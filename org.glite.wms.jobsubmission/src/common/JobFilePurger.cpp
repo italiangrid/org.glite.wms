@@ -15,7 +15,7 @@
 
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #ifdef ENABLE_PURGER
-#include "glite/wms/purger/purger.h"
+#include "purger.h"
 #endif
 #include "../jobcontrol_namespace.h"
 #include "../common/files.h"
