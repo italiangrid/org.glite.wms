@@ -33,53 +33,63 @@ noinst_HEADERS = \
 	wmproxy.h \
 	wmputils.h
 
-#endif
 
 wmProxy_SOURCES = \
-	wmpexceptions.cpp wmpgsoapoperations.cpp wmproxy.cpp \
-	wmpexpdagad.cpp wmplogger.cpp wmputils.cpp \
-	wmpdelegation.cpp wmpgsoapfaultmanipulator.cpp wmpoperations.cpp
+	NS2WMProxy.cpp \
+	soapC.cpp \
+	soapServer.cpp \
+	wmclient.cpp \
+	wmpdelegation.cpp \
+	wmpdispatcher.cpp \
+	wmpeventlogger.cpp \
+	wmpexceptions.cpp \
+	wmpexpdagad.cpp \
+	wmpgsoapfaultmanipulator.cpp \
+	wmpgsoapoperations.cpp \
+	WMPManager.cpp \
+	wmpoperations.cpp \
+	wmproxy.cpp \
+	wmputils.cpp
+
 	
 wmProxy_LDFLAGS = -Xlinker --export-dynamic
 
 wmProxy_LDADD = \
-	$(GLOBUS_LDAP_LIBS) \
-	../../common/logger/libedg_wl_logger.la \
-	../../common/utilities/libedg_wl_util.la \
-	../../common/process/libedg_wl_process.la \
-	../../common/requestad/libedg_wl_common_requestad.la \
-	../commands/libnsservercommands.la \
-	../versions/libedg_wl_versions.la \
-	../../purger/libedg_wl_purger.la \
-	../../common/socket++/libedg_wl_gsisocket_pp.la \
-	../../common/utilities/libedg_wl_exceptions.la \
-	../../common/jobid/libedg_wl_jobid.la \
-	../../common/configuration/libedg_wl_conf.la \
-	../../common/utilities/libedg_wl_util.la \
-	../../common/ldif2classad/libedg_wl_LDIF2ClassAd.la \
-	../../common/utilities/libedg_wl_iiattrutil.la \
-	../../logging/client/libedg_wl_logging.la \
-	../../logging/client/libedg_wl_loggingpp.la \
-	../../proxyrenewal/libedg_wl_renewal.la \
-	../../planning/broker/libbroker.la \
-	../../planning/plugin/libedg_wl_classad_plugin_loader.la \
-	../../common/ssl_helpers/libedg_wl_ssl_helpers.la \
-	../../common/ssl_helpers/libedg_wl_ssl_pthr_helpers.la \
-	$(EXPAT_LIBS) $(ARES_LIBS) \
-	$(BOOST_LIBS) $(CLASSAD_DL_LIBS) \
-	$(GLOBUS_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
-    $(GLOBUS_SSL_THR_LIBS)
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLOBUS_SSL_LIBS) \
+	$(GLOBUS_GSS_LIBS) \
+	$(GLOBUS_COMMON_LIBS) \
+	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
+	$(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMS_CHKPT_LIBS) \
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMSUI_PARTITIONER_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS) \
+	$(ARES_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(BOOST_LIBS) \
+	$(EXPAT_LIBS) \
+	$(GRIDSITE_LIBS) \
+	-lxml2 \
+	$(FASTCGI_CPP_LIBS)
+
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) \
+	$(GLOBUS_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(MYPROXY_CFLAGS) \
-	$(GLOBUS_SSL_UTILS_CFLAGS)
+	$(MYPROXY_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
