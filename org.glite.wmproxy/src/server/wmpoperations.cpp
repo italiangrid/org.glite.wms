@@ -310,7 +310,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	}
 	try {
 		// Check TYPE/JOBTYPE attributes and convert JDL when needed
-		WMPExpDagAd *dag=NULL;
+		WMPExpDagAd *dag = NULL;
 		JobAd *jad = NULL;
 		int type = getType(jdl);
 		if (type == TYPE_DAG) {
@@ -331,10 +331,14 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 		}
 		// PERFORM THE PROPER REGISTRATION
 		if (dag && jad) {
+			dag->setLocalAccess(false);
+			jad->setLocalAccess(false);
 			regist(jobRegister_response, delegation_id, jdl, dag, jad);
 		} else if (dag) {
+			dag->setLocalAccess(false);
 			regist(jobRegister_response, delegation_id, jdl, dag);
 		} else if (jad) {
+			jad->setLocalAccess(false);
 			regist(jobRegister_response, delegation_id, jdl, jad);
 		} else {
 			throw "FATAL ERROR";  // UNREACHABLE LINE (either dag or jad are initialised)
@@ -477,7 +481,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	jad->setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
 
 	// Initializing logger
-	WMPLogger wmplogger;
+	WMPEventLogger wmplogger;
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 	
 	// Registering the job
@@ -550,7 +554,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	dag->setReserved(JDL::WMPISB_BASE_URI, dest_uri);
 
 	// Initializing logger
-	WMPLogger wmplogger;
+	WMPEventLogger wmplogger;
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 	
 	// Checking for partitionable registration needs
@@ -630,7 +634,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 void
 submit(const string &jdl, JobId *jid)
 {
-	WMPLogger wmplogger;
+	WMPEventLogger wmplogger;
 	edglog_fn("   wmpoperations::submit");
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 
@@ -649,15 +653,13 @@ submit(const string &jdl, JobId *jid)
 	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
 
 	if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
-		wmplogger.logEvent(eventlogger::WMPLogger::LOG_ABORT,
+		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
 			wmp_fault.message.c_str(), true, true);
 		throw JobOperationException(__FILE__, __LINE__,
 			"submit(const string &jdl, JobId *jid)",
 			wmp_fault.code, wmp_fault.message);
 	} else {
-		//wmplogger.logEvent(eventlogger::LOQ_ENQUE, jid->toString());
-		//wmplogger.logEnqueuedJob(jdl, const std::string &file_queue, bool
-		//	mode, const char *reason, bool retry );
+		wmplogger.logEvent(eventlogger::LOG_ACCEPT, "");
 	}
 }
 
@@ -708,7 +710,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			"Cancel has already been requested");
 	}
 
-	WMPLogger wmplogger;
+	WMPEventLogger wmplogger;
 	
 	// Vector of parameters to pass to runCommand()
 	vector<string> params;
@@ -726,7 +728,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			// The register of the job has been done
 			//TBC should I check if MyProxyServer was present in jdl??
 			wmplogger.unregisterProxyRenewal();
-			wmplogger.logEvent(eventlogger::WMPLogger::LOG_ABORT,
+			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
 				"Cancelled by user", true, true);
 			break;
 		case JobStatus::WAITING:
@@ -744,7 +746,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 					"string &job_id)",
 					wmp_fault.code, wmp_fault.message);
 			}
-			wmplogger.logEvent(eventlogger::WMPLogger::LOG_CANCEL,
+			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 				"Cancelled by user", true, true);
 			break;
 		case JobStatus::DONE:
@@ -762,7 +764,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 						"string &job_id)",
 						wmp_fault.code, wmp_fault.message);
 				}
-				wmplogger.logEvent(eventlogger::WMPLogger::LOG_CANCEL,
+				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 					"Cancelled by user", true, true);
 			}
 			break;
@@ -788,12 +790,6 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	edglog_fn("   wmpoperations::getMaxInputSandboxSize");
 
 	try {
-		//TBD Choose a file to save into
-		//FILE * file = new FILE();
-		/*authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer(stderr);
-		auth->checkUserAuthZ();
-		auth->mapUser();
-		cerr<<"----- User Name: "<<auth->getUserName()<<endl;*/
 		getMaxInputSandboxSize_response.size =
 		// WARNING: Temporal cast TBD
 		// WARNING: double temporarely casted into long (soon long will be returned directly
@@ -850,8 +846,16 @@ getQuota(getQuotaResponse &getQuota_response)
 	GLITE_STACK_TRY("getQuota(getQuotaResponse &getQuota_response)");
 	edglog_fn("   wmpoperations::getQuota");
 	
+	//TBD Choose a file to save into
+	//FILE * file = new FILE();
+	cerr<<"----- WMPAuthorizer"<<endl;
+	authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer(stderr);
+	auth->checkUserAuthZ();
+	auth->mapUser();
+	string uname = auth->getUserName();
+	cerr<<"----- User Name: "<<uname<<endl;
 	//TBD Use LCAS method
-	string uname = "peppe";
+	//string uname = "peppe";
 	pair<long, long> quotas;
 	if (!wmputilities::getUserQuota(quotas, uname)) {
 		edglog(severe)<<"\nUnable to get total quota"<<endl;
@@ -912,9 +916,9 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 				wmputilities::WMS_IS_FAILURE, "Unable to perform job purge");
 		}
 		// Initializing logger
-		WMPLogger wmplogger;
+		WMPEventLogger wmplogger;
 		wmplogger.init(NS_ADDRESS, NS_PORT, jobid);
-		wmplogger.logEvent(eventlogger::WMPLogger::LOG_CLEAR,
+		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CLEAR,
 			"Job purged by user");
 	} else {
 		edglog(severe)<<"\nJob state doesn't allow purge operation"<<endl;
