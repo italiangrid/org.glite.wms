@@ -61,7 +61,7 @@ class UserJobs{
 	* @param lbPort the LB server port value
 	* @param  jobs the vector of JobId which will be filled with all the user jobs
 	*/
-	void getJobs ( const std::string& lbHost, int lbPort,  std::vector<glite::wms::jobid::JobId> &jobs ) ;
+	void getJobs ( const std::string& lbHost, int lbPort,  std::vector<glite::wmsutils::jobid::JobId> &jobs ) ;
 
 	/** Retrieve the status of all the user's jobs
 	* @param lbHost the LB server host name
