@@ -35,15 +35,15 @@ class CommandFactory
    * Creates a Command by name.
    * @return a pointer to new Command.
    */
-  Command* create(const std::string& name, const std::vector<std::string> param) { return impl -> create( name ); }
+  Command* create(const std::string& name, const std::vector<std::string>& param){ return impl -> create( name, param ); }
   
 private:
   boost::scoped_ptr<CommandFactoryImpl> impl;
 };
 
-} // namespace commands
-} // namespace wmproxy
-} // namespace wms
-} // namespace glite
+}
+}
+}
+}
 
 #endif

@@ -49,7 +49,6 @@
 
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 #include "glite/wms/common/utilities/classad_utils.h"
-// #include "glite/wms/common/utilities/quota.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h" 
 #include "glite/lb/producer.h"
@@ -1155,7 +1154,7 @@ static bool logCancel(Command *cmd){
 		      false);
 }
 
-Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::vector<std::string> param)
+Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::vector<std::string>& param)
 {
   std::string name;
   edglog_fn("CFSI::createFSM");

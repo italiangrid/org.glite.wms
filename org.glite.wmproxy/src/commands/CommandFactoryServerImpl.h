@@ -32,7 +32,7 @@ public:
    * Creates a new command of the specified type, using Server view.
    * @return a pointer to a new server-side command.
    */
-   Command* create(const std::string& name, const std::vector<std::string> param);
+   Command* create(const std::string& name, const std::vector<std::string>& param);
 
 };
 
