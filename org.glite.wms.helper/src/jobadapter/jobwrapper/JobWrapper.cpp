@@ -270,7 +270,7 @@ JobWrapper::set_lb_sequence_code(ostream& os,
 				 const string& scode,
 				 const string& ecode) const
 {
-  os << "GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-wms-logev" << " \\" << endl
+  os << "GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent" << " \\" << endl
      << " --jobid=" << "\"" << "$GLITE_WMS_JOBID" << "\"" << " \\" << endl
      << " --source=LRMS" << " \\" << endl
      << " --sequence=" << "\"" << "$GLITE_WMS_SEQUENCE_CODE" << "\"" << "\\" << endl
