@@ -12,12 +12,20 @@
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
-#include "wmpoperations.h"
-#include "wmpconfiguration.h"
-#include "utilities/wmputils.h"
 #include "wmproxy.h"
-#include "eventlogger/wmpeventlogger.h"
+#include "wmpoperations.h"
 #include "wmpexpdagad.h"
+#include "wmpconfiguration.h"
+
+// Utilities
+#include "utilities/wmputils.h"
+
+// Eventlogger
+#include "eventlogger/wmpeventlogger.h"
+
+// Authorizer
+#include "authorizer/wmpauthorizer.h"
+
 
 // WMPManager
 #include "WMPManager.h"
@@ -94,6 +102,7 @@ namespace wmpmanager	 = glite::wms::wmproxy::server;
 namespace wmputilities	 = glite::wms::wmproxy::utilities;
 namespace task           = glite::wms::common::task;
 namespace eventlogger    = glite::wms::wmproxy::eventlogger;
+namespace authorizer 	 = glite::wms::wmproxy::authorizer;
 
 
 //namespace glite {
@@ -647,6 +656,8 @@ submit(const string &jdl, JobId *jid)
 			wmp_fault.code, wmp_fault.message);
 	} else {
 		//wmplogger.logEvent(eventlogger::LOQ_ENQUE, jid->toString());
+		//wmplogger.logEnqueuedJob(jdl, const std::string &file_queue, bool
+		//	mode, const char *reason, bool retry );
 	}
 }
 
@@ -777,6 +788,12 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	edglog_fn("   wmpoperations::getMaxInputSandboxSize");
 
 	try {
+		//TBD Choose a file to save into
+		//FILE * file = new FILE();
+		authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer(stderr);
+		auth->checkUserAuthZ();
+		auth->init();
+		cerr<<"----- User Name: "<<auth->getUserName()<<endl;
 		getMaxInputSandboxSize_response.size =
 		// WARNING: Temporal cast TBD
 		// WARNING: double temporarely casted into long (soon long will be returned directly
@@ -897,12 +914,14 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 		// Initializing logger
 		WMPLogger wmplogger;
 		wmplogger.init(NS_ADDRESS, NS_PORT, jobid);
-		wmplogger.logEvent(eventlogger::WMPLogger::LOG_CLEAR, "Job purged by user");
+		wmplogger.logEvent(eventlogger::WMPLogger::LOG_CLEAR,
+			"Job purged by user");
 	} else {
 		edglog(severe)<<"\nJob state doesn't allow purge operation"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)",
-			wmputilities::WMS_OPERATION_NOT_ALLOWED, "Job state doesn't allow purge operation");
+			wmputilities::WMS_OPERATION_NOT_ALLOWED, "Job state doesn't allow "
+			"purge operation");
 	}
 	
 	edglog(info) << "\njob Purged successfully" << endl;
@@ -917,45 +936,52 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		"&getOutputFileList_response, const string &jid)");
 	edglog_fn("   wmpoperations::getOutputFileList");
 	
-	/*wmp_fault_t wmp_fault;
-	wmp_fault.code = WMS_NO_ERROR;
-	if (wmp_fault.code != WMS_NO_ERROR) {
+	JobId *jobid = new JobId(jid);
+  	
+  	// Getting job status to check if purge is possible
+	JobStatus status = getStatus(jobid);
+
+	if ((status.status == JobStatus::ABORTED)
+		|| ((status.status == JobStatus::DONE)
+			&& (status.getValInt(JobStatus::DONE_CODE) == 0))) {
+		// OUTPUT stage area = SandboxDestURIResponse/output
+		getSandboxDestURIResponse getSandboxDestURI_response;
+		getSandboxDestURI(getSandboxDestURI_response, jid);
+		string output_uri = getSandboxDestURI_response.path + FILE_SEPARATOR
+			+ "output";
+		edglog(debug)<<"\noutput_uri = " << output_uri <<endl;
+		edglog(debug)<<"\nnow calling path... " << output_uri <<endl;
+		
+		// find files inside directory
+		const boost::filesystem::path p(output_uri,boost::filesystem::system_specific);
+		edglog(debug)<<"\nPath filled" << endl;
+		std::vector<std::string> found;
+		glite::wms::wmproxy::commands::list_files(p, found);
+		edglog(debug)<<"\nlist files called, size is: "<<found.size()<<endl;
+		
+		// Create and return the list:
+		StringAndLongList *list = new StringAndLongList();
+		vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+		StringAndLongType *item = NULL;
+		for (unsigned int i = 0; i < found.size(); i++) {
+			item = new StringAndLongType();
+			item->name = string(found[i]);
+			item->size = 5 + i;
+			edglog(debug)<<"\npush back address = " <<item<<endl;
+			file->push_back(item);
+		}
+		list->file = file;
+		getOutputFileList_response.OutputFileAndSizeList = list;
+		
+		edglog(info)<<"\nSuccessfully retrieved files: "<<found.size()<<endl;
+	} else {
+		edglog(severe)<<"\nJob state doesn't allow get output file list operation"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"getOutputFileList(getOutputFileListResponse "
 			"&getOutputFileList_response, const string &jid)",
-			wmp_fault.code, wmp_fault.message);
-	}*/
-
-	// OUTPUT stage area = SandboxDestURIResponse/output
-	getSandboxDestURIResponse getSandboxDestURI_response;
-	getSandboxDestURI(getSandboxDestURI_response, jid);
-	string output_uri = getSandboxDestURI_response.path + FILE_SEPARATOR
-		+ "output";
-	edglog(debug)<<"\noutput_uri = " << output_uri <<endl;
-	edglog(debug)<<"\nnow calling path... " << output_uri <<endl;
-	
-	// find files inside directory
-	const boost::filesystem::path p(output_uri,boost::filesystem::system_specific);
-	edglog(debug)<<"\nPath filled" << endl;
-	std::vector<std::string> found;
-	glite::wms::wmproxy::commands::list_files(p, found);
-	edglog(debug)<<"\nlist files called, size is: "<<found.size()<<endl;
-	
-	// Create and return the list:
-	StringAndLongList *list = new StringAndLongList();
-	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
-	StringAndLongType *item = NULL;
-	for (unsigned int i = 0; i < found.size(); i++) {
-		item = new StringAndLongType();
-		item->name = string(found[i]);
-		item->size = 5 + i;
-		edglog(debug)<<"\npush back address = " <<item<<endl;
-		file->push_back(item);
+			wmputilities::WMS_OPERATION_NOT_ALLOWED, "Job state doesn't allow "
+			"get output file list operation");
 	}
-	list->file = file;
-	getOutputFileList_response.OutputFileAndSizeList = list;
-	
-	edglog(info) << "\nSuccessfully retrieved files: " <<  found.size() << endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -1025,11 +1051,9 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 		"const string &rank)");
 	edglog_fn("   wmpoperations::getJobTemplate");
 	
-	//TBD to remove from call to AdConverter
-	string vo = "Fake VO"; // get it from proxy, it should be the default one
 	getJobTemplate_response.jdl =
 		(AdConverter::createJobTemplate(convertJobTypeListToInt(jobType),
-		executable, arguments, requirements, rank, vo))->toString();
+		executable, arguments, requirements, rank))->toString();
 		
 	edglog(info) << "\nTemplate retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
@@ -1045,11 +1069,9 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 		"&requirements, const string &rank)");
 	edglog_fn("   wmpoperations::getDAGTemplate");
 	
-	//TBD to remove from call to AdConverter
-	string vo = "Fake VO";
 	getDAGTemplate_response.jdl = AdConverter::createDAGTemplate(
 		convertGraphStructTypeToNodeStruct(dependencies),
-		requirements, rank, vo)->toString();
+		requirements, rank)->toString();
 		
 	edglog(info) << "\nTemplate retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
@@ -1065,11 +1087,9 @@ getCollectionTemplate(getCollectionTemplateResponse
 		"&requirements, const string &rank)");
 	edglog_fn("   wmpoperations::getCollectionTemplate");
 
-	//TBD to remove from call to AdConverter
-	string vo = "Fake VO";
 	getCollectionTemplate_response.jdl =
-		AdConverter::createCollectionTemplate(jobNumber, requirements, rank,
-			vo)->toString();
+		AdConverter::createCollectionTemplate(jobNumber, requirements,
+			rank)->toString();
 			
 	edglog(info) << "\nTemplate retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
@@ -1084,12 +1104,9 @@ getIntParametricJobTemplate(
 	GLITE_STACK_TRY("");
 	edglog_fn("   wmpoperations::getIntParametricJobTemplate");
 	
-	//TBD to remove from call to AdConverter
-	string vo = "Fake VO";
-	int parametrised = 2;
 	getIntParametricJobTemplate_response.jdl =
-		AdConverter::createIntParametricTemplate(parametrised, param,
-			parameterStart, parameterStep, requirements, rank, vo)->toString();
+		AdConverter::createIntParametricTemplate(*(attributes->Item), param,
+			parameterStart, parameterStep, requirements, rank)->toString();
 			
 	edglog(info) << "\nTemplate retrieved successfully" << endl;
 	
@@ -1105,12 +1122,9 @@ getStringParametricJobTemplate(
 	GLITE_STACK_TRY("");
 	edglog_fn("   wmpoperations::getStringParametricJobTemplate");
 	
-	//TBD to remove from call to AdConverter
-	string vo = "Fake VO";
-	int parametrised = 2;
 	getStringParametricJobTemplate_response.jdl =
-		AdConverter::createStringParametricTemplate(parametrised,
-		*(param->Item), requirements, rank, vo)->toString();
+		AdConverter::createStringParametricTemplate(*(attributes->Item),
+		*(param->Item), requirements, rank)->toString();
 		
 	edglog(info) << "\nTemplate retrieved successfully" << endl;
 	
