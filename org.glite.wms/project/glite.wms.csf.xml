@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.13  2004/05/13 18:35:11  flammer
+	Added missing dependencies. Deleted duplicated external dependencies.
+
 	Revision 1.12  2004/05/13 09:46:58  flammer
 	Moved to variable naming & include style.
-
+	
 	Revision 1.11  2004/05/05 23:21:04  dimeglio
 	Updated Jalopy dependencies
 	
@@ -62,16 +65,19 @@
 
 <project name="EGEE Middleware Test2 WMS CSF" default="all">
 
+	<!-- overwrite default workspace directory -->
+	<property name="workspace.dir" value="../.." />
+
 	<!-- ===============================================
 		 Load properties
 		 =============================================== -->
 
 	<!-- load baseline and user properties -->
-	<import file="../../org.egee/project/baseline.properties.xml" />
+	<import file="${workspace.dir}/org.egee/project/baseline.properties.xml" />
 
-	<!-- Load module-specific property file -->
+	<!-- Load subsytem-specific property files -->
 	<property file="./build.properties"/>
-	<property file="./properties.xml"/>
+	<import file="./properties.xml"/>
 
 	<!-- load global properties -->
 	<import file="${global.properties.file}" />
@@ -88,6 +94,9 @@
 
 	<!-- Load global dependencies file -->
 	<property file="${global.dependencies.file}" />
+
+	<!-- Load external dependencies -->
+	<import file="${global.external-dependencies.file}" />
 
 	<!-- ========================================================
 		 Checkout/updates the EGEE Middleware Test2 WMS components
@@ -273,112 +282,8 @@
 		 ===================================================== -->
 	
 	<!--  All external libraries -->
- 	<target name="external" depends="globus,boost,classads,jclassads"/>
+ 	<target name="external" depends="log4j"/>
  	
-	<!-- Globus Libraries and Includes-->
-	<target name="globus" unless="offline.repository">                                                                                                   
-		<mkdir dir="${repository}/${ext.globus.name}" />
-		<get src="${ext.globus.rep-url}"
-			 dest="${repository}/${ext.globus.subpath}/${ext.boost.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-		<!-- check if uptodate unpacked -->
-		<uptodate property="globus.old" targetfile="${repository}/${ext.globus.subpath}/${ext.globus.rep-file}">
-			<srcfiles dir="${repository}/${ext.globus.subpath}" includes="**/*.h" />
-		</uptodate>
-		<antcall target="globus-expand" />
-	</target>
-
- 	<target name="globus-expand" if="globus.old">		
-		<delete>
-			<fileset dir="${repository}/${ext.globus.subpath}">
-				<include name="**/*" />
-				<exclude name="${ext.globus.rep-file}" />
-			</fileset>
-		</delete>
-		<exec dir="${repository}/${ext.globus.subpath}" executable="tar">
-			<arg line="-xzf ${ext.globus.rep-file}" />
-		</exec>
-		<touch>
-			<fileset dir="${repository}/${ext.globus.subpath}">
-				<exclude name="${ext.globus.rep-file}" />
-			</fileset>
-		</touch>
-	</target>
-
-	<!-- Boost Libraries and Includes-->
-	<target name="boost" unless="offline.repository">                                                                                                   
-		<mkdir dir="${repository}/${ext.boost.name}" />
-		<get src="${ext.boost.rep-url}"
-			 dest="${repository}/${ext.boost.subpath}/${ext.boost.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-		<!-- check if uptodate unpacked -->
-		<uptodate property="boost.old" targetfile="${repository}/${ext.boost.subpath}/${ext.boost.rep-file}">
-			<srcfiles dir="${repository}/${ext.boost.subpath}" includes="**/*.h" />
-		</uptodate>
-		<antcall target="boost-expand" />
-	</target>
-
- 	<target name="boost-expand" if="boost.old">		
-		<delete>
-			<fileset dir="${repository}/${ext.boost.subpath}">
-				<include name="**/*" />
-				<exclude name="${ext.boost.rep-file}" />
-			</fileset>
-		</delete>
-		<exec dir="${repository}/${ext.boost.subpath}" executable="tar">
-			<arg line="-xzf ${ext.boost.rep-file}" />
-		</exec>
-		<touch>
-			<fileset dir="${repository}/${ext.boost.subpath}">
-				<exclude name="${ext.boost.rep-file}" />
-			</fileset>
-		</touch>
-	</target>
-
-
-	<!-- ClassADs Libraries and Includes-->
-	<target name="classadds" unless="offline.repository">                                                                                                   
-		<mkdir dir="${repository}/${ext.classadds.name}" />
-		<get src="${ext.classadds.rep-url}"
-			 dest="${repository}/${ext.classadds.subpath}/${ext.classadds.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-		<!-- check if uptodate unpacked -->
-		<uptodate property="classadds.old" targetfile="${repository}/${ext.classadds.subpath}/${ext.classadds.rep-file}">
-			<srcfiles dir="${repository}/${ext.classadds.subpath}" includes="**/*.h" />
-		</uptodate>
-		<antcall target="classadds-expand" />
-	</target>
-
- 	<target name="classadds-expand" if="classadds.old">		
-		<delete>
-			<fileset dir="${repository}/${ext.classadds.subpath}">
-				<include name="**/*" />
-				<exclude name="${ext.classadds.rep-file}" />
-			</fileset>
-		</delete>
-		<exec dir="${repository}/${ext.classadds.subpath}" executable="tar">
-			<arg line="-xzf ${ext.classadds.rep-file}" />
-		</exec>
-		<touch>
-			<fileset dir="${repository}/${ext.classadds.subpath}">
-				<exclude name="${ext.classadds.rep-file}" />
-			</fileset>
-		</touch>
-	</target>
-
-	
-    <!--  Java ClassAds -->
-    <target name="jclassads" unless="offline.repository">
-            <mkdir dir="${repository}/${ext.jclassads.subpath}" />
-            <get src="${ext.jclassads.rep-url}"
-                     dest="${repository}/${ext.jclassads.subpath}/{ext.jclassads.rep-file}"
-                     verbose="on"
-                     usetimestamp="true" />
-    </target>
-
 	<!-- =====================================================
 		 EGEE Middleware modules
 		 ===================================================== -->
@@ -444,7 +349,7 @@
 		 ==================================================== -->
 	
 	<!-- All libraries -->
- 	<target name="all" depends="org.egee, org.egee.test3.wms, envchecks, devtools, project" />		
+ 	<target name="all" depends="org.egee, org.egee.test3.wms, envchecks, devtools, external, project" />		
 
 	<!-- ====================================================
 		 Print dependecies to console
