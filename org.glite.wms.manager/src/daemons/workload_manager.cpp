@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cstdlib>
 #include <sys/types.h>          // getpid(), getpwnam()
 #include <unistd.h>             // getpid()
@@ -29,7 +30,6 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
-#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 
 namespace manager = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
@@ -261,7 +261,7 @@ try {
   boost::thread_group purchaser_thread_group;
 
   // Try to execute ISM purchaser thread
-  if (string(brlib)=="libglite_wms_helper_broker_ism.so") {
+  if (std::string(brlib).find("_ism") != std::string::npos) {
      
     char* prlib1 = "libglite_wms_ism_ii_purchaser.so";	
     void* prh1 = dlopen(prlib1,RTLD_NOW|RTLD_GLOBAL);
@@ -276,18 +276,19 @@ try {
 
     ism_ii_purchaser_handle.reset(prh1, dlclose);
 
-    char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";	
-    void* prh2 = dlopen(prlib2,RTLD_NOW|RTLD_GLOBAL);
-    if (!prh2) {
-      get_err_stream() << program_name << ": "
-                       << "cannot load ism purchaser lib (" << prlib2 << "\n";
-      std::string dlerr(dlerror());
-      get_err_stream() << program_name << ": "
-                       << "dlerror returns: " << dlerr << "\n";
-      return EXIT_FAILURE;
-    }
-
-    ism_cemon_purchaser_handle.reset(prh2, dlclose);
+// Temporarily disabled, until issues with gsoap are addressed.
+//     char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";	
+//     void* prh2 = dlopen(prlib2,RTLD_NOW|RTLD_GLOBAL);
+//     if (!prh2) {
+//       get_err_stream() << program_name << ": "
+//                        << "cannot load ism purchaser lib (" << prlib2 << "\n";
+//       std::string dlerr(dlerror());
+//       get_err_stream() << program_name << ": "
+//                        << "dlerror returns: " << dlerr << "\n";
+//       return EXIT_FAILURE;
+//     }
+// 
+//     ism_cemon_purchaser_handle.reset(prh2, dlclose);
 
     // load the symbols
     create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh1, "create");
@@ -298,13 +299,14 @@ try {
         return EXIT_FAILURE;
     }
   
-    create_cemon_purchaser  = (purchaser::cemon::create_t*)  dlsym(prh2, "create");
-    destroy_cemon_purchaser = (purchaser::cemon::destroy_t*) dlsym(prh2, "destroy");
-    
-    if ((!create_cemon_purchaser) || (!destroy_cemon_purchaser)) {
-        get_err_stream() << "Cannot load " << prlib2 << " symbols: " << dlerror() << "\n";
-        return EXIT_FAILURE;
-    }
+// Temporarily disabled, until issues with gsoap are addressed.
+//     create_cemon_purchaser  = (purchaser::cemon::create_t*)  dlsym(prh2, "create");
+//     destroy_cemon_purchaser = (purchaser::cemon::destroy_t*) dlsym(prh2, "destroy");
+//     
+//     if ((!create_cemon_purchaser) || (!destroy_cemon_purchaser)) {
+//         get_err_stream() << "Cannot load " << prlib2 << " symbols: " << dlerror() << "\n";
+//         return EXIT_FAILURE;
+//     }
     ismp1.reset( 
       create_ii_purchaser(
         ns_config->ii_contact(), ns_config->ii_port(),
@@ -315,18 +317,19 @@ try {
     // FIXME: It is not so nice but works...
     purchaser_thread_group.create_thread(call_execute(ismp1));
     
-    // Try to execute ISM CEMON purchaser thread
-    std::vector<std::string> cemonURLs = wm_config->ce_monitor_services();
-    if (!cemonURLs.empty()) {
-      
-      ismp2.reset(
-        create_cemon_purchaser(cemonURLs,"CE_MONITOR:ISM", 
-          120, purchaser::loop, 120), destroy_cemon_purchaser
-      );
-      // FIXME: It is not so nice but works...
-      purchaser_thread_group.create_thread(call_execute(ismp2));
-    }
-  }
+// Temporarily disabled, until issues with gsoap are addressed.
+//     // Try to execute ISM CEMON purchaser thread
+//     std::vector<std::string> cemonURLs = wm_config->ce_monitor_services();
+//     if (!cemonURLs.empty()) {
+//       
+//       ismp2.reset(
+//         create_cemon_purchaser(cemonURLs,"CE_MONITOR:ISM", 
+//           120, purchaser::loop, 120), destroy_cemon_purchaser
+//       );
+//       // FIXME: It is not so nice but works...
+//       purchaser_thread_group.create_thread(call_execute(ismp2));
+//     }
+   }
   manager::Dispatcher dispatcher;
   manager::RequestHandler request_handler;
   task::Task d(dispatcher, d2rh);
