@@ -75,6 +75,8 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 AC_GLITE
 
+AC_OPTIMIZE
+
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
