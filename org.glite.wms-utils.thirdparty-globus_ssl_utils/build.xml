@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.4  2004/05/13 12:39:58  flammer
+	Moved to new variable naming & including style.
+
 	Revision 1.3  2004/05/05 17:15:41  dimeglio
 	Dist is new default target (warning: this may change)
-
+	
 	Revision 1.2  2004/04/29 18:20:30  dimeglio
 	Added export of interface files
 	
@@ -37,29 +40,52 @@
 		 Builds the EGEE Test 3 WMS Globus SSLUtils Module
 		 ========================================= -->
 	
-	<!-- Import properties -->
-	<import file="../org.egee/project/properties.xml" />
-	<import file="${workspace.dir}/${test3.wms.subsystem}/project/properties.xml" />
-
-	<!-- Import task definitions -->
-	<import file="${master.project.dir}/taskdefs.xml" />
-	<import file="${subsystem.project.dir}/taskdefs.xml" />
+		<!-- =========================================
+		 Builds the EGEE Test 3 WMS Common Module
+		 ========================================= -->
 	
-	<!-- Package name -->
-	<property name="package.name" value="${package.prefix}-thirdparty-${ant.project.name}" />
-
-	<!-- Module name -->
-	<property name="module.name" value="${subsystem.name}.thirdparty-${ant.project.name}" />
-
-	<!-- Load dependencies files -->
-	<property file="${dependencies.file}"/>
+	<!-- =========================================
+	     Import properties (order is important)
+		 ========================================= -->
+	<import file="../org.egee/project/baseline.properties.xml" />
+	<import file="./project/properties.xml" />	
+	<import file="${subsystem.properties.file}" />
+	<import file="${global.properties.file}" />
+		
+	<!-- =========================================
+		 Load dependency property files (order is important)
+		 ========================================= -->
+	<property file="${user.dependencies.file}"/>
+	<property file="${component.dependencies.file}"/>
 	<property file="${subsystem.dependencies.file}"/>
-
-	<!-- Load version file -->
+	<property file="${global.dependencies.file}"/>
+	
+	<!-- =========================================
+		 Import external dependencies files (order is important) 
+		========================================= -->
+	<!-- <import file="${component.external-dependencies.file}"/> -->
+	<!-- <import file="${subsystem.external-dependencies.file}"/> -->
+	<import file="${global.external-dependencies.file}"/>	
+	
+	<!-- =========================================
+		 Import task definitions (order is important)
+		 ========================================= -->
+	<!-- <import file="${component.taskdefs.file}" /> -->
+	<import file="${subsystem.taskdefs.file}" />
+	<import file="${global.taskdefs.file}" />
+			
+	<!-- =========================================
+		 Load common targets file (order is important)
+		 ========================================= -->
+	<!-- <import file=${component.targets.file}" /> -->
+	<!-- <import file=${subsystem.targets.file}" /> -->
+	<import file="${global.targets.file}" />
+	
+	<!-- =========================================
+		 Load version file 
+		 ========================================= -->
 	<property file="${version.file}"/>
-
-	<!-- Import common public targets -->
-	<import file="${master.project.dir}/targets-cpp.xml" />
+		
 	
 	<!-- ==============================================
 		 Local private targets
