@@ -49,7 +49,8 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I$(BOOST)/include/boost \
 	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include 
 
-LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
+LDFLAGS= \
+	-L$(GLOBUS_LOCATION)/lib \
 	-L$(REPLIBS) \
 	-L$(CLASSAD)/lib \
 	-L$(BOOST)/lib/release \
@@ -127,14 +128,14 @@ wmProxy:        wm.h \
                                 wmpdispatcher.cpp wmpdispatcher.h\
                                 WMPManager.h NS2WMProxy.h wmpresponsestruct.h $(SOAPH) $(SOAPCPP)
 			@echo "wmproxy....."
-			@$(CPP) $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
+			$(CPP) $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
                                 wmpoperations.cpp \
                                 wmpgsoapoperations.cpp \
                                 wmpdispatcher.cpp wmpconfiguration.cpp\
                                 wmpexpdagad.cpp wmpdelegation.cpp \
                                 WMPManager.cpp NS2WMProxy.cpp \
-                                $(SOAPCPP) $(LIBS) $(LDFLAGS)
+                                $(SOAPCPP) $(LIBS) $(LDFLAGS) 
 
 
 

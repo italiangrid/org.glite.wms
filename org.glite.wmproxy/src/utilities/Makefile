@@ -14,17 +14,18 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I$(REPOSITORY)/org.glite.wms.common/src/utilities
 	
 EXTRALIBFLAGS = \
-	-L$(REPOSITORY)/org.glite.wms.purger/build/src/libglite_wms_purger.la \
-	-L$(REPOSITORY)/org.glite.wms.common/build/src/utilities/libglite_wms_quota.la
+        $(REPOSITORY)/org.glite.wms.purger/build/src/.libs/libglite_wms_purger.al \
+        $(REPOSITORY)/org.glite.wms.common/build/src/utilities/.libs/libglite_wms_quota.al
+
 	
 all:	utilities
 
 
 utilities: 
-		$(CPP) -shared $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) -I../server \
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server \
 	        -o libglite_wms_wmproxy_utilities.so \
 	        wmputils.cpp wmpexceptions.cpp\
- 		$(LIBS)
+ 		$(LIBS) $(EXTRALIBFLAGS)
 
 
 clean:
