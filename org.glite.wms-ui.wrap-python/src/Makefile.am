@@ -163,7 +163,6 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
         $(EXPAT_LIBS) \
 	$(GLITE_WMSUI_PARTITIONER_LIBS) \
 	$(GLITE_WMS_CHKPT_LIBS) \
-	-lglite_wmsui_partitioner \
 	-lstdc++
 
 LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
