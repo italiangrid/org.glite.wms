@@ -252,12 +252,12 @@ public:
   fs::path pre(jobid::JobId const& node_id) const
   {
     std::string const edg_wl_location = std::getenv("GLITE_WMS_LOCATION");
-    return fs::path(edg_wl_location, fs::system_specific) << "libexec/edg-wl-planner.sh";
+    return fs::path(edg_wl_location, fs::system_specific) << "libexec/glite-wms-planner.sh";
   }
   fs::path post(jobid::JobId const& node_id) const
   {
     std::string const edg_wl_location = std::getenv("GLITE_WMS_LOCATION");
-    return fs::path(edg_wl_location, fs::system_specific) << "libexec/edg-wl-dag-post.sh";
+    return fs::path(edg_wl_location, fs::system_specific) << "libexec/glite-wms-dag-post.sh";
   }
   fs::path standard_output(jobid::JobId const& node_id) const
   {
