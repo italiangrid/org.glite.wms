@@ -20,9 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.5  2004/05/13 23:51:04  dimeglio
+	Replace .. with ${workspace.dir}
+	Removed properties definitions for object that must be only global
+
 	Revision 1.4  2004/05/13 19:50:11  dimeglio
 	Changed all occurrences of test3.wms to wms
-
+	
 	Revision 1.3  2004/05/13 19:37:04  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
 	
@@ -49,7 +53,7 @@
 	<!-- ====================================================== -->
 		
 	<!-- Subsystem root directory -->
-	<property name="subsystem.dir" location="../${subsystem.name}" />
+	<property name="subsystem.dir" location="${workspace.dir}/${subsystem.name}" />
 	
 	<!-- Subsystem build directory -->
 	<property name="subsystem.project.dir" location="${subsystem.dir}/project" />
@@ -63,21 +67,6 @@
 	<!-- Subsystem taskdefs file -->
 	<property name="subsystem.taskdefs.file" value="${subsystem.project.dir}/taskdefs.xml" />
 		
-	<!-- Subsystem compilerdefs file -->
-	<property name="subsystem.compilerdefs.file" value="${subsystem.project.dir}/compilerdefs.xml" />
-		
-	<!-- Subsystem common targets file -->
-	<property name="subsystem.targets.file" value="${subsystem.project.dir}/targets.xml" />
-	
-	<!-- Subsystem cpp ant target file -->
-	<property name="subsystem.targets-cpp-ant.file" value="${subsystem.project.dir}/targets-cpp-ant.xml" />
-
-	<!-- Subsystem environment checks file -->
-	<property name="subsystem.envchecks.file" value="${subsystem.project.dir}/envchecks.xml" />
-
-	<!-- Subsystem external dependencies file -->
-	<property name="subsystem.external-dependencies.file" value="${subsystem.project.dir}/external-dependencies.xml" />
-
 	<!-- ==============================================================
 		 Module stuff 
 		 ============================================================== -->
