@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/04/29 01:42:09  dimeglio
+	Added dependencies to csf files
+
 	Revision 1.1  2004/04/29 01:36:29  dimeglio
 	Added org.egee.test3.wms
-
+	
 -->
 
 
@@ -208,7 +211,11 @@
 		 ===================================================== -->
 	
 	<!-- All project modules -->
- 	<target name="project"/>
+ 	<target name="project" depends="thirdparty-globus_ssl_utils,
+ 								    thirdparty-bypass,
+ 								    thirdparty-globus_gridftp_server,
+ 								    thirdparty-loki,
+ 								    common"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils">		
