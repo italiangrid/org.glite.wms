@@ -49,7 +49,8 @@ libglite_wms_manager_mocks_la_SOURCES=	mockJC.cpp \
 	mockLB.cpp
 
 check_PROGRAMS = WMFactory_cu \
-		WMReal_cu
+		WMReal_cu \
+		DispatcherFromFileList_cu
 
 WMFactory_cu_SOURCES = \
 	WMFactory_cu_suite.cpp \
@@ -65,10 +66,22 @@ WMReal_cu_SOURCES = \
 	WMReal_cu_main.cpp \
 	../src/server/WMReal.cpp
 
-WMReal_cu_LDADD= -L../src/server -lglite_wms_manager_common -lglite_wms_manager_server \
+WMReal_cu_LDADD= -L../src/server -lglite_wms_manager_server \
 	-L../src/common/ -lglite_wms_manager_common \
 	-lglite_wms_manager_mocks \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
+	$(GLITE_WMS_HELPER_LIBS) \
+	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
+	$(COMMON_LD_FLAGS)
+
+DispatcherFromFileList_cu_SOURCES= \
+	DispatcherFromFileList_cu_suite.cpp \
+	DispatcherFromFileList_cu_main.cpp \
+	../src/server/DispatcherFromFileList.cpp
+
+DispatcherFromFileList_cu_LDADD= -L../src/server -lglite_wms_manager_server \
+	-L../src/common/ -lglite_wms_manager_common \
+	-lglite_wms_manager_mocks \
 	$(GLITE_WMS_HELPER_LIBS) \
 	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(COMMON_LD_FLAGS)
