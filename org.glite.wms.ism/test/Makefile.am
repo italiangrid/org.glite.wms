@@ -6,7 +6,7 @@ glite_wms_ism_cemon_purchaserTest_SOURCES = \
 glite_wms_ism_cemon_purchaserTest_LDADD = \
         $(top_srcdir)/../org.glite.ce.monitor-client-api-c/build/src/libglite_ce_monitor_client.la \
 	$(top_srcdir)/../org.glite.wms.ism/build/src/purchaser/libglite_wms_ism_cemon_purchaser.la \
-	$(top_srcdir)/../repository/gsoap/2.6.2/rhel30_gcc32/lib/libgsoap.a \
+	$(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/lib/libgsoap.a \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
