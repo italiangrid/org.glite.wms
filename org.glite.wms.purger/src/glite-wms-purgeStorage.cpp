@@ -4,8 +4,7 @@
 #include <boost/progress.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "glite/wms/manager/daemon/NetworkServer.h"
-#include "glite/wms/purger/purger.h"
+#include "purger.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
@@ -27,7 +26,6 @@
 
 namespace fs            = boost::filesystem;
 namespace wl	        = glite::wms;
-namespace ns            = glite::wms::networkserver; 
 namespace logger	= glite::wms::common::logger;
 namespace utilities     = glite::wms::common::utilities;
 namespace jobid         = glite::wmsutils::jobid;
