@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/08/18 08:07:23  eronchie
+#       Added internal and external dependencies
+#
 #       Revision 1.2  2004/08/16 13:21:25  eronchie
 #       Updated
 #       WARNING: work in progress
@@ -82,19 +85,33 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 
 have_globus=no
 have_cppunit=no
+have_ares=no
+have_expat=no
 
+AC_ARES([], have_ares=yes, have_ares=no)
+AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
 
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
+AC_MSG_RESULT(["ARES found $have_ares"])
+AC_MSG_RESULT(["EXPAT found $have_expat"])
 
 have_tp_bypass=no
+have_glite_wmsutils=no
+have_glite_lb=no
 
 AC_GLITE
 
 AC_GLITE_WMS_TP_BYPASS([], have_tp_bypass=yes, have_tp_bypass=no)
 AC_MSG_RESULT(["TP_BYPASS found $have_tp_bypass"])
+
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
