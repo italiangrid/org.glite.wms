@@ -90,10 +90,10 @@ soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .cpp"
 	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) wm.h 
-	
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/build/src/server \
 	$(GLITE_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
