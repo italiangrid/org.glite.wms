@@ -15,7 +15,7 @@ public:
   void unregister( void );
 
 private:
-  glite::wms::jobid::JobId   pu_id;
+  glite::wmsutils::jobid::JobId   pu_id;
 };
 
 };

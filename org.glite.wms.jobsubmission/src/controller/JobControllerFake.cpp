@@ -11,7 +11,8 @@
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/jobid/JobId.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
 
 #include "JobControllerFake.h"
 #include "JobControllerExceptions.h"
@@ -58,7 +59,7 @@ try {
 }
 catch( SubmitAdException &error ) { throw CannotExecute( error.error() ); }
 
-bool JobControllerFake::cancel( const glite::wms::jobid::JobId &id, const char *logfile, bool force )
+bool JobControllerFake::cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force )
 {
   logger::StatePusher     pusher( elog::cedglog, "JobControllerFake::cancel(...)" );
 

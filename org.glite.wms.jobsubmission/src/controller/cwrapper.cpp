@@ -6,7 +6,7 @@
 
 #include <classad_distribution.h>
 
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/context.h"
 

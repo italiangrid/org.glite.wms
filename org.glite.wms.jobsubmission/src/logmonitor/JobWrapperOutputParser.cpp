@@ -6,8 +6,10 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "../jobcontrol_namespace.h"
@@ -104,7 +106,7 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
 
   bool                       found = false;
   status_type                stat = good;
-  glite::wms::jobid::JobId               id( this->jwop_edgid );
+  glite::wmsutils::jobid::JobId               id( this->jwop_edgid );
   auto_ptr<jccommon::Files>  files( (this->jwop_dagid.size() != 0) ? new jccommon::Files(this->jwop_dagid, this->jwop_edgid) :
 				    new jccommon::Files(this->jwop_edgid) );
   ifstream                   ifs;

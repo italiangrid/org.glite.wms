@@ -55,7 +55,7 @@ public:
    *  \param force Stats wether to use the -f switch of the condor_rm command.
    *  \return \a true if everything went well, \a false otherwise
    */
-  virtual bool cancel( const glite::wms::jobid::JobId &id, const char *logfile, bool force ) = 0;
+  virtual bool cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force ) = 0;
   /**
    *  Remove a job.
    *  Remove a job from the queue using its condor ID.

@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/25 16:42:14  eronchie
+#       Updated jobid, and tls
+#       Moved out from org.glite.wms and put in org.glite.wms-utils
+#
 #       Revision 1.3  2004/07/18 11:56:40  eronchie
 #       Updated LB dependency
 #
@@ -80,7 +84,7 @@ have_globus_ssl=no
                                                                                 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_CONDORG(6.5.3, have_condorg=yes, have_condorg=no)
+AC_CONDORG(6.7.1, have_condorg=yes, have_condorg=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 
 AC_GLOBUS_SSL_UTILS([], have_globus_ssl=yes, have_globus_ssl=no)
@@ -92,8 +96,8 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["GLOBUS_SSL found $have_globus_ssl"])
 
 have_glite_wms_common=no
-have_glite_wms_jobid=no
-have_glite_wms_tls=no
+have_glite_wmsutils_jobid=no
+have_glite_wmsutils_tls=no
 have_glite_wms_jdl=no
 have_glite_lb=no                                                          
                       
@@ -102,11 +106,11 @@ AC_GLITE
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
-AC_GLITE_WMS_JOBID([], have_glite_wms_jobid=yes, have_glite_wms_jobid=no)
-AC_MSG_RESULT(["GLITE_WMS_JOBID found $have_glite_wms_jobid"])
+AC_GLITE_WMSUTILS_JOBID([], have_glite_wmsutils_jobid=yes, have_glite_wmsutils_jobid=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_JOBID found $have_glite_wmsutils_jobid"])
 
-AC_GLITE_WMS_TLS([], have_glite_wms_tls=yes, have_glite_wms_tls=no)
-AC_MSG_RESULT(["GLITE_WMS_TLS found $have_glite_wms_tls"])
+AC_GLITE_WMSUTILS_TLS([], have_glite_wmsutils_tls=yes, have_glite_wmsutils_tls=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_TLS found $have_glite_wmsutils_tls"])
 
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])

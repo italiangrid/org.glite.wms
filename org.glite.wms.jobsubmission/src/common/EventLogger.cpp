@@ -11,8 +11,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-
-
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/context.h"
@@ -21,7 +19,9 @@
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/tls/ssl_helpers/ssl_inits.h"
+
+#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
+
 #include "../jobcontrol_namespace.h"
 
 #include "SignalChecker.h"
