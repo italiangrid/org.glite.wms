@@ -22,7 +22,7 @@
 #include <sys/time.h>
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 #include <cstdio>
 #include <errno.h>
 #endif

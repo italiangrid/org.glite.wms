@@ -20,7 +20,7 @@
 #include "glite/wmsutils/tls/socket++/GSISocketServer.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 #endif
 
 namespace glite {   

@@ -19,7 +19,7 @@
 #include "errors.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 #endif
 #include <iostream>
 

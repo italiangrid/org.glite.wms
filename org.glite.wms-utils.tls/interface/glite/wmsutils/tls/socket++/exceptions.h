@@ -7,7 +7,7 @@
  */
 
 #include "glite/wmsutils/exception/Exception.h"
-#include "exception_codes.h"
+#include "glite/wmsutils/tls/socket++/exception_codes.h"
 
 namespace utilities = glite::wmsutils::exception;
 

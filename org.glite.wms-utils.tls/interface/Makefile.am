@@ -8,6 +8,8 @@
 
 tlssodir = $(includedir)
 nobase_tlsso_HEADERS = \
+	glite/wmsutils/tls/socket++/exceptions.h \
+	glite/wmsutils/tls/socket++/exception_codes.h \
 	glite/wmsutils/tls/socket++/GSISocketAgent.h \
         glite/wmsutils/tls/socket++/GSISocketClient.h \
 	glite/wmsutils/tls/socket++/GSISocketServer.h \

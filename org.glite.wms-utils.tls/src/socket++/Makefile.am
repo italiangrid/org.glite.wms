@@ -28,8 +28,6 @@ libglite_wmsutils_tls_gsisocket_pp_la_LIBADD = \
 
 socketppincludedir = $(includedir)/glite/wmsutils/tls/socket++
 socketppinclude_HEADERS = \
-	exception_codes.h \
-	exceptions.h \
 	tokens.h \
 	errors.h
 

@@ -25,7 +25,7 @@
 /** The communication agent header file. */
 #include "glite/wmsutils/tls/socket++/SocketAgent.h"
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 #endif
 
 namespace glite { 
