@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Copyright (c) 2004 on behalf of the EU EGEE Project: 
+	The European Organization for Nuclear Research (CERN), 
+	Istituto Nazionale di Fisica Nucleare (INFN), Italy
+	Datamat Spa, Italy
+	Centre National de la Recherche Scientifique (CNRS), France
+	CS Systeme d'Information (CSSI), France
+	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+	Universiteit van Amsterdam (UvA), Netherlands
+	University of Helsinki (UH.HIP), Finland
+	University of Bergen (UiB), Norway
+	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+
+	Common build properties file for the GLite wms manager component
+	
+	Authors: Joachim Flammer <Joachim.Flammer@cern.ch>
+	Version info: $Id$
+	Release: $Name$	
+	
+	Revision history:
+	$Log$
+	Revision 1.1  2004/08/08 17:03:21  eronchie
+	Initial revision
+
+	
+-->
+
+<project name="wms manager component common properties">
+
+	<!-- Include build properties to allow overwriting 
+	     of properties for subsystem                    -->
+	<property file="build.properties" />	
+
+	<!-- ======================================================
+              Define corresponding subsystem properties
+	     ====================================================== -->
+
+	<!-- Subsystem name -->
+	<property name="subsystem.name" value="${wms.subsystem.name}"/>
+		
+	<!-- Subsystem prefix -->
+	<property name="subsystem.prefix" value="${wms.subsystem.prefix}"/>
+
+	<!-- ======================================================
+              Define component properties
+	     ====================================================== -->
+		 		
+	<!-- Component name prefix -->
+	<property name="component.prefix" value="manager" />
+			
+	<!-- ======================================================
+              Define general component properties
+	     ====================================================== -->
+	
+	<import file="${component.general.properties.file}" />
+						
+	<!-- ======================================================
+	      Define extra properties here ...
+	     ====================================================== -->
+	
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 ares.m4 glite.m4 glite_lb.m4 glite_wmsutils.m4 glite_renewal.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_helper.m4 glite_wms_jss.m4"/>
+	
+</project>
