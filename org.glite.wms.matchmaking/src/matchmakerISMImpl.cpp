@@ -102,7 +102,8 @@ void matchmakerISMImpl::checkRequirement(const classad::ClassAd* requestAd, matc
   
   for (ism::ism_type::const_iterator it = ism::get_ism().begin(); it != ism::get_ism().end(); it++) {
 
-    boost::shared_ptr<classad::ClassAd> ceAd = boost::tuples::get<1>((*it).second);
+    boost::shared_ptr<classad::ClassAd> ceAd(static_cast<classad::ClassAd*>(boost::tuples::get<2>((*it).second)->Copy()));
+    ceAd->SetParentScope(0);
   
     // Cadidates CE's are those where the user is authorized to submit...
     // ...we should check for authorization first...
@@ -186,6 +187,9 @@ void matchmakerISMImpl::checkRequirement(const classad::ClassAd* requestAd, matc
 void matchmakerISMImpl::checkRank(const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces)
 {
   edglog_fn(checkRank);
+  if (suitableCEs.empty()) {
+	return;
+  } 
   bool unable_to_rank_all = true;
   boost::mutex::scoped_lock l(ism::get_ism_mutex());
   for(match_table_t::iterator mit = suitableCEs.begin(); mit != suitableCEs.end(); mit++) {
