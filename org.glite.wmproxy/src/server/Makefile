@@ -4,13 +4,13 @@ LIBS=
 COFLAGS=-O2
 #CWFLAGS=-Wall
 CWFLAGS=
-REPOSITORY=/home/pacio/egee
+#REPOSITORY=/home/fpacini/CVS_REP/cern
 CIFLAGS=-I$(REPOSITORY)/org.glite.wms.wmproxy/src
 CMFLAGS=-DWITH_FASTCGI -DHAVE_STRINGSTREAM
 #CMFLAGS=
 
 GSOAPVER=2.7
-SOAPPARSER=/home/pacio/egee/repository/gsoap/2.7.0/rhel30_gcc32/wsdl2h
+SOAPPARSER=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/wsdl2h
 GSOAP=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/soapcpp2
 SOAPH=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.h
 SOAPC=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.c
@@ -42,7 +42,6 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I/usr/include/httpd -I/usr/include/apr-0 \
 	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
 	-I$(ARES)/include \
-	-I/tmp/fcgi/include \
 	-I$(REPOSITORY)/org.glite.wms.wmproxy/src \
 	-I$(GSOAPPATH) \
 	-I$(REPOSITORY)/stage/include \
@@ -57,7 +56,6 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-L$(ARES)/lib \
 	-L$(EXPAT)/lib \
 	-L../commands \
-	-L/tmp/fcgi/lib \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
 	-lglite_lb_clientpp_gcc32 \
