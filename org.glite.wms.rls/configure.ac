@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/10/17 15:11:42  eronchie
+#       ..... Removed _BASE
+#
 #       Revision 1.5  2004/10/12 12:22:59  eronchie
 #       Updated
 #
@@ -108,15 +111,15 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 
 have_boost=no
 have_replica=no
-have_gsoap_base=no
+have_gsoap=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_REPLICA([], have_replica=yes, have_replica=no)
-AC_GSOAP_BASE([], have_gsoap_base=yes, have_gsoap_base=no)
+AC_GSOAP([], have_gsoap=yes, have_gsoap=no)
 
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["REPLICA found $have_replica"])
-AC_MSG_RESULT(["GSOAP_BASE found $have_gsoap_base"])
+AC_MSG_RESULT(["GSOAP found $have_gsoap"])
 
 AC_GLITE
 
