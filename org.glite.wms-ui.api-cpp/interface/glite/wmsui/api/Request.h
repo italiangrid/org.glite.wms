@@ -101,13 +101,13 @@ class Request{
 	/** Retrieve the status of the job
 	* @param ad if set to false only basic info are retrieved
 	* @return the status of the requested component
-	* @see  glite::wms::lb::JobStatus class documentation */
-	glite::wms::lb::JobStatus getStatus(  bool ad = true )  ;
+	* @see  glite::lb::JobStatus class documentation */
+	glite::lb::JobStatus getStatus(  bool ad = true )  ;
 	/**  Retrieve the bookkeeping information of the job
 	* @return all the events logged during the job life
-	* @see  glite::wms::lb::Event class documentation */
-	std::vector <glite::wms::lb::Event> getLogInfo() ;
-	// std::vector <glite::wms::lb::Event> getLogInfo( std::vector < std::pair <std::string , std::string> > userTags, bool owner = true, bool ad = true) ; 
+	* @see  glite::lb::Event class documentation */
+	std::vector <glite::lb::Event> getLogInfo() ;
+	// std::vector <glite::lb::Event> getLogInfo( std::vector < std::pair <std::string , std::string> > userTags, bool owner = true, bool ad = true) ; 
 
 
 
@@ -153,7 +153,7 @@ private:
 	// Private methods:
 	void submit ( ) ;
 	void regist() ;
-	void getOutput(const std::string& dir_path , const std::string& nsRootPath, const  glite::wms::lb::JobStatus& status );
+	void getOutput(const std::string& dir_path , const std::string& nsRootPath, const  glite::lb::JobStatus& status );
 	// Private Members:
 	glite::wmsutils::jobid::JobId* jid;
 	/*Internal DAGAd instance pointer  */
