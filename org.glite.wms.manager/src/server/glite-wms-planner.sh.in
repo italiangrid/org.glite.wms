@@ -20,7 +20,7 @@ fi
 
 planner=${GLITE_WMS_LOCATION}/libexec/glite-wms-planner
 planned2submit=${GLITE_WMS_LOCATION}/libexec/glite-wms-planned2submit
-logev=${GLITE_WMS_LOCATION}/bin/glite-wms-logev
+logev=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
 eval_ad_expr=${GLITE_WMS_LOCATION}/libexec/glite-wms-eval_ad_expr
 
 if [ ! -x ${planner} ]; then
@@ -43,7 +43,7 @@ fi
 initial_sequence_code="UI=2:NS=0:WM=0:BH=1:JSS=0:LM=0:LRMS=0:APP=0"
 sequence_code=${initial_sequence_code}
 
-job_id=`${eval_ad_expr} ${input_file} "glite_jobid"`
+job_id=`${eval_ad_expr} ${input_file} "edg_jobid"`
 if [ $? -ne 0 ]; then
     echo "Cannot get the job id" >&2
     exit 1

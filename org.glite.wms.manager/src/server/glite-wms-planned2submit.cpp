@@ -1,4 +1,4 @@
-// File: edg-wl-planned2submit.cpp
+// File: glite-wl-planned2submit.cpp
 // Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
 // Copyright (c) 2003 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
@@ -49,7 +49,7 @@ try {
 
   }
 
-  configuration::Configuration config("edg_wl.conf",
+  configuration::Configuration config("glite_wl.conf",
                                       configuration::ModuleType::workload_manager);
 
   std::string sequence_code(argv[1]);
