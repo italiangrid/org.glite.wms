@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/07/28 10:51:21  eronchie
+#       Added m4files.list property
+#
 #       Revision 1.6  2004/07/27 11:34:57  eronchie
 #       Start using AC_GLITE_WMSUTILS
 #
@@ -115,7 +118,6 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 have_glite_wmsutils=no
-
 have_glite_wms_common=no
 have_glite_wms_jdl=no
 
