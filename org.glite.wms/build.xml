@@ -20,9 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/05/05 17:05:25  dimeglio
+	Implemented stage and dist targets for the project
+	Dist is new default target (warning: this may change)
+
 	Revision 1.5  2004/05/03 00:37:00  dimeglio
 	Removed XML comment sequence in CVS log entry
-
+	
 	Revision 1.4  2004/05/03 00:24:58  dimeglio
 	Fixed module name error (common > jcommon)
 	
@@ -40,7 +44,7 @@
 	
 -->
 
-<project name="test3-wms" default="export">
+<project name="test3-wms" default="dist">
 
 	<description>
 		Ant build file to build the EGEE Test 3 WMS
@@ -124,18 +128,17 @@
 		</antcall>
 	</target>
 
-	<target name="export" depends="localinit">
+	<target name="doc" depends="localinit">
 		<antcall target="buildmodules">
-			<param name="target" value="export"/>
+			<param name="target" value="doc"/>
 		</antcall>
 	</target>
 
-        <target name="stage" depends="localinit">
-                <antcall target="buildmodules">
-                        <param name="target" value="stage"/>
-                </antcall>
-        </target>
-
+    <target name="stage" depends="localinit">
+            <antcall target="buildmodules">
+                    <param name="target" value="stage"/>
+            </antcall>
+    </target>
 
 	<target name="dist" depends="localinit">
 		<antcall target="buildmodules">
@@ -146,12 +149,6 @@
 	<target name="install" depends="localinit">
 		<antcall target="buildmodules">
 			<param name="target" value="install"/>
-		</antcall>
-	</target>
-
-	<target name="doc" depends="localinit">
-		<antcall target="buildmodules">
-			<param name="target" value="doc"/>
 		</antcall>
 	</target>
 
@@ -197,27 +194,39 @@
 	     =============================================== -->
 
 	<target name="globus_ssl_utils">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-globus_ssl_utils" target="${target}" />
+		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-globus_ssl_utils"
+		     target="${target}"
+		     inheritall="false" />
 	</target>
 
 	<target name="bypass">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-bypass" target="${target}" />
+		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-bypass"
+		     target="${target}"
+                     inheritall="false" />
 	</target>
 
 	<target name="globus_gridftp_server" depends="globus">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-globus_gridftp_server" target="${target}" />
+		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-globus_gridftp_server"
+		     target="${target}"
+                     inheritall="false" />
 	</target>
 
 	<target name="loki">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-loki" target="${target}" />
+		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-loki"
+		     target="${target}"
+                     inheritall="false" />
 	</target>
 
-	<target name="common" depends="boost,classads,globus">
-		<ant dir="${master.dir}/../${subsystem.name}.common" target="${target}" />
+	<target name="common" depends="boost,classads,globus,globus_ssl_utils">
+		<ant dir="${master.dir}/../${subsystem.name}.common"
+		     target="${target}"
+                     inheritall="false" />
 	</target>
 
         <target name="jcommon" depends="jclassads">
-                <ant dir="${master.dir}/../${subsystem.name}.jcommon" target="${target}" />
+                <ant dir="${master.dir}/../${subsystem.name}.jcommon"
+		     target="${target}"
+                     inheritall="false" />
         </target>
 
 	<!-- Main proxy -->
