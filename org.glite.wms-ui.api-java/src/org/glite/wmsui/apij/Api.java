@@ -269,5 +269,5 @@ public class Api {
 	private int dagContext   ;
 
 	/** Load native C++ Library */
-	static  { System.loadLibrary("org_glite_wmsui_native"); }
+	static  { System.loadLibrary("glite_wmsui_native"); }
 };
