@@ -27,8 +27,8 @@
 #include <errno.h>
 #endif
 
-#include "SocketAgent.h"
-#include "SocketServer.h"
+#include "glite/wms/tls/socket++/SocketAgent.h"
+#include "glite/wms/tls/socket++/SocketServer.h"
 
 namespace glite {   
 namespace wms { 

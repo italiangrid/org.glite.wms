@@ -21,9 +21,9 @@
 #include <iostream>
 
 /** This class header file. */
-#include "SocketClient.h"
+#include "glite/wms/tls/socket++/SocketClient.h"
 /** The communication agent header file. */
-#include "SocketAgent.h"
+#include "glite/wms/tls/socket++/SocketAgent.h"
 #ifdef WITH_SOCKET_EXCEPTIONS
 #include "exceptions.h"
 #endif

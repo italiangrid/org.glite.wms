@@ -15,9 +15,9 @@
 /** Functionalities for transmitting and receiveing tokens. */
 #include "tokens.h"
 /** The secure Socket Agent used for communication. */
-#include "GSISocketAgent.h"
+#include "glite/wms/tls/socket++/GSISocketAgent.h"
 /** This class header file. */
-#include "GSISocketServer.h"
+#include "glite/wms/tls/socket++/GSISocketServer.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
 #include "exceptions.h"

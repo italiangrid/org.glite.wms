@@ -10,9 +10,9 @@
 #include <errno.h>
 
 /** This class header file. */
-#include "GSISocketClient.h"
+#include "glite/wms/tls/socket++/GSISocketClient.h"
 /** The communication agent definition file. */
-#include "GSISocketAgent.h"
+#include "glite/wms/tls/socket++/GSISocketAgent.h"
 /** The tokens transission and reception features definitions. */
 #include "tokens.h"
 /** The error messages file. */

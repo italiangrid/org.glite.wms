@@ -18,7 +18,7 @@
 #include "glite/wms/thirdparty/globus_ssl_utils/sslutils.h"
 
 /** This class header file. */
-#include "GSISocketAgent.h"
+#include "glite/wms/tls/socket++/GSISocketAgent.h"
 /** The tokens transmission and reception functionality definitions file. */
 #include "tokens.h"
 
