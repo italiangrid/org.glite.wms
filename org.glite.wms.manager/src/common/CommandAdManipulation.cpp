@@ -6,16 +6,15 @@
 // $Id$
 
 #include "CommandAdManipulation.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
+#include  "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/common/utilities/classad_utils.h"
-
 #include <algorithm>
 #include <cctype>
 #include <boost/scoped_ptr.hpp>
 #include <classad_distribution.h>
 
 namespace utilities = glite::wms::common::utilities;
-namespace jdl = glite::wms::jdl;
+namespace requestad = glite::wms::jdl;
 
 namespace glite {
 namespace wms {
@@ -23,15 +22,25 @@ namespace manager {
 namespace common {
 
 namespace {
-const std::string
-command_requirements("[requirements="
-                     "other.version==\"1.0.0\""
-                     "&& isString(other.command)"
-                     "&& (other.command == \"jobsubmit\""
-                     "    || other.command == \"jobresubmit\""
-                     "    || other.command == \"jobcancel\""
-                     "    || other.command == \"quit\")]"
-                    );
+std::string const command_requirements(
+  "[requirements="
+  "  other.version==\"1.0.0\""
+  "  && isString(other.command)"
+  "  && isClassad(other.arguments)"
+  "  && (other.command == \"jobsubmit\""
+  "      && isClassad(other.arguments.ad)"
+  "      && isString(other.arguments.ad.edg_jobid)"
+  "      && isString(other.arguments.ad.lb_sequence_code)"
+  "      && isString(other.arguments.ad.X509UserProxy)"
+  "      || other.command == \"jobresubmit\""
+  "      && isString(other.arguments.id)"
+  "      && isString(other.arguments.lb_sequence_code)"
+  "      || other.command == \"jobcancel\""
+  "      && isString(other.arguments.id)"
+  "      && isString(other.arguments.lb_sequence_code)"
+  "     )"
+  "]"
+);
 
 const std::string
 submit_command_requirements("[requirements="
@@ -62,13 +71,16 @@ cancel_command_requirements("[requirements="
                             "&& isstring(other.arguments.lb_sequence_code)"
                             "]"
                             );
+} // {anonymous}
 
-const std::string
-quit_command_requirements("[requirements="
-                          "other.version==\"1.0.0\""
-                          "&& other.command == \"quit\"]"
-                         );
+bool
+command_is_valid(classad::ClassAd const& command_ad)
+{
+  static classad::ClassAd const* command_ad_requirements(
+    utilities::parse_classad(command_requirements)
+  );
 
+  return utilities::left_matches_right(command_ad, *command_ad_requirements);
 }
 
 std::string
@@ -86,7 +98,7 @@ submit_command_create(classad::ClassAd* job_ad)
 {
   classad::ClassAd* result = 0;
 
-  std::string jobid = jdl::get_edg_jobid(*job_ad);
+  std::string jobid = requestad::get_edg_jobid(*job_ad);
   if (!jobid.empty()) {
     result = new classad::ClassAd;
     result->InsertAttr("version", std::string("1.0.0"));
@@ -188,26 +200,5 @@ cancel_command_get_lb_sequence_code(classad::ClassAd const& command_ad)
   return utilities::evaluate_expression(command_ad, "arguments.lb_sequence_code");
 }
 
-classad::ClassAd*
-quit_command_create()
-{
-  classad::ClassAd* result = new classad::ClassAd;
-  result->InsertAttr("version", std::string("1.0.0"));
-  result->InsertAttr("command", std::string("quit"));
-
-  return result;
-}
-
-bool
-quit_command_is_valid(classad::ClassAd const& quit_command_ad)
-{
-  boost::scoped_ptr<classad::ClassAd> rhs(utilities::parse_classad(quit_command_requirements));
-
-  return utilities::left_matches_right(quit_command_ad, *rhs);
-}
-
-} // common
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::common
 
