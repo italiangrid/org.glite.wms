@@ -50,5 +50,7 @@
 
 	<property name="wsdl.src.dir" location="../${subsystem.name}.wmproxy-interface/interface" />
 	<property name="wsdl.src.file" location="${wsdl.src.dir}/WMProxy.wsdl" />
+        <property name="m4files.list" value="boost.m4 classads.m4 gridsite.m4 glite.m4 gsoap.m4 optimize.m4"/>
+
 
 </project>
