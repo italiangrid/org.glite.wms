@@ -21,10 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.28  2004/07/10 07:22:06  eronchie
+	Updated internal dependencies
+	WARNING: work in progress
+
 	Revision 1.27  2004/07/10 06:47:53  eronchie
 	Updated matchmaking internal dependencies
 	Added classad_plugin
-
+	
 	Revision 1.26  2004/07/10 06:23:19  eronchie
 	Start adding matchmaking dependency
 	WARNING: work in progress
@@ -363,7 +367,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="brokerinfo" unless="setenvonly" depends="boost,classads">
+	<target name="brokerinfo" unless="setenvonly" depends="boost,classads,common,jdl">
                 <ant dir="${workspace.dir}/${subsystem.name}.brokerinfo"
                      target="${target}"
                      inheritall="false" />
@@ -381,13 +385,13 @@
                      inheritall="false" />
         </target>
 
-	<target name="helper" unless="setenvonly" depends="boost,classads">
+	<target name="helper" unless="setenvonly" depends="boost,classads,common,jdl,jobid">
                 <ant dir="${workspace.dir}/${subsystem.name}.helper"
                      target="${target}"
                      inheritall="false" />
         </target>
 
-	<target name="broker" unless="setenvonly" depends="boost,classads">
+	<target name="broker" unless="setenvonly" depends="boost,classads,common,jdl">
                 <ant dir="${workspace.dir}/${subsystem.name}.broker"
                      target="${target}"
                      inheritall="false" />

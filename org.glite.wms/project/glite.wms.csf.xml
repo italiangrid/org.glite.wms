@@ -21,10 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.35  2004/07/10 07:22:06  eronchie
+	Updated internal dependencies
+	WARNING: work in progress
+
 	Revision 1.34  2004/07/10 06:47:53  eronchie
 	Updated matchmaking internal dependencies
 	Added classad_plugin
-
+	
 	Revision 1.33  2004/07/10 06:23:19  eronchie
 	Start adding matchmaking dependency
 	WARNING: work in progress
@@ -425,7 +429,7 @@
 	</target>
 
 	<!-- Brokerinfo -->
-        <target name="brokerinfo" depends="boost,classads,globus,get.brokerinfo.head, get.brokerinfo.tag"/>
+        <target name="brokerinfo" depends="boost,classads,globus,common,jdl,get.brokerinfo.head, get.brokerinfo.tag"/>
         <target name="get.brokerinfo.head" if="brokerinfo.head">
                 <cvs-co package="org.glite.wms.brokerinfo" />
         </target>
@@ -455,7 +459,7 @@
         </target>
 
 	<!-- Helper -->
-        <target name="helper" depends="boost,classads,globus,get.helper.head, get.helper.tag"/>
+        <target name="helper" depends="boost,classads,globus,common,jdl,jobid,get.helper.head, get.helper.tag"/>
         <target name="get.helper.head" if="helper.head">
                 <cvs-co package="org.glite.wms.helper" />
         </target>
@@ -465,7 +469,7 @@
         </target>
 
 	<!-- Broker -->
-        <target name="broker" depends="boost,classads,globus,get.broker.head, get.broker.tag"/>
+        <target name="broker" depends="boost,classads,globus,common,jdl,get.broker.head, get.broker.tag"/>
         <target name="get.broker.head" if="broker.head">
                 <cvs-co package="org.glite.wms.broker" />
         </target>
