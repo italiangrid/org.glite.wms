@@ -57,21 +57,15 @@
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
-// #include "glite/wms/common/configuration/CommonConfiguration.h"
-// #include "glite/wms/common/configuration/Configuration.h"
-// #include "purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
 #include "listjobmatch.h"
-// #include "listfiles.h"
 
 #include "glite/wms/jdl/DAGAd.h"
 
 namespace utilities     = glite::wms::common::utilities;
-// namespace configuration = glite::wms::common::configuration;
 namespace logger        = glite::wms::common::logger;
-// namespace purger        = glite::wms::purger;
 namespace nsjobid       = glite::wms::wmproxy::commands::jobid;
 namespace jobid         = glite::wmsutils::jobid;
 namespace jdl           = glite::wms::jdl;
@@ -1179,12 +1173,7 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
     cmd -> fsm = NULL;
   }
   cmd -> fsm = new state_machine_t;
-  // cmd -> serializeImpl = serializeServerImpl;
   cmd -> ad -> InsertAttr("Command", name);
-  // cmd -> ad -> InsertAttr("ServerVersion", SERVER_VERSION);
-  // cmd -> ad -> InsertAttr("ClientVersion", ver.asString());
-  // edglog(info) << "Command Received..: " << name << std::endl; 
-  // edglog(info) << "Client  Version...: " << ver.asString() << std::endl; 
 
   CommandState::shared_ptr state;
   
