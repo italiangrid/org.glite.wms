@@ -151,6 +151,7 @@
 	</wsdl:message>
 	<wsdl:message name="jobSubmitRequest">
 		<wsdl:part name="jdl" type="xsd:string"/>
+		<wsdl:part name="delegationId" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="jobSubmitResponse">
 		<wsdl:part name="jobIdStruct" type="glitenstypes:JobIdStructType"/>
@@ -302,7 +303,7 @@
 			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="jobRegister" parameterOrder="jdl">
+		<wsdl:operation name="jobRegister" parameterOrder="jdl delegationId">
 			<wsdl:documentation>
 					This operation registers a job for submission. The JDL description of the job provided by the client is first validated by the service and then registered to the LB. The unique identifier assigned to the job is returned to the client. Note that this operation only registers the job and assign it with an identifier. The actual submission of the job has to be triggered by a call to the jobStart operation after all preparation activities, such as the Input sandbox files upload, have been completed.
 					The service supports registration of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs; the description is always provided through a single JDL description (see "GLite JDL Attributes" document for details). 
@@ -361,7 +362,7 @@ To better clarify, an example of the correct sequence of operations for submitti
 			<wsdl:fault name="JobUnknownFault" message="glitens:JobUnknownFault"/>
 			<wsdl:fault name="OperationNotAllowedFault" message="glitens:OperationNotAllowedFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="jobSubmit" parameterOrder="jdl">
+		<wsdl:operation name="jobSubmit" parameterOrder="jdl delegationId">
 			<wsdl:documentation>
 					This operation submits a job. The JDL description of the job provided by the client is validated by the service, registered to the LB and finally passed to the Workload Manager. The unique identifier assigned to the job is returned to the client.
 					This operation assumes that all the work preparatory to the job (e.g. input sandbox upload, registration of input data to the Data Management service etc.) has been completed by the client. Usage of this operation (instead of jobRegister + jobStart) is indeed recommended when the job identifier is not needed prior to its submission (e.g. jobs without input sandbox or with a sandbox entirely available on a GridFTP server managed by the client).
