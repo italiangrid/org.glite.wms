@@ -46,6 +46,7 @@ glite_wms_workload_manager_LDADD   = \
 	$(GLOBUS_LDAP_THR_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS)
 	$(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \

@@ -97,6 +97,7 @@ glite_wms_planner_LDADD   = \
         $(GLOBUS_LDAP_THR_LIBS) \
 	$(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
         $(BOOST_LIBS)
 
 glite_wms_planned2submit_SOURCES = glite-wms-planned2submit.cpp
@@ -124,6 +125,7 @@ glite_wms_planned2submit_LDADD   = \
         $(GLOBUS_LDAP_THR_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
         $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
