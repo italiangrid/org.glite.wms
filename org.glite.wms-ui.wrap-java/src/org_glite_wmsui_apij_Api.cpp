@@ -9,7 +9,7 @@
 // Network Server:
 #include "glite/wms/manager-ns/client/NSClient.h"
 #include "glite/wms/common/logger/common.h"
-#include "glite/wms-utils/exception/Exception.h"
+#include "glite/wmsutils/exception/Exception.h"
 // LB:
 #include "glite/lb/consumer.h" // TBD is possible?
 #include "glite/lb/producer.h"
@@ -76,7 +76,7 @@ non-native methods:
 	void unlock(){   pthread_mutex_unlock( &mutex);  /*UNLOCK RESOURCES*/ };
 
 	void log_error (JNIEnv *env , string error) {
-		// jclass newExcCls = env->FindClass("glite/wms-ui/api/ApiException");
+		// jclass newExcCls = env->FindClass("glite/wmsui/api/ApiException");
 		jclass newExcCls = env->FindClass("java/lang/RuntimeException");
 		if (newExcCls == 0) /* Unable to find the new exception class, give up */ return ;
 		if ( error.empty() )
