@@ -136,7 +136,7 @@ void matchmakerISMImpl::checkRequirement(const classad::ClassAd* requestAd, matc
     CloseSEs = retrieveCloseSEsInfo( CEid, VO, additionalSESAInfo ); ]");
         gang_match_storageAd.reset( utilities::parse_classad(adstr) );            
       } else {
-        gang_match_storageAd -> InsertAttr("CEid",ce_str);
+        gang_match_storageAd -> InsertAttr("CEid",it->first);
       }
 
       ceAd->Insert("storage", gang_match_storageAd->Copy());  
