@@ -33,7 +33,7 @@ namespace jobwrapper {
 const string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
 
 JobWrapper::JobWrapper(const string& job)
-  : m_job(job), m_create_subdir(false), m_nodes(0)
+  : m_job(job), m_create_subdir(false), m_nodes(0), m_wmp_support(false)
 {  
 }
 
@@ -151,6 +151,39 @@ JobWrapper::dsupload(const url::URL& id)
   m_dsupload.assign("DSUpload_");
   m_dsupload.append(id.path().substr(1));
   m_dsupload.append(".out");
+}
+
+void
+JobWrapper::wmp_support(void)
+{
+  m_wmp_support = true;
+}
+
+void 
+JobWrapper::wmp_input_sandbox_support(const std::vector<std::string>& input_base_files)
+{
+  copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_wmp_input_base_files));
+
+  for (std::vector<std::string>::const_iterator it = input_base_files.begin();
+      it != input_base_files.end(); it++) {
+
+    string::size_type pos = it->find_last_of("/");
+    if (pos == string::npos) {
+      // throw ExInvalidURL("there is not ://");
+      std::cerr << "ERROR" ;
+    }
+    string filename = it->substr(pos);
+    m_wmp_input_files.push_back(filename); 
+  }
+
+}
+
+void 
+JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_files,
+                                  const std::vector<std::string>& output_dest_files)
+{
+  copy(output_files.begin(), output_files.end(), back_inserter(m_wmp_output_files));
+  copy(output_dest_files.begin(), output_dest_files.end(), back_inserter(m_wmp_output_dest_files));
 }
 
 ostream&
@@ -393,6 +426,67 @@ JobWrapper::make_transfer(ostream& os,
   return os << "  fi" << endl
 	    << "done" << endl 
 	    << endl;
+}
+
+ostream&
+JobWrapper::make_transfer_wmp_support(ostream& os,
+                          const bool& input) const
+{
+  // source and destination must be '/' terminated
+//  string value = prefix.as_string();
+//  if (value[value.size() - 1] != '/') {
+//    value.append( 1, '/' );
+//  }
+
+  os << "  file=`basename $f`" << endl;
+
+  if (input) {
+    os << "  globus-url-copy ${f} file://${workdir}/${file}" <<
+       endl
+       << "  if [ $? != 0 ]; then" << endl
+       << "    echo \"Cannot download ${file} from ${f}\"" << endl
+       << "    echo \"Cannot download ${file} from ${f}\" >> \"${maradona}\"" << endl << endl;
+
+    string imessage("Cannot download ${file} from ${f}");
+//    imessage.append(value);
+
+    os << "    "; this->set_lb_sequence_code(os,
+                    "Done",
+                    imessage,
+                    "FAILED",
+                    "0");
+
+    os << "    doExit 1" << endl;
+  } else {
+    os << "  if [ -r \"${file}\" ]; then" << endl;
+
+//    os << "    output=`dirname $f`" << endl
+//       << "    if [ \"x${output}\" = \"x.\" ]; then" << endl
+//       << "      ff=$f" << endl
+//       << "    else" << endl
+//       << "      ff=${f##*/}" << endl
+//       << "    fi" << endl;
+
+    os << "    globus-url-copy file://${workdir}/${file} ${f}" << endl
+       << "    if [ $? != 0 ]; then" << endl
+       << "      echo \"Cannot upload ${file} into ${f}\"" << endl
+       << "      echo \"Cannot upload ${file} into ${f}\" >> \"${maradona}\"" << endl << endl;
+
+    string omessage("Cannot upload ${file} into ${f}");
+//    omessage.append(value);
+
+    os << "      "; this->set_lb_sequence_code(os,
+                       "Done",
+                       omessage,
+                       "FAILED",
+                       "0");
+
+    os << "      doExit 1" << endl
+       << "    fi" << endl;
+  }
+  return os << "  fi" << endl
+            << "done" << endl
+            << endl;
 }
 
 ostream& 
@@ -876,9 +970,16 @@ JobWrapper::print(ostream& os) const
   set_umask(os);
  
   // transfer input sandbox
-  prepare_transfer(os, m_input_files);
-  make_transfer(os, m_input_base_url, true);
   
+//  prepare_transfer(os, m_input_files);
+  if (m_wmp_support) {
+    prepare_transfer(os, m_wmp_input_base_files);
+    make_transfer_wmp_support(os, true);
+  } else { 
+    prepare_transfer(os, m_input_files); 
+    make_transfer(os, m_input_base_url, true);
+  }
+
   // check the file mod
   check_file_mod(os, m_job);
   
@@ -913,8 +1014,13 @@ JobWrapper::print(ostream& os) const
   
   // transfer output sandbox
   os << "error=0" << endl;
-  prepare_transfer(os, m_output_files);
-  make_transfer(os, m_output_base_url, false);
+  if (m_wmp_support) {
+    prepare_transfer(os, m_wmp_output_dest_files);
+    make_transfer_wmp_support(os, false);
+  } else {
+    prepare_transfer(os, m_output_files);
+    make_transfer(os, m_output_base_url, false);
+  }
 
   // update the environment variable GLITE_WMS_SEQUENCE_CODE
   set_lb_sequence_code(os, 

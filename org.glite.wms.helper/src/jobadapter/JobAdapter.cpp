@@ -149,29 +149,55 @@ try {
   /* Not Mandatory */
   vector<string>  outputsandbox;
   utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandbox", outputsandbox); 
-  
+ 
+  bool b_osb_dest_uri = false;
+  vector<string>  outputsandboxdesturi;
+  if (!outputsandbox.empty()) {
+    utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
+    if (!outputsandboxdesturi.empty()) {
+      b_osb_dest_uri = true;
+      std::cout << "trovato uri" << std::endl;
+    }
+  }
+ 
   /* Not Mandatory */
   vector<string>  inputsandbox;
+  bool b_isb;
   utilities::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
-  /* Mandatory */
-  string inputsandboxpath(jdl::get_input_sandbox_path(*m_ad));
-  if (inputsandboxpath.empty()) { 
-    throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
-                                        inputsandboxpath,
-                                        "not empty",
-                                        helper_id);
+  /* Not Mandatory */
+  bool b_wmpisb_base_uri = false;
+  if (!inputsandbox.empty()) {
+    string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
+    if (!wmpisb_base_uri.empty()) {
+      std::cout << "trovato" << wmpisb_base_uri << std::endl;
+    }
   }
-	  
-  /* Mandatory */
-  string outputsandboxpath(jdl::get_output_sandbox_path(*m_ad));
-  if (outputsandboxpath.empty()) {
-    throw helper::InvalidAttributeValue(jdl::JDLPrivate::OUTPUT_SANDBOX_PATH,
-                                        outputsandboxpath,
-                                        "not empty",
-                                        helper_id);
+
+  string inputsandboxpath;
+  if (!b_wmpisb_base_uri) {
+    /* Mandatory */
+    inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
+    if (inputsandboxpath.empty()) { 
+      throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
+                                          inputsandboxpath,
+                                          "not empty",
+                                          helper_id);
+    }
   }
-  
+
+  string outputsandboxpath;
+  if (!b_osb_dest_uri) {	  
+    /* Mandatory */
+    outputsandboxpath.append(jdl::get_output_sandbox_path(*m_ad));
+    if (outputsandboxpath.empty()) {
+      throw helper::InvalidAttributeValue(jdl::JDLPrivate::OUTPUT_SANDBOX_PATH,
+                                          outputsandboxpath,
+                                          "not empty",
+                                          helper_id);
+    }
+  }
+
   /* Not Mandatory */
   bool   b_arg;
   string arguments(jdl::get_arguments(*m_ad, b_arg));
@@ -588,26 +614,39 @@ try {
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   
-  //check if there is the protocol in the inputsandbox path. 
-  //if no the protocol gsiftp:// is added to the inputsandboxpath.
-  if (inputsandboxpath.find("://") == string::npos) {
-    string new_inputsandboxpath("gsiftp://");
-    new_inputsandboxpath.append(local_host_name);
-    new_inputsandboxpath.append(inputsandboxpath);
-    jw->input_sandbox(url::URL(new_inputsandboxpath), inputsandbox);    
-  } else { 
-    jw->input_sandbox(url::URL(inputsandboxpath), inputsandbox);
+  if (!b_wmpisb_base_uri) {
+    //check if there is the protocol in the inputsandbox path. 
+    //if no the protocol gsiftp:// is added to the inputsandboxpath.
+    if (inputsandboxpath.find("://") == string::npos) {
+      string new_inputsandboxpath("gsiftp://");
+      new_inputsandboxpath.append(local_host_name);
+      new_inputsandboxpath.append(inputsandboxpath);
+      jw->input_sandbox(url::URL(new_inputsandboxpath), inputsandbox);    
+    } else { 
+      jw->input_sandbox(url::URL(inputsandboxpath), inputsandbox);
+    }
+  } else {
+    jw->wmp_input_sandbox_support(inputsandbox);
   }
 
-  //check if there is the protocol in the outputsandbox path. 
-  //if no the protocol gsiftp:// is added to the outputsandboxpath.
-  if (outputsandboxpath.find("://") == string::npos) {
-    string new_outputsandboxpath("gsiftp://");     
-    new_outputsandboxpath.append(local_host_name);
-    new_outputsandboxpath.append(outputsandboxpath);
-    jw->output_sandbox(url::URL(new_outputsandboxpath), outputsandbox);
-  } else {  
-    jw->output_sandbox(url::URL(outputsandboxpath), outputsandbox);
+  if (!b_osb_dest_uri) {
+    //check if there is the protocol in the outputsandbox path. 
+    //if no the protocol gsiftp:// is added to the outputsandboxpath.
+    if (outputsandboxpath.find("://") == string::npos) {
+      string new_outputsandboxpath("gsiftp://");     
+      new_outputsandboxpath.append(local_host_name);
+      new_outputsandboxpath.append(outputsandboxpath);
+      jw->output_sandbox(url::URL(new_outputsandboxpath), outputsandbox);
+    } else {  
+      jw->output_sandbox(url::URL(outputsandboxpath), outputsandbox);
+    }
+  } else {
+    jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
+  }
+
+  //check if we need to support new Input/Output Sandboxes in WMProxy
+  if (b_osb_dest_uri || b_wmpisb_base_uri) {
+    jw->wmp_support();
   }
   
   // end preparation JobWrapper file

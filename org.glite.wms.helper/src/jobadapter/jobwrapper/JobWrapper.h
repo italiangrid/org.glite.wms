@@ -191,6 +191,30 @@ public:
     * \ingroup jobadapter
     */
    void dsupload(const url::URL& id);
+
+   /**
+    * Set the support of Input/Output Sandboxes in WMProxy.
+    * @param wm
+    * \ingroup jobadapter
+    */
+   void wmp_support(void);
+
+   /**
+   * Declare which files are in the input sandbox and where they are located.
+   * @param base_url location of all the files in the input sandbox
+   * @param files    list of files in the input sandbox
+   * \ingroup jobadapter
+   */
+  void wmp_input_sandbox_support(const std::vector<std::string>& input_base_files);
+
+  /**
+   * Declare which files are in the output sandbox and where they have to be moved.
+   * @param base_url location the files in the output sandbox have to be moved to
+   * @param files    list of files in the output sandbox
+   * \ingroup jobadapter
+   */
+  void wmp_output_sandbox_support(const std::vector<std::string>& output_files,
+				  const std::vector<std::string>& output_dest_files);   
    
 protected:
   virtual std::ostream& print(std::ostream& os) const;
@@ -230,6 +254,8 @@ protected:
   virtual std::ostream& make_transfer(std::ostream&   os,
 		  		      const url::URL& prefix,
 				      const bool&     input) const;
+  virtual std::ostream& make_transfer_wmp_support(std::ostream&   os,
+		                                  const bool&     input) const;
 
   virtual std::ostream& execute_job(std::ostream&      os,
 			            const std::string& arguments,
@@ -278,11 +304,11 @@ protected:
   std::string              m_maradonaprotocol;
   
   // input sandbox
-  url::URL              m_input_base_url;
+  url::URL                 m_input_base_url;
   std::vector<std::string> m_input_files;
 
   // output sandbox
-  url::URL              m_output_base_url;
+  url::URL                 m_output_base_url;
   std::vector<std::string> m_output_files;
 
   // brokerinfo file
@@ -312,6 +338,12 @@ protected:
   std::string              m_vo;
 
   std::string              m_dsupload;
+
+  bool			   m_wmp_support;
+  std::vector<std::string> m_wmp_input_files;
+  std::vector<std::string> m_wmp_input_base_files;
+  std::vector<std::string> m_wmp_output_files;
+  std::vector<std::string> m_wmp_output_dest_files;
   
 protected:
   // default value of the brokerinfo file
