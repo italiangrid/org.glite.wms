@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.5  2004/11/10 11:00:09  monforte
+#       *** empty log message ***
+#
 #       Revision 1.4  2004/11/09 10:14:39  monforte
 #       Added first experimental prototype of ism purchaser for cemonitor...
 #
@@ -100,6 +103,8 @@ AC_GLITE
 AC_GSOAP
 AC_GLOBUS
 
+AC_OPTIMIZE
+
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 
@@ -113,6 +118,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/purchaser/Makefile])
-#AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

@@ -16,7 +16,7 @@ libglite_wms_ism_ii_purchaser_la_SOURCES = \
 
 libglite_wms_ism_cemon_purchaser_la_SOURCES = \
 	ism-cemon-purchaser.cpp
-
+CXXFLAGS = -g
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/interface \
