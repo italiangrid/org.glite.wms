@@ -13,10 +13,10 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
-namespace edg {
-namespace workload {
-namespace networkserver {
-namespace daemon {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
 
 class WMPManager  
 {
@@ -25,14 +25,14 @@ public:
   WMPManager();
   virtual ~WMPManager();
   
-  virtual void runCommand(std::string cmdname, std::string param, std::string &result); 
+  virtual void runCommand(std::string cmdname, std::vector<std::string> param, void* result, wmp_fault_t &fault); 
 
 };
 
-} // namespace daemon
-} // namespace networkserver
-} // namespace workload
-} // namespace edg
+}
+}
+}
+}
 
 #endif
 
