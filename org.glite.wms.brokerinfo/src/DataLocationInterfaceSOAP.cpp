@@ -94,7 +94,6 @@ dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string vo,
 std::vector<std::string> 
 dli::DataLocationInterfaceSOAP::listReplicas(std::string inputDataType,
 					     std::string inputData)
-  throw (char*) 
 {
   std::vector<std::string> urlVector;
 
@@ -106,7 +105,13 @@ dli::DataLocationInterfaceSOAP::listReplicas(std::string inputDataType,
 				 inputDataType, inputData, &urlList)) {
     // In case of a SOAP Fault, throw an error string that the server sent
     //
-    throw m_soap.fault->faultstring;
+      if ( m_soap.fault != NULL ) {
+         throw m_soap.fault->faultstring;
+      }
+      else {
+          throw "Error in soap request towards DLI Catalog. Unknown fault reason, soap.fault=NULL";
+      }
+
     
   }
 

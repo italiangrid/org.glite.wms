@@ -79,8 +79,7 @@ public:
    *          where hostname is a registered SEId.
    */
   virtual std::vector<std::string> listReplicas(std::string inputDataType,
-						std::string inputData)
-    throw (char *);
+						std::string inputData);
 
   /**
    * Destructor: clean up the SOAP environment

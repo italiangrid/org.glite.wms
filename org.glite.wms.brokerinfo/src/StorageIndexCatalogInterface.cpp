@@ -71,7 +71,12 @@ void glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::listSEbyGUID( c
    
    if (soap_call_storageindex__listSEbyGUID(&m_soap, m_endpoint.c_str(), NULL, guidCopy, &output) ) {
       delete [] guidCopy;
-      throw m_soap.fault->faultstring;
+      if ( m_soap.fault != NULL ) {
+         throw m_soap.fault->faultstring;
+      }
+      else {
+          throw "Error in soap request towards StorageIndex Catalog. Unknown fault reason, soap.fault=NULL";
+      }
    }
 
    for (int i=0; i < output._listSEbyGUIDReturn->__size; i++ ) {
@@ -94,7 +99,12 @@ glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::listSEbyLFN( const s
 
    if( soap_call_storageindex__listSEbyLFN(&m_soap, m_endpoint.c_str(), NULL, lfnCopy, &output) ) {
       delete [] lfnCopy;
-      throw m_soap.fault->faultstring;
+      if ( m_soap.fault != NULL ) {
+         throw m_soap.fault->faultstring;
+      }
+      else {
+          throw "Error in soap request towards StorageIndex Catalog. Unknown fault reason, soap.fault=NULL";
+      }
    }
                                                                                                                  
    for (int i=0; i < output._listSEbyLFNReturn->__size; i++ ) {

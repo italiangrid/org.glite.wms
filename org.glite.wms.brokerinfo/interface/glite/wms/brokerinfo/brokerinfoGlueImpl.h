@@ -23,6 +23,7 @@ class brokerinfoGlueImpl : public BrokerInfoImpl
  public:
   brokerinfoGlueImpl();
   ~brokerinfoGlueImpl();
+  bool retrieveCloseSEsInfoFromISM(const BrokerInfoData::CEid_type& CEId, BrokerInfoData& bid);
   void retrieveCloseSAsInfo(const BrokerInfoData::VO_name_type& VO, BrokerInfoData& bid, std::vector<std::string>* = 0);
   void retrieveCloseSEsInfo(const BrokerInfoData::CEid_type& CEId, BrokerInfoData& bid, std::vector<std::string>* = 0);
   void retrieveSEsInfo     (const classad::ClassAd& requestAd, BrokerInfoData& bid);

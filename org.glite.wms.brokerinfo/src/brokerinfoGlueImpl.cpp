@@ -45,6 +45,7 @@
 #include "glite/wms/rls/ReplicaServiceReal.h"
 
 #include "glue_attributes.h"
+#include "glite/wms/ism/ism.h"
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
@@ -69,244 +70,285 @@ brokerinfoGlueImpl::~brokerinfoGlueImpl()
 {
 }
 
-     void brokerinfoGlueImpl::retrieveCloseSAsInfo(const BrokerInfoData::VO_name_type& VO, 
-                                                    BrokerInfoData& bid,
-                                                    std::vector<std::string>* additional_attrs)
-      {
-        edglog_fn(retrieveCloseSAsInfo);   
-        const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
-        bid.m_referredVO.assign( VO );
-        boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
+void brokerinfoGlueImpl::retrieveCloseSAsInfo(const BrokerInfoData::VO_name_type& VO, 
+					      BrokerInfoData& bid,
+					      std::vector<std::string>* additional_attrs)
+{
+  edglog_fn(retrieveCloseSAsInfo);   
+  const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
+  bid.m_referredVO.assign( VO );
+  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
   
-        IIconnection.reset( new ldif2classad::LDAPSynchConnection( NSconf -> ii_dn(),
-                                                                   NSconf -> ii_contact(),
-                                                                   NSconf -> ii_port(),
-                                                                   NSconf -> ii_timeout()) );
-        try {
-          IIconnection -> open();
-          std::vector<std::string> CloseSAattr;
-          CloseSAattr.push_back( "GlueSAStateAvailableSpace" );
+  IIconnection.reset( new ldif2classad::LDAPSynchConnection( NSconf -> ii_dn(),
+							     NSconf -> ii_contact(),
+							     NSconf -> ii_port(),
+							     NSconf -> ii_timeout()) );
+  try {
+    IIconnection -> open();
+    std::vector<std::string> CloseSAattr;
+    CloseSAattr.push_back( "GlueSAStateAvailableSpace" );
   
-          if( additional_attrs && !additional_attrs->empty() ) {
+    if( additional_attrs && !additional_attrs->empty() ) {
     
-            CloseSAattr.insert( CloseSAattr.begin(), 
-                                additional_attrs->begin(), 
-                                additional_attrs->end() );
-          }
-          for(BrokerInfoData::CloseSEInfo_iterator it = bid.m_CloseSEInfo_map.begin();
-              it != bid.m_CloseSEInfo_map.end(); it++) { 
-            const string CloseSE(it->first);
-            std::string CloseSAInfo_filter;
-            CloseSAInfo_filter.assign("(&(&(objectclass=GlueSA)(GlueChunkKey=GlueSEUniqueID=" + CloseSE + 
-                                      ")(GlueSAAccessControlBaseRule=" + VO + ")))");
+      CloseSAattr.insert( CloseSAattr.begin(), 
+			  additional_attrs->begin(), 
+			  additional_attrs->end() );
+    }
+    for(BrokerInfoData::CloseSEInfo_iterator it = bid.m_CloseSEInfo_map.begin();
+	it != bid.m_CloseSEInfo_map.end(); it++) { 
+      const string CloseSE(it->first);
+      std::string CloseSAInfo_filter;
+      CloseSAInfo_filter.assign("(&(&(objectclass=GlueSA)(GlueChunkKey=GlueSEUniqueID=" + CloseSE + 
+				")(GlueSAAccessControlBaseRule=" + VO + ")))");
     
-            ldif2classad::LDAPQuery CloseSAInfo_query(IIconnection.get(), CloseSAInfo_filter, CloseSAattr);
-            try {
+      ldif2classad::LDAPQuery CloseSAInfo_query(IIconnection.get(), CloseSAInfo_filter, CloseSAattr);
+      try {
     
-              CloseSAInfo_query.execute();
-              if( !CloseSAInfo_query.tuples() -> empty() ) {
+	CloseSAInfo_query.execute();
+	if( !CloseSAInfo_query.tuples() -> empty() ) {
         
-                ldif2classad::LDAPForwardIterator CloseSAInfo_it( CloseSAInfo_query.tuples() );
-                CloseSAInfo_it.first();
-                boost::scoped_ptr<classad::ClassAd> ad((*CloseSAInfo_it).asClassAd());
-                bid.m_CloseSEInfo_map[CloseSE]->Update(*ad);
-              }
-              else {
-                edglog(warning) << "InformationIndex search (no tuples): " 
-                                <<  CloseSAInfo_query.what() << endl;
-              }
-            }
-            catch( ldif2classad::QueryException& e) {
+	  ldif2classad::LDAPForwardIterator CloseSAInfo_it( CloseSAInfo_query.tuples() );
+	  CloseSAInfo_it.first();
+	  boost::scoped_ptr<classad::ClassAd> ad((*CloseSAInfo_it).asClassAd());
+	  bid.m_CloseSEInfo_map[CloseSE]->Update(*ad);
+	}
+	else {
+	  edglog(warning) << "InformationIndex search (no tuples): " 
+			  <<  CloseSAInfo_query.what() << endl;
+	}
+      }
+      catch( ldif2classad::QueryException& e) {
     
-              edglog( warning ) << e.what() << endl;
-            }
-            catch( ldif2classad::LDAPNoEntryEx&) { 
+	edglog( warning ) << e.what() << endl;
+      }
+      catch( ldif2classad::LDAPNoEntryEx&) { 
       
-              edglog(warning) << "InformationIndex search (no entry): " << CloseSAInfo_query.what() << endl;    
-            }    
-          }
-        }
-        catch( ldif2classad::ConnectionException& e) {
+	edglog(warning) << "InformationIndex search (no entry): " << CloseSAInfo_query.what() << endl;    
+      }    
+    }
+  }
+  catch( ldif2classad::ConnectionException& e) {
    
-          edglog(warning) << e.what() << endl;
-        }
-      }
+    edglog(warning) << e.what() << endl;
+  }
+}
 
-      void brokerinfoGlueImpl::retrieveCloseSEsInfo(const BrokerInfoData::CEid_type& CEid, 
-                                                    BrokerInfoData& bid, std::vector<std::string>* additional_attrs)
-      { 
-        edglog_fn(retrieveCloseSAsInfo);  
-        const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
-        bid.m_CloseSEInfo_map.clear();
-        bid.m_referredCEid.assign( CEid );
-        std::vector<std::string> CloseSEattr;
-        CloseSEattr.push_back("GlueCESEBindGroupSEUniqueID");
+bool  brokerinfoGlueImpl::retrieveCloseSEsInfoFromISM(const BrokerInfoData::CEid_type& CEid,
+						      BrokerInfoData& bid) {
+  bool result = true;
+  edglog_fn(retrieveCloseSAsInfoFromISM);
+  bid.m_CloseSEInfo_map.clear();
+  bid.m_referredCEid.assign( CEid );
+  boost::mutex::scoped_lock l(ism::get_ism_mutex());
+  ism::ism_type::const_iterator ce_it = ism::get_ism().find(CEid);
+  if (ce_it != ism::get_ism().end()) {
+    // Retrieve the CloseStorageElements expression list
+    classad::Value value;
+    const classad::ExprList *adList;
+    if (boost::tuples::get<2>((*ce_it).second)->EvaluateAttr("CloseStorageElements", value) &&
+	value.IsListValue(adList)) {
+      vector<classad::ExprTree*> ads;
+      adList->GetComponents(ads);
+      for (vector<classad::ExprTree*>::const_iterator expr_it = ads.begin();
+	   expr_it != ads.end(); expr_it++) {
+	
+	// Check if the expression is a classad...
+	if ((*expr_it)->GetKind() == classad::ExprTree::CLASSAD_NODE) {
+	  string SEid;
+	  string SEmount;
+	  static_cast<classad::ClassAd*>(*expr_it)->EvaluateAttrString("name", SEid);
+	  static_cast<classad::ClassAd*>(*expr_it)->EvaluateAttrString("mount", SEmount);
+	  BrokerInfoData::CloseSEInfo_type CloseSEInfo(new classad::ClassAd(*static_cast<classad::ClassAd*>(*expr_it)));
+	  bid.m_CloseSEInfo_map[SEid] = CloseSEInfo;
+	  edglog( debug ) << CEid << " is close to " << SEid << " mountable on " << SEmount << endl;
+	}
+	else { result = false; break;}
+      }
+    }
+    else { result = false; }
+  }
+  else { result = false; }
+  return result;
+}
+
+void brokerinfoGlueImpl::retrieveCloseSEsInfo(const BrokerInfoData::CEid_type& CEid, 
+					      BrokerInfoData& bid, std::vector<std::string>* additional_attrs)
+{ 
+  // Patch to look up the ISM for CESEBinding information first
+  if(retrieveCloseSEsInfoFromISM(CEid, bid)) return;
+
+  edglog_fn(retrieveCloseSAsInfo);  
+  const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
+  bid.m_CloseSEInfo_map.clear();
+  bid.m_referredCEid.assign( CEid );
+  std::vector<std::string> CloseSEattr;
+  CloseSEattr.push_back("GlueCESEBindGroupSEUniqueID");
   
-        std::string CloseSE_filter;
-        CloseSE_filter = "(&(objectclass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + CEid + "))";
+  std::string CloseSE_filter;
+  CloseSE_filter = "(&(objectclass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + CEid + "))";
   
-        boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
+  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
   
-        IIconnection.reset( new ldif2classad::LDAPSynchConnection( NSconf -> ii_dn(),
-                                                                   NSconf -> ii_contact(),
-                                                                   NSconf -> ii_port(),
-                                                                   NSconf -> ii_timeout()) );
+  IIconnection.reset( new ldif2classad::LDAPSynchConnection( NSconf -> ii_dn(),
+							     NSconf -> ii_contact(),
+							     NSconf -> ii_port(),
+							     NSconf -> ii_timeout()) );
     
-        ldif2classad::LDAPQuery CloseSE_query(IIconnection.get(), CloseSE_filter, CloseSEattr);
+  ldif2classad::LDAPQuery CloseSE_query(IIconnection.get(), CloseSE_filter, CloseSEattr);
   
-        try {
+  try {
     
-          IIconnection -> open();
-          CloseSE_query.execute();    
-          if( !CloseSE_query.tuples() -> empty() ) {
-            try {
+    IIconnection -> open();
+    CloseSE_query.execute();    
+    if( !CloseSE_query.tuples() -> empty() ) {
+      try {
         
-              ldif2classad::LDAPForwardIterator CloseSE_it( CloseSE_query.tuples() );   
-              CloseSE_it.first();
-              while( CloseSE_it.current() ) {
+	ldif2classad::LDAPForwardIterator CloseSE_it( CloseSE_query.tuples() );   
+	CloseSE_it.first();
+	while( CloseSE_it.current() ) {
                 
-                vector<string> CloseSEs;
-                (*CloseSE_it).EvaluateAttribute("GlueCESEBindGroupSEUniqueID",CloseSEs);
+	  vector<string> CloseSEs;
+	  (*CloseSE_it).EvaluateAttribute("GlueCESEBindGroupSEUniqueID",CloseSEs);
             
-                vector<string> CloseSEInfo_attr;
-                CloseSEInfo_attr.push_back(GS_GLUECE_SEBIND_ACCESSPOINT);
+	  vector<string> CloseSEInfo_attr;
+	  CloseSEInfo_attr.push_back(GS_GLUECE_SEBIND_ACCESSPOINT);
       
-                for(vector<string>::const_iterator it=CloseSEs.begin(); 
-                    it!=CloseSEs.end(); it++) {
+	  for(vector<string>::const_iterator it=CloseSEs.begin(); 
+	      it!=CloseSEs.end(); it++) {
       
-                  string CloseSEInfo_filter("(&(objectclass=GlueCESEBind)(" + 
-                                            string(GS_GLUECE_SEBIND_SEUNIQUEID) + string("=") + *it + string("))"));
+	    string CloseSEInfo_filter("(&(objectclass=GlueCESEBind)(" + 
+				      string(GS_GLUECE_SEBIND_SEUNIQUEID) + string("=") + *it + string("))"));
       
-                  ldif2classad::LDAPQuery CloseSEInfo_query(IIconnection.get(), CloseSEInfo_filter, CloseSEInfo_attr);
-                  try {
-                    CloseSEInfo_query.execute();    
-                    if( !CloseSEInfo_query.tuples() -> empty() ) {
+	    ldif2classad::LDAPQuery CloseSEInfo_query(IIconnection.get(), CloseSEInfo_filter, CloseSEInfo_attr);
+	    try {
+	      CloseSEInfo_query.execute();    
+	      if( !CloseSEInfo_query.tuples() -> empty() ) {
       
-                      ldif2classad::LDAPForwardIterator CloseSEInfo_it( CloseSEInfo_query.tuples() );   
-                      CloseSEInfo_it.first();
-                      ldif2classad::LDIFObject ldif_CloseSE = (*CloseSEInfo_it);
-                      if( additional_attrs && !additional_attrs->empty() ) {
+		ldif2classad::LDAPForwardIterator CloseSEInfo_it( CloseSEInfo_query.tuples() );   
+		CloseSEInfo_it.first();
+		ldif2classad::LDIFObject ldif_CloseSE = (*CloseSEInfo_it);
+		if( additional_attrs && !additional_attrs->empty() ) {
       
-                        string SE_info_filter("(&(objectclass=GlueSE)(GlueSEUniqueId=" + *it + "))");
-                        edglog( debug ) << "Filtering Information Index: " << SE_info_filter << endl;
-                        ldif2classad::LDAPQuery SE_info_query(IIconnection.get(), SE_info_filter, *additional_attrs);
-                        try {
-                          SE_info_query.execute();
-                          if(!SE_info_query.tuples()->empty()) {
+		  string SE_info_filter("(&(objectclass=GlueSE)(GlueSEUniqueId=" + *it + "))");
+		  edglog( debug ) << "Filtering Information Index: " << SE_info_filter << endl;
+		  ldif2classad::LDAPQuery SE_info_query(IIconnection.get(), SE_info_filter, *additional_attrs);
+		  try {
+		    SE_info_query.execute();
+		    if(!SE_info_query.tuples()->empty()) {
                   
-                            ldif2classad::LDAPForwardIterator SE_info_it(SE_info_query.tuples());
-                            SE_info_it.first();
-                            if(SE_info_it.current()) {
+		      ldif2classad::LDAPForwardIterator SE_info_it(SE_info_query.tuples());
+		      SE_info_it.first();
+		      if(SE_info_it.current()) {
                           
-                              ldif_CloseSE.merge(*SE_info_it);
-                            }
-                          }
-                        }
-                        catch( ldif2classad::QueryException& e) {
+			ldif_CloseSE.merge(*SE_info_it);
+		      }
+		    }
+		  }
+		  catch( ldif2classad::QueryException& e) {
       
-                          edglog( warning ) << e.what() << endl;
-                        }
-                      }
-                      utilities::ii_attributes::const_iterator attrs_begin, attrs_end;
-                      boost::tie(attrs_begin,attrs_end) = utilities::ii_attributes::multiValued();
-                      BrokerInfoData::CloseSEInfo_type CloseSEInfo( ldif_CloseSE.asClassAd(attrs_begin, attrs_end) );
-                      bid.m_CloseSEInfo_map[*it] = CloseSEInfo;
-                    }
-                    else {
+		    edglog( warning ) << e.what() << endl;
+		  }
+		}
+		utilities::ii_attributes::const_iterator attrs_begin, attrs_end;
+		boost::tie(attrs_begin,attrs_end) = utilities::ii_attributes::multiValued();
+		BrokerInfoData::CloseSEInfo_type CloseSEInfo( ldif_CloseSE.asClassAd(attrs_begin, attrs_end) );
+		bid.m_CloseSEInfo_map[*it] = CloseSEInfo;
+	      }
+	      else {
         
-                      edglog(warning) << "InformationIndex search (no tuples): " <<  CloseSEInfo_query.what() << endl;
-                    }
-                  } 
-                  catch( ldif2classad::QueryException& e) {
+		edglog(warning) << "InformationIndex search (no tuples): " <<  CloseSEInfo_query.what() << endl;
+	      }
+	    } 
+	    catch( ldif2classad::QueryException& e) {
           
-                    edglog( warning ) << e.what() << endl;
-                  }
-                }  
-                CloseSE_it.next();
-              }
-            } 
-            catch( ldif2classad::LDAPNoEntryEx& ) {
+	      edglog( warning ) << e.what() << endl;
+	    }
+	  }  
+	  CloseSE_it.next();
+	}
+      } 
+      catch( ldif2classad::LDAPNoEntryEx& ) {
       
-              edglog(warning) << "InformationIndex search (no entry): " << CloseSE_query.what() << endl;
-            }
-          }
-          else {
-    
-            edglog(warning) << "InformationIndex search (no tuples): " << CloseSE_query.what() << endl;
-          }
-        }
-        catch( ldif2classad::QueryException& e) {
-    
-          edglog(warning) << e.what() << endl;
-        }
-        catch( ldif2classad::ConnectionException& e) {
-    
-          edglog(warning) << e.what() << endl;
-        }
+	edglog(warning) << "InformationIndex search (no entry): " << CloseSE_query.what() << endl;
       }
+    }
+    else {
+    
+      edglog(warning) << "InformationIndex search (no tuples): " << CloseSE_query.what() << endl;
+    }
+  }
+  catch( ldif2classad::QueryException& e) {
+    
+    edglog(warning) << e.what() << endl;
+  }
+  catch( ldif2classad::ConnectionException& e) {
+    
+    edglog(warning) << e.what() << endl;
+  }
+}
 
-      void brokerinfoGlueImpl::retrieveSEsInfo(const classad::ClassAd& requestAd, BrokerInfoData& bid)
-      {
-        edglog_fn(retrieveSEsInfo);  
-        const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
+void brokerinfoGlueImpl::retrieveSEsInfo(const classad::ClassAd& requestAd, BrokerInfoData& bid)
+{
+  edglog_fn(retrieveSEsInfo);  
+  const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
   
-        vector<string> attributes;
+  vector<string> attributes;
   
-        attributes.push_back(GS_GLUESE_ACCESSPROTOCOL_TYPE);
-        attributes.push_back(GS_GLUESE_ACCESSPROTOCOL_PORT);
-        BrokerInfoData::SE_const_iterator se_begin, se_end;
-        boost::tie(se_begin,se_end) = bid.involvedSEs();
-        for (BrokerInfoData::SE_const_iterator it = se_begin; it != se_end; it++) {    
-          string filter;  
-          filter = "(&(objectclass=GlueSEAccessProtocol)(GlueChunkKey=GlueSEUniqueID=" + (*it) + "))";
+  attributes.push_back(GS_GLUESE_ACCESSPROTOCOL_TYPE);
+  attributes.push_back(GS_GLUESE_ACCESSPROTOCOL_PORT);
+  BrokerInfoData::SE_const_iterator se_begin, se_end;
+  boost::tie(se_begin,se_end) = bid.involvedSEs();
+  for (BrokerInfoData::SE_const_iterator it = se_begin; it != se_end; it++) {    
+    string filter;  
+    filter = "(&(objectclass=GlueSEAccessProtocol)(GlueChunkKey=GlueSEUniqueID=" + (*it) + "))";
     
-          boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
-          IIconnection.reset( new ldif2classad::LDAPSynchConnection( NSconf -> ii_dn(),
-                                                                     NSconf -> ii_contact(),
-                                                                     NSconf -> ii_port(),
-                                                                     NSconf -> ii_timeout()) );
+    boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
+    IIconnection.reset( new ldif2classad::LDAPSynchConnection( NSconf -> ii_dn(),
+							       NSconf -> ii_contact(),
+							       NSconf -> ii_port(),
+							       NSconf -> ii_timeout()) );
     
-          ldif2classad::LDAPQuery query(IIconnection.get(),filter,attributes);
+    ldif2classad::LDAPQuery query(IIconnection.get(),filter,attributes);
     
-          try {
+    try {
       
-            IIconnection -> open();
-            query.execute();
+      IIconnection -> open();
+      query.execute();
       
-            if( !query.tuples() -> empty() ) {
+      if( !query.tuples() -> empty() ) {
   
-              try {
+	try {
     
-                ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );   
-                ldap_it.first();
-                while( ldap_it.current() ) {
+	  ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );   
+	  ldap_it.first();
+	  while( ldap_it.current() ) {
       
-                  BrokerInfoData::protocol_name protocol;
-                  std::string str_port;
+	    BrokerInfoData::protocol_name protocol;
+	    std::string str_port;
       
-                  (*ldap_it).EvaluateAttribute(GS_GLUESE_ACCESSPROTOCOL_TYPE, protocol);
-                  (*ldap_it).EvaluateAttribute(GS_GLUESE_ACCESSPROTOCOL_PORT, str_port);
+	    (*ldap_it).EvaluateAttribute(GS_GLUESE_ACCESSPROTOCOL_TYPE, protocol);
+	    (*ldap_it).EvaluateAttribute(GS_GLUESE_ACCESSPROTOCOL_PORT, str_port);
       
-                  bid.m_SE2Protocol_map[(*it)].push_back( std::make_pair(protocol,std::atoi(str_port.c_str())) );
-                  ldap_it.next();
-                }
-              } 
-              catch( ldif2classad::LDAPNoEntryEx&) {
-                edglog(warning) << "InformationIndex search (no entry): " <<  query.what() << endl;
-              }
-            } 
-            else {
-              edglog(warning) << "InformationIndex search (no tuples): " << query.what() << endl;  
-            }
-          } 
-          catch( ldif2classad::QueryException& e) {
-            edglog(warning) << e.what() << endl;
-          }
-          catch ( ldif2classad::ConnectionException& e) {
-            edglog(warning) << e.what() << endl;
-          }
-        }
+	    bid.m_SE2Protocol_map[(*it)].push_back( std::make_pair(protocol,std::atoi(str_port.c_str())) );
+	    ldap_it.next();
+	  }
+	} 
+	catch( ldif2classad::LDAPNoEntryEx&) {
+	  edglog(warning) << "InformationIndex search (no entry): " <<  query.what() << endl;
+	}
+      } 
+      else {
+	edglog(warning) << "InformationIndex search (no tuples): " << query.what() << endl;  
       }
+    } 
+    catch( ldif2classad::QueryException& e) {
+      edglog(warning) << e.what() << endl;
+    }
+    catch ( ldif2classad::ConnectionException& e) {
+      edglog(warning) << e.what() << endl;
+    }
+  }
+}
 
 void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, BrokerInfoData& bid)
 {
@@ -747,6 +789,14 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 //enzo
 //cout  << "gsoap Exception : " << faultstring << endl;
       }
+      catch(const char *faultstring) {
+        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+        //
+        edglog(warning) <<  faultstring << endl;
+//enzo
+//cout  <<  faultstring << endl;
+      }
+
                                                                                                 
    } //for
 

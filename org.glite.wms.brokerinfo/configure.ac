@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.13  2005/02/28 10:21:31  monforte
+#       megeing RC1->HEAD
+#
 #       Revision 1.12  2005/02/09 14:51:44  emartel
 #       increased version
 #
@@ -62,11 +65,12 @@
 #
 #
 #
+#
                                                                                                                                                              
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Brokerinfo], [1.0.1])
+AC_INIT([GLite WMS Brokerinfo], [1.0.3])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glue_attributes.h])

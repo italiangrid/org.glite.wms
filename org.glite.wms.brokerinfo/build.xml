@@ -21,9 +21,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2005/02/28 10:21:30  monforte
+	megeing RC1->HEAD
+
+	Revision 1.2.2.1  2005/02/12 01:53:06  glbuild
+	Changed start time
+	
 	Revision 1.2  2004/07/06 18:09:21  flammer
 	Update of classpath definitions, targets & configure file.
-
+	
 	Revision 1.1  2004/06/28 22:58:08  eronchie
 	Start adding brokerinfo
 	WARNING: work in progress
@@ -87,6 +93,7 @@
 		 Load version file 
 	     ========================================= -->
 	<property file="${module.version.file}"/>
+		<property file="${module.build.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets
