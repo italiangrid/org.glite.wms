@@ -205,7 +205,7 @@ STATIC  methods:
 	* Method:    getPid
 	* Signature: ()I
 	*/
-	JNIEXPORT jint JNICALL Java_edg_workload_userinterface_jclient_Api_getPid
+	JNIEXPORT jint JNICALL Java_org_glite_wmsui_apij_Api_getPid
 	(JNIEnv *env, jclass){  return getpid();    }
 
 	/*
@@ -213,7 +213,7 @@ STATIC  methods:
 	* Method:    shadow
 	* Signature: (Ljava/lang/String;)I
 	*/
-	JNIEXPORT jint JNICALL Java_edg_workload_userinterface_jclient_Api_shadow
+	JNIEXPORT jint JNICALL Java_org_glite_wmsui_apij_Api_shadow
 	(JNIEnv *env, jclass, jstring unique){
 		const char *nm = env->GetStringUTFChars(unique, 0);
 		int result = system( nm  ) ;
@@ -226,7 +226,7 @@ STATIC  methods:
 	* Method:    getEnv
 	* Signature: (Ljava/lang/String;)Ljava/lang/String;
 	*/
-	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_getEnv
+	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_getEnv
 	(JNIEnv *env, jclass, jstring name ){
 		const char *nm = env->GetStringUTFChars(name, 0);
 		char* value = getenv (nm) ;
@@ -239,7 +239,7 @@ STATIC  methods:
 	* Method:    getUid
 	* Signature: ()I
 	*/
-	JNIEXPORT jint JNICALL Java_edg_workload_userinterface_jclient_Api_getUid
+	JNIEXPORT jint JNICALL Java_org_glite_wmsui_apij_Api_getUid
 	(JNIEnv *env, jclass){   return  getuid() ;    }
 
 	/*
@@ -247,7 +247,7 @@ STATIC  methods:
 	* Method:    setEnv
 	* Signature: (Ljava/lang/String;Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_setEnv
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_setEnv
 	(JNIEnv *env, jclass, jstring name, jstring value ){
 		const char *nm = env->GetStringUTFChars(name, 0);
 		const char *vl = env->GetStringUTFChars(value, 0);
@@ -262,7 +262,7 @@ STATIC  methods:
          * Method:    unsetEnv
          * Signature: (Ljava/lang/String;)V
          */
-         JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_unsetEnv
+         JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_unsetEnv
          (JNIEnv *env, jclass, jstring name){
                  const char *nm = env->GetStringUTFChars(name, 0);
                  unsetenv(nm) ;
@@ -274,7 +274,7 @@ STATIC  methods:
 	* Method:    initialise
 	* Signature: ()V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_initialise
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_initialise
 	(JNIEnv *env, jclass ){
 		/*
 		edg_wlc_SSLInitialization();
@@ -290,7 +290,7 @@ STATIC  methods:
 	* Method:    genetareId
 	* Signature: (Ljava/lang/String;I)Ljava/lang/String;
 	*/
-	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_generateId
+	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_generateId
 	(JNIEnv *env, jclass , jstring lbHost, jint lbPort){
 		const char *host = env->GetStringUTFChars( lbHost, 0);
 		try{
@@ -314,7 +314,7 @@ NETWORK SERVER  methods:
 	* Signature: (Ljava/lang/String;II)V
 	* This Metdhos is synchronized. no more lock unlock are needed
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1init
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1init
 	(JNIEnv *env, jobject obj, jstring host , jint port , jint  logLevel){
 		const char *ns = env->GetStringUTFChars( host, 0);
 		nsHost = string (ns) ;   nsPort = port ;     nsLevel = logLevel ;
@@ -326,7 +326,7 @@ NETWORK SERVER  methods:
 * Method:    ns_submit
 	* Signature: (Ljava/lang/String;Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1submit
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1submit
 	(JNIEnv *env, jobject obj, jstring  jdl , jstring jnsHost, jint jnsPort){
 		const char *jd = env->GetStringUTFChars(jdl, 0);
 		const char *ct = env->GetStringUTFChars(jnsHost, 0);
@@ -373,7 +373,7 @@ unlock() ;
 * Method:    ns_purge
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1purge
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1purge
 	(JNIEnv *env, jobject obj, jstring jobid){
 	const char *id = env->GetStringUTFChars(jobid, 0);
 		try{
@@ -391,7 +391,7 @@ unlock() ;
 * Method:    ns_cancel
 	* Signature: (Ljava/lang/String;)I
 	*/
-	JNIEXPORT jint JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1cancel
+	JNIEXPORT jint JNICALL Java_org_glite_wmsui_apij_Api_ns_1cancel
 	(JNIEnv *env, jobject obj, jstring jobid){
 		const char *id = env->GetStringUTFChars(jobid, 0);
 		try{
@@ -408,7 +408,7 @@ unlock() ;
 * Method:    ns_get_root
 	* Signature: (Ljava/lang/String;)Ljava/lang/String;
 	*/
-	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1get_1root
+	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_ns_1get_1root
 	(JNIEnv *env, jobject obj, jstring jobId ){
 	const char *id = env->GetStringUTFChars(jobId, 0);
 		try{
@@ -428,7 +428,7 @@ unlock() ;
 * Method:    ns_multi
 	* Signature: ()V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1multi
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1multi
 	(JNIEnv *env, jobject obj){
 		jclass cls = env->GetObjectClass(obj);
 		jmethodID appStr = env->GetMethodID ( cls , "appendString" ,  "(ILjava/lang/String;)V" ) ;
@@ -449,7 +449,7 @@ unlock() ;
 	* Signature: (Ljava/lang/String;)V
 	*/
 
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1output
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1output
 	(JNIEnv *env, jobject obj, jstring   jobid){
 		jclass cls = env->GetObjectClass(obj);
 		jmethodID appStr = env->GetMethodID ( cls , "appendString" ,  "(ILjava/lang/String;)V" ) ;
@@ -471,7 +471,7 @@ unlock() ;
 * Method:    ns_match
 	* Signature: (Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1match
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1match
 	(JNIEnv *env, jobject obj, jstring jobad){
 		const char *id = env->GetStringUTFChars( jobad, 0);
 		jclass cls = env->GetObjectClass(obj);
@@ -498,7 +498,7 @@ unlock() ;
 * Method:    ns_free
 	* Signature: ()V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1free
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1free
 	(JNIEnv *env, jobject obj){     cerr << "JNI ns_free: do nothing (Deprecated)" << endl ; /*  Deprecated */              }
 
 
@@ -514,7 +514,7 @@ LOGGING methods:
 * Method:    lb_init
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1init
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1init
 	(JNIEnv *env, jobject obj, jstring  nsAddr ){
 		const char *lb = env->GetStringUTFChars(nsAddr, 0);
 		jclass cls = env->GetObjectClass(obj);
@@ -542,7 +542,7 @@ LOGGING methods:
 * Method:    lb_register
 	* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1register
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1register
 	(JNIEnv *env, jobject obj, jstring jobId, jstring jdl, jstring nsAddr){
 		const char *jd = env->GetStringUTFChars(jdl, 0);
 		const char *id = env->GetStringUTFChars(jobId, 0);
@@ -574,7 +574,7 @@ unlock() ;
 * Method:    lb_logSync
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1logSync
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1logSync
 	(JNIEnv *env, jobject obj, jstring jdl){
 		const char *jd = env->GetStringUTFChars(jdl, 0);
 		if ( edg_wll_LogEventSync( *lbVect[  getCtx( env, obj , LB_CTX  ) ] , EDG_WLL_EVENT_CHKPT , EDG_WLL_FORMAT_CHKPT , "1" , jd ) )
@@ -588,12 +588,11 @@ unlock() ;
 * Method:    lb_log_output
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log_1output
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1log_1output
 	(JNIEnv *env, jobject obj, jstring jobId){
 		const char *id = env->GetStringUTFChars(jobId, 0);
 		try{
 			glite::wmsutils::jobid::JobId jid ( id )  ;
-			cout << "JNI  Api_lb_1log_1output WARNING, deprecated method used" << endl ;
 		}catch(exception &exc){  log_error (env , exc.what() ) ;
 		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper");    }
 		env->ReleaseStringUTFChars( jobId, id);
@@ -604,7 +603,7 @@ unlock() ;
 * Method:    lb_log_start
 	* Signature: (Ljava/lang/String;Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log_1start
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1log_1start
 	(JNIEnv *env, jobject obj, jstring jdl, jstring host , jint port ){
 		const char *addr = env->GetStringUTFChars(host, 0);
 		const char *jd = env->GetStringUTFChars(jdl, 0);
@@ -624,7 +623,7 @@ unlock() ;
 * Method:    lb_free
 	* Signature: ()V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1free
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1free
 	(JNIEnv *env, jobject obj){
 		cerr << "JNI lb_free: do nothing (Deprecated)" << endl ;
 	}
@@ -636,7 +635,7 @@ unlock() ;
 * Method:    lb_getSequence
 	* Signature: ()Ljava/lang/String;
 	*/
-	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1getSequence
+	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_lb_1getSequence
 	(JNIEnv *env, jobject obj){   return  env->NewStringUTF ( edg_wll_GetSequenceCode(*lbVect[  getCtx( env, obj , LB_CTX  ) ] )  );  }
 
 
@@ -647,7 +646,7 @@ unlock() ;
 * Method:    lb_log_listener
 	* Signature: (Ljava/lang/String;Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log_1listener
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1log_1listener
 	(JNIEnv *env, jobject obj, jstring jobid , jstring host , jint port){
 		const char *addr = env->GetStringUTFChars(host, 0);
 		const char *id = env->GetStringUTFChars(jobid, 0);
@@ -679,7 +678,7 @@ unlock() ;
 * Method:    lb_log_query
 	* Signature: (Ljava/lang/String;I)Ljava/lang/String;
 	*/
-	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log_1query
+	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_lb_1log_1query
 	(JNIEnv *env, jobject obj, jstring jobid_str, jint step){
 		using namespace glite::lb ;
 		const char *id = env->GetStringUTFChars(jobid_str, 0);
@@ -746,7 +745,7 @@ unlock() ;
 * Method:    lb_log_tag
 	* Signature: (Ljava/lang/String;Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log_1tag
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1log_1tag
 	(JNIEnv *env, jobject obj, jstring name, jstring value){
 
 		const char *tName = env->GetStringUTFChars(name, 0);
@@ -773,7 +772,7 @@ BOOKKEEPING methods: JOBID info
 * Method:    lb_user_jobs
 	* Signature: (Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1user_1jobs
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1user_1jobs
 	(JNIEnv *env, jobject obj, jstring lbHost, jint port){
 		using namespace glite::lb ;
 		const char *lb = env->GetStringUTFChars(lbHost, 0);
@@ -800,7 +799,7 @@ BOOKKEEPING methods: JOBID info
 * Method:    lb_jobs
 	* Signature: (Ljava/lang/String;IIILjava/lang/String;Z)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1jobs
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1jobs
 	(JNIEnv *env, jobject obj, jstring lbHost, jint port, jint from, jint to, jstring utags,  jint inex, jstring issu){
 		using namespace glite::lb ;
 		using namespace glite::wmsutils::jobid ;
@@ -941,7 +940,7 @@ BOOKKEEPING methods: JOBSTATUS info
 * Method:    lb_user_status
 	* Signature: (Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1user_1status
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1user_1status
 	(JNIEnv *env, jobject obj, jstring  lbHost, jint port){
 	using namespace glite::lb ;
 	const char *lb = env->GetStringUTFChars(lbHost, 0);
@@ -963,7 +962,7 @@ BOOKKEEPING methods: JOBSTATUS info
 * Method:    lb_status
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1status
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1status
 	(JNIEnv *env, jobject obj, jstring jobId ){
 		const char *id = env->GetStringUTFChars(jobId, 0);
 		using namespace glite::lb ;
@@ -992,7 +991,7 @@ BOOKKEEPING methods: JOBSTATUS info
 * Method:    lb_notify
 	* Signature: (Ljava/lang/String;I)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1notify
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1notify
 	(JNIEnv *env, jobject obj, jstring jobad  , jint timeout ){
 		using namespace glite::lb ;
 		using namespace glite::wmsutils::jobid ;
@@ -1041,7 +1040,7 @@ BOOKKEEPING methods: LOGGING info
 * Method:    lb_log
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1log
 	(JNIEnv *env, jobject obj, jstring jobId){
 		const char *id = env->GetStringUTFChars(jobId, 0);
 		using namespace glite::lb ;
@@ -1178,7 +1177,7 @@ DAGAD implementation methods:
 * Method:    dagFromFile
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_dagFromFile
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dagFromFile
 	(JNIEnv *env, jobject obj, jstring fileStr  ){
 			jclass cls = env->GetObjectClass(obj);
 			jmethodID appInt = env->GetMethodID ( cls , "appendInt" ,  "(II)V" ) ;
@@ -1204,7 +1203,7 @@ DAGAD implementation methods:
 * Method:    dagToString
 	* Signature: (I)Ljava/lang/String;
 	*/
-	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_dagToString
+	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_dagToString
 	(JNIEnv *env, jobject obj, jint level  ){
 	lock() ;
 		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
@@ -1218,7 +1217,7 @@ DAGAD implementation methods:
 * Method:    dag_getSubmissionStrings
 	* Signature: ()V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_dag_1getSubmissionStrings
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dag_1getSubmissionStrings
 	(JNIEnv *, jobject){
 		// glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
 		// return  env->NewStringUTF(  dagad->toString(  level )   ) ;
@@ -1229,7 +1228,7 @@ DAGAD implementation methods:
 * Method:    dag_getSubAttributes
 	* Signature: (Ljava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_dag_1logUserTags
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dag_1logUserTags
 	(JNIEnv *env, jobject obj, jstring   jobid  ){
 	lock() ;
 		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
@@ -1257,7 +1256,7 @@ DAGAD implementation methods:
 * Method:    dagSetAttribute
 	* Signature: (ILjava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_dagSetAttribute
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dagSetAttribute
 	(JNIEnv *env, jobject obj, jint  name  , jstring  value ){
 	lock() ;
 		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
@@ -1272,7 +1271,7 @@ DAGAD implementation methods:
 	* Method:    registerDag
 	* Signature: (ILjava/lang/String;)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_registerDag
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_registerDag
 	(JNIEnv *env, jobject  obj ,  jstring jid , jstring nsAddress ){
 	try{
 		glite::wmsutils::jobid::JobId id(    string (  env->GetStringUTFChars( jid , 0)   )      ) ;
@@ -1340,7 +1339,7 @@ DAGAD implementation methods:
 * Method:    logDefaultValues
 	* Signature: (Z)V
 	*/
-	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_logDefaultValues
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_logDefaultValues
 	(JNIEnv *env, jobject  obj, jboolean boom  ){
 		lock() ;
 		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
@@ -1357,7 +1356,7 @@ AUTHORISATION methods:
  * Method:    ns_dgas
  * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_ns_1dgas
+JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_ns_1dgas
   (JNIEnv *env, jobject obj, jstring  jid  , jstring  hlrj  ){
 	//DGAS Job Authorisation manipulation
 	jobAuth_data jobAuth ;
