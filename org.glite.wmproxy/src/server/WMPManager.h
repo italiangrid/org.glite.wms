@@ -32,7 +32,8 @@ public:
 
   WMPManager();
   virtual ~WMPManager();
-  
+  virtual void run() {};
+
   virtual wmp_fault_t runCommand(const std::string& cmdname, const std::vector<std::string>& param, void* result = NULL); 
 
 };
