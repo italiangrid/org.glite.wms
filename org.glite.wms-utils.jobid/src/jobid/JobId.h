@@ -10,7 +10,7 @@
 #include <string>
 #include <iosfwd>
 
-#include "../jobid_namespace.h"
+#include "jobid_namespace.h"
 #include "jobid.h"
 
 typedef struct _edg_wlc_jobid_s* edg_wlc_jobid_t;

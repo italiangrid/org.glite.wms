@@ -9,7 +9,7 @@
 ## Subdirectories list
 SUBDIRS = jobid
 
-jobid_includedir = $(includedir)/glite/workload/jobid
-jobid_include_HEADERS = jobid_namespace.h
+#jobid_includedir = $(includedir)/glite/workload/jobid
+#jobid_include_HEADERS = jobid_namespace.h
 
 MAINTAINERCLEANFILES = Makefile.in 

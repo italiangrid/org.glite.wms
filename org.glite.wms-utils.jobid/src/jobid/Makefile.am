@@ -21,7 +21,8 @@ jobidinclude_HEADERS = \
 	JobIdExceptions.h \
 	jobid.h \
 	manipulation.h \
-	strmd5.h
+	strmd5.h \
+	jobid_namespace.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/.. \
 	$(GLITE_WORKLOAD_CFLAGS) \
