@@ -9,9 +9,8 @@
 lib_LTLIBRARIES = \
 	libglite_wmsui_partitioner.la 
 
-lib_HEADERS = \
-        Partition.h \
-	Partitioner.h \
+partdir = $(includedir)/glite/wmsui/partitioner
+part_HEADERS = \
 	Bin.h \
 	Binlist.h 
 
