@@ -8,6 +8,7 @@
 
 lib_LTLIBRARIES = \
 	libglite_wms_helper_broker_ii.la \
+	libglite_wms_helper_broker_ii_prefetch.la \
 	libglite_wms_helper_broker_ism.la
 
 libglite_wms_helper_broker_ii_la_SOURCES = \
@@ -19,6 +20,15 @@ dnl libglite_wms_helper_broker_ii_la_LIBADD = \
 dnl        $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la \
 dnl        $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la \
 dnl        $(top_srcdir)/../org.glite.wms.ism/build/src/libglite_wms_ism.la 
+
+libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
+        Helper.h \
+        Helper_ii_prefetch.cpp \
+        exceptions.cpp
+
+Helper_ii_prefetch.cpp: Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E Helper_ii.cpp > Helper_ii_prefetch.cpp
+
+dnl libglite_wms_helper_broker_ii_prefetch_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
 
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
@@ -34,5 +44,5 @@ AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
- 
-MAINTAINERCLEANFILES = Makefile.in
+
+MAINTAINERCLEANFILES = Makefile.in Helper_ii_prefetch.*
