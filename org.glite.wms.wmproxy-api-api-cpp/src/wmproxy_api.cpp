@@ -3,10 +3,11 @@
 #include <stdlib.h> // getenv(...)
 #include <unistd.h> // getuid()
 #include <sys/types.h> // getuid()
-#include <boost/lexical_cast.hpp> // int to string conversion
 #include <fstream> //strsream
 #include <ctype.h>
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
+#include <sstream> // int to string conversion
+
 using namespace std;
 namespace glite {
 namespace wms {
@@ -82,7 +83,10 @@ const char* getProxyFile(ConfigContext *cfs){
 		const char * env_proxy = getenv ("X509_USER_PROXY");
 		if(env_proxy!=NULL)return checkFileExistence(env_proxy);
 		else{
-			string result ="/tmp/x509up_u" + boost::lexical_cast<std::string>(getuid()) ;
+			// Append UID to X509 default file
+			stringstream uid_string;
+			uid_string << getuid() ;
+			string result ="/tmp/x509up_u" + uid_string.str();
 			return checkFileExistence( result.c_str() );
 		}
 	}
