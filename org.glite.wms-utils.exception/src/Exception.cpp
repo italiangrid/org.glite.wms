@@ -4,7 +4,7 @@
 *  copyright : (C) 2002 by DATAMAT
 ***************************************************************************/
 
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/exception/exception_codes.h"
 namespace glite { 
 namespace wmsutils{ 
