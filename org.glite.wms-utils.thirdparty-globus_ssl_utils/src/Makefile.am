@@ -8,12 +8,11 @@
 
 SUBDIRS = oldgaa
 
-noinst_LTLIBRARIES = libglobus_ssl_utils.la
+lib_LTLIBRARIES = libglobus_ssl_utils.la
 
 libglobus_ssl_utils_la_SOURCES = \
 	scutils.c \
 	sslutils.c
-
 libglobus_ssl_utils_la_LIBADD = ${top_builddir}/src/oldgaa/libglobus_oldgaa.la
 
 globus_ssl_utilsincludedir = $(includedir)/glite/wms/thirdparty/globus_ssl_utils
@@ -22,8 +21,7 @@ globus_ssl_utilsinclude_HEADERS = \
 	sslutils.h
 
 AM_CPPFLAGS = -I${srcdir}/oldgaa \
-	-I/usr/kerberos/include \
-	-I/usr/include/openssl \
-	-DERR_file_name=__FILE__
+	$(GLOBUS_CFLAGS) \
+	$(GLOBUS_OPENSSL_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
