@@ -12,10 +12,10 @@
 
 #include "Partitioner.h"
 #include "glite/wms/jdl/DAGAdManipulation.h"
-#include "glite/wms/jdl_attributes.h"
-#include "glite/wms/JDLAttributes.h"
-#include "glite/wms/JobAdManipulation.h"
-#include "glite/wms/ManipulationExceptions.h"
+#include "glite/wms/jdl/jdl_attributes.h"
+#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/exception/exception_codes.h"
 
