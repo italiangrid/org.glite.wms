@@ -287,7 +287,7 @@ try {
     create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh1, "create");
     destroy_ii_purchaser = (purchaser::ii::destroy_t*) dlsym(prh1, "destroy");
 
-    if (create_ii_purchaser || !destroy_ii_purchaser) {
+    if ((!create_ii_purchaser) || (!destroy_ii_purchaser)) {
         get_err_stream() << "Cannot load " << prlib1 << " symbols: " << dlerror() << "\n";
         return EXIT_FAILURE;
     }
@@ -295,7 +295,7 @@ try {
     create_cemon_purchaser  = (purchaser::cemon::create_t*)  dlsym(prh2, "create");
     destroy_cemon_purchaser = (purchaser::cemon::destroy_t*) dlsym(prh2, "destroy");
     
-    if (create_cemon_purchaser || !destroy_cemon_purchaser) {
+    if ((!create_cemon_purchaser) || (!destroy_cemon_purchaser)) {
         get_err_stream() << "Cannot load " << prlib2 << " symbols: " << dlerror() << "\n";
         return EXIT_FAILURE;
     }
