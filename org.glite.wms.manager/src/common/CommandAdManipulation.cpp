@@ -40,7 +40,7 @@ std::string const command_requirements(
   "      && isString(other.arguments.lb_sequence_code)"
   "      || other.command == \"match\""
   "      && isClassad(other.arguments.ad)"
-  "      && isString(other.arguments.ad.CertSubject)"
+  "      && isString(other.arguments.ad.CertificateSubject)"
   "      && isString(other.arguments.file)"
   "     )"
   "]"
