@@ -99,6 +99,10 @@ LD1FLAGS= -lssl \
 	-lxml2 \
 	-lgridsite
 
+EXTRALIBFLAGS = \
+	-L$(REPOSITORY)/org.glite.wms.purger/build/src/libglite_wms_purger.la \
+	-L$(REPOSITORY)/org.glite.wms.common/build/src/utilities/libglite_wms_quota.la
+
 
 	#$(GLOBUS_COMMON_LIBS) \
 	#-lglite_wmsutils_cjobid \
@@ -128,7 +132,7 @@ wmProxy:        wm.h \
                                 wmpdispatcher.cpp wmpdispatcher.h\
                                 WMPManager.h NS2WMProxy.h wmpresponsestruct.h $(SOAPH) $(SOAPCPP)
 			@echo "wmproxy....."
-			@$(CPP) $(CFLAGS) $(CMFLAGS) \
+			@$(CPP) $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
                                 wmpoperations.cpp \
                                 wmpgsoapoperations.cpp \
