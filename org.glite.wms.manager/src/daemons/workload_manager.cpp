@@ -220,18 +220,17 @@ try {
     }
   }
 
-  boost::shared_ptr<void> broker_helper_handle(
-    dlopen(brlib,RTLD_NOW|RTLD_GLOBAL),
-    dlclose
-  );
-
-  if (!broker_helper_handle) {
+  void *h = dlopen(brlib,RTLD_NOW|RTLD_GLOBAL);
+  if (!h) {
     get_err_stream() << program_name << ": "
                      << "cannot load broker helper lib (" << brlib << ")\n";
+    std::string dlerr(dlerror());
     get_err_stream() << program_name << ": "
-                     << "dlerror returns: " << dlerror() << "\n";
+                     << "dlerror returns: " << dlerr << "\n";
     return EXIT_FAILURE;
   }
+
+  boost::shared_ptr<void> broker_helper_handle(h, dlclose);
 
   // force the creation of the TaskQueue before entering multithreading
   manager::the_task_queue();
