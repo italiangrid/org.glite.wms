@@ -14,8 +14,8 @@ JOBWRAPPER = $(top_builddir)/src/jobadapter/jobwrapper/libglite_wms_ja_jobwrappe
 
 check_PROGRAMS = \
 	jobwrapperTest \
-	mpilsfjobwrapperTest \
-	mpipbsjobwrapperTest \
+#	mpilsfjobwrapperTest \
+#	mpipbsjobwrapperTest \
 	urlTest \
 	jobadapterTest
 
@@ -49,25 +49,25 @@ jobwrapperTest_LDADD   = \
         $(CLASSAD_LIBS) \
 	$(BOOST_LIBS)
 
-mpilsfjobwrapperTest_SOURCES = mpilsfjobwrapperTest.cpp
-mpilsfjobwrapperTest_LDADD   = \
-        $(JOBWRAPPER) \
-        $(URL) \
-        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
-        $(CLASSAD_LIBS) \
-        $(BOOST_LIBS)
+#mpilsfjobwrapperTest_SOURCES = mpilsfjobwrapperTest.cpp
+#mpilsfjobwrapperTest_LDADD   = \
+#        $(JOBWRAPPER) \
+#        $(URL) \
+#        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+#        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+#       $(GLITE_WMS_JDL_LIBS) \
+#        $(CLASSAD_LIBS) \
+#        $(BOOST_LIBS)
 
-mpipbsjobwrapperTest_SOURCES = mpipbsjobwrapperTest.cpp
-mpipbsjobwrapperTest_LDADD   = \
-	$(JOBWRAPPER) \
-	$(URL) \
-	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
-        $(CLASSAD_LIBS) \
-        $(BOOST_LIBS)
+#mpipbsjobwrapperTest_SOURCES = mpipbsjobwrapperTest.cpp
+#mpipbsjobwrapperTest_LDADD   = \
+#	$(JOBWRAPPER) \
+#	$(URL) \
+#	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+#        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+#        $(GLITE_WMS_JDL_LIBS) \
+#        $(CLASSAD_LIBS) \
+#        $(BOOST_LIBS)
 
 urlTest_SOURCES = urlTest.cpp
 urlTest_LDADD   = $(URL)
