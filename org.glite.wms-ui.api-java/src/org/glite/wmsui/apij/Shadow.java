@@ -154,7 +154,7 @@ public class Shadow implements Runnable{
 	int console( int port )   {
 		pipeRoot = "/tmp/listener-" + jobId.unique;
 		// Launch the grid-console-shadow with --logfile (background process)
-		String shPath = Api.getEnv (EDG_WL_LOCATION) ;
+		String shPath = Api.getEnv (GLITE_WMS_LOCATION) ;
 		if (  shPath== null  )
 			shPath = OPT_EDG ;
 		shPath = shPath +SEP +BIN +SEP + "edg-wl-grid-console-shadow"  ;
@@ -230,7 +230,7 @@ public class Shadow implements Runnable{
 	private BufferedWriter barbaWriter = null ;
 	private JobId jobId;
 	private static final String SEP = "/" ;
-	private static final String EDG_WL_LOCATION = "EDG_WL_LOCATION";
+	private static final String GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
 	private static final String OPT_EDG = SEP + "opt"+ SEP +  "edg";
 	private static final String BIN = SEP + "bin" ;
 }; //end Shaodw class
