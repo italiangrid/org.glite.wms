@@ -14,7 +14,6 @@ lib_LTLIBRARIES = libglite_wms_helper.la
 helperdir = $(includedir)/glite/wms/helper
 helper_HEADERS = \
 	CopyHelper.h \
-	HelperFactory.h \
 	Helper.h \
 	Request.h \
 	RequestStateMachine.h
@@ -30,7 +29,8 @@ libglite_wms_helper_la_SOURCES = \
         RequestStateMachine.h \
         RequestStateMachine.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/interface \
+	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)

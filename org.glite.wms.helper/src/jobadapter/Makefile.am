@@ -26,13 +26,13 @@ libglite_wms_jobadapter_la_SOURCES = \
 libglite_wms_helper_jobadapter_la_SOURCES = \
         Helper.cpp
 libglite_wms_helper_jobadapter_la_LIBADD = \
-	$(URL) \
         $(JOBWRAPPER) \
+	$(URL) \
         ./libglite_wms_jobadapter.la
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
-	$(GLITE_LOCATION) \
+	$(GLITE_CFLAGS) \
         $(BOOST_CFLAGS) \
         $(CLASSAD_CFLAGS)
 

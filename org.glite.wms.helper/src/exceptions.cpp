@@ -5,8 +5,10 @@
 
 // $Id$
 
-#include "exceptions.h"
+#include "glite/wms/helper/exceptions.h"
+
 #include <string>
+
 #include "glite/wms/jdl/ManipulationExceptions.h"
 
 namespace glite {

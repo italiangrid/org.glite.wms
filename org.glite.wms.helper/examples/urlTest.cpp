@@ -7,13 +7,13 @@
 
 #include <iostream>
 
-#include "url/URL.h"
+#include "jobadapter/url/URL.h"
 
 using std::cout;
 using std::cerr;
 using std::endl;
 
-using namespace glite::wms::jobadapter::url;
+using namespace glite::wms::helper::jobadapter::url;
 
 int
 main(int argc, char* argv[])

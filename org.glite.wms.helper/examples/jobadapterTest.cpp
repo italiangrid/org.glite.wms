@@ -12,15 +12,16 @@
 
 #include "classad_distribution.h"
 
-//#include "edg/workload/planning/helper/exceptions.h"
+#include "glite/wms/helper/exceptions.h"
 
-#include "jobwrapper/JobAdapter.h"
-#include "jobwrapper/exceptions.h"
+#include "jobadapter/JobAdapter.h"
+#include "jobadapter/exceptions.h"
 
-#include "url/URL.h"
+#include "jobadapter/url/URL.h"
 
-#include "glite/wms/jdl/JobId.h"
-#include "glite/wms/jdl/manipulation.h"
+#include "glite/wms/jobid/JobId.h"
+#include "glite/wms/jobid/manipulation.h"
+
 #include "glite/wms/jdl/convert.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
@@ -31,17 +32,17 @@
 using namespace std;
 using namespace classad;
 
-using namespace edg::workload::planning::common;
-using namespace edg::workload::planning::jobadapter;
-//using namespace edg::workload::planning::helper;
-using namespace edg::workload::common::jobid;
-using namespace edg::workload::common::configuration;
-//using namespace edg::workload::common::requestad;
-using namespace edg::workload::common::logger;
-using namespace edg::workload::common::logger::threadsafe;
+using namespace glite::wms::helper::jobadapter::url;
+using namespace glite::wms::helper::jobadapter;
 
-namespace requestad = edg::workload::common::requestad;
-namespace helper = edg::workload::planning::helper;
+using namespace glite::wms::jobid;
+
+using namespace glite::wms::common::configuration;
+using namespace glite::wms::common::logger;
+using namespace glite::wms::common::logger::threadsafe;
+
+namespace jdl = glite::wms::jdl;
+namespace helper = glite::wms::helper;
 
 int
 main(int argc, char* argv[])
@@ -121,7 +122,7 @@ main(int argc, char* argv[])
     
     ofstream convertedoutf(parsedofile.c_str());
 
-    requestad::to_submit_stream(convertedoutf, *ad_modified); 
+    jdl::to_submit_stream(convertedoutf, *ad_modified); 
   }
   catch (CannotConfigure &ex) {
     cerr << ex << endl;

@@ -58,7 +58,7 @@ using namespace std;
 using namespace classad;
 
 namespace config = glite::wms::common::configuration;
-namespace jobid = glite::wms::common::jobid;
+namespace jobid = glite::wms::jobid;
 namespace utilities = glite::wms::common::utilities;
 
 namespace jobwrapper = glite::wms::helper::jobadapter::jobwrapper;
@@ -297,7 +297,7 @@ try {
   }
   
   /* start preparing JobWrapper file */
-  JobWrapper* jw = 0;
+  jobwrapper::JobWrapper* jw = 0;
    
   /* convert the jobid into filename */
   string jobid_to_file(jobid::to_filename(job_id));

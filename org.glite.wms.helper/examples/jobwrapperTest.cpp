@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "jobwrapper/JobWrapper.h"
+#include "jobadapter/jobwrapper/JobWrapper.h"
 
 using std::ofstream;
 using std::cout;
@@ -20,8 +20,8 @@ using std::endl;
 using std::vector;
 using std::string;
 
-using namespace glite::wms::jobadapter::url;
-using namespace glite::wms::jobadapter::jobwrapper;
+using namespace glite::wms::helper::jobadapter::url;
+using namespace glite::wms::helper::jobadapter::jobwrapper;
 
 int
 main(int argc, char* argv[])

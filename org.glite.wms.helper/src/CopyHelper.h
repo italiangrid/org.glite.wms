@@ -9,7 +9,7 @@
 #define GLITE_WMS_HELPER_COPYHELPER_H
 
 #ifndef GLITE_WMS_HELPER_HELPERIMPL_H
-#include "HelperImpl.h"
+#include "glite/wms/helper/HelperImpl.h"
 #endif
 
 namespace glite {

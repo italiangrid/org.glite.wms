@@ -6,9 +6,9 @@
 // $Id$
 
 #include "Helper.h"
-#include "HelperImpl.h"
-#include "HelperFactory.h"
-#include "exceptions.h"
+#include "glite/wms/helper/HelperImpl.h"
+#include "glite/wms/helper/HelperFactory.h"
+#include "glite/wms/helper/exceptions.h"
 
 namespace glite {
 namespace wms {
