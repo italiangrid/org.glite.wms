@@ -11,7 +11,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/tuple.hpp>
+#include <boost/tuple/tuple.hpp>
 
 namespace glite {
 namespace wms {

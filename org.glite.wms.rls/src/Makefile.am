@@ -9,13 +9,12 @@
 noinst_LTLIBRARIES = libglite_wms_replicaservice.la
 
 noinst_HEADERS = \
-	ReplicaService.h \
 	ReplicaServiceException.h \
-	ReplicaServiceReal.h
 
 libglite_wms_replicaservice_la_SOURCES = \
 	ReplicaServiceReal.cpp \
 	ReplicaServiceException.cpp
+
 libglite_wms_replicaservice_la_LIBADD = $(RM_LIBS)
 
 AM_CPPFLAGS = \
