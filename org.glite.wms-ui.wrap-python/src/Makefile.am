@@ -47,45 +47,6 @@ install-exec-hook:
 	ln -fs lib$$file _$$file; \
 	done
 
-SHARED_LIB_UTILITIES = ../../common/utilities/filecontainer.lo \
-	../../common/utilities/fstreamlock.lo \
-	../../common/utilities/FileList.lo \
-	../../common/utilities/FileListIterator.lo \
-	../../common/utilities/FileListLock.lo \
-	../../common/utilities/FileLocker.lo \
-	../../common/utilities/LineParser.lo \
-	../../common/utilities/LineParserExceptions.lo \
-	../../common/utilities/mixed.lo \
-	../../common/utilities/boost_fs_add.lo \
-	../../common/utilities/classad_utils.lo \
-	../../common/utilities/utils.lo \
-	../../common/utilities/globus_ftp_mkdir.lo \
-	../../common/utilities/globus_ftp_put.lo \
-	../../common/utilities/globus_ftp_exists.lo
-SHARED_LIB_LOGGER = ../../common/logger/common.lo \
-	../../common/logger/logbuf.lo \
-	../../common/logger/logstream.lo \
-	../../common/logger/manipulators.lo \
-	../../common/logger/logstream_ts.lo \
-	../../common/logger/container_ts.lo \
-	../../common/logger/manipulators_ts.lo
-SHARED_LIB_REQUESTAD = ../../common/requestad/JDLAttributes.lo \
-	../../common/requestad/PrivateAttributes.lo \
-	../../common/requestad/JobAdManipulation.lo \
-	../../common/requestad/PrivateAdManipulation.lo \
-	../../common/requestad/ManipulationExceptions.lo \
-	../../common/requestad/JdlAttributeList.lo \
-	../../common/requestad/JobAd.lo \
-	../../common/requestad/NodeAd.lo \
-	../../common/requestad/DAGAd.lo \
-	../../common/requestad/DAGAdManipulation.lo \
-	../../common/requestad/ExpDagAd.lo \
-	../../common/requestad/Ad.lo \
-	../../common/requestad/JobAdExceptions.lo \
-	../../common/requestad/JobAdSchema.lo \
-	../../common/requestad/convert.lo
-
-
 GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(top_srcdir)/../org.glite.wms.manager-ns-client/build/src \
 	-L$(top_srcdir)/../org.glite.wms.manager-ns-commands/build/src \
 	-L$(top_srcdir)/../org.glite.wms.manager-ns-fsm/build/src \
@@ -117,12 +78,6 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
         $(EXPAT_LIBS) \
 	-lstdc++
 
-#	../../networkserver/client/libnsclient.la \
-#	$(SHARED_LIB_REQUESTAD) \
-#	$(SHARED_LIB_UTILITIES) \
-#	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la 
-
 libglite_wmsui_LogWrapper_la_SOURCES = \
 	LogWrapper_wrap.cpp \
 	LogWrapper.cpp \
@@ -147,12 +102,6 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
 	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
-
-#	../../networkserver/client/libnsclient.la \
-#	$(SHARED_LIB_REQUESTAD) \
-#	$(SHARED_LIB_UTILITIES) \
-#	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la 
 
 libglite_wmsui_NsWrapper_la_SOURCES = \
 	NsWrapper_wrap.cpp \
@@ -187,12 +136,6 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
         $(EXPAT_LIBS) \
 	-lstdc++
 
-#	../../networkserver/client/libnsclient.la \
-#	$(SHARED_LIB_REQUESTAD) \
-#	$(SHARED_LIB_UTILITIES) \
-#	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la 
-
 libglite_wmsui_AdWrapper_la_SOURCES = \
 	AdWrapper_wrap.cpp \
 	AdWrapper.cpp \
@@ -218,11 +161,9 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
         $(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
-	-lglite_wmsui_partitioner \
-	-lglite_wms_checkpointing \
+	$(GLITE_WMSUI_PARTITIONER_LIBS) \
+	$(GLITE_WMS_CHKPT_LIBS) \
 	-lstdc++
-
-#-L/home/marask/Repository/cern/stage/lib 
 
 LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 	@#Create the files
