@@ -35,7 +35,7 @@ using namespace classad;
 using namespace glite::wms::helper::jobadapter::url;
 using namespace glite::wms::helper::jobadapter;
 
-using namespace glite::wms::jobid;
+using namespace glite::wmsutils::jobid;
 
 using namespace glite::wms::common::configuration;
 using namespace glite::wms::common::logger;
