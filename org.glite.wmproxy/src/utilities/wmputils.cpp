@@ -138,6 +138,33 @@ waitForSeconds(int seconds)
 	cerr<<"-----> End waiting"<<endl;
 }
 
+/*static bool copy_file(const std::string& from, const std::string& to)
+{
+  edglog_fn("CFSI::copyFile");
+  edglog(info) << "Copying file.." << std::endl;
+  edglog(debug) << "From: " << from << " To: " << to << std::endl;
+  std::ifstream in ( from.c_str() );
+
+  if( !in.good() ) {
+    return false;
+  }
+  std::ofstream out( to.c_str() );
+  
+  if( !out.good() ) {
+    return false;
+  }
+  out << in.rdbuf(); // read original file into target
+  
+  struct stat from_stat;
+  if(   stat(from.c_str(), &from_stat) ||
+        chown( to.c_str(), from_stat.st_uid, from_stat.st_gid ) ||
+        chmod( to.c_str(), from_stat.st_mode ) ) {
+    edglog(severe) << "Copy failed. From: " << from << " To: " << to << std::endl;
+    return false;
+  }
+  edglog(debug) << "Copy done." << std::endl;
+  return true;
+}*/
 
 void
 fileCopy(const string &source, const string &target) 
@@ -203,7 +230,7 @@ int managedir ( const std::string &dest_uri , int userid , std::vector<std::stri
    arguments += " -m 0770 "; // MODE 
    int level = 0; 
    bool extended_path = true ; 
-   const string executable = gliteDirmanExe  + arguments + dest_uri + FILE_SEP; 
+   const string executable = gliteDirmanExe + arguments + dest_uri + FILE_SEP; 
    boost::char_separator<char> sep(FILE_SEP.c_str()); 
    // Iterate over the jobs 
    for (unsigned int i = 0 ; i < jobids.size() ; i++){ 
