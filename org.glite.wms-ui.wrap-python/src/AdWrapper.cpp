@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "AdWrapper.h"
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wmsui/partitioner/Partitioner.h"
+#include "glite/wms/partitioner/Partitioner.h"
 #include "glite/wms/jdl/DAGAd.h"
 #define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
 #define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
@@ -67,7 +67,7 @@ bool AdWrapper::toDagAd (){
 }
 bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-	glite::wmsui::partitioner::Partitioner part ( jad->ad(),jobids);
+	glite::wms::partitioner::Partitioner part ( jad->ad(),jobids);
 	cAd=new DAGAd( part.createDag()->ad() );
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
