@@ -19,19 +19,19 @@ glite_wms_pipe_input_LDFLAGS = -static
 glite_wms_pipe_input_LDADD = \
 	$(GLITE_WMS_TP_BYPASS_LIBS) \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
+        $(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
         $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
         $(ARES_LIBS) \
-	$(EXPAT_STATIC_LIBS) \
+	$(EXPAT_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_FTP_CLIENT_THR_LIBS) \
-        $(GLOBUS_GSS_NOTHR_LIBS) \
+        $(GLOBUS_GSS_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
-	-lstdc++ -lnsl -ldl -lpthread
+        -lstdc++ -lpthread -lnsl -ldl
 
 glite_wms_pipe_output_SOURCES = glite_wms_pipe_output.c
 glite_wms_pipe_output_LDFLAGS = -static
@@ -45,7 +45,7 @@ glite_wms_pipe_output_LDADD = \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
         $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
         $(ARES_LIBS) \
-	$(EXPAT_STATIC_LIBS) \
+	$(EXPAT_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_FTP_CLIENT_THR_LIBS) \
         $(GLOBUS_GSS_NOTHR_LIBS) \
