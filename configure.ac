@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2004/07/28 10:19:09  eronchie
+#       Added m4files.list property
+#
 #       Revision 1.7  2004/07/27 13:46:37  pandreet
 #       LB dependencies fixed
 #
@@ -89,7 +92,6 @@ have_boost=no
 have_classads=no
 have_condorg=no
 have_globus=no
-have_globus_ssl=no
 have_ares=no
 have_expat=no
                                                                                 
@@ -99,13 +101,11 @@ AC_CONDORG(6.5.3, have_condorg=yes, have_condorg=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_ARES([], have_ares=yes, have_ares=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
-AC_GLOBUS_SSL_UTILS([], have_globus_ssl=yes, have_globus_ssl=no)
                                                                                 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["CONDORG found $have_condorg"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["GLOBUS_SSL found $have_globus_ssl"])
 AC_MSG_RESULT(["ARES found $have_ares"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 
