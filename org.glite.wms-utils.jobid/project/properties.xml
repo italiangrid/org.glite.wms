@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.5  2004/07/28 07:21:58  eronchie
+	Added m4files.list property
+
 	Revision 1.4  2004/07/23 14:47:01  eronchie
 	Removed....
-
+	
 	Revision 1.3  2004/07/21 18:22:38  eronchie
 	Changed wms in wms-utils
 	
@@ -64,5 +67,11 @@
 		 ====================================================== -->
 	
 	<import file="${component.general.properties.file}" />
-						
+
+	<!-- ======================================================
+                 Define extra properties here ...
+                 ====================================================== -->
+
+        <property name="m4files.list" value="globus.m4 glite.m4">
+	
 </project>
