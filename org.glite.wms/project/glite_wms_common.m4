@@ -12,7 +12,7 @@ AC_DEFUN(AC_GLITE_WMS_COMMON,
     if test -n "ac_glite_wms_common_prefix" ; then
     	GLITE_WMS_COMMON_CFLAGS="-I$ac_glite_wms_common_prefix/include/glite/wms/common"
 	dnl
-	dnl path only for workload/logging/common
+	dnl 
 	dnl
         ac_glite_wms_common_lib="-L$ac_glite_wms_common_prefix/lib"
 	GLITE_WMS_COMMON_CONF_LIBS="$ac_glite_wms_common_lib -lglite_wms_conf"
