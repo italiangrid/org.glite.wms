@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/23 17:13:13  eronchie
+#       Updatreds
+#
 #       Revision 1.1  2004/07/08 15:11:03  pandreet
 #       Basic build files for checkpointing
 #
@@ -79,11 +82,14 @@ AC_GLITE
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
-AC_GLITE_WMS_JOBID([], have_glite_wms_jobid=yes, have_glite_wms_jobid=no)
-AC_MSG_RESULT(["GLITE_WMS_JOBID found $have_glite_wms_jobid"])
+AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wms_common"])
 
-AC_GLITE_WMS_TLS([], have_glite_wms_tls=yes, have_glite_wms_tls=no)
-AC_MSG_RESULT(["GLITE_WMS_TLS found $have_glite_wms_tls"])
+AC_GLITE_WMSUTILS_JOBID([], have_glite_wms_jobid=yes, have_glite_wms_jobid=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_JOBID found $have_glite_wms_jobid"])
+
+AC_GLITE_WMSUTILS_TLS([], have_glite_wms_tls=yes, have_glite_wms_tls=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_TLS found $have_glite_wms_tls"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
