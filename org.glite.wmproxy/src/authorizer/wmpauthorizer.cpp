@@ -11,10 +11,10 @@
 #include "utilities/wmpexception_codes.h"
 
 
-// LCAS-LCMAPS C libraries
+// LCAS-LCMAPS C libraries headers
 extern "C" {
-#include "lcas.h"
-#include "lcmaps.h"
+#include "glite/security/lcas/lcas.h"
+#include "glite/security/lcmaps/lcmaps.h"
 }
 #include <dlfcn.h>
 
