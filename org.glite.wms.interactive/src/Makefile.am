@@ -49,7 +49,22 @@ glite_wms_pipe_output_LDADD = \
         $(GLOBUS_STATIC_SSL_THR_LIBS) \
 	-lnsl -ldl -lpthread -lstdc++
 
-glite_wms_job_agent_SOURCES = glite_wms_job_agent.c
+glite_wms_job_agent_SOURCES = glite_wms_job_agent.c 
+glite_wms_job_agent_output_LDFLAGS = -static
+glite_wms_job_agent_LDADD = \
+        $(GLITE_WMS_TP_BYPASS_LIBS) \
+        $(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
+        $(GLITE_LB_NOTHR_COMMON_LIBS) \
+        $(GLITE_LB_NOTHR_CLIENT_LIBS) \
+        $(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+        $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
+        $(ARES_LIBS) \
+        $(EXPAT_STATIC_LIBS) \
+        $(GLOBUS_STATIC_COMMON_THR_LIBS) \
+        $(GLOBUS_STATIC_SSL_THR_LIBS) \
+        -lnsl -ldl -lpthread -lstdc++
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
