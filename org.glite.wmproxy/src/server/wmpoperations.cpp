@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <glob.h>  //get output file list
 
 #include "wmpoperations.h"
 #include "wmpconfiguration.h"
@@ -26,6 +25,7 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "commands/logging.h"
+#include "commands/listfiles.h"
 
 // Delegation
 #include "wmpdelegation.h"
@@ -65,25 +65,6 @@ using namespace glite::wms::common::configuration; // Configuration
 using namespace boost::details::pool ; //singleton
 namespace logger         = glite::wms::common::logger;
 namespace configuration  = glite::wms::common::configuration;
-
-/*
-const NSConfiguration* wmpConfig() {
-	configuration::NSConfiguration const* wmp_config ;
-	try{
-		cout << "Arrivai in wmpConfig..." << endl ;
-		std::string opt_conf_file("glite_wms.conf");
-		configuration::Configuration config(opt_conf_file, configuration::ModuleType::network_server);
-	        wmp_config= config.ns() ;
-		// delete config ;
-		edglog(fatal) << "wmpConfig exiting:\t" << wmp_config->sandbox_staging_path() << endl ;
-	} catch (...) {
-		// DO nothing...
-	}
-	return wmp_config ;
-
-}
-*/
-
 
 //namespace glite {
 //namespace wms {
@@ -808,7 +789,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 			"jobPurge(jobPurgeResponse &jobPurge_response, string jid)",
 			wmp_fault.code, wmp_fault.message);
 	}
-	edglog(severe) << "" << endl;
+	edglog(severe) << "job Purged successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -828,50 +809,36 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 			wmp_fault.code, wmp_fault.message);
 	}
 
-/*
 	// OUTPUT stage area =  SandboxDestURIResponse/output
 	getSandboxDestURIResponse getSandboxDestURI_response;
-	getSandboxDestURI(getSandboxDestURI_response, jid->toString());
-	string output_uri = getSandboxDestURI_response.path + "/output/*" ;
-	edglog(fatal)<<"output_uri: "<< output_uri <<endl;
+	getSandboxDestURI(getSandboxDestURI_response, jid);
+	string output_uri = getSandboxDestURI_response.path + "/output" ;
+	edglog(fatal)<<"output_uri = " << output_uri <<endl;
+	edglog(fatal)<<"now calling path... " << output_uri <<endl;
 	// find files inside directory
-	glob_t  *pglob ;
-	pglob = (glob_t  *) malloc (sizeof(glob_t)) ;
-	// Retrieve files from path
-	int gl = glob( output_uri.c_str()   , GLOB_ERR ,  NULL, pglob);
-	if  (gl!=0)
-		 throw JobOperationException(__FILE__, __LINE__,
-			"getOutputFileList(getOutputFileListResponse "
-			"&getOutputFileList_response, const string &jid)",
-			WMS_FATAL, "MEMORY ERROR");
-*/
-
-	/// To remove. Only to test
-	StringAndLongList *list = new StringAndLongList();
-	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
-/*
-	for  (unsigned int i=0 ; i< pglob->gl_pathc ; i++){
-		StringAndLongType *item = new StringAndLongType();
-		pglob->gl_pathv[i]
+	const boost::filesystem::path p (output_uri,boost::filesystem::system_specific );
+	edglog(fatal)<<"Path filled" << endl;
+	std::vector<std::string> found ;
+	glite::wms::wmproxy::commands::list_files( p , found);
+	edglog(fatal)<<"list files called, size is: " << found.size()<<endl;
+	// Create and return the list:
+	getOutputFileList_response.OutputFileAndSizeList = new StringAndLongList;
+	getOutputFileList_response.OutputFileAndSizeList->file = new vector<StringAndLongType*>(found.size());
+	StringAndLongType *item = NULL;
+	for (unsigned int i = 0 ; i < found.size() ; i++){
+		item=new StringAndLongType();
+		item->name = found[i];
+		item->size = 5 + i;
+		edglog(fatal)<<"push back address=" << item <<endl;
+		getOutputFileList_response.OutputFileAndSizeList->file->push_back(item);
 	}
-*/
+	edglog(fatal)<<"Now checking the vector created..." << endl;
+	for (unsigned int i = 0 ; i < found.size() ; i++)
+		edglog(fatal)<<"- " << (*(getOutputFileList_response.OutputFileAndSizeList->file))[i]->name << endl ;
 
-
-
-	StringAndLongType *item = new StringAndLongType();
-	item->name = *(new string("First"));
-	item->size = 5;
-	file->push_back(item);
-
-
-	StringAndLongType *item2 = new StringAndLongType();
-	item2->name = *(new string("Second"));
-	item2->size = 50;
-	file->push_back(item2);
-	list->file = file;
-	getOutputFileList_response.OutputFileAndSizeList = list;
-
-	edglog(severe) << "" << endl;
+	// list->file = file;
+	// getOutputFileList_response.OutputFileAndSizeList = list;
+	edglog(severe) << "Successfully retrieved files: " <<  found.size() << endl;
 	GLITE_STACK_CATCH();
 }
 
