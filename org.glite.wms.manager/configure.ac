@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/09/21 19:25:54  glbuild
+#       modified module.version
+#
 #       Revision 1.4  2004/08/27 13:34:32  eronchie
 #       Added handling of config dir
 #       Added start up script file
@@ -40,7 +43,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Manager], [0.0.0])
+AC_INIT([GLite WMS Manager], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/WMImpl.h])
@@ -153,3 +156,4 @@ AC_CONFIG_FILES([src/server/glite-wms-dag-post.sh])
 AC_CONFIG_FILES([src/server/glite-wms-planner.sh])
 
 AC_OUTPUT
+
