@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2004/12/09 11:30:55  eronchie
+#       Updated
+#
 #       Revision 1.8  2004/12/09 11:18:13  eronchie
 #       Updated data info
 #
@@ -121,9 +124,11 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["REPLICA found $have_replica"])
-AC_MSG_RESULT(["GLITE_DATA found $have_data"])
 
 AC_GLITE
+
+AC_GLITE_DATA([], have_data=yes, have_data=no)
+AC_MSG_RESULT(["GLITE_DATA found $have_data"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
