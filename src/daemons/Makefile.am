@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/27 13:46:37  pandreet
+#       LB dependencies fixed
+#
 #       Revision 1.2  2004/07/27 09:41:26  pandreet
 #       JobId and Exception dependencies fixed
 #
@@ -27,14 +30,10 @@
 WL_JCTRL_DCTRL=glite-wms-job_controller
 WL_JCTRL_DLOG=glite-wms-log_monitor
 
-#LOGGING = $(top_srcdir)/logging/client/libedg_wl_logging.la
-LOCAL_CFLAGS = $(ARES_CFLAGS) $(EXPAT_CFLAGS)
-LOCAL_LIBS = $(ARES_LIBS) $(EXPAT_LIBS)
 #PROXYRENEWAL = $(top_srcdir)/proxyrenewal/libedg_wl_renewal.la
 #PURGER = $(top_srcdir)/purger/libedg_wl_purger.la \
 #         $(top_srcdir)/logging/client/libedg_wl_loggingpp.la
 
-LOGGING =
 PROXYRENEWAL =
 PURGER =
 
@@ -60,10 +59,11 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_controller.la \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-	$(LOGGING) \
-	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) -lglobus_ssl_utils \
+	$(GLITE_LB_CLIENT_LIBS) $(GLITE_LB_COMMON_LIBS) \
+	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
-	$(LOCAL_LIBS) $(CONDORG_LIBS) \
+	$(ARES_LIBS) $(EXPAT_LIBS) $(CONDORG_LIBS) \
 	$(PROXYRENEWAL) $(PURGER)
 
 glite_wms_log_monitor_SOURCES = logmonitor.cpp \
@@ -82,10 +82,11 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_controller.la \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-	$(LOGGING) \
-	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) -lglobus_ssl_utils \
+	$(GLITE_LB_CLIENT_LIBS) $(GLITE_LB_COMMON_LIBS) \
+	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
-	$(CONDORG_LIBS) $(LOCAL_LIBS) \
+	$(CONDORG_LIBS) $(ARES_LIBS) $(EXPAT_LIBS) \
 	$(PROXYRENEWAL) $(PURGER)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
@@ -93,7 +94,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(LOCAL_CFLAGS) \
+	$(ARES_CFLAGS) $(EXPAT_CFLAGS) \
 	$(CONDORG_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~

@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/27 13:46:37  pandreet
+#       LB dependencies fixed
+#
 #       Revision 1.2  2004/07/18 11:53:35  eronchie
 #       Added AC_GLITE_LB check
 #       WARNING: work in progress
@@ -41,10 +44,9 @@ noinst_HEADERS = \
 	SignalChecker.h \
 	handler.h
 
-#LOCAL_LOGGING_CFLAGS = -DENABLE_LOGGING
 #LOCAL_PURGER_CFLAGS = -DENABLE_PURGER
 #LOCAL_RENEWAL_CFLAGS = -DENABLE_RENEWAL
-LOCAL_LOGGING_CFLAGS =
+LOCAL_LOGGING_CFLAGS = -DENABLE_LOGGING
 LOCAL_PURGER_CFLAGS =
 LOCAL_RENEWAL_CFLAGS =
 

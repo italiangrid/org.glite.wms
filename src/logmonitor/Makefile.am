@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/27 13:46:37  pandreet
+#       LB dependencies fixed
+#
 #       Revision 1.2  2004/07/25 17:40:02  eronchie
 #       Updated condor prefix
 #
@@ -36,14 +39,9 @@ noinst_HEADERS = \
 	SizeFile.h \
 	Timer.h
 
-#Uncomment as dependencies become available.
-#LOGGING = $(top_srcdir)/src/logging/client/libedg_wl_logging.la
-#LOCAL_CFLAGS = $(ARES_CFLAGS) $(EXPAT_CFLAGS)
-#LOCAL_LIBS = $(ARES_LIBS) $(EXPAT_LIBS)
 #PROXYRENEWAL = $(top_srcdir)/proxyrenewal/libedg_wl_renewal.la
 #PURGER = $(top_srcdir)/purger/libedg_wl_purger.la \
 #         $(top_srcdir)/logging/client/libedg_wl_loggingpp.la
-LOGGING =
 PROXYRENEWAL =
 PURGER =
 
@@ -66,9 +64,11 @@ glite_wms_lm_job_status_LDADD = libglite_wms_logmonitor.la \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(BOOST_FS_LIBS) $(BOOST_THREAD_LIBS) $(BOOST_REGEX_LIBS) \
-	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) -lglobus_ssl_utils \
+	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
-	$(LOGGING) $(LOCAL_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	$(ARES_LIBS) $(EXPAT_LIBS) \
 	$(PROXYRENEWAL) $(PURGER)
 
 libglite_wms_logmonitor_la_SOURCES = CondorMonitor.cpp \
@@ -102,7 +102,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_NOTHR_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(CONDORG_CFLAGS) \
-	$(LOCAL_CLFLAGS)
+	$(CONDORG_CFLAGS) 
 
 MAINTAINERCLEANFILES = Makefile.in *~
