@@ -16,8 +16,8 @@ void bypass_grid_console_remote(int);
 
 int set_term_();
 
-        /* How often should we try to restore broken connections ? */
-#define EDG_WL_PIPE_OUTPUT_RESTORE_REMOTE_CONNECTION_TIMEOUT 5 
+/* How often should we try to restore broken connections ? */
+#define GLITE_WMS_PIPE_OUTPUT_RESTORE_REMOTE_CONNECTION_TIMEOUT 5 
 
 int main()
  {
@@ -41,7 +41,7 @@ int main()
   while (1)
    {
     FD_SET(fin,&input);
-    periodic_restore.tv_sec = EDG_WL_PIPE_OUTPUT_RESTORE_REMOTE_CONNECTION_TIMEOUT;
+    periodic_restore.tv_sec = GLITE_WMS_PIPE_OUTPUT_RESTORE_REMOTE_CONNECTION_TIMEOUT;
     periodic_restore.tv_usec = 0;
     retcod=select(1,&input, NULL, NULL, &periodic_restore);
 

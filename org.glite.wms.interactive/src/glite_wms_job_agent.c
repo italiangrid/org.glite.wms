@@ -29,7 +29,7 @@ int main(int argc,  char **argv) {
 
  int size=BUF_SIZE;
  
- char *agent_location="./libedg-wl-grid-console-agent.so";
+ char *agent_location="./libglite-wms-grid-console-agent.so";
  
  if(argc!=4){
   printf("Usage: argv[0] <remote_host> <remote_port> <exe>\n");
@@ -112,8 +112,6 @@ int main(int argc,  char **argv) {
   exit(-1);
  }
    
- 
-
  gettimeofday(tv, tz);
  
  if (getcwd(localdir, size) == NULL) {
@@ -152,8 +150,8 @@ int main(int argc,  char **argv) {
  sprintf(pipout, "%s%s%ld", localdir, "pipout", tv->tv_sec);
  mknod(pipout, (S_IFIFO | 00644),S_IFIFO);
 
- sprintf(pipinval, "%s%s%s%s%s", localdir, "edg-wl-pipe-input", " > ", pipin, "&");
- sprintf(pipoutval, "%s%s%s%s%s", localdir, "edg-wl-pipe-output", " < ", pipout, "&");
+ sprintf(pipinval, "%s%s%s%s%s", localdir, "glite-wms-pipe-input", " > ", pipin, "&");
+ sprintf(pipoutval, "%s%s%s%s%s", localdir, "glite-wms-pipe-output", " < ", pipout, "&");
 
  sprintf(execval, "%s%s%s%s%s", argv[3], " < ", pipin, " >& ", pipout);
    
@@ -161,7 +159,7 @@ int main(int argc,  char **argv) {
  system(pipoutval);
  system(execval);
 
- system("killall edg-wl-pipe-input");
+ system("killall glite-wms-pipe-input");
 
  remove(pipin);
  remove(pipout);

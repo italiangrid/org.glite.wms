@@ -17,16 +17,16 @@ bin_PROGRAMS = \
 glite_wms_pipe_input_SOURCES = glite_wms_pipe_input.c
 glite_wms_pipe_input_LDFLAGS = -static
 gltie_wms_pipe_input_LDADD = \
-	../thirdparty/bypass-2_5_3/examples/libedg-wl-grid-console-agent.la \
-	$(GLOBUS_SSL_UTILS_LIBS) \
+	$(GLITE_WMS_THIRDPARTY_BYPASS_LIBS) \
+	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(GLOBUS_STATIC_LIBS) \
 	-lstdc++ -lnsl -ldl -lpthread
 
 glite_wms_pipe_output_SOURCES = edg_wl_pipe_output.c
 glite_wms_pipe_output_LDFLAGS = -static
 glite_wms_pipe_output_LDADD = \
-	../thirdparty/bypass-2_5_3/examples/libedg-wl-grid-console-agent.la \
-	$(GLOBUS_SSL_UTILS_LIBS) \
+	$(GLITE_WMS_THIRDPARTY_BYPASS_LIBS) \
+	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
         $(GLOBUS_STATIC_LIBS) \
 	-lstdc++ -lnsl -ldl -lpthread
 
@@ -35,8 +35,6 @@ glite_wms_job_agent_SOURCES = edg_wl_job_agent.c
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
-	-I../thirdparty/bypass-2_5_3/src \
-	$(GLOBUS_SSL_UTILS_CFLAGS) 
 
 EXTRA_DIST = LICENSE README.in	
 

@@ -5,7 +5,7 @@
 #include <sys/poll.h>
 #include "layer.h"
 
-#define EDG_WL_PIPE_INPUT_ERROR_RETRY_PERIOD 5 /* Sleep on any error when polling, in seconds. */
+#define GLITE_WMS_PIPE_INPUT_ERROR_RETRY_PERIOD 5 /* Sleep on any error when polling, in seconds. */
 
 void bypass_layer_init();
 
@@ -32,7 +32,7 @@ int main()
      }
     else 
      {
-      sleep(EDG_WL_PIPE_INPUT_ERROR_RETRY_PERIOD);
+      sleep(GLITE_WMS_PIPE_INPUT_ERROR_RETRY_PERIOD);
       continue;
      }
 
