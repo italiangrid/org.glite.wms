@@ -45,7 +45,8 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
-
+// Environment variable name to get User Distinguished Name
+const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
 
 bool
 doPurge(std::string dg_jobid)
@@ -73,9 +74,6 @@ getUserFreeQuota(std::pair<long, long>& result, std::string uname)
 {
 	result = commonutilities::quota::getFreeQuota(uname);
 }
-
-
-const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
 
 char *
 getUserDN()
