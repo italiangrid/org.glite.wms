@@ -32,8 +32,8 @@ import org.glite.wmsui.apij.*;
 
 import org.apache.log4j.*;
 
-import org.edg.info.Consumer;
-import org.edg.info.ResultSet;
+import org.glite.rgma.Consumer;
+import org.glite.rgma.ResultSet;
 import org.edg.info.CanonicalProducer;
 import org.edg.info.ServletConnection;
 
