@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/10/01 13:52:12  pandreet
+#       Build files for unit tests
+#
 #       Revision 1.6  2004/09/22 01:04:44  dimeglio
 #       Fixed missing parenthesis in AC_INIT
 #
@@ -101,18 +104,21 @@ have_classads=no
 have_globus=no
 have_ares=no
 have_expat=no
+have_cppunit=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_ARES([], have_ares=yes, have_ares=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
+AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
                                                                                
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["ARES found $have_ares"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
+AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
@@ -157,6 +163,7 @@ AC_CONFIG_FILES([src/daemons/Makefile])
 AC_CONFIG_FILES([src/server/Makefile])
 AC_CONFIG_FILES([src/server/glite-wms-dag-post.sh])
 AC_CONFIG_FILES([src/server/glite-wms-planner.sh])
+AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT
 

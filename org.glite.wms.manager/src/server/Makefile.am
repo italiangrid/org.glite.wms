@@ -124,7 +124,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/common \
         $(CLASSAD_CFLAGS) \
-        $(BOOST_CFLAGS)
+        $(BOOST_CFLAGS) \
+	-I$(top_srcdir)/../org.glite.wms.purger/src
 
 EXTRA_DIST = glite-wms-planner.sh.in \
         	glite-wms-dag-post.sh.in
