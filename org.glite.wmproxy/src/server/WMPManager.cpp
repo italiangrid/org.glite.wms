@@ -32,10 +32,10 @@ namespace logger        = common::logger;
 namespace utilities   	= common::utilities;
 namespace commands      = edg::workload::networkserver::commands;
 
-namespace edg {
-namespace workload {
-namespace networkserver {
-namespace daemon {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
 
 class WMPDispatcher
 {
