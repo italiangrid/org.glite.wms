@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2004/07/28 14:38:57  pandreet
+#       Proxyrenewal dependencies fixed
+#
 #       Revision 1.8  2004/07/28 10:19:09  eronchie
 #       Added m4files.list property
 #
@@ -112,7 +115,8 @@ AC_MSG_RESULT(["EXPAT found $have_expat"])
 have_glite_wms_common=no
 have_glite_wmsutils=no
 have_glite_wms_jdl=no
-have_glite_lb=no                                                          
+have_glite_lb=no
+have_glite_security=no                                                       
                       
 AC_GLITE
                                                                                 
@@ -127,6 +131,9 @@ AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
+AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

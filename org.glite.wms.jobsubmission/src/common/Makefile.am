@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/07/28 14:38:58  pandreet
+#       Proxyrenewal dependencies fixed
+#
 #       Revision 1.4  2004/07/28 13:51:38  pandreet
 #       Purger dependencies fixed
 #
@@ -47,9 +50,6 @@ noinst_HEADERS = \
 	SignalChecker.h \
 	handler.h
 
-#LOCAL_PURGER_CFLAGS = -DENABLE_PURGER
-#LOCAL_RENEWAL_CFLAGS = -DENABLE_RENEWAL
-
 libglite_wms_js_common_la_SOURCES = IdContainer.cpp \
 	RamContainer.cpp \
 	PointerId.cpp \
@@ -67,6 +67,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	-I$(top_srcdir)/../org.glite.wms.purger/interface \
-	-DENABLE_LOGGING -DENABLE_PURGER
+	-DENABLE_LOGGING -DENABLE_PURGER -DENABLE_RENEWAL
 
 MAINTAINERCLEANFILES = Makefile.in *~
