@@ -9,6 +9,7 @@
 #include <boost/regex.hpp>
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/ce/monitor-client-api-c/CEEvent.h"
+#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 
 #include "glite/wms/common/ldif2classad/LDIFObject.h"
 
