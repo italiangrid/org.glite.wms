@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2004/07/27 09:14:19  eronchie
+#       Removed AC_WMSUTILS_EXCEPTION and AC_GLOBUS_SSL_UTILS checks
+#       Set directly exception library macro
+#
 #       Revision 1.7  2004/07/21 17:53:36  eronchie
 #       Moved out org.glite.wms.jobid from org.glite.wms and put in org.glite.wms-utils
 #
@@ -84,9 +88,8 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 have_glite_wmsutils_exception=no
                                                                                 
 AC_GLITE
-                                                                                
-AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
+
+GLITE_WMSUTILS_EXCEPTION_LIBS="-L$GLITE_LOCATION/lib -lglite_wmsutils_exception"AC_SUBST(GLITE_WMSUTILS_EXCEPTION_LIBS)
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
