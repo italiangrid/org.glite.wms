@@ -13,7 +13,7 @@ AC_DEFUN(AC_GLITE_WMSUTILS_EXCEPTION,
 	dnl path only for 
 	dnl
         ac_glite_wmsutils_exception_lib="-L$ac_glite_wmsutils_exception_prefix/lib"
-	GLITE_WMSUTILS_EXCEPTION_LIBS="$ac_glite_wmsutils_exception_lib -lglite_wmsutils_exceptions"
+	GLITE_WMSUTILS_EXCEPTION_LIBS="$ac_glite_wmsutils_exception_lib -lglite_wmsutils_exception"
 	ifelse([$2], , :, [$2])
     else
 	GLITE_WMSUTILS_EXCEPTION_CFLAGS=""

@@ -20,10 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2004/07/23 10:43:13  eronchie
+	Removed s
+
 	Revision 1.2  2004/07/23 07:56:24  eronchie
 	Added wms-utils
 	WARNING: work in progress
-
+	
 	Revision 1.1.1.1  2004/07/21 16:32:21  eronchie
 	Start adding new subsystem
 	
@@ -224,7 +227,7 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="globus_ssl_utils" unless="setenvonly" depends="globus">
+	<target name="thirdparty-globus_ssl_utils" unless="setenvonly" depends="globus">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
 		     target="${target}"
 		     inheritall="false" />
@@ -236,20 +239,20 @@
                      inheritall="false" />
 	</target>
 
-        <target name="tls" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,exception">
+        <target name="tls" unless="setenvonly" depends="boost,classads,globus,thirdparty-globus_ssl_utils,exception">
                 <ant dir="${workspace.dir}/${subsystem.name}.tls"
                      target="${target}"
                      inheritall="false" />
         </target>
 
-	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,exception">
+	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,thirdparty-globus_ssl_utils,exception">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobid"
                      target="${target}"
                      inheritall="false" />
         </target>
 
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="globus_ssl_utils,
+	<target name="buildmodules" depends="thirdparty-globus_ssl_utils,
 					     tls,
 					     jobid,
 					     exception" />
