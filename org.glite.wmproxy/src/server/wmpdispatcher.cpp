@@ -6,14 +6,23 @@
 
 #include "wmpdispatcher.h"
 #include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/thread/thread.hpp>
 #include "glite/wmsutils/exception/Exception.h"
 
+#include "commands/logging.h"
+#include "NS2WMProxy.h"
+#include "WMPManager.h"
+
+
+namespace logger         = glite::wms::common::logger;
 using namespace glite::wmsutils::exception; //Exception
 
 void
-WMPDispatcher::run(void)
+//WMPDispatcher::run(void)
+WMPDispatcher::operator()()
 {
 try {
   edglog_fn("Dispatcher::run");

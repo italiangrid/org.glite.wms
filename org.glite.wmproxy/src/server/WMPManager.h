@@ -14,8 +14,9 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
-#include "Task.h"
+#include "glite/wms/common/task/Task.h"
 #include "glite/wms/common/utilities/classad_utils.h"
+#include "wmpresponsestruct.h"
 
 namespace task          = glite::wms::common::task;
 

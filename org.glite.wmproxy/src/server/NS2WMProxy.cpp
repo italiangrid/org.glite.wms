@@ -9,8 +9,8 @@
 
 #include "NS2WMProxy.h"
 #include <classad_distribution.h>
-#include "Command.h"
-#include "logging.h"
+#include "commands/Command.h"
+#include "commands/logging.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/context.h"
 #include "glite/wms/common/utilities/classad_utils.h"
@@ -20,7 +20,7 @@
 #include "glite/wms/jdl/DAGAd.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
-#include "JobId.h"
+#include "commands/JobId.h"
 #include "wmpeventlogger.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>

@@ -14,14 +14,14 @@
 #include "WMPManager.h"
 #include "NS2WMProxy.h"
 #include "exceptions.h"
-#include "Command.h"
-#include "CommandFactory.h"
-#include "CommandFactoryServerImpl.h"
-#include "logging.h" 
+#include "commands/Command.h"
+#include "commands/CommandFactory.h"
+#include "commands/CommandFactoryServerImpl.h"
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/common/utilities/classad_utils.h" 
 #include "glite/wms/common/logger/edglog.h" 
 #include "glite/wms/common/logger/manipulators.h" 
+#include "commands/logging.h" 
 
 namespace common        = glite::wms::common;
 namespace configuration = common::configuration;

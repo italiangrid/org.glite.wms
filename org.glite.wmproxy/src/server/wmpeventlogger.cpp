@@ -18,7 +18,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 // edglog macro definitions
-#include "logging.h"
+#include "commands/logging.h"
 
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
