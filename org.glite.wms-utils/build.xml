@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.10  2004/08/09 04:35:22  dimeglio
+	Fixed inheritance of do.cvs.tag property
+
 	Revision 1.9  2004/08/09 03:05:21  dimeglio
 	Fixed inheritance of failonerror property
-
+	
 	Revision 1.8  2004/08/09 02:41:53  dimeglio
 	Set default value for failonerror
 	
@@ -253,7 +256,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-utils.subsystem.dir}.thirdparty-globus_ssl_utils" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -269,7 +272,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-utils.subsystem.dir}.exception" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -285,7 +288,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-utils.subsystem.dir}.tls" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -301,7 +304,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-utils.subsystem.dir}.jobid" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
