@@ -12,25 +12,30 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	Build file for the GLite WMS ui-api-cpp module
+	Build file for the GLite WMS Common module
 	
-	Authors:  Alessandro Maraschini <alessandro.maraschini@datamat.it>
+	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
+		     Joachim Flammer <Joachim.Flammer@cern.ch>		
 	Version info: $Id$
 	Release: $Name$
 
-	
+	Revision history:
+	$Log$
+	Revision 1.2  2004/08/09 15:59:39  eronchie
+	WARNING: work in progress
 
+	
 -->
 
-<project name="ui-api-cpp" default="dist">
+<project name="api-cpp" default="dist">
 	
 	<!-- =========================================
-		 Builds the GLite WMS ui-api-cpp Module
-		 ========================================= -->
+		 Builds the GLite WMS UI Api Cpp Module
+	     ========================================= -->
 	
 	<!-- =========================================
 	     Import properties (order is important)
-		 ========================================= -->
+	     ========================================= -->
 
 	<!-- import baseline & user properties -->
 	<import file="../org.glite/project/baseline.properties.xml" />
@@ -51,39 +56,37 @@
 		
 	<!-- =========================================
 		 Load dependency property files (order is important)
-		 ========================================= -->
+	     ========================================= -->
 	<property file="${user.dependencies.file}"/>
 	<property file="${component.dependencies.file}" />
 	<property file="${subsystem.dependencies.file}" />
 	<property file="${global.dependencies.file}"/>
 	
+	<!-- =========================================
+                 Load configure options (order is important)
+             ========================================= -->
+        <import file="${global.configure.options.file}"/>
+	<import file="${component.configure.options.file}"/>
 	
 	<!-- =========================================
 		 Import task definitions (order is important)
-		 ========================================= -->
+	     ========================================= -->
 	<import file="${subsystem.taskdefs.file}" />
 	<import file="${global.taskdefs.file}" />
-
-	<!-- =========================================
-                 Load configure options
-                 ========================================= -->
-        <property file="${global.configure.options.file}"/>
-                                                                                
-        <!-- =========================================
-                 Load common targets
-                 ========================================= -->
-        <import file="${global.targets-external-dependencies.file}"/>
-        <import file="${global.targets-make.file}" />
-        <import file="${component.configure.options.file}"/>
 			
 	<!-- =========================================
+		 Load common targets
+	     ========================================= -->
+	<import file="${global.targets-make.file}" />
+
+	<!-- =========================================
 		 Load version file 
-		 ========================================= -->
+	     ========================================= -->
 	<property file="${module.version.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets
-		 ============================================== -->
+	     ============================================== -->
 	
 	<target name="localinit"
 		description="Module specific initialization tasks">
