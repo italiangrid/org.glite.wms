@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/10 07:01:57  eronchie
+#       Updated configure.ac
+#       Removed wrong CFLAGS
+#
 #       Revision 1.1  2004/07/02 08:48:27  monforte
 #       Initial Broker porting to new build system
 #       WARNING: work in progress...
@@ -93,10 +97,14 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
+have_glite_wms_jdl=no
+have_glite_wms_common=no
+have_glite_wms_matchmaking=no
+
 AC_GLITE
-AC_GLITE_WMS_JOBID
-AC_GLITE_WMS_COMMON
-AC_GLITE_WMS_MATCHMAKING
+AC_GLITE_WMS_JDL([],have_glite_wms_jdl=yes,have_glite_wms_jdl=no)
+AC_GLITE_WMS_COMMON([],have_glite_wms_common=yes,have_glite_wms_common=no)
+AC_GLITE_WMS_MATCHMAKING(],have_glite_wms_matchmaking=yes,have_glite_wms_matchmaking=no)
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

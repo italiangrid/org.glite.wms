@@ -19,10 +19,8 @@ broker_HEADERS = \
 libglite_wms_broker_la_SOURCES = \
 	RBSimpleImpl.cpp 
 
-
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
-	$(GLITE_WMS_JOBID_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
  
