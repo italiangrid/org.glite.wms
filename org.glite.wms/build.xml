@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.18  2004/05/31 15:47:59  eronchie
+	Updated jdl dependences
+
 	Revision 1.17  2004/05/26 19:35:04  eronchie
 	Added new sub-module org.glite.wms.jdl
-
+	
 	Revision 1.16  2004/05/26 18:52:54  eronchie
 	Added new sub-module org.glite.wms.jobid
 	
@@ -315,7 +318,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="jdl" depends="boost,classads,globus,globus_ssl_utils,common">
+	<target name="jdl" depends="boost,classads,globus,globus_ssl_utils,common,jobid">
                 <ant dir="${workspace.dir}/${subsystem.name}.jdl"
                      target="${target}"
                      inheritall="false" />
