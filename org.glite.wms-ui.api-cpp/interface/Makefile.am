@@ -16,4 +16,5 @@ nobase_apicpp_HEADERS = \
 	glite/wmsui/api/Request.h \
 	glite/wmsui/api/Shadow.h \
 	glite/wmsui/api/UserCredential.h \
-	glite/wmsui/api/UserJobs.h 
+	glite/wmsui/api/UserJobs.h \
+	glite/wmsui/api/Logging.h 
