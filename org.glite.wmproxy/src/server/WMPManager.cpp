@@ -47,7 +47,9 @@ namespace server {
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
-    
+    wmp_fault_t fault;
+    fault.code = -1; 
+
     try {
       while (true) {
 	
@@ -81,7 +83,7 @@ namespace server {
 
 		      // Here we should log the attribute list returned.
 		      // If Submit
-		      jobSubmitResponse* result; 
+
 		      cmd -> setParam("Ciccio", "PincoPallo");
 		      /*
 		      struct JobIdStructType { 
@@ -91,9 +93,9 @@ namespace server {
 		      }; 
 		      */
 		      cmd -> getParam("JobId", result->jobIdStruct->id);
-		      
-		      
-		      return NULL;
+		      fault.code=0;
+		      fault.message="ciao pacio";
+	              return fault;
 
 	      } 
 	      catch (commands::bad&) {
@@ -118,7 +120,7 @@ namespace server {
       edglog(fatal) << "Uncaught Exception: please check." << std::endl;
     } 
 
-    return NULL;
+    return fault;
   }
 
 } 
