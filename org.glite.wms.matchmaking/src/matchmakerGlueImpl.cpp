@@ -16,7 +16,7 @@
 #include <glite/wms/common/ldif2classad/LDAPForwardIterator.h>
 #include <glite/wms/common/ldif2classad/exceptions.h>
 
-#include "glite/wms/common/utilities/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
@@ -39,6 +39,7 @@
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 using namespace std;
+namespace excep = glite::wmsutils::exception;
 
 namespace glite {
 namespace wms {
