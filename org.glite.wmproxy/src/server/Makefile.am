@@ -78,7 +78,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
-	$(GRIDSITE_LIBS) \
+	$(GRIDSITE_GLOBUS_LIBS) \
 	$(XML2_LIBS) \
 	$(FCGI_CPP_LIBS)
 
