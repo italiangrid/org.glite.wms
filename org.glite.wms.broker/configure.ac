@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/12/10 07:40:38  eronchie
+#       Increased version
+#
 #       Revision 1.5  2004/09/22 00:58:44  dimeglio
 #       Fixed missing parenthesis in AC_INIT
 #
@@ -46,7 +49,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Broker], [0.1.0])
+AC_INIT([GLite WMS Broker], [1.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])
