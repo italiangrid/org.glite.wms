@@ -8,7 +8,8 @@
 
 noinst_LTLIBRARIES = libglide_wms_broker_selectors.la
 
-noinst_HEADERS = \
+selectorsdir = $(includedir)/glite/wms/broker/selectors
+selectors_HEADERS = \
 	maxRankSelector.h \
 	RBSelectionSchema.h \
 	stochasticRankSelector.h 

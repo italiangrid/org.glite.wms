@@ -10,7 +10,8 @@ SUBDIRS = selectors
 
 lib_LTLIBRARIES = libglite_wms_broker.la 
 
-noinst_HEADERS = \
+brokerdir = $(includedir)/glite/wms/broker
+broker_HEADERS = \
 	RBSimpleImpl.h \
 	ResourceBroker.h \
 	utility.h
