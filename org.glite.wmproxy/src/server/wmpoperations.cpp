@@ -790,10 +790,10 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	try {
 		//TBD Choose a file to save into
 		//FILE * file = new FILE();
-		authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer(stderr);
+		/*authorizer::WMPAuthorizer *auth = new authorizer::WMPAuthorizer(stderr);
 		auth->checkUserAuthZ();
-		auth->init();
-		cerr<<"----- User Name: "<<auth->getUserName()<<endl;
+		auth->mapUser();
+		cerr<<"----- User Name: "<<auth->getUserName()<<endl;*/
 		getMaxInputSandboxSize_response.size =
 		// WARNING: Temporal cast TBD
 		// WARNING: double temporarely casted into long (soon long will be returned directly
