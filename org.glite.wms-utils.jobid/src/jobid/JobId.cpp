@@ -4,11 +4,11 @@
  *  copyright : (C) 2002 by DATAMAT
  ***************************************************************************/
 
-#include "JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 
 #include <iostream>
 
-#include "JobIdExceptions.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 namespace glite {
 namespace wmsutils {

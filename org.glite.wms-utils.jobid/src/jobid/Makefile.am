@@ -19,9 +19,6 @@ libglite_wmsutils_cjobid_la_SOURCES = \
 
 jobidincludedir = $(includedir)/glite/wmsutils/jobid
 jobidinclude_HEADERS = \
-	JobId.h \
-	JobIdExceptions.h \
-	cjobid.h \
 	manipulation.h \
 	strmd5.h 
 

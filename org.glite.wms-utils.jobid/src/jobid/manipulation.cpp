@@ -3,7 +3,7 @@
 #include <string>
 #include <algorithm>
 
-#include "JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 
 using namespace std;
 

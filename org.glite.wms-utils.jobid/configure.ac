@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/08/17 13:41:20  eronchie
+#       Moved out JobIdExceptions.h cjobid.h JobId.h
+#       Put in interface/glite/wmsutils/jobid
+#
 #       Revision 1.9  2004/08/17 10:40:34  eronchie
 #       Added optimize option
 #
@@ -101,6 +105,7 @@ AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
+AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/jobid/Makefile])
 
