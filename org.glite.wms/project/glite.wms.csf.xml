@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.8  2004/05/03 00:28:12  dimeglio
+	Revision 1.9  2004/05/03 00:30:57  dimeglio
 	Added jcommon component to subsystem dependencies
 
+	Revision 1.8  2004/05/03 00:28:12  dimeglio
+	Added jcommon component to subsystem dependencies
+	
 	Revision 1.7  2004/04/29 04:36:56  dimeglio
 	Fixed dependency spelling errors
 	
@@ -250,7 +253,8 @@
  								    thirdparty-bypass,
  								    thirdparty-globus_gridftp_server,
  								    thirdparty-loki,
- 								    common"/>
+ 								    common,
+ 								    jcommon"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils">		
