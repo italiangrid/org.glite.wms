@@ -20,6 +20,7 @@
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 #include "glite/wms/broker/RBSimpleISMImpl.h"
+#include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
 //#include "edg/workload/planning/broker/RBMaximizeFilesImpl.h"
 //#include "edg/workload/planning/broker/RBMinimizeAccessCostImpl.h"
 #include "glite/wms/matchmaking/exceptions.h"
@@ -134,7 +135,15 @@ try {
 
   boost::scoped_ptr<BrokerInfo> BI(new BrokerInfo);
 
-  rb_impl.reset(new glite::wms::broker::RBSimpleISMImpl());
+  bool input_data_exists = false;
+  std::vector<std::string> input_data;
+  requestad::get_input_data(input_ad, input_data, input_data_exists);
+  if (input_data_exists) {
+    rb_impl.reset(new glite::wms::broker::RBMaximizeFilesISMImpl(BI.get()));
+  } 
+  else {
+    rb_impl.reset(new glite::wms::broker::RBSimpleISMImpl());
+  }
 
   glite::wms::broker::ResourceBroker rb(rb_impl.release());
 
