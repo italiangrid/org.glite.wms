@@ -7,25 +7,25 @@
 ## *********************************************************************
 
 lib_LTLIBRARIES = \
-	libglite_wms_helper_brokerii.la \
-	libglite_wms_helper_brokerism.la
+	libglite_wms_helper_broker_ii.la \
+	libglite_wms_helper_broker_ism.la
 
-libglite_wms_helper_brokerii_la_SOURCES = \
+libglite_wms_helper_broker_ii_la_SOURCES = \
         Helper.h \
         Helper_ii.cpp \
 	exceptions.cpp
 
-libglite_wms_helper_brokerii_la_LIBADD = \
-        $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la \
-        $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la \
-        $(top_srcdir)/../org.glite.wms.ism/build/src/libglite_wms_ism.la 
+dnl libglite_wms_helper_broker_ii_la_LIBADD = \
+dnl        $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la \
+dnl        $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la \
+dnl        $(top_srcdir)/../org.glite.wms.ism/build/src/libglite_wms_ism.la 
 
-libglite_wms_helper_brokerism_la_SOURCES = \
+libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
         Helper_ism.cpp \
 	exceptions.cpp
 
-libglite_wms_helper_brokerism_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
+dnl libglite_wms_helper_broker_ism_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
