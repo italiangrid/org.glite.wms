@@ -10,7 +10,6 @@ package org.glite.wmsui.apij ;
 import java.util.* ;
 import  org.glite.wms.jdlj.Ad ;
 import javax.naming.directory.InvalidAttributeValueException ;
-
 /**
  * LB QeuryServer Class Wrapped.
  * <p>
@@ -96,6 +95,14 @@ public class Query {
 		to.setTime( new Date ( time  )) ;
 	}
 	/**
+	* Set all userTags couples in the query. Only jobs containing such tags will be retrieved
+	* If the attribute already exists is automatically replaced
+	* @param tags a valid ad containing all usertags information
+	*/
+	public void setUserTags( Ad tags ){
+		userTags= (Ad)(tags.clone());
+	}
+	/**
 	* get all jobs submitted with the specified user tag
 	* If the attribute already exists is automatically replaced
 	* @param name the name of the user tag
@@ -162,7 +169,7 @@ public class Query {
 	/***********
 	* Get Methods:
 	************/
-	/** 
+	/**
 	* Retrieve the set from filter
 	* @return a Calendar representing the time when to look for the jobs from (Null if not set) */
 	public Calendar getFrom( ) {return from;}
