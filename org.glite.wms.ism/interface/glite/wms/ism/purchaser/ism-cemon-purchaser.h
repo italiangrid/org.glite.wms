@@ -11,13 +11,14 @@
 #include <string>
 #include <vector>
 #include "glite/wms/ism/purchaser/common.h"
+#include "glite/wms/ism/purchaser/ism-purchaser.h"
 
 namespace glite {
 namespace wms {
 namespace ism {
 namespace purchaser {
 
-class ism_cemon_purchaser
+class ism_cemon_purchaser : public ism_purchaser
 {
 public:
                 
@@ -31,20 +32,9 @@ public:
 
   void operator()();
 
-  exec_mode_t exec_mode() const
-  {
-    return m_mode;
-  }
-  size_t sleep_interval() const
-  {
-    return m_interval;
-  }
-
 private:                
   std::string m_topic;
   int m_rate;
-  exec_mode_t m_mode;
-  size_t m_interval;
   std::vector<std::string> m_multi_attributes;
   std::vector<std::string> m_services;
 };

@@ -10,13 +10,14 @@
 
 #include <string>
 #include "glite/wms/ism/purchaser/common.h"
+#include "glite/wms/ism/purchaser/ism-purchaser.h"
  
 namespace glite {
 namespace wms {
 namespace ism {
 namespace purchaser {
 
-class ism_ii_purchaser
+class ism_ii_purchaser : public ism_purchaser
 {
 public:
                 
@@ -30,15 +31,6 @@ public:
   );
 
   void operator()();
-
-  exec_mode_t exec_mode() const
-  {
-    return m_mode;
-  }
-  size_t sleep_interval() const
-  {
-    return m_interval;
-  }
 
 private:                
   std::string m_hostname;
@@ -61,7 +53,7 @@ typedef ism_ii_purchaser* create_t(std::string const& hostname,
 
 typedef void destroy_t(ism_ii_purchaser*);
 }
-                
+
 } // namespace purchaser
 } // namespace ism
 } // namespace wms

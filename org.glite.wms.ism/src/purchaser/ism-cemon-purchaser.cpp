@@ -29,11 +29,10 @@ ism_cemon_purchaser::ism_cemon_purchaser(
   exec_mode_t mode,
   size_t interval
 )
-  : m_services(services),
-    m_topic(topic),
-    m_rate(rate),
-    m_mode(mode),
-    m_interval(interval)
+  : ism_purchaser(mode, interval),
+  m_services(services),
+  m_topic(topic),
+  m_rate(rate)
 {
 }
 

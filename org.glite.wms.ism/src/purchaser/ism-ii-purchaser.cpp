@@ -4,6 +4,7 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 // $Id$
+#include <boost/mem_fn.hpp>
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 
 #include "glite/wms/common/ldif2classad/LDAPQuery.h"
@@ -254,13 +255,13 @@ ism_ii_purchaser::ism_ii_purchaser(
   int timeout,
   exec_mode_t mode,
   size_t interval
-)
-  : m_hostname(hostname),
-    m_port(port),
-    m_dn(distinguished_name),
-    m_timeout(timeout),
-    m_mode(mode),
-    m_interval(interval)
+) : ism_purchaser(mode, interval),
+  m_hostname(hostname),
+  m_port(port),
+  m_dn(distinguished_name),
+  m_timeout(timeout),
+  m_mode(mode),
+  m_interval(interval)
 {
 }
 
