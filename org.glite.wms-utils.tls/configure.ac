@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/07/27 09:13:49  eronchie
+#       Removed AC_WMSUTILS_EXCEPTION and AC_GLOBUS_SSL_UTILS checks
+#       Set directly exception library macro
+#
 #       Revision 1.9  2004/07/21 17:35:43  eronchie
 #       Moved some tests in examples
 #       Removed files from test
@@ -89,11 +93,9 @@ have_glite_wmsutils_exception=no
 
 AC_GLITE
 
-AC_GLOBUS_SSL_UTILS([], have_globus_ssl_utils=yes, have_globus_ssl_utils=no)
-AC_MSG_RESULT(["GLOBUS_SSL_UTILS found $have_globus_ssl_utils"])
+GLITE_WMSUTILS_EXCEPTION_LIBS="-L$GLITE_LOCATION/lib -lglite_wmsutils_exception"
 
-AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
+AC_SUBST(GLITE_WMSUTILS_EXCEPTION_LIBS)
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
