@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.6  2004/12/09 10:18:37  eronchie
+	Moved gsoap_base.m4 in gsoap.m4
+
 	Revision 1.5  2004/12/07 18:47:45  eronchie
 	Work In progress
-
+	
 	Revision 1.4  2004/12/02 16:45:53  emartel
 	Added Storage Index catalog interface and Data Location catalog interface
 	
@@ -73,6 +76,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 gsoap_base.m4 replica.m4 cgsi-gsoap.m4 data.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 gsoap.m4 replica.m4 cgsi-gsoap.m4 data.m4"/>
 		 						
 </project>
