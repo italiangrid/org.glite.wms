@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.38  2004/07/23 10:00:03  eronchie
+	Added thirdparty
+
 	Revision 1.37  2004/07/23 09:56:18  eronchie
 	Removed globus_ssl_utils dependency
 	It is moved out in org.glite.wms-utils
-
+	
 	Revision 1.36  2004/07/23 09:33:14  eronchie
 	Changed condor in condorg
 	
@@ -345,19 +348,19 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="bypass" unless="setenvonly">
+	<target name="thirdparty-bypass" unless="setenvonly">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-bypass"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
-	<target name="globus_gridftp_server" unless="setenvonly" depends="globus">
+	<target name="thirdparty-globus_gridftp_server" unless="setenvonly" depends="globus">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_gridftp_server"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
-	<target name="loki" unless="setenvonly">
+	<target name="thirdparty-loki" unless="setenvonly">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-loki"
 		     target="${target}"
                      inheritall="false" />
@@ -430,9 +433,9 @@
         </target>
 
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="bypass,
-   					     globus_gridftp_server,
- 					     loki,
+	<target name="buildmodules" depends="thirdparty-bypass,
+   					     thirdparty-globus_gridftp_server,
+ 					     thirdparty-loki,
 					     common,
 					     jdl,
    					     jdlj,
