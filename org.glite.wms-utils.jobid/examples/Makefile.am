@@ -8,14 +8,14 @@
 
 STDCPP = -lstdc++
 
-JOBID = $(top_builddir)/src/jobid/libglite_wms_cjobid.la
+JOBID = $(top_builddir)/src/jobid/libglite_wmsutils_cjobid.la
 
 check_PROGRAMS = testjobid 
 
 testjobid_SOURCES = testjobid.c
 testjobid_LDADD = \
 	$(JOBID) \
-	$(GLITE_WMS_COMMON_UT_EXCEPTIONS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTIONS_LIBS) \
 	$(GLOBUS_SSL_THR_LIBS) \
 	$(STDCPP)
 

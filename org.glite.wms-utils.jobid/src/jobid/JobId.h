@@ -1,5 +1,5 @@
-#ifndef GLITE_WMS_JOBID_JOBID_H
-#define GLITE_WMS_JOBID_JOBID_H
+#ifndef GLITE_WMSUTILS_JOBID_JOBID_H
+#define GLITE_WMSUTILS_JOBID_JOBID_H
 
 /*
  * JobId.h
@@ -15,7 +15,7 @@
 typedef struct _edg_wlc_jobid_s* edg_wlc_jobid_t;
 
 namespace glite { 
-namespace wms { 
+namespace wmsutils { 
 namespace jobid {
 
 /**
@@ -114,7 +114,7 @@ return     strcmp ( lhs.m_pStr , rhs.m_pStr ) ==0 ;
 std::ostream& operator<<(std::ostream& os, JobId const& id);
 
 } // namespace jobid
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
-#endif // GLITE_WMS_JOBID_JOBID_H
+#endif // GLITE_WMSUTILS_JOBID_JOBID_H

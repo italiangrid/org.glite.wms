@@ -19,27 +19,8 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.6  2004/06/16 15:56:09  eronchie
-#       Added configure options
-#       WARNING: work in progress
-#
-#       Revision 1.5  2004/06/16 11:02:05  eronchie
-#       Added configure options
-#       WARNING: Work in progress
-#
-#       Revision 1.4  2004/06/14 18:14:35  eronchie
-#       Added Configure options
-#       WARNING work in progress
-#
-#       Revision 1.3  2004/06/01 13:52:35  eronchie
-#       Updated namespace for jobid.
-#       Changed glite::wms::common::jobid namespace in glite::wms::jobid
-#
-#       Revision 1.2  2004/05/31 14:03:30  eronchie
-#       Merged with code in the infnforge repository
-#
-#       Revision 1.1.1.1  2004/05/26 18:45:05  eronchie
-#       Import of wms jobid
+#       Revision 1.7  2004/07/21 17:53:36  eronchie
+#       Moved out org.glite.wms.jobid from org.glite.wms and put in org.glite.wms-utils
 #
 #
 #
@@ -47,7 +28,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS jobid], [0.0.0])
+AC_INIT([GLite WMS Utils Jobid], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobid/cjobid.h])
@@ -100,19 +81,19 @@ have_globus=no
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
-have_glite_wms_common=no
+have_glite_wmsutils_exception=no
                                                                                 
 AC_GLITE
                                                                                 
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/jobid/Makefile])
-AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

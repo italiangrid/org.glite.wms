@@ -1,10 +1,10 @@
-#ifndef GLITE_WMS_JOBID_MANIPULATION_H
-#define GLITE_WMS_JOBID_MANIPULATION_H
+#ifndef GLITE_WMSUTILS_JOBID_MANIPULATION_H
+#define GLITE_WMSUTILS_JOBID_MANIPULATION_H
 
 #include <string>
 
 namespace glite {
-namespace wms {
+namespace wmsutils {
 namespace jobid {
 
 class JobId;
@@ -14,10 +14,10 @@ std::string to_filename( const JobId &id );
 JobId from_filename( const std::string &filename );
 
 } // namespace jobid
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
-#endif /* GLITE_WMS_JOBID_MANIPULATION_H */
+#endif /* GLITE_WMSUTILS_JOBID_MANIPULATION_H */
 
 // Local Variables:
 // mode: c++

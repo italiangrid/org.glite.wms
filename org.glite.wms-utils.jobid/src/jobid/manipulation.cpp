@@ -8,7 +8,7 @@
 using namespace std;
 
 namespace glite {
-namespace wms {
+namespace wmsutils {
 namespace jobid {
 
 namespace {
@@ -176,5 +176,5 @@ JobId from_filename( const string &filename )
 }
 
 } // namespace jobid
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite

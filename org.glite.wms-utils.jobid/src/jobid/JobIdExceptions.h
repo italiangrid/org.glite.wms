@@ -1,15 +1,15 @@
-#ifndef GLITE_WMS_JOBID_EXCEPTIONS_H
-#define GLITE_WMS_JOBID_EXCEPTIONS_H
+#ifndef GLITE_WMSUTILS_JOBID_EXCEPTIONS_H
+#define GLITE_WMSUTILS_JOBID_EXCEPTIONS_H
 
 /*
  * JobIdExceptions.h
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  */
 
-#include "glite/wms/common/utilities/Exceptions.h"
+#include "glite/wmsutils/exception/Exceptions.h"
 
 namespace glite { 
-namespace wms { 
+namespace wmsutils { 
 namespace jobid {
 
 /**
@@ -20,7 +20,7 @@ namespace jobid {
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
 
-class JobIdException : public glite::wms::common::utilities::Exception {
+class JobIdException : public glite::wmsutils::exception::Exception {
 public:
     /**
      * Update all mandatory Exception Information
@@ -73,8 +73,8 @@ public:
 }; //End CLass EmptyIdException
 
 } // namespace jobid
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
-#endif // GLITE_WMS_JOBID_EXCEPTIONS_H
+#endif // GLITE_WMSUTILS_JOBID_EXCEPTIONS_H
 

@@ -7,11 +7,11 @@
 #include "JobIdExceptions.h"
 
 namespace glite {
-namespace wms {
+namespace wmsutils {
 namespace jobid {
 
 using namespace std;
-using namespace glite::wms::common::utilities;
+using namespace glite::wmsutils::exception;
 
 /*****************************
 * JobIdException
@@ -53,6 +53,6 @@ EmptyIdException::EmptyIdException(const string& file,
 }
 
 } // namespace jobid
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 

@@ -11,7 +11,7 @@
 #include "JobIdExceptions.h"
 
 namespace glite {
-namespace wms {
+namespace wmsutils {
 namespace jobid {
 
 using namespace std ;
@@ -179,5 +179,5 @@ operator<<(std::ostream& os, JobId const& id)
 }
 
 } // namespace jobid
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite 
