@@ -7,6 +7,7 @@
 
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include <vector>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -23,7 +24,7 @@
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
 #include "glite/wms/common/logger/logger_utils.h"
-
+#include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/ism/ism.h"
 
 using namespace std;
@@ -185,83 +186,41 @@ void prefetchGlueCEinfo(const std::string& hostname,
   catch (ldif2classad::LDAPNoEntryEx&) {
 
     Error("Unexpected result while searching the IS...");
-    //throw matchmaking::ISQueryError(
-    //                          NSconf->ii_contact(),
-    //                          NSconf->ii_port(),
-    //                          NSconf->ii_dn(),
-    //                          filter);
   }
   catch( ldif2classad::QueryException& e) {
 
     Warning(e.what());
-    //throw matchmaking::ISQueryError(
-    //                          NSconf->ii_contact(),
-    //                          NSconf->ii_port(),
-    //                          NSconf->ii_dn(),
-    //                          filter);
   }
   catch( ldif2classad::ConnectionException& e) {
 
     Warning(e.what());
-    //throw matchmaking::ISConnectionError(
-    //                               NSconf->ii_contact(),
-    //                               NSconf->ii_port(),
-    //                               NSconf->ii_dn());
   }
-}
-
-bool expand_information_service_info(gluece_info_type& gluece_info)
-{
-  string isURL;
-  bool result = false;
-  try {
-
-    isURL = utilities::evaluate_attribute(*gluece_info, "GlueInformationServiceURL");
-    static boost::regex  expression_gisu("\\S.*://(.*):([0-9]+)/(.*)");
-    boost::smatch        pieces_gisu;
-
-    if (boost::regex_match(isURL, pieces_gisu, expression_gisu)) {
-
-      string ishost(pieces_gisu[1].first, pieces_gisu[1].second);
-      string isport(pieces_gisu[2].first, pieces_gisu[2].second);
-      string isbasedn(pieces_gisu[3].first, pieces_gisu[3].second);
-
-      gluece_info->InsertAttr("InformationServiceDN", isbasedn);
-      gluece_info->InsertAttr("InformationServiceHost", ishost);
-      gluece_info->InsertAttr("InformationServicePort",
-                              boost::lexical_cast<int>(isport));
-      result = true;
-    }
-  } catch (utilities::InvalidValue& e) {
-    Error("Cannot evaluate GlueInformationServiceURL...");
-    result = false;
-  }
-  return result;
 }
 
 bool fetch_gluece_info(gluece_info_type& gluece_info)
 {
   std::string is_dn;
-  try {
-    is_dn = utilities::evaluate_attribute(*gluece_info, "InformationServiceDN");
-  } catch (utilities::InvalidValue& e) {
-    Warning("Cannot evaluate InformationServiceDN...");
-    return false;
-  }
-
   std::string is_host;
-  try {
-    is_host = utilities::evaluate_attribute(*gluece_info, "InformationServiceHost");
-  } catch (utilities::InvalidValue& e) {
-    Warning("Cannot evaluate InformationServiceHost...");
-    return false;
-  }
-
+  std::string is_URL;
   int is_port;
   try {
-    is_port = utilities::evaluate_attribute(*gluece_info, "InformationServicePort");
-  } catch (utilities::InvalidValue& e) {
-    Warning("Cannot evaluate InformationServicePort...");
+
+    is_URL.assign( utilities::evaluate_attribute(*gluece_info, "GlueInformationServiceURL") );
+    static boost::regex expression_gisu( "\\S.*://(.*):([0-9]+)/(.*)" );
+    boost::smatch pieces_gisu;
+    std::string port;
+
+    if (boost::regex_match(is_URL, pieces_gisu, expression_gisu)) {
+
+      is_host.assign (pieces_gisu[1].first, pieces_gisu[1].second);
+      port.assign    (pieces_gisu[2].first, pieces_gisu[2].second);
+      is_dn.assign   (pieces_gisu[3].first, pieces_gisu[3].second);
+
+      is_port = std::atoi(port.c_str());
+    }
+  }
+  catch (utilities::InvalidValue& e) {
+    Error("Cannot evaluate GlueInformationServiceURL...");
     return false;
   }
 
@@ -401,36 +360,45 @@ timestamp_type get_current_time(void)
 }
 
 }
-
 void ism_ii_purchaser::operator()()
 {
   do {
-  
-     gluece_info_container_type gluece_info_container;
-     prefetchGlueCEinfo(m_hostname, m_port, m_dn, m_timeout, gluece_info_container);
+    try {
+      gluece_info_container_type gluece_info_container;
+      std::vector<gluece_info_container_type::const_iterator> gluece_info_to_remove; 
+      prefetchGlueCEinfo(m_hostname, m_port, m_dn, m_timeout, gluece_info_container);
+      		
+      for (gluece_info_iterator it = gluece_info_container.begin();
+          it != gluece_info_container.end(); it++) {
 
+        bool purchasing_ok =
+          fetch_gluece_info(it->second) &&
+          expand_glueceid_info(it->second);
 
-    for (gluece_info_iterator it = gluece_info_container.begin();
-         it != gluece_info_container.end(); ++it) {
-      try {
-        expand_information_service_info(it->second);
-        fetch_gluece_info(it->second);
-        insert_aux_requirements(it->second);
-	expand_glueceid_info(it->second);
-        boost::mutex::scoped_lock l(get_ism_mutex());
-        get_ism().insert(
-          make_ism_entry(it->first, get_current_time(), it->second)
-        );
-      } catch(...) {
-        Warning("Caught exception while fetching " << it->first
-                << " IS information.");
+        if (purchasing_ok) {
+          insert_aux_requirements(it->second);
+          boost::mutex::scoped_lock l(get_ism_mutex());
+          get_ism().insert(make_ism_entry(it->first, get_current_time(), it->second));
+        }
+        else {
+
+          Warning("Purchasing from " << it->first << " failed...");
+	  gluece_info_to_remove.push_back(it);		
+        }
       }
+      // We have to remove not responding entries from the ISM...
+      {
+        boost::mutex::scoped_lock l(get_ism_mutex());
+        for (std::vector<gluece_info_container_type::const_iterator>::const_iterator it = gluece_info_to_remove.begin();
+ 	  it != gluece_info_to_remove.end(); it++) {
+          get_ism().erase((*it)->first);
+        }
+      }
+      if (m_mode) sleep(m_interval);
     }
-
-    if (m_mode == loop) {
-      sleep(m_interval);
+    catch (...) { // TODO: Check which exception may arrive here... and remove catching all
+      Warning("Failed to purchase info from " << m_hostname << ":" << m_port);
     }
-
   } while (m_mode);
 }
 
