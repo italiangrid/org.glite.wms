@@ -32,7 +32,7 @@ int main(int argc,  char **argv) {
  char *agent_location="./libglite-wms-grid-console-agent.so";
  
  if(argc!=4){
-  printf("Usage: argv[0] <remote_host> <remote_port> <exe>\n");
+  printf("Usage: %s <remote_host> <remote_port> <exe>\n",argv[0]);
   exit(-1);
  }
  
@@ -138,9 +138,6 @@ int main(int argc,  char **argv) {
  setenv ("GRID_CONSOLE_STDIN", "-", 1);
  setenv ("GRID_CONSOLE_STDERR", "-", 1);*/
 
-/* BYPASS_SHADOW_HOST and BYPASS_SHADOW_PORT will be set by JobWrapper
-  reading env vars from RSL */
-  
  setenv ("BYPASS_SHADOW_HOST", argv[1], 1);
  setenv ("BYPASS_SHADOW_PORT", argv[2], 1);
  
