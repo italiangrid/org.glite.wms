@@ -13,27 +13,39 @@
 
 // gSOAP
 #include "soapH.h"
-//#include "gridsite.h"
-
 #include "WMProxy.nsmap"
 #include "soapWMProxyObject.h"
 //#include "wmproxynameH.h"
 //#include "wmproxyname.nsmap"
 
 // Logging
-//#include "logging.h"
-//#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
+#include "glite/wms/common/utilities/edgstrstream.h"
+#include "logging.h"
 
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
+//#include "glite/wms/common/configuration/CommonConfiguration.h"
+#include "glite/wms/common/configuration/exceptions.h"
 
+//#include "glite/wms/common/utilities/FileList.h"
+//#include "glite/wms/common/utilities/FileListLock.h"
+
+// Exceptions
 #include "wmpexception_codes.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 
 #include "wmpoperations.h"
+
+#include "wmpdispatcher.h"
+
+#include "wmputils.h"
+
 
 //#include <pthread.h>
 #include <iostream>
@@ -41,14 +53,30 @@
 #include <vector>
 //#include <unistd.h>
 
-//namespace logger = glite::wms::common::logger;
-//namespace configuration = glite::wms::common::configuration;
+// Boost
+#include <boost/pool/detail/singleton.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+
+namespace utilities  = glite::wms::common::utilities;
+namespace task          = glite::wms::common::task;
+
+namespace logger        = glite::wms::common::logger;
+namespace configuration = glite::wms::common::configuration;
+
+//typedef boost::scoped_ptr< glite::wms::common::utilities::FileList<std::string> > FileListPtr;
+//typedef boost::scoped_ptr< glite::wms::common::utilities::FileListMutex> FileListMutexPtr;
 
 using namespace std;
+
+//const configuration::NSConfiguration& configuration();
+const configuration::NSConfiguration* NSconf;
 
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
+
+
 
 int
 main(int argc, char* argv[])
@@ -59,20 +87,60 @@ main(int argc, char* argv[])
 	struct soap *soap;
 	struct soap *tsoap;
 	
+	
 	//try {
-		/*logger::threadsafe::edglog.open(
-			configuration::Configuration::instance()->ns()->log_file(),
-			static_cast<logger::level_t>
-			(configuration::Configuration::instance()->ns()->log_level()));
-		edglog_fn("   NS::main");
+	/*logger::threadsafe::edglog.open(
+	      configuration::Configuration::instance()->ns()->log_file(),
+     	      static_cast<logger::level_t>(configuration::Configuration::instance()->ns()->log_level()) );
+		
+		edglog_fn("   WMProxy::main");
 		edglog(fatal) << "--------------------------------------" << endl;
-		edglog(fatal) << "Starting Network Server..." << endl;
+		edglog(fatal) << "Starting WM Proxy..." << endl;
 		logger::threadsafe::edglog.activate_log_rotation (
 			configuration::Configuration::instance()->ns()->log_file_max_size(),
 			configuration::Configuration::instance()->ns()->log_rotation_base_file(),
-	        configuration::Configuration::instance()->ns()->log_rotation_max_file_number());
-	*/
+	        configuration::Configuration::instance()->ns()->log_rotation_max_file_number());*/
+	
+		
 		if (argc < 3) {
+			waitForSeconds(15);
+			std::auto_ptr<configuration::Configuration> conf;
+			try {
+				string file_name = "glite_wms.conf";
+				conf.reset(new configuration::Configuration(file_name, "NetworkServer"));
+			} catch( configuration::CannotOpenFile &file ) {
+			    //edglog(fatal) << "Cannot open file: " << file << std::endl;
+			    std::cout << "Cannot open file: " << file << std::endl;
+			} catch( configuration::CannotConfigure &error ) {
+			    //edglog(fatal) << "Cannot configure: " << error << std::endl;
+			    std::cout << "Cannot configure: " << error << std::endl;
+			} catch (exception ex) {
+				cerr<<"Error: "<<ex.what()<<endl;	
+			}
+			
+			cerr<<"NS inst: " <<configuration::Configuration::instance()->wm();
+			cerr<<"ISB Size: " <<configuration::Configuration::instance()->ns()->max_input_sandbox_size();
+
+			configuration::Configuration const* config = configuration::Configuration::instance();
+			cerr<<"Config: "<<config<<endl;
+			NSconf = config -> ns();
+			cerr<<"NSconf: "<<NSconf<<endl;
+
+		    task::Pipe<classad::ClassAd*> pipe;
+		    Dispatcher dispatcher;
+		    //boost::condition  do_shutdown;
+  			//boost::mutex     mtx_shutdown;
+		    try {
+		    	cerr<<"Launching thread(s)..."<<endl;
+			  task::Task dispatchers(dispatcher, pipe, NSconf->dispatcher_threads());
+			  cerr<<"Launching thread(s)... finished"<<endl;
+			  //boost::mutex::scoped_lock lk( mtx_shutdown );
+			  //do_shutdown.wait(lk);
+			  //exit(0);
+		    } catch ( configuration::InvalidExpression &error ) {
+		      //edglog(fatal) << "Invalid Expression: " << error << std::endl;
+		    }
+	
 	    	// Running as a Fast CGI application
 	     	while (FCGI_Accept() >= 0) {
 	        	WMProxy proxy;

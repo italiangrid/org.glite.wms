@@ -74,5 +74,5 @@ managedir ( const string &dir , int userid ){
 		default:
 			error_msg ="Unexpected error while launching:\n" + gliteDirmanExe ;
 	}
-	if (exit_value!=0) throw JobOperationException(__FILE__, __LINE__, "managedir()" , WMS_OPERATION_NOT_ALLOWED,error_msg);
+	//if (exit_value!=0) throw JobOperationException(__FILE__, __LINE__, "managedir()" , WMS_OPERATION_NOT_ALLOWED,error_msg);
 }

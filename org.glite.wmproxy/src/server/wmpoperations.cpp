@@ -36,6 +36,10 @@
 // AdConverter class for jdl convertion and templates
 #include "glite/wms/jdl/adconverter.h"
 
+// Configuration
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
+
 // Default name of the delegated Proxy that is copied inside private job 
 // directory
 const std::string USER_PROXY_NAME = "/proxy";
@@ -48,6 +52,7 @@ using namespace wmproxyname;
 using namespace glite::wms::jdl; // DagAd, AdConverter
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
+using namespace glite::wms::common::configuration; // Configuration
 
 //namespace glite {
 //namespace wms {
@@ -687,20 +692,15 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	GLITE_STACK_TRY("getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
 		"&getMaxInputSandboxSize_response)");
 
-	/*
-	org::glite::daemon::WMPManager manager;
-	wmp_fault_t wmp_fault = manager.runCommand("getMaxInputSandboxSize",
-		getMaxInputSandboxSize_response);
-	*/
-	wmp_fault_t wmp_fault;
-	wmp_fault.code = WMS_NO_ERROR;
-	if (wmp_fault.code != WMS_NO_ERROR) {
+	try {
+		getMaxInputSandboxSize_response.size =
+			Configuration::instance()->ns()->max_input_sandbox_size();
+	} catch (exception &ex) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
 			"&getMaxInputSandboxSize_response)",
-			wmp_fault.code, wmp_fault.message);
+			WMS_IS_FAILURE, ex.what());
 	}
-	getMaxInputSandboxSize_response.size = 23;
 
 	GLITE_STACK_CATCH();
 }
