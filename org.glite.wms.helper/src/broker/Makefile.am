@@ -26,7 +26,7 @@ libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         Helper_ii_prefetch.cpp \
         exceptions.cpp
 
-Helper_ii_prefetch.cpp: Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E Helper_ii.cpp > Helper_ii_prefetch.cpp
+$(srcdir)/Helper_ii_prefetch.cpp: $(srcdir)/Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_ii.cpp > $(srcdir)/Helper_ii_prefetch.cpp
 
 dnl libglite_wms_helper_broker_ii_prefetch_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
 
