@@ -8,10 +8,10 @@ dnl prerequisites:
 
 AC_DEFUN(AC_CONDORG,
 [
-    AC_ARG_WITH(condorg_prefix,
-	[  --with-condorg-prefix=PFX    prefix where CondorG is installed.],
+    AC_ARG_WITH(condor_prefix,
+	[  --with-condor-prefix=PFX    prefix where CondorG is installed.],
 	[], 
-        with_condorg_prefix=${CONDORG_INSTALL_PATH:-/opt/condor})
+        with_condor_prefix=${CONDORG_INSTALL_PATH:-/opt/condor})
 
     changequote(<<, >>)
     gcc_major_version=`gcc -v 2>&1 | grep version | sed -e 's/.*version \([0-9]\+\)\.[0-9]\+\.\?[0-9]*.*/\1/'`
@@ -30,21 +30,21 @@ AC_DEFUN(AC_CONDORG,
     gcc_version=`gcc -v 2>&1 | grep version | sed -e 's/.*version \([0-9]\+\.[0-9]\+\.\?[0-9]*\).*/\1/'`
     changequote([, ])
 
-    if test -n "$with_condorg_prefix" ; then
+    if test -n "$with_condor_prefix" ; then
       if test "x$gcc_major_version" = "x3" ; then
-        ac_condorg_library_prefix="$with_condorg_prefix/gcc-$gcc_version/lib"
-        ac_condorg_include_prefix="$with_condorg_prefix/gcc-$gcc_version/include"
+        ac_condor_library_prefix="$with_condor_prefix/gcc-$gcc_version/lib"
+        ac_condor_include_prefix="$with_condor_prefix/gcc-$gcc_version/include"
       else
-        ac_condorg_library_prefix="$with_condorg_prefix/lib"
-        ac_condorg_include_prefix="$with_condorg_prefix/include"
+        ac_condor_library_prefix="$with_condor_prefix/lib"
+        ac_condor_include_prefix="$with_condor_prefix/include"
       fi
-      CONDORG_CFLAGS="-I$ac_condorg_include_prefix"
-      CONDORG_LIBS="-L$ac_condorg_library_prefix $CONDORG_LIBS"
+      CONDORG_CFLAGS="-I$ac_condor_include_prefix"
+      CONDORG_LIBS="-L$ac_condor_library_prefix $CONDORG_LIBS"
       AC_MSG_RESULT([condor include path $CONDORG_CFLAGS])
       AC_MSG_RESULT([condor lib path $CONDORG_LIBS])
     fi
 
-    CONDOR_BIN=$with_condorg_prefix/bin
+    CONDOR_BIN=$with_condor_prefix/bin
 
     AC_PATH_PROG(RUN_CONDOR_VER,condor_version,no,$CONDOR_BIN)
 
@@ -89,19 +89,19 @@ AC_DEFUN(AC_CONDORG,
 	    AC_LANG_RESTORE
 
 	    if test "$ac_have_condorlibs" = "yes" ; then
-		ac_cv_condorg_valid=yes
+		ac_cv_condor_valid=yes
 	    else
-		ac_cv_condorg_valid=no
+		ac_cv_condor_valid=no
 		AC_MSG_WARN([
 		    ***  Cannot compile a small CondorG log parser: check
 		    ***  whether the CondorG parsing libraries are installed])
 	    fi
 	else
-	    ac_cv_condorg_valid=no
+	    ac_cv_condor_valid=no
 	    AC_MSG_WARN([***  Mismatching CondorG version, please upgrade to $1])
 	fi
     else
-	ac_cv_condorg_valid=no
+	ac_cv_condor_valid=no
 	AC_MSG_WARN([
 	    ***  Cannot find an usable condor_version program: please check
 	    ***  your CondorG installation])
@@ -109,8 +109,8 @@ AC_DEFUN(AC_CONDORG,
 
     AC_MSG_RESULT([Condor version: $CONDORG_VERSION])
 
-    if test x$ac_cv_condorg_valid = xyes ; then
-	CONDORG_INSTALL_PATH=$with_condorg_prefix
+    if test x$ac_cv_condor_valid = xyes ; then
+	CONDORG_INSTALL_PATH=$with_condor_prefix
         ifelse([$2], , :, [$2])
     else
         CONDORG_CFLAGS=""

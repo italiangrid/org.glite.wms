@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.46  2004/07/25 17:02:49  eronchie
+	Renamed in condor instead of condorg
+
 	Revision 1.45  2004/07/23 09:56:18  eronchie
 	Removed globus_ssl_utils dependency
 	It is moved out in org.glite.wms-utils
-
+	
 	Revision 1.44  2004/07/23 09:33:14  eronchie
 	Changed condor in condorg
 	
@@ -506,7 +509,7 @@
         </target>
 
 	<!-- JobSubmission -->
-        <target name="jobsubmission" depends="boost,classads,globus,common,jdl,purger,get.jobsubmission.head, get.jobsubmission.tag"/>
+        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
         <target name="get.jobsubmission.head" if="jobsubmission.head">
             <cvs-co package="org.glite.wms.jobsubmission" />
         </target>
