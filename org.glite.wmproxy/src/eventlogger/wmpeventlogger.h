@@ -40,6 +40,8 @@ class WMPEventLogger  {
 		void init(const std::string &nsHost, int nsPort,
 			glite::wmsutils::jobid::JobId *id);
 
+		void setLBProxy( bool value) {lbProxy_b=value;}
+		bool getLBProxy() {return lbProxy_b;}
 		std::string getSequence();
 		
 		void registerProxyRenewal(const std::string &proxy_path,
@@ -81,6 +83,7 @@ class WMPEventLogger  {
 		edg_wll_Context ctx;
 		std::string lb_host;
 		int lb_port;
+		bool lbProxy_b ;
 		static const char *GLITE_WMS_LOG_DESTINATION;
 		static const int LB_RENEWAL_PORT = 7512;
 		static const int LOG_RETRY_COUNT = 3;

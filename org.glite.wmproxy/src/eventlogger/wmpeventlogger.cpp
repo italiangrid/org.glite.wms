@@ -25,6 +25,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+const bool DEFAULT_USER_PROXY= false;
+
+
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -73,6 +77,7 @@ std::string retrieveHostName() {
 WMPEventLogger::WMPEventLogger()
 {
 	id = NULL;
+	lbProxy_b = DEFAULT_USER_PROXY ;
 	if (edg_wll_InitContext(&ctx)
 			|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
 			EDG_WLL_SOURCE_WM_PROXY))) {
@@ -159,8 +164,17 @@ WMPEventLogger::registerJob(JobAd *jad)
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
-	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
-		jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
+	int register_result ;
+	if (lbProxy_b){
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_JOB_SIMPLE, getUserDN(),
+			jad->toSubmissionString().c_str(),
+			str_addr, 0, NULL, NULL) ;
+	}else{
+		register_result = edg_wll_RegisterJobSync (ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
+			jad->toSubmissionString().c_str(),
+			str_addr, 0, NULL, NULL) ;
+	}
+	if ( register_result ) {
 		cerr<<"JobOperationException"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerJob(JobAd* jad)",
@@ -236,10 +250,20 @@ WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 	cerr<<"Registering partitionable job" << endl;
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, getSequence());
 	edg_wlc_JobId *subjobs = NULL;
-	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED,
-				dag->toString(WMPExpDagAd::NO_NODES).c_str(), //TBD NO_NODES??
-				str_addr, res_num, //TBD or dag->size()??
-				NULL, &subjobs)) {
+	int register_result;
+	if (lbProxy_b){
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED, getUserDN(),
+			dag->toString(WMPExpDagAd::NO_NODES).c_str(), //TBD NO_NODES??
+			str_addr, res_num, //TBD or dag->size()??
+			NULL, &subjobs) ;
+	}else{
+		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED,
+			dag->toString(WMPExpDagAd::NO_NODES).c_str(), //TBD NO_NODES??
+			str_addr, res_num, //TBD or dag->size()??
+			NULL, &subjobs);
+	}
+
+	if (register_result ) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)",
 			WMS_OPERATION_NOT_ALLOWED,
@@ -266,9 +290,18 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 	cerr<<"Registering dag" << endl;
 	edg_wlc_JobId *subjobs = NULL;
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, getSequence());
-	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
+	int register_result ;
+	if (lbProxy_b){
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_DAG, getUserDN(),
 			dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
-			NULL, &subjobs)) {
+			NULL, &subjobs) ;
+	}else{
+		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
+			dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
+			NULL, &subjobs) ;
+	}
+
+	if(register_result){
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerDag(WMPExpDagAd *dag)",
 			WMS_OPERATION_NOT_ALLOWED,
@@ -312,7 +345,8 @@ WMPEventLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree
 		setLoggingJob(userTags[i].first);
 		logUserTags((classad::ClassAd*)(userTags[i].second));
 	}
-	edg_wll_SetLoggingJob(ctx, id->getId(), NULL, EDG_WLL_SEQ_NORMAL);
+	if (lbProxy_b) { edg_wll_SetLoggingJobProxy(ctx, id->getId(), NULL , getUserDN() , EDG_WLL_SEQ_NORMAL); }
+	else { edg_wll_SetLoggingJob(ctx, id->getId(), NULL, EDG_WLL_SEQ_NORMAL); }
 }
 
 void
@@ -342,7 +376,8 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 }
 void WMPEventLogger::setLoggingJob( const std::string &jid , const char* seq_code){
 	glite::wmsutils::jobid::JobId jobid ( jid ) ;
-	edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code ,EDG_WLL_SEQ_NORMAL);
+	if (lbProxy_b) edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code , getUserDN() , EDG_WLL_SEQ_NORMAL); 
+	else{   edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code ,EDG_WLL_SEQ_NORMAL);   }
 }
 
 
@@ -354,18 +389,22 @@ bool WMPEventLogger::logEvent(event_name event, const char* reason){
 		switch (event){
 			case LOG_ACCEPT:
 				edglog(debug) << "Logging Accept event" << endl ;
-				return !edg_wll_LogAccepted(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");
+				if (lbProxy_b){ return !edg_wll_LogAcceptedProxy(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");}
+				else {return !edg_wll_LogAccepted(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");}
 				break;
 			case LOG_CANCEL:
 				edglog(debug) << "Logging Cancel event" << endl ;
+				if (lbProxy_b) {return !edg_wll_LogCancelREQProxy(ctx, reason);}
 				return !edg_wll_LogCancelREQ(ctx, reason);
 				break;
 			case LOG_CLEAR:
 				edglog(debug) << "Logging Clear event" << endl ;
+				if (lbProxy_b) {return !edg_wll_LogCancelREQProxy(ctx, reason);}
 				return !edg_wll_LogClearUSER(ctx);
 				break;
 			case LOG_ABORT:
 				edglog(debug) << "Logging Abort event" << endl ;
+				if (lbProxy_b) {return !edg_wll_LogCancelREQProxy(ctx, reason);}
 				return !edg_wll_LogAbort(ctx,reason);
 				break;
 			default:
