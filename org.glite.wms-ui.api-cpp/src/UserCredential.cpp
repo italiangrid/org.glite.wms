@@ -5,16 +5,16 @@
 ***************************************************************************/
 #include <unistd.h>
 #include "glite/wmsui/api/UserCredential.h"
-#include "glite/wmsui/api/CredentialException.h"
+#include "CredentialException.h"
 #include <sys/types.h> // in order to get pid
-#include "sslutils.h"
+#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 #include <iostream>  //cout
 
 namespace glite {
 namespace wmsui {
 namespace api {
 
-using namespace glite::wmsustils::exception ;
+using namespace glite::wmsutils::exception ;
 using namespace std ;
 //   Initialize static mutex variable
 pthread_mutex_t UserCredential::mutex = PTHREAD_MUTEX_INITIALIZER;

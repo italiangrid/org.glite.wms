@@ -149,10 +149,10 @@ void Job::initialise( ){
 #ifndef WITHOUT_THREAD
 #else
   if (edg_wlc_SSLLockingInit() != 0)
-      throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
+      throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  "0" )  ;
 #endif
   if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
-      throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
+      throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  "0" )  ;
 
 }
 

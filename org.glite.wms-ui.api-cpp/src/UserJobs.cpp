@@ -4,7 +4,7 @@
 *  copyright : (C) 2002 by DATAMAT
 *********************************************************************/
 #include "glite/wmsui/api/UserJobs.h"
-#include "glite/wmsui/api/CredentialException.h"
+#include "CredentialException.h"
 #include "glite/wmsui/api/JobExceptions.h"
 // #include  "glite/wmsui/api/NotificationAd.h" Deprecated class
 // Common
@@ -17,7 +17,7 @@ namespace wmsui {
 namespace api {
 
 using namespace std ;
-using namespace glite::wmsustils::exception ;
+using namespace glite::wmsutils::exception ;
 using namespace glite::wmsutils::jobid ;
 using namespace glite::lb ;
 
