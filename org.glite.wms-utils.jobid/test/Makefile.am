@@ -21,7 +21,7 @@ testjobid_LDADD = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
         $(GLITE_CFLAGS) \
-	$(GLITE_THR_CFLAGS)
+	$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
 
