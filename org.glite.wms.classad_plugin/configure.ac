@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/06/26 13:38:37  eronchie
+#       *** empty log message ***
+#
 #       Revision 1.2  2004/06/26 13:24:23  eronchie
 #       Start adding classad_plugin
 #       WARNING: work in progress
@@ -82,18 +85,19 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 
 have_boost=no
 have_classads=no
-have_globus=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+have_glite_wms_common=no
 
 AC_GLITE
-AC_GLITE_WMS_COMMON
+
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
