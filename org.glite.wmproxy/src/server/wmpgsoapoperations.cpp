@@ -272,7 +272,7 @@ setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
 	sp->ErrorCode = new string(error_code);
 	sp->Description = new string(description);
 	sp->FaultCause = convertStackVector(stack);
-
+	cerr<<"FAULT READY"<<endl;
 	// Sending fault
 	soap_receiver_fault(soap, "Stack dump", NULL);
 	setFaultDetails(soap, getServiceFaultType(code), sp);
@@ -367,7 +367,7 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegationId,
 		fault->setDescription(new string((string) exc.what()));
 		//soap_receiver_fault(soap, "Stack dump", NULL);
 		*/
-		cerr<<"exc.what(): "<<exc.what()<<endl;
+		//cerr<<"exc.what(): "<<exc.what()<<endl;
 
 		// THIRD METHOD
 		setSOAPFault(soap, exc.getCode(), "jobRegister", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());

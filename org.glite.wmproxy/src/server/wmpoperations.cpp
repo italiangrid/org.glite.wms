@@ -214,12 +214,16 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 				/// DO IT??  dag->check(); // This changes ISB files to absolute paths
 				regist(jobRegister_response, jdl, dag);
 				delete dag;
-		} else  if (type == TYPE_JOB) {
+		} else if (type == TYPE_JOB) {
 				cerr<<"---->> JOB"<<endl;
 				JobAd *jad = new JobAd(jdl);
-				jad->check(); // This changes ISB files to absolute paths
+				cerr<<"---->> AFTER JOB AD"<<endl;
+				cerr<<"---->> JOBAD: "<<jad->toString()<<endl;
+				//jad->check(); // This changes ISB files to absolute paths
 				if (jad->hasAttribute(JDL::JOBTYPE)) {
+					cerr<<"---->> AFTER jad->hasAttribute(JDL::JOBTYPE)"<<endl;
 					string job_type = (jad->getStringValue(JDL::TYPE))[0];
+					cerr<<"---->> AFTER getStringValue"<<endl;
 					if (job_type == JDL_JOBTYPE_PARAMETRIC) {
 						cerr<<"---->> PARAMETRIC"<<endl;
 						delete jad;
@@ -235,10 +239,12 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 						delete jad;
 						delete dag;
 					} else { // Default Job Type is Normal
+						cerr<<"JOB NORMAL"<<endl;
 						regist(jobRegister_response, jdl, jad);
 						delete jad;
 					}
 				} else {
+					cerr<<"---->> AFTER jad->hasAttribute(JDL::JOBTYPE)2 job"<<endl;
 					regist(jobRegister_response, jdl, jad);
 					delete jad;
 				}
@@ -290,7 +296,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &jdl, JobAd *jad)
 		throw ex;
 	}
 	string dest_uri = getSandboxDestURI_response.path;
-	
+	cerr<<"dest_uri: "<<dest_uri<<endl;
 	// Adding WMProxyDestURI and InputSandboxDestURI attributes
 	try {
 		if (!jad->hasAttribute(JDL::ISB_DEST_URI)) {
@@ -304,10 +310,10 @@ regist(jobRegisterResponse &jobRegister_response, const string &jdl, JobAd *jad)
 	}
 
 	WMPLogger wmplogger;
-	wmplogger.init(LB_ADDRESS, LB_PORT, jid);
+	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 
 	jad->setAttribute(JDL::JOBID, jid->toString());
-	
+	cerr<<"---->> wmplogger.registerJob(jad)"<<endl;
 	wmplogger.registerJob(jad);
 	
 	// Logging original jdl
@@ -374,7 +380,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &jdl, WMPExpDagAd
 	
 	cerr<<"JID: "<< jid->toString();
 	WMPLogger wmplogger;
-	wmplogger.init(LB_ADDRESS, LB_PORT, jid);
+	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 	wmplogger.setDestinationURI(dest_uri);
 
 	dag->setAttribute(WMPExpDagAd::EDG_JOBID, jid->toString());
@@ -425,8 +431,10 @@ jobStart(jobStartResponse &jobStart_response, const string &jobId)
 
 	JobId *jid = new JobId(jobId);
 	WMPLogger wmplogger;
-	wmplogger.init(SERVER_ADDRESS, SERVER_PORT, jid);
-
+	//wmplogger.init(SERVER_ADDRESS, SERVER_PORT, jid);
+	//wmplogger.init(LB_ADDRESS, LB_PORT, jid);
+	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
+	
 	try {
 		start(jobStart_response, jid, wmplogger);
 	} catch (Exception &exc) {
@@ -439,6 +447,9 @@ jobStart(jobStartResponse &jobStart_response, const string &jobId)
 	// Running wmproxy command
 	/*wmpmanager::WMPManager manager;
 	wmp_fault_t wmp_fault = manager.runCommand("JobStart", *jobId, job_start_response);*/
+	// it should be like a submit:
+	// ask logger for jdl and then check if the job hasn't already been started, if so -> error
+	// wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", *jdl, job_start_response);
 	wmp_fault_t wmp_fault;
 	wmp_fault.code = WMS_NO_ERROR;
 	if (wmp_fault.code != WMS_NO_ERROR) {
@@ -468,33 +479,15 @@ start(jobStartResponse &jobStart_response, JobId *jid, WMPLogger &wmplogger)
 		throw ex;
 	}
 
-	if (type == TYPE_DAG) {
-		WMPExpDagAd *dag = new WMPExpDagAd(jdl);
-		wmplogger.transfer(WMPLogger::START, dag->toString());
-		dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, wmplogger.getSequence());
-		wmplogger.logUserTags(dag->getSubAttributes(JDL::USERTAGS));
-		jdl = dag->toString();
-		delete dag;
-	} else if (type == TYPE_JOB) {
-		JobAd *jad = new JobAd(jdl);
-		wmplogger.transfer(WMPLogger::START, jad->toSubmissionString());
-		jad->setAttribute(JDL::LB_SEQUENCE_CODE, wmplogger.getSequence());
-		jdl = jad->toSubmissionString();
-		if (jad->hasAttribute(JDL::USERTAGS)) {
-			wmplogger.logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
-		}
-		delete jad;
-	}
-
 	try {
 		/*wmpmanager::WMPManager manager;
 		wmp_fault_t wmp_fault = manager.runCommand("JobStart", jid, jobStart_response);*/
-		wmplogger.transfer(WMPLogger::OK, jdl);
+		wmplogger.log(WMPLogger::ACCEPTED, jid->toString(), "");
 	} catch (Exception &exc) {
-		wmplogger.transfer(WMPLogger::FAIL, jdl, exc.what());
+		wmplogger.log(WMPLogger::ABORT, "", exc.what());
 		throw exc;
 	} catch (exception &ex) {
-		wmplogger.transfer(WMPLogger::FAIL, jdl, ex.what());
+		wmplogger.log(WMPLogger::ABORT, "", ex.what());
 		throw ex;
 	}
 
@@ -587,17 +580,20 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &jobId)
 void
 getMaxInputSandboxSize(getMaxInputSandboxSizeResponse &getMaxInputSandboxSize_response)
 {
-	GLITE_STACK_TRY("getMaxInputSandboxSize(getMaxInputSandboxSizeResponse &getMaxInputSandboxSize_response)");
+	GLITE_STACK_TRY("getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
+		"&getMaxInputSandboxSize_response)");
 
 	/*
 	org::glite::daemon::WMPManager manager;
-	wmp_fault_t wmp_fault = manager.runCommand("getMaxInputSandboxSize", getMaxInputSandboxSize_response);
+	wmp_fault_t wmp_fault = manager.runCommand("getMaxInputSandboxSize",
+		getMaxInputSandboxSize_response);
 	*/
 	wmp_fault_t wmp_fault;
 	wmp_fault.code = WMS_NO_ERROR;
 	if (wmp_fault.code != WMS_NO_ERROR) {
 		throw JobOperationException(__FILE__, __LINE__,
-				"getMaxInputSandboxSize(getMaxInputSandboxSizeResponse &getMaxInputSandboxSize_response)",
+				"getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
+				"&getMaxInputSandboxSize_response)",
 				wmp_fault.code, wmp_fault.message);
 	}
 	getMaxInputSandboxSize_response.size = 23;

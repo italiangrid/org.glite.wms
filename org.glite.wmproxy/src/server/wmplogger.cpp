@@ -48,15 +48,15 @@ WMPLogger::~WMPLogger() throw()
 }
 
 void
-WMPLogger::init(const string &nsHost, int nsPort, jobid::JobId *id)
+WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 {
 	this->id = id;
-	this->nsHost = nsHost;
-	this->nsPort = nsPort;
+	this->lb_host = lb_host;
+	this->lb_port = lb_port;
 	if (!getenv(GLITE_WMS_LOG_DESTINATION)) {
-		if (edg_wll_SetParamString(ctx, EDG_WLL_PARAM_DESTINATION, nsHost.c_str())) {
+		if (edg_wll_SetParamString(ctx, EDG_WLL_PARAM_DESTINATION, lb_host.c_str())) {
 			throw JobOperationException(__FILE__, __LINE__,
-					"WMPLogger::init(const string& nsHost, int nsPort, jobid::JobId* id)",
+					"WMPLogger::init(const string& lb_host, int lb_port, jobid::JobId* id)",
 					WMS_OPERATION_NOT_ALLOWED, "LB initialisation failed (set destination)");
 		}
 	}
@@ -86,19 +86,44 @@ void
 WMPLogger::registerJob(JobAd *jad)
 {
 	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
+	cerr<<"AFTER sprintf"<<endl;
+	cerr<<"ctx: "<<ctx<<endl;
+	cerr<<"id->getId(): "<<id->getId()<<endl;
+	cerr<<"jad->toSubmissionString().c_str(): "<<jad->toSubmissionString().c_str()<<endl;
+	cerr<<"str_addr: "<<str_addr<<endl;
+	string proxy = "/tmp/x509up_u503";
+	edg_wll_SetParamString(ctx, EDG_WLL_PARAM_X509_PROXY, proxy.c_str());
+	string proxyout;
+	//edg_wll_GetParam(ctx, EDG_WLL_PARAM_X509_PROXY, &proxyout);
+	//cerr<<"p_proxy_filename: "<<proxyout<<endl;
+	/*cerr<<"p_cert_filename: "<<ctx->p_cert_filename<<endl;
+	cerr<<"p_key_filename: "<<ctx->p_key_filename<<endl;
+	cerr<<"p_host: "<<ctx.p_host<<endl;
+	cerr<<"p_source: "<<ctx.p_source<<endl;
+	cerr<<"p_destination: "<<ctx.p_destination<<endl;
+	cerr<<"p_dest_port: "<<ctx.p_dest_port<<endl;*/
+	char* host = "10.3.1.43";
+	
+	jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
-			jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
+			jad->toSubmissionString().c_str(), host, 0, NULL, NULL)) {
+		cerr<<"JobOperationException"<<endl;
 		throw JobOperationException(__FILE__, __LINE__, "WMPLogger::registerJob(JobAd* jad)",
 			WMS_OPERATION_NOT_ALLOWED, error_message("edg_wll_RegisterJobSync"));
 	}
+	if (jad->hasAttribute(JDL::USERTAGS)) {
+		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
+	}
+	
+	cerr<<"After if"<<endl;
 }
 
 void
 WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 {
 	char str_nsAddr[1024];
-	sprintf(str_nsAddr, "%s%s%d", nsHost.c_str(), ":", nsPort);
+	sprintf(str_nsAddr, "%s%s%d", lb_host.c_str(), ":", lb_port);
 	vector<string> jdls = ad->getSubmissionStrings();
 	
 	// array of jdls
@@ -132,7 +157,7 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		job_ad->setNodeAttribute(jobid, JDL::WMPROXY_DEST_URI, dest_uri);*/
 	}
 	
-	cerr<<"WMPLogger::Creating N Sub Jobs of size: "<<jdls.size()<<endl;
+	//cerr<<"WMPLogger::Creating N Sub Jobs of size: "<<jdls.size()<<endl;
 	jdls_char = (char**) malloc(sizeof(char*) * (jdls.size() + 1));
 	zero_char = jdls_char;
 	jdls_char[jdls.size()] = NULL;
@@ -141,17 +166,17 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	for (iter = jdls.begin(); iter != jdls.end(); iter++, i++) {
 		*zero_char = (char*) malloc(iter->size() + 1);
 		sprintf(*zero_char, "%s", iter->c_str());
-		cerr<<"WMPLogger::Created Sub: "<<*zero_char<<endl;
+		//cerr<<"WMPLogger::Created Sub: "<<*zero_char<<endl;
 		zero_char++;
 	}
-	cerr<<"WMPLogger::Performing edg_wll_RegisterSubjobs (Dag father is): "<<id->toString()<<endl;
+	//cerr<<"WMPLogger::Performing edg_wll_RegisterSubjobs (Dag father is): "<<id->toString()<<endl;
 	if (edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char, str_nsAddr, subjobs)) {
 		throw JobOperationException(__FILE__, __LINE__, "WMPLogger::registerJob",
 			WMS_OPERATION_NOT_ALLOWED, error_message("edg_wll_RegisterSubjobs"));
 	}
 
 	// Release Memory  REMOVE!!
-	for ( unsigned int i = 0 ; i < jdls.size() ; i++ ) {
+	for (unsigned int i = 0 ; i < jdls.size() ; i++ ) {
 		std::free(jdls_char[i]);
 	}
     	std::free(jdls_char);
@@ -164,8 +189,9 @@ WMPLogger::registerDag(WMPExpDagAd *dag, int res_num)
 	edg_wlc_JobId *subjobs = NULL;
 
 	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
-	cerr<<"WMPLogger::registerDag Registering partitiobnable job" << endl;
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
+	//cerr<<"WMPLogger::registerDag Registering partitiobnable job" << endl;
+	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, getSequence());
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
 		dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
 		NULL, &subjobs)) {
@@ -173,6 +199,8 @@ WMPLogger::registerDag(WMPExpDagAd *dag, int res_num)
 				"WMPLogger::registerDag", WMS_OPERATION_NOT_ALLOWED,
 				error_message("edg_wll_RegisterJobSync"));
 	}
+	logUserTags(dag->getSubAttributes(JDL::USERTAGS));
+	
 	registerSubJobs(dag, subjobs);
 	vector<string> jobids;
 	for (unsigned int i = 0; i < res_num; i++) {
@@ -182,56 +210,58 @@ WMPLogger::registerDag(WMPExpDagAd *dag, int res_num)
 };
 
 void
-WMPLogger::registerDag(WMPExpDagAd *ad)
+WMPLogger::registerDag(WMPExpDagAd *dag)
 {
 	// array of subjob id
 	edg_wlc_JobId *subjobs = NULL;
 
 	// Writing the wmp address
 	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
 
+	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, getSequence());
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
-		ad->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, ad->size(),
+		dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
 		NULL, &subjobs)) {
 			throw JobOperationException(__FILE__, __LINE__,
 				"WMPLogger::registerDag", WMS_OPERATION_NOT_ALLOWED,
 				error_message("edg_wll_RegisterJobSync"));
 	}
-	registerSubJobs(ad, subjobs);
+	logUserTags(dag->getSubAttributes(JDL::USERTAGS));
+	
+	registerSubJobs(dag, subjobs);
 	vector<string> jobids;
-	for (unsigned int i = 0; i < ad->size(); i++) {
-		cerr << "Appending jobid..." <<  edg_wlc_JobIdUnparse(subjobs[i]) << endl;
+	for (unsigned int i = 0; i < dag->size(); i++) {
+		//cerr << "Appending jobid..." <<  edg_wlc_JobIdUnparse(subjobs[i]) << endl;
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
 	}
 	// Inserting the sub-jobids into the DagAd
-	ad->setJobIds(jobids);	
+	dag->setJobIds(jobids);	
 }
 
 void
-WMPLogger::transfer(txType tx, const std::string &jdl, const char *error)
+WMPLogger::log(log_type type, const std::string &jid, const char *reason)
 {
 	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
-	switch (tx) {
-		case START:
-			if (edg_wll_LogTransferSTART(ctx, EDG_WLL_SOURCE_NETWORK_SERVER,
-					nsHost.c_str(), str_addr, jdl.c_str(), error, "")) {
-				cerr << error_message("edg_wll_LogTransferSTART") << endl;
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
+	switch (type) {
+		case ACCEPTED:
+			if (edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER,
+					lb_host.c_str(), str_addr, jid.c_str())) {
+				//cerr << error_message("edg_wll_LogTransferSTART") << endl;
 			}
 			break;
-		case OK:
-			if (edg_wll_LogTransferOK(ctx, EDG_WLL_SOURCE_NETWORK_SERVER,
-					nsHost.c_str(), str_addr, jdl.c_str(), error, "")) {
-				cerr << error_message("edg_wll_LogTransferOK") << endl;
-			}
+		case REFUSED:
+			//if (edg_wll_LogTransferOK(ctx, EDG_WLL_SOURCE_NETWORK_SERVER,
+				//	lb_host.c_str(), str_addr, jdl.c_str(), error, "")) {
+				//cerr << error_message("edg_wll_LogTransferOK") << endl;
+			//}
 			break;
-		case FAIL:
-			if (edg_wll_LogTransferFAIL(ctx, EDG_WLL_SOURCE_NETWORK_SERVER,
-					nsHost.c_str(), str_addr, jdl.c_str(), error, "")) {
-				cerr << error_message( "edg_wll_LogTransferFAIL") << endl;
+		case ABORT:
+			if (edg_wll_LogAbort(ctx, reason)) {
+				//cerr << error_message( "edg_wll_LogTransferFAIL") << endl;
 			}
-			edg_wll_LogAbort(ctx, error);
+			
 			break;
 		default:
 			break;
@@ -247,7 +277,7 @@ WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> > 
 				+ userTags[i].first);
 		}
 		glite::wmsutils::jobid::JobId sub_jobid(userTags[i].first);
-		cerr<<"logUserTags log for "<<sub_jobid.toString()<<endl;
+		//cerr<<"logUserTags log for "<<sub_jobid.toString()<<endl;
 		edg_wll_SetLoggingJob(ctx, sub_jobid.getId(), NULL, EDG_WLL_SEQ_NORMAL);
 		logUserTags((classad::ClassAd*)(userTags[i].second));
 	}
