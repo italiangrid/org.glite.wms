@@ -7,16 +7,10 @@
 #include "wmproxy.h"
 
 // Fast CGI
-//extern "C" {
-	#include "fcgi_stdio.h"
-//}
 #include "fcgio.h"
-#include "fcgi_config.h"  // HAVE_IOSTREAM_WITHASSIGN_STREAMBUF
+#include "fcgi_config.h"
+#include <fcgi_stdio.h>
 
-//#include "fcg_stdio.h"
-//#include "libfcgio.a"
-//#include "libfcgio.so"
-//#include <fcgi_stdio.h>
 
 // gSOAP
 #include "soapH.h"
@@ -36,7 +30,7 @@
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 
-#include "exception_codes.h"
+#include "wmpexception_codes.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 

@@ -26,7 +26,8 @@ void jobRegister(jobRegisterResponse &jobRegister_response,
 
 void jobStart(jobStartResponse &jobStart_response, const std::string &jobId);
 
-void jobSubmit(jobSubmitResponse &jobSubmit_response, const std::string &jdl);
+void jobSubmit(jobSubmitResponse &jobSubmit_response, const std::string &jdl,
+	const std::string &delegationId);
 
 void jobCancel(jobCancelResponse &jobCancel_response, const std::string &jobId);
 
@@ -62,7 +63,13 @@ void getCollectionTemplate(getCollectionTemplateResponse
 	const std::string &requirements,
 	const std::string &rank);
 
+void getProxyReq(getProxyReqResponse &getProxyReq_response,
+	const std::string &delegation_id);
 
+void putProxy(putProxyResponse &putProxyReq_response, 
+	const std::string &delegation_id, const std::string &proxy);
+
+	
 //} // wmproxy
 //} // wms
 //} // glite

@@ -7,7 +7,7 @@
 #ifndef GLITE_WMS_WMPROXY_WMPEXCEPTIONS_H
 #define GLITE_WMS_WMPROXY_WMPEXCEPTIONS_H
 
-#include "exception_codes.h"
+#include "wmpexception_codes.h"
 #include "glite/wmsutils/exception/Exception.h"
 
 //namespace glite {
@@ -31,6 +31,12 @@ class JobTimeoutException : public JobException {
 class JobOperationException : public JobException {
 	public:
 	JobOperationException(const std::string& file, int line, 
+		const std::string& method, int code, const std::string& reason);
+};
+
+class ProxyOperationException : public JobException {
+	public:
+	ProxyOperationException(const std::string& file, int line, 
 		const std::string& method, int code, const std::string& reason);
 };
 

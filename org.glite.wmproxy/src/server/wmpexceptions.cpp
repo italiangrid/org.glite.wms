@@ -35,6 +35,14 @@ JobOperationException::JobOperationException(const std::string& file, int line,
 	error_message += reason;
 }
 
+ProxyOperationException::ProxyOperationException(const std::string& file, int line,
+	const std::string& method, int code, const std::string& reason)
+	:JobException(file, line, method, code, "JobOperationException")
+    {
+	error_message = "The Operation is not allowed: " + reason;
+	error_message += reason;
+}
+
 //} // wmproxy
 //} // wms
 //} // glite

@@ -28,7 +28,7 @@ enum JobType {
 	WMS_CHECKPOINTABLE,
 };
 
-// Base fault type to hold all kinds of fault
+// Base fault type to hold all kinds of faults
 struct BaseFaultType
 {
     std::string methodName;
@@ -137,6 +137,13 @@ struct getDAGTemplateResponse {
 
 struct getCollectionTemplateResponse {
   std::string jdl;
+};
+
+struct getProxyReqResponse {
+  std::string request;
+};
+
+struct putProxyResponse {
 };
 
 struct getIntParametricJobTemplateResponse {

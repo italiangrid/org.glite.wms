@@ -1,5 +1,5 @@
 /*
-	Copyright (c) Members of the EGEE Collaboration. 2004.
+ 	Copyright (c) Members of the EGEE Collaboration. 2004.
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
@@ -21,36 +21,34 @@
 //namespace wms {
 //namespace wmproxy {
 
-
-
 class WMPLogger  {
 
 	public:
-		enum log_type {
-			ACCEPTED,
-			ABORT,
-			REFUSED
-		};
 
 		WMPLogger();
 		virtual ~WMPLogger() throw();
 
-		void init(const std::string &nsHost, int nsPort, glite::wmsutils::jobid::JobId *id);
-
-		void registerJob(glite::wms::jdl::JobAd *ad);
-		void registerDag(WMPExpDagAd *ad);
-		void registerDag(WMPExpDagAd *ad, int res_num);
-
-		void log(log_type tx, const std::string &jid, const char *reason = "");
+		void init(const std::string &nsHost, int nsPort, 
+			glite::wmsutils::jobid::JobId *id);
 
 		std::string getSequence();
+		
+		void registerJob(glite::wms::jdl::JobAd *ad);
+		void registerDag(WMPExpDagAd *ad);
+		void registerPartitionable(WMPExpDagAd *ad, int res_num);
 
+		void logAccepted(const std::string &jid);
+		void logRefused(const std::string &jid);
+		void logAbort(const char *reason = "");
+
+		void logUserTag(std::string name, const std::string &value);
 		void logUserTags(classad::ClassAd *userTags);
-		void logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> > userTags);
+		void logUserTags(std::vector<std::pair<std::string, 
+			classad::ExprTree*> > userTags);
 		
 		void setDestinationURI(std::string dest_uri);
 		
-		void logOriginalJdl(const std::string &jdl);
+		static const char *GLITE_WMS_LOG_DESTINATION;
 		
 	private:
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
