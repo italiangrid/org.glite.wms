@@ -94,6 +94,7 @@ public class Utils {
                                                       // 'automatically'
                                                       // inserted in a jdl file.
       //!!! STR_USER_PROXY will be a user attribute.
+      Jdl.PRE_JOB, Jdl.POST_JOB,
       Jdl.NODENUMB, Jdl.CHKPT_STEPS, Jdl.CHKPT_CURRENTSTEP, Jdl.SHPORT,
       Jdl.VIRTUAL_ORGANISATION, Jdl.EXECUTABLE, Jdl.ARGUMENTS, Jdl.STDINPUT,
       Jdl.STDOUTPUT, Jdl.STDERROR, Jdl.INPUTSB, Jdl.OUTPUTSB, Jdl.ENVIRONMENT,

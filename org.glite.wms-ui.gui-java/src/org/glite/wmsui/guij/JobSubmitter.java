@@ -147,6 +147,12 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     // Set application type. The type of application affects on some settings.
     Utils.setApplicationType(Utils.FRAME);
     // Set the items selectable from Edit menu.
+    /*ImageIcon iconLogo = null;
+    URL urlLogo = JobSubmitter.class.getResource(Utils.ICON_DATAGRID_LOGO);
+    if (urlLogo != null) {
+      iconLogo = new ImageIcon(urlLogo);
+    }
+    this.setIconImage(iconLogo.getImage());*/
     setJMenuEditItemsEnabled();
     Toolkit toolkit = getToolkit();
     Dimension screenSize = toolkit.getScreenSize();

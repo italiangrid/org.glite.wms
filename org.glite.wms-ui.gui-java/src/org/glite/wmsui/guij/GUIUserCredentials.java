@@ -1661,7 +1661,7 @@ public class GUIUserCredentials extends JDialog {
             JobMonitorPreferences.initializeUserConfiguration();
 
             // Load from preferences file
-            jobMonitorJFrame.loadConf(jobMonitorJFrame.
+            jobMonitorJFrame.loadConf(JobMonitor.
                 getJobMonitorRecoveryFile());
           }
 

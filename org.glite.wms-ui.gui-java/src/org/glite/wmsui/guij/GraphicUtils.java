@@ -1,10 +1,10 @@
 /*
- * GraphicUtils.java 
- * 
+ * GraphicUtils.java
+ *
  * Copyright (c) Members of the EGEE Collaboration. 2004.
  * See http://public.eu-egee.org/partners/ for details on the copyright holders.
  * For license conditions see the license file or http://www.eu-egee.org/license.html
- * 
+ *
  */
 
 package org.glite.wmsui.guij;
@@ -46,6 +46,10 @@ public class GraphicUtils {
 
   // Screen proportion.
   static final double SCREEN_WIDTH_PROPORTION = 0.8;
+  
+  static final double SCREEN_WIDTH_INFO_DETAILS_PROPORTION = 0.66;
+  
+  static final double SCREEN_WIDTH_INFO_DETAILS_PREFERRED_PROPORTION = 0.33;
 
   static final double SCREEN_HEIGHT_PROPORTION = 0.75;
 

@@ -1141,22 +1141,25 @@ public class JobTypePanel extends JPanel {
 
   boolean checkWeights() {
     int dashCount = 0;
+    int numberCount = 0;
     int rowCount = jobTableModel.getRowCount();
     String currentValue;
     for (int i = 0; i < rowCount; i++) {
       currentValue = jobTableModel.getValueAt(i, WEIGHT_COLUMN_INDEX)
           .toString().trim();
-      if (currentValue == DASH) {
+      if (currentValue.equals(DASH)) {
+        if (numberCount != 0) {
+          return false;
+        }
         dashCount++;
       } else {
         if (dashCount != 0) {
-          // We have a dash & a no dash value
           return false;
-        } else {
-          if (Utils.getValueType(currentValue) != Utils.INTEGER) {
-            return false;
-          }
         }
+        if (Utils.getValueType(currentValue) != Utils.INTEGER) {
+          return false;
+        }
+        numberCount++;
       }
     }
     return true;

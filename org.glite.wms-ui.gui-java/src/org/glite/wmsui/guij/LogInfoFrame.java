@@ -13,6 +13,7 @@ import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.util.Vector;
@@ -95,31 +96,17 @@ public class LogInfoFrame extends JFrame {
     }
   }
 
-  private void jbInit() throws Exception {
+private void jbInit() throws Exception {
     isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
         : false;
+    Toolkit toolkit = getToolkit();
+    Dimension screenSize = toolkit.getScreenSize();
+    int width = (int) (screenSize.width * GraphicUtils.SCREEN_WIDTH_PROPORTION * GraphicUtils.SCREEN_WIDTH_INFO_DETAILS_PROPORTION);
+    int height = (int) (screenSize.height * GraphicUtils.SCREEN_HEIGHT_PROPORTION);
+    this.setSize(new Dimension(width, height));
     this.addComponentListener(new java.awt.event.ComponentListener() {
       public void componentResized(ComponentEvent e) {
         logInfoJPanel.updateValueTableWidth();
-        /*
-         int xPosition = getBounds().x;
-         int yPosition = getBounds().y;
-         int height = getBounds().height;
-         int width = getBounds().width;
-         boolean changed = false;
-         if (width > FRAME_WIDTH) {
-         width = FRAME_WIDTH;
-         changed = true;
-         }
-         if (height > FRAME_HEIGHT) {
-         height = FRAME_HEIGHT;
-         changed = true;
-         }
-         if (changed) {
-         setBounds(new Rectangle(xPosition, yPosition, width, height));
-         } else {
-         repaint();
-         }*/
       }
 
       public void componentMoved(ComponentEvent e) {
@@ -145,11 +132,10 @@ public class LogInfoFrame extends JFrame {
     jPanelText.add(jScrollPaneText, BorderLayout.CENTER);
     jPanelText.add(jPanelButton, BorderLayout.SOUTH);
     this.getContentPane().add(jScrollPaneMain, BorderLayout.CENTER);
-    logInfoJPanel.setPreferredSize(new Dimension(500, 480));
-    this.setSize(new Dimension(620, 600));
-  }
-
-  void setTableEvents(Vector eventsVector) {
+    logInfoJPanel.setPreferredSize(new Dimension(
+            (int) (width - width * GraphicUtils.SCREEN_WIDTH_INFO_DETAILS_PREFERRED_PROPORTION),
+            (int) (height - height * GraphicUtils.SCREEN_WIDTH_INFO_DETAILS_PREFERRED_PROPORTION)));
+  }  void setTableEvents(Vector eventsVector) {
     logInfoJPanel.setTableEvents(eventsVector);
   }
 

@@ -20,6 +20,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.SystemColor;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
@@ -249,7 +250,11 @@ public class StatusDetailsFrame extends JFrame {
   private void jbInit() throws Exception {
     isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
         : false;
-    //setSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
+    Toolkit toolkit = getToolkit();
+    Dimension screenSize = toolkit.getScreenSize();
+    int width = (int) (screenSize.width * GraphicUtils.SCREEN_WIDTH_PROPORTION * GraphicUtils.SCREEN_WIDTH_INFO_DETAILS_PROPORTION);
+    int height = (int) (screenSize.height * GraphicUtils.SCREEN_HEIGHT_PROPORTION);
+    this.setSize(new Dimension(width, height));
     this.addComponentListener(new java.awt.event.ComponentListener() {
       public void componentResized(ComponentEvent e) {
         updateValueTableWidth();
@@ -556,8 +561,9 @@ public class StatusDetailsFrame extends JFrame {
     jScrollPaneMain.getViewport().add(jPanelMain);
     this.getContentPane().setLayout(new BorderLayout());
     this.getContentPane().add(jScrollPaneMain, BorderLayout.CENTER);
-    jPanelMain.setPreferredSize(new Dimension(500, 480));
-    this.setSize(new Dimension(620, 600));
+    jPanelMain.setPreferredSize(new Dimension(
+        (int) (width - width * GraphicUtils.SCREEN_WIDTH_INFO_DETAILS_PREFERRED_PROPORTION),
+        (int) (height - height * GraphicUtils.SCREEN_WIDTH_INFO_DETAILS_PREFERRED_PROPORTION)));
   }
 
   void showJPanelViewText(String text) {
