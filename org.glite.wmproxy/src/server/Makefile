@@ -4,7 +4,7 @@ LIBS=
 COFLAGS=-O2
 #CWFLAGS=-Wall
 CWFLAGS=
-#REPOSITORY=/home/fpacini/CVS_REP/cern
+
 CIFLAGS=-I$(REPOSITORY)/org.glite.wms.wmproxy/src
 CMFLAGS=-DWITH_FASTCGI -DHAVE_STRINGSTREAM
 #CMFLAGS=
@@ -98,11 +98,6 @@ LD1FLAGS= -lssl \
 	-lcrypto \
 	-lxml2 \
 	-lgridsite
-
-EXTRALIBFLAGS = \
-	-L$(REPOSITORY)/org.glite.wms.purger/build/src/libglite_wms_purger.la \
-	-L$(REPOSITORY)/org.glite.wms.common/build/src/utilities/libglite_wms_quota.la
-
 
 	#$(GLOBUS_COMMON_LIBS) \
 	#-lglite_wmsutils_cjobid \
