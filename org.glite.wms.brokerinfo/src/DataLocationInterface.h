@@ -18,7 +18,6 @@
  *  http://www.edg.org/license.html
  */
 
-// $Id$
 
 
 class URLArray {
