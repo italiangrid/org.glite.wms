@@ -1,0 +1,270 @@
+<?xml version="1.0"?>
+<!--
+	Copyright (c) 2004 on behalf of the EU EGEE Project: 
+	The European Organization for Nuclear Research (CERN), 
+	Istituto Nazionale di Fisica Nucleare (INFN), Italy
+	Datamat Spa, Italy
+	Centre National de la Recherche Scientifique (CNRS), France
+	CS Systeme d'Information (CSSI), France
+	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+	Universiteit van Amsterdam (UvA), Netherlands
+	University of Helsinki (UH.HIP), Finland
+	University of Bergen (UiB), Norway
+	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+
+	EGEE Middleware Test WMS Configuration Specification File
+	
+	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
+	Version info: $Id$
+	Release: $Name$
+
+	Revision history:
+	$Log$
+	Revision 1.1  2004/04/29 01:36:29  dimeglio
+	Added org.egee.test3.wms
+
+-->
+
+
+<project name="EGEE Middleware Test2 WMS CSF" default="all">
+
+	<!-- Proxy settings, default values can be overriden by user -->
+	<property name="proxyhost" value="" />
+	<property name="proxyport" value="80" />
+	<setproxy proxyhost="${proxyhost}" proxyport="${proxyport}"/>
+
+	<!-- ========================================================
+		 Checkout/updates the EGEE Middleware Test2 WMS components
+		 ======================================================== -->
+	
+	<!-- Default workspace location is module parent directory -->
+	<!-- Override from command line -->
+	<property name="workspace.dir" location="../.." />
+	<property name="repository" location="${workspace.dir}/repository" />
+	
+	<!-- Load environment variables -->
+	<property environment="env" />
+	
+	<!-- Load subsystem dependencies file -->
+	<property file="subsystem.dependencies.properties" />
+	
+	<!-- Default update mode - Override from command line -->
+	<property name="update" value="false" />
+	
+	<!-- Set org.egee update mode -->
+	<condition property="egee.uptodate">
+		<and>
+			<isfalse value="${update}" />
+			<available file="${workspace.dir}/org.egee" type="dir" />
+		</and>
+	</condition>
+
+	<!-- Set org.egee.test3 update mode -->
+	<condition property="uptodate">
+		<isfalse value="${update}" />
+	</condition>
+
+	<!-- =====================================================
+		 Self-update if required
+		 ===================================================== -->
+		
+	<!-- Load subsystem dependencies file -->
+	<property file="dependencies.properties" />
+
+	<!-- Update main EGEE module -->
+	<target name="org.egee" unless="egee.uptodate">
+		<cvs command="checkout"
+        	package="org.egee"
+        	dest="${workspace.dir}"
+        	tag="${org.egee.version}"/>
+		<fail>The org.egee module has been updated, please rerun the configuration file</fail>
+	</target>
+
+	<!-- Update the current module -->
+	<target name="org.egee.test3.wms" unless="uptodate">
+		<cvs command="checkout"
+        	package="org.egee.test3.wms"
+        	dest="${workspace.dir}"
+        	tag="${org.egee.test3.wms.version}" />
+		<fail>The org.egee.test3.wms module has been updated, please rerun the configuration file</fail>
+	</target>
+
+	<!-- Load master dependencies file -->
+	<property file="${workspace.dir}/org.egee/project/dependencies.properties" />
+	
+	<!-- *****************************************************-->
+	<!-- Environmental checks                                 -->
+	<!-- *****************************************************-->
+	
+	<!-- All environmental checks -->
+	<target name="envchecks" depends="oscheck,javacheck,antcheck,gcccheck" />
+
+	<target name="oscheck">
+		<!-- Operating system -->
+		<condition property="isWindows">
+			<os family="windows"/>
+		</condition>
+		<condition property="isUnix">
+			<os family="unix"/>
+		</condition>
+		<echo>Operating system:		${os.name}</echo>
+	</target>
+			
+	<target name="javacheck">
+		<!-- Java version -->
+		<condition property="isJavaOk">
+			<contains string="${java.version}" substring="${egee.java.version}"/>
+		</condition>
+		<echo>Java version:		${java.version}</echo>
+		<fail unless="isJavaOk">Java JRE version must be ${egee.java.version}_XX</fail>
+		<echo>JAVA_HOME:			${env.JAVA_HOME}</echo>
+	</target>
+			
+	<target name="antcheck">
+		<!--  Ant -->
+		<condition property="isAntOk">
+			<contains string="${ant.version}" substring="${egee.ant.version}"/>
+		</condition>
+		<echo>Ant version:		${ant.version}</echo>
+		<fail unless="isAntOk">Ant version must be ${egee.ant.version}</fail>
+		<echo>ANT_HOME:			${env.ANT_HOME}</echo>
+	</target>
+		
+	<target name="gcccheck" if="isUnix">
+		<!-- Gcc compiler version -->
+		<exec executable="gcc" outputproperty="detected.gcc.version">
+			<arg line="-dumpversion" />
+		</exec>
+		<condition property="isGccOk">
+			<equals arg1="${detected.gcc.version}" arg2="${egee.gcc.version}"/>
+		</condition>
+		<echo>Gcc version:		${detected.gcc.version}</echo>
+		<fail unless="isGccOk">Gcc version must be ${egee.gcc.version}</fail>
+		<exec executable="which" outputproperty="detected.gcc.path">
+			<arg line="gcc" />
+		</exec>
+		<echo>gcc path:			${detected.gcc.path}</echo>
+	</target>
+	
+	<!-- *****************************************************-->
+	<!-- Development tools                                    -->
+	<!-- *****************************************************-->
+	
+	<!-- All development tools -->
+ 	<target name="devtools" depends="junit,
+ 									 checkstyle,
+ 									 jalopy,
+ 									 cpptasks"/>		
+
+	<!--  JUnit -->
+ 	<target name="junit">		
+		<mkdir dir="${repository}/${junit.name}" />
+		<get src="${junit.url}/junit.jar"
+			 dest="${repository}/${junit.name}/junit.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+
+		<!-- Copy junit jar to Ant lib directory, needed to run JUnit task -->
+		<copy file="${repository}/${junit.name}/junit.jar"
+			tofile="${env.ANT_HOME}/lib/junit.jar"/>
+	</target>
+
+	<!--  CheckStyle -->
+ 	<target name="checkstyle">		
+		<mkdir dir="${repository}/${checkstyle.name}" />
+		<get src="${checkstyle.url}/checkstyle-all-3.3.jar"
+			 dest="${repository}/${checkstyle.name}/checkstyle-all-3.3.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+	</target>
+
+	<!--  Jalopy -->
+ 	<target name="jalopy">		
+		<mkdir dir="${repository}/${jalopy.name}" />
+		<get src="${jalopy.url}/lib/jalopy-ant-0.6.1.jar"
+			 dest="${repository}/${jalopy.name}/jalopy-ant-0.6.1.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+	</target>
+
+	<!--  CPPTasks -->
+ 	<target name="cpptasks">		
+		<mkdir dir="${repository}/${cpptasks.name}" />
+		<get src="${cpptasks.url}/cpptasks.jar"
+			 dest="${repository}/${cpptasks.name}/cpptasks.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+	</target>
+
+	<!-- =====================================================
+		 External libraries
+		 ===================================================== -->
+	
+	<!--  All external libraries -->
+ 	<target name="external" depends=""/>
+ 	
+	<!-- =====================================================
+		 EGEE Middleware modules
+		 ===================================================== -->
+	
+	<!-- All project modules -->
+ 	<target name="project"/>
+
+	<!-- Globus SSLUtils -->
+ 	<target name="thirdparty-globus_ssl_utils">		
+		<cvs command="checkout"
+			package="org.egee.test3.wms.thirdparty-globus_ssl_utils"
+			dest="${workspace.dir}"
+			tag="${org.egee.test2.wms.thirdparty-globus_ssl_utils.version}"/>
+	</target>
+	
+	<!-- ByPass -->
+ 	<target name="thirdparty-bypass">		
+		<cvs command="checkout"
+			package="org.egee.test3.wms.thirdparty-bypass"
+			dest="${workspace.dir}"
+			tag="${org.egee.test3.wms.thirdparty-bypass}"/>
+	</target>
+	
+	<!-- Globus GridFTP Server -->
+ 	<target name="thirdparty-globus_gridftp_server" depends="globus">		
+		<cvs command="checkout"
+			package="org.egee.test3.wms.thirdparty-globus_gridftp_server"
+			dest="${workspace.dir}"
+			tag="${org.egee.test3.wms.thirdparty-globus_gridftp_server.version}"/>
+	</target>
+	
+	<!-- Loki -->
+ 	<target name="thirdparty-loki">		
+		<cvs command="checkout"
+			package="org.egee.test3.wms.thirdparty-loki"
+			dest="${workspace.dir}"
+			tag="${org.egee.test3.wms.thirdparty-loki.version}"/>
+	</target>
+	
+	<!-- Common -->
+ 	<target name="common" depends="boost,classads,globus">		
+		<cvs command="checkout"
+			package="org.egee.test3.wms.common"
+			dest="${workspace.dir}"
+			tag="${org.egee.test3.wms.common.version}"/>
+	</target>
+	
+	<!-- ====================================================
+		 Checkout all
+		 ==================================================== -->
+	
+	<!-- All libraries -->
+ 	<target name="all" depends="org.egee, org.egee.test3.wms, envchecks, devtools, external, project" />		
+
+	<!-- ====================================================
+		 Print dependecies to console
+		 ==================================================== -->
+	
+ 	<target name="dependencies">
+ 		<concat>
+ 			<fileset dir="." includes="dependencies.properties" />
+ 		</concat>
+ 	</target>		
+
+</project>
