@@ -112,8 +112,9 @@ void Request::getOutput(const std::string& dir_path , const std::string& nsRootP
 		finally purge the Dag files*/
 		for ( vector<JobStatus>::iterator it = states.begin() ; it!=states.end() ; it++ )
 			getOutput( dir_path + "/" + string ( getlogin()) + "_" +  status.getValJobId( JobStatus::JOB_ID ).getUnique(), nsRootPath , *it ) ;
-		if ( nsClient-> jobPurge(  status.getValJobId( JobStatus::JOB_ID ).toString() ))
-			cerr << "\nWarning: Unable to purge the output files for the job:\n" +status.getValJobId( JobStatus::JOB_ID ).toString() ;
+		if ( nsClient-> jobPurge(  status.getValJobId( JobStatus::JOB_ID ).toString() )) {
+			//cerr << "\nWarning: Unable to purge the output files for the job:\n" +status.getValJobId( JobStatus::JOB_ID ).toString() ;
+		}
 	}
 	else{
 		/** JOB:: Create the destination directory and
@@ -138,15 +139,16 @@ void Request::getOutput(const std::string& dir_path , const std::string& nsRootP
 			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"Unable To create the directory: " + dest_path ) ;
 		for  (  vector<string>::iterator it  =  outputList.begin() ; it !=outputList.end() ; it++ ) {
 			command = commandSource + *it + " file:"+ dest_path +"/" +it->substr( it->find_last_of( "/") , it->length()  ) ;
-			cout << "This is the fucking command..." << command << endl ;
+			//cout << "This is the launching command..." << command << endl ;
 			if (  system ( command.c_str() ) ){
 				outputErr+=" " +*it ;
 				outSuccess = false ;
 			}
 		}
 		if (!outSuccess)  throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"Unable to retrieve all output file(s):"+outputErr ) ;
-		if ( nsClient-> jobPurge(  status.getValJobId( JobStatus::JOB_ID ).toString() ))
-			cerr << "\nWarning: Unable to purge the output files for the job:\n" +status.getValJobId( JobStatus::JOB_ID ).toString() ;
+		if ( nsClient-> jobPurge(  status.getValJobId( JobStatus::JOB_ID ).toString() )){
+			//cerr << "\nWarning: Unable to purge the output files for the job:\n" +status.getValJobId( JobStatus::JOB_ID ).toString() ;
+		}
 	}
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 }
@@ -189,13 +191,13 @@ void Request::submit ( ){
 	string jdl ;
 	if   (  type== EWU_TYPE_DAG_AD  ){
 		// It's a DAG
-		cout << "Log Transfer..." << endl ;
+		//cout << "Log Transfer..." << endl ;
 		log.transfer (Logging::START, dag->toString () ) ;
-		cout << "Sequence Code..." << endl ;
+		//cout << "Sequence Code..." << endl ;
 		dag->setAttribute (   ExpDagAd::SEQUENCE_CODE ,   log.getSequence()  );
 		log.logUserTags (  dag->getSubAttributes ( JDL::USERTAGS  )  );
 		jdl =  dag->toString () ;
-		cout << "Request::submit>NSClient:: submit_dag: "<< endl ;
+		//cout << "Request::submit>NSClient:: submit_dag: "<< endl ;
 	}else{
 		// it's a Normal Job
 		log.transfer ( Logging::START, jad->toSubmissionString () ) ;
@@ -205,7 +207,7 @@ void Request::submit ( ){
 		if (  jad->hasAttribute  (   JDL::USERTAGS  )   ){
 			log.logUserTags(  ( classad::ClassAd*)  jad->delAttribute (  JDL::USERTAGS  )   ) ;
 		}
-		cout << "Request::submit>NSClient:: submit job" << endl ;
+		//cout << "Request::submit>NSClient:: submit job" << endl ;
 	}
 	try{
 		if   (  type== EWU_TYPE_DAG_AD  ) 
@@ -213,10 +215,10 @@ void Request::submit ( ){
 		else{
 			nsClient->jobSubmit ( jdl ) ;
 		}
-		cout << "Request::submit>NSClient:: log Transfer OK" << endl ;
+		//cout << "Request::submit>NSClient:: log Transfer OK" << endl ;
 		log.transfer (Logging::OK , jdl) ;
 	} catch (Exception &exc){
-		cout << exc.printStackTrace() ;
+		//cout << exc.printStackTrace() ;
 		log.transfer (Logging::FAIL , jdl , exc.what() ) ;
 		throw exc;
 	} catch (exception &exc){
@@ -294,13 +296,13 @@ std::vector <glite::lb::Event> Request::getLogInfo() {
 void Request::regist(){
 	if   (  type== EWU_TYPE_DAG_AD  ){
 		dag->setAttribute (   ExpDagAd::EDG_JOBID , jid->toString()   );
-		cout << "Request::submit>Register Dag" << endl ;
+		//cout << "Request::submit>Register Dag" << endl ;
 		log.registerDag(  dag    ) ;
 	}else{   /*   type== EWU_TYPE_JOB_AD   */
 		jad->setAttribute ( JDL::JOBID , jid->toString()   );
 		if (  jad->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_PARTITIONABLE )  ){
 			// PARTITIONABLE JOB
-			cout << "Request:submit>Realizing Partitionable" << endl ;
+			//cout << "Request:submit>Realizing Partitionable" << endl ;
 			// Partitioning job registration:
 			int res_number = 0 ; // TBD JobSteps Check
 			vector<string> resources ;

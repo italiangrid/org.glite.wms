@@ -726,7 +726,9 @@ void Job::nsSubmit(const string&  lb_addr ) {
 		EDG_WLL_SOURCE_NETWORK_SERVER ,
 		nsHost.c_str(),
 		str_addr ,
-		jdl.c_str(), "", "" )) cerr << "Warning: edg_wll_LogTransferSTART failed" << endl ;
+		jdl.c_str(), "", "" )) {
+			//cerr << "Warning: edg_wll_LogTransferSTART failed" << endl ;
+		}
 // pthread_mutex_unlock( & dgtransfer_mutex);  //UNLOCK RESOURCES   <--
 	jad->setAttribute (JDL::LB_SEQUENCE_CODE , string ( edg_wll_GetSequenceCode(ctx)  ) );
 	jdl = jad->toSubmissionString();
@@ -738,16 +740,18 @@ void Job::nsSubmit(const string&  lb_addr ) {
 		pthread_mutex_unlock( & dgtransfer_mutex);  //UNLOCK RESOURCES   <--
 		//Call the dgLog Transfer method  for failure (No Thread Safe Method)
 		// cerr << "\n                    LB-DBG: "<< "edg_wll_LogTransferFAIL & Log Abort!!!\n Exception caught: "<< exc.what() << endl ;
-		if (edg_wll_LogTransferFAIL(ctx, EDG_WLL_SOURCE_NETWORK_SERVER , nsHost.c_str(), str_addr , jdl.c_str(), exc.what(),""))
-			cerr << "Warning: edg_wll_LogTransferFAIL  Failed"<< endl ;
+		if (edg_wll_LogTransferFAIL(ctx, EDG_WLL_SOURCE_NETWORK_SERVER , nsHost.c_str(), str_addr , jdl.c_str(), exc.what(),"")) {
+			//cerr << "Warning: edg_wll_LogTransferFAIL  Failed"<< endl ;
+		}
 		edg_wll_LogAbort (ctx , exc.what() );
 		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , exc.what()  ) ;
 	}
 	this->jobType = JOB_SUBMITTED ;
 	//Call the dgLog Transfer method (No Thread Safe Method)
 	// pthread_mutex_lock( & dgtransfer_mutex);    //LOCK RESOURCES    -->
-	if (edg_wll_LogTransferOK(ctx, EDG_WLL_SOURCE_NETWORK_SERVER , nsHost.c_str(),  str_addr , jdl.c_str(), "",""))
-		cerr << " Warning edg_wll_LogTransferOK Failed" << endl ;
+	if (edg_wll_LogTransferOK(ctx, EDG_WLL_SOURCE_NETWORK_SERVER , nsHost.c_str(),  str_addr , jdl.c_str(), "","")){
+		//cerr << " Warning edg_wll_LogTransferOK Failed" << endl ;
+	}
 // pthread_mutex_unlock( & dgtransfer_mutex);  //UNLOCK RESOURCES   <--
 	if ( jad->hasAttribute(JDL::HLR_LOCATION) ){
 		//DGAS Job Authorisation manipulation2
@@ -756,8 +760,12 @@ void Job::nsSubmit(const string&  lb_addr ) {
 		string ptr;
 		string hlr = jad->getString ( JDL::HLR_LOCATION ) ;
 		try{
-			if (dgas_jobAuth_client ( hlr, jobAuth , &ptr )) cerr << "dgas_jobAuth_client failed" << endl ;
-		}catch (exception &exc){ cerr << "dgas_jobAuth_client failed:" << exc.what() << endl;}
+			if (dgas_jobAuth_client ( hlr, jobAuth , &ptr )) {
+				//cerr << "dgas_jobAuth_client failed" << endl ;
+			}
+		}catch (exception &exc){ 
+			//cerr << "dgas_jobAuth_client failed:" << exc.what() << endl;
+			}
 	}
 	edg_wll_FreeContext(ctx) ;
 	delete nsClient ;
@@ -792,7 +800,9 @@ void Job::nsOutput( const string& finalDir ){
 		}
 	}
 	if (!outSuccess)  throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"Unable to retrieve all output file(s):"+outputErr ) ;
-	if ( nsClient-> jobPurge( jid->toString() ))  cerr  << "Warning:  jobPurge failed" << endl ;
+	if ( nsClient-> jobPurge( jid->toString() )) {
+		 //cerr  << "Warning:  jobPurge failed" << endl ;
+	}
 	delete nsClient ;
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };

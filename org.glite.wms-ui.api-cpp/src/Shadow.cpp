@@ -105,7 +105,7 @@ namespace api {
 			string gtp_env = string( gl_env  );
 			string sep[] = {" " , ":" , "-" , "," } ;
 			for (unsigned int i = 0 ; i< sep->length() ; i++){
-				cout << "Looking for '" << sep[i] <<"' in " << gtp_env << flush ;
+				//cout << "Looking for '" << sep[i] <<"' in " << gtp_env << flush ;
 				if ( gtp_env.find( sep[i] ) <  gtp_env.size()  ){
 					fromP = atoi (  gtp_env.substr(0 , gtp_env.find( sep[i] ) ).c_str()   ) ;
 					toP    = atoi (  gtp_env.substr(gtp_env.find( sep[i] )  ).c_str()   ) ;
