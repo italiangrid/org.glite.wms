@@ -3,8 +3,8 @@
 *  author    : Alessandro Maraschini <alessandro.maraschini@datamat.it>
 *  copyright : (C) 2002 by DATAMAT
 *********************************************************************/
-#include "glite/wms-ui/api/Shadow.h"
-#include "glite/wms-ui/api/JobExceptions.h"
+#include "glite/wmsui/api/Shadow.h"
+#include "glite/wmsui/api/JobExceptions.h"
 #include "glite/wms/jdl/Ad.h"
 
 #ifdef HAVE_CONFIG_H

@@ -1,5 +1,5 @@
-#include "glite/wms-ui/api/Logging.h"
-#include "glite/wms-ui/api/JobExceptions.h"
+#include "glite/wmsui/api/Logging.h"
+#include "glite/wmsui/api/JobExceptions.h"
 #include "edg/workload/partitioner/Partitioner.h"
 
 // Logging Class Includes:

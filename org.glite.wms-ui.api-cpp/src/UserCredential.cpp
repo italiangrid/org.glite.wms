@@ -4,8 +4,8 @@
 *  copyright : (C) 2002 by DATAMAT
 ***************************************************************************/
 #include <unistd.h>
-#include "glite/wms-ui/api/UserCredential.h"
-#include "glite/wms-ui/api/CredentialException.h"
+#include "glite/wmsui/api/UserCredential.h"
+#include "glite/wmsui/api/CredentialException.h"
 #include <sys/types.h> // in order to get pid
 #include "sslutils.h"
 #include <iostream>  //cout

@@ -3,10 +3,10 @@
 *  author    : Alessandro Maraschini <alessandro.maraschini@datamat.it>
 *  copyright : (C) 2002 by DATAMAT
 *********************************************************************/
-#include "glite/wms-ui/api/UserJobs.h"
-#include "glite/wms-ui/api/CredentialException.h"
-#include "glite/wms-ui/api/JobExceptions.h"
-// #include  "glite/wms-ui/api/NotificationAd.h" Deprecated class
+#include "glite/wmsui/api/UserJobs.h"
+#include "glite/wmsui/api/CredentialException.h"
+#include "glite/wmsui/api/JobExceptions.h"
+// #include  "glite/wmsui/api/NotificationAd.h" Deprecated class
 // Common
 #include "glite/wmsutils/jobid/JobId.h"
 //LB includes:

@@ -8,7 +8,7 @@
  */
 
 #include "glite/wmsutils/exception/Exceptions.h"
-#include "glite/wms-ui/api/exception_codes.h"
+#include "glite/wmsui/api/exception_codes.h"
 
 // EWC_BEGIN_NAMESPACE; // NameSpace Definition
 USERINTERFACE_NAMESPACE_BEGIN//Defining UserInterFace NameSpace

@@ -25,9 +25,9 @@
 // Dgas
 #include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
 /* C++ Userinterface Api Implementation */
-#include "glite/wms-ui/api/Job.h"
-#include "glite/wms-ui/api/JobExceptions.h"
-#include "glite/wms-ui/api/Listener.h"
+#include "glite/wmsui/api/Job.h"
+#include "glite/wmsui/api/JobExceptions.h"
+#include "glite/wmsui/api/Listener.h"
 
 
 

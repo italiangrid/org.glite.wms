@@ -13,7 +13,7 @@
 #include "glite/wmsutils/jobid/JobId.h"
 // Lb logger API
 #include "glite/lb/consumer.h"
-#include "glite/wms-ui/api/userinterface_namespace.h"
+#include "glite/wmsui/api/userinterface_namespace.h"
 
 USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 class Logging  {

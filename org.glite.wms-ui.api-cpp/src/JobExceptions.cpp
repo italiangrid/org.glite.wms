@@ -3,7 +3,7 @@
 *  author    : Alessandro Maraschini <alessandro.maraschini@datamat.it>
 *  copyright : (C) 2002 by DATAMAT
 ***************************************************************************/
-#include "glite/wms-ui/api/JobExceptions.h"
+#include "glite/wmsui/api/JobExceptions.h"
 
 USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 using namespace std ;

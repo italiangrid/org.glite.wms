@@ -4,9 +4,9 @@
 *  copyright : (C) 2002 by DATAMAT
 **************************************************************************/
 #include "glite/wms/jdl/JobAd.h"
-#include "glite/wms-ui/api/JobCollection.h"
-#include "glite/wms-ui/api/JobExceptions.h"
-#include "glite/wms-ui/api/CredentialException.h"
+#include "glite/wmsui/api/JobCollection.h"
+#include "glite/wmsui/api/JobExceptions.h"
+#include "glite/wmsui/api/CredentialException.h"
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/producer.h"
 // requestad
