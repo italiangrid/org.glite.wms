@@ -23,18 +23,24 @@ class ism_cemon_purchaser : public ism_purchaser
 public:
                 
   ism_cemon_purchaser(
+    std::string const& certfile,
+    std::string const& certpath,
     std::vector<std::string> const& service,
     std::string const& topic,
     int rate = 30,
     exec_mode_t mode = loop,
-    size_t interval = 30
+    size_t interval = 30,
+    exit_predicate_type exit_predicate = exit_predicate_type(),
+    skip_predicate_type skip_predicate = skip_predicate_type()
   );
 
   void do_purchase();
 
   void operator()();
 
-private:                
+private:
+  std::string m_certfile,
+  std::string m_certpath,               
   std::string m_topic;
   int m_rate;
   std::vector<std::string> m_multi_attributes;
@@ -43,11 +49,15 @@ private:
 
 namespace cemon {
 // the types of the class factories
-typedef ism_cemon_purchaser* create_t(std::vector<std::string> const& service,
+typedef ism_cemon_purchaser* create_t(std::string const& certfile,
+    std::string const& certpath,
+    std::vector<std::string> const& service,
     std::string const& topic,
     int rate = 30,
     exec_mode_t mode = loop,
-    size_t interval = 30
+    size_t interval = 30,
+    exit_predicate_type exit_predicate = exit_predicate_type(),
+    skip_predicate_type skip_predicate = skip_predicate_type()
 );
 typedef void destroy_t(ism_cemon_purchaser*);
 }

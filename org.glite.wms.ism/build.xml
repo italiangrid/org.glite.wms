@@ -21,9 +21,15 @@
 
 	Revision history:
 	$Log$
-	Revision 1.1  2004/09/21 12:02:49  eronchie
-	Initial revision
+	Revision 1.2  2005/02/28 10:50:17  monforte
+	*** empty log message ***
 
+	Revision 1.1.1.1.4.1  2005/02/12 01:54:48  glbuild
+	Changed start time
+	
+	Revision 1.1.1.1  2004/09/21 12:02:49  eronchie
+	Moved ism from manager component into the new component ism
+	
 	
 -->
 
@@ -83,6 +89,7 @@
 		 Load version file 
 	     ========================================= -->
 	<property file="${module.version.file}"/>
+		<property file="${module.build.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets

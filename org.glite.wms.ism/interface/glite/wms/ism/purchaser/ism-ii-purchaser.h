@@ -27,7 +27,9 @@ public:
     std::string const& distinguished_name,
     int timeout = 30,
     exec_mode_t mode = loop,
-    size_t interval = 30
+    size_t interval = 30,
+    exit_predicate_type exit_predicate = exit_predicate_type(),
+    skip_predicate_type skip_predicate = skip_predicate_type()	
   );
   
   void do_purchase();
@@ -39,8 +41,20 @@ private:
   int m_port;
   std::string m_dn;
   int m_timeout;
-  exec_mode_t m_mode;
-  size_t m_interval;
+};
+
+class ism_ii_purchaser_entry_update
+{
+public:
+  ism_ii_purchaser_entry_update(std::string const& id, std::string const& hn, int p, std::string const& dn, int timeout) :
+    m_id(id), m_ldap_server(hn), m_ldap_port(p), m_ldap_dn(dn), m_ldap_timeout(timeout)  {}
+  bool operator()(int a,boost::shared_ptr<classad::ClassAd>& ad);
+private:
+  std::string m_id;
+  std::string m_ldap_server;
+  std::string m_ldap_dn;
+  int m_ldap_port;
+  int m_ldap_timeout;
 };
 
 namespace ii {
@@ -50,7 +64,9 @@ typedef ism_ii_purchaser* create_t(std::string const& hostname,
     std::string const& distinguished_name,
     int timeout = 30,
     exec_mode_t mode = loop,
-    size_t interval = 30
+    size_t interval = 30,
+    exit_predicate_type exit_predicate = exit_predicate_type(),
+    skip_predicate_type skip_predicate = skip_predicate_type()
   );
 
 typedef void destroy_t(ism_ii_purchaser*);

@@ -15,11 +15,18 @@ namespace wms {
 namespace ism {
 namespace purchaser {
 
+typedef boost::function<bool(void)> exit_predicate_type;
+typedef boost::function<bool(std::string const&)> skip_predicate_type;
+
 class ism_purchaser
 {
 public:
-  ism_purchaser(exec_mode_t mode, size_t interval) :
-	m_mode(mode), m_interval(interval) {}
+  ism_purchaser(exec_mode_t mode, 
+    size_t interval, 
+    exit_predicate_type exit_predicate = exit_predicate_type(),
+    skip_predicate_type skip_predicate = skip_predicate_type()) :
+	m_mode(mode), m_interval(interval), m_exit_predicate(exit_predicate), m_skip_predicate(skip_predicate) {}
+
   virtual ~ism_purchaser() {}
   virtual void do_purchase() = 0;
   virtual void operator()() = 0;
@@ -33,9 +40,19 @@ public:
     return m_interval;
   }
 
+  void exit_predicate(exit_predicate_type const& p) {
+    m_exit_predicate = p; 
+  }
+
+  void skip_predicate(skip_predicate_type const &p) {
+    m_skip_predicate = p;
+  }
+
 protected:               
   exec_mode_t m_mode;
   size_t m_interval;
+  exit_predicate_type m_exit_predicate;
+  skip_predicate_type m_skip_predicate;
 };
 
 } // namespace purchaser

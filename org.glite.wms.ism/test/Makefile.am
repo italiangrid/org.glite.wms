@@ -1,32 +1,104 @@
-check_PROGRAMS = glite_wms_ism_cemon_purchaserTest
+check_PROGRAMS = glite_wms_ism_file_purchaserTest glite_wms_ism_ii_purchaserTest glite_wms_ism_cemon_purchaserTest glite_wms_ism_cemon_asynch_purchaserTest
+
+glite_wms_ism_file_purchaserTest_SOURCES = \
+        ism-file-purchaserTest.cpp
+
+glite_wms_ism_ii_purchaserTest_SOURCES = \
+        ism-ii-purchaserTest.cpp
 
 glite_wms_ism_cemon_purchaserTest_SOURCES = \
 	ism-cemon-purchaserTest.cpp
 
-glite_wms_ism_cemon_purchaserTest_LDADD = \
-        $(top_srcdir)/../org.glite.ce.monitor-client-api-c/build/src/libglite_ce_monitor_client.la \
-	$(top_srcdir)/../org.glite.wms.ism/build/src/purchaser/libglite_wms_ism_cemon_purchaser.la \
-	$(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/lib/libgsoap.a \
-	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+glite_wms_ism_cemon_asynch_purchaserTest_SOURCES = \
+        ism-cemon-asynch-purchaserTest.cpp
+
+glite_wms_ism_file_purchaserTest_LDADD = \
+        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_file_purchaser.la \
+        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_purchaser.la \
+        $(top_srcdir)/build/src/libglite_wms_ism.la \
+        $(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS) \
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMS_COMMON_UT_II_LIBS) \
+        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(BOOST_LIBS) \
-	$(top_srcdir)/../org.glite.wms.common/build/src/ldif2classad/LDIFObject.lo \
-	$(GLITE_WMS_COMMON_UTIL_LIBS) \
+        $(GLITE_WMS_COMMON_UTIL_LIBS) \
+        $(GLOBUS_LDAP_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
         $(CLASSAD_LIBS) \
-	$(top_srcdir)/../org.glite.wms.ism/build/src/libglite_wms_ism.la
+        $(BOOST_LIBS)
+
+glite_wms_ism_ii_purchaserTest_LDADD = \
+        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_purchaser.la \
+        $(top_srcdir)/build/src/libglite_wms_ism.la \
+        $(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS) \
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMS_COMMON_UT_II_LIBS) \
+        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+        $(GLITE_WMS_COMMON_UTIL_LIBS) \
+        $(GLOBUS_LDAP_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+        $(CLASSAD_LIBS) \
+        $(BOOST_LIBS)
+
+glite_wms_ism_cemon_purchaserTest_LDADD = \
+	$(top_srcdir)/build/src/purchaser/libglite_wms_ism_cemon_purchaser.la \
+	$(top_srcdir)/build/src/libglite_wms_ism.la \
+	$(GLITE_CE_MONITOR_CLIENT_LIBS) \
+        $(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS) \
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMS_COMMON_UT_II_LIBS) \
+        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMS_COMMON_UTIL_LIBS) \
+	$(GLOBUS_LDAP_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(BOOST_LIBS)
+
+glite_wms_ism_cemon_asynch_purchaserTest_LDADD = \
+        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_cemon_asynch_purchaser.la \
+        $(top_srcdir)/build/src/libglite_wms_ism.la \
+	$(GLITE_CE_MONITOR_CLIENT_LIBS) \
+        $(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS) \
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMS_COMMON_UT_II_LIBS) \
+        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+        $(GLITE_WMS_COMMON_UTIL_LIBS) \
+        $(GLOBUS_LDAP_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+        $(CLASSAD_LIBS) \
+        $(BOOST_LIBS)
+
+
+
 CXXFLAGS = -g
+
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcdir)/src \
         -I$(top_srcidr)/test \
-        -I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/interface \
-        -I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/src/autogen/monitor_client \
-        -I$(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/include \
+        $(GSOAP_CFLAGS) \
         $(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
-        $(GLITE_WMS_ISM_CFLAGS) 
+	$(GLOBUS_THR_CFLAGS) \
+        $(GLITE_WMS_ISM_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
-

@@ -47,7 +47,7 @@ bool expand_information_service_info(gluece_info_type& gluece_info)
   return result;
 }
 
-void insert_aux_requirements(gluece_info_type& gluece_info)
+bool insert_aux_requirements(gluece_info_type& gluece_info)
 {
   if (!requirements_ad) {
     
@@ -65,10 +65,11 @@ void insert_aux_requirements(gluece_info_type& gluece_info)
     }
     catch(...) {
       std::cout << "Ops!" << std::endl;
-      exit( -1 );
+      return false;
     }
-  }
+  } 
   gluece_info->Update(*requirements_ad);
+  return true;
 }
 
 bool expand_glueceid_info(gluece_info_type& gluece_info)
@@ -105,9 +106,39 @@ bool expand_glueceid_info(gluece_info_type& gluece_info)
   return true;
 }
 
-timestamp_type get_current_time(void)
+bool split_information_service_url(classad::ClassAd const& ad, boost::tuple<std::string, int, std::string>& i)
 {
-  timestamp_type current_time;
+ try {
+  std::string ldap_dn;
+  std::string ldap_host;
+  std::string ldap_url;
+
+  ldap_url.assign( utilities::evaluate_attribute(ad, "GlueInformationServiceURL") );
+  static boost::regex expression_gisu( "\\S.*://(.*):([0-9]+)/(.*)" );
+  boost::smatch pieces_gisu;
+  std::string port;
+
+  if (boost::regex_match(ldap_url, pieces_gisu, expression_gisu)) {
+
+    ldap_host.assign (pieces_gisu[1].first, pieces_gisu[1].second);
+    port.assign      (pieces_gisu[2].first, pieces_gisu[2].second);
+    ldap_dn.assign   (pieces_gisu[3].first, pieces_gisu[3].second);
+
+    i = boost::make_tuple(ldap_host, std::atoi(port.c_str()), ldap_dn);
+  }
+  else {
+  return false;
+  }
+ }
+ catch (utilities::InvalidValue& e) {
+   return false;
+ }
+ return true;
+}
+
+boost::xtime get_current_time(void)
+{
+  boost::xtime current_time;
 
   boost::xtime_get(&current_time, boost::TIME_UTC);
   

@@ -19,8 +19,35 @@
 #
 #       Revision history: 
 #       $Log$
-#       Revision 1.8  2004/12/20 08:22:27  dimeglio
-#       Incremented version number
+#       Revision 1.9  2005/02/28 10:50:17  monforte
+#       *** empty log message ***
+#
+#       Revision 1.7.2.8  2005/02/15 12:18:14  monforte
+#       Fixed CE SE binding
+#
+#       Revision 1.7.2.7  2005/02/08 21:11:50  monforte
+#       increased version nummber
+#
+#       Revision 1.7.2.6  2005/02/03 14:34:58  monforte
+#       Added and improved some test.
+#       Added handling of balck list in each purchaser
+#
+#       Revision 1.7.2.5  2005/01/26 14:52:17  eronchie
+#       Updated
+#       Added AC_GLITE_CE
+#
+#       Revision 1.7.2.4  2005/01/20 15:45:34  eronchie
+#       Updated
+#       fix bug for expiry ism entries
+#
+#       Revision 1.7.2.3  2005/01/12 10:59:52  eronchie
+#       Updated
+#
+#       Revision 1.7.2.2  2004/12/27 11:21:31  eronchie
+#       Updated
+#
+#       Revision 1.7.2.1  2004/12/20 08:25:55  dimeglio
+#       Incremented patch number
 #
 #       Revision 1.7  2004/12/10 07:48:44  eronchie
 #       Increased version
@@ -48,7 +75,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [1.1.0])
+AC_INIT([GLite WMS ISM], [1.0.4])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
@@ -99,31 +126,50 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 have_boost=no
 have_classads=no
 have_cppunit=no
+have_globus=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
+AC_GLOBUS([], have_globus=yes, have_globus=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+have_glite_wms_common=no
+have_glite_wms_jdl=no
+have_glite_wms_ism=no
+have_glite_wmsutils=no
+have_glite_ce=no
 
 AC_GLITE
+
 AC_GSOAP
-AC_GLOBUS
 
 AC_OPTIMIZE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 
+AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+
 AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
+
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+
+AC_GLITE_CE([], have_glite_ce=yes, have_glite_ce=no)
+AC_MSG_RESULT(["GLITE_CE found $have_glite_ce"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([example/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/purchaser/Makefile])

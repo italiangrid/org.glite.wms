@@ -16,25 +16,18 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.3  2004/11/09 10:14:39  monforte
-#       Added first experimental prototype of ism purchaser for cemonitor...
+#       Revision 1.4  2005/02/28 10:50:17  monforte
+#       *** empty log message ***
 #
-#       Revision 1.2  2004/10/25 15:51:50  eronchie
-#       Added LICENSE file
+#       Revision 1.3.4.1  2005/01/20 15:45:34  eronchie
+#       Updated
+#       fix bug for expiry ism entries
 #
-#       Revision 1.1.1.1  2004/09/21 12:02:49  eronchie
-#       Moved ism from manager component into the new component ism
+#       Revision 1.3.6.1  2004/12/27 13:45:11  eronchie
+#       Updated
 #
 #
 #
-                                                                                                                                                             
-## *********************************************************************
-## *
-## * Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
-## * For license conditions see LICENSE file or
-## * http://www.edg.org/license.html
-## *
-## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
 
@@ -44,7 +37,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src test
+SUBDIRS = interface src example test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
