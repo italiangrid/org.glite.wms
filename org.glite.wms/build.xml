@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.29  2004/07/14 23:17:34  dimeglio
+	Added dependency of globus_ssl_utils on globus
+
 	Revision 1.28  2004/07/10 07:22:06  eronchie
 	Updated internal dependencies
 	WARNING: work in progress
-
+	
 	Revision 1.27  2004/07/10 06:47:53  eronchie
 	Updated matchmaking internal dependencies
 	Added classad_plugin
@@ -313,7 +316,7 @@
 		 Modules proxy targets
 	     =============================================== -->
 
-	<target name="globus_ssl_utils" unless="setenvonly">
+	<target name="globus_ssl_utils" unless="setenvonly" depends="globus">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
 		     target="${target}"
 		     inheritall="false" />
