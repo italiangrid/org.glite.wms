@@ -66,6 +66,7 @@ class AdWrapper {
       ~AdWrapper();
       bool toJobAd () ;      
       bool toDagAd () ;       
+      bool toDagAd (const vector<String>& jobids) ;
       void printChar( const String &ch ) ;
       bool fromString(const String &jdl) ;
       bool fromFile(const String &jdl) ;
