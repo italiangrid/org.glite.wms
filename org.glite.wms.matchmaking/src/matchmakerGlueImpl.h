@@ -8,10 +8,10 @@
 #ifndef _GLITE_WMS_MATCHMAKING_MATCHMAKERGLUEIMPL_H
 #define _GLITE_WMS_MATCHMAKING_MATCHMAKERGLUEIMPL_H
 
-#include "glite/wms/matchmaking/matchmaker.h"
+#include "matchmaker.h"
 #include "glite/wms/common/ldif2classad/LDIFObject.h"
 
-namespace ldif2classad = glite::wms::common::ldif2classad
+namespace ldif2classad = glite::wms::common::ldif2classad;
 
 namespace glite {
 namespace wms {

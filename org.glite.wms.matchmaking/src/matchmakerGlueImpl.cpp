@@ -26,10 +26,13 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "glite/wms/matchmaking/matchmakerGlueImpl.h"
-#include "glite/wms/matchmaking/glue_attributes.h"
-#include "glite/wms/matchmaking/exceptions.h"
-#include "glite/wms/classad_plugin/classad-plugin-loader.h"
+#include "matchmakerGlueImpl.h"
+#include "glue_attributes.h"
+#include "jdl_attributes.h"
+#include "exceptions.h"
+
+#include "glite/wms/classad_plugin/classad_plugin_loader.h"
+
 #include "classad_distribution.h"
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)

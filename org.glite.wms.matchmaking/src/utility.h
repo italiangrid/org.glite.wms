@@ -13,7 +13,7 @@
 #include <vector>
 #include <numeric>
 #include <algorithm>
-#include "glite/wms/matchmaking/matchmaker.h"
+#include "matchmaker.h"
 
 using namespace std;
 

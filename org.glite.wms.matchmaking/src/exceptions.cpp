@@ -6,7 +6,7 @@
 
 // $Id$
 
-#include "glite/wms/matchmaking/exceptions.h"
+#include "exceptions.h"
 #include <string>
 
 namespace glite {
