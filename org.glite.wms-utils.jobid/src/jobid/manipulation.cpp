@@ -3,7 +3,7 @@
 #include <string>
 #include <algorithm>
 
-#include "../jobid_namespace.h"
+#include "jobid_namespace.h"
 #include "JobId.h"
 
 using namespace std;
