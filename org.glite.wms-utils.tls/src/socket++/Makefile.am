@@ -6,7 +6,8 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_tls_socket_pp.la libglite_wms_tls_gsisocket_pp.la
+lib_LTLIBRARIES = libglite_wms_tls_socket_pp.la \
+	libglite_wms_tls_gsisocket_pp.la
 
 libglite_wms_tls_socket_pp_la_SOURCES = \
 	SocketClient.cpp \
@@ -41,8 +42,7 @@ socketppinclude_HEADERS = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_THR_CFLAGS) \
 	$(GLOBUS_SSL_UTILS_CFLAGS) \
-	$(GLITE_WORKLOAD_CFLAGS) \
-	$(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
+	$(GLITE_CFLAGS) \
 	-DWITH_SOCKET_EXCEPTIONS \
 	-DWITH_GLOBUS_TOOLKIT_2_2
 

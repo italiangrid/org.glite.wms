@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/06/15 17:35:14  eronchie
+#       Added configure options
+#       WARNING: work in progress
+#
 #       Revision 1.3  2004/06/14 17:50:09  eronchie
 #       Added configure options
 #       WARNING Work in progress
@@ -49,27 +53,18 @@ AC_REVISION([$Revision$])
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
-STAGE=$WORKDIR/../../stage
-
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
 
-
-have_globus=no
-
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
-AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
+#GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
+#AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
 #GLOBUS_SSL_UTILS_LIBS="-L$STAGE/lib -lglobus_ssl_utils"
 #AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
 
-GLITE_WORKLOAD_CFLAGS="-I$STAGE/include"
-AC_SUBST([GLITE_WORKLOAD_CFLAGS])
-GLITE_WORKLOAD_COMMON_LIBS="-L$STAGE/lib -lglite_wms_exceptions"
-AC_SUBST([GLITE_WORKLOAD_COMMON_LIBS])
+#GLITE_WORKLOAD_CFLAGS="-I$STAGE/include"
+#AC_SUBST([GLITE_WORKLOAD_CFLAGS])
+#GLITE_WORKLOAD_COMMON_LIBS="-L$STAGE/lib -lglite_wms_exceptions"
+#AC_SUBST([GLITE_WORKLOAD_COMMON_LIBS])
 
 # Checks for programs.
 AC_PROG_CC
@@ -103,6 +98,22 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
+
+have_globus=no
+                                                                               
+AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+have_globus_ssl_utils=no
+have_glite_wms_common=no
+
+AC_GLITE
+
+AC_GLOBUS_SSL_UTILS([], have_globus_ssl_utils=yes, have_globus_ssl_utils=no)
+AC_MSG_RESULT(["GLOBUS_SSL_UTILS found $have_globus_ssl_utils"])
+
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
