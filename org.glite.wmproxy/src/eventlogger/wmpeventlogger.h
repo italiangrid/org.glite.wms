@@ -4,8 +4,8 @@
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
 
-#ifndef GLITE_WMS_WMPROXY_WMPLOGGER_H
-#define GLITE_WMS_WMPROXY_WMPLOGGER_H
+#ifndef GLITE_WMS_WMPROXY_WMPEVENTLOGGER_H
+#define GLITE_WMS_WMPROXY_WMPEVENTLOGGER_H
 
 #include <vector>
 
@@ -24,7 +24,8 @@ namespace wms {
 namespace wmproxy {
 namespace eventlogger {
 
-class WMPLogger  {
+
+class WMPEventLogger  {
 
 	public:
 		enum event_name {
@@ -33,8 +34,8 @@ class WMPLogger  {
 			LOG_CLEAR,
 			LOG_ABORT
 		};
-		WMPLogger();
-		virtual ~WMPLogger() throw();
+		WMPEventLogger();
+		virtual ~WMPEventLogger() throw();
 
 		void init(const std::string &nsHost, int nsPort,
 			glite::wmsutils::jobid::JobId *id);
@@ -85,9 +86,11 @@ class WMPLogger  {
 		static const int LOG_RETRY_COUNT = 3;
 };
 
+typedef WMPEventLogger WMPLogger;
+
 } // eventlogger
 } // wmproxy
 } // wms
 } // glite
 
-#endif // GLITE_WMS_WMPROXY_WMPLOGGER_H
+#endif // GLITE_WMS_WMPROXY_WMPEVENTLOGGER_H

@@ -40,7 +40,7 @@ using namespace glite::wms::jdl; // DagAd
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 
-const char *WMPLogger::GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
+const char *WMPEventLogger::GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
 
 
 
@@ -72,19 +72,19 @@ std::string retrieveHostName() {
 
 
 
-WMPLogger::WMPLogger()
+WMPEventLogger::WMPEventLogger()
 {
 	id = NULL;
 	if (edg_wll_InitContext(&ctx)){
 		//	|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
 			//EDG_WLL_SOURCE_WM_PROXY))) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::WMPLogger()",
+			"WMPEventLogger::WMPEventLogger()",
 			WMS_IS_FAILURE, "LB initialisation failed");
 	}
 };
 
-WMPLogger::~WMPLogger() throw()
+WMPEventLogger::~WMPEventLogger() throw()
 {
 	edg_wll_FreeContext(ctx);
 }
@@ -93,7 +93,7 @@ WMPLogger::~WMPLogger() throw()
 
 
 void
-WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
+WMPEventLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 {
 	this->id = id;
 	this->lb_host = lb_host;
@@ -102,7 +102,7 @@ WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 		if (edg_wll_SetParamString(ctx, EDG_WLL_PARAM_DESTINATION,
 				lb_host.c_str())) {
 			throw JobOperationException(__FILE__, __LINE__,
-				"WMPLogger::init(const string& lb_host, int lb_port, "
+				"WMPEventLogger::init(const string& lb_host, int lb_port, "
 					"jobid::JobId *id)",
 				WMS_OPERATION_NOT_ALLOWED, "LB initialisation failed "
 					"(set destination)");
@@ -111,7 +111,7 @@ WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 }
 
 std::string
-WMPLogger::getSequence()
+WMPEventLogger::getSequence()
 {
 	return std::string(edg_wll_GetSequenceCode(ctx));
 };
@@ -120,7 +120,7 @@ WMPLogger::getSequence()
 // Registering methods
 
 void
-WMPLogger::registerProxyRenewal(const string &proxy_path,
+WMPEventLogger::registerProxyRenewal(const string &proxy_path,
 	const string &my_proxy_server)
 {
 	char *renewal_proxy_path = NULL;
@@ -140,14 +140,14 @@ WMPLogger::registerProxyRenewal(const string &proxy_path,
 	    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
 	    	proxy_path.c_str()); j++);
 	   	throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::registerProxyRenewal(const string &proxy_path, const "
+			"WMPEventLogger::registerProxyRenewal(const string &proxy_path, const "
 			"string &my_proxy_server)",
 			WMS_LOGGING_ERROR, error_message("registerProxyRenewal"));
  	}
 }
 
 void
-WMPLogger::unregisterProxyRenewal()
+WMPEventLogger::unregisterProxyRenewal()
 {
 	char *renewal_proxy_path = NULL;
 	cerr<<"---->> ID: "<<id->toString()<<endl;
@@ -156,16 +156,15 @@ WMPLogger::unregisterProxyRenewal()
 }
 
 void
-WMPLogger::registerJob(JobAd *jad)
+WMPEventLogger::registerJob(JobAd *jad)
 {
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
 	//jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
-	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
-			jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
+	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE, jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
 		cerr<<"JobOperationException"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::registerJob(JobAd* jad)",
+			"WMPEventLogger::registerJob(JobAd* jad)",
 			WMS_OPERATION_NOT_ALLOWED,
 			error_message("edg_wll_RegisterJobSync"));
 	}
@@ -175,7 +174,7 @@ WMPLogger::registerJob(JobAd *jad)
 } 
 
 void
-WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
+WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 {
 	char str_nsAddr[1024];
 	sprintf(str_nsAddr, "%s%s%d", lb_host.c_str(), ":", lb_port);
@@ -218,7 +217,7 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	if (edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char, str_nsAddr, 
 			subjobs)) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)",
+			"WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)",
 			WMS_OPERATION_NOT_ALLOWED,
 			error_message("edg_wll_RegisterSubjobs"));
 	}
@@ -232,7 +231,7 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 }
 
 vector<string>
-WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
+WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 {
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
@@ -245,7 +244,7 @@ WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 				str_addr, res_num, //TBD or dag->size()??
 				NULL, &subjobs)) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)",
+			"WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)",
 			WMS_OPERATION_NOT_ALLOWED,
 			error_message("edg_wll_RegisterJobSync"));
 	}
@@ -262,7 +261,7 @@ WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 }
 
 vector<string>
-WMPLogger::registerDag(WMPExpDagAd *dag)
+WMPEventLogger::registerDag(WMPExpDagAd *dag)
 {
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
@@ -274,7 +273,7 @@ WMPLogger::registerDag(WMPExpDagAd *dag)
 			dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
 			NULL, &subjobs)) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::registerDag(WMPExpDagAd *dag)",
+			"WMPEventLogger::registerDag(WMPExpDagAd *dag)",
 			WMS_OPERATION_NOT_ALLOWED,
 			error_message("edg_wll_RegisterJobSync"));
 	}
@@ -293,7 +292,7 @@ WMPLogger::registerDag(WMPExpDagAd *dag)
 
 // User Tags and JobId logs:
 void
-WMPLogger::logUserTag(string name, const string &value){
+WMPEventLogger::logUserTag(string name, const string &value){
 	cerr<<"name: "<<name<<endl;
 	Ad *classad = new Ad();
 	classad->setAttribute(JDL::JDL_ORIGINAL, value);
@@ -302,13 +301,13 @@ WMPLogger::logUserTag(string name, const string &value){
 }
 
 void
-WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> >
+WMPEventLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> >
 	userTags)
 {
 	for (unsigned int i = 0; i < userTags.size(); i++) {
 		if (userTags[i].second->GetKind() != classad::ExprTree::CLASSAD_NODE) {
 			throw JobOperationException(__FILE__, __LINE__,
-				"WMPLogger::logUserTags(std::vector<std::pair<std::string, "
+				"WMPEventLogger::logUserTags(std::vector<std::pair<std::string, "
 				"classad::ExprTree*> > userTags)",
 				WMS_OPERATION_NOT_ALLOWED, "Wrong UserTag value for "
 				+ userTags[i].first);
@@ -320,7 +319,7 @@ WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> >
 }
 
 void
-WMPLogger::logUserTags(classad::ClassAd* userTags)
+WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 {
 	vector<pair<string, classad::ExprTree *> > vect;
 	classad::Value val;
@@ -330,21 +329,21 @@ WMPLogger::logUserTags(classad::ClassAd* userTags)
 		if (!userTags->EvaluateExpr(vect[i].second, val)) {
 			// Unable to parse the attribute
 			throw JobOperationException(__FILE__, __LINE__,
-				"WMPLogger::logUserTags(classad::ClassAd* userTags)",
+				"WMPEventLogger::logUserTags(classad::ClassAd* userTags)",
 				WMS_OPERATION_NOT_ALLOWED, "Unable to Parse Expression");
 		}
  		if (val.IsStringValue(attrValue)) {
 			if (edg_wll_LogUserTag(ctx, (vect[i].first).c_str(),
 					attrValue.c_str())) {
 				throw JobOperationException(__FILE__, __LINE__,
-					"WMPLogger::logUserTags(classad::ClassAd* userTags)",
+					"WMPEventLogger::logUserTags(classad::ClassAd* userTags)",
 					WMS_OPERATION_NOT_ALLOWED,
 					error_message("edg_wll_LogUserTag"));
 			}
  		}
 	}
 }
-void WMPLogger::setLoggingJob( const std::string &jid , const char* seq_code){
+void WMPEventLogger::setLoggingJob( const std::string &jid , const char* seq_code){
 	glite::wmsutils::jobid::JobId jobid ( jid ) ;
 	edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code ,EDG_WLL_SEQ_NORMAL);
 }
@@ -354,26 +353,31 @@ void WMPLogger::setLoggingJob( const std::string &jid , const char* seq_code){
 Logging Events: Accepted,Aborted, Refused, Cancel, Purge
 ******************************************************************/
 // Actual LB log call
-bool WMPLogger::logEvent(event_name event, const char* reason){
+bool WMPEventLogger::logEvent(event_name event, const char* reason){
 		switch (event){
 			case LOG_ACCEPT:
+				edglog(debug) << "Logging Accept event" << endl ;
 				return !edg_wll_LogAccepted(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");
 				break;
 			case LOG_CANCEL:
+				edglog(debug) << "Logging Cancel event" << endl ;
 				return !edg_wll_LogCancelREQ(ctx, reason);
 				break;
 			case LOG_CLEAR:
+				edglog(debug) << "Logging Clear event" << endl ;
 				return !edg_wll_LogClearUSER(ctx);
 				break;
 			case LOG_ABORT:
+				edglog(debug) << "Logging Abort event" << endl ;
 				return !edg_wll_LogAbort(ctx,reason);
 				break;
 			default:
+				edglog(severe) << "Warning: no event caught, not Logging" << endl ;
 				return true;
 		}
 }
 
-void WMPLogger::logEvent(event_name event, const char* reason, bool retry){
+void WMPEventLogger::logEvent(event_name event, const char* reason, bool retry){
 	int i=0;
 	edglog_fn("CFSI::logCancel(event, char* reason, bool retry)");
 	edglog(fatal) << "Logging "<< event<<" Request." << std::endl;
@@ -389,16 +393,16 @@ void WMPLogger::logEvent(event_name event, const char* reason, bool retry){
 	if ((retry && (i>=3)) || (!retry && (i>0)) ) {
 		edglog(severe) << "Error while logging Cancelled Job." << std::endl;
 			throw JobOperationException(__FILE__, __LINE__,
-				"WMPLogger::logEvent(event ,char* reason, bool retry)",
+				"WMPEventLogger::logEvent(event ,char* reason, bool retry)",
 				WMS_OPERATION_NOT_ALLOWED,
 				error_message("edg_wll_Log<Event>REQ"));
 	}
 	edglog(debug) << "Logged." << std::endl;
 }
 
-void WMPLogger::logEvent(event_name  event, const char* reason,bool retry, bool test) {
+void WMPEventLogger::logEvent(event_name  event, const char* reason,bool retry, bool test) {
 	if (!test) logEvent(event, reason, retry);
-	edglog_fn("WMPLogger::logEvent(event_name event, bool retry, bool test) ");
+	edglog_fn("WMPEventLogger::logEvent(event_name event, bool retry, bool test) ");
 	edglog(fatal) << "Logging "<< event<<" Job." << std::endl;
 	int res;
 	bool with_hp = false;
@@ -421,9 +425,9 @@ void WMPLogger::logEvent(event_name  event, const char* reason,bool retry, bool 
 }
 
 
-void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode, const char *reason, bool retry ){
+void WMPEventLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode, const char *reason, bool retry ){
 	int i=0;
-	edglog_fn("WMPLogger::logEnqueuedJobN");
+	edglog_fn("WMPEventLogger::logEnqueuedJobN");
 	edglog(fatal) << "Logging Enqueued Job." << std::endl;
 	bool logged = false;
 	for (; i < 3 && !logged && retry; i++) {
@@ -440,7 +444,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 	if ((retry && (i>=3)) || (!retry && (i>0)) ) {
 		edglog(severe) << "Error while logging Enqueued Job." << std::endl;
 		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,"
+			"WMPEventLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,"
 			"const char *reason, bool retry )",
 			WMS_OPERATION_NOT_ALLOWED, "Error while logging Enqueued Job.");
 	}
@@ -449,11 +453,11 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 }
 
 
-void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
+void WMPEventLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 			const std::string &host_cert, const std::string &host_key, const std::string &file_queue,
 			bool mode, const char *reason, bool retry, bool test){
 	if (!test) logEnqueuedJob(jdl, file_queue, mode, reason, retry);
-	edglog_fn("WMPLogger::logEnqueuedJobE");
+	edglog_fn("WMPEventLogger::logEnqueuedJobE");
 	edglog(fatal) << "Logging Enqueued Job." << std::endl;
 	int res;
 	bool with_hp = false;
@@ -470,7 +474,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 }
 
 
-int WMPLogger::setX509Param(const std::string &name , const std::string &value ,  edg_wll_ContextParam lbX509code ){
+int WMPEventLogger::setX509Param(const std::string &name , const std::string &value ,  edg_wll_ContextParam lbX509code ){
 	if(value.length() == 0 ){
 		edglog(warning) <<name<< " not set inside configuration file." << std::endl
 			<< "Trying with a default NULL and hoping for the best." << std::endl;
@@ -482,7 +486,7 @@ int WMPLogger::setX509Param(const std::string &name , const std::string &value ,
 }
 
 void
-WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_cert, const std::string &host_key)
+WMPEventLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_cert, const std::string &host_key)
 {
 	edglog_fn("NS2WM::test&Log");
 	if( code ) {
@@ -527,8 +531,8 @@ WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &ho
 }
 
 void
-WMPLogger::reset_user_proxy( const std::string &proxy_path ){
-	edglog_fn("WMPLogger::resetUserProxy");
+WMPEventLogger::reset_user_proxy( const std::string &proxy_path ){
+	edglog_fn("WMPEventLogger::resetUserProxy");
 	bool    erase = false;
 	int     res;
 	if( proxy_path.size() ) {
@@ -549,7 +553,7 @@ WMPLogger::reset_user_proxy( const std::string &proxy_path ){
 
 // Error Message Parsing
 const char*
-WMPLogger::error_message(const char *api){
+WMPEventLogger::error_message(const char *api){
 	char *error_message = (char*) malloc(1024);
 	char *msg;
 	char *dsc;
