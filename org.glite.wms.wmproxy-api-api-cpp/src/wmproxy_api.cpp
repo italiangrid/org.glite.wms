@@ -58,7 +58,7 @@ void soapAuthentication(WMProxy &wmp,ConfigContext *cfs){
 	if (soap_ssl_client_context(wmp.soap,
 		SOAP_SSL_NO_AUTHENTICATION,
 		getProxyFile(cfs),// keyfile: required only when client must authenticate to server
-		NULL, // password to read the key file
+		"", // password to read the key file
 		NULL, // optional cacert file to store trusted certificates (needed to verify server)
 		getTrustedCert(cfs), 
 		// if randfile!=NULL: use a file with random data to seed randomness
@@ -241,8 +241,20 @@ vector <pair<string , long> > jobListMatch (string &jdl, ConfigContext *cfs){
 /*****************************************************************
 getJobTemplate
 ******************************************************************/
-ns1__JobTypeList *createJobTypeList(int jobType) {
+ns1__JobTypeList *createJobTypeList(int type) {
 	ns1__JobTypeList *result  = new ns1__JobTypeList;
+	result->jobType= new std::vector<enum ns1__JobType     > ;
+	if ( type & JOBTYPE_PARTITIONABLE ){
+		result->jobType->push_back( ns1__JobType__PARTITIONABLE );
+	} if ( type & JOBTYPE_CHECKPOINTABLE ){
+		result->jobType->push_back(ns1__JobType__CHECKPOINTABLE);
+	} if ( type & JOBTYPE_PARAMETRIC ) {
+		result->jobType->push_back(ns1__JobType__PARAMETRIC);
+	} if ( type & JOBTYPE_INTERACTIVE ) {
+		result->jobType->push_back(ns1__JobType__INTERACTIVE);
+	} if ( type & JOBTYPE_MPICH ) {
+		result->jobType->push_back(ns1__JobType__MPI);
+	}
 	return result ;
 }
 string  getJobTemplate (int jobType, string &executable,string &arguments,string &requirements,string &rank, ConfigContext *cfs){
@@ -282,6 +294,8 @@ getIntParametricJobTemplate
 ******************************************************************/
 ns1__StringList *createStringList ( vector<string> &attributes){
 	ns1__StringList *result =new ns1__StringList;
+	result->Item=new vector<string>;
+	for (unsigned int i = 0; i<attributes.size();i++) result->Item->push_back(attributes[i]);
 	return result ;
 }
 string getIntParametricJobTemplate (vector<string> attributes , int parameters , int start , int step , string &requirements, string &rank, ConfigContext *cfs){
@@ -324,7 +338,7 @@ void putProxy(std::string &delegationId, std::string &proxy, ConfigContext *cfs)
 	if (wmp.ns1__putProxy(delegationId, proxy, response) == SOAP_OK) {
 		//OK
 	} else soapErrorMng(wmp) ;
-}
+} */
 
 } // wmproxy-api namespace
 } // wms namespace
