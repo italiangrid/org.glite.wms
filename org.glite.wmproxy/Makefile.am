@@ -23,7 +23,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = src test
+SUBDIRS = src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
