@@ -22,8 +22,9 @@
 #include "exceptions.h"
 #endif
 #include <iostream>
-namespace edg {   
-namespace workload { 
+
+namespace glite {   
+namespace wms { 
 namespace common {
 namespace socket_pp {
 
@@ -253,8 +254,8 @@ bool GSISocketClient::Close()
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 
 

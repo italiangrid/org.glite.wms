@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file SocketClient.cpp
@@ -14,6 +14,7 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  * @author comments by Marco Pappalardo marco.pappalardo@ct.infn.it and Salvatore Monforte
  */
+
 #include <unistd.h>
 #include <memory.h>
 #include <stdio.h>
@@ -26,8 +27,9 @@
 #ifdef WITH_SOCKET_EXCEPTIONS
 #include "exceptions.h"
 #endif
-namespace edg { 
-namespace workload { 
+
+namespace glite { 
+namespace wms { 
 namespace common {
 namespace socket_pp {
 
@@ -203,6 +205,6 @@ SocketAgent* SocketClient::getAgent() const
 
 } // namespace socket
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 

@@ -9,10 +9,10 @@
 #include "glite/wms/common/utilities/Exceptions.h"
 #include "exception_codes.h"
 
-namespace utilities = edg::workload::common::utilities;
+namespace utilities = glite::wms::common::utilities;
 
-namespace edg {  
-namespace workload {
+namespace glite {  
+namespace wms {
 namespace common {
 namespace socket_pp {
    
@@ -57,7 +57,7 @@ namespace socket_pp {
   
 } // namespace socket_pp
 } // namespace common
-} // namespace networkserver
-} // namespace edg
+} // namespace wms 
+} // namespace glite
 
 #endif

@@ -14,8 +14,8 @@
 
 #include <string>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common { 
 namespace socket_pp {
 
@@ -139,8 +139,8 @@ protected:
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 
 #endif

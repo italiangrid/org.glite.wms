@@ -23,8 +23,8 @@
 /** Include the secure socket globus definition. */
 #include <globus_gss_assist.h>
 
-namespace edg {   
-namespace workload { 
+namespace glite {   
+namespace wms { 
 namespace common {
 namespace socket_pp {
 
@@ -103,8 +103,8 @@ class GSISocketClient : public SocketClient
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif
 

@@ -23,8 +23,8 @@
 #include "exceptions.h"
 #endif
 
-namespace edg {   
-  namespace workload { 
+namespace glite {   
+  namespace wms { 
     namespace common {
       namespace socket_pp {
 
@@ -388,7 +388,7 @@ namespace edg {
 
       } // namespace socket_pp
     } // namespace common
-  } // namespace workload
-} // namespace edg
+  } // namespace wms
+} // namespace glite
 
 

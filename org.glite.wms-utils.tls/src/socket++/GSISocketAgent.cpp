@@ -1,4 +1,4 @@
-// $Id:
+// $Id$
 
 /**
  * @file GSISocketAgent.cpp
@@ -15,7 +15,7 @@
 #include <string>
 #include <unistd.h>
 
-#include <sslutils.h>
+#include "glite/wms/thirdparty/globus_ssl_utils/sslutils.h"
 
 /** This class header file. */
 #include "GSISocketAgent.h"
@@ -26,8 +26,8 @@
 #include "exceptions.h"
 #endif
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace socket_pp {
 
@@ -260,8 +260,8 @@ bool GSISocketAgent::Receive(std::string& s)
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 
 

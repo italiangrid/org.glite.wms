@@ -13,11 +13,13 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  * @author comments by Marco Pappalardo marco.pappalardo@ct.infn.it and Salvatore Monforte
  */
+
 #include <cstdio>
 #include <unistd.h>
 #include <memory.h>
 #include <sys/time.h>
 #include <errno.h>
+
 /** This class header file. */
 #include "SocketAgent.h"
 
@@ -25,8 +27,8 @@
 #include "exceptions.h"
 #endif
 
-namespace edg { 
-namespace workload { 
+namespace glite { 
+namespace wms { 
 namespace common {
 namespace socket_pp {
 
@@ -284,6 +286,6 @@ std::string SocketAgent::HostName()
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 

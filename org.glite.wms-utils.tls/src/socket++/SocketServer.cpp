@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file SocketServer.cpp
@@ -30,8 +30,8 @@
 #include "SocketAgent.h"
 #include "SocketServer.h"
 
-namespace edg {   
-namespace workload { 
+namespace glite {   
+namespace wms { 
 namespace common {
 namespace socket_pp {
 
@@ -214,7 +214,7 @@ void SocketServer::KillAgent(SocketAgent* a)
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 

@@ -23,8 +23,8 @@
 /** The globus secure shell definitions file. */
 #include <globus_gss_assist.h>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common { 
 namespace socket_pp {
 
@@ -116,8 +116,8 @@ private:
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 
 #endif

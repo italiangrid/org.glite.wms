@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file SocketServer.h
@@ -25,8 +25,8 @@
 #include <list>
 #include <string>
 
-namespace edg {   
-namespace workload { 
+namespace glite {   
+namespace wms { 
 namespace common {
 namespace socket_pp {
 
@@ -104,8 +104,8 @@ class SocketServer
 
 } // namespace socket_pp
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 
 #endif

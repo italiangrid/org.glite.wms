@@ -5,7 +5,8 @@
 #include <iostream>
 #include <string>
 
-namespace socket_pp = edg::workload::common::socket_pp;
+namespace socket_pp = glite::wms::common::socket_pp;
+
 int main(int argc, char* argv[])
 {
 int res=0;

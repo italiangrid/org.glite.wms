@@ -5,9 +5,10 @@
 #include <string>
 
 using namespace std;
-using namespace edg::workload::common::socket_pp;
+using namespace glite::wms::common::socket_pp;
 
-namespace socket_pp = edg::workload::common::socket_pp;
+namespace socket_pp = glite::wms::common::socket_pp;
+
 int main(int argc, char* argv[])
 {
 	const string host=argv[1];
