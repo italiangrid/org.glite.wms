@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/09/21 19:26:09  glbuild
+#       modified module.version
+#
 #       Revision 1.1  2004/08/11 08:33:57  eronchie
 #       Start adding partitioner
 #       WARNING: work in progress
@@ -28,7 +31,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI partitioner], [0.0.0])
+AC_INIT([GLite WMS UI partitioner], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Partition.cpp])
@@ -98,3 +101,4 @@ AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 
 AC_OUTPUT
+
