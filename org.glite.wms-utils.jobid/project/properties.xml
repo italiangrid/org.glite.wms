@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.8  2004/08/04 07:42:42  eronchie
+	Added cppunit.m4
+
 	Revision 1.7  2004/08/04 07:38:27  eronchie
 	Added cppunit
-
+	
 	Revision 1.6  2004/07/28 07:27:22  eronchie
 	Added /
 	
@@ -78,6 +81,6 @@
                  Define extra properties here ...
                  ====================================================== -->
 
-        <property name="m4files.list" value="globus.m4 glite.m4 cppunit"/>
+        <property name="m4files.list" value="globus.m4 glite.m4 cppunit.m4"/>
 	
 </project>
