@@ -226,7 +226,6 @@ public class Api {
 	native void lb_user_jobs ( String host , int port ) ;
 	native void lb_jobs ( String host , int port  , int from , int to , String utags , int inex ,String issuer) ;
 	native void lb_notify( String jobids_states , int timeout );
-
 	native void lb_user_status (String host , int port ) ;
 	native String lb_getSequence();
 	native void lb_status(String jobId);
@@ -236,22 +235,18 @@ public class Api {
 	// Log quuery -> perform a  query over the database in order to retrieve State info
 	native String lb_log_query( String jobid  , int step ) ;
 	native void lb_log_tag ( String name , String value) ;
-
 	/*************************************************
 	*      Dag-Ad wrapper methods
 	**************************************************/
 	native void dagFromFile( String file );
 	native String dagToString ( int level ) ;
-	Vector dagGetSubmissionStrings () {
-		result = new Vector();
-		return (Vector)result ;
-	};
-	private native void dag_getSubmissionStrings () ;
 	native void dag_logUserTags (String jobid ) ;
 	native void dagSetAttribute ( int attr_name , String  attrValue ) ;
-	native void registerDag ( String jdl , String nsAddress ) ;
+	native void registerDag ( String jobid , String nsAddress ) ;
+	native void registerPart( String jobid , String original, String submission , String nsAddress , int res_number ) ;
 	native void logDefaultValues ( boolean set);
-
+	/***@deprecated */
+	private native void dag_getSubmissionStrings () ;
 	/** Members*/
 	Object result ;
 	Event event ;
@@ -267,7 +262,6 @@ public class Api {
 	private int lbContext    ;
 	private int nsContext   ;
 	private int dagContext   ;
-
 	/** Load native C++ Library */
 	static  { System.loadLibrary("glite_wmsui_native"); }
 };

@@ -58,7 +58,7 @@ public class Job  {
 	/** Instantiates an  Job object with a JobAd
 	* @param dagad  the dagad file instance from which the Dag has to be created
 	* @throws IllegalArgumentException If the DagAd is not valid */
-	public Job( String dagFile)throws IllegalArgumentException  { 
+	public Job( String dagFile)throws IllegalArgumentException  {
 		System.out.println("Setting Dag file... "  +dagFile) ;
 		setDagAd(dagFile) ;
 	};
@@ -757,7 +757,9 @@ public class Job  {
 		javax.naming.directory.InvalidAttributeValueException, // JobAd addVal , getVal
 		java.net.UnknownHostException ,  // Shadow
 		org.glite.wms.jdlj.JobAdException, // checkAll
-		NoSuchFieldException // each JobAd attribute
+		NoSuchFieldException, // each JobAd attribute
+		GlobusCredentialException,
+		FileNotFoundException // Credential problems
 	{
 		String jdl = null ;
 		if    (jobType == JOB_AD){
@@ -802,13 +804,24 @@ public class Job  {
 			jdl =api.dagToString( 2) ;  // No nodes are shown (for registering)
 			System.out.println("Job.java: String: " + jdl ) ;
 		}
-
 		// initialise the LB context
 		api.lb_init(  nsAddr.getHost() ) ;
 		api.initialise() ;
-
 		if    (jobType == JOB_AD){
-			api.lb_register(jid.toString() , jdl , nsAddr.getAddress() );
+			// PERFORM REGISTRATION:
+			if (jad.hasAttribute (Jdl.JOBTYPE) ) if (  jad.getStringValue(Jdl.JOBTYPE).contains(  Jdl.JOBTYPE_PARTITIONABLE ) ) {
+				// PERFORM A LIST MATCH
+				int res_number = ((Vector)listMatchingCE(nsAddr).getResult()).size() ;
+				// Pre-post check (if pre-post job present res_number incremented)
+				if (  jad.hasAttribute ( Jdl.PRE_JOB ) ) res_number++ ;
+				if (  jad.hasAttribute ( Jdl.POST_JOB ) ) res_number++ ;
+				// Register jobs (perform a registration for res_number jobs and create jobids)
+				// and Switch to DAG
+				api.registerPart( jid.toString() , jad.toString(), jad.toSubmissionString(), nsAddr.getAddress(), res_number );
+				jobType = DAG_AD ;
+				jdl = api.dagToString ( 1  ) ;  // Submission String
+				api.dag_logUserTags ( jid.toString() ) ;
+			}  else  api.lb_register(jid.toString() , jdl , nsAddr.getAddress() );  // ANY JOB (but partitionable)
 			//					SPECIAL features:
 			if (jad.hasAttribute (Jdl.JOBTYPE) ){
 				//	1	Interactive:
