@@ -7,8 +7,8 @@
 ***************************************************************************/
 #include <iostream>
 #include "NsWrapper.h"
-#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 #include "glite/lb/producer.h"
+#include <pem.h>
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
