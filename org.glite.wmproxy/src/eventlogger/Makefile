@@ -35,56 +35,6 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I$(BOOST)/include/boost \
 	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include
 
-LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
-	-L$(REPLIBS) \
-	-L$(CLASSAD)/lib \
-	-L$(BOOST)/lib/release \
-	-L$(ARES)/lib \
-	-L$(EXPAT)/lib \
-	-lglite_lb_common_gcc32 \
-	-lglite_lb_client_gcc32 \
-	-lglite_lb_clientpp_gcc32 \
-	$(GLOBUS_SSL_LIBS) \
-	$(GLOBUS_GSS_LIBS) \
-	$(GLOBUS_COMMON_LIBS) \
-	-lglobus_gsi_proxy_core_gcc32dbg \
-	-lglobus_gsi_credential_gcc32dbg \
-	-lglobus_gssapi_gsi_gcc32dbg \
-	-lglobus_gsi_callback_gcc32dbg \
-	-lglobus_oldgaa_gcc32dbg \
-	-lglobus_gsi_sysconfig_gcc32dbg \
-	-lglobus_gsi_cert_utils_gcc32dbg \
-	-lglobus_openssl_gcc32dbg \
-	-lglobus_proxy_ssl_gcc32dbg \
-	-lglobus_openssl_error_gcc32dbg \
-	-lglite_security_proxyrenewal_gcc32 \
-	-lglite_wms_util \
-	-lglite_wmsutils_jobid \
-	-lglite_wmsutils_cjobid \
-	-lglite_wms_jdl \
-	-lglite_wms_checkpointing \
-	-lglite_wms_logger \
-	-lglite_wmsutils_exception \
-	-lglite_wms_conf \
-	-lglite_wms_broker \
-	-lglite_wms_matchmaking \
-	-lglite_wms_ism \
-	-lares \
-	-lclassad \
-	-lclassad_dl \
-	-lboost_fs \
-	-lboost_thread \
-	-lboost_signals \
-	-lprg_exec_monitor \
-	-lboost_regex \
-	-lexpat \
-	-lxml2
-
-LDCLIENTFLAGS= -lssl \
-	-lcrypto
-
-
-
 all:	eventlogger 
 
 eventlogger:	
@@ -95,4 +45,4 @@ eventlogger:
 
 clean:
 	@echo Removing
-	@rm libglitePipe.so
+	@rm libglite_wms_wmproxy_eventlogger.so
