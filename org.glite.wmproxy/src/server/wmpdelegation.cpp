@@ -113,7 +113,7 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
   		throw poe;	
   	}
   
-	if (GRSTx509StoreProxy(WMPDelegation::getProxyDir(),
+	if (GRSTx509CacheProxy(WMPDelegation::getProxyDir(),
 			(char*) delegation_id.c_str(), user_dn,
 			(char*) proxy_req.c_str()) != GRST_RET_OK) {
 		throw ProxyOperationException(__FILE__, __LINE__,
@@ -132,7 +132,7 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	} catch (ProxyOperationException &poe) {
 		throw poe;	
 	}
-	char *delegated_proxy = GRSTx509ProxyKeyFind(getProxyDir(), 
+	char *delegated_proxy = GRSTx509CachedProxyKeyFind(getProxyDir(), 
 		(char*) delegation_id.c_str(), user_dn);
 	if (delegated_proxy == NULL) {
 		throw JobOperationException(__FILE__, __LINE__,

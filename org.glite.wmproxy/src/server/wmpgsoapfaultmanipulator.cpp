@@ -43,8 +43,6 @@ SOAPFault::SOAPFault(struct soap *soap, int fault_type)
 		soap->fault->detail->__type = soap_fault_type;
 		soap->fault->detail->fault = sp;
 	}
-	cerr<<"ECCOLO"<<endl;
-
 }
 
 /**

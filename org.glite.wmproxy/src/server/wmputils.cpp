@@ -43,9 +43,13 @@ waitForSeconds(int seconds)
 	cerr<<"-----> End waiting"<<endl;
 }
 
-std::string to_filename(glite::wmsutils::jobid::JobId j,int level = 0,bool extended_path = true){
-	std::string path( glite::wmsutils::jobid::get_reduced_part(j, level) );
-	if ( extended_path ) path.append(std::string("/") + glite::wmsutils::jobid::to_filename(j));
+std::string
+to_filename(glite::wmsutils::jobid::JobId j, int level, bool extended_path)
+{
+	std::string path(glite::wmsutils::jobid::get_reduced_part(j, level));
+	if (extended_path) {
+		path.append(std::string("/") + glite::wmsutils::jobid::to_filename(j));
+	}
 	return path;
 }
 

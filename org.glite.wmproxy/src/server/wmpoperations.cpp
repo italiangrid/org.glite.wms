@@ -144,6 +144,7 @@ getType(string jdl)
 		Ad *in_ad = new Ad(jdl);
 		if (in_ad->hasAttribute(JDL::TYPE)) {
 			string type = (in_ad->getStringValue(JDL::TYPE))[0];
+			cerr<<"Type: "<<type<<endl;
 			if (type == JDL_TYPE_DAG) {
 				return_value = TYPE_DAG;
 			} else if (type == JDL_TYPE_JOB) {
@@ -296,6 +297,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 			WMPExpDagAd *dag =
 				new WMPExpDagAd(*(AdConverter::collection2dag(jdl)));
 			/// DO IT??  dag->check(); // This changes ISB files to absolute paths
+			cerr<<"---->> DAG jobad: "<<dag->toString()<<endl;
 			regist(jobRegister_response, delegation_id, jdl, dag);
 			delete dag;	
 		}
@@ -332,7 +334,7 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri)
 	}
 	
 	// Copying delegated Proxy to destination URI
-	char buffer[200];
+	/*char buffer[200];
 	string target_file = dest_uri + USER_PROXY_NAME;
 	sprintf(buffer, "cp %s %s", delegated_proxy.c_str(), target_file.c_str());
 	if (system(buffer) == -1) {
@@ -340,8 +342,8 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri)
 			"setJobFileSystem(const string &delegation_id, const "
 			"string &dest_uri)",
 			WMS_IS_FAILURE, "Unable to copy Proxy file");
-	}
-	/*char ch;
+	}*/
+	char ch;
 	ifstream source_stream;
   	ofstream target_stream;
   	filebuf *source_buffer;
@@ -361,7 +363,7 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri)
   	}
 
   	target_stream.close();
-  	source_stream.close();*/
+  	source_stream.close();
   	
   	GLITE_STACK_CATCH();
 }
@@ -611,21 +613,26 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 
   	JobId *jid = new JobId(job_id);
 	JobStatus status = getStatus(jid);
-	delete jid;
+	
 	if (status.getValBool(JobStatus::CANCELLING)) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobCancel(jobCancelResponse &jobCancel_response, const string "
 			"&job_id)", WMS_OPERATION_NOT_ALLOWED,
 			"Cancel has been already requested");
 	}
+	
 	WMPLogger wmplogger;
+	
 	wmp_fault_t wmp_fault;
 	wmp_fault.code = WMS_NO_ERROR; //TBD remove when WMPManager coded
 	switch (status.status) {
 		case JobStatus::SUBMITTED:
 			// The register of the job has been done
+			
+			// Initializing logger
 			wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 			wmplogger.unregisterProxyRenewal();
+			
 			wmplogger.logAbort("Cancelled by user");
 			break;
 		case JobStatus::WAITING:
@@ -647,7 +654,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		case JobStatus::DONE:
 			// If the job is DONE, then cancellation is allowed only if
 			// DONE_CODE = Failed (1)
-			if (status.getValInt (JobStatus::DONE_CODE) ==1) {
+			if (status.getValInt(JobStatus::DONE_CODE) == 1) {
 				/*
 				org::glite::daemon::WMPManager manager;
 				wmp_fault_t wmp_fault = manager.runCommand("jobCancel",
@@ -668,6 +675,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				"Cancel not allowed: check the status");
 			break;
   	}
+  	delete jid;
 
  	GLITE_STACK_CATCH();
 }
@@ -738,6 +746,8 @@ getQuota(getQuotaResponse &getQuota_response)
 			"getQuota(getQuotaResponse &getQuota_response)",
 			wmp_fault.code, wmp_fault.message);
 	}
+	getQuota_response.softLimit = 100;
+	getQuota_response.hardLimit = 200;
 
 	GLITE_STACK_CATCH();
 }
@@ -757,6 +767,9 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 			"getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)",
 			wmp_fault.code, wmp_fault.message);
 	}
+	
+	getFreeQuota_response.softLimit = 100;
+	getFreeQuota_response.hardLimit = 200;
 
 	GLITE_STACK_CATCH();
 }
@@ -800,6 +813,22 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 			"&getOutputFileList_response, const string &jid)",
 			wmp_fault.code, wmp_fault.message);
 	}
+	
+	/// To remove. Only to test
+	StringAndLongList *list = new StringAndLongList();
+	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+	StringAndLongType *item = new StringAndLongType();
+	item->name = *(new string("First"));
+	item->size = 5;
+	file->push_back(item);
+	StringAndLongType *item2 = new StringAndLongType();
+	item2->name = *(new string("Second"));
+	item2->size = 50;
+	file->push_back(item2);
+	list->file = file;
+	getOutputFileList_response.OutputFileAndSizeList = list;
+	///
+	
 	GLITE_STACK_CATCH();
 }
 
@@ -831,6 +860,21 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl)
 			"string jdl)", WMS_OPERATION_NOT_ALLOWED,
 			"Operation permitted only for normal job");
 	}
+	
+	/// To remove. Only to test
+	StringAndLongList *list = new StringAndLongList();
+	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+	StringAndLongType *item = new StringAndLongType();
+	item->name = *(new string("First"));
+	item->size = 5;
+	file->push_back(item);
+	StringAndLongType *item2 = new StringAndLongType();
+	item2->name = *(new string("Second"));
+	item2->size = 50;
+	file->push_back(item2);
+	list->file = file;
+	jobListMatch_response.CEIdAndRankList = list;
+	///
 
 	GLITE_STACK_CATCH();
 }

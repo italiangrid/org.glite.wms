@@ -625,17 +625,21 @@ ns1__getOutputFileList(struct soap *soap, string job_id,
 	int return_value = SOAP_OK;
 
 	getOutputFileListResponse getOutputFileList_response;
+	
+	response._OutputFileAndSizeList = new ns1__StringAndLongList();
+	response._OutputFileAndSizeList->file = new vector<ns1__StringAndLongType*>;
+	ns1__StringAndLongType *item = NULL;
 
 	try {
 		getOutputFileList(getOutputFileList_response, job_id);
-		for (int i = 0; i < (*(getOutputFileList_response
-				.OutputFileAndSizeList->file)).size(); i++) {
-			(*(response._OutputFileAndSizeList->file))[i]->name = 
-				(*(getOutputFileList_response.OutputFileAndSizeList->file))[i]
+		item = new ns1__StringAndLongType();
+		for (int i = 0; i < getOutputFileList_response
+				.OutputFileAndSizeList->file->size(); i++) {
+			item->name = (*getOutputFileList_response.OutputFileAndSizeList->file)[i]
 					->name;
-			(*(response._OutputFileAndSizeList->file))[i]->size = 
-				(*(getOutputFileList_response.OutputFileAndSizeList->file))[i]
+			item->size = (*getOutputFileList_response.OutputFileAndSizeList->file)[i]
 					->size;
+			response._OutputFileAndSizeList->file->push_back(item);
 		}
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getOutputFileList", time(NULL),

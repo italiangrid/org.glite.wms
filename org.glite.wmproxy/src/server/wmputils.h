@@ -14,6 +14,7 @@ void waitForSeconds(int seconds);
  * @param level 
  * @param extended_path
  */
-std::string to_filename(glite::wmsutils::jobid::JobId j,int level = 0,bool extended_path = true);
+std::string to_filename(glite::wmsutils::jobid::JobId j, int level = 0,
+	bool extended_path = true);
 
 #endif // GLITE_WMS_WMPROXY_WMPUTILS_H

@@ -106,6 +106,7 @@ void
 WMPLogger::unregisterProxyRenewal()
 {
 	char *renewal_proxy_path = NULL;
+	cerr<<"---->> ID: "<<id->toString()<<endl;
 	for (int i = 0; i < LOG_RETRY_COUNT
 		&& edg_wlpr_UnregisterProxy(id->getId(), renewal_proxy_path); i++);
 }
@@ -210,7 +211,7 @@ WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
 	
-	cerr<<"Registering partitiobnable job" << endl;
+	cerr<<"Registering partitionable job" << endl;
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, getSequence());
 	edg_wlc_JobId *subjobs = NULL;
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED,

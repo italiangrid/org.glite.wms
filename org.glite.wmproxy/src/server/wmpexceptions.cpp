@@ -32,7 +32,7 @@ JobOperationException::JobOperationException(const std::string& file, int line,
 	:JobException(file, line, method, code, "JobOperationException")
     {
 	error_message = "The Operation is not allowed: " + reason;
-	error_message += reason;
+	//error_message += reason;
 }
 
 ProxyOperationException::ProxyOperationException(const std::string& file, int line,
@@ -40,7 +40,7 @@ ProxyOperationException::ProxyOperationException(const std::string& file, int li
 	:JobException(file, line, method, code, "JobOperationException")
     {
 	error_message = "The Operation is not allowed: " + reason;
-	error_message += reason;
+	//error_message += reason;
 }
 
 //} // wmproxy

@@ -78,21 +78,21 @@ main(int argc, char* argv[])
 	        	WMProxy proxy;
 	        	proxy.serve();
 	     	}	 
-	    } else {
-			cerr<<"Starting service..."<<endl;
+	    } else {}
+			/*cerr<<"Starting service..."<<endl;
 		    soap = soap_new();
-	        soap_init(soap);
+	        soap_init(soap);*/
 	
-	        if (soap_ssl_server_context(soap,
-	            SOAP_SSL_DEFAULT,
-	            "x509up_u500", /* keyfile: required when server must authenticate to clients (see SSL docs on how to obtain this file) */
-	            "10greenbottles", /* password to read the key file */
-	            NULL, /* optional cacert file to store trusted certificates */
-	            "/etc/grid-security/certificates", /* optional capath to directory with trusted certificates */
-	            NULL, /* DH file, if NULL use RSA */
-	            NULL, /* if randfile!=NULL: use a file with random data to seed randomness */
-	            NULL /* optional server identification to enable SSL session cache (must be a unique name) */    ))
-	        {
+	        //if (soap_ssl_server_context(soap,
+	          //  SOAP_SSL_DEFAULT,
+	            //"x509up_u500", /* keyfile: required when server must authenticate to clients (see SSL docs on how to obtain this file) */
+	            //"10greenbottles", /* password to read the key file */
+	            //NULL, /* optional cacert file to store trusted certificates */
+	            //"/etc/grid-security/certificates", /* optional capath to directory with trusted certificates */
+	            //NULL, /* DH file, if NULL use RSA */
+	            //NULL, /* if randfile!=NULL: use a file with random data to seed randomness */
+	            //NULL /* optional server identification to enable SSL session cache (must be a unique name) */    ))
+	        /*{
 	            soap_print_fault(soap, stderr);
 	            exit(1);
 	        }
@@ -112,7 +112,7 @@ main(int argc, char* argv[])
 					soap_print_fault(soap, stderr);
 	        		exit(-1);
 	      		}
-	            tsoap = soap_copy(soap); /* should call soap_ssl_accept on a copy */
+	            tsoap = soap_copy(soap);
 	            if (!tsoap) {
 	            	break;
 	            }
@@ -122,7 +122,7 @@ main(int argc, char* argv[])
 	                soap_print_fault(tsoap, stderr);
 	                soap_done(tsoap);
 	                free(tsoap);
-	                continue; /* when soap_ssl_accept fails, we should just go on */
+	                continue; 
 	            } 
 	      		soap_serve(tsoap);         // process request
 	      		soap_destroy(tsoap);       // delete class instances
@@ -131,7 +131,7 @@ main(int argc, char* argv[])
 	  		soap_destroy(soap);       // delete class instances
 	  		soap_end(soap);           // clean up everything and close socket
 			//cerr<<"Service stopped"<<endl;
-		}
+		}*/
 	/*} catch (exception &ex) {
 		//edglog(fatal) << "Exception caught: " << ex.what() << endl;
  	} catch ( ... ) {
