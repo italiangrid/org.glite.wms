@@ -12,6 +12,8 @@ brokerinfodir = $(includedir)/glite/wms/brokerinfo
 brokerinfo_HEADERS = \
 	glue_attributes.h
 
+libglite_wms_brokerinfo_la_LDFLAGS = -all-static
+
 libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
