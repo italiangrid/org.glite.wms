@@ -16,7 +16,7 @@
 #include <numeric>
 
 #include "glite/wms/rls/ReplicaServiceReal.h" 
-#include "glite/wms/rls/ReplicaServiceException.h"
+#include "ReplicaServiceException.h"
 
 #include "EdgReplicaManager/ReplicaManagerImpl.h"
 #include "EdgReplicaManager/ReplicaManagerExceptions.h"
@@ -56,10 +56,10 @@ struct insertAccessCostInfoInVector :
     v->push_back(boost::make_tuple(string(c.getCeId()), c.getTotalTime(), c.getSizeToBeReplicated() ));
     return v;
   }
-};
-	
 }
 	
+}
+
 ReplicaServiceReal::ReplicaServiceReal(const string& vo)
 {
   logger::StatePusher pusher(ts::edglog, "ReplicaServiceReal()");
@@ -68,7 +68,7 @@ ReplicaServiceReal::ReplicaServiceReal(const string& vo)
   }
   catch (replicamanager::ReplicaManagerException& ex) {
     ts::edglog << logger::setlevel(logger::error) << ex.what() << endl;
-    throw InvalidRLS(ex.what());	
+    throw InvalidRLS(ex.what());
   }
 }
 
@@ -107,7 +107,7 @@ ReplicaServiceReal::listReplica(const string& lfn)
   return pfns;
 }
 
-access_cost_info_container_type 
+access_cost_info_container_type
 ReplicaServiceReal::getAccessCost(const vector<string>& lfns,
 	                          const vector<string>& ces,
 				  const vector<string>& protocols)
@@ -117,11 +117,10 @@ ReplicaServiceReal::getAccessCost(const vector<string>& lfns,
   
   logger::StatePusher pusher(ts::edglog, "getAccessCost()");
  
-  try { 
-  m_rm->getAccessCost(lfns, ces, protocols, costs);
+  try {
+    m_rm->getAccessCost(lfns, ces, protocols, costs);
 
-  accumulate(costs.begin(), costs.end(), &costs_info, 
-	     insertAccessCostInfoInVector());
+    accumulate(costs.begin(), costs.end(), &costs_info, insertAccessCostInfoInVector());
   }
   catch (replicamanager::ReplicaManagerException& ex) {
     ts::edglog << logger::setlevel(logger::error) << ex.what() << endl;

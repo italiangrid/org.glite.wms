@@ -17,7 +17,7 @@ namespace glite {
 namespace wms {
 namespace rls {
 	
-typedef boost::tuple::triple<std::string, float, float> access_cost_info_type;
+typedef boost::tuple<std::string, float, float> access_cost_info_type;
 typedef std::vector<access_cost_info_type> access_cost_info_container_type;
 
 class ReplicaService
