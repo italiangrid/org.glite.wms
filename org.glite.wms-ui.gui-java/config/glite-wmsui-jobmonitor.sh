@@ -22,11 +22,9 @@ EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/glite-wms-ui-gui-ja
 EXTRA_CLASSES="$EXTRA_CLASSES:$JGLOBUS_PATH/cog-jglobus.jar"
 EXTRA_CLASSES="$EXTRA_CLASSES:$LOG4J_PATH/log4j-1.2.8.jar"
 EXTRA_CLASSES="$EXTRA_CLASSES:$CLASSADJ_PATH/classad.jar"
+EXTRA_CLASSES="$EXTRA_CLASSES:/opt/glite/externals/share/java/bcprov-jdk14-122.jar"
+EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/glite-security-util-java.jar"
 
 # Job Monitor specific
-EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/edg-java-security-authorization.jar"
-EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/edg-java-security-trustmanager.jar"
 EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/info.jar"
-EXTRA_CLASSES="$EXTRA_CLASSES:/usr/share/java/bcprov-jdk14-119.jar"
-
 exec "$JAVA_PATH/bin/java" -DRGMA_PROPS=$RGMA_PROPS -cp ".:$EXTRA_CLASSES" org.glite.wmsui.guij.JobMonitor &
