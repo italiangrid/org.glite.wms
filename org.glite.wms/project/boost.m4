@@ -104,11 +104,14 @@ AC_DEFUN(AC_BOOST,
 	AC_MSG_CHECKING([for stringstream into c++ STL])
 	AC_TRY_LINK([ #include <sstream> ],
 		    [ std::stringstream sstr; ],
-		    [ ac_have_stringstream=yes 
-		      AC_DEFINE(HAVE_STRINGSTREAM) ], 
+		    [ ac_have_stringstream=yes ], 
 		    [ ac_have_stringstream=no 
-		      BOOST_CFLAGS="$BOOST_CFLAGS -DBOOST_NO_STRINGSTREAM"
-		      AC_DEFINE(BOOST_NO_STRINGSTREAM) ])
+		      BOOST_CFLAGS="$BOOST_CFLAGS -DBOOST_NO_STRINGSTREAM" ])
+        if test x$ac_have_stringstream = xyes ; then
+            AC_DEFINE(HAVE_STRINGSTREAM)
+        else 
+            AC_DEFINE(BOOST_NO_STRINGSTREAM)
+        fi 
 	AC_MSG_RESULT([$ac_have_stringstream])
 	CPPFLAGS=$ac_save_cppflags
 	LIBS=$ac_save_libs
