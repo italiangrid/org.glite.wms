@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/08/16 15:07:55  eronchie
+#       Updated
+#
 #       Revision 1.1  2004/08/16 14:18:11  eronchie
 #       Start adding
 #       WARNING: work in progress
@@ -80,7 +83,15 @@ AC_GLITE
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
+AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
+AC_CONFIG_FILES([config/glite-wms-check-daemons.sh])
+AC_CONFIG_FILES([config/glite-wms-config.sh])
+AC_CONFIG_FILES([config/glite-wms.csh])
+AC_CONFIG_FILES([config/glite-wms-parse-configuration.sh])
+AC_CONFIG_FILES([config/glite-wms.sh])
+AC_CONFIG_FILES([config/glite-wms-vars.csh])
+AC_CONFIG_FILES([config/glite-wms-vars.sh])
 
 AC_OUTPUT
