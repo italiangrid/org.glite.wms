@@ -19,6 +19,7 @@ LD = $(GLITE_WMS_BROKER_LIBS) \
 libglite_wms_helper_broker_ii_la_SOURCES = \
         Helper.h \
         Helper_ii.cpp \
+        Helper_matcher.cpp \
 	exceptions.cpp
 
 libglite_wms_helper_broker_ii_la_LIBADD = \
@@ -27,20 +28,25 @@ libglite_wms_helper_broker_ii_la_LIBADD = \
 libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         Helper.h \
         Helper_ii_prefetch.cpp \
+        Helper_matcher_prefetch.cpp \
         exceptions.cpp
 
 libglite_wms_helper_broker_ii_prefetch_la_LIBADD = \
         $(LD)
 
 $(srcdir)/Helper_ii_prefetch.cpp: $(srcdir)/Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_ii.cpp > $(srcdir)/Helper_ii_prefetch.cpp
+$(srcdir)/Helper_matcher_prefetch.cpp: $(srcdir)/Helper_matcher.cpp ; $(CXXCOMPILE) -D MATCHER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_matcher.cpp > $(srcdir)/Helper_matcher_prefetch.cpp
 
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
         Helper_ism.cpp \
+        Helper_matcher_ism.cpp \
 	exceptions.cpp
 
 libglite_wms_helper_broker_ism_la_LIBADD = \
         $(LD)
+
+$(srcdir)/Helper_matcher_ism.cpp: $(srcdir)/Helper_matcher.cpp ; $(CXXCOMPILE) -D MATCHER_HELPER_USE_ISM -E $(srcdir)/Helper_matcher.cpp > $(srcdir)/Helper_matcher_ism.cpp
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
