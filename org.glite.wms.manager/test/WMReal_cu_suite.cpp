@@ -43,22 +43,23 @@ WMReal_test::tearDown()
 void
 WMReal_test::test_submit()
 {
-  std::string key1("edg_jobid");
-  std::string value1("https://lxb1420.cern.ch:9000/BqXQcCpXqnF92nvj94PZVw");
+  std::string jobid_key("edg_jobid");
+  std::string jobid_value("https://lxb1420.cern.ch:9000/BqXQcCpXqnF92nvj94PZVw");
+  std::string seqcode_key("LB_sequence_code");
+  std::string seqcode_value("0000");
 
 
   ClassAd *classad =  new ClassAd();
   CPPUNIT_ASSERT( classad );
 
-  classad->InsertAttr(key1,value1);
+  classad->InsertAttr(jobid_key,jobid_value);
+  classad->InsertAttr(seqcode_key,seqcode_value);
 
   try{
     wm_real->submit(classad);
   }catch(glite::wms::jdl::CannotGetAttribute att_error){
     cerr << "Cannot retrieve " << att_error.reason() << endl;
   }
-
-  CPPUNIT_ASSERT( wm_real!=NULL );
 
   delete classad;
 }
