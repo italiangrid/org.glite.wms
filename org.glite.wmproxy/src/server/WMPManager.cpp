@@ -14,7 +14,7 @@
 
 #include "WMPManager.h"
 #include "NS2WMProxy.h"
-#include "exceptions.h"
+#include "utilities/exceptions.h"
 #include "commands/Command.h"
 #include "commands/CommandFactory.h"
 #include "commands/CommandFactoryServerImpl.h"
