@@ -86,12 +86,15 @@ cout << "wmp_config_3(config.ns())>>>>" << wmp_config_3->log_level()  <<endl ;
 		edglog_fn("   WMProxy::main");
 		edglog(fatal) << "Dispatcher= " << wmp_config->dispatcher_threads() << endl ;
 		edglog(fatal) << "--------------------------------------" << endl;
-		// edglog(fatal) << "Staging path..." <<  wmpConfig->sandbox_staging_path() <<endl;
-		edglog(fatal) << "Starting WMProxy Service..." << endl;
-		logger::threadsafe::edglog.activate_log_rotation (
+		// Open log file destination:
+		if (logger::threadsafe::edglog.activate_log_rotation (
 			wmp_config->log_file_max_size(),
 			wmp_config->log_rotation_base_file(),
-			wmp_config->log_rotation_max_file_number());
+			wmp_config->log_rotation_max_file_number())) {
+				cout << "Unable to create default log file: " << endl <<  wmp_config->log_rotation_base_file() << endl ;
+				cerr << "System exiting..."<< endl ;
+				return 1;
+		}
 		if (argc < 3) {
                         // Run as a FastCGI script
 			edglog(fatal) << "Running as a FastCGI program" << endl;
