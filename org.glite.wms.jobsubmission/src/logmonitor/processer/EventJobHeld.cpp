@@ -12,7 +12,7 @@
 #include <globus_gram_protocol_constants.h>
 #endif
 
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "../../common/EventLogger.h"
@@ -119,7 +119,7 @@ void EventJobHeld::process_event( void )
 	elog::cedglog << logger::setlevel( logger::debug )
 		      << "Forwarding request by EDG Id..." << endl;
 
-	controller.cancel( glite::wms::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
+	controller.cancel( glite::wmsutils::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
       }
 
 #if (CONDORG_VERSION >= 653)

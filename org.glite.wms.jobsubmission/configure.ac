@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/07/27 09:41:25  pandreet
+#       JobId and Exception dependencies fixed
+#
 #       Revision 1.4  2004/07/25 16:42:14  eronchie
 #       Updated jobid, and tls
 #       Moved out from org.glite.wms and put in org.glite.wms-utils
@@ -98,6 +101,7 @@ AC_MSG_RESULT(["GLOBUS_SSL found $have_globus_ssl"])
 have_glite_wms_common=no
 have_glite_wmsutils_jobid=no
 have_glite_wmsutils_tls=no
+have_glite_wmsutils_exception=no
 have_glite_wms_jdl=no
 have_glite_lb=no                                                          
                       
@@ -114,6 +118,9 @@ AC_MSG_RESULT(["GLITE_WMSUTILS_TLS found $have_glite_wmsutils_tls"])
 
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+
+AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])

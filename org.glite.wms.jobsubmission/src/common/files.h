@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <boost/filesystem/path.hpp>
+#include <glite/wmsutils/jobid/JobId.h>
 
 JOBCONTROL_NAMESPACE_BEGIN {
 

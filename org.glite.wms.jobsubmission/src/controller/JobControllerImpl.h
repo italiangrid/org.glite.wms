@@ -9,6 +9,8 @@
 
 // $Id$
 
+#include <glite/wmsutils/jobid/JobId.h>
+
 COMMON_SUBNAMESPACE_CLASS_J(jobid, JobId );
 
 namespace classad { class ClassAd; }

@@ -6,7 +6,7 @@
 
 #include <user_log.c++.h>
 
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "../../common/IdContainer.h"
