@@ -21,10 +21,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.39  2004/07/18 11:26:20  eronchie
+	Added condorg.m4 file
+	Start adding jobsubmission component
+	Condor package is still missing in the repository
+
 	Revision 1.38  2004/07/18 10:55:41  eronchie
 	Start adding checkpointing
 	WARNING: work in progress
-
+	
 	Revision 1.37  2004/07/16 16:25:44  flammer
 	Added tags for automated adding of components.
 	
@@ -296,6 +301,10 @@
 		<condition property="checkpointing.head">
                         <equals arg1="${org.glite.wms.checkpointing.version}" arg2="HEAD" />
                 </condition>
+
+		<condition property="jobsubmission.head">
+                        <equals arg1="${org.glite.wms.jobsubmission.version}" arg2="HEAD" />
+                </condition>
     	</target>
 
     	<presetdef name="cvs-co">
@@ -334,12 +343,12 @@
 	
 	<!-- All development tools -->
  	<target name="devtools" depends="junitcheck,
-					 				 junit,
- 									 chkstyle,
- 									 jalopy,
- 									 ant-contrib,
- 									 cpptasks,
- 									 egee-ant-ext"/>		
+	 				 junit,
+  				         chkstyle,
+ 					 jalopy,
+ 					 ant-contrib,
+ 					 cpptasks,
+ 					 egee-ant-ext"/>		
 	
 	<!-- =====================================================
 		 External libraries
@@ -502,6 +511,16 @@
         <target name="get.checkpointing.tag" unless="checkpointing.head">
             <cvs-co package="org.glite.wms.checkpointing"
                     tag="${org.glite.wms.checkpointing.version}" />
+        </target>
+
+	<!-- JobSubmission -->
+        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jobid,tls,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
+        <target name="get.jobsubmission.head" if="jobsubmission.head">
+            <cvs-co package="org.glite.wms.jobsubmission" />
+        </target>
+        <target name="get.jobsubmission.tag" unless="jobsubmission.head">
+            <cvs-co package="org.glite.wms.jobsubmission"
+                    tag="${org.glite.wms.jobsubmission.version}" />
         </target>	
 		
 	<!-- All project modules -->
@@ -519,7 +538,8 @@
 					matchmaking,
 					broker,
 					helper,
-					checkpointing"/>
+					checkpointing,
+					jobsubmission"/>
 
 
 	<!-- ====================================================
