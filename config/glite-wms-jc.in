@@ -1,0 +1,379 @@
+#!/bin/bash
+#
+# edg-wl-jc:      Starts the JobController daemon(s)
+#
+# Version:        @(#) /etc/rc.d/init.d/edg-wl-jc   2.0
+#
+# chkconfig: 345 95 06 
+# description: Starts, stops and checks the European DataGrid \
+#              JobController daemon. It also starts the CondorG \
+#              thinghie.
+#
+# processname: edg-wl-job_controller condor_master condor_schedd
+# config: /opt/edg/etc/edg_wl.conf
+# hide: false
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
+
+. ${EDG_WL_LOCATION}/etc/edg-wl-vars.sh
+. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
+. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl-config.sh
+
+init_variables()
+{
+# All these things must go in some centralized place...
+    EDG_WL_BIN_DIR=${EDG_WL_LOCATION}/bin
+
+# All these things should stay there
+    CONFIGURATION_FILE=edg_wl.conf
+
+#    EDG_WL_USER=`${EDG_WL_BIN_DIR}/edg-wl-get-configuration Common.DGUser` || do_failure "Cannot determine username"
+
+    CONTROLLERBASE=edg-wl-job_controller
+    MASTERBASE=condor_master
+
+    edguid=`id -u ${EDG_WL_USER} 2>&1` || do_failure $edguid
+    edggid=`id -g ${EDG_WL_USER} 2>&1` || do_failure $edggid
+    export CONDOR_IDS="$edguid.$edggid"
+
+    CONDOR_MASTER=${CONDORG_INSTALL_PATH}/sbin/${MASTERBASE}
+    CONDOR_OFF=${CONDORG_INSTALL_PATH}/sbin/condor_off
+    CONDOR_SCHEDD=${CONDORG_INSTALL_PATH}/sbin/condor_schedd
+    JOBCONTROLLER=${EDG_WL_BIN_DIR}/${CONTROLLERBASE}
+
+    LOCKFILE=`${EDG_WL_BIN_DIR}/edg-wl-get-configuration JobController.LockFile`
+    SCRIPT_UID=`/usr/bin/id -u`
+
+    EDGUSER_HOME=`eval echo ~${EDG_WL_USER}`
+    [ -d ${EDGUSER_HOME} ] || do_failure "Missing user directory ${EDGUSER_HOME}"
+}
+
+create_dirs() 
+{
+  CONFIGURATION_FILE=edg_wl.conf
+  
+  . ${EDG_WL_LOCATION}/libexec/edg-wl-parse-configuration.sh ${CONFIGURATION_FILE} JobController
+}
+do_failure()
+{
+    echo -n " $*"
+    failure $1
+    echo ""
+
+    exit 1
+}
+
+remove_lockfile()
+{
+  if [ -f "${LOCKFILE}" ]; then
+    action "A stale lock file still exists, removing it.." /bin/rm -f  ${LOCKFILE}
+  fi
+}   
+
+
+create_proxy()
+{
+    local proxy=
+
+    if [ ${SCRIPT_UID} -eq 0 ]; then
+	proxy=`su $EDG_WL_USER -s /bin/sh -c "${GLOBUS_LOCATION}/bin/grid-proxy-init -q \
+	    -cert $X509_HOST_CERT \
+	    -key  $X509_HOST_KEY \
+	    -hours 24 \
+	    -out  ${X509_USER_PROXY}.$$ 2>&1"`
+
+	[ $? = 0 ] || do_failure $proxy
+    else
+	proxy=`${GLOBUS_LOCATION}/bin/grid-proxy-init -q \
+	    -cert $X509_HOST_CERT \
+	    -key  $X509_HOST_KEY \
+	    -hours 24 \
+	    -out  ${X509_USER_PROXY}.$$ 2>&1`
+
+        [ $? -eq 0 ] || do_failure $proxy
+    fi
+
+    local move=`mv ${X509_USER_PROXY}.$$ ${X509_USER_PROXY} 2>&1`
+    [ $? -eq 0 ] || do_failure $move
+}
+
+start()
+{
+    if [ "x$1" = "xJobController" -o "x$1" = "x" ]; then
+	echo -ne "\tStarting JobController..."
+	daemon ${JOBCONTROLLER} -c ${CONFIGURATION_FILE}
+	local result=$?
+	echo ""
+
+	if [ ${result} -eq 1 ]; then # Startup of the daemon is failed, try to understand the cause
+	    local pid=`pidofproc ${JOBCONTROLLER}`
+
+	    if [ -z "${pid}" -a -f "${LOCKFILE}" ]; then
+		echo "JobController is not running, but a stale lock file exists."
+		echo "Check situation and try to start again."
+		echo "Lock file path is: ${LOCKFILE}"
+	    elif [ -n "${pid}" ]; then
+		echo "JobController yet running in pid ${pid}"
+	    fi
+	elif [ ${SCRIPT_UID} -eq 0 ]; then
+	    echo `pidofproc ${JOBCONTROLLER}` > /var/run/${CONTROLLERBASE}.pid
+	fi
+    fi
+
+    if [ "x$1" = "xCondorG" -o "x$1" = "x" ]; then
+	echo -ne "\tStarting CondorG..."
+	ulimit -n 16384
+	daemon --user ${EDG_WL_USER} ${CONDOR_MASTER}
+	echo ""
+
+	if [ ${SCRIPT_UID} -eq 0 ]; then
+	    echo `pidofproc ${CONDOR_MASTER}` > /var/run/${MASTERBASE}.pid
+	fi
+    fi
+}
+
+reload()
+{
+    local pid=`pidofproc ${JOBCONTROLLER}`
+
+    if [ -z "${pid}" -a -f "${LOCKFILE}" ]; then
+	pid=`/bin/cat ${LOCKFILE}`
+    fi
+
+    if [ -n "${pid}" ]; then
+	action "Reloading JobController configuration " /bin/kill -HUP ${pid}
+    fi
+}
+
+stop()
+{
+    local times pidfile pid lpid result=0
+
+    if [ "x$1" = "xJobController" -o "x$1" = "x" ]; then
+	echo -ne "\tStopping JobController..."
+
+        pid=`pidofproc ${JOBCONTROLLER}`
+        if [ -f "/var/run/${CONTROLLERBASE}.pid" ]; then
+            pidfile=`/bin/cat /var/run/${CONTROLLERBASE}.pid`
+        fi
+        
+        if [ -n "${pid}" -a -n "${pidfile}" ]; then
+            if [ "${pid}" != "${pidfile}" ]; then
+                result=1
+                echo -ne "\t\tCould not reliably find JobController pid!\n"
+                pid=
+                pidfile=
+            fi
+        else
+            if [ -z "${pidfile}" ]; then
+                pidfile=$pid
+            fi
+        fi
+
+	if [ -n "${pidfile}" ]; then
+            if [ -f "${LOCKFILE}" ]; then
+                lpid=`/bin/cat ${LOCKFILE}`
+            fi
+            if [ "${pidfile}" == "${lpid}" ]; then
+                if [ -n "${pid}" ]; then
+                    /bin/kill -TERM $pid
+                    for (( times = 10; times >= 0; times-- )); do
+                        [ -f "${LOCKFILE}" ] || { success $"JobController terminated normally" && echo && break; }
+                        if [ $times -eq 0 ]; then
+                            killproc ${JOBCONTROLLER}
+                            result=$?
+                            echo
+                        else
+                            sleep 1
+                        fi
+                    done
+                    if [ $result -eq 0 ]; then
+                        remove_lockfile
+                        if [ ${SCRIPT_UID} -eq 0 ]; then
+                            rm -f /var/run/${CONTROLLERBASE}.pid
+                        fi
+                    fi
+                else
+                    result=1
+                    failure $"JobController not running, but lock file found"
+                    echo
+                fi
+            else
+                if [ ! -f "${LOCKFILE}" ]; then
+                    if [ -n "${pid}" ]; then
+                        action "" /bin/kill -KILL $pid
+                        result=$?
+                    else
+                        success $"JobController was not running"
+                        echo
+                    fi
+                    if [ $result -eq 0 -a ${SCRIPT_UID} -eq 0 ]; then
+                        rm -f /var/run/${CONTROLLERBASE}.pid
+                    fi
+                else
+                    result=1
+                    failure $"Inconsistent JobController lock files"
+                    echo
+                fi
+            fi
+        else
+            if [ $result -eq 0 ]; then
+                if [ -f "${LOCKFILE}" ]; then
+                    success
+                    echo
+                    remove_lockfile
+                else
+                    echo -ne "\t\tJobController not running!\n"
+                fi
+            fi
+        fi
+    fi
+
+    if [ "x$1" = "xCondorG" -o "x$1" = "x" ]; then
+	echo -ne "\tStopping CondorG..."
+
+	pid=`pidofproc ${CONDOR_MASTER}`
+	if [ "x$pid" = "x" ]; then
+	    # do_failure "CondorG not running"
+	    echo -ne "\t\tCondorG not running!\n"
+	else
+	    ${CONDOR_OFF} -master > /dev/null 2>&1
+            sleep 1
+            if checkpid $pid 2>&1; then
+		killproc ${CONDOR_SCHEDD}
+		killproc ${CONDOR_MASTER}
+		echo ""
+	    else
+		success
+		echo ""
+
+		if [ ${SCRIPT_UID} -eq 0 ]; then
+		    rm -rf /var/run/${MASTERBASE}.pid
+		fi
+	    fi
+	fi
+    fi
+}
+
+status()
+{
+    local pid=
+
+    if [ "x$1" = "xJobController" -o "x$1" = "x" ]; then
+	pid=`pidofproc ${JOBCONTROLLER}`
+
+#	if [ -n "$pid" ]; then
+#	    echo "JobController running in pid: ${pid}"
+#	else
+#	    echo "JobController not running"
+#	fi
+
+        if [ -n "$pid" ]; then
+           echo "JobController running in pid: ${pid}"
+        elif [ -f "${LOCKFILE}" ]; then
+           echo "JobController not running but stale lock file present."
+           exit 1
+        else
+           echo "JobController stopped."
+        fi
+
+    fi
+
+    if [ "x$1" = "xJobController" -o "x$1" = "x" ]; then
+	pid=`pidofproc ${CONDOR_MASTER}`
+
+#	if [ -n "$pid" ]; then
+#	    echo "CondorG master running in pid: $pid"
+#	else
+#	    echo "CondorG master not running"
+#	fi
+
+        if [ -n "$pid" ]; then
+           echo "CondorG master running in pid: ${pid}"
+        elif [ -f /var/run/${MASTERBASE}.pid ]; then
+           echo "CondorG master not running but stale pid file present."
+           exit 1
+        else
+           echo "CondorG master stopped."
+        fi
+
+	pid=`pidofproc ${CONDOR_SCHEDD}`
+
+	if [ -n "$pid" ]; then
+	    echo "CondorG schedd running in pid: $pid"
+	else
+	    echo "CondorG schedd not running"
+	fi
+    fi
+}
+
+check()
+{
+    status=`${JOBCONTROLLER} -Cc ${CONFIGURATION_FILE} 2>&1`
+
+    if [ $? -eq 0 ]; then
+	success $"check"
+	echo ""
+    else
+	failure $"check"
+	echo ""
+	echo $status
+    fi
+}
+
+cd /tmp
+
+case $1 in
+    start)
+	echo "Starting JobController daemon(s)"
+
+	init_variables
+        create_dirs
+	start $2
+	RETVAL=$?
+    ;;
+    stop)
+	echo "Stopping JobController daemon(s)"
+
+	init_variables
+	stop $2
+	RETVAL=$?
+    ;;
+    restart)
+	echo "Restarting JobController daemon(s)"
+
+	init_variables
+	create_dirs
+	stop $2
+#	create_proxy
+	start $2
+	RETVAL=$?
+    ;;
+    reload)
+	init_variables
+	reload
+	RETVAL=$?
+    ;;
+    status)
+	init_variables
+	status $2
+	RETVAL=$?
+    ;;
+    check)
+	echo -n "Checking installation..."
+
+	init_variables
+	check
+	RETVAL=$?
+    ;;
+    *)
+	echo "Usage: $0 {start|stop|restart|reload|status|check} [JobController|CondorG]"
+	RETVAL=1
+    ;;
+esac
+exit $RETVAL
+
+

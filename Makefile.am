@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/08/27 13:19:40  eronchie
+#       Added handling of config directory
+#       Added start up script files
+#
 #       Revision 1.1  2004/07/06 10:05:38  pandreet
 #       Basic build files for jobsubmission
 #
@@ -24,7 +28,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Subdirectories list
-SUBDIRS = src test 
+SUBDIRS = config src test 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
