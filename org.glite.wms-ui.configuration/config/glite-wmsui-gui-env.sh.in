@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ -z $COG_INSTALL_PATH ]; then
+   export COG_INSTALL_PATH=@COG_INSTALL_PATH@
+fi
+
+if [ -z $CLASSADJ_INSTALL_PATH ]; then
+   export CLASSADJ_INSTALL_PATH=@CLASSADJ_INSTALL_PATH@
+fi
+
+if [ -z $JAVA_INSTALL_PATH ]; then
+   export JAVA_INSTALL_PATH=@JAVA_INSTALL_PATH@
+fi
+
+if [ -z $LOG4J_INSTALL_PATH ]; then
+   export LOG4J_INSTALL_PATH=@LOG4J_INSTALL_PATH@
+fi
+
