@@ -70,6 +70,7 @@ managedir ( const string &dir , int userid ){
 #endif
 	// Try to find managedirexecutable
 	char* glite_path = getenv ("GLITE_WMS_LOCATION");
+	if (glite_path==NULL) glite_path = getenv ("GLITE_LOCATION");
 	string gliteDirmanExe = (glite_path==NULL)?("/opt/glite"):(string(glite_path));
 	gliteDirmanExe += "/bin/glite-wms-dirmanager";
 	// Set Arguments
