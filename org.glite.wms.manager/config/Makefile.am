@@ -9,7 +9,7 @@
 EXTRA_DIST = \
 	glite-wms-wm.in
 
-wmdir = $(sysconfig)/init.d
+wmdir = $(sysconfdir)/init.d
 wm_SCRIPTS = glite-wms-wm
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~
