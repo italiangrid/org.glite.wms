@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2004/08/27 13:19:40  eronchie
+#       Added handling of config directory
+#       Added start up script files
+#
 #       Revision 1.10  2004/07/30 08:17:38  eronchie
 #       Increased condor version 6.7.1
 #
@@ -142,6 +146,10 @@ AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([config/Makefile])
+AC_CONFIG_FILES([config/glite-wms-clean-lm-recycle.sh])
+AC_CONFIG_FILES([config/glite-wms-jc])
+AC_CONFIG_FILES([config/glite-wms-lm])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/common/Makefile])
 AC_CONFIG_FILES([src/controller/Makefile])
