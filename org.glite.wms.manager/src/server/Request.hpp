@@ -44,7 +44,11 @@ public:
   };
 
 public:
-  Request(classad::ClassAd const& command_ad, boost::function<void()> const& cleanup);
+  Request(
+    classad::ClassAd const& command_ad, 
+    boost::function<void()> const& cleanup, 
+    glite::wmsutils::jobid::JobId const& id
+  );
   ~Request();
   glite::wmsutils::jobid::JobId id() const { return m_id; }
   void state(State s, std::string const& message = std::string())
@@ -67,6 +71,13 @@ public:
   void mark_resubmitted() { m_resubmitted = true; }
   bool marked_resubmitted() const { return m_resubmitted; }
 
+  void mark_match(std::string const& result_file) {
+    m_match_result_file = result_file;
+  }
+  bool marked_match() const { return !m_match_result_file.empty(); }
+  
+  std::string match_result_file() const { return m_match_result_file; }
+
   void add_cleanup(boost::function<void()> const& cleanup)
   {
     m_input_cleaners.push_back(cleanup);
@@ -83,6 +94,8 @@ private:
   glite::wms::manager::common::ContextPtr m_lb_context;
   bool m_cancelled;
   bool m_resubmitted;
+  //distingue a match from submit and cancel
+  std::string m_match_result_file;
 };
 
 }}}}

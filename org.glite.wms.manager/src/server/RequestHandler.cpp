@@ -20,6 +20,7 @@
 #include "glite/wms/helper/exceptions.h"
 #include "Request.hpp"
 #include "TaskQueue.hpp"
+#include "listmatch.h"
 
 namespace jobid = glite::wmsutils::jobid;
 namespace task = glite::wms::common::task;
@@ -61,9 +62,18 @@ try {
 
       if (req->jdl() && !req->marked_cancelled()) {
         req->state(Request::PROCESSING);
-        Info("considering (re)submit of " << req->id());
-
-        wm.submit(req->jdl());
+        
+        if (req->marked_match()) {
+           Info("considering match " << req->id());
+           
+           if (!match(*req->jdl(), req->match_result_file())) {
+              Info("Failed match for " << req->id());
+           }
+        } else {
+           Info("considering (re)submit of " << req->id());
+           wm.submit(req->jdl());
+        }
+        
         req->state(Request::DELIVERED);
 
       } else {

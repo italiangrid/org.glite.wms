@@ -23,26 +23,6 @@ namespace server {
 
 namespace {
 
-jobid::JobId
-aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
-{
-  if (command == "jobsubmit") {
-    return jobid::JobId(
-      requestad::get_edg_jobid(
-        *common::submit_command_get_ad(command_ad)
-      )
-    );
-  } else if (command == "jobcancel") {
-    return jobid::JobId(common::cancel_command_get_id(command_ad));
-  } else if (command == "jobresubmit") {
-    return jobid::JobId(common::resubmit_command_get_id(command_ad));
-  }
-
-  // the following is just to avoid a warning about "control reaches end of
-  // non-void function", but there is no possibility to arrive here
-  return jobid::JobId();
-}
-
 common::ContextPtr
 aux_create_context(
   classad::ClassAd const& command_ad,
@@ -72,9 +52,11 @@ aux_create_context(
 
 Request::Request(
   classad::ClassAd const& command_ad,
-  boost::function<void()> const& cleanup
+  boost::function<void()> const& cleanup, 
+  jobid::JobId const& id
 )
-  : m_state(WAITING),
+  : m_id(id),
+    m_state(WAITING),
     m_cancelled(false),
     m_resubmitted(false)
 {
@@ -82,10 +64,14 @@ Request::Request(
     throw InvalidRequest(utilities::unparse_classad(command_ad));
   }
   std::string command = common::command_get_command(command_ad);
-  m_id = aux_get_id(command_ad, command);
-  m_lb_context = aux_create_context(command_ad, command, m_id);
+  
+  if (command != "match") { //match doesn't need any context or jobid  ?!?!
+    m_lb_context = aux_create_context(command_ad, command, m_id);
+  }
+  
   #warning TODO better error handling
-  assert(m_lb_context);
+  // assert(m_lb_context); There isn't any context for match
+  
   if (command == "jobsubmit") {
     m_jdl.reset(static_cast<classad::ClassAd*>(common::submit_command_get_ad(command_ad)->Copy()));
     m_jdl->SetParentScope(0);
@@ -94,7 +80,11 @@ Request::Request(
   } else if (command == "jobcancel") {
     state(DELIVERED); 
     mark_cancelled();
+  } else if (command == "match") {
+    m_jdl.reset(static_cast<classad::ClassAd*>(common::match_command_get_ad(command_ad)->Copy()));
+    mark_match(common::match_command_get_file(command_ad)); 
   }
+  
   m_input_cleaners.push_back(cleanup);
   m_last_processed.sec = 0;
   m_last_processed.nsec = 0;

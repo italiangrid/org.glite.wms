@@ -438,6 +438,33 @@ void do_transitions_for_submit(
   }
 }
 
+void do_transitions_for_match( 
+  RequestPtr const& req,
+  task::PipeWriteEnd<RequestPtr>& write_end
+)
+{ 
+  switch (req->state()) {
+
+  case Request::WAITING:
+    Info("considering match of " << req->id());
+    req->state(Request::READY);
+    write_end.write(req);
+    break;
+  
+  case Request::DELIVERED:
+    Info(req->id() << " delivered");
+    break;
+
+  case Request::READY:
+  case Request::PROCESSING:
+    // do nothing; the job is in the hands of the request handler, wait for
+    // the job to enter a stable state
+    break;
+
+  }
+}
+
+
 void do_transitions(
   TaskQueue& tq,
   task::PipeWriteEnd<RequestPtr>& write_end
@@ -451,6 +478,8 @@ void do_transitions(
 
     if (req->marked_cancelled()) {
       do_transitions_for_cancel(req, current_time, write_end);
+    } else if (req->marked_match()) {
+      do_transitions_for_match(req, write_end);
     } else {
       do_transitions_for_submit(req, current_time, write_end);
     }
@@ -503,6 +532,15 @@ aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
     return jobid::JobId(common::resubmit_command_get_id(command_ad));
   } else if (command == "jobcancel") {
     return jobid::JobId(common::cancel_command_get_id(command_ad));
+  } else if (command == "match") {
+    	//Do I need to create a jobid?, should I create it in this way?
+      jobid::JobId match_jobid;
+      
+      //is unique created???
+      match_jobid.setJobId("localhost", 6000, "");
+      //add jobid in jdj (needed?????)      
+      
+      return match_jobid;
   }
 
   // the following is just to avoid a warning about "control reaches end of
@@ -564,17 +602,22 @@ get_new_requests(
       if (it == tq.end()) {
 
         cleanup_guard.dismiss();
-        RequestPtr request(new Request(*command_ad, cleanup));
+        RequestPtr request(new Request(*command_ad, cleanup, id));
         tq.insert(std::make_pair(id.toString(), request));
 
+		//logging
+		
         if (command == "jobsubmit" || command == "jobresubmit") {
           log_dequeued(request->lb_context());
-        } else {
+        } else if (command == "jobcancel") {
           log_cancel_req(request->lb_context());
         }
+        
 
       } else {
-
+        //match can't be canceled or whatever
+        assert(command != "match");
+        
         RequestPtr request = it->second;
 
         if (command == "jobsubmit") {
@@ -603,11 +646,13 @@ get_new_requests(
           request->add_cleanup(cleanup);
 
         } else if (command == "jobcancel") {
+        
           log_cancel_req(request->lb_context());
           request->mark_cancelled();
           cleanup_guard.dismiss();
           request->add_cleanup(cleanup);
-        }
+        
+        } 
 
       }
 
