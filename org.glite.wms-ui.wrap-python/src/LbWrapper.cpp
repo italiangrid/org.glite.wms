@@ -15,8 +15,8 @@
 
 
 
-#define ORG_GLITE_WMSUI_WRAPY_TRY_ERRROR try{ error_code = false ;
-#define ORG_GLITE_WMSUI_WRAPY_CATCH_ERRROR \
+#define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
+#define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
 } catch (Exception &exc){  error_code= true; error = exc.what(); \
 } catch (exception &exc){  error_code= true; error = exc.what(); \
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
