@@ -15,7 +15,7 @@ USING_COMMON_NAMESPACE;
 
 using namespace std;
 
-namespace ts = edg::workload::common::logger::threadsafe;
+namespace ts = glite::wms::common::logger::threadsafe;
 
 void cunicolo( logger::logstream &log )
 {

@@ -8,7 +8,7 @@
 #include "../src/process/process.h"
 #include "../src/process/subprocess.h"
 
-namespace process = edg::workload::common::process;
+namespace process = glite::wms::common::process;
 
 using namespace std;
 

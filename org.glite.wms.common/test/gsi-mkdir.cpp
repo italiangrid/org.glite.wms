@@ -6,8 +6,8 @@
 #include "../src/utilities/globus_ftp_utils.h"
 #include "../src/logger/edglog.h"
 
-namespace utilities     = edg::workload::common::utilities;
-namespace logger        = edg::workload::common::logger::threadsafe;
+namespace utilities     = glite::wms::common::utilities;
+namespace logger        = glite::wms::common::logger::threadsafe;
 
 using namespace std;
 using namespace utilities;

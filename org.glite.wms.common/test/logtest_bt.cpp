@@ -12,7 +12,7 @@
 
 USING_COMMON_NAMESPACE;
 
-namespace ts = edg::workload::common::logger::threadsafe;
+namespace ts = glite::wms::common::logger::threadsafe;
 
 using namespace std;
 

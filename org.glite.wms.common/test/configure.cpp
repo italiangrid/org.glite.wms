@@ -13,12 +13,12 @@ USING_COMMON_NAMESPACE;
 
 int main( void )
 {
-//    setenv( "EDG_WL_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
+//    setenv( "GLITE_WMS_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
 
   configuration::Configuration   *configuration;
 
   try {
-    configuration = new configuration::Configuration( "edg_ns.conf", "JobController" );
+    configuration = new configuration::Configuration( "glite_ns.conf", "JobController" );
 
     cout << "Condor submit = " << configuration->jc()->condor_submit() << endl;
     cout << "Condor remove = " << configuration->jc()->condor_remove() << endl;
@@ -44,10 +44,10 @@ int main( void )
 
 //  int func( void )
 //  {
-//    setenv( "EDG_WL_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
+//    setenv( "GLITE_WMS_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
 
 //    try {
-//      configuration::Factory::create_factory( "JobController", "edg_wl.conf" )->create();
+//      configuration::Factory::create_factory( "JobController", "glite_wms.conf" )->create();
 
 //      cout << "Condor submit = " << configuration::JCConfiguration::instance()->condor_submit() << endl;
 //      cout << "Condor remove = " << configuration::JCConfiguration::instance()->condor_remove() << endl;
