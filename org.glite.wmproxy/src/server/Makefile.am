@@ -15,7 +15,7 @@
 #
 # WARNING: work in progress
 
-bin_PROGRAMS = wmProxy
+bin_PROGRAMS = glite_wms_wmproxy_server
 
 noinst_HEADERS = \
 	exceptions.h \
@@ -33,12 +33,11 @@ noinst_HEADERS = \
 	wmproxy.h \
 	wmputils.h
 
-
-wmProxy_SOURCES = \
+glite_wms_wmproxy_server_SOURCES = \
+	wm.h \
 	NS2WMProxy.cpp \
 	soapC.cpp \
 	soapServer.cpp \
-	wmclient.cpp \
 	wmpdelegation.cpp \
 	wmpdispatcher.cpp \
 	wmpeventlogger.cpp \
@@ -50,11 +49,10 @@ wmProxy_SOURCES = \
 	wmpoperations.cpp \
 	wmproxy.cpp \
 	wmputils.cpp
-
 	
-#wmProxy_LDFLAGS = -Xlinker --export-dynamic
+#glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic
 
-wmProxy_LDADD = \
+glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
@@ -81,6 +79,19 @@ wmProxy_LDADD = \
 	$(XML2_LIBS) \
 	$(FASTCGI_CPP_LIBS)
 
+wm.h :
+	@#Create the files
+	@echo "wsdl2h compiling .h "
+	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
+        -t$(GSOAP_LOCATION)/typemap.dat \
+        $(GLITE_LOCATION)/interface/WMProxy.wsdl
+
+soapC.cpp : wm.h
+	@#Create the files
+	@echo "gsoap compiling .cpp"
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) wm.h 
+	
+
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
@@ -89,6 +100,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(MYPROXY_CFLAGS)
+	$(MYPROXY_CFLAGS) \
+	-DWITH_FASTCGI 
 
 MAINTAINERCLEANFILES = Makefile.in
