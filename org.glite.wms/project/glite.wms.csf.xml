@@ -21,10 +21,16 @@
 
 	Revision history:
 	$Log$
+	Revision 1.30  2004/06/28 23:08:57  eronchie
+	Start adding new component
+	brokerinfo
+	classad_plugin
+	matchmaking
+
 	Revision 1.29  2004/06/26 13:49:09  eronchie
 	Temporarely removed classad_plugin
 	work in progress
-
+	
 	Revision 1.28  2004/06/26 13:07:35  eronchie
 	*** empty log message ***
 	
@@ -224,6 +230,15 @@
 		<condition property="jdlj.head">
 			<equals arg1="${org.glite.wms.jdlj.version}" arg2="HEAD" />
 		</condition>
+		<condition property="brokerinfo.head">
+                        <equals arg1="${org.glite.wms.brokerinfo.version}" arg2="HEAD" />
+                </condition>
+		<condition property="classad_plugin.head">
+                        <equals arg1="${org.glite.wms.classad_plugin.version}" arg2="HEAD" />
+                </condition>
+		<condition property="matchmaking.head">
+                        <equals arg1="${org.glite.wms.matchmaking.version}" arg2="HEAD" />
+                </condition>
     </target>
 
     <presetdef name="cvs-co">
@@ -289,7 +304,10 @@
 				        tls,
 					jobid,
 					jdl,
- 				        jdlj"/>
+ 				        jdlj,
+					brokerinfo,
+					classad_plugin,
+					matchmaking"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils" depends="get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
@@ -380,6 +398,36 @@
 		<cvs-co package="org.glite.wms.jdlj"
 			tag="${org.glite.wms.jdlj.version}" />
 	</target>
+
+	<!-- Brokerinfo -->
+        <target name="brokerinfo" depends="boost,classads,globus,get.brokerinfo.head, get.brokerinfo.tag"/>
+        <target name="get.brokerinfo.head" if="brokerinfo.head">
+                <cvs-co package="org.glite.wms.brokerinfo" />
+        </target>
+        <target name="get.brokerinfo.tag" unless="brokerinfo.head">
+                <cvs-co package="org.glite.wms.brokerinfo"
+                        tag="${org.glite.wms.brokerinfo.version}" />
+        </target>
+
+	<!-- ClassAdPlugin -->
+        <target name="classad_plugin" depends="boost,classads,globus,common,brokerinfo,get.classad_plugin.head, get.classad_plugin.tag"/>
+        <target name="get.classad_plugin.head" if="classad_plugin.head">
+                <cvs-co package="org.glite.wms.classad_plugin" />
+        </target>
+        <target name="get.classad_plugin.tag" unless="classad_plugin.head">
+                <cvs-co package="org.glite.wms.classad_plugin"
+                        tag="${org.glite.wms.classad_plugin.version}" />
+        </target>
+
+	<!-- Matchmaking -->
+        <target name="matchmaking" depends="boost,classads,globus,common,get.matchmaking.head, get.matchmaking.tag"/>
+        <target name="get.matchmaking.head" if="matchmaking.head">
+                <cvs-co package="org.glite.wms.matchmaking" />
+        </target>
+        <target name="get.matchmaking.tag" unless="matchmaking.head">
+                <cvs-co package="org.glite.wms.matchmaking"
+                        tag="${org.glite.wms.matchmaking.version}" />
+        </target>
 
 	<!-- ====================================================
 		 Checkout all

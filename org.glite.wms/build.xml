@@ -21,9 +21,11 @@
 
 	Revision history:
 	$Log$
-	Revision 1.22  2004/06/26 13:49:08  eronchie
-	Temporarely removed classad_plugin
-	work in progress
+	Revision 1.23  2004/06/28 23:08:57  eronchie
+	Start adding new component
+	brokerinfo
+	classad_plugin
+	matchmaking
 
 	Revision 1.21  2004/06/26 13:07:35  eronchie
 	*** empty log message ***
@@ -341,6 +343,24 @@
                      inheritall="false" />
         </target>
 
+	<target name="brokerinfo" unless="setenvonly" depends="boost,classads">
+                <ant dir="${workspace.dir}/${subsystem.name}.brokerinfo"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
+	<target name="classad_plugin" unless="setenvonly" depends="boost,classads,common,brokerinfo">
+                <ant dir="${workspace.dir}/${subsystem.name}.classad_plugin"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
+	<target name="matchmaking" unless="setenvonly" depends="boost,classads,common">
+                <ant dir="${workspace.dir}/${subsystem.name}.matchmaking"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -350,6 +370,9 @@
 					     tls,
 					     jobid,
 					     jdl,
-   					     jdlj" />
+   					     jdlj,
+					     brokerinfo,
+					     classad_plugin,
+					     matchmaking" />
 		
 </project>
