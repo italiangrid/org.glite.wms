@@ -10,20 +10,20 @@ EXTRA_DIST = AdWrapper_wrap.cpp \
 	LbWrapper_wrap.cpp \
 	LogWrapper_wrap.cpp \
 	NsWrapper_wrap.cpp \
-	org_glite_wms_ui_python_AdWrapper.py \
-	org_glite_wms_ui_python_NsWrapper.py \
-	org_glite_wms_ui_python_LbWrapper.py \
-	org_glite_wms_ui_python_LogWrapper.py \
-	org_glite_wms_ui_python_AdWrapper.pyc \
-	org_glite_wms_ui_python_NsWrapper.pyc
-	org_glite_wms_ui_python_LbWrapper.pyc \
-	org_glite_wms_ui_python_LogWrapper.pyc
+	glite_wmsui_AdWrapper.py \
+	glite_wmsui_NsWrapper.py \
+	glite_wmsui_LbWrapper.py \
+	glite_wmsui_LogWrapper.py \
+	glite_wmsui_AdWrapper.pyc \
+	glite_wmsui_NsWrapper.pyc
+	glite_wmsui_LbWrapper.pyc \
+	glite_wmsui_LogWrapper.pyc
 
 lib_LTLIBRARIES = \
-	liborg_glite_wmsui_python_LbWrapper.la \
-	liborg_glite_wmsui_python_LogWrapper.la \
-	liborg_glite_wmsui_python_NsWrapper.la \
-	liborg_glite_wmsui_python_AdWrapper.la
+	libglite_wmsui_LbWrapper.la \
+	libglite_wmsui_LogWrapper.la \
+	libglite_wmsui_NsWrapper.la \
+	libglite_wmsui_AdWrapper.la
 
 noinst_HEADERS = \
 	AdWrapper.h \
@@ -32,14 +32,14 @@ noinst_HEADERS = \
 	NsWrapper.h
 
 uicommonlibdir = $(libdir)/python
-uicommonlib_SCRIPTS=org_glite_wmsui_python_AdWrapper.py \
-	org_glite_wmsui_python_NsWrapper.py \
-	org_glite_wmsui_python_LbWrapper.py \
-	org_glite_wmsui_python_LogWrapper.py \
-	org_glite_wmsui_python_AdWrapper.pyc \
-	org_glite_wmsui_python_NsWrapper.pyc \
-	org_glite_wmsui_python_LbWrapper.pyc \
-	org_glite_wmsui_python_LogWrapper.pyc
+uicommonlib_SCRIPTS=glite_wmsui_AdWrapper.py \
+	glite_wmsui_NsWrapper.py \
+	glite_wmsui_LbWrapper.py \
+	glite_wmsui_LogWrapper.py \
+	glite_wmsui_AdWrapper.pyc \
+	glite_wmsui_NsWrapper.pyc \
+	glite_wmsui_LbWrapper.pyc \
+	glite_wmsui_LogWrapper.pyc
  
 install-exec-hook:
 	cd $(DESTDIR)$(libdir); \
@@ -111,13 +111,13 @@ SHARED_LIB_SSL = ../../common/ssl_helpers/ssl_pthreads.lo \
 SHARED_LIB_DGAS = ../../dgas/services/clients/edg-wl-dgas-jobAuthClient.lo \
 	../../dgas/common/libdgas_xmlutil.la
 
-libglite_wmsui_python_LbWrapper_la_SOURCES = \
+libglite_wmsui_LbWrapper_la_SOURCES = \
 	LbWrapper_wrap.cpp \
 	LbWrapper.cpp \
-	org_glite_wms_ui_python_LbWrapper.i
-libglite_wmsui_python_LbWrapper_la_LDFLAGS = \
+	glite_wmsui_LbWrapper.i
+libglite_wmsui_LbWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-libglite_wmsui_python_LbWrapper_la_LIBADD = \
+libglite_wmsui_LbWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(SHARED_LIB_SOCKET) \
@@ -137,13 +137,13 @@ libglite_wmsui_python_LbWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-libglite_wmsui_python_LogWrapper_la_SOURCES = \
+libglite_wmsui_LogWrapper_la_SOURCES = \
 	LogWrapper_wrap.cpp \
 	LogWrapper.cpp \
-	org_glite_wms_ui_python_LogWrapper.i
-libglite_wmsui_python_LogWrapper_la_LDFLAGS = \
+	glite_wmsui_LogWrapper.i
+libglite_wmsui_LogWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-libglite_wmsui_python_LogWrapper_la_LIBADD = \
+libglite_wmsui_LogWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(SHARED_LIB_SOCKET) \
@@ -163,13 +163,13 @@ libglite_wmsui_python_LogWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-libglite_wmsui_python_NsWrapper_la_SOURCES = \
+libglite_wmsui_NsWrapper_la_SOURCES = \
 	NsWrapper_wrap.cpp \
 	NsWrapper.cpp \
-	org_glite_wms_ui_python_NsWrapper.i
-libglite_wmsui_python_NsWrapper_la_LDFLAGS = \
+	glite_wmsui_NsWrapper.i
+libglite_wmsui_NsWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-libglite_wmsui_python_NsWrapper_la_LIBADD = \
+libglite_wmsui_NsWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(VOMS_CPP_LIBS) \
@@ -191,13 +191,13 @@ libglite_wmsui_python_NsWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-libglite_wmsui_python_AdWrapper_la_SOURCES = \
+libglite_wmsui_AdWrapper_la_SOURCES = \
 	AdWrapper_wrap.cpp \
 	AdWrapper.cpp \
-	org_glite_wms_ui_python_AdWrapper.i
-libglite_wmsui_python_AdWrapper_la_LDFLAGS = \
+	glite_wmsui_AdWrapper.i
+libglite_wmsui_AdWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-libglite_wmsui_python_AdWrapper_la_LIBADD = \
+libglite_wmsui_AdWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(SHARED_LIB_SOCKET) \
@@ -217,70 +217,70 @@ libglite_wmsui_python_AdWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-LbWrapper_wrap.cpp : org_glite_wms_ui_python_LbWrapper.i
+LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
 	$(SWIG_BIN_PATH)/swig -python -shadow -c++ -o $@ $<
 
-LogWrapper_wrap.cpp : org_glite_wms_ui_python_LogWrapper.i
+LogWrapper_wrap.cpp : glite_wmsui_LogWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
 	$(SWIG_BIN_PATH)/swig -I$(top_srcdir) -python -shadow -c++ -o $@ $<
 
-NsWrapper_wrap.cpp: org_glite_wms_ui_python_NsWrapper.i
+NsWrapper_wrap.cpp: glite_wmsui_NsWrapper.i
 	@#Create the files
 	@echo "Swig compiling file .CPP and .PY $< ...."
 	$(SWIG_BIN_PATH)/swig -python -shadow -c++ -o $@ $<
 
-AdWrapper_wrap.cpp : org_glite_wms_ui_python_AdWrapper.i
+AdWrapper_wrap.cpp : glite_wmsui_AdWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
 	$(SWIG_BIN_PATH)/swig -python -shadow -c++ -o $@ $<
 
-org_glite_wms_ui_python_AdWrapper.pyc:
-	/bin/touch org_glite_wms_ui_python_AdWrapper.pyc
+glite_wmsui_AdWrapper.pyc:
+	/bin/touch glite_wmsui_AdWrapper.pyc
 
-org_glite_wms_ui_python_NsWrapper.pyc:
-	/bin/touch org_glite_wms_ui_python_NsWrapper.pyc
+glite_wmsui_NsWrapper.pyc:
+	/bin/touch glite_wmsui_NsWrapper.pyc
 
-org_glite_wms_ui_python_LbWrapper.pyc:
-	/bin/touch org_glite_wms_ui_python_LbWrapper.pyc
+glite_wmsui_LbWrapper.pyc:
+	/bin/touch glite_wmsui_LbWrapper.pyc
 
-org_glite_wms_ui_python_LogWrapper.pyc:
-	/bin/touch org_glite_wms_ui_python_LogWrapper.pyc
+glite_wmsui_LogWrapper.pyc:
+	/bin/touch glite_wmsui_LogWrapper.pyc
 
-org_glite_wms_ui_python_AdWrapper.py:
-	/bin/touch org_glite_wms_ui_python_AdWrapper.py
+glite_wmsui_AdWrapper.py:
+	/bin/touch glite_wmsui_AdWrapper.py
 
-org_glite_wms_ui_python_NsWrapper.py:
-	/bin/touch org_glite_wms_ui_python_NsWrapper.py
+glite_wmsui_NsWrapper.py:
+	/bin/touch glite_wmsui_NsWrapper.py
 
-org_glite_wms_ui_python_LbWrapper.py:
-	/bin/touch org_glite_wms_ui_python_LbWrapper.py
+glite_wmsui_LbWrapper.py:
+	/bin/touch glite_wmsui_LbWrapper.py
 
-org_glite_wms_ui_python_LogWrapper.py:
-	/bin/touch org_glite_wms_ui_python_LogWrapper.py
+glite_wmsui_LogWrapper.py:
+	/bin/touch glite_wmsui_LogWrapper.py
 
-WL_UI_COM_EDG = org_glite_wms_ui_python_AdWrapper.a \
-	org_glite_wms_ui_python_AdWrapper.la \
-	org_glite_wms_ui_python_AdWrapper.so \
-	org_glite_wms_ui_python_AdWrapper.so.0 \
-	org_glite_wms_ui_python_AdWrapper.so.0.0.0 \
-	org_glite_wms_ui_python_LbWrapper.a \
-	org_glite_wms_ui_python_LbWrapper.la \
-	org_glite_wms_ui_python_LbWrapper.so \
-	org_glite_wms_ui_python_LbWrapper.so.0 \
-	org_glite_wms_ui_python_LbWrapper.so.0.0.0 \
-	org_glite_wms_ui_python_LogWrapper.a \
-	org_glite_wms_ui_python_LogWrapper.la \
-	org_glite_wms_ui_python_LogWrapper.so \
-	org_glite_wms_ui_python_LogWrapper.so.0 \
-	org_glite_wms_ui_python_LogWrapper.so.0.0.0 \
-	org_glite_wms_ui_python_NsWrapper.a \
-	org_glite_wms_ui_python_NsWrapper.la \
-	org_glite_wms_ui_python_NsWrapper.so \
-	org_glite_wms_ui_python_NsWrapper.so.0 \
-	org_glite_wms_ui_python_NsWrapper.so.0.0.0 
+WL_UI_COM_EDG = glite_wmsui_AdWrapper.a \
+	glite_wmsui_AdWrapper.la \
+	glite_wmsui_AdWrapper.so \
+	glite_wmsui_AdWrapper.so.0 \
+	glite_wmsui_AdWrapper.so.0.0.0 \
+	glite_wmsui_LbWrapper.a \
+	glite_wmsui_LbWrapper.la \
+	glite_wmsui_LbWrapper.so \
+	glite_wmsui_LbWrapper.so.0 \
+	glite_wmsui_LbWrapper.so.0.0.0 \
+	glite_wmsui_LogWrapper.a \
+	glite_wmsui_LogWrapper.la \
+	glite_wmsui_LogWrapper.so \
+	glite_wmsui_LogWrapper.so.0 \
+	glite_wmsui_LogWrapper.so.0.0.0 \
+	glite_wmsui_NsWrapper.a \
+	glite_wmsui_NsWrapper.la \
+	glite_wmsui_NsWrapper.so \
+	glite_wmsui_NsWrapper.so.0 \
+	glite_wmsui_NsWrapper.so.0.0.0 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
@@ -297,13 +297,13 @@ CLEANFILES = AdWrapper_wrap.cpp \
 	LbWrapper_wrap.cpp \
 	LogWrapper_wrap.cpp \
 	NsWrapper_wrap.cpp \
-	org_glite_wms_ui_python_AdWrapper.py \
-	org_glite_wms_ui_python_NsWrapper.py \
-	org_glite_wms_ui_python_LbWrapper.py \
-	org_glite_wms_ui_python_LogWrapper.py \
-	org_glite_wms_ui_python_AdWrapper.pyc \
-	org_glite_wms_ui_python_NsWrapper.pyc \
-	org_glite_wms_ui_python_LbWrapper.pyc \
-	org_glite_wms_ui_python_LogWrapper.pyc
+	glite_wmsui_AdWrapper.py \
+	glite_wmsui_NsWrapper.py \
+	glite_wmsui_LbWrapper.py \
+	glite_wmsui_LogWrapper.py \
+	glite_wmsui_AdWrapper.pyc \
+	glite_wmsui_NsWrapper.pyc \
+	glite_wmsui_LbWrapper.pyc \
+	glite_wmsui_LogWrapper.pyc
 
 MAINTAINERCLEANFILES = Makefile.in
