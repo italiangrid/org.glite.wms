@@ -350,7 +350,7 @@ public class Utils {
   static final String ICON_CUT = "images/cut.gif";
   static final String ICON_COPY = "images/copy.gif";
   static final String ICON_PASTE = "images/paste.gif";
-  static final String ICON_DATAGRID_LOGO = "images/datagrid3.jpeg";
+  static final String ICON_DATAGRID_LOGO = "images/glite_small.jpg";
 
   // Names of VO specific configuration attributes used in VO_CONF_FILE_NAME.
   static final String CONF_FILE_VIRTUAL_ORGANISATION = "VirtualOrganisation";
@@ -395,12 +395,12 @@ public class Utils {
   static final String STORAGE_ELEMENT = "StorageElement";
   static final String LOGICAL_FILE_NAME = "LogicalFileName";
 
-  static final String EDG_WL_LOG_TIMEOUT = "EDG_WL_LOG_TIMEOUT";
-  static final String EDG_WL_LOG_SYNC_TIMEOUT = "EDG_WL_LOG_SYNC_TIMEOUT";
-  static final String EDG_WL_LOG_DESTINATION = "EDG_WL_LOG_DESTINATION";
+  static final String EDG_WL_LOG_TIMEOUT = "GLITE_WMSUI_LOG_TIMEOUT";
+  static final String EDG_WL_LOG_SYNC_TIMEOUT = "GLITE_WMSUI_LOG_SYNC_TIMEOUT";
+  static final String EDG_WL_LOG_DESTINATION = "GLITE_WMSUI_LOG_DESTINATION";
 
-  static final String EDG_WL_GUI_CONFIG_VAR = "EDG_WL_GUI_CONFIG_VAR";
-  static final String EDG_WL_GUI_CONFIG_VO = "EDG_WL_GUI_CONFIG_VO";
+  static final String EDG_WL_GUI_CONFIG_VAR = "GLITE_WMSUI_CONFIG_VAR";
+  static final String EDG_WL_GUI_CONFIG_VO = "GLITE_WMSUI_CONFIG_VO";
 
   //!!! DAG
   // Names of query Ad in user preferences file.

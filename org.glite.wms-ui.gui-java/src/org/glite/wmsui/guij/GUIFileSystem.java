@@ -47,8 +47,8 @@ public class GUIFileSystem {
   static final boolean THIS_CLASS_DEBUG = false;
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
-  static final String EDG_LOCATION = "EDG_LOCATION";
-  static final String EDG_WL_LOCATION = "EDG_WL_LOCATION";
+  static final String EDG_LOCATION = "GLITE_LOCATION";
+  static final String EDG_WL_LOCATION = "GLITE_WMS_LOCATION";
 
   // Environment variables will be checked in the specified order.
   static final String[] confFileLocationEnvironmentVars = {
@@ -58,7 +58,7 @@ public class GUIFileSystem {
   // Alternative file locations will be checked in the specified order.
   // Write paths using initial and final file separators.
   static final String[] confFileAlternativeLocations = {
-      File.separator + "opt" + File.separator + "edg" + File.separator + "etc"
+      File.separator + "opt" + File.separator + "glite" + File.separator + "etc"
       + File.separator,
       File.separator + "usr" + File.separator + "local" + File.separator
       + "etc" + File.separator,
@@ -109,8 +109,8 @@ public class GUIFileSystem {
   static final String ERROR_LOG_EXTENSION = ".log";
   static final String CE_ID_LIST_FILE_EXTENSION = ".lst";
 
-  static final String EDG_WL_GUI_CONFIG_VAR = "EDG_WL_GUI_CONFIG_VAR";
-  static final String EDG_WL_GUI_CONFIG_VO = "EDG_WL_GUI_CONFIG_VO";
+  //static final String EDG_WL_GUI_CONFIG_VAR = "GLITE_WMSUI_CONFIG_VAR";
+  //static final String EDG_WL_GUI_CONFIG_VO = "GLITE_WMSUI_CONFIG_VO";
 
   //!!! VO
   static final String VOMSES_FILE_NAME = "vomses";
@@ -281,7 +281,7 @@ public class GUIFileSystem {
   }
 
   static String getGUIConfVarFile() {
-    String fileName = Api.getEnv(EDG_WL_GUI_CONFIG_VAR);
+    String fileName = Api.getEnv(Utils.EDG_WL_GUI_CONFIG_VAR);
     if ((fileName != null) && !fileName.trim().equals("")) {
       if (new File(fileName).isFile()) {
         return fileName;
@@ -295,7 +295,7 @@ public class GUIFileSystem {
   }
 
   static String getGUIConfVOFile() {
-    String fileName = Api.getEnv(EDG_WL_GUI_CONFIG_VO);
+    String fileName = Api.getEnv(Utils.EDG_WL_GUI_CONFIG_VO);
     if ((fileName != null) && !fileName.trim().equals("")) {
       if (new File(fileName).isFile()) {
         return fileName;

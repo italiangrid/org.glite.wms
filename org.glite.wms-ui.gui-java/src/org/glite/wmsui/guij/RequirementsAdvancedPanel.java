@@ -74,8 +74,8 @@ public class RequirementsAdvancedPanel extends JPanel {
   DefaultMutableTreeNode rootNode = null;
   DefaultMutableTreeNode parentNode = null;
   String allExp = "<html><font color=\"#800080\">" + "<b>Exp</b>" + "</font>";
-  String subExp = "<html><font color=\"#602080\">" + "<b>Sub-Exp</b>" +
-      "</font>";
+  String subExp = "<html><font color=\"#602080\">" + "<b>Sub-Exp</b>"
+      + "</font>";
   JButton jButtonClear = new JButton();
   JTextField jTextFieldConditionalCond = new JTextField();
   JLabel jLabelQuestionMark = new JLabel();
@@ -87,9 +87,10 @@ public class RequirementsAdvancedPanel extends JPanel {
   JLabel jLabelExp1 = new JLabel();
   JLabel jLabelExp2 = new JLabel();
   JComboBox jComboBoxFunctionsFirstOperand = new JComboBox();
+  JComboBox jComboBoxAttributesSecondOperand = new JComboBox();
   JPanel jPanelFirstOperand = new JPanel();
   JPanel jPanelSecondOperand = new JPanel();
-  JComboBox jComboBoxAttributesSecondOperand = new JComboBox();
+  
   JRadioButton jRadioButtonAttributeSecondOperand = new JRadioButton();
   JComboBox jComboBoxFirstOperandParam1 = new JComboBox();
   JComboBox jComboBoxFunctionsSecondOperand = new JComboBox();
@@ -270,6 +271,12 @@ public class RequirementsAdvancedPanel extends JPanel {
         jComboBoxFunctionsFirstOperandEvent(e);
       }
     });
+    jComboBoxFunctionsSecondOperand.addActionListener(new java.awt.event.
+           ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jComboBoxFunctionsSecondOperandEvent(e);
+          }
+        });
     jRadioButtonValueSecondOperand.setSelected(true);
     jRadioButtonAttributeSecondOperand.addActionListener(new java.awt.event.
         ActionListener() {
@@ -292,19 +299,14 @@ public class RequirementsAdvancedPanel extends JPanel {
       }
     });
     jComboBoxFirstOperandParam1.setEditable(true);
-    jComboBoxAttributesSecondOperand.addActionListener(new java.awt.event.
+    /*jComboBoxAttributesSecondOperand.addActionListener(new java.awt.event.
         ActionListener() {
       public void actionPerformed(ActionEvent e) {
+      	//functionsSecondOperandSetJCombo();
         jComboBoxAttributesSecondOperandEvent(e);
       }
-    });
-    jComboBoxFunctionsSecondOperand.addActionListener(new java.awt.event.
-        ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        functionsSecondOperandSetJCombo();
-        jComboBoxFunctionsSecondOperandEvent(e);
-      }
-    });
+    });*/
+    
     jRadioButtonFunctionSecondOperand.setText("Function");
     jRadioButtonFunctionSecondOperand.addActionListener(new java.awt.event.
         ActionListener() {
@@ -348,12 +350,12 @@ public class RequirementsAdvancedPanel extends JPanel {
       }
     });
     jComboBoxFirstOperandParam2.setEditable(true);
-    jComboBoxFirstOperandParam2.addActionListener(new java.awt.event.
+    /*jComboBoxFirstOperandParam2.addActionListener(new java.awt.event.
         ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jComboBoxFirstOperandParam2Event(e);
       }
-    });
+    });*/
     jComboBoxFirstOperandParam2.getEditor().getEditorComponent().
         addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
@@ -1089,7 +1091,6 @@ public class RequirementsAdvancedPanel extends JPanel {
             date));
         if (stringBuffer.charAt(8) == '0') {
           stringBuffer.setCharAt(8, ' ');
-          //System.out.println("##### " + Constant.getInstance(stringBuffer.toString()));
         }
         nodeTextSecondOperand = "'" + stringBuffer.toString() + "'";
         //nodeTextSecondOperand = "\"" + stringBuffer.toString() + "\"";
@@ -1494,6 +1495,7 @@ public class RequirementsAdvancedPanel extends JPanel {
       if (operand == FIRSTOPERAND) {
         attributesFirstOperandSetJCombo();
         attributesFirstOperandSetJRadio();
+        //jComboBoxFunctionsSecondOperandEvent(null);
       }
     } else if (choice.equals("Function")) {
       function = true;
@@ -1501,6 +1503,7 @@ public class RequirementsAdvancedPanel extends JPanel {
         functionsFirstOperandSetJCombo();
         functionsFirstOperandSetJRadio();
         functionsFirstOperandSetParamJText();
+        //jComboBoxFunctionsSecondOperandEvent(null);
 
       }
       /* else if(operand == SECONDOPERAND) {
@@ -1891,6 +1894,7 @@ public class RequirementsAdvancedPanel extends JPanel {
     //packExprTree(rootNode);
   }
 
+      
   private void functionsSecondOperandSetJCombo() {
     if (jComboBoxFunctionsSecondOperand.getItemCount() != 0) {
       String selectedFunctionItem = jComboBoxFunctionsSecondOperand.
@@ -1905,8 +1909,9 @@ public class RequirementsAdvancedPanel extends JPanel {
       jComboBoxSecondOperandParam2.removeAllItems();
       jComboBoxSecondOperandParam3.removeAllItems();
 
+      String functionName;
       for (int j = 0; j < confFileFunctionsVector.size(); j++) {
-        String functionName = ((Function) confFileFunctionsVector.get(j)).
+        functionName = ((Function) confFileFunctionsVector.get(j)).
             getName();
         if (selectedFunctionItem.equals(functionName)) {
           int parameterCount = ((Function) confFileFunctionsVector.get(j)).
@@ -1980,10 +1985,14 @@ public class RequirementsAdvancedPanel extends JPanel {
 
       //!!!
       functionsSecondOperandSetJCombo();
-      functionsFirstOperandSetJCombo(); //21/04/2004 added
-      functionsFirstOperandSetParamJText(); //21/04/2004 added
-      blankFirstOperandJCombo();
-      blankSecondOperandJCombo();
+      //jComboBoxFunctionsSecondOperandEvent(null);
+      functionsSecondOperandSetJCombo();
+      functionsSecondOperandSetJRadio();
+      //functionsFirstOperandSetJCombo(); //21/04/2004 added
+      //functionsFirstOperandSetParamJText(); //21/04/2004 added
+      
+      //blankFirstOperandJCombo();
+      //blankSecondOperandJCombo();
 
       switch (selectedAttributeType) {
         case Utils.INTEGER:
@@ -2106,6 +2115,9 @@ public class RequirementsAdvancedPanel extends JPanel {
       blankFirstOperandJCombo();
       blankSecondOperandJCombo();
       functionsSecondOperandSetJCombo();
+      //jComboBoxFunctionsSecondOperandEvent(null);
+      functionsSecondOperandSetJCombo();
+      functionsSecondOperandSetJRadio();
 
       switch (selectedFunctionType) {
         case Utils.INTEGER:
@@ -2146,21 +2158,21 @@ public class RequirementsAdvancedPanel extends JPanel {
 
   private void attributesFirstOperandSetJRadio() {
     if (jComboBoxAttributesFirstOperand.getItemCount() != 0) {
-      boolean bool = true;
+      //boolean bool = true;
       if (getAttributeType(jComboBoxAttributesFirstOperand.getSelectedItem().
           toString()) == Utils.BOOLEAN) {
-        bool = false;
-        jRadioButtonValueSecondOperand.setEnabled(bool);
-        jTextFieldValueSecondOperand.setEnabled(bool);
+        //bool = false;
+        jRadioButtonValueSecondOperand.setEnabled(false);
+        jTextFieldValueSecondOperand.setEnabled(false);
 
-        jRadioButtonAttributeSecondOperand.setEnabled(bool);
-        jComboBoxAttributesSecondOperand.setEnabled(bool);
+        jRadioButtonAttributeSecondOperand.setEnabled(false);
+        jComboBoxAttributesSecondOperand.setEnabled(false);
 
-        jRadioButtonFunctionSecondOperand.setEnabled(bool);
-        jComboBoxFunctionsSecondOperand.setEnabled(bool);
-        jComboBoxSecondOperandParam1.setEnabled(bool);
-        jComboBoxSecondOperandParam2.setEnabled(bool);
-        jComboBoxSecondOperandParam3.setEnabled(bool);
+        jRadioButtonFunctionSecondOperand.setEnabled(false);
+        jComboBoxFunctionsSecondOperand.setEnabled(false);
+        jComboBoxSecondOperandParam1.setEnabled(false);
+        jComboBoxSecondOperandParam2.setEnabled(false);
+        jComboBoxSecondOperandParam3.setEnabled(false);
 
         jTextFieldValueSecondOperand.setVisible(true);
         setTimeTextFieldVisible(false);
@@ -2176,18 +2188,18 @@ public class RequirementsAdvancedPanel extends JPanel {
         jLabelDate.setVisible(true);
         jRadioButtonValueSecondOperand.setText("Time (hhmmss)");
 
-        jRadioButtonValueSecondOperand.setEnabled(bool);
+        jRadioButtonValueSecondOperand.setEnabled(true);
         if (jComboBoxAttributesSecondOperand.getItemCount() == 0) {
           jRadioButtonAttributeSecondOperand.setEnabled(false);
           jRadioButtonValueSecondOperand.setSelected(true);
         } else {
-          jRadioButtonAttributeSecondOperand.setEnabled(bool);
+          jRadioButtonAttributeSecondOperand.setEnabled(true);
         }
         if (jComboBoxFunctionsSecondOperand.getItemCount() == 0) {
           jRadioButtonFunctionSecondOperand.setEnabled(false);
           jRadioButtonValueSecondOperand.setSelected(true);
         } else {
-          jRadioButtonFunctionSecondOperand.setEnabled(bool);
+          jRadioButtonFunctionSecondOperand.setEnabled(true);
         }
         if (jRadioButtonValueSecondOperand.isSelected()) {
           jRadioButtonChangeEvent("Value", SECONDOPERAND, null);
@@ -2195,7 +2207,6 @@ public class RequirementsAdvancedPanel extends JPanel {
           jRadioButtonChangeEvent("Attribute", SECONDOPERAND, null);
         } else if (jRadioButtonFunctionSecondOperand.isSelected()) {
           jRadioButtonChangeEvent("Function", SECONDOPERAND, null);
-
         }
       } else if (getAttributeType(jComboBoxAttributesFirstOperand.
           getSelectedItem().toString()) == Utils.REL_TIME) {
@@ -2204,18 +2215,18 @@ public class RequirementsAdvancedPanel extends JPanel {
         setDateTextFieldVisible(false);
         jLabelDate.setVisible(false);
         jRadioButtonValueSecondOperand.setText("Time (hhmmss)");
-        jRadioButtonValueSecondOperand.setEnabled(bool);
+        jRadioButtonValueSecondOperand.setEnabled(true);
         if (jComboBoxAttributesSecondOperand.getItemCount() == 0) {
           jRadioButtonAttributeSecondOperand.setEnabled(false);
           jRadioButtonValueSecondOperand.setSelected(true);
         } else {
-          jRadioButtonAttributeSecondOperand.setEnabled(bool);
+          jRadioButtonAttributeSecondOperand.setEnabled(true);
         }
         if (jComboBoxFunctionsSecondOperand.getItemCount() == 0) {
           jRadioButtonFunctionSecondOperand.setEnabled(false);
           jRadioButtonValueSecondOperand.setSelected(true);
         } else {
-          jRadioButtonFunctionSecondOperand.setEnabled(bool);
+          jRadioButtonFunctionSecondOperand.setEnabled(true);
         }
         if (jRadioButtonValueSecondOperand.isSelected()) {
           jRadioButtonChangeEvent("Value", SECONDOPERAND, null);
@@ -2232,18 +2243,20 @@ public class RequirementsAdvancedPanel extends JPanel {
         jLabelDate.setVisible(false);
         jRadioButtonValueSecondOperand.setText("Value");
 
-        jRadioButtonValueSecondOperand.setEnabled(bool);
+        jRadioButtonValueSecondOperand.setEnabled(true);
         if (jComboBoxAttributesSecondOperand.getItemCount() == 0) {
           jRadioButtonAttributeSecondOperand.setEnabled(false);
           jRadioButtonValueSecondOperand.setSelected(true);
         } else {
-          jRadioButtonAttributeSecondOperand.setEnabled(bool);
+          jRadioButtonAttributeSecondOperand.setEnabled(true);
+          jComboBoxAttributesSecondOperand.setEnabled(true);
         }
         if (jComboBoxFunctionsSecondOperand.getItemCount() == 0) {
           jRadioButtonFunctionSecondOperand.setEnabled(false);
           jRadioButtonValueSecondOperand.setSelected(true);
         } else {
-          jRadioButtonFunctionSecondOperand.setEnabled(bool);
+          jRadioButtonFunctionSecondOperand.setEnabled(true);
+          jComboBoxFunctionsSecondOperand.setEnabled(false);
         }
         if (jRadioButtonValueSecondOperand.isSelected()) {
           jRadioButtonChangeEvent("Value", SECONDOPERAND, null);
@@ -2263,9 +2276,14 @@ public class RequirementsAdvancedPanel extends JPanel {
     functionsFirstOperandSetJCombo();
     functionsFirstOperandSetJRadio();
     functionsFirstOperandSetParamJText();
+    
+    functionsSecondOperandSetJCombo();
+    functionsSecondOperandSetJRadio();
+    //jComboBoxFunctionsSecondOperandEvent(null);
   }
 
   private void functionsFirstOperandSetJRadio() {
+  	if (jComboBoxFunctionsFirstOperand.getItemCount() != 0) {
     //jComboBoxAttributesFirstOperand.setToolTipText(jComboBoxAttributesFirstOperand.getSelectedItem().toString());
     String firstOperandSelectedFunction = jComboBoxFunctionsFirstOperand.
         getSelectedItem().toString();
@@ -2374,9 +2392,11 @@ public class RequirementsAdvancedPanel extends JPanel {
         jRadioButtonChangeEvent("Function", SECONDOPERAND, null);
       }
     }
+  	}
   }
 
   private void functionsFirstOperandSetParamJText() {
+  	if (jComboBoxFunctionsFirstOperand.getItemCount() != 0){
     String selectedFunctionItem =
         jComboBoxFunctionsFirstOperand.getSelectedItem().toString();
     int parameterCount = 0;
@@ -2433,10 +2453,73 @@ public class RequirementsAdvancedPanel extends JPanel {
         jComboBoxFirstOperandParam3.setVisible(true);
         break;
     }
+    }
+  }
+  
+  private void functionsSecondOperandSetParamJText() {
+  	if (jComboBoxFunctionsSecondOperand.getItemCount() != 0) {
+    String selectedFunctionItem =
+        jComboBoxFunctionsSecondOperand.getSelectedItem().toString();
+    int parameterCount = 0;
+    for (int j = 0; j < confFileFunctionsVector.size(); j++) {
+      String functionName = ((Function) confFileFunctionsVector.get(j)).getName();
+      if (selectedFunctionItem.equals(functionName)) {
+        parameterCount =
+            ((Function) confFileFunctionsVector.get(j)).getParameterCount();
+      }
+    }
+    //int selectedIndex = jComboBoxFunctionsFirstOperand.getSelectedIndex();
+    //int selectedFunctionParamNumber = paramNumber[selectedIndex];
+    /* You have to add functions first param type structure!!
+         int selectedFunctionParam1Type = param1Type[selectedIndex];
+         jComboBoxFunctionsFirstOperand.removeAllItems();
+         for(int i = 0; i < attributes.length; i++) {
+      if(getAttributeType(i) == selectedFunctionParam1Type) {
+        jComboBoxFunctionsFirstOperand.addItem(attributes[i]);
+      }
+         }
+     */
+    //switch(selectedFunctionParamNumber) {
+    switch (parameterCount) {
+      case Utils.INFINITE: //strcat()
+
+        // Show different Frame.
+        break;
+
+      case 0: //unixTime()
+        jComboBoxSecondOperandParam1.setVisible(false);
+        jComboBoxSecondOperandParam2.setVisible(false);
+        jComboBoxSecondOperandParam3.setVisible(false);
+        break;
+
+      case 1:
+
+        // int(), real(), string(), floor(), ceiling(), round(), timeInterval(), localTimeString(), gmtTimeString()
+        jComboBoxSecondOperandParam1.setVisible(true);
+        jComboBoxSecondOperandParam2.setVisible(false);
+        jComboBoxSecondOperandParam3.setVisible(false);
+        break;
+
+      case 2:
+
+        // strcmp(), stricmp(), glob(), iglob()
+        jComboBoxSecondOperandParam1.setVisible(true);
+        jComboBoxSecondOperandParam2.setVisible(true);
+        jComboBoxSecondOperandParam3.setVisible(false);
+        break;
+
+      case 3: //substr()
+        jComboBoxSecondOperandParam1.setVisible(true);
+        jComboBoxSecondOperandParam2.setVisible(true);
+        jComboBoxSecondOperandParam3.setVisible(true);
+        break;
+    }
+  	}
   }
 
-  private void jComboBoxFunctionsSecondOperandEvent(ActionEvent e) {
-    String selectedItem = jComboBoxFunctionsSecondOperand.getSelectedItem().
+  	private void functionsSecondOperandSetJRadio() {
+  		if (jComboBoxFunctionsSecondOperand.getItemCount() != 0) {
+  		String selectedItem = jComboBoxFunctionsSecondOperand.getSelectedItem().
         toString();
     int selectedFunctionParamCount = getFunctionParameterCount(selectedItem);
     /* You have to add functions first param type structure!!
@@ -2482,6 +2565,17 @@ public class RequirementsAdvancedPanel extends JPanel {
         jComboBoxSecondOperandParam3.setVisible(true);
         break;
     }
+  		}
+  		
+  	}
+  	
+  private void jComboBoxFunctionsSecondOperandEvent(ActionEvent e) {
+  	//functionsSecondOperandSetJCombo();
+    //functionsSecondOperandSetJRadio();
+  	functionsSecondOperandSetJCombo();
+    functionsSecondOperandSetParamJText();
+    
+    
   }
 
   private int getAttributeType(String attributeName) {
@@ -2563,14 +2657,18 @@ public class RequirementsAdvancedPanel extends JPanel {
   }
 
   private void functionInitialize() {
+  	 functionsArrayList.clear();
+     for (int i = 0; i < confFileFunctionsVector.size(); i++) {
+       functionsArrayList.add((Function) confFileFunctionsVector.get(i));
+     }
     int size = confFileFunctionsVector.size();
     jComboBoxFunctionsFirstOperand.removeAllItems();
     jComboBoxFunctionsSecondOperand.removeAllItems();
+    String functionName;
     for (int i = 0; i < size; i++) {
-      jComboBoxFunctionsFirstOperand.addItem(((Function)
-          confFileFunctionsVector.get(i)).getName());
-      jComboBoxFunctionsSecondOperand.addItem(((Function)
-          confFileFunctionsVector.get(i)).getName());
+    	functionName = ((Function) confFileFunctionsVector.get(i)).getName();
+      jComboBoxFunctionsFirstOperand.addItem(functionName);
+      jComboBoxFunctionsSecondOperand.addItem(functionName);
     }
   }
 
@@ -2871,16 +2969,16 @@ public class RequirementsAdvancedPanel extends JPanel {
     downSeconds.setEnabled(bool);
   }
 
-  void jComboBoxAttributesSecondOperandEvent(ActionEvent e) {
+  /*void jComboBoxAttributesSecondOperandEvent(ActionEvent e) {
 
-  }
+  }*/
 
-  void jComboBoxFirstOperandParam2Event(ActionEvent e) {
+  //void jComboBoxFirstOperandParam2Event(ActionEvent e) {
   //System.out.println("Validating");
   //jComboBoxFirstOperandParam2.validate();
   //jComboBoxFirstOperandParam2.revalidate();
   //jComboBoxFirstOperandParam2.repaint();
-  }
+  //}
 
   void jComboBoxFirstOperandParam1Event(ActionEvent e) {
     if (jComboBoxFunctionsFirstOperand.getItemCount() != 0) {
@@ -2892,7 +2990,6 @@ public class RequirementsAdvancedPanel extends JPanel {
       int parameterCount = selectedFunctionParamTypes.size();
 
       String selectedAttributeParam1 = "";
-      //if(jComboBoxFirstOperandParam1.isEnabled())
       if (jComboBoxFirstOperandParam1.getItemCount() != 0) {
         selectedAttributeParam1 = jComboBoxFirstOperandParam1.getEditor().
             getItem().toString();
@@ -2903,11 +3000,10 @@ public class RequirementsAdvancedPanel extends JPanel {
       if (Integer.parseInt(selectedFunctionParamTypes.get(0).toString(),
           10) == Utils.LIST) {
         int parametersType = getAttributeType(selectedAttributeParam1);
-        //System.out.println(parametersType);
         jComboBoxFirstOperandParam2.removeAllItems();
         jComboBoxFirstOperandParam3.removeAllItems();
-        if ((selectedAttributeParam1.equals("") ||
-            !attributesNameVector.contains(selectedAttributeParam1))) {
+        if ((selectedAttributeParam1.equals("")
+            || !attributesNameVector.contains(selectedAttributeParam1))) {
           jComboBoxFirstOperandParam2.removeAllItems();
           jComboBoxFirstOperandParam3.removeAllItems();
           for (int i = 0; i < attributesArrayList.size(); i++) {
