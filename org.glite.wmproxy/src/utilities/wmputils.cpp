@@ -104,13 +104,9 @@ getUserDN()
 	}
 	
 	user_dn = strdup(client_dn);
-	p = strstr(user_dn, "/CN=proxy"); ///TBC ITERATE????
-	/*if (p != NULL) {
+	p = strstr(user_dn, "/CN=proxy");
+	if (p != NULL) {
 		*p = '\0';      
-	}*/
-	while (p != NULL) {
-		*p = '\0';
-		p = strstr(user_dn, "/CN=proxy");
 	}
 	p = strstr(user_dn, "/CN=limited proxy");
 	if (p != NULL) {

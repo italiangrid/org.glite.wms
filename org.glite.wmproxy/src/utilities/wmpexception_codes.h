@@ -40,6 +40,8 @@ enum {
       WMS_PROXY_ERROR,
       WMS_DELEGATION_ERROR,
       WMS_LOGGING_ERROR,
+      WMS_AUTHZ_ERROR,
+      WMS_USERMAP_ERROR,
       WMS_NO_ERROR,                            NSE_NO_ERROR = WMS_NO_ERROR
 
 };

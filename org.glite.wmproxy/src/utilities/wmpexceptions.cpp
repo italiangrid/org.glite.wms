@@ -48,6 +48,14 @@ FileSystemException::FileSystemException(const std::string& file,
 	error_message += reason;
 }
 
+AuthorizationException::AuthorizationException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "AuthorizationException")
+{
+	error_message += reason;
+}
+
+
 //} // wmproxy
 //} // wms
 //} // glite
