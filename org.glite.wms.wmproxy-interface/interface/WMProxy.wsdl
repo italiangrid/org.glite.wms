@@ -1,4 +1,10 @@
-<wsdl:definitions xmlns:glitens="http://glite.org/wms/wmproxy" xmlns:glitenstypes="http://glite.org/wms/wmproxy" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://glite.org/wms/wmproxy" name="WMProxy">
+<wsdl:definitions 
+ xmlns:glitens="http://glite.org/wms/wmproxy" 
+ xmlns:glitenstypes="http://glite.org/wms/wmproxy" 
+ xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+ xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+ targetNamespace="http://glite.org/wms/wmproxy" name="WMProxy">
 	<wsdl:types>
 		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://glite.org/wms/wmproxy">
 			<!-- ==== List of supported requests types ==== -->
@@ -164,7 +170,7 @@
 	<wsdl:message name="getMaxInputSandboxSizeRequest">
 	</wsdl:message>
 	<wsdl:message name="getMaxInputSandboxSizeResponse">
-		<wsdl:part name="size" type="xsd:double"/>
+		<wsdl:part name="size" type="xsd:long"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxDestURIRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
@@ -423,7 +429,7 @@ To better clarify, an example of the correct sequence of operations for submitti
                                 
 					Input: no input.
 					
-					Output: double containing the size in bytes.
+					Output: long containing the size in bytes.
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
@@ -438,10 +444,10 @@ To better clarify, an example of the correct sequence of operations for submitti
 		</wsdl:operation>
 		<wsdl:operation name="getSandboxDestURI" parameterOrder="jobId">
 			<wsdl:documentation>
-					This operation returns a destination URI associated to the job, identified by the jobId provided as input, where the job input sandbox files can be uploaded by the client. The location is created in the storage managed by the WM (if needed) and the corresponding URI is returned to the operation caller if no problems has been arised during creation. Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE. 
-					Note that the WM service only provides a the URI of a location where the job input sandbox files can be stored but does not perform any file transfer. File upload is indeed responsibility of the client (through the GridFTP service available on the WM node). 
+					This operation returns a destination URI associated to the job, identified by the jobId provided as input, where the job input sandbox files can be uploaded by the client on the WMS node. The location is created in the storage managed by the WM and the corresponding URI is returned to the operation caller if no problems has been arised during creation. Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE. 
+					Note that the WM service only provides a the URI of a location where the job input sandbox files can be stored but does not perform any file transfer. File upload is indeed responsibility of the client (through the GridFTP service available on the WMS node). 
 					The user can also specify in the JDL the complete URI of files that are stored on a GridFTP server (e.g. managed by her organisation); those files will be directly downloaded (by the JobWrapper) on the WN where the job will run without transiting on the WM machine.
-					The same applies to the output sandbox files lis, i.e. the user can specify in the JDL, complete URIs for the files of the output sandbox; those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP servers without transiting on the WM machine.
+					The same applies to the output sandbox files list, i.e. the user can specify in the JDL the complete URIs for the files of the output sandbox; those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP servers without transiting on the WMS machine.
 					
 					Input: string containing the JobId.
 					
