@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.42  2004/07/18 12:29:39  eronchie
+	Start adding purger
+	WARNING: work in progress
+
 	Revision 1.41  2004/07/18 12:17:33  eronchie
 	Start integrating purger
-
+	
 	Revision 1.40  2004/07/18 11:40:12  eronchie
 	Removed temporarely condor
 	
@@ -311,6 +315,10 @@
 		<condition property="jobsubmission.head">
                         <equals arg1="${org.glite.wms.jobsubmission.version}" arg2="HEAD" />
                 </condition>
+
+		<condition property="purger.head">
+                        <equals arg1="${org.glite.wms.purger.version}" arg2="HEAD" />
+                </condition>
     	</target>
 
     	<presetdef name="cvs-co">
@@ -519,6 +527,16 @@
                     tag="${org.glite.wms.checkpointing.version}" />
         </target>
 
+	<!-- purger -->
+        <target name="purger" depends="boost,classads,globus,get.purger.head, get.purger.tag"/>
+        <target name="get.purger.head" if="purger.head">
+            <cvs-co package="org.glite.wms.purger" />
+        </target>
+        <target name="get.purger.tag" unless="purger.head">
+            <cvs-co package="org.glite.wms.purger"
+                    tag="${org.glite.wms.purger.version}" />
+        </target>
+
 	<!-- JobSubmission -->
         <target name="jobsubmission" depends="boost,classads,globus,common,jobid,tls,jdl,purger,get.jobsubmission.head, get.jobsubmission.tag"/>
         <target name="get.jobsubmission.head" if="jobsubmission.head">
@@ -545,6 +563,7 @@
 					broker,
 					helper,
 					checkpointing,
+					purger,
 					jobsubmission"/>
 
 

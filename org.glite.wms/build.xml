@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.34  2004/07/18 12:29:39  eronchie
+	Start adding purger
+	WARNING: work in progress
+
 	Revision 1.33  2004/07/18 12:17:33  eronchie
 	Start integrating purger
-
+	
 	Revision 1.32  2004/07/18 11:40:12  eronchie
 	Removed temporarely condor
 	
@@ -421,6 +425,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="purger" unless="setenvonly" depends="boost,classads,globus">
+                <ant dir="${workspace.dir}/${subsystem.name}.purger"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,common,jobid,tls,jdl,purger">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
                      target="${target}"
@@ -443,6 +453,7 @@
 					     broker,
 					     helper,
 					     checkpointing,
-					     jobsubmission" />
+					     jobsubmission,
+					     purger" />
 		
 </project>
