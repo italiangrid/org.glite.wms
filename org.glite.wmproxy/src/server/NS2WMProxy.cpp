@@ -21,7 +21,7 @@
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "commands/JobId.h"
-#include "wmpeventlogger.h"
+#include "eventlogger/wmpeventlogger.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 

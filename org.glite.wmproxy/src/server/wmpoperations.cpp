@@ -20,7 +20,7 @@
 #include "wmpconfiguration.h"
 #include "utilities/wmputils.h"
 #include "wmproxy.h"
-#include "wmpeventlogger.h"
+#include "eventlogger/wmpeventlogger.h"
 #include "wmpexpdagad.h"
 
 // WMPManager
