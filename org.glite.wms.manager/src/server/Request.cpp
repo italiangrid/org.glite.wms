@@ -18,6 +18,7 @@ namespace jobid = glite::wmsutils::jobid;
 namespace requestad = glite::wms::jdl;
 namespace common = glite::wms::manager::common;
 namespace utilities = glite::wms::common::utilities;
+namespace purger = glite::wms::purger;
 
 namespace glite {
 namespace wms {
