@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/08 15:03:26  monforte
+#       rls integration
+#
 #       Revision 1.1  2004/06/28 22:58:08  eronchie
 #       Start adding brokerinfo
 #       WARNING: work in progress
@@ -27,8 +30,13 @@
 
 ## Process this file with automake to produce Makefile.in
 
-## Subdirectories list
-SUBDIRS = interface 
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
+
+# Subdirectories list
+SUBDIRS = interface src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

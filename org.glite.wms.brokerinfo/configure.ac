@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/10/08 15:03:26  monforte
+#       rls integration
+#
 #       Revision 1.3  2004/09/22 00:59:10  dimeglio
 #       Fixed missing parenthesis in AC_INIT
 #
@@ -106,6 +109,7 @@ AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
+AC_CONFIG_FILES([src/Makefile])
 
 AC_OUTPUT
 
