@@ -455,6 +455,19 @@ JobWrapper::create_maradona_file(ostream& os,
 }
 
 ostream&
+JobWrapper::create_dgas_proxy_file(ostream& os,
+                                   const string& jobid_to_filename) const
+{
+  // create the dgas proxy file
+  os << "if [ -n \"${"<<"HLR_LOCATION"<<"}\" ]; then" << endl;
+  os << "  if [ -n \"${"<<"X509_USER_PROXY"<<"}\" ]; then" << endl;
+  os << "    cp ${X509_USER_PROXY} /tmp/dgas_" << jobid_to_filename
+     << ".proxy" << endl;
+  os << "  fi" << endl;
+  return os << "fi" << endl << endl;
+}
+
+ostream&
 JobWrapper::doExit(ostream& os, 
 		   const string& maradonaprotocol, 
 		   bool create_subdir) const
@@ -806,6 +819,9 @@ JobWrapper::print(ostream& os) const
   
   // set the jdl environment variables
   set_environment(os, m_environment);
+
+  // Handling dgas proxy
+  create_dgas_proxy_file(os, m_jobid_to_filename);
 
   // set the umask
   set_umask(os);

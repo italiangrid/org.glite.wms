@@ -244,6 +244,9 @@ protected:
 
   virtual std::ostream& create_maradona_file(std::ostream& os,
 		  			     const std::string& jobid_to_filename) const;
+
+  virtual std::ostream& create_dgas_proxy_file(std::ostream& os,
+                                               const std::string& jobid_to_filename) const;
   
   virtual std::ostream& doExit(std::ostream& os,
 		  	       const std::string& maradonaprotocol,
