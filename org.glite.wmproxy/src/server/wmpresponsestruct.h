@@ -80,10 +80,6 @@ struct GraphStructType {
 
 // Response structures
 
-struct pingResponse {
-  bool isUp;
-};
-
 struct getVersionResponse {
   std::string version;
 };

@@ -35,9 +35,11 @@ class WMPLogger  {
 
 		void init(const std::string &nsHost, int nsPort, glite::wmsutils::jobid::JobId *id);
 
-		WMPExpDagAd *registerJob(glite::wms::jdl::JobAd *ad, int resource);
+		//WMPExpDagAd *registerJob(glite::wms::jdl::JobAd *ad, int res_num);
+		
 		void registerJob(glite::wms::jdl::JobAd *ad);
 		void registerDag(WMPExpDagAd *ad);
+		void registerDag(WMPExpDagAd *ad, int res_num);
 
 		void transfer(txType tx, const std::string &jdl, const char *error = "");
 

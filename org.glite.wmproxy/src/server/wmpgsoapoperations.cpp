@@ -95,25 +95,23 @@ convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
  * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector pointer
  */
 vector<ns1__JobIdStructType*> *
-convertToGSOAPGraphStructTypeVector(vector<JobIdStructType*> *graph_struct_type_vector)
+convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*> *graph_struct_type_vector)
 {
-	if (!graph_struct_type_vector) {
-		return new vector<ns1__JobIdStructType*>;
-	}
 	vector<ns1__JobIdStructType*> *returnVector = new vector<ns1__JobIdStructType*>;
-	ns1__JobIdStructType *element = NULL;
-	for (int i = 0; i < graph_struct_type_vector->size(); i++) {
-		element = new ns1__JobIdStructType;
-		element->id = (*graph_struct_type_vector)[i]->id;
-		element->name = (*graph_struct_type_vector)[i]->name;
-		//element->childrenJobNum = (*graph_struct_type_vector)[i]->childrenJobNum;
-		if (!(*graph_struct_type_vector)[i]) { // Vector not NULL
-			element->childrenJob = convertToGSOAPGraphStructTypeVector(
-				(*graph_struct_type_vector)[i]->childrenJob);
-		} else {
-			element->childrenJob = new vector<ns1__JobIdStructType*>;
+	if (graph_struct_type_vector) {
+		ns1__JobIdStructType *element = NULL;
+		for (int i = 0; i < graph_struct_type_vector->size(); i++) {
+			element = new ns1__JobIdStructType;
+			element->id = (*graph_struct_type_vector)[i]->id;
+			element->name = (*graph_struct_type_vector)[i]->name;
+			if ((*graph_struct_type_vector)[i]) { // Vector not NULL
+				element->childrenJob = convertToGSOAPJobIdStructTypeVector(
+					(*graph_struct_type_vector)[i]->childrenJob);
+			} else {
+				element->childrenJob = new vector<ns1__JobIdStructType*>;
+			}
+			returnVector->push_back(element);
 		}
-		returnVector->push_back(element);
 	}
 	return returnVector;
 }
@@ -130,7 +128,7 @@ convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*>
 	for (int i = 0; i < graph_struct_type_vector->size(); i++) {
 		element = new GraphStructType();
 		element->name = (*graph_struct_type_vector)[i]->name;
-		if (!(*graph_struct_type_vector)[i]) { // Vector not NULL
+		if ((*graph_struct_type_vector)[i]->childrenJob) { // Vector not NULL
 			element->childrenJob = convertFromGSOAPGraphStructTypeVector(
 				(*graph_struct_type_vector)[i]->childrenJob);
 		} else {
@@ -149,7 +147,7 @@ convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
 {
 	GraphStructType *element = new GraphStructType();
 	element->name = graph_struct_type->name;
-	if (!graph_struct_type) { // Element not NULL
+	if (graph_struct_type) { // Element not NULL
 		element->childrenJob = convertFromGSOAPGraphStructTypeVector(
 			graph_struct_type->childrenJob);
 	} else {
@@ -320,9 +318,11 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 }
 
 int
-ns1__jobRegister(struct soap *soap, string jdl, string delegation_id, struct ns1__jobRegisterResponse &response)
+ns1__jobRegister(struct soap *soap, string jdl, string delegationId,
+	struct ns1__jobRegisterResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobRegister(struct soap *soap, string jdl, struct ns1__jobRegisterResponse &response)");
+	GLITE_STACK_TRY("ns1__jobRegister(struct soap *soap, string jdl, "
+		"string delegationId, struct ns1__jobRegisterResponse &response)");
 	cerr<<"jobRegister operation called"<<endl;
 
 	int return_value = SOAP_OK;
@@ -331,21 +331,20 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id, struct ns1
 	jobRegisterResponse jobRegister_response;
 
 	try {
-		jobRegister(jobRegister_response, jdl);
+		jobRegister(jobRegister_response, jdl, delegationId);
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobRegister_response.jobIdStruct->id;
 		job_id_struct->name = jobRegister_response.jobIdStruct->name;
-		//job_id_struct->childrenJobNum = jobRegister_response.jobIdStruct->childrenJobNum;
-		if (!(jobRegister_response.jobIdStruct->childrenJob)) {
-			job_id_struct->childrenJob = convertToGSOAPGraphStructTypeVector(jobRegister_response.jobIdStruct->childrenJob);
+		if (jobRegister_response.jobIdStruct->childrenJob) {
+			job_id_struct->childrenJob =
+				convertToGSOAPJobIdStructTypeVector(jobRegister_response.jobIdStruct->childrenJob);
 		} else {
 			job_id_struct->childrenJob = new vector<ns1__JobIdStructType*>;
 		}
-		//job_id_struct->childrenJob = new vector<ns1__JobIdStructType*>;
 		response._jobIdStruct = job_id_struct;
 	} catch (Exception &exc) {
 		// Generating a fault
-    		/* FIRST METHOD
+    	/* FIRST METHOD
 		ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(exc.getCode());
 
 		// Filling fault fields
@@ -420,7 +419,7 @@ ns1__jobSubmit(struct soap *soap, string jdl, struct ns1__jobSubmitResponse &res
 		response._jobIdStruct->name = jobSubmit_response.jobIdStruct->name;
 		//response._jobIdStruct->childrenJobNum = jobSubmit_response.jobIdStruct->childrenJobNum;
 		if (!(jobSubmit_response.jobIdStruct->childrenJob)) {
-			response._jobIdStruct->childrenJob = convertToGSOAPGraphStructTypeVector(jobSubmit_response.jobIdStruct->childrenJob);
+			response._jobIdStruct->childrenJob = convertToGSOAPJobIdStructTypeVector(jobSubmit_response.jobIdStruct->childrenJob);
 		} else {
 			response._jobIdStruct->childrenJob = new vector<ns1__JobIdStructType*>;
 		}
@@ -622,8 +621,12 @@ ns1__jobListMatch(struct soap *soap, string jdl, struct ns1__jobListMatchRespons
 	jobListMatchResponse jobListMatch_response;
 	try {
 		jobListMatch(jobListMatch_response, jdl);
-		//response._CEIdAndRankList->name = jobListMatch_response.CEIdAndRankList->name;
-		//response._CEIdAndRankList->size = jobListMatch_response.CEIdAndRankList->size;
+		for (unsigned int i = 0; i < response._CEIdAndRankList->file->size(); i++) {
+			(*(response._CEIdAndRankList->file))[i]->name =
+				(*(jobListMatch_response.CEIdAndRankList->file))[i]->name;
+			(*(response._CEIdAndRankList->file))[i]->size =
+				(*(jobListMatch_response.CEIdAndRankList->file))[i]->size;
+		}
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobListMatch", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;

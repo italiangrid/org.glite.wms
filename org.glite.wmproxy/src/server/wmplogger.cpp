@@ -30,7 +30,7 @@ using namespace wmproxyname;
 
 //namespace glite {
 //namespace wms {
-//namespace wmproxyname {
+//namespace wmproxy {
 
 WMPLogger::WMPLogger()
 {
@@ -94,35 +94,6 @@ WMPLogger::registerJob(JobAd *jad)
 	}
 }
 
-// Registers a partitionable job
-WMPExpDagAd * // void ??
-WMPLogger::registerJob(JobAd *jad, int res_number)
-{
-	char str_addr[1024];
-	sprintf (str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
-	string jdl = jad->toSubmissionString();
-	edg_wlc_JobId *subjobs = NULL;
-	cerr << "WMPLogger:: Registering partitioning job" << endl ;
-	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED,
-			jad->toSubmissionString().c_str(), str_addr, res_number, NULL, &subjobs)) {
-		throw JobOperationException(__FILE__, __LINE__,
-			"WMPLogger::registerJob(JobAd* jad, int res_number)",
-			WMS_OPERATION_NOT_ALLOWED, error_message("edg_wll_RegisterJobSync"));
-	}
-
-	// Partitioning job implementation
-	vector<string> jobids;
-	for (unsigned int i = 0; i < res_number; i++) {
-		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
-	}
-	jad->check();
-	glite::wmsui::partitioner::Partitioner part(jad->ad(), jobids);
-	WMPExpDagAd *dagad = new WMPExpDagAd(part.createDag());
-	cerr << "WMPLogger:: created DAG:" << dagad->toString(WMPExpDagAd::MULTI_LINES) << endl << "Logging::Registering partitioning SUB job" << endl ;
-	registerSubJobs(dagad, subjobs);
-	return dagad;
-};
-
 void
 WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 {
@@ -173,7 +144,7 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		cerr<<"WMPLogger::Created Sub: "<<*zero_char<<endl;
 		zero_char++;
 	}
-	cerr<<"WMPLogger::Performing edg_wll_RegisterSubjobs (Dag father is) : "<<id->toString()<<endl;
+	cerr<<"WMPLogger::Performing edg_wll_RegisterSubjobs (Dag father is): "<<id->toString()<<endl;
 	if (edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char, str_nsAddr, subjobs)) {
 		throw JobOperationException(__FILE__, __LINE__, "WMPLogger::registerJob",
 			WMS_OPERATION_NOT_ALLOWED, error_message("edg_wll_RegisterSubjobs"));
@@ -188,6 +159,29 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 };
 
 void
+WMPLogger::registerDag(WMPExpDagAd *dag, int res_num)
+{
+	edg_wlc_JobId *subjobs = NULL;
+
+	char str_addr[1024];
+	sprintf(str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
+	cerr<<"WMPLogger::registerDag Registering partitiobnable job" << endl;
+	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
+		dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
+		NULL, &subjobs)) {
+			throw JobOperationException(__FILE__, __LINE__,
+				"WMPLogger::registerDag", WMS_OPERATION_NOT_ALLOWED,
+				error_message("edg_wll_RegisterJobSync"));
+	}
+	registerSubJobs(dag, subjobs);
+	vector<string> jobids;
+	for (unsigned int i = 0; i < res_num; i++) {
+		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
+	}
+	dag->setJobIds(jobids);
+};
+
+void
 WMPLogger::registerDag(WMPExpDagAd *ad)
 {
 	// array of subjob id
@@ -197,16 +191,14 @@ WMPLogger::registerDag(WMPExpDagAd *ad)
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", nsHost.c_str(), ":", nsPort);
 
-	// Registering the job
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
 		ad->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, ad->size(),
 		NULL, &subjobs)) {
 			throw JobOperationException(__FILE__, __LINE__,
-				"WMPLogger::registerJob", WMS_OPERATION_NOT_ALLOWED,
+				"WMPLogger::registerDag", WMS_OPERATION_NOT_ALLOWED,
 				error_message("edg_wll_RegisterJobSync"));
 	}
 	registerSubJobs(ad, subjobs);
-	cerr << "Sub Jobs Registered. now unparsing JobIds..." << endl ;
 	vector<string> jobids;
 	for (unsigned int i = 0; i < ad->size(); i++) {
 		cerr << "Appending jobid..." <<  edg_wlc_JobIdUnparse(subjobs[i]) << endl;
@@ -283,7 +275,8 @@ void WMPLogger::logUserTags(classad::ClassAd* userTags) {
 }
 
 // Error Message Parsing
-const char* WMPLogger::error_message(const char* api) {
+const char* 
+WMPLogger::error_message(const char* api) {
 	char* error_message =(char*) malloc (1024);
 	char *msg;
 	char *dsc;
@@ -291,7 +284,7 @@ const char* WMPLogger::error_message(const char* api) {
 	sprintf(error_message, "%s %s %s%s%s%s%s", api,
 		getenv(GLITE_WMS_LOG_DESTINATION), "\n", msg, " (", dsc, ")");
 	return error_message;
-} ;
+}
 
 //} // wmproxy
 //} // wms
