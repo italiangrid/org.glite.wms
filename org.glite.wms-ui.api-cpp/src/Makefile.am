@@ -33,6 +33,7 @@ libglite_wmsui_client_la_SOURCES = Job.cpp \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
+	-I$(top_srcdir)/../org.glite.wms.manager-ns-client/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \

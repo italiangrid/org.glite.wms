@@ -20,7 +20,7 @@ namespace api {
 */
 /**
 * Update all mandatory Exception Information*/
-class JobCollectionException : public glite::wmsui::exception::Exception {
+class JobCollectionException : public glite::wmsutils::exception::Exception {
 public:
    /**
    * Update all mandatory Exception Information*/

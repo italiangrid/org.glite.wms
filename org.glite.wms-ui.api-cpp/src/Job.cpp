@@ -14,7 +14,7 @@
 #include "glite/wms/jdl/jdl_attributes.h"  // Constant attribute values
 #include "glite/wms/jdl/JDLAttributes.h" // JobAd attribute names
 /**  CHKPT */
-#include "glite/wms/checkpointing/client/jobstate.h"//Checkpointing
+#include "glite/wms/checkpointing/jobstate.h"//Checkpointing
 /**  NS */
 #include "NSClient.h"// NetworkServer
 /*  Logging and Bookkeeping */
@@ -38,7 +38,7 @@ using namespace glite::wmsustils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
 using namespace glite::wms::jdl ; // JobAd
 using namespace glite::wms::manager::ns::client ; //NSClient
-using namespace glite::wms::checkpointing::client ;
+using namespace glite::wms::checkpointing ;
 using namespace glite::wms::lb ;
 
 pthread_mutex_t  Job::dgtransfer_mutex  = PTHREAD_MUTEX_INITIALIZER;
