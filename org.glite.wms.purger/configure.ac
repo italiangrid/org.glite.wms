@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/07/28 11:49:15  eronchie
+#       Updated package name
+#
 #       Revision 1.6  2004/07/28 08:10:02  eronchie
 #       Updated
 #
@@ -68,7 +71,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Tls], [0.0.0])
+AC_INIT([GLite WMS Purger], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/purger.cpp])
