@@ -118,8 +118,8 @@ USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 		char* shPath_ch = getenv ("EDG_WL_LOCATION") ;
 		string shPath  ;
 		if (  shPath == NULL)
-			shPath = "/opt/edg" ;
-		shPath = string(shPath_ch) + "/bin/grid_console_shadow"  ;
+			shPath = "/opt/glite" ;
+		shPath = string(shPath_ch) + "/bin/glite-wms-grid-console-shadow"  ;
 		string command = shPath  +arguments +" &";
 		if (  system(command.c_str())   )
 			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Unable to launch the Shadow listaner executable: "+ shPath  ) ;
