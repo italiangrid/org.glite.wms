@@ -30,7 +30,6 @@ class WMPLogger  {
 
 		void init(const std::string &nsHost, int nsPort,
 			glite::wmsutils::jobid::JobId *id);
-		// void init(edg_wll_Context &ctx ){ this->ctx = ctx;};
 
 		std::string getSequence();
 		
