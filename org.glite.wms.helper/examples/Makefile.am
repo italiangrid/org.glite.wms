@@ -14,8 +14,6 @@ JOBWRAPPER = $(top_builddir)/src/jobadapter/jobwrapper/libglite_wms_ja_jobwrappe
 
 check_PROGRAMS = \
 	jobwrapperTest \
-#	mpilsfjobwrapperTest \
-#	mpipbsjobwrapperTest \
 	urlTest \
 	jobadapterTest
 
