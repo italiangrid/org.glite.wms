@@ -43,7 +43,7 @@ namespace server {
   }
 
 
-  void WMPManager::runCommand(std::string cmdname, std::vector<std::string> param, void* result,  wmp_fault_t &fault)
+  void* WMPManager::runCommand(std::string cmdname, std::vector<std::string> param, wmp_fault_t &fault)
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
@@ -82,7 +82,8 @@ namespace server {
 		      // Here we should log the attribute list returned.
 		      cmd -> setParam("Ciccio", "PincoPallo");
 		      cmd -> getParam("Ciccio", result);
-
+		      
+		      return NULL;
 
 	      } 
 	      catch (commands::bad&) {
@@ -106,6 +107,8 @@ namespace server {
     catch (...) {
       edglog(fatal) << "Uncaught Exception: please check." << std::endl;
     } 
+
+    return NULL;
   }
 
 } 
