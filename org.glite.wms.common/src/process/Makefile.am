@@ -7,15 +7,15 @@
 ## *********************************************************************
 
 #if AMC_BUILD_CMN_PROCESS
-lib_LTLIBRARIES = libegee_wl_process.la
+lib_LTLIBRARIES = libglite_wms_process.la
 #endif
 
-libegee_wl_process_la_SOURCES = \
+libglite_wms_process_la_SOURCES = \
 	process.cpp \
 	subprocess.cpp \
 	user.cpp
 
-processincludedir = $(includedir)/egee/workload/common/process
+processincludedir = $(includedir)/glite/workload/common/process
 processinclude_HEADERS = \
 	process.h \
 	subprocess.h \

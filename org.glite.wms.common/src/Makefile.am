@@ -10,7 +10,7 @@
 SUBDIRS = scripts configuration ldif2classad utilities logger requestad \
 	socket++ task process programs ssl_helpers jobid
 
-common_includedir = $(includedir)/egee/workload/common
+common_includedir = $(includedir)/glite/workload/common
 common_include_HEADERS = common_namespace.h
 
 MAINTAINERCLEANFILES = Makefile.in 

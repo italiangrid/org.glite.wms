@@ -7,17 +7,17 @@
 ## *********************************************************************
 
 #if AMC_BUILD_CMN_PROGRAMS
-bin_PROGRAMS = egee-wl-get-configuration
+bin_PROGRAMS = glite-wms-get-configuration
 #endif
 
-UTIL = $(top_builddir)/src/utilities/libegee_wl_util.la
-CONFIG = $(top_builddir)/src/configuration/libegee_wl_conf.la
-CONFIG_WRAPPER = $(top_builddir)/src/configuration/libegee_wl_conf_wrapper.la
-LOGGER = $(top_builddir)/src/logger/libegee_wl_logger.la
-PROCESS = $(top_builddir)/src/process/libegee_wl_process.la
+UTIL = $(top_builddir)/src/utilities/libglite_wms_util.la
+CONFIG = $(top_builddir)/src/configuration/libglite_wms_conf.la
+CONFIG_WRAPPER = $(top_builddir)/src/configuration/libglite_wms_conf_wrapper.la
+LOGGER = $(top_builddir)/src/logger/libglite_wms_logger.la
+PROCESS = $(top_builddir)/src/process/libglite_wms_process.la
 
-egee_wl_get_configuration_SOURCES = get_configuration.cpp
-egee_wl_get_configuration_LDADD   = \
+glite_wms_get_configuration_SOURCES = get_configuration.cpp
+glite_wms_get_configuration_LDADD   = \
 	$(CONFIG) \
 	$(UTIL) \
 	$(BOOST_LIBS) $(CLASSAD_LIBS)

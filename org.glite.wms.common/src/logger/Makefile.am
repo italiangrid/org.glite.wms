@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libegee_wl_logger.la
+lib_LTLIBRARIES = libglite_wms_logger.la
 
-libegee_wl_logger_la_SOURCES = \
+libglite_wms_logger_la_SOURCES = \
 	common.cpp \
 	logbuf.cpp \
 	logstream.cpp \
@@ -17,7 +17,7 @@ libegee_wl_logger_la_SOURCES = \
 	container_ts.cpp \
 	manipulators_ts.cpp
 
-loggerincludedir = $(includedir)/egee/workload/common/logger
+loggerincludedir = $(includedir)/glite/workload/common/logger
 loggerinclude_HEADERS = \
 	common.h \
 	container_ts.h \

@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libegee_wl_LDIF2ClassAd.la
+lib_LTLIBRARIES = libglite_wms_LDIF2ClassAd.la
 
-libegee_wl_LDIF2ClassAd_la_SOURCES = \
+libglite_wms_LDIF2ClassAd_la_SOURCES = \
 	LDAPQuery.cpp \
 	LDAPSynchConnection.cpp \
 	FileStreamConnection.cpp \
@@ -16,7 +16,7 @@ libegee_wl_LDIF2ClassAd_la_SOURCES = \
 	LDIFObject.cpp \
 	LDAPForwardIterator.cpp
 
-ldif2classadincludedir = $(includedir)/egee/workload/common/ldif2classad
+ldif2classadincludedir = $(includedir)/glite/workload/common/ldif2classad
 ldif2classadinclude_HEADERS = \
 	FileStreamConnection.h \
 	LDAPConnection.h \

@@ -6,10 +6,10 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libegee_wl_conf.la \
-	libegee_wl_conf_wrapper.la
+lib_LTLIBRARIES = libglite_wms_conf.la \
+	libglite_wms_conf_wrapper.la
 
-libegee_wl_conf_la_SOURCES = \
+libglite_wms_conf_la_SOURCES = \
 	Configuration.cpp \
 	JCConfiguration.cpp \
 	NSConfiguration.cpp \
@@ -20,11 +20,11 @@ libegee_wl_conf_la_SOURCES = \
 	exceptions.cpp \
 	ModuleType.cpp
 
-libegee_wl_conf_wrapper_la_SOURCES = \
+libglite_wms_conf_wrapper_la_SOURCES = \
 	initializer.cpp \
 	cwrapper.cpp
 
-configurationincludedir = $(includedir)/egee/workload/common/configuration
+configurationincludedir = $(includedir)/glite/workload/common/configuration
 configurationinclude_HEADERS = \
 	CommonConfiguration.h \
 	confbase.h \
