@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/09/21 19:24:51  glbuild
+#       modified module.version
+#
 #       Revision 1.4  2004/07/28 10:14:40  eronchie
 #       Added m4files.list property
 #       Removed AC_WMS_COMMON
@@ -34,7 +37,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS checkpointing], [0.0.0])
+AC_INIT([GLite WMS checkpointing], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobstate.cpp])
@@ -98,3 +101,4 @@ AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([checkpointing.dox])
 
 AC_OUTPUT
+
