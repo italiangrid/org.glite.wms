@@ -20,25 +20,29 @@ pthread_mutex_t METHOD_MUTEX  ;  // This mutex is used in order to lock the file
 Exception::Exception () {
 	line = 0;
 } ;
+
 Exception::~Exception() throw(){ }
+
 /**
 * Exception chainig
 */
-void Exception::push_back (  const string& source, int line_number,  const string& method ){
-	stack_strings.push_back ( dbgMessage() ) ;
-	ancestor = what() ;
-	source_file = source ;
-	line = line_number ;
-	method_name    =  method;
-	error_message = "" ;
-	exception_name="" ;
+void Exception::push_back (const string& source, int line_number,  const string& method){
+	stack_strings.push_back (dbgMessage());
+	ancestor = what();
+	source_file = source;
+	line = line_number;
+	method_name = method;
+	error_message = "";
+	exception_name = "";
 }
+
 Exception::Exception( const std::string& file, int line_number,  const std::string& method,  int code, const std::string& name)
 	: error_code(code), exception_name(name){
 	source_file    = file;
 	line           = line_number;
 	method_name    = method;
 };
+
 Exception::Exception (const string& source, const string& method, int code, const string& exception)
 	: error_code(code), exception_name(exception){
 	source_file    = source;
@@ -46,30 +50,27 @@ Exception::Exception (const string& source, const string& method, int code, cons
 	// stack= "";
 	line = 0;
 };
+
 int Exception::getCode(){
-    if  (error_code != 0)
-       return error_code ;
+    if  (error_code != 0) return error_code;
     else
        return WMS_COMMON_BASE;
 };
-const char* Exception::what() const throw(){
-  if (!ancestor.empty() )
-       return ancestor.c_str() ;
-  if  ( error_message != "")
-       return error_message.c_str() ;
-  else       return "" ;
 
+const char* Exception::what() const throw(){
+  if (!ancestor.empty()) return ancestor.c_str();
+ 
+  return error_message.c_str();
 };
+
 string Exception::getExceptionName(){
-   if  (exception_name!= "")
-     return exception_name;
-   else
-     return "" ;
+   return exception_name;
 };
+
 void Exception::log(const std::string& logfile)
 {
-    if (  logfile == "")
-	syslog (  LOG_PERROR,   (char *)  (dbgMessage()).c_str()  );
+    if (logfile == "")
+	syslog (LOG_PERROR, (char *)(dbgMessage()).c_str());
     else{
 	pthread_mutex_lock( &METHOD_MUTEX);                   //   LOCK
 	//TBD : test if file exist-->>Create HEADER   ??
@@ -79,6 +80,7 @@ void Exception::log(const std::string& logfile)
 	pthread_mutex_unlock( &METHOD_MUTEX);               //   UNLOCK
     }
 };
+
 string Exception::printStackTrace(){
 	string stack = "" ;
 	for (unsigned int i = 0 ; i < stack_strings.size() ; i++ ){
@@ -86,25 +88,27 @@ string Exception::printStackTrace(){
 	}
 	return stack +dbgMessage();
 };
+
 vector<string> Exception::getStackTrace(){
 	// make a copy of the stack
 	vector<string> stack = stack_strings ;
-	stack.push_back(dbgMessage() ) ;
+	stack.push_back(dbgMessage()) ;
 	return stack;
 };
 
 string Exception::dbgMessage(){
    string result ;
    //Adding exception Name
-   if ( exception_name!="")
-        result = exception_name ;
+   result = exception_name;
+   
    //Adding error msg
-   if (error_message!="")
-        result +=": " + string(what());
-   if (result != "")
-      result+="\n";
+   if (error_message!="") result +=": " + string(what());
+   
+   if (result != "") result+="\n";
+   
    //Adding  Source
    result +="\tat " + method_name  +"[" +source_file;
+   
    //Adding line number
    if (line!=0){
       char buffer [1024] ;
