@@ -1,6 +1,5 @@
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
-#include "glite/ce/monitor-client-api-c/CEEvent.h"
 #include <vector>
 #include <string>
 #include <exception>

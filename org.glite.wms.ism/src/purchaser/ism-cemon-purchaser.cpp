@@ -87,7 +87,7 @@ void ism_cemon_purchaser::operator()()
 	  
 	    string ldif_entry;
 	    ldif_entry.assign(*gluece_tok_it);
-	    static boost::regex  ldif_regex("([[:alpha:]]+):[\\s]+(.+)");
+	    static boost::regex  ldif_regex("([[:alnum:]]+):[\\s]+(.+)");
 	    boost::smatch ldif_pieces;
 	  
 	    if (boost::regex_match(ldif_entry, ldif_pieces, ldif_regex)) {
@@ -101,7 +101,7 @@ void ism_cemon_purchaser::operator()()
 	      }
             }
 	    else {
-	      Error("Unable to parse ldif string: " << ldif_entry << endl);
+	      Warning("Unable to parse ldif string: " << ldif_entry << endl);
 	    }
 	  }
 	  	
@@ -134,7 +134,7 @@ void ism_cemon_purchaser::operator()()
         get_ism().insert(
 	  make_ism_entry(it->first, get_current_time(), it->second)
         );
-	cout << *it->second << endl;
+	Debug(*it->second << endl);
 	//} catch(...) {
         //Warning("Caught exception while fetching " << it->first
         //        << " IS information.");
