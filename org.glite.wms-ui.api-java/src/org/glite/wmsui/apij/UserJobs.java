@@ -12,8 +12,6 @@ import java.io.File ;
 import  org.glite.wms.jdlj.Ad ;
 import org.globus.gsi.GlobusCredentialException;
 import java.lang.Math ; // to perform the power
-
-
 /**
  * Allow controlling all the jobs owned by the user
  * The UserJobs class provides methods that allow controlling all the user's jobs during its lifetime.
@@ -30,7 +28,6 @@ public class UserJobs{
 	public UserJobs () throws  GlobusCredentialException , java.io.FileNotFoundException{
 		userCred= new UserCredential ( );
 	}
-
 	/** Instantiates an  UserJobs object using specified user credential
 	* @param cp The full path of the proxy certificate file to be set
 	* @throws FileNotFoundException Unable to find certificates files
@@ -55,6 +52,7 @@ public class UserJobs{
 	}
 	/** Retreive the jobs owned by the user in a specific LB
 	* @param lbAddress  the full Logging and Bookkeeping address
+	* @return A vector containing all the jobs owned by the user for the specified LB address
 	* @throws FileNotFoundException Unable to find certificates files
 	* @throws GlobusCredentialException - Unable to get the specified proxy certificate
 	*/
@@ -81,14 +79,12 @@ public class UserJobs{
 		for (int i = 0 ; i< JobStatus.MAX_STATUS ;i++){
 			if (query.getInclude(i) ) {
 				resultInEx += Math.pow( 2 , i ) ;
-				// System.out.println("UserJobs....adding INc" +Math.pow( 2 , i )   );
 			}
 		}
 		if (resultInEx==0){
 			for (int i = 0 ; i< JobStatus.MAX_STATUS ;i++){
 				if (query.getExclude(i) ) {
 					resultInEx += Math.pow( 2 , i ) ;
-					// System.out.println("UserJobs....adding Exc " +Math.pow( 2 , i )   );
 				}
 				// remember: Negative resultInEx means reverse (UNEQUAL) query
 			}
@@ -96,19 +92,15 @@ public class UserJobs{
 		}
 		Vector vect = api.lbGetJobs (    lbAddress , fromInt , toInt , query.getUserTags() , resultInEx, query.getOwned()?userCred.getIssuer( ):"" ) ;
 		return vect ;
-
-
-
 	}
 	/** Retreive a vector of JobStatus that match the query for the specified LB
-	*@deprecated use instead getJobs ( Url lbAddress , Query query)  */
-
+	*@deprecated use instead getJobs ( Url lbAddress , Query query)
 	public Vector getJobs ( Url lbAddress , Calendar from , Calendar to , Ad userTags,boolean owned )  throws  GlobusCredentialException, java.io.FileNotFoundException {
 		boolean [] includes = new boolean[JobStatus.MAX_STATUS];
 		boolean [] excludes = new boolean[JobStatus.MAX_STATUS];
 		return getJobs ( lbAddress , from , to , userTags, includes, excludes, owned ) ;
 	}
-
+	*/
 	/** Retreive a vector of JobStatus that match the query for the specified LB
 	* @param lbAddress  the full Logging and Bookkeeping address
 	* @param from filter selecting only jobs submitted after the specified time
@@ -131,14 +123,12 @@ public class UserJobs{
 		for (int i = 0 ; i< JobStatus.MAX_STATUS ;i++){
 			if (includes[i] ) {
 				resultInEx += Math.pow( 2 , i ) ;
-				// System.out.println("UserJobs....adding INc" +Math.pow( 2 , i )   );
 			}
 		}
 		if (resultInEx==0){
 			for (int i = 0 ; i< JobStatus.MAX_STATUS ;i++){
 				if (excludes[i] ) {
 					resultInEx += Math.pow( 2 , i ) ;
-					// System.out.println("UserJobs....adding Exc " +Math.pow( 2 , i )   );
 				}
 				// remember: Negative resultInEx means reverse (UNEQUAL) query
 			}
@@ -147,7 +137,6 @@ public class UserJobs{
 		Vector vect = api.lbGetJobs (    lbAddress , fromInt , toInt , userTags , resultInEx, owned?userCred.getIssuer( ):"" ) ;
 		return vect ;
 	}
-
 	/** Retrieve the status of all the user's jobs
 	* @param  lbAddress  the full Logging and Bookkeeping address
 	* @return  the vector to be filled of all the jobs status information

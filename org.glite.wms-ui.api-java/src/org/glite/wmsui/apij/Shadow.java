@@ -22,7 +22,7 @@ import java.io.IOException ;
 
 /**
  * This class provides the core management for interactive jobs.
- * once the edg-grid-console-shadow has started successfully and the job is running
+ * once the glite-wms-grid-console-shadow has started successfully and the job is running
  * the user should interact with the submitted job  (or might have attached to a previous job)
 * At the end of the interaction the background bypass process should be
  * killed and the I/O pipes have to be removed. This is done automatically by the 'detach' method.
@@ -43,6 +43,9 @@ public class Shadow implements Runnable{
 			/** Do nothing*/
 		}
 	};
+	/**
+	* Run the listener
+	*/
 	public void run() {
 		if (listener!=null)  listener.run( this) ;
 		else    finalize() ;
@@ -62,8 +65,9 @@ public class Shadow implements Runnable{
 	}
 	/**
 	* Read any possible message stored inside the output pipeline
-	@throws throws IOException If any error occurred while reading in the pipe
-	@throws NoSuchFieldException if the outputPipe has not been created yet */
+	* @return the message read in the pipe (if any)
+	* @throws throws IOException If any error occurred while reading in the pipe
+	* @throws NoSuchFieldException if the outputPipe has not been created yet */
 	public String emptyOut ( )throws IOException, NoSuchFieldException {
 		if ( outBuf ==null)  outBuf = new BufferedReader ( new FileReader(  getPipeOut() )  ) ;
 		int intbuf = outBuf.read()  ;
@@ -91,19 +95,20 @@ public class Shadow implements Runnable{
 			Api.shadow( command );
 		pipeRoot=null ;
 	};
-      
+
 
 	/**
-	* Retrieve the name of the pipe that listens for the standard input 
-	@throws java.lang.NoSuchFieldException the pipe has not been created yet
+	* Retrieve the name of the pipe that listens for the standard input
+	* @return the string representation of the input pipe name for the current job
+	* @throws java.lang.NoSuchFieldException the pipe has not been created yet
 	*/
 	public String getPipeIn() throws NoSuchFieldException {
-		if (pipeRoot!=null)
-		return pipeRoot +".in" ;
+		if (pipeRoot!=null) return pipeRoot +".in" ;
 		else  throw new NoSuchFieldException("Shadow named pipe not yet created. Unable to retrieve")  ;
 	};
 	/**
 	* Retrieve the name of the pipe that listens for the standard output
+	* @return the string representation of the output pipe name for the current job
 	@throws java.lang.NoSuchFieldException the pipe has not been created yet
 	*/
 	public String getPipeOut()throws NoSuchFieldException {
@@ -114,7 +119,8 @@ public class Shadow implements Runnable{
 
 	/**
 	* Retrieve the process id corresponding to the shadow background process
-	@throws java.lang.NoSuchFieldException the process has not been launched yet */
+	* @return the id of the process related to the running shadow
+	* @throws java.lang.NoSuchFieldException the process has not been launched yet */
 	public int getPid() throws NoSuchFieldException , IOException  {
 		if (pipeRoot!=null)
 		return pid ;
@@ -122,7 +128,8 @@ public class Shadow implements Runnable{
 	}
 	/**
 	* Retrieve the Name of the host 
-	@throws UnknownHostException the system is unable to retrieve host information */
+	* @return the string representation of the current host
+	* @throws UnknownHostException the system is unable to retrieve host information */
 	static public String getHost ()  throws UnknownHostException{
 			String hostname = "" ;
 			String ipAddr = "";
@@ -136,16 +143,21 @@ public class Shadow implements Runnable{
 			} else throw new UnknownHostException ("Unable to parse the Inet ip address") ;
 	}
 	/**
-	* retrieve the port where the shadow proces is listening to
-	@throws java.lang.NoSuchFieldException the process has not been launched yet */
+	* Retrieve the shadow port
+	* @return the port where the shadow proces is listening to
+	* @throws java.lang.NoSuchFieldException the process has not been launched yet */
 	public int getPort()throws NoSuchFieldException  {
 		if (pipeRoot!=null)   return port ;
 		else  throw new NoSuchFieldException("Shadow named pipe not yet created. Unable to retrieve process Id")  ;
 	}
 	/**
-	* Return the JobId instance linked to the Shadow
+	* Retrieve the id of the Job for the current Shadow
+	* @return the JobId instance linked to the Shadow
 	*/
 	public JobId getJobId ()    {  return jobId ; }
+
+
+
 	void start()   {  new Thread(  this ).start();  /* launch the listener */ };
 	/**  Perform a grid-console-shadow  */
 	int console( ) { return console (0 ); }
@@ -156,8 +168,8 @@ public class Shadow implements Runnable{
 		// Launch the grid-console-shadow with --logfile (background process)
 		String shPath = Api.getEnv (GLITE_WMS_LOCATION) ;
 		if (  shPath== null  )
-			shPath = OPT_EDG ;
-		shPath = shPath +SEP +BIN +SEP + "edg-wl-grid-console-shadow"  ;
+			shPath = OPT_GLITE ;
+		shPath = shPath +SEP +BIN +SEP + "glite-wms-grid-console-shadow"  ;
 		File sh = new File ( shPath ) ;
 		if (  !sh.isFile () )
 			throw new RuntimeException ("Unable to find listener shadow executable: " +shPath ) ;
@@ -220,9 +232,11 @@ public class Shadow implements Runnable{
 		System.out.println ("Shadow::console-->Console Started Successffully") ;
 		return 0 ;
 	};
-	// private / packages Members:
+	/******
+	*  private / packages Members:
+	*******/
+	int port ;	
 	private int pid =0;
-	int port ;
 	private String host;
 	private Listener listener ;
 	private String pipeRoot = null;
@@ -231,7 +245,7 @@ public class Shadow implements Runnable{
 	private JobId jobId;
 	private static final String SEP = "/" ;
 	private static final String GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
-	private static final String OPT_EDG = SEP + "opt"+ SEP +  "edg";
+	private static final String OPT_GLITE = SEP + "opt"+ SEP +  "glite";
 	private static final String BIN = SEP + "bin" ;
 }; //end Shaodw class
 

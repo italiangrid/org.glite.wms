@@ -8,7 +8,6 @@
 */
 package org.glite.wmsui.apij ;
 import java.util.* ;
-
 /**
 * The Result Class is used to store information of a required operation
 * Depending on the operation type, the user will be able to check for possible error 
@@ -28,10 +27,11 @@ public class Result {
 	   return toString ( 0 ) ;
 	}
 	/** Convert the Result into a string
-	@param verbosity: depending on the Operation required, the verbosity prints additional information.
-	if verbosity is 0 then basic info are returned
-	if verbosity is 1 then medium info are returned
-	if verbosity is 2 then all info are returned
+	* if verbosity is 0 then basic info are returned.
+	* if verbosity is 1 then medium info are returned.
+	* if verbosity is 2 then all info are returned.
+	@param verbosity depending on the Operation required, the verbosity prints additional information.
+	@return the string representation of the current Result
 	*/
 	public String toString(int verbosity) {
 		String toPrint = "" ;
@@ -77,7 +77,7 @@ public class Result {
 		toPrint +="\n   " ;
 		// adding operation info
 		// adding optional result Info
-		if (code<10)switch (operation){  //TBD other cases
+		if (code<10)switch (operation){
 			case SUBMIT:
 			case CANCEL:
 				break ;
@@ -132,12 +132,6 @@ public class Result {
 	public Object getResult() { return result ; }
 	/** Retrun the Id representing the Job (empty string if the job hasn't been submitted)*/
 	public String getId() { return jobId ; }
-	//  The Code that indicates the result of the operation
-	private int code ;
-	private Object result = null;
-	private String jobId = null ;
-	private int operation ;
-	private String       message ;
 	/*
 	* offset values to obtain failure starting from operation
 	* es : SUBMIT_FAILURE = SUBMIT + FAILURE
@@ -218,5 +212,15 @@ public class Result {
 	public static final int OUTPUT_UNCOMPLETED   =  111    ;
 	/** Time out Exception found*/
 	public static final int TIMEOUT_REACHED   =  111    ;
+	/**
+	* Private members
+	*/
+	private int code ;
+	private Object result = null;
+	private String jobId = null ;
+	private int operation ;
+	private String       message ;
+
+
 
 };

@@ -6,20 +6,13 @@
  *
  */
 package org.glite.wmsui.apij;
-
-
 import  java.io.BufferedReader ; //Stream of info gathering from pipes
 import  java.io.FileReader;
 import  java.io.FileWriter;
 import  java.io.BufferedWriter; //Stream of info gathering from pipes
-// import org.glite.wmsui.apij.Job ; //  UI
 import org.glite.wmsui.apij.Shadow ; //  UI
 import org.glite.wmsui.apij.Listener ; //  UI
 import java.io.IOException ; // Stream writing Exception
-
-import org.apache.log4j.*;
-
-
 /**
  * Implementation of the Listener interface.
  * <p>
@@ -31,13 +24,12 @@ import org.apache.log4j.*;
  * @version 1.0
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it> */
 public class ListenerConsole  implements Listener {
-
 	/** Default Constructor */
 	public ListenerConsole( ) { }
-	
 	/**
 	* Set the terminator string. Once the interactivity is started the console needs
-	a string that indicates that the session is finished and the Shadow must be detached
+	* a string that indicates that the session is finished and the Shadow must be detached
+	* @param tr the terminator string to be set
 	*/
 	public void setTerminator(String tr) {
 		terminator = tr ;
@@ -67,7 +59,9 @@ public class ListenerConsole  implements Listener {
 		} // end while
 		stop() ;
 	}
-
+	/**
+	* Close session
+	*/
 	private void stop(){
 		/** Flush output /  error Streams */
 		try{
@@ -90,16 +84,15 @@ public class ListenerConsole  implements Listener {
 		thIn.setDaemon(  true )  ;
 		thIn.start() ;
 	}
-	/******************************************
-	*    Private / package MEMBERS
-	******************************************/
+	// Terminator string
 	private String terminator ="$QUIT" ;
-	BufferedWriter inputBuffer ;
-	// boolean refresh = true ;
-	// Job job ;
-	Shadow shadow;
+	// Shadow instance
+	private Shadow shadow;
+/* DEPRECATED STUFF
 	static int OUT = 1 ;
 	static int IN = 2 ;
 	static int ERR = 3 ;
-	Thread thIn=null, thOut, thErr ;  // input writing Thread
+	BufferedWriter inputBuffer ;
+*/
+	Thread thIn=null, thOut ;  // input writing Thread
 };  //End ListenerConsole class

@@ -55,7 +55,8 @@ public class JobStatus extends InfoLB{
 	public Vector getSubJobs ( ) { return subjobs ; };
 
 	/**
-	* String representation for the status attributes
+	* Convert the JobStatus into a string
+	* @return the string representation for the status attributes
 	@param level of verbosity, can be 0 (minimal) 1(normal) or 2 (high) */
 	public String toString (int level){
 		String result  = "" ;
@@ -101,9 +102,10 @@ public class JobStatus extends InfoLB{
 		"condorId", "condor_jdl", "cpuTime", "destination", "done_code", "exit_code", "expectFrom", "expectUpdate", "globusId", "jdl", "jobId",
 		"jobtype", "lastUpdateTime", "localId", "location", "matched_jdl", "network_server", "owner", "parent_job", "reason", "resubmitted", "rsl",
 		"seed", "stateEnterTime", "stateEnterTimes", "subjob_failed", "user_tags", "Status", "status_code" };
-		
-		
+
+	/** Static value that indicates a Dag*/
 	static final public int JOBTYPE_DAG = 1 ;
+	/** Static value that indicates a Job*/	
 	static final public int JOBTYPE_JOB = 0  ;
 
 	/**********************************************************************************

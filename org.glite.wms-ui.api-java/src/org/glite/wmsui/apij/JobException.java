@@ -94,7 +94,7 @@ public class JobException extends Exception {
      * Prints this exception's stack trace to a print writer.
      * If this exception has a root exception; the stack trace of the
      * root exception is printed to the print writer instead.
-     * @param ps The non-null print writer to which to print.
+     * @param pw The non-null print writer to which to print.
      */
     public void printStackTrace(java.io.PrintWriter pw) {
         if ( exception != null ) {

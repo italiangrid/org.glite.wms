@@ -22,8 +22,8 @@ public class JobId {
 	/** Instantiates an  empty  JobId object */
 	public JobId(){   jobId =null ;     } ;
 	/**Intantiates a JobId object providing full information: LB server address and unique string 
-	* @param  lbAddress  the Logging and Bookkeeping server  address
-	* @param   uniqueString a Unique identification */
+	* @param lbAddress  the Logging and Bookkeeping server  address
+	* @param unique a Unique identifier */
 	public JobId(Url lbAddress, String unique ) { setJobId (lbAddress , unique ) ; }
 	/**
 	* Instantiates a JobId object from the passed dg_jobId in String format.
@@ -87,8 +87,9 @@ public class JobId {
 		String md5UniqueString = Api.generateId ( lbServer.getHost() , lbServer.getPort() ) ;
 		setJobId (  lbServer , md5UniqueString );
 	}
-	/** @return the LB address  into its String format
-	@throws  NoSuchFieldException   If the jobId has not been initialised yet */
+	/** Retrieve the address related to the JobId's LB server
+	* @return the Url corresponding to the current jobid
+	* @throws  NoSuchFieldException   If the jobId has not been initialised yet */
 	public Url getServer( )throws  NoSuchFieldException{
 		if (   isSet()   ) return lbAddress  ;
 		else throw new NoSuchFieldException("JobId not set yet, unable to get LB address")  ;
@@ -99,7 +100,7 @@ public class JobId {
 		if (   isSet()   ) return unique ;
 		else throw new NoSuchFieldException("JobId not set yet, unable to get unique string")  ;
 	}
-	//Private Memebrs :
+	// Private/Package Memebrs :
 	String        jobId , unique;
 	Url        lbAddress ;
 	private static final String LB_DEFAULT_PROTOCOL = "https://" ;

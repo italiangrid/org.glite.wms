@@ -24,7 +24,10 @@ public class InfoLB extends HashMap {
 	public Object get(int attrName){
 		return super.get(new Integer( attrName  )) ;
 	}
-	/** Insert the value (create a vector when needed) */
+	/** Insert the value (create a vector when needed) 
+	*@param attrName the name of the attribute to be put
+	*@param attrValue an object corresponding to the value of the attribute to be put
+	*/
 	void put (int attrName , Object attrValue) {
 		Object obj = get( attrName) ;
 		if (obj==null){  // it is a single value
@@ -41,6 +44,7 @@ public class InfoLB extends HashMap {
 		}
 	}
 	/**  Retrieve the integer value of the specified attribute
+	*@param i the attribute to be retrieved
 	*@return the int value corresponding to the requested attribute
 	*@throws java.lang.ClassCastException  */
 	public int getValInt (int i)  {
@@ -51,7 +55,9 @@ public class InfoLB extends HashMap {
 	*@throws java.lang.ClassCastException  */
 	public String getValString ( int i )  {return  (String) get (i) ; }
 
-	/** Convert the instance into a String */
+	/** Convert the instance into a String 
+	*@return the string representation of LB info
+	*/
 	public String toString (){
 		String result = "" ;
 		for (int i = 0 ; i< size() ; i++ ) {

@@ -20,168 +20,163 @@ import org.glite.wms.jdlj.Ad ;
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
 public class Event extends InfoLB {
+	/** Retrieve the EVENT field
+	* @return the string representation of the event
+	* @see #code
+	* @see #EVENT the attribute code to be retrieved  */
+	public String name ()  {  return  getValString(EVENT) ; }
+	/**
+	* Retreive the EVENT_CODE field
+	* @return the integer representation of the Event code
+	* @see #EVENT_CODE the attribute to be retrieved
+	* @see #CODE_UNDEF a possible returned value
+	* @see #CODE_TRANSFER a possible returned value
+	* @see #CODE_ACCEPTED a possible returned value
+	* @see #CODE_REFUSED a possible returned value
+	* @see #CODE_ENQUEUED a possible returned value
+	* etc...   */
+	public int code () { return getValInt ( EVENT_CODE ) ; }
+	/**
+	Retrieve the string representation of the Event.
+	It is identical to toString(0)
+	@return The string representation of  the basic event attributes
+	@see #toString(int)   */
+	public String toString ( ){  return toString ( 0 ) ; }
 
-/** Retrieve the EVENT field
-* @return the string representation of the event
-* @see #code
-* @see #EVENT the attribute code to be retrieved
-*/
-public String name ()  {  return  getValString(EVENT) ; }
-/**
-  * Retreive the EVENT_CODE field
- * @return the integer representation of the Event code
- * @see #EVENT_CODE the attribute to be retrieved
- * @see #CODE_UNDEF a possible returned value
- * @see #CODE_TRANSFER a possible returned value
- * @see #CODE_ACCEPTED a possible returned value
- * @see #CODE_REFUSED a possible returned value
- * @see #CODE_ENQUEUED a possible returned value
- * etc...   */
-public int code () { return getValInt ( EVENT_CODE ) ; }
-/**
-Retrieve the string representation of the Event.
-It is identical to toString(0)
-@return The string representation of  the basic event attributes
-@see #toString(int)   */
-public String toString ( ){  return toString ( 0 ) ; }
-
-/** Return a String representation of the Event
-* @return The string representation of  the event attributes. The number of the events taken into account depends of the value of the level parameter
-* @param level the verbosity level of toString representation as described in InfoLB class
-* @see InfoLB#DEFAULT_LOG_LEVEL basical information retrieved
-* @see InfoLB#NORMAL_LOG_LEVEL normal information retrieved
-* @see InfoLB#HIGH_LOG_LEVEL full-complete information retrieved
-*/
-public String toString( int level ){
-	   // String result = "\n=================\n\nEvent =" +name() +"\n" ;
-	   // result += "For the job: " +getValString(JOBID)+"\n" ;
-	   String result = new String() ;
-	   Object obj ;
-	   String app ;
-	   Iterator it = keySet().iterator() ;
-	   int tag ;
-	   while( it.hasNext()  ){
-	      tag = ((Integer)it.next()).intValue() ;
-	      obj = get(tag) ;
-	      if ( obj!= null ){
-		app = obj.toString() ;
-		if (!app.equals ("") ){
-		   switch (tag){
-			case JOBID:
-			case EVENT:
-			case DESTINATION:
-			case RESULT:
-			case SOURCE:
-			case TIMESTAMP:
-				result += attrNames[ tag ]  + "  =  "  + app  + "\n";
-				break;
-			case JDL:
-			case CLASSAD:
-			case JOB:
-				if (level>1)
-				try{   result += attrNames[ tag ] + "  = " + new Ad(app).toString (true , true  ) + "\n" ;     } catch (Exception exc) {
-				    result += attrNames[ tag ] + "  = " + app  + "\n" ;
-				    // System.out.println ("\nWarning!!! Unable to parse into a classad: " + app ) ;
-				}
-				break;
-		        default:
-			 	if (level >0)  result += attrNames[ tag ] + " = " + app  + "\n" ;
-				break;
-		   } //end switch (tag)
+	/** Return a String representation of the Event
+	* @return The string representation of  the event attributes. The number of the events taken into account depends of the value of the level parameter
+	* @param level the verbosity level of toString representation as described in InfoLB class
+	* @see InfoLB#DEFAULT_LOG_LEVEL basical information retrieved
+	* @see InfoLB#NORMAL_LOG_LEVEL normal information retrieved
+	* @see InfoLB#HIGH_LOG_LEVEL full-complete information retrieved
+	*/
+	public String toString( int level ){
+		String result = new String() ;
+		Object obj ;
+		String app ;
+		Iterator it = keySet().iterator() ;
+		int tag ;
+		while( it.hasNext()  ){
+		tag = ((Integer)it.next()).intValue() ;
+		obj = get(tag) ;
+		if ( obj!= null ){
+			app = obj.toString() ;
+			if (!app.equals ("") ){
+			switch (tag){
+				case JOBID:
+				case EVENT:
+				case DESTINATION:
+				case RESULT:
+				case SOURCE:
+				case TIMESTAMP:
+					result += attrNames[ tag ]  + "  =  "  + app  + "\n";
+					break;
+				case JDL:
+				case CLASSAD:
+				case JOB:
+					if (level>1)
+					try{   result += attrNames[ tag ] + "  = " + new Ad(app).toString (true , true  ) + "\n" ;     } catch (Exception exc) {
+					result += attrNames[ tag ] + "  = " + app  + "\n" ;
+					// System.out.println ("\nWarning!!! Unable to parse into a classad: " + app ) ;
+					}
+					break;
+				default:
+					if (level >0)  result += attrNames[ tag ] + " = " + app  + "\n" ;
+					break;
+			} //end switch (tag)
+			}
 		}
-	      }
-	   } // end while(it.hasNext() )
-	   return result ;
-}
-/** This array contains the possible Event names */
-static final public String code[] = {
-	"Undefined",
-	"Transfer",
-	"Accepted",
-	"Refused",
-	"EnQueued",
-	"DeQueued",
-	"HelperCall",
-	"HelperReturn",
-	"Running",
-	"Resubmission",
-	"Done",
-	"Cancel",
-	"Abort",
-	"Clear",
-	"Purge",
-	"Match",
-	"Pending",
-	"RegJob",
-	"Chkpt",
-	"Listener",
-	"CurDescr",
-	"UserTag",
-	"Change Acl",
-	"Notification"
-};
-/** This array contains the name of all the possible events attributes*/
-static final public String attrNames[] ={
-	"classad",
-	"descr",
-	"dest_host",
-	"dest_id",
-	"dest_instance",
-	"dest_jobid",
-	"dest_port",
-	"destination",
-	"exit_code",
-	"from",
-	"from_host",
-	"from_instance",
-	"helper_name",
-	"helper_params",
-	"host",
-	"jdl",
-	"job",
-	"jobId",
-	"jobstat",
-	"jobtype",
-	"level",
-	"local_jobid",
-	"name",
-	"node",
-	"notified",
-	"ns",
-	"nsubjobs",
-	"operation",
-	"owner",
-	"parent",
-	"permission",
-	"permission type",
-	"priority",
-	"queue",
-	"reason",
-	"result",
-	"retval",
-	"seed",
-	"seqcode",
-	"source",
-	"src_instance",
-	"src_role",
-	"status_code",
-	"svc_host",
-	"svc_name",
-	"svc_port",
-	"tag",
-	"timestamp",
-	"user",
-	"user Id",
-	"User Id Type",
-	"value",
-	"Event",
-	"event_code",
-	"arrived"
-} ;
-
-/*****************************************************************************
-*               EVENT  CODES
-*******************************************************************************/
+		} // end while(it.hasNext() )
+		return result ;
+	}
+	/** This array contains the possible Event names */
+	static final public String code[] = {
+		"Undefined",
+		"Transfer",
+		"Accepted",
+		"Refused",
+		"EnQueued",
+		"DeQueued",
+		"HelperCall",
+		"HelperReturn",
+		"Running",
+		"Resubmission",
+		"Done",
+		"Cancel",
+		"Abort",
+		"Clear",
+		"Purge",
+		"Match",
+		"Pending",
+		"RegJob",
+		"Chkpt",
+		"Listener",
+		"CurDescr",
+		"UserTag",
+		"Change Acl",
+		"Notification"
+	};
+	/** This array contains the name of all the possible events attributes*/
+	static final public String attrNames[] ={
+		"classad",
+		"descr",
+		"dest_host",
+		"dest_id",
+		"dest_instance",
+		"dest_jobid",
+		"dest_port",
+		"destination",
+		"exit_code",
+		"from",
+		"from_host",
+		"from_instance",
+		"helper_name",
+		"helper_params",
+		"host",
+		"jdl",
+		"job",
+		"jobId",
+		"jobstat",
+		"jobtype",
+		"level",
+		"local_jobid",
+		"name",
+		"node",
+		"notified",
+		"ns",
+		"nsubjobs",
+		"operation",
+		"owner",
+		"parent",
+		"permission",
+		"permission type",
+		"priority",
+		"queue",
+		"reason",
+		"result",
+		"retval",
+		"seed",
+		"seqcode",
+		"source",
+		"src_instance",
+		"src_role",
+		"status_code",
+		"svc_host",
+		"svc_name",
+		"svc_port",
+		"tag",
+		"timestamp",
+		"user",
+		"user Id",
+		"User Id Type",
+		"value",
+		"Event",
+		"event_code",
+		"arrived"
+	} ;
+	/*****************************************************************************
+	*               EVENT  CODES
+	*******************************************************************************/
 	/** Possible value returned by code() method. Undefined code. Should never happen*/
 	static final public int CODE_UNDEF = 0;
 	/** Possible value returned by code() method.  Start, success, or failure of job transfer to another component */
@@ -227,7 +222,6 @@ static final public String attrNames[] ={
 	/** Possible value returned by code() method.  user tag -- arbitrary name=value pair */
 	static final public int CODE_USERTAG=    21 ;
 	static final public int CODE_TYPE_MAX = 22 ;
-
 /*****************************************************************************
 *               EVENT ATTRIBUTES
 *******************************************************************************/

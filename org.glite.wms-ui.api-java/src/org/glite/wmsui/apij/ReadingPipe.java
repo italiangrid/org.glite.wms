@@ -20,6 +20,9 @@ class ReadingPipe implements Runnable  {
 	* @see Shadow
 	*/
 	public  ReadingPipe (   Shadow shadow )  {  sh= shadow ;  };
+	/**
+	* Start the actual reading pipe to run and empty the pipe
+	*/
 	public void run ()   {
 		while ( true )  try{
 			String str = sh.emptyOut()  ;

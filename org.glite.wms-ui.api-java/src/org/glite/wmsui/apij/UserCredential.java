@@ -11,17 +11,15 @@ import java.io.* ;
 import org.globus.gsi.*;
 import org.globus.gsi.bc.BouncyCastleOpenSSLKey;
 import org.globus.util.Util;
-
 import org.edg.security.voms.VOMSInfo;
 import org.edg.security.voms.VOMSExtension;
 import org.edg.security.authorization.DNConvert;
 import java.security.cert.X509Certificate;
 
-
 /**
  * The UserCredential class allows to control the general user security certificate's validity.
  * <p>
- * This class can manipulate standard proxies as well as edg-VOMS certificates, in order to extract the extension information
+ * This class can manipulate standard proxies as well as VOMS certificates, in order to extract the extension information
  * The main operation are:
  * <ul>
  * <li> Create whether a default or a custom proxy certificate
@@ -44,9 +42,8 @@ public class UserCredential{
 	* @throws FileNotFoundException Unable to retrieve find the default proxy certificate
 	* @throws GlobusCredentialException Unable to parse the default proxy certificate   */
 	public UserCredential () throws FileNotFoundException , GlobusCredentialException {
-          //!!!proxy = GlobusCredential.load(  getDefaultProxy() , null  );
-          proxy = new GlobusCredential(   getDefaultProxy()  );
-        }
+		proxy = new GlobusCredential(   getDefaultProxy()  );
+	}
 	/** Constructor with File.
 	* Try to set the specified path as the default proxy
 	* @param  credPath a File where to load the proxy from
@@ -55,7 +52,7 @@ public class UserCredential{
 	public UserCredential (File credPath) throws java.io.FileNotFoundException , org.globus.gsi.GlobusCredentialException { setProxy   (credPath)  ; }
 	/**
 	* Destroy the proxy file used */
-	public void destroyProxy ( )   {  }
+	public void destroyProxy ( )   { /** TBD */}
 	/** Create the default proxy
 	* Create the default proxy certificate with all the default values: 512-key-length bits, 24c hours, not limited
 	* @param passPhrase the passphrase needed in oprder to generate the proxy certificate
@@ -123,7 +120,7 @@ public class UserCredential{
 	}
 	/**
 	* Set statically the default proxy used for the current session.
-	*@param String the string representation of the proxy file name
+	*@param proxyName the string representation of the proxy file name
 	*/
 	public synchronized static void setDefaultProxy( String proxyName) {
 		DEFAULT_PROXY_VAR = proxyName ;
@@ -202,7 +199,7 @@ public class UserCredential{
 
 	/**
 	* Set the proxy certificate to a non-default value
-	* @param credPath- the path pointing to the proxy certificate file
+	* @param credPath the path pointing to the proxy certificate file
 	* @throws GlobusCredentialException - Unable to get the specified proxy certificate  */
 	public void setProxy (File credPath) throws GlobusCredentialException {
 		// This Environment must be set in order to let the native api recognise the proxy
@@ -222,13 +219,9 @@ public class UserCredential{
 	* @throws GlobusCredentialException - Unable to get the proxy certificate  */
 	public void checkProxy ( ) throws GlobusCredentialException{
 	if (  getTimeLeft()  <  0 )
-		throw  new GlobusCredentialException(GlobusCredentialException.EXPIRED,
-                                                     "Proxy Certificate time left expired",
-                                                     new Throwable()) ;
+		throw  new GlobusCredentialException(GlobusCredentialException.EXPIRED, "Proxy Certificate time left expired", new Throwable()) ;
 	else if (  getTimeLeft()  <  EXPIRATION_LIMIT )
-		throw  new GlobusCredentialException(GlobusCredentialException.EXPIRED,
-                        "Proxy Certificate time left not enough to perform any operation",
-                        new Throwable()) ;
+		throw  new GlobusCredentialException(GlobusCredentialException.EXPIRED, "Proxy Certificate time left not enough to perform any operation", new Throwable()) ;
 	};
 	/**
 	*    Return the Subject of the Proxy Certificate
@@ -236,20 +229,18 @@ public class UserCredential{
 	public String getSubject(   )throws GlobusCredentialException {
 		return proxy.getSubject()  ;
 	}
-
 	/**
 	*    Return the Issuer of the Proxy Certificate
 	* @throws GlobusCredentialException - Unable to get the proxy certificate */
 	public String getIssuer(   )throws GlobusCredentialException {
 		return CertUtil.toGlobusID(  new DNConvert(   proxy.getIssuer().trim()   ).reformat( DNConvert.RFC2253  )   );
 	}
-
 	/**
 	*   Return whether the proxy is a full proxy (true) or a limited proxy (false)
 	* @throws GlobusCredentialException - Unable to get the proxy certificate
 	*/
 	public boolean  getCredType    ( )  {
-          return !CertUtil.isLimitedProxy(proxy.getProxyType()) ; };
+		return !CertUtil.isLimitedProxy(proxy.getProxyType()) ; };
 	/**
 	*    Return the Cred type of the Proxy Certificate
 	* @throws GlobusCredentialException - Unable to get the proxy certificate
@@ -261,6 +252,10 @@ public class UserCredential{
 	*/
 	public int  getTimeLeft     ( ) { return (int)proxy.getTimeLeft()  ; };
 
+
+  /****************************************
+  *     VOMS METHODS IMPLEMENTATION
+  *****************************************/
 
   /**
    * Returns the proxy user subject removing all occurencies of "CN=/Proxy".
@@ -303,8 +298,6 @@ public class UserCredential{
     }
     return voVector;
   }
-
-
   /**
    * Returns the name of the default Virtual Organisation contained in the proxy
    * certificate if the proxy certificate is a VOMS proxy certificate. (the default
@@ -328,7 +321,6 @@ public class UserCredential{
     }
     //return (extension != null) ? extension.getDefaultVOMSInfo().getVO() : "";
   }
-
   /**
    * Returns a String Vector containing the names of all voName groups present
    * in the proxy certificate extension if the proxy certificate is a VOMS proxy certificate.
@@ -340,11 +332,6 @@ public class UserCredential{
    *         an empty Vector if the proxy is not a VOMS proxy or no groups are present.
    */
   public Vector getGroups(String voName) throws IOException, GlobusCredentialException, Exception {
-    /*
-    if ((voName == null) || voName.equals("")) {
-      throw new InvalidArgumentException("Invalid argument exception");
-    }
-    */
     VOMSExtension extension = getProxyVOMSExtension();
     java.util.List infoList = extension.getVOMSInfos();
     VOMSInfo vomsInfo;
@@ -360,8 +347,6 @@ public class UserCredential{
     }
     return groupVector;
   }
-
-
   /**
    * Returns a String Vector containing the names of all default Virtual Organisation groups present
    * in the proxy certificate extension if the proxy certificate is a VOMS proxy certificate.
@@ -379,8 +364,6 @@ public class UserCredential{
       return new Vector();
     }
   }
-
-
   /**
    * Returns a Boolean value indicating if the Virtual Organisation voName is present in the
    * VOMS proxy extension or not.
@@ -392,11 +375,6 @@ public class UserCredential{
    *         false otherwise.
    */
   public boolean containsVO(String voName) throws IOException, GlobusCredentialException, Exception {
-    /*
-    if ((voName == null) || voName.equals("")) {
-      throw new InvalidArgumentException("Invalid argument exception");
-    }
-    */
     VOMSExtension extension = getProxyVOMSExtension();
     java.util.List infoList = extension.getVOMSInfos();
     for (int i = 0; i < infoList.size(); i++) {
@@ -406,8 +384,6 @@ public class UserCredential{
     }
     return false;
   }
-
-
 	/**
 	* Returns a Boolean value indicating if the proxy certificate has a VOMS extension or not
 	* (if the proxy is a VOMS proxy certificate or not).
@@ -422,8 +398,6 @@ public class UserCredential{
 		if ((extension != null) && (extension.getDefaultVOMSInfo() != null)) return true;
 		return false;
 	}
-
-
 	private VOMSExtension getProxyVOMSExtension() throws FileNotFoundException, GlobusCredentialException, Exception {
 		VOMSExtension extension;
 		String proxyName = "";
@@ -435,13 +409,10 @@ public class UserCredential{
 		} catch (IOException ioe) {
 			throw new FileNotFoundException("Unable to find proxy certificate file: " + proxyName);
 		} catch (java.security.cert.CertificateException ce) {
-			throw new GlobusCredentialException(GlobusCredentialException.FAILURE,
-                               "Unable to load proxy certificate",
-                               new Throwable());
+			throw new GlobusCredentialException(GlobusCredentialException.FAILURE,"Unable to load proxy certificate",new Throwable());
 		}
-			return extension;
+		return extension;
 	}
-
 	// Private / Package memebrs:
 	private GlobusCredential proxy= null ;
 	private String userProxy, userCert, userKey, userDir ;

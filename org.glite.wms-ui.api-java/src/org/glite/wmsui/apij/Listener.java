@@ -1,8 +1,16 @@
+/*
+* Listener.java
+*
+* Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
+*
+* Contributors are mentioned in the code there appropriate.
+*
+*/
 package org.glite.wmsui.apij;
+/* DEPRECATED STUFF...
 import  java.io.BufferedReader ; //Stream of info gathering from pipes
 import  java.io.BufferedWriter; //Stream of info gathering from pipes
-
-
+*/
 
 
 /**

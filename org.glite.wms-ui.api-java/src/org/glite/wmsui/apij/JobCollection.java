@@ -35,7 +35,6 @@ import java.io.IOException ;
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
 public class JobCollection implements Runnable{
-
 	/** Instantiates an  empty  JobCollection object*/
 	public JobCollection()   {  this.jobs = new Vector() ;  }   ;
 	/** Instantiates a collection with n copies of a job (the Job has to be of JOB__AD type)
@@ -394,14 +393,16 @@ public class JobCollection implements Runnable{
 			appendJob( jobNumber,   new Result (id, exc ,  operation , operation + Result.FAILURE  )      );
 		}
 	};
+	/**In order to perform JobCollection Actions, a certificate proxy file is needed */
+	String credPath  ;
+	/*This variable indicates the number of maximum simultaneous executing threads */
+	int maxThreadNumber =1;
 
 	/** The Job in the collection are stored in a vector */
 	protected  Vector jobs;
 	/** To Check if the credential are OK   */
 	private UserCredential userCred ;
 	private int operation;
-	/**In order to perform JobCollection Actions, a certificate proxy file is needed */
-	String credPath  ;
 	/** The set of paramether used by thread*/
 	private Url nsAddress ;
 	private Vector lbAddresses ;
@@ -412,8 +413,6 @@ public class JobCollection implements Runnable{
 	private Vector vect  ;
 	/** Store Thread array instances*/
 	private Thread threads[] ;
-	/*This variable indicates the number of maximum simultaneous executing threads */
-	int maxThreadNumber =1;
 	private static final int MAX_THREAD_NUMBER = 1 ;
 	private int nsLoggerLevel =0 ;
 	private boolean uiLogDefault = true ;

@@ -41,9 +41,9 @@ public class Api {
 	*@param key the name of the environment variable to set
 	*@param value the value of the environment variable to be set */
 	static public native void setEnv (String key , String value) ;
-        /** Static native System Info Method:  Unset the specified Environment variable
-        *@param key the name of the environment variable to unset*/
-        static public native void unsetEnv (String key);
+	/** Static native System Info Method:  Unset the specified Environment variable
+	*@param key the name of the environment variable to unset*/
+	static public native void unsetEnv (String key);
 	// LB query
 	Vector lbGetJobs (Url lbAddress ,  long from , long to , Ad userTags, int inex , String issuer) {
 		result = new Vector() ;

@@ -11,7 +11,6 @@ import java.util.* ;
 import  org.glite.wms.jdlj.Ad ;
 import javax.naming.directory.InvalidAttributeValueException ;
 
-
 /**
  * LB QeuryServer Class Wrapped.
  * <p>
@@ -31,7 +30,7 @@ public class Query {
 		from = null ;
 		to = null ;
 	}
-	/** Make a copy of the current query*/
+	/** Make a deep copy of the current query */
 	public Query copy () {
 		Query q = new Query() ;
 		q.owned = owned ;
@@ -53,6 +52,8 @@ public class Query {
 		includes = new boolean[JobStatus.MAX_STATUS] ;
 		excludes = new boolean[JobStatus.MAX_STATUS] ;
 	};
+	/** Retrieve current query string representation
+	* @return query string representation */
 	public String  toString() {
 		String result = new String () ;
 		result += "Only owned jobs : " + owned ;
@@ -228,7 +229,7 @@ public class Query {
 		if(    ( status_code < JobStatus.UNDEF ) || (status_code >= JobStatus.MAX_STATUS)   )
 			throw new ArrayIndexOutOfBoundsException  ("status code :" + status_code +" is out of possible range" ) ;
 		return excludes[status_code];
-	} ;
+	}
 	/**
 	* Retrieve the filter on the included states
 	* @return an array of booleans, each value represents whether the

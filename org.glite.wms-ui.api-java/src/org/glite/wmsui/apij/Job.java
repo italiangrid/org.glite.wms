@@ -14,8 +14,6 @@ import  org.glite.wms.jdlj.Jdl ;
 import org.globus.io.urlcopy.UrlCopy ;
 import org.globus.util.* ;   // GlobusUrl class
 import org.globus.gsi.GlobusCredentialException;
-// Log 4 J package:
-// import org.apache.log4j.*;
 import condor.classad.* ;
 import java.util.* ;
 import  java.io.* ;
@@ -52,14 +50,13 @@ public class Job  {
 	* @throws IllegalArgumentException If the JobId is not valid */
 	public Job( JobId id) throws IllegalArgumentException  {  setJobId(id) ; }  ;
 	/** Instantiates an  Job object with a JobAd
-	* @param id  the JobAd instance from which the Job has to be created
+	* @param ad  the JobAd instance from which the Job has to be created
 	* @throws IllegalArgumentException If the JobAd is not valid */
 	public Job( JobAd ad)throws IllegalArgumentException  { setJobAd(ad) ;  };
 	/** Instantiates an  Job object with a JobAd
-	* @param dagad  the dagad file instance from which the Dag has to be created
+	* @param dagFile  the dagad file instance from which the Dag has to be created
 	* @throws IllegalArgumentException If the DagAd is not valid */
 	public Job( String dagFile)throws IllegalArgumentException  {
-		System.out.println("Setting Dag file... "  +dagFile) ;
 		setDagAd(dagFile) ;
 	};
 	/** Create a copy of the Job, including its private JobId and JobAd members information
@@ -387,7 +384,7 @@ public class Job  {
 	}
 	/**
 	* Retrieve the specified checkpointable step from the LB server
-	* @param In order to retrieve the last logged checkpointable event, step must be 0. step must be 1 for the last-but-one etc etc
+	* @param step In order to retrieve the last logged checkpointable event, step must be 0. step must be 1 for the last-but-one etc etc
 	* @throws UnsupportedOperationException  The Operation required is not allowed for the Job
 	* @throws FileNotFoundException unable to find any certificate file
 	* @throws org.globus.gsi.GlobusCredentialException proxy certificate information failed
@@ -497,7 +494,6 @@ public class Job  {
 		if    (jobType == DAG_AD){
 			// DAG
 			api.dagFromFile (dagad) ;
-			System.out.println( api.dagToString( 3 )  ) ;
 			api.dagSetAttribute (  0 , jid.toString() );
 			api.logDefaultValues ( uiLogDefault ) ;
 		} else{
@@ -572,7 +568,6 @@ public class Job  {
 		org.globus.gsi.GlobusCredentialException // Proxy
 	{
 		if   (   jobType == JOB_NONE )   throw new UnsupportedOperationException ("listMatchingCE: operation not allowed" );
-		// System.out.println("Submission = " + jad.toSubmissionString()  );
 		nsInit   (nsAddr) ;
 		Vector vect = api.ns_multi_attribute();
 		if ( (vect!=null)  && vect.size()>0 ){
@@ -588,7 +583,6 @@ public class Job  {
 
 
 	/**Cancel the job from the resource broker ( syncronous version )
-	* @param  email The E-mail address where to send the cancellation notification result
 	* @return  The Result of the operation
 	* @throws JobAdException when the Jdl has semantic errors
 	* @throws UnsupportedOperationException  The Operation required is not allowed for the Job
@@ -657,7 +651,6 @@ public class Job  {
 		FileNotFoundException, // Proxy
 		org.globus.gsi.GlobusCredentialException // Proxy
 	{
-		// System.out.println( "private getOutput called for " + path  ) ;
 		 String jobid = status.getValString( JobStatus.JOB_ID) ;
 		if   ( status.code() !=JobStatus.DONE )
 			throw new UnsupportedOperationException ("Job Status != Done. Unable to retrieve OutputFiles from " + jobid );
@@ -667,16 +660,16 @@ public class Job  {
 						Result.OUTPUT, Result.GETOUTPUT_FAILURE ) ;
 		//NO problems so Far: Create Directory:
 		if ( path.isDirectory() ) {
-		   /** OK   System.out.println("Path is a directory: already Exists... OK " + path  );*/ 
+		   /** OK: Path is a directory and already Exists */
                 }
 		// The path exists but it is not a directory
 		else if ( path.exists() ) {
-			// System.out.println("Path already BUT NOT DIR " + path  ) ;
+			//  Path already BUT NOT DIR 
 			throw new UnsupportedOperationException ("The path " +path + " is already existing but it is not a directory" );
 		}
 		// The path does not exist. Try to create the directory
 		else{
-			// System.out.println("Path Creation..... " + path  ) ;
+			//  Path Creation.....  
 			if (!path.mkdir() ) throw new UnsupportedOperationException ("Unable to create the path: " + path );
 		}
 		// Check For Dags children iteration:
@@ -687,7 +680,7 @@ public class Job  {
 			for (int i = 0 ; i< subJobs.size()  ; i++){
 				sonStatus = (JobStatus)(subJobs.get(i) )  ;
 				sonId = new JobId (  sonStatus.getValString (JobStatus.JOB_ID )   );
-				// System.out.println("Iterating over the son: " + sonId ) ;
+				//  terating over son 
 				getOutput (    new File (  path.getAbsolutePath() + "/" + System.getProperty( "user.name" ) + "_"  + sonId.unique) ,  sonStatus  , purge   ) ;
 			}
 		}
@@ -697,20 +690,17 @@ public class Job  {
 		if ( result.getCode()>=10 ) return result;
 		// If purge needed do it:
 		if ( purge ){
-			System.out.println( "Purging the job: " +jobid ) ;
 			api.ns_purge (  jobid.toString()  );
 		}
 		if(    ( status.getValInt ( JobStatus.CHILDREN_NUM) >0 )  && ( result.getCode() <10 )  )
 			// It is a Dag and successfully retrieved
 			result = new Result ( jobid.toString () , path.getAbsolutePath() , Result.OUTPUT,  Result.SUCCESS  ) ;
-		// System.out.println("PATH LIST: " + path.list() ) ;
 		if ( path.list().length==0 )
 			try{
 				path.delete() ;
-				// System.out.println("Caught (to be removed)empty directory for: " + jobid  ) ;
 			}  catch (SecurityException  exc ) {
 				/* Unable to remove Directory, nothing to do*/
-				System.out.println("Warning, unable to remove directory : " + path ) ;
+				System.out.println("Job::getOutput Warning, unable to remove directory : " + path ) ;
 			}
 		return result ;
 	}
@@ -802,7 +792,6 @@ public class Job  {
 			jdl = jad.toSubmissionString() ;
 		} else {
 			jdl =api.dagToString( 2) ;  // No nodes are shown (for registering)
-			System.out.println("Job.java: String: " + jdl ) ;
 		}
 		// initialise the LB context
 		api.lb_init(  nsAddr.getHost() ) ;
@@ -826,7 +815,6 @@ public class Job  {
 			if (jad.hasAttribute (Jdl.JOBTYPE) ){
 				//	1	Interactive:
 				if (  jad.getStringValue(Jdl.JOBTYPE).contains(  Jdl.JOBTYPE_INTERACTIVE ) ) {
-					// System.out.println("Job::nsSubmit> logging listener") ;
 					api.lb_log_listener( jid.toString() , shadow.getHost() , shadow.getPort()  ) ;
 				}
 				//	2	CheckPointable:
@@ -868,7 +856,6 @@ public class Job  {
 
 	/** Retrieve job output files*/
 	private Result nsOutput (  String jobId ,  String dir ){
-		// System.out.println( "Private nsOutput called for " + jobId + "\n -> " + dir  ) ;
 		String source_path =  "gsiftp://" + nsAddress.getHost() +  "//"   ;
 		String dest_path = "file:///" + dir ;
 		Vector outputList = api.ns_output_files ( jobId.toString()) ;
@@ -939,12 +926,9 @@ public class Job  {
 		// iterating over the multi attributes to check whether are wrongly used
 		for  (  int j = 0 ; j <multi.size(); j++  ) {
 			String it = (String)multi.get( j )  ;
-			//System.out.println(" checking :"+ it );
 			if (  attrValue.indexOf ("other." +  it ) !=-1  ){
-				// System.out.println(" ...found in reqs") ;
 				//The Attribute cannot be present in the values
 				if  ( values.contains( "other." + it) ){
-					//System.out.println(" But found in Values!!!") ;
 					throw new JobAdException (attrName +": wrong usage of Member/InMember function for multi attribute "
 						+it + ".\nSyntax is: Member/IsMember(List,Value)" );
 				}
