@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.36  2004/07/23 09:33:14  eronchie
+	Changed condor in condorg
+
 	Revision 1.35  2004/07/23 08:51:27  eronchie
 	Removed tls, jobid, thirdparty-globus_ssl_utils
-
+	
 	Revision 1.34  2004/07/18 12:29:39  eronchie
 	Start adding purger
 	WARNING: work in progress
@@ -416,7 +419,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condor,common,jdl,purger">
+	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condorg,common,jdl,purger">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
                      target="${target}"
                      inheritall="false" />
