@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/10/13 15:34:31  eronchie
+#       ......
+#
 #       Revision 1.2  2004/10/13 15:11:30  eronchie
 #       Updated
 #
@@ -86,7 +89,6 @@ AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
-AC_CONFIG_FILES([config/glite-wmsui.csh])
 AC_CONFIG_FILES([config/glite-wmsui-env.csh])
 AC_CONFIG_FILES([config/glite-wmsui-env.sh])
 AC_CONFIG_FILES([config/glite-wmsui-gui-env.csh])
