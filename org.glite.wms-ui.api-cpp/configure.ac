@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/12/17 13:53:49  amarasch
+#       Version updated
+#
 #       Revision 1.4  2004/12/10 09:47:49  amarasch
 #       Increased version
 #
@@ -36,7 +39,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Api Cpp], [1.0.0])
+AC_INIT([GLite WMS UI Api Cpp], [1.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/CredentialException.h])
