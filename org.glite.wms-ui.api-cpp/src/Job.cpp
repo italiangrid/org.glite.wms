@@ -81,7 +81,7 @@ Job::Job(const JobId& id){
          cred_path = "" ;
          jCollect = false ;
          }
-     GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+     GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace 
 };
 Job::Job(const JobAd& ad){
       GLITE_STACK_TRY("Job::Job(const JobAd& ad)") ;
