@@ -20,10 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.7  2004/05/13 09:45:47  flammer
+	Moved to new variable naming & including style.
+
 	Revision 1.6  2004/05/05 17:05:25  dimeglio
 	Implemented stage and dist targets for the project
 	Dist is new default target (warning: this may change)
-
+	
 	Revision 1.5  2004/05/03 00:37:00  dimeglio
 	Removed XML comment sequence in CVS log entry
 	
@@ -50,21 +53,59 @@
 		Ant build file to build the EGEE Test 3 WMS
 	</description>
 	
-	<!-- Import properties -->
-	<import file="../org.egee/project/properties.xml" />
-	<import file="${workspace.dir}/${test3.wms.subsystem}/project/properties.xml" />
-
-	<!-- Load dependencies files -->
-	<property file="${dependencies.file}"/>
+	<!-- =========================================
+	     Import properties (order is important) 
+		 ========================================= -->
+	<import file="../org.egee/project/baseline.properties.xml" />
+	<import file="./project/properties.xml" />	
+	<import file="${global.properties.file}" />
+				
+	<!-- =========================================
+		 Load dependencies properties files (order is important) 
+		 ========================================= -->
+	<property file="${user.dependencies.file}"/>
 	<property file="${subsystem.dependencies.file}"/>
+	<property file="${global.dependencies.file}"/>	
+	
+	<!-- =========================================
+		 Import external dependencies files (order is important) 
+		========================================= -->
+	<!-- <import file="${subsystem.external-dependencies.file}"/> 	-->
+	<import file="${global.external-dependencies.file}"/>	
+		
+	<!-- =========================================
+		 Import task definitions (order is important)
+		 ========================================= -->
+	<!-- <import file="${subsystem.taskdefs.file}" /> -->
+	<import file="${global.taskdefs.file}" />
+	
+	<!-- =========================================
+	     Import compiler definitions (order is important)
+  	     ========================================= -->
+	<!-- <import file="${subsystem.compilerdefs.file}" /> -->
+	<import file="${global.compilerdefs.file}" />
 
-	<!-- Load version file -->
+	<!-- =========================================
+		 Import common public targets (order is important)
+		 ========================================= -->
+	<!-- <import file="${subsystem.targets-cpp-ant.file}" /> -->
+	<import file="${global.targets-cpp-ant.file}" />
+		
+	<!-- =========================================
+		 Default envchecks (order is important)
+		 ========================================= -->
+	<!-- <import file="${subsystem.envchecks.file}" /> -->
+	<import file="${global.envchecks.file}" />
+
+	<!-- =========================================
+		 Load version file 
+		 ========================================= -->
 	<property file="${version.file}"/>
-
+	
 	<!-- ===============================================
-		 Public common targets
-	     =============================================== -->
-
+		  Public common targets
+	  	 =============================================== -->
+	
 	<target name="envinfo">
 		<!-- Workspace paths -->
 		<echo>*****************************************************************</echo>
@@ -73,8 +114,8 @@
 		<echo>*****************************************************************</echo>
 		<echo>*****************************************************************</echo>
 		<echo>  </echo>
-		<echo>Master project path:	${master.dir}</echo>
-		<echo>Master project name:	${application.name}</echo>
+		<echo>Global project path:	${global.dir}</echo>
+		<echo>Global project name:	${global.name}</echo>
 		<echo>Subsystem name:		${subsystem.name}</echo>
 	</target>
 
@@ -84,9 +125,6 @@
 		<antcall target="envinfo" />
 		<antcall target="defaultenvchecks" />
 	</target>
-
-	<!-- Default envchecks (defined in envchecks.xml) -->
-	<import file="${master.project.dir}/envchecks.xml" />
 
 
 	<target name="localinit" depends="envcheck">
@@ -168,63 +206,54 @@
 			<param name="target" value="clean"/>
 		</antcall>
 
-		<delete dir="${bin.dir}" />
-		<delete dir="${lib.dir}" />
-		<delete dir="${autosrc.dir}" />
-		<delete dir="${autodoc.dir}" />
-		<delete dir="${test.reports.dir}" />
+		<delete dir="${module.bin.dir}" />
+		<delete dir="${module.lib.dir}" />
+		<delete dir="${module.autosrc.dir}" />
+		<delete dir="${module.autodoc.dir}" />
+		<delete dir="${module.test.reports.dir}" />
 
 	</target>
 
 	<!-- ===============================================
 		 Private targets
 	     =============================================== -->
-
-
-
-	<!-- ===============================================
-		 External dependencies
-	     =============================================== -->
 	
-	<!-- Import external dependencies targets -->
-	<import file="${master.project.dir}/external-dependencies.xml" />
-
 	<!-- ===============================================
 		 Modules proxy targets
 	     =============================================== -->
 
 	<target name="globus_ssl_utils">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-globus_ssl_utils"
+		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
 		     target="${target}"
 		     inheritall="false" />
 	</target>
 
 	<target name="bypass">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-bypass"
+		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-bypass"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
 	<target name="globus_gridftp_server" depends="globus">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-globus_gridftp_server"
+		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-globus_gridftp_server"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
 	<target name="loki">
-		<ant dir="${master.dir}/../${subsystem.name}.thirdparty-loki"
+		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-loki"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
 	<target name="common" depends="boost,classads,globus,globus_ssl_utils">
-		<ant dir="${master.dir}/../${subsystem.name}.common"
+		<ant dir="${workspace.abs.dir}/${subsystem.name}.common"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
         <target name="jcommon" depends="jclassads">
-                <ant dir="${master.dir}/../${subsystem.name}.jcommon"
+                <ant dir="${workspace.abs.dir}/${subsystem.name}.jcommon"
 		     target="${target}"
                      inheritall="false" />
         </target>
