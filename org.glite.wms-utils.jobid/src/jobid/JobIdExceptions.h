@@ -1,5 +1,5 @@
-#ifndef  EDG_WORKLOAD_COMMON_CLIENT_JOBIDEXCEPTIONS_H
-#define EDG_WORKLOAD_COMMON_CLIENT_JOBIDEXCEPTIONS_H
+#ifndef GLITE_WMS_COMMON_CLIENT_JOBIDEXCEPTIONS_H
+#define GLITE_WMS_COMMON_CLIENT_JOBIDEXCEPTIONS_H
 
 /*
  * JobIdExceptions.h
@@ -7,7 +7,7 @@
  */
 #include "glite/wms/common/utilities/Exceptions.h"
 
-#define COMMON_JOBID_NAMESPACE_BEGIN namespace edg { namespace workload { namespace common {namespace jobid{
+#define COMMON_JOBID_NAMESPACE_BEGIN namespace glite { namespace wms { namespace common {namespace jobid{
 COMMON_JOBID_NAMESPACE_BEGIN
 /**
  * JobIdException - Exception thrown by JobId Class
@@ -16,7 +16,7 @@ COMMON_JOBID_NAMESPACE_BEGIN
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
-class JobIdException : public edg::workload::common::utilities::Exception {
+class JobIdException : public glite::wms::common::utilities::Exception {
 public:
     /**
      * Update all mandatory Exception Information

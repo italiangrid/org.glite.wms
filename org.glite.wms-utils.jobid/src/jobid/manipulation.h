@@ -1,9 +1,9 @@
-#ifndef EDG_WORKLOAD_COMMON_JOBID_MANIPULATION_H
-#define EDG_WORKLOAD_COMMON_JOBID_MANIPULATION_H
+#ifndef GLITE_WMS_COMMON_JOBID_MANIPULATION_H
+#define GLITE_WMS_COMMON_JOBID_MANIPULATION_H
 
 #include <string>
 
-#include "edg/workload/common/common_namespace.h"
+#include "jobid_namespace.h"
 
 COMMON_NAMESPACE_BEGIN {
 
@@ -19,7 +19,7 @@ JobId from_filename( const std::string &filename );
 
 } COMMON_NAMESPACE_END;
 
-#endif /* EDG_WORKLOAD_COMMON_JOBID_MANIPULATION_H */
+#endif /* GLITE_WMS_COMMON_JOBID_MANIPULATION_H */
 
 // Local Variables:
 // mode: c++

@@ -1,20 +1,20 @@
 #ifndef __COMMON_NAMESPACE_H_LOADED
 #define __COMMON_NAMESPACE_H_LOADED
 
-#define COMMON_NAMESPACE_BEGIN namespace edg { namespace workload { namespace common
+#define COMMON_NAMESPACE_BEGIN namespace glite { namespace wms { namespace common
 
 #define COMMON_NAMESPACE_END }}
 
-#define USING_COMMON_NAMESPACE using namespace edg::workload::common
-#define USING_COMMON_NAMESPACE_ADD( last ) using namespace edg::workload::common::##last
+#define USING_COMMON_NAMESPACE using namespace glite::wms::common
+#define USING_COMMON_NAMESPACE_ADD( last ) using namespace glite::wms::common::##last
 
 #define COMMON_NAMESPACE_CLASS( Type )                  \
-namespace edg { namespace workload { namespace common { \
+namespace glite { namespace wms { namespace common { \
   class Type;                                           \
 }}}
 
 #define COMMON_SUBNAMESPACE_CLASS( Namespace, Type )    \
-namespace edg { namespace workload { namespace common { \
+namespace glite { namespace wms { namespace common { \
   namespace Namespace {                                 \
     class Type;                                         \
   }                                                     \

@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_CLIENT_JOBID_H
-#define EDG_WORKLOAD_COMMON_CLIENT_JOBID_H
+#ifndef GLITE_WMS_COMMON_CLIENT_JOBID_H
+#define GLITE_WMS_COMMON_CLIENT_JOBID_H
 
 /*
  * JobId.h
@@ -14,7 +14,7 @@
 #include "jobid.h"
 
 typedef struct _edg_wlc_jobid_s* edg_wlc_jobid_t;
-#define COMMON_JOBID_NAMESPACE_BEGIN namespace edg { namespace workload { namespace common {namespace jobid{
+#define COMMON_JOBID_NAMESPACE_BEGIN namespace glite { namespace wms { namespace common {namespace jobid{
 COMMON_JOBID_NAMESPACE_BEGIN
 /**
  * Managing Identification, checking, retreiving info from a job
@@ -112,4 +112,4 @@ std::ostream& operator<<(std::ostream& os, JobId const& id);
 
 } COMMON_NAMESPACE_END }
 
-#endif // EDG_WORKLOAD_COMMON_CLIENT_JOBID_H
+#endif // GLITE_WMS_COMMON_CLIENT_JOBID_H

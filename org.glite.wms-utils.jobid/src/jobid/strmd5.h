@@ -1,5 +1,5 @@
-#ifndef _EDG_STRMD5_H
-#define _EDG_STRMD5_H
+#ifndef _GLITE_STRMD5_H
+#define _GLITE_STRMD5_H
 
 #ident "$Header$"
 
@@ -25,4 +25,4 @@ char *str2md5(const char *src);
  */
 char *str2md5base64(const char *src);
 
-#endif /* _EDG_STRMD5_H */
+#endif /* _GLITE_STRMD5_H */

@@ -62,7 +62,7 @@ int edg_wlc_JobIdRecreate(const char* bkserver, int port, const char *unique, ed
 
     /* check if it begins with prefix */
     /* unsupported */
-    if (strncmp(bkserver, EDG_WLC_JOBID_PROTO_PREFIX, sizeof(EDG_WLC_JOBID_PROTO_PREFIX)-1) == 0)
+    if (strncmp(bkserver, GLITE_WMSC_JOBID_PROTO_PREFIX, sizeof(GLITE_WMSC_JOBID_PROTO_PREFIX)-1) == 0)
         return EINVAL;
 
     out->BShost = strdup(bkserver);
@@ -75,7 +75,7 @@ int edg_wlc_JobIdRecreate(const char* bkserver, int port, const char *unique, ed
     }
 
     if (port == 0)
-        port = EDG_WLC_JOBID_DEFAULT_PORT;
+        port = GLITE_WMSC_JOBID_DEFAULT_PORT;
 
     out->BSport = port;
 
@@ -136,7 +136,7 @@ int edg_wlc_JobIdParse(const char *idString, edg_wlc_JobId *jobId)
 
     memset(out,0,sizeof(*out));
 
-    if (strncmp(idString, EDG_WLC_JOBID_PROTO_PREFIX, sizeof(EDG_WLC_JOBID_PROTO_PREFIX) - 1)) {
+    if (strncmp(idString, GLITE_WMSC_JOBID_PROTO_PREFIX, sizeof(GLITE_WMSC_JOBID_PROTO_PREFIX) - 1)) {
 	out->BShost  = (char *) NULL;
 	out->BSport  = 0;
 
@@ -144,7 +144,7 @@ int edg_wlc_JobIdParse(const char *idString, edg_wlc_JobId *jobId)
 	return EINVAL;
     }
 
-    pom = strdup(idString + sizeof(EDG_WLC_JOBID_PROTO_PREFIX) - 1);
+    pom = strdup(idString + sizeof(GLITE_WMSC_JOBID_PROTO_PREFIX) - 1);
     pom1 = strchr(pom, '/');
     pom2 = strchr(pom, ':');
 
@@ -158,7 +158,7 @@ int edg_wlc_JobIdParse(const char *idString, edg_wlc_JobId *jobId)
     } else {
 	pom[pom1-pom]     = '\0';
 	out->BShost  = strdup(pom);
-	out->BSport  = EDG_WLC_JOBID_DEFAULT_PORT;
+	out->BSport  = GLITE_WMSC_JOBID_DEFAULT_PORT;
     }
 
     /* XXX: localhost not supported in jobid 
@@ -221,7 +221,7 @@ char* edg_wlc_JobIdUnparse(const edg_wlc_JobId jobid)
     else
         *port = 0;
 
-    asprintf(&out,EDG_WLC_JOBID_PROTO_PREFIX"%s%s/%s%s%s",
+    asprintf(&out, GLITE_WMSC_JOBID_PROTO_PREFIX"%s%s/%s%s%s",
 	     jobid->BShost,port,
 	     jobid->id,
 	     (jobid->info ? "?" : ""),
@@ -237,7 +237,7 @@ char* edg_wlc_JobIdGetServer(const edg_wlc_JobId jobid)
 
     if (jobid)
 	asprintf(&bs, "%s:%u", jobid->BShost,
-		 jobid->BSport ? jobid->BSport : EDG_WLC_JOBID_DEFAULT_PORT);
+		 jobid->BSport ? jobid->BSport : GLITE_WMSC_JOBID_DEFAULT_PORT);
 
     return bs;
 }
@@ -247,7 +247,7 @@ void edg_wlc_JobIdGetServerParts(const edg_wlc_JobId jobid, char **srvName, unsi
 {
     if (jobid) {
 	*srvName = strdup(jobid->BShost);
-	*srvPort = jobid->BSport ? jobid->BSport : EDG_WLC_JOBID_DEFAULT_PORT;
+	*srvPort = jobid->BSport ? jobid->BSport : GLITE_WMSC_JOBID_DEFAULT_PORT;
     }
 }
 

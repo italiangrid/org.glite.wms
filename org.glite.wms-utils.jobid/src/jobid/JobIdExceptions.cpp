@@ -8,8 +8,9 @@
 
 COMMON_NAMESPACE_BEGIN{
 namespace jobid{
-using namespace std ;
-using namespace edg::workload::common::utilities ;
+using namespace std;
+using namespace glite::wms::common::utilities;
+
 /*****************************
 * JobIdException
 *****************************/

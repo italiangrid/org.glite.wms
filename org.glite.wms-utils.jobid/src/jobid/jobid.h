@@ -1,5 +1,5 @@
-#ifndef _EDG_JOBID_H
-#define _EDG_JOBID_H
+#ifndef _GLITE_JOBID_H
+#define _GLITE_JOBID_H
 
 /*!
  * \file jobid/jobid.h
@@ -14,8 +14,8 @@ extern "C" {
 
 typedef struct _edg_wlc_JobId *edg_wlc_JobId;
 
-#define EDG_WLC_JOBID_DEFAULT_PORT 9000 /**< Default port where bookkeeping server listens */
-#define EDG_WLC_JOBID_PROTO_PREFIX "https://" /**< JobId protocol prefix */
+#define GLITE_WMSC_JOBID_DEFAULT_PORT 9000 /**< Default port where bookkeeping server listens */
+#define GLITE_WMSC_JOBID_PROTO_PREFIX "https://" /**< JobId protocol prefix */
 
 
 /* All the pointer functions return malloc'ed objects (or NULL on error) */
@@ -106,4 +106,4 @@ char* edg_wlc_JobIdGetUnique(const edg_wlc_JobId jobid);
 }
 #endif
 
-#endif /* _EDG_JOBID_H */
+#endif /* _GLITE_JOBID_H */
