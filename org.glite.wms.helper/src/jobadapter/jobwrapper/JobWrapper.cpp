@@ -586,6 +586,60 @@ JobWrapper::create_maradona_file(ostream& os,
 }
 
 ostream&
+JobWrapper::send_dgas_gianduia_lsf_files(ostream& os,
+                const string& globus_resource_contact_string,
+                const string& gatekeeper) const
+{
+  os << "if [ -n \"${LSB_JOBID}\" ]; then" << endl;
+  os << "  cat \"${X509_USER_PROXY}\" ";
+  os << "| ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ";
+  os << "-s " << gatekeeper << ":56569: ";
+  os << "-L lsf_${LSB_JOBID} ";
+  os << "-G ${GLITE_WMS_JOBID} ";
+  os << "-C " << globus_resource_contact_string << " ";
+  os << "-H \"$HLR_LOCATION\"" << endl;
+  os << "  if [ $? != 0 ]; then" << endl;
+  os << "  echo \"Error transferring gianduia with command: ";
+  os << "cat ${X509_USER_PROXY} ";
+  os << "| ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ";
+  os << "-s " << gatekeeper << ":56569: ";
+  os << "-L lsf_${LSB_JOBID} ";
+  os << "-G ${GLITE_WMS_JOBID} ";
+  os << "-C " << globus_resource_contact_string << " ";
+  os << "-H $HLR_LOCATION\"" << endl;
+  os << "  fi" << endl;
+  os << "fi" << endl << endl;
+  return os;
+}
+
+ostream&
+JobWrapper::send_dgas_gianduia_pbs_files(ostream& os,
+                const string& globus_resource_contact_string,
+                const string& gatekeeper) const
+{
+  os << "if [ -n \"${PBS_JOBID}\" ]; then" << endl;
+  os << "  cat ${X509_USER_PROXY} ";
+  os << "| ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ";
+  os << "-s " << gatekeeper << ":56569: ";
+  os << "-L pbs_${PBS_JOBID} ";
+  os << "-G ${GLITE_WMS_JOBID} ";
+  os << "-C " << globus_resource_contact_string << " ";
+  os << "-H \"$HLR_LOCATION\"" << endl;
+  os << "  if [ $? != 0 ]; then" << endl;
+  os << "  echo \"Error transferring gianduia with command: ";
+  os << "cat ${X509_USER_PROXY} ";
+  os << "| ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient ";
+  os << "-s " << gatekeeper << ":56569: ";
+  os << "-L pbs_${PBS_JOBID} ";
+  os << "-G ${GLITE_WMS_JOBID} ";
+  os << "-C " << globus_resource_contact_string << " ";
+  os << "-H $HLR_LOCATION\"" << endl;
+  os << "  fi" << endl;
+  os << "fi" << endl << endl;
+  return os;
+}
+
+ostream&
 JobWrapper::doExit(ostream& os, 
 		   const string& maradonaprotocol, 
 		   bool create_subdir) const
@@ -937,6 +991,11 @@ JobWrapper::print(ostream& os) const
   
   // set the jdl environment variables
   set_environment(os, m_environment);
+
+  send_dgas_gianduia_lsf_files(os, m_globus_resource_contact_string,
+                               m_gatekeeper_hostname);
+  send_dgas_gianduia_pbs_files(os, m_globus_resource_contact_string,
+                               m_gatekeeper_hostname);
 
   // set the umask
   set_umask(os);

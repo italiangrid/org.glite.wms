@@ -271,6 +271,14 @@ protected:
   virtual std::ostream& create_maradona_file(std::ostream& os,
 		  			     const std::string& jobid_to_filename) const;
 
+  virtual std::ostream& send_dgas_gianduia_lsf_files(std::ostream& os,
+				  const std::string& globus_resource_contact_string,
+                                  const std::string& gatekeeper) const;
+
+  virtual std::ostream& send_dgas_gianduia_pbs_files(std::ostream& os,
+  			          const std::string& globus_resource_contact_string,
+                                  const std::string& gatekeeper) const;
+
   virtual std::ostream& doExit(std::ostream& os,
 		  	       const std::string& maradonaprotocol,
 			       bool create_subdir) const;
