@@ -17,21 +17,21 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/11 15:29:44  eronchie
+#       Added LICENSE handling
+#
 #       Revision 1.1  2004/10/06 14:32:49  eronchie
 #       Start adding rls
 #
 #
 #
-                                                                                                                                                             
-## *********************************************************************
-## *
-## * Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
-## * For license conditions see LICENSE file or
-## * http://www.edg.org/license.html
-## *
-## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = interface src 
