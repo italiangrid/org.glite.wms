@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/10/27 07:27:47  avellino
+	Inserting launch scripts & conf files in rpm
+
 	Revision 1.1  2004/08/12 12:23:03  eronchie
 	Updated
-
+	
 	
 -->
 
@@ -118,5 +121,24 @@
 	<target name="localclean"
 		description="Module specific cleaning tasks">
 	</target>
+
+       <target name="localdistbin"
+       		description="Inserting launch scripts and configuration files">
+        <mkdir dir="tempbuild/bin"/>
+		<copy toDir="tempbuild/bin">
+			<fileset dir="${module.config.dir}">
+				<include name="**/*.sh"/>
+				<include name="**/*.csh"/>
+			</fileset>
+		</copy>
+		<copy toDir="tempbuild/etc">
+			<fileset dir="${module.config.dir}">
+				<include name="**/*.xml"/>
+				<include name="glite_wmsui_gui_var.conf"/>
+				<include name="glite_wmsui_gui_log4j.properties"/>
+			</fileset>
+		</copy>
+	</target>
+
 	
-</project>		
+</project>
