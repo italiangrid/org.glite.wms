@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.10  2004/08/11 12:15:30  eronchie
+	WARNING: work in progress
+
 	Revision 1.9  2004/08/11 10:05:08  eronchie
 	Updated
-
+	
 	Revision 1.8  2004/08/11 08:42:50  eronchie
 	Start adding partitioner
 	
@@ -358,10 +361,28 @@
 		</if>
 	</target>
 
+	<target name="wrap-python" unless="setenvonly" depends="boost,classads,globus, swig">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms-ui.subsystem.dir}.wrap-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms-ui.subsystem.dir}.wrap-python"
+                            target="${target}"
+                            inheritall="false" />
+                        </else>
+                </if>
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="partitioner,
 					     api-cpp,
    					     api-java,
+					     wrap-python,
+					     wrap-java,
  					     cli-python,
 					     gui-java" />
 		

@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/08/11 12:15:31  eronchie
+	WARNING: work in progress
+
 	Revision 1.5  2004/08/11 08:42:50  eronchie
 	Start adding partitioner
-
+	
 	Revision 1.4  2004/08/10 09:07:20  eronchie
 	Updated
 	
@@ -136,6 +139,22 @@
 			<equals arg1="${org.glite.wms-ui.api-java.version}" arg2="HEAD" />
 		</condition>
 
+		<condition property="wrap-python.head">
+                        <equals arg1="${org.glite.wms-ui.wrap-python.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="wrap-java.head">
+                        <equals arg1="${org.glite.wms-ui.wrap-java.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="gui-java.head">
+                        <equals arg1="${org.glite.wms-ui.gui-java.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="cli-python.head">
+                        <equals arg1="${org.glite.wms-ui.cli-python.version}" arg2="HEAD" />
+                </condition>
+
     	</target>
 
     	<presetdef name="cvs-co">
@@ -224,10 +243,24 @@
 			tag="${org.glite.wms-ui.api-java.version}" />
 	</target>
 
+	<!-- wrap-python -->
+        <target name="wrap-python" depends="get.wrap-python.head, get.wrap-python.tag"/>
+        <target name="get.wrap-python.head" if="wrap-python.head">
+                <cvs-co package="org.glite.wms-ui.wrap-python" />
+        </target>
+        <target name="get.wrap-python.tag" unless="wrap-python.head">
+                <cvs-co package="org.glite.wms-ui.wrap-python"
+                        tag="${org.glite.wms-ui.wrap-python.version}" />
+        </target>
+
 	<!-- All project modules -->
  	<target name="project" depends="partitioner,
 					api-cpp,
-  				        api-java"/>
+  				        api-java,
+                                        wrap-python,
+                                        wrap-java,
+                                        cli-python,
+                                        gui-java"/>
 
 
 	<!-- ====================================================
