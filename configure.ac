@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/07/30 08:17:38  eronchie
+#       Increased condor version 6.7.1
+#
 #       Revision 1.9  2004/07/28 14:38:57  pandreet
 #       Proxyrenewal dependencies fixed
 #
@@ -100,7 +103,7 @@ have_expat=no
                                                                                 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_CONDORG(6.5.3, have_condorg=yes, have_condorg=no)
+AC_CONDORG(6.7.1, have_condorg=yes, have_condorg=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_ARES([], have_ares=yes, have_ares=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
