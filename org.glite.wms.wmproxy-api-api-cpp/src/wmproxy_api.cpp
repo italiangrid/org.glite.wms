@@ -6,12 +6,19 @@
 #include <fstream> //strsream
 #include <ctype.h>
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
+#include "gridsite.h" // GRSTx509MakeProxyCert method
 #include <sstream> // int to string conversion
 
 using namespace std;
 namespace glite {
 namespace wms {
 namespace wmproxyapi {
+
+BaseException* createWmpException (BaseException *b_ex ,const string &method , const string &descrption ){
+	b_ex->methodName = method ;
+	b_ex->Description   = description;
+	return b_ex ;
+}
 
 BaseException* createWmpException(SOAP_ENV__Detail *detail){
 	BaseException *b_ex =NULL;
@@ -49,6 +56,7 @@ BaseException* createWmpException(SOAP_ENV__Detail *detail){
 	}
 	return b_ex;
 }
+
 
 /*****************************************************************
 soapErrorMng - common soap failure management
@@ -218,7 +226,7 @@ void jobCancel(const string &jobid, ConfigContext *cfs){
 /*****************************************************************
 getMaxInputSandboxSize
 ******************************************************************/
-double getMaxInputSandboxSize(ConfigContext *cfs){
+long getMaxInputSandboxSize(ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getMaxInputSandboxSizeResponse response;
@@ -397,11 +405,14 @@ putProxy
 void putProxy(const string &delegationId, const string &request, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
+	char *certtxt;
+	if (GRSTx509MakeProxyCert(&certtxt, stderr, request.c_str(), getProxyFile(cfs), getProxyFile(cfs), 60))
+		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	ns1__putProxyResponse response;
-	if (wmp.ns1__putProxy(delegationId, request, response) == SOAP_OK) {
+	if (wmp.ns1__putProxy(delegationId, string(*certtxt), response) == SOAP_OK) {
 		//OK
 	} else soapErrorMng(wmp) ;
-} 
+}
 
 } // wmproxy-api namespace
 } // wms namespace

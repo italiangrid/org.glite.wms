@@ -125,7 +125,7 @@ void jobCancel(const std::string &jobid, ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the input sandbox maximum size in bytes
 */
-double getMaxInputSandboxSize(ConfigContext *cfs=NULL);
+long getMaxInputSandboxSize(ConfigContext *cfs=NULL);
 /**
 * Create a unique URI associated to the job
 * @param jobid the string identification of the job
@@ -205,7 +205,7 @@ std::string getIntParametricJobTemplate (std::vector<std::string> attributes , i
 * @param attributes all the attributes that contains reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
 * @param parametersa vector containing all the parameters
 * @param requirementsa string representing the expression describing all the Job requirements (which is an attribute of boolean type)
-* @param ranka string representing the expression for the rank (which is an attribute of double type) of the resource
+* @param rank a string representing the expression for the rank (which is an attribute of double type) of the resource
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the JDL string representation of the parametric job
 */
