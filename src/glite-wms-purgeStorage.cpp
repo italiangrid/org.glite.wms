@@ -1,22 +1,21 @@
 
-// includes boost/filesystem/path.hpp
 #include <boost/filesystem/operations.hpp> 
 #include <boost/filesystem/exception.hpp>
 #include <boost/progress.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "edg/workload/networkserver/daemon/NetworkServer.h"
-#include "edg/workload/purger/purger.h"
+#include "glite/wms/manager/daemon/NetworkServer.h"
+#include "glite/wms/purger/purger.h"
 
-#include "edg/workload/common/jobid/JobId.h"
-#include "edg/workload/common/jobid/manipulation.h"
-#include "edg/workload/common/jobid/JobIdExceptions.h"
+#include "glite/wms/jobid/JobId.h"
+#include "glite/wms/jobid/manipulation.h"
+#include "glite/wms/jobid/JobIdExceptions.h"
 
-#include "edg/workload/common/logger/edglog.h"
-#include "edg/workload/common/logger/manipulators.h"
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
 
-#include "edg/workload/common/utilities/LineParser.h"
-#include "edg/workload/common/utilities/LineParserExceptions.h"
+#include "glite/wms/common/utilities/LineParser.h"
+#include "glite/wms/common/utilities/LineParserExceptions.h"
 
 #include <iostream>                        // for cout
 #include <string>
@@ -27,11 +26,11 @@
 #include <sys/vfs.h>
 
 namespace fs            = boost::filesystem;
-namespace wl	        = edg::workload;
-namespace ns            = edg::workload::networkserver; 
-namespace logger	= edg::workload::common::logger;
-namespace utilities     = edg::workload::common::utilities;
-namespace jobid         = edg::workload::common::jobid;
+namespace wl	        = glite::wms;
+namespace ns            = glite::wms::networkserver; 
+namespace logger	= glite::wms::common::logger;
+namespace utilities     = glite::wms::common::utilities;
+namespace jobid         = glite::wms::common::jobid;
 
 using namespace std;
 
