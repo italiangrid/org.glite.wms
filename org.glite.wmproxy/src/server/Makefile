@@ -4,7 +4,7 @@ LIBS=
 COFLAGS=-O2
 #CWFLAGS=-Wall
 CWFLAGS=
-#REPOSITORY=/home/fpacini/CVS_REP/cern
+REPOSITORY=$(HOME)/Repository/cern
 CIFLAGS=-I$(REPOSITORY)/org.glite.wms.wmproxy/src
 CMFLAGS=-DWITH_FASTCGI -DHAVE_STRINGSTREAM
 #CMFLAGS=
@@ -75,6 +75,7 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-lglite_wmsui_partitioner \
 	-lglitePipe \
 	-lgliteWMPCommands \
+	-lglite_wms_wmproxy_eventlogger \
 	-lglite_wms_wmproxy_utilities \
 	-lares \
 	-lclassad \
@@ -122,7 +123,6 @@ wmProxy:        wm.h \
                                 wmpgsoapoperations.cpp \
 				wmpconfiguration.h wmpconfiguration.cpp \
                                 wmpexceptions.cpp wmpexceptions.h \
-                                wmpeventlogger.cpp wmpeventlogger.h \
                                 wmpgsoapfaultmanipulator.cpp wmpgsoapfaultmanipulator.h \
                                 wmpdelegation.cpp wmpdelegation.h \
                                 wmpexpdagad.cpp wmpexpdagad.h \
