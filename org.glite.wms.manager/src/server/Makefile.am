@@ -120,6 +120,7 @@ glite_wms_planned2submit_LDADD   = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	-I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
+	-I$(top_srcdir)/../org.glite.wms.purger/src			\
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/common \
         $(CLASSAD_CFLAGS) \
