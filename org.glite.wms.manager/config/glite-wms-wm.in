@@ -13,10 +13,17 @@
 
 GLITE_LOCATION=${GLITE_LOCATION:-@prefix@}
 
-. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
-. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
-. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
-. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+#########################################################
+#
+#				Integration changes
+#. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
+#. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+
+. /etc/glite/profile.d/glite_setenv.sh 
+########################################
+
  
 GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
 export GLITE_WMS_CONFIG_DIR
