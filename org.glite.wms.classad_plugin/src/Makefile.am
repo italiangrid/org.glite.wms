@@ -10,7 +10,10 @@
 SUBDIRS = gangmatch
 
 lib_LTLIBRARIES = libglite_wms_classad_plugin_loader.la
-noinst_HEADERS = classad_plugin_loader.h
+
+classad_plugindir = $(includedir)/glite/wms/classad_plugin
+classad_plugin_HEADERS = \
+	classad_plugin_loader.h
  
 libglite_wms_classad_plugin_loader_la_SOURCES = \
 	classad_plugin_loader.cpp
