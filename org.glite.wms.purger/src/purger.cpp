@@ -101,7 +101,7 @@ bool purgeStorageEx(const fs::path& p, int purge_threshold, bool fake_rm)
   try {
 			
     jobid::JobId jobid( jobid::from_filename( p.leaf() ) ); 	
-    logging::client::JobStatus job_status = logging::client::Job( jobid ).status(0);
+    logging::JobStatus job_status = logging::Job( jobid ).status(0);
     std::string dg_jobid( jobid.toString() );
     std::string seqcode;
     logger::edglog << dg_jobid << " ->";
@@ -133,7 +133,7 @@ bool purgeStorageEx(const fs::path& p, int purge_threshold, bool fake_rm)
     
     switch( job_status.status ) {
   
-    case logging::client::JobStatus::CLEARED:	
+    case logging::JobStatus::CLEARED:	
 			
       logger::edglog << " removing";
       
@@ -150,11 +150,11 @@ bool purgeStorageEx(const fs::path& p, int purge_threshold, bool fake_rm)
         logger::edglog << ": fail";	
       }		
       break;
-    case logging::client::JobStatus::ABORTED:
-    case logging::client::JobStatus::DONE: 
+    case logging::JobStatus::ABORTED:
+    case logging::JobStatus::DONE: 
       {
 	struct timeval last_update_time = 
-	  job_status.getValTime(logging::client::JobStatus::LAST_UPDATE_TIME);
+	  job_status.getValTime(logging::JobStatus::LAST_UPDATE_TIME);
         time_t now;
 	time( &now);
 	
