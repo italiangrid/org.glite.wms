@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.37  2004/07/23 09:56:18  eronchie
+	Removed globus_ssl_utils dependency
+	It is moved out in org.glite.wms-utils
+
 	Revision 1.36  2004/07/23 09:33:14  eronchie
 	Changed condor in condorg
-
+	
 	Revision 1.35  2004/07/23 08:51:27  eronchie
 	Removed tls, jobid, thirdparty-globus_ssl_utils
 	
@@ -359,13 +363,13 @@
                      inheritall="false" />
 	</target>
 
-	<target name="common" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils">
+	<target name="common" unless="setenvonly" depends="boost,classads,globus">
 		<ant dir="${workspace.dir}/${subsystem.name}.common"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
-	<target name="jdl" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common">
+	<target name="jdl" unless="setenvonly" depends="boost,classads,globus,common">
                 <ant dir="${workspace.dir}/${subsystem.name}.jdl"
                      target="${target}"
                      inheritall="false" />
@@ -419,7 +423,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condorg,common,jdl,purger">
+	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,common,jdl,purger">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
                      target="${target}"
                      inheritall="false" />
