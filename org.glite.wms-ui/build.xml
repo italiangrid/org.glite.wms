@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.13  2004/08/12 09:51:37  eronchie
+	Revision 1.14  2004/08/12 12:14:24  eronchie
 	Updated
 
+	Revision 1.13  2004/08/12 09:51:37  eronchie
+	Updated
+	
 	Revision 1.12  2004/08/11 13:54:16  eronchie
 	Updated classpath
 	
@@ -402,11 +405,49 @@
                 </if>
         </target>
 
+	<target name="gui-java" unless="setenvonly" depends="api-java, wrap-java">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerr
+or="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${fa
+ilonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms-ui.subsystem.dir}.gui-java"
+                            target="${target}"
+                            inheritall="false" />
+                        </else>
+                </if>
+        </target>
+
+	<target name="cli-python" unless="setenvonly" depends="cli-python">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerr
+or="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${fa
+ilonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms-ui.subsystem.dir}.cli-python"
+                            target="${target}"
+                            inheritall="false" />
+                        </else>
+                </if>
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="partitioner,
 					     api-cpp,
    					     api-java,
 					     wrap-python,
-					     wrap-java" />
+					     wrap-java,
+					     gui-java,
+					     cli-python" />
 		
 </project>

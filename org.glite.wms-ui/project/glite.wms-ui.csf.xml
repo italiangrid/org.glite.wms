@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.10  2004/08/12 12:13:13  eronchie
+	Revision 1.11  2004/08/12 12:14:24  eronchie
 	Updated
 
+	Revision 1.10  2004/08/12 12:13:13  eronchie
+	Updated
+	
 	Revision 1.9  2004/08/12 09:51:37  eronchie
 	Updated
 	
@@ -286,7 +289,7 @@
 	</target>
 
 	<!-- cli-python -->
-        <target name="cli-python" depends="swig, get.cli-python.head, get.cli-python.tag"/>
+        <target name="cli-python" depends="get.cli-python.head, get.cli-python.tag"/>
         <target name="get.cli-python.head" if="cli-python.head">
                 <cvs-co package="org.glite.wms-ui.cli-python" />
         </target>
