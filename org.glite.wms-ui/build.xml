@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.14  2004/08/12 12:14:24  eronchie
+	Revision 1.15  2004/08/12 14:23:16  eronchie
 	Updated
 
+	Revision 1.14  2004/08/12 12:14:24  eronchie
+	Updated
+	
 	Revision 1.13  2004/08/12 09:51:37  eronchie
 	Updated
 	
@@ -409,8 +412,7 @@
                 <if>
                         <isset property="small.memory" />
                         <then>
-                                <exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerr
-or="${failonerror}">
+                                <exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
                                         <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${fa
 ilonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                                 </exec>
