@@ -17,6 +17,8 @@ matchmaking_HEADERS = \
         jdl_attributes.h \
         glue_attributes.h
 
+libglite_wms_matchmaking_la_LDFLAGS = -all-static
+
 libglite_wms_matchmaking_la_SOURCES = \
 	matchmakerGlueImpl.cpp \
 	matchmakerISMImpl.cpp \
