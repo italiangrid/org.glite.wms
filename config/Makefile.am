@@ -11,7 +11,7 @@ EXTRA_DIST = \
 	glite-wms-jc.in \
 	glite-wms-lm.in
 
-jsdir = $(prefix)/etc/init.d
+jsdir = $(sysconfig)/init.d
 js_SCRIPTS = glite-wms-lm glite-wms-lm
 
 libexec_SCRIPTS = glite-wms-clean-lm-recycle.sh
