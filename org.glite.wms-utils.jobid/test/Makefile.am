@@ -8,7 +8,7 @@
 
 STDCPP = -lstdc++
 
-JOBID = $(top_builddir)/src/jobid/libglite_wms_jobid.la
+JOBID = $(top_builddir)/src/jobid/libglite_wms_cjobid.la
 
 check_PROGRAMS = testjobid 
 

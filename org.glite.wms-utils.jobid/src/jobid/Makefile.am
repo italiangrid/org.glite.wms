@@ -6,14 +6,16 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_jobid.la
+lib_LTLIBRARIES = libglite_wms_jobid.la libglite_wms_cjobid.la
 
 libglite_wms_jobid_la_SOURCES = \
 	JobId.cpp \
 	JobIdExceptions.cpp \
-	manipulation.cpp \
-	cjobid.c \
-	strmd5.c
+	manipulation.cpp 
+
+libglite_wms_cjobid_la_SOURCES = \
+        cjobid.c \
+        strmd5.c
 
 jobidincludedir = $(includedir)/glite/wms/jobid
 jobidinclude_HEADERS = \
