@@ -417,13 +417,15 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    //        * si-lfn, si-guid  -> use SI
    //
    //
-   dli::create_t* createDli;  dli::destroy_t* destroyDli; void *dliLibHandle;
+   dli::create_t* createDli; dli::create_t_with_timeout* createDli_with_timeout;
+   dli::destroy_t* destroyDli; void *dliLibHandle;
    dli::DataLocationInterfaceSOAP* dli;
-                                                                                                
+                                                                                                            
    rls::create_t* createRls;  rls::destroy_t* destroyRls; void *rlsLibHandle;
    rls::ReplicaServiceReal* replica;
-                                                                                                
-   sici::create_t* createSici;  sici::destroy_t* destroySici; void *siciLibHandle;
+                                                                                                            
+   sici::create_t* createSici;  sici::create_t_with_timeout* createSici_with_timeout;
+   sici::destroy_t* destroySici; void *siciLibHandle;
    sici::StorageIndexCatalogInterface* sici;
 
               
@@ -431,8 +433,12 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    string rlsLib = "libglite_wms_rls.so";
    string siciLib = "libglite_wms_sici.so";
 
+   int timeout = (configuration::Configuration::instance()->ns())->dli_si_catalog_timeout();
 
    for(BrokerInfoData::LFN_container_type::const_iterator lfn = input_data.begin(); lfn != input_data.end();lfn++) {
+
+//enzo
+//cout << "-----------------------" << *lfn << "----------------------------------\n";
 
       try {
          BrokerInfoData::SFN_container_type resolved_sfn;
@@ -495,15 +501,34 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      edglog(warning) << "dlerror returns: " << dlerror() << endl;
                   }
                   else {
-                     createDli = (dli::create_t*)dlsym(dliLibHandle,"create");
-                     destroyDli = (dli::destroy_t*)dlsym(dliLibHandle,"destroy");
-                     if (!createDli || !destroyDli) {
-                        edglog(warning) << "cannot load DLI helper symbols" << endl;
-                        edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                        dlclose(dliLibHandle);
+                     bool dlsym_Ok = true;
+                     if ( timeout == 0 ) {
+                        createDli = (dli::create_t*)dlsym(dliLibHandle,"create");
+                        destroyDli = (dli::destroy_t*)dlsym(dliLibHandle,"destroy");
+                        if (!createDli || !destroyDli) {
+                           dlsym_Ok = false;
+                           edglog(warning) << "cannot load DLI helper symbols" << endl;
+                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                           dlclose(dliLibHandle);
+                        }
                      }
                      else {
-                        dli = createDli(vo, dliEndpoint);
+                        createDli_with_timeout = (dli::create_t_with_timeout*)dlsym(dliLibHandle,"create_with_timeout");
+                        destroyDli = (dli::destroy_t*)dlsym(dliLibHandle,"destroy");
+                        if (!createDli_with_timeout || !destroyDli) {
+                           dlsym_Ok = false;
+                           edglog(warning) << "cannot load DLI helper symbols" << endl;
+                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                           dlclose(dliLibHandle);
+                        }
+                     }
+                     if ( dlsym_Ok ) {
+                        if ( timeout == 0 ) {
+                           dli = createDli(vo, dliEndpoint);
+                        }
+                        else {
+                           dli = createDli_with_timeout(vo, dliEndpoint, timeout);
+                        }
                         dliInUse = true;
                         if ((*lfn).find(ldsPrefix.c_str()) == 0) {
                            resolved_sfn = dli->listReplicas(ldsPrefix.c_str(), *lfn);
@@ -566,15 +591,34 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      edglog(warning) << "dlerror returns: " << dlerror() << endl;
                   }
                   else {
-                     createSici = (sici::create_t*)dlsym(siciLibHandle,"create");
-                     destroySici = (sici::destroy_t*)dlsym(siciLibHandle,"destroy");
-                     if (!createSici || !destroySici) {
-                        edglog(warning) << "cannot load SI helper symbols" << endl;
-                        edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                        dlclose(siciLibHandle);
+                     bool dlsym_Ok = true;
+                     if ( timeout == 0 ) {
+                        createSici = (sici::create_t*)dlsym(siciLibHandle,"create");
+                        destroySici = (sici::destroy_t*)dlsym(siciLibHandle,"destroy");
+                        if (!createSici || !destroySici) {
+                           dlsym_Ok = false;
+                           edglog(warning) << "cannot load SI helper symbols" << endl;
+                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                           dlclose(siciLibHandle);
+                        }
                      }
                      else {
-                        sici = createSici(siciEndpoint);
+                        createSici_with_timeout = (sici::create_t_with_timeout*)dlsym(siciLibHandle,"create_with_timeout");
+                        destroySici = (sici::destroy_t*)dlsym(siciLibHandle,"destroy");
+                        if (!createSici_with_timeout || !destroySici) {
+                           dlsym_Ok = false;
+                           edglog(warning) << "cannot load SI helper symbols" << endl;
+                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                           dlclose(siciLibHandle);
+                        }
+                     }
+                     if ( dlsym_Ok ) {
+                        if ( timeout == 0 ) {
+                           sici = createSici(siciEndpoint);
+                        }
+                        else {
+                           sici = createSici_with_timeout(siciEndpoint, timeout);
+                        }
                         siciInUse = true;
                                                                                                 
                         string noPrefix = *lfn;
@@ -642,6 +686,8 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
               sfn != resolved_sfn.end(); sfn++) {
                                                                                                 
                edglog(debug) << *sfn << endl;
+//enzo
+//cout <<"sfn returned by the catalog: "<< *sfn << endl;
                                                                                                 
                try {
                 
@@ -651,6 +697,8 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                   if( boost::regex_match(*sfn, pieces, expression) ) {
                      SE_name.assign(pieces[2].first, pieces[2].second);
                      bid.m_involvedSEs.insert(SE_name);
+//
+//cout<<"SE inserted: " << SE_name << endl;
                   }
                   else {
                      // If the SFN doesn't match the regular expression, we assume
@@ -665,9 +713,13 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      }
                      if (validSE(SE) == 0) {
                         bid.m_involvedSEs.insert(SE);
+//enzo
+//cout << "SE inserted after validity check: " << SE << endl;
                      }
                      else {
                         edglog(warning) << SE << ": " << "in not a valid SE"<< endl;
+//enzo
+//cout <<  SE << ": " << "in not a valid SE"<< endl;
                      }
                   }
                }
@@ -685,11 +737,15 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
       }
       catch( std::exception& ex ) {
            edglog(warning) << ex.what() << endl;
+//enzo
+//cout << ex.what() << endl;
       }
       catch(char *faultstring) {
         // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
         //
         edglog(warning) << "gsoap Exception : " << faultstring << endl;
+//enzo
+//cout  << "gsoap Exception : " << faultstring << endl;
       }
                                                                                                 
    } //for
