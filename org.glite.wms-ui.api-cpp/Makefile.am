@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/08 09:26:05  amarasch
+#       Added LICENSE handling
+#
 #       Revision 1.1  2004/08/09 15:59:39  eronchie
 #       WARNING: work in progress
 #
@@ -45,6 +48,10 @@
 
 ## Process this file with automake to produce Makefile.in
 
+EXTRA_DIST = LICENSE
+ 
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 ## Subdirectories list
 SUBDIRS = interface src 
 
