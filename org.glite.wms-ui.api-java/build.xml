@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/08/11 13:54:37  eronchie
+	Updated
+
 	Revision 1.1  2004/07/23 16:54:45  amarasch
 	build files committed
-
+	
 	Revision 1.3  2004/07/06 18:17:51  flammer
 	Update of classpath definitions, targets & configure file.
 	
@@ -97,10 +100,19 @@
 		 Local private targets
 	     ============================================== -->
 	
-	<path id="compile.classpath">
-        	<path refid="ext.jclassads.classpath"/>
-        	<pathelement location="${module.classes.dir}"/>
-    	</path>
+	<!-- Set classpaths -->
+        <path id="compile.classpath">
+               <!-- jclassads classpath -->
+               <path refid="ext.jclassads.classpath"/>
+		<!-- jglobus classpath -->
+               <path refid="ext.jglobus.classpath"/>
+	       <!-- log4j classpath -->
+               <path refid="ext.log4j.classpath"/>
+	       <!-- log4j classpath -->
+               <path refid="ext.edg-java-security.classpath"/>
+               <!-- stage classpath -->
+               <fileset dir="${stage.java.dir}"/>
+        </path>
 
     	<path id="test.classpath">
         	<path refid="compile.classpath"/>
