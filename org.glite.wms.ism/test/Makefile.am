@@ -11,12 +11,11 @@ glite_wms_ism_cemon_purchaserTest_LDADD = \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
         $(BOOST_LIBS) \
-	$(top_srcdir)/../org.glite.wms.common/build/src/ldif2classad/LDIFObject.lo
+	$(top_srcdir)/../org.glite.wms.common/build/src/ldif2classad/LDIFObject.lo \
 	$(GLITE_WMS_COMMON_UTIL_LIBS) \
-        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
         $(CLASSAD_LIBS) \
         $(GLITE_WMS_ISM_LIBS)
-
+CXXFLAGS = -g
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcdir)/src \
         -I$(top_srcidr)/test \

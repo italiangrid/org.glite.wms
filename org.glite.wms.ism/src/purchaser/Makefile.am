@@ -7,15 +7,15 @@
 ## *********************************************************************
 
 lib_LTLIBRARIES    = \
-	libglite_wms_ism_ii_purchaser.la 
-#	libglite_wms_ism_cemon_purchaser.la
+	libglite_wms_ism_ii_purchaser.la \
+	libglite_wms_ism_cemon_purchaser.la
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
 	common.cpp \
         ism-ii-purchaser.cpp
 
-# libglite_wms_ism_cemon_purchaser_la_SOURCES = \
-#	ism-cemon-purchaser.cpp
+libglite_wms_ism_cemon_purchaser_la_SOURCES = \
+	ism-cemon-purchaser.cpp
 CXXFLAGS = -g
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
