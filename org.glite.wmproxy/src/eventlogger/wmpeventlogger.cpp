@@ -5,9 +5,8 @@
 */
 
 #include "wmpeventlogger.h"
-
 #include "glite/lb/producer.h"
-// from logging_fn
+
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
@@ -17,6 +16,7 @@
 #include "commands/logging.h"
 #include "utilities/wmpexception_codes.h"
 #include "utilities/wmpexceptions.h"
+#include "utilities/wmputils.h"
 
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
@@ -168,7 +168,6 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	JobId *jobid = NULL;
 	string dest_uri;
 	string jobidstring;
-	//                          getSandboxDestURIResponse getSandboxDestURI_response;
 	int size = sizeof(subjobs) / sizeof(subjobs[0]);
 	for (unsigned int i = 0; i < size; i++) {
 		// Setting attribute for children jobs
@@ -176,15 +175,9 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		// it should be recursive in the case the job is a dag!! //TBD
 		jobidstring = edg_wlc_JobIdUnparse(subjobs[i]);
 		jobid = new JobId(jobidstring);
-		try {
-			//                        getSandboxDestURI(getSandboxDestURI_response, jobidstring);
-		} catch (Exception &exc) {
-			throw exc;
-		} catch (exception &ex) {
-			throw ex;
-		}
-	 	//             dest_uri = getSandboxDestURI_response.path;
-	 	dest_uri = "getSandboxDestURI_response.path";
+	 	dest_uri = string (getenv("DOCUMENT_ROOT") )
+			+ "/"
+			+ to_filename ( *jobid ) ;
 		/*if (!ad->hasNodeAttribute(jobid, JDL::ISB_BASE_URI)) {
 			ad->setNodeAttribute(jobid, JDL::ISB_BASE_URI, dest_uri);
 		}				//TBD ** UNCOMMENT WHEN CODED **
