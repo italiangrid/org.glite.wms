@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "../src/configuration/cwrapper.h"
+#include "configuration/cwrapper.h"
 
 int main( void )
 {

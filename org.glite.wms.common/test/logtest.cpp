@@ -6,10 +6,10 @@
 
 #include <boost/thread/tss.hpp>
 
-#include "../src/logger/logstream.h"
-#include "../src/logger/manipulators.h"
-#include "../src/logger/edglog.h"
-#include "../src/utilities/streamdescriptor.h"
+#include "logger/logstream.h"
+#include "logger/manipulators.h"
+#include "logger/edglog.h"
+#include "utilities/streamdescriptor.h"
 
 USING_COMMON_NAMESPACE;
 

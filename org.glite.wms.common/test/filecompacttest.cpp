@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../src/utilities/FileList.h"
+#include "utilities/FileList.h"
 
 USING_COMMON_NAMESPACE;
 using namespace std;

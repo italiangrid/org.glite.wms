@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../src/utilities/filecontainer.h"
+#include "utilities/filecontainer.h"
 
 using namespace std;
 

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../src/utilities/FileList.h"
+#include "utilities/FileList.h"
 
 using namespace std;
 

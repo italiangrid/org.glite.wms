@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "../src/process/user.h"
-#include "../src/process/process.h"
+#include "process/user.h"
+#include "process/process.h"
 
 using namespace std;
 USING_COMMON_NAMESPACE;

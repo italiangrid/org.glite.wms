@@ -5,7 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include <classad_distribution.h>
 
-#include "../src/utilities/FileList.h"
+#include "utilities/FileList.h"
 
 USING_COMMON_NAMESPACE;
 using namespace std;

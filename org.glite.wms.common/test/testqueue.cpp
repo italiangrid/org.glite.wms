@@ -1,7 +1,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include "../src/utilities/FileList.h"
+#include "utilities/FileList.h"
 
 using namespace std;
 USING_COMMON_NAMESPACE;

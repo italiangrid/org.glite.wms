@@ -5,8 +5,8 @@
 
 #include <iostream>
 
-#include "../src/process/process.h"
-#include "../src/process/subprocess.h"
+#include "process/process.h"
+#include "process/subprocess.h"
 
 namespace process = glite::wms::common::process;
 

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../src/utilities/globus_ftp_utils.h"
+#include "utilities/globus_ftp_utils.h"
 
 using namespace std;
 namespace utilities = glite::wms::common::utilities;

@@ -2,10 +2,10 @@
 
 #include <iostream>
 
-#include "../src/configuration/Configuration.h"
-#include "../src/configuration/NSConfiguration.h"
-#include "../src/configuration/JCConfiguration.h"
-#include "../src/configuration/exceptions.h"
+#include "configuration/Configuration.h"
+#include "configuration/NSConfiguration.h"
+#include "configuration/JCConfiguration.h"
+#include "configuration/exceptions.h"
 
 using namespace std;
 

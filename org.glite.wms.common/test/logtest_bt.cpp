@@ -6,9 +6,9 @@
 
 #include <boost/thread/thread.hpp>
 
-#include "../src/logger/logstream_ts.h"
-#include "../src/logger/manipulators.h"
-#include "../src/logger/edglog.h"
+#include "logger/logstream_ts.h"
+#include "logger/manipulators.h"
+#include "logger/edglog.h"
 
 USING_COMMON_NAMESPACE;
 

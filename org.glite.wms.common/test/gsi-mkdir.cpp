@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
 
-#include "../src/utilities/LineParser.h"
-#include "../src/utilities/LineParserExceptions.h"
-#include "../src/utilities/globus_ftp_utils.h"
-#include "../src/logger/edglog.h"
+#include "utilities/LineParser.h"
+#include "utilities/LineParserExceptions.h"
+#include "utilities/globus_ftp_utils.h"
+#include "logger/edglog.h"
 
 namespace utilities     = glite::wms::common::utilities;
 namespace logger        = glite::wms::common::logger::threadsafe;

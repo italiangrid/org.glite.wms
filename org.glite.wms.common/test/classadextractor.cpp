@@ -5,9 +5,9 @@
 
 #include <classad_distribution.h>
 
-#include "../src/utilities/FileList.h"
-#include "../src/utilities/FileListLock.h"
-#include "../src/utilities/Extractor.h"
+#include "utilities/FileList.h"
+#include "utilities/FileListLock.h"
+#include "utilities/Extractor.h"
 
 #include "queuecommon.h"
 

@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-#include "../src/utilities/FileList.h"
-#include "../src/utilities/FileListLock.h"
-#include "../src/common/utilities/Extractor.h"
+#include "utilities/FileList.h"
+#include "utilities/FileListLock.h"
+#include "common/utilities/Extractor.h"
 
 using namespace std;
 USING_COMMON_NAMESPACE;

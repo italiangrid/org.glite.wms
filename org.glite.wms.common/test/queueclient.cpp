@@ -6,8 +6,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "../src/utilities/FileList.h"
-#include "../src/utilities/FileListLock.h"
+#include "utilities/FileList.h"
+#include "utilities/FileListLock.h"
 
 #include "queuecommon.h"
 

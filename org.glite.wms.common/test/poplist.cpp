@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "../src/utilities/FileList.h"
-#include "../src/utilities/Extractor.h"
+#include "utilities/FileList.h"
+#include "utilities/Extractor.h"
 
 USING_COMMON_NAMESPACE;
 using namespace std;
