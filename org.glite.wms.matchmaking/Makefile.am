@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/10/08 15:08:47  monforte
+#       fixed LICENCE problem
+#
 #       Revision 1.2  2004/07/28 17:45:27  eronchie
 #       Ping Puzzetta Puzzosa
 #
@@ -28,6 +31,11 @@
 #
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = interface src 
