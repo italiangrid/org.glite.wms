@@ -12,11 +12,8 @@
 #include "fcgi_config.h"
 
 // gSOAP
-#include "soapH.h"
 #include "WMProxy.nsmap"
 #include "soapWMProxyObject.h"
-//#include "wmproxynameH.h"
-//#include "wmproxyname.nsmap"
 
 // Logging
 #include "glite/wms/common/logger/edglog.h"
@@ -29,7 +26,6 @@
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-//#include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
 
 //#include "glite/wms/common/utilities/FileList.h"
@@ -51,7 +47,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-//#include <unistd.h>
 
 // Boost
 #include <boost/pool/detail/singleton.hpp>
@@ -66,30 +61,12 @@ namespace configuration = glite::wms::common::configuration;
 
 using namespace std;
 
-const configuration::NSConfiguration* NSconf;
 
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
 
-
-
-
-
-
-
-template<typename T>
-void taskPipe ( task::PipeReader<T>&  runner , task::Pipe<T> &pipe , int num_threads ){
-	boost::thread_group m_group ;
-	assert (num_threads > 0);
-	// runner.read_from(pipe.read_end());
-	// task::ReaderFunctor<T> f (runner, pipe.read_end() );
-	// pipe.open_read_end(num_threads);
-	// while(num_threads--){
-	//	m_group.create_thread(f);
-	//}
-}
-
+std::string opt_conf_file("glite_wms.conf");
 
 
 
@@ -103,50 +80,40 @@ main(int argc, char* argv[])
 	struct soap *tsoap;
 
 	try {
-		logger::threadsafe::edglog.open( configuration::Configuration::instance()->ns()->log_file(),
-			static_cast<logger::level_t>(configuration::Configuration::instance()->ns()->log_level()) );
+		configuration::Configuration config(opt_conf_file, configuration::ModuleType::network_server);
+  		//configuration::WMConfiguration const* const wmp_config(config.wmp());
+                configuration::NSConfiguration const* const wmp_config(config.ns());
+
+		logger::threadsafe::edglog.open( wmp_config->log_file(), 
+						static_cast<logger::level_t>(wmp_config->log_level()) );
+
 		edglog_fn("   WMProxy::main");
 		edglog(fatal) << "--------------------------------------" << endl;
 		edglog(fatal) << "Starting WM Proxy..." << endl;
 		logger::threadsafe::edglog.activate_log_rotation (
-			configuration::Configuration::instance()->ns()->log_file_max_size(),
-			configuration::Configuration::instance()->ns()->log_rotation_base_file(),
-			configuration::Configuration::instance()->ns()->log_rotation_max_file_number());
+			wmp_config->log_file_max_size(),
+			wmp_config->log_rotation_base_file(),
+			wmp_config->log_rotation_max_file_number());
+
 		if (argc < 3) {
 			waitForSeconds(15);
-			std::auto_ptr<configuration::Configuration> conf;
-			try {
-				string file_name = "glite_wms.conf";
-				conf.reset(new configuration::Configuration(file_name, "NetworkServer"));
-			} catch( configuration::CannotOpenFile &file ) {
-			    edglog(fatal) << "Cannot open file: " << file << std::endl;
-			    std::cout << "Cannot open file: " << file << std::endl;
-			} catch( configuration::CannotConfigure &error ) {
-			    edglog(fatal) << "Cannot configure: " << error << std::endl;
-			    std::cout << "Cannot configure: " << error << std::endl;
-			} catch (exception ex) {
-				cerr<<"Error: "<<ex.what()<<endl;
-			}
 
-			cerr<<"NS inst: " <<configuration::Configuration::instance()->wm();
-			cerr<<"ISB Size: " <<configuration::Configuration::instance()->ns()->max_input_sandbox_size();
+			cerr<<"ISB Size: " << wmp_config->max_input_sandbox_size() << endl;
 
-			configuration::Configuration const* config = configuration::Configuration::instance();
-			cerr<<"Config: "<<config<<endl;
-			NSconf = config -> ns();
-			cerr<<"NSconf: "<<NSconf<<endl;
 			int thread_number;
 			try {
-				thread_number =  NSconf->dispatcher_threads() ;
+				thread_number =  wmp_config->dispatcher_threads() ;
 		    	} catch ( configuration::InvalidExpression &error ) {
 		      		edglog(fatal) << "Invalid Expression: " << error << std::endl;
 		    	}
 			task::Pipe<classad::ClassAd*> pipe;
 			Dispatcher dispatcher;
 			cerr<<"Launching thread(s)..."<<endl;
+			edglog(fatal) << "Launching " << thread_number << " dispatcher thread(s)" << endl;
 			task::Task dispatchers(dispatcher, pipe, thread_number);
 			cerr<<"Launching thread(s)... finished"<<endl;
 			// Running as a Fast CGI application
+			edglog(fatal) << "Entering the FastCGI accept loop..." << endl;
 			while (FCGI_Accept() >= 0) {
 				WMProxy proxy;
 				proxy.serve();
@@ -155,7 +122,7 @@ main(int argc, char* argv[])
 			/*cerr<<"Starting service..."<<endl;
 		    soap = soap_new();
 	        soap_init(soap);*/
-	
+
 	        //if (soap_ssl_server_context(soap,
 	          //  SOAP_SSL_DEFAULT,
 	            //"x509up_u500", /* keyfile: required when server must authenticate to clients (see SSL docs on how to obtain this file) */
@@ -169,7 +136,7 @@ main(int argc, char* argv[])
 	            soap_print_fault(soap, stderr);
 	            exit(1);
 	        }
-	
+
 	        bind = soap_bind(soap, argv[1], atoi(argv[2]), 100);
 	    	if (bind < 0) {
 				soap_print_fault(soap, stderr);
@@ -205,6 +172,12 @@ main(int argc, char* argv[])
 	  		soap_end(soap);           // clean up everything and close socket
 			//cerr<<"Service stopped"<<endl;
 		}*/
+        } catch( configuration::CannotOpenFile &file ) {
+                    edglog(fatal) << "Cannot open file: " << file << std::endl;
+                    std::cout << "Cannot open file: " << file << std::endl;
+        } catch( configuration::CannotConfigure &error ) {
+                    edglog(fatal) << "Cannot configure: " << error << std::endl;
+                    std::cout << "Cannot configure: " << error << std::endl;
 	} catch (exception &ex) {
 		edglog(fatal) << "Exception caught: " << ex.what() << endl;
  	} catch ( ... ) {
