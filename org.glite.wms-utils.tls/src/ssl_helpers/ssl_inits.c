@@ -3,7 +3,7 @@
 #include <openssl/ssl.h>
 
 #include "ssl_inits.h"
-#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
+//#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 
 int edg_wlc_SSLInitialization(void)
 {

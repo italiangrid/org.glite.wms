@@ -15,7 +15,7 @@
 #include <string>
 #include <unistd.h>
 
-#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
+//#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 
 /** This class header file. */
 #include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
