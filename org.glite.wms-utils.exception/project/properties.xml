@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
-	Revision 1.1  2004/07/21 18:16:57  eronchie
-	Initial revision
+	Revision 1.2  2004/07/23 15:37:26  eronchie
+	Commit
 
+	Revision 1.1.1.1  2004/07/21 18:16:57  eronchie
+	Moved out exception from org.glite.wms.common/src/utilitiesY
+	
 	Revision 1.2  2004/07/16 14:56:56  flammer
 	Corrected input path of build.properties.
 	
@@ -54,7 +57,7 @@
 		 ====================================================== -->
 		 		
 	<!-- Component name prefix -->
-	<property name="component.prefix" value="jobid" />
+	<property name="component.prefix" value="exception" />
 			
 	<!-- ======================================================
           Define general component properties
