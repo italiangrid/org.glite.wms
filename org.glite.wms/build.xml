@@ -21,11 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.25  2004/07/06 18:06:12  flammer
+	Update of classpath definitions, targets & configure file.
+
 	Revision 1.24  2004/07/06 08:47:22  eronchie
 	Removed jobadapter
 	Added helper
 	jobadapter was moved in helper
-
+	
 	Revision 1.23  2004/06/28 23:08:57  eronchie
 	Start adding new component
 	brokerinfo
@@ -114,7 +117,7 @@
 	
 	<!-- =========================================
 	     Import properties (order is important) 
-		 ========================================= -->
+	     ========================================= -->
 	
 	<!-- Import baseline & user properties -->
 	<import file="../org.glite/project/baseline.properties.xml" />
@@ -129,14 +132,19 @@
 				
 	<!-- =========================================
 		 Load dependencies properties files (order is important) 
-		 ========================================= -->
+	     ========================================= -->
 	<property file="${user.dependencies.file}"/>
 	<property file="${subsystem.dependencies.file}"/>
 	<property file="${global.dependencies.file}"/>	
-			
+	
+	<!-- =========================================
+                 Load configure options
+             ========================================= -->
+        <import file="${global.configure.options.file}"/>
+		
 	<!-- =========================================
 		 Import global task definitions
-		 ========================================= -->
+	     ========================================= -->
 	<import file="${global.taskdefs.file}" />
 	
 	<!-- =========================================
@@ -146,18 +154,17 @@
 		
 	<!-- =========================================
 		 Import targets 
-		 ========================================= -->
-	<import file="${global.targets-external-dependencies.file}"/>
-	<import file="${global.targets-envchecks.file}" />
+	     ========================================= -->
+	<import file="${global.targets-common.file}" />
 	
 	<!-- =========================================
 		 Load version file 
-		 ========================================= -->
+	     ========================================= -->
 	<property file="${module.version.file}"/>
 	
 	<!-- ===============================================
 		  Public common targets
-	  	 =============================================== -->
+	     =============================================== -->
 	
 	<target name="envinfo">
 		<!-- Workspace paths -->
