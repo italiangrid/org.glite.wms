@@ -10,6 +10,11 @@
 #ifndef _GLITE_WMS_WMPROXY_COMMANDS_LISTFILES_H_
 #define _GLITE_WMS_WMPROXY_COMMANDS_LISTFILES_H_
 
+#include "boost/filesystem/path.hpp"
+#include <string>
+#include <vector>
+
+
 namespace glite {
 namespace wms {
 namespace wmproxy {

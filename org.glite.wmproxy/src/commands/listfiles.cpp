@@ -9,11 +9,10 @@
 //  $Id$
 
 #include "boost/filesystem/operations.hpp"
-#include "boost/filesystem/path.hpp"
 #include <iostream>
-#include <string>
-#include <vector>
 
+
+#include "listfiles.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
