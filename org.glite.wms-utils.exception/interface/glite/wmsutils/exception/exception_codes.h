@@ -19,11 +19,11 @@ namespace exception {
 	*/
 	enum {
 			WMS_COMMON_BASE = GLITE_WMS_COMMON_ERROR_BASE,
-			WMS_THREAD_INIT  ,          // pthread_attr_init              method failed
-			WMS_THREAD_DETACH ,         // pthread_attr_setdetachstate    method failed
-			WMS_THREAD_CREATE ,         // pthread_create                 method failed
-			WMS_THREAD_JOIN,
-			WMS_THREAD_SSL,
+			THREAD_INIT  ,          // pthread_attr_init              method failed
+			THREAD_DETACH ,         // pthread_attr_setdetachstate    method failed
+			THREAD_CREATE ,         // pthread_create                 method failed
+			THREAD_JOIN,
+			THREAD_SSL,
 			WMS_FATAL_ERROR,
 			WMS_UI_ERROR_BASE            = GLITE_WMS_USERINTERFACE_ERROR_BASE,
 			WMS_NS_ERROR_BASE            = GLITE_WMS_NETWORKSERVER_ERROR_BASE,
