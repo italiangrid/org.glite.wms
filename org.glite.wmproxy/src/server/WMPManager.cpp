@@ -26,11 +26,11 @@
 #include "glite/wms/common/logger/edglog.h" 
 #include "glite/wms/common/logger/manipulators.h" 
 
-namespace common        = edg::workload::common;
+namespace common        = glite::wms::common;
 namespace configuration = common::configuration;
 namespace logger        = common::logger; 
 namespace utilities   	= common::utilities;
-namespace commands      = edg::workload::networkserver::commands;
+namespace commands      = glite::wms::wmproxy::commands;
 
 namespace glite {
 namespace wms {
