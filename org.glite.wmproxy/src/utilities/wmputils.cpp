@@ -159,6 +159,8 @@ fileCopy(const std::string& source, const std::string& target)
   edglog(info)<<"Copying file..."<<std::endl;
   edglog(debug)<<"Source: "<<source<<" Target: "<<target<<std::endl;
   
+  std::cerr<<"Source: "<<source<<" Target: "<<target<<std::endl;
+  
   std::ifstream in(source.c_str());
   if (!in.good()) {
     throw FileSystemException(__FILE__, __LINE__,
@@ -224,17 +226,21 @@ int managedir( const std::string &document_root , int userid , std::vector<std::
    arguments += " -m 0770 "; // MODE 
    int level = 0; 
    bool extended_path = true ; 
-   const string executable = gliteDirmanExe + arguments + document_root + FILE_SEP; 
+    string executable = gliteDirmanExe + arguments + document_root + FILE_SEP; 
    boost::char_separator<char> sep(FILE_SEP.c_str()); 
    // Iterate over the jobs 
    for (unsigned int i = 0 ; i < jobids.size() ; i++){ 
    		// boost::tokenizer<> 
        boost::tokenizer<boost::char_separator<char> > 
-               tok(to_filename (glite::wmsutils::jobid::JobId ( jobids[i] ), level, extended_path ), sep); 
-       // For each job more than one directory might be created 
-               for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end();++beg){ 
-                       if( execute (executable +*beg) ) {return 1;} 
-               } 
+           tok(to_filename (glite::wmsutils::jobid::JobId ( jobids[i] ), level, extended_path ), sep); 
+           
+   			// For each job more than one directory might be created
+           for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end();beg++) {
+           			executable = executable + FILE_SEP +*beg;
+                   if( execute (executable) ) {return 1;} 
+                   
+           }
+           
   	}
     return exit_code; 
 } 
