@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.54  2004/08/09 04:55:37  dimeglio
+	Replaced rtag with tag
+
 	Revision 1.53  2004/08/09 04:35:47  dimeglio
 	Fixed inheritance of do.cvs.tag property
-
+	
 	Revision 1.52  2004/08/09 03:05:42  dimeglio
 	Fixed inheritance of failonerror property
 	
@@ -358,7 +361,7 @@
 		<!-- CVS Label -->
 		<property name="cvs.label" value="${module.package.name}_B_${module.build}" />
 		<exec dir="${workspace.abs.dir}" executable="cvs">
-			<arg line="rtag -aFR ${cvs.label} ${module.name}" />
+			<arg line="tag -aFR ${cvs.label} ${module.name}" />
 		</exec>
 	
 	</target>
