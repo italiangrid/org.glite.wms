@@ -130,14 +130,12 @@ void matchmakerISMImpl::checkRequirement(const classad::ClassAd* requestAd, matc
     
       if (!gang_match_storageAd) {
      
-        string adstr("[CEid = \"" + it->first + "\"; \
+        string adstr("[CEid = parent.GlueCEUniqueID; \
     VO = parent.other.VirtualOrganisation; \
     additionalSESAInfo = listAttrRegEx(\"^GlueS[EA].*\", parent.other.requirements); \
     CloseSEs = retrieveCloseSEsInfo( CEid, VO, additionalSESAInfo ); ]");
         gang_match_storageAd.reset( utilities::parse_classad(adstr) );            
-      } else {
-        gang_match_storageAd -> InsertAttr("CEid",it->first);
-      }
+      } 
 
       ceAd->Insert("storage", gang_match_storageAd->Copy());  
     

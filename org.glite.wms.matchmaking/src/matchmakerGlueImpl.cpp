@@ -568,15 +568,14 @@ void matchmakerGlueImpl::checkRequirement(const classad::ClassAd* requestAd, mat
 	  
 	  if( !gang_match_storageAd ) {
 	   
-	   string adstr("[CEid = \"" + ce_str + "\"; \
+	   string adstr("[CEid = parent.GlueCEUniqueID; \
 				VO = parent.other.VirtualOrganisation; \
 				additionalSESAInfo = listAttrRegEx(\"^GlueS[EA].*\", parent.other.requirements); \
 				CloseSEs = retrieveCloseSEsInfo( CEid, VO, additionalSESAInfo ); ]");
 	    gang_match_storageAd.reset( utilities::parse_classad(adstr) );			      
-	  } else {
-            gang_match_storageAd -> InsertAttr("CEid",ce_str);
-          }
-	  ceAd->Insert("storage", gang_match_storageAd->Copy());	
+	  } 
+	  
+          ceAd->Insert("storage", gang_match_storageAd->Copy());	
 	  
 	  //
 	  // Construct the CE's requirement expression as follows:
