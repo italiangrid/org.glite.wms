@@ -9,7 +9,4 @@
 ## Subdirectories list
 SUBDIRS = socket++ ssl_helpers
 
-#tlsincludedir = $(includedir)/glite/workload/tls
-#tlsinclude_HEADERS = common_namespace.h
-
 MAINTAINERCLEANFILES = Makefile.in 
