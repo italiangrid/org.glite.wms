@@ -21,10 +21,13 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.2  2004/07/16 14:56:56  flammer
+	Corrected input path of build.properties.
+
 	Revision 1.1  2004/07/02 13:11:39  monforte
 	Initial Helper porting to new build system
 	WARNING: work in progress
-
+	
 	Revision 1.1  2004/06/26 15:25:03  eronchie
 	Start handling matchmaking
 	WARNING: work in progress
@@ -36,7 +39,7 @@
 
 	<!-- Include build properties to allow overwriting 
 	     of properties for subsystem                    -->
-	<property file="build.properties" />	
+	<property file="project/build.properties" />	
 
 	<!-- ======================================================
           Define corresponding subsystem properties
