@@ -36,7 +36,7 @@
 					<xsd:element name="size" type="xsd:long" minOccurs="1" maxOccurs="1"/>
 				</xsd:sequence>
 			</xsd:complexType>
-			<xsd:complexType name="NameAndSizeList">
+			<xsd:complexType name="StringAndLongList">StringAndLongList
 				<xsd:sequence>
 					<element name="file" type="glitenstypes:StringAndLongType" minOccurs="0" maxOccurs="unbounded"/>
 				</xsd:sequence>
@@ -175,13 +175,13 @@
 		<wsdl:part name="jobId" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getOutputFileListResponse">
-		<wsdl:part name="OutputFileAndSizeList" type="glitenstypes:NameAndSizeList"/>
+		<wsdl:part name="OutputFileAndSizeList" type="glitenstypes:StringAndLongList"/>
 	</wsdl:message>
 	<wsdl:message name="jobListMatchRequest">
 		<wsdl:part name="jdl" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="jobListMatchResponse">
-		<wsdl:part name="CEIdAndRankList" type="glitenstypes:StringAndLongType"/>
+		<wsdl:part name="CEIdAndRankList" type="glitenstypes:StringAndLongList"/>
 	</wsdl:message>
 	<wsdl:message name="getJobTemplateRequest">
 		<wsdl:part name="jobType" type="glitenstypes:JobTypeList"/>
