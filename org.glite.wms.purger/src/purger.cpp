@@ -8,9 +8,9 @@
 #include <boost/filesystem/operations.hpp> 
 #include <boost/filesystem/exception.hpp>
 
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
-#include "glite/wms/jobid/JobIdExceptions.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -28,7 +28,7 @@
 #include <time.h>
 
 namespace fs            = boost::filesystem;
-namespace jobid         = glite::wms::jobid;
+namespace jobid         = glite::wmsutils::jobid;
 namespace logger	= glite::wms::common::logger::threadsafe;
 namespace logging       = glite::lb;
 namespace configuration = glite::wms::common::configuration;

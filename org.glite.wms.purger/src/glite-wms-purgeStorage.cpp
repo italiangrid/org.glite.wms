@@ -7,9 +7,9 @@
 #include "glite/wms/manager/daemon/NetworkServer.h"
 #include "glite/wms/purger/purger.h"
 
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
-#include "glite/wms/jobid/JobIdExceptions.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -30,7 +30,7 @@ namespace wl	        = glite::wms;
 namespace ns            = glite::wms::networkserver; 
 namespace logger	= glite::wms::common::logger;
 namespace utilities     = glite::wms::common::utilities;
-namespace jobid         = glite::wms::common::jobid;
+namespace jobid         = glite::wmsutils::jobid;
 
 using namespace std;
 

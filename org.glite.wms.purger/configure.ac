@@ -19,8 +19,11 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.1  2004/07/18 12:14:57  eronchie
-#       Initial revision
+#       Revision 1.2  2004/07/25 18:05:23  eronchie
+#       Updated according to the new components
+#
+#       Revision 1.1.1.1  2004/07/18 12:14:57  eronchie
+#       Start adding purger component
 #
 #       Revision 1.7  2004/06/21 12:56:33  eronchie
 #       Start handling of interface headers
@@ -55,7 +58,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS Tls], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/ssl_helpers/ssl_inits.h])
+AC_CONFIG_SRCDIR([src/purger.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -100,21 +103,36 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
+have_boost=no
+have_classads=no
 have_globus=no
-                                                                               
+
+AC_BOOST([], have_boost=yes, have_boost=no)
+AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
+
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
-have_globus_ssl_utils=no
 have_glite_wms_common=no
+have_glite_wmsutils_jobid=no
+have_glite_wmsutils_exception=no
+have_glite_lb=no
 
 AC_GLITE
 
-AC_GLOBUS_SSL_UTILS([], have_globus_ssl_utils=yes, have_globus_ssl_utils=no)
-AC_MSG_RESULT(["GLOBUS_SSL_UTILS found $have_globus_ssl_utils"])
-
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+
+AC_GLITE_WMSUTILS_JOBID([], have_glite_wmsutils_jobid=yes, have_glite_wmsutils_jobid=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_JOBID found $have_glite_wmsutils_jobid"])
+
+AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
+
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
+AC_MSG_RESULT(["GLITE_LB found $gave_glite_lb"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
@@ -122,8 +140,5 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/socket++/Makefile])
-AC_CONFIG_FILES([src/ssl_helpers/Makefile])
-AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT
