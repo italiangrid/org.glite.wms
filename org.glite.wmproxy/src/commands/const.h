@@ -12,6 +12,7 @@
 #define __GLITE_WMS_WMPROXY_CONST_H__
 
 #define GLITE_WMS_WMPMATCHMAKINGERROR "Error"
+#define GLITE_WMS_WMPPARAMERROR       "Insufficient Number of arguments for runCommand."
 
 #define _JDL_TYPE_ATTR_STR_ "Type" 
 
