@@ -59,6 +59,7 @@ have_ares=no
 have_expat=no
 have_fcgi=no
 have_xml2=no
+have_gridsite=no
  
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_MSG_RESULT(["BOOST found $have_boost"])
@@ -80,6 +81,9 @@ AC_MSG_RESULT(["FCGI found $have_fcgi"])
 
 AC_XML2([], have_xml2=yes, have_xml2=no)
 AC_MSG_RESULT(["XML2 found $have_xml2"])
+
+AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
+AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 
 have_glite_wmsutils=no
                                                                                 
