@@ -22,6 +22,8 @@
 #ifndef __GLITE_WMS_MANAGER_MOCK_LB_H__
 #define __GLITE_WMS_MANAGER_MOCK_LB_H__
 
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

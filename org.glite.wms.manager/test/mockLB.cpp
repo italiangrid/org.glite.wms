@@ -30,7 +30,7 @@ extern "C" {
 char*
 edg_wll_GetSequenceCode( const edg_wll_Context	context )
 {
-  return "prova";
+  return strdup("00001");
 }
 
 int 
