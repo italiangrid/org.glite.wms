@@ -8,14 +8,11 @@
 #define GLITE_WMS_WMPROXY_WMPEVENTLOGGER_H
 
 #include <vector>
-
 // DagAd
 #include "server/wmpexpdagad.h"
 #include "glite/wms/jdl/JobAd.h"
-
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
-
 // LB logger API
 #include "glite/lb/consumer.h"
 
@@ -34,7 +31,7 @@ class WMPEventLogger  {
 			LOG_CLEAR,
 			LOG_ABORT
 		};
-		WMPEventLogger();
+		WMPEventLogger(const char* endpoint = NULL);
 		virtual ~WMPEventLogger() throw();
 
 		void init(const std::string &nsHost, int nsPort,

@@ -18,14 +18,13 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/security/proxyrenewal/renewal.h"
-
 // gethostbyname inclusion:
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 
-const bool DEFAULT_USER_PROXY= false;
+const bool DEFAULT_USER_PROXY = false;
 
 
 
@@ -74,13 +73,14 @@ std::string retrieveHostName() {
 
 
 
-WMPEventLogger::WMPEventLogger()
+WMPEventLogger::WMPEventLogger(const char* endpoint)
 {
 	id = NULL;
 	lbProxy_b = DEFAULT_USER_PROXY ;
-	if (edg_wll_InitContext(&ctx)
-			|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
-			EDG_WLL_SOURCE_WM_PROXY))) {
+	if (	edg_wll_InitContext(&ctx)
+		|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,EDG_WLL_SOURCE_WM_PROXY))
+		|| (endpoint?edg_wll_SetParamString(ctx, EDG_WLL_PARAM_INSTANCE,endpoint):false)
+		){
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::WMPEventLogger()",
 			WMS_IS_FAILURE, "LB initialisation failed");
@@ -196,8 +196,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	char **jdls_char;
 	char **zero_char;
 	vector<string>::iterator iter;
-	
-	// Adding WMProxyDestURI and InputSandboxDestURI attributes
+	// Adding WMPInputSandboxBaseURI and InputSandboxDestURI attributes
 	string dest_uri;
 	string jobidstring;
 	int size = sizeof(subjobs) / sizeof(subjobs[0]);
@@ -406,7 +405,7 @@ bool WMPEventLogger::logEvent(event_name event, const char* reason){
 				edglog(debug) << "Logging Abort event" << endl ;
 				if (lbProxy_b) {return !edg_wll_LogCancelREQProxy(ctx, reason);}
 				return !edg_wll_LogAbort(ctx,reason);
-				break;
+				break;			
 			default:
 				edglog(severe) << "Warning: no event caught, not Logging" << endl ;
 				return true;
