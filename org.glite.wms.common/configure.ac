@@ -40,6 +40,8 @@ WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
 REPOSITORY=`pwd`/../../repository
+DISTBIN=$WORKDIR/../../dist
+AC_SUBST(DISTBIN)
 
 BOOST_CFLAGS=-I$REPOSITORY/boost/include
 AC_SUBST([BOOST_CFLAGS])
@@ -116,7 +118,7 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 # Configuration items
-AC_PREFIX_DEFAULT([`pwd`/../../opt/egee])
+AC_PREFIX_DEFAULT([/opt/egee])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
