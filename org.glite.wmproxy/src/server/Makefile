@@ -47,7 +47,7 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I$(REPOSITORY)/stage/include \
 	-I$(CLASSAD)/include \
 	-I$(BOOST)/include/boost \
-	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include
+	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include 
 
 LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-L$(REPLIBS) \
@@ -56,6 +56,7 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-L$(ARES)/lib \
 	-L$(EXPAT)/lib \
 	-L../commands \
+	-L../utilities \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
 	-lglite_lb_clientpp_gcc32 \
@@ -74,6 +75,7 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-lglite_wmsui_partitioner \
 	-lglitePipe \
 	-lgliteWMPCommands \
+	-lglite_wms_wmproxy_utilities \
 	-lares \
 	-lclassad \
 	-lclassad_dl \
@@ -116,7 +118,6 @@ wmClient:	wm.h wmclient.cpp $(SOAPH) $(SOAPCPP)
 
 wmProxy:        wm.h \
                                 wmproxy.cpp wmproxy.h \
-                                wmputils.cpp wmputils.h \
                                 wmpoperations.cpp wmpoperations.h  \
                                 wmpgsoapoperations.cpp \
 				wmpconfiguration.h wmpconfiguration.cpp \
@@ -130,7 +131,7 @@ wmProxy:        wm.h \
 			@echo "wmproxy....."
 			@$(CPP) $(CFLAGS) $(CMFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
-                                wmputils.cpp wmpoperations.cpp wmpeventlogger.cpp \
+                                wmpoperations.cpp wmpeventlogger.cpp \
                                 wmpexceptions.cpp wmpgsoapoperations.cpp \
                                 wmpdispatcher.cpp wmpconfiguration.cpp\
                                 wmpgsoapfaultmanipulator.cpp wmpexpdagad.cpp wmpdelegation.cpp \
