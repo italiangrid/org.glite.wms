@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/10/15 15:52:23  eronchie
+#       Start adding ui configuration
+#
 #       Revision 1.3  2004/10/13 15:34:31  eronchie
 #       ......
 #
@@ -83,6 +86,11 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 AC_GLITE
+
+AC_JAVA
+AC_JCLASSAD
+AC_JGLOBUS
+AC_LOG4J
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
