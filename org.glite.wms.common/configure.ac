@@ -51,15 +51,9 @@ AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 
-AC_MSG_RESULT(["GLOBUS found $have_globus])
-
-#GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
-#AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
-#GLOBUS_SSL_UTILS_LIBS="-L$STAGE/lib -lglobus_ssl_utils"
-#AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
-
-#GLOBUS_LIBS="-L$REPOSITORY/globus/2.4.3/rhel30_gcc32/lib -lglobus_gass_copy_gcc32 -lglobus_ftp_client_gcc32 -lglobus_gass_transfer_gcc32 -lglobus_ftp_control_gcc32 -lglobus_io_gcc32 -lglobus_gss_assist_gcc32 -lglobus_gssapi_gsi_gcc32 -lglobus_gsi_proxy_core_gcc32 -lglobus_gsi_credential_gcc32 -lglobus_gsi_callback_gcc32 -lglobus_oldgaa_gcc32 -lglobus_gsi_sysconfig_gcc32 -lglobus_gsi_cert_utils_gcc32 -lglobus_openssl_error_gcc32 -lglobus_openssl_gcc32 -lglobus_proxy_ssl_gcc32 -lssl_gcc32 -lcrypto_gcc32 -lglobus_common_gcc32"
-#AC_SUBST([GLOBUS_LIBS])
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_MSG_RESULT(["BOOST found $have_boost"])
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 # Checks for programs.
 AC_PROG_CC
