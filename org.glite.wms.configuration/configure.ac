@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/09/22 01:01:01  dimeglio
+#       Fixed missing parenthesis in AC_INIT
+#
 #       Revision 1.3  2004/09/21 19:23:47  glbuild
 #       modified module.version
 #
@@ -34,7 +37,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Configuration], [0.1.0]
+AC_INIT([GLite WMS Configuration], [0.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([config/glite_wms.conf])
