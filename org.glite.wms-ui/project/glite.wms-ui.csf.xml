@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.7  2004/08/11 13:43:20  eronchie
+	Updated
+
 	Revision 1.6  2004/08/11 12:15:31  eronchie
 	WARNING: work in progress
-
+	
 	Revision 1.5  2004/08/11 08:42:50  eronchie
 	Start adding partitioner
 	
@@ -143,18 +146,6 @@
                         <equals arg1="${org.glite.wms-ui.wrap-python.version}" arg2="HEAD" />
                 </condition>
 
-		<condition property="wrap-java.head">
-                        <equals arg1="${org.glite.wms-ui.wrap-java.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="gui-java.head">
-                        <equals arg1="${org.glite.wms-ui.gui-java.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="cli-python.head">
-                        <equals arg1="${org.glite.wms-ui.cli-python.version}" arg2="HEAD" />
-                </condition>
-
     	</target>
 
     	<presetdef name="cvs-co">
@@ -234,7 +225,7 @@
 	</target>
 
 	<!-- api-java -->
- 	<target name="api-java" depends="get.api-java.head, get.api-java.tag"/>
+ 	<target name="api-java" depends="jglobus, jclassads, log4j, get.api-java.head, get.api-java.tag"/>
 	<target name="get.api-java.head" if="api-java.head">
 		<cvs-co package="org.glite.wms-ui.api-java" />
 	</target>
@@ -244,7 +235,7 @@
 	</target>
 
 	<!-- wrap-python -->
-        <target name="wrap-python" depends="get.wrap-python.head, get.wrap-python.tag"/>
+        <target name="wrap-python" depends="swig, get.wrap-python.head, get.wrap-python.tag"/>
         <target name="get.wrap-python.head" if="wrap-python.head">
                 <cvs-co package="org.glite.wms-ui.wrap-python" />
         </target>
@@ -257,10 +248,7 @@
  	<target name="project" depends="partitioner,
 					api-cpp,
   				        api-java,
-                                        wrap-python,
-                                        wrap-java,
-                                        cli-python,
-                                        gui-java"/>
+                                        wrap-python"/>
 
 
 	<!-- ====================================================
