@@ -1,46 +1,66 @@
 /*
- * JDLEditor.java
- *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
- *
+ * JDLEditor.java 
+ * 
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
+ * 
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.io.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.StringWriter;
 import java.net.URL;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-import javax.swing.plaf.basic.*;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
-
-import javax.naming.directory.InvalidAttributeValueException;
-
-import java.beans.PropertyVetoException;
-import java.beans.PropertyChangeEvent;
-
-import condor.classad.*;
-
-import org.glite.wms.jdlj.*;
-
-import org.apache.log4j.*;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.glite.wms.jdlj.Ad;
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
+import org.glite.wms.jdlj.JobAdException;
+import condor.classad.ClassAdWriter;
+import condor.classad.RecordExpr;
 
 /**
- * Implementation of the JDLEditor class.
- *
- * This class implements the JDL Editor in a simple JFrame. The JFrame is a
- * standalone application you can use to create a new classad file or edit an
- * existing one.
- *
+ * Implementation of the JDLEditor class. This class implements the JDL Editor
+ * in a simple JFrame. The JFrame is a standalone application you can use to
+ * create a new classad file or edit an existing one.
+ * 
  * @ingroup gui
  * @brief class to implement a standalone application for classad file editing.
  * @version 1.0
@@ -51,39 +71,67 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   static Logger logger = Logger.getLogger(JDLEditor.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int FRAME_WIDTH = 640;
+
   static final int FRAME_HEIGHT = 720;
+
   static final int MAX_FRAME_WIDTH = FRAME_WIDTH + 120;
 
   JTabbedPane jTabbedJDL = new JTabbedPane();
+
   JScrollPane jScrollPaneTabbedJDL = new JScrollPane();
+
   JScrollPane jScrollPaneTextPaneJDL = new JScrollPane();
+
   JTextPane jTextAreaJDL = new JTextPane();
+
   JSplitPane splitPane = new JSplitPane();
+
   JPanel jPanelDesktop = new JPanel();
+
   JPanel jPanelJDLText = new JPanel();
+
   JPanel jPanelButtonPane = new JPanel();
+
   JPanel jPanelButtonAll = new JPanel();
+
   JPanel jPanelMain = new JPanel();
+
   JButton jButtonReset = new JButton();
+
   JButton jButtonView = new JButton();
+
   JButton jButtonOk = new JButton();
+
   JButton jButtonClose = new JButton();
+
   JButton jButtonResetAll = new JButton();
+
   JButton jButtonViewAll = new JButton();
+
   JButton jButtonCheck = new JButton();
+
   JButton jButtonBack = new JButton();
 
   JobDef1Panel jobDef1 = null;
+
   JobDef2Panel jobDef2 = null;
+
   JobInputDataPanel dataReq = null;
+
   JobOutputDataPanel jobOutputData = null;
+
   RequirementsPanel requirements = null;
+
   RankPanel rank = null;
+
   JobTypePanel checkpoint = null;
+
   TagPanel tags = null;
+
   UnknownPanel unknown = null;
 
   JMenuItem jMenuItemFileParsingError = new JMenuItem("");
@@ -93,18 +141,25 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   JScrollPane jScrollPaneText = new JScrollPane();
 
   JPanel jdlTextPanel;
+
   JPanel jPanelFirst = new JPanel();
 
   JPanel unknownPanel = new JPanel();
+
   JPanel checkpointPanel = new JPanel();
+
   JMenuBar jMenuBar;
 
   JobAd jobAd = new JobAd();
+
   Ad ad = new Ad();
+
   JobAd jobAdGlobal = new JobAd();
 
   String parserErrorMsg = "";
+
   String errorMsg = "";
+
   String warningMsg = "";
 
   final String FRAME_TITLE = "JDL Editor";
@@ -112,12 +167,17 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   Vector guiAttributesVector = new Vector();
 
   String currentOpenedFile = "";
+
   String rBName = "";
+
   String keyJobName = "";
+
   String userWorkingDirectory = "";
+
   int savedFileCount = 0;
 
   boolean isJobSubmitterCalling = false;
+
   boolean isJobSubmitted = false;
 
   String jobType = Jdl.TYPE_JOB;
@@ -125,7 +185,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   JobSubmitterInterface jintSub;
 
   JPanelStateBar jPanelStateBar;
+
   JPanel jPanelState = new JPanel();
+
   JPanel jPanelSouth = new JPanel();
 
   /**
@@ -160,7 +222,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       try {
         ad.setAttribute(Jdl.TYPE, Jdl.TYPE_DAG);
       } catch (Exception ex) {
-      // Do nothing.
+        // Do nothing.
       }
       displayJDLText(ad.toString(true, true));
       jTextPane.grabFocus();
@@ -180,12 +242,10 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     this.jintSub = (JobSubmitterInterface) component;
     JDLEditor.this.setTitle("JDL Editor - " + rBName + " - " + keyJobName);
     isJobSubmitterCalling = true;
-
     ExprChecker exprChecker = new ExprChecker();
     //ClassAdSAXParser classAdSAXParser = new ClassAdSAXParser();
     File file = new File(fileName);
     String fileExtension = GUIFileSystem.getFileExtension(file).toUpperCase();
-
     if (fileExtension.equals("XML")) {
       // XML file
       try {
@@ -207,7 +267,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           this.jobType = Jdl.TYPE_JOB;
         }
       } catch (NoSuchFieldException nsfe) {
-      // Do nothing.
+        // Do nothing.
       } catch (java.text.ParseException pe) {
         if (isDebugging) {
           pe.printStackTrace();
@@ -248,10 +308,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           jButtonBack.setEnabled(false);
           jButtonCheck.setEnabled(false);
         } else {
-        //throw new UncorrectJDLFileException();
-        //throw new NotAJDLFileException();
+          //throw new UncorrectJDLFileException();
+          //throw new NotAJDLFileException();
         }
-
       } else {
         // Normal Job
         try {
@@ -299,25 +358,21 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         }
       }
     }
-
   }
 
-  void jbInit() {
+void jbInit() {
     // Set application type. The type of application effects on some settings.
     Utils.setApplicationType(Utils.FRAME);
-
     String log4JConfFile = GUIFileSystem.getLog4JConfFile();
     File file = new File(log4JConfFile);
     if (file.isFile()) {
       PropertyConfigurator.configure(log4JConfFile);
     } else {
       logger.setLevel(Level.FATAL);
-      logger.getRootLogger().setLevel(Level.FATAL);
+      Logger.getRootLogger().setLevel(Level.FATAL);
     }
-
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
-        ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     if (!jobType.equals(Jdl.TYPE_DAG)) {
       File confFile = new File(GUIFileSystem.getGUIConfVarFile());
       JobAd confAd = new JobAd();
@@ -326,9 +381,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           confAd.fromFile(confFile.toString());
           if (!isJobSubmitterCalling) {
             if (confAd.hasAttribute(Utils.GUI_CONF_VAR_JDLE_DEFAULT_SCHEMA)) {
-              String schema =
-                  confAd.getStringValue(Utils.GUI_CONF_VAR_JDLE_DEFAULT_SCHEMA)
-                  .get(0).toString().trim().toUpperCase();
+              String schema = confAd.getStringValue(
+                  Utils.GUI_CONF_VAR_JDLE_DEFAULT_SCHEMA).get(0).toString()
+                  .trim().toUpperCase();
               for (int i = 0; i < Utils.jdleSchemaNameConfFile.length; i++) {
                 if (schema.equals(Utils.jdleSchemaNameConfFile[i][0])) {
                   Utils.setJDLESchemaFile(schema);
@@ -341,25 +396,24 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
               confAd.fromFile(userPrefFile);
             }
           }
-
           if (confAd.hasAttribute(Utils.confFileSchema)) {
             JobAd schemaAd = new JobAd();
             schemaAd = confAd.getJobAdValue(Utils.confFileSchema);
             if (schemaAd.hasAttribute(Jdl.RANK)) {
-              GUIGlobalVars.setGUIConfVarRank(schemaAd.getAttributeExpr(Jdl.
-                  RANK));
+              GUIGlobalVars.setGUIConfVarRank(schemaAd
+                  .getAttributeExpr(Jdl.RANK));
               logger.debug("setting rank default: "
                   + schemaAd.getAttributeExpr(Jdl.RANK));
             }
             if (schemaAd.hasAttribute(Jdl.REQUIREMENTS)) {
-              GUIGlobalVars.setGUIConfVarRequirements(schemaAd.getAttributeExpr(
-                  Jdl.REQUIREMENTS));
+              GUIGlobalVars.setGUIConfVarRequirements(schemaAd
+                  .getAttributeExpr(Jdl.REQUIREMENTS));
               logger.debug("setting requirements default: "
                   + schemaAd.getAttributeExpr(Jdl.REQUIREMENTS));
             }
             if (schemaAd.hasAttribute(Utils.GUI_CONF_VAR_RANKMPI)) {
-              GUIGlobalVars.setGUIConfVarRankMPI(schemaAd.getAttributeExpr(
-                  Utils.GUI_CONF_VAR_RANKMPI));
+              GUIGlobalVars.setGUIConfVarRankMPI(schemaAd
+                  .getAttributeExpr(Utils.GUI_CONF_VAR_RANKMPI));
             }
           }
         } catch (Exception ex) {
@@ -368,14 +422,12 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           }
         }
       }
-
       // guiAttributesVector initialize. This attributes are those
       // application recognizes.
       for (int i = 0; i < Utils.guiAttributesArray.length; i++) {
         guiAttributesVector.addElement(Utils.guiAttributesArray[i]);
       }
     }
-
     // initializing JDL Editor panels
     jobDef1 = new JobDef1Panel(this);
     jobDef2 = new JobDef2Panel(this);
@@ -386,9 +438,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     checkpoint = new JobTypePanel(this);
     tags = new TagPanel(this);
     unknown = new UnknownPanel(this);
-
+    partitionable = new PartitionablePanel(this)
     JDLEditor.this.setSize(FRAME_WIDTH, FRAME_HEIGHT);
-
     this.addComponentListener(new java.awt.event.ComponentListener() {
       public void componentResized(ComponentEvent e) {
         int xPosition = getBounds().x;
@@ -403,53 +454,42 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         }
       }
 
-      public void componentMoved(ComponentEvent e) {}
+      public void componentMoved(ComponentEvent e) {
+      }
 
-      public void componentHidden(ComponentEvent e) {}
+      public void componentHidden(ComponentEvent e) {
+      }
 
-      public void componentShown(ComponentEvent e) {}
+      public void componentShown(ComponentEvent e) {
+      }
     });
-
     jTabbedJDL.setPreferredSize(new Dimension(610, 525));
-
     checkpoint.jComboBoxJobTypeEvent(null);
-
     // Menu initialize.
     jMenuBar = createMenuBar();
     setJMenuBar(jMenuBar);
-
     jPanelDesktop.setLayout(new BorderLayout());
-
     // Initialize tabbed pane panels.
-    Object[][] element = { {
-        Utils.GUI_PANEL_NAMES[0], checkpoint}
-        , {
-        Utils.GUI_PANEL_NAMES[1], jobDef1}
-        , {
-        Utils.GUI_PANEL_NAMES[2], jobDef2}
-        , {
-        Utils.GUI_PANEL_NAMES[3], dataReq}
-        , {
-        Utils.GUI_PANEL_NAMES[4], jobOutputData}
-        , {
-        Utils.GUI_PANEL_NAMES[5], requirements}
-        , {
-        Utils.GUI_PANEL_NAMES[6], rank}
-        , {
-        Utils.GUI_PANEL_NAMES[8], tags}
-        , {
-        Utils.GUI_PANEL_NAMES[7], unknown}
+    Object[][] element = { { Utils.GUI_PANEL_NAMES[0], checkpoint
+    }, { Utils.GUI_PANEL_NAMES[1], jobDef1
+    }, { Utils.GUI_PANEL_NAMES[2], jobDef2
+    }, { Utils.GUI_PANEL_NAMES[3], dataReq
+    }, { Utils.GUI_PANEL_NAMES[4], jobOutputData
+    }, { Utils.GUI_PANEL_NAMES[5], requirements
+    }, { Utils.GUI_PANEL_NAMES[6], rank
+    }, { Utils.GUI_PANEL_NAMES[8], tags
+    }, { Utils.GUI_PANEL_NAMES[7], unknown
+    }
     };
     for (int i = 0; i < element.length; i++) {
       jTabbedJDL.addTab((String) element[i][0], (JPanel) element[i][1]);
     }
     checkpointPanel = (JPanel) checkpoint;
-
     jTabbedJDL.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-    jTabbedJDL.setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
+    jTabbedJDL
+        .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
     jobDef1.jTextFieldExecutable.grabFocus();
     jScrollPaneTabbedJDL = new JScrollPane(jTabbedJDL);
-
     jButtonView.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonViewEvent();
@@ -476,13 +516,10 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     jButtonClose.setText("  Close   ");
     jButtonResetAll.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        int choice =
-            JOptionPane.showOptionDialog(JDLEditor.this,
-            "Do you really want to reset all?",
-            "Confirm Reset All",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null);
+        int choice = JOptionPane.showOptionDialog(JDLEditor.this,
+            "Do you really want to reset all?", "Confirm Reset All",
+            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            null, null);
         if (choice == 0) {
           resetAll();
         }
@@ -495,28 +532,23 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       }
     });
     jButtonViewAll.setText("View All ");
-
     jButtonCheck.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonCheckEvent(e);
       }
     });
     jButtonCheck.setText(" Check  ");
-
     jButtonBack.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         displayJPanelDesktopCheck();
       }
     });
     jButtonBack.setText("  Back   ");
-
     jTextAreaJDL.setEditable(false);
-
     jTextPane.setEditable(true);
     jTextPane.setFont(new Font("Monospaced", Font.PLAIN, 12));
     jScrollPaneTextPaneJDL = new JScrollPane(jTextAreaJDL);
     jPanelJDLText.setLayout(new BorderLayout());
-
     jPanelMain.setLayout(new BorderLayout());
     jPanelButtonPane.setBounds(new Rectangle(0, 0, 700, 50));
     jPanelButtonPane.setBorder(BorderFactory.createRaisedBevelBorder());
@@ -539,19 +571,15 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     jButtonCheck.setVisible(false);
     jPanelButtonAll.add(jButtonCheck);
     jPanelButtonAll.add(jButtonBack);
-
     jPanelJDLText.add(jScrollPaneTextPaneJDL, BorderLayout.CENTER);
     //jPanelJDLText.add(jPanelButtonAll, BorderLayout.SOUTH);
-
     jPanelMain.add(jScrollPaneTabbedJDL, BorderLayout.CENTER);
     jPanelMain.add(jPanelButtonPane, BorderLayout.SOUTH);
-
     //Create a split pane with two scroll panes inside.
     splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jPanelMain,
         jPanelJDLText);
     splitPane.setOneTouchExpandable(true);
     splitPane.setDividerLocation(570); // old value 600
-
     jPanelDesktop.add(splitPane);
     //jdlTextPanel = (JPanel) jdlText;
     jdlTextPanel = new JPanel();
@@ -564,23 +592,18 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     getContentPane().setLayout(new BorderLayout());
     getContentPane().add(jPanelFirst, BorderLayout.CENTER);
     jPanelFirst.add(jPanelDesktop, BorderLayout.CENTER);
-
     //jPanelState.setBorder(new EtchedBorder());
     jPanelState.setBorder(BorderFactory.createRaisedBevelBorder());
     jPanelSouth.setLayout(new BorderLayout());
     jPanelSouth.add(jPanelState, BorderLayout.EAST);
     jPanelSouth.add(jPanelButtonAll, BorderLayout.CENTER);
-
     jPanelFirst.add(jPanelSouth, BorderLayout.SOUTH);
     JPanel newPanel = new JPanel();
-
     if (GUIFileSystem.getIsConfFileError()) {
       rank.showAdvancedPanelOnly();
       requirements.showAdvancedPanelOnly();
     }
-
     jobDef1.jTextFieldExecutable.grabFocus();
-
     jTabbedJDL.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         String panelName = jTabbedJDL.getTitleAt(jTabbedJDL.getSelectedIndex());
@@ -591,33 +614,28 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         }
       }
     });
-
     jPanelStateBar = new JPanelStateBar(jTextPane);
     jPanelState.setVisible(false);
     jTextPane.addCaretListener(jPanelStateBar);
     ((FlowLayout) jPanelStateBar.getLayout()).setAlignment(FlowLayout.RIGHT);
     jPanelState.add(jPanelStateBar);
-  }
-
-  /**
+  }  /**
    * Creates the menu bar of the JDL Editor
+   * 
    * @return the JMenuBar object
    */
   protected JMenuBar createMenuBar() {
     final JMenuBar jMenuBar = new JMenuBar();
     ActionListener alst = null;
     JMenuItem jMenuItem = null;
-
     JMenu jMenuFile = null;
     if (isJobSubmitterCalling) {
       jMenuFile = new JMenu("Job");
       jMenuFile.setMnemonic('j');
-
       jMenuItem = new JMenuItem("     Save To File...");
     } else {
       jMenuFile = new JMenu("File");
       jMenuFile.setMnemonic('f');
-
       jMenuItem = new JMenuItem("Open File...");
       URL fileOpenGifUrl = JobDef1Panel.class.getResource(Utils.ICON_FILE_OPEN);
       if (fileOpenGifUrl != null) {
@@ -631,7 +649,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       };
       jMenuItem.addActionListener(alst);
       jMenuFile.add(jMenuItem);
-
       jMenuItem = new JMenuItem("Save File");
       URL fileSaveGifUrl = JobDef1Panel.class.getResource(Utils.ICON_FILE_SAVE);
       if (fileSaveGifUrl != null) {
@@ -645,7 +662,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       };
       jMenuItem.addActionListener(alst);
       jMenuFile.add(jMenuItem);
-
       jMenuItem = new JMenuItem("     Save File As...");
     }
     jMenuItem.setMnemonic('v');
@@ -656,9 +672,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuFile.addSeparator();
-
     jMenuItemFileParsingError = new JMenuItem("     File Parsing Error(s)");
     jMenuItemFileParsingError.setMnemonic('e');
     jMenuItemFileParsingError.setEnabled(false);
@@ -669,23 +683,19 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     };
     jMenuItemFileParsingError.addActionListener(alst);
     jMenuFile.add(jMenuItemFileParsingError);
-
     jMenuFile.addSeparator();
-
     if (isJobSubmitterCalling) {
       jMenuItem = new JMenuItem("     Close");
       jMenuItem.setMnemonic('c');
       alst = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           int choice = JOptionPane.showOptionDialog(JDLEditor.this,
-              "Do you really want to close editor?",
-              "Confirm Close",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null);
+              "Do you really want to close editor?", "Confirm Close",
+              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+              null, null);
           if (choice == 0) {
-            GUIGlobalVars.openedEditorHashMap.remove(rBName + " - " +
-                keyJobName);
+            GUIGlobalVars.openedEditorHashMap.remove(rBName + " - "
+                + keyJobName);
             JDLEditor.this.dispose();
           }
         }
@@ -696,11 +706,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       alst = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           int choice = JOptionPane.showOptionDialog(JDLEditor.this,
-              "Do you really want to exit?",
-              "Confirm Exit",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null);
+              "Do you really want to exit?", "Confirm Exit",
+              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+              null, null);
           if (choice == 0) {
             System.exit(0);
           }
@@ -709,26 +717,19 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     }
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuBar.add(jMenuFile);
-
     JMenu jMenuHelp = new JMenu("Help");
     jMenuHelp.setMnemonic('h');
-
     jMenuItem = new JMenuItem("Help Topics");
     jMenuItem.setMnemonic('h');
-
     //!!! To remove when coded.
     jMenuItem.setEnabled(false);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-
       }
     };
     jMenuItem.addActionListener(alst);
     jMenuHelp.add(jMenuItem);
-
     jMenuItem = new JMenuItem("About");
     jMenuItem.setMnemonic('a');
     alst = new ActionListener() {
@@ -738,9 +739,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuHelp.add(jMenuItem);
-
     jMenuBar.add(jMenuHelp);
-
     return jMenuBar;
   }
 
@@ -754,12 +753,13 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   }
 
   /**
-   * Checks job represented by input String displaying warning/error messages
-   * to the user
-   *
-   * @param text the String representing the job
-   * @return a JobAd containing the description of the job;
-   *                 <code>null</code> in case of warning or error
+   * Checks job represented by input String displaying warning/error messages to
+   * the user
+   * 
+   * @param text
+   *          the String representing the job
+   * @return a JobAd containing the description of the job; <code>null</code>
+   *         in case of warning or error
    */
   protected JobAd checkJDLText(String jdlText) {
     ExprChecker exprChecker = new ExprChecker();
@@ -770,12 +770,11 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       String firstLine = "<html><font color=\"#800080\">"
           + "JDL text contains error(s)" + "</font>" + "\n";
       GraphicUtils.showOptionDialogMsg(JDLEditor.this, errorMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, firstLine, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+          firstLine, null);
       return null;
     }
-
     JobAd jobAd = new JobAd();
     logger.debug("jdlText: " + jdlText);
     try {
@@ -785,17 +784,17 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       String firstLine = "<html><font color=\"#800080\">"
           + "JDL file cannot be submitted" + "</font>" + "\n";
       GraphicUtils.showOptionDialogMsg(JDLEditor.this, jae.getMessage(),
-          Utils.WARNING_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, firstLine, null);
+          Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+          firstLine, null);
       return jobAd;
     } catch (Exception e) {
       String firstLine = "<html><font color=\"#800080\">"
           + "JDL file cannot be submitted" + "</font>" + "\n";
       GraphicUtils.showOptionDialogMsg(JDLEditor.this, e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, firstLine, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+          firstLine, null);
       return null;
     }
     return jobAd;
@@ -810,28 +809,24 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     if (jobAd == null) {
       return;
     }
-
     // clears all jdl editor panel
     resetAll();
-
     // inserts all the attribute in the jdl editor panels from the JobAd
     addAttributesFromJobAd(jobAd, false);
-
     if (!jobAd.hasAttribute(Jdl.RETRYCOUNT)) {
       GUIGlobalVars.setGUIConfVarRetryCount(GUIGlobalVars.NO_RETRY_COUNT);
     }
     if (isJobSubmitterCalling) {
-      String workingVirtualOrganisation = GUIGlobalVars.getVirtualOrganisation();
-      if (!jobDef1.getVOText().toUpperCase()
-          .equals(workingVirtualOrganisation.toUpperCase())) {
+      String workingVirtualOrganisation = GUIGlobalVars
+          .getVirtualOrganisation();
+      if (!jobDef1.getVOText().toUpperCase().equals(
+          workingVirtualOrganisation.toUpperCase())) {
         JOptionPane.showOptionDialog(JDLEditor.this,
             "Cannot change 'VirtualOrganisation' attribute value"
-            + "\nPrevious value '" + workingVirtualOrganisation
-            + "' will be restored",
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null, null, null);
+                + "\nPrevious value '" + workingVirtualOrganisation
+                + "' will be restored", Utils.WARNING_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+            null, null);
         jobDef1.setVOText(workingVirtualOrganisation);
       }
     }
@@ -865,25 +860,25 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       if (errorMsg.equals("")) {
         if (!warningMsg.equals("")) {
           GraphicUtils.showOptionDialogMsg(JDLEditor.this, warningMsg,
-              Utils.WARNING_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-              Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+              Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+              null, null);
         } else {
           JobAd jobAd = new JobAd();
           try {
             jobAd.fromString(jdlText);
             jintSub.addJobToTable(rBName, keyJobName, currentOpenedFile, jobAd);
-            GUIGlobalVars.openedEditorHashMap.remove(rBName + " - " +
-                keyJobName);
+            GUIGlobalVars.openedEditorHashMap.remove(rBName + " - "
+                + keyJobName);
             JDLEditor.this.dispose();
           } catch (Exception e) {
             if (isDebugging) {
               e.printStackTrace();
             }
             GraphicUtils.showOptionDialogMsg(JDLEditor.this, e.getMessage(),
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-                Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+                null, null);
             return;
           }
         }
@@ -894,36 +889,29 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         if (jobAd == null) {
           return;
         }
-
-        String workingVirtualOrganisation = GUIGlobalVars.
-            getVirtualOrganisation();
+        String workingVirtualOrganisation = GUIGlobalVars
+            .getVirtualOrganisation();
         String jobAdVirtualOrganisation = "";
         try {
-          jobAdVirtualOrganisation = jobAd.getStringValue(Jdl.
-              VIRTUAL_ORGANISATION).get(0)
-              .toString().trim();
+          jobAdVirtualOrganisation = jobAd.getStringValue(
+              Jdl.VIRTUAL_ORGANISATION).get(0).toString().trim();
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(JDLEditor.this,
-              "Unable to Add job",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JDLEditor.this, "Unable to Add job",
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           return;
         }
-        if (!jobAdVirtualOrganisation.toUpperCase()
-            .equals(workingVirtualOrganisation.toUpperCase())) {
+        if (!jobAdVirtualOrganisation.toUpperCase().equals(
+            workingVirtualOrganisation.toUpperCase())) {
           JOptionPane.showOptionDialog(JDLEditor.this,
               "Cannot change 'VirtualOrganisation' attribute value"
-              + "\nPrevious value '" + workingVirtualOrganisation
-              + "' will be restored",
-              Utils.WARNING_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.WARNING_MESSAGE,
-              null, null, null);
+                  + "\nPrevious value '" + workingVirtualOrganisation
+                  + "' will be restored", Utils.WARNING_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+              null, null);
           try {
             jobAd.delAttribute(Jdl.VIRTUAL_ORGANISATION);
             jobAd.setAttribute(Jdl.VIRTUAL_ORGANISATION,
@@ -932,12 +920,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
             if (isDebugging) {
               e.printStackTrace();
             }
-            JOptionPane.showOptionDialog(JDLEditor.this,
-                "Unable to Add job",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(JDLEditor.this, "Unable to Add job",
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             return;
           }
         }
@@ -953,42 +938,36 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
             e.printStackTrace();
           }
           JOptionPane.showOptionDialog(JDLEditor.this,
-              "Edited Dag contains syntax error(s)",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+              "Edited Dag contains syntax error(s)", Utils.ERROR_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+              null, null);
           return;
         }
-        String workingVirtualOrganisation = GUIGlobalVars.
-            getVirtualOrganisation();
+        String workingVirtualOrganisation = GUIGlobalVars
+            .getVirtualOrganisation();
         String jobAdVirtualOrganisation = "";
         try {
-          jobAdVirtualOrganisation = ad.getStringValue(Jdl.
-              VIRTUAL_ORGANISATION).get(0).toString().trim();
+          jobAdVirtualOrganisation = ad
+              .getStringValue(Jdl.VIRTUAL_ORGANISATION).get(0).toString()
+              .trim();
         } catch (Exception e) {
           // Attribute not present, setting default.
           jobAdVirtualOrganisation = workingVirtualOrganisation;
           /*
-                     if (isDebugging) e.printStackTrace();
-                     JOptionPane.showOptionDialog(JDLEditor.this,
-                                       "Unable to Add Dag",
-                                       Utils.ERROR_MSG_TXT,
-                                       JOptionPane.DEFAULT_OPTION,
-                                       JOptionPane.ERROR_MESSAGE,
-                                       null, null, null);
-                     return;*/
+           * if (isDebugging) e.printStackTrace();
+           * JOptionPane.showOptionDialog(JDLEditor.this, "Unable to Add Dag",
+           * Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+           * JOptionPane.ERROR_MESSAGE, null, null, null); return;
+           */
         }
-        if (!jobAdVirtualOrganisation.toUpperCase()
-            .equals(workingVirtualOrganisation.toUpperCase())) {
+        if (!jobAdVirtualOrganisation.toUpperCase().equals(
+            workingVirtualOrganisation.toUpperCase())) {
           JOptionPane.showOptionDialog(JDLEditor.this,
               "Cannot change 'VirtualOrganisation' attribute value"
-              + "\nPrevious value '" + workingVirtualOrganisation
-              + "' will be restored",
-              Utils.WARNING_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.WARNING_MESSAGE,
-              null, null, null);
+                  + "\nPrevious value '" + workingVirtualOrganisation
+                  + "' will be restored", Utils.WARNING_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+              null, null);
           try {
             ad.delAttribute(Jdl.VIRTUAL_ORGANISATION);
             ad.setAttribute(Jdl.VIRTUAL_ORGANISATION,
@@ -997,12 +976,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
             if (isDebugging) {
               e.printStackTrace();
             }
-            JOptionPane.showOptionDialog(JDLEditor.this,
-                "Unable to Add Dag",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(JDLEditor.this, "Unable to Add Dag",
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             return;
           }
         }
@@ -1012,12 +988,10 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           }
           ad.addAttribute(Jdl.TYPE, Jdl.TYPE_DAG);
         } catch (Exception ex) {
-
         }
         jintSub.addJobToTable(rBName, keyJobName, currentOpenedFile, ad);
         GUIGlobalVars.openedEditorHashMap.remove(rBName + " - " + keyJobName);
         JDLEditor.this.dispose();
-
       }
     }
   }
@@ -1049,21 +1023,21 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       if (requirements.jButtonAdvanced.getText().equals("Advanced >>")) {
         requirements.jButtonRequirementsViewEvent(true, true, null);
       } else {
-        requirements.requirementsAdvancedPanel.
-            jButtonRequirementsAdvancedPanelViewEvent(true, true, null);
+        requirements.requirementsAdvancedPanel
+            .jButtonRequirementsAdvancedPanelViewEvent(true, true, null);
       }
     } else if (paneName.equals(Utils.GUI_PANEL_NAMES[6])) {
       if (rank.jButtonAdvanced.getText().equals("Advanced >>")) {
         rank.jButtonRankViewEvent(true, true, null);
       } else {
-        rank.rankAdvancedPanel.jButtonRankAdvancedPanelViewEvent(true, true, null);
+        rank.rankAdvancedPanel.jButtonRankAdvancedPanelViewEvent(true, true,
+            null);
       }
     } else if (paneName.equals(Utils.GUI_PANEL_NAMES[7])) {
       unknown.jButtonUnknownViewEvent(true, true, null);
     } else if (paneName.equals(Utils.GUI_PANEL_NAMES[8])) {
       tags.jButtonTagsViewEvent(true, true, null);
     }
-
   }
 
   String yieldJDLText(boolean showWarningMsg, boolean showErrorMsg) {
@@ -1075,20 +1049,19 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     if (rank.jButtonAdvanced.getText().equals("Advanced >>")) {
       result += rank.jButtonRankViewEvent(false, false, null);
     } else {
-      result += rank.rankAdvancedPanel.jButtonRankAdvancedPanelViewEvent(false, false, null);
+      result += rank.rankAdvancedPanel.jButtonRankAdvancedPanelViewEvent(false,
+          false, null);
     }
     if (requirements.jButtonAdvanced.getText().equals("Advanced >>")) {
       result += requirements.jButtonRequirementsViewEvent(false, false, null);
     } else {
-      result += requirements.requirementsAdvancedPanel.
-          jButtonRequirementsAdvancedPanelViewEvent(false, false, null);
+      result += requirements.requirementsAdvancedPanel
+          .jButtonRequirementsAdvancedPanelViewEvent(false, false, null);
     }
     //result += unknown.getUnknownText();
     result += tags.jButtonTagsViewEvent(false, false, null);
     result += unknown.jButtonUnknownViewEvent(false, false, null);
-
     setJTextAreaJDL("");
-
     String panelNameJobType = "<html><font color=\"#602080\">"
         + Utils.GUI_PANEL_NAMES[0] + ":" + "</font>";
     String panelNameJobDefinition1 = "<html><font color=\"#602080\">"
@@ -1107,7 +1080,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         + Utils.GUI_PANEL_NAMES[7] + ":" + "</font>";
     String panelNameTags = "<html><font color=\"#602080\">"
         + Utils.GUI_PANEL_NAMES[8] + ":" + "</font>";
-
     this.errorMsg = "";
     if (!checkpoint.getErrorMsg().equals("")) {
       errorMsg += panelNameJobType + "\n" + checkpoint.getErrorMsg() + "\n";
@@ -1152,17 +1124,15 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     if (!unknown.getErrorMsg().equals("")) {
       errorMsg += panelNameUnknown + "\n" + unknown.getErrorMsg() + "\n";
     }
-
     errorMsg = errorMsg.trim();
     if (!errorMsg.equals("") && showErrorMsg) {
       GraphicUtils.showOptionDialogMsg(JDLEditor.this, errorMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE, null,
+          null);
       return null;
     } else {
       ExprChecker exprChecker = new ExprChecker();
-
       String defaultRank = "";
       if (checkpoint.getJobTypeValue().equals(Jdl.JOBTYPE_MPICH)
           && !GUIGlobalVars.getGUIConfVarRankMPI().equals("")) {
@@ -1170,16 +1140,12 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       } else {
         defaultRank = GUIGlobalVars.getGUIConfVarRank();
       }
-
-      JobAd jobAd = exprChecker.parse("[" + result + "]", true,
-          GUIGlobalVars.getGUIConfVarRequirements(),
-          defaultRank);
-
+      JobAd jobAd = exprChecker.parse("[" + result + "]", true, GUIGlobalVars
+          .getGUIConfVarRequirements(), defaultRank);
       warningMsg = "";
       {
         Vector errorAttributeVector = exprChecker.getErrorAttributeVector();
         Vector errorTypeMsgVector = exprChecker.getErrorTypeMsgVector();
-
         String jobTypeWarningMsg = "";
         Vector jobTypeAttributeVector = new Vector();
         for (int i = 0; i < Utils.jobTypeAttributeArray.length; i++) {
@@ -1188,14 +1154,14 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         String jobDefinition1WarningMsg = "";
         Vector jobDefinition1AttributeVector = new Vector();
         for (int i = 0; i < Utils.jobDefinition1AttributeArray.length; i++) {
-          jobDefinition1AttributeVector.add(Utils.jobDefinition1AttributeArray[
-              i]);
+          jobDefinition1AttributeVector
+              .add(Utils.jobDefinition1AttributeArray[i]);
         }
         String jobDefinition2WarningMsg = "";
         Vector jobDefinition2AttributeVector = new Vector();
         for (int i = 0; i < Utils.jobDefinition2AttributeArray.length; i++) {
-          jobDefinition2AttributeVector.add(Utils.jobDefinition2AttributeArray[
-              i]);
+          jobDefinition2AttributeVector
+              .add(Utils.jobDefinition2AttributeArray[i]);
         }
         String jobInputDataWarningMsg = "";
         Vector jobInputDataAttributeVector = new Vector();
@@ -1205,7 +1171,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         String jobOutputDataWarningMsg = "";
         Vector jobOutputDataAttributeVector = new Vector();
         for (int i = 0; i < Utils.jobOutputDataAttributeArray.length; i++) {
-          jobOutputDataAttributeVector.add(Utils.jobOutputDataAttributeArray[i]);
+          jobOutputDataAttributeVector
+              .add(Utils.jobOutputDataAttributeArray[i]);
         }
         String requirementsWarningMsg = "";
         Vector requirementsAttributeVector = new Vector();
@@ -1229,18 +1196,20 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           currentErrorTypeMsg = errorTypeMsgVector.get(i).toString();
           if (jobTypeAttributeVector.contains(currentErrorAttribute)) {
             jobTypeWarningMsg += currentErrorTypeMsg + "\n";
-          } else if (jobDefinition1AttributeVector.contains(
-              currentErrorAttribute)) {
+          } else if (jobDefinition1AttributeVector
+              .contains(currentErrorAttribute)) {
             jobDefinition1WarningMsg += currentErrorTypeMsg + "\n";
-          } else if (jobDefinition2AttributeVector.contains(
-              currentErrorAttribute)) {
+          } else if (jobDefinition2AttributeVector
+              .contains(currentErrorAttribute)) {
             jobDefinition2WarningMsg += currentErrorTypeMsg + "\n";
-          } else if (jobInputDataAttributeVector.contains(currentErrorAttribute)) {
+          } else if (jobInputDataAttributeVector
+              .contains(currentErrorAttribute)) {
             jobInputDataWarningMsg += currentErrorTypeMsg + "\n";
-          } else if (jobOutputDataAttributeVector.contains(
-              currentErrorAttribute)) {
+          } else if (jobOutputDataAttributeVector
+              .contains(currentErrorAttribute)) {
             jobOutputDataWarningMsg += currentErrorTypeMsg + "\n";
-          } else if (requirementsAttributeVector.contains(currentErrorAttribute)) {
+          } else if (requirementsAttributeVector
+              .contains(currentErrorAttribute)) {
             requirementsWarningMsg += currentErrorTypeMsg; //!!! + "\n";
           } else if (rankAttributeVector.contains(currentErrorAttribute)) {
             rankWarningMsg += currentErrorTypeMsg + "\n";
@@ -1248,11 +1217,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
             tagsWarningMsg += currentErrorTypeMsg + "\n";
           }
         }
-
         if (!jobTypeWarningMsg.equals("")) {
           warningMsg += panelNameJobType + "\n" + jobTypeWarningMsg;
         }
-
         if (!jobDefinition1WarningMsg.equals("")) {
           warningMsg += panelNameJobDefinition1 + "\n"
               + jobDefinition1WarningMsg;
@@ -1260,7 +1227,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         if (!jobDef1.getGUIWarningMsg().equals("")) {
           jobDefinition1WarningMsg += jobDef1.getGUIWarningMsg();
         }
-
         if (!jobDefinition2WarningMsg.equals("")) {
           warningMsg += panelNameJobDefinition2 + "\n"
               + jobDefinition2WarningMsg + "\n";
@@ -1285,22 +1251,17 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         }
       }
       System.gc();
-
       if (jobAd != null) {
         result = jobAd.toLines();
       }
-
       warningMsg = warningMsg.trim();
       if (!warningMsg.equals("") && showWarningMsg) {
         String firstLine = "<html><font color=\"#800080\">"
-            + "JDL file cannot be submitted."
-            + "</font>" + "\n";
+            + "JDL file cannot be submitted." + "</font>" + "\n";
         int choice = GraphicUtils.showOptionDialogMsg(JDLEditor.this,
-            warningMsg,
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE, firstLine,
-            "Do you want to see it anyway?");
+            warningMsg, Utils.WARNING_MSG_TXT, JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            firstLine, "Do you want to see it anyway?");
         if (choice != 0) {
           return null;
         }
@@ -1321,10 +1282,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     String paneName = jTabbedJDL.getTitleAt(jTabbedJDL.getSelectedIndex());
     int choice = JOptionPane.showOptionDialog(JDLEditor.this,
         "Do you really want to Reset '" + paneName + "' panel?",
-        "Confirm Reset",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Confirm Reset", JOptionPane.YES_NO_OPTION,
+        JOptionPane.QUESTION_MESSAGE, null, null, null);
     if (choice == 0) {
       if (paneName.equals(Utils.GUI_PANEL_NAMES[0])) {
         checkpoint.jButtonCheckpointResetEvent(null);
@@ -1340,8 +1299,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         if (requirements.jButtonAdvanced.getText().equals("Advanced >>")) {
           requirements.jButtonRequirementsResetEvent(null);
         } else {
-          requirements.requirementsAdvancedPanel.
-              jButtonRequirementsAdvancedPanelResetEvent(null);
+          requirements.requirementsAdvancedPanel
+              .jButtonRequirementsAdvancedPanelResetEvent(null);
         }
       } else if (paneName.equals(Utils.GUI_PANEL_NAMES[6])) {
         if (rank.jButtonAdvanced.getText().equals("Advanced >>")) {
@@ -1369,18 +1328,14 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     jobDef2.jButtonJobDef2ResetEvent(null);
     dataReq.jButtonDataReqResetEvent(null);
     jobOutputData.jButtonJobOutputDataResetEvent(null);
-
     requirements.jButtonRequirementsResetEvent(null);
-    requirements.requirementsAdvancedPanel.
-        jButtonRequirementsAdvancedPanelResetEvent(null);
-
+    requirements.requirementsAdvancedPanel
+        .jButtonRequirementsAdvancedPanelResetEvent(null);
     rank.jButtonRankResetEvent(null);
     rank.rankAdvancedPanel.jButtonRankAdvancedPanelResetEvent(null);
-
     checkpoint.jButtonCheckpointResetEvent(null);
     tags.jButtonTagsResetEvent(null);
     unknown.jButtonUnknownClearEventNoMsg(null);
-
     parserErrorMsg = "";
     jobAdGlobal.clear();
     if (!isJobSubmitterCalling) {
@@ -1398,32 +1353,23 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     jobDef2.jButtonJobDef2ResetEvent(null);
     dataReq.jButtonDataReqResetEvent(null);
     jobOutputData.jButtonJobOutputDataResetEvent(null);
-
     requirements.jButtonRequirementsResetEvent(null);
-    requirements.requirementsAdvancedPanel.
-        jButtonRequirementsAdvancedPanelResetEvent(null);
-
+    requirements.requirementsAdvancedPanel
+        .jButtonRequirementsAdvancedPanelResetEvent(null);
     rank.jButtonRankResetEvent(null);
     rank.rankAdvancedPanel.jButtonRankAdvancedPanelResetEvent(null);
-
     checkpoint.jButtonCheckpointResetEvent(null);
     tags.jButtonTagsResetEvent(null);
     unknown.jButtonUnknownClearEventNoMsg(null);
   }
 
-  /* boolean isFilePresentPathName(String element, Vector vector) {
-     File pathName;
-     String fileName = "";
-     for (int i = 0; i < vector.size(); i++) {
-       pathName = new File(vector.get(i).toString());
-       fileName = pathName.getName().toString();
-       if (fileName.equals(element)) {
-         return true;
-       }
-     }
-     return false;
-   }*/
-
+  /*
+   * boolean isFilePresentPathName(String element, Vector vector) { File
+   * pathName; String fileName = ""; for (int i = 0; i < vector.size(); i++) {
+   * pathName = new File(vector.get(i).toString()); fileName =
+   * pathName.getName().toString(); if (fileName.equals(element)) { return true; } }
+   * return false; }
+   */
   boolean isFilePresentNamePath(String element, Vector vector) {
     File pathName;
     String fileName = "";
@@ -1455,93 +1401,71 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       }
       checkpoint.setJobType(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
-      String value = jobAd.getStringValue(Jdl.VIRTUAL_ORGANISATION).get(0).
-          toString();
+      String value = jobAd.getStringValue(Jdl.VIRTUAL_ORGANISATION).get(0)
+          .toString();
       jobDef1.setVOText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     // For "Executable" see below after InputSandbox.
     try {
       String value = jobAd.getStringValue(Jdl.ARGUMENTS).get(0).toString();
       jobDef1.setArgumentsText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     // For "Executable" see below after InputSandbox.
-
     // For "StdOutput" and "StdError" see below after InputSandbox.
-
     try {
       Vector itemVector = jobAd.getStringValue(Jdl.OUTPUTSB);
       jobDef1.setOutputSandboxList(itemVector);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       Vector itemVector = jobAd.getStringValue(Jdl.INPUTSB);
       jobDef1.setInputSandboxList(itemVector);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       String value = jobAd.getStringValue(Jdl.STDOUTPUT).get(0).toString();
       jobDef1.setStdOutputText(value);
@@ -1549,19 +1473,15 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         jobDef1.jCheckBoxStdOutput.setSelected(true);
       }
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       String value = jobAd.getStringValue(Jdl.STDERROR).get(0).toString();
       jobDef1.setStdErrorText(value);
@@ -1569,72 +1489,56 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         jobDef1.jCheckBoxStdError.setSelected(true);
       }
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     // You must do the set for "Executable" and "StdInput" after "InputSandbox"
     // setting.
     try {
       String value = jobAd.getStringValue(Jdl.EXECUTABLE).get(0).toString();
       jobDef1.setExecutableText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       String value = jobAd.getStringValue(Jdl.STDINPUT).get(0).toString();
       jobDef1.setStdInputText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       Vector itemVector = jobAd.getStringValue(Jdl.ENVIRONMENT);
       jobDef2.setEnvironmentList(itemVector);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       String value = "";
       if (jobAd.hasAttribute(Jdl.MYPROXY)) {
@@ -1647,19 +1551,15 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       }
       jobDef2.setMyProxyServerText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       String value = "";
       if (jobAd.hasAttribute(Jdl.HLR_LOCATION)) {
@@ -1672,153 +1572,119 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       }
       jobDef2.setHLRLocationText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     if (jobAd.hasAttribute(Jdl.RETRYCOUNT)) {
       String value = (jobAd.lookup(Jdl.RETRYCOUNT).toString());
       jobDef2.setRetryCountValue(value);
     }
-
     if (jobAd.hasAttribute(Jdl.SHPORT)) {
-      if (checkpoint.jComboBoxJobType.getSelectedItem().toString().equals(Jdl.
-          JOBTYPE_INTERACTIVE)) {
+      if (checkpoint.jComboBoxJobType.getSelectedItem().toString().equals(
+          Jdl.JOBTYPE_INTERACTIVE)) {
         String value = (jobAd.lookup(Jdl.SHPORT).toString());
         checkpoint.setListenerPortValue(value);
       }
     }
-
     try {
       Vector itemVector = jobAd.getStringValue(Jdl.INPUTDATA);
       dataReq.setInputDataList(itemVector);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       Vector itemVector = jobAd.getStringValue(Jdl.DATA_ACCESS);
       dataReq.setDataAccessProtocolList(itemVector);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       Vector adVector = jobAd.getAdValue(Jdl.OUTPUTDATA);
       jobOutputData.setOutputData(adVector);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     try {
       String value = jobAd.getStringValue(Jdl.OUTPUT_SE).get(0).toString();
       jobOutputData.setOutputSEText(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     ///////////////////////////////////
     // Requirements EXPRESSION TREE. //
     ///////////////////////////////////
-
     try {
       String value = jobAd.getAttributeExpr(Jdl.REQUIREMENTS).trim();
       requirements.setRequirementsTree(value);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     ///////////////////////////
     // Rank EXPRESSION TREE. //
     ///////////////////////////
-
     if (jobAd.hasAttribute(Jdl.FUZZY_RANK)) {
       String value = (jobAd.lookup(Jdl.FUZZY_RANK).toString());
       rank.setFuzzyRankValue(value);
     }
-
     try {
       String value = jobAd.getAttributeExpr(Jdl.RANK).trim();
       if (!value.equals("")) {
         rank.setRankTree(value);
       }
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         e.printStackTrace();
       }
     }
-
     //////////////////////
     // Type ATTRIBUTES. //
     //////////////////////
-
     if (jobTypesVector.contains(Jdl.JOBTYPE_NORMAL)) {
       if (jobAd.hasAttribute(Jdl.NODENUMB)) {
         String value = (jobAd.lookup(Jdl.NODENUMB).toString());
@@ -1826,7 +1692,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         checkpoint.setNodeNumberVisible(true);
       }
     }
-
     if (jobTypesVector.contains(Jdl.JOBTYPE_INTERACTIVE)) {
       if (jobAd.hasAttribute(Jdl.SHPORT)) {
         String value = (jobAd.lookup(Jdl.SHPORT).toString());
@@ -1834,7 +1699,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         checkpoint.setListenerPortVisible(true);
       }
     }
-
     if (jobTypesVector.contains(Jdl.JOBTYPE_CHECKPOINTABLE)) {
       try {
         int type = jobAd.getType(Jdl.CHKPT_STEPS);
@@ -1856,68 +1720,56 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           }
           checkpoint.setJobStepsSelected(true);
         } catch (Exception e) {
-          JOptionPane.showOptionDialog(JDLEditor.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           if (isDebugging) {
             e.printStackTrace();
           }
         }
       } catch (NoSuchFieldException nsfe) {
-      // Attribute not present in jobad.
+        // Attribute not present in jobad.
       }
-
     }
-
     //////////////////////
     // Tags ATTRIBUTES. //
     //////////////////////
-
     try {
       Ad adUserTags = jobAd.getAd(Jdl.USER_TAGS);
       tags.setUserTags(adUserTags);
     } catch (NoSuchFieldException nsfe) {
-    // Attribute not present in jobad.
+      // Attribute not present in jobad.
     } catch (Exception e) {
       if (isDebugging) {
         e.printStackTrace();
       }
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
     }
-
     /////////////////////////
     // Unknown ATTRIBUTES. //
     /////////////////////////
-
     Iterator iterator = jobAd.attributes();
     String element = "";
     String unknownAttributesText = "";
-    for (; iterator.hasNext(); ) {
+    for (; iterator.hasNext();) {
       element = iterator.next().toString();
       if (!Utils.isInVectorCi(element, guiAttributesVector)) {
-        unknownAttributesText += element + " = " +
-            jobAd.lookup(element).toString() + ";\n";
+        unknownAttributesText += element + " = "
+            + jobAd.lookup(element).toString() + ";\n";
       }
     }
     if (!unknownAttributesText.trim().equals("")) {
       unknown.setUnknownText(unknownAttributesText);
       //setUnknownPaneVisible(true);
     }
-
     if (!parserErrorMsg.equals("")) {
       jMenuItemFileParsingError.setEnabled(true);
       GraphicUtils.showOptionDialogMsg(JDLEditor.this, parserErrorMsg,
-          Utils.WARNING_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+          Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+          null, null);
       logger.debug("parserErrorMsg: " + parserErrorMsg);
       writeErrorLogFile(parserErrorMsg);
     } else {
@@ -1925,19 +1777,17 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     }
   }
 
-  /*String getLocalExecutableText() {
-    return jobDef1.jTextFieldExecutable.getText().trim();
-     }
-     String getRemoteExecutableText() {
-    return jobDef1.jTextFieldExecutable.getText().trim();
-     }*/
-
+  /*
+   * String getLocalExecutableText() { return
+   * jobDef1.jTextFieldExecutable.getText().trim(); } String
+   * getRemoteExecutableText() { return
+   * jobDef1.jTextFieldExecutable.getText().trim(); }
+   */
   void jMenuFileOpen(String fileName) throws java.text.ParseException {
     ExprChecker exprChecker = new ExprChecker();
     File file = new File(fileName);
     String fileExtension = GUIFileSystem.getFileExtension(file).toUpperCase();
     this.jobType = Jdl.TYPE_JOB;
-
     if (fileExtension.equals("XML")) {
       try {
         jobAd = exprChecker.parse(file, true, ExprChecker.XML);
@@ -1945,17 +1795,16 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       } catch (java.text.ParseException pe) {
         throw pe;
       }
-
       if (jobAd != null) {
-        resetAllOpen(); // Clear all fields before inserting new values and remove Unknown pane.
+        resetAllOpen(); // Clear all fields before inserting new values and
+        // remove Unknown pane.
         addAttributesFromJobAd(jobAd, true);
         jButtonBack.setEnabled(true);
         displayJPanelDesktop();
-        jTabbedJDL.setSelectedIndex(GraphicUtils.
-            STARTUP_SELECTED_TABBED_PANE_INDEX);
+        jTabbedJDL
+            .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
         //jobDef1.jTextFieldExecutable.grabFocus();
       }
-
     } else {
       Ad ad = new Ad();
       try {
@@ -1964,7 +1813,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           this.jobType = ad.getStringValue(Jdl.TYPE).get(0).toString();
         }
       } catch (NoSuchFieldException nsfe) {
-      // Do nothing.
+        // Do nothing.
       } catch (java.text.ParseException pe) {
         if (isDebugging) {
           pe.printStackTrace();
@@ -1986,7 +1835,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           throw new java.text.ParseException("", 0);
         }
         if (ad != null) {
-          resetAllOpen(); // Clear all fields before inserting new values and remove Unknown pane.
+          resetAllOpen(); // Clear all fields before inserting new values and
+          // remove Unknown pane.
           displayJDLText(ad.toString(true, true));
           jButtonBack.setEnabled(false);
           jButtonCheck.setEnabled(false);
@@ -2010,8 +1860,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           addAttributesFromJobAd(jobAd, true);
           jButtonBack.setEnabled(true);
           displayJPanelDesktop();
-          jTabbedJDL.setSelectedIndex(GraphicUtils.
-              STARTUP_SELECTED_TABBED_PANE_INDEX);
+          jTabbedJDL
+              .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
           //jobDef1.jTextFieldExecutable.grabFocus();
         }
       }
@@ -2020,52 +1870,42 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
 
   void jMenuFileOpen() {
     JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
-
-    String[] extensionsJDL = {
-        "JDL"};
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
+    String[] extensionsJDL = { "JDL"
+    };
     GUIFileFilter classadFileFilter = new GUIFileFilter("*.jdl", extensionsJDL);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
-    String[] extensionsXML = {
-        "XML"};
+    String[] extensionsXML = { "XML"
+    };
     classadFileFilter = new GUIFileFilter("*.xml", extensionsXML);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
-    String[] extensionsJDLXML = {
-        "JDL", "XML"};
+    String[] extensionsJDLXML = { "JDL", "XML"
+    };
     classadFileFilter = new GUIFileFilter("*.jdl, *.xml", extensionsJDLXML);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
     int choice = fileChooser.showOpenDialog(JDLEditor.this);
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JDLEditor.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JDLEditor.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       try {
         jMenuFileOpen(selectedFile);
         currentOpenedFile = selectedFile;
         JDLEditor.this.setTitle("JDL Editor - " + currentOpenedFile);
-
       } catch (java.text.ParseException pe) {
         JOptionPane.showOptionDialog(JDLEditor.this,
             "Selected file is not a valid classad file or it is empty",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     }
   }
@@ -2079,22 +1919,18 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         jdlText = yieldJDLText(showWarningMsg, showErrorMsg);
         if (!errorMsg.equals("")) {
           String msg = "<html><font color=\"#800080\">"
-              + "JDL file cannot be saved. It contains error(s):"
-              + "</font>" + "\n";
+              + "JDL file cannot be saved. It contains error(s):" + "</font>"
+              + "\n";
           GraphicUtils.showOptionDialogMsg(JDLEditor.this, errorMsg,
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              Utils.MESSAGE_LINES_PER_JOPTIONPANE, msg, null);
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+              msg, null);
           return;
         } else if (!warningMsg.equals("")) {
           int choice = GraphicUtils.showOptionDialogMsg(JDLEditor.this,
-              warningMsg,
-              Utils.WARNING_MSG_TXT,
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.WARNING_MESSAGE,
-              Utils.MESSAGE_LINES_PER_JOPTIONPANE, null,
-              "Do you want to save it anyway?");
+              warningMsg, Utils.WARNING_MSG_TXT, JOptionPane.YES_NO_OPTION,
+              JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+              null, "Do you want to save it anyway?");
           if (choice != 0) {
             return;
           }
@@ -2117,10 +1953,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         }
         JOptionPane.showOptionDialog(JDLEditor.this,
             "Dag file cannot be saved. It contains syntax error(s)",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         return;
       }
     }
@@ -2130,31 +1964,32 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       int choice = -1;
       if (selectedFile.equals("")) {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-            getFileChooserWorkingDirectory()));
-
-        String[] extensions1 = {"XML"};
+        fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+            .getFileChooserWorkingDirectory()));
+        String[] extensions1 = { "XML"
+        };
         GUIFileFilter classadFileFilter = new GUIFileFilter("xml", extensions1);
         fileChooser.addChoosableFileFilter(classadFileFilter);
-
-        String[] extensions2 = {"JDL"};
+        String[] extensions2 = { "JDL"
+        };
         classadFileFilter = new GUIFileFilter("jdl", extensions2);
         fileChooser.addChoosableFileFilter(classadFileFilter);
-
         savedFileCount++;
         if (currentOpenedFile.equals("")) {
-          fileChooser.setSelectedFile(new File(GUIFileSystem.
-              DEFAULT_JDL_EDITOR_SAVE_FILE_NAME + savedFileCount));
+          fileChooser
+              .setSelectedFile(new File(
+                  GUIFileSystem.DEFAULT_JDL_EDITOR_SAVE_FILE_NAME
+                      + savedFileCount));
         } else {
           String fileName = (new File(currentOpenedFile)).getName().toString();
           String extension = GUIFileSystem.getFileExtension(new File(fileName));
           if (extension.length() != 0) {
-            fileChooser.setSelectedFile(new File(fileName.substring(0,
-                fileName.length()
+            fileChooser.setSelectedFile(new File(fileName.substring(0, fileName
+                .length()
                 - (extension.length() + 1)))); // Remove extension (and dot).
           } else {
-            fileChooser.setSelectedFile(new File(fileName.substring(0,
-                fileName.length())));
+            fileChooser.setSelectedFile(new File(fileName.substring(0, fileName
+                .length())));
           }
         }
         choice = fileChooser.showSaveDialog(JDLEditor.this);
@@ -2162,28 +1997,26 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           savedFileCount--;
           return;
         } else {
-          GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-              getCurrentDirectory().toString());
+          GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+              .getCurrentDirectory().toString());
           File file = fileChooser.getSelectedFile();
           selectedFile = file.toString();
           String extension = GUIFileSystem.getFileExtension(file).toUpperCase();
           FileFilter selectedFileFilter = fileChooser.getFileFilter();
-          if (!extension.equals("JDL") &&
-              selectedFileFilter.getDescription().equals("jdl")) {
+          if (!extension.equals("JDL")
+              && selectedFileFilter.getDescription().equals("jdl")) {
             selectedFile += ".jdl";
-          } else if (!extension.equals("XML") &&
-              selectedFileFilter.getDescription().equals("xml")) {
+          } else if (!extension.equals("XML")
+              && selectedFileFilter.getDescription().equals("xml")) {
             selectedFile += ".xml";
           }
         }
         outputFile = new File(selectedFile);
         if (outputFile.isFile()) {
           choice = JOptionPane.showOptionDialog(JDLEditor.this,
-              "Output file exists. Overwrite?",
-              "Confirm Save",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null);
+              "Output file exists. Overwrite?", "Confirm Save",
+              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+              null, null);
         }
       } else {
         choice = 0;
@@ -2192,13 +2025,12 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       if (choice == 0) {
         try {
           ExprChecker exprChecker = new ExprChecker();
-          String fileExtension = GUIFileSystem.getFileExtension(outputFile).
-              toUpperCase();
+          String fileExtension = GUIFileSystem.getFileExtension(outputFile)
+              .toUpperCase();
           if (fileExtension.equals("XML")) {
             JobAd jobAd = exprChecker.parse(jdlText);
             jobAd.toLines();
             RecordExpr recordExpr = jobAd.copyAd();
-
             StringWriter stringWriter = new StringWriter();
             ClassAdWriter classAdWriter = new ClassAdWriter(stringWriter,
                 ClassAdWriter.XML);
@@ -2207,7 +2039,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
             classAdWriter.print(recordExpr);
             classAdWriter.close();
             String xmlText = stringWriter.toString().trim();
-
             GUIFileSystem.saveTextFile(outputFile, xmlText);
           } else {
             //!!!GUIFileSystem.saveTextFile(outputFile, jdlText, true);
@@ -2221,12 +2052,9 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           if (isDebugging) {
             ex.printStackTrace();
           }
-          JOptionPane.showOptionDialog(JDLEditor.this,
-              ex.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JDLEditor.this, ex.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
         }
       } else {
         savedFileCount--;
@@ -2237,32 +2065,33 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   void jMenuHelpAbout() {
     URL url = JobDef1Panel.class.getResource(Utils.ICON_DATAGRID_LOGO);
     JOptionPane.showOptionDialog(JDLEditor.this,
-        //Utils.JDL_EDITOR_ABOUT_MSG,
+    //Utils.JDL_EDITOR_ABOUT_MSG,
         "JDL Editor Version " + GUIGlobalVars.getGUIConfVarVersion() + "\n\n"
-        + Utils.COPYRIGHT,
-        "About",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.INFORMATION_MESSAGE,
-        (url == null) ? null : new ImageIcon(url), null, null);
+            + Utils.COPYRIGHT, "About", JOptionPane.DEFAULT_OPTION,
+        JOptionPane.INFORMATION_MESSAGE, (url == null) ? null : new ImageIcon(
+            url), null, null);
   }
 
   /**
    * Sets if the Unknown panel must be visible or not
+   * 
    * @param bool
    */
   protected void setUnknownPaneVisible(boolean bool) {
     if (bool) {
       jTabbedJDL.addTab(Utils.GUI_PANEL_NAMES[7], unknownPanel);
     } else {
-      jTabbedJDL.setSelectedIndex(GraphicUtils.
-          STARTUP_SELECTED_TABBED_PANE_INDEX);
+      jTabbedJDL
+          .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
       jTabbedJDL.remove(unknownPanel);
     }
   }
 
   /**
    * main() method
-   * @param args command line arguments
+   * 
+   * @param args
+   *          command line arguments
    */
   public static void main(String[] args) {
     JFrame frame = new JDLEditor();
@@ -2276,22 +2105,18 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     if (e.getID() == WindowEvent.WINDOW_CLOSING) {
       if (isJobSubmitterCalling) {
         int choice = JOptionPane.showOptionDialog(JDLEditor.this,
-            "Do you really want to close editor?",
-            "Confirm Close",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null);
+            "Do you really want to close editor?", "Confirm Close",
+            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            null, null);
         if (choice == 0) {
           GUIGlobalVars.openedEditorHashMap.remove(rBName + " - " + keyJobName);
           JDLEditor.this.dispose();
         }
       } else {
         int choice = JOptionPane.showOptionDialog(JDLEditor.this,
-            "Do you really want to exit?",
-            "Confirm Exit",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null);
+            "Do you really want to exit?", "Confirm Exit",
+            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            null, null);
         if (choice == 0) {
           System.exit(0);
         }
@@ -2303,32 +2128,27 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     try {
       String fileName = GUIGlobalVars.getGUIConfVarErrorStorage()
           + File.separator + GUIFileSystem.ERROR_LOG_FILE_NAME + "_"
-          + System.getProperty("user.name")
-          + System.currentTimeMillis() + GUIFileSystem.ERROR_LOG_EXTENSION;
+          + System.getProperty("user.name") + System.currentTimeMillis()
+          + GUIFileSystem.ERROR_LOG_EXTENSION;
       String text = "\nJDL Editor Version "
           + GUIGlobalVars.getGUIConfVarVersion()
           + " parser error(s) log file.\nThis file contains error(s) "
-          + "found during file parsing." + "\n"
-          + "\n" + parserErrorMsg + "\n";
+          + "found during file parsing." + "\n" + "\n" + parserErrorMsg + "\n";
       GUIFileSystem.saveTextFile(fileName, text);
     } catch (Exception ex) {
       if (isDebugging) {
         ex.printStackTrace();
       }
       JOptionPane.showOptionDialog(JDLEditor.this,
-          "Unable to write error log file:"
-          + ex.getMessage(),
-          Utils.WARNING_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.WARNING_MESSAGE,
-          null, null, null);
+          "Unable to write error log file:" + ex.getMessage(),
+          Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.WARNING_MESSAGE, null, null, null);
     }
   }
 
-  /*********************************************
+  /*****************************************************************************
    * JDLEditorInterface methods implementation *
-   *********************************************/
-
+   ****************************************************************************/
   // get, set methods //
   public String getUserWorkingDirectory() {
     return userWorkingDirectory;
@@ -2385,7 +2205,6 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     jButtonViewAll.setVisible(true);
     jPanelState.setVisible(false);
     jPanelFirst.add(jPanelDesktop, BorderLayout.CENTER);
-
     validate();
     repaint();
   }
@@ -2401,41 +2220,39 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
 
   // exit method //
   public void exitApplication() {
-    System.exit( -1);
+    System.exit(-1);
   }
-
 }
-
-
-
-/************************
+/*******************************************************************************
  * CLASS JPanelStateBar *
- ************************/
+ ******************************************************************************/
+
 class JPanelStateBar extends JPanel implements CaretListener {
   String newline = "\n";
+
   JTextPane jTextPane;
+
   JLabel jLabelRow = new JLabel("Line:");
+
   JLabel jLabelRowValue = new JLabel();
+
   JLabel jLabelColumn = new JLabel("Column:");
+
   JLabel jLabelColumnValue = new JLabel();
 
   public JPanelStateBar(JTextPane jTextPane) {
     this.jTextPane = jTextPane;
-
     jLabelRowValue.setBorder(BorderFactory.createLoweredBevelBorder());
     jLabelRowValue.setPreferredSize(new Dimension(30, 18));
     jLabelRowValue.setHorizontalAlignment(SwingConstants.RIGHT);
-
     jLabelColumnValue.setBorder(BorderFactory.createLoweredBevelBorder());
     jLabelColumnValue.setPreferredSize(new Dimension(30, 18));
     jLabelColumnValue.setHorizontalAlignment(SwingConstants.RIGHT);
-
-    ((FlowLayout)this.getLayout()).setAlignment(FlowLayout.RIGHT);
+    ((FlowLayout) this.getLayout()).setAlignment(FlowLayout.RIGHT);
     this.add(this.jLabelRow);
     this.add(this.jLabelRowValue);
     this.add(this.jLabelColumn);
     this.add(this.jLabelColumnValue);
-
   }
 
   public void caretUpdate(CaretEvent e) {

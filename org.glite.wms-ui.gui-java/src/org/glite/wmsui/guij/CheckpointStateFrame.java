@@ -1,20 +1,28 @@
 /*
  * CheckpointStateFrame.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-
-import org.apache.log4j.*;
-
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Implementation of the CheckpointStateFrame class.
@@ -29,6 +37,7 @@ public class CheckpointStateFrame extends JFrame {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   private String fileName;
@@ -36,11 +45,14 @@ public class CheckpointStateFrame extends JFrame {
   Component component;
 
   JPanel jPanelButtonEdit = new JPanel();
-  JPanel jPanelCheckpointState = new JPanel();
-  JButton jButtonEdit = new JButton();
-  JScrollPane jScrollPaneCheckpointState = new JScrollPane();
-  JTextPane jTextPaneCheckpointState = new JTextPane();
 
+  JPanel jPanelCheckpointState = new JPanel();
+
+  JButton jButtonEdit = new JButton();
+
+  JScrollPane jScrollPaneCheckpointState = new JScrollPane();
+
+  JTextPane jTextPaneCheckpointState = new JTextPane();
 
   /**
    * Constructor.
@@ -53,16 +65,15 @@ public class CheckpointStateFrame extends JFrame {
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
-    }
-    catch(Exception e) {
-      if (isDebugging) e.printStackTrace();
+    } catch (Exception e) {
+      if (isDebugging)
+        e.printStackTrace();
     }
   }
 
-
-  private void jbInit() throws Exception  {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+  private void jbInit() throws Exception {
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     setSize(520, 600);
     setResizable(false);
     this.getContentPane().setLayout(new BorderLayout());
@@ -80,15 +91,14 @@ public class CheckpointStateFrame extends JFrame {
     this.getContentPane().add(jPanelCheckpointState, BorderLayout.CENTER);
     jPanelCheckpointState.add(jScrollPaneCheckpointState, BorderLayout.CENTER);
     this.getContentPane().add(jPanelButtonEdit, BorderLayout.SOUTH);
-    jScrollPaneCheckpointState.getViewport().add(jTextPaneCheckpointState, null);
+    jScrollPaneCheckpointState.getViewport()
+        .add(jTextPaneCheckpointState, null);
     this.getContentPane().setVisible(true);
   }
-
 
   public void setCheckpointState(String text) {
     jTextPaneCheckpointState.setText(text);
   }
-
 
   void jButtonCloseEvent(ActionEvent e) {
     if (GUIGlobalVars.openedCheckpointStateMap.containsKey(this.fileName)) {
@@ -96,7 +106,6 @@ public class CheckpointStateFrame extends JFrame {
     }
     this.dispose();
   }
-
 
   protected void processWindowEvent(WindowEvent e) {
     super.processWindowEvent(e);
@@ -106,15 +115,11 @@ public class CheckpointStateFrame extends JFrame {
     }
   }
 
-
   static void closeAllCheckpointStateFrames() {
     Object[] values = GUIGlobalVars.openedCheckpointStateMap.values().toArray();
-    for(int i = 0 ; i < values.length; i++) {
+    for (int i = 0; i < values.length; i++) {
       ((CheckpointStateFrame) values[i]).dispose();
     }
     GUIGlobalVars.openedCheckpointStateMap.clear();
   }
-
-
-
 }

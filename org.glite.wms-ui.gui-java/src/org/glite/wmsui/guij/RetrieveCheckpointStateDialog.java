@@ -1,29 +1,31 @@
 /*
  * RetrieveCheckpointStateDialog.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import java.util.*;
-import java.beans.VetoableChangeListener;
-import java.beans.PropertyVetoException;
-
-import org.glite.wms.jdlj.JobAd;
-import org.glite.wms.jdlj.JobAdException;
-
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-import javax.swing.plaf.basic.*;
-
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.plaf.basic.BasicArrowButton;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Implementation of the RetrieveCheckpointStateDialog class.
@@ -39,25 +41,36 @@ public class RetrieveCheckpointStateDialog extends JDialog {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   private String jobId = "";
+
   private int state = Utils.CHECKPOINT_STATE_DEF_VAL;
 
   JLabel jLabelJobId = new JLabel();
-  JTextField jTextFieldJobId = new JTextField();
-  BasicArrowButton upCheckpointState = new BasicArrowButton(BasicArrowButton.NORTH);
-  BasicArrowButton downCheckpointState = new BasicArrowButton(BasicArrowButton.SOUTH);
-  JTextField jTextFieldCheckpointState = new JTextField();
-  JLabel jLabelCheckpointState = new JLabel();
-  JButton jButtonCancel = new JButton();
-  JButton jButtonRetrieve = new JButton();
 
+  JTextField jTextFieldJobId = new JTextField();
+
+  BasicArrowButton upCheckpointState = new BasicArrowButton(
+      BasicArrowButton.NORTH);
+
+  BasicArrowButton downCheckpointState = new BasicArrowButton(
+      BasicArrowButton.SOUTH);
+
+  JTextField jTextFieldCheckpointState = new JTextField();
+
+  JLabel jLabelCheckpointState = new JLabel();
+
+  JButton jButtonCancel = new JButton();
+
+  JButton jButtonRetrieve = new JButton();
 
   /**
    *  Constructor.
    */
-  public RetrieveCheckpointStateDialog(Component component, String jobIdText, boolean isEditable) {
+  public RetrieveCheckpointStateDialog(Component component, String jobIdText,
+      boolean isEditable) {
     super((JFrame) component);
     this.jobId = jobIdText;
     if (component instanceof JobSubmitter) {
@@ -78,16 +91,15 @@ public class RetrieveCheckpointStateDialog extends JDialog {
       } else {
         jTextFieldJobId.selectAll();
       }
-    }
-    catch(Exception e) {
-      if (isDebugging) e.printStackTrace();
+    } catch (Exception e) {
+      if (isDebugging)
+        e.printStackTrace();
     }
   }
 
-
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     setSize(new Dimension(547, 110));
     setResizable(false);
     jLabelJobId.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -100,14 +112,20 @@ public class RetrieveCheckpointStateDialog extends JDialog {
     downCheckpointState.setBounds(new Rectangle(507, 24, 16, 16));
     jTextFieldCheckpointState.setHorizontalAlignment(SwingConstants.RIGHT);
     jTextFieldCheckpointState.setBounds(new Rectangle(478, 11, 29, 27));
-    jTextFieldCheckpointState.addFocusListener(new java.awt.event.FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        GraphicUtils.jTextFieldFocusLost(jTextFieldCheckpointState, Utils.INTEGER,  Integer.toString(Utils.CHECKPOINT_STATE_DEF_VAL),
-                  Utils.CHECKPOINT_STATE_MIN_VAL, Utils.CHECKPOINT_STATE_MAX_VAL);
-      }
-      public void focusGained(FocusEvent e) {}
-    });
-    jTextFieldCheckpointState.setText(Integer.toString(Utils.CHECKPOINT_STATE_DEF_VAL));
+    jTextFieldCheckpointState
+        .addFocusListener(new java.awt.event.FocusAdapter() {
+          public void focusLost(FocusEvent e) {
+            GraphicUtils.jTextFieldFocusLost(jTextFieldCheckpointState,
+                Utils.INTEGER,
+                Integer.toString(Utils.CHECKPOINT_STATE_DEF_VAL),
+                Utils.CHECKPOINT_STATE_MIN_VAL, Utils.CHECKPOINT_STATE_MAX_VAL);
+          }
+
+          public void focusGained(FocusEvent e) {
+          }
+        });
+    jTextFieldCheckpointState.setText(Integer
+        .toString(Utils.CHECKPOINT_STATE_DEF_VAL));
     jLabelCheckpointState.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelCheckpointState.setText("State");
     jLabelCheckpointState.setBounds(new Rectangle(439, 15, 36, 18));
@@ -135,42 +153,37 @@ public class RetrieveCheckpointStateDialog extends JDialog {
     this.getContentPane().add(jButtonCancel, null);
     upCheckpointState.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldCheckpointState, Utils.INTEGER, Integer.toString(Utils.CHECKPOINT_STATE_DEF_VAL),
-                  Utils.CHECKPOINT_STATE_MIN_VAL, Utils.CHECKPOINT_STATE_MAX_VAL);
+        Utils.upButtonEvent(jTextFieldCheckpointState, Utils.INTEGER, Integer
+            .toString(Utils.CHECKPOINT_STATE_DEF_VAL),
+            Utils.CHECKPOINT_STATE_MIN_VAL, Utils.CHECKPOINT_STATE_MAX_VAL);
       }
     });
     downCheckpointState.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldCheckpointState, Utils.INTEGER, Integer.toString(Utils.CHECKPOINT_STATE_DEF_VAL),
-                  Utils.CHECKPOINT_STATE_MIN_VAL, Utils.CHECKPOINT_STATE_MAX_VAL);
+        Utils.downButtonEvent(jTextFieldCheckpointState, Utils.INTEGER, Integer
+            .toString(Utils.CHECKPOINT_STATE_DEF_VAL),
+            Utils.CHECKPOINT_STATE_MIN_VAL, Utils.CHECKPOINT_STATE_MAX_VAL);
       }
     });
-
-
   }
-
 
   public String getJobId() {
     return this.jobId;
   }
 
-
   public int getState() {
     return this.state;
   }
-
 
   void jButtonCancelEvent(ActionEvent e) {
     this.jobId = null;
     this.dispose();
   }
 
-
   void jButtonRetrieveEvent(ActionEvent e) {
     this.jobId = jTextFieldJobId.getText().trim();
-    this.state = Integer.parseInt(jTextFieldCheckpointState.getText().trim(), 10);
+    this.state = Integer.parseInt(jTextFieldCheckpointState.getText().trim(),
+        10);
     this.dispose();
   }
-
-
 }

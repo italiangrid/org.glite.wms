@@ -1,28 +1,47 @@
 /*
  * NSPreferencesPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import java.util.*;
-import java.io.*;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import condor.classad.*;
-
-import org.apache.log4j.*;
-
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import condor.classad.Constant;
+import condor.classad.ListExpr;
 
 /**
  * Implementation of the NSPreferencesPanel class.
@@ -38,36 +57,61 @@ public class NSPreferencesPanel extends JPanel {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int NS_NAME_COLUMN_INDEX = 0;
+
   static final String NS_NAME_TABLE_HEADER = "NS Name";
+
   static final int NS_ADDRESS_COLUMN_INDEX = 1;
+
   static final String NS_ADDRESS_TABLE_HEADER = "NS Address";
+
   static final int JDLE_SCHEMA_COLUMN_INDEX = 2;
+
   static final String JDLE_SCHEMA_TABLE_HEADER = "Information Service Schema";
 
   JPanel jPanelNS = new JPanel();
+
   JTextField jTextFieldNSAddress = new JTextField();
+
   JTextField jTextFieldNSPort = new JTextField();
+
   JLabel jLabelNSAddress = new JLabel();
+
   JLabel jLabelNSPort = new JLabel();
 
   JScrollPane jScrollPaneNSTable = new JScrollPane();
+
   JTable jTableNS;
+
   JobTableModel jobTableModel;
+
   Vector vectorHeader = new Vector();
+
   JButton jButtonAdd = new JButton();
+
   JButton jButtonRemove = new JButton();
+
   JButton jButtonAll = new JButton();
+
   JButton jButtonNone = new JButton();
+
   JButton jButtonClear = new JButton();
+
   JButton jButtonClearTable = new JButton();
+
   JButton jButtonEdit = new JButton();
+
   JobSubmitter jobSubmitterJFrame;
+
   JTextField jTextFieldNSName = new JTextField(8);
+
   JComboBox jComboBoxJDLESchema = new JComboBox();
+
   JLabel jLabelNSName = new JLabel();
+
   JLabel jLabelJDLESchema = new JLabel();
 
   /**
@@ -78,9 +122,8 @@ public class NSPreferencesPanel extends JPanel {
     if (component instanceof JobSubmitter) {
       this.jobSubmitterJFrame = (JobSubmitter) component;
     } else {
-      System.exit( -1);
+      System.exit(-1);
     }
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -92,24 +135,22 @@ public class NSPreferencesPanel extends JPanel {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     vectorHeader.addElement(NS_NAME_TABLE_HEADER);
     vectorHeader.addElement(NS_ADDRESS_TABLE_HEADER);
     vectorHeader.addElement(JDLE_SCHEMA_TABLE_HEADER);
-
     for (int i = 0; i < Utils.jdleSchemaArray.length; i++) {
       jComboBoxJDLESchema.addItem(Utils.jdleSchemaArray[i]);
     }
-
     jobTableModel = new JobTableModel(vectorHeader, 0);
     jTableNS = new JTable(jobTableModel);
     jTableNS.getTableHeader().setReorderingAllowed(false);
     setSize(new Dimension(550, 460));
     setLayout(null);
     jPanelNS.setBorder(new TitledBorder(new EtchedBorder(),
-        " NS Configuration ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
+        " NS Configuration ", 0, 0, null,
+        GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelNS.setBounds(new Rectangle(5, 5, 527, 305));
     jPanelNS.setLayout(null);
     jTextFieldNSAddress.setBounds(new Rectangle(88, 51, 338, 21));
@@ -204,15 +245,14 @@ public class NSPreferencesPanel extends JPanel {
     jPanelNS.add(jLabelNSName, null);
     jScrollPaneNSTable.getViewport().add(jTableNS, null);
     this.add(jPanelNS, null);
-
     jTableNS.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
           Point point = me.getPoint();
           int row = jTableNS.rowAtPoint(point);
           int column = jTableNS.columnAtPoint(point);
-          String nsName = jobTableModel.getValueAt(row,
-              NS_NAME_COLUMN_INDEX).toString().trim();
+          String nsName = jobTableModel.getValueAt(row, NS_NAME_COLUMN_INDEX)
+              .toString().trim();
           String addressPort = jobTableModel.getValueAt(row,
               NS_ADDRESS_COLUMN_INDEX).toString().trim();
           String nsSchema = jobTableModel.getValueAt(row,
@@ -249,25 +289,20 @@ public class NSPreferencesPanel extends JPanel {
     String insertedNSAddress = jTextFieldNSAddress.getText().trim();
     String insertedNSPort = jTextFieldNSPort.getText().trim();
     String insertedNSSchema = jComboBoxJDLESchema.getSelectedItem().toString();
-
     if (insertedNSName.equals("")) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "NS Name field cannot be blank",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "NS Name field cannot be blank", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSName.setText("");
       jTextFieldNSName.grabFocus();
       return;
     }
     if (insertedNSAddress.equals("")) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "NS Address field cannot be blank",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "NS Address field cannot be blank", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSAddress.setText("");
       jTextFieldNSAddress.grabFocus();
       return;
@@ -276,11 +311,9 @@ public class NSPreferencesPanel extends JPanel {
       insertedNSPort = Utils.LB_DEFAULT_PORT.trim();
       if (insertedNSPort.equals("")) {
         JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-            "NS Port cannot be blank",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            "NS Port cannot be blank", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
         jTextFieldNSPort.grabFocus();
         jTextFieldNSPort.selectAll();
         return;
@@ -289,41 +322,31 @@ public class NSPreferencesPanel extends JPanel {
         || (Integer.parseInt(insertedNSPort, 10) < 1024)) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
           "NS Port must be an int value greater than 1023",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       jTextFieldNSPort.grabFocus();
       jTextFieldNSPort.selectAll();
       return;
     }
-
     String addressPort = insertedNSAddress + ":" + insertedNSPort;
-
     if (jobTableModel.isElementPresentInColumnCi(insertedNSName,
         NS_NAME_COLUMN_INDEX) == true) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "Inserted NS Name is already present",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "Inserted NS Name is already present", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSName.grabFocus();
       jTextFieldNSName.selectAll();
       return;
     }
-
     Vector rowElement = new Vector();
     rowElement.addElement(insertedNSName);
     rowElement.addElement(insertedNSAddress + ":" + insertedNSPort);
     rowElement.addElement(insertedNSSchema);
     jobTableModel.addRow(rowElement);
-
-    LBPreferencesPanel lbPreferencesPanel =
-        jobSubmitterJFrame.getJobSubmitterPreferencesReference().
-        getLBPreferencesPanelReference();
+    LBPreferencesPanel lbPreferencesPanel = jobSubmitterJFrame
+        .getJobSubmitterPreferencesReference().getLBPreferencesPanelReference();
     lbPreferencesPanel.addNSAddress(insertedNSAddress + ":" + insertedNSPort);
-
     jTextFieldNSName.selectAll();
     jTextFieldNSName.grabFocus();
   }
@@ -332,46 +355,36 @@ public class NSPreferencesPanel extends JPanel {
     if (jTableNS.getSelectedRowCount() == 0) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
           "Please first select from table a NS to replace",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
       return;
     } else if (jTableNS.getSelectedRowCount() != 1) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
           "Please select from table a single NS to replace",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
       return;
     }
     int selectedRow = jTableNS.getSelectedRow();
-
     String insertedNSName = jTextFieldNSName.getText().trim();
     String insertedNSAddress = jTextFieldNSAddress.getText().trim();
     String insertedNSPort = jTextFieldNSPort.getText().trim();
     String insertedNSSchema = jComboBoxJDLESchema.getSelectedItem().toString();
     String addressPort = insertedNSAddress + ":" + insertedNSPort;
-
     if (insertedNSName.equals("")) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "NS Name field cannot be blank",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "NS Name field cannot be blank", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSName.setText("");
       jTextFieldNSName.grabFocus();
       return;
     }
     if (insertedNSAddress.equals("")) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "NS Address field cannot be blank",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "NS Address field cannot be blank", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSAddress.setText("");
       jTextFieldNSAddress.grabFocus();
       return;
@@ -380,60 +393,48 @@ public class NSPreferencesPanel extends JPanel {
       insertedNSPort = Utils.NS_DEFAULT_PORT;
     } else if (Utils.getValueType(insertedNSPort) != Utils.INTEGER) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "NS Port must be an int value",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "NS Port must be an int value", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSPort.grabFocus();
       jTextFieldNSPort.selectAll();
       return;
     }
-
     String selectedNSName = jobTableModel.getValueAt(selectedRow,
         NS_NAME_COLUMN_INDEX).toString().trim();
     String selectedNSAddress = jobTableModel.getValueAt(selectedRow,
         NS_ADDRESS_COLUMN_INDEX).toString().trim();
     String selectedNSSchema = jobTableModel.getValueAt(selectedRow,
         JDLE_SCHEMA_COLUMN_INDEX).toString().trim();
-
     if ((!selectedNSName.equals(insertedNSName))
         && (jobTableModel.isElementPresentInColumnCi(insertedNSName,
-        NS_NAME_COLUMN_INDEX) == true)) {
+            NS_NAME_COLUMN_INDEX) == true)) {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          "Inserted NS Name is already present",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "Inserted NS Name is already present", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldNSName.grabFocus();
       jTextFieldNSName.selectAll();
       return;
     }
-
     NSPanel nsPanel = null;
     int tabIndex = jobSubmitterJFrame.jTabbedPaneRB.indexOfTab(selectedNSName);
     if (tabIndex != -1) {
-      nsPanel = (NSPanel) jobSubmitterJFrame.jTabbedPaneRB.getComponentAt(
-          tabIndex);
+      nsPanel = (NSPanel) jobSubmitterJFrame.jTabbedPaneRB
+          .getComponentAt(tabIndex);
     }
-
     if ((nsPanel != null) && nsPanel.hasSubmittedJobs()) {
       if (!addressPort.equals(selectedNSAddress)
           || !insertedNSSchema.equals(selectedNSSchema)) {
-        JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-            "Selected NS \"" + selectedNSName
+        JOptionPane.showOptionDialog(NSPreferencesPanel.this, "Selected NS \""
+            + selectedNSName
             + "\" has submitted job(s)\nYou can replace NS Name only",
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null, null, null);
+            Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.WARNING_MESSAGE, null, null, null);
         return;
       }
     }
-
     //!!!NetworkServer ns = (NetworkServer) GUIGlobalVars.nsMap.get(selectedNSName);
-
     if (!insertedNSName.equals(selectedNSName)) {
       //!!! Null check
       if (nsPanel != null) {
@@ -446,17 +447,16 @@ public class NSPreferencesPanel extends JPanel {
           + File.separator + insertedNSName));
       jobTableModel.setValueAt(insertedNSName, selectedRow,
           NS_NAME_COLUMN_INDEX);
-
-      Vector openedEditorVector = GUIGlobalVars.getNSPanelOpenedEditorKeyVector(
-          selectedNSName);
+      Vector openedEditorVector = GUIGlobalVars
+          .getNSPanelOpenedEditorKeyVector(selectedNSName);
       JDLEditor editor;
       String title;
       String nsName;
       String keyJobName;
       int index = -1;
       for (int i = 0; i < openedEditorVector.size(); i++) {
-        editor = (JDLEditor) GUIGlobalVars.openedEditorHashMap.get(
-            openedEditorVector.get(i));
+        editor = (JDLEditor) GUIGlobalVars.openedEditorHashMap
+            .get(openedEditorVector.get(i));
         title = editor.getTitle();
         index = title.lastIndexOf("-");
         keyJobName = title.substring(index + 1).trim();
@@ -468,23 +468,18 @@ public class NSPreferencesPanel extends JPanel {
             + keyJobName, editor);
       }
     }
-
     //!!!ns.setAddress(insertedNSAddress);
     //!!!ns.setJDLESchema(insertedNSSchema);
     //!!!GUIGlobalVars.nsMap.remove(selectedNSName);
     //!!!GUIGlobalVars.nsMap.put(insertedNSName, ns);
-
     jobTableModel.setValueAt(insertedNSAddress + ":" + insertedNSPort,
         selectedRow, NS_ADDRESS_COLUMN_INDEX);
     jobTableModel.setValueAt(insertedNSSchema, selectedRow,
         JDLE_SCHEMA_COLUMN_INDEX);
-
-    LBPreferencesPanel lbPreferencesPanel =
-        jobSubmitterJFrame.getJobSubmitterPreferencesReference().
-        getLBPreferencesPanelReference();
-    lbPreferencesPanel.replaceNSAddress(selectedNSAddress,
-        insertedNSAddress + ":" + insertedNSPort);
-
+    LBPreferencesPanel lbPreferencesPanel = jobSubmitterJFrame
+        .getJobSubmitterPreferencesReference().getLBPreferencesPanelReference();
+    lbPreferencesPanel.replaceNSAddress(selectedNSAddress, insertedNSAddress
+        + ":" + insertedNSPort);
     jTextFieldNSName.selectAll();
     jTextFieldNSName.grabFocus();
   }
@@ -492,9 +487,8 @@ public class NSPreferencesPanel extends JPanel {
   private void removeRows(int[] selectedRow) {
     NSPanel rbPanel = null;
     int selectedRowCount = selectedRow.length;
-    LBPreferencesPanel lbPreferencesPanel =
-        jobSubmitterJFrame.getJobSubmitterPreferencesReference().
-        getLBPreferencesPanelReference();
+    LBPreferencesPanel lbPreferencesPanel = jobSubmitterJFrame
+        .getJobSubmitterPreferencesReference().getLBPreferencesPanelReference();
     String currentNSName = "";
     String currentNSAddress = "";
     for (int i = selectedRowCount - 1; i >= 0; i--) {
@@ -505,31 +499,26 @@ public class NSPreferencesPanel extends JPanel {
       int choice = 0;
       int index = jobSubmitterJFrame.jTabbedPaneRB.indexOfTab(currentNSName);
       if (index != -1) {
-        rbPanel = (NSPanel) jobSubmitterJFrame.jTabbedPaneRB.getComponentAt(
-            index);
+        rbPanel = (NSPanel) jobSubmitterJFrame.jTabbedPaneRB
+            .getComponentAt(index);
         if (rbPanel.hasSubmittedJobs() || rbPanel.hasJobs()) {
           String submitted = "";
           if (rbPanel.hasSubmittedJobs()) {
             submitted = " submitted";
           }
-          choice = JOptionPane.showOptionDialog(
-              NSPreferencesPanel.this,
-              "NS '" + currentNSName +
-              "' contains" + submitted + " job(s)\nRemove anyway?",
-              Utils.WARNING_MSG_TXT,
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.WARNING_MESSAGE,
-              null, null, null);
+          choice = JOptionPane.showOptionDialog(NSPreferencesPanel.this, "NS '"
+              + currentNSName + "' contains" + submitted
+              + " job(s)\nRemove anyway?", Utils.WARNING_MSG_TXT,
+              JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null,
+              null, null);
         }
       }
       if (choice == 0) {
         jobTableModel.removeRow(selectedRow[i]);
-
         lbPreferencesPanel.removeNSAddress(currentNSAddress);
-
         if (jobTableModel.getRowCount() != 0) {
-          int selectableRow = selectedRow[selectedRowCount - 1] + 1 -
-              selectedRowCount; // Next.
+          int selectableRow = selectedRow[selectedRowCount - 1] + 1
+              - selectedRowCount; // Next.
           if (selectableRow > jobTableModel.getRowCount() - 1) {
             selectableRow--; // Prev. (selectedRow[selectedRowCount - 1] - selectedRowCount).
           }
@@ -545,29 +534,24 @@ public class NSPreferencesPanel extends JPanel {
       removeRows(selectedRows);
     } else {
       JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-          Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.SELECT_AN_ITEM, Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
     }
   }
 
   void jButtonClearTableEvent(ActionEvent e) {
     int choice = JOptionPane.showOptionDialog(NSPreferencesPanel.this,
-        "Do you really want to clear NS table?",
-        "Confirm Clear",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Do you really want to clear NS table?", "Confirm Clear",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       //!!! selectAll?
       jTableNS.selectAll();
       removeRows(jTableNS.getSelectedRows());
-
-      LBPreferencesPanel lbPreferencesPanel =
-          jobSubmitterJFrame.getJobSubmitterPreferencesReference().
-          getLBPreferencesPanelReference();
+      LBPreferencesPanel lbPreferencesPanel = jobSubmitterJFrame
+          .getJobSubmitterPreferencesReference()
+          .getLBPreferencesPanelReference();
       lbPreferencesPanel.removeAllNSAddress();
     }
   }
@@ -594,8 +578,8 @@ public class NSPreferencesPanel extends JPanel {
     }
   }
 
-  static Ad setNSLBMapAttribute(Ad ad, Map map,
-      JobTableModel jobTableModel) throws Exception {
+  static Ad setNSLBMapAttribute(Ad ad, Map map, JobTableModel jobTableModel)
+      throws Exception {
     Vector vectorToSave = new Vector();
     Vector nsVector = new Vector();
     Vector lbVector;
@@ -603,7 +587,8 @@ public class NSPreferencesPanel extends JPanel {
     String list;
     for (int j = 0; j < jobTableModel.getRowCount(); j++) {
       list = "";
-      nsAddress = jobTableModel.getValueAt(j, NS_ADDRESS_COLUMN_INDEX).toString();
+      nsAddress = jobTableModel.getValueAt(j, NS_ADDRESS_COLUMN_INDEX)
+          .toString();
       nsVector.add(Constant.getInstance(nsAddress));
       lbVector = (Vector) map.get(nsAddress);
       if (lbVector.size() >= 1) {
@@ -654,15 +639,15 @@ public class NSPreferencesPanel extends JPanel {
       try {
         userConfAd.fromFile(userConfFile.toString());
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_NAME)) {
-            nsNameVector = userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_NS_NAME);
-            nsAddressVector = userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_NS_ADDRESS);
-            nsJDLESchemaVector = userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_JDLE_SCHEMA);
+            nsNameVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_NS_NAME);
+            nsAddressVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_NS_ADDRESS);
+            nsJDLESchemaVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_JDLE_SCHEMA);
             for (int i = 0; i < nsNameVector.size(); i++) {
               Vector rowToAdd = new Vector();
               rowToAdd.add(nsNameVector.get(i));
@@ -681,95 +666,86 @@ public class NSPreferencesPanel extends JPanel {
   }
 
   /*
-    static Vector getConfFileNetworkServers() {
-      Ad userConfAd = new Ad();
-      Vector nsVector = new Vector();
-      File userConfFile = new File(GUIFileSystem.getUserPrefFile());
-      if(userConfFile.isFile()) {
-        try {
-          userConfAd.fromFile(userConfFile.toString());
-        } catch (Exception ex) {
-          if (isDebugging) ex.printStackTrace();
-        }
-        try {
-          if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-       Ad userConfJobSubmitterAd = userConfAd.getAd(Utils.PREF_FILE_JOB_SUBMITTER);
-            if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_NAME)) {
-              Vector nsNameVector = userConfJobSubmitterAd.getStringValue(Utils.PREF_FILE_NS_NAME);
-              Vector nsAddressVector = userConfJobSubmitterAd.getStringValue(Utils.PREF_FILE_NS_ADDRESS);
-              Vector nsJDLESchemaVector = userConfJobSubmitterAd.getStringValue(Utils.PREF_FILE_JDLE_SCHEMA);
-              for (int i = 0; i < nsNameVector.size(); i++) {
-                nsVector.add(new NetworkServer(nsNameVector.get(i).toString(),
-       nsAddressVector.get(i).toString(),
-       nsJDLESchemaVector.get(i).toString()));
-              }
-            }
-          }
-        }
-        catch (Exception e) {
-          if (isDebugging) e.printStackTrace();
-        }
-      }
-      return nsVector;
-    }
-    static Vector getConfFileNetworkServerNames() {
-      Vector nsNameVector = new Vector();
-      Vector nsVector = getConfFileNetworkServers();
-      for(int i = 0; i < nsVector.size(); i++) {
-        nsNameVector.add(((NetworkServer) nsVector.get(i)).getName());
-      }
-      return nsNameVector;
-    }
+   static Vector getConfFileNetworkServers() {
+   Ad userConfAd = new Ad();
+   Vector nsVector = new Vector();
+   File userConfFile = new File(GUIFileSystem.getUserPrefFile());
+   if(userConfFile.isFile()) {
+   try {
+   userConfAd.fromFile(userConfFile.toString());
+   } catch (Exception ex) {
+   if (isDebugging) ex.printStackTrace();
+   }
+   try {
+   if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
+   Ad userConfJobSubmitterAd = userConfAd.getAd(Utils.PREF_FILE_JOB_SUBMITTER);
+   if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_NAME)) {
+   Vector nsNameVector = userConfJobSubmitterAd.getStringValue(Utils.PREF_FILE_NS_NAME);
+   Vector nsAddressVector = userConfJobSubmitterAd.getStringValue(Utils.PREF_FILE_NS_ADDRESS);
+   Vector nsJDLESchemaVector = userConfJobSubmitterAd.getStringValue(Utils.PREF_FILE_JDLE_SCHEMA);
+   for (int i = 0; i < nsNameVector.size(); i++) {
+   nsVector.add(new NetworkServer(nsNameVector.get(i).toString(),
+   nsAddressVector.get(i).toString(),
+   nsJDLESchemaVector.get(i).toString()));
+   }
+   }
+   }
+   }
+   catch (Exception e) {
+   if (isDebugging) e.printStackTrace();
+   }
+   }
+   return nsVector;
+   }
+   static Vector getConfFileNetworkServerNames() {
+   Vector nsNameVector = new Vector();
+   Vector nsVector = getConfFileNetworkServers();
+   for(int i = 0; i < nsVector.size(); i++) {
+   nsNameVector.add(((NetworkServer) nsVector.get(i)).getName());
+   }
+   return nsNameVector;
+   }
    */
-
   int jButtonApplyEvent(ActionEvent e) {
     String title = "<html><font color=\"#602080\">"
-        + JobSubmitterPreferences.NS_PANEL_NAME
-        + ":" + "</font>";
-
-    JDialog jDialog = (JDialog) jobSubmitterJFrame.
-        getJobSubmitterPreferencesReference();
-
+        + JobSubmitterPreferences.NS_PANEL_NAME + ":" + "</font>";
+    JDialog jDialog = (JDialog) jobSubmitterJFrame
+        .getJobSubmitterPreferencesReference();
     if (jobTableModel.getRowCount() == 0) {
-      JOptionPane.showOptionDialog(jDialog,
-          title + "\nPlease provide at least a Network Server",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(jDialog, title
+          + "\nPlease provide at least a Network Server", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       return Utils.FAILED;
     }
-
     for (int i = 0; i < jobSubmitterJFrame.jTabbedPaneRB.getTabCount(); i++) {
-      if (((NSPanel) jobSubmitterJFrame.jTabbedPaneRB.getComponentAt(i)).
-          hasSubmittingJobs()) {
-        JOptionPane.showOptionDialog(jDialog,
-            title + "\nOne or more jobs are in submitting phase"
-            +
-            "\nCannot apply preferences, all job submissions must be completed",
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null, null, null);
+      if (((NSPanel) jobSubmitterJFrame.jTabbedPaneRB.getComponentAt(i))
+          .hasSubmittingJobs()) {
+        JOptionPane
+            .showOptionDialog(
+                jDialog,
+                title
+                    + "\nOne or more jobs are in submitting phase"
+                    + "\nCannot apply preferences, all job submissions must be completed",
+                Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.WARNING_MESSAGE, null, null, null);
         return Utils.FAILED;
       }
     }
-
     Iterator iterator = GUIGlobalVars.tempNSLBMap.keySet().iterator();
     while (iterator.hasNext()) {
       if (((Vector) GUIGlobalVars.tempNSLBMap.get(iterator.next())).size() == 0) {
         return Utils.FAILED;
       }
     }
-
     Ad userConfAd = GUIFileSystem.loadPrefFileAd();
     Ad userConfJobSubmitterAd = new Ad();
     File userConfFile = new File(GUIFileSystem.getUserPrefFile());
     if (userConfFile.isFile()) {
       try {
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           userConfAd.delAttribute(Utils.PREF_FILE_JOB_SUBMITTER);
         }
       } catch (Exception ex) {
@@ -783,43 +759,38 @@ public class NSPreferencesPanel extends JPanel {
     Vector guiNSJDLESchemaVector = new Vector();
     Vector nsApplyVector = new Vector();
     Vector nsNameVector = new Vector();
-
     Vector nsToRemove = new Vector();
     Iterator nsIterator = GUIGlobalVars.nsMap.keySet().iterator();
     while (nsIterator.hasNext()) {
       nsToRemove.add(nsIterator.next().toString());
     }
     logger.debug("nsToRemove Vector: " + nsToRemove);
-
     String nsName;
     String nsAddress;
     String nsSchema;
     NetworkServer ns;
     GUIGlobalVars.nsMap.clear();
     for (int i = 0; i < jobTableModel.getRowCount(); i++) {
-      nsName = jobTableModel.getValueAt(i,
-          NS_NAME_COLUMN_INDEX).toString().trim();
-      nsAddress = jobTableModel.getValueAt(i,
-          NS_ADDRESS_COLUMN_INDEX).toString().trim();
-      nsSchema = jobTableModel.getValueAt(i,
-          JDLE_SCHEMA_COLUMN_INDEX).toString().trim();
+      nsName = jobTableModel.getValueAt(i, NS_NAME_COLUMN_INDEX).toString()
+          .trim();
+      nsAddress = jobTableModel.getValueAt(i, NS_ADDRESS_COLUMN_INDEX)
+          .toString().trim();
+      nsSchema = jobTableModel.getValueAt(i, JDLE_SCHEMA_COLUMN_INDEX)
+          .toString().trim();
       ns = new NetworkServer(nsName, nsAddress, nsSchema);
       GUIGlobalVars.nsMap.put(nsName, ns);
-
       nsToRemove.remove(nsName);
-
       guiNSNameVector.add(Constant.getInstance(nsName));
       guiNSAddressVector.add(Constant.getInstance(nsAddress));
       guiNSJDLESchemaVector.add(Constant.getInstance(nsSchema));
       nsApplyVector.add(new NetworkServer(jobTableModel.getValueAt(i,
-          NS_NAME_COLUMN_INDEX).toString(),
-          jobTableModel.getValueAt(i, NS_ADDRESS_COLUMN_INDEX).toString(),
-          jobTableModel.getValueAt(i, JDLE_SCHEMA_COLUMN_INDEX).toString()));
-      nsNameVector.add(jobTableModel.getValueAt(i,
-          NS_NAME_COLUMN_INDEX).toString());
+          NS_NAME_COLUMN_INDEX).toString(), jobTableModel.getValueAt(i,
+          NS_ADDRESS_COLUMN_INDEX).toString(), jobTableModel.getValueAt(i,
+          JDLE_SCHEMA_COLUMN_INDEX).toString()));
+      nsNameVector.add(jobTableModel.getValueAt(i, NS_NAME_COLUMN_INDEX)
+          .toString());
     }
     logger.debug("nsToRemove Vector (after): " + nsToRemove);
-
     try {
       if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_NAME)) {
         userConfJobSubmitterAd.delAttribute(Utils.PREF_FILE_NS_NAME);
@@ -845,29 +816,25 @@ public class NSPreferencesPanel extends JPanel {
     }
     logger.debug("userConfFile: " + userConfFile);
     try {
-      GUIFileSystem.saveTextFile(userConfFile, userConfAd.toString(true, false));
+      GUIFileSystem
+          .saveTextFile(userConfFile, userConfAd.toString(true, false));
     } catch (Exception ex) {
       if (isDebugging) {
         ex.printStackTrace();
       }
-      JOptionPane.showOptionDialog(jDialog,
-          "Unable to save preferences file",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(jDialog, "Unable to save preferences file",
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
     }
-
     for (int i = 0; i < nsToRemove.size(); i++) {
       try {
-        GUIFileSystem.removeDirectoryTree(new File(GUIFileSystem.
-            getJobTemporaryFileDirectory()
+        GUIFileSystem.removeDirectoryTree(new File(GUIFileSystem
+            .getJobTemporaryFileDirectory()
             + nsToRemove.get(i).toString()));
       } catch (Exception ex) {
-      // Do nothing. Unable to remove panel directory and jobs.
+        // Do nothing. Unable to remove panel directory and jobs.
       }
     }
-
     jobSubmitterJFrame.setNSTabbedPanePanels(nsApplyVector);
     jobSubmitterJFrame.setNSMenuItems(nsNameVector);
     if (jobSubmitterJFrame.jTabbedPaneRB.getTabCount() == 1) {
@@ -889,5 +856,4 @@ public class NSPreferencesPanel extends JPanel {
       Toolkit.getDefaultToolkit().beep();
     }
   }
-
 }

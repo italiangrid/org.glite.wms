@@ -1,31 +1,35 @@
 /*
  * QueryPreferencesPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.util.*;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
-
-import javax.naming.directory.InvalidAttributeValueException;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
+import java.util.Vector;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.TableColumn;
-
-import org.glite.wms.jdlj.*;
-
-import org.apache.log4j.*;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
 
 /**
  * Implementation of the QueryPreferencesPanel class.
@@ -41,26 +45,35 @@ public class QueryPreferencesPanel extends JPanel {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int QUERY_NAME_COLUMN_INDEX = 0;
+
   static final int LB_SERVER_COLUMN_INDEX = 1;
+
   static final int OWNED_COLUMN_INDEX = 2;
 
   static final String NOT_AVAILABLE_LB = " (NA)";
 
   JPanel jPanelQuery = new JPanel();
+
   JScrollPane jScrollPaneTags = new JScrollPane();
+
   JTable jTableQueries;
+
   JobTableModel jobTableModel;
 
   Vector vectorHeader = new Vector();
 
   JButton jButtonNew = new JButton();
+
   JButton jButtonEdit = new JButton();
+
   JButton jButtonRemove = new JButton();
 
   JobMonitorPreferences jobMonitorPreferences;
+
   JobMonitor jobMonitorJFrame;
 
   /**
@@ -95,32 +108,26 @@ public class QueryPreferencesPanel extends JPanel {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
-        ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     vectorHeader.addElement("Query Name");
     vectorHeader.addElement("LB Server");
     vectorHeader.addElement("Owned Jobs Only");
     jobTableModel = new JobTableModel(vectorHeader, 0);
-
     jTableQueries = new JTable(jobTableModel);
     jTableQueries.getTableHeader().setReorderingAllowed(false);
-
     //jTableQueries.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     TableColumn col = jTableQueries.getColumnModel().getColumn(
         QUERY_NAME_COLUMN_INDEX);
     col.setCellRenderer(new GUITableTooltipCellRenderer());
-
     col = jTableQueries.getColumnModel().getColumn(LB_SERVER_COLUMN_INDEX);
     col.setCellRenderer(new GUITableTooltipCellRenderer());
     col.setPreferredWidth(200);
-
     col = jTableQueries.getColumnModel().getColumn(OWNED_COLUMN_INDEX);
     col.setCellRenderer(new GUICheckBoxCellRenderer());
     col.setMinWidth(110);
     col.setMaxWidth(110);
     //jTableQueries.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
     jPanelQuery.add(jButtonRemove, null);
     jPanelQuery.add(jScrollPaneTags, null);
     jPanelQuery.add(jButtonNew, null);
@@ -129,7 +136,6 @@ public class QueryPreferencesPanel extends JPanel {
     this.add(jPanelQuery, null);
     this.setLayout(null);
     this.setSize(new Dimension(547, 381));
-
     jScrollPaneTags.getViewport().setBackground(Color.white);
     jScrollPaneTags.setBounds(new Rectangle(12, 20, 507, 179));
     jButtonNew.setBounds(new Rectangle(12, 208, 85, 25));
@@ -139,8 +145,8 @@ public class QueryPreferencesPanel extends JPanel {
     jButtonRemove.setBounds(new Rectangle(434, 208, 85, 25));
     jButtonRemove.setText("Remove");
     jPanelQuery.setBorder(new TitledBorder(new EtchedBorder(),
-        " Queries List Table ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
+        " Queries List Table ", 0, 0, null,
+        GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelQuery.setBounds(new Rectangle(2, 3, 530, 246));
     jPanelQuery.setLayout(null);
     jButtonNew.addActionListener(new java.awt.event.ActionListener() {
@@ -158,7 +164,6 @@ public class QueryPreferencesPanel extends JPanel {
         jButtonEditEvent(e);
       }
     });
-
     jTableQueries.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
@@ -169,9 +174,7 @@ public class QueryPreferencesPanel extends JPanel {
         }
       }
     });
-
     //loadPreferencesFromFile();
-
   }
 
   void jButtonRemoveEvent(ActionEvent e) {
@@ -191,30 +194,24 @@ public class QueryPreferencesPanel extends JPanel {
       }
     } else {
       JOptionPane.showOptionDialog(QueryPreferencesPanel.this,
-          Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.SELECT_AN_ITEM, Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
     }
   }
 
   void jButtonEditEvent(ActionEvent e) {
     if (jTableQueries.getSelectedRowCount() == 0) {
       JOptionPane.showOptionDialog(QueryPreferencesPanel.this,
-          "Please first select a table row to Edit",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          "Please first select a table row to Edit", Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
       return;
     } else if (jTableQueries.getSelectedRowCount() != 1) {
       JOptionPane.showOptionDialog(QueryPreferencesPanel.this,
           "Please select a single table row to Edit",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
       return;
     }
     int selectedRow = jTableQueries.getSelectedRow();
@@ -264,8 +261,8 @@ public class QueryPreferencesPanel extends JPanel {
       for (int i = 0; i < rowCount; i++) {
         try {
           userPrefJobMonitorAd.addAttribute(Utils.USER_QUERIES,
-              (Ad) jobMonitorJFrame.userQueryMap.get(
-              jobTableModel.getValueAt(i, QUERY_NAME_COLUMN_INDEX)));
+              (Ad) jobMonitorJFrame.userQueryMap.get(jobTableModel.getValueAt(
+                  i, QUERY_NAME_COLUMN_INDEX)));
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
@@ -273,7 +270,8 @@ public class QueryPreferencesPanel extends JPanel {
           return Utils.FAILED;
         }
       }
-      userPrefAd.setAttribute(Utils.PREF_FILE_JOB_MONITOR, userPrefJobMonitorAd);
+      userPrefAd
+          .setAttribute(Utils.PREF_FILE_JOB_MONITOR, userPrefJobMonitorAd);
     } catch (Exception ex) {
       if (isDebugging) {
         ex.printStackTrace();
@@ -286,16 +284,12 @@ public class QueryPreferencesPanel extends JPanel {
         ex.printStackTrace();
       }
       JOptionPane.showOptionDialog(QueryPreferencesPanel.this,
-          "Unable to save preferences file",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "Unable to save preferences file", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
     }
-
-    jobMonitorJFrame.setLBQueryMenuItems(jobMonitorJFrame.
-        loadUserQueriesFromFile());
-
+    jobMonitorJFrame.setLBQueryMenuItems(jobMonitorJFrame
+        .loadUserQueriesFromFile());
     return Utils.SUCCESS;
   }
 
@@ -329,7 +323,7 @@ public class QueryPreferencesPanel extends JPanel {
       jobMonitorJFrame.userQueryMap.remove(queryName);
       jobMonitorJFrame.userQueryMap.put(queryName, userQueryAd);
     } else {
-    // ERROR
+      // ERROR
     }
   }
 
@@ -352,8 +346,8 @@ public class QueryPreferencesPanel extends JPanel {
           userPrefJobMonitorAd = userPrefAd.getAd(Utils.PREF_FILE_JOB_MONITOR);
           logger.debug("userPrefJobMonitorAd: " + userPrefJobMonitorAd);
           if (userPrefJobMonitorAd.hasAttribute(Utils.USER_QUERIES)) {
-            Vector queriesAdVector = userPrefJobMonitorAd.getAdValue(Utils.
-                USER_QUERIES);
+            Vector queriesAdVector = userPrefJobMonitorAd
+                .getAdValue(Utils.USER_QUERIES);
             Ad queryAd = new Ad();
             String queryName = "";
             Boolean allLBFlag = new Boolean(false);
@@ -364,25 +358,23 @@ public class QueryPreferencesPanel extends JPanel {
               queryAd = (Ad) queriesAdVector.get(i);
               logger.debug("queriesAd: " + queryAd);
               Vector elementToAddVector = new Vector();
-              queryName = queryAd.getStringValue(Utils.QUERY_NAME).get(0).
-                  toString().trim();
+              queryName = queryAd.getStringValue(Utils.QUERY_NAME).get(0)
+                  .toString().trim();
               elementToAddVector.add(queryName);
-
-              allLBFlag = (Boolean) queryAd.getBooleanValue(Utils.ALL_LB_FLAG).
-                  get(0);
+              allLBFlag = (Boolean) queryAd.getBooleanValue(Utils.ALL_LB_FLAG)
+                  .get(0);
               if (!allLBFlag.booleanValue()) {
                 if (!jobMonitorJFrame.getLBMenuItems().contains(lbAddress)) {
-                  lbAddress = queryAd.getStringValue(Utils.LB_ADDRESS).get(0).
-                      toString();
+                  lbAddress = queryAd.getStringValue(Utils.LB_ADDRESS).get(0)
+                      .toString();
                   lbAddress += NOT_AVAILABLE_LB;
                 }
               } else {
                 lbAddress = QueryPanel.ALL_LB_SERVERS;
               }
               elementToAddVector.add(lbAddress);
-
-              ownedJobsOnlyFlag = (Boolean) queryAd.getBooleanValue(Utils.
-                  OWNED_JOBS_ONLY_FLAG).get(0);
+              ownedJobsOnlyFlag = (Boolean) queryAd.getBooleanValue(
+                  Utils.OWNED_JOBS_ONLY_FLAG).get(0);
               elementToAddVector.add(ownedJobsOnlyFlag);
               jobTableModel.addRow(elementToAddVector);
               jobMonitorJFrame.userQueryMap.put(queryName, queryAd);
@@ -401,5 +393,4 @@ public class QueryPreferencesPanel extends JPanel {
   Ad getQueryFromMap(String queryName) {
     return (Ad) jobMonitorJFrame.userQueryMap.get(queryName);
   }
-
 }

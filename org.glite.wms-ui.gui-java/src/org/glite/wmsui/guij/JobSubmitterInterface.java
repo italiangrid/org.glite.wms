@@ -1,25 +1,15 @@
 /*
  * JobSubmitterInterface.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
-
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
-
 package org.glite.wmsui.guij;
 
-
-import java.util.Vector;
-
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-
-import javax.swing.JButton;
-import javax.swing.JMenuBar;
-
 import org.glite.wms.jdlj.Ad;
-
 
 /**
  * Implementation of the JobSubmitterInterface interface.
@@ -32,5 +22,6 @@ import org.glite.wms.jdlj.Ad;
  * @author Giuseppe Avellino <giuseppe.avellino@datamat.it>
  */
 public interface JobSubmitterInterface {
-  void addJobToTable(String rBName, String keyJobName, String currentOpenedFile, Ad jobAd);
+  void addJobToTable(String rBName, String keyJobName,
+      String currentOpenedFile, Ad jobAd);
 }

@@ -1,29 +1,54 @@
 /*
  * LBPreferencesPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import java.util.*;
-import javax.swing.plaf.basic.*;
-import java.io.*;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import condor.classad.*;
-
-import org.apache.log4j.*;
-
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicArrowButton;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import condor.classad.Constant;
+import condor.classad.ListExpr;
 
 /**
  * Implementation of the LBPreferencesPanel class.
@@ -39,11 +64,15 @@ public class LBPreferencesPanel extends JPanel {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int LB_ADDRESS_COLUMN_INDEX = 0;
+
   static final String LB_ADDRESS_TABLE_HEADER = "Address";
+
   static final int LB_PORT_COLUMN_INDEX = 1;
+
   static final String LB_PORT_TABLE_HEADER = "Port";
 
   static final String LB_DEFAULT_PORT = "9000";
@@ -51,41 +80,68 @@ public class LBPreferencesPanel extends JPanel {
   String lastSelectedNS = "";
 
   JPanel jPanelLB = new JPanel();
+
   JTextField jTextFieldLBAddress = new JTextField();
+
   JTextField jTextFieldLBPort = new JTextField();
+
   JLabel jLabelLBAddress = new JLabel();
+
   JLabel jLabelLBPort = new JLabel();
+
   JScrollPane jScrollPaneLBTable = new JScrollPane();
+
   JTable jTableLB;
+
   JobTableModel jobTableModel;
+
   Vector vectorHeader = new Vector();
+
   JButton jButtonAdd = new JButton();
+
   JButton jButtonRemove = new JButton();
+
   JButton jButtonAll = new JButton();
+
   JButton jButtonNone = new JButton();
+
   JButton jButtonClear = new JButton();
+
   JButton jButtonClearTable = new JButton();
+
   JPanel jPanelMiscellaneous = new JPanel();
+
   JTextField jTextFieldUpdateRate = new JTextField();
+
   //JLabel jLabelUpdateRate = new JLabel();
   JLabel jLabelMin = new JLabel();
+
   JobMonitorInterface jint;
+
   JButton jButtonEdit = new JButton();
 
   BasicArrowButton upUpdateRate = new BasicArrowButton(BasicArrowButton.NORTH);
+
   BasicArrowButton downUpdateRate = new BasicArrowButton(BasicArrowButton.SOUTH);
 
   JobMonitor jobMonitorJFrame;
+
   JobSubmitter jobSubmitterJFrame;
+
   JComboBox jComboBoxNS = new JComboBox();
+
   JLabel jLabelNS = new JLabel();
+
   JTextField jTextFieldNS = new JTextField();
+
   JLabel jLabelNSAddress = new JLabel();
 
   JPanel jPanelNS = new JPanel();
 
   JRadioButton jRadioButtonLBUpdate = new JRadioButton();
+
   JRadioButton jRadioButtonRGMAUpdate = new JRadioButton();
+
   ButtonGroup buttonGroupUpdate = new ButtonGroup();
 
   /**
@@ -97,9 +153,8 @@ public class LBPreferencesPanel extends JPanel {
     } else if (component instanceof JobSubmitter) {
       jobSubmitterJFrame = (JobSubmitter) component;
     } else {
-      System.exit( -1);
+      System.exit(-1);
     }
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -111,31 +166,26 @@ public class LBPreferencesPanel extends JPanel {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     vectorHeader.addElement(LB_ADDRESS_TABLE_HEADER);
     vectorHeader.addElement(LB_PORT_TABLE_HEADER);
     jobTableModel = new JobTableModel(vectorHeader, 0);
     jTableLB = new JTable(jobTableModel);
     jTableLB.getTableHeader().setReorderingAllowed(false);
-
     jTextFieldLBPort.setText(Utils.LB_DEFAULT_PORT);
     jLabelLBAddress.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelLBAddress.setText("LB Address");
-
     jLabelLBPort.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelLBPort.setText("LB Port");
     jScrollPaneLBTable.getViewport().setBackground(Color.white);
     jScrollPaneLBTable.setBorder(BorderFactory.createEtchedBorder());
-
     jButtonAdd.setText("  Add  ");
-
     jButtonAdd.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonAddEvent(e);
       }
     });
-
     jButtonRemove.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonRemoveEvent(e);
@@ -143,20 +193,17 @@ public class LBPreferencesPanel extends JPanel {
     });
     jButtonRemove.setText("Remove");
     jButtonAll.setText("   All   ");
-
     jButtonAll.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonAllEvent(e);
       }
     });
-
     jButtonNone.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonNoneEvent(e);
       }
     });
     jButtonNone.setText("  None  ");
-
     jButtonClear.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonClearEvent(e);
@@ -169,7 +216,6 @@ public class LBPreferencesPanel extends JPanel {
         jButtonClearTableEvent(e);
       }
     });
-
     jTextFieldUpdateRate.setPreferredSize(new Dimension(35, 25));
     jTextFieldUpdateRate.setHorizontalAlignment(SwingConstants.RIGHT);
     //jTextFieldUpdateRate.setBounds(new Rectangle(135, 18, 33, 27));
@@ -180,13 +226,12 @@ public class LBPreferencesPanel extends JPanel {
             Utils.UPDATE_RATE_MIN_VAL, Utils.UPDATE_RATE_MAX_VAL);
       }
 
-      public void focusGained(FocusEvent e) {}
+      public void focusGained(FocusEvent e) {
+      }
     });
     jTextFieldUpdateRate.setText(Integer.toString(Utils.UPDATE_RATE_DEF_VAL));
     jLabelMin.setText("Min.");
-
     jButtonEdit.setText("Replace");
-
     jButtonEdit.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonReplaceEvent(e);
@@ -195,42 +240,37 @@ public class LBPreferencesPanel extends JPanel {
     upUpdateRate.setBounds(new Rectangle(168, 15, 16, 16));
     upUpdateRate.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldUpdateRate, Utils.INTEGER,
-            Integer.toString(Utils.UPDATE_RATE_DEF_VAL),
-            Utils.UPDATE_RATE_MIN_VAL, Utils.UPDATE_RATE_MAX_VAL);
+        Utils.upButtonEvent(jTextFieldUpdateRate, Utils.INTEGER, Integer
+            .toString(Utils.UPDATE_RATE_DEF_VAL), Utils.UPDATE_RATE_MIN_VAL,
+            Utils.UPDATE_RATE_MAX_VAL);
       }
     });
     downUpdateRate.setBounds(new Rectangle(168, 31, 16, 16));
     downUpdateRate.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldUpdateRate, Utils.INTEGER,
-            Integer.toString(Utils.UPDATE_RATE_DEF_VAL),
-            Utils.UPDATE_RATE_MIN_VAL, Utils.UPDATE_RATE_MAX_VAL);
+        Utils.downButtonEvent(jTextFieldUpdateRate, Utils.INTEGER, Integer
+            .toString(Utils.UPDATE_RATE_DEF_VAL), Utils.UPDATE_RATE_MIN_VAL,
+            Utils.UPDATE_RATE_MAX_VAL);
       }
     });
-
     jRadioButtonLBUpdate.setText("LB Update Rate");
-
     jRadioButtonLBUpdate.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jRadioButtonLBUpdateEvent(e);
       }
     });
     jRadioButtonRGMAUpdate.setText("R-GMA");
-
-    jRadioButtonRGMAUpdate.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jRadioButtonRGMAUpdateEvent(e);
-      }
-    });
-
+    jRadioButtonRGMAUpdate
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jRadioButtonRGMAUpdateEvent(e);
+          }
+        });
     jScrollPaneLBTable.getViewport().add(jTableLB, null);
     buttonGroupUpdate.add(jRadioButtonLBUpdate);
     buttonGroupUpdate.add(jRadioButtonRGMAUpdate);
-
     jRadioButtonLBUpdate.setSelected(true);
     setLBUpdateEnabled(true);
-
     jComboBoxNS.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jComboBoxNSActionPerformed(e);
@@ -240,41 +280,33 @@ public class LBPreferencesPanel extends JPanel {
     jLabelNS.setHorizontalAlignment(SwingConstants.RIGHT);
     //jLabelNS.setText("NS Name");
     jLabelNS.setText("NS Address");
-
     jTextFieldNS.setText("");
     jTextFieldNS.setPreferredSize(new Dimension(180, 20));
     jTextFieldLBPort.setText(Utils.LB_DEFAULT_PORT);
-
     jTextFieldLBPort.setPreferredSize(new Dimension(60, 20));
     jTextFieldLBAddress.setPreferredSize(new Dimension(325, 20));
     //jLabelUpdateRate.setBounds(new Rectangle(16, 22, 84, 18));
     //jLabelUpdateRate.setHorizontalAlignment(SwingConstants.RIGHT);
     //jLabelUpdateRate.setText("Update Rate");
-
     jLabelNSAddress.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelNSAddress.setText("NS Address");
-
     this.setLayout(new BorderLayout());
-
     jPanelNS.add(jLabelNS);
     jPanelNS.add(jComboBoxNS);
     ((FlowLayout) jPanelNS.getLayout()).setAlignment(FlowLayout.LEFT);
     //jPanelNS.add(jLabelNSAddress);
     //jPanelNS.add(jTextFieldNS);
-
     JPanel jPanelLB = new JPanel();
     ((FlowLayout) jPanelLB.getLayout()).setAlignment(FlowLayout.LEFT);
     jPanelLB.add(jLabelLBAddress);
     jPanelLB.add(jTextFieldLBAddress);
     jPanelLB.add(jLabelLBPort);
     jPanelLB.add(jTextFieldLBPort);
-
     JPanel jPanelButton = new JPanel();
     ((FlowLayout) jPanelButton.getLayout()).setAlignment(FlowLayout.RIGHT);
     jPanelButton.add(jButtonClear, null);
     jPanelButton.add(jButtonEdit, null);
     jPanelButton.add(jButtonAdd, null);
-
     JPanel jPanelButton2 = new JPanel();
     jPanelButton2.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelButton2.setLayout(new BoxLayout(jPanelButton2, BoxLayout.X_AXIS));
@@ -286,56 +318,48 @@ public class LBPreferencesPanel extends JPanel {
     jPanelButton2.add(jButtonRemove, null);
     jPanelButton2.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelButton2.add(jButtonClearTable, null);
-
     JPanel jPanelNorth = new JPanel();
     JPanel jPanelCenter = new JPanel();
     JPanel jPanelSouth = new JPanel();
-
     jPanelNorth.setLayout(new BoxLayout(jPanelNorth, BoxLayout.Y_AXIS));
     jPanelNorth.add(jPanelNS);
     jPanelNorth.add(jPanelLB);
     jPanelNorth.add(jPanelButton);
-
     JPanel jPanelLBConf = new JPanel();
     jPanelLBConf.setLayout(new BorderLayout());
     jPanelLBConf.setBorder(new TitledBorder(new EtchedBorder(),
-        " LB Configuration ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
+        " LB Configuration ", 0, 0, null,
+        GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelLBConf.add(jPanelNorth, BorderLayout.NORTH);
     jPanelLBConf.add(jScrollPaneLBTable, BorderLayout.CENTER);
     jPanelLBConf.add(jPanelButton2, BorderLayout.SOUTH);
-
     jScrollPaneLBTable.getViewport().add(jTableLB, null);
-
-    jPanelMiscellaneous.setBorder(new TitledBorder(new EtchedBorder(),
-        " Status Update ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
+    jPanelMiscellaneous
+        .setBorder(new TitledBorder(new EtchedBorder(), " Status Update ", 0,
+            0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     //jPanelMiscellaneous.setMaximumSize(new Dimension(100, 210));
     JPanel jPanelUpDown = new JPanel();
     jPanelUpDown.setLayout(new BoxLayout(jPanelUpDown, BoxLayout.Y_AXIS));
     jPanelUpDown.add(upUpdateRate);
     jPanelUpDown.add(downUpdateRate);
-
-    ((FlowLayout) jPanelMiscellaneous.getLayout()).setAlignment(FlowLayout.LEFT);
+    ((FlowLayout) jPanelMiscellaneous.getLayout())
+        .setAlignment(FlowLayout.LEFT);
     jPanelMiscellaneous.add(jRadioButtonLBUpdate, null);
     //jPanelMiscellaneous.add(jLabelUpdateRate, null);
     jPanelMiscellaneous.add(jTextFieldUpdateRate, null);
     jPanelMiscellaneous.add(jPanelUpDown, null);
     jPanelMiscellaneous.add(jLabelMin, null);
     jPanelMiscellaneous.add(jRadioButtonRGMAUpdate, null);
-
     JPanel jPanelUpdateRate = new JPanel();
     FlowLayout flowLayout = (FlowLayout) jPanelUpdateRate.getLayout();
     flowLayout.setHgap(0);
     flowLayout.setVgap(0);
     flowLayout.setAlignment(FlowLayout.LEFT);
     jPanelUpdateRate.add(jPanelMiscellaneous);
-
     this.add(jPanelUpdateRate, BorderLayout.SOUTH);
     this.add(jPanelLBConf, BorderLayout.CENTER);
     //this.add(jPanelLBConf);
     //this.add(jPanelMiscellaneous);
-
     jTableLB.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
@@ -344,8 +368,8 @@ public class LBPreferencesPanel extends JPanel {
           int column = jTableLB.columnAtPoint(point);
           String lbAddress = jobTableModel.getValueAt(row,
               LB_ADDRESS_COLUMN_INDEX).toString().trim();
-          String lbPort = jobTableModel.getValueAt(row,
-              LB_PORT_COLUMN_INDEX).toString().trim();
+          String lbPort = jobTableModel.getValueAt(row, LB_PORT_COLUMN_INDEX)
+              .toString().trim();
           jTextFieldLBAddress.setText(lbAddress);
           jTextFieldLBPort.setText(lbPort);
         }
@@ -369,11 +393,9 @@ public class LBPreferencesPanel extends JPanel {
         if (insertedPort.equals("")) {
           jTextFieldLBPort.grabFocus();
           JOptionPane.showOptionDialog(LBPreferencesPanel.this,
-              "LB Port cannot be blank",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+              "LB Port cannot be blank", Utils.ERROR_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+              null, null);
           jTextFieldLBPort.selectAll();
           return;
         }
@@ -382,20 +404,16 @@ public class LBPreferencesPanel extends JPanel {
         jTextFieldLBPort.grabFocus();
         JOptionPane.showOptionDialog(LBPreferencesPanel.this,
             "LB Port must be an int value greater than 1023",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         jTextFieldLBPort.selectAll();
         return;
       }
       if (jobTableModel.isRowPresent(insertedAddress + insertedPort) == true) {
         JOptionPane.showOptionDialog(LBPreferencesPanel.this,
             "Inserted LB Address and Port are already present",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         return;
       }
       Vector rowElement = new Vector();
@@ -403,27 +421,24 @@ public class LBPreferencesPanel extends JPanel {
       rowElement.addElement(insertedPort);
       jobTableModel.addRow(rowElement);
       jTextFieldLBAddress.selectAll();
-
       if (jobSubmitterJFrame != null) {
         String nsAddress = jComboBoxNS.getSelectedItem().toString();
         GUIGlobalVars.tempNSLBMap.remove(nsAddress);
         Vector lbVector = new Vector();
         for (int i = 0; i < jTableLB.getRowCount(); i++) {
-          lbVector.add(jobTableModel.getValueAt(i,
-              LB_ADDRESS_COLUMN_INDEX).toString()
-              + ":" + jobTableModel.getValueAt(i,
-              LB_PORT_COLUMN_INDEX).toString());
+          lbVector.add(jobTableModel.getValueAt(i, LB_ADDRESS_COLUMN_INDEX)
+              .toString()
+              + ":"
+              + jobTableModel.getValueAt(i, LB_PORT_COLUMN_INDEX).toString());
         }
         GUIGlobalVars.tempNSLBMap.put(nsAddress, lbVector);
       }
     } else {
       jTextFieldLBAddress.grabFocus();
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
-          "LB Address field cannot be blank",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "LB Address field cannot be blank", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldLBAddress.setText("");
       return;
     }
@@ -434,33 +449,25 @@ public class LBPreferencesPanel extends JPanel {
     if (jTableLB.getSelectedRowCount() == 0) {
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
           "Please first select from table a LB to replace",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
       return;
     } else if (jTableLB.getSelectedRowCount() != 1) {
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
           "Please select from table a single LB to replace",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
       return;
     }
     int selectedRow = jTableLB.getSelectedRow();
-
     String insertedLBAddress = jTextFieldLBAddress.getText().trim();
     String insertedLBPort = jTextFieldLBPort.getText().trim();
-
     if (insertedLBAddress.equals("")) {
       jTextFieldLBAddress.grabFocus();
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
-          "LB Address field cannot be blank",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "LB Address field cannot be blank", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldLBAddress.setText("");
       return;
     }
@@ -469,46 +476,39 @@ public class LBPreferencesPanel extends JPanel {
     } else if (Utils.getValueType(insertedLBPort) != Utils.INTEGER) {
       jTextFieldLBPort.grabFocus();
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
-          "LB Port must be an int value",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "LB Port must be an int value", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       jTextFieldLBPort.selectAll();
       return;
     }
-
     String selectedLBAddress = jobTableModel.getValueAt(selectedRow,
         LB_ADDRESS_COLUMN_INDEX).toString().trim();
     String selectedLBPort = jobTableModel.getValueAt(selectedRow,
         LB_PORT_COLUMN_INDEX).toString().trim();
-
     if (!selectedLBAddress.equals(insertedLBAddress)
         && (jobTableModel.isRowPresent(insertedLBAddress + insertedLBPort) == true)) {
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
           "Inserted LB Address and Port are already present",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     }
     jobTableModel.setValueAt(insertedLBAddress, selectedRow,
         LB_ADDRESS_COLUMN_INDEX);
     jobTableModel.setValueAt(insertedLBPort, selectedRow, LB_PORT_COLUMN_INDEX);
-
     if (jobSubmitterJFrame != null) {
       String nsAddress = jComboBoxNS.getSelectedItem().toString();
       GUIGlobalVars.tempNSLBMap.remove(nsAddress);
       Vector lbVector = new Vector();
       for (int i = 0; i < jTableLB.getRowCount(); i++) {
-        lbVector.add(jobTableModel.getValueAt(i,
-            LB_ADDRESS_COLUMN_INDEX).toString()
-            + ":" + jobTableModel.getValueAt(i, LB_PORT_COLUMN_INDEX).toString());
+        lbVector.add(jobTableModel.getValueAt(i, LB_ADDRESS_COLUMN_INDEX)
+            .toString()
+            + ":"
+            + jobTableModel.getValueAt(i, LB_PORT_COLUMN_INDEX).toString());
       }
       GUIGlobalVars.tempNSLBMap.put(nsAddress, lbVector);
     }
-
     jTextFieldLBAddress.selectAll();
     jTextFieldLBAddress.grabFocus();
   }
@@ -528,40 +528,33 @@ public class LBPreferencesPanel extends JPanel {
           jTableLB.setRowSelectionInterval(selectableRow, selectableRow);
         }
       }
-
       if (jobSubmitterJFrame != null) {
         String nsAddress = jComboBoxNS.getSelectedItem().toString();
         GUIGlobalVars.tempNSLBMap.remove(nsAddress);
         Vector lbVector = new Vector();
         for (int i = 0; i < jTableLB.getRowCount(); i++) {
-          lbVector.add(jobTableModel.getValueAt(i,
-              LB_ADDRESS_COLUMN_INDEX).toString()
-              + ":" + jobTableModel.getValueAt(i,
-              LB_PORT_COLUMN_INDEX).toString());
+          lbVector.add(jobTableModel.getValueAt(i, LB_ADDRESS_COLUMN_INDEX)
+              .toString()
+              + ":"
+              + jobTableModel.getValueAt(i, LB_PORT_COLUMN_INDEX).toString());
         }
         GUIGlobalVars.tempNSLBMap.put(nsAddress, lbVector);
       }
-
     } else {
       JOptionPane.showOptionDialog(LBPreferencesPanel.this,
-          Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.SELECT_AN_ITEM, Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
     }
   }
 
   void jButtonClearTableEvent(ActionEvent e) {
     int choice = JOptionPane.showOptionDialog(LBPreferencesPanel.this,
-        "Do you really want to clear LB table?",
-        "Confirm Clear",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Do you really want to clear LB table?", "Confirm Clear",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       jobTableModel.removeAllRows();
-
       if (jobSubmitterJFrame != null) {
         String nsAddress = jComboBoxNS.getSelectedItem().toString();
         GUIGlobalVars.tempNSLBMap.remove(nsAddress);
@@ -661,41 +654,34 @@ public class LBPreferencesPanel extends JPanel {
     Vector lbVector = new Vector();
     File userConfFile = new File(GUIFileSystem.getUserPrefFile());
     String title = "<html><font color=\"#602080\">"
-        + JobSubmitterPreferences.LB_PANEL_NAME
-        + ":" + "</font>";
-
-    JDialog jDialog = (jobSubmitterJFrame != null)
-        ? (JDialog) jobSubmitterJFrame.getJobSubmitterPreferencesReference()
+        + JobSubmitterPreferences.LB_PANEL_NAME + ":" + "</font>";
+    JDialog jDialog = (jobSubmitterJFrame != null) ? (JDialog) jobSubmitterJFrame
+        .getJobSubmitterPreferencesReference()
         : (JDialog) jobMonitorJFrame.getJobMonitorPreferencesReference();
-
     if (jobSubmitterJFrame != null) {
-      NSPreferencesPanel nsPreferencesPanel
-          = jobSubmitterJFrame.jobSubmitterPreferences.
-          getNSPreferencesPanelReference();
+      NSPreferencesPanel nsPreferencesPanel = jobSubmitterJFrame.jobSubmitterPreferences
+          .getNSPreferencesPanelReference();
       Vector lbAddressVector = new Vector();
       String nsAddress;
       for (int i = 0; i < nsPreferencesPanel.jobTableModel.getRowCount(); i++) {
         nsAddress = nsPreferencesPanel.jobTableModel.getValueAt(i,
-            nsPreferencesPanel.NS_ADDRESS_COLUMN_INDEX).toString();
+            NSPreferencesPanel.NS_ADDRESS_COLUMN_INDEX).toString();
         lbAddressVector = (Vector) GUIGlobalVars.tempNSLBMap.get(nsAddress);
         if (lbAddressVector.size() == 0) {
           title = "<html><font color=\"#602080\">"
               + JobSubmitterPreferences.NS_PANEL_NAME + ", "
               + JobSubmitterPreferences.LB_PANEL_NAME + ":" + "</font>";
-          JOptionPane.showOptionDialog(jDialog,
-              title + "\nPlease provide at least a Logging"
-              + " & Bookkeeping server for Network Server:"
-              + "\n'" + nsAddress + "'",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
-          NSPreferencesPanel nsPreferencesPanelReference =
-              jobSubmitterJFrame.getJobSubmitterPreferencesReference().
-              getNSPreferencesPanelReference();
-          int index = nsPreferencesPanelReference.jobTableModel.
-              getIndexOfElementInColumn(nsAddress,
-              NSPreferencesPanel.NS_ADDRESS_COLUMN_INDEX);
+          JOptionPane.showOptionDialog(jDialog, title
+              + "\nPlease provide at least a Logging"
+              + " & Bookkeeping server for Network Server:" + "\n'" + nsAddress
+              + "'", Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
+          NSPreferencesPanel nsPreferencesPanelReference = jobSubmitterJFrame
+              .getJobSubmitterPreferencesReference()
+              .getNSPreferencesPanelReference();
+          int index = nsPreferencesPanelReference.jobTableModel
+              .getIndexOfElementInColumn(nsAddress,
+                  NSPreferencesPanel.NS_ADDRESS_COLUMN_INDEX);
           if (index != -1) {
             nsPreferencesPanelReference.jTableNS.setRowSelectionInterval(index,
                 index);
@@ -703,37 +689,34 @@ public class LBPreferencesPanel extends JPanel {
           return Utils.FAILED;
         }
       }
-
-      NSPreferencesPanel nsPreferencesPanelReference =
-          jobSubmitterJFrame.getJobSubmitterPreferencesReference().
-          getNSPreferencesPanelReference();
+      NSPreferencesPanel nsPreferencesPanelReference = jobSubmitterJFrame
+          .getJobSubmitterPreferencesReference()
+          .getNSPreferencesPanelReference();
       GUIGlobalVars.nsLBMap.clear();
       Vector nsLBVectorToSave = new Vector();
       String tempNSAddress;
-      for (int i = 0; i < nsPreferencesPanelReference.jobTableModel.getRowCount();
-          i++) {
+      for (int i = 0; i < nsPreferencesPanelReference.jobTableModel
+          .getRowCount(); i++) {
         tempNSAddress = nsPreferencesPanelReference.jobTableModel.getValueAt(i,
             NSPreferencesPanel.NS_ADDRESS_COLUMN_INDEX).toString();
-        Vector tempLBVector = (Vector) GUIGlobalVars.tempNSLBMap.get(
-            tempNSAddress);
+        Vector tempLBVector = (Vector) GUIGlobalVars.tempNSLBMap
+            .get(tempNSAddress);
         if (!GUIGlobalVars.nsLBMap.containsKey(tempNSAddress)) {
           GUIGlobalVars.nsLBMap.put(tempNSAddress, tempLBVector);
         }
         nsLBVectorToSave.add(tempLBVector);
       }
-
       Ad userConfAd = GUIFileSystem.loadPrefFileAd();
       Ad userConfJobSubmitterAd = new Ad();
-
       try {
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           userConfAd.delAttribute(Utils.PREF_FILE_JOB_SUBMITTER);
         }
         if (GUIGlobalVars.tempNSLBMap.size() != 0) {
-          userConfJobSubmitterAd =
-              setNSLBVectorAttribute(userConfJobSubmitterAd, nsLBVectorToSave);
+          userConfJobSubmitterAd = setNSLBVectorAttribute(
+              userConfJobSubmitterAd, nsLBVectorToSave);
         }
         logger.debug("userConfJobSubmitterAd:" + userConfJobSubmitterAd);
         userConfAd.setAttribute(Utils.PREF_FILE_JOB_SUBMITTER,
@@ -744,20 +727,18 @@ public class LBPreferencesPanel extends JPanel {
         }
       }
       try {
-        GUIFileSystem.saveTextFile(userConfFile, userConfAd.toString(true, true));
+        GUIFileSystem.saveTextFile(userConfFile, userConfAd
+            .toString(true, true));
       } catch (Exception ex) {
         if (isDebugging) {
           ex.printStackTrace();
         }
-        JOptionPane.showOptionDialog(jDialog,
-            title + "\nUnable to save preferences settings to file",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(jDialog, title
+            + "\nUnable to save preferences settings to file",
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
       logger.debug("User Conf Ad: " + userConfAd);
-
     } else if (jobMonitorJFrame != null) {
       int updateRate = Integer.parseInt(jTextFieldUpdateRate.getText(), 10);
       logger.debug("updateRate: " + updateRate + " GUIGlobal: "
@@ -765,7 +746,8 @@ public class LBPreferencesPanel extends JPanel {
       if (updateRate != GUIGlobalVars.getJobMonitorUpdateRate()) {
         GUIGlobalVars.setJobMonitorUpdateRate(updateRate);
         logger.debug("updateRate setting... ");
-        if ((jobMonitorJFrame != null) && (jobMonitorJFrame.multipleJobPanel != null)
+        if ((jobMonitorJFrame != null)
+            && (jobMonitorJFrame.multipleJobPanel != null)
             && (jobMonitorJFrame.multipleJobPanel.updateThread != null)) {
           jobMonitorJFrame.multipleJobPanel.updateThread.restartThread();
         }
@@ -774,14 +756,13 @@ public class LBPreferencesPanel extends JPanel {
       if (jRadioButtonRGMAUpdate.isSelected()) {
         updateMode = Utils.RGMA_MODE;
       }
-
       if (jobTableModel.getRowCount() == 0) {
         jobMonitorJFrame.setLBMenuItems(lbVector); // lbVector is empty.
         jobMonitorJFrame.jMenuItemGetJobIdFromLB.setEnabled(false);
       } else {
         for (int i = 0; i < jobTableModel.getRowCount(); i++) {
-          address = jobTableModel.getValueAt(i,
-              LB_ADDRESS_COLUMN_INDEX).toString();
+          address = jobTableModel.getValueAt(i, LB_ADDRESS_COLUMN_INDEX)
+              .toString();
           port = jobTableModel.getValueAt(i, LB_PORT_COLUMN_INDEX).toString();
           lbToSaveVector.add(Constant.getInstance(address + ":" + port));
           lbVector.add(address + ":" + port);
@@ -789,7 +770,6 @@ public class LBPreferencesPanel extends JPanel {
         jobMonitorJFrame.setLBMenuItems(lbVector);
         jobMonitorJFrame.jMenuItemGetJobIdFromLB.setEnabled(true);
       }
-
       Ad userConfAd = GUIFileSystem.loadPrefFileAd();
       Ad userConfJobMonitorAd = new Ad();
       try {
@@ -802,21 +782,17 @@ public class LBPreferencesPanel extends JPanel {
           ex.printStackTrace();
         }
       }
-
       try {
         if (userConfJobMonitorAd.hasAttribute(Utils.PREF_FILE_UPDATE_MODE)) {
           userConfJobMonitorAd.delAttribute(Utils.PREF_FILE_UPDATE_MODE);
         }
         userConfJobMonitorAd.setAttribute(Utils.PREF_FILE_UPDATE_MODE,
             updateMode);
-
         if (userConfJobMonitorAd.hasAttribute(Utils.PREF_FILE_UPDATE_RATE)) {
           userConfJobMonitorAd.delAttribute(Utils.PREF_FILE_UPDATE_RATE);
         }
-        userConfJobMonitorAd.setAttribute(Utils.PREF_FILE_UPDATE_RATE,
-            Integer.parseInt(
-            jTextFieldUpdateRate.getText().trim(), 10));
-
+        userConfJobMonitorAd.setAttribute(Utils.PREF_FILE_UPDATE_RATE, Integer
+            .parseInt(jTextFieldUpdateRate.getText().trim(), 10));
         if (userConfJobMonitorAd.hasAttribute(Utils.PREF_FILE_LB_ADDRESS)) {
           userConfJobMonitorAd.delAttribute(Utils.PREF_FILE_LB_ADDRESS);
         }
@@ -833,17 +809,16 @@ public class LBPreferencesPanel extends JPanel {
         }
       }
       try {
-        GUIFileSystem.saveTextFile(userConfFile, userConfAd.toString(true, true));
+        GUIFileSystem.saveTextFile(userConfFile, userConfAd
+            .toString(true, true));
       } catch (Exception ex) {
         if (isDebugging) {
           ex.printStackTrace();
         }
-        JOptionPane.showOptionDialog(jDialog,
-            title + "\nUnable to save preferences settings to file",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(jDialog, title
+            + "\nUnable to save preferences settings to file",
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     }
     return Utils.SUCCESS;
@@ -853,54 +828,50 @@ public class LBPreferencesPanel extends JPanel {
     logger.info("Loading Preferences from File");
     Ad userConfAd = GUIFileSystem.loadPrefFileAd();
     jobTableModel.removeAllRows();
-
     // JOB SUBMITTER
     if (jobSubmitterJFrame != null) {
       try {
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          Ad userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          Ad userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_ADDRESS)) {
-            Vector nsVector = userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_NS_ADDRESS);
+            Vector nsVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_NS_ADDRESS);
             if (nsVector.size() != 0) {
-              if (userConfJobSubmitterAd.hasAttribute(Utils.
-                  PREF_FILE_LB_ADDRESS)) {
-                Vector lbVector = userConfJobSubmitterAd.getStringValue(Utils.
-                    PREF_FILE_LB_ADDRESS);
+              if (userConfJobSubmitterAd
+                  .hasAttribute(Utils.PREF_FILE_LB_ADDRESS)) {
+                Vector lbVector = userConfJobSubmitterAd
+                    .getStringValue(Utils.PREF_FILE_LB_ADDRESS);
                 if (lbVector.size() != 0) {
-                  if (lbVector.get(0)instanceof String) {
+                  if (lbVector.get(0) instanceof String) {
                     for (int i = 1; i < lbVector.size(); i++) {
-                      if (!(lbVector.get(i)instanceof String)) {
+                      if (!(lbVector.get(i) instanceof String)) {
                         throw new Exception(
-                            "Unable to parse preferences file, "
-                            + "'" + Utils.CONF_FILE_LBADDRESSES
-                            + "' attribute");
+                            "Unable to parse preferences file, " + "'"
+                                + Utils.CONF_FILE_LBADDRESSES + "' attribute");
                       }
                     }
                   } else { // Vector.
                     for (int i = 1; i < lbVector.size(); i++) {
-                      if (lbVector.get(i)instanceof String) {
+                      if (lbVector.get(i) instanceof String) {
                         throw new Exception(
-                            "Unable to parse preferences file, "
-                            + "'" + Utils.CONF_FILE_LBADDRESSES
-                            + "' attribute");
+                            "Unable to parse preferences file, " + "'"
+                                + Utils.CONF_FILE_LBADDRESSES + "' attribute");
                       }
                     }
                   }
-
                   String nsItem;
                   GUIGlobalVars.tempNSLBMap = new HashMap();
                   int lbVectorSize = lbVector.size();
                   Vector vectorElement = new Vector();
-                  if (!(lbVector.get(0)instanceof String)) {
+                  if (!(lbVector.get(0) instanceof String)) {
                     for (int i = 0; i < nsVector.size(); i++) {
                       nsItem = nsVector.get(i).toString();
                       if (!GUIGlobalVars.tempNSLBMap.containsKey(nsItem)) {
                         if (i < lbVectorSize) {
                           vectorElement = (Vector) lbVector.get(i);
-                          if ((vectorElement.size() == 1) &&
-                              vectorElement.get(0).toString().equals("")) {
+                          if ((vectorElement.size() == 1)
+                              && vectorElement.get(0).toString().equals("")) {
                             vectorElement = new Vector();
                           }
                         } else {
@@ -921,7 +892,6 @@ public class LBPreferencesPanel extends JPanel {
                     }
                   }
                 }
-
                 // Setting first NS values (i.e. Address, LB Addresses).
                 if (jComboBoxNS.getItemCount() != 0) {
                   jComboBoxNS.setEnabled(true);
@@ -945,25 +915,23 @@ public class LBPreferencesPanel extends JPanel {
           ex.printStackTrace();
         }
       }
-
       // JOB MONITOR
     } else if (jobMonitorJFrame != null) {
       if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_MONITOR)) {
         try {
-          Ad userConfJobMonitorAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_MONITOR);
+          Ad userConfJobMonitorAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_MONITOR);
           if (userConfJobMonitorAd.hasAttribute(Utils.PREF_FILE_UPDATE_RATE)) {
             int updateRate = ((Integer) userConfJobMonitorAd.getIntValue(
                 Utils.PREF_FILE_UPDATE_RATE).get(0)).intValue();
-            if ((Utils.UPDATE_RATE_MIN_VAL <= updateRate) &&
-                (updateRate <= Utils.UPDATE_RATE_MAX_VAL)) {
+            if ((Utils.UPDATE_RATE_MIN_VAL <= updateRate)
+                && (updateRate <= Utils.UPDATE_RATE_MAX_VAL)) {
               jTextFieldUpdateRate.setText(Integer.toString(updateRate));
             } else {
-              jTextFieldUpdateRate.setText(Integer.toString(Utils.
-                  UPDATE_RATE_DEF_VAL));
+              jTextFieldUpdateRate.setText(Integer
+                  .toString(Utils.UPDATE_RATE_DEF_VAL));
             }
           }
-
           if (userConfJobMonitorAd.hasAttribute(Utils.PREF_FILE_UPDATE_MODE)) {
             int updateMode = ((Integer) userConfJobMonitorAd.getIntValue(
                 Utils.PREF_FILE_UPDATE_MODE).get(0)).intValue();
@@ -977,10 +945,9 @@ public class LBPreferencesPanel extends JPanel {
               jRadioButtonLBUpdateEvent(null);
             }
           }
-
           if (userConfJobMonitorAd.hasAttribute(Utils.PREF_FILE_LB_ADDRESS)) {
-            Vector lbVector = userConfJobMonitorAd.getStringValue(Utils.
-                PREF_FILE_LB_ADDRESS);
+            Vector lbVector = userConfJobMonitorAd
+                .getStringValue(Utils.PREF_FILE_LB_ADDRESS);
             String address;
             String port = LB_DEFAULT_PORT;
             int index = -1;
@@ -1047,8 +1014,8 @@ public class LBPreferencesPanel extends JPanel {
       while (iterator.hasNext()) {
         addNSAddress(iterator.next().toString());
       }
-      setLBAddressTable((Vector) GUIGlobalVars.nsLBMap.get(jComboBoxNS.
-          getItemAt(0)));
+      setLBAddressTable((Vector) GUIGlobalVars.nsLBMap.get(jComboBoxNS
+          .getItemAt(0)));
       jComboBoxNS.setSelectedIndex(0);
       jComboBoxNS.setEnabled(true);
     }
@@ -1134,5 +1101,4 @@ public class LBPreferencesPanel extends JPanel {
     jComboBoxNS.setEnabled(false);
     jobTableModel.removeAllRows();
   }
-
 }

@@ -1,30 +1,45 @@
 /*
  * TagPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
 
-import java.util.Vector;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Iterator;
-import java.io.File;
-import java.io.IOException;
+import java.util.Vector;
 
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
-import javax.swing.*;
-import javax.swing.border.*;
-
-import javax.naming.directory.InvalidAttributeValueException;
-
-import org.glite.wms.jdlj.*;
-
-import org.apache.log4j.*;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
 
 
 /**
@@ -95,7 +110,7 @@ public class TagPanel extends JPanel {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
 
     vectorHeader.addElement("Tag Name");
     vectorHeader.addElement("Tag Value");

@@ -1,29 +1,25 @@
 /*
  * MultipleJobFrame.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme,
- * all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-
-import java.io.*;
-import java.util.*;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-
+import java.awt.AWTEvent;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.WindowEvent;
+import java.util.Vector;
+import javax.swing.JFrame;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wmsui.apij.Job;
+import org.glite.wmsui.apij.JobCollection;
+import org.glite.wmsui.apij.JobId;
 
 /**
  * Implementation of the MultipleJobFrame class.
@@ -39,10 +35,13 @@ public class MultipleJobFrame extends JFrame {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   protected JobMonitor jobMonitorFrame;
+
   protected MultipleJobPanel multipleJobPanel;
+
   protected String dagJobId;
 
   /**
@@ -70,15 +69,13 @@ public class MultipleJobFrame extends JFrame {
 
   private void jbInit(String state, String submissionTime) throws Exception,
       IllegalArgumentException {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
-        ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     Toolkit toolkit = getToolkit();
     Dimension screenSize = toolkit.getScreenSize();
-    this.setSize(new Dimension((int) (screenSize.width
-        * GraphicUtils.SCREEN_WIDTH_PROPORTION),
+    this.setSize(new Dimension(
+        (int) (screenSize.width * GraphicUtils.SCREEN_WIDTH_PROPORTION),
         (int) (screenSize.height * GraphicUtils.SCREEN_HEIGHT_PROPORTION)));
-
     JobCollection jobCollection = new JobCollection();
     Vector childrenVector = new Vector();
     try {
@@ -117,5 +114,4 @@ public class MultipleJobFrame extends JFrame {
     this.jobMonitorFrame.dagMonitorMap.remove(this.dagJobId);
     this.dispose();
   }
-
 }

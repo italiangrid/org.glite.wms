@@ -1,21 +1,22 @@
 /*
  * GUIGlobalVars.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme,
- * all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.io.*;
-import java.util.*;
-
-import org.glite.wms.jdlj.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
 import org.glite.wmsui.apij.Api;
-
 
 /**
  * Implementation of the GUIGlobalVars class.
@@ -31,24 +32,26 @@ public class GUIGlobalVars {
   static final int NO_RETRY_COUNT = -1;
 
   //*** Certificate and Proxy context.
-   static String proxyFilePath = "";
+  static String proxyFilePath = "";
+
   static String certFilePath = "";
+
   static String certKeyPath = "";
+
   static String trustedCertDir = "";
 
   static String proxySubject = "";
 
   static boolean hasVOMSExtension = false;
-  //*** END
 
-   // Working Virtual Organisation
-   static private String virtualOrganisation = "";
+  //*** END
+  // Working Virtual Organisation
+  static private String virtualOrganisation = "";
 
   //*** Current requirements, rank and rankMPI values.
-
-   // Variable used to mantain Requirements attribute default value.
-   //static private String guiConfVarRequirements = "true"; //Jdl.REQUIREMENTS_DEFAULT;
-   static private String guiConfVarRequirements = "";
+  // Variable used to mantain Requirements attribute default value.
+  //static private String guiConfVarRequirements = "true"; //Jdl.REQUIREMENTS_DEFAULT;
+  static private String guiConfVarRequirements = "";
 
   // Variable used to mantain Rank attribute default value.
   // If no value is provided in conf file, API default will be used.
@@ -61,14 +64,14 @@ public class GUIGlobalVars {
   static Vector srrDefaultVector;
 
   //*** END
-
-   //*** Job Submitter preferences working values.
-
-    // Job Submitter preferences Network Server panel.
-    static private Vector nsVector = new Vector();
+  //*** Job Submitter preferences working values.
+  // Job Submitter preferences Network Server panel.
+  static private Vector nsVector = new Vector();
 
   static Map nsLBMap = new HashMap();
+
   static Map tempNSLBMap = new HashMap();
+
   static Map defaultNSLBMap = new HashMap();
 
   // Job Monitor LB Vector.
@@ -76,49 +79,54 @@ public class GUIGlobalVars {
 
   // Job Submitter preferences JDL Defaults panel.
   static private String hlrLocation = "";
+
   static private String myProxyServer = "";
+
   static private int guiConfVarRetryCount = NO_RETRY_COUNT;
 
   // Job Submitter preferences Logging panel.
   static private String guiConfVarErrorStorage = "/tmp";
+
   static private int guiConfVarLoggingTimeout = Utils.LOGGING_TIMEOUT_DEF_VAL;
-  static private int guiConfVarLoggingSyncTimeout = Utils.
-      LOGGING_SYNC_TIMEOUT_DEF_VAL;
+
+  static private int guiConfVarLoggingSyncTimeout = Utils.LOGGING_SYNC_TIMEOUT_DEF_VAL;
+
   static private String guiConfVarLoggingDestination = "";
 
   // These values are present in the preferences file but user can't set
   // the values directly from GUI.
   static private int nsLoggerLevel = Utils.NS_LOGGER_LEVEL_DEF_VAL;
-  //*** END
 
-   // Application Version. The value is read from a file containing only this value.
-   static private String guiConfVarVersion = "Unavailable";
+  //*** END
+  // Application Version. The value is read from a file containing only this value.
+  static private String guiConfVarVersion = "Unavailable";
 
   //*** Hash Maps.
-
-   // Map used to store NetworkServer objects. The key is the name of the Job Submitter
-   // tabbed pane panel the value is the NetworkServer.
-   static Map nsMap = new HashMap();
+  // Map used to store NetworkServer objects. The key is the name of the Job Submitter
+  // tabbed pane panel the value is the NetworkServer.
+  static Map nsMap = new HashMap();
 
   // Keep track of current opened editors, the key has the form "<NSPanel> - <keyJobName>",
   // the value is the reference to the editor instance.
   static Map openedEditorHashMap = new HashMap();
+
   static Map openedListenerFrameMap = new HashMap();
+
   static Map openedCheckpointStateMap = new HashMap();
+
   static Map openedListmatchMap = new HashMap();
+
   //*** END
-
-   //*** Copy and Paste functionalities.
-
-    // Keep track of copied name(s) of NSPanel job(s).
-    static Vector selectedJobNameCopyVector = new Vector();
+  //*** Copy and Paste functionalities.
+  // Keep track of copied name(s) of NSPanel job(s).
+  static Vector selectedJobNameCopyVector = new Vector();
 
   // Keep track of the RBPanel name from where the job name are copied.
   static String selectedRBPanelCopy = "";
-  //*** END
 
-   // FileChooser instances use this default directory.
-   static String fileChooserWorkingDirectory = "";
+  //*** END
+  // FileChooser instances use this default directory.
+  static String fileChooserWorkingDirectory = "";
 
   // User temporary file directory to save context files in.
   static String userTemporaryFileDirectory = "";
@@ -174,7 +182,6 @@ public class GUIGlobalVars {
 
   static protected void setLBVector(Vector vector) {
     lbVector = (Vector) vector.clone();
-
   }
 
   static protected Vector getLBVector() {
@@ -189,10 +196,9 @@ public class GUIGlobalVars {
     return nsLBMap;
   }
 
-  static protected void setNSLBMap(Map nsLBMap) {
-    nsLBMap = nsLBMap;
-  }
-
+  /*static protected void setNSLBMap(Map nsLBMap) {
+   nsLBMap = nsLBMap;
+   }*/
   static protected Vector getNSVector() {
     return nsVector;
   }
@@ -257,7 +263,7 @@ public class GUIGlobalVars {
         jobAd.setAttributeExpr(Jdl.REQUIREMENTS, expr);
         guiConfVarRequirements = expr.trim();
       } catch (Exception e) {
-      // throw exc
+        // throw exc
       }
     }
   }
@@ -273,7 +279,7 @@ public class GUIGlobalVars {
         jobAd.setAttributeExpr(Jdl.RANK, expr);
         guiConfVarRank = expr.trim();
       } catch (Exception e) {
-      // throw exc
+        // throw exc
       }
     }
   }
@@ -289,7 +295,7 @@ public class GUIGlobalVars {
         jobAd.setAttributeExpr(Jdl.RANK_MPI, expr);
         guiConfVarRankMPI = expr.trim();
       } catch (Exception e) {
-      // throw exc
+        // throw exc
       }
     }
   }
@@ -302,8 +308,8 @@ public class GUIGlobalVars {
     if (value == NO_RETRY_COUNT) {
       guiConfVarRetryCount = NO_RETRY_COUNT;
     }
-    if ((Utils.RETRYCOUNT_MIN_VAL <= value) &&
-        (value <= Utils.RETRYCOUNT_MAX_VAL)) {
+    if ((Utils.RETRYCOUNT_MIN_VAL <= value)
+        && (value <= Utils.RETRYCOUNT_MAX_VAL)) {
       guiConfVarRetryCount = value;
     }
   }
@@ -363,8 +369,8 @@ public class GUIGlobalVars {
   }
 
   static void setGUIConfVarNSLoggerLevel(int value) {
-    if ((Utils.NS_LOGGER_LEVEL_MIN_VAL <= value) &&
-        (value <= Utils.NS_LOGGER_LEVEL_MAX_VAL)) {
+    if ((Utils.NS_LOGGER_LEVEL_MIN_VAL <= value)
+        && (value <= Utils.NS_LOGGER_LEVEL_MAX_VAL)) {
       nsLoggerLevel = value;
     } else {
       nsLoggerLevel = Utils.NS_LOGGER_LEVEL_DEF_VAL;
@@ -383,5 +389,4 @@ public class GUIGlobalVars {
   static String getGUIConfVarErrorStorage() {
     return guiConfVarErrorStorage;
   }
-
 }

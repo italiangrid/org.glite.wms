@@ -1,37 +1,44 @@
 /*
  * DagMultipleJobPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.util.*;
-import java.net.*;
-import java.io.*;
-
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
 import java.awt.Color;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileFilter;
-
-import java.beans.VetoableChangeListener;
-import java.beans.PropertyVetoException;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.util.Date;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.TableColumn;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
+import org.glite.wms.jdlj.JobAdException;
+import org.glite.wmsui.apij.Job;
+import org.glite.wmsui.apij.JobCollection;
+import org.glite.wmsui.apij.JobId;
+import org.glite.wmsui.apij.JobStatus;
+import org.glite.wmsui.apij.Result;
 
 /*
  import org.edg.info.Consumer;
@@ -39,7 +46,6 @@ import org.apache.log4j.*;
  import org.edg.info.CanonicalProducer;
  import org.edg.info.ServletConnection;
  */
-
 /**
  * Implementation of the DagMultipleJobPanel class.
  *
@@ -54,30 +60,41 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int NODE_NAME_COLUMN_INDEX = 5;
+
   JPanel jPanelDag = new JPanel();
+
   JLabel jLabelDagJobId = new JLabel("Dag Id");
+
   JTextField jTextFieldDagJobId = new JTextField();
+
   JLabel jLabelJobStatus = new JLabel("Status");
+
   JTextField jTextFieldJobStatus = new JTextField();
+
   JLabel jLabelSubmissionTime = new JLabel("Submission Time");
+
   JTextField jTextFieldSubmissionTime = new JTextField();
+
   JPanel jPanelJobId = new JPanel();
+
   JPanel jPanelStatus = new JPanel();
 
   protected String dagJobId;
+
   protected boolean isFirstTimeNodeName = true;
+
   protected MultipleJobFrame multipleJobFrame;
 
   /**
    * Constructor.
    */
   public DagMultipleJobPanel(MultipleJobFrame multipleJobFrame,
-      JobMonitor jobMonitorFrame, String dagJobId,
-      String jobStatus, String submissionTime,
-      JobCollection jobCollection) throws Exception {
+      JobMonitor jobMonitorFrame, String dagJobId, String jobStatus,
+      String submissionTime, JobCollection jobCollection) throws Exception {
     super(jobMonitorFrame);
     this.multipleJobFrame = multipleJobFrame;
     this.dagJobId = dagJobId;
@@ -106,16 +123,13 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
   }
 
   private void jbInit(String jobStatus, String submissionTime) throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
-        ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     startUpdateThread();
-
     TableColumn nodeNameColumn = new TableColumn(5);
     nodeNameColumn.setCellRenderer(new GUITableTooltipCellRenderer());
     jobTableModel.addColumn("Node Name");
     jTableJobs.addColumn(nodeNameColumn);
-
     jTextFieldDagJobId.setText(this.dagJobId);
     jTextFieldDagJobId.setEditable(false);
     jTextFieldDagJobId.setBorder(BorderFactory.createEtchedBorder());
@@ -125,7 +139,6 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
         GraphicUtils.jTextFieldDeselect(jTextFieldDagJobId);
       }
     });
-
     jTextFieldJobStatus.setText(jobStatus);
     jTextFieldJobStatus.setEditable(false);
     jTextFieldJobStatus.setPreferredSize(new Dimension(150, 20));
@@ -137,25 +150,23 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
         GraphicUtils.jTextFieldDeselect(jTextFieldJobStatus);
       }
     });
-
     jTextFieldSubmissionTime.setText(submissionTime);
     jTextFieldSubmissionTime.setEditable(false);
     jTextFieldSubmissionTime.setBorder(BorderFactory.createEtchedBorder());
     jTextFieldSubmissionTime.setBackground(Color.white);
     jTextFieldSubmissionTime.setPreferredSize(new Dimension(200, 20));
     jTextFieldSubmissionTime.setMaximumSize(new Dimension(200, 20));
-    jTextFieldSubmissionTime.addFocusListener(new java.awt.event.FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        GraphicUtils.jTextFieldDeselect(jTextFieldSubmissionTime);
-      }
-    });
-
+    jTextFieldSubmissionTime
+        .addFocusListener(new java.awt.event.FocusAdapter() {
+          public void focusLost(FocusEvent e) {
+            GraphicUtils.jTextFieldDeselect(jTextFieldSubmissionTime);
+          }
+        });
     jPanelJobId.setLayout(new BoxLayout(jPanelJobId, BoxLayout.X_AXIS));
     jPanelJobId.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelJobId.add(jLabelDagJobId, null);
     jPanelJobId.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobId.add(jTextFieldDagJobId, null);
-
     jPanelStatus.setLayout(new BoxLayout(jPanelStatus, BoxLayout.X_AXIS));
     jPanelStatus.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelStatus.add(jLabelJobStatus, null);
@@ -166,20 +177,16 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
     jPanelStatus.add(jLabelSubmissionTime, null);
     jPanelStatus.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelStatus.add(jTextFieldSubmissionTime, null);
-
     jPanelDag.setBorder(new TitledBorder(new EtchedBorder(), " Dag ", 0, 0,
         null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelDag.setLayout(new BorderLayout());
     jPanelDag.add(jPanelJobId, BorderLayout.NORTH);
     jPanelDag.add(jPanelStatus, BorderLayout.SOUTH);
-
     jPanelNorth.remove(jPanelJobId);
     jPanelNorth.add(jPanelDag, BorderLayout.SOUTH);
-
     jPanelJobStatusTable.setBorder(new TitledBorder(new EtchedBorder(),
-        " Dag Nodes Status Table ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+        " Dag Nodes Status Table ", 0, 0, null,
+        GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jButtonDagNodes.setVisible(false);
     //jButtonDagMon.setVisible(false);
     jButtonCancel.setVisible(false);
@@ -236,11 +243,8 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
             e.printStackTrace();
           }
           JOptionPane.showOptionDialog(DagMultipleJobPanel.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+              e.getMessage(), Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
         }
       }
     }
@@ -274,14 +278,14 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
         rowToAddVector.addElement(jobStatusName);
       }
     }
-    Vector stateEnterTimesVector = (Vector) jobStatus.get(JobStatus.
-        STATE_ENTER_TIMES);
+    Vector stateEnterTimesVector = (Vector) jobStatus
+        .get(JobStatus.STATE_ENTER_TIMES);
     logger.debug("State Enter Times (Vector): " + stateEnterTimesVector);
     if (stateEnterTimesVector != null) {
       logger.debug("State Enter Time (Vector.get(1)): "
           + stateEnterTimesVector.get(1).toString().trim());
-      rowToAddVector.addElement(Utils.toDate(stateEnterTimesVector.get(1).
-          toString().trim()));
+      rowToAddVector.addElement(Utils.toDate(stateEnterTimesVector.get(1)
+          .toString().trim()));
     } else {
       rowToAddVector.addElement("");
     }
@@ -291,7 +295,6 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
     } else {
       rowToAddVector.addElement("");
     }
-
     if (isFirstTimeNodeName) {
       String nodeName = "";
       Ad userTagsAd = new Ad();
@@ -300,8 +303,8 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
         logger.debug("USER_TAGS Ad: "
             + jobStatus.getValString(JobStatus.USER_TAGS));
         userTagsAd.fromString(jobStatus.getValString(JobStatus.USER_TAGS));
-        nodeName = userTagsAd.getStringValue(Jdl.EDG_WL_UI_DAG_NODE_NAME).get(0).
-            toString();
+        nodeName = userTagsAd.getStringValue(Jdl.EDG_WL_UI_DAG_NODE_NAME)
+            .get(0).toString();
       } catch (Exception e) {
         if (isDebugging) {
           e.printStackTrace();
@@ -311,17 +314,15 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
       logger.debug("NODE NAME: " + nodeName);
       rowToAddVector.addElement(nodeName);
     }
-
     return rowToAddVector;
   }
 
   void updateJobStatusTableJobs() {
     logger.debug("setJTableJobs() - jobCollection.size(): "
         + DagMultipleJobPanel.this.jobCollection.size());
-
     try {
-      DagMultipleJobPanel.this.jobVector = DagMultipleJobPanel.this.
-          jobCollection.getStatus();
+      DagMultipleJobPanel.this.jobVector = DagMultipleJobPanel.this.jobCollection
+          .getStatus();
     } catch (InterruptedException ie) {
       // Thread has been interrupted, maybe during update event from user command
       // button "Back", do nothing.
@@ -333,15 +334,11 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
       if (isDebugging) {
         e.printStackTrace();
       }
-      JOptionPane.showOptionDialog(DagMultipleJobPanel.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(DagMultipleJobPanel.this, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     }
-
     String warningMsg = "";
     try {
       String jobIdText = "";
@@ -355,26 +352,24 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
         if (jobResult != null) {
           resultCode = jobResult.getCode();
           jobIdText = jobResult.getId().trim();
-
           // Checks if jobCollection contains jobs after update event. User could remove some jobs
           // from table during update event. In this case jobStatus must not be shown, the job is
           // removed from table.
-          if (!DagMultipleJobPanel.this.jobCollection.contains(new Job(new
-              JobId(jobIdText)))) {
+          if (!DagMultipleJobPanel.this.jobCollection.contains(new Job(
+              new JobId(jobIdText)))) {
             continue;
           }
-
           index = jobTableModel.getIndexOfElementInColumn(jobIdText,
               JOB_ID_COLUMN_INDEX);
           if ((resultCode != Result.STATUS_FAILURE)
               && (resultCode != Result.STATUS_FORBIDDEN)) {
             jobStatus = (JobStatus) jobResult.getResult();
             logger.debug("setJTableJobs() - Job Id: " + jobIdText);
-
             // Stores job status information in hash map structure.
             // This hash map is used when user asks for details, in this case you
             // don't recall getStatus() API (it will be done when you ask for an update).
-            if (DagMultipleJobPanel.this.jobStatusHashMap.containsKey(jobIdText)) {
+            if (DagMultipleJobPanel.this.jobStatusHashMap
+                .containsKey(jobIdText)) {
               DagMultipleJobPanel.this.jobStatusHashMap.remove(jobIdText);
             }
             DagMultipleJobPanel.this.jobStatusHashMap.put(jobIdText, jobStatus);
@@ -401,28 +396,27 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
               // code different from super version.
               if (jobIdText.equals(this.dagJobId)) {
                 jTextFieldJobStatus.setText(rowToAddVector.get(2).toString());
-                jTextFieldSubmissionTime.setText(rowToAddVector.get(3).toString());
+                jTextFieldSubmissionTime.setText(rowToAddVector.get(3)
+                    .toString());
               }
               // END
             }
           } else {
-            if (DagMultipleJobPanel.this.jobStatusHashMap.containsKey(jobIdText)) {
+            if (DagMultipleJobPanel.this.jobStatusHashMap
+                .containsKey(jobIdText)) {
               DagMultipleJobPanel.this.jobStatusHashMap.remove(jobIdText);
             }
-
             if (index != -1) {
-              if (jobTableModel.getValueAt(index,
-                  JOB_STATUS_COLUMN_INDEX).toString()
-                  .equals(Utils.COLLECTING_STATE)) {
+              if (jobTableModel.getValueAt(index, JOB_STATUS_COLUMN_INDEX)
+                  .toString().equals(Utils.COLLECTING_STATE)) {
                 jobTableModel.setValueAt(Utils.UNABLE_TO_GET_STATUS, index,
                     JOB_STATUS_COLUMN_INDEX);
               }
             } else {
               // code different from super version.
               if (jobIdText.equals(this.dagJobId)) {
-                if (jobTableModel.getValueAt(index,
-                    JOB_STATUS_COLUMN_INDEX).toString()
-                    .equals(Utils.COLLECTING_STATE)) {
+                if (jobTableModel.getValueAt(index, JOB_STATUS_COLUMN_INDEX)
+                    .toString().equals(Utils.COLLECTING_STATE)) {
                   jTextFieldJobStatus.setText(Utils.UNABLE_TO_GET_STATUS);
                 }
               }
@@ -431,18 +425,15 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
             warningMsg += ((Exception) jobResult.getResult()).getMessage()
                 + "\n";
           }
-          jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-              getRowCount()));
+          jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+              .getRowCount()));
         } else {
           logger.debug("setJTableJobs() - Job result is null");
         }
       }
-
       isFirstTimeNodeName = false;
-
       //jobTableModel.sortBy(this, jTableJobs, sortingColumn, true);
       jobTableModel.sortBy(jTableJobs, sortingColumn, true);
-
       Date date = new Date();
       String timeText = date.toString(); // look timeText below
       jLabelLastUpdate.setText(timeText);
@@ -451,48 +442,37 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
         e.printStackTrace();
       }
     }
-    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.getRowCount()));
+    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+        .getRowCount()));
     warningMsg = warningMsg.trim();
     if (!warningMsg.equals("")) {
       GraphicUtils.showOptionDialogMsg(DagMultipleJobPanel.this, warningMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-          null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE, null,
+          null);
     }
   }
 
   protected void renewJPopupMenu() {
     jPopupMenuTable.add(jMenuItemRemove);
     jPopupMenuTable.add(jMenuItemClear);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemSelectAll);
     jPopupMenuTable.add(jMenuItemSelectNone);
     jPopupMenuTable.add(jMenuItemInvertSelection);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemDetails);
     jPopupMenuTable.add(jMenuItemLogInfo);
     jPopupMenuTable.add(jMenuItemUpdate);
-
     jPopupMenuTable.addSeparator();
-
     //jPopupMenuTable.add(jMenuItemJobCancel);
     jPopupMenuTable.add(jMenuItemJobOutput);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemInteractiveConsole);
     jPopupMenuTable.add(jMenuItemRetrieveCheckpointState);
-
     //jPopupMenuTable.addSeparator();
-
     //jPopupMenuTable.add(jMenuItemDagNodes);
     //jPopupMenuTable.add(jMenuItemDagMonitor);
-
     jPopupMenuTable.addSeparator();
     jPopupMenuTable.add(jMenuItemSortAddingOrder);
   }
@@ -505,17 +485,14 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
       }
     };
     jMenuItemRemove.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuClear();
       }
     };
     jMenuItemClear.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemRemove);
     jPopupMenuTable.add(jMenuItemClear);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -523,25 +500,21 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
       }
     };
     jMenuItemSelectAll.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuSelectNone();
       }
     };
     jMenuItemSelectNone.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuInvertSelection();
       }
     };
     jMenuItemInvertSelection.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemSelectAll);
     jPopupMenuTable.add(jMenuItemSelectNone);
     jPopupMenuTable.add(jMenuItemInvertSelection);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -549,38 +522,30 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
       }
     };
     jMenuItemDetails.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemDetails);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonLogInfoEvent(null);
       }
     };
     jMenuItemLogInfo.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonUpdateEvent(null);
       }
     };
     jMenuItemUpdate.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemDetails);
     jPopupMenuTable.add(jMenuItemLogInfo);
     jPopupMenuTable.add(jMenuItemUpdate);
-
     jPopupMenuTable.addSeparator();
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonGetOutputEvent(null);
       }
     };
     jMenuItemJobOutput.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemJobOutput);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -588,26 +553,21 @@ public class DagMultipleJobPanel extends MultipleJobPanel {
       }
     };
     jMenuItemInteractiveConsole.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonRetrieveCheckpointStateEvent(null);
       }
     };
     jMenuItemRetrieveCheckpointState.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemInteractiveConsole);
     jPopupMenuTable.add(jMenuItemRetrieveCheckpointState);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jobTableModel.sortBy(jTableJobs, Utils.NO_SORTING, true);
       }
     };
     jMenuItemSortAddingOrder.addActionListener(alst);
-
     jPopupMenuTable.addSeparator();
     jPopupMenuTable.add(jMenuItemSortAddingOrder);
   }
-
 }

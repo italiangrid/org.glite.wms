@@ -1,32 +1,46 @@
 /*
  * JobDef1Panel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme,
- * all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.io.*;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.io.File;
 import java.net.URL;
 import java.util.Vector;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.plaf.basic.*;
-
 import javax.naming.directory.InvalidAttributeValueException;
-
-import org.glite.wms.jdlj.*;
-
-import org.apache.log4j.*;
-
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.ExtractFiles;
+import org.glite.wms.jdlj.Jdl;
 
 /**
  * Implementation of the JobDef1Panel class.
@@ -42,60 +56,106 @@ public class JobDef1Panel extends JPanel {
   static Logger logger = Logger.getLogger(JDLEditor.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   String warningMsg = "";
+
   String GUIWarningMsg = "";
+
   String errorMsg = "";
 
   final int NO_MATCH_ERROR = 0;
+
   final int MATCH_ERROR_EXECUTABLE_STDINPUT = -1;
+
   final int MATCH_ERROR_STDOUTPUT_STDERROR = -2;
-  final String MATCH_ERROR_EXECUTABLE_STDINPUT_MSG
-      = "- " + Jdl.EXECUTABLE + ", " + Jdl.STDINPUT
-      + ": inserted files must be different";
+
+  final String MATCH_ERROR_EXECUTABLE_STDINPUT_MSG = "- " + Jdl.EXECUTABLE
+      + ", " + Jdl.STDINPUT + ": inserted files must be different";
 
   JPanel contentPane;
+
   JButton jButtonFileExecutable = new JButton();
+
   JLabel jLabelExecutable = new JLabel();
+
   JLabel jLabelArguments = new JLabel();
+
   JLabel jLabelStdInput = new JLabel();
+
   JLabel jLabelStdOutput = new JLabel();
+
   JLabel jLabelStdError = new JLabel();
+
   JPanel jPanelExecutable = new JPanel();
+
   JTextField jTextFieldExecutable = new JTextField();
+
   JTextField jTextFieldStdInput = new JTextField();
+
   JTextField jTextFieldArguments = new JTextField();
+
   JPanel jPanelStandardStreams = new JPanel();
+
   JTextField jTextFieldStdOutput = new JTextField();
+
   JTextField jTextFieldStdError = new JTextField();
+
   JPanel jPanelJobDInputSandbox = new JPanel();
+
   JPanel jPanelJobDOutputSandbox = new JPanel();
+
   JTextField jTextFieldInputSb = new JTextField();
+
   JTextField jTextFieldOutputSb = new JTextField();
+
   JButton jButtonRemoveInputSb = new JButton();
+
   JButton jButtonAddInputSb = new JButton();
+
   JButton jButtonClearInputSb = new JButton();
+
   JButton jButtonRemoveOutputSb = new JButton();
+
   JButton jButtonAddOutputSb = new JButton();
+
   JButton jButtonClearOutputSb = new JButton();
+
   JCheckBox jCheckBoxExecutableRemote = new JCheckBox();
+
   JCheckBox jCheckBoxStdInputRemote = new JCheckBox();
+
   JButton jButtonFileStdInput = new JButton();
+
   JCheckBox jCheckBoxStdOutput = new JCheckBox();
+
   JCheckBox jCheckBoxStdError = new JCheckBox();
+
   JButton jButtonFileInputSandbox = new JButton();
+
   JScrollPane jScrollPaneInputSandbox = new JScrollPane();
+
   JList jListInputSb = new JList();
+
   Vector inputSbVector = new Vector();
+
   Vector outputSbVector = new Vector();
+
   JScrollPane jScrollPaneOutputSandbox = new JScrollPane();
+
   JList jListOutputSb = new JList();
+
   JDLEditorInterface jint;
+
   Component component;
+
   boolean isAppletCalling = false;
+
   JPanel jPanelVO = new JPanel();
+
   JLabel jLabelVO = new JLabel();
+
   JTextField jTextFieldVO = new JTextField();
 
   public JobDef1Panel(Component component) {
@@ -103,16 +163,15 @@ public class JobDef1Panel extends JPanel {
     if (component instanceof JDLEditor) {
       jint = (JDLEditor) component;
       /*
-          } else if (component instanceof JDLEJInternalFrame) {
-            jint = (JDLEJInternalFrame) component;
-          } else if (component instanceof JDLEJApplet) {
-            jint = (JDLEJApplet) component;
-            isAppletCalling = true;
+       } else if (component instanceof JDLEJInternalFrame) {
+       jint = (JDLEJInternalFrame) component;
+       } else if (component instanceof JDLEJApplet) {
+       jint = (JDLEJApplet) component;
+       isAppletCalling = true;
        */
     } else {
-      System.exit( -1);
+      System.exit(-1);
     }
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -125,8 +184,8 @@ public class JobDef1Panel extends JPanel {
 
   /**Component initialization*/
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     URL url = JobDef1Panel.class.getResource(Utils.ICON_FILE_OPEN);
     if (url != null) {
       jButtonFileExecutable.setIcon(new ImageIcon(url));
@@ -229,11 +288,9 @@ public class JobDef1Panel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         if (inputSbVector.size() != 0) {
           int choice = JOptionPane.showOptionDialog(JobDef1Panel.this,
-              "Clear Input Sandbox list?",
-              "Confirm Clear",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null);
+              "Clear Input Sandbox list?", "Confirm Clear",
+              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+              null, null);
           if (choice == 0) {
             jButtonClearInputSbEvent(e);
           }
@@ -243,11 +300,12 @@ public class JobDef1Panel extends JPanel {
       }
     });
     jButtonRemoveOutputSb.setText("Remove");
-    jButtonRemoveOutputSb.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jButtonRemoveOutputSbEvent(e);
-      }
-    });
+    jButtonRemoveOutputSb
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jButtonRemoveOutputSbEvent(e);
+          }
+        });
     jButtonAddOutputSb.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonAddOutputSbEvent(e);
@@ -258,11 +316,9 @@ public class JobDef1Panel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         if (outputSbVector.size() != 0) {
           int choice = JOptionPane.showOptionDialog(JobDef1Panel.this,
-              "Clear Output Sandbox list?",
-              "Confirm Clear",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null);
+              "Clear Output Sandbox list?", "Confirm Clear",
+              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+              null, null);
           if (choice == 0) {
             jButtonClearOutputSbEvent(e);
           }
@@ -273,27 +329,29 @@ public class JobDef1Panel extends JPanel {
     });
     jButtonClearOutputSb.setText("Clear");
     jCheckBoxExecutableRemote.setText("Remote");
-    jCheckBoxExecutableRemote.addFocusListener(new java.awt.event.FocusAdapter() {
-      public void focusLost(FocusEvent e) {
-        jCheckBoxExecutableRemoteFocusLost(e);
-      }
-    });
-    jCheckBoxExecutableRemote.addActionListener(new java.awt.event.
-        ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jCheckBoxExecutableRemoteEvent(e);
-      }
-    });
+    jCheckBoxExecutableRemote
+        .addFocusListener(new java.awt.event.FocusAdapter() {
+          public void focusLost(FocusEvent e) {
+            jCheckBoxExecutableRemoteFocusLost(e);
+          }
+        });
+    jCheckBoxExecutableRemote
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jCheckBoxExecutableRemoteEvent(e);
+          }
+        });
     jCheckBoxStdInputRemote.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
         jCheckBoxStdInputRemoteFocusLost(e);
       }
     });
-    jCheckBoxStdInputRemote.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jCheckBoxStdInputRemoteEvent(e);
-      }
-    });
+    jCheckBoxStdInputRemote
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jCheckBoxStdInputRemoteEvent(e);
+          }
+        });
     jCheckBoxStdInputRemote.setText("Remote");
     jButtonFileStdInput.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -361,192 +419,146 @@ public class JobDef1Panel extends JPanel {
     });
     jLabelVO.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelVO.setText("Virtual Organisation");
-
     GridBagLayout gbl = new GridBagLayout();
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.insets = new Insets(3, 3, 3, 3);
-
     // jPanelVO
     jPanelVO.setLayout(gbl);
     jPanelVO.setBorder(new EtchedBorder());
-
-    jPanelVO.add(jLabelVO, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelVO.add(jTextFieldVO, setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
+    jPanelVO.add(jLabelVO, setGridBagConstraints(gbc, 0, 0, 1, 1, 0.0, 0.0,
+        GridBagConstraints.CENTER, GridBagConstraints.NONE, null, 0, 0));
+    jPanelVO.add(jTextFieldVO, setGridBagConstraints(gbc, 1, 0, 1, 1, 1.0, 0.0,
+        GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, null, 0, 0));
     // jPanelExecutable
     jPanelExecutable.setLayout(gbl);
     setDefaultGridBagConstraints(gbc);
     jPanelExecutable.setBorder(new EtchedBorder());
-
-    jPanelExecutable.add(jLabelExecutable, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelExecutable.add(jTextFieldExecutable, setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
+    jPanelExecutable.add(jLabelExecutable, setGridBagConstraints(gbc, 0, 0, 1,
+        1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, null, 0,
+        0));
+    jPanelExecutable.add(jTextFieldExecutable, setGridBagConstraints(gbc, 1, 0,
+        1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jButtonFileExecutable.setPreferredSize(new Dimension(20, 20));
-    jPanelExecutable.add(jButtonFileExecutable, setGridBagConstraints(
-        gbc, 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelExecutable.add(jButtonFileExecutable, setGridBagConstraints(gbc, 2,
+        0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+        null, 0, 0));
+    jPanelExecutable.add(jCheckBoxExecutableRemote, setGridBagConstraints(gbc,
+        3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelExecutable.add(jCheckBoxExecutableRemote, setGridBagConstraints(
-        gbc, 3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelExecutable.add(jLabelArguments, setGridBagConstraints(
-        gbc, 0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelExecutable.add(jTextFieldArguments, setGridBagConstraints(
-        gbc, 1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelExecutable.add(jLabelArguments, setGridBagConstraints(gbc, 0, 1, 1,
+        1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, null, 0,
+        0));
+    jPanelExecutable.add(jTextFieldArguments, setGridBagConstraints(gbc, 1, 1,
+        1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     // jPanelStandardStreams
     jPanelStandardStreams.setLayout(gbl);
     setDefaultGridBagConstraints(gbc);
     jPanelStandardStreams.setBorder(new TitledBorder(new EtchedBorder(),
         " Standard Streams ", 0, 0, null,
         GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
-    jPanelStandardStreams.add(jLabelStdInput, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelStandardStreams.add(jTextFieldStdInput, setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
+    jPanelStandardStreams.add(jLabelStdInput, setGridBagConstraints(gbc, 0, 0,
+        1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, null,
+        0, 0));
+    jPanelStandardStreams.add(jTextFieldStdInput, setGridBagConstraints(gbc, 1,
+        0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jButtonFileStdInput.setPreferredSize(new Dimension(20, 20));
-    jPanelStandardStreams.add(jButtonFileStdInput, setGridBagConstraints(
-        gbc, 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelStandardStreams.add(jButtonFileStdInput, setGridBagConstraints(gbc,
+        2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, null, 0, 0));
-
     jPanelStandardStreams.add(jCheckBoxStdInputRemote, setGridBagConstraints(
         gbc, 3, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
         GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelStandardStreams.add(jLabelStdOutput, setGridBagConstraints(
-        gbc, 0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelStandardStreams.add(jTextFieldStdOutput, setGridBagConstraints(
-        gbc, 1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelStandardStreams.add(jLabelStdOutput, setGridBagConstraints(gbc, 0, 1,
+        1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, null,
+        0, 0));
+    jPanelStandardStreams.add(jTextFieldStdOutput, setGridBagConstraints(gbc,
+        1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelStandardStreams.add(jCheckBoxStdOutput, setGridBagConstraints(
-        gbc, 2, 1, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelStandardStreams.add(jLabelStdError, setGridBagConstraints(
-        gbc, 0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelStandardStreams.add(jTextFieldStdError, setGridBagConstraints(
-        gbc, 1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelStandardStreams.add(jCheckBoxStdOutput, setGridBagConstraints(gbc, 2,
+        1, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+        null, 0, 0));
+    jPanelStandardStreams.add(jLabelStdError, setGridBagConstraints(gbc, 0, 2,
+        1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, null,
+        0, 0));
+    jPanelStandardStreams.add(jTextFieldStdError, setGridBagConstraints(gbc, 1,
+        2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelStandardStreams.add(jCheckBoxStdError, setGridBagConstraints(
-        gbc, 2, 2, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
+    jPanelStandardStreams.add(jCheckBoxStdError, setGridBagConstraints(gbc, 2,
+        2, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+        null, 0, 0));
     // jPanelJobDInputSandbox
     jPanelJobDInputSandbox.setLayout(gbl);
-    jPanelJobDInputSandbox.setBorder(new TitledBorder(new EtchedBorder(),
-        " Input Sandbox ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+    jPanelJobDInputSandbox
+        .setBorder(new TitledBorder(new EtchedBorder(), " Input Sandbox ", 0,
+            0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     JPanel jPanelInputSb = new JPanel();
     jPanelInputSb.setLayout(gbl);
     setDefaultGridBagConstraints(gbc);
-    jPanelInputSb.add(jTextFieldInputSb, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
+    jPanelInputSb.add(jTextFieldInputSb, setGridBagConstraints(gbc, 0, 0, 1, 1,
+        1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+        null, 0, 0));
     jButtonFileInputSandbox.setPreferredSize(new Dimension(20, 20));
-    jPanelInputSb.add(jButtonFileInputSandbox, setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelJobDInputSandbox.add(jPanelInputSb, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
+    jPanelInputSb.add(jButtonFileInputSandbox, setGridBagConstraints(gbc, 1, 0,
+        1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+        null, 0, 0));
+    jPanelJobDInputSandbox.add(jPanelInputSb, setGridBagConstraints(gbc, 0, 0,
+        1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobDInputSandbox.add(jButtonAddInputSb, setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelJobDInputSandbox.add(jButtonAddInputSb, setGridBagConstraints(gbc, 1,
+        0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jPanelJobDInputSandbox.add(jScrollPaneInputSandbox, setGridBagConstraints(
         gbc, 0, 1, 1, 2, 0.0, 1.0, GridBagConstraints.CENTER,
         GridBagConstraints.BOTH, null, 0, 0));
-
-    jPanelJobDInputSandbox.add(jButtonRemoveInputSb, setGridBagConstraints(
-        gbc, 1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
+    jPanelJobDInputSandbox.add(jButtonRemoveInputSb, setGridBagConstraints(gbc,
+        1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobDInputSandbox.add(jButtonClearInputSb, setGridBagConstraints(
-        gbc, 1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
+    jPanelJobDInputSandbox.add(jButtonClearInputSb, setGridBagConstraints(gbc,
+        1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jScrollPaneInputSandbox.getViewport().add(jListInputSb, null);
-
     // jPanelJobDOutputSandbox
     jPanelJobDOutputSandbox.setLayout(gbl);
-    jPanelJobDOutputSandbox.setBorder(new TitledBorder(new EtchedBorder(),
-        " Output Sandbox ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
-    jPanelJobDOutputSandbox.add(jTextFieldOutputSb, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelJobDOutputSandbox
+        .setBorder(new TitledBorder(new EtchedBorder(), " Output Sandbox ", 0,
+            0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
+    jPanelJobDOutputSandbox.add(jTextFieldOutputSb, setGridBagConstraints(gbc,
+        0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobDOutputSandbox.add(jScrollPaneOutputSandbox, setGridBagConstraints(
-        gbc, 0, 1, 1, 2, 1.0, 1.0, GridBagConstraints.CENTER,
-        GridBagConstraints.BOTH, null, 0, 0));
-
-    jPanelJobDOutputSandbox.add(jButtonAddOutputSb, setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+    jPanelJobDOutputSandbox.add(jScrollPaneOutputSandbox,
+        setGridBagConstraints(gbc, 0, 1, 1, 2, 1.0, 1.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH, null, 0, 0));
+    jPanelJobDOutputSandbox.add(jButtonAddOutputSb, setGridBagConstraints(gbc,
+        1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jPanelJobDOutputSandbox.add(jButtonRemoveOutputSb, setGridBagConstraints(
         gbc, 1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jPanelJobDOutputSandbox.add(jButtonClearOutputSb, setGridBagConstraints(
         gbc, 1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jScrollPaneOutputSandbox.getViewport().add(jListOutputSb, null);
-
     // this
     this.setLayout(gbl);
     setDefaultGridBagConstraints(gbc);
-    this.add(jPanelVO, setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.FIRST_LINE_START,
-        GridBagConstraints.BOTH, new Insets(1, 1, 1, 1), 0, 0));
-
-    this.add(jPanelExecutable, setGridBagConstraints(
-        gbc, 0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
-        GridBagConstraints.BOTH, null, 0, 0));
-
-    this.add(jPanelStandardStreams, setGridBagConstraints(
-        gbc, 0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
-        GridBagConstraints.BOTH, null, 0, 0));
-
-    this.add(jPanelJobDInputSandbox, setGridBagConstraints(
-        gbc, 0, 3, 1, 1, 0.0, 0.5, GridBagConstraints.FIRST_LINE_START,
-        GridBagConstraints.BOTH, null, 0, 0));
-
-    this.add(jPanelJobDOutputSandbox, setGridBagConstraints(
-        gbc, 0, 4, 1, 1, 0.0, 0.5, GridBagConstraints.FIRST_LINE_START,
-        GridBagConstraints.BOTH, null, 0, 0));
-
+    this.add(jPanelVO, setGridBagConstraints(gbc, 0, 0, 1, 1, 1.0, 0.0,
+        GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH,
+        new Insets(1, 1, 1, 1), 0, 0));
+    this.add(jPanelExecutable, setGridBagConstraints(gbc, 0, 1, 1, 1, 0.0, 0.0,
+        GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, null, 0,
+        0));
+    this.add(jPanelStandardStreams, setGridBagConstraints(gbc, 0, 2, 1, 1, 0.0,
+        0.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH,
+        null, 0, 0));
+    this.add(jPanelJobDInputSandbox, setGridBagConstraints(gbc, 0, 3, 1, 1,
+        0.0, 0.5, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH,
+        null, 0, 0));
+    this.add(jPanelJobDOutputSandbox, setGridBagConstraints(gbc, 0, 4, 1, 1,
+        0.0, 0.5, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH,
+        null, 0, 0));
     if (isAppletCalling) {
       setAppletObject(false);
     }
@@ -557,24 +569,21 @@ public class JobDef1Panel extends JPanel {
     //fileChooser.setCurrentDirectory(new File(jint.getUserWorkingDirectory()));
     fileChooser.setDialogTitle(Jdl.INPUTSB + " File Selection");
     fileChooser.setApproveButtonText("Select");
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     int choice = fileChooser.showOpenDialog(JobDef1Panel.this);
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String inputSbText = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          "Unable to find file: " + inputSbText,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, "Unable to find file: "
+          + inputSbText, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
       //jint.setUserWorkingDirectory(fileChooser.getCurrentDirectory().toString());
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String inputSbText = fileChooser.getSelectedFile().toString().trim();
       jTextFieldInputSb.setText(inputSbText);
     }
@@ -588,39 +597,28 @@ public class JobDef1Panel extends JPanel {
       if (jCheckBoxStdOutput.isSelected()) {
         if (!outputSbVector.contains(stdOutputText)) {
           try {
-            jint.jobAdGlobal.addAttribute(Jdl.OUTPUTSB, stdOutputText);
+            JDLEditorInterface.jobAdGlobal.addAttribute(Jdl.OUTPUTSB,
+                stdOutputText);
             outputSbVector.add(0, stdOutputText); // Adding at first position.
-
           } catch (IllegalArgumentException iae) {
-            JOptionPane.showOptionDialog(component,
-                "- " + iae.getMessage() + "\n",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(component, "- " + iae.getMessage()
+                + "\n", Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             jCheckBoxStdOutput.setSelected(false);
             return;
-
           } catch (InvalidAttributeValueException iave) {
-            JOptionPane.showOptionDialog(component,
-                "- " + iave.getMessage() + "\n",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(component, "- " + iave.getMessage()
+                + "\n", Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             jCheckBoxStdOutput.setSelected(false);
             return;
-
           } catch (Exception ex) {
             if (isDebugging) {
               ex.printStackTrace();
             }
-            JOptionPane.showOptionDialog(component,
-                ex.getMessage(),
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(component, ex.getMessage(),
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             jCheckBoxStdOutput.setSelected(false);
           }
         } else {
@@ -637,53 +635,36 @@ public class JobDef1Panel extends JPanel {
   void jButtonAddInputSbEvent(ActionEvent e) {
     String inputSbText = jTextFieldInputSb.getText().trim();
     String executableText = jTextFieldExecutable.getText().trim();
-
     try {
       inputSbText = Utils.solveEnviron(inputSbText);
     } catch (Exception ex) {
-      JOptionPane.showOptionDialog(component,
-          ex.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(component, ex.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       jTextFieldInputSb.selectAll();
       jTextFieldInputSb.grabFocus();
       return;
     }
-
     if (!inputSbText.equals("") && (!inputSbVector.contains(inputSbText))) {
       try {
-        jint.jobAdGlobal.addAttribute(Jdl.INPUTSB, inputSbText);
+        JDLEditorInterface.jobAdGlobal.addAttribute(Jdl.INPUTSB, inputSbText);
         inputSbVector.add(inputSbText);
         jListInputSb.setListData(inputSbVector);
-
       } catch (IllegalArgumentException iae) {
-        JOptionPane.showOptionDialog(component,
-            "- " + iae.getMessage() + "\n",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-
+        JOptionPane.showOptionDialog(component, "- " + iae.getMessage() + "\n",
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       } catch (InvalidAttributeValueException iave) {
-        JOptionPane.showOptionDialog(component,
-            "- InputData: wrong format\n",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-
+        JOptionPane.showOptionDialog(component, "- InputData: wrong format\n",
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       } catch (Exception ex) {
         if (isDebugging) {
           ex.printStackTrace();
         }
-        JOptionPane.showOptionDialog(component,
-            ex.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(component, ex.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     }
     jTextFieldInputSb.selectAll();
@@ -698,43 +679,32 @@ public class JobDef1Panel extends JPanel {
       if (jCheckBoxStdError.isSelected()) {
         if (!outputSbVector.contains(stdErrorText)) {
           try {
-            jint.jobAdGlobal.addAttribute(Jdl.OUTPUTSB, stdErrorText);
+            JDLEditorInterface.jobAdGlobal.addAttribute(Jdl.OUTPUTSB,
+                stdErrorText);
             int index = 0;
             if (jCheckBoxStdOutput.isSelected()) {
               index = 1;
             }
             outputSbVector.add(index, stdErrorText);
-
           } catch (IllegalArgumentException iae) {
-            JOptionPane.showOptionDialog(component,
-                "- " + iae.getMessage() + "\n",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(component, "- " + iae.getMessage()
+                + "\n", Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             jCheckBoxStdError.setSelected(false);
             return;
-
           } catch (InvalidAttributeValueException iave) {
-            JOptionPane.showOptionDialog(component,
-                "- " + iave.getMessage() + "\n",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(component, "- " + iave.getMessage()
+                + "\n", Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             jCheckBoxStdError.setSelected(false);
             return;
-
           } catch (Exception ex) {
             if (isDebugging) {
               ex.printStackTrace();
             }
-            JOptionPane.showOptionDialog(component,
-                ex.getMessage(),
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(component, ex.getMessage(),
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             jCheckBoxStdError.setSelected(false);
           }
         } else {
@@ -752,42 +722,31 @@ public class JobDef1Panel extends JPanel {
     String outputSbText = jTextFieldOutputSb.getText().trim();
     if (!outputSbText.equals("")) {
       try {
-        jint.jobAdGlobal.addAttribute(Jdl.OUTPUTSB, outputSbText);
+        JDLEditorInterface.jobAdGlobal.addAttribute(Jdl.OUTPUTSB, outputSbText);
         if (!outputSbVector.contains(outputSbText)) {
           outputSbVector.add(outputSbText);
           jListOutputSb.setListData(outputSbVector);
         }
-
       } catch (IllegalArgumentException iae) {
-        JOptionPane.showOptionDialog(component,
-            "- " + iae.getMessage() + "\n",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(component, "- " + iae.getMessage() + "\n",
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         jTextFieldOutputSb.selectAll();
         return;
-
       } catch (InvalidAttributeValueException iave) {
         JOptionPane.showOptionDialog(component,
-            "- " + iave.getMessage() + "\n",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            "- " + iave.getMessage() + "\n", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
         jTextFieldOutputSb.selectAll();
         return;
-
       } catch (Exception ex) {
         if (isDebugging) {
           ex.printStackTrace();
         }
-        JOptionPane.showOptionDialog(component,
-            ex.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(component, ex.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     }
     jTextFieldOutputSb.selectAll();
@@ -802,14 +761,13 @@ public class JobDef1Panel extends JPanel {
         inputSbVector.removeElementAt(selectedItems[i]);
       }
       jListInputSb.setListData(inputSbVector);
-
       /* Old selection method.
-             if(jListInputSb.getModel().getSize() != 0) {
-        int selectableItem = selectedItems[selectedItemsCount - 1] + 1 - selectedItemsCount;
-        if(selectableItem > jListInputSb.getModel().getSize() - 1)
-          selectableItem = 0;
-        jListInputSb.setSelectedIndex(selectableItem);
-             }
+       if(jListInputSb.getModel().getSize() != 0) {
+       int selectableItem = selectedItems[selectedItemsCount - 1] + 1 - selectedItemsCount;
+       if(selectableItem > jListInputSb.getModel().getSize() - 1)
+       selectableItem = 0;
+       jListInputSb.setSelectedIndex(selectableItem);
+       }
        */
       if (jListInputSb.getModel().getSize() != 0) {
         int selectableItem = selectedItems[selectedItemsCount - 1] + 1
@@ -819,14 +777,10 @@ public class JobDef1Panel extends JPanel {
         }
         jListInputSb.setSelectedIndex(selectableItem);
       }
-
     } else {
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, Utils.SELECT_AN_ITEM,
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
     }
     jTextFieldInputSb.selectAll();
     jTextFieldInputSb.grabFocus();
@@ -847,7 +801,6 @@ public class JobDef1Panel extends JPanel {
         outputSbVector.removeElementAt(selectedItems[i]);
       }
       jListOutputSb.setListData(outputSbVector);
-
       if (jListOutputSb.getModel().getSize() != 0) {
         int selectableItem = selectedItems[selectedItemsCount - 1] + 1
             - selectedItemsCount; // Next.
@@ -856,41 +809,37 @@ public class JobDef1Panel extends JPanel {
         }
         jListOutputSb.setSelectedIndex(selectableItem);
       }
-
     } else {
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, Utils.SELECT_AN_ITEM,
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
     }
     jTextFieldOutputSb.selectAll();
     jTextFieldOutputSb.grabFocus();
   }
 
   private void jTextFieldStdOutputKeyTyped(KeyEvent e) {
-  /*
-       if(jCheckBoxStdOutput.isSelected()) {
-    String stdOutputText = jTextFieldStdOutput.getText().trim();
-    if(!stdOutputText.equals(""))
-      outputSbVector.removeElement(stdOutputText);
-    jListOutputSb.setListData(outputSbVector);
-    jCheckBoxStdOutput.setSelected(false);
-       }
-   */
+    /*
+     if(jCheckBoxStdOutput.isSelected()) {
+     String stdOutputText = jTextFieldStdOutput.getText().trim();
+     if(!stdOutputText.equals(""))
+     outputSbVector.removeElement(stdOutputText);
+     jListOutputSb.setListData(outputSbVector);
+     jCheckBoxStdOutput.setSelected(false);
+     }
+     */
   }
 
   private void jTextFieldStdErrorKeyTyped(KeyEvent e) {
-  /*
-       if(jCheckBoxStdError.isSelected()) {
-    String stdErrorText = jTextFieldStdError.getText().trim();
-    if(!stdErrorText.equals(""))
-      outputSbVector.removeElement(stdErrorText);
-    jListOutputSb.setListData(outputSbVector);
-    jCheckBoxStdError.setSelected(false);
-       }
-   */
+    /*
+     if(jCheckBoxStdError.isSelected()) {
+     String stdErrorText = jTextFieldStdError.getText().trim();
+     if(!stdErrorText.equals(""))
+     outputSbVector.removeElement(stdErrorText);
+     jListOutputSb.setListData(outputSbVector);
+     jCheckBoxStdError.setSelected(false);
+     }
+     */
   }
 
   void jButtonClearInputSbEvent(ActionEvent e) {
@@ -906,7 +855,6 @@ public class JobDef1Panel extends JPanel {
   }
 
   void jButtonJobDef1ResetEvent(ActionEvent e) {
-
     //if(!(jint instanceof JDLEJApplet)) {
     if (jTextFieldVO.isEditable()) {
       jTextFieldVO.setText("");
@@ -914,15 +862,12 @@ public class JobDef1Panel extends JPanel {
     jTextFieldExecutable.setText("");
     jButtonFileExecutable.setEnabled(true);
     jCheckBoxExecutableRemote.setSelected(false);
-
     jTextFieldStdInput.setText("");
     jButtonFileStdInput.setEnabled(true);
     jCheckBoxStdInputRemote.setSelected(false);
-
     inputSbVector.removeAllElements();
     jListInputSb.setListData(inputSbVector);
     //}
-
     jTextFieldExecutable.setVisible(true);
     jTextFieldArguments.setText("");
     jTextFieldStdInput.setVisible(true);
@@ -934,25 +879,21 @@ public class JobDef1Panel extends JPanel {
     jTextFieldOutputSb.setText("");
     outputSbVector.removeAllElements();
     jListOutputSb.setListData(outputSbVector);
-
     try {
-      jint.jobAdGlobal.delAttribute(Jdl.INPUTSB);
+      JDLEditorInterface.jobAdGlobal.delAttribute(Jdl.INPUTSB);
     } catch (Exception ex) {
-    // Do nothing
+      // Do nothing
     }
     try {
-      jint.jobAdGlobal.delAttribute(Jdl.OUTPUTSB);
+      JDLEditorInterface.jobAdGlobal.delAttribute(Jdl.OUTPUTSB);
     } catch (Exception ex) {
-    // Do nothing
+      // Do nothing
     }
-
     jint.setJTextAreaJDL("");
-
     jTextFieldExecutable.grabFocus();
     if (jTextFieldVO.isEditable()) {
       jTextFieldVO.grabFocus();
     }
-
   }
 
   void jCheckBoxExecutableRemoteEvent(ActionEvent e) {
@@ -984,12 +925,13 @@ public class JobDef1Panel extends JPanel {
         ///Win32FileSystem ufs = new Win32FileSystem();
         ///if(!file.isAbsolute()) {
         if (!file.isAbsolute() && !GUIFileSystem.isAbsolute(stdInputText)) {
-          JOptionPane.showOptionDialog(component,
-              Jdl.STDINPUT + ": you have selected \"Remote\", file name must be specified as an absolute path",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane
+              .showOptionDialog(
+                  component,
+                  Jdl.STDINPUT
+                      + ": you have selected \"Remote\", file name must be specified as an absolute path",
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
           jTextFieldStdInput.selectAll();
           jCheckBoxStdInputRemote.setSelected(false);
         }
@@ -1010,25 +952,22 @@ public class JobDef1Panel extends JPanel {
     fileChooser.setDialogTitle(Jdl.EXECUTABLE + " File Selection");
     fileChooser.setApproveButtonText("Select");
     //fileChooser.setCurrentDirectory(new File(jint.getUserWorkingDirectory()));
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     int choice = fileChooser.showOpenDialog(JobDef1Panel.this);
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
       //jint.setUserWorkingDirectory(fileChooser.getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       jTextFieldExecutable.setText(selectedFile);
     }
     jTextFieldExecutable.grabFocus();
@@ -1040,25 +979,21 @@ public class JobDef1Panel extends JPanel {
     fileChooser.setDialogTitle(Jdl.STDINPUT + " File Selection");
     fileChooser.setApproveButtonText("Select");
     //fileChooser.setCurrentDirectory(new File(jint.getUserWorkingDirectory()));
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     int choice = fileChooser.showOpenDialog(JobDef1Panel.this);
-
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
       //jint.setUserWorkingDirectory(fileChooser.getCurrentDirectory().toString());
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       jTextFieldStdInput.setText(selectedFile);
     }
@@ -1070,24 +1005,21 @@ public class JobDef1Panel extends JPanel {
     fileChooser.setDialogTitle(Jdl.OUTPUTSB + " File Selection");
     fileChooser.setApproveButtonText("Select");
     //fileChooser.setCurrentDirectory(new File(jint.getUserWorkingDirectory()));
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     int choice = fileChooser.showOpenDialog(JobDef1Panel.this);
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String outputSbText = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          "Unable to find file: " + outputSbText,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, "Unable to find file: "
+          + outputSbText, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
       //jint.setUserWorkingDirectory(fileChooser.getCurrentDirectory().toString());
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String outputSbText = fileChooser.getSelectedFile().toString().trim();
       File fileName = new File(outputSbText);
       outputSbText = fileName.getName().toString();
@@ -1111,13 +1043,10 @@ public class JobDef1Panel extends JPanel {
     String executableText = jTextFieldExecutable.getText().trim();
     String stdOutputText = jTextFieldStdOutput.getText().trim();
     String stdErrorText = jTextFieldStdError.getText().trim();
-
     errorMsg += checkInsertedValues();
-
     if (!voText.equals("")) {
       result += Jdl.VIRTUAL_ORGANISATION + " = \"" + voText + "\";\n";
     }
-
     if (jCheckBoxExecutableRemote.isSelected()) {
       if (!executableText.equals("")) {
         result += Jdl.EXECUTABLE + " = \"" + executableText + "\";\n";
@@ -1133,7 +1062,8 @@ public class JobDef1Panel extends JPanel {
           fileNameVector.add(fileNameText);
         }
         File fileName = null;
-        if (executableText.equals((new File(executableText)).getName().toString())) {
+        if (executableText.equals((new File(executableText)).getName()
+            .toString())) {
           fileName = new File(workingDir + File.separator + executableText);
         } else {
           fileName = new File(executableText);
@@ -1142,11 +1072,9 @@ public class JobDef1Panel extends JPanel {
             + "\";\n";
       }
     }
-
     String argumentsText = jTextFieldArguments.getText().trim();
     if (!argumentsText.equals("")) {
       result += Jdl.ARGUMENTS + " = \"" + argumentsText + "\";\n";
-
     }
     if (jPanelStandardStreams.isEnabled()) {
       if (jCheckBoxStdInputRemote.isSelected()) {
@@ -1164,7 +1092,8 @@ public class JobDef1Panel extends JPanel {
             fileNameVector.add(fileNameText);
           }
           File fileName = null;
-          if (stdInputText.equals((new File(stdInputText)).getName().toString())) {
+          if (stdInputText
+              .equals((new File(stdInputText)).getName().toString())) {
             fileName = new File(workingDir + File.separator + stdInputText);
           } else {
             fileName = new File(stdInputText);
@@ -1173,18 +1102,15 @@ public class JobDef1Panel extends JPanel {
               + "\";\n";
         }
       }
-
       if (!stdOutputText.equals("")) {
         File fileName = new File(stdOutputText);
         result += Jdl.STDOUTPUT + " = \"" + fileName.toString() + "\";\n";
       }
-
       if (!stdErrorText.equals("")) {
         File fileName = new File(stdErrorText);
         result += Jdl.STDERROR + " = \"" + fileName.toString() + "\";\n";
       }
     }
-
     Vector tempInputSbVector = (Vector) inputSbVector.clone();
     boolean isExecutablePresent = false;
     if (!executableText.equals("") && !jCheckBoxExecutableRemote.isSelected()) {
@@ -1199,7 +1125,6 @@ public class JobDef1Panel extends JPanel {
         if (!stdInputText.equals(executableText)
             && tempInputSbVector.contains(stdInputText)) {
           tempInputSbVector.remove(stdInputText);
-
         }
         if (isExecutablePresent) {
           tempInputSbVector.add(1, stdInputText); // Second position.
@@ -1222,7 +1147,6 @@ public class JobDef1Panel extends JPanel {
             + "\"};\n";
       }
     }
-
     int jListOutputSbCount = outputSbVector.size();
     boolean isWildcardPresent = false;
     if (jListOutputSbCount != 0) {
@@ -1243,71 +1167,69 @@ public class JobDef1Panel extends JPanel {
             isWildcardPresent = true;
           }
         }
-        String lastElement = outputSbVector.get(jListOutputSbCount
-            - 1).toString();
+        String lastElement = outputSbVector.get(jListOutputSbCount - 1)
+            .toString();
         result += "\"" + lastElement + "\"};\n";
-        if ((lastElement.indexOf("?") != -1) || (lastElement.indexOf("*") != -1)) {
+        if ((lastElement.indexOf("?") != -1)
+            || (lastElement.indexOf("*") != -1)) {
           isWildcardPresent = true;
         }
       }
       if (isWildcardPresent) {
-        GUIWarningMsg = "\n- " + Jdl.OUTPUTSB
-            +
-            ": one or more files contain wildcards, file overwriting is possible";
+        GUIWarningMsg = "\n- "
+            + Jdl.OUTPUTSB
+            + ": one or more files contain wildcards, file overwriting is possible";
       }
     }
-
     //boolean localAccess = (jint instanceof JDLEJApplet) ? false : true;
     boolean localAccess = true;
     warningMsg = ExprChecker.checkResult(result,
-        Utils.jobDefinition1AttributeArray, localAccess) + GUIWarningMsg;
+        Utils.jobDefinition1AttributeArray, localAccess)
+        + GUIWarningMsg;
     errorMsg = errorMsg.trim();
     warningMsg = warningMsg.trim();
     if (!errorMsg.equals("") && showErrorMsg) {
       GraphicUtils.showOptionDialogMsg(JobDef1Panel.this, errorMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE, null,
+          null);
       return "";
     } else {
       if (!warningMsg.trim().equals("") && showWarningMsg) {
         GraphicUtils.showOptionDialogMsg(JobDef1Panel.this, warningMsg,
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+            Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            null, null);
       }
       jint.setJTextAreaJDL(result);
     }
-
     return result;
   }
 
   String checkInsertedValues() {
     String errorMsg = "";
-
     String stdInputText = jTextFieldStdInput.getText().trim();
     String executableText = jTextFieldExecutable.getText().trim();
     String stdOutputText = jTextFieldStdOutput.getText().trim();
     String stdErrorText = jTextFieldStdError.getText().trim();
-
     String executableFileName = GUIFileSystem.getName(executableText);
     if (!executableText.equals("")) {
       if (jCheckBoxExecutableRemote.isSelected()) {
-        if (!executableText.equals(executableFileName) &&
-            (new File(executableText)).isAbsolute()
+        if (!executableText.equals(executableFileName)
+            && (new File(executableText)).isAbsolute()
             && !GUIFileSystem.isAbsolute(executableText)) {
-          errorMsg +=
-              "- " + Jdl.EXECUTABLE + ": you have selected \"Remote\", "
+          errorMsg += "- " + Jdl.EXECUTABLE
+              + ": you have selected \"Remote\", "
               + "file name must be specified as a single name or as an "
               + "absolute path\n";
         }
         errorMsg += GUIFileSystem.checkFileRemote(Jdl.EXECUTABLE,
             executableText, this);
       } else {
-        errorMsg += GUIFileSystem.checkFileLocal(Jdl.EXECUTABLE, executableText, this);
+        errorMsg += GUIFileSystem.checkFileLocal(Jdl.EXECUTABLE,
+            executableText, this);
       }
     }
-
     if (!stdInputText.equals("")) {
       if (jCheckBoxStdInputRemote.isSelected()) {
         if (!(new File(stdInputText)).isAbsolute()
@@ -1315,17 +1237,20 @@ public class JobDef1Panel extends JPanel {
           errorMsg += "- " + Jdl.STDINPUT + ": you have selected \"Remote\", "
               + "file name must be specified as an absolute path\n";
         }
-        errorMsg += GUIFileSystem.checkFileRemote(Jdl.STDINPUT, stdInputText, this);
+        errorMsg += GUIFileSystem.checkFileRemote(Jdl.STDINPUT, stdInputText,
+            this);
       } else {
-        errorMsg += GUIFileSystem.checkFileLocal(Jdl.STDINPUT, stdInputText, this);
+        errorMsg += GUIFileSystem.checkFileLocal(Jdl.STDINPUT, stdInputText,
+            this);
       }
     }
-
     if (!stdOutputText.equals("")) {
-      errorMsg += GUIFileSystem.checkFileRemote(Jdl.STDOUTPUT, stdOutputText, this);
+      errorMsg += GUIFileSystem.checkFileRemote(Jdl.STDOUTPUT, stdOutputText,
+          this);
     }
     if (!stdErrorText.equals("")) {
-      errorMsg += GUIFileSystem.checkFileRemote(Jdl.STDOUTPUT, stdErrorText, this);
+      errorMsg += GUIFileSystem.checkFileRemote(Jdl.STDOUTPUT, stdErrorText,
+          this);
     }
     errorMsg += getMatchErrorMsg();
     return errorMsg;
@@ -1337,73 +1262,73 @@ public class JobDef1Panel extends JPanel {
     }
     jTextFieldExecutable.select(0, 0); // Deselect.
     /*
-         String executableText = jTextFieldExecutable.getText().trim();
-         String stdInputText = jTextFieldStdInput.getText().trim();
-         //String executableFileName = (new File(executableText)).getName().toString();
-         String executableFileName = GUIFileSystem.getName(executableText);
-         String stdInputFileName = GUIFileSystem.getName(stdInputText);
-         int matchErrorType = getMatchErrorType();
-         Component hasFocusComponent = e.getOppositeComponent(); // Get component that "has the focus".
-         System.out.println("System: " + System.getProperty("os.name"));
-         if(hasFocusComponent == null) { // component == null if you lost focus moving to other application.
-      jTextFieldExecutable.selectAll();
-      jTextFieldExecutable.grabFocus();
-      return;
-         }
-         if( ((hasFocusComponent == jTextFieldStdInput) || (hasFocusComponent == jCheckBoxExecutableRemote) ||
-              (hasFocusComponent == jButtonFileExecutable) || (hasFocusComponent == jCheckBoxStdInputRemote) ||
-              (hasFocusComponent == jButtonFileStdInput))
-              && (matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) ) {
-      jTextFieldExecutable.select(0, 0);
-      return;
-         }
-         if( (hasFocusComponent instanceof javax.swing.JRootPane) ||
-              (hasFocusComponent.getParent().getParent() instanceof javax.swing.JOptionPane) ||
-              (hasFocusComponent.toString().substring(0, 41).equals(
-              "javax.swing.plaf.metal.MetalFileChooserUI")) ) {
-      jTextFieldExecutable.select(0, 0);
-      return;
-         }
-         if(matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) {
-      JOptionPane.showOptionDialog(component,
-              MATCH_ERROR_EXECUTABLE_STDINPUT_MSG,
-              "Error Message",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
-      jTextFieldExecutable.selectAll();
-      jTextFieldExecutable.grabFocus();
-      return;
-         }
-         if(!executableText.equals("")) {
-      if(jCheckBoxExecutableRemote.isSelected()) {
-        ///if(!executableText.equals(executableFileName) && !(new File(executableText)).isAbsolute()) {
-        if(!executableText.equals(executableFileName) &&
-         !(new File(executableText)).isAbsolute() && !GUIFileSystem.isAbsolute(executableText)) {
-          JOptionPane.showOptionDialog(JobDef1Panel.this,
-                "Executable: you have selected \"Remote\", file name must be specified as a single name or as an absolute path",
-                "Error Message",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
-          //jCheckBoxExecutableRemote.setSelected(false);
-          jTextFieldExecutable.selectAll();
-          jTextFieldExecutable.grabFocus();
-          return;
-        }
-        if(!Utils.isCheckFileRemoteOk("Executable", executableText, this)) {
-          jTextFieldExecutable.selectAll();
-          jTextFieldExecutable.grabFocus();
-          return;
-        }
-      } else {
-        if(!Utils.isCheckFileLocalOk("Executable", executableText, this)) {
-          jTextFieldExecutable.selectAll();
-          jTextFieldExecutable.grabFocus();
-          return;
-        }
-      }
-         }
+     String executableText = jTextFieldExecutable.getText().trim();
+     String stdInputText = jTextFieldStdInput.getText().trim();
+     //String executableFileName = (new File(executableText)).getName().toString();
+     String executableFileName = GUIFileSystem.getName(executableText);
+     String stdInputFileName = GUIFileSystem.getName(stdInputText);
+     int matchErrorType = getMatchErrorType();
+     Component hasFocusComponent = e.getOppositeComponent(); // Get component that "has the focus".
+     System.out.println("System: " + System.getProperty("os.name"));
+     if(hasFocusComponent == null) { // component == null if you lost focus moving to other application.
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     return;
+     }
+     if( ((hasFocusComponent == jTextFieldStdInput) || (hasFocusComponent == jCheckBoxExecutableRemote) ||
+     (hasFocusComponent == jButtonFileExecutable) || (hasFocusComponent == jCheckBoxStdInputRemote) ||
+     (hasFocusComponent == jButtonFileStdInput))
+     && (matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) ) {
+     jTextFieldExecutable.select(0, 0);
+     return;
+     }
+     if( (hasFocusComponent instanceof javax.swing.JRootPane) ||
+     (hasFocusComponent.getParent().getParent() instanceof javax.swing.JOptionPane) ||
+     (hasFocusComponent.toString().substring(0, 41).equals(
+     "javax.swing.plaf.metal.MetalFileChooserUI")) ) {
+     jTextFieldExecutable.select(0, 0);
+     return;
+     }
+     if(matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) {
+     JOptionPane.showOptionDialog(component,
+     MATCH_ERROR_EXECUTABLE_STDINPUT_MSG,
+     "Error Message",
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     return;
+     }
+     if(!executableText.equals("")) {
+     if(jCheckBoxExecutableRemote.isSelected()) {
+     ///if(!executableText.equals(executableFileName) && !(new File(executableText)).isAbsolute()) {
+     if(!executableText.equals(executableFileName) &&
+     !(new File(executableText)).isAbsolute() && !GUIFileSystem.isAbsolute(executableText)) {
+     JOptionPane.showOptionDialog(JobDef1Panel.this,
+     "Executable: you have selected \"Remote\", file name must be specified as a single name or as an absolute path",
+     "Error Message",
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     //jCheckBoxExecutableRemote.setSelected(false);
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     return;
+     }
+     if(!Utils.isCheckFileRemoteOk("Executable", executableText, this)) {
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     return;
+     }
+     } else {
+     if(!Utils.isCheckFileLocalOk("Executable", executableText, this)) {
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     return;
+     }
+     }
+     }
      */
   }
 
@@ -1413,72 +1338,72 @@ public class JobDef1Panel extends JPanel {
     }
     jTextFieldStdInput.select(0, 0); // Deselect.
     /*
-         String executableText = jTextFieldExecutable.getText().trim();
-         String stdInputText = jTextFieldStdInput.getText().trim();
-         //String executableFileName = (new File(executableText)).getName().toString();
-         String executableFileName = GUIFileSystem.getName(executableText);
-         //String stdInputFileName = (new File(stdInputText)).getName().toString();
-         String stdInputFileName = GUIFileSystem.getName(stdInputText);
-         int matchErrorType = getMatchErrorType();
-         Component hasFocusComponent = e.getOppositeComponent(); // Get component that "has the focus".
-         if(hasFocusComponent == null) { // component == null if you lost focus moving to other application.
-      jTextFieldStdInput.selectAll();
-      jTextFieldStdInput.grabFocus();
-      return;
-         }
-         if( ((hasFocusComponent == jTextFieldExecutable) || (hasFocusComponent == jCheckBoxExecutableRemote) ||
-              (hasFocusComponent == jButtonFileExecutable) || (hasFocusComponent == jCheckBoxStdInputRemote) ||
-              (hasFocusComponent == jButtonFileStdInput))
-              && (matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT)) {
-      jTextFieldStdInput.select(0, 0);
-      return;
-         }
-         if( (hasFocusComponent instanceof javax.swing.JRootPane) ||
-              (hasFocusComponent.getParent().getParent() instanceof javax.swing.JOptionPane) ||
-              (hasFocusComponent.toString().substring(0, 41).equals(
-              "javax.swing.plaf.metal.MetalFileChooserUI")) ) {
-      jTextFieldExecutable.select(0, 0);
-      return;
-         }
-         if(matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) {
-      errorMsg = "Executable, StdInput: inserted files must be different";
-      JOptionPane.showOptionDialog(component,
-              "Executable, StdInput: inserted files must be different",
-              "Error Message",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
-      jTextFieldStdInput.selectAll();
-      jTextFieldStdInput.grabFocus();
-      return;
-         }
-         if(!stdInputText.equals("")) {
-      if(jCheckBoxStdInputRemote.isSelected()) {
-        ///if(!(new File(stdInputText)).isAbsolute()) {
-         if(!(new File(stdInputText)).isAbsolute() && !GUIFileSystem.isAbsolute(stdInputText)) {
-          JOptionPane.showOptionDialog(JobDef1Panel.this,
-                "StdInput: you have selected \"Remote\", file name must be specified as an absolute path",
-                "Error Message",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
-          jTextFieldStdInput.selectAll();
-          jTextFieldStdInput.grabFocus();
-          return;
-        }
-        if(!Utils.isCheckFileRemoteOk("StdInput", stdInputText, this)) {
-          jTextFieldStdInput.selectAll();
-          jTextFieldStdInput.grabFocus();
-          return;
-        }
-      } else {
-        if(!Utils.isCheckFileLocalOk("StdInput", stdInputText, this)) {
-          jTextFieldStdInput.selectAll();
-          jTextFieldStdInput.grabFocus();
-          return;
-        }
-      }
-         }
+     String executableText = jTextFieldExecutable.getText().trim();
+     String stdInputText = jTextFieldStdInput.getText().trim();
+     //String executableFileName = (new File(executableText)).getName().toString();
+     String executableFileName = GUIFileSystem.getName(executableText);
+     //String stdInputFileName = (new File(stdInputText)).getName().toString();
+     String stdInputFileName = GUIFileSystem.getName(stdInputText);
+     int matchErrorType = getMatchErrorType();
+     Component hasFocusComponent = e.getOppositeComponent(); // Get component that "has the focus".
+     if(hasFocusComponent == null) { // component == null if you lost focus moving to other application.
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     return;
+     }
+     if( ((hasFocusComponent == jTextFieldExecutable) || (hasFocusComponent == jCheckBoxExecutableRemote) ||
+     (hasFocusComponent == jButtonFileExecutable) || (hasFocusComponent == jCheckBoxStdInputRemote) ||
+     (hasFocusComponent == jButtonFileStdInput))
+     && (matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT)) {
+     jTextFieldStdInput.select(0, 0);
+     return;
+     }
+     if( (hasFocusComponent instanceof javax.swing.JRootPane) ||
+     (hasFocusComponent.getParent().getParent() instanceof javax.swing.JOptionPane) ||
+     (hasFocusComponent.toString().substring(0, 41).equals(
+     "javax.swing.plaf.metal.MetalFileChooserUI")) ) {
+     jTextFieldExecutable.select(0, 0);
+     return;
+     }
+     if(matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) {
+     errorMsg = "Executable, StdInput: inserted files must be different";
+     JOptionPane.showOptionDialog(component,
+     "Executable, StdInput: inserted files must be different",
+     "Error Message",
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     return;
+     }
+     if(!stdInputText.equals("")) {
+     if(jCheckBoxStdInputRemote.isSelected()) {
+     ///if(!(new File(stdInputText)).isAbsolute()) {
+     if(!(new File(stdInputText)).isAbsolute() && !GUIFileSystem.isAbsolute(stdInputText)) {
+     JOptionPane.showOptionDialog(JobDef1Panel.this,
+     "StdInput: you have selected \"Remote\", file name must be specified as an absolute path",
+     "Error Message",
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     return;
+     }
+     if(!Utils.isCheckFileRemoteOk("StdInput", stdInputText, this)) {
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     return;
+     }
+     } else {
+     if(!Utils.isCheckFileLocalOk("StdInput", stdInputText, this)) {
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     return;
+     }
+     }
+     }
      */
   }
 
@@ -1488,58 +1413,57 @@ public class JobDef1Panel extends JPanel {
     }
     jTextFieldStdOutput.select(0, 0);
     /*
-         String stdOutputText = jTextFieldStdOutput.getText().trim();
-         String stdErrorText = jTextFieldStdError.getText().trim();
-         //String stdOutputFileName = ( (new File(stdOutputText)).getName().toString() );
-         String stdOutputFileName = GUIFileSystem.getName(stdOutputText);
-         String stdErrorFileName = GUIFileSystem.getName(stdErrorText);
-         int matchErrorType = getMatchErrorType();
-         Component hasFocusComponent = e.getOppositeComponent(); // Get component that "has the focus".
-         if(hasFocusComponent == null) { // component == null if you lost focus moving to other application.
-      jTextFieldStdOutput.selectAll();
-      jTextFieldStdOutput.grabFocus();
-      return;
-         }
-         if( ((hasFocusComponent == jTextFieldStdError) || (hasFocusComponent == jCheckBoxStdError)
-              || (hasFocusComponent == jCheckBoxStdOutput))
-              && (matchErrorType == MATCH_ERROR_STDOUTPUT_STDERROR) ) {
-      jTextFieldStdOutput.select(0, 0);
-      return;
-         }
-         if( (hasFocusComponent instanceof javax.swing.JRootPane) ||
-              (hasFocusComponent.getParent().getParent() instanceof javax.swing.JOptionPane) ||
-              (hasFocusComponent.toString().substring(0, 41).equals(
-              "javax.swing.plaf.metal.MetalFileChooserUI")) ) {
-      jTextFieldExecutable.select(0, 0);
-      return;
-         }
-         if(matchErrorType == MATCH_ERROR_STDOUTPUT_STDERROR) {
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-         "StdOutput, StdError: inserted files can be equal but not in different paths",
-              "Error Message",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
-      jTextFieldStdOutput.selectAll();
-      jTextFieldStdOutput.grabFocus();
-      return;
-         }
-         if(!stdOutputText.equals("")) {
-      if(!Utils.isCheckFileLocalOk("StdOutput", stdOutputText, this)) {
-        jTextFieldStdOutput.selectAll();
-        jTextFieldStdOutput.grabFocus();
-        return;
-      }
-         }
+     String stdOutputText = jTextFieldStdOutput.getText().trim();
+     String stdErrorText = jTextFieldStdError.getText().trim();
+     //String stdOutputFileName = ( (new File(stdOutputText)).getName().toString() );
+     String stdOutputFileName = GUIFileSystem.getName(stdOutputText);
+     String stdErrorFileName = GUIFileSystem.getName(stdErrorText);
+     int matchErrorType = getMatchErrorType();
+     Component hasFocusComponent = e.getOppositeComponent(); // Get component that "has the focus".
+     if(hasFocusComponent == null) { // component == null if you lost focus moving to other application.
+     jTextFieldStdOutput.selectAll();
+     jTextFieldStdOutput.grabFocus();
+     return;
+     }
+     if( ((hasFocusComponent == jTextFieldStdError) || (hasFocusComponent == jCheckBoxStdError)
+     || (hasFocusComponent == jCheckBoxStdOutput))
+     && (matchErrorType == MATCH_ERROR_STDOUTPUT_STDERROR) ) {
+     jTextFieldStdOutput.select(0, 0);
+     return;
+     }
+     if( (hasFocusComponent instanceof javax.swing.JRootPane) ||
+     (hasFocusComponent.getParent().getParent() instanceof javax.swing.JOptionPane) ||
+     (hasFocusComponent.toString().substring(0, 41).equals(
+     "javax.swing.plaf.metal.MetalFileChooserUI")) ) {
+     jTextFieldExecutable.select(0, 0);
+     return;
+     }
+     if(matchErrorType == MATCH_ERROR_STDOUTPUT_STDERROR) {
+     JOptionPane.showOptionDialog(JobDef1Panel.this,
+     "StdOutput, StdError: inserted files can be equal but not in different paths",
+     "Error Message",
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     jTextFieldStdOutput.selectAll();
+     jTextFieldStdOutput.grabFocus();
+     return;
+     }
+     if(!stdOutputText.equals("")) {
+     if(!Utils.isCheckFileLocalOk("StdOutput", stdOutputText, this)) {
+     jTextFieldStdOutput.selectAll();
+     jTextFieldStdOutput.grabFocus();
+     return;
+     }
+     }
      */
   }
 
   /*
-    String getJobTypeValue() {
-      return jComboBoxJobType.getSelectedItem().toString();
-    }
+   String getJobTypeValue() {
+   return jComboBoxJobType.getSelectedItem().toString();
+   }
    */
-
   void jTextFieldStdErrorFocusLost(FocusEvent e) {
     GraphicUtils.jTextFieldDeselect(jTextFieldStdError);
   }
@@ -1566,10 +1490,8 @@ public class JobDef1Panel extends JPanel {
 
   String getMatchErrorMsg() {
     String matchErrorMsg = "";
-
     String executableText = jTextFieldExecutable.getText().trim();
     String stdInputText = jTextFieldStdInput.getText().trim();
-
     if (!stdInputText.equals("") && !executableText.equals("")) {
       if (!jCheckBoxStdInputRemote.isSelected()
           && !jCheckBoxExecutableRemote.isSelected()) {
@@ -1577,7 +1499,6 @@ public class JobDef1Panel extends JPanel {
         String executableFileName = GUIFileSystem.getName(executableText);
         //String stdInputFileName = ( (new File(stdInputText)).getName().toString() );
         String stdInputFileName = GUIFileSystem.getName(stdInputText);
-
         if (stdInputFileName.equals(executableFileName)) {
           matchErrorMsg += MATCH_ERROR_EXECUTABLE_STDINPUT_MSG;
         }
@@ -1588,15 +1509,12 @@ public class JobDef1Panel extends JPanel {
         }
       }
     }
-
     String stdOutputText = jTextFieldStdOutput.getText().trim();
     String stdErrorText = jTextFieldStdError.getText().trim();
     //String stdOutputFileName = ( (new File(stdOutputText)).getName().toString() );
     String stdOutputFileName = GUIFileSystem.getName(stdOutputText);
-
     //String stdErrorFileName = ( (new File(stdErrorText)).getName().toString() );
     String stdErrorFileName = GUIFileSystem.getName(stdErrorText);
-
     if (jCheckBoxStdOutput.isSelected() && jCheckBoxStdError.isSelected()) {
       if (!stdErrorText.equals("") && !stdOutputText.equals("")
           && !stdErrorText.equals(stdOutputText)) {
@@ -1606,14 +1524,12 @@ public class JobDef1Panel extends JPanel {
         }
       }
     }
-
     return matchErrorMsg;
   }
 
   int getMatchErrorType() {
     String executableText = jTextFieldExecutable.getText().trim();
     String stdInputText = jTextFieldStdInput.getText().trim();
-
     if (!stdInputText.equals("") && !executableText.equals("")) {
       if (!jCheckBoxStdInputRemote.isSelected()
           && !jCheckBoxExecutableRemote.isSelected()) {
@@ -1631,14 +1547,12 @@ public class JobDef1Panel extends JPanel {
         }
       }
     }
-
     String stdOutputText = jTextFieldStdOutput.getText().trim();
     String stdErrorText = jTextFieldStdError.getText().trim();
     //String stdOutputFileName = ( (new File(stdOutputText)).getName().toString() );
     String stdOutputFileName = GUIFileSystem.getName(stdOutputText);
     //String stdErrorFileName = ( (new File(stdErrorText)).getName().toString() );
     String stdErrorFileName = GUIFileSystem.getName(stdErrorText);
-
     if (jCheckBoxStdOutput.isSelected() && jCheckBoxStdError.isSelected()) {
       if (!stdErrorText.equals("") && !stdOutputText.equals("")
           && !stdErrorText.equals(stdOutputText)) {
@@ -1647,106 +1561,104 @@ public class JobDef1Panel extends JPanel {
         }
       }
     }
-
     /*
-         Vector checkVector = new Vector();
-         File file = null;
-         String fileName = "";
-         for(int i = 0; i < inputSbVector.size(); i++) {
-      file = new File(inputSbVector.get(i).toString());
-      fileName = file.getName();
-      checkVector.add(fileName);
-         }
-         //String executableText = jTextFieldExecutable.getText().trim();
-         if(!executableText.equals("") && !jCheckBoxExecutableRemote.isSelected()) {
-      file = new File(executableText);
-      fileName = file.getName();
-      if(checkVector.contains(fileName))
-        return MATCH_ERROR_EXECUTABLE_INPUTSB; //checkVector.add(fileName);
-         }
-         //String stdInputText = jTextFieldStdInput.getText().trim();
-         if(!stdInputText.equals("") && !jCheckBoxStdInputRemote.isSelected()) {
-      file = new File(stdInputText);
-      fileName = file.getName();
-      if(checkVector.contains(fileName))
-        return MATCH_ERROR_STDINPUT_INPUTSB;
-         }
-         String stdOutputText = jTextFieldStdOutput.getText().trim();
-         String stdErrorText = jTextFieldStdError.getText().trim();
-         if(!stdOutputText.equals("") && stdOutputText.equals(stdErrorText))
-      return MATCH_ERROR_STDOUTPUT_STDERROR;
+     Vector checkVector = new Vector();
+     File file = null;
+     String fileName = "";
+     for(int i = 0; i < inputSbVector.size(); i++) {
+     file = new File(inputSbVector.get(i).toString());
+     fileName = file.getName();
+     checkVector.add(fileName);
+     }
+     //String executableText = jTextFieldExecutable.getText().trim();
+     if(!executableText.equals("") && !jCheckBoxExecutableRemote.isSelected()) {
+     file = new File(executableText);
+     fileName = file.getName();
+     if(checkVector.contains(fileName))
+     return MATCH_ERROR_EXECUTABLE_INPUTSB; //checkVector.add(fileName);
+     }
+     //String stdInputText = jTextFieldStdInput.getText().trim();
+     if(!stdInputText.equals("") && !jCheckBoxStdInputRemote.isSelected()) {
+     file = new File(stdInputText);
+     fileName = file.getName();
+     if(checkVector.contains(fileName))
+     return MATCH_ERROR_STDINPUT_INPUTSB;
+     }
+     String stdOutputText = jTextFieldStdOutput.getText().trim();
+     String stdErrorText = jTextFieldStdError.getText().trim();
+     if(!stdOutputText.equals("") && stdOutputText.equals(stdErrorText))
+     return MATCH_ERROR_STDOUTPUT_STDERROR;
      */
-
     return NO_MATCH_ERROR;
   }
 
   void jButtonFileExecutableFocusLost(FocusEvent e) {
-  /*
-       if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
-    jTextFieldExecutable.selectAll();
-    jTextFieldExecutable.grabFocus();
-       }
-   */
+    /*
+     if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     }
+     */
   }
 
   void jTextFieldExecutableFocusGained(FocusEvent e) {
-  /*int matchErrorType = getMatchErrorType();
-       Component hadFocusComponent = e.getOppositeComponent(); // Get component that "had the focus".
-       if( ((hadFocusComponent == jButtonFileExecutable) || (hadFocusComponent == jCheckBoxExecutableRemote))
-            && (matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) ) {
-    JOptionPane.showOptionDialog(JobDef1Panel.this,
-            MATCH_ERROR_EXECUTABLE_STDINPUT_MSG,
-            "Error Message",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-       }
-   */
+    /*int matchErrorType = getMatchErrorType();
+     Component hadFocusComponent = e.getOppositeComponent(); // Get component that "had the focus".
+     if( ((hadFocusComponent == jButtonFileExecutable) || (hadFocusComponent == jCheckBoxExecutableRemote))
+     && (matchErrorType == MATCH_ERROR_EXECUTABLE_STDINPUT) ) {
+     JOptionPane.showOptionDialog(JobDef1Panel.this,
+     MATCH_ERROR_EXECUTABLE_STDINPUT_MSG,
+     "Error Message",
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     }
+     */
   }
 
   void jCheckBoxExecutableRemoteFocusLost(FocusEvent e) {
-  /*
-       if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
-    jTextFieldExecutable.selectAll();
-    jTextFieldExecutable.grabFocus();
-       }
-   */
+    /*
+     if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
+     jTextFieldExecutable.selectAll();
+     jTextFieldExecutable.grabFocus();
+     }
+     */
   }
 
   void jButtonFileStdInputFocusLost(FocusEvent e) {
-  /*
-       if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
-    jTextFieldStdInput.selectAll();
-    jTextFieldStdInput.grabFocus();
-       }
-   */
+    /*
+     if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     }
+     */
   }
 
   void jCheckBoxStdInputRemoteFocusLost(FocusEvent e) {
-  /*
-       if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
-    jTextFieldStdInput.selectAll();
-    jTextFieldStdInput.grabFocus();
-       }
-   */
+    /*
+     if(getMatchErrorType() == MATCH_ERROR_EXECUTABLE_STDINPUT) {
+     jTextFieldStdInput.selectAll();
+     jTextFieldStdInput.grabFocus();
+     }
+     */
   }
 
   void jCheckBoxStdOutputFocusLost(FocusEvent e) {
-  /*
-       if(getMatchErrorType() == MATCH_ERROR_STDOUTPUT_STDERROR) {
-    jTextFieldStdOutput.selectAll();
-    jTextFieldStdOutput.grabFocus();
-       }
-   */
+    /*
+     if(getMatchErrorType() == MATCH_ERROR_STDOUTPUT_STDERROR) {
+     jTextFieldStdOutput.selectAll();
+     jTextFieldStdOutput.grabFocus();
+     }
+     */
   }
 
   void jCheckBoxStdErrorFocusLost(FocusEvent e) {
-  /*
-       if(getMatchErrorType() == MATCH_ERROR_STDOUTPUT_STDERROR) {
-    jTextFieldStdError.selectAll();
-    jTextFieldStdError.grabFocus();
-       }
-   */
+    /*
+     if(getMatchErrorType() == MATCH_ERROR_STDOUTPUT_STDERROR) {
+     jTextFieldStdError.selectAll();
+     jTextFieldStdError.grabFocus();
+     }
+     */
   }
 
   void jTextFieldArgumentsFocusLost(FocusEvent e) {
@@ -1795,19 +1707,14 @@ public class JobDef1Panel extends JPanel {
   void setAppletObject(boolean bool) {
     jTextFieldExecutable.setEditable(bool);
     jTextFieldExecutable.setBackground(Color.white);
-
     jButtonFileExecutable.setEnabled(bool);
     jCheckBoxExecutableRemote.setEnabled(bool);
-
     jTextFieldStdInput.setEditable(bool);
     jTextFieldStdInput.setBackground(Color.white);
-
     jButtonFileStdInput.setEnabled(bool);
     jCheckBoxStdInputRemote.setEnabled(bool);
-
     jTextFieldInputSb.setEditable(bool);
     jTextFieldInputSb.setBackground(Color.white);
-
     jButtonFileInputSandbox.setEnabled(bool);
     jButtonAddInputSb.setEnabled(bool);
     jButtonRemoveInputSb.setEnabled(bool);
@@ -1817,7 +1724,7 @@ public class JobDef1Panel extends JPanel {
   void setJTextFieldVOEditable(boolean bool) {
     jTextFieldVO.setEditable(bool);
     if (bool) {
-    //jTextFieldVO.setBackground();
+      //jTextFieldVO.setBackground();
     } else {
       jTextFieldVO.setBackground(Color.white);
     }
@@ -1850,18 +1757,15 @@ public class JobDef1Panel extends JPanel {
         jTextFieldExecutable.setText(value);
         inputSbVector.remove(value);
       } else {
-      //!!! Error to display to user.
+        //!!! Error to display to user.
       }
-
-    } else if (!value.equals(fileName) && ((new File(value)).isAbsolute()
-        || GUIFileSystem.isAbsolute(value))) {
+    } else if (!value.equals(fileName)
+        && ((new File(value)).isAbsolute() || GUIFileSystem.isAbsolute(value))) {
       // Executable is an absolute path name.
       setExecutableRemoteEnabled(true);
       jTextFieldExecutable.setText(value);
-
     } else if (value.equals(fileName)) {
       String executableAbsoluteFile = getInputSbExecutableAbsoluteFile(value);
-
       if (!executableAbsoluteFile.equals("")) { // I have found this element in InputSandbox.
         setExecutableRemoteEnabled(false);
         jTextFieldExecutable.setText(executableAbsoluteFile);
@@ -1886,8 +1790,8 @@ public class JobDef1Panel extends JPanel {
       currentElement = inputSbVector.get(i).toString();
       fileName = GUIFileSystem.getName(currentElement);
       if (fileName == null) {
-      //fileFormatErrorMsg += "- InputSandbox: file \"" + currentElement + "\" has wrong format\n";
-      //parserErrorMsg += "\n- InputSandbox: file \"" + currentElement + "\" has wrong format";
+        //fileFormatErrorMsg += "- InputSandbox: file \"" + currentElement + "\" has wrong format\n";
+        //parserErrorMsg += "\n- InputSandbox: file \"" + currentElement + "\" has wrong format";
       } else {
         if (fileName.equals(value)) {
           return currentElement;
@@ -1895,12 +1799,9 @@ public class JobDef1Panel extends JPanel {
       }
     }
     if (!fileFormatErrorMsg.equals("")) {
-      JOptionPane.showOptionDialog(JobDef1Panel.this,
-          fileFormatErrorMsg,
-          Utils.WARNING_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.WARNING_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobDef1Panel.this, fileFormatErrorMsg,
+          Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.WARNING_MESSAGE, null, null, null);
     }
     return "";
   }
@@ -1918,24 +1819,21 @@ public class JobDef1Panel extends JPanel {
         jTextFieldStdInput.setText(value);
         inputSbVector.remove(value);
       } else {
-      //!!! Error to display to user.
+        //!!! Error to display to user.
       }
-
-    } else if (!value.equals(fileName) && ((new File(value)).isAbsolute()
-        || GUIFileSystem.isAbsolute(value))) {
+    } else if (!value.equals(fileName)
+        && ((new File(value)).isAbsolute() || GUIFileSystem.isAbsolute(value))) {
       // StdInput is an absolute path name.
       setStdInputRemoteEnabled(true);
       jTextFieldStdInput.setText(value);
-
     } else if (value.equals(fileName)) {
       String stdInputAbsoluteFile = getInputSbExecutableAbsoluteFile(value);
-
       if (!stdInputAbsoluteFile.equals("")) { // I have found this element in InputSandbox.
         setStdInputRemoteEnabled(false);
         jTextFieldStdInput.setText(stdInputAbsoluteFile);
         inputSbVector.remove(stdInputAbsoluteFile);
       } else { // I didn't found the element.
-      //!!! Error to dispaly to user.
+        //!!! Error to dispaly to user.
       }
     }
   }
@@ -2014,7 +1912,6 @@ public class JobDef1Panel extends JPanel {
     jLabelStdError.setEnabled(bool);
     jTextFieldStdError.setEnabled(bool);
     jCheckBoxStdError.setEnabled(bool);
-
     String stdOutputText = jTextFieldStdOutput.getText().trim();
     String stdErrorText = jTextFieldStdError.getText().trim();
     if (bool) {
@@ -2052,15 +1949,12 @@ public class JobDef1Panel extends JPanel {
 
   GridBagConstraints setDefaultGridBagConstraints(GridBagConstraints gbc) {
     return setGridBagConstraints(gbc, 0, 0, 1, 1, 0.0, 0.0,
-        GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0);
+        GridBagConstraints.CENTER, GridBagConstraints.NONE, null, 0, 0);
   }
 
   GridBagConstraints setGridBagConstraints(GridBagConstraints gbc, int gridx,
-      int gridy, int gridwidth, int gridheight,
-      double weightx, double weighty, int anchor,
-      int fill, Insets insets, int ipadx,
-      int ipady) {
+      int gridy, int gridwidth, int gridheight, double weightx, double weighty,
+      int anchor, int fill, Insets insets, int ipadx, int ipady) {
     gbc.gridx = gridx;
     gbc.gridy = gridy;
     gbc.gridwidth = gridwidth;
@@ -2074,8 +1968,6 @@ public class JobDef1Panel extends JPanel {
     }
     gbc.ipadx = ipadx;
     gbc.ipady = ipady;
-
     return gbc;
   }
-
 }

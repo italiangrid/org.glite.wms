@@ -1,39 +1,51 @@
 /*
  * CreateProxyPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.util.*;
-import java.io.*;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.net.URL;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.plaf.basic.*;
-
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 import javax.crypto.BadPaddingException;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import condor.classad.*;
-
-import org.globus.common.CoGProperties;
-import org.globus.gsi.*;
-
-import org.apache.log4j.*;
-
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.plaf.basic.BasicArrowButton;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wmsui.apij.Api;
+import org.glite.wmsui.apij.UserCredential;
+import org.globus.gsi.GlobusCredentialException;
 
 /**
  * Implementation of the CreateProxyPanel class.
@@ -48,43 +60,65 @@ public class CreateProxyPanel extends JDialog {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
-  static final int[] keyLengthArray = {
-      512, 1024, 2048, 4096};
+  static final int[] keyLengthArray = { 512, 1024, 2048, 4096
+  };
+
   static final String NO_EXTENSION = "- No Extension -";
 
   private Map voMap = new HashMap();
+
   private String pwd = null;
 
   JPasswordField jPasswordFieldPassphrase = new JPasswordField();
 
   JLabel jLabelKeyLength = new JLabel();
+
   JLabel jLabelProxyLifetime = new JLabel();
+
   JLabel jLabelPassphrase = new JLabel();
+
   JComboBox jComboBoxKeyLength = new JComboBox();
+
   JTextField jTextFieldProxyLifetime = new JTextField();
+
   JPanel jPanelCreateProxy = new JPanel();
+
   JLabel jLabelProxyFile = new JLabel();
+
   JButton jButtonCancel = new JButton();
+
   JButton jButtonOk = new JButton();
-  BasicArrowButton upProxyLifetime = new BasicArrowButton(BasicArrowButton.
-      NORTH);
-  BasicArrowButton downProxyLifetime = new BasicArrowButton(BasicArrowButton.
-      SOUTH);
+
+  BasicArrowButton upProxyLifetime = new BasicArrowButton(
+      BasicArrowButton.NORTH);
+
+  BasicArrowButton downProxyLifetime = new BasicArrowButton(
+      BasicArrowButton.SOUTH);
+
   JLabel jLabelVirtualOrganisation = new JLabel();
+
   JTextField jTextFieldProxyFile = new JTextField();
+
   GUIUserCredentials credentialInformation;
+
   JLabel jLabelHours = new JLabel();
+
   JLabel jLabelBit = new JLabel();
+
   JButton jButtonProxyFileChooser = new JButton();
+
   JComboBox jComboBoxVO = new JComboBox();
+
   JCheckBox jCheckBoxRegenerate = new JCheckBox();
 
   /**
    * Constructor
    */
-  public CreateProxyPanel() {}
+  public CreateProxyPanel() {
+  }
 
   /**
    * Constructor
@@ -96,10 +130,8 @@ public class CreateProxyPanel extends JDialog {
     } else {
       JOptionPane.showOptionDialog(CreateProxyPanel.this,
           Utils.UNESPECTED_ERROR + Utils.WRONG_COMPONENT_ARGUMENT_TYPE,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     }
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
@@ -111,22 +143,18 @@ public class CreateProxyPanel extends JDialog {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
-        ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     for (int i = 0; i < keyLengthArray.length; i++) {
       jComboBoxKeyLength.addItem(new Integer(keyLengthArray[i]));
     }
-
     this.setTitle("Credential - Create Proxy");
     this.setSize(new Dimension(447, 250));
     this.setResizable(false);
-
     //!!! Remove Regenerate Check Box, the proxy will be always regenerated.
     jCheckBoxRegenerate.setSelected(true);
     jCheckBoxRegenerate.setVisible(false);
     /////
-
     jButtonCancel.setBounds(new Rectangle(15, 185, 85, 25));
     jButtonCancel.setText("Cancel");
     jButtonCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -144,33 +172,32 @@ public class CreateProxyPanel extends JDialog {
     upProxyLifetime.setBounds(new Rectangle(141, 40, 16, 16));
     upProxyLifetime.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldProxyLifetime, Utils.INTEGER,
-            Integer.toString(Utils.PROXY_LIFETIME_DEF_VAL),
+        Utils.upButtonEvent(jTextFieldProxyLifetime, Utils.INTEGER, Integer
+            .toString(Utils.PROXY_LIFETIME_DEF_VAL),
             Utils.PROXY_LIFETIME_MIN_VAL, Utils.PROXY_LIFETIME_MAX_VAL);
       }
     });
     downProxyLifetime.setBounds(new Rectangle(141, 56, 16, 16));
     downProxyLifetime.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldProxyLifetime, Utils.INTEGER,
-            Integer.toString(Utils.PROXY_LIFETIME_DEF_VAL),
+        Utils.downButtonEvent(jTextFieldProxyLifetime, Utils.INTEGER, Integer
+            .toString(Utils.PROXY_LIFETIME_DEF_VAL),
             Utils.PROXY_LIFETIME_MIN_VAL, Utils.PROXY_LIFETIME_MAX_VAL);
       }
     });
-
     URL fileOpenGifUrl = JobDef1Panel.class.getResource(Utils.ICON_FILE_OPEN);
     if (fileOpenGifUrl != null) {
       jButtonProxyFileChooser.setIcon(new ImageIcon(fileOpenGifUrl));
     } else {
       jButtonProxyFileChooser.setText("...");
     }
-    jButtonProxyFileChooser.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jButtonFileChooserEvent(e, jTextFieldProxyFile,
-            "Cert File Path Selection");
-      }
-    });
-
+    jButtonProxyFileChooser
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jButtonFileChooserEvent(e, jTextFieldProxyFile,
+                "Cert File Path Selection");
+          }
+        });
     jLabelKeyLength.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelKeyLength.setText("Key Length");
     jLabelKeyLength.setBounds(new Rectangle(220, 48, 72, 16));
@@ -181,18 +208,19 @@ public class CreateProxyPanel extends JDialog {
     jLabelPassphrase.setText("Passphrase");
     jLabelPassphrase.setBounds(new Rectangle(17, 117, 89, 20));
     jComboBoxKeyLength.setBounds(new Rectangle(296, 46, 64, 20));
-    jTextFieldProxyLifetime.setText(Integer.toString(Utils.
-        PROXY_LIFETIME_DEF_VAL));
+    jTextFieldProxyLifetime.setText(Integer
+        .toString(Utils.PROXY_LIFETIME_DEF_VAL));
     jTextFieldProxyLifetime.setHorizontalAlignment(SwingConstants.RIGHT);
     jTextFieldProxyLifetime.setBounds(new Rectangle(111, 43, 31, 26));
     jTextFieldProxyLifetime.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
-        GraphicUtils.jTextFieldFocusLost(jTextFieldProxyLifetime, Utils.INTEGER,
-            Integer.toString(Utils.PROXY_LIFETIME_DEF_VAL),
+        GraphicUtils.jTextFieldFocusLost(jTextFieldProxyLifetime,
+            Utils.INTEGER, Integer.toString(Utils.PROXY_LIFETIME_DEF_VAL),
             Utils.PROXY_LIFETIME_MIN_VAL, Utils.PROXY_LIFETIME_MAX_VAL);
       }
 
-      public void focusGained(FocusEvent e) {}
+      public void focusGained(FocusEvent e) {
+      }
     });
     jPasswordFieldPassphrase.setText("");
     jPasswordFieldPassphrase.setBounds(new Rectangle(111, 117, 188, 20));
@@ -202,7 +230,8 @@ public class CreateProxyPanel extends JDialog {
     jLabelVirtualOrganisation.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelVirtualOrganisation.setText("Virtual Org");
     jLabelVirtualOrganisation.setBounds(new Rectangle(17, 81, 89, 16));
-    String proxyFile = credentialInformation.jTextFieldProxyFile.getText().trim();
+    String proxyFile = credentialInformation.jTextFieldProxyFile.getText()
+        .trim();
     if (proxyFile.equals("")) {
       proxyFile = UserCredential.getDefaultProxy();
     }
@@ -240,12 +269,10 @@ public class CreateProxyPanel extends JDialog {
     this.getContentPane().add(jPanelCreateProxy, null);
     this.getContentPane().add(jButtonOk, null);
     this.getContentPane().add(jButtonCancel, null);
-
     // Read VO from file vomses
     jComboBoxVO.setEditable(false);
     Vector voVector = new Vector();
     voVector.add(getVOMSVOVector().get(0));
-
     if (voVector.size() == 0) {
       voVector = GUIFileSystem.getVirtualOrganisations();
     }
@@ -270,31 +297,26 @@ public class CreateProxyPanel extends JDialog {
     if (component instanceof JTextField) {
       jTextField = (JTextField) component;
     } else {
-      System.exit( -1);
+      System.exit(-1);
     }
-
     JFileChooser fileChooser = new JFileChooser();
     fileChooser.setDialogTitle(title);
     fileChooser.setFileHidingEnabled(false);
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
-
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     int choice = fileChooser.showOpenDialog(CreateProxyPanel.this);
-
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       JOptionPane.showOptionDialog(CreateProxyPanel.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          "Unable to find file: " + selectedFile, Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       return;
     } else {
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       jTextField.setText(selectedFile);
     }
@@ -307,62 +329,53 @@ public class CreateProxyPanel extends JDialog {
       passPhrase += passPhraseArray[i];
     }
     passPhrase = passPhrase.trim();
-
     String userProxy = jTextFieldProxyFile.getText().trim();
     String userCert = credentialInformation.jTextFieldCertFile.getText().trim();
     String userKey = credentialInformation.jTextFieldCertKey.getText().trim();
-    String caCertLocation = credentialInformation.jTextFieldTrustedCert.getText().
-        trim();
-    int bits = Integer.parseInt(jComboBoxKeyLength.getSelectedItem().toString(),
-        10);
+    String caCertLocation = credentialInformation.jTextFieldTrustedCert
+        .getText().trim();
+    int bits = Integer.parseInt(
+        jComboBoxKeyLength.getSelectedItem().toString(), 10);
     int hours = Integer.parseInt(jTextFieldProxyLifetime.getText(), 10);
     boolean limited = false;
-
     if (!(new File(userProxy)).isFile() || jCheckBoxRegenerate.isSelected()) {
       try {
         UserCredential.createProxy(passPhrase, userProxy, userCert, userKey,
             bits, hours, limited);
         credentialInformation.jTextFieldProxyFile.setText(userProxy);
         credentialInformation.setGUIUserCredentials(new File(userProxy));
-
         // Store user selection to show when he asks for Info or to Create new Proxy.
         GUIGlobalVars.certFilePath = userCert;
         GUIGlobalVars.certKeyPath = userKey;
         GUIGlobalVars.trustedCertDir = caCertLocation;
         GUIGlobalVars.proxyFilePath = userProxy;
-
       } catch (GlobusCredentialException gpe) {
         if (isDebugging) {
           gpe.printStackTrace();
         }
         JOptionPane.showOptionDialog(CreateProxyPanel.this,
-            "Unable to create the Proxy",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            "Unable to create the Proxy", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
         this.dispose();
         return;
-
         // GeneralSecurityException subclass.
       } catch (BadPaddingException bpe) {
         jPasswordFieldPassphrase.grabFocus();
         JOptionPane.showOptionDialog(CreateProxyPanel.this,
-            "Inserted Passphrase is uncorrect",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            "Inserted Passphrase is uncorrect", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
         jPasswordFieldPassphrase.selectAll();
         return;
       } catch (InvalidKeyException ike) {
         credentialInformation.jTextFieldCertFile.grabFocus();
-        JOptionPane.showOptionDialog(CreateProxyPanel.this,
-            "Unable to create the Proxy\nplease check certificate and key files",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane
+            .showOptionDialog(
+                CreateProxyPanel.this,
+                "Unable to create the Proxy\nplease check certificate and key files",
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
         this.dispose();
         credentialInformation.jTextFieldCertFile.selectAll();
         return;
@@ -371,43 +384,33 @@ public class CreateProxyPanel extends JDialog {
         if (isDebugging) {
           gse.printStackTrace();
         }
-        JOptionPane.showOptionDialog(CreateProxyPanel.this,
-            gse.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(CreateProxyPanel.this, gse.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         return;
-
       } catch (Exception e) {
         if (isDebugging) {
           e.printStackTrace();
         }
-        JOptionPane.showOptionDialog(CreateProxyPanel.this,
-            e.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(CreateProxyPanel.this, e.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         return;
       }
     }
-
     //String vo = jComboBoxVO.getEditor().getItem().toString().trim();
     String vo = jComboBoxVO.getSelectedItem().toString().trim();
     if (!vo.equals("") && !vo.equals(NO_EXTENSION)) {
       String location = Api.getEnv(GUIFileSystem.EDG_LOCATION);
-      if ((location == null) || location.equals("") || !(new File(location
-          + "/bin/edg-voms-proxy-init")).isFile()) {
+      if ((location == null) || location.equals("")
+          || !(new File(location + "/bin/edg-voms-proxy-init")).isFile()) {
         if ((new File("/opt/edg/bin/edg-voms-proxy-init")).isFile()) {
           location = "/opt/edg/bin/edg-voms-proxy-init";
         } else {
           JOptionPane.showOptionDialog(CreateProxyPanel.this,
-              "Unable to add VOMS extension to Proxy",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+              "Unable to add VOMS extension to Proxy", Utils.ERROR_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+              null, null);
           credentialInformation.setGUIUserCredentials(new File(userProxy));
           this.dispose();
           return;
@@ -416,12 +419,9 @@ public class CreateProxyPanel extends JDialog {
         location += "/bin/edg-voms-proxy-init";
       }
       JOptionPane.showOptionDialog(CreateProxyPanel.this,
-          "Press Ok to add Extension",
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
-
+          "Press Ok to add Extension", Utils.ERROR_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
       try {
         this.voMap = CreateProxyPanel.getVomsesVOAliasMap();
         vo = this.voMap.get(vo).toString();
@@ -433,11 +433,9 @@ public class CreateProxyPanel extends JDialog {
           e.printStackTrace();
         }
         JOptionPane.showOptionDialog(CreateProxyPanel.this,
-            "Unable to add VOMS extension to Proxy",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+            "Unable to add VOMS extension to Proxy", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
       }
     }
     credentialInformation.setGUIUserCredentials(new File(userProxy));
@@ -554,11 +552,12 @@ public class CreateProxyPanel extends JDialog {
   }
 
   boolean changeProxyVO(String vo, GUIUserCredentials credentialInformation) {
-    String userProxy = credentialInformation.jTextFieldProxyFile.getText().trim();
+    String userProxy = credentialInformation.jTextFieldProxyFile.getText()
+        .trim();
     String userCert = credentialInformation.jTextFieldCertFile.getText().trim();
     String userKey = credentialInformation.jTextFieldCertKey.getText().trim();
-    String caCertLocation = credentialInformation.jTextFieldTrustedCert.getText().
-        trim();
+    String caCertLocation = credentialInformation.jTextFieldTrustedCert
+        .getText().trim();
     int bits = 512;
     int hours = 12;
     boolean limited = false;
@@ -589,71 +588,71 @@ public class CreateProxyPanel extends JDialog {
     }
     return false;
     /*
-         voVector.add(vo);
-         String location = Api.getEnv(Utils.EDG_LOCATION);
-         if ((location == null) || location.equals("") || !(new File(location
-        + "/bin/edg-voms-proxy-init")).isFile()) {
-      if ((new File("/opt/edg/bin/edg-voms-proxy-init")).isFile()) {
-        location = "/opt/edg/bin/edg-voms-proxy-init";
-      } else {
-        return false;
-      }
-         } else {
-      location += "/bin/edg-voms-proxy-init";
-         }
-         PasswordDialog passwordDialog = new PasswordDialog(credentialInformation, this);
-         passwordDialog.setModal(true);
-         Utils.windowCenterWindow(credentialInformation, passwordDialog);
-         passwordDialog.setVisible(true);
-         if (this.pwd == null) {
-      return false;
-         }
-         String voms = "";
-         for (int i = 0; i < voVector.size(); i++) {
-      voms += " -voms " + voMap.get(voVector.get(i).toString()).toString();
-         }
-         String pwdFileName = Utils.getUserHomeDirectory() + File.separator
-        + Utils.getTemporaryFileDirectory() + ".tempFile";
-         logger.debug("pwdFileName" + pwdFileName);
-         File pwdFile = new File(pwdFileName);
-         try {
-      Utils.saveTextFile(pwdFile, this.pwd);
-         } catch (Exception e) {
-      if (isDebugging) e.printStackTrace();
-      return false;
-         }
-         this.pwd = null;
-         String outFileName = Utils.getUserHomeDirectory() + File.separator
-        + Utils.getTemporaryFileDirectory() + "x509_TempProxy";
-         File outFile = new File(outFileName);
-         //String command = location + voms + " -pwstdin -q < " + pwdFileName;
-         //String command = location + voms + " -noregen -q";
-         String command = location + voms + " -pwstdin -out " + outFileName + " -q < " + pwdFileName;
-         logger.debug("Command: " + command);
-         try {
-      if (Api.shadow(command) != 0) {
-        logger.debug("Api.shadow(command) != 0"); // old code 256
-        outFile.delete();
-        pwdFile.delete();
-        return false;
-      }
-         } catch (Exception e) {
-      if (isDebugging) e.printStackTrace();
-      outFile.delete();
-      pwdFile.delete();
-      return false;
-         }
-         try {
-      Utils.copyFile(outFile, new File(userProxy));
-         } catch (Exception e) {
-      if (isDebugging) e.printStackTrace();
-      outFile.delete();
-      pwdFile.delete();
-      return false;
-         }
-         outFile.delete();
-         pwdFile.delete();
-         return true;
+     voVector.add(vo);
+     String location = Api.getEnv(Utils.EDG_LOCATION);
+     if ((location == null) || location.equals("") || !(new File(location
+     + "/bin/edg-voms-proxy-init")).isFile()) {
+     if ((new File("/opt/edg/bin/edg-voms-proxy-init")).isFile()) {
+     location = "/opt/edg/bin/edg-voms-proxy-init";
+     } else {
+     return false;
+     }
+     } else {
+     location += "/bin/edg-voms-proxy-init";
+     }
+     PasswordDialog passwordDialog = new PasswordDialog(credentialInformation, this);
+     passwordDialog.setModal(true);
+     Utils.windowCenterWindow(credentialInformation, passwordDialog);
+     passwordDialog.setVisible(true);
+     if (this.pwd == null) {
+     return false;
+     }
+     String voms = "";
+     for (int i = 0; i < voVector.size(); i++) {
+     voms += " -voms " + voMap.get(voVector.get(i).toString()).toString();
+     }
+     String pwdFileName = Utils.getUserHomeDirectory() + File.separator
+     + Utils.getTemporaryFileDirectory() + ".tempFile";
+     logger.debug("pwdFileName" + pwdFileName);
+     File pwdFile = new File(pwdFileName);
+     try {
+     Utils.saveTextFile(pwdFile, this.pwd);
+     } catch (Exception e) {
+     if (isDebugging) e.printStackTrace();
+     return false;
+     }
+     this.pwd = null;
+     String outFileName = Utils.getUserHomeDirectory() + File.separator
+     + Utils.getTemporaryFileDirectory() + "x509_TempProxy";
+     File outFile = new File(outFileName);
+     //String command = location + voms + " -pwstdin -q < " + pwdFileName;
+     //String command = location + voms + " -noregen -q";
+     String command = location + voms + " -pwstdin -out " + outFileName + " -q < " + pwdFileName;
+     logger.debug("Command: " + command);
+     try {
+     if (Api.shadow(command) != 0) {
+     logger.debug("Api.shadow(command) != 0"); // old code 256
+     outFile.delete();
+     pwdFile.delete();
+     return false;
+     }
+     } catch (Exception e) {
+     if (isDebugging) e.printStackTrace();
+     outFile.delete();
+     pwdFile.delete();
+     return false;
+     }
+     try {
+     Utils.copyFile(outFile, new File(userProxy));
+     } catch (Exception e) {
+     if (isDebugging) e.printStackTrace();
+     outFile.delete();
+     pwdFile.delete();
+     return false;
+     }
+     outFile.delete();
+     pwdFile.delete();
+     return true;
      */
   }
 
@@ -680,5 +679,4 @@ public class CreateProxyPanel extends JDialog {
       }
     }
   }
-
 }

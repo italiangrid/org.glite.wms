@@ -1,29 +1,42 @@
 /*
  * JobTypePanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
 import java.util.Vector;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.plaf.basic.*;
-
-import javax.naming.directory.InvalidAttributeValueException;
-
-import org.glite.wms.jdlj.*;
-
-import org.apache.log4j.*;
-
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicArrowButton;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Jdl;
 
 /**
  * Implementation of the JobTypePanel class.
@@ -39,58 +52,98 @@ public class JobTypePanel extends JPanel {
   static Logger logger = Logger.getLogger(JDLEditor.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   Vector labelListVector = new Vector();
+
   JDLEditorInterface jint;
+
   Component component;
 
   ButtonGroup buttonGroupJobSteps = new ButtonGroup();
+
   JRadioButton jRadioButtonLabelList = new JRadioButton("Label List");
+
   JRadioButton jRadioButtonNumericValue = new JRadioButton("Numeric Value");
+
   ButtonGroup buttonGroup = new ButtonGroup();
 
   JTextField jTextFieldLabelList = new JTextField();
+
   JPanel jPanelJobSteps = new JPanel();
+
   JScrollPane jScrollPaneLabelList = new JScrollPane();
+
   JList jListLabelList = new JList();
+
   JButton jButtonAdd = new JButton();
+
   JButton jButtonRemove = new JButton();
+
   JButton jButtonClear = new JButton();
+
   BasicArrowButton upLastStep = new BasicArrowButton(BasicArrowButton.NORTH);
+
   BasicArrowButton downLastStep = new BasicArrowButton(BasicArrowButton.SOUTH);
+
   JTextField jTextFieldLastStep = new JTextField();
 
   JLabel jLabelCurrentIndex = new JLabel();
+
   String errorMsg = "";
+
   String warningMsg = "";
+
   BasicArrowButton upFirstStep = new BasicArrowButton(BasicArrowButton.NORTH);
+
   BasicArrowButton downFirstStep = new BasicArrowButton(BasicArrowButton.SOUTH);
+
   JTextField jTextFieldFirstStep = new JTextField();
+
   BasicArrowButton downNodeNumber = new BasicArrowButton(BasicArrowButton.SOUTH);
+
   BasicArrowButton upNodeNumber = new BasicArrowButton(BasicArrowButton.NORTH);
+
   JTextField jTextFieldNodeNumber = new JTextField();
+
   JLabel jLabelType = new JLabel();
+
   JComboBox jComboBoxJobType = new JComboBox(Utils.JOB_TYPES);
+
   JPanel jPanelListenerPort = new JPanel();
-  BasicArrowButton downListenerPort = new BasicArrowButton(BasicArrowButton.
-      SOUTH);
+
+  BasicArrowButton downListenerPort = new BasicArrowButton(
+      BasicArrowButton.SOUTH);
+
   BasicArrowButton upListenerPort = new BasicArrowButton(BasicArrowButton.NORTH);
+
   JTextField jTextFieldListenerPort = new JTextField();
+
   JLabel jLabelFirstStepNumeric = new JLabel();
+
   JPanel jPanelNodeNumber = new JPanel();
+
   JPanel jPanelJobType = new JPanel();
+
   JComboBox jComboBoxCurrentItem = new JComboBox();
+
   JLabel jLabelFirstStepList = new JLabel();
 
   JCheckBox jCheckBoxJobSteps = new JCheckBox();
 
   JPanel jPanelJobStepsList = new JPanel();
+
   JPanel jPanelJobStepsNumeric = new JPanel();
+
   JLabel jLabelJobSteps = new JLabel();
+
   JLabel jLabelLastStep = new JLabel();
+
   JLabel jLabelStepsList = new JLabel();
+
   JCheckBox jCheckBoxListenerPort = new JCheckBox();
+
   JLabel jLabelNodeNumber = new JLabel("NodeNumber");
 
   public JobTypePanel(Component component) {
@@ -98,15 +151,14 @@ public class JobTypePanel extends JPanel {
     if (component instanceof JDLEditor) {
       jint = (JDLEditor) component;
       /*
-          } else if (component instanceof JDLEJInternalFrame) {
-            jint = (JDLEJInternalFrame) component;
-          } else if (component instanceof JDLEJApplet) {
-            jint = (JDLEJApplet) component;
+       } else if (component instanceof JDLEJInternalFrame) {
+       jint = (JDLEJInternalFrame) component;
+       } else if (component instanceof JDLEJApplet) {
+       jint = (JDLEJApplet) component;
        */
     } else {
-      System.exit( -1);
+      System.exit(-1);
     }
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -118,58 +170,46 @@ public class JobTypePanel extends JPanel {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     jPanelJobStepsList.setEnabled(true);
     jPanelJobStepsNumeric.setEnabled(false);
     jPanelJobSteps.setVisible(true); //
     jPanelListenerPort.setVisible(true);
     jPanelNodeNumber.setVisible(false);
-
     setNumberOfStepsEnabled(false);
     setLabelListEnabled(false);
     setCurrentIndexEnabled(false);
     setCurrentStepEnabled(false);
-
     jRadioButtonLabelList.setSelected(true);
     setJobStepsPanelEnabled(false);
-
     setListenerPortEnabled(false);
-
     jCheckBoxJobSteps.setText("JobSteps");
-
     jTextFieldLabelList.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
         jTextFieldLabelListFocusLost(e);
       }
     });
-
     jButtonAdd.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonCheckpointAddEvent(e);
       }
     });
-
     jButtonAdd.setText("Add");
     jButtonRemove.setText("Remove");
-
     jButtonRemove.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonCheckpointRemoveEvent(e);
       }
     });
     jButtonClear.setText("Clear");
-
     jButtonClear.setToolTipText("");
     jButtonClear.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (JobTypePanel.this.labelListVector.size() != 0) {
           int choice = JOptionPane.showOptionDialog(component,
-              "Clear Steps List?",
-              "Confirm Clear",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null);
+              "Clear Steps List?", "Confirm Clear", JOptionPane.YES_NO_OPTION,
+              JOptionPane.QUESTION_MESSAGE, null, null, null);
           if (choice == 0) {
             jButtonCheckpointClearEvent(e);
           }
@@ -181,51 +221,46 @@ public class JobTypePanel extends JPanel {
     });
     upLastStep.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldLastStep, Utils.INTEGER,
-            Integer.toString(Utils.JOBSTEPS_DEF_VAL),
-            Utils.JOBSTEPS_MIN_VAL, Utils.JOBSTEPS_MAX_VAL);
+        Utils.upButtonEvent(jTextFieldLastStep, Utils.INTEGER, Integer
+            .toString(Utils.JOBSTEPS_DEF_VAL), Utils.JOBSTEPS_MIN_VAL,
+            Utils.JOBSTEPS_MAX_VAL);
       }
     });
-
     downLastStep.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldLastStep, Utils.INTEGER,
-            Integer.toString(Utils.JOBSTEPS_DEF_VAL),
-            Utils.JOBSTEPS_MIN_VAL, Utils.JOBSTEPS_MAX_VAL);
-        if (Integer.parseInt(jTextFieldLastStep.getText(),
-            10) < Integer.parseInt(jTextFieldFirstStep.getText(), 10)) {
-          jTextFieldFirstStep.setText(Integer.toString(Utils.
-              CURRENTSTEP_DEF_VAL));
+        Utils.downButtonEvent(jTextFieldLastStep, Utils.INTEGER, Integer
+            .toString(Utils.JOBSTEPS_DEF_VAL), Utils.JOBSTEPS_MIN_VAL,
+            Utils.JOBSTEPS_MAX_VAL);
+        if (Integer.parseInt(jTextFieldLastStep.getText(), 10) < Integer
+            .parseInt(jTextFieldFirstStep.getText(), 10)) {
+          jTextFieldFirstStep.setText(Integer
+              .toString(Utils.CURRENTSTEP_DEF_VAL));
         }
       }
     });
-
     jTextFieldLastStep.setText(Integer.toString(Utils.JOBSTEPS_DEF_VAL));
     jTextFieldLastStep.setHorizontalAlignment(SwingConstants.RIGHT);
     jTextFieldLastStep.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
         GraphicUtils.jTextFieldFocusLost(jTextFieldLastStep, Utils.INTEGER,
-            Integer.toString(Utils.JOBSTEPS_DEF_VAL),
-            Utils.JOBSTEPS_MIN_VAL, Utils.JOBSTEPS_MAX_VAL);
+            Integer.toString(Utils.JOBSTEPS_DEF_VAL), Utils.JOBSTEPS_MIN_VAL,
+            Utils.JOBSTEPS_MAX_VAL);
       }
 
-      public void focusGained(FocusEvent e) {}
+      public void focusGained(FocusEvent e) {
+      }
     });
-
     upFirstStep.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldFirstStep, Utils.INTEGER,
-            Integer.toString(Utils.CURRENTSTEP_DEF_VAL),
-            Utils.CURRENTSTEP_MIN_VAL,
+        Utils.upButtonEvent(jTextFieldFirstStep, Utils.INTEGER, Integer
+            .toString(Utils.CURRENTSTEP_DEF_VAL), Utils.CURRENTSTEP_MIN_VAL,
             Integer.parseInt(jTextFieldLastStep.getText()));
       }
     });
-
     downFirstStep.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldFirstStep, Utils.INTEGER,
-            Integer.toString(Utils.CURRENTSTEP_DEF_VAL),
-            Utils.CURRENTSTEP_MIN_VAL,
+        Utils.downButtonEvent(jTextFieldFirstStep, Utils.INTEGER, Integer
+            .toString(Utils.CURRENTSTEP_DEF_VAL), Utils.CURRENTSTEP_MIN_VAL,
             Integer.parseInt(jTextFieldLastStep.getText()));
       }
     });
@@ -235,31 +270,29 @@ public class JobTypePanel extends JPanel {
       public void focusLost(FocusEvent e) {
         GraphicUtils.jTextFieldFocusLost(jTextFieldFirstStep, Utils.INTEGER,
             Integer.toString(Utils.CURRENTSTEP_DEF_VAL),
-            Utils.CURRENTSTEP_MIN_VAL,
-            Integer.parseInt(jTextFieldLastStep.getText()));
+            Utils.CURRENTSTEP_MIN_VAL, Integer.parseInt(jTextFieldLastStep
+                .getText()));
       }
 
-      public void focusGained(FocusEvent e) {}
+      public void focusGained(FocusEvent e) {
+      }
     });
-
     downNodeNumber.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldNodeNumber, Utils.INTEGER,
-            Integer.toString(Utils.NODENUMBER_DEF_VAL),
-            Utils.NODENUMBER_MIN_VAL, Utils.NODENUMBER_MAX_VAL);
+        Utils.downButtonEvent(jTextFieldNodeNumber, Utils.INTEGER, Integer
+            .toString(Utils.NODENUMBER_DEF_VAL), Utils.NODENUMBER_MIN_VAL,
+            Utils.NODENUMBER_MAX_VAL);
       }
     });
-
     upNodeNumber.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldNodeNumber, Utils.INTEGER,
-            Integer.toString(Utils.NODENUMBER_DEF_VAL),
-            Utils.NODENUMBER_MIN_VAL, Utils.NODENUMBER_MAX_VAL);
+        Utils.upButtonEvent(jTextFieldNodeNumber, Utils.INTEGER, Integer
+            .toString(Utils.NODENUMBER_DEF_VAL), Utils.NODENUMBER_MIN_VAL,
+            Utils.NODENUMBER_MAX_VAL);
       }
     });
     jTextFieldNodeNumber.setText(Integer.toString(Utils.NODENUMBER_DEF_VAL));
     jTextFieldNodeNumber.setHorizontalAlignment(SwingConstants.RIGHT);
-
     jTextFieldNodeNumber.addFocusListener(new java.awt.event.FocusListener() {
       public void focusLost(FocusEvent e) {
         GraphicUtils.jTextFieldFocusLost(jTextFieldNodeNumber, Utils.INTEGER,
@@ -267,30 +300,28 @@ public class JobTypePanel extends JPanel {
             Utils.NODENUMBER_MIN_VAL, Utils.NODENUMBER_MAX_VAL);
       }
 
-      public void focusGained(FocusEvent e) {}
+      public void focusGained(FocusEvent e) {
+      }
     });
     jLabelType.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelType.setText("JobType");
-
     jComboBoxJobType.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jComboBoxJobTypeEvent(e);
       }
     });
-
     downListenerPort.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.downButtonEvent(jTextFieldListenerPort, Utils.INTEGER,
-            Integer.toString(Utils.SHADOWPORT_DEF_VAL),
-            Utils.SHADOWPORT_MIN_VAL, Utils.SHADOWPORT_MAX_VAL);
+        Utils.downButtonEvent(jTextFieldListenerPort, Utils.INTEGER, Integer
+            .toString(Utils.SHADOWPORT_DEF_VAL), Utils.SHADOWPORT_MIN_VAL,
+            Utils.SHADOWPORT_MAX_VAL);
       }
     });
-
     upListenerPort.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Utils.upButtonEvent(jTextFieldListenerPort, Utils.INTEGER,
-            Integer.toString(Utils.SHADOWPORT_DEF_VAL),
-            Utils.SHADOWPORT_MIN_VAL, Utils.SHADOWPORT_MAX_VAL);
+        Utils.upButtonEvent(jTextFieldListenerPort, Utils.INTEGER, Integer
+            .toString(Utils.SHADOWPORT_DEF_VAL), Utils.SHADOWPORT_MIN_VAL,
+            Utils.SHADOWPORT_MAX_VAL);
       }
     });
     jTextFieldListenerPort.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -302,252 +333,210 @@ public class JobTypePanel extends JPanel {
             Utils.SHADOWPORT_MIN_VAL, Utils.SHADOWPORT_MAX_VAL);
       }
 
-      public void focusGained(FocusEvent e) {}
+      public void focusGained(FocusEvent e) {
+      }
     });
-
     jLabelFirstStepNumeric.setText("First Step");
-
     jLabelFirstStepList.setText("First Step");
-
     jCheckBoxJobSteps.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jCheckBoxJobStepsEvent(e);
       }
     });
-
     jLabelJobSteps.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelJobSteps.setText("JobSteps");
-
     jLabelLastStep.setText("Last Step");
-
     jLabelStepsList.setText("Steps List");
-
     jListLabelList.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
         jListLabelListFocusLost(e);
       }
     });
     jCheckBoxListenerPort.setText("ListenerPort");
-
-    jCheckBoxListenerPort.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jCheckBoxListenerPortEvent(e);
-      }
-    });
-
-    jRadioButtonLabelList.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jRadioButtonLabelListEvent(e);
-      }
-    });
-
-    jRadioButtonNumericValue.addActionListener(new java.awt.event.
-        ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        jRadioButtonNumericValueEvent(e);
-      }
-    });
-
+    jCheckBoxListenerPort
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jCheckBoxListenerPortEvent(e);
+          }
+        });
+    jRadioButtonLabelList
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jRadioButtonLabelListEvent(e);
+          }
+        });
+    jRadioButtonNumericValue
+        .addActionListener(new java.awt.event.ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            jRadioButtonNumericValueEvent(e);
+          }
+        });
     buttonGroup.add(jRadioButtonLabelList);
     buttonGroup.add(jRadioButtonNumericValue);
-
     jComboBoxCurrentItem.setRenderer(new GUIListCellTooltipRenderer());
-
     GridBagLayout gbl = new GridBagLayout();
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.insets = new Insets(3, 3, 3, 3);
-
     // jPanelJobType
     jPanelJobType.setLayout(gbl);
     jPanelJobType.setBorder(new TitledBorder(new EtchedBorder(), " Job Type ",
         0, 0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
-    jPanelJobType.add(jLabelType, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
-    jPanelJobType.add(jComboBoxJobType, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
+    jPanelJobType.add(jLabelType, GraphicUtils.setGridBagConstraints(gbc, 0, 0,
+        1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+        null, 0, 0));
+    jPanelJobType.add(jComboBoxJobType, GraphicUtils.setGridBagConstraints(gbc,
+        1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     // jPanelListenerPort
     jPanelListenerPort.setLayout(gbl);
     GraphicUtils.setDefaultGridBagConstraints(gbc);
-    jPanelListenerPort.setBorder(new TitledBorder(new EtchedBorder(),
-        " Listener Port ", 0, 0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+    jPanelListenerPort
+        .setBorder(new TitledBorder(new EtchedBorder(), " Listener Port ", 0,
+            0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     JPanel jPanelArrowListenerPort = new JPanel();
     jPanelArrowListenerPort.setLayout(new BoxLayout(jPanelArrowListenerPort,
         BoxLayout.Y_AXIS));
     jPanelArrowListenerPort.add(upListenerPort, null);
     jPanelArrowListenerPort.add(downListenerPort, null);
-
-    jPanelListenerPort.add(jCheckBoxListenerPort, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
+    jPanelListenerPort
+        .add(jCheckBoxListenerPort, GraphicUtils.setGridBagConstraints(gbc, 0,
+            0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
     jTextFieldListenerPort.setPreferredSize(new Dimension(50, 32));
-    jPanelListenerPort.add(jTextFieldListenerPort, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelListenerPort.add(jPanelArrowListenerPort, GraphicUtils.setGridBagConstraints(
-        gbc, 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.NONE, null, 0, 0));
-
+    jPanelListenerPort
+        .add(jTextFieldListenerPort, GraphicUtils.setGridBagConstraints(gbc, 1,
+            0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
+    jPanelListenerPort.add(jPanelArrowListenerPort, GraphicUtils
+        .setGridBagConstraints(gbc, 2, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE, null, 0, 0));
     // jPanelNodeNumber
     jPanelNodeNumber.setLayout(gbl);
     GraphicUtils.setDefaultGridBagConstraints(gbc);
     jPanelNodeNumber.setBorder(new TitledBorder(new EtchedBorder(),
         " Number of Computational Nodes ", 0, 0, null,
         GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
     JPanel jPanelArrowNodeNumber = new JPanel();
     jPanelArrowNodeNumber.setLayout(new BoxLayout(jPanelArrowNodeNumber,
         BoxLayout.Y_AXIS));
     jPanelArrowNodeNumber.add(upNodeNumber, null);
     jPanelArrowNodeNumber.add(downNodeNumber, null);
-
     jPanelNodeNumber.add(jLabelNodeNumber, GraphicUtils.setGridBagConstraints(
         gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jTextFieldNodeNumber.setPreferredSize( GraphicUtils.NUMERIC_TEXT_FIELD_DIMENSION);
-    jPanelNodeNumber.add(jTextFieldNodeNumber, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelNodeNumber.add(jPanelArrowNodeNumber, GraphicUtils.setGridBagConstraints(
-        gbc, 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.NONE, null, 0, 0));
-
+    jTextFieldNodeNumber
+        .setPreferredSize(GraphicUtils.NUMERIC_TEXT_FIELD_DIMENSION);
+    jPanelNodeNumber
+        .add(jTextFieldNodeNumber, GraphicUtils.setGridBagConstraints(gbc, 1,
+            0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
+    jPanelNodeNumber.add(jPanelArrowNodeNumber, GraphicUtils
+        .setGridBagConstraints(gbc, 2, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE, null, 0, 0));
     // jPanelJobSteps
     jPanelJobStepsList.setLayout(gbl);
     GraphicUtils.setDefaultGridBagConstraints(gbc);
-
     jPanelJobStepsList.add(jLabelStepsList, GraphicUtils.setGridBagConstraints(
         gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.NONE, null, 0, 0));
-
     jTextFieldLabelList.setPreferredSize(new Dimension(250, 20));
-    jPanelJobStepsList.add(jTextFieldLabelList, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
+    jPanelJobStepsList.add(jTextFieldLabelList, GraphicUtils
+        .setGridBagConstraints(gbc, 1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL,
+            null, 0, 0));
+    jPanelJobStepsList.add(jButtonAdd, GraphicUtils.setGridBagConstraints(gbc,
+        2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobStepsList.add(jButtonAdd, GraphicUtils.setGridBagConstraints(
-        gbc, 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jScrollPaneLabelList.setPreferredSize(new Dimension(150, 150));
     jScrollPaneLabelList.getViewport().add(jListLabelList, null);
-    jPanelJobStepsList.add(jScrollPaneLabelList, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 1, 2, 2, 1.0, 1.0, GridBagConstraints.CENTER,
-        GridBagConstraints.BOTH, null, 0, 0));
-
+    jPanelJobStepsList.add(jScrollPaneLabelList, GraphicUtils
+        .setGridBagConstraints(gbc, 0, 1, 2, 2, 1.0, 1.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH, null, 0, 0));
     jPanelJobStepsList.add(jButtonRemove, GraphicUtils.setGridBagConstraints(
         gbc, 2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
     jPanelJobStepsList.add(jButtonClear, GraphicUtils.setGridBagConstraints(
         gbc, 2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobStepsList.add(jLabelFirstStepList, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, null, 0, 0));
-
+    jPanelJobStepsList.add(jLabelFirstStepList, GraphicUtils
+        .setGridBagConstraints(gbc, 0, 3, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, null, 0, 0));
     jComboBoxCurrentItem.setPreferredSize(new Dimension(250, 20));
-    jPanelJobStepsList.add(jComboBoxCurrentItem, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
+    jPanelJobStepsList.add(jComboBoxCurrentItem,
+        GraphicUtils
+            .setGridBagConstraints(gbc, 1, 3, 1, 1, 0.0, 0.0,
+                GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, null,
+                0, 0));
     jPanelJobStepsNumeric.setLayout(gbl);
     GraphicUtils.setDefaultGridBagConstraints(gbc);
-
     JPanel jPanelArrowLastStep = new JPanel();
     jPanelArrowLastStep.setLayout(new BoxLayout(jPanelArrowLastStep,
         BoxLayout.Y_AXIS));
     jPanelArrowLastStep.add(upLastStep, null);
     jPanelArrowLastStep.add(downLastStep, null);
-
-    jPanelJobStepsNumeric.add(jLabelLastStep, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jTextFieldLastStep.setPreferredSize( GraphicUtils.NUMERIC_TEXT_FIELD_DIMENSION);
-    jPanelJobStepsNumeric.add(jTextFieldLastStep, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobStepsNumeric.add(jPanelArrowLastStep, GraphicUtils.setGridBagConstraints(
-        gbc, 2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.NONE, null, 0, 0));
-
+    jPanelJobStepsNumeric
+        .add(jLabelLastStep, GraphicUtils.setGridBagConstraints(gbc, 0, 0, 1,
+            1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
+    jTextFieldLastStep
+        .setPreferredSize(GraphicUtils.NUMERIC_TEXT_FIELD_DIMENSION);
+    jPanelJobStepsNumeric
+        .add(jTextFieldLastStep, GraphicUtils.setGridBagConstraints(gbc, 1, 0,
+            1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
+    jPanelJobStepsNumeric.add(jPanelArrowLastStep, GraphicUtils
+        .setGridBagConstraints(gbc, 2, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE, null, 0, 0));
     JPanel jPanelArrowFirstStep = new JPanel();
     jPanelArrowFirstStep.setLayout(new BoxLayout(jPanelArrowFirstStep,
         BoxLayout.Y_AXIS));
     jPanelArrowFirstStep.add(upFirstStep, null);
     jPanelArrowFirstStep.add(downFirstStep, null);
-
-    jPanelJobStepsNumeric.add(jLabelFirstStepNumeric,
-        GraphicUtils.setGridBagConstraints(
-        gbc, 0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jTextFieldFirstStep.setPreferredSize( GraphicUtils.NUMERIC_TEXT_FIELD_DIMENSION);
-    jPanelJobStepsNumeric.add(jTextFieldFirstStep, GraphicUtils.setGridBagConstraints(
-        gbc, 1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-        GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    jPanelJobStepsNumeric.add(jPanelArrowFirstStep, GraphicUtils.setGridBagConstraints(
-        gbc, 2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-        GridBagConstraints.NONE, null, 0, 0));
-
+    jPanelJobStepsNumeric
+        .add(jLabelFirstStepNumeric, GraphicUtils.setGridBagConstraints(gbc, 0,
+            1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
+    jTextFieldFirstStep
+        .setPreferredSize(GraphicUtils.NUMERIC_TEXT_FIELD_DIMENSION);
+    jPanelJobStepsNumeric
+        .add(jTextFieldFirstStep, GraphicUtils.setGridBagConstraints(gbc, 1, 1,
+            1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+            GridBagConstraints.HORIZONTAL, null, 0, 0));
+    jPanelJobStepsNumeric.add(jPanelArrowFirstStep, GraphicUtils
+        .setGridBagConstraints(gbc, 2, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE, null, 0, 0));
     JPanel jPanelJobStepsInner = new JPanel();
     jPanelJobStepsInner.setLayout(gbl);
     GraphicUtils.setDefaultGridBagConstraints(gbc);
-
     jPanelJobStepsInner.add(new JPanelCheckBox(jRadioButtonLabelList,
-        jPanelJobStepsList),
-        GraphicUtils.setGridBagConstraints(
-        gbc, 0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START,
+        jPanelJobStepsList), GraphicUtils.setGridBagConstraints(gbc, 0, 1, 1,
+        1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.BOTH, null, 0, 0));
-
     jPanelJobStepsInner.add(new JPanelCheckBox(jRadioButtonNumericValue,
-        jPanelJobStepsNumeric),
-        GraphicUtils.setGridBagConstraints(
-        gbc, 1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.PAGE_START,
-        GridBagConstraints.NONE, null, 0, 0));
-
+        jPanelJobStepsNumeric), GraphicUtils.setGridBagConstraints(gbc, 1, 1,
+        1, 1, 0.0, 0.0, GridBagConstraints.PAGE_START, GridBagConstraints.NONE,
+        null, 0, 0));
     jPanelJobSteps = new JPanelCheckBox(jCheckBoxJobSteps, jPanelJobStepsInner);
-
     // this
     this.setLayout(gbl);
     GraphicUtils.setDefaultGridBagConstraints(gbc);
-
-    this.add(jPanelJobType, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
+    this.add(jPanelJobType, GraphicUtils.setGridBagConstraints(gbc, 0, 0, 1, 1,
+        0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(1, 1, 1, 1), 0, 0));
-
-    this.add(jPanelListenerPort, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
+    this.add(jPanelListenerPort, GraphicUtils.setGridBagConstraints(gbc, 0, 1,
+        1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    this.add(jPanelNodeNumber, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
+    this.add(jPanelNodeNumber, GraphicUtils.setGridBagConstraints(gbc, 0, 2, 1,
+        1, 0.0, 0.0, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
-
-    this.add(jPanelJobSteps, GraphicUtils.setGridBagConstraints(
-        gbc, 0, 3, 2, 1, 1.0, 0.2, GridBagConstraints.FIRST_LINE_START,
+    this.add(jPanelJobSteps, GraphicUtils.setGridBagConstraints(gbc, 0, 3, 2,
+        1, 1.0, 0.2, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.BOTH, null, 0, 0));
-
-    this.add(new JPanel(), GraphicUtils.setGridBagConstraints(
-        gbc, 0, 4, 2, 1, 1.0, 0.8, GridBagConstraints.FIRST_LINE_START,
+    this.add(new JPanel(), GraphicUtils.setGridBagConstraints(gbc, 0, 4, 2, 1,
+        1.0, 0.8, GridBagConstraints.FIRST_LINE_START,
         GridBagConstraints.VERTICAL, null, 0, 0));
-
     jPanelJobStepsList.setEnabled(true);
     jPanelJobStepsNumeric.setEnabled(false);
-
   }
 
   void jButtonCheckpointAddEvent(ActionEvent e) {
@@ -562,12 +551,9 @@ public class JobTypePanel extends JPanel {
         jComboBoxCurrentItem.addItem(insertedText);
         setCurrentIndexEnabled(true);
       } else {
-        JOptionPane.showOptionDialog(component,
-            checkErrorMsg,
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(component, checkErrorMsg,
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     }
     jTextFieldLabelList.selectAll();
@@ -577,9 +563,7 @@ public class JobTypePanel extends JPanel {
       boolean showErrorMsg, ActionEvent e) {
     String result = "";
     errorMsg = "";
-
     result += Jdl.TYPE + " = \"Job\";\n";
-
     String jobType = jComboBoxJobType.getSelectedItem().toString().trim();
     int index = jobType.indexOf(Utils.JOBTYPE_LIST_SEPARATOR);
     if (index != -1) {
@@ -589,14 +573,12 @@ public class JobTypePanel extends JPanel {
     } else {
       result += Jdl.JOBTYPE + " = \"" + jobType + "\";\n";
     }
-
     if (jPanelNodeNumber.isVisible()) {
       if (jTextFieldNodeNumber.isEnabled()) {
         result += Jdl.NODENUMB + " = " + jTextFieldNodeNumber.getText().trim()
             + ";\n";
       }
     }
-
     if (jPanelJobSteps.isVisible() && jCheckBoxJobSteps.isSelected()) {
       if (jPanelJobStepsList.isEnabled()) {
         int itemsCount = labelListVector.size();
@@ -626,33 +608,29 @@ public class JobTypePanel extends JPanel {
             + jTextFieldFirstStep.getText().trim() + ";\n";
       }
     }
-
     //if (jPanelListenerPort.isEnabled()) {
     if (jPanelListenerPort.isVisible()) {
       if (jTextFieldListenerPort.isEnabled()) {
-
         //!!! No Jdl constant for ListenerPort check it!
-        result += Jdl.SHPORT + " = " + jTextFieldListenerPort.getText().trim() +
-            ";\n";
+        result += Jdl.SHPORT + " = " + jTextFieldListenerPort.getText().trim()
+            + ";\n";
       }
     }
-
     logger.debug("result: " + result);
     warningMsg = ExprChecker.checkResult(result, Utils.jobTypeAttributeArray);
-
     errorMsg = errorMsg.trim();
     warningMsg = warningMsg.trim();
     if (!errorMsg.trim().equals("") && showErrorMsg) {
       GraphicUtils.showOptionDialogMsg(JobTypePanel.this, errorMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE, null,
+          null);
     } else {
       if (!warningMsg.trim().equals("") && showWarningMsg) {
         GraphicUtils.showOptionDialogMsg(JobTypePanel.this, warningMsg,
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+            Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            null, null);
       }
       jint.setJTextAreaJDL(result);
     }
@@ -699,10 +677,9 @@ public class JobTypePanel extends JPanel {
         jComboBoxCurrentItem.removeItemAt(selectedItems[i]);
       }
       jListLabelList.setListData(labelListVector);
-
       if (jListLabelList.getModel().getSize() != 0) {
-        int selectableItem = selectedItems[selectedItemsCount - 1] + 1 -
-            selectedItemsCount; //Next.
+        int selectableItem = selectedItems[selectedItemsCount - 1] + 1
+            - selectedItemsCount; //Next.
         if (selectableItem > jListLabelList.getModel().getSize() - 1) {
           selectableItem--; // Prev. (selectedItems[selectedItemsCount - 1] - selectedItemsCount).
         }
@@ -711,12 +688,9 @@ public class JobTypePanel extends JPanel {
         setCurrentIndexEnabled(false);
       }
     } else {
-      JOptionPane.showOptionDialog(JobTypePanel.this,
-          Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobTypePanel.this, Utils.SELECT_AN_ITEM,
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
     }
     jTextFieldLabelList.selectAll();
   }
@@ -752,60 +726,24 @@ public class JobTypePanel extends JPanel {
 
   void jComboBoxJobTypeEvent(ActionEvent e) {
     String selectedItem = jComboBoxJobType.getSelectedItem().toString();
-
-    if (selectedItem.equals(Jdl.JOBTYPE_MPICH)) {
+    if (selectedItem.indexOf(Jdl.JOBTYPE_MPICH) != -1) {
       jPanelNodeNumber.setVisible(true);
       setNodeNumberEnabled(true);
     } else {
       jPanelNodeNumber.setVisible(false);
       setNodeNumberEnabled(false);
     }
-
-    if (selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE)) {
+    if (selectedItem.indexOf(Jdl.JOBTYPE_CHECKPOINTABLE) != -1) {
       jPanelJobSteps.setVisible(true);
     } else {
       jPanelJobSteps.setVisible(false);
-
     }
-    if (selectedItem.equals(Jdl.JOBTYPE_INTERACTIVE)) {
+    if (selectedItem.indexOf(Jdl.JOBTYPE_INTERACTIVE) != -1) {
       jPanelListenerPort.setVisible(true);
       jint.setDef1StandardStreamsEnabled(false);
     } else {
       jPanelListenerPort.setVisible(false);
       jint.setDef1StandardStreamsEnabled(true);
-    }
-
-    if (selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE +
-        Utils.JOBTYPE_LIST_SEPARATOR
-        + Jdl.JOBTYPE_INTERACTIVE)) {
-      jPanelJobSteps.setVisible(true);
-      jPanelListenerPort.setVisible(true);
-    } else {
-      if (!selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE) &&
-          !selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE
-          + Utils.JOBTYPE_LIST_SEPARATOR + Jdl.JOBTYPE_MPICH)) {
-        jPanelJobSteps.setVisible(false);
-      }
-      if (!selectedItem.equals(Jdl.JOBTYPE_INTERACTIVE)) {
-        jPanelListenerPort.setVisible(false);
-      }
-    }
-
-    if (selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE
-        + Utils.JOBTYPE_LIST_SEPARATOR + Jdl.JOBTYPE_MPICH)) {
-      jPanelJobSteps.setVisible(true);
-      jPanelNodeNumber.setVisible(true);
-      setNodeNumberEnabled(true);
-    } else {
-      if (!selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE) &&
-          !selectedItem.equals(Jdl.JOBTYPE_CHECKPOINTABLE
-          + Utils.JOBTYPE_LIST_SEPARATOR + Jdl.JOBTYPE_INTERACTIVE)) {
-        jPanelJobSteps.setVisible(false);
-      }
-      if (!selectedItem.equals(Jdl.JOBTYPE_MPICH)) {
-        jPanelNodeNumber.setVisible(false);
-        setNodeNumberEnabled(false);
-      }
     }
   }
 
@@ -846,13 +784,11 @@ public class JobTypePanel extends JPanel {
   void setJobStepsPanelEnabled(boolean bool) {
     jRadioButtonLabelList.setEnabled(bool);
     jRadioButtonNumericValue.setEnabled(bool);
-
     if (bool) {
       if (jRadioButtonLabelList.isSelected()) {
         jPanelJobStepsNumeric.setEnabled(false);
         setNumberOfStepsEnabled(false);
         setCurrentStepEnabled(false);
-
         jPanelJobStepsList.setEnabled(true);
         setLabelListEnabled(true);
         if (jListLabelList.getModel().getSize() != 0) {
@@ -862,7 +798,6 @@ public class JobTypePanel extends JPanel {
         jPanelJobStepsNumeric.setEnabled(true);
         setNumberOfStepsEnabled(true);
         setCurrentStepEnabled(true);
-
         jPanelJobStepsList.setEnabled(false);
         setLabelListEnabled(false);
         setCurrentIndexEnabled(false);
@@ -870,16 +805,13 @@ public class JobTypePanel extends JPanel {
     } else {
       jRadioButtonLabelList.setEnabled(false);
       jRadioButtonNumericValue.setEnabled(false);
-
       jPanelJobStepsNumeric.setEnabled(false);
       setNumberOfStepsEnabled(false);
       setCurrentStepEnabled(false);
-
       jPanelJobStepsList.setEnabled(false);
       setLabelListEnabled(false);
       setCurrentIndexEnabled(false);
     }
-
   }
 
   void setJobType(String value) {
@@ -899,7 +831,6 @@ public class JobTypePanel extends JPanel {
   void setNodeNumberValue(String text) {
     jTextFieldNodeNumber.setText(text);
   }
-
 
   void setCurrentStepValue(String text) {
     setCurrentStepEnabled(true);
@@ -947,7 +878,8 @@ public class JobTypePanel extends JPanel {
   void jCheckBoxListenerPortEvent(ActionEvent e) {
     String listenerPort = jTextFieldListenerPort.getText().trim();
     if (listenerPort.equals("")) {
-      jTextFieldListenerPort.setText(Integer.toString(Utils.SHADOWPORT_DEF_VAL));
+      jTextFieldListenerPort
+          .setText(Integer.toString(Utils.SHADOWPORT_DEF_VAL));
     }
     if (jCheckBoxListenerPort.isSelected()) {
       setListenerPortEnabled(true);
@@ -962,7 +894,6 @@ public class JobTypePanel extends JPanel {
     jPanelJobStepsNumeric.setEnabled(false);
     setNumberOfStepsEnabled(false);
     setCurrentStepEnabled(false);
-
     jPanelJobStepsList.setEnabled(true);
     setLabelListEnabled(true);
     if (jListLabelList.getModel().getSize() != 0) {
@@ -974,12 +905,10 @@ public class JobTypePanel extends JPanel {
     jPanelJobStepsList.setEnabled(false);
     setLabelListEnabled(false);
     setCurrentIndexEnabled(false);
-
     jPanelJobStepsNumeric.setEnabled(true);
     setNumberOfStepsEnabled(true);
     setCurrentStepEnabled(true);
   }
-
 
   void setNodeNumberVisible(boolean bool) {
     jPanelNodeNumber.setVisible(bool);
@@ -990,5 +919,4 @@ public class JobTypePanel extends JPanel {
     jPanelListenerPort.setVisible(bool);
     setListenerPortEnabled(bool);
   }
-
 }

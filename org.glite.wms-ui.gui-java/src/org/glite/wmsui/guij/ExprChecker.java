@@ -1,28 +1,22 @@
 /*
  * ExprChecker.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme,
- * all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
 import java.io.*;
 import java.util.*;
-
 import condor.classad.*;
-
 import org.glite.wms.jdlj.JobAd;
 import org.glite.wms.jdlj.JobAdException;
-
 import java.text.ParseException;
 import javax.naming.directory.InvalidAttributeValueException;
-
 import org.apache.log4j.*;
-
 
 /**
  * Implementation of the ExprChecker class.
@@ -42,16 +36,21 @@ public class ExprChecker {
   static Logger logger = Logger.getLogger(JDLEditor.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int NORMAL = 0;
+
   static final int XML = 1;
 
   String errorMsg = "";
+
   String warningMsg = "";
 
   Vector guiAttributesVector = new Vector();
+
   Vector errorAttributeVector = new Vector();
+
   Vector errorTypeMsgVector = new Vector();
 
   /**
@@ -96,10 +95,10 @@ public class ExprChecker {
    *                    contains at least one attribute;
    *                    a null jobAd otherwise.
    */
-  public JobAd parse(File file, boolean localAccess, int type) throws ParseException {
+  public JobAd parse(File file, boolean localAccess, int type)
+      throws ParseException {
     JobAd jobAd = new JobAd();
     jobAd.setLocalAccess(localAccess);
-
     if (type == NORMAL) { // JDL file
       try {
         jobAd.fromFile(file.getAbsolutePath());
@@ -154,7 +153,6 @@ public class ExprChecker {
         }
       }
     }
-
     if (errorMsg.equals("")) { // No XML parsing error
       try {
         jobAd.checkAll();
@@ -190,8 +188,8 @@ public class ExprChecker {
    *                    contains at least one attribute;
    *                    a null jobAd otherwise.
    */
-  public JobAd parse(File file, boolean localAccess,
-      JobAd jobAdAttributeToAdd) throws ParseException {
+  public JobAd parse(File file, boolean localAccess, JobAd jobAdAttributeToAdd)
+      throws ParseException {
     JobAd jobAd = new JobAd();
     jobAd.setLocalAccess(localAccess);
     try {
@@ -207,15 +205,15 @@ public class ExprChecker {
       }
       errorMsg += e.getMessage() + "\n";
     }
-
     if (jobAdAttributeToAdd != null) {
       Iterator iterator = jobAdAttributeToAdd.attributes();
       String attribute = "";
-      for (; iterator.hasNext(); ) {
+      for (; iterator.hasNext();) {
         attribute = (String) iterator.next();
         if (!jobAd.hasAttribute(attribute)) {
           try {
-            jobAd.setAttribute(attribute, jobAdAttributeToAdd.lookup(attribute));
+            jobAd
+                .setAttribute(attribute, jobAdAttributeToAdd.lookup(attribute));
           } catch (Exception e) {
             if (isDebugging) {
               e.printStackTrace();
@@ -224,7 +222,6 @@ public class ExprChecker {
         }
       }
     }
-
     try {
       jobAd.checkAll();
     } catch (JobAdException jae) {
@@ -237,7 +234,6 @@ public class ExprChecker {
         e.printStackTrace();
       }
     }
-
     parseErrorMsg(errorMsg);
     jobAd.toLines();
     return jobAd;
@@ -280,14 +276,12 @@ public class ExprChecker {
       guiAttributesVector.add(Utils.guiAttributesArray[i]);
     }
     JobAd jobAd = new JobAd();
-
     if ((defaultRequirements != null) && !defaultRequirements.equals("")) {
       jobAd.setDefaultRequirements(defaultRequirements);
     }
     if ((defaultRank != null) && !defaultRank.equals("")) {
       jobAd.setDefaultRank(defaultRank);
     }
-
     jobAd.setLocalAccess(localAccess);
     try {
       jobAd.fromString(inputString);
@@ -329,7 +323,7 @@ public class ExprChecker {
     int index = 0;
     int firstDash = 0;
     int secondDash = 0;
-    for (; ; ) {
+    for (;;) {
       firstDash = error.indexOf("-", startingIndex);
       secondDash = error.indexOf("-", firstDash + 1);
       if ((firstDash != -1) && (secondDash != -1)) {
@@ -382,15 +376,13 @@ public class ExprChecker {
     logger.debug("");
     Iterator iterator = jobAd.attributes();
     logger.debug("Attributes names:");
-
-    for (; iterator.hasNext(); ) {
+    for (; iterator.hasNext();) {
       logger.debug("  " + iterator.next());
     }
     logger.debug("");
     iterator = jobAd.attributes();
     logger.debug("Attributes values:");
-
-    for (; iterator.hasNext(); ) {
+    for (; iterator.hasNext();) {
       logger.debug("  " + jobAd.lookup(iterator.next().toString()));
     }
   }
@@ -409,14 +401,11 @@ public class ExprChecker {
     String currentChar = new String();
     String attribute = new String();
     String value = new String();
-
     ClassAdParser cap = null;
     Expr valueExpr = null;
     JobAd jobAd = new JobAd();
-
     Iterator iterator = null;
     Vector rowInputStringVector = new Vector();
-
     int position = 0;
     int rowCount = 1;
     int rowCountNoComments = 1;
@@ -425,7 +414,6 @@ public class ExprChecker {
     int continueRowCount = 0;
     boolean isBraketPresent = false;
     errorMsg = "";
-
     // Check for squared brakets.
     int inputStringLength = trimmedInputString.length();
     if (inputStringLength == 0) {
@@ -446,13 +434,12 @@ public class ExprChecker {
           inputStringLength - 1);
       inputStringLength--;
     }
-
     // Creating a lines vector.
     for (int i = 0; i < inputStringLength; i++) {
       currentChar = trimmedInputString.substring(i, i + 1);
       if (currentChar.equals("\n")) {
-        logger.debug("Adding line: " + trimmedInputString.substring(position,
-            i + 1));
+        logger.debug("Adding line: "
+            + trimmedInputString.substring(position, i + 1));
         rowInputStringVector.addElement(trimmedInputString.substring(position,
             i + 1));
         position = i + 1;
@@ -466,7 +453,6 @@ public class ExprChecker {
     }
     inputExp = (String) rowInputStringVector.get(0);
     int k = 1;
-
     while (k < rowInputStringVector.size()) {
       if ((rowCountNoComments >= Utils.ROW_BEFORE_NO_JDL_FILE_ERROR)
           && (jobAd.size() == 0)) {
@@ -477,7 +463,6 @@ public class ExprChecker {
       String trimmedInputExp = inputExp.trim();
       int length = trimmedInputExp.length();
       int trimmedInputExpLength = trimmedInputExp.length();
-
       // Check for blank line.
       if (length == 0) {
         logger.debug("I have found a blank line");
@@ -486,7 +471,6 @@ public class ExprChecker {
         rowCount++;
         continue;
       }
-
       // Check for comment line.
       if ((trimmedInputExp.charAt(0) == '#')
           || (length >= 2 && trimmedInputExp.substring(0, 2).equals("//"))) {
@@ -496,7 +480,6 @@ public class ExprChecker {
         rowCount++;
         continue;
       }
-
       // Check for line continuing in the next one.
       if (trimmedInputExp.charAt(length - 1) == '\\') {
         logger.debug("I have found '\\', expression continues next line.");
@@ -508,7 +491,6 @@ public class ExprChecker {
         rowCountNoComments++;
         continue;
       }
-
       if (trimmedInputExp.charAt(length - 1) != ';') {
         String line = (String) rowInputStringVector.get(k);
         logger.debug("line: " + line);
@@ -526,7 +508,6 @@ public class ExprChecker {
           logger.debug("Continuing inputExp: " + inputExp);
         }
       }
-
       // Check current line for error(s). Check is line by line.
       String inputExpClassad = "[" + inputExp + "]";
       logger.debug("inputExp: " + "[" + inputExp + "]");
@@ -535,16 +516,13 @@ public class ExprChecker {
       // format: eg. \n -> "new line")
       //!!! check if needed with ClassAd 2.1!!
       inputExpClassad = Utils.addBackSlashes(inputExpClassad);
-
       cap = new ClassAdParser(inputExpClassad);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos);
       cap.setErrorStream(ps);
       cap.setVerbosity(1);
       Expr expr = cap.parse();
-
       RecordExpr recordExpr = (RecordExpr) expr;
-
       if (recordExpr == null) {
         // Formatting error messages.
         String tempErrorMsg = baos.toString().trim();
@@ -555,19 +533,21 @@ public class ExprChecker {
             // The error is like: "syntax error at line..."
             logger.debug("tempErrorMsg: " + tempErrorMsg);
             tempErrorMsg = tempErrorMsg.substring(0, linePosition + 5)
-                + (Integer.parseInt(tempErrorMsg.substring(linePosition
-                + 4, columnPosition).trim(), 10) - 1 + rowCount) + " column "
-                + (Integer.parseInt(tempErrorMsg.substring(columnPosition
-                + 6).trim(), 10) - 1);
+                + (Integer.parseInt(tempErrorMsg.substring(linePosition + 4,
+                    columnPosition).trim(), 10) - 1 + rowCount)
+                + " column "
+                + (Integer.parseInt(tempErrorMsg.substring(columnPosition + 6)
+                    .trim(), 10) - 1);
           }
           int openedSquaredBraketPosition = tempErrorMsg.indexOf("[");
           int closedSquaredBraketPosition = tempErrorMsg.indexOf("]");
           if ((openedSquaredBraketPosition != -1)
               && (closedSquaredBraketPosition != -1)) {
             tempErrorMsg = tempErrorMsg.substring(0,
-                openedSquaredBraketPosition) + " "
+                openedSquaredBraketPosition)
+                + " "
                 + tempErrorMsg.substring(openedSquaredBraketPosition + 1,
-                closedSquaredBraketPosition)
+                    closedSquaredBraketPosition)
                 + tempErrorMsg.substring(closedSquaredBraketPosition + 1);
           }
           errorMsg += "- " + tempErrorMsg + "\n";
@@ -582,7 +562,7 @@ public class ExprChecker {
       }
       // recordExpr != null.
       iterator = recordExpr.attributes();
-      for (; iterator.hasNext(); ) {
+      for (; iterator.hasNext();) {
         attribute = (String) iterator.next().toString();
         logger.debug("Attribute in RecordExp: " + attribute);
         valueExpr = recordExpr.lookup(attribute);
@@ -605,7 +585,6 @@ public class ExprChecker {
       //rowCount++;
       rowCountNoComments++;
     }
-
     if (jobAd != null) {
       jobAd.toLines();
     }
@@ -687,5 +666,4 @@ public class ExprChecker {
     }
     return warningMsg;
   }
-
 }

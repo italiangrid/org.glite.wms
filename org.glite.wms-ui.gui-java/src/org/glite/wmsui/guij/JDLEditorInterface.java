@@ -1,24 +1,16 @@
 /*
  * JDLEditorInterface.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights
- * reserved.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.util.Vector;
-
-import java.awt.Component;
 import java.awt.event.ActionEvent;
-
-import javax.swing.JButton;
-import javax.swing.JMenuBar;
-
 import org.glite.wms.jdlj.JobAd;
-
 
 /**
  * Implementation of the JDLEditorInterface interface.
@@ -32,9 +24,9 @@ import org.glite.wms.jdlj.JobAd;
  */
 public interface JDLEditorInterface {
   JobAd jobAdGlobal = new JobAd();
+
   //JButton jButtonReset = new JButton();
   //JMenuBar getJMenuBarReference();
-
   // get, set methods //
   String getUserWorkingDirectory();
 
@@ -43,7 +35,6 @@ public interface JDLEditorInterface {
   String getNodeNumberValue();
 
   //String getJobTypeValue();
-
   String getHTMLParameter(String paramName);
 
   void setJTextAreaJDL(String JDLText);
@@ -51,8 +42,8 @@ public interface JDLEditorInterface {
   // view, display methods //
   void viewAll();
 
-  String jButtonDataReqViewEvent(boolean showWarningMsg,
-      boolean showErrorMsg, ActionEvent ae);
+  String jButtonDataReqViewEvent(boolean showWarningMsg, boolean showErrorMsg,
+      ActionEvent ae);
 
   void displayJPanelDesktop();
 
@@ -63,5 +54,4 @@ public interface JDLEditorInterface {
 
   // exit method //
   void exitApplication();
-
 }

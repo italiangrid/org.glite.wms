@@ -1,31 +1,38 @@
 /*
  * JobSubmitterPreferences.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.util.*;
-import java.io.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import condor.classad.*;
-
-import org.apache.log4j.*;
-
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import condor.classad.Constant;
+import condor.classad.ListExpr;
 
 /**
  * Implementation of the JobSubmitterPreferences class.
@@ -40,30 +47,47 @@ public class JobSubmitterPreferences extends JDialog {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final String NS_PANEL_NAME = "Network Server";
+
   static final String LB_PANEL_NAME = "Logging & Bookkeeping";
+
   static final String JDL_DEFAULTS_PANEL_NAME = "JDL Defaults";
+
   static final String LOGGING_PANEL_NAME = "Logging";
+
   static final int NS_PANEL_INDEX = 0;
+
   static final int LB_PANEL_INDEX = 1;
+
   static final int MISCELLANEOUS_PANEL_INDEX = 2;
+
   static final int LOGGING_PANEL_INDEX = 3;
 
   JPanel jPanelButton = new JPanel();
+
   JButton jButtonCancel = new JButton();
+
   JButton jButtonApply = new JButton();
+
   JButton jButtonOk = new JButton();
 
   JButton jButtonLoadDefault = new JButton();
+
   JButton jButtonLoadUser = new JButton();
 
   JTabbedPane jTabbedPane = new JTabbedPane();
+
   JobSubmitter jobSubmitterJFrame;
+
   NSPreferencesPanel jobSubmitterPreferencesPanel;
+
   LBPreferencesPanel jobMonitorPreferencesPanel;
+
   JDLDefaultsPreferencesPanel jdlDefaultsPreferencesPanel;
+
   LoggingPreferencesPanel loggingPreferencesPanel;
 
   JLabel jLabelFill = new JLabel();
@@ -82,9 +106,7 @@ public class JobSubmitterPreferences extends JDialog {
     jdlDefaultsPreferencesPanel = new JDLDefaultsPreferencesPanel(
         jobSubmitterJFrame);
     loggingPreferencesPanel = new LoggingPreferencesPanel(jobSubmitterJFrame);
-
     jobMonitorPreferencesPanel.setMiscellaneousVisible(false);
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -96,18 +118,18 @@ public class JobSubmitterPreferences extends JDialog {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     // Initialize tabbed pane panels.
-    Object[][] element = { {NS_PANEL_NAME, jobSubmitterPreferencesPanel}
-        , {LB_PANEL_NAME, jobMonitorPreferencesPanel}
-        , {JDL_DEFAULTS_PANEL_NAME, jdlDefaultsPreferencesPanel}
-        , {LOGGING_PANEL_NAME, loggingPreferencesPanel}
+    Object[][] element = { { NS_PANEL_NAME, jobSubmitterPreferencesPanel
+    }, { LB_PANEL_NAME, jobMonitorPreferencesPanel
+    }, { JDL_DEFAULTS_PANEL_NAME, jdlDefaultsPreferencesPanel
+    }, { LOGGING_PANEL_NAME, loggingPreferencesPanel
+    }
     };
     for (int i = 0; i < element.length; i++) {
       jTabbedPane.addTab((String) element[i][0], (JPanel) element[i][1]);
     }
-
     jButtonCancel.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonCancelEvent(null);
@@ -145,33 +167,28 @@ public class JobSubmitterPreferences extends JDialog {
     jPanelButton.add(jButtonOk, null);
     jPanelButton.add(jButtonApply, null);
     jPanelButton.setBorder(BorderFactory.createRaisedBevelBorder());
-
     jTabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         if (jTabbedPane.getTitleAt(jTabbedPane.getSelectedIndex()).equals(
             LB_PANEL_NAME)) {
-          int selectedRow = jobSubmitterPreferencesPanel.jTableNS.
-              getSelectedRow();
+          int selectedRow = jobSubmitterPreferencesPanel.jTableNS
+              .getSelectedRow();
           if (selectedRow != -1) {
-            jobMonitorPreferencesPanel.jComboBoxNS.setSelectedItem(
-                jobSubmitterPreferencesPanel.jTableNS.getValueAt(
-                selectedRow,
-                NSPreferencesPanel.NS_ADDRESS_COLUMN_INDEX).toString());
+            jobMonitorPreferencesPanel.jComboBoxNS
+                .setSelectedItem(jobSubmitterPreferencesPanel.jTableNS
+                    .getValueAt(selectedRow,
+                        NSPreferencesPanel.NS_ADDRESS_COLUMN_INDEX).toString());
           }
         }
       }
     });
-
     this.getContentPane().setLayout(new BorderLayout());
     this.getContentPane().add(jTabbedPane, BorderLayout.CENTER);
     this.getContentPane().add(jPanelButton, BorderLayout.SOUTH);
-
     setSize(new Dimension(550, 410));
     setTitle("Job Submitter - Preferences");
     setResizable(false);
-
     jobSubmitterPreferencesPanel.jTextFieldNSName.grabFocus();
-
     jButtonLoadUserEvent(null);
   }
 
@@ -187,11 +204,9 @@ public class JobSubmitterPreferences extends JDialog {
         jButtonCancelEvent(null);
       } else {
         int choice = JOptionPane.showOptionDialog(JobSubmitterPreferences.this,
-            "Do you really want to exit?",
-            "Confirm Exit",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null);
+            "Do you really want to exit?", "Confirm Exit",
+            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            null, null);
         if (choice == 0) {
           System.exit(0);
         }
@@ -204,9 +219,9 @@ public class JobSubmitterPreferences extends JDialog {
     if (result != Utils.FAILED) {
       dispose();
       /*
-             if (reloadOldWorkingSession) {
-        jobSubmitterJFrame.loadOldWorkingSession();
-             }*/
+       if (reloadOldWorkingSession) {
+       jobSubmitterJFrame.loadOldWorkingSession();
+       }*/
     }
   }
 
@@ -216,10 +231,8 @@ public class JobSubmitterPreferences extends JDialog {
     if (GUIGlobalVars.openedEditorHashMap.size() != 0) {
       choice = JOptionPane.showOptionDialog(JobSubmitterPreferences.this,
           "Apply preferences?\nAll opened editors will be closed",
-          "Confirm Apply Preferences",
-          JOptionPane.YES_NO_OPTION,
-          JOptionPane.QUESTION_MESSAGE,
-          null, null, null);
+          "Confirm Apply Preferences", JOptionPane.YES_NO_OPTION,
+          JOptionPane.QUESTION_MESSAGE, null, null, null);
       if (choice != 0) {
         return Utils.FAILED;
       }
@@ -246,25 +259,22 @@ public class JobSubmitterPreferences extends JDialog {
     Map nsLBMap = new HashMap();
     if (nsVector.size() != 0) {
       if (lbVector.size() != 0) {
-        if (lbVector.get(0)instanceof String) {
+        if (lbVector.get(0) instanceof String) {
           for (int i = 1; i < lbVector.size(); i++) {
-            if (!(lbVector.get(i)instanceof String)) {
-              throw new Exception("Unable to parse configuration file, "
-                  + "'" + Utils.CONF_FILE_LBADDRESSES
-                  + "' attribute");
+            if (!(lbVector.get(i) instanceof String)) {
+              throw new Exception("Unable to parse configuration file, " + "'"
+                  + Utils.CONF_FILE_LBADDRESSES + "' attribute");
             }
           }
         } else { // Vector.
           for (int i = 1; i < lbVector.size(); i++) {
-            if (lbVector.get(i)instanceof String) {
-              throw new Exception("Unable to parse configuration file, "
-                  + "'" + Utils.CONF_FILE_LBADDRESSES
-                  + "' attribute");
-
+            if (lbVector.get(i) instanceof String) {
+              throw new Exception("Unable to parse configuration file, " + "'"
+                  + Utils.CONF_FILE_LBADDRESSES + "' attribute");
             }
           }
         }
-        if (lbVector.get(0)instanceof String) { // Attribute is a simple list.
+        if (lbVector.get(0) instanceof String) { // Attribute is a simple list.
           for (int i = 0; i < nsVector.size(); i++) {
             nsLBMap.put(nsVector.get(i).toString(), lbVector.clone());
           }
@@ -300,39 +310,35 @@ public class JobSubmitterPreferences extends JDialog {
       try {
         userConfAd.fromFile(userConfFile.toString());
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_ADDRESS)) {
-            nsVector =
-                userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_NS_ADDRESS);
+            nsVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_NS_ADDRESS);
           }
           if (nsVector.size() != 0) {
             if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_LB_ADDRESS)) {
-              lbVector =
-                  userConfJobSubmitterAd.getStringValue(Utils.
-                  PREF_FILE_LB_ADDRESS);
+              lbVector = userConfJobSubmitterAd
+                  .getStringValue(Utils.PREF_FILE_LB_ADDRESS);
               if (lbVector.size() != 0) {
-                if (lbVector.get(0)instanceof String) {
+                if (lbVector.get(0) instanceof String) {
                   for (int i = 1; i < lbVector.size(); i++) {
-                    if (!(lbVector.get(i)instanceof String)) {
+                    if (!(lbVector.get(i) instanceof String)) {
                       throw new Exception("Unable to parse configuration file "
-                          + userConfFile + "\n'"
-                          + Utils.CONF_FILE_LBADDRESSES
+                          + userConfFile + "\n'" + Utils.CONF_FILE_LBADDRESSES
                           + "' attribute");
                     }
                   }
                 } else { // Vector.
                   for (int i = 1; i < lbVector.size(); i++) {
-                    if (lbVector.get(i)instanceof String) {
+                    if (lbVector.get(i) instanceof String) {
                       throw new Exception("Unable to parse configuration file "
-                          + userConfFile + "\n'"
-                          + Utils.CONF_FILE_LBADDRESSES
+                          + userConfFile + "\n'" + Utils.CONF_FILE_LBADDRESSES
                           + "' attribute");
                     }
                   }
                 }
-                if (lbVector.get(0)instanceof String) { // Attribute is a simple list.
+                if (lbVector.get(0) instanceof String) { // Attribute is a simple list.
                   for (int i = 0; i < nsVector.size(); i++) {
                     nsLBMap.put(nsVector.get(i).toString(), lbVector.clone());
                   }
@@ -376,12 +382,11 @@ public class JobSubmitterPreferences extends JDialog {
       try {
         userConfAd.fromFile(userConfFile.toString());
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_LB_ADDRESS)) {
-            lbVector =
-                userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_LB_ADDRESS);
+            lbVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_LB_ADDRESS);
           }
         }
       } catch (Exception ex) {
@@ -402,8 +407,8 @@ public class JobSubmitterPreferences extends JDialog {
       try {
         userConfAd.fromFile(userConfFile.toString());
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userPrefJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userPrefJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           userConfAd.delAttribute(Utils.PREF_FILE_JOB_SUBMITTER);
         }
       } catch (Exception ex) {
@@ -442,8 +447,8 @@ public class JobSubmitterPreferences extends JDialog {
       try {
         userConfAd.fromFile(userConfFile.toString());
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userPrefJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userPrefJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           userConfAd.delAttribute(Utils.PREF_FILE_JOB_SUBMITTER);
         }
       } catch (Exception ex) {
@@ -498,19 +503,19 @@ public class JobSubmitterPreferences extends JDialog {
       }
       try {
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          Ad userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          Ad userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_NAME)) {
-            Vector nsNameVector = userConfJobSubmitterAd.getStringValue(Utils.
-                PREF_FILE_NS_NAME);
-            Vector nsAddressVector = userConfJobSubmitterAd.getStringValue(
-                Utils.PREF_FILE_NS_ADDRESS);
-            Vector nsJDLESchemaVector = userConfJobSubmitterAd.getStringValue(
-                Utils.PREF_FILE_JDLE_SCHEMA);
+            Vector nsNameVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_NS_NAME);
+            Vector nsAddressVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_NS_ADDRESS);
+            Vector nsJDLESchemaVector = userConfJobSubmitterAd
+                .getStringValue(Utils.PREF_FILE_JDLE_SCHEMA);
             for (int i = 0; i < nsNameVector.size(); i++) {
               nsVector.add(new NetworkServer(nsNameVector.get(i).toString(),
-                  nsAddressVector.get(i).toString(),
-                  nsJDLESchemaVector.get(i).toString()));
+                  nsAddressVector.get(i).toString(), nsJDLESchemaVector.get(i)
+                      .toString()));
             }
           }
         }
@@ -532,8 +537,8 @@ public class JobSubmitterPreferences extends JDialog {
       try {
         userConfAd.fromFile(userConfFile.toString());
         if (userConfAd.hasAttribute(Utils.PREF_FILE_JOB_SUBMITTER)) {
-          userConfJobSubmitterAd = userConfAd.getAd(Utils.
-              PREF_FILE_JOB_SUBMITTER);
+          userConfJobSubmitterAd = userConfAd
+              .getAd(Utils.PREF_FILE_JOB_SUBMITTER);
           userConfAd.delAttribute(Utils.PREF_FILE_JOB_SUBMITTER);
         }
       } catch (Exception ex) {
@@ -547,10 +552,10 @@ public class JobSubmitterPreferences extends JDialog {
     Vector guiNSJDLESchemaVector = new Vector();
     for (int i = 0; i < nsNameVector.size(); i++) {
       guiNSNameVector.add(Constant.getInstance(nsNameVector.get(i).toString()));
-      guiNSAddressVector.add(Constant.getInstance(nsAddressVector.get(i).
-          toString()));
-      guiNSJDLESchemaVector.add(Constant.getInstance(nsSchemaVector.get(i).
-          toString()));
+      guiNSAddressVector.add(Constant.getInstance(nsAddressVector.get(i)
+          .toString()));
+      guiNSJDLESchemaVector.add(Constant.getInstance(nsSchemaVector.get(i)
+          .toString()));
     }
     try {
       if (userConfJobSubmitterAd.hasAttribute(Utils.PREF_FILE_NS_NAME)) {
@@ -598,8 +603,8 @@ public class JobSubmitterPreferences extends JDialog {
     if (preferences.equals(Utils.USER_PREFERENCES)) {
       Vector nsVectorConfFile = JobSubmitterPreferences.loadPrefFileNS();
       jobSubmitterJFrame.setNSTabbedPanePanels(nsVectorConfFile);
-      jobSubmitterJFrame.setNSMenuItems(JobSubmitterPreferences.
-          loadPrefFileNSNames());
+      jobSubmitterJFrame.setNSMenuItems(JobSubmitterPreferences
+          .loadPrefFileNSNames());
       jobSubmitterPreferencesPanel.loadPreferencesFromFile();
     } else if (preferences.equals(Utils.DEFAULT_PREFERENCES)) {
       Vector nsAddressesVector = GUIGlobalVars.getNSVector();
@@ -611,9 +616,8 @@ public class JobSubmitterPreferences extends JDialog {
         for (int i = 0; i < nsAddressesVector.size(); i++) {
           nsName = Utils.DEFAULT_NS_NAME + Integer.toString(i + 1);
           nsNameVector.add(nsName);
-          nsVector.add(new NetworkServer(nsName,
-              nsAddressesVector.get(i).toString(),
-              Utils.DEFAULT_INFORMATION_SCHEMA));
+          nsVector.add(new NetworkServer(nsName, nsAddressesVector.get(i)
+              .toString(), Utils.DEFAULT_INFORMATION_SCHEMA));
           nsSchemaVector.add(Utils.DEFAULT_INFORMATION_SCHEMA);
         }
         jobSubmitterJFrame.setNSTabbedPanePanels(nsVector);
@@ -625,11 +629,9 @@ public class JobSubmitterPreferences extends JDialog {
 
   void jButtonLoadDefaultEvent(ActionEvent ae) {
     int choice = JOptionPane.showOptionDialog(JobSubmitterPreferences.this,
-        "Load Default Preferences?",
-        "Confirm Load Default Preferences",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Load Default Preferences?", "Confirm Load Default Preferences",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       jobSubmitterPreferencesPanel.loadDefaultPreferences();
       jobMonitorPreferencesPanel.loadDefaultPreferences();
@@ -646,11 +648,8 @@ public class JobSubmitterPreferences extends JDialog {
     } catch (Exception e) {
       e.printStackTrace();
       JOptionPane.showOptionDialog(JobSubmitterPreferences.this,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          e.getMessage(), Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
     }
     jdlDefaultsPreferencesPanel.loadPreferencesFromFile();
     loggingPreferencesPanel.loadPreferencesFromFile();
@@ -660,11 +659,10 @@ public class JobSubmitterPreferences extends JDialog {
     Ad userPrefAd = new Ad();
     Ad defaultPrefAd = new Ad();
     Ad voSpecificPrefAd = new Ad();
-
     String warningMsg = "";
-
     try {
-      logger.debug("Reading getUserPrefFile: " + GUIFileSystem.getUserPrefFile());
+      logger.debug("Reading getUserPrefFile: "
+          + GUIFileSystem.getUserPrefFile());
       userPrefAd.fromFile(GUIFileSystem.getUserPrefFile());
       logger.debug("userPrefAd: " + userPrefAd);
     } catch (Exception ex) {
@@ -673,7 +671,8 @@ public class JobSubmitterPreferences extends JDialog {
       }
     }
     try {
-      logger.debug("Reading getGUIConfVarFile: " + GUIFileSystem.getGUIConfVarFile());
+      logger.debug("Reading getGUIConfVarFile: "
+          + GUIFileSystem.getGUIConfVarFile());
       defaultPrefAd.fromFile(GUIFileSystem.getGUIConfVarFile());
       logger.debug("defaultPrefFile: " + defaultPrefAd);
     } catch (Exception ex) {
@@ -682,7 +681,8 @@ public class JobSubmitterPreferences extends JDialog {
       }
     }
     try {
-      logger.debug("Reading getGUIConfVOFile: " + GUIFileSystem.getGUIConfVOFile());
+      logger.debug("Reading getGUIConfVOFile: "
+          + GUIFileSystem.getGUIConfVOFile());
       voSpecificPrefAd.fromFile(GUIFileSystem.getGUIConfVOFile());
       logger.debug("voSpecificPrefFile: " + voSpecificPrefAd);
     } catch (Exception ex) {
@@ -690,20 +690,17 @@ public class JobSubmitterPreferences extends JDialog {
         ex.printStackTrace();
       }
     }
-
     //if ((userPrefAd.size() == 0) && (defaultPrefFile.size() == 0)) {
     //return;
     //}
-
     try {
-      Vector returnVector = JDLDefaultsPreferencesPanel.
-          getRequirementsRankVector(userPrefAd,
-          voSpecificPrefAd, defaultPrefAd);
+      Vector returnVector = JDLDefaultsPreferencesPanel
+          .getRequirementsRankVector(userPrefAd, voSpecificPrefAd,
+              defaultPrefAd);
       GUIGlobalVars.srrDefaultVector = (Vector) returnVector.get(0);
-      JDLDefaultsPreferencesPanel.setSchemaAttributes(GUIGlobalVars.
-          srrDefaultVector, userPrefAd);
+      JDLDefaultsPreferencesPanel.setSchemaAttributes(
+          GUIGlobalVars.srrDefaultVector, userPrefAd);
       warningMsg += returnVector.get(1).toString();
-
       if (userPrefAd.hasAttribute(Utils.CONF_FILE_HLRLOCATION)) {
         GUIGlobalVars.setHLRLocation(userPrefAd.getStringValue(
             Utils.CONF_FILE_HLRLOCATION).get(0).toString());
@@ -723,21 +720,21 @@ public class JobSubmitterPreferences extends JDialog {
         userPrefAd.setAttribute(Utils.CONF_FILE_MYPROXYSERVER, myProxyServer);
       }
       if (userPrefAd.hasAttribute(Utils.GUI_CONF_VAR_RETRY_COUNT)) {
-        GUIGlobalVars.setGUIConfVarRetryCount(((Integer) userPrefAd.getIntValue(
-            Utils.GUI_CONF_VAR_RETRY_COUNT).get(0)).intValue());
+        GUIGlobalVars.setGUIConfVarRetryCount(((Integer) userPrefAd
+            .getIntValue(Utils.GUI_CONF_VAR_RETRY_COUNT).get(0)).intValue());
       } else if (defaultPrefAd.hasAttribute(Utils.GUI_CONF_VAR_RETRY_COUNT)) {
         int retryCount = ((Integer) defaultPrefAd.getIntValue(
             Utils.GUI_CONF_VAR_RETRY_COUNT).get(0)).intValue();
         GUIGlobalVars.setGUIConfVarRetryCount(retryCount);
         userPrefAd.setAttribute(Utils.GUI_CONF_VAR_RETRY_COUNT, retryCount);
       }
-
       // LoggingPreferencesPanel
       if (userPrefAd.hasAttribute(Utils.GUI_CONF_VAR_LOGGING_DESTINATION)) {
-        GUIGlobalVars.setGUIConfVarLoggingDestination(userPrefAd.getStringValue(
-            Utils.GUI_CONF_VAR_LOGGING_DESTINATION).get(0).toString());
-      } else if (voSpecificPrefAd.hasAttribute(Utils.
-          GUI_CONF_VAR_LOGGING_DESTINATION)) {
+        GUIGlobalVars.setGUIConfVarLoggingDestination(userPrefAd
+            .getStringValue(Utils.GUI_CONF_VAR_LOGGING_DESTINATION).get(0)
+            .toString());
+      } else if (voSpecificPrefAd
+          .hasAttribute(Utils.GUI_CONF_VAR_LOGGING_DESTINATION)) {
         String loggingDestination = voSpecificPrefAd.getStringValue(
             Utils.GUI_CONF_VAR_LOGGING_DESTINATION).get(0).toString();
         GUIGlobalVars.setGUIConfVarLoggingDestination(loggingDestination);
@@ -745,9 +742,9 @@ public class JobSubmitterPreferences extends JDialog {
             loggingDestination);
       }
       if (userPrefAd.hasAttribute(Utils.GUI_CONF_VAR_LOGGING_TIMEOUT)) {
-        GUIGlobalVars.setGUIConfVarLoggingTimeout(((Integer) userPrefAd.
-            getIntValue(
-            Utils.GUI_CONF_VAR_LOGGING_TIMEOUT).get(0)).intValue());
+        GUIGlobalVars
+            .setGUIConfVarLoggingTimeout(((Integer) userPrefAd.getIntValue(
+                Utils.GUI_CONF_VAR_LOGGING_TIMEOUT).get(0)).intValue());
       } else if (defaultPrefAd.hasAttribute(Utils.GUI_CONF_VAR_LOGGING_TIMEOUT)) {
         int loggingTimeout = ((Integer) defaultPrefAd.getIntValue(
             Utils.GUI_CONF_VAR_LOGGING_TIMEOUT).get(0)).intValue();
@@ -756,11 +753,11 @@ public class JobSubmitterPreferences extends JDialog {
             loggingTimeout);
       }
       if (userPrefAd.hasAttribute(Utils.GUI_CONF_VAR_LOGGING_SYNC_TIMEOUT)) {
-        GUIGlobalVars.setGUIConfVarLoggingSyncTimeout(((Integer) userPrefAd.
-            getIntValue(
-            Utils.GUI_CONF_VAR_LOGGING_SYNC_TIMEOUT).get(0)).intValue());
-      } else if (defaultPrefAd.hasAttribute(Utils.
-          GUI_CONF_VAR_LOGGING_SYNC_TIMEOUT)) {
+        GUIGlobalVars.setGUIConfVarLoggingSyncTimeout(((Integer) userPrefAd
+            .getIntValue(Utils.GUI_CONF_VAR_LOGGING_SYNC_TIMEOUT).get(0))
+            .intValue());
+      } else if (defaultPrefAd
+          .hasAttribute(Utils.GUI_CONF_VAR_LOGGING_SYNC_TIMEOUT)) {
         int loggingTimeout = ((Integer) defaultPrefAd.getIntValue(
             Utils.GUI_CONF_VAR_LOGGING_SYNC_TIMEOUT).get(0)).intValue();
         GUIGlobalVars.setGUIConfVarLoggingSyncTimeout(loggingTimeout);
@@ -776,10 +773,11 @@ public class JobSubmitterPreferences extends JDialog {
         GUIGlobalVars.setGUIConfVarErrorStorage(errorStorage);
         userPrefAd.setAttribute(Utils.GUI_CONF_VAR_ERROR_STORAGE, errorStorage);
       } else {
-        userPrefAd.setAttribute(Utils.GUI_CONF_VAR_ERROR_STORAGE,
-            GUIGlobalVars.getGUIConfVarErrorStorage());
+        userPrefAd.setAttribute(Utils.GUI_CONF_VAR_ERROR_STORAGE, GUIGlobalVars
+            .getGUIConfVarErrorStorage());
       }
-      GUIFileSystem.saveTextFile(GUIFileSystem.getUserPrefFile(), userPrefAd.toString(true, true));
+      GUIFileSystem.saveTextFile(GUIFileSystem.getUserPrefFile(), userPrefAd
+          .toString(true, true));
     } catch (Exception e) {
       if (isDebugging) {
         e.printStackTrace();
@@ -801,5 +799,4 @@ public class JobSubmitterPreferences extends JDialog {
   NSPreferencesPanel getNSPreferencesPanelReference() {
     return jobSubmitterPreferencesPanel;
   }
-
 }

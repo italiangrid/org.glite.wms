@@ -1,28 +1,55 @@
 /*
  * ListmatchFrame.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-
-import java.io.*;
-import java.util.*;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.TableColumn;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
+import org.glite.wmsui.apij.Job;
+import org.glite.wmsui.apij.Result;
+import org.glite.wmsui.apij.Url;
+import org.glite.wmsui.apij.UserCredential;
 
 /**
  * Implementation of the ListmatchFrame class.
@@ -37,31 +64,48 @@ public class ListmatchFrame extends JFrame {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int CE_ID_COLUMN_INDEX = 0;
+
   static final int RANK_VALUE_COLUMN_INDEX = 1;
-  static final String[] stringHeader = {
-      "CE Id", "rank Value"
+
+  static final String[] stringHeader = { "CE Id", "rank Value"
   };
 
   private Component component;
+
   private String nsName;
+
   private String nsAddress;
+
   private String keyJobName;
+
   private String title;
 
   JTable jTableCEId;
+
   JobTableModel jobTableModel;
+
   JPanel jPanelCEId = new JPanel();
+
   JScrollPane jScrollPaneJListmatchFrame = new JScrollPane();
+
   JScrollPane jScrollPaneCEId = new JScrollPane();
+
   JLabel jLabelTotalFoundCEIds = new JLabel();
+
   JTextField jTextFieldTotalFoundCEIds = new JTextField();
+
   JButton jButtonSelectCEId = new JButton();
+
   JLabel jLabelSelectedCEId = new JLabel();
+
   JTextField jTextFieldSelectedCEId = new JTextField();
+
   JButton jButtonClose = new JButton();
+
   JButton jButtonSave = new JButton();
 
   /**
@@ -75,7 +119,6 @@ public class ListmatchFrame extends JFrame {
     this.nsAddress = nsAddress;
     this.keyJobName = keyJobName;
     this.title = title;
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -87,34 +130,30 @@ public class ListmatchFrame extends JFrame {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     setSize(new Dimension(525, 343));
     setResizable(false);
     this.getContentPane().setLayout(null);
-
     Vector vectorHeader = new Vector();
     for (int i = 0; i < stringHeader.length; i++) {
       vectorHeader.addElement(stringHeader[i]);
     }
     jobTableModel = new JobTableModel(vectorHeader, 0);
-
     jTableCEId = new JTable(jobTableModel);
     jTableCEId.getTableHeader().setReorderingAllowed(false);
     jTableCEId.setAutoCreateColumnsFromModel(false);
     jTableCEId.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
     TableColumn col = jTableCEId.getColumnModel().getColumn(CE_ID_COLUMN_INDEX);
     col.setCellRenderer(new GUITableTooltipCellRenderer());
     col = jTableCEId.getColumnModel().getColumn(RANK_VALUE_COLUMN_INDEX);
     col.setCellRenderer(new GUITableTooltipCellRenderer());
     col.setMinWidth(80);
     col.setMaxWidth(80);
-
     jPanelCEId.setLayout(null);
     jPanelCEId.setBorder(new TitledBorder(new EtchedBorder(),
-        " Listmatch CE Ids Table ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
+        " Listmatch CE Ids Table ", 0, 0, null,
+        GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jButtonClose.setBounds(new Rectangle(5, 284, 85, 25));
     jButtonClose.setText("Close");
     jButtonClose.addActionListener(new java.awt.event.ActionListener() {
@@ -129,7 +168,8 @@ public class ListmatchFrame extends JFrame {
     jLabelTotalFoundCEIds.setText("Total CE Ids");
     jLabelTotalFoundCEIds.setBounds(new Rectangle(351, 21, 98, 18));
     jTextFieldTotalFoundCEIds.setFont(new java.awt.Font("Dialog", 1, 12));
-    jTextFieldTotalFoundCEIds.setBorder(BorderFactory.createLoweredBevelBorder());
+    jTextFieldTotalFoundCEIds.setBorder(BorderFactory
+        .createLoweredBevelBorder());
     jTextFieldTotalFoundCEIds.setText("");
     jTextFieldTotalFoundCEIds.setHorizontalAlignment(SwingConstants.RIGHT);
     jTextFieldTotalFoundCEIds.setEditable(false);
@@ -170,20 +210,18 @@ public class ListmatchFrame extends JFrame {
     this.getContentPane().add(jButtonSave, null);
     this.getContentPane().add(jLabelSelectedCEId, null);
     this.getContentPane().setVisible(true);
-
     jTableCEId.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 1) {
           Point p = e.getPoint();
           int row = jTableCEId.rowAtPoint(p);
           int column = jTableCEId.columnAtPoint(p);
-          String selectedCEId = jTableCEId.getValueAt(row,
-              CE_ID_COLUMN_INDEX).toString().trim();
+          String selectedCEId = jTableCEId.getValueAt(row, CE_ID_COLUMN_INDEX)
+              .toString().trim();
           jTextFieldSelectedCEId.setText(selectedCEId);
         }
       }
     });
-
   }
 
   /**
@@ -197,8 +235,8 @@ public class ListmatchFrame extends JFrame {
       vectorTemp.addElement("");
       jobTableModel.addRow(vectorTemp);
     }
-    jTextFieldTotalFoundCEIds.setText(Integer.toString(jobTableModel.
-        getRowCount()));
+    jTextFieldTotalFoundCEIds.setText(Integer.toString(jobTableModel
+        .getRowCount()));
     if (jobTableModel.getRowCount() != 0) {
       jTableCEId.setRowSelectionInterval(0, 0);
       jTextFieldSelectedCEId.setText(jobTableModel.getValueAt(0,
@@ -207,7 +245,7 @@ public class ListmatchFrame extends JFrame {
   }
 
   /**
-       * Loads CE Ids and corrisponding rank value from file represented by filePath
+   * Loads CE Ids and corrisponding rank value from file represented by filePath
    * and inserts the values in the CE Ids table.
    * @throws Exception
    * @returns Utils.SUCCESS or Utils.FAILED depending on the method outcome.
@@ -221,30 +259,26 @@ public class ListmatchFrame extends JFrame {
       job = new Job(jobAd);
       logger.info("setCEIdTable(String file) - jobAd: " + jobAd);
       logger.info("setCEIdTable(String file) - NS Address: " + this.nsAddress);
-      UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.
-          proxyFilePath));
-      if (userCredential.getX500UserSubject().equals(GUIGlobalVars.proxySubject)) {
+      UserCredential userCredential = new UserCredential(new File(
+          GUIGlobalVars.proxyFilePath));
+      if (userCredential.getX500UserSubject()
+          .equals(GUIGlobalVars.proxySubject)) {
         result = job.listMatchingCE(new Url(this.nsAddress));
       } else {
-        JOptionPane.showOptionDialog(component,
-            Utils.FATAL_ERROR + "Proxy file user subject has changed"
-            + "\nApplication will be terminated",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-        System.exit( -1);
+        JOptionPane.showOptionDialog(component, Utils.FATAL_ERROR
+            + "Proxy file user subject has changed"
+            + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
+        System.exit(-1);
       }
     } catch (Exception e) {
       if (isDebugging) {
         e.printStackTrace();
       }
-      JOptionPane.showOptionDialog(this.component,
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(this.component, e.getMessage(),
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return Utils.FAILED;
     }
     int code = result.getCode();
@@ -265,17 +299,14 @@ public class ListmatchFrame extends JFrame {
         jobTableModel.insertRow(0, rowToAddVector);
       }
     } else {
-      JOptionPane.showOptionDialog(this.component,
-          "Job '" + keyJobName + "':\n"
-          + ((Exception) result.getResult()).getMessage(),
-          "JobSubmitter - Listmatch",
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(this.component, "Job '" + keyJobName
+          + "':\n" + ((Exception) result.getResult()).getMessage(),
+          "JobSubmitter - Listmatch", JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return Utils.FAILED;
     }
-    jTextFieldTotalFoundCEIds.setText(Integer.toString(jobTableModel.
-        getRowCount()));
+    jTextFieldTotalFoundCEIds.setText(Integer.toString(jobTableModel
+        .getRowCount()));
     if (jobTableModel.getRowCount() != 0) {
       jTableCEId.setRowSelectionInterval(0, 0);
       jTextFieldSelectedCEId.setText(jobTableModel.getValueAt(0,
@@ -304,9 +335,11 @@ public class ListmatchFrame extends JFrame {
   void jButtonSelectCEIdEvent(ActionEvent ae) {
     String selectedCEId = jTextFieldSelectedCEId.getText().trim();
     if (!selectedCEId.equals("")) {
-      String temporaryPhysicalFileName = GUIFileSystem.
-          getJobTemporaryFileDirectory()
-          + this.nsName + File.separator + this.keyJobName
+      String temporaryPhysicalFileName = GUIFileSystem
+          .getJobTemporaryFileDirectory()
+          + this.nsName
+          + File.separator
+          + this.keyJobName
           + GUIFileSystem.JDL_FILE_EXTENSION;
       try {
         JobAd jobAd = new JobAd();
@@ -315,35 +348,32 @@ public class ListmatchFrame extends JFrame {
           jobAd.delAttribute(Jdl.CEID);
         }
         jobAd.setAttribute(Jdl.CEID, selectedCEId);
-        GUIFileSystem.saveTextFile(temporaryPhysicalFileName, jobAd.toString(true, true));
+        GUIFileSystem.saveTextFile(temporaryPhysicalFileName, jobAd.toString(
+            true, true));
       } catch (Exception e) {
         if (isDebugging) {
           e.printStackTrace();
         }
-        JOptionPane.showOptionDialog(ListmatchFrame.this,
-            e.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(ListmatchFrame.this, e.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
       jButtonCloseEvent(null);
     } else {
       JOptionPane.showOptionDialog(ListmatchFrame.this,
           "Please choose or provide a CE Id before selection",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.INFORMATION_MESSAGE, null, null, null);
     }
   }
 
   void jButtonSaveEvent(ActionEvent e) {
     JFileChooser fileChooser = new JFileChooser();
     fileChooser.setDialogTitle("Save CE Ids List File");
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
-    String[] extensions = {"LST"};
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
+    String[] extensions = { "LST"
+    };
     GUIFileFilter classadFileFilter = new GUIFileFilter("*.lst", extensions);
     fileChooser.addChoosableFileFilter(classadFileFilter);
     int choice = fileChooser.showSaveDialog(ListmatchFrame.this);
@@ -357,11 +387,9 @@ public class ListmatchFrame extends JFrame {
       choice = 0;
       if (outputFile.isFile()) {
         choice = JOptionPane.showOptionDialog(ListmatchFrame.this,
-            "Output file exists. Overwrite?",
-            "Confirm Save",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null);
+            "Output file exists. Overwrite?", "Confirm Save",
+            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            null, null);
       }
       if (choice == 0) {
         try {
@@ -369,8 +397,9 @@ public class ListmatchFrame extends JFrame {
               selectedFile)));
           if (jobTableModel.getRowCount() != 0) {
             for (int i = 0; i < jobTableModel.getRowCount(); i++) {
-              out.write(jTableCEId.getValueAt(i,
-                  CE_ID_COLUMN_INDEX).toString().trim() + "\n");
+              out.write(jTableCEId.getValueAt(i, CE_ID_COLUMN_INDEX).toString()
+                  .trim()
+                  + "\n");
             }
           } else {
             out.write("");
@@ -407,5 +436,4 @@ public class ListmatchFrame extends JFrame {
     }
     GUIGlobalVars.openedListmatchMap.clear();
   }
-
 }

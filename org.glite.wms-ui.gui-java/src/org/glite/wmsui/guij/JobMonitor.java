@@ -1,33 +1,81 @@
 /*
  * JobMonitor.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.io.*;
-import java.util.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URL;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-import javax.swing.JTable.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import org.glite.wms.jdlj.JobState;
+import org.glite.wmsui.apij.Job;
+import org.glite.wmsui.apij.JobCollection;
+import org.glite.wmsui.apij.JobCollectionException;
+import org.glite.wmsui.apij.JobId;
+import org.glite.wmsui.apij.Url;
+import org.glite.wmsui.apij.UserCredential;
+import org.glite.wmsui.apij.UserJobs;
 
 /**
  * Implementation of the JobMonitor class.
@@ -43,11 +91,13 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final String TITLE = "Job Monitor";
 
   static final int JOB_MONITOR_MAIN = 0;
+
   static final int MULTIPLE_JOB_PANEL = 1;
 
   static final int JOB_ID_COLUMN_INDEX = 0;
@@ -57,55 +107,88 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   private Vector menuLBVector = new Vector();
 
   Map dagMonThreadMap = new HashMap();
+
   Map dagMonitorMap = new HashMap();
 
   Map userQueryMap = new HashMap();
+
   Map userQueryAvailabilityMap = new HashMap();
 
   JobSubmitter jobSubmitterJFrame;
+
   JobMonitorPreferences jobMonitorPreferences;
 
   String selectedPreferences = Utils.DEFAULT_PREFERENCES;
+
   boolean isJobPresentOnStartup = false;
 
   private JPopupMenu jPopupMenuTable = new JPopupMenu();
+
   JMenuItem jMenuItemRemove = new JMenuItem("Remove");
+
   JMenuItem jMenuItemClear = new JMenuItem("Clear");
+
   JMenuItem jMenuItemSelectAll = new JMenuItem("Select All");
+
   JMenuItem jMenuItemSelectNone = new JMenuItem("Select None");
+
   JMenuItem jMenuItemInvertSelection = new JMenuItem("Invert Selection");
+
   JMenuItem jMenuItemStatus = new JMenuItem("Job Status");
+
   JMenuItem jMenuItemRetrieveCheckpointState = new JMenuItem(
       "Retrieve Checkpoint State");
+
   JMenuItem jMenuItemGetJobIdAllLB = new JMenuItem(
       "     Get Job Ids from All LBs");
+
   JMenu jMenuItemGetJobIdFromLB = new JMenu("     Get Job Ids from LB");
+
   JMenu jMenuItemGetJobIdMatchingQuery = new JMenu(
       "     Get Job Ids Matching Query");
 
   JMenuItem jMenuItemChangeVO = new JMenuItem("Change VO");
 
   JobTableModel jobTableModel;
+
   JTable jTableJobs;
+
   Vector vectorHeader = new Vector();
+
   JScrollPane jScrollPaneJobTable = new JScrollPane();
+
   JScrollPane jScrollPaneMain = new JScrollPane();
+
   JLabel jLabelTotalDisplayed = new JLabel();
+
   JLabel jLabelTotalDisplayedJobs = new JLabel();
+
   JTextField jTextFieldUserJobId = new JTextField();
+
   JButton jButtonClearJobId = new JButton();
+
   JButton jButtonAddJobId = new JButton();
+
   JPanel jPanelJobId = new JPanel();
+
   JPanel jPanelJobIdTable = new JPanel();
+
   JButton jButtonView = new JButton();
+
   MultipleJobPanel multipleJobPanel;
+
   JPanel jPanelMain = new JPanel();
+
   JLabel jLabelTotalSelected = new JLabel();
+
   JLabel jLabelTotalSelectedJobs = new JLabel();
+
   JMenuBar jMenuBar;
 
   JPanel jPanelButton = new JPanel();
+
   JPanel jPanelLabel = new JPanel();
+
   JPanel jPanelJobIdButton = new JPanel();
 
   /**
@@ -127,7 +210,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     credential.setModal(true);
     GraphicUtils.screenCenterWindow(credential);
     credential.show();
-
     // If a previous session has crashed try to recover it
     //loadConf(getJobMonitorRecoveryFile());
   }
@@ -139,7 +221,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     super(TITLE + " - Virtual Organisation: "
         + GUIGlobalVars.getVirtualOrganisation());
     this.jobSubmitterJFrame = jobSubmitter;
-
     enableEvents(AWTEvent.WINDOW_EVENT_MASK);
     try {
       jbInit();
@@ -148,7 +229,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         e.printStackTrace();
       }
     }
-
     setLBQueryMenuItems(loadUserQueriesFromFile());
     // If a previous session has crashed try to recover it
     loadConf(getJobMonitorRecoveryFile());
@@ -157,23 +237,19 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   private void jbInit() throws Exception {
     // Set application type. The type of application affects on some settings.
     Utils.setApplicationType(Utils.FRAME);
-
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
-        ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     Toolkit toolkit = getToolkit();
     Dimension screenSize = toolkit.getScreenSize();
     this.setSize(new Dimension(
         (int) (screenSize.width * GraphicUtils.SCREEN_WIDTH_PROPORTION),
         (int) (screenSize.height * GraphicUtils.SCREEN_HEIGHT_PROPORTION)));
-
     jLabelTotalSelected.setText("Total Selected Jobs");
     jLabelTotalSelected.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelTotalSelectedJobs.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelTotalSelectedJobs.setBorder(BorderFactory.createLoweredBevelBorder());
     jLabelTotalSelectedJobs.setText("0");
     jLabelTotalDisplayed.setHorizontalAlignment(SwingConstants.RIGHT);
-
     jTextFieldUserJobId.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
         jTextFieldUserJobIdFocusLost(e);
@@ -183,9 +259,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     jobTableModel = new JobTableModel(vectorHeader, 0);
     jTableJobs = new JTable(jobTableModel);
     jTableJobs.getTableHeader().setReorderingAllowed(false);
-
     jLabelTotalDisplayed.setText("Total Displayed Jobs");
-
     jButtonClearJobId.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonClearJobIdEvent(e);
@@ -193,39 +267,32 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     });
     jButtonClearJobId.setText("Clear");
     jButtonAddJobId.setText("Add");
-
     jButtonAddJobId.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonAddJobIdEvent(e);
       }
     });
-    jPanelJobId.setBorder(new TitledBorder(new EtchedBorder(), " Job Id ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+    jPanelJobId.setBorder(new TitledBorder(new EtchedBorder(), " Job Id ", 0,
+        0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelJobId.setLayout(new BorderLayout());
     jPanelJobIdTable.setBorder(new TitledBorder(new EtchedBorder(),
-        " Job Id Table ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+        " Job Id Table ", 0, 0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelJobIdTable.setLayout(new BorderLayout());
     jButtonView.setText("Job Status");
-
     jButtonView.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonStatusEvent(e);
       }
     });
-
     ListSelectionModel listSelectionModel = jTableJobs.getSelectionModel();
     listSelectionModel.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
-          jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-              getSelectedRowCount()));
+          jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+              .getSelectedRowCount()));
         }
       }
     });
-
     jTableJobs.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
@@ -233,13 +300,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           int row = jTableJobs.rowAtPoint(point);
           int column = jTableJobs.columnAtPoint(point);
           Vector jobIdVector = new Vector();
-          jobIdVector.add(jTableJobs.getValueAt(row,
-              JOB_ID_COLUMN_INDEX).toString());
+          jobIdVector.add(jTableJobs.getValueAt(row, JOB_ID_COLUMN_INDEX)
+              .toString());
           setJobStatusTableJobs(jobIdVector);
         }
       }
     });
-
     jTableJobs.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         showJPopupMenuTable(e);
@@ -249,7 +315,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         showJPopupMenuTable(e);
       }
     });
-
     jScrollPaneJobTable.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         if (jTableJobs.getRowCount() != 0) {
@@ -265,65 +330,53 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         showJPopupMenuTable(e);
       }
     });
-
     createJPopupMenu();
-
     this.menuLBVector = JobMonitorPreferences.loadPrefFileLB();
     setLBMenuItems(this.menuLBVector);
-
     this.userQueryMap = loadUserQueriesFromFile();
     setLBQueryMenuItems(this.userQueryMap);
-
     jMenuBar = createMenuBar(JOB_MONITOR_MAIN);
     setJMenuBar(jMenuBar);
-
     jPanelJobIdButton.setLayout(new BoxLayout(jPanelJobIdButton,
         BoxLayout.X_AXIS));
     jPanelJobIdButton.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelJobIdButton.add(jButtonClearJobId, null);
     jPanelJobIdButton.add(Box.createGlue());
     jPanelJobIdButton.add(jButtonAddJobId, null);
-
     jTextFieldUserJobId.setPreferredSize(new Dimension(300, 18));
     jPanelJobId.add(jTextFieldUserJobId, BorderLayout.NORTH);
     jPanelJobId.add(jPanelJobIdButton, BorderLayout.SOUTH);
-
     ((FlowLayout) jPanelButton.getLayout()).setAlignment(FlowLayout.RIGHT);
     jPanelButton.add(jButtonView);
-
     jScrollPaneJobTable.getViewport().setBackground(Color.white);
-    jScrollPaneJobTable.setHorizontalScrollBarPolicy(JScrollPane.
-        HORIZONTAL_SCROLLBAR_NEVER);
+    jScrollPaneJobTable
+        .setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     jScrollPaneJobTable.setBorder(null);
     jScrollPaneJobTable.getViewport().add(jTableJobs, null);
     jPanelLabel.setLayout(new BoxLayout(jPanelLabel, BoxLayout.X_AXIS));
     jPanelLabel.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelLabel.add(jLabelTotalDisplayed, null);
     jPanelLabel.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
-
     jLabelTotalDisplayedJobs.setText("0");
     jLabelTotalDisplayedJobs.setPreferredSize(new Dimension(50, 18));
-    jLabelTotalDisplayedJobs.setBorder(BorderFactory.createLoweredBevelBorder());
+    jLabelTotalDisplayedJobs
+        .setBorder(BorderFactory.createLoweredBevelBorder());
     jLabelTotalDisplayedJobs.setHorizontalAlignment(SwingConstants.RIGHT);
     jPanelLabel.add(jLabelTotalDisplayedJobs, null);
-
     jPanelLabel.add(Box.createGlue());
     jPanelLabel.add(jLabelTotalSelected, null);
     jPanelLabel.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jLabelTotalSelectedJobs.setPreferredSize(new Dimension(50, 18));
     jPanelLabel.add(jLabelTotalSelectedJobs, null);
-
     ((BorderLayout) jPanelJobIdTable.getLayout()).setHgap(GraphicUtils.H_GAP);
     ((BorderLayout) jPanelJobIdTable.getLayout()).setVgap(GraphicUtils.V_GAP);
     jPanelJobIdTable.add(jPanelLabel, BorderLayout.NORTH);
     jPanelJobIdTable.add(jScrollPaneJobTable, BorderLayout.CENTER);
-
     jPanelMain.setLayout(new BorderLayout());
     jPanelMain.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelMain.add(jPanelJobId, BorderLayout.NORTH);
     jPanelMain.add(jPanelJobIdTable, BorderLayout.CENTER);
     jPanelMain.add(jPanelButton, BorderLayout.SOUTH);
-
     //this.getContentPane().add(jScrollPaneMain, null);
     //jPanelMain.setPreferredSize(new Dimension(660, 545));
     //jScrollPaneMain.getViewport().add(jPanelMain, null);
@@ -331,9 +384,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     ((BorderLayout) getContentPane().getLayout()).setHgap(GraphicUtils.H_GAP);
     ((BorderLayout) getContentPane().getLayout()).setVgap(GraphicUtils.V_GAP);
     this.getContentPane().add(jPanelMain, null);
-
     JobMonitorPreferences.initializeUserConfiguration();
-
     Vector lbVectorVOConf = GUIGlobalVars.getLBVector();
     Vector lbVectorMonitor = JobMonitorPreferences.loadPrefFileLB();
     if (lbVectorMonitor.size() != 0) {
@@ -348,13 +399,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       jMenuItemGetJobIdFromLB.setEnabled(false);
       jMenuItemGetJobIdAllLB.setEnabled(false);
     }
-
   }
 
   // Configuration file generator:
   static protected File getJobMonitorRecoveryFile() {
-    return new File(GUIFileSystem.getUserHomeDirectory()
-        + File.separator + GUIFileSystem.getTemporaryFileDirectory()
+    return new File(GUIFileSystem.getUserHomeDirectory() + File.separator
+        + GUIFileSystem.getTemporaryFileDirectory()
         + GUIFileSystem.JOBMONITOR_RECOVERY_FILE + "_"
         + System.getProperty("user.name") + ".recover");
   }
@@ -365,11 +415,13 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
    **/
   protected void saveConf(File conf) {
     try {
-      PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(conf)));
+      PrintWriter out = new PrintWriter(
+          new BufferedWriter(new FileWriter(conf)));
       if (jobTableModel.getRowCount() != 0) {
         for (int i = 0; i < jobTableModel.getRowCount(); i++) {
-          out.write(jTableJobs.getValueAt(i,
-              JOB_ID_COLUMN_INDEX).toString().trim() + "\n");
+          out.write(jTableJobs.getValueAt(i, JOB_ID_COLUMN_INDEX).toString()
+              .trim()
+              + "\n");
         }
       } else {
         out.write("");
@@ -385,17 +437,15 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
 
   protected void exit(boolean removeCtx) {
     if (JOptionPane.showOptionDialog(JobMonitor.this,
-        "Do you really want to exit?",
-        "Job Monitor - Confirm Exit",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null) == 0) {
+        "Do you really want to exit?", "Job Monitor - Confirm Exit",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null) == 0) {
       if (removeCtx) {
         // Remove the context file and exit
         try {
           getJobMonitorRecoveryFile().delete();
         } catch (java.lang.SecurityException exc) {
-        //Do nothing, the context is definetely lost
+          //Do nothing, the context is definetely lost
         }
       }
       if (multipleJobPanel != null) {
@@ -451,9 +501,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         if (JOptionPane.showOptionDialog(JobMonitor.this,
             "A previous working session is available. Do you want to load it?",
             "Job Monitor - Job Monitoring Session Restoring",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null, null, null) != 0) {
+            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            null, null) != 0) {
           conf.delete();
           return;
         }
@@ -462,8 +511,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           rowElement.add((String) result.get(i));
           jobTableModel.addRow(rowElement);
         }
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
         this.isJobPresentOnStartup = true;
       }
       jTextFieldUserJobId.selectAll();
@@ -481,7 +530,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     JMenuItem jMenuItem = null;
     JMenu jMenuFile = new JMenu("Job");
     jMenuFile.setMnemonic('j');
-
     switch (frame) {
       case JOB_MONITOR_MAIN:
         jMenuItem = new JMenuItem("Open Job Ids List File...");
@@ -495,39 +543,34 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         alst = new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-                getFileChooserWorkingDirectory()));
+            fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+                .getFileChooserWorkingDirectory()));
             int choice = fileChooser.showOpenDialog(JobMonitor.this);
             if (choice != JFileChooser.APPROVE_OPTION) {
               return;
             } else if (!fileChooser.getSelectedFile().isFile()) {
-              String selectedFile = fileChooser.getSelectedFile().toString().
-                  trim();
+              String selectedFile = fileChooser.getSelectedFile().toString()
+                  .trim();
               JOptionPane.showOptionDialog(JobMonitor.this,
-                  "Unable to find file: " +
-                  selectedFile,
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+                  "Unable to find file: " + selectedFile, Utils.ERROR_MSG_TXT,
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+                  null, null);
               return;
             } else {
-              GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-                  getCurrentDirectory().toString());
-              String selectedFile = fileChooser.getSelectedFile().toString().
-                  trim();
+              GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+                  .getCurrentDirectory().toString());
+              String selectedFile = fileChooser.getSelectedFile().toString()
+                  .trim();
               jMenuFileOpen(selectedFile);
             }
           }
         };
         jMenuItem.addActionListener(alst);
         jMenuFile.add(jMenuItem);
-        break;
-
+      break;
       default:
-        break;
+      break;
     }
-
     jMenuItem = new JMenuItem("Save Job Ids List File...");
     URL fileSaveGifUrl = JobMonitor.class.getResource(Utils.ICON_FILE_SAVE);
     if (fileSaveGifUrl != null) {
@@ -539,15 +582,15 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-            getFileChooserWorkingDirectory()));
+        fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+            .getFileChooserWorkingDirectory()));
         fileChooser.setDialogTitle("Save Job Ids List File");
         int choice = fileChooser.showSaveDialog(JobMonitor.this);
         if (choice != JFileChooser.APPROVE_OPTION) {
           return;
         } else {
-          GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-              getCurrentDirectory().toString());
+          GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+              .getCurrentDirectory().toString());
           String selectedFile = fileChooser.getSelectedFile().toString();
           jMenuFileSave(selectedFile, false);
         }
@@ -555,7 +598,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuItem = new JMenuItem("     Save Selected Job Ids List File...");
     //URL fileSaveGifUrl = JobMonitor.class.getResource(Utils.ICON_FILE_SAVE);
     //if(fileSaveGifUrl != null) jMenuItem.setIcon(new ImageIcon(fileSaveGifUrl));
@@ -572,15 +614,15 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         }
         if (jTable.getSelectedRowCount() != 0) {
           JFileChooser fileChooser = new JFileChooser();
-          fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-              getFileChooserWorkingDirectory()));
+          fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+              .getFileChooserWorkingDirectory()));
           fileChooser.setDialogTitle("Save Selected Job Ids List File");
           int choice = fileChooser.showSaveDialog(JobMonitor.this);
           if (choice != JFileChooser.APPROVE_OPTION) {
             return;
           } else {
-            GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-                getCurrentDirectory().toString());
+            GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+                .getCurrentDirectory().toString());
             String selectedFile = fileChooser.getSelectedFile().toString();
             jMenuFileSave(selectedFile, true);
           }
@@ -588,17 +630,14 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           JOptionPane.showOptionDialog(JobMonitor.this,
               "No selected Job Ids to save",
               "Job Monitor - Save Selected Job Ids List File",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.WARNING_MESSAGE,
-              null, null, null);
+              JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+              null, null);
         }
       }
     };
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuFile.addSeparator();
-
     switch (frame) {
       case JOB_MONITOR_MAIN:
         jMenuItemGetJobIdAllLB.setMnemonic('a');
@@ -609,7 +648,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         };
         jMenuItemGetJobIdAllLB.addActionListener(alst);
         jMenuFile.add(jMenuItemGetJobIdAllLB);
-
         //jMenuItemGetJobIdFromLB = new JMenu("     Get Job Ids from LB");
         //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
         jMenuItemGetJobIdFromLB.setMnemonic('g');
@@ -630,7 +668,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           jMenuItemGetJobIdFromLB.setEnabled(false);
         }
         jMenuFile.add(jMenuItemGetJobIdFromLB);
-
         jMenuItemGetJobIdMatchingQuery.setMnemonic('q');
         jMenuItemGetJobIdMatchingQuery.removeAll();
         Iterator iterator = this.userQueryMap.keySet().iterator();
@@ -656,8 +693,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
             }
           };
           jMenuItem.addActionListener(alst);
-          if (!lbAddress.equals(QueryPanel.ALL_LB_SERVERS) &&
-              !this.menuLBVector.contains(lbAddress)) {
+          if (!lbAddress.equals(QueryPanel.ALL_LB_SERVERS)
+              && !this.menuLBVector.contains(lbAddress)) {
             jMenuItem.setEnabled(false);
             notEnabledCount++;
           } else {
@@ -672,14 +709,11 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           jMenuItemGetJobIdMatchingQuery.setEnabled(true);
         }
         jMenuFile.add(jMenuItemGetJobIdMatchingQuery);
-
         jMenuFile.addSeparator();
-        break;
-
+      break;
       default:
-        break;
+      break;
     }
-
     jMenuItem = new JMenuItem("     Preferences");
     jMenuItem.setMnemonic('p');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,
@@ -691,9 +725,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuFile.addSeparator();
-
     jMenuItem = new JMenuItem("     Exit");
     jMenuItem.setMnemonic('x');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W,
@@ -705,7 +737,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuItem = new JMenuItem("     Exit & Clean Context");
     jMenuItem.setMnemonic('l');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
@@ -717,15 +748,11 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuFile.add(jMenuItem);
-
     jMenuBar.add(jMenuFile);
-
     // Checkpoint Menu.
     JMenu jMenuCheckpoint = new JMenu("Checkpoint");
     jMenuCheckpoint.setMnemonic('c');
-
     jMenuItem = new JMenuItem("Open Checkpoint State...");
-
     jMenuItem.setMnemonic('o');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K,
         GraphicUtils.KEY_EVENT_MASK));
@@ -736,7 +763,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuCheckpoint.add(jMenuItem);
-
     jMenuItem = new JMenuItem("Retrieve Checkpoint State...");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('r');
@@ -749,13 +775,10 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuCheckpoint.add(jMenuItem);
-
     jMenuBar.add(jMenuCheckpoint);
-
     // Proxy Menu.
     JMenu jMenuProxy = new JMenu("Credential");
     jMenuProxy.setMnemonic('r');
-
     jMenuItem = new JMenuItem("Info");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('i');
@@ -770,69 +793,67 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
     };
     jMenuItem.addActionListener(alst);
-
     jMenuProxy.add(jMenuItem);
     /* VO
-        jMenuItem = new JMenuItem("Create");
-        //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
-        jMenuItem.setMnemonic('c');
-        alst = new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            GUIUserCredentials credential = new GUIUserCredentials(JobMonitor.this, GUIUserCredentials.CREATION_MODE);
-            credential.setModal(true);
-            GraphicUtils.windowCenterWindow(JobMonitor.this, credential);
-            credential.setTitle(credential.getTitle() + " Create");
-            credential.show();
-          }
-        };
-        jMenuItem.addActionListener(alst);
-        jMenuProxy.add(jMenuItem);
-        jMenuItem = new JMenuItem("Destroy");
-        //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
-        jMenuItem.setMnemonic('d');
-        alst = new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            int choice = JOptionPane.showOptionDialog(JobMonitor.this,
-                                           "Current Proxy: " + GUIGlobalVars.proxyFilePath + "\nDo you really want to destroy Proxy?",
-                                           "Confirm Credential Destroy",
-                                           JOptionPane.YES_NO_OPTION,
-                                           JOptionPane.QUESTION_MESSAGE,
-                                           null, null, null);
-            if (choice == 0) {
-              try {
-                UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.proxyFilePath));
-                userCredential.destroyProxy();
-              } catch (Exception ex) {
-                JOptionPane.showOptionDialog(JobMonitor.this,
-                                           ex.getMessage(),
-                                           Utils.ERROR_MSG_TXT,
-                                           JOptionPane.DEFAULT_OPTION,
-                                           JOptionPane.ERROR_MESSAGE,
-                                           null, null, null);
-              }
-            }
-          }
-        };
-        jMenuItem.addActionListener(alst);
-        jMenuProxy.add(jMenuItem);
-        boolean flag = jMenuItemChangeVO.isEnabled();
-        jMenuItemChangeVO = new JMenuItem("Change VO");
-        jMenuItemChangeVO.setEnabled(flag);
-        //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
-        jMenuItemChangeVO.setMnemonic('v');
-        alst = new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            GUIUserCredentials credential = new GUIUserCredentials(JobMonitor.this, GUIUserCredentials.CHANGE_VO_MODE);
-            credential.setModal(true);
-            GraphicUtils.windowCenterWindow(JobMonitor.this, credential);
-            credential.setTitle(credential.getTitle() + " Change VO");
-            credential.show();
-          }
-        };
-        jMenuItemChangeVO.addActionListener(alst);
-        jMenuProxy.add(jMenuItemChangeVO);
+     jMenuItem = new JMenuItem("Create");
+     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
+     jMenuItem.setMnemonic('c');
+     alst = new ActionListener() {
+     public void actionPerformed(ActionEvent e) {
+     GUIUserCredentials credential = new GUIUserCredentials(JobMonitor.this, GUIUserCredentials.CREATION_MODE);
+     credential.setModal(true);
+     GraphicUtils.windowCenterWindow(JobMonitor.this, credential);
+     credential.setTitle(credential.getTitle() + " Create");
+     credential.show();
+     }
+     };
+     jMenuItem.addActionListener(alst);
+     jMenuProxy.add(jMenuItem);
+     jMenuItem = new JMenuItem("Destroy");
+     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
+     jMenuItem.setMnemonic('d');
+     alst = new ActionListener() {
+     public void actionPerformed(ActionEvent e) {
+     int choice = JOptionPane.showOptionDialog(JobMonitor.this,
+     "Current Proxy: " + GUIGlobalVars.proxyFilePath + "\nDo you really want to destroy Proxy?",
+     "Confirm Credential Destroy",
+     JOptionPane.YES_NO_OPTION,
+     JOptionPane.QUESTION_MESSAGE,
+     null, null, null);
+     if (choice == 0) {
+     try {
+     UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.proxyFilePath));
+     userCredential.destroyProxy();
+     } catch (Exception ex) {
+     JOptionPane.showOptionDialog(JobMonitor.this,
+     ex.getMessage(),
+     Utils.ERROR_MSG_TXT,
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);
+     }
+     }
+     }
+     };
+     jMenuItem.addActionListener(alst);
+     jMenuProxy.add(jMenuItem);
+     boolean flag = jMenuItemChangeVO.isEnabled();
+     jMenuItemChangeVO = new JMenuItem("Change VO");
+     jMenuItemChangeVO.setEnabled(flag);
+     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
+     jMenuItemChangeVO.setMnemonic('v');
+     alst = new ActionListener() {
+     public void actionPerformed(ActionEvent e) {
+     GUIUserCredentials credential = new GUIUserCredentials(JobMonitor.this, GUIUserCredentials.CHANGE_VO_MODE);
+     credential.setModal(true);
+     GraphicUtils.windowCenterWindow(JobMonitor.this, credential);
+     credential.setTitle(credential.getTitle() + " Change VO");
+     credential.show();
+     }
+     };
+     jMenuItemChangeVO.addActionListener(alst);
+     jMenuProxy.add(jMenuItemChangeVO);
      VO */
-
     // Added to select the proxy file and then the VO to use.
     // Remove it when change VO will be possible from GUI interface.
     boolean flag = jMenuItemChangeVO.isEnabled();
@@ -841,8 +862,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     jMenuItemChangeVO.setMnemonic('s');
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        GUIUserCredentials credential =
-            new GUIUserCredentials(JobMonitor.this,
+        GUIUserCredentials credential = new GUIUserCredentials(JobMonitor.this,
             GUIUserCredentials.CHANGE_VO_MODE);
         credential.setModal(true);
         GraphicUtils.windowCenterWindow(JobMonitor.this, credential);
@@ -852,34 +872,26 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItemChangeVO.addActionListener(alst);
     jMenuProxy.add(jMenuItemChangeVO);
-
     jMenuBar.add(jMenuProxy);
-
     switch (frame) {
       case MULTIPLE_JOB_PANEL:
-        break;
-
+      break;
       default:
-        break;
+      break;
     }
-
     JMenu jMenuHelp = new JMenu("Help");
     jMenuHelp.setMnemonic('h');
-
     jMenuItem = new JMenuItem("Help Topics");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('h');
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-
       }
     };
     jMenuItem.addActionListener(alst);
     //!!! To remove when coded.
     jMenuItem.setEnabled(false);
-
     jMenuHelp.add(jMenuItem);
-
     jMenuItem = new JMenuItem("About");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('a');
@@ -890,9 +902,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuHelp.add(jMenuItem);
-
     jMenuBar.add(jMenuHelp);
-
     return jMenuBar;
   }
 
@@ -920,14 +930,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
       setJobStatusTableJobs(jobIdVector);
     } else {
-      if ((multipleJobPanel == null) ||
-          (multipleJobPanel.getJobCollectionSize() == 0)) {
+      if ((multipleJobPanel == null)
+          || (multipleJobPanel.getJobCollectionSize() == 0)) {
         JOptionPane.showOptionDialog(JobMonitor.this,
-            "Please select at least a job",
-            "Job Monitor - Job Status",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.INFORMATION_MESSAGE,
-            null, null, null);
+            "Please select at least a job", "Job Monitor - Job Status",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+            null, null);
       } else {
         jMenuBar = createMenuBar(MULTIPLE_JOB_PANEL);
         setJMenuBar(jMenuBar);
@@ -941,21 +949,18 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   void setJobStatusTableJobs(final Vector jobIdVector) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int jobIdVectorSize = jobIdVector.size();
         if (jobIdVectorSize != 0) {
           if (multipleJobPanel != null) {
             int choice = 1;
             if (multipleJobPanel.getJobCollectionSize() != 0) {
-              Object[] options = {
-                  "Add", "Replace", "Cancel"};
+              Object[] options = { "Add", "Replace", "Cancel"
+              };
               choice = JOptionPane.showOptionDialog(JobMonitor.this,
                   "Add selected job(s) to old ones or Replace them?",
-                  "Job Monitor - Job Status",
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.QUESTION_MESSAGE,
-                  null, options, null);
+                  "Job Monitor - Job Status", JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.QUESTION_MESSAGE, null, options, null);
             }
             JobCollection jobCollection;
             switch (choice) {
@@ -965,36 +970,31 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
                 for (int i = 0; i < jobIdVector.size(); i++) {
                   jobIdText = jobIdVector.get(i).toString().trim();
                   if (!multipleJobPanel.jobTableModel.isElementPresentInColumn(
-                      jobIdText,
-                      JOB_ID_COLUMN_INDEX)) {
+                      jobIdText, JOB_ID_COLUMN_INDEX)) {
                     toAddJobIdVector.add(jobIdText);
                   }
                 }
                 jobIdVectorSize = toAddJobIdVector.size();
                 logger.debug("toAddJobIdVector: " + toAddJobIdVector);
                 int monitoredJobCount = multipleJobPanel.getJobCollectionSize();
-                logger.debug("GUIGlobalVars.currentMonitoredJobCount: " +
-                    monitoredJobCount);
-                int maxMonitoredJobNumber = MultipleJobPanel.
-                    getMaxMonitoredJobNumber();
-                if (jobIdVectorSize >
-                    (maxMonitoredJobNumber - monitoredJobCount)) {
+                logger.debug("GUIGlobalVars.currentMonitoredJobCount: "
+                    + monitoredJobCount);
+                int maxMonitoredJobNumber = MultipleJobPanel
+                    .getMaxMonitoredJobNumber();
+                if (jobIdVectorSize > (maxMonitoredJobNumber - monitoredJobCount)) {
                   if ((maxMonitoredJobNumber - monitoredJobCount) != 0) {
                     JOptionPane.showOptionDialog(JobMonitor.this,
                         "Unable to insert to Job Status Table more than "
-                        + (maxMonitoredJobNumber - monitoredJobCount) + " jobs",
-                        "Job Monitor - Job Status",
+                            + (maxMonitoredJobNumber - monitoredJobCount)
+                            + " jobs", "Job Monitor - Job Status",
                         JOptionPane.DEFAULT_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
-                        null, null, null);
+                        JOptionPane.WARNING_MESSAGE, null, null, null);
                   } else {
                     JOptionPane.showOptionDialog(JobMonitor.this,
                         "Max simultaneously monitored job number reached"
-                        + "\nFirst remove one or more jobs from table",
-                        "Job Monitor - Job Status",
-                        JOptionPane.DEFAULT_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
-                        null, null, null);
+                            + "\nFirst remove one or more jobs from table",
+                        "Job Monitor - Job Status", JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE, null, null, null);
                     jMenuBar = createMenuBar(MULTIPLE_JOB_PANEL);
                     setJMenuBar(jMenuBar);
                     displayMultipleJobPanel();
@@ -1010,10 +1010,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
                 displayMultipleJobPanel();
                 multipleJobPanel.startCurrentTimeThread();
                 multipleJobPanel.startUpdateThread();
-                break;
+              break;
               case 1:
-                if ((MultipleJobPanel.getMaxMonitoredJobNumber() >=
-                    jobIdVectorSize)) {
+                if ((MultipleJobPanel.getMaxMonitoredJobNumber() >= jobIdVectorSize)) {
                   multipleJobPanel = new MultipleJobPanel(JobMonitor.this);
                   jMenuBar = createMenuBar(MULTIPLE_JOB_PANEL);
                   setJMenuBar(jMenuBar);
@@ -1021,60 +1020,50 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
                   jobCollection = createJobCollection(jobIdVector);
                   multipleJobPanel.setJobCollection(jobCollection);
                   multipleJobPanel.setJobStatusTableJobs();
-
                   multipleJobPanel.startCurrentTimeThread();
                   multipleJobPanel.startUpdateThread();
                 } else {
                   JOptionPane.showOptionDialog(JobMonitor.this,
                       "Unable to insert to Job Status Table more than "
-                      + MultipleJobPanel.getMaxMonitoredJobNumber()
-                      + " jobs",
-                      "Job Monitor - Job Status",
-                      JOptionPane.DEFAULT_OPTION,
-                      JOptionPane.WARNING_MESSAGE,
+                          + MultipleJobPanel.getMaxMonitoredJobNumber()
+                          + " jobs", "Job Monitor - Job Status",
+                      JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
                       null, null, null);
                 }
-                break;
+              break;
               case 2:
                 return "";
               default:
-                break;
+              break;
             }
           } else {
             JobCollection jobCollection = createJobCollection(jobIdVector);
             int jobCollectionSize = jobCollection.size();
-            if ((MultipleJobPanel.getMaxMonitoredJobNumber() >=
-                jobCollectionSize)) {
+            if ((MultipleJobPanel.getMaxMonitoredJobNumber() >= jobCollectionSize)) {
               multipleJobPanel = new MultipleJobPanel(JobMonitor.this);
               jMenuBar = createMenuBar(MULTIPLE_JOB_PANEL);
               setJMenuBar(jMenuBar);
               displayMultipleJobPanel();
               multipleJobPanel.setJobCollection(jobCollection);
               multipleJobPanel.setJobStatusTableJobs();
-
               multipleJobPanel.startCurrentTimeThread();
               multipleJobPanel.startUpdateThread();
             } else {
               JOptionPane.showOptionDialog(JobMonitor.this,
                   "Unable to insert to Job Status Table more than "
-                  + MultipleJobPanel.getMaxMonitoredJobNumber()
-                  + " jobs",
-                  "Job Monitor - Job Status",
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.WARNING_MESSAGE,
-                  null, null, null);
+                      + MultipleJobPanel.getMaxMonitoredJobNumber() + " jobs",
+                  "Job Monitor - Job Status", JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.WARNING_MESSAGE, null, null, null);
             }
           }
         } else {
           jMenuBar = createMenuBar(MULTIPLE_JOB_PANEL);
           setJMenuBar(jMenuBar);
           displayMultipleJobPanel();
-
           multipleJobPanel.startCurrentTimeThread();
           multipleJobPanel.startUpdateThread();
         }
         // END Standard code
-
         return "";
       }
     };
@@ -1084,7 +1073,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   void jMenuLBGetMatchingQueryJobId(final ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         Ad queryAd = (Ad) userQueryMap.get(ae.getActionCommand().toString());
         logger.debug("Selected Query: " + ae.getActionCommand());
@@ -1104,34 +1092,30 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
               vectorTemp.addElement(jobIdText);
               jobTableModel.addRow(vectorTemp);
             }
-            jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-                getRowCount()));
+            jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+                .getRowCount()));
           }
         } else {
           JOptionPane.showOptionDialog(JobMonitor.this,
               "No Job Ids found Matching Query: "
-              + ae.getActionCommand().toString(),
+                  + ae.getActionCommand().toString(),
               "Job Monitor - Get Job Ids Matching Query",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
         saveConf(getJobMonitorRecoveryFile());
         // END Standard code
-
         return "";
       }
     };
     worker.start();
-
   }
 
   void jMenuAllLBGetJobId(ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         String errorMsg = "";
         String warningMsg = "";
@@ -1158,35 +1142,33 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
                 vectorTemp.addElement(jobIdText);
                 jobTableModel.addRow(vectorTemp);
               }
-              jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-                  getRowCount()));
+              jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+                  .getRowCount()));
             }
           } else {
             warningMsg += "- " + lbURLText + "\n";
           }
         }
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
         saveConf(getJobMonitorRecoveryFile());
-
         warningMsg = warningMsg.trim();
         if (!warningMsg.equals("")) {
           GraphicUtils.showOptionDialogMsg(JobMonitor.this, warningMsg,
-              "Job Monitor - Get Job Ids from LB",
-              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+              "Job Monitor - Get Job Ids from LB", JOptionPane.DEFAULT_OPTION,
+              JOptionPane.INFORMATION_MESSAGE,
               Utils.MESSAGE_LINES_PER_JOPTIONPANE,
               "No Job Ids found from Logging & Bookkeeping Server(s):", null);
         }
         errorMsg = errorMsg.trim();
         if (!errorMsg.equals("")) {
           GraphicUtils.showOptionDialogMsg(JobMonitor.this, errorMsg,
-              "Job Monitor - Get Job Ids from LB",
-              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-              Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-              "Unable to get Job Ids from Logging & Bookkeeping Server(s):", null);
+              "Job Monitor - Get Job Ids from LB", JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+              "Unable to get Job Ids from Logging & Bookkeeping Server(s):",
+              null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -1196,7 +1178,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   void jMenuLBGetJobId(final ActionEvent e) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         String lbURLText = e.getActionCommand();
         Vector vectorJobId = new Vector();
@@ -1208,11 +1189,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           }
           JOptionPane.showOptionDialog(JobMonitor.this,
               "Unable to get Job Ids from Logging & Bookkeeping Server:\n"
-              + "- " + lbURLText + ": " + e.getMessage(),
-              "Job Monitor - Get Job Ids from LB",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+                  + "- " + lbURLText + ": " + e.getMessage(),
+              "Job Monitor - Get Job Ids from LB", JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           return "";
         }
         int jobIdCount = vectorJobId.size();
@@ -1225,23 +1204,20 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
               vectorTemp.addElement(jobIdText);
               jobTableModel.addRow(vectorTemp);
             }
-            jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-                getRowCount()));
+            jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+                .getRowCount()));
           }
         } else {
           JOptionPane.showOptionDialog(JobMonitor.this,
-              "No Job Ids found from Logging & Bookkeeping Server:\n"
-              + "- " + lbURLText,
-              "Job Monitor - Get Job Ids from LB",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "No Job Ids found from Logging & Bookkeeping Server:\n" + "- "
+                  + lbURLText, "Job Monitor - Get Job Ids from LB",
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
         saveConf(getJobMonitorRecoveryFile());
         // END Standard code
-
         return "";
       }
     };
@@ -1271,13 +1247,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     errorMsg = errorMsg.trim();
     if (!errorMsg.equals("")) {
       GraphicUtils.showOptionDialogMsg(JobMonitor.this, errorMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-          "Unable to add the following Job Id(s):",
-          "Please check format");
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+          "Unable to add the following Job Id(s):", "Please check format");
     }
-    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.getRowCount()));
+    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+        .getRowCount()));
     saveConf(getJobMonitorRecoveryFile());
   }
 
@@ -1286,11 +1261,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     int choice = 0;
     if (outputFile.isFile()) {
       choice = JOptionPane.showOptionDialog(JobMonitor.this,
-          "Output file exists. Overwrite?",
-          "Job Monitor - Confirm Save",
-          JOptionPane.YES_NO_OPTION,
-          JOptionPane.WARNING_MESSAGE,
-          null, null, null);
+          "Output file exists. Overwrite?", "Job Monitor - Confirm Save",
+          JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null,
+          null);
     }
     if (choice == 0) {
       try {
@@ -1300,7 +1273,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
             int jobIdCount = multipleJobPanel.jobTableModel.getRowCount();
             for (int i = 0; i < jobIdCount; i++) {
               text += multipleJobPanel.jobTableModel.getValueAt(i,
-                  JOB_ID_COLUMN_INDEX) + "\n";
+                  JOB_ID_COLUMN_INDEX)
+                  + "\n";
             }
           } else {
             int jobIdCount = jobTableModel.getRowCount();
@@ -1311,16 +1285,18 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         } else {
           if ((multipleJobPanel != null) && multipleJobPanel.isVisible()) {
             int[] selectedRows = multipleJobPanel.jTableJobs.getSelectedRows();
-            for (int i = 0; i < multipleJobPanel.jTableJobs.getSelectedRowCount();
-                i++) {
+            for (int i = 0; i < multipleJobPanel.jTableJobs
+                .getSelectedRowCount(); i++) {
               text += multipleJobPanel.jobTableModel.getValueAt(
-                  selectedRows[i], JOB_ID_COLUMN_INDEX) + "\n";
+                  selectedRows[i], JOB_ID_COLUMN_INDEX)
+                  + "\n";
             }
           } else {
             int[] selectedRows = jTableJobs.getSelectedRows();
             for (int i = 0; i < jTableJobs.getSelectedRowCount(); i++) {
               text += jobTableModel.getValueAt(selectedRows[i],
-                  JOB_ID_COLUMN_INDEX) + "\n";
+                  JOB_ID_COLUMN_INDEX)
+                  + "\n";
             }
           }
         }
@@ -1329,13 +1305,10 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         if (isDebugging) {
           ex.printStackTrace();
         }
-        JOptionPane.showOptionDialog(JobMonitor.this,
-            "Unable to save file: " + outputFile
-            + ex.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobMonitor.this, "Unable to save file: "
+            + outputFile + ex.getMessage(), Utils.ERROR_MSG_TXT,
+            JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
       }
     }
   }
@@ -1354,15 +1327,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     int rowNumber = 0;
     try {
       try {
-        BufferedReader inputFile = new BufferedReader(
-            new InputStreamReader(
+        BufferedReader inputFile = new BufferedReader(new InputStreamReader(
             new FileInputStream(fileName)));
-
         inputLine = inputFile.readLine().trim();
         while (inputLine != null) {
           inputLine = inputLine.trim();
           length = inputLine.length();
-
           // Check for blank or comment line.
           String trimmedInputLine = inputLine.trim();
           if ((length == 0) || (trimmedInputLine.charAt(0) == '#')
@@ -1372,29 +1342,23 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
             rowNumber++;
             continue;
           }
-
           vectorJobIds.add(inputLine);
           inputLine = inputFile.readLine();
           rowNumber++;
         }
-
       } catch (EOFException eofe) {
         if (isDebugging) {
           eofe.printStackTrace();
         }
       }
-
     } catch (FileNotFoundException fnfe) {
       if (isDebugging) {
         fnfe.printStackTrace();
       }
     } catch (IOException ioe) {
-      JOptionPane.showOptionDialog(JobMonitor.this,
-          "Unable to read file: " + fileName,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.YES_NO_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobMonitor.this, "Unable to read file: "
+          + fileName, Utils.ERROR_MSG_TXT, JOptionPane.YES_NO_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       if (isDebugging) {
         ioe.printStackTrace();
       }
@@ -1406,8 +1370,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     Vector jobIdVector = new Vector();
     boolean allLBFlag = false;
     try {
-      allLBFlag = ((Boolean) queryAd.getBooleanValue(Utils.ALL_LB_FLAG).get(0)).
-          booleanValue();
+      allLBFlag = ((Boolean) queryAd.getBooleanValue(Utils.ALL_LB_FLAG).get(0))
+          .booleanValue();
     } catch (Exception ex) {
       if (isDebugging) {
         // Attribute not present.
@@ -1417,8 +1381,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     Vector lbURLVector = new Vector();
     if (!allLBFlag) {
       try {
-        lbURLVector.add(queryAd.getStringValue(Utils.LB_ADDRESS).get(0).
-            toString());
+        lbURLVector.add(queryAd.getStringValue(Utils.LB_ADDRESS).get(0)
+            .toString());
       } catch (Exception ex) {
         // Attribute not present.
         if (isDebugging) {
@@ -1427,20 +1391,20 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
     } else {
       //lbURLVector = (Vector) GUIGlobalVars.getLBVector().clone();
-      lbURLVector = (Vector)this.menuLBVector.clone();
+      lbURLVector = (Vector) this.menuLBVector.clone();
     }
     Calendar fromDate = Calendar.getInstance();
     Calendar toDate = Calendar.getInstance();
     try {
       if (queryAd.hasAttribute(Utils.FROM_DATE)) {
-        fromDate.setTimeInMillis(Long.parseLong(queryAd.getStringValue(Utils.
-            FROM_DATE).get(0).toString(), 10));
+        fromDate.setTimeInMillis(Long.parseLong(queryAd.getStringValue(
+            Utils.FROM_DATE).get(0).toString(), 10));
       } else {
         fromDate = null;
       }
       if (queryAd.hasAttribute(Utils.TO_DATE)) {
-        toDate.setTimeInMillis(Long.parseLong(queryAd.getStringValue(Utils.
-            TO_DATE).get(0).toString(), 10));
+        toDate.setTimeInMillis(Long.parseLong(queryAd.getStringValue(
+            Utils.TO_DATE).get(0).toString(), 10));
       } else {
         toDate = null;
       }
@@ -1464,8 +1428,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     }
     boolean ownedJobsOnly = true;
     try {
-      ownedJobsOnly = ((Boolean) queryAd.getBooleanValue(Utils.
-          OWNED_JOBS_ONLY_FLAG).get(0)).booleanValue();
+      ownedJobsOnly = ((Boolean) queryAd.getBooleanValue(
+          Utils.OWNED_JOBS_ONLY_FLAG).get(0)).booleanValue();
     } catch (Exception ex) {
       if (isDebugging) {
         ex.printStackTrace();
@@ -1478,22 +1442,19 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         Url lbURL = new Url(lbURLVector.get(i).toString());
         UserCredential userCredential = new UserCredential(new File(
             GUIGlobalVars.proxyFilePath));
-        if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-            proxySubject)) {
+        if (userCredential.getX500UserSubject().equals(
+            GUIGlobalVars.proxySubject)) {
           logger.info("userJobs.getJobs(" + lbURL + ", " + fromDate + ", "
               + toDate + ", " + userTagsAd + ", " + ownedJobsOnly + ")");
           jobIdVector = userJobs.getJobs(lbURL, fromDate, toDate, userTagsAd,
               ownedJobsOnly);
         } else {
-          JOptionPane.showOptionDialog(JobMonitor.this,
-              Utils.FATAL_ERROR
+          JOptionPane.showOptionDialog(JobMonitor.this, Utils.FATAL_ERROR
               + "Proxy file user subject has changed"
-              + "\nApplication will be terminated",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
-          System.exit( -1);
+              + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+              null, null);
+          System.exit(-1);
         }
       } catch (Exception ex) {
         //throw e;
@@ -1505,12 +1466,10 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     }
     errorMsg = errorMsg.trim();
     if (!errorMsg.equals("")) {
-      JOptionPane.showOptionDialog(JobMonitor.this,
-          errorMsg,
+      JOptionPane.showOptionDialog(JobMonitor.this, errorMsg,
           "Job Monitor - Get Job Ids Matching Query",
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+          null);
     }
     return jobIdVector;
   }
@@ -1521,19 +1480,18 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     try {
       UserJobs userJobs = new UserJobs();
       Url lbURL = new Url(lbURLText);
-      UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.
-          proxyFilePath));
-      if (userCredential.getX500UserSubject().equals(GUIGlobalVars.proxySubject)) {
+      UserCredential userCredential = new UserCredential(new File(
+          GUIGlobalVars.proxyFilePath));
+      if (userCredential.getX500UserSubject()
+          .equals(GUIGlobalVars.proxySubject)) {
         jobIdVector = userJobs.getJobs(lbURL);
       } else {
-        JOptionPane.showOptionDialog(JobMonitor.this,
-            Utils.FATAL_ERROR + "Proxy file user subject has changed"
-            + "\nApplication will be terminated",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-        System.exit( -1);
+        JOptionPane.showOptionDialog(JobMonitor.this, Utils.FATAL_ERROR
+            + "Proxy file user subject has changed"
+            + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
+        System.exit(-1);
       }
     } catch (Exception e) {
       throw e;
@@ -1560,20 +1518,15 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           }
           JOptionPane.showOptionDialog(JobMonitor.this,
               "Inserted Job Id has wrong format\nPlease check value",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           jTextFieldUserJobId.selectAll();
           jTextFieldUserJobId.grabFocus();
           return;
         } catch (Exception ex) {
-          JOptionPane.showOptionDialog(JobMonitor.this,
-              ex.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JobMonitor.this, ex.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           if (isDebugging) {
             ex.printStackTrace();
           }
@@ -1582,16 +1535,14 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         Vector rowElement = new Vector();
         rowElement.add(insertedJobId);
         jobTableModel.addRow(rowElement);
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
         saveConf(getJobMonitorRecoveryFile());
       } else {
         JOptionPane.showOptionDialog(JobMonitor.this,
-            "Inserted Job Id is already present",
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null, null, null);
+            "Inserted Job Id is already present", Utils.WARNING_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+            null, null);
       }
       jTextFieldUserJobId.selectAll();
       jTextFieldUserJobId.grabFocus();
@@ -1608,8 +1559,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
 
   void jButtonAllEvent(ActionEvent e) {
     jTableJobs.selectAll();
-    jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-        getSelectedRowCount()));
+    jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+        .getSelectedRowCount()));
   }
 
   void jButtonNoneEvent(ActionEvent e) {
@@ -1620,67 +1571,61 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   void jMenuHelpAbout() {
     URL url = JobDef1Panel.class.getResource(Utils.ICON_DATAGRID_LOGO);
     JOptionPane.showOptionDialog(JobMonitor.this,
-        //Utils.JOB_MONITOR_ABOUT_MSG,
-        "Job Monitor Version " + GUIGlobalVars.getGUIConfVarVersion() + "\n\n" +
-        Utils.COPYRIGHT,
-        "Job Monitor - About",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.INFORMATION_MESSAGE,
+    //Utils.JOB_MONITOR_ABOUT_MSG,
+        "Job Monitor Version " + GUIGlobalVars.getGUIConfVarVersion() + "\n\n"
+            + Utils.COPYRIGHT, "Job Monitor - About",
+        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
         (url == null) ? null : new ImageIcon(url), null, null);
   }
 
   /*
-    void jMenuSortByJobId() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.JOB_ID_COLUMN_INDEX);
-      multipleJobPanel.sortBy(MultipleJobPanel.JOB_ID_COLUMN_INDEX, true);
-    }
-    void jMenuSortByJobType() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.JOB_TYPE_COLUMN_INDEX);
-      multipleJobPanel.sortBy(MultipleJobPanel.JOB_TYPE_COLUMN_INDEX, true);
-    }
-    void jMenuSortByStatus() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.JOB_STATUS_COLUMN_INDEX);
-      multipleJobPanel.sortBy(MultipleJobPanel.JOB_STATUS_COLUMN_INDEX, true);
-    }
-    void jMenuSortBySubmissionTime() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.SUBMISSION_TIME_COLUMN_INDEX);
-       multipleJobPanel.sortBy(MultipleJobPanel.SUBMISSION_TIME_COLUMN_INDEX, true);
-    }
-    void jMenuSortByDestination() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.DESTINATION_COLUMN_INDEX);
-      multipleJobPanel.sortBy(MultipleJobPanel.DESTINATION_COLUMN_INDEX, true);
-    }
-   */
-
-  /*
-    void jMenuSortByNetworkServer() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.NETWORK_SERVER_COLUMN_INDEX);
-       multipleJobPanel.sortBy(MultipleJobPanel.NETWORK_SERVER_COLUMN_INDEX, true);
-    }
+   void jMenuSortByJobId() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.JOB_ID_COLUMN_INDEX);
+   multipleJobPanel.sortBy(MultipleJobPanel.JOB_ID_COLUMN_INDEX, true);
+   }
+   void jMenuSortByJobType() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.JOB_TYPE_COLUMN_INDEX);
+   multipleJobPanel.sortBy(MultipleJobPanel.JOB_TYPE_COLUMN_INDEX, true);
+   }
+   void jMenuSortByStatus() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.JOB_STATUS_COLUMN_INDEX);
+   multipleJobPanel.sortBy(MultipleJobPanel.JOB_STATUS_COLUMN_INDEX, true);
+   }
+   void jMenuSortBySubmissionTime() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.SUBMISSION_TIME_COLUMN_INDEX);
+   multipleJobPanel.sortBy(MultipleJobPanel.SUBMISSION_TIME_COLUMN_INDEX, true);
+   }
+   void jMenuSortByDestination() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.DESTINATION_COLUMN_INDEX);
+   multipleJobPanel.sortBy(MultipleJobPanel.DESTINATION_COLUMN_INDEX, true);
+   }
    */
   /*
-    void jMenuSortByAddingOrder() {
-      GUIGlobalVars.setMultipleJobPanelSortColumn(Utils.NO_SORTING);
-      multipleJobPanel.sortBy(Utils.NO_SORTING, true);
-    }
+   void jMenuSortByNetworkServer() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(MultipleJobPanel.NETWORK_SERVER_COLUMN_INDEX);
+   multipleJobPanel.sortBy(MultipleJobPanel.NETWORK_SERVER_COLUMN_INDEX, true);
+   }
    */
   /*
-    public void sortBy(int columnIndex, boolean ascending) {
-      Vector vectorData = multipleJobPanel.jobTableModel.getDataVector();
-      Collections.sort(vectorData, new ColumnSorter(columnIndex, ascending));
-      multipleJobPanel.jobTableModel.fireTableStructureChanged();
-    }
+   void jMenuSortByAddingOrder() {
+   GUIGlobalVars.setMultipleJobPanelSortColumn(Utils.NO_SORTING);
+   multipleJobPanel.sortBy(Utils.NO_SORTING, true);
+   }
    */
-
+  /*
+   public void sortBy(int columnIndex, boolean ascending) {
+   Vector vectorData = multipleJobPanel.jobTableModel.getDataVector();
+   Collections.sort(vectorData, new ColumnSorter(columnIndex, ascending));
+   multipleJobPanel.jobTableModel.fireTableStructureChanged();
+   }
+   */
   void jMenuRemove(ActionEvent e) {
     int[] selectedRows = jTableJobs.getSelectedRows();
     int selectedRowCount = selectedRows.length;
     int choice = JOptionPane.showOptionDialog(JobMonitor.this,
         "Remove selected Job Id(s) from table?",
-        "Job Monitor - Confirm Remove",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Job Monitor - Confirm Remove", JOptionPane.YES_NO_OPTION,
+        JOptionPane.QUESTION_MESSAGE, null, null, null);
     if (choice == 0) {
       for (int i = selectedRowCount - 1; i >= 0; i--) {
         jobTableModel.removeRow(selectedRows[i]);
@@ -1688,29 +1633,27 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         // multipleJobPanel.removeJobFromTable(jobTableModel.getValueAt(selectedRow[i],
         //          multipleJobPanel.JOB_ID_COLUMN_INDEX).toString());
         // after removing job is still submitted.
-
         // N.B. not necessary because jobmonitorjframe and multiplejobpanel are mutually exclusive.
       }
-      jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-          getSelectedRowCount()));
-      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-          getRowCount()));
+      jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+          .getSelectedRowCount()));
+      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+          .getRowCount()));
       saveConf(getJobMonitorRecoveryFile());
     }
   }
 
   /*
-    void showMultipleJobPanel() {
-      Vector jobIdVector = new Vector();
-      String jobIdText;
-      for (int i = 0; i < jobTableModel.getRowCount(); i++) {
-       jobIdText = jobTableModel.getValueAt(i, JOB_ID_COLUMN_INDEX).toString().trim();
-        jobIdVector.add(jobIdText);
-      }
-      showMultipleJobPanel(jobIdVector);
-    }
+   void showMultipleJobPanel() {
+   Vector jobIdVector = new Vector();
+   String jobIdText;
+   for (int i = 0; i < jobTableModel.getRowCount(); i++) {
+   jobIdText = jobTableModel.getValueAt(i, JOB_ID_COLUMN_INDEX).toString().trim();
+   jobIdVector.add(jobIdText);
+   }
+   showMultipleJobPanel(jobIdVector);
+   }
    */
-
   public JobCollection createJobCollection(Vector jobIdVector) {
     JobCollection jobCollection = new JobCollection();
     String jobIdText = "";
@@ -1723,34 +1666,25 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         if (isDebugging) {
           iae.printStackTrace();
         }
-        JOptionPane.showOptionDialog(JobMonitor.this,
-            Utils.UNESPECTED_ERROR +
-            iae.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobMonitor.this, Utils.UNESPECTED_ERROR
+            + iae.getMessage(), Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
       } catch (JobCollectionException jce) {
         if (isDebugging) {
           jce.printStackTrace();
         }
-        JOptionPane.showOptionDialog(JobMonitor.this,
-            Utils.UNESPECTED_ERROR +
-            jce.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobMonitor.this, Utils.UNESPECTED_ERROR
+            + jce.getMessage(), Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
       } catch (Exception ex) {
         if (isDebugging) {
           ex.printStackTrace();
         }
-        JOptionPane.showOptionDialog(JobMonitor.this,
-            ex.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobMonitor.this, ex.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     }
     return jobCollection;
@@ -1814,12 +1748,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
         }
       }
       if (!warningMsg.equals("")) {
-        JOptionPane.showOptionDialog(JobMonitor.this,
-            warningMsg,
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobMonitor.this, warningMsg,
+            Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.WARNING_MESSAGE, null, null, null);
       }
     }
   }
@@ -1829,8 +1760,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       Vector rowElement = new Vector();
       rowElement.add(jobId);
       jobTableModel.addRow(rowElement);
-      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-          getRowCount()));
+      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+          .getRowCount()));
       saveConf(getJobMonitorRecoveryFile());
     }
   }
@@ -1838,7 +1769,6 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   void addSubmittedJobs(final Vector jobVector) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         if (jobVector.size() != 0) {
           String jobIdText;
@@ -1851,14 +1781,13 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
               jobTableModel.addRow(elementToAdd);
             }
           }
-          jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-              getRowCount()));
-          jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-              getSelectedRowCount()));
+          jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+              .getRowCount()));
+          jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+              .getSelectedRowCount()));
           saveConf(getJobMonitorRecoveryFile());
         }
         // END Standard code
-
         return "";
       }
     };
@@ -1868,19 +1797,13 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
   protected void renewJPopupMenu() {
     jPopupMenuTable.add(jMenuItemRemove);
     jPopupMenuTable.add(jMenuItemClear);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemSelectAll);
     jPopupMenuTable.add(jMenuItemSelectNone);
     jPopupMenuTable.add(jMenuItemInvertSelection);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemStatus);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemRetrieveCheckpointState);
   }
 
@@ -1892,17 +1815,14 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
     };
     jMenuItemRemove.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuClear();
       }
     };
     jMenuItemClear.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemRemove);
     jPopupMenuTable.add(jMenuItemClear);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1910,25 +1830,21 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
     };
     jMenuItemSelectAll.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuSelectNone();
       }
     };
     jMenuItemSelectNone.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuInvertSelection();
       }
     };
     jMenuItemInvertSelection.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemSelectAll);
     jPopupMenuTable.add(jMenuItemSelectNone);
     jPopupMenuTable.add(jMenuItemInvertSelection);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1936,9 +1852,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
     };
     jMenuItemStatus.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemStatus);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1948,9 +1862,7 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       }
     };
     jMenuItemRetrieveCheckpointState.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemRetrieveCheckpointState);
-
   }
 
   void showJPopupMenuTable(MouseEvent e) {
@@ -2044,8 +1956,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           }
         };
         jMenuItem.addActionListener(alst);
-        if (!lbAddress.equals(QueryPanel.ALL_LB_SERVERS) &&
-            !this.menuLBVector.contains(lbAddress)) {
+        if (!lbAddress.equals(QueryPanel.ALL_LB_SERVERS)
+            && !this.menuLBVector.contains(lbAddress)) {
           jMenuItem.setEnabled(false);
           notEnabledCount++;
         } else {
@@ -2059,41 +1971,37 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       } else {
         jMenuItemGetJobIdMatchingQuery.setEnabled(true);
       }
-
     } else {
       jMenuItemGetJobIdFromLB.removeAll();
       jMenuItemGetJobIdFromLB.setEnabled(false);
-
       jMenuItemGetJobIdAllLB.setEnabled(false);
-
       jMenuItemGetJobIdMatchingQuery.setEnabled(false);
     }
   }
 
   Vector getLBMenuItems() {
-    return (Vector)this.menuLBVector.clone();
+    return (Vector) this.menuLBVector.clone();
   }
 
   protected void jMenuClear() {
     int choice = JOptionPane.showOptionDialog(JobMonitor.this,
-        "Clear Job Id table?",
-        "Job Monitor - Confirm Clear",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Clear Job Id table?", "Job Monitor - Confirm Clear",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       jobTableModel.removeAllRows();
-      jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-          getSelectedRowCount()));
-      jLabelTotalDisplayedJobs.setText(Integer.toString(jTableJobs.getRowCount()));
+      jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+          .getSelectedRowCount()));
+      jLabelTotalDisplayedJobs.setText(Integer.toString(jTableJobs
+          .getRowCount()));
       saveConf(getJobMonitorRecoveryFile());
     }
   }
 
   protected void jMenuSelectAll() {
     jTableJobs.selectAll();
-    jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-        getSelectedRowCount()));
+    jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+        .getSelectedRowCount()));
   }
 
   protected void jMenuSelectNone() {
@@ -2116,8 +2024,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     } else {
       jTableJobs.selectAll();
     }
-    jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs.
-        getSelectedRowCount()));
+    jLabelTotalSelectedJobs.setText(Integer.toString(jTableJobs
+        .getSelectedRowCount()));
   }
 
   int getJobCount() {
@@ -2135,38 +2043,33 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
 
   void jMenuOpenCheckPointState() {
     JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     fileChooser.setDialogTitle("Open Checkpoint State");
-    String[] extensions = {
-        "CHKPT"};
+    String[] extensions = { "CHKPT"
+    };
     GUIFileFilter classadFileFilter = new GUIFileFilter("*.chkpt", extensions);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
     int choice = fileChooser.showOpenDialog(JobMonitor.this);
-
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobMonitor.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobMonitor.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       JobState jobState = new JobState();
       try {
         jobState.fromFile(selectedFile);
         jobState.check();
         if (GUIGlobalVars.openedCheckpointStateMap.containsKey(selectedFile)) {
-          CheckpointStateFrame checkpointState = (CheckpointStateFrame)
-              GUIGlobalVars.openedCheckpointStateMap.get(selectedFile);
+          CheckpointStateFrame checkpointState = (CheckpointStateFrame) GUIGlobalVars.openedCheckpointStateMap
+              .get(selectedFile);
           checkpointState.setVisible(false);
           GraphicUtils.deiconifyFrame(checkpointState);
           checkpointState.setVisible(true);
@@ -2183,9 +2086,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           e.printStackTrace();
         }
         GraphicUtils.showOptionDialogMsg(JobMonitor.this, e.getMessage(),
-            "Job Monitor - Open Checkpoint State",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+            "Job Monitor - Open Checkpoint State", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            null, null);
       }
     }
   }
@@ -2194,11 +2097,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
       final boolean isEditable) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
-        RetrieveCheckpointStateDialog retrieveCheckpointState =
-            new RetrieveCheckpointStateDialog(JobMonitor.this, jobIdText,
-            isEditable);
+        RetrieveCheckpointStateDialog retrieveCheckpointState = new RetrieveCheckpointStateDialog(
+            JobMonitor.this, jobIdText, isEditable);
         retrieveCheckpointState.setModal(true);
         GraphicUtils.windowCenterWindow(JobMonitor.this,
             retrieveCheckpointState);
@@ -2214,53 +2115,46 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
             try {
               job = new Job(new JobId(jobId));
             } catch (IllegalArgumentException iae) {
-              JOptionPane.showOptionDialog(JobMonitor.this,
-                  iae.getMessage(),
+              JOptionPane.showOptionDialog(JobMonitor.this, iae.getMessage(),
                   "Job Monitor - Retrieve Checkpoint State",
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+                  null, null);
               if (isDebugging) {
                 iae.printStackTrace();
                 //SW return;
               }
               return "";
             } catch (Exception e) {
-              JOptionPane.showOptionDialog(JobMonitor.this,
-                  e.getMessage(),
+              JOptionPane.showOptionDialog(JobMonitor.this, e.getMessage(),
                   "Job Monitor - Retrieve Checkpoint State",
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+                  null, null);
               if (isDebugging) {
                 e.printStackTrace();
               }
             }
-
             try {
               UserCredential userCredential = new UserCredential(new File(
                   GUIGlobalVars.proxyFilePath));
-              if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-                  proxySubject)) {
+              if (userCredential.getX500UserSubject().equals(
+                  GUIGlobalVars.proxySubject)) {
                 jobState = job.getState(state);
               } else {
-                JOptionPane.showOptionDialog(JobMonitor.this,
-                    Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                    + "\nApplication will be terminated",
-                    Utils.ERROR_MSG_TXT,
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
+                JOptionPane.showOptionDialog(JobMonitor.this, Utils.FATAL_ERROR
+                    + "Proxy file user subject has changed"
+                    + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
                     null, null, null);
-                System.exit( -1);
+                System.exit(-1);
               }
               logger.debug("jobState: " + jobState);
               if (jobState != null) {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setDialogTitle("Save Checkpoint State - " + jobId);
-                fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-                    getFileChooserWorkingDirectory()));
-                String[] extensions = {
-                    "CHKPT"};
+                fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+                    .getFileChooserWorkingDirectory()));
+                String[] extensions = { "CHKPT"
+                };
                 GUIFileFilter classadFileFilter = new GUIFileFilter("chkpt",
                     extensions);
                 fileChooser.addChoosableFileFilter(classadFileFilter);
@@ -2268,15 +2162,15 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
                 if (choice != JFileChooser.APPROVE_OPTION) {
                   return "";
                 } else {
-                  GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-                      getCurrentDirectory().toString());
+                  GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+                      .getCurrentDirectory().toString());
                   File outputFile = fileChooser.getSelectedFile();
                   String selectedFile = outputFile.toString();
-                  String extension = GUIFileSystem.getFileExtension(outputFile).
-                      toUpperCase();
+                  String extension = GUIFileSystem.getFileExtension(outputFile)
+                      .toUpperCase();
                   FileFilter selectedFileFilter = fileChooser.getFileFilter();
-                  if (!extension.equals("CHKPT") &&
-                      selectedFileFilter.getDescription().equals("chkpt")) {
+                  if (!extension.equals("CHKPT")
+                      && selectedFileFilter.getDescription().equals("chkpt")) {
                     selectedFile += ".chkpt";
                   }
                   outputFile = new File(selectedFile);
@@ -2285,12 +2179,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
                     choice = JOptionPane.showOptionDialog(JobMonitor.this,
                         "Output file exists. Overwrite?",
                         "Job Monitor - Confirm Save",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
                         null, null, null);
                   }
                   if (choice == 0) {
-                    GUIFileSystem.saveTextFile(selectedFile, jobState.toString(true, true));
+                    GUIFileSystem.saveTextFile(selectedFile, jobState.toString(
+                        true, true));
                   }
                 }
               }
@@ -2298,22 +2192,17 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
               if (isDebugging) {
                 e.printStackTrace();
               }
-              JOptionPane.showOptionDialog(JobMonitor.this,
-                  e.getMessage(),
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+              JOptionPane.showOptionDialog(JobMonitor.this, e.getMessage(),
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
             }
           }
         }
         // END Standard code
-
         return "";
       }
     };
     worker.start();
-
   }
 
   void setMenuCredentialChangeVOItemEnabled(boolean bool) {
@@ -2325,12 +2214,12 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     if (multipleJobPanel != null) {
       multipleJobPanel.jobTableModel.removeAllRows();
       multipleJobPanel.clearJobCollection();
-      if (multipleJobPanel.isSingleJobDialogShown) {
-        multipleJobPanel.singleJobDialog.dispose();
+      if (MultipleJobPanel.isSingleJobDialogShown) {
+        MultipleJobPanel.singleJobDialog.dispose();
         multipleJobPanel.setIsSingleJobDialogShown(false);
       }
-      if (multipleJobPanel.isLogInfoJDialogShown) {
-        multipleJobPanel.logInfoJDialog.dispose();
+      if (MultipleJobPanel.isLogInfoJDialogShown) {
+        MultipleJobPanel.logInfoJDialog.dispose();
         multipleJobPanel.setIsLogInfoJDialogShown(false);
       }
       multipleJobPanel.stopUpdateThread();
@@ -2360,15 +2249,15 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           userPrefJobMonitorAd = userPrefAd.getAd(Utils.PREF_FILE_JOB_MONITOR);
           logger.debug("userPrefJobMonitorAd: " + userPrefJobMonitorAd);
           if (userPrefJobMonitorAd.hasAttribute(Utils.USER_QUERIES)) {
-            Vector queriesAdVector = userPrefJobMonitorAd.getAdValue(Utils.
-                USER_QUERIES);
+            Vector queriesAdVector = userPrefJobMonitorAd
+                .getAdValue(Utils.USER_QUERIES);
             Ad queryAd = new Ad();
             String queryName = "";
             for (int i = 0; i < queriesAdVector.size(); i++) {
               queryAd = (Ad) queriesAdVector.get(i);
               logger.debug("queriesAd: " + queryAd);
-              queryName = queryAd.getStringValue(Utils.QUERY_NAME).get(0).
-                  toString().trim();
+              queryName = queryAd.getStringValue(Utils.QUERY_NAME).get(0)
+                  .toString().trim();
               userQueryMap.put(queryName, queryAd);
             }
           }
@@ -2409,8 +2298,8 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
           }
         };
         jMenuItem.addActionListener(alst);
-        if (!lbAddress.equals(QueryPanel.ALL_LB_SERVERS) &&
-            !this.menuLBVector.contains(lbAddress)) {
+        if (!lbAddress.equals(QueryPanel.ALL_LB_SERVERS)
+            && !this.menuLBVector.contains(lbAddress)) {
           jMenuItem.setEnabled(false);
           notEnabledCount++;
         }
@@ -2455,10 +2344,9 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
 
   /*
    *********************
-    INTERFACE METHODS
+   INTERFACE METHODS
    *********************
    */
-
   public void displayMultipleJobPanel() {
     this.getContentPane().remove(jPanelMain);
     this.getContentPane().add(multipleJobPanel, BorderLayout.CENTER);
@@ -2476,7 +2364,5 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
     validate();
     repaint();
   }
-
   // END INTERFACE METHODS
-
 }

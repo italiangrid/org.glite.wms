@@ -1,37 +1,65 @@
 /*
  * GUIUserCredentials.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme,
- * all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
 
-import java.util.*;
-import java.io.*;
-import java.net.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
 
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
-
-import java.security.GeneralSecurityException;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import condor.classad.*;
-
-import org.globus.common.CoGProperties;
-import org.globus.gsi.*;
-
-import org.apache.log4j.*;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.glite.wms.jdlj.Ad;
+import org.glite.wms.jdlj.JobAdException;
+import org.glite.wmsui.apij.Api;
+import org.glite.wmsui.apij.UserCredential;
+import org.globus.gsi.GlobusCredentialException;
 
 
 /**
@@ -157,15 +185,15 @@ public class GUIUserCredentials extends JDialog {
         PropertyConfigurator.configure(log4JConfFile);
       } else {
         logger.setLevel(Level.FATAL);
-        logger.getRootLogger().setLevel(Level.FATAL);
+        Logger.getRootLogger().setLevel(Level.FATAL);
       }
-      isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
+      isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG)
           ? true : false;
 
       loadUIConfFile();
       setEnvironmentVariables();
     } else {
-      isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG)
+      isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG)
           ? true : false;
     }
 
@@ -2199,7 +2227,7 @@ public class GUIUserCredentials extends JDialog {
     if (guiConfVarLoggingTimeout != -1) {
       Api.setEnv(Utils.EDG_WL_LOG_TIMEOUT,
           (new Integer(guiConfVarLoggingTimeout)).toString());
-      logger.info("EDG_WL_LOG_TIMEOUT set to: "
+      logger.info(Utils.EDG_WL_LOG_TIMEOUT + " set to: "
           + Api.getEnv(Utils.EDG_WL_LOG_TIMEOUT));
     }
     int guiConfVarLoggingSyncTimeout = GUIGlobalVars.
@@ -2207,13 +2235,13 @@ public class GUIUserCredentials extends JDialog {
     if (guiConfVarLoggingSyncTimeout != -1) {
       Api.setEnv(Utils.EDG_WL_LOG_SYNC_TIMEOUT,
           (new Integer(guiConfVarLoggingSyncTimeout)).toString());
-      logger.info("EDG_WL_LOG_SYNC_TIMEOUT set to: "
+      logger.info(Utils.EDG_WL_LOG_SYNC_TIMEOUT + " set to: "
           + Api.getEnv(Utils.EDG_WL_LOG_SYNC_TIMEOUT));
     }
     String guiConfVarLoggingDestination = GUIGlobalVars.
         getGUIConfVarLoggingDestination();
     Api.setEnv(Utils.EDG_WL_LOG_DESTINATION, guiConfVarLoggingDestination);
-    logger.info("EDG_WL_LOG_DESTINATION set to: "
+    logger.info(Utils.EDG_WL_LOG_DESTINATION + " set to: "
         + Api.getEnv(Utils.EDG_WL_LOG_DESTINATION));
   }
 

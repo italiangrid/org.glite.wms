@@ -1,33 +1,58 @@
 /*
  * JobSubmitter.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
-import javax.swing.table.*;
-import javax.swing.JTable.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.net.URL;
+import java.util.Date;
+import java.util.Vector;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileFilter;
-
-import java.io.*;
-import java.util.*;
-import java.net.*;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.glite.wms.jdlj.Ad;
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
+import org.glite.wms.jdlj.JobState;
+import org.glite.wmsui.apij.Job;
+import org.glite.wmsui.apij.JobCollection;
+import org.glite.wmsui.apij.JobCollectionException;
+import org.glite.wmsui.apij.JobId;
+import org.glite.wmsui.apij.Result;
+import org.glite.wmsui.apij.Url;
+import org.glite.wmsui.apij.UserCredential;
 
 /**
  * Implementation of the JobSubmitter class.
@@ -43,36 +68,56 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final String TITLE = "Job Submitter";
 
   private Vector nsVector = new Vector();
+
   private Vector nsNameVector = new Vector();
+
   private Vector menuNSVector = new Vector();
 
   // Popup menu.
   protected JMenuBar jMenuBar;
+
   JMenuItem jMenuItemCut = new JMenuItem("Cut");
+
   JMenuItem jMenuItemCopy = new JMenuItem("Copy");
+
   JMenuItem jMenuItemPaste = new JMenuItem("Paste");
+
   protected JMenu jMenuCopyTo = new JMenu("     Copy to");
+
   protected JMenu jMenuMoveTo = new JMenu("     Move to");
+
   JMenuItem jMenuItemSelectAll = new JMenuItem("     Select All");
+
   JMenuItem jMenuItemSelectNone = new JMenuItem("     Select None");
+
   JMenuItem jMenuItemSelectSubmitted = new JMenuItem("     Select Submitted");
+
   JMenuItem jMenuItemInvertSelection = new JMenuItem("     Invert Selection");
 
   JPanel jPanelMain = new JPanel();
+
   JScrollPane jScrollPaneMain = new JScrollPane();
+
   JButton jButtonEditor = new JButton();
+
   JButton jButtonSubmit = new JButton();
+
   JButton jButtonMonitor = new JButton();
+
   JPanel jPanelButton = new JPanel();
+
   JPanel jPanelJTabbedPaneRB = new JPanel();
+
   JTabbedPane jTabbedPaneRB = new JTabbedPane();
 
   JobMonitor jobMonitorJFrame;
+
   JobSubmitterPreferences jobSubmitterPreferences;
 
   /**
@@ -96,44 +141,36 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     credential.show();
   }
 
-
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     // Set application type. The type of application affects on some settings.
     Utils.setApplicationType(Utils.FRAME);
-
     // Set the items selectable from Edit menu.
     setJMenuEditItemsEnabled();
-
     Toolkit toolkit = getToolkit();
     Dimension screenSize = toolkit.getScreenSize();
-
-    this.setSize(new Dimension((int)
-        (screenSize.width * GraphicUtils.SCREEN_WIDTH_PROPORTION),
+    this.setSize(new Dimension(
+        (int) (screenSize.width * GraphicUtils.SCREEN_WIDTH_PROPORTION),
         (int) (screenSize.height * GraphicUtils.SCREEN_HEIGHT_PROPORTION)));
-
     jButtonEditor.setText("Editor");
     jButtonEditor.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonEditorEvent(e, true);
       }
     });
-
     jButtonMonitor.setText("Monitor");
     jButtonMonitor.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonMonitorEvent(e);
       }
     });
-
     jButtonSubmit.setText("Submit");
     jButtonSubmit.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonSubmitEvent(e);
       }
     });
-
     jPanelButton.setLayout(new BoxLayout(jPanelButton, BoxLayout.X_AXIS));
     jPanelButton.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelButton.add(jButtonEditor, null);
@@ -142,22 +179,16 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     jPanelButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelButton.add(Box.createGlue());
     jPanelButton.add(jButtonSubmit, null);
-
     jPanelJTabbedPaneRB.setLayout(new BorderLayout());
     jPanelJTabbedPaneRB.add(jTabbedPaneRB, BorderLayout.CENTER);
-
     jPanelMain.setLayout(new BorderLayout());
     jPanelMain.add(jPanelJTabbedPaneRB, BorderLayout.CENTER);
     jPanelMain.add(jPanelButton, BorderLayout.SOUTH);
-
     this.getContentPane().setLayout(new BorderLayout());
     this.getContentPane().add(jPanelMain, null);
-
     jMenuBar = createMenuBar();
     setJMenuBar(jMenuBar);
-
   }
-
 
   /**
    * Creates the Menu bar for the application.
@@ -166,11 +197,9 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     final JMenuBar jMenuBar = new JMenuBar();
     ActionListener alst = null;
     JMenuItem jMenuItem = null;
-
     // Job Menu.
     JMenu jMenuJob = new JMenu("Job");
     jMenuJob.setMnemonic('j');
-
     ImageIcon iconNew = null;
     URL url = JobSubmitter.class.getResource(Utils.ICON_FILE_NEW);
     if (url != null) {
@@ -184,8 +213,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     jMenuItem = jMenuJob.add(actionNew);
     jMenuItem.setMnemonic('n');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
-         GraphicUtils.KEY_EVENT_MASK));
-
+        GraphicUtils.KEY_EVENT_MASK));
     actionNew = new AbstractAction("     New Dag") {
       public void actionPerformed(ActionEvent e) {
         jMenuFileNewDag(e);
@@ -194,8 +222,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     jMenuItem = jMenuJob.add(actionNew);
     jMenuItem.setMnemonic('g');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
-         GraphicUtils.KEY_EVENT_MASK));
-
+        GraphicUtils.KEY_EVENT_MASK));
     jMenuItem = new JMenuItem("Open in Editor...");
     url = JobSubmitter.class.getResource(Utils.ICON_FILE_OPEN);
     if (url != null) {
@@ -203,7 +230,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
     jMenuItem.setMnemonic('o');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuFileOpenInEditor();
@@ -211,12 +238,11 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuJob.add(jMenuItem);
-
     jMenuItem = new JMenuItem("     Add...");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('d');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuJobAddFile();
@@ -224,9 +250,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuJob.add(jMenuItem);
-
     jMenuJob.addSeparator();
-
     jMenuItem = new JMenuItem("Save Job Ids List File...");
     url = JobSubmitter.class.getResource(Utils.ICON_FILE_SAVE);
     if (url != null) {
@@ -234,7 +258,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
     jMenuItem.setMnemonic('s');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuSaveJobIdList(e);
@@ -242,11 +266,10 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuJob.add(jMenuItem);
-
     jMenuItem = new JMenuItem("     Save Selected Job Ids List File...");
     jMenuItem.setMnemonic('a');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuSaveSelectedJobIdList(e);
@@ -254,13 +277,11 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuJob.add(jMenuItem);
-
     jMenuJob.addSeparator();
-
     jMenuItem = new JMenuItem("     Exit");
     jMenuItem.setMnemonic('x');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuExit(false);
@@ -268,11 +289,10 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuJob.add(jMenuItem);
-
     jMenuItem = new JMenuItem("     Exit & Clean Context");
     jMenuItem.setMnemonic('l');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuExit(true);
@@ -280,9 +300,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuJob.add(jMenuItem);
-
     jMenuBar.add(jMenuJob);
-
     // Edit Menu.
     JMenu jMenuEdit = new JMenu("Edit");
     jMenuEdit.setMnemonic('e');
@@ -291,14 +309,13 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         setNSMenuItems(JobSubmitter.this.nsNameVector);
       }
 
+      public void menuDeselected(MenuEvent e) {
+      }
 
-      public void menuDeselected(MenuEvent e) {}
-
-
-      public void menuCanceled(MenuEvent e) {}
+      public void menuCanceled(MenuEvent e) {
+      }
     };
     jMenuEdit.addMenuListener(ml);
-
     url = JobSubmitter.class.getResource(Utils.ICON_CUT);
     if (url != null) {
       jMenuItemCut.setIcon(new ImageIcon(url));
@@ -312,7 +329,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemCut.addActionListener(alst);
     jMenuEdit.add(jMenuItemCut);
-
     url = JobSubmitter.class.getResource(Utils.ICON_COPY);
     if (url != null) {
       jMenuItemCopy.setIcon(new ImageIcon(url));
@@ -326,7 +342,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemCopy.addActionListener(alst);
     jMenuEdit.add(jMenuItemCopy);
-
     url = JobSubmitter.class.getResource(Utils.ICON_PASTE);
     if (url != null) {
       jMenuItemPaste.setIcon(new ImageIcon(url));
@@ -340,17 +355,12 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemPaste.addActionListener(alst);
     jMenuEdit.add(jMenuItemPaste);
-
     jMenuEdit.addSeparator();
-
     jMenuCopyTo.setMnemonic('o');
     jMenuEdit.add(jMenuCopyTo);
-
     jMenuMoveTo.setMnemonic('v');
     jMenuEdit.add(jMenuMoveTo);
-
     jMenuEdit.addSeparator();
-
     //jMenuItem.setIcon(new ImageIcon("copy.gif"));
     jMenuItemSelectAll.setMnemonic('a');
     alst = new ActionListener() {
@@ -360,7 +370,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemSelectAll.addActionListener(alst);
     jMenuEdit.add(jMenuItemSelectAll);
-
     //jMenuItem.setIcon(new ImageIcon("copy.gif"));
     jMenuItemSelectNone.setMnemonic('n');
     alst = new ActionListener() {
@@ -370,7 +379,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemSelectNone.addActionListener(alst);
     jMenuEdit.add(jMenuItemSelectNone);
-
     //jMenuItem.setIcon(new ImageIcon("copy.gif"));
     jMenuItemSelectSubmitted.setMnemonic('s');
     alst = new ActionListener() {
@@ -380,7 +388,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemSelectSubmitted.addActionListener(alst);
     jMenuEdit.add(jMenuItemSelectSubmitted);
-
     //jMenuItem.setIcon(new ImageIcon("copy.gif"));
     jMenuItemInvertSelection.setMnemonic('i');
     alst = new ActionListener() {
@@ -390,33 +397,26 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItemInvertSelection.addActionListener(alst);
     jMenuEdit.add(jMenuItemInvertSelection);
-
     jMenuEdit.addSeparator();
-
     jMenuItem = new JMenuItem("     Preferences");
     jMenuItem.setMnemonic('r');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuJobPreferences();
       }
     };
     jMenuItem.addActionListener(alst);
-
     jMenuEdit.add(jMenuItem);
-
     jMenuBar.add(jMenuEdit);
-
     // Checkpoint Menu.
     JMenu jMenuCheckpoint = new JMenu("Checkpoint");
     jMenuCheckpoint.setMnemonic('c');
-
     jMenuItem = new JMenuItem("Open Checkpoint State...");
     jMenuItem.setMnemonic('o');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K,
-         GraphicUtils.KEY_EVENT_MASK));
-
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuOpenCheckPointState();
@@ -424,12 +424,11 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuCheckpoint.add(jMenuItem);
-
     jMenuItem = new JMenuItem("Retrieve Checkpoint State...");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('r');
     jMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
-         GraphicUtils.KEY_EVENT_MASK));
+        GraphicUtils.KEY_EVENT_MASK));
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuRetrieveCheckpointState("", true);
@@ -437,20 +436,17 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuCheckpoint.add(jMenuItem);
-
     jMenuBar.add(jMenuCheckpoint);
-
     // Proxy Menu.
     JMenu jMenuProxy = new JMenu("Credential");
     jMenuProxy.setMnemonic('r');
-
     jMenuItem = new JMenuItem("Info");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('i');
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        GUIUserCredentials credential = new GUIUserCredentials(JobSubmitter.this,
-            GUIUserCredentials.INFO_MODE);
+        GUIUserCredentials credential = new GUIUserCredentials(
+            JobSubmitter.this, GUIUserCredentials.INFO_MODE);
         credential.setModal(true);
         GraphicUtils.windowCenterWindow(JobSubmitter.this, credential);
         credential.setTitle(credential.getTitle() + " Info");
@@ -459,14 +455,12 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuProxy.add(jMenuItem);
-
     jMenuItem = new JMenuItem("Select");
     jMenuItem.setMnemonic('s');
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        GUIUserCredentials credential =
-            new GUIUserCredentials(JobSubmitter.this,
-            GUIUserCredentials.CHANGE_VO_MODE);
+        GUIUserCredentials credential = new GUIUserCredentials(
+            JobSubmitter.this, GUIUserCredentials.CHANGE_VO_MODE);
         credential.setModal(true);
         GraphicUtils.windowCenterWindow(JobSubmitter.this, credential);
         credential.setTitle(credential.getTitle() + " Select");
@@ -475,13 +469,10 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuProxy.add(jMenuItem);
-
     jMenuBar.add(jMenuProxy);
-
     // Help Menu.
     JMenu jMenuHelp = new JMenu("Help");
     jMenuHelp.setMnemonic('h');
-
     jMenuItem = new JMenuItem("Help Topics");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('h');
@@ -491,12 +482,9 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       }
     };
     jMenuItem.addActionListener(alst);
-
     //!!! To remove when coded.
     jMenuItem.setEnabled(false);
-
     jMenuHelp.add(jMenuItem);
-
     jMenuItem = new JMenuItem("About");
     //jMenuItem.setIcon(new ImageIcon("file_open.gif"));
     jMenuItem.setMnemonic('a');
@@ -507,12 +495,9 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuHelp.add(jMenuItem);
-
     jMenuBar.add(jMenuHelp);
-
     return jMenuBar;
   }
-
 
   /**
    * main method
@@ -522,7 +507,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     JFrame frame = new JobSubmitter();
   }
 
-
   protected void processWindowEvent(WindowEvent e) {
     super.processWindowEvent(e);
     this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -531,90 +515,71 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
   }
 
-
   void jButtonNoneEvent(ActionEvent e) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuSelectNone();
   }
-
 
   void jButtonAllEvent(ActionEvent e) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuSelectAll();
   }
 
-
   void jButtonSubmittedEvent(ActionEvent e) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuSelectSubmitted();
   }
 
-
   void jMenuFileOpenInEditor() {
     JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
-
-    String[] extensionsJDL = {
-        "JDL"};
-    GUIFileFilter classadFileFilter = new GUIFileFilter("*.jdl",
-        extensionsJDL);
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
+    String[] extensionsJDL = { "JDL"
+    };
+    GUIFileFilter classadFileFilter = new GUIFileFilter("*.jdl", extensionsJDL);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
-    String[] extensionsXML = {
-        "XML"};
+    String[] extensionsXML = { "XML"
+    };
     classadFileFilter = new GUIFileFilter("*.xml", extensionsXML);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
-    String[] extensionsJDLXML = {
-        "JDL", "XML"};
+    String[] extensionsJDLXML = { "JDL", "XML"
+    };
     classadFileFilter = new GUIFileFilter("*.jdl, *.xml", extensionsJDLXML);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
     int choice = fileChooser.showOpenDialog(JobSubmitter.this);
-
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobSubmitter.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobSubmitter.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
-      String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB.
-          getSelectedIndex());
-
+      String rBName = jTabbedPaneRB
+          .getTitleAt(jTabbedPaneRB.getSelectedIndex());
       String tempName = GUIFileSystem.getNameNoExtension(selectedFile);
       String keyJobName = selectedRB.getAvailableJobName(tempName);
-
       JFrame editor;
       try {
-        editor = new JDLEditor(rBName, keyJobName,
-            selectedFile, JobSubmitter.this);
+        editor = new JDLEditor(rBName, keyJobName, selectedFile,
+            JobSubmitter.this);
       } catch (Exception ex) {
-        JOptionPane.showOptionDialog(JobSubmitter.this,
-            ex.getMessage(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobSubmitter.this, ex.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
         return;
       }
-      GUIGlobalVars.openedEditorHashMap.put(rBName + " - " + keyJobName,
-          editor);
+      GUIGlobalVars.openedEditorHashMap
+          .put(rBName + " - " + keyJobName, editor);
       GraphicUtils.screenCenterWindow(editor);
       editor.setVisible(true);
     }
   }
-
 
   void jMenuFileNew(ActionEvent ae) {
     NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
@@ -627,7 +592,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     editor.setVisible(true);
   }
 
-
   void jMenuFileNewDag(ActionEvent ae) {
     NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB.getSelectedIndex());
@@ -639,26 +603,21 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     editor.setVisible(true);
   }
 
-
   void jMenuSaveSelectedJobIdList(ActionEvent ae) {
     NSPanel selectedNS = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedNS.saveSelectedJobIdList();
   }
-
 
   void jMenuSaveJobIdList(ActionEvent ae) {
     NSPanel selectedNS = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedNS.saveJobIdList();
   }
 
-
   void jMenuExit(boolean removeCtx) {
     int choice = JOptionPane.showOptionDialog(JobSubmitter.this,
-        "Do you really want to exit?",
-        "Job Submitter - Confirm Exit",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Do you really want to exit?", "Job Submitter - Confirm Exit",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       if (removeCtx) {
         try {
@@ -687,50 +646,39 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
   }
 
-
   void jMenuJobAddFile() {
     JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     fileChooser.setApproveButtonText("Add");
     fileChooser.setApproveButtonToolTipText("Add selected file");
     fileChooser.setDialogTitle("Add");
-
-    String[] extensionsJDL = {
-        "JDL"};
-    GUIFileFilter classadFileFilter = new GUIFileFilter("*.jdl",
-        extensionsJDL);
+    String[] extensionsJDL = { "JDL"
+    };
+    GUIFileFilter classadFileFilter = new GUIFileFilter("*.jdl", extensionsJDL);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
-    String[] extensionsXML = {
-        "XML"};
+    String[] extensionsXML = { "XML"
+    };
     classadFileFilter = new GUIFileFilter("*.xml", extensionsXML);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
-    String[] extensionsJDLXML = {
-        "JDL", "XML"};
+    String[] extensionsJDLXML = { "JDL", "XML"
+    };
     classadFileFilter = new GUIFileFilter("*.jdl, *.xml", extensionsJDLXML);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
     fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-
     int choice = fileChooser.showOpenDialog(JobSubmitter.this);
-
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
-    } else if (!fileChooser.getSelectedFile().isFile() &&
-        !fileChooser.getSelectedFile().isDirectory()) {
+    } else if (!fileChooser.getSelectedFile().isFile()
+        && !fileChooser.getSelectedFile().isDirectory()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobSubmitter.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobSubmitter.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       File file = new File(selectedFile);
       String errorMsg = "";
@@ -738,9 +686,10 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         File files[] = file.listFiles();
         String fileExtension = "";
         for (int i = 0; i < files.length; i++) {
-          fileExtension = GUIFileSystem.getFileExtension(files[i]).toUpperCase();
-          if (files[i].isFile() && (fileExtension.equals("JDL")
-              || fileExtension.equals("XML"))) {
+          fileExtension = GUIFileSystem.getFileExtension(files[i])
+              .toUpperCase();
+          if (files[i].isFile()
+              && (fileExtension.equals("JDL") || fileExtension.equals("XML"))) {
             // Add files only, not directories.
             if (!addFileToJobTable(files[i].toString())) {
               errorMsg += "- " + files[i] + "\n";
@@ -755,40 +704,33 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       errorMsg = errorMsg.trim();
       if (!errorMsg.equals("")) {
         GraphicUtils.showOptionDialogMsg(JobSubmitter.this, errorMsg,
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-            "Cannot add file(s):",
-            "The file(s) cannot be submitted"
-            + "\n(Use the editor to correct errors before adding)");
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            "Cannot add file(s):", "The file(s) cannot be submitted"
+                + "\n(Use the editor to correct errors before adding)");
       }
     }
   }
-
 
   void jMenuCut() {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuCut();
   }
 
-
   void jMenuCopy() {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuCopy();
   }
-
 
   void jMenuCopyTo(ActionEvent e) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuCopyTo(e);
   }
 
-
   void jMenuMoveTo(ActionEvent e) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuMoveTo(e);
   }
-
 
   void jButtonEditorEvent(ActionEvent e, boolean openNew) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
@@ -796,26 +738,21 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     int selectedRowCount = selectedRow.length;
     if (selectedRowCount > 1) {
       JOptionPane.showOptionDialog(JobSubmitter.this,
-          "To edit from table select a single item",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          "To edit from table select a single item", Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
       jMenuFileNew(null);
     } else if (selectedRowCount == 1) {
       String jobIdText = selectedPanel.jTableJobs.getValueAt(selectedRow[0],
           NSPanel.JOB_ID_COLUMN_INDEX).toString().trim();
       if (jobIdText.equals(Utils.SUBMITTING_TEXT)
           || jobIdText.equals(Utils.LISTMATCHING_TEXT)) {
-        String msg = (jobIdText.equals(Utils.SUBMITTING_TEXT))
-            ? "Cannot edit, the job is in Submitting phase"
+        String msg = (jobIdText.equals(Utils.SUBMITTING_TEXT)) ? "Cannot edit, the job is in Submitting phase"
             : "Cannot edit, the job is in Searching CE phase";
-        JOptionPane.showOptionDialog(JobSubmitter.this,
-            msg + ((openNew) ? "\nA new JDL Editor will be opened" : ""),
-            Utils.INFORMATION_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.INFORMATION_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobSubmitter.this, msg
+            + ((openNew) ? "\nA new JDL Editor will be opened" : ""),
+            Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE, null, null, null);
         if (openNew) {
           jMenuFileNew(null);
         }
@@ -824,26 +761,28 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       String keyJobName = selectedPanel.jTableJobs.getValueAt(selectedRow[0],
           NSPanel.JOB_NAME_COLUMN_INDEX).toString();
       NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
-      String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB.getSelectedIndex());
-      String temporaryPhysicalFileName = GUIFileSystem.getJobTemporaryFileDirectory() +
-          rBName + File.separator + keyJobName + GUIFileSystem.JDL_FILE_EXTENSION;
+      String rBName = jTabbedPaneRB
+          .getTitleAt(jTabbedPaneRB.getSelectedIndex());
+      String temporaryPhysicalFileName = GUIFileSystem
+          .getJobTemporaryFileDirectory()
+          + rBName
+          + File.separator
+          + keyJobName
+          + GUIFileSystem.JDL_FILE_EXTENSION;
       JFrame editor = null;
       if (!GUIGlobalVars.openedEditorHashMap.containsKey(rBName + " - "
           + keyJobName)) {
-        String jdleSchema = ((NetworkServer) GUIGlobalVars.nsMap.get(rBName)).
-            getJDLESchema();
+        String jdleSchema = ((NetworkServer) GUIGlobalVars.nsMap.get(rBName))
+            .getJDLESchema();
         Utils.setJDLESchemaFile(jdleSchema);
         try {
           editor = new JDLEditor(rBName, keyJobName, temporaryPhysicalFileName,
               JobSubmitter.this);
         } catch (Exception ex) {
           ex.printStackTrace();
-          JOptionPane.showOptionDialog(JobSubmitter.this,
-              ex.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JobSubmitter.this, ex.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           return;
         }
         GUIGlobalVars.openedEditorHashMap.put(rBName + " - " + keyJobName,
@@ -852,14 +791,11 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         editor.setVisible(true);
       } else {
         JOptionPane.showOptionDialog(JobSubmitter.this,
-            "A JDL Editor for the job '" + keyJobName
-            + "'  is already opened",
-            Utils.INFORMATION_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.INFORMATION_MESSAGE,
-            null, null, null);
-        editor = (JDLEditor) GUIGlobalVars.openedEditorHashMap.get(rBName +
-            " - " + keyJobName);
+            "A JDL Editor for the job '" + keyJobName + "'  is already opened",
+            Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE, null, null, null);
+        editor = (JDLEditor) GUIGlobalVars.openedEditorHashMap.get(rBName
+            + " - " + keyJobName);
         editor.setVisible(false);
         GraphicUtils.deiconifyFrame(editor);
         editor.setVisible(true);
@@ -869,11 +805,10 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
   }
 
-
   void jButtonMonitorEvent(ActionEvent e) {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
-    JobTableModel jobTableModel = ((JobTableModel) selectedPanel.jTableJobs.
-        getModel());
+    JobTableModel jobTableModel = ((JobTableModel) selectedPanel.jTableJobs
+        .getModel());
     int[] selectedRow = selectedPanel.jTableJobs.getSelectedRows();
     int selectedRowCount = selectedRow.length;
     if (isJobMonitorActive()) { // Monitor is shown.
@@ -900,64 +835,54 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
               NSPanel.JOB_ID_COLUMN_INDEX));
         } else {
           jobName = jobTableModel.getValueAt(selectedRow[i],
-              NSPanel.JOB_NAME_COLUMN_INDEX)
-              .toString().trim();
+              NSPanel.JOB_NAME_COLUMN_INDEX).toString().trim();
           warningMsg += "- " + jobName + "\n";
         }
       }
-
       jobMonitorJFrame.addSubmittedJobs(newElementVector);
-      if (!jobMonitorJFrame.isJobPresentOnStartup ||
-          ((jobMonitorJFrame.multipleJobPanel != null)
-          && jobMonitorJFrame.multipleJobPanel.isVisible())) {
+      if (!jobMonitorJFrame.isJobPresentOnStartup
+          || ((jobMonitorJFrame.multipleJobPanel != null) && jobMonitorJFrame.multipleJobPanel
+              .isVisible())) {
         jobMonitorJFrame.isJobPresentOnStartup = false;
         jobMonitorJFrame.showMultipleJobPanel(newElementVector);
       }
       warningMsg = warningMsg.trim();
       if (!warningMsg.equals("")) {
         GraphicUtils.showOptionDialogMsg(jobMonitorJFrame, warningMsg,
-            Utils.WARNING_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            Utils.WARNING_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.WARNING_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
             "Cannot monitor job(s):",
             "Not submitted job(s) or submission is on-going");
       }
     }
   }
 
-
   void jButtonSubmitEvent(ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
         String rBName = selectedPanel.getName();
-        JobTableModel jobTableModel = ((JobTableModel) selectedPanel.jTableJobs.
-            getModel());
-
+        JobTableModel jobTableModel = ((JobTableModel) selectedPanel.jTableJobs
+            .getModel());
         // Creating Network Server URL.
         Url nsUrl = null;
         String nsUrlText = "";
         try {
-          nsUrlText = ((NetworkServer) GUIGlobalVars.nsMap.get(rBName)).
-              getAddress();
+          nsUrlText = ((NetworkServer) GUIGlobalVars.nsMap.get(rBName))
+              .getAddress();
           nsUrl = new Url(nsUrlText);
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(JobSubmitter.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JobSubmitter.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           return "";
         }
         logger.info("Starting Submissioning Method ");
         logger.info("Network Server: " + nsUrlText);
-
         // Creating Logging & Bookkeeping Server URLs.
         Vector lbUrlVector = new Vector();
         Vector lbVector = (Vector) GUIGlobalVars.nsLBMap.get(nsUrlText);
@@ -974,15 +899,11 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(JobSubmitter.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JobSubmitter.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           return "";
         }
-
         int[] selectedRows = selectedPanel.jTableJobs.getSelectedRows();
         int selectedRowCount = selectedRows.length;
         if (selectedRowCount != 0) {
@@ -990,8 +911,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           Vector selectedJobNameVector = new Vector();
           for (int i = 0; i < selectedRowCount; i++) {
             selectedJobNameVector.add(selectedPanel.jTableJobs.getValueAt(
-                selectedRows[i],
-                NSPanel.JOB_NAME_COLUMN_INDEX).toString());
+                selectedRows[i], NSPanel.JOB_NAME_COLUMN_INDEX).toString());
           }
           Date timeText = new Date();
           String jobId;
@@ -999,86 +919,84 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           String jobName;
           String jobType;
           String temporaryPhysicalFileName;
-
           JobAd jobAd = new JobAd();
           Ad ad = new Ad();
-
           // Creating job collection.
           JobCollection jobCollection = new JobCollection();
           for (int i = 0; i < selectedRowCount; i++) {
             jobIdValue = selectedPanel.jTableJobs.getValueAt(selectedRows[i],
-                NSPanel.JOB_ID_COLUMN_INDEX)
-                .toString().trim();
+                NSPanel.JOB_ID_COLUMN_INDEX).toString().trim();
             //logger.debug("jobId: " + jobIdValue);
             jobName = selectedPanel.jTableJobs.getValueAt(selectedRows[i],
-                NSPanel.JOB_NAME_COLUMN_INDEX)
-                .toString().trim();
+                NSPanel.JOB_NAME_COLUMN_INDEX).toString().trim();
             if (jobIdValue.equals(Utils.NOT_SUBMITTED_TEXT)) {
               jobType = selectedPanel.jTableJobs.getValueAt(selectedRows[i],
-                  NSPanel.JOB_TYPE_COLUMN_INDEX)
-                  .toString().trim();
-              if (GUIGlobalVars.openedEditorHashMap.containsKey(selectedPanel.
-                  getName() + " - " + jobName)) {
-                int choice = JOptionPane.showOptionDialog(JobSubmitter.this,
-                    "A JDL Editor is opened for the job '" + jobName + "'"
-                    + "\nDo you want to submit this job anyway?"
-                    + "\n(Last modifies will be lost, JDL Editor will be closed)",
-                    Utils.WARNING_MSG_TXT,
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE,
-                    null, null, null);
+                  NSPanel.JOB_TYPE_COLUMN_INDEX).toString().trim();
+              if (GUIGlobalVars.openedEditorHashMap.containsKey(selectedPanel
+                  .getName()
+                  + " - " + jobName)) {
+                int choice = JOptionPane
+                    .showOptionDialog(
+                        JobSubmitter.this,
+                        "A JDL Editor is opened for the job '"
+                            + jobName
+                            + "'"
+                            + "\nDo you want to submit this job anyway?"
+                            + "\n(Last modifies will be lost, JDL Editor will be closed)",
+                        Utils.WARNING_MSG_TXT, JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE, null, null, null);
                 if (choice != 0) {
                   selectedJobNameVector.remove(jobName);
                   continue;
                 } else {
                   JFrame editor = (JFrame) GUIGlobalVars.openedEditorHashMap
                       .get(selectedPanel.getName() + " - " + jobName);
-                  GUIGlobalVars.openedEditorHashMap.remove(rBName + " - " +
-                      jobName);
+                  GUIGlobalVars.openedEditorHashMap.remove(rBName + " - "
+                      + jobName);
                   editor.dispose();
                 }
               }
-
-              if (GUIGlobalVars.openedListmatchMap.containsKey(selectedPanel.
-                  getName()
+              if (GUIGlobalVars.openedListmatchMap.containsKey(selectedPanel
+                  .getName()
                   + " - " + jobName)) {
-                int choice = JOptionPane.showOptionDialog(JobSubmitter.this,
-                    "A Listmatch window is shown for '" + jobName + "' job"
-                    +
-                    "\nNone of the proposed CEs has been selected for the job"
-                    + "\nDo you want to submit this job anyway?"
-                    + "\n(Listmatch window will be closed)",
-                    Utils.WARNING_MSG_TXT,
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE,
-                    null, null, null);
+                int choice = JOptionPane
+                    .showOptionDialog(
+                        JobSubmitter.this,
+                        "A Listmatch window is shown for '"
+                            + jobName
+                            + "' job"
+                            + "\nNone of the proposed CEs has been selected for the job"
+                            + "\nDo you want to submit this job anyway?"
+                            + "\n(Listmatch window will be closed)",
+                        Utils.WARNING_MSG_TXT, JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE, null, null, null);
                 if (choice != 0) {
                   selectedJobNameVector.remove(jobName);
                   continue;
                 } else {
-                  ListmatchFrame listmatch = (ListmatchFrame) GUIGlobalVars.
-                      openedListmatchMap
+                  ListmatchFrame listmatch = (ListmatchFrame) GUIGlobalVars.openedListmatchMap
                       .get(selectedPanel.getName() + " - " + jobName);
-                  GUIGlobalVars.openedListmatchMap.remove(rBName + " - " +
-                      jobName);
+                  GUIGlobalVars.openedListmatchMap.remove(rBName + " - "
+                      + jobName);
                   listmatch.dispose();
                 }
               }
-
               try {
-                temporaryPhysicalFileName = GUIFileSystem.getJobTemporaryFileDirectory()
-                    + rBName + File.separator + jobName +
-                    GUIFileSystem.JDL_FILE_EXTENSION;
-
+                temporaryPhysicalFileName = GUIFileSystem
+                    .getJobTemporaryFileDirectory()
+                    + rBName
+                    + File.separator
+                    + jobName
+                    + GUIFileSystem.JDL_FILE_EXTENSION;
                 if (!jobType.equals(Jdl.TYPE_DAG)) {
-                  logger.debug("temporaryPhysicalFileName: " +
-                      temporaryPhysicalFileName);
+                  logger.debug("temporaryPhysicalFileName: "
+                      + temporaryPhysicalFileName);
                   jobAd.fromFile(temporaryPhysicalFileName);
                   if (jobType.indexOf(Jdl.JOBTYPE_CHECKPOINTABLE) != -1) {
                     String checkpointStateFile = "";
                     if (jobAd.hasAttribute(Utils.GUI_CHECKPOINT_STATE_FILE)) {
-                      checkpointStateFile = jobAd.getStringValue(Utils.
-                          GUI_CHECKPOINT_STATE_FILE).get(0).toString();
+                      checkpointStateFile = jobAd.getStringValue(
+                          Utils.GUI_CHECKPOINT_STATE_FILE).get(0).toString();
                     }
                     logger.info("The job is checkpointable - checkpoint file: "
                         + checkpointStateFile);
@@ -1094,18 +1012,15 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
                           selectedJobNameVector.remove(jobName);
                         }
                         JOptionPane.showOptionDialog(JobSubmitter.this,
-                            "Unable to find linked file: " +
-                            checkpointStateFile
-                            + "\nCannot submit job: " + jobName,
-                            Utils.ERROR_MSG_TXT,
+                            "Unable to find linked file: "
+                                + checkpointStateFile + "\nCannot submit job: "
+                                + jobName, Utils.ERROR_MSG_TXT,
                             JOptionPane.DEFAULT_OPTION,
-                            JOptionPane.ERROR_MESSAGE,
-                            null, null, null);
+                            JOptionPane.ERROR_MESSAGE, null, null, null);
                         continue;
                       }
                     }
                   }
-
                   // Inserting job into jobCollection.
                   jobCollection.insertAd(jobAd);
                 } else {
@@ -1114,9 +1029,8 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
                       + job.toString());
                   jobCollection.insert(job);
                 }
-                jobTableModel.setValueAt(Utils.SUBMITTING_TEXT, selectedRows[i],
-                    NSPanel.JOB_ID_COLUMN_INDEX);
-
+                jobTableModel.setValueAt(Utils.SUBMITTING_TEXT,
+                    selectedRows[i], NSPanel.JOB_ID_COLUMN_INDEX);
               } catch (JobCollectionException jce) {
                 if (selectedJobNameVector.contains(jobName)) {
                   selectedJobNameVector.remove(jobName);
@@ -1132,7 +1046,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
                   e.printStackTrace();
                 }
               }
-
             } else if (jobIdValue.equals(Utils.LISTMATCHING_TEXT)) {
               selectedJobNameVector.remove(jobName);
               informationMsg += "- The job '" + jobName
@@ -1147,21 +1060,19 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
                   + "' is already submitted\n";
             }
           }
-
           if (jobCollection.size() != 0) {
             logger.debug("Job Name(s) to Submit: " + selectedJobNameVector);
             Vector resultVector = new Vector();
             try {
-              jobCollection.setLoggerLevel(GUIGlobalVars.
-                  getGUIConfVarNSLoggerLevel());
+              jobCollection.setLoggerLevel(GUIGlobalVars
+                  .getGUIConfVarNSLoggerLevel());
               UserCredential userCredential = new UserCredential(new File(
                   GUIGlobalVars.proxyFilePath));
-              if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-                  proxySubject)) {
+              if (userCredential.getX500UserSubject().equals(
+                  GUIGlobalVars.proxySubject)) {
                 logger.info("Submitting Job Collection...\n\t"
                     + " Job Collection Size: " + jobCollection.size()
                     + "\n\t submit(" + nsUrl + ", " + lbUrlVector + ", null)");
-
                 //long startTime = (new Date()).getTime();
                 resultVector = jobCollection.submit(nsUrl, lbUrlVector, null);
                 //long endTime = (new Date()).getTime();
@@ -1170,12 +1081,10 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
               } else {
                 JOptionPane.showOptionDialog(JobSubmitter.this,
                     Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                    + "\nApplication will be terminated",
-                    Utils.ERROR_MSG_TXT,
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
-                    null, null, null);
-                System.exit( -1);
+                        + "\nApplication will be terminated",
+                    Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.ERROR_MESSAGE, null, null, null);
+                System.exit(-1);
               }
             } catch (Exception e) {
               if (isDebugging) {
@@ -1185,20 +1094,17 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
               for (int i = 0; i < selectedJobNameVector.size(); i++) {
                 jobName = selectedJobNameVector.get(i).toString();
                 index = selectedPanel.jobTableModel.getIndexOfElementInColumn(
-                    selectedJobNameVector
-                    .get(i).toString(), NSPanel.JOB_NAME_COLUMN_INDEX);
+                    selectedJobNameVector.get(i).toString(),
+                    NSPanel.JOB_NAME_COLUMN_INDEX);
                 if (index == -1) {
                   continue;
                 }
                 jobTableModel.setValueAt(Utils.NOT_SUBMITTED_TEXT, index,
                     NSPanel.JOB_ID_COLUMN_INDEX);
               }
-              JOptionPane.showOptionDialog(JobSubmitter.this,
-                  e.getMessage(),
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+              JOptionPane.showOptionDialog(JobSubmitter.this, e.getMessage(),
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
             }
             int index = -1;
             int statusCode;
@@ -1217,22 +1123,25 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
               }
               jobName = selectedJobNameVector.get(i).toString();
               index = selectedPanel.jobTableModel.getIndexOfElementInColumn(
-                  selectedJobNameVector
-                  .get(i).toString(), NSPanel.JOB_NAME_COLUMN_INDEX);
+                  selectedJobNameVector.get(i).toString(),
+                  NSPanel.JOB_NAME_COLUMN_INDEX);
               if (index == -1) {
                 continue;
               }
               logger.debug("statusCode: " + statusCode);
-              if ((statusCode != Result.SUBMIT_FAILURE) &&
-                  (statusCode != Result.SUBMIT_FORBIDDEN)) {
+              if ((statusCode != Result.SUBMIT_FAILURE)
+                  && (statusCode != Result.SUBMIT_FORBIDDEN)) {
                 jobIdText = result.getId();
                 selectedPanel.jTableJobs.setValueAt(jobIdText, index,
                     NSPanel.JOB_ID_COLUMN_INDEX);
                 selectedPanel.jTableJobs.setValueAt(timeText, index,
                     NSPanel.JOB_SUBMIT_TIME_COLUMN_INDEX);
-                temporaryPhysicalFileName = GUIFileSystem.getJobTemporaryFileDirectory()
-                    + rBName + File.separator + jobName +
-                    GUIFileSystem.JDL_FILE_EXTENSION;
+                temporaryPhysicalFileName = GUIFileSystem
+                    .getJobTemporaryFileDirectory()
+                    + rBName
+                    + File.separator
+                    + jobName
+                    + GUIFileSystem.JDL_FILE_EXTENSION;
                 try {
                   ad.fromFile(temporaryPhysicalFileName);
                   if (ad.hasAttribute(Jdl.TYPE)) {
@@ -1242,49 +1151,44 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
                     jobAd.fromFile(temporaryPhysicalFileName);
                     if (jobAd.hasAttribute(Utils.GUI_JOB_ID_ATTR_NAME)) {
                       jobAd.delAttribute(Utils.GUI_JOB_ID_ATTR_NAME);
-                      if (jobAd.hasAttribute(Utils.
-                          GUI_SUBMISSION_TIME_ATTR_NAME)) {
-                        jobAd.delAttribute(Utils.
-                            GUI_SUBMISSION_TIME_ATTR_NAME);
+                      if (jobAd
+                          .hasAttribute(Utils.GUI_SUBMISSION_TIME_ATTR_NAME)) {
+                        jobAd.delAttribute(Utils.GUI_SUBMISSION_TIME_ATTR_NAME);
                       }
                     }
                     jobAd.addAttribute(Utils.GUI_JOB_ID_ATTR_NAME, jobIdText);
                     jobAd.addAttribute(Utils.GUI_SUBMISSION_TIME_ATTR_NAME,
                         (new Long(timeText.getTime())).toString()); //!!! timeText or something from result?
-                    GUIFileSystem.saveTextFile(temporaryPhysicalFileName, jobAd.toLines());
+                    GUIFileSystem.saveTextFile(temporaryPhysicalFileName, jobAd
+                        .toLines());
                   } else { // Dag.
                     if (ad.hasAttribute(Utils.GUI_JOB_ID_ATTR_NAME)) {
                       ad.delAttribute(Utils.GUI_JOB_ID_ATTR_NAME);
-                      if (ad.hasAttribute(Utils.
-                          GUI_SUBMISSION_TIME_ATTR_NAME)) {
-                        ad.delAttribute(Utils.
-                            GUI_SUBMISSION_TIME_ATTR_NAME);
+                      if (ad.hasAttribute(Utils.GUI_SUBMISSION_TIME_ATTR_NAME)) {
+                        ad.delAttribute(Utils.GUI_SUBMISSION_TIME_ATTR_NAME);
                       }
                     }
                     ad.addAttribute(Utils.GUI_JOB_ID_ATTR_NAME, jobIdText);
                     ad.addAttribute(Utils.GUI_SUBMISSION_TIME_ATTR_NAME,
                         (new Long(timeText.getTime())).toString()); //!!! timeText or something from result?
-                    GUIFileSystem.saveTextFile(temporaryPhysicalFileName, ad.toString());
+                    GUIFileSystem.saveTextFile(temporaryPhysicalFileName, ad
+                        .toString());
                   }
-
                 } catch (java.lang.Exception e) {
                   if (isDebugging) {
                     e.printStackTrace();
                   }
-                  JOptionPane.showOptionDialog(JobSubmitter.this,
-                      e.getMessage(),
-                      Utils.ERROR_MSG_TXT,
-                      JOptionPane.DEFAULT_OPTION,
-                      JOptionPane.ERROR_MESSAGE,
+                  JOptionPane.showOptionDialog(JobSubmitter.this, e
+                      .getMessage(), Utils.ERROR_MSG_TXT,
+                      JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
                       null, null, null);
                   continue;
                 }
-
               } else {
                 String submissionErrorMsg = "";
                 if (result != null) {
-                  submissionErrorMsg = ((Exception) result.getResult()).
-                      getMessage();
+                  submissionErrorMsg = ((Exception) result.getResult())
+                      .getMessage();
                 } else {
                   submissionErrorMsg = "Unable to submit job";
                 }
@@ -1300,26 +1204,21 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           informationMsg = informationMsg.trim();
           if (!informationMsg.equals("")) {
             GraphicUtils.showOptionDialogMsg(JobSubmitter.this, informationMsg,
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-                Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+                null, null);
           }
         } else {
-          JOptionPane.showOptionDialog(JobSubmitter.this,
-              Utils.SELECT_AN_ITEM,
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(JobSubmitter.this, Utils.SELECT_AN_ITEM,
+              Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.INFORMATION_MESSAGE, null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
     worker.start();
   }
-
 
   /**
    * Loads old working session serching for jobs in the temporary file
@@ -1339,34 +1238,34 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       }
       Vector nsDirectoryVector = new Vector();
       nsDirectoryVector = JobSubmitterPreferences.loadPrefFileNSNames();
-
       int errorCounter = 0;
       for (int i = 0; i < nsDirectoryVector.size(); i++) {
-        File nsDirectory = new File(directory + File.separator +
-            nsDirectoryVector.get(i));
+        File nsDirectory = new File(directory + File.separator
+            + nsDirectoryVector.get(i));
         File[] nsFiles = nsDirectory.listFiles();
         if (nsFiles != null) {
           for (int j = 0; j < nsFiles.length; j++) {
             if (nsFiles[j].isFile()) {
               //String fileExtension = Utils.getExtension(nsFiles[j]);
               String fileExtension = GUIFileSystem.getFileExtension(nsFiles[j]);
-              if ((fileExtension != null) &&
-                  ("." + fileExtension).equals(GUIFileSystem.JDL_FILE_EXTENSION)) {
+              if ((fileExtension != null)
+                  && ("." + fileExtension)
+                      .equals(GUIFileSystem.JDL_FILE_EXTENSION)) {
                 if (choice == -1) {
                   choice = JOptionPane.showOptionDialog(JobSubmitter.this,
                       "A previous working session is available. "
-                      + "Do you want to load it?",
+                          + "Do you want to load it?",
                       "Job Submitter - Job Submission Session Restoring",
-                      JOptionPane.YES_NO_OPTION,
-                      JOptionPane.QUESTION_MESSAGE,
+                      JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                       null, null, null);
                 }
                 if (choice == 0) {
-                  NSPanel rbPanel = getRBPanelReference(this.nsNameVector.get(i).
-                      toString());
+                  NSPanel rbPanel = getRBPanelReference(this.nsNameVector
+                      .get(i).toString());
                   int fileLength = GUIFileSystem.getName(nsFiles[j]).length();
-                  if (!rbPanel.restoreJobToTable((GUIFileSystem.getName(nsFiles[j]))
-                      .substring(0, fileLength - 4), nsFiles[j])) {
+                  if (!rbPanel.restoreJobToTable((GUIFileSystem
+                      .getName(nsFiles[j])).substring(0, fileLength - 4),
+                      nsFiles[j])) {
                     errorCounter++;
                     try {
                       nsFiles[j].delete();
@@ -1402,18 +1301,15 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         }
       }
       if (errorCounter != 0) {
-        JOptionPane.showOptionDialog(JobSubmitter.this,
-            "Unable to load " + errorCounter + " old context job(s)"
-            + "\nCorrupted job(s) will be removed",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(JobSubmitter.this, "Unable to load "
+            + errorCounter + " old context job(s)"
+            + "\nCorrupted job(s) will be removed", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
       }
     }
     GUIGlobalVars.restorePreviousSession = true;
   }
-
 
   /**
    * Adds the selected file (as a job) into the Job Table
@@ -1440,7 +1336,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         }
         return false;
       }
-
       try {
         type = ad.getStringValue(Jdl.TYPE).get(0).toString();
       } catch (Exception e) {
@@ -1448,38 +1343,37 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           e.printStackTrace();
         }
       }
-
       if (!type.equals(Jdl.TYPE_DAG)) {
         NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
-        String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB.getSelectedIndex());
-        String jdleSchema = ((NetworkServer) GUIGlobalVars.nsMap.get(rBName)).
-            getJDLESchema();
+        String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB
+            .getSelectedIndex());
+        String jdleSchema = ((NetworkServer) GUIGlobalVars.nsMap.get(rBName))
+            .getJDLESchema();
         String defRequirements = "";
         String defRank = "";
         String defRankMPI = "";
         SchemaRankRequirementsDefault schemaRankRequirementsDefault;
         for (int i = 0; i < GUIGlobalVars.srrDefaultVector.size(); i++) {
-          schemaRankRequirementsDefault = (SchemaRankRequirementsDefault)
-              GUIGlobalVars.srrDefaultVector.get(i);
+          schemaRankRequirementsDefault = (SchemaRankRequirementsDefault) GUIGlobalVars.srrDefaultVector
+              .get(i);
           logger.info("addFileToJobTable() - schemaRankRequirementsDefault: "
               + schemaRankRequirementsDefault);
           logger.info("addFileToJobTable() - jdleSchema: " + jdleSchema);
           if (schemaRankRequirementsDefault.getSchema().equals(jdleSchema)) {
-            defRequirements = schemaRankRequirementsDefault.getRequirements().
-                trim();
+            defRequirements = schemaRankRequirementsDefault.getRequirements()
+                .trim();
             defRank = schemaRankRequirementsDefault.getRank().trim();
             defRankMPI = schemaRankRequirementsDefault.getRankMPI().trim();
           }
         }
         try {
           // Adds virtual organisation to pass API check() method.
-          if (!GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.
-              VIRTUAL_ORGANISATION)) {
-            GUIGlobalVars.jobAdAttributeToAdd.addAttribute(Jdl.
-                VIRTUAL_ORGANISATION,
-                GUIGlobalVars.getVirtualOrganisation());
+          if (!GUIGlobalVars.jobAdAttributeToAdd
+              .hasAttribute(Jdl.VIRTUAL_ORGANISATION)) {
+            GUIGlobalVars.jobAdAttributeToAdd.addAttribute(
+                Jdl.VIRTUAL_ORGANISATION, GUIGlobalVars
+                    .getVirtualOrganisation());
           }
-
           if (GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.RANK)) {
             GUIGlobalVars.jobAdAttributeToAdd.delAttribute(Jdl.RANK);
           }
@@ -1489,73 +1383,66 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
             logger.info("addFileToJobTable() - jobAdAttributeToAdd defRank: "
                 + defRank);
           }
-
           if (GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.REQUIREMENTS)) {
             GUIGlobalVars.jobAdAttributeToAdd.delAttribute(Jdl.REQUIREMENTS);
           }
           if ((defRequirements != null) && !defRequirements.equals("")) {
-            GUIGlobalVars.jobAdAttributeToAdd.setAttributeExpr(Jdl.REQUIREMENTS,
-                defRequirements);
-            logger.info(
-                "addFileToJobTable() - jobAdAttributeToAdd defRequirements: "
-                + defRequirements);
+            GUIGlobalVars.jobAdAttributeToAdd.setAttributeExpr(
+                Jdl.REQUIREMENTS, defRequirements);
+            logger
+                .info("addFileToJobTable() - jobAdAttributeToAdd defRequirements: "
+                    + defRequirements);
           }
-
           if (GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.RANK_MPI)) {
             GUIGlobalVars.jobAdAttributeToAdd.delAttribute(Jdl.RANK_MPI);
           }
           if ((defRankMPI != null) && !defRankMPI.equals("")) {
             GUIGlobalVars.jobAdAttributeToAdd.setAttributeExpr(Jdl.RANK_MPI,
                 defRankMPI);
-            logger.info(
-                "addFileToJobTable() - jobAdAttributeToAdd defRankMPI: "
-                + defRankMPI);
+            logger
+                .info("addFileToJobTable() - jobAdAttributeToAdd defRankMPI: "
+                    + defRankMPI);
           }
-
           if (!GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.RETRYCOUNT)) {
             int retryCount = GUIGlobalVars.getGUIConfVarRetryCount();
             if (retryCount != GUIGlobalVars.NO_RETRY_COUNT) {
               GUIGlobalVars.jobAdAttributeToAdd.setAttribute(Jdl.RETRYCOUNT,
                   retryCount);
             }
-            logger.info(
-                "addFileToJobTable() - jobAdAttributeToAdd retryCount: "
-                + retryCount);
+            logger
+                .info("addFileToJobTable() - jobAdAttributeToAdd retryCount: "
+                    + retryCount);
           }
-
           if (!GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.HLR_LOCATION)) {
             String hlrLocation = GUIGlobalVars.getHLRLocation();
             if (!hlrLocation.equals("")) {
               GUIGlobalVars.jobAdAttributeToAdd.setAttribute(Jdl.HLR_LOCATION,
                   hlrLocation);
             }
-            logger.info(
-                "addFileToJobTable() - jobAdAttributeToAdd hlrLocation: "
-                + hlrLocation);
+            logger
+                .info("addFileToJobTable() - jobAdAttributeToAdd hlrLocation: "
+                    + hlrLocation);
           }
-
           if (!GUIGlobalVars.jobAdAttributeToAdd.hasAttribute(Jdl.MYPROXY)) {
             String myProxyServer = GUIGlobalVars.getMyProxyServer();
             if (!myProxyServer.equals("")) {
               GUIGlobalVars.jobAdAttributeToAdd.setAttribute(Jdl.MYPROXY,
                   myProxyServer);
             }
-            logger.info(
-                "addFileToJobTable() - jobAdAttributeToAdd myProxyServer: "
-                + myProxyServer);
+            logger
+                .info("addFileToJobTable() - jobAdAttributeToAdd myProxyServer: "
+                    + myProxyServer);
           }
-
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
           }
           return false;
         }
-
         try {
-          logger.info(
-              "addFileToJobTable() - GUIGlobalVars.jobAdAttributeToAdd: "
-              + GUIGlobalVars.jobAdAttributeToAdd);
+          logger
+              .info("addFileToJobTable() - GUIGlobalVars.jobAdAttributeToAdd: "
+                  + GUIGlobalVars.jobAdAttributeToAdd);
           jobAd = exprChecker.parse(file, true,
               GUIGlobalVars.jobAdAttributeToAdd);
           try {
@@ -1564,8 +1451,8 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
             if (jobAd.hasAttribute(Jdl.VIRTUAL_ORGANISATION)) {
               jobAd.delAttribute(Jdl.VIRTUAL_ORGANISATION);
             }
-            jobAd.addAttribute(Jdl.VIRTUAL_ORGANISATION,
-                GUIGlobalVars.getVirtualOrganisation());
+            jobAd.addAttribute(Jdl.VIRTUAL_ORGANISATION, GUIGlobalVars
+                .getVirtualOrganisation());
           } catch (Exception e) {
             if (isDebugging) {
               e.printStackTrace();
@@ -1584,27 +1471,24 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           }
           return false;
         }
-
       } else {
         NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
-        String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB.getSelectedIndex());
-
+        String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB
+            .getSelectedIndex());
         String tempName = GUIFileSystem.getNameNoExtension(selectedFile);
         String keyJobName = selectedRB.getAvailableJobName(tempName);
-
         try {
           if (ad.hasAttribute(Jdl.VIRTUAL_ORGANISATION)) {
             ad.delAttribute(Jdl.VIRTUAL_ORGANISATION);
           }
-          ad.addAttribute(Jdl.VIRTUAL_ORGANISATION,
-              GUIGlobalVars.getVirtualOrganisation());
+          ad.addAttribute(Jdl.VIRTUAL_ORGANISATION, GUIGlobalVars
+              .getVirtualOrganisation());
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
           }
           return false;
         }
-
         selectedRB.addDagToTable(rBName, keyJobName, ad);
       }
     } else if (fileExtension.equals("XML")) {
@@ -1617,15 +1501,13 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         }
       }
     }
-
     if (!type.equals(Jdl.TYPE_DAG)) {
       if (parserErrorMsg.equals("") && (jobAd != null) && (jobAd.size() != 0)) {
         NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
-        String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB.getSelectedIndex());
-
+        String rBName = jTabbedPaneRB.getTitleAt(jTabbedPaneRB
+            .getSelectedIndex());
         String tempName = GUIFileSystem.getNameNoExtension(selectedFile);
         String keyJobName = selectedRB.getAvailableJobName(tempName);
-
         selectedRB.addJobToTable(rBName, keyJobName, jobAd);
       } else {
         return false;
@@ -1633,7 +1515,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
     return true;
   }
-
 
   /**
    * Sends all the jobs contained in <code>jobVector</code> to the Job Monitor
@@ -1653,45 +1534,39 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       jobMonitorJFrame.setMenuCredentialChangeVOItemEnabled(false);
     }
     jobMonitorJFrame.addSubmittedJobs(jobVector);
-    if (!jobMonitorJFrame.isJobPresentOnStartup ||
-        ((jobMonitorJFrame.multipleJobPanel != null) &&
-        jobMonitorJFrame.multipleJobPanel.isVisible())) {
+    if (!jobMonitorJFrame.isJobPresentOnStartup
+        || ((jobMonitorJFrame.multipleJobPanel != null) && jobMonitorJFrame.multipleJobPanel
+            .isVisible())) {
       jobMonitorJFrame.isJobPresentOnStartup = false;
       jobMonitorJFrame.showMultipleJobPanel(jobVector);
     }
   }
 
-
   public void addJobToTable(String rBName, String keyJobName,
       String currentOpenedFile, Ad jobAd) {
-    NSPanel targetNSPanel = (NSPanel) jTabbedPaneRB.getComponentAt(
-        jTabbedPaneRB.indexOfTab(rBName));
+    NSPanel targetNSPanel = (NSPanel) jTabbedPaneRB
+        .getComponentAt(jTabbedPaneRB.indexOfTab(rBName));
     targetNSPanel.addJobToTable(rBName, keyJobName, jobAd);
   }
 
-
   NSPanel getRBPanelReference(String rbName) {
-    return (NSPanel) jTabbedPaneRB.getComponentAt(jTabbedPaneRB.indexOfTab(
-        rbName));
+    return (NSPanel) jTabbedPaneRB.getComponentAt(jTabbedPaneRB
+        .indexOfTab(rbName));
   }
-
 
   void jMenuPaste() {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuPaste();
   }
 
-
   void jMenuSelectAll() {
     jButtonAllEvent(null);
   }
-
 
   void jMenuInvertSelection() {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
     selectedPanel.jMenuInvertSelection();
   }
-
 
   void setJMenuEditItemsEnabled() {
     NSPanel selectedPanel = (NSPanel) jTabbedPaneRB.getSelectedComponent();
@@ -1708,13 +1583,11 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         jMenuItemSelectSubmitted.setEnabled(true);
         jMenuItemInvertSelection.setEnabled(true);
       }
-
       if (GUIGlobalVars.selectedJobNameCopyVector.size() == 0) {
         jMenuItemPaste.setEnabled(false);
       } else {
         jMenuItemPaste.setEnabled(true);
       }
-
       if (selectedRowCount == 0) {
         jMenuItemCut.setEnabled(false);
         jMenuItemCopy.setEnabled(false);
@@ -1726,7 +1599,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         jMenuCopyTo.setEnabled(true);
         jMenuMoveTo.setEnabled(true);
       }
-
       if (this.nsNameVector.size() == 1) {
         jMenuMoveTo.setEnabled(false);
       } else if ((this.nsNameVector.size() > 1) && (selectedRowCount > 0)) {
@@ -1735,19 +1607,15 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
   }
 
-
   void jMenuHelpAbout() {
     URL url = JobDef1Panel.class.getResource(Utils.ICON_DATAGRID_LOGO);
     JOptionPane.showOptionDialog(JobSubmitter.this,
-        //"Job Submitter" + Utils.JOB_SUBMITTER_ABOUT_MSG,
-        "Job Submitter Version " + GUIGlobalVars.getGUIConfVarVersion() +
-        "\n\n" + Utils.COPYRIGHT,
-        "Job Submitter - About",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.INFORMATION_MESSAGE,
+    //"Job Submitter" + Utils.JOB_SUBMITTER_ABOUT_MSG,
+        "Job Submitter Version " + GUIGlobalVars.getGUIConfVarVersion()
+            + "\n\n" + Utils.COPYRIGHT, "Job Submitter - About",
+        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
         (url == null) ? null : new ImageIcon(url), null, null);
   }
-
 
   void jMenuJobPreferences() {
     jobSubmitterPreferences = new JobSubmitterPreferences(this);
@@ -1755,7 +1623,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     GraphicUtils.windowCenterWindow(this, jobSubmitterPreferences);
     jobSubmitterPreferences.show();
   }
-
 
   void jMenuJobPreferences(boolean isCancelButtonVisible) {
     jobSubmitterPreferences = new JobSubmitterPreferences(this);
@@ -1765,18 +1632,16 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     jobSubmitterPreferences.show();
   }
 
-
   void jMenuRetrieveCheckpointState(final String jobIdText,
       final boolean isEditable) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
-        RetrieveCheckpointStateDialog retrieveCheckpointState =
-            new RetrieveCheckpointStateDialog(JobSubmitter.this, jobIdText,
-            isEditable);
+        RetrieveCheckpointStateDialog retrieveCheckpointState = new RetrieveCheckpointStateDialog(
+            JobSubmitter.this, jobIdText, isEditable);
         retrieveCheckpointState.setModal(true);
-        GraphicUtils.windowCenterWindow(JobSubmitter.this, retrieveCheckpointState);
+        GraphicUtils.windowCenterWindow(JobSubmitter.this,
+            retrieveCheckpointState);
         retrieveCheckpointState.show();
         String jobId = retrieveCheckpointState.getJobId();
         int state = retrieveCheckpointState.getState();
@@ -1789,68 +1654,58 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
             try {
               job = new Job(new JobId(jobId));
             } catch (IllegalArgumentException iae) {
-              JOptionPane.showOptionDialog(JobSubmitter.this,
-                  iae.getMessage(),
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+              JOptionPane.showOptionDialog(JobSubmitter.this, iae.getMessage(),
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
               if (isDebugging) {
                 iae.printStackTrace();
               }
               return "";
             } catch (Exception e) {
-              JOptionPane.showOptionDialog(JobSubmitter.this,
-                  e.getMessage(),
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+              JOptionPane.showOptionDialog(JobSubmitter.this, e.getMessage(),
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
               if (isDebugging) {
                 e.printStackTrace();
               }
             }
-
             try {
               UserCredential userCredential = new UserCredential(new File(
                   GUIGlobalVars.proxyFilePath));
-              if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-                  proxySubject)) {
+              if (userCredential.getX500UserSubject().equals(
+                  GUIGlobalVars.proxySubject)) {
                 jobState = job.getState(state);
               } else {
                 JOptionPane.showOptionDialog(JobSubmitter.this,
                     Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                    + "\nApplication will be terminated",
-                    Utils.ERROR_MSG_TXT,
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
-                    null, null, null);
-                System.exit( -1);
+                        + "\nApplication will be terminated",
+                    Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.ERROR_MESSAGE, null, null, null);
+                System.exit(-1);
               }
               if (jobState != null) {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setDialogTitle("Save Checkpoint State - " + jobId);
-                fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-                    getFileChooserWorkingDirectory()));
-                String[] extensions = {
-                    "CHKPT"};
+                fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+                    .getFileChooserWorkingDirectory()));
+                String[] extensions = { "CHKPT"
+                };
                 GUIFileFilter classadFileFilter = new GUIFileFilter("chkpt",
                     extensions);
                 fileChooser.addChoosableFileFilter(classadFileFilter);
-
                 int choice = fileChooser.showSaveDialog(JobSubmitter.this);
                 if (choice != JFileChooser.APPROVE_OPTION) {
                   return "";
                 } else {
-                  GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-                      getCurrentDirectory().toString());
+                  GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+                      .getCurrentDirectory().toString());
                   File outputFile = fileChooser.getSelectedFile();
                   String selectedFile = outputFile.toString();
-                  String extension = GUIFileSystem.getFileExtension(outputFile).
-                      toUpperCase();
+                  String extension = GUIFileSystem.getFileExtension(outputFile)
+                      .toUpperCase();
                   FileFilter selectedFileFilter = fileChooser.getFileFilter();
-                  if (!extension.equals("CHKPT") &&
-                      selectedFileFilter.getDescription().equals("chkpt")) {
+                  if (!extension.equals("CHKPT")
+                      && selectedFileFilter.getDescription().equals("chkpt")) {
                     selectedFile += ".chkpt";
                   }
                   outputFile = new File(selectedFile);
@@ -1859,12 +1714,12 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
                     choice = JOptionPane.showOptionDialog(JobSubmitter.this,
                         "Output file exists. Overwrite?",
                         "Job Submitter - Confirm Save",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
                         null, null, null);
                   }
                   if (choice == 0) {
-                    GUIFileSystem.saveTextFile(selectedFile, jobState.toString(true, true));
+                    GUIFileSystem.saveTextFile(selectedFile, jobState.toString(
+                        true, true));
                   }
                 }
               }
@@ -1872,60 +1727,48 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
               if (isDebugging) {
                 e.printStackTrace();
               }
-              JOptionPane.showOptionDialog(JobSubmitter.this,
-                  e.getMessage(),
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+              JOptionPane.showOptionDialog(JobSubmitter.this, e.getMessage(),
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
             }
           }
         }
         // END Standard code
-
         return "";
       }
     };
     worker.start();
-
   }
-
 
   void jMenuOpenCheckPointState() {
     JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-        getFileChooserWorkingDirectory()));
+    fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+        .getFileChooserWorkingDirectory()));
     fileChooser.setDialogTitle("Open Checkpoint State");
-    String[] extensions = {
-        "CHKPT"};
+    String[] extensions = { "CHKPT"
+    };
     GUIFileFilter classadFileFilter = new GUIFileFilter("*.chkpt", extensions);
     fileChooser.addChoosableFileFilter(classadFileFilter);
-
     int choice = fileChooser.showOpenDialog(JobSubmitter.this);
-
     if (choice != JFileChooser.APPROVE_OPTION) {
       return;
     } else if (!fileChooser.getSelectedFile().isFile()) {
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
-      JOptionPane.showOptionDialog(JobSubmitter.this,
-          "Unable to find file: " + selectedFile,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      JOptionPane.showOptionDialog(JobSubmitter.this, "Unable to find file: "
+          + selectedFile, Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     } else {
-      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-          getCurrentDirectory().toString());
+      GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+          .getCurrentDirectory().toString());
       String selectedFile = fileChooser.getSelectedFile().toString().trim();
       JobState jobState = new JobState();
       try {
         jobState.fromFile(selectedFile);
         jobState.check();
         if (GUIGlobalVars.openedCheckpointStateMap.containsKey(selectedFile)) {
-          CheckpointStateFrame checkpointState =
-              (CheckpointStateFrame) GUIGlobalVars.openedCheckpointStateMap.get(
-              selectedFile);
+          CheckpointStateFrame checkpointState = (CheckpointStateFrame) GUIGlobalVars.openedCheckpointStateMap
+              .get(selectedFile);
           checkpointState.setVisible(false);
           GraphicUtils.deiconifyFrame(checkpointState);
           checkpointState.setVisible(true);
@@ -1949,7 +1792,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
   }
 
-
   protected void addNSMenuItem(String item) {
     this.menuNSVector.add(item);
     JMenuItem jMenuItem = new JMenuItem(item);
@@ -1960,7 +1802,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuMoveTo.add(jMenuItem);
-
     jMenuItem = new JMenuItem(item);
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1969,7 +1810,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     };
     jMenuItem.addActionListener(alst);
     jMenuCopyTo.add(jMenuItem);
-
     if (this.menuNSVector.size() == 1) {
       jMenuMoveTo.setEnabled(false);
       jMenuCopyTo.setEnabled(false);
@@ -1978,7 +1818,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       jMenuCopyTo.setEnabled(true);
     }
   }
-
 
   protected void setNSTabbedPanePanels(Vector nsVector) {
     this.nsVector = (Vector) nsVector.clone();
@@ -1993,7 +1832,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
   }
 
-
   protected void setNSMenuItems(Vector nsNamesVector) {
     this.nsNameVector = nsNamesVector;
     int nsVectorSize = nsNamesVector.size();
@@ -2006,8 +1844,8 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
       String nsName;
       for (int i = 0; i < nsVectorSize; i++) {
         nsName = nsNamesVector.get(i).toString().trim();
-        if (!nsName.equals(jTabbedPaneRB.getTitleAt(jTabbedPaneRB.
-            getSelectedIndex()).trim())) {
+        if (!nsName.equals(jTabbedPaneRB.getTitleAt(
+            jTabbedPaneRB.getSelectedIndex()).trim())) {
           jMenuItem = new JMenuItem(nsName);
           alst = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -2017,7 +1855,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
           jMenuItem.addActionListener(alst);
           jMenuMoveTo.add(jMenuItem);
         }
-
         jMenuItem = new JMenuItem(nsName);
         alst = new ActionListener() {
           public void actionPerformed(ActionEvent e) {
@@ -2030,32 +1867,27 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
     setJMenuEditItemsEnabled();
     for (int i = 0; i < nsNamesVector.size(); i++) {
-      (getRBPanelReference(nsNamesVector.get(i).toString())).setNSMenuItems(
-          nsNamesVector);
+      (getRBPanelReference(nsNamesVector.get(i).toString()))
+          .setNSMenuItems(nsNamesVector);
     }
   }
 
-
   boolean isJobMonitorActive() {
-    return ((this.jobMonitorJFrame != null)
-        && this.jobMonitorJFrame.isVisible());
+    return ((this.jobMonitorJFrame != null) && this.jobMonitorJFrame
+        .isVisible());
   }
-
 
   public Vector getNSVector() {
-    return (Vector)this.nsVector.clone();
+    return (Vector) this.nsVector.clone();
   }
-
 
   public Vector getNSNameVector() {
-    return (Vector)this.nsNameVector.clone();
+    return (Vector) this.nsNameVector.clone();
   }
-
 
   JobSubmitterPreferences getJobSubmitterPreferencesReference() {
     return jobSubmitterPreferences;
   }
-
 
   boolean isSubmittedJob(String jobIdText) {
     if (!jobIdText.equals(Utils.NOT_SUBMITTED_TEXT)
@@ -2065,11 +1897,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
     }
     return false;
   }
-
 }
-
-
-
 /**********************
  *
  * CLASS NetworkServer
@@ -2078,7 +1906,9 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
 
 class NetworkServer {
   private String name;
+
   private String address;
+
   private String jdleSchema;
 
   public NetworkServer(String name, String address, String jdleSchema) {
@@ -2087,34 +1917,27 @@ class NetworkServer {
     this.jdleSchema = jdleSchema;
   }
 
-
   public String getName() {
     return name;
   }
-
 
   public void setName(String name) {
     this.name = name;
   }
 
-
   public String getAddress() {
     return address;
   }
-
 
   public void setAddress(String address) {
     this.address = address;
   }
 
-
   public String getJDLESchema() {
     return jdleSchema;
   }
 
-
   public void setJDLESchema(String jdleSchema) {
     this.jdleSchema = jdleSchema;
   }
-
 }

@@ -1,42 +1,69 @@
 /*
  * MultipleJobPanel.java
  *
- * Copyright (c) 2001 The European DataGrid Project - IST programme, all rights reserved.
- * Contributors are mentioned in the code where appropriate.
+ * Copyright (c) Members of the EGEE Collaboration. 2004.
+ * See http://public.eu-egee.org/partners/ for details on the copyright holders.
+ * For license conditions see the license file or http://www.eu-egee.org/license.html
  *
  */
 
 package org.glite.wmsui.guij;
 
-
-import java.util.*;
-import java.net.*;
-import java.io.*;
-
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
 import java.awt.Color;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
-
-import java.beans.VetoableChangeListener;
-import java.beans.PropertyVetoException;
-
-import org.glite.wms.jdlj.*;
-import org.glite.wmsui.apij.*;
-
-import org.apache.log4j.*;
-
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.edg.info.Consumer;
 import org.edg.info.ResultSet;
-import org.edg.info.CanonicalProducer;
-import org.edg.info.ServletConnection;
-
+import org.glite.wms.jdlj.Jdl;
+import org.glite.wms.jdlj.JobAd;
+import org.glite.wms.jdlj.JobAdException;
+import org.glite.wms.jdlj.JobState;
+import org.glite.wmsui.apij.Api;
+import org.glite.wmsui.apij.Job;
+import org.glite.wmsui.apij.JobCollection;
+import org.glite.wmsui.apij.JobId;
+import org.glite.wmsui.apij.JobStatus;
+import org.glite.wmsui.apij.Result;
+import org.glite.wmsui.apij.UserCredential;
 
 /**
  * Implementation of the MultipleJobPanel class.
@@ -52,29 +79,34 @@ public class MultipleJobPanel extends JPanel {
   static Logger logger = Logger.getLogger(GUIUserCredentials.class.getName());
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   static final int JOB_MONITOR_MAIN = 0;
+
   static final int MULTIPLE_JOB_PANEL = 1;
 
   int sortingColumn = Utils.NO_SORTING;
+
   boolean ascending = false;
 
   //static final String STATE_DONE = "Done";
-
   // Max number of jobs that can be simultaneously monitored
-  static protected int maxMonitoredJobNumber = Utils.
-      MAX_MONITORED_JOB_NUMBER_DEF_VAL; // Read this value from a configuration file??
+  static protected int maxMonitoredJobNumber = Utils.MAX_MONITORED_JOB_NUMBER_DEF_VAL; // Read this value from a configuration file??
 
   static final int JOB_ID_COLUMN_INDEX = 0;
-  static final int JOB_TYPE_COLUMN_INDEX = 1;
-  static final int JOB_STATUS_COLUMN_INDEX = 2;
-  static final int SUBMISSION_TIME_COLUMN_INDEX = 3;
-  static final int DESTINATION_COLUMN_INDEX = 4;
-  //static final int NETWORK_SERVER_COLUMN_INDEX = 4;
 
-  static final String[] stringHeader = {
-      "Job Id", "Job Type", "Status", "Submitted", "Destination" //, "Network Server"
+  static final int JOB_TYPE_COLUMN_INDEX = 1;
+
+  static final int JOB_STATUS_COLUMN_INDEX = 2;
+
+  static final int SUBMISSION_TIME_COLUMN_INDEX = 3;
+
+  static final int DESTINATION_COLUMN_INDEX = 4;
+
+  //static final int NETWORK_SERVER_COLUMN_INDEX = 4;
+  static final String[] stringHeader = { "Job Id", "Job Type", "Status",
+      "Submitted", "Destination" //, "Network Server"
   };
 
   // Vector used to store the one returned by jobStatus().
@@ -88,66 +120,110 @@ public class MultipleJobPanel extends JPanel {
   protected HashMap jobStatusHashMap = new HashMap();
 
   static boolean isSingleJobDialogShown = false;
-  static boolean isLogInfoJDialogShown = false;
-  static StatusDetailsFrame singleJobDialog;
-  static LogInfoFrame logInfoJDialog;
-  JobMonitor jobMonitorJFrame;
-  //MultipleJobFrame multipleJobFrame;
 
+  static boolean isLogInfoJDialogShown = false;
+
+  static StatusDetailsFrame singleJobDialog;
+
+  static LogInfoFrame logInfoJDialog;
+
+  JobMonitor jobMonitorJFrame;
+
+  //MultipleJobFrame multipleJobFrame;
   Vector vectorHeader = new Vector();
 
   UpdateThread updateThread = new UpdateThread(this);
+
   CurrentTimeThread currentTimeThread = new CurrentTimeThread(this);
 
   protected JPopupMenu jPopupMenuTable = new JPopupMenu();
+
   JMenuItem jMenuItemRemove = new JMenuItem("Remove");
+
   JMenuItem jMenuItemClear = new JMenuItem("Clear");
+
   JMenuItem jMenuItemSelectAll = new JMenuItem("Select All");
+
   JMenuItem jMenuItemSelectNone = new JMenuItem("Select None");
+
   JMenuItem jMenuItemInvertSelection = new JMenuItem("Invert Selection");
+
   JMenuItem jMenuItemDetails = new JMenuItem("Details");
+
   JMenuItem jMenuItemLogInfo = new JMenuItem("Log Info");
+
   JMenuItem jMenuItemUpdate = new JMenuItem("Update");
+
   JMenuItem jMenuItemJobCancel = new JMenuItem("Job Cancel");
+
   JMenuItem jMenuItemJobOutput = new JMenuItem("Job Output");
+
   JMenuItem jMenuItemInteractiveConsole = new JMenuItem("Interactive Console");
+
   JMenuItem jMenuItemRetrieveCheckpointState = new JMenuItem(
       "Retrieve Checkpoint State");
+
   JMenuItem jMenuItemDagNodes = new JMenuItem("Dag Nodes");
+
   JMenuItem jMenuItemDagMonitor = new JMenuItem("Dag Monitor");
+
   JMenuItem jMenuItemSortAddingOrder = new JMenuItem("Sort by Adding Order");
 
   JobTableModel jobTableModel;
+
   JTable jTableJobs;
+
   JScrollPane jScrollPaneJobTable = new JScrollPane();
+
   JLabel jLabelTotalDisplayed = new JLabel();
+
   JLabel jLabelTotalDisplayedJobs = new JLabel();
+
   JTextField jTextFieldUserJobId = new JTextField();
+
   JButton jButtonClearJobId = new JButton();
+
   JButton jButtonAddJobId = new JButton();
+
   JPanel jPanelJobId = new JPanel();
+
   JPanel jPanelJobStatusTable = new JPanel();
+
   JButton jButtonUpdate = new JButton();
+
   JButton jButtonDetails = new JButton();
 
   JButton jButtonDagNodes = new JButton();
-  //JButton jButtonDagMon = new JButton();
 
+  //JButton jButtonDagMon = new JButton();
   JButton jButtonBack = new JButton();
+
   JLabel jLabelLastUp = new JLabel();
+
   JLabel jLabelLastUpdate = new JLabel();
+
   JLabel jTextFieldCurrentTime = new JLabel();
+
   JLabel jLabelCurrentTime = new JLabel();
+
   JButton jButtonLogInfo = new JButton();
+
   JButton jButtonGetOutput = new JButton();
+
   JButton jButtonCancel = new JButton();
 
   JPanel jPanelButton = new JPanel();
+
   JPanel jPanelJobIdButton = new JPanel();
+
   JPanel jPanelTime = new JPanel();
+
   JPanel jPanelJobStatusTableLabel = new JPanel();
+
   JPanel jPanelJobStatusTableButton = new JPanel();
+
   JPanel jPanelNorth = new JPanel();
+
   JPanel jPanelMain = new JPanel();
 
   /**
@@ -183,29 +259,25 @@ public class MultipleJobPanel extends JPanel {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false;
-
+    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
+        : false;
     currentTimeThread.start();
-
     createJPopupMenu();
-
     for (int i = 0; i < stringHeader.length; i++) {
       vectorHeader.addElement(stringHeader[i]);
     }
     jobTableModel = new JobTableModel(vectorHeader, 0);
-
     Date date = new Date();
     String timeText = date.toString();
     jLabelLastUpdate.setText(timeText);
     jTableJobs = new JTable(jobTableModel);
     jTableJobs.getTableHeader().setReorderingAllowed(false);
     jTableJobs.setAutoCreateColumnsFromModel(false);
-
-    TableColumn col = jTableJobs.getColumnModel().getColumn(JOB_ID_COLUMN_INDEX);
+    TableColumn col = jTableJobs.getColumnModel()
+        .getColumn(JOB_ID_COLUMN_INDEX);
     //TableCellRenderer tableRenderer = col.getHeaderRenderer();
     //col.setHeaderRenderer(new RendererDecorator(tableRenderer));
     col.setCellRenderer(new GUITableTooltipCellRenderer());
-
     col = jTableJobs.getColumnModel().getColumn(JOB_TYPE_COLUMN_INDEX);
     col.setCellRenderer(new GUITableTooltipCellRenderer());
     col = jTableJobs.getColumnModel().getColumn(JOB_STATUS_COLUMN_INDEX);
@@ -215,29 +287,25 @@ public class MultipleJobPanel extends JPanel {
     //col = jTableJobs.getColumnModel().getColumn(NETWORK_SERVER_COLUMN_INDEX);
     col = jTableJobs.getColumnModel().getColumn(SUBMISSION_TIME_COLUMN_INDEX);
     col.setCellRenderer(new GUITableTooltipCellRenderer());
-
-    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.getRowCount()));
+    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+        .getRowCount()));
     jLabelTotalDisplayedJobs.setPreferredSize(new Dimension(50, 18));
-    jScrollPaneJobTable.setHorizontalScrollBarPolicy(JScrollPane.
-        HORIZONTAL_SCROLLBAR_NEVER);
+    jScrollPaneJobTable
+        .setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     jScrollPaneJobTable.getViewport().setBackground(Color.white);
     jScrollPaneJobTable.setBorder(BorderFactory.createEtchedBorder());
     //setSize(new Dimension(680, 600));
-
     this.setLayout(new BorderLayout());
-
     jLabelTotalDisplayed.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelTotalDisplayed.setText("Total Displayed Jobs");
-
-    jLabelTotalDisplayedJobs.setBorder(BorderFactory.createLoweredBevelBorder());
+    jLabelTotalDisplayedJobs
+        .setBorder(BorderFactory.createLoweredBevelBorder());
     jLabelTotalDisplayedJobs.setHorizontalAlignment(SwingConstants.RIGHT);
-
     jTextFieldUserJobId.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(FocusEvent e) {
         jTextFieldUserJobIdFocusLost(e);
       }
     });
-
     jButtonClearJobId.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonClearJobIdEvent(e);
@@ -245,153 +313,135 @@ public class MultipleJobPanel extends JPanel {
     });
     jButtonClearJobId.setText("Clear");
     jButtonAddJobId.setText("Add");
-
     jButtonAddJobId.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonAddJobIdEvent(e);
       }
     });
-    jPanelJobId.setBorder(new TitledBorder(new EtchedBorder(), " Job Id ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+    jPanelJobId.setBorder(new TitledBorder(new EtchedBorder(), " Job Id ", 0,
+        0, null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelJobId.setLayout(new BorderLayout());
     jPanelJobStatusTable.setBorder(new TitledBorder(new EtchedBorder(),
-        " Job Status Table ", 0, 0,
-        null, GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
-
+        " Job Status Table ", 0, 0, null,
+        GraphicUtils.TITLED_ETCHED_BORDER_COLOR));
     jPanelJobStatusTable.setLayout(new BorderLayout());
-
     jButtonUpdate.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonUpdateEvent(e);
       }
     });
     jButtonUpdate.setText("Update");
-
     jButtonDetails.setText(" Details ");
     jButtonDetails.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonDetailsEvent(e);
       }
     });
-
     jButtonDagNodes.setText("Dag Nodes");
     jButtonDagNodes.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonDagNodesEvent(e);
       }
     });
-
     jButtonBack.setText("Back");
     jButtonBack.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonBackEvent(e);
       }
     });
-
     jLabelLastUp.setText("Last Table Update");
     jLabelLastUp.setHorizontalAlignment(SwingConstants.RIGHT);
-
     jLabelLastUpdate.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelLastUpdate.setBorder(BorderFactory.createLoweredBevelBorder());
     jTextFieldCurrentTime.setBorder(BorderFactory.createLoweredBevelBorder());
     jTextFieldCurrentTime.setHorizontalAlignment(SwingConstants.RIGHT);
-
     jLabelCurrentTime.setHorizontalAlignment(SwingConstants.RIGHT);
     jLabelCurrentTime.setText("Current Time");
-
     jButtonLogInfo.setText("Log Info");
     jButtonLogInfo.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonLogInfoEvent(e);
       }
     });
-
     jButtonGetOutput.setText("Job Output");
     jButtonGetOutput.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonGetOutputEvent(e);
       }
     });
-
     jButtonCancel.setText("Job Cancel");
     jButtonCancel.addActionListener(new java.awt.event.ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonCancelEvent(e);
       }
     });
-
     jPanelJobIdButton.setLayout(new BoxLayout(jPanelJobIdButton,
         BoxLayout.X_AXIS));
     jPanelJobIdButton.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelJobIdButton.add(jButtonClearJobId, null);
     jPanelJobIdButton.add(Box.createGlue());
     jPanelJobIdButton.add(jButtonAddJobId, null);
-
     jPanelJobId.setLayout(new BorderLayout());
     jPanelJobId.add(jTextFieldUserJobId, BorderLayout.NORTH);
     jPanelJobId.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobId.add(jPanelJobIdButton, BorderLayout.SOUTH);
-
     jPanelButton.setLayout(new BoxLayout(jPanelButton, BoxLayout.X_AXIS));
     jPanelButton.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelButton.add(jButtonUpdate, null);
     jPanelButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelButton.add(Box.createGlue());
     jPanelButton.add(jButtonBack, null);
-
     ((FlowLayout) jPanelTime.getLayout()).setAlignment(FlowLayout.RIGHT);
     jPanelTime.add(jLabelCurrentTime, null);
     jPanelTime.add(jTextFieldCurrentTime, null);
-
-    jPanelJobStatusTableLabel.setLayout(new BoxLayout(jPanelJobStatusTableLabel,
-        BoxLayout.X_AXIS));
+    jPanelJobStatusTableLabel.setLayout(new BoxLayout(
+        jPanelJobStatusTableLabel, BoxLayout.X_AXIS));
     jPanelJobStatusTableLabel.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelJobStatusTableLabel.add(jLabelTotalDisplayed, null);
-    jPanelJobStatusTableLabel.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableLabel.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableLabel.add(jLabelTotalDisplayedJobs, null);
-    jPanelJobStatusTableLabel.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableLabel.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableLabel.add(Box.createGlue());
     jPanelJobStatusTableLabel.add(jLabelLastUp, null);
-    jPanelJobStatusTableLabel.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableLabel.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableLabel.add(jLabelLastUpdate, null);
-
     jScrollPaneJobTable.getViewport().add(jTableJobs, null);
-
     jPanelJobStatusTableButton.setLayout(new BoxLayout(
         jPanelJobStatusTableButton, BoxLayout.X_AXIS));
     jPanelJobStatusTableButton.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelJobStatusTableButton.add(jButtonDetails, null);
-    jPanelJobStatusTableButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableButton.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableButton.add(jButtonDagNodes, null);
-    jPanelJobStatusTableButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableButton.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     //jPanelJobStatusTableButton.add(jButtonDagMon, null);
     //jPanelJobStatusTableButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableButton.add(Box.createGlue());
     jPanelJobStatusTableButton.add(jButtonLogInfo, null);
-    jPanelJobStatusTableButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableButton.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableButton.add(jButtonCancel, null);
-    jPanelJobStatusTableButton.add(Box.createHorizontalStrut(GraphicUtils.STRUT_GAP));
+    jPanelJobStatusTableButton.add(Box
+        .createHorizontalStrut(GraphicUtils.STRUT_GAP));
     jPanelJobStatusTableButton.add(jButtonGetOutput, null);
-
     jPanelJobStatusTable.add(jPanelJobStatusTableLabel, BorderLayout.NORTH);
     jPanelJobStatusTable.add(jScrollPaneJobTable, BorderLayout.CENTER);
     jPanelJobStatusTable.add(jPanelJobStatusTableButton, BorderLayout.SOUTH);
     jPanelNorth.setLayout(new BorderLayout());
-
     jPanelNorth.add(jPanelTime, BorderLayout.NORTH);
     jPanelNorth.add(jPanelJobId, BorderLayout.SOUTH);
-
     jPanelMain.setLayout(new BorderLayout());
     jPanelMain.setBorder(GraphicUtils.SPACING_BORDER);
     jPanelMain.add(jPanelNorth, BorderLayout.NORTH);
     jPanelMain.add(jPanelJobStatusTable, BorderLayout.CENTER);
     jPanelMain.add(jPanelButton, BorderLayout.SOUTH);
-
     this.add(jPanelMain, BorderLayout.CENTER);
     this.setVisible(true);
     setPreferredSize(new Dimension(660, 540));
-
     jTableJobs.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2) {
@@ -420,7 +470,6 @@ public class MultipleJobPanel extends JPanel {
         }
       }
     });
-
     jTableJobs.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         showJPopupMenuTable(e);
@@ -430,7 +479,6 @@ public class MultipleJobPanel extends JPanel {
         showJPopupMenuTable(e);
       }
     });
-
     jScrollPaneJobTable.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         if (jTableJobs.getRowCount() != 0) {
@@ -446,7 +494,6 @@ public class MultipleJobPanel extends JPanel {
         showJPopupMenuTable(e);
       }
     });
-
     JTableHeader tableHeader = jTableJobs.getTableHeader();
     tableHeader.setUpdateTableInRealTime(true);
     tableHeader.addMouseListener(new MouseAdapter() {
@@ -459,11 +506,9 @@ public class MultipleJobPanel extends JPanel {
         }
         ascending = (sortingColumn == columnIndex) ? !ascending : true;
         sortingColumn = columnIndex;
-
         sortBy(jTableJobs, modelIndex, ascending);
       }
     });
-
   }
 
   void setJobCollection(JobCollection jobCollection) {
@@ -482,36 +527,32 @@ public class MultipleJobPanel extends JPanel {
   void jButtonDagNodesEvent(ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRows = jTableJobs.getSelectedRows();
         if (selectedRows.length == 0) {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select a Dag",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select a Dag", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         } else if (selectedRows.length == 1) {
           String selectedJobId = jTableJobs.getValueAt(selectedRows[0],
               JOB_ID_COLUMN_INDEX).toString().trim();
           String jobType = jTableJobs.getValueAt(selectedRows[0],
               JOB_TYPE_COLUMN_INDEX).toString().trim();
-
           if (jobType.equals(Jdl.TYPE_DAG)) {
-            if (!MultipleJobPanel.this.jobMonitorJFrame.dagMonitorMap.
-                containsKey(selectedJobId)) {
+            if (!MultipleJobPanel.this.jobMonitorJFrame.dagMonitorMap
+                .containsKey(selectedJobId)) {
               String state = jTableJobs.getValueAt(selectedRows[0],
                   JOB_STATUS_COLUMN_INDEX).toString().trim();
               String submissionTime = jTableJobs.getValueAt(selectedRows[0],
                   SUBMISSION_TIME_COLUMN_INDEX).toString().trim();
               try {
-                MultipleJobFrame multipleJobFrame =
-                    new MultipleJobFrame(MultipleJobPanel.this.jobMonitorJFrame,
-                    selectedJobId, state, submissionTime);
+                MultipleJobFrame multipleJobFrame = new MultipleJobFrame(
+                    MultipleJobPanel.this.jobMonitorJFrame, selectedJobId,
+                    state, submissionTime);
                 GraphicUtils.screenCenterWindow(multipleJobFrame);
-                if (!MultipleJobPanel.this.jobMonitorJFrame.dagMonitorMap.
-                    containsKey(selectedJobId)) {
+                if (!MultipleJobPanel.this.jobMonitorJFrame.dagMonitorMap
+                    .containsKey(selectedJobId)) {
                   MultipleJobPanel.this.jobMonitorJFrame.dagMonitorMap.put(
                       selectedJobId, multipleJobFrame);
                   multipleJobFrame.setVisible(true);
@@ -519,39 +560,31 @@ public class MultipleJobPanel extends JPanel {
                   multipleJobFrame.dispose();
                 }
               } catch (Exception e) {
-                JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                    e.getMessage(),
-                    Utils.ERROR_MSG_TXT,
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
+                JOptionPane.showOptionDialog(MultipleJobPanel.this, e
+                    .getMessage(), Utils.ERROR_MSG_TXT,
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
                     null, null, null);
               }
             } else {
-              MultipleJobFrame multipleJobFrame =
-                  (MultipleJobFrame) MultipleJobPanel.this.jobMonitorJFrame.
-                  dagMonitorMap.get(selectedJobId);
+              MultipleJobFrame multipleJobFrame = (MultipleJobFrame) MultipleJobPanel.this.jobMonitorJFrame.dagMonitorMap
+                  .get(selectedJobId);
               multipleJobFrame.setVisible(false);
               GraphicUtils.deiconifyFrame(multipleJobFrame);
               multipleJobFrame.setVisible(true);
             }
           } else {
             JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                "Please select a Dag",
-                Utils.INFORMATION_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.INFORMATION_MESSAGE,
+                "Please select a Dag", Utils.INFORMATION_MSG_TXT,
+                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                 null, null, null);
           }
         } else {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select a single Dag",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select a single Dag", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -561,31 +594,29 @@ public class MultipleJobPanel extends JPanel {
   void jButtonDagMonEvent(ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRows = jTableJobs.getSelectedRows();
         if (selectedRows.length == 0) {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select a Dag",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select a Dag", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         } else if (selectedRows.length == 1) {
           String selectedJobId = jTableJobs.getValueAt(selectedRows[0],
               JOB_ID_COLUMN_INDEX).toString().trim();
           String jobType = jTableJobs.getValueAt(selectedRows[0],
               JOB_TYPE_COLUMN_INDEX).toString().trim();
-
           if (jobType.equals(Jdl.TYPE_DAG)) {
-            if (!MultipleJobPanel.this.jobMonitorJFrame.dagMonThreadMap.
-                containsKey(selectedJobId)) {
+            if (!MultipleJobPanel.this.jobMonitorJFrame.dagMonThreadMap
+                .containsKey(selectedJobId)) {
               String state = jTableJobs.getValueAt(selectedRows[0],
                   JOB_STATUS_COLUMN_INDEX).toString().trim();
-
-              String dagMonLocation = Api.getEnv(GUIFileSystem.EDG_XDAGMON_LOCATION);
-              String topologyLocation = Api.getEnv(GUIFileSystem.EDG_TOPOLOGY_LOCATION);
-              String repLocation = Api.getEnv(GUIFileSystem.EDG_REPOSITORY_LOCATION);
+              String dagMonLocation = Api
+                  .getEnv(GUIFileSystem.EDG_XDAGMON_LOCATION);
+              String topologyLocation = Api
+                  .getEnv(GUIFileSystem.EDG_TOPOLOGY_LOCATION);
+              String repLocation = Api
+                  .getEnv(GUIFileSystem.EDG_REPOSITORY_LOCATION);
               String wlLocation = Api.getEnv(GUIFileSystem.EDG_WL_LOCATION);
               if (dagMonLocation == null) {
                 if (repLocation != null) {
@@ -601,7 +632,6 @@ public class MultipleJobPanel extends JPanel {
                   topologyLocation = wlLocation + "/bin";
                 }
               }
-
               Toolkit toolkit = getToolkit();
               Dimension screenSize = toolkit.getScreenSize();
               String command = dagMonLocation + "/xdagmon -tparse "
@@ -609,46 +639,37 @@ public class MultipleJobPanel extends JPanel {
                   //+ " -geometry " + ((int) (screenSize.width * Utils.SCREEN_WIDTH_PROPORTION))
                   + " -geometry " + ((int) (screenSize.width * 0.75))
                   //+ "x" + ((int) (screenSize.height * Utils.SCREEN_HEIGHT_PROPORTION))
-                  + "x" + ((int) (screenSize.height * 0.7))
-                  + " " + selectedJobId;
+                  + "x" + ((int) (screenSize.height * 0.7)) + " "
+                  + selectedJobId;
               logger.debug("Command: " + command);
               int code = Api.shadow(command);
               if ((code != 256) && (code != 13)) {
                 JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                    "Unable to show Dag Monitor",
-                    Utils.ERROR_MSG_TXT,
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
+                    "Unable to show Dag Monitor", Utils.ERROR_MSG_TXT,
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
                     null, null, null);
               }
               logger.debug("EXIT CODE: " + code);
             } else {
               JOptionPane.showOptionDialog(MultipleJobPanel.this,
                   "A Dag Monitor is already shown for the Dag:/n"
-                  + selectedJobId,
-                  Utils.INFORMATION_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.INFORMATION_MESSAGE,
+                      + selectedJobId, Utils.INFORMATION_MSG_TXT,
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                   null, null, null);
             }
           } else {
             JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                "Please select a Dag",
-                Utils.INFORMATION_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.INFORMATION_MESSAGE,
+                "Please select a Dag", Utils.INFORMATION_MSG_TXT,
+                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                 null, null, null);
           }
         } else {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select a single Dag",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select a single Dag", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -659,17 +680,14 @@ public class MultipleJobPanel extends JPanel {
     int[] selectedRows = jTableJobs.getSelectedRows();
     if (selectedRows.length == 0) {
       JOptionPane.showOptionDialog(MultipleJobPanel.this,
-          "Please select a job",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          "Please select a job", Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
     } else if (selectedRows.length == 1) {
       String selectedJobId = jTableJobs.getValueAt(selectedRows[0],
           JOB_ID_COLUMN_INDEX).toString().trim();
       String jobType = jTableJobs.getValueAt(selectedRows[0],
           JOB_TYPE_COLUMN_INDEX).toString().trim();
-
       JobStatus jobStatus = getStoredJobStatus(selectedJobId);
       if (jobStatus != null) {
         if (!isSingleJobDialogShown) {
@@ -690,11 +708,9 @@ public class MultipleJobPanel extends JPanel {
       }
     } else {
       JOptionPane.showOptionDialog(MultipleJobPanel.this,
-          "Please select a single job",
-          Utils.INFORMATION_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE,
-          null, null, null);
+          "Please select a single job", Utils.INFORMATION_MSG_TXT,
+          JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+          null, null);
     }
   }
 
@@ -719,33 +735,26 @@ public class MultipleJobPanel extends JPanel {
             jTextFieldUserJobId.setText("");
             //GUIGlobalVars.currentMonitoredJobCount++;
           } catch (Exception e) {
-            JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                e.getMessage(),
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+            JOptionPane.showOptionDialog(MultipleJobPanel.this, e.getMessage(),
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
             return;
           }
           addJobStatusTableJobs(jobCollectionToAdd);
         } else {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
               "Max simultaneously monitored job number reached\n"
-              + "First remove a job before adding",
-              "Job Monitor - Add Job Id",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.WARNING_MESSAGE,
-              null, null, null);
+                  + "First remove a job before adding",
+              "Job Monitor - Add Job Id", JOptionPane.DEFAULT_OPTION,
+              JOptionPane.WARNING_MESSAGE, null, null, null);
         }
         jTextFieldUserJobId.selectAll();
         jTextFieldUserJobId.grabFocus();
       } else {
         JOptionPane.showOptionDialog(MultipleJobPanel.this,
-            "Inserted Job Id is already present",
-            "Job Monitor - Add Job Id",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.WARNING_MESSAGE,
-            null, null, null);
+            "Inserted Job Id is already present", "Job Monitor - Add Job Id",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+            null, null);
       }
     }
   }
@@ -758,7 +767,6 @@ public class MultipleJobPanel extends JPanel {
   void jButtonUpdateEvent(ActionEvent e) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         logger.debug("Call to jButtonUpdateEvent()");
         if ((MultipleJobPanel.this.jobCollection != null)
@@ -783,7 +791,6 @@ public class MultipleJobPanel extends JPanel {
           }
         }
         // END Standard code
-
         return "";
       }
     };
@@ -822,23 +829,22 @@ public class MultipleJobPanel extends JPanel {
       JobId jobId = new JobId(jobIdText);
       Job job = new Job(jobId);
       Result jobResult = null;
-      UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.
-          proxyFilePath));
-      if (userCredential.getX500UserSubject().equals(GUIGlobalVars.proxySubject)) {
+      UserCredential userCredential = new UserCredential(new File(
+          GUIGlobalVars.proxyFilePath));
+      if (userCredential.getX500UserSubject()
+          .equals(GUIGlobalVars.proxySubject)) {
         jobResult = job.getStatus();
       } else {
-        JOptionPane.showOptionDialog(MultipleJobPanel.this,
-            Utils.FATAL_ERROR + "Proxy file user subject has changed"
-            + "\nApplication will be terminated",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-        System.exit( -1);
+        JOptionPane.showOptionDialog(MultipleJobPanel.this, Utils.FATAL_ERROR
+            + "Proxy file user subject has changed"
+            + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
+        System.exit(-1);
       }
       int resultCode = jobResult.getCode();
-      if ((resultCode != Result.STATUS_FAILURE) &&
-          (resultCode != Result.STATUS_FORBIDDEN)) {
+      if ((resultCode != Result.STATUS_FAILURE)
+          && (resultCode != Result.STATUS_FORBIDDEN)) {
         JobStatus jobStatus = (JobStatus) jobResult.getResult();
         if (jobStatus != null) {
           if (this.jobStatusHashMap.containsKey(jobIdText)) {
@@ -848,12 +854,9 @@ public class MultipleJobPanel extends JPanel {
         }
         return jobStatus;
       } else {
-        JOptionPane.showOptionDialog(MultipleJobPanel.this,
-            jobResult.getResult(),
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
+        JOptionPane.showOptionDialog(MultipleJobPanel.this, jobResult
+            .getResult(), Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
       }
     } catch (Exception e) {
       if (isDebugging) {
@@ -869,7 +872,7 @@ public class MultipleJobPanel extends JPanel {
    */
   JobStatus getStoredJobStatus(String jobIdText) {
     try {
-      JobStatus jobStatus = (JobStatus)this.jobStatusHashMap.get(jobIdText);
+      JobStatus jobStatus = (JobStatus) this.jobStatusHashMap.get(jobIdText);
       return jobStatus;
     } catch (Exception e) {
       if (isDebugging) {
@@ -895,52 +898,52 @@ public class MultipleJobPanel extends JPanel {
       }
       if (!jobTableModel.isElementPresentInColumn(jobId, JOB_ID_COLUMN_INDEX)) {
         jobTableModel.addRow(makeTempRowToAddVector(job));
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
       }
     }
-    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.getRowCount()));
+    jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+        .getRowCount()));
     updateJobStatusTableJobs();
   }
 
-//---------------------------------------------------------------------
+  //---------------------------------------------------------------------
   static int count = 0;
+
   void updateJobStatusTableJobs() {
     /*JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                                   "Calling: " + (++count) + "\n",
-                                   Utils.ERROR_MSG_TXT,
-                                   JOptionPane.DEFAULT_OPTION,
-                                   JOptionPane.ERROR_MESSAGE,
-                                   null, null, null);*/
-
+     "Calling: " + (++count) + "\n",
+     Utils.ERROR_MSG_TXT,
+     JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE,
+     null, null, null);*/
     logger.debug("setJobStatusTableJobs() - jobCollection.size(): "
         + MultipleJobPanel.this.jobCollection.size());
     try {
-      UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.
-          proxyFilePath));
-      if (userCredential.getX500UserSubject().equals(GUIGlobalVars.proxySubject)) {
+      UserCredential userCredential = new UserCredential(new File(
+          GUIGlobalVars.proxyFilePath));
+      if (userCredential.getX500UserSubject()
+          .equals(GUIGlobalVars.proxySubject)) {
         MultipleJobPanel.this.jobVector = new Vector();
         /*
-                JobCollection coll = new JobCollection();
-                Iterator iterator = MultipleJobPanel.this.jobCollection.jobs();
-                while (iterator.hasNext()) {
-                  coll.insert((Job) iterator.next());
-                }
-                MultipleJobPanel.this.jobCollection = coll;
+         JobCollection coll = new JobCollection();
+         Iterator iterator = MultipleJobPanel.this.jobCollection.jobs();
+         while (iterator.hasNext()) {
+         coll.insert((Job) iterator.next());
+         }
+         MultipleJobPanel.this.jobCollection = coll;
          */
         logger.debug("----- CALLING JOBSTATUS");
         logger.debug(MultipleJobPanel.this.jobCollection);
-        MultipleJobPanel.this.jobVector = MultipleJobPanel.this.jobCollection.
-            getStatus();
+        MultipleJobPanel.this.jobVector = MultipleJobPanel.this.jobCollection
+            .getStatus();
       } else {
-        JOptionPane.showOptionDialog(MultipleJobPanel.this,
-            Utils.FATAL_ERROR + "Proxy file user subject has changed"
-            + "\nApplication will be terminated",
-            Utils.ERROR_MSG_TXT,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE,
-            null, null, null);
-        System.exit( -1);
+        JOptionPane.showOptionDialog(MultipleJobPanel.this, Utils.FATAL_ERROR
+            + "Proxy file user subject has changed"
+            + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, null,
+            null);
+        System.exit(-1);
       }
     } catch (InterruptedException ie) {
       // Thread has been interrupted, maybe during update event from user command
@@ -948,11 +951,11 @@ public class MultipleJobPanel extends JPanel {
       if (isDebugging) {
         ie.printStackTrace();
         /* JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                                    ie.getMessage(),
-                                    Utils.ERROR_MSG_TXT,
-                                    JOptionPane.DEFAULT_OPTION,
-                                    JOptionPane.ERROR_MESSAGE,
-                                    null, null, null);
+         ie.getMessage(),
+         Utils.ERROR_MSG_TXT,
+         JOptionPane.DEFAULT_OPTION,
+         JOptionPane.ERROR_MESSAGE,
+         null, null, null);
          */
       }
       return;
@@ -961,18 +964,13 @@ public class MultipleJobPanel extends JPanel {
         e.printStackTrace();
       }
       JOptionPane.showOptionDialog(MultipleJobPanel.this,
-          //"HERE: " + (++count) + "\n" +
-          e.getMessage(),
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE,
-          null, null, null);
+      //"HERE: " + (++count) + "\n" +
+          e.getMessage(), Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, null, null, null);
       return;
     }
-
-    logger.debug("----- MultipleJobPanel.this.jobVector: " +
-        MultipleJobPanel.this.jobVector);
-
+    logger.debug("----- MultipleJobPanel.this.jobVector: "
+        + MultipleJobPanel.this.jobVector);
     String warningMsg = "";
     try {
       String jobIdText = "";
@@ -984,17 +982,14 @@ public class MultipleJobPanel extends JPanel {
       for (int i = 0; i < MultipleJobPanel.this.jobVector.size(); i++) {
         logger.debug("----- INSIDE CYCLE");
         jobResult = (Result) MultipleJobPanel.this.jobVector.get(i);
-
         logger.debug("--------------- jobResult");
         logger.debug(new String(new Integer(jobResult.hashCode()).toString()));
         logger.debug("-------------------------");
-
         if (jobResult != null) {
           //logger.debug("setJobStatusTableJobs() - jobResult: " + jobResult);
           resultCode = jobResult.getCode();
           //logger.debug("setJobStatusTableJobs() - resultCode: " + resultCode);
           jobIdText = jobResult.getId().trim();
-
           // Checks if jobCollection contains jobs after update event. User could remove some jobs
           // from table during update event. In this case jobStatus must not be shown, the job is
           // removed from table.
@@ -1002,13 +997,11 @@ public class MultipleJobPanel extends JPanel {
               jobIdText)))) {
             continue;
           }
-
           index = jobTableModel.getIndexOfElementInColumn(jobIdText,
               JOB_ID_COLUMN_INDEX);
           if ((resultCode != Result.STATUS_FAILURE)
               && (resultCode != Result.STATUS_FORBIDDEN)) {
             jobStatus = (JobStatus) jobResult.getResult();
-
             // Stores job status information in hash map structure.
             // This hash map is used when user asks for details, in this case you
             // don't recall getStatus() API (it will be done when you ask for an update).
@@ -1016,7 +1009,6 @@ public class MultipleJobPanel extends JPanel {
               MultipleJobPanel.this.jobStatusHashMap.remove(jobIdText);
             }
             MultipleJobPanel.this.jobStatusHashMap.put(jobIdText, jobStatus);
-
             if (index != -1) {
               Vector rowToAddVector = makeRowToAddVector(jobStatus);
               if (rowToAddVector.size() != 0) {
@@ -1030,36 +1022,32 @@ public class MultipleJobPanel extends JPanel {
                     DESTINATION_COLUMN_INDEX);
               }
             } else {
-              logger.debug(
-                  "setJobStatusTableJobs() - Job Id not present in column: " +
-                  jobIdText);
+              logger
+                  .debug("setJobStatusTableJobs() - Job Id not present in column: "
+                      + jobIdText);
             }
           } else {
             if (MultipleJobPanel.this.jobStatusHashMap.containsKey(jobIdText)) {
               MultipleJobPanel.this.jobStatusHashMap.remove(jobIdText);
             }
-
             if (index != -1) {
-              if (jobTableModel.getValueAt(index,
-                  JOB_STATUS_COLUMN_INDEX).toString().equals(Utils.
-                  COLLECTING_STATE)) {
+              if (jobTableModel.getValueAt(index, JOB_STATUS_COLUMN_INDEX)
+                  .toString().equals(Utils.COLLECTING_STATE)) {
                 jobTableModel.setValueAt(Utils.UNABLE_TO_GET_STATUS, index,
                     JOB_STATUS_COLUMN_INDEX);
               }
             }
-            warningMsg += ((Exception) jobResult.getResult()).getMessage() +
-                "\n";
+            warningMsg += ((Exception) jobResult.getResult()).getMessage()
+                + "\n";
             logger.debug("----- warningMsg: " + warningMsg);
           }
-          jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-              getRowCount()));
+          jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+              .getRowCount()));
         } else {
           logger.debug("setJobStatusTableJobs() - Job result is null");
         }
       }
-
       sortBy(jTableJobs, sortingColumn, true);
-
       Date date = new Date();
       String timeText = date.toString(); // look timeText below
       jLabelLastUpdate.setText(timeText);
@@ -1068,14 +1056,12 @@ public class MultipleJobPanel extends JPanel {
         e.printStackTrace();
       }
     }
-
     warningMsg = warningMsg.trim();
     if (!warningMsg.equals("")) {
       GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, warningMsg,
-          Utils.ERROR_MSG_TXT,
-          JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-          Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-          null, null);
+          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE, null,
+          null);
     }
   }
 
@@ -1102,10 +1088,9 @@ public class MultipleJobPanel extends JPanel {
   void addJobStatusTableJobs(final JobCollection addJobCollection) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
-        logger.debug("addJobStatusTableJobs() addJobCollection.size(): " +
-            addJobCollection.size());
+        logger.debug("addJobStatusTableJobs() addJobCollection.size(): "
+            + addJobCollection.size());
         String warningMsg = "";
         JobCollection tempJobCollection = new JobCollection();
         Job job;
@@ -1117,8 +1102,8 @@ public class MultipleJobPanel extends JPanel {
               tempJobCollection.insert(job);
               MultipleJobPanel.this.jobCollection.insert(job);
               jobTableModel.addRow(makeTempRowToAddVector(job));
-              jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-                  getRowCount()));
+              jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+                  .getRowCount()));
             } catch (Exception e) {
               if (isDebugging) {
                 e.printStackTrace();
@@ -1126,33 +1111,27 @@ public class MultipleJobPanel extends JPanel {
             }
           }
         }
-
         if (tempJobCollection.size() == 0) {
           return "";
         }
-
         Vector addJobVector = new Vector();
         try {
           //!!! TO REMOVE test only
           //tempJobCollection.setMaxThreadNumber(1);
-
           addJobVector = tempJobCollection.getStatus();
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(MultipleJobPanel.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
           return "";
         }
-        logger.debug("addJobCollection.getStatus().size(): " +
-            addJobVector.size());
-        logger.debug("jobCollection.getStatus(): " +
-            MultipleJobPanel.this.jobVector);
+        logger.debug("addJobCollection.getStatus().size(): "
+            + addJobVector.size());
+        logger.debug("jobCollection.getStatus(): "
+            + MultipleJobPanel.this.jobVector);
         logger.debug("STATUS_FAILURE: " + Result.STATUS_FAILURE);
         logger.debug("STATUS_FORBIDDEN: " + Result.STATUS_FORBIDDEN);
         try {
@@ -1166,13 +1145,12 @@ public class MultipleJobPanel extends JPanel {
             logger.debug("jobResult: " + jobResult);
             resultCode = jobResult.getCode();
             logger.debug("resultCode: " + resultCode);
-            if ((resultCode != Result.STATUS_FAILURE) &&
-                (resultCode != Result.STATUS_FORBIDDEN)) {
+            if ((resultCode != Result.STATUS_FAILURE)
+                && (resultCode != Result.STATUS_FORBIDDEN)) {
               jobStatus = (JobStatus) jobResult.getResult();
               jobIdText = jobStatus.getValString(JobStatus.JOB_ID);
               jobIdText = jobIdText.trim();
               logger.debug("addJTableJobs() Job Id: " + jobIdText);
-
               // Store job status information in hash map structure.
               // This has map is used when user ask for details, in this case you
               // don't recall getStatus() API (it will be done when you ask for an update).
@@ -1180,7 +1158,6 @@ public class MultipleJobPanel extends JPanel {
                 MultipleJobPanel.this.jobStatusHashMap.remove(jobIdText);
               }
               MultipleJobPanel.this.jobStatusHashMap.put(jobIdText, jobStatus);
-
               // Check it to avoid double inserting in case of some Exception, during
               // update whitout user interaction; an exception occurs and a dialog is shown,
               // but user don't close dialog and another update event occurs.
@@ -1201,7 +1178,6 @@ public class MultipleJobPanel extends JPanel {
               } else {
                 logger.debug("Job Id not present in table: " + jobIdText);
               }
-
             } else {
               jobIdText = jobResult.getId().trim();
               index = jobTableModel.getIndexOfElementInColumn(jobIdText,
@@ -1210,18 +1186,17 @@ public class MultipleJobPanel extends JPanel {
                 MultipleJobPanel.this.jobStatusHashMap.remove(jobIdText);
               }
               if (index != -1) {
-                if (jobTableModel.getValueAt(index,
-                    JOB_STATUS_COLUMN_INDEX).toString()
-                    .equals(Utils.COLLECTING_STATE)) {
+                if (jobTableModel.getValueAt(index, JOB_STATUS_COLUMN_INDEX)
+                    .toString().equals(Utils.COLLECTING_STATE)) {
                   jobTableModel.setValueAt(Utils.UNABLE_TO_GET_STATUS, index,
                       JOB_STATUS_COLUMN_INDEX);
                 }
               }
-              warningMsg += ((Exception) jobResult.getResult()).getMessage() +
-                  "\n";
+              warningMsg += ((Exception) jobResult.getResult()).getMessage()
+                  + "\n";
             }
-            jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-                getRowCount()));
+            jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+                .getRowCount()));
           }
           //jTableJobs.repaint();
           //if (GUIGlobalVars.getMultipleJobPanelSortColumn() != Utils.NO_SORTING) {
@@ -1236,14 +1211,13 @@ public class MultipleJobPanel extends JPanel {
         warningMsg = warningMsg.trim();
         if (!warningMsg.equals("")) {
           GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, warningMsg,
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-              Utils.MESSAGE_LINES_PER_JOPTIONPANE, null, null);
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+              null, null);
         }
-        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-            getRowCount()));
+        jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+            .getRowCount()));
         // END Standard code
-
         return "";
       }
     };
@@ -1282,12 +1256,12 @@ public class MultipleJobPanel extends JPanel {
             jobType = valuesVector.get(0).toString();
           } else if (valuesVector.contains(Jdl.JOBTYPE_INTERACTIVE)
               && valuesVector.contains(Jdl.JOBTYPE_CHECKPOINTABLE)) {
-            jobType = Jdl.JOBTYPE_CHECKPOINTABLE + Utils.JOBTYPE_LIST_SEPARATOR +
-                Jdl.JOBTYPE_INTERACTIVE;
+            jobType = Jdl.JOBTYPE_CHECKPOINTABLE + Utils.JOBTYPE_LIST_SEPARATOR
+                + Jdl.JOBTYPE_INTERACTIVE;
           } else if (valuesVector.contains(Jdl.JOBTYPE_INTERACTIVE)
               && valuesVector.contains(Jdl.JOBTYPE_MPICH)) {
-            jobType = Jdl.JOBTYPE_CHECKPOINTABLE + Utils.JOBTYPE_LIST_SEPARATOR +
-                Jdl.JOBTYPE_MPICH;
+            jobType = Jdl.JOBTYPE_CHECKPOINTABLE + Utils.JOBTYPE_LIST_SEPARATOR
+                + Jdl.JOBTYPE_MPICH;
           }
         } catch (JobAdException jae) {
           // Unespected exception.
@@ -1311,12 +1285,9 @@ public class MultipleJobPanel extends JPanel {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(MultipleJobPanel.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
         }
       }
     }
@@ -1337,8 +1308,8 @@ public class MultipleJobPanel extends JPanel {
       } else { // DONE_CODE = 0.
         int exitCode = jobStatus.getValInt(JobStatus.EXIT_CODE);
         if (exitCode != 0) {
-          rowToAddVector.addElement(jobStatusName +
-              Utils.STATE_EXIT_CODE_NOT_ZERO);
+          rowToAddVector.addElement(jobStatusName
+              + Utils.STATE_EXIT_CODE_NOT_ZERO);
         } else {
           rowToAddVector.addElement(jobStatusName);
         }
@@ -1351,15 +1322,15 @@ public class MultipleJobPanel extends JPanel {
         rowToAddVector.addElement(jobStatusName);
       }
     }
-    Vector stateEnterTimesVector = (Vector) jobStatus.get(JobStatus.
-        STATE_ENTER_TIMES);
+    Vector stateEnterTimesVector = (Vector) jobStatus
+        .get(JobStatus.STATE_ENTER_TIMES);
     logger.debug("State Enter Times (Vector): " + stateEnterTimesVector);
     if (stateEnterTimesVector != null) {
-      logger.debug("State Enter Time (Vector.get(1)): " +
-          stateEnterTimesVector.get(1).toString().trim());
+      logger.debug("State Enter Time (Vector.get(1)): "
+          + stateEnterTimesVector.get(1).toString().trim());
       //rowToAddVector.addElement(Utils.toTime(stateEnterTimesVector.get(1).toString().trim()));
-      rowToAddVector.addElement(Utils.toDate(stateEnterTimesVector.get(1).
-          toString().trim()));
+      rowToAddVector.addElement(Utils.toDate(stateEnterTimesVector.get(1)
+          .toString().trim()));
     } else {
       //rowToAddVector.addElement("");
       rowToAddVector.addElement(null);
@@ -1384,16 +1355,13 @@ public class MultipleJobPanel extends JPanel {
   void jButtonCancelEvent(ActionEvent e) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRows = jTableJobs.getSelectedRows();
         if (selectedRows.length > 0) {
           if (JOptionPane.showOptionDialog(MultipleJobPanel.this,
               "Do you really want to cancel selected job(s)?",
-              "Job Monitor - Confirm Job Cancel",
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.QUESTION_MESSAGE,
-              null, null, null) == 0) {
+              "Job Monitor - Confirm Job Cancel", JOptionPane.YES_NO_OPTION,
+              JOptionPane.QUESTION_MESSAGE, null, null, null) == 0) {
             //String result, title;
             String cancelErrorMsg = "";
             Job job = null;
@@ -1412,18 +1380,16 @@ public class MultipleJobPanel extends JPanel {
                 job.setLoggerLevel(GUIGlobalVars.getGUIConfVarNSLoggerLevel());
                 UserCredential userCredential = new UserCredential(new File(
                     GUIGlobalVars.proxyFilePath));
-                if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-                    proxySubject)) {
+                if (userCredential.getX500UserSubject().equals(
+                    GUIGlobalVars.proxySubject)) {
                   job.cancel();
                 } else {
                   JOptionPane.showOptionDialog(MultipleJobPanel.this,
                       Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                      + "\nApplication will be terminated",
-                      Utils.ERROR_MSG_TXT,
-                      JOptionPane.DEFAULT_OPTION,
-                      JOptionPane.ERROR_MESSAGE,
-                      null, null, null);
-                  System.exit( -1);
+                          + "\nApplication will be terminated",
+                      Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                      JOptionPane.ERROR_MESSAGE, null, null, null);
+                  System.exit(-1);
                 }
                 jTableJobs.setValueAt(status + Utils.STATE_CANCELLING,
                     selectedRows[i], JOB_STATUS_COLUMN_INDEX);
@@ -1432,13 +1398,13 @@ public class MultipleJobPanel extends JPanel {
                 if (isDebugging) {
                   exc.printStackTrace();
                 }
-                cancelErrorMsg += "- " + jobIdText + "\n"
-                    + "   (" + exc.getMessage() + ")\n";
+                cancelErrorMsg += "- " + jobIdText + "\n" + "   ("
+                    + exc.getMessage() + ")\n";
               }
             }
             if (!cancelErrorMsg.equals("")) {
-              GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, cancelErrorMsg,
-                  "Job Monitor - Job Cancel",
+              GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this,
+                  cancelErrorMsg, "Job Monitor - Job Cancel",
                   JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
                   Utils.MESSAGE_LINES_PER_JOPTIONPANE,
                   "Unable to cancel the job(s):", null);
@@ -1446,14 +1412,11 @@ public class MultipleJobPanel extends JPanel {
           }
         } else {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select at least a job",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select at least a job", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -1463,15 +1426,14 @@ public class MultipleJobPanel extends JPanel {
   void jButtonGetOutputEvent(ActionEvent e) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRow = jTableJobs.getSelectedRows();
         if (selectedRow.length > 0) {
           JFileChooser outputDir = new JFileChooser();
-          outputDir.setDialogTitle(
-              "Job Output file(s) storing directory selection");
-          outputDir.setApproveButtonToolTipText(
-              "Retrieve the output file(s) of the selected job in the directory");
+          outputDir
+              .setDialogTitle("Job Output file(s) storing directory selection");
+          outputDir
+              .setApproveButtonToolTipText("Retrieve the output file(s) of the selected job in the directory");
           outputDir.setApproveButtonText("Retrieve");
           outputDir.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
           outputDir.setMultiSelectionEnabled(false);
@@ -1485,8 +1447,7 @@ public class MultipleJobPanel extends JPanel {
             for (int i = 0; i < selectedRow.length; i++) {
               try {
                 jobs[i] = new Job(new JobId((String) jTableJobs.getValueAt(
-                    selectedRow[i],
-                    JOB_ID_COLUMN_INDEX)));
+                    selectedRow[i], JOB_ID_COLUMN_INDEX)));
               } catch (Exception exc) {
                 if (isDebugging) {
                   exc.printStackTrace();
@@ -1495,26 +1456,23 @@ public class MultipleJobPanel extends JPanel {
             }
             try {
               JobCollection jobCollection = new JobCollection(jobs);
-              jobCollection.setLoggerLevel(GUIGlobalVars.
-                  getGUIConfVarNSLoggerLevel());
-
+              jobCollection.setLoggerLevel(GUIGlobalVars
+                  .getGUIConfVarNSLoggerLevel());
               //!!! TO REMOVE test only
               //jobCollection.setMaxThreadNumber(1);
               Vector output = new Vector();
               UserCredential userCredential = new UserCredential(new File(
                   GUIGlobalVars.proxyFilePath));
-              if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-                  proxySubject)) {
+              if (userCredential.getX500UserSubject().equals(
+                  GUIGlobalVars.proxySubject)) {
                 output = jobCollection.getOutput(selectedDir.toString());
               } else {
                 JOptionPane.showOptionDialog(MultipleJobPanel.this,
                     Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                    + "\nApplication will be terminated",
-                    Utils.ERROR_MSG_TXT,
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.ERROR_MESSAGE,
-                    null, null, null);
-                System.exit( -1);
+                        + "\nApplication will be terminated",
+                    Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.ERROR_MESSAGE, null, null, null);
+                System.exit(-1);
               }
               String errorMsg = "";
               String infoMsg = "";
@@ -1527,70 +1485,67 @@ public class MultipleJobPanel extends JPanel {
                 jobIdText = jobs[i].getJobId().toString();
                 if (result != null) {
                   statusCode = result.getCode();
-                  if ((statusCode == Result.GETOUTPUT_FAILURE) ||
-                      (statusCode == Result.GETOUTPUT_FORBIDDEN)) {
+                  if ((statusCode == Result.GETOUTPUT_FAILURE)
+                      || (statusCode == Result.GETOUTPUT_FORBIDDEN)) {
                     logger.debug("result: " + result);
                     logger.debug("result.getResult(): " + result.getResult());
-                    errorMsg += "- " +
-                        ((Exception) result.getResult()).getMessage()
+                    errorMsg += "- "
+                        + ((Exception) result.getResult()).getMessage()
                         + "\n   Job: " + jobIdText + "\n";
                   } else {
-                    logger.debug("jobs[i].getJobId().getUnique(): " +
-                        jobs[i].getJobId().getUnique());
+                    logger.debug("jobs[i].getJobId().getUnique(): "
+                        + jobs[i].getJobId().getUnique());
                     infoMsg += "- " + selectedDir.toString() + File.separator
                         + System.getProperty("user.name") + "_"
-                        + jobs[i].getJobId().getUnique() + "\n   " + "Job: " +
-                        jobIdText + "\n";
+                        + jobs[i].getJobId().getUnique() + "\n   " + "Job: "
+                        + jobIdText + "\n";
                   }
                 } else {
-                  errorMsg += "Unespected error getting job output" +
-                      "\n   Job: " + jobIdText + "\n";
+                  errorMsg += "Unespected error getting job output"
+                      + "\n   Job: " + jobIdText + "\n";
                 }
               }
               errorMsg = errorMsg.trim();
               if (!errorMsg.equals("")) {
-                GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, errorMsg,
-                    "Job Monitor - Job Output",
+                GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this,
+                    errorMsg, "Job Monitor - Job Output",
                     JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
                     Utils.MESSAGE_LINES_PER_JOPTIONPANE,
                     "Unable to get output:", null);
               }
               infoMsg = infoMsg.trim();
               if (!infoMsg.equals("")) {
-                GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, infoMsg,
-                    "Job Monitor - Output Retrieval Success",
-                    JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                    Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-                    "The Output File(s) have been successfully retrieved and stored in:",
-                    null);
+                GraphicUtils
+                    .showOptionDialogMsg(
+                        MultipleJobPanel.this,
+                        infoMsg,
+                        "Job Monitor - Output Retrieval Success",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE,
+                        Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+                        "The Output File(s) have been successfully retrieved and stored in:",
+                        null);
               }
             } catch (Exception exc) {
               exc.printStackTrace();
-              JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                  exc.getMessage(),
-                  "Job Monitor - Job Output",
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
+              JOptionPane.showOptionDialog(MultipleJobPanel.this, exc
+                  .getMessage(), "Job Monitor - Job Output",
+                  JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+                  null, null);
             }
           } else {
             JOptionPane.showOptionDialog(MultipleJobPanel.this,
                 "Unable to find selected directory: " + selectedDir,
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
           }
         } else {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select at least a job",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select at least a job", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -1634,7 +1589,6 @@ public class MultipleJobPanel extends JPanel {
   void jButtonLogInfoEvent(ActionEvent e) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRows = jTableJobs.getSelectedRows();
         String selectedJobId = "";
@@ -1643,10 +1597,8 @@ public class MultipleJobPanel extends JPanel {
         Result result = null;
         if (selectedRows.length == 0) {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select a job",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select a job", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         } else if (selectedRows.length == 1) {
           selectedJobId = (String) jTableJobs.getValueAt(selectedRows[0],
@@ -1672,29 +1624,25 @@ public class MultipleJobPanel extends JPanel {
           try {
             UserCredential userCredential = new UserCredential(new File(
                 GUIGlobalVars.proxyFilePath));
-            if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-                proxySubject)) {
+            if (userCredential.getX500UserSubject().equals(
+                GUIGlobalVars.proxySubject)) {
               result = job.getLogInfo();
             } else {
               JOptionPane.showOptionDialog(MultipleJobPanel.this,
                   Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                  + "\nApplication will be terminated",
-                  Utils.ERROR_MSG_TXT,
-                  JOptionPane.DEFAULT_OPTION,
-                  JOptionPane.ERROR_MESSAGE,
-                  null, null, null);
-              System.exit( -1);
+                      + "\nApplication will be terminated",
+                  Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                  JOptionPane.ERROR_MESSAGE, null, null, null);
+              System.exit(-1);
             }
           } catch (Exception ex) {
             if (isDebugging) {
               ex.printStackTrace();
             }
             JOptionPane.showOptionDialog(MultipleJobPanel.this,
-                ex.getMessage(),
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
+                ex.getMessage(), Utils.ERROR_MSG_TXT,
+                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+                null, null);
             return "";
           }
           String logInfoText = "";
@@ -1721,14 +1669,11 @@ public class MultipleJobPanel extends JPanel {
           }
         } else {
           JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              "Please select a single job",
-              Utils.INFORMATION_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.INFORMATION_MESSAGE,
+              "Please select a single job", Utils.INFORMATION_MSG_TXT,
+              JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
               null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -1752,34 +1697,23 @@ public class MultipleJobPanel extends JPanel {
   protected void renewJPopupMenu() {
     jPopupMenuTable.add(jMenuItemRemove);
     jPopupMenuTable.add(jMenuItemClear);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemSelectAll);
     jPopupMenuTable.add(jMenuItemSelectNone);
     jPopupMenuTable.add(jMenuItemInvertSelection);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemDetails);
     jPopupMenuTable.add(jMenuItemLogInfo);
     jPopupMenuTable.add(jMenuItemUpdate);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemJobCancel);
     jPopupMenuTable.add(jMenuItemJobOutput);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemInteractiveConsole);
     jPopupMenuTable.add(jMenuItemRetrieveCheckpointState);
-
     jPopupMenuTable.addSeparator();
-
     jPopupMenuTable.add(jMenuItemDagNodes);
     jPopupMenuTable.add(jMenuItemDagMonitor);
-
     jPopupMenuTable.addSeparator();
     jPopupMenuTable.add(jMenuItemSortAddingOrder);
   }
@@ -1792,17 +1726,14 @@ public class MultipleJobPanel extends JPanel {
       }
     };
     jMenuItemRemove.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuClear();
       }
     };
     jMenuItemClear.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemRemove);
     jPopupMenuTable.add(jMenuItemClear);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1810,25 +1741,21 @@ public class MultipleJobPanel extends JPanel {
       }
     };
     jMenuItemSelectAll.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuSelectNone();
       }
     };
     jMenuItemSelectNone.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jMenuInvertSelection();
       }
     };
     jMenuItemInvertSelection.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemSelectAll);
     jPopupMenuTable.add(jMenuItemSelectNone);
     jPopupMenuTable.add(jMenuItemInvertSelection);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1836,27 +1763,22 @@ public class MultipleJobPanel extends JPanel {
       }
     };
     jMenuItemDetails.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemDetails);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonLogInfoEvent(null);
       }
     };
     jMenuItemLogInfo.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonUpdateEvent(null);
       }
     };
     jMenuItemUpdate.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemDetails);
     jPopupMenuTable.add(jMenuItemLogInfo);
     jPopupMenuTable.add(jMenuItemUpdate);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1864,17 +1786,14 @@ public class MultipleJobPanel extends JPanel {
       }
     };
     jMenuItemJobCancel.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonGetOutputEvent(null);
       }
     };
     jMenuItemJobOutput.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemJobCancel);
     jPopupMenuTable.add(jMenuItemJobOutput);
-
     jPopupMenuTable.addSeparator();
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -1882,45 +1801,37 @@ public class MultipleJobPanel extends JPanel {
       }
     };
     jMenuItemInteractiveConsole.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonRetrieveCheckpointStateEvent(null);
       }
     };
     jMenuItemRetrieveCheckpointState.addActionListener(alst);
-
     jPopupMenuTable.add(jMenuItemInteractiveConsole);
     jPopupMenuTable.add(jMenuItemRetrieveCheckpointState);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonDagNodesEvent(null);
       }
     };
     jMenuItemDagNodes.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         jButtonDagMonEvent(null);
       }
     };
     jMenuItemDagMonitor.addActionListener(alst);
-
     alst = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         sortBy(jTableJobs, Utils.NO_SORTING, true);
       }
     };
     jMenuItemSortAddingOrder.addActionListener(alst);
-
     jPopupMenuTable.addSeparator();
     jPopupMenuTable.add(jMenuItemDagNodes);
     jPopupMenuTable.add(jMenuItemDagMonitor);
-
     jPopupMenuTable.addSeparator();
     jPopupMenuTable.add(jMenuItemSortAddingOrder);
-
   }
 
   void showJPopupMenuTable(MouseEvent e) {
@@ -1931,7 +1842,6 @@ public class MultipleJobPanel extends JPanel {
       if ((row != -1) && !jTableJobs.isRowSelected(row)) {
         jTableJobs.setRowSelectionInterval(row, row);
       }
-
       if (jTableJobs.getRowCount() != 0) {
         if (jTableJobs.getRowCount() >= 2) {
           jMenuItemSortAddingOrder.setEnabled(true);
@@ -2007,7 +1917,6 @@ public class MultipleJobPanel extends JPanel {
       }
       //!!! REMOVE FOLLOWING LINE TEST ONLY
       //jMenuItemInteractiveConsole.setEnabled(true);
-
       jPopupMenuTable = new JPopupMenu();
       renewJPopupMenu();
       jPopupMenuTable.show(e.getComponent(), e.getX(), e.getY());
@@ -2041,11 +1950,9 @@ public class MultipleJobPanel extends JPanel {
 
   void jMenuClear() {
     int choice = JOptionPane.showOptionDialog(MultipleJobPanel.this,
-        "Clear job table?",
-        "Job Monitor - Confirm Clear",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Clear job table?", "Job Monitor - Confirm Clear",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       int rowCount = jobTableModel.getRowCount();
       String jobIdText;
@@ -2056,13 +1963,12 @@ public class MultipleJobPanel extends JPanel {
         try {
           this.jobCollection.remove(new Job(new JobId(jobIdText)));
           jobTableModel.removeRow(i);
-
-          if ((isSingleJobDialogShown) &&
-              (singleJobDialog.getJobIdShown().equals(jobIdText))) {
+          if ((isSingleJobDialogShown)
+              && (singleJobDialog.getJobIdShown().equals(jobIdText))) {
             disposeStatusDetails();
           }
-          if ((isLogInfoJDialogShown) &&
-              (logInfoJDialog.getJobIdShown().equals(jobIdText))) {
+          if ((isLogInfoJDialogShown)
+              && (logInfoJDialog.getJobIdShown().equals(jobIdText))) {
             disposeLogInfo();
           }
           if (GUIGlobalVars.openedListenerFrameMap.containsKey(jobIdText)) {
@@ -2078,27 +1984,23 @@ public class MultipleJobPanel extends JPanel {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(MultipleJobPanel.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
         }
       }
-      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-          getRowCount()));
+      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+          .getRowCount()));
       if (!errorMsg.equals("")) {
         GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, errorMsg,
-            "Job Monitor - Clear",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            "Job Monitor - Clear", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
             "Unable to remove the Job(s):", null);
       }
       if (!informationMsg.equals("")) {
         GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, informationMsg,
-            "Job Monitor - Clear",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+            "Job Monitor - Clear", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE,
             Utils.MESSAGE_LINES_PER_JOPTIONPANE,
             "An interactive window is opened for the Job(s):", null);
       }
@@ -2109,11 +2011,9 @@ public class MultipleJobPanel extends JPanel {
     int[] selectedRows = jTableJobs.getSelectedRows();
     int selectedRowCount = selectedRows.length;
     int choice = JOptionPane.showOptionDialog(MultipleJobPanel.this,
-        "Remove selected Job(s) from table?",
-        "Job Monitor - Confirm Remove",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null, null, null);
+        "Remove selected Job(s) from table?", "Job Monitor - Confirm Remove",
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null,
+        null);
     if (choice == 0) {
       String jobIdText;
       String informationMsg = "";
@@ -2132,13 +2032,12 @@ public class MultipleJobPanel extends JPanel {
           //if (index != -1) {
           //jobMonitorJFrame.jobTableModel.removeRow(index);
           //}
-
-          if ((isSingleJobDialogShown) &&
-              (singleJobDialog.getJobIdShown().equals(jobIdText))) {
+          if ((isSingleJobDialogShown)
+              && (singleJobDialog.getJobIdShown().equals(jobIdText))) {
             disposeStatusDetails();
           }
-          if ((isLogInfoJDialogShown) &&
-              (logInfoJDialog.getJobIdShown().equals(jobIdText))) {
+          if ((isLogInfoJDialogShown)
+              && (logInfoJDialog.getJobIdShown().equals(jobIdText))) {
             disposeLogInfo();
           }
           if (GUIGlobalVars.openedListenerFrameMap.containsKey(jobIdText)) {
@@ -2151,35 +2050,31 @@ public class MultipleJobPanel extends JPanel {
           }
           errorMsg += "- " + jobIdText;
           /*
-                   } catch (JobCollectionException jce) {
-            if (isDebugging) jce.printStackTrace();
-            errorMsg += "- " + jobIdText;
+           } catch (JobCollectionException jce) {
+           if (isDebugging) jce.printStackTrace();
+           errorMsg += "- " + jobIdText;
            */
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(MultipleJobPanel.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
         }
       }
-      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel.
-          getRowCount()));
+      jLabelTotalDisplayedJobs.setText(Integer.toString(jobTableModel
+          .getRowCount()));
       if (!errorMsg.equals("")) {
         GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, errorMsg,
-            "Job Monitor - Remove",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
-            Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+            "Job Monitor - Remove", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
             "Unable to remove the Job(s):", null);
       }
       if (!informationMsg.equals("")) {
         GraphicUtils.showOptionDialogMsg(MultipleJobPanel.this, informationMsg,
-            "Job Monitor - Remove",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+            "Job Monitor - Remove", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE,
             Utils.MESSAGE_LINES_PER_JOPTIONPANE,
             "An interactive window is opened for the Job(s):", null);
       }
@@ -2189,7 +2084,6 @@ public class MultipleJobPanel extends JPanel {
   void jMenuInteractiveConsole(ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRows = jTableJobs.getSelectedRows();
         if (selectedRows.length == 1) {
@@ -2210,14 +2104,13 @@ public class MultipleJobPanel extends JPanel {
               }
             }
           } else {
-            ListenerFrame listener = (ListenerFrame) GUIGlobalVars.
-                openedListenerFrameMap.get(jobIdText);
+            ListenerFrame listener = (ListenerFrame) GUIGlobalVars.openedListenerFrameMap
+                .get(jobIdText);
             GraphicUtils.deiconifyFrame(listener);
             listener.setVisible(true);
           }
         }
         // END Standard code
-
         return "";
       }
     };
@@ -2227,7 +2120,6 @@ public class MultipleJobPanel extends JPanel {
   void jButtonRetrieveCheckpointStateEvent(ActionEvent ae) {
     final SwingWorker worker = new SwingWorker() {
       public Object construct() {
-
         // Standard code
         int[] selectedRows = jTableJobs.getSelectedRows();
         //SW if (selectedRows.length != 1) return;
@@ -2236,10 +2128,11 @@ public class MultipleJobPanel extends JPanel {
         }
         String jobId = jobTableModel.getValueAt(selectedRows[0],
             JOB_ID_COLUMN_INDEX).toString();
-        RetrieveCheckpointStateDialog retrieveCheckpointState =
-            new RetrieveCheckpointStateDialog(jobMonitorJFrame, jobId, false);
+        RetrieveCheckpointStateDialog retrieveCheckpointState = new RetrieveCheckpointStateDialog(
+            jobMonitorJFrame, jobId, false);
         retrieveCheckpointState.setModal(true);
-        GraphicUtils.windowCenterWindow(jobMonitorJFrame, retrieveCheckpointState);
+        GraphicUtils.windowCenterWindow(jobMonitorJFrame,
+            retrieveCheckpointState);
         retrieveCheckpointState.show();
         int state = retrieveCheckpointState.getState();
         logger.debug("jobId: " + jobId + " state: " + Integer.toString(state));
@@ -2251,12 +2144,10 @@ public class MultipleJobPanel extends JPanel {
           if (isDebugging) {
             iae.printStackTrace();
           }
-          JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              iae.getMessage(),
+          JOptionPane.showOptionDialog(MultipleJobPanel.this, iae.getMessage(),
               "Job Monitor - Retrieve Checkpoint State",
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+              JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+              null, null);
           //SW return;
           return "";
         } catch (Exception e) {
@@ -2264,63 +2155,56 @@ public class MultipleJobPanel extends JPanel {
             e.printStackTrace();
           }
         }
-
         try {
           UserCredential userCredential = new UserCredential(new File(
               GUIGlobalVars.proxyFilePath));
-          if (userCredential.getX500UserSubject().equals(GUIGlobalVars.
-              proxySubject)) {
+          if (userCredential.getX500UserSubject().equals(
+              GUIGlobalVars.proxySubject)) {
             jobState = job.getState(state);
           } else {
             JOptionPane.showOptionDialog(MultipleJobPanel.this,
                 Utils.FATAL_ERROR + "Proxy file user subject has changed"
-                + "\nApplication will be terminated",
-                Utils.ERROR_MSG_TXT,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null, null, null);
-            System.exit( -1);
+                    + "\nApplication will be terminated", Utils.ERROR_MSG_TXT,
+                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null,
+                null, null);
+            System.exit(-1);
           }
           if (jobState != null) {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Save Checkpoint State - " + jobId);
-            fileChooser.setCurrentDirectory(new File(GUIGlobalVars.
-                getFileChooserWorkingDirectory()));
-
-            String[] extensions = {
-                "CHKPT"};
+            fileChooser.setCurrentDirectory(new File(GUIGlobalVars
+                .getFileChooserWorkingDirectory()));
+            String[] extensions = { "CHKPT"
+            };
             GUIFileFilter classadFileFilter = new GUIFileFilter("chkpt",
                 extensions);
             fileChooser.addChoosableFileFilter(classadFileFilter);
-
             int choice = fileChooser.showSaveDialog(MultipleJobPanel.this);
-
             if (choice != JFileChooser.APPROVE_OPTION) {
               //SW return;
               return "";
             } else {
-              GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser.
-                  getCurrentDirectory().toString());
+              GUIGlobalVars.setFileChooserWorkingDirectory(fileChooser
+                  .getCurrentDirectory().toString());
               File file = fileChooser.getSelectedFile();
               String selectedFile = file.toString().trim();
-              String extension = GUIFileSystem.getFileExtension(file).toUpperCase();
+              String extension = GUIFileSystem.getFileExtension(file)
+                  .toUpperCase();
               FileFilter selectedFileFilter = fileChooser.getFileFilter();
-              if (!extension.equals("CHKPT") &&
-                  selectedFileFilter.getDescription().equals("chkpt")) {
+              if (!extension.equals("CHKPT")
+                  && selectedFileFilter.getDescription().equals("chkpt")) {
                 selectedFile += ".chkpt";
               }
-
               choice = 0;
               if (new File(selectedFile).isFile()) {
                 choice = JOptionPane.showOptionDialog(MultipleJobPanel.this,
                     "Output file exists. Overwrite?",
-                    "Job Monitor - Confirm Save",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null, null, null);
+                    "Job Monitor - Confirm Save", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE, null, null, null);
               }
               if (choice == 0) {
-                GUIFileSystem.saveTextFile(selectedFile, jobState.toString(true, true));
+                GUIFileSystem.saveTextFile(selectedFile, jobState.toString(
+                    true, true));
               }
             }
           }
@@ -2328,15 +2212,11 @@ public class MultipleJobPanel extends JPanel {
           if (isDebugging) {
             e.printStackTrace();
           }
-          JOptionPane.showOptionDialog(MultipleJobPanel.this,
-              e.getMessage(),
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
+          JOptionPane.showOptionDialog(MultipleJobPanel.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
         }
         // END Standard code
-
         return "";
       }
     };
@@ -2348,8 +2228,8 @@ public class MultipleJobPanel extends JPanel {
   }
 
   static public void setMaxMonitoredJobNumber(int number) {
-    if ((Utils.MAX_MONITORED_JOB_NUMBER_MIN_VAL <= number) &&
-        (number <= Utils.MAX_MONITORED_JOB_NUMBER_MAX_VAL)) {
+    if ((Utils.MAX_MONITORED_JOB_NUMBER_MIN_VAL <= number)
+        && (number <= Utils.MAX_MONITORED_JOB_NUMBER_MAX_VAL)) {
       maxMonitoredJobNumber = number;
     }
   }
@@ -2359,7 +2239,7 @@ public class MultipleJobPanel extends JPanel {
   }
 
   HashMap getJobStatusHashMap() {
-    return (HashMap)this.jobStatusHashMap.clone();
+    return (HashMap) this.jobStatusHashMap.clone();
   }
 
   void clearJobCollection() {
@@ -2402,7 +2282,6 @@ public class MultipleJobPanel extends JPanel {
       selectedJobIdVector.add(jobTableModel.getValueAt(selectedRows[i],
           JOB_ID_COLUMN_INDEX).toString().trim());
     }
-
     TableColumnModel columnModel = table.getColumnModel();
     if (columnIndex == Utils.NO_SORTING) { // Table Adding Order.
       this.sortingColumn = columnIndex;
@@ -2421,7 +2300,6 @@ public class MultipleJobPanel extends JPanel {
         column.setHeaderValue(name);
       }
       table.getTableHeader().repaint();
-
       Iterator jobIterator = this.jobCollection.jobs();
       String jobIdText = "";
       int index = -1;
@@ -2447,138 +2325,133 @@ public class MultipleJobPanel extends JPanel {
     table.repaint();
     int index = 0;
     for (int i = 0; i < selectedJobIdVector.size(); i++) {
-      index = jobTableModel.getIndexOfElementInColumn(selectedJobIdVector.get(i)
-          .toString(), JOB_ID_COLUMN_INDEX);
+      index = jobTableModel.getIndexOfElementInColumn(selectedJobIdVector
+          .get(i).toString(), JOB_ID_COLUMN_INDEX);
       if (index != -1) {
         table.addRowSelectionInterval(index, index);
       }
     }
   }
-
 }
-
-
-
 /*
  ********************
-  CLASS GUIThread
+ CLASS GUIThread
  ********************
  */
 /*
  class GUIThread extends Thread {
-   static Logger logger = Logger.getLogger(JobSubmitter.class);
-   static final boolean THIS_CLASS_DEBUG = false;
-   private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
-   Component component;
-   private volatile boolean active = true;
-   ServerSocket serverSocket;
-   String temporaryDirectory = "";
-   int port;
-   public GUIThread(Component component, String temporaryDirectory) {
-  this.component = component;
-  setDaemon(true); // Thread will be killed when calling application will die.
-  boolean isSuccess = false;
-  int port = Utils.GUI_THREAD_INITIAL_PORT;
-  int lastPort = Utils.GUI_THREAD_INITIAL_PORT + Utils.GUI_THREAD_RETRY_COUNT;
-  this.temporaryDirectory = temporaryDirectory;
-  try {
-    ServerSocket serverSocket = new ServerSocket();
-  } catch(Exception e) {
-    if (isDebugging) e.printStackTrace();
-  }
-  while (!isSuccess && (port < lastPort)) {
-    logger.info("GUI Thread trying at Port: " + Integer.toString(port));
-    this.port = port;
-    try {
-      serverSocket = new ServerSocket(port);
-      isSuccess = true;
-      // Writing file containing port number.
-      GUIFileSystem.saveTextFile(Utils.getThreadConfigurationFilePath(), Integer.toString(port));
-      logger.info("GUI Thread Success at port: " + Integer.toString(port));
-    } catch (IOException ioe) {
-      // The port is already in use, do nothing, you will try another port.
-    } catch (Exception e) {
-      if (isDebugging) e.printStackTrace();
-      JOptionPane.showOptionDialog(component,
-              Utils.FATAL_ERROR
-                + "Some problems occured initialising thread socket\nApplication will be terminated",
-              Utils.ERROR_MSG_TXT,
-              JOptionPane.DEFAULT_OPTION,
-              JOptionPane.ERROR_MESSAGE,
-              null, null, null);
-      System.exit(-1);
-    }
-    port++;
-  }
-  if(!isSuccess) {
-    JOptionPane.showOptionDialog(component,
-   Utils.FATAL_ERROR
-                + "Some problems occured initialising thread socket\nApplication will be terminated",
-   Utils.ERROR_MSG_TXT,
-   JOptionPane.DEFAULT_OPTION,
-   JOptionPane.ERROR_MESSAGE,
-   null, null, null);
-    System.exit(-1);
-  }
-   }
-   public void run() {
-  Socket clientSocket = null;
-  while (active) {
-    try {
-      clientSocket = serverSocket.accept();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    try {
-      PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-      BufferedReader in = new BufferedReader(new InputStreamReader(
-          clientSocket.getInputStream()));
-      String inputLine = "";
-      String outputLine = "";
-      //serverSocket.setSoTimeout(2000);
-      inputLine = in.readLine();
-      if (inputLine.equals(Utils.GUI_SOCKET_HANDSHAKE_MSG)) {
-        outputLine = Utils.GUI_SOCKET_HANDSHAKE_MSG;
-        out.println(outputLine);
-        out.println(temporaryDirectory);
-      }
-      out.close();
-      in.close();
-      clientSocket.close();
-      //serverSocket.close();
-    } catch(Exception e) {
-      if (isDebugging) e.printStackTrace();
-    }
-  }
-   }
-   public boolean setTemporaryDirectory(String temporaryDirectory, String vo) {
-  logger.debug("setTemporaryDirectory() - port: " + this.port);
-  this.temporaryDirectory = temporaryDirectory;
-  logger.debug("setTemporaryDirectory() - temporaryDirectory: " + this.temporaryDirectory);
-  try {
-    Utils.copyFile(new File(Utils.getThreadConfigurationFilePath(vo)),
-                   new File(Utils.getThreadConfigurationFilePath()));
-    logger.debug("setTemporaryDirectory() - Source file: " + Utils.getThreadConfigurationFilePath(vo));
-    logger.debug("setTemporaryDirectory() - Target file: " + Utils.getThreadConfigurationFilePath());
-  } catch (Exception e) {
-    e.printStackTrace();
-    return false;
-  }
-  logger.debug("setTemporaryDirectory() - Delete file: " + Utils.getThreadConfigurationFilePath(vo));
-  boolean outgoing = (new File(Utils.getThreadConfigurationFilePath(vo))).delete();
-  // if (!outgoing) Do nothing. Unable to delete the file.
-  return true;
-   }
-   public void stopThread() {
-  active = false;
-  interrupt();
-   }
+ static Logger logger = Logger.getLogger(JobSubmitter.class);
+ static final boolean THIS_CLASS_DEBUG = false;
+ private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
+ Component component;
+ private volatile boolean active = true;
+ ServerSocket serverSocket;
+ String temporaryDirectory = "";
+ int port;
+ public GUIThread(Component component, String temporaryDirectory) {
+ this.component = component;
+ setDaemon(true); // Thread will be killed when calling application will die.
+ boolean isSuccess = false;
+ int port = Utils.GUI_THREAD_INITIAL_PORT;
+ int lastPort = Utils.GUI_THREAD_INITIAL_PORT + Utils.GUI_THREAD_RETRY_COUNT;
+ this.temporaryDirectory = temporaryDirectory;
+ try {
+ ServerSocket serverSocket = new ServerSocket();
+ } catch(Exception e) {
+ if (isDebugging) e.printStackTrace();
+ }
+ while (!isSuccess && (port < lastPort)) {
+ logger.info("GUI Thread trying at Port: " + Integer.toString(port));
+ this.port = port;
+ try {
+ serverSocket = new ServerSocket(port);
+ isSuccess = true;
+ // Writing file containing port number.
+ GUIFileSystem.saveTextFile(Utils.getThreadConfigurationFilePath(), Integer.toString(port));
+ logger.info("GUI Thread Success at port: " + Integer.toString(port));
+ } catch (IOException ioe) {
+ // The port is already in use, do nothing, you will try another port.
+ } catch (Exception e) {
+ if (isDebugging) e.printStackTrace();
+ JOptionPane.showOptionDialog(component,
+ Utils.FATAL_ERROR
+ + "Some problems occured initialising thread socket\nApplication will be terminated",
+ Utils.ERROR_MSG_TXT,
+ JOptionPane.DEFAULT_OPTION,
+ JOptionPane.ERROR_MESSAGE,
+ null, null, null);
+ System.exit(-1);
+ }
+ port++;
+ }
+ if(!isSuccess) {
+ JOptionPane.showOptionDialog(component,
+ Utils.FATAL_ERROR
+ + "Some problems occured initialising thread socket\nApplication will be terminated",
+ Utils.ERROR_MSG_TXT,
+ JOptionPane.DEFAULT_OPTION,
+ JOptionPane.ERROR_MESSAGE,
+ null, null, null);
+ System.exit(-1);
+ }
+ }
+ public void run() {
+ Socket clientSocket = null;
+ while (active) {
+ try {
+ clientSocket = serverSocket.accept();
+ } catch (Exception e) {
+ e.printStackTrace();
+ }
+ try {
+ PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+ BufferedReader in = new BufferedReader(new InputStreamReader(
+ clientSocket.getInputStream()));
+ String inputLine = "";
+ String outputLine = "";
+ //serverSocket.setSoTimeout(2000);
+ inputLine = in.readLine();
+ if (inputLine.equals(Utils.GUI_SOCKET_HANDSHAKE_MSG)) {
+ outputLine = Utils.GUI_SOCKET_HANDSHAKE_MSG;
+ out.println(outputLine);
+ out.println(temporaryDirectory);
+ }
+ out.close();
+ in.close();
+ clientSocket.close();
+ //serverSocket.close();
+ } catch(Exception e) {
+ if (isDebugging) e.printStackTrace();
+ }
+ }
+ }
+ public boolean setTemporaryDirectory(String temporaryDirectory, String vo) {
+ logger.debug("setTemporaryDirectory() - port: " + this.port);
+ this.temporaryDirectory = temporaryDirectory;
+ logger.debug("setTemporaryDirectory() - temporaryDirectory: " + this.temporaryDirectory);
+ try {
+ Utils.copyFile(new File(Utils.getThreadConfigurationFilePath(vo)),
+ new File(Utils.getThreadConfigurationFilePath()));
+ logger.debug("setTemporaryDirectory() - Source file: " + Utils.getThreadConfigurationFilePath(vo));
+ logger.debug("setTemporaryDirectory() - Target file: " + Utils.getThreadConfigurationFilePath());
+ } catch (Exception e) {
+ e.printStackTrace();
+ return false;
+ }
+ logger.debug("setTemporaryDirectory() - Delete file: " + Utils.getThreadConfigurationFilePath(vo));
+ boolean outgoing = (new File(Utils.getThreadConfigurationFilePath(vo))).delete();
+ // if (!outgoing) Do nothing. Unable to delete the file.
+ return true;
+ }
+ public void stopThread() {
+ active = false;
+ interrupt();
+ }
  } // END CLASS GUIThread
  */
-
 /*
  ***************************
-  CLASS CurrentTimeThread
+ CLASS CurrentTimeThread
  ***************************
  */
 
@@ -2586,10 +2459,13 @@ class CurrentTimeThread extends Thread {
   static Logger logger = Logger.getLogger(JobMonitor.class);
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   MultipleJobPanel multipleJobPanel;
+
   private volatile boolean active = true;
+
   private volatile boolean run = true;
 
   public CurrentTimeThread(MultipleJobPanel multipleJobPanel) {
@@ -2601,17 +2477,17 @@ class CurrentTimeThread extends Thread {
       while (active) {
         multipleJobPanel.jTextFieldCurrentTime.setText((new Date()).toString());
         try {
-          this.sleep(1000);
+          Thread.sleep(1000);
         } catch (InterruptedException ie) {
-        // Do nothing.
+          // Do nothing.
         }
         //logger.debug("CurrentTimeThread - WHILE ACTIVE");
       }
       //logger.debug("CurrentTimeThread - WHILE RUN");
       try {
-        this.sleep(1000);
+        Thread.sleep(1000);
       } catch (InterruptedException ie) {
-      // Do nothing.
+        // Do nothing.
       }
     }
   }
@@ -2636,151 +2512,156 @@ class CurrentTimeThread extends Thread {
       this.start();
     }
   }
-
 } // END CLASS CurrentTimeThread
-
-
-
 /*
  **********************
-  CLASS UpdateThread
+ CLASS UpdateThread
  **********************
  */
-
 /*// R-GMA Notification Service.
-class UpdateThread extends Thread {
-static Logger logger = Logger.getLogger(JobSubmitter.class);
-static final boolean THIS_CLASS_DEBUG = false;
-private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
-private long updateRate;
-private Date startTime = new Date();
-private long startTimeLong = startTime.getTime();
-private volatile boolean active = true;
-private int updateCount = 0;
-private MultipleJobPanel multipleJobPanel;
-private String selectStatement = "select * from JobStatusRaw";
-private String whereClause = "";
-private final int consumerType = Consumer.CONTINUOUS;
-private Consumer consumer = null;
-private ServletConnection producer;
-public UpdateThread(MultipleJobPanel multipleJobPanel) {
-this.multipleJobPanel = multipleJobPanel;
-}
-public void run() {
-ResultSet resultSet;
-while (multipleJobPanel.jTableJobs.getRowCount() == 0) {}
-int rowCount = multipleJobPanel.jTableJobs.getRowCount();
-//whereClause = " where Job_id='" + multipleJobPanel.jobTableModel.getValueAt(0, 0) + "'";
-//for (int i = 1; i < rowCount; i++) {
-//whereClause += " OR Job_id='" + multipleJobPanel.jobTableModel.getValueAt(i, 0) + "'";
-//}
-try {
-UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.proxyFilePath));
-whereClause = " where Owner='" + userCredential.getX500UserSubject() + "'";
-} catch (Exception e) {
-// whereClause is set to "".
-if (isDebugging) e.printStackTrace();
-logger.debug("Unable to get User Subject");
-}
-selectStatement += whereClause;
-try {
-logger.debug("selectStatement: " + selectStatement);
-logger.debug("consumerType: " + consumerType);
-consumer = new Consumer(selectStatement, consumerType);
-consumer.start();
-} catch (Exception e) {
-logger.debug("Consumer Constructor (or start()) Exception");
-e.printStackTrace();
-}
-logger.debug("consumer: " + consumer);
-while(active) {
-try {
+ class UpdateThread extends Thread {
+ static Logger logger = Logger.getLogger(JobSubmitter.class);
+ static final boolean THIS_CLASS_DEBUG = false;
+ private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
+ private long updateRate;
+ private Date startTime = new Date();
+ private long startTimeLong = startTime.getTime();
+ private volatile boolean active = true;
+ private int updateCount = 0;
+ private MultipleJobPanel multipleJobPanel;
+ private String selectStatement = "select * from JobStatusRaw";
+ private String whereClause = "";
+ private final int consumerType = Consumer.CONTINUOUS;
+ private Consumer consumer = null;
+ private ServletConnection producer;
+ public UpdateThread(MultipleJobPanel multipleJobPanel) {
+ this.multipleJobPanel = multipleJobPanel;
+ }
+ public void run() {
+ ResultSet resultSet;
+ while (multipleJobPanel.jTableJobs.getRowCount() == 0) {}
+ int rowCount = multipleJobPanel.jTableJobs.getRowCount();
+ //whereClause = " where Job_id='" + multipleJobPanel.jobTableModel.getValueAt(0, 0) + "'";
+ //for (int i = 1; i < rowCount; i++) {
+ //whereClause += " OR Job_id='" + multipleJobPanel.jobTableModel.getValueAt(i, 0) + "'";
+ //}
+ try {
+ UserCredential userCredential = new UserCredential(new File(GUIGlobalVars.proxyFilePath));
+ whereClause = " where Owner='" + userCredential.getX500UserSubject() + "'";
+ } catch (Exception e) {
+ // whereClause is set to "".
+ if (isDebugging) e.printStackTrace();
+ logger.debug("Unable to get User Subject");
+ }
+ selectStatement += whereClause;
+ try {
+ logger.debug("selectStatement: " + selectStatement);
+ logger.debug("consumerType: " + consumerType);
+ consumer = new Consumer(selectStatement, consumerType);
+ consumer.start();
+ } catch (Exception e) {
+ logger.debug("Consumer Constructor (or start()) Exception");
+ e.printStackTrace();
+ }
+ logger.debug("consumer: " + consumer);
+ while(active) {
+ try {
  if (consumer != null) {
-   resultSet = consumer.popIfPossible();
-   if (resultSet != null) {
-     logger.debug("resultSet.size(): " + resultSet.size());
-     String jobIdText = "";
-     int index = -1;
-     //resultSet.next();
-     int count = 1;
-     String oldState = "";
-     String newState = "";
-     while (resultSet.next()) {
-       jobIdText = resultSet.getString(1).trim();
-       logger.debug("JOB " + count + ": " + jobIdText);
-       count++;
-index = multipleJobPanel.jobTableModel.getIndexOfElementInColumn(jobIdText,
-           multipleJobPanel.JOB_ID_COLUMN_INDEX);
-       if (index != -1) {
-         oldState = multipleJobPanel.jobTableModel.getValueAt(
-             index, multipleJobPanel.JOB_STATUS_COLUMN_INDEX).toString();
-         newState = resultSet.getString(2).trim();
-         if ((oldState.indexOf(Utils.STATE_CANCELLING) != -1)
-&& (!newState.equals(JobStatus.code[JobStatus.CANCELLED]))) {
-           newState += Utils.STATE_CANCELLING;
-         }
-         multipleJobPanel.jobTableModel.setValueAt(newState,
-             index, multipleJobPanel.JOB_STATUS_COLUMN_INDEX);
-       }
-     }
-     logger.debug("\n--- resultSet: " + resultSet.toString() + " ---\n");
-   } else {
-     logger.debug("\n--- null resultSet ---\n");
-   }
+ resultSet = consumer.popIfPossible();
+ if (resultSet != null) {
+ logger.debug("resultSet.size(): " + resultSet.size());
+ String jobIdText = "";
+ int index = -1;
+ //resultSet.next();
+ int count = 1;
+ String oldState = "";
+ String newState = "";
+ while (resultSet.next()) {
+ jobIdText = resultSet.getString(1).trim();
+ logger.debug("JOB " + count + ": " + jobIdText);
+ count++;
+ index = multipleJobPanel.jobTableModel.getIndexOfElementInColumn(jobIdText,
+ multipleJobPanel.JOB_ID_COLUMN_INDEX);
+ if (index != -1) {
+ oldState = multipleJobPanel.jobTableModel.getValueAt(
+ index, multipleJobPanel.JOB_STATUS_COLUMN_INDEX).toString();
+ newState = resultSet.getString(2).trim();
+ if ((oldState.indexOf(Utils.STATE_CANCELLING) != -1)
+ && (!newState.equals(JobStatus.code[JobStatus.CANCELLED]))) {
+ newState += Utils.STATE_CANCELLING;
+ }
+ multipleJobPanel.jobTableModel.setValueAt(newState,
+ index, multipleJobPanel.JOB_STATUS_COLUMN_INDEX);
+ }
+ }
+ logger.debug("\n--- resultSet: " + resultSet.toString() + " ---\n");
  } else {
-   logger.debug("Consumer null");
+ logger.debug("\n--- null resultSet ---\n");
+ }
+ } else {
+ logger.debug("Consumer null");
  }
  this.sleep(Utils.AUTO_UPDATE_RATE);
  // If consumer == null try to create it again.
  if (consumer == null) {
-   try {
-     consumer = new Consumer(selectStatement, consumerType);
-     consumer.start();
-   } catch (Exception e) {
-     logger.debug("Consumer Constructor (or start()) Exception");
-     e.printStackTrace();
-   }
+ try {
+ consumer = new Consumer(selectStatement, consumerType);
+ consumer.start();
+ } catch (Exception e) {
+ logger.debug("Consumer Constructor (or start()) Exception");
+ e.printStackTrace();
  }
-} catch (InterruptedException ie) {
+ }
+ } catch (InterruptedException ie) {
  // interrupt() method called from restartThread() do nothing.
-} catch (Exception e) {
+ } catch (Exception e) {
  logger.debug("popIfPossible() Exception: " + e.getMessage());
  e.printStackTrace();
  System.exit(-1);
-}
-}
-//consumer.abort();
-}
-public void restartThread() {
-logger.debug("UpdateThread - restartThread()");
-active = true;
-interrupt();
-}
-public void stopThread() {
-logger.debug("UpdateThread - stopThread()");
-active = false;
-interrupt();
-}
-*/
+ }
+ }
+ //consumer.abort();
+ }
+ public void restartThread() {
+ logger.debug("UpdateThread - restartThread()");
+ active = true;
+ interrupt();
+ }
+ public void stopThread() {
+ logger.debug("UpdateThread - stopThread()");
+ active = false;
+ interrupt();
+ }
+ */
 
 class UpdateThread extends Thread {
   static Logger logger = Logger.getLogger(JobMonitor.class);
 
   static final boolean THIS_CLASS_DEBUG = false;
+
   private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
 
   private long updateRate;
+
   private Date startTime = new Date();
+
   private long startTimeLong = startTime.getTime();
+
   private volatile boolean active = true;
+
   private volatile boolean run = true;
+
   private int updateCount = 0;
+
   private MultipleJobPanel multipleJobPanel;
 
   // R-GMA update.
   private String selectStatement = "select * from JobStatusRaw";
+
   private String whereClause = "";
+
   private final int consumerType = Consumer.CONTINUOUS;
+
   private Consumer consumer = null;
 
   public UpdateThread(MultipleJobPanel multipleJobPanel) {
@@ -2789,13 +2670,14 @@ class UpdateThread extends Thread {
 
   public void run() {
     ResultSet resultSet;
-    while (multipleJobPanel.jTableJobs.getRowCount() == 0) {}
+    while (multipleJobPanel.jTableJobs.getRowCount() == 0) {
+    }
     int rowCount = multipleJobPanel.jTableJobs.getRowCount();
     try {
       UserCredential userCredential = new UserCredential(new File(
           GUIGlobalVars.proxyFilePath));
-      whereClause = " where Owner='" + userCredential.getX500UserSubject() +
-          "'";
+      whereClause = " where Owner='" + userCredential.getX500UserSubject()
+          + "'";
     } catch (Exception e) {
       // whereClause is set to "".
       if (isDebugging) {
@@ -2810,13 +2692,13 @@ class UpdateThread extends Thread {
           switch (GUIGlobalVars.getUpdateMode()) {
             case Utils.LB_MODE:
               updateRate = 1000 * 60 * GUIGlobalVars.getJobMonitorUpdateRate();
-              logger.debug("UpdateThread - run() - updateRate: " +
-                  GUIGlobalVars.getJobMonitorUpdateRate());
-              this.sleep(updateRate);
+              logger.debug("UpdateThread - run() - updateRate: "
+                  + GUIGlobalVars.getJobMonitorUpdateRate());
+              Thread.sleep(updateRate);
               multipleJobPanel.threadUpdateEvent();
-              break;
+            break;
             case Utils.RGMA_MODE:
-              this.sleep(Utils.RGMA_UPDATE_RATE);
+              Thread.sleep(Utils.RGMA_UPDATE_RATE);
               if (consumer == null) {
                 try {
                   consumer = new Consumer(selectStatement, consumerType);
@@ -2840,34 +2722,33 @@ class UpdateThread extends Thread {
                   jobIdText = resultSet.getString(1).trim();
                   logger.debug("JOB " + count + ": " + jobIdText);
                   count++;
-                  index = multipleJobPanel.jobTableModel.
-                      getIndexOfElementInColumn(jobIdText,
-                      multipleJobPanel.
-                      JOB_ID_COLUMN_INDEX);
+                  index = multipleJobPanel.jobTableModel
+                      .getIndexOfElementInColumn(jobIdText,
+                          MultipleJobPanel.JOB_ID_COLUMN_INDEX);
                   if (index != -1) {
-                    oldState = multipleJobPanel.jobTableModel.getValueAt(
-                        index, multipleJobPanel.JOB_STATUS_COLUMN_INDEX).
-                        toString();
+                    oldState = multipleJobPanel.jobTableModel.getValueAt(index,
+                        MultipleJobPanel.JOB_STATUS_COLUMN_INDEX).toString();
                     newState = resultSet.getString(2).trim();
                     if ((oldState.indexOf(Utils.STATE_CANCELLING) != -1)
-                        && (!newState.equals(JobStatus.code[JobStatus.CANCELLED]))) {
+                        && (!newState
+                            .equals(JobStatus.code[JobStatus.CANCELLED]))) {
                       newState += Utils.STATE_CANCELLING;
                     }
-                    multipleJobPanel.jobTableModel.setValueAt(newState,
-                        index, multipleJobPanel.JOB_STATUS_COLUMN_INDEX);
+                    multipleJobPanel.jobTableModel.setValueAt(newState, index,
+                        MultipleJobPanel.JOB_STATUS_COLUMN_INDEX);
                   }
                 }
-                logger.debug("\n--- resultSet: " + resultSet.toString() +
-                    " ---\n");
+                logger.debug("\n--- resultSet: " + resultSet.toString()
+                    + " ---\n");
               } else {
                 logger.debug("\n--- null resultSet ---\n");
               }
-              break;
+            break;
           }
           updateCount++;
           logger.debug("UpdateThread - run() - updateCount: " + updateCount);
         } catch (InterruptedException ie) {
-        // interrupt() method called from restartThread() do nothing.
+          // interrupt() method called from restartThread() do nothing.
         } catch (Exception e) {
           logger.debug("popIfPossible() Exception: " + e.getMessage());
           e.printStackTrace();
@@ -2875,9 +2756,9 @@ class UpdateThread extends Thread {
         //logger.debug("UpdateThread - WHILE ACTIVE");
       }
       try {
-        this.sleep(1000);
+        Thread.sleep(1000);
       } catch (InterruptedException ie) {
-      // Do nothing.
+        // Do nothing.
       }
       //logger.debug("UpdateThread - WHILE RUN");
     }
@@ -2909,13 +2790,11 @@ class UpdateThread extends Thread {
       this.start();
     }
   }
-
 } // END CLASS UpdateThread
-
-
 
 class CommandThread extends Thread {
   private String command;
+
   private int exitCode = 0;
 
   public CommandThread(String command) {
@@ -2931,55 +2810,52 @@ class CommandThread extends Thread {
     return this.exitCode;
   }
 }
-
-
-
 /*
  class UpdateThread extends Thread {
-  static Logger logger = Logger.getLogger(JobSubmitter.class);
-  static final boolean THIS_CLASS_DEBUG = false;
-  private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
-  private long updateRate;
-  private Date startTime = new Date();
-  private long startTimeLong = startTime.getTime();
-  private volatile boolean active = true;
-  private int updateCount = 0;
-  private MultipleJobPanel multipleJobPanel;
-  public UpdateThread(MultipleJobPanel multipleJobPanel) {
-    this.multipleJobPanel = multipleJobPanel;
-  }
-  public void run() {
-    while(active) {
-      updateRate = 1000 * 60 * GUIGlobalVars.getJobMonitorUpdateRate();
-      logger.debug("UpdateThread - run() - updateRate: " + GUIGlobalVars.getJobMonitorUpdateRate());
-      try {
-        this.sleep(updateRate);
-        multipleJobPanel.threadUpdateEvent();
-        updateCount++;
-        logger.debug("UpdateThread - run() - updateCount: " + updateCount);
-      } catch(InterruptedException ie) {
-        // interrupt() method called from restartThread() do nothing.
-      }
-    }
-  }
-  public void restartThread() {
-    logger.debug("UpdateThread - restartThread()");
-    active = true;
-    interrupt();
-  }
-  public void stopThread() {
-    logger.debug("UpdateThread - stopThread()");
-    active = false;
-    interrupt();
-  }
+ static Logger logger = Logger.getLogger(JobSubmitter.class);
+ static final boolean THIS_CLASS_DEBUG = false;
+ private boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
+ private long updateRate;
+ private Date startTime = new Date();
+ private long startTimeLong = startTime.getTime();
+ private volatile boolean active = true;
+ private int updateCount = 0;
+ private MultipleJobPanel multipleJobPanel;
+ public UpdateThread(MultipleJobPanel multipleJobPanel) {
+ this.multipleJobPanel = multipleJobPanel;
+ }
+ public void run() {
+ while(active) {
+ updateRate = 1000 * 60 * GUIGlobalVars.getJobMonitorUpdateRate();
+ logger.debug("UpdateThread - run() - updateRate: " + GUIGlobalVars.getJobMonitorUpdateRate());
+ try {
+ this.sleep(updateRate);
+ multipleJobPanel.threadUpdateEvent();
+ updateCount++;
+ logger.debug("UpdateThread - run() - updateCount: " + updateCount);
+ } catch(InterruptedException ie) {
+ // interrupt() method called from restartThread() do nothing.
+ }
+ }
+ }
+ public void restartThread() {
+ logger.debug("UpdateThread - restartThread()");
+ active = true;
+ interrupt();
+ }
+ public void stopThread() {
+ logger.debug("UpdateThread - stopThread()");
+ active = false;
+ interrupt();
+ }
  } // END CLASS UpdateThread
  */
-
 /*
  *******************************
-  CLASS GUITableCellRenderer
+ CLASS GUITableCellRenderer
  *******************************
  */
+
 class GUITableCellRenderer extends DefaultTableCellRenderer {
   MultipleJobPanel multipleJobPanel;
 
@@ -2991,10 +2867,8 @@ class GUITableCellRenderer extends DefaultTableCellRenderer {
   // using this renderer needs to be rendered.
   public Component getTableCellRendererComponent(JTable table, Object value,
       boolean isSelected, boolean hasFocus, int row, int column) {
-
-    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
-        column);
-
+    super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
+        row, column);
     setToolTipText(null);
     if (value instanceof String) {
       String text = value.toString().trim();
@@ -3002,7 +2876,6 @@ class GUITableCellRenderer extends DefaultTableCellRenderer {
         setToolTipText(text);
       }
     }
-
     if (isSelected) {
       setForeground(table.getSelectionForeground());
       super.setBackground(table.getSelectionBackground());
@@ -3017,7 +2890,6 @@ class GUITableCellRenderer extends DefaultTableCellRenderer {
             MultipleJobPanel.JOB_ID_COLUMN_INDEX).toString();
         setHorizontalAlignment(SwingConstants.CENTER);
         setFont(GraphicUtils.BOLD_FONT);
-
         String state = table.getValueAt(row,
             MultipleJobPanel.JOB_STATUS_COLUMN_INDEX).toString();
         //System.out.println("RED" + Color.lightGray.getRed());
