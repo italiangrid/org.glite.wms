@@ -129,11 +129,13 @@ AC_DEFUN(AC_GLOBUS,
                                                                                 
     AC_MSG_CHECKING([for $ac_globus_thr_ldap/lber.h])
     AC_MSG_CHECKING([for $ac_globus_thr_ldap/ldap.h])                                                                            
-    if test ! -f "$ac_globus_thr_ldap/ldap.h" -a ! -f "$ac_globus_thr_ldap/lber.h" ; then
-        ac_globus_thr_ldap=""
-        AC_MSG_RESULT([no])
-    else
-        AC_MSG_RESULT([yes])
+    if test ! -f "$ac_globus_thr_ldap/ldap.h" ; then
+        if test ! -f "$ac_globus_thr_ldap/lber.h" ; then
+            ac_globus_thr_ldap=""
+            AC_MSG_RESULT([no])
+        else
+            AC_MSG_RESULT([yes])
+	fi
     fi
                                                                                 
     AC_MSG_CHECKING([for ldap thr])
