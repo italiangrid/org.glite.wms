@@ -264,7 +264,7 @@ try {
   if (std::string(brlib).find("_ism") != std::string::npos) {
      
     char* prlib1 = "libglite_wms_ism_ii_purchaser.so";	
-    void* prh1 = dlopen(prlib1,RTLD_NOW|RTLD_GLOBAL);
+    void* prh1 = dlopen(prlib1,RTLD_NOW);
     if (!prh1) {
       get_err_stream() << program_name << ": "
                        << "cannot load ism purchaser lib (" << prlib1 << "\n";
@@ -276,21 +276,20 @@ try {
 
     ism_ii_purchaser_handle.reset(prh1, dlclose);
 
-// Temporarily disabled, until issues with gsoap are addressed.
-//     char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";	
-//     void* prh2 = dlopen(prlib2,RTLD_NOW|RTLD_GLOBAL);
-//     if (!prh2) {
-//       get_err_stream() << program_name << ": "
-//                        << "cannot load ism purchaser lib (" << prlib2 << "\n";
-//       std::string dlerr(dlerror());
-//       get_err_stream() << program_name << ": "
-//                        << "dlerror returns: " << dlerr << "\n";
-//       return EXIT_FAILURE;
-//     }
-// 
-//     ism_cemon_purchaser_handle.reset(prh2, dlclose);
+    char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";	
+    void* prh2 = dlopen(prlib2,RTLD_NOW);
+    if (!prh2) {
+      get_err_stream() << program_name << ": "
+                       << "cannot load ism purchaser lib (" << prlib2 << "\n";
+      std::string dlerr(dlerror());
+      get_err_stream() << program_name << ": "
+                       << "dlerror returns: " << dlerr << "\n";
+      return EXIT_FAILURE;
+    }
 
-    // load the symbols
+    ism_cemon_purchaser_handle.reset(prh2, dlclose);
+
+ // load the symbols
     create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh1, "create");
     destroy_ii_purchaser = (purchaser::ii::destroy_t*) dlsym(prh1, "destroy");
 
