@@ -135,7 +135,7 @@ inline std::ostream &operator<<( std::ostream &os, const CannotConfigure &cc ) {
 
 } COMMON_NAMESPACE_END;
 
-#endif /* EDG_WORKLOAD_COMMON_CONFIGURATION_EXCEPTIONS_H */
+#endif /* GLITE_WMS_COMMON_CONFIGURATION_EXCEPTIONS_H */
 
 // Local Variables:
 // mode: c++

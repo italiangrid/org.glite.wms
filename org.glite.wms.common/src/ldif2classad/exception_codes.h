@@ -15,7 +15,7 @@ namespace common {
 namespace ldif2classad {
 
 enum {
-      LDAP_FATAL_ERROR = glite::wms::common::utilities::WL_LDAP_ERROR_BASE +1 ,
+      LDAP_FATAL_ERROR = glite::wms::common::utilities::WMS_LDAP_ERROR_BASE +1 ,
       LDAP_CONNECTION_ERROR,
       LDAP_QUERY_ERROR,
       LDAP_UNDEFINED_VALUE_ERROR

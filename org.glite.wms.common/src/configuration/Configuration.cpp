@@ -146,7 +146,7 @@ try {
   vector<string>::iterator     pathIt;
   boost::filesystem::path      complete, name( filename );
 
-  if( (value = getenv("EDG_WL_CONFIG_DIR")) != NULL )
+  if( (value = getenv("GLITE_WMS_CONFIG_DIR")) != NULL )
     spaths.push_back( boost::filesystem::normalize_path(value) );
 
   spaths.insert( spaths.end(), c_s_paths, c_s_paths + (sizeof(c_s_paths) / sizeof(char *)) );
@@ -186,8 +186,8 @@ Configuration::Configuration( const ModuleType &type ) : c_jc(), c_lm(), c_ns(),
 
   if( this->c_mtype.get_codetype() == ModuleType::unknown ) throw ModuleMismatch( this->c_mtype );
 
-  if( (filename = getenv("EDG_WL_CONFIG_FILENAME")) == NULL )
-    throw OtherErrors( "environment variable \"EDG_WL_CONFIG_FILENAME\" unset." );
+  if( (filename = getenv("GLITE_WMS_CONFIG_FILENAME")) == NULL )
+    throw OtherErrors( "environment variable \"GLITE_WMS_CONFIG_FILENAME\" unset." );
   else if( c_s_instance == NULL ) {
     c_s_instance = this;
     this->createConfiguration( filename );
