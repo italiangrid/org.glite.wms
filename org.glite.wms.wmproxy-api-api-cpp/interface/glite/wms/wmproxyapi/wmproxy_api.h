@@ -16,6 +16,8 @@ namespace wms {
 namespace wmproxyapi {
 
 
+class BaseException
+
 /**
 * Used to specify the jobtype. multiple jobtype can be specified togheter by the bitwise (|) or operation
 */
@@ -111,7 +113,7 @@ int getMaxInputSandboxSize(ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the uniqe URI associated to the provided jobid
 */
-std::string  getSandboxDestURI(std::string &jobiD, ConfigContext *cfs=NULL);
+std::string  getSandboxDestURI(std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Retrieve the total amount of user space quota
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
@@ -121,13 +123,16 @@ std::pair<long, long> getTotalQuota(ConfigContext *cfs=NULL);
 /**
 * Retrieve the avaliable user space quota, still to be possibly used
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @param jobid the string identification of the job
 *@return a pair containing the soft and the hard limit quota
 **/
 void jobPurge(std::string &jobid, ConfigContext *cfs=NULL);
-
-
-
-
+/**
+* Retrieve the list of URIs where the output files created during job execution have been stored in the WM managed space
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @param jobid the string identification of the job
+* @return a vector containing, for each element, the URI of the output file and corresponding size in bytes
+*/
 std::vector <std::pair<std::string , long> > getOutputFileList (std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Retrieve all resources matching with the provided jdl
@@ -192,12 +197,12 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the string representing the request, which has to be used as input while performing a putProxy for the created delegation Id
 */
-std::string getProxyRequest(const std::string &delegationId, ConfigContext *cfs=NULL);
+std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
-* Actually associate the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyRequest call
-* @param delegationId the id of the delegation created previously (by a getProxyRequest call)
+* Actually associate the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
+* @param delegationId the id of the delegation created previously (by a getProxyReq call)
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
-* @param request the request output of a getProxyRequest
+* @param request the request output of a getProxyReq
 */
 void putProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs=NULL);
 } // wmproxy namespace
