@@ -8,7 +8,7 @@
 #ifndef GLITE_WMS_BROKER_RBSIMPLEISMIMPL_H
 #define GLITE_WMS_BROKER_RBSIMPLEISMIMPL_H
 
-#include "ResourceBroker.h"
+#include "glite/wms/broker/ResourceBroker.h"
 
 namespace glite {
 namespace wms {

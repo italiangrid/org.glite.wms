@@ -21,7 +21,7 @@
 #include "glite/wms/matchmaking/glue_attributes.h"
 #include "glite/wms/matchmaking/jdl_attributes.h"
 #include "glite/wms/broker/RBMaximizeFilesImpl.h"
-#include "glite/wms/broker/utility.h"
+#include "utility.h"
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
