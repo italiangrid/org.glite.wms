@@ -153,7 +153,7 @@ bool SocketAgent::Receive( long& l )
   
   if( result = readbuffer((char*)long_buffer,8))  {
     for (int i=0; i<8; i++) {
-      l  |= (((unsigned int) long_buffer[i]) << (56-i*8)) & 0xffffffffffffffff;
+      l  |= (((unsigned long) long_buffer[i]) << (56-i*8)) & ((1L << 64) - 1);
     }     
   }
   return result;
