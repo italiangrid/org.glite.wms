@@ -14,7 +14,7 @@
 #include "glite/wms/common/utilities/result_codes.h"
 // Credential Information
 #include "glite/wmsui/api/UserCredential.h"
-#include "glite/wmsui/api/Logging.h"
+#include "Logging.h"
 
 /************************Logging and Bookkeeping  *******************/
 #include "glite/lb/consumer.h"
