@@ -51,6 +51,8 @@ AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 
+AC_MSG_RESULT(["GLOBUS found $have_globus])
+
 #GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
 #AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
 #GLOBUS_SSL_UTILS_LIBS="-L$STAGE/lib -lglobus_ssl_utils"
