@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2004/07/21 17:35:43  eronchie
+#       Moved some tests in examples
+#       Removed files from test
+#
 #       Revision 1.8  2004/07/21 17:24:34  eronchie
 #       Moved out tls from org.glite.wms and put in org.glite.wms-utils
 #
@@ -96,9 +100,9 @@ AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
+AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/socket++/Makefile])
 AC_CONFIG_FILES([src/ssl_helpers/Makefile])
-AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

@@ -1,13 +1,13 @@
-#include "glite/wms/tls/socket++/GSISocketClient.h"
+#include "glite/wmsutils/tls/socket++/GSISocketClient.h"
 #include "socket++/exceptions.h"
 
 #include <iostream>
 #include <string>
 
 using namespace std;
-using namespace glite::wms::tls::socket_pp;
+using namespace glite::wmsutils::tls::socket_pp;
 
-namespace socket_pp = glite::wms::tls::socket_pp;
+namespace socket_pp = glite::wmsutils::tls::socket_pp;
 
 int main(int argc, char* argv[])
 {

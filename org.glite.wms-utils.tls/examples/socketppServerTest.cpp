@@ -1,11 +1,11 @@
-#include "glite/wms/tls/socket++/GSISocketServer.h"
-#include "glite/wms/tls/socket++/GSISocketAgent.h"
+#include "glite/wmsutils/tls/socket++/GSISocketServer.h"
+#include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
 #include "socket++/exceptions.h"
 
 #include <iostream>
 #include <string>
 
-namespace socket_pp = glite::wms::tls::socket_pp;
+namespace socket_pp = glite::wmsutils::tls::socket_pp;
 
 int main(int argc, char* argv[])
 {
