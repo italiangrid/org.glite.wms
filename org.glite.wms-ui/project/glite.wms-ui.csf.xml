@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.12  2004/10/11 16:34:01  eronchie
+	Start adding configuration
+
 	Revision 1.11  2004/08/12 12:14:24  eronchie
 	Updated
-
+	
 	Revision 1.10  2004/08/12 12:13:13  eronchie
 	Updated
 	
@@ -162,6 +165,10 @@
                         <equals arg1="${org.glite.wms-ui.wrap-java.version}" arg2="HEAD" />
                 </condition>
 
+		<condition property="configuration.head">
+                        <equals arg1="${org.glite.wms-ui.configuration.version}" arg2="HEAD" />
+                </condition>
+
 		<condition property="gui-java.head">
                         <equals arg1="${org.glite.wms-ui.gui-java.version}" arg2="HEAD" />
                 </condition>
@@ -278,8 +285,18 @@
                         tag="${org.glite.wms-ui.wrap-java.version}" />
         </target>
 
+	<!-- configuration -->
+        <target name="configuration" depends="get.configuration.head, get.configuration.tag"/>
+        <target name="get.configuraiton.head" if="configuration.head">
+                <cvs-co package="org.glite.wms-ui.configuration" />
+        </target>
+        <target name="get.configuration.tag" unless="configuration.head">
+                <cvs-co package="org.glite.wms-ui.configuration"
+                        tag="${org.glite.wms-ui.configuration.version}" />
+        </target>
+
 	<!-- gui-java -->
-        <target name="gui-java" depends="get.gui-java.head, get.gui-java.tag"/>
+        <target name="gui-java" depends="configuration, get.gui-java.head, get.gui-java.tag"/>
         <target name="get.gui-java.head" if="gui-java.head">
                 <cvs-co package="org.glite.wms-ui.gui-java" />
         </target>
@@ -289,7 +306,7 @@
 	</target>
 
 	<!-- cli-python -->
-        <target name="cli-python" depends="get.cli-python.head, get.cli-python.tag"/>
+        <target name="cli-python" depends="configuration, get.cli-python.head, get.cli-python.tag"/>
         <target name="get.cli-python.head" if="cli-python.head">
                 <cvs-co package="org.glite.wms-ui.cli-python" />
         </target>
@@ -304,6 +321,7 @@
   				        api-java,
                                         wrap-python,
 					wrap-java,
+					configuration,
 					gui-java,
 					cli-python"/>
 

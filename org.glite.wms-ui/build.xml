@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.23  2004/10/11 16:34:01  eronchie
+	Start adding configuration
+
 	Revision 1.22  2004/09/29 13:40:39  flammer
 	Only changed line formatting.
-
+	
 	Revision 1.21  2004/09/09 21:09:47  dimeglio
 	Moved tag target to targets-common
 	
@@ -304,7 +307,7 @@
 		</if>
 	</target>
 
-	<target name="cli-python" unless="setenvonly" depends="boost,classads,globus">
+	<target name="cli-python" unless="setenvonly" depends="boost,classads,globus, configuration">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -314,22 +317,6 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.cli-python"
-	                    	     target="${target}"
-	                    	     inheritall="false" />
-			</else>
-		</if>
-	</target>
-
-	<target name="gui-java" unless="setenvonly" depends="boost,classads,globus">
-		<if>
-			<isset property="small.memory" />
-			<then>
-				<exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-				</exec>
-			</then>
-			<else>
-				<ant dir="${wms-ui.subsystem.dir}.gui-java"
 	                    	     target="${target}"
 	                    	     inheritall="false" />
 			</else>
@@ -384,6 +371,22 @@
         	</if>
     	</target>
 
+        <target name="configuration" unless="setenvonly">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms-ui.subsystem.dir}.configuration" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms-ui.subsystem.dir}.configuration"
+                                     target="${target}"
+                                     inheritall="false" />
+                         </else>
+                </if>
+        </target>
+
 	<target name="gui-java" unless="setenvonly" depends="api-java, wrap-java">
         	<if>
             		<isset property="small.memory" />
@@ -422,6 +425,7 @@
    					     api-java,
 					     wrap-python,
 					     wrap-java,
+					     configuration,
 					     gui-java,
 					     cli-python">
 		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
