@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/07/28 13:51:38  pandreet
+#       Purger dependencies fixed
+#
 #       Revision 1.4  2004/07/28 10:22:36  eronchie
 #       Added the prefix GLITE_WMSUTILS_THP_ in the macro GLOBUS_SSL_UTILS
 #
@@ -33,12 +36,8 @@
 WL_JCTRL_DCTRL=glite-wms-job_controller
 WL_JCTRL_DLOG=glite-wms-log_monitor
 
-#PROXYRENEWAL = $(top_srcdir)/proxyrenewal/libedg_wl_renewal.la
-#PURGER = $(top_srcdir)/purger/libedg_wl_purger.la \
-#         $(top_srcdir)/logging/client/libedg_wl_loggingpp.la
-
 PROXYRENEWAL =
-PURGER =
+GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
 bin_PROGRAMS = $(WL_JCTRL_DCTRL) $(WL_JCTRL_DLOG)
 
@@ -62,13 +61,14 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_controller.la \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-	$(GLITE_LB_CLIENT_LIBS) $(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) $(EXPAT_LIBS) $(CONDORG_LIBS) \
-	$(PROXYRENEWAL) $(PURGER)
+	$(PROXYRENEWAL) $(GLITE_WMS_PURGER_LIBS)
 
 glite_wms_log_monitor_SOURCES = logmonitor.cpp \
 	MonitorLoop.cpp \
@@ -86,12 +86,13 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_controller.la \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
-	$(GLITE_LB_CLIENT_LIBS) $(GLITE_LB_COMMON_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(CONDORG_LIBS) $(ARES_LIBS) $(EXPAT_LIBS) \
-	$(PROXYRENEWAL) $(PURGER)
+	$(PROXYRENEWAL) $(GLITE_WMS_PURGER_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \

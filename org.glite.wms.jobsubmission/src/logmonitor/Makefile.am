@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/07/28 13:51:38  pandreet
+#       Purger dependencies fixed
+#
 #       Revision 1.4  2004/07/28 10:22:36  eronchie
 #       Added the prefix GLITE_WMSUTILS_THP_ in the macro GLOBUS_SSL_UTILS
 #
@@ -42,11 +45,9 @@ noinst_HEADERS = \
 	SizeFile.h \
 	Timer.h
 
-#PROXYRENEWAL = $(top_srcdir)/proxyrenewal/libedg_wl_renewal.la
-#PURGER = $(top_srcdir)/purger/libedg_wl_purger.la \
-#         $(top_srcdir)/logging/client/libedg_wl_loggingpp.la
 PROXYRENEWAL =
-PURGER =
+GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
+
 
 SUBDIRS = processer
 
@@ -71,9 +72,10 @@ glite_wms_lm_job_status_LDADD = libglite_wms_logmonitor.la \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
-	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(ARES_LIBS) $(EXPAT_LIBS) \
-	$(PROXYRENEWAL) $(PURGER)
+	$(PROXYRENEWAL) $(GLITE_WMS_PURGER_LIBS)
 
 libglite_wms_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \

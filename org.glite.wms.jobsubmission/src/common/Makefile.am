@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/28 13:51:38  pandreet
+#       Purger dependencies fixed
+#
 #       Revision 1.3  2004/07/27 13:46:37  pandreet
 #       LB dependencies fixed
 #
@@ -46,14 +49,6 @@ noinst_HEADERS = \
 
 #LOCAL_PURGER_CFLAGS = -DENABLE_PURGER
 #LOCAL_RENEWAL_CFLAGS = -DENABLE_RENEWAL
-LOCAL_LOGGING_CFLAGS = -DENABLE_LOGGING
-LOCAL_PURGER_CFLAGS =
-LOCAL_RENEWAL_CFLAGS =
-
-
-LOCAL_CFLAGS = $(LOCAL_LOGGING_CFLAGS) \
-	$(LOCAL_PURGER_CFLAGS) \
-	$(LOCAL_RENEWAL_CFLAGS)
 
 libglite_wms_js_common_la_SOURCES = IdContainer.cpp \
 	RamContainer.cpp \
@@ -71,6 +66,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(LOCAL_CFLAGS)
+	-I$(top_srcdir)/../org.glite.wms.purger/interface \
+	-DENABLE_LOGGING -DENABLE_PURGER
 
 MAINTAINERCLEANFILES = Makefile.in *~
