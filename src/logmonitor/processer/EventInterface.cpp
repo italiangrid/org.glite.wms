@@ -4,7 +4,7 @@
 
 #include <user_log.c++.h>
 
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 
 #include "EventInterface.h"
 #include "MonitorData.h"
@@ -33,9 +33,9 @@ SubmitReader *EventInterface::createReader( const string &edgid )
   SubmitReader   *reader;
 
   if( !this->ei_data->md_isDagLog || (edgid == this->ei_data->md_dagId) )
-    reader = new SubmitReader( glite::wms::jobid::JobId(edgid) );
+    reader = new SubmitReader( glite::wmsutils::jobid::JobId(edgid) );
   else
-    reader = new SubmitReader( glite::wms::jobid::JobId(this->ei_data->md_dagId), glite::wms::jobid::JobId(edgid) );
+    reader = new SubmitReader( glite::wmsutils::jobid::JobId(this->ei_data->md_dagId), glite::wmsutils::jobid::JobId(edgid) );
 
   return reader;
 }

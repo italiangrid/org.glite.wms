@@ -5,7 +5,7 @@
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "../../common/EventLogger.h"
 #include "../../common/IdContainer.h"
 #include "../../controller/JobController.h"
@@ -71,7 +71,7 @@ void EventGlobusResourceDown::process_event( void )
       elog::cedglog << logger::setlevel( logger::debug )
 		    << "Forwarding request by EDG Id..." << endl;
 
-      controller.cancel( glite::wms::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
+      controller.cancel( glite::wmsutils::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
     }
 
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->egrd_event->eventNumber );

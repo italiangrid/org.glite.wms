@@ -9,15 +9,15 @@ namespace logmonitor { namespace processer {
 
 class SubmitReader {
 public:
-  SubmitReader( const glite::wms::jobid::JobId &edgid );
-  SubmitReader( const glite::wms::jobid::JobId &dagid, const glite::wms::jobid::JobId &jobid );
+  SubmitReader( const glite::wmsutils::jobid::JobId &edgid );
+  SubmitReader( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &jobid );
   ~SubmitReader( void );
 
   inline const std::string &to_string( void ) const { return this->sr_submit; }
   inline const std::string &get_globus_rsl( void ) const { return this->sr_globusRsl; }
 
 private:
-  void internalRead( const glite::wms::jobid::JobId &edgid );
+  void internalRead( const glite::wmsutils::jobid::JobId &edgid );
 
   std::string        sr_submit, sr_globusRsl;
   jccommon::Files    sr_files;

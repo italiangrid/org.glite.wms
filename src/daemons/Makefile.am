@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/27 09:41:26  pandreet
+#       JobId and Exception dependencies fixed
+#
 #       Revision 1.1  2004/07/06 10:05:38  pandreet
 #       Basic build files for jobsubmission
 #
@@ -49,13 +52,13 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_controller.la \
 	../controller/libglite_wms_controller_adapter.la \
 	../common/libglite_wms_js_common.la \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
-	$(GLITE_WMS_JOBID_LIBS) \
-	$(GLITE_WMS_CJOBID_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_JDL_LIBS)\
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_WMS_COMMON_UT_EXCEPTIONS_LIBS) \
-	$(GLITE_WMS_TLS_SSL_HELPERS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
 	$(LOGGING) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) -lglobus_ssl_utils \
@@ -71,13 +74,13 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_controller.la \
 	../logmonitor/libglite_wms_logmonitor.la \
 	../common/libglite_wms_js_common.la \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
-	$(GLITE_WMS_JOBID_LIBS) \
-	$(GLITE_WMS_CJOBID_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_JDL_LIBS)\
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_WMS_COMMON_UT_EXCEPTIONS_LIBS) \
-	$(GLITE_WMS_TLS_SSL_HELPERS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_PROCESS_LIBS) \
 	$(LOGGING) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) -lglobus_ssl_utils \

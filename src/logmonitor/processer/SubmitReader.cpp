@@ -4,7 +4,7 @@
 
 #include <boost/regex.hpp>
 
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "../../jobcontrol_namespace.h"
@@ -19,7 +19,7 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace logmonitor { namespace processer {
 
-void SubmitReader::internalRead( const glite::wms::jobid::JobId &edgid )
+void SubmitReader::internalRead( const glite::wmsutils::jobid::JobId &edgid )
 {
   string                buffer;
   ifstream              rsl;
@@ -54,12 +54,12 @@ void SubmitReader::internalRead( const glite::wms::jobid::JobId &edgid )
   return;
 }
 
-SubmitReader::SubmitReader( const glite::wms::jobid::JobId &edgid ) : sr_submit(), sr_globusRsl(), sr_files( edgid )
+SubmitReader::SubmitReader( const glite::wmsutils::jobid::JobId &edgid ) : sr_submit(), sr_globusRsl(), sr_files( edgid )
 {
   this->internalRead( edgid );
 }
 
-SubmitReader::SubmitReader( const glite::wms::jobid::JobId &dagid, const glite::wms::jobid::JobId &edgid ) : sr_submit(), sr_globusRsl(),
+SubmitReader::SubmitReader( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &edgid ) : sr_submit(), sr_globusRsl(),
 											     sr_files( dagid, edgid )
 {
   this->internalRead( edgid );
