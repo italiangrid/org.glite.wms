@@ -359,7 +359,7 @@ bool WMPLogger::logEvent(event_name event, const char* reason){
 			case LOG_FEFUSE:
 				return !edg_wll_LogRefused (ctx, EDG_WLL_SOURCE_WM_PROXY, (char *) (retrieveHostName().c_str()), "", reason);
 				break;
-			case LOG_ACCEPTED:
+			case LOG_ACCEPT:
 				return !edg_wll_LogAccepted(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");
 				break;
 			case LOG_CANCEL:
@@ -368,7 +368,7 @@ bool WMPLogger::logEvent(event_name event, const char* reason){
 			case LOG_PURGE:
 				return !edg_wll_LogClearUSER(ctx);
 				break;
-			case LOG_ABORTED:
+			case LOG_ABORT:
 				return !edg_wll_LogAbort(ctx,reason);
 				break;
 			default:

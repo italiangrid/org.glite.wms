@@ -29,10 +29,10 @@ class WMPLogger  {
 	public:
 		enum event_name {
 			LOG_FEFUSE,
-			LOG_ACCEPTED,
+			LOG_ACCEPT,
 			LOG_CANCEL,
 			LOG_PURGE,
-			LOG_ABORTED
+			LOG_ABORT
 		};
 		WMPLogger();
 		virtual ~WMPLogger() throw();
