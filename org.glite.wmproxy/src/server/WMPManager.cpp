@@ -43,7 +43,7 @@ namespace server {
   }
 
 
-  void* WMPManager::runCommand(std::string cmdname, std::vector<std::string> param, wmp_fault_t &fault)
+  wmp_fault_t WMPManager::runCommand(std::string cmdname, std::vector<std::string> param, void* &result)
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
@@ -65,7 +65,7 @@ namespace server {
 			  
 		        if( cmd -> state().forwardRequest() ) {
 			      is_forwarded = true;
-		    	  char* seq_str = edg_wll_GetSequenceCode(*cmd->getLogContext());
+			      char* seq_str = edg_wll_GetSequenceCode(*cmd->getLogContext());
 			      std::string seq_code(seq_str);		    
 			      free( seq_str );
 			      cmd->setParam("SeqCode", seq_code);	    
@@ -80,8 +80,18 @@ namespace server {
 		      } while( cmd -> execute() && !cmd -> isDone() );
 
 		      // Here we should log the attribute list returned.
+		      // If Submit
+		      jobSubmitResponse* result; 
 		      cmd -> setParam("Ciccio", "PincoPallo");
-		      cmd -> getParam("Ciccio", result);
+		      /*
+		      struct JobIdStructType { 
+			std::string id;
+			std::string *name;
+			std::vector<JobIdStructType*> *childrenJob;
+		      }; 
+		      */
+		      cmd -> getParam("JobId", result->jobIdStruct->id);
+		      
 		      
 		      return NULL;
 
