@@ -12,16 +12,19 @@ matchmakingdir = $(includedir)/glite/wms/matchmaking
 matchmaking_HEADERS = \
 	utility.h \
         matchmakerGlueImpl.h \
+	matchmakerISMImpl.h \
         exceptions.h \
         jdl_attributes.h \
         glue_attributes.h
 
 libglite_wms_matchmaking_la_SOURCES = \
 	matchmakerGlueImpl.cpp \
+	matchmakerISMImpl.cpp \
 	exceptions.cpp 
 
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
