@@ -12,7 +12,7 @@
 #include <classad_distribution.h>
 #include "RequestStateMachine.h"
 #include "Helper.h"
-#include "logger_utils.h"
+#include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 
 namespace utilities = glite::wms::common::utilities;
