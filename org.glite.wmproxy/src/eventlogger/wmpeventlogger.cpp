@@ -350,14 +350,11 @@ void WMPLogger::setLoggingJob( const std::string &jid , const char* seq_code){
 }
 
 
-
-
 /******************************************************************
 Logging Events: Accepted,Aborted, Refused, Cancel, Purge
 ******************************************************************/
-
 // Actual LB log call
-bool WMPLogger::logEvent(event_name event, char* reason){
+bool WMPLogger::logEvent(event_name event, const char* reason){
 		switch (event){
 			case LOG_FEFUSE:
 				return !edg_wll_LogRefused (ctx, EDG_WLL_SOURCE_WM_PROXY, (char *) (retrieveHostName().c_str()), "", reason);
@@ -379,7 +376,7 @@ bool WMPLogger::logEvent(event_name event, char* reason){
 		}
 }
 
-void WMPLogger::logEvent(event_name event, char* reason, bool retry){
+void WMPLogger::logEvent(event_name event, const char* reason, bool retry){
 	int i=0;
 	edglog_fn("CFSI::logCancel(event, char* reason, bool retry)");
 	edglog(fatal) << "Logging "<< event<<" Request." << std::endl;
@@ -397,12 +394,12 @@ void WMPLogger::logEvent(event_name event, char* reason, bool retry){
 			throw JobOperationException(__FILE__, __LINE__,
 				"WMPLogger::logEvent(event ,char* reason, bool retry)",
 				WMS_OPERATION_NOT_ALLOWED,
-				error_message("edg_wll_LogCancelREQ"));
+				error_message("edg_wll_Log<Event>REQ"));
 	}
 	edglog(debug) << "Logged." << std::endl;
 }
 
-void WMPLogger::logEvent(event_name  event, char* reason,bool retry, bool test) {
+void WMPLogger::logEvent(event_name  event, const char* reason,bool retry, bool test) {
 	if (!test) logEvent(event, reason, retry);
 	edglog_fn("WMPLogger::logEvent(event_name event, bool retry, bool test) ");
 	edglog(fatal) << "Logging "<< event<<" Job." << std::endl;
@@ -423,7 +420,7 @@ void WMPLogger::logEvent(event_name  event, char* reason,bool retry, bool test) 
 		res = logEvent (event , reason);
 		testAndLog( res, with_hp, lap, host_cert , host_key );
 	} while( res != 0 );
-	// Return true.... this means failure??
+	// return true    TBD.... this means failure??
 }
 
 
@@ -435,7 +432,7 @@ WMPLogger::logAccepted(const std::string &jid)
 {
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER, lb_host.c_str(),
+	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY, lb_host.c_str(),
 		str_addr, jid.c_str());
 }
 
@@ -444,7 +441,7 @@ WMPLogger::logRefused(const std::string &jid)
 {
 	/*char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER, lb_host.c_str(),
+	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY, lb_host.c_str(),
 		str_addr, jid.c_str());*/
 }
 

@@ -52,9 +52,9 @@ class WMPLogger  {
 
 
 		// Event logging
-		bool logEvent(event_name event, char* reason);
-		void logEvent(event_name event, char* reason, bool retry);
-		void logEvent(event_name  event, char* reason, bool retry, bool test);
+		bool logEvent(event_name event,  const char* reason);
+		void logEvent(event_name event,  const char* reason, bool retry);
+		void logEvent(event_name  event, const char* reason, bool retry, bool test);
 		void logAccepted(const std::string &jid);
 		void logRefused(const std::string &jid);
 		void logAbort(const char *reason = "");
