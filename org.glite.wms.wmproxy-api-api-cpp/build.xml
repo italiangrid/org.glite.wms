@@ -13,6 +13,9 @@
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
 	Build file for the GLite wms wmproxy-api-cpp component
+
+	Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+
 -->
 
 <project name="wmproxy-api-cpp" default="dist">

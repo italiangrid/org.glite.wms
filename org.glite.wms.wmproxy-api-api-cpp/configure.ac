@@ -11,6 +11,8 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
+#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#
 
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS wmproxy-api-cpp], [0.1.0])
