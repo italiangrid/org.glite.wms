@@ -711,7 +711,7 @@ int JobState::saveState( void )
     case EAGAIN:
     case ECONNREFUSED: 
 	  case ENOTCONN:
-		case EDG_WLL_ERROR_SSL: // connection problem
+		case EDG_WLL_ERROR_GSS: // connection problem
       rep--;
 			sleep( 10 );
       error = CHKPT_ConnProb;
