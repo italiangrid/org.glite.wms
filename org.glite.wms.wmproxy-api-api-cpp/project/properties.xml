@@ -12,15 +12,12 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	Common build properties file for the GLite wms wmproxy-api-cpp component
-
-        Authors: Alessandro Maraschini <alessandro.maraschini@datamat.it>
-
+	Common build properties file for the GLite wms wmproxy component
 -->
 
-<project name="wms wmproxy-api-cpp component common properties">
+<project name=" wms wmproxy-api-cpp component common properties">
 
-	<!-- Include build properties to allow overwriting
+	<!-- Include build properties to allow overwriting 
 	     of properties for subsystem                    -->
 	<property file="project/build.properties" />
 
