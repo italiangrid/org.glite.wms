@@ -12,7 +12,7 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	Common build properties file for the EGEE test3 wms common component
+	Common build properties file for the Glite WMS Common component
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
 			 Joachim Flammer <Joachim.Flammer@cern.ch>
@@ -21,25 +21,28 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.3  2004/05/13 19:48:38  dimeglio
+	Changed all occurrences of EGEE or egee to GLite and glite
+
 	Revision 1.2  2004/05/13 11:45:59  flammer
 	Added correct header.
-
+	
 -->
 
-<project name="test3 wms common component common properties">
+<project name="WMS Common component common properties">
 
 	<!-- ======================================================
-		 Component properties file for EGEE test3 wms component common
+		 Component properties file for GLite WMS component common
 		 ====================================================== -->
 		
 	<!-- Component name prefix -->
 	<property name="component.prefix" value="common" />
 	
 	<!-- Subsystem name -->
-	<property name="subsystem.name" value="${test3.wms.subsystem.name}"/>
+	<property name="subsystem.name" value="${wms.subsystem.name}"/>
 		
 	<!-- Subsystem prefix -->
-	<property name="subsystem.prefix" value="${test3.wms.subsystem.prefix}"/>
+	<property name="subsystem.prefix" value="${wms.subsystem.prefix}"/>
 
 	<!-- ====================================================== -->
 		
