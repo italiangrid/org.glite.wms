@@ -12,14 +12,14 @@ libglite_wms_jobid_la_SOURCES = \
 	JobId.cpp \
 	JobIdExceptions.cpp \
 	manipulation.cpp \
-	jobid.c \
+	cjobid.c \
 	strmd5.c
 
 jobidincludedir = $(includedir)/glite/wms/jobid
 jobidinclude_HEADERS = \
 	JobId.h \
 	JobIdExceptions.h \
-	jobid.h \
+	cjobid.h \
 	manipulation.h \
 	strmd5.h \
 	jobid_namespace.h
