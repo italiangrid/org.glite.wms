@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/28 17:45:27  eronchie
+#       Ping Puzzetta Puzzosa
+#
 #       Revision 1.1  2004/06/26 15:25:03  eronchie
 #       Start handling matchmaking
 #       WARNING: work in progress
@@ -27,7 +30,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Subdirectories list
-SUBDIRS = src 
+SUBDIRS = interface src 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

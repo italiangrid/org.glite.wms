@@ -11,7 +11,6 @@ lib_LTLIBRARIES = libglite_wms_matchmaking.la
 matchmakingdir = $(includedir)/glite/wms/matchmaking
 matchmaking_HEADERS = \
 	utility.h \
-        matchmaker.h \
         matchmakerGlueImpl.h \
         exceptions.h \
         jdl_attributes.h \

@@ -8,8 +8,6 @@
 
 matchmakingdir = $(includedir)
 nobase_matchmaking_HEADERS = \
-	glite/wms/matchmaking/matchmaker.h \
-	glite/wms/matchmaking/matchmakerGlueImpl.h \
-	glite/wms/matchmaking/utility.h
+	glite/wms/matchmaking/matchmaker.h
 
 MAINTAINERCLEANFILES = Makefile.in
