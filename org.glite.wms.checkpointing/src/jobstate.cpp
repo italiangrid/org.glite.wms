@@ -109,18 +109,18 @@ const char *JobState::createContext( void )
   int            error;
   
   // define a context using the values stored in the environment variables. 
-  const char *job = getenv( "EDG_WL_JOBID" ); // the edg jobID
+  const char *job = getenv( "GLITE_WMS_JOBID" ); // the edg jobID
 
   if ( !job ) 
-    throw SEException(__FILE__, __LINE__, "JobState::createContext", "EDG_WL_JOBID");
+    throw SEException(__FILE__, __LINE__, "JobState::createContext", "GLITE_WMS_JOBID");
   try {
     jobid.fromString(job);
   } catch (glite::wmsutils::jobid::WrongIdException) {
-    throw SEException(__FILE__, __LINE__, "JobState::createContext", "EDG_WL_JOBID");
+    throw SEException(__FILE__, __LINE__, "JobState::createContext", "GLITE_WMS_JOBID");
   }
-  const char *sc = getenv( "EDG_WL_SEQUENCE_CODE" ); // the sequence code
+  const char *sc = getenv( "GLITE_WMS_SEQUENCE_CODE" ); // the sequence code
   if ( !sc ) 
-    throw SEException(__FILE__, __LINE__, "JobState::createContext", "EDG_WL_SEQUENCE_CODE");
+    throw SEException(__FILE__, __LINE__, "JobState::createContext", "GLITE_WMS_SEQUENCE_CODE");
  
   this->js_ctx.reset( new edg_wll_Context );
 
@@ -678,7 +678,7 @@ int JobState::saveState( void )
   if ( !this->js_ctx.get() )
     job = this->createContext();
   else 
-    job = getenv( "EDG_WL_JOBID" );
+    job = getenv( "GLITE_WMS_JOBID" );
 
   if ( !job ) return CHKPT_SyntaxError;
   

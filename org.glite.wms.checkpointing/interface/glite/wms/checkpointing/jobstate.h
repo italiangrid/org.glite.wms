@@ -322,7 +322,7 @@ class StepsSet;
     /** \name Auxiliary generic methods. */
     /// @{
     /** Create an LB context, useful to query the LB database.
-	\return The edg-jobId as it is set in the EDG_WL_JOBID env variable.
+	\return The edg-jobId as it is set in the GLITE_WMS_JOBID env variable.
 	\throw SEException 
 	\throw LFException  */
     const char *createContext( void );
