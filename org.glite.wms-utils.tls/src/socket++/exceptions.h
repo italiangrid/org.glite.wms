@@ -6,7 +6,7 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
 
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "exception_codes.h"
 
 namespace utilities = glite::wmsutils::exception;
