@@ -35,6 +35,13 @@ COMMON_LD_FLAGS= \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_WMS_JDL_LIBS) \
+	$(GLOBUS_COMMON_THR_LIBS) \
+	$(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
+	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
+	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
+	$(EXPAT_LIBS) \
+	$(ARES_LIBS) \
 	$(BOOST_LIBS)
 
 
@@ -54,7 +61,8 @@ WMReal_cu_SOURCES = \
 	WMReal_cu_main.cpp \
 	../src/server/WMReal.cpp
 
-WMReal_cu_LDADD= -L../src/common/ -lglite_wms_manager_common -lglite_wms_manager_server \
+WMReal_cu_LDADD= -L../src/server -lglite_wms_manager_common -lglite_wms_manager_server \
+	-L../src/common/ -lglite_wms_manager_common \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
