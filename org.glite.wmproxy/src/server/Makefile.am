@@ -81,8 +81,6 @@ wmProxy_LDADD = \
 	$(XML2) \
 	$(FASTCGI_CPP_LIBS)
 
-
-
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
