@@ -38,6 +38,11 @@ ism_cemon_purchaser::ism_cemon_purchaser(
 
 void ism_cemon_purchaser::operator()()
 {
+  do_purchase();
+}
+
+void ism_cemon_purchaser::do_purchase()
+{
   // History of glueceid already inserted into the ISM
   //set<std::string> gluece_info_history;
  

@@ -21,9 +21,8 @@ public:
   ism_purchaser(exec_mode_t mode, size_t interval) :
 	m_mode(mode), m_interval(interval) {}
   virtual ~ism_purchaser() {}
+  virtual void do_purchase() = 0;
   virtual void operator()() = 0;
-  
-  void execute() { (*this)(); };
 
   exec_mode_t exec_mode() const
   {

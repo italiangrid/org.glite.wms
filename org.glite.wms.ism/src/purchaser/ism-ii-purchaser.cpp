@@ -267,6 +267,11 @@ ism_ii_purchaser::ism_ii_purchaser(
 
 void ism_ii_purchaser::operator()()
 {
+  do_purchase();
+}
+
+void ism_ii_purchaser::do_purchase()
+{
   // History of glueceid already inserted into the ISM
   //set<std::string> gluece_info_history;
   do {

@@ -29,6 +29,8 @@ public:
     exec_mode_t mode = loop,
     size_t interval = 30
   );
+  
+  void do_purchase();
 
   void operator()();
 
