@@ -33,6 +33,7 @@ namespace utilities   	= glite::wmsutils::exception;
 namespace commands      = glite::wms::wmproxy::commands;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
 
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -188,29 +189,29 @@ namespace server {
 	      catch (commands::bad&) {
 	        edglog(fatal) << "Bad Command." << std::endl;
 	      }
-	      catch( utilities::Exception& e) {
+	      catch( Exception &e) {
 		     edglog(fatal) << "Exception Caught: " << e.what() << std::endl;
 	      }
 	      if (cmd) {
 		    delete cmd;
 		    cmd = NULL;
-          }   
+          }
       }
-    } 
-    catch (commands::bad&) {
+    }
+    catch (commands::bad &e) {
       edglog(fatal) << "Bad Command." << std::endl;
-    } 
-    catch( std::exception& e ) {
+    }
+    catch( std::exception &e ) {
       edglog(fatal) << "WMPManager: " << e.what() << std::endl;
-    } 
+    }
     catch (...) {
       edglog(fatal) << "Uncaught Exception: please check." << std::endl;
-    } 
+    }
 
     return fault;
   }
 
-} 
+}
 } 
 } 
 } 
