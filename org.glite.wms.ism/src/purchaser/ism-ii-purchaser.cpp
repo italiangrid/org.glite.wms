@@ -404,11 +404,11 @@ timestamp_type get_current_time(void)
 
 void ism_ii_purchaser::operator()()
 {
-  gluece_info_container_type gluece_info_container;
-
-  prefetchGlueCEinfo(m_hostname, m_port, m_dn, m_timeout, gluece_info_container);
-
   do {
+  
+     gluece_info_container_type gluece_info_container;
+     prefetchGlueCEinfo(m_hostname, m_port, m_dn, m_timeout, gluece_info_container);
+
 
     for (gluece_info_iterator it = gluece_info_container.begin();
          it != gluece_info_container.end(); ++it) {
