@@ -34,12 +34,12 @@ namespace wmsui {
 namespace api {
 
 using namespace std ;
-using namespace glite::wmsustils::exception ; //Exception
+using namespace glite::wmsutils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
 using namespace glite::wms::jdl ; // JobAd
 using namespace glite::wms::manager::ns::client ; //NSClient
 using namespace glite::wms::checkpointing ;
-using namespace glite::wms::lb ;
+using namespace glite::lb ;
 
 pthread_mutex_t  Job::dgtransfer_mutex  = PTHREAD_MUTEX_INITIALIZER;
 // Compare two edg_wll_Event using the timestamp member
