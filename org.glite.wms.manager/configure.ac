@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/10/22 12:24:34  eronchie
+#       Added optimize support
+#
 #       Revision 1.9  2004/10/14 14:15:22  eronchie
 #       Updated
 #
@@ -104,6 +107,8 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
+
+AC_OPTIMIZE
 
 have_boost=no
 have_classads=no
