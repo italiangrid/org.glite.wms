@@ -25,7 +25,7 @@
 
 namespace glite {   
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /** The secure agent used to realize message exchange. */
@@ -95,11 +95,11 @@ class GSISocketServer : public SocketServer
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 
-#endif
+#endif // _GSISocketServer_h_
 
 /*
   Local Variables:

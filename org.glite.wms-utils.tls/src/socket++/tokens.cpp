@@ -1,4 +1,4 @@
-// $Id:
+// $Id$
 
 /**
  * @file tokens.cpp
@@ -21,7 +21,7 @@
 
 const int _TIMEOUT_ = 300;
 
-namespace socket_pp = glite::wms::common::socket_pp;
+namespace socket_pp = glite::wms::tls::socket_pp;
 
 /**
  * Send a gss token.

@@ -13,7 +13,7 @@ namespace utilities = glite::wms::common::utilities;
 
 namespace glite {  
 namespace wms {
-namespace common {
+namespace tls {
 namespace socket_pp {
    
    class Exception : public utilities::Exception
@@ -56,8 +56,8 @@ namespace socket_pp {
     };
   
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms 
 } // namespace glite
 
-#endif
+#endif // _SocketExceptions_h_

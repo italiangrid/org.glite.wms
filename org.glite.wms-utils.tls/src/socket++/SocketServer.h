@@ -16,7 +16,7 @@
  */
 
 #ifndef _SocketServer_h__
-#define _SocketServer_h_
+#define _SocketServer_h__
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -27,7 +27,7 @@
 
 namespace glite {   
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /** The agent used to realize message exchange. */
@@ -103,12 +103,12 @@ class SocketServer
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 
 
-#endif
+#endif // _SocketServer_h__
 
 /*
   Local Variables:

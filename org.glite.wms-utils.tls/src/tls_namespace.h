@@ -1,26 +1,26 @@
-#ifndef __COMMON_NAMESPACE_H_LOADED
-#define __COMMON_NAMESPACE_H_LOADED
+#ifndef __TLS_NAMESPACE_H_LOADED
+#define __TLS_NAMESPACE_H_LOADED
 
-#define COMMON_NAMESPACE_BEGIN namespace edg { namespace workload { namespace common
+#define TLS_NAMESPACE_BEGIN namespace glite { namespace wms { namespace tls
 
-#define COMMON_NAMESPACE_END }}
+#define TLS_NAMESPACE_END }}
 
-#define USING_COMMON_NAMESPACE using namespace edg::workload::common
-#define USING_COMMON_NAMESPACE_ADD( last ) using namespace edg::workload::common::##last
+#define USING_TLS_NAMESPACE using namespace glite::wms::tls
+#define USING_TLS_NAMESPACE_ADD( last ) using namespace glite::wms::tls::##last
 
-#define COMMON_NAMESPACE_CLASS( Type )                  \
-namespace edg { namespace workload { namespace common { \
+#define TLS_NAMESPACE_CLASS( Type )                  \
+namespace glite { namespace wms { namespace tls { \
   class Type;                                           \
 }}}
 
-#define COMMON_SUBNAMESPACE_CLASS( Namespace, Type )    \
-namespace edg { namespace workload { namespace common { \
+#define TLS_SUBNAMESPACE_CLASS( Namespace, Type )    \
+namespace glite { namespace wms { namespace tls { \
   namespace Namespace {                                 \
     class Type;                                         \
   }                                                     \
 }}}
 
-#endif /* __COMMON_NAMESPACE_H_LOADED */
+#endif /* __TLS_NAMESPACE_H_LOADED */
 
 // Local Variables:
 // mode: c++

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-namespace socket_pp = glite::wms::common::socket_pp;
+namespace socket_pp = glite::wms::tls::socket_pp;
 
 int main(int argc, char* argv[])
 {

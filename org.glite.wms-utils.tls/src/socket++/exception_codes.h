@@ -1,5 +1,5 @@
-#ifndef GLITE_WMS_COMMON_SOCKETPP_EXCEPTION_CODES_H
-#define GLITE_WMS_COMMON_SOCKETPP_EXCEPTION_CODES_H
+#ifndef GLITE_WMS_TLS_SOCKETPP_EXCEPTION_CODES_H
+#define GLITE_WMS_TLS_SOCKETPP_EXCEPTION_CODES_H
 /*
  * exception_codes.h
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
@@ -10,7 +10,7 @@
 
 namespace glite {
 namespace wms {
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 enum {
@@ -21,9 +21,10 @@ enum {
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
-#endif
+
+#endif // GLITE_WMS_TLS_SOCKETPP_EXCEPTION_CODES_H
 
 // EOF

@@ -14,4 +14,4 @@ int edg_wlc_SSLLockingCleanup(void);
 }
 #endif
 
-#endif
+#endif // _GLITE_WMS_COMMON_SSL_HELPERS_SSL_PTHREADS_H

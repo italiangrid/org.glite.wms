@@ -16,7 +16,7 @@
 
 namespace glite {
 namespace wms {
-namespace common { 
+namespace tls { 
 namespace socket_pp {
 
 /** 
@@ -138,12 +138,12 @@ protected:
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 
 
-#endif
+#endif // __SOCKETAGENT__
 
 /*
   Local Variables:

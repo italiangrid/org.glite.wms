@@ -30,7 +30,7 @@
 
 namespace glite { 
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /** 
@@ -204,7 +204,7 @@ SocketAgent* SocketClient::getAgent() const
 }
 
 } // namespace socket
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 

@@ -24,9 +24,9 @@
 #endif
 
 namespace glite {   
-  namespace wms { 
-    namespace common {
-      namespace socket_pp {
+namespace wms { 
+namespace tls {
+namespace socket_pp {
 
 	/** The data struct containing the authentication context. */
 	struct GSIAuthenticationContext 
@@ -386,9 +386,9 @@ namespace glite {
 	  return sa!=NULL;
 	}
 
-      } // namespace socket_pp
-    } // namespace common
-  } // namespace wms
+} // namespace socket_pp
+} // namespace tls
+} // namespace wms
 } // namespace glite
 
 

@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file SocketClient.h
@@ -27,7 +27,7 @@
 
 namespace glite {   
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /** The agent used to realize message exchange. */
@@ -145,11 +145,11 @@ class SocketClient
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 
-#endif
+#endif // _SocketClient_h_
 
 /*
   Local Variables:

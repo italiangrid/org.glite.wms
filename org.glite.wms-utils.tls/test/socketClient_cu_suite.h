@@ -8,7 +8,8 @@
 #include "../src/socket++/SocketAgent.h"
 #include "../src/socket++/exceptions.h"
 
-namespace socket_pp = glite::wms::common::socket_pp;
+namespace socket_pp = glite::wms::tls::socket_pp;
+
 using namespace std;
 
 class socketClient_test : public CppUnit::TestFixture {

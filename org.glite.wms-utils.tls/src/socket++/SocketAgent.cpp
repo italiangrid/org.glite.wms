@@ -29,7 +29,7 @@
 
 namespace glite { 
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /**
@@ -285,7 +285,7 @@ std::string SocketAgent::HostName()
 }
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 

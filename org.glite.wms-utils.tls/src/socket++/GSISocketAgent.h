@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file GSISocketAgent.h
@@ -20,12 +20,13 @@
 
 /** The superclass definition file. */
 #include "SocketAgent.h"
+
 /** The globus secure shell definitions file. */
 #include <globus_gss_assist.h>
 
 namespace glite {
 namespace wms {
-namespace common { 
+namespace tls { 
 namespace socket_pp {
 
 /** 
@@ -115,12 +116,11 @@ private:
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 
-
-#endif
+#endif // _GSISocketAgent_h_
 
 /*
   Local Variables:

@@ -5,7 +5,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 #include <errno.h>
 
@@ -25,7 +25,7 @@
 
 namespace glite {   
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /**
@@ -253,7 +253,7 @@ bool GSISocketClient::Close()
 }
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 

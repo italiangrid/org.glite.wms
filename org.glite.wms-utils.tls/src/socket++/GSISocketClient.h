@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file GSISocketServer.h
@@ -25,7 +25,7 @@
 
 namespace glite {   
 namespace wms { 
-namespace common {
+namespace tls {
 namespace socket_pp {
 
 /** The secure agent used to realize message exchange. */
@@ -102,11 +102,11 @@ class GSISocketClient : public SocketClient
 };
 
 } // namespace socket_pp
-} // namespace common
+} // namespace tls
 } // namespace wms
 } // namespace glite
 
-#endif
+#endif // _GSISocketClient_h_
 
 /*
   Local Variables:
