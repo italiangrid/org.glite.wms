@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.15  2004/08/12 14:23:16  eronchie
+	Revision 1.16  2004/08/12 14:23:59  eronchie
 	Updated
 
+	Revision 1.15  2004/08/12 14:23:16  eronchie
+	Updated
+	
 	Revision 1.14  2004/08/12 12:14:24  eronchie
 	Updated
 	
@@ -429,8 +432,7 @@ ilonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                 <if>
                         <isset property="small.memory" />
                         <then>
-                                <exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerr
-or="${failonerror}">
+                                <exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
                                         <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${fa
 ilonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                                 </exec>
