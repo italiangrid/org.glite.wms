@@ -24,7 +24,7 @@ class WMPDelegation {
 public:
 	
 	/**
-	 * Gets the user Distinguish Name of the user. This is the DN of the request
+	 * Gets the user Distinguished Name of the user. This is the DN of the request
 	 * environment
 	 * @return the user DN
 	 */
@@ -53,7 +53,7 @@ public:
 	/**
 	 * Gets the delegated proxy path. This is the Proxy corresponding to the 
 	 * delegation identifier passed as argument and to the specific user. The
-	 * user is represented by the Distinguish Name contained inside the request
+	 * user is represented by the Distinguished Name contained inside the request
 	 * environment
 	 * @param the delegation id identifing the delegated session
 	 * @return the user DN

@@ -360,7 +360,7 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri)
     	ch = source_buffer->snextc();
   	}
 
-  	source_stream.close();
+  	target_stream.close();
   	source_stream.close();*/
   	
   	GLITE_STACK_CATCH();
@@ -625,6 +625,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		case JobStatus::SUBMITTED:
 			// The register of the job has been done
 			wmplogger.init(NS_ADDRESS, NS_PORT, jid);
+			wmplogger.unregisterProxyRenewal();
 			wmplogger.logAbort("Cancelled by user");
 			break;
 		case JobStatus::WAITING:

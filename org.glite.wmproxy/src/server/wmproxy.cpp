@@ -7,10 +7,9 @@
 #include "wmproxy.h"
 
 // Fast CGI
+#include <fcgi_stdio.h>
 #include "fcgio.h"
 #include "fcgi_config.h"
-#include <fcgi_stdio.h>
-
 
 // gSOAP
 #include "soapH.h"
@@ -22,7 +21,7 @@
 //#include "wmproxyname.nsmap"
 
 // Logging
-#include "logging.h"
+//#include "logging.h"
 //#include "glite/wms/common/logger/edglog.h"
 
 // Configuration
@@ -59,6 +58,7 @@ main(int argc, char* argv[])
 	int ssl_accept;
 	struct soap *soap;
 	struct soap *tsoap;
+	
 	//try {
 		/*logger::threadsafe::edglog.open(
 			configuration::Configuration::instance()->ns()->log_file(),
@@ -139,6 +139,8 @@ main(int argc, char* argv[])
   	}*/
 	return 0;
 }
+
+
 
 //} // wmproxy
 //} // wms

@@ -8,8 +8,8 @@
 //namespace wms {
 //namespace wmproxy {
 
-#include <iostream>
 #include <string>
+#include <iostream>
 
 #include "wmpdelegation.h"
 
@@ -45,7 +45,7 @@ WMPDelegation::getUserDN()
 	}
 	
 	user_dn = strdup(client_dn);
-	p = strstr(user_dn, "/CN=proxy"); // ITERATE????
+	p = strstr(user_dn, "/CN=proxy"); ///TBC ITERATE????
 	if (p != NULL) {
 		*p = '\0';      
 	}
@@ -91,7 +91,7 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq(getProxyReqResponse &getProxyReq_response, "
 			"const string &delegation_id)",
-			WMS_PROXY_ERROR, "Unable to complete proxy request");
+			WMS_PROXY_ERROR, "Unable to complete Proxy request");
 	}
 	
 	string proxy_req = "";
@@ -119,7 +119,7 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"putProxy(putProxyResponse &putProxyReq_response, const string "
 			"&delegation_id, const string &proxy)",
-			WMS_PROXY_ERROR, "Unable to store client proxy");
+			WMS_PROXY_ERROR, "Unable to store client Proxy");
     }	
 }
 
@@ -148,6 +148,8 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	}
 	return path;
 }
+
+
 
 //} // wmproxy
 //} // wms

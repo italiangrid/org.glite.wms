@@ -35,6 +35,7 @@ class WMPLogger  {
 		
 		void registerProxyRenewal(const std::string &proxy_path,
 			const std::string &my_proxy_server);
+		void unregisterProxyRenewal();
 			
 		void registerJob(glite::wms::jdl::JobAd *ad);
 		void registerDag(WMPExpDagAd *ad);

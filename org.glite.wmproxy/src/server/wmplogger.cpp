@@ -103,6 +103,14 @@ WMPLogger::registerProxyRenewal(const string &proxy_path,
 }
 
 void
+WMPLogger::unregisterProxyRenewal()
+{
+	char *renewal_proxy_path = NULL;
+	for (int i = 0; i < LOG_RETRY_COUNT
+		&& edg_wlpr_UnregisterProxy(id->getId(), renewal_proxy_path); i++);
+}
+
+void
 WMPLogger::registerJob(JobAd *jad)
 {
 	char str_addr[1024];
