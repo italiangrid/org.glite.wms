@@ -13,8 +13,6 @@
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
 	Build file for the GLite wms wmproxy-api-cpp component
-
-	Authors: Alessandro Maraschini <alessandro.maraschini@datamat.it>
 -->
 
 <project name="wmproxy-api-cpp" default="dist">
@@ -26,7 +24,7 @@
 	<!-- =========================================
 	      Import properties (order is important)
 	     ========================================= -->
-
+	
 	<!-- Import baseline properties & user properties -->
 	<import file="../org.glite/project/baseline.properties.xml" />
 
@@ -51,12 +49,6 @@
 	<property file="${component.dependencies.file}" />
 	<property file="${subsystem.dependencies.file}" />
 	<property file="${global.dependencies.file}"/>
-
-	<!-- =========================================
-                 Load configuration definitions (order is important)
-             ========================================= -->
-        <import file="${global.configure.options.file}"/>
-        <import file="${component.configure.options.file}"/>
 	
 	<!-- =========================================
       	      Import task definitions (order is important)
@@ -64,12 +56,17 @@
 	<import file="${subsystem.taskdefs.file}" />
 	<import file="${global.taskdefs.file}" />
 	
+        <!-- =========================================
+                 Load configure options
+                 ========================================= -->
+        <property file="${global.configure.options.file}"/>
+        <import file="${component.configure.options.file}"/>
+
 	<!-- =========================================
 		 Load common targets
 	     ========================================= -->
-	<!-- Put your language target (java/c++-ant/c++-autotool/perl) here -->
-	<import file="${global.targets-cpp-ant.file}" />
-	<target name="distbin"/>   <!-- BUG? Required by cpp targets -->
+	<!-- import file="${global.targets-external-dependencies.file}"/ -->	
+        <import file="${global.targets-make.file}" />
 		
 	<!-- =========================================
 		 Load version file 
@@ -81,7 +78,6 @@
 	     ============================================== -->
 	
 	<target name="localinit"
-		depends="wsdl.cpp"
 		description="Module specific initialization tasks">
 	</target>
 	
@@ -89,12 +85,7 @@
 		description="Module specific compile tasks">
 	</target>
 
-	<target name="localstage"
-		description="Module specific staging tasks">
-	</target>  <!-- BUG? Also required by cpp targets -->
-
 	<target name="localclean"
-		depends="wsdl.cpp.clean"
 		description="Module specific cleaning tasks">
 	</target>
 	
