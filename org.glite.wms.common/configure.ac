@@ -128,13 +128,9 @@ AC_CONFIG_FILES([src/configuration/Makefile])
 AC_CONFIG_FILES([src/ldif2classad/Makefile])
 AC_CONFIG_FILES([src/logger/Makefile])
 AC_CONFIG_FILES([src/utilities/Makefile])
-AC_CONFIG_FILES([src/socket++/Makefile])
 AC_CONFIG_FILES([src/task/Makefile])
-AC_CONFIG_FILES([src/requestad/Makefile])
 AC_CONFIG_FILES([src/process/Makefile])
 AC_CONFIG_FILES([src/programs/Makefile])
-AC_CONFIG_FILES([src/ssl_helpers/Makefile])
-AC_CONFIG_FILES([src/jobid/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT
