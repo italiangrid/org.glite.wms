@@ -4,11 +4,13 @@
 *  copyright : (C) 2002 by DATAMAT
 **************************************************************************/
 
+#include <boost/lexical_cast.hpp>
+
 #include "glite/wms/jdl/JobAd.h"
 
 #include "glite/wmsui/api/JobCollection.h"
 #include "glite/wmsui/api/JobExceptions.h"
-#include "glite/wmsui/api/CredentialException.h"
+#include "CredentialException.h"
 
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/producer.h"
@@ -24,6 +26,8 @@
 using namespace glite::wmsutils::exception;
 using namespace glite::wmsutils::jobid;
 using namespace glite::lb ;
+using namespace glite::wms::common::utilities ;
+
 using namespace std ;
 
 namespace glite {
@@ -241,16 +245,22 @@ pthread_t JobCollection::ExecuteThread(void* (*fn)(void*), void *arg) {
    //INIT
    int jobNumber =(    (struct paramStruct* )arg    )->jobNumber ;
    int errorCode = pthread_attr_init(&pthread_attr) ;
-   if (errorCode !=0)
-         throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT,  jobNumber )  ;
+   if (errorCode !=0) {
+	 string nn(boost::lexical_cast<string>(jobNumber));
+         throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT,  nn )  ;
+   }
    //DETACH
    errorCode = pthread_attr_setdetachstate(&pthread_attr, PTHREAD_CREATE_JOINABLE) ;
-   if (errorCode != 0 )
-         throw   ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_DETACH  , jobNumber ) ;
+   if (errorCode != 0 ) {
+	 string nn(boost::lexical_cast<string>(jobNumber));
+         throw   Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_DETACH  , nn ) ;
+   }
    //CREATE
    errorCode =  pthread_create(&tid, &pthread_attr   , fn, arg) ;
-   if (errorCode!= 0  )
-        throw   ThreadException ( __FILE__ , __LINE__ ,METHOD ,  THREAD_CREATE, jobNumber) ;
+   if (errorCode!= 0  ) {
+        string nn(boost::lexical_cast<string>(jobNumber));
+        throw   Exception ( __FILE__ , __LINE__ ,METHOD ,  THREAD_CREATE, nn) ;
+   }
    return tid ;
    GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
@@ -267,8 +277,10 @@ resultStruct   JobCollection::retrieve ( pthread_t tid ,  int  jobNumber){
           return result ;
      }else  if (joint ==ESRCH) {
           return resultStruct (JOIN_FAILED , "Unable To Join the thread");
-     }else
-          throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT, jobNumber )  ;
+     }else {
+          string nn(boost::lexical_cast<string>(jobNumber));
+          throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT, nn )  ;
+     }
      GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 /******************************************************************

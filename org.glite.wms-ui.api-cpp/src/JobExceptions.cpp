@@ -10,7 +10,7 @@ namespace wmsui {
 namespace api {
 
 using namespace std ;
-using namespace glite::wmsustils::exception ;
+using namespace glite::wmsutils::exception ;
 
 JobCollectionException::JobCollectionException  (const std::string& file,
 			     int line,
