@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_CONFIGURATION_CWRAPPER_H
-#define EDG_WORKLOAD_COMMON_CONFIGURATION_CWRAPPER_H
+#ifndef GLITE_WMS_COMMON_CONFIGURATION_CWRAPPER_H
+#define GLITE_WMS_COMMON_CONFIGURATION_CWRAPPER_H
 
 #include "initializer.h"
 
@@ -9,7 +9,7 @@
 /* Tmpl: wrap class NSConfiguration */
 /* Tmpl: wrap class WMConfiguration */
 
-#endif /* EDG_WORKLOAD_COMMON_CONFIGURATION_CWRAPPER_H */
+#endif /* GLITE_WMS_COMMON_CONFIGURATION_CWRAPPER_H */
 
 // Local Variables:
 // mode: c

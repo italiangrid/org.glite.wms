@@ -7,8 +7,8 @@
 
 #include "WMConfiguration.h"
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace configuration {
 
@@ -21,5 +21,5 @@ WMConfiguration::~WMConfiguration(void)
 {
 }
 
-}}}} // edg::workload::common::configuration
+}}}} // glite::wms::common::configuration
 

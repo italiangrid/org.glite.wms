@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_CONFIGURATION_INITIALIZER_H
-#define EDG_WORKLOAD_COMMON_CONFIGURATION_INITIALIZER_H
+#ifndef GLITE_WMS_COMMON_CONFIGURATION_INITIALIZER_H
+#define GLITE_WMS_COMMON_CONFIGURATION_INITIALIZER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +22,7 @@ const char *edg_wlcc_ConfigurationError( void );
 } /* extern "C" */
 #endif
 
-#endif /* EDG_WORKLOAD_COMMON_CONFIGURATION_INITIALIZER_H */
+#endif /* GLITE_WMS_COMMON_CONFIGURATION_INITIALIZER_H */
 
 // Local Variables:
 // mode: c

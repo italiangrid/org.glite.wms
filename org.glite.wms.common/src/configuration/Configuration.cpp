@@ -32,7 +32,7 @@ COMMON_NAMESPACE_BEGIN {
 namespace configuration {
 
 const Configuration  *Configuration::c_s_instance = NULL;
-const char *Configuration::c_s_paths[] = { "/opt/edg/etc", "/etc", "/usr/local/etc" };
+const char *Configuration::c_s_paths[] = { "/opt/glite/etc", "/etc", "/usr/local/etc" };
 
 namespace {
 

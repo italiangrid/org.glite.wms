@@ -5,10 +5,10 @@
 
 // $Id: WMConfiguration.h.G,v 1.4 2003/03/13 11:48:53 peluso Exp $
 
-#ifndef EDG_WORKLOAD_COMMON_CONFIGURATION_WMCONFIGURATION_H
-#define EDG_WORKLOAD_COMMON_CONFIGURATION_WMCONFIGURATION_H
+#ifndef GLITE_WMS_COMMON_CONFIGURATION_WMCONFIGURATION_H
+#define GLITE_WMS_COMMON_CONFIGURATION_WMCONFIGURATION_H
 
-#ifndef EDG_WORKLOAD_COMMON_CONFIGURATION_CONFBASE_H
+#ifndef GLITE_WMS_COMMON_CONFIGURATION_CONFBASE_H
 #include "confbase.h"
 #endif
 
@@ -16,8 +16,8 @@ namespace classad {
 class ClassAd;
 }
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace configuration {
 
@@ -30,7 +30,7 @@ public:
   /* Tmpl: partial include class WMConfiguration */
 };
 
-}}}} // edg::workload::common::configuration
+}}}} // glite::wms::common::configuration
 
 #endif
 
