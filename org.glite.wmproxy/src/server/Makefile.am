@@ -18,16 +18,21 @@
 bin_PROGRAMS = wmProxy
 
 noinst_HEADERS = \
-	 wmpexception_codes.h \
-	 wmpgsoapfaultmanipulator.h \
-	 wmpresponsestruct.h \
-	 wmpexceptions.h \
-	 wmplogger.h \
-	 wmproxy.h \
-	 wmpdelegation.h \
-	 wmpexpdagad.h \
-	 wmpoperations.h \
-	 wmputils.h
+	exceptions.h \
+	NS2WMProxy.h \
+	wmpdelegation.h \
+	wmpdispatcher.h \
+	wmpeventlogger.h \
+	wmpexception_codes.h \
+	wmpexceptions.h \
+	wmpexpdagad.h \
+	wmpgsoapfaultmanipulator.h \
+	WMPManager.h \
+	wmpoperations.h \
+	wmpresponsestruct.h \
+	wmproxy.h \
+	wmputils.h
+
 #endif
 
 wmProxy_SOURCES = \
@@ -68,6 +73,7 @@ wmProxy_LDADD = \
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
+	-I$(top_srcdir)/src \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
 	$(BOOST_CFLAGS) \
