@@ -32,10 +32,10 @@
 		 ====================================================== -->
 
 	<!-- Subsystem name -->
-	<property name="subsystem.name" value="${wms.subsystem.name}"/>
+	<property name="subsystem.name" value="${wms-utils.subsystem.name}"/>
 		
 	<!-- Subsystem prefix -->
-	<property name="subsystem.prefix" value="${wms.subsystem.prefix}"/>
+	<property name="subsystem.prefix" value="${wms-utils.subsystem.prefix}"/>
 
 	<!-- ======================================================
           Define component properties
