@@ -5,8 +5,8 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_COMMON_TASK_TASK_H
-#define EDG_WORKLOAD_COMMON_TASK_TASK_H
+#ifndef GLITE_WMS_COMMON_TASK_TASK_H
+#define GLITE_WMS_COMMON_TASK_TASK_H
 
 #include <deque>
 #include <cassert>
@@ -15,8 +15,8 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/thread.hpp>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace task {
 
@@ -437,7 +437,7 @@ public:
 
 } // namespace task
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
-#endif // EDG_WORKLOAD_COMMON_TASK_TASK_H
+#endif // GLITE_WMS_COMMON_TASK_TASK_H
