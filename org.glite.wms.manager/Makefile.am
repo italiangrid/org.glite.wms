@@ -1,4 +1,4 @@
-## *********************************************************************
+]## *********************************************************************
 ## *
 ## * Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
 ## * For license conditions see LICENSE file or
@@ -14,7 +14,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = config src test
+SUBDIRS = config src 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
