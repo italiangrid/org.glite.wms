@@ -37,7 +37,7 @@ stage:
 
 ## Move source tarball to distribution directory
 distsrc: dist
-	mv $(distdir).tar.gz $(DISTBIN)/$(distdir)_src.tar.gz
+	mv $(distdir).tar.gz $(DISTTAR)/$(distdir)_src.tar.gz
 
 ## Recursive target to create binary tarball in the distribution directory
 distbin:
@@ -62,7 +62,7 @@ distbin:
         fi; test -z "$$fail"; \
         mkdir $$tmpdistbin; \
         pushd $$tmpdistbin; \
-            $(AMTAR) -zcf $(DISTBIN)/$(distdir)_bin.tar.gz .; \
+            $(AMTAR) -zcf $(DISTTAR)/$(distdir)_bin.tar.gz .; \
         popd; \
 	rm -rf $$tmpdistbin
 	

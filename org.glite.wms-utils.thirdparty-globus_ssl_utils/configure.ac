@@ -39,9 +39,6 @@ AC_REVISION([$Revision$])
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
-DISTBIN=$WORKDIR/../../dist
-AC_SUBST(DISTBIN)
-
 # Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_CC
