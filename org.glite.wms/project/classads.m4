@@ -6,26 +6,26 @@ dnl - CLASSAD_LIBS (linker flags, stripping and path)
 dnl - CLASSAD_INSTALL_PATH
 dnl prerequisites:
 
-AC_DEFUN(AC_CLASSAD,
+AC_DEFUN(AC_CLASSADS,
 [
-    AC_ARG_WITH(classad_prefix, 
-	[  --with-classad-prefix=PFX    prefix where the Classad is installed.],
+    AC_ARG_WITH(classads_prefix, 
+	[  --with-classads-prefix=PFX    prefix where the Classad is installed.],
 	[], 
-	with_classad_prefix="/opt/classads")
+	with_classads_prefix="/opt/classads")
 
     AC_MSG_CHECKING([for CLASSAD installation])
 
     CLASSAD_CFLAGS=""
     CLASSAD_LIBS="-lclassad"
     CLASSAD_DL_LIBS="-lclassad_dl"
-    if test -n "$with_classad_prefix" -a "$with_classad_prefix" != "/usr" ; then
-            AC_MSG_RESULT([prefix: $with_classad_prefix])
+    if test -n "$with_classads_prefix" -a "$with_classads_prefix" != "/usr" ; then
+            AC_MSG_RESULT([prefix: $with_classads_prefix])
 
-            ac_classad_prefix=$with_classad_prefix
+            ac_classads_prefix=$with_classads_prefix
 
-            CLASSAD_CFLAGS="-I$with_classad_prefix/include"
-            CLASSAD_LIBS="-L$with_classad_prefix/lib $CLASSAD_LIBS"
-	    CLASSAD_DL_LIBS="-L$with_classad_prefix/lib $CLASSAD_DL_LIBS"
+            CLASSAD_CFLAGS="-I$with_classads_prefix/include"
+            CLASSAD_LIBS="-L$with_classads_prefix/lib $CLASSAD_LIBS"
+	    CLASSAD_DL_LIBS="-L$with_classads_prefix/lib $CLASSAD_DL_LIBS"
     fi
 
     AC_LANG_SAVE
@@ -37,24 +37,24 @@ AC_DEFUN(AC_CLASSAD,
     AC_MSG_CHECKING([if a small classads program compiles])
     AC_TRY_LINK([ #include <classad_distribution.h> ],
 		[ classad::ClassAd ad; classad::ClassAdParser parser; ],
-		[ ac_have_classad=yes ], [ ac_have_classad=no ])
-    if test x$ac_have_classad = xno ; then
+		[ ac_have_classads=yes ], [ ac_have_classads=no ])
+    if test x$ac_have_classads = xno ; then
         CLASSAD_CFLAGS="$CLASSAD_CFLAGS -DWANT_NAMESPACES"
         CPPFLAGS="$CLASSAD_CFLAGS $ac_save_cppflags"
         AC_TRY_LINK([ #include <classad_distribution.h> ],
                     [ classad::ClassAd ad; classad::ClassAdParser parser; ],
-                    [ ac_have_classad=yes ], [ ac_have_classad=no ])	
+                    [ ac_have_classads=yes ], [ ac_have_classads=no ])	
     fi
-    AC_MSG_RESULT([$ac_have_classad])
+    AC_MSG_RESULT([$ac_have_classads])
 
     CPPFLAGS=$ac_save_cppflags
     LIBS=$ac_save_libs
     AC_LANG_RESTORE
 
-    CLASSAD_PATH=$with_classad_prefix/gcc-$gcc_version
+    CLASSAD_PATH=$with_classads_prefix
 
-    if test x$ac_have_classad = xyes ; then
-        CLASSAD_INSTALL_PATH=$ac_classad_prefix
+    if test x$ac_have_classads = xyes ; then
+        CLASSAD_INSTALL_PATH=$ac_classads_prefix
 	ifelse([$2], , :, [$2])
     else
         AC_MSG_WARN([

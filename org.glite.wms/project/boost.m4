@@ -18,9 +18,17 @@ AC_DEFUN(AC_BOOST,
         with_boost_prefix="/opt/boost" )
 
     AC_ARG_ENABLE(boost_debug,
-	[  --enable-boost_debug         Enable debug Boost libraries.],
-	ac_boost_flavor="debug", 
-        ac_boost_flavor="release" )
+	[  --enable-boost_debug=<option> Enable debug Boost libraries.],
+	ac_boost_flavor="$enableval", 
+        ac_boost_flavor="yes")
+
+    if test x$ac_boost_flavor = xyes ; then
+        ac_boost_flavor="debug"
+    elif test x$ac_boost_flavor = xrelease ; then
+        ac_boost_flavor="release"
+    else
+	AC_MSG_WARN([***  boost_flavor can be either debug or release]) 
+    fi
 
     AC_MSG_RESULT([Using boost flavor: $ac_boost_flavor])
 

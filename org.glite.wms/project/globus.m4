@@ -30,22 +30,21 @@ AC_DEFUN(AC_GLOBUS,
     ac_cv_globus_nothr_valid=no
     ac_cv_globus_thr_valid=no
 
-    GLOBUS_THR_CFLAGS="$with_globus_prefix/include/$with_globus_thr_flavor"
     GLOBUS_NOTHR_CFLAGS="$with_globus_prefix/include/$with_globus_nothr_flavor"
+    GLOBUS_THR_CFLAGS="$with_globus_prefix/include/$with_globus_thr_flavor"
 
     ac_globus_ldlib="-L$with_globus_prefix/lib"
 
     GLOBUS_COMMON_NOTHR_LIBS="$ac_globus_ldlib -lglobus_common_$with_globus_nothr_flavor"
-
     GLOBUS_COMMON_THR_LIBS="$ac_globus_ldlib -lglobus_common_$with_globus_thr_flavor"
 
     GLOBUS_FTP_CLIENT_NOTHR_LIBS="$ac_globus_ldlib -lglobus_ftp_client_$with_globus_nothr_flavor"
-
     GLOBUS_FTP_CLIENT_THR_LIBS="$ac_globus_ldlib -lglobus_ftp_client_$with_globus_thr_flavor"
 
     GLOBUS_SSL_NOTHR_LIBS="$ac_globus_ldlib -lssl_$with_globus_nothr_flavor -lcrypto_$with_globus_nothr_flavor"
-
     GLOBUS_SSL_THR_LIBS="$ac_globus_ldlib -lssl_$with_globus_thr_flavor -lcrypto_$with_globus_thr_flavor"
+
+    GLOBUS_LDAP_THR_LIBS="$ac_globus_ldlib -lldap_$with_globus_thr_flavor -llber_$with_globus_thr_flavor"
 
     dnl
     dnl check nothr openssl header
@@ -63,12 +62,14 @@ AC_DEFUN(AC_GLOBUS,
 
     AC_MSG_CHECKING([for openssl nothr])
 
-    test -n "$ac_globus_nothr_ssl" && GLOBUS_NOTHR_CFLAGS="-I$ac_globus_nothr_ssl $GLOBUS_NOTHR_CFLAGS"
+    test -n "$ac_globus_nothr_ssl" && GLOBUS_NOTHR_CFLAGS="-I$ac_globus_nothr_ssl -I$GLOBUS_NOTHR_CFLAGS"
 
     if test -n "$ac_globus_nothr_ssl" -a -n "$ac_globus_ldlib" ; then
         dnl
         dnl maybe do some complex test of globus instalation here later
         dnl
+#	ac_save_libs=$LIBS
+#        LIBS="$GLOBUS_SSL_NOTHR_LIBS $LIBS"
         ac_save_CFLAGS=$CFLAGS
         CFLAGS="$GLOBUS_NOTHR_CFLAGS $CFLAGS"
         AC_TRY_COMPILE([
@@ -79,6 +80,7 @@ AC_DEFUN(AC_GLOBUS,
            [ac_cv_globus_nothr_valid=yes],
            [ac_cv_globus_nothr_valid=no])
         CFLAGS=$ac_save_CFLAGS
+#	LIBS=$ac_save_LIBS
         AC_MSG_RESULT([$ac_cv_globus_nothr_valid])
     fi
 
@@ -95,7 +97,7 @@ AC_DEFUN(AC_GLOBUS,
         AC_MSG_RESULT([yes])
     fi
 
-    test -n "$ac_globus_thr_ssl" && GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ssl $GLOBUS_THR_CFLAGS"
+    test -n "$ac_globus_thr_ssl" && GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ssl -I$GLOBUS_THR_CFLAGS"
 
     AC_MSG_CHECKING([checking openssl thr])
 
@@ -116,7 +118,45 @@ AC_DEFUN(AC_GLOBUS,
         AC_MSG_RESULT([$ac_cv_globus_thr_valid])
     fi
 
-    if test x$ac_cv_globus_nothr_valid = xyes -a x$ac_cv_globus_thr_valid = xyes; then
+    dnl
+    dnl check thr ldap header
+    dnl
+    ac_globus_thr_ldap="$with_globus_prefix/include/$with_globus_thr_flavor"
+                                                                                
+    AC_MSG_CHECKING([for $ac_globus_thr_ldap/lber.h])
+    AC_MSG_CHECKING([for $ac_globus_thr_ldap/ldap.h])                                                                            
+    if test ! -f "$ac_globus_thr_ldap/ldap.h" -a ! -f "$ac_globus_thr_ldap/lber.h" ; then
+        ac_globus_thr_ldap=""
+        AC_MSG_RESULT([no])
+    else
+        AC_MSG_RESULT([yes])
+    fi
+                                                                                
+    AC_MSG_CHECKING([for ldap thr])
+                                                                                
+    test -n "$ac_globus_thr_ldap" && GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ldap -I$GLOBUS_THR_CFLAGS"
+
+    if test -n "$ac_globus_thr_ldap" -a -n "$ac_globus_ldlib" ; then
+        dnl
+        dnl maybe do some complex test of globus instalation here later
+        dnl
+        ac_save_CFLAGS=$CFLAGS
+        CFLAGS="$GLOBUS_THR_CFLAGS $CFLAGS"
+	AC_TRY_COMPILE([
+              #include "ldap.h"
+              #include "lber.h"
+           ],
+           [
+           LDAPMessage *ldresult;
+           BerElement *ber;
+           ],
+           [ac_cv_globus_thr_valid2=yes],
+           [ac_cv_globus_thr_valid2=no])
+        CFLAGS=$ac_save_CFLAGS
+        AC_MSG_RESULT([$ac_cv_globus_thr_valid2])
+    fi
+
+    if test x$ac_cv_globus_nothr_valid = xyes -a x$ac_cv_globus_thr_valid1 = xyes -a x$ac_cv_globus_thr_valid2 = xyes ; then
 	GLOBUS_LOCATION=$with_globus_prefix
 	GLOBUS_NOTHR_FLAVOR=$with_globus_nothr_flavor
         GLOBUS_THR_FLAVOR=$with_globus_thr_flavor
@@ -132,6 +172,7 @@ AC_DEFUN(AC_GLOBUS,
 	GLOBUS_FTP_CLIENT_THR_LIBS=""
 	GLOBUS_SSL_NOTHR_LIBS=""
 	GLOBUS_SSL_THR_LIBS=""
+	GLOBUS_LDAP_THR_LIBS=""
 	ifelse([$3], , :, [$3])
     fi
 
@@ -148,5 +189,6 @@ AC_DEFUN(AC_GLOBUS,
     AC_SUBST(GLOBUS_FTP_CLIENT_THR_LIBS)
     AC_SUBST(GLOBUS_SSL_NOTHR_LIBS)
     AC_SUBST(GLOBUS_SSL_THR_LIBS)
+    AC_SUBST(GLOBUS_LDAP_THR_LIBS)
 ])
 
