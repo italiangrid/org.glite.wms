@@ -18,11 +18,14 @@
 #include <errno.h>
 #include <netdb.h>
 
+#include <openssl/md5.h>
+
 #include <memory>
 
 #include <classad_distribution.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
@@ -43,6 +46,7 @@
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
+#include "glite/wms/common/utilities/edgstrstream.h"
 
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
@@ -177,26 +181,7 @@ try {
   utilities::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
 
   /* Mandatory */
-  jdl::set_copy_to_spool(*result, false);
-  jdl::set_transfer_executable(*result, true);
-  jdl::set_universe(*result, "Globus");
- 
-  /* Mandatory */
-  jdl::set_notification(*result, "never");
-  
-  /* Not Mandatory */
-  bool b_std;
-  string stdinput(jdl::get_std_input(*m_ad, b_std));
-  string stderror(jdl::get_std_error(*m_ad, b_std));
-  string stdoutput(jdl::get_std_output(*m_ad, b_std));
-  
-  // TEMP patch: forward ce_id
-  bool   b_ce_id;
-  string ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
-  jdl::set_ce_id(*result, ce_id, b_ce_id);
-  
-  /* Mandatory */
-  /* It is renamed in globusscheduler. */
+  /* It is renamed in globusscheduler. (Below) */
   string globusresourcecontactstring(jdl::get_globus_resource_contact_string(*m_ad));
   if (globusresourcecontactstring.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
@@ -204,8 +189,135 @@ try {
                                         "not empty",
                                         helper_id);
   }
+
+  // Get the gatekeeper hostname
+  string::size_type pos = globusresourcecontactstring.find(":");
+  if (pos == 0 || pos == string::npos) {
+    throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
+                                        globusresourcecontactstring,
+                                        "contains a hostname before a :",
+                                        helper_id);
+  }
+  string gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
+ 
+  /* Mandatory */
+  /* x509 user proxy is mandatory for the condor submit file. */
+  string userproxy(jdl::get_x509_user_proxy(*m_ad));
+  if (userproxy.empty()) {
+    throw helper::InvalidAttributeValue(jdl::JDLPrivate::USERPROXY,
+                                        userproxy,
+                                        "not empty",
+                                        helper_id);
+  }
+ 
+  /* Mandatory */
+  /* queuname is mandatory to build the globusrsl string. */
+  string queuename(jdl::get_queue_name(*m_ad));
+  if (queuename.empty()) {
+    throw helper::InvalidAttributeValue(jdl::JDL::QUEUENAME,
+                                        queuename,
+                                        "not empty",
+                                        helper_id);
+  }
+
+  /* Mandatory */
+  /* lrms type is mandatory for the mpich job */
+  /* and forwarded to Condor-C in any case.   */
+  string lrmstype(jdl::get_lrms_type(*m_ad));
+
+  /* FIXME: Test whether this is a 'blahpd' resource so that  */
+  /* FIXME: the submit file can be adjusted accordingly.      */
+  /* FIXME: Eventually, CondorG should be able to handle this */
+
+  static boost::regex expression_blahce(":[0-9]+/blah-");
+  boost::smatch       result_blahce;
+  bool is_blahp_resource = false;
+
+  if (boost::regex_search(globusresourcecontactstring,
+			  result_blahce,
+                          expression_blahce)) {
+    is_blahp_resource = true;
+  }
+
+  string condor_submit_environment;
+
+  /* Mandatory */
+  jdl::set_universe(*result, "grid"); 
+
+  if (!is_blahp_resource) {
+    jdl::set_grid_type(*result, "globus");
+    jdl::set_copy_to_spool(*result, false);
+    jdl::set_transfer_executable(*result, true);
+  } else {
+    jdl::set_grid_type(*result, "condor");
+    jdl::set_remote_job_universe(*result, 9);
+    jdl::set_remote_sub_universe(*result, "blah");
+    jdl::set_remote_remote_grid_type(*result, lrmstype);
+    jdl::set_remote_remote_queue(*result, queuename);
+
+    unsigned char md5_cert_hash[MD5_DIGEST_LENGTH];
+    utilities::oedgstrstream md5_hex_hash;
+
+    MD5((unsigned char *)certificatesubject.c_str(),
+        certificatesubject.length(),
+        md5_cert_hash);
+    md5_hex_hash.setf(ios_base::hex, ios_base::basefield);
+    md5_hex_hash.width(2);
+    md5_hex_hash.fill('0');
+
+    for (int i=0; i<MD5_DIGEST_LENGTH; i++) {
+      md5_hex_hash.width(2);
+      md5_hex_hash << (unsigned int)md5_cert_hash[i];
+    }
+
+    string hashedcertificatesubject(md5_hex_hash.str());
+
+    string remote_schedd(hashedcertificatesubject);
+    remote_schedd.append("@");
+    remote_schedd.append(gatekeeper_hostname);
+    jdl::set_remote_schedd(*result, remote_schedd);
+
+    jdl::set_copy_to_spool(*result, false);
+    jdl::set_should_transfer_files(*result, "YES");
+    jdl::set_when_to_transfer_output(*result, "ON_EXIT");
+    jdl::set_transfer_input_files(*result, userproxy);
+
+    /* FIXME user.proxy should be basename of userproxy */
+    condor_submit_environment.assign("X509_USER_PROXY=user.proxy");
+    jdl::set_remote_env(*result,condor_submit_environment);
+
+    // Build the jobmanager-fork contact string.
+    string::size_type pos = globusresourcecontactstring.find("/");
+    if (pos == 0 || pos == string::npos) {
+      throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
+                                          globusresourcecontactstring,
+                                          "contains a slash",
+                                          helper_id);
+    }
+    string gatekeeper_fork(globusresourcecontactstring.substr(0, pos));
+    gatekeeper_fork.append("/jobmanager-fork");
+
+    jdl::set_site_name(*result,gatekeeper_hostname);
+    jdl::set_site_gatekeeper(*result,gatekeeper_fork);
+  }
+
   jdl::set_globus_scheduler(*result, globusresourcecontactstring);
-  
+  jdl::set_x509_user_proxy(*result, userproxy);
+
+  /* Mandatory */
+  jdl::set_notification(*result, "never");
+
+  /* Not Mandatory */
+  bool b_std;
+  string stdinput(jdl::get_std_input(*m_ad, b_std));
+  string stderror(jdl::get_std_error(*m_ad, b_std));
+  string stdoutput(jdl::get_std_output(*m_ad, b_std));
+
+  /* TEMP patch: forward ce_id */
+  bool   b_ce_id;
+  string ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
+  jdl::set_ce_id(*result, ce_id, b_ce_id);
+
   /* Mandatory */
   /* job id is mandatory to build the globusrsl string and to create the */
   /* job wrapper                                                         */
@@ -218,7 +330,7 @@ try {
   }
   jdl::set_edg_jobid(*result, job_id);
 
-  // keep the dag id if present
+  /* keep the dag id if present */
   bool b_present = false;
   string dag_id(jdl::get_edg_dagid(*m_ad, b_present));
   if (b_present && !dag_id.empty()) {
@@ -240,16 +352,7 @@ try {
   requirements.append(reqvalue);
   requirements.append("'");
   
-  /* Mandatory */
-  /* queuname is mandatory to build the globusrsl string. */ 
-  string queuename(jdl::get_queue_name(*m_ad));
-  if (queuename.empty()) {
-    throw helper::InvalidAttributeValue(jdl::JDL::QUEUENAME,
-                                        queuename,
-                                        "not empty",
-                                        helper_id);
-  }
-
+  /* Create globusrsl value */
   string globusrsl("(queue=");
   globusrsl.append(queuename);
   globusrsl.append(")(jobtype=single)");
@@ -264,6 +367,11 @@ try {
   hlrlocation.append(" '");
   string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
   if (!hlrvalue.empty()) {
+    if (is_blahp_resource) {
+      condor_submit_environment.append(";EDG_WL_HLR_LOCATION=");
+      condor_submit_environment.append(hlrvalue);
+      jdl::set_remote_env(*result,condor_submit_environment);
+    }
     replace(hlrvalue, "\"", "\\\"");
     hlrlocation.append(hlrvalue);
     hlrlocation.append("'");
@@ -279,17 +387,6 @@ try {
     globusrsl.append(jid);
     globusrsl.append("))");
   }
-  
-  /* Mandatory */
-  /* x509 user proxy is mandatory for the condor submit file. */
-  string userproxy(jdl::get_x509_user_proxy(*m_ad));
-  if (userproxy.empty()) {
-    throw helper::InvalidAttributeValue(jdl::JDLPrivate::USERPROXY,
-                                        userproxy,
-                                        "not empty",
-                                        helper_id);
-  }
-  jdl::set_x509_user_proxy(*result, userproxy);
   
   /* Mandatory */
   string type(jdl::get_type(*m_ad));
@@ -358,9 +455,12 @@ try {
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
   
   if (ljobtype == "mpich") {
-    /* Mandatory */	  
-    /* lrms type is mandatory for the mpich job */  
-    string lrmstype(jdl::get_lrms_type(*m_ad));
+    if (is_blahp_resource) {
+      throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
+                                          jobtype,
+                                          "not be 'mpich' for non-globus resources",
+                                          helper_id);
+    }
     /* lowercase all lrmstype characters */
     string llrmstype(lrmstype);
     std::transform(llrmstype.begin(), llrmstype.end(), llrmstype.begin(), ::tolower);    
@@ -473,15 +573,6 @@ try {
   jw->job_Id(job_id);
   jw->job_id_to_filename(jobid_to_file); 
   jw->environment(env);
-  
-  // Get the gatekeeper hostname
-  string::size_type pos = globusresourcecontactstring.find(":");
-  if (pos == 0 || pos == string::npos) {
-    throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
-                                        globusresourcecontactstring,
-                                        "contains a hostname before a :",
-                                        helper_id);
-  }
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   
   //check if there is the protocol in the inputsandbox path. 
@@ -516,9 +607,6 @@ try {
 
   config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
   
-//  string maradona_name(jobid_to_file);
-//  maradona_name.append("/");
-//  maradona_name.append("Maradona.output");
   boost::filesystem::path maradona_path(
     boost::filesystem::normalize_path(nsconfig->sandbox_staging_path()),
     boost::filesystem::system_specific);
@@ -582,6 +670,15 @@ try {
   output_file_path.append("/");
   output_file_path.append(jobid_to_file);
   output_file_path.append("/");
+
+  if (is_blahp_resource) {
+    // Condor-C will not move Standard Output and Error to the absolute
+    // path specified in the submit file, but to the Initial Dir.
+    // This defaults to /tmp, so StandardOutput/Error files from different
+    // jobs may overwrite each other as well.
+    // So, set a different InitialDir per job.
+    jdl::set_initial_dir(*result, output_file_path);
+  }
 
   // New parameter Mandatory
   // Output file path is mandatory
