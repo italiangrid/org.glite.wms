@@ -26,7 +26,10 @@ bool match(classad::ClassAd const& jdl, std::string const& result_file)
     result.reset(glite::wms::helper::Helper("MatcherHelper").resolve(&jdl)); 
   }
   catch (glite::wms::helper::HelperError const& e) {
-    return false;
+    // We need to chime into the communication pipe in this case.
+    result.reset(new classad::ClassAd);
+    result->InsertAttr("reason", std::string("error accessing broker helper"));
+    result->InsertAttr("match_result", new classad::ExprList);
   }
   
   if (result_file.empty() || result_file[0] != '/') {
