@@ -8,14 +8,12 @@
 
 #include <string>
 
-#include "edg/workload/planning/broker/rls/ReplicaServiceException.h"
+#include "ReplicaServiceException.h"
 
 using namespace std;
 
-namespace edg {
-namespace workload {
-namespace planning {
-namespace broker {
+namespace glite {
+namespace wms {
 namespace rls {
 
 ReplicaServiceException::ReplicaServiceException(void) 
@@ -103,7 +101,5 @@ InvalidRLS::parameter(void) const
 }
 
 } // namespace rls
-} // namespace broker
-} // namespace planning
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite

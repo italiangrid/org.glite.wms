@@ -14,7 +14,7 @@
 #include <exception>
 #include <string>
 
-namespace glide {
+namespace glite {
 namespace wms {
 namespace rls {
 

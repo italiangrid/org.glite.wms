@@ -16,15 +16,16 @@
 #include <numeric>
 
 #include "glite/wms/rls/ReplicaServiceReal.h" 
-#include "ReplicaServiceException.h"
 
-#include "EdgReplicaManager/ReplicaManagerImpl.h"
-#include "EdgReplicaManager/ReplicaManagerExceptions.h"
-#include "EdgReplicaLocationService/ReplicationExceptions.h"
-#include "EdgReplicaMetadataCatalog/ReplicationExceptions.h"
+#include <EdgReplicaManager/ReplicaManagerImpl.h>
+#include <EdgReplicaManager/ReplicaManagerExceptions.h>
+#include <EdgReplicaLocationService/ReplicationExceptions.h>
+#include <EdgReplicaMetadataCatalog/ReplicationExceptions.h>
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
+
+#include "ReplicaServiceException.h"
 
 using namespace std;
 
@@ -32,8 +33,6 @@ namespace replicamanager = EdgReplicaManager;
 namespace replicalocationservice = EdgReplicaLocationService;
 namespace replicametadatacatalog = EdgReplicaMetadataCatalog;
 namespace replicaoptimization = EdgReplicaOptimization;
-
-namespace utilities = glite::wms::common::utilities;
 
 namespace logger = glite::wms::common::logger;
 namespace ts = glite::wms::common::logger::threadsafe;
@@ -56,8 +55,8 @@ struct insertAccessCostInfoInVector :
     v->push_back(boost::make_tuple(string(c.getCeId()), c.getTotalTime(), c.getSizeToBeReplicated() ));
     return v;
   }
-}
-	
+};
+
 }
 
 ReplicaServiceReal::ReplicaServiceReal(const string& vo)
