@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/12/09 10:32:04  eronchie
+#       Updated dependency
+#
 #       Revision 1.6  2004/12/07 18:47:45  eronchie
 #       Work In progress
 #
@@ -109,7 +112,7 @@ AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_GSOAP
 AC_CGSI_GSOAP
 AC_REPLICA([], have_replica=yes, have_replica=no)
-AC_REPLICA([], have_data=yes, have_data=no)
+AC_DATA([], have_data=yes, have_data=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
