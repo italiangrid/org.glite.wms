@@ -21,9 +21,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2005/02/28 10:22:32  monforte
+	merging RC1->HEAD
+
+	Revision 1.2.2.1  2005/02/12 01:54:08  glbuild
+	Changed start time
+	
 	Revision 1.2  2004/07/06 20:58:59  flammer
 	Updated configure & targets.
-
+	
 	Revision 1.1  2004/07/02 13:11:39  monforte
 	Initial Helper porting to new build system
 	WARNING: work in progress
@@ -91,6 +97,7 @@
 		 Load version file 
 		 ========================================= -->
 	<property file="${module.version.file}"/>
+		<property file="${module.build.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets

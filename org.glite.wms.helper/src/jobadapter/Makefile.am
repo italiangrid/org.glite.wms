@@ -16,8 +16,10 @@ lib_LTLIBRARIES = libglite_wms_helper_jobadapter.la
 noinst_LTLIBRARIES = libglite_wms_jobadapter.la
 noinst_HEADERS = \
 	exceptions.h \
-	Helper.h \
-	JobAdapter.h
+	Helper.h
+
+indir = $(includedir)/glite/wms/helper/jobadapter
+in_HEADERS = JobAdapter.h
 
 libglite_wms_jobadapter_la_SOURCES = \
         JobAdapter.cpp \

@@ -277,18 +277,28 @@ try {
     delete[] resolver_work_buffer;
   }
 
-  /* FIXME: Test whether this is a 'blahpd' resource so that  */
+  /* FIXME: Test whether this is a 'blahpd' or 'condor' resource so that  */
   /* FIXME: the submit file can be adjusted accordingly.      */
   /* FIXME: Eventually, CondorG should be able to handle this */
 
   static boost::regex expression_blahce(":[0-9]+/blah-");
   boost::smatch       result_blahce;
   bool is_blahp_resource = false;
+  bool is_condor_resource = false;
 
   if (boost::regex_search(globusresourcecontactstring,
 			  result_blahce,
                           expression_blahce)) {
     is_blahp_resource = true;
+  } else {
+    static boost::regex expression_condorce(":[0-9]+/condor-");
+    boost::smatch       result_condorce;
+
+    if (boost::regex_search(globusresourcecontactstring,
+			    result_condorce,
+                            expression_condorce)) {
+      is_condor_resource = true;
+    }
   }
 
   string condor_submit_environment;
@@ -296,17 +306,25 @@ try {
   /* Mandatory */
   jdl::set_universe(*result, "grid"); 
 
-  if (!is_blahp_resource) {
+  if (!is_blahp_resource && !is_condor_resource) {
     jdl::set_grid_type(*result, "globus");
     jdl::set_copy_to_spool(*result, false);
     jdl::set_transfer_executable(*result, true);
   } else {
     jdl::set_grid_type(*result, "condor");
-    jdl::set_remote_job_universe(*result, 9);
-    jdl::set_remote_sub_universe(*result, "blah");
-    jdl::set_remote_job_grid_type(*result, "blah");
-    jdl::set_remote_remote_grid_type(*result, lrmstype);
-    jdl::set_remote_remote_queue(*result, queuename);
+    if (is_condor_resource || lrmstype == "condor") {
+      jdl::set_remote_job_universe(*result, 5);
+    } else {
+      // blah resource
+      jdl::set_remote_job_universe(*result, 9);
+      jdl::set_remote_sub_universe(*result, "blah");
+      jdl::set_remote_job_grid_type(*result, "blah");
+      jdl::set_remote_remote_grid_type(*result, lrmstype);
+      jdl::set_remote_remote_queue(*result, queuename);
+      // We have to make sure the *jobwrapper* gets transferred to 
+      // the worker nodes.
+      jdl::set_remote_remote_stagecmd(*result, true);
+    }
 
     unsigned char md5_cert_hash[MD5_DIGEST_LENGTH];
     utilities::oedgstrstream md5_hex_hash;
@@ -494,12 +512,12 @@ try {
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
   
   if (ljobtype == "mpich") {
-    if (is_blahp_resource) {
-      throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
-                                          jobtype,
-                                          "not be 'mpich' for non-globus resources",
-                                          helper_id);
-    }
+//    if (is_blahp_resource) {
+//      throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
+//                                          jobtype,
+//                                          "not be 'mpich' for non-globus resources",
+//                                          helper_id);
+//    }
     /* lowercase all lrmstype characters */
     string llrmstype(lrmstype);
     std::transform(llrmstype.begin(), llrmstype.end(), llrmstype.begin(), ::tolower);    
@@ -513,6 +531,11 @@ try {
     /* Mandatory */
     /* node number is mandatory for the mpich job */
     int    nodenumber = jdl::get_node_number(*m_ad);
+
+    if (is_blahp_resource) {
+      jdl::set_remote_remote_nodenumber(*result, nodenumber);
+    }
+
     string nn(boost::lexical_cast<string>(nodenumber));
     
     globusrsl.append("(count=");

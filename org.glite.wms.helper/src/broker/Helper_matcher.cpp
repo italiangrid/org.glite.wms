@@ -20,6 +20,7 @@
 #include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
+#include "glite/wms/brokerinfo/brokerinfo.h"
 
 #ifdef MATCHER_HELPER_USE_ISM
 #include "glite/wms/broker/RBSimpleISMImpl.h"
@@ -92,6 +93,27 @@ Register const r;
 
 std::string const f_output_file_suffix(".rbh");
 
+/* Answer format:
+ * 1) if no error occurs
+ * [
+ *   reason =ok;
+ *   match_result={
+ *                  [
+ *                    ce_id=...;
+ *                    rank=...;
+ *                    brokerinfo=...;
+ *                  ],
+ *                  [...],
+ *                  ...
+ *                }
+ * ]
+ * 2) if error occurs
+ * [
+ *   reason = error reason;
+ *   match_result={}
+ * ]
+ */
+
 std::auto_ptr<classad::ClassAd>
 f_resolve_do_match(classad::ClassAd const& input_ad)
 {
@@ -99,7 +121,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   result.reset(new classad::ClassAd);
 
   result->InsertAttr("reason", std::string("no matching resources found"));
-  result->InsertAttr("match_result", new classad::ExprList);
+  result->Insert("match_result", new classad::ExprList);
     
 #ifdef MATCHER_HELPER_USE_ISM
   glite::wms::broker::ResourceBroker rb(new glite::wms::broker::RBSimpleISMImpl());
@@ -144,7 +166,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   }
 
   boost::scoped_ptr<matchmaking::match_table_t> suitableCEs;
-  
   std::string mm_error;
   
   try {
@@ -160,26 +181,17 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       for (matchmaking::match_vector_t::const_iterator it = suitableCEs_vector.begin(); 
            it != suitableCEs_vector.end(); 
            ++it) {
+          
+        std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
+        ceinfo->InsertAttr("ce_id", it->first);
+        ceinfo->InsertAttr("rank", it->second.getRank());
+        ceinfo->Insert("brokerinfo", BI->asClassAd());
       
-        //  "host,rank"
-        classad::Value value;
-        value.SetStringValue(
-          it->first + ',' + boost::lexical_cast<std::string>(it->second.getRank())
-        );
-
-       hosts.push_back(classad::Literal::MakeLiteral(value));
-     
-    /* classad::ClassAd* ceinfo = new classad::ClassAd;
-      if (!ceinfo->InsertAttr("host", it->first)) return false;
-      if (!ceinfo->InsertAttr("rank", it -> second.getRank())) return false;
-      
-      hosts.push_back(ceinfo->Copy());*/
-
+        hosts.push_back(ceinfo.release());
       }
       
       result->InsertAttr("reason", std::string("ok"));    
-      result->Insert("match_result", classad::ExprList::MakeExprList(hosts));
-            
+      result->Insert("match_result", classad::ExprList::MakeExprList(hosts));           
     }
     
   } catch (matchmaking::ISNoResultError const& e) {

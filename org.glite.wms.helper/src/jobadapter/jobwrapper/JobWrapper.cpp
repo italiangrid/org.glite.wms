@@ -505,12 +505,25 @@ JobWrapper::execute_job(ostream& os,
 			const string& stde,
 			int   node) const
 {
+  os << "(" << endl
+     << "  perl -e '" << endl
+     << "    unless (defined($ENV{\"EDG_WL_NOSETPGRP\"})) {" << endl
+     << "      $SIG{\"TTIN\"} = \"IGNORE\";" << endl
+     << "      $SIG{\"TTOU\"} = \"IGNORE\";" << endl
+     << "      setpgrp(0, 0);" << endl
+     << "    }" << endl
+     << "    exec(@ARGV);" << endl
+     << "    warn \"could not exec $ARGV[0]: $!\\n\";" << endl
+     << "    exit(127);" << endl
+     << "  ' ";
+
   if (arguments != "") {
     os << "\"" << job << "\"" << " " << arguments << " $*";
   }
   else {
     os << "\"" << job << "\" $*";
   }
+
   if (stdi != "") {
     os << " < \"" << stdi << "\"";
   }
@@ -533,7 +546,31 @@ JobWrapper::execute_job(ostream& os,
     os << " 2> /dev/null";
   }
 
-  return os << endl 
+  return os << " &" << endl
+            << endl
+            << "  user_job=$!" << endl
+            << endl
+            << "  exec 2> /dev/null" << endl
+            << endl
+            << "  perl -e '" << endl
+            << "    while (1) {" << endl
+            << "      $time_left = `grid-proxy-info -timeleft 2> /dev/null` || 0;" << endl
+            << "      last if ($time_left <= 0);" << endl
+            << "      sleep($time_left);" << endl
+            << "    }" << endl
+            << "    kill(defined($ENV{\"EDG_WL_NOSETPGRP\"}) ? 9 : -9, '\"$user_job\"');" << endl
+            << "    exit(1);" << endl
+            << "  ' &" << endl
+            << endl
+            << "  watchdog=$!" << endl
+            << endl
+            << "  wait $user_job" << endl
+            << "  status=$?" << endl
+            << endl
+            << "  kill -9 $watchdog $user_job -$user_job" << endl
+            << endl
+            << "  exit $status" << endl
+            << ")" << endl 
 	    << endl;
 }
 

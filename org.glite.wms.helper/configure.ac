@@ -19,6 +19,26 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.13  2005/02/28 10:22:32  monforte
+#       merging RC1->HEAD
+#
+#       Revision 1.12.2.4  2005/02/18 14:35:41  eronchie
+#       Updated
+#       Increased version for the following reason:
+#
+#       "Modified JobAdapter to allow submission of Condor 'vanilla' jobs
+#       via Condor-C"
+#
+#       Revision 1.12.2.3  2005/02/08 15:17:26  fprelz
+#       Increased minor version, as the broker helper links in the matchmaking
+#       library statically, and the latter received a bug fix.
+#
+#       Revision 1.12.2.2  2005/01/17 16:54:38  eronchie
+#       Updated optimization
+#
+#       Revision 1.12.2.1  2005/01/13 17:01:41  eronchie
+#       Added patch related to bug 3931
+#
 #       Revision 1.12  2004/12/10 07:47:50  eronchie
 #       Increased version
 #
@@ -72,7 +92,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [1.0.0])
+AC_INIT([GLite WMS Helper], [1.0.3])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
@@ -141,6 +161,7 @@ have_glite_wms_matchmaking=no
 have_glite_wms_ism=no
 
 AC_GLITE
+AC_OPTIMIZE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
