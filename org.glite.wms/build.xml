@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.52  2004/08/09 03:05:42  dimeglio
+	Fixed inheritance of failonerror property
+
 	Revision 1.51  2004/08/09 02:39:12  dimeglio
 	Set default value for failonerror
-
+	
 	Revision 1.50  2004/08/08 19:45:04  dimeglio
 	Added small.memory type of build
 	
@@ -399,7 +402,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.thirdparty-bypass" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -415,7 +418,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.thirdparty-globus_gridftp_server" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -431,7 +434,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.thirdparty-loki" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -447,7 +450,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.common" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -463,7 +466,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.jdl" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -479,7 +482,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.jdlj" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -495,7 +498,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.brokerinfo" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -511,7 +514,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.classad_plugin" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -527,7 +530,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.matchmaking" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -543,7 +546,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.helper" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -559,7 +562,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.broker" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -575,7 +578,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.checkpointing" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -591,7 +594,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager-ns-versions" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -607,7 +610,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager-ns-common" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -623,7 +626,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager-ns-fsm" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -639,7 +642,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager-ns-commands" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -655,7 +658,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager-ns-client" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -671,7 +674,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager-ns-daemon" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -687,7 +690,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.purger" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -703,7 +706,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.jobsubmission" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
@@ -719,7 +722,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms.subsystem.dir}.manager" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
 				</exec>
 			</then>
 			<else>
