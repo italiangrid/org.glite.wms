@@ -12,8 +12,8 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/regex.hpp>
 
-#include "../utilities/classad_utils.h"
-#include "../utilities/boost_fs_add.h"
+#include "edg/workload/common/utilities/classad_utils.h"
+#include "edg/workload/common/utilities/boost_fs_add.h"
 
 #include "Configuration.h"
 #include "JCConfiguration.h"
@@ -93,7 +93,7 @@ void Configuration::loadFile( const char *filename )
   classad::ClassAdParser        parser;
 
   if( ifs.good() ) {
-    part = parser.ParseClassAd( &ifs );
+    part = parser.ParseClassAd( ifs );
 
     if( part == NULL ) throw CannotReadFile( filename );
     this->c_read.reset( part );
@@ -146,7 +146,7 @@ try {
   vector<string>::iterator     pathIt;
   boost::filesystem::path      complete, name( filename );
 
-  if( (value = getenv("GLITE_WMS_CONFIG_DIR")) != NULL )
+  if( (value = getenv("EDG_WL_CONFIG_DIR")) != NULL )
     spaths.push_back( boost::filesystem::normalize_path(value) );
 
   spaths.insert( spaths.end(), c_s_paths, c_s_paths + (sizeof(c_s_paths) / sizeof(char *)) );

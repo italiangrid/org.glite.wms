@@ -197,9 +197,11 @@ class CommonConfiguration {
 
   copy ConfBase.parse;
   copy ConfBase.fileparse;
+  copy ConfBase.normal;
 
   parameter std::string( DGUser = "dguser" ) section parse;
   parameter std::string( HostProxyFile ) section fileparse;
+  parameter bool( UseCacheInsteadOfGris = false ) section normal; 
 }
 
 class JCConfiguration {
@@ -225,9 +227,9 @@ class JCConfiguration {
 
   parameter std::string( CondorSubmit ) section fileparse;
   parameter std::string( CondorRemove ) section fileparse;
-  parameter std::string( CondorQuery ) section fileparse;
-  parameter std::string( CondorSubmitDag ) section fileparse;
-  parameter std::string( CondorRelease ) section fileparse;
+  parameter std::string( CondorDagman ) section fileparse;
+  parameter int( DagmanLogLevel ) section normal;
+  parameter int( DagmanLogRotate ) section normal;
 
   parameter std::string( Input ) section fileparse;
   parameter std::string( SubmitFileDir ) section fileparse;
@@ -282,6 +284,7 @@ class NSConfiguration {
   copy ConfBase.normal;
   copy ConfBase.parse;
   copy ConfBase.fileparse;
+
   parameter int( BacklogSize = 16 ) section normal;
   parameter int( ListeningPort ) section normal;
   parameter int( MasterThreads ) section normal;

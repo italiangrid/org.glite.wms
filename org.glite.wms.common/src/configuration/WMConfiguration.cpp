@@ -5,7 +5,7 @@
 
 // $Id$
 
-#include "WMConfiguration.h"
+#include "edg/workload/common/configuration/WMConfiguration.h"
 
 namespace edg {
 namespace workload {
