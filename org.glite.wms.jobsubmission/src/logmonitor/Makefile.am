@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/28 10:22:36  eronchie
+#       Added the prefix GLITE_WMSUTILS_THP_ in the macro GLOBUS_SSL_UTILS
+#
 #       Revision 1.3  2004/07/27 13:46:37  pandreet
 #       LB dependencies fixed
 #
@@ -65,7 +68,8 @@ glite_wms_lm_job_status_LDADD = libglite_wms_logmonitor.la \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(BOOST_FS_LIBS) $(BOOST_THREAD_LIBS) $(BOOST_REGEX_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
+	$(GLOBUS_COMMON_NOTHR_LIBS) \
+	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
 	$(GLITE_LB_CLIENT_LIBS) \
 	$(ARES_LIBS) $(EXPAT_LIBS) \
