@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.33  2004/07/18 12:17:33  eronchie
+	Start integrating purger
+
 	Revision 1.32  2004/07/18 11:40:12  eronchie
 	Removed temporarely condor
-
+	
 	Revision 1.31  2004/07/18 10:55:41  eronchie
 	Start adding checkpointing
 	WARNING: work in progress
@@ -418,7 +421,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,common,jobid,tls,jdl,classad_plugin">
+	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,common,jobid,tls,jdl,purger">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
                      target="${target}"
                      inheritall="false" />

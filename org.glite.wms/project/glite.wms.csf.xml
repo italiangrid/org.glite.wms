@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.41  2004/07/18 12:17:33  eronchie
+	Start integrating purger
+
 	Revision 1.40  2004/07/18 11:40:12  eronchie
 	Removed temporarely condor
-
+	
 	Revision 1.39  2004/07/18 11:26:20  eronchie
 	Added condorg.m4 file
 	Start adding jobsubmission component
@@ -517,7 +520,7 @@
         </target>
 
 	<!-- JobSubmission -->
-        <target name="jobsubmission" depends="boost,classads,globus,common,jobid,tls,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
+        <target name="jobsubmission" depends="boost,classads,globus,common,jobid,tls,jdl,purger,get.jobsubmission.head, get.jobsubmission.tag"/>
         <target name="get.jobsubmission.head" if="jobsubmission.head">
             <cvs-co package="org.glite.wms.jobsubmission" />
         </target>
