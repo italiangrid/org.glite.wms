@@ -27,6 +27,7 @@ libglite_wms_sici_la_SOURCES = \
 
 libglite_wms_sici_la_LIBADD = \
 	$(GLITE_DATA_LIBS) \
+	$(CGSI_GSOAP_STATIC_LIBS) \
 	$(GSOAP_LIBS) \
 	env.o
 
