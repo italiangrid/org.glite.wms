@@ -162,7 +162,7 @@ class Job{
 		*  @param  step an positive integer number representing the JobState step we want to retrieve:
 		* step= 0 (default):  last State of the job. step=1: last but one. step=2: last but two... etc etc
 		* @return the statue of the job in the specified step   */
-		glite::wms::checkpointing::client::JobState getState(unsigned int step = 0) ;
+		glite::wms::checkpointing::JobState getState(unsigned int step = 0) ;
 		/** Attach the job to a new listener (if possible) and log new information to LB
 		* @param  port the local machine port to be forced as listener
 		* @param  A pointer to a Listener interface implementation which manages input/output/error streams
@@ -201,7 +201,7 @@ class Job{
 		* @param  lbHost The LB host name
 		* @param  lbPort The LB port value */
 		void submit (const std::string& ns_host, int ns_port, const std::string& lbHost , int lbPort ,
-			glite::wms::checkpointing::client::JobState *state , Listener *ls , const std::string& ce_id="" )  ;
+			glite::wms::checkpointing::JobState *state , Listener *ls , const std::string& ce_id="" )  ;
 		/**Look for matching Computing Element available resources
 		* @param  ns_addr The Network Server full address given in the form  <NS host>:<NS port>
 		* @param  warning_message The warnings catched while executing the NS api
