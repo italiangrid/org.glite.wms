@@ -87,11 +87,13 @@ void ism_cemon_purchaser::operator()()
       cout << "Building CEEvent objects..." << endl;
 
       boost::scoped_ptr<CEEvent> ceE(new CEEvent());
+      
       ceE->setParam(service_it->c_str(),m_topic.c_str());
 
       cout << "Param set!" << endl;
 
-      if ((ceE->getEvent()==SOAP_OK) && (ceE->getNumberOfMessages() == 2)) {
+      if (ceE->getEvent()) {
+	if (ceE->getNumberOfMessages() == 2) {
 	
 	cout << "got Event!" << endl;
 	string gluece_str, attrs_str;
@@ -148,6 +150,8 @@ void ism_cemon_purchaser::operator()()
         );
 	
 	gluece_info_container[GlueCEUniqueID] = ceAd;
+      
+	}
       }
       else {
 	Error("Unable to get event from CEMonitor. Error #" << ceE->getErrorCode() 

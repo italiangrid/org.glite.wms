@@ -26,7 +26,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GSOAP_CFLAGS) \
-        -DGSOAP_VER_26
+        -DGSOAP_VER_27
 
 
 MAINTAINERCLEANFILES = Makefile.in *.*~
