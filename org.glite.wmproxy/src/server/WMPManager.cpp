@@ -24,9 +24,9 @@
 #include "commands/logging.h" 
 
 namespace common        = glite::wms::common;
-namespace configuration = common::configuration;
+//namespace configuration = common::configuration;
 namespace logger        = common::logger; 
-namespace utilities   	= common::utilities;
+namespace utilities   	= glite::wmsutils::exception;
 namespace commands      = glite::wms::wmproxy::commands;
 
 namespace glite {
@@ -88,7 +88,7 @@ namespace server {
 	      catch (commands::bad&) {
 	        edglog(fatal) << "Bad Command." << std::endl;
 	      }
-	      catch( edg::workload::common::utilities::Exception& e) {
+	      catch( utilities::Exception& e) {
 		     edglog(fatal) << "Exception Caught: " << e.what() << std::endl;
 	      }
 	      if (cmd) {
