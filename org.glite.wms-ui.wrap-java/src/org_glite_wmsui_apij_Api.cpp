@@ -19,10 +19,10 @@
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"  //replace jobid name
 
-//Open Ssl safe thread
-#include <globus_common.h>
-#include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
+//Open Ssl safe thread DEPRECATED
+// #include <globus_common.h>
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 // DagAd Wrapper
 #include "glite/wms/jdl/ExpDagAd.h"
 // Dgas Authorisation include files
@@ -276,11 +276,13 @@ STATIC  methods:
 	*/
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_initialise
 	(JNIEnv *env, jclass ){
+		/*
 		edg_wlc_SSLInitialization();
 		if ( globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS )
 			log_error (env , "Unable to use safe multi threading for Open SSL" );
 		else if (edg_wlc_SSLLockingInit() != 0)
 			log_error (env , "Unable to use safe multi threading for Open SSL" );
+		*/
 	}
 
 	/*
