@@ -8,10 +8,10 @@
 #include "glite/wmsutils/exceptionexception_codes.h"
 /** The list of this namespace possible error codes: */
 
-namespace glite { namespace wms-ui { namespace client
+namespace glite { namespace wmsui { namespace client
 
 enum{
-		WL_JDLFULL= glite::wms-utils::exception::WL_UI_ERROR_BASE+1,   //full attrbiute
+		WL_JDLFULL= glite::wmsutils::exception::WL_UI_ERROR_BASE+1,   //full attrbiute
 		WL_JDLEMPTY, //empty attribute
 		WL_JDLMISMATCH, //JDL mistake Error
 		WL_JDL_MEMBER, //Wrong JDL Member-IsMember Usage

@@ -13,7 +13,7 @@
 // ClassAd Definition
 namespace classad {class ClassAd ; }
 // JobId Definition
-namespace glite { namespace wms-utils { namespace jobid { class JobId ; } } }
+namespace glite { namespace wmsutils { namespace jobid { class JobId ; } } }
 
 USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 #define UJ_CANCEL_ERR           -1
