@@ -4,7 +4,6 @@
         For license conditions see the license file or http://www.eu-egee.org/license.html
 */
 
-
 #include "wmpauthorizer.h"
 
 // Exceptions
@@ -38,124 +37,163 @@ namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 
 
- WMPAuthorizer::WMPAuthorizer()
- {
- }
+WMPAuthorizer::WMPAuthorizer(FILE* lcas_logfile)
+{
+	this->mapdone = false;
+	this->lcas_logfile = lcas_logfile;
+}
 
- WMPAuthorizer::~WMPAuthorizer() throw()
- {
- }
+WMPAuthorizer::~WMPAuthorizer() throw()
+{
+}
+	
+string
+WMPAuthorizer::getUserName()
+{
+	if (mapdone) {
+		return this->username;
+	} else {
+		throw AuthorizationException(__FILE__, __LINE__,
+	    	"WMPAuthorizer::getUserName()",
+	    	wmputilities::WMS_AUTHZ_ERROR, "User mapping not done");
+	}
+}
 
+uid_t
+WMPAuthorizer::getUserId()
+{
+	if (mapdone) {
+		return this->userid;
+	} else {
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"WMPAuthorizer::getUserId()",
+      		wmputilities::WMS_AUTHZ_ERROR, "User mapping not done");
+	}
+}
 
 /*****************************************************************************
  * Calls LCAS to check if the user is authorized for the requested operation * 
  *****************************************************************************/
- void checkUserAuthZ(FILE* lcas_logfile) 
- {
-  int retval;
-  char * user_dn = NULL;
-  char * request = NULL;
-  gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
+void 
+WMPAuthorizer::checkUserAuthZ()
+{	
+	int retval;
+  	char * user_dn = NULL;
+  	char * request = NULL;
+  	gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
   
-  user_dn = wmputilities::getUserDN();
-  // Initialize LCAS
-  retval = lcas_init(lcas_logfile);
-  if (retval)
-  {
-    edglog(info) << "LCAS initialization failure." << endl;
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcas_init(FILE *lcas_logfile);",
-          wmputilities::WMS_AUTHZ_ERROR, "LCAS initialization failure.");
-  }
+  	user_dn = wmputilities::getUserDN();
+  	// Initialize LCAS
+  
+  	FILE* lcas_logfile = this->lcas_logfile;
+  	retval = lcas_init(lcas_logfile);
+  	if (retval) {
+    	edglog(info) << "LCAS initialization failure." << endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"int lcas_init(FILE *lcas_logfile);",
+  			wmputilities::WMS_AUTHZ_ERROR, "LCAS initialization failure.");
+  	}
 
-  // Send authorization request to LCAS
-  retval = lcas_get_fabric_authorization(user_dn, user_cred_handle, request);
-  if (retval)
-  {
-    edglog(info) << "LCAS failed authorization: User " << user_dn << " is not authorized" << endl; 
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcas_get_fabric_authorization(char * user_dn_tmp, "
-          "gss_cred_id_t user_cred, lcas_request_t request);",
-          wmputilities::WMS_NOT_AUTHORIZED_USER, "LCAS failed authorization: User is not authorized.");
-  }
-  // Terminate the LCAS 
-  retval = lcas_term();
-  if (retval)
-  {
-    edglog(info) << "LCAS termination failure." << endl;
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcas_term();",
-          wmputilities::WMS_AUTHZ_ERROR, "LCAS termination failure.");
-  }
+  	// Send authorization request to LCAS
+ 	retval = lcas_get_fabric_authorization(user_dn, user_cred_handle, request);
+  	if (retval) {
+    	edglog(info) << "LCAS failed authorization: User " << user_dn
+    		<< " is not authorized" << endl; 
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"int lcas_get_fabric_authorization(char * user_dn_tmp, "
+  			"gss_cred_id_t user_cred, lcas_request_t request);",
+  			wmputilities::WMS_NOT_AUTHORIZED_USER, "LCAS failed authorization: "
+  			"User is not authorized.");
+  	}
+  	// Terminate the LCAS 
+  	retval = lcas_term();
+  	if (retval) {
+    	edglog(info) << "LCAS termination failure." << endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"int lcas_term();",
+  			wmputilities::WMS_AUTHZ_ERROR, "LCAS termination failure.");
+  	}
 }
 
 
 /*******************************************************************************
  * Calls LCMAPS to get the local user id corresponding to the user credentials * 
  *******************************************************************************/
-uid_t getUserId(FILE * lcmaps_logfile)
+void
+WMPAuthorizer::mapUser()
 {
-  int retval; 
-  int npols = 0; // this makes LCMAPS check all policies
-  char * user_dn = NULL;
-  char * request = NULL;
-  char ** namep = NULL;
-  char ** policynames = NULL; // this makes LCMAPS check all policies
-  gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
-  struct passwd *  user_info   = NULL;
-  uid_t user_id; 
+	this->mapdone = false;
+	
+ 	int retval; 
+  	int npols = 0; // this makes LCMAPS check all policies
+  	char * user_dn = NULL;
+  	char * request = NULL;
+  	char ** namep = NULL;
+  	char ** policynames = NULL; // this makes LCMAPS check all policies
+  	gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
+  	struct passwd *  user_info   = NULL;
+  	uid_t user_id; 
 
-  user_dn = wmputilities::getUserDN();
-  // Initialize LCMAPS
-  retval = lcmaps_init(lcmaps_logfile);
-  if (retval)
-  {
-    edglog(info) << "LCMAPS initialization failure." << endl;
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcmaps_init(FILE *lcmaps_logfile);",
-          wmputilities::WMS_USERMAP_ERROR, "LCMAPS initialization failure.");
-  }
+  	user_dn = wmputilities::getUserDN();
+  	// Initialize LCMAPS
+  	//retval = lcmaps_init(lcmaps_logfile);
+  	FILE* lcas_logfile = this->lcas_logfile; //TBC use a different file???
+  	retval = lcmaps_init(lcas_logfile);
+  	if (retval) {
+    	edglog(info) << "LCMAPS initialization failure." << endl;
+    	throw AuthorizationException(__FILE__, __LINE__,
+    		"int lcmaps_init(FILE *lcmaps_logfile);",
+        	wmputilities::WMS_USERMAP_ERROR, "LCMAPS initialization failure.");
+  	}
 
-  // Will be used when VOMS cert will be supported by GridSite
-  //retval = lcmaps_run_with_fqans_and_return_account(user_dn,
-  //                                                  fqan_list, fqan_num
-  //                                                  request,
-  //                                                  npols, policynames,
-  //                                                  puid, ppgid_list,
-  //                                                  pnpgid, psgid_list, pnsgid,
-  //                                                  poolindexp );
+  	// Will be used when VOMS cert will be supported by GridSite
+  	//retval = lcmaps_run_with_fqans_and_return_account(user_dn,
+  	//                                                  fqan_list, fqan_num
+  	//                                                  request,
+  	//                                                  npols, policynames,
+  	//                                                  puid, ppgid_list,
+  	//                                                  pnpgid, psgid_list, pnsgid,
+  	//                                                  poolindexp );
 
-  // Send user mapping request to LCMAPS 
-  retval = lcmaps_run_and_return_username(user_dn, user_cred_handle, request, 
-  	namep, npols, policynames);
-  if (retval)
-  {
-    edglog(info) << "LCAS failed authorization: User " << user_dn << " is not authorized" << endl;
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcas_get_fabric_authorization();",
-          wmputilities::WMS_NOT_AUTHORIZED_USER, "LCMAPS failed to map user credential.");
-  }
-
-  // Get uid from username
-  user_info = getpwnam(*namep);
-  if ( user_info == NULL )
-  {
-    edglog(info) << "LCMAPS could not find the uid related to username: " << *namep << endl; 
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcas_get_fabric_authorization();",
-          wmputilities::WMS_USERMAP_ERROR, "LCMAPS could not find the uid related to username.");
-  }
+  	// Send user mapping request to LCMAPS 
+  	retval = lcmaps_run_and_return_username(user_dn, user_cred_handle, request, 
+  		namep, npols, policynames);
+  	if (retval) {
+    	edglog(info) << "LCAS failed authorization: User " << user_dn 
+    		<< " is not authorized" << endl;
+    	throw AuthorizationException(__FILE__, __LINE__,
+        	"int lcas_get_fabric_authorization();",
+        	wmputilities::WMS_NOT_AUTHORIZED_USER,
+        	"LCMAPS failed to map user credential.");
+  	}
   
-  // Terminate the LCMAPS */
-  retval = lcmaps_term();
-  if (retval)
-  {
-    edglog(info) << "LCMAPS termination failure." << endl;
-    throw AuthorizationException(__FILE__, __LINE__,
-          "int lcmaps_term();",
-          wmputilities::WMS_USERMAP_ERROR, "LCMAPS termination failure.");
-  }
- return (user_info->pw_uid);
+  	// Setting value for username private member
+  	this->username = string(*namep);
+  
+  	// Get uid from username
+  	user_info = getpwnam(*namep);
+  	if ( user_info == NULL ) {
+    	edglog(info) << "LCMAPS could not find the uid related to username: "
+    		<< *namep << endl; 
+    	throw AuthorizationException(__FILE__, __LINE__,
+        	"int lcas_get_fabric_authorization();",
+        	wmputilities::WMS_USERMAP_ERROR,
+        	"LCMAPS could not find the uid related to username.");
+  	}
+  
+  	// Terminate the LCMAPS */
+  	retval = lcmaps_term();
+  	if (retval) {
+    	edglog(info) << "LCMAPS termination failure." << endl;
+    	throw AuthorizationException(__FILE__, __LINE__,
+        	"int lcmaps_term();",
+        	wmputilities::WMS_USERMAP_ERROR, "LCMAPS termination failure.");
+  	}
+  
+  	// Setting value for userid private member
+  	this->userid = user_info->pw_uid;
+  
+  	this->mapdone = true;
 }
 
 } // namespace authorizer
