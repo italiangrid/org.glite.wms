@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2004/09/22 00:25:17  glbuild
+#       Fixed missing parenthesis
+#
 #       Revision 1.7  2004/09/21 19:21:57  glbuild
 #       modified module.version
 #
@@ -46,7 +49,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Exception], [0.1.0]
+AC_INIT([GLite WMS Utils Exception], [0.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Exception.cpp])
