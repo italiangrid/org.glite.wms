@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.51  2004/07/28 17:50:55  eronchie
+	Added broker
+
 	Revision 1.50  2004/07/28 16:33:24  eronchie
 	Start adding manager-ns-common
 	WARNING: Work in progress
-
+	
 	Revision 1.49  2004/07/27 15:39:20  eronchie
 	Updated dependency
 	
@@ -558,7 +561,7 @@
         </target>
 
 	<!-- Manager NS Commands -->
-        <target name="manager-ns-commands" depends="boost, classads, globus, manager-ns-fsm, manager-ns-versions, manager-ns-common, purger, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
+        <target name="manager-ns-commands" depends="boost, classads, globus, manager-ns-fsm, manager-ns-versions, manager-ns-common, broker, purger, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
         <target name="get.manager-ns-commands.head" if="manager-ns-commands.head">
             <cvs-co package="org.glite.wms.manager-ns-commands" />
         </target>
