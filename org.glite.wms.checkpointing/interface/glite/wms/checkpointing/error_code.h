@@ -19,7 +19,7 @@
 #define EDG_WORKLOAD_CHECKPOINTING_ERROR_CODE_H
 
 #include "glite/wms/checkpointing/checkpointing_namespace.h"
-#include "glite/wms/common/utilities/exception_codes.h"
+#include "glite/wmsutils/exception/exception_codes.h"
 
 CHKPT_NAMESPACE_BEGIN {
   
@@ -28,7 +28,7 @@ CHKPT_NAMESPACE_BEGIN {
    */
 
   enum {
-    BASE = glite::wms::common::utilities::WMS_CHKPT_ERROR_BASE, /**< Base value. */
+    BASE = glite::wmsutils::exception::WMS_CHKPT_ERROR_BASE, /**< Base value. */
     CHKPT_OutOfSet,        /**< \b 01 - The end of the iterator. */
     CHKPT_UndefinedLabel,  /**< \b 02 - You have request an attribute which is not defined. */
     CHKPT_WrongType,       /**< \b 03 - The type of the attribute mismatched with the type of the function. */

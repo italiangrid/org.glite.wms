@@ -18,7 +18,7 @@
 #ifndef EDG_WORKLOAD_CHECKPOINTING_EXCEPTIONS_H
 #define EDG_WORKLOAD_CHECKPOINTING_EXCEPTIONS_H
 
-#include "glite/wms/common/utilities/Exceptions.h"
+#include "glite/wmsutils/exception/Exceptions.h"
 #include "glite/wms/checkpointing/error_code.h"
 
 CHKPT_NAMESPACE_BEGIN { 
@@ -30,7 +30,7 @@ CHKPT_NAMESPACE_BEGIN {
    * \see glite::wms::common::Exception base class.
    */  
 
-  class ChkptException : public glite::wms::common::utilities::Exception {
+  class ChkptException : public glite::wmsutils::exception::Exception {
     
   protected: 
     /** 
