@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/04/29 04:05:04  dimeglio
+	Moved user property look up before dependencies properties
+
 	Revision 1.5  2004/04/29 03:39:47  dimeglio
 	Added Import of  user and project properties
-
+	
 	Revision 1.4  2004/04/29 03:30:23  dimeglio
 	Replaced list of dependencies with common dependencies file
 	
@@ -76,6 +79,15 @@
 		<isfalse value="${update}" />
 	</condition>
 
+	<!-- Location of user property files -->
+	<property name="user.properties.file" location="${user.home}/egee.build.properties"/>
+	
+	<!-- Load user-specific property files -->
+	<property file="${user.properties.file}"/>
+	
+	<!-- Load module-specific property file -->
+	<property file="build.properties"/>
+
 	<!-- =====================================================
 		 Self-update if required
 		 ===================================================== -->
@@ -107,15 +119,6 @@
 	<!-- *****************************************************-->
 	<!-- Environmental checks                                 -->
 	<!-- *****************************************************-->
-	
-	<!-- Location of user property files -->
-	<property name="user.properties.file" location="${user.home}/${application.prefix}.build.properties"/>
-	
-	<!-- Load user-specific property files -->
-	<property file="${user.properties.file}"/>
-	
-	<!-- Load module-specific property file -->
-	<property file="build.properties"/>
 	
 	<!-- All environmental checks -->
 	<target name="envchecks" depends="oscheck,javacheck,antcheck,gcccheck" />
