@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2004/07/23 14:50:08  eronchie
+	Added exception
+
 	Revision 1.2  2004/07/23 08:27:03  eronchie
 	Updated
-
+	
 	
 -->
 
@@ -123,6 +126,10 @@
 
 		<condition property="jobid.head">
                         <equals arg1="${org.glite.wms-utils.jobid.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="exception.head">
+                        <equals arg1="${org.glite.wms-utils.exception.version}" arg2="HEAD" />
                 </condition>
     	</target>
 
