@@ -25,7 +25,14 @@ class classad_plugin_loader : boost::noncopyable
         ~classad_plugin_loader();
 };
 
-namespace { classad_plugin_loader init; }
+// FIXME: the following global instantiation is commented out because,
+// FIXME: if this creator is invoked -before- the creator for
+// FIXME: the global classad::FunctionCall::functionTable, it will
+// FIXME: cause a SEGV while trying to access the non-initialized 
+// FIXME: functionTable. For the time being this was moved to the NS main
+// FIXME: and to the broker Helper.cpp. This can come back when the
+// FIXME: matchmaker is finally done only via the broker_helper DL.
+// namespace { classad_plugin_loader init; }
 
 } // namespace classad_plugin
 } // namespace wms
