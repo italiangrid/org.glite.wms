@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-#include "../common_namespace.h"
+#include "common_namespace.h"
 
 /*
   Hack to activate wrong filelist dumping...

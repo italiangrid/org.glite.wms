@@ -1,7 +1,7 @@
 #ifndef GLITE_WMS_COMMON_UTILITIES_EXCEPTION_CODES_H
 #define GLITE_WMS_COMMON_UTILITIES_EXCEPTION_CODES_H
 
-#include "../common_namespace.h"
+#include "common_namespace.h"
 
 // pure C-style code:
 #define GLITE_WMS_COMMON_ERROR_BASE 900

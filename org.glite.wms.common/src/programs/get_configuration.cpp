@@ -3,8 +3,8 @@
 
 #include <classad_distribution.h>
 
-#include "../configuration/Configuration.h"
-#include "../configuration/exceptions.h"
+#include "configuration/Configuration.h"
+#include "configuration/exceptions.h"
 
 USING_COMMON_NAMESPACE;
 using namespace std;

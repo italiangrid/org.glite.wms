@@ -5,11 +5,11 @@
 
 // $Id$
 
-#include "../configuration/NSConfiguration.h"
-#include "../configuration/Configuration.h"
-#include "../ldif2classad/LDAPQuery.h"
-#include "../ldif2classad/LDAPSynchConnection.h"
-#include "../ldif2classad/LDAPForwardIterator.h"
+#include "configuration/NSConfiguration.h"
+#include "configuration/Configuration.h"
+#include "ldif2classad/LDAPQuery.h"
+#include "ldif2classad/LDAPSynchConnection.h"
+#include "ldif2classad/LDAPForwardIterator.h"
 
 #include "Exceptions.h"
 #include "ii_attr_utils.h"

@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "../common_namespace.h"
+#include "common_namespace.h"
 
 COMMON_NAMESPACE_BEGIN {
 

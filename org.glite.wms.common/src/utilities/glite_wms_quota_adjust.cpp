@@ -10,8 +10,8 @@
 #include <string>
 
 #include "classad_distribution.h"
-#include "../configuration/Configuration.h"
-#include "../configuration/NSConfiguration.h"
+#include "configuration/Configuration.h"
+#include "configuration/NSConfiguration.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

@@ -12,8 +12,8 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/regex.hpp>
 
-#include "../utilities/classad_utils.h"
-#include "../utilities/boost_fs_add.h"
+#include "utilities/classad_utils.h"
+#include "utilities/boost_fs_add.h"
 
 #include "Configuration.h"
 #include "JCConfiguration.h"

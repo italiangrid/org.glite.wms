@@ -15,7 +15,7 @@
 #include <string>
 #include <exception> // base ancestor
 #include "result_codes.h" //base result codes
-#include "../common_namespace.h" // base namespace
+#include "common_namespace.h" // base namespace
 COMMON_NAMESPACE_BEGIN{
      namespace utilities {
 extern pthread_mutex_t METHOD_MUTEX; //  used in order to store info into a file (rather then syslog)

@@ -19,7 +19,7 @@
 
 #ifdef WITH_LDAP_EXCEPTIONS
 #include "exceptions.h"
-#include "../utilities/edgstrstream.h"
+#include "utilities/edgstrstream.h"
 #endif 
 
 namespace glite {

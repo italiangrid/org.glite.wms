@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include "../common_namespace.h"
+#include "common_namespace.h"
 
 #include "common.h"
 
