@@ -14,10 +14,17 @@ libglite_wms_helper_broker_ii_la_SOURCES = \
         Helper_ii.cpp \
 	exceptions.cpp
 
+libglite_wms_helper_broker_ii_la_LIBADD = \
+        $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la \
+        $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la \
+        $(top_srcdir)/../org.glite.wms.ism/build/src/libglite_wms_ism.la 
+
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
         Helper_ism.cpp \
 	exceptions.cpp
+
+libglite_wms_helper_broker_ism_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
