@@ -214,9 +214,9 @@ try {
   char *brlib = getenv("GLITE_WMS_BROKER_HELPER_LIB");
   if (brlib == NULL) {
     if (common_config->use_cache_instead_of_gris()) {
-      brlib = "libedg_wl_helper_broker_prefetch.so.0";
+      brlib = "libglite_wms_helper_broker_ii_prefetch.so";
     } else {
-      brlib = "libedg_wl_helper_broker.so.0";
+      brlib = "libglite_wms_helper_broker_ism.so";
     }
   }
 
