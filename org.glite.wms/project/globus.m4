@@ -66,14 +66,14 @@ AC_DEFUN(AC_GLOBUS,
 
     AC_MSG_CHECKING([for openssl nothr])
 
-    test -n "$ac_globus_nothr_ssl" && GLOBUS_NOTHR_CFLAGS="-I$ac_globus_nothr_ssl -I$GLOBUS_NOTHR_CFLAGS"
+    if test -n "$ac_globus_nothr_ssl" ; then
+	GLOBUS_NOTHR_CFLAGS="-I$ac_globus_nothr_ssl -I$GLOBUS_NOTHR_CFLAGS"
+    fi
 
     if test -n "$ac_globus_nothr_ssl" ; then
         dnl
         dnl maybe do some complex test of globus instalation here later
         dnl
-#	ac_save_libs=$LIBS
-#        LIBS="$GLOBUS_SSL_NOTHR_LIBS $LIBS"
         ac_save_CFLAGS=$CFLAGS
         CFLAGS="$GLOBUS_NOTHR_CFLAGS $CFLAGS"
         AC_TRY_COMPILE([
@@ -84,14 +84,14 @@ AC_DEFUN(AC_GLOBUS,
            [ac_cv_globus_nothr_valid=yes],
            [ac_cv_globus_nothr_valid=no])
         CFLAGS=$ac_save_CFLAGS
-#	LIBS=$ac_save_LIBS
         AC_MSG_RESULT([$ac_cv_globus_nothr_valid])
     fi
 
     dnl
     dnl check thr openssl header
     dnl
-    ac_globus_thr_ssl=$with_globus_prefix/include/$with_globus_thr_flavor/openssl
+    ac_globus_thr_ssl="$with_globus_prefix/include/$with_globus_thr_flavor/openssl"
+
     AC_MSG_CHECKING([for $ac_globus_thr_ssl/ssl.h])
 
     if test ! -f "$ac_globus_thr_ssl/ssl.h" ; then
@@ -101,7 +101,9 @@ AC_DEFUN(AC_GLOBUS,
         AC_MSG_RESULT([yes])
     fi
 
-    test -n "$ac_globus_thr_ssl" && GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ssl -I$GLOBUS_THR_CFLAGS"
+    if test -n "$ac_globus_thr_ssl" ; then
+        GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ssl -I$GLOBUS_THR_CFLAGS"
+    fi
 
     AC_MSG_CHECKING([checking openssl thr])
 
@@ -129,22 +131,16 @@ AC_DEFUN(AC_GLOBUS,
                                                                                 
     AC_MSG_CHECKING([for $ac_globus_thr_ldap/lber.h])
     
-    if test ! -f $ac_globus_thr_ldap/lber.h ; then
+    if test ! -f "$ac_globus_thr_ldap/lber.h" ; then
 	ac_globus_thr_ldap=""
 	AC_MSG_RESULT([no])
     else
         AC_MSG_RESULT([yes])
     fi
-                                                           
-    AC_MSG_CHECKING([for ldap thr])
-                                                                                
-    if test -n "$ac_globus_thr_ldap" ; then
-        if test -z x$ac_globus_thr_ldap != x$ac_globus_thr_ssl ; then 
-            GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ldap -I$GLOBUS_THR_CFLAGS"
-	fi
-    fi
 
-    if test -n "$ac_globus_thr_ldap" -a -n "$ac_globus_ldlib" ; then
+    AC_MSG_CHECKING([for ldap thr])
+
+    if test -n "$ac_globus_thr_ldap" ; then
         dnl
         dnl maybe do some complex test of globus instalation here later
         dnl
