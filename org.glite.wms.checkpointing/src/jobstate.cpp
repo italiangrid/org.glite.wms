@@ -20,9 +20,6 @@
 #include "glite/lb/consumer.h"
 #include "glite/lb/producer.h"
 
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
-
-
 using namespace std;
 using namespace classad;
 //using namespace glite::wmsutils::tls::socket_pp;
@@ -125,10 +122,11 @@ const char *JobState::createContext( void )
   this->js_ctx.reset( new edg_wll_Context );
 
   // initialize SSL libraries
-  error = edg_wlc_SSLInitialization();
-  if( error )
-    throw LFException(__FILE__, __LINE__, "JobState::createContext", "edg_wlc_SSLInitialization", error);
-	 
+/* sslutils removed */
+//  error = edg_wlc_SSLInitialization();
+//  if( error )
+//    throw LFException(__FILE__, __LINE__, "JobState::createContext", "edg_wlc_SSLInitialization", error);
+
   // create the context
   error = edg_wll_InitContext( this->js_ctx.get() );
 
