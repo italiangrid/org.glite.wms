@@ -1,8 +1,9 @@
 Makefile.in
 aclocal.m4
 autom4te.cache
-.bin
-.build
+bin
+build
 configure
-.lib
-.reports
+lib
+reports
+.project
