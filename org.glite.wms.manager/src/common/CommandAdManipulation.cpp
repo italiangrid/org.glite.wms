@@ -38,6 +38,10 @@ std::string const command_requirements(
   "      || other.command == \"jobcancel\""
   "      && isString(other.arguments.id)"
   "      && isString(other.arguments.lb_sequence_code)"
+  "      || other.command == \"match\""
+  "      && isClassad(other.arguments.ad)"
+  "      && isString(other.arguments.ad.CertSubject)"
+  "      && isString(other.arguments.file)"
   "     )"
   "]"
 );
@@ -150,6 +154,18 @@ std::string
 cancel_command_get_lb_sequence_code(classad::ClassAd const& command_ad)
 {
   return utilities::evaluate_expression(command_ad, "arguments.lb_sequence_code");
+}
+
+classad::ClassAd const*
+match_command_get_ad(classad::ClassAd const& match_command_ad)
+{
+  return utilities::evaluate_expression(match_command_ad, "arguments.ad");
+}
+
+std::string
+match_command_get_file(classad::ClassAd const& match_command_ad)
+{
+  return utilities::evaluate_expression(match_command_ad, "arguments.file");
 }
 
 }}}} // glite::wms::manager::common

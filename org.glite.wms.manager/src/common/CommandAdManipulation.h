@@ -31,17 +31,11 @@ command_get_command(classad::ClassAd const& command_ad);
 classad::ClassAd*
 submit_command_create(classad::ClassAd* job_ad);
 
-bool
-submit_command_is_valid(classad::ClassAd const& submit_command_ad);
-
 classad::ClassAd const*
 submit_command_get_ad(classad::ClassAd const& submit_command_ad);
 
 classad::ClassAd*
 cancel_command_create(std::string const& job_id);
-
-bool
-cancel_command_is_valid(classad::ClassAd const& cancel_command_ad);
 
 std::string
 cancel_command_get_id(classad::ClassAd const& cancel_command_ad);
@@ -52,14 +46,17 @@ cancel_command_get_lb_sequence_code(classad::ClassAd const& command_ad);
 classad::ClassAd*
 resubmit_command_create(std::string const& job_id, std::string const& sequence_code);
 
-bool
-resubmit_command_is_valid(classad::ClassAd const& command_ad);
-
 std::string
 resubmit_command_get_id(classad::ClassAd const& command_ad);
 
 std::string
 resubmit_command_get_lb_sequence_code(classad::ClassAd const& command_ad);
+
+classad::ClassAd const*
+match_command_get_ad(classad::ClassAd const& match_command_ad);
+
+std::string
+match_command_get_file(classad::ClassAd const& match_command_ad);
 
 }}}} // glite::wms::manager::common
 
