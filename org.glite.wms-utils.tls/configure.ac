@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2004/07/28 07:25:04  eronchie
+#       Added m4files.list property
+#
 #       Revision 1.10  2004/07/27 09:13:49  eronchie
 #       Removed AC_WMSUTILS_EXCEPTION and AC_GLOBUS_SSL_UTILS checks
 #       Set directly exception library macro
@@ -87,9 +90,6 @@ have_globus=no
                                                                                
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-have_globus_ssl_utils=no
-have_glite_wmsutils_exception=no
 
 AC_GLITE
 
