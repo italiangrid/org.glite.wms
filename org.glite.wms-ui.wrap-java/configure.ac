@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/09/21 19:26:30  glbuild
+#       modified module.version
+#
 #       Revision 1.3  2004/08/12 16:03:09  eronchie
 #       Updated
 #
@@ -34,7 +37,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Wrap java], [0.0.0])
+AC_INIT([GLite WMS UI Wrap java], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/org_glite_wmsui_apij_Api.cpp])
@@ -122,3 +125,4 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 
 AC_OUTPUT
+
