@@ -84,29 +84,35 @@ libglite_wmsui_native_la_SOURCES = \
 	org_glite_wmsui_apij_Api.cpp 
 libglite_wmsui_native_la_LIBADD = \
         -lc \
-        ../../networkserver/client/libjnsclient.la \
-        $(SHARED_LIB_SOCKET) \
-        $(CLASSAD_LIBS) \
-	$(SHARED_LIB_REQUESTAD) \
-        $(SHARED_LIB_JOBID) \
-        $(SHARED_LIB_UTILITIES) \
-	$(SHARED_LIB_LOGGER) \
-        $(SHARED_LIB_LOGGING) \
-	$(SHARED_LIB_SSL) \
-        ../../logging/common/liblogbase.la \
-        ../../thirdparty/trio/libtrio.la \
-        $(ARES_LIBS) $(BOOST_LIBS) \
-	$(SHARED_LIB_DGAS) \
-	$(GLOBUS_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
+	$(ARES_LIBS) \
+	$(BOOST_LIBS) \
+        $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
-	$(EXPAT_LIBS) \
-	-lstdc++
+        $(EXPAT_LIBS) 
+
+#        ../../networkserver/client/libjnsclient.la \
+#        $(SHARED_LIB_SOCKET) \
+#        $(CLASSAD_LIBS) \
+#	$(SHARED_LIB_REQUESTAD) \
+#        $(SHARED_LIB_JOBID) \
+#        $(SHARED_LIB_UTILITIES) \
+#	$(SHARED_LIB_LOGGER) \
+#        $(SHARED_LIB_LOGGING) \
+#	$(SHARED_LIB_SSL) \
+#        ../../logging/common/liblogbase.la \
+#        ../../thirdparty/trio/libtrio.la \
+#        $(ARES_LIBS) $(BOOST_LIBS) \
+#	$(SHARED_LIB_DGAS) \
+#	$(GLOBUS_THR_LIBS) \
+#	$(GLOBUS_COMMON_THR_LIBS) \
+#        $(GLOBUS_SSL_THR_LIBS) \
+#	$(EXPAT_LIBS) \
+#	-lstdc++
 
 org_glite_wmsui_apij_Api.lo: org_glite_wmsui_apij_Api.cpp
 	/bin/touch org_glite_wmsui_apij_Api.h
 	javah -jni \
-	-d . -classpath ../../.. \
+	-d . -classpath $(prefix)/share/java \
 	org.glite.wmsui.apij.Api
 	/usr/bin/libtool $(CXX) -c $(CFLAGS) -DHAVE_CONFIG_H \
 	-I. -I. -I../.. $(AM_CPPFLAGS) \
