@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_LOGGER_LOGSTREAM_H
-#define EDG_WORKLOAD_COMMON_LOGGER_LOGSTREAM_H
+#ifndef GLITE_WMS_COMMON_LOGGER_LOGSTREAM_H
+#define GLITE_WMS_COMMON_LOGGER_LOGSTREAM_H
 
 #include <iostream>
 #include <string>
@@ -71,13 +71,13 @@ public:
 
 extern logstream cedglog;
 
-#define RenameLogStreamNS( log ) namespace log = edg::workload::common::logger
+#define RenameLogStreamNS( log ) namespace log = glite::wms::common::logger
 
 }; // Namespace logger
 
 } COMMON_NAMESPACE_END;
 
-#endif /* EDG_WORKLOAD_COMMON_LOGGER_LOGSTREAM_H */
+#endif /* GLITE_WMS_COMMON_LOGGER_LOGSTREAM_H */
 
 // Local Variables:
 // mode: c++

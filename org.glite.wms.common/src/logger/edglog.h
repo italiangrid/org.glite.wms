@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_LOGGER_EDGLOG_H
-#define EDG_WORKLOAD_COMMON_LOGGER_EDGLOG_H
+#ifndef GLITE_WMS_COMMON_LOGGER_EDGLOG_H
+#define GLITE_WMS_COMMON_LOGGER_EDGLOG_H
 
 #include "logstream_ts.h"
 
@@ -11,9 +11,9 @@ COMMON_NAMESPACE_BEGIN {
 
 } COMMON_NAMESPACE_END;
 
-#define RenameLogStreamNS_ts( ts )  namespace ts = edg::workload::common::logger::threadsafe
+#define RenameLogStreamNS_ts( ts )  namespace ts = glite::wms::common::logger::threadsafe
 
-#endif /* EDG_WORKLOAD_COMMON_LOGGER_EDGLOG_H */
+#endif /* GLITE_WMS_COMMON_LOGGER_EDGLOG_H */
 
 // Local Variables:
 // mode: c++

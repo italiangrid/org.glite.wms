@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_LOGGER_LOGSTREAM_TS_H
-#define EDG_WORKLOAD_COMMON_LOGGER_LOGSTREAM_TS_H
+#ifndef GLITE_WMS_COMMON_LOGGER_LOGSTREAM_TS_H
+#define GLITE_WMS_COMMON_LOGGER_LOGSTREAM_TS_H
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -17,11 +17,11 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/tss.hpp>
 
-namespace edg { namespace workload { namespace common { namespace logger { namespace threadsafe {
+namespace glite { namespace wms { namespace common { namespace logger { namespace threadsafe {
   class logstream;
 }}}}};
 
-#define __log_t   edg::workload::common::logger::threadsafe::logstream
+#define __log_t   glite::wms::common::logger::threadsafe::logstream
 namespace std {
   typedef __log_t  &(*lts_manip_t)(__log_t &);
 }
@@ -110,7 +110,7 @@ logstream &logstream::operator<<( const Type &t )
 
 } COMMON_NAMESPACE_END;
 
-#define __log_t   edg::workload::common::logger::threadsafe::logstream
+#define __log_t   glite::wms::common::logger::threadsafe::logstream
 namespace std {
   typedef __log_t  &(*lts_manip_t)(__log_t &);
 
@@ -120,7 +120,7 @@ namespace std {
 }
 #undef __log_t
 
-#endif /* EDG_WORKLOAD_COMMON_LOGGER_LOGSTREAM_TS_H */
+#endif /* GLITE_WMS_COMMON_LOGGER_LOGSTREAM_TS_H */
 
 // Local Variables:
 // mode: c++

@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_LOGGER_MANIPULATORS_H
-#define EDG_WORKLOAD_COMMON_LOGGER_MANIPULATORS_H
+#ifndef GLITE_WMS_COMMON_LOGGER_MANIPULATORS_H
+#define GLITE_WMS_COMMON_LOGGER_MANIPULATORS_H
 
 #include <iostream>
 #include <string>
@@ -124,7 +124,7 @@ threadsafe::logstream &operator<<( threadsafe::logstream &os, const setmultiline
 
 } COMMON_NAMESPACE_END;
 
-#endif /* EDG_WORKLOAD_COMMON_LOGGER_MANIPULATORS_H */
+#endif /* GLITE_WMS_COMMON_LOGGER_MANIPULATORS_H */
 
 // Local Variables:
 // mode: c++
