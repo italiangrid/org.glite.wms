@@ -21,7 +21,9 @@
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/checkpointing/error_code.h"
 
-CHKPT_NAMESPACE_BEGIN { 
+namespace glite {
+namespace wms {
+namespace checkpointing {
 
   /**
    * \brief This ChkptException is thrown when something goes wrong in the checkpointing API.
@@ -173,7 +175,9 @@ CHKPT_NAMESPACE_BEGIN {
 		  );
   };
 
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite  
 
 #endif
 

@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include "glite/wms/checkpointing/ChkptException.h"
 
-CHKPT_NAMESPACE_BEGIN { 
+namespace glite {
+namespace wms {
+namespace checkpointing {
  
   ChkptException::ChkptException ( std::string file,
 				   int line,
@@ -72,7 +74,9 @@ CHKPT_NAMESPACE_BEGIN {
     this->error_message.append( boost::lexical_cast<std::string>(code) );
   }
 
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite
 
 // Local Variables:
 // mode: c++

@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/08/13 14:53:03  eronchie
+#       Added namespace
+#
 #       Revision 1.1  2004/07/08 15:13:25  pandreet
 #       API for checkpointing
 #
@@ -25,7 +28,6 @@
 chkptdir = $(includedir)
 nobase_chkpt_HEADERS = \
 	glite/wms/checkpointing/checkpointing.h \
-	glite/wms/checkpointing/checkpointing_namespace.h \
 	glite/wms/checkpointing/ChkptException.h \
 	glite/wms/checkpointing/error_code.h \
 	glite/wms/checkpointing/jobstate.h \

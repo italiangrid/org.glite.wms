@@ -8,7 +8,9 @@
 #include "glite/wms/checkpointing/stepper.h"
 #include "glite/wms/checkpointing/ChkptException.h"
 
-CHKPT_NAMESPACE_BEGIN {
+namespace glite {
+namespace wms {
+namespace checkpointing {
 
 // Constructor
 StepsSet::StepsSet( const std::vector<std::string>& llabel, int cstep ) : ss_first(  cstep ? cstep - 1: cstep ), 
@@ -71,7 +73,9 @@ const std::string StepsSet::getCurrentLabel(void ) {
     return this->ss_steps[ss_current]; 
 }
 
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite
 
 
 

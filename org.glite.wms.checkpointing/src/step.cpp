@@ -8,7 +8,9 @@
 #include "glite/wms/checkpointing/step.h"
 #include "glite/wms/checkpointing/ChkptException.h"
 
-CHKPT_NAMESPACE_BEGIN {
+namespace glite {
+namespace wms {
+namespace checkpointing {
 
 // Construct 
 Step::Step( int istep ) : s_type( integer ), s_u_istep( istep ) {}
@@ -69,7 +71,9 @@ const std::string &Step::getLabel( void ) {
 }
 
 
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite
 
 
 

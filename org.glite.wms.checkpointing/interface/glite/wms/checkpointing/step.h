@@ -17,10 +17,11 @@
 #ifndef EDG_WORKLOAD_CHECKPOINTING_STEP_H
 #define EDG_WORKLOAD_CHECKPOINTING_STEP_H
 
-#include <glite/wms/checkpointing/checkpointing_namespace.h>
 #include <string>
 
-CHKPT_NAMESPACE_BEGIN { 
+namespace glite {
+namespace wms {
+namespace checkpointing {
 
   /**      
    * \brief Provides the label of a single step.
@@ -94,7 +95,9 @@ CHKPT_NAMESPACE_BEGIN {
     };    
   };
 
-} CHKPT_NAMESPACE_END;
+}  // checkpointing
+} // wms
+} // glite
 
 #endif // EDG_WORKLOAD_CHECKPOINTING_STEP_H
 

@@ -28,7 +28,9 @@ using namespace classad;
 //using namespace glite::wmsutils::tls::socket_pp;
 using namespace glite::wmsutils::jobid;
 
-CHKPT_NAMESPACE_BEGIN {
+namespace glite {
+namespace wms {
+namespace checkpointing {
   
 // Constructors-destructor
 // Default one
@@ -867,5 +869,7 @@ string JobState::getStateFromLB( const char *jobid_str, int num )
   return state;
 }  
 
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite
 

@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include <glite/wms/checkpointing/checkpointing_namespace.h>
 #include <glite/wms/checkpointing/step.h>
 #include <glite/lb/context.h>
 
@@ -30,7 +29,9 @@
 #include "classad_distribution.h"
 
 
-CHKPT_NAMESPACE_BEGIN {
+namespace glite {
+namespace wms {
+namespace checkpointing {
  
 class StepsSet;
 
@@ -365,7 +366,9 @@ class StepsSet;
     classad::ClassAd   *js_pairs;              /**< The set of <var, value> pairs defined by the user. */  
   };
 
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite
 
 #endif // EDG_WORKLOAD_CHECKPOINTING_JOBSTATE_H
 

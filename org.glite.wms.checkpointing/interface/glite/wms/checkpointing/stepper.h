@@ -19,9 +19,10 @@
 
 #include <vector>
 #include <string>
-#include <glite/wms/checkpointing/checkpointing_namespace.h>
 
-CHKPT_NAMESPACE_BEGIN { 
+namespace glite {
+namespace wms {
+namespace checkpointing {
 
   /**
    *  \brief Provides the iterator.
@@ -125,7 +126,9 @@ CHKPT_NAMESPACE_BEGIN {
     
   };
   
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite
 
 #endif // EDG_WORKLOAD_CHECKPOINTING_STEPPER_H
 

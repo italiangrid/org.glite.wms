@@ -18,10 +18,11 @@
 #ifndef EDG_WORKLOAD_CHECKPOINTING_ERROR_CODE_H
 #define EDG_WORKLOAD_CHECKPOINTING_ERROR_CODE_H
 
-#include "glite/wms/checkpointing/checkpointing_namespace.h"
 #include "glite/wmsutils/exception/exception_codes.h"
 
-CHKPT_NAMESPACE_BEGIN {
+namespace glite {
+namespace wms {
+namespace checkpointing {
   
   /**
    * \brief A list of errors return by some methods of the JobState class.
@@ -42,7 +43,8 @@ CHKPT_NAMESPACE_BEGIN {
     CHKPT_NotAuth,         /**< \b 11 - User are not authorized to save this State (only for partitionable)*/ 
   };
 
-
-} CHKPT_NAMESPACE_END;
+} // checkpointing
+} // wms
+} // glite 
 
 #endif
