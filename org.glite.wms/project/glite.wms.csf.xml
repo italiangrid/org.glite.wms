@@ -20,9 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.15  2004/05/13 23:07:19  dimeglio
+	Added ant-contrib target
+	Replaced workspace.abs.dir with workspace.dir
+
 	Revision 1.14  2004/05/13 19:37:04  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
-
+	
 	Revision 1.13  2004/05/13 18:35:11  flammer
 	Added missing dependencies. Deleted duplicated external dependencies.
 	
@@ -112,7 +116,7 @@
 	<condition property="glite.uptodate">
 		<and>
 			<isfalse value="${update}" />
-			<available file="${workspace.abs.dir}/org.glite" type="dir" />
+			<available file="${workspace.dir}/org.glite" type="dir" />
 		</and>
 	</condition>
 
@@ -213,6 +217,7 @@
 					 				 junit,
  									 checkstyle,
  									 jalopy,
+ 									 ant-contrib,
  									 cpptasks"/>		
 
 	<!-- Check if junit is already installed -->
@@ -258,7 +263,6 @@
 		</uptodate>
 		<antcall target="jalopy-expand" />
 	</target>
-	
  	<target name="jalopy-expand" if="jalopy.old"		
  	 			description="Untar jalopy tarball.">		
 		<untar compression="gzip" src="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}"
@@ -268,6 +272,16 @@
 				<exclude name="${ext.jalopy.rep-file}" />
 			</fileset>
 		</touch>
+	</target>
+	
+	<!--  Ant Contributions -->
+ 	<target name="ant-contrib"
+ 			description="Install ant-contrib.">		
+		<mkdir dir="${repository}/${ext.ant-contrib.subpath}" />
+		<get src="${ext.ant-contrib.rep-url}"
+			 dest="${repository}/${ext.ant-contrib.subpath}/${ext.ant-contrib.rep-file}"
+			 verbose="on"
+			 usetimestamp="true" />
 	</target>
 	
 	<!--  CPPTasks -->
@@ -303,7 +317,7 @@
  	<target name="thirdparty-globus_ssl_utils">		
 		<cvs command="checkout"
 			package="org.glite.wms.thirdparty-globus_ssl_utils"
-			dest="${workspace.abs.dir}"
+			dest="${workspace.dir}"
 			tag="${org.glite.wms.thirdparty-globus_ssl_utils.version}"/>
 	</target>
 	
@@ -311,7 +325,7 @@
  	<target name="thirdparty-bypass">		
 		<cvs command="checkout"
 			package="org.glite.wms.thirdparty-bypass"
-			dest="${workspace.abs.dir}"
+			dest="${workspace.dir}"
 			tag="${org.glite.wms.thirdparty-bypass.version}"/>
 	</target>
 	
@@ -319,7 +333,7 @@
  	<target name="thirdparty-globus_gridftp_server" depends="globus">		
 		<cvs command="checkout"
 			package="org.glite.wms.thirdparty-globus_gridftp_server"
-			dest="${workspace.abs.dir}"
+			dest="${workspace.dir}"
 			tag="${org.glite.wms.thirdparty-globus_gridftp_server.version}"/>
 	</target>
 	
@@ -327,7 +341,7 @@
  	<target name="thirdparty-loki">		
 		<cvs command="checkout"
 			package="org.glite.wms.thirdparty-loki"
-			dest="${workspace.abs.dir}"
+			dest="${workspace.dir}"
 			tag="${org.glite.wms.thirdparty-loki.version}"/>
 	</target>
 	
@@ -335,7 +349,7 @@
  	<target name="common" depends="boost,classads,globus">		
 		<cvs command="checkout"
 			package="org.glite.wms.common"
-			dest="${workspace.abs.dir}"
+			dest="${workspace.dir}"
 			tag="${org.glite.wms.common.version}"/>
 	</target>
 	
@@ -343,7 +357,7 @@
  	<target name="jcommon" depends="jclassads">		
 		<cvs command="checkout"
 			package="org.glite.wms.jcommon"
-			dest="${workspace.abs.dir}"
+			dest="${workspace.dir}"
 			tag="${org.glite.wms.jcommon.version}"/>
 	</target>
 	
