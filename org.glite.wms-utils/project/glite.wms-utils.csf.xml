@@ -14,18 +14,16 @@
 
 	GLite Middleware WMS Configuration Specification File
 	
-	Authors: Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>		
+	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
+	         Joachim Flammer <Joachim.Flammer@cern.ch>
 	Version info: $Id$
 	Release: $Name$
 
 	Revision history:
 	$Log$
-	Revision 1.1  2004/07/23 08:08:17  eronchie
-	Changed file name
+	Revision 1.2  2004/07/23 08:27:03  eronchie
+	Updated
 
-	Revision 1.1.1.1  2004/07/21 16:32:21  eronchie
-	Start adding new subsystem
-	
 	
 -->
 
@@ -126,10 +124,7 @@
 		<condition property="jobid.head">
                         <equals arg1="${org.glite.wms-utils.jobid.version}" arg2="HEAD" />
                 </condition>
-
-		<condition property="exception.head">
-			<equals arg1="${org.glite.wms-utils.exception.version}" arg2="HEAD" />
-		</condition>
+    	</target>
 
     	<presetdef name="cvs-co">
 		<cvs command="checkout" dest="${workspace.dir}" />
@@ -217,16 +212,16 @@
                     tag="${org.glite.wms-utils.jobid.version}" />
     	</target>
 
-	<!-- Exception -->
- 	<target name="exception" depends="boost,classads,get.exception.head, get.exception.tag"/>
-	<target name="get.exception.head" if="exception.head">
-		<cvs-co package="org.glite.wms-utils.exception" />
-	</target>
-	<target name="get.exception.tag" unless="exception.head">
-		<cvs-co package="org.glite.wms-utils.exception"
-			tag="${org.glite.wms-utils.exception.version}" />
-	</target>
-
+	<!-- exception -->
+        <target name="exception" depends="get.exception.head, get.exception.tag"/>
+        <target name="get.exception.head" if="exception.head">
+            <cvs-co package="org.glite.wms-utils.exception" />
+        </target>
+        <target name="get.exception.tag" unless="exception.head">
+            <cvs-co package="org.glite.wms-utils.exception"
+                    tag="${org.glite.wms-utils.exception.version}" />
+        </target>	
+		
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-globus_ssl_utils,
 				        tls,
