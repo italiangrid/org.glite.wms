@@ -11,10 +11,6 @@ lib_LTLIBRARIES    = libglite_wmsutils_exception.la
 libglite_wmsutils_exception_la_SOURCES = \
 	Exception.cpp
 
-utilitiesincludedir = $(includedir)/glite/wmsutils/exception
-utilitiesinclude_HEADERS = \
-	utils.h 
-
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src 
 
