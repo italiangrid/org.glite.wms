@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.12  2004/09/21 19:22:09  glbuild
+#       modified module.version
+#
 #       Revision 1.11  2004/08/17 13:46:28  eronchie
 #       Added interface
 #
@@ -42,7 +45,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Jobid], [0.0.0])
+AC_INIT([GLite WMS Utils Jobid], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobid/strmd5.h])
@@ -113,3 +116,4 @@ AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/jobid/Makefile])
 
 AC_OUTPUT
+
