@@ -14,8 +14,8 @@
  * \author Alessio Gianelle <gianelle@pd.infn.it>
 */
 
-#ifndef EDG_WORKLOAD_CHECKPOINTING_STEPPER_H
-#define EDG_WORKLOAD_CHECKPOINTING_STEPPER_H
+#ifndef GLITE_WMS_CHECKPOINTING_STEPPER_H
+#define GLITE_WMS_CHECKPOINTING_STEPPER_H
 
 #include <vector>
 #include <string>
@@ -130,7 +130,7 @@ namespace checkpointing {
 } // wms
 } // glite
 
-#endif // EDG_WORKLOAD_CHECKPOINTING_STEPPER_H
+#endif // GLITE_WMS_CHECKPOINTING_STEPPER_H
 
 //  Local Variables:
 //  mode: c++

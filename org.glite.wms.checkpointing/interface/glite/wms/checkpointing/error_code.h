@@ -15,8 +15,8 @@
  * \author Alessio Gianelle <gianelle@pd.infn.it>
 */
 
-#ifndef EDG_WORKLOAD_CHECKPOINTING_ERROR_CODE_H
-#define EDG_WORKLOAD_CHECKPOINTING_ERROR_CODE_H
+#ifndef GLITE_WMS_CHECKPOINTING_ERROR_CODE_H
+#define GLITE_WMS_CHECKPOINTING_ERROR_CODE_H
 
 #include "glite/wmsutils/exception/exception_codes.h"
 

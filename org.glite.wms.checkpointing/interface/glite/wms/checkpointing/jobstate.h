@@ -14,8 +14,8 @@
  * \author Alessio Gianelle <gianelle@pd.infn.it>
 */
 
-#ifndef EDG_WORKLOAD_CHECKPOINTING_JOBSTATE_H
-#define EDG_WORKLOAD_CHECKPOINTING_JOBSTATE_H
+#ifndef GLITE_WMS_CHECKPOINTING_JOBSTATE_H
+#define GLITE_WMS_CHECKPOINTING_JOBSTATE_H
 
 #include <string>
 #include <vector>
@@ -370,7 +370,7 @@ class StepsSet;
 } // wms
 } // glite
 
-#endif // EDG_WORKLOAD_CHECKPOINTING_JOBSTATE_H
+#endif // GLITE_WMS_CHECKPOINTING_JOBSTATE_H
 
 //  Local Variables:
 //  mode: c++

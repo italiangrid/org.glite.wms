@@ -21,15 +21,15 @@
  * \author Alessio Gianelle <gianelle@pd.infn.it>
 */
 
-#ifndef EDG_WORKLOAD_CHECKPOINTING_CHKPT_H
-#define EDG_WORKLOAD_CHECKPOINTING_CHKPT_H
+#ifndef GLITE_WMS_CHECKPOINTING_CHKPT_H
+#define GLITE_WMS_CHECKPOINTING_CHKPT_H
 
 #include <glite/wms/checkpointing/step.h>
 #include <glite/wms/checkpointing/stepper.h>
 #include <glite/wms/checkpointing/jobstate.h>
 #include "glite/wms/checkpointing/ChkptException.h"
 
-#endif // EDG_WORKLOAD_CHECKPOINTING_CHKPT_H
+#endif // GLITE_WMS_CHECKPOINTING_CHKPT_H
 
 //  Local Variables:
 //  mode: c++
