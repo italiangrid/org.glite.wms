@@ -10,13 +10,12 @@
 #include <algorithm>
 #include <vector>
 
-#include "edg/workload/planning/broker/stochasticRankSelector.h"
+#include "stochasticRankSelector.h"
 
 using namespace std;
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
 namespace broker {
 
 namespace 
@@ -73,6 +72,5 @@ matchmaking::match_const_iterator stochasticRankSelector::selectBestCE(const mat
 }	
 
 }; // namespace broker
-}; // namespace planning
-}; // workload
-}; // edg
+}; // namespace wms
+}; // namespace glite

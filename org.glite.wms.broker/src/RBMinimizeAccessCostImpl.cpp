@@ -15,14 +15,14 @@
 #include <boost/tuple/tuple.hpp>
 #include <classad_distribution.h>
 
-#include "glite/wms/common/requestad/ManipulationExceptions.h"
-#include "glite/wms/common/requestad/JobAdManipulation.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/wms/jdl/JobAdManipulation.h"
 
 #include "glite/wms/matchmaking/matchmakerGlueImpl.h"
 #include "glite/wms/matchmaking/glue_attributes.h"
 #include "glite/wms/matchmaking/jdl_attributes.h"
-#include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
-#include "glite/wms/broker/utility.h"
+#include "RBMinimizeAccessCostImpl.h"
+#include "utility.h"
 #include "glite/wms/rls/ReplicaServiceReal.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"

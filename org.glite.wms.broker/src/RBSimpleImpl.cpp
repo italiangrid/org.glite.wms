@@ -17,8 +17,8 @@
 #include "glite/wms/matchmaking/matchmakerGlueImpl.h"
 #include "glite/wms/matchmaking/glue_attributes.h"
 #include "glite/wms/matchmaking/jdl_attributes.h"
-#include "glite/wms/broker/RBSimpleImpl.h"
-#include "glite/wms/broker/utility.h"
+#include "RBSimpleImpl.h"
+#include "utility.h"
 
 using namespace std;
 

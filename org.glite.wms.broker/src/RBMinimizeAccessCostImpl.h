@@ -8,7 +8,7 @@
 #ifndef _GLITE_WMS_BROKER_RBMINIMIZEACCESSCOSTIMPL_H_
 #define _GLITE_WMS_BROKER_RBMINIMIZEACCESSCOSTIMPL_H_
 
-#include "glite/wms/broker/ResourceBroker.h"
+#include "ResourceBroker.h"
 #include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 

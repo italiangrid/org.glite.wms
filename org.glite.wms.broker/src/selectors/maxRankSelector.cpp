@@ -11,7 +11,7 @@
 #include <boost/random/uniform_smallint.hpp>
 
 #include <vector>
-#include "glite/wms/broker/maxRankSelector.h"
+#include "maxRankSelector.h"
 
 using namespace std;
 

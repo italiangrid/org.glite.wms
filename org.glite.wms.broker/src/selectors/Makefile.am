@@ -11,16 +11,19 @@ noinst_LTLIBRARIES = libglide_wms_broker_selectors.la
 noinst_HEADERS = \
 	maxRankSelector.h \
 	RBSelectionSchema.h \
-	stochasticRankSelector.h \
+	stochasticRankSelector.h 
 
 libglide_wms_broker_selectors_la_SOURCES = \
 	RBSelectionSchema.cpp \
 	maxRankSelector.cpp \
 	stochasticRankSelector.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/selectors \
+	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_MATCHMAKING_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GLOBUS_LDAP_CFLAGS) \
 	$(CLASSAD_CFLAGS)
  
 MAINTAINERCLEANFILES = Makefile.in

@@ -8,8 +8,8 @@
 #ifndef _GLITE_WMS_BROKER_RESOURCEBROKER_H_
 #define _GLITE_WMS_BROKER_RESOURCEBROKER_H_
 
-#include "glite/wms/broker/matchmaking/matchmaker.h"
-#include "glite/wms/broker/RBSelectionSchema.h"	
+#include "glite/wms/matchmaking/matchmaker.h"
+#include "selectors/RBSelectionSchema.h"	
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>

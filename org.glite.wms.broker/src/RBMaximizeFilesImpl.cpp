@@ -14,8 +14,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include "glite/wms/common/requestad/ManipulationExceptions.h"
-#include "glite/wms/common/requestad/JobAdManipulation.h"
+#include "glite/wms/jdl/requestad/ManipulationExceptions.h"
+#include "glite/wms/jdl/requestad/JobAdManipulation.h"
 
 #include "glite/wms/matchmaking/matchmakerGlueImpl.h"
 #include "glite/wms/matchmaking/glue_attributes.h"

@@ -9,11 +9,12 @@
 
 # ifndef GLITE_WMS_BROKER_SELECTORS_RBSELECTIONSCHEMA_H_
 # define GLITE_WMS_BROKER_SELECTORS_RBSELECTIONSCHEMA_H_
+
 # include <boost/utility.hpp>
 # include <boost/thread/mutex.hpp>
 # include <map>
 # include <vector>
-# include "glite/wms/matchmaking/matchmaker.h"
+# include <glite/wms/matchmaking/matchmaker.h>
 
 namespace matchmaking = glite::wms::matchmaking;
 

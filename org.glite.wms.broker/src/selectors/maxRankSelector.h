@@ -8,7 +8,7 @@
 #ifndef GLITE_WMS_BROKER_SELECTORS_MAXRANKSELECTOR_H_
 #define GLITE_WMS_BROKER_SELECTORS_MAXRANKSELECTOR_H_
 
-#include "glite/wms/broker/RBSelectionSchema.h"
+#include "RBSelectionSchema.h"
 
 namespace matchmaking = glite::wms::matchmaking;
 

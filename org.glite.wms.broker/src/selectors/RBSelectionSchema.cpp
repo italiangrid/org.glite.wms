@@ -5,9 +5,9 @@
 
 // $Id$ 
 
-#include "glite/wms/broker/RBSelectionSchema.h"
-#include "glite/wms/broker/maxRankSelector.h"
-#include "glite/wms/broker/stochasticRankSelector.h"
+#include "RBSelectionSchema.h"
+#include "maxRankSelector.h"
+#include "stochasticRankSelector.h"
 
 #include <string>
 #include <map>
