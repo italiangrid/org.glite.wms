@@ -17,8 +17,11 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.1  2004/09/21 12:02:49  eronchie
-#       Initial revision
+#       Revision 1.2  2004/10/25 15:51:50  eronchie
+#       Added LICENSE file
+#
+#       Revision 1.1.1.1  2004/09/21 12:02:49  eronchie
+#       Moved ism from manager component into the new component ism
 #
 #
 #
@@ -32,6 +35,11 @@
 ## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = interface src 
