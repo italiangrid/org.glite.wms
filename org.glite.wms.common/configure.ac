@@ -41,18 +41,46 @@ AC_SUBST(WORKDIR)
 
 REPOSITORY=`pwd`/../../repository
 
-BOOST_CPPFLAGS=-I$REPOSITORY/boost/include
+BOOST_CFLAGS=-I$REPOSITORY/boost/include
+AC_SUBST([BOOST_CFLAGS])
+BOOST_CPPFLAGS=$BOOST_CFLAGS
 AC_SUBST([BOOST_CPPFLAGS])
 BOOST_LIBS="-L$REPOSITORY/boost/lib/release -lboost_fs -lboost_thread -lpthread -lboost_regex -lc"
 AC_SUBST([BOOST_LIBS])
 
-CLASSAD_CPPFLAGS=-I$REPOSITORY/classads/include
+CLASSAD_CFLAGS=-I$REPOSITORY/classads/include
+AC_SUBST([CLASSAD_CFLAGS])
+CLASSAD_CPPFLAGS=$CLASSAD_CFLAGS
 AC_SUBST([CLASSAD_CPPFLAGS])
 CLASSAD_LIBS="-L$REPOSITORY/classads/lib -lclassad"
 AC_SUBST([CLASSAD_LIBS])
 
-GLOBUS_CPPFLAGS=-I$REPOSITORY/globus/include/gcc32
+GLOBUS_SSL_UTILS_CFLAGS="-I\$(top_builddir)/../../org.egee/interface/org.egee.test3.wms.thirdparty-globus_ssl_utils"
+AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
+GLOBUS_SSL_UTILS_LIBS="-L\$(top_builddir)/../../org.egee/lib/org.egee.test3.wms.thirdparty-globus_ssl_utils -lglobus_ssl_utils"
+AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
+
+GLOBUS_COMMON_NOTHR_LIBS="-L$REPOSITORY/globus/lib -lglobus_common_gcc32"
+AC_SUBST([GLOBUS_COMMON_NOTHR_LIBS])
+GLOBUS_COMMON_THR_LIBS="-L$REPOSITORY/globus/lib -lglobus_common_gcc32pthr"
+AC_SUBST([GLOBUS_COMMON_THR_LIBS])
+
+GLOBUS_FTP_CLIENT_NOTHR_LIBS="-L$REPOSITORY/globus/lib -lglobus_ftp_client_gcc32"
+AC_SUBST([GLOBUS_FTP_CLIENT_NOTHR_LIBS])
+GLOBUS_FTP_CLIENT_THR_LIBS="-L$REPOSITORY/globus/lib -lglobus_ftp_client_gcc32pthr"
+AC_SUBST([GLOBUS_FTP_CLIENT_THR_LIBS])
+ 
+GLOBUS_SSL_NOTHR_LIBS="-L$REPOSITORY/globus/lib -lssl_gcc32 -lcrypto_gcc32"
+AC_SUBST([GLOBUS_SSL_NOTHR_LIBS])
+GLOBUS_SSL_THR_LIBS="-L$REPOSITORY/globus/lib -lssl_gcc32pthr -lcrypto_gcc32pthr"
+AC_SUBST([GLOBUS_SSL_THR_LIBS])
+
+GLOBUS_CFLAGS=-I$REPOSITORY/globus/include/gcc32
+AC_SUBST([GLOBUS_CFLAGS])
+GLOBUS_CPPFLAGS=$GLOBUS_CFLAGS
 AC_SUBST([GLOBUS_CPPFLAGS])
+GLOBUS_LIBS="-L$REPOSITORY/globus/lib -lglobus_gass_copy_gcc32 -lglobus_ftp_client_gcc32 -lglobus_gass_transfer_gcc32 -lglobus_ftp_control_gcc32 -lglobus_io_gcc32 -lglobus_gss_assist_gcc32 -lglobus_gssapi_gsi_gcc32 -lglobus_gsi_proxy_core_gcc32 -lglobus_gsi_credential_gcc32 -lglobus_gsi_callback_gcc32 -lglobus_oldgaa_gcc32 -lglobus_gsi_sysconfig_gcc32 -lglobus_gsi_cert_utils_gcc32 -lglobus_openssl_error_gcc32 -lglobus_openssl_gcc32 -lglobus_proxy_ssl_gcc32 -lssl_gcc32 -lcrypto_gcc32 -lglobus_common_gcc32"
+AC_SUBST([GLOBUS_LIBS])
 
 # Checks for programs.
 AC_PROG_CC
@@ -97,5 +125,13 @@ AC_CONFIG_FILES([src/configuration/Makefile])
 AC_CONFIG_FILES([src/ldif2classad/Makefile])
 AC_CONFIG_FILES([src/logger/Makefile])
 AC_CONFIG_FILES([src/utilities/Makefile])
-                                                                                                                                                             
+AC_CONFIG_FILES([src/socket++/Makefile])
+AC_CONFIG_FILES([src/task/Makefile])
+AC_CONFIG_FILES([src/requestad/Makefile])
+AC_CONFIG_FILES([src/process/Makefile])
+AC_CONFIG_FILES([src/programs/Makefile])
+AC_CONFIG_FILES([src/ssl_helpers/Makefile])
+AC_CONFIG_FILES([src/jobid/Makefile])
+AC_CONFIG_FILES([test/Makefile])
+
 AC_OUTPUT
