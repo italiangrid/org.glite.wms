@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.27  2004/10/26 13:24:49  dimeglio
+	Fixed spelling error in envchecks
+
 	Revision 1.26  2004/10/25 21:01:13  dimeglio
 	Use antExec
-
+	
 	Revision 1.25  2004/10/13 16:51:27  dimeglio
 	Removed duplicate targets (cli-python, partitioner)
 	
@@ -237,7 +240,7 @@
 		</antcall>
 	</target>
 
-	<target name="clean">
+	<target name="clean" depends="envcheck">
 
 		<property name="offline.repository" value="true" />
 		<antcall target="buildmodules">
@@ -252,11 +255,7 @@
 
 	</target>
 
-	<target name="cleanAll" depends="localinit">
-		<antcall target="buildmodules">
-			<param name="target" value="cleanAll"/>
-		</antcall>
-	</target>
+	<target name="cleanAll" depends="clean"/>
 
 	<!-- ===============================================
 		 Private targets
