@@ -7,7 +7,7 @@
  * Contributors are mentioned in the code where appropriate.
  */
 
-#include "edg/workload/common/utilities/Exceptions.h"
+#include "glite/wmsutils/exception/Exceptions.h"
 #include "glite/wms-ui/api/exception_codes.h"
 
 // EWC_BEGIN_NAMESPACE; // NameSpace Definition
@@ -19,7 +19,7 @@ USERINTERFACE_NAMESPACE_BEGIN//Defining UserInterFace NameSpace
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
-class CredentialException : public  glite::wmsustils::exception::Exception{
+class CredentialException : public  glite::wmsutils::exception::Exception{
 public:
    /**
    * Update all mandatory Exception Information
