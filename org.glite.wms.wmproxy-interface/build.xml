@@ -80,7 +80,6 @@
 	     ============================================== -->
 	
 	<target name="localinit"
-		depends="wsdl.wsi.check,wsdl.doc"
 		description="Module specific initialization tasks">
 
                 <!-- Set compile classpaths -->
