@@ -62,12 +62,31 @@ namespace server {
 	      commands::CommandFactory<commands::CommandFactoryServerImpl> factory;
 	      bool is_forwarded = false;
 	      try {
-	      		std::cerr<<"----- cmdname: "<<cmdname<<std::endl;
-	      		
+		      std::cerr<<"----- cmdname: "<<cmdname<<std::endl;
+	      	      bool param_err = false;
 		      cmd =  factory.create(cmdname, param);
-		      // cmd -> serialize( agent );
 		      // Serialize parameters
-		      // to be done
+	              if (param.size() = 0) {
+			  param_err = true;
+		      } else if (cmdname == "JobSubmit" || cmdname == "DagSubmit") {
+			  cmd -> setParam("jdl", param[0]);
+		      } else if (cmdname == "ListJobMatch" )  {
+			    if (param.size > 1) {
+                      	        cmd -> setParam("jdl", param[0]);
+                                cmd -> setParam("ListMatchPath", param[1]);
+                            } else {
+                                param_err = true;
+                            }
+                      } else if (cmdname == "JobCancel") {
+                            cmd -> setParam("JobId", param[0]);
+                      }
+
+		      if (param_err) {
+                            fault.code = glite::wms::wmproxy::server::WMS_INVALID_ARGUMENT;
+                            fault.message = std::string(GLITE_WMS_WMPPARAMERROR);
+                            edglog(critical) << "Error during MatchMaking:\n\t" << temp_list[1] << std::endl;
+    			    return fault;
+                      }
 
 		      assert( !cmd -> isDone() );
 		      do {
@@ -147,8 +166,8 @@ namespace server {
                         // Fill result struct with data
                       } else if (cmdname == "JobCancel") {
                         // Fill result struct with data
-                        cmd -> setParam("Ciccio", "PincoPallo");
-		        cmd -> getParam("JobId", ((jobSubmitResponse*)result)->jobIdStruct->id);
+                        // cmd -> setParam("Ciccio", "PincoPallo");
+		        // cmd -> getParam("JobId", ((jobSubmitResponse*)result)->jobIdStruct->id);
                       }
 
                       // Here we should log the attribute list returned.
