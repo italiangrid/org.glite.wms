@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/10 06:44:36  eronchie
+#       Removed AC_GLITE_WMS_COMMON
+#       It is not necessary
+#
 #       Revision 1.2  2004/06/30 08:35:15  monforte
 #       Initial MatchMaking porting to new build system
 #
@@ -93,7 +97,6 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 AC_GLITE
-AC_GLITE_WMS_COMMON
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
