@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/08/27 13:34:32  eronchie
+#       Added handling of config dir
+#       Added start up script file
+#
 #       Revision 1.3  2004/08/09 07:45:06  eronchie
 #       Updated
 #       WARNING: work in progress
@@ -139,6 +143,8 @@ AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([config/Makefile])
+AC_CONFIG_FILES([config/glite-wms-wm])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/common/Makefile])
 AC_CONFIG_FILES([src/daemons/Makefile])

@@ -1,0 +1,151 @@
+#!/bin/sh
+
+# File: edg-wl-wm
+# Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
+# Copyright (c) 2002 EU DataGrid.
+# For license conditions see http://www.eu-datagrid.org/license.html
+#
+# Description: start, stop, status of the EDG workload manager daemon
+#
+# $Id$
+
+# chkconfig: 345 94 06 
+EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
+
+. ${EDG_WL_LOCATION}/etc/edg-wl-vars.sh
+. ${EDG_WL_LOCATION}/libexec/edg-wl-services-certs.sh
+. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
+. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl-config.sh
+ 
+this_script_name=$0
+
+program_name=edg-wl-workload_manager
+binpath=${EDG_WL_LOCATION}/bin/${program_name}
+pid_file=${EDG_WL_TMP}/${program_name}.pid
+
+#set -x
+
+running()
+{
+    # no pidfile
+    if [ ! -r ${pid_file} ]; then
+        return 3
+    fi
+
+    pid=`cat ${pid_file} 2> /dev/null`
+
+    # no pid
+    if [ -z "${pid}" ]; then
+        return 1
+    fi
+    
+    local cmdline=`ps hwwwp ${pid} o command` # BSD style
+    local cmd=`echo ${cmdline} | awk '{print $1}'` # beware of white spaces in the command
+
+    # no workload_manager?
+    if [ "${cmd}" != "${binpath}" ]; then
+        # maybe the process has been swapped out
+        # the command name (the first 15 chars) appears between []
+        local expected_cmd="[`echo ${program_name} | cut -c1-15`]"
+        if [ "${cmd}" != "${expected_cmd}" ]; then
+            return 1;
+        fi
+    fi
+
+    return 0
+}
+
+ret_code=0
+
+start()
+{
+    conf_file=edg_wl.conf
+    parse_attribute=WorkloadManager
+    . ${EDG_WL_LOCATION}/libexec/edg-wl-parse-configuration.sh ${conf_file} ${parse_attribute}
+
+    echo -n "starting workload manager... "
+    if running; then
+        echo "ok (already running)"
+    else
+        rm -f ${pid_file}
+        ${binpath} --daemon ${pid_file} > /dev/null 2>&1
+        # there is a race condition due to some delay between becoming
+        # a daemon (hence returning control to this script) and
+        # writing the pid file; the following sleep should be enough
+        # to get around it
+        sleep 1
+        if running; then
+            echo "ok"
+        else
+            echo "failure"
+            ret_code=1
+        fi
+    fi
+}
+
+stop()
+{
+    echo -n "stopping workload manager... "
+    if running; then
+        pid=`cat ${pid_file} 2> /dev/null`
+        kill ${pid}
+        sleep 2
+        if running; then
+            kill -9 ${pid}
+            sleep 2
+            if running; then
+                echo "failure (stop it manually)"
+                ret_code=1
+            else
+                echo "ok"
+            fi
+        else
+            echo "ok"
+            rm -f ${pid_file}
+        fi
+    else
+        echo "ok (was not running)"
+    fi
+}
+
+status()
+{
+    running
+    RETVAL=$?
+    if [ ${RETVAL} -eq 0 ]; then
+        pid=`cat ${pid_file} 2> /dev/null`
+        echo "${binpath} (pid ${pid}) is running..."
+    else
+        echo "${binpath} is not running"
+    fi
+    return ${RETVAL}
+}
+
+usage()
+{
+    echo "Usage: ${this_script_name} {start|stop|restart|status}"
+}
+
+case $1 in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        if [ ${ret_code} -eq 0 ]; then
+            start
+        fi     
+        ;;
+    status)
+        status
+        ret_code=$?
+        ;;
+    *)
+        usage
+        ret_code=1
+esac
+
+exit ${ret_code}
