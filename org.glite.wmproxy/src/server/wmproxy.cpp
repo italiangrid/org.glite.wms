@@ -5,106 +5,76 @@
 */
 
 #include "wmproxy.h"
-
 // Fast CGI
 #include <fcgi_stdio.h>
 #include "fcgio.h"
 #include "fcgi_config.h"
-
 // gSOAP
 #include "WMProxy.nsmap"
 #include "soapWMProxyObject.h"
-
 // Logging
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
 #include "commands/logging.h"
-
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-
-//#include "glite/wms/common/utilities/FileList.h"
-//#include "glite/wms/common/utilities/FileListLock.h"
-
 // Exceptions
 #include "wmpexception_codes.h"
-
 #include "glite/wmsutils/jobid/JobId.h"
-
 #include "wmpoperations.h"
-
 #include "wmpdispatcher.h"
-
+#include "wmpconfiguration.h"
 #include "wmputils.h"
-
-
 #include <iostream>
 #include <string>
 #include <vector>
-
-// Boost
-#include <boost/pool/detail/singleton.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-
 
 namespace utilities  = glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
+using namespace boost::details::pool ;
 using namespace std;
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
-std::string opt_conf_file("glite_wms.conf");
 
+std::string opt_conf_file("glite_wms.conf");
 int
 main(int argc, char* argv[])
 {
 	int m, s;
 	struct soap *soap;
 	char msg[100];
-
 	try {
-		configuration::NSConfiguration const* wmp_config= NULL ;
-		configuration::Configuration config(opt_conf_file, configuration::ModuleType::network_server);
-		wmp_config =config.ns();
-
-/*
-configuration::Configuration config_3(opt_conf_file, configuration::ModuleType::network_server);
-configuration::NSConfiguration const* const wmp_config_3(config_3.ns());
-cout << "wmp_config_3(config.ns())>>>>" << wmp_config_3->log_level()  <<endl ;
-*/
-
-		logger::threadsafe::edglog.open( wmp_config->log_file(),
-						static_cast<logger::level_t>(wmp_config->log_level()) );
+		singleton_default<WmproxyConfiguration>::instance().init(opt_conf_file, configuration::ModuleType::network_server);
+		logger::threadsafe::edglog.open( singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file(),
+				static_cast<logger::level_t>(singleton_default<WmproxyConfiguration>::instance().wmp_config->log_level()) );
 		edglog_fn("   WMProxy::main");
-		edglog(fatal) << "Dispatcher= " << wmp_config->dispatcher_threads() << endl ;
 		edglog(fatal) << "--------------------------------------" << endl;
 		// Open log file destination:
 		if (logger::threadsafe::edglog.activate_log_rotation (
-			wmp_config->log_file_max_size(),
-			wmp_config->log_rotation_base_file(),
-			wmp_config->log_rotation_max_file_number())) {
-				cout << "Unable to create default log file: " << endl <<  wmp_config->log_rotation_base_file() << endl ;
+			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file_max_size(),
+			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_base_file(),
+			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_max_file_number())) {
+				cout << "Unable to create default log file: " << endl <<  singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_base_file() << endl ;
 				cerr << "System exiting..."<< endl ;
 				return 1;
 		}
 		if (argc < 3) {
                         // Run as a FastCGI script
 			edglog(fatal) << "Running as a FastCGI program" << endl;
-			//waitForSeconds(5);
 			int thread_number;
 			try {
-				thread_number =  wmp_config->dispatcher_threads() ;
+				thread_number =  singleton_default<WmproxyConfiguration>::instance().wmp_config->dispatcher_threads() ;
 		    	} catch ( configuration::InvalidExpression &error ) {
-		      		edglog(fatal) << "Invalid Expression: " << error << std::endl;
-		      		std::cout << "Invalid Expression: " << error << std::endl;
+		      		edglog(fatal) << "ERROR: Unable to read value from Configuration file" << error << std::endl;
+				return 1;
 		    	}
 			task::Pipe<classad::ClassAd*> pipe;
 			WMPDispatcher dispatcher;
