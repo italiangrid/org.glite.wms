@@ -20,9 +20,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/05/14 00:24:34  dimeglio
+	Added command to load the system build.properties file before
+	loading the subsystem and global properties, but after baseline
+	and user properties
+	Removed references to local versions of global-only objects
+
 	Revision 1.5  2004/05/13 19:37:14  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
-
+	
 	Revision 1.4  2004/05/13 14:53:59  flammer
 	Moved to new variable naming & including style.
 	
@@ -47,7 +53,9 @@
 	<!-- =========================================
 	     Import properties (order is important)
 		 ========================================= -->
-	<import file="../org./project/baseline.properties.xml" />
+	<import file="../org.glite/project/baseline.properties.xml" />
+	<property file="./project/build.properties"/>
+	<property file="${subsystem.project.dir}/build.properties"/>
 	<import file="./project/properties.xml" />	
 	<import file="${subsystem.properties.file}" />
 	<import file="${global.properties.file}" />
@@ -56,26 +64,21 @@
 		 Load dependency property files (order is important)
 		 ========================================= -->
 	<property file="${user.dependencies.file}"/>
-	<property file="${component.dependencies.file}"/>
-	<property file="${subsystem.dependencies.file}"/>
 	<property file="${global.dependencies.file}"/>
 	
 	<!-- =========================================
 		 Import external dependencies files (order is important) 
 		========================================= -->
-	<!-- <import file="${component.external-dependencies.file}"/> -->
-	<!-- <import file="${subsystem.external-dependencies.file}"/> -->
 	<import file="${global.external-dependencies.file}"/>	
 	
 	<!-- =========================================
 		 Import task definitions (order is important)
 		 ========================================= -->
-	<!-- <import file="${component.taskdefs.file}" /> -->
 	<import file="${subsystem.taskdefs.file}" />
 	<import file="${global.taskdefs.file}" />
 			
 	<!-- =========================================
-		 Load common targets file (order is important)
+		 Load common targets file for this module type
 		 ========================================= -->
 	<import file="${global.targets-cpp.file}" />
 	
