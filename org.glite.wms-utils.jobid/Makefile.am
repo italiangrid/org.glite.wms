@@ -35,7 +35,7 @@ stage:
         fi; test -z "$$fail"
 
 distsrc: dist
-	mv $(distdir).tar.gz $(DISTBIN)/$(distdir)_src.tar.gz
+	mv $(distdir).tar.gz $(DISTTAR)/$(distdir)_src.tar.gz
 
 distbin:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
@@ -58,7 +58,7 @@ distbin:
           $(MAKE) $(AM_MAKEFLAGS) "$$target-am" $$prefix_arg || exit 1; \
         fi; test -z "$$fail"; \
 	pushd $$tmpdistbin; \
-	$(AMTAR) -zcf $(DISTBIN)/$(distdir)_bin.tar.gz .; \
+	$(AMTAR) -zcf $(DISTTAR)/$(distdir)_bin.tar.gz .; \
 	popd; \
 	rm -rf $$tmpdistbin
 	
