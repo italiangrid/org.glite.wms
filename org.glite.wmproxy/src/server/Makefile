@@ -76,8 +76,8 @@ LDFLAGS= \
 	-lglite_wms_conf \
 	-lglite_wmsutils_exception \
 	-lglite_wmsui_partitioner \
-	-lglitePipe \
-	-lgliteWMPCommands \
+	-lglite_wms_wmproxy_pipe \
+	-lglite_wms_wmproxy_commands \
 	-lglite_wms_wmproxy_utilities \
 	-lglite_wms_wmproxy_eventlogger \
 	-lglite_wms_wmproxy_authorizer \
