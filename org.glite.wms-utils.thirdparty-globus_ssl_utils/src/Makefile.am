@@ -15,7 +15,7 @@ libglobus_ssl_utils_la_SOURCES = \
 	sslutils.c
 libglobus_ssl_utils_la_LIBADD = ${top_builddir}/src/oldgaa/libglobus_oldgaa.la
 
-globus_ssl_utilsincludedir = $(includedir)/glite/wms/thirdparty/globus_ssl_utils
+globus_ssl_utilsincludedir = $(includedir)/glite/wmsutils/thirdparty/globus_ssl_utils
 globus_ssl_utilsinclude_HEADERS = \
 	scutils.h \
 	sslutils.h
