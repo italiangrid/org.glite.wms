@@ -5,6 +5,7 @@
 ## * http://www.edg.org/license.html
 ## *
 ## *********************************************************************
+CXXFLAGS = -g
 
 MNGR_COMMON = $(top_builddir)/src/common/libglite_wms_manager_common.la
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
@@ -25,8 +26,6 @@ glite_wms_workload_manager_LDADD   = \
         $(MNGR_SERVER) \
         $(GLITE_WMS_HELPER_LIBS) \
         $(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
-	$(GLITE_WMS_ISM_II_PURCHASER_LIBS) \
-	$(GLITE_WMS_ISM_CEMON_PURCHASER_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
 	$(top_srcdir)/../stage/lib/libglite_ce_monitor_client.la \
         $(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/lib/libgsoap.a \

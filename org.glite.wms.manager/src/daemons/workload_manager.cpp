@@ -14,6 +14,7 @@
 #include <stdlib.h>             // getenv()
 #include <dlfcn.h>              // dlopen(), dlclose()
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "Dispatcher.h"
 #include "RequestHandler.h"
@@ -110,7 +111,7 @@ main(int argc, char* argv[])
 try {
 
   program_name = argv[0];
-
+  
   for (int i = 1; i < argc; ++i) {
     if (argv[i] == std::string("--help")) {
       usage(get_out_stream());
@@ -242,26 +243,79 @@ try {
 
   task::Pipe<boost::shared_ptr<manager::Request> > d2rh(wm_config->pipe_depth());
 
-  // Try to execute ISM purchaser thread
-  purchaser::ism_ii_purchaser ismp(ns_config->ii_contact(),
-                                 ns_config->ii_port(),
-                                 ns_config->ii_dn(),
-                                 ns_config->ii_timeout(),
-				 purchaser::ism_ii_purchaser::loop, 30);
-  task::Task p(ismp);
+  purchaser::ii::create_t* create_ii_purchaser = 0;
+  purchaser::ii::destroy_t* destroy_ii_purchaser = 0;
   
-  // Try to execute ISM CEMON purchaser thread
-  std::vector<std::string> cemonURLs = wm_config->ce_monitor_services();
-  if (!cemonURLs.empty()) {
-    purchaser::ism_cemon_purchaser ismp1(cemonURLs,"CE_MONITOR:ISM", 45);
-    task::Task p1(ismp1);
-  }
+  purchaser::cemon::create_t* create_cemon_purchaser = 0;
+  purchaser::cemon::destroy_t* destroy_cemon_purchaser = 0;
+  
+  // Try to execute ISM purchaser thread
+  if (string(brlib)=="libglite_wms_helper_broker_ism.so") {
+     
+    char* prlib1 = "libglite_wms_ism_ii_purchaser.so";	
+    void* prh1 = dlopen(prlib1,RTLD_NOW|RTLD_GLOBAL);
+    if (!prh1) {
+      get_err_stream() << program_name << ": "
+                       << "cannot load ism purchaser lib (" << prlib1 << "\n";
+      std::string dlerr(dlerror());
+      get_err_stream() << program_name << ": "
+                       << "dlerror returns: " << dlerr << "\n";
+      return EXIT_FAILURE;
+    }
+    
+    char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";	
+    void* prh2 = dlopen(prlib2,RTLD_NOW|RTLD_GLOBAL);
+    if (!prh2) {
+      get_err_stream() << program_name << ": "
+                       << "cannot load ism purchaser lib (" << prlib2 << "\n";
+      std::string dlerr(dlerror());
+      get_err_stream() << program_name << ": "
+                       << "dlerror returns: " << dlerr << "\n";
+      return EXIT_FAILURE;
+    }
 
+    // load the symbols
+    create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh1, "create");
+    destroy_ii_purchaser = (purchaser::ii::destroy_t*) dlsym(prh1, "destroy");
+
+    if (create_ii_purchaser || !destroy_ii_purchaser) {
+        get_err_stream() << "Cannot load " << prlib1 << " symbols: " << dlerror() << "\n";
+        return EXIT_FAILURE;
+    }
+  
+    create_cemon_purchaser  = (purchaser::cemon::create_t*)  dlsym(prh2, "create");
+    destroy_cemon_purchaser = (purchaser::cemon::destroy_t*) dlsym(prh2, "destroy");
+
+    if (create_cemon_purchaser || !destroy_cemon_purchaser) {
+        get_err_stream() << "Cannot load " << prlib2 << " symbols: " << dlerror() << "\n";
+        return EXIT_FAILURE;
+    }
+    boost::shared_ptr<purchaser::ism_ii_purchaser> ismp1( 
+      create_ii_purchaser(
+        ns_config->ii_contact(), ns_config->ii_port(),
+        ns_config->ii_dn(),ns_config->ii_timeout(),
+        purchaser::loop, 240), destroy_ii_purchaser
+    );
+  
+    boost::thread t1(*ismp1);
+ 
+    // Try to execute ISM CEMON purchaser thread
+    std::vector<std::string> cemonURLs = wm_config->ce_monitor_services();
+    if (!cemonURLs.empty()) {
+      
+      boost::shared_ptr<purchaser::ism_cemon_purchaser> ismp2(
+        create_cemon_purchaser(cemonURLs,"CE_MONITOR:ISM", 
+          120, purchaser::loop, 120), destroy_cemon_purchaser
+      );
+      
+      boost::thread t2(*ismp2);
+    }
+  }
   manager::Dispatcher dispatcher;
   manager::RequestHandler request_handler;
   task::Task d(dispatcher, d2rh);
   task::Task r(request_handler, d2rh, wm_config->worker_threads());
-
+  
 } catch (std::exception& e) {
   get_err_stream() << "std::exception " << e.what() << "\n";
   return EXIT_FAILURE;
