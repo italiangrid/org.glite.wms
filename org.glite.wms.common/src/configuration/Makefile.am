@@ -24,7 +24,7 @@ libglite_wl_conf_wrapper_la_SOURCES = \
 	initializer.cpp \
 	cwrapper.cpp
 
-configurationincludedir = $(includedir)/glite/workload/common/configuration
+configurationincludedir = $(includedir)/glite/wms/common/configuration
 configurationinclude_HEADERS = \
 	CommonConfiguration.h \
 	confbase.h \
