@@ -6,32 +6,33 @@
 // $Id$
 
 #include "WMReal.h"
-
 #include <algorithm>
 #include <cctype>
-
-#include "../common/WMFactory.h"
-
-#include "RequestPlanningPolicy.h"
-#include "JCDeliveryPolicy.h"
-#include "JCCancellingPolicy.h"
-#include "dispatching_utils.h"
-
-#include "../common/lb_utils.h"
-
+#include "WMFactory.h"
+#include "lb_utils.h"
 #include "glite/wms/common/logger/logger_utils.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
-
 #include "glite/wmsutils/jobid/JobId.h"
-
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/PrivateAdManipulation.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
+
+#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wms/common/utilities/scope_guard.h"
+#include "glite/wms/helper/Request.h"
+#include "JobController.h"
+#include "glite/lb/producer.h"
+#include "TaskQueue.hpp"
+
+#include "plan.h"
 
 namespace utilities = glite::wms::common::utilities;
 namespace jobid = glite::wmsutils::jobid;
-namespace jdl = glite::wms::jdl;
+namespace requestad = glite::wms::jdl;
 namespace common = glite::wms::manager::common;
+namespace controller = glite::wms::jobsubmission::controller;
 
 namespace glite {
 namespace wms {
@@ -40,68 +41,17 @@ namespace server {
 
 namespace {
 
-common::WMFactory::wm_type wm_id("Real");
+std::string wm_id("Real");
 
-common::WMFactory::wm_type normalize(common::WMFactory::wm_type const& id)
+std::string normalize(std::string id)
 {
-  common::WMFactory::wm_type result(id);
-  std::transform(result.begin(), result.end(), result.begin(), ::tolower);
-  return result;
+  std::transform(id.begin(), id.end(), id.begin(), ::tolower);
+  return id;
 }
-
-struct FakePlanningPolicy
-{
-  static classad::ClassAd* Plan(classad::ClassAd const& ad)
-  {
-    Debug("planning ad (" << &ad << ")" << utilities::unparse_classad(ad));
-    classad::ClassAd* result = new classad::ClassAd(ad);
-    if (result != 0) {
-      jdl::set_ce_id(*result, "bbq.mi.infn.it:2119/jobmanager-pbs-dque");
-    }
-    return result;
-  }
-};
-
-struct FakeDeliveryPolicy
-{
-  static void Deliver(classad::ClassAd const& ad)
-  {
-    jobid::JobId id(jdl::get_edg_jobid(ad));
-    boost::mutex::scoped_lock l(submit_cancel_mutex());
-    common::ContextPtr context_ptr = common::get_context(id);
-    if (common::unregister_context(id)) {
-      Debug("delivering job " << id << " (" << utilities::unparse_classad(ad) << ")");
-    }
-  }
-};
-
-struct FakeCancellingPolicy
-{
-  static void Cancel(jobid::JobId const& request_id) {
-    Debug("cancelling job " << request_id);
-  }
-};
 
 common::WMImpl* create_wm()
 {
-  namespace configuration = glite::wms::common::configuration;
-
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-
-  if (!config) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-
-  if (wm_config->fake()) {      // fake policies
-    return new WMReal<PlanningPolicy, FakeDeliveryPolicy, FakeCancellingPolicy>;
-  } else {                      // real policies
-    return new WMReal<PlanningPolicy, DeliveryPolicy, CancellingPolicy>;
-  }
+  return new WMReal;
 }
 
 struct Register
@@ -118,10 +68,70 @@ struct Register
 
 Register r;
 
+void Deliver(
+  classad::ClassAd const& ad,
+  common::ContextPtr const& context
+)
+{
+  edg_wll_Context c_context = context.get();
+  controller::JobController(&c_context).submit(&ad);
 }
 
-} // server
-} // manager
-} // wms
-} // glite 
+void Cancel(glite::wmsutils::jobid::JobId const& id)
+{
+  edg_wll_Context c_context = get_context(id).get();
+  controller::JobController(&c_context).cancel(id);
+}
 
+void log_match(
+  glite::wmsutils::jobid::JobId const& job_id,
+  common::ContextPtr const& context,
+  char const* ce_id
+)
+{
+  int lb_error = edg_wll_LogMatch(context.get(), ce_id); 
+  if (lb_error != 0) {
+    Warning("edg_wll_LogMatch failed for " << job_id
+            << " (" << common::get_lb_message(context) << ")");
+  }
+}
+
+} // {anonymous}
+
+void
+WMReal::submit(classad::ClassAd const* request_ad_p)
+{
+  if (!request_ad_p) {
+    Error("request ad is null");
+    return;
+  }
+
+  // make a copy because we change the sequence code, see below
+  classad::ClassAd request_ad(*request_ad_p);
+
+  glite::wmsutils::jobid::JobId jobid(requestad::get_edg_jobid(request_ad));
+
+  common::ContextPtr context = get_context(jobid);
+
+  // update the sequence code before doing the planning
+  // some helpers may need a more recent sequence code than what appears in
+  // the classad originally received
+
+  std::string sequence_code(common::get_lb_sequence_code(context));
+  requestad::remove_lb_sequence_code(request_ad);
+  requestad::set_lb_sequence_code(request_ad, sequence_code);
+
+  boost::scoped_ptr<classad::ClassAd> planned_ad(Plan(request_ad));
+  std::string ce_id = requestad::get_ce_id(*planned_ad);
+  log_match(jobid, context, ce_id.c_str());
+
+  Deliver(*planned_ad, context);
+}
+
+void
+WMReal::cancel(glite::wmsutils::jobid::JobId const& request_id)
+{
+  Cancel(request_id);
+}
+
+}}}} // glite::wms::manager::server

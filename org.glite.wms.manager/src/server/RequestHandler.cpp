@@ -6,78 +6,85 @@
 // $Id$
 
 #include "RequestHandler.h"
-
 #include <string>
-#include <boost/scoped_ptr.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/thread/xtime.hpp>
 #include <classad_distribution.h>
-
-#include "../common/WorkloadManager.h"
-#include "../common/CommandAdManipulation.h"
-
+#include "WorkloadManager.h"
+#include "CommandAdManipulation.h"
 #include "signal_handling.h"
-
 #include "glite/wms/common/logger/logger_utils.h"
-
 #include "glite/wmsutils/jobid/JobId.h"
-
+#include "glite/wms/jdl/ManipulationExceptions.h"
 #include "glite/wmsutils/exception/Exception.h"
-
 #include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wms/helper/exceptions.h"
+#include "Request.hpp"
+#include "TaskQueue.hpp"
 
 namespace jobid = glite::wmsutils::jobid;
 namespace task = glite::wms::common::task;
 namespace common = glite::wms::manager::common;
+namespace exception = glite::wmsutils::exception;
+namespace requestad = glite::wms::jdl;
 
 namespace glite {
 namespace wms {
 namespace manager {
 namespace server {
 
-class RequestHandler::Impl 
+struct RequestHandler::Impl
 {
   common::WorkloadManager m_wm;
-
-public:
-  void run(task::PipeReadEnd<pipe_value_type>& read_end);
 };
 
+RequestHandler::RequestHandler()
+  : m_impl(new Impl)
+{
+}
+
 void
-RequestHandler::Impl::run(task::PipeReadEnd<pipe_value_type>& read_end)
+RequestHandler::run()
 try {
 
   Info("RequestHandler: starting");
 
-  while (true) {
-    if (received_quit_signal()) {
-      Debug("RequestHandler: asked to quit");
-      break;
+  common::WorkloadManager& wm = m_impl->m_wm;
+
+  while (!received_quit_signal()) {
+
+    RequestPtr req(read_end().read());
+    boost::xtime current_time;
+    boost::xtime_get(&current_time, boost::TIME_UTC);
+    req->last_processed(current_time);
+
+    try {
+
+      if (req->jdl() && !req->marked_cancelled()) {
+        req->state(Request::PROCESSING);
+        Info("considering (re)submit of " << req->id());
+
+        wm.submit(req->jdl());
+        req->state(Request::DELIVERED);
+
+      } else {
+        Info("considering cancel of " << req->id());
+
+        wm.cancel(req->id());
+        req->state(Request::CANCELLED);
+
+      }
+
+
+    } catch (helper::HelperError const& e) {
+      req->state(Request::RECOVERABLE, e.what());
+    } catch (std::invalid_argument const& e) {
+      req->state(Request::UNRECOVERABLE, e.what());
+    } catch (requestad::ManipulationException const& e) {
+      req->state(Request::UNRECOVERABLE, e.what());
+    } catch (exception::Exception const& e) {
+      req->state(Request::UNRECOVERABLE, e.what());
     }
-    PostProcessFunction post_process;
-    ClassAdPtr command_ad;
-    boost::tie(post_process, command_ad) = read_end.read();
 
-    std::string command(common::command_get_command(*command_ad));
- 
-    if (command == "jobsubmit") {
-
-      m_wm.submit(common::submit_command_get_ad(*command_ad));
-
-    } else if (command == "jobresubmit") {
-
-      m_wm.resubmit(jobid::JobId(common::resubmit_command_get_id(*command_ad)));
-
-    } else if (command == "jobcancel") {
-
-      m_wm.cancel(jobid::JobId(common::cancel_command_get_id(*command_ad)));
-
-    } else {
-      Error("Invalid command (" << command << ")");
-    }
-
-    Debug("postprocessing");
-    post_process();
   }
 
   Info("RequestHandler: exiting");
@@ -90,23 +97,4 @@ try {
   Error("RequestHandler: caught unknown exception. Exiting...");
 }
 
-RequestHandler::RequestHandler()
-  : m_impl(new Impl)
-{
-}
-
-RequestHandler::~RequestHandler()
-{
-  delete m_impl;
-}
-
-void
-RequestHandler::run()
-{
-  m_impl->run(read_end());
-}
-
-} // namespace server
-} // namespace manager
-} // namespace wms
-} // namespace glite
+}}}} // glite::wms::manager::server

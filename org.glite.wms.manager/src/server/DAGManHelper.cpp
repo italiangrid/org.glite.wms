@@ -6,40 +6,31 @@
 // $Id$
 
 #include "DAGManHelper.h"
-
 #include <memory>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-
 #include "glite/wms/common/utilities/boost_fs_add.h"
-
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include <classad_distribution.h>
-
 #include "glite/wms/helper/HelperFactory.h"
 #include "glite/wms/helper/exceptions.h"
-
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
-
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/DAGAd.h"
 #include "glite/wms/jdl/DAGAdManipulation.h"
-
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-
 #include "glite/wms/common/logger/logger_utils.h"
 
 namespace fs = boost::filesystem;
@@ -578,7 +569,7 @@ try {
   jdl::DAGAd dagad(input_ad);
 
   std::string const dag_id_str = jdl::get_edg_jobid(dagad);
-  wmsutils::jobid::JobId const dag_id(dag_id_str);
+  jobid::JobId const dag_id(dag_id_str);
 
   jdl::set_edg_jobid(*result, dag_id_str);
 

@@ -6,19 +6,16 @@
 // $Id$
 
 #include "WorkloadManager.h"
-
 #include <algorithm>
 #include <cctype>
-
 #include "WMFactory.h"
 #include "WMImpl.h"
-
 #include "glite/wms/common/logger/logger_utils.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
 namespace configuration = glite::wms::common::configuration;
+namespace jobid = glite::wmsutils::jobid;
 
 namespace glite {
 namespace wms {
@@ -79,18 +76,9 @@ WorkloadManager::submit(classad::ClassAd const* request_ad)
 }
 
 void
-WorkloadManager::resubmit(wmsutils::jobid::JobId const& request_id)
-{
-  m_impl->resubmit(request_id);
-}
-
-void
-WorkloadManager::cancel(wmsutils::jobid::JobId const& request_id)
+WorkloadManager::cancel(jobid::JobId const& request_id)
 {
   m_impl->cancel(request_id);
 }
 
-} // common
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::common

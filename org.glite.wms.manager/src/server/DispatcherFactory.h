@@ -8,17 +8,8 @@
 #ifndef GLITE_WMS_MANAGER_SERVER_DISPATCHERFACTORY_H
 #define GLITE_WMS_MANAGER_SERVER_DISPATCHERFACTORY_H
 
-#ifndef GLITE_WMS_X_BOOST_UTILITY_HPP
-#define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
-#endif
-#ifndef GLITE_WMS_X_BOOST_SCOPED_PTR_HPP
-#define GLITE_WMS_X_BOOST_SCOPED_PTR_HPP
 #include <boost/scoped_ptr.hpp>
-#endif
-#ifndef GLITE_WMS_MANAGER_SERVER_DISPATCHING_UTILS_H
-#include "dispatching_utils.h"
-#endif
 
 namespace glite {
 namespace wms {
@@ -46,15 +37,12 @@ public:
 
 public:
 
-  bool register_dispatcher(dispatcher_type const& id, product_creator_type creator);
-  bool unregister_dispatcher(dispatcher_type const& id);
-  product_type* create_dispatcher(dispatcher_type const& id);
+  bool register_dispatcher(std::string const& id, product_creator_type creator);
+  bool unregister_dispatcher(std::string const& id);
+  product_type* create_dispatcher(std::string const& id);
 };
 
-} // server
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::server
 
 #endif
 

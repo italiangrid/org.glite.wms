@@ -6,6 +6,7 @@
 // $Id$
 
 #include "DispatcherFactory.h"
+#include <string>
 #include "glite/wms/thirdparty/loki/Factory.h"
 
 namespace glite {
@@ -17,30 +18,30 @@ DispatcherFactory* DispatcherFactory::s_instance = 0;
 
 class DispatcherFactory::Impl: boost::noncopyable
 {
-  typedef Loki::Factory<product_type, dispatcher_type, product_creator_type> factory_type;
+  typedef Loki::Factory<product_type, std::string, product_creator_type> factory_type;
   factory_type m_factory;
 
 public:
 
-  bool register_dispatcher(dispatcher_type const& id, product_creator_type creator);
-  bool unregister_dispatcher(dispatcher_type const& id);
-  product_type* create_dispatcher(dispatcher_type const& id);
+  bool register_dispatcher(std::string const& id, product_creator_type creator);
+  bool unregister_dispatcher(std::string const& id);
+  product_type* create_dispatcher(std::string const& id);
 };
 
 bool
-DispatcherFactory::Impl::register_dispatcher(dispatcher_type const& id, product_creator_type creator)
+DispatcherFactory::Impl::register_dispatcher(std::string const& id, product_creator_type creator)
 {
   return m_factory.Register(id, creator);
 }
 
 bool
-DispatcherFactory::Impl::unregister_dispatcher(dispatcher_type const& id)
+DispatcherFactory::Impl::unregister_dispatcher(std::string const& id)
 {
   return m_factory.Unregister(id);
 }
 
 DispatcherFactory::product_type*
-DispatcherFactory::Impl::create_dispatcher(dispatcher_type const& id)
+DispatcherFactory::Impl::create_dispatcher(std::string const& id)
 {
   return m_factory.CreateObject(id);
 }
@@ -61,24 +62,24 @@ DispatcherFactory::DispatcherFactory()
 }
 
 bool
-DispatcherFactory::register_dispatcher(dispatcher_type const& id, product_creator_type creator)
+DispatcherFactory::register_dispatcher(std::string const& id, product_creator_type creator)
 {
   return m_impl->register_dispatcher(id, creator);
 }
 
 bool
-DispatcherFactory::unregister_dispatcher(dispatcher_type const& id)
+DispatcherFactory::unregister_dispatcher(std::string const& id)
 {
   return m_impl->unregister_dispatcher(id);
 }
 
 DispatcherFactory::product_type*
-DispatcherFactory::create_dispatcher(dispatcher_type const& id)
+DispatcherFactory::create_dispatcher(std::string const& id)
 {
   return m_impl->create_dispatcher(id);
 }
 
-} // common
+} // server
 } // manager
 } // wms
 } // glite

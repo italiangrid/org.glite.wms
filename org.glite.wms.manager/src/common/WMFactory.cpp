@@ -6,9 +6,7 @@
 // $Id$
 
 #include "WMFactory.h"
-
 #include <boost/utility.hpp>
-
 #include "glite/wms/thirdparty/loki/Factory.h"
 
 namespace glite {
@@ -81,7 +79,4 @@ WMFactory::create_wm(wm_type const& id)
   return m_impl->create_wm(id);
 }
 
-} // common
-} // manager
-} // wms
-} // glite 
+}}}} // glite::wms::manager::common

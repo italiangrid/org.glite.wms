@@ -13,24 +13,23 @@
 #include <pwd.h>                // getpwnam()
 #include <stdlib.h>             // getenv()
 #include <dlfcn.h>              // dlopen(), dlclose()
+#include <boost/shared_ptr.hpp>
 
-#include "../server/Dispatcher.h"
-#include "../server/RequestHandler.h"
-#include "../server/pipedefs.h"
-#include "../server/signal_handling.h"
+#include "Dispatcher.h"
+#include "RequestHandler.h"
+#include "signal_handling.h"
+#include "TaskQueue.hpp"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-
 #include "glite/wms/common/logger/logstream_ts.h"
 #include "glite/wms/common/logger/edglog.h"
-
 #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 
-namespace server = glite::wms::manager::server;
+namespace manager = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
 namespace task = glite::wms::common::task;
 namespace logger = glite::wms::common::logger;
@@ -136,7 +135,7 @@ try {
     }
   }
 
-  server::signal_handling_init();
+  manager::signal_handling_init();
 
   if (!ssl_init()) {
     get_err_stream() << program_name << ": "
@@ -221,8 +220,12 @@ try {
     }
   }
 
-  void *m_broker_helper_handle = dlopen(brlib,RTLD_NOW|RTLD_GLOBAL);
-  if (m_broker_helper_handle == NULL) {
+  boost::shared_ptr<void> broker_helper_handle(
+    dlopen(brlib,RTLD_NOW|RTLD_GLOBAL),
+    dlclose
+  );
+
+  if (!broker_helper_handle) {
     get_err_stream() << program_name << ": "
                      << "cannot load broker helper lib (" << brlib << ")\n";
     get_err_stream() << program_name << ": "
@@ -230,14 +233,15 @@ try {
     return EXIT_FAILURE;
   }
 
-  server::pipe_type d2rh(wm_config->pipe_depth());
+  // force the creation of the TaskQueue before entering multithreading
+  manager::the_task_queue();
 
-  server::Dispatcher dispatcher;
-  server::RequestHandler request_handler;
+  task::Pipe<boost::shared_ptr<manager::Request> > d2rh(wm_config->pipe_depth());
+
+  manager::Dispatcher dispatcher;
+  manager::RequestHandler request_handler;
   task::Task d(dispatcher, d2rh);
   task::Task r(request_handler, d2rh, wm_config->worker_threads());
-
-  dlclose(m_broker_helper_handle);
 
 } catch (std::exception& e) {
   get_err_stream() << "std::exception " << e.what() << "\n";

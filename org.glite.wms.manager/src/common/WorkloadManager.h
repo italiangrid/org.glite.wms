@@ -8,15 +8,8 @@
 #ifndef GLITE_WMS_MANAGER_COMMON_WORKLOADMANAGER_H
 #define GLITE_WMS_MANAGER_COMMON_WORKLOADMANAGER_H
 
-#ifndef GLITE_WMS_X_BOOST_UTILITY_HPP
-#define GLITE_WMS_X_BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
-#endif
-
-#ifndef GLITE_WMS_X_BOOST_SCOPED_PTR_HPP
-#define GLITE_WMS_X_BOOST_SCOPED_PTR_HPP
 #include <boost/scoped_ptr.hpp>
-#endif
 
 namespace classad {
 class ClassAd;
@@ -27,8 +20,7 @@ namespace glite {
 namespace wmsutils {
 namespace jobid {
 class JobId;
-} // jobid
-} // wmsutils
+}}
 
 namespace wms {
 namespace manager {
@@ -73,17 +65,6 @@ public:
    */
   void submit(classad::ClassAd const* request_ad);
 
-  /**
-   * Resubmit a request
-   *
-   * The resubmission is applied only to requests satisfying resubmission
-   * constraits, e.g. requests that have failed and are "idle".  Relevant
-   * information will be retrieved from the Logging and Bookkeping Service.
-   *
-   * @param request_id request identifier.
-   */
-  void resubmit(wmsutils::jobid::JobId const& request_id);
-
   /** 
    * Cancel a request 
    * 
@@ -93,10 +74,7 @@ public:
 
 };
 
-} // common
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::common
 
 #endif // GLITE_WMS_MANAGER_COMMON_WORKLOADMANAGER_H
 

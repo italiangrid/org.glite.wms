@@ -6,7 +6,7 @@
 // $Id$
 
 #ifndef GLITE_WMS_MANAGER_COMMON_WMFACTORY_H
-#define GLITE_WMS_MANAGER_COMMON__WMFACTORY_H
+#define GLITE_WMS_MANAGER_COMMON_WMFACTORY_H
 
 #ifndef GLITE_WMS_X_STRING
 #define GLITE_WMS_X_STRING
@@ -52,10 +52,7 @@ public:
   product_type* create_wm(wm_type const& id);
 };
 
-} // common
-} // manager
-} // wms
-} // glite
+}}}} // // glite::wms::manager::common
 
 
 #endif // GLITE_WMS_MANAGER_COMMON_WMFACTORY_H

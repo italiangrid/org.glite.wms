@@ -6,15 +6,11 @@
 // $Id$
 
 #include "Dispatcher.h"
-
 #include <algorithm>
 #include <cctype>
-
 #include "DispatcherImpl.h"
 #include "DispatcherFactory.h"
-
 #include "glite/wms/common/logger/logger_utils.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
@@ -27,9 +23,9 @@ namespace server {
 
 namespace {
 
-dispatcher_type normalize(dispatcher_type const& id)
+std::string normalize(std::string const& id)
 {
-  dispatcher_type result(id);
+  std::string result(id);
   std::transform(result.begin(), result.end(), result.begin(), ::tolower);
   return result;
 }

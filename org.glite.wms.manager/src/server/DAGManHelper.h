@@ -41,10 +41,8 @@ public:
   classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
 };
 
-} // server
-} // manager
-} // wms
-} // glite
+}}}} // glite::manager::wms::server
+
 
 #endif
 

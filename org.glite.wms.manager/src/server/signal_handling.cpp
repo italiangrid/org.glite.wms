@@ -35,7 +35,4 @@ bool received_quit_signal()
   return f_received_quit_signal != 0;
 }
 
-} // server
-} // manager
-} // wms
-} // glite 
+}}}} // glite::wms::manager::server

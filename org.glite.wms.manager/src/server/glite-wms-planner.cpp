@@ -12,22 +12,20 @@
 #include <boost/scoped_ptr.hpp>
 #include <classad_distribution.h>
 
-#include "RequestPlanningPolicy.h"
 #include "signal_handling.h"
-
 #include "glite/wms/common/utilities/classad_utils.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-
 #include "glite/wms/jdl/JobAdManipulation.h"
-
 #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 
+#include "glite/wms/helper/Request.h"
+#include "plan.h"
+
 namespace manager = glite::wms::manager::server;
 namespace utilities = glite::wms::common::utilities;
-namespace jdl = glite::wms::jdl;
+namespace requestad = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
 
 namespace {
@@ -36,10 +34,6 @@ bool ssl_init()
 {
   return edg_wlc_SSLInitialization() == 0 && edg_wlc_SSLLockingInit() == 0;
 }
-
-struct Planner: manager::RequestPlanningPolicy
-{
-};
 
 std::string program_name;
 
@@ -116,7 +110,7 @@ try {
   }
 
   boost::scoped_ptr<classad::ClassAd> input_ad(utilities::parse_classad(is));
-  boost::scoped_ptr<classad::ClassAd> output_ad(Planner().Plan(*input_ad));
+  boost::scoped_ptr<classad::ClassAd> output_ad(Plan(*input_ad));
 
   if (!output_ad) {
     std::cerr << "Planning failed for unknown reason\n";
@@ -125,7 +119,7 @@ try {
 
   os << utilities::unparse_classad(*output_ad) << "\n";
 
-  std::cout << jdl::get_ce_id(*output_ad) << '\n';
+  std::cout << requestad::get_ce_id(*output_ad) << '\n';
 
 } catch (std::exception& e) {
 

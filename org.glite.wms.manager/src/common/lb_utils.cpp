@@ -6,7 +6,6 @@
 // $Id$
 
 #include "lb_utils.h"
-
 #include <map>
 #include <boost/thread/xtime.hpp>
 #include <boost/thread/thread.hpp>
@@ -14,115 +13,23 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
-
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
-
-#include "glite/lb/producer.h"
-#include "glite/lb/consumer.h"
-
+#include  "glite/lb/producer.h"
+#include  "glite/lb/consumer.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-
 #include "glite/security/proxyrenewal/renewal.h"
 
 namespace jobid = glite::wmsutils::jobid;
+
 namespace configuration = glite::wms::common::configuration;
 
 namespace glite {
 namespace wms {
 namespace manager {
 namespace common {
-
-namespace {
-
-class ActiveRequests
-{
-  class Impl;
-  Impl* m_impl;
-
-  ActiveRequests();
-
-public:
-  ~ActiveRequests();
-  static ActiveRequests* instance();
-  // return true iff the id WAS NOT there
-  bool insert(wmsutils::jobid::JobId const& id, boost::shared_ptr<lb_context_adapter> ctx);
-  // return true iff the id WAS there
-  bool remove(wmsutils::jobid::JobId const& id);
-  boost::shared_ptr<lb_context_adapter> find(wmsutils::jobid::JobId const& id);
-};
-
-boost::mutex f_mutex;
-ActiveRequests* f_instance;
-
-class ActiveRequests::Impl 
-{
-  typedef std::map<std::string, boost::shared_ptr<lb_context_adapter> > Requests;
-  Requests m_requests;
-
-public:
-  bool insert(jobid::JobId const& id, boost::shared_ptr<lb_context_adapter> ctx)
-  {
-    boost::mutex::scoped_lock l(f_mutex);
-    return m_requests.insert(std::make_pair(id.toString(), ctx)).second;
-  }
-  bool remove(jobid::JobId const& id)
-  {
-    boost::mutex::scoped_lock l(f_mutex);
-    return m_requests.erase(id.toString()) > 0;
-  }
-  boost::shared_ptr<lb_context_adapter> find(jobid::JobId const& id)
-  {
-    boost::mutex::scoped_lock l(f_mutex);
-    Requests::iterator it = m_requests.find(id.toString());
-    return (it != m_requests.end()) ? it->second : boost::shared_ptr<lb_context_adapter>();
-  }
-};
-
-ActiveRequests::ActiveRequests()
-  : m_impl(new Impl)
-{
-}
-
-ActiveRequests::~ActiveRequests()
-{
-  delete m_impl;
-}
-
-ActiveRequests*
-ActiveRequests::instance()
-{
-  if (f_instance == 0) {
-    boost::mutex::scoped_lock l(f_mutex);
-    if (f_instance == 0) {
-      f_instance = new ActiveRequests;
-    }
-  }
-
-  return f_instance;
-}
-
-bool
-ActiveRequests::insert(jobid::JobId const& id, boost::shared_ptr<lb_context_adapter> ctx)
-{
-  return m_impl->insert(id, ctx);
-}
-
-bool
-ActiveRequests::remove(jobid::JobId const& id)
-{
-  return m_impl->remove(id);
-}
-
-boost::shared_ptr<lb_context_adapter>
-ActiveRequests::find(jobid::JobId const& id)
-{
-  return m_impl->find(id);
-}
-
-} // {anonymous}
 
 ContextPtr
 create_context(
@@ -131,17 +38,11 @@ create_context(
   std::string const& sequence_code
 )
 {
-  ContextPtr result;            // default ctor initializes to zero
-
-  // any better test?
-  if (x509_proxy.empty()) {
-    return result;
-  }
-
   edg_wll_Context context;
   int errcode = edg_wll_InitContext(&context);
-
-  ContextPtr tmp(new lb_context_adapter(context));
+  if (errcode) {
+    return ContextPtr();
+  }
 
   errcode |= edg_wll_SetParam(context,
                               EDG_WLL_PARAM_SOURCE,
@@ -157,62 +58,14 @@ create_context(
   errcode |= edg_wll_SetLoggingJob(context, id, sequence_code.c_str(), flag);
 
   if (!errcode) {
-    result = tmp;
+    return ContextPtr(context, edg_wll_FreeContext);
+  } else {
+    return ContextPtr();
   }
-
-  return result;
-}
-
-bool register_context(jobid::JobId const& id, ContextPtr context)
-{
-  return ActiveRequests::instance()->insert(id, context);
-}
-
-bool unregister_context(jobid::JobId const& id)
-{
-  return ActiveRequests::instance()->remove(id);
-}
-
-ContextPtr get_context(jobid::JobId const& id)
-{
-  return ActiveRequests::instance()->find(id);
-}
-
-std::vector<std::string>
-get_previous_matches(edg_wll_Context context, wmsutils::jobid::JobId const& id)
-{
-  std::vector<std::string> result;
-
-  edg_wll_QueryRec job_conditions[2];
-  job_conditions[0].attr    = EDG_WLL_QUERY_ATTR_JOBID;
-  job_conditions[0].op      = EDG_WLL_QUERY_OP_EQUAL;
-  job_conditions[0].value.j = id.getId();
-  job_conditions[1].attr    = EDG_WLL_QUERY_ATTR_UNDEF;
-
-  edg_wll_QueryRec event_conditions[2];
-  event_conditions[0].attr    = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
-  event_conditions[0].op      = EDG_WLL_QUERY_OP_EQUAL;
-  event_conditions[0].value.i = EDG_WLL_EVENT_MATCH;
-  event_conditions[1].attr    = EDG_WLL_QUERY_ATTR_UNDEF;
-
-  edg_wll_Event* events = 0;
-  edg_wll_QueryEvents(context, job_conditions, event_conditions, &events);
-
-  if (events) {
-    for (int i = 0; events[i].type; ++i) {
-      if (events[i].type == EDG_WLL_EVENT_MATCH) {
-        result.push_back(events[i].match.dest_id);
-        edg_wll_FreeEvent(&events[i]);
-      }
-    }
-    free(events);
-  }
-
-  return result;
 }
 
 std::vector<std::pair<std::string,int> >
-get_previous_matches_ex(edg_wll_Context context, wmsutils::jobid::JobId const& id)
+get_previous_matches(edg_wll_Context context, jobid::JobId const& id)
 {
   std::vector<std::pair<std::string,int> > result;
 
@@ -247,7 +100,7 @@ get_previous_matches_ex(edg_wll_Context context, wmsutils::jobid::JobId const& i
 }
 
 std::string
-get_original_jdl(edg_wll_Context context, wmsutils::jobid::JobId const& id)
+get_original_jdl(edg_wll_Context context, jobid::JobId const& id)
 {
   std::string result;
 
@@ -333,7 +186,7 @@ std::string get_host_x509_proxy()
 namespace {
 
 boost::tuple<int,std::string,std::string>
-get_error_info(edg_wll_Context context)
+get_error_info(ContextPtr context)
 {
   int error;
   std::string error_txt;
@@ -341,7 +194,7 @@ get_error_info(edg_wll_Context context)
 
   char* c_error_txt = 0;
   char* c_description_txt = 0;
-  error = edg_wll_Error(context, &c_error_txt, &c_description_txt);
+  error = edg_wll_Error(context.get(), &c_error_txt, &c_description_txt);
 
   if (c_error_txt) {
     error_txt = c_error_txt;
@@ -358,7 +211,7 @@ get_error_info(edg_wll_Context context)
 } // anonymous
 
 std::string
-get_lb_message(edg_wll_Context context)
+get_lb_message(ContextPtr const& context)
 {
   std::string result;
 
@@ -377,9 +230,12 @@ get_lb_message(edg_wll_Context context)
 }
 
 std::string
-get_lb_message(ContextPtr context_ptr)
+get_lb_sequence_code(ContextPtr const& context)
 {
-  return get_lb_message(*context_ptr);
+  char* c_sequence_code = edg_wll_GetSequenceCode(context.get());
+  std::string sequence_code(c_sequence_code);
+  free(c_sequence_code);
+  return sequence_code;
 }
 
 // 0 success - returned ContextPtr is user context
@@ -396,7 +252,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
   int result_error = 0;
   ContextPtr result_context = user_context;
 
-  int lb_error = log_f(*user_context);
+  int lb_error = log_f(user_context.get());
 
   for (int i = 1; i < 3 && lb_error && lb_error != EINVAL; ++i) {
 
@@ -406,7 +262,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
 
       // get the sequence code
       std::string host_x509_proxy(get_host_x509_proxy());
-      char* c_sequence_code = edg_wll_GetSequenceCode(*user_context);
+      char* c_sequence_code = edg_wll_GetSequenceCode(user_context.get());
       assert(c_sequence_code);
       if (!c_sequence_code) {
         result_error = 3;
@@ -417,13 +273,13 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
 
       // get the jobid
       edg_wlc_JobId c_jobid;
-      int e = edg_wll_GetLoggingJob(*user_context, &c_jobid);
+      int e = edg_wll_GetLoggingJob(user_context.get(), &c_jobid);
       assert(e == 0);
       if (e) {
         result_error = 3;
         break;
       }
-      wmsutils::jobid::JobId jobid(c_jobid);
+      jobid::JobId jobid(c_jobid);
       edg_wlc_JobIdFree(c_jobid);
 
       // create the host context
@@ -433,7 +289,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
         break;
       }
 
-      lb_error = log_f(*host_context);
+      lb_error = log_f(host_context.get());
 
       for (int k = 1;
            k < 3 && lb_error && lb_error != EINVAL && lb_error != EDG_WLL_ERROR_GSS;
@@ -443,7 +299,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
         xt.sec += 60;
         boost::thread::sleep(xt);
 
-        lb_error = log_f(*host_context);
+        lb_error = log_f(host_context.get());
       }
 
       if (lb_error) {
@@ -463,7 +319,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
       xt.sec += 60;
       boost::thread::sleep(xt);
 
-      lb_error = log_f(*user_context);
+      lb_error = log_f(user_context.get());
 
     }
 
@@ -488,9 +344,9 @@ get_logger_message(
   result += " failed for ";
 
   edg_wlc_JobId c_jobid;
-  int e = edg_wll_GetLoggingJob(*user_context, &c_jobid);
+  int e = edg_wll_GetLoggingJob(user_context.get(), &c_jobid);
   assert(e == 0);
-  wmsutils::jobid::JobId jobid(c_jobid);
+  jobid::JobId jobid(c_jobid);
   edg_wlc_JobIdFree(c_jobid);
   
   result += jobid.toString();
@@ -501,23 +357,23 @@ get_logger_message(
     break;
   case 1:
     // SSL error with user proxy, success with host proxy
-    result += "(" + get_lb_message(*user_context)
+    result += "(" + get_lb_message(user_context)
       + ") with the user proxy. Success with host proxy.";
     break;
   case 2:
     if (user_context == last_context) {
       // no-SSL error with user proxy, no retry with host proxy
-      result += "(" + get_lb_message(*user_context) + ")";
+      result += "(" + get_lb_message(user_context) + ")";
     } else {
       // SSL error with user proxy, failure also with host proxy
-      result += "(" + get_lb_message(*user_context)
+      result += "(" + get_lb_message(user_context)
         + ") with the user proxy. Failed with host proxy too ("
-        + get_lb_message(*last_context) + ")";
+        + get_lb_message(last_context) + ")";
     }
     break;
   case 3:
     // SSL error with the user proxy, cannot retry with the host proxy
-    result += "(" + get_lb_message(*user_context)
+    result += "(" + get_lb_message(user_context)
       + ") with the user proxy. Cannot retry with the host proxy";
     break;
   }
@@ -526,8 +382,5 @@ get_logger_message(
   
 }
 
-} // common
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::common
 

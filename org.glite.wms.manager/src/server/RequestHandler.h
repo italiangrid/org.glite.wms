@@ -8,21 +8,9 @@
 #ifndef GLITE_WMS_MANAGER_SERVER_REQUESTHANDLER_H
 #define GLITE_WMS_MANAGER_SERVER_REQUESTHANDLER_H
 
-#ifndef BOOST_UTILITY_HPP
 #include <boost/utility.hpp>
-#endif
-#ifndef BOOST_SHARED_PTR_HPP
 #include <boost/shared_ptr.hpp>
-#endif
-#ifndef BOOST_SHARED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
-#endif
-#ifndef GLITE_WMS_COMMON_TASK_TASK_H
 #include "glite/wms/common/task/Task.h"
-#endif
-#ifndef GLITE_WMS_MANAGER_SERVER_PIPEDEFS_H
-#include "pipedefs.h"
-#endif
 
 namespace classad {
 class ClassAd;
@@ -33,26 +21,21 @@ namespace wms {
 namespace manager {
 namespace server {
 
-namespace task = glite::wms::common::task;
+class Request;
 
 class RequestHandler:
-    public task::PipeReader<pipe_value_type>,
+    public glite::wms::common::task::PipeReader<boost::shared_ptr<Request> >,
     boost::noncopyable
 {
   class Impl;
-  Impl* m_impl;
+  boost::shared_ptr<Impl> m_impl;
 
 public:
   RequestHandler();
-  virtual ~RequestHandler();
-
-  virtual void run();
+  void run();
 };
 
 
-} // namespace server
-} // namespace manager
-} // namespace wms
-} // namespace glite
+}}}} // glite::wms::manager::server
 
-#endif // GLITE_WMS_MANAGER_SERVER_REQUESTHANDLER_H
+#endif // EDG_WORKLOAD_PLANNING_MANAGER_REQUESTHANDLER_H

@@ -22,12 +22,12 @@ namespace glite {
 namespace wmsutils {
 namespace jobid {
 class JobId;
-} // jobid
-} // wmsutils
+}}
 
 namespace wms {
 namespace manager {
 namespace common {
+
 
 class WMImpl: boost::noncopyable
 {
@@ -36,14 +36,10 @@ public:
   virtual ~WMImpl();
 
   virtual void submit(classad::ClassAd const* request_ad) = 0;
-  virtual void resubmit(wmsutils::jobid::JobId const& request_id) = 0;
   virtual void cancel(wmsutils::jobid::JobId const& request_id) = 0;
 };
 
-} // namespace common
-} // namespace manager
-} // namespace wms
-} // namespace glite
+}}}} // glite::wms::manager::common
 
 #endif // GLITE_WMS_MANAGER_COMMON_WMIMPL_H
 

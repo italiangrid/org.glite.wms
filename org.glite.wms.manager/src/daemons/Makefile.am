@@ -50,6 +50,7 @@ glite_wms_workload_manager_LDADD   = \
 	$(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/../org.glite.wms.manager/src/server \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)

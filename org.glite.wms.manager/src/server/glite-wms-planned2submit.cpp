@@ -9,17 +9,13 @@
 #include <fstream>
 #include <boost/scoped_ptr.hpp>
 #include <classad_distribution.h>
-
 #include "glite/wms/common/utilities/classad_utils.h"
-
 #include "glite/wms/jdl/convert.h"
-
 #include "SubmitAdapter.h"
+#include  "glite/wms/common/configuration/Configuration.h"
 
-#include "glite/wms/common/configuration/Configuration.h"
-
-namespace jss = glite::wms::jobsubmission;
-namespace jdl = glite::wms::jdl;
+namespace jobcontrol = glite::wms::jobsubmission::controller;
+namespace requestad = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
 namespace utilities = glite::wms::common::utilities;
 
@@ -72,7 +68,7 @@ try {
 
   boost::scoped_ptr<classad::ClassAd> input_ad(utilities::parse_classad(is));
 
-  jss::controller::SubmitAdapter sad(*input_ad);
+  jobcontrol::SubmitAdapter sad(*input_ad);
 
   boost::scoped_ptr<classad::ClassAd> submit_ad(
     sad.adapt_for_submission(sequence_code)
@@ -82,7 +78,7 @@ try {
     std::cerr << "SubmitAdapter::adapt_for_submission() failed\n";
     return EXIT_FAILURE;
   }
-  jdl::to_submit_stream(os, *submit_ad);
+  requestad::to_submit_stream(os, *submit_ad);
 
 } catch (std::exception& e) {
   std::cerr << e.what() << "\n";

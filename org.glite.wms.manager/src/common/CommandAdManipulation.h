@@ -22,6 +22,9 @@ namespace wms {
 namespace manager {
 namespace common {
 
+bool
+command_is_valid(classad::ClassAd const& command_ad);
+
 std::string
 command_get_command(classad::ClassAd const& command_ad);
 
@@ -58,16 +61,7 @@ resubmit_command_get_id(classad::ClassAd const& command_ad);
 std::string
 resubmit_command_get_lb_sequence_code(classad::ClassAd const& command_ad);
 
-classad::ClassAd*
-quit_command_create();
-
-bool
-quit_command_is_valid(classad::ClassAd const& quit_command_ad);
-
-} // common
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::common
 
 #endif
 
