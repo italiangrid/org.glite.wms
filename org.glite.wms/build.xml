@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.10  2004/05/13 19:50:11  dimeglio
+	Changed all occurrences of test3.wms to wms
+
 	Revision 1.9  2004/05/13 19:37:04  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
-
+	
 	Revision 1.8  2004/05/13 14:26:25  flammer
 	Corrected target include.
 	
@@ -53,7 +56,7 @@
 	
 -->
 
-<project name="test3-wms" default="dist">
+<project name="wms" default="dist">
 
 	<description>
 		Ant build file to build the GLite WMS
