@@ -23,5 +23,14 @@ AC_DEFUN(AC_GLITE,
 
     AC_SUBST(GLITE_LOCATION)
     AC_SUBST(GLITE_CFLAGS)
+
+    AC_ARG_WITH(dist_location,
+        [  --with-dist-location=PFX     prefix where DIST location is. (pwd)],
+        [],
+        with_dist_location=$WORKDIR/../dist)
+
+    DISTTAR=$with_dist_location
+
+    AC_SUBST(DISTTAR)
 ])
 
