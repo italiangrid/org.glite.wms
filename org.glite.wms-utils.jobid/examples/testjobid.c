@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "jobid/cjobid.h"
+#include "glite/wmsutils/jobid/cjobid.h"
 
 int main(int argc, char* argv[])
 {
