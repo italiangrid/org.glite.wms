@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/23 16:30:58  eronchie
+#       The component name is wms-classad_plugin
+#
 #       Revision 1.3  2004/06/26 13:38:37  eronchie
 #       *** empty log message ***
 #
@@ -35,7 +38,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ClassAdPlugin], [0.0.0])
+AC_INIT([GLite WMS ClassAd_Plugin], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/classad_plugin_loader.h])
