@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.18  2004/10/11 17:02:48  eronchie
+	Removed ssl_utils as jobid dependency
+
 	Revision 1.17  2004/09/29 13:19:52  flammer
 	Only update of formatting os small.memory lines.
-
+	
 	Revision 1.16  2004/09/09 21:10:38  dimeglio
 	Moved tag target to targets-common
 	
@@ -291,7 +294,7 @@
 		</if>
     	</target>
 
-	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
+	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,cppunit,exception">
 		<if>
 			<isset property="small.memory" />
 			<then>
