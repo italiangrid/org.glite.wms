@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/12/10 07:53:01  eronchie
+#       Increased version
+#
 #       Revision 1.6  2004/10/17 15:11:42  eronchie
 #       ..... Removed _BASE
 #
@@ -61,7 +64,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS RLS], [0.1.0])
+AC_INIT([GLite WMS RLS], [1.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ReplicaServiceException.h])
