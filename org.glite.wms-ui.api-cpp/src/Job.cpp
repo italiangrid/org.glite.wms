@@ -695,7 +695,7 @@ void Job::nsSubmit(const string&  lb_addr ) {
              current_step = "First checkpoint state without JobSteps" ;
         else
              current_step = "1" ;
-        if (edg_wll_LogEventSync( ctx, EDG_WLL_EVENT_CHKPT ,EDG_WLL_FORMAT_CHKPT , current_step.c_str() , jad->getAd(JDL_CHKPT_JOBSTATE).c_str() ) )
+        if (edg_wll_LogEventSync( ctx, EDG_WLL_EVENT_CHKPT ,EDG_WLL_FORMAT_CHKPT , current_step.c_str() , jad->getAd(JDL_CHKPT_JOBSTATE).toString().c_str() ) )
               throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB  edg_wll_LogEventSync failed" ) ;
         jad->delAttribute(JDL_CHKPT_JOBSTATE );
      }
