@@ -39,7 +39,8 @@ socketppinclude_HEADERS = \
 	errors.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(GLOBUS_CFLAGS) $(GLOBUS_SSL_UTILS_CFLAGS) \
+	$(GLOBUS_THR_CFLAGS) \
+	$(GLOBUS_SSL_UTILS_CFLAGS) \
 	$(GLITE_WORKLOAD_CFLAGS) \
 	$(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
 	-DWITH_SOCKET_EXCEPTIONS \

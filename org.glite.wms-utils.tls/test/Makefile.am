@@ -21,13 +21,13 @@ glite_wms_socketppServerTest_SOURCES = socketppServerTest.cpp
 glite_wms_socketppServerTest_LDADD = \
 	$(GSISOCKET_PP) \
 	$(GLITE_WORKLOAD_COMMON_LIBS) \
-	$(GLOBUS_LIBS)
+	$(GLOBUS_GSS_THR_LIBS)
 
 glite_wms_socketppClientTest_SOURCES = socketppClientTest.cpp
 glite_wms_socketppClientTest_LDADD = \
 	$(GSISOCKET_PP) \
 	$(GLITE_WORKLOAD_COMMON_LIBS) \
-	$(GLOBUS_LIBS)
+	$(GLOBUS_GSS_THR_LIBS)
 
 ##socketClient_cu_SOURCES = socketClient_cu_suite.h socketClient_cu_suite.cpp \
 ##      socketClient_cu_main.cpp
@@ -37,10 +37,9 @@ glite_wms_socketppClientTest_LDADD = \
 ##      $(GLOBUS_LIBS) $(CPPUNIT_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
 	$(GLITE_WORKLOAD_CFLAGS) \
-	$(GLOBUS_CFLAGS)
+	$(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
+	$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
 
