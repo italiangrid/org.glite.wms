@@ -42,7 +42,7 @@ pthread_mutex_t  mutex;
 vector <edg_wll_Context* > lbVect ;
 // DagAd Wrapper
 vector <glite::wms::jdl::ExpDagAd* > dagVect ;
-glite::wms::lb::Job lbJob ;
+glite::lb::Job lbJob ;
 string nsHost ;
 int nsPort ;
 int nsLevel ;
@@ -111,9 +111,9 @@ non-native methods:
 	/**
 	* Method : LOAD STATUS
 	* This method Load the c++ JobStatus into a Java JobStatus instance **/
-	void loadStatus(  JNIEnv *env, const jobject &obj, const glite::wms::lb::JobStatus  &status ){
+	void loadStatus(  JNIEnv *env, const jobject &obj, const glite::lb::JobStatus  &status ){
 		//Defining non-native methods
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		jclass cls = env->GetObjectClass(obj);
 		jmethodID appStr = env->GetMethodID ( cls , "appendString" ,  "(ILjava/lang/String;)V" ) ;
 		if (appStr==0)   log_error (env , "Fatal Error while retrieving status information\nUnable to find Api.appStr method\n" ) ;
@@ -296,7 +296,7 @@ STATIC  methods:
 			jobid.setJobId( host,  lbPort );
 			env->ReleaseStringUTFChars( lbHost, host);
 			return env->NewStringUTF( jobid.getUnique().c_str() ) ;
-		}catch(glite::wmsustils::exception::Exception &exc){  log_error (env , exc.what() ) ;
+		}catch(glite::wmsutils::exception::Exception &exc){  log_error (env , exc.what() ) ;
 		}catch(exception &exc){  log_error (env , exc.what() ) ;
 		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper");    }
 	}
@@ -378,7 +378,7 @@ unlock() ;
 			glite::wmsutils::jobid::JobId jid ( id )  ;
 			glite::wms::manager::ns::client::NSClient nsClient ( nsHost , nsPort,  ( glite::wms::common::logger::level_t)nsLevel ) ;
 			nsClient.jobPurge( id )  ;
-		}catch(glite::wmsustils::exception::Exception &exc){  log_error (env , exc.what() ) ;
+		}catch(glite::wmsutils::exception::Exception &exc){  log_error (env , exc.what() ) ;
 		}catch(exception &exc){  log_error (env , exc.what() ) ;
 		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper");    }
 		env->ReleaseStringUTFChars( jobid , id);
@@ -679,7 +679,7 @@ unlock() ;
 	*/
 	JNIEXPORT jstring JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log_1query
 	(JNIEnv *env, jobject obj, jstring jobid_str, jint step){
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		const char *id = env->GetStringUTFChars(jobid_str, 0);
 		int                 i, cnt, error;
 		edg_wlc_JobId       jobid;
@@ -773,7 +773,7 @@ BOOKKEEPING methods: JOBID info
 	*/
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1user_1jobs
 	(JNIEnv *env, jobject obj, jstring lbHost, jint port){
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		const char *lb = env->GetStringUTFChars(lbHost, 0);
 		//Defining non-native methods:
 		jclass cls = env->GetObjectClass(obj);
@@ -800,7 +800,7 @@ BOOKKEEPING methods: JOBID info
 	*/
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1jobs
 	(JNIEnv *env, jobject obj, jstring lbHost, jint port, jint from, jint to, jstring utags,  jint inex, jstring issu){
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		using namespace glite::wmsutils::jobid ;
 		vector<vector<QueryRecord> >cond  ;
 		try{
@@ -921,7 +921,7 @@ BOOKKEEPING methods: JOBID info
 			env->CallVoidMethod(obj, appStr, (jint) 0 , env->NewStringUTF( it->toString().c_str() ) );
 		}
 
-	}catch( glite::wmsustils::exception::Exception &exc){
+	}catch( glite::wmsutils::exception::Exception &exc){
 		log_error (env ,  exc.what() ) ;
 	}catch(exception &exc){  log_error (env ,  exc.what() ) ;
 	}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper\n");    }
@@ -941,7 +941,7 @@ BOOKKEEPING methods: JOBSTATUS info
 	*/
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1user_1status
 	(JNIEnv *env, jobject obj, jstring  lbHost, jint port){
-	using namespace glite::wms::lb ;
+	using namespace glite::lb ;
 	const char *lb = env->GetStringUTFChars(lbHost, 0);
 		try{
 			ServerConnection server ;
@@ -964,7 +964,7 @@ BOOKKEEPING methods: JOBSTATUS info
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1status
 	(JNIEnv *env, jobject obj, jstring jobId ){
 		const char *id = env->GetStringUTFChars(jobId, 0);
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		string err ;
 		glite::wmsutils::jobid::JobId jid (id)  ;
 		env->ReleaseStringUTFChars(jobId, id);
@@ -992,7 +992,7 @@ BOOKKEEPING methods: JOBSTATUS info
 	*/
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1notify
 	(JNIEnv *env, jobject obj, jstring jobad  , jint timeout ){
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		using namespace glite::wmsutils::jobid ;
 
 		try{
@@ -1016,7 +1016,7 @@ BOOKKEEPING methods: JOBSTATUS info
 			if (n.receive ( stat , to ) ) ; // return 1 ;
 			else loadStatus ( env , obj , stat )  ;
 			// return 0 ;
-		}catch( glite::wmsustils::exception::Exception &exc){
+		}catch( glite::wmsutils::exception::Exception &exc){
 			unlock() ;
 			if (exc.getCode()==ETIMEDOUT) log_error (env , exc.what()  ) ;
 			else log_error (env ,exc.what()  ) ;
@@ -1042,7 +1042,7 @@ BOOKKEEPING methods: LOGGING info
 	JNIEXPORT void JNICALL Java_edg_workload_userinterface_jclient_Api_lb_1log
 	(JNIEnv *env, jobject obj, jstring jobId){
 		const char *id = env->GetStringUTFChars(jobId, 0);
-		using namespace glite::wms::lb ;
+		using namespace glite::lb ;
 		//Defining non-native methods:
 		jclass cls = env->GetObjectClass(obj);
 		jmethodID appStr = env->GetMethodID ( cls , "appendString" ,  "(ILjava/lang/String;)V" ) ;
@@ -1156,7 +1156,7 @@ BOOKKEEPING methods: LOGGING info
 					}
 				} // end of switch
 			} //end for events
-		}catch( glite::wmsustils::exception::Exception &exc){
+		}catch( glite::wmsutils::exception::Exception &exc){
 		cerr  << "JNI::getLogInfo-> error caught" << exc.dbgMessage() << endl << flush ;
 		log_error (env ,  exc.what() ) ;
 		}catch(exception &exc){  log_error (env ,  exc.what() ) ;
