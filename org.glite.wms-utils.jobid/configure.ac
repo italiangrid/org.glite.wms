@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.14  2004/11/16 15:15:45  eronchie
+#       Increased version
+#
 #       Revision 1.13  2004/09/22 00:25:17  glbuild
 #       Fixed missing parenthesis
 #
@@ -48,7 +51,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Jobid], [0.1.0])
+AC_INIT([GLite WMS Utils Jobid], [0.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobid/strmd5.h])
