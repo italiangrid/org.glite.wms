@@ -13,35 +13,18 @@ AC_DEFUN(AC_CONDORG,
 	[], 
         with_condor_prefix=${CONDORG_INSTALL_PATH:-/opt/condor})
 
-    changequote(<<, >>)
-    gcc_major_version=`gcc -v 2>&1 | grep version | sed -e 's/.*version \([0-9]\+\)\.[0-9]\+\.\?[0-9]*.*/\1/'`
-    changequote([, ])
+    AC_MSG_CHECKING([for CONDOR installation])
 
     CONDORG_CFLAGS=""
-    if test "x$gcc_major_version" = "x3" ; then
-        CONDORG_LIBS="-lcondorapi.3 -ldl"
-	AC_MSG_RESULT([condor libs $gcc_major_version $CONDORG_LIBS])
-    else
-        CONDORG_LIBS="-lcondorapi"
-	AC_MSG_RESULT([condor libs $gcc_major_version $CONDORG_LIBS])
-    fi
-
-    changequote(<<, >>)
-    gcc_version=`gcc -v 2>&1 | grep version | sed -e 's/.*version \([0-9]\+\.[0-9]\+\.\?[0-9]*\).*/\1/'`
-    changequote([, ])
+    CONDORG_LIBS="-lcondorapi -ldl"
 
     if test -n "$with_condor_prefix" ; then
-      if test "x$gcc_major_version" = "x3" ; then
-        ac_condor_library_prefix="$with_condor_prefix/gcc-$gcc_version/lib"
-        ac_condor_include_prefix="$with_condor_prefix/gcc-$gcc_version/include"
-      else
-        ac_condor_library_prefix="$with_condor_prefix/lib"
-        ac_condor_include_prefix="$with_condor_prefix/include"
-      fi
+      AC_MSG_RESULT([prefix: $with_condor_prefix])
+
+      ac_condor_library_prefix="$with_condor_prefix/lib"
+      ac_condor_include_prefix="$with_condor_prefix/include"
       CONDORG_CFLAGS="-I$ac_condor_include_prefix"
       CONDORG_LIBS="-L$ac_condor_library_prefix $CONDORG_LIBS"
-      AC_MSG_RESULT([condor include path $CONDORG_CFLAGS])
-      AC_MSG_RESULT([condor lib path $CONDORG_LIBS])
     fi
 
     CONDOR_BIN=$with_condor_prefix/bin
@@ -64,7 +47,7 @@ AC_DEFUN(AC_CONDORG,
 	rm condor.ver
 
         CONDORG_VERSION=$condor_major_ver$condor_minor_ver$condor_micro_ver
- 
+
         AC_DEFINE_UNQUOTED(CONDORG_VERSION, $CONDORG_VERSION)
         
 	if test $condor_major_ver -gt $ac_req_major -o \
