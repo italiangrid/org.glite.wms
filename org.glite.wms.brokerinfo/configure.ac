@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/12/07 18:47:45  eronchie
+#       Work In progress
+#
 #       Revision 1.5  2004/12/02 16:45:53  emartel
 #       Added Storage Index catalog interface and Data Location catalog interface
 #
@@ -96,17 +99,25 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 have_boost=no
 have_classads=no
 have_globus=no
+have_cgsi_gsoap=no
+have_replica=no
+have_data=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_GSOAP
+AC_CGSI_GSOAP
+AC_REPLICA([], have_replica=yes, have_replica=no)
+AC_REPLICA([], have_data=yes, have_data=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_MSG_RESULT(["REPLICA found $have_replica"])
+AC_MSG_RESULT(["DATA found $have_data"])
 
 AC_GLITE
-AC_GSOAP
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

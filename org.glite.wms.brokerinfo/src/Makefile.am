@@ -40,7 +40,7 @@ libglite_wms_rls_la_SOURCES =
 
 libglite_wms_rls_la_LIBADD = \
 	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
-	$(top_srcdir)/../repository/edg-replica-manager-client/2.3.1/rhel30_gcc32/lib/libedg_replica_manager_client_gcc3_2_2-2.3.1.so
+	$(REPLICA_MANAGER_LIBS)
 
 libglite_wms_dli_la_SOURCES = \
         soapC.cpp \
@@ -59,7 +59,7 @@ soapC.cpp: $(srcdir)/DataLocationInterface.h ; \
 soapH.h: $(srcdir)/DataLocationInterface.h ; \
 	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
 
-CGSI_CFLAGS = -I$(top_srcdir)/../repository/cgsi-gsoap/2.6-1.1.5/rhel30_gcc32/include/
+#CGSI_CFLAGS = -I$(top_srcdir)/../repository/cgsi-gsoap/2.6-1.1.5/rhel30_gcc32/include/
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
@@ -68,6 +68,6 @@ AM_CPPFLAGS = \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GSOAP_CFLAGS) \
-	$(CGSI_CFLAGS)
+	$(CGSI_GSOAP_CFLAGS)
  
 MAINTAINERCLEANFILES = Makefile.in
