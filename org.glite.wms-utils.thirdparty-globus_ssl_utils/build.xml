@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.11  2004/06/15 09:22:57  eronchie
+	Added configure options
+	WARNING: work in progress
+
 	Revision 1.10  2004/05/17 16:50:49  flammer
 	Updated variable naming.
-
+	
 	Revision 1.9  2004/05/14 00:37:33  dimeglio
 	Replaced targets-cpp with targets-make
 	
@@ -96,12 +100,18 @@
 		 ========================================= -->
 	<import file="${subsystem.taskdefs.file}" />
 	<import file="${global.taskdefs.file}" />
-	
+
 	<!-- =========================================
-		 Load common targets
-		 ========================================= -->
-	<import file="${global.targets-external-dependencies.file}"/>	
-	<import file="${global.targets-make.file}" />
+                 Load configure options
+                 ========================================= -->
+        <property file="${global.configure.options.file}"/>
+                                                                                
+        <!-- =========================================
+                 Load common targets
+                 ========================================= -->
+        <import file="${global.targets-external-dependencies.file}"/>
+        <import file="${global.targets-make.file}" />
+        <import file="${component.configure.options.file}"/>
 		
 	<!-- =========================================
 		 Load version file 

@@ -21,7 +21,6 @@ globus_ssl_utilsinclude_HEADERS = \
 	sslutils.h
 
 AM_CPPFLAGS = -I${srcdir}/oldgaa \
-	$(GLOBUS_CFLAGS) \
-	$(GLOBUS_OPENSSL_CFLAGS)
+	$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in

@@ -38,8 +38,7 @@ AC_REVISION([$Revision$])
 #Environment.
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
-                                                                                                               
-REPOSITORY=`pwd`/../../repository
+
 STAGE=`pwd`/../../stage
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
@@ -73,13 +72,10 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([memset putenv strchr strdup strrchr strspn tzset])
 
-GLOBUS_CFLAGS=-I$REPOSITORY/globus/2.4.3/rhel30_gcc32/include/gcc32
-AC_SUBST([GLOBUS_CFLAGS])
-GLOBUS_CPPFLAGS=$GLOBUS_CFLAGS
-AC_SUBST([GLOBUS_CPPFLAGS])
-
-GLOBUS_OPENSSL_CFLAGS=-I$REPOSITORY/globus/2.4.3/rhel30_gcc32/include/gcc32/openssl
-AC_SUBST(GLOBUS_OPENSSL_CFLAGS)
+have_globus=no
+                                                                                
+AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

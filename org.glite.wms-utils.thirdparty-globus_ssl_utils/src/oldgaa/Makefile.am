@@ -30,6 +30,6 @@ EXTRA_DIST = globus_config.h \
 	oldgaa_policy_evaluator.h \
 	oldgaa_utils.h
 
-AM_CPPFLAGS = $(GLOBUS_OPENSSL_CFLAGS) 
+AM_CPPFLAGS = $(GLOBUS_THR_CFLAGS) 
 
 MAINTAINERCLEANFILES = Makefile.in
