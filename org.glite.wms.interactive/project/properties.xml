@@ -21,10 +21,14 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.2  2004/08/16 13:21:25  eronchie
+	Updated
+	WARNING: work in progress
+
 	Revision 1.1  2004/08/16 12:53:47  eronchie
 	Start adding new component
 	WARNING: work in progress
-
+	
 	
 -->
 
@@ -61,6 +65,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 glite.m4 cppunit.m4"/>
+	<property name="m4files.list" value="globus.m4 glite.m4 cppunit.m4 glite_wms_tp_bypass.m4"/>
 
 </project>

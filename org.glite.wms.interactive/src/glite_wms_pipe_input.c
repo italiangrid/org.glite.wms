@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/poll.h>
-#include "layer.h"
+#include "glite/wms/thirdparty/bypass/layer.h"
 
 #define GLITE_WMS_PIPE_INPUT_ERROR_RETRY_PERIOD 5 /* Sleep on any error when polling, in seconds. */
 

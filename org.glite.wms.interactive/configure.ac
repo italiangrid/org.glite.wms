@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/08/16 13:21:25  eronchie
+#       Updated
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/08/16 12:53:47  eronchie
 #       Start adding new component
 #       WARNING: work in progress
@@ -85,7 +89,12 @@ AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 
+have_tp_bypass=no
+
 AC_GLITE
+
+AC_GLITE_WMS_TP_BYPASS([], have_tp_bypass=yes, have_tp_bypass=no)
+AC_MSG_RESULT(["TP_BYPASS found $have_tp_bypass"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

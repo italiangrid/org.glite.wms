@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
-#include "layer.h"
+#include "glite/wms/thirdparty/bypass/layer.h"
 
 #define BUFFER_SIZE 131072
 
