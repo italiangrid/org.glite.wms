@@ -15,14 +15,18 @@
 	GLite Middleware WMS Configuration Specification File
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
+	         Joachim Flammer <Joachim.Flammer@cern.ch>
 	Version info: $Id$
 	Release: $Name$
 
 	Revision history:
 	$Log$
+	Revision 1.17  2004/05/17 16:22:12  flammer
+	Unification of variable naming.
+
 	Revision 1.16  2004/05/13 23:40:56  dimeglio
 	Removed one occurrence of Test2 WMS
-
+	
 	Revision 1.15  2004/05/13 23:07:19  dimeglio
 	Added ant-contrib target
 	Replaced workspace.abs.dir with workspace.dir
@@ -85,8 +89,10 @@
 	<!-- load baseline and user properties -->
 	<import file="${workspace.dir}/org.glite/project/baseline.properties.xml" />
 
+	<!-- define build properties file location since we are already in project dir -->
+	<property name="subsystem.build.properties.file" value="./build.properties" />
+
 	<!-- Load subsytem-specific property files -->
-	<property file="./build.properties"/>
 	<import file="./properties.xml"/>
 
 	<!-- load global properties -->
@@ -105,8 +111,12 @@
 	<!-- Load global dependencies file -->
 	<property file="${global.dependencies.file}" />
 
-	<!-- Load external dependencies -->
-	<import file="${global.external-dependencies.file}" />
+	<!-- ===============================================
+		 Load targets 
+		 =============================================== -->
+
+	<!-- Load external dependencies targets -->
+	<import file="${global.targets-external-dependencies.file}" />
 
 	<!-- ========================================================
 		 Checkout/updates the GLite Middleware WMS components
@@ -119,7 +129,7 @@
 	<condition property="glite.uptodate">
 		<and>
 			<isfalse value="${update}" />
-			<available file="${workspace.dir}/org.glite" type="dir" />
+			<available file="${global.dependencies.file}" type="file" />
 		</and>
 	</condition>
 
@@ -139,7 +149,7 @@
 	<!-- Update main GLite module -->
 	<target name="org.glite" unless="glite.uptodate">
 		<cvs command="checkout"
-        	package="org.glite"
+        	package="${global.name}"
         	dest="${workspace.dir}"
         	tag="${org.glite.version}"/>
 		<fail>The org.glite module has been updated, please rerun the configuration file</fail>
@@ -148,14 +158,12 @@
 	<!-- Update the current module -->
 	<target name="org.glite.wms" unless="uptodate">
 		<cvs command="checkout"
-        	package="org.glite.wms"
+        	package="${wms.subsystem.name}"
         	dest="${workspace.dir}"
         	tag="${org.glite.wms.version}" />
 		<fail>The org.glite.wms module has been updated, please rerun the configuration file</fail>
 	</target>
 
-	<!-- Load master dependencies file -->
-	<property file="${workspace.dir}/org.glite/project/dependencies.properties" />
 	
 	<!-- *****************************************************-->
 	<!-- Environmental checks                                 -->
@@ -218,84 +226,10 @@
 	<!-- All development tools -->
  	<target name="devtools" depends="junitcheck,
 					 				 junit,
- 									 checkstyle,
+ 									 chkstyle,
  									 jalopy,
  									 ant-contrib,
  									 cpptasks"/>		
-
-	<!-- Check if junit is already installed -->
-	<target name="junitcheck">
-		<available classname="junit.runner.Version" property="is.junit.present"/>
-	</target>
-
-	<!--  JUnit -->
- 	<target name="junit" unless="is.junit.present"
- 			description="Install junit.">		
-		<mkdir dir="${repository}/${ext.junit.subpath}" />
-		<get src="${ext.junit.rep-url}"
-			 dest="${repository}/${ext.junit.subpath}/${ext.junit.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-
-		<!-- Copy junit jar to Ant lib directory, needed to run JUnit task -->
-		<copy file="${repository}/${ext.junit.subpath}/${ext.junit.rep-file}"
-			tofile="${env.ANT_HOME}/lib/{ext.junit.rep-file}"/>
-	</target>
-
-	<!--  CheckStyle -->
- 	<target name="checkstyle"
- 			description="Check of checkstyle installation.">		
-		<mkdir dir="${repository}/${ext.checkstyle.subpath}" />
-		<get src="${ext.checkstyle.rep-url}"
-			 dest="${repository}/${ext.checkstyle.subpath}/${ext.checkstyle.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-	</target>
-	
-	<!--  Jalopy -->
- 	<target name="jalopy"		
- 			description="Install jalopy.">		
-		<mkdir dir="${repository}/${ext.jalopy.subpath}" />
-		<get src="${ext.jalopy.rep-url}"
-			 dest="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-		<!-- check if uptodate unpacked -->
-		<uptodate property="jalopy.old" targetfile="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}">
-			<srcfiles dir="${repository}/${ext.jalopy.subpath}" includes="**/*" />
-		</uptodate>
-		<antcall target="jalopy-expand" />
-	</target>
- 	<target name="jalopy-expand" if="jalopy.old"		
- 	 			description="Untar jalopy tarball.">		
-		<untar compression="gzip" src="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}"
-			dest="${repository}/${ext.jalopy.subpath}" />
-		<touch>
-			<fileset dir="${repository}/${ext.jalopy.subpath}">
-				<exclude name="${ext.jalopy.rep-file}" />
-			</fileset>
-		</touch>
-	</target>
-	
-	<!--  Ant Contributions -->
- 	<target name="ant-contrib"
- 			description="Install ant-contrib.">		
-		<mkdir dir="${repository}/${ext.ant-contrib.subpath}" />
-		<get src="${ext.ant-contrib.rep-url}"
-			 dest="${repository}/${ext.ant-contrib.subpath}/${ext.ant-contrib.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-	</target>
-	
-	<!--  CPPTasks -->
- 	<target name="cpptasks"
- 			description="Install cpptasks.">		
-		<mkdir dir="${repository}/${ext.cpptasks.subpath}" />
-		<get src="${ext.cpptasks.rep-url}"
-			 dest="${repository}/${ext.cpptasks.subpath}/${ext.cpptasks.rep-file}"
-			 verbose="on"
-			 usetimestamp="true" />
-	</target>
 	
 	<!-- =====================================================
 		 External libraries

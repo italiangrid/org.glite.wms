@@ -15,17 +15,21 @@
 	Build file for the GLite Middleware WMS Subsystem
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
+			 Joachim Flammer <Joachim.Flammer@cern.ch>
 	Version info: $Id$
 	Release: $Name$
 
 	Revision history:
 	$Log$
+	Revision 1.13  2004/05/17 16:22:12  flammer
+	Unification of variable naming.
+
 	Revision 1.12  2004/05/14 00:07:32  dimeglio
 	Added command to load the system build.properties file before
 	loading the global properties, but after baseline and user properties
 	Removed references to local versions of global-only objects
 	Added default Ant all and cleanAll targets
-
+	
 	Revision 1.11  2004/05/13 23:01:49  dimeglio
 	Removed commands to create module directories (this is a subsystem)
 	Replaced workspace.abs.dir with workspace.dir
@@ -75,9 +79,16 @@
 	<!-- =========================================
 	     Import properties (order is important) 
 		 ========================================= -->
+	
+	<!-- Import baseline & user properties -->
 	<import file="../org.glite/project/baseline.properties.xml" />
-	<property file="./project/build.properties" />
-	<import file="./project/properties.xml" />	
+
+	<!-- Import subsystem build properties, 
+	                      subsystem properties & 
+	                      subsystem common properties -->
+	<import file="./project/properties.xml" />
+
+	<!-- Import global build properties and global properties -->
 	<import file="${global.properties.file}" />
 				
 	<!-- =========================================
@@ -86,31 +97,27 @@
 	<property file="${user.dependencies.file}"/>
 	<property file="${subsystem.dependencies.file}"/>
 	<property file="${global.dependencies.file}"/>	
-	
+			
 	<!-- =========================================
-		 Import external dependencies files (order is important) 
-		========================================= -->
-	<import file="${global.external-dependencies.file}"/>	
-		
-	<!-- =========================================
-		 Import task definitions (order is important)
+		 Import global task definitions
 		 ========================================= -->
 	<import file="${global.taskdefs.file}" />
 	
 	<!-- =========================================
-	     Import compiler definitions (order is important)
+	     Import global compiler definitions
   	     ========================================= -->
 	<import file="${global.compilerdefs.file}" />
 		
 	<!-- =========================================
-		 Default envchecks (order is important)
+		 Import targets 
 		 ========================================= -->
-	<import file="${global.envchecks.file}" />
-
+	<import file="${global.targets-external-dependencies.file}"/>
+	<import file="${global.targets-envchecks.file}" />
+	
 	<!-- =========================================
 		 Load version file 
 		 ========================================= -->
-	<property file="${version.file}"/>
+	<property file="${module.version.file}"/>
 	
 	<!-- ===============================================
 		  Public common targets
