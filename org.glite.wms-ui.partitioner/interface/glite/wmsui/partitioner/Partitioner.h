@@ -31,7 +31,7 @@
 namespace reqad = glite::wms::jdl;
 
 namespace glite {
-namespace wms {
+namespace wmsui {
 namespace partitioner {
 
 class Partitioner {
