@@ -61,13 +61,6 @@ libglite_wms_iiattrutil_la_SOURCES = \
 libglite_wms_quota_la_SOURCES = \
 	quota.cpp
 
-classad_jutils.lo: classad_jutils.cpp classad_utils.h
-	$(CXXCOMPILE) -DWITH_UI_JCLIENT -c $<
-	$(LTCXXCOMPILE) -DWITH_UI_JCLIENT -c $<
-
-classad_jutils.cpp:	classad_utils.cpp
-	/bin/cp $(srcdir)/classad_utils.cpp classad_jutils.cpp
-
 utilitiesincludedir = $(includedir)/glite/wms/common/utilities
 utilitiesinclude_HEADERS = \
 	boost_fs_add.h \

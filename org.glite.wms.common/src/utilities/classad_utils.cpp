@@ -7,8 +7,8 @@
 
 #include "classad_utils.h"
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 
@@ -299,5 +299,5 @@ evaluate(classad::ClassAd const& ad,
   return result;
 }
 
-}}}} // edg::workload::common::utilities
+}}}} // glite::wms::common::utilities
 

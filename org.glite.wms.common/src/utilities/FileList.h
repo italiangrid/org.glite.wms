@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_FILELIST_H
+#define GLITE_WMS_COMMON_UTILITIES_FILELIST_H
 
 #include <iterator>
 
@@ -159,7 +159,7 @@ inline void FileList<std::string>::remove( const std::string &val ) { this->remo
 
 } COMMON_NAMESPACE_END;
 
-#endif /* EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H */
+#endif /* iGLITE_WMS_COMMON_UTILITIES_FILELIST_H */
 
 // Local Variables:
 // mode: c++

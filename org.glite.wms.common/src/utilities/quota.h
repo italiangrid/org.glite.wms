@@ -1,10 +1,10 @@
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_QUOTA_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_QUOTA_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_QUOTA_H
+#define GLITE_WMS_COMMON_UTILITIES_QUOTA_H
 
 #include <string>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 namespace quota {
@@ -17,12 +17,12 @@ namespace quota {
 } // namespace quota
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // edg
+} // namespace wms
+} // namespace glite
 
 // Local Variables:
 // mode: c++
 // End:
 // 
 
-#endif /* EDG_WORKLOAD_COMMON_UTILITIES_QUOTA_H */
+#endif /* GLITE_WMS_COMMON_UTILITIES_QUOTA_H */

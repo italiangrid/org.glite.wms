@@ -13,7 +13,7 @@
 #include <value.h>
 #include "classad_utils.h"
 
-namespace utilities = edg::workload::common::utilities;
+namespace utilities = glite::wms::common::utilities;
 
 namespace {
 

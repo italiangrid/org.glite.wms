@@ -5,42 +5,42 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_FLEXTRACTOR_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_FLEXTRACTOR_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_FLEXTRACTOR_H
+#define GLITE_WMS_COMMON_UTILITIES_FLEXTRACTOR_H
 
-#ifndef EDG_WORKLOAD_X_STRING
-#define EDG_WORKLOAD_X_STRING
+#ifndef GLITE_WMS_X_STRING
+#define GLITE_WMS_X_STRING
 #include <string>
 #endif
-#ifndef EDG_WORKLOAD_X_UTILITY
-#define EDG_WORKLOAD_X_UTILITY
+#ifndef GLITE_WMS_X_UTILITY
+#define GLITE_WMS_X_UTILITY
 #include <utility>
 #endif
-#ifndef EDG_WORKLOAD_X_VECTOR
-#define EDG_WORKLOAD_X_VECTOR
+#ifndef GLITE_WMS_X_VECTOR
+#define GLITE_WMS_X_VECTOR
 #include <vector>
 #endif
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_FILELIST_H
 #include "FileList.h"
 #endif
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_FILELISTLOCK_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_FILELISTLOCK_H
 #include "FileListLock.h"
 #endif
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_EXTRACTOR_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_EXTRACTOR_H
 #include "Extractor.h"
 #endif
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 
 template<typename T>
 class FLExtractor
 {
-  typedef typename edg::workload::common::utilities::FileList<T> FL;
-  typedef edg::workload::common::utilities::FileListMutex FLM;
-  typedef edg::workload::common::utilities::ForwardExtractor<FL> FE;
+  typedef typename glite::wms::common::utilities::FileList<T> FL;
+  typedef glite::wms::common::utilities::FileListMutex FLM;
+  typedef glite::wms::common::utilities::ForwardExtractor<FL> FE;
 
   FL m_filelist;
   FLM m_mutex;
@@ -62,9 +62,9 @@ public:
 
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms 
+} // namespace glite
 
-#include "edg/workload/common/utilities/FLExtractor.cpp"
+#include "FLExtractor.cpp"
 
 #endif

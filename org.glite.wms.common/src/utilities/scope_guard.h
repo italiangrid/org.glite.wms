@@ -6,14 +6,14 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_SCOPE_GUARD_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_SCOPE_GUARD_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_SCOPE_GUARD_H
+#define GLITE_WMS_COMMON_UTILITIES_SCOPE_GUARD_H
 
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 
@@ -45,7 +45,7 @@ public:
 
 };
 
-}}}} // edg::workload::common::utilities
+}}}} // glite::wms::common::utilities
 
 #endif
 

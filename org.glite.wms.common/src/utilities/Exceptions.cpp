@@ -11,7 +11,7 @@
 COMMON_NAMESPACE_BEGIN{
      namespace utilities {
 using namespace std ;
-using namespace edg::workload::common::utilities ;
+using namespace glite::wms::common::utilities ;
 pthread_mutex_t METHOD_MUTEX  ;  // This mutex is used in order to lock the file for writing log infornation
 /* *********************************
 * Exception Class Implementation
@@ -64,7 +64,7 @@ int Exception::getCode(){
     if  (error_code != 0)
        return error_code ;
     else
-       return WL_COMMON_BASE;
+       return WMS_COMMON_BASE;
 };
 const char* Exception::what() const throw(){
   if (!ancestor.empty() )
@@ -122,7 +122,7 @@ string Exception::dbgMessage(){
 FatalErrorException::FatalErrorException(const std::string& file,
 					 int line,
 					 const std::string& method)
-    : Exception(file, line, method, WL_FATAL_ERROR, "FatalErrorException")
+    : Exception(file, line, method, WMS_FATAL_ERROR, "FatalErrorException")
 {
     error_message = "Fatal Error found: system is unable to continue";
 }

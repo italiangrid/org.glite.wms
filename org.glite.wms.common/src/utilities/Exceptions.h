@@ -1,5 +1,5 @@
-#ifndef  EDG_WORKLOAD_COMMON_CLIENT_EXCEPTIONS_H
-#define EDG_WORKLOAD_COMMON_CLIENT_EXCEPTIONS_H
+#ifndef GLITE_WMS_COMMON_CLIENT_EXCEPTIONS_H
+#define GLITE_WMS_COMMON_CLIENT_EXCEPTIONS_H
 
 /*
  * Exceptions.h
@@ -20,7 +20,7 @@ COMMON_NAMESPACE_BEGIN{
      namespace utilities {
 extern pthread_mutex_t METHOD_MUTEX; //  used in order to store info into a file (rather then syslog)
 #define EDG_STACK_TRY(method_name) std::string METHOD = method_name ; try {
-#define EDG_STACK_CATCH() } catch (edg::workload::common::utilities::Exception &exc){ throw  edg::workload::common::utilities::Exception ( __FILE__ , METHOD , &exc)   ;  }
+#define EDG_STACK_CATCH() } catch (glite::wms::common::utilities::Exception &exc){ throw  glite::wms::common::utilities::Exception ( __FILE__ , METHOD , &exc)   ;  }
 
 /**
  * The Exception classes contains attributes into which are placed exception information and provides

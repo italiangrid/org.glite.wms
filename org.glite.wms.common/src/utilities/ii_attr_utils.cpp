@@ -7,10 +7,10 @@
 
 #include "../configuration/NSConfiguration.h"
 #include "../configuration/Configuration.h"
-
 #include "../ldif2classad/LDAPQuery.h"
 #include "../ldif2classad/LDAPSynchConnection.h"
 #include "../ldif2classad/LDAPForwardIterator.h"
+
 #include "Exceptions.h"
 #include "ii_attr_utils.h"
 
@@ -19,13 +19,13 @@
 
 using namespace std;
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 namespace ii_attributes {
 
-using namespace edg::workload::common::ldif2classad;
+using namespace glite::wms::common::ldif2classad;
 
 namespace {
 	
@@ -72,7 +72,7 @@ std::vector<std::string> getTypes()
     ldap_it.first();
     (*ldap_it).EvaluateAttribute("attributeTypes",attributetypes);
   }
-  catch( edg::workload::common::utilities::Exception& e ) {
+  catch( glite::wms::common::utilities::Exception& e ) {
     cout << e.what() << endl;
   }
   return attributetypes;
@@ -142,5 +142,5 @@ bool isGlueSchema()
 } // namespace ii_attributes
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms 
+} // namespace glite

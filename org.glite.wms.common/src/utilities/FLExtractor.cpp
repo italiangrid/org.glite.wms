@@ -5,10 +5,8 @@
 
 // $Id$
 
-//#include "edg/workload/common/utilities/FLExtractor.h"
-
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 
@@ -58,6 +56,6 @@ FLExtractor<T>::erase(const iterator& it)
 
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 

@@ -8,8 +8,8 @@
 #include <globus_ftp_client.h>
 #include <string>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 namespace globus {	

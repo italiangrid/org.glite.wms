@@ -44,7 +44,7 @@ extern "C" {
 #define QUOTABLOCK_BITS 9
 #endif
 
-namespace configuration = edg::workload::common::configuration;
+namespace configuration = glite::wms::common::configuration;
 
 void usage(std::string exe)
 {
@@ -110,19 +110,19 @@ int main(int argc, char* argv[])
 
  if (!found_p || !found_q)
   {
-   // Need at least one parameter from EDG WL configuration
+   // Need at least one parameter from GLITE WMS configuration
    // Let's go and fetch it.
 
    configuration::Configuration *conf;
    const configuration::NSConfiguration *nsconf;
    try
     {
-     conf = new configuration::Configuration("edg_wl.conf", "NetworkServer");
+     conf = new configuration::Configuration("glite_wms.conf", "NetworkServer");
      nsconf = configuration::Configuration::instance()->ns();
     }
    catch (...)
     {
-     std::cerr << ex_name << ": Error reading EDG-WL configuration. Exiting." 
+     std::cerr << ex_name << ": Error reading GLITE-WMS configuration. Exiting." 
        << std::endl;
      exit(17);
     }

@@ -8,8 +8,8 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_CLASSAD_UTILS_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_CLASSAD_UTILS_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_CLASSAD_UTILS_H
+#define GLITE_WMS_COMMON_UTILITIES_CLASSAD_UTILS_H
 
 #include <string>
 #include <vector>
@@ -20,8 +20,8 @@
 #include <classad_distribution.h>
 #include <iostream>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 

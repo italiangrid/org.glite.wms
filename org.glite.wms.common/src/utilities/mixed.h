@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_MIXED_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_MIXED_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_MIXED_H
+#define GLITE_WMS_COMMON_UTILITIES_MIXED_H
 
 #include <cstdlib>
 #include <cstdio>
@@ -483,7 +483,7 @@ typedef Mixed::mixed_type_t   mixed_type_t;
 
 } COMMON_NAMESPACE_END;
 
-#endif /* EDG_WORKLOAD_COMMON_UTILITIES_MIXED_H */
+#endif /* GLITE_WMS_COMMON_UTILITIES_MIXED_H */
 
 // Local Variables:
 // mode: c++

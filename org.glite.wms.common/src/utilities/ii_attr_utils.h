@@ -4,16 +4,16 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 // $Id$
 
-#ifndef _EDG_WORKLOAD_COMMON_UTILITIES_II_ATTR_UTILS_
-#define _EDG_WORKLOAD_COMMON_UTILITIES_II_ATTR_UTILS_
+#ifndef _GLITE_WMS_COMMON_UTILITIES_II_ATTR_UTILS_
+#define _GLITE_WMS_COMMON_UTILITIES_II_ATTR_UTILS_
 
 #include <string>
 #include <vector>
 
 #include <boost/utility.hpp>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 namespace ii_attributes {
@@ -29,8 +29,8 @@ extern bool isGlueSchema();
 } // namespace ii_attributes
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif
 

@@ -24,8 +24,8 @@ __END_DECLS
 
 #define qinfo(dbstr, name)  std::cout << #name << ":\t" << dbstr.name << std::endl;
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 namespace quota {
@@ -159,6 +159,6 @@ std::pair<long, long> getQuota(const std::string &uname) {
 } // namespace quota
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // edg
+} // namespace wms
+} // glite
 

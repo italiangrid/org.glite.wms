@@ -16,13 +16,13 @@
 #include "../logger/manipulators.h"
 #include "globus_ftp_macros.h" 
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 namespace globus {
 
-namespace logger = edg::workload::common::logger;
+namespace logger = glite::wms::common::logger;
 
 namespace {	
 static globus_mutex_t lock;
@@ -96,5 +96,5 @@ bool mkdir(const std::string& dst)
 } // globus namespace closure
 } // utilities namespace closure
 } // common namespace closure
-} // workload namespace closure
-} // edg namespace closure
+} // wms namespace closure
+} // glite namespace closure

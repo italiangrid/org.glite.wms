@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_LINEPARSEREXCEPTIONS_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_LINEPARSEREXCEPTIONS_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_LINEPARSEREXCEPTIONS_H
+#define GLITE_WMS_COMMON_UTILITIES_LINEPARSEREXCEPTIONS_H
 
 #include <exception>
 
@@ -65,10 +65,10 @@ private:
 
 } COMMON_NAMESPACE_END;
 
-inline std::ostream &operator<<( std::ostream &os, const edg::workload::common::utilities::LineParsingError &lpe )
+inline std::ostream &operator<<( std::ostream &os, const glite::wms::common::utilities::LineParsingError &lpe )
 { lpe.usage( os ); return os; }
 
-#endif /* EDG_WORKLOAD_COMMON_UTILITIES_LINEPARSEREXCEPTIONS_H */
+#endif /* GLITE_WMS_COMMON_UTILITIES_LINEPARSEREXCEPTIONS_H */
 
 // Local Variables:
 // mode: c++

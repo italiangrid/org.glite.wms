@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_BOOST_FS_ADD_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_BOOST_FS_ADD_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_BOOST_FS_ADD_H
+#define GLITE_WMS_COMMON_UTILITIES_BOOST_FS_ADD_H
 
 #include <string>
 #include <iostream>
@@ -19,7 +19,7 @@ std::string normalize_path( const std::string &fpath );
 
 }};
 
-#endif /* EDG_WORKLOAD_COMMON_UTILITIES_BOOST_FS_ADD_H */
+#endif /* GLITE_WMS_COMMON_UTILITIES_BOOST_FS_ADD_H */
 
 // Local Variables:
 // mode: c++

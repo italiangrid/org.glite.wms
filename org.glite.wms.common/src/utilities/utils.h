@@ -1,5 +1,5 @@
-#ifndef  EDG_WORKLOAD_COMMON_UTILITIES_UTILS_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_UTILS_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_UTILS_H
+#define GLITE_WMS_COMMON_UTILITIES_UTILS_H
 /*
  * utils.h
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.

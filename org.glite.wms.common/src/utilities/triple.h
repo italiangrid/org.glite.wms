@@ -9,10 +9,10 @@
  * For license description see http://www.eu-datagrid.org/license.html
  */
 
-// Id: $
+// Id:$
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common { 
 namespace utilities {
 /**
@@ -81,8 +81,8 @@ inline triple<_T1, _T2, _T3> make_triple(const _T1& __x, const _T2& __y, const _
 
 } // namespace utilities
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif 
 

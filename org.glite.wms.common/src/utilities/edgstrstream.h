@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_UTILITIES_EDGSTRSTREAM_H
-#define EDG_WORKLOAD_COMMON_UTILITIES_EDGSTRSTREAM_H
+#ifndef GLITE_WMS_COMMON_UTILITIES_EDGSTRSTREAM_H
+#define GLITE_WMS_COMMON_UTILITIES_EDGSTRSTREAM_H
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -12,7 +12,7 @@
 #include <string>
 #endif
 
-namespace edg { namespace workload { namespace common { namespace utilities {
+namespace glite { namespace wms { namespace common { namespace utilities {
 
 #ifdef HAVE_STRINGSTREAM
 typedef std::stringstream   edgstrstream;
@@ -83,7 +83,7 @@ public:
 
 }}}}
 
-#endif /* EDG_WORKLOAD_COMMON_UTILITIES_EDGSTRSTREAM_H */
+#endif /* GLITE_WMS_COMMON_UTILITIES_EDGSTRSTREAM_H */
 
 // Local Variables:
 // mode: c++
