@@ -370,7 +370,9 @@ public class JobCollection implements Runnable{
 				String dirPath = paramTh  + "/"  + System.getProperty( "user.name" ) +  "_" +    job.jid.getUnique ()  ;
 				File path = new File (dirPath);
 				/* Do nothing, The path already exist and it is a directory: OK */
-				if ( path.isDirectory() ) {/** OK */}
+				if ( path.isDirectory() ) {
+                                   /** OK */
+                                }
 				// The path exists but it is not a directory
 				else  if ( path.exists() )
 					throw new UnsupportedOperationException ("The path " +dirPath + " is already existing but it is not a directory" );

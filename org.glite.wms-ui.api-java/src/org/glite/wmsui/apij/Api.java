@@ -132,7 +132,9 @@ public class Api {
 				break ;
 			case USERJOBS:
 				try{ ((Vector)result).add(new JobId(attrValue)) ;
-				}catch (Exception exc) { /** DO NOTHING*/ }
+				}catch (Exception exc) { 
+				   /** DO NOTHING*/ 
+                                }
 				break ;
 			case   LISTMATCH:
                                 int index = attrValue.lastIndexOf("=");
