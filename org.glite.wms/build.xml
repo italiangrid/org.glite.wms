@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.20  2004/06/18 22:14:30  dimeglio
+	Removed antcalls from check target
+
 	Revision 1.19  2004/06/07 14:37:20  dimeglio
 	Added conditional build of modules
 	with setenvonly flag
-
+	
 	Revision 1.18  2004/05/31 15:47:59  eronchie
 	Updated jdl dependences
 	
@@ -155,11 +158,8 @@
 		<echo>Subsystem name:		${subsystem.name}</echo>
 	</target>
 
-	<target name="envcheck" unless="checks.done"
+	<target name="envcheck" depends="envinfo,defaultenvchecks" 
 		description="Check environment configuration">
-
-		<antcall target="envinfo" />
-		<antcall target="defaultenvchecks" />
 	</target>
 
 	<target name="localinit" depends="envcheck">
