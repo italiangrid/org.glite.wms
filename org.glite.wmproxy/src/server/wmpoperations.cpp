@@ -38,6 +38,7 @@
 
 // RequestAd
 #include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wms/jdl/PrivateAttributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 
@@ -392,9 +393,9 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 
 	// Copying delegated Proxy to destination URI
 	//TBD check result of copy
-	wmputilities::fileCopy(delegated_proxy, document_root + "/"
+	wmputilities::fileCopy(delegated_proxy, document_root + FILE_SEPARATOR
 		+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid))
-		+ "/" + USER_PROXY_NAME);
+		+ FILE_SEPARATOR + USER_PROXY_NAME);
 	
 	if (jobids.size() != 0) {
 		edglog(info)<<"Creating sub job directories for job:\n"<<jobid<<endl;
@@ -411,11 +412,11 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 			string target;
 			string link;
 			for (unsigned int i = 0; i < jobids.size(); i++) {
-				string target = (document_root + "/" + dest_uri
-					 + "/" + USER_PROXY_NAME);
-				string link = document_root + "/"
-						+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]))
-						+ "/" + USER_PROXY_NAME;
+				string target = document_root + FILE_SEPARATOR + dest_uri
+					+ FILE_SEPARATOR + USER_PROXY_NAME;
+				string link = document_root + FILE_SEPARATOR
+					+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]))
+					+ FILE_SEPARATOR + USER_PROXY_NAME;
 				edglog(info)<<"Creating proxy symbolic link in: "<<jobids[i]<<endl;
 				if (symlink(target.c_str(), link.c_str())) {
 			      	edglog(fatal)<<"\nUnable to create symbolic link to proxy file:\n\t"
@@ -460,11 +461,11 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	// Setting job identifier
 	jad->setAttribute(JDL::JOBID, stringjid);
 	
-	// Adding WMProxyBaseURI and InputSandboxBaseURI attributes
+	// Adding WMPInputSandboxBaseURI and InputSandboxBaseURI attributes
 	if (!jad->hasAttribute(JDL::ISB_BASE_URI)) {
 		jad->setAttribute(JDL::ISB_BASE_URI, dest_uri);
 	}
-	jad->setAttribute(JDL::WMPROXY_BASE_URI, dest_uri);
+	jad->setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
 
 	// Initializing logger
 	WMPLogger wmplogger;
@@ -537,7 +538,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	if (!dag->hasAttribute(JDL::ISB_BASE_URI)) {
 		dag->setReserved(JDL::ISB_BASE_URI, dest_uri);
 	}
-	dag->setReserved(JDL::WMPROXY_BASE_URI, dest_uri);
+	dag->setReserved(JDL::WMPISB_BASE_URI, dest_uri);
 
 	// Initializing logger
 	WMPLogger wmplogger;
@@ -597,9 +598,19 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 			WMS_OPERATION_NOT_ALLOWED, "The job has already been started");
 	}
 
+	string proxy(getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
+		+ wmputilities::to_filename(*jid)
+		+ FILE_SEPARATOR + USER_PROXY_NAME);
+	
 	// Getting jdl
 	string jdl = status.getValString(JobStatus::JDL);
-	submit(jdl, jid);
+	Ad *ad = new Ad(jdl);
+	
+	// Adding Proxy attributes
+	ad->setAttribute(JDL::CERT_SUBJ, wmputilities::getUserDN());
+	ad->setAttribute(JDLPrivate::USERPROXY, proxy);
+	
+	submit(ad->toString(), jid);
 	delete jid;
 
 	GLITE_STACK_CATCH();
