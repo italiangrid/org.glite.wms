@@ -573,7 +573,9 @@ void matchmakerGlueImpl::checkRequirement(const classad::ClassAd* requestAd, mat
 				additionalSESAInfo = listAttrRegEx(\"^GlueS[EA].*\", parent.other.requirements); \
 				CloseSEs = retrieveCloseSEsInfo( CEid, VO, additionalSESAInfo ); ]");
 	    gang_match_storageAd.reset( utilities::parse_classad(adstr) );			      
-	  }
+	  } else {
+            gang_match_storageAd -> InsertAttr("CEid",ce_str);
+          }
 	  ceAd->Insert("storage", gang_match_storageAd->Copy());	
 	  
 	  //
