@@ -5,7 +5,7 @@
 */
 #ifndef GLITE_WMS_WMPROXY_WMPUTILS_H
 #define GLITE_WMS_WMPROXY_WMPUTILS_H
-
+#include <vector>
 #include "glite/wmsutils/jobid/JobId.h"
 void waitForSeconds(int seconds);
 /**
@@ -22,4 +22,5 @@ std::string to_filename(glite::wmsutils::jobid::JobId j, int level = 0,
 * @param userid the id of the user
 */
 int managedir ( const std::string &dir , int userid );
+int managedir ( const std::string &dir , int userid , std::vector<std::string> jobids);
 #endif // GLITE_WMS_WMPROXY_WMPUTILS_H

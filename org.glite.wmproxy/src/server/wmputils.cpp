@@ -9,6 +9,8 @@
 #include <iostream>
 // by dirmanagement
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
+
 
 using namespace std;
 void
@@ -52,9 +54,48 @@ to_filename(glite::wmsutils::jobid::JobId j, int level, bool extended_path){
 	return path;
 }
 
-int execute (const string &command, const string &executable){
-	string error_msg ="";
+int execute (const string &command ){
 	return system( command.c_str() );
+}
+
+
+
+
+int managedir ( const std::string &dest_uri , int userid , std::vector<std::string> jobids){
+	int exit_code=0;
+	// Define File Separator
+#ifdef WIN
+	// Windows File Separator
+	const string FILE_SEP = "\\";
+#else
+        // Linux File Separator
+	const string FILE_SEP ="/";
+#endif
+	// Try to find managedirexecutable
+	char* glite_path = getenv ("GLITE_WMS_LOCATION");
+	if (glite_path==NULL) glite_path = getenv ("GLITE_LOCATION");
+	string gliteDirmanExe = (glite_path==NULL)?("/opt/glite"):(string(glite_path));
+	gliteDirmanExe += "/bin/glite-wms-dirmanager";
+	// Set Common Arguments
+	string arguments =" ";
+	arguments += " -c " + boost::lexical_cast<std::string>( userid  ); // UID
+	arguments += " -g " + boost::lexical_cast<std::string>( getgid()); // GROUP
+	arguments += " -m 0770 "; // MODE
+	int level = 0;
+	bool extended_path = true ;
+	const string executable = gliteDirmanExe  + arguments + dest_uri + FILE_SEP;
+	boost::char_separator<char> sep(FILE_SEP.c_str());
+	// Iterate over the jobs
+	for (unsigned int i = 0 ; i < jobids.size() ; i++){
+		// boost::tokenizer<>
+		boost::tokenizer<boost::char_separator<char> >
+			tok(to_filename (glite::wmsutils::jobid::JobId ( jobids[i] ), level, extended_path ), sep);
+		// For each job more than one directory might be created
+		for(boost::tokenizer<boost::char_separator<char> >::iterator beg=tok.begin(); beg!=tok.end();++beg){
+			if( execute (executable +*beg) ) {return 1;}
+		}
+	}
+	return exit_code;
 }
 
 int
@@ -83,8 +124,8 @@ managedir ( const string &dir , int userid ){
 	int sep_index = 0 ;
 	sep_index = dir.find ( FILE_SEP , sep_index);
 	argdir = dir.substr(0,sep_index) ;
-	exit_code | execute ( gliteDirmanExe  + arguments + argdir  , gliteDirmanExe) ;
+	exit_code | execute ( gliteDirmanExe  + arguments + argdir   ) ;
 	argdir = dir.substr(sep_index) ;
-	exit_code | execute ( gliteDirmanExe  + arguments + argdir  , gliteDirmanExe) ;
+	exit_code | execute ( gliteDirmanExe  + arguments + argdir   ) ;
 	return exit_code;
 }
