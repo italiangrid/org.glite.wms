@@ -632,15 +632,17 @@ ns1__getOutputFileList(struct soap *soap, string job_id,
 
 	try {
 		getOutputFileList(getOutputFileList_response, job_id);
-		item = new ns1__StringAndLongType();
+		
 		for (int i = 0; i < getOutputFileList_response
 				.OutputFileAndSizeList->file->size(); i++) {
-			item->name = (*getOutputFileList_response.OutputFileAndSizeList->file)[i]
-					->name;
-			item->size = (*getOutputFileList_response.OutputFileAndSizeList->file)[i]
-					->size;
+			item = new ns1__StringAndLongType();
+			item->name = 
+				(*getOutputFileList_response.OutputFileAndSizeList->file)[i]->name;
+			item->size = 
+				(*getOutputFileList_response.OutputFileAndSizeList->file)[i]->size;
 			response._OutputFileAndSizeList->file->push_back(item);
 		}
+		
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getOutputFileList", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -666,15 +668,21 @@ ns1__jobListMatch(struct soap *soap, string jdl,
 	int return_value = SOAP_OK;
 
 	jobListMatchResponse jobListMatch_response;
+	
+	response._CEIdAndRankList = new ns1__StringAndLongList();
+	response._CEIdAndRankList->file = new vector<ns1__StringAndLongType*>;
+	ns1__StringAndLongType *item = NULL;
+	
 	try {
 		jobListMatch(jobListMatch_response, jdl);
-		for (unsigned int i = 0; i < response._CEIdAndRankList->file->size();
-				i++) {
-			(*(response._CEIdAndRankList->file))[i]->name =
-				(*(jobListMatch_response.CEIdAndRankList->file))[i]->name;
-			(*(response._CEIdAndRankList->file))[i]->size =
-				(*(jobListMatch_response.CEIdAndRankList->file))[i]->size;
+		
+		for (int i = 0; i < jobListMatch_response.CEIdAndRankList->file->size(); i++) {
+			item = new ns1__StringAndLongType();
+			item->name = (*jobListMatch_response.CEIdAndRankList->file)[i]->name;
+			item->size = (*jobListMatch_response.CEIdAndRankList->file)[i]->size;
+			response._CEIdAndRankList->file->push_back(item);
 		}
+		
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobListMatch", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());

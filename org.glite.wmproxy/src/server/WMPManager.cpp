@@ -62,6 +62,8 @@ namespace server {
 	      commands::CommandFactory<commands::CommandFactoryServerImpl> factory;
 	      bool is_forwarded = false;
 	      try {
+	      		std::cerr<<"----- cmdname: "<<cmdname<<std::endl;
+	      		
 		      cmd =  factory.create(cmdname, param);
 		      // cmd -> serialize( agent );
 		      // Serialize parameters

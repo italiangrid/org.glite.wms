@@ -17,6 +17,8 @@
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
 #include "commands/logging.h"
+
+#include "NS2WMProxy.h"
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -24,12 +26,12 @@
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
 // Exceptions
-#include "wmpexception_codes.h"
+#include "utilities/wmpexception_codes.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "wmpoperations.h"
 #include "wmpdispatcher.h"
 #include "wmpconfiguration.h"
-#include "wmputils.h"
+#include "utilities/wmputils.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -38,6 +40,7 @@ namespace utilities  	= glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
+namespace wmproxyserver = glite::wms::wmproxy::server;
 
 using namespace boost::details::pool;
 using namespace std;
@@ -53,9 +56,7 @@ main(int argc, char* argv[])
 	struct soap *soap;
 	char msg[100];
 	try {
-		
-		//singleton_default<NS2WMProxy>::instance()
-			//.init(configuration::Configuration::instance()->wm()->input());
+		glite::wms::wmproxy::utilities::waitForSeconds(15);
 		
 		singleton_default<WmproxyConfiguration>::instance().init(opt_conf_file, configuration::ModuleType::network_server);
 		logger::threadsafe::edglog.open( singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file(),
@@ -72,21 +73,32 @@ main(int argc, char* argv[])
 				return 1;
 		}
 		if (argc < 3) {
-                        // Run as a FastCGI script
+            // Run as a FastCGI script
 			edglog(fatal) << "Running as a FastCGI program" << endl;
+			
+			cerr<<"---- NS2WMProxy"<<endl;
+			/*string file_name = "glite_wms.conf";
+			std::auto_ptr<configuration::Configuration> conf;
+			conf.reset(new configuration::Configuration(file_name, "NetworkServer"));
+			singleton_default<wmproxyserver::NS2WMProxy>::instance()
+				.init(configuration::Configuration::instance()->wm()->input());*/
+			cerr<<"---- NS2WMProxy END"<<endl;
+			
 			int thread_number;
 			try {
-				thread_number =  singleton_default<WmproxyConfiguration>::instance().wmp_config->dispatcher_threads() ;
-		    	} catch ( configuration::InvalidExpression &error ) {
-		      		edglog(fatal) << "ERROR: Unable to read value from Configuration file" << error << std::endl;
-				return 1;
-		    	}
+				thread_number =  singleton_default<WmproxyConfiguration>::instance()
+					.wmp_config->dispatcher_threads() ;
+	    	} catch ( configuration::InvalidExpression &error ) {
+	      		edglog(fatal) << "ERROR: Unable to read value from Configuration file" << error << std::endl;
+			return 1;
+	    	}
 			task::Pipe<classad::ClassAd*> pipe;
 			WMPDispatcher dispatcher;
 			cerr<<"Launching thread(s)..."<<endl;
 			edglog(fatal) << "Launching " << thread_number << " dispatcher thread(s)" << endl;
 			task::Task dispatchers(dispatcher, pipe, thread_number);
 			cerr<<"Launching thread(s)... finished"<<endl;
+			
 			// Running as a Fast CGI application
 			edglog(fatal) << "Entering the FastCGI accept loop..." << endl;
 			while (FCGI_Accept() >= 0) {
