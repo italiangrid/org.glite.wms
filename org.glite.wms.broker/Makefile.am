@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/10/11 15:54:07  monforte
+#       rls integration
+#
 #       Revision 1.2  2004/07/28 17:23:17  eronchie
 #       merd
 #
@@ -32,6 +35,11 @@
 #
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = interface src 

@@ -14,8 +14,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include "glite/wms/jdl/requestad/ManipulationExceptions.h"
-#include "glite/wms/jdl/requestad/JobAdManipulation.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/wms/jdl/JobAdManipulation.h"
 
 #include "glite/wms/matchmaking/matchmakerGlueImpl.h"
 #include "glite/wms/matchmaking/glue_attributes.h"
@@ -33,7 +33,7 @@ using namespace std;
 namespace glite {
 namespace wms {
 
-namespace requestad     = common::requestad;
+namespace requestad     = jdl;
 namespace logger        = common::logger;
 
 using namespace matchmaking;

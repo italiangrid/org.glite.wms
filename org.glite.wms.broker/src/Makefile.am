@@ -19,7 +19,10 @@ broker_HEADERS = \
 
 libglite_wms_broker_la_SOURCES = \
 	RBSimpleISMImpl.cpp \
-	RBSimpleImpl.cpp
+	RBSimpleImpl.cpp \
+	RBMaximizeFilesImpl.cpp \
+	RBMinimizeAccessCostImpl.cpp
+
 libglite_wms_broker_la_LDFLAGS = -all-static
 libglite_wms_broker_la_LIBADD = \
         ./selectors/libglite_wms_broker_selectors.la
@@ -28,6 +31,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src/selectors \
 	$(GLITE_CFLAGS) \
+	$(GLITE_JDL_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
  

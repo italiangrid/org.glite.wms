@@ -21,7 +21,7 @@
 #include "glite/wms/matchmaking/matchmakerGlueImpl.h"
 #include "glite/wms/matchmaking/glue_attributes.h"
 #include "glite/wms/matchmaking/jdl_attributes.h"
-#include "RBMinimizeAccessCostImpl.h"
+#include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
 #include "utility.h"
 #include "glite/wms/rls/ReplicaServiceReal.h"
 #include "glite/wms/common/logger/edglog.h"
@@ -35,7 +35,7 @@ namespace glite {
 namespace wms {
 	
 namespace logger        = common::logger;
-namespace requestad     = common::requestad;
+namespace requestad     = jdl;
 
 using namespace matchmaking;
 using namespace brokerinfo;
@@ -60,7 +60,7 @@ namespace
 	};
 }
 
-RBMinimizeAccessCostImpl::RBMinimizeAccessCostImpl(brokerinfo::BrokerInfo<brokerinfo::brokerinfoGlueImpl> *bi)
+RBMinimizeAccessCostImpl::RBMinimizeAccessCostImpl(BrokerInfo<brokerinfoGlueImpl> *bi)
 {
 	BI = bi;
 }
@@ -73,7 +73,7 @@ match_table_t* RBMinimizeAccessCostImpl::findSuitableCEs(const classad::ClassAd*
 {
   if (!requestAd) return 0;
  	  
-  matchmaking::match_table_t* suitableCEs = 0;
+  match_table_t* suitableCEs = 0;
   MatchMaker<matchmakerGlueImpl> MM;
   suitableCEs = new match_table_t;
   MM.checkRequirement(requestAd, *suitableCEs);
@@ -110,21 +110,20 @@ match_table_t* RBMinimizeAccessCostImpl::findSuitableCEs(const classad::ClassAd*
   for( access_cost_info_container_type::const_iterator it = aic.begin();
 	       it != aic.end(); it++ ) {
 	       
-	BI->retrieveCloseSEsInfo(it->first);
+	BI->retrieveCloseSEsInfo(boost::tuples::get<0>(*it));
 	BI->retrieveCloseSAsInfo(vo); // Retrieves only GlueSAAvailableVOSpace
 	
 	BrokerInfoData::CloseSEInfo_const_iterator CloseSEInfo_begin, CloseSEInfo_end;
 	boost::tie(CloseSEInfo_begin, CloseSEInfo_end) = (*BI)->CloseSEInfo_map();
 	
-	if( std::find_if( CloseSEInfo_begin, CloseSEInfo_end, IsAvailableSpaceAtLeast(it->third) ) ==
+	if( std::find_if( CloseSEInfo_begin, CloseSEInfo_end, IsAvailableSpaceAtLeast(boost::tuples::get<2>(*it)) ) ==
 			CloseSEInfo_end ) {
 
-		deletingCEs.push_back(it->first);
+		deletingCEs.push_back(boost::tuples::get<0>(*it));
 	}
 	
-	edglog( debug ) << it->first << " access cost = " << it->second 
-		<< " replication size = " << it->third << endl;
-	(*suitableCEs)[it->first].setRank( it->second );
+	edglog( debug ) << boost::tuples::get<0>(*it) << " access cost = " << boost::tuples::get<1>(*it) << " replication size = " << boost::tuples::get<2>(*it) << endl;
+	(*suitableCEs)[boost::tuples::get<0>(*it)].setRank(boost::tuples::get<1>(*it));
   }
   std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
   
