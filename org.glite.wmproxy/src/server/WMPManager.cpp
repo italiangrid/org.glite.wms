@@ -42,7 +42,7 @@ namespace server {
   {
   }
 
-  wmp_fault_t WMPManager::runCommand(std::string cmdname, std::vector<std::string> param, void* result)
+  wmp_fault_t WMPManager::runCommand(const std::string cmdname, const std::vector<std::string> param, void* result)
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
@@ -91,7 +91,7 @@ namespace server {
 			std::vector<JobIdStructType*> *childrenJob;
 		      }; 
 		      */
-		      cmd -> getParam("JobId", result->jobIdStruct->id);
+		      cmd -> getParam("JobId", ((jobSubmitResponse*)result)->jobIdStruct->id);
 		      fault.code=0;
 		      fault.message="ciao pacio";
 	              return fault;
