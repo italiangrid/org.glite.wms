@@ -5,7 +5,7 @@
 
 // $Id$
 
-#include "ism-ii-purchaser.h"
+#include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include <vector>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>

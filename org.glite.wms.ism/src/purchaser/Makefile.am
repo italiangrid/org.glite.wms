@@ -10,7 +10,6 @@ lib_LTLIBRARIES    = \
 	libglite_wms_ism_ii_purchaser.la 
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
-        ism-ii-purchaser.h \
         ism-ii-purchaser.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
