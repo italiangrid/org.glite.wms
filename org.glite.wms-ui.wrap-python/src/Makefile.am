@@ -1,4 +1,4 @@
-## *********************************************************************
+# *********************************************************************
 ## *
 ## * Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
 ## * For license conditions see LICENSE file or
@@ -84,6 +84,7 @@ SHARED_LIB_REQUESTAD = ../../common/requestad/JDLAttributes.lo \
 	../../common/requestad/JobAdExceptions.lo \
 	../../common/requestad/JobAdSchema.lo \
 	../../common/requestad/convert.lo
+
 
 GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(top_srcdir)/../org.glite.wms.manager-ns-client/build/src \
 	-L$(top_srcdir)/../org.glite.wms.manager-ns-commands/build/src \
@@ -201,6 +202,7 @@ libglite_wmsui_AdWrapper_la_LDFLAGS = \
 libglite_wmsui_AdWrapper_la_LIBADD = \
 	-lc \
 	$(GLITE_WMSUTILS_TLS_GSI_SOCKET_LIBS) \
+	$(GLITE_WMSUI_PARTITIONER_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -216,13 +218,11 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
         $(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
+	-lglite_wmsui_partitioner \
+	-lglite_wms_checkpointing \
 	-lstdc++
 
-#	../../networkserver/client/libnsclient.la \
-#	$(SHARED_LIB_UTILITIES) \
-#	$(SHARED_LIB_REQUESTAD) \
-#	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la 
+#-L/home/marask/Repository/cern/stage/lib 
 
 LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 	@#Create the files
