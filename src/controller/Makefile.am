@@ -17,13 +17,16 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/08/10 12:01:43  eronchie
+#       Updated
+#
 #       Revision 1.1  2004/07/06 10:05:38  pandreet
 #       Basic build files for jobsubmission
 #
 
-lib_LTLIBRARIES = libglite_wms_controller.la \
-	libglite_wms_controller_wrapper.la \
-	libglite_wms_controller_adapter.la
+lib_LTLIBRARIES = libglite_wms_jss_controller.la \
+	libglite_wms_jss_controller_wrapper.la \
+	libglite_wms_jss_controller_adapter.la
 
 noinst_HEADERS = \
 	CondorG.h \
@@ -44,13 +47,13 @@ noinst_HEADERS = \
 	SubmitAd.h \
 	SubmitAdExceptions.h
 
-libglite_wms_controller_wrapper_la_SOURCES = cwrapper.cpp
+libglite_wms_jss_controller_wrapper_la_SOURCES = cwrapper.cpp
 
-libglite_wms_controller_adapter_la_SOURCES = SubmitAd.cpp \
+libglite_wms_jss_controller_adapter_la_SOURCES = SubmitAd.cpp \
 	SubmitAdExceptions.cpp \
 	SubmitAdapter.cpp
 
-libglite_wms_controller_la_SOURCES = CondorG.cpp \
+libglite_wms_jss_controller_la_SOURCES = CondorG.cpp \
 	Request.cpp \
 	RequestExceptions.cpp \
 	JobController.cpp \
@@ -62,7 +65,7 @@ libglite_wms_controller_la_SOURCES = CondorG.cpp \
 	JobControllerClient.cpp \
 	JobControllerClientReal.cpp
 
-libglite_wms_controller_la_LIBADD = $(CONDORG_LIBS)
+libglite_wms_jss_controller_la_LIBADD = $(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \

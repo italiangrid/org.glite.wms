@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/08/10 12:01:43  eronchie
+#       Updated
+#
 #       Revision 1.6  2004/07/30 08:15:40  eronchie
 #       purger.h is not located in interface but in src
 #
@@ -37,7 +40,7 @@
 #       Basic build files for jobsubmission
 #
 
-lib_LTLIBRARIES = libglite_wms_js_common.la
+lib_LTLIBRARIES = libglite_wms_jss_common.la
 
 noinst_HEADERS = \
 	constants.h \
@@ -53,7 +56,7 @@ noinst_HEADERS = \
 	SignalChecker.h \
 	handler.h
 
-libglite_wms_js_common_la_SOURCES = IdContainer.cpp \
+libglite_wms_jss_common_la_SOURCES = IdContainer.cpp \
 	RamContainer.cpp \
 	PointerId.cpp \
 	EventLogger.cpp \

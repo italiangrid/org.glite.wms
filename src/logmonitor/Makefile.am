@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/08/10 12:01:43  eronchie
+#       Updated
+#
 #       Revision 1.6  2004/07/28 14:38:58  pandreet
 #       Proxyrenewal dependencies fixed
 #
@@ -36,7 +39,7 @@
 #       Basic build files for jobsubmission
 #
 
-lib_LTLIBRARIES = libglite_wms_logmonitor.la
+lib_LTLIBRARIES = libglite_wms_jss_logmonitor.la
 
 noinst_HEADERS = \
 	JobStatusExtractor.h \
@@ -79,7 +82,7 @@ glite_wms_lm_job_status_LDADD = libglite_wms_logmonitor.la \
 	$(ARES_LIBS) $(EXPAT_LIBS) \
 	$(GLITE_SECURITY_NOTHR_RENEWAL_LIBS) $(GLITE_WMS_PURGER_LIBS)
 
-libglite_wms_logmonitor_la_SOURCES = CondorMonitor.cpp \
+libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \
 	Timer.cpp \
 	SizeFile.cpp \
@@ -103,7 +106,7 @@ libglite_wms_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	./processer/SubmitReader.cpp \
 	./processer/JobResubmitter.cpp
 
-libglite_wms_logmonitor_la_LIBADD = $(CONDORG_LIBS)
+libglite_wms_jss_logmonitor_la_LIBADD = $(CONDORG_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
