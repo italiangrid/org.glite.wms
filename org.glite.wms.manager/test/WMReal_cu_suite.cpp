@@ -21,7 +21,10 @@
  */
 
 #include "WMReal_cu_suite.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
+
 using namespace CppUnit;
+using namespace classad;
 
 void
 WMReal_test::setUp()
@@ -40,7 +43,24 @@ WMReal_test::tearDown()
 void
 WMReal_test::test_submit()
 {
+  std::string key1("edg_jobid");
+  std::string value1("https://lxb1420.cern.ch:9000/BqXQcCpXqnF92nvj94PZVw");
+
+
+  ClassAd *classad =  new ClassAd();
+  CPPUNIT_ASSERT( classad );
+
+  classad->InsertAttr(key1,value1);
+
+  try{
+    wm_real->submit(classad);
+  }catch(glite::wms::jdl::CannotGetAttribute att_error){
+    cerr << "Cannot retrieve " << att_error.reason() << endl;
+  }
+
   CPPUNIT_ASSERT( wm_real!=NULL );
+
+  delete classad;
 }
 
 void

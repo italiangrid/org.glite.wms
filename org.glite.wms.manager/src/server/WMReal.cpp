@@ -41,7 +41,7 @@ namespace server {
 
 namespace {
 
-std::string wm_id("Real");
+std::string wm_id("real");
 
 std::string normalize(std::string id)
 {
@@ -62,7 +62,8 @@ struct Register
   }
   ~Register()
   {
-    common::WMFactory::instance()->unregister_wm(normalize(wm_id));
+    common::WMFactory *factory = common::WMFactory::instance();
+    factory->unregister_wm(wm_id);
   }
 };
 

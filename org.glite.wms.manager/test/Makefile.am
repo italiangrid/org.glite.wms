@@ -21,8 +21,6 @@
 
 TESTS=  WMFactory_cu
 
-GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
-
 COMMON_LD_FLAGS= \
 	$(CPPUNIT_LIBS) \
 	$(CLASSAD_LIBS) \
@@ -44,6 +42,10 @@ COMMON_LD_FLAGS= \
 	$(ARES_LIBS) \
 	$(BOOST_LIBS)
 
+lib_LTLIBRARIES = libglite_wms_manager_mocks.la
+
+libglite_wms_manager_mocks_la_SOURCES=	mockJC.cpp \
+	mockPurger.cpp
 
 check_PROGRAMS = WMFactory_cu \
 		WMReal_cu
@@ -63,23 +65,17 @@ WMReal_cu_SOURCES = \
 
 WMReal_cu_LDADD= -L../src/server -lglite_wms_manager_common -lglite_wms_manager_server \
 	-L../src/common/ -lglite_wms_manager_common \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_WMS_PURGER_LIBS) \
+	-lglite_wms_manager_mocks \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMS_HELPER_LIBS) \
 	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
-	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
-	$(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
-	$(GLITE_WMS_JSS_COMMON_LIBS) \
 	$(COMMON_LD_FLAGS)
 
 AM_CPPFLAGS = \
 	-I$(GLITE_LOCATION)/include \
 	-I$(top_srcdir)/src/ \
 	-I$(top_srcdir)/src/common/ \
-	-I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
+	-I$(top_srcdir)/../org.glite.wms.purger/src/ \
 	$(CPPUNIT_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \

@@ -32,6 +32,7 @@
 #include <iostream>
 #include "../src/common/WMImpl.h"
 #include "../src/server/WMReal.h"
+#include "classad_distribution.h"
 
 using namespace CppUnit;
 using namespace std;
