@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.25  2004/05/26 18:27:46  eronchie
+	Added sub-module org.glite.wms.tls
+
 	Revision 1.24  2004/05/25 11:42:46  eronchie
 	Removed jcommon and added jdlj
-
+	
 	Revision 1.23  2004/05/19 23:21:45  dimeglio
 	Fixed errors in wms component CVS targets
 	
@@ -196,6 +199,9 @@
 		<condition property="common.head">
 			<equals arg1="${org.glite.wms.common.version}" arg2="HEAD" />
 		</condition>
+		<condition property="tls.head">
+                        <equals arg1="${org.glite.wms.tls.version}" arg2="HEAD" />
+                </condition>
 		<condition property="jdlj.head">
 			<equals arg1="${org.glite.wms.jdlj.version}" arg2="HEAD" />
 		</condition>
@@ -257,11 +263,12 @@
 	
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-globus_ssl_utils,
- 								    thirdparty-bypass,
- 								    thirdparty-globus_gridftp_server,
- 								    thirdparty-loki,
- 								    common,
- 								    jdlj"/>
+  				        thirdparty-bypass,
+  				        thirdparty-globus_gridftp_server,
+  				        thirdparty-loki,
+				        common,
+				        tls,
+ 				        jdlj"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils" depends="get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
@@ -312,6 +319,16 @@
 		<cvs-co package="org.glite.wms.common"
 			tag="${org.glite.wms.common.version}" />
 	</target>
+
+        <!-- Tls -->
+        <target name="tls" depends="boost,classads,globus,get.tls.head, get.tls.tag"/>
+        <target name="get.tls.head" if="tls.head">
+                <cvs-co package="org.glite.wms.tls" />
+        </target>
+        <target name="get.tls.tag" unless="tls.head">
+                <cvs-co package="org.glite.wms.tls"
+                        tag="${org.glite.wms.tls.version}" />
+        </target>
 
 	<!-- Jdlj -->
  	<target name="jdlj" depends="jclassads,get.jdlj.head, get.jdlj.tag"/>

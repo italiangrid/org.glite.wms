@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.15  2004/05/26 18:27:46  eronchie
+	Added sub-module org.glite.wms.tls
+
 	Revision 1.14  2004/05/25 11:42:12  eronchie
 	Removed jcommon and added jdlj
-
+	
 	Revision 1.13  2004/05/17 16:22:12  flammer
 	Unification of variable naming.
 	
@@ -294,6 +297,12 @@
                      inheritall="false" />
 	</target>
 
+        <target name="tls" depends="boost,classads,globus,globus_ssl_utils,common">
+                <ant dir="${workspace.dir}/${subsystem.name}.tls"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
         <target name="jdlj" depends="jclassads">
                 <ant dir="${workspace.dir}/${subsystem.name}.jdlj"
 		     target="${target}"
@@ -302,10 +311,11 @@
 
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
-									     bypass,
-				   					     globus_gridftp_server,
-				  					     loki,
-									     common, 
-										 jdlj" />
+					     bypass,
+   					     globus_gridftp_server,
+ 					     loki,
+					     common,
+					     tls,
+   					     jdlj" />
 		
 </project>
