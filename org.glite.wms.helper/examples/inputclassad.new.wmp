@@ -13,13 +13,17 @@
 
   executable = "./job.sh";
 
+  lrms_type="pbs";
+
   globusresourcecontactstring = "lxde01.pd.infn.it:2119/jobmanager-pbs";
 
-  outputsandbox = "pluto.txt";
+  outputsandbox = {"ls.out", "ls.err"};
 
-  inputsandbox = {"job.sh", "inputfile1"};
+  outputsandboxdesturi = {"gsiftp://gundam.cnaf.infn.it/tmp/ls.out",
+                          "gsiftp://tigerman.cnaf.infn.it/tmp/ls.err"};
 
-  lrms_type ="pbs";
+  inputsandbox = "gsiftp://gundam.cnaf.infn.it/users/pacini/test.jdl";
+  WMPInputSandboxBaseURI = "ydi0099";
 
   stderror = "stderror.txt";
 
@@ -30,10 +34,6 @@
   queuename = "jobmanager-pbs";
 
   environment = "VAL1 = val1";
-
-  inputsandboxpath = "gsiftp://grid012f.cnaf.infn.it/tmp/http/input";
-
-  outputsandboxpath = "gsiftp://grid012f.cnaf.infn.it/tmp/http/output";
 
   x509userproxy = "/tmp/x509_u464";
 
