@@ -14,7 +14,7 @@ namespace glite {
 namespace wms {
 namespace helper {
 namespace broker {
-
+class NoCompatibleCEs;
 class Helper: public helper::HelperImpl
 {
 public:

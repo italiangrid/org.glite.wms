@@ -14,49 +14,51 @@
 
 #include <classad_distribution.h>
 
-#include "edg/workload/planning/broker/Helper.h"
-#include "edg/workload/planning/broker/exceptions.h"
-#include "edg/workload/planning/broker/RBSimpleImpl.h"
-#include "edg/workload/planning/broker/RBMaximizeFilesImpl.h"
-#include "edg/workload/planning/broker/RBMinimizeAccessCostImpl.h"
-#include "edg/workload/planning/broker/matchmaking/exceptions.h"
-#include "edg/workload/common/jobid/JobId.h"
-#include "edg/workload/common/jobid/manipulation.h"
-#include "edg/workload/common/jobid/JobIdExceptions.h"
+#include "Helper.h"
+#include "glite/wms/helper/HelperFactory.h"
+#include "glite/wms/helper/broker/exceptions.h"
+#include "glite/wms/helper/exceptions.h"
+#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
+#include "glite/wms/broker/RBSimpleImpl.h"
+//#include "edg/workload/planning/broker/RBMaximizeFilesImpl.h"
+//#include "edg/workload/planning/broker/RBMinimizeAccessCostImpl.h"
+#include "glite/wms/matchmaking/exceptions.h"
+#include "glite/wms/jobid/JobId.h"
+#include "glite/wms/jobid/manipulation.h"
+#include "glite/wms/jobid/JobIdExceptions.h"
 
-#include "edg/workload/common/configuration/Configuration.h"
-#include "edg/workload/common/configuration/NSConfiguration.h"
-#include "edg/workload/common/configuration/exceptions.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
+#include "glite/wms/common/configuration/exceptions.h"
 
-#include "edg/workload/common/logger/edglog.h"
-#include "edg/workload/common/logger/manipulators.h"
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
 
-#include "edg/workload/planning/helper/HelperFactory.h"
-#include "edg/workload/planning/helper/exceptions.h"
-#include "edg/workload/common/requestad/JDLAttributes.h"
-#include "edg/workload/common/requestad/JobAdManipulation.h"
-#include "edg/workload/common/requestad/ManipulationExceptions.h"
+#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
 
-#include "edg/workload/common/utilities/classad_utils.h"
+#include "glite/wms/common/utilities/classad_utils.h"
 
 namespace fs            = boost::filesystem;
-namespace jobid         = edg::workload::common::jobid;
-namespace logger        = edg::workload::common::logger;
-namespace configuration = edg::workload::common::configuration;
-namespace requestad = edg::workload::common::requestad;
-namespace utilities = edg::workload::common::utilities;
+namespace jobid         = glite::wms::jobid;
+namespace logger        = glite::wms::common::logger;
+namespace configuration = glite::wms::common::configuration;
+namespace requestad     = glite::wms::jdl;
+namespace utilities     = glite::wms::common::utilities;
+namespace matchmaking   = glite::wms::matchmaking;
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
+namespace helper {
 namespace broker {
 
 namespace {
 
-typedef matchmaking::brokerinfo::BrokerInfo<matchmaking::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
+typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
 
 std::string const helper_id("BrokerHelper");
 
@@ -99,7 +101,7 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
     requestad::set_queue_name(*result, name);
     try {
       std::string junk = requestad::get_lrms_type(*result);
-    } catch ( edg::workload::common::requestad::CannotGetAttribute const& e) {
+    } catch ( glite::wms::jdl::CannotGetAttribute const& e) {
       requestad::set_lrms_type(*result, type);
     }
    
@@ -121,7 +123,7 @@ f_resolve_mm(classad::ClassAd const& input_ad)
 try {
   std::auto_ptr<classad::ClassAd> result;
 
-  std::auto_ptr<ResourceBrokerImpl> rb_impl;
+  std::auto_ptr<glite::wms::broker::ResourceBrokerImpl> rb_impl;
 
   std::string vo(requestad::get_virtual_organisation(input_ad));
   boost::scoped_ptr<BrokerInfo> BI(new BrokerInfo);
@@ -143,6 +145,7 @@ try {
         rank_expr,
         utilities::is_reference_to("other")
       );
+#ifdef ENABLE_RB_ENHANCED_IMPLEMENTATIONS
       if (rankAttributes.size() == 1
           && rankAttributes.front() == "DataAccessCost") {
         rb_impl.reset(new RBMinimizeAccessCostImpl(BI.get()));
@@ -153,18 +156,18 @@ try {
         rb_impl.reset(new RBMaximizeFilesImpl(BI.get()));
 #endif
       }
-
+#endif
     }
 
   } else {
 #ifdef BROKER_HELPER_PREFETCH_INFO_FROM_II
-    rb_impl.reset(new RBSimpleImpl(true));
+    rb_impl.reset(new glite::wms::broker::RBSimpleImpl(true));
 #else
-    rb_impl.reset(new RBSimpleImpl);
+    rb_impl.reset(new glite::wms::broker::RBSimpleImpl);
 #endif
   }
 
-  ResourceBroker rb(rb_impl.release());
+  glite::wms::broker::ResourceBroker rb(rb_impl.release());
 
   // If fuzzy_rank is true in the request ad we have
   // to use the stochastic selector...
@@ -199,7 +202,7 @@ try {
   std::ofstream BIfilestream(BIfile.file_path().c_str());
 
   if (!BIfilestream) {
-    throw CannotCreateBrokerinfo(BIfile);
+    throw glite::wms::helper::broker::CannotCreateBrokerinfo(BIfile);
   }
 
   boost::scoped_ptr<classad::ClassAd> biAd(BI->asClassAd());
@@ -254,11 +257,11 @@ try {
 
 } catch (matchmaking::InformationServiceError const& e) {
 
-  throw NoAvailableCEs(e.what());
+  throw helper::broker::NoAvailableCEs(e.what());
   
 } catch (matchmaking::RankingError const& e) {
   
-  throw NoAvailableCEs(e.what());
+  throw helper::broker::NoAvailableCEs(e.what());
 	
 } catch (requestad::CannotGetAttribute const& e) {
 

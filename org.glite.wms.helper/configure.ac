@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/06 13:55:36  monforte
+#       Initial Helpers porting to new build system
+#       WARNING: work in progress...
+#
 #       Revision 1.3  2004/07/05 16:06:00  eronchie
 #       Start handling helper
 #       WARNING: work in progress
@@ -125,7 +129,7 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
-#AC_CONFIG_FILES([src/broker/Makefile])
+AC_CONFIG_FILES([src/broker/Makefile])
 AC_CONFIG_FILES([src/jobadapter/Makefile])
 AC_CONFIG_FILES([src/jobadapter/jobwrapper/Makefile])
 AC_CONFIG_FILES([src/jobadapter/url/Makefile])

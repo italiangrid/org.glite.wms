@@ -5,31 +5,21 @@
 ## * http://www.edg.org/license.html
 ## *
 ## *********************************************************************
+lib_LTLIBRARIES = libglite_wms_helper_broker.la
 
-SUBDIRS = broker jobadapter
+#helper_brokerdir = $(includedir)/glite/wms/helper/broker
+#helper_brokerHEADERS = \
+#	Helper.h \
+#	exceptions.h
 
-lib_LTLIBRARIES = libglite_wms_helper.la
-
-helperdir = $(includedir)/glite/wms/helper
-helper_HEADERS = \
-	CopyHelper.h \
-	Helper.h \
-	Request.h \
-	RequestStateMachine.h
-
-libglite_wms_helper_la_SOURCES = \
+libglite_wms_helper_broker_la_SOURCES = \
         Helper.h \
         Helper.cpp \
-        exceptions.cpp \
-        HelperFactory.cpp \
-        HelperImpl.cpp \
-        Request.h \
-        Request.cpp \
-        RequestStateMachine.h \
-        RequestStateMachine.cpp
+	exceptions.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/interface \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
