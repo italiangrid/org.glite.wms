@@ -24,13 +24,14 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 all:	glitePipe gliteWMPCommands
 
 glitePipe:	
-		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I$(CLASSAD)/include -I. -DSHOW_EXECUTION \
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I$(CLASSAD)/include \
+			-I../utilities -I. -DSHOW_EXECUTION \
 		    -o libglitePipe.so MatchingPipe.cpp MatchingPipeFiller.cpp \
 		$(LIBS)
 
 gliteWMPCommands: 
-		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server \
-		-I ../../../org.glite.wms.purger/src -DSHOW_EXECUTION \
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server -I../utilities\
+		-I../../../org.glite.wms.purger/src -DSHOW_EXECUTION \
 	        -o libgliteWMPCommands.so common.cpp \
 	        Command.cpp ExecuteFunction.cpp \
 	        ForwardRequest.cpp \
