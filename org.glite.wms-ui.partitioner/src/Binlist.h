@@ -14,7 +14,7 @@
 #include "Bin.h"
 
 namespace glite {
-namespace wms {
+namespace wmsui {
 namespace partitioner {
 
   /** 
@@ -94,7 +94,7 @@ namespace partitioner {
 
 
 } // namespace partitioner
-} // namespace wms
+} // namespace wmsui
 } // namespace glite
 
 #endif //  EDG_WORKLOAD_PARTITIONER_BINLIST_H__

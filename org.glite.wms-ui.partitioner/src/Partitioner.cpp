@@ -27,7 +27,7 @@ namespace reqad = glite::wms::jdl;
 namespace utils = glite::wmsutils::exception;
 
 namespace glite {
-namespace wms {
+namespace wmsui {
 namespace partitioner {
 
 Partitioner::Partitioner( const classad::ClassAd* ad, std::vector<std::string> id ) : p_prejob( NULL ), 

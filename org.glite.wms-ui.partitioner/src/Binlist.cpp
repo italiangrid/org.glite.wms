@@ -13,7 +13,7 @@
 #include <ctime>
 
 namespace glite {
-namespace wms {
+namespace wmsui {
 namespace partitioner {
 
   BinList::BinList( int capacity ) : bl_capacity( capacity ) {};

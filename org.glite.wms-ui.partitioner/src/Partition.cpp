@@ -17,7 +17,7 @@
 namespace chkpt = glite::wms::checkpointing; 
 
 namespace glite {  
-namespace wms {
+namespace wmsui {
 namespace partitioner {
 
 // Constructors-destructor

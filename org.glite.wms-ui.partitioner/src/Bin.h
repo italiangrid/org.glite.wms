@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace glite {
-namespace wms {
+namespace wmsui {
 namespace partitioner {
 
   /** 
