@@ -11,11 +11,7 @@ MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
 GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
-lib_LTLIBRARIES = libglite_wms_manager_ism.la \
-	libglite_wms_manager_ism_ii_purchaser.la \
-	libglite_wms_manager_server.la 
-
-
+lib_LTLIBRARIES = libglite_wms_manager_server.la 
 
 libexec_SCRIPTS = \
 	glite-wms-dag-post.sh \
@@ -31,18 +27,9 @@ noinst_HEADERS = \
         Dispatcher.h \
         DispatcherImpl.h \
         RequestHandler.h \
-		  signal_handling.h \
-		  WMReal.h \
-		  ism.h
+	signal_handling.h \
+	WMReal.h
 		
-libglite_wms_manager_ism_la_SOURCES = \
-	ism.h \
-	ism.cpp
-
-libglite_wms_manager_ism_ii_purchaser_la_SOURCES = \
-	ism-ii-purchaser.h \
-	ism-ii-purchaser.cpp
-
 libglite_wms_manager_server_la_SOURCES = \
 	Request.hpp \
 	Request.cpp \
@@ -66,13 +53,12 @@ libglite_wms_manager_server_la_SOURCES = \
 	WMReal.cpp \
 	signal_handling.h \
 	signal_handling.cpp 
-	
 
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_planner_LDADD   = \
 	$(MNGR_COMMON) \
-   $(MNGR_SERVER) \
+	$(MNGR_SERVER) \
 	$(GLITE_WMS_HELPER_LIBS) \
 	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
@@ -80,7 +66,7 @@ glite_wms_planner_LDADD   = \
 	$(GLITE_WMS_JSS_COMMON_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
-   $(GLITE_WMSUTILS_CJOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMS_JDL_LIBS)\
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
@@ -92,52 +78,52 @@ glite_wms_planner_LDADD   = \
 	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-   $(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-   $(EXPAT_LIBS) \
-   $(ARES_LIBS) \
-   $(CLASSAD_DL_LIBS) \
-   $(GLOBUS_LDAP_THR_LIBS) \
+	$(EXPAT_LIBS) \
+	$(ARES_LIBS) \
+	$(CLASSAD_DL_LIBS) \
+	$(GLOBUS_LDAP_THR_LIBS) \
 	$(GLOBUS_COMMON_THR_LIBS) \
-   $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
-   $(BOOST_LIBS)
+	$(BOOST_LIBS)
 
 glite_wms_planned2submit_SOURCES = glite-wms-planned2submit.cpp
 glite_wms_planned2submit_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_planned2submit_LDADD   = \
-		$(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
-      $(GLITE_WMS_JSS_COMMON_LIBS) \
-		$(GLITE_WMS_PURGER_LIBS) \
-		$(GLITE_WMSUTILS_JOBID_LIBS) \
-      $(GLITE_WMSUTILS_CJOBID_LIBS) \
-      $(GLITE_WMS_JDL_LIBS)\
-		$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-      $(GLITE_WMS_COMMON_CONF_LIBS) \
-		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-      $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-		$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
-      $(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
-		$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-      $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-      $(GLITE_LB_NOTHR_COMMON_LIBS) \
-		$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-      $(EXPAT_LIBS) \
-      $(ARES_LIBS) \
-      $(CLASSAD_DL_LIBS) \
-      $(GLOBUS_LDAP_THR_LIBS) \
-      $(GLOBUS_COMMON_THR_LIBS) \
-      $(GLOBUS_SSL_THR_LIBS) \
-		$(GLOBUS_GSS_THR_LIBS) \
-      $(BOOST_LIBS)
+	$(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
+	$(GLITE_WMS_JSS_COMMON_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS)\
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
+        $(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+        $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+        $(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+        $(EXPAT_LIBS) \
+        $(ARES_LIBS) \
+        $(CLASSAD_DL_LIBS) \
+        $(GLOBUS_LDAP_THR_LIBS) \
+        $(GLOBUS_COMMON_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
+        $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	-I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
-	-I$(top_srcdir)/../org.glite.wms.purger/src \
-	-I$(top_srcdir)/../org.glite.wms.manager/src/common \
-    $(CLASSAD_CFLAGS) \
-    $(BOOST_CFLAGS)
+	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/common \
+        $(CLASSAD_CFLAGS) \
+        $(BOOST_CFLAGS)
 
 EXTRA_DIST = glite-wms-planner.sh.in \
         	glite-wms-dag-post.sh.in
