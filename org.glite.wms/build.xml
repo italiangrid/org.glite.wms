@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.22  2004/06/26 13:49:08  eronchie
+	Temporarely removed classad_plugin
+	work in progress
+
 	Revision 1.21  2004/06/26 13:07:35  eronchie
 	*** empty log message ***
-
+	
 	Revision 1.20  2004/06/18 22:14:30  dimeglio
 	Removed antcalls from check target
 	
@@ -337,12 +341,6 @@
                      inheritall="false" />
         </target>
 
-	<target name="classad_plugin" unless="setenvonly" depends="boost,classads,common">
-                <ant dir="${workspace.dir}/${subsystem.name}.classad_plugin"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -352,7 +350,6 @@
 					     tls,
 					     jobid,
 					     jdl,
-   					     jdlj,
-					     classad_plugin" />
+   					     jdlj" />
 		
 </project>
