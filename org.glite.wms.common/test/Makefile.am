@@ -8,101 +8,34 @@
 
 STDCPP = -lstdc++
 
-#if AMC_BUILD_CMN_LOGGER
-WL_CMN_TEST6 = logtest logthread
-#WL_CMN_TSBIN6 = 
-#endif
+WL_CMN_LOGGER_TEST = logtest logthread
 
-#if AMC_BUILD_CMN_PROCESS
-WL_CMN_TEST4 = proctest regain
-#WL_CMN_TSBIN4 =
-#endif
+WL_CMN_PROCESS_TEST = proctest regain
 
-#if AMC_BUILD_CMN_UT_OTHERS
-WL_CMN_TEST7  = container create extractor qclient qserver \
-	newclient newserver \
-	queue show compact lock_client lock_server classadclient \
-	classadextractor 
-#endif
+WL_CMN_UTILITIES_TEST = classadclient classadextractor \
+        container compact create \
+        extractor \
+        lock_client lock_server \
+        newclient newserver \
+        qclient qserver queue show
 
-#if AMC_BUILD_CMN_UT_OTHERS
-#if AMC_BUILD_CMN_SOCKET
-WL_CMN_TSBIN7 = glite-wms-socketppServerTest glite-wms-socketppClientTest \
-        glite-wms-showlistTest glite-wms-listsTest glite-wms-poplist
-#endif
-#endif
+WL_CMN_UT_TEST = glite-wl-listsTest \
+        glite-wl-poplist \
+        glite-wl-showlistTest
 
-#if AMC_BUILD_CMN_LOGGER
-#if AMC_BUILD_CMN_UT_OTHERS
-WL_CMN_TEST8 = gsi-mkdir sftpput
-#WL_CMN_TSBIN8 =
-#endif
-#endif
+WL_CMN_OTHER_TEST = config cconfig gsi-mkdir sftpput
 
+WL_CMN_OT_TEST = glite-wl-classadlistTest
 
-#if AMC_BUILD_CMN_UT_EXCEPTION
-#if AMC_BUILD_CMN_JOBID
-WL_CMN_TEST5 = testjobid 
-#WL_CMN_TSBIN5 =
-#endif
-#endif
+check_PROGRAMS = $(WL_CMN_LOGGER_TEST) \
+        $(WL_CMN_PROCESS_TEST) \
+        $(WL_CMN_UTILITIES_TEST) \
+        $(WL_CMN_OTHER_TEST)
 
-#if AMC_BUILD_CMN_UT_OTHERS
-#if AMC_BUILD_CMN_CONFIGURATION
-WL_CMN_TEST3  = config cconfig
-WL_CMN_TSBIN3 = glite-wms-classadlistTest
-#endif
-#endif 
-
-#if AMC_BUILD_CMN_UT_EXCEPTION
-#if AMC_BUILD_CMN_REQUESTAD
-#if AMC_BUILD_CMN_CONFIGURATION
-#WL_CMN_TEST1 = 
-WL_CMN_TSBIN1 = glite-wms-jobad-test
-#endif
-#endif
-#endif
-
-#if AMC_BUILD_CMN_UT_OTHERS
-#if AMC_BUILD_CMN_UT_EXCEPTION
-#if AMC_BUILD_CMN_REQUESTAD
-#if AMC_BUILD_CMN_CONFIGURATION
-#WL_CMN_TEST2 = 
-WL_CMN_TSBIN2 = glite-wms-convert-test
-#endif
-#endif
-#endif
-#endif
-
-check_PROGRAMS = $(WL_CMN_TEST5) \
-	$(WL_CMN_TEST6) \
-	$(WL_CMN_TEST4) \
-	$(WL_CMN_TEST3) \
-	$(WL_CMN_TEST7) \
-	$(WL_CMN_TEST8)
-
-ts_common_bindir = $(prefix)/wms/test/bin
+ts_common_bindir = $(prefix)/workload/test/bin
 ts_common_bin_PROGRAMS= \
-	$(WL_CMN_TSBIN1) \
-	$(WL_CMN_TSBIN2) \
-	$(WL_CMN_TSBIN3) \
-	$(WL_CMN_TSBIN7) 
-
-glite_wms_jobad_test_SOURCES = glite-wms-jobad-test.cpp
-glite_wms_jobad_test_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_exceptions.la \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
-	$(top_builddir)/src/requestad/libglite_wms_common_requestad.la \
-	$(BOOST_LIBS) \
-	$(CLASSAD_LIBS)
-
-glite_wms_convert_test_SOURCES = convert_test.cpp
-glite_wms_convert_test_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
-	$(top_builddir)/src/utilities/libglite_wms_exceptions.la \
-	$(top_builddir)/src/requestad/libglite_wms_common_requestad.la \
-	$(BOOST_LIBS) \
-	$(CLASSAD_LIBS)
+        $(WL_CMN_UT_TEST) \
+        $(WL_CMN_OT_TEST)
 
 container_SOURCES = testcontainer.cpp
 container_LDADD   = \
@@ -245,13 +178,6 @@ proctest_LDADD   = $(top_builddir)/src/process/libglite_wms_process.la
 regain_SOURCES = regain.cpp
 regain_LDADD   = $(top_builddir)/src/process/libglite_wms_process.la
 
-testjobid_SOURCES = testjobid.c
-testjobid_LDADD = \
-	$(top_builddir)/src/jobid/libglite_wms_jobid.la \
-	$(top_builddir)/src/utilities/libglite_wms_exceptions.la \
-	$(GLOBUS_LIBS) \
-	$(STDCPP)
-
 gsi_mkdir_SOURCES = gsi-mkdir.cpp
 gsi_mkdir_LDADD   = \
 	$(top_builddir)/src/logger/libglite_wms_logger.la \
@@ -267,18 +193,6 @@ sftpput_LDADD   = \
 	$(top_builddir)/src/logger/libglite_wms_logger.la \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
         $(BOOST_LIBS)
-
-glite_wms_socketppServerTest_SOURCES = socketppServerTest.cpp
-glite_wms_socketppServerTest_LDADD = \
-	$(top_builddir)/src/socket++/libglite_wms_gsisocket_pp.la \
-	$(top_builddir)/src/utilities/libglite_wms_exceptions.la \
-	$(GLOBUS_LIBS)
-
-glite_wms_socketppClientTest_SOURCES = socketppClientTest.cpp
-glite_wms_socketppClientTest_LDADD = \
-	$(top_builddir)/src/socket++/libglite_wms_gsisocket_pp.la \
-	$(top_builddir)/src/utilities/libglite_wms_exceptions.la \
-	$(GLOBUS_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(BOOST_CFLAGS) \
