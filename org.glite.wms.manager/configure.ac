@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2004/11/01 10:41:51  dimeglio
+#       Incremented version number
+#
 #       Revision 1.10  2004/10/22 12:24:34  eronchie
 #       Added optimize support
 #
@@ -58,7 +61,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Manager], [0.1.0])
+AC_INIT([GLite WMS Manager], [0.2.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/WMImpl.h])
