@@ -12,7 +12,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/regex.hpp>
 #include "glite/wms/brokerinfo/BrokerInfoData.h"
-#include "glite/wms/brokerinfo/glue_attributes.h"
+#include "glue_attributes.h"
 
 using namespace std;
 

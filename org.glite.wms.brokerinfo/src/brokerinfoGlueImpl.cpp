@@ -16,22 +16,26 @@
 #include "glite/wms/common/ldif2classad/LDAPSynchConnection.h"
 #include "glite/wms/common/ldif2classad/LDAPForwardIterator.h"
 #include "glite/wms/common/ldif2classad/exceptions.h"
+
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
+
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "glite/wms/common/requestad/ManipulationExceptions.h"
-#include "glite/wms/common/requestad/JobAdManipulation.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/wms/jdl/JobAdManipulation.h"
 
 #include "glite/wms/common/utilities/Exceptions.h"
+
 #include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 
 #include "glite/wms/matchmaking/glue_attributes.h"
 #include "glite/wms/matchmaking/jdl_attributes.h"
+
 #include "glite/wms/rls/ReplicaServiceReal.h"
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
