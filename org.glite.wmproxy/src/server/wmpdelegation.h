@@ -49,16 +49,7 @@ public:
 	 */
 	static void putProxy(const std::string &delegation_id,
 		const std::string &proxy_req);
-	
-	
-private:
-	/**
-	 * Gets the path of the delegated Proxy. This is the directory where all the
-	 * delegated Proxies are saved
-	 * @return the delegated Proxy path
-	 */
-	static char* getProxyDir();
-	
+		
 	/**
 	 * Gets the delegated proxy path. This is the Proxy corresponding to the 
 	 * delegation identifier passed as argument and to the specific user. The
@@ -68,6 +59,15 @@ private:
 	 * @return the user DN
 	 */
 	static std::string getDelegatedProxyPath(const std::string &delegation_id);
+	
+	
+private:
+	/**
+	 * Gets the path of the delegated Proxy. This is the directory where all the
+	 * delegated Proxies are saved
+	 * @return the delegated Proxy path
+	 */
+	static char* getProxyDir();
 	
 	// The proxy cache directory environment variable name
 	static const char* GRST_PROXYCACHE;

@@ -33,6 +33,9 @@ class WMPLogger  {
 
 		std::string getSequence();
 		
+		void registerProxyRenewal(const std::string &proxy_path,
+			const std::string &my_proxy_server);
+			
 		void registerJob(glite::wms::jdl::JobAd *ad);
 		void registerDag(WMPExpDagAd *ad);
 		void registerPartitionable(WMPExpDagAd *ad, int res_num);
@@ -46,10 +49,6 @@ class WMPLogger  {
 		void logUserTags(std::vector<std::pair<std::string, 
 			classad::ExprTree*> > userTags);
 		
-		void setDestinationURI(std::string dest_uri);
-		
-		static const char *GLITE_WMS_LOG_DESTINATION;
-		
 	private:
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
 		const char * error_message(const char *api);
@@ -59,6 +58,10 @@ class WMPLogger  {
 		//std::string ll_host;
 		std::string lb_host;
 		int lb_port;
+		
+		static const char *GLITE_WMS_LOG_DESTINATION;
+		static const int LB_RENEWAL_PORT = 7512;
+		static const int LOG_RETRY_COUNT = 3;
 };
 
 //} // wmproxy

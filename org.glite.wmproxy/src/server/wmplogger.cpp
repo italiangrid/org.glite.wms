@@ -15,6 +15,8 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 
+#include "glite/security/proxyrenewal/renewal.h"
+
 namespace jobid = glite::wmsutils::jobid;
 
 using namespace std;
@@ -52,7 +54,7 @@ WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 	this->id = id;
 	this->lb_host = lb_host;
 	this->lb_port = lb_port;
-	//if (!getenv(GLITE_WMS_LOG_DESTINATION)) {
+	if (!getenv(GLITE_WMS_LOG_DESTINATION)) {
 		if (edg_wll_SetParamString(ctx, EDG_WLL_PARAM_DESTINATION,
 				lb_host.c_str())) {
 			throw JobOperationException(__FILE__, __LINE__,
@@ -61,7 +63,7 @@ WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 				WMS_OPERATION_NOT_ALLOWED, "LB initialisation failed "
 					"(set destination)");
 		}
-	//}
+	}
 }
 
 std::string
@@ -70,23 +72,42 @@ WMPLogger::getSequence()
 	return std::string(edg_wll_GetSequenceCode(ctx));
 };
 
-void
-WMPLogger::setDestinationURI(string dest_uri)
-{
-	this->dest_uri = dest_uri;
-}
-
 
 // Registering methods
+
+void
+WMPLogger::registerProxyRenewal(const string &proxy_path,
+	const string &my_proxy_server)
+{
+	char *renewal_proxy_path = NULL;
+	int i = 0;
+	for (; i < LOG_RETRY_COUNT
+		&& edg_wlpr_RegisterProxyExt((char*)proxy_path.c_str(),
+	 			(char*)my_proxy_server.c_str(), LB_RENEWAL_PORT,
+				id->getId(), EDG_WLPR_FLAG_UNIQUE,
+      		    &renewal_proxy_path); i++);
+
+ 	if (i = LOG_RETRY_COUNT - 1) {
+		for (int j = 0; j < LOG_RETRY_COUNT
+	    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
+	    	renewal_proxy_path); j++);
+	} else {
+		for (int j = 0; j < LOG_RETRY_COUNT
+	    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
+	    	proxy_path.c_str()); j++);
+	   	throw JobOperationException(__FILE__, __LINE__,
+			"WMPLogger::registerProxyRenewal(const string &proxy_path, const "
+			"string &my_proxy_server)",
+			WMS_LOGGING_ERROR, error_message("registerProxyRenewal"));
+ 	}
+}
 
 void
 WMPLogger::registerJob(JobAd *jad)
 {
 	char str_addr[1024];
-	//lb_host = "gundam.cnaf.infn.it:9000";
-	cerr<<"JOBAD: "<<jad->toString()<<endl;
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	cerr<<"AFTER sprintf"<<endl;
+	cerr<<"JOBAD: "<<jad->toString()<<endl;
 	cerr<<"ctx: "<<ctx<<endl;
 	cerr<<"id->getId(): "<<id->getId()<<endl;
 	cerr<<"jad->toSubmissionString().c_str(): "<<jad->toSubmissionString().c_str()<<endl;

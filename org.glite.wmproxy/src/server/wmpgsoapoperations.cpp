@@ -6,6 +6,9 @@
 
 #include <sstream>
 
+// Boost
+#include <boost/lexical_cast.hpp>
+
 // gSOAP
 #include "soapH.h"
 
@@ -17,9 +20,9 @@
 #include "wmpexception_codes.h"
 #include "glite/wms/jdl/JobAdExceptions.h"
 
-#include "glite/lb/JobStatus.h"
+//#include "wmpgsoapfaultmanipulator.h"
 
-#include <boost/lexical_cast.hpp>
+#include "glite/lb/JobStatus.h"
 
 namespace errorcodes = wmproxyname;
 namespace jobid = glite::wmsutils::jobid;
@@ -83,7 +86,8 @@ convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
 }
 
 /**
- * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector pointer
+ * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector 
+ * pointer
  */
 vector<ns1__JobIdStructType*> *
 convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*> 
@@ -110,7 +114,8 @@ convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*>
 }
 
 /**
- * Converts a ns1__GraphStructType vector pointer to GraphStructType vector pointer
+ * Converts a ns1__GraphStructType vector pointer to GraphStructType vector 
+ * pointer
  */
 vector<GraphStructType*> *
 convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*> 
@@ -149,6 +154,9 @@ convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
 	return element;
 }
 
+/**
+ * Determines the type of the service fault referring to the error code
+ */
 int
 getServiceFaultType(int code)
 {
@@ -193,6 +201,7 @@ getServiceFaultType(int code)
 		case errorcodes::WMS_JOB_SIZE:
 		case errorcodes::WMS_IS_FAILURE:
 		case errorcodes::WMS_MULTI_ATTRIBUTE_FAILURE:
+		case errorcodes::WMS_LOGGING_ERROR:
 			return SOAP_TYPE_ns1__GenericFaultType;
 			break;
 
@@ -204,6 +213,9 @@ getServiceFaultType(int code)
 	}
 }
 
+/*
+ * Initializes the fault stack pointer with the appropriate service fault type
+ */
 void *
 initializeStackPointer(int code)
 {
@@ -237,6 +249,10 @@ initializeStackPointer(int code)
 	return sp;
 }
 
+/*
+ * Sets the fault stack pointer and the other fields of the gSOAP fault
+ * structure
+ */
 void
 setFaultDetails(struct soap *soap, int type, void *sp)
 {
@@ -255,6 +271,10 @@ setFaultDetails(struct soap *soap, int type, void *sp)
 	}
 }
 
+/**
+ * Sets the fields of the Base Fault Type. The service faults are "subclasses"
+ * of the Base Faul Type
+ */
 void
 setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
 	int error_code, string description, vector<string> stack)
@@ -274,6 +294,10 @@ setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
 	setFaultDetails(soap, getServiceFaultType(code), sp);
 }
 
+/**
+ * Sets the fields of the Base Fault Type. The service faults are "subclasses"
+ * of the Base Faul Type. The stack vector is set as an empty vector.
+ */
 void
 setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
 	int error_code, string description)
@@ -286,6 +310,7 @@ setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
 
 
 // WM Web Service available operations
+// To get more infomation see WM service wsdl file
 
 int
 ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
@@ -317,11 +342,11 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 }
 
 int
-ns1__jobRegister(struct soap *soap, string jdl, string delegationId,
+ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	struct ns1__jobRegisterResponse &response)
 {
 	GLITE_STACK_TRY("ns1__jobRegister(struct soap *soap, string jdl, "
-		"string delegationId, struct ns1__jobRegisterResponse &response)");
+		"string delegation_id, struct ns1__jobRegisterResponse &response)");
 	cerr<<"jobRegister operation called"<<endl;
 
 	int return_value = SOAP_OK;
@@ -330,7 +355,7 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegationId,
 	jobRegisterResponse jobRegister_response;
 
 	try {
-		jobRegister(jobRegister_response, jdl, delegationId);
+		jobRegister(jobRegister_response, jdl, delegation_id);
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobRegister_response.jobIdStruct->id;
 		job_id_struct->name = jobRegister_response.jobIdStruct->name;
@@ -357,10 +382,10 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegationId,
 }
 
 int
-ns1__jobStart(struct soap *soap, string jobId,
+ns1__jobStart(struct soap *soap, string job_id,
 	struct ns1__jobStartResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobStart(struct soap *soap, string jobId, struct "
+	GLITE_STACK_TRY("ns1__jobStart(struct soap *soap, string job_id, struct "
 		"ns1__jobStartResponse &response)");
 	cerr<<"jobStart operation called"<<endl;
 
@@ -368,7 +393,7 @@ ns1__jobStart(struct soap *soap, string jobId,
 
 	jobStartResponse jobStart_response;
 	try {
-		jobStart(jobStart_response, jobId);
+		jobStart(jobStart_response, job_id);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobStart", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -384,21 +409,20 @@ ns1__jobStart(struct soap *soap, string jobId,
 }
 
 int
-ns1__jobSubmit(struct soap *soap, string jdl, string delegationId,
+ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
 	struct ns1__jobSubmitResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobSubmit(struct soap *soap, string jdl, struct "
-		"ns1__jobSubmitResponse &response)");
+	GLITE_STACK_TRY("ns1__jobSubmit(struct soap *soap, string jdl, string "
+		"delegation_id, struct ns1__jobSubmitResponse &response)");
 	cerr<<"jobSubmit operation called"<<endl;
 	
 	int return_value = SOAP_OK;
 	
 	jobSubmitResponse jobSubmit_response;
 	try {
-		jobSubmit(jobSubmit_response, jdl, delegationId);
+		jobSubmit(jobSubmit_response, jdl, delegation_id);
 		response._jobIdStruct->id = jobSubmit_response.jobIdStruct->id;
 		response._jobIdStruct->name = jobSubmit_response.jobIdStruct->name;
-		//response._jobIdStruct->childrenJobNum = jobSubmit_response.jobIdStruct->childrenJobNum;
 		if (!(jobSubmit_response.jobIdStruct->childrenJob)) {
 			response._jobIdStruct->childrenJob =
 				convertToGSOAPJobIdStructTypeVector(jobSubmit_response
@@ -422,10 +446,10 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegationId,
 }
 
 int
-ns1__jobCancel(struct soap *soap, string jobId,
+ns1__jobCancel(struct soap *soap, string job_id,
 	struct ns1__jobCancelResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobCancel(struct soap *soap, string jobId, struct "
+	GLITE_STACK_TRY("ns1__jobCancel(struct soap *soap, string job_id, struct "
 		"ns1__jobCancelResponse &response)");
 	cerr<<"jobCancel operation called"<<endl;
 
@@ -433,7 +457,7 @@ ns1__jobCancel(struct soap *soap, string jobId,
 
 	jobCancelResponse jobCancel_response;
 	try {
-		jobCancel(jobCancel_response, jobId);
+		jobCancel(jobCancel_response, job_id);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobCancel", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -479,10 +503,10 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 }
 
 int
-ns1__getSandboxDestURI(struct soap *soap, string jobId,
+ns1__getSandboxDestURI(struct soap *soap, string job_id,
 	struct ns1__getSandboxDestURIResponse &response)
 {
-	GLITE_STACK_TRY("ns1__getSandboxDestURI(struct soap *soap, string jobId, "
+	GLITE_STACK_TRY("ns1__getSandboxDestURI(struct soap *soap, string job_id, "
 		"struct ns1__getSandboxDestURIResponse &response)");
 	cerr<<"getSandboxDestURI operation called"<<endl;
 	
@@ -490,7 +514,7 @@ ns1__getSandboxDestURI(struct soap *soap, string jobId,
 	
 	getSandboxDestURIResponse getSandboxDestURI_response;
 	try {
-		getSandboxDestURI(getSandboxDestURI_response, jobId);
+		getSandboxDestURI(getSandboxDestURI_response, job_id);
 		response._path = getSandboxDestURI_response.path;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getSandboxDestURI", time(NULL),
@@ -510,7 +534,7 @@ int
 ns1__getTotalQuota(struct soap *soap,
 	struct ns1__getTotalQuotaResponse &response)
 {
-	GLITE_STACK_TRY("ns1__getQuota(struct soap *soap, struct "
+	GLITE_STACK_TRY("ns1__getTotalQuota(struct soap *soap, struct "
 		"ns1__getQuotaResponse &response)");
 	cerr<<"getQuota operation called"<<endl;
 
@@ -522,11 +546,11 @@ ns1__getTotalQuota(struct soap *soap,
 		response.softLimit = getQuota_response.softLimit;
 		response.hardLimit = getQuota_response.hardLimit;
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "getQuota", time(NULL),
+	 	setSOAPFault(soap, exc.getCode(), "getTotalQuota", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "getQuota", time(NULL),
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getTotalQuota", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
@@ -564,10 +588,10 @@ ns1__getFreeQuota(struct soap *soap, struct ns1__getFreeQuotaResponse &response)
 }
 
 int 
-ns1__jobPurge(struct soap *soap, string jobId,
+ns1__jobPurge(struct soap *soap, string job_id,
 	struct ns1__jobPurgeResponse &response)
 {
-	GLITE_STACK_TRY("ns1__jobPurge(struct soap *soap, string *jobId, struct "
+	GLITE_STACK_TRY("ns1__jobPurge(struct soap *soap, string *job_id, struct "
 		"ns1__jobPurgeResponse &response)");
 	cerr<<"jobPurge operation called"<<endl;
 	
@@ -575,7 +599,7 @@ ns1__jobPurge(struct soap *soap, string jobId,
 	
 	jobPurgeResponse jobPurge_response;
 	try {
-		jobPurge(jobPurge_response, jobId);
+		jobPurge(jobPurge_response, job_id);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobPurge", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -591,10 +615,10 @@ ns1__jobPurge(struct soap *soap, string jobId,
 }
 
 int 
-ns1__getOutputFileList(struct soap *soap, string jobId,
+ns1__getOutputFileList(struct soap *soap, string job_id,
 	struct ns1__getOutputFileListResponse &response)
 {
-	GLITE_STACK_TRY("ns1__getOutputFileList(struct soap *soap, string *jobId, "
+	GLITE_STACK_TRY("ns1__getOutputFileList(struct soap *soap, string *job_id, "
 		"struct ns1__getOutputFileListResponse &response)");
 	cerr<<"getOutputFileList operation called"<<endl;
 
@@ -603,7 +627,7 @@ ns1__getOutputFileList(struct soap *soap, string jobId,
 	getOutputFileListResponse getOutputFileList_response;
 
 	try {
-		getOutputFileList(getOutputFileList_response, jobId);
+		getOutputFileList(getOutputFileList_response, job_id);
 		for (int i = 0; i < (*(getOutputFileList_response
 				.OutputFileAndSizeList->file)).size(); i++) {
 			(*(response._OutputFileAndSizeList->file))[i]->name = 
@@ -667,8 +691,8 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 	struct ns1__getJobTemplateResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList "
-		"*jobType, string *executable, string *argumements, string "
-		"*requirements, string *rank, struct ns1__getJobTemplateResponse "
+		"*job_type_list, string executable, string arguments, string "
+		"requirements, string rank, struct ns1__getJobTemplateResponse "
 		"&response)");
 	cerr<<"getJobTemplate operation called"<<endl;
 	
@@ -706,8 +730,8 @@ ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 	struct ns1__getDAGTemplateResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getDAGTemplate(struct soap *soap, "
-		"ns1__JobIdStructType *dependencies, string requirements, string "
-		"rank, struct ns1__getDAGTemplateResponse &response)");
+		"ns1__GraphStructType *dependencies, string requirements, string rank, "
+		"struct ns1__getDAGTemplateResponse &response)");
 	cerr<<"getDAGTemplate operation called"<<endl;
 
 	int return_value = SOAP_OK;
@@ -739,28 +763,29 @@ ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 }
 
 int
-ns1__getCollectionTemplate(struct soap *soap, int jobNumber,
+ns1__getCollectionTemplate(struct soap *soap, int job_number,
 	string requirements, string rank,
 	struct ns1__getCollectionTemplateResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getCollectionTemplate(struct soap *soap, int "
-		"jobNumber, string *requirements, string *rank, struct "
-		"ns1__getCollectionTemplateResponse &response)");
+		"job_number, string requirements, string rank, "
+		"struct ns1__getCollectionTemplateResponse &response)");
 	cerr<<"getCollectionTemplate operation called"<<endl;
 
 	int return_value = SOAP_OK;
 
 	getCollectionTemplateResponse getCollectionTemplate_response;
 	try  {
-		getCollectionTemplate(getCollectionTemplate_response, jobNumber, requirements, rank);
+		getCollectionTemplate(getCollectionTemplate_response, job_number,
+			requirements, rank);
 		response.jdl = getCollectionTemplate_response.jdl;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getCollectionTemplate", time(NULL),
-	 	exc.getCode(), (string) exc.what(), exc.getStackTrace());
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
 	 	setSOAPFault(soap, WMS_IS_FAILURE, "getCollectionTemplate", time(NULL),
-	 	WMS_IS_FAILURE, (string) ex.what());
+	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -770,35 +795,37 @@ ns1__getCollectionTemplate(struct soap *soap, int jobNumber,
 
 int
 ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
-	int param, int parameterStart, int parameterStep, string requirements,
+	int param, int parameter_start, int parameter_step, string requirements,
 	string rank, struct ns1__getIntParametricJobTemplateResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getIntParametricJobTemplate(struct soap *soap, "
-		"ns1__StringList *attributes, int param, int parameterStart, "
-		"int parameterStep, string requirements, string rank, "
+		"ns1__StringList *attributes, int param, int parameter_start, "
+		"int parameter_step, string requirements, string rank, "
 		"struct ns1__getIntParametricJobTemplateResponse &response)");
 	cerr<<"getIntParametricJobTemplate operation called"<<endl;
 
 	int return_value = SOAP_OK;
 
 	if (!attributes) {
-		setSOAPFault(soap, WMS_INVALID_ARGUMENT, "getDAGTemplate", time(NULL),
-	 		WMS_INVALID_ARGUMENT, "Invalid Argument");
+		setSOAPFault(soap, WMS_INVALID_ARGUMENT, "getIntParametricJobTemplate",
+			time(NULL), WMS_INVALID_ARGUMENT, "Invalid Argument");
 		return_value = SOAP_FAULT;
 	} else {
 		getIntParametricJobTemplateResponse 
 			getIntParametricJobTemplate_response;
 		try  {
 			//getIntParametricJobTemplate(getIntParametricJobTemplate_response,
-			//	attributes, param, parameterStart, parameterStep, requirements, rank);
+				//attributes, param, parameter_start, parameter_step,
+				//requirements, rank);
 			response.jdl = getIntParametricJobTemplate_response.jdl;
 		} catch (Exception &exc) {
-		 	setSOAPFault(soap, exc.getCode(), "getCollectionTemplate", time(NULL),
-		 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		 	setSOAPFault(soap, exc.getCode(), "getIntParametricJobTemplate",
+		 		time(NULL), exc.getCode(), (string) exc.what(),
+		 		exc.getStackTrace());
 			return_value = SOAP_FAULT;
 		} catch (exception &ex) {
-		 	setSOAPFault(soap, WMS_IS_FAILURE, "getCollectionTemplate", time(NULL),
-		 		WMS_IS_FAILURE, (string) ex.what());
+		 	setSOAPFault(soap, WMS_IS_FAILURE, "getIntParametricJobTemplate",
+		 		time(NULL), WMS_IS_FAILURE, (string) ex.what());
 			return_value = SOAP_FAULT;
 		}
 	}
@@ -829,7 +856,7 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 			getStringParametricJobTemplate_response;
 		try  {
 			//getStringParametricJobTemplate(getStringParametricJobTemplate_response,
-			//	attributes, param, requirements, rank);
+				//attributes, param, requirements, rank);
 			response.jdl = getStringParametricJobTemplate_response.jdl;
 		} catch (Exception &exc) {
 		 	setSOAPFault(soap, exc.getCode(), "getCollectionTemplate", time(NULL),
