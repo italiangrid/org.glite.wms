@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.22  2004/09/29 13:40:39  flammer
+	Only changed line formatting.
+
 	Revision 1.21  2004/09/09 21:09:47  dimeglio
 	Moved tag target to targets-common
-
+	
 	Revision 1.20  2004/09/05 22:40:06  dimeglio
 	Removed local envcheck (must use common)
 	Removed circular dependency on cli-python)
@@ -254,19 +257,19 @@
 	<!-- component targets definitions tag = do not remove = -->
 
 	<target name="partitioner" unless="setenvonly">
-        <if>
-            <isset property="small.memory" />
-            <then>
-                <exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-                    <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                </exec>
-            </then>
-            <else>
-                <ant dir="${wms-ui.subsystem.dir}.partitioner"
-	                target="${target}"
-	                inheritall="false" />
-            </else>
-        </if>
+        	<if>
+            		<isset property="small.memory" />
+            		<then>
+                		<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                    			<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                		</exec>
+            		</then>
+            		<else>
+                		<ant dir="${wms-ui.subsystem.dir}.partitioner"
+	                	     target="${target}"
+	                	     inheritall="false" />
+            		</else>
+        	</if>
 	</target>
 
 	<target name="api-cpp" unless="setenvonly">
@@ -279,8 +282,8 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.api-cpp"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
@@ -295,8 +298,8 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.api-java"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
@@ -311,8 +314,8 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.cli-python"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
@@ -327,8 +330,8 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.gui-java"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
@@ -343,74 +346,74 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.partitioner"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
 
 	<target name="wrap-python" unless="setenvonly" depends="boost,classads,globus, swig">
-        <if>
-            <isset property="small.memory" />
-            <then>
-                <exec dir="${wms-ui.subsystem.dir}.wrap-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+        	<if>
+            		<isset property="small.memory" />
+            		<then>
+                		<exec dir="${wms-ui.subsystem.dir}.wrap-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                </exec>
-            </then>
-            <else>
+                		</exec>
+            		</then>
+            		<else>
 				<ant dir="${wms-ui.subsystem.dir}.wrap-python"
-					target="${target}"
-                	inheritall="false" />
-            </else>
-        </if>
+				     target="${target}"
+                		     inheritall="false" />
+            		</else>
+        	</if>
 	</target>
 
 	<target name="wrap-java" unless="setenvonly" depends="boost,classads,globus">
-        <if>
-            <isset property="small.memory" />
-            <then>
-                <exec dir="${wms-ui.subsystem.dir}.wrap-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+        	<if>
+            		<isset property="small.memory" />
+            		<then>
+                		<exec dir="${wms-ui.subsystem.dir}.wrap-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                </exec>
-            </then>
-            <else>
+                		</exec>
+            		</then>
+            		<else>
 				<ant dir="${wms-ui.subsystem.dir}.wrap-java"
-                	target="${target}"
-                	inheritall="false" />
-            </else>
-        </if>
-    </target>
+                		     target="${target}"
+                		     inheritall="false" />
+            		</else>
+        	</if>
+    	</target>
 
 	<target name="gui-java" unless="setenvonly" depends="api-java, wrap-java">
-        <if>
-            <isset property="small.memory" />
-            <then>
-                <exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+        	<if>
+            		<isset property="small.memory" />
+            		<then>
+                		<exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                </exec>
-            </then>
+                		</exec>
+            		</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.gui-java"
-                	target="${target}"
-                	inheritall="false" />
-            </else>
-        </if>
+                		     target="${target}"
+                		     inheritall="false" />
+           		 </else>
+        	</if>
 	</target>
 
 	<target name="cli-python" unless="setenvonly">
-        <if>
-            <isset property="small.memory" />
-            <then>
-                <exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+        	<if>
+            		<isset property="small.memory" />
+            		<then>
+                		<exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                </exec>
-            </then>
+                		</exec>
+            		</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.cli-python"
-	                target="${target}"
-	                inheritall="false" />
-            </else>
-        </if>
+	                	     target="${target}"
+	                	     inheritall="false" />
+            		</else>
+        	</if>
 	</target>
 
 	<!-- Main proxy -->
