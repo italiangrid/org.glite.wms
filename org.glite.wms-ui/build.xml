@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.24  2004/10/13 15:15:16  eronchie
+	Updated
+
 	Revision 1.23  2004/10/11 16:34:01  eronchie
 	Start adding configuration
-
+	
 	Revision 1.22  2004/09/29 13:40:39  flammer
 	Only changed line formatting.
 	
@@ -387,7 +390,7 @@
                 </if>
         </target>
 
-	<target name="gui-java" unless="setenvonly" depends="api-java, wrap-java">
+	<target name="gui-java" unless="setenvonly" depends="configuration, api-java, wrap-java">
         	<if>
             		<isset property="small.memory" />
             		<then>
