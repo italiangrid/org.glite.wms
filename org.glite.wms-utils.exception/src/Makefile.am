@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES    = libglite_wms_exceptions.la 
+lib_LTLIBRARIES    = libglite_wmsutils_exceptions.la 
 
-libglite_wms_exceptions_la_SOURCES = \
+libglite_wmsutils_exceptions_la_SOURCES = \
 	Exceptions.cpp \
 	utils.cpp
 
