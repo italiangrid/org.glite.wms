@@ -18,13 +18,36 @@
 lib_LTLIBRARIES = libglite_wms_wmproxy_api_cpp.la
 
 libglite_wms_wmproxy_api_cpp_la_SOURCES = \
-	wmproxy_api.cpp
+	wm.h \
+	soapC.cpp \
+	soapClient.cpp \
+	wmproxy_api.cpp \
+	stdsoap2.cpp
+
+
+vpath stdsoap2.cpp $(GLOBAL_LOCATION)
+
+
+wm.h :
+        @#Create the files
+        @echo "wsdl2h compiling .h "
+        $(GSOAP_LOCATION)/wsdl2h -o wm.h \
+        -t$(GSOAP_LOCATION)/typemap.dat \
+        $(GLITE_LOCATION)/interface/WMProxy.wsdl
+
+soapC.cpp : wm.h
+        @#Create the files
+        @echo "gsoap compiling .cpp"
+        $(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) -I$(top_srcdir)/build/src/wm.h
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
+	-I$(GSOAP_LOCATION) \
         $(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(BOOST_CFLAGS)
+	$(BOOST_CFLAGS) \ 
+	-DWITH_OPENSSL
 
 MAINTAINERCLEANFILES = Makefile.in
 
