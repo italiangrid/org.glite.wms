@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.9  2004/06/14 12:24:08  eronchie
+	Added configure options
+	WARNING::: Work in progress
+
 	Revision 1.8  2004/05/17 16:33:04  flammer
 	Updating variable naming.
-
+	
 	Revision 1.7  2004/05/14 00:37:43  dimeglio
 	Replaced targets-cpp with targets-make
 	
@@ -98,7 +102,8 @@
 		 ========================================= -->
 	<import file="${global.targets-external-dependencies.file}"/>	
 	<import file="${global.targets-make.file}" />
-		
+	<import file="./project/configure-options.xml"/>
+
 	<!-- =========================================
 		 Load version file 
 		 ========================================= -->
