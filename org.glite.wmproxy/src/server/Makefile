@@ -90,7 +90,10 @@ LDFLAGS= \
 	-lprg_exec_monitor \
 	-lboost_regex \
 	-lexpat \
-	-lmcnab \
+	-lgridsite_globus \
+	-llcas \
+	-llcmaps \
+	-lvomsc \
 	-lxml2 \
 	-lfcgi++
 
