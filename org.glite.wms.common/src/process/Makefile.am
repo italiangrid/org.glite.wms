@@ -19,7 +19,7 @@ processinclude_HEADERS = \
 	subprocess.h \
 	user.h
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(BOOST_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
