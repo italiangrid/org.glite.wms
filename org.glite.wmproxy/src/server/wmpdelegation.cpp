@@ -18,20 +18,25 @@
 #include "wmpexception_codes.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 
+// Common utility methods
+#include "utilities/wmputils.h" // getUserDN()
+
 // Gridsite C library
 extern "C" {
 	#include "gridsite.h"
 }
 
 using namespace std;
-using namespace glite::wms::wmproxy::server ;  //Exception codes
-using namespace glite::wmsutils::exception; //Exception
+using namespace glite::wms::wmproxy::server;  //Exception codes
+
+namespace wmputilities		 = glite::wms::wmproxy::utilities;
+//using namespace glite::wmsutils::exception; //Exception
 
 const char* WMPDelegation::GRST_PROXYCACHE = "proxycache";
 const char* WMPDelegation::SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
 const char* WMPDelegation::DOCUMENT_ROOT = "DOCUMENT_ROOT";
 
-char *
+/*char *
 WMPDelegation::getUserDN()
 {
 	char* p = NULL;
@@ -59,7 +64,7 @@ WMPDelegation::getUserDN()
 	}
 	
 	return user_dn;
-}
+}*/
 
 char *
 WMPDelegation::getProxyDir()
@@ -80,7 +85,7 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 {
 	char *user_dn = NULL;
   	try {
-  		user_dn = getUserDN();
+  		user_dn = wmputilities::getUserDN();
   	} catch (ProxyOperationException &poe) {
   		throw poe;	
   	}
@@ -108,7 +113,7 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 {
 	char *user_dn = NULL;
   	try {
-  		user_dn = WMPDelegation::getUserDN();
+  		user_dn = wmputilities::getUserDN();
   	} catch (ProxyOperationException &poe) {
   		throw poe;	
   	}
@@ -128,7 +133,7 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 {
 	char *user_dn = NULL;
 	try {
-		user_dn = getUserDN();
+		user_dn = wmputilities::getUserDN();
 	} catch (ProxyOperationException &poe) {
 		throw poe;	
 	}

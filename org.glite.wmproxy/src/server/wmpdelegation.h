@@ -13,7 +13,7 @@
 
 /**
  * WMPDelegation class provides a set of utility methods to work on
- * Proxy delegation. It also includes some methods to get Proxy info.
+ * Proxy delegation.
  *
  * @brief utility methods to work on Proxy delegation
  * @version 1.0
@@ -28,7 +28,7 @@ public:
 	 * environment
 	 * @return the user DN
 	 */
-	static char* getUserDN();
+	//static char* getUserDN();
 	
 	/**
 	 * Gets a delegated Proxy request. A Proxy request must be done in order
