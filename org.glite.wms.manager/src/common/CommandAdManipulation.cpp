@@ -50,8 +50,7 @@ command_is_valid(classad::ClassAd const& command_ad)
   static classad::ClassAd const* command_ad_requirements(
     utilities::parse_classad(command_requirements)
   );
-
-  return utilities::right_matches_left(command_ad, *command_ad_requirements);
+  return utilities::left_matches_right(command_ad, *command_ad_requirements);
 }
 
 std::string
