@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.31  2004/07/18 10:55:41  eronchie
+	Start adding checkpointing
+	WARNING: work in progress
+
 	Revision 1.30  2004/07/16 16:25:44  flammer
 	Added tags for automated adding of components.
-
+	
 	Revision 1.29  2004/07/14 23:17:34  dimeglio
 	Added dependency of globus_ssl_utils on globus
 	
@@ -405,6 +409,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="checkpointing" unless="setenvonly" depends="boost,classads,common,jobid,tls">
+                <ant dir="${workspace.dir}/${subsystem.name}.checkpointing"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -419,6 +429,7 @@
 					     classad_plugin,
 					     matchmaking,
 					     broker,
-					     helper" />
+					     helper,
+					     checkpointing" />
 		
 </project>

@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.38  2004/07/18 10:55:41  eronchie
+	Start adding checkpointing
+	WARNING: work in progress
+
 	Revision 1.37  2004/07/16 16:25:44  flammer
 	Added tags for automated adding of components.
-
+	
 	Revision 1.36  2004/07/14 23:17:34  dimeglio
 	Added dependency of globus_ssl_utils on globus
 	
@@ -288,6 +292,10 @@
 		<condition property="broker.head">
                         <equals arg1="${org.glite.wms.broker.version}" arg2="HEAD" />
                 </condition>
+
+		<condition property="checkpointing.head">
+                        <equals arg1="${org.glite.wms.checkpointing.version}" arg2="HEAD" />
+                </condition>
     	</target>
 
     	<presetdef name="cvs-co">
@@ -486,6 +494,15 @@
                     tag="${org.glite.wms.broker.version}" />
 	</target>
 
+	<!-- CheckPointing -->
+        <target name="checkpointing" depends="boost,classads,common,jobid,tls,get.checkpointing.head, get.checkpointing.tag"/>
+        <target name="get.checkpointing.head" if="checkpointing.head">
+            <cvs-co package="org.glite.wms.checkpointing" />
+        </target>
+        <target name="get.checkpointing.tag" unless="checkpointing.head">
+            <cvs-co package="org.glite.wms.checkpointing"
+                    tag="${org.glite.wms.checkpointing.version}" />
+        </target>	
 		
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-globus_ssl_utils,
@@ -501,7 +518,8 @@
 					classad_plugin,
 					matchmaking,
 					broker,
-					helper"/>
+					helper,
+					checkpointing"/>
 
 
 	<!-- ====================================================
