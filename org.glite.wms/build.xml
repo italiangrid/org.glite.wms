@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.35  2004/07/23 08:51:27  eronchie
+	Removed tls, jobid, thirdparty-globus_ssl_utils
+
 	Revision 1.34  2004/07/18 12:29:39  eronchie
 	Start adding purger
 	WARNING: work in progress
-
+	
 	Revision 1.33  2004/07/18 12:17:33  eronchie
 	Start integrating purger
 	
@@ -335,12 +338,6 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="globus_ssl_utils" unless="setenvonly" depends="globus">
-		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
-		     target="${target}"
-		     inheritall="false" />
-	</target>
-
 	<target name="bypass" unless="setenvonly">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-bypass"
 		     target="${target}"
@@ -365,19 +362,7 @@
                      inheritall="false" />
 	</target>
 
-        <target name="tls" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common">
-                <ant dir="${workspace.dir}/${subsystem.name}.tls"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common">
-                <ant dir="${workspace.dir}/${subsystem.name}.jobid"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="jdl" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common,jobid">
+	<target name="jdl" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common">
                 <ant dir="${workspace.dir}/${subsystem.name}.jdl"
                      target="${target}"
                      inheritall="false" />
@@ -407,7 +392,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="helper" unless="setenvonly" depends="boost,classads,common,jdl,jobid">
+	<target name="helper" unless="setenvonly" depends="boost,classads,common,jdl">
                 <ant dir="${workspace.dir}/${subsystem.name}.helper"
                      target="${target}"
                      inheritall="false" />
@@ -419,7 +404,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="checkpointing" unless="setenvonly" depends="boost,classads,common,jobid,tls">
+	<target name="checkpointing" unless="setenvonly" depends="boost,classads,common">
                 <ant dir="${workspace.dir}/${subsystem.name}.checkpointing"
                      target="${target}"
                      inheritall="false" />
@@ -431,20 +416,17 @@
                      inheritall="false" />
         </target>
 
-	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,common,jobid,tls,jdl,purger">
+	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condor,common,jdl,purger">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
                      target="${target}"
                      inheritall="false" />
         </target>
 
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="globus_ssl_utils,
-					     bypass,
+	<target name="buildmodules" depends="bypass,
    					     globus_gridftp_server,
  					     loki,
 					     common,
-					     tls,
-					     jobid,
 					     jdl,
    					     jdlj,
 					     brokerinfo,

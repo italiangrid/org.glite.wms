@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.43  2004/07/23 08:51:28  eronchie
+	Removed tls, jobid, thirdparty-globus_ssl_utils
+
 	Revision 1.42  2004/07/18 12:29:39  eronchie
 	Start adding purger
 	WARNING: work in progress
-
+	
 	Revision 1.41  2004/07/18 12:17:33  eronchie
 	Start integrating purger
 	
@@ -252,10 +255,6 @@
 	
 		<!-- condition property tag = do not remove = -->
 
-		<condition property="thirdparty-globus_ssl_utils.head">
-			<equals arg1="${org.glite.wms.thirdparty-globus_ssl_utils.version}" arg2="HEAD" />
-		</condition>
-
 		<condition property="thirdparty-globus_gridftp_server.head">
 			<equals arg1="${org.glite.wms.thirdparty-globus_gridftp_server.version}" arg2="HEAD" />
 		</condition>
@@ -271,14 +270,6 @@
 		<condition property="common.head">
 			<equals arg1="${org.glite.wms.common.version}" arg2="HEAD" />
 		</condition>
-
-		<condition property="tls.head">
-                        <equals arg1="${org.glite.wms.tls.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="jobid.head">
-                        <equals arg1="${org.glite.wms.jobid.version}" arg2="HEAD" />
-                </condition>
 
 		<condition property="jdl.head">
                         <equals arg1="${org.glite.wms.jdl.version}" arg2="HEAD" />
@@ -377,16 +368,6 @@
 
 	<!-- component targets tag = do not remove = -->
 
-	<!-- Globus SSLUtils -->
- 	<target name="thirdparty-globus_ssl_utils" depends="globus,get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
-	<target name="get.thirdparty-globus_ssl_utils.head" if="thirdparty-globus_ssl_utils.head">
-		<cvs-co package="org.glite.wms.thirdparty-globus_ssl_utils" />
-	</target>
-	<target name="get.thirdparty-globus_ssl_utils.tag" unless="thirdparty-globus_ssl_utils.head">
-		<cvs-co package="org.glite.wms.thirdparty-globus_ssl_utils"
-			tag="${org.glite.wms.thirdparty-globus_ssl_utils.version}" />
-	</target>
-
 	<!-- ByPass -->
  	<target name="thirdparty-bypass" depends="get.thirdparty-bypass.head, get.thirdparty-bypass.tag"/>
 	<target name="get.thirdparty-bypass.head" if="thirdparty-bypass.head">
@@ -426,26 +407,6 @@
 		<cvs-co package="org.glite.wms.common"
 			tag="${org.glite.wms.common.version}" />
 	</target>
-
-    	<!-- Tls -->
-    	<target name="tls" depends="boost,classads,globus,get.tls.head, get.tls.tag"/>
-    	<target name="get.tls.head" if="tls.head">
-            <cvs-co package="org.glite.wms.tls" />
-    	</target>
-    	<target name="get.tls.tag" unless="tls.head">
-            <cvs-co package="org.glite.wms.tls"
-                    tag="${org.glite.wms.tls.version}" />
-    	</target>
-
-	<!-- Jobid -->
-    	<target name="jobid" depends="boost,classads,globus,get.jobid.head, get.jobid.tag"/>
-    	<target name="get.jobid.head" if="jobid.head">
-            <cvs-co package="org.glite.wms.jobid" />
-    	</target>
-    	<target name="get.jobid.tag" unless="jobid.head">
-            <cvs-co package="org.glite.wms.jobid"
-                    tag="${org.glite.wms.jobid.version}" />
-    	</target>
 
 	<!-- Jdl -->
     	<target name="jdl" depends="boost,classads,globus,get.jdl.head, get.jdl.tag"/>
@@ -498,7 +459,7 @@
     	</target>
 
 	<!-- Helper -->
-    	<target name="helper" depends="boost,classads,globus,common,jdl,jobid,get.helper.head, get.helper.tag"/>
+    	<target name="helper" depends="boost,classads,globus,common,jdl,get.helper.head, get.helper.tag"/>
     	<target name="get.helper.head" if="helper.head">
             <cvs-co package="org.glite.wms.helper" />
     	</target>
@@ -518,7 +479,7 @@
 	</target>
 
 	<!-- CheckPointing -->
-        <target name="checkpointing" depends="boost,classads,common,jobid,tls,get.checkpointing.head, get.checkpointing.tag"/>
+        <target name="checkpointing" depends="boost,classads,common,get.checkpointing.head, get.checkpointing.tag"/>
         <target name="get.checkpointing.head" if="checkpointing.head">
             <cvs-co package="org.glite.wms.checkpointing" />
         </target>
@@ -538,7 +499,7 @@
         </target>
 
 	<!-- JobSubmission -->
-        <target name="jobsubmission" depends="boost,classads,globus,common,jobid,tls,jdl,purger,get.jobsubmission.head, get.jobsubmission.tag"/>
+        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jdl,purger,get.jobsubmission.head, get.jobsubmission.tag"/>
         <target name="get.jobsubmission.head" if="jobsubmission.head">
             <cvs-co package="org.glite.wms.jobsubmission" />
         </target>
@@ -548,13 +509,10 @@
         </target>	
 		
 	<!-- All project modules -->
- 	<target name="project" depends="thirdparty-globus_ssl_utils,
-  				        thirdparty-bypass,
+ 	<target name="project" depends="thirdparty-bypass,
   				        thirdparty-globus_gridftp_server,
   				        thirdparty-loki,
 				        common,
-				        tls,
-					jobid,
 					jdl,
  				        jdlj,
 					brokerinfo,
