@@ -15,7 +15,7 @@
 #ifdef WANT_NAMESPACES
 using namespace classad;
 #endif
-using namespace glite::wmsustils::exception ;
+using namespace glite::wmsutils::exception ;
 using namespace std ;
 
 
