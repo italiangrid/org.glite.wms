@@ -21,11 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.40  2004/07/18 11:40:12  eronchie
+	Removed temporarely condor
+
 	Revision 1.39  2004/07/18 11:26:20  eronchie
 	Added condorg.m4 file
 	Start adding jobsubmission component
 	Condor package is still missing in the repository
-
+	
 	Revision 1.38  2004/07/18 10:55:41  eronchie
 	Start adding checkpointing
 	WARNING: work in progress
@@ -514,7 +517,7 @@
         </target>
 
 	<!-- JobSubmission -->
-        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jobid,tls,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
+        <target name="jobsubmission" depends="boost,classads,globus,common,jobid,tls,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
         <target name="get.jobsubmission.head" if="jobsubmission.head">
             <cvs-co package="org.glite.wms.jobsubmission" />
         </target>

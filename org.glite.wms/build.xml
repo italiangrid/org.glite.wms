@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.32  2004/07/18 11:40:12  eronchie
+	Removed temporarely condor
+
 	Revision 1.31  2004/07/18 10:55:41  eronchie
 	Start adding checkpointing
 	WARNING: work in progress
-
+	
 	Revision 1.30  2004/07/16 16:25:44  flammer
 	Added tags for automated adding of components.
 	
@@ -415,6 +418,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,common,jobid,tls,jdl,classad_plugin">
+                <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -430,6 +439,7 @@
 					     matchmaking,
 					     broker,
 					     helper,
-					     checkpointing" />
+					     checkpointing,
+					     jobsubmission" />
 		
 </project>
