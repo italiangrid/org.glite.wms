@@ -5,40 +5,49 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_PLANNING_MANAGER_WMFILELISTPROXY_H
-#define EDG_WORKLOAD_PLANNING_MANAGER_WMFILELISTPROXY_H
+#ifndef GLITE_WMS_MANAGER_SERVER_WMFILELISTPROXY_H
+#define GLITE_WMS_MANAGER_SERVER_WMFILELISTPROXY_H
 
 #include <string>
-#include "edg/workload/planning/manager/WMImpl.h"
-#include "edg/workload/common/utilities/FileList.h"
+#include "../common/WMImpl.h"
+#include "glite/wms/common/utilities/FileList.h"
 
-namespace edg {
-namespace workload {
+namespace glite {
+
+namespace jobid = wmsutils::jobid;
+
+namespace wms {
 
 namespace common {
 namespace utilities {
 class FileListMutex;
 }}
 
-namespace planning {
-namespace manager {
+namespace common = manager::common;
+namespace utilities = common::utilities;
 
-class WMFileListProxy: public WMImpl
+namespace manager {
+namespace server {
+
+class WMFileListProxy: public common::WMImpl
 {
-  common::utilities::FileList<std::string>& m_filelist;
-  common::utilities::FileListMutex&         m_filelist_mutex;
+  utilities::FileList<std::string>& m_filelist;
+  utilities::FileListMutex&         m_filelist_mutex;
 
 public:
-  WMFileListProxy(common::utilities::FileList<std::string>& filelist,
-                  common::utilities::FileListMutex& filelist_mutex);
+  WMFileListProxy(utilities::FileList<std::string>& filelist,
+                  utilities::FileListMutex& filelist_mutex);
   ~WMFileListProxy();
 
   void submit(classad::ClassAd const* request_ad);
-  void resubmit(common::jobid::JobId const& request_id);
-  void cancel(common::jobid::JobId const& request_id);
+  void resubmit(jobid::JobId const& request_id);
+  void cancel(jobid::JobId const& request_id);
 };
 
-}}}} // edg::workload::planning::manager
+} // server
+} // manager
+} // wms
+} // glite
 
 #endif
 

@@ -6,44 +6,50 @@
 ## *
 ## *********************************************************************
 
+MNGR_COMMON = $(top_builddir)/src/common/libglite_wms_manager_common.la
+MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
+
+GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
+
 bin_PROGRAMS = \
         glite-wms-workload_manager
 
 glite_wms_workload_manager_SOURCES = workload_manager.cpp
 glite_wms_workload_manager_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_workload_manager_LDADD   = \
-	../manager/libedg_wl_manager_common.la \
-	../manager/libedg_wl_manager_server.la \
-	../helper/libedg_wl_helper.la \
-	../jobadapter/libedg_wl_helper_jobadapter.la \
-	../jobadapter/libedg_wl_jobadapter.la \
-	../../jobcontrol/controller/libedg_wl_controller_adapter.la \
-	../../jobcontrol/controller/libedg_wl_controller.la \
-	../../jobcontrol/common/libedg_wl_jc_common.la \
-	../../purger/libedg_wl_purger.la \
-	../../common/jobid/libedg_wl_jobid.la \
-	../../common/requestad/libedg_wl_common_requestad.la \
-	../../common/logger/libedg_wl_logger.la \
-	../../common/configuration/libedg_wl_conf.la \
-	../../common/utilities/libedg_wl_util.la \
-	../../common/utilities/libedg_wl_iiattrutil.la \
-	../../common/ldif2classad/libedg_wl_LDIF2ClassAd.la \
-	../../common/utilities/libedg_wl_exceptions.la \
-	../../common/ssl_helpers/libedg_wl_ssl_helpers.la \
-	../../common/ssl_helpers/libedg_wl_ssl_pthr_helpers.la \
-	../../logging/client/libedg_wl_loggingpp.la \
-	../../logging/client/libedg_wl_logging.la \
-	../../proxyrenewal/libedg_wl_renewal.la \
+	$(MNGR_COMMON) \
+        $(MNGR_SERVER) \
+        $(GLITE_WMS_HELPER_LIBS) \
+        $(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
+	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
+        $(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
+        $(GLITE_WMS_JSS_COMMON_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS) \
+        $(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS)\
+        $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMS_COMMON_UT_II_LIBS) \
+        $(GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+        $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
+        $(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
+        $(GLITE_LB_NOTHR_CLIENT_LIBS) \
+        $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+        $(GLITE_LB_NOTHR_COMMON_LIBS) \
+        $(GLITE_SECURITY_NOTHR_RENEWAL_LIBS) \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_DL_LIBS) \
-	$(GLOBUS_LDAP_LIBS) \
-	$(GLOBUS_THR_LIBS) \
+	$(GLOBUS_LDAP_THR_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
 	$(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
 

@@ -28,12 +28,12 @@ namespace classad {
 class ClassAd;
 }
 
+namespace task = glite::wms::common::task;
+
 namespace glite {
 namespace wms {
 namespace manager {
 namespace server {
-
-namespace task = glite::wms::common::task;
 
 typedef boost::function0<void> PostProcessFunction;
 typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;

@@ -5,34 +5,42 @@
 
 // $Id$
 
-#include "edg/workload/planning/manager/WMFileListProxy.h"
+#include "WMFileListProxy.h"
+
 #include <memory>
 #include <boost/thread/mutex.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <classad_distribution.h>
-#include "edg/workload/planning/manager/WMFactory.h"
-#include "edg/workload/planning/manager/CommandAdManipulation.h"
-#include "edg/workload/planning/manager/lb_utils.h"
-#include "edg/workload/planning/manager/logging_utils.h"
-#include "edg/workload/common/jobid/JobId.h"
-#include "edg/workload/common/configuration/Configuration.h"
-#include "edg/workload/common/configuration/WMConfiguration.h"
-#include "edg/workload/common/requestad/JobAdManipulation.h"
-#include "edg/workload/common/utilities/classad_utils.h"
-#include "edg/workload/common/utilities/FileListLock.h"
-#include "edg/workload/logging/client/context.h"
-#include "edg/workload/logging/client/producer.h"
+
+#include "../common/WMFactory.h"
+#include "../common/CommandAdManipulation.h"
+#include "../common/lb_utils.h"
+
+#include "glite/wms/common/logger/logging_utils.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+
+#include "glite/wms/jdl/JobAdManipulation.h"
+
+#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wms/common/utilities/FileListLock.h"
+
+#include "glite/lb/context.h"
+#include "glite/lb/producer.h"
 
 using namespace classad;
 
-namespace utilities = edg::workload::common::utilities;
-namespace jobid = edg::workload::common::jobid;
-namespace requestad = edg::workload::common::requestad;
+namespace utilities = glite::wms::common::utilities;
+namespace jobid = glite::wmsutils::jobid;
+namespace jdl = glite::wms::jdl;
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
 namespace manager {
+namespace server {
 
 namespace {
 
@@ -49,11 +57,11 @@ boost::scoped_ptr<utilities::FileList<std::string> > filelist;
 boost::scoped_ptr<utilities::FileListMutex>          filelist_mutex;
 boost::mutex                                         filelist_init_mutex;
 
-WMImpl* create_wm()
+common::WMImpl* create_wm()
 {
   static char const* const function_name = "create_wm";
 
-  namespace configuration = edg::workload::common::configuration;
+  namespace configuration = glite::wms::common::configuration;
 
   configuration::Configuration const* const config
     = configuration::Configuration::instance();
@@ -113,7 +121,7 @@ WMFileListProxy::submit(classad::ClassAd const* request_ad)
   boost::scoped_ptr<ClassAd> command_ad(
     submit_command_create(request_ad_copy.release())
   );
-  jobid::JobId request_id(requestad::get_dg_jobid(*request_ad));
+  jobid::JobId request_id(jdl::get_dg_jobid(*request_ad));
   boost::shared_ptr<lb_context_adapter> context_ptr
     = ActiveRequests::instance()->find(request_id);
   if (!context_ptr) {
@@ -164,7 +172,7 @@ WMFileListProxy::submit(classad::ClassAd const* request_ad)
 }
 
 void
-WMFileListProxy::resubmit(common::jobid::JobId const& request_id)
+WMFileListProxy::resubmit(jobid::JobId const& request_id)
 {
   static char const* const function_name = "WMFileListProxy::resubmit";
 
@@ -202,7 +210,7 @@ WMFileListProxy::resubmit(common::jobid::JobId const& request_id)
 }
 
 void
-WMFileListProxy::cancel(common::jobid::JobId const& request_id)
+WMFileListProxy::cancel(jobid::JobId const& request_id)
 {
   static char const* const function_name = "WMFileListProxy::cancel";
 

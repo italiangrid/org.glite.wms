@@ -30,7 +30,7 @@
 #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 
-namespace manager = glite::wms::manager::server;
+namespace server = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
 namespace task = glite::wms::common::task;
 namespace logger = glite::wms::common::logger;
@@ -136,7 +136,7 @@ try {
     }
   }
 
-  manager::signal_handling_init();
+  server::signal_handling_init();
 
   if (!ssl_init()) {
     get_err_stream() << program_name << ": "
@@ -230,10 +230,10 @@ try {
     return EXIT_FAILURE;
   }
 
-  manager::pipe_type d2rh(wm_config->pipe_depth());
+  server::pipe_type d2rh(wm_config->pipe_depth());
 
-  manager::Dispatcher dispatcher;
-  manager::RequestHandler request_handler;
+  server::Dispatcher dispatcher;
+  server::RequestHandler request_handler;
   task::Task d(dispatcher, d2rh);
   task::Task r(request_handler, d2rh, wm_config->worker_threads());
 
