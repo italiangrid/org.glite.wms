@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/06/28 22:53:49  eronchie
+#       Start adding classad_plugin
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/06/26 13:00:44  eronchie
 #       Start adding classad_plugin
 #       WARNING: work in progress
@@ -34,7 +38,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Subdirectories list
-SUBDIRS = src test
+SUBDIRS = src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
