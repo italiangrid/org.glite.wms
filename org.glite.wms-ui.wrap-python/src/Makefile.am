@@ -43,7 +43,7 @@ uicommonlib_SCRIPTS=glite_wmsui_AdWrapper.py \
  
 install-exec-hook:
 	cd $(DESTDIR)$(libdir); \
-	for file in $(WL_UI_COM_EDG); do \
+	for file in $(WMS_UI_COM_GLITE); do \
 	ln -fs lib$$file _$$file; \
 	done
 
@@ -261,7 +261,7 @@ glite_wmsui_LbWrapper.py:
 glite_wmsui_LogWrapper.py:
 	/bin/touch glite_wmsui_LogWrapper.py
 
-WL_UI_COM_EDG = glite_wmsui_AdWrapper.a \
+WMS_UI_COM_GLITE = glite_wmsui_AdWrapper.a \
 	glite_wmsui_AdWrapper.la \
 	glite_wmsui_AdWrapper.so \
 	glite_wmsui_AdWrapper.so.0 \
