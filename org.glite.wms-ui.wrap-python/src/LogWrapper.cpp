@@ -119,8 +119,8 @@ void LOG::init ( const std::string& ns ) {
     error_code= 0 ;
     if ( edg_wll_InitContext( &ctx ) ) log_error ( "Unable to Initialise LB context") ;
     else if (edg_wll_SetParam( ctx, EDG_WLL_PARAM_SOURCE, EDG_WLL_SOURCE_USER_INTERFACE ) ) log_error ( "Unable to set LB source parameter" ) ;
-    if ( ! getenv ( GLITE_WMS_LOG_DESTINATION) ){
-       setenv ( GLITE_WMS_LOG_DESTINATION   ,  ns.c_str()  , 0 );
+    if ( ! getenv ( GLITE_LB_LOG_DESTINATION) ){
+       setenv ( GLITE_LB_LOG_DESTINATION   ,  ns.c_str()  , 0 );
        if (edg_wll_SetParamString( ctx, EDG_WLL_PARAM_DESTINATION, ns.c_str() ) ) log_error ( "Unable to set LB destination parameter") ;
     }
 };
@@ -136,7 +136,7 @@ void LOG::regist( const std::string& jobid , const std::string& jdl , const std:
         char *msg, *dsc ;
         edg_wll_Error( ctx , &msg , &dsc ) ;
         sprintf ( error_message , "%s%s%s%s%s%s%s%s%s", "Unable to Register the Job:\n", jid.toString().c_str(),"\nto the LB logger at: ",
-        getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , ")" )  ;
+        getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , ")" )  ;
         log_error ( error_message  ) ;
      }
    }catch (exception &exc){
@@ -153,7 +153,7 @@ void LOG::logSync ( const std::string& state ) {
          char *msg, *dsc ;
          edg_wll_Error( ctx , &msg , &dsc ) ;
          sprintf ( error_message , "%s%s%s%s%s%s%s", "Unable to log the sync event to LB logger at: ",
-         getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+         getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
          log_error ( error_message ) ;
        }
 };
@@ -167,7 +167,7 @@ void LOG::log_start (const std::string& host , int port , const std::string& jdl
        char *msg, *dsc ;
        edg_wll_Error( ctx , &msg , &dsc ) ;
        sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogTransferSTART at: ",
-       getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+       getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
        log_error ( error_message ) ;
    }
   }
@@ -178,7 +178,7 @@ void LOG::log_tag (const std::string& attrName  , const std::string& attrValue )
 		char *msg, *dsc ;
 		edg_wll_Error( ctx , &msg , &dsc ) ;
 		sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform   edg_wll_LogUserTag  at: ",
-		getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+		getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
 		log_error ( error_message ) ;
 	}
 }
@@ -199,12 +199,12 @@ void LOG::log_listener( const std::string& jobid, const std::string& host , int 
      try{
         glite::wmsutils::jobid::JobId jid ( jobid );
         if ( edg_wll_SetLoggingJob(ctx , jid.getId() , NULL , EDG_WLL_SEQ_DUPLICATE) )
-               log_error ( "Unable to perform edg_wll_SetLoggingJob LB api to " + string ( getenv ( GLITE_WMS_LOG_DESTINATION) )  ) ;
+               log_error ( "Unable to perform edg_wll_SetLoggingJob LB api to " + string ( getenv ( GLITE_LB_LOG_DESTINATION) )  ) ;
         return ;
      } catch (exception &exc) {    log_error ( "Unable parse JobId: " + jobid ) ;     return ;     }
    if (edg_wll_LogListener(  ctx , "InteractiveListener", host.c_str(),   (uint16_t) port)){
          if (edg_wll_LogAbort ( ctx , "edg_wll_LogListener method failed"   )) cerr << "\n\n\nLB - Warning  edg_wll_LogAbort Failed  ! ! ! "<<flush;
-         log_error ( "Unable to perform edg_wll_LogListener LB api to " + string ( getenv ( GLITE_WMS_LOG_DESTINATION) )  ) ;
+         log_error ( "Unable to perform edg_wll_LogListener LB api to " + string ( getenv ( GLITE_LB_LOG_DESTINATION) )  ) ;
    }
 }
 void LOG::log_tr_ok ( const std::string& jdl , const std::string&  host , int port ){
@@ -216,7 +216,7 @@ void LOG::log_tr_ok ( const std::string& jdl , const std::string&  host , int po
 	   char *msg, *dsc ;
 	   edg_wll_Error( ctx , &msg , &dsc ) ;
 	   sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform   edg_wll_LogTransferOK at:",
-	   getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+	   getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
 	   log_error (  error_message ) ;
 	}
 }
@@ -249,7 +249,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 		char *msg, *dsc ;
 		edg_wll_Error( ctx , &msg , &dsc ) ;
 		sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform  edg_wll_RegisterJobSync at: ",
-		getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+		getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
 		log_error ( error_message ) ;
 		return jobids ;
 	}
@@ -280,7 +280,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 			char *msg, *dsc ;
 			edg_wll_Error( ctx , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform   edg_wll_RegisterSubjobs  at: ",
-			getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
 			log_error ( error_message ) ;
 			return jobids ;
 		}
