@@ -29,6 +29,14 @@
 #include <boost/tuple/tuple.hpp>
 // #include <boost/details.hpp>
 
+
+
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace commands {
+namespace dag {
+
 namespace utilities = glite::wms::common::utilities; 
 namespace logger    = glite::wms::common::logger;
 namespace requestad = glite::wms::jdl;
@@ -36,13 +44,7 @@ namespace commands  = glite::wms::wmproxy::commands;
 namespace nsjobid   = glite::wms::wmproxy::commands::jobid;
 
 // using namespace boost::details::pool; 
-using namespace glite::wms::wmproxy::server;
-
-namespace glite {
-namespace wms {
-namespace wmproxy {
-namespace commands {
-namespace dag {
+using namespace glite::wms::wmproxy::utilities;
 
 #ifndef WITH_GLOBUS_FTP_CLIENT_API	
 

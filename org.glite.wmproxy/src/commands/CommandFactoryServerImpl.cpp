@@ -63,18 +63,18 @@
 
 #include "glite/wms/jdl/DAGAd.h"
 
-namespace utilities     = glite::wms::common::utilities;
-namespace logger        = glite::wms::common::logger;
-namespace nsjobid       = glite::wms::wmproxy::commands::jobid;
-namespace jobid         = glite::wmsutils::jobid;
-namespace jdl           = glite::wms::jdl;
-
-using namespace glite::wms::wmproxy::server;
-
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace commands {
+	
+namespace utilities     = glite::wms::common::utilities;
+namespace logger        = glite::wms::common::logger;
+namespace nsjobid       = glite::wms::wmproxy::commands::jobid;
+//namespace jobid         = glite::wmsutils::jobid;
+namespace jdl           = glite::wms::jdl;
+
+using namespace glite::wms::wmproxy::utilities;
 
 static bool LogRefusedJob(Command*,char*, bool, bool);
 static bool LogAcceptedJob(Command*, bool, bool);

@@ -28,17 +28,18 @@
 #include "wmpexception_codes.h"
 
 using namespace std;
-using namespace glite::wms::wmproxy::server;
-
-namespace logger        = glite::wms::common::logger;
-namespace utilities     = glite::wms::common::utilities;
-namespace requestad     = glite::wms::jdl;
-namespace jobid         = glite::wmsutils::jobid;
+//using namespace glite::wms::wmproxy::utilities;
 
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace commands {
+
+namespace logger        = glite::wms::common::logger;
+namespace utilities     = glite::wms::common::utilities;
+namespace requestad     = glite::wms::jdl;
+namespace jobid         = glite::wmsutils::jobid;
+namespace wmputilities  = glite::wms::wmproxy::utilities;
 
   bool listjobmatchex(Command* cmd) {
     int iserror;
