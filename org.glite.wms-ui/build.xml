@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.28  2004/10/28 18:31:03  dimeglio
+	Added envcheck to individual components
+
 	Revision 1.27  2004/10/26 13:24:49  dimeglio
 	Fixed spelling error in envchecks
-
+	
 	Revision 1.26  2004/10/25 21:01:13  dimeglio
 	Use antExec
 	
@@ -267,7 +270,7 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="partitioner" unless="setenvonly" depends="boost,classads,globus">
+	<target name="partitioner" unless="setenvonly" depends="envcheck, boost,classads,globus">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -283,7 +286,7 @@
 		</if>
 	</target>
 
-	<target name="api-cpp" unless="setenvonly">
+	<target name="api-cpp" unless="setenvonly" depends="envcheck">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -299,7 +302,7 @@
 		</if>
 	</target>
 
-	<target name="api-java" unless="setenvonly" depends="jclassads, jglobus, log4j, edg-java-security">
+	<target name="api-java" unless="setenvonly" depends="envcheck, jclassads, jglobus, log4j, edg-java-security">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -315,7 +318,7 @@
 		</if>
 	</target>
 
-	<target name="cli-python" unless="setenvonly" depends="boost,classads,globus, configuration">
+	<target name="cli-python" unless="setenvonly" depends="envcheck, boost,classads,globus, configuration">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -331,7 +334,7 @@
 		</if>
 	</target>
 
-	<target name="wrap-python" unless="setenvonly" depends="boost,classads,globus, swig">
+	<target name="wrap-python" unless="setenvonly" depends="envcheck, boost,classads,globus, swig">
         	<if>
             		<isset property="small.memory" />
             		<then>
@@ -347,7 +350,7 @@
         	</if>
 	</target>
 
-	<target name="wrap-java" unless="setenvonly" depends="boost,classads,globus">
+	<target name="wrap-java" unless="setenvonly" depends="envcheck, boost,classads,globus">
         	<if>
             		<isset property="small.memory" />
             		<then>
@@ -363,7 +366,7 @@
         	</if>
     	</target>
 
-        <target name="configuration" unless="setenvonly">
+        <target name="configuration" unless="setenvonly" depends="envcheck">
                 <if>
                         <isset property="small.memory" />
                         <then>
@@ -379,7 +382,7 @@
                 </if>
         </target>
 
-	<target name="gui-java" unless="setenvonly" depends="configuration, api-java, wrap-java">
+	<target name="gui-java" unless="setenvonly" depends="envcheck, configuration, api-java, wrap-java">
         	<if>
             		<isset property="small.memory" />
             		<then>
@@ -396,7 +399,8 @@
 	</target>
 
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="partitioner,
+	<target name="buildmodules" depends="envcheck,
+						 partitioner,
 					     api-cpp,
    					     api-java,
 					     wrap-python,
