@@ -6,61 +6,44 @@
 ## *
 ## *********************************************************************
 
-if AMC_BUILD_ETC_COMMON
-wletcddir = $(datadir)/doc/@PACKAGE@-config-@VERSION@
-wletcd_DATA = LICENSE README
-
-wletcdddir = $(datadir)/doc/@PACKAGE@-services-common-@VERSION@
-wletcdd_DATA = LICENSE README
-
 wletcdir = $(sysconfdir)
-wletc_SCRIPTS = edg-wl-vars.sh edg-wl-vars.csh
+wletc_SCRIPTS = glite-wms-vars.sh glite-wms-vars.csh
 wletcutilsdir = $(sysconfdir)/profile.d
-wletcutils_SCRIPTS = edg-wl.sh edg-wl.csh
+wletcutils_SCRIPTS = glite-wms.sh glite-wms.csh
 
 libexec_SCRIPTS = \
-	edg-wl-check-daemons.sh \
-	edg-wl-services-certs.sh \
-	edg-wl-parse-configuration.sh
-endif
+	glite-wms-check-daemons.sh \
+	glite-wms-services-certs.sh \
+	glite-wms-parse-configuration.sh
 
-if AMC_BUILD_ETC_WM
-ETC_VAL_WM=wm
 wletcwmdir = $(sysconfdir)
-wletcwm_DATA = edg_wl.conf
+wletcwm_DATA = glite_wms.conf
 
 wletcwmsdir = $(sysconfdir)/profile.d
-wletcwms_SCRIPTS = edg-wl-config.sh
-else
-ETC_VAL_WM=nowm
-endif	
+wletcwms_SCRIPTS = glite-wms-config.sh
 
 install-data-hook:
-	if [ $(ETC_VAL_WM) = wm ] ; then \
-           /bin/cp $(DESTDIR)$(sysconfdir)/edg_wl.conf $(DESTDIR)$(sysconfdir)/edg_wl.conf.template; \
-	fi
+           /bin/cp $(DESTDIR)$(sysconfdir)/glite_wms.conf $(DESTDIR)$(sysconfdir)/glite_mws.conf.template
 
 EXTRA_DIST = \
-        edg_wl.conf \
-        edg-wl.csh.in \
-        edg-wl.sh.in \
-        edg-wl-vars.sh.in \
-        edg-wl-vars.csh.in \
-	edg-wl-config.sh.in \
-	edg-wl-parse-configuration.sh.in \
-	edg-wl-check-daemons.sh.in \
-	edg-wl-services-certs.sh \
-        LICENSE \
-        README.in
+        glite_wms.conf \
+        glite-wms.csh.in \
+        glite-wms.sh.in \
+        glite-wms-vars.sh.in \
+        glite-wms-vars.csh.in \
+	glite-wms-config.sh.in \
+	glite-wms-parse-configuration.sh.in \
+	glite-wms-check-daemons.sh.in \
+	glite-wms-services-certs.sh
 
 CLEANFILES = \
-	edg-wl.csh \
-	edg-wl-parse-configuration.sh \
-	edg-wl.sh \
-	edg-wl-vars.sh \
-	edg-wl-vars.csh \
-	edg-wl-check-daemons.sh \
-	edg-wl-config.sh 
+	glite-wms.csh \
+	glite-wms-parse-configuration.sh \
+	glite-wms.sh \
+	glite-wms-vars.sh \
+	glite-wms-vars.csh \
+	glite-wms-check-daemons.sh \
+	glite-wms-config.sh 
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~
 

@@ -8,90 +8,77 @@ lm=LogMonitor
 wm=WorkloadManager
 ns=NetworkServer
 
-EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
+GLITE_WMS_LOCATION=${GLITE_WMS_LOCATION:-@prefix@}
 
-if [ -z "$EDG_WL_USER" ] || [ -z "$EDG_WL_CONFIG_DIR" ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
-   . ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
-   . ${EDG_WL_LOCATION}/etc/profile.d/edg-wl-config.sh
+if [ -z "$GLITE_WMS_USER" ] || [ -z "$GLITE_WMS_CONFIG_DIR" ]; then
+   . ${GLITE_WMS_LOCATION}/etc/glite-wms-vars.sh
+   . ${GLITE_WMS_LOCATION}/etc/profile.d/glite-wms.sh
+   . ${GLITE_WMS_LOCATION}/etc/profile.d/glite-wms-config.sh
 fi
 
-if [ ! -d "$EDG_WL_TMP" ] ; then
-  mkdir -p $EDG_WL_TMP
-  chmod +775 $EDG_WL_TMP
-  chown -R $EDG_WL_USER.$EDG_WL_USER $EDG_WL_TMP
+if [ ! -d "$GLITE_WMS_TMP" ] ; then
+  mkdir -p $GLITE_WMS_TMP
+  chmod +775 $GLITE_WMS_TMP
+  chown -R $GLITE_WMS_USER.$GLITE_WMS_USER $GLITE_WMS_TMP
 fi
 
-if [ -f ${EDG_WL_LOCATION}/bin/edg-wl-get-configuration ]; then
-#  echo "Parse the ${EDG_WL_CONFIG_DIR}/$ConfFile file"
+GET_CONF=${GLITE_WMS_LOCATION}/bin/glite-wms-get-configuration
+
+if [ -f ${GET_CONF} ]; then
 
   if [ $DaemonName = $jc ]; then
-#    echo "Create the directories used by the edg-wl-job_control daemon"
-#    echo "with $EDG_WL_USER permissions"
+    pathSubmit=`${GET_CONF} $2.SubmitFileDir`
 
-    pathSubmit=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.SubmitFileDir`
-
-    pathOutput=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.OutputFileDir`
+    pathOutput=`${GET_CONF} $2.OutputFileDir`
     
     for location in $pathSubmit $pathOutput; do
       mkdir -p $location
       file=${location##/*/}
       dir=${location/$file/}
-      chown -R $EDG_WL_USER.$EDG_WL_USER $dir
+      chown -R $GLITE_WMS_USER.$GLITE_WMS_USER $dir
     done
   fi
 
   if [ $DaemonName = $lm ]; then
-#    echo "Create the directories used by the edg-wl-logmonitor daemon"
-#    echo "with $EDG_WL_USER permissions"
+    pathCondorLog=`${GET_CONF} $2.CondorLogDir`
 
-    pathCondorLog=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.CondorLogDir`
-
-    pathCondorLogR=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.CondorLogRecycleDir`
+    pathCondorLogR=`${GET_CONF} $2.CondorLogRecycleDir`
 
     for location in $pathCondorLog $pathCondorLogR; do
       mkdir -p $location
       file=${location##/*/}
       dir=${location/$file/}
-      chown -R $EDG_WL_USER.$EDG_WL_USER $dir
+      chown -R $GLITE_WMS_USER.$GLITE_WMS_USER $dir
     done
   fi
 
   if [ $DaemonName = $ns ]; then
-#    echo "Create the directories used by the edg-wl-ns_daemon"
-#    echo "with $EDG_WL_USER permissions"
+    dirStaging=`${GET_CONF} $2.SandboxStagingPath`
 
-    dirStaging=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.SandboxStagingPath`
-
-    path=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.LogFile`
+    path=`${GET_CONF} $2.LogFile`
     dir=$(dirname "$path")
     dirLogFile=$(dirname "$dir")
 
     for location in $dirStaging $dirLogFile $dir; do
       mkdir -p $location
-      chown -R $EDG_WL_USER.$EDG_WL_USER $location
+      chown -R $GLITE_WMS_USER.$GLITE_WMS_USER $location
     done
 
     chmod g+w $dirStaging
   fi
 
   if [ $DaemonName = $wm ]; then
-#    echo "Create the directories used by the edg-wl-workload_manager"
-#    echo "with $EDG_WL_USER permissions"
-
-    path=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.Input`
-#    echo $path
+    path=`${GET_CONF} $2.Input`
     file=${path##/*/}
     dirInput=${path/$file/}
 
-    path=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.LogFile`
-#    echo $path
+    path=`${GET_CONF} $2.LogFile`
     dir=$(dirname "$path")
     dirLogFile=$(dirname "$dir")
 
     for location in $dirInput $dirLogFile $dir; do
       mkdir -p $location
-      chown $EDG_WL_USER.$EDG_WL_USER $location
+      chown $GLITE_WMS_USER.$GLITE_WMS_USER $location
     done
   fi
 fi

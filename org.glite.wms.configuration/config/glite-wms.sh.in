@@ -1,61 +1,61 @@
-if [ -f /etc/sysconfig/edg ]; then
-   . /etc/sysconfig/edg
+if [ -f /etc/sysconfig/glite ]; then
+   . /etc/sysconfig/glite
 fi
 
-if [ -z "$EDG_LOCATION" ]; then
-   EDG_LOCATION=@prefix@
+if [ -z "$GLITE_LOCATION" ]; then
+   GLITE_LOCATION=@prefix@
 fi
 
-export EDG_LOCATION
+export GLITE_LOCATION
 
-if [ -z "$EDG_WL_LOCATION" ]; then
-   EDG_WL_LOCATION=@prefix@
+if [ -z "$GLTIE_WMS_LOCATION" ]; then
+   GLITE_WMS_LOCATION=@prefix@
 fi
 
-export EDG_WL_LOCATION
+export GLITE_WMS_LOCATION
 
-if [ -z "$EDG_WL_USER" ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+if [ -z "$GLITE_WMS_USER" ]; then
+   . $GLITE_WMS_LOCATION/etc/glite-wms-vars.sh
 fi
 
-export EDG_WL_USER
+export GLITE_WMS_USER
 
-if [ -z "$EDG_WL_LOCATION_VAR" ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+if [ -z "$GLITE_WMS_LOCATION_VAR" ]; then
+   . $GLITE_WMS_LOCATION/etc/glite-wms-vars.sh
 fi
 
-export EDG_WL_LOCATION_VAR
+export GLITE_WMS_LOCATION_VAR
 
-if [ -z "$EDG_WL_TMP" ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+if [ -z "$GLITE_WMS_TMP" ]; then
+   . $GLITE_WMS_LOCATION/etc/glite-wms-vars.sh
 fi
 
-export EDG_WL_TMP
+export GLITE_WMS_TMP
 
 if [ ! -d $GLOBUS_LOCATION ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+   . $GLITE_WMS_LOCATION/etc/glite-wms-vars.sh
 fi
 
 if [ ! -d $GLOBUS_LOCATION ]; then
    echo "GLOBUS_LOCATION not found"
 fi
 
-if [ -z "$EDG_WL_PATH" ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+if [ -z "$GLITE_WMS_PATH" ]; then
+   . $GLITE_WMS_LOCATION/etc/glite-wms-vars.sh
 fi
 
 if [ -z "$PATH" ]; then
-   export PATH=$EDG_WL_PATH
+   export PATH=$GLTIE_WMS_PATH
 else
-   export PATH=$PATH":"$EDG_WL_PATH
+   export PATH=$PATH":"$GLITE_WMS_PATH
 fi
 
-if [ -z "$EDG_WL_LIBRARY_PATH" ]; then
-   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+if [ -z "$GLITE_WMS_LIBRARY_PATH" ]; then
+   . $GLITE_WMS_LOCATION/etc/glite-wms-vars.sh
 fi
 
 if [ -z "$LD_LIBRARY_PATH" ]; then
-   export LD_LIBRARY_PATH=$EDG_WL_LIBRARY_PATH
+   export LD_LIBRARY_PATH=$GLITE_WMS_LIBRARY_PATH
 else
-   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH":"$EDG_WL_LIBRARY_PATH
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH":"$GLITE_WMS_LIBRARY_PATH
 fi

@@ -22,20 +22,20 @@ fi
 
 export PATH=$PATH":"$CONDORG_INSTALL_PATH/bin":"$CONDORG_INSTALL_PATH/sbin
 
-if [ -f /etc/sysconfig/edg ]; then
-   . /etc/sysconfig/edg
+if [ -f /etc/sysconfig/glite ]; then
+   . /etc/sysconfig/glite
 fi
 
-if [ -z "$EDG_WL_LOCATION" ]; then
-   if [ -f /etc/sysconfig/edg ]; then
-   . /etc/sysconfig/edg
+if [ -z "$GLITE_WMS_LOCATION" ]; then
+   if [ -f /etc/sysconfig/glite ]; then
+   . /etc/sysconfig/glite
    fi
-   . ${EDG_LOCATION}/etc/profile.d/edg-wl.sh
+   . ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
 fi
 
-if [ "x${EDG_WL_CONFIG_DIR}" = "x" \
-   -a \( "${EDG_WL_LOCATION}" != "/opt/edg" -o "${EDG_WL_LOCATION}" != "/usr/local" \) ]; then
-   export EDG_WL_CONFIG_DIR="${EDG_WL_LOCATION}/etc"
+if [ "x${GLITE_WMS_CONFIG_DIR}" = "x" \
+   -a \( "${GLITE_WMS_LOCATION}" != "/opt/edg" -o "${GLITE_WMS_LOCATION}" != "/usr/local" \) ]; then
+   export GLITE_WMS_CONFIG_DIR="${GLITE_WMS_LOCATION}/etc"
 fi
 
 if [ "x${GRIDMAP}" = "x" ]; then
@@ -66,8 +66,8 @@ if [ ! -r $CONDOR_CONFIG ]; then
    export CONDOR_CONFIG=@CONDORG_INSTALL_PATH@/etc/condor.conf
 fi
 
-if [ "x${EDG_WL_LOG_DESTINATION}" = "x" ]; then
+if [ "x${GLITE_WMS_LOG_DESTINATION}" = "x" ]; then
    val=`hostname`
-   EDG_WL_LOG_DESTINATION=$val:9002
-   export EDG_WL_LOG_DESTINATION
+   GLITE_WMS_LOG_DESTINATION=$val:9002
+   export GLITE_WMS_LOG_DESTINATION
 fi

@@ -1,34 +1,34 @@
 #!/bin/csh
 
-if (! $?EDG_SYSCONFIG) then
-  set EDG_SYSCONFIG=/etc/sysconfig/edg
+if (! $?GLITE_SYSCONFIG) then
+  set GLITE_SYSCONFIG=/etc/sysconfig/glite
 endif
 
-if ( -r "$EDG_SYSCONFIG" ) then
-  set tmp=`grep ^EDG_LOCATION $EDG_SYSCONFIG| tail -1|sed 's/=/ /'`
-  if ( ! -z "$EDG_SYSCONFIG" ) then
+if ( -r "$GLITE_SYSCONFIG" ) then
+  set tmp=`grep ^GLITE_LOCATION $GLITE_SYSCONFIG| tail -1|sed 's/=/ /'`
+  if ( ! -z "$GLITE_SYSCONFIG" ) then
     eval setenv $tmp
   endif
 endif
 
-if ( ! $?EDG_WL_LOCATION ) then
-  setenv EDG_WL_LOCATION "@prefix@"
+if ( ! $?GLITE_WMS_LOCATION ) then
+  setenv GLITE_WMS_LOCATION "@prefix@"
 endif
 
-if( ! $?EDG_WL_USER ) then
-    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+if( ! $?GLITE_WMS_USER ) then
+    source $GLITE_WMS_LOCATION"/etc/glite-wms-vars.csh"
 endif
 
-if( ! $?EDG_WL_LOCATION_VAR ) then
-    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+if( ! $?GLITE_WMS_LOCATION_VAR ) then
+    source $GLITE_WMS_LOCATION"/etc/glite-wms-vars.csh"
 endif
 
-if( ! $?EDG_WL_TMP ) then
-    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+if( ! $?GLITE_WMS_TMP ) then
+    source $GLITE_WMS_LOCATION"/etc/glite-wms-vars.csh"
 endif
 
 if( ! -d $GLOBUS_LOCATION ) then
-   source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+   source $GLITE_WMS_LOCATION"/etc/glite-wms-vars.csh"
 endif
 
 if( ! -d $GLOBUS_LOCATION ) then
@@ -37,22 +37,22 @@ endif
 
 # The rest of the workload.sh script
 
-if( ! $?EDG_WL_PATH ) then
-    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+if( ! $?GLITE_WMS_PATH ) then
+    source $GLITE_WMS_LOCATION"/etc/glite-wms-vars.csh"
 endif
 
 if( $?PATH ) then
-    setenv PATH ${PATH}":"$EDG_WL_PATH
+    setenv PATH ${PATH}":"$GLITE_WMS_PATH
 else
-    setenv PATH $EDG_WL_PATH
+    setenv PATH $GLITE_WMS_PATH
 endif
 
-if( ! $?EDG_WL_LIBRARY_PATH ) then
-    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+if( ! $?GLITE_WMS_LIBRARY_PATH ) then
+    source $GLITE_WMS_LOCATION"/etc/glite-wms-vars.csh"
 endif
 
 if( $?LD_LIBRARY_PATH ) then
-    setenv LD_LIBRARY_PATH $LD_LIBRARY_PATH":"$EDG_WL_LIBRARY_PATH
+    setenv LD_LIBRARY_PATH $LD_LIBRARY_PATH":"$GLITE_WMS_LIBRARY_PATH
 else
-    setenv LD_LIBRARY_PATH $EDG_WL_LIBRARY_PATH
+    setenv LD_LIBRARY_PATH $GLITE_WMS_LIBRARY_PATH
 endif

@@ -1,5 +1,5 @@
-if [ -f /etc/sysconfig/edg ]; then
-   . /etc/sysconfig/edg
+if [ -f /etc/sysconfig/glite ]; then
+   . /etc/sysconfig/glite
 fi
 
 if [ -z "$X509_USER_CERT" ]; then

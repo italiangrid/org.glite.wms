@@ -4,21 +4,21 @@ if ( ! $?GLOBUS_LOCATION) then
     setenv GLOBUS_LOCATION "/opt/globus"
 endif
 
-if ( $?EDG_WL_USER) then
-  setenv EDG_WL_USER edguser
+if ( $?GLITE_WMS_USER) then
+  setenv GLITE_WMS_USER gliteuser
 endif
 
-if ( $?EDG_WL_LOCATION_VAR) then
-  setenv EDG_WL_LOCATION_VAR ${EDG_WL_LOCATION}"/var"
+if ( $?GLITE_WMS_LOCATION_VAR) then
+  setenv GLITE_WMS_LOCATION_VAR ${GLITE_WMS_LOCATION}"/var"
 endif
 
-if ( $?EDG_WL_TMP) then
-  setenv EDG_WL_TMP "/var/edgwl"
+if ( $?GLITE_WMS_TMP) then
+  setenv GLITE_WMS_TMP "/var/glitewms"
 endif
 
-setenv EDG_WL_PATH ${EDG_WL_LOCATION}"/bin:"${EDG_WL_LOCATION}"/sbin"
+setenv GLITE_WMS_PATH ${GLITE_WMS_LOCATION}"/bin:"${GLITE_WMS_LOCATION}"/sbin"
 
-setenv EDG_WL_LIBRARY_PATH ${GLOBUS_LOCATION}"/lib:"${EDG_WL_LOCATION}"/lib"
+setenv GLITE_WMS_LIBRARY_PATH ${GLOBUS_LOCATION}"/lib:"${GLITE_WMS_LOCATION}"/lib"
 
 
 
