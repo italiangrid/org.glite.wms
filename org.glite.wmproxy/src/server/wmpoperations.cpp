@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <glob.h>  //get output file list
 
 #include "wmpoperations.h"
 #include "wmpconfiguration.h"
@@ -210,38 +211,36 @@ int
 convertJobTypeListToInt(JobTypeList job_type_list)
 {
 	GLITE_STACK_TRY("convertJobTypeListToInt(JobTypeList job_type_list)");
-	
-	int type = 0;
+	edglog_fn("   wmpoperations::convertJobTypeListToInt");
+	int type = AdConverter::ADCONV_JOBTYPE_NORMAL;
 	for (unsigned int i = 0; i < job_type_list.jobType->size(); i++) {
 		switch ((*job_type_list.jobType)[i]) {
 			case WMS_PARAMETRIC:
 				type |= AdConverter::ADCONV_JOBTYPE_PARAMETRIC;
+				edglog(fatal)<<"Type caught: Parametric"<<endl;
 				break;
-			//case WMS_NORMAL:
-				//type |= AdConverter::ADCONV_JOBTYPE_NORMAL;
-				//break;
 			case WMS_INTERACTIVE:
 				type |= AdConverter::ADCONV_JOBTYPE_INTERACTIVE;
+				edglog(fatal)<<"Type caught: Interactive"<<endl;
 				break;
 			case WMS_MPI:
 				type |= AdConverter::ADCONV_JOBTYPE_MPICH;
+				edglog(fatal)<<"Type caught: Mpi"<<endl;
 				break;
 			case WMS_PARTITIONABLE:
 				type |= AdConverter::ADCONV_JOBTYPE_PARTITIONABLE;
+				edglog(fatal)<<"Type caught: Partitionable"<<endl;
 				break;
 			case WMS_CHECKPOINTABLE:
 				type |= AdConverter::ADCONV_JOBTYPE_CHECKPOINTABLE;
+				edglog(fatal)<<"Type caught: CHKPT"<<endl;
 				break;
 			default:
 				break;
 		}
 	}
-	if (type = 0) {
-		type = AdConverter::ADCONV_JOBTYPE_NORMAL;
-	}
-	edglog(fatal)<<"convertJobTypeListToInt type: "<<type<<endl;
+	// edglog(fatal)<<"Final type value = "<<type<<endl;
 	return type;
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -698,7 +697,9 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 
 	try {
 		getMaxInputSandboxSize_response.size =
-			 singleton_default<WmproxyConfiguration>::instance().wmp_config->max_input_sandbox_size();
+			// WARNING: Temporal cast TBD
+			// WARNING: double temporarely casted into long (soon long will be returned directly
+			 (long)singleton_default<WmproxyConfiguration>::instance().wmp_config->max_input_sandbox_size();
 	} catch (exception &ex) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
@@ -740,7 +741,7 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 		+ "/"
 #endif
 		+ to_filename (JobId ( jid ) ) ;
-	edglog(severe) << "Sandbox path retrieved successfully" << endl;
+	edglog(severe) << "Sandbox path retrieved successfully:\n"<< getSandboxDestURI_response.path << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -818,11 +819,6 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	GLITE_STACK_TRY("getOutputFileList(getOutputFileListResponse "
 		"&getOutputFileList_response, const string &jid)");
 	edglog_fn("   wmpoperations::getOutputFileList");
-	/*
-	org::glite::daemon::WMPManager manager;
-	retun manager.runCommand("getOutputFileList", jid,
-		getOutputFileList_response);
-	*/
 	wmp_fault_t wmp_fault;
 	wmp_fault.code = WMS_NO_ERROR;
 	if (wmp_fault.code != WMS_NO_ERROR) {
@@ -832,13 +828,42 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 			wmp_fault.code, wmp_fault.message);
 	}
 
+/*
+	// OUTPUT stage area =  SandboxDestURIResponse/output
+	getSandboxDestURIResponse getSandboxDestURI_response;
+	getSandboxDestURI(getSandboxDestURI_response, jid->toString());
+	string output_uri = getSandboxDestURI_response.path + "/output/*" ;
+	edglog(fatal)<<"output_uri: "<< output_uri <<endl;
+	// find files inside directory
+	glob_t  *pglob ;
+	pglob = (glob_t  *) malloc (sizeof(glob_t)) ;
+	// Retrieve files from path
+	int gl = glob( output_uri.c_str()   , GLOB_ERR ,  NULL, pglob);
+	if  (gl!=0)
+		 throw JobOperationException(__FILE__, __LINE__,
+			"getOutputFileList(getOutputFileListResponse "
+			"&getOutputFileList_response, const string &jid)",
+			WMS_FATAL, "MEMORY ERROR");
+*/
+
 	/// To remove. Only to test
 	StringAndLongList *list = new StringAndLongList();
 	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+/*
+	for  (unsigned int i=0 ; i< pglob->gl_pathc ; i++){
+		StringAndLongType *item = new StringAndLongType();
+		pglob->gl_pathv[i]
+	}
+*/
+
+
+
 	StringAndLongType *item = new StringAndLongType();
 	item->name = *(new string("First"));
 	item->size = 5;
 	file->push_back(item);
+
+
 	StringAndLongType *item2 = new StringAndLongType();
 	item2->name = *(new string("Second"));
 	item2->size = 50;
@@ -906,12 +931,11 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 		"&executable, const string &arguments, const string &requirements, "
 		"const string &rank)");
 	edglog_fn("   wmpoperations::getJobTemplate");
-
 	string vo = "Fake VO"; // get it from proxy, it should be the default one
 	getJobTemplate_response.jdl =
 		(AdConverter::createJobTemplate(convertJobTypeListToInt(jobType),
 		executable, arguments, requirements, rank, vo))->toString();
-	edglog(severe) << "" << endl;
+	edglog(severe) << "JDL retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -928,7 +952,7 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 	getDAGTemplate_response.jdl = AdConverter::createDAGTemplate(
 		convertGraphStructTypeToNodeStruct(dependencies),
 		requirements, rank, vo)->toString();
-	edglog(severe) << "" << endl;
+	edglog(severe) << "JDL retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -946,7 +970,7 @@ getCollectionTemplate(getCollectionTemplateResponse
 	getCollectionTemplate_response.jdl =
 		AdConverter::createCollectionTemplate(jobNumber, requirements, rank,
 			vo)->toString();
-	edglog(severe) << "" << endl;
+	edglog(severe) << "JDL retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -963,7 +987,7 @@ getIntParametricJobTemplate(
 	getIntParametricJobTemplate_response.jdl =
 		AdConverter::createIntParametricTemplate(parametrised, param,
 			parameterStart, parameterStep, requirements, rank, vo)->toString();
-	edglog(severe) << "" << endl;
+	edglog(severe) << "JDL retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -980,7 +1004,7 @@ getStringParametricJobTemplate(
 	getStringParametricJobTemplate_response.jdl =
 		AdConverter::createStringParametricTemplate(parametrised,
 		*(param->Item), requirements, rank, vo)->toString();
-	edglog(severe) << "" << endl;
+	edglog(severe) << "JDL retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -1000,7 +1024,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 
 	getProxyReq_response.request =
 		WMPDelegation::getProxyRequest(delegation_id);
-	edglog(severe) << "" << endl;
+	edglog(severe) << "Proxy requested successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -1018,7 +1042,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 			WMS_DELEGATION_ERROR, "Delegation id not valid");
 	}
 	WMPDelegation::putProxy(delegation_id, proxy);
-	edglog(severe) << "" << endl;
+	edglog(severe) << "proxy put successfully" << endl ;
 	GLITE_STACK_CATCH();
 }
 
