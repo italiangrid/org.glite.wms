@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/04/29 18:20:30  dimeglio
+	Added export of interface files
+
 	Revision 1.1  2004/04/29 00:37:19  dimeglio
 	Added org.egee.test3.wms.thirdparty-globus_ssl_utils
-
+	
 -->
 
 <project name="globus_ssl_utils" default="export">
@@ -72,11 +75,15 @@
 				<include name="**/*.al" />
 			</fileset>
 		</copy>
+		<copy toDir="${int.dir}">
+			<fileset dir="${module.dir}/src">
+				<include name="*.h" />
+			</fileset>
+		</copy>
 	</target>
 	
 	<target name="localclean"
 		description="Module specific cleaning tasks">
-		<delete dir="${master.lib.dir}/${module.name}" />
 	</target>
 	
 </project>		
