@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/10/11 16:12:00  monforte
+#       Added LICENSE
+#
 #       Revision 1.2  2004/06/28 22:53:49  eronchie
 #       Start adding classad_plugin
 #       WARNING: work in progress
@@ -36,6 +39,11 @@
 ## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = src
