@@ -132,8 +132,8 @@ void Job::operator=(const Job& job) {
 
 Job::~Job() {
 	GLITE_STACK_TRY("Job::~Job");
-	if (jid) delete jid ;
-	if (jad) delete jad ;
+	//if (jid!=NULL) delete jid ;
+	//if (jad!=NULL) delete jad ;
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
