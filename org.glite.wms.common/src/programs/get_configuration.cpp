@@ -14,7 +14,7 @@ try {
   int                               ret = 0;
   const classad::ClassAd           *ad;
   const classad::ExprList          *lst;
-  configuration::Configuration      config( "glite_wms.conf", "LogMonitor" );
+  configuration::Configuration      config( "edg_wl.conf", "LogMonitor" );
   auto_ptr<classad::ClassAd>        complete( config.get_classad() );
   classad::Value                    value;
   classad::PrettyPrint              unp;

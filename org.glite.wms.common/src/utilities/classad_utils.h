@@ -25,6 +25,32 @@ namespace workload {
 namespace common {
 namespace utilities {
 
+inline bool is_literal(classad::ExprTree const* t) {
+  return t && t->GetKind() == classad::ExprTree::LITERAL_NODE;
+}
+
+inline bool is_attribute_reference(classad::ExprTree const* t)
+{
+  return t && t->GetKind() == classad::ExprTree::ATTRREF_NODE;
+}
+
+inline bool is_operation(classad::ExprTree const* t) {
+  return t && t->GetKind() == classad::ExprTree::OP_NODE;
+}
+
+inline bool is_function_call(classad::ExprTree const* t) {
+  return t && t->GetKind() == classad::ExprTree::FN_CALL_NODE;
+}
+
+inline bool is_classad(classad::ExprTree const* t)
+{
+  return t && t->GetKind() == classad::ExprTree::CLASSAD_NODE;
+}
+
+inline bool is_expression_list(classad::ExprTree const* t) {
+  return t && t->GetKind() == classad::ExprTree::EXPR_LIST_NODE;
+}
+
 inline void setValue(classad::Value& value, const std::string& s) { value.SetStringValue(s); }
 inline void setValue(classad::Value& value, double d) { value.SetRealValue(d); }
 inline void setValue(classad::Value& value, bool b)   { value.SetBooleanValue(b); }
@@ -38,17 +64,16 @@ inline bool getValue(const classad::Value& value, int& i)          { return valu
 template<class T> 
 struct InsertExprInVector : public std::binary_function<std::vector<T>*, classad::ExprTree*, std::vector<T>* > 
 {
-    std::vector<T>* operator()(std::vector<T>* v, classad::ExprTree* e) {
-    classad::Value value;
-
-#ifndef WITH_UI_JCLIENT
-    dynamic_cast<classad::Literal*>(e) -> GetValue(value);
-#else     
-    ((classad::Literal*)(e)) -> GetValue(value);
-#endif
-    
-    T s;
-    if( getValue(value,s) ) v -> push_back( s );  
+  std::vector<T>* operator()(std::vector<T>* v, classad::ExprTree* e)
+  {
+    if (is_literal(e)) {
+      classad::Value value;
+      static_cast<classad::Literal*>(e)->GetValue(value);
+      T s;
+      if (getValue(value, s)) {
+        v->push_back(s);
+      }
+    }
     return v;
   }
 };
@@ -101,7 +126,6 @@ bool InsertAttrList(classad::ClassAd& ad, const std::string& what, const std::ve
     
   if( !expr_list ) return false;
     
-  expr_list -> SetParentScope( &ad );
   return ad.Insert(what,expr_list);
 } 
   
@@ -113,7 +137,7 @@ inline std::string asString(classad::ClassAd& ad)
 	  
   value.SetClassAdValue(&ad);
   unparser.Unparse(s, value);
-	  
+
   return s;
 } 
   
@@ -126,12 +150,10 @@ classad::ExprList* asExprList(const std::vector<T>& v)
   for(it = v.begin(); it != v.end(); it++) {
     classad::Value value;
     setValue(value, (*it));
-    list.push_back( static_cast<classad::ExprTree*>(classad::Literal::MakeLiteral(value)));
+    list.push_back(classad::Literal::MakeLiteral(value));
   }
     
-  classad::ExprList* result = NULL;
-    
-  result = classad::ExprList::MakeExprList(list);
+  classad::ExprList* result = classad::ExprList::MakeExprList(list);
     
   return result;
 }
@@ -148,11 +170,10 @@ struct is_reference_to : public unary_predicate
     classad::ExprTree* reference_expr = 0;
     std::string name;
     bool absolute;
-    ctx.second -> GetComponents(reference_expr, name, absolute);
-    if( reference_expr && 
-        reference_expr -> GetKind() == classad::ExprTree::ATTRREF_NODE ) {
-      classad::ExprTree* e; 
-      dynamic_cast<classad::AttributeReference*>(reference_expr) -> GetComponents(e, name, absolute);
+    ctx.second->GetComponents(reference_expr, name, absolute);
+    if (reference_expr && is_attribute_reference(reference_expr)) {
+      classad::ExprTree* e;
+      static_cast<classad::AttributeReference*>(reference_expr)->GetComponents(e, name, absolute);
       return name == ref;
     } 
     return false;
@@ -181,10 +202,10 @@ struct is_function_call_to : public std::unary_function<classad::ExprTree*, bool
 {
    is_function_call_to(const std::string& fn) : fn_name( fn ) {}
    bool operator()(classad::ExprTree* e) const {
-	   if( e->GetKind() != classad::ExprTree::FN_CALL_NODE ) return false;
+	   if (!is_function_call(e)) return false;
 	   std::vector<classad::ExprTree*> args;
 	   std::string fn;
-	   dynamic_cast<classad::FunctionCall*>(e) ->  GetComponents(fn, args);
+           static_cast<classad::FunctionCall*>(e)->GetComponents(fn, args);
 	   return fn == fn_name;
    }
    std::string fn_name;	   
@@ -208,7 +229,7 @@ struct is_rightmost_operand_of : public unary_predicate
 	
 	std::vector<classad::ExprTree*> args;
 	std::string fn;
-	dynamic_cast<classad::FunctionCall*>(*it) ->  GetComponents(fn, args);
+	static_cast<classad::FunctionCall*>(*it)->GetComponents(fn, args);
   	return ctx.second == args.back();
   }
   std::string fn_name;
@@ -220,54 +241,68 @@ std::vector<std::string>* insertAttributeInVector(std::vector<std::string>* v, c
   if( !e ) return v;
   
   exprTrace -> push_front(e);
-  switch( e -> GetKind() ) {
-	  case classad::ExprTree::LITERAL_NODE: break;
+
+  switch (e->GetKind()) {
+
+  case classad::ExprTree::LITERAL_NODE:
+    break;
       
   case classad::ExprTree::OP_NODE: {
     classad::ExprTree* e1 = 0, *e2 = 0, *e3 = 0;
     classad::Operation::OpKind ok;
-    dynamic_cast<classad::Operation*>(e) -> GetComponents(ok, e1, e2, e3);
-    if( e1 ) insertAttributeInVector(v, e1, exprTrace, predicate);
-    if( e2 ) insertAttributeInVector(v, e2, exprTrace, predicate);
-    if( e3 ) insertAttributeInVector(v, e3, exprTrace, predicate);
+    static_cast<classad::Operation*>(e)->GetComponents(ok, e1, e2, e3);
+    if (e1) insertAttributeInVector(v, e1, exprTrace, predicate);
+    if (e2) insertAttributeInVector(v, e2, exprTrace, predicate);
+    if (e3) insertAttributeInVector(v, e3, exprTrace, predicate);
   }
-  break;
+    break;
+
   case classad::ExprTree::FN_CALL_NODE: {
     std::vector<classad::ExprTree*> args;
     std::string fn;
-    dynamic_cast<classad::FunctionCall*>(e) ->  GetComponents(fn, args);
-    for(std::vector<classad::ExprTree*>::const_iterator it = args.begin();
-        it != args.end(); it++) insertAttributeInVector(v,*it, exprTrace, predicate);
+    static_cast<classad::FunctionCall*>(e)->GetComponents(fn, args);
+    for (std::vector<classad::ExprTree*>::const_iterator it = args.begin();
+         it != args.end(); ++it) {
+      insertAttributeInVector(v, *it, exprTrace, predicate);
+    }
   }
-  break;
+    break;
+
   case classad::ExprTree::EXPR_LIST_NODE: {
     std::vector<classad::ExprTree*> args;
-    dynamic_cast<classad::ExprList*>(e) ->  GetComponents(args);
-    for(std::vector<classad::ExprTree*>::const_iterator it = args.begin();
-        it != args.end(); it++) insertAttributeInVector(v,*it, exprTrace, predicate);
-  }	
-  break; 
+    static_cast<classad::ExprList*>(e)->GetComponents(args);
+    for (std::vector<classad::ExprTree*>::const_iterator it = args.begin();
+         it != args.end(); ++it) {
+      insertAttributeInVector(v, *it, exprTrace, predicate);
+    }
+  }
+    break;
+
   case classad::ExprTree::ATTRREF_NODE: {
     
-    classad::AttributeReference* a = dynamic_cast<classad::AttributeReference*>(e);
+    classad::AttributeReference* a = static_cast<classad::AttributeReference*>(e);
     classad::ExprTree* reference_expr = 0;
     std::string name;
     bool absolute;
-    a -> GetComponents(reference_expr, name, absolute);
+    a->GetComponents(reference_expr, name, absolute);
     if(!reference_expr)  {
-      reference_expr = a -> GetParentScope() -> Lookup(name);
-      if(reference_expr) insertAttributeInVector(v, reference_expr, exprTrace, predicate);
-    }	
-    else {
-	if( predicate(std::make_pair(exprTrace,a)) &&
-	    find(v -> begin(), v->end(), name) == v->end() ) v -> push_back(name);
-   }
+      reference_expr = a->GetParentScope()->Lookup(name);
+      if (reference_expr) {
+        insertAttributeInVector(v, reference_expr, exprTrace, predicate);
+      }
+    } else {
+      if (predicate(std::make_pair(exprTrace,a))
+          && find(v->begin(), v->end(), name) == v->end()) {
+        v->push_back(name);
+      }
+    }
   }
-  break;
+    break;
+
   default:
     assert( false );
   }
-  exprTrace -> pop_front();
+  exprTrace->pop_front();
   return v;
 }
 
@@ -298,6 +333,7 @@ class CannotParseClassAd: public ClassAdError
 {
   std::string m_what;
   std::string m_str;
+
 public:
   CannotParseClassAd()
     : m_what("ClassAd utils - cannot parse classad")
@@ -318,19 +354,29 @@ public:
     return m_what.c_str();
   }
 };
-
-class nothrow_t {};
-extern nothrow_t const nothrow;
   
-// throws CannotParseClassAd
+  // throws CannotParseClassAd
 classad::ClassAd* parse_classad(std::string const& s);
 
-classad::ClassAd* parse_classad(std::string const& s, nothrow_t const&);
-
-// throws CannotParseClassAd
+  // throws CannotParseClassAd
 classad::ClassAd* parse_classad(std::istream& is);
 
 std::string unparse_classad(classad::ClassAd const& ad);
+
+inline std::string unparse(classad::ExprTree const& et)
+{
+  std::string result;
+
+  classad::ClassAdUnParser unparser;
+  unparser.Unparse(result, &et);
+
+  return result;
+}
+
+inline std::string unparse(classad::ExprTree const* et)
+{
+  return unparse(*et);
+}
 
 class InvalidValue: public ClassAdError
 {
@@ -365,12 +411,30 @@ public:
   operator classad::ExprList const*() const;
 };
 
+ValueProxy evaluate(classad::ExprTree const& et);
+bool evaluate(classad::Literal const& et, std::string& value);
+
+template<typename T>
+bool evaluate(classad::ExprList const& el, std::vector<T>& value)
+{
+  bool result = false;
+
+  for (classad::ExprList::const_iterator it = el.begin(); it != el.end(); ++it) {
+    T t(evaluate(**it));
+    value.push_back(t);
+  }
+
+  return result;
+}
+
 ValueProxy evaluate_attribute(classad::ClassAd const& ad,
                               std::string const& attribute);
-  
+
 ValueProxy evaluate_expression(classad::ClassAd const& ad,
                                std::string const& expression);
-  
+
+ValueProxy unparse_expression(classad::ExprTree const& tree);
+
 bool match(classad::ClassAd const& lhs,
            classad::ClassAd const& rhs,
            std::string const& match_type);
@@ -400,10 +464,14 @@ double right_rank(classad::ClassAd const& lhs,
                   classad::ClassAd const& rhs);
 
 // more traditional interface (to be completed)
-  
+
 bool evaluate_attribute(classad::ClassAd const& ad,
                         std::string const& attribute,
                         std::string& value);
+
+bool evaluate_attribute(classad::ClassAd const& ad,
+                        std::string const& attribute,
+                        int& value);
   
 bool evaluate_expression(classad::ClassAd const& ad,
                          std::string const& expression,
@@ -412,8 +480,38 @@ bool evaluate_expression(classad::ClassAd const& ad,
 bool evaluate_expression(classad::ClassAd const& ad,
                          std::string const& expression,
                          classad::ClassAd const*& value);
-  
-}}}} 
+
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              bool& value);
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              int& value);
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              double& value);
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              std::string& value);
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              classad::ClassAd const*& value);
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              classad::ExprList const*& value);
+
+template<typename T>
+bool evaluate(classad::ClassAd const& ad,
+              std::string const& expression,
+              std::vector<T>& v)
+{
+  classad::ExprList const* el;
+  if (evaluate(ad, expression, el)) {
+    return evaluate(el, v);
+  }
+}
+
+}}}}
 
 #endif
 

@@ -50,7 +50,7 @@ void DataContainerSingle::multiline( bool m, const char *prefix )
 
 void DataContainerSingle::next_level( level_t lev )
 {
-  if( static_cast<int>(lev) < static_cast<int>(null) ) lev = null;
+  if( static_cast<int>(lev) < static_cast<int>(_first_level) ) lev = _first_level;
   else if( static_cast<int>(lev) >= static_cast<int>(_last_level) )
     lev = static_cast<level_t>( static_cast<int>(_last_level) - 1 );
 

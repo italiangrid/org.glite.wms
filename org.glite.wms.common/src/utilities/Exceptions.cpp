@@ -7,6 +7,7 @@
 #include "Exceptions.h"
 #include "exception_codes.h"
 #include "utils.h"
+
 COMMON_NAMESPACE_BEGIN{
      namespace utilities {
 using namespace std ;

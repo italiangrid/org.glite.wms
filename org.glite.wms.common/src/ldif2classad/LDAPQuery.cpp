@@ -13,9 +13,9 @@
  */
 
 /** This class header file. */
-#include "../ldif2classad/LDAPQuery.h"
+#include "LDAPQuery.h"
 /** The LDAP Connection header file. */
-#include "../ldif2classad/LDAPConnection.h"
+#include "LDAPConnection.h"
 
 namespace edg {
 namespace workload {

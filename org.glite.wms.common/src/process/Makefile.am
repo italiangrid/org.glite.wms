@@ -13,7 +13,7 @@ libglite_wl_process_la_SOURCES = \
 	subprocess.cpp \
 	user.cpp
 
-processincludedir = $(includedir)/glite/workload/common/process
+processincludedir = $(includedir)/glite/wms/common/process
 processinclude_HEADERS = \
 	process.h \
 	subprocess.h \

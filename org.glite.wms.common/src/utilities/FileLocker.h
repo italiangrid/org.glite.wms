@@ -7,7 +7,7 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "common_namespace.h"
+#include "../common_namespace.h"
 
 #include "fstreamlock.h"
 

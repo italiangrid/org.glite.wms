@@ -9,7 +9,7 @@
 #define EDG_WORKLOAD_COMMON_CONFIGURATION_WMCONFIGURATION_H
 
 #ifndef EDG_WORKLOAD_COMMON_CONFIGURATION_CONFBASE_H
-#include "edg/workload/common/configuration/confbase.h"
+#include "confbase.h"
 #endif
 
 namespace classad {

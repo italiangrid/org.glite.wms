@@ -14,8 +14,8 @@
 // $Id:
 
 /** Includes header definitions. */
-#include "../ldif2classad/LDAPQuery.h"
-#include "../ldif2classad/LDAPSynchConnection.h"
+#include "LDAPQuery.h"
+#include "LDAPSynchConnection.h"
 
 #ifdef WITH_LDAP_EXCEPTIONS
 #include "exceptions.h"

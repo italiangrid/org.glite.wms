@@ -10,7 +10,7 @@
 SUBDIRS = scripts configuration ldif2classad utilities logger \
 	task process programs
 
-common_includedir = $(includedir)/glite/workload/common
+common_includedir = $(includedir)/glite/wms/common
 common_include_HEADERS = common_namespace.h
 
 MAINTAINERCLEANFILES = Makefile.in 

@@ -7,7 +7,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "common_namespace.h"
+#include "../common_namespace.h"
 
 COMMON_NAMESPACE_BEGIN {
 
@@ -16,13 +16,20 @@ namespace logger {
 class StatePusher;
 
 enum level_t {
-  null,     fatal = null,
-  verylow,  critical = verylow,
-  low,      severe = low,
-  medium,   error = medium,
-  high,     warning = high,
-  ugly,     info = ugly,
-  veryugly, debug = veryugly,
+  _first_level, fatal = _first_level,
+  critical,
+  severe,
+  error,
+  warning,
+  info,
+  debug,
+  _last_positive, null = _last_positive,
+  verylow,
+  low,
+  medium,
+  high,
+  ugly,
+  veryugly,
   _last_level
 };
 
@@ -141,7 +148,7 @@ public:
   inline size_t total_size( void ) { return this->bd_total; }
   inline size_t buffer_size( void ) { return bd_s_bufsize; }
   inline level_t next_level( void ) { return this->bd_data->next_level(); }
-  inline level_t buffer_level( void ) { return this->bd_current; }
+  inline level_t buffer_level( void ) { return static_cast<level_t>( static_cast<int>(this->bd_current) % static_cast<int>(_last_positive) ); }
   inline char *buffer_base( void ) { return this->bd_buffer; }
   inline DataContainerImpl *container( void ) { return this->bd_data; }
   inline const std::string &time_format( void ) { return this->bd_data->time_format(); }

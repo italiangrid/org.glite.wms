@@ -7,7 +7,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <classad_distribution.h>
+namespace classad { class ClassAd; } // Forward declaration
 
 COMMON_NAMESPACE_BEGIN {
 
@@ -61,8 +61,13 @@ class StdConverter {
 public:
   inline StdConverter( void ) {}
 
-  inline std::string operator()( const Type &data ) { return( boost::lexical_cast<std::string>(data) ); }
-  inline Type operator()( const std::string &data ) { return( boost::lexical_cast<Type>(data) ); }
+  inline std::string operator()( const Type &data )
+  try { return boost::lexical_cast<std::string>( data ); }
+  catch( boost::bad_lexical_cast &e ) { throw FileContainerError( FileContainerError::cannot_convert_to_string ); }
+
+  inline Type operator()( const std::string &data ) 
+  try { return boost::lexical_cast<Type>( data ); }
+  catch( boost::bad_lexical_cast &e ) { throw FileContainerError( FileContainerError::cannot_convert_from_string ); }
 };
 
 template <> class StdConverter<std::string> {};
@@ -70,12 +75,13 @@ template <> class StdConverter<std::string> {};
 template <> class StdConverter<classad::ClassAd> {
 public:
   StdConverter( void );
+  ~StdConverter( void );
 
   std::string operator()( const classad::ClassAd &data );
   const classad::ClassAd &operator()( const std::string &data );
 
 private:
-  classad::ClassAd    sc_classad;
+  classad::ClassAd    *sc_classad;
 };
 
 template <class Type, class Converter>

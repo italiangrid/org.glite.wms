@@ -12,8 +12,6 @@ namespace workload {
 namespace common {
 namespace utilities {
 
-nothrow_t const nothrow = {};
-
 classad::ClassAd*
 parse_classad(std::string const& s)
 {
@@ -29,18 +27,11 @@ parse_classad(std::string const& s)
 }
 
 classad::ClassAd*
-parse_classad(std::string const& s, nothrow_t const&)
-{
-  classad::ClassAdParser parser;
-  return parser.ParseClassAd(s);
-}
-
-classad::ClassAd*
 parse_classad(std::istream& is)
 {
   classad::ClassAd* ad = 0;
   classad::ClassAdParser parser;
-  ad = parser.ParseClassAd(&is);
+  ad = parser.ParseClassAd(is);
 
   if (ad == 0) {
     throw CannotParseClassAd();
@@ -48,6 +39,9 @@ parse_classad(std::istream& is)
 
   return ad;
 }
+
+ValueProxy unparse_expression(classad::ExprTree const& tree) { classad::EvalState state; classad::Value v;  tree.Evaluate(state, v); return ValueProxy("", v); }
+
 
 std::string
 unparse_classad(classad::ClassAd const& ad)
@@ -126,6 +120,22 @@ ValueProxy::operator classad::ExprList const*() const
 }
 
 ValueProxy
+evaluate(classad::ExprTree const& et)
+{
+  classad::Value v;
+  et.Evaluate(v);
+  return ValueProxy("", v);
+}
+
+bool
+evaluate(classad::Literal const& l, std::string& value)
+{
+  classad::Value v;
+  l.GetValue(v);
+  return v.IsStringValue(value);
+}
+
+ValueProxy
 evaluate_attribute(classad::ClassAd const& ad,
                    std::string const& attribute)
 {
@@ -149,8 +159,8 @@ match(classad::ClassAd const& lhs, classad::ClassAd const& rhs,
 {
   bool result = false;
 
-  classad::ClassAd* lhs_ad(lhs.Copy());
-  classad::ClassAd* rhs_ad(rhs.Copy());
+  classad::ClassAd* lhs_ad(new classad::ClassAd(lhs));
+  classad::ClassAd* rhs_ad(new classad::ClassAd(rhs));
   assert(lhs_ad != 0 && rhs_ad != 0);
 
   classad::MatchClassAd match_ad(lhs_ad, rhs_ad);
@@ -233,7 +243,15 @@ evaluate_attribute(classad::ClassAd const& ad,
                    std::string const& attribute,
                    std::string& value)
 {
-  return ad.EvaluateAttrString("command", value);
+  return ad.EvaluateAttrString(attribute, value);
+}
+
+bool
+evaluate_attribute(classad::ClassAd const& ad,
+                   std::string const& attribute,
+                   int& value)
+{
+  return ad.EvaluateAttrInt(attribute, value);
 }
 
 bool
@@ -258,13 +276,25 @@ evaluate_expression(classad::ClassAd const& ad,
 {
   bool result = false;
 
-  classad::ClassAd* tmp;        // needed to preserve const-correctness
   classad::Value v;
   if (ad.EvaluateExpr(expression, v)) {
-    result = v.IsClassAdValue(tmp);
+    result = v.IsClassAdValue(value);
   }
 
-  value = tmp;
+  return result;
+}
+
+bool
+evaluate(classad::ClassAd const& ad,
+         std::string const& expression,
+         classad::ExprList const*& value)
+{
+  bool result = false;
+
+  classad::Value v;
+  if (ad.EvaluateExpr(expression, v)) {
+    result = v.IsListValue(value);
+  }
 
   return result;
 }

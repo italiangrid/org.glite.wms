@@ -1,6 +1,8 @@
 #ifndef EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H
 #define EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H
 
+#include <iterator>
+
 #include <boost/lexical_cast.hpp>
 
 #include "filecontainer.h"
@@ -56,12 +58,15 @@ protected:
 template <class Type, class Converter = StdConverter<Type> >
 class FileList : public _file_sequence_t {
 public:
-  typedef Type                               value_type;
-  typedef Type *                             pointer;
-  typedef const Type *                       const_pointer;
-  typedef Type &                             reference;
-  typedef const Type &                       const_reference;
-  typedef FLIterator<Type, Converter>        iterator;
+  typedef Type                                    value_type;
+  typedef Type *                                  pointer;
+  typedef const Type *                            const_pointer;
+  typedef Type &                                  reference;
+  typedef const Type &                            const_reference;
+  typedef FLIterator<Type, Converter>             iterator;
+  typedef FLIterator<const Type, Converter>       const_iterator;
+  typedef std::reverse_iterator<iterator>         reverse_iterator;
+  typedef std::reverse_iterator<const_iterator>   const_reverse_iterator;
 
   FileList( void );
   FileList( const std::string &filename );
@@ -74,6 +79,12 @@ public:
 
   inline iterator begin( void ) { return iterator( this->getBegin() ); }
   inline iterator end( void ) { return iterator( this->getEnd() ); }
+  inline const_iterator begin( void ) const { return const_iterator( this->getBegin() ); }
+  inline const_iterator end( void ) const { return const_iterator( this->getEnd() ); }
+  inline reverse_iterator rbegin( void ) { return reverse_iterator( this->end() ); }
+  inline reverse_iterator rend( void ) { return reverse_iterator( this->begin() ); }
+  inline const_reverse_iterator rbegin( void ) const { return const_reverse_iterator( this->end() ); }
+  inline const_reverse_iterator rend( void ) const { return const_reverse_iterator( this->begin() ); }
 
   inline Type front( void ) { return *(this->begin()); }
   inline Type back( void ) { return *(--this->end()); }

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <exception>
 
-#include "edg/workload/common/common_namespace.h"
+#include "../common_namespace.h"
 
 #include "ModuleType.h"
 

@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
    const configuration::NSConfiguration *nsconf;
    try
     {
-     conf = new configuration::Configuration("glite_wms.conf", "NetworkServer");
+     conf = new configuration::Configuration("edg_wl.conf", "NetworkServer");
      nsconf = configuration::Configuration::instance()->ns();
     }
    catch (...)

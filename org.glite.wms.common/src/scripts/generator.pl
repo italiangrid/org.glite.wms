@@ -910,7 +910,9 @@ sub parseValueAndType {
 
 	    if( $style ) {
 		$line =~ s/ ?\* ?/ \*/g;
-		$line =~ s/ ?\& ?/ \&/g;
+		$line =~ s/ \& / \&/g;
+		$line =~ s/([^\&])\& /$1\&/g;
+#		$line =~ s/ ?\& ?/ \&/g;
 		$line =~ s/\(\(/\( \(/g;
 		$line =~ s/\)\)/\) \)/g;
 	    }
@@ -918,7 +920,9 @@ sub parseValueAndType {
 		$line =~ s/\( /\(/g;
 		$line =~ s/ \)/\)/g;
 		$line =~ s/ ?\* ?/\* /g;
-		$line =~ s/ ?\& ?/\& /g;
+#		$line =~ s/ ?\& ?/\& /g;
+		$line =~ s/ \&([^\&])/\& $1/g;
+		$line =~ s/ \& /\& /g;
 	    }
 
 	    $line =~ s/\/ \*/\/\*/g;

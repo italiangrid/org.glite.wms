@@ -1,10 +1,8 @@
-/*
- * File: globus_ftp_utils.h
- * Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
- * Copyright (c) 2002 EU DataGrid.
- * For license conditions see http://www.eu-datagrid.org/license.html
- */
-
+// File: globus_utils.h
+// Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
+// Copyright (c) 2002 EU DataGrid.
+// For license conditions see http://www.eu-datagrid.org/license.html
+// 
 // $Id$
 
 #include <globus_ftp_client.h>

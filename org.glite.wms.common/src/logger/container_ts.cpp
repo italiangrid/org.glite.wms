@@ -14,7 +14,7 @@ DataContainerMulti::data_s::data_s( const DataContainerSingle &dcs ) : d_date( d
 
 DataContainerMulti::DataContainerMulti( const char *format ) : dcm_data(), dcm_single( format )
 {
-	this->dcm_data.reset( new data_s(this->dcm_single) );
+  this->dcm_data.reset( new data_s(this->dcm_single) );
 }
 
 DataContainerMulti::~DataContainerMulti( void )
@@ -39,7 +39,7 @@ void DataContainerMulti::multiline( bool d, const char *prefix )
 
 void DataContainerMulti::next_level( level_t lev )
 {
-  if( static_cast<int>(lev) < static_cast<int>(null) ) lev = null;
+  if( static_cast<int>(lev) < static_cast<int>(_first_level) ) lev = _first_level;
   else if( static_cast<int>(lev) >= static_cast<int>(_last_level) )
     lev = static_cast<level_t>( static_cast<int>(_last_level) - 1 );
 

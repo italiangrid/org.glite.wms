@@ -1,3 +1,5 @@
+#include <classad_distribution.h>
+
 #include "FileList.h"
 
 using namespace std;
@@ -98,8 +100,13 @@ _base_iterator_t &_base_iterator_t::decrement( void )
   return( *this );
 }
 
-StdConverter<classad::ClassAd>::StdConverter( void )
+StdConverter<classad::ClassAd>::StdConverter( void ) : sc_classad( NULL )
 {}
+
+StdConverter<classad::ClassAd>::~StdConverter( void )
+{
+  delete this->sc_classad;
+}
 
 string StdConverter<classad::ClassAd>::operator()( const classad::ClassAd &data )
 {
@@ -113,20 +120,18 @@ string StdConverter<classad::ClassAd>::operator()( const classad::ClassAd &data 
 
 const classad::ClassAd &StdConverter<classad::ClassAd>::operator()( const string &data )
 {
-  classad::ClassAd         *nuovo;
   classad::ClassAdParser    parser;
 
-  this->sc_classad.Clear();
-
-  nuovo = parser.ParseClassAd( data.c_str() );
-
-  if( nuovo != NULL ) {
-    this->sc_classad.Update( *nuovo );
-
-    delete nuovo;
+  if( this->sc_classad ) {
+    delete this->sc_classad;
+    this->sc_classad = NULL;
   }
 
-  return this->sc_classad;
+  this->sc_classad = parser.ParseClassAd( data.c_str() );
+
+  if( this->sc_classad == NULL ) throw FileContainerError( FileContainerError::cannot_convert_from_string );
+
+  return *this->sc_classad;
 }
 
 }; // Namespace utilities

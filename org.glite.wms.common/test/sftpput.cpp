@@ -1,5 +1,6 @@
 #include <iostream>
-#include "../src/utilities/globus_ftp_utils.h"
+
+#include <../src/utilities/globus_ftp_utils.h>
 
 using namespace std;
 namespace utilities = edg::workload::common::utilities;

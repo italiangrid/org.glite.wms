@@ -25,7 +25,7 @@ COMMON_NAMESPACE_BEGIN {
 
 namespace logger {
 
-const char   *Logbuf::lb_s_letterLevels = "FCSEWID";
+const char   *Logbuf::lb_s_letterLevels = "FCSEWID*VLMHU!";
 
 bool Logbuf::checkRotationBuffer( void )
 {
@@ -78,7 +78,8 @@ void Logbuf::writeBuffer( std::streamoff n )
 int Logbuf::internalSync( bool overflow )
 {
   bool                         do_write, show_severity = this->lb_data.show_severity();
-  int                          res = 0, next_level = static_cast<int>( this->lb_data.next_level() );
+  int                          res = 0, next_total_level( static_cast<int>(this->lb_data.next_level()) % _last_level );
+  int                          next_level( next_total_level % _last_positive );
   size_t                       datesize;
   time_t                       epoch;
   string::size_type            len;
@@ -109,7 +110,7 @@ int Logbuf::internalSync( bool overflow )
 	if( len > 0 ) {
 	  if( show_severity ) {
 	    this->lb_buffer->sputn( " -", 2 );
-	    this->lb_buffer->sputn( lb_s_letterLevels + next_level, 1 );
+	    this->lb_buffer->sputn( lb_s_letterLevels + next_total_level, 1 );
 	    this->lb_buffer->sputn( "- ", 2 );
 	    this->lb_current += 5;
 	  }
@@ -123,7 +124,7 @@ int Logbuf::internalSync( bool overflow )
 	}
 	else if( show_severity ) {
 	  this->lb_buffer->sputn( " -", 2 );
-	  this->lb_buffer->sputn( lb_s_letterLevels + next_level, 1 );
+	  this->lb_buffer->sputn( lb_s_letterLevels + next_total_level, 1 );
 	  this->lb_current += 3;
 	}
 	
@@ -371,7 +372,7 @@ int Logbuf::overflow( int ch )
   if( (n != 0) && this->internalSync(true) ) ret = EOF;
 
   if( ch != EOF ) {
-    bool     do_write = ((int) this->lb_data.next_level() <= (int) this->lb_data.buffer_level());
+    bool     do_write( (static_cast<int>(this->lb_data.next_level()) % _last_positive) <= static_cast<int>(this->lb_data.buffer_level()) );
 
     if( do_write )
       this->sputc( static_cast<char>(ch) );

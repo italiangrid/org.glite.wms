@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-#include "common_namespace.h"
+#include "../common_namespace.h"
 
 /*
   Hack to activate wrong filelist dumping...
@@ -72,6 +72,8 @@ public:
 		    unrecoverable_data,
 		    decrementing_from_zero,
 		    not_removing_last,
+		    cannot_convert_from_string,
+		    cannot_convert_to_string,
 		    _last_error
   };
 

@@ -21,13 +21,13 @@
 #include <vector>
 #endif
 #ifndef EDG_WORKLOAD_COMMON_UTILITIES_FILELIST_H
-#include "edg/workload/common/utilities/FileList.h"
+#include "FileList.h"
 #endif
 #ifndef EDG_WORKLOAD_COMMON_UTILITIES_FILELISTLOCK_H
-#include "edg/workload/common/utilities/FileListLock.h"
+#include "FileListLock.h"
 #endif
 #ifndef EDG_WORKLOAD_COMMON_UTILITIES_EXTRACTOR_H
-#include "edg/workload/common/utilities/Extractor.h"
+#include "Extractor.h"
 #endif
 
 namespace edg {

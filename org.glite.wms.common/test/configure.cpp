@@ -13,7 +13,7 @@ USING_COMMON_NAMESPACE;
 
 int main( void )
 {
-//    setenv( "GLITE_WMS_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
+//    setenv( "EDG_WL_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
 
   configuration::Configuration   *configuration;
 
@@ -22,8 +22,10 @@ int main( void )
 
     cout << "Condor submit = " << configuration->jc()->condor_submit() << endl;
     cout << "Condor remove = " << configuration->jc()->condor_remove() << endl;
+		/*
     cout << "Condor query  = " << configuration->jc()->condor_query() << endl;
     cout << "Condor submitDAG = " << configuration->jc()->condor_submit_dag() << endl;
+		*/
 
     cout << "JCConfiguration = (" << (void *) configuration->jc()
 	 << "), NSConfiguration = (" << (void *) configuration->ns() << ")" << endl;
@@ -42,10 +44,10 @@ int main( void )
 
 //  int func( void )
 //  {
-//    setenv( "GLITE_WMS_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
+//    setenv( "EDG_WL_CONFIG_DIR", "", 1 ); // This is needed to find the file in the current directory
 
 //    try {
-//      configuration::Factory::create_factory( "JobController", "glite_wms.conf" )->create();
+//      configuration::Factory::create_factory( "JobController", "edg_wl.conf" )->create();
 
 //      cout << "Condor submit = " << configuration::JCConfiguration::instance()->condor_submit() << endl;
 //      cout << "Condor remove = " << configuration::JCConfiguration::instance()->condor_remove() << endl;

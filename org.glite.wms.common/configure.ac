@@ -51,11 +51,11 @@ AC_SUBST([BOOST_CPPFLAGS])
 BOOST_LIBS="-L$REPOSITORY/boost/1.29.1/rhel30_gcc32/lib/release -lboost_fs -lboost_thread -lpthread -lboost_regex -lc"
 AC_SUBST([BOOST_LIBS])
 
-CLASSAD_CFLAGS=-I$REPOSITORY/classads/0.9.4/rhel30_gcc32/include
+CLASSAD_CFLAGS="-I$REPOSITORY/classads/0.9.5/rhel30_gcc32/include -DWANT_NAMESPACES"
 AC_SUBST([CLASSAD_CFLAGS])
 CLASSAD_CPPFLAGS=$CLASSAD_CFLAGS
 AC_SUBST([CLASSAD_CPPFLAGS])
-CLASSAD_LIBS="-L$REPOSITORY/classads/0.9.4/rhel30_gcc32/lib -lclassad"
+CLASSAD_LIBS="-L$REPOSITORY/classads/0.9.5/rhel30_gcc32/lib -lclassad"
 AC_SUBST([CLASSAD_LIBS])
 
 GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"

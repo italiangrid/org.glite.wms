@@ -3,7 +3,7 @@
 
 #include <fstream>
 
-#include "common_namespace.h"
+#include "../common_namespace.h"
 
 #if (__GNUC__>=3)
 #include <ext/stdio_filebuf.h>

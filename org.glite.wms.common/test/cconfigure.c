@@ -23,8 +23,10 @@ int main( void )
     len = 1000; pc = edg_wlcc_JobController_condor_remove( buffer, &len, &err );
     printf( "CondorRemove = %s (%d)\n", pc, (int) err );
 
+		/*
     len = 1000; pc = edg_wlcc_JobController_condor_query( buffer, &len, &err );
     printf( "CondirQuery = %s (%d)\n", pc, (int) err );
+		*/
 
     val = edg_wlcc_JobController_log_level( &err );
     printf( "LogLevel = %d (%d)\n", val, (int) err );

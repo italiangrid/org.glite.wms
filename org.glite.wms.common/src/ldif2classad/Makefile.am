@@ -16,7 +16,7 @@ libglite_wl_LDIF2ClassAd_la_SOURCES = \
 	LDIFObject.cpp \
 	LDAPForwardIterator.cpp
 
-ldif2classadincludedir = $(includedir)/glite/workload/common/ldif2classad
+ldif2classadincludedir = $(includedir)/glite/wms/common/ldif2classad
 ldif2classadinclude_HEADERS = \
 	FileStreamConnection.h \
 	LDAPConnection.h \

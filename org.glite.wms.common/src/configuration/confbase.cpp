@@ -1,8 +1,8 @@
 #include <boost/regex.hpp>
 #include <classad_distribution.h>
 
-#include "edg/workload/common/utilities/classad_utils.h"
-#include "edg/workload/common/utilities/boost_fs_add.h"
+#include "../utilities/classad_utils.h"
+#include "../utilities/boost_fs_add.h"
 
 #include "confbase.h"
 

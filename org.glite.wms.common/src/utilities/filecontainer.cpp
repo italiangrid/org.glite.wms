@@ -135,7 +135,9 @@ const char *FileContainerError::fce_s_errors[] = {
   "Syntax error on file", "Input/Output error", "Data format error",
   "Position not currently available", "Container modified since last access",
   "Data recovering in progress", "File contains unrecoverable data",
-  "Trying to decrementing a zero sized file.", "Not removing last pointer."
+  "Trying to decrementing a zero sized file.", "Not removing last pointer.",
+  "Cannot convert string to given data type.",
+  "Cannot convert data from string type."
 };
 
 int FileContainer::fc_s_stampSize = 0, FileContainer::fc_s_sizeSize = 0;
@@ -172,14 +174,14 @@ inline streamoff calculateDataSize( const string &data, int sizeSize )
 
 int integer_size( size_t size, int basen = 10 )
 {
-  int         bitnumber = (int) (log((double)(UCHAR_MAX + 1)) / log(2.0)), answer;
+  int         bitnumber = static_cast<int>(log((double)(UCHAR_MAX + 1)) / log(2.0)), answer;
   double      partial = size / sizeof(unsigned char), total = (bitnumber * partial), largest, rapporto;
 
   largest = pow( 2, total ) - 1;
-  rapporto = log( largest ) / log( (double) basen );
-  answer = (int) rapporto;
+  rapporto = log( largest ) / log( static_cast<double>(basen) );
+  answer = static_cast<int>( rapporto );
 
-  if( ((double) answer) != rapporto ) answer += 1;
+  if( (static_cast<double>(answer)) != rapporto ) answer += 1;
 
   return answer;
 }
@@ -366,7 +368,7 @@ FileContainerError::iostatus_t FileContainer::eraseFile( off_t size )
 
 FileContainerError::iostatus_t FileContainer::writeFileStatus( filestatus_t status )
 {
-  char        stat = (char) status;
+  char        stat = static_cast<char>( status );
   iostatus_t  answer = FileContainerError::all_good;
   streamoff   old = this->fc_stream->tellp();
 #ifdef FILELIST_HAS_DEBUG_CODE
@@ -918,6 +920,7 @@ FileContainerError::iostatus_t FileContainer::removeDataPointer( const FileItera
 	if( isGood(answer) ) answer = this->writeInitialPosition( this->fc_removed, true );
       }
     }
+    else answer = FileContainerError::not_removing_last;
   }
   else if( iter.get_next() == end ) { // Removing the last object in the list...
     answer = this->writeLimitsBackup( rd_limits, this->fc_limits );
@@ -1305,7 +1308,6 @@ FileContainerError::iostatus_t FileContainer::backupFile( const char *backupfile
 #ifdef FILELIST_HAS_DEBUG_CODE
   StackPusher       stack_pusher( this->fc_callStack, "backupFile( backupfile = \"%s\" )", backupfile );
 #endif
-
   if( backupfile == NULL ) backup.append( ".bak" );
 
   bakstr.open( backup.c_str() );
@@ -1692,10 +1694,10 @@ const char *FileContainerError::what( void ) const throw()
 
 string FileContainerError::string_error( void ) const
 {
-  int        code = (int) this->fce_code + 1;
+  int        code = static_cast<int>( this->fce_code ) + 1;
   string     answer;
 
-  if( (code < 0) || (code >= ((int)_last_error + 1)) ) code = 0;
+  if( (code < 0) || (code >= (static_cast<int>(_last_error) + 1)) ) code = 0;
 
   answer.assign( fce_s_errors[code] );
   if( this->fce_file.size() != 0 ) {
@@ -1931,7 +1933,6 @@ FileContainerError::iostatus_t FileContainer::remove_data( streamoff where )
 	logMessage( function, message, this->fc_filename );
 #endif
   	answer = this->checkConsistency( 0 );
-
 #ifdef FILELIST_HAS_DEBUG_CODE
 	if( notGood(answer) ) {
 	  message.assign( "Consistency check returned \"" );
@@ -1940,7 +1941,6 @@ FileContainerError::iostatus_t FileContainer::remove_data( streamoff where )
 	  logMessage( function, message, this->fc_filename );
 	}
 #endif
-
 	if( isGood(answer) ) this->fc_size += 1; // This number does not count the just removed field.
 	else answer = FileContainerError::decrementing_from_zero;
       }
