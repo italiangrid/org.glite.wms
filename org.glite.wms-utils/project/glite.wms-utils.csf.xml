@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/10/12 14:21:21  eronchie
+	Removed ssl_utils dependency
+
 	Revision 1.5  2004/08/20 09:51:39  eronchie
 	Updated buildmodules orders
-
+	
 	Revision 1.4  2004/08/04 07:30:29  eronchie
 	Added cppunit
 	
@@ -122,10 +125,6 @@
 	
 		<!-- condition property tag = do not remove = -->
 
-		<condition property="thirdparty-globus_ssl_utils.head">
-			<equals arg1="${org.glite.wms-utils.thirdparty-globus_ssl_utils.version}" arg2="HEAD" />
-		</condition>
-
 		<condition property="tls.head">
                         <equals arg1="${org.glite.wms-utils.tls.version}" arg2="HEAD" />
                 </condition>
@@ -195,16 +194,6 @@
 
 	<!-- component targets tag = do not remove = -->
 
-	<!-- Globus SSLUtils -->
- 	<target name="thirdparty-globus_ssl_utils" depends="globus,cppunit,get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
-	<target name="get.thirdparty-globus_ssl_utils.head" if="thirdparty-globus_ssl_utils.head">
-		<cvs-co package="org.glite.wms-utils.thirdparty-globus_ssl_utils" />
-	</target>
-	<target name="get.thirdparty-globus_ssl_utils.tag" unless="thirdparty-globus_ssl_utils.head">
-		<cvs-co package="org.glite.wms-utils.thirdparty-globus_ssl_utils"
-			tag="${org.glite.wms-utils.thirdparty-globus_ssl_utils.version}" />
-	</target>
-
     	<!-- Tls -->
     	<target name="tls" depends="boost,classads,globus,cppunit,exception,get.tls.head, get.tls.tag"/>
     	<target name="get.tls.head" if="tls.head">
@@ -236,8 +225,7 @@
         </target>	
 		
 	<!-- All project modules -->
- 	<target name="project" depends="thirdparty-globus_ssl_utils,
-					exception,
+ 	<target name="project" depends="exception,
 				        tls,
 					jobid"/>
 

@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.20  2004/10/12 14:21:21  eronchie
+	Removed ssl_utils dependency
+
 	Revision 1.19  2004/10/11 17:04:48  eronchie
 	Removed ssl_utils as tls dependency
-
+	
 	Revision 1.18  2004/10/11 17:02:48  eronchie
 	Removed ssl_utils as jobid dependency
 	
@@ -249,22 +252,6 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="thirdparty-globus_ssl_utils" unless="setenvonly" depends="globus,cppunit">
-		<if>
-			<isset property="small.memory" />
-			<then>
-				<exec dir="${wms-utils.subsystem.dir}.thirdparty-globus_ssl_utils" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-				</exec>
-			</then>
-			<else>
-				<ant dir="${wms-utils.subsystem.dir}.thirdparty-globus_ssl_utils"
-	                    	     target="${target}"
-	                    	     inheritall="false" />
-			</else>
-		</if>
-	</target>
-
 	<target name="exception" unless="setenvonly" depends="boost,classads,cppunit">
 		<if>
 			<isset property="small.memory" />
@@ -314,8 +301,7 @@
     	</target>
 
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="thirdparty-globus_ssl_utils,
-					     exception,
+	<target name="buildmodules" depends="exception,
 					     tls,
 					     jobid">
 		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
