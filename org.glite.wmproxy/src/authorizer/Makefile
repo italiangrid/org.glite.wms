@@ -17,13 +17,10 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-DLCMAPS_GSI_MODE \
 	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
 	-I$(REPOSITORY)/stage/include \
-	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include \
-	-I$(REPOSITORY)/stage/include/glite/security/lcas
+	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include
 
 LDFLAGS= \
-	-L$(REPOSITORY)/stage/lib \
-	-llcas \
-	-llcmaps
+	-L$(REPOSITORY)/stage/lib
 
 all:	authorizer
 
