@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.58  2004/08/26 23:53:51  dimeglio
+	Added generation of cruisecontrol config file entry
+
 	Revision 1.57  2004/08/20 10:07:02  eronchie
 	Updated buildmodules
-
+	
 	Revision 1.56  2004/08/16 15:00:04  eronchie
 	Added configuration component
 	
@@ -804,6 +807,10 @@
 					     manager-ns-client,
 					     manager-ns-daemon,	
 					     jobsubmission,
-					     manager" />
-		
+					     manager">
+		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
+	&lt;project name="${subsystem.name}" type="post-subsystem" packageName="${global.prefix}-${subsystem.prefix}"/&gt;
+		</echo>
+	</target>
+
 </project>
