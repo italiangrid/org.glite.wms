@@ -8,39 +8,40 @@
 
 wletcdir = $(sysconfdir)
 wletc_SCRIPTS = glite-wmsui-vars.sh glite-wmsui-vars.csh
-wletcutilsdir = $(sysconfdir)/profile.d
-wletcutils_SCRIPTS = glite-wmsui.sh glite-wmsui.csh
 
-libexec_SCRIPTS = 
+wletcutilsdir = $(sysconfdir)/profile.d
+wletcutils_SCRIPTS = glite-wmsui.sh glite-wmsui.csh \
+	glite-wmsui-env.csh glite-wmsui-env.sh \
+        glite-wmsui-gui-env.csh glite-wmsui-gui-env.sh
 
 wletcwmdir = $(sysconfdir)
 wletcwm_DATA = glite_wmsui.conf
 
-wletcwmsdir = $(sysconfdir)/profile.d
-wletcwms_SCRIPTS = 
-
 install-data-hook:
-	/bin/cp $(DESTDIR)$(sysconfdir)/glite_wms.conf $(DESTDIR)$(sysconfdir)/glite_wms.conf.template
+	/bin/cp $(DESTDIR)$(sysconfdir)/glite_wmsui.conf $(DESTDIR)$(sysconfdir)/glite_wmsui.conf.template
 
 EXTRA_DIST = \
-        glite_wms.conf \
-        glite-wms.csh.in \
-        glite-wms.sh.in \
-        glite-wms-vars.sh.in \
-        glite-wms-vars.csh.in \
-	glite-wms-config.sh.in \
-	glite-wms-parse-configuration.sh.in \
-	glite-wms-check-daemons.sh.in \
-	glite-wms-services-certs.sh
+        glite_wmsui.conf \
+	glite-wmsui.csh.in \
+	glite-wmsui-env.csh.in \
+	glite-wmsui-env.sh.in \
+	glite-wmsui-gui-env.csh.in \
+	glite-wmsui-gui-env.sh.in \
+	glite-wmsui.sh.in \
+	glite-wmsui.csh.in \
+	glite-wmsui-vars.csh.in \
+	glite-wmsui-vars.sh.in
 
 CLEANFILES = \
-	glite-wms.csh \
-	glite-wms-parse-configuration.sh \
-	glite-wms.sh \
-	glite-wms-vars.sh \
-	glite-wms-vars.csh \
-	glite-wms-check-daemons.sh \
-	glite-wms-config.sh 
+	glite-wmsui.csh \
+        glite-wmsui-env.csh \
+        glite-wmsui-env.sh \
+        glite-wmsui-gui-env.csh \
+        glite-wmsui-gui-env.sh \
+        glite-wmsui.sh \
+	glite-wmsui.csh \
+        glite-wmsui-vars.csh \
+        glite-wmsui-vars.sh
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~
 

@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/13 15:11:30  eronchie
+#       Updated
+#
 #       Revision 1.1  2004/10/13 14:57:05  eronchie
 #       Start adding configuration
 #
@@ -88,6 +91,7 @@ AC_CONFIG_FILES([config/glite-wmsui-env.csh])
 AC_CONFIG_FILES([config/glite-wmsui-env.sh])
 AC_CONFIG_FILES([config/glite-wmsui-gui-env.csh])
 AC_CONFIG_FILES([config/glite-wmsui-gui-env.sh])
+AC_CONFIG_FILES([config/glite-wmsui.csh])
 AC_CONFIG_FILES([config/glite-wmsui.sh])
 AC_CONFIG_FILES([config/glite-wmsui-vars.csh])
 AC_CONFIG_FILES([config/glite-wmsui-vars.sh])
