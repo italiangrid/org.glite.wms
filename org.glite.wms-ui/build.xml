@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.17  2004/08/26 23:54:34  dimeglio
+	Added generation of cruisecontrol config file entry
+
 	Revision 1.16  2004/08/12 14:23:59  eronchie
 	Updated
-
+	
 	Revision 1.15  2004/08/12 14:23:16  eronchie
 	Updated
 	
@@ -452,6 +455,10 @@ ilonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 					     wrap-python,
 					     wrap-java,
 					     gui-java,
-					     cli-python" />
-		
+					     cli-python">
+		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
+	&lt;project name="${subsystem.name}" type="post-subsystem" packageName="${global.prefix}-${subsystem.prefix}"/&gt;
+		</echo>
+	</target>
+
 </project>
