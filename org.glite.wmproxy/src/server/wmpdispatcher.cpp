@@ -5,7 +5,7 @@
 */
 
 #include "wmpdispatcher.h"
-
+#include "glite/wms/common/logger/edglog.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "glite/wmsutils/exception/Exception.h"
