@@ -99,7 +99,7 @@ struct jobCancelResponse {
 };
 
 struct getMaxInputSandboxSizeResponse {  
-  double size;
+  long size;
 };
 
 struct getSandboxDestURIResponse {
