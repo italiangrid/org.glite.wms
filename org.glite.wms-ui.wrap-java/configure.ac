@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/08/12 16:03:09  eronchie
+#       Updated
+#
 #       Revision 1.2  2004/08/12 10:35:12  eronchie
 #       Updated
 #
@@ -97,7 +100,20 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["ARES found $have_ares"])
 
+have_glite_wmsutils=no
+have_lb=no
+have_dgas=no
+
 AC_GLITE
+
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_GLITE_DGAS([], have_glite_dgas=yes, have_glite_dgas=no)
+AC_MSG_RESULT(["GLITE_DGAS found $have_glite_dgas"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

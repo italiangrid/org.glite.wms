@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
-	Revision 1.1  2004/08/12 10:25:50  eronchie
+	Revision 1.2  2004/08/12 16:04:21  eronchie
 	Updated
 
+	Revision 1.1  2004/08/12 10:25:50  eronchie
+	Updated
+	
 	
 -->
 
@@ -60,7 +63,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 expat.m4 ares.m4 python.m4 glite_wmsutils.m4 glite_lb.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 expat.m4 ares.m4 python.m4 glite_wmsutils.m4 glite_lb.m4 glite_dgas.m4"/>
 
 
 </project>
