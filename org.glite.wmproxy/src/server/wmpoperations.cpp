@@ -3,13 +3,6 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
-
-
-#define WMP_MAJOR_VERSION   "1"
-#define WMP_MINOR_VERSION   "0"
-#define WMP_RELEASE_VERSION "0"
-#define WMP_POINT_VERSION 	"."
-#define WMP_VERSION string(WMP_MAJOR_VERSION)+string(WMP_POINT_VERSION)+string(WMP_MINOR_VERSION)+string(WMP_POINT_VERSION)+string(WMP_RELEASE_VERSION)
 		
 #include <fstream>
 #include <errno.h>
@@ -57,6 +50,15 @@
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
+
+// WMProxy software version
+const std::string WMP_MAJOR_VERSION = "1";
+const std::string WMP_MINOR_VERSION = "0";
+const std::string WMP_RELEASE_VERSION = "0";
+const std::string WMP_POINT_VERSION = ".";
+const std::string WMP_VERSION = WMP_MAJOR_VERSION
+	+ WMP_POINT_VERSION + WMP_MINOR_VERSION
+	+ WMP_POINT_VERSION + WMP_RELEASE_VERSION;
 
 // Default name of the delegated Proxy that is copied inside private job
 // directory
