@@ -11,7 +11,7 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  * @author comments by Marco Pappalardo marco.pappalardo@ct.infn.it and Salvatore Monforte
  */
-// $Id:
+// $Id$
 
 /** Includes header definitions. */
 #include "LDAPQuery.h"
@@ -19,11 +19,11 @@
 
 #ifdef WITH_LDAP_EXCEPTIONS
 #include "exceptions.h"
-#include "../utilities/edgstrstream.h"
+#include "glite/wms/common/utilities/edgstrstream.h"
 #endif 
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -179,5 +179,5 @@ bool LDAPSynchConnection::is_established() const
 
 } // namespace ldif2classad 
 } // namespace common
-} // namespace workload
-} // namespace edg 
+} // namespace wms
+} // namespace glite 

@@ -4,7 +4,7 @@
  *  copyright : (C) 2002 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file FileStreamConnection.h
@@ -25,8 +25,8 @@ namespace classad {
 class ClassAd;
 }
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -180,8 +180,8 @@ private:
 
 } // namespace ldif2classad 
 } // namespace common
-} // namespace workload
-} // namespace edg 
+} // namespace wms
+} // namespace glite 
 
 /*
   Local Variables:

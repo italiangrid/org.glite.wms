@@ -10,16 +10,16 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  */
 
-// $Id:
-// $Date:
+// $Id$
+// $Date$
 
 #ifndef _LDAP_FORWARD_ITERATOR_
 #define _LDAP_FORWARD_ITERATOR_
 
 #include <string>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -90,8 +90,8 @@ private:
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif
 

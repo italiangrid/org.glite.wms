@@ -10,8 +10,9 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  */
 
-// $Id:
-// $Date:
+// $Id$
+// $Date$
+
 #include <iostream>
 #include <algorithm>
 #include <cctype>
@@ -19,8 +20,8 @@
 
 using namespace std;
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -264,5 +265,5 @@ string LDAPFilterParser::make_expression( vector<string>* multi_attributes )
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite

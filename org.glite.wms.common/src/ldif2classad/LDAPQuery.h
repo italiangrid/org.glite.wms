@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -99,8 +99,8 @@ private:
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 
 #endif

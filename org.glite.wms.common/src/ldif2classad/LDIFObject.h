@@ -23,8 +23,8 @@
 #include <vector>
 #include <classad_distribution.h>
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 }
@@ -128,8 +128,8 @@ extern double   RankClassifiedAd  (classad::ClassAd *where, classad::ClassAd *wh
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif
 

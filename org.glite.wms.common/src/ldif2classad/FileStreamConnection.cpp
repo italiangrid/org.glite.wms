@@ -10,7 +10,7 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  */
 
-// $Id:
+// $Id$
 
 /** Includes header definitions. */
 #include "FileStreamConnection.h"
@@ -21,8 +21,8 @@
 
 using namespace std;
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -315,6 +315,6 @@ bool FileStreamConnection::to_requirements(const string& s, string& r)
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 

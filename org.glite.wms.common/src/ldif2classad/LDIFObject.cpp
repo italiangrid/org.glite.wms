@@ -14,15 +14,15 @@
 
 using namespace std;
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace utilities {
 }
 namespace ldif2classad {
 
 using namespace classad;
-namespace utilities = edg::workload::common::utilities;
+namespace utilities = glite::wms::common::utilities;
 	
 LDIFObject::LDIFObject()
 {
@@ -324,5 +324,5 @@ ClassAd* LDIFObject::ExportClassAd(vector<string>::const_iterator attrs_begin, v
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite

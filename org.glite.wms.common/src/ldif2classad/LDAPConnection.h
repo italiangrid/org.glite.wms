@@ -10,16 +10,16 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  */
 
-// $Id:
-// $Date:
+// $Id$
+// $Date$
 
 #include<string>
 
 #ifndef _LDAPCONNECTION_
 #define _LDAPCONNECTION_
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -132,8 +132,8 @@ struct LDAPConnection
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif
 

@@ -4,7 +4,7 @@
  *  copyright : (C) 2001, 2002 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 
 /**
@@ -22,8 +22,8 @@
 
 using namespace std;
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -118,5 +118,5 @@ LDAPForwardIterator::~LDAPForwardIterator()
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite

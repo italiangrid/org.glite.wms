@@ -2,6 +2,7 @@
 #define _LDIF2ClassAdExceptions_h_
 
 /*
+ * exceptions.h
  * Copyright (c) 2002 EU DataGrid
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
@@ -9,10 +10,10 @@
 #include "../utilities/Exceptions.h"
 #include "exception_codes.h"
 
-namespace utilities = edg::workload::common::utilities;
+namespace utilities = glite::wms::common::utilities;
 
-namespace edg {  
-namespace workload {
+namespace glite {  
+namespace wms {
 namespace common {
 namespace ldif2classad {
  
@@ -50,11 +51,9 @@ namespace ldif2classad {
  
      };
  
-
-  
 } // namespace ldif2classad
 } // namespace common
-} // namespace networkserver
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
 #endif

@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file LDIF2ClassAd.h
@@ -20,11 +20,11 @@
 /** Class Ad header file. */
 #include "classad_distribution.h"
 /** LDAP Synchronous connection header file. */
-#include "Workload/Broker/LDIF2ClassAd/LDAPSynchConnection.h"
+#include "LDAPSynchConnection.h"
 /** LDAP Query header file. */
-#include "Workload/Broker/LDIF2ClassAd/LDAPQuery.h"
+#include "LDAPQuery.h"
 /** LDIF Object header file. */
-#include "Workload/Broker/LDIF2ClassAd/LDIFObject.h"
+#include "LDIFObject.h"
 
 
 #endif

@@ -17,8 +17,8 @@
 /** The LDAP Connection header file. */
 #include "LDAPConnection.h"
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace common {
 namespace ldif2classad {
 
@@ -74,6 +74,6 @@ std::string  LDAPQuery::what() const
 
 } // namespace ldif2classad
 } // namespace common
-} // namespace workload
-} // namespace edg
+} // namespace wms
+} // namespace glite
 
