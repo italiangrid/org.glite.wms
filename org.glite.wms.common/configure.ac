@@ -39,21 +39,8 @@ AC_REVISION([$Revision$])
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
-STAGE=`pwd`/../../stage
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
-
-have_boost=no
-have_classads=no
-have_globus=no
-
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 # Checks for programs.
 AC_PROG_CC
@@ -87,6 +74,18 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
+
+have_boost=no
+have_classads=no
+have_globus=no
+                                                                                
+AC_BOOST([], have_boost=yes, have_boost=no)
+AC_CLASSADS([], have_classads=yes, have_classads=no)
+AC_GLOBUS([], have_globus=yes, have_globus=no)
+                                                                                
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_MSG_RESULT(["BOOST found $have_boost"])
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
