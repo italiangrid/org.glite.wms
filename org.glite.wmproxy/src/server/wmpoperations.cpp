@@ -21,7 +21,7 @@
 // Exceptions
 #include "wmpexceptions.h"
 #include "wmpexception_codes.h"
-#include "glite/wms/jdl/JobAdExceptions.h"
+#include "glite/wms/jdl/RequestAdExceptions.h"
 
 // RequestAd
 #include "glite/wms/jdl/JDLAttributes.h"

@@ -16,7 +16,7 @@
 // Exceptions
 #include "wmpexceptions.h"
 #include "wmpexception_codes.h"
-#include "glite/wms/jdl/JobAdExceptions.h"
+#include "glite/wms/jdl/RequestAdExceptions.h"
 
 // Gridsite C library
 extern "C" {
