@@ -6,9 +6,11 @@
 
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/exception/exception_codes.h"
+
 namespace glite { 
 namespace wmsutils{ 
 namespace exception {
+using namespace std ;
 pthread_mutex_t METHOD_MUTEX  ;  // This mutex is used in order to lock the file for writing log infornation
 /* *********************************
 * Exception Class Implementation
@@ -21,7 +23,9 @@ Exception::~Exception() throw(){ }
 /**
 * Exception chainig
 */
-Exception::Exception (  const string& source,   const string& method,    Exception *e){
+Exception::Exception (  const string& source,   
+const string& method,    
+Exception *e){
 	source_file = source ;
 	method_name    = method;
 	error_message = "";
@@ -50,7 +54,7 @@ Exception::Exception (const string& source,
 
 int Exception::getCode(){
 	if  (error_code != 0) return error_code ;
-	else return WL_COMMON_BASE;
+	else return WMS_COMMON_BASE;
 };
 
 const char* Exception::what() const throw(){
