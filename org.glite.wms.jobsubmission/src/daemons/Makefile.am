@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2004/08/17 12:41:36  eronchie
+#       Updated RENEWAL check
+#
 #       Revision 1.7  2004/08/10 12:01:43  eronchie
 #       Updated
 #
@@ -73,7 +76,8 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(ARES_LIBS) $(EXPAT_LIBS) $(CONDORG_LIBS) \
-	$(GLITE_SECURITY_NOTHR_RENEWAL_LIBS) $(GLITE_WMS_PURGER_LIBS)
+	$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS)
 
 glite_wms_log_monitor_SOURCES = logmonitor.cpp \
 	MonitorLoop.cpp \
@@ -97,7 +101,8 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(CONDORG_LIBS) $(ARES_LIBS) $(EXPAT_LIBS) \
-	$(GLITE_SECURITY_NOTHR_RENEWAL_LIBS) $(GLITE_WMS_PURGER_LIBS)
+        $(GLITE_SECURITY_RENEWAL_THR_LIBS) \
+	$(GLITE_WMS_PURGER_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
