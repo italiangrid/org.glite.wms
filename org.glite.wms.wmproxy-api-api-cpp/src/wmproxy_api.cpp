@@ -218,12 +218,12 @@ void jobCancel(const string &jobid, ConfigContext *cfs){
 /*****************************************************************
 getMaxInputSandboxSize
 ******************************************************************/
-int getMaxInputSandboxSize(ConfigContext *cfs){
+double getMaxInputSandboxSize(ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getMaxInputSandboxSizeResponse response;
 	if (wmp.ns1__getMaxInputSandboxSize(response) == SOAP_OK) {
-		return response.size;
+		return  response.size;
 	} else soapErrorMng(wmp) ;
 }
 /*****************************************************************

@@ -125,7 +125,7 @@ void jobCancel(const std::string &jobid, ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the input sandbox maximum size in bytes
 */
-int getMaxInputSandboxSize(ConfigContext *cfs=NULL);
+double getMaxInputSandboxSize(ConfigContext *cfs=NULL);
 /**
 * Create a unique URI associated to the job
 * @param jobid the string identification of the job
