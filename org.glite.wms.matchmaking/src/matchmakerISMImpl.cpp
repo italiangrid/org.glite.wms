@@ -194,7 +194,8 @@ void matchmakerISMImpl::checkRank(const classad::ClassAd* requestAd, match_table
     ism::ism_type::const_iterator ism_entry = ism::get_ism().find( CEid );
     if( ism_entry != ism::get_ism().end() ) {
       
-      boost::shared_ptr<classad::ClassAd> ceAd = boost::tuples::get<1>(ism_entry->second);
+      boost::shared_ptr<classad::ClassAd> ceAd = boost::tuples::get<1>(ism_entry->second)->Copy();
+      ceAd->SetParentScope(0);
       try {
         mit -> second.setRank( utilities::right_rank(*ceAd, *requestAd) );
         unable_to_rank_all = false;
