@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/18 11:56:40  eronchie
+#       Updated LB dependency
+#
 #       Revision 1.2  2004/07/18 11:53:35  eronchie
 #       Added AC_GLITE_LB check
 #       WARNING: work in progress
@@ -92,7 +95,7 @@ have_glite_wms_common=no
 have_glite_wms_jobid=no
 have_glite_wms_tls=no
 have_glite_wms_jdl=no
-have_lite_lb=no                                                          
+have_glite_lb=no                                                          
                       
 AC_GLITE
                                                                                 
