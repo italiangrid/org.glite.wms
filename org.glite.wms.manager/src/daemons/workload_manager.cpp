@@ -28,6 +28,8 @@
 #include "glite/wms/common/logger/logstream_ts.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
+#include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
+#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 
 namespace manager = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
@@ -247,6 +249,13 @@ try {
                                  ns_config->ii_timeout(),
 				 purchaser::ism_ii_purchaser::loop, 30);
   task::Task p(ismp);
+  
+  // Try to execute ISM CEMON purchaser thread
+  std::vector<std::string> cemonURLs = wm_config->ce_monitor_services();
+  if (!cemonURLs.empty()) {
+    purchaser::ism_cemon_purchaser ismp1(cemonURLs,"CE_MONITOR:ISM", 45);
+    task::Task p1(ismp1);
+  }
 
   manager::Dispatcher dispatcher;
   manager::RequestHandler request_handler;
