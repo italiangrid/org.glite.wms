@@ -6,7 +6,7 @@
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  */
 
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 
 namespace glite { 
 namespace wmsutils { 
