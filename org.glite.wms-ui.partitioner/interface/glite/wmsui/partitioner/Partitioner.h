@@ -17,8 +17,8 @@
  * \author Alessio Gianelle <gianelle@pd.infn.it>
 */
 
-#ifndef EDG_WORKLOAD_PARTITIONER_PARTITIONER_H
-#define EDG_WORKLOAD_PARTITIONER_PARTITIONER_H
+#ifndef GLITE_WMS_PARTITIONER_PARTITIONER_H
+#define GLITE_WMS_PARTITIONER_PARTITIONER_H
 
 // glite include
 #include "glite/wmsui/partitioner/Partition.h"
@@ -79,4 +79,4 @@ class Partitioner {
 } // namespace wms
 } // namespace glite
 
-#endif // EDG_WORKLOAD_PLANNING_PARTITIONER_PARTITIONER_H
+#endif // GLITE_WMS_PLANNING_PARTITIONER_PARTITIONER_H

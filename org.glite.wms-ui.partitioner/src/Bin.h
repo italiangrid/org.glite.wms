@@ -8,8 +8,8 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_PARTITIONER_BIN_H__
-#define EDG_WORKLOAD_PARTITIONER_BIN_H__
+#ifndef GLITE_WMS_PARTITIONER_BIN_H__
+#define GLITE_WMS_PARTITIONER_BIN_H__
 
 #include <vector>
 
@@ -72,4 +72,4 @@ namespace partitioner {
 } // namespace wms
 } // namespace glite
 
-#endif //  EDG_WORKLOAD_PARTITIONER_BIN_H__
+#endif //  GLITE_WMS_PARTITIONER_BIN_H__

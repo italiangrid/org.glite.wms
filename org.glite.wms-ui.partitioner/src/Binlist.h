@@ -8,8 +8,8 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_PARTITIONER_BINLIST_H__
-#define EDG_WORKLOAD_PARTITIONER_BINLIST_H__
+#ifndef GLITE_WMS_PARTITIONER_BINLIST_H__
+#define GLITE_WMS_PARTITIONER_BINLIST_H__
 
 #include "Bin.h"
 
@@ -97,4 +97,4 @@ namespace partitioner {
 } // namespace wmsui
 } // namespace glite
 
-#endif //  EDG_WORKLOAD_PARTITIONER_BINLIST_H__
+#endif //  GLITE_WMS_PARTITIONER_BINLIST_H__

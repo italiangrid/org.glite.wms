@@ -17,8 +17,8 @@
  * \author Alessio Gianelle <gianelle@pd.infn.it>
 */
 
-#ifndef EDG_WORKLOAD_PARTITIONER_PARTITION_H
-#define EDG_WORKLOAD_PARTITIONER_PARTITION_H
+#ifndef GLITE_WMS_PARTITIONER_PARTITION_H
+#define GLITE_WMS_PARTITIONER_PARTITION_H
 
 #include <string>
 #include <vector>
@@ -109,4 +109,4 @@ namespace partitioner {
 } // namespace wms
 } // namespace glite
 
-#endif // EDG_WORKLOAD_PLANNING_PARTITIONER_PARTITION_H
+#endif // GLITE_WMS_PLANNING_PARTITIONER_PARTITION_H
