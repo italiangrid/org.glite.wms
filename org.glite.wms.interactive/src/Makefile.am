@@ -23,7 +23,6 @@ glite_wms_pipe_input_LDADD = \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
         $(ARES_LIBS) \
 	$(EXPAT_STATIC_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
@@ -40,7 +39,6 @@ glite_wms_pipe_output_LDADD = \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
         $(ARES_LIBS) \
 	$(EXPAT_STATIC_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
@@ -56,7 +54,6 @@ glite_wms_job_agent_LDADD = \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-        $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
         $(ARES_LIBS) \
         $(EXPAT_STATIC_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
