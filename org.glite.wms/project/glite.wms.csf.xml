@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.22  2004/05/19 22:34:25  dimeglio
+	Environmental checks are implemented in the global file
+
 	Revision 1.21  2004/05/19 22:01:13  dimeglio
 	Removed old unless condition
-
+	
 	Revision 1.20  2004/05/19 21:56:03  dimeglio
 	Removed old update conditions
 	
@@ -126,8 +129,7 @@
 	<!-- ===============================================
 		 Load targets 
 		 =============================================== -->
-
-	<!-- Load external dependencies targets -->
+	<import file="${global.targets-envchecks.file}" />
 	<import file="${global.targets-external-dependencies.file}" />
 
 	<!-- ===============================================
@@ -224,60 +226,6 @@
 	</target>
 
 	<!-- *****************************************************-->
-	<!-- Environmental checks                                 -->
-	<!-- *****************************************************-->
-	
-	<!-- All environmental checks -->
-	<target name="envchecks" depends="oscheck,javacheck,antcheck,gcccheck" />
-
-	<target name="oscheck">
-		<!-- Operating system -->
-		<condition property="isWindows">
-			<os family="windows"/>
-		</condition>
-		<condition property="isUnix">
-			<os family="unix"/>
-		</condition>
-		<echo>Operating system:		${os.name}</echo>
-	</target>
-			
-	<target name="javacheck">
-		<!-- Java version -->
-		<condition property="isJavaOk">
-			<contains string="${java.version}" substring="${glite.java.version}"/>
-		</condition>
-		<echo>Java version:		${java.version}</echo>
-		<fail unless="isJavaOk">Java JRE version must be ${glite.java.version}_XX</fail>
-		<echo>JAVA_HOME:			${env.JAVA_HOME}</echo>
-	</target>
-			
-	<target name="antcheck">
-		<!--  Ant -->
-		<condition property="isAntOk">
-			<contains string="${ant.version}" substring="${glite.ant.version}"/>
-		</condition>
-		<echo>Ant version:		${ant.version}</echo>
-		<fail unless="isAntOk">Ant version must be ${glite.ant.version}</fail>
-		<echo>ANT_HOME:			${env.ANT_HOME}</echo>
-	</target>
-		
-	<target name="gcccheck" if="isUnix">
-		<!-- Gcc compiler version -->
-		<exec executable="gcc" outputproperty="detected.gcc.version">
-			<arg line="-dumpversion" />
-		</exec>
-		<condition property="isGccOk">
-			<equals arg1="${detected.gcc.version}" arg2="${glite.gcc.version}"/>
-		</condition>
-		<echo>Gcc version:		${detected.gcc.version}</echo>
-		<fail unless="isGccOk">Gcc version must be ${glite.gcc.version}</fail>
-		<exec executable="which" outputproperty="detected.gcc.path">
-			<arg line="gcc" />
-		</exec>
-		<echo>gcc path:			${detected.gcc.path}</echo>
-	</target>
-	
-	<!-- *****************************************************-->
 	<!-- Development tools                                    -->
 	<!-- *****************************************************-->
 	
@@ -287,7 +235,8 @@
  									 chkstyle,
  									 jalopy,
  									 ant-contrib,
- 									 cpptasks"/>		
+ 									 cpptasks,
+ 									 egee-ant-ext"/>		
 	
 	<!-- =====================================================
 		 External libraries
@@ -373,7 +322,7 @@
 		 ==================================================== -->
 	
 	<!-- All libraries -->
- 	<target name="all" depends="evaluate.cvs.tags, org.glite, org.glite.wms, envchecks, devtools, external, project" />		
+ 	<target name="all" depends="evaluate.cvs.tags,defaultenvchecks,org.glite,org.glite.wms,devtools,external,project" />		
 
 	<!-- ====================================================
 		 Print dependecies to console
