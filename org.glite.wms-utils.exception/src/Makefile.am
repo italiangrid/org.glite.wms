@@ -6,11 +6,10 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES    = libglite_wmsutils_exceptions.la 
+lib_LTLIBRARIES    = libglite_wmsutils_exception.la
 
-libglite_wmsutils_exceptions_la_SOURCES = \
-	Exceptions.cpp \
-	utils.cpp
+libglite_wmsutils_exception_la_SOURCES = \
+	Exception.cpp
 
 utilitiesincludedir = $(includedir)/glite/wmsutils/exception
 utilitiesinclude_HEADERS = \

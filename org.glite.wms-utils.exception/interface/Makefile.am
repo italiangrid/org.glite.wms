@@ -9,7 +9,6 @@
 exceptiondir = $(includedir)
 nobase_exception_HEADERS = \
 	glite/wmsutils/exception/exception_codes.h \
-	glite/wmsutils/exception/Exceptions.h \
-	glite/wmsutils/exception/result_codes.h 
+	glite/wmsutils/exception/Exception.h
 
 MAINTAINERCLEANFILES = Makefile.in
