@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.9  2004/08/12 09:51:37  eronchie
+	Revision 1.10  2004/08/12 12:13:13  eronchie
 	Updated
 
+	Revision 1.9  2004/08/12 09:51:37  eronchie
+	Updated
+	
 	Revision 1.8  2004/08/11 13:54:16  eronchie
 	Updated classpath
 	
@@ -156,6 +159,14 @@
                         <equals arg1="${org.glite.wms-ui.wrap-java.version}" arg2="HEAD" />
                 </condition>
 
+		<condition property="gui-java.head">
+                        <equals arg1="${org.glite.wms-ui.gui-java.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="cli-python.head">
+                        <equals arg1="${org.glite.wms-ui.cli-python.version}" arg2="HEAD" />
+                </condition>
+
     	</target>
 
     	<presetdef name="cvs-co">
@@ -264,12 +275,34 @@
                         tag="${org.glite.wms-ui.wrap-java.version}" />
         </target>
 
+	<!-- gui-java -->
+        <target name="gui-java" depends="get.gui-java.head, get.gui-java.tag"/>
+        <target name="get.gui-java.head" if="gui-java.head">
+                <cvs-co package="org.glite.wms-ui.gui-java" />
+        </target>
+        <target name="get.gui-java.tag" unless="gui-java.head">
+                <cvs-co package="org.glite.wms-ui.gui-java"
+                        tag="${org.glite.wms-ui.gui-java.version}" />
+	</target>
+
+	<!-- cli-python -->
+        <target name="cli-python" depends="swig, get.cli-python.head, get.cli-python.tag"/>
+        <target name="get.cli-python.head" if="cli-python.head">
+                <cvs-co package="org.glite.wms-ui.cli-python" />
+        </target>
+        <target name="get.cli-python.tag" unless="cli-python.head">
+                <cvs-co package="org.glite.wms-ui.cli-python"
+                        tag="${org.glite.wms-ui.cli-python.version}" />
+        </target>
+
 	<!-- All project modules -->
  	<target name="project" depends="partitioner,
 					api-cpp,
   				        api-java,
                                         wrap-python,
-					wrap-java"/>
+					wrap-java,
+					gui-java,
+					cli-python"/>
 
 
 	<!-- ====================================================
