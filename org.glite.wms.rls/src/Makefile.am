@@ -15,12 +15,12 @@ libglite_wms_replicaservice_la_SOURCES = \
 	ReplicaServiceReal.cpp \
 	ReplicaServiceException.cpp
 
-libglite_wms_replicaservice_la_LIBADD = $(RM_LIBS)
+libglite_wms_replicaservice_la_LIBADD = $(REPLICA_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcdir)/src \
         $(GLITE_CFLAGS) \
         $(BOOST_CFLAGS) \
-        $(CLASSAD_CFLAGS)
+	$(REPLICA_CFLAGS) 
 
 MAINTAINERCLEANFILES = Makefile.in *.*~

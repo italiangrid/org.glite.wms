@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/10/06 10:53:54  eronchie
+#       Updated
+#       Added REPLICA
+#
 #       Revision 1.2  2004/10/05 13:34:41  monforte
 #       *** WORK IN PROGRESS ***
 #
@@ -97,16 +101,16 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 have_boost=no
-have_classads=no
 have_globus=no
+have_replica=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
-AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_REPLICA([], have_replica=yes, have_replica=no)
 
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_MSG_RESULT(["REPLICA found $have_replica"])
 
 AC_GLITE
 
