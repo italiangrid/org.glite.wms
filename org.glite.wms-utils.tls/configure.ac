@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/06/16 08:24:07  eronchie
+#       Added configure options
+#       WARNING: work in progress
+#
 #       Revision 1.4  2004/06/15 17:35:14  eronchie
 #       Added configure options
 #       WARNING: work in progress
@@ -55,16 +59,6 @@ AC_SUBST(WORKDIR)
 
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
-
-#GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
-#AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
-#GLOBUS_SSL_UTILS_LIBS="-L$STAGE/lib -lglobus_ssl_utils"
-#AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
-
-#GLITE_WORKLOAD_CFLAGS="-I$STAGE/include"
-#AC_SUBST([GLITE_WORKLOAD_CFLAGS])
-#GLITE_WORKLOAD_COMMON_LIBS="-L$STAGE/lib -lglite_wms_exceptions"
-#AC_SUBST([GLITE_WORKLOAD_COMMON_LIBS])
 
 # Checks for programs.
 AC_PROG_CC

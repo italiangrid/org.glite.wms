@@ -22,7 +22,7 @@ ssl_helpersinclude_HEADERS = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_THR_CFLAGS) \
-	$(GLOBUS_SSL_UTILS_CFLAGS) \
+	$(GLITE_CFLAGS) \
 	-D_GNU_SOURCE
 
 MAINTAINERCLEANFILES = Makefile.in
