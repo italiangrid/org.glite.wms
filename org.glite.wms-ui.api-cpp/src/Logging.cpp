@@ -1,4 +1,4 @@
-#include "Logging.h"
+#include "glite/wmsui/api/Logging.h"
 #include "glite/wmsui/api/JobExceptions.h"
 #include "glite/wmsui/partitioner/Partitioner.h"
 

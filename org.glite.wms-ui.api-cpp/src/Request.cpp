@@ -1,4 +1,5 @@
 #include "glite/wmsui/api/Request.h"
+#include "glite/wmsui/api/Logging.h"
 #include "glite/wmsui/api/JobExceptions.h"
 /************************  Network Server ******************/
 #include "NSClient.h"

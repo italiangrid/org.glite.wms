@@ -10,8 +10,7 @@ lib_LTLIBRARIES = libglite_wmsui_client.la
 
 clientdir = $(includedir)/glite/wmsui/client
 client_HEADERS = \
-	CredentialException.h \
-	Logging.h 
+	CredentialException.h 
 
 GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(top_srcdir)/../org.glite.wms.manager-ns-client/build/src \
         -L$(top_srcdir)/../org.glite.wms.manager-ns-commands/build/src \
