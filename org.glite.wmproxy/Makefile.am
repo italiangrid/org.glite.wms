@@ -11,6 +11,8 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
+#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#
 
 
 ## Process this file with automake to produce Makefile.in
