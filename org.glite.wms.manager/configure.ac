@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2004/10/13 22:02:23  eronchie
+#       Added ism dependency
+#
 #       Revision 1.7  2004/10/01 13:52:12  pandreet
 #       Build files for unit tests
 #
@@ -127,6 +130,7 @@ have_glite_wms_helper=no
 have_glite_wms_jss=no
 have_glite_lb=no
 have_glite_security=no
+have_glite_wms_ism=no
 
 AC_GLITE
 
@@ -144,6 +148,9 @@ AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
 
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+
+AC_GLITE_WMS_JDL([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
+AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
