@@ -18,7 +18,7 @@
 #define EDG_WLU_SOURCE_NS "NetworkServer"
 #define CHAR_BUFFER_SIZE      1024
 #define JOB_CANCEL_ERR             -1
-#define GLITE_WMS_LOG_DESTINATION "GLITE_WMS_LOG_DESTINATION"
+#define GLITE_LB_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 
 namespace glite { 
 

@@ -5,7 +5,7 @@
 // Logging Class Includes:
 #include "glite/lb/producer.h"
 
-#define GLITE_WMS_LOG_DESTINATION "GLITE_WMS_LOG_DESTINATION"
+#define GLITE_LB_LOG_DESTINATION "EDG_LB_LOG_DESTINATION" // TBD: change when LB provides new values
 
 using namespace std ;
 using namespace glite::wmsutils::exception ; //Exception
@@ -29,7 +29,7 @@ void Logging::init ( const string& nsHost  , int nsPort, glite::wmsutils::jobid:
 	this->nsPort = nsPort;
 	cout << "Logging::init For: "<< id->toString() << endl ;
 	string METHOD = "lbInit(const string& nsHost)"  ;
-	if   ( ! getenv ( GLITE_WMS_LOG_DESTINATION) )
+	if   ( ! getenv ( GLITE_LB_LOG_DESTINATION) )
 		if (edg_wll_SetParamString( ctx, EDG_WLL_PARAM_DESTINATION, nsHost.c_str() ) )
 			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB initialisation failed (set destination)" ) ;
 }
@@ -180,7 +180,7 @@ const char* Logging::error_message ( const char* api  ){
 	char *msg, *dsc ;
 	edg_wll_Error(  ctx , &msg , &dsc ) ;
 	sprintf ( error_message , "%s %s %s%s%s%s%s", api,
-	getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , ")" )  ;
+	getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , ")" )  ;
 	return error_message ;
 } ;
 

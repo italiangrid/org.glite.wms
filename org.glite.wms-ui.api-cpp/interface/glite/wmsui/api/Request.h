@@ -21,7 +21,7 @@
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/Event.h"
 
-#define GLITE_WMS_LOG_DESTINATION "GLITE_WMS_LOG_DESTINATION"
+#define GLITE_LB_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 // Namespace definition:
 namespace glite {
 

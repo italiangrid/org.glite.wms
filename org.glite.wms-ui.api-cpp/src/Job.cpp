@@ -129,15 +129,12 @@ void Job::operator=(const Job& job) {
        jad  = new  JobAd (*(job.jad)) ;
     GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
-
 Job::~Job() {
 	GLITE_STACK_TRY("Job::~Job");
-	//if (jid!=NULL) delete jid ;
-	//if (jad!=NULL) delete jad ;
+	if (jid) delete jid ;
+	if (jad) delete jad ;
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
-
-
 /*******
 *  initialise ()
 * STatic MEthod
@@ -667,7 +664,7 @@ void Job::nsSubmit(const string&  lb_addr ) {
            char *msg, *dsc ;
            edg_wll_Error(  ctx , &msg , &dsc ) ;
            sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform  edg_wll_RegisterJobSync  at: ",
-           getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+           getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
            throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,  error_message) ;
      }
      // CheckPointable Job:
@@ -808,7 +805,7 @@ void Job::lbInit(  const string& nsHost  ) {
         (edg_wll_InitContext( &ctx )) ||
         (edg_wll_SetParam( ctx, EDG_WLL_PARAM_SOURCE, EDG_WLL_SOURCE_USER_INTERFACE ) )
      ) throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB initialisation failed" ) ;
-     if   ( ! getenv ( GLITE_WMS_LOG_DESTINATION) )
+     if   ( ! getenv ( GLITE_LB_LOG_DESTINATION) )
           if (edg_wll_SetParamString( ctx, EDG_WLL_PARAM_DESTINATION, nsHost.c_str() ) )
                throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB initialisation failed (set destination)" ) ;
 }
