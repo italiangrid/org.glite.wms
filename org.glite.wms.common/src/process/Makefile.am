@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wl_process.la
+lib_LTLIBRARIES = libglite_wms_process.la
 
-libglite_wl_process_la_SOURCES = \
+libglite_wms_process_la_SOURCES = \
 	process.cpp \
 	subprocess.cpp \
 	user.cpp

@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wl_LDIF2ClassAd.la
+lib_LTLIBRARIES = libglite_wms_LDIF2ClassAd.la
 
-libglite_wl_LDIF2ClassAd_la_SOURCES = \
+libglite_wms_LDIF2ClassAd_la_SOURCES = \
 	LDAPQuery.cpp \
 	LDAPSynchConnection.cpp \
 	FileStreamConnection.cpp \
