@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.4  2004/07/23 14:47:01  eronchie
+	Removed....
+
 	Revision 1.3  2004/07/21 18:22:38  eronchie
 	Changed wms in wms-utils
-
+	
 	Revision 1.2  2004/07/16 14:56:56  flammer
 	Corrected input path of build.properties.
 	
@@ -33,7 +36,7 @@
 	
 -->
 
-<project name="WMS jobid component common properties">
+<project name="WMS Utils jobid component common properties">
 
 	<!-- Include build properties to allow overwriting 
 	     of properties for subsystem                    -->
@@ -62,9 +65,4 @@
 	
 	<import file="${component.general.properties.file}" />
 						
-	<!-- ======================================================
-		 Define extra properties here ...
-		 ====================================================== -->
-		 
-		 						
 </project>
