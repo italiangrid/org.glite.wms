@@ -254,6 +254,9 @@ try {
   purchaser::cemon::create_t* create_cemon_purchaser = 0;
   purchaser::cemon::destroy_t* destroy_cemon_purchaser = 0;
   
+  boost::shared_ptr<void> ism_ii_purchaser_handle;
+  boost::shared_ptr<void> ism_cemon_purchaser_handle;
+
   // Try to execute ISM purchaser thread
   if (string(brlib)=="libglite_wms_helper_broker_ism.so") {
      
@@ -268,7 +271,7 @@ try {
       return EXIT_FAILURE;
     }
 
-    boost::shared_ptr<void> ism_ii_purchaser_handle(prh1, dlclose);
+    ism_ii_purchaser_handle.reset(prh1, dlclose);
 
     char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";	
     void* prh2 = dlopen(prlib2,RTLD_NOW|RTLD_GLOBAL);
@@ -281,7 +284,7 @@ try {
       return EXIT_FAILURE;
     }
 
-    boost::shared_ptr<void> ism_cemon_purchaser_handle(prh2, dlclose);
+    ism_cemon_purchaser_handle.reset(prh2, dlclose);
 
     // load the symbols
     create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh1, "create");
