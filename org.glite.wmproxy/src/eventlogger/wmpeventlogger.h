@@ -7,6 +7,8 @@
 #ifndef GLITE_WMS_WMPROXY_WMPLOGGER_H
 #define GLITE_WMS_WMPROXY_WMPLOGGER_H
 
+#include <vector>
+
 // DagAd
 #include "server/wmpexpdagad.h"
 #include "glite/wms/jdl/JobAd.h"
@@ -39,8 +41,8 @@ class WMPLogger  {
 		void unregisterProxyRenewal();
 			
 		void registerJob(glite::wms::jdl::JobAd *ad);
-		void registerDag(WMPExpDagAd *ad);
-		void registerPartitionable(WMPExpDagAd *ad, int res_num);
+		std::vector<std::string> registerDag(WMPExpDagAd *ad);
+		std::vector<std::string> registerPartitionable(WMPExpDagAd *ad, int res_num);
 
 		void logAccepted(const std::string &jid);
 		void logRefused(const std::string &jid);

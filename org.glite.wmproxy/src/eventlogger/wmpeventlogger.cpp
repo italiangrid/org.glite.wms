@@ -130,16 +130,6 @@ WMPLogger::registerJob(JobAd *jad)
 {
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	cerr<<"JOBAD: "<<jad->toString()<<endl;
-	cerr<<"ctx: "<<ctx<<endl;
-	cerr<<"id->getId(): "<<id->getId()<<endl;
-	cerr<<"jad->toSubmissionString().c_str(): "<<jad->toSubmissionString().c_str()<<endl;
-	cerr<<"str_addr: "<<str_addr<<endl;
-	/*string proxy = "/tmp/x509up_u503";
-	edg_wll_SetParamString(ctx, EDG_WLL_PARAM_X509_PROXY, proxy.c_str());
-	string proxyout;*/
-	cerr<<"BEFORE edg_wll_RegisterJobSync"<<endl;
-	
 	//jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
 			jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
@@ -152,8 +142,6 @@ WMPLogger::registerJob(JobAd *jad)
 	if (jad->hasAttribute(JDL::USERTAGS)) {
 		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
 	}
-	
-	cerr<<"----------- After if"<<endl;
 } 
 
 void
@@ -213,7 +201,7 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
     	//delete []jdls_char;
 }
 
-void
+vector<string>
 WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 {
 	char str_addr[1024];
@@ -239,9 +227,11 @@ WMPLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
 	}
 	dag->setJobIds(jobids);
+	
+	return jobids;
 }
 
-void
+vector<string>
 WMPLogger::registerDag(WMPExpDagAd *dag)
 {
 	char str_addr[1024];
@@ -265,7 +255,9 @@ WMPLogger::registerDag(WMPExpDagAd *dag)
 	for (unsigned int i = 0; i < dag->size(); i++) {
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
 	}
-	dag->setJobIds(jobids);	
+	dag->setJobIds(jobids);
+	
+	return jobids;
 }
 
 
