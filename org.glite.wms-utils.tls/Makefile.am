@@ -7,6 +7,12 @@
 ## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
+## Subdirectories list
+SUBDIRS = interface src
 
 ## Subdirectories list
 SUBDIRS = interface src examples 
