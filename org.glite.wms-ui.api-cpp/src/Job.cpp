@@ -6,8 +6,8 @@
 /* Open SSL include files */
 #include <globus_common.h>
 
-#include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
@@ -145,6 +145,7 @@ Job::~Job() {
 ********/
 void Job::initialise( ){
   string METHOD = "Job::initialise( )" ;
+  /*
   edg_wlc_SSLInitialization();
 #ifndef WITHOUT_THREAD
 #else
@@ -153,7 +154,7 @@ void Job::initialise( ){
 #endif
   if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
       throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
-
+  */
 }
 
 JobId* Job::getJobId()  {
