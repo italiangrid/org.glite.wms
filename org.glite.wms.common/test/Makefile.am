@@ -19,8 +19,8 @@ WL_CMN_UTILITIES_TEST = classadclient classadextractor \
         newclient newserver \
         qclient qserver queue show
 
-WL_CMN_UT_TEST = glite-wl-listsTest \
-        glite-wl-poplist \
+WL_CMN_UT_TEST = glite_wl_listsTest \
+	glite-wl-poplist \
         glite-wl-showlistTest
 
 WL_CMN_OTHER_TEST = config cconfig gsi-mkdir sftpput

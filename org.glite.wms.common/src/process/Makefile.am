@@ -6,11 +6,9 @@
 ## *
 ## *********************************************************************
 
-#if AMC_BUILD_CMN_PROCESS
-lib_LTLIBRARIES = libglite_wms_process.la
-#endif
+lib_LTLIBRARIES = libglite_wl_process.la
 
-libglite_wms_process_la_SOURCES = \
+libglite_wl_process_la_SOURCES = \
 	process.cpp \
 	subprocess.cpp \
 	user.cpp

@@ -6,44 +6,37 @@
 ## *
 ## *********************************************************************
 
-CMN_UT_EX=libglite_wms_exceptions.la
+noinst_LTLIBRARIES = libglite_wl_quota.la
+sbin_PROGRAMS      = glite-wl-quota-adjust
 
-CMN_UT_JUT=libglite_wms_jutil.la
+lib_LTLIBRARIES = libglite_wl_exceptions.la \
+	libglite_wl_jutil.la \
+	libglite_wl_util.la \
+	libglite_wl_globus_ftp_util.la \
+	libglite_wl_iiattrutil.la
 
-CMN_UT=libglite_wms_util.la libglite_wms_globus_ftp_util.la
+glite_wl_quota_adjust_LDFLAGS = -all-static
 
-CMN_UT_GLUE=libglite_wms_iiattrutil.la
-
-noinst_LTLIBRARIES = libglite_wms_quota.la
-sbin_PROGRAMS      = glite-wms-quota-adjust
-
-lib_LTLIBRARIES = $(CMN_UT_EX) \
-	$(CMN_UT) \
-	$(CMN_UT_GLUE) \
-	$(CMN_UT_JUT)
-
-glite_wms_quota_adjust_LDFLAGS = -all-static
-
-glite_wms_quota_adjust_SOURCES = \
+glite_wl_quota_adjust_SOURCES = \
         glite_wms_quota_adjust.cpp
 
-glite_wms_quota_adjust_LDADD = \
-        ../configuration/libglite_wms_conf.la \
-        ./libglite_wms_util.la \
+glite_wl_quota_adjust_LDADD = \
+        ../configuration/libglite_wl_conf.la \
+        ./libglite_wl_util.la \
          $(BOOST_LIBS) $(CLASSAD_LIBS)
 
-libglite_wms_globus_ftp_util_la_SOURCES = \
+libglite_wl_globus_ftp_util_la_SOURCES = \
 	globus_ftp_mkdir.cpp \
 	globus_ftp_put.cpp \
 	globus_ftp_exists.cpp
-libglite_wms_globus_ftp_util_la_LDFLAGS = -rpath @prefix@
+libglite_wl_globus_ftp_util_la_LDFLAGS = -rpath @prefix@
 
-libglite_wms_exceptions_la_SOURCES = \
+libglite_wl_exceptions_la_SOURCES = \
 	Exceptions.cpp \
 	utils.cpp
-libglite_wms_exceptions_la_LDFLAGS = -rpath @prefix@
+libglite_wl_exceptions_la_LDFLAGS = -rpath @prefix@
 
-libglite_wms_util_la_SOURCES = \
+libglite_wl_util_la_SOURCES = \
 	filecontainer.cpp \
 	fstreamlock.cpp \
 	FileList.cpp \
@@ -55,10 +48,10 @@ libglite_wms_util_la_SOURCES = \
 	mixed.cpp \
 	boost_fs_add.cpp \
 	classad_utils.cpp
-libglite_wms_util_la_LDFLAGS = -rpath @prefix@
-libglite_wms_util_la_LIBADD = -lstdc++
+libglite_wl_util_la_LDFLAGS = -rpath @prefix@
+libglite_wl_util_la_LIBADD = -lstdc++
 
-libglite_wms_jutil_la_SOURCES = \
+libglite_wl_jutil_la_SOURCES = \
         filecontainer.cpp \
         fstreamlock.cpp \
         FileList.cpp \
@@ -71,10 +64,10 @@ libglite_wms_jutil_la_SOURCES = \
         boost_fs_add.cpp \
         classad_jutils.cpp 
 
-libglite_wms_iiattrutil_la_SOURCES = \
+libglite_wl_iiattrutil_la_SOURCES = \
 	ii_attr_utils.cpp
 
-libglite_wms_quota_la_SOURCES = \
+libglite_wl_quota_la_SOURCES = \
 	quota.cpp
 
 classad_jutils.lo: classad_jutils.cpp classad_utils.h
@@ -117,9 +110,11 @@ GLUE_CFLAGS = $(GLOBUS_LDAP_CFLAGS)
 
 QUOTA_CFLAGS = -DB_THREAD_SAFE
 
-AM_CPPFLAGS = -I$(top_srcdir)/src/ \
-			  -I$(top_srcdir)/src/logger \
-			  $(GLUE_CFLAGS) $(UT_CFLAGS) $(QUOTA_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/logger \
+	$(GLUE_CFLAGS) \
+	$(UT_CFLAGS) \
+	$(QUOTA_CFLAGS)
 
 EXTRA_DIST = \
 	triple.h \

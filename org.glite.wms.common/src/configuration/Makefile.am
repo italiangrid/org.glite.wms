@@ -6,10 +6,10 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_conf.la \
-	libglite_wms_conf_wrapper.la
+lib_LTLIBRARIES = libglite_wl_conf.la \
+	libglite_wl_conf_wrapper.la
 
-libglite_wms_conf_la_SOURCES = \
+libglite_wl_conf_la_SOURCES = \
 	Configuration.cpp \
 	JCConfiguration.cpp \
 	NSConfiguration.cpp \
@@ -20,7 +20,7 @@ libglite_wms_conf_la_SOURCES = \
 	exceptions.cpp \
 	ModuleType.cpp
 
-libglite_wms_conf_wrapper_la_SOURCES = \
+libglite_wl_conf_wrapper_la_SOURCES = \
 	initializer.cpp \
 	cwrapper.cpp
 
@@ -48,7 +48,7 @@ EXTRA_DIST = JCConfiguration.h.G \
 	Configuration.def
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-			  $(BOOST_CPPFLAGS) $(CLASSAD_CPPFLAGS)
+	$(BOOST_CPPFLAGS) $(CLASSAD_CPPFLAGS)
 
 CLEANFILES = $(srcdir)/JCConfiguration.h \
         $(srcdir)/LMConfiguration.h \

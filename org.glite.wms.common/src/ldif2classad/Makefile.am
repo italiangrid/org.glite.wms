@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_LDIF2ClassAd.la
+lib_LTLIBRARIES = libglite_wl_LDIF2ClassAd.la
 
-libglite_wms_LDIF2ClassAd_la_SOURCES = \
+libglite_wl_LDIF2ClassAd_la_SOURCES = \
 	LDAPQuery.cpp \
 	LDAPSynchConnection.cpp \
 	FileStreamConnection.cpp \
@@ -30,8 +30,8 @@ ldif2classadinclude_HEADERS = \
 	exceptions.h 
 
 AM_CPPFLAGS = $(CLASSAD_CPPFLAGS) \
-			  $(GLOBUS_LDAP_CPPFLAGS) \
-			  -DWITH_LDAP_EXCEPTIONS \
-			  -DDONT_QUOTE_TRUE_FALSE
+	$(GLOBUS_LDAP_CPPFLAGS) \
+	-DWITH_LDAP_EXCEPTIONS \
+	-DDONT_QUOTE_TRUE_FALSE
 
 MAINTAINERCLEANFILES = Makefile.in

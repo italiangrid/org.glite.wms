@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_logger.la
+lib_LTLIBRARIES = libglite_wl_logger.la
 
-libglite_wms_logger_la_SOURCES = \
+libglite_wl_logger_la_SOURCES = \
 	common.cpp \
 	logbuf.cpp \
 	logstream.cpp \
@@ -28,7 +28,7 @@ loggerinclude_HEADERS = \
 	manipulators.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-			  $(BOOST_CPPFLAGS)
+	$(BOOST_CPPFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
 
