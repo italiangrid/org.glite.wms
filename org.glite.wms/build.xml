@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.49  2004/08/08 17:00:47  eronchie
+	Start adding manager
+
 	Revision 1.48  2004/08/08 15:09:05  dimeglio
 	Modified to use new Ant launcher (work in progress)
-
+	
 	Revision 1.47  2004/08/04 07:34:45  eronchie
 	Added cppunit
 	
@@ -545,6 +548,12 @@
                      inheritall="false" /> -->
         </target>
 
+	<target name="manager" unless="setenvonly" depends="boost,classads,globus,expat,ares,common,purger,jdl,helper,jobsubmission">
+                <ant dir="${workspace.dir}/${subsystem.name}.manager"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="thirdparty-bypass,
    					     thirdparty-globus_gridftp_server,
@@ -565,6 +574,7 @@
 					     manager-ns-commands,
 					     manager-ns-client,
 					     manager-ns-daemon,	
-					     jobsubmission" />
+					     jobsubmission,
+					     manager" />
 		
 </project>

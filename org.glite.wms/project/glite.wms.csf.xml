@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.54  2004/08/08 17:00:47  eronchie
+	Start adding manager
+
 	Revision 1.53  2004/08/04 07:34:45  eronchie
 	Added cppunit
-
+	
 	Revision 1.52  2004/07/28 17:55:43  eronchie
 	Added broker
 	
@@ -365,6 +368,10 @@
                         <equals arg1="${org.glite.wms.jobsubmission.version}" arg2="HEAD" />
                 </condition>
 
+		<condition property="manager.head">
+                        <equals arg1="${org.glite.wms.manager.version}" arg2="HEAD" />
+                </condition>
+
 		<condition property="purger.head">
                         <equals arg1="${org.glite.wms.purger.version}" arg2="HEAD" />
                 </condition>
@@ -625,6 +632,16 @@
             <cvs-co package="org.glite.wms.jobsubmission"
                     tag="${org.glite.wms.jobsubmission.version}" />
         </target>	
+
+	<!-- Manager -->
+        <target name="manager" depends="boost,classads,globus,expat,ares,common,jdl,purger,helper,jobsubmission,get.manager.head, get.manager.tag"/>
+        <target name="get.manager.head" if="manager.head">
+            <cvs-co package="org.glite.wms.manager" />
+        </target>
+        <target name="get.manager.tag" unless="manager.head">
+            <cvs-co package="org.glite.wms.manager"
+                    tag="${org.glite.wms.manager.version}" />
+        </target>
 		
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-bypass,
@@ -646,7 +663,8 @@
 					manager-ns-commands,
 					manager-ns-client,
 					manager-ns-daemon,
-					jobsubmission"/>
+					jobsubmission,
+					manager"/>
 
 
 	<!-- ====================================================
