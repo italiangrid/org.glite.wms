@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.7  2004/10/13 10:22:20  fpacini
+	glite_wms.m4 includes jdl and common
+
 	Revision 1.6  2004/10/11 10:41:03  fpacini
 	added dependencies
-
+	
 	Revision 1.5  2004/08/12 17:22:18  eronchie
 	Added VOMS dependency
 	
@@ -75,7 +78,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 swig.m4 python.m4 glite_wmsutils.m4 glite_wms_jdl.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms_common.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 swig.m4 python.m4 glite_wmsutils.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms.m4"/>
 
 
 </project>
