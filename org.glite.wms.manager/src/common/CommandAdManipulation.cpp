@@ -42,35 +42,6 @@ std::string const command_requirements(
   "]"
 );
 
-const std::string
-submit_command_requirements("[requirements="
-                            "other.version==\"1.0.0\""
-                            "&& other.command == \"jobsubmit\""
-                            "&& isclassad(other.arguments)"
-                            "&& isclassad(other.arguments.ad)"
-                            "&& isstring(other.arguments.ad.edg_jobid)]"
-                            "&& isstring(other.arguments.ad.X509UserProxy)]"
-                           );
-
-const std::string
-resubmit_command_requirements(
-                              "[requirements="
-                              "other.version==\"1.0.0\""
-                              "&& other.command == \"jobresubmit\""
-                              "&& isclassad(other.arguments)"
-                              "&& isstring(other.arguments.id)"
-                              "&& isstring(other.arguments.lb_sequence_code)]"
-                              );
-
-const std::string
-cancel_command_requirements("[requirements="
-                            "other.version==\"1.0.0\""
-                            "&& other.command == \"jobcancel\""
-                            "&& isclassad(other.arguments)"
-                            "&& isstring(other.arguments.id)"
-                            "&& isstring(other.arguments.lb_sequence_code)"
-                            "]"
-                            );
 } // {anonymous}
 
 bool
@@ -80,7 +51,7 @@ command_is_valid(classad::ClassAd const& command_ad)
     utilities::parse_classad(command_requirements)
   );
 
-  return utilities::left_matches_right(command_ad, *command_ad_requirements);
+  return utilities::right_matches_left(command_ad, *command_ad_requirements);
 }
 
 std::string
@@ -111,13 +82,7 @@ submit_command_create(classad::ClassAd* job_ad)
   return result;
 }
 
-bool
-submit_command_is_valid(classad::ClassAd const& submit_command_ad)
-{
-  boost::scoped_ptr<classad::ClassAd> rhs(utilities::parse_classad(submit_command_requirements));
 
-  return utilities::left_matches_right(submit_command_ad, *rhs);
-}
 
 classad::ClassAd const*
 submit_command_get_ad(classad::ClassAd const& submit_command_ad)
@@ -143,13 +108,7 @@ resubmit_command_create(std::string const& job_id, std::string const& sequence_c
   return result;
 }
 
-bool
-resubmit_command_is_valid(classad::ClassAd const& command_ad)
-{
-  boost::scoped_ptr<classad::ClassAd> rhs(utilities::parse_classad(resubmit_command_requirements));
 
-  return utilities::left_matches_right(command_ad, *rhs);
-}
 
 std::string
 resubmit_command_get_id(classad::ClassAd const& command_ad)
@@ -180,13 +139,7 @@ cancel_command_create(std::string const& job_id)
   return result;
 }
 
-bool
-cancel_command_is_valid(classad::ClassAd const& cancel_command_ad)
-{
-  boost::scoped_ptr<classad::ClassAd> rhs(utilities::parse_classad(cancel_command_requirements));
 
-  return utilities::left_matches_right(cancel_command_ad, *rhs);
-}
 
 std::string
 cancel_command_get_id(classad::ClassAd const& cancel_command_ad)
