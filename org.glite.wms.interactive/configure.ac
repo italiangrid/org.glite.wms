@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/09/21 19:23:59  glbuild
+#       modified module.version
+#
 #       Revision 1.3  2004/08/18 08:07:23  eronchie
 #       Added internal and external dependencies
 #
@@ -35,7 +38,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Interactive], [0.0.0])
+AC_INIT([GLite WMS Interactive], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glite_wms_pipe_input.c])
@@ -121,3 +124,4 @@ AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/README])
 
 AC_OUTPUT
+
