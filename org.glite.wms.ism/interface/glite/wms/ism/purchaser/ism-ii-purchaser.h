@@ -9,6 +9,7 @@
 #define GLITE_WMS_ISM_PURCHASER_ISM_II_PURCHASER_H
 
 #include <string>
+#include "glite/wms/ism/purchaser/common.h"
  
 namespace glite {
 namespace wms {
@@ -18,10 +19,6 @@ namespace purchaser {
 class ism_ii_purchaser
 {
 public:
-  enum exec_mode_t {
-    once,
-    loop
-  }; 
                 
   ism_ii_purchaser(
     std::string const& hostname,
@@ -51,6 +48,19 @@ private:
   exec_mode_t m_mode;
   size_t m_interval;
 };
+
+namespace ii {
+// the types of the class factories
+typedef ism_ii_purchaser* create_t(std::string const& hostname,
+    int port,
+    std::string const& distinguished_name,
+    int timeout = 30,
+    exec_mode_t mode = loop,
+    size_t interval = 30
+  );
+
+typedef void destroy_t(ism_ii_purchaser*);
+}
                 
 } // namespace purchaser
 } // namespace ism

@@ -43,6 +43,11 @@ namespace purchaser {
  bool expand_glueceid_info(gluece_info_type& gluece_info);
  timestamp_type get_current_time(void);
 
+ enum exec_mode_t {
+   once,
+   loop
+ };
+
 } // namespace purchaser
 } // namespace ism
 } // namespace wms

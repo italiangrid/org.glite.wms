@@ -7,7 +7,6 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/regex.hpp>
-#include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/ce/monitor-client-api-c/CEEvent.h"
 
@@ -40,6 +39,9 @@ ism_cemon_purchaser::ism_cemon_purchaser(
 
 void ism_cemon_purchaser::operator()()
 {
+  // History of glueceid already inserted into the ISM
+  //set<std::string> gluece_info_history;
+ 
   do {
     
     gluece_info_container_type gluece_info_container;
@@ -78,7 +80,7 @@ void ism_cemon_purchaser::operator()()
 	// CE whose schema is to be retrieved.
 	while(--n) {
 	  string gluece_str;
-	  gluece_str.assign(ceE->getNextEventMessage());   
+	  gluece_str.assign(ceE->getNextEventMessage());
 	  ldif2classad::LDIFObject ldif_ce;
 	  boost::escaped_list_separator<char> gluece_sep("","\n","");
 	  boost::tokenizer<boost::escaped_list_separator<char> > gluece_tok(gluece_str,gluece_sep);
@@ -109,12 +111,22 @@ void ism_cemon_purchaser::operator()()
           ldif_ce.EvaluateAttribute("GlueCEUniqueID", GlueCEUniqueID);
 	  
           if (!GlueCEUniqueID.empty()) {
-	    
-            gluece_info_type ceAd(
-	      ldif_ce.asClassAd(m_multi_attributes.begin(), m_multi_attributes.end())
-            );
-	    gluece_info_container[GlueCEUniqueID] = ceAd;
+	    Debug("CEMonitor info for " << GlueCEUniqueID << "... Ok" << endl);
+            // Check whether the gluece_info has already been inserted into the ISM, on not...
+	    //if (gluece_info_history.find(GlueCEUniqueID) == gluece_info_history.end()) {
+
+              gluece_info_type ceAd(
+                ldif_ce.asClassAd(m_multi_attributes.begin(), m_multi_attributes.end())
+              );
+	      gluece_info_container[GlueCEUniqueID] = ceAd;
+            //}
+            //else {
+            //  Debug(GlueCEUniqueID << "...already in ISM");
+            //}
           }
+	  else {
+	    Warning("Unable to evaluate GlueCEUniqueID" << endl);
+	  }
 	} // while
        }
       }
@@ -134,8 +146,9 @@ void ism_cemon_purchaser::operator()()
         get_ism().insert(
 	  make_ism_entry(it->first, get_current_time(), it->second)
         );
-	Debug(*it->second << endl);
-	//} catch(...) {
+        //gluece_info_history.insert(it->first);
+       
+        //} catch(...) {
         //Warning("Caught exception while fetching " << it->first
         //        << " IS information.");
 	//}
@@ -147,6 +160,23 @@ void ism_cemon_purchaser::operator()()
     
   } while (m_mode);
 }
+
+namespace cemon {
+// the class factories
+
+extern "C" ism_cemon_purchaser* create(std::vector<std::string> const& service,
+    std::string const& topic,
+    int rate = 30,
+    exec_mode_t mode = loop,
+    size_t interval = 30
+) {
+    return new ism_cemon_purchaser(service, topic, rate, mode, interval);
+}
+
+extern "C" void destroy(ism_cemon_purchaser* p) {
+    delete p;
+}
+} 
 
 } // namespace purchaser
 } // namespace ism

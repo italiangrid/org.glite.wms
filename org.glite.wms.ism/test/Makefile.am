@@ -23,6 +23,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/src/autogen/monitor_client \
         -I$(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/include \
         $(GLITE_CFLAGS) \
+	$(CLASSAD_CFLAGS) \
+	$(BOOST_CFLAGS) \
+	$(GLITE_WMS_COMMON_LOGGER_CFLAGS) \
         $(GLITE_WMS_ISM_CFLAGS) 
 
 MAINTAINERCLEANFILES = Makefile.in *~

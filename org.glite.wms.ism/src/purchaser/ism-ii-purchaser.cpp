@@ -4,7 +4,6 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 // $Id$
-#include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 
 #include "glite/wms/common/ldif2classad/LDAPQuery.h"
@@ -267,37 +266,38 @@ ism_ii_purchaser::ism_ii_purchaser(
 
 void ism_ii_purchaser::operator()()
 {
+  // History of glueceid already inserted into the ISM
+  //set<std::string> gluece_info_history;
   do {
     try {
       gluece_info_container_type gluece_info_container;
-      std::vector<gluece_info_container_type::const_iterator> gluece_info_to_remove; 
       prefetchGlueCEinfo(m_hostname, m_port, m_dn, m_timeout, gluece_info_container);
       		
       for (gluece_info_iterator it = gluece_info_container.begin();
           it != gluece_info_container.end(); it++) {
 
-        bool purchasing_ok =
-          fetch_gluece_info(it->second) &&
-          expand_glueceid_info(it->second);
+        // Check whether the gluece_info has already been inserted into the ISM, on not...
+        //if (gluece_info_history.find(it->first) == gluece_info_history.end()) {
 
-        if (purchasing_ok) {
-          insert_aux_requirements(it->second);
-          boost::mutex::scoped_lock l(get_ism_mutex());
-          get_ism().insert(make_ism_entry(it->first, get_current_time(), it->second));
-        }
-        else {
+          bool purchasing_ok =
+            fetch_gluece_info(it->second) &&
+            expand_glueceid_info(it->second);
 
-          Warning("Purchasing from " << it->first << " failed...");
-	  gluece_info_to_remove.push_back(it);		
-        }
-      }
-      // We have to remove not responding entries from the ISM...
-      {
-        boost::mutex::scoped_lock l(get_ism_mutex());
-        for (std::vector<gluece_info_container_type::const_iterator>::const_iterator it = gluece_info_to_remove.begin();
- 	  it != gluece_info_to_remove.end(); it++) {
-          get_ism().erase((*it)->first);
-        }
+          if (purchasing_ok) {
+            insert_aux_requirements(it->second);
+            boost::mutex::scoped_lock l(get_ism_mutex());
+            get_ism().insert(make_ism_entry(it->first, get_current_time(), it->second));
+          //  gluece_info_history.insert(it->first);
+          }
+          else {
+
+            Warning("Purchasing from " << it->first << " failed...");
+          }
+        //}
+        //else {
+        //  Debug(it->first << "...already in ISM");
+        //}
+ 
       }
       if (m_mode) sleep(m_interval);
     }
@@ -305,6 +305,24 @@ void ism_ii_purchaser::operator()()
       Warning("Failed to purchase info from " << m_hostname << ":" << m_port);
     }
   } while (m_mode);
+}
+
+namespace ii {
+// the class factories
+
+extern "C" ism_ii_purchaser* create(std::string const& hostname,
+    int port,
+    std::string const& distinguished_name,
+    int timeout = 30,
+    exec_mode_t mode = loop,
+    size_t interval = 30) 
+{
+    return new ism_ii_purchaser(hostname, port, distinguished_name, timeout, mode, interval);
+}
+
+extern "C" void destroy(ism_ii_purchaser* p) {
+    delete p;
+}
 }
 
 } // namespace purchaser

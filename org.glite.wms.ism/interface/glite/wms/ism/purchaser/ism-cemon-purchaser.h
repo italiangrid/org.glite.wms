@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include "glite/wms/ism/purchaser/common.h"
 
 namespace glite {
 namespace wms {
@@ -19,10 +20,6 @@ namespace purchaser {
 class ism_cemon_purchaser
 {
 public:
-  enum exec_mode_t {
-    once,
-    loop
-  }; 
                 
   ism_cemon_purchaser(
     std::vector<std::string> const& service,
@@ -51,7 +48,18 @@ private:
   std::vector<std::string> m_multi_attributes;
   std::vector<std::string> m_services;
 };
-                
+
+namespace cemon {
+// the types of the class factories
+typedef ism_cemon_purchaser* create_t(std::vector<std::string> const& service,
+    std::string const& topic,
+    int rate = 30,
+    exec_mode_t mode = loop,
+    size_t interval = 30
+);
+typedef void destroy_t(ism_cemon_purchaser*);
+}
+
 } // namespace purchaser
 } // namespace ism
 } // namespace wms
