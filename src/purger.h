@@ -5,30 +5,28 @@
 //
 // $Id$
 
-#ifndef EDG_WORKLOAD_NETWORKSERVER_UTILS_PURGER_H
-#define EDG_WORKLOAD_NETWORKSERVER_UTILS_PURGER_H
+#ifndef GLITE_WMS_PURGER_PURGER_H
+#define GLITE_WMS_PURGER_PURGER_H
 
 #include <boost/filesystem/operations.hpp> 
 
-namespace edg {
-namespace workload {
-namespace common {
+namespace glite {
+namespace wms {
 namespace jobid {
 class JobId;
 } // namespace jobid
-} // namespace common
 namespace purger {
 
  bool purgeStorageEx(const boost::filesystem::path&, int purge_threshold = 0, bool fake_rm = false);
  bool purgeStorage(const workload::common::jobid::JobId&, const std::string& sandboxdir = "");
 
 } // namespace purger
-} // namespace workload
-} // edg
+} // namespace wms
+} // namespace glite
 
 // Local Variables:
 // mode: c++
 // End:
 // 
 
-#endif /* EDG_WORKLOAD_NETWORKSERVER_UTILS_PURGER_H */
+#endif /* GLITE_WMS_PURGER_PURGER_H */

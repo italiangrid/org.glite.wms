@@ -8,35 +8,35 @@
 #include <boost/filesystem/operations.hpp> 
 #include <boost/filesystem/exception.hpp>
 
-#include "edg/workload/common/jobid/JobId.h"
-#include "edg/workload/common/jobid/manipulation.h"
-#include "edg/workload/common/jobid/JobIdExceptions.h"
+#include "glite/wms/jobid/JobId.h"
+#include "glite/wms/jobid/manipulation.h"
+#include "glite/wms/jobid/JobIdExceptions.h"
 
-#include "edg/workload/common/configuration/Configuration.h"
-#include "edg/workload/common/configuration/NSConfiguration.h"
-#include "edg/workload/common/configuration/exceptions.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
+#include "glite/wms/common/configuration/exceptions.h"
 
-#include "edg/workload/common/logger/edglog.h"
-#include "edg/workload/common/logger/manipulators.h"
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
 
-#include "edg/workload/logging/client/Job.h"
-#include "edg/workload/logging/client/JobStatus.h"
-#include "edg/workload/logging/client/context.h"
-#include "edg/workload/logging/client/producer.h"
+#include "glite/lb/Job.h"
+#include "glite/lb/JobStatus.h"
+#include "glite/lb/context.h"
+#include "glite/lb/producer.h"
 
 #include <string>
 #include <time.h>
 
 namespace fs            = boost::filesystem;
-namespace jobid         = edg::workload::common::jobid;
-namespace logger	= edg::workload::common::logger::threadsafe;
-namespace logging       = edg::workload::logging;
-namespace configuration = edg::workload::common::configuration;
+namespace jobid         = glite::wms::jobid;
+namespace logger	= glite::wms::common::logger::threadsafe;
+namespace logging       = glite::lb;
+namespace configuration = glite::wms::common::configuration;
 
-#define edglog_fn(name) edg::workload::common::logger::StatePusher    pusher(logger::edglog, #name);
+#define edglog_fn(name) glite::wms::common::logger::StatePusher    pusher(logger::edglog, #name);
 
-namespace edg {
-namespace workload {
+namespace glite {
+namespace wms {
 namespace purger {
 
 namespace 
@@ -199,6 +199,6 @@ bool purgeStorageEx(const fs::path& p, int purge_threshold, bool fake_rm)
 }
 
 } // namespace purger
-} // namespace workload
-} // namesapce edg
+} // namespace wms
+} // namesapce glite
 
