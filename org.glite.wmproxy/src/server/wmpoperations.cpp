@@ -785,6 +785,36 @@ getStatus(JobId *jid)
 	GLITE_STACK_CATCH();
 }
 
+/*int
+ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
+	int param, int parameterStart, int parameterStep, string requirements,
+	string rank, struct ns1__getIntParametricJobTemplateResponse &response)
+{
+void
+getCollectionTemplate(getCollectionTemplateResponse &getCollectionTemplate_response, int jobNumber,
+	const string &requirements, const string &rank)
+{
+	GLITE_STACK_TRY("getCollectionTemplate(getCollectionTemplateResponse &getCollectionTemplate_response, int job_number, string requirements, string rank)");
+
+	string vo = "Fake VO";
+	getCollectionTemplate_response.jdl =
+		AdConverter::createCollectionTemplate(jobNumber, requirements, rank,
+			vo)->toString();
+
+	GLITE_STACK_CATCH();
+}
+
+glite::lb::JobStatus
+getStatus(JobId *jid)
+{
+	GLITE_STACK_TRY("getStatus(JobId *jid)");
+
+	glite::lb::Job lb_job(*jid);
+	return lb_job.status(glite::lb::Job::STAT_CLASSADS); // to get also jdl
+	// lb_job.status(0) minimal information about the job
+
+	GLITE_STACK_CATCH();
+}*/
 
 //} // wmproxy
 //} // wms

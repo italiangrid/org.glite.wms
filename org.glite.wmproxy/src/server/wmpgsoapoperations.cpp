@@ -19,6 +19,12 @@
 
 #include "glite/lb/JobStatus.h"
 
+extern "C" {
+	#include "gridsite.h"
+}
+
+#define GRST_PROXYCACHE "proxycache"
+
 namespace jobid = glite::wmsutils::jobid;
 namespace errorcodes = wmproxyname;
 
@@ -64,22 +70,22 @@ convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
 	vector<JobType> *type_vector = new vector<JobType>;
 	for (int i = 0; i < job_type_list->jobType->size(); i++) {
 		switch ((*(job_type_list->jobType))[i]) {
-			case PARAMETRIC:
+			case ns1__JobType__PARAMETRIC:
 				type_vector->push_back(WMS_PARAMETRIC);
 				break;
-			case NORMAL:
+			case ns1__JobType__NORMAL:
 				type_vector->push_back(WMS_NORMAL);
 				break;
-			case INTERACTIVE:
+			case ns1__JobType__INTERACTIVE:
 				type_vector->push_back(WMS_INTERACTIVE);
 				break;
-			case MPI:
+			case ns1__JobType__MPI:
 				type_vector->push_back(WMS_MPI);
 				break;
-			case PARTITIONABLE:
+			case ns1__JobType__PARTITIONABLE:
 				type_vector->push_back(WMS_PARTITIONABLE);
 				break;
-			case CHECKPOINTABLE:
+			case ns1__JobType__CHECKPOINTABLE:
 				type_vector->push_back(WMS_CHECKPOINTABLE);
 				break;
 			default:
@@ -248,13 +254,13 @@ setFaultDetails(struct soap *soap, int type, void *sp)
 		soap->fault->SOAP_ENV__Detail = (struct SOAP_ENV__Detail*)
 			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
 		soap->fault->SOAP_ENV__Detail->__type = type; // stack type
-		soap->fault->SOAP_ENV__Detail->value = sp; // point to stack
+		soap->fault->SOAP_ENV__Detail->fault = sp; // point to stack
 		soap->fault->SOAP_ENV__Detail->__any = NULL; // no other XML data
 	} else {
 		soap->fault->detail = (struct SOAP_ENV__Detail*)
 			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
 		soap->fault->detail->__type = type; // stack type
-		soap->fault->detail->value = sp; // point to stack
+		soap->fault->detail->fault = sp; // point to stack
 		soap->fault->detail->__any = NULL; // no other XML data
 	}
 }
@@ -305,10 +311,12 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 		getVersion(getVersion_response);
 		response.version = getVersion_response.version;
 	} catch (Exception &exc) {
-		setSOAPFault(soap, exc.getCode(), "getVersion", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+		setSOAPFault(soap, exc.getCode(), "getVersion", time(NULL),
+			itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
-		setSOAPFault(soap, WMS_IS_FAILURE, "getVersion", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+		setSOAPFault(soap, WMS_IS_FAILURE, "getVersion", time(NULL),
+			itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
 
@@ -370,10 +378,12 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegationId,
 		//cerr<<"exc.what(): "<<exc.what()<<endl;
 
 		// THIRD METHOD
-		setSOAPFault(soap, exc.getCode(), "jobRegister", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+		setSOAPFault(soap, exc.getCode(), "jobRegister", time(NULL),
+			itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
-		setSOAPFault(soap, WMS_IS_FAILURE, "jobRegister", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+		setSOAPFault(soap, WMS_IS_FAILURE, "jobRegister", time(NULL),
+			itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	}
 
@@ -393,10 +403,12 @@ ns1__jobStart(struct soap *soap, string jobId, struct ns1__jobStartResponse &res
 	try {
 		jobStart(jobStart_response, jobId);
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "jobStart", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "jobStart", time(NULL),
+	 		itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobStart", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobStart", time(NULL),
+	 		itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -424,10 +436,12 @@ ns1__jobSubmit(struct soap *soap, string jdl, struct ns1__jobSubmitResponse &res
 			response._jobIdStruct->childrenJob = new vector<ns1__JobIdStructType*>;
 		}
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
+	 		itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobSubmit", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobSubmit", time(NULL),
+	 		itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -447,10 +461,12 @@ ns1__jobCancel(struct soap *soap, string jobId, struct ns1__jobCancelResponse &r
 	try {
 		jobCancel(jobCancel_response, jobId);
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "jobCancel", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "jobCancel", time(NULL),
+	 		itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobCancel", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "jobCancel", time(NULL),
+	 		itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -472,10 +488,12 @@ ns1__getMaxInputSandboxSize(struct soap *soap, struct ns1__getMaxInputSandboxSiz
 		getMaxInputSandboxSize(getMaxInputSandboxSize_response);
 		response.size = getMaxInputSandboxSize_response.size;
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "getMaxInputSandboxSize", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "getMaxInputSandboxSize",
+	 		time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "getMaxInputSandboxSize", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getMaxInputSandboxSize",
+	 		time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -496,10 +514,12 @@ ns1__getSandboxDestURI(struct soap *soap, string jobId, struct ns1__getSandboxDe
 		getSandboxDestURI(getSandboxDestURI_response, jobId);
 		response._path = getSandboxDestURI_response.path;
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "getSandboxDestURI", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "getSandboxDestURI", time(NULL),
+	 		itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "getSandboxDestURI", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getSandboxDestURI", time(NULL),
+	 		itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -521,10 +541,12 @@ ns1__getTotalQuota(struct soap *soap, struct ns1__getTotalQuotaResponse &respons
 		response.softLimit = getQuota_response.softLimit;
 		response.hardLimit = getQuota_response.hardLimit;
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "getQuota", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "getQuota", time(NULL),
+	 		itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "getQuota", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getQuota", time(NULL),
+	 		itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -546,10 +568,12 @@ ns1__getFreeQuota(struct soap *soap, struct ns1__getFreeQuotaResponse &response)
 		response.softLimit = getFreeQuota_response.softLimit;
 		response.hardLimit = getFreeQuota_response.hardLimit;
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "getFreeQuota", time(NULL), itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
+	 	setSOAPFault(soap, exc.getCode(), "getFreeQuota", time(NULL),
+	 		itos(exc.getCode()), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	 } catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "getFreeQuota", time(NULL), itos(WMS_IS_FAILURE), (string) ex.what());
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getFreeQuota", time(NULL),
+	 		itos(WMS_IS_FAILURE), (string) ex.what());
 		return_value = SOAP_FAULT;
 	 }
 
@@ -777,7 +801,141 @@ ns1__getStringParametricJobTemplate(struct soap *soap, ns1__StringList *attribut
 	GLITE_STACK_CATCH();
 }
 
+int
+ns1__getProxyReq(struct soap *soap, string delegation_id,
+	ns1__getProxyReqResponse &response)
+{
+	GLITE_STACK_TRY("ns1__getProxyReq(struct soap *soap, string delegation_id, "
+		"ns1__getProxyReqResponse &response)");
+		
+	char *p = NULL;
+  	char *client_dn = NULL;
+  	char *user_dn = NULL;
+  	char *docroot = NULL;
+  	char *proxydir = NULL;
+  	
+  	char *request = NULL;
+   
+ 	int return_value = SOAP_OK;
+  
+  	cerr<<"----- ns1__getProxyReq"<<endl;
 
+	client_dn = getenv("SSL_CLIENT_S_DN");
+	if ((client_dn == NULL) || (client_dn == '\0')) {
+		client_dn = "/C=IT/O=INFN/OU=Personal Certificate/L=DATAMAT "
+		"DSAGRD/CN=Giuseppe Avellino/Email=giuseppe.avellino@datamat.it";
+	}
+	if (client_dn != NULL) {
+		user_dn = strdup(client_dn);
+		
+		/* we assume here that mod_ssl has verified proxy chain already ... */
 
+		p = strstr(user_dn, "/CN=proxy");
+		if (p != NULL) {
+			*p = '\0';      
+		}
+		p = strstr(user_dn, "/CN=limited proxy");
+		if (p != NULL) {
+			*p = '\0';      
+		}
+	}
 
+	
+	if (delegation_id == "") {
+  		delegation_id = "_";
+	}
+  
+	docroot = getenv("DOCUMENT_ROOT");
+	//if ((docroot == NULL) || (docroot == '\0')) {
+		docroot = "/home/gridsite"; 
+	//}
+	asprintf(&proxydir, "%s/%s", docroot, GRST_PROXYCACHE); // /home/gridsite/proxycache
+	
+	cerr<<"----- user_dn: "<<user_dn<<endl;
+	cerr<<"----- proxydir: "<<proxydir<<endl;
+	cerr<<"----- delegation_id: "<<delegation_id<<endl;
+	
+	if ((user_dn != NULL) && (user_dn[0] != '\0')
+		&& (GRSTx509MakeProxyRequest(&request, proxydir,
+		(char*) delegation_id.c_str(), user_dn) == 0)) {
+			string value = "";
+			int i = 0;
+			while (request[i] != '\0') {
+				value += request[i];
+				i++;
+			}
+			response.request = value;
+			return SOAP_OK;
+	}
+      
+  return SOAP_FAULT;
+  
+  GLITE_STACK_CATCH();
+} 
+
+int
+ns1__putProxy(struct soap *soap, string delegation_id, string proxy,
+	struct ns1__putProxyResponse &unused)
+{ 
+	GLITE_STACK_TRY("ns1__putProxy(struct soap *soap, string delegation_id, "
+		"string proxy, struct ns1__putProxyResponse &unused)");
+		
+	int fd;
+	int c;
+	int len = 0;
+	int i;
+	char *docroot = NULL;
+	char *proxydir = NULL;
+	char *p = NULL;
+	char *client_dn = NULL;
+	char *user_dn = NULL;
+	
+	int return_value = SOAP_OK;
+  
+	client_dn = getenv("SSL_CLIENT_S_DN");
+	if ((client_dn == NULL) || (client_dn == '\0')) {
+		client_dn = "/C=IT/O=INFN/OU=Personal Certificate/L=DATAMAT "
+		"DSAGRD/CN=Giuseppe Avellino/Email=giuseppe.avellino@datamat.it";
+	}
+	
+	if (client_dn != NULL) {
+		user_dn = strdup(client_dn);
+		
+		/* we assume here that mod_ssl has verified proxy chain already ... */
+
+		p = strstr(user_dn, "/CN=proxy");
+		if (p != NULL) {
+			*p = '\0';      
+		}
+
+		p = strstr(user_dn, "/CN=limited proxy");
+		if (p != NULL) {
+			*p = '\0';      
+		}
+	}
+  	
+  	if (delegation_id == "") {
+		delegation_id = "_";
+  	}
+  
+	docroot = getenv("DOCUMENT_ROOT");
+	//if ((docroot == NULL) || (docroot == '\0')) {
+		docroot = "/home/gridsite"; 
+	//}
+	asprintf(&proxydir, "%s/%s", docroot, GRST_PROXYCACHE); // /home/gridsite/proxycache
+
+	cerr<<"----- user_dn: "<<user_dn<<endl;
+	cerr<<"----- proxydir: "<<proxydir<<endl;
+	cerr<<"----- delegation_id: "<<delegation_id<<endl;
+	cerr<<"----- proxy: "<<endl<<proxy<<endl;
+		
+	if ((user_dn == NULL) || (user_dn[0] == '\0')
+		|| (GRSTx509StoreProxy(proxydir, (char*) delegation_id.c_str(), user_dn,
+		(char*) proxy.c_str()) != GRST_RET_OK)) {
+			return_value = SOAP_FAULT;
+    }
+	return return_value;
+	
+	GLITE_STACK_CATCH();
+}
 
