@@ -49,7 +49,7 @@ try {
 
   }
 
-  configuration::Configuration config("glite_wl.conf",
+  configuration::Configuration config("glite_wms.conf",
                                       configuration::ModuleType::workload_manager);
 
   std::string sequence_code(argv[1]);
