@@ -20,10 +20,16 @@
 
 	Revision history:
 	$Log$
+	Revision 1.12  2004/05/14 00:07:32  dimeglio
+	Added command to load the system build.properties file before
+	loading the global properties, but after baseline and user properties
+	Removed references to local versions of global-only objects
+	Added default Ant all and cleanAll targets
+
 	Revision 1.11  2004/05/13 23:01:49  dimeglio
 	Removed commands to create module directories (this is a subsystem)
 	Replaced workspace.abs.dir with workspace.dir
-
+	
 	Revision 1.10  2004/05/13 19:50:11  dimeglio
 	Changed all occurrences of test3.wms to wms
 	
@@ -63,13 +69,14 @@
 <project name="wms" default="dist">
 
 	<description>
-		Ant build file to build the GLite WMS
+		Ant build file to build the GLite WMS Subsystem
 	</description>
 	
 	<!-- =========================================
 	     Import properties (order is important) 
 		 ========================================= -->
 	<import file="../org.glite/project/baseline.properties.xml" />
+	<property file="./project/build.properties" />
 	<import file="./project/properties.xml" />	
 	<import file="${global.properties.file}" />
 				
@@ -83,25 +90,21 @@
 	<!-- =========================================
 		 Import external dependencies files (order is important) 
 		========================================= -->
-	<!-- <import file="${subsystem.external-dependencies.file}"/> 	-->
 	<import file="${global.external-dependencies.file}"/>	
 		
 	<!-- =========================================
 		 Import task definitions (order is important)
 		 ========================================= -->
-	<!-- <import file="${subsystem.taskdefs.file}" /> -->
 	<import file="${global.taskdefs.file}" />
 	
 	<!-- =========================================
 	     Import compiler definitions (order is important)
   	     ========================================= -->
-	<!-- <import file="${subsystem.compilerdefs.file}" /> -->
 	<import file="${global.compilerdefs.file}" />
 		
 	<!-- =========================================
 		 Default envchecks (order is important)
 		 ========================================= -->
-	<!-- <import file="${subsystem.envchecks.file}" /> -->
 	<import file="${global.envchecks.file}" />
 
 	<!-- =========================================
@@ -216,6 +219,12 @@
 
 	</target>
 
+	<target name="all" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="all"/>
+		</antcall>
+	</target>
+
 	<target name="clean">
 
 		<property name="offline.repository" value="true" />
@@ -229,6 +238,12 @@
 		<delete dir="${module.autodoc.dir}" />
 		<delete dir="${module.test.reports.dir}" />
 
+	</target>
+
+	<target name="cleanAll" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="cleanAll"/>
+		</antcall>
 	</target>
 
 	<!-- ===============================================
