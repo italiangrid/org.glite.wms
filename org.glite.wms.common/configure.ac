@@ -11,7 +11,7 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Common configure.ac file for the all EGEE modules
+#       Common configure.ac file for the GLite WMS Common module
 #
 #       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
 #       Version info: $Id$
@@ -24,7 +24,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([EGEE WMS Common], [0.0.0])
+AC_INIT([GLite WMS Common], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common_namespace.h])
@@ -119,7 +119,7 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 # Configuration items
-AC_PREFIX_DEFAULT([/opt/egee])
+AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
