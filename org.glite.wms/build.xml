@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.30  2004/07/16 16:25:44  flammer
+	Added tags for automated adding of components.
+
 	Revision 1.29  2004/07/14 23:17:34  dimeglio
 	Added dependency of globus_ssl_utils on globus
-
+	
 	Revision 1.28  2004/07/10 07:22:06  eronchie
 	Updated internal dependencies
 	WARNING: work in progress
@@ -315,6 +318,8 @@
 	<!-- ===============================================
 		 Modules proxy targets
 	     =============================================== -->
+
+	<!-- component targets definitions tag = do not remove = -->
 
 	<target name="globus_ssl_utils" unless="setenvonly" depends="globus">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
