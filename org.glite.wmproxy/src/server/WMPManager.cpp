@@ -93,12 +93,12 @@ namespace server {
 		        if( cmd -> state().forwardRequest() ) {
 			      is_forwarded = true;
 
-/*   SEQUENCE CODE SET by wmpoperations
+			      // SEQUENCE CODE SET by wmpoperations
+			      // Retrieved 'cause needed by NS2WMProxy
 			      char* seq_str = edg_wll_GetSequenceCode(*cmd->getLogContext());
 			      std::string seq_code(seq_str);
 			      free( seq_str );
 			      cmd->setParam("SeqCode", seq_code);
-*/
 
 			      // Dispatch the Command
 			      write_end().write(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
