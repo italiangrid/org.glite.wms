@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.26  2004/10/25 21:01:13  dimeglio
+	Use antExec
+
 	Revision 1.25  2004/10/13 16:51:27  dimeglio
 	Removed duplicate targets (cli-python, partitioner)
-
+	
 	Revision 1.24  2004/10/13 15:15:16  eronchie
 	Updated
 	
@@ -269,7 +272,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
@@ -285,7 +288,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-ui.subsystem.dir}.api-cpp" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-ui.subsystem.dir}.api-cpp" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
@@ -301,7 +304,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-ui.subsystem.dir}.api-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-ui.subsystem.dir}.api-java" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
@@ -317,7 +320,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
@@ -333,7 +336,7 @@
         	<if>
             		<isset property="small.memory" />
             		<then>
-                		<exec dir="${wms-ui.subsystem.dir}.wrap-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                		<exec dir="${wms-ui.subsystem.dir}.wrap-python" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                 		</exec>
             		</then>
@@ -349,7 +352,7 @@
         	<if>
             		<isset property="small.memory" />
             		<then>
-                		<exec dir="${wms-ui.subsystem.dir}.wrap-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                		<exec dir="${wms-ui.subsystem.dir}.wrap-java" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                 		</exec>
             		</then>
@@ -365,7 +368,7 @@
                 <if>
                         <isset property="small.memory" />
                         <then>
-                                <exec dir="${wms-ui.subsystem.dir}.configuration" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                                <exec dir="${wms-ui.subsystem.dir}.configuration" executable="${antExec}" failonerror="${failonerror}">
                                         <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                                 </exec>
                         </then>
@@ -381,7 +384,7 @@
         	<if>
             		<isset property="small.memory" />
             		<then>
-                		<exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                		<exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
                 		</exec>
             		</then>
