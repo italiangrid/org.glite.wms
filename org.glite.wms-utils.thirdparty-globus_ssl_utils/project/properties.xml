@@ -54,6 +54,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 
-	<property name="m4files.list" value="globus.m4 glite.m4">
+	<property name="m4files.list" value="globus.m4 glite.m4"/>
 		 		
 </project>
