@@ -15,7 +15,7 @@
 #include <classad_distribution.h>
 
 namespace utilities = glite::wms::common::utilities;
-namespace requestad = glite::wms::common::requestad;
+namespace jdl = glite::wms::jdl;
 
 namespace glite {
 namespace wms {
@@ -86,7 +86,7 @@ submit_command_create(classad::ClassAd* job_ad)
 {
   classad::ClassAd* result = 0;
 
-  std::string jobid = requestad::get_edg_jobid(*job_ad);
+  std::string jobid = jdl::get_edg_jobid(*job_ad);
   if (!jobid.empty()) {
     result = new classad::ClassAd;
     result->InsertAttr("version", std::string("1.0.0"));

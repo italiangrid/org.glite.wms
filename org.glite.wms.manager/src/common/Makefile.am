@@ -28,6 +28,7 @@ libglite_wms_manager_common_la_SOURCES = \
         lb_utils.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
         $(CLASSAD_CFLAGS) \
         $(BOOST_CFLAGS)
 

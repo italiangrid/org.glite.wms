@@ -15,7 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/function.hpp>
 
-#include "glite/wmwutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 
 #include "glite/lb/producer.h"
