@@ -21,12 +21,17 @@
 
 	Revision history:
 	$Log$
+	Revision 1.24  2004/07/06 08:47:22  eronchie
+	Removed jobadapter
+	Added helper
+	jobadapter was moved in helper
+
 	Revision 1.23  2004/06/28 23:08:57  eronchie
 	Start adding new component
 	brokerinfo
 	classad_plugin
 	matchmaking
-
+	
 	Revision 1.21  2004/06/26 13:07:35  eronchie
 	*** empty log message ***
 	
@@ -361,6 +366,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="helper" unless="setenvonly" depends="boost,classads">
+                <ant dir="${workspace.dir}/${subsystem.name}.helper"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -373,6 +384,7 @@
    					     jdlj,
 					     brokerinfo,
 					     classad_plugin,
-					     matchmaking" />
+					     matchmaking,
+					     helper" />
 		
 </project>

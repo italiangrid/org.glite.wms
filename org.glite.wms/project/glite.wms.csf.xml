@@ -21,10 +21,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.32  2004/07/06 08:47:22  eronchie
+	Removed jobadapter
+	Added helper
+	jobadapter was moved in helper
+
 	Revision 1.31  2004/07/06 08:43:20  eronchie
 	Updated m4 file
 	Added new components
-
+	
 	Revision 1.30  2004/06/28 23:08:57  eronchie
 	Start adding new component
 	brokerinfo
@@ -243,8 +248,8 @@
 		<condition property="matchmaking.head">
                         <equals arg1="${org.glite.wms.matchmaking.version}" arg2="HEAD" />
                 </condition>
-		<condition property="jobadapter.head">
-                        <equals arg1="${org.glite.wms.jobadapter.version}" arg2="HEAD" />
+		<condition property="helper.head">
+                        <equals arg1="${org.glite.wms.helper.version}" arg2="HEAD" />
                 </condition>
     </target>
 
@@ -315,7 +320,7 @@
 					brokerinfo,
 					classad_plugin,
 					matchmaking,
-					jobadapter"/>
+					helper"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils" depends="get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
@@ -438,13 +443,13 @@
         </target>
 
 	<!-- JobAdapter -->
-        <target name="jobadapter" depends="boost,classads,globus,get.jobadapter.head, get.jobadapter.tag"/>
-        <target name="get.jobadapter.head" if="jobadapter.head">
-                <cvs-co package="org.glite.wms.jobadapter" />
+        <target name="helper" depends="boost,classads,globus,get.helper.head, get.helper.tag"/>
+        <target name="get.helper.head" if="helper.head">
+                <cvs-co package="org.glite.wms.helper" />
         </target>
-        <target name="get.jobadapter.tag" unless="jobadapter.head">
-                <cvs-co package="org.glite.wms.jobadapter"
-                        tag="${org.glite.wms.jobadapter.version}" />
+        <target name="get.helper.tag" unless="helper.head">
+                <cvs-co package="org.glite.wms.helper"
+                        tag="${org.glite.wms.helper.version}" />
         </target>
 
 	<!-- ====================================================
