@@ -8,7 +8,7 @@ fi
 
 export GLITE_LOCATION
 
-if [ -z "$GLTIE_WMS_LOCATION" ]; then
+if [ -z "$GLITE_WMS_LOCATION" ]; then
    GLITE_WMS_LOCATION=@prefix@
 fi
 
