@@ -434,12 +434,15 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
   try {
     f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
     // Take the result of f_forward and do what for LogEnQueued in CommandFactoryServerImpl
-    // Put host proxy instead of twice user proxy
-    wmplogger.logEnqueuedJob(jdl, proxy, proxy,(*m_filelist).filename(), true, "", true, true);
+    // Put host cert/key instead of user proxy
+    wmplogger.logEnqueuedJob(jdl, proxy, proxy, proxy, (*m_filelist).filename(), true, "", true, true);
+    //wmplogger.logEnqueuedJob(jdl, (*m_filelist).filename(), true, "", true);
     edglog(null) << "Submit EnQueued OK." << std::endl;
   } catch (std::exception &e) {
     // LogEnQueued FAIL if exception occurs
-    wmplogger.logEnqueuedJob( jdl, proxy, proxy,(*m_filelist).filename(), false, e.what(), true, true);
+    // Put host cert/key instead of user proxy
+    wmplogger.logEnqueuedJob( jdl, proxy, proxy, proxy, (*m_filelist).filename(), false, e.what(), true, true);
+    //wmplogger.logEnqueuedJob(jdl, (*m_filelist).filename(), true, "", true);
     edglog(null) << "Submit EnQueued FAIL." << std::endl;
   }
 
