@@ -1,5 +1,5 @@
-#ifndef  EDG_WORKLOAD_USERINTERFACE_CLIENT_LOGGING_H
-#define EDG_WORKLOAD_USERINTERFACE_CLIENT_LOGGING_H
+#ifndef  GLITE_WMS_UI_CLIENT_LOGGING_H
+#define GLITE_WMS_UI_CLIENT_LOGGING_H
 /*
  * Logging.h
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
