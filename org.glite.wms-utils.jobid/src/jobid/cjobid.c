@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "jobid.h"
+#include "cjobid.h"
 #include "strmd5.h"
 
 struct _edg_wlc_JobId {

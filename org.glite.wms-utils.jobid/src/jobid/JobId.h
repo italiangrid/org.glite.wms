@@ -11,7 +11,7 @@
 #include <iosfwd>
 
 #include "jobid_namespace.h"
-#include "jobid.h"
+#include "cjobid.h"
 
 typedef struct _edg_wlc_jobid_s* edg_wlc_jobid_t;
 #define COMMON_JOBID_NAMESPACE_BEGIN namespace glite { namespace wms { namespace common {namespace jobid{

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../src/jobid.h"
+#include "../src/cjobid.h"
 
 int main(int argc, char* argv[])
 {
