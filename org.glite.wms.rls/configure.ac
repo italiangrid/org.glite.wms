@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/10/06 14:32:49  eronchie
+#       Start adding rls
+#
 #       Revision 1.3  2004/10/06 10:53:54  eronchie
 #       Updated
 #       Added REPLICA
@@ -101,16 +104,16 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 have_boost=no
-have_globus=no
+dnl have_globus=no
 have_replica=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
+dnl AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_REPLICA([], have_replica=yes, have_replica=no)
 
 AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-AC_MSG_RESULT(["REPLICA found $have_replica"])
+dnl AC_MSG_RESULT(["GLOBUS found $have_globus"])
+dnl AC_MSG_RESULT(["REPLICA found $have_replica"])
 
 AC_GLITE
 
