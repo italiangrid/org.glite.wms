@@ -39,7 +39,7 @@ namespace std {
 }
 
 namespace std {
-   %template(StringStatus) vector<glite::wms::lb::JobStatus> ;
+   %template(StringStatus) vector<glite::lb::JobStatus> ;
 }
 
 
