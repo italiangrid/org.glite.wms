@@ -82,6 +82,7 @@ Request::Request(
     mark_cancelled();
   } else if (command == "match") {
     m_jdl.reset(static_cast<classad::ClassAd*>(common::match_command_get_ad(command_ad)->Copy()));
+    m_jdl->SetParentScope(0);
     mark_match(common::match_command_get_file(command_ad)); 
   }
   
