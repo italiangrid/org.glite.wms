@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/05/13 09:46:58  flammer
+	Moved to variable naming & include style.
+
 	Revision 1.1  2004/04/29 01:36:29  dimeglio
 	Added org.egee.test3.wms
-
+	
 -->
 
 <project name="Test3 Wms Subsystem common properties">
@@ -32,15 +35,54 @@
 		 ====================================================== -->
 	
 	<!-- Subsystem name -->
-	<property name="subsystem.name" value="${test3.wms.subsystem}"/>
+	<property name="subsystem.name" value="${test3.wms.subsystem.name}"/>
 	
-	<!-- Package prefix -->
-	<property name="package.prefix" value="${application.prefix}-test3-wms"/>
+	<!-- Subsystem prefix -->
+	<property name="subsystem.prefix" value="${test3.wms.subsystem.prefix}"/>
+	
+	<!-- ====================================================== -->
+		
+	<!-- Subsystem root directory -->
+	<property name="subsystem.dir" location="../${subsystem.name}" />
 	
 	<!-- Subsystem build directory -->
-	<property name="subsystem.project.dir" location="${module.dir}/../${subsystem.name}/project" />
+	<property name="subsystem.project.dir" location="${subsystem.dir}/project" />
+		
+	<!-- Subsystem-specific property file -->
+	<property name="subsystem.properties.file" location="${subsystem.project.dir}/properties.xml"/>
 	
 	<!-- Subsystem dependencies file -->
 	<property name="subsystem.dependencies.file" value="${subsystem.project.dir}/dependencies.properties" />
+		
+	<!-- Subsystem taskdefs file -->
+	<property name="subsystem.taskdefs.file" value="${subsystem.project.dir}/taskdefs.xml" />
+		
+	<!-- Subsystem compilerdefs file -->
+	<property name="subsystem.compilerdefs.file" value="${subsystem.project.dir}/compilerdefs.xml" />
+		
+	<!-- Subsystem common targets file -->
+	<property name="subsystem.targets.file" value="${subsystem.project.dir}/targets.xml" />
+	
+	<!-- Subsystem cpp ant target file -->
+	<property name="subsystem.targets-cpp-ant.file" value="${subsystem.project.dir}/targets-cpp-ant.xml" />
 
+	<!-- Subsystem environment checks file -->
+	<property name="subsystem.envchecks.file" value="${subsystem.project.dir}/envchecks.xml" />
+
+	<!-- Subsystem external dependencies file -->
+	<property name="subsystem.external-dependencies.file" value="${subsystem.project.dir}/external-dependencies.xml" />
+
+	<!-- ==============================================================
+		 Module stuff 
+		 ============================================================== -->
+
+	<!-- Module name -->
+	<property name="module.name" value="${subsystem.name}" />
+
+	<!-- Module package name -->
+	<property name="module.package.name" value="${global.prefix}-${subsystem.prefix}" />
+
+	<!-- Module level -->
+	<property name="module.level" value="subsystem"/>
+			
 </project>

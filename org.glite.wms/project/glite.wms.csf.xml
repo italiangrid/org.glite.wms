@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.12  2004/05/13 09:46:58  flammer
+	Moved to variable naming & include style.
+
 	Revision 1.11  2004/05/05 23:21:04  dimeglio
 	Updated Jalopy dependencies
-
+	
 	Revision 1.10  2004/05/05 23:05:17  dimeglio
 	Removed import of external dependencies file, dependencies are
 	explicitly set. This is necessary to be able to run the subsystem CSF
@@ -57,29 +60,39 @@
 	
 -->
 
-
 <project name="EGEE Middleware Test2 WMS CSF" default="all">
 
-	<!-- Proxy settings, default values can be overriden by user -->
-	<property name="proxyhost" value="" />
-	<property name="proxyport" value="80" />
-	<setproxy proxyhost="${proxyhost}" proxyport="${proxyport}"/>
+	<!-- ===============================================
+		 Load properties
+		 =============================================== -->
+
+	<!-- load baseline and user properties -->
+	<import file="../../org.egee/project/baseline.properties.xml" />
+
+	<!-- Load module-specific property file -->
+	<property file="./build.properties"/>
+	<property file="./properties.xml"/>
+
+	<!-- load global properties -->
+	<import file="${global.properties.file}" />
+
+	<!-- ===============================================
+		 Load dependencies 
+		 =============================================== -->
+
+	<!-- Load user dependencies file -->
+	<property file="${user.dependencies.file}" />
+		
+	<!-- Load subsystem dependencies file -->
+	<property file="./dependencies.properties" />
+
+	<!-- Load global dependencies file -->
+	<property file="${global.dependencies.file}" />
 
 	<!-- ========================================================
 		 Checkout/updates the EGEE Middleware Test2 WMS components
 		 ======================================================== -->
-	
-	<!-- Default workspace location is module parent directory -->
-	<!-- Override from command line -->
-	<property name="workspace.dir" location="../.." />
-	<property name="repository" location="${workspace.dir}/repository" />
-	
-	<!-- Load environment variables -->
-	<property environment="env" />
-	
-	<!-- Load subsystem dependencies file -->
-	<property file="subsystem.dependencies.properties" />
-	
+		
 	<!-- Default update mode - Override from command line -->
 	<property name="update" value="false" />
 	
@@ -87,7 +100,7 @@
 	<condition property="egee.uptodate">
 		<and>
 			<isfalse value="${update}" />
-			<available file="${workspace.dir}/org.egee" type="dir" />
+			<available file="${workspace.abs.dir}/org.egee" type="dir" />
 		</and>
 	</condition>
 
@@ -96,14 +109,6 @@
 		<isfalse value="${update}" />
 	</condition>
 
-	<!-- Location of user property files -->
-	<property name="user.properties.file" location="${user.home}/egee.build.properties"/>
-	
-	<!-- Load user-specific property files -->
-	<property file="${user.properties.file}"/>
-	
-	<!-- Load module-specific property file -->
-	<property file="build.properties"/>
 
 	<!-- =====================================================
 		 Self-update if required
@@ -193,7 +198,7 @@
 	
 	<!-- All development tools -->
  	<target name="devtools" depends="junitcheck,
-					 junit,
+					 				 junit,
  									 checkstyle,
  									 jalopy,
  									 cpptasks"/>		
@@ -204,57 +209,65 @@
 	</target>
 
 	<!--  JUnit -->
- 	<target name="junit" unless="is.junit.present">		
-		<mkdir dir="${repository}/${junit.name}" />
-		<get src="${junit.url}/junit.jar"
-			 dest="${repository}/${junit.name}/junit.jar"
+ 	<target name="junit" unless="is.junit.present"
+ 			description="Install junit.">		
+		<mkdir dir="${repository}/${ext.junit.subpath}" />
+		<get src="${ext.junit.rep-url}"
+			 dest="${repository}/${ext.junit.subpath}/${ext.junit.rep-file}"
 			 verbose="on"
 			 usetimestamp="true" />
 
 		<!-- Copy junit jar to Ant lib directory, needed to run JUnit task -->
-		<copy file="${repository}/${junit.name}/junit.jar"
-			tofile="${env.ANT_HOME}/lib/junit.jar"/>
+		<copy file="${repository}/${ext.junit.subpath}/${ext.junit.rep-file}"
+			tofile="${env.ANT_HOME}/lib/{ext.junit.rep-file}"/>
 	</target>
 
 	<!--  CheckStyle -->
- 	<target name="checkstyle">		
-		<mkdir dir="${repository}/${checkstyle.name}" />
-		<get src="${checkstyle.url}/checkstyle-all-3.3.jar"
-			 dest="${repository}/${checkstyle.name}/checkstyle-all-3.3.jar"
+ 	<target name="checkstyle"
+ 			description="Check of checkstyle installation.">		
+		<mkdir dir="${repository}/${ext.checkstyle.subpath}" />
+		<get src="${ext.checkstyle.rep-url}"
+			 dest="${repository}/${ext.checkstyle.subpath}/${ext.checkstyle.rep-file}"
 			 verbose="on"
 			 usetimestamp="true" />
 	</target>
-
+	
 	<!--  Jalopy -->
- 	<target name="jalopy">		
-		<mkdir dir="${repository}/${jalopy.name}" />
-		<get src="${jalopy.url}/lib/jalopy-ant-0.6.1.jar"
-			 dest="${repository}/${jalopy.name}/jalopy-ant-0.6.1.jar"
+ 	<target name="jalopy"		
+ 			description="Install jalopy.">		
+		<mkdir dir="${repository}/${ext.jalopy.subpath}" />
+		<get src="${ext.jalopy.rep-url}"
+			 dest="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}"
 			 verbose="on"
 			 usetimestamp="true" />
-		<get src="${jalopy.url}/lib/jalopy-1.0b10.jar"
-			 dest="${repository}/${jalopy.name}/jalopy-1.0b10.jar"
-			 verbose="on"
-			 usetimestamp="true" />
-		<get src="${jalopy.url}/lib/jdom-1.0b8.jar"
-			 dest="${repository}/${jalopy.name}/jdom-1.0b8.jar"
-			 verbose="on"
-			 usetimestamp="true" />
-		<get src="${jalopy.url}/lib/oro-2.0.6.jar"
-			 dest="${repository}/${jalopy.name}/oro-2.0.6.jar"
-			 verbose="on"
-			 usetimestamp="true" />
+		<!-- check if uptodate unpacked -->
+		<uptodate property="jalopy.old" targetfile="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}">
+			<srcfiles dir="${repository}/${ext.jalopy.subpath}" includes="**/*" />
+		</uptodate>
+		<antcall target="jalopy-expand" />
 	</target>
-
+	
+ 	<target name="jalopy-expand" if="jalopy.old"		
+ 	 			description="Untar jalopy tarball.">		
+		<untar compression="gzip" src="${repository}/${ext.jalopy.subpath}/${ext.jalopy.rep-file}"
+			dest="${repository}/${ext.jalopy.subpath}" />
+		<touch>
+			<fileset dir="${repository}/${ext.jalopy.subpath}">
+				<exclude name="${ext.jalopy.rep-file}" />
+			</fileset>
+		</touch>
+	</target>
+	
 	<!--  CPPTasks -->
- 	<target name="cpptasks">		
-		<mkdir dir="${repository}/${cpptasks.name}" />
-		<get src="${cpptasks.url}/cpptasks.jar"
-			 dest="${repository}/${cpptasks.name}/cpptasks.jar"
+ 	<target name="cpptasks"
+ 			description="Install cpptasks.">		
+		<mkdir dir="${repository}/${ext.cpptasks.subpath}" />
+		<get src="${ext.cpptasks.rep-url}"
+			 dest="${repository}/${ext.cpptasks.subpath}/${ext.cpptasks.rep-file}"
 			 verbose="on"
 			 usetimestamp="true" />
 	</target>
-
+	
 	<!-- =====================================================
 		 External libraries
 		 ===================================================== -->
@@ -264,98 +277,104 @@
  	
 	<!-- Globus Libraries and Includes-->
 	<target name="globus" unless="offline.repository">                                                                                                   
-		<mkdir dir="${repository}/${globus.name}" />
-		<get src="${globus.url}/globus.tar.gz"
-			 dest="${repository}/${globus.name}/globus.tar.gz"
+		<mkdir dir="${repository}/${ext.globus.name}" />
+		<get src="${ext.globus.rep-url}"
+			 dest="${repository}/${ext.globus.subpath}/${ext.boost.rep-file}"
 			 verbose="on"
 			 usetimestamp="true" />
-		<uptodate property="globus.old" targetfile="${repository}/${globus.name}/globus.tar.gz">
-			<srcfiles dir="${repository}/${globus.name}" includes="**/*.h" />
+		<!-- check if uptodate unpacked -->
+		<uptodate property="globus.old" targetfile="${repository}/${ext.globus.subpath}/${ext.globus.rep-file}">
+			<srcfiles dir="${repository}/${ext.globus.subpath}" includes="**/*.h" />
 		</uptodate>
 		<antcall target="globus-expand" />
 	</target>
+
  	<target name="globus-expand" if="globus.old">		
-                <delete>
-                        <fileset dir="${repository}/${globus.name}">
+		<delete>
+			<fileset dir="${repository}/${ext.globus.subpath}">
 				<include name="**/*" />
-                                <exclude name="globus.tar.gz" />
-                        </fileset>
-                </delete>
-		<exec dir="${repository}/${globus.name}" executable="tar">
-			<arg line="-xzf globus.tar.gz" />
+				<exclude name="${ext.globus.rep-file}" />
+			</fileset>
+		</delete>
+		<exec dir="${repository}/${ext.globus.subpath}" executable="tar">
+			<arg line="-xzf ${ext.globus.rep-file}" />
 		</exec>
 		<touch>
-			<fileset dir="${repository}/${globus.name}">
-				<exclude name="globus.tar.gz" />
+			<fileset dir="${repository}/${ext.globus.subpath}">
+				<exclude name="${ext.globus.rep-file}" />
 			</fileset>
 		</touch>
 	</target>
 
 	<!-- Boost Libraries and Includes-->
- 	<target name="boost" unless="offline.repository">	
-		<mkdir dir="${repository}/${boost.name}" />
-		<get src="${boost.url}/boost.tar.gz"
-			 dest="${repository}/${boost.name}/boost.tar.gz"
+	<target name="boost" unless="offline.repository">                                                                                                   
+		<mkdir dir="${repository}/${ext.boost.name}" />
+		<get src="${ext.boost.rep-url}"
+			 dest="${repository}/${ext.boost.subpath}/${ext.boost.rep-file}"
 			 verbose="on"
-			 usetimestamp="true"
-			 ignoreerrors="true" />
-		<uptodate property="boost.old" targetfile="${repository}/${boost.name}/boost.tar.gz">
-			<srcfiles dir="${repository}/${boost.name}" includes="**/*.h" />
+			 usetimestamp="true" />
+		<!-- check if uptodate unpacked -->
+		<uptodate property="boost.old" targetfile="${repository}/${ext.boost.subpath}/${ext.boost.rep-file}">
+			<srcfiles dir="${repository}/${ext.boost.subpath}" includes="**/*.h" />
 		</uptodate>
 		<antcall target="boost-expand" />
 	</target>
- 	<target name="boost-expand" if="boost.old">
-                <delete>
-                        <fileset dir="${repository}/${boost.name}">
-				<include name="**/*" />
-                                <exclude name="boost.tar.gz" />
-                        </fileset>
-                </delete>
-		<exec dir="${repository}/${boost.name}" executable="tar">
-			<arg line="-xzf boost.tar.gz" />
-		</exec>
-		<touch>
-			<fileset dir="${repository}/${boost.name}">
-				<exclude name="boost.tar.gz" />
-			</fileset>
-		</touch>
-	</target>
 
-	<!-- ClassADs Libraries and Includes-->
- 	<target name="classads" unless="offline.repository">		
-		<mkdir dir="${repository}/${classads.name}" />
-		<get src="${classads.url}/classads.tar.gz"
-			 dest="${repository}/${classads.name}/classads.tar.gz"
-			 verbose="on"
-			 usetimestamp="true"
-			 ignoreerrors="true" />
-		<uptodate property="classads.old" targetfile="${repository}/${classads.name}/classads.tar.gz">
-			<srcfiles dir="${repository}/${classads.name}" includes="**/*.h" />
-		</uptodate>
-		<antcall target="classads-expand" />
-	</target>
- 	<target name="classads-expand" if="classads.old">
+ 	<target name="boost-expand" if="boost.old">		
 		<delete>
-			<fileset dir="${repository}/${classads.name}">
+			<fileset dir="${repository}/${ext.boost.subpath}">
 				<include name="**/*" />
-				<exclude name="classads.tar.gz" />
+				<exclude name="${ext.boost.rep-file}" />
 			</fileset>
 		</delete>
-		<exec dir="${repository}/${classads.name}" executable="tar">
-			<arg line="-xzf classads.tar.gz" />
+		<exec dir="${repository}/${ext.boost.subpath}" executable="tar">
+			<arg line="-xzf ${ext.boost.rep-file}" />
 		</exec>
 		<touch>
-			<fileset dir="${repository}/${classads.name}">
-				<exclude name="classads.tar.gz" />
+			<fileset dir="${repository}/${ext.boost.subpath}">
+				<exclude name="${ext.boost.rep-file}" />
 			</fileset>
 		</touch>
 	</target>
 
+
+	<!-- ClassADs Libraries and Includes-->
+	<target name="classadds" unless="offline.repository">                                                                                                   
+		<mkdir dir="${repository}/${ext.classadds.name}" />
+		<get src="${ext.classadds.rep-url}"
+			 dest="${repository}/${ext.classadds.subpath}/${ext.classadds.rep-file}"
+			 verbose="on"
+			 usetimestamp="true" />
+		<!-- check if uptodate unpacked -->
+		<uptodate property="classadds.old" targetfile="${repository}/${ext.classadds.subpath}/${ext.classadds.rep-file}">
+			<srcfiles dir="${repository}/${ext.classadds.subpath}" includes="**/*.h" />
+		</uptodate>
+		<antcall target="classadds-expand" />
+	</target>
+
+ 	<target name="classadds-expand" if="classadds.old">		
+		<delete>
+			<fileset dir="${repository}/${ext.classadds.subpath}">
+				<include name="**/*" />
+				<exclude name="${ext.classadds.rep-file}" />
+			</fileset>
+		</delete>
+		<exec dir="${repository}/${ext.classadds.subpath}" executable="tar">
+			<arg line="-xzf ${ext.classadds.rep-file}" />
+		</exec>
+		<touch>
+			<fileset dir="${repository}/${ext.classadds.subpath}">
+				<exclude name="${ext.classadds.rep-file}" />
+			</fileset>
+		</touch>
+	</target>
+
+	
     <!--  Java ClassAds -->
     <target name="jclassads" unless="offline.repository">
-            <mkdir dir="${repository}/${jclassads.name}" />
-            <get src="${jclassads.url}/classad.jar"
-                     dest="${repository}/${jclassads.name}/classad.jar"
+            <mkdir dir="${repository}/${ext.jclassads.subpath}" />
+            <get src="${ext.jclassads.rep-url}"
+                     dest="${repository}/${ext.jclassads.subpath}/{ext.jclassads.rep-file}"
                      verbose="on"
                      usetimestamp="true" />
     </target>
@@ -376,7 +395,7 @@
  	<target name="thirdparty-globus_ssl_utils">		
 		<cvs command="checkout"
 			package="org.egee.test3.wms.thirdparty-globus_ssl_utils"
-			dest="${workspace.dir}"
+			dest="${workspace.abs.dir}"
 			tag="${org.egee.test3.wms.thirdparty-globus_ssl_utils.version}"/>
 	</target>
 	
@@ -384,7 +403,7 @@
  	<target name="thirdparty-bypass">		
 		<cvs command="checkout"
 			package="org.egee.test3.wms.thirdparty-bypass"
-			dest="${workspace.dir}"
+			dest="${workspace.abs.dir}"
 			tag="${org.egee.test3.wms.thirdparty-bypass.version}"/>
 	</target>
 	
@@ -392,7 +411,7 @@
  	<target name="thirdparty-globus_gridftp_server" depends="globus">		
 		<cvs command="checkout"
 			package="org.egee.test3.wms.thirdparty-globus_gridftp_server"
-			dest="${workspace.dir}"
+			dest="${workspace.abs.dir}"
 			tag="${org.egee.test3.wms.thirdparty-globus_gridftp_server.version}"/>
 	</target>
 	
@@ -400,7 +419,7 @@
  	<target name="thirdparty-loki">		
 		<cvs command="checkout"
 			package="org.egee.test3.wms.thirdparty-loki"
-			dest="${workspace.dir}"
+			dest="${workspace.abs.dir}"
 			tag="${org.egee.test3.wms.thirdparty-loki.version}"/>
 	</target>
 	
@@ -408,7 +427,7 @@
  	<target name="common" depends="boost,classads,globus">		
 		<cvs command="checkout"
 			package="org.egee.test3.wms.common"
-			dest="${workspace.dir}"
+			dest="${workspace.abs.dir}"
 			tag="${org.egee.test3.wms.common.version}"/>
 	</target>
 	
@@ -416,7 +435,7 @@
  	<target name="jcommon" depends="jclassads">		
 		<cvs command="checkout"
 			package="org.egee.test3.wms.jcommon"
-			dest="${workspace.dir}"
+			dest="${workspace.abs.dir}"
 			tag="${org.egee.test3.wms.jcommon.version}"/>
 	</target>
 	
