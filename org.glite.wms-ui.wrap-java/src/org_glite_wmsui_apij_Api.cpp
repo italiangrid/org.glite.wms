@@ -5,9 +5,9 @@
 #include <iostream>
 #include <math.h> // calculate mathematical power
 #include <unistd.h> // getpid method
-#include "glite/wmsui/wrapjava/glite_wmsui_wrapjava_Api.h"
+#include "glite/wmsui/wrap/java/org_glite_wmsui_apij_Api.h"
 // Network Server:
-#include "glite/wms/manager-ns/client/NSClient.h"
+#include "NSClient.h"
 #include "glite/wms/common/logger/common.h"
 #include "glite/wmsutils/exception/Exception.h"
 // LB:
