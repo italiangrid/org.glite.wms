@@ -33,7 +33,7 @@
 
 
 
-glite::wms::sici::StorageIndexCatalogInterface::StorageIndexCatalogInterface( const std::string &endpoint)
+glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::StorageIndexCatalogInterface( const std::string &endpoint)
 {
    // Initialise SOAP
    //
@@ -43,7 +43,7 @@ glite::wms::sici::StorageIndexCatalogInterface::StorageIndexCatalogInterface( co
    m_endpoint = endpoint;
 }
 
-void glite::wms::sici::StorageIndexCatalogInterface::listSEbyGUID( const std::string &guid, std::vector<std::string> & list) 
+void glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::listSEbyGUID( const std::string &guid, std::vector<std::string> & list) 
 {
 
    struct storageindex__listSEbyGUIDResponse output;
@@ -68,7 +68,7 @@ void glite::wms::sici::StorageIndexCatalogInterface::listSEbyGUID( const std::st
 }
 
 void 
-glite::wms::sici::StorageIndexCatalogInterface::listSEbyLFN( const std::string &lfn, std::vector<std::string> & list) 
+glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::listSEbyLFN( const std::string &lfn, std::vector<std::string> & list) 
 {
    struct storageindex__listSEbyLFNResponse output;
 				                    
@@ -92,7 +92,7 @@ glite::wms::sici::StorageIndexCatalogInterface::listSEbyLFN( const std::string &
     
 
 
-glite::wms::sici::StorageIndexCatalogInterface::~StorageIndexCatalogInterface()
+glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::~StorageIndexCatalogInterface()
 {
   // Finalise SOAP
   //
@@ -105,12 +105,12 @@ glite::wms::sici::StorageIndexCatalogInterface::~StorageIndexCatalogInterface()
 /*****************************************************************************/
 /*  Class factories that can be used for a plug-in                           */
 /*****************************************************************************/
-extern "C" glite::wms::sici::StorageIndexCatalogInterface* create(const std::string& endpoint)
+extern "C" glite::wms::brokerinfo::sici::StorageIndexCatalogInterface* create(const std::string& endpoint)
 {
-  return new glite::wms::sici::StorageIndexCatalogInterface(endpoint);
+  return new glite::wms::brokerinfo::sici::StorageIndexCatalogInterface(endpoint);
 }
  
-extern "C" void destroy(glite::wms::sici::StorageIndexCatalogInterface* p) {
+extern "C" void destroy(glite::wms::brokerinfo::sici::StorageIndexCatalogInterface* p) {
   delete p;
 }
 
