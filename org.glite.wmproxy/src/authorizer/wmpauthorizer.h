@@ -10,11 +10,10 @@
 #include <pwd.h>
 #include <sys/types.h>
 
-
-
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace authorizer {
 
 /**
  * WMPAuthorizer class provides a set of utility methods for performing
@@ -43,16 +42,12 @@ public:
          * Mapping is done on the basis of user's credential.
          * @return the local user id.
          */
-        uid_t getUserId(FILE * fp);  
+        uid_t getUserId(FILE * fp);
+};
 
+} // namespace authorizer
+} // namespace wmproxy
+} // namespace wms
+} // namespace glite
 
-private:
-        // The proxy cache directory environment variable name
-        static const char* GRST_PROXYCACHE;
-
-} // End WMPAuthorizer
-
-// } // wmproxy
-// } // wms
-// } // glite
-
+#endif // GLITE_WMS_WMPROXY_WMPAUTHORIZER_H
