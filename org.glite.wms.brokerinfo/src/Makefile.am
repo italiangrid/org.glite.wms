@@ -22,19 +22,22 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
 
-GLITE_DATA_CATALOG_STORAGEINDEX_API_C_LIBS = \
-	-L$(top_srcdir)/../stage/lib $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a
+#GLITE_DATA_CATALOG_STORAGEINDEX_API_C_LIBS = \
+#	-L$(top_srcdir)/../stage/lib $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a
 
 libglite_wms_sici_la_SOURCES = \
 	StorageIndexCatalogInterface.cpp 
 
 libglite_wms_sici_la_LIBADD = \
-	$(GLITE_DATA_CATALOG_STORAGEINDEX_API_C_LIBS) \
+	$(GLITE_DATA_LIBS) \
 	$(GSOAP_LIBS) \
 	env.o
 
-env.o: $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a ; \
-	ar x $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a env.o
+#env.o: $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a ; \
+#	ar x $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a env.o
+
+env.o: $(GLITE_DATA_CFLAGS) ; \
+	ar x $(GLITE_DATA_LIBS) env.o
 
 libglite_wms_rls_la_SOURCES = 
 
@@ -58,8 +61,6 @@ soapC.cpp: $(srcdir)/DataLocationInterface.h ; \
 
 soapH.h: $(srcdir)/DataLocationInterface.h ; \
 	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
-
-#CGSI_CFLAGS = -I$(top_srcdir)/../repository/cgsi-gsoap/2.6-1.1.5/rhel30_gcc32/include/
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
