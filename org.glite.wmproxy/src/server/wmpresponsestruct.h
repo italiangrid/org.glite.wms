@@ -62,14 +62,18 @@ struct StringAndLongType {
     long size;
 };
 
-struct NameAndSizeList {
+struct StringAndLongList {
     std::vector<StringAndLongType*> *file;
 };
 
-struct GraphStructType {
+struct JobIdStructType {
     std::string id;
-    std::string name;
-    int childrenJobNum;
+    std::string *name;
+    std::vector<JobIdStructType*> *childrenJob;
+};
+
+struct GraphStructType {
+    std::string *name;
     std::vector<GraphStructType*> *childrenJob;
 };
 
@@ -85,14 +89,14 @@ struct getVersionResponse {
 };
 
 struct jobRegisterResponse {
-  GraphStructType *jobIdStruct;
+  JobIdStructType *jobIdStruct;
 };
 
 struct jobStartResponse {
 };
 
 struct jobSubmitResponse {
-  GraphStructType *jobIdStruct;
+  JobIdStructType *jobIdStruct;
 };
 
 struct jobCancelResponse {
@@ -120,11 +124,11 @@ struct jobPurgeResponse {
 };
 
 struct getOutputFileListResponse {
-  NameAndSizeList *OutputFiles;
+  StringAndLongList *OutputFileAndSizeList;
 };
 
 struct jobListMatchResponse {
-  StringList *CEIdList;
+  StringAndLongList *CEIdAndRankList;
 };
 
 struct getJobTemplateResponse {
@@ -137,6 +141,14 @@ struct getDAGTemplateResponse {
 
 struct getCollectionTemplateResponse {
   std::string jdl;
+};
+
+struct getIntParametricJobTemplateResponse {
+	std::string jdl;
+};
+  
+struct getStringParametricJobTemplateResponse {
+    std::string jdl;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H

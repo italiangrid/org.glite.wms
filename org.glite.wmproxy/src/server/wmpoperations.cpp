@@ -59,18 +59,17 @@ void start(jobStartResponse &jobStart_response, JobId *jid, WMPLogger &wmplogger
 
 
 /**
- * Converts JobIdStruct vector into a GraphStructType vector pointer
+ * Converts JobIdStruct vector into a JobIdStructType vector pointer
  */
-vector<GraphStructType*> *
+vector<JobIdStructType*> *
 convertJobIdStruct(vector<JobIdStruct*> &job_struct)
 {
-	vector<GraphStructType*> *graph_struct_type = new vector<GraphStructType*>;
-	GraphStructType *graph_struct = NULL;
+	vector<JobIdStructType*> *graph_struct_type = new vector<JobIdStructType*>;
+	JobIdStructType *graph_struct = NULL;
 	for (unsigned int i = 0; i < job_struct.size(); i++) {
-		graph_struct = new GraphStructType();
+		graph_struct = new JobIdStructType();
 		graph_struct->id = job_struct[i]->jobid.toString(); // should be equal to: jid->toString()
-		graph_struct->name = *(job_struct[i]->nodeName);
-		graph_struct->childrenJobNum = job_struct[i]->children.size();
+		graph_struct->name = job_struct[i]->nodeName;
 		graph_struct->childrenJob = convertJobIdStruct(job_struct[i]->children);
 		graph_struct_type->push_back(graph_struct);
 	}
@@ -152,19 +151,6 @@ convertJobTypeListToInt(JobTypeList job_type_list)
 	}
 	return type;
 	
-	GLITE_STACK_CATCH();
-}
-
-void
-ping(pingResponse &ping_response)
-{
-	GLITE_STACK_TRY("ping(pingResponse &ping_response)");
-	/*
-	org::glite::daemon::WMPManager manager;
-	return manager.runCommand("Ping", ping_response);
-	*/
-	ping_response.isUp = true;
-
 	GLITE_STACK_CATCH();
 }
 
@@ -282,7 +268,7 @@ registJob(jobRegisterResponse &jobRegister_response, const string &jdl)
 		} catch (exception &ex) {
 			throw ex;
 		}
-		int res_number = (jobListMatch_response.CEIdList->Item)->size(); // TBD JobSteps Check
+		int res_number = (jobListMatch_response.CEIdAndRankList->file)->size(); // TBD JobSteps Check
 		if (jad->hasAttribute(JDL::PREJOB)) {
 			res_number++;
 		}
@@ -300,12 +286,12 @@ registJob(jobRegisterResponse &jobRegister_response, const string &jdl)
 	cerr<<"---->> jdl original: "<<jdl<<endl;
 	wmplogger.logOriginalJdl(jdl);
 
-	GraphStructType *job_id_struct = new GraphStructType();
+	JobIdStructType *job_id_struct = new JobIdStructType();
 	job_id_struct->id = jid->toString();
 	delete jid;
-	job_id_struct->name = "";
-	job_id_struct->childrenJobNum = 0;
-	job_id_struct->childrenJob = new vector<GraphStructType*>;
+	job_id_struct->name = new string("");
+	//job_id_struct->childrenJobNum = 0;
+	job_id_struct->childrenJob = new vector<JobIdStructType*>;
 
 	jobRegister_response.jobIdStruct = job_id_struct;
 
@@ -441,11 +427,11 @@ registDag(jobRegisterResponse &jobRegister_response, const string &jdl)
 	// Logging original jdl
 	wmplogger.logOriginalJdl(jdl);
 	
-	GraphStructType *job_id_struct = new GraphStructType();
+	JobIdStructType *job_id_struct = new JobIdStructType();
 	JobIdStruct job_struct = dag->getJobIdStruct();
 	job_id_struct->id = job_struct.jobid.toString(); // should be equal to: jid->toString()
-	job_id_struct->name = *job_struct.nodeName;
-	job_id_struct->childrenJobNum = job_struct.children.size();
+	job_id_struct->name = job_struct.nodeName;
+	//job_id_struct->childrenJobNum = job_struct.children.size();
 	job_id_struct->childrenJob = convertJobIdStruct(job_struct.children);
 
 	jobRegister_response.jobIdStruct = job_id_struct;
@@ -788,7 +774,7 @@ void
 getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response, GraphStructType dependencies,
 	string requirements, string rank)
 {
-	GLITE_STACK_TRY("getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response, GraphStructType dependencies, string requirements, string rank)");
+	GLITE_STACK_TRY("getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response, JobIdStructType dependencies, string requirements, string rank)");
 
 	string vo = "Fake VO";
 	AdConverter converter;

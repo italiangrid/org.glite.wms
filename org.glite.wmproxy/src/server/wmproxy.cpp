@@ -8,8 +8,8 @@
 
 // gSOAP
 #include "soapH.h"
-#include "WorkloadManagerProxy_USCOREbinding.nsmap"
-#include "soapWorkloadManagerProxy_USCOREbindingObject.h"
+#include "WMProxy.nsmap"
+#include "soapWMProxyObject.h"
 //#include "wmproxynameH.h"
 //#include "wmproxyname.nsmap"
 
@@ -110,7 +110,7 @@ main(int argc, char* argv[])
 	*/
 	if (argc < 3) {
      	// Running as CGI application
-        WorkloadManagerProxy proxy;
+        WMProxy proxy;
         proxy.serve();
     } else {
 		cout<<"Starting service..."<<endl;

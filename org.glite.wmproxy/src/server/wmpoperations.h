@@ -19,8 +19,6 @@
 // For more information about arguments see Web Service Description Language
 // file (wsdl).
 
-void ping(pingResponse &ping_response);
-
 void getVersion(getVersionResponse &getVersion_response);
 
 void jobRegister(jobRegisterResponse &jobRegister_response, const std::string &jdl);
