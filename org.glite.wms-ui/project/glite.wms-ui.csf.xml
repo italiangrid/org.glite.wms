@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2004/08/09 14:43:59  eronchie
+	Updated
+	WARNING: work in progress
+
 	Revision 1.2  2004/07/27 11:13:39  eronchie
 	Removed
-
+	
 	
 -->
 
@@ -113,61 +117,14 @@
 	
 		<!-- condition property tag = do not remove = -->
 
-		<condition property="thirdparty-globus_gridftp_server.head">
-			<equals arg1="${org.glite.wms.thirdparty-globus_gridftp_server.version}" arg2="HEAD" />
+		<condition property="api-cpp.head">
+			<equals arg1="${org.glite.wms.api-cpp.version}" arg2="HEAD" />
 		</condition>
 
-		<condition property="thirdparty-loki.head">
-			<equals arg1="${org.glite.wms.thirdparty-loki.version}" arg2="HEAD" />
+		<condition property="api-java.head">
+			<equals arg1="${org.glite.wms.api-java.version}" arg2="HEAD" />
 		</condition>
 
-		<condition property="thirdparty-bypass.head">
-			<equals arg1="${org.glite.wms.thirdparty-bypass.version}" arg2="HEAD" />
-		</condition>
-
-		<condition property="common.head">
-			<equals arg1="${org.glite.wms.common.version}" arg2="HEAD" />
-		</condition>
-
-		<condition property="jdl.head">
-                        <equals arg1="${org.glite.wms.jdl.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="jdlj.head">
-			<equals arg1="${org.glite.wms.jdlj.version}" arg2="HEAD" />
-		</condition>
-
-		<condition property="brokerinfo.head">
-                        <equals arg1="${org.glite.wms.brokerinfo.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="classad_plugin.head">
-                        <equals arg1="${org.glite.wms.classad_plugin.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="matchmaking.head">
-                        <equals arg1="${org.glite.wms.matchmaking.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="helper.head">
-                        <equals arg1="${org.glite.wms.helper.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="broker.head">
-                        <equals arg1="${org.glite.wms.broker.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="checkpointing.head">
-                        <equals arg1="${org.glite.wms.checkpointing.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="jobsubmission.head">
-                        <equals arg1="${org.glite.wms.jobsubmission.version}" arg2="HEAD" />
-                </condition>
-
-		<condition property="purger.head">
-                        <equals arg1="${org.glite.wms.purger.version}" arg2="HEAD" />
-                </condition>
     	</target>
 
     	<presetdef name="cvs-co">
@@ -189,15 +146,15 @@
 	</target>
 
 	<!-- Update the current module -->
- 	<target name="org.glite.wms" depends="get.glite-wms.head, get.glite-wms.tag"/>
-	<target name="get.glite-wms.head" if="glite-wms.head">
-		<cvs-co package="org.glite.wms" />
-		<fail>The org.glite and org.glite.wms modules have been updated, please rerun the configuration file</fail>
+ 	<target name="org.glite.wms-ui" depends="get.glite-wms-ui.head, get.glite-wms-ui.tag"/>
+	<target name="get.glite-wms-ui.head" if="glite-wms-ui.head">
+		<cvs-co package="org.glite.wms-ui" />
+		<fail>The org.glite and org.glite.wms-ui modules have been updated, please rerun the configuration file</fail>
 	</target>
-	<target name="get.glite-wms.tag" if="glite-wms.tag">
-		<cvs-co package="org.glite.wms"
-			tag="${org.glite.wms.version}" />
-		<fail>The org.glite and org.glite.wms modules have been updated, please rerun the configuration file</fail>
+	<target name="get.glite-wms-ui.tag" if="glite-wms-ui.tag">
+		<cvs-co package="org.glite.wms-ui"
+			tag="${org.glite.wms-ui.version}" />
+		<fail>The org.glite and org.glite.wms-ui modules have been updated, please rerun the configuration file</fail>
 	</target>
 
 	<!-- *****************************************************-->
@@ -226,161 +183,29 @@
 
 	<!-- component targets tag = do not remove = -->
 
-	<!-- ByPass -->
- 	<target name="thirdparty-bypass" depends="get.thirdparty-bypass.head, get.thirdparty-bypass.tag"/>
-	<target name="get.thirdparty-bypass.head" if="thirdparty-bypass.head">
-		<cvs-co package="org.glite.wms.thirdparty-bypass" />
+	<!-- api-cpp -->
+ 	<target name="api-cpp" depends="get.api-cpp.head, get.api-cpp.tag"/>
+	<target name="get.api-cpp.head" if="api-cpp.head">
+		<cvs-co package="org.glite.wms.api-cpp" />
 	</target>
-	<target name="get.thirdparty-bypass.tag" unless="thirdparty-bypass.head">
-		<cvs-co package="org.glite.wms.thirdparty-bypass"
-			tag="${org.glite.wms.thirdparty-bypass.version}" />
-	</target>
-
-	<!-- Globus GridFTP Server -->
- 	<target name="thirdparty-globus_gridftp_server" depends="globus,get.thirdparty-globus_gridftp_server.head, get.thirdparty-globus_gridftp_server.tag"/>
-	<target name="get.thirdparty-globus_gridftp_server.head" if="thirdparty-globus_gridftp_server.head">
-		<cvs-co package="org.glite.wms.thirdparty-globus_gridftp_server" />
-	</target>
-	<target name="get.thirdparty-globus_gridftp_server.tag" unless="thirdparty-globus_gridftp_server.head">
-		<cvs-co package="org.glite.wms.thirdparty-globus_gridftp_server"
-			tag="${org.glite.wms.thirdparty-globus_gridftp_server.version}" />
+	<target name="get.api-cpp.tag" unless="api-cpp.head">
+		<cvs-co package="org.glite.wms.api-cpp"
+			tag="${org.glite.wms.api-cpp.version}" />
 	</target>
 
-	<!-- Loki -->
- 	<target name="thirdparty-loki" depends="get.thirdparty-loki.head, get.thirdparty-loki.tag"/>
-	<target name="get.thirdparty-loki.head" if="thirdparty-loki.head">
-		<cvs-co package="org.glite.wms.thirdparty-loki" />
+	<!-- api-java -->
+ 	<target name="api-java" depends="get.api-java.head, get.api-java.tag"/>
+	<target name="get.api-java.head" if="api-java.head">
+		<cvs-co package="org.glite.wms.api-java" />
 	</target>
-	<target name="get.thirdparty-loki.tag" unless="thirdparty-loki.head">
-		<cvs-co package="org.glite.wms.thirdparty-loki"
-			tag="${org.glite.wms.thirdparty-loki.version}" />
-	</target>
-
-	<!-- Common -->
- 	<target name="common" depends="boost,classads,globus,get.common.head, get.common.tag"/>
-	<target name="get.common.head" if="common.head">
-		<cvs-co package="org.glite.wms.common" />
-	</target>
-	<target name="get.common.tag" unless="common.head">
-		<cvs-co package="org.glite.wms.common"
-			tag="${org.glite.wms.common.version}" />
+	<target name="get.api-java.tag" unless="api-java.head">
+		<cvs-co package="org.glite.wms.api-java"
+			tag="${org.glite.wms.api-java.version}" />
 	</target>
 
-	<!-- Jdl -->
-    	<target name="jdl" depends="boost,classads,globus,get.jdl.head, get.jdl.tag"/>
-    	<target name="get.jdl.head" if="jdl.head">
-            <cvs-co package="org.glite.wms.jdl" />
-    	</target>
-    	<target name="get.jdl.tag" unless="jdl.head">
-            <cvs-co package="org.glite.wms.jdl"
-                    tag="${org.glite.wms.jdl.version}" />
-    	</target>
-
-	<!-- Jdlj -->
- 	<target name="jdlj" depends="jclassads,get.jdlj.head, get.jdlj.tag"/>
-	<target name="get.jdlj.head" if="jdlj.head">
-		<cvs-co package="org.glite.wms.jdlj" />
-	</target>
-	<target name="get.jdlj.tag" unless="jdlj.head">
-		<cvs-co package="org.glite.wms.jdlj"
-			tag="${org.glite.wms.jdlj.version}" />
-	</target>
-
-	<!-- Brokerinfo -->
-    	<target name="brokerinfo" depends="boost,classads,globus,common,jdl,get.brokerinfo.head, get.brokerinfo.tag"/>
-    	<target name="get.brokerinfo.head" if="brokerinfo.head">
-            <cvs-co package="org.glite.wms.brokerinfo" />
-    	</target>
-    	<target name="get.brokerinfo.tag" unless="brokerinfo.head">
-            <cvs-co package="org.glite.wms.brokerinfo"
-                    tag="${org.glite.wms.brokerinfo.version}" />
-    	</target>
-
-	<!-- ClassAdPlugin -->
-    	<target name="classad_plugin" depends="boost,classads,globus,common,brokerinfo,get.classad_plugin.head, get.classad_plugin.tag"/>
-    	<target name="get.classad_plugin.head" if="classad_plugin.head">
-            <cvs-co package="org.glite.wms.classad_plugin" />
-    	</target>
-    	<target name="get.classad_plugin.tag" unless="classad_plugin.head">
-            <cvs-co package="org.glite.wms.classad_plugin"
-                    tag="${org.glite.wms.classad_plugin.version}" />
-    	</target>
-
-	<!-- Matchmaking -->
-    	<target name="matchmaking" depends="boost,classads,globus,common,classad_plugin,get.matchmaking.head, get.matchmaking.tag"/>
-    	<target name="get.matchmaking.head" if="matchmaking.head">
-            <cvs-co package="org.glite.wms.matchmaking" />
-    	</target>
-    	<target name="get.matchmaking.tag" unless="matchmaking.head">
-            <cvs-co package="org.glite.wms.matchmaking"
-                    tag="${org.glite.wms.matchmaking.version}" />
-    	</target>
-
-	<!-- Helper -->
-    	<target name="helper" depends="boost,classads,globus,common,jdl,get.helper.head, get.helper.tag"/>
-    	<target name="get.helper.head" if="helper.head">
-            <cvs-co package="org.glite.wms.helper" />
-    	</target>
-    	<target name="get.helper.tag" unless="helper.head">
-            <cvs-co package="org.glite.wms.helper"
-                    tag="${org.glite.wms.helper.version}" />
-    	</target>
-
-	<!-- Broker -->
-    	<target name="broker" depends="boost,classads,globus,common,jdl,get.broker.head, get.broker.tag"/>
-    	<target name="get.broker.head" if="broker.head">
-            <cvs-co package="org.glite.wms.broker" />
-    	</target>
-    	<target name="get.broker.tag" unless="broker.head">
-            <cvs-co package="org.glite.wms.broker"
-                    tag="${org.glite.wms.broker.version}" />
-	</target>
-
-	<!-- CheckPointing -->
-        <target name="checkpointing" depends="boost,classads,common,get.checkpointing.head, get.checkpointing.tag"/>
-        <target name="get.checkpointing.head" if="checkpointing.head">
-            <cvs-co package="org.glite.wms.checkpointing" />
-        </target>
-        <target name="get.checkpointing.tag" unless="checkpointing.head">
-            <cvs-co package="org.glite.wms.checkpointing"
-                    tag="${org.glite.wms.checkpointing.version}" />
-        </target>
-
-	<!-- purger -->
-        <target name="purger" depends="boost,classads,globus,get.purger.head, get.purger.tag"/>
-        <target name="get.purger.head" if="purger.head">
-            <cvs-co package="org.glite.wms.purger" />
-        </target>
-        <target name="get.purger.tag" unless="purger.head">
-            <cvs-co package="org.glite.wms.purger"
-                    tag="${org.glite.wms.purger.version}" />
-        </target>
-
-	<!-- JobSubmission -->
-        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
-        <target name="get.jobsubmission.head" if="jobsubmission.head">
-            <cvs-co package="org.glite.wms.jobsubmission" />
-        </target>
-        <target name="get.jobsubmission.tag" unless="jobsubmission.head">
-            <cvs-co package="org.glite.wms.jobsubmission"
-                    tag="${org.glite.wms.jobsubmission.version}" />
-        </target>	
-		
 	<!-- All project modules -->
- 	<target name="project" depends="thirdparty-bypass,
-  				        thirdparty-globus_gridftp_server,
-  				        thirdparty-loki,
-				        common,
-					jdl,
- 				        jdlj,
-					brokerinfo,
-					classad_plugin,
-					matchmaking,
-					broker,
-					helper,
-					checkpointing,
-					purger,
-					jobsubmission"/>
+ 	<target name="project" depends="api-cpp,
+  				        api-java"/>
 
 
 	<!-- ====================================================
