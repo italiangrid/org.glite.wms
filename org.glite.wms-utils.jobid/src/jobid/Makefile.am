@@ -27,7 +27,6 @@ jobidinclude_HEADERS = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
-	$(GLITE_WMS_COMMON_CFLAGS) \
 	-D_GNU_SOURCE
 
 MAINTAINERCLEANFILES = Makefile.in
