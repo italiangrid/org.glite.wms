@@ -118,7 +118,7 @@ namespace api {
 				throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to perform attachement: port exceeds firewall range"  ) ;
 			arguments += "-port " ; //TBD + repr (port)
 		}
-		char* shPath_ch = getenv ("EDG_WL_LOCATION") ;
+		char* shPath_ch = getenv ("GLITE_WMS_LOCATION") ;
 		string shPath  ;
 		if (  shPath == NULL)
 			shPath = "/opt/glite" ;

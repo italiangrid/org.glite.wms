@@ -11,16 +11,7 @@ lib_LTLIBRARIES = libglite_wmsui_client.la
 clientdir = $(includedir)/glite/wmsui/client
 client_HEADERS = \
 	CredentialException.h \
-	Job.h \
-	Request.h \
-	Logging.h \
-	JobCollection.h \
-	JobExceptions.h \
-	UserCredential.h \
-	Listener.h \
-	Shadow.h \
-	UserJobs.h \
-	exception_codes.h 
+	Logging.h 
 
 libglite_wmsui_client_la_SOURCES = Job.cpp \
 	Request.cpp \
