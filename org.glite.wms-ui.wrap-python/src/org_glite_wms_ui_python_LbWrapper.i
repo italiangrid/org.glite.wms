@@ -39,7 +39,7 @@ namespace std {
 }
 
 namespace std {
-   %template(StringStatus) vector<edg::workload::logging::client::JobStatus> ;
+   %template(StringStatus) vector<glite::wms::lb::JobStatus> ;
 }
 
 
