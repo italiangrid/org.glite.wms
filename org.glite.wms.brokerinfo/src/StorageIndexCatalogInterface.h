@@ -6,18 +6,18 @@
 //  e-mail :   "enzo.martelli@mi.infn.it"
 //
 //  Revision history :
-//  29-11-2004 Original release
+//  02-12-2004 Original release
 //
 //  Description:
-//  Wraps the Storage Index Catalog client API
+//  Wraps the Storage Index soap Catalog client API
 //   
 //   
 //  Copyright (c) 2004 Istituto Nazionale di Fisica Nucleare (INFN). 
 //  All rights reserved.
 //  See http://grid.infn.it/grid/license.html for license details. 
 //
-#ifndef STORAGE_INDEX_CATALOG_H
-#define STORAGE_INDEX_CATALOG_H
+#ifndef GLITE_WMS_BROKERINFO_STORAGE_INDEX_CATALOG_INTERFACE_H
+#define GLITE_WMS_BROKERINFO_STORAGE_INDEX_CATALOG_INTERFACE_H 
 
 
 #include <string>
@@ -27,6 +27,7 @@
 
 namespace glite {
 namespace wms {
+namespace brokerinfo {
 namespace sici {
 
 class StorageIndexCatalogInterface
@@ -79,6 +80,7 @@ typedef StorageIndexCatalogInterface* create_t(const std::string&);
 typedef void destroy_t(StorageIndexCatalogInterface*);
 
 } // end namespace sici
+} // end namespace brokerinfo
 } // end namespace wms
 } // end namespace glite
 
