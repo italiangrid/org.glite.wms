@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.18  2004/05/18 10:17:54  dimeglio
+	Modified not to use -r HEAD when checking out modules from HEAD
+
 	Revision 1.17  2004/05/17 16:22:12  flammer
 	Unification of variable naming.
-
+	
 	Revision 1.16  2004/05/13 23:40:56  dimeglio
 	Removed one occurrence of Test2 WMS
 	
@@ -143,27 +146,59 @@
 		 Self-update if required
 		 ===================================================== -->
 		
-	<!-- Load subsystem dependencies file -->
-	<property file="dependencies.properties" />
-
 	<!-- Update main GLite module -->
-	<target name="org.glite" unless="glite.uptodate">
-		<cvs command="checkout"
-        	package="${global.name}"
-        	dest="${workspace.dir}"
-        	tag="${org.glite.version}"/>
+	<target name="org.glite" unless="uptodate"
+			description="Check if org.glite is uptodate.">
+		<condition property="glite.tag">
+			<not>
+				<equals arg1="${org.glite.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getGLiteHead" />
+		<antcall target="getGLiteTag" />
+	</target>
+	<target name="getGLiteHead" unless="glite.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="${global.name}" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+		<fail>The org.glite module has been updated, please rerun the configuration file</fail>
+	</target>
+	<target name="getGLiteTag" if="glite.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="${global.name}" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.version}" />
+ 		</antcall>
 		<fail>The org.glite module has been updated, please rerun the configuration file</fail>
 	</target>
 
 	<!-- Update the current module -->
-	<target name="org.glite.wms" unless="uptodate">
-		<cvs command="checkout"
-        	package="${wms.subsystem.name}"
-        	dest="${workspace.dir}"
-        	tag="${org.glite.wms.version}" />
+	<target name="org.glite.wms" unless="uptodate"
+			description="Update security subsystem.">
+		<condition property="wms.tag">
+			<not>
+				<equals arg1="${org.glite.wms.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getWMSHead" />
+		<antcall target="getWMSTag" />
+	</target>
+	<target name="getWMSHead" unless="wms.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="${wms.subsystem.name}" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
 		<fail>The org.glite.wms module has been updated, please rerun the configuration file</fail>
 	</target>
-
+	<target name="getWMSTag" if="wms.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="${wms.subsystem.name}" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.version}" />
+ 		</antcall>
+		<fail>The org.glite.wms module has been updated, please rerun the configuration file</fail>
+	</target>
 	
 	<!-- *****************************************************-->
 	<!-- Environmental checks                                 -->
@@ -252,50 +287,146 @@
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils">		
-		<cvs command="checkout"
-			package="org.glite.wms.thirdparty-globus_ssl_utils"
-			dest="${workspace.dir}"
-			tag="${org.glite.wms.thirdparty-globus_ssl_utils.version}"/>
+		<condition property="globus_ssl_utils.tag">
+			<not>
+				<equals arg1="${org.glite.wms.thirdparty-globus_ssl_utils.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getGSSLUHead" />
+		<antcall target="getGSSLUTag" />
+	</target>
+	<target name="getGSSLUHead" unless="globus_ssl_utils.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-globus_ssl_utils" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+	</target>
+	<target name="getGSSLUTag" if="globus_ssl_utils.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-globus_ssl_utils" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.thirdparty-globus_ssl_utils.version}" />
+ 		</antcall>
 	</target>
 	
 	<!-- ByPass -->
  	<target name="thirdparty-bypass">		
-		<cvs command="checkout"
-			package="org.glite.wms.thirdparty-bypass"
-			dest="${workspace.dir}"
-			tag="${org.glite.wms.thirdparty-bypass.version}"/>
+		<condition property="bypass.tag">
+			<not>
+				<equals arg1="${org.glite.wms.thirdparty-bypass.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getByPassHead" />
+		<antcall target="getByPassTag" />
+	</target>
+	<target name="getByPassHead" unless="bypass.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-bypass" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+	</target>
+	<target name="getByPassTag" if="bypass.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-bypass" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.thirdparty-bypass.version}" />
+ 		</antcall>
 	</target>
 	
 	<!-- Globus GridFTP Server -->
  	<target name="thirdparty-globus_gridftp_server" depends="globus">		
-		<cvs command="checkout"
-			package="org.glite.wms.thirdparty-globus_gridftp_server"
-			dest="${workspace.dir}"
-			tag="${org.glite.wms.thirdparty-globus_gridftp_server.version}"/>
+		<condition property="globus_gridftp_server.tag">
+			<not>
+				<equals arg1="${org.glite.wms.thirdparty-globus_gridftp_server.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getGGFTPSHead" />
+		<antcall target="getGGFTPSTag" />
+	</target>
+	<target name="getGGFTPSHead" unless="globus_gridftp_server.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-globus_gridftp_server" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+	</target>
+	<target name="getGGFTPSTag" if="globus_gridftp_server.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-globus_gridftp_server" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.thirdparty-globus_gridftp_server.version}" />
+ 		</antcall>
 	</target>
 	
 	<!-- Loki -->
  	<target name="thirdparty-loki">		
-		<cvs command="checkout"
-			package="org.glite.wms.thirdparty-loki"
-			dest="${workspace.dir}"
-			tag="${org.glite.wms.thirdparty-loki.version}"/>
+		<condition property="loki.tag">
+			<not>
+				<equals arg1="${org.glite.wms.thirdparty-loki.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getLokiHead" />
+		<antcall target="getLokiTag" />
+	</target>
+	<target name="getLokiHead" unless="loki.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-loki" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+	</target>
+	<target name="getLokiTag" if="loki.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="org.glite.wms.thirdparty-loki" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.thirdparty-loki.version}" />
+ 		</antcall>
 	</target>
 	
 	<!-- Common -->
  	<target name="common" depends="boost,classads,globus">		
-		<cvs command="checkout"
-			package="org.glite.wms.common"
-			dest="${workspace.dir}"
-			tag="${org.glite.wms.common.version}"/>
+		<condition property="common.tag">
+			<not>
+				<equals arg1="${org.glite.wms.common.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getCommonHead" />
+		<antcall target="getCommonTag" />
+	</target>
+	<target name="getCommonHead" unless="common.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="org.glite.wms.common" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+	</target>
+	<target name="getCommonTag" if="common.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="org.glite.wms.common" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.common.version}" />
+ 		</antcall>
 	</target>
 	
 	<!-- JCommon -->
  	<target name="jcommon" depends="jclassads">		
-		<cvs command="checkout"
-			package="org.glite.wms.jcommon"
-			dest="${workspace.dir}"
-			tag="${org.glite.wms.jcommon.version}"/>
+		<condition property="jcommon.tag">
+			<not>
+				<equals arg1="${org.glite.wms.jcommon.version}" arg2="HEAD" />
+			</not>
+		</condition>
+		<antcall target="getJCommonHead" />
+		<antcall target="getJCommonTag" />
+	</target>
+	<target name="getJCommonHead" unless="jcommon.tag">
+ 		<antcall target="getCVSHead" inheritAll="false">
+			<param name="package" value="org.glite.wms.jcommon" />
+			<param name="dest" value="${workspace.dir}" />
+ 		</antcall>
+	</target>
+	<target name="getJCommonTag" if="jcommon.tag">
+ 		<antcall target="getCVSTag" inheritAll="false">
+			<param name="package" value="org.glite.wms.jcommon" />
+			<param name="dest" value="${workspace.dir}" />
+			<param name="tag" value="${org.glite.wms.jcommon.version}" />
+ 		</antcall>
 	</target>
 	
 	<!-- ====================================================
@@ -305,6 +436,23 @@
 	<!-- All libraries -->
  	<target name="all" depends="org.glite, org.glite.wms, envchecks, devtools, external, project" />		
 
+	<!-- ====================================================
+		 CVS Targets
+		 ==================================================== -->
+
+	<target name="getCVSHead" if="">
+		<cvs command="checkout"
+			package="${package}"
+			dest="${dest}" />
+	</target>
+	
+	<target name="getCVSTag" if="">
+		<cvs command="checkout"
+			package="${package}"
+			dest="${dest}"
+			tag="${tag}" />
+	</target>
+	
 	<!-- ====================================================
 		 Print dependecies to console
 		 ==================================================== -->
