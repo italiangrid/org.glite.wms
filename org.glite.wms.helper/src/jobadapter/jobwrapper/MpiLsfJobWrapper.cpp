@@ -1,0 +1,105 @@
+/***************************************************************************
+ *  filename  : MpiLsfJobWrapper.cpp
+ *  authors   : Alessio Gianelle <alessio.gianelle@pd.infn.it>
+ *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
+ *              Rosario Peluso <rosario.peluso@pd.infn.it>
+ *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
+ *  For license conditions see LICENSE file or
+ *  http://www.edg.org/license.html
+ ***************************************************************************/
+
+#include <algorithm>
+#include <cassert>
+
+#include "JobWrapper.h"
+#include "MpiLsfJobWrapper.h"
+
+using namespace std;
+
+namespace url = glite::wms::helper::jobadapter::url;
+
+namespace glite {
+namespace wms {
+namespace helper {
+namespace jobadapter {
+namespace jobwrapper {
+
+MpiLsfJobWrapper::MpiLsfJobWrapper(const string& job)
+  : JobWrapper(job)
+{ 
+}
+
+MpiLsfJobWrapper::~MpiLsfJobWrapper(void)
+{
+}
+
+ostream&
+MpiLsfJobWrapper::set_subdir(ostream& os,
+                             const string& dir) const
+{
+  os << "newdir=\"" << dir << "\"" << endl
+     << "mkdir -p \".mpi/\"${newdir}" << endl
+     << "if [ $? != 0 ]; then" << endl
+     << "  echo \"Cannot create \".mpi/\"${newdir} directory\"" << endl << endl;
+
+  os << "  "; this->set_lb_sequence_code(os,
+		   "Done",
+		   "Cannot create \".mpi/\"${newdir} directory",
+                   "FAILED",
+                   "0");
+	    
+  return os << "  exit 1" << endl
+            << "fi" << endl
+            << "cd \".mpi/\"${newdir}" << endl
+            << endl;
+}
+
+ostream&
+MpiLsfJobWrapper::execute_job(ostream& os,
+                 const string& arguments,
+                 const string& job,
+                 const string& stdi,
+                 const string& stdo,
+                 const string& stde,
+		 int           node) const
+{
+  os << "HOSTFILE=host$$" << endl
+     << "touch ${HOSTFILE}" << endl
+     << "for host in ${LSB_HOSTS}" << endl
+     << "  do echo $host >> ${HOSTFILE}" << endl
+     << "done" << endl
+     << endl;	
+
+  if (arguments != "") {
+    os << "mpirun -np " << node << " -machinefile ${HOSTFILE} "
+       << "  \"" << job << "\"" << " " << arguments << " $*";
+  } else {
+    os << "mpirun -np " << node << " -machinefile ${HOSTFILE} "
+       << "  \"" << job << "\" $*";
+  }
+
+  if (stdi != "") {
+    os << " < \"" << stdi << "\"";
+  }
+
+  if (stdo != "") {
+    os << " > \"" << stdo << "\"";
+  } else {
+    os << " 2> /dev/null";
+  }
+
+  if (stde != "") {
+    os << " 2> \"" << stde << "\"";
+  } else {
+    os << " 2> /dev/null";
+  }
+
+  return os << endl 
+	    << endl;  
+}
+
+} // namespace jobwrapper
+} // namespace jobadapter
+} // namespace helper
+} // namespace wms
+} // namespace glite

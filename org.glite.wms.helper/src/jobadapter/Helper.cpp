@@ -8,13 +8,16 @@
 #include <fstream>
 #include <boost/scoped_ptr.hpp>
 #include <classad_distribution.h>
-#include "edg/workload/planning/jobadapter/Helper.h"
-#include "edg/workload/planning/helper/HelperFactory.h"
-#include "edg/workload/planning/jobadapter/JobAdapter.h"
 
-namespace edg {
-namespace workload {
-namespace planning {
+#include "Helper.h"
+#include "glite/wms/helper/HelperFactory.h"
+#include "JobAdapter.h"
+
+namespace helper = glite::wms::helper;
+
+namespace glite {
+namespace wms {
+namespace helper {
 namespace jobadapter {
 
 namespace {
@@ -62,4 +65,7 @@ Helper::resolve(classad::ClassAd const* input_ad) const
   return JobAdapter(input_ad).resolve();
 }
 
-}}}} // edg::workload::planning::jobadapter
+} // namespace jobadapter
+} // namespace helper
+} // namespace wms
+} // namespace glite

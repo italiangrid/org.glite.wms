@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/05 14:55:56  eronchie
+#       Start handling helper
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/07/02 13:11:39  monforte
 #       Initial Helper porting to new build system
 #       WARNING: work in progress
@@ -31,7 +35,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Subdirectories list
-SUBDIRS = src 
+SUBDIRS = interface src examples 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

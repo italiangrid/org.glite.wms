@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/05 14:55:56  eronchie
+#       Start handling helper
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/07/02 13:11:39  monforte
 #       Initial Helper porting to new build system
 #       WARNING: work in progress
@@ -96,14 +100,27 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
+have_glite_wms_common=no
+have_glite_wms_jdl=no
+
 AC_GLITE
-AC_GLITE_WMS_COMMON
+
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([examples/Makefile])
+AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
-#AC_CONFIG_FILES([interface/Makefile])
+#AC_CONFIG_FILES([src/broker/Makefile])
+AC_CONFIG_FILES([src/jobadapter/Makefile])
+AC_CONFIG_FILES([src/jobadapter/jobwrapper/Makefile])
+AC_CONFIG_FILES([src/jobadapter/url/Makefile])
 
 AC_OUTPUT

@@ -5,14 +5,14 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_PLANNING_JOBADAPTER_HELPER_H
-#define EDG_WORKLOAD_PLANNING_JOBADAPTER_HELPER_H
+#ifndef GLITE_WMS_HELPER_JOBADAPTER_HELPER_H
+#define GLITE_WMS_HELPER_JOBADAPTER_HELPER_H
 
-#include "edg/workload/planning/helper/HelperImpl.h"
+#include "glite/wms/helper/HelperImpl.h"
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
+namespace helper {
 namespace jobadapter {
 
 class Helper: public helper::HelperImpl
@@ -24,6 +24,9 @@ public:
   classad::ClassAd* resolve(classad::ClassAd const* input_ad) const;
 };
 
-}}}} // edg::workload::planning::jobadapter
+} // namespace jobadapter
+} // namespace helper
+} // namespace wms
+} // namespace glite 
 
 #endif
