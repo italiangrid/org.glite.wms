@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Copyright (c) 2004 on behalf of the EU EGEE Project: 
+	The European Organization for Nuclear Research (CERN), 
+	Istituto Nazionale di Fisica Nucleare (INFN), Italy
+	Datamat Spa, Italy
+	Centre National de la Recherche Scientifique (CNRS), France
+	CS Systeme d'Information (CSSI), France
+	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+	Universiteit van Amsterdam (UvA), Netherlands
+	University of Helsinki (UH.HIP), Finland
+	University of Bergen (UiB), Norway
+	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+
+	Common build properties file for the EGEE test3 wms common component
+		
+-->
+
+<project name="test3 wms common component common properties">
+
+	<!-- ======================================================
+		 Component properties file for EGEE test3 wms component common
+		 ====================================================== -->
+		
+	<!-- Component name prefix -->
+	<property name="component.prefix" value="common" />
+	
+	<!-- Subsystem name -->
+	<property name="subsystem.name" value="${test3.wms.subsystem.name}"/>
+		
+	<!-- Subsystem prefix -->
+	<property name="subsystem.prefix" value="${test3.wms.subsystem.prefix}"/>
+
+	<!-- ====================================================== -->
+		
+	<!-- Subsystem properties file -->
+	<property name="subsystem.properties.file" value="../${subsystem.name}/project/properties.xml"/>	
+				
+	<!-- ====================================================== -->
+	
+	<!-- Component name -->
+	<property name="component.name" value="${subsystem.name}.${component.prefix}" />
+		
+	<!-- Component root directory -->
+	<property name="component.dir" location="../${component.name}" />
+	
+	<!-- Component project directory -->
+	<property name="component.project.dir" location="${component.dir}/project" />
+		
+	<!-- Component-specific property file -->
+	<property name="component.properties.file" location="${component.project.dir}/build.properties"/>
+	
+	<!-- Component-specific dependencies file -->
+	<property name="component.dependencies.file" value="${component.project.dir}/dependencies.properties" />
+		
+	<!-- Component taskdefs file -->
+	<property name="component.taskdefs.file" value="${component.project.dir}/taskdefs.xml" />
+		
+	<!-- Component compilerdefs file -->
+	<property name="component.compilerdefs.file" value="${component.project.dir}/compilerdefs.xml" />
+	
+	<!-- Subsystem common targets file -->
+	<property name="component.targets.file" value="${component.project.dir}/targets.xml" />
+	
+	<!-- Component cpp ant file -->
+	<property name="component.targets-cpp-ant.file" value="${component.project.dir}/targets-cpp-ant.xml" />
+	
+	<!-- Component external dependencies file -->
+	<property name="component.external-dependencies.file" value="${component.project.dir}/external-dependencies.xml" />			
+			
+	<!-- ====================================================== -->
+	
+	<!-- Module name -->
+	<property name="module.name" value="${component.name}" />
+	
+	<!-- Module package name -->
+	<property name="module.package.name" value="${global.prefix}-${subsystem.prefix}-${component.prefix}" />
+			
+	<!-- Module level -->
+	<property name="module.level" value="component" />
+		
+</project>
