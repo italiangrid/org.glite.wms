@@ -12,7 +12,7 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	Common build properties file for the EGEE test3 wms thirdparty-globus_ssl_utils component
+	Common build properties file for the GLite WMS thirdparty-globus_ssl_utils component
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
 			 Joachim Flammer <Joachim.Flammer@cern.ch>
@@ -21,20 +21,20 @@
 	
 -->
 
-<project name="test3 wms thirdparty-globus_ssl_utils component thirdparty-globus_ssl_utils properties">
+<project name="WMS thirdparty-globus_ssl_utils component thirdparty-globus_ssl_utils properties">
 
 	<!-- ======================================================
-		 Component properties file for EGEE test3 wms component thirdparty-globus_ssl_utils
+		 Component properties file for GLite WMS component thirdparty-globus_ssl_utils
 		 ====================================================== -->
 		
 	<!-- Component name prefix -->
 	<property name="component.prefix" value="thirdparty-globus_ssl_utils" />
 	
 	<!-- Subsystem name -->
-	<property name="subsystem.name" value="${test3.wms.subsystem.name}"/>
+	<property name="subsystem.name" value="${wms.subsystem.name}"/>
 		
 	<!-- Subsystem prefix -->
-	<property name="subsystem.prefix" value="${test3.wms.subsystem.prefix}"/>
+	<property name="subsystem.prefix" value="${wms.subsystem.prefix}"/>
 
 	<!-- ====================================================== -->
 		
