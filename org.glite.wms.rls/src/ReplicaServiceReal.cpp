@@ -143,6 +143,17 @@ ReplicaServiceReal::getAccessCost(const vector<string>& lfns,
   return costs_info;
 }
 
+// the class factories
+ 
+extern "C" ReplicaServiceReal* create(const std::string& vo){
+            return new ReplicaServiceReal(vo);
+}
+ 
+extern "C" void destroy(ReplicaServiceReal* p) {
+            delete p;
+}
+
+
 } // namespace rls
 } // namespace wms
 } // namespace glite
