@@ -26,7 +26,7 @@
 #include <string>
 
 namespace glite {   
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -146,7 +146,7 @@ class SocketClient
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 #endif // _SocketClient_h_

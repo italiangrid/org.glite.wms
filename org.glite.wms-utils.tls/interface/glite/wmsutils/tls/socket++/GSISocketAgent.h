@@ -19,13 +19,13 @@
 #define _GSISocketAgent_h_
 
 /** The superclass definition file. */
-#include "glite/wms/tls/socket++/SocketAgent.h"
+#include "glite/wmsutils/tls/socket++/SocketAgent.h"
 
 /** The globus secure shell definitions file. */
 #include <globus_gss_assist.h>
 
 namespace glite {
-namespace wms {
+namespace wmsutils {
 namespace tls { 
 namespace socket_pp {
 
@@ -117,7 +117,7 @@ private:
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 #endif // _GSISocketAgent_h_

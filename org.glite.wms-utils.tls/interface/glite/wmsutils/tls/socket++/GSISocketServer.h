@@ -19,12 +19,12 @@
 #define _GSISocketServer_h_
 
 /** Include the super class header. */
-#include "glite/wms/tls/socket++/SocketServer.h"
+#include "glite/wmsutils/tls/socket++/SocketServer.h"
 /** Include the secure socket globus definition. */
 #include <globus_gss_assist.h>
 
 namespace glite {   
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -96,7 +96,7 @@ class GSISocketServer : public SocketServer
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 #endif // _GSISocketServer_h_

@@ -19,12 +19,12 @@
 #define _GSISocketClient_h_
 
 /** This super class header file. */
-#include "glite/wms/tls/socket++/SocketClient.h"
+#include "glite/wmsutils/tls/socket++/SocketClient.h"
 /** Include the secure socket globus definition. */
 #include <globus_gss_assist.h>
 
 namespace glite {   
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -103,7 +103,7 @@ class GSISocketClient : public SocketClient
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 #endif // _GSISocketClient_h_
