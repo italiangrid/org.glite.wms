@@ -12,11 +12,13 @@ lib_LTLIBRARIES = libglite_wms_broker.la
 
 brokerdir = $(includedir)/glite/wms/broker
 broker_HEADERS = \
+	RBSimpleISMImpl.h \
 	RBSimpleImpl.h \
 	ResourceBroker.h \
 	utility.h
 
 libglite_wms_broker_la_SOURCES = \
+	RBSimpleISMImpl.cpp \
 	RBSimpleImpl.cpp
 libglite_wms_broker_la_LIBADD = \
         ./selectors/libglite_wms_broker_selectors.la
