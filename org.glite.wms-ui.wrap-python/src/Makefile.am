@@ -107,6 +107,7 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
 	$(BOOST_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
@@ -138,6 +139,7 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
@@ -171,6 +173,7 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
@@ -202,6 +205,7 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
