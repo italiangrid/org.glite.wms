@@ -30,7 +30,7 @@
 
 namespace common     = glite::wms::common;
 namespace jobid      = glite::wmsutils::jobid;
-namespace nsjobid    = glite::wms::wmproxy::jobid;
+namespace nsjobid    = glite::wms::wmproxy::commands::jobid;
 namespace utilities  = common::utilities;
 namespace logger     = common::logger;
 namespace commands   = glite::wms::wmproxy::commands;
