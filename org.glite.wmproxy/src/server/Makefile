@@ -4,7 +4,7 @@ LIBS=
 COFLAGS=-O2
 #CWFLAGS=-Wall
 CWFLAGS=
-REPOSITORY=$(HOME)/Repository/cern
+#REPOSITORY=/home/fpacini/CVS_REP/cern
 CIFLAGS=-I$(REPOSITORY)/org.glite.wms.wmproxy/src
 CMFLAGS=-DWITH_FASTCGI -DHAVE_STRINGSTREAM
 #CMFLAGS=
@@ -57,6 +57,7 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-L$(EXPAT)/lib \
 	-L../commands \
 	-L../utilities \
+	-L../eventlogger \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
 	-lglite_lb_clientpp_gcc32 \
@@ -75,8 +76,8 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-lglite_wmsui_partitioner \
 	-lglitePipe \
 	-lgliteWMPCommands \
-	-lglite_wms_wmproxy_eventlogger \
 	-lglite_wms_wmproxy_utilities \
+	-lglite_wms_wmproxy_eventlogger \
 	-lares \
 	-lclassad \
 	-lclassad_dl \
@@ -121,9 +122,7 @@ wmProxy:        wm.h \
                                 wmproxy.cpp wmproxy.h \
                                 wmpoperations.cpp wmpoperations.h  \
                                 wmpgsoapoperations.cpp \
-				wmpconfiguration.h wmpconfiguration.cpp \
-                                wmpexceptions.cpp wmpexceptions.h \
-                                wmpgsoapfaultmanipulator.cpp wmpgsoapfaultmanipulator.h \
+								wmpconfiguration.h wmpconfiguration.cpp \
                                 wmpdelegation.cpp wmpdelegation.h \
                                 wmpexpdagad.cpp wmpexpdagad.h \
                                 wmpdispatcher.cpp wmpdispatcher.h\
@@ -131,10 +130,10 @@ wmProxy:        wm.h \
 			@echo "wmproxy....."
 			@$(CPP) $(CFLAGS) $(CMFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
-                                wmpoperations.cpp wmpeventlogger.cpp \
-                                wmpexceptions.cpp wmpgsoapoperations.cpp \
+                                wmpoperations.cpp \
+                                wmpgsoapoperations.cpp \
                                 wmpdispatcher.cpp wmpconfiguration.cpp\
-                                wmpgsoapfaultmanipulator.cpp wmpexpdagad.cpp wmpdelegation.cpp \
+                                wmpexpdagad.cpp wmpdelegation.cpp \
                                 WMPManager.cpp NS2WMProxy.cpp \
                                 $(SOAPCPP) $(LIBS) $(LDFLAGS)
 
