@@ -6,12 +6,10 @@
 ## *
 ## *********************************************************************
 
-if AMC_BUILD_UI_JCLIENT
-lib_LTLIBRARIES = libedg_wl_userinterface_native.la
+lib_LTLIBRARIES = libglite_wmsui_native.la
 
-uijcommondir = $(includedir)/edg/workload/userinterface/jcommon
-uijcommon_HEADERS = edg_workload_userinterface_jclient_Api.h
-endif
+#uijcommondir = $(includedir)/edg/workload/userinterface/jcommon
+#uijcommon_HEADERS = edg_workload_userinterface_jclient_Api.h
 
 
 SHARED_LIB_DGAS = ../../dgas/services/clients/edg-wl-dgas-jobAuthClient.lo \
@@ -81,10 +79,10 @@ SHARED_LIB_REQUESTAD = ../../common/requestad/JDLAttributes.lo \
 SHARED_LIB_SSL = ../../common/ssl_helpers/ssl_pthreads.lo\
 	../../common/ssl_helpers/ssl_inits.lo
 
-libedg_wl_userinterface_native_la_SOURCES = \
-	edg_workload_userinterface_jclient_Api.h \
-	edg_workload_userinterface_jclient_Api.cpp 
-libedg_wl_userinterface_native_la_LIBADD = \
+libglite_wmsui_native_la_SOURCES = \
+	org_glite_wmsui_apij_Api.h \
+	org_glite_wmsui_apij_Api.cpp 
+libglite_wmsui_native_la_LIBADD = \
         -lc \
         ../../networkserver/client/libjnsclient.la \
         $(SHARED_LIB_SOCKET) \
@@ -105,17 +103,17 @@ libedg_wl_userinterface_native_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-edg_workload_userinterface_jclient_Api.lo: edg_workload_userinterface_jclient_Api.cpp
-	/bin/touch edg_workload_userinterface_jclient_Api.h
-	$(JAVA_BIN_PATH)/javah -jni \
+org_glite_wmsui_apij_Api.lo: org_glite_wmsui_apij_Api.cpp
+	/bin/touch org_glite_wmsui_apij_Api.h
+	javah -jni \
 	-d . -classpath ../../.. \
-	edg.workload.userinterface.jclient.Api
+	org.glite.wmsui.apij.Api
 	/usr/bin/libtool $(CXX) -c $(CFLAGS) -DHAVE_CONFIG_H \
 	-I. -I. -I../.. $(AM_CPPFLAGS) \
-	-o edg_workload_userinterface_jclient_Api.o \
-	edg_workload_userinterface_jclient_Api.cpp
+	-o org_glite_wmsui_apij_Api.o org_glite_wmsui_apij_Api.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(BOOST_CFLAGS) \
@@ -124,6 +122,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/.. \
 	$(JAVA_CFLAGS) \
 	-DWANT_NAMESPACES
 
-CLEANFILES = edg_workload_userinterface_jclient_Api.h
+CLEANFILES = org_glite_wmsui_apij_Api.h
 
 MAINTAINERCLEANFILES = Makefile.in
