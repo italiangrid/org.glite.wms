@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/09/21 19:24:33  glbuild
+#       modified module.version
+#
 #       Revision 1.3  2004/07/10 06:44:36  eronchie
 #       Removed AC_GLITE_WMS_COMMON
 #       It is not necessary
@@ -36,7 +39,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Matchmaking], [0.0.0])
+AC_INIT([GLite WMS Matchmaking], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])
@@ -106,3 +109,4 @@ AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 
 AC_OUTPUT
+
