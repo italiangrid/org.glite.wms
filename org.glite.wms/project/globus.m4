@@ -68,7 +68,7 @@ AC_DEFUN(AC_GLOBUS,
 
     test -n "$ac_globus_nothr_ssl" && GLOBUS_NOTHR_CFLAGS="-I$ac_globus_nothr_ssl -I$GLOBUS_NOTHR_CFLAGS"
 
-    if test -n "$ac_globus_nothr_ssl" -a -n "$ac_globus_ldlib" ; then
+    if test -n "$ac_globus_nothr_ssl" ; then
         dnl
         dnl maybe do some complex test of globus instalation here later
         dnl
@@ -105,7 +105,7 @@ AC_DEFUN(AC_GLOBUS,
 
     AC_MSG_CHECKING([checking openssl thr])
 
-    if test -n "$ac_globus_thr_ssl" -a -n "$ac_globus_ldlib" ; then
+    if test -n "$ac_globus_thr_ssl" ; then
 	dnl
 	dnl maybe do some complex test of globus instalation here later
 	dnl
@@ -128,20 +128,20 @@ AC_DEFUN(AC_GLOBUS,
     ac_globus_thr_ldap="$with_globus_prefix/include/$with_globus_thr_flavor"
                                                                                 
     AC_MSG_CHECKING([for $ac_globus_thr_ldap/lber.h])
-    AC_MSG_CHECKING([for $ac_globus_thr_ldap/ldap.h])                                                                            
-    if test ! -f "$ac_globus_thr_ldap/ldap.h" ; then
-        if test ! -f "$ac_globus_thr_ldap/lber.h" ; then
-            ac_globus_thr_ldap=""
-            AC_MSG_RESULT([no])
-        else
-            AC_MSG_RESULT([yes])
-	fi
+    
+    if test ! -f $ac_globus_thr_ldap/lber.h ; then
+	ac_globus_thr_ldap=""
+	AC_MSG_RESULT([no])
+    else
+        AC_MSG_RESULT([yes])
     fi
-                                                                                
+                                                           
     AC_MSG_CHECKING([for ldap thr])
                                                                                 
-    if test -n "$ac_globus_thr_ldap" -a -z x$ac_globus_thr_ldap != x$ac_globus_thr_ssl ; then 
-      GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ldap -I$GLOBUS_THR_CFLAGS"
+    if test -n "$ac_globus_thr_ldap" ; then
+        if test -z x$ac_globus_thr_ldap != x$ac_globus_thr_ssl ; then 
+            GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ldap -I$GLOBUS_THR_CFLAGS"
+	fi
     fi
 
     if test -n "$ac_globus_thr_ldap" -a -n "$ac_globus_ldlib" ; then

@@ -13,7 +13,7 @@ AC_DEFUN(AC_GLITE,
 
     if test -n "with_glite_location" ; then
     	GLITE_LOCATION="$with_glite_location"
-	GLITE_CFLAGS=$GLITE_LOCATION/include
+	GLITE_CFLAGS="-I$GLITE_LOCATION/include"
     else
 	GLITE_LOCATION=""
 	GLITE_CFLAGS=""
