@@ -13,7 +13,7 @@
 
 
 /**
- * Provide a wrapper for the glite::wms::lb::JobStatus class
+ * Provide a wrapper for the glite::lb::JobStatus class
  * it allows the user to retrieve bookkeeping information over a sequence of jobs as well as to
  * perform a query on the LB server and get back all the jobs that match
  *
@@ -91,13 +91,13 @@ class Status {
 	const std::vector<int>& excludes,const std::vector<int>& includes,
 	std::string issuer,int from , int to ,int ad );
   private:
-	std::list<glite::wms::lb::JobStatus> states ;
+	std::list<glite::lb::JobStatus> states ;
 	std::string error ;
 	bool error_code ;
 	void log_error ( const std::string& err) ;
 };
 /**
- * Provide a wrapper for the glite::wms::lb::Event class
+ * Provide a wrapper for the glite::lb::Event class
  * it allows the user to retrieve logging information over one or more jobs
  *
  * @brief LB Event wrapper class
@@ -141,7 +141,7 @@ class Eve{
 	*/
 	int get_error (std::string& err) ;
   private:
-	std::list<glite::wms::lb::Event> events ;
+	std::list<glite::lb::Event> events ;
 	std::string error;
 	bool error_code ;
 	void log_error ( const std::string& err) ;

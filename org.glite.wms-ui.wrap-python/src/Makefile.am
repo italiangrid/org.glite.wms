@@ -225,7 +225,7 @@ LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 LogWrapper_wrap.cpp : glite_wmsui_LogWrapper.i
 	@#Create the files
 	@echo "Swig compiling file $< ...."
-	$(SWIG_BIN_PATH)/swig -I$(top_srcdir) -python -shadow -c++ -o $@ $<
+	$(SWIG_BIN_PATH)/swig -I$(top_srcdir)/src -python -shadow -c++ -o $@ $<
 
 NsWrapper_wrap.cpp: glite_wmsui_NsWrapper.i
 	@#Create the files

@@ -23,9 +23,9 @@
 
 using namespace std ;
 using namespace glite::wms::lb ;
-using namespace glite::wmsustils::exception ;
+using namespace glite::wmsutils::exception ;
 
-glite::wms::lb::Job lbJob;
+glite::lb::Job lbJob;
 // Create a query. This method is used both for queryStatus and for queryEvents
 
 void createQuery (
@@ -105,13 +105,13 @@ Eve::~Eve() {} ;
 /** Status::size(int status_number)*/
 int Status::size(int status_number){
    error_code = false ;
-   list<glite::wms::lb::JobStatus>::iterator it = states.begin();
-   // vector<glite::wms::lb::JobStatus>::iterator it = states.begin();
+   list<glite::lb::JobStatus>::iterator it = states.begin();
+   // vector<glite::lb::JobStatus>::iterator it = states.begin();
    for ( int j = 0 ; j< status_number ; j++)  {
       if (  it==states.end()  ) break ;
       it++ ;
    }
-   glite::wms::lb::JobStatus status_retrieved = *it;
+   glite::lb::JobStatus status_retrieved = *it;
    std::vector<pair<JobStatus::Attr, JobStatus::AttrType> > attrList = status_retrieved.getAttrs();
    return attrList.size() ;
 }
@@ -121,9 +121,9 @@ int Eve::size(){ return events.size() ;  }
 
 int Eve::size(int event_number){
    error_code = false ;
-   list<glite::wms::lb::Event>::iterator it = events.begin();
+   list<glite::lb::Event>::iterator it = events.begin();
    for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
-   glite::wms::lb::Event event_retrieved = *it ;
+   glite::lb::Event event_retrieved = *it ;
    std::vector<pair<Event::Attr,Event::AttrType> > attrList = event_retrieved.getAttrs();
    return attrList.size() ;
 }
@@ -150,11 +150,11 @@ int Status::get_error (std::string& err)  {
 };
 int Status::getStatus (const string& jobid , int level) {
 	error_code = false ;
-	glite::wms::lb::JobStatus status ;
+	glite::lb::JobStatus status ;
 	try{
 		lbJob = glite::wmsutils::jobid::JobId( jobid  ) ;
-		if (level!= 0 ) level =  glite::wms::lb::Job::STAT_CLASSADS ;
-		status = lbJob.status( level  | glite::wms::lb::Job::STAT_CHILDSTAT  ) ;
+		if (level!= 0 ) level =  glite::lb::Job::STAT_CLASSADS ;
+		status = lbJob.status( level  | glite::lb::Job::STAT_CHILDSTAT  ) ;
 		states.push_back( status );
 		return status.getAttrs().size() ;
 	}catch (exception &exc){  log_error ("Unable to retrieve the status for: " + jobid +"\n" + string (exc.what() ) ) ;
@@ -266,7 +266,7 @@ int Eve::getEvents (const  std::string& jobid) {
 	events.resize( 0 ) ;
 	try{
 		lbJob = glite::wmsutils::jobid::JobId ( jobid );
-		// OLD APPROACH:    glite::wms::lb::Job    lbJob ( j )   ;
+		// OLD APPROACH:    glite::lb::Job    lbJob ( j )   ;
 		lbJob.log(  events_vector   );
 		for (unsigned int i = 0 ; i< events_vector.size() ; i++) 
 			events.push_back (   events_vector[i]    ) ;
@@ -282,9 +282,9 @@ int Eve::getEvents (const  std::string& jobid) {
 
 std::string Eve::getVal (int field , string& result , int event_number) {
 	error_code = false ;
-	list<glite::wms::lb::Event>::iterator it = events.begin();
+	list<glite::lb::Event>::iterator it = events.begin();
 	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
-	glite::wms::lb::Event event_retrieved = *it ;
+	glite::lb::Event event_retrieved = *it ;
 	string attrName = "" ;
 	int EVENT = 53 ;
 	if ( field == EVENT) {
@@ -386,10 +386,10 @@ try{
 string Status::getVal (int field , string& result, int status_number ) {
 	// Retrieve the status to be investigated
 	error_code = false ;
-	list<glite::wms::lb::JobStatus>::iterator it = states.begin();
-	// vector<glite::wms::lb::JobStatus>::iterator it = states.begin();
+	list<glite::lb::JobStatus>::iterator it = states.begin();
+	// vector<glite::lb::JobStatus>::iterator it = states.begin();
 	for ( int j = 0 ; j< status_number ; j++,it++ )  {   if (  it==states.end()  ) break ; }
-	glite::wms::lb::JobStatus status_retrieved = *it;  //TBD use pointers!!!
+	glite::lb::JobStatus status_retrieved = *it;  //TBD use pointers!!!
 	// Special FIELD Retrieval:
 	char tmp [1024] ;//TBD could be not enough for JobStatus list
 	int STATUS = 35 ;
