@@ -20,6 +20,7 @@ broker_HEADERS = \
 libglite_wms_broker_la_SOURCES = \
 	RBSimpleISMImpl.cpp \
 	RBSimpleImpl.cpp
+libglite_wms_broker_la_LDFLAGS = -all-static
 libglite_wms_broker_la_LIBADD = \
         ./selectors/libglite_wms_broker_selectors.la
 
