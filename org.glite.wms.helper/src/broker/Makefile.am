@@ -5,16 +5,18 @@
 ## * http://www.edg.org/license.html
 ## *
 ## *********************************************************************
-lib_LTLIBRARIES = libglite_wms_helper_broker.la
+lib_LTLIBRARIES = \
+	libglite_wms_helper_broker_ii.la \
+	libglite_wms_helper_broker_ism.la
 
-#helper_brokerdir = $(includedir)/glite/wms/helper/broker
-#helper_brokerHEADERS = \
-#	Helper.h \
-#	exceptions.h
-
-libglite_wms_helper_broker_la_SOURCES = \
+libglite_wms_helper_broker_ii_la_SOURCES = \
         Helper.h \
-        Helper.cpp \
+        Helper_ii.cpp \
+	exceptions.cpp
+
+libglite_wms_helper_broker_ism_la_SOURCES = \
+        Helper.h \
+        Helper_ism.cpp \
 	exceptions.cpp
 
 AM_CPPFLAGS = \
