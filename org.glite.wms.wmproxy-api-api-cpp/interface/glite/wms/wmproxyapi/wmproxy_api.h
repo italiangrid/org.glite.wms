@@ -1,11 +1,11 @@
 #ifndef  GLITE_WMS_WMPROXYAPICPP_H
 #define GLITE_WMS_WMPROXYAPICPP_H
+
 /**
 * \file wmproxy_api.h
 * \brief wsdl wmproxy service wrapper
 * A wrapper around wmproxy Web Service. It provides primitive or simple structure to access more complicated service methods
 */
-
 
 #include <iostream>
 #include <string>
@@ -15,12 +15,8 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
-/**
-* Base exception wrap
-*/
+/**  Base exception wrap */
 struct BaseException {
-	BaseException::BaseException( std::string methodName, time_t Timestamp, std::string* ErrorCode, std::string* Description, std::vector<std::string> *FaultCause){
-	}
 	std::string                          methodName  ;
 	/// Element Timestamp of type xs:dateTime
 	time_t                               Timestamp     ;
@@ -31,6 +27,7 @@ struct BaseException {
 	/// Vector of std::string with length 0..unbounded
 	std::vector<std::string           > *FaultCause   ;
 };
+
 struct AuthenticationException:BaseException{};
 struct AuthorizationException:BaseException{};
 struct InvalidArgumentException:BaseException{};
@@ -201,13 +198,13 @@ std::string getCollectionTemplate(int jobNumber, std::string &requirements,std::
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the JDL string representation of the parametric job
 */
-std::string getIntParametricJobTemplate (std::vector<std::string> attributes , int parameters , int start , int step , std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+std::string getIntParametricJobTemplate (std::vector<std::string> attributes , int parameters , int start , int step , const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Create a valid template JDL for a parametric job
 * @param attributes all the attributes that contains reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
-* @param parameters a vector containing all the parameters
-* @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
-* @param rank a string representing the expression for the rank (which is an attribute of double type) of the resource
+* @param parametersa vector containing all the parameters
+* @param requirementsa string representing the expression describing all the Job requirements (which is an attribute of boolean type)
+* @param ranka string representing the expression for the rank (which is an attribute of double type) of the resource
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the JDL string representation of the parametric job
 */
@@ -219,6 +216,7 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 * @return the string representing the request, which has to be used as input while performing a putProxy for the created delegation Id
 */
 std::string getProxyReq(const std::string &delegationId, ConfigContext *cfs=NULL);
+
 /**
 * Actually associate the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
 * @param delegationId the id of the delegation created previously (by a getProxyReq call)
@@ -229,6 +227,5 @@ void putProxy(const std::string &delegationId, const std::string &request, Confi
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
-
 #endif
 //EOF

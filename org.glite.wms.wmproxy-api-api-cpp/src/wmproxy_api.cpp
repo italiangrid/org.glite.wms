@@ -11,14 +11,49 @@ using namespace std;
 namespace glite {
 namespace wms {
 namespace wmproxyapi {
+
+
+BaseException* createBaseException(ns1__BaseFaultType *ex){
+	BaseException *b_ex =NULL;
+	if (ex != NULL) {
+		b_ex=new BaseException ;
+		b_ex->methodName = ex->methodName ;
+		b_ex->Timestamp    = ex->Timestamp    ;
+		b_ex->ErrorCode    = ex->ErrorCode    ;
+		b_ex->Description   = ex->Description  ;
+	}
+	return b_ex;
+}
+
+
 /*****************************************************************
-soapErrorMng - common soap failure managemente
+soapErrorMng - common soap failure management
 ******************************************************************/
 void soapErrorMng (const WMProxy &wmp){
 	soap_print_fault(wmp.soap, stderr);
+	BaseException *b_ex =createBaseException ((ns1__BaseFaultType*)wmp.soap->fault->detail->fault) ;
 	soap_destroy(wmp.soap); // delete deserialized class instances (for C++ only)
 	soap_end(wmp.soap); // remove deserialized data and clean up
 	soap_done(wmp.soap); // detach the gSOAP environment
+	throw *b_ex ;
+}
+
+
+void soapErrorMng (const WMProxy &wmp){
+	soap_print_fault(wmp.soap, stderr);
+	BaseException b_ex ;
+			ns1__BaseFaultType *ex = NULL;
+			ex = (ns1__BaseFaultType*)wmp.soap->fault->detail->fault;
+			if (ex != NULL) {
+				b_ex->methodName = ex->methodName ;
+				b_ex->Timestamp    = ex->Timestamp    ;
+				b_ex->ErrorCode    = ex->ErrorCode    ;
+				b_ex->Description   = ex->Description  ;
+			}
+	soap_destroy(wmp.soap); // delete deserialized class instances (for C++ only)
+	soap_end(wmp.soap); // remove deserialized data and clean up
+	soap_done(wmp.soap); // detach the gSOAP environment
+	throw 100 ;
 }
 /*****************************************************************
 Look for a file existence
@@ -59,7 +94,7 @@ void soapAuthentication(WMProxy &wmp,ConfigContext *cfs){
 		getProxyFile(cfs),// keyfile: required only when client must authenticate to server
 		"", // password to read the key file
 		NULL, // optional cacert file to store trusted certificates (needed to verify server)
-		getTrustedCert(cfs), 
+		getTrustedCert(cfs),
 		// if randfile!=NULL: use a file with random data to seed randomness
 		NULL
 	))soapErrorMng(wmp);
@@ -77,8 +112,8 @@ JobIdStruct* jobidSoap2cpp (ns1__JobIdStructType *s_id){
 			new string(*(s_id->name));
 	else result->nodeName=NULL ;
 	for (unsigned int i = 0 ; i< s_id->childrenJob->size(); i++){
+		cout << "Warning!! jobidSoap2cpp calling front method but ..." << endl ;
 		result->children.push_back(jobidSoap2cpp(s_id->childrenJob->front()  ) ) ;
-		cout << "jobidSoap2cpp calling front method but ..." << endl ;
 	}
 	return result ;
 }
@@ -95,9 +130,23 @@ vector <pair<string , long> > listSoap2cpp (ns1__StringAndLongList *s_list){
 	return result ;
 }
 /*****************************************************************
-ConfigContext Constructor
+
+Tranform the soap string&long list structure into cpp primitive object structure
+******************************************************************/
+ns1__GraphStructType* node2soap(NodeStruct *c_node){
+	ns1__GraphStructType *s_node = new ns1__GraphStructType();
+	s_node->name=c_node->nodeName;
+	if(c_node->childrenNodes.size()>0) s_node->childrenJob=new vector<ns1__GraphStructType*>;
+	for(unsigned int i=0; i<c_node->childrenNodes.size();i++){
+		s_node->childrenJob->push_back(node2soap(c_node->childrenNodes[i]));
+	}
+	return s_node;
+}
+/*****************************************************************
+ConfigContext Constructor/Destructor
 ******************************************************************/
 ConfigContext::ConfigContext(std::string p , std::string s, std::string t):proxy_file(p),endpoint(s),trusted_cert_dir(t){};
+ConfigContext::~ConfigContext() throw(){};
 /*===============================================
 		WMPROXY SERVICE METHODS:
 ===============================================*/
@@ -253,6 +302,8 @@ ns1__JobTypeList *createJobTypeList(int type) {
 		result->jobType->push_back(ns1__JobType__INTERACTIVE);
 	} if ( type & JOBTYPE_MPICH ) {
 		result->jobType->push_back(ns1__JobType__MPI);
+	} if ( result->jobType->size() ==0 ){
+	result->jobType->push_back(ns1__JobType__NORMAL);
 	}
 	return result ;
 }
@@ -267,16 +318,16 @@ string  getJobTemplate (int jobType, string &executable,string &arguments,string
 /*****************************************************************
 getDAGTemplate
 ******************************************************************/
-/*
+
 string getDAGTemplate(NodeStruct dependencies, string &requirements,string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getDAGTemplateResponse response;
-	if (wmp.ns1__getDAGTemplate(response) == SOAP_OK) {
+	if (wmp.ns1__getDAGTemplate( node2soap(&dependencies), requirements, rank, response) == SOAP_OK) {
 		return response.jdl ;
 	} else soapErrorMng(wmp) ;
 }
-*/
+
 /*****************************************************************
 getCollectionTemplate
 ******************************************************************/
@@ -297,44 +348,47 @@ ns1__StringList *createStringList ( vector<string> &attributes){
 	for (unsigned int i = 0; i<attributes.size();i++) result->Item->push_back(attributes[i]);
 	return result ;
 }
-string getIntParametricJobTemplate (vector<string> attributes , int parameters , int start , int step , string &requirements, string &rank, ConfigContext *cfs){
+string getIntParametricJobTemplate (vector<string> attributes , int parameters , int start , int step , const string &requirements, const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getIntParametricJobTemplateResponse response;
 	if (wmp.ns1__getIntParametricJobTemplate(createStringList(attributes), parameters, start, step, requirements, rank, response) == SOAP_OK) {
 		return response.jdl ;
 	} else soapErrorMng(wmp) ;
+	return "";
 }
 /*****************************************************************
 getStringParametricJobTemplate
 ******************************************************************/
-string getStringParametricJobTemplate (vector<string>attributes, vector<string> parameters, string &requirements,string &rank, ConfigContext *cfs){
+string getStringParametricJobTemplate (vector<string>attributes, vector<string> parameters, const string &requirements,const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getStringParametricJobTemplateResponse response;
 	if (wmp.ns1__getStringParametricJobTemplate(createStringList(attributes), createStringList(parameters), requirements, rank, response) == SOAP_OK) {
 		return response.jdl ;
 	} else soapErrorMng(wmp) ;
+	return "";
 }
 /*****************************************************************
-getProxyRequest
+getProxyReq
 ******************************************************************/
-std::string getProxyRequest(std::string &request, ConfigContext *cfs){
+string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
-	ns1__getProxyRequestResponse response;
-	if (wmp.ns1__getProxyRequest(request, response) == SOAP_OK) {
-		return response.type;
+	ns1__getProxyReqResponse response;
+	if (wmp.ns1__getProxyReq(delegationId, response) == SOAP_OK) {
+		return response.request;
 	} else soapErrorMng(wmp) ;
+	return "";
 }
 /*****************************************************************
 putProxy
 *****************************************************************/
-void putProxy(std::string &delegationId, std::string &proxy, ConfigContext *cfs){
+void putProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__putProxyResponse response;
-	if (wmp.ns1__putProxy(delegationId, proxy, response) == SOAP_OK) {
+	if (wmp.ns1__putProxy(delegationId, request, response) == SOAP_OK) {
 		//OK
 	} else soapErrorMng(wmp) ;
 } 
