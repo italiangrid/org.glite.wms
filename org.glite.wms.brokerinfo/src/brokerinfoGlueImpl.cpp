@@ -33,9 +33,6 @@
 #include "glite/wms/brokerinfo/brokerinfo.h"
 #include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 
-#include "glite/wms/matchmaking/glue_attributes.h"
-#include "glite/wms/matchmaking/jdl_attributes.h"
-
 #include "glite/wms/rls/ReplicaServiceReal.h"
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
