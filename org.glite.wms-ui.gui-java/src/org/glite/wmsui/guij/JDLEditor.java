@@ -134,6 +134,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
 
   UnknownPanel unknown = null;
 
+  PartitionablePanel partitionable = null;
+
   JMenuItem jMenuItemFileParsingError = new JMenuItem("");
 
   JTextPane jTextPane = new JTextPane();
@@ -146,7 +148,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
 
   JPanel unknownPanel = new JPanel();
 
-  JPanel checkpointPanel = new JPanel();
+  JPanel partitionablePanel = new JPanel();
 
   JMenuBar jMenuBar;
 
@@ -360,7 +362,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     }
   }
 
-void jbInit() {
+  void jbInit() {
     // Set application type. The type of application effects on some settings.
     Utils.setApplicationType(Utils.FRAME);
     String log4JConfFile = GUIFileSystem.getLog4JConfFile();
@@ -438,7 +440,7 @@ void jbInit() {
     checkpoint = new JobTypePanel(this);
     tags = new TagPanel(this);
     unknown = new UnknownPanel(this);
-    partitionable = new PartitionablePanel(this)
+    partitionable = new PartitionablePanel(this);
     JDLEditor.this.setSize(FRAME_WIDTH, FRAME_HEIGHT);
     this.addComponentListener(new java.awt.event.ComponentListener() {
       public void componentResized(ComponentEvent e) {
@@ -478,13 +480,15 @@ void jbInit() {
     }, { Utils.GUI_PANEL_NAMES[5], requirements
     }, { Utils.GUI_PANEL_NAMES[6], rank
     }, { Utils.GUI_PANEL_NAMES[8], tags
-    }, { Utils.GUI_PANEL_NAMES[7], unknown
-    }
+    //}, { Utils.GUI_PANEL_NAMES[9], partitionable
+        }, { Utils.GUI_PANEL_NAMES[7], unknown
+        }
     };
+    //partitionable.setVisible(false);
     for (int i = 0; i < element.length; i++) {
       jTabbedJDL.addTab((String) element[i][0], (JPanel) element[i][1]);
     }
-    checkpointPanel = (JPanel) checkpoint;
+    //partitionablePanel = (JPanel) partitionable;
     jTabbedJDL.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     jTabbedJDL
         .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
@@ -607,7 +611,8 @@ void jbInit() {
     jTabbedJDL.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         String panelName = jTabbedJDL.getTitleAt(jTabbedJDL.getSelectedIndex());
-        if (panelName.equals(Utils.GUI_PANEL_NAMES[7])) {
+        if (panelName.equals(Utils.GUI_PANEL_NAMES[7])
+            || panelName.equals(Utils.GUI_PANEL_NAMES[9])) {
           jButtonView.setText("  Check  ");
         } else {
           jButtonView.setText("   View   ");
@@ -619,7 +624,9 @@ void jbInit() {
     jTextPane.addCaretListener(jPanelStateBar);
     ((FlowLayout) jPanelStateBar.getLayout()).setAlignment(FlowLayout.RIGHT);
     jPanelState.add(jPanelStateBar);
-  }  /**
+  }
+
+  /**
    * Creates the menu bar of the JDL Editor
    * 
    * @return the JMenuBar object
@@ -1042,6 +1049,9 @@ void jbInit() {
 
   String yieldJDLText(boolean showWarningMsg, boolean showErrorMsg) {
     String result = checkpoint.jButtonCheckpointViewEvent(false, false, null);
+    if (checkpoint.getJobTypeValue() == Jdl.JOBTYPE_PARTITIONABLE) {
+      result += partitionable.jButtonPartitionableViewEvent(false, false, null);
+    }
     result += jobDef1.jButtonJobDef1ViewEvent(false, false, null);
     result += jobDef2.jButtonJobDef2ViewEvent(false, false, null);
     result += dataReq.jButtonDataReqViewEvent(false, false, null);
@@ -1080,9 +1090,14 @@ void jbInit() {
         + Utils.GUI_PANEL_NAMES[7] + ":" + "</font>";
     String panelNameTags = "<html><font color=\"#602080\">"
         + Utils.GUI_PANEL_NAMES[8] + ":" + "</font>";
+    String panelNamePartitionable = "<html><font color=\"#602080\">"
+      + Utils.GUI_PANEL_NAMES[9] + ":" + "</font>";
     this.errorMsg = "";
     if (!checkpoint.getErrorMsg().equals("")) {
       errorMsg += panelNameJobType + "\n" + checkpoint.getErrorMsg() + "\n";
+    }
+    if (!partitionable.getErrorMsg().equals("")) {
+      errorMsg += panelNamePartitionable + "\n" + partitionable.getErrorMsg() + "\n";
     }
     if (!jobDef1.getErrorMsg().equals("")) {
       errorMsg += panelNameJobDefinition1 + "\n" + jobDef1.getErrorMsg() + "\n";
@@ -1151,6 +1166,11 @@ void jbInit() {
         for (int i = 0; i < Utils.jobTypeAttributeArray.length; i++) {
           jobTypeAttributeVector.add(Utils.jobTypeAttributeArray[i]);
         }
+        String partitionableWarningMsg = "";
+        Vector partitionableAttributeVector = new Vector();
+        for (int i = 0; i < Utils.partitionableAttributeArray.length; i++) {
+          partitionableAttributeVector.add(Utils.partitionableAttributeArray[i]);
+        }
         String jobDefinition1WarningMsg = "";
         Vector jobDefinition1AttributeVector = new Vector();
         for (int i = 0; i < Utils.jobDefinition1AttributeArray.length; i++) {
@@ -1196,6 +1216,9 @@ void jbInit() {
           currentErrorTypeMsg = errorTypeMsgVector.get(i).toString();
           if (jobTypeAttributeVector.contains(currentErrorAttribute)) {
             jobTypeWarningMsg += currentErrorTypeMsg + "\n";
+          } else if (partitionableAttributeVector
+              .contains(currentErrorAttribute)) {
+            partitionableWarningMsg += currentErrorTypeMsg + "\n";
           } else if (jobDefinition1AttributeVector
               .contains(currentErrorAttribute)) {
             jobDefinition1WarningMsg += currentErrorTypeMsg + "\n";
@@ -1219,6 +1242,10 @@ void jbInit() {
         }
         if (!jobTypeWarningMsg.equals("")) {
           warningMsg += panelNameJobType + "\n" + jobTypeWarningMsg;
+        }
+        if (!partitionableWarningMsg.equals("")) {
+          warningMsg += panelNamePartitionable + "\n"
+              + partitionableWarningMsg;
         }
         if (!jobDefinition1WarningMsg.equals("")) {
           warningMsg += panelNameJobDefinition1 + "\n"
@@ -1287,6 +1314,8 @@ void jbInit() {
     if (choice == 0) {
       if (paneName.equals(Utils.GUI_PANEL_NAMES[0])) {
         checkpoint.jButtonCheckpointResetEvent(null);
+      } else if (paneName.equals(Utils.GUI_PANEL_NAMES[9])) {
+        partitionable.jButtonPartitionableResetEvent(null);
       } else if (paneName.equals(Utils.GUI_PANEL_NAMES[1])) {
         jobDef1.jButtonJobDef1ResetEvent(null);
       } else if (paneName.equals(Utils.GUI_PANEL_NAMES[2])) {
@@ -1325,6 +1354,7 @@ void jbInit() {
       String myProxyServer = GUIGlobalVars.getMyProxyServer();
       jobDef2.setMyProxyServerText(myProxyServer);
     }
+    partitionable.jButtonPartitionableResetEventNoMsg(null);
     jobDef2.jButtonJobDef2ResetEvent(null);
     dataReq.jButtonDataReqResetEvent(null);
     jobOutputData.jButtonJobOutputDataResetEvent(null);
@@ -1349,6 +1379,7 @@ void jbInit() {
   }
 
   void resetAllOpen() {
+    partitionable.jButtonPartitionableResetEventNoMsg(null);
     jobDef1.jButtonJobDef1ResetEvent(null);
     jobDef2.jButtonJobDef2ResetEvent(null);
     dataReq.jButtonDataReqResetEvent(null);
@@ -1383,7 +1414,7 @@ void jbInit() {
     return false;
   }
 
-  private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
+private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
     Vector jobTypesVector = new Vector();
     try {
       jobTypesVector = jobAd.getStringValue(Jdl.JOBTYPE);
@@ -1710,6 +1741,7 @@ void jbInit() {
               String value = (jobAd.lookup(Jdl.CHKPT_CURRENTSTEP).toString());
               checkpoint.setCurrentStepValue(value);
             }
+            checkpoint.setNumericValueSelected(true);
           } else {
             Vector itemVector = jobAd.getStringValue(Jdl.CHKPT_STEPS);
             checkpoint.setJobStepsList(itemVector);
@@ -1717,6 +1749,7 @@ void jbInit() {
               String value = (jobAd.lookup(Jdl.CHKPT_CURRENTSTEP).toString());
               checkpoint.setCurrentIndexValue(value);
             }
+            checkpoint.setNumericValueSelected(false);
           }
           checkpoint.setJobStepsSelected(true);
         } catch (Exception e) {
@@ -1731,6 +1764,70 @@ void jbInit() {
         // Attribute not present in jobad.
       }
     }
+    
+    if (jobTypesVector.contains(Jdl.JOBTYPE_PARTITIONABLE)) {
+      setPartitionablePanelVisible(true);
+      try {
+        if (jobAd.hasAttribute(Jdl.PRE_JOB)) {
+          JobAd preJobAd = jobAd.getJobAdValue(Jdl.PRE_JOB);
+          if (preJobAd.size() != 0){
+            partitionable.setPartitionablePreText(preJobAd);
+          }
+        }
+        if (jobAd.hasAttribute(Jdl.POST_JOB)) {
+          JobAd postJobAd = jobAd.getJobAdValue(Jdl.POST_JOB);
+          if (postJobAd.size() != 0){
+            partitionable.setPartitionablePostText(postJobAd);
+          }
+        }
+      } catch (Exception e) {
+        JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.ERROR_MESSAGE, null, null, null);
+        if (isDebugging) {
+          e.printStackTrace();
+        }
+      }
+      try {
+        int type = jobAd.getType(Jdl.CHKPT_STEPS);
+        try {
+          if (type == JobAd.TYPE_INTEGER) {
+            Vector valueVector = jobAd.getIntValue(Jdl.CHKPT_STEPS);
+            checkpoint.setJobStepsValue(valueVector.get(0).toString());
+            if (jobAd.hasAttribute(Jdl.CHKPT_CURRENTSTEP)) {
+              String value = (jobAd.lookup(Jdl.CHKPT_CURRENTSTEP).toString());
+              checkpoint.setCurrentStepValue(value);
+            }
+            checkpoint.setNumericValueSelected(true);
+          } else {
+            Vector itemVector = jobAd.getStringValue(Jdl.CHKPT_STEPS);
+            Vector weightVector = new Vector();
+            if (jobAd.hasAttribute(Jdl.STEP_WEIGHT)) {
+              weightVector = jobAd.getIntValue(Jdl.STEP_WEIGHT);
+              checkpoint.setJobStepsTable(itemVector, weightVector);
+            } else {
+              checkpoint.setJobStepsTable(itemVector);
+            }
+            if (jobAd.hasAttribute(Jdl.CHKPT_CURRENTSTEP)) {
+              String value = (jobAd.lookup(Jdl.CHKPT_CURRENTSTEP).toString());
+              checkpoint.setCurrentIndexValue(value);
+            }
+            checkpoint.setNumericValueSelected(false);
+          }
+          checkpoint.setJobStepsSelected(true);
+        } catch (Exception e) {
+          JOptionPane.showOptionDialog(JDLEditor.this, e.getMessage(),
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
+          if (isDebugging) {
+            e.printStackTrace();
+          }
+        }
+      } catch (NoSuchFieldException nsfe) {
+        // Attribute not present in jobad.
+      }
+    }
+    
     //////////////////////
     // Tags ATTRIBUTES. //
     //////////////////////
@@ -1775,14 +1872,13 @@ void jbInit() {
     } else {
       jMenuItemFileParsingError.setEnabled(false);
     }
-  }
-
-  /*
+  }  /*
    * String getLocalExecutableText() { return
    * jobDef1.jTextFieldExecutable.getText().trim(); } String
    * getRemoteExecutableText() { return
    * jobDef1.jTextFieldExecutable.getText().trim(); }
    */
+
   void jMenuFileOpen(String fileName) throws java.text.ParseException {
     ExprChecker exprChecker = new ExprChecker();
     File file = new File(fileName);
@@ -2222,9 +2318,18 @@ void jbInit() {
   public void exitApplication() {
     System.exit(-1);
   }
+
+  public void setPartitionablePanelVisible(boolean bool) {
+    if (bool) {
+      jTabbedJDL.insertTab(Utils.GUI_PANEL_NAMES[9], null, partitionable, null,
+          1);
+    } else {
+      jTabbedJDL.remove(partitionable);
+    }
+  }
 }
 /*******************************************************************************
- * CLASS JPanelStateBar *
+ * CLASS JPanelStateBar
  ******************************************************************************/
 
 class JPanelStateBar extends JPanel implements CaretListener {

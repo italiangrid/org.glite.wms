@@ -65,7 +65,8 @@ public class Utils {
 
   // Tabbed pane panel names. Do not change order, add at the end!!
   static final String[] GUI_PANEL_NAMES = { "Type", "Files", "Environment",
-      "Input Data", "Output Data", "Requirements", "Rank", "Unknown", "Tags"
+      "Input Data", "Output Data", "Requirements", "Rank", "Unknown", "Tags",
+      "Partitionable"
   };
 
   // Used to create UserContact list
@@ -77,8 +78,9 @@ public class Utils {
   // Job types array.
   static final String[] JOB_TYPES = {
       Jdl.JOBTYPE_NORMAL,
-      Jdl.JOBTYPE_INTERACTIVE, /* Jdl.JOBTYPE_PARTITIONABLE, */
+      Jdl.JOBTYPE_INTERACTIVE, 
       Jdl.JOBTYPE_CHECKPOINTABLE,
+      Jdl.JOBTYPE_PARTITIONABLE,
       Jdl.JOBTYPE_MPICH,
       Jdl.JOBTYPE_CHECKPOINTABLE + JOBTYPE_LIST_SEPARATOR
           + Jdl.JOBTYPE_INTERACTIVE,
@@ -100,6 +102,14 @@ public class Utils {
       Jdl.OUTPUT_SE, Jdl.REQUIREMENTS, Jdl.RANK, Jdl.FUZZY_RANK, Jdl.RANK_MPI
   };
 
+  static final String[] jobTypeAttributeArray = { Jdl.TYPE, Jdl.JOBTYPE,
+      Jdl.NODENUMB, Jdl.CHKPT_STEPS, Jdl.CHKPT_CURRENTSTEP, Jdl.SHPORT
+  };
+  
+  static final String[] partitionableAttributeArray = { Jdl.PRE_JOB,
+      Jdl.POST_JOB
+  };
+  
   static final String[] jobDefinition1AttributeArray = {
       Jdl.VIRTUAL_ORGANISATION, Jdl.EXECUTABLE, Jdl.ARGUMENTS, Jdl.STDINPUT,
       Jdl.STDOUTPUT, Jdl.STDERROR, Jdl.INPUTSB, Jdl.OUTPUTSB,
@@ -117,10 +127,6 @@ public class Utils {
   };
 
   static final String[] rankAttributeArray = { Jdl.RANK, Jdl.FUZZY_RANK
-  };
-
-  static final String[] jobTypeAttributeArray = { Jdl.TYPE, Jdl.JOBTYPE,
-      Jdl.NODENUMB, Jdl.CHKPT_STEPS, Jdl.CHKPT_CURRENTSTEP, Jdl.SHPORT
   };
 
   static final String[] jobOutputDataAttributeArray = { Jdl.OUTPUTDATA,

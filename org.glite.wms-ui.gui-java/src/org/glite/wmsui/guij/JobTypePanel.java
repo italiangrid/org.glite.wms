@@ -10,6 +10,7 @@
 package org.glite.wmsui.guij;
 
 import java.awt.AWTEvent;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -29,11 +30,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.basic.BasicArrowButton;
+import javax.swing.table.TableColumn;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.glite.wms.jdlj.Jdl;
@@ -54,6 +57,18 @@ public class JobTypePanel extends JPanel {
   static final boolean THIS_CLASS_DEBUG = false;
 
   static boolean isDebugging = THIS_CLASS_DEBUG || Utils.GLOBAL_DEBUG;
+
+  static final int CHECKPOINTABLE = 0;
+
+  static final int PARTITIONABLE = 1;
+
+  static final int STEP_COLUMN_INDEX = 0;
+
+  static final int WEIGHT_COLUMN_INDEX = 1;
+
+  static final String DASH = "-";
+
+  int mode = CHECKPOINTABLE;
 
   Vector labelListVector = new Vector();
 
@@ -76,6 +91,10 @@ public class JobTypePanel extends JPanel {
   JScrollPane jScrollPaneLabelList = new JScrollPane();
 
   JList jListLabelList = new JList();
+
+  JTable jTableLabelList;
+
+  JobTableModel jobTableModel;
 
   JButton jButtonAdd = new JButton();
 
@@ -146,10 +165,15 @@ public class JobTypePanel extends JPanel {
 
   JLabel jLabelNodeNumber = new JLabel("NodeNumber");
 
+  Vector vectorHeader = new Vector();
+
+  JDLEditor editor;
+
   public JobTypePanel(Component component) {
     this.component = component;
     if (component instanceof JDLEditor) {
       jint = (JDLEditor) component;
+      editor = (JDLEditor) component;
       /*
        } else if (component instanceof JDLEJInternalFrame) {
        jint = (JDLEJInternalFrame) component;
@@ -172,9 +196,23 @@ public class JobTypePanel extends JPanel {
   private void jbInit() throws Exception {
     isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
         : false;
+    vectorHeader.addElement("Step");
+    vectorHeader.addElement("Weight");
+    jobTableModel = new JobTableModel(vectorHeader, 0);
+    jTableLabelList = new JTable(jobTableModel);
+    jTableLabelList.getTableHeader().setReorderingAllowed(false);
+    TableColumn col = jTableLabelList.getColumnModel().getColumn(
+        STEP_COLUMN_INDEX);
+    col.setCellRenderer(new GUITableTooltipCellRenderer());
+    col.setPreferredWidth(250);
+    col = jTableLabelList.getColumnModel().getColumn(WEIGHT_COLUMN_INDEX);
+    //col.setCellRenderer(new GUITableTooltipCellRenderer());
+    col.setCellRenderer(jTableLabelList.getDefaultRenderer(Integer.class));
+    jobTableModel.setColumnEditable(WEIGHT_COLUMN_INDEX, true);
+    jTableLabelList.setEnabled(false);
     jPanelJobStepsList.setEnabled(true);
     jPanelJobStepsNumeric.setEnabled(false);
-    jPanelJobSteps.setVisible(true); //
+    jPanelJobSteps.setVisible(true);
     jPanelListenerPort.setVisible(true);
     jPanelNodeNumber.setVisible(false);
     setNumberOfStepsEnabled(false);
@@ -352,6 +390,11 @@ public class JobTypePanel extends JPanel {
         jListLabelListFocusLost(e);
       }
     });
+    jTableLabelList.addFocusListener(new java.awt.event.FocusAdapter() {
+      public void focusLost(FocusEvent e) {
+        jTableLabelListFocusLost(e);
+      }
+    });
     jCheckBoxListenerPort.setText("ListenerPort");
     jCheckBoxListenerPort
         .addActionListener(new java.awt.event.ActionListener() {
@@ -448,6 +491,8 @@ public class JobTypePanel extends JPanel {
         2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, null, 0, 0));
     jScrollPaneLabelList.setPreferredSize(new Dimension(150, 150));
+    //jScrollPaneLabelList.getViewport().add(jTableLabelList, null);
+    jScrollPaneLabelList.getViewport().setBackground(Color.white);
     jScrollPaneLabelList.getViewport().add(jListLabelList, null);
     jPanelJobStepsList.add(jScrollPaneLabelList, GraphicUtils
         .setGridBagConstraints(gbc, 0, 1, 2, 2, 1.0, 1.0,
@@ -542,18 +587,40 @@ public class JobTypePanel extends JPanel {
   void jButtonCheckpointAddEvent(ActionEvent e) {
     String insertedText = jTextFieldLabelList.getText().trim();
     jTextFieldLabelList.grabFocus();
-    if ((!insertedText.equals("")) && (!labelListVector.contains(insertedText))) {
-      String checkErrorMsg = Utils.checkAttributeAdd(Jdl.CHKPT_STEPS,
-          insertedText);
-      if (checkErrorMsg.equals("")) {
-        labelListVector.add(insertedText);
-        jListLabelList.setListData(labelListVector);
-        jComboBoxCurrentItem.addItem(insertedText);
-        setCurrentIndexEnabled(true);
-      } else {
-        JOptionPane.showOptionDialog(component, checkErrorMsg,
-            Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
-            JOptionPane.ERROR_MESSAGE, null, null, null);
+    if (this.mode == CHECKPOINTABLE) {
+      if ((!insertedText.equals(""))
+          && (!labelListVector.contains(insertedText))) {
+        String checkErrorMsg = Utils.checkAttributeAdd(Jdl.CHKPT_STEPS,
+            insertedText);
+        if (checkErrorMsg.equals("")) {
+          labelListVector.add(insertedText);
+          jListLabelList.setListData(labelListVector);
+          jComboBoxCurrentItem.addItem(insertedText);
+          setCurrentIndexEnabled(true);
+        } else {
+          JOptionPane.showOptionDialog(component, checkErrorMsg,
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
+        }
+      }
+    } else {
+      if ((!insertedText.equals(""))
+          && (!jobTableModel.isElementPresentInColumn(insertedText,
+              STEP_COLUMN_INDEX))) {
+        String checkErrorMsg = Utils.checkAttributeAdd(Jdl.CHKPT_STEPS,
+            insertedText);
+        if (checkErrorMsg.equals("")) {
+          Vector rowElement = new Vector();
+          rowElement.addElement(insertedText);
+          rowElement.addElement(DASH);
+          jobTableModel.addRow(rowElement);
+          jComboBoxCurrentItem.addItem(insertedText);
+          setCurrentIndexEnabled(true);
+        } else {
+          JOptionPane.showOptionDialog(component, checkErrorMsg,
+              Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+              JOptionPane.ERROR_MESSAGE, null, null, null);
+        }
       }
     }
     jTextFieldLabelList.selectAll();
@@ -581,24 +648,77 @@ public class JobTypePanel extends JPanel {
     }
     if (jPanelJobSteps.isVisible() && jCheckBoxJobSteps.isSelected()) {
       if (jPanelJobStepsList.isEnabled()) {
-        int itemsCount = labelListVector.size();
-        if (itemsCount != 0) {
-          result += Jdl.CHKPT_STEPS + " = ";
-          if (itemsCount == 1) {
-            result += "\"" + labelListVector.get(0).toString() + "\";\n";
-          } else {
-            result += "{";
-            for (int i = 0; i < itemsCount - 1; i++) {
-              result += "\"" + labelListVector.get(i) + "\", ";
+        if (mode == CHECKPOINTABLE) {
+          int itemsCount = labelListVector.size();
+          if (itemsCount != 0) {
+            result += Jdl.CHKPT_STEPS + " = ";
+            if (itemsCount == 1) {
+              result += "\"" + labelListVector.get(0).toString() + "\";\n";
+            } else {
+              result += "{";
+              for (int i = 0; i < itemsCount - 1; i++) {
+                result += "\"" + labelListVector.get(i) + "\", ";
+              }
+              result += "\"" + labelListVector.get(itemsCount - 1) + "\"};\n";
             }
-            result += "\"" + labelListVector.get(itemsCount - 1) + "\"};\n";
+            result += Jdl.CHKPT_CURRENTSTEP + " = "
+                + (jComboBoxCurrentItem.getSelectedIndex() + 1) + ";\n";
+          } else {
+            errorMsg += "Steps list must contain at least one item";
+            jTextFieldLabelList.selectAll();
+            jTextFieldLabelList.grabFocus();
           }
-          result += Jdl.CHKPT_CURRENTSTEP + " = "
-              + (jComboBoxCurrentItem.getSelectedIndex() + 1) + ";\n";
-        } else {
-          errorMsg += "Steps list must contain at least one item";
-          jTextFieldLabelList.selectAll();
-          jTextFieldLabelList.grabFocus();
+        } else { // mode == PARTITIONABLE
+          if (!checkWeights()) {
+            String msg = "Step Weights must be all int values or '" + DASH
+                + "'";
+            JOptionPane.showOptionDialog(JobTypePanel.this, msg,
+                Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
+            jint.setJTextAreaJDL(msg);
+            return "";
+          }
+          int itemsCount = jobTableModel.getRowCount();
+          if (itemsCount != 0) {
+            String stepWeight = Jdl.STEP_WEIGHT + " = ";
+            for (int i = 0; i < itemsCount - 1; i++) {
+            }
+            result += Jdl.CHKPT_STEPS + " = ";
+            if (itemsCount == 1) {
+              result += "\""
+                  + jobTableModel.getValueAt(0, STEP_COLUMN_INDEX).toString()
+                  + "\";\n";
+              stepWeight += jobTableModel.getValueAt(0, WEIGHT_COLUMN_INDEX)
+                  .toString()
+                  + ";\n";
+            } else {
+              result += "{";
+              stepWeight += "{";
+              for (int i = 0; i < itemsCount - 1; i++) {
+                result += "\""
+                    + jobTableModel.getValueAt(i, STEP_COLUMN_INDEX).toString()
+                    + "\", ";
+                stepWeight += jobTableModel.getValueAt(i, WEIGHT_COLUMN_INDEX)
+                    .toString()
+                    + ", ";
+              }
+              result += "\""
+                  + jobTableModel.getValueAt(itemsCount - 1, STEP_COLUMN_INDEX)
+                      .toString() + "\"};\n";
+              stepWeight += jobTableModel.getValueAt(itemsCount - 1,
+                  WEIGHT_COLUMN_INDEX).toString()
+                  + "};\n";
+            }
+            result += Jdl.CHKPT_CURRENTSTEP + " = "
+                + (jComboBoxCurrentItem.getSelectedIndex() + 1) + ";\n";
+            if (stepWeight.indexOf(DASH) == -1) {
+              result += stepWeight;
+            }
+          } else {
+            errorMsg += "Steps list must contain at least one item";
+            jTextFieldLabelList.selectAll();
+            jTextFieldLabelList.grabFocus();
+          }
         }
         //} else if (jPanelJobStepsNumeric.isVisible()) {
       } else if (jPanelJobStepsNumeric.isEnabled()) {
@@ -638,6 +758,7 @@ public class JobTypePanel extends JPanel {
   }
 
   void jButtonCheckpointResetEvent(ActionEvent e) {
+    editor.setPartitionablePanelVisible(false);
     jComboBoxJobType.setSelectedIndex(0);
     jTextFieldNodeNumber.setText(Integer.toString(Utils.NODENUMBER_DEF_VAL));
     setNodeNumberEnabled(false);
@@ -648,6 +769,7 @@ public class JobTypePanel extends JPanel {
     jTextFieldLastStep.setText(Integer.toString(Utils.JOBSTEPS_DEF_VAL));
     jTextFieldLabelList.selectAll();
     jTextFieldLabelList.grabFocus();
+    jint.setJTextAreaJDL("");
   }
 
   String getErrorMsg() {
@@ -661,6 +783,7 @@ public class JobTypePanel extends JPanel {
   void jButtonCheckpointClearEvent(ActionEvent e) {
     this.labelListVector.removeAllElements();
     jComboBoxCurrentItem.removeAllItems();
+    jobTableModel.removeAllRows();
     jListLabelList.setListData(this.labelListVector);
     setCurrentIndexEnabled(false);
     jTextFieldLabelList.selectAll();
@@ -668,29 +791,54 @@ public class JobTypePanel extends JPanel {
   }
 
   void jButtonCheckpointRemoveEvent(ActionEvent e) {
-    int[] selectedItems = jListLabelList.getSelectedIndices();
-    int selectedItemsCount = selectedItems.length;
-    jTextFieldLabelList.grabFocus();
-    if (selectedItemsCount != 0) {
-      for (int i = selectedItemsCount - 1; i >= 0; i--) {
-        labelListVector.removeElementAt(selectedItems[i]);
-        jComboBoxCurrentItem.removeItemAt(selectedItems[i]);
-      }
-      jListLabelList.setListData(labelListVector);
-      if (jListLabelList.getModel().getSize() != 0) {
-        int selectableItem = selectedItems[selectedItemsCount - 1] + 1
-            - selectedItemsCount; //Next.
-        if (selectableItem > jListLabelList.getModel().getSize() - 1) {
-          selectableItem--; // Prev. (selectedItems[selectedItemsCount - 1] - selectedItemsCount).
+    if (mode == CHECKPOINTABLE) {
+      int[] selectedItems = jListLabelList.getSelectedIndices();
+      int selectedItemsCount = selectedItems.length;
+      jTextFieldLabelList.grabFocus();
+      if (selectedItemsCount != 0) {
+        for (int i = selectedItemsCount - 1; i >= 0; i--) {
+          labelListVector.removeElementAt(selectedItems[i]);
+          jComboBoxCurrentItem.removeItemAt(selectedItems[i]);
         }
-        jListLabelList.setSelectedIndex(selectableItem);
+        jListLabelList.setListData(labelListVector);
+        if (jListLabelList.getModel().getSize() != 0) {
+          int selectableItem = selectedItems[selectedItemsCount - 1] + 1
+              - selectedItemsCount; //Next.
+          if (selectableItem > jListLabelList.getModel().getSize() - 1) {
+            selectableItem--; // Prev. (selectedItems[selectedItemsCount - 1] - selectedItemsCount).
+          }
+          jListLabelList.setSelectedIndex(selectableItem);
+        } else {
+          setCurrentIndexEnabled(false);
+        }
       } else {
-        setCurrentIndexEnabled(false);
+        JOptionPane.showOptionDialog(JobTypePanel.this, Utils.SELECT_AN_ITEM,
+            Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE, null, null, null);
       }
-    } else {
-      JOptionPane.showOptionDialog(JobTypePanel.this, Utils.SELECT_AN_ITEM,
-          Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
-          JOptionPane.INFORMATION_MESSAGE, null, null, null);
+    } else { // mode == PARTITIONABLE
+      int[] selectedRows = jTableLabelList.getSelectedRows();
+      int selectedRowCount = selectedRows.length;
+      if (selectedRowCount != 0) {
+        for (int i = selectedRowCount - 1; i >= 0; i--) {
+          jobTableModel.removeRow(selectedRows[i]);
+          jComboBoxCurrentItem.removeItemAt(selectedRows[i]);
+        }
+        if (jobTableModel.getRowCount() != 0) {
+          int selectableRow = selectedRows[selectedRowCount - 1] + 1
+              - selectedRowCount; // Next.
+          if (selectableRow > jobTableModel.getRowCount() - 1) {
+            selectableRow--; // Prev. (selectedRow[selectedRowCount - 1] - selectedRowCount).
+          }
+          jTableLabelList.setRowSelectionInterval(selectableRow, selectableRow);
+        } else {
+          setCurrentIndexEnabled(false);
+        }
+      } else {
+        JOptionPane.showOptionDialog(JobTypePanel.this, Utils.SELECT_AN_ITEM,
+            Utils.INFORMATION_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+            JOptionPane.INFORMATION_MESSAGE, null, null, null);
+      }
     }
     jTextFieldLabelList.selectAll();
   }
@@ -717,6 +865,8 @@ public class JobTypePanel extends JPanel {
   void setLabelListEnabled(boolean bool) {
     jLabelStepsList.setEnabled(bool);
     jTextFieldLabelList.setEnabled(bool);
+    jTableLabelList.setEnabled(bool);
+    jTableLabelList.getTableHeader().setEnabled(bool);
     jListLabelList.setEnabled(bool);
     jScrollPaneLabelList.setEnabled(bool);
     jButtonAdd.setEnabled(bool);
@@ -733,10 +883,18 @@ public class JobTypePanel extends JPanel {
       jPanelNodeNumber.setVisible(false);
       setNodeNumberEnabled(false);
     }
-    if (selectedItem.indexOf(Jdl.JOBTYPE_CHECKPOINTABLE) != -1) {
+    if ((selectedItem.indexOf(Jdl.JOBTYPE_CHECKPOINTABLE) != -1)
+        || (selectedItem.indexOf(Jdl.JOBTYPE_PARTITIONABLE) != -1)) {
+      if (selectedItem.indexOf(Jdl.JOBTYPE_CHECKPOINTABLE) != -1) {
+        setMode(CHECKPOINTABLE);
+      } else {
+        setMode(PARTITIONABLE);
+        editor.setPartitionablePanelVisible(true);
+      }
       jPanelJobSteps.setVisible(true);
     } else {
       jPanelJobSteps.setVisible(false);
+      editor.setPartitionablePanelVisible(false);
     }
     if (selectedItem.indexOf(Jdl.JOBTYPE_INTERACTIVE) != -1) {
       jPanelListenerPort.setVisible(true);
@@ -748,7 +906,6 @@ public class JobTypePanel extends JPanel {
   }
 
   void setNodeNumberEnabled(boolean bool) {
-    //jLabelNodeNumber.setEnabled(bool);
     jTextFieldNodeNumber.setEnabled(bool);
     upNodeNumber.setEnabled(bool);
     downNodeNumber.setEnabled(bool);
@@ -779,6 +936,14 @@ public class JobTypePanel extends JPanel {
   void setJobStepsSelected(boolean bool) {
     jCheckBoxJobSteps.setSelected(bool);
     setJobStepsPanelEnabled(bool);
+  }
+
+  void setNumericValueSelected(boolean bool) {
+    if (bool) {
+      jRadioButtonNumericValue.setSelected(true);
+    } else {
+      jRadioButtonLabelList.setSelected(true);
+    }
   }
 
   void setJobStepsPanelEnabled(boolean bool) {
@@ -847,7 +1012,7 @@ public class JobTypePanel extends JPanel {
   }
 
   void setJobStepsList(Vector itemVector) {
-    String item = "";
+    String item;
     labelListVector.clear();
     for (int i = 0; i < itemVector.size(); i++) {
       item = itemVector.get(i).toString().trim();
@@ -855,6 +1020,30 @@ public class JobTypePanel extends JPanel {
       jComboBoxCurrentItem.addItem(item);
     }
     jListLabelList.setListData(labelListVector);
+  }
+
+  void setJobStepsTable(Vector itemVector) {
+    Vector dashVector = new Vector();
+    for (int i = 0; i < itemVector.size(); i++) {
+      dashVector.add(DASH);
+    }
+    setJobStepsTable(itemVector, dashVector);
+  }
+
+  void setJobStepsTable(Vector itemVector, Vector weightVector) {
+    String item;
+    String weight;
+    jobTableModel.removeAllRows();
+    Vector element;
+    for (int i = 0; i < itemVector.size(); i++) {
+      item = itemVector.get(i).toString().trim();
+      weight = weightVector.get(i).toString().trim();
+      element = new Vector();
+      element.add(item);
+      element.add(weight);
+      jobTableModel.addRow(element);
+      jComboBoxCurrentItem.addItem(item);
+    }
   }
 
   void setListenerPortValue(String text) {
@@ -873,6 +1062,18 @@ public class JobTypePanel extends JPanel {
     if (e.getOppositeComponent() != jButtonRemove) { // Get component that "has the focus".
       jListLabelList.clearSelection();
     }
+  }
+
+  void jTableLabelListFocusLost(FocusEvent e) {
+    /*if (e.getOppositeComponent() != jButtonRemove) { // Get component that "has the focus".
+     jTableLabelList.clearSelection();
+     }*/
+    /*System.out.println("-----" + e.getOppositeComponent());
+     System.out.println("-----" + e.getOppositeComponent().getParent());
+     if ((e.getOppositeComponent().getParent() != jTableLabelList)
+     && (e.getOppositeComponent().getParent() != jScrollPaneLabelList)) {*/
+    //jTableLabelList.getCellEditor().cancelCellEditing();
+    //}
   }
 
   void jCheckBoxListenerPortEvent(ActionEvent e) {
@@ -918,5 +1119,46 @@ public class JobTypePanel extends JPanel {
   void setListenerPortVisible(boolean bool) {
     jPanelListenerPort.setVisible(bool);
     setListenerPortEnabled(bool);
+  }
+
+  void setMode(int mode) {
+    this.mode = mode;
+    switch (mode) {
+      case CHECKPOINTABLE:
+        /*jTableLabelList.setVisible(false);
+         jListLabelList.setVisible(true);*/
+        jScrollPaneLabelList.getViewport().remove(jTableLabelList);
+        jScrollPaneLabelList.getViewport().add(jListLabelList, null);
+      break;
+      case PARTITIONABLE:
+        /*jListLabelList.setVisible(false);
+         jTableLabelList.setVisible(true);*/
+        jScrollPaneLabelList.getViewport().remove(jListLabelList);
+        jScrollPaneLabelList.getViewport().add(jTableLabelList, null);
+      break;
+    }
+  }
+
+  boolean checkWeights() {
+    int dashCount = 0;
+    int rowCount = jobTableModel.getRowCount();
+    String currentValue;
+    for (int i = 0; i < rowCount; i++) {
+      currentValue = jobTableModel.getValueAt(i, WEIGHT_COLUMN_INDEX)
+          .toString().trim();
+      if (currentValue == DASH) {
+        dashCount++;
+      } else {
+        if (dashCount != 0) {
+          // We have a dash & a no dash value
+          return false;
+        } else {
+          if (Utils.getValueType(currentValue) != Utils.INTEGER) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 }
