@@ -14,8 +14,9 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-//#include "logging.h"
-//#include "purger.h" 
+#include "logging.h"
+#include "quota.h"
+#include "purger.h" 
 
 // Exceptions
 #include "wmpexceptions.h"
@@ -34,18 +35,18 @@
 using namespace std;
 using namespace glite::wms::wmproxy::server;
 
-namespace logger        = glite::wms::common::logger;
-namespace utilities     = glite::wms::common::utilities;
-// namespace requestad     = glite::wms::jdl;
-namespace jobid         = glite::wmsutils::jobid;
-//namespace purger        = glite::wms::purger;
+namespace logger		  = glite::wms::common::logger;
+namespace commonutilities = glite::wms::common::utilities;
+namespace jobid			  = glite::wmsutils::jobid;
+namespace purger          = glite::wms::purger;
 
 namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace utilities {
 
-/*
+
+
 bool
 doPurge(std::string dg_jobid)
 { 
@@ -64,15 +65,15 @@ doPurge(std::string dg_jobid)
 bool
 getUserQuota(std::pair<long, long>& result, std::string uname)
 {
-	result = utilities::quota::getQuota(uname);
+	result = commonutilities::quota::getQuota(uname);
 }
 
 bool
 getUserFreeQuota(std::pair<long, long>& result, std::string uname)
 {
-	result = utilities::quota::getFreeQuota(uname);
+	result = commonutilities::quota::getFreeQuota(uname);
 }
-*/
+
 
 const char* SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
 
@@ -207,7 +208,7 @@ int execute (const string &command)
 	return system( command.c_str() );
 }
 
-int managedir ( const std::string &dest_uri , int userid , std::vector<std::string> jobids)
+int managedir( const std::string &dest_uri , int userid , std::vector<std::string> jobids)
 { 
    int exit_code=0; 
    // Define File Separator 
