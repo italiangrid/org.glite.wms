@@ -20,9 +20,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.2  2004/07/28 10:19:09  eronchie
+	Added m4files.list property
+
 	Revision 1.1  2004/07/06 10:05:38  pandreet
 	Basic build files for jobsubmission
-
+	
 	Revision 1.1.1.1  2004/06/18 12:40:17  flammer
 	Added general component template.
 	
@@ -62,5 +65,6 @@
 	      Define extra properties here ...
 	     ====================================================== -->
 	
-		
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 ares.m4 condorg.m4 glite.m4 glite_lb.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4"/>
+	
 </project>
