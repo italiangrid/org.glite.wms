@@ -14,7 +14,7 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "logging.h"
+//#include "logging.h"
 //#include "purger.h" 
 
 // Exceptions
