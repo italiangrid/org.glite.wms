@@ -284,18 +284,19 @@ std::string NS2WMProxy::convertProtocol(classad::ClassAd* cmdAd)
      * ]
      */
     std::string jdl      (utilities::evaluate_expression(*cmdAd, "Arguments.jdl"));
-    std::string isb      (utilities::evaluate_expression(*cmdAd, "Arguments.InputSandboxPath"));
-    std::string osb      (utilities::evaluate_expression(*cmdAd, "Arguments.OutputSandboxPath"));
-    std::string proxy    (utilities::evaluate_expression(*cmdAd, "Arguments.X509UserProxy"));
     std::string seq_code (utilities::evaluate_expression(*cmdAd, "Arguments.SeqCode"));
+    // std::string isb      (utilities::evaluate_expression(*cmdAd, "Arguments.InputSandboxPath"));
+    // std::string osb      (utilities::evaluate_expression(*cmdAd, "Arguments.OutputSandboxPath"));
+    // std::string proxy    (utilities::evaluate_expression(*cmdAd, "Arguments.X509UserProxy"));
+    
     
     classad::ClassAd internal, total;
     classad::ClassAd* jdlAd(utilities::parse_classad(jdl)); 
     
     jdlAd->InsertAttr("lb_sequence_code",  seq_code); 
-    jdlAd->InsertAttr("InputSandboxPath",  isb );
-    jdlAd->InsertAttr("OutputSandboxPath", osb);
-    jdlAd->InsertAttr("X509UserProxy",     proxy);
+    // jdlAd->InsertAttr("InputSandboxPath",  isb );
+    // jdlAd->InsertAttr("OutputSandboxPath", osb);
+    // jdlAd->InsertAttr("X509UserProxy",     proxy);
    
     // edglog(null) << "Modified Command: " << *ad  << std::endl;
 
@@ -311,21 +312,16 @@ std::string NS2WMProxy::convertProtocol(classad::ClassAd* cmdAd)
 	// ISB_normalized( push_back(p.leaf()) );
 	std::string full_path_2_file( *it );
 	size_t slash_pos = full_path_2_file.rfind("/");
-	std::string filename( full_path_2_file.substr(slash_pos + 1, full_path_2_file.length() - slash_pos -1 ) );	
-	ISB_normalized.push_back( filename );	
+	std::string filename( full_path_2_file.substr(slash_pos + 1, full_path_2_file.length() - slash_pos -1 ) );
+	ISB_normalized.push_back( filename );
     }
     utilities::InsertAttrList( *jdlAd, "InputSandBox", ISB_normalized);
 
-#ifdef DEBUG
-    edglog(debug) << "Berfore normalization: \n" << *jdlAd  << std::endl; 
-#endif
     if (name == "DagSubmit") { 
       jdlAd = normalizeNodesISB(jdlAd); 
     } 
     internal.Insert( "ad", jdlAd ); 
-#ifdef DEBUG
-    edglog(debug) << "After normalization: \n" << *jdlAd  << std::endl;
-#endif
+
     total.InsertAttr( "command", std::string("jobsubmit") );
     total.InsertAttr( "version", std::string("1.0.0") );
     total.Insert( "arguments", internal.Copy() );
