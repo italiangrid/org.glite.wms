@@ -39,158 +39,158 @@ ts_common_bin_PROGRAMS= \
 
 container_SOURCES = testcontainer.cpp
 container_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 compact_SOURCES = filecompacttest.cpp
 compact_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 show_SOURCES = showcontainer.cpp
 show_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
-glite_wms_showlistTest_SOURCES = showlist.cpp
-glite_wms_showlistTest_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+glite_wl_showlistTest_SOURCES = showlist.cpp
+glite_wl_showlistTest_LDADD   = \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
-glite_wms_poplist_SOURCES = poplist.cpp
-glite_wms_poplist_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+glite_wl_poplist_SOURCES = poplist.cpp
+glite_wl_poplist_LDADD   = \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 create_SOURCES = createlist.cpp
 create_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 queue_SOURCES = testqueue.cpp
 queue_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 qserver_SOURCES = queueserver.cpp queuecommon.h
 qserver_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 qclient_SOURCES = queueclient.cpp queuecommon.h
 qclient_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 newserver_SOURCES = newserver.cpp queuecommon.h
 newserver_LDADD = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 newclient_SOURCES = newclient.cpp queuecommon.h
 newclient_LDADD = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 extractor_SOURCES = extractor.cpp queuecommon.h
 extractor_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
-glite_wms_listsTest_SOURCES = listtest.cpp
-glite_wms_listsTest_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+glite_wl_listsTest_SOURCES = listtest.cpp
+glite_wl_listsTest_LDADD   = \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 config_SOURCES = configure.cpp
 config_LDADD   = \
-	$(top_builddir)/src/configuration/libglite_wms_conf.la \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/configuration/libglite_wl_conf.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
-glite_wms_classadlistTest_SOURCES = classadlist.cpp
-glite_wms_classadlistTest_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
-	$(top_builddir)/src/configuration/libglite_wms_conf.la \
+glite_wl_classadlistTest_SOURCES = classadlist.cpp
+glite_wl_classadlistTest_LDADD   = \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
+	$(top_builddir)/src/configuration/libglite_wl_conf.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 cconfig_SOURCES = cconfigure.c
 cconfig_LDADD   = \
-	$(top_builddir)/src/configuration/libglite_wms_conf_wrapper.la \
-	$(top_builddir)/src/configuration/libglite_wms_conf.la \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/configuration/libglite_wl_conf_wrapper.la \
+	$(top_builddir)/src/configuration/libglite_wl_conf.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(STDCPP)
 
 lock_client_SOURCES = listlockclient.cpp
 lock_client_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 lock_server_SOURCES = listlockserver.cpp
 lock_server_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 classadclient_SOURCES = classadclient.cpp queuecommon.h
 classadclient_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 classadextractor_SOURCES = classadextractor.cpp queuecommon.h
 classadextractor_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_util.la \
+	$(top_builddir)/src/utilities/libglite_wl_util.la \
 	$(BOOST_LIBS) \
 	$(CLASSAD_LIBS)
 
 logtest_SOURCES = logtest.cpp
 logtest_LDADD   = \
-	$(top_builddir)/src/logger/libglite_wms_logger.la \
+	$(top_builddir)/src/logger/libglite_wl_logger.la \
 	$(BOOST_LIBS)
 
 logthread_SOURCES = logtest_bt.cpp
 logthread_LDADD   = \
-	$(top_builddir)/src/logger/libglite_wms_logger.la \
+	$(top_builddir)/src/logger/libglite_wl_logger.la \
 	$(BOOST_LIBS)
 
 proctest_SOURCES = proctest.cpp
-proctest_LDADD   = $(top_builddir)/src/process/libglite_wms_process.la
+proctest_LDADD   = $(top_builddir)/src/process/libglite_wl_process.la
 
 regain_SOURCES = regain.cpp
-regain_LDADD   = $(top_builddir)/src/process/libglite_wms_process.la
+regain_LDADD   = $(top_builddir)/src/process/libglite_wl_process.la
 
 gsi_mkdir_SOURCES = gsi-mkdir.cpp
 gsi_mkdir_LDADD   = \
-	$(top_builddir)/src/logger/libglite_wms_logger.la \
-        $(top_builddir)/src/utilities/libglite_wms_util.la \
-        $(top_builddir)/src/utilities/libglite_wms_globus_ftp_util.la \
+	$(top_builddir)/src/logger/libglite_wl_logger.la \
+        $(top_builddir)/src/utilities/libglite_wl_util.la \
+        $(top_builddir)/src/utilities/libglite_wl_globus_ftp_util.la \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
 	$(BOOST_LIBS) \
         $(CLASSAD_LIBS)
 
 sftpput_SOURCES = sftpput.cpp
 sftpput_LDADD   = \
-	$(top_builddir)/src/utilities/libglite_wms_globus_ftp_util.la \
-	$(top_builddir)/src/logger/libglite_wms_logger.la \
+	$(top_builddir)/src/utilities/libglite_wl_globus_ftp_util.la \
+	$(top_builddir)/src/logger/libglite_wl_logger.la \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
         $(BOOST_LIBS)
 
