@@ -17,8 +17,6 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 
 #include "glite/wms/helper/Request.h"
 #include "plan.h"
@@ -30,10 +28,10 @@ namespace configuration = glite::wms::common::configuration;
 
 namespace {
 
-bool ssl_init()
+/*bool ssl_init()
 {
   return edg_wlc_SSLInitialization() == 0 && edg_wlc_SSLLockingInit() == 0;
-}
+}*/
 
 std::string program_name;
 
@@ -65,10 +63,11 @@ try {
 
   manager::signal_handling_init();
 
-  if (!ssl_init()) {
-    std::cerr << "Cannot initialize SSL\n";
-    return EXIT_FAILURE;
-  }
+/* removed ssl_helpers */
+//  if (!ssl_init()) {
+//    std::cerr << "Cannot initialize SSL\n";
+//    return EXIT_FAILURE;
+//  }
 
   configuration::Configuration config("glite_wms.conf",
                                       configuration::ModuleType::workload_manager);

@@ -26,8 +26,6 @@
 #include "glite/wms/common/configuration/exceptions.h"
 #include "glite/wms/common/logger/logstream_ts.h"
 #include "glite/wms/common/logger/edglog.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 
 namespace manager = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
@@ -72,10 +70,10 @@ void set_err_stream(std::ostream& os)
   err_stream_p = &os;
 }
 
-bool ssl_init()
+/*bool ssl_init()
 {
   return edg_wlc_SSLInitialization() == 0 && edg_wlc_SSLLockingInit() == 0;
-}
+}*/
 
 // change the uid and gid to those of user
 // no-op if user corresponds to the current effective uid
@@ -137,11 +135,12 @@ try {
 
   manager::signal_handling_init();
 
-  if (!ssl_init()) {
-    get_err_stream() << program_name << ": "
-                     << "cannot initialize SSL\n";
-    return EXIT_FAILURE;
-  }
+/* removed ssl_helpers */
+//  if (!ssl_init()) {
+//    get_err_stream() << program_name << ": "
+//                     << "cannot initialize SSL\n";
+//    return EXIT_FAILURE;
+//  }
 
   configuration::Configuration config(opt_conf_file,
                                       configuration::ModuleType::workload_manager);
