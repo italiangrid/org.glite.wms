@@ -18,12 +18,11 @@
 #include <memory.h>
 #include <sys/time.h>
 #include <errno.h>
-
 /** This class header file. */
-#include "../socket++/SocketAgent.h"
+#include "SocketAgent.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
 #endif
 
 namespace edg { 
@@ -93,7 +92,6 @@ bool SocketAgent::Send(int i)
   int_buffer[1] = (unsigned char) ((i >> 16) & 0xff);
   int_buffer[2] = (unsigned char) ((i >>  8) & 0xff);
   int_buffer[3] = (unsigned char) ((i      ) & 0xff);
-
   return sendbuffer((char*)int_buffer,4);
 }
 
@@ -135,11 +133,10 @@ bool SocketAgent::Receive( int& i )
   unsigned char int_buffer[4];
   
   if( result = readbuffer((char*)int_buffer,4))  {
-    
-    i  = (((unsigned int) int_buffer[0]) << 24) & 0xffff;
-    i |= (((unsigned int) int_buffer[1]) << 16) & 0xffff;
-    i |= (((unsigned int) int_buffer[2]) <<  8) & 0xffff;
-    i |= (((unsigned int) int_buffer[3])      ) & 0xffff;
+    i  = (((unsigned int) int_buffer[0]) << 24 ) & 0xffffffff;
+    i |= (((unsigned int) int_buffer[1]) << 16 ) & 0xffffffff;
+    i |= (((unsigned int) int_buffer[2]) <<  8 ) & 0xffffffff;
+    i |= (((unsigned int) int_buffer[3])       ) & 0xffffffff;
     
   }
   return result;
@@ -153,7 +150,7 @@ bool SocketAgent::Receive( long& l )
   
   if( result = readbuffer((char*)long_buffer,8))  {
     for (int i=0; i<8; i++) {
-      l  |= (((unsigned int) long_buffer[i]) << (56-i*8)) & 0xffff;
+      l  |= (((unsigned int) long_buffer[i]) << (56-i*8)) & 0xffffffffffffffff;
     }     
   }
   return result;

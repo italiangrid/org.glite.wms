@@ -19,7 +19,7 @@
 #define _GSISocketClient_h_
 
 /** This super class header file. */
-#include "../socket++/SocketClient.h"
+#include "SocketClient.h"
 /** Include the secure socket globus definition. */
 #include <globus_gss_assist.h>
 

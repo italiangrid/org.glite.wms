@@ -22,13 +22,13 @@
 #include <sys/time.h>
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
 #include <cstdio>
 #include <errno.h>
 #endif
 
-#include "../socket++/SocketAgent.h"
-#include "../socket++/SocketServer.h"
+#include "SocketAgent.h"
+#include "SocketServer.h"
 
 namespace edg {   
 namespace workload { 

@@ -91,6 +91,13 @@ class SocketAgent
    * @return tru on success, false otherwise.
    */
   bool SetSndTimeout(size_t);
+  /**
+   * Returns the host name.
+   * @param the string to fill with host name.
+   */
+  int SocketDescriptor() { return sck; }
+
+
 protected:
 
   /**

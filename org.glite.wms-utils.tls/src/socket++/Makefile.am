@@ -6,26 +6,26 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wl_tls_socket_pp.la libglite_wl_tls_gsisocket_pp.la
+lib_LTLIBRARIES = libglite_wms_tls_socket_pp.la libglite_wms_tls_gsisocket_pp.la
 
-libglite_wl_tls_socket_pp_la_SOURCES = \
+libglite_wms_tls_socket_pp_la_SOURCES = \
 	SocketClient.cpp \
 	SocketServer.cpp \
 	SocketAgent.cpp
 
-libglite_wl_tls_gsisocket_pp_la_SOURCES = \
+libglite_wms_tls_gsisocket_pp_la_SOURCES = \
 	GSISocketAgent.cpp \
 	GSISocketClient.cpp \
 	GSISocketServer.cpp \
 	tokens.cpp
 
-libglite_wl_tls_gsisocket_pp_la_LIBADD = \
+libglite_wms_tls_gsisocket_pp_la_LIBADD = \
 	SocketClient.lo \
 	SocketServer.lo \
 	SocketAgent.lo \
 	$(GLOBUS_SSL_UTILS_LIBS) 
 
-socketppincludedir = $(includedir)/glite/workload/tls/socket++
+socketppincludedir = $(includedir)/glite/wms/tls/socket++
 socketppinclude_HEADERS = \
 	GSISocketAgent.h \
 	GSISocketClient.h \
@@ -38,7 +38,7 @@ socketppinclude_HEADERS = \
 	tokens.h \
 	errors.h
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_CFLAGS) $(GLOBUS_SSL_UTILS_CFLAGS) \
 	$(GLITE_WORKLOAD_CFLAGS) \
 	-DWITH_SOCKET_EXCEPTIONS \

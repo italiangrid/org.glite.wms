@@ -10,16 +10,17 @@
 #include <gssapi.h>
 #include <memory.h>
 #include <time.h>
+#include <stdio.h>
 
 /** Functionalities for transmitting and receiveing tokens. */
-#include "../socket++/tokens.h"
+#include "tokens.h"
 /** The secure Socket Agent used for communication. */
-#include "../socket++/GSISocketAgent.h"
+#include "GSISocketAgent.h"
 /** This class header file. */
-#include "../socket++/GSISocketServer.h"
+#include "GSISocketServer.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
 #endif
 
 namespace edg {   
@@ -296,17 +297,25 @@ namespace edg {
 	GSISocketAgent* GSISocketServer::Listen()
 	{
 	  GSISocketAgent*  sa;
-	  gss_ctx_id_t   context = GSS_C_NO_CONTEXT; 
-	  OM_uint32      major_status, minor_status;
 
 	  //do {
     
 	  sa = static_cast<GSISocketAgent*>
 	    (SocketServer::Listen(new GSISocketAgent));
-    
+          
+          return sa;
+        }
+
+        bool GSISocketServer::AuthenticateAgent(GSISocketAgent* sa) {
+
+          gss_ctx_id_t   context = GSS_C_NO_CONTEXT; 
+	  OM_uint32      major_status, minor_status;
+          int sd = 0;
+
 	  GSIAuthenticationContext ctx;
 
 	  if (sa) {
+            sd = sa -> SocketDescriptor();
 	    major_status = globus_gss_assist_acquire_cred(&minor_status,
 							  GSS_C_BOTH,
 							  &(ctx.credential));
@@ -323,6 +332,8 @@ namespace edg {
 					       0);
 #else
 	      char *gssmsg;
+              char buff[16];
+              sprintf(buff, "%d", sd);
 	      globus_gss_assist_display_status_str( &gssmsg, 
 						    NULL,
 						    major_status,
@@ -332,9 +343,10 @@ namespace edg {
 	      std::string source(gssmsg);
 	      free(gssmsg);
 	      throw AuthenticationException ( source, std::string("globus_gss_assist_acquire_cred()"),
-					      std::string("Failed to acquire credentials..."));
+					      std::string("Failed to acquire credentials on socket #") +
+                                              std::string(buff));
 #endif
-	      return sa;
+	      return false;
 	    }
 	  }
   
@@ -371,7 +383,7 @@ namespace edg {
 	    };
 #endif
 	  }
-	  return sa;
+	  return sa!=NULL;
 	}
 
       } // namespace socket_pp

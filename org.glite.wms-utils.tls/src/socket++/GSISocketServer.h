@@ -19,7 +19,7 @@
 #define _GSISocketServer_h_
 
 /** Include the super class header. */
-#include "../socket++/SocketServer.h"
+#include "SocketServer.h"
 /** Include the secure socket globus definition. */
 #include <globus_gss_assist.h>
 
@@ -68,6 +68,10 @@ class GSISocketServer : public SocketServer
    * @return the GSI Socket Agent redirecting communication on a dedicated port.
    */
   virtual GSISocketAgent* Listen();
+  /**
+   * 
+   */
+  bool GSISocketServer::AuthenticateAgent(GSISocketAgent* sa);
   /**
    * Redirects the GSI output.
    * This method allows to define a logging file for GSI.

@@ -6,24 +6,35 @@
 ## *
 ## *********************************************************************
 
-STDCPP = -lstdc++
+GSISOCKET_PP = $(top_builddir)/src/socket++/libglite_wms_tls_gsisocket_pp.la
+SOCKET_PP = $(top_builddir)/src/socket++/libglite_wms_socket_pp.la
 
-WL_CMN_SOCKET_TEST = glite-wl-socketppServerTest \
-	glite-wl-socketppClientTest 
+WMS_CMN_SOCKET_TEST = glite-wms-socketppServerTest \
+	glite-wms-socketppClientTest
 
-check_PROGRAMS = $(WL_CMN_SOCKET_TEST) 
+#WMS_CMN_SC_TEST = socketClient_cu
 
-glite_wl_socketppServerTest_SOURCES = socketppServerTest.cpp
-glite_wl_socketppServerTest_LDADD = \
-	$(top_builddir)/src/socket++/libglite_wl_tls_gsisocket_pp.la \
+check_PROGRAMS = $(WMS_CMN_SOCKET_TEST) 
+#	$(WL_TLS_SC_TEST)
+
+glite_wms_socketppServerTest_SOURCES = socketppServerTest.cpp
+glite_wms_socketppServerTest_LDADD = \
+	$(GSISOCKET_PP) \
 	$(GLITE_WORKLOAD_COMMON_LIBS) \
 	$(GLOBUS_LIBS)
 
-glite_wl_socketppClientTest_SOURCES = socketppClientTest.cpp
-glite_wl_socketppClientTest_LDADD = \
-	$(top_builddir)/src/socket++/libglite_wl_tls_gsisocket_pp.la \
+glite_wms_socketppClientTest_SOURCES = socketppClientTest.cpp
+glite_wms_socketppClientTest_LDADD = \
+	$(GSISOCKET_PP) \
 	$(GLITE_WORKLOAD_COMMON_LIBS) \
 	$(GLOBUS_LIBS)
+
+##socketClient_cu_SOURCES = socketClient_cu_suite.h socketClient_cu_suite.cpp \
+##      socketClient_cu_main.cpp
+##socketClient_cu_LDADD = \
+##      $(SOCKET_PP) \
+##      $(GLITE_WORKLOAD_COMMON_LIBS) \
+##      $(GLOBUS_LIBS) $(CPPUNIT_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(BOOST_CFLAGS) \

@@ -6,8 +6,8 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
 
-#include "glite/workload/common/utilities/Exceptions.h"
-#include "../socket++/exception_codes.h"
+#include "glite/wms/common/utilities/Exceptions.h"
+#include "exception_codes.h"
 
 namespace utilities = edg::workload::common::utilities;
 

@@ -18,12 +18,12 @@
 #include <sslutils.h>
 
 /** This class header file. */
-#include "../socket++/GSISocketAgent.h"
+#include "GSISocketAgent.h"
 /** The tokens transmission and reception functionality definitions file. */
-#include "../socket++/tokens.h"
+#include "tokens.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
 #endif
 
 namespace edg {

@@ -19,7 +19,7 @@
 #define _GSISocketAgent_h_
 
 /** The superclass definition file. */
-#include "../socket++/SocketAgent.h"
+#include "SocketAgent.h"
 /** The globus secure shell definitions file. */
 #include <globus_gss_assist.h>
 

@@ -20,11 +20,11 @@
 #include <iostream>
 
 /** This class header file. */
-#include "../socket++/SocketClient.h"
+#include "SocketClient.h"
 /** The communication agent header file. */
-#include "../socket++/SocketAgent.h"
+#include "SocketAgent.h"
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
 #endif
 namespace edg { 
 namespace workload { 

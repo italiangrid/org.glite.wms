@@ -6,7 +6,7 @@
  * Contributors are mentioned in the code where appropriate.
  */
 
-#include "glite/workload/common/utilities/exception_codes.h"
+#include "glite/wms/common/utilities/exception_codes.h"
 
 namespace edg {
 namespace workload {

@@ -7,7 +7,7 @@
 
 #include <openssl/crypto.h>
 
-#include "../ssl_helpers/ssl_pthreads.h"
+#include "ssl_pthreads.h"
 
 static void edg_wlc_SSLLockingCallback(int mode, int n, const char *file, int line);
 static unsigned long edg_wlc_SSLThreadId(void);

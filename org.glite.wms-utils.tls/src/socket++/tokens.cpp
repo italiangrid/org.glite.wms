@@ -1,7 +1,7 @@
 // $Id:
 
 /**
- * @file tokens.c
+ * @file tokens.cpp
  * @brief The implementation for token transmission and reception.
  * This file implements a couple of methods providing functionality
  * to send and receive tokens.
@@ -17,9 +17,12 @@
 #include <unistd.h>
 #include <globus_gss_assist.h>
 
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
+
+const int _TIMEOUT_ = 300;
 
 namespace socket_pp = edg::workload::common::socket_pp;
+
 /**
  * Send a gss token.
  * This method send gss tokens using GSI socket objects.
@@ -34,6 +37,11 @@ int send_token(void *arg, void *token, size_t token_length)
     ssize_t			n_written;
     int 			fd = *( (int *) arg );
     unsigned char		token_length_buffer[4];
+    // struct timeval timeout;
+    // timeout.tv_sec = _TIMEOUT_; 
+    // timeout.tv_usec = 0;
+ 
+    // setsockopt( fd, SOL_SOCKET, SO_SNDTIMEO, (void *) &timeout, sizeof(struct timeval) ); 
 
     if( !token ) { 
         char msg[16];
@@ -100,6 +108,11 @@ int get_token(void *arg, void **token, size_t *token_length)
     ssize_t			n_read;
     int 			fd = *( (int *) arg );
     unsigned char		token_length_buffer[4];
+    // struct timeval timeout;
+    // timeout.tv_sec = _TIMEOUT_;
+    // timeout.tv_usec = 0;
+ 
+    // setsockopt( fd, SOL_SOCKET, SO_RCVTIMEO, (void *) &timeout, sizeof(struct timeval) );
 
     /* read the token length */
 

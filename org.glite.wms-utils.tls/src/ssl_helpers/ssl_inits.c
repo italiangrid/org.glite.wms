@@ -2,9 +2,8 @@
 
 #include <openssl/ssl.h>
 
-#include "../ssl_helpers/ssl_inits.h"
-
-#include "sslutils.h"
+#include "ssl_inits.h"
+#include "glite/wms/thirdparty/globus_ssl_utils/sslutils.h"
 
 int edg_wlc_SSLInitialization(void)
 {

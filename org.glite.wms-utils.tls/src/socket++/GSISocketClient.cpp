@@ -10,16 +10,16 @@
 #include <errno.h>
 
 /** This class header file. */
-#include "../socket++/GSISocketClient.h"
+#include "GSISocketClient.h"
 /** The communication agent definition file. */
-#include "../socket++/GSISocketAgent.h"
+#include "GSISocketAgent.h"
 /** The tokens transission and reception features definitions. */
-#include "../socket++/tokens.h"
+#include "tokens.h"
 /** The error messages file. */
-#include "../socket++/errors.h"
+#include "errors.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
-#include "../socket++/exceptions.h"
+#include "exceptions.h"
 #endif
 #include <iostream>
 namespace edg {   
