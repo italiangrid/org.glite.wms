@@ -229,7 +229,7 @@ vector<double> AdWrapper::getDoubleValue (const string& attr_name){
 
 string AdWrapper::getAd( const string& name  ) {
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERRROR
-	return (    (glite::wms::jdl::JobAd*)  jad)->getAd(  name  ) ;
+	return ((    (glite::wms::jdl::JobAd*)  jad)->getAd(  name  )).toString() ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERRROR
 	return "" ;
 }
