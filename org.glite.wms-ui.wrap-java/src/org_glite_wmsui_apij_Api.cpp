@@ -547,7 +547,7 @@ LOGGING methods:
 		const char *jd = env->GetStringUTFChars(jdl, 0);
 		const char *id = env->GetStringUTFChars(jobId, 0);
 		const char *ns = env->GetStringUTFChars(nsAddr, 0);
-		edg_wlc_SSLInitialization();
+		// edg_wlc_SSLInitialization();
 		try{
 			glite::wmsutils::jobid::JobId jid ( id );
 lock();
