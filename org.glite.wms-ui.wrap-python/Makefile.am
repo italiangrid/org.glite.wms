@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/08 09:34:06  amarasch
+#       Added LICENSE handling
+#
 #       Revision 1.1  2004/08/11 14:52:43  eronchie
 #       Start adding wrap-python
 #
@@ -33,6 +36,10 @@
 
 ## Process this file with automake to produce Makefile.in
 
+EXTRA_DIST = LICENSE
+ 
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 ## Subdirectories list
 SUBDIRS = src 
 
