@@ -6,14 +6,14 @@
 ## *
 ## *********************************************************************
 
-noinst_LTLIBRARIES = libglite_wms_classad_plugin_loader.la
+lib_LTLIBRARIES = libglite_wms_classad_plugin_loader.la
 noinst_HEADERS = classad_plugin_loader.h
  
 libglide_wms_classad_plugin_loader_la_SOURCES = \
 	classad_plugin_loader.cpp
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/.. \
+	-I$(top_srcdir)/src \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
  

@@ -14,12 +14,11 @@ libglite_wms_gangmatch_classad_plugin_la_SOURCES = \
 	listAttrRegEx.cpp \
 	retrieveCloseSEsInfo.cpp
 
-
 libglite_wms_gangmatch_classad_plugin_la_CPPFLAGS = \
 	-fPIC -shared
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/.. \
+	-I$(top_srcdir)/src \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
  
