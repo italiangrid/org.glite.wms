@@ -17,7 +17,9 @@ broker_HEADERS = \
 	utility.h
 
 libglite_wms_broker_la_SOURCES = \
-	RBSimpleImpl.cpp 
+	RBSimpleImpl.cpp
+libglite_wms_broker_la_LIBADD = \
+	./selectors/libglide_wms_broker_selectors.la 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
