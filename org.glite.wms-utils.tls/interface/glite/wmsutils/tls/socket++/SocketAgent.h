@@ -72,7 +72,7 @@ class SocketAgent
    * Returns the host name.
    * @param the string to fill with host name.
    */
-  std::string HostName();
+  std::string PeerName();
   /**
    * Set the connection timeout.
    * @param secs a size_t representing the timeout in seconds.
@@ -96,7 +96,16 @@ class SocketAgent
    * @param the string to fill with host name.
    */
   int SocketDescriptor() { return sck; }
-
+  /**                                                                                             
+   * Return the peer entity ip address.                                                           
+   * @return peer entity ip address.                                                              
+   */ 
+  std::string PeerAddr(); 
+  /**                                                                                             
+   * Return the peer entity port.                                                                 
+   * @return peer entity port.                                                                    
+   */ 
+  int PeerPort();
 
 protected:
 
