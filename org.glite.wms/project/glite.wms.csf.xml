@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.56  2004/08/16 15:00:04  eronchie
+	Added configuration component
+
 	Revision 1.55  2004/08/16 13:00:42  eronchie
 	Updated
 	Added interactive component
-
+	
 	Revision 1.54  2004/08/08 17:00:47  eronchie
 	Start adding manager
 	
@@ -383,6 +386,10 @@
 		<condition property="interactive.head">
                         <equals arg1="${org.glite.wms.interactive.version}" arg2="HEAD" />
                 </condition>
+
+		<condition property="configuration.head">
+                        <equals arg1="${org.glite.wms.configuration.version}" arg2="HEAD" />
+                </condition>
     	</target>
 
     	<presetdef name="cvs-co">
@@ -660,6 +667,16 @@
             <cvs-co package="org.glite.wms.interactive"
                     tag="${org.glite.wms.interactive.version}" />
         </target>
+
+	<!-- Configuration -->
+        <target name="configuration" depends="globus,get.configuration.head, get.configuration.tag"/>
+        <target name="get.configuration.head" if="configuration.head">
+            <cvs-co package="org.glite.wms.configuration" />
+        </target>
+        <target name="get.configuration.tag" unless="configuration.head">
+            <cvs-co package="org.glite.wms.configuration"
+                    tag="${org.glite.wms.configuration.version}" />
+        </target>
 		
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-bypass,
@@ -683,7 +700,8 @@
 					manager-ns-daemon,
 					jobsubmission,
 					manager,
-					interactive"/>
+					interactive,
+					configuration"/>
 
 
 	<!-- ====================================================

@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.56  2004/08/16 15:00:04  eronchie
+	Added configuration component
+
 	Revision 1.55  2004/08/16 13:00:42  eronchie
 	Updated
 	Added interactive component
-
+	
 	Revision 1.54  2004/08/09 04:55:37  dimeglio
 	Replaced rtag with tag
 	
@@ -759,6 +762,22 @@
                 </if>
         </target>
 
+	<target name="configuration" unless="setenvonly" depends="globus">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms.subsystem.dir}.configuration" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms.subsystem.dir}.configuration"
+                            target="${target}"
+                            inheritall="false" />
+                        </else>
+                </if>
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="thirdparty-bypass,
    					     thirdparty-globus_gridftp_server,
@@ -781,6 +800,7 @@
 					     manager-ns-daemon,	
 					     jobsubmission,
 					     manager,
-					     interactive" />
+					     interactive,
+					     configuration" />
 		
 </project>
