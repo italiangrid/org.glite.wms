@@ -16,14 +16,14 @@ libglobus_ssl_utils_la_SOURCES = \
 
 libglobus_ssl_utils_la_LIBADD = ${top_builddir}/src/oldgaa/libglobus_oldgaa.la
 
-globus_ssl_utilsincludedir = $(includedir)
+globus_ssl_utilsincludedir = $(includedir)/glite/wms/thirdparty/globus_ssl_utils
 globus_ssl_utilsinclude_HEADERS = \
 	scutils.h \
 	sslutils.h
 
 AM_CPPFLAGS = -I${srcdir}/oldgaa \
-			  -I/usr/kerberos/include \
-			  -I/usr/include/openssl \
-			  -DERR_file_name=__FILE__
+	-I/usr/kerberos/include \
+	-I/usr/include/openssl \
+	-DERR_file_name=__FILE__
 
 MAINTAINERCLEANFILES = Makefile.in
