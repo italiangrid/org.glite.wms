@@ -63,7 +63,7 @@ ExpDagAd* Logging::registerJob(JobAd* jad , int res_number  ){
 		jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
 	cout << "Logging::Creating Partitioner  " << endl ;
 	jad->check() ;
-	edg::workload::partitioner::Partitioner part ( jad->ad() , jobids   ) ;
+	glite::wmsui::partitioner::Partitioner part ( jad->ad() , jobids   ) ;
 	cout << "Logging::Creating dagad " << endl ;
 	ExpDagAd* dagad = new ExpDagAd   (part.createDag() );
 	// cout << "Logging:: created DAG:" << dagad->toString(ExpDagAd::MULTI_LINES) << endl << "Logging::Registering partitioning SUB job" << endl ;

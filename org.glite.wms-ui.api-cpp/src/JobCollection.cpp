@@ -21,8 +21,8 @@
 // NetworkServer
 #include "NSClient.h"
 
-using namespace glite::wmsustils::exception ;
-using namespace glite::wmsutils::jobid ;
+using namespace glite::wmsutils::exception;
+using namespace glite::wmsutils::jobid;
 using namespace glite::lb ;
 using namespace std ;
 
@@ -130,11 +130,11 @@ void JobCollection::remove (const Job& job){
                    cleared = true ;
                    break;
                  }
-           } catch  (glite::wmsustils::exception::Exception &exc){
+           } catch  (glite::wmsutils::exception::Exception &exc){
                  //The job is not of Id type do nothing
            }
          }
-     }  catch  (glite::wmsustils::exception::Exception &exc){
+     }  catch  (glite::wmsutils::exception::Exception &exc){
 /* TBD
           //No JobId Found: looking for JobAd
           try{
@@ -147,11 +147,11 @@ void JobCollection::remove (const Job& job){
                       cleared = true ;
                       break;
                    }
-                 } catch  (glite::wmsustils::exception::Exception &exc){
+                 } catch  (glite::wmsutils::exception::Exception &exc){
                    //The job is not of Ad type   do nothing
                  }
              }
-          }catch  (glite::wmsustils::exception::Exception &exc)  {
+          }catch  (glite::wmsutils::exception::Exception &exc)  {
           //No Jobad found ---> ERROR
             throw JobCollectNoJobException ( __FILE__ , __LINE__ ,METHOD ,WMS_NOSUCHJOB ,jobString);
           }
