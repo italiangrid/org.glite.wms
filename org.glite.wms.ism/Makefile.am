@@ -11,12 +11,14 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
 #       Version info: $Id$
 #       Release: $Name$
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/11/09 10:14:39  monforte
+#       Added first experimental prototype of ism purchaser for cemonitor...
+#
 #       Revision 1.2  2004/10/25 15:51:50  eronchie
 #       Added LICENSE file
 #
@@ -42,7 +44,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src 
+SUBDIRS = interface src test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

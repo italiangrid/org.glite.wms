@@ -7,15 +7,26 @@
 ## *********************************************************************
 
 lib_LTLIBRARIES    = \
-	libglite_wms_ism_ii_purchaser.la 
+	libglite_wms_ism_ii_purchaser.la \
+	libglite_wms_ism_cemon_purchaser.la
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
+	common.cpp \
         ism-ii-purchaser.cpp
+
+libglite_wms_ism_cemon_purchaser_la_SOURCES = \
+	ism-cemon-purchaser.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/interface \
+	-I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/src/autogen/monitor_client \
+	-I$(top_srcdir)/../repository/gsoap/2.3.8/rhel30_gcc32/include \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS) 
+	$(CLASSAD_CFLAGS) \
+	$(GSOAP_CFLAGS) \
+        -DGSOAP_VER_26
+
 
 MAINTAINERCLEANFILES = Makefile.in *.*~

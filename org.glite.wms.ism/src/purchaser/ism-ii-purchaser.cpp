@@ -4,50 +4,27 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 // $Id$
-
+#include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
-#include <vector>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
 
 #include "glite/wms/common/ldif2classad/LDAPQuery.h"
 #include "glite/wms/common/ldif2classad/LDAPSynchConnection.h"
 #include "glite/wms/common/ldif2classad/LDAPForwardIterator.h"
 #include "glite/wms/common/ldif2classad/exceptions.h"
 
-#include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
-#include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/ism/ism.h"
-
 using namespace std;
-
-namespace exception = glite::wmsutils::exception;
 
 namespace glite {
 namespace wms {
 
 namespace ldif2classad  = common::ldif2classad;
-namespace utilities     = common::utilities;
-namespace logger        = common::logger;
 
 namespace ism {
 namespace purchaser {
 
 namespace {
-
-typedef boost::shared_ptr<classad::ClassAd>      gluece_info_type;
-typedef std::map<std::string, gluece_info_type>  gluece_info_container_type;
-typedef gluece_info_container_type::const_iterator gluece_info_const_iterator;
-typedef gluece_info_container_type::iterator       gluece_info_iterator;
-
 
 bool mergeInfo(
   string const& filter,
@@ -269,66 +246,6 @@ bool fetch_gluece_info(gluece_info_type& gluece_info)
   return true;
 }
 
-boost::scoped_ptr<classad::ClassAd> requirements_ad;
-
-void insert_aux_requirements(gluece_info_type& gluece_info)
-{
-  if (!requirements_ad) {
-    
-    std::string requirements_str(
-      "[ \
-        CloseOutputSECheck = IsUndefined(other.OutputSE) \
-          ||   member(other.OutputSE, GlueCESEBindGroupSEUniqueID); \
-        AuthorizationCheck = member(other.CertificateSubject, GlueCEAccessControlBaseRule) \
-          ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule); \
-      ]"
-    );
-
-    try {
-      requirements_ad.reset(utilities::parse_classad(requirements_str));
-    }
-    catch(...) {
-      std::cout << "Ops!" << std::endl;
-      exit( -1 );
-    }
-  }
-  gluece_info->Update(*requirements_ad);
-}
-
-bool expand_glueceid_info(gluece_info_type& gluece_info)
-{
-  string ce_str;
-  ce_str.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEUniqueID"));
-  static boost::regex  expression_ceid("(.+/[^\\-]+-(.+))-(.+)");
-  boost::smatch  pieces_ceid;
-  string gcrs, type, name;
-  
-  if (boost::regex_match(ce_str, pieces_ceid, expression_ceid)) {
-    
-    gcrs.assign(pieces_ceid[1].first, pieces_ceid[1].second);
-    try {
-      type.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEInfoLRMSType"));
-    } 
-    catch(utilities::InvalidValue& e) {
-      // Try to fall softly in case the attribute is missing...
-      type.assign(pieces_ceid[2].first, pieces_ceid[2].second);
-      Warning("Cannot evaluate GlueCEInfoLRMSType using value from contact string: " << type);
-    }
-    // ... or in case the attribute is empty.
-    if (type.length() == 0) type.assign(pieces_ceid[2].first, pieces_ceid[2].second);
-    name.assign(pieces_ceid[3].first, pieces_ceid[3].second);
-  }
-  else { 
-    Warning("Cannot parse CEid=" << ce_str);
-    return false;
-  }
-  gluece_info -> InsertAttr("GlobusResourceContactString", gcrs);
-  gluece_info -> InsertAttr("LRMSType", type);
-  gluece_info -> InsertAttr("QueueName", name);
-  gluece_info -> InsertAttr("CEid", ce_str);
-  return true;
-}
-
 } // {anonymous}
 
 ism_ii_purchaser::ism_ii_purchaser(
@@ -348,18 +265,6 @@ ism_ii_purchaser::ism_ii_purchaser(
 {
 }
 
-namespace {
-
-timestamp_type get_current_time(void)
-{
-  timestamp_type current_time;
-
-  boost::xtime_get(&current_time, boost::TIME_UTC);
-  
-  return current_time;
-}
-
-}
 void ism_ii_purchaser::operator()()
 {
   do {

@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.4  2004/11/09 10:14:39  monforte
+#       Added first experimental prototype of ism purchaser for cemonitor...
+#
 #       Revision 1.3  2004/09/22 01:02:25  dimeglio
 #       Fixed missing parenthesis in AC_INIT
 #
@@ -94,6 +97,14 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 
 AC_GLITE
+AC_GSOAP
+AC_GLOBUS
+
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+
+AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
+AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
@@ -102,5 +113,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/purchaser/Makefile])
+#AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

@@ -9,6 +9,8 @@
 ismdir = $(includedir)
 nobase_ism_HEADERS = \
 	glite/wms/ism/ism.h \
+	glite/wms/ism/purchaser/common.h \
+	glite/wms/ism/purchaser/ism-cemon-purchaser.h \
 	glite/wms/ism/purchaser/ism-ii-purchaser.h
 
 MAINTAINERCLEANFILES = Makefile.in
