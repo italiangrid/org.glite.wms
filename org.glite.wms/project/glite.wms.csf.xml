@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.7  2004/04/29 04:36:56  dimeglio
+	Fixed dependency spelling errors
+
 	Revision 1.6  2004/04/29 04:05:04  dimeglio
 	Moved user property look up before dependencies properties
-
+	
 	Revision 1.5  2004/04/29 03:39:47  dimeglio
 	Added Import of  user and project properties
 	
@@ -251,7 +254,7 @@
 		<cvs command="checkout"
 			package="org.egee.test3.wms.thirdparty-globus_ssl_utils"
 			dest="${workspace.dir}"
-			tag="${org.egee.test2.wms.thirdparty-globus_ssl_utils.version}"/>
+			tag="${org.egee.test3.wms.thirdparty-globus_ssl_utils.version}"/>
 	</target>
 	
 	<!-- ByPass -->
@@ -259,7 +262,7 @@
 		<cvs command="checkout"
 			package="org.egee.test3.wms.thirdparty-bypass"
 			dest="${workspace.dir}"
-			tag="${org.egee.test3.wms.thirdparty-bypass}"/>
+			tag="${org.egee.test3.wms.thirdparty-bypass.version}"/>
 	</target>
 	
 	<!-- Globus GridFTP Server -->
