@@ -73,6 +73,7 @@ import org.glite.wmsui.apij.Job;
 import org.glite.wmsui.apij.JobCollection;
 import org.glite.wmsui.apij.JobCollectionException;
 import org.glite.wmsui.apij.JobId;
+import org.glite.wmsui.apij.Query;
 import org.glite.wmsui.apij.Url;
 import org.glite.wmsui.apij.UserCredential;
 import org.glite.wmsui.apij.UserJobs;
@@ -1446,8 +1447,24 @@ public class JobMonitor extends JFrame implements JobMonitorInterface {
             GUIGlobalVars.proxySubject)) {
           logger.info("userJobs.getJobs(" + lbURL + ", " + fromDate + ", "
               + toDate + ", " + userTagsAd + ", " + ownedJobsOnly + ")");
-          jobIdVector = userJobs.getJobs(lbURL, fromDate, toDate, userTagsAd,
-              ownedJobsOnly);
+
+
+	/** Old approach - deprecated */
+	// jobIdVector = userJobs.getJobs(lbURL, fromDate, toDate, userTagsAd, ownedJobsOnly);
+
+	/** Query approach */
+	Query datequery = new Query () ;
+	datequery.setTimeFrom(fromDate);
+	datequery.setTimeTo(toDate);
+	datequery.setUserTags(userTagsAd);
+	if ( ownedJobsOnly) datequery.setOwned () ;
+	jobIdVector = userJobs.getJobs(lbURL, datequery);
+
+
+
+
+
+
         } else {
           JOptionPane.showOptionDialog(JobMonitor.this, Utils.FATAL_ERROR
               + "Proxy file user subject has changed"
