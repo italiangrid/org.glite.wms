@@ -10,7 +10,7 @@
 #include <sys/types.h>
 
 #include "wmpoperations.h"
-
+#include "wmputils.h"
 #include "wmproxy.h"
 #include "wmpeventlogger.h"
 #include "wmpexpdagad.h"
@@ -40,7 +40,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-// Default name of the delegated Proxy that is copied inside private job 
+// Default name of the delegated Proxy that is copied inside private job
 // directory
 const std::string USER_PROXY_NAME = "/proxy";
 
@@ -48,7 +48,7 @@ const std::string USER_PROXY_NAME = "/proxy";
 
 using namespace std;
 using namespace glite::lb; // JobStatus
-using namespace wmproxyname;
+using namespace glite::wms::wmproxy::server ;
 using namespace glite::wms::jdl; // DagAd, AdConverter
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
@@ -68,7 +68,7 @@ enum type {
 // "private" methods prototypes
 glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid);
 
-void regist(jobRegisterResponse &jobRegister_response, 
+void regist(jobRegisterResponse &jobRegister_response,
 	const string &delegation_id, const string &jdl, JobAd *jad);
 
 void regist(jobRegisterResponse &jobRegister_response,
@@ -167,7 +167,7 @@ getType(string jdl)
 		throw ex;
 	}
 	return return_value;
-	
+
 	GLITE_STACK_CATCH();
 }
 
@@ -220,28 +220,20 @@ glite::lb::JobStatus
 getStatus(JobId *jid)
 {
 	GLITE_STACK_TRY("getStatus(JobId *jid)");
-
 	glite::lb::Job lb_job(*jid);
 	return lb_job.status(glite::lb::Job::STAT_CLASSADS); // to get also jdl
 	// lb_job.status(0) minimal information about the job
-
 	GLITE_STACK_CATCH();
 }
 
-
 // WM Web Service available operations
 // To get more infomation see WM service wsdl file
-
 void
 getVersion(getVersionResponse &getVersion_response)
 {
 	GLITE_STACK_TRY("getVersion(getVersionResponse &getVersion_response)");
-	/*
-	org::glite::daemon::WMPManager manager;
-	return manager.runCommand("getVersion", getVersion_response);
-	*/
-	getVersion_response.version = "version";
-
+	cerr << "wmpConfig==" << wmpConfig  << endl ;
+	getVersion_response.version = "wmpConfig->sandbox_staging_path()" ;
 	GLITE_STACK_CATCH();
 }
 
@@ -249,9 +241,13 @@ void
 jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegation_id)
 {
+
+
+
+
+
 	GLITE_STACK_TRY("jobRegister(jobRegisterResponse &jobRegister_response, "
 		"const string &jdl, const string &delegation_id)");
-
 	// Checking delegation id
 	if (delegation_id == "") {
   		throw ProxyOperationException(__FILE__, __LINE__,
@@ -259,53 +255,35 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 			"const string &jdl, const string &delegation_id)",
 			WMS_DELEGATION_ERROR, "Delegation id not valid");
 	}
-
 	try {
+		// Check TYPE/JOBTYPE attributes and convert JDL when needed
+		WMPExpDagAd *dag=NULL ;
+		JobAd *jad = NULL ;
 		int type = getType(jdl);
 		if (type == TYPE_DAG) {
 			cerr<<"---->> DAG"<<endl;
-			WMPExpDagAd *dag = new WMPExpDagAd(jdl);
-			/// DO IT??  dag->check(); // This changes ISB files to absolute paths
-			regist(jobRegister_response, delegation_id, jdl, dag);
-			delete dag;
+			dag = new WMPExpDagAd(jdl);
 		} else if (type == TYPE_JOB) {
 			cerr<<"---->> JOB"<<endl;
-			JobAd *jad = new JobAd(jdl);
-			//jad->check(); // This changes ISB files to absolute paths
-			if (jad->hasAttribute(JDL::JOBTYPE)) {
-				string job_type = (jad->getStringValue(JDL::TYPE))[0];
-				if (job_type == JDL_JOBTYPE_PARAMETRIC) {
-					cerr<<"---->> PARAMETRIC"<<endl;
-					delete jad;
-					WMPExpDagAd *dag =
-						new WMPExpDagAd(*(AdConverter::bulk2dag(jdl)));
-					regist(jobRegister_response, delegation_id, jdl, dag);
-					delete dag;
-				} else if (job_type == JDL_JOBTYPE_PARTITIONABLE) {
-					cerr<<"---->> PARTITIONABLE"<<endl;
-					WMPExpDagAd *dag =
-						new WMPExpDagAd(*(AdConverter::part2dag(jdl)));
-					regist(jobRegister_response, delegation_id, jdl, dag, jad);
-					delete jad;
-					delete dag;
-				} else { // Default Job Type is Normal
-					cerr<<"---->> NORMAL"<<endl;
-					regist(jobRegister_response, delegation_id, jdl, jad);
-					delete jad;
-				}
-			} else {
-				regist(jobRegister_response, delegation_id, jdl, jad);
-				delete jad;
+			jad = new JobAd(jdl);
+			if (jad->hasAttribute(JDL::JOBTYPE  ,  JDL_JOBTYPE_PARAMETRIC   )  ){
+				dag =new WMPExpDagAd(*(AdConverter::bulk2dag(jdl)));
+				delete jad ;
+			}else if (jad->hasAttribute(JDL::JOBTYPE  , JDL_JOBTYPE_PARTITIONABLE     )  ){
+				dag =new WMPExpDagAd(*(AdConverter::part2dag(jdl)));
 			}
 		} else if (type == TYPE_COLLECTION) {
 			cerr<<"---->> COLLECTION"<<endl;
-			WMPExpDagAd *dag =
-				new WMPExpDagAd(*(AdConverter::collection2dag(jdl)));
-			/// DO IT??  dag->check(); // This changes ISB files to absolute paths
-			cerr<<"---->> DAG jobad: "<<dag->toString()<<endl;
-			regist(jobRegister_response, delegation_id, jdl, dag);
-			delete dag;	
+			dag = new WMPExpDagAd(*(AdConverter::collection2dag(jdl)));
 		}
+		// PERFORM THE PROPER REGISTRATION
+		if (dag && jad) regist(jobRegister_response, delegation_id, jdl, dag, jad);
+		else if (dag)   regist(jobRegister_response, delegation_id, jdl, dag);
+		else if (jad)   regist(jobRegister_response, delegation_id, jdl, jad);
+		else throw "FATAL ERROR" ;  // UNREACHABLE LINE (either dag or jad are initialised)
+		// Release Memory
+		if (dag)  delete dag ;
+		if (jad)  delete jad ;
 	} catch (Exception &exc) {
 		cerr<<"---->> jobRegister() Exception: "<<exc.what()<<endl;
 		throw exc;
@@ -322,32 +300,25 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri)
 {
 	GLITE_STACK_TRY("setJobFileSystem(const string &delegation_id, const "
 		"string &dest_uri)");
-		
 	// Getting delegated Proxy file name
 	string delegated_proxy =
 		WMPDelegation::getDelegatedProxyPath(delegation_id);
 	cerr<<"Delegated Proxy file name: "<<delegated_proxy<<endl;
-	
 	// Creating destination URI path
 	mode_t mode(755);
 	cerr<<"creating directory "<<dest_uri<<endl;
-	if (mkdir(dest_uri.c_str(), mode) != 0) {
-		throw JobOperationException(__FILE__, __LINE__,
-			"setJobFileSystem(const string &delegation_id, const "
-			"string &dest_uri)",
+	/*
+	*  NEW APPROACH:
+	*/
+	// TBD WARNING! THIS IS SHALL BE PROVIDED BY an LCMAP METHOD
+	int userid = getuid();
+	// TBD WARNING! Still to be implemented
+	if ( managedir ( dest_uri,userid ))
+		throw JobOperationException(__FILE__, __LINE__,"setJobFileSystem(const string &delegation_id, const string &dest_uri)",
 			WMS_IS_FAILURE, "Unable to create job local directory");
-	}
+
 	
 	// Copying delegated Proxy to destination URI
-	/*char buffer[200];
-	string target_file = dest_uri + USER_PROXY_NAME;
-	sprintf(buffer, "cp %s %s", delegated_proxy.c_str(), target_file.c_str());
-	if (system(buffer) == -1) {
-		throw JobOperationException(__FILE__, __LINE__,
-			"setJobFileSystem(const string &delegation_id, const "
-			"string &dest_uri)",
-			WMS_IS_FAILURE, "Unable to copy Proxy file");
-	}*/
 	char ch;
 	ifstream source_stream;
   	ofstream target_stream;
@@ -363,13 +334,13 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri)
 
   	ch = source_buffer->sgetc();
   	while (ch != EOF) {
-    	target_buffer->sputc(ch);
-    	ch = source_buffer->snextc();
+		target_buffer->sputc(ch);
+		ch = source_buffer->snextc();
   	}
 
   	target_stream.close();
   	source_stream.close();
-  	
+
   	GLITE_STACK_CATCH();
 }
 
@@ -439,14 +410,14 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 }
 
 void
-regist(jobRegisterResponse &jobRegister_response, const string &delegation_id, 
+regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	const string &jdl, WMPExpDagAd *dag)
 {
 	regist(jobRegister_response, delegation_id, jdl, dag, NULL);
 }
 
 void
-regist(jobRegisterResponse &jobRegister_response, const string &delegation_id, 
+regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	const string &jdl, WMPExpDagAd *dag, JobAd *jad)
 {
 	GLITE_STACK_TRY("regist(jobRegisterResponse &jobRegister_response, "
@@ -725,9 +696,8 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 			wmp_fault.code, wmp_fault.message);
 	}
 	int length = jid.length();
-	getSandboxDestURI_response.path = "/home/gridsite/jobdir/"
-		+ jid.substr(length - 22, length);
-
+	getSandboxDestURI_response.path = "/tmp/wmpConfig-sandbox_staging_path"
+		+ to_filename (JobId ( jid ) ) ;  //TBD extra parameters??
 	GLITE_STACK_CATCH();
 }
 
@@ -978,27 +948,27 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 			"const string &delegation_id)",
 			WMS_DELEGATION_ERROR, "Delegation id not valid");
 	}
-	
+
 	getProxyReq_response.request =
 		WMPDelegation::getProxyRequest(delegation_id);
-	
+
 	GLITE_STACK_CATCH();
-} 
-	
+}
+
 void
 putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	const string &proxy)
-{ 
+{
 	GLITE_STACK_TRY("putProxy(putProxyResponse &putProxyReq_response, "
 		"const string &delegation_id, const string &proxy)");
-	
+
 	if (delegation_id == "") {
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"putProxy(putProxyResponse &putProxyReq_response, const string "
 			"&delegation_id, const string &proxy)",
 			WMS_DELEGATION_ERROR, "Delegation id not valid");
 	}
-	
+
 	WMPDelegation::putProxy(delegation_id, proxy);
 	
 	GLITE_STACK_CATCH();
