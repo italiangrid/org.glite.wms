@@ -43,7 +43,6 @@
 #include "wmputils.h"
 
 
-//#include <pthread.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -52,6 +51,7 @@
 #include <boost/pool/detail/singleton.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+
 
 namespace utilities  = glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
@@ -73,11 +73,10 @@ std::string opt_conf_file("glite_wms.conf");
 int
 main(int argc, char* argv[])
 {
-	int bind;
-	int accept;
-	int ssl_accept;
+	int m, s;
 	struct soap *soap;
-	struct soap *tsoap;
+	char msg[100];
+
 
 	try {
 		configuration::Configuration config(opt_conf_file, configuration::ModuleType::network_server);
@@ -89,22 +88,23 @@ main(int argc, char* argv[])
 
 		edglog_fn("   WMProxy::main");
 		edglog(fatal) << "--------------------------------------" << endl;
-		edglog(fatal) << "Starting WM Proxy..." << endl;
+		edglog(fatal) << "Starting WMProxy Service..." << endl;
 		logger::threadsafe::edglog.activate_log_rotation (
 			wmp_config->log_file_max_size(),
 			wmp_config->log_rotation_base_file(),
 			wmp_config->log_rotation_max_file_number());
 
 		if (argc < 3) {
-			waitForSeconds(15);
-
-			cerr<<"ISB Size: " << wmp_config->max_input_sandbox_size() << endl;
+                        // Run as a FastCGI script
+			edglog(fatal) << "Running as a FastCGI program" << endl;
+			//waitForSeconds(5);
 
 			int thread_number;
 			try {
 				thread_number =  wmp_config->dispatcher_threads() ;
 		    	} catch ( configuration::InvalidExpression &error ) {
 		      		edglog(fatal) << "Invalid Expression: " << error << std::endl;
+		      		std::cout << "Invalid Expression: " << error << std::endl;
 		    	}
 			task::Pipe<classad::ClassAd*> pipe;
 			Dispatcher dispatcher;
@@ -118,60 +118,39 @@ main(int argc, char* argv[])
 				WMProxy proxy;
 				proxy.serve();
 			}
-	    } else {}
-			/*cerr<<"Starting service..."<<endl;
-		    soap = soap_new();
-	        soap_init(soap);*/
-
-	        //if (soap_ssl_server_context(soap,
-	          //  SOAP_SSL_DEFAULT,
-	            //"x509up_u500", /* keyfile: required when server must authenticate to clients (see SSL docs on how to obtain this file) */
-	            //"10greenbottles", /* password to read the key file */
-	            //NULL, /* optional cacert file to store trusted certificates */
-	            //"/etc/grid-security/certificates", /* optional capath to directory with trusted certificates */
-	            //NULL, /* DH file, if NULL use RSA */
-	            //NULL, /* if randfile!=NULL: use a file with random data to seed randomness */
-	            //NULL /* optional server identification to enable SSL session cache (must be a unique name) */    ))
-	        /*{
-	            soap_print_fault(soap, stderr);
-	            exit(1);
-	        }
-
-	        bind = soap_bind(soap, argv[1], atoi(argv[2]), 100);
-	    	if (bind < 0) {
-				soap_print_fault(soap, stderr);
-	      	   	exit(-1);
-	    	}
-		
-			cerr<<"Socket Connection Successful"<<endl;
-			cerr<<"Master Socket: "<<bind<<endl;
-	
-			for (;;) {
-				accept = soap_accept(soap);
-	      		if (accept < 0) {
-					soap_print_fault(soap, stderr);
-	        		exit(-1);
-	      		}
-	            tsoap = soap_copy(soap);
-	            if (!tsoap) {
-	            	break;
-	            }
-	            ssl_accept = soap_ssl_accept(tsoap);
-	            if (ssl_accept < 0) {
-	                //cerr << "Fail SSL accept" << endl;
-	                soap_print_fault(tsoap, stderr);
-	                soap_done(tsoap);
-	                free(tsoap);
-	                continue; 
-	            } 
-	      		soap_serve(tsoap);         // process request
-	      		soap_destroy(tsoap);       // delete class instances
-	      		soap_end(tsoap);           // clean up everything and close socket
-	    	}
-	  		soap_destroy(soap);       // delete class instances
-	  		soap_end(soap);           // clean up everything and close socket
-			//cerr<<"Service stopped"<<endl;
-		}*/
+	    	} 
+		else 
+		{
+			edglog(fatal) << "Running as a gSoap standalone Service" << endl;
+        		soap = soap_new();
+   			soap->accept_timeout = 60;     /* server times out after 10 minutes of inactivity */
+                	soap->recv_timeout = 30;       /* if read stalls, then timeout after 60 seconds */
+                	edglog(fatal) << "Binding socket... " << argv[2] << endl;
+        		m = soap_bind(soap, argv[1], atoi(argv[2]), 100);
+        		if (m < 0)
+        		{
+				edglog(fatal) << "Failed to bind socket " << argv[2] << endl;
+                		soap_print_fault(soap, stderr);
+                		exit(-1);
+        		}
+        		edglog(fatal) << "Socket connection successful: master socket = " << m << endl;
+        		for (int i = 1; ; i++)
+        		{
+                		s = soap_accept(soap);
+                		if (s < 0)
+                		{
+					edglog(fatal) << "Failed to accept soap request " << endl;
+                        		soap_print_fault(soap, stderr);
+                       			exit(-1);
+                		}
+                		sprintf(msg, "%d: Accepted connection from IP = %d.%d.%d.%d socket = %d ... ", i, (int)(soap->ip>>24)&0xFF, (int)(soap->ip>>16)&0xFF, (int)(soap->ip>>8)&0xFF, (int)soap->ip&0xFF, s);
+				edglog(fatal) << msg << endl; 
+                		soap_serve(soap);         // process request
+				edglog(fatal) << "Request served" << endl; 
+                		soap_destroy(soap);       // delete class instances
+                		soap_end(soap);           // clean up everything and close socket
+        		} //for
+		} //else
         } catch( configuration::CannotOpenFile &file ) {
                     edglog(fatal) << "Cannot open file: " << file << std::endl;
                     std::cout << "Cannot open file: " << file << std::endl;
