@@ -19,36 +19,33 @@ EXTRA_DIST = AdWrapper_wrap.cpp \
 	org_glite_wms_ui_python_LbWrapper.pyc \
 	org_glite_wms_ui_python_LogWrapper.pyc
 
-if AMC_BUILD_UI_COMMANDLINE
 lib_LTLIBRARIES = \
-	liborg_glite_wms_ui_python_LbWrapper.la \
-	liborg_glite_wms_ui_python_LogWrapper.la \
-	liborg_glite_wms_ui_python_NsWrapper.la \
-	liborg_glite_wms_ui_python_AdWrapper.la
+	liborg_glite_wmsui_python_LbWrapper.la \
+	liborg_glite_wmsui_python_LogWrapper.la \
+	liborg_glite_wmsui_python_NsWrapper.la \
+	liborg_glite_wmsui_python_AdWrapper.la
 
-uicommondir = $(includedir)/edg/workload/userinterface/common
-uicommon_HEADERS = \
+noinst_HEADERS = \
 	AdWrapper.h \
 	LbWrapper.h \
 	LogWrapper.h \
 	NsWrapper.h
 
 uicommonlibdir = $(libdir)/python
-uicommonlib_SCRIPTS=org_glite_wms_ui_python_AdWrapper.py \
-	org_glite_wms_ui_python_NsWrapper.py \
-	org_glite_wms_ui_python_LbWrapper.py \
-	org_glite_wms_ui_python_LogWrapper.py \
-	org_glite_wms_ui_python_AdWrapper.pyc \
-	org_glite_wms_ui_python_NsWrapper.pyc \
-	org_glite_wms_ui_python_LbWrapper.pyc \
-	org_glite_wms_ui_python_LogWrapper.pyc
+uicommonlib_SCRIPTS=org_glite_wmsui_python_AdWrapper.py \
+	org_glite_wmsui_python_NsWrapper.py \
+	org_glite_wmsui_python_LbWrapper.py \
+	org_glite_wmsui_python_LogWrapper.py \
+	org_glite_wmsui_python_AdWrapper.pyc \
+	org_glite_wmsui_python_NsWrapper.pyc \
+	org_glite_wmsui_python_LbWrapper.pyc \
+	org_glite_wmsui_python_LogWrapper.pyc
  
 install-exec-hook:
 	cd $(DESTDIR)$(libdir); \
 	for file in $(WL_UI_COM_EDG); do \
 	ln -fs lib$$file _$$file; \
 	done
-endif
 
 SHARED_LIB_SOCKET = ../../common/socket++/GSISocketAgent.lo \
 	../../common/socket++/GSISocketClient.lo \
@@ -114,13 +111,13 @@ SHARED_LIB_SSL = ../../common/ssl_helpers/ssl_pthreads.lo \
 SHARED_LIB_DGAS = ../../dgas/services/clients/edg-wl-dgas-jobAuthClient.lo \
 	../../dgas/common/libdgas_xmlutil.la
 
-liborg_glite_wms_ui_python_LbWrapper_la_SOURCES = \
+libglite_wmsui_python_LbWrapper_la_SOURCES = \
 	LbWrapper_wrap.cpp \
 	LbWrapper.cpp \
 	org_glite_wms_ui_python_LbWrapper.i
-liborg_glite_wms_ui_python_LbWrapper_la_LDFLAGS = \
+libglite_wmsui_python_LbWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-liborg_glite_wms_ui_python_LbWrapper_la_LIBADD = \
+libglite_wmsui_python_LbWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(SHARED_LIB_SOCKET) \
@@ -140,13 +137,13 @@ liborg_glite_wms_ui_python_LbWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-liborg_glite_wms_ui_python_LogWrapper_la_SOURCES = \
+libglite_wmsui_python_LogWrapper_la_SOURCES = \
 	LogWrapper_wrap.cpp \
 	LogWrapper.cpp \
 	org_glite_wms_ui_python_LogWrapper.i
-liborg_glite_wms_ui_python_LogWrapper_la_LDFLAGS = \
+libglite_wmsui_python_LogWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-liborg_glite_wms_ui_python_LogWrapper_la_LIBADD = \
+libglite_wmsui_python_LogWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(SHARED_LIB_SOCKET) \
@@ -166,13 +163,13 @@ liborg_glite_wms_ui_python_LogWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-liborg_glite_wms_ui_python_NsWrapper_la_SOURCES = \
+libglite_wmsui_python_NsWrapper_la_SOURCES = \
 	NsWrapper_wrap.cpp \
 	NsWrapper.cpp \
 	org_glite_wms_ui_python_NsWrapper.i
-liborg_glite_wms_ui_python_NsWrapper_la_LDFLAGS = \
+libglite_wmsui_python_NsWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-liborg_glite_wms_ui_python_NsWrapper_la_LIBADD = \
+libglite_wmsui_python_NsWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(VOMS_CPP_LIBS) \
@@ -194,13 +191,13 @@ liborg_glite_wms_ui_python_NsWrapper_la_LIBADD = \
 	$(EXPAT_LIBS) \
 	-lstdc++
 
-liborg_glite_wms_ui_python_AdWrapper_la_SOURCES = \
+libglite_wmsui_python_AdWrapper_la_SOURCES = \
 	AdWrapper_wrap.cpp \
 	AdWrapper.cpp \
 	org_glite_wms_ui_python_AdWrapper.i
-liborg_glite_wms_ui_python_AdWrapper_la_LDFLAGS = \
+libglite_wmsui_python_AdWrapper_la_LDFLAGS = \
 	-rpath @prefix@
-liborg_glite_wms_ui_python_AdWrapper_la_LIBADD = \
+libglite_wmsui_python_AdWrapper_la_LIBADD = \
 	-lc \
 	../../networkserver/client/libnsclient.la \
 	$(SHARED_LIB_SOCKET) \
@@ -285,7 +282,8 @@ WL_UI_COM_EDG = org_glite_wms_ui_python_AdWrapper.a \
 	org_glite_wms_ui_python_NsWrapper.so.0 \
 	org_glite_wms_ui_python_NsWrapper.so.0.0.0 
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(PYTHON_CFLAGS) \
