@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/08/12 08:16:32  eronchie
+#       Updated
+#
 #       Revision 1.2  2004/08/11 16:00:53  eronchie
 #       Updated
 #
@@ -85,6 +88,7 @@ have_expat=no
 have_ares=no
 have_cppunit=no
 have_swig=no
+have_python=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
@@ -93,6 +97,7 @@ AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_ARES([], have_ares=yes, have_ares=no)
 AC_SWIG([1.3.21], have_swig=yes, have_swig=no)
+AC_PYTHON([2.2.3], have_python=yes, have_python=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
@@ -101,6 +106,7 @@ AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["ARES found $have_ares"])
 AC_MSG_RESULT(["SWIG found $have_swig"])
+AC_MSG_RESULT(["PYTHON found $have_python"])
 
 AC_GLITE
 
