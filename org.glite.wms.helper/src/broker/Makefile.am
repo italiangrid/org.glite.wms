@@ -19,6 +19,7 @@ libglite_wms_helper_broker_la_SOURCES = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/../org.glite.wms.broker/src/selectors \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
