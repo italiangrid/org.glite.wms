@@ -20,9 +20,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.4  2004/10/08 10:11:21  pandreet
+	LICENSE in rpm; defined summary and description
+
 	Revision 1.3  2004/10/01 13:52:12  pandreet
 	Build files for unit tests
-
+	
 	Revision 1.2  2004/08/17 13:28:42  eronchie
 	Changed glite_renewal.m4 in glite_security.m4
 	
@@ -64,7 +67,11 @@
 	<!-- ======================================================
 	      Define extra properties here ...
 	     ====================================================== -->
-	
+
+        <property name="build.package.summary" value="WMS manager service" />
+                                                                                                                          
+        <property name="build.package.description" value="WMS manager: service and task queue" />
+
 	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 ares.m4 glite.m4 glite_lb.m4 glite_wmsutils.m4 glite_security.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_helper.m4 glite_wms_jss.m4 cppunit.m4"/>
 	
 </project>
