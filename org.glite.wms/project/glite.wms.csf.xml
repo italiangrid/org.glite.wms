@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.28  2004/06/26 13:07:35  eronchie
+	*** empty log message ***
+
 	Revision 1.27  2004/05/26 19:35:04  eronchie
 	Added new sub-module org.glite.wms.jdl
-
+	
 	Revision 1.26  2004/05/26 18:52:55  eronchie
 	Added new sub-module org.glite.wms.jobid
 	
@@ -217,6 +220,9 @@
 		<condition property="jdlj.head">
 			<equals arg1="${org.glite.wms.jdlj.version}" arg2="HEAD" />
 		</condition>
+		<condition property="classad_plugin.head">
+                        <equals arg1="${org.glite.wms.classad_plugin.version}" arg2="HEAD" />
+                </condition>
     </target>
 
     <presetdef name="cvs-co">
@@ -282,7 +288,8 @@
 				        tls,
 					jobid,
 					jdl,
- 				        jdlj"/>
+ 				        jdlj,
+					classad_plugin"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils" depends="get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
@@ -373,6 +380,17 @@
 		<cvs-co package="org.glite.wms.jdlj"
 			tag="${org.glite.wms.jdlj.version}" />
 	</target>
+
+	<!-- ClassAdPlugin -->
+        <target name="classad_plugin" depends="boost,classads,globus,get.classad_plugin.head, get.classad_plugin.tag"/>
+        <target name="get.classad_plugin.head" if="classad_plugin.head">
+                <cvs-co package="org.glite.wms.classad_plugin" />
+        </target>
+        <target name="get.classad_plugin.tag" unless="classad_plugin.head">
+                <cvs-co package="org.glite.wms.classad_plugin"
+                        tag="${org.glite.wms.classad_plugin.version}" />
+        </target>
+
 
 	<!-- ====================================================
 		 Checkout all

@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.21  2004/06/26 13:07:35  eronchie
+	*** empty log message ***
+
 	Revision 1.20  2004/06/18 22:14:30  dimeglio
 	Removed antcalls from check target
-
+	
 	Revision 1.19  2004/06/07 14:37:20  dimeglio
 	Added conditional build of modules
 	with setenvonly flag
@@ -334,6 +337,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="classad_plugin" unless="setenvonly" depends="boost,classads,common">
+                <ant dir="${workspace.dir}/${subsystem.name}.classad_plugin"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -343,6 +352,7 @@
 					     tls,
 					     jobid,
 					     jdl,
-   					     jdlj" />
+   					     jdlj,
+					     classad_plugin" />
 		
 </project>
