@@ -20,11 +20,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.11  2004/05/05 23:21:04  dimeglio
+	Updated Jalopy dependencies
+
 	Revision 1.10  2004/05/05 23:05:17  dimeglio
 	Removed import of external dependencies file, dependencies are
 	explicitly set. This is necessary to be able to run the subsystem CSF
 	without extracting org.egee manually
-
+	
 	Revision 1.9  2004/05/03 00:30:57  dimeglio
 	Added jcommon component to subsystem dependencies
 	
@@ -227,6 +230,18 @@
 		<mkdir dir="${repository}/${jalopy.name}" />
 		<get src="${jalopy.url}/lib/jalopy-ant-0.6.1.jar"
 			 dest="${repository}/${jalopy.name}/jalopy-ant-0.6.1.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+		<get src="${jalopy.url}/lib/jalopy-1.0b10.jar"
+			 dest="${repository}/${jalopy.name}/jalopy-1.0b10.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+		<get src="${jalopy.url}/lib/jdom-1.0b8.jar"
+			 dest="${repository}/${jalopy.name}/jdom-1.0b8.jar"
+			 verbose="on"
+			 usetimestamp="true" />
+		<get src="${jalopy.url}/lib/oro-2.0.6.jar"
+			 dest="${repository}/${jalopy.name}/oro-2.0.6.jar"
 			 verbose="on"
 			 usetimestamp="true" />
 	</target>
