@@ -159,7 +159,8 @@ WMPEventLogger::registerJob(JobAd *jad)
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
 	//jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
-	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE, jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
+	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
+		jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
 		cerr<<"JobOperationException"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerJob(JobAd* jad)",
@@ -193,9 +194,8 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		// it should be recursive in the case the job is a dag!! //TBD
 		jobidstring = edg_wlc_JobIdUnparse(subjobs[i]);
 		jobid = new JobId(jobidstring);
-	 	dest_uri = string (getenv("DOCUMENT_ROOT") )
-			+ "/";
-			//+ to_filename ( *jobid ) ;
+	 	dest_uri = string(getenv("DOCUMENT_ROOT"))
+			+ "/" + to_filename(*jobid);
 		/*if (!ad->hasNodeAttribute(jobid, JDL::ISB_BASE_URI)) {
 			ad->setNodeAttribute(jobid, JDL::ISB_BASE_URI, dest_uri);
 		}				//TBD ** UNCOMMENT WHEN CODED **
