@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/18 11:53:35  eronchie
+#       Added AC_GLITE_LB check
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/07/06 10:05:38  pandreet
 #       Basic build files for jobsubmission
 #
@@ -45,7 +49,9 @@ LOCAL_PURGER_CFLAGS =
 LOCAL_RENEWAL_CFLAGS =
 
 
-LOCAL_CFLAGS = $(LOCAL_LOGGING_CFLAGS) $(LOCAL_PURGER_CFLAGS) $(LOCAL_RENEWAL_CFLAGS)
+LOCAL_CFLAGS = $(LOCAL_LOGGING_CFLAGS) \
+	$(LOCAL_PURGER_CFLAGS) \
+	$(LOCAL_RENEWAL_CFLAGS)
 
 libglite_wms_js_common_la_SOURCES = IdContainer.cpp \
 	RamContainer.cpp \
