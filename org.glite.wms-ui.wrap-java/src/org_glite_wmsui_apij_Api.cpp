@@ -18,13 +18,11 @@
 #include "glite/lb/Notification.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"  //replace jobid name
+#include "glite/wmsui/partitioner/Partitioner.h"  //Partitioner
 
-//Open Ssl safe thread DEPRECATED
-// #include <globus_common.h>
-// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
-// DagAd Wrapper
+// Ad
 #include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/wms/common/utilities/classad_utils.h"
 // Dgas Authorisation include files
 #include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
 #define EDG_WLU_SOURCE_NS "NetworkServer"
@@ -1164,14 +1162,9 @@ BOOKKEEPING methods: LOGGING info
 		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper\n");    }
 		env->ReleaseStringUTFChars(jobId, id);
 	}
-
-
-
 /*************************************************************************
 DAGAD implementation methods:
 *************************************************************************/
-
-
 	/*
 	* Class:     edg_workload_userinterface_jclient_Api
 * Method:    dagFromFile
@@ -1197,7 +1190,6 @@ DAGAD implementation methods:
 		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper\n");   return ; }
 			env->ReleaseStringUTFChars( fileStr, file );
 	};
-
 	/*
 	* Class:     edg_workload_userinterface_jclient_Api
 * Method:    dagToString
@@ -1347,8 +1339,91 @@ DAGAD implementation methods:
 		dagad->setDefaultValues ( boom ) ;
 	};
 
+	/*
+	* Class:     org_glite_wmsui_apij_Api
+* Method:    registerPart
+	* Signature: (Ljava/lang/String;Ljava/lang/String;I)V
+	*/
+	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_registerPart
+	(JNIEnv *env,  jobject obj, jstring jid, jstring original, jstring submission, jstring nsAddress, jint res_number){
+
+	try{
+		glite::wmsutils::jobid::JobId id(    string (  env->GetStringUTFChars(jid , 0)   )      ) ;
+		const char *str_addr = env->GetStringUTFChars( nsAddress , 0);
+
+		// Retrieving the LB context
+		edg_wll_Context ctx = *lbVect[  getCtx( env, obj , LB_CTX  ) ]  ;
+		//  array of subjob ID's
+		edg_wlc_JobId* subjobs = NULL ;
+		// Register the job
+	lock();
+		if (      edg_wll_RegisterJobSync( ctx,   id.getId()  , EDG_WLL_REGJOB_PARTITIONED, env->GetStringUTFChars( submission , 0) ,
+			str_addr,   res_number,   NULL,   &subjobs  ) ){
+			char error_message [1024];
+			char *msg, *dsc ;
+			edg_wll_Error( ctx   , &msg , &dsc ) ;
+			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform  edg_wll_RegisterJobSync   at: ",
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+			log_error (env ,   error_message ) ;
+		}
+	unlock();
+
+
+		// Create the DagAd Instance
+		vector<string> jobids ;
+		for ( unsigned int i= 0 ; i< res_number ; i++ ){
+			jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
+		}
+		glite::wms::jdl::ExpDagAd* dagad =NULL;
+		glite::wmsui::partitioner::Partitioner part (  glite::wms::common::utilities::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
+		dagad= new glite::wms::jdl::ExpDagAd ( part.createDag() ) ;
+
+
+		// REGISTER SUB JOBS
+		vector<string> jdls = dagad->getSubmissionStrings() ;
+		// array of Jdls
+		char **jdls_char , **zero_char ;
+		vector<string>::iterator iter ;
+		jdls_char = (char**) malloc(sizeof(char*) * (jdls.size()+1));
+		zero_char =jdls_char ;
+		jdls_char[jdls.size()] = NULL;
+		int i = 0 ;
+		for (  iter = jdls.begin() ; iter!=jdls.end() ; iter++, i++){
+			*zero_char = (char*) malloc ( iter->size() + 1 ) ;
+			sprintf ( *zero_char  , "%s" ,  iter->c_str() ) ;
+			zero_char++;
+		}
+		if (      edg_wll_RegisterSubjobs (  ctx,   id.getId()   , jdls_char, str_addr, subjobs )     ){
+			char error_message [1024];
+			char *msg, *dsc ;
+			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
+			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogUserTag   at: ",
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+			log_error (env ,   error_message ) ;
+		}
+
+		// RELEASE ALLOCATED MEMORY
+		for ( unsigned int i = 0 ; i < jdls.size() ; i++ )  std::free(jdls_char[i]);
+		std::free(jdls_char);
+		env->ReleaseStringUTFChars( nsAddress, str_addr);
+
+		// STORE DAGAD VALUE
+		jclass cls = env->GetObjectClass(obj);
+		jmethodID appInt = env->GetMethodID ( cls , "appendInt" ,  "(II)V" ) ;
+		if (appInt==0)
+			log_error (env , "Fatal Error: unable to find Api.appInt method\n" ) ;
+	lock() ;
+		env->CallVoidMethod(obj, appInt, DAG_CTX , (jint) dagVect.size() );
+		dagVect.push_back(  dagad  ) ;
+	unlock() ;
+		}catch(exception &exc){   log_error (env , exc.what() ) ;  return ;
+		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper\n");   return ; }
+	}
+
+
+
 /*************************************************************************
-AUTHORISATION methods: 
+AUTHORISATION methods:
 *************************************************************************/
 
   /*
