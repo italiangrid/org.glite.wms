@@ -428,7 +428,13 @@ JobWrapper::execute_job(ostream& os,
   }
 
   if (stde != "") {
-    os << " 2> \"" << stde << "\"";
+    if (stdo != "") {
+      if (stdo == stde) {
+        os << " 2>&1";
+      } else {
+        os << " 2> \"" << stde << "\"";
+      }
+    }
   } else {
     os << " 2> /dev/null";
   }
