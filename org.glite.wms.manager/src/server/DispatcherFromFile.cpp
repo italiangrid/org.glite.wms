@@ -109,8 +109,7 @@ void
 DispatcherFromFile::run(task::PipeWriteEnd<pipe_value_type>& write_end)
 {
   try {
-
-    Info("starting");
+    Info("DispatcherFromFile: starting");
 
     std::vector<std::string> requests;
     load_requests(m_file, requests);
@@ -136,13 +135,13 @@ DispatcherFromFile::run(task::PipeWriteEnd<pipe_value_type>& write_end)
       }
     }
   } catch (task::SigPipe&) {
-    Info("SigPipe exception");
+    Info("DispatcherFromFile: SigPipe exception");
   } catch (std::exception& e) {
     Error("std::exception (" << e.what() << ")");
   } catch (...) {
     Error("unknown exception");
   }
-  Info("exiting");
+  Info("DispatcherFromFile: exiting");
 }
 
 } // server

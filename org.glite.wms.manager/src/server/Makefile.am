@@ -38,6 +38,8 @@ noinst_HEADERS = \
         WMReal.h
 
 libglite_wms_manager_server_la_SOURCES = \
+	RequestHandler.cpp \
+	RequestHandler.h \
         DAGManHelper.h \
         DAGManHelper.cpp \
         Dispatcher.h \
@@ -54,8 +56,6 @@ libglite_wms_manager_server_la_SOURCES = \
 	JCCancellingPolicy.cpp \
         JCDeliveryPolicy.h \
         JCDeliveryPolicy.cpp \
-        RequestHandler.h \
-        RequestHandler.cpp \
         RequestPlanningPolicy.h \
         WMReal.h \
         WMReal.cpp \
@@ -128,6 +128,8 @@ glite_wms_planned2submit_LDADD   = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
+	-I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
+	-I$(top_srcdir)/../org.glite.wms.purger/src \
         $(CLASSAD_CFLAGS) \
         $(BOOST_CFLAGS)
 

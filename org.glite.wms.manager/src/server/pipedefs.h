@@ -33,10 +33,12 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace task = glite::wms::common::task;
+
 typedef boost::function0<void> PostProcessFunction;
 typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;
 typedef std::pair<PostProcessFunction, ClassAdPtr> pipe_value_type;
-typedef glite::wms::common::task::Pipe<pipe_value_type> pipe_type;
+typedef task::Pipe<pipe_value_type> pipe_type;
 
 } // server
 } // manager

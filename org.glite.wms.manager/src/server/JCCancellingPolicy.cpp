@@ -13,9 +13,12 @@
 
 #include "glite/wmsutils/jobid/JobId.h"
 
-#include "glite/wms/jobcontrol/controller/JobController.h"
+//#include "glite/wms/jobcontrol/controller/JobController.h"
+#include "JobController.h"
 
 namespace jobid = glite::wmsutils::jobid;
+namespace common = glite::wms::manager::common;
+namespace jss = glite::wms::jobsubmission;
 
 namespace glite {
 namespace wms {
@@ -30,11 +33,11 @@ void JCCancellingPolicy::Cancel(wmsutils::jobid::JobId const& id)
 {
   Debug("cancelling job " << id);
 
-  ContextPtr context_ptr = get_context(id);
+  common::ContextPtr context_ptr = common::get_context(id);
   assert(context_ptr);
-  assert(unregister_context(id));
+  assert(common::unregister_context(id));
   edg_wll_Context context = *context_ptr;
-  jobcontrol::controller::JobController(&context).cancel(id);
+  jss::controller::JobController(&context).cancel(id);
 }
 
 } // server

@@ -27,10 +27,13 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace task = glite::wms::common::task;
+namespace utilities = glite::wms::common::utilities;
+
 class DispatcherFromFileList: public DispatcherImpl
 {
 public:
-  typedef glite::wms::common::utilities::FLExtractor<std::string> extractor_type;
+  typedef utilities::FLExtractor<std::string> extractor_type;
 
 private:
   boost::shared_ptr<extractor_type> m_extractor;
@@ -38,7 +41,7 @@ private:
 public:
   DispatcherFromFileList(boost::shared_ptr<extractor_type> extractor);
 
-  void run(common::task::PipeWriteEnd<pipe_value_type>& write_end);
+  void run(task::PipeWriteEnd<pipe_value_type>& write_end);
 };
 
 } // server

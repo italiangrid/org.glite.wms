@@ -14,11 +14,15 @@
 #include "../common/lb_utils.h"
 
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/jobcontrol/controller/JobController.h"
+//#include "glite/wms/jobcontrol/controller/JobController.h"
+#include "JobController.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 
 #include "glite/wms/jdl/JobAdManipulation.h"
+
+namespace common = glite::wms::manager::common;
+namespace jss = glite::wms::jobsubmission;
 
 namespace glite {
 namespace wms {
@@ -35,11 +39,11 @@ JCDeliveryPolicy::Deliver(classad::ClassAd const& ad)
   wmsutils::jobid::JobId id(wms::jdl::get_edg_jobid(ad));
 
   boost::mutex::scoped_lock l(submit_cancel_mutex());
-  ContextPtr context_ptr = get_context(id);
-  if (unregister_context(id)) {
+  common::ContextPtr context_ptr = common::get_context(id);
+  if (common::unregister_context(id)) {
     Debug("delivering job " << id);
     edg_wll_Context context = *context_ptr;
-    jobcontrol::controller::JobController(&context).submit(&ad);
+    jss::controller::JobController(&context).submit(&ad);
   }
 }
 

@@ -25,13 +25,15 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace task = glite::wms::common::task;
+
 class DispatcherImpl: boost::noncopyable
 {
 public:
   DispatcherImpl();
   virtual ~DispatcherImpl();
 
-  virtual void run(common::task::PipeWriteEnd<pipe_value_type>& write_end) = 0;
+  virtual void run(task::PipeWriteEnd<pipe_value_type>& write_end) = 0;
 };
 
 } // server

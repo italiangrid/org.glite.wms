@@ -33,8 +33,10 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace task = glite::wms::common::task;
+
 class RequestHandler:
-    public common::task::PipeReader<pipe_value_type>,
+    public task::PipeReader<pipe_value_type>,
     boost::noncopyable
 {
   class Impl;

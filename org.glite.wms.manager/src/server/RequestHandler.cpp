@@ -24,10 +24,11 @@
 
 #include "glite/wmsutils/exception/Exception.h"
 
-#include "glite/wmsutils/common/utilities/classad_utils.h"
+#include "glite/wms/common/utilities/classad_utils.h"
 
 namespace jobid = glite::wmsutils::jobid;
 namespace task = glite::wms::common::task;
+namespace common = glite::wms::manager::common;
 
 namespace glite {
 namespace wms {
@@ -36,7 +37,7 @@ namespace server {
 
 class RequestHandler::Impl 
 {
-  WorkloadManager m_wm;
+  common::WorkloadManager m_wm;
 
 public:
   void run(task::PipeReadEnd<pipe_value_type>& read_end);
@@ -57,19 +58,19 @@ try {
     ClassAdPtr command_ad;
     boost::tie(post_process, command_ad) = read_end.read();
 
-    std::string command(command_get_command(*command_ad));
+    std::string command(common::command_get_command(*command_ad));
  
     if (command == "jobsubmit") {
 
-      m_wm.submit(submit_command_get_ad(*command_ad));
+      m_wm.submit(common::submit_command_get_ad(*command_ad));
 
     } else if (command == "jobresubmit") {
 
-      m_wm.resubmit(jobid::JobId(resubmit_command_get_id(*command_ad)));
+      m_wm.resubmit(jobid::JobId(common::resubmit_command_get_id(*command_ad)));
 
     } else if (command == "jobcancel") {
 
-      m_wm.cancel(jobid::JobId(cancel_command_get_id(*command_ad)));
+      m_wm.cancel(jobid::JobId(common::cancel_command_get_id(*command_ad)));
 
     } else {
       Error("Invalid command (" << command << ")");

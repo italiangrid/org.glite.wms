@@ -24,6 +24,8 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace task = glite::wms::common::task;
+
 typedef std::string dispatcher_type;
 
 enum PPResult {
@@ -55,7 +57,7 @@ public:
 bool process(
   std::string const& ad_str,
   PostProcessFunction f,
-  common::task::PipeWriteEnd<pipe_value_type>& write_end
+  task::PipeWriteEnd<pipe_value_type>& write_end
 );
 
 

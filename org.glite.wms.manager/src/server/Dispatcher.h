@@ -30,10 +30,12 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace task = glite::wms::common::task;
+
 class DispatcherImpl;
 
 class Dispatcher:
-    public common::task::PipeWriter<pipe_value_type>,
+    public task::PipeWriter<pipe_value_type>,
     boost::noncopyable
 {
   boost::scoped_ptr<DispatcherImpl> m_impl;

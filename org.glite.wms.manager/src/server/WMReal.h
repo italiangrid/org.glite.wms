@@ -5,21 +5,24 @@
 
 // $Id$
 
-#ifndef EDG_WORKLOAD_PLANNING_MANAGER_WMREAL_H
-#define EDG_WORKLOAD_PLANNING_MANAGER_WMREAL_H
+#ifndef GLITE_WMS_MANAGER_SERVER_WMREAL_H
+#define GLITE_WMS_MANAGER_SERVER_WMREAL_H
 
-#ifndef EDG_WORKL0AD_PLANNING_MANAGER_WMIMPL_H
-#include "edg/workload/planning/manager/WMImpl.h"
+#ifndef GLITE_WMS_MANAGER_SERVER_WMIMPL_H
+#include "../common/WMImpl.h"
 #endif
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace jobid = glite::wmsutils::jobid;
+namespace common = glite::wms::manager::common;
+
+namespace glite {
+namespace wms {
 namespace manager {
+namespace server {
 
 template<typename PlanningPolicy, typename DeliveryPolicy, typename CancellingPolicy>
 class WMReal:
-    public WMImpl,
+    public common::WMImpl,
     public PlanningPolicy,
     public DeliveryPolicy,
     public CancellingPolicy
@@ -30,12 +33,15 @@ public:
   ~WMReal();
 
   void submit(classad::ClassAd const* request_ad);
-  void resubmit(common::jobid::JobId const& request_id);
-  void cancel(common::jobid::JobId const& request_id);
+  void resubmit(jobid::JobId const& request_id);
+  void cancel(jobid::JobId const& request_id);
 };
 
-}}}} // edg::workload::planning::manager
+} // server
+} // manager
+} // wms
+} // glite
 
-#include "edg/workload/planning/manager/WMReal.tcc"
+#include "WMReal.tcc"
 
-#endif // EDG_WORKLOAD_PLANNING_MANAGER_WMREAL_H
+#endif // GLITE_WMS_MANAGER_SERVER_WMREAL_H

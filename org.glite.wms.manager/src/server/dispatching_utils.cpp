@@ -11,8 +11,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
 
-#include "CommandAdManipulation.h"
-#include "lb_utils.h"
+#include "../common/CommandAdManipulation.h"
+#include "../common/lb_utils.h"
 
 #include "glite/wms/common/logger/logger_utils.h"
 
@@ -46,6 +46,7 @@ namespace task = glite::wms::common::task;
 namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace fs = boost::filesystem;
+namespace common = glite::wms::manager::common;
 
 namespace {
 
@@ -84,11 +85,11 @@ PPResult preprocess_submit(ClassAdPtr command_ad)
 {
   PPResult result = NOTHING_TO_DO;
 
-  if (!submit_command_is_valid(*command_ad)) {
+  if (!common::submit_command_is_valid(*command_ad)) {
     return INVALID_REQUEST;
   }
 
-  classad::ClassAd const* job_ad(submit_command_get_ad(*command_ad));
+  classad::ClassAd const* job_ad(common::submit_command_get_ad(*command_ad));
   std::string const jobid_str(jdl::get_edg_jobid(*job_ad));
 
   jobid::JobId jobid;
@@ -102,18 +103,18 @@ PPResult preprocess_submit(ClassAdPtr command_ad)
 
   Debug("processing job submit for " << jobid);
 
-  common::utilities::scope_guard storage_guard(
+  utilities::scope_guard storage_guard(
     boost::bind(purger::purgeStorage, jobid, std::string(""))
   );
 
-  common::utilities::scope_guard proxy_guard(
+  utilities::scope_guard proxy_guard(
     boost::bind(edg_wlpr_UnregisterProxy, jobid, static_cast<char const*>(0))
   );
 
   std::string x509_proxy = jdl::get_x509_user_proxy(*job_ad);
   std::string sequence_code = jdl::get_lb_sequence_code(*job_ad);
 
-  ContextPtr context_ptr = create_context(jobid, x509_proxy, sequence_code);
+  common::ContextPtr context_ptr = common::create_context(jobid, x509_proxy, sequence_code);
 
   if (!context_ptr) {
     Error("cannot create the LB context for " << jobid);
@@ -128,13 +129,13 @@ PPResult preprocess_submit(ClassAdPtr command_ad)
 
   result = FORWARD_TO_WM;
 
-  common::utilities::scope_guard context_guard(boost::bind(unregister_context, jobid));
+  utilities::scope_guard context_guard(boost::bind(common::unregister_context, jobid));
 
   std::string input_name(get_input_name());
   char const* const local_jobid = ""; // not needed because no real local id
 
   int lb_error;
-  ContextPtr ctx;
+  common::ContextPtr ctx;
   boost::tie(lb_error, ctx) = lb_log(
     boost::bind(edg_wll_LogDeQueued, _1, input_name.c_str(), local_jobid),
     context_ptr
@@ -155,11 +156,11 @@ PPResult preprocess_resubmit(ClassAdPtr command_ad)
 {
   PPResult result = NOTHING_TO_DO;
 
-  if (!resubmit_command_is_valid(*command_ad)) {
+  if (!common::resubmit_command_is_valid(*command_ad)) {
     return INVALID_REQUEST;
   }
 
-  std::string jobid_str(resubmit_command_get_id(*command_ad));
+  std::string jobid_str(common::resubmit_command_get_id(*command_ad));
 
   jobid::JobId jobid;
   try {
@@ -172,18 +173,18 @@ PPResult preprocess_resubmit(ClassAdPtr command_ad)
 
   Debug("processing job resubmit for " << jobid);
 
-  common::utilities::scope_guard storage_guard(
+  utilities::scope_guard storage_guard(
     boost::bind(purger::purgeStorage, jobid, std::string(""))
   );
 
-  common::utilities::scope_guard proxy_guard(
+  utilities::scope_guard proxy_guard(
     boost::bind(edg_wlpr_UnregisterProxy, jobid, static_cast<char const*>(0))
   );
 
-  std::string x509_proxy(get_user_x509_proxy(jobid));
-  std::string sequence_code(resubmit_command_get_lb_sequence_code(*command_ad));
+  std::string x509_proxy(common::get_user_x509_proxy(jobid));
+  std::string sequence_code(common::resubmit_command_get_lb_sequence_code(*command_ad));
 
-  ContextPtr context_ptr = create_context(jobid, x509_proxy, sequence_code);
+  common::ContextPtr context_ptr = common::create_context(jobid, x509_proxy, sequence_code);
 
   if (!context_ptr) {
     Error("cannot create the LB context for " << jobid);
@@ -198,13 +199,13 @@ PPResult preprocess_resubmit(ClassAdPtr command_ad)
 
   result = FORWARD_TO_WM;
 
-  common::utilities::scope_guard context_guard(boost::bind(unregister_context, jobid));
+  utilities::scope_guard context_guard(boost::bind(common::unregister_context, jobid));
 
   std::string input_name(get_input_name());
   char const* const local_jobid = ""; // not needed because no real local id
 
   int lb_error;
-  ContextPtr ctx;
+  common::ContextPtr ctx;
   boost::tie(lb_error, ctx) = lb_log(
     boost::bind(edg_wll_LogDeQueued, _1, input_name.c_str(), local_jobid),
     context_ptr
@@ -221,11 +222,11 @@ PPResult preprocess_cancel(ClassAdPtr command_ad)
 {
   PPResult result = NOTHING_TO_DO;
 
-  if (!cancel_command_is_valid(*command_ad)) {
+  if (!common::cancel_command_is_valid(*command_ad)) {
     return INVALID_REQUEST;
   }
 
-  std::string jobid_str((cancel_command_get_id(*command_ad)));
+  std::string jobid_str((common::cancel_command_get_id(*command_ad)));
 
   jobid::JobId jobid;
   try {
@@ -238,11 +239,11 @@ PPResult preprocess_cancel(ClassAdPtr command_ad)
 
   Debug("processing job cancel " << jobid);
 
-  common::utilities::scope_guard storage_guard(
+  utilities::scope_guard storage_guard(
     boost::bind(purger::purgeStorage, jobid, std::string(""))
   );
 
-  common::utilities::scope_guard proxy_guard(
+  utilities::scope_guard proxy_guard(
     boost::bind(edg_wlpr_UnregisterProxy, jobid, static_cast<char const*>(0))
   );
 
@@ -252,16 +253,16 @@ PPResult preprocess_cancel(ClassAdPtr command_ad)
     // delivery of the submit request in WM::submit() (see
     // e.g. JCDeliveryPolicy::Deliver())
     boost::mutex::scoped_lock l(submit_cancel_mutex());
-    if (unregister_context(jobid)) {
+    if (common::unregister_context(jobid)) {
       cancel_here = true;
     }
   }
 
   // need a new context for logging the cancel events
-  std::string sequence_code = cancel_command_get_lb_sequence_code(*command_ad);
-  std::string x509_proxy = get_user_x509_proxy(jobid);
+  std::string sequence_code = common::cancel_command_get_lb_sequence_code(*command_ad);
+  std::string x509_proxy = common::get_user_x509_proxy(jobid);
 
-  ContextPtr context_ptr = create_context(jobid, x509_proxy, sequence_code);
+  common::ContextPtr context_ptr = common::create_context(jobid, x509_proxy, sequence_code);
 
   if (!context_ptr) {
     Error("cannot create the LB context for " << jobid);
@@ -273,7 +274,8 @@ PPResult preprocess_cancel(ClassAdPtr command_ad)
   if (cancel_here) {
 
     Debug("cancelling job " << jobid);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogCancelDONE, _1, "SUCCESSFULLY_CANCELLED"),
       context_ptr
@@ -289,7 +291,7 @@ PPResult preprocess_cancel(ClassAdPtr command_ad)
     int lb_error = edg_wll_LogCancelREQ(context, "CANCELLATION REQUEST"); 
     if (lb_error != 0) {
       Warning("edg_wll_LogCancelREQ failed for " << jobid
-              << " (" << get_lb_message(context) << ")");
+              << " (" << common::get_lb_message(context) << ")");
     }
 
     if (!register_context(jobid, context_ptr)) {
@@ -309,7 +311,7 @@ PPResult preprocess_cancel(ClassAdPtr command_ad)
 
 PPResult preprocess_quit(ClassAdPtr command_ad)
 {
-  if (quit_command_is_valid(*command_ad)) {
+  if (common::quit_command_is_valid(*command_ad)) {
     return QUIT;
   } else {
     return INVALID_REQUEST;
@@ -320,7 +322,7 @@ PPResult preprocess(ClassAdPtr command_ad)
 {
   PPResult result = NOTHING_TO_DO;
 
-  std::string command(command_get_command(*command_ad));
+  std::string command(common::command_get_command(*command_ad));
 
   std::transform(command.begin(), command.end(), command.begin(), ::tolower);
 
@@ -388,7 +390,7 @@ InvalidRequest::what() const throw()
 // return false iff we got the quit command
 // throws InvalidRequest if the request does not have the correct format
 bool process(const std::string& ad_str,
-             manager::PostProcessFunction postprocess,
+             PostProcessFunction postprocess,
              task::PipeWriteEnd<pipe_value_type>& write_end)
 {
   bool result = true;

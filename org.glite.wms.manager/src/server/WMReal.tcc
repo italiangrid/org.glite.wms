@@ -45,17 +45,23 @@ namespace wms {
 namespace manager {
 namespace server {
 
+namespace configuration = glite::wms::common::configuration;
+namespace utilities = glite::wms::common::utilities;
+namespace common = glite::wms::manager::common;
+namespace jdl = glite::wms::jdl;
+namespace purger = glite::wms::purger;
+
 namespace {
 
 int get_max_retry_count()
 {
-  common::configuration::Configuration const* const config
-    = common::configuration::Configuration::instance();
+  configuration::Configuration const* const config
+    = configuration::Configuration::instance();
 
   if (!config) {
     Fatal("empty or invalid configuration");
   }
-  common::configuration::WMConfiguration const* const wm_config = config->wm();
+  configuration::WMConfiguration const* const wm_config = config->wm();
   if (!wm_config) {
     Fatal("empty WM configuration");
   }
@@ -91,22 +97,22 @@ WMReal<PlanningP, DeliveryP, CancellingP>::submit(classad::ClassAd const* reques
 
   try {
 
-    wmsutils::jobid::JobId tmp_jobid(wms::jdl::get_edg_jobid(request_ad));
+    wmsutils::jobid::JobId tmp_jobid(jdl::get_edg_jobid(request_ad));
     jobid = tmp_jobid;
 
-  } catch (wms::jdl::CannotGetAttribute const& e) {
+  } catch (jdl::CannotGetAttribute const& e) {
 
-    Error(e.what() << " for " << common::utilities::unparse_classad(request_ad));
+    Error(e.what() << " for " << utilities::unparse_classad(request_ad));
     return;
 
   } catch (wmsutils::jobid::JobIdException const& e) {
 
-    Error(e.what() << " for " << common::utilities::unparse_classad(request_ad));
+    Error(e.what() << " for " << utilities::unparse_classad(request_ad));
     return;
 
   }
 
-  ContextPtr context_ptr = get_context(jobid);
+  common::ContextPtr context_ptr = common::get_context(jobid);
   if (!context_ptr) {
     Info("LB context not available for " << jobid << "(job already cancelled?)");
     return;
@@ -115,17 +121,17 @@ WMReal<PlanningP, DeliveryP, CancellingP>::submit(classad::ClassAd const* reques
 
   // keep the storage guard outside the try block, because the lb logs in the
   // catch blocks require the proxy, which lives in the storage
-  common::utilities::scope_guard storage_guard(
+  utilities::scope_guard storage_guard(
     boost::bind(purger::purgeStorage, jobid, std::string(""))
   );
 
   try {
 
-    common::utilities::scope_guard proxy_guard(
+    utilities::scope_guard proxy_guard(
       boost::bind(edg_wlpr_UnregisterProxy, jobid, static_cast<char const*>(0))
     );
 
-    common::utilities::scope_guard context_guard(boost::bind(unregister_context, jobid));
+    utilities::scope_guard context_guard(boost::bind(common::unregister_context, jobid));
 
     // update the sequence code before doing the planning
     // some helpers may need a more recent sequence code than what appears in
@@ -135,16 +141,16 @@ WMReal<PlanningP, DeliveryP, CancellingP>::submit(classad::ClassAd const* reques
     std::string sequence_code(c_sequence_code);
     free(c_sequence_code);
 
-    wms::jdl::remove_lb_sequence_code(request_ad);
-    wms::jdl::set_lb_sequence_code(request_ad, sequence_code);
+    jdl::remove_lb_sequence_code(request_ad);
+    jdl::set_lb_sequence_code(request_ad, sequence_code);
 
     boost::scoped_ptr<classad::ClassAd> planned_ad(Plan(request_ad));
 
-    char const* const c_ce_id = wms::jdl::get_ce_id(*planned_ad).c_str();
+    char const* const c_ce_id = jdl::get_ce_id(*planned_ad).c_str();
     int lb_error = edg_wll_LogMatch(context, c_ce_id); 
     if (lb_error != 0) {
       Warning("edg_wll_LogMatch failed for " << jobid
-              << " (" << get_lb_message(context) << ")");
+              << " (" << common::get_lb_message(context) << ")");
     }
 
     Deliver(*planned_ad);
@@ -152,12 +158,13 @@ WMReal<PlanningP, DeliveryP, CancellingP>::submit(classad::ClassAd const* reques
     context_guard.dismiss();
     proxy_guard.dismiss();
 
-  } catch (wms::jdl::ManipulationException const& e) {
+  } catch (jdl::ManipulationException const& e) {
 
     std::string reason("Cannot plan: ");
     reason += e.what();
     Error(reason << " for " << jobid);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
       context_ptr
@@ -172,7 +179,8 @@ WMReal<PlanningP, DeliveryP, CancellingP>::submit(classad::ClassAd const* reques
     std::string reason("Cannot plan: ");
     reason += e.what();
     Error(reason << " for " << jobid);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
       context_ptr
@@ -187,7 +195,8 @@ WMReal<PlanningP, DeliveryP, CancellingP>::submit(classad::ClassAd const* reques
     std::string reason("Cannot plan: ");
     reason += e.what();
     Error(reason << " for " << jobid);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
       context_ptr
@@ -212,7 +221,7 @@ template<typename PlanningP, typename DeliveryP, typename CancellingP>
 void
 WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const& request_id)
 {
-  ContextPtr context_ptr = get_context(request_id);
+  common::ContextPtr context_ptr = common::get_context(request_id);
   if (!context_ptr) {
     Info("LB context not available for " << request_id << "(job already cancelled?)");
     return;
@@ -221,7 +230,7 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
 
   // keep the storage guard outside the try block, because the lb logs in the
   // catch blocks require the proxy, which lives in the storage
-  common::utilities::scope_guard storage_guard(
+  utilities::scope_guard storage_guard(
     boost::bind(purger::purgeStorage, request_id, std::string(""))
   );
 
@@ -229,23 +238,24 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
 
   try {
 
-    common::utilities::scope_guard proxy_guard(
+    utilities::scope_guard proxy_guard(
       boost::bind(edg_wlpr_UnregisterProxy, request_id, static_cast<char const*>(0))
     );
 
-    common::utilities::scope_guard context_guard(boost::bind(unregister_context, request_id));
+    utilities::scope_guard context_guard(boost::bind(common::unregister_context, request_id));
+
 
     // flush the lb events since we'll query the server
     struct timeval* timeout = 0;
     lb_error = edg_wll_LogFlush(context, timeout);
     if (lb_error != 0) {
       Warning("edg_wll_LogFlush failed for " << request_id
-              << " (" << get_lb_message(context) << ")");
+              << " (" << common::get_lb_message(context) << ")");
     }
 
     // retrieve previous matches; continue if failure
     std::vector<std::pair<std::string,int> > const previous_matches_ex
-      = get_previous_matches_ex(context, request_id);
+      = common::get_previous_matches_ex(context, request_id);
 
     if (previous_matches_ex.empty()) {
       std::ostringstream os;
@@ -268,7 +278,8 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
       os << "MaxRetryCount (" << max_retry_count << ") hit for " << request_id;
       std::string reason = os.str();
       Info(reason);
-      int err; ContextPtr ctx;
+      int err; 
+      common::ContextPtr ctx;
       boost::tie(err, ctx) = lb_log(
         boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
         context_ptr
@@ -281,12 +292,12 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
     }
 
     // retrieve original jdl
-    std::string const job_ad_str = get_original_jdl(context, request_id);
-    boost::scoped_ptr<classad::ClassAd> job_ad(common::utilities::parse_classad(job_ad_str));
+    std::string const job_ad_str = common::get_original_jdl(context, request_id);
+    boost::scoped_ptr<classad::ClassAd> job_ad(utilities::parse_classad(job_ad_str));
 
     // check the job max retry count; abort if exceeded
     bool count_valid = false;
-    int job_retry_count = wms::jdl::get_retry_count(*job_ad, count_valid);
+    int job_retry_count = jdl::get_retry_count(*job_ad, count_valid);
     if (!count_valid) {
       job_retry_count = 0;
     }
@@ -296,7 +307,8 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
       os << "Job RetryCount (" << job_retry_count << ") hit";
       std::string reason = os.str();
       Info(reason << " for " << request_id);
-      int err; ContextPtr ctx;
+      int err; 
+      common::ContextPtr ctx;
       boost::tie(err, ctx) = lb_log(
         boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
         context_ptr
@@ -312,16 +324,16 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
     // max(0, min(job_retry_count, max_retry_count))
 
     // do the planning/delivery; abort if failure
-    wms::jdl::set_edg_previous_matches(*job_ad, previous_matches);
-    wms::jdl::set_edg_previous_matches_ex(*job_ad, previous_matches_ex);
+    jdl::set_edg_previous_matches(*job_ad, previous_matches);
+    jdl::set_edg_previous_matches_ex(*job_ad, previous_matches_ex);
 
     boost::scoped_ptr<classad::ClassAd> planned_ad(Plan(*job_ad));
 
-    char const* const c_ce_id = wms::jdl::get_ce_id(*planned_ad).c_str();
+    char const* const c_ce_id = jdl::get_ce_id(*planned_ad).c_str();
     lb_error = edg_wll_LogMatch(context, c_ce_id);
     if (lb_error != 0) {
       Warning("edg_wll_LogMatch failed for " << request_id
-              << " (" << get_lb_message(context) << ")");
+              << " (" << common::get_lb_message(context) << ")");
     }
 
     Deliver(*planned_ad);
@@ -329,7 +341,7 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
     context_guard.dismiss();
     proxy_guard.dismiss();
 
-  } catch (common::utilities::CannotParseClassAd const& e) {
+  } catch (utilities::CannotParseClassAd const& e) {
 
     std::string reason;
     if (e.str().empty()) {
@@ -338,7 +350,8 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
       reason = "original JDL is not a classad";
     }
     Error(reason << " for " << request_id);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
       context_ptr
@@ -349,11 +362,12 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
 
     return;
 
-  } catch (wms::jdl::ManipulationException const& e) {
+  } catch (jdl::ManipulationException const& e) {
 
     std::string reason(e.what());
     Error(reason << " for " << request_id);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
       context_ptr
@@ -369,7 +383,8 @@ WMReal<PlanningP, DeliveryP, CancellingP>::resubmit(wmsutils::jobid::JobId const
     std::string reason("Cannot plan: ");
     reason += e.what();
     Error(reason << " for " << request_id);
-    int err; ContextPtr ctx;
+    int err; 
+    common::ContextPtr ctx;
     boost::tie(err, ctx) = lb_log(
       boost::bind(edg_wll_LogAbort, _1, reason.c_str()),
       context_ptr
