@@ -6,11 +6,11 @@
 //  e-mail :   "heinz.stockinger@cern.ch"
 //
 //  Revision history :
-//  Original release has been implemented for LCG
-//  gg-mm-yyyy Integration in glite
+//  Original release has been implemented for LCG 
+//  02-12-2004 Integration in glite
 //
 //  Description:
-//  Wraps the Storage Index Catalog client API
+//  Wraps the DLI soap client API
 //
 //
 //  Copyright (c) 2004 Istituto Nazionale di Fisica Nucleare (INFN).

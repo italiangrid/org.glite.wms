@@ -6,10 +6,10 @@
 //  e-mail :   "enzo.martelli@mi.infn.it"
 //
 //  Revision history :
-//  29-11-2004 Original release
+//  02-12-2004 Original release
 //
 //  Description:
-//  Wraps the Data Location Catalog client API
+//  Wraps the DLI soap client API
 //
 //
 //  Copyright (c) 2004 Istituto Nazionale di Fisica Nucleare (INFN).
