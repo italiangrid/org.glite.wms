@@ -49,6 +49,12 @@ private:
   replicamanager::ReplicaManagerImpl* m_rm;
 }; 
 
+// Types for plug-in
+//
+typedef ReplicaServiceReal* create_t(const std::string&);
+typedef void destroy_t(ReplicaServiceReal*);
+
+
 } // namespace rls
 } // namespace wms
 } // namespace glite
