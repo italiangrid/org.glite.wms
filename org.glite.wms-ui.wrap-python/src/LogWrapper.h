@@ -9,7 +9,7 @@
 #include <list>
 #include <string>
 #include "glite/lb/producer.h"
-#define GLITE_WMS_LOG_DESTINATION "GLITE_WMS_LOG_DESTINATION"
+#define GLITE_LB_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 /**
  * Provide a wrapper for the locallogger client methods
  * it allows the user to log all the information the job needs at submission time both for simple jobs and for dags
@@ -114,6 +114,7 @@ class LOG {
 	* @param ns the Network server string representation <host >:<port>
 	*/
 	std::vector<std::string>  regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns );
+	std::vector<std::string>  regist_part ( const std::string& jobid , const std::string& jdl ,  int subjobs, const std::string& ns ) ;
    private:
 	// void log_error ( const std::string& err ,  edg_wll_Context *ctx=NULL ) ;
 	void log_error ( const std::string& err ) ;
