@@ -52,7 +52,7 @@ wmProxy_SOURCES = \
 	wmputils.cpp
 
 	
-wmProxy_LDFLAGS = -Xlinker --export-dynamic
+#wmProxy_LDFLAGS = -Xlinker --export-dynamic
 
 wmProxy_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
@@ -72,12 +72,13 @@ wmProxy_LDADD = \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMSUI_PARTITIONER_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
+	$(GLITE_WMS_WMPROXY_CMD_LIBS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
 	$(GRIDSITE_LIBS) \
-	-lxml2 \
+	$(XML2) \
 	$(FASTCGI_CPP_LIBS)
 
 
