@@ -150,7 +150,7 @@ int main(int argc,  char **argv) {
  sprintf(pipinval, "%s%s%s%s%s", localdir, "glite-wms-pipe-input", " > ", pipin, "&");
  sprintf(pipoutval, "%s%s%s%s%s", localdir, "glite-wms-pipe-output", " < ", pipout, "&");
 
- sprintf(execval, "%s%s%s%s%s", argv[3], " < ", pipin, " >& ", pipout);
+ sprintf(execval, "%s%s%s%s%s", argv[3], " < ", pipin, " 2>&1 | tee ", pipout);
    
  system(pipinval);
  system(pipoutval);
