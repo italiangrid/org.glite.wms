@@ -15,13 +15,13 @@ check_PROGRAMS = glite-wmsutils-socketppServerTest \
 glite_wmsutils_socketppServerTest_SOURCES = socketppServerTest.cpp
 glite_wmsutils_socketppServerTest_LDADD = \
 	$(GSISOCKET_PP) \
-	$(GLITE_WMSUTILS_EXCEPTIONS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS)
 
 glite_wmsutils_socketppClientTest_SOURCES = socketppClientTest.cpp
 glite_wmsutils_socketppClientTest_LDADD = \
 	$(GSISOCKET_PP) \
-	$(GLITE_WMSUTILS_EXCEPTIONS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
