@@ -7,8 +7,8 @@
 ## *********************************************************************
 
 ## Subdirectories list
-SUBDIRS = scripts configuration ldif2classad utilities logger requestad \
-	socket++ task process programs ssl_helpers jobid
+SUBDIRS = scripts configuration ldif2classad utilities logger \
+	task process programs
 
 common_includedir = $(includedir)/glite/workload/common
 common_include_HEADERS = common_namespace.h
