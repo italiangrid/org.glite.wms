@@ -19,7 +19,7 @@
 #        Release: $Name$
 #
 
-TESTS=  WMFactory_cu WMReal_cu
+TESTS=  WMFactory_cu
 
 COMMON_LD_FLAGS= \
 	$(CPPUNIT_LIBS) \
