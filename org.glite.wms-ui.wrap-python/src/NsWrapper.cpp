@@ -7,7 +7,7 @@
 ***************************************************************************/
 #include <iostream>
 #include "NsWrapper.h"
-#include <sslutils.h>
+#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 #include "glite/lb/producer.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/jdl/JobAd.h"
