@@ -57,6 +57,7 @@ have_classads=no
 have_globus=no
 have_ares=no
 have_expat=no
+have_fcgi=no
  
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_MSG_RESULT(["BOOST found $have_boost"])
@@ -72,6 +73,9 @@ AC_MSG_RESULT(["ARES found $have_ares"])
 
 AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_MSG_RESULT(["EXPAT found $have_expat"])
+
+AC_FCGI([], have_fcgi=yes, have_fcgi=no)
+AC_MSG_RESULT(["FCGI found $have_fcgi"])
 
 have_glite_wmsutils=no
                                                                                 
