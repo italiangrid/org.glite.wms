@@ -27,11 +27,10 @@ glite_wms_pipe_input_LDADD = \
         $(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
         $(ARES_LIBS) \
 	$(EXPAT_LIBS) \
-        $(GLOBUS_COMMON_THR_LIBS) \
-        $(GLOBUS_FTP_CLIENT_THR_LIBS) \
-        $(GLOBUS_GSS_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
-        -lstdc++ -lpthread -lnsl -ldl
+	$(GLOBUS_COMMON_THR_LIBS) \
+        -lnsl -ldl -lpthread \
+	-lstdc++ 
 
 glite_wms_pipe_output_SOURCES = glite_wms_pipe_output.c
 glite_wms_pipe_output_LDFLAGS = -static
@@ -50,7 +49,7 @@ glite_wms_pipe_output_LDADD = \
         $(GLOBUS_FTP_CLIENT_THR_LIBS) \
         $(GLOBUS_GSS_NOTHR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
-	-lnsl -ldl -lpthread
+	-lnsl -ldl -lpthread -lstdc++
 
 glite_wms_job_agent_SOURCES = glite_wms_job_agent.c
 
