@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.14  2004/08/17 10:38:34  eronchie
+#       Added optimize macro
+#
 #       Revision 1.13  2004/08/04 12:15:39  eronchie
 #       Added AC_CPPUNIT
 #       CPPUNIT_CFLAGS
@@ -108,6 +111,8 @@ AC_GLITE
 GLITE_WMSUTILS_EXCEPTION_LIBS="-L$GLITE_LOCATION/lib -lglite_wmsutils_exception"
 
 AC_SUBST(GLITE_WMSUTILS_EXCEPTION_LIBS)
+
+AC_OPTIMIZE
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

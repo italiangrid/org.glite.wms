@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.7  2004/08/17 10:38:34  eronchie
+	Added optimize macro
+
 	Revision 1.6  2004/08/04 07:37:21  eronchie
 	Added cppunit
-
+	
 	Revision 1.5  2004/07/28 07:27:54  eronchie
 	Added /
 	
@@ -75,6 +78,6 @@
                  Define extra properties here ...
                  ====================================================== -->
 
-	<property name="m4files.list" value="globus.m4 glite.m4 cppunit.m4"/>
+	<property name="m4files.list" value="globus.m4 glite.m4 cppunit.m4 optimize.m4"/>
 
 </project>
