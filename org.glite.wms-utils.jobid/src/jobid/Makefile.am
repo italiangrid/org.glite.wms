@@ -23,11 +23,9 @@ jobidinclude_HEADERS = \
 	manipulation.h \
 	strmd5.h 
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_WORKLOAD_CFLAGS) \
 	$(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
-	$(GLOBUS_CFLAGS) \
-	$(BOOST_CFLAGS) \
 	-D_GNU_SOURCE
 
 MAINTAINERCLEANFILES = Makefile.in

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../jobid/strmd5.h"
+#include "jobid/strmd5.h"
 
 #warning Thread unsafe!
 static char mbuf[33];

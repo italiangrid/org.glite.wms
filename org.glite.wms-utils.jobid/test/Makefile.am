@@ -16,14 +16,13 @@ testjobid_SOURCES = testjobid.c
 testjobid_LDADD = \
 	$(JOBID) \
 	$(GLITE_WORKLOAD_COMMON_LIBS) \
-	$(GLOBUS_LIBS) \
+	$(GLOBUS_SSL_THR_LIBS) \
 	$(STDCPP)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
-	$(GLITE_WORKLOAD_COMMON_CFLAGS) \
-	$(GLOBUS_CFLAGS)
+        $(GLITE_WORKLOAD_CFLAGS) \
+        $(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
+	$(GLITE_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
 
