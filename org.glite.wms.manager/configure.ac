@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.13  2004/12/09 17:33:28  giaco
+#       set version number to 1.0.0
+#
 #       Revision 1.12  2004/12/04 21:20:23  dimeglio
 #       Increased version number
 #
@@ -64,7 +67,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Manager], [0.3.0])
+AC_INIT([GLite WMS Manager], [1.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/WMImpl.h])
