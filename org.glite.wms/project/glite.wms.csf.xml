@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.55  2004/08/16 13:00:42  eronchie
+	Updated
+	Added interactive component
+
 	Revision 1.54  2004/08/08 17:00:47  eronchie
 	Start adding manager
-
+	
 	Revision 1.53  2004/08/04 07:34:45  eronchie
 	Added cppunit
 	
@@ -375,6 +379,10 @@
 		<condition property="purger.head">
                         <equals arg1="${org.glite.wms.purger.version}" arg2="HEAD" />
                 </condition>
+
+		<condition property="interactive.head">
+                        <equals arg1="${org.glite.wms.interactive.version}" arg2="HEAD" />
+                </condition>
     	</target>
 
     	<presetdef name="cvs-co">
@@ -642,6 +650,16 @@
             <cvs-co package="org.glite.wms.manager"
                     tag="${org.glite.wms.manager.version}" />
         </target>
+
+	<!-- Interactive -->
+        <target name="interactive" depends="globus,thirdparty-bypass,get.interactive.head, get.interactive.tag"/>
+        <target name="get.interactive.head" if="interactive.head">
+            <cvs-co package="org.glite.wms.interactive" />
+        </target>
+        <target name="get.interactive.tag" unless="interactive.head">
+            <cvs-co package="org.glite.wms.interactive"
+                    tag="${org.glite.wms.interactive.version}" />
+        </target>
 		
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-bypass,
@@ -664,7 +682,8 @@
 					manager-ns-client,
 					manager-ns-daemon,
 					jobsubmission,
-					manager"/>
+					manager,
+					interactive"/>
 
 
 	<!-- ====================================================

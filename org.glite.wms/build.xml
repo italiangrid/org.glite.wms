@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.55  2004/08/16 13:00:42  eronchie
+	Updated
+	Added interactive component
+
 	Revision 1.54  2004/08/09 04:55:37  dimeglio
 	Replaced rtag with tag
-
+	
 	Revision 1.53  2004/08/09 04:35:47  dimeglio
 	Fixed inheritance of do.cvs.tag property
 	
@@ -481,9 +485,9 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
-    <target name="jdlj" unless="setenvonly" depends="jclassads">
+        <target name="jdlj" unless="setenvonly" depends="jclassads">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -497,7 +501,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="brokerinfo" unless="setenvonly" depends="boost,classads,common,jdl">
 		<if>
@@ -513,7 +517,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="classad_plugin" unless="setenvonly" depends="boost,classads,common,brokerinfo">
 		<if>
@@ -529,7 +533,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="matchmaking" unless="setenvonly" depends="boost,classads,common,classad_plugin">
 		<if>
@@ -545,7 +549,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="helper" unless="setenvonly" depends="boost,classads,common,jdl">
 		<if>
@@ -561,7 +565,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="broker" unless="setenvonly" depends="boost,classads,common,jdl">
 		<if>
@@ -577,7 +581,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="checkpointing" unless="setenvonly" depends="boost,classads,common">
 		<if>
@@ -593,7 +597,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager-ns-versions" unless="setenvonly">
 		<if>
@@ -609,7 +613,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager-ns-common" unless="setenvonly">
 		<if>
@@ -625,7 +629,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager-ns-fsm" unless="setenvonly" depends="boost,classads,globus">
 		<if>
@@ -641,7 +645,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager-ns-commands" unless="setenvonly" depends="boost,classads,common,manager-ns-fsm,manager-ns-versions,manager-ns-common,purger,broker">
 		<if>
@@ -657,7 +661,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager-ns-client" unless="setenvonly" depends="boost,classads,common, manager-ns-commands">
 		<if>
@@ -673,7 +677,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager-ns-daemon" unless="setenvonly" depends="boost,classads,common, manager-ns-commands">
 		<if>
@@ -689,7 +693,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="purger" unless="setenvonly" depends="boost,classads,globus">
 		<if>
@@ -705,7 +709,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condor,globus,common,purger,jdl">
 		<if>
@@ -721,7 +725,7 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
 
 	<target name="manager" unless="setenvonly" depends="boost,classads,globus,expat,ares,common,purger,jdl,helper,jobsubmission">
 		<if>
@@ -737,7 +741,23 @@
 	                    inheritall="false" />
 			</else>
 		</if>
-    </target>
+        </target>
+
+	<target name="interactive" unless="setenvonly" depends="globus,thirdparty-bypass">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms.subsystem.dir}.interactive" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms.subsystem.dir}.interactive"
+                            target="${target}"
+                            inheritall="false" />
+                        </else>
+                </if>
+        </target>
 
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="thirdparty-bypass,
@@ -760,6 +780,7 @@
 					     manager-ns-client,
 					     manager-ns-daemon,	
 					     jobsubmission,
-					     manager" />
+					     manager,
+					     interactive" />
 		
 </project>
