@@ -12,11 +12,35 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
-
-BaseException* createBaseException(ns1__BaseFaultType *ex){
+BaseException* createWmpException(SOAP_ENV__Detail *detail){
 	BaseException *b_ex =NULL;
+	ns1__BaseFaultType *ex = (ns1__BaseFaultType*)detail->fault;
 	if (ex != NULL) {
-		b_ex=new BaseException ;
+		switch (detail->__type){
+			case SOAP_TYPE_ns1__OperationNotAllowedFaultType:
+				b_ex=new OperationNotAllowedException;
+				break;
+			case SOAP_TYPE_ns1__JobUnknownFaultType:
+				b_ex=new JobUnknownException;
+				break;
+			case SOAP_TYPE_ns1__NoSuitableResourcesFaultType:
+				b_ex=new NoSuitableResourcesException;
+				break;
+			case SOAP_TYPE_ns1__GetQuotaManagementFaultType:
+				b_ex=new GetQuotaManagementException;
+				break;
+			case SOAP_TYPE_ns1__InvalidArgumentFaultType:
+				b_ex=new InvalidArgumentException;
+				break;
+			case SOAP_TYPE_ns1__AuthenticationFaultType:
+				b_ex=new AuthenticationException;
+				break;
+			case SOAP_TYPE_ns1__GenericFaultType:
+				b_ex=new GenericException;
+				break;
+			default:
+				b_ex=new BaseException ;
+		}
 		b_ex->methodName = ex->methodName ;
 		b_ex->Timestamp    = ex->Timestamp    ;
 		b_ex->ErrorCode    = ex->ErrorCode    ;
@@ -25,36 +49,18 @@ BaseException* createBaseException(ns1__BaseFaultType *ex){
 	return b_ex;
 }
 
-
 /*****************************************************************
 soapErrorMng - common soap failure management
 ******************************************************************/
 void soapErrorMng (const WMProxy &wmp){
 	soap_print_fault(wmp.soap, stderr);
-	BaseException *b_ex =createBaseException ((ns1__BaseFaultType*)wmp.soap->fault->detail->fault) ;
+	BaseException *b_ex =createWmpException (wmp.soap->fault->detail);
 	soap_destroy(wmp.soap); // delete deserialized class instances (for C++ only)
 	soap_end(wmp.soap); // remove deserialized data and clean up
 	soap_done(wmp.soap); // detach the gSOAP environment
 	throw *b_ex ;
 }
 
-
-void soapErrorMng (const WMProxy &wmp){
-	soap_print_fault(wmp.soap, stderr);
-	BaseException b_ex ;
-			ns1__BaseFaultType *ex = NULL;
-			ex = (ns1__BaseFaultType*)wmp.soap->fault->detail->fault;
-			if (ex != NULL) {
-				b_ex->methodName = ex->methodName ;
-				b_ex->Timestamp    = ex->Timestamp    ;
-				b_ex->ErrorCode    = ex->ErrorCode    ;
-				b_ex->Description   = ex->Description  ;
-			}
-	soap_destroy(wmp.soap); // delete deserialized class instances (for C++ only)
-	soap_end(wmp.soap); // remove deserialized data and clean up
-	soap_done(wmp.soap); // detach the gSOAP environment
-	throw 100 ;
-}
 /*****************************************************************
 Look for a file existence
 ******************************************************************/
@@ -164,7 +170,7 @@ string getVersion(ConfigContext *cfs){
 /*****************************************************************
 jobRegister
 ******************************************************************/
-JobIdStruct jobRegister (string &jdl, string &delegationId, ConfigContext *cfs){
+JobIdStruct jobRegister (const string &jdl, const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__jobRegisterResponse response;
@@ -175,7 +181,7 @@ JobIdStruct jobRegister (string &jdl, string &delegationId, ConfigContext *cfs){
 /*****************************************************************
 jobSubmit
 ******************************************************************/
-JobIdStruct jobSubmit(string &jdl, string &delegationId, ConfigContext *cfs){
+JobIdStruct jobSubmit(const string &jdl, const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__jobSubmitResponse response;
@@ -186,7 +192,7 @@ JobIdStruct jobSubmit(string &jdl, string &delegationId, ConfigContext *cfs){
 /*****************************************************************
 jobStart
 ******************************************************************/
-void jobStart(string &jobid, ConfigContext *cfs){
+void jobStart(const string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__jobStartResponse response;
@@ -197,7 +203,7 @@ void jobStart(string &jobid, ConfigContext *cfs){
 /*****************************************************************
 jobCancel
 ******************************************************************/
-void jobCancel(string &jobid, ConfigContext *cfs){
+void jobCancel(const string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__jobCancelResponse response;
@@ -219,7 +225,7 @@ int getMaxInputSandboxSize(ConfigContext *cfs){
 /*****************************************************************
 getSandboxDestURI
 ******************************************************************/
-string getSandboxDestURI(string &jobid, ConfigContext *cfs){
+string getSandboxDestURI(const string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getSandboxDestURIResponse response;
@@ -256,7 +262,7 @@ pair<long, long>getFreeQuota(ConfigContext *cfs){
 /*****************************************************************
 jobPurge
 ******************************************************************/
-void jobPurge(string &jobid, ConfigContext *cfs){
+void jobPurge(const string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__jobPurgeResponse response;
@@ -267,7 +273,7 @@ void jobPurge(string &jobid, ConfigContext *cfs){
 /*****************************************************************
 getOutputFileList
 ******************************************************************/
-vector <pair<string , long> > getOutputFileList (string &jobid, ConfigContext *cfs){
+vector <pair<string , long> > getOutputFileList (const string &jobid, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getOutputFileListResponse response;
@@ -278,7 +284,7 @@ vector <pair<string , long> > getOutputFileList (string &jobid, ConfigContext *c
 /*****************************************************************
 jobListMatch
 ******************************************************************/
-vector <pair<string , long> > jobListMatch (string &jdl, ConfigContext *cfs){
+vector <pair<string , long> > jobListMatch (const string &jdl, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__jobListMatchResponse response;
@@ -307,7 +313,7 @@ ns1__JobTypeList *createJobTypeList(int type) {
 	}
 	return result ;
 }
-string  getJobTemplate (int jobType, string &executable,string &arguments,string &requirements,string &rank, ConfigContext *cfs){
+string  getJobTemplate (int jobType, const string &executable,const string &arguments,const string &requirements,const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getJobTemplateResponse response;
@@ -319,7 +325,7 @@ string  getJobTemplate (int jobType, string &executable,string &arguments,string
 getDAGTemplate
 ******************************************************************/
 
-string getDAGTemplate(NodeStruct dependencies, string &requirements,string &rank, ConfigContext *cfs){
+string getDAGTemplate(NodeStruct dependencies, const string &requirements,const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getDAGTemplateResponse response;
@@ -331,7 +337,7 @@ string getDAGTemplate(NodeStruct dependencies, string &requirements,string &rank
 /*****************************************************************
 getCollectionTemplate
 ******************************************************************/
-string getCollectionTemplate(int jobNumber, string &requirements,string &rank, ConfigContext *cfs){
+string getCollectionTemplate(int jobNumber, const string &requirements,const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getCollectionTemplateResponse response;
@@ -372,7 +378,7 @@ string getStringParametricJobTemplate (vector<string>attributes, vector<string> 
 /*****************************************************************
 getProxyReq
 ******************************************************************/
-string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
+string getProxyReq(const string &delegationId, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__getProxyReqResponse response;
@@ -384,7 +390,7 @@ string getProxyReq(const std::string &delegationId, ConfigContext *cfs){
 /*****************************************************************
 putProxy
 *****************************************************************/
-void putProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs){
+void putProxy(const string &delegationId, const string &request, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ns1__putProxyResponse response;

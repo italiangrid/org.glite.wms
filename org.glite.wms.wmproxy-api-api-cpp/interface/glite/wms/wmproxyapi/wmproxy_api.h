@@ -35,6 +35,7 @@ struct GetQuotaManagementException:BaseException{};
 struct NoSuitableResourcesException:BaseException{};
 struct JobUnknownException:BaseException{};
 struct OperationNotAllowedException:BaseException{};
+struct GenericException:BaseException{};
 
 /**
 * Used to specify the jobtype. multiple jobtype can be specified togheter by the bitwise (|) or operation
@@ -98,7 +99,7 @@ std::string getVersion(ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the structure associated to the registered job, with its jobid(s)
 */
-JobIdStruct jobRegister (std::string &jdl, std::string &delegationId, ConfigContext *cfs=NULL);
+JobIdStruct jobRegister (const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 * Register the job and than submit it to the networkserver
 * @param jdl the jdl string representation of the job
@@ -106,19 +107,19 @@ JobIdStruct jobRegister (std::string &jdl, std::string &delegationId, ConfigCont
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the structure associated to the registered job, with its jobid(s)
 */
-JobIdStruct jobSubmit(std::string &jdl, std::string &delegationId, ConfigContext *cfs=NULL);
+JobIdStruct jobSubmit(const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 * Submit the job to the networkserver.Before being submitted,a jobRegister must be issued
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 *@param jobid the string identification of the job (as returned from jobRegister method)
 */
-void jobStart(std::string &jobid, ConfigContext *cfs=NULL);
+void jobStart(const std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Stop the job from beeing executed.
 *@param jobid the string identification of the job 
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 */
-void jobCancel(std::string &jobid, ConfigContext *cfs=NULL);
+void jobCancel(const std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Retrieve the maximum Input sandbox size a user can count-on for a job submission if using the space managed by the WM.
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
@@ -131,7 +132,7 @@ int getMaxInputSandboxSize(ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the uniqe URI associated to the provided jobid
 */
-std::string  getSandboxDestURI(std::string &jobid, ConfigContext *cfs=NULL);
+std::string  getSandboxDestURI(const std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Retrieve the total amount of user space quota
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
@@ -144,20 +145,20 @@ std::pair<long, long> getTotalQuota(ConfigContext *cfs=NULL);
 * @param jobid the string identification of the job
 *@return a pair containing the soft and the hard limit quota
 **/
-void jobPurge(std::string &jobid, ConfigContext *cfs=NULL);
+void jobPurge(const std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Retrieve the list of URIs where the output files created during job execution have been stored in the WM managed space
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @param jobid the string identification of the job
 * @return a vector containing, for each element, the URI of the output file and corresponding size in bytes
 */
-std::vector <std::pair<std::string , long> > getOutputFileList (std::string &jobid, ConfigContext *cfs=NULL);
+std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, ConfigContext *cfs=NULL);
 /**
 * Retrieve all resources matching with the provided jdl
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return a vector containing, for each recource found, its full name and its rank
 */
-std::vector <std::pair<std::string , long> > jobListMatch (std::string &jdl, ConfigContext *cfs=NULL);
+std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, ConfigContext *cfs=NULL);
 /**
 * Create a valid template ready for submission for a job
 * @param type the jobtype of the job. Multiple jobtype can be specified toghether through the bitwise '|' operator
@@ -168,7 +169,7 @@ std::vector <std::pair<std::string , long> > jobListMatch (std::string &jdl, Con
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the JDL string representation of the job
 */
-std::string getJobTemplate (int type, std::string &executable,std::string &arguments,std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+std::string getJobTemplate (int type, const std::string &executable,const std::string &arguments,const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Create a valid template ready for submission for a job
 * @param dependencies the dependency structure of the dag: each node must list all the nodes that depends on it.
@@ -177,7 +178,7 @@ std::string getJobTemplate (int type, std::string &executable,std::string &argum
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the JDL string representation of the dag
 */
-std::string getDAGTemplate(NodeStruct dependencies, std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+std::string getDAGTemplate(NodeStruct dependencies, const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Create a valid template JDL for a Collection of jobs
 * @param jobNumber  the number of jobs to be created for the collection
@@ -186,7 +187,7 @@ std::string getDAGTemplate(NodeStruct dependencies, std::string &requirements,st
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the JDL string representation of the collection of jobs
 */
-std::string getCollectionTemplate(int jobNumber, std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+std::string getCollectionTemplate(int jobNumber, const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
 /**
 * Create a valid template JDL for a parametric job
 * @param attributes all the attributes that contains reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
