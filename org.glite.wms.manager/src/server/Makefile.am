@@ -11,6 +11,11 @@ MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
 GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
+GLITE_WMS_RLS_LIBS = $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
+GLITE_WMS_BROKER_LIBS = $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la
+GLITE_WMS_BROKERINFO_LIBS = $(top_srcdir)/../org.glite.wms.brokerinfo/build/src/libglite_wms_brokerinfo.la
+GLITE_WMS_MATCHMAKING_LIBS = $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la
+
 lib_LTLIBRARIES = libglite_wms_manager_server.la 
 
 libexec_SCRIPTS = \
@@ -28,9 +33,12 @@ noinst_HEADERS = \
         DispatcherImpl.h \
         RequestHandler.h \
 	signal_handling.h \
+	listmatch.h \
 	WMReal.h
 		
 libglite_wms_manager_server_la_SOURCES = \
+	listmatch.h \
+	listmatch.cpp\
 	Request.hpp \
 	Request.cpp \
 	TaskQueue.hpp \
@@ -53,6 +61,7 @@ libglite_wms_manager_server_la_SOURCES = \
 	WMReal.cpp \
 	signal_handling.h \
 	signal_handling.cpp 
+	
 
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
@@ -78,6 +87,10 @@ glite_wms_planner_LDADD   = \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+	$(GLITE_WMS_BROKER_LIBS) \
+	$(GLITE_WMS_BROKERINFO_LIBS) \
+	$(GLITE_WMS_MATCHMAKING_LIBS) \
+	$(GLITE_WMS_RLS_LIBS) \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_DL_LIBS) \
