@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/28 10:14:40  eronchie
+#       Added m4files.list property
+#       Removed AC_WMS_COMMON
+#
 #       Revision 1.3  2004/07/27 11:26:23  eronchie
 #       Start using AC_GLITE_WMSUTILS
 #
@@ -80,9 +84,6 @@ have_glite_wms_common=no
 have_glite_wmsutils=no
                                                                                 
 AC_GLITE
-                                                                                
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
