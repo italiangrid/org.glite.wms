@@ -327,6 +327,9 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    string   siciEndpoint = "";
                                                                                                 
    bool     dliEndpointSet = false;
+
+   bool     siciEndpointSetInJdl = false;
+   bool     siciEndpointSetInSI = false;
    bool     siciEndpointSet = false;
                                                                                                 
    bool     rlsConfig = false; // Determine if RLS is configured
@@ -384,15 +387,19 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
               
    try {
       siciEndpoint = requestad::get_storage_index(requestAd);
-      siciEndpointSet = true;
+      siciEndpointSetInJdl = true;
    }
    catch(...) {
       if ( voInJdl ) {
          siciEndpoint = getSICIurl(vo);
          if  ( siciEndpoint != "") {
-            siciEndpointSet = true;
+            siciEndpointSetInSI = true;
          }
       }
+   }
+
+   if ( siciEndpointSetInSI || siciEndpointSetInJdl ) {
+      siciEndpointSet = true;
    }
 
    // Due to the different SOAP versions used in the three catalog interfaces, we load the
@@ -432,7 +439,8 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
          // lfn:: or guid:: prefix ?
          bool lfn_or_guid_found = ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0);
-         if ( lfn_or_guid_found && (!siciEndpointSet) ) {
+
+         if ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) {
 
             if ( !rlsInUse ) {
 
@@ -474,9 +482,11 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
          // If the prefix is "lfn" or "guid" but we didn't manage to load the rls plug-in
          //      or the RLSCatalog is not configured for the given vo, we try with the dli catalog
-         if ( ( (      ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)      )   || 
-                ( lfn_or_guid_found && (!rlsInUse))) && (!siciEndpointSet) ) {
- 
+
+         if ( 
+            (    ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)    )   || 
+            (    ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) && (!rlsInUse)                     )
+            ) {
             if ( !dliInUse ) {
                if ( dliEndpointSet ) {
                   dliLibHandle = dlopen (dliLib.c_str(), RTLD_NOW);
@@ -542,8 +552,10 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
             }
          }
 
-         if ( ( ((*lfn).find(silfnPrefix.c_str()) == 0) || ((*lfn).find(siguidPrefix.c_str()) == 0) ) ||
-              ( lfn_or_guid_found && siciEndpointSet)) {
+         if ( 
+            (   ((*lfn).find(silfnPrefix.c_str()) == 0) || ((*lfn).find(siguidPrefix.c_str()) == 0)    )    ||
+                ( lfn_or_guid_found && siciEndpointSetInJdl )
+            ) {
                                                                                                 
             if ( !siciInUse ) {
                                                                                                 
@@ -666,6 +678,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          }
          else {
             edglog(debug) << "No replica(s) found!" << endl;
+
          }
                       
                                                                                                 
@@ -699,7 +712,6 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                                                                                 
                                                                                                 
 }
-
 
 
 
