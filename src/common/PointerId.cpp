@@ -2,7 +2,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 
 #include "PointerId.h"

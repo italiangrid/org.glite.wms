@@ -21,8 +21,10 @@
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "../common/files.h"
 
@@ -96,7 +98,7 @@ void SubmitAd::createFromAd( const classad::ClassAd *pad )
   time_t                                   epoch = 0;
   char                                    *dirType;
   string                                   buildPath;
-  glite::wms::jobid::JobId                             edgId, dagId;
+  glite::wmsutils::jobid::JobId                             edgId, dagId;
   auto_ptr<jccommon::Files>                files;
   logger::StatePusher                      pusher( elog::cedglog, "SubmitAd::createFromAd(...)" );
 

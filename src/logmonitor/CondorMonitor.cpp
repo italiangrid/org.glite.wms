@@ -13,8 +13,10 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/JobIdExceptions.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
+
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
@@ -214,11 +216,11 @@ CondorMonitor::CondorMonitor( const string &filename, MonitorData &data ) :
     this->cm_shared_data->md_dagId.assign( match_pieces[1].first, match_pieces[2].second );
 
     try {
-      glite::wms::jobid::JobId     dId( dagId );
+      glite::wmsutils::jobid::JobId     dId( dagId );
 
       this->cm_shared_data->md_isDagLog = true;
     }
-    catch( const glite::wms::jobid::JobIdException &err ) {
+    catch( const glite::wmsutils::jobid::JobIdException &err ) {
       this->cm_shared_data->md_dagId.clear();
       this->cm_shared_data->md_isDagLog = false;
     }

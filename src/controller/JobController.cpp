@@ -23,7 +23,7 @@ JobController::~JobController( void )
 int JobController::submit( const classad::ClassAd *ad )
 { return this->jc_impl->submit( ad ); }
 
-bool JobController::cancel( const glite::wms::jobid::JobId &id, const char *logfile, bool force )
+bool JobController::cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force )
 { return this->jc_impl->cancel( id, logfile, force ); }
 
 bool JobController::cancel( int condorid, const char *logfile, bool force )

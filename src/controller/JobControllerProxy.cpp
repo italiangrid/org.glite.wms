@@ -18,7 +18,9 @@
 #include "glite/lb/producer.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/jobid/JobId.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
@@ -90,7 +92,7 @@ catch( RequestException &err ) {
   throw CannotExecute( error );
 }
 
-bool JobControllerProxy::cancel( const glite::wms::jobid::JobId &id, const char *logfile, bool force )
+bool JobControllerProxy::cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force )
 {
   bool                          good;
   string                        proxyfile;

@@ -8,8 +8,10 @@
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "../jobcontrol_namespace.h"
@@ -45,20 +47,20 @@ Files::path *Files::createDagLogFileName( const string &jobid )
   return logfile.release();
 }
 
-Files::Files( const glite::wms::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(), f_maradona(),
+Files::Files( const glite::wmsutils::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(), f_maradona(),
 					 f_sandbox(), f_insbx(), f_outsbx(), f_dagsubdir(),
-					 f_jobid( glite::wms::jobid::to_filename(id) ), f_dagid(),
-					 f_jobReduced( glite::wms::jobid::get_reduced_part(id) ),
+					 f_jobid( glite::wmsutils::jobid::to_filename(id) ), f_dagid(),
+					 f_jobReduced( glite::wmsutils::jobid::get_reduced_part(id) ),
 					 f_dagReduced()
 
 {}
 				
-Files::Files( const glite::wms::jobid::JobId &dagid, const glite::wms::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(),
+Files::Files( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &id ) : f_epoch( 0 ), f_submit(), f_classad(), f_outdir(), f_logfile(),
 								    f_maradona(), f_insbx(), f_outsbx(), f_dagsubdir(),
-								    f_jobid( glite::wms::jobid::to_filename(id) ),
-								    f_dagid( glite::wms::jobid::to_filename(dagid) ),
-								    f_jobReduced( glite::wms::jobid::get_reduced_part(id) ),
-								    f_dagReduced( glite::wms::jobid::get_reduced_part(dagid) )
+								    f_jobid( glite::wmsutils::jobid::to_filename(id) ),
+								    f_dagid( glite::wmsutils::jobid::to_filename(dagid) ),
+								    f_jobReduced( glite::wmsutils::jobid::get_reduced_part(id) ),
+								    f_dagReduced( glite::wmsutils::jobid::get_reduced_part(dagid) )
 {}
 
 Files::~Files( void ) {}

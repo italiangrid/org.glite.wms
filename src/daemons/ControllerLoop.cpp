@@ -24,8 +24,10 @@
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/JobIdExceptions.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
+
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/edglog.h"
@@ -360,10 +362,10 @@ try {
 	  if( source == configuration::ModuleType::log_monitor ) {
 	    boost::filesystem::path        logfile( remreq->get_logfile(), boost::filesystem::system_specific );
 
-	    controller.cancel( glite::wms::jobid::JobId(jobid), logfile.file_path().c_str(), force );
+	    controller.cancel( glite::wmsutils::jobid::JobId(jobid), logfile.file_path().c_str(), force );
 	  }
 	  else
-	    controller.cancel( glite::wms::jobid::JobId(jobid), NULL, force );
+	    controller.cancel( glite::wmsutils::jobid::JobId(jobid), NULL, force );
 
 	  break;
 	}
@@ -426,7 +428,7 @@ try {
 			<< logger::setlevel( logger::info )
 			<< "Ignoring request..." << endl;
       }
-      catch( glite::wms::jobid::JobIdException &error ) {
+      catch( glite::wmsutils::jobid::JobIdException &error ) {
 	this->cl_stream << logger::setlevel( logger::severe )
 			<< "Cannot execute command \"" << controller::Request::string_command( command ) << "\"." << endl
 			<< "Error creating job id: \"" << error.what() << "\"" << endl

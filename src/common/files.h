@@ -15,8 +15,8 @@ class Files {
   typedef  boost::filesystem::path   path;
 
 public:
-  Files( const glite::wms::jobid::JobId &id );
-  Files( const glite::wms::jobid::JobId &dagid, const glite::wms::jobid::JobId &jobid );
+  Files( const glite::wmsutils::jobid::JobId &id );
+  Files( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &jobid );
   ~Files( void );
 
   const path &submit_file( void );

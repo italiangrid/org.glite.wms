@@ -4,15 +4,15 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
 
-
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/jobid/manipulation.h"
-#include "glite/wms/jobid/JobId.h"
+
+#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobId.h"
+
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #ifdef ENABLE_PURGER
 #include "glite/wms/purger/purger.h"
@@ -30,9 +30,9 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace jccommon {
 
-JobFilePurger::JobFilePurger( const glite::wms::jobid::JobId &id, bool isdag ) : jfp_isDag( isdag ), jfp_jobId( id ), jfp_dagId() {}
+JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &id, bool isdag ) : jfp_isDag( isdag ), jfp_jobId( id ), jfp_dagId() {}
 
-JobFilePurger::JobFilePurger( const glite::wms::jobid::JobId &dagid, const glite::wms::jobid::JobId &jobid ) : jfp_isDag( false ),
+JobFilePurger::JobFilePurger( const glite::wmsutils::jobid::JobId &dagid, const glite::wmsutils::jobid::JobId &jobid ) : jfp_isDag( false ),
 										       jfp_jobId( jobid ), jfp_dagId( dagid )
 {}
 

@@ -2,7 +2,7 @@
 
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobId.h"
 #ifdef ENABLE_RENEWAL
 #include "glite/wms/proxyrenewal/renewal.h"
 #endif

@@ -31,7 +31,7 @@ public:
   ~JobControllerProxy( void );
 
   virtual int submit( const classad::ClassAd *ad );
-  virtual bool cancel( const glite::wms::jobid::JobId &id, const char *logfile, bool force );
+  virtual bool cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force );
   virtual bool cancel( int condorid, const char *logfile, bool force );
   virtual size_t queue_size( void );
 

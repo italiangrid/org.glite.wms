@@ -33,8 +33,10 @@
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/utilities/filecontainer.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+
 #include "glite/wms/jdl/convert.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
@@ -303,7 +305,7 @@ catch( utilities::FileContainerError &error ) {
 }
 catch( SubmitAdException &error ) { throw CannotExecute( error.error() ); }
 
-bool JobControllerReal::cancel( const glite::wms::jobid::JobId &id, const char *logfile, bool force )
+bool JobControllerReal::cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force )
 {
   bool                  good = true;
   int                   icid = 0;
