@@ -1143,10 +1143,8 @@ public class GUIUserCredentials extends JDialog {
             null, null, null);
         return Utils.FAILED;
       }
-
       subject = UserCredential.getX500UserSubject(subject);
-      String currentSubject = UserCredential.getX500UserSubject(GUIGlobalVars.
-          proxySubject);
+      String currentSubject = GUIGlobalVars.proxySubject;
 
       if (!subject.equals(currentSubject)) {
         JOptionPane.showOptionDialog(GUIUserCredentials.this,
@@ -1913,6 +1911,7 @@ public class GUIUserCredentials extends JDialog {
         guiThreadReference = guiThread;
         return true;
       }
+
       int port = Integer.parseInt(GUIFileSystem.readTextFile(new File(
           getThreadConfigurationFilePath())).trim(), 10);
       logger.debug("getThreadConfigurationFilePath(): "
@@ -1923,13 +1922,11 @@ public class GUIUserCredentials extends JDialog {
       in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
       String fromServer = "";
       String fromUser;
-
-      // Contacting thread server.
       out.println(Utils.GUI_SOCKET_HANDSHAKE_MSG);
 
+      // Contacting thread server.
       clientSocket.setSoTimeout(1000);
       fromServer = in.readLine();
-
       logger.debug("SERVER: " + fromServer);
 
       if (fromServer.equals(Utils.GUI_SOCKET_HANDSHAKE_MSG)) {
