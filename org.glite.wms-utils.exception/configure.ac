@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2004/07/21 18:49:26  eronchie
+#       Added AC_GLITE
+#
 #       Revision 1.3  2004/07/21 18:47:49  eronchie
 #       Removed obsolete things
 #
@@ -81,6 +84,8 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
+
+AC_GLITE
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
