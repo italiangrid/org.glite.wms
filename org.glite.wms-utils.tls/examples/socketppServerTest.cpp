@@ -1,6 +1,6 @@
 #include "glite/wmsutils/tls/socket++/GSISocketServer.h"
 #include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
-#include "socket++/exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 
 #include <iostream>
 #include <string>

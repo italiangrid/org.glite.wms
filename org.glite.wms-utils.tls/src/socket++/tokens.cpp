@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <globus_gss_assist.h>
 
-#include "exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 
 const int _TIMEOUT_ = 300;
 

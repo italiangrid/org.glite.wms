@@ -1,5 +1,5 @@
 #include "glite/wmsutils/tls/socket++/GSISocketClient.h"
-#include "socket++/exceptions.h"
+#include "glite/wmsutils/tls/socket++/exceptions.h"
 
 #include <iostream>
 #include <string>
