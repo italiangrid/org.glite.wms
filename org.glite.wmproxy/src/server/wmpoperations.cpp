@@ -17,6 +17,7 @@
 #include <sys/types.h>
 
 #include "wmpoperations.h"
+#include "wmpconfiguration.h"
 #include "wmputils.h"
 #include "wmproxy.h"
 #include "wmpeventlogger.h"
@@ -60,6 +61,7 @@ using namespace glite::wms::jdl; // DagAd, AdConverter
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 using namespace glite::wms::common::configuration; // Configuration
+using namespace boost::details::pool ; //singleton
 namespace logger         = glite::wms::common::logger;
 namespace configuration  = glite::wms::common::configuration;
 
@@ -696,7 +698,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 
 	try {
 		getMaxInputSandboxSize_response.size =
-			Configuration::instance()->ns()->max_input_sandbox_size();
+			 singleton_default<WmproxyConfiguration>::instance().wmp_config->max_input_sandbox_size();
 	} catch (exception &ex) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
@@ -728,9 +730,17 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 			wmp_fault.code, wmp_fault.message);
 	}
 	int length = jid.length();
-	getSandboxDestURI_response.path = "/tmp/wmpConfig-sandbox_staging_path/"
+	getSandboxDestURI_response.path =
+		singleton_default<WmproxyConfiguration>::instance().wmp_config->sandbox_staging_path()
+#ifdef WIN
+	// Windows Separator
+		+ "\\"
+#else
+        // Linux Separator
+		+ "/"
+#endif
 		+ to_filename (JobId ( jid ) ) ;
-	edglog(severe) << "" << endl;
+	edglog(severe) << "Sandbox path retrieved successfully" << endl;
 	GLITE_STACK_CATCH();
 }
 
@@ -752,6 +762,7 @@ getQuota(getQuotaResponse &getQuota_response)
 	}
 	getQuota_response.softLimit = 100;
 	getQuota_response.hardLimit = 200;
+
 	edglog(severe) << "" << endl;
 	GLITE_STACK_CATCH();
 }
@@ -834,6 +845,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	file->push_back(item2);
 	list->file = file;
 	getOutputFileList_response.OutputFileAndSizeList = list;
+
 	edglog(severe) << "" << endl;
 	GLITE_STACK_CATCH();
 }
