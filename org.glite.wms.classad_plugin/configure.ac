@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/09/21 19:24:26  glbuild
+#       modified module.version
+#
 #       Revision 1.4  2004/07/23 16:30:58  eronchie
 #       The component name is wms-classad_plugin
 #
@@ -38,7 +41,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ClassAd_Plugin], [0.0.0])
+AC_INIT([GLite WMS ClassAd_Plugin], [0.1.0]
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/classad_plugin_loader.h])
@@ -110,3 +113,4 @@ AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/gangmatch/Makefile])
 
 AC_OUTPUT
+
