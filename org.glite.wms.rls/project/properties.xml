@@ -20,9 +20,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.3  2004/10/06 10:51:04  eronchie
+	Start adding rls
+
 	Revision 1.2  2004/10/05 14:12:58  monforte
 	*** WORK IN PROGRESS ***
-
+	
 	Revision 1.1  2004/10/05 11:08:04  monforte
 	Initial porting of RLS: *** WORK IN PROGRESS ***
 	
@@ -74,6 +77,6 @@
 	<!-- ======================================================
 	      Define extra properties here ...
 	     ====================================================== -->
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4"/>
+	<property name="m4files.list" value="boost.m4 replica.m4 glite.m4 cppunit.m4"/>
 		
 </project>
