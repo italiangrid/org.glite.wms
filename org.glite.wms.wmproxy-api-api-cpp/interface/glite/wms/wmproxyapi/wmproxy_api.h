@@ -1,5 +1,11 @@
 #ifndef  GLITE_WMS_WMPROXYAPICPP_H
 #define GLITE_WMS_WMPROXYAPICPP_H
+/**
+* \file wmproxy_api.h
+* \brief wsdl wmproxy service wrapper
+* A wrapper around wmproxy Web Service. It provides primitive or simple structure to access more complicated service methods
+*/
+
 
 #include <iostream>
 #include <string>
@@ -10,7 +16,9 @@ namespace wms {
 namespace wmproxyapi {
 
 
-
+/**
+* Used to specify the jobtype. multiple jobtype can be specified togheter by the bitwise (|) or operation
+*/
 enum jobtype {
 	/*** Normal Jobs */
 	JOBTYPE_NORMAL=1,
@@ -25,45 +33,173 @@ enum jobtype {
 	/*** Checkpointable Jobs */
 	JOBTYPE_CHECKPOINTABLE =32
 };
-
+/**
+* Used to define the the structure of a dag
+* the name of the node might be NULL for the first instance (if it's representing the dag itself) while all the children have to be properly initialised.
+*/
 struct NodeStruct {
-	std::string* name ;
+	/** The name of the node (might be NULL for the first instance) */
+	std::string* nodeName ;
+	/** A list of all the children for this node*/
 	std::vector< NodeStruct* > childrenNodes ;
 };
+/**
+* Used to define the jobid hierarchy of a job or a dag. the nodeName is mandatory only when the jobid refers to a dag node
+*/
 struct JobIdStruct{
+	/** */
 	std::string jobid ;
 	std::string* nodeName ;
 	std::vector< JobIdStruct* > children ;
 };
+/**
+* Used to configure non-default properties such as:
+* A proxy file different from the default one
+* An endpoint service different from the one specified in the wsdl
+* A further directory where to look for CA certificates */
 struct ConfigContext{
 	ConfigContext( std::string p , std::string s, std::string t);
+	virtual ~ConfigContext() throw();
 	std::string proxy_file;
 	std::string endpoint;
 	std::string trusted_cert_dir;
 };
-
+/**
+* Retrieve service version information
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return an alpha-numeric version representation
+*/
 std::string getVersion(ConfigContext *cfs=NULL);
+/**
+* Register the job to the LB server. Once a job has been registered,
+* a jobStart has to be issued in order to let it be properly submitted to the networkserver
+* @param jdl the jdl string representation of the job
+* @param delegationID the identification of the delegated proxy asociated to that job
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the structure associated to the registered job, with its jobid(s)
+*/
 JobIdStruct jobRegister (std::string &jdl, std::string &delegationId, ConfigContext *cfs=NULL);
+/**
+* Register the job and than submit it to the networkserver
+* @param jdl the jdl string representation of the job
+* @param delegationID the identification of the delegated proxy asociated to that job
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the structure associated to the registered job, with its jobid(s)
+*/
 JobIdStruct jobSubmit(std::string &jdl, std::string &delegationId, ConfigContext *cfs=NULL);
-
+/**
+* Submit the job to the networkserver.Before being submitted,a jobRegister must be issued
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+*@param jobid the string identification of the job (as returned from jobRegister method)
+*/
 void jobStart(std::string &jobid, ConfigContext *cfs=NULL);
+/**
+* Stop the job from beeing executed.
+*@param jobid the string identification of the job 
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+*/
 void jobCancel(std::string &jobid, ConfigContext *cfs=NULL);
+/**
+* Retrieve the maximum Input sandbox size a user can count-on for a job submission if using the space managed by the WM.
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the input sandbox maximum size in bytes
+*/
 int getMaxInputSandboxSize(ConfigContext *cfs=NULL);
-std::string  getSandboxDestURI(std::string &jobid, ConfigContext *cfs=NULL);
+/**
+* Create a unique URI associated to the job
+* @param jobid the string identification of the job
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the uniqe URI associated to the provided jobid
+*/
+std::string  getSandboxDestURI(std::string &jobiD, ConfigContext *cfs=NULL);
+/**
+* Retrieve the total amount of user space quota
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+*@return a pair containing the soft and the hard limit quota
+**/
 std::pair<long, long> getTotalQuota(ConfigContext *cfs=NULL);
-std::pair<long, long>getFreeQuota(ConfigContext *cfs=NULL);
+/**
+* Retrieve the avaliable user space quota, still to be possibly used
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+*@return a pair containing the soft and the hard limit quota
+**/
 void jobPurge(std::string &jobid, ConfigContext *cfs=NULL);
+
+
+
+
 std::vector <std::pair<std::string , long> > getOutputFileList (std::string &jobid, ConfigContext *cfs=NULL);
+/**
+* Retrieve all resources matching with the provided jdl
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return a vector containing, for each recource found, its full name and its rank
+*/
 std::vector <std::pair<std::string , long> > jobListMatch (std::string &jdl, ConfigContext *cfs=NULL);
-
-std::string getJobTemplate (int jobType, std::string &executable,std::string &arguments,std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+/**
+* Create a valid template ready for submission for a job
+* @param type the jobtype of the job. Multiple jobtype can be specified toghether through the bitwise '|' operator
+* @param executable the name of the executable to be executed
+* @param arguments the arguments needed by the executable (empty string if not necessary)
+* @param requirements a string representing the expression describing the requirements (which is an attribute of boolean type) for the job
+* @param rank a string representing the expression for the rank (which is an attribute of double type) for the job
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the JDL string representation of the job
+*/
+std::string getJobTemplate (int type, std::string &executable,std::string &arguments,std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+/**
+* Create a valid template ready for submission for a job
+* @param dependencies the dependency structure of the dag: each node must list all the nodes that depends on it.
+* @param requirements a string representing the expression describing the requirements (which is an attribute of boolean type) for all the nodes of the dag
+* @param rank a string representing the expression for the rank (which is an attribute of double type) for all the nodes of the dag
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the JDL string representation of the dag
+*/
 std::string getDAGTemplate(NodeStruct dependencies, std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+/**
+* Create a valid template JDL for a Collection of jobs
+* @param jobNumber  the number of jobs to be created for the collection
+* @param requirements a string representing the expression describing the requirements (which is an attribute of boolean type) for all the jobs in the collection
+* @param rank a string representing the expression for the rank (which is an attribute of double type) for all the jobs in the collection
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the JDL string representation of the collection of jobs
+*/
 std::string getCollectionTemplate(int jobNumber, std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+/**
+* Create a valid template JDL for a parametric job
+* @param attributes all the attributes that contains reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
+* @param parameters  the number of different parameters to be created
+* @param start (default value is 0) the starting point where to begin to parametrise
+* @param step (default value is 1) the step between one parameter and the next one among param_start
+* @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
+* @param rank a string representing the expression for the rank (which is an attribute of double type) of the resource
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the JDL string representation of the parametric job
+*/
 std::string getIntParametricJobTemplate (std::vector<std::string> attributes , int parameters , int start , int step , std::string &requirements,std::string &rank, ConfigContext *cfs=NULL);
+/**
+* Create a valid template JDL for a parametric job
+* @param attributes all the attributes that contains reference to a parameter. Multiple attributes can be specified toghegher through the bitwise '|' operator ( as specified in attribute)
+* @param parameters a vector containing all the parameters
+* @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
+* @param rank a string representing the expression for the rank (which is an attribute of double type) of the resource
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the JDL string representation of the parametric job
+*/
 std::string getStringParametricJobTemplate (std::vector<std::string>attributes, std::vector<std::string> parameters, const std::string &requirements,const std::string &rank, ConfigContext *cfs=NULL);
-std::string getProxyRequest(const std::string &request, ConfigContext *cfs=NULL);
-void putProxy(const std::string &delegationId, const std::string &proxy, ConfigContext *cfs=NULL);
-
+/**
+* Create a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call
+* @param delegationId the id of the delegation to be created
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @return the string representing the request, which has to be used as input while performing a putProxy for the created delegation Id
+*/
+std::string getProxyRequest(const std::string &delegationId, ConfigContext *cfs=NULL);
+/**
+* Actually associate the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyRequest call
+* @param delegationId the id of the delegation created previously (by a getProxyRequest call)
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+* @param request the request output of a getProxyRequest
+*/
+void putProxy(const std::string &delegationId, const std::string &request, ConfigContext *cfs=NULL);
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
