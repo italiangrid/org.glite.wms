@@ -6,14 +6,14 @@
 ## *
 ## *********************************************************************
 
-noinst_LTLIBRARIES = libglide_wms_broker_selectors.la
+noinst_LTLIBRARIES = libglite_wms_broker_selectors.la
 
 selectorsdir = $(includedir)/glite/wms/broker/selectors
 selectors_HEADERS = \
 	maxRankSelector.h \
 	stochasticRankSelector.h 
 
-libglide_wms_broker_selectors_la_SOURCES = \
+libglite_wms_broker_selectors_la_SOURCES = \
 	RBSelectionSchema.cpp \
 	maxRankSelector.cpp \
 	stochasticRankSelector.cpp
