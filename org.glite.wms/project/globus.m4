@@ -29,14 +29,11 @@ AC_DEFUN(AC_GLOBUS,
 
     ac_cv_globus_nothr_valid=no
     ac_cv_globus_thr_valid=no
-    ac_globus_mk=conf.globus
-    ac_globus_thr_mk=conf.globus.thr
-    ac_globus_static_mk=conf.globus.static
 
-    GLOBUS_CFLAGS="$with_globus_prefix/include/$with_globus_thr_flavor"
+    GLOBUS_THR_CFLAGS="$with_globus_prefix/include/$with_globus_thr_flavor"
     GLOBUS_NOTHR_CFLAGS="$with_globus_prefix/include/$with_globus_nothr_flavor"
 
-    ac_globus_ldlib="$with_globus_prefix/lib"
+    ac_globus_ldlib="-L$with_globus_prefix/lib"
 
     GLOBUS_COMMON_NOTHR_LIBS="$ac_globus_ldlib -lglobus_common_$with_globus_nothr_flavor"
 
@@ -79,7 +76,7 @@ AC_DEFUN(AC_GLOBUS,
              #include "globus_gss_assist.h"
            ],
            [globus_gss_assist_ex aex],
-           [],
+           [ac_cv_globus_nothr_valid=yes],
            [ac_cv_globus_nothr_valid=no])
         CFLAGS=$ac_save_CFLAGS
         AC_MSG_RESULT([$ac_cv_globus_nothr_valid])
@@ -98,7 +95,7 @@ AC_DEFUN(AC_GLOBUS,
         AC_MSG_RESULT([yes])
     fi
 
-    test -n "$ac_globus_thr_ssl" && GLOBUS_CFLAGS="-I$ac_globus_thr_ssl $GLOBUS_CFLAGS"
+    test -n "$ac_globus_thr_ssl" && GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ssl $GLOBUS_THR_CFLAGS"
 
     AC_MSG_CHECKING([checking openssl thr])
 
@@ -107,13 +104,13 @@ AC_DEFUN(AC_GLOBUS,
 	dnl maybe do some complex test of globus instalation here later
 	dnl
 	ac_save_CFLAGS=$CFLAGS
-	CFLAGS="$GLOBUS_CFLAGS $CFLAGS"
+	CFLAGS="$GLOBUS_THR_CFLAGS $CFLAGS"
 	AC_TRY_COMPILE([
 	     #include "openssl/ssl.h"
 	     #include "globus_gss_assist.h"
 	   ],
            [globus_gss_assist_ex aex],
-	   [],
+	   [ac_cv_globus_thr_valid=yes],
            [ac_cv_globus_thr_valid=no])
         CFLAGS=$ac_save_CFLAGS
         AC_MSG_RESULT([$ac_cv_globus_thr_valid])
@@ -126,7 +123,7 @@ AC_DEFUN(AC_GLOBUS,
 	ifelse([$2], , :, [$2])
     else
 	GLOBUS_NOTHR_CFLAGS=""
-	GLOBUS_CFLAGS=""
+	GLOBUS_THR_CFLAGS=""
 	GLOBUS_NOTHR_LIBS=""
 	GLOBUS_THR_LIBS=""
 	GLOBUS_COMMON_NOTHR_LIBS=""
