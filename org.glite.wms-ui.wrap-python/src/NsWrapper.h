@@ -7,7 +7,7 @@
  *
  */
 
-#include "glite/wms/manager-ns/client/NSClient.h"
+#include "NSClient.h"
 #include "glite/wmsutils/exception/Exceptions.h"
 #include "glite/wms/common/logger/common.h"
 #include "glite/lb/JobStatus.h"
@@ -17,8 +17,8 @@
 /*********************
 * VOMS includes:
 *********************/
-#include "voms_api.h"
-#include "sslutils.h"
+#include "glite/security/voms/voms_api.h"
+#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 /**
  * Provide a wrapper for the glite::wms::manager::ns::client:NSClient class
  * it allows the user to submit, cancel, and retrieve output files from a job (as well as for a dag)
