@@ -9,7 +9,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-// #include <boost/pool/detail/singleton.hpp>
 #include <classad_distribution.h>
 
 #include "WMPManager.h"
@@ -20,8 +19,6 @@
 #include "CommandFactoryServerImpl.h"
 #include "logging.h" 
 #include "glite/wmsutils/exception/Exception.h"
-// #include "glite/wms/common/process/process.h" 
-// #include "glite/wms/common/process/user.h" 
 #include "glite/wms/common/utilities/classad_utils.h" 
 #include "glite/wms/common/logger/edglog.h" 
 #include "glite/wms/common/logger/manipulators.h" 
@@ -36,47 +33,6 @@ namespace glite {
 namespace wms {
 namespace wmproxy {
 namespace server {
-
-class WMPDispatcher
-{
-public:
-  virtual void dispatch(classad::ClassAd *cmd_ad)
-  {
-      edglog_fn("Dispatcher::run");
-      while (true) {
-        try {
-          boost::scoped_ptr< classad::ClassAd > cmdAd( cmd_ad );
-          std::string cmdName;
-          try {
-             cmdName.assign(utilities::evaluate_attribute(*cmdAd, "Command"));
-             edglog(critical) << "Command to dispatch: " << cmdName << std::endl;
-          }
-          catch(utilities::InvalidValue &e) {
-            edglog(fatal) << "Missing Command name." << std::endl;
-          }
-
-          if ( cmdName == "JobSubmit") {
-            singleton_default<NS2WMProxy>::instance().submit(cmdAd.get());
-          }
-          else if ( cmdName == "JobCancel" ) {
-            singleton_default<NS2WMProxy>::instance().cancel(cmdAd.get());
-          }
-          else if ( cmdName == "DagSubmit" ) {
-            singleton_default<NS2WMProxy>::instance().submit(cmdAd.get());
-          } else {
-            edglog(fatal) << "No forwarding procedure defined for this command." << std::endl;
-          }
-        }
-        catch(utilities::Exception& e) {
-          edglog(fatal) << "Exception Caught:" << e.what() << std::endl;
-        }
-        catch( std::exception& ex ) {
-          edglog(fatal) << "Exception Caught:" << ex.what() << std::endl;
-        }
-      }
-  }
-};
-
 
   WMPManager::WMPManager()
   {
@@ -113,10 +69,11 @@ public:
 			      std::string seq_code(seq_str);		    
 			      free( seq_str );
 			      cmd->setParam("SeqCode", seq_code);	    
-			      // write_end().write(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
 			      // Dispatch the Command
-			      WMPDispatcher wmp_dispatcher;
-			      wmp_dispatcher.dispatch(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
+			      write_end().write(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
+			      // To be used in case the Dispatcher in not a task::pipereader
+			      // WMPDispatcher wmp_dispatcher;
+			      // wmp_dispatcher.dispatch(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
 			      edglog(fatal) << "Command Forwarded." << std::endl;
 		        }
 		    
@@ -125,7 +82,6 @@ public:
 		      // Here we should log the attribute list returned.
 		      cmd -> setParam("Ciccio", "PincoPallo");
 		      cmd -> getParam("Ciccio", result);
-
 
 
 	      } 

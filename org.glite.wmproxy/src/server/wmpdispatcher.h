@@ -11,12 +11,11 @@
 #include "glite/wms/common/utilities/classad_utils.h" // InvalidValue
 
 
-class Dispatcher: public glite::wms::common::task::PipeReader< classad::ClassAd* >
+class WMPDispatcher: public glite::wms::common::task::PipeReader< classad::ClassAd* >
 {
 	
 public:
-		
-	virtual void run(void);
+  virtual void run(void);
 
 };
 
