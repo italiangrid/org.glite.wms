@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/07/28 06:59:57  eronchie
+#       Removed interface
+#
 #       Revision 1.4  2004/07/27 11:42:00  eronchie
 #       Start using AC_GLITE_WMSUTILS
 #
@@ -141,7 +144,6 @@ AC_MSG_RESULT(["GLITE_LB found $gave_glite_lb"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 
 AC_OUTPUT
