@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.21  2004/05/19 22:01:13  dimeglio
+	Removed old unless condition
+
 	Revision 1.20  2004/05/19 21:56:03  dimeglio
 	Removed old update conditions
-
+	
 	Revision 1.19  2004/05/19 21:48:59  dimeglio
 	Modifed logic to check out CVS modules
 	
@@ -209,7 +212,7 @@
 	</target>
 
 	<!-- Update the current module -->
- 	<target name="org.glite.wms" depends="get.glite-wms.head, get.glite-wms.tag" unless="uptodate"/>
+ 	<target name="org.glite.wms" depends="get.glite-wms.head, get.glite-wms.tag"/>
 	<target name="get.glite-wms.head" if="glite-wms.head">
 		<cvs-co package="org.glite.wms" />
 		<fail>The org.glite and org.glite.wms modules have been updated, please rerun the configuration file</fail>
