@@ -400,7 +400,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
 
   for (int i = 1; i < 3 && lb_error && lb_error != EINVAL; ++i) {
 
-    if (lb_error == EDG_WLL_ERROR_SSL) {
+    if (lb_error == EDG_WLL_ERROR_GSS) {
 
       // try with the host proxy
 
@@ -436,7 +436,7 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
       lb_error = log_f(*host_context);
 
       for (int k = 1;
-           k < 3 && lb_error && lb_error != EINVAL && lb_error != EDG_WLL_ERROR_SSL;
+           k < 3 && lb_error && lb_error != EINVAL && lb_error != EDG_WLL_ERROR_GSS;
            ++k) {
         boost::xtime xt;
         boost::xtime_get(&xt, boost::TIME_UTC);
