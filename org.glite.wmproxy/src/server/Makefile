@@ -59,6 +59,7 @@ LDFLAGS= \
 	-L../commands \
 	-L../utilities \
 	-L../eventlogger \
+	-L../authorizer \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
 	-lglite_lb_clientpp_gcc32 \
@@ -79,6 +80,7 @@ LDFLAGS= \
 	-lgliteWMPCommands \
 	-lglite_wms_wmproxy_utilities \
 	-lglite_wms_wmproxy_eventlogger \
+	-lglite_wms_wmproxy_authorizer \
 	-lares \
 	-lclassad \
 	-lclassad_dl \
@@ -128,7 +130,7 @@ wmProxy:        wm.h \
                                 wmpdispatcher.cpp wmpdispatcher.h\
                                 WMPManager.h NS2WMProxy.h wmpresponsestruct.h $(SOAPH) $(SOAPCPP)
 			@echo "wmproxy....."
-			$(CPP) $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
+			$(CPP) -I. $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
                                 wmpoperations.cpp \
                                 wmpgsoapoperations.cpp \
