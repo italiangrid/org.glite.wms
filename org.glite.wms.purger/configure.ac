@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/07/28 08:10:02  eronchie
+#       Updated
+#
 #       Revision 1.5  2004/07/28 06:59:57  eronchie
 #       Removed interface
 #
@@ -116,14 +119,20 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 have_boost=no
 have_classads=no
 have_globus=no
+have_expat=no
+have_ares=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_EXPAT([], have_expat=yes, have_expat=no)
+AC_ARES([], have_ares=yes, have_ares=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_MSG_RESULT(["EXPAT found $have_expat"])
+AC_MSG_RESULT(["ARES found $have_ares"])
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
