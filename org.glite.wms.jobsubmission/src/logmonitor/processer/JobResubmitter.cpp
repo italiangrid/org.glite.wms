@@ -20,7 +20,11 @@
 #include "../../jobcontrol_namespace.h"
 #include "../../common/ProxyUnregistrar.h"
 #include "../../common/EventLogger.h"
+#include "../../common/IdContainer.h"
 #include "../../logmonitor/exceptions.h"
+#include "../../logmonitor/JobWrapperOutputParser.h"
+
+#include <user_log.c++.h>
 
 #include "JobResubmitter.h"
 
@@ -31,6 +35,8 @@ RenameLogStreamNS( elog );
 JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace logmonitor { namespace processer {
+
+typedef  JobWrapperOutputParser   JWOP;
 
 JobResubmitter::JobResubmitter( jccommon::EventLogger *logger ) : jr_list(), jr_logger( logger )
 {
@@ -55,12 +61,15 @@ JobResubmitter::JobResubmitter( jccommon::EventLogger *logger ) : jr_list(), jr_
 JobResubmitter::~JobResubmitter( void )
 {}
 
-void JobResubmitter::resubmit( int laststatus, const string &edgid, const string &sequence_code )
+void JobResubmitter::resubmit( int laststatus, const string &edgid, const string &sequence_code, jccommon::IdContainer *container )
 {
   const configuration::WMConfiguration       *config = configuration::Configuration::instance()->wm();
   utilities::FileListDescriptorMutex          flmutex( this->jr_list );
   classad::ClassAd                            command, arguments;
   logger::StatePusher                         pusher( elog::cedglog, "JobResubmitter::resubmit(...)" );
+  int                                         retcode;
+  string                                      errors;
+  JobWrapperOutputParser                      parser( edgid );
 
   elog::cedglog << logger::setlevel( logger::info )
 		<< "Last known status = " << laststatus << endl;
@@ -78,10 +87,31 @@ void JobResubmitter::resubmit( int laststatus, const string &edgid, const string
 
       break;
 #endif
+  case jccommon::no_resubmission:
+    elog::cedglog << logger::setlevel( logger::warning ) << "Job has been cancelled by the user." << endl
+		  << "Don't resubmit it." << endl;
+    break;
+  case GLOBUS_GRAM_PROTOCOL_ERROR_STAGE_OUT_FAILED: // see LCG2 bug 3987
+    if( parser.parse_file( retcode, errors ) == JWOP::good ) { // Job terminated successfully
+      
+      jccommon::IdContainer::iterator position = container->position_by_edg_id( edgid );
+      
+      elog::cedglog << logger::setlevel( logger::verylow ) << "Real return code: " << retcode << endl;
+      
+      this->jr_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, position->sequence_code() );
+      this->jr_logger->terminated_event( retcode ); // This call discriminates between 0 and all other codes.
+      container->update_pointer( position, this->jr_logger->sequence_code(), ULOG_JOB_TERMINATED );
+      
+      jccommon::ProxyUnregistrar( edgid ).unregister();
+      
+      break;
+    } else // resubmit it --> default label. Pay attention: don't put any other case under this one!!!
+      elog::cedglog << logger::setlevel( logger::verylow ) << "The job is not terminated successfully. Reason: " << errors << endl;
+    
   default:
     elog::cedglog << logger::setlevel( logger::info ) << "Resubmitting job to WM." << endl
 		  << logger::setlevel( logger::debug ) << "EDG id = " << edgid << endl;
-
+    
     command.InsertAttr( "version", string("1.0.0") );
     command.InsertAttr( "command", string("jobresubmit") );
     arguments.InsertAttr( "id", edgid );

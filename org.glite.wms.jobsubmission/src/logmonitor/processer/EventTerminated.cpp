@@ -48,6 +48,8 @@ void EventTerminated::processNormalJob( jccommon::IdContainer::iterator &positio
   elog::cedglog << logger::setlevel( logger::info )
 		<< ei_s_edgideq << position->edg_id() << endl
 		<< "Return value = " << this->et_event->returnValue << endl;
+  
+  this->ei_data->md_timer->remove_all_timeouts( this->et_event->cluster ); // Remove any installed timeout for this job.
 
   this->ei_data->md_sizefile->decrement_pending();
 
@@ -147,8 +149,7 @@ void EventTerminated::process_event( void )
       jccommon::ProxyUnregistrar( position->edg_id() ).unregister();
       jccommon::JobFilePurger( position->edg_id(), true ).do_purge();
 
-			this->ei_data->md_sizefile->decrement_pending();
-      //this->ei_data->md_sizefile->set_completed();
+      this->ei_data->md_sizefile->decrement_pending();
     }
     else if( !this->ei_data->md_isDagLog ) // Common jobs only...
       this->processNormalJob( position );

@@ -736,12 +736,13 @@ Timer &Timer::remove_timeout( EventIterator &evIt )
   return *this;
 }
 
-Timer &Timer::remove_timeout( int condorid )
+Timer &Timer::remove_timeout( int condorid, int eventcode )
 {
   EventIterator    it, end = this->t_events.end();
 
   for( it = this->t_events.begin(); it != end; ++it )
-    if( it->second->to_event()->cluster == condorid )
+    if( (it->second->to_event()->cluster == condorid ) &&
+	( it->second->to_event()->eventNumber == static_cast<ULogEventNumber>(eventcode) ) )
       break;
 
   return this->remove_timeout( it );

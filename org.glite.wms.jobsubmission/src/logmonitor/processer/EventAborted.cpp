@@ -46,12 +46,12 @@ void EventAborted::process_event( void )
 		<< "For cluster " << this->ei_condor << endl;
 
   position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
-
+  
   if( position == this->ei_data->md_container->end() )
     elog::cedglog << logger::setlevel( logger::warning ) << ei_s_notsub << endl;
   else if( this->ei_data->md_isDagLog && (this->ei_data->md_dagId == position->edg_id()) ) { // Aborting of a DAG job
     elog::cedglog << logger::setlevel( logger::info ) << ei_s_dagideq << position->edg_id() << endl;
-
+    
     this->ei_data->md_sizefile->set_last( true );
 
     this->ei_data->md_sizefile->decrement_pending();
@@ -67,13 +67,14 @@ void EventAborted::process_event( void )
     if( this->ei_data->md_isDagLog )
       elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
 
+    if( this->ea_removeTimer )
+      this->ei_data->md_timer->remove_all_timeouts( this->ea_event->cluster ); // Remove any installed timeout for the job
+
     this->ei_data->md_sizefile->decrement_pending();
     this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
 
     if( this->ei_data->md_aborted->search(this->ei_condor) ) { // Job got an error
       this->ei_data->md_aborted->remove( this->ei_condor );
-      if( this->ea_removeTimer )
-	this->ei_data->md_timer->remove_all_timeouts( this->ea_event->cluster ); // Remove any installed timeout for this job...
 
       this->ei_data->md_logger->aborted_by_system_event( ei_s_joberror );
 
@@ -82,7 +83,7 @@ void EventAborted::process_event( void )
       else {
 	jccommon::JobFilePurger( position->edg_id() ).do_purge();
 	// Only resubmit common jobs...
-	this->ei_data->md_resubmitter->resubmit( position->last_status(), position->edg_id(), position->sequence_code() );
+	this->ei_data->md_resubmitter->resubmit( position->last_status(), position->edg_id(), position->sequence_code(), this->ei_data->md_container );
       }
     }
     else { // Job had a "normal" life cycle...

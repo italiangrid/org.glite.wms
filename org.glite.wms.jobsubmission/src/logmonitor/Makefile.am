@@ -17,6 +17,18 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2004/09/07 10:21:22  gianelle
+#       Fixes some LCG2 bugs:
+#       3807 - Log monitor must not crash on bad CondorG log files
+#       3883 - Cancel request from JC never appears in condorG
+#       3884 - Jobs not cancelled: unknown to the system
+#       3895 - Job canceled on receipt of ULOG_GLOBUS_RESOURCE_DOWN
+#       3987 - Try to finish job exiting with globus error 155
+#
+#       Fixed a new bug found during the test of the previous patches:
+#       a user cancel during the timeout resubmission failed (the job was
+#       resubmitted in any case)
+#
 #       Revision 1.10  2004/08/24 14:06:32  pandreet
 #       GSSAPI dependencies
 #
@@ -111,6 +123,7 @@ libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	./processer/EventAborted.cpp \
 	./processer/EventGlobusSubmitFailed.cpp \
 	./processer/EventGlobusResourceDown.cpp \
+	./processer/EventGlobusResourceUp.cpp \
 	./processer/EventJobHeld.cpp \
 	./processer/EventGeneric.cpp \
 	./processer/MonitorData.cpp \
