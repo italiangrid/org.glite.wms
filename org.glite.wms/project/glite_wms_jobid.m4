@@ -2,8 +2,6 @@ dnl Usage:
 dnl AC_GLITE_WMS_JOBID
 dnl - GLITE_WMS_JOBID_CFLAGS
 dnl - GLITE_WMS_JOBID_LIBS
-dnl check for things needed by globus_ssl_utils thirdparty library
-dnl (basicaly a modified code from globus_ssl_utils's configure.in file)
 
 AC_DEFUN(AC_GLITE_WMS_JOBID,
 [

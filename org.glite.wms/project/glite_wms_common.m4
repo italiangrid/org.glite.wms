@@ -1,9 +1,16 @@
 dnl Usage:
 dnl AC_GLITE_WMS_COMMON
 dnl - GLITE_WMS_COMMON_CFLAGS
-dnl - GLITE_WMS_COMMON_LIBS
-dnl check for things needed by globus_ssl_utils thirdparty library
-dnl (basicaly a modified code from globus_ssl_utils's configure.in file)
+dnl - GLITE_WMS_COMMON_CONF_LIBS
+dnl - GLITE_WMS_COMMON_CONF_WRAPPER_LIBS
+dnl - GLITE_WMS_COMMON_CONFIG_LIBS
+dnl - GLITE_WMS_COMMON_LDIF2CLASSADS_LIBS
+dnl - GLITE_WMS_COMMON_LOGGER
+dnl - GLITE_WMS_COMMON_PROCESS
+dnl - GLITE_WMS_COMMON_UT_EXCEPTIONS_LIBS
+dnl - GLITE_WMS_COMMON_UT_UTIL_LIBS
+dnl - GLITE_WMS_COMMON_UT_FTP_LIBS
+dnl - GLITE_WMS_COMMON_UT_II_LIBS
 
 AC_DEFUN(AC_GLITE_WMS_COMMON,
 [

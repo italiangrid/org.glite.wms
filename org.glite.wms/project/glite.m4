@@ -1,8 +1,8 @@
 dnl Usage:
 dnl AC_GLITE
 dnl - GLITE_LOCATION
-dnl check for things needed by globus_ssl_utils thirdparty library
-dnl (basicaly a modified code from globus_ssl_utils's configure.in file)
+dnl - GLITE_CFLAGS
+dnl - DISTTAR
 
 AC_DEFUN(AC_GLITE,
 [

@@ -1,10 +1,10 @@
 dnl Usage:
 dnl AC_CLASSAD(MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for globus, and defines
 dnl - CLASSAD_CFLAGS (compiler flags)
 dnl - CLASSAD_LIBS (linker flags, stripping and path)
+dnl - CLASSAD_DL_LIBS
 dnl - CLASSAD_INSTALL_PATH
-dnl prerequisites:
+dnl - CLASSAD_PATH
 
 AC_DEFUN(AC_CLASSADS,
 [

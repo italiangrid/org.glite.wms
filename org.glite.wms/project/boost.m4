@@ -1,6 +1,5 @@
 dnl Usage:
 dnl AC_BOOST(MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for boost, and defines
 dnl - BOOST_CFLAGS (compiler flags)
 dnl - BOOST_LIBS (linker flags, stripping and path)
 dnl - BOOST_FS_LIBS (linker flags, stripping and path)
@@ -8,7 +7,6 @@ dnl - BOOST_THREAD_LIBS (linker flags, stripping and path)
 dnl - BOOST_REGEX_LIBS (linker flags, stripping and path)
 dnl - BOOST_PYTHON_LIBS (linker flags, stripping and path)
 dnl - BOOST_INSTALL_PATH
-dnl prerequisites:
 
 AC_DEFUN(AC_BOOST,
 [

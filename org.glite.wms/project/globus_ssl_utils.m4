@@ -2,8 +2,6 @@ dnl Usage:
 dnl AC_GLOBUS_SSL_UTILS
 dnl - GLOBUS_SSL_UTILS_CFLAGS
 dnl - GLOBUS_SSL_UTILS_LIBS
-dnl check for things needed by globus_ssl_utils thirdparty library
-dnl (basicaly a modified code from globus_ssl_utils's configure.in file)
 
 AC_DEFUN(AC_GLOBUS_SSL_UTILS,
 [
