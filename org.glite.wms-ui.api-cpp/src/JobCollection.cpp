@@ -3,9 +3,6 @@
 *  author    : Alessandro Maraschini <alessandro.maraschini@datamat.it>
 *  copyright : (C) 2002 by DATAMAT
 **************************************************************************/
-
-#include <boost/lexical_cast.hpp>
-
 #include "glite/wms/jdl/JobAd.h"
 
 #include "glite/wmsui/api/JobCollection.h"
@@ -246,20 +243,17 @@ pthread_t JobCollection::ExecuteThread(void* (*fn)(void*), void *arg) {
    int jobNumber =(    (struct paramStruct* )arg    )->jobNumber ;
    int errorCode = pthread_attr_init(&pthread_attr) ;
    if (errorCode !=0) {
-	 string nn(boost::lexical_cast<string>(jobNumber));
-         throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT,  nn )  ;
+         throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT,  jobNumber )  ;
    }
    //DETACH
    errorCode = pthread_attr_setdetachstate(&pthread_attr, PTHREAD_CREATE_JOINABLE) ;
    if (errorCode != 0 ) {
-	 string nn(boost::lexical_cast<string>(jobNumber));
-         throw   Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_DETACH  , nn ) ;
+         throw   ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_DETACH  , jobNumber ) ;
    }
    //CREATE
    errorCode =  pthread_create(&tid, &pthread_attr   , fn, arg) ;
    if (errorCode!= 0  ) {
-        string nn(boost::lexical_cast<string>(jobNumber));
-        throw   Exception ( __FILE__ , __LINE__ ,METHOD ,  THREAD_CREATE, nn) ;
+        throw   ThreadException ( __FILE__ , __LINE__ ,METHOD ,  THREAD_CREATE,jobNumber) ;
    }
    return tid ;
    GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
@@ -278,8 +272,7 @@ resultStruct   JobCollection::retrieve ( pthread_t tid ,  int  jobNumber){
      }else  if (joint ==ESRCH) {
           return resultStruct (JOIN_FAILED , "Unable To Join the thread");
      }else {
-          string nn(boost::lexical_cast<string>(jobNumber));
-          throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT, nn )  ;
+          throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_INIT,jobNumber )  ;
      }
      GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
