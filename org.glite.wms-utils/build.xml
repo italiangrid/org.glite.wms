@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.17  2004/09/29 13:19:52  flammer
+	Only update of formatting os small.memory lines.
+
 	Revision 1.16  2004/09/09 21:10:38  dimeglio
 	Moved tag target to targets-common
-
+	
 	Revision 1.15  2004/08/27 03:04:04  dimeglio
 	Preserve original timestamp when copying file and overwrite when new
 	
@@ -250,8 +253,8 @@
 			</then>
 			<else>
 				<ant dir="${wms-utils.subsystem.dir}.thirdparty-globus_ssl_utils"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
@@ -266,13 +269,13 @@
 			</then>
 			<else>
 				<ant dir="${wms-utils.subsystem.dir}.exception"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
 	</target>
 
-    <target name="tls" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
+    	<target name="tls" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -282,11 +285,11 @@
 			</then>
 			<else>
 				<ant dir="${wms-utils.subsystem.dir}.tls"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
-    </target>
+    	</target>
 
 	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
 		<if>
@@ -298,11 +301,11 @@
 			</then>
 			<else>
 				<ant dir="${wms-utils.subsystem.dir}.jobid"
-	                    target="${target}"
-	                    inheritall="false" />
+	                    	     target="${target}"
+	                    	     inheritall="false" />
 			</else>
 		</if>
-    </target>
+    	</target>
 
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="thirdparty-globus_ssl_utils,
