@@ -5,7 +5,10 @@
 ***************************************************************************/
 #include "glite/wmsui/api/JobExceptions.h"
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+namespace glite {
+namespace wmsui {
+namespace api {
+
 using namespace std ;
 using namespace glite::wmsustils::exception ;
 
@@ -23,16 +26,16 @@ JobCollectNoJobException::JobCollectNoJobException(const std::string& file,
 	: JobCollectionException(file, line, method, code,
 				 "JobCollectNoJobException" ){
 	switch (code){
-	case  WL_NOSUCHJOB : //Deprecated Code
+	case  WMS_NOSUCHJOB : //Deprecated Code
 	    error_message = "No such job found, unable to cancel"  ;
 	    break;
 	case  ENOENT :
 	    error_message = "No such job found, unable to cancel"  ;
 	    break;
-	case  WL_DUPLICATE_JOB:
+	case  WMS_DUPLICATE_JOB:
 	    error_message = "Duplicate JobId value, unable to insert";
 	    break;
-	default:    //WL_DUPLICATE_JOB
+	default:    //WMS_DUPLICATE_JOB
 	    error_message = "Duplicate JobId value, unable to insert";
 	    break;
 	}
@@ -69,6 +72,6 @@ JobOperationException::JobOperationException(const std::string& file,
 	error_message += reason;
 }
 
-//EWC_END_NAMESPACE; //Close the NameSpace
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
-
+} // api
+} // wmsui
+} // glite

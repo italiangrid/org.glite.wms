@@ -23,12 +23,21 @@
 
 #define EDG_WL_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 // Namespace definition:
-namespace glite{
-	namespace  wms{
-		namespace  networkserver{namespace client { class NSClient ;  } }
-	}
+namespace glite {
+
+namespace  wms {
+namespace  manager {
+namespace ns {
+namespace client { 
+class NSClient ;  
+} 
 }
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+}
+}
+
+namespace wmsui {
+namespace api {
+
 /**
  * Allow controlling the Dag
  * The Job class provides methods that allow controlling the job during its lifetime.
@@ -83,7 +92,7 @@ class Request{
 	void setDagAd(const glite::wms::jdl::ExpDagAd& ad);
 	/** set  the JobId instance
 	* @param id the JobId Instance to set*/
-	void setDagId(const glite::wms::jobid::JobId& id);
+	void setDagId(const glite::wmsutils::jobid::JobId& id);
 	//@}
 
 	/**@name Job Action Methods */
@@ -146,7 +155,7 @@ private:
 	void regist() ;
 	void getOutput(const std::string& dir_path , const std::string& nsRootPath, const  glite::wms::lb::JobStatus& status );
 	// Private Members:
-	glite::wms::jobid::JobId* jid;
+	glite::wmsutils::jobid::JobId* jid;
 	/*Internal DAGAd instance pointer  */
 	glite::wms::jdl::ExpDagAd* dag;
 	/*Internal JobAd instance pointer  */
@@ -167,6 +176,9 @@ private:
 	dagType type ;
 };
 
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+} // api
+} // wmsui
+} // glite
+
 #endif
 

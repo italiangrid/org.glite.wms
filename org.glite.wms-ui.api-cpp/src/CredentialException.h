@@ -7,11 +7,13 @@
  * Contributors are mentioned in the code where appropriate.
  */
 
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsui/api/exception_codes.h"
 
-// EWC_BEGIN_NAMESPACE; // NameSpace Definition
-USERINTERFACE_NAMESPACE_BEGIN//Defining UserInterFace NameSpace
+namespace glite {
+namespace wmsui {
+namespace api {
+
 /**
  * Credential Exception class defines a series of possible exception that UserCredential class might throw
  * @see UserCredential
@@ -66,7 +68,7 @@ public:
    ProxyException   (     std::string file,
                                    int line,
                                   std::string method):
-   CredentialException(file,line,method,  WL_PROXY  , "ProxyException"){
+   CredentialException(file,line,method,  WMS_PROXY  , "ProxyException"){
    this->error_message = "Unable to get credential" ;
    };
 };//End CLass
@@ -84,15 +86,15 @@ public:
                                   std::string method,
 				  int code,
 				  std::string field = "" ):
-CredentialException(file,line,method,  WL_PROXY  , "VomsException"){
+CredentialException(file,line,method,  WMS_PROXY  , "VomsException"){
 	switch( code){
-		case WL_VO_LOAD:
+		case WMS_VO_LOAD:
 			this->error_message = "Unable to Load VirtualOrganisation certificate. SSL method: " + field + " failed.";
 			break;
-		case WL_VO_TYPE:
+		case WMS_VO_TYPE:
 			this->error_message = "Unbable to retrieve voms groups for VirtualOrganisation: " + field ;
 			break;
-		default: // WL_VO_DEFAULT
+		default: // WMS_VO_DEFAULT
 			this->error_message = "Unable to find default VirtualOrganisation name" ;
 	}
 };
@@ -118,6 +120,8 @@ public:
    };
 };//End CLass CredKeyException
 
-// EWC_END_NAMESPACE ;//Close the NameSpace
-} USERINTERFACE_NAMESPACE_END  //Closing  UserInterFace NameSpace
+} // api
+} // wmsui
+} // glite
+
 #endif

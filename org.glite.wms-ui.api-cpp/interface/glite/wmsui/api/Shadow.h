@@ -6,10 +6,14 @@
  * Contributors are mentioned in the code where appropriate.
 */
 // #include "edg/workload/userinterface/client/Job.h"
-#include "Listener.h"
-#include "glite/wms/jobid/JobId.h"
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+#include "Listener.h"
+#include "glite/wmsutils/jobid/JobId.h"
+
+namespace glite {
+namespace wmsui {
+namespace api {
+
 /**
  * This class provides the core management for interactive jobs.
  * once the edg-grid-console-shadow has started successfully and the job is running
@@ -49,13 +53,13 @@ class Shadow {
   private:
 	friend class Job ;
 	/**Constructor*/
-	Shadow (glite::wms::jobid::JobId  jid ,  Listener* ls) ;
+	Shadow (glite::wmsutils::jobid::JobId  jid ,  Listener* ls) ;
 	/**Ctor */
 	Shadow();
 	/**CDtor */
 	~Shadow();
 	/**Set the JobId where to listen to */
-	void set(  glite::wms::jobid::JobId  jid , Listener* ls=NULL) ;
+	void set(  glite::wmsutils::jobid::JobId  jid , Listener* ls=NULL) ;
 	/** Launch the listener process */
 	void console( int port = 0);
 	/** Private */
@@ -65,8 +69,12 @@ class Shadow {
 	std::string host;
 	Listener *listener ;
 	std::string pipeRoot;
-	glite::wms::jobid::JobId jobId;
+	glite::wmsutils::jobid::JobId jobId;
 };
 //end Listener class
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite
+
 #endif

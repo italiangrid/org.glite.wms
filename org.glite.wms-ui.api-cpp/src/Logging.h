@@ -13,9 +13,11 @@
 #include "glite/wmsutils/jobid/JobId.h"
 // Lb logger API
 #include "glite/lb/consumer.h"
-#include "glite/wmsui/api/userinterface_namespace.h"
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+namespace glite {
+namespace wmsui {
+namespace api {
+
 class Logging  {
    public:
 	enum txType {
@@ -44,5 +46,9 @@ class Logging  {
 	int nsPort ;
 	bool jCollect ;
 };
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite
+
 #endif

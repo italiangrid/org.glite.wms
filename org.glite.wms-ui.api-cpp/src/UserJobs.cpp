@@ -12,8 +12,10 @@
 //LB includes:
 #include "glite/lb/ServerConnection.h"
 
+namespace glite {
+namespace wmsui {
+namespace api {
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 using namespace std ;
 using namespace glite::wmsustils::exception ;
 using namespace glite::wmsutils::jobid ;
@@ -51,4 +53,7 @@ GLITE_STACK_TRY("getStatus   (string lb_address ,  vector <JobStatus> &jobsStatu
    server.userJobStates(jobsStates) ;
 GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite

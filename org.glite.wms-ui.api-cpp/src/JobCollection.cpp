@@ -3,15 +3,21 @@
 *  author    : Alessandro Maraschini <alessandro.maraschini@datamat.it>
 *  copyright : (C) 2002 by DATAMAT
 **************************************************************************/
+
 #include "glite/wms/jdl/JobAd.h"
+
 #include "glite/wmsui/api/JobCollection.h"
 #include "glite/wmsui/api/JobExceptions.h"
 #include "glite/wmsui/api/CredentialException.h"
+
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/producer.h"
+
 // requestad
 #include "glite/wms/jdl/JDLAttributes.h"
+
 #include "glite/wmsutils/jobid/JobId.h"
+
 // NetworkServer
 #include "NSClient.h"
 
@@ -20,7 +26,9 @@ using namespace glite::wmsutils::jobid ;
 using namespace glite::wms::lb ;
 using namespace std ;
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+namespace glite {
+namespace wmsui {
+namespace api {
 
 /******************************************************************
  methods :  ResultStruct Methods:
@@ -55,7 +63,7 @@ JobCollection::JobCollection(const Job& job , unsigned int n) {
               (jobs[i]).setCollect();
      }
  } else
-       throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WL_DUPLICATE_JOB );   //TBD other code
+       throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WMS_DUPLICATE_JOB );   //TBD other code
   Job::initialise() ;       
   maxThreadNumber = 1 ;
  GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
@@ -74,24 +82,24 @@ void JobCollection::insert(const Job& job){
 			vector<Job>::iterator   jobIt;
 			for (jobIt = jobs.begin() ;  jobIt!=jobs.end() ; ++jobIt )
 				if    (   jobIt->jid->toString()   == id   )
-					throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WL_DUPLICATE_JOB , id);
+					throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WMS_DUPLICATE_JOB , id);
 			break;
 		}
 		case JOB_AD:
 			break;
 		default:
-			throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WL_DUPLICATE_JOB );    //TBD other code
+			throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WMS_DUPLICATE_JOB );    //TBD other code
 	}
 /* OLD CHECK
     if  (job.jobType == JOB_NONE) {      //The Job Is empty, cannot insert
-                throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WL_DUPLICATE_JOB );    //TBD other code
+                throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WMS_DUPLICATE_JOB );    //TBD other code
     }  else if (       job.jid->isSet()  ) {
          //The JobId has been already set: chek if a previous identical jobId has been inserted (throw)
          string id  = job.jid->toString()   ;
          vector<Job>::iterator   jobIt;
          for (jobIt = jobs.begin() ;  jobIt!=jobs.end() ; ++jobIt ){
              if    (   jobIt->jid->toString()   == id   )
-                   throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WL_DUPLICATE_JOB , id);
+                   throw   JobCollectNoJobException ( __FILE__ , __LINE__ , METHOD ,WMS_DUPLICATE_JOB , id);
          }
     }
 */
@@ -142,12 +150,12 @@ void JobCollection::remove (const Job& job){
              }
           }catch  (glite::wmsustils::exception::Exception &exc)  {
           //No Jobad found ---> ERROR
-            throw JobCollectNoJobException ( __FILE__ , __LINE__ ,METHOD ,WL_NOSUCHJOB ,jobString);
+            throw JobCollectNoJobException ( __FILE__ , __LINE__ ,METHOD ,WMS_NOSUCHJOB ,jobString);
           }
 */    //TBD
      }
      if (! cleared)    {
-         throw  JobCollectNoJobException ( __FILE__ , __LINE__ ,METHOD ,WL_NOSUCHJOB ,jobString);
+         throw  JobCollectNoJobException ( __FILE__ , __LINE__ ,METHOD ,WMS_NOSUCHJOB ,jobString);
          }
   GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
@@ -269,7 +277,7 @@ CollectionResult JobCollection::launch( const paramStruct  &params ){
      GLITE_STACK_TRY("JobCollection::launch( const paramStruct &params )") ;
      cout << "JobCollection::launch" << endl ;
      if (jobs.size()==0)
-       throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED ,"The collection is empty" ) ;
+       throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"The collection is empty" ) ;
      //Check If the Credential are OK
      string subj , issuer;
      int cred_type, strength, time_left;
@@ -437,7 +445,7 @@ void* JobCollection::getOutputTo (void* paramStruct) {
 	string dir_path = (   (struct paramStruct* )paramStruct)-> parA ;
 	try{
 		if (mkdir( dir_path.c_str(), 0777) == -1)
-			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED ,"Unable To create the directory: " + dir_path ) ;
+			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"Unable To create the directory: " + dir_path ) ;
 		(   (struct paramStruct* )paramStruct )->job->getOutput(dir_path);
 		return  (void*)    new resultStruct ( SUCCESS )  ;
 	} catch  ( exception &exc){
@@ -448,4 +456,6 @@ void* JobCollection::getOutputTo (void* paramStruct) {
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+} // api
+} // wmsui
+} // glite

@@ -20,8 +20,7 @@ client_HEADERS = \
 	Listener.h \
 	Shadow.h \
 	UserJobs.h \
-	exception_codes.h \
-        userinterface_namespace.h
+	exception_codes.h 
 
 libglite_wmsui_client_la_SOURCES = Job.cpp \
 	Request.cpp \
@@ -34,13 +33,13 @@ libglite_wmsui_client_la_SOURCES = Job.cpp \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
+	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
 	$(VOMS_CFLAGS) \
-	$(GLOBUS_SSL_UTILS_CFLAGS) \
 	-fPIC -D_REENTRANT -DWANT_NAMESPACES
  
 MAINTAINERCLEANFILES = Makefile.in

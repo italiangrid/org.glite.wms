@@ -11,11 +11,22 @@
 #include <list>
 
 // ClassAd Definition
-namespace classad {class ClassAd ; }
-// JobId Definition
-namespace glite { namespace wmsutils { namespace jobid { class JobId ; } } }
+namespace classad {
+class ClassAd ; 
+}
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+// JobId Definition
+namespace glite { 
+
+namespace wmsutils { 
+namespace jobid { 
+class JobId ; 
+} 
+} 
+
+namespace wmsui {
+namespace api {
+
 #define UJ_CANCEL_ERR           -1
 /**
  * Allow controlling all the jobs owned by the user
@@ -64,5 +75,9 @@ class UserJobs{
       std::string cred_path ;
 
 };
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite
+
 #endif

@@ -5,8 +5,11 @@
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  * Contributors are mentioned in the code where appropriate.
 */
-#include "userinterface_namespace.h"
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+
+namespace glite {
+namespace wmsui {
+namespace api {
+
 class Shadow ;
 /**
 * The listener interface is used in order to manage the interaction of interactive jobs.
@@ -28,5 +31,9 @@ class Listener {
      virtual void run ( Shadow *shadow) const = 0 ;
 };
 //end Listener class
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite 
+
 #endif

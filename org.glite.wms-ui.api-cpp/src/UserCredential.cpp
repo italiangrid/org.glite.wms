@@ -10,13 +10,10 @@
 #include "sslutils.h"
 #include <iostream>  //cout
 
+namespace glite {
+namespace wmsui {
+namespace api {
 
-
-
-
-
-
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 using namespace glite::wmsustils::exception ;
 using namespace std ;
 //   Initialize static mutex variable
@@ -111,19 +108,19 @@ void UserCredential::getInfo(string& subj, string& issuer, int& cred_type, int& 
            else{
               proxy_get_filenames(pcd, 1, NULL, NULL, &proxy_file, NULL, NULL);
               if (!proxy_file) {
-                 throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WL_CRED  , "determine" );
+                 throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
                  }
               }
            /* Find proxy file */
            if (stat(proxy_file,&stx) != 0) {
-              throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WL_CRED, "find" );
+              throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED, "find" );
            }
            /* Load proxy */
            pcd->type=CRED_TYPE_PROXY;
            if (proxy_load_user_cert(pcd, proxy_file, NULL, NULL))
-              throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WL_CRED, "load" );
+              throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED, "load" );
            if ((pcd->upkey = X509_get_pubkey(pcd->ucert)) == NULL)
-              throw   CredKeyException(__FILE__ , __LINE__ ,METHOD, WL_CRED );
+              throw   CredKeyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED );
            /* The things we will need to know below: subject, issuer,
            strength, validity, type */
            ASN1_UTCTIME *        asn1_time = NULL;
@@ -202,7 +199,7 @@ STACK_OF(X509) *load_chain(char *certfile)
     printf("memory allocation failure\n");
   BIO_free(in);
   sk_X509_INFO_free(sk);
-    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WL_VO_TYPE, "");
+    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WMS_VO_TYPE, "");
   }
 
   if(!(in=BIO_new_file(certfile, "r"))) {
@@ -210,7 +207,7 @@ STACK_OF(X509) *load_chain(char *certfile)
     // goto end;
   BIO_free(in);
   sk_X509_INFO_free(sk);
-    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WL_VO_TYPE, "" );
+    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WMS_VO_TYPE, "" );
   }
 
   /* This loads from a file, a stack of x509/crl/pkey sets */
@@ -219,7 +216,7 @@ STACK_OF(X509) *load_chain(char *certfile)
     // goto end;
   BIO_free(in);
   sk_X509_INFO_free(sk);
-    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WL_VO_TYPE, "" );
+    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WMS_VO_TYPE, "" );
   }
 
   /* scan over it and pull out the certs */
@@ -242,7 +239,7 @@ STACK_OF(X509) *load_chain(char *certfile)
   BIO_free(in);
   sk_X509_INFO_free(sk);
     // goto end;
-    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WL_VO_TYPE, "" );
+    throw CredProxyException(__FILE__ , __LINE__ , "load_chain" ,WMS_VO_TYPE, "" );
   }
   ret=stack;
   return(ret);
@@ -296,7 +293,7 @@ void UserCredential::load_voms ( vomsdata& d  ){
 	string METHOD("load_voms(vomsdata vo)");
 	if (proxy_file ==""){
 		proxy_get_filenames(pcd, 1, NULL, NULL, &proxy_file, NULL, NULL);
-		if (!proxy_file)  throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WL_CRED  , "determine" );
+		if (!proxy_file)  throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
 	}
 	d.data.clear() ;
 	BIO *in = NULL;
@@ -311,11 +308,11 @@ void UserCredential::load_voms ( vomsdata& d  ){
 				return ;
 			}
 			//  if this point is reached then exception is thrown
-			throw CredProxyException(__FILE__ , __LINE__ ,METHOD,  WL_VO_LOAD  , "retrieve" );
+			throw CredProxyException(__FILE__ , __LINE__ ,METHOD,  WMS_VO_LOAD  , "retrieve" );
 		}
-		throw CredProxyException(__FILE__ , __LINE__ ,METHOD, WL_VO_LOAD  , "BIO_read_filename" );
+		throw CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_VO_LOAD  , "BIO_read_filename" );
 	}
-	throw CredProxyException(__FILE__ , __LINE__ ,METHOD, WL_VO_LOAD  , "BIO_new" );
+	throw CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_VO_LOAD  , "BIO_new" );
 } ;
 
 
@@ -326,7 +323,7 @@ void UserCredential::load_voms ( vomsdata& d  ){
 vector <string> UserCredential::load_groups( voms &v ){
 	// check the data
 	if (  v.type!=TYPE_STD  )
-		throw CredProxyException(__FILE__ , __LINE__ , "load_groups" ,WL_VO_TYPE, v.voname );
+		throw CredProxyException(__FILE__ , __LINE__ , "load_groups" ,WMS_VO_TYPE, v.voname );
 	// appending group names
 	vector <string> vect ; // contains the groups
 	for (  vector<data>::iterator i = v.std.begin() ; i!= v.std.end() ; i++  ){
@@ -345,7 +342,7 @@ std::string  UserCredential::getDefaultVoName (){
 	voms v;
 	// get Default voms
 	if (   !vo_data.DefaultData(  v  )   )
-		throw CredProxyException(__FILE__ , __LINE__ ,"getDefaultVoName", WL_VO_DEFAULT  , "DefaultData" );
+		throw CredProxyException(__FILE__ , __LINE__ ,"getDefaultVoName", WMS_VO_DEFAULT  , "DefaultData" );
 	return string (  v.voname );
 };
 
@@ -375,7 +372,7 @@ std::vector <std::string> UserCredential::getGroups ( const std::string& voname 
 	for ( vector<voms>::iterator it = vect.begin() ; it!= vect.end() ; it++ )
 		if ( voname == it->voname ) return load_groups( *it  ) ;
 	// If this step is reached then the searched voms has not been found
-	throw CredProxyException(__FILE__ , __LINE__ ,"load_groups" , WL_VO_TYPE  , "voname" );
+	throw CredProxyException(__FILE__ , __LINE__ ,"load_groups" , WMS_VO_TYPE  , "voname" );
 }
 /******************************************************************
  method: getDefaultGroups
@@ -386,7 +383,7 @@ std::vector <std::string > UserCredential::getDefaultGroups (){
 	voms v;
 	// get Default voms
 	if (!vo_data.DefaultData(v))
-		throw CredProxyException(__FILE__ , __LINE__ ,"getDefaultGroups" , WL_VO_DEFAULT  , "" );
+		throw CredProxyException(__FILE__ , __LINE__ ,"getDefaultGroups" , WMS_VO_DEFAULT  , "" );
 	return load_groups( v ) ;
 
 }
@@ -404,9 +401,8 @@ bool UserCredential::containsVo ( const std::string& voname ) {
 	return false ;
 }
 
-
-
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
-
+} // api
+} // wmsui
+} // glite
 
 

@@ -17,17 +17,16 @@ using namespace glite::wmsustils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
 using namespace glite::wms::jdl ; // DagAd
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
-
-
-
+namespace glite {
+namespace wmsui {
+namespace api {
 
 /***************************************** GENERAL USED METHODS ************************************/
 void checkNs( const string& ns , string& nsHost , int& nsPort ){
 	string METHOD = "checkNS( const string& nsAddress , string& nsHost , int& nsPort )" ;
 	unsigned int port = ns.find (":") ;
 	if ( port > ns.size() - 2 )
-		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Unable to parse NS address: " +ns ) ;
+		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to parse NS address: " +ns ) ;
 	nsHost =ns.substr(0, port) ;
 	sscanf (ns.substr ( port+1 ).c_str() , "%d" , &nsPort );
 }
@@ -82,18 +81,18 @@ void Request::getOutput(const std::string& dir_path){
 	GLITE_STACK_TRY("Request::getOutput(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort)");
 	if (     (  type!= EWU_TYPE_ID)  && (type!= EWU_TYPE_SUBMITTED  )   )
 		//  Get Output is not allowed
-		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "OutpuFiles Retrieval not allowed" ) ;
+		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "OutpuFiles Retrieval not allowed" ) ;
 	JobStatus stat = getStatus();
 	switch ( stat.status  ){
 		case JobStatus::DONE:
 			if (stat.getValInt ( JobStatus::DONE_CODE) == 0)
 				break;
 		case JobStatus::CLEARED:
-			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Output files already successfully retrieved") ;
+			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Output files already successfully retrieved") ;
 				break;
 		default:
 			// Operation not allowed
-			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Output not allowed: check the status ("+stat.name() +")" ) ;
+			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Output not allowed: check the status ("+stat.name() +")" ) ;
 	}
 	// Nsclient instance:
 	string nsHost ;
@@ -133,11 +132,11 @@ void Request::getOutput(const std::string& dir_path , const std::string& nsRootP
 		string command ;
 		vector<string> outputList ;
 		nsClient->getOutputFilesList ( status.getValJobId( JobStatus::JOB_ID ).toString() , outputList ) ;
-		if ( outputList.size() ==0  ) throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED ,"No OutputSandbox file(s) returned from: " + nsHost) ;
+		if ( outputList.size() ==0  ) throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"No OutputSandbox file(s) returned from: " + nsHost) ;
 		string outputErr ;
 		//  create directory
 		if (mkdir( dest_path.c_str(), 0777) == -1)
-			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED ,"Unable To create the directory: " + dest_path ) ;
+			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"Unable To create the directory: " + dest_path ) ;
 		for  (  vector<string>::iterator it  =  outputList.begin() ; it !=outputList.end() ; it++ ) {
 			command = commandSource + *it + " file:"+ dest_path +"/" +it->substr( it->find_last_of( "/") , it->length()  ) ;
 			cout << "This is the fucking command..." << command << endl ;
@@ -146,7 +145,7 @@ void Request::getOutput(const std::string& dir_path , const std::string& nsRootP
 				outSuccess = false ;
 			}
 		}
-		if (!outSuccess)  throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED ,"Unable to retrieve all output file(s):"+outputErr ) ;
+		if (!outSuccess)  throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,"Unable to retrieve all output file(s):"+outputErr ) ;
 		if ( nsClient-> jobPurge(  status.getValJobId( JobStatus::JOB_ID ).toString() ))
 			cerr << "\nWarning: Unable to purge the output files for the job:\n" +status.getValJobId( JobStatus::JOB_ID ).toString() ;
 	}
@@ -158,7 +157,7 @@ JobId Request::submit(const std::string& nsHost , int nsPort , const std::string
 	GLITE_STACK_TRY("Request::submit(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort)");
 	if (     (  type!= EWU_TYPE_DAG_AD  )&& (  type!= EWU_TYPE_JOB_AD  )   )
 		//  Submission is not allowed
-		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Submission not allowed" ) ;
+		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Submission not allowed" ) ;
 	// Nsclient instance:
 	nsClient =   new glite::wms::manager::ns::client::NSClient   ( nsHost, nsPort , (glite::wms::common::logger::level_t) loggerLevel)    ;
 	// Multi attriubte check:
@@ -238,7 +237,7 @@ void Request::submit ( ){
 std::vector<std::string> Request::listMatchingCE(const std::string& nsHost , int nsPort ){
 	GLITE_STACK_TRY("Request::listMatchingCE(const string& host , int port)") ;
 	if (   type!= EWU_TYPE_JOB_AD  )
-		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Matching CE not allowed" ) ;
+		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Matching CE not allowed" ) ;
 	vector<string> resources;
 	// Nsclient instance:
 	nsClient =   new glite::wms::manager::ns::client::NSClient   ( nsHost, nsPort , (glite::wms::common::logger::level_t) loggerLevel)    ;
@@ -261,7 +260,7 @@ glite::wms::lb::JobStatus Request::getStatus(bool ad)  {
 		case EWU_TYPE_NONE:
 		case EWU_TYPE_DAG_AD:
 		case EWU_TYPE_JOB_AD:
-			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "LB information retrieval not allowed" ) ;
+			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB information retrieval not allowed" ) ;
 		default:
 			break;
 		}
@@ -282,7 +281,7 @@ std::vector <glite::wms::lb::Event> Request::getLogInfo() {
 		case EWU_TYPE_NONE:
 		case EWU_TYPE_DAG_AD:
 		case EWU_TYPE_JOB_AD:
-			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "LB information retrieval not allowed" ) ;
+			throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB information retrieval not allowed" ) ;
 		default:
 			break;
 		}
@@ -313,16 +312,13 @@ void Request::regist(){
 			// Release un-needed memory
 			delete jad ;
 			type = EWU_TYPE_DAG_AD ;
-			// throw JobOperationException     ( __FILE__ , __LINE__ ,"Dag regist" , WL_JOBOP_ALLOWED , "Submission not performed...it is a partitioning" ) ;
+			// throw JobOperationException     ( __FILE__ , __LINE__ ,"Dag regist" , WMS_JOBOP_ALLOWED , "Submission not performed...it is a partitioning" ) ;
 		}else
 			// Normal job registering:
 			log.registerJob (jad) ;
 	}
 } ;
 
-
-
-
-
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
-
+} // api
+} // wmsui
+} // glite

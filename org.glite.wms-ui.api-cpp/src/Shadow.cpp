@@ -17,10 +17,13 @@
 #include <strstream>
 #endif
 
-
 using namespace glite::wmsutils::jobid ; //JobId
 using namespace std ;
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+
+namespace glite {
+namespace wmsui {
+namespace api {
+
 	Shadow::Shadow (JobId jid , Listener *ls) {set(jid , ls);}
 	Shadow::Shadow (){};
 	Shadow::~Shadow(){};
@@ -112,7 +115,7 @@ USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 		}
 		if (port !=0){
 			if (    (port < fromP  ) || (port > toP)    )
-				throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Unable to perform attachement: port exceeds firewall range"  ) ;
+				throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to perform attachement: port exceeds firewall range"  ) ;
 			arguments += "-port " ; //TBD + repr (port)
 		}
 		char* shPath_ch = getenv ("EDG_WL_LOCATION") ;
@@ -122,7 +125,7 @@ USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 		shPath = string(shPath_ch) + "/bin/glite-wms-grid-console-shadow"  ;
 		string command = shPath  +arguments +" &";
 		if (  system(command.c_str())   )
-			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Unable to launch the Shadow listaner executable: "+ shPath  ) ;
+			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to launch the Shadow listaner executable: "+ shPath  ) ;
 		// get the pid and the port:
 		string adStr ;
 		int timeout= 0 ;
@@ -137,15 +140,18 @@ USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 			break ;
 		}
 		if (timeout==10)
-			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Unable to read listener named pipe streams" );
+			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to read listener named pipe streams" );
 	
 		glite::wms::jdl::Ad ad ( adStr );
 		this->port = ad.getIntValue("PORT")[0];
 		pid  = ad.getIntValue("PID")[0];
 		if  (   fromP>0 &&   (   (this->port < fromP  ) || (this->port > toP)    )   ){
 			detach();
-			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WL_JOBOP_ALLOWED , "Unable to perform attachement: port exceeds firewall range" );
+			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to perform attachement: port exceeds firewall range" );
 		}
 		GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 	};
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite

@@ -11,8 +11,17 @@
 #define MAX_THREAD_NUMBER  10
 
 // JobId Definition
-namespace glite { namespace wms { namespace jobid { class JobId ; } } }
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+namespace glite { 
+
+namespace wmsutils { 
+namespace jobid { 
+class JobId ; 
+} 
+} 
+
+namespace wmsui {
+namespace api {
+
 class JobCollection ;
 /**
  * This Class is used to return the ResultCode back to the main function  */
@@ -220,6 +229,10 @@ private:
 	unsigned int maxThreadNumber ;
 	unsigned int loggerLevel ;
 };
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+
+} // api
+} // wmsui
+} // glite
+
 #endif
 

@@ -5,10 +5,13 @@
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  * Contributors are mentioned in the code where appropriate.
  */
-#include "glite/wms/common/utilities/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsui/api/exception_codes.h"
 
-USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
+namespace glite {
+namespace wmsui {
+namespace api {
+
 /**
 *  JobCollectionException
  * @version 0.1
@@ -17,7 +20,7 @@ USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 */
 /**
 * Update all mandatory Exception Information*/
-class JobCollectionException : public glite::wms::common::utilities::Exception {
+class JobCollectionException : public glite::wmsui::exception::Exception {
 public:
    /**
    * Update all mandatory Exception Information*/
@@ -49,7 +52,7 @@ JobCollectNoJobException(const std::string& file,
  * Broker  Error
  * Logging Error
 */
-class JobException : public glite::wms::common::utilities::Exception {
+class JobException : public glite::wmsutils::exception::Exception {
 /**
 * Update all mandatory Exception Information
 */
@@ -93,6 +96,8 @@ public:
 			  const std::string& reason);
 };//End CLass JobOperationException
 
-// EWC_END_NAMESPACE; //Close the NameSpace
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+} // api
+} // wmsui
+} // glite
+
 #endif

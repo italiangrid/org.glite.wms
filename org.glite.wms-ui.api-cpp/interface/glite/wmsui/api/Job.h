@@ -20,24 +20,48 @@
 #define JOB_CANCEL_ERR             -1
 #define EDG_WL_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 
-namespace glite { namespace wms {
-	namespace jobid {	class JobId ;      }
-	namespace jdl { 		class JobAd ;   class Ad ;    }
+namespace glite { 
 
+namespace wmsutils {
+namespace jobid {	
+class JobId ;      
+}
+}
 
-     // NS
-     namespace  networkserver{    namespace client {          class NSClient ;         }      }
-     // LB
-     namespace logging { namespace client { class JobStatus ; class Event ; } }
-     // ChkPt
-     namespace checkpointing {   class JobState ; }
-     }
-} // namespace wms
+namespace wms {
 
+namespace jdl { 		
+class JobAd ;   
+class Ad ;    
+}
 
+// NS
+namespace manager {    
+namespace ns { 
+namespace client {
+class NSClient ;         
+}      
+}
+}
+
+namespace checkpointing {   
+class JobState ; 
+}
+
+} // wms
+
+// lB
+namespace lb { 
+class JobStatus ; 
+class Event ; 
+} 
 
 } //namespace glite
-USERINTERFACE_NAMESPACE_BEGIN//Defining UserInterFace NameSpace
+
+namespace glite {
+namespace wmsui {
+namespace api {
+
 	/** Current situation of the Job   */
 	enum jType {
 		/** Non type. The job has been initilised with the default ctor*/
@@ -86,7 +110,7 @@ class Job{
 		Job();
 		/** Instantiates an  Job object with a JobId
 		* @exception JobOperationException If the JobId is empty  */
-		Job(const glite::wms::jobid::JobId& id);
+		Job(const glite::wmsutils::jobid::JobId& id);
 		/** Instantiates an  Job object with a JobAd
 		* @exception JobOperationException If the JobAd is empty  */
 		Job(const glite::wms::jdl::JobAd& ad);
@@ -107,7 +131,7 @@ class Job{
 	//@{
 		/** Get the JobId instance
 		* @return a pointer to the JobId intance */
-		glite::wms::jobid::JobId* getJobId() ;
+		glite::wmsutils::jobid::JobId* getJobId() ;
 		/** Get the JobAd instance
 		* @return a pointer to the JobAd intance*/
 		glite::wms::jdl::JobAd* getJobAd() ;
@@ -125,7 +149,7 @@ class Job{
 		void setJobAd(const glite::wms::jdl::JobAd& ad);
 		/** set  the JobId instance
 		* @param id the JobId Instance to set from*/
-		void setJobId(const glite::wms::jobid::JobId& id);
+		void setJobId(const glite::wmsutils::jobid::JobId& id);
 		/** Set the JobAd member attribute of the Job instance to the job description got from the LB */
 		void retrieveJobAd() ;
 		/** returns the type of the job _jobType*/
@@ -210,7 +234,7 @@ class Job{
 		* @param  ce_id The Computing Element Identificator where to perform the jo
 		* @param outputDir the directory where to retrieve the output files from the job once it is ready
 		* @param timeout lentgh of status cycle retrieval. Each 30 seconds a getStatus is called for timeout times */
-		static glite::wms::jobid::JobId* submit(
+		static glite::wmsutils::jobid::JobId* submit(
 					const std::string& host , int port ,
 					const std::string& lbHost , int lbPort,
 					const std::string& executable ,
@@ -238,7 +262,7 @@ class Job{
 		jType jobType;
 		static pthread_mutex_t dgtransfer_mutex;
 		/* Internal JobId instance pointer*/
-		glite::wms::jobid::JobId* jid;
+		glite::wmsutils::jobid::JobId* jid;
 		/*Internal JobAd instance pointer  */
 		glite::wms::jdl::JobAd* jad;
 		/*Stores the path of the proxy (if different from the default)*/
@@ -264,6 +288,9 @@ class Job{
 		friend class JobCollection ;
 };
 
-USERINTERFACE_NAMESPACE_END } //Closing  UserInterFace NameSpace
+} // api
+} // wmsui
+} // glite
+
 #endif
 
