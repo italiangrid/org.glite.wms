@@ -9,6 +9,8 @@
 
 #include "glite/wmsutils/jobid/JobId.h"
 
+#include <vector>
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -54,7 +56,7 @@ std::string to_filename(glite::wmsutils::jobid::JobId j, int level = 0,
 * @param dir name of the dir to be generated
 * @param userid the id of the user
 */
-int managedir ( const std::string &dir , int userid );
+int managedir ( const std::string &dir , int userid, std::vector<std::string> jobids);
 
 } // namespace utilities
 } // namespace wmproxy
