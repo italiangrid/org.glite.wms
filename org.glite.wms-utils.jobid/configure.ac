@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2004/08/17 10:40:34  eronchie
+#       Added optimize option
+#
 #       Revision 1.8  2004/07/27 09:14:19  eronchie
 #       Removed AC_WMSUTILS_EXCEPTION and AC_GLOBUS_SSL_UTILS checks
 #       Set directly exception library macro
@@ -90,6 +93,8 @@ have_glite_wmsutils_exception=no
 AC_GLITE
 
 GLITE_WMSUTILS_EXCEPTION_LIBS="-L$GLITE_LOCATION/lib -lglite_wmsutils_exception"AC_SUBST(GLITE_WMSUTILS_EXCEPTION_LIBS)
+
+AC_OPTIMIZE
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
