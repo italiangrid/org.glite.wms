@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.5  2004/08/20 09:51:39  eronchie
+	Updated buildmodules orders
+
 	Revision 1.4  2004/08/04 07:30:29  eronchie
 	Added cppunit
-
+	
 	Revision 1.3  2004/07/23 14:50:08  eronchie
 	Added exception
 	
@@ -234,9 +237,9 @@
 		
 	<!-- All project modules -->
  	<target name="project" depends="thirdparty-globus_ssl_utils,
+					exception,
 				        tls,
-					jobid,
-					exception"/>
+					jobid"/>
 
 
 	<!-- ====================================================
