@@ -6,10 +6,12 @@
 ## *
 ## *********************************************************************
 
+CONF = $(top_builddir)/src/configuration/libglite_wms_conf.la
+
 noinst_LTLIBRARIES = libglite_wms_quota.la
 sbin_PROGRAMS      = glite-wms-quota-adjust
 
-lib_LTLIBRARIES = libglite_wms_exceptions.la \
+lib_LTLIBRARIES    = libglite_wms_exceptions.la \
 	libglite_wms_util.la \
 	libglite_wms_globus_ftp_util.la \
 	libglite_wms_iiattrutil.la
@@ -19,26 +21,25 @@ libexec_PROGRAMS   = glite-wms-eval_ad_expr
 glite_wms_eval_ad_expr_SOURCES = glite-wms-eval_ad_expr.cpp
 glite_wms_eval_ad_expr_LDADD   = \
         ./libglite_wms_util.la \
-	$(BOOST_LIBS) $(CLASSAD_LIBS)
+	$(BOOST_LIBS) \
+	$(CLASSAD_LIBS)
 
-glite_wms_quota_adjust_SOURCES = \
-        glite_wms_quota_adjust.cpp
+glite_wms_quota_adjust_SOURCES = glite_wms_quota_adjust.cpp
 glite_wms_quota_adjust_LDADD = \
-        ../configuration/libglite_wms_conf.la \
+        $(CONF) \
         ./libglite_wms_util.la \
-         $(BOOST_LIBS) $(CLASSAD_LIBS)
+        $(BOOST_LIBS) \
+	$(CLASSAD_LIBS)
 glite_wms_quota_adjust_LDFLAGS = -all-static
 
 libglite_wms_globus_ftp_util_la_SOURCES = \
 	globus_ftp_mkdir.cpp \
 	globus_ftp_put.cpp \
 	globus_ftp_exists.cpp
-libglite_wms_globus_ftp_util_la_LDFLAGS = -rpath @prefix@
 
 libglite_wms_exceptions_la_SOURCES = \
 	Exceptions.cpp \
 	utils.cpp
-libglite_wms_exceptions_la_LDFLAGS = -rpath @prefix@
 
 libglite_wms_util_la_SOURCES = \
 	filecontainer.cpp \
@@ -52,7 +53,6 @@ libglite_wms_util_la_SOURCES = \
 	mixed.cpp \
 	boost_fs_add.cpp \
 	classad_utils.cpp
-libglite_wms_util_la_LDFLAGS = -rpath @prefix@
 libglite_wms_util_la_LIBADD = -lstdc++
 
 libglite_wms_iiattrutil_la_SOURCES = \
@@ -88,18 +88,13 @@ utilitiesinclude_HEADERS = \
 	utils.h \
 	triple.h \
 	scope_guard.h
- 
-UT_CFLAGS = $(BOOST_CFLAGS) $(CLASSAD_CFLAGS) $(GLOBUS_THR_CFLAGS)
-
-GLUE_CFLAGS = $(GLOBUS_LDAP_CFLAGS)
-
-QUOTA_CFLAGS = -DB_THREAD_SAFE
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/logger \
-	$(GLUE_CFLAGS) \
-	$(UT_CFLAGS) \
-	$(QUOTA_CFLAGS)
+	$(GLOBUS_CFLAGS) \
+	$(BOOST_CFLAGS) \
+	$(CLASSAD_CFLAGS) \
+	-DB_THREAD_SAFE
 
 EXTRA_DIST = \
 	triple.h \

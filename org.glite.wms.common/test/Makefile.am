@@ -216,7 +216,7 @@ sftpput_LDADD   = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(GLOBUS_CFLAGS)
+	$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
 
