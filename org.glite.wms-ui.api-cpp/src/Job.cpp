@@ -683,7 +683,7 @@ void Job::nsSubmit(const string&  lb_addr ) {
            char *msg, *dsc ;
            edg_wll_Error(  ctx , &msg , &dsc ) ;
            sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform  edg_wll_RegisterJobSync  at: ",
-           getenv ( EDG_WL_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+           getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
            throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,  error_message) ;
      }
      // cout << "Job properly Registered.." <<  jid->toString() << endl ;
@@ -827,7 +827,7 @@ void Job::lbInit(  const string& nsHost  ) {
         (edg_wll_InitContext( &ctx )) ||
         (edg_wll_SetParam( ctx, EDG_WLL_PARAM_SOURCE, EDG_WLL_SOURCE_USER_INTERFACE ) )
      ) throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB initialisation failed" ) ;
-     if   ( ! getenv ( EDG_WL_LOG_DESTINATION) )
+     if   ( ! getenv ( GLITE_WMS_LOG_DESTINATION) )
           if (edg_wll_SetParamString( ctx, EDG_WLL_PARAM_DESTINATION, nsHost.c_str() ) )
                throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB initialisation failed (set destination)" ) ;
 }
