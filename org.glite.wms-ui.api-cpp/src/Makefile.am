@@ -35,3 +35,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-fPIC -D_REENTRANT -DWANT_NAMESPACES
  
 MAINTAINERCLEANFILES = Makefile.in
+
+Makefile.am : 
+	$(srcdir)/Makefile.am
+	$(LN_S) $(srcdir)/Makefile.am Makefile.am
+

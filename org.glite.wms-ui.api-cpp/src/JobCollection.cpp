@@ -33,7 +33,10 @@ namespace api {
 /******************************************************************
  methods :  ResultStruct Methods:
 *******************************************************************/
-void resultStruct::set (  ResultCode res  )   {    result = res;  };
+void resultStruct::set(ResultCode res) { 
+  result = res;  
+};
+
 /******************************************************************
  methods: Constructors, Copy-Constructor and Operations
 *******************************************************************/
@@ -412,14 +415,14 @@ void* JobCollection::submitTo  (void* paramStruct) {
  methods :  cancel     STATIC Thread Method
 *******************************************************************/
 void* JobCollection::cancelTo (void* ps) {
-	GLITE_STACK_TRY("JobCollection::cancelTo (void* ps)") ;
-	try{
-		ResultCode code = (   (struct paramStruct* )ps )->job->cancel(  );
-		return  (void*)    new resultStruct (   code   ) ;
-	} catch (exception &exc){
-		return  (void*)    new resultStruct ( CANCEL_FAILURE, exc.what() ) ;
-	}
-	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+  GLITE_STACK_TRY("JobCollection::cancelTo (void* ps)");
+  try {
+    ResultCode code = ((struct paramStruct* )ps)->job->cancel();
+    return  (void*) new resultStruct(code);
+  } catch (exception &exc) {
+    return  (void*) new resultStruct(CANCEL_FAILURE, exc.what());
+  }
+  GLITE_STACK_CATCH(); //Exiting from method: remove line from stack trace
 };
 
 //Function cancel  (SYNC)

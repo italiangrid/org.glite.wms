@@ -48,6 +48,7 @@ using namespace glite::wms::jdl ; // JobAd
 using namespace glite::wms::manager::ns::client ; //NSClient
 using namespace glite::wms::checkpointing ;
 using namespace glite::lb ;
+using namespace glite::wms::common::utilities;
 
 pthread_mutex_t  Job::dgtransfer_mutex  = PTHREAD_MUTEX_INITIALIZER;
 // Compare two edg_wll_Event using the timestamp member
@@ -148,10 +149,10 @@ void Job::initialise( ){
 #ifndef WITHOUT_THREAD
 #else
   if (edg_wlc_SSLLockingInit() != 0)
-      throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
+      throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
 #endif
   if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
-      throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
+      throw  Exception ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
 
 }
 
@@ -360,11 +361,11 @@ JobStatus Job::getStatus(bool ad)  {
    if (! jCollect)
        //The job does not belong to a collection : credential check needed
        userCred.checkProxy(cred_path) ;
-   glite::wms::lb::Job    lbJob (*jid)   ;
+   glite::lb::Job    lbJob (*jid)   ;
    // if (jCollect) cout << "Job::getStatus   lbJob.status for: " << jid->toString() << endl << flush;
-   glite::wms::lb::JobStatus  status ;
+   glite::lb::JobStatus  status ;
    if (ad)
-      status =  lbJob.status( glite::wms::lb::Job::STAT_CLASSADS );
+      status =  lbJob.status( glite::lb::Job::STAT_CLASSADS );
    else
       status = lbJob.status( 0 );
    return    status ;
@@ -378,7 +379,7 @@ vector<Event> Job::getLogInfo() {
         throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "getLogInfo not allowed" ) ;
      userCred.checkProxy(cred_path) ;
      // cout << "\n                    LB-DBG: "<< "lbJob (*jid)  " << flush;
-     glite::wms::lb::Job    lbJob (*jid)   ;
+     glite::lb::Job    lbJob (*jid)   ;
      // cout << "\n                    LB-DBG: "<< "event= lbJob.log();" << flush;
      vector <Event> event= lbJob.log();
      return event ;
