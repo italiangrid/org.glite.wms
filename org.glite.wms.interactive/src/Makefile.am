@@ -50,7 +50,7 @@ glite_wms_pipe_output_LDADD = \
 	-lnsl -ldl -lpthread -lstdc++
 
 glite_wms_job_agent_SOURCES = glite_wms_job_agent.c 
-glite_wms_job_agent_output_LDFLAGS = -static
+glite_wms_job_agent_LDFLAGS = -static
 glite_wms_job_agent_LDADD = \
         $(GLITE_WMS_TP_BYPASS_LIBS) \
         $(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
