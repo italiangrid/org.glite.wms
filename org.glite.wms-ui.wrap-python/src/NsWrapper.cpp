@@ -8,7 +8,6 @@
 #include <iostream>
 #include "NsWrapper.h"
 #include "glite/lb/producer.h"
-//#include "glite/wms/manager/ns/client/NSClient.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
@@ -17,7 +16,8 @@
 
 using namespace std ;
 // using namespace classad ;
-using namespace glite::wmsustils::exception ;
+using namespace glite::wmsutils::exception ;
+using namespace glite::wms::common ;
 using namespace glite::wms::manager::ns::client ;
 
    /** Default Ctor*/
