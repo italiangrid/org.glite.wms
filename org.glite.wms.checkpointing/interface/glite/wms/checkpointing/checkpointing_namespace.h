@@ -14,7 +14,7 @@
 #define __CHKPT_NAMESPACE_H_LOADED
 
 /** Define the macro to "open" the namespace */ 
-#define CHKPT_NAMESPACE_BEGIN namespace edg { namespace workload { namespace checkpointing
+#define CHKPT_NAMESPACE_BEGIN namespace glite { namespace wms { namespace checkpointing
 /** Define the macro to "close" the namespace */ 
 #define CHKPT_NAMESPACE_END }}
 /** Define the macro to "use" the namespace */
