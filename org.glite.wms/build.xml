@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.26  2004/07/10 06:23:19  eronchie
+	Start adding matchmaking dependency
+	WARNING: work in progress
+
 	Revision 1.25  2004/07/06 18:06:12  flammer
 	Update of classpath definitions, targets & configure file.
-
+	
 	Revision 1.24  2004/07/06 08:47:22  eronchie
 	Removed jobadapter
 	Added helper
@@ -379,6 +383,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="broker" unless="setenvonly" depends="boost,classads">
+                <ant dir="${workspace.dir}/${subsystem.name}.broker"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
 					     bypass,
@@ -392,6 +402,7 @@
 					     brokerinfo,
 					     classad_plugin,
 					     matchmaking,
+					     broker,
 					     helper" />
 		
 </project>

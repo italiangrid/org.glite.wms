@@ -21,11 +21,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.33  2004/07/10 06:23:19  eronchie
+	Start adding matchmaking dependency
+	WARNING: work in progress
+
 	Revision 1.32  2004/07/06 08:47:22  eronchie
 	Removed jobadapter
 	Added helper
 	jobadapter was moved in helper
-
+	
 	Revision 1.31  2004/07/06 08:43:20  eronchie
 	Updated m4 file
 	Added new components
@@ -251,6 +255,9 @@
 		<condition property="helper.head">
                         <equals arg1="${org.glite.wms.helper.version}" arg2="HEAD" />
                 </condition>
+		<condition property="broker.head">
+                        <equals arg1="${org.glite.wms.broker.version}" arg2="HEAD" />
+                </condition>
     </target>
 
     <presetdef name="cvs-co">
@@ -320,6 +327,7 @@
 					brokerinfo,
 					classad_plugin,
 					matchmaking,
+					broker,
 					helper"/>
 
 	<!-- Globus SSLUtils -->
@@ -442,7 +450,7 @@
                         tag="${org.glite.wms.matchmaking.version}" />
         </target>
 
-	<!-- JobAdapter -->
+	<!-- Helper -->
         <target name="helper" depends="boost,classads,globus,get.helper.head, get.helper.tag"/>
         <target name="get.helper.head" if="helper.head">
                 <cvs-co package="org.glite.wms.helper" />
@@ -450,6 +458,16 @@
         <target name="get.helper.tag" unless="helper.head">
                 <cvs-co package="org.glite.wms.helper"
                         tag="${org.glite.wms.helper.version}" />
+        </target>
+
+	<!-- Broker -->
+        <target name="broker" depends="boost,classads,globus,get.broker.head, get.broker.tag"/>
+        <target name="get.broker.head" if="broker.head">
+                <cvs-co package="org.glite.wms.broker" />
+        </target>
+        <target name="get.broker.tag" unless="broker.head">
+                <cvs-co package="org.glite.wms.broker"
+                        tag="${org.glite.wms.broker.version}" />
         </target>
 
 	<!-- ====================================================
