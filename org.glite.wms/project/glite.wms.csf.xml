@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.20  2004/05/19 21:56:03  dimeglio
+	Removed old update conditions
+
 	Revision 1.19  2004/05/19 21:48:59  dimeglio
 	Modifed logic to check out CVS modules
-
+	
 	Revision 1.18  2004/05/18 10:17:54  dimeglio
 	Modified not to use -r HEAD when checking out modules from HEAD
 	
@@ -191,27 +194,6 @@
 		<cvs command="checkout" dest="${workspace.dir}" />
     </presetdef>
 
-	<!-- ========================================================
-		 Checkout/updates the GLite Middleware WMS components
-		 ======================================================== -->
-		
-	<!-- Default update mode - Override from command line -->
-	<property name="update" value="false" />
-	
-	<!-- Set org.glite update mode -->
-	<condition property="glite.uptodate">
-		<and>
-			<isfalse value="${update}" />
-			<available file="${global.dependencies.file}" type="file" />
-		</and>
-	</condition>
-
-	<!-- Set org.glite.wms update mode -->
-	<condition property="uptodate">
-		<isfalse value="${update}" />
-	</condition>
-
-
 	<!-- =====================================================
 		 Self-update if required
 		 ===================================================== -->
@@ -220,24 +202,22 @@
  	<target name="org.glite" depends="get.glite.head, get.glite.tag"/>
 	<target name="get.glite.head" if="glite.head">
 		<cvs-co package="org.glite" />
-		<fail>The org.glite module has been updated, please rerun the configuration file</fail>
 	</target>
 	<target name="get.glite.tag" if="glite.tag">
 		<cvs-co package="org.glite"
 			tag="${org.glite.version}" />
-		<fail>The org.glite module has been updated, please rerun the configuration file</fail>
 	</target>
 
 	<!-- Update the current module -->
  	<target name="org.glite.wms" depends="get.glite-wms.head, get.glite-wms.tag" unless="uptodate"/>
 	<target name="get.glite-wms.head" if="glite-wms.head">
 		<cvs-co package="org.glite.wms" />
-		<fail>The org.glite.wms module has been updated, please rerun the configuration file</fail>
+		<fail>The org.glite and org.glite.wms modules have been updated, please rerun the configuration file</fail>
 	</target>
 	<target name="get.glite-wms.tag" if="glite-wms.tag">
 		<cvs-co package="org.glite.wms"
 			tag="${org.glite.wms.version}" />
-		<fail>The org.glite.wms module has been updated, please rerun the configuration file</fail>
+		<fail>The org.glite and org.glite.wms modules have been updated, please rerun the configuration file</fail>
 	</target>
 
 	<!-- *****************************************************-->
