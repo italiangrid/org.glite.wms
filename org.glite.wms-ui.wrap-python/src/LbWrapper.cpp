@@ -1,8 +1,8 @@
 #include "LbWrapper.h"
 /* Open SSL include files */
-#include <globus_common.h>
-#include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
+//#include <globus_common.h>
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 #include <stdio.h>
 #include <iostream>
 #include <vector>
@@ -84,21 +84,25 @@ void createQuery (
 
 
 Status::Status () {
+   /*
    edg_wlc_SSLInitialization();
    if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
       log_error ("Unable to Initialise SSL context") ;
    else if (edg_wlc_SSLLockingInit() != 0)
       log_error ("Unable to Initialise SSL context" ) ;
+   */
 } ;
 
 Status::~Status () { };
 
 Eve::Eve () {
+   /*
    edg_wlc_SSLInitialization();
    if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
       log_error ("Unable to Initialise SSL context") ;
    else if (edg_wlc_SSLLockingInit() != 0)
       log_error ("Unable to Initialise SSL context" ) ;
+   */
 } ;
 Eve::~Eve() {} ;
 

@@ -7,9 +7,9 @@
 #include <iostream>
 #include <string>
 /* Open SSL include files */
-#include <globus_common.h>
-#include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
+// #include <globus_common.h>
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
+// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 
 
 
@@ -19,12 +19,13 @@ using namespace std ;
 // using namespace glite::wms::lb ;
 
 LOG::LOG() {
+  /*
   edg_wlc_SSLInitialization();
   if (edg_wlc_SSLLockingInit() != 0)
       log_error ( "JobState::getStateFromLB error from edg_wlc_JobIdParse");
   if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
       log_error ( "JobState::getStateFromLB error from edg_wlc_JobIdParse");
-
+  */
 } ;
 LOG::~LOG() {  } ;
 
