@@ -22,8 +22,6 @@ glite_wms_workload_manager_LDADD   = \
         $(GLITE_WMS_HELPER_LIBS) \
         $(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
-	$(top_srcdir)/../stage/lib/libglite_ce_monitor_client.la \
-        $(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/lib/libgsoap.a \
 	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
         $(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
         $(GLITE_WMS_JSS_COMMON_LIBS) \
@@ -54,9 +52,6 @@ glite_wms_workload_manager_LDADD   = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/../org.glite.wms.manager/src/server \
 	$(GLITE_CFLAGS) \
-	-I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/interface \
-	-I$(top_srcdir)/../org.glite.ce.monitor-client-api-c/src/autogen/monitor_client \
-	-I$(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/include \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
 
