@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "../src/socket++/socketClient_cu_suite.h"
+#include "socket++/socketClient_cu_suite.h"
 
 #include "cppunit/TestResult.h"
 #include "cppunit/TestRunner.h"

@@ -1,5 +1,5 @@
-#include "../src/socket++/GSISocketClient.h"
-#include "../src/socket++/exceptions.h"
+#include "socket++/GSISocketClient.h"
+#include "socket++/exceptions.h"
 
 #include <iostream>
 #include <string>

@@ -1,6 +1,6 @@
-#include "../src/socket++/GSISocketServer.h"
-#include "../src/socket++/GSISocketAgent.h"
-#include "../src/socket++/exceptions.h"
+#include "socket++/GSISocketServer.h"
+#include "socket++/GSISocketAgent.h"
+#include "socket++/exceptions.h"
 
 #include <iostream>
 #include <string>

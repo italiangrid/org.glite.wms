@@ -1,4 +1,4 @@
-#include "../src/socket++/socketClient_cu_suite.h"
+#include "socket++/socketClient_cu_suite.h"
 
 void socketClient_test::setUp()
 {

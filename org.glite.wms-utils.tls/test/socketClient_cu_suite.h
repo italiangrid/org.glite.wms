@@ -3,10 +3,10 @@
 #include <pthread.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "../src/socket++/SocketServer.h" 
-#include "../src/socket++/SocketClient.h"
-#include "../src/socket++/SocketAgent.h"
-#include "../src/socket++/exceptions.h"
+#include "socket++/SocketServer.h" 
+#include "socket++/SocketClient.h"
+#include "socket++/SocketAgent.h"
+#include "socket++/exceptions.h"
 
 namespace socket_pp = glite::wms::tls::socket_pp;
 
