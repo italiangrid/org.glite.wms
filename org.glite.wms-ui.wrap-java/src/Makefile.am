@@ -116,9 +116,11 @@ org_glite_wmsui_apij_Api.lo: org_glite_wmsui_apij_Api.cpp
 	org.glite.wmsui.apij.Api
 	/usr/bin/libtool $(CXX) -c $(CFLAGS) -DHAVE_CONFIG_H \
 	-I. -I. -I../.. $(AM_CPPFLAGS) \
-	-o org_glite_wmsui_apij_Api.o ../../src/org_glite_wmsui_apij_Api.cpp
+	-o org_glite_wmsui_apij_Api.o $(top_srcdir)/src/org_glite_wmsui_apij_Api.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_buildir)/src/autogen \
+	-I$(top_srcdir)/../org.glite.wms.manager-ns-client/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
