@@ -15,8 +15,8 @@ class WMPDispatcher: public glite::wms::common::task::PipeReader< classad::Class
 {
 	
 public:
-  //virtual void run(void);
-    void operator()();
+  virtual void run(void);
+  //  void operator()();
 
 };
 

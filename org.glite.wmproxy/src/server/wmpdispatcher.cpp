@@ -24,7 +24,7 @@ using namespace glite::wms::wmproxy::server;
 
 
 void
-WMPDispatcher::operator()()
+WMPDispatcher::run()
 {
 try {
   edglog_fn("Dispatcher::run");
