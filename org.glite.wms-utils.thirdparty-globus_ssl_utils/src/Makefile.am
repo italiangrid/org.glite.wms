@@ -16,7 +16,8 @@ libglobus_ssl_utils_la_SOURCES = \
 
 libglobus_ssl_utils_la_LIBADD = ${top_builddir}/src/oldgaa/libglobus_oldgaa.la
 
-noinst_HEADERS = \
+globus_ssl_utilsincludedir = $(includedir)
+globus_ssl_utilsinclude_HEADERS = \
 	scutils.h \
 	sslutils.h
 
