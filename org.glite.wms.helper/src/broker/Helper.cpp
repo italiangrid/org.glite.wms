@@ -23,9 +23,9 @@
 //#include "edg/workload/planning/broker/RBMaximizeFilesImpl.h"
 //#include "edg/workload/planning/broker/RBMinimizeAccessCostImpl.h"
 #include "glite/wms/matchmaking/exceptions.h"
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
-#include "glite/wms/jobid/JobIdExceptions.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -41,7 +41,7 @@
 #include "glite/wms/common/utilities/classad_utils.h"
 
 namespace fs            = boost::filesystem;
-namespace jobid         = glite::wms::jobid;
+namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::wms::jdl;

@@ -19,8 +19,8 @@
 
 #include "jobadapter/url/URL.h"
 
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
 
 #include "glite/wms/jdl/convert.h"
 

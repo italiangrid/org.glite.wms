@@ -34,8 +34,8 @@
 #include "jobadapter/jobwrapper/MpiPbsJobWrapper.h"
 #include "jobadapter/jobwrapper/InteractiveJobWrapper.h"
 
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
@@ -58,7 +58,7 @@ using namespace std;
 using namespace classad;
 
 namespace config = glite::wms::common::configuration;
-namespace jobid = glite::wms::jobid;
+namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
 
 namespace jobwrapper = glite::wms::helper::jobadapter::jobwrapper;
