@@ -14,7 +14,6 @@ brokerdir = $(includedir)/glite/wms/broker
 broker_HEADERS = \
 	RBSimpleISMImpl.h \
 	RBSimpleImpl.h \
-	ResourceBroker.h \
 	utility.h
 
 libglite_wms_broker_la_SOURCES = \
