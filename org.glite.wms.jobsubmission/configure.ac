@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/07/27 11:39:01  eronchie
+#       *** empty log message ***
+#
 #       Revision 1.5  2004/07/27 09:41:25  pandreet
 #       JobId and Exception dependencies fixed
 #
@@ -87,7 +90,7 @@ have_globus_ssl=no
                                                                                 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_CONDORG(6.7.1, have_condorg=yes, have_condorg=no)
+AC_CONDORG(6.5.3, have_condorg=yes, have_condorg=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 
 AC_GLOBUS_SSL_UTILS([], have_globus_ssl=yes, have_globus_ssl=no)
@@ -99,9 +102,7 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["GLOBUS_SSL found $have_globus_ssl"])
 
 have_glite_wms_common=no
-have_glite_wmsutils_jobid=no
-have_glite_wmsutils_tls=no
-have_glite_wmsutils_exception=no
+have_glite_wmsutils=no
 have_glite_wms_jdl=no
 have_glite_lb=no                                                          
                       
@@ -110,17 +111,11 @@ AC_GLITE
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
-AC_GLITE_WMSUTILS_JOBID([], have_glite_wmsutils_jobid=yes, have_glite_wmsutils_jobid=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_JOBID found $have_glite_wmsutils_jobid"])
-
-AC_GLITE_WMSUTILS_TLS([], have_glite_wmsutils_tls=yes, have_glite_wmsutils_tls=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_TLS found $have_glite_wmsutils_tls"])
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
-
-AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
