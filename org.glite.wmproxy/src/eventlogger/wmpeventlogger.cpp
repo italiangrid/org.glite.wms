@@ -3,10 +3,8 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
-
 #include "wmpeventlogger.h"
 #include "glite/lb/producer.h"
-
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
@@ -17,11 +15,15 @@
 #include "utilities/wmpexception_codes.h"
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmputils.h"
-
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
-
 #include "glite/security/proxyrenewal/renewal.h"
+
+// gethostbyname inclusion:
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 namespace glite {
 namespace wms {
@@ -39,6 +41,34 @@ using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 
 const char *WMPLogger::GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
+
+
+
+std::string retrieveHostName() {
+	struct hostent hent, *hp;
+	size_t hstbuflen = 1024;
+	char *tmphstbuf;
+	char hostname[101];
+	int res;
+	int herr;
+
+	edglog_fn("CFSI::retrHostName");
+	if (gethostname(hostname, 100) == -1) {
+		edglog(severe) << "Error while retrieving host name." << std::endl;
+	}
+	tmphstbuf = (char *)malloc (hstbuflen);
+	while ( (res = gethostbyname_r(hostname, &hent, tmphstbuf, hstbuflen, &hp,&herr)) == ERANGE ) {
+		hstbuflen *= 2;
+		tmphstbuf = (char *)realloc (tmphstbuf, hstbuflen);
+	}
+	free(tmphstbuf);
+	if (res || hp == NULL) {
+		return "";
+	}
+	edglog(debug) << "Hostname: " << hp->h_name << std::endl;
+	return std::string(hp->h_name);
+}
+
 
 
 
@@ -261,37 +291,9 @@ WMPLogger::registerDag(WMPExpDagAd *dag)
 }
 
 
-// Loggin methods
-
+// User Tags and JobId logs:
 void
-WMPLogger::logAccepted(const std::string &jid)
-{
-	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER, lb_host.c_str(),
-		str_addr, jid.c_str());
-}
-
-void
-WMPLogger::logRefused(const std::string &jid)
-{
-	/*char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER, lb_host.c_str(),
-		str_addr, jid.c_str());*/
-}
-
-void
-WMPLogger::logAbort(const char *reason)
-{
-	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAbort(ctx, reason);
-}
-
-void
-WMPLogger::logUserTag(string name, const string &value)
-{
+WMPLogger::logUserTag(string name, const string &value){
 	cerr<<"name: "<<name<<endl;
 	Ad *classad = new Ad();
 	classad->setAttribute(JDL::JDL_ORIGINAL, value);
@@ -342,17 +344,124 @@ WMPLogger::logUserTags(classad::ClassAd* userTags)
  		}
 	}
 }
-
-
-
 void WMPLogger::setLoggingJob( const std::string &jid , const char* seq_code){
-		glite::wmsutils::jobid::JobId jobid ( jid ) ;
-		edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code ,EDG_WLL_SEQ_NORMAL);
+	glite::wmsutils::jobid::JobId jobid ( jid ) ;
+	edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code ,EDG_WLL_SEQ_NORMAL);
 }
 
 
-void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
-			const char *reason, bool retry ){
+
+
+/******************************************************************
+Logging Events: Accepted,Aborted, Refused, Cancel, Purge
+******************************************************************/
+
+// Actual LB log call
+bool WMPLogger::logEvent(event_name event, char* reason){
+		switch (event){
+			case LOG_FEFUSE:
+				return !edg_wll_LogRefused (ctx, EDG_WLL_SOURCE_WM_PROXY, (char *) (retrieveHostName().c_str()), "", reason);
+				break;
+			case LOG_ACCEPTED:
+				return !edg_wll_LogAccepted(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");
+				break;
+			case LOG_CANCEL:
+				return !edg_wll_LogCancelREQ(ctx, reason);
+				break;
+			case LOG_PURGE:
+				return !edg_wll_LogClearUSER(ctx);
+				break;
+			case LOG_ABORTED:
+				return !edg_wll_LogAbort(ctx,reason);
+				break;
+			default:
+				return true;
+		}
+}
+
+void WMPLogger::logEvent(event_name event, char* reason, bool retry){
+	int i=0;
+	edglog_fn("CFSI::logCancel(event, char* reason, bool retry)");
+	edglog(fatal) << "Logging "<< event<<" Request." << std::endl;
+	bool logged = false;
+	for (; i < 3 && !logged && retry; i++) {
+		// PERFORM the Requested operation (actual LB call)
+		logged = logEvent (event , reason);
+		if (!logged && (i<2) && retry) {
+			edglog(info) << "Failed to log Cancelled Job. Sleeping 60 seconds before retry." << std::endl;
+			sleep(60);
+		}
+	}
+	if ((retry && (i>=3)) || (!retry && (i>0)) ) {
+		edglog(severe) << "Error while logging Cancelled Job." << std::endl;
+			throw JobOperationException(__FILE__, __LINE__,
+				"WMPLogger::logEvent(event ,char* reason, bool retry)",
+				WMS_OPERATION_NOT_ALLOWED,
+				error_message("edg_wll_LogCancelREQ"));
+	}
+	edglog(debug) << "Logged." << std::endl;
+}
+
+void WMPLogger::logEvent(event_name  event, char* reason,bool retry, bool test) {
+	if (!test) logEvent(event, reason, retry);
+	edglog_fn("WMPLogger::logEvent(event_name event, bool retry, bool test) ");
+	edglog(fatal) << "Logging "<< event<<" Job." << std::endl;
+	int res;
+	bool with_hp = false;
+	int lap = 0;
+	std::string host_cert , host_key ;
+
+/*  TBD TBD GET PARAM
+	std::string user_proxy;
+	std::string host_proxy;
+	cmd->getParam("X509UserProxy", user_proxy);
+	reset_user_proxy(cmd, user_proxy);
+	cmd->getParam("HostProxy", host_proxy);
+*/
+	do {
+		// PERFORM the Requested operation (actual LB call)
+		res = logEvent (event , reason);
+		testAndLog( res, with_hp, lap, host_cert , host_key );
+	} while( res != 0 );
+	// Return true.... this means failure??
+}
+
+
+
+
+
+void
+WMPLogger::logAccepted(const std::string &jid)
+{
+	char str_addr[1024];
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
+	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER, lb_host.c_str(),
+		str_addr, jid.c_str());
+}
+
+void
+WMPLogger::logRefused(const std::string &jid)
+{
+	/*char str_addr[1024];
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
+	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_NETWORK_SERVER, lb_host.c_str(),
+		str_addr, jid.c_str());*/
+}
+
+void
+WMPLogger::logAbort(const char *reason)
+{
+	char str_addr[1024];
+	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
+	edg_wll_LogAbort(ctx, reason);
+}
+
+
+
+
+
+
+void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode, const char *reason, bool retry ){
 	int i=0;
 	edglog_fn("WMPLogger::logEnqueuedJobN");
 	edglog(fatal) << "Logging Enqueued Job." << std::endl;
@@ -368,9 +477,6 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 			sleep(60);
 		}
 	}
-
-
-
 	if ((retry && (i>=3)) || (!retry && (i>0)) ) {
 		edglog(severe) << "Error while logging Enqueued Job." << std::endl;
 		throw JobOperationException(__FILE__, __LINE__,
@@ -393,7 +499,6 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 	bool with_hp = false;
 	int lap = 0;
 	reset_user_proxy( proxy_path);
-
 	do {
 		res = edg_wll_LogEnQueued (ctx,
 				file_queue.c_str(),
@@ -418,76 +523,68 @@ int WMPLogger::setX509Param(const std::string &name , const std::string &value ,
 
 void
 WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_cert, const std::string &host_key)
-  {
-    edglog_fn("NS2WM::test&Log");
-    if( code ) {
-      switch( code ) {
-      case EINVAL:
-	edglog(critical) << "Critical error in L&B calls: EINVAL." << std::endl;
-	code = 0; // Don't retry...
-	break;
-      case EDG_WLL_ERROR_GSS:
-	edglog(severe) << "Severe error in SSL layer while communicating with L&B daemons." << std::endl;
-	if( with_hp ) {
-	  edglog(severe) << "The log with the host certificate has just been done. Giving up." << std::endl;
-	  code = 0; // Don't retry...
-	}else {
-	  edglog(info) << "Retrying using cert and key certificate..." << std::endl;
-	  // unsetting proxy parameters: 
-	  edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY , NULL );
-	  // Setting usercert and userkey instead:
-	  if   ( setX509Param("Host Cert" , host_cert , EDG_WLL_PARAM_X509_CERT)
-		| setX509Param("Host Key" , host_key , EDG_WLL_PARAM_X509_KEY) )  {
-	    		edglog(severe) << "Cannot set some host credential inside the context. Giving up." << std::endl;
-	    		code = 0; // Don't retry.
-	 } else with_hp = true; // Set and retry (code is still != 0)
-	}
-	break;
-      default:
-	if( ++lap > 3 ) {
-	  edglog(error) << "L&B call retried " << lap << " times always failed." << std::endl
-			<< "Ignoring." << std::endl;
-	  code = 0; // Don't retry anymore
-	}
-	else {
-	  edglog(warning) << "L&B call got a transient error. Waiting 60 seconds and trying again." << std::endl;
-	  edglog(info) << "Try n. " << lap << "/3" << std::endl;
-	  sleep( 60 );
-	}
-	break;
-      }
-    }
-    else // The logging call worked fine, do nothing
-      edglog(debug) << "L&B call succeeded." << std::endl;
-    return;
-  }
+{
+	edglog_fn("NS2WM::test&Log");
+	if( code ) {
+		switch( code ) {
+			case EINVAL:
+				edglog(critical) << "Critical error in L&B calls: EINVAL." << std::endl;
+				code = 0; // Don't retry...
+				break;
+			case EDG_WLL_ERROR_GSS:
+				edglog(severe) << "Severe error in SSL layer while communicating with L&B daemons." << std::endl;
+				if( with_hp ) {
+					edglog(severe) << "The log with the host certificate has just been done. Giving up." << std::endl;
+					code = 0; // Don't retry...
+				}else {
+					edglog(info) << "Retrying using cert and key certificate..." << std::endl;
+					// unsetting proxy parameters:
+					edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY , NULL );
+					// Setting usercert and userkey instead:
+					if   ( setX509Param("Host Cert" , host_cert , EDG_WLL_PARAM_X509_CERT)
+						| setX509Param("Host Key" , host_key , EDG_WLL_PARAM_X509_KEY) )  {
+					edglog(severe) << "Cannot set some host credential inside the context. Giving up." << std::endl;
+					code = 0; // Don't retry.
+					} else with_hp = true; // Set and retry (code is still != 0)
+				}
+				break;
+			default:
+				if( ++lap > 3 ) {
+					edglog(error) << "L&B call retried " << lap << " times always failed." << std::endl
+						<< "Ignoring." << std::endl;
+					code = 0; // Don't retry anymore
+				} else {
+					edglog(warning) << "L&B call got a transient error. Waiting 60 seconds and trying again." << std::endl;
+					edglog(info) << "Try n. " << lap << "/3" << std::endl;
+					sleep( 60 );
+				}
+				break;
+			}
+	}   // end of "if( code ) {"
+	else // The logging call worked fine, do nothing
+		edglog(debug) << "L&B call succeeded." << std::endl;
+	return;
+}
 
 void
 WMPLogger::reset_user_proxy( const std::string &proxy_path ){
-    edglog_fn("WMPLogger::resetUserProxy");
-    bool    erase = false;
-    int     res;
-
-    if( proxy_path.size() ) {
-      boost::filesystem::path pf( boost::filesystem::normalize_path(proxy_path), boost::filesystem::system_specific );
-
-      if( boost::filesystem::exists(pf) ) {
-	res = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, proxy_path.c_str() );
-	if( res ) edglog(severe) << "Cannot set proxyfile path inside context." << std::endl;
-      }
-      else erase = true;
-    }
-    else if( proxy_path.size() == 0 ) erase = true;
-
-    if( erase ) {
-      res = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, NULL ); 
-      if( res ) edglog(severe) << "Cannot reset proxyfile path inside context." << std::endl;;
-    }
-
-  }
-
-
-
+	edglog_fn("WMPLogger::resetUserProxy");
+	bool    erase = false;
+	int     res;
+	if( proxy_path.size() ) {
+		boost::filesystem::path pf( boost::filesystem::normalize_path(proxy_path), boost::filesystem::system_specific );
+		if( boost::filesystem::exists(pf) ) {
+			res = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, proxy_path.c_str() );
+			if( res ) edglog(severe) << "Cannot set proxyfile path inside context." << std::endl;
+		}
+		else erase = true;
+	}
+	else if( proxy_path.size() == 0 ) erase = true;
+	if( erase ) {
+		res = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, NULL );
+		if( res ) edglog(severe) << "Cannot reset proxyfile path inside context." << std::endl;;
+	}
+}
 
 
 // Error Message Parsing

@@ -27,7 +27,13 @@ namespace eventlogger {
 class WMPLogger  {
 
 	public:
-
+		enum event_name {
+			LOG_FEFUSE,
+			LOG_ACCEPTED,
+			LOG_CANCEL,
+			LOG_PURGE,
+			LOG_ABORTED
+		};
 		WMPLogger();
 		virtual ~WMPLogger() throw();
 
@@ -44,6 +50,11 @@ class WMPLogger  {
 		std::vector<std::string> registerDag(WMPExpDagAd *ad);
 		std::vector<std::string> registerPartitionable(WMPExpDagAd *ad, int res_num);
 
+
+		// Event logging
+		bool logEvent(event_name event, char* reason);
+		void logEvent(event_name event, char* reason, bool retry);
+		void logEvent(event_name  event, char* reason, bool retry, bool test);
 		void logAccepted(const std::string &jid);
 		void logRefused(const std::string &jid);
 		void logAbort(const char *reason = "");
@@ -58,7 +69,6 @@ class WMPLogger  {
 		void logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 			const std::string &host_cert, const std::string &host_key, const std::string &file_queue,
 			bool mode, const char *reason, bool retry, bool test);
-
 		void setLoggingJob( const std::string &jid , const char* seq_code=NULL );
 
 
