@@ -8,8 +8,8 @@
 #include <map>
 #include <vector>
 #include "glite/wms/common/utilities/result_codes.h"
-#include "glite/wms/ui/client/UserCredential.h"
-#include "glite/wms/ui/client/Shadow.h"
+#include "glite/wmsui/api/UserCredential.h"
+#include "glite/wmsui/api/Shadow.h"
 #include "glite/lb/consumer.h"
 #define EMPTY_STRING              ""
 #define LB_DGLOG_PROT           "x-dglog://"

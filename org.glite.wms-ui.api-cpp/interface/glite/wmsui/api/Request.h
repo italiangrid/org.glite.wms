@@ -6,25 +6,25 @@
  * Contributors are mentioned in the code where appropriate.
  */
  // DagAd
-#include "edg/workload/common/requestad/ExpDagAd.h"
+#include "glite/wms/jdl/ExpDagAd.h"
 #include <map>
 #include <vector>
 // JobId
-#include "edg/workload/common/jobid/JobId.h"
-#include "edg/workload/common/utilities/result_codes.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wms/common/utilities/result_codes.h"
 // Credential Information
-#include "edg/workload/userinterface/client/UserCredential.h"
-#include "edg/workload/userinterface/client/Logging.h"
+#include "glite/wmsui/api/UserCredential.h"
+#include "glite/wmsui/api/Logging.h"
 
 /************************Logging and Bookkeeping  *******************/
-#include "edg/workload/logging/client/consumer.h"
-#include "edg/workload/logging/client/JobStatus.h"
-#include "edg/workload/logging/client/Event.h"
+#include "glite/lb/consumer.h"
+#include "glite/lb/JobStatus.h"
+#include "glite/lb/Event.h"
 
 #define EDG_WL_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 // Namespace definition:
-namespace edg{
-	namespace  workload{
+namespace glite{
+	namespace  wms{
 		namespace  networkserver{namespace client { class NSClient ;  } }
 	}
 }

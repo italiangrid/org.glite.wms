@@ -6,7 +6,7 @@
  * Contributors are mentioned in the code where appropriate.
  */
 #include "glite/wms/common/utilities/Exceptions.h"
-#include "glite/wms/ui/client/exception_codes.h"
+#include "glite/wmsui/api/exception_codes.h"
 
 USERINTERFACE_NAMESPACE_BEGIN //Defining UserInterFace NameSpace
 /**
