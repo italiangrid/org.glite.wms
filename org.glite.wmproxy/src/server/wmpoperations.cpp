@@ -73,8 +73,7 @@ using namespace glite::wms::wmproxy::eventlogger;
 namespace logger         = glite::wms::common::logger;
 namespace configuration  = glite::wms::common::configuration;
 namespace wmpmanager	 = glite::wms::wmproxy::server;
-
-namespace wmputilities		 = glite::wms::wmproxy::utilities;
+namespace wmputilities	 = glite::wms::wmproxy::utilities;
 
 
 //namespace glite {
@@ -356,9 +355,10 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri,
 			const string FILE_SEP = "/";
 		#endif*/
 		
+		vector<string> jobids;
 		for (unsigned int i = 0; i < children_dest_uris.size(); i++) {
 			edglog(fatal)<<"Creating sub job directory "<<children_dest_uris[i]<<endl;
-			if (wmputilities::managedir(children_dest_uris[i], userid)) {
+			if (wmputilities::managedir(children_dest_uris[i], userid, jobids)) {
 				throw JobOperationException(__FILE__, __LINE__,
 					"setJobFileSystem(const string &delegation_id, const string "
 					"&dest_uri, const vector<string> &children_dest_uris)",
