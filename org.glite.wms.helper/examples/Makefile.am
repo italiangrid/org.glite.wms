@@ -13,11 +13,11 @@ JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_jobadapter.la
 JOBWRAPPER = $(top_builddir)/src/jobadapter/jobwrapper/libglite_wms_ja_jobwrapper.la
 
 check_PROGRAMS = \
-	jobadapterTest \
 	jobwrapperTest \
 	mpilsfjobwrapperTest \
 	mpipbsjobwrapperTest \
-	urlTest
+	urlTest \
+	jobadapterTest
 
 jobadapterTest_SOURCES = jobadapterTest.cpp
 jobadapterTest_LDADD   = \
@@ -41,8 +41,8 @@ jobwrapperTest_LDADD   = \
 	$(JOBWRAPPER) \
 	$(URL) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
         $(CLASSAD_LIBS) \
 	$(BOOST_LIBS)
 
