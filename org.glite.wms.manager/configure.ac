@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2004/10/14 14:15:22  eronchie
+#       Updated
+#
 #       Revision 1.8  2004/10/13 22:02:23  eronchie
 #       Added ism dependency
 #
@@ -149,7 +152,7 @@ AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 
-AC_GLITE_WMS_JDL([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
+AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
