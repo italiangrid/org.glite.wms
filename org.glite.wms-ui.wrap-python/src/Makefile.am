@@ -85,6 +85,12 @@ SHARED_LIB_REQUESTAD = ../../common/requestad/JDLAttributes.lo \
 	../../common/requestad/JobAdSchema.lo \
 	../../common/requestad/convert.lo
 
+GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(top_srcdir)/../org.glite.wms.manager-ns-client/build/src \
+	-L$(top_srcdir)/../org.glite.wms.manager-ns-commands/build/src \
+	-L$(top_srcdir)/../org.glite.wms.manager-ns-fsm/build/src \
+	-L$(top_srcdir)/../org.glite.wms.manager-ns-versions/build/src \
+	-lglite_wms_manager_ns_client -lnsclientcommands -lnsfsm -lglite_wms_manager-ns-versions 
+
 libglite_wmsui_LbWrapper_la_SOURCES = \
 	LbWrapper_wrap.cpp \
 	LbWrapper.cpp \
@@ -97,6 +103,7 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(VOMS_CPP_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
@@ -129,6 +136,7 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(VOMS_CPP_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
@@ -157,23 +165,30 @@ libglite_wmsui_NsWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_NsWrapper_la_LIBADD = \
 	-lc \
-	$(GLITE_SECURITY_VOMS_CPP_LIBS) \
+ 	$(GLITE_WMS_MANAGER_NS_CLIENT_LIBS) \
+	$(VOMS_CPP_LIBS) \
 	$(GLITE_WMSUTILS_TLS_GSI_SOCKET_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_WMS_COMMON_UT_FTP_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
 	$(GLITE_DGAS_JOBAUTHCLIENT_LIBS) \
+	$(GLITE_DGAS_COMMON_XMLUTIL_LIBS) \
 	$(CLASSAD_LIBS) \
         $(ARES_LIBS) \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
+	$(GLOBUS_FTP_CLIENT_THR_LIBS) \
         $(EXPAT_LIBS) \
 	-lstdc++
 
@@ -195,11 +210,13 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMS_JDL_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(CLASSAD_LIBS) \
         $(ARES_LIBS) \
         $(BOOST_LIBS) \
