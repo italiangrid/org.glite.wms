@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.12  2004/08/04 10:10:42  eronchie
+#       Start adding unittest
+#
 #       Revision 1.11  2004/07/28 07:25:04  eronchie
 #       Added m4files.list property
 #
@@ -106,5 +109,6 @@ AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/socket++/Makefile])
 AC_CONFIG_FILES([src/ssl_helpers/Makefile])
+AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

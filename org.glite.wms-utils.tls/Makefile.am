@@ -9,7 +9,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Subdirectories list
-SUBDIRS = interface src examples 
+SUBDIRS = interface src examples test 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
