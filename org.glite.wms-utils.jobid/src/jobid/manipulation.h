@@ -1,12 +1,10 @@
-#ifndef GLITE_WMS_COMMON_JOBID_MANIPULATION_H
-#define GLITE_WMS_COMMON_JOBID_MANIPULATION_H
+#ifndef GLITE_WMS_JOBID_MANIPULATION_H
+#define GLITE_WMS_JOBID_MANIPULATION_H
 
 #include <string>
 
-#include "jobid_namespace.h"
-
-COMMON_NAMESPACE_BEGIN {
-
+namespace glite {
+namespace wms {
 namespace jobid {
 
 class JobId;
@@ -15,11 +13,11 @@ std::string get_reduced_part( const JobId &id, int level = 0 );
 std::string to_filename( const JobId &id );
 JobId from_filename( const std::string &filename );
 
-}; // Namespace jobid
+} // namespace jobid
+} // namespace wms
+} // namespace glite
 
-} COMMON_NAMESPACE_END;
-
-#endif /* GLITE_WMS_COMMON_JOBID_MANIPULATION_H */
+#endif /* GLITE_WMS_JOBID_MANIPULATION_H */
 
 // Local Variables:
 // mode: c++

@@ -3,13 +3,12 @@
 #include <string>
 #include <algorithm>
 
-#include "jobid_namespace.h"
 #include "JobId.h"
 
 using namespace std;
 
-COMMON_NAMESPACE_BEGIN {
-
+namespace glite {
+namespace wms {
 namespace jobid {
 
 namespace {
@@ -176,6 +175,6 @@ JobId from_filename( const string &filename )
   return JobId( decoded );
 }
 
-}; // Namespace jobid
-
-} COMMON_NAMESPACE_END;
+} // namespace jobid
+} // namespace wms
+} // namespace glite

@@ -10,8 +10,10 @@
 
 #include "JobIdExceptions.h"
 
-COMMON_NAMESPACE_BEGIN{
-namespace jobid{
+namespace glite {
+namespace wms {
+namespace jobid {
+
 using namespace std ;
 
 /******************************************************************
@@ -176,4 +178,6 @@ operator<<(std::ostream& os, JobId const& id)
   return os << id.toString();
 }
 
-} COMMON_NAMESPACE_END}
+} // namespace jobid
+} // namespace wms
+} // namespace glite 

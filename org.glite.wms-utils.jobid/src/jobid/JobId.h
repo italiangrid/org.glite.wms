@@ -1,5 +1,5 @@
-#ifndef GLITE_WMS_COMMON_CLIENT_JOBID_H
-#define GLITE_WMS_COMMON_CLIENT_JOBID_H
+#ifndef GLITE_WMS_JOBID_JOBID_H
+#define GLITE_WMS_JOBID_JOBID_H
 
 /*
  * JobId.h
@@ -10,12 +10,14 @@
 #include <string>
 #include <iosfwd>
 
-#include "jobid_namespace.h"
 #include "cjobid.h"
 
 typedef struct _edg_wlc_jobid_s* edg_wlc_jobid_t;
-#define COMMON_JOBID_NAMESPACE_BEGIN namespace glite { namespace wms { namespace common {namespace jobid{
-COMMON_JOBID_NAMESPACE_BEGIN
+
+namespace glite { 
+namespace wms { 
+namespace jobid {
+
 /**
  * Managing Identification, checking, retreiving info from a job
  * File name: JobId.h
@@ -28,7 +30,8 @@ COMMON_JOBID_NAMESPACE_BEGIN
  * @version 0.1
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>  */ 
- class JobId {
+
+class JobId {
 public:
     /**@name Constructors/Destructor */
     //@{
@@ -110,6 +113,8 @@ return     strcmp ( lhs.m_pStr , rhs.m_pStr ) ==0 ;
 
 std::ostream& operator<<(std::ostream& os, JobId const& id);
 
-} COMMON_NAMESPACE_END }
+} // namespace jobid
+} // namespace wms
+} // namespace glite
 
-#endif // GLITE_WMS_COMMON_CLIENT_JOBID_H
+#endif // GLITE_WMS_JOBID_JOBID_H

@@ -6,8 +6,10 @@
 
 #include "JobIdExceptions.h"
 
-COMMON_NAMESPACE_BEGIN{
-namespace jobid{
+namespace glite {
+namespace wms {
+namespace jobid {
+
 using namespace std;
 using namespace glite::wms::common::utilities;
 
@@ -19,7 +21,10 @@ JobIdException::JobIdException (const string& file,
 				    const string& method,
 				    int code,
 				    const string& exception_name)
-	: Exception(file, line, method, code, exception_name){}
+	: Exception(file, line, method, code, exception_name)
+{
+}
+
 /*****************************
 * WrongIdException
 *****************************/
@@ -28,9 +33,11 @@ WrongIdException::WrongIdException(const string& file,
 				       const string& method,
 				       int code )
 	: JobIdException(file, line, method, code,
-			 "WrongIdException"){
+			 "WrongIdException")
+{
 	error_message = "Wrong Field caught while parsing Job Id" ;
-    };
+}
+
 /*****************************
 * EmptyIdException
 *****************************/
@@ -41,9 +48,11 @@ EmptyIdException::EmptyIdException(const string& file,
 				       const string& field )
 	: JobIdException(file, line, method, code,
 			 "EmptyIdException")
-    {
+{
 	error_message = "Unable to retrieve " + field + ": the instance has not been initialized yet";
-    }
+}
 
-} COMMON_NAMESPACE_END }
+} // namespace jobid
+} // namespace wms
+} // namespace glite
 

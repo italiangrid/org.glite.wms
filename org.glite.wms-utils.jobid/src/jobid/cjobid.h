@@ -2,7 +2,7 @@
 #define _GLITE_JOBID_H
 
 /*!
- * \file jobid/cjobid.h
+ * \file cjobid.h
  * \brief L&B consumer API
  */
 

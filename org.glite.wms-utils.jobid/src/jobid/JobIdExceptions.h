@@ -1,14 +1,17 @@
-#ifndef GLITE_WMS_COMMON_CLIENT_JOBIDEXCEPTIONS_H
-#define GLITE_WMS_COMMON_CLIENT_JOBIDEXCEPTIONS_H
+#ifndef GLITE_WMS_JOBID_EXCEPTIONS_H
+#define GLITE_WMS_JOBID_EXCEPTIONS_H
 
 /*
  * JobIdExceptions.h
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  */
+
 #include "glite/wms/common/utilities/Exceptions.h"
 
-#define COMMON_JOBID_NAMESPACE_BEGIN namespace glite { namespace wms { namespace common {namespace jobid{
-COMMON_JOBID_NAMESPACE_BEGIN
+namespace glite { 
+namespace wms { 
+namespace jobid {
+
 /**
  * JobIdException - Exception thrown by JobId Class
  * @ingroup Common
@@ -16,6 +19,7 @@ COMMON_JOBID_NAMESPACE_BEGIN
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
+
 class JobIdException : public glite::wms::common::utilities::Exception {
 public:
     /**
@@ -67,6 +71,10 @@ public:
 				       int code ,
 				       const std::string& field );
 }; //End CLass EmptyIdException
-} COMMON_NAMESPACE_END }
-#endif
+
+} // namespace jobid
+} // namespace wms
+} // namespace glite
+
+#endif // GLITE_WMS_JOBID_EXCEPTIONS_H
 
