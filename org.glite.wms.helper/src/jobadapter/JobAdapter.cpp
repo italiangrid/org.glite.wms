@@ -225,6 +225,32 @@ try {
   /* and forwarded to Condor-C in any case.   */
   string lrmstype(jdl::get_lrms_type(*m_ad));
 
+  // Figure out the local host name (this should really come from
+  // some common entity).
+  char   hostname[1024];
+  string local_host_name("");
+  
+  if (gethostname(hostname, sizeof(hostname)) >= 0) {
+    hostent resolved_host;
+    hostent *resolver_result=NULL;
+    int resolver_work_buffer_size = 2048;
+    char* resolver_work_buffer = new char[resolver_work_buffer_size];
+    int resolve_errno = ERANGE;
+    while ((gethostbyname_r(hostname, &resolved_host,
+                            resolver_work_buffer,
+                            resolver_work_buffer_size,
+                            &resolver_result,
+                            &resolve_errno) ) == ERANGE ) {
+      delete[] resolver_work_buffer;
+      resolver_work_buffer_size *= 2;
+      resolver_work_buffer = new char[resolver_work_buffer_size];
+    }
+    if (resolver_result != NULL) {
+      local_host_name.assign(resolved_host.h_name);
+    }
+    delete[] resolver_work_buffer;
+  }
+
   /* FIXME: Test whether this is a 'blahpd' resource so that  */
   /* FIXME: the submit file can be adjusted accordingly.      */
   /* FIXME: Eventually, CondorG should be able to handle this */
@@ -259,8 +285,20 @@ try {
     unsigned char md5_cert_hash[MD5_DIGEST_LENGTH];
     utilities::oedgstrstream md5_hex_hash;
 
-    MD5((unsigned char *)certificatesubject.c_str(),
-        certificatesubject.length(),
+    // Without the local host name, the CondorC/BLAH submission
+    // will most likely not work. We bail out in this case:
+    if (local_host_name.empty()) {
+      throw helper::InvalidAttributeValue("local hostname",
+                                          local_host_name,
+                                          "not empty",
+                                          helper_id);
+    }
+
+    string hostandcertificatesubject(local_host_name);
+    hostandcertificatesubject.append("/");
+    hostandcertificatesubject.append(certificatesubject);
+    MD5((unsigned char *)hostandcertificatesubject.c_str(),
+        hostandcertificatesubject.length(),
         md5_cert_hash);
     md5_hex_hash.setf(ios_base::hex, ios_base::basefield);
     md5_hex_hash.width(2);
@@ -425,32 +463,6 @@ try {
     executable.insert(0, "./", 2);
   }    
 	
-  // Figure out the local host name (this should really come from
-  // some common entity)
-  char   hostname[1024];
-  string local_host_name("");
-  
-  if (gethostname(hostname, sizeof(hostname)) >= 0) {
-    hostent resolved_host;
-    hostent *resolver_result=NULL;
-    int resolver_work_buffer_size = 2048;
-    char* resolver_work_buffer = new char[resolver_work_buffer_size];
-    int resolve_errno = ERANGE;
-    while ((gethostbyname_r(hostname, &resolved_host,
-                            resolver_work_buffer,
-                            resolver_work_buffer_size,
-                            &resolver_result,
-                            &resolve_errno) ) == ERANGE ) {
-      delete[] resolver_work_buffer;
-      resolver_work_buffer_size *= 2;
-      resolver_work_buffer = new char[resolver_work_buffer_size];
-    }
-    if (resolver_result != NULL) {
-      local_host_name.assign(resolved_host.h_name);
-    }
-    delete[] resolver_work_buffer;
-  }
-  
   /* lowercase all jobtype characters */
   string ljobtype(jobtype);
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
