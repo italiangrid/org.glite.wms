@@ -22,15 +22,18 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
 #include "glite/wms/common/logger/logstream_ts.h"
 #include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 
 namespace manager = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
 namespace task = glite::wms::common::task;
 namespace logger = glite::wms::common::logger;
+namespace purchaser = glite::wms::ism::purchaser;
 
 namespace {
 
@@ -145,6 +148,7 @@ try {
   configuration::Configuration config(opt_conf_file,
                                       configuration::ModuleType::workload_manager);
   configuration::WMConfiguration const* const wm_config(config.wm());
+  configuration::NSConfiguration const* const ns_config(config.ns());
 
   configuration::CommonConfiguration const* const common_config(config.common());
 
@@ -235,6 +239,14 @@ try {
   manager::the_task_queue();
 
   task::Pipe<boost::shared_ptr<manager::Request> > d2rh(wm_config->pipe_depth());
+
+  // Try to execute ISM purchaser thread
+  purchaser::ism_ii_purchaser ismp(ns_config->ii_contact(),
+                                 ns_config->ii_port(),
+                                 ns_config->ii_dn(),
+                                 ns_config->ii_timeout(),
+				 purchaser::ism_ii_purchaser::loop, 30);
+  task::Task p(ismp);
 
   manager::Dispatcher dispatcher;
   manager::RequestHandler request_handler;
