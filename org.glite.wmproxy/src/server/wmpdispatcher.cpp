@@ -9,7 +9,7 @@
 #include "glite/wms/common/logger/manipulators.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/thread/thread.hpp>
+#include <boost/pool/detail/singleton.hpp>
 #include "glite/wmsutils/exception/Exception.h"
 
 #include "commands/logging.h"
@@ -19,9 +19,11 @@
 
 namespace logger         = glite::wms::common::logger;
 using namespace glite::wmsutils::exception; //Exception
+using namespace boost::details::pool; //Exception
+using namespace glite::wms::wmproxy::server;
+
 
 void
-//WMPDispatcher::run(void)
 WMPDispatcher::operator()()
 {
 try {
@@ -64,5 +66,4 @@ try {
   edglog(fatal) << "Pipe Closed." << std::endl;
 }
 }
-  
-
+ 
