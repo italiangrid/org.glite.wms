@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/08 09:32:24  amarasch
+#       Added LICENSE handling
+#
 #       Revision 1.1  2004/08/11 08:33:57  eronchie
 #       Start adding partitioner
 #       WARNING: work in progress
@@ -32,7 +35,10 @@
 ## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
-
+EXTRA_DIST = LICENSE
+ 
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 ## Subdirectories list
 SUBDIRS = interface src 
 
