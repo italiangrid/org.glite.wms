@@ -56,6 +56,7 @@ class WMPLogger  {
 			const std::string &host_cert, const std::string &host_key, const std::string &file_queue,
 			bool mode, const char *reason, bool retry, bool test);
 
+		void setLoggingJob( const std::string &jid , const char* seq_code=NULL );
 
 
 		

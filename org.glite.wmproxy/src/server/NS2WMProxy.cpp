@@ -130,44 +130,40 @@ static bool copy_file(const std::string& from, const std::string& to)
 } 
 
 
-void NS2WMProxy::storeSequenceCode (classad::ClassAd* cmdAd, edg_wll_Context* log_ctx)
+void NS2WMProxy::storeSequenceCode (classad::ClassAd* cmdAd, WMPLogger *wmplogger)
 {
   edglog_fn("NS2WM::stSeqCode");
   edglog(fatal) << "Storing Seq_Code." << std::endl;
 
   std::string seq_code;
   try {
-   if( log_ctx ) {
-     char* seqstr = edg_wll_GetSequenceCode(*log_ctx);
-     seq_code.assign( std::string(seqstr) );
-     free( seqstr );
-   }
-   else seq_code.assign( utilities::evaluate_expression(*cmdAd, "Arguments.SeqCode") );
-    
+   if( wmplogger ) {  seq_code.assign( wmplogger->getSequence() );  }
+   else {                 seq_code.assign( utilities::evaluate_expression(*cmdAd, "Arguments.SeqCode") ); }
+
    std::string seq_path(utilities::evaluate_expression(*cmdAd, "Arguments.JobPath"));
    std::string seq_file(seq_path + "/" + SEQFILENAME);
    std::string jdl     ( utilities::evaluate_expression( *cmdAd, "Arguments.jdl" ) );
    classad::ClassAdParser parser;
    classad::ClassAd* jdlad = parser.ParseClassAd( jdl );
    std::string type    ( utilities::evaluate_expression( *jdlad, "type" ) );
-      
+
    edglog(info) << "Sequence Code: " << seq_code << std::endl;
    edglog(info) << "Sequence Code file: "  << seq_file << std::endl;
-      
+
    std::ofstream ostr( seq_file.c_str());
-   if ( ostr ) {	
+   if ( ostr ) {
      ostr << seq_code << std::endl;
      ostr.close();
 
-     if (type == std::string("dag")) { 
-       std::string to_root ( utilities::evaluate_expression( *cmdAd, "Arguments.SandboxRootPath" )); 
-       storeDAGSequenceCode(jdlad, seq_file, to_root); 
+     if (type == std::string("dag")) {
+       std::string to_root ( utilities::evaluate_expression( *cmdAd, "Arguments.SandboxRootPath" ));
+       storeDAGSequenceCode(jdlad, seq_file, to_root);
      }
 
-   } 
+   }
    else {
      edglog(info) << "Error during sequence file creation." << std::endl;
-   } 
+   }
   }
   catch(utilities::InvalidValue& e)
   {
@@ -180,7 +176,7 @@ void NS2WMProxy::storeSequenceCode (classad::ClassAd* cmdAd, edg_wll_Context* lo
 
 void NS2WMProxy::storeDAGSequenceCode(classad::ClassAd* jdlad, std::string seqfile, std::string \
 				      to_root_path) {
- 
+
   edglog_fn( "NS2WM::stDAGSeqCode" );
   edglog(fatal) << "Storing Seq_Code for Nodes." << std::endl; 
  
@@ -404,20 +400,9 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
   //
   // Initialize the logging context
   //
-  edg_wll_Context      log_ctx;
-  edg_wlc_JobId        wlc_jid;
-  if( edg_wll_InitContext( &log_ctx ) != 0 ||
-      edg_wlc_JobIdParse ( jobid.c_str(), &wlc_jid ) != 0 ||
-      edg_wll_SetParam( log_ctx, EDG_WLL_PARAM_SOURCE,  EDG_WLL_SOURCE_NETWORK_SERVER  ) != 0 ||
-      edg_wll_SetLoggingJob( log_ctx, wlc_jid, seq_code.c_str(), EDG_WLL_SEQ_NORMAL ) != 0 )  {
-	  char      *et,*ed;
-          edg_wll_Error(log_ctx,&et,&ed);
-          edglog(fatal) << " unable to initialize logging context " << et << ": " << ed;
-          free(et); free(ed);
-  }
-  char* seq_str = edg_wll_GetSequenceCode(log_ctx);
-  ((classad::ClassAd*)(cmdAd->Lookup("Arguments"))) -> InsertAttr("SeqCode", std::string(seq_str));
-  free(seq_str);
+  WMPLogger wmplogger;
+  wmplogger.setLoggingJob(jobid ,seq_code.c_str() );
+  ((classad::ClassAd*)(cmdAd->Lookup("Arguments"))) -> InsertAttr("SeqCode", wmplogger.getSequence());
 
   edglog(debug) << "start: " << jdl << std::endl;
   std::string proxy (utilities::evaluate_expression(*cmdAd, "Arguments.X509UserProxy"));
@@ -428,9 +413,6 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
 
   edglog(debug) << "Logged jdl: " << jdl << std::endl;
 
-  edg_wlc_JobIdFree(wlc_jid);
-  WMPLogger wmplogger;
-  //wmplogger.init(ctx);
   try {
     f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
     // Take the result of f_forward and do what for LogEnQueued in CommandFactoryServerImpl
@@ -447,10 +429,8 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
   }
 
   // Save the sequence code on an hidden file.
-  storeSequenceCode(cmdAd, &log_ctx);
+  storeSequenceCode(cmdAd, &wmplogger);
 
-  // Free the context
-  edg_wll_FreeContext(log_ctx);
   edglog(null) << "Submit Forwarded." << std::endl; 
 }
 
@@ -463,7 +443,7 @@ void NS2WMProxy::cancel(classad::ClassAd* cmdAd)
   f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
 
   // Save the sequence code on an hidden file.
-  storeSequenceCode(cmdAd, 0);
+  storeSequenceCode(cmdAd);
 
   edglog(null) << "Cancel Forwarded." << std::endl;
 }

@@ -15,11 +15,12 @@
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wmsutils/jobid/cjobid.h"
-#include "glite/lb/producer.h"
 
 namespace classad {
   class ClassAd;
 }
+
+class WMPLogger;
 
 namespace glite {
 namespace wms {
@@ -28,7 +29,6 @@ namespace commands {
   class Command;
 }
 namespace server {
-
 namespace commands=glite::wms::wmproxy::commands;
 
 typedef boost::scoped_ptr< glite::wms::common::utilities::FileList<std::string> > FileListPtr;
@@ -48,7 +48,7 @@ public:
    * Destructor.
    */
   virtual ~NS2WMProxy();
-  
+
   /*
    * Initialized the NS to WM Proxy using the given FileList.
    * @param filename the pathname of FileList file.
@@ -76,7 +76,7 @@ private:
    * Stores the sequence code for Purger activities, in case of submit.
    * @param cmd the Command classad object related to the edg_job_submit as provided by NS.
    */
-  void storeSequenceCode(classad::ClassAd*, edg_wll_Context*);
+  void storeSequenceCode(classad::ClassAd*, WMPLogger* wmplogger=NULL);
   /*
    * Stores the user id for Purger quota activities.
    * @param cmd the Command classad object related to the edg_job_submit as provided by NS.
@@ -95,13 +95,13 @@ private:
    * @param the Command object related to the command as provided by NS.
    * @return the converted common-protocol-based string.
    */
-  std::string convertProtocol(classad::ClassAd*); 
-  /*                                                            
+  std::string convertProtocol(classad::ClassAd*);
+  /*
    * Normalizes Dag nodes ISB deleting pathname preceeding filename.
    * It takes a reference to a classad and changes are applied to it.
-   * @param ad the dag classad                                  
-   */ 
-  classad::ClassAd* normalizeNodesISB(classad::ClassAd*); 
+   * @param ad the dag classad
+   */
+  classad::ClassAd* normalizeNodesISB(classad::ClassAd*);
 
 };
 

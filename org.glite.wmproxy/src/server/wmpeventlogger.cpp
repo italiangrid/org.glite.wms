@@ -46,7 +46,7 @@ WMPLogger::WMPLogger()
 	id = NULL;
 	if ((edg_wll_InitContext(&ctx))
 			|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
-			EDG_WLL_SOURCE_USER_INTERFACE))) {
+			EDG_WLL_SOURCE_WM_PROXY))) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPLogger::WMPLogger()",
 			WMS_IS_FAILURE, "LB initialisation failed");
@@ -324,8 +324,7 @@ WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> >
 				WMS_OPERATION_NOT_ALLOWED, "Wrong UserTag value for "
 				+ userTags[i].first);
 		}
-		glite::wmsutils::jobid::JobId sub_jobid(userTags[i].first);
-		edg_wll_SetLoggingJob(ctx, sub_jobid.getId(), NULL, EDG_WLL_SEQ_NORMAL);
+		setLoggingJob(userTags[i].first);
 		logUserTags((classad::ClassAd*)(userTags[i].second));
 	}
 	edg_wll_SetLoggingJob(ctx, id->getId(), NULL, EDG_WLL_SEQ_NORMAL);
@@ -359,76 +358,75 @@ WMPLogger::logUserTags(classad::ClassAd* userTags)
 
 
 
-
+void WMPLogger::setLoggingJob( const std::string &jid , const char* seq_code){
+		glite::wmsutils::jobid::JobId jobid ( jid ) ;
+		edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code ,EDG_WLL_SEQ_NORMAL);
+}
 
 
 void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
 			const char *reason, bool retry ){
-    int i=0;
-    edglog_fn("WMPLogger::logEnqueuedJobN");
-    edglog(fatal) << "Logging Enqueued Job." << std::endl;
-    bool logged = false;
-
-    for (; i < 3 && !logged && retry; i++) {
-      logged = !edg_wll_LogEnQueued (ctx,
-				     file_queue.c_str(),
-				     jdl.c_str(),
-				     (mode ? "OK" : "FAIL"),
-				     reason);
-      if (!logged && (i<2) && retry) {
-        edglog(info) << "Failed to log Enqueued Job. Sleeping 60 seconds before retry." << std::endl;
-        sleep(60);
-      }
-    }
-
-    if ((retry && (i>=3)) || (!retry && (i>0)) ) {
-	edglog(severe) << "Error while logging Enqueued Job." << std::endl;
-	throw JobOperationException(__FILE__, __LINE__,
-				"WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,"
-				"const char *reason, bool retry )",
-				WMS_OPERATION_NOT_ALLOWED, "Error while logging Enqueued Job.");
+	int i=0;
+	edglog_fn("WMPLogger::logEnqueuedJobN");
+	edglog(fatal) << "Logging Enqueued Job." << std::endl;
+	bool logged = false;
+	for (; i < 3 && !logged && retry; i++) {
+		logged = !edg_wll_LogEnQueued (ctx,
+			file_queue.c_str(),
+			jdl.c_str(),
+			(mode ? "OK" : "FAIL"),
+			reason);
+		if (!logged && (i<2) && retry) {
+			edglog(info) << "Failed to log Enqueued Job. Sleeping 60 seconds before retry." << std::endl;
+			sleep(60);
+		}
+	}
 
 
-    }
 
-    edglog(debug) << "Logged." << std::endl;
-    edg_wll_FreeContext(ctx);
-  }
+	if ((retry && (i>=3)) || (!retry && (i>0)) ) {
+		edglog(severe) << "Error while logging Enqueued Job." << std::endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,"
+			"const char *reason, bool retry )",
+			WMS_OPERATION_NOT_ALLOWED, "Error while logging Enqueued Job.");
+	}
+	edglog(debug) << "Logged." << std::endl;
+	edg_wll_FreeContext(ctx);
+}
 
 
 void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 			const std::string &host_cert, const std::string &host_key, const std::string &file_queue,
 			bool mode, const char *reason, bool retry, bool test){
+	if (!test) logEnqueuedJob(jdl, file_queue, mode, reason, retry);
+	edglog_fn("WMPLogger::logEnqueuedJobE");
+	edglog(fatal) << "Logging Enqueued Job." << std::endl;
+	int res;
+	bool with_hp = false;
+	int lap = 0;
+	reset_user_proxy( proxy_path);
 
-    if (!test) logEnqueuedJob(jdl, file_queue, mode, reason, retry);
-    edglog_fn("WMPLogger::logEnqueuedJobE");
-    edglog(fatal) << "Logging Enqueued Job." << std::endl;
-
-    int res;
-    bool with_hp = false;
-    int lap = 0;
-    reset_user_proxy( proxy_path);
-
-    do {
-      res = edg_wll_LogEnQueued (ctx,
-				 file_queue.c_str(),
-				 jdl.c_str(),
-				 (mode ? "OK" : "FAIL"),
-				 reason);
-      this->testAndLog( res, with_hp, lap, host_cert, host_key );
-    } while( res != 0 );
-  }
+	do {
+		res = edg_wll_LogEnQueued (ctx,
+				file_queue.c_str(),
+				jdl.c_str(),
+				(mode ? "OK" : "FAIL"),
+				reason);
+		this->testAndLog( res, with_hp, lap, host_cert, host_key );
+	}while( res != 0 );
+}
 
 
 int WMPLogger::setX509Param(const std::string &name , const std::string &value ,  edg_wll_ContextParam lbX509code ){
 	if(value.length() == 0 ){
 		edglog(warning) <<name<< " not set inside configuration file." << std::endl
-      			<< "Trying with a default NULL and hoping for the best." << std::endl;
-       		return edg_wll_SetParam( ctx, lbX509code, NULL );
-       	}else {
-       		edglog(info) << name <<" found = \"" << value << "\"." << std::endl;
-       		return  edg_wll_SetParam( ctx, lbX509code, value.c_str() );
-       	}
+			<< "Trying with a default NULL and hoping for the best." << std::endl;
+		return edg_wll_SetParam( ctx, lbX509code, NULL );
+	}else {
+		edglog(info) << name <<" found = \"" << value << "\"." << std::endl;
+		return  edg_wll_SetParam( ctx, lbX509code, value.c_str() );
+	}
 }
 
 void
