@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/08 13:46:08  mezzadri
+#       added managing of LICENSE file
+#
 #       Revision 1.1  2004/08/16 12:53:47  eronchie
 #       Start adding new component
 #       WARNING: work in progress
@@ -33,6 +36,11 @@
 ## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = src 
