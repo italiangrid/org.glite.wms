@@ -15,7 +15,7 @@
 typedef struct _edg_wlc_jobid_s* edg_wlc_jobid_t;
 
 namespace glite { 
-namespace wmsutils { 
+namespace wmsutils {
 namespace jobid {
 
 /**
@@ -39,12 +39,22 @@ public:
     JobId() ;
     /**
      * Instantiates a JobId object from the passed dg_jobId in string format.
-     * @param  job_id_string a string representig a classAd expression
+     * @param  jobid a string representig a classAd expression
      * @throws  WrongIdException When a string is passed in a wrong format
      */
-    JobId(const std::string& job_id_string ) ;
-    JobId(const JobId&);
-    JobId(const edg_wlc_JobId&);
+    JobId(const std::string& jobid ) ;
+    /**
+     * Instantiates a JobId object from the passed JobId instance
+     * @param jobid a JobId instance to copy from
+     * @throws  WrongIdException When a string is passed in a wrong format
+     */
+    JobId(const JobId& jobid );
+    /**
+     * Instantiates a JobId object from the passed  JobId internal reference
+     * @param  jobid the JobId internal reference
+     * @throws  WrongIdException When a string is passed in a wrong format
+     */
+    JobId(const edg_wlc_JobId& jobid);
     /**
      * Destructor
      * Destroy the Job Id instance
@@ -86,9 +96,14 @@ public:
     /** Converts the jobId into a string
     @return the string representation of a JobId*/
     std::string toString() const;
+    /** casting operator */
     operator const edg_wlc_JobId() const { return m_JobId; }
+    /** Operator "=" create a deep copy of the JobId instance*/
     JobId & operator=(JobId const &);
+    /** Operator "=" create a deep copy of the JobId instance*/
     JobId & operator=(const edg_wlc_JobId &);
+    /** Retrieve the internal id reference 
+    *@return the JobId internal reference used by some LB methods */
     edg_wlc_JobId  getId() const ;
 private:
     // This Variable stores the Job unique identification String
@@ -96,8 +111,9 @@ private:
     mutable char* m_pStr;
     mutable char* m_pBkserver;
     mutable char* m_pUnique;
-
+    /** Operator "<"*/
     friend bool operator<(JobId const& lhs, JobId const& rhs);
+    /** Operator "=="*/
     friend bool operator==(JobId const& lhs, JobId const& rhs);
 };
 
