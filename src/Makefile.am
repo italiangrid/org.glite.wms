@@ -8,7 +8,7 @@
 
 noinst_LTLIBRARIES = libglite_wms_purger.la
 
-#noinst_HEADERS     = purger.h
+noinst_HEADERS     = purger.h
 
 sbin_PROGRAMS      = glite-wms-purgeStorage
 
@@ -34,12 +34,12 @@ glite_wms_purgeStorage_LDADD = \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-	$(GLITE_LB_CLIENT_LIBS) \
+	$(GLITE_LB_THR_CLIENT_LIBS) \
 	$(BOOST_LIBS) \
 	$(GLOBUS_THR_LIBS) \
 	$(CLASSAD_LIBS) 
 
-AM_CPPFLAGS = -I$(top_srcdir)/interface \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
