@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+	Copyright (c) 2004 on behalf of the EU EGEE Project: 
+	The European Organization for Nuclear Research (CERN), 
+	Istituto Nazionale di Fisica Nucleare (INFN), Italy
+	Datamat Spa, Italy
+	Centre National de la Recherche Scientifique (CNRS), France
+	CS Systeme d'Information (CSSI), France
+	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+	Universiteit van Amsterdam (UvA), Netherlands
+	University of Helsinki (UH.HIP), Finland
+	University of Bergen (UiB), Norway
+	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+
+	Build file for the GLite Middleware WMS Subsystem
+	
+	Authors: Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>		
+	Version info: $Id$
+	Release: $Name$
+
+	Revision history:
+	$Log$
+	Revision 1.1  2004/07/21 16:32:21  eronchie
+	Initial revision
+
+	
+-->
+
+<project name="wms-utils" default="dist">
+
+	<description>
+		Ant build file to build the GLite WMS Utils Subsystem
+	</description>
+	
+	<!-- =========================================
+	     Import properties (order is important) 
+	     ========================================= -->
+	
+	<!-- Import baseline & user properties -->
+	<import file="../org.glite/project/baseline.properties.xml" />
+
+	<!-- Import subsystem build properties, 
+	                      subsystem properties & 
+	                      subsystem common properties -->
+	<import file="./project/properties.xml" />
+
+	<!-- Import global build properties and global properties -->
+	<import file="${global.properties.file}" />
+				
+	<!-- =========================================
+		 Load dependencies properties files (order is important) 
+	     ========================================= -->
+	<property file="${user.dependencies.file}"/>
+	<property file="${subsystem.dependencies.file}"/>
+	<property file="${global.dependencies.file}"/>	
+	
+	<!-- =========================================
+                 Load configure options
+             ========================================= -->
+        <import file="${global.configure.options.file}"/>
+		
+	<!-- =========================================
+		 Import global task definitions
+	     ========================================= -->
+	<import file="${global.taskdefs.file}" />
+	
+	<!-- =========================================
+	     Import global compiler definitions
+  	     ========================================= -->
+	<import file="${global.compilerdefs.file}" />
+		
+	<!-- =========================================
+		 Import targets 
+	     ========================================= -->
+	<import file="${global.targets-common.file}" />
+	
+	<!-- =========================================
+		 Load version file 
+	     ========================================= -->
+	<property file="${module.version.file}"/>
+	
+	<!-- ===============================================
+		  Public common targets
+	     =============================================== -->
+	
+	<target name="envinfo">
+		<!-- Workspace paths -->
+		<echo>*****************************************************************</echo>
+		<echo>*****************************************************************</echo>
+		<echo>****** ${subsystem.name}	</echo>
+		<echo>*****************************************************************</echo>
+		<echo>*****************************************************************</echo>
+		<echo>  </echo>
+		<echo>Global project path:	${global.dir}</echo>
+		<echo>Global project name:	${global.name}</echo>
+		<echo>Subsystem name:		${subsystem.name}</echo>
+	</target>
+
+	<target name="envcheck" depends="envinfo,defaultenvchecks" 
+		description="Check environment configuration">
+	</target>
+
+	<target name="localinit" depends="envcheck">
+
+		<echo> Preparing directories ... </echo>
+		
+		<mkdir dir="${stage.bin.dir}" />
+		<mkdir dir="${stage.lib.dir}" />
+		<mkdir dir="${stage.java.dir}" />
+		<mkdir dir="${stage.inc.dir}" />
+		<mkdir dir="${stage.int.dir}" />
+
+		<mkdir dir="${dist.dir}" />
+
+	</target>
+
+	<target name="init" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="init"/>
+		</antcall>
+	</target>
+
+	<target name="checkstyle" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="checkstyle"/>
+		</antcall>
+	</target>
+
+	<target name="compile" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="compile"/>
+		</antcall>
+	</target>
+
+	<target name="compiletest" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="compiletest"/>
+		</antcall>
+	</target>
+
+	<target name="unittest" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="unittest"/>
+		</antcall>
+	</target>
+
+	<target name="unitcoverage" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="unitcoverage"/>
+		</antcall>
+	</target>
+
+	<target name="doc" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="doc"/>
+		</antcall>
+	</target>
+
+    <target name="stage" depends="localinit">
+            <antcall target="buildmodules">
+                    <param name="target" value="stage"/>
+            </antcall>
+    </target>
+
+	<target name="dist" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="dist"/>
+		</antcall>
+	</target>
+
+	<target name="install" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="install"/>
+		</antcall>
+	</target>
+
+	<target name="tag" depends="clean">
+
+		<!-- This target is not recursive
+			 It is only used to set private tags
+			 Tagging is done by the build system -->
+		<!-- TODO -->		
+
+	</target>
+
+	<target name="all" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="all"/>
+		</antcall>
+	</target>
+
+	<target name="clean">
+
+		<property name="offline.repository" value="true" />
+		<antcall target="buildmodules">
+			<param name="target" value="clean"/>
+		</antcall>
+
+		<delete dir="${module.bin.dir}" />
+		<delete dir="${module.lib.dir}" />
+		<delete dir="${module.autosrc.dir}" />
+		<delete dir="${module.autodoc.dir}" />
+		<delete dir="${module.test.reports.dir}" />
+
+	</target>
+
+	<target name="cleanAll" depends="localinit">
+		<antcall target="buildmodules">
+			<param name="target" value="cleanAll"/>
+		</antcall>
+	</target>
+
+	<!-- ===============================================
+		 Private targets
+	     =============================================== -->
+	
+	<!-- ===============================================
+		 Modules proxy targets
+	     =============================================== -->
+
+	<!-- component targets definitions tag = do not remove = -->
+
+	<target name="globus_ssl_utils" unless="setenvonly" depends="globus">
+		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
+		     target="${target}"
+		     inheritall="false" />
+	</target>
+
+	<target name="exception" unless="setenvonly" depends="boost,classads">
+		<ant dir="${workspace.dir}/${subsystem.name}.exception"
+		     target="${target}"
+                     inheritall="false" />
+	</target>
+
+        <target name="tls" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common">
+                <ant dir="${workspace.dir}/${subsystem.name}.tls"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
+	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,globus_ssl_utils,common">
+                <ant dir="${workspace.dir}/${subsystem.name}.jobid"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
+	<!-- Main proxy -->
+	<target name="buildmodules" depends="globus_ssl_utils,
+					     tls,
+					     jobid,
+					     exception" />
+		
+</project>

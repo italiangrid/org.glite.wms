@@ -1,0 +1,251 @@
+<?xml version="1.0"?>
+<!--
+	Copyright (c) 2004 on behalf of the EU EGEE Project: 
+	The European Organization for Nuclear Research (CERN), 
+	Istituto Nazionale di Fisica Nucleare (INFN), Italy
+	Datamat Spa, Italy
+	Centre National de la Recherche Scientifique (CNRS), France
+	CS Systeme d'Information (CSSI), France
+	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+	Universiteit van Amsterdam (UvA), Netherlands
+	University of Helsinki (UH.HIP), Finland
+	University of Bergen (UiB), Norway
+	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+
+	GLite Middleware WMS Configuration Specification File
+	
+	Authors: Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>		
+	Version info: $Id$
+	Release: $Name$
+
+	Revision history:
+	$Log$
+	Revision 1.1  2004/07/21 16:32:21  eronchie
+	Initial revision
+
+	
+-->
+
+<project name="GLite Middleware WMS Utils CSF" default="all">
+
+	<!-- overwrite default workspace directory -->
+	<property name="workspace.dir" value="../.." />
+
+	<!-- ===============================================
+		 Load properties
+		 =============================================== -->
+
+	<!-- load baseline and user properties -->
+	<import file="${workspace.dir}/org.glite/project/baseline.properties.xml" />
+
+	<!-- define build properties file location since we are already in project dir -->
+	<property name="subsystem.build.properties.file" value="./build.properties" />
+
+	<!-- Load subsytem-specific property files -->
+	<import file="./properties.xml"/>
+
+	<!-- load global properties -->
+	<import file="${global.properties.file}" />
+
+	<!-- ===============================================
+		 Load dependencies 
+		 =============================================== -->
+
+	<!-- Load user dependencies file -->
+	<property file="${user.dependencies.file}" />
+		
+	<!-- Load subsystem dependencies file -->
+	<property file="./dependencies.properties" />
+
+	<!-- Load global dependencies file -->
+	<property file="${global.dependencies.file}" />
+
+	<!-- ===============================================
+		 Load targets 
+		 =============================================== -->
+	<import file="${global.targets-envchecks.file}" />
+	<import file="${global.targets-external-dependencies.file}" />
+
+	<!-- ===============================================
+		 Evaluate CVS tags
+		 =============================================== -->
+
+    	<target name="evaluate.cvs.tags" description="Figure out if we need tagged CVS checkout">
+		<condition property="glite.head">
+			<and>
+				<equals arg1="${org.glite.version}" arg2="HEAD" />
+				<or>
+					<istrue value="${update}" />
+					<not>
+						<available file="${global.dependencies.file}" type="file" />
+					</not>
+				</or>
+			</and>
+		</condition>
+		<condition property="glite.tag">
+			<and>
+				<not>
+					<equals arg1="${org.glite.version}" arg2="HEAD" />
+				</not>
+				<or>
+					<istrue value="${update}" />
+					<not>
+						<available file="${global.dependencies.file}" type="file" />
+					</not>
+				</or>
+			</and>
+		</condition>
+		<condition property="glite-wms-utils.head">
+			<and>
+				<equals arg1="${org.glite.wms-utils.version}" arg2="HEAD" />
+				<istrue value="${update}" />
+			</and>
+		</condition>
+		<condition property="glite-wms-utils.tag">
+			<and>
+				<not>
+					<equals arg1="${org.glite.wms-utils.version}" arg2="HEAD" />
+				</not>
+				<istrue value="${update}" />
+			</and>
+		</condition>
+	
+		<!-- condition property tag = do not remove = -->
+
+		<condition property="thirdparty-globus_ssl_utils.head">
+			<equals arg1="${org.glite.wms-utils.thirdparty-globus_ssl_utils.version}" arg2="HEAD" />
+		</condition>
+
+		<condition property="tls.head">
+                        <equals arg1="${org.glite.wms-utils.tls.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="jobid.head">
+                        <equals arg1="${org.glite.wms-utils.jobid.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="exception.head">
+			<equals arg1="${org.glite.wms-utils.exception.version}" arg2="HEAD" />
+		</condition>
+
+    	<presetdef name="cvs-co">
+		<cvs command="checkout" dest="${workspace.dir}" />
+    	</presetdef>
+
+	<!-- =====================================================
+		 Self-update if required
+		 ===================================================== -->
+		
+	<!-- Update main GLite module -->
+ 	<target name="org.glite" depends="get.glite.head, get.glite.tag"/>
+	<target name="get.glite.head" if="glite.head">
+		<cvs-co package="org.glite" />
+	</target>
+	<target name="get.glite.tag" if="glite.tag">
+		<cvs-co package="org.glite"
+			tag="${org.glite.version}" />
+	</target>
+
+	<!-- Update the current module -->
+ 	<target name="org.glite.wms-utils" depends="get.glite-wms-utils.head, get.glite-wms-utils.tag"/>
+	<target name="get.glite-wms-utils.head" if="glite-wms-utils.head">
+		<cvs-co package="org.glite.wms-utils" />
+		<fail>The org.glite and org.glite.wms-utils modules have been updated, please rerun the configuration file</fail>
+	</target>
+	<target name="get.glite-wms-utils.tag" if="glite-wms-utils.tag">
+		<cvs-co package="org.glite.wms-utils"
+			tag="${org.glite.wms-utils.version}" />
+		<fail>The org.glite and org.glite.wms-utils modules have been updated, please rerun the configuration file</fail>
+	</target>
+
+	<!-- *****************************************************-->
+	<!-- Development tools                                    -->
+	<!-- *****************************************************-->
+	
+	<!-- All development tools -->
+ 	<target name="devtools" depends="junitcheck,
+	 				 junit,
+  				         chkstyle,
+ 					 jalopy,
+ 					 ant-contrib,
+ 					 cpptasks,
+ 					 egee-ant-ext"/>		
+	
+	<!-- =====================================================
+		 External libraries
+		 ===================================================== -->
+	
+	<!--  All external libraries -->
+ 	<target name="external" depends="log4j"/>
+ 	
+	<!-- =====================================================
+		 GLite WMS modules
+		 ===================================================== -->
+
+	<!-- component targets tag = do not remove = -->
+
+	<!-- Globus SSLUtils -->
+ 	<target name="thirdparty-globus_ssl_utils" depends="globus,get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
+	<target name="get.thirdparty-globus_ssl_utils.head" if="thirdparty-globus_ssl_utils.head">
+		<cvs-co package="org.glite.wms-utils.thirdparty-globus_ssl_utils" />
+	</target>
+	<target name="get.thirdparty-globus_ssl_utils.tag" unless="thirdparty-globus_ssl_utils.head">
+		<cvs-co package="org.glite.wms-utils.thirdparty-globus_ssl_utils"
+			tag="${org.glite.wms-utils.thirdparty-globus_ssl_utils.version}" />
+	</target>
+
+    	<!-- Tls -->
+    	<target name="tls" depends="boost,classads,globus,exception,get.tls.head, get.tls.tag"/>
+    	<target name="get.tls.head" if="tls.head">
+            <cvs-co package="org.glite.wms-utils.tls" />
+    	</target>
+    	<target name="get.tls.tag" unless="tls.head">
+            <cvs-co package="org.glite.wms-utils.tls"
+                    tag="${org.glite.wms-utils.tls.version}" />
+    	</target>
+
+	<!-- Jobid -->
+    	<target name="jobid" depends="boost,classads,globus,exception,get.jobid.head, get.jobid.tag"/>
+    	<target name="get.jobid.head" if="jobid.head">
+            <cvs-co package="org.glite.wms-utils.jobid" />
+    	</target>
+    	<target name="get.jobid.tag" unless="jobid.head">
+            <cvs-co package="org.glite.wms-utils.jobid"
+                    tag="${org.glite.wms-utils.jobid.version}" />
+    	</target>
+
+	<!-- Exception -->
+ 	<target name="exception" depends="boost,classads,get.exception.head, get.exception.tag"/>
+	<target name="get.exception.head" if="exception.head">
+		<cvs-co package="org.glite.wms-utils.exception" />
+	</target>
+	<target name="get.exception.tag" unless="exception.head">
+		<cvs-co package="org.glite.wms-utils.exception"
+			tag="${org.glite.wms-utils.exception.version}" />
+	</target>
+
+	<!-- All project modules -->
+ 	<target name="project" depends="thirdparty-globus_ssl_utils,
+				        tls,
+					jobid,
+					exception"/>
+
+
+	<!-- ====================================================
+		 Checkout all
+		 ==================================================== -->
+	
+	<!-- All libraries -->
+ 	<target name="all" depends="evaluate.cvs.tags,defaultenvchecks,org.glite,org.glite.wms-utils,devtools,external,project" />		
+
+	<!-- ====================================================
+		 Print dependecies to console
+		 ==================================================== -->
+	
+ 	<target name="dependencies">
+ 		<concat>
+ 			<fileset dir="." includes="dependencies.properties" />
+ 		</concat>
+ 	</target>		
+
+</project>
