@@ -21,12 +21,16 @@
 
 	Revision history:
 	$Log$
+	Revision 1.31  2004/07/06 08:43:20  eronchie
+	Updated m4 file
+	Added new components
+
 	Revision 1.30  2004/06/28 23:08:57  eronchie
 	Start adding new component
 	brokerinfo
 	classad_plugin
 	matchmaking
-
+	
 	Revision 1.29  2004/06/26 13:49:09  eronchie
 	Temporarely removed classad_plugin
 	work in progress
@@ -239,6 +243,9 @@
 		<condition property="matchmaking.head">
                         <equals arg1="${org.glite.wms.matchmaking.version}" arg2="HEAD" />
                 </condition>
+		<condition property="jobadapter.head">
+                        <equals arg1="${org.glite.wms.jobadapter.version}" arg2="HEAD" />
+                </condition>
     </target>
 
     <presetdef name="cvs-co">
@@ -307,7 +314,8 @@
  				        jdlj,
 					brokerinfo,
 					classad_plugin,
-					matchmaking"/>
+					matchmaking,
+					jobadapter"/>
 
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils" depends="get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
@@ -427,6 +435,16 @@
         <target name="get.matchmaking.tag" unless="matchmaking.head">
                 <cvs-co package="org.glite.wms.matchmaking"
                         tag="${org.glite.wms.matchmaking.version}" />
+        </target>
+
+	<!-- JobAdapter -->
+        <target name="jobadapter" depends="boost,classads,globus,get.jobadapter.head, get.jobadapter.tag"/>
+        <target name="get.jobadapter.head" if="jobadapter.head">
+                <cvs-co package="org.glite.wms.jobadapter" />
+        </target>
+        <target name="get.jobadapter.tag" unless="jobadapter.head">
+                <cvs-co package="org.glite.wms.jobadapter"
+                        tag="${org.glite.wms.jobadapter.version}" />
         </target>
 
 	<!-- ====================================================
