@@ -86,13 +86,9 @@ libglite_wmsui_native_la_LIBADD = \
 	$(GLOBUS_GSS_THR_LIBS) \
         $(GLOBUS_FTP_CLIENT_THR_LIBS) \
         $(EXPAT_LIBS) \
+	$(GLITE_WMSUI_PARTITIONER_LIBS) \
+	$(GLITE_WMS_CHKPT_LIBS) \
 	-lstdc++ 
-
-#        ../../networkserver/client/libjnsclient.la \
-#	$(SHARED_LIB_REQUESTAD) \
-#        $(SHARED_LIB_UTILITIES) \
-#	$(SHARED_LIB_LOGGER) \
-#        ../../thirdparty/trio/libtrio.la \
 
 org_glite_wmsui_apij_Api.lo: org_glite_wmsui_apij_Api.cpp
 	/bin/touch org_glite_wmsui_apij_Api.h

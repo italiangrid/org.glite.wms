@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.5  2004/12/20 17:04:36  amarasch
+	Checkpointing and partitioning libraries added
+
 	Revision 1.4  2004/10/15 09:46:28  fpacini
 	fixed miisng deps
-
+	
 	Revision 1.3  2004/10/11 17:14:37  fpacini
 	added missing deps
 	
@@ -69,7 +72,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-        <property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 glite_wmsutils.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4"/>
+        <property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 glite_wmsutils.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wmsui_partitioner.m4"/>
 
 
 

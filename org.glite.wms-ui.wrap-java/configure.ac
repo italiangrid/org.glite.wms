@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/12/20 17:04:36  amarasch
+#       Checkpointing and partitioning libraries added
+#
 #       Revision 1.9  2004/12/17 13:53:22  amarasch
 #       Version updated
 #
@@ -148,6 +151,12 @@ AC_MSG_RESULT(["GLITE_DGAS_COMMON found $have_glite_dgas_common"])
 
 AC_VOMS([], have_voms=yes, have_voms=no)
 AC_MSG_RESULT(["VOMS found $have_voms"])
+
+AC_GLITE_WMS_CHKPT([], have_glite_wms_chkpt=yes, have_glite_wms_chkpt=no)
+AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
+
+AC_GLITE_WMSUI_PARTITIONER([], have_glite_wmsui_part=yes, have_glite_wmsui_part=no)
+AC_MSG_RESULT(["GLITE_WMSUI_PARTITIONER found $have_glite_wmsui_part"])
 
 
 # Configuration items
