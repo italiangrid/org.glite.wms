@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.7  2004/10/18 23:01:18  dimeglio
+	Added oscheck to various targets
+
 	Revision 1.6  2004/10/12 14:21:21  eronchie
 	Removed ssl_utils dependency
-
+	
 	Revision 1.5  2004/08/20 09:51:39  eronchie
 	Updated buildmodules orders
 	
@@ -173,9 +176,10 @@
 	<!-- *****************************************************-->
 	
 	<!-- All development tools -->
- 	<target name="devtools" depends="junitcheck,
+ 	<target name="devtools" depends="oscheck,
+ 					 junitcheck,
 	 				 junit,
-  				         chkstyle,
+  				     chkstyle,
  					 jalopy,
  					 ant-contrib,
  					 cpptasks,
@@ -186,7 +190,8 @@
 		 ===================================================== -->
 	
 	<!--  All external libraries -->
- 	<target name="external" depends="log4j"/>
+ 	<target name="external" depends="oscheck,
+ 					 log4j"/>
  	
 	<!-- =====================================================
 		 GLite WMS modules
@@ -235,7 +240,7 @@
 		 ==================================================== -->
 	
 	<!-- All libraries -->
- 	<target name="all" depends="evaluate.cvs.tags,defaultenvchecks,org.glite,org.glite.wms-utils,devtools,external,project" />		
+ 	<target name="all" depends="oscheck,evaluate.cvs.tags,defaultenvchecks,org.glite,org.glite.wms-utils,devtools,external,project" />		
 
 	<!-- ====================================================
 		 Print dependecies to console
