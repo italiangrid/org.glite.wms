@@ -344,13 +344,13 @@ public class Utils {
   static final int MAX_MONITORED_JOB_NUMBER_MAX_VAL = 200;
 
   // Icon files.
-  static final String ICON_FILE_OPEN = "icon/file_open.gif";
-  static final String ICON_FILE_SAVE = "icon/file_save.gif";
-  static final String ICON_FILE_NEW = "icon/file_new.gif";
-  static final String ICON_CUT = "icon/cut.gif";
-  static final String ICON_COPY = "icon/copy.gif";
-  static final String ICON_PASTE = "icon/paste.gif";
-  static final String ICON_DATAGRID_LOGO = "icon/datagrid3.jpeg";
+  static final String ICON_FILE_OPEN = "images/file_open.gif";
+  static final String ICON_FILE_SAVE = "images/file_save.gif";
+  static final String ICON_FILE_NEW = "images/file_new.gif";
+  static final String ICON_CUT = "images/cut.gif";
+  static final String ICON_COPY = "images/copy.gif";
+  static final String ICON_PASTE = "images/paste.gif";
+  static final String ICON_DATAGRID_LOGO = "images/datagrid3.jpeg";
 
   // Names of VO specific configuration attributes used in VO_CONF_FILE_NAME.
   static final String CONF_FILE_VIRTUAL_ORGANISATION = "VirtualOrganisation";

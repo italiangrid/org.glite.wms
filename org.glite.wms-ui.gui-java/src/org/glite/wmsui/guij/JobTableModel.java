@@ -632,7 +632,7 @@ class GUICheckBoxCellRenderer extends JCheckBox implements TableCellRenderer {
  class RendererDecorator implements TableCellRenderer {
   TableCellRenderer tableRenderer;
   JPanel jPanel;
-  URL icon = JobDef1Panel.class.getResource("icon/arrow_up.gif");
+  URL icon = JobDef1Panel.class.getResource("images/arrow_up.gif");
   JLabel iconLabel = new JLabel(new ImageIcon(icon));
   public RendererDecorator(TableCellRenderer tableRenderer) {
     this.tableRenderer = tableRenderer;
