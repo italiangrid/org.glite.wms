@@ -20,10 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.4  2004/05/03 00:24:58  dimeglio
+	Fixed module name error (common --> jcommon)
+
 	Revision 1.3  2004/04/30 18:05:34  eronchie
 	Added jclassads dependency
 	Added jcommon dependency
-
+	
 	Revision 1.2  2004/04/30 16:22:06  eronchie
 	Added stage target
 	Added stage, distsrc, and distbin targets
@@ -211,7 +214,7 @@
 	</target>
 
         <target name="jcommon" depends="jclassads">
-                <ant dir="${master.dir}/../${subsystem.name}.common" target="${target}" />
+                <ant dir="${master.dir}/../${subsystem.name}.jcommon" target="${target}" />
         </target>
 
 	<!-- Main proxy -->
@@ -220,6 +223,6 @@
    					     globus_gridftp_server,
   					     loki,
 					     common, 
-				             jcommon" />
+						 jcommon" />
 		
 </project>
