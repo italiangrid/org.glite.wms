@@ -1,4 +1,3 @@
-//#include "soapWMProxy.h"
 #include "soapWMProxyProxy.h"
 #include "WMProxy.nsmap"
 #include <stdlib.h> // getenv(...)
@@ -7,7 +6,7 @@
 #include <boost/lexical_cast.hpp> // int to string conversion
 #include <fstream> //strsream
 #include <ctype.h>
-#include "wmproxy_api.h"
+#include "glite/wms/wmproxyapi/wmproxy_api.h"
 using namespace std;
 namespace glite {
 namespace wms {
