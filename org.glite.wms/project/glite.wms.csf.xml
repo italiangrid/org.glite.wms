@@ -21,10 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.48  2004/07/26 17:53:54  eronchie
+	Start adding manager-ns components
+	WARNING: Work in progress
+
 	Revision 1.47  2004/07/26 17:15:09  eronchie
 	Start adding manager-ns component
 	WARNING: work in progress
-
+	
 	Revision 1.46  2004/07/25 17:02:49  eronchie
 	Renamed in condor instead of condorg
 	
@@ -325,6 +329,18 @@
                         <equals arg1="${org.glite.wms.manager-ns-versions.version}" arg2="HEAD" />
                 </condition>
 
+		<condition property="manager-ns-commands.head">
+                        <equals arg1="${org.glite.wms.manager-ns-commands.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="manager-ns-client.head">
+                        <equals arg1="${org.glite.wms.manager-ns-client.version}" arg2="HEAD" />
+                </condition>
+
+		<condition property="manager-ns-daemon.head">
+                        <equals arg1="${org.glite.wms.manager-ns-daemon.version}" arg2="HEAD" />
+                </condition>
+
 		<condition property="jobsubmission.head">
                         <equals arg1="${org.glite.wms.jobsubmission.version}" arg2="HEAD" />
                 </condition>
@@ -510,8 +526,38 @@
                     tag="${org.glite.wms.checkpointing.version}" />
         </target>
 
+        <!-- Manager NS Client -->
+        <target name="manager-ns-client" depends="boost, classads, globus, manager-ns-commands, get.manager-ns-client.head, get.manager-ns-client.tag"/>
+        <target name="get.manager-ns-client.head" if="manager-ns-client.head">
+            <cvs-co package="org.glite.wms.manager-ns-client" />
+        </target>
+        <target name="get.manager-ns-client.tag" unless="manager-ns-client.head">
+            <cvs-co package="org.glite.wms.manager-ns-client"
+                    tag="${org.glite.wms.manager-ns-client.version}" />
+        </target>
+
+	<!-- Manager NS Commands -->
+        <target name="manager-ns-commands" depends="boost, classads, globus, purger, manager-ns-fsm, manager-ns-versions, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
+        <target name="get.manager-ns-commands.head" if="manager-ns-commands.head">
+            <cvs-co package="org.glite.wms.manager-ns-commands" />
+        </target>
+        <target name="get.manager-ns-commands.tag" unless="manager-ns-commands.head">
+            <cvs-co package="org.glite.wms.manager-ns-commands"
+                    tag="${org.glite.wms.manager-ns-commands.version}" />
+        </target>
+
+	<!-- Manager NS Daemon -->
+        <target name="manager-ns-daemon" depends="boost, classads, globus, manager-ns-commands, get.manager-ns-daemon.head, get.manager-ns-daemon.tag"/>
+        <target name="get.manager-ns-daemon.head" if="manager-ns-daemon.head">
+            <cvs-co package="org.glite.wms.manager-ns-daemon" />
+        </target>
+        <target name="get.manager-ns-daemon.tag" unless="manager-ns-daemon.head">
+            <cvs-co package="org.glite.wms.manager-ns-daemon"
+                    tag="${org.glite.wms.manager-ns-daemon.version}" />
+        </target>
+
 	<!-- Manager NS FSM -->
-        <target name="manager-ns-fsm" depends="get.manager-ns-fsm.head, get.manager-ns-fsm.tag"/>
+        <target name="manager-ns-fsm" depends="boost, classads, globus, get.manager-ns-fsm.head, get.manager-ns-fsm.tag"/>
         <target name="get.manager-ns-fsm.head" if="manager-ns-fsm.head">
             <cvs-co package="org.glite.wms.manager-ns-fsm" />
         </target>
@@ -563,9 +609,12 @@
 					broker,
 					helper,
 					checkpointing,
+					purger,
 					manager-ns-fsm,
 					manager-ns-versions,
-					purger,
+					manager-ns-commands,
+					manager-ns-client,
+					manager-ns-daemon,
 					jobsubmission"/>
 
 
