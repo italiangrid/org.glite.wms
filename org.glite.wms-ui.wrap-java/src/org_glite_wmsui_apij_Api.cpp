@@ -18,7 +18,7 @@
 #include "glite/lb/Notification.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"  //replace jobid name
-#include "glite/wmsui/partitioner/Partitioner.h"  //Partitioner
+#include "glite/wms/partitioner/Partitioner.h"  //Partitioner
 
 // Ad
 #include "glite/wms/jdl/ExpDagAd.h"
@@ -1375,7 +1375,7 @@ DAGAD implementation methods:
 			jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
 		}
 		glite::wms::jdl::ExpDagAd* dagad =NULL;
-		glite::wmsui::partitioner::Partitioner part (  glite::wms::common::utilities::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
+		glite::wms::partitioner::Partitioner part (  glite::wms::common::utilities::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
 		dagad= new glite::wms::jdl::ExpDagAd ( part.createDag() ) ;
 
 
