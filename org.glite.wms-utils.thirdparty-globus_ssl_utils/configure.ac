@@ -39,7 +39,6 @@ AC_REVISION([$Revision$])
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
-STAGE=`pwd`/../../stage
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
 
