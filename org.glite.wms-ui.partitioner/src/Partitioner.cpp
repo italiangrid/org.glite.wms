@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-#include "Partitioner.h"
+#include "glite/wmsui/partitioner/Partitioner.h"
 #include "glite/wms/jdl/DAGAdManipulation.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"

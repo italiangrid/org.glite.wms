@@ -10,7 +10,7 @@
 // $Id$
 #include <cmath>
 #include <map>
-#include "Partition.h"
+#include "glite/wmsui/partitioner/Partition.h"
 #include "Binlist.h"
 #include "glite/wms/checkpointing/ChkptException.h"
 
