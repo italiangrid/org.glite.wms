@@ -39,7 +39,9 @@ public class Shadow implements Runnable{
 	public void finalize () {
 		// System.out.println ( "\n\n\nShadow::Finalising!!\n\n\n"  );
 		try{     detach () ;  }
-		catch (  Exception exc ){  /** Do nothing*/}
+		catch (  Exception exc ){  
+			/** Do nothing*/
+		}
 	};
 	public void run() {
 		if (listener!=null)  listener.run( this) ;

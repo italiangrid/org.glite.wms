@@ -374,7 +374,9 @@ public class Job  {
 			if (ind !=-1){
 				try{
 					port  =  java.lang.Integer.parseInt( hostandport.substring( ind +1 )  );
-				}catch (java.lang.NumberFormatException exc) { /** do nothing. Port is zero*/  }
+				}catch (java.lang.NumberFormatException exc) { 
+				  /** do nothing. Port is zero*/  
+				}
 			}
 		}
 		// Start the interactive session
@@ -664,7 +666,9 @@ public class Job  {
 						new JobException ("Done code !=0 for " + jobid) ,
 						Result.OUTPUT, Result.GETOUTPUT_FAILURE ) ;
 		//NO problems so Far: Create Directory:
-		if ( path.isDirectory() ) {/** OK   System.out.println("Path is a directory: already Exists... OK " + path  );*/ }
+		if ( path.isDirectory() ) {
+		   /** OK   System.out.println("Path is a directory: already Exists... OK " + path  );*/ 
+                }
 		// The path exists but it is not a directory
 		else if ( path.exists() ) {
 			// System.out.println("Path already BUT NOT DIR " + path  ) ;
