@@ -42,7 +42,6 @@
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/utilities/classad_utils.h"
-#include "glite/wms/common/utilities/utils.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 
 #include "glite/wms/jdl/JobAdManipulation.h"
@@ -90,6 +89,22 @@ public:
 private:
   string m_what;
 };
+}
+
+/******************************************************************
+ *  method :   replace
+ *  field: string class
+ *  Replace "what" value with "with" value
+ *******************************************************************/
+void
+replace(string& where, const string& what, const string& with)
+{
+  size_t fpos = where.find(what);
+
+  while (fpos  != string::npos) {
+    where.replace(fpos, what.length(), with);
+    fpos = where.find(what, fpos + what.length() + 1);
+  }
 }
 
 JobAdapter::JobAdapter(ClassAd const* ad)
@@ -220,7 +235,7 @@ try {
                                         "not empty",
                                         helper_id);
   }
-  utilities::replace(reqvalue, "\"", "\\\"");
+  replace(reqvalue, "\"", "\\\"");
   
   requirements.append(reqvalue);
   requirements.append("'");
@@ -249,7 +264,7 @@ try {
   hlrlocation.append(" '");
   string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
   if (!hlrvalue.empty()) {
-    utilities::replace(hlrvalue, "\"", "\\\"");
+    replace(hlrvalue, "\"", "\\\"");
     hlrlocation.append(hlrvalue);
     hlrlocation.append("'");
     globusrsl.append("(environment=(");
@@ -258,7 +273,7 @@ try {
     string jid("EDG_WL_JOBID");
     jid.append(" '");
     string jidvalue(job_id);
-    utilities::replace(jidvalue, "\"", "\\\"");
+    replace(jidvalue, "\"", "\\\"");
     jid.append(jidvalue);
     jid.append("'");
     globusrsl.append(jid);

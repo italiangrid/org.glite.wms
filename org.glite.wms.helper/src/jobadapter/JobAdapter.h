@@ -25,6 +25,9 @@ namespace wms {
 namespace helper {
 namespace jobadapter {
 
+void
+replace(std::string& where, const std::string& what, const std::string& with);
+
 class JobAdapter: boost::noncopyable
 {
 public:
