@@ -119,23 +119,30 @@ libglite_wmsui_LbWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_LbWrapper_la_LIBADD = \
 	-lc \
-	../../networkserver/client/libnsclient.la \
-	$(SHARED_LIB_SOCKET) \
 	$(CLASSAD_LIBS) \
-	$(SHARED_LIB_REQUESTAD) \
-	$(SHARED_LIB_JOBID) \
-	$(SHARED_LIB_UTILITIES) \
-	$(SHARED_LIB_LOGGER) \
-	$(SHARED_LIB_LOGGING) \
-	$(SHARED_LIB_SSL) \
-	../../logging/common/liblogbase.la \
-	../../thirdparty/trio/libtrio.la \
-	$(ARES_LIBS) $(BOOST_LIBS) \
-	$(GLOBUS_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
-	$(EXPAT_LIBS) \
-	-lstdc++
+	$(ARES_LIBS) \
+	$(BOOST_LIBS) \
+        $(GLOBUS_COMMON_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+        $(EXPAT_LIBS)
+
+#	../../networkserver/client/libnsclient.la \
+#	$(SHARED_LIB_SOCKET) \
+#	$(CLASSAD_LIBS) \
+#	$(SHARED_LIB_REQUESTAD) \
+#	$(SHARED_LIB_JOBID) \
+#	$(SHARED_LIB_UTILITIES) \
+#	$(SHARED_LIB_LOGGER) \
+#	$(SHARED_LIB_LOGGING) \
+#	$(SHARED_LIB_SSL) \
+#	../../logging/common/liblogbase.la \
+#	../../thirdparty/trio/libtrio.la \
+#	$(ARES_LIBS) $(BOOST_LIBS) \
+#	$(GLOBUS_THR_LIBS) \
+#	$(GLOBUS_COMMON_THR_LIBS) \
+#	$(GLOBUS_SSL_THR_LIBS) \
+#	$(EXPAT_LIBS) \
+#	-lstdc++
 
 libglite_wmsui_LogWrapper_la_SOURCES = \
 	LogWrapper_wrap.cpp \
@@ -145,23 +152,30 @@ libglite_wmsui_LogWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_LogWrapper_la_LIBADD = \
 	-lc \
-	../../networkserver/client/libnsclient.la \
-	$(SHARED_LIB_SOCKET) \
 	$(CLASSAD_LIBS) \
-	$(SHARED_LIB_REQUESTAD) \
-	$(SHARED_LIB_JOBID) \
-	$(SHARED_LIB_UTILITIES) \
-	$(SHARED_LIB_LOGGER) \
-	$(SHARED_LIB_LOGGING) \
-	$(SHARED_LIB_SSL) \
-	../../logging/common/liblogbase.la \
-	../../thirdparty/trio/libtrio.la \
-	$(ARES_LIBS) $(BOOST_LIBS) \
-	$(GLOBUS_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
-	$(EXPAT_LIBS) \
-	-lstdc++
+        $(ARES_LIBS) \
+        $(BOOST_LIBS) \
+        $(GLOBUS_COMMON_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+        $(EXPAT_LIBS)
+
+#	../../networkserver/client/libnsclient.la \
+#	$(SHARED_LIB_SOCKET) \
+#	$(CLASSAD_LIBS) \
+#	$(SHARED_LIB_REQUESTAD) \
+#	$(SHARED_LIB_JOBID) \
+#	$(SHARED_LIB_UTILITIES) \
+#	$(SHARED_LIB_LOGGER) \
+#	$(SHARED_LIB_LOGGING) \
+#	$(SHARED_LIB_SSL) \
+#	../../logging/common/liblogbase.la \
+#	../../thirdparty/trio/libtrio.la \
+#	$(ARES_LIBS) $(BOOST_LIBS) \
+#	$(GLOBUS_THR_LIBS) \
+#	$(GLOBUS_COMMON_THR_LIBS) \
+#	$(GLOBUS_SSL_THR_LIBS) \
+#	$(EXPAT_LIBS) \
+#	-lstdc++
 
 libglite_wmsui_NsWrapper_la_SOURCES = \
 	NsWrapper_wrap.cpp \
@@ -171,25 +185,32 @@ libglite_wmsui_NsWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_NsWrapper_la_LIBADD = \
 	-lc \
-	../../networkserver/client/libnsclient.la \
-	$(VOMS_CPP_LIBS) \
-	$(SHARED_LIB_SOCKET) \
 	$(CLASSAD_LIBS) \
-	$(SHARED_LIB_REQUESTAD) \
-	$(SHARED_LIB_JOBID) \
-	$(SHARED_LIB_UTILITIES) \
-	$(SHARED_LIB_LOGGER) \
-	$(SHARED_LIB_LOGGING) \
-	$(SHARED_LIB_SSL) \
-	$(SHARED_LIB_DGAS) \
-	../../logging/common/liblogbase.la \
-	../../thirdparty/trio/libtrio.la \
-	$(ARES_LIBS) $(BOOST_LIBS) \
-	$(GLOBUS_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
-	$(EXPAT_LIBS) \
-	-lstdc++
+        $(ARES_LIBS) \
+        $(BOOST_LIBS) \
+        $(GLOBUS_COMMON_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+        $(EXPAT_LIBS)
+
+#	../../networkserver/client/libnsclient.la \
+#	$(VOMS_CPP_LIBS) \
+#	$(SHARED_LIB_SOCKET) \
+#	$(CLASSAD_LIBS) \
+#	$(SHARED_LIB_REQUESTAD) \
+#	$(SHARED_LIB_JOBID) \
+#	$(SHARED_LIB_UTILITIES) \
+#	$(SHARED_LIB_LOGGER) \
+#	$(SHARED_LIB_LOGGING) \
+#	$(SHARED_LIB_SSL) \
+#	$(SHARED_LIB_DGAS) \
+#	../../logging/common/liblogbase.la \
+#	../../thirdparty/trio/libtrio.la \
+#	$(ARES_LIBS) $(BOOST_LIBS) \
+#	$(GLOBUS_THR_LIBS) \
+#	$(GLOBUS_COMMON_THR_LIBS) \
+#	$(GLOBUS_SSL_THR_LIBS) \
+#	$(EXPAT_LIBS) \
+#	-lstdc++
 
 libglite_wmsui_AdWrapper_la_SOURCES = \
 	AdWrapper_wrap.cpp \
@@ -199,23 +220,30 @@ libglite_wmsui_AdWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_AdWrapper_la_LIBADD = \
 	-lc \
-	../../networkserver/client/libnsclient.la \
-	$(SHARED_LIB_SOCKET) \
 	$(CLASSAD_LIBS) \
-	$(SHARED_LIB_JOBID) \
-	$(SHARED_LIB_UTILITIES) \
-	$(SHARED_LIB_REQUESTAD) \
-	$(SHARED_LIB_LOGGER) \
-	$(SHARED_LIB_LOGGING) \
-	$(SHARED_LIB_SSL) \
-	../../logging/common/liblogbase.la \
-	../../thirdparty/trio/libtrio.la \
-	$(ARES_LIBS) $(BOOST_LIBS) \
-	$(GLOBUS_THR_LIBS) \
-	$(GLOBUS_COMMON_THR_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
-	$(EXPAT_LIBS) \
-	-lstdc++
+        $(ARES_LIBS) \
+        $(BOOST_LIBS) \
+        $(GLOBUS_COMMON_THR_LIBS) \
+        $(GLOBUS_SSL_THR_LIBS) \
+        $(EXPAT_LIBS)
+
+#	../../networkserver/client/libnsclient.la \
+#	$(SHARED_LIB_SOCKET) \
+#	$(CLASSAD_LIBS) \
+#	$(SHARED_LIB_JOBID) \
+#	$(SHARED_LIB_UTILITIES) \
+#	$(SHARED_LIB_REQUESTAD) \
+#	$(SHARED_LIB_LOGGER) \
+#	$(SHARED_LIB_LOGGING) \
+#	$(SHARED_LIB_SSL) \
+#	../../logging/common/liblogbase.la \
+#	../../thirdparty/trio/libtrio.la \
+#	$(ARES_LIBS) $(BOOST_LIBS) \
+#	$(GLOBUS_THR_LIBS) \
+#	$(GLOBUS_COMMON_THR_LIBS) \
+#	$(GLOBUS_SSL_THR_LIBS) \
+#	$(EXPAT_LIBS) \
+#	-lstdc++
 
 LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 	@#Create the files
@@ -283,6 +311,7 @@ WMS_UI_COM_GLITE = glite_wmsui_AdWrapper.a \
 	glite_wmsui_NsWrapper.so.0.0.0 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/../org.glite.wms.manager-ns-client/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
