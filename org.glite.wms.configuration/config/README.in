@@ -1,0 +1,41 @@
+#=================================================================
+#
+# Author  : Workload Management Team <wp1-help@infn.it>.
+# Author  : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>.
+# Version : $Id$
+#
+# Release : @VERSION@
+# Title   : workload common configuration.
+#
+#=================================================================
+
+workload/etc
+----------------------
+
+Thank you for trying workload/etc, and we appreciate your
+feedback in the mailing lists.
+
+For each problem you can reach the Workload Management
+Team at the following mailing list wp1-help@infn.it.
+
+For basic installation and usage instruction refer to the
+Workload Management Installation and Guide at the links
+
+Description:
+============
+
+
+RPM:
+	edg-wl-config
+	edg-wl-services-common
+
+Exported libraries: N/A
+
+Exported programs: N/A
+
+Internal dependencies:
+
+External dependencies:
+
+
+

@@ -1,0 +1,25 @@
+#!/bin/csh
+
+if ( ! $?GLOBUS_LOCATION) then
+    setenv GLOBUS_LOCATION "/opt/globus"
+endif
+
+if ( $?EDG_WL_USER) then
+  setenv EDG_WL_USER edguser
+endif
+
+if ( $?EDG_WL_LOCATION_VAR) then
+  setenv EDG_WL_LOCATION_VAR ${EDG_WL_LOCATION}"/var"
+endif
+
+if ( $?EDG_WL_TMP) then
+  setenv EDG_WL_TMP "/var/edgwl"
+endif
+
+setenv EDG_WL_PATH ${EDG_WL_LOCATION}"/bin:"${EDG_WL_LOCATION}"/sbin"
+
+setenv EDG_WL_LIBRARY_PATH ${GLOBUS_LOCATION}"/lib:"${EDG_WL_LOCATION}"/lib"
+
+
+
+

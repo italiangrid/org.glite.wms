@@ -1,0 +1,52 @@
+#!/bin/sh
+
+SCRIPT_LOCATION=/etc/rc.d/init.d
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-locallogger ]; then
+  /etc/rc.d/init.d/@PACKAGE@-locallogger status >/dev/null
+  if [ $? -ne 0 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-locallogger restart
+  fi
+fi
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-lbserver ]; then
+  /etc/rc.d/init.d/@PACKAGE@-lbserver status >/dev/null
+  if [ $? -ne 0 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-lbserver restart
+  fi
+fi
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-proxyrenewal ]; then
+  /etc/rc.d/init.d/@PACKAGE@-proxyrenewal status >/dev/null
+  if [ $? -ne 0 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-proxyrenewal restart
+  fi
+fi
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-lm ]; then
+  /etc/rc.d/init.d/@PACKAGE@-lm status >/dev/null
+  if [ $? -eq 1 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-lm restart
+  fi
+fi
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-jc ]; then
+  /etc/rc.d/init.d/@PACKAGE@-jc status >/dev/null
+  if [ $? -eq 1 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-jc restart
+  fi
+fi
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-ns ]; then
+  /etc/rc.d/init.d/@PACKAGE@-ns status >/dev/null
+  if [ $? -eq 1 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-ns restart
+  fi
+fi
+
+if [ -f ${SCRIPT_LOCATION}/@PACKAGE@-wm ]; then
+  /etc/rc.d/init.d/@PACKAGE@-wm status >/dev/null
+  if [ $? -eq 1 ]; then
+    /etc/rc.d/init.d/@PACKAGE@-wm restart
+  fi
+fi

@@ -1,0 +1,61 @@
+if [ -f /etc/sysconfig/edg ]; then
+   . /etc/sysconfig/edg
+fi
+
+if [ -z "$EDG_LOCATION" ]; then
+   EDG_LOCATION=@prefix@
+fi
+
+export EDG_LOCATION
+
+if [ -z "$EDG_WL_LOCATION" ]; then
+   EDG_WL_LOCATION=@prefix@
+fi
+
+export EDG_WL_LOCATION
+
+if [ -z "$EDG_WL_USER" ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+fi
+
+export EDG_WL_USER
+
+if [ -z "$EDG_WL_LOCATION_VAR" ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+fi
+
+export EDG_WL_LOCATION_VAR
+
+if [ -z "$EDG_WL_TMP" ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+fi
+
+export EDG_WL_TMP
+
+if [ ! -d $GLOBUS_LOCATION ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+fi
+
+if [ ! -d $GLOBUS_LOCATION ]; then
+   echo "GLOBUS_LOCATION not found"
+fi
+
+if [ -z "$EDG_WL_PATH" ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+fi
+
+if [ -z "$PATH" ]; then
+   export PATH=$EDG_WL_PATH
+else
+   export PATH=$PATH":"$EDG_WL_PATH
+fi
+
+if [ -z "$EDG_WL_LIBRARY_PATH" ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+fi
+
+if [ -z "$LD_LIBRARY_PATH" ]; then
+   export LD_LIBRARY_PATH=$EDG_WL_LIBRARY_PATH
+else
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH":"$EDG_WL_LIBRARY_PATH
+fi

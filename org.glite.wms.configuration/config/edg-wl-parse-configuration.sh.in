@@ -1,0 +1,98 @@
+#!/bin/sh
+
+ConfFile=$1
+DaemonName=$2
+
+jc=JobController
+lm=LogMonitor
+wm=WorkloadManager
+ns=NetworkServer
+
+EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
+
+if [ -z "$EDG_WL_USER" ] || [ -z "$EDG_WL_CONFIG_DIR" ]; then
+   . $EDG_WL_LOCATION/etc/edg-wl-vars.sh
+   . ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
+   . ${EDG_WL_LOCATION}/etc/profile.d/edg-wl-config.sh
+fi
+
+if [ ! -d "$EDG_WL_TMP" ] ; then
+  mkdir -p $EDG_WL_TMP
+  chmod +775 $EDG_WL_TMP
+  chown -R $EDG_WL_USER.$EDG_WL_USER $EDG_WL_TMP
+fi
+
+if [ -f ${EDG_WL_LOCATION}/bin/edg-wl-get-configuration ]; then
+#  echo "Parse the ${EDG_WL_CONFIG_DIR}/$ConfFile file"
+
+  if [ $DaemonName = $jc ]; then
+#    echo "Create the directories used by the edg-wl-job_control daemon"
+#    echo "with $EDG_WL_USER permissions"
+
+    pathSubmit=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.SubmitFileDir`
+
+    pathOutput=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.OutputFileDir`
+    
+    for location in $pathSubmit $pathOutput; do
+      mkdir -p $location
+      file=${location##/*/}
+      dir=${location/$file/}
+      chown -R $EDG_WL_USER.$EDG_WL_USER $dir
+    done
+  fi
+
+  if [ $DaemonName = $lm ]; then
+#    echo "Create the directories used by the edg-wl-logmonitor daemon"
+#    echo "with $EDG_WL_USER permissions"
+
+    pathCondorLog=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.CondorLogDir`
+
+    pathCondorLogR=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.CondorLogRecycleDir`
+
+    for location in $pathCondorLog $pathCondorLogR; do
+      mkdir -p $location
+      file=${location##/*/}
+      dir=${location/$file/}
+      chown -R $EDG_WL_USER.$EDG_WL_USER $dir
+    done
+  fi
+
+  if [ $DaemonName = $ns ]; then
+#    echo "Create the directories used by the edg-wl-ns_daemon"
+#    echo "with $EDG_WL_USER permissions"
+
+    dirStaging=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.SandboxStagingPath`
+
+    path=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.LogFile`
+    dir=$(dirname "$path")
+    dirLogFile=$(dirname "$dir")
+
+    for location in $dirStaging $dirLogFile $dir; do
+      mkdir -p $location
+      chown -R $EDG_WL_USER.$EDG_WL_USER $location
+    done
+
+    chmod g+w $dirStaging
+  fi
+
+  if [ $DaemonName = $wm ]; then
+#    echo "Create the directories used by the edg-wl-workload_manager"
+#    echo "with $EDG_WL_USER permissions"
+
+    path=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.Input`
+#    echo $path
+    file=${path##/*/}
+    dirInput=${path/$file/}
+
+    path=`${EDG_WL_LOCATION}/bin/edg-wl-get-configuration $2.LogFile`
+#    echo $path
+    dir=$(dirname "$path")
+    dirLogFile=$(dirname "$dir")
+
+    for location in $dirInput $dirLogFile $dir; do
+      mkdir -p $location
+      chown $EDG_WL_USER.$EDG_WL_USER $location
+    done
+  fi
+fi
+

@@ -1,0 +1,58 @@
+#!/bin/csh
+
+if (! $?EDG_SYSCONFIG) then
+  set EDG_SYSCONFIG=/etc/sysconfig/edg
+endif
+
+if ( -r "$EDG_SYSCONFIG" ) then
+  set tmp=`grep ^EDG_LOCATION $EDG_SYSCONFIG| tail -1|sed 's/=/ /'`
+  if ( ! -z "$EDG_SYSCONFIG" ) then
+    eval setenv $tmp
+  endif
+endif
+
+if ( ! $?EDG_WL_LOCATION ) then
+  setenv EDG_WL_LOCATION "@prefix@"
+endif
+
+if( ! $?EDG_WL_USER ) then
+    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+endif
+
+if( ! $?EDG_WL_LOCATION_VAR ) then
+    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+endif
+
+if( ! $?EDG_WL_TMP ) then
+    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+endif
+
+if( ! -d $GLOBUS_LOCATION ) then
+   source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+endif
+
+if( ! -d $GLOBUS_LOCATION ) then
+    echo "$GLOBUS_LOCATION not found"
+endif
+
+# The rest of the workload.sh script
+
+if( ! $?EDG_WL_PATH ) then
+    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+endif
+
+if( $?PATH ) then
+    setenv PATH ${PATH}":"$EDG_WL_PATH
+else
+    setenv PATH $EDG_WL_PATH
+endif
+
+if( ! $?EDG_WL_LIBRARY_PATH ) then
+    source $EDG_WL_LOCATION"/etc/edg-wl-vars.csh"
+endif
+
+if( $?LD_LIBRARY_PATH ) then
+    setenv LD_LIBRARY_PATH $LD_LIBRARY_PATH":"$EDG_WL_LIBRARY_PATH
+else
+    setenv LD_LIBRARY_PATH $EDG_WL_LIBRARY_PATH
+endif
