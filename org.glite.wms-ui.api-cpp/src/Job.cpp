@@ -84,34 +84,34 @@ Job::Job(const JobId& id){
      GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace 
 };
 Job::Job(const JobAd& ad){
-      GLITE_STACK_TRY("Job::Job(const JobAd& ad)") ;
-      if (!  ((JobAd) ad).isSet() )
-          throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Empty JobAd instance" ) ;
-      else{
-         this->jad =  new JobAd (ad) ;
-         this->jad->check();
-         this->jid = new JobId();
-         jobType = JOB_AD ;
-         cred_path = "" ;
-         jCollect = false ;
-      }
-      GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+	GLITE_STACK_TRY("Job::Job(const JobAd& ad)") ;
+	if (!  ((JobAd) ad).isSet() )
+		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Empty JobAd instance" ) ;
+	else{
+		this->jad =  new JobAd (ad) ;
+		// this->jad->check();
+		this->jid = new JobId();
+		jobType = JOB_AD ;
+		cred_path = "" ;
+		jCollect = false ;
+	}
+	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 //Job Constructor Copy
 Job::Job(const Job& job) {
-   GLITE_STACK_TRY("Job::Job(const Job& )") ;
-   jid = NULL ;
-   jad = NULL ;
-   jobType = job.jobType ;
-   jCollect = job.jCollect ;
-   cred_path = job.cred_path ;
-   if (job.jid !=NULL){
-       jid = new  JobId (*(job.jid)) ;
-   }
-   if (job.jad !=NULL){
-       jad = new  JobAd (*(job.jad)) ;
-   }
-   GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+	GLITE_STACK_TRY("Job::Job(const Job& )") ;
+	jid = NULL ;
+	jad = NULL ;
+	jobType = job.jobType ;
+	jCollect = job.jCollect ;
+	cred_path = job.cred_path ;
+	if (job.jid !=NULL){
+		jid = new  JobId (*(job.jid)) ;
+	}
+	if (job.jad !=NULL){
+		jad = new  JobAd (*(job.jad)) ;
+	}
+	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
 void Job::operator=(const Job& job) {
@@ -131,10 +131,10 @@ void Job::operator=(const Job& job) {
 };
 
 Job::~Job() {
- GLITE_STACK_TRY("Job::~Job");
-   if (jid) delete jid ;
-   if (jad) delete jad ;
- GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+	GLITE_STACK_TRY("Job::~Job");
+	if (jid) delete jid ;
+	if (jad) delete jad ;
+	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
 
@@ -145,16 +145,6 @@ Job::~Job() {
 ********/
 void Job::initialise( ){
   string METHOD = "Job::initialise( )" ;
-  /*
-  edg_wlc_SSLInitialization();
-#ifndef WITHOUT_THREAD
-#else
-  if (edg_wlc_SSLLockingInit() != 0)
-      throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
-#endif
-  if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
-      throw  ThreadException ( __FILE__ , __LINE__ ,METHOD , THREAD_SSL,  0 )  ;
-  */
 }
 
 JobId* Job::getJobId()  {
@@ -271,7 +261,6 @@ JobState Job::getState( unsigned int step )  {
   ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
   ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
   ec[0].value.i = EDG_WLL_EVENT_CHKPT;
-  // cout << "Job::getState > Performing QUERY" << endl << flush ;
   error = edg_wll_QueryEvents( ctx, jc, ec, &events );
   if ( error == ENOENT )  // no events found
    // return "";
@@ -281,11 +270,9 @@ JobState Job::getState( unsigned int step )  {
   for ( cnt=0; events[cnt].type; cnt++ ); // counts the number of events
   if ( !cnt ) // no events found
     throw JobOperationException( __FILE__, __LINE__, METHOD , WMS_JOBOP_ALLOWED, "Empty Events vector returned");
-  // cout << "Job::getState > Sorting Events" << endl << flush ;
   // sort the events vector using the timestamp
   qsort(events, cnt, sizeof(edg_wll_Event), &cmp_by_timestamp);
   // the last state in the array is the most recent
-  // cout << "Job::getState > Retrieving state and free events...   " << endl << flush ;
   if ((int)step>= cnt)
     throw JobOperationException( __FILE__, __LINE__, METHOD , WMS_JOBOP_ALLOWED, "Number of step bigger then chkpt logged events");
   string state( events[cnt-1-step].chkpt.classad );
@@ -333,13 +320,11 @@ int Job::attach ( Listener* ls , int port) {
      throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Attachment not allowed: not an interactive job" ) ;
   sh.set(  *jid , ls) ;
   sh.console(  port );
-  // cout << "Check wheter the nsHost has been initialised" << endl << flush ;
   lbInit( nsHost) ;
   if   (   jobType != JOB_SUBMITTED){
           if ( edg_wll_SetLoggingJob(ctx , jid->getId() , NULL , EDG_WLL_SEQ_DUPLICATE) )
                throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB  edg_wll_SetLoggingJob  failed" ) ;
   }
-  // cout << "\n                    LB-DBG: "<< "edg_wll_LogListener" << flush ;
   if (edg_wll_LogListener(  ctx , "InteractiveListener", sh.getHost().c_str(), (uint16_t) sh.getPort()) )
           throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "LB edg_wll_LogListener  failed" ) ;
   sh.start ( ) ;
@@ -455,7 +440,6 @@ void Job::submit ( const string& host, int port , const string& lbHost , int lbP
 	this->lbHost  = lbHost ;
 	this->lbPort = lbPort ;
 	//Create the jobId and add the dg_jobId field into the JobAd
-	// if ( jCollect) cout << "Job::submit - jobad setting" << endl << flush;
 	if ( lbPort ==0)   jid->setJobId( lbHost); else jid->setJobId( lbHost , lbPort);
 	jad->setAttribute( (string) JDL::JOBID , jid->toString());
 	// Interactive Jobs manipulation:
@@ -678,7 +662,6 @@ void Job::nsSubmit(const string&  lb_addr ) {
      // Log the submission to the LB server:
      char str_addr [1024];
      sprintf (str_addr , "%s%s%d" , nsHost.c_str(),":",nsPort );
-     // cout << "Registering job..." <<  jid->toString()  << endl ;
      if (edg_wll_RegisterJobSync ( ctx , jid->getId() ,   EDG_WLL_JOB_SIMPLE ,  jdl.c_str(),  str_addr, 0 ,   NULL, NULL) ){
            char error_message [1024];
            char *msg, *dsc ;
@@ -687,7 +670,6 @@ void Job::nsSubmit(const string&  lb_addr ) {
            getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
            throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED ,  error_message) ;
      }
-     // cout << "Job properly Registered.." <<  jid->toString() << endl ;
      // CheckPointable Job:
      if (  jad->hasAttribute( JDL::JOBTYPE , JDL_JOBTYPE_CHECKPOINTABLE)  ){
         string current_step ;
@@ -753,9 +735,7 @@ void Job::nsSubmit(const string&  lb_addr ) {
 	jdl = jad->toSubmissionString();
 	try{
 		pthread_mutex_lock( & dgtransfer_mutex);    //LOCK RESOURCES    -->
-		// cout << "Job::nsSubmit> proper submission" << endl ;
 		nsClient->jobSubmit( jdl   );
-		// cout << "Job::nsSubmit> proper submission END" << endl ;
 		pthread_mutex_unlock( & dgtransfer_mutex);  //UNLOCK RESOURCES   <--
 	} catch (Exception &exc){
 		pthread_mutex_unlock( & dgtransfer_mutex);  //UNLOCK RESOURCES   <--
