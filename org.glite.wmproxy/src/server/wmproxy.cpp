@@ -56,7 +56,7 @@ main(int argc, char* argv[])
 	struct soap *soap;
 	char msg[100];
 	try {
-		glite::wms::wmproxy::utilities::waitForSeconds(15);
+		glite::wms::wmproxy::utilities::waitForSeconds(10);
 		
 		singleton_default<WmproxyConfiguration>::instance().init(opt_conf_file, configuration::ModuleType::network_server);
 		logger::threadsafe::edglog.open( singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file(),

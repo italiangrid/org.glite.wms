@@ -659,7 +659,7 @@ submit(const string &jdl, JobId *jid)
 			"submit(const string &jdl, JobId *jid)",
 			wmp_fault.code, wmp_fault.message);
 	} else {
-		wmplogger.logEvent(eventlogger::LOG_ACCEPT, "");
+		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT, "");
 	}
 }
 
