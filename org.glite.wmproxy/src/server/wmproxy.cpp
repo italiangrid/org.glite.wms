@@ -107,7 +107,7 @@ main(int argc, char* argv[])
 		      		std::cout << "Invalid Expression: " << error << std::endl;
 		    	}
 			task::Pipe<classad::ClassAd*> pipe;
-			Dispatcher dispatcher;
+			WMPDispatcher dispatcher;
 			cerr<<"Launching thread(s)..."<<endl;
 			edglog(fatal) << "Launching " << thread_number << " dispatcher thread(s)" << endl;
 			task::Task dispatchers(dispatcher, pipe, thread_number);
