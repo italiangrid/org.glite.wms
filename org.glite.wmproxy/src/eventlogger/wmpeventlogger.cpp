@@ -23,6 +23,11 @@
 
 #include "glite/security/proxyrenewal/renewal.h"
 
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace eventlogger {
+	
 namespace logger        = glite::wms::common::logger;
 namespace jobid = glite::wmsutils::jobid;
 
@@ -35,16 +40,14 @@ using namespace glite::wmsutils::exception; //Exception
 
 const char *WMPLogger::GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
+
 
 WMPLogger::WMPLogger()
 {
 	id = NULL;
-	if ((edg_wll_InitContext(&ctx))
-			|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
-			EDG_WLL_SOURCE_WM_PROXY))) {
+	if (edg_wll_InitContext(&ctx)){
+		//	|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
+			//EDG_WLL_SOURCE_WM_PROXY))) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPLogger::WMPLogger()",
 			WMS_IS_FAILURE, "LB initialisation failed");
@@ -176,8 +179,8 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		jobidstring = edg_wlc_JobIdUnparse(subjobs[i]);
 		jobid = new JobId(jobidstring);
 	 	dest_uri = string (getenv("DOCUMENT_ROOT") )
-			+ "/"
-			+ to_filename ( *jobid ) ;
+			+ "/";
+			//+ to_filename ( *jobid ) ;
 		/*if (!ad->hasNodeAttribute(jobid, JDL::ISB_BASE_URI)) {
 			ad->setNodeAttribute(jobid, JDL::ISB_BASE_URI, dest_uri);
 		}				//TBD ** UNCOMMENT WHEN CODED **
@@ -507,7 +510,7 @@ WMPLogger::error_message(const char *api){
 	return error_message;
 }
 
-
-//} // wmproxy
-//} // wms
-//} // glite
+} // eventlogger
+} // wmproxy
+} // wms
+} // glite

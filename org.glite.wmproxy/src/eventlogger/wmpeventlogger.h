@@ -17,9 +17,10 @@
 // LB logger API
 #include "glite/lb/consumer.h"
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace eventlogger {
 
 class WMPLogger  {
 
@@ -76,8 +77,9 @@ class WMPLogger  {
 		static const int LOG_RETRY_COUNT = 3;
 };
 
-//} // wmproxy
-//} // wms
-//} // glite
+} // eventlogger
+} // wmproxy
+} // wms
+} // glite
 
 #endif // GLITE_WMS_WMPROXY_WMPLOGGER_H
