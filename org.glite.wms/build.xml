@@ -12,7 +12,7 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	Build file for the EGEE Middleware Test 3 WMS Subsystem
+	Build file for the GLite Middleware WMS Subsystem
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
 	Version info: $Id$
@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.9  2004/05/13 19:37:04  dimeglio
+	Changed all occurrences of EGEE or egee to GLite and glite
+
 	Revision 1.8  2004/05/13 14:26:25  flammer
 	Corrected target include.
-
+	
 	Revision 1.7  2004/05/13 09:45:47  flammer
 	Moved to new variable naming & including style.
 	
@@ -53,13 +56,13 @@
 <project name="test3-wms" default="dist">
 
 	<description>
-		Ant build file to build the EGEE Test 3 WMS
+		Ant build file to build the GLite WMS
 	</description>
 	
 	<!-- =========================================
 	     Import properties (order is important) 
 		 ========================================= -->
-	<import file="../org.egee/project/baseline.properties.xml" />
+	<import file="../org.glite/project/baseline.properties.xml" />
 	<import file="./project/properties.xml" />	
 	<import file="${global.properties.file}" />
 				

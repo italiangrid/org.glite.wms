@@ -12,7 +12,7 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	EGEE Middleware Test WMS Configuration Specification File
+	GLite Middleware WMS Configuration Specification File
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
 	Version info: $Id$
@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.14  2004/05/13 19:37:04  dimeglio
+	Changed all occurrences of EGEE or egee to GLite and glite
+
 	Revision 1.13  2004/05/13 18:35:11  flammer
 	Added missing dependencies. Deleted duplicated external dependencies.
-
+	
 	Revision 1.12  2004/05/13 09:46:58  flammer
 	Moved to variable naming & include style.
 	
@@ -63,7 +66,7 @@
 	
 -->
 
-<project name="EGEE Middleware Test2 WMS CSF" default="all">
+<project name="GLite Middleware WMS CSF" default="all">
 
 	<!-- overwrite default workspace directory -->
 	<property name="workspace.dir" value="../.." />
@@ -73,7 +76,7 @@
 		 =============================================== -->
 
 	<!-- load baseline and user properties -->
-	<import file="${workspace.dir}/org.egee/project/baseline.properties.xml" />
+	<import file="${workspace.dir}/org.glite/project/baseline.properties.xml" />
 
 	<!-- Load subsytem-specific property files -->
 	<property file="./build.properties"/>
@@ -99,21 +102,21 @@
 	<import file="${global.external-dependencies.file}" />
 
 	<!-- ========================================================
-		 Checkout/updates the EGEE Middleware Test2 WMS components
+		 Checkout/updates the GLite Middleware Test2 WMS components
 		 ======================================================== -->
 		
 	<!-- Default update mode - Override from command line -->
 	<property name="update" value="false" />
 	
-	<!-- Set org.egee update mode -->
-	<condition property="egee.uptodate">
+	<!-- Set org.glite update mode -->
+	<condition property="glite.uptodate">
 		<and>
 			<isfalse value="${update}" />
-			<available file="${workspace.abs.dir}/org.egee" type="dir" />
+			<available file="${workspace.abs.dir}/org.glite" type="dir" />
 		</and>
 	</condition>
 
-	<!-- Set org.egee.test3 update mode -->
+	<!-- Set org.glite.wms update mode -->
 	<condition property="uptodate">
 		<isfalse value="${update}" />
 	</condition>
@@ -126,26 +129,26 @@
 	<!-- Load subsystem dependencies file -->
 	<property file="dependencies.properties" />
 
-	<!-- Update main EGEE module -->
-	<target name="org.egee" unless="egee.uptodate">
+	<!-- Update main GLite module -->
+	<target name="org.glite" unless="glite.uptodate">
 		<cvs command="checkout"
-        	package="org.egee"
+        	package="org.glite"
         	dest="${workspace.dir}"
-        	tag="${org.egee.version}"/>
-		<fail>The org.egee module has been updated, please rerun the configuration file</fail>
+        	tag="${org.glite.version}"/>
+		<fail>The org.glite module has been updated, please rerun the configuration file</fail>
 	</target>
 
 	<!-- Update the current module -->
-	<target name="org.egee.test3.wms" unless="uptodate">
+	<target name="org.glite.wms" unless="uptodate">
 		<cvs command="checkout"
-        	package="org.egee.test3.wms"
+        	package="org.glite.wms"
         	dest="${workspace.dir}"
-        	tag="${org.egee.test3.wms.version}" />
-		<fail>The org.egee.test3.wms module has been updated, please rerun the configuration file</fail>
+        	tag="${org.glite.wms.version}" />
+		<fail>The org.glite.wms module has been updated, please rerun the configuration file</fail>
 	</target>
 
 	<!-- Load master dependencies file -->
-	<property file="${workspace.dir}/org.egee/project/dependencies.properties" />
+	<property file="${workspace.dir}/org.glite/project/dependencies.properties" />
 	
 	<!-- *****************************************************-->
 	<!-- Environmental checks                                 -->
@@ -168,20 +171,20 @@
 	<target name="javacheck">
 		<!-- Java version -->
 		<condition property="isJavaOk">
-			<contains string="${java.version}" substring="${egee.java.version}"/>
+			<contains string="${java.version}" substring="${glite.java.version}"/>
 		</condition>
 		<echo>Java version:		${java.version}</echo>
-		<fail unless="isJavaOk">Java JRE version must be ${egee.java.version}_XX</fail>
+		<fail unless="isJavaOk">Java JRE version must be ${glite.java.version}_XX</fail>
 		<echo>JAVA_HOME:			${env.JAVA_HOME}</echo>
 	</target>
 			
 	<target name="antcheck">
 		<!--  Ant -->
 		<condition property="isAntOk">
-			<contains string="${ant.version}" substring="${egee.ant.version}"/>
+			<contains string="${ant.version}" substring="${glite.ant.version}"/>
 		</condition>
 		<echo>Ant version:		${ant.version}</echo>
-		<fail unless="isAntOk">Ant version must be ${egee.ant.version}</fail>
+		<fail unless="isAntOk">Ant version must be ${glite.ant.version}</fail>
 		<echo>ANT_HOME:			${env.ANT_HOME}</echo>
 	</target>
 		
@@ -191,10 +194,10 @@
 			<arg line="-dumpversion" />
 		</exec>
 		<condition property="isGccOk">
-			<equals arg1="${detected.gcc.version}" arg2="${egee.gcc.version}"/>
+			<equals arg1="${detected.gcc.version}" arg2="${glite.gcc.version}"/>
 		</condition>
 		<echo>Gcc version:		${detected.gcc.version}</echo>
-		<fail unless="isGccOk">Gcc version must be ${egee.gcc.version}</fail>
+		<fail unless="isGccOk">Gcc version must be ${glite.gcc.version}</fail>
 		<exec executable="which" outputproperty="detected.gcc.path">
 			<arg line="gcc" />
 		</exec>
@@ -285,7 +288,7 @@
  	<target name="external" depends="log4j"/>
  	
 	<!-- =====================================================
-		 EGEE Middleware modules
+		 GLite WMS modules
 		 ===================================================== -->
 	
 	<!-- All project modules -->
@@ -299,49 +302,49 @@
 	<!-- Globus SSLUtils -->
  	<target name="thirdparty-globus_ssl_utils">		
 		<cvs command="checkout"
-			package="org.egee.test3.wms.thirdparty-globus_ssl_utils"
+			package="org.glite.wms.thirdparty-globus_ssl_utils"
 			dest="${workspace.abs.dir}"
-			tag="${org.egee.test3.wms.thirdparty-globus_ssl_utils.version}"/>
+			tag="${org.glite.wms.thirdparty-globus_ssl_utils.version}"/>
 	</target>
 	
 	<!-- ByPass -->
  	<target name="thirdparty-bypass">		
 		<cvs command="checkout"
-			package="org.egee.test3.wms.thirdparty-bypass"
+			package="org.glite.wms.thirdparty-bypass"
 			dest="${workspace.abs.dir}"
-			tag="${org.egee.test3.wms.thirdparty-bypass.version}"/>
+			tag="${org.glite.wms.thirdparty-bypass.version}"/>
 	</target>
 	
 	<!-- Globus GridFTP Server -->
  	<target name="thirdparty-globus_gridftp_server" depends="globus">		
 		<cvs command="checkout"
-			package="org.egee.test3.wms.thirdparty-globus_gridftp_server"
+			package="org.glite.wms.thirdparty-globus_gridftp_server"
 			dest="${workspace.abs.dir}"
-			tag="${org.egee.test3.wms.thirdparty-globus_gridftp_server.version}"/>
+			tag="${org.glite.wms.thirdparty-globus_gridftp_server.version}"/>
 	</target>
 	
 	<!-- Loki -->
  	<target name="thirdparty-loki">		
 		<cvs command="checkout"
-			package="org.egee.test3.wms.thirdparty-loki"
+			package="org.glite.wms.thirdparty-loki"
 			dest="${workspace.abs.dir}"
-			tag="${org.egee.test3.wms.thirdparty-loki.version}"/>
+			tag="${org.glite.wms.thirdparty-loki.version}"/>
 	</target>
 	
 	<!-- Common -->
  	<target name="common" depends="boost,classads,globus">		
 		<cvs command="checkout"
-			package="org.egee.test3.wms.common"
+			package="org.glite.wms.common"
 			dest="${workspace.abs.dir}"
-			tag="${org.egee.test3.wms.common.version}"/>
+			tag="${org.glite.wms.common.version}"/>
 	</target>
 	
 	<!-- JCommon -->
  	<target name="jcommon" depends="jclassads">		
 		<cvs command="checkout"
-			package="org.egee.test3.wms.jcommon"
+			package="org.glite.wms.jcommon"
 			dest="${workspace.abs.dir}"
-			tag="${org.egee.test3.wms.jcommon.version}"/>
+			tag="${org.glite.wms.jcommon.version}"/>
 	</target>
 	
 	<!-- ====================================================
@@ -349,7 +352,7 @@
 		 ==================================================== -->
 	
 	<!-- All libraries -->
- 	<target name="all" depends="org.egee, org.egee.test3.wms, envchecks, devtools, external, project" />		
+ 	<target name="all" depends="org.glite, org.glite.wms, envchecks, devtools, external, project" />		
 
 	<!-- ====================================================
 		 Print dependecies to console
