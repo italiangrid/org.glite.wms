@@ -33,7 +33,7 @@ namespace api {
  *  (hence likely to be insecure) software components like GUI. It is recalled that proxy existence and correct
  * setting of the X509* variables is required by all job monitoring and control methods.
  * <p>
- * This class can manipulate standard proxies as well as edg-VOMS certificates, in order to extract the extension information
+ * This class can manipulate standard proxies as well as VOMS certificates, in order to extract the extension information
  * The main operation are:
  * <ul>
  * <li> Read a proxy certificate and retrieve any possible information ( time left, subject, strengthetc...)
@@ -123,8 +123,7 @@ class  UserCredential{
 	Retrieve the vector of all  the Virtual Organisation names */
 	std::vector <std::string> getVoNames ();
 
-	/***
-	Retrieve all groups belonging to the specified VirtualOrganisation
+	/** Retrieve all groups belonging to the specified VirtualOrganisation
 	* @param voName the name of the Virtual Organisation where to retrieve groups */
 	std::vector <std::string> getGroups ( const std::string& voName ) ;
 

@@ -41,6 +41,9 @@ class resultStruct {
 		/** If some error occurred (FAILURE result code) retrieve the error message
 		* @return A detailed description of the error of the operation */
 		std::string getError (){      if (result == glite::wms::common::utilities::SUCCESS) return "" ;    else return error ;  }
+		/** Retrieve the message of this result instance
+		*@return the string exception (if any) representatio, smpty string otherwise
+		*/
 		std::string getMessage (){if (result == glite::wms::common::utilities::SUCCESS) return error; else return   ""   ;  }
 		/** Destructor */
 		virtual ~resultStruct () {

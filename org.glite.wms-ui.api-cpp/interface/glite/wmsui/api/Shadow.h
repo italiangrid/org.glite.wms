@@ -5,7 +5,7 @@
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  * Contributors are mentioned in the code where appropriate.
 */
-// #include "edg/workload/userinterface/client/Job.h"
+
 
 #include "Listener.h"
 #include "glite/wmsutils/jobid/JobId.h"
@@ -16,7 +16,7 @@ namespace api {
 
 /**
  * This class provides the core management for interactive jobs.
- * once the edg-grid-console-shadow has started successfully and the job is running
+ * once the glite-grid-console-shadow has started successfully and the job is running
  * the user should interact with the submitted job  (or might have attached to a previous job)
 * At the end of the interaction the background bypass process should be
  * killed and the I/O pipes have to be removed. This is done automatically by the 'detach' method.

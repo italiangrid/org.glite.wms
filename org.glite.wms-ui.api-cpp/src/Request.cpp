@@ -75,8 +75,6 @@ void Request::setJobAd(const JobAd& ad){
 /****************************************************
 *     NETWORK SERVER Submission Methods:
 ****************************************************/
-
-
 void Request::getOutput(const std::string& dir_path){
 	using namespace glite::lb ;
 	GLITE_STACK_TRY("Request::getOutput(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort)");
@@ -152,8 +150,6 @@ void Request::getOutput(const std::string& dir_path , const std::string& nsRootP
 	}
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 }
-
-
 JobId Request::submit(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort , const std::string& ceid){
 	GLITE_STACK_TRY("Request::submit(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort)");
 	if (     (  type!= EWU_TYPE_DAG_AD  )&& (  type!= EWU_TYPE_JOB_AD  )   )
@@ -188,13 +184,14 @@ JobId Request::submit(const std::string& nsHost , int nsPort , const std::string
 	return JobId ( *jid) ;
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
-
 /*** Private method, permofm the submission **/
 void Request::submit ( ){
 	string jdl ;
 	if   (  type== EWU_TYPE_DAG_AD  ){
 		// It's a DAG
+		cout << "Log Transfer..." << endl ;
 		log.transfer (Logging::START, dag->toString () ) ;
+		cout << "Sequence Code..." << endl ;
 		dag->setAttribute (   ExpDagAd::SEQUENCE_CODE ,   log.getSequence()  );
 		log.logUserTags (  dag->getSubAttributes ( JDL::USERTAGS  )  );
 		jdl =  dag->toString () ;
@@ -302,6 +299,8 @@ void Request::regist(){
 	}else{   /*   type== EWU_TYPE_JOB_AD   */
 		jad->setAttribute ( JDL::JOBID , jid->toString()   );
 		if (  jad->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_PARTITIONABLE )  ){
+			// PARTITIONABLE JOB
+			cout << "Request:submit>Realizing Partitionable" << endl ;
 			// Partitioning job registration:
 			int res_number = 0 ; // TBD JobSteps Check
 			vector<string> resources ;
@@ -310,13 +309,15 @@ void Request::regist(){
 			if (  jad->hasAttribute (  JDL::PREJOB ) ) res_number++ ;
 			if (  jad->hasAttribute (  JDL::POSTJOB ) ) res_number++ ;
 			dag =  log.registerJob (jad , res_number) ;
+			cout << "DAGAD returned: " << dag.toString(ExpDagAd::MULTI_LINES) << endl ;
 			// Release un-needed memory
 			delete jad ;
 			type = EWU_TYPE_DAG_AD ;
 			// throw JobOperationException     ( __FILE__ , __LINE__ ,"Dag regist" , WMS_JOBOP_ALLOWED , "Submission not performed...it is a partitioning" ) ;
-		}else
-			// Normal job registering:
+		}else{
+			// ANY KIND OF JOB (but partitionable)
 			log.registerJob (jad) ;
+		}
 	}
 } ;
 

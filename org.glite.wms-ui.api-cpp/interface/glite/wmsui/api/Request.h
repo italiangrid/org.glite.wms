@@ -57,12 +57,15 @@ class Request{
 	/** Instantiates an  empty  Job object */
 	Request();
 	/** Instantiates an  Job object with a JobId
+	*@param id the Jobid instance
 	* @exception JobOperationException If the JobId is empty  */
 	Request(const glite::wmsutils::jobid::JobId& id);
 	/** Instantiates an  Job object with a ExpDagAd
+	*@param ad the ExprDagAd instance
 	* @exception JobOperationException If the DagAd is empty  */
 	Request(const glite::wms::jdl::ExpDagAd& ad);
 	/** Instantiates an  Job object with a JobAd
+	*@param ad the JobAd instance	
 	* @exception JobOperationException If the JobAd is empty  */
 	Request(const glite::wms::jdl::JobAd& ad);
 	/** Copy constructor*/
@@ -81,8 +84,7 @@ class Request{
 	/**Set the Proxy certificate as default*/
 	void unsetCredPath() ;
 	/** Se the verbosity level for NS debug
-	*  default value = 0 (no verbosity)
-	* max value = 6 (dreadful verbosity, print screen) */
+	* @param level default value = 0 (no verbosity), max value = 6 (dreadful verbosity, print screen) */
 	void setLoggerLevel ( unsigned int level )  { loggerLevel = level ; }
 	/** set  the JobAd instance
 	* @param ad the JobAd Instance to set  */
@@ -94,10 +96,8 @@ class Request{
 	* @param id the JobId Instance to set*/
 	void setDagId(const glite::wmsutils::jobid::JobId& id);
 	//@}
-
 	/**@name Job Action Methods */
 	//@{
-
 	/** Retrieve the status of the job
 	* @param ad if set to false only basic info are retrieved
 	* @return the status of the requested component
@@ -107,25 +107,22 @@ class Request{
 	* @return all the events logged during the job life
 	* @see  glite::lb::Event class documentation */
 	std::vector <glite::lb::Event> getLogInfo() ;
-	// std::vector <glite::lb::Event> getLogInfo( std::vector < std::pair <std::string , std::string> > userTags, bool owner = true, bool ad = true) ; 
-
-
-
 	/**
 	*Submit the job to the Network Server
-	* @param  ns_host The Network Server host address
-	* @param  ns_port The Network Server port
-	* @param  lb_host The LB Server host address
-	* @param  lb_port The LB Server port
+	* @param  nsHost The Network Server host address
+	* @param  nsPort The Network Server port
+	* @param  lbHost The LB Server host address
+	* @param  lbPort The LB Server port
+	* @param ceid the resource id where the job has to be executed
 	* @return the JobId representing the submitted job
 	*/
-	glite::wmsutils::jobid::JobId submit(const std::string& host , int port , const std::string& lbHost , int lbPort, const std::string& ceid="" )  ;
+	glite::wmsutils::jobid::JobId submit(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort, const std::string& ceid="" )  ;
 	/**
 	* Look for matching resources
-	* @param  ns_host The Network Server host address
-	* @param  ns_port The Network Server port
+	* @param  nsHost The Network Server host address
+	* @param  nsPort The Network Server port
 	* @return the Computing elements that match with the specified JDL  */
-	std::vector<std::string> listMatchingCE(const std::string& host , int port );
+	std::vector<std::string> listMatchingCE(const std::string& nsHost , int nsPort );
 	/**Cancel the job from the Network Server
 	* @return  The Result of the operation
 	* @exception JobOperationException The Operation required is not allowed for the Job

@@ -109,9 +109,11 @@ class Job{
 		/** Instantiates an  empty  Job object */
 		Job();
 		/** Instantiates an  Job object with a JobId
+		* @param id a JobId instance
 		* @exception JobOperationException If the JobId is empty  */
 		Job(const glite::wmsutils::jobid::JobId& id);
 		/** Instantiates an  Job object with a JobAd
+		* @param ad a JobAd instance		
 		* @exception JobOperationException If the JobAd is empty  */
 		Job(const glite::wms::jdl::JobAd& ad);
 		/** Copy constructor*/
@@ -141,18 +143,20 @@ class Job{
 		/**Set the Proxy certificate as default*/
 		void unsetCredPath() ;
 		/** Se the verbosity level for NS debug
-		*  default value = 0 (no verbosity)
-		* max value = 6 (dreadful verbosity, print screen) */
+		* @param level default value = 0 (no verbosity), max value = 6 (dreadful verbosity, print screen) */
 		void setLoggerLevel ( int level ) ;
 		/** set  the JobAd instance
-		* @param ad the JobAd Instance to set from  */
+		* @param ad the JobAd Instance to be set  */
 		void setJobAd(const glite::wms::jdl::JobAd& ad);
 		/** set  the JobId instance
-		* @param id the JobId Instance to set from*/
+		* @param id the JobId Instance to be set */
 		void setJobId(const glite::wmsutils::jobid::JobId& id);
 		/** Set the JobAd member attribute of the Job instance to the job description got from the LB */
 		void retrieveJobAd() ;
-		/** returns the type of the job _jobType*/
+		/** returns the type of the job _jobType
+		*@return the type of the job
+		*@see jType
+		*/
 		jType getType ()  {  return jobType ; };
 	//@}
 	/**@name Job Special Action Methods */
@@ -165,10 +169,10 @@ class Job{
 		glite::wms::checkpointing::JobState getState(unsigned int step = 0) ;
 		/** Attach the job to a new listener (if possible) and log new information to LB
 		* @param  port the local machine port to be forced as listener
-		* @param  A pointer to a Listener interface implementation which manages input/output/error streams
+		* @param ls A pointer to a Listener interface implementation which manages input/output/error streams
 		* @return the pid corresponding to the launched listener process id (in a new window)
 		* @exception JobOperationException The Operation required is not allowed for the Job  */
-		int attach ( Listener* , int port = 0)  ;
+		int attach ( Listener* ls, int port = 0)  ;
 	//@}
 	/**@name LB retrieve info Methods */
 	//@{
@@ -190,21 +194,22 @@ class Job{
 		* @param  nsPort The Network Server port value
 		* @param  lbHost The LB host name
 		* @param  lbPort The LB port value
-		* @param  ls the listener implementation where to attach the job (if interactive)  */
+		* @param ce_id the specific atddress of the resource where the job has to be executed */
 		void submit(const std::string& nSHost , int nsPort , const std::string& lbHost , int lbPort ,const std::string& ce_id= "" )  ;
 		/**
 		* Submit the job to the Network Server starting from an intermediate step specified in the JobState
 		* @param state the step where to begin the submission (only for Checkpointable jobs)
-		* @param Listener a listener implementation which will perform the job interaction (only for Interactive jobs)
+		* @param ls a Listener implementation which will perform the job interaction (only for Interactive jobs)
 		* @param  nsHost The Network Server host name
 		* @param  nsPort The Network Server port value
 		* @param  lbHost The LB host name
+		* @param ce_id the specific atddress of the resource where the job has to be executed		
 		* @param  lbPort The LB port value */
-		void submit (const std::string& ns_host, int ns_port, const std::string& lbHost , int lbPort ,
+		void submit (const std::string& nsHost, int nsPort, const std::string& lbHost , int lbPort ,
 			glite::wms::checkpointing::JobState *state , Listener *ls , const std::string& ce_id="" )  ;
 		/**Look for matching Computing Element available resources
-		* @param  ns_addr The Network Server full address given in the form  <NS host>:<NS port>
-		* @param  warning_message The warnings catched while executing the NS api
+		* @param  host The Network server host name
+		* @param port the Network server port number
 		* @return all the Computing Elemets that match with the given JDL togheter with their rank */
 		std::vector<std::pair <std::string , double> > listMatchingCE(const std::string& host , int port) ;
 		/**Cancel the job from the Network Server
@@ -233,9 +238,10 @@ class Job{
 		* @param stdErr  The value of the standard Error JDL attribute
 		* @param  ce_id The Computing Element Identificator where to perform the jo
 		* @param outputDir the directory where to retrieve the output files from the job once it is ready
+		* @param time_interval amount of time to wait before perform next check
 		* @param timeout lentgh of status cycle retrieval. Each 30 seconds a getStatus is called for timeout times */
 		static glite::wmsutils::jobid::JobId* submit(
-					const std::string& host , int port ,
+					const std::string& nsHost , int nsPort ,
 					const std::string& lbHost , int lbPort,
 					const std::string& executable ,
 					const std::string& stdOutput ,
@@ -284,7 +290,7 @@ class Job{
 		std::string lbHost ; // keep the lb host retrieved from NS
 		int lbPort ,nsPort; // keep the lb port retrieved from NS
 		void setCollect()  {   jCollect = true ;  }
-		// JobCollection has full access to all Job private members
+		/**JobCollection has full access to all Job private members */
 		friend class JobCollection ;
 };
 
