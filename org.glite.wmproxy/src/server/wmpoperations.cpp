@@ -12,7 +12,7 @@
 #include "wmpoperations.h"
 
 #include "wmproxy.h"
-#include "wmplogger.h"
+#include "wmpeventlogger.h"
 #include "wmpexpdagad.h"
 
 // Delegation
