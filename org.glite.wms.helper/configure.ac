@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/10/13 21:43:24  eronchie
+#       Added libraries
+#
 #       Revision 1.9  2004/09/22 01:01:27  dimeglio
 #       Fixed missing parenthesis in AC_INIT
 #
@@ -126,16 +129,29 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 have_glite_wmsutils=no
 have_glite_wms_common=no
 have_glite_wms_jdl=no
+have_glite_wms_broker=no
+have_glite_wms_brokerinfo=no
+have_glite_wms_matchmaking=no
+have_glite_wms_ism=no
 
 AC_GLITE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+AC_GLITE_WMS_BROKER([], have_glite_wms_broker=yes, have_glite_wms_broker=no)
+AC_GLITE_WMS_BROKERINFO([], have_glite_wms_brokerinfo=yes, have_glite_wms_brokerinfo=no)
+AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
+AC_GLITE_WMS_MATCHMAKING([], have_glite_wms_matchmaking=yes, have_glite_wms_matchmaking=no)
+
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+AC_MSG_RESULT(["GLITE_WMS_BROKERINFO found $have_glite_wms_brokerinfo"])
+AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])
+AC_MSG_RESULT(["GLITE_WMS_MATCHMAKING found $have_glite_wms_matchmaking"])
+AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

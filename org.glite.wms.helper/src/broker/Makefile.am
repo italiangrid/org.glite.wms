@@ -11,31 +11,39 @@ lib_LTLIBRARIES = \
 	libglite_wms_helper_broker_ii_prefetch.la \
 	libglite_wms_helper_broker_ism.la
 
+LD = $(GLITE_WMS_BROKER_LIBS) \
+	$(GLITE_WMS_MATCHMAKING_LIBS) \
+	$(GLITE_WMS_BROKERINFO_LIBS) \
+	$(GLITE_WMS_ISM_LIBS)
+
 libglite_wms_helper_broker_ii_la_SOURCES = \
         Helper.h \
         Helper_ii.cpp \
 	exceptions.cpp
 
-dnl libglite_wms_helper_broker_ii_la_LIBADD = \
-dnl        $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la \
-dnl        $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la \
-dnl        $(top_srcdir)/../org.glite.wms.ism/build/src/libglite_wms_ism.la 
+libglite_wms_helper_broker_ii_la_LIBADD = \
+	$(LD) \
+        $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la 
 
 libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         Helper.h \
         Helper_ii_prefetch.cpp \
         exceptions.cpp
 
-$(srcdir)/Helper_ii_prefetch.cpp: $(srcdir)/Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_ii.cpp > $(srcdir)/Helper_ii_prefetch.cpp
+libglite_wms_helper_broker_ii_prefetch_la_LIBADD = \
+        $(LD) \
+        $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
 
-dnl libglite_wms_helper_broker_ii_prefetch_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
+$(srcdir)/Helper_ii_prefetch.cpp: $(srcdir)/Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_ii.cpp > $(srcdir)/Helper_ii_prefetch.cpp
 
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
         Helper_ism.cpp \
 	exceptions.cpp
 
-dnl libglite_wms_helper_broker_ism_la_LIBADD = $(libglite_wms_helper_broker_ii_la_LIBADD)
+libglite_wms_helper_broker_ism_la_LIBADD = \
+        $(LD) \
+        $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \

@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.4  2004/10/13 21:43:24  eronchie
+	Added libraries
+
 	Revision 1.3  2004/07/28 10:51:21  eronchie
 	Added m4files.list property
-
+	
 	Revision 1.2  2004/07/16 14:56:56  flammer
 	Corrected input path of build.properties.
 	
@@ -71,6 +74,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4"/>
+	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_matchmaking.m4 glite_wms_broker.m4 glite_wms_brokerinfo.m4 glite_wms_ism.m4"/>
 
 </project>
