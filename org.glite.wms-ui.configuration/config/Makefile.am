@@ -14,11 +14,11 @@ wletcutils_SCRIPTS = glite-wmsui.sh glite-wmsui.csh \
 	glite-wmsui-env.csh glite-wmsui-env.sh \
         glite-wmsui-gui-env.csh glite-wmsui-gui-env.sh
 
-wletcwmdir = $(sysconfdir)
+wletcwmdir = $(sysconfdir)/vo_template
 wletcwm_DATA = glite_wmsui.conf
 
 install-data-hook:
-	/bin/cp $(DESTDIR)$(sysconfdir)/glite_wmsui.conf $(DESTDIR)$(sysconfdir)/glite_wmsui.conf.template
+	/bin/cp $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsui.conf $(DESTDIR)$(sysconfdir)/vo_template/glite_wmsui.conf.template
 
 EXTRA_DIST = \
         glite_wmsui.conf \
