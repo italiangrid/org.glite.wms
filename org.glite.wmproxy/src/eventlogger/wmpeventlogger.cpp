@@ -158,7 +158,7 @@ WMPEventLogger::registerJob(JobAd *jad)
 {
 	char str_addr[1024];
 	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	//jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
+	jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
 	if (edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
 		jad->toSubmissionString().c_str(), str_addr, 0, NULL, NULL)) {
 		cerr<<"JobOperationException"<<endl;
@@ -184,7 +184,6 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	vector<string>::iterator iter;
 	
 	// Adding WMProxyDestURI and InputSandboxDestURI attributes
-	JobId *jobid = NULL;
 	string dest_uri;
 	string jobidstring;
 	int size = sizeof(subjobs) / sizeof(subjobs[0]);
@@ -193,13 +192,13 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		// method getting jobId, attr name, attr value
 		// it should be recursive in the case the job is a dag!! //TBD
 		jobidstring = edg_wlc_JobIdUnparse(subjobs[i]);
-		jobid = new JobId(jobidstring);
+		JobId jobid(jobidstring);
 	 	dest_uri = string(getenv("DOCUMENT_ROOT"))
-			+ "/" + to_filename(*jobid);
-		/*if (!ad->hasNodeAttribute(jobid, JDL::ISB_BASE_URI)) {
+			+ "/" + to_filename(jobid);
+		if (!ad->hasNodeAttribute(jobid, JDL::ISB_BASE_URI)) {
 			ad->setNodeAttribute(jobid, JDL::ISB_BASE_URI, dest_uri);
-		}				//TBD ** UNCOMMENT WHEN CODED **
-		job_ad->setNodeAttribute(jobid, JDL::WMPROXY_BASE_URI, dest_uri);*/
+		}
+		ad->setNodeAttribute(jobid, JDL::WMPISB_BASE_URI, dest_uri);
 	}
 	
 	jdls_char = (char**) malloc(sizeof(char*) * (jdls.size() + 1));
