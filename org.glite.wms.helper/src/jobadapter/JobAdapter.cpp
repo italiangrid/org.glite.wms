@@ -655,17 +655,21 @@ try {
   
   // Mandatory
   // Maradone file path
-  string maradonapr(logconfig->maradona_transport_protocol());
+  if (!b_wmpisb_base_uri) {
+    string maradonapr(logconfig->maradona_transport_protocol());
 
-  config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
+    config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
   
-  boost::filesystem::path maradona_path(
-    boost::filesystem::normalize_path(nsconfig->sandbox_staging_path()),
-    boost::filesystem::system_specific);
-  maradona_path <<= jobid::get_reduced_part(job_id);
-  maradona_path <<= jobid_to_file;
-  maradona_path <<= "Maradona.output";
-  jw->maradonaprotocol(maradonapr, maradona_path.file_path());
+    boost::filesystem::path maradona_path(
+      boost::filesystem::normalize_path(nsconfig->sandbox_staging_path()),
+      boost::filesystem::system_specific);
+    maradona_path <<= jobid::get_reduced_part(job_id);
+    maradona_path <<= jobid_to_file;
+    maradona_path <<= "Maradona.output";
+    jw->maradonaprotocol(maradonapr, maradona_path.file_path());
+  } else {
+    jw->maradonaprotocol(wmpisb_base_uri, "Maradona.output");
+  }
 
   config::JCConfiguration const* jcconfig = config::Configuration::instance()->jc();
 
