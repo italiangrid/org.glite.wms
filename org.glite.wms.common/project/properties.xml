@@ -21,10 +21,13 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.6  2004/06/14 13:48:11  dimeglio
+	Rolled back to previous
+
 	Revision 1.5  2004/06/14 12:24:08  eronchie
 	Added configure options
 	WARNING::: Work in progress
-
+	
 	Revision 1.4  2004/05/17 16:31:53  flammer
 	Updating variable naming.
 	
@@ -65,4 +68,9 @@
 	
 	<import file="${component.general.properties.file}" />
 						
+	<!-- ======================================================
+		 Define extra properties here ...
+		 ====================================================== -->
+		 
+		 						
 </project>
