@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.4  2004/11/11 12:08:27  fprelz
+	Added missing cppunit.m4.
+
 	Revision 1.3  2004/11/09 10:14:39  monforte
 	Added first experimental prototype of ism purchaser for cemonitor...
-
+	
 	Revision 1.2  2004/09/21 12:49:00  eronchie
 	Updated
 	
@@ -90,6 +93,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	        <property name="m4files.list" value="boost.m4 classads.m4 glite.m4 globus.m4 gsoap.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 optimize.m4"/>
+	        <property name="m4files.list" value="boost.m4 classads.m4 glite.m4 cppunit.m4 globus.m4 gsoap.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 optimize.m4"/>
 
 </project>
