@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.14  2004/05/25 11:42:12  eronchie
+	Removed jcommon and added jdlj
+
 	Revision 1.13  2004/05/17 16:22:12  flammer
 	Unification of variable naming.
-
+	
 	Revision 1.12  2004/05/14 00:07:32  dimeglio
 	Added command to load the system build.properties file before
 	loading the global properties, but after baseline and user properties
@@ -291,8 +294,8 @@
                      inheritall="false" />
 	</target>
 
-        <target name="jcommon" depends="jclassads">
-                <ant dir="${workspace.dir}/${subsystem.name}.jcommon"
+        <target name="jdlj" depends="jclassads">
+                <ant dir="${workspace.dir}/${subsystem.name}.jdlj"
 		     target="${target}"
                      inheritall="false" />
         </target>
@@ -303,6 +306,6 @@
 				   					     globus_gridftp_server,
 				  					     loki,
 									     common, 
-										 jcommon" />
+										 jdlj" />
 		
 </project>
