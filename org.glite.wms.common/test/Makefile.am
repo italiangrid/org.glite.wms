@@ -9,7 +9,7 @@
 STDCPP = -lstdc++
 
 #if AMC_BUILD_CMN_LOGGER
-wms_CMN_TEST6 = logtest logthread
+WL_CMN_TEST6 = logtest logthread
 #WL_CMN_TSBIN6 = 
 #endif
 
