@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2004/08/24 14:06:32  pandreet
+#       GSSAPI dependencies
+#
 #       Revision 1.8  2004/08/17 12:41:36  eronchie
 #       Updated RENEWAL check
 #
@@ -72,6 +75,7 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
@@ -98,6 +102,7 @@ glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) $(GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(BOOST_LIBS) \
 	$(CONDORG_LIBS) $(ARES_LIBS) $(EXPAT_LIBS) \

@@ -92,7 +92,7 @@ void EventLogger::testCode( int &code, bool retry )
       code = 0; // Don't retry...
       break;
 #ifdef ENABLE_LOGGING
-    case EDG_WLL_ERROR_SSL:
+    case EDG_WLL_ERROR_GSS:
       ts::edglog << logger::setlevel( logger::severe )
 		 << "Severe error in SSL layer while communicating with L&B daemons." << endl
 		 << "Cause = \"" << cause << "\"." << endl;

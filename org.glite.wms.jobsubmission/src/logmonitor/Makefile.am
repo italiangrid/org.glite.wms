@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/08/24 14:06:32  pandreet
+#       GSSAPI dependencies
+#
 #       Revision 1.9  2004/08/12 17:20:31  eronchie
 #       Changed renewal in security
 #       Changed NOTHR_RENEWAL_LIBS in RENEWAL_NOTHR_LIBS
@@ -81,6 +84,7 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(BOOST_FS_LIBS) $(BOOST_THREAD_LIBS) $(BOOST_REGEX_LIBS) \
 	$(GLOBUS_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_GSS_NOTHR_LIBS) \
 	$(GLOBUS_COMMON_NOTHR_LIBS) \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(CLASSAD_LIBS) $(CONDORG_LIBS) \
