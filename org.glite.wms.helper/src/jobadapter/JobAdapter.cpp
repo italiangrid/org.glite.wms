@@ -252,6 +252,7 @@ try {
     jdl::set_grid_type(*result, "condor");
     jdl::set_remote_job_universe(*result, 9);
     jdl::set_remote_sub_universe(*result, "blah");
+    jdl::set_remote_job_grid_type(*result, "blah");
     jdl::set_remote_remote_grid_type(*result, lrmstype);
     jdl::set_remote_remote_queue(*result, queuename);
 
