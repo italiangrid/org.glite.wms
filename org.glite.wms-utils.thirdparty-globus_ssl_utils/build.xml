@@ -12,7 +12,7 @@
 	University of Bergen (UiB), Norway
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
-	Build file for the EGEE Test WMS Globus SSLUtils module
+	Build file for the GLite WMS Globus SSL Utils module
 	
 	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
 	Version info: $Id$
@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.7  2004/05/13 19:36:44  dimeglio
+	Changed all occurrences of EGEE or egee to GLite and glite
+
 	Revision 1.6  2004/05/13 15:01:39  flammer
 	Corrected target includes.
-
+	
 	Revision 1.5  2004/05/13 12:44:22  flammer
 	Comment correction.
 	
@@ -43,13 +46,13 @@
 <project name="globus_ssl_utils" default="dist">
 
 	<!-- =========================================
-		 Builds the EGEE Test 3 WMS Globus SSLUtils Module
+		 Builds the GLite WMS Globus SSLUtils Module
 		 ========================================= -->
 	
 	<!-- =========================================
 	     Import properties (order is important)
 		 ========================================= -->
-	<import file="../org.egee/project/baseline.properties.xml" />
+	<import file="../org.glite/project/baseline.properties.xml" />
 	<import file="./project/properties.xml" />	
 	<import file="${subsystem.properties.file}" />
 	<import file="${global.properties.file}" />

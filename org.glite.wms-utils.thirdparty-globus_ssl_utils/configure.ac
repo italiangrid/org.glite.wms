@@ -11,11 +11,11 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Common configure.ac file for the all EGEE modules
+#       Common configure.ac file for the GLite WMS Globus SSL Utils module
 #
 #       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
 #       Version info: $Id$
-#       Release: $Name:$
+#       Release: $Name$
 #
 #       Revision history:
 #       $Log$
@@ -24,7 +24,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([EGEE WMS Globus SSL Utils], [0.0.0])
+AC_INIT([GLite WMS Globus SSL Utils], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/scutils.c])
