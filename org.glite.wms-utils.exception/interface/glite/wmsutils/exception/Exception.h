@@ -13,6 +13,7 @@
 #include <syslog.h>  // For logging exceptions to log file
 #include <errno.h> // list the exception codes
 #include <string>
+#include <vector>
 #include <exception> // base ancestor stl::exception
 
 
@@ -21,8 +22,8 @@ namespace glite {
 		namespace exception {
 
 extern pthread_mutex_t METHOD_MUTEX; //  used in order to store info into a file (rather then syslog)
-#define GLITE_STACK_TRY(method_name) std::string METHOD = method_name ; try {
-#define GLITE_STACK_CATCH() } catch (glite::wmsutils::exception::Exception &exc){ throw  glite::wmsutils::exception::Exception ( __FILE__ , METHOD , &exc)   ;  }
+#define GLITE_STACK_TRY(method_name) std::string METHOD = method_name ;  int LINE = __LINE__ ; try {
+#define GLITE_STACK_CATCH() } catch (glite::wmsutils::exception::Exception &exc){ exc.push_back ( __FILE__ , LINE,  METHOD ); throw exc ;  }
 
 /**
  * The Exception base classe contains attributes into which are placed exception information and provides
@@ -104,7 +105,14 @@ class Exception : public std::exception{
 	*@return the string representation of the stack trace: each line correspond to an exception message
 	*/
 	virtual std::string printStackTrace() ;
-
+	/**
+	*   Return the list of methods that caused the Exception
+	*/
+	virtual std::vector<std::string> getStackTrace() ;
+	/**
+	* Update stack information
+	*/
+	virtual void push_back (  const std::string& source, int line_number,  const std::string& method   ) ;
   protected:
 		Exception();
 		int                   error_code;
@@ -114,6 +122,7 @@ class Exception : public std::exception{
 		std::string          exception_name;
 		std::string          method_name ;
 		std::string          stack;
+		std::vector< std::string> stack_strings ;
 		std::string          ancestor ;
 }; //End  Exception Class
 }}}  // Closing namespace
