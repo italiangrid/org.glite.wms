@@ -35,6 +35,8 @@
 
 // AdConverter class for jdl convertion and templates
 #include "glite/wms/jdl/adconverter.h"
+// by dirmanagement
+#include <boost/lexical_cast.hpp>
 
 // Default name of the delegated Proxy that is copied inside private job 
 // directory
@@ -240,6 +242,36 @@ getVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_CATCH();
 }
 
+
+void managedir ( const string &dir,   ){
+/*
+	// Try to find managedirexecutable
+	char* glite_path = getenv ("GLITE_WMS_LOCATION") ;
+	string gliteDirmanExe = (glite_path==NULL)?("/opt/glite"):(string(glite_path))  ;
+	gliteDirmanExe += "/bin/glite-wms-dirmanager";
+	string arguments ="";
+	// UID
+	arguments += " -c " ;
+	// GROUP
+	arguments += " -g " + boost::lexical_cast<std::string>(getgid());
+	// MODE
+	arguments += " -m 0770"  ;
+	// DIRECTORY
+	arguments += dir;
+	string command = gliteDirmanExe  + " " + arguments ;
+	string error_msg ="";
+	int exit_value= system(command.c_str()) );
+	switch (exit_value){
+		case 0:
+			break;
+		default:
+			error_msg ="Unexpected error while launching:\n"+gliteDirmanExe
+	}
+	if (exit_value!=0) throw JobOperationException(__FILE__, __LINE__, "managedir()" , WMS_OPERATION_NOT_ALLOWED,error_msg);
+*/
+}
+
+
 void
 jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegation_id)
@@ -254,7 +286,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 			"const string &jdl, const string &delegation_id)",
 			WMS_DELEGATION_ERROR, "Delegation id not valid");
 	}
-	
+
 	try {
 		int type = getType(jdl);
 		if (type == TYPE_DAG) {
