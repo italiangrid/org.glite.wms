@@ -1,32 +1,31 @@
 #!/bin/sh
 
-# File: edg-wl-wm
+# File: glite-wms-wm
 # Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
 # Copyright (c) 2002 EU DataGrid.
 # For license conditions see http://www.eu-datagrid.org/license.html
 #
-# Description: start, stop, status of the EDG workload manager daemon
+# Description: start, stop, status of the GLITE workload manager daemon
 #
 # $Id$
 
 # chkconfig: 345 94 06 
 
 GLITE_LOCATION=${GLITE_LOCATION:-@prefix@}
-EDG_WL_LOCATION=${EDG_WL_LOCATION:-/opt/edg-4prototype}
 
-. ${EDG_WL_LOCATION}/etc/edg-wl-vars.sh
-. ${EDG_WL_LOCATION}/libexec/edg-wl-services-certs.sh
-. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
-. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl-config.sh
+. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
+. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
+. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
+. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
  
-GLITE_WMS_CONFIG_DIR=${EDG_WL_LOCATION}/etc/
+GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
 export GLITE_WMS_CONFIG_DIR
 
 this_script_name=$0
 
 program_name=glite-wms-workload_manager
 binpath=${GLITE_LOCATION}/bin/${program_name}
-pid_file=${EDG_WL_TMP}/${program_name}.pid
+pid_file=${GLITE_WMS_TMP}/${program_name}.pid
 
 #set -x
 
@@ -64,16 +63,16 @@ ret_code=0
 
 start()
 {
-    conf_file=edg_wl.conf
+    conf_file=glite_wms.conf
     parse_attribute=WorkloadManager
-    . ${EDG_WL_LOCATION}/libexec/edg-wl-parse-configuration.sh ${conf_file} ${parse_attribute}
+    . ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
 
     echo -n "starting workload manager... "
     if running; then
         echo "ok (already running)"
     else
         rm -f ${pid_file}
-        ${binpath} --daemon ${pid_file} > /dev/null 2>&1
+        ${binpath} --conf ${conf_file} --daemon ${pid_file} > /dev/null 2>&1
         # there is a race condition due to some delay between becoming
         # a daemon (hence returning control to this script) and
         # writing the pid file; the following sleep should be enough
