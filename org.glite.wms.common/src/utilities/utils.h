@@ -9,7 +9,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "common_namespace.h"
+#include "../common_namespace.h"
 #ifdef HAVE_STRINGSTREAM
 #include <sstream>
 #else

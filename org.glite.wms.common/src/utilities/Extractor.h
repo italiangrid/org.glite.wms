@@ -4,7 +4,7 @@
 #include <list>
 #include <algorithm>
 
-#include "edg/workload/common/common_namespace.h"
+#include "../common_namespace.h"
 
 COMMON_NAMESPACE_BEGIN {
 
