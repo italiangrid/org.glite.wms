@@ -69,7 +69,7 @@ AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([memset putenv strchr strdup strrchr strspn tzset])
 
 # Configuration items
-AC_PREFIX_DEFAULT([`pwd`/../../opt/egee])
+AC_PREFIX_DEFAULT([/opt/egee])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
