@@ -403,11 +403,11 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	// Setting job identifier
 	jad->setAttribute(JDL::JOBID, jid->toString());
 	
-	// Adding WMProxyDestURI and InputSandboxDestURI attributes
-	if (!jad->hasAttribute(JDL::ISB_DEST_URI)) {
-		jad->setAttribute(JDL::ISB_DEST_URI, dest_uri);
+	// Adding WMProxyBaseURI and InputSandboxBaseURI attributes
+	if (!jad->hasAttribute(JDL::ISB_BASE_URI)) {
+		jad->setAttribute(JDL::ISB_BASE_URI, dest_uri);
 	}
-	jad->setAttribute(JDL::WMPROXY_DEST_URI, dest_uri);
+	jad->setAttribute(JDL::WMPROXY_BASE_URI, dest_uri);
 
 	// Initializing logger
 	WMPLogger wmplogger;
@@ -475,11 +475,11 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	dag->setAttribute(WMPExpDagAd::EDG_JOBID, jid->toString());
 	
 	// Adding WMProxyDestURI and InputSandboxDestURI attributes
-	if (!dag->hasAttribute(JDL::ISB_DEST_URI)) {
-		dag->setReserved(JDL::ISB_DEST_URI, dest_uri);
+	if (!dag->hasAttribute(JDL::ISB_BASE_URI)) {
+		dag->setReserved(JDL::ISB_BASE_URI, dest_uri);
 	}
-	dag->setReserved(JDL::WMPROXY_DEST_URI, dest_uri);
-	
+	dag->setReserved(JDL::WMPROXY_BASE_URI, dest_uri);
+
 	// Initializing logger
 	WMPLogger wmplogger;
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);

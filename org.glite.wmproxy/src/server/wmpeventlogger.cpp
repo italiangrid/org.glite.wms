@@ -183,10 +183,10 @@ WMPLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 			throw ex;
 		}
 	 	dest_uri = getSandboxDestURI_response.path;
-		/*if (!ad->hasNodeAttribute(jobid, JDL::ISB_DEST_URI)) {
-			ad->setNodeAttribute(jobid, JDL::ISB_DEST_URI, dest_uri);
+		/*if (!ad->hasNodeAttribute(jobid, JDL::ISB_BASE_URI)) {
+			ad->setNodeAttribute(jobid, JDL::ISB_BASE_URI, dest_uri);
 		}				//TBD ** UNCOMMENT WHEN CODED **
-		job_ad->setNodeAttribute(jobid, JDL::WMPROXY_DEST_URI, dest_uri);*/
+		job_ad->setNodeAttribute(jobid, JDL::WMPROXY_BASE_URI, dest_uri);*/
 	}
 	
 	jdls_char = (char**) malloc(sizeof(char*) * (jdls.size() + 1));
