@@ -17,11 +17,11 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
-#include "glite/wms/jdl/DAGAd.h" 
-#include "glite/wmsutils/jobid/JobId.h" 
-#include "glite/wmsutils/jobid/manipulation.h" 
+#include "glite/wms/jdl/DAGAd.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
 #include "JobId.h"
-#include "logging_fn.h"
+#include "wmpeventlogger.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -396,7 +396,7 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
 {
   edglog_fn("NS2WM::submit");
   edglog(fatal) << "Forwarding Submit Request." << std::endl;
-  
+
   std::string seq_code(utilities::evaluate_expression(*cmdAd, "Arguments.SeqCode"));
   std::string jdl     (utilities::evaluate_expression(*cmdAd, "Arguments.jdl"));
   boost::scoped_ptr<classad::ClassAd> jdlAd(utilities::parse_classad(jdl));
@@ -405,9 +405,9 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
   // Initialize the logging context
   //
   edg_wll_Context      log_ctx;
-  edg_wlc_JobId        wlc_jid; 
+  edg_wlc_JobId        wlc_jid;
   if( edg_wll_InitContext( &log_ctx ) != 0 ||
-      edg_wlc_JobIdParse ( jobid.c_str(), &wlc_jid ) != 0 ||  
+      edg_wlc_JobIdParse ( jobid.c_str(), &wlc_jid ) != 0 ||
       edg_wll_SetParam( log_ctx, EDG_WLL_PARAM_SOURCE,  EDG_WLL_SOURCE_NETWORK_SERVER  ) != 0 ||
       edg_wll_SetLoggingJob( log_ctx, wlc_jid, seq_code.c_str(), EDG_WLL_SEQ_NORMAL ) != 0 )  {
 	  char      *et,*ed;
@@ -428,31 +428,18 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
 
   edglog(debug) << "Logged jdl: " << jdl << std::endl;
 
-  edg_wlc_JobIdFree(wlc_jid);                                                      
-
+  edg_wlc_JobIdFree(wlc_jid);
+  WMPLogger wmplogger;
+  wmplogger.init(ctx);
   try {
     f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
     // Take the result of f_forward and do what for LogEnQueued in CommandFactoryServerImpl
-    /*
-    edg_wll_LogEnQueued( log_ctx,
-			(*m_filelist).filename().c_str(),
-			jdl.c_str(),
-			"OK",
-		        "");
-    */
-    LogEnqueuedJob( log_ctx, jdl, proxy, (*m_filelist).filename().c_str(), true, "", true, true);
-    edglog(null) << "Submit EnQueued OK." << std::endl; 
+    logger.logEnqueuedJob(jdl, proxy, (*m_filelist).filename(), true, "", true, true);
+    edglog(null) << "Submit EnQueued OK." << std::endl;
   } catch (std::exception &e) {
     // LogEnQueued FAIL if exception occurs
-    /*
-    edg_wll_LogEnQueued( log_ctx,
-			(*m_filelist).filename().c_str(),
-                        jdl.c_str(),
-                        "FAIL",
-                        e.what());
-    */
-    LogEnqueuedJob( log_ctx, jdl, proxy, (*m_filelist).filename().c_str(), false, e.what(), true, true);
-    edglog(null) << "Submit EnQueued FAIL." << std::endl; 
+    logger.logEnqueuedJob( jdl, proxy, (*m_filelist).filename(), false, e.what(), true, true);
+    edglog(null) << "Submit EnQueued FAIL." << std::endl;
   }
 
   // Save the sequence code on an hidden file.

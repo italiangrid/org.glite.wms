@@ -58,6 +58,9 @@ WMPLogger::~WMPLogger() throw()
 	edg_wll_FreeContext(ctx);
 }
 
+
+
+
 void
 WMPLogger::init(const string &lb_host, int lb_port, jobid::JobId *id)
 {
@@ -360,7 +363,7 @@ WMPLogger::logUserTags(classad::ClassAd* userTags)
 
 
 void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
-			const std::string &reason, bool retry ){
+			const char *reason, bool retry ){
     int i=0;
     edglog_fn("WMPLogger::logEnqueuedJobN");
     edglog(fatal) << "Logging Enqueued Job." << std::endl;
@@ -371,7 +374,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 				     file_queue.c_str(),
 				     jdl.c_str(),
 				     (mode ? "OK" : "FAIL"),
-				     reason.c_str());
+				     reason);
       if (!logged && (i<2) && retry) {
         edglog(info) << "Failed to log Enqueued Job. Sleeping 60 seconds before retry." << std::endl;
         sleep(60);
@@ -382,7 +385,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 	edglog(severe) << "Error while logging Enqueued Job." << std::endl;
 	throw JobOperationException(__FILE__, __LINE__,
 				"WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,"
-				"const std::string &reason, bool retry )",
+				"const char *reason, bool retry )",
 				WMS_OPERATION_NOT_ALLOWED, "Error while logging Enqueued Job.");
 
 
@@ -395,7 +398,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 
 void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 			std::string host_proxy, const std::string &file_queue,
-			bool mode, const std::string &reason, bool retry, bool test){
+			bool mode, const char *reason, bool retry, bool test){
 
     if (!test) logEnqueuedJob(jdl, file_queue, mode, reason, retry);
     edglog_fn("WMPLogger::logEnqueuedJobE");
@@ -411,7 +414,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 				 file_queue.c_str(),
 				 jdl.c_str(),
 				 (mode ? "OK" : "FAIL"),
-				 reason.c_str());
+				 reason);
       testAndLog( res, with_hp, lap, host_proxy );
     } while( res != 0 );
   }

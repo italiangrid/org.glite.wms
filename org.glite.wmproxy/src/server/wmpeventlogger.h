@@ -30,6 +30,7 @@ class WMPLogger  {
 
 		void init(const std::string &nsHost, int nsPort,
 			glite::wmsutils::jobid::JobId *id);
+		void init(edg_wll_Context &ctx ){ this->ctx = ctx;};
 
 		std::string getSequence();
 		
@@ -51,10 +52,10 @@ class WMPLogger  {
 			classad::ExprTree*> > userTags);
 
 		void logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
-			const std::string &reason, bool retry );
+			const char *reason, bool retry );
 		void logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 			std::string host_proxy, const std::string &file_queue,
-			bool mode, const std::string &reason, bool retry, bool test);
+			bool mode, const char *reason, bool retry, bool test);
 
 
 
@@ -63,15 +64,12 @@ class WMPLogger  {
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
 		void testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_proxy);
 		void reset_user_proxy( const std::string &proxy_path );
-		
 		const char * error_message(const char *api);
 		std::string dest_uri;
 		glite::wmsutils::jobid::JobId *id;
 		edg_wll_Context ctx;
-		//std::string ll_host;
 		std::string lb_host;
 		int lb_port;
-		
 		static const char *GLITE_WMS_LOG_DESTINATION;
 		static const int LB_RENEWAL_PORT = 7512;
 		static const int LOG_RETRY_COUNT = 3;
