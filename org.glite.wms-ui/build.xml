@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.29  2004/10/28 22:59:23  dimeglio
+	Quoted ant command line parameters
+
 	Revision 1.28  2004/10/28 18:31:03  dimeglio
 	Added envcheck to individual components
-
+	
 	Revision 1.27  2004/10/26 13:24:49  dimeglio
 	Fixed spelling error in envchecks
 	
@@ -275,7 +278,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
 				</exec>
 			</then>
 			<else>
@@ -291,7 +294,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.api-cpp" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
 				</exec>
 			</then>
 			<else>
@@ -307,7 +310,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.api-java" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
 				</exec>
 			</then>
 			<else>
@@ -323,7 +326,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
 				</exec>
 			</then>
 			<else>
@@ -339,7 +342,7 @@
             		<isset property="small.memory" />
             		<then>
                 		<exec dir="${wms-ui.subsystem.dir}.wrap-python" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
                 		</exec>
             		</then>
             		<else>
@@ -355,7 +358,7 @@
             		<isset property="small.memory" />
             		<then>
                 		<exec dir="${wms-ui.subsystem.dir}.wrap-java" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
                 		</exec>
             		</then>
             		<else>
@@ -371,7 +374,7 @@
                         <isset property="small.memory" />
                         <then>
                                 <exec dir="${wms-ui.subsystem.dir}.configuration" executable="${antExec}" failonerror="${failonerror}">
-                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                        <arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
                                 </exec>
                         </then>
                         <else>
@@ -387,7 +390,7 @@
             		<isset property="small.memory" />
             		<then>
                 		<exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
                 		</exec>
             		</then>
 			<else>
