@@ -7,9 +7,10 @@
 #ifndef GLITE_WMS_WMPROXY_WMPDELEGATION_H
 #define GLITE_WMS_WMPROXY_WMPDELEGATION_H
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
 
 /**
  * WMPDelegation class provides a set of utility methods to work on
@@ -80,9 +81,9 @@ private:
 	
 }; // END WMPDelegation class
  
-	
-// } // wmproxy
-// } // wms
-// } // glite
+} // namespace server
+} // namespace wmproxy
+} // namespace wms
+} // namespace glite
 
 #endif // GLITE_WMS_WMPROXY_WMPDELEGATION_H

@@ -34,11 +34,12 @@
 #include <string>
 #include <vector>
 
-namespace utilities  = glite::wms::common::utilities;
+namespace utilities  	= glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-using namespace boost::details::pool ;
+
+using namespace boost::details::pool;
 using namespace std;
 //namespace glite {
 //namespace wms {

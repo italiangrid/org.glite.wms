@@ -4,18 +4,14 @@
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
-
 #include <string>
 #include <iostream>
 
 #include "wmpdelegation.h"
 
 // Exceptions
-#include "wmpexceptions.h"
-#include "wmpexception_codes.h"
+#include "utilities/wmpexceptions.h"
+#include "utilities/wmpexception_codes.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 
 // Common utility methods
@@ -26,45 +22,18 @@ extern "C" {
 	#include "gridsite.h"
 }
 
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace server {
+
+const char* WMPDelegation::GRST_PROXYCACHE = "proxycache";
+const char* WMPDelegation::DOCUMENT_ROOT = "DOCUMENT_ROOT";
+
 using namespace std;
 using namespace glite::wms::wmproxy::server;  //Exception codes
 
-namespace wmputilities		 = glite::wms::wmproxy::utilities;
-//using namespace glite::wmsutils::exception; //Exception
-
-const char* WMPDelegation::GRST_PROXYCACHE = "proxycache";
-const char* WMPDelegation::SSL_CLIENT_DN = "SSL_CLIENT_S_DN";
-const char* WMPDelegation::DOCUMENT_ROOT = "DOCUMENT_ROOT";
-
-/*char *
-WMPDelegation::getUserDN()
-{
-	char* p = NULL;
-	char* client_dn = NULL;
-	char* user_dn = NULL;
-	
-	client_dn = getenv(SSL_CLIENT_DN);
-	if ((client_dn == NULL) || (client_dn == '\0')) {
-		throw ProxyOperationException(__FILE__, __LINE__,
-			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
-	}
-	
-	user_dn = strdup(client_dn);
-	p = strstr(user_dn, "/CN=proxy"); ///TBC ITERATE????
-	if (p != NULL) {
-		*p = '\0';      
-	}
-	p = strstr(user_dn, "/CN=limited proxy");
-	if (p != NULL) {
-		*p = '\0';      
-	}
-	if ((user_dn == NULL) || (user_dn[0] == '\0')) {
-		throw ProxyOperationException(__FILE__, __LINE__,
-			"getUserDN()", WMS_PROXY_ERROR, "Unable to get a valid user DN");
-	}
-	
-	return user_dn;
-}*/
+namespace wmputilities = glite::wms::wmproxy::utilities;
 
 char *
 WMPDelegation::getProxyDir()
@@ -155,8 +124,8 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	return path;
 }
 
+} // namespace server
+} // namespace wmproxy
+} // namespace wms
+} // namespace glite
 
-
-//} // wmproxy
-//} // wms
-//} // glite

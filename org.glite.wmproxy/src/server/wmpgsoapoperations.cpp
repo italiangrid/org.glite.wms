@@ -16,8 +16,8 @@
 #include "wmpresponsestruct.h"
 
 // Exceptions
-#include "wmpexceptions.h"
-#include "wmpexception_codes.h"
+#include "utilities/wmpexceptions.h"
+#include "utilities/wmpexception_codes.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 
 //#include "wmpgsoapfaultmanipulator.h"

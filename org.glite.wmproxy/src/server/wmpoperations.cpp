@@ -36,8 +36,8 @@
 #include "wmpdelegation.h"
 
 // Exceptions
-#include "wmpexceptions.h"
-#include "wmpexception_codes.h"
+#include "utilities/wmpexceptions.h"
+#include "utilities/wmpexception_codes.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 
 // RequestAd
@@ -68,11 +68,14 @@ using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 using namespace glite::wms::common::configuration; // Configuration
 using namespace boost::details::pool ; //singleton
+using namespace glite::wms::wmproxy::eventlogger;
+
 namespace logger         = glite::wms::common::logger;
 namespace configuration  = glite::wms::common::configuration;
 namespace wmpmanager	 = glite::wms::wmproxy::server;
 
 namespace wmputilities		 = glite::wms::wmproxy::utilities;
+
 
 //namespace glite {
 //namespace wms {
@@ -334,12 +337,12 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri,
 	// TBD WARNING! THIS IS SHALL BE PROVIDED BY an LCMAP METHOD
 	int userid = getuid();
 	// TBD WARNING! Still to be implemented
-	if (wmputilities::managedir(dest_uri, userid)) {
+	/*if (wmputilities::managedir(dest_uri, userid)) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"setJobFileSystem(const string &delegation_id, const string "
 			"&dest_uri, const vector<string> &children_dest_uris)",
 			WMS_IS_FAILURE, "Unable to create job local directory");
-	}
+	}*/
 	
 	// Copying delegated Proxy to destination URI
 	wmputilities::fileCopy(delegated_proxy, dest_uri + USER_PROXY_NAME);
@@ -502,7 +505,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	}
 	
 	// Creating private job directory with delegated Proxy
-	setJobFileSystem(dest_uri, delegation_id, wmplogger.getDestURIs());
+	//setJobFileSystem(dest_uri, delegation_id, wmplogger.getDestURIs());
 	
 	// Logging delegation id & original jdl
 	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
