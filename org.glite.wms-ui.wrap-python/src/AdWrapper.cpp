@@ -229,7 +229,6 @@ DagWrapper::DagWrapper( ){
 		if (cAd==NULL){error_code=true;error = "Fatal Error: This method must be used after the AdWrapper::toDagAd method"; }
 		else{ 
 			dagad= new ExpDagAd (cAd) ;  
-			dagad->getSubmissionStrings() ;
 		}
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
@@ -280,7 +279,7 @@ std::vector<std::string> DagWrapper::getSubAttributes ( const std::string& attr_
 			//Unparse the ClassAd instance
 			result.push_back (   subAttributes[i].first  ) ; // Jobid
 			unp.Unparse(  buffer, subAttributes[i].second ) ;
-			result.push_back (   buffer ) ;  //User Tags classAd as a string
+			result.push_back (   buffer ) ;  // desired attribute as a string
 		}
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return result ;
