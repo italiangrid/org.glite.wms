@@ -47,7 +47,7 @@ bool AdWrapper::fromFile(const string  &jdl_file ){
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
 }
-void  AdWrapper::printChar( const std::string &ch ) {  cout << ch << flush ;  };
+void AdWrapper::printChar( const std::string &ch ) {  cout << ch << flush ;  };
 bool AdWrapper::fromString(const string  &jdl ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	jad->fromString( jdl ) ;
@@ -66,7 +66,7 @@ bool AdWrapper::toDagAd (){
 bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	glite::wmsui::partitioner::Partitioner part ( jad->ad(),jobids);
-	cAd=part.createDag();
+	cAd=new DAGAd( part.createDag()->ad() );
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
@@ -226,15 +226,18 @@ string AdWrapper::getAd( const string& name  ) {
 *************************************************************************************************************/
 DagWrapper::DagWrapper( ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-		if ( cAd == NULL){  error_code= true; error = "Fatal Error: This method must be used after the AdWrapper::toDagAd method"; }
-		else{ dagad= new ExpDagAd (cAd) ;  }
+		if (cAd==NULL){error_code=true;error = "Fatal Error: This method must be used after the AdWrapper::toDagAd method"; }
+		else{ 
+			dagad= new ExpDagAd (cAd) ;  
+			dagad->getSubmissionStrings() ;
+		}
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
 DagWrapper::DagWrapper( const string& file ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 		ifstream jdl  ( file.c_str()  ) ;
 		error_code= false ;
-		dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+		dagad= new ExpDagAd ( jdl ) ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
 DagWrapper::~DagWrapper(){
