@@ -21,5 +21,5 @@ std::string to_filename(glite::wmsutils::jobid::JobId j, int level = 0,
 * @param dir name of the dir to be generated
 * @param userid the id of the user
 */
-void managedir ( const std::string &dir , int userid );
+int managedir ( const std::string &dir , int userid );
 #endif // GLITE_WMS_WMPROXY_WMPUTILS_H
