@@ -42,8 +42,6 @@ using namespace glite::wmsutils::exception; //Exception
 
 const char *WMPEventLogger::GLITE_WMS_LOG_DESTINATION = "GLITE_WMS_LOG_DESTINATION";
 
-
-
 std::string retrieveHostName() {
 	struct hostent hent, *hp;
 	size_t hstbuflen = 1024;
@@ -75,9 +73,9 @@ std::string retrieveHostName() {
 WMPEventLogger::WMPEventLogger()
 {
 	id = NULL;
-	if (edg_wll_InitContext(&ctx)){
-		//	|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
-			//EDG_WLL_SOURCE_WM_PROXY))) {
+	if (edg_wll_InitContext(&ctx)
+			|| (edg_wll_SetParam(ctx, EDG_WLL_PARAM_SOURCE,
+			EDG_WLL_SOURCE_WM_PROXY))) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::WMPEventLogger()",
 			WMS_IS_FAILURE, "LB initialisation failed");
