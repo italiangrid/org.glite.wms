@@ -29,12 +29,11 @@ class WMPManager: public task::PipeWriter <classad::ClassAd*>
 {
   
 public:
+
   WMPManager();
   virtual ~WMPManager();
   
-  virtual wmp_fault_t runCommand(std::string cmdname, std::vector<std::string> param, void* result = NULL); 
-
- private:
+  virtual wmp_fault_t runCommand(const std::string& cmdname, const std::vector<std::string>& param, void* result = NULL); 
 
 };
 

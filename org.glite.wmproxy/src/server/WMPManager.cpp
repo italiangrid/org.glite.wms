@@ -22,9 +22,9 @@
 #include "glite/wms/common/logger/edglog.h" 
 #include "glite/wms/common/logger/manipulators.h" 
 #include "commands/logging.h" 
+#include <string>
 
 namespace common        = glite::wms::common;
-//namespace configuration = common::configuration;
 namespace logger        = common::logger; 
 namespace utilities   	= glite::wmsutils::exception;
 namespace commands      = glite::wms::wmproxy::commands;
@@ -42,7 +42,7 @@ namespace server {
   {
   }
 
-  wmp_fault_t WMPManager::runCommand(const std::string cmdname, const std::vector<std::string> param, void* result)
+  wmp_fault_t WMPManager::runCommand(const std::string& cmdname, const std::vector<std::string>& param, void* result)
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
@@ -59,7 +59,6 @@ namespace server {
 		      // cmd -> serialize( agent );
 		      // Serialize parameters
 		      // to be done
-		      //
 
 		      assert( !cmd -> isDone() );
 		      do {
