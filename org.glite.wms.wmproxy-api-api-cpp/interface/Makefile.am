@@ -11,6 +11,9 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
+#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#
+# WARNING: work in progress
 
 wmproxy_api_cppdir = $(includedir)
 nobase_wmproxy_api_cpp_HEADERS = \
