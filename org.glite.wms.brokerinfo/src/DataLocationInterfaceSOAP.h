@@ -46,6 +46,18 @@ public:
 			    std::string endpoint);
 
   /**
+   * Constructor for DataLocationInterface
+   *
+   * @param vo       Virtual Organisation
+   * @param endpoint SOAP endpoint (URL) of the remote catalogue
+   *                 example: http://localhost:8085/
+   * @param timeout  connection and IO timeout
+   */
+  DataLocationInterfaceSOAP(std::string vo,
+                            std::string endpoint,
+                            int timeout);
+
+  /**
    * List all replicas of a given InputDataType. A replica needs to contain
    * a valid SEId that is registered with the Information Service.
    *
@@ -84,6 +96,9 @@ private:
 
 typedef DataLocationInterfaceSOAP* create_t(const std::string&, 
 					    const std::string&);
+typedef DataLocationInterfaceSOAP* create_t_with_timeout(const std::string&,
+                                            const std::string&,
+                                            int timeout);
 typedef void destroy_t(DataLocationInterfaceSOAP*);
 
 

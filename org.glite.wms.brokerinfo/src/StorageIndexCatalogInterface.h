@@ -42,6 +42,15 @@ public:
    StorageIndexCatalogInterface(const std::string &endpoint );
 
   /**
+   * Constructor for StorageIndexCatalogInterface
+   *
+   * @param endpoint SOAP endpoint (URL) of the remote catalogue
+   * @param timeout connenction and IO timeout 
+   *
+   */
+   StorageIndexCatalogInterface(const std::string &endpoint, int timeout );
+
+  /**
    * Fill the list with the SEs conteining replicas related to the guid
    *
    * @param guid guid passed as input parameter
@@ -76,6 +85,8 @@ private:
 };
 
 typedef StorageIndexCatalogInterface* create_t(const std::string&);
+
+typedef StorageIndexCatalogInterface* create_t_with_timeout(const std::string&, int timeout);
 
 typedef void destroy_t(StorageIndexCatalogInterface*);
 

@@ -32,13 +32,29 @@
 #include <StorageIndexCatalogInterface.h>
 
 
-
 glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::StorageIndexCatalogInterface( const std::string &endpoint)
 {
    // Initialise SOAP
    //
    soap_init(&m_soap);
    m_soap.namespaces = storageindex_namespaces;
+                                                                                                     
+   m_endpoint = endpoint;
+}
+
+glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::StorageIndexCatalogInterface( const std::string &endpoint, int timeout)
+{
+   // Initialise SOAP
+   //
+   soap_init(&m_soap);
+   m_soap.namespaces = storageindex_namespaces;
+  
+   // connection timeout 
+   m_soap.connect_timeout = timeout;
+
+   // IO timeouts
+   m_soap.send_timeout = timeout;
+   m_soap.recv_timeout = timeout;
 
    m_endpoint = endpoint;
 }
@@ -109,6 +125,12 @@ extern "C" glite::wms::brokerinfo::sici::StorageIndexCatalogInterface* create(co
 {
   return new glite::wms::brokerinfo::sici::StorageIndexCatalogInterface(endpoint);
 }
+
+extern "C" glite::wms::brokerinfo::sici::StorageIndexCatalogInterface* create_with_timeout(const std::string& endpoint, int timeout)
+{
+  return new glite::wms::brokerinfo::sici::StorageIndexCatalogInterface(endpoint, timeout);
+}
+
  
 extern "C" void destroy(glite::wms::brokerinfo::sici::StorageIndexCatalogInterface* p) {
   delete p;

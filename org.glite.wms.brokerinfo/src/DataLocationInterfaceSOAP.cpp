@@ -43,16 +43,27 @@ dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string vo,
   // Initialise SOAP
   //
   soap_init1(&m_soap, SOAP_IO_CHUNK);
-  // connect timeout value (not supported by Linux)
-
-
-  m_soap.connect_timeout = 10;
-  // IO timeouts
-  m_soap.send_timeout = 30;
-  m_soap.recv_timeout = 30;
 
   m_endpoint = endpoint;
 } // Constructor
+
+dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string vo,
+                                                          std::string endpoint,
+                                                          int timeout)
+{
+  // Initialise SOAP
+  //
+  soap_init1(&m_soap, SOAP_IO_CHUNK);
+
+  // connection timeout 
+  m_soap.connect_timeout = timeout;
+  // IO timeouts
+  m_soap.send_timeout = timeout;
+  m_soap.recv_timeout = timeout;
+                                                                                                     
+  m_endpoint = endpoint;
+} // Constructor
+
 
 
 /*****************************************************************************/
@@ -131,6 +142,14 @@ extern "C" dli::DataLocationInterfaceSOAP* create(const std::string& vo,
 {
   return new dli::DataLocationInterfaceSOAP(vo, endpoint);
 }
+
+extern "C" dli::DataLocationInterfaceSOAP* create_with_timeout(const std::string& vo,
+                                                  const std::string& endpoint,
+                                                  int timeout)
+{
+  return new dli::DataLocationInterfaceSOAP(vo, endpoint);
+}
+
 
 extern "C" void destroy(dli::DataLocationInterfaceSOAP* p) {
   delete p;
