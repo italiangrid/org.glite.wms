@@ -4,6 +4,6 @@
         
 	<project name="configure options">                                                                        
         <property name="configure.args"
-               value="--with-globus-prefix=${with.globus.prefix} --with-globus-thr-flavor=${with.globus.thr.flavor} --with-globus-nothr-flavor=${with.globus.nothr.flavor}"/>
+               value="--prefix=${workspace.abs.dir}/stage --with-globus-prefix=${with.globus.prefix} --with-globus-thr-flavor=${with.globus.thr.flavor} --with-globus-nothr-flavor=${with.globus.nothr.flavor} --with-glite-location=${with.glite.location}"/>
 
 	</project>

@@ -24,8 +24,8 @@ jobidinclude_HEADERS = \
 	strmd5.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(GLITE_WORKLOAD_CFLAGS) \
-	$(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
+	$(GLITE_CFLAGS) \
+	$(GLITE_WMS_COMMON_CFLAGS) \
 	-D_GNU_SOURCE
 
 MAINTAINERCLEANFILES = Makefile.in

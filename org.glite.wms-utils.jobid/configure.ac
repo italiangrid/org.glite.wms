@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/06/16 11:02:05  eronchie
+#       Added configure options
+#       WARNING: Work in progress
+#
 #       Revision 1.4  2004/06/14 18:14:35  eronchie
 #       Added Configure options
 #       WARNING work in progress
@@ -54,21 +58,9 @@ AC_REVISION([$Revision$])
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
-STAGE=$WORKDIR/../../stage
-
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
-
-have_globus=no
                                                                                
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-GLITE_WORKLOAD_CFLAGS="-I$STAGE/include"
-AC_SUBST([GLITE_WORKLOAD_CFLAGS])
-GLITE_WORKLOAD_COMMON_LIBS="-L$STAGE/lib -lglite_wms_exceptions"
-AC_SUBST([GLITE_WORKLOAD_COMMON_LIBS])
-
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
@@ -101,6 +93,18 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
+
+have_globus=no
+                                                                                
+AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+have_glite_wms_common=no
+                                                                                
+AC_GLITE
+                                                                                
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

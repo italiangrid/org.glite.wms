@@ -18,7 +18,7 @@ stage:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
 	dot_seen=no; \
         target="install"; \
-	prefix_arg="prefix=$(WORKDIR)/../../stage"; \
+	prefix_arg="@prefix@"; \
         list='$(SUBDIRS)'; for subdir in $$list; do \
           echo "Making $$target $$prefix_arg in $$subdir"; \
           if test "$$subdir" = "."; then \
