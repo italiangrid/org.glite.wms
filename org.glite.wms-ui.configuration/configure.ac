@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/10/19 12:00:24  eronchie
+#       Removed config.h handling
+#
 #       Revision 1.4  2004/10/15 15:52:23  eronchie
 #       Start adding ui configuration
 #
@@ -94,7 +97,7 @@ AC_LOG4J
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
-AM_CONFIG_HEADER([src/autogen/config.h])
+dnl AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([config/glite-wmsui-env.csh])
