@@ -21,7 +21,7 @@
 
 const int _TIMEOUT_ = 300;
 
-namespace socket_pp = glite::wms::tls::socket_pp;
+namespace socket_pp = glite::wmsutils::tls::socket_pp;
 
 /**
  * Send a gss token.

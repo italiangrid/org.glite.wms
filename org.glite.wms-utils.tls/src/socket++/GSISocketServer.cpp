@@ -15,16 +15,16 @@
 /** Functionalities for transmitting and receiveing tokens. */
 #include "tokens.h"
 /** The secure Socket Agent used for communication. */
-#include "glite/wms/tls/socket++/GSISocketAgent.h"
+#include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
 /** This class header file. */
-#include "glite/wms/tls/socket++/GSISocketServer.h"
+#include "glite/wmsutils/tls/socket++/GSISocketServer.h"
 
 #ifdef WITH_SOCKET_EXCEPTIONS
 #include "exceptions.h"
 #endif
 
 namespace glite {   
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -388,7 +388,7 @@ namespace socket_pp {
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 

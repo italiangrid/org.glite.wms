@@ -15,10 +15,10 @@
 #include <string>
 #include <unistd.h>
 
-#include "glite/wms/thirdparty/globus_ssl_utils/sslutils.h"
+#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 
 /** This class header file. */
-#include "glite/wms/tls/socket++/GSISocketAgent.h"
+#include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
 /** The tokens transmission and reception functionality definitions file. */
 #include "tokens.h"
 
@@ -27,7 +27,7 @@
 #endif
 
 namespace glite {
-namespace wms {
+namespace wmsutils {
 namespace tls {
 namespace socket_pp {
 
@@ -260,7 +260,7 @@ bool GSISocketAgent::Receive(std::string& s)
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 

@@ -6,16 +6,16 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_tls_ssl_helpers.la \
-	libglite_wms_tls_ssl_pthr_helpers.la
+lib_LTLIBRARIES = libglite_wmsutils_tls_ssl_helpers.la \
+	libglite_wmsutils_tls_ssl_pthr_helpers.la
 
-libglite_wms_tls_ssl_helpers_la_SOURCES = \
+libglite_wmsutils_tls_ssl_helpers_la_SOURCES = \
 	ssl_inits.c
 
-libglite_wms_tls_ssl_pthr_helpers_la_SOURCES = \
+libglite_wmsutils_tls_ssl_pthr_helpers_la_SOURCES = \
 	ssl_pthreads.c
 
-ssl_helpersincludedir = $(includedir)/glite/wms/tls/ssl_helpers
+ssl_helpersincludedir = $(includedir)/glite/wmsutils/tls/ssl_helpers
 ssl_helpersinclude_HEADERS = \
 	ssl_inits.h \
 	ssl_pthreads.h

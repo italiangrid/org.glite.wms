@@ -19,37 +19,15 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.7  2004/06/21 12:56:33  eronchie
-#       Start handling of interface headers
-#
-#       Revision 1.6  2004/06/16 15:57:56  eronchie
-#       Added configure options
-#       WARNING: work in progress
-#
-#       Revision 1.5  2004/06/16 08:24:07  eronchie
-#       Added configure options
-#       WARNING: work in progress
-#
-#       Revision 1.4  2004/06/15 17:35:14  eronchie
-#       Added configure options
-#       WARNING: work in progress
-#
-#       Revision 1.3  2004/06/14 17:50:09  eronchie
-#       Added configure options
-#       WARNING Work in progress
-#
-#       Revision 1.2  2004/05/31 13:39:51  eronchie
-#       Merged with code in the infnforge repository
-#
-#       Revision 1.1.1.2  2004/05/26 18:24:28  eronchie
-#       Import of wms tls
+#       Revision 1.8  2004/07/21 17:24:34  eronchie
+#       Moved out tls from org.glite.wms and put in org.glite.wms-utils
 #
 #
                                                                                                                                                              
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Tls], [0.0.0])
+AC_INIT([GLite WMS Utils Tls], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ssl_helpers/ssl_inits.h])
@@ -103,15 +81,15 @@ AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 have_globus_ssl_utils=no
-have_glite_wms_common=no
+have_glite_wmsutils_exception=no
 
 AC_GLITE
 
 AC_GLOBUS_SSL_UTILS([], have_globus_ssl_utils=yes, have_globus_ssl_utils=no)
 AC_MSG_RESULT(["GLOBUS_SSL_UTILS found $have_globus_ssl_utils"])
 
-AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wmsutils_exception=yes, have_glite_wmsutils_exception=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wmsutils_exception"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

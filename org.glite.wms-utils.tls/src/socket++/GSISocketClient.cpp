@@ -10,9 +10,9 @@
 #include <errno.h>
 
 /** This class header file. */
-#include "glite/wms/tls/socket++/GSISocketClient.h"
+#include "glite/wmsutils/tls/socket++/GSISocketClient.h"
 /** The communication agent definition file. */
-#include "glite/wms/tls/socket++/GSISocketAgent.h"
+#include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
 /** The tokens transission and reception features definitions. */
 #include "tokens.h"
 /** The error messages file. */
@@ -24,7 +24,7 @@
 #include <iostream>
 
 namespace glite {   
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -254,7 +254,7 @@ bool GSISocketClient::Close()
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 

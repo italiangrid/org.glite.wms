@@ -6,13 +6,13 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
 
-#include "glite/wms/common/utilities/Exceptions.h"
+#include "glite/wmsutils/exception/Exceptions.h"
 #include "exception_codes.h"
 
-namespace utilities = glite::wms::common::utilities;
+namespace utilities = glite::wmsutils::exception;
 
 namespace glite {  
-namespace wms {
+namespace wmsutils {
 namespace tls {
 namespace socket_pp {
    
@@ -57,7 +57,7 @@ namespace socket_pp {
   
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms 
+} // namespace wmsutils 
 } // namespace glite
 
 #endif // _SocketExceptions_h_

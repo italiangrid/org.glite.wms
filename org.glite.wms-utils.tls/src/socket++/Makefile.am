@@ -6,27 +6,27 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_tls_socket_pp.la \
-	libglite_wms_tls_gsisocket_pp.la
+lib_LTLIBRARIES = libglite_wmsutils_tls_socket_pp.la \
+	libglite_wmsutils_tls_gsisocket_pp.la
 
-libglite_wms_tls_socket_pp_la_SOURCES = \
+libglite_wmsutils_tls_socket_pp_la_SOURCES = \
 	SocketClient.cpp \
 	SocketServer.cpp \
 	SocketAgent.cpp
 
-libglite_wms_tls_gsisocket_pp_la_SOURCES = \
+libglite_wmsutils_tls_gsisocket_pp_la_SOURCES = \
 	GSISocketAgent.cpp \
 	GSISocketClient.cpp \
 	GSISocketServer.cpp \
 	tokens.cpp
 
-libglite_wms_tls_gsisocket_pp_la_LIBADD = \
+libglite_wmsutils_tls_gsisocket_pp_la_LIBADD = \
 	SocketClient.lo \
 	SocketServer.lo \
 	SocketAgent.lo \
 	$(GLOBUS_SSL_UTILS_LIBS) 
 
-socketppincludedir = $(includedir)/glite/wms/tls/socket++
+socketppincludedir = $(includedir)/glite/wmsutils/tls/socket++
 socketppinclude_HEADERS = \
 	exception_codes.h \
 	exceptions.h \

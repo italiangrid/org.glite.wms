@@ -21,15 +21,15 @@
 #include <iostream>
 
 /** This class header file. */
-#include "glite/wms/tls/socket++/SocketClient.h"
+#include "glite/wmsutils/tls/socket++/SocketClient.h"
 /** The communication agent header file. */
-#include "glite/wms/tls/socket++/SocketAgent.h"
+#include "glite/wmsutils/tls/socket++/SocketAgent.h"
 #ifdef WITH_SOCKET_EXCEPTIONS
 #include "exceptions.h"
 #endif
 
 namespace glite { 
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -205,6 +205,6 @@ SocketAgent* SocketClient::getAgent() const
 
 } // namespace socket
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 

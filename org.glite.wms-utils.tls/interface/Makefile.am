@@ -8,11 +8,11 @@
 
 tlssodir = $(includedir)
 nobase_tlsso_HEADERS = \
-	glite/wms/tls/socket++/GSISocketAgent.h \
-        glite/wms/tls/socket++/GSISocketClient.h \
-	glite/wms/tls/socket++/GSISocketServer.h \
-	glite/wms/tls/socket++/SocketAgent.h \
-	glite/wms/tls/socket++/SocketClient.h \
-	glite/wms/tls/socket++/SocketServer.h
+	glite/wmsutils/tls/socket++/GSISocketAgent.h \
+        glite/wmsutils/tls/socket++/GSISocketClient.h \
+	glite/wmsutils/tls/socket++/GSISocketServer.h \
+	glite/wmsutils/tls/socket++/SocketAgent.h \
+	glite/wmsutils/tls/socket++/SocketClient.h \
+	glite/wmsutils/tls/socket++/SocketServer.h
 
 MAINTAINERCLEANFILES = Makefile.in

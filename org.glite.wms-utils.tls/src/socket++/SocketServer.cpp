@@ -27,11 +27,11 @@
 #include <errno.h>
 #endif
 
-#include "glite/wms/tls/socket++/SocketAgent.h"
-#include "glite/wms/tls/socket++/SocketServer.h"
+#include "glite/wmsutils/tls/socket++/SocketAgent.h"
+#include "glite/wmsutils/tls/socket++/SocketServer.h"
 
 namespace glite {   
-namespace wms { 
+namespace wmsutils { 
 namespace tls {
 namespace socket_pp {
 
@@ -214,7 +214,7 @@ void SocketServer::KillAgent(SocketAgent* a)
 
 } // namespace socket_pp
 } // namespace tls
-} // namespace wms
+} // namespace wmsutils
 } // namespace glite
 
 
