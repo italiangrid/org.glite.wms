@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/12/10 09:47:53  amarasch
+#       Increased version
+#
 #       Revision 1.5  2004/10/19 12:00:24  eronchie
 #       Removed config.h handling
 #
@@ -40,7 +43,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Configuration], [0.1.0])
+AC_INIT([GLite WMS UI Configuration], [1.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([config/glite_wmsui.conf])
