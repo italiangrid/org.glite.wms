@@ -36,7 +36,7 @@
 					<xsd:element name="size" type="xsd:long" minOccurs="1" maxOccurs="1"/>
 				</xsd:sequence>
 			</xsd:complexType>
-			<xsd:complexType name="StringAndLongList">StringAndLongList
+			<xsd:complexType name="StringAndLongList">
 				<xsd:sequence>
 					<element name="file" type="glitenstypes:StringAndLongType" minOccurs="0" maxOccurs="unbounded"/>
 				</xsd:sequence>
@@ -164,7 +164,7 @@
 	<wsdl:message name="getMaxInputSandboxSizeRequest">
 	</wsdl:message>
 	<wsdl:message name="getMaxInputSandboxSizeResponse">
-		<wsdl:part name="size" type="xsd:int"/>
+		<wsdl:part name="size" type="xsd:double"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxDestURIRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
@@ -370,6 +370,7 @@ To better clarify, an example of the correct sequence of operations for submitti
 					When a clients requests for submission of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs), the operations returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
 					
 					Input: string containing the job jdl representation.
+					Input: string containing the Id of the delegated proxy associated to the job.
 					
 					Output: no output.
 					
@@ -422,7 +423,7 @@ To better clarify, an example of the correct sequence of operations for submitti
                                 
 					Input: no input.
 					
-					Output: integer containing the size in bytes.
+					Output: double containing the size in bytes.
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
