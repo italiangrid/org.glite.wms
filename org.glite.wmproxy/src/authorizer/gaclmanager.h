@@ -1,104 +1,109 @@
 
-
-#include <iostream>
 #include <string>
+#include <iostream>
+
 
 #include "gaclexception.h"
+
+
 
 // Gridsite C library
 extern "C" {
 #include "gridsite.h"
  }
 
-// permission strings
-#define GACLMGR_PERM_NONE 	"none"
-#define GACLMGR_PERM_READ 	"read"
-#define GACLMGR_PERM_EXEC		"exec"
-#define GACLMGR_PERM_LIST		"list"
-#define GACLMGR_PERM_WRITE	"write"
-#define GACLMGR_PERM_ADMIN	"admin"
-
 // permission codes
-#define GACLMGR_NONE 			0
-#define GACLMGR_READ 			1
-#define GACLMGR_EXEC			2
-#define GACLMGR_LIST			3
-#define GACLMGR_WRITE			4
-#define GACLMGR_ADMIN			5
+#define WMPGACL_NOPERM 	GRST_PERM_NONE
+#define WMPGACL_READ		GRST_PERM_READ
+#define WMPGACL_EXEC		GRST_PERM_EXEC
+#define WMPGACL_LIST		GRST_PERM_LIST
+#define WMPGACL_WRITE		GRST_PERM_WRITE
+#define WMPGACL_ADMIN		GRST_PERM_ADMIN
 
-#define GACLMGR_NUMDEF_CODES	6
+/*
+#define WMPGACL_ANYUSER_TYPE	0
+#define WMPGACL_PERSON_TYPE		1
+#define WMPGACL_DNLIST_TYPE		2
+*/
 
-#define GACLMGR_ANYUSER		"any-user"
+#define WMPGACL_ANYUSER_CRED	"any-user"
+#define WMPGACL_PERSON_CRED		"person"
+#define WMPGACL_DNLIST_CRED		"dn-list"
 
-#define DEFAULT_GACL_FILE		".gacl"
+#define WMPGACL_ANYUSER_TAG		"any-user"
+#define WMPGACL_PERSON_TAG		"dn"
+#define WMPGACL_DNLIST_TAG		"dn-list"
 
-#define GACLMGR_SUCCESS	0
-#define GACLMGR_ERROR		-1
+#define WMPGACL_DEFAULT_FILE		".gacl"
+
+#define WMPGACL_SUCCESS		0
+#define WMPGACL_ERROR		-1
+
+typedef GRSTgaclPerm WMPgaclPerm ;
+
+typedef enum{
+			WMPGACL_UNDEFCRED_TYPE,
+			WMPGACL_ANYUSER_TYPE,
+			WMPGACL_PERSON_TYPE,
+			 WMPGACL_DNLIST_TYPE } WMPgaclCredType;
 
 class GaclManager {
 
  public:
 
-	GaclManager ( );
+ 	GaclManager ( );
 
-	GaclManager ( std::string gaclFile, bool create = true );
+	GaclManager (std::string file, WMPgaclCredType type, std::string dn, bool unset_perm = false, bool create = false);
 
-	int getPermissionCode (std::string permission);
+	int checkAllowPermission (WMPgaclPerm permission) ;
 
-	int checkAllowPermission (std::string user, std::string permission) ;
+	int allowPermission( WMPgaclPerm permission );
 
-	int checkAllowReadForAnyUser ( );
+	int denyPermission(WMPgaclPerm permission );
 
-	int checkAllowWriteForAnyUser ( );
-
-	int checkAllowExecForAnyUser ( );
-
-	int checkAllowListForAnyUser ( );
-
-	int allowPermission(std::string user, std::string permission, std::string rawname = "",  std::string rawvalue = "" );
-
-	int denyPermission(std::string user, std::string permission, std::string rawname = "",  std::string rawvalue = "" );
-
-
-	int allowReadToAnyUser  (  ) ;
-	int allowWriteToAnyUser  (  ) ;
-	int allowExecToAnyUser  (  ) ;
-	int allowListToAnyUser  (  ) ;
-
-	int denyReadToAnyUser  (  ) ;
-	int denyWriteToAnyUser  (  ) ;
-	int denyExecToAnyUser  (  ) ;
-	int denyListToAnyUser  (  ) ;
-
+	int loadNewCredential ( std::string file, WMPgaclCredType type, std::string dn, bool unset_perm = false, bool create = false) ;
 
 	int saveGacl ( std::string gaclFile ) ;
 
-	void printGacl ( ) ;
-private :
+	int saveGacl (  ) ;
 
-	GRSTgaclAcl *gaclAcl  ;
-	GRSTgaclEntry *gaclEntry;
-	GRSTgaclCred *gaclCred  ;
-	GRSTgaclUser *gaclUser ;
-	GRSTgaclPerm  gaclAllowed ;
-	GRSTgaclPerm  gaclDenied ;
-	GRSTgaclPerm  gaclPerm ;
-	std::string gaclFile ;
-	/*
-	GRSTgaclEntry *anyUserEntry;
-	GRSTgaclCred *anyUserCred  ;
-	GRSTgaclUser *anyUser ;
-	GRSTgaclPerm  anyUserAllowed ;
-	GRSTgaclPerm  anyUserDenied ;
-	GRSTgaclPerm  anyUserPerm ;
-	*/
+	void printGacl ( ) ;
+
 	bool gaclExists (std::string file);
+
+private :
 
 	void loadFromFile (std::string gaclFile) ;
 
-	void newUserCredential ( std::string username, std::string rawname = "",  std::string rawvalue = "" ) ;
+	void newGacl () ;
 
-	int loadUserCredential (std::string user, std::string rawname = "",  std::string rawvalue = "" ) ;
+	void newCredential ( ) ;
+
+	int loadCredential (bool unset_perm =false ) ;
+
+	GRSTgaclAcl *gaclAcl  ;
+
+	GRSTgaclEntry *gaclEntry;
+
+	GRSTgaclCred *gaclCred  ;
+
+	GRSTgaclUser *gaclUser ;
+
+	WMPgaclPerm  gaclAllowed ;
+
+	WMPgaclPerm  gaclDenied ;
+
+	WMPgaclPerm  gaclPerm ;
+
+	std::string gaclFile ;
+
+	std::string credType;
+
+	std::string rawName ;
+
+	std::string rawValue ;
+
+
 
 
 
