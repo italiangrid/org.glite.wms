@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/07/12 09:32:36  pandreet
+	New configure properties file
+
 	Revision 1.1  2004/07/06 10:05:38  pandreet
 	Basic build files for jobsubmission
-
+	
 	
 	
 -->
@@ -77,7 +80,7 @@
 	<!-- =========================================
 		 Load common targets
 	     ========================================= -->
-	<import file="${global.targets-external-dependencies.file}"/>	
+	<!-- import file="${global.targets-external-dependencies.file}"/  -->	
         <import file="${global.targets-make.file}" />
 		
 	<!-- =========================================
