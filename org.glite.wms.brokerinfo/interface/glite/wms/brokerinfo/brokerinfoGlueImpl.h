@@ -1,5 +1,9 @@
 // File: brokerinfoGlueImpl.h
 // Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
+//
+// Revision history
+// 12-11-2004 new catolog interfaces added. Author: Enzo Martelli <enzo.martelli@mi.infn.it>
+//
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
@@ -23,6 +27,34 @@ class brokerinfoGlueImpl : public BrokerInfoImpl
   void retrieveCloseSEsInfo(const BrokerInfoData::CEid_type& CEId, BrokerInfoData& bid, std::vector<std::string>* = 0);
   void retrieveSEsInfo     (const classad::ClassAd& requestAd, BrokerInfoData& bid);
   void retrieveSFNsInfo    (const classad::ClassAd& requestAd, BrokerInfoData& bid);
+private:
+  /**
+   * Contact the Information Service (IS) and check if the given SE (SEid)
+   * is registered in the IS. If yes, the SE is valid and 0 is returned, 
+   * otherwise -1. 
+   */
+  int  validSE(std::string SEid);
+
+  /**
+   * Contact the Information Service (IS) and return the URL (endpoint) of the
+   * server the provides the StorageIndex Catalog(SI).
+   * If no service is found, "" is returned.
+   */
+  std::string getSICIurl(std::string vo);
+
+  /**
+   * Contact the Information Service (IS) and return the URL (endpoint) of the
+   * server the provides the DataLocationInterface(DLI).
+   * If no service is found, "" is returned.
+   */
+  std::string getDLIurl(std::string vo);
+
+  /*
+   * Check the configuration file of the Networkserver if RLS is used for
+   * a certain VO. In case the RLS is used, 0 is returned, Otherwise -1.
+   */
+  int checkRlsUsage(std::string vo);
+
 };
 
 } // namespace brokerinfo

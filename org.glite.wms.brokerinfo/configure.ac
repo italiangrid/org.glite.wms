@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2004/12/02 16:45:53  emartel
+#       Added Storage Index catalog interface and Data Location catalog interface
+#
 #       Revision 1.4  2004/10/08 15:03:26  monforte
 #       rls integration
 #
@@ -103,6 +106,7 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 AC_GLITE
+AC_GSOAP
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

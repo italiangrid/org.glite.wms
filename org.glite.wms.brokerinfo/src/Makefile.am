@@ -6,7 +6,11 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_brokerinfo.la
+lib_LTLIBRARIES = \
+	libglite_wms_brokerinfo.la \
+	libglite_wms_sici.la \
+	libglite_wms_rls.la \
+	libglite_wms_dli.la
 
 brokerinfodir = $(includedir)/glite/wms/brokerinfo
 brokerinfo_HEADERS = \
@@ -18,11 +22,52 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
 
+GLITE_DATA_CATALOG_STORAGEINDEX_API_C_LIBS = \
+	-L$(top_srcdir)/../stage/lib $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a
+
+libglite_wms_sici_la_SOURCES = \
+	StorageIndexCatalogInterface.cpp 
+
+libglite_wms_sici_la_LIBADD = \
+	$(GLITE_DATA_CATALOG_STORAGEINDEX_API_C_LIBS) \
+	$(GSOAP_LIBS) \
+	env.o
+
+env.o: $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a ; \
+	ar x $(top_srcdir)/../stage/lib/libglite_data_catalog_storageindex_api_c.a env.o
+
+libglite_wms_rls_la_SOURCES = 
+
+libglite_wms_rls_la_LIBADD = \
+	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
+	$(top_srcdir)/../repository/edg-replica-manager-client/2.3.1/rhel30_gcc32/lib/libedg_replica_manager_client_gcc3_2_2-2.3.1.so
+
+libglite_wms_dli_la_SOURCES = \
+        soapC.cpp \
+	soapClient.cpp \
+	DataLocationInterfaceSOAP.cpp
+
+libglite_wms_dli_la_LIBADD = \
+	$(GSOAP_LIBS)
+
+soapClient.cpp: $(srcdir)/DataLocationInterface.h ; \
+	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
+
+soapC.cpp: $(srcdir)/DataLocationInterface.h ; \
+	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
+
+soapH.h: $(srcdir)/DataLocationInterface.h ; \
+	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
+
+CGSI_CFLAGS = -I$(top_srcdir)/../repository/cgsi-gsoap/2.6-1.1.5/rhel30_gcc32/include/
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS)
+	$(CLASSAD_CFLAGS) \
+	$(GSOAP_CFLAGS) \
+	$(CGSI_CFLAGS)
  
 MAINTAINERCLEANFILES = Makefile.in
