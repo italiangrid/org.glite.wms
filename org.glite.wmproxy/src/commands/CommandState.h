@@ -16,6 +16,8 @@ namespace wms {
 namespace wmproxy { 
 namespace commands {
 
+class Command;
+
 /**
  * This class is a superclass for all stub states in NS.
  * Each state inherits its properties and specifies new actions to be

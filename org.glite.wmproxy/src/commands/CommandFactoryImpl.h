@@ -29,7 +29,7 @@ public:
    * Creates a new command of the specified type.
    * @return a pointer to a new command.
    */
-  virtual Command* create(const std::string& name) = 0;
+  virtual Command* create(const std::string& name, const std::vector<std::string> param) = 0;
   /**
    * Destructor.
    */

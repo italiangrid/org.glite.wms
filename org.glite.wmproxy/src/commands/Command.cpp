@@ -51,7 +51,7 @@ bool Command::execute()
 {  
   if( this -> fsm -> empty() ) { return false; }
 
-  ns::fsm::CommandState::shared_ptr state(fsm -> front());
+  CommandState::shared_ptr state(fsm -> front());
   this -> fsm -> pop();
 
 #ifdef DEBUG
@@ -66,7 +66,7 @@ bool Command::isDone() const
   return this -> fsm -> empty();
 }
 
-const fsm::CommandState& Command::state()
+const CommandState& Command::state()
 {
   assert( !this -> fsm -> empty() );
   return *this -> fsm -> front();

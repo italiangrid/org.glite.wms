@@ -6,7 +6,7 @@ CWFLAGS=
 CIFLAGS=-I../..
 CMFLAGS=-DWITH_FASTCGI
 
-REPOSITORY=/home/fpacini/CVS_REP/cern
+REPOSITORY=/home/marcop/develop/ws
 REPLIBS=$(REPOSITORY)/stage/lib
 INTERFACE=$(REPOSITORY)/org.glite.wms.wmproxy-interface/interface
 
@@ -66,6 +66,9 @@ LDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-lglite_wms_logger \
 	-lglite_wmsutils_exception \
 	-lglite_wms_conf \
+	-lglite_wms_broker \
+	-lglite_wms_matchmaking \
+	-lglite_wms_ism \
 	-lares \
 	-lclassad \
 	-lclassad_dl \
@@ -82,22 +85,22 @@ LDCLIENTFLAGS= -lssl \
 
 
 
-all:	glitePipe wmCommands
+all:	glitePipe gliteWMPCommands
 
 glitePipe:	
-		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I. -DSHOW_EXECUTION \
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I$(CLASSAD)/include -I. -DSHOW_EXECUTION \
 		    -o libglitePipe.so MatchingPipe.cpp MatchingPipeFiller.cpp \
 		$(LIBS)
 
-wmCommands: 
-		$(CPP) $(CFLAGS) $(CMFLAGS) -DSHOW_EXECUTION \
-	       -o wmCommands common.cpp \
+gliteWMPCommands: 
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server -DSHOW_EXECUTION \
+	       -o libgliteWMPCommands.so common.cpp \
 	        Command.cpp ExecuteFunction.cpp \
 	        ForwardRequest.cpp \
 	        listjobmatch.cpp listfiles.cpp \
 		CommandFactoryServerImpl.cpp \
 		DagCommandFactoryServerImpl.cpp \
- 		$(LDFLAGS)
+ 		$(LIBS)
 
 
 clean:

@@ -86,7 +86,7 @@ class Command
    * Returns current state for command.
    * @return the state the command actually stays.
    */
-  const ns::fsm::CommandState& state();
+  const CommandState& state();
   
   /**
    * Returns the agent for this command.
@@ -209,11 +209,10 @@ class Command
 
 
 private:
-  friend class ns::fsm::Jump;
   /** A pointer to the ClassAd representation of the command. */
   classad::ClassAd      *ad;
   /** A pointer to the FiniteStateMachine */
-  ns::fsm::state_machine_t *fsm;
+  state_machine_t *fsm;
   /** A pointer to a socket agent. */
   // socket_pp::SocketAgent*                 sck;
   /** A scoped pointed Log Context. */
@@ -225,10 +224,9 @@ private:
 
 };
  
-} // namespace commands
-} // namespace ns
-} // namespace manager
-} // namespace wms
-} // namespace glite
+} 
+} 
+} 
+} 
 
 #endif

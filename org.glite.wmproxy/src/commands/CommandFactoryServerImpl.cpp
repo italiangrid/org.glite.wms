@@ -40,9 +40,8 @@
 #include "CommandFactoryServerImpl.h"
 #include "Command.h"
 #include "common.h"
-#include "NetworkServer.h" 
 
-#include "exception_codes.h"
+#include "wmpexception_codes.h"
 
 #include "const.h"
 #include "JobId.h"
@@ -60,7 +59,7 @@
 #include "glite/wms/common/logger/manipulators.h"
 // #include "glite/wms/common/configuration/CommonConfiguration.h"
 // #include "glite/wms/common/configuration/Configuration.h"
-#include "purger.h"
+// #include "purger.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
@@ -72,11 +71,12 @@
 namespace utilities     = glite::wms::common::utilities;
 // namespace configuration = glite::wms::common::configuration;
 namespace logger        = glite::wms::common::logger;
-namespace purger        = glite::wms::purger;
+// namespace purger        = glite::wms::purger;
 namespace nsjobid       = glite::wms::wmproxy::commands::jobid;
-namespace fsm           = glite::wms::wmproxy::fsm;
 namespace jobid         = glite::wmsutils::jobid;
 namespace jdl           = glite::wms::jdl;
+
+using namespace glite::wms::wmproxy::server;
 
 namespace glite {
 namespace wms {
@@ -170,7 +170,7 @@ static bool insertPipePath (Command* cmd) {
   return cmd -> setParam("file", s.str());
 }
 
-
+  /*
 static bool doPurge(Command* cmd) {
   edglog_fn("CFSI::doPurge");
   edglog(info) << "Preparing to Purge." << std::endl;
@@ -189,6 +189,7 @@ static bool doPurge(Command* cmd) {
     return false;
   }
 }
+  */
 
 bool setJobPaths(Command* cmd)
 {
@@ -407,11 +408,9 @@ static bool insertCertificateSubject(Command* cmd)
 {
   edglog_fn("CFSI::insertCertSubj");
   edglog(info) << "Inserting Certificate Subject" << std::endl;
-  socket_pp::GSISocketAgent *agent = 
-	static_cast<socket_pp::GSISocketAgent*>(&cmd -> agent());
-  std::string certificate_subject( std::string("CertificateSubject=\"") + 
-				   agent -> CertificateSubject() + "\";" );    
+  std::string certificate_subject;
   std::string jdl;
+  cmd -> getParam ("CertificateSubject", certificate_subject);
   cmd -> getParam("jdl", jdl);
   jdl.insert(1, certificate_subject);
   cmd -> setParam("jdl", jdl);
@@ -620,10 +619,10 @@ static bool createContext(Command* cmd) {
 
   if (edg_wll_InitContext( cmd->getLogContext() ) != 0) {
     // just signalize it, if needed
-    glitelogTag(fatal) << std::endl;
+    glitelogTag(fatal)  << std::endl;
     glitelogHead(fatal) << "Error while initializing the context." << std::endl;
-    glitelogTag(fatal) << std::endl;
-    edglog(fatal) << "Error while initializing the context." << std::endl;
+    glitelogTag(fatal)  << std::endl;
+    edglog(fatal)       << "Error while initializing the context." << std::endl;
     return false;
   }
 
@@ -1162,7 +1161,7 @@ static bool logCancel(Command *cmd){
 		      false);
 }
 
-Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::string param)
+Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::vector<std::string> param)
 {
   std::string name;
   edglog_fn("CFSI::createFSM");
@@ -1179,7 +1178,7 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
     delete (cmd -> fsm);
     cmd -> fsm = NULL;
   }
-  cmd -> fsm = new fsm::state_machine_t;
+  cmd -> fsm = new state_machine_t;
   // cmd -> serializeImpl = serializeServerImpl;
   cmd -> ad -> InsertAttr("Command", name);
   // cmd -> ad -> InsertAttr("ServerVersion", SERVER_VERSION);
@@ -1187,156 +1186,158 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
   // edglog(info) << "Command Received..: " << name << std::endl; 
   // edglog(info) << "Client  Version...: " << ver.asString() << std::endl; 
 
-  fsm::CommandState::shared_ptr state;
+  CommandState::shared_ptr state;
   
   if( name == "JobSubmit" ) {        
-    state.reset( new fsm::ExecuteFunction(createContext) );
+    state.reset( new ExecuteFunction(createContext) );
     cmd -> fsm -> push (state);
-    // state.reset(new fsm::ReceiveLong("SandboxSize") );
+    // state.reset(new ReceiveLong("SandboxSize") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(checkJobSize) );
+    // state.reset(new ExecuteFunction(checkJobSize) );
     // cmd -> fsm -> push(state);   
-    // state.reset(new fsm::SendBoolean("CheckSizePassed") );
+    // state.reset(new SendBoolean("CheckSizePassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(evaluateCheckSize) );
+    // state.reset(new ExecuteFunction(evaluateCheckSize) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(checkUserQuota) );
+    // state.reset(new ExecuteFunction(checkUserQuota) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendBoolean("CheckQuotaPassed") );
+    // state.reset(new SendBoolean("CheckQuotaPassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(evaluateCheckQuota) );
+    // state.reset(new ExecuteFunction(evaluateCheckQuota) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(checkSpace) );
+    // state.reset(new ExecuteFunction(checkSpace) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendBoolean("CheckPassed") );
+    // state.reset(new SendBoolean("CheckPassed") );
     // cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(insertCertificateSubject) );
+    state.reset(new ExecuteFunction(insertCertificateSubject) );
     cmd -> fsm -> push(state);
-    state.reset( new fsm::ExecuteFunction(setJobPaths) );
+    state.reset( new ExecuteFunction(setJobPaths) );
     cmd -> fsm -> push(state);
-    state.reset( new fsm::ExecuteFunction(createReducedPathDirs) );
+    state.reset( new ExecuteFunction(createReducedPathDirs) );
     cmd -> fsm -> push(state);
 #ifdef WITH_GLOBUS_FTP_CLIENT_API
-    // state.reset(new fsm::SendString("InputSandboxPath") );
+    // state.reset(new SendString("InputSandboxPath") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendString("OutputSandboxPath") );
+    // state.reset(new SendString("OutputSandboxPath") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ReceiveBoolean("ClientCreateDirsPassed") );
+    // state.reset(new ReceiveBoolean("ClientCreateDirsPassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(evaluateClientCreateDirs) );
+    // state.reset(new ExecuteFunction(evaluateClientCreateDirs) );
     // cmd -> fsm -> push(state);
 #endif
-    state.reset(new fsm::ExecuteFunction(createStagingDirectories) );
+    state.reset(new ExecuteFunction(createStagingDirectories) );
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendInt("SDCreationError") );
+    // state.reset(new SendInt("SDCreationError") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendString("SDCreationMessage") );
+    // state.reset(new SendString("SDCreationMessage") );
     // cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(stagingDirectoryCreationPostControl));
+    state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendBoolean("ProxyRenewalDone"));
+    // state.reset(new SendBoolean("ProxyRenewalDone"));
     // cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(proxyRenewalCheck));
+    state.reset(new ExecuteFunction(proxyRenewalCheck));
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendString("InputSandboxPath") );
+    // state.reset(new SendString("InputSandboxPath") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ReceiveBoolean("TransferDone") );
+    // state.reset(new ReceiveBoolean("TransferDone") );
     // cmd -> fsm -> push(state);
-    state.reset( new fsm::ForwardRequest() );
+    state.reset( new ForwardRequest() );
     cmd -> fsm -> push(state);
   } 
   else if (name == "JobCancel") {
     cmd -> setParam("JobId", param);
 
-    state.reset(new fsm::ExecuteFunction(setJobPaths) );
+    state.reset(new ExecuteFunction(setJobPaths) );
     cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(createContext) );
+    state.reset(new ExecuteFunction(createContext) );
     cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(logCancel) );
+    state.reset(new ExecuteFunction(logCancel) );
     cmd -> fsm -> push(state);
-    state.reset( new fsm::ForwardRequest() );
+    state.reset( new ForwardRequest() );
     cmd -> fsm -> push(state);    
   }
+  /*
   else if (name == "JobPurge") {
-    state.reset(new fsm::ReceiveString("JobId") );
+    // state.reset(new ReceiveString("JobId") );
+    // cmd -> fsm -> push(state);
+    state.reset(new ExecuteFunction(setJobPaths) );
     cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(setJobPaths) );
+    state.reset(new ExecuteFunction(createContext) );
     cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(createContext) );
-    cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(doPurge) );
+    state.reset(new ExecuteFunction(doPurge) );
     cmd -> fsm -> push(state);
   }
+  */
   else if (name == "ListJobMatch") {
-    state.reset(new fsm::ReceiveString("jdl"));
-    cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(insertCertificateSubject) );
+    // state.reset(new ReceiveString("jdl"));
+    // cmd -> fsm -> push(state);
+    state.reset(new ExecuteFunction(insertCertificateSubject) );
     cmd -> fsm -> push(state);     
-    state.reset(new fsm::ExecuteFunction(insertPipePath));
+    state.reset(new ExecuteFunction(insertPipePath));
     cmd -> fsm -> push(state);
-    state.reset(new fsm::ForwardRequest());
+    state.reset(new ForwardRequest());
     cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(listjobmatchex)); 
+    state.reset(new ExecuteFunction(listjobmatchex)); 
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendVector("MatchResult"));
+    // state.reset(new SendVector("MatchResult"));
     // cmd -> fsm -> push(state); 
   }
   else if( name == "DagSubmit" ) {        
-    state.reset( new fsm::ExecuteFunction(createContext) );
+    state.reset( new ExecuteFunction(createContext) );
     cmd -> fsm -> push (state);
-    // state.reset(new fsm::ReceiveLong("SandboxSize") );
+    // state.reset(new ReceiveLong("SandboxSize") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(checkJobSize) );
+    // state.reset(new ExecuteFunction(checkJobSize) );
     // cmd -> fsm -> push(state);   
-    // state.reset(new fsm::SendBoolean("CheckSizePassed") );
+    // state.reset(new SendBoolean("CheckSizePassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(evaluateCheckSize) );
+    // state.reset(new ExecuteFunction(evaluateCheckSize) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(checkUserQuota) );
+    // state.reset(new ExecuteFunction(checkUserQuota) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendBoolean("CheckQuotaPassed") );
+    // state.reset(new SendBoolean("CheckQuotaPassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(evaluateCheckQuota) );
+    // state.reset(new ExecuteFunction(evaluateCheckQuota) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(checkSpace) );
+    // state.reset(new ExecuteFunction(checkSpace) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendBoolean("CheckPassed") );
+    // state.reset(new SendBoolean("CheckPassed") );
     // cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(insertCertificateSubject) );
+    state.reset(new ExecuteFunction(insertCertificateSubject) );
     cmd -> fsm -> push(state);
 #ifdef WITH_GLOBUS_FTP_CLIENT_API
-    state.reset(new fsm::ExecuteFunction(setJobPaths) );
+    state.reset(new ExecuteFunction(setJobPaths) );
     cmd -> fsm -> push(state);
-    state.reset( new fsm::ExecuteFunction(createReducedPathDirs) );
+    state.reset( new ExecuteFunction(createReducedPathDirs) );
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(setSandboxRootPath) );
+    // state.reset(new ExecuteFunction(setSandboxRootPath) );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendString("SandboxRootPath") );
+    // state.reset(new SendString("SandboxRootPath") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ReceiveBoolean("ClientCreateDirsPassed") );
+    // state.reset(new ReceiveBoolean("ClientCreateDirsPassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::ExecuteFunction(evaluateClientCreateDirs) );
+    // state.reset(new ExecuteFunction(evaluateClientCreateDirs) );
     // cmd -> fsm -> push(state);
 #endif
-    state.reset(new fsm::ExecuteFunction(dag::createStagingDirectories) );
+    state.reset(new ExecuteFunction(dag::createStagingDirectories) );
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendInt("SDCreationError") );
+    // state.reset(new SendInt("SDCreationError") );
     // cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendString("SDCreationMessage") );
+    // state.reset(new SendString("SDCreationMessage") );
     // cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(stagingDirectoryCreationPostControl));
+    state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
     cmd -> fsm -> push(state);
-    // state.reset(new fsm::SendBoolean("ProxyRenewalDone"));
+    // state.reset(new SendBoolean("ProxyRenewalDone"));
     // cmd -> fsm -> push(state);
-    state.reset(new fsm::ExecuteFunction(proxyRenewalCheck));
+    state.reset(new ExecuteFunction(proxyRenewalCheck));
     cmd -> fsm -> push(state);
     // logger::threadsafe::edglog << logger::setlevel(logger::fatal) << "Send String ... " << std::endl;
-    // state.reset(new fsm::SendString("InputSandboxPath") );
+    // state.reset(new SendString("InputSandboxPath") );
     // cmd -> fsm -> push(state);
     // logger::threadsafe::edglog << logger::setlevel(logger::fatal) << "Send String Done!" << std::endl;
-    // state.reset(new fsm::ReceiveBoolean("TransferDone") );
+    // state.reset(new ReceiveBoolean("TransferDone") );
     // cmd -> fsm -> push(state);
-    state.reset( new fsm::ForwardRequest() );
+    state.reset( new ForwardRequest() );
     cmd -> fsm -> push(state);
   } 
   else {

@@ -11,8 +11,7 @@
 #include "common.h"
 #include "CommandFactoryServerImpl.h"
 #include "logging.h"
-#include "exception_codes.h"
-#include "NetworkServer.h"
+#include "wmpexception_codes.h"
 #include "JobId.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -28,14 +27,16 @@
 #include <unistd.h>
 #include <errno.h>
 #include <boost/tuple/tuple.hpp>
+// #include <boost/details.hpp>
 
 namespace utilities = glite::wms::common::utilities; 
 namespace logger    = glite::wms::common::logger;
 namespace requestad = glite::wms::jdl;
 namespace commands  = glite::wms::wmproxy::commands;
-namespace nsjobid   = glite::wms::wmproxy::jobid;
+namespace nsjobid   = glite::wms::wmproxy::commands::jobid;
 
-using namespace boost::details::pool; 
+// using namespace boost::details::pool; 
+using namespace glite::wms::wmproxy::server;
 
 namespace glite {
 namespace wms {
@@ -45,7 +46,7 @@ namespace dag {
 
 #ifndef WITH_GLOBUS_FTP_CLIENT_API	
 
-  bool createJobDirs() {
+  bool createJobDirs(commands::Command* cmd, std::string local_path) {
 
     edglog_fn("DAG::CFSI");
 
@@ -146,7 +147,7 @@ namespace dag {
 	    local_path.assign( root + "/" + nsjobid::to_filename( wmsutils::jobid::JobId(id) ) );
 
 	    if ( !createJobDirs(cmd, local_path) ) {
-	      errstr.assign("Error creating DAG directories at\n\t Host: " + to_host + "\n\t DAGId:" + id);
+	      errstr.assign("Error creating DAG directories at\n\t Host: " + local_path + "\n\t DAGId:" + id);
 	      edglog(fatal) << errstr << std::endl;	  	      
 	      return true;
 	    }
@@ -157,7 +158,7 @@ namespace dag {
 	  cmd -> setParam("ClientCreateDirsPassed", true);
 	  edglog(fatal) << "Remote Dirs Cretion Successful" << std::endl;
 	} else {
-	  errstr.assign("Error creating DAG directories at\n\t Host: " + to_host + "\n\t DAGId:" + id);
+	  errstr.assign("Error creating DAG directories at\n\t Host: " + local_path + "\n\t DAGId:" + id);
 	  edglog(fatal) << errstr << std::endl;
 	}
 #endif
@@ -165,7 +166,7 @@ namespace dag {
 	id.assign( utilities::unparse_expression(*dagad.get_generic("edg_jobid")) );
 	local_path.assign( root + "/" + nsjobid::to_filename( wmsutils::jobid::JobId(id) ) );
  
-        std:string credentials_file;
+        std::string credentials_file;
 	cmd -> getParam("CredentialsFile", credentials_file);
 	if(!fcopy( credentials_file, local_path + "/user.proxy")){
 	  edglog(fatal) << "*********" << std::endl;

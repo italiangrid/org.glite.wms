@@ -33,8 +33,10 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
+#include "wmpexception_codes.h"
 
 using namespace std;
+using namespace glite::wms::wmproxy::server;
 
 namespace broker        = glite::wms::broker;
 namespace brokerinfo    = glite::wms::brokerinfo;
@@ -156,7 +158,7 @@ bool listjobmatch(Command* cmd)
     cmd->setParam("MatchMakingDone", false);
     cmd->setParam("MatchMakingError", mm_error );
     std::vector<std::string> match_list;
-    match_list.push_back(EDG_WL_NSMATCHMAKINGERROR);
+    match_list.push_back(GLITE_WMS_WMPMATCHMAKINGERROR);
     match_list.push_back(mm_error);
     cmd->setParam( "MatchResult", match_list );
     return true;
@@ -215,7 +217,7 @@ bool listjobmatch(Command* cmd)
 
     if (iserror) {
       cmd->setParam("MatchMakingDone", false);
-      match_list.push_back(EDG_WL_NSMATCHMAKINGERROR);
+      match_list.push_back(GLITE_WMS_WMPMATCHMAKINGERROR);
       if (ad.get()->EvaluateAttrString(reason_attribute, reason)) {
 	cmd->setParam("MatchMakingError", reason);
 	match_list.push_back(reason);
