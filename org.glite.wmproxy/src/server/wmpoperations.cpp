@@ -318,17 +318,19 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 
 void
 setJobFileSystem(const string &delegation_id, const string &jobid, 
-	const vector<string> &jobids)
+	vector<string> &jobids)
 {
-	GLITE_STACK_TRY("setJobFileSystem(const string &delegation_id, const string jobid, "
-		"const vector<string> &jobids)");
+	GLITE_STACK_TRY("setJobFileSystem(const string &delegation_id, const "
+		"string jobid, vector<string> &jobids)");
 		
 	// Getting delegated Proxy file name
 	string delegated_proxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog_fn("   wmpoperations::seJobFileSystem");
-	edglog(fatal)<<"Delegated Proxy file name: "<<delegated_proxy<<endl;
+	edglog(fatal) << "Delegated Proxy file name: " << delegated_proxy << endl;
 	
-	// Creating destination URI path
+	string document_root = getenv("DOCUMENT_ROOT");
+	//TBD Check the result
+	
 	mode_t mode(755);
 	//edglog(fatal)<<"Creating job directory "<<dest_uri<<endl;
 	/*
@@ -337,13 +339,12 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 	// TBD WARNING! THIS IS SHALL BE PROVIDED BY an LCMAP METHOD
 	int userid = getuid();
 	// TBD WARNING! Still to be implemented
-	string document_root = getenv("DOCUMENT_ROOT");
 	vector<string> job;
 	job.push_back(jobid);
 	if (wmputilities::managedir(document_root, userid, job)) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"setJobFileSystem(const string &delegation_id, const string jobid, "
-			"const vector<string> &jobids)",
+			"vector<string> &jobids)",
 			WMS_IS_FAILURE, "Unable to create job local directory");
 	}
 	
@@ -352,25 +353,29 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
    	bool extended_path = true ; 
    
 	// Copying delegated Proxy to destination URI
-	//wmputilities::fileCopy(delegated_proxy, document_root + "/"
-		//+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid), level, extended_path) + "/" + USER_PROXY_NAME);
+	wmputilities::fileCopy(delegated_proxy, document_root + "/"
+		+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid),
+			level, extended_path) + "/" + USER_PROXY_NAME);
 	
 	if (jobids.size() != 0) {
-		//edglog(fatal)<<"Creating sub job directory "<<children_dest_uris[i]<<endl;
+		edglog(fatal)<<"Creating sub job directories for job:\n"<<jobid<<endl;
 		if (wmputilities::managedir(document_root, userid, jobids)) {
 			throw JobOperationException(__FILE__, __LINE__,
-				"setJobFileSystem(const string &delegation_id, const string jobid, "
-				"const vector<string> &jobids)",
+				"setJobFileSystem(const string &delegation_id, const string "
+				"&jobid, vector<string> &jobids)",
 				WMS_IS_FAILURE, "Unable to create sub jobs local directory");
 		} else {
-			string dest_uri = "";//wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid), level, extended_path);
+			string dest_uri =
+				wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid),
+				level, extended_path);
 			for (int i = 0; i < jobids.size(); i++) {
 				edglog(fatal)<<"Creating proxy symbolic link in: "<<jobids[i]<<endl;
 				string command = "ln -s " 
 					+ document_root + "/" + dest_uri
 					+ "/" + USER_PROXY_NAME + " " // link target
 					+ document_root + "/"
-					+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]), level, extended_path)
+					+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]),
+						level, extended_path)
 					+ "/" + USER_PROXY_NAME; // link name
 					cerr << "Link Command: " << command << endl;
 					
@@ -378,7 +383,6 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 				system(command.c_str());
 			}
 		}
-		
 	}
 	
   	GLITE_STACK_CATCH();
@@ -436,7 +440,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	}
 	
 	// Logging delegation id & original jdl
-	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
+	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
 	wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 
 	// Creating job identifier structure to return to the caller
@@ -464,9 +468,6 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	GLITE_STACK_TRY("regist(jobRegisterResponse &jobRegister_response, "
 	"const string &jdl, WMPExpDagAd *dag, JobAd *jad)");
 
-	// Modifing jdl to set InputSandbox with only absolute paths
-	// Alex method??? do it with the check method??
-	
 	// Creating unique identifier
 	JobId *jid = new JobId();
 	if (LB_PORT == 0 ) {
@@ -515,7 +516,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	setJobFileSystem(delegation_id, jid->toString(), jobids);
 	
 	// Logging delegation id & original jdl
-	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
+	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
 	wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 	
 	// Creating job identifier structure to return to the caller
@@ -572,14 +573,14 @@ submit(const string &jdl, JobId *jid)
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 
 	// Vector of parameters to runCommand()
-	/*vector<string> params;
+	vector<string> params;
 	params.push_back(jdl);
 	wmpmanager::WMPManager manager;
 	//wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params, jobStart_response);
-	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);*/
+	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
 
-	wmp_fault_t wmp_fault;
-	wmp_fault.code = WMS_NO_ERROR;
+	//wmp_fault_t wmp_fault;
+	//wmp_fault.code = WMS_NO_ERROR;
 	if (wmp_fault.code != WMS_NO_ERROR) {
 		wmplogger.logAbort(wmp_fault.message.c_str());
 		throw JobOperationException(__FILE__, __LINE__,
@@ -756,8 +757,9 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
         // Linux Separator
 		+ "/"
 	#endif
-	+ wmputilities::to_filename (JobId ( jid ) ) ;
-	edglog(severe) << "Sandbox path retrieved successfully:\n"<< getSandboxDestURI_response.path << endl;
+	+ wmputilities::to_filename(JobId(jid));
+	edglog(severe) << "Sandbox path retrieved successfully:\n"
+		<< getSandboxDestURI_response.path << endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -768,16 +770,16 @@ getQuota(getQuotaResponse &getQuota_response)
 	GLITE_STACK_TRY("getQuota(getQuotaResponse &getQuota_response)");
 	edglog_fn("   wmpoperations::getQuota");
 	
-	wmp_fault_t wmp_fault;
-	wmp_fault.code = WMS_NO_ERROR;
-	if (wmp_fault.code != WMS_NO_ERROR) {
+	string uname = getenv("USER"); //TBC
+	pair<long, long> quotas;
+	if (!wmputilities::getUserQuota(quotas, uname)) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"getQuota(getQuotaResponse &getQuota_response)",
-			wmp_fault.code, wmp_fault.message);
+			WMS_IS_FAILURE, "Unable to get quota");
 	}
-	getQuota_response.softLimit = 100;
-	getQuota_response.hardLimit = 200;
-
+	getQuota_response.softLimit = quotas.first;
+	getQuota_response.hardLimit = quotas.second;
+	
 	edglog(severe) << "" << endl;
 	GLITE_STACK_CATCH();
 }
@@ -788,16 +790,16 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	GLITE_STACK_TRY("getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)");
 	edglog_fn("   wmpoperations::getFreeQuota");
 	
-	wmp_fault_t wmp_fault;
-	wmp_fault.code = WMS_NO_ERROR;
-	if (wmp_fault.code != WMS_NO_ERROR) {
+	string uname = getenv("USER"); //TBC
+	pair<long, long> quotas;
+	if (!wmputilities::getUserFreeQuota(quotas, uname)) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)",
-			wmp_fault.code, wmp_fault.message);
+			WMS_IS_FAILURE, "Unable to get free quota");
 	}
-
-	getFreeQuota_response.softLimit = 100;
-	getFreeQuota_response.hardLimit = 200;
+	getFreeQuota_response.softLimit = quotas.first;
+	getFreeQuota_response.hardLimit = quotas.second;
+	
 	edglog(severe) << "" << endl;
 	GLITE_STACK_CATCH();
 }
@@ -809,13 +811,12 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 		"string &jid)");
 	edglog_fn("   wmpoperations::jobPurge");
 	
-	wmp_fault_t wmp_fault;
-	wmp_fault.code = WMS_NO_ERROR;
-	if (wmp_fault.code != WMS_NO_ERROR) {
+	if (!wmputilities::doPurge(jid)) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"jobPurge(jobPurgeResponse &jobPurge_response, string jid)",
-			wmp_fault.code, wmp_fault.message);
+			"jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)",
+			WMS_IS_FAILURE, "Unable to perform job purge");
 	}
+	
 	edglog(severe) << "job Purged successfully" << endl;
 	GLITE_STACK_CATCH();
 }
