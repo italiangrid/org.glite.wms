@@ -60,6 +60,7 @@ AD_CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(OBJFLAGS) \
 
 
 AD_LDFLAGS= \
+	-L./ \
 	-L../utilities \
         -L$(GLOBUS_LOCATION)/lib \
         -L$(REPLIBS) \
@@ -70,7 +71,6 @@ AD_LDFLAGS= \
         -L$(REPOSITORY)/repository/org.glite.wms.wmproxy/src/authorizer \
         -L$(REPOSITORY)/stage/lib \
         -L$(EXPAT_LOCATION)/lib \
-        -L../../src/utilities \
         -lcurl -lz -lssl$(FLAVOR_EXT) -lcrypto_gcc32pthr -lxml2 -lm \
         -lvomsc \
          -llcas \
@@ -89,10 +89,9 @@ authorizer:
 		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I. \
 		-I../server -I../utilities \
 	        -o libglite_wms_wmproxy_authorizer.so \
-	        wmpauthorizer.cpp  gaclmanager.cpp gaclexception.cpp \
+	        wmpauthorizer.cpp wmpgaclmanager.cpp \
  		$(LIBS) $(LDFLAGS)
 
-		cp libglite_wms_wmproxy_authorizer.so $(REPOSITORY)/stage/lib
 
 gacladmin:
 	$(CPP) -g -Wall $(CFLAGS) $(AD_CFLAGS)  $(AD_LDFLAGS)  \
