@@ -430,7 +430,9 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
       try {
          BrokerInfoData::SFN_container_type resolved_sfn;
 
-         if ( ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0) ) {
+         // lfn:: or guid:: prefix ?
+         bool lfn_or_guid_found = ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0);
+         if ( lfn_or_guid_found && (!siciEndpointSet) ) {
 
             if ( !rlsInUse ) {
 
@@ -472,10 +474,9 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
          // If the prefix is "lfn" or "guid" but we didn't manage to load the rls plug-in
          //      or the RLSCatalog is not configured for the given vo, we try with the dli catalog
-         if (   (      ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)      )   ||
-                                                                                                
-                (   (  ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0)  ) && (rlsInUse == false)  )   ){
-
+         if ( ( (      ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)      )   || 
+                ( lfn_or_guid_found && (!rlsInUse))) && (!siciEndpointSet) ) {
+ 
             if ( !dliInUse ) {
                if ( dliEndpointSet ) {
                   dliLibHandle = dlopen (dliLib.c_str(), RTLD_NOW);
@@ -541,7 +542,8 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
             }
          }
 
-         if ( ((*lfn).find(silfnPrefix.c_str()) == 0) || ((*lfn).find(siguidPrefix.c_str()) == 0) ) {
+         if ( ( ((*lfn).find(silfnPrefix.c_str()) == 0) || ((*lfn).find(siguidPrefix.c_str()) == 0) ) ||
+              ( lfn_or_guid_found && siciEndpointSet)) {
                                                                                                 
             if ( !siciInUse ) {
                                                                                                 
@@ -564,12 +566,18 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                         siciInUse = true;
                                                                                                 
                         string noPrefix = *lfn;
-                        if ( (*lfn).find(silfnPrefix.c_str()) == 0) {
-                           noPrefix.erase(0,silfnPrefix.length()+1);
+                        string::size_type colon_pos;
+                        if ((colon_pos = noPrefix.find(":"))!=string::npos) {
+                           // Remove any prefix before the leading colon. Including the colon.
+                           colon_pos++;
+                           noPrefix.erase(0,colon_pos);
+                        }
+
+                        if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
+                             (*lfn).find(lfnPrefix.c_str()) == 0 ) {
                            sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn);
                         }
                         else {
-                           noPrefix.erase(0,siguidPrefix.length()+1);
                            sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn);
                         }
                      }
@@ -581,12 +589,17 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
             }
             else {
                string noPrefix = *lfn;
-               if ( (*lfn).find(silfnPrefix.c_str()) == 0) {
-                  noPrefix.erase(0,silfnPrefix.length()+1);
+               string::size_type colon_pos;
+               if ((colon_pos = noPrefix.find(":"))!=string::npos) {
+                  // Remove any prefix before the leading colon. Including the colon.
+                  colon_pos++;
+                  noPrefix.erase(0,colon_pos);
+               }
+               if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
+                    (*lfn).find(lfnPrefix.c_str()) == 0 ) {
                   sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn);
                }
                else {
-                  noPrefix.erase(0,siguidPrefix.length()+1);
                   sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn);
                }
             }
