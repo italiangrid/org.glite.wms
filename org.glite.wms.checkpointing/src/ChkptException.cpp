@@ -17,7 +17,7 @@ CHKPT_NAMESPACE_BEGIN {
 				   std::string method,
 				   int code,
 				   std::string exception_name) :
-   glite::wms::common::utilities::Exception(file, line, method, code, exception_name ) {};
+   glite::wmsutils::exception::Exception(file, line, method, code, exception_name ) {};
       
   EoSException::EoSException ( std::string file,
 			       int line, 
