@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/10/05 13:34:41  monforte
+	*** WORK IN PROGRESS ***
+
 	Revision 1.1  2004/10/05 11:08:04  monforte
 	Initial porting of RLS: *** WORK IN PROGRESS ***
-
+	
 	Revision 1.5  2004/07/20 16:08:30  flammer
 	Changed incorrect my_... instead of .._template entries for subsystem and component.
 	
@@ -93,7 +96,8 @@
 	     ========================================= -->
 	<!-- Put your language target (java/c++-ant/c++-autotool/perl) here -->
 	<!-- <import file="{global.targets-xxx.xml}" /> -->
-		
+	<import file="${global.targets-make.file}" />
+	
 	<!-- =========================================
 		 Load version file 
 	     ========================================= -->

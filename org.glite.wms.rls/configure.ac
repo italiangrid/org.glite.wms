@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/05 13:34:41  monforte
+#       *** WORK IN PROGRESS ***
+#
 #       Revision 1.1  2004/10/05 11:08:04  monforte
 #       Initial porting of RLS: *** WORK IN PROGRESS ***
 #
@@ -48,7 +51,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS RLS], [0.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/utility.h])
+AC_CONFIG_SRCDIR([src/ReplicaServiceException.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
