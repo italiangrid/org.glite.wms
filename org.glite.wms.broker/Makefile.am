@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/28 17:23:17  eronchie
+#       merd
+#
 #       Revision 1.1  2004/07/02 08:48:27  monforte
 #       Initial Broker porting to new build system
 #       WARNING: work in progress...
@@ -31,7 +34,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Subdirectories list
-SUBDIRS = src 
+SUBDIRS = interface src 
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

@@ -10,7 +10,7 @@
 #ifndef GLITE_WMS_BROKER_SELECTORS_STOCHASTICRANKSELECTOR_H_
 #define GLITE_WMS_BROKER_SELECTORS_STOCHASTICRANKSELECTOR_H_
 
-#include "RBSelectionSchema.h"
+#include "glite/wms/broker/selectors/RBSelectionSchema.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/random/linear_congruential.hpp>

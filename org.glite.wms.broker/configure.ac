@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/28 17:23:17  eronchie
+#       merd
+#
 #       Revision 1.2  2004/07/10 07:01:57  eronchie
 #       Updated configure.ac
 #       Removed wrong CFLAGS
@@ -112,5 +115,6 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/selectors/Makefile])
+AC_CONFIG_FILES([interface/Makefile])
 
 AC_OUTPUT
