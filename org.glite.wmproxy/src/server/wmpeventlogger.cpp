@@ -11,13 +11,23 @@
 #include "wmpoperations.h"
 
 #include "glite/lb/producer.h"
+// from logging_fn
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/manipulators.h"
+#include "glite/wms/common/utilities/boost_fs_add.h"
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+// edglog macro definitions
+#include "logging.h"
 
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 
 #include "glite/security/proxyrenewal/renewal.h"
 
+namespace logger        = glite::wms::common::logger;
 namespace jobid = glite::wmsutils::jobid;
+
 
 using namespace std;
 using namespace wmproxyname;
@@ -300,7 +310,7 @@ WMPLogger::logUserTag(string name, const string &value)
 }
 
 void
-WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> > 
+WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> >
 	userTags)
 {
 	for (unsigned int i = 0; i < userTags.size(); i++) {
@@ -318,7 +328,7 @@ WMPLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> >
 	edg_wll_SetLoggingJob(ctx, id->getId(), NULL, EDG_WLL_SEQ_NORMAL);
 }
 
-void 
+void
 WMPLogger::logUserTags(classad::ClassAd* userTags)
 {
 	vector<pair<string, classad::ExprTree *> > vect;
@@ -333,7 +343,7 @@ WMPLogger::logUserTags(classad::ClassAd* userTags)
 				WMS_OPERATION_NOT_ALLOWED, "Unable to Parse Expression");
 		}
  		if (val.IsStringValue(attrValue)) {
-			if (edg_wll_LogUserTag(ctx, (vect[i].first).c_str(), 
+			if (edg_wll_LogUserTag(ctx, (vect[i].first).c_str(),
 					attrValue.c_str())) {
 				throw JobOperationException(__FILE__, __LINE__,
 					"WMPLogger::logUserTags(classad::ClassAd* userTags)",
@@ -344,10 +354,163 @@ WMPLogger::logUserTags(classad::ClassAd* userTags)
 	}
 }
 
+
+
+
+
+
+void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
+			const std::string &reason, bool retry ){
+    int i=0;
+    edglog_fn("WMPLogger::logEnqueuedJobN");
+    edglog(fatal) << "Logging Enqueued Job." << std::endl;
+    bool logged = false;
+
+    for (; i < 3 && !logged && retry; i++) {
+      logged = !edg_wll_LogEnQueued (ctx,
+				     file_queue.c_str(),
+				     jdl.c_str(),
+				     (mode ? "OK" : "FAIL"),
+				     reason.c_str());
+      if (!logged && (i<2) && retry) {
+        edglog(info) << "Failed to log Enqueued Job. Sleeping 60 seconds before retry." << std::endl;
+        sleep(60);
+      }
+    }
+
+    if ((retry && (i>=3)) || (!retry && (i>0)) ) {
+	edglog(severe) << "Error while logging Enqueued Job." << std::endl;
+	throw JobOperationException(__FILE__, __LINE__,
+				"WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,"
+				"const std::string &reason, bool retry )",
+				WMS_OPERATION_NOT_ALLOWED, "Error while logging Enqueued Job.");
+
+
+    }
+
+    edglog(debug) << "Logged." << std::endl;
+    edg_wll_FreeContext(ctx);
+  }
+
+
+void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
+			std::string host_proxy, const std::string &file_queue,
+			bool mode, const std::string &reason, bool retry, bool test){
+
+    if (!test) logEnqueuedJob(jdl, file_queue, mode, reason, retry);
+    edglog_fn("WMPLogger::logEnqueuedJobE");
+    edglog(fatal) << "Logging Enqueued Job." << std::endl;
+
+    int res;
+    bool with_hp = false;
+    int lap = 0;
+    reset_user_proxy( proxy_path);
+
+    do {
+      res = edg_wll_LogEnQueued (ctx,
+				 file_queue.c_str(),
+				 jdl.c_str(),
+				 (mode ? "OK" : "FAIL"),
+				 reason.c_str());
+      testAndLog( res, with_hp, lap, host_proxy );
+    } while( res != 0 );
+  }
+
+void
+WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_proxy)
+  {
+    edglog_fn("NS2WM::test&Log");
+    int          ret;
+    if( code ) {
+
+      switch( code ) {
+      case EINVAL:
+	edglog(critical) << "Critical error in L&B calls: EINVAL." << std::endl;
+	code = 0; // Don't retry...
+	break;
+
+      case EDG_WLL_ERROR_GSS:
+	edglog(severe) << "Severe error in SSL layer while communicating with L&B daemons." << std::endl;
+
+	if( with_hp ) {
+	  edglog(severe) << "The log with the host certificate has just been done. Giving up." << std::endl;
+	  code = 0; // Don't retry...
+	}
+	else {
+	  edglog(info) << "Retrying using host proxy certificate..." << std::endl;
+
+	  if( host_proxy.length() == 0 ) {
+	    edglog(warning) << "Host proxy file not set inside configuration file." << std::endl
+			    << "Trying with a default NULL and hoping for the best." << std::endl;
+	    ret = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, NULL );
+	  }
+	  else {
+	    edglog(info) << "Host proxy file found = \"" << host_proxy << "\"." << std::endl;
+	    ret = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
+	  }
+
+	  if( ret ) {
+	    edglog(severe) << "Cannot set the host proxy inside the context. Giving up." << std::endl;
+	    code = 0; // Don't retry.
+	  }
+	  else with_hp = true; // Set and retry (code is still != 0)
+	}
+
+	break;
+
+      default:
+	if( ++lap > 3 ) {
+	  edglog(error) << "L&B call retried " << lap << " times always failed." << std::endl
+			<< "Ignoring." << std::endl;
+	  code = 0; // Don't retry anymore
+	}
+	else {
+	  edglog(warning) << "L&B call got a transient error. Waiting 60 seconds and trying again." << std::endl;
+	  edglog(info) << "Try n. " << lap << "/3" << std::endl;
+	  sleep( 60 );
+	}
+
+	break;
+      }
+    }
+    else // The logging call worked fine, do nothing
+      edglog(debug) << "L&B call succeeded." << std::endl;
+
+    return;
+  }
+
+
+void
+WMPLogger::reset_user_proxy( const std::string &proxy_path ){
+    edglog_fn("WMPLogger::resetUserProxy");
+    bool    erase = false;
+    int     res;
+
+    if( proxy_path.size() ) {
+      boost::filesystem::path pf( boost::filesystem::normalize_path(proxy_path), boost::filesystem::system_specific );
+
+      if( boost::filesystem::exists(pf) ) {
+	res = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, proxy_path.c_str() );
+	if( res ) edglog(severe) << "Cannot set proxyfile path inside context." << std::endl;
+      }
+      else erase = true;
+    }
+    else if( proxy_path.size() == 0 ) erase = true;
+
+    if( erase ) {
+      res = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, NULL ); 
+      if( res ) edglog(severe) << "Cannot reset proxyfile path inside context." << std::endl;;
+    }
+
+  }
+
+
+
+
+
 // Error Message Parsing
-const char* 
-WMPLogger::error_message(const char *api)
-{
+const char*
+WMPLogger::error_message(const char *api){
 	char *error_message = (char*) malloc(1024);
 	char *msg;
 	char *dsc;
@@ -356,6 +519,7 @@ WMPLogger::error_message(const char *api)
 		getenv(GLITE_WMS_LOG_DESTINATION), "\n", msg, " (", dsc, ")");
 	return error_message;
 }
+
 
 //} // wmproxy
 //} // wms

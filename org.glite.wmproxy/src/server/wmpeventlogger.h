@@ -28,7 +28,7 @@ class WMPLogger  {
 		WMPLogger();
 		virtual ~WMPLogger() throw();
 
-		void init(const std::string &nsHost, int nsPort, 
+		void init(const std::string &nsHost, int nsPort,
 			glite::wmsutils::jobid::JobId *id);
 
 		std::string getSequence();
@@ -47,11 +47,23 @@ class WMPLogger  {
 
 		void logUserTag(std::string name, const std::string &value);
 		void logUserTags(classad::ClassAd *userTags);
-		void logUserTags(std::vector<std::pair<std::string, 
+		void logUserTags(std::vector<std::pair<std::string,
 			classad::ExprTree*> > userTags);
+
+		void logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
+			const std::string &reason, bool retry );
+		void logEnqueuedJob(std::string jdl, const std::string &proxy_path,
+			std::string host_proxy, const std::string &file_queue,
+			bool mode, const std::string &reason, bool retry, bool test);
+
+
+
 		
 	private:
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
+		void testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_proxy);
+		void reset_user_proxy( const std::string &proxy_path );
+		
 		const char * error_message(const char *api);
 		std::string dest_uri;
 		glite::wmsutils::jobid::JobId *id;
