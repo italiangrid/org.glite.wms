@@ -1179,6 +1179,15 @@ public class JobInputDataPanel extends JPanel {
     GUIDVector.clear();
     for (int i = 0; i < itemVector.size(); i++) {
       item = itemVector.get(i).toString().trim();
+
+// WARNING: TEMPORAL PATCH BEGIN!!!
+	if (item.startsWith( "si")) {
+		warningMsg +="- " + Jdl.INPUTDATA + ": " +item+" prefix not yet supported.\nIt will be converted into a known prefix" ;
+		item=item.substring(3);
+	}
+// WARNING: TEMPORAL PATCH END!!!
+
+
       //if(item.substring(0, LFN_PREFIX.length()).toUpperCase().equals(LFN_PREFIX)) {
       if (item.substring(0, LFN_PREFIX.length()).equals(LFN_PREFIX)) {
         LFNVector.add(item.substring(LFN_PREFIX.length()).trim());
@@ -1186,7 +1195,14 @@ public class JobInputDataPanel extends JPanel {
       //else if (item.substring(0, LCN_PREFIX.length()).toUpperCase().equals(LCN_PREFIX)) {
       else if (item.substring(0, GUID_PREFIX.length()).equals(GUID_PREFIX)) {
         GUIDVector.add(item.substring(GUID_PREFIX.length()).trim());
+      } 
+
+// WARNING: TEMPORAL PATCH BEGIN!!!
+      else {
+	warningMsg +="- " + Jdl.INPUTDATA + ": " +item+" unable to load known prefix";
       }
+// WARNING: TEMPORAL PATCH END!!!
+
       try {
         jobAdGlobalJobInputDataPanel.addAttribute(Jdl.INPUTDATA, item);
       } catch (IllegalArgumentException iae) {
@@ -1204,6 +1220,7 @@ public class JobInputDataPanel extends JPanel {
     }
     jListLFN.setListData(LFNVector);
     jListGUID.setListData(GUIDVector);
+
     return warningMsg;
   }
 
@@ -1269,3 +1286,4 @@ public class JobInputDataPanel extends JPanel {
    }
    RC */
 }
+
