@@ -1,5 +1,5 @@
-#ifndef EDG_WORKLOAD_COMMON_PROCESS_USER_H
-#define EDG_WORKLOAD_COMMON_PROCESS_USER_H
+#ifndef GLITE_WMS_COMMON_PROCESS_USER_H
+#define GLITE_WMS_COMMON_PROCESS_USER_H
 
 #include "../common_namespace.h"
 
@@ -60,7 +60,7 @@ private:
 
 } COMMON_NAMESPACE_END;
 
-#endif /*  EDG_WORKLOAD_COMMON_PROCESS_USER_H */
+#endif /*  GLITE_WMS_COMMON_PROCESS_USER_H */
 
 // Local Variables:
 // mode: c++
