@@ -20,6 +20,8 @@ namespace utilities {
 {*/
 bool doPurge(std::string dg_jobid);
 
+bool doPurge(std::string dg_jobid, std::string sandboxdir);
+
 bool getUserQuota(std::pair<long, long>& result, std::string uname);
 
 bool getUserFreeQuota(std::pair<long, long>& result, std::string uname);

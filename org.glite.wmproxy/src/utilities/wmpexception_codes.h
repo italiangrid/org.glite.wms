@@ -12,7 +12,7 @@
 namespace glite {
 namespace wms {
 namespace wmproxy {
-namespace server {
+namespace utilities {
 
 enum {
       WMS_FATAL = glite::wmsutils::exception::WMS_NS_ERROR_BASE +1, 
@@ -44,7 +44,7 @@ enum {
 
 };
 
-} // namespace server
+} // namespace utilities
 } // namespace wmproxy
 } // namespace wms
 } // namespace glite

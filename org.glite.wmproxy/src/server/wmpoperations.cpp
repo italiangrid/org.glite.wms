@@ -297,7 +297,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"jobRegister(jobRegisterResponse &jobRegister_response, "
 			"const string &jdl, const string &delegation_id)",
-			WMS_DELEGATION_ERROR, "Delegation id not valid");
+			wmputilities::WMS_DELEGATION_ERROR, "Delegation id not valid");
 	}
 	try {
 		// Check TYPE/JOBTYPE attributes and convert JDL when needed
@@ -388,7 +388,7 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 		throw FileSystemException(__FILE__, __LINE__,
 			"setJobFileSystem(const string &delegation_id, const string &jobid, "
 			"vector<string> &jobids)",
-			WMS_FATAL, "Unable to create job local directory");
+			wmputilities::WMS_FATAL, "Unable to create job local directory");
 	}
 
 	// Copying delegated Proxy to destination URI
@@ -405,7 +405,7 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 			throw FileSystemException(__FILE__, __LINE__,
 				"setJobFileSystem(const string &delegation_id, const string "
 				"&jobid, vector<string> &jobids)",
-				WMS_FATAL, "Unable to create sub jobs local directories");
+				wmputilities::WMS_FATAL, "Unable to create sub jobs local directories");
 		} else {
 			string dest_uri =
 				wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid));
@@ -424,7 +424,7 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 			      
 			      	throw FileSystemException(__FILE__, __LINE__,
 						"setJobFileSystem(const string &delegation_id, const string "
-						"&jobid, vector<string> &jobids)", WMS_FATAL, 
+						"&jobid, vector<string> &jobids)", wmputilities::WMS_FATAL, 
 						"Unable to create symbolic link to proxy file");
 			    }
 			}
@@ -595,7 +595,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 	if (status.status != JobStatus::SUBMITTED) {
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobStart(jobStartResponse &jobStart_response, const string &job_id)",
-			WMS_OPERATION_NOT_ALLOWED, "The job has already been started");
+			wmputilities::WMS_OPERATION_NOT_ALLOWED, "The job has already been started");
 	} else {
 		// TBD Check the field INSTANCE to see if the register has been done by
 		// the same WMProxy manager
@@ -639,7 +639,7 @@ submit(const string &jdl, JobId *jid)
 	
 	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
 
-	if (wmp_fault.code != WMS_NO_ERROR) {
+	if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 		wmplogger.logEvent(eventlogger::WMPLogger::LOG_ABORT,
 			wmp_fault.message.c_str(), true, true);
 		throw JobOperationException(__FILE__, __LINE__,
@@ -693,7 +693,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		edglog(severe)<<"\nCancel has already been requested"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobCancel(jobCancelResponse &jobCancel_response, const string "
-			"&job_id)", WMS_OPERATION_NOT_ALLOWED,
+			"&job_id)", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"Cancel has already been requested");
 	}
 
@@ -726,7 +726,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			wmp_fault = manager.runCommand("jobCancel", params,
 				&jobCancel_response);
 			
-			if (wmp_fault.code != WMS_NO_ERROR) {
+			if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 				edglog(fatal)<<"\n" + wmp_fault.message<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 					"jobCancel(jobCancelResponse &jobCancel_response, const "
@@ -744,7 +744,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				wmp_fault = manager.runCommand("jobCancel", params,
 					&jobCancel_response);
 				
-				if (wmp_fault.code != WMS_NO_ERROR) {
+				if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 					edglog(fatal)<<"\n" + wmp_fault.message<<endl;
 					throw JobOperationException(__FILE__, __LINE__,
 						"jobCancel(jobCancelResponse &jobCancel_response, const "
@@ -759,7 +759,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			edglog(severe)<<"\nJob status doesn't allow job cancel"<<endl;
 			throw JobOperationException(__FILE__, __LINE__,
 				"jobCancel(jobCancelResponse &jobCancel_response, "
-				"const string &job_id)", WMS_OPERATION_NOT_ALLOWED,
+				"const string &job_id)", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 				"Job status doesn't allow job cancel");
 			break;
   	}
@@ -787,7 +787,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 		throw FileSystemException(__FILE__, __LINE__,
 			"getMaxInputSandboxSize(getMaxInputSandboxSizeResponse "
 			"&getMaxInputSandboxSize_response)",
-			WMS_IS_FAILURE, "Unable to get max input sandbox size");
+			wmputilities::WMS_IS_FAILURE, "Unable to get max input sandbox size");
 	}
 
 	GLITE_STACK_CATCH();
@@ -818,7 +818,7 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 		throw FileSystemException(__FILE__, __LINE__,
 			"getSandboxDestURI(getSandboxDestURIResponse "
 			"&getSandboxDestURI_response, string jid)",
-			WMS_IS_FAILURE, ex.what());
+			wmputilities::WMS_IS_FAILURE, ex.what());
 	}
 	
 	edglog(info)<<"\nSandbox path retrieved successfully:\n\t"
@@ -840,7 +840,7 @@ getQuota(getQuotaResponse &getQuota_response)
 		edglog(severe)<<"\nUnable to get total quota"<<endl;
 		throw FileSystemException(__FILE__, __LINE__,
 			"getQuota(getQuotaResponse &getQuota_response)",
-			WMS_IS_FAILURE, "Unable to get total quota");
+			wmputilities::WMS_IS_FAILURE, "Unable to get total quota");
 	}
 	getQuota_response.softLimit = quotas.first;
 	getQuota_response.hardLimit = quotas.second;
@@ -861,7 +861,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 		edglog(severe)<<"\nUnable to get free quota"<<endl;
 		throw FileSystemException(__FILE__, __LINE__,
 			"getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)",
-			WMS_IS_FAILURE, "Unable to get free quota");
+			wmputilities::WMS_IS_FAILURE, "Unable to get free quota");
 	}
 	getFreeQuota_response.softLimit = quotas.first;
 	getFreeQuota_response.hardLimit = quotas.second;
@@ -892,7 +892,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 			edglog(severe)<<"\nUnable to perform job purge"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
 				"jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)",
-				WMS_IS_FAILURE, "Unable to perform job purge");
+				wmputilities::WMS_IS_FAILURE, "Unable to perform job purge");
 		}
 		// Initializing logger
 		WMPLogger wmplogger;
@@ -902,7 +902,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 		edglog(severe)<<"\nJob state doesn't allow purge operation"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)",
-			WMS_OPERATION_NOT_ALLOWED, "Job state doesn't allow purge operation");
+			wmputilities::WMS_OPERATION_NOT_ALLOWED, "Job state doesn't allow purge operation");
 	}
 	
 	edglog(info) << "\njob Purged successfully" << endl;
@@ -976,7 +976,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl)
 		wmp_fault_t wmp_fault = manager.runCommand("jobListMatch", params,
 			&jobListMatch_response);
 		cerr<<"----- wmp_fault: "<<wmp_fault.code<<endl;
-		if (wmp_fault.code != WMS_NO_ERROR) {
+		if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 			throw JobOperationException(__FILE__, __LINE__,
 				"jobListMatch(jobListMatchResponse &jobListMatch_response, "
 				"const string &jdl)",
@@ -985,7 +985,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl)
 	} else {
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobListMatch(jobListMatchResponse &jobListMatch_response, "
-			"string jdl)", WMS_OPERATION_NOT_ALLOWED,
+			"string jdl)", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"Operation permitted only for normal job");
 	}
 
@@ -1129,7 +1129,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq(getProxyReqResponse &getProxyReq_response, "
 			"const string &delegation_id)",
-			WMS_DELEGATION_ERROR, "Provided delegation id not valid");
+			wmputilities::WMS_DELEGATION_ERROR, "Provided delegation id not valid");
 	}
 	
 	getProxyReq_response.request =
@@ -1152,7 +1152,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
   		throw ProxyOperationException(__FILE__, __LINE__,
 			"putProxy(putProxyResponse &putProxyReq_response, const string "
 			"&delegation_id, const string &proxy)",
-			WMS_DELEGATION_ERROR, "Provided delegation id not valid");
+			wmputilities::WMS_DELEGATION_ERROR, "Provided delegation id not valid");
 	}
 	
 	WMPDelegation::putProxy(delegation_id, proxy);

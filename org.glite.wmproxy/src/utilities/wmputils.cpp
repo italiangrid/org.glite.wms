@@ -33,7 +33,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
-using namespace glite::wms::wmproxy::server;
+//using namespace glite::wms::wmproxy::server;
 
 namespace logger		  = glite::wms::common::logger;
 namespace commonutilities = glite::wms::common::utilities;
@@ -56,6 +56,21 @@ doPurge(std::string dg_jobid)
   		edglog(warning) << "JobId object for purging created: "<< dg_jobid << std::endl;
  
      	return purger::purgeStorage(jobid);
+    } else {
+   		edglog(critical) << logger::setfunction("CFSI::doPurge()") << 
+			"Error in Purging: Invalid Job Id. Purge not done." << std::endl;
+      return false; 
+    } 
+}
+
+bool
+doPurge(std::string dg_jobid, std::string sandboxdir)
+{ 
+	if ( dg_jobid.length() ) { 
+  		const jobid::JobId jobid(dg_jobid);
+  		edglog(warning) << "JobId object for purging created: "<< dg_jobid << std::endl;
+ 
+     	return purger::purgeStorage(jobid, sandboxdir);
     } else {
    		edglog(critical) << logger::setfunction("CFSI::doPurge()") << 
 			"Error in Purging: Invalid Job Id. Purge not done." << std::endl;

@@ -24,12 +24,14 @@
 #include "glite/wms/common/logger/edglog.h" 
 #include "glite/wms/common/logger/manipulators.h" 
 #include "commands/logging.h" 
+#include "utilities/wmpexception_codes.h"
 #include <string>
 
 namespace common        = glite::wms::common;
 namespace logger        = common::logger; 
 namespace utilities   	= glite::wmsutils::exception;
 namespace commands      = glite::wms::wmproxy::commands;
+namespace wmputilities  = glite::wms::wmproxy::utilities;
 
 namespace glite {
 namespace wms {
@@ -66,12 +68,12 @@ namespace server {
 	      	      bool param_err = false;
 		      cmd =  factory.create(cmdname, param);
 		      // Serialize parameters
-	              if (param.size() = 0) {
+	              if (param.size() == 0) {
 			  param_err = true;
 		      } else if (cmdname == "JobSubmit" || cmdname == "DagSubmit") {
 			  cmd -> setParam("jdl", param[0]);
 		      } else if (cmdname == "ListJobMatch" )  {
-			    if (param.size > 1) {
+			    if (param.size() > 1) {
                       	        cmd -> setParam("jdl", param[0]);
                                 cmd -> setParam("ListMatchPath", param[1]);
                             } else {
@@ -82,9 +84,9 @@ namespace server {
                       }
 
 		      if (param_err) {
-                            fault.code = glite::wms::wmproxy::server::WMS_INVALID_ARGUMENT;
+                            fault.code = wmputilities::WMS_INVALID_ARGUMENT;
                             fault.message = std::string(GLITE_WMS_WMPPARAMERROR);
-                            edglog(critical) << "Error during MatchMaking:\n\t" << temp_list[1] << std::endl;
+                            //edglog(critical) << "Error during MatchMaking:\n\t" << temp_list[1] << std::endl;
     			    return fault;
                       }
 

@@ -65,7 +65,7 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"getProxyReq(getProxyReqResponse &getProxyReq_response, "
 			"const string &delegation_id)",
-			WMS_PROXY_ERROR, "Unable to complete Proxy request");
+			wmputilities::WMS_PROXY_ERROR, "Unable to complete Proxy request");
 	}
 	
 	string proxy_req = "";
@@ -93,7 +93,7 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"putProxy(putProxyResponse &putProxyReq_response, const string "
 			"&delegation_id, const string &proxy)",
-			WMS_PROXY_ERROR, "Unable to store client Proxy");
+			wmputilities::WMS_PROXY_ERROR, "Unable to store client Proxy");
     }	
 }
 
@@ -113,7 +113,7 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 		throw JobOperationException(__FILE__, __LINE__,
 			"regist(jobRegisterResponse &jobRegister_response, const string "
 			"&delegation_id, const string &jdl, JobAd *jad)",
-			WMS_DELEGATION_ERROR, "Unable to get delegated Proxy");
+			wmputilities::WMS_DELEGATION_ERROR, "Unable to get delegated Proxy");
 	}
 	string path = "";
 	int i = 0;
