@@ -90,7 +90,7 @@ all:	eventlogger
 eventlogger:	
 		@echo "Compiling eventlogger..."
 		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I$(CLASSAD)/include -I. -DSHOW_EXECUTION \
-		    -o libglitePipe.so wmpeventlogger.cpp 
+		    -o libglite_wms_wmproxy_eventlogger.so wmpeventlogger.cpp 
 		$(LIBS)
 
 clean:
