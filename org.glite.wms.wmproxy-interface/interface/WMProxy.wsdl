@@ -1,4 +1,4 @@
-<wsdl:definitions 
+<wsdl:definitions
  xmlns:glitens="http://glite.org/wms/wmproxy" 
  xmlns:glitenstypes="http://glite.org/wms/wmproxy" 
  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
@@ -170,7 +170,7 @@
 	<wsdl:message name="getMaxInputSandboxSizeRequest">
 	</wsdl:message>
 	<wsdl:message name="getMaxInputSandboxSizeResponse">
-		<wsdl:part name="size" type="xsd:long"/>
+		<wsdl:part name="size" type="xsd:double"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxDestURIRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
@@ -425,17 +425,17 @@ To better clarify, an example of the correct sequence of operations for submitti
 		<wsdl:operation name="getMaxInputSandboxSize">
 			<wsdl:documentation>
 					This operation returns the maximum Input sandbox size (in bytes) a user can count-on for a job submission if using the space managed by the WM.  This is a static value in the WM configuration (on a job-basis) set by the VO administrator.
-					No assumption should be made on the input sandboxes space managed by the WM. It is managed  transparently to the user; it can be either local to the WM or remote. 
-                                
+					No assumption should be made on the input sandboxes space managed by the WM. It is managed  transparently to the user; it can be either local to the WM or remote.
+
 					Input: no input.
-					
-					Output: long containing the size in bytes.
-					
+
+					Output: double containing the size in bytes.
+
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
 					AuthorizationFault: 			client is not authorized to perform this operation.
-					GenericFault: 					another problem occured. 
-					
+					GenericFault: 					another problem occured.
+
             </wsdl:documentation>
 			<wsdl:input name="getMaxInputSandboxSizeRequest" message="glitens:getMaxInputSandboxSizeRequest"/>
 			<wsdl:output name="getMaxInputSandboxSizeResponse" message="glitens:getMaxInputSandboxSizeResponse"/>
