@@ -10,6 +10,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <exception> 
 
 namespace glite {
 namespace wms {
@@ -17,6 +18,15 @@ namespace manager {
 namespace server {
 
 class DispatcherImpl;
+
+struct NoCreateDispatcherException: public std::exception
+{
+  const char* what() const throw () 
+  { 
+    return "Unknown Dispatcher"; 
+  }
+};
+
 
 class DispatcherFactory: boost::noncopyable
 {

@@ -19,6 +19,8 @@
 #include <boost/utility.hpp>
 #endif
 
+#include <exception>
+
 namespace glite {
 namespace wms {
 namespace manager {
@@ -26,27 +28,35 @@ namespace common {
 
 class WMImpl;
 
+struct NoCreateWMException: public std::exception
+{
+  const char* what() const throw () 
+  { 
+    return "Unknown WorkloadManager"; 
+  }
+};
+ 
 class WMFactory: boost::noncopyable
 {
   class Impl;
-
+  
   boost::scoped_ptr<Impl> m_impl;
-
+  
   static WMFactory* s_instance;
-
+  
   WMFactory();
-
+  
   typedef WMImpl product_type;
   typedef product_type* (*product_creator_type)();
-
-public:
+  
+ public:
   static WMFactory* instance();
   ~WMFactory();
-
+  
 public:
-
+  
   typedef std::string wm_type;
-
+  
   bool register_wm(wm_type const& id, product_creator_type creator);
   bool unregister_wm(wm_type const& id);
   product_type* create_wm(wm_type const& id);

@@ -6,8 +6,10 @@
 // $Id$
 
 #include "DispatcherFactory.h"
+
 #include <string>
-#include "glite/wms/thirdparty/loki/Factory.h"
+#include <map>
+
 
 namespace glite {
 namespace wms {
@@ -18,32 +20,38 @@ DispatcherFactory* DispatcherFactory::s_instance = 0;
 
 class DispatcherFactory::Impl: boost::noncopyable
 {
-  typedef Loki::Factory<product_type, std::string, product_creator_type> factory_type;
+  typedef std::map<std::string, product_creator_type> factory_type;
   factory_type m_factory;
 
 public:
-
+  
   bool register_dispatcher(std::string const& id, product_creator_type creator);
   bool unregister_dispatcher(std::string const& id);
   product_type* create_dispatcher(std::string const& id);
 };
-
+  
 bool
 DispatcherFactory::Impl::register_dispatcher(std::string const& id, product_creator_type creator)
 {
-  return m_factory.Register(id, creator);
+  return m_factory.insert(std::make_pair(id, creator)).second;
 }
 
 bool
 DispatcherFactory::Impl::unregister_dispatcher(std::string const& id)
 {
-  return m_factory.Unregister(id);
+  return m_factory.erase(id) == 1;
 }
 
 DispatcherFactory::product_type*
 DispatcherFactory::Impl::create_dispatcher(std::string const& id)
 {
-  return m_factory.CreateObject(id);
+  factory_type::iterator i = m_factory.find(id);
+  if (i == m_factory.end())
+    {
+      throw NoCreateDispatcherException();
+    }
+   
+  return (i->second)();  
 }
 
 DispatcherFactory*

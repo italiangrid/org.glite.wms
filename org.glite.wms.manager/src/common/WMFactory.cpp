@@ -6,8 +6,9 @@
 // $Id$
 
 #include "WMFactory.h"
+#include <map>
 #include <boost/utility.hpp>
-#include "glite/wms/thirdparty/loki/Factory.h"
+
 
 namespace glite {
 namespace wms {
@@ -18,11 +19,11 @@ WMFactory* WMFactory::s_instance = 0;
 
 class WMFactory::Impl: boost::noncopyable
 {
-  typedef Loki::Factory<product_type, wm_type, product_creator_type> factory_type;
+  typedef std::map<wm_type, product_creator_type> factory_type;
   factory_type m_factory;
-
+  
 public:
-
+  
   bool register_wm(wm_type const& id, product_creator_type creator);
   bool unregister_wm(wm_type const& id);
   product_type* create_wm(wm_type const& id);
@@ -31,19 +32,24 @@ public:
 bool
 WMFactory::Impl::register_wm(wm_type const& id, product_creator_type creator)
 {
-  return m_factory.Register(id, creator);
+  return m_factory.insert(std::make_pair(id, creator)).second;
 }
 
 bool
 WMFactory::Impl::unregister_wm(wm_type const& id)
 {
-  return m_factory.Unregister(id);
+  return m_factory.erase(id) == 1;
 }
 
 WMFactory::product_type*
 WMFactory::Impl::create_wm(wm_type const& id)
 {
-  return m_factory.CreateObject(id);
+  factory_type::iterator i = m_factory.find(id);
+  if (i == m_factory.end())
+    {
+      throw NoCreateWMException();
+    }
+  return (i->second)();   
 }
 
 WMFactory*
