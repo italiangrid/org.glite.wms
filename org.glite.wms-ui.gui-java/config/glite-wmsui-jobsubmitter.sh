@@ -26,6 +26,7 @@ EXTRA_CLASSES="$EXTRA_CLASSES:$LOG4J_PATH/log4j-1.2.8.jar"
 EXTRA_CLASSES="$EXTRA_CLASSES:$CLASSADJ_PATH/classad.jar"
 EXTRA_CLASSES="$EXTRA_CLASSES:/opt/glite/externals/share/java/bcprov-jdk14-122.jar"
 EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/glite-security-util-java.jar"
+EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/glite-rgma-stubs-servlet-java.jar"
 
 # Job Submitter specific
 EXTRA_CLASSES="$EXTRA_CLASSES:$GLITE_WMS_LOCATION/share/java/info.jar"
