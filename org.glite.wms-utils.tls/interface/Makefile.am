@@ -6,8 +6,8 @@
 ## *
 ## *********************************************************************
 
-tlsutdir = $(includedir)
-nobase_tlsnut_HEADERS = \
+tlssodir = $(includedir)
+nobase_tlsso_HEADERS = \
 	glite/wms/tls/socket++/GSISocketAgent.h \
         glite/wms/tls/socket++/GSISocketClient.h \
 	glite/wms/tls/socket++/GSISocketServer.h \
