@@ -8,7 +8,7 @@
 #include <vector>
 /**  LB Class implementation:  */
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/Job.h"
 

@@ -5,7 +5,7 @@
 ***************************************************************************/
 #include <stdlib.h>
 #include "AdWrapper.h"
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #define ORG_GLITE_WMSUI_WRAPY_TRY_ERRROR try{ error_code = false ;
 #define ORG_GLITE_WMSUI_WRAPY_CATCH_ERRROR \
 } catch (Exception &exc){  error_code= true; error = exc.what(); \

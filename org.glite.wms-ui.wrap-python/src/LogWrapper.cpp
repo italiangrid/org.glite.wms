@@ -1,8 +1,8 @@
 #include "LogWrapper.h"
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/lb/consumer.h"
-#include "glite/lb/producer.h"
+//#include "glite/lb/producer.h"
 #include <stdio.h>
 #include <iostream>
 #include <string>

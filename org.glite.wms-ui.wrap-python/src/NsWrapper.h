@@ -8,7 +8,7 @@
  */
 
 #include "NSClient.h"
-#include "glite/wmsutils/exception/Exceptions.h"
+#include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/common/logger/common.h"
 #include "glite/lb/JobStatus.h"
 #include <vector>
