@@ -5,7 +5,7 @@
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  * Contributors are mentioned in the code where appropriate.
  */
-#include "glite/wmsutils/exceptionexception_codes.h"
+#include "glite/wmsutils/exception/exception_codes.h"
 /** The list of this namespace possible error codes: */
 
 namespace glite { 
