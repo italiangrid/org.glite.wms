@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.21  2004/10/25 21:01:40  dimeglio
+	Use antExec
+
 	Revision 1.20  2004/10/12 14:21:21  eronchie
 	Removed ssl_utils dependency
-
+	
 	Revision 1.19  2004/10/11 17:04:48  eronchie
 	Removed ssl_utils as tls dependency
 	
@@ -256,7 +259,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.exception" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-utils.subsystem.dir}.exception" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
@@ -272,7 +275,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.tls" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-utils.subsystem.dir}.tls" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
@@ -288,7 +291,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.jobid" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+				<exec dir="${wms-utils.subsystem.dir}.jobid" executable="${antExec}" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
