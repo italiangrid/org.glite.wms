@@ -116,7 +116,7 @@ org_glite_wmsui_apij_Api.lo: org_glite_wmsui_apij_Api.cpp
 	org.glite.wmsui.apij.Api
 	/usr/bin/libtool $(CXX) -c $(CFLAGS) -DHAVE_CONFIG_H \
 	-I. -I. -I../.. $(AM_CPPFLAGS) \
-	-o org_glite_wmsui_apij_Api.o org_glite_wmsui_apij_Api.cpp
+	-o org_glite_wmsui_apij_Api.o ../../src/org_glite_wmsui_apij_Api.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
