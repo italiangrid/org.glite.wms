@@ -109,7 +109,8 @@ wsdl:
 		rm *.xml
 
 wmClient:	wm.h wmclient.cpp $(SOAPH) $(SOAPCPP)
-			$(CPP) -I. $(C1FLAGS) -I$(GSOAPPATH) -DWITH_OPENSSL \
+			@echo "wmclient....."
+			@$(CPP) -I. $(C1FLAGS) -I$(GSOAPPATH) -DWITH_OPENSSL \
 				-o wmClient wmclient.cpp soapC.cpp soapClient.cpp \
 				$(SOAPCPP) $(LIBS) $(LD1FLAGS)
 
@@ -118,6 +119,7 @@ wmProxy:        wm.h \
                                 wmputils.cpp wmputils.h \
                                 wmpoperations.cpp wmpoperations.h  \
                                 wmpgsoapoperations.cpp \
+				wmpconfiguration.h wmpconfiguration.cpp \
                                 wmpexceptions.cpp wmpexceptions.h \
                                 wmpeventlogger.cpp wmpeventlogger.h \
                                 wmpgsoapfaultmanipulator.cpp wmpgsoapfaultmanipulator.h \
@@ -125,11 +127,12 @@ wmProxy:        wm.h \
                                 wmpexpdagad.cpp wmpexpdagad.h \
                                 wmpdispatcher.cpp wmpdispatcher.h\
                                 WMPManager.h NS2WMProxy.h wmpresponsestruct.h $(SOAPH) $(SOAPCPP)
-			$(CPP) $(CFLAGS) $(CMFLAGS) \
+			@echo "wmproxy....."
+			@$(CPP) $(CFLAGS) $(CMFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
                                 wmputils.cpp wmpoperations.cpp wmpeventlogger.cpp \
                                 wmpexceptions.cpp wmpgsoapoperations.cpp \
-                                wmpdispatcher.cpp \
+                                wmpdispatcher.cpp wmpconfiguration.cpp\
                                 wmpgsoapfaultmanipulator.cpp wmpexpdagad.cpp wmpdelegation.cpp \
                                 WMPManager.cpp NS2WMProxy.cpp \
                                 $(SOAPCPP) $(LIBS) $(LDFLAGS)
