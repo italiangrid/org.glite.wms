@@ -11,11 +11,13 @@
 #include <stdlib.h>
 
 #include "glite/wmsui/partitioner/Partitioner.h"
+
 #include "glite/wms/jdl/DAGAdManipulation.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
+
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/exception/exception_codes.h"
 
@@ -44,7 +46,7 @@ Partitioner::Partitioner( const classad::ClassAd* ad, std::vector<std::string> i
     set_edg_jobid( *this->p_dag, reqad::get_edg_jobid( *old ) );
     reqad::remove_edg_jobid( *old );
   } catch ( reqad::CannotGetAttribute ) { 
-    throw utils::Exception(__FILE__, __LINE__, "Partitioner::Partitioner( ... )", utils::WL_FATAL_ERROR, "NO_EdgJobId");
+    throw utils::Exception(__FILE__, __LINE__, "Partitioner::Partitioner( ... )", utils::WMS_FATAL_ERROR, "NO_EdgJobId");
   }
 
   try { // the InputSandBox is optional
@@ -121,7 +123,7 @@ Partitioner::Partitioner( const classad::ClassAd* ad, std::vector<std::string> i
       else  // the weight attribute is set
 	this->p_subdivision = new Partition( lstep, w, this->p_id.size());
     } catch ( reqad::CannotGetAttribute ) {
-      throw utils::Exception(__FILE__, __LINE__, "Partitioner::Partitioner( ... )",  utils::WL_FATAL_ERROR, "NO_JobSteps");
+      throw utils::Exception(__FILE__, __LINE__, "Partitioner::Partitioner( ... )",  utils::WMS_FATAL_ERROR, "NO_JobSteps");
     }
   }
   // set the subjob (this part of jdl is common for all the subjobs)
