@@ -20,10 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.16  2004/05/13 23:40:56  dimeglio
+	Removed one occurrence of Test2 WMS
+
 	Revision 1.15  2004/05/13 23:07:19  dimeglio
 	Added ant-contrib target
 	Replaced workspace.abs.dir with workspace.dir
-
+	
 	Revision 1.14  2004/05/13 19:37:04  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
 	
@@ -106,7 +109,7 @@
 	<import file="${global.external-dependencies.file}" />
 
 	<!-- ========================================================
-		 Checkout/updates the GLite Middleware Test2 WMS components
+		 Checkout/updates the GLite Middleware WMS components
 		 ======================================================== -->
 		
 	<!-- Default update mode - Override from command line -->
