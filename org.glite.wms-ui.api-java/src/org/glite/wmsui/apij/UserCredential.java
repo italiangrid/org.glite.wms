@@ -52,7 +52,7 @@ public class UserCredential{
 	public UserCredential (File credPath) throws java.io.FileNotFoundException , org.globus.gsi.GlobusCredentialException { setProxy   (credPath)  ; }
 	/**
 	* Destroy the proxy file used */
-	public void destroyProxy ( )   { /** TBD */}
+	public void destroyProxy ( )   { }
 	/** Create the default proxy
 	* Create the default proxy certificate with all the default values: 512-key-length bits, 24c hours, not limited
 	* @param passPhrase the passphrase needed in oprder to generate the proxy certificate
