@@ -26,7 +26,7 @@ classad_plugin_loader::classad_plugin_loader()
   if (count++ == 0) {
 	  // TODO: change code to allow reading of plugin modules to be loaded froma configuration file	
 	  classad::ClassAdParser parser;
-          classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_gangmatch_plugin.so");
+          classad::FunctionCall::RegisterSharedLibraryFunctions("libglite_wms_gangmatch_classad_plugin.so");
   }
 }
 
