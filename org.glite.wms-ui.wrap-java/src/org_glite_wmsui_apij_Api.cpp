@@ -28,7 +28,7 @@
 // Dgas Authorisation include files
 #include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
 #define EDG_WLU_SOURCE_NS "NetworkServer"
-#define GLITE_WMS_LOG_DESTINATION "GLITE_WMS_LOG_DESTINATION"
+#define GLITE_LB_LOG_DESTINATION "EDG_WL_LOG_DESTINATION" //TBD change when LB people provide new naming
 
 #define NS_CTX 0
 #define LB_CTX 1
@@ -68,7 +68,7 @@ non-native methods:
 		char *msg, *dsc ;
 		edg_wll_Error(  ctx , &msg , &dsc ) ;
 		sprintf ( error_message , "%s%s%s%s%s%s%s", api,
-		getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+		getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 		return error_message ;
 	} ;
 
@@ -526,13 +526,13 @@ LOGGING methods:
 		lbVect.push_back( ctx) ;
 		if ( edg_wll_InitContext( ctx ) ) log_error (env , "Unable to Initialise LB context") ;
 		if (edg_wll_SetParam( *ctx, EDG_WLL_PARAM_SOURCE, EDG_WLL_SOURCE_USER_INTERFACE ) ) log_error (env , "Unable to set LB source parameter" ) ;
-		if ( ! getenv ( GLITE_WMS_LOG_DESTINATION) ){
+		if ( ! getenv ( GLITE_LB_LOG_DESTINATION) ){
 			if (edg_wll_SetParamString( *ctx, EDG_WLL_PARAM_DESTINATION, lb ) ) log_error (env , "Unable to set LB destination parameter") ;
 			char edg_log_dest [1024];
 			int DEF_LOG_PORT = 9002 ;
 			sprintf (  edg_log_dest , "%s%s%d", lb , ":" , DEF_LOG_PORT ) ;
-			unsetenv( GLITE_WMS_LOG_DESTINATION  ) ;
-			setenv (  GLITE_WMS_LOG_DESTINATION, edg_log_dest , 0 );
+			unsetenv( GLITE_LB_LOG_DESTINATION  ) ;
+			setenv (  GLITE_LB_LOG_DESTINATION, edg_log_dest , 0 );
 		}
 		env->ReleaseStringUTFChars( nsAddr, lb);
 	}
@@ -556,7 +556,7 @@ lock();
 				char *msg, *dsc ;
 				edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]  , &msg , &dsc ) ;
 				sprintf ( error_message , "%s%s%s%s%s%s%s%s%s", "Unable to Register the Job:\n", jid.toString().c_str() ,"\nto the LB logger at: ",
-				getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+				getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
 				log_error (env , error_message) ;
 			}
 unlock() ;
@@ -663,7 +663,7 @@ unlock() ;
 			char *msg, *dsc ;
 			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogListener  at: ",
-			getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
 		}
 		env->ReleaseStringUTFChars(host, addr);
@@ -756,7 +756,7 @@ unlock() ;
 			char *msg, *dsc ;
 			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogUserTag   at: ",
-			getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
 		}
 		env->ReleaseStringUTFChars(name, tName);
@@ -1293,7 +1293,7 @@ DAGAD implementation methods:
 			char *msg, *dsc ;
 			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform  edg_wll_RegisterJobSync   at: ",
-			getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
 		}
 	unlock();
@@ -1316,7 +1316,7 @@ DAGAD implementation methods:
 			char *msg, *dsc ;
 			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogUserTag   at: ",
-			getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
+			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
 		}
 
