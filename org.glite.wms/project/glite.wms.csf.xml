@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.57  2004/08/20 10:07:02  eronchie
+	Updated buildmodules
+
 	Revision 1.56  2004/08/16 15:00:04  eronchie
 	Added configuration component
-
+	
 	Revision 1.55  2004/08/16 13:00:42  eronchie
 	Updated
 	Added interactive component
@@ -679,9 +682,11 @@
         </target>
 		
 	<!-- All project modules -->
- 	<target name="project" depends="thirdparty-bypass,
+ 	<target name="project" depends="configuration,
   				        thirdparty-globus_gridftp_server,
   				        thirdparty-loki,
+					thirdparty-bypass,
+					interactive,
 				        common,
 					jdl,
  				        jdlj,
@@ -699,9 +704,7 @@
 					manager-ns-client,
 					manager-ns-daemon,
 					jobsubmission,
-					manager,
-					interactive,
-					configuration"/>
+					manager"/>
 
 
 	<!-- ====================================================
