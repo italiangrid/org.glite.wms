@@ -13,19 +13,20 @@
 #include "glite/wms/checkpointing/ChkptException.h"
 
 // JobId library
-#include "glite/wms/jobid/JobId.h"
-#include "glite/wms/jobid/JobIdExceptions.h"
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 // LB library
 #include "glite/lb/consumer.h"
 #include "glite/lb/producer.h"
 
-#include "glite/wms/tls/ssl_helpers/ssl_inits.h"
+#include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 
 
 using namespace std;
 using namespace classad;
-using namespace glite::wms::common;
+//using namespace glite::wmsutils::tls::socket_pp;
+using namespace glite::wmsutils::jobid;
 
 CHKPT_NAMESPACE_BEGIN {
   
@@ -102,7 +103,7 @@ JobState::JobState( const JobState &cjs ) : js_stateId( cjs.js_stateId ), js_ctx
 // Create and initialize an LB context
 const char *JobState::createContext( void )
 {
-  glite::wms::jobid::JobId   jobid;
+  glite::wmsutils::jobid::JobId   jobid;
   int            error;
   
   // define a context using the values stored in the environment variables. 
@@ -112,7 +113,7 @@ const char *JobState::createContext( void )
     throw SEException(__FILE__, __LINE__, "JobState::createContext", "EDG_WL_JOBID");
   try {
     jobid.fromString(job);
-  } catch (glite::wms::jobid::WrongIdException) {
+  } catch (glite::wmsutils::jobid::WrongIdException) {
     throw SEException(__FILE__, __LINE__, "JobState::createContext", "EDG_WL_JOBID");
   }
   const char *sc = getenv( "EDG_WL_SEQUENCE_CODE" ); // the sequence code
