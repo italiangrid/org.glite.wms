@@ -221,8 +221,8 @@ public class NSPanel extends JPanel {
   }
 
   private void _Init() throws Exception {
-    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
-        : false;
+    isDebugging = isDebugging
+        || ((Logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false);
     createJPopupMenu();
     jScrollPaneJobTable.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusGained(FocusEvent e) {
@@ -433,12 +433,17 @@ public class NSPanel extends JPanel {
     for (int i = 0; i < jobTableModel.getRowCount(); i++) {
       jobName = jobTableModel.getValueAt(i, JOB_NAME_COLUMN_INDEX).toString()
           .toUpperCase().trim();
+      logger.debug("-------- Name:" + name);
+      logger.debug("-------- Job Name:" + jobName);
       if (jobName.indexOf(name) == 0) {
         progressiveNumberTxt = jobName.substring(name.length());
         try {
           progressiveNumber = Integer.parseInt(progressiveNumberTxt, 10);
           progressiveNumberVector.add(Integer.toString(progressiveNumber));
         } catch (NumberFormatException nfe) {
+          if (isDebugging) {
+            nfe.printStackTrace();
+          }
           // Value after
           // GUIFileSystem.DEFAULT_JDL_EDITOR_SAVE_FILE_NAME is not
           // an integer. Do nothing.
@@ -456,11 +461,14 @@ public class NSPanel extends JPanel {
       if (lastIndex != -1) {
         nsName = key.substring(0, lastIndex).trim();
         if (nsName.equals(this.name)) {
-          jobName = key.substring(lastIndex + 1).trim();
+          jobName = key.substring(lastIndex + 1).toUpperCase().trim();
+          logger.debug("-------- Name:" + name);
+          logger.debug("-------- Job Name:" + jobName);
           if (jobName.indexOf(name) == 0) {
             try {
               progressiveNumber = Integer.parseInt(jobName.substring(name
                   .length()), 10);
+              logger.debug("-------- Progressive number:" + progressiveNumber);
               progressiveNumberVector.add(Integer.toString(progressiveNumber));
             } catch (NumberFormatException nfe) {
               if (isDebugging) {
@@ -486,8 +494,12 @@ public class NSPanel extends JPanel {
   }
 
   protected String getAvailableJobName(String name) {
-    if (jobTableModel.isElementPresentInColumn(name, JOB_NAME_COLUMN_INDEX)) {
-      return name + getProgressiveJobNumber(name);
+    logger.debug("-------- Available name: " + name);
+    String key = this.name + " - " + name;
+    logger.debug("-------- Key: " + key);
+    if (jobTableModel.isElementPresentInColumn(name, JOB_NAME_COLUMN_INDEX)
+        || GUIGlobalVars.openedEditorHashMap.containsKey(key)) {
+      name = name + getProgressiveJobNumber(name);
     }
     return name;
   }
@@ -1733,7 +1745,9 @@ public class NSPanel extends JPanel {
     }
     String type = "";
     try {
-      type = ad.getStringValue(Jdl.TYPE).get(0).toString();
+      if (ad.hasAttribute(Jdl.TYPE)) {
+        type = ad.getStringValue(Jdl.TYPE).get(0).toString();
+      }
     } catch (Exception e) {
       if (isDebugging) {
         e.printStackTrace();

@@ -79,7 +79,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
   static final int FRAME_HEIGHT = 720;
 
   static final int MAX_FRAME_WIDTH = FRAME_WIDTH + 120;
-  
+
   Component startUpSelectedTab;
 
   JTabbedPane jTabbedJDL = new JTabbedPane();
@@ -375,8 +375,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       logger.setLevel(Level.FATAL);
       Logger.getRootLogger().setLevel(Level.FATAL);
     }
-    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
-        : false;
+    isDebugging = isDebugging
+        || ((Logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false);
     if (!jobType.equals(Jdl.TYPE_DAG)) {
       File confFile = new File(GUIFileSystem.getGUIConfVarFile());
       JobAd confAd = new JobAd();
@@ -491,19 +491,18 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
       jTabbedJDL.addTab((String) element[i][0], (JPanel) element[i][1]);
     }
     //partitionablePanel = (JPanel) partitionable;
-    
     jTabbedJDL.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     //jTabbedJDL
-      //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
+    //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
     //String panelName = jTabbedJDL.getTitleAt(jTabbedJDL.getSelectedIndex());
-    startUpSelectedTab = jobDef2;
+    startUpSelectedTab = jobDef1;
     jTabbedJDL.setSelectedComponent(startUpSelectedTab);
     /*logger.debug("--------------" + panelName);
-    if (panelName.equals(Utils.GUI_PANEL_NAMES[9])) {
-      jButtonView.setText("  Check  ");
-    } else {
-      jButtonView.setText("   View   ");
-    }*/
+     if (panelName.equals(Utils.GUI_PANEL_NAMES[9])) {
+     jButtonView.setText("  Check  ");
+     } else {
+     jButtonView.setText("   View   ");
+     }*/
     jobDef1.jTextFieldExecutable.grabFocus();
     jScrollPaneTabbedJDL = new JScrollPane(jTabbedJDL);
     jButtonView.addActionListener(new java.awt.event.ActionListener() {
@@ -782,18 +781,18 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
    */
   protected JobAd checkJDLText(String jdlText) {
     /*ExprChecker exprChecker = new ExprChecker();
-    //(*)JobAd jobAd = exprChecker.parseLineByLine(jdlText);
-    exprChecker.parseLineByLine(jdlText);
-    String errorMsg = exprChecker.getErrorMsg().trim();
-    if (!errorMsg.equals("")) {
-      String firstLine = "<html><font color=\"#800080\">"
-          + "JDL text contains error(s)" + "</font>" + "\n";
-      GraphicUtils.showOptionDialogMsg(JDLEditor.this, errorMsg,
-          Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
-          JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
-          firstLine, null);
-      return null;
-    }*/
+     //(*)JobAd jobAd = exprChecker.parseLineByLine(jdlText);
+     exprChecker.parseLineByLine(jdlText);
+     String errorMsg = exprChecker.getErrorMsg().trim();
+     if (!errorMsg.equals("")) {
+     String firstLine = "<html><font color=\"#800080\">"
+     + "JDL text contains error(s)" + "</font>" + "\n";
+     GraphicUtils.showOptionDialogMsg(JDLEditor.this, errorMsg,
+     Utils.ERROR_MSG_TXT, JOptionPane.DEFAULT_OPTION,
+     JOptionPane.ERROR_MESSAGE, Utils.MESSAGE_LINES_PER_JOPTIONPANE,
+     firstLine, null);
+     return null;
+     }*/
     JobAd jobAd = new JobAd();
     logger.debug("jdlText: " + jdlText);
     try {
@@ -1103,13 +1102,14 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     String panelNameTags = "<html><font color=\"#602080\">"
         + Utils.GUI_PANEL_NAMES[8] + ":" + "</font>";
     String panelNamePartitionable = "<html><font color=\"#602080\">"
-      + Utils.GUI_PANEL_NAMES[9] + ":" + "</font>";
+        + Utils.GUI_PANEL_NAMES[9] + ":" + "</font>";
     this.errorMsg = "";
     if (!checkpoint.getErrorMsg().equals("")) {
       errorMsg += panelNameJobType + "\n" + checkpoint.getErrorMsg() + "\n";
     }
     if (!partitionable.getErrorMsg().equals("")) {
-      errorMsg += panelNamePartitionable + "\n" + partitionable.getErrorMsg() + "\n";
+      errorMsg += panelNamePartitionable + "\n" + partitionable.getErrorMsg()
+          + "\n";
     }
     if (!jobDef1.getErrorMsg().equals("")) {
       errorMsg += panelNameJobDefinition1 + "\n" + jobDef1.getErrorMsg() + "\n";
@@ -1181,7 +1181,8 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
         String partitionableWarningMsg = "";
         Vector partitionableAttributeVector = new Vector();
         for (int i = 0; i < Utils.partitionableAttributeArray.length; i++) {
-          partitionableAttributeVector.add(Utils.partitionableAttributeArray[i]);
+          partitionableAttributeVector
+              .add(Utils.partitionableAttributeArray[i]);
         }
         String jobDefinition1WarningMsg = "";
         Vector jobDefinition1AttributeVector = new Vector();
@@ -1256,8 +1257,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
           warningMsg += panelNameJobType + "\n" + jobTypeWarningMsg;
         }
         if (!partitionableWarningMsg.equals("")) {
-          warningMsg += panelNamePartitionable + "\n"
-              + partitionableWarningMsg;
+          warningMsg += panelNamePartitionable + "\n" + partitionableWarningMsg;
         }
         if (!jobDefinition1WarningMsg.equals("")) {
           warningMsg += panelNameJobDefinition1 + "\n"
@@ -1426,7 +1426,7 @@ public class JDLEditor extends JFrame implements JDLEditorInterface {
     return false;
   }
 
-private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
+  private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
     Vector jobTypesVector = new Vector();
     try {
       jobTypesVector = jobAd.getStringValue(Jdl.JOBTYPE);
@@ -1776,19 +1776,18 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
         // Attribute not present in jobad.
       }
     }
-    
     if (jobTypesVector.contains(Jdl.JOBTYPE_PARTITIONABLE)) {
       setPartitionablePanelVisible(true);
       try {
         if (jobAd.hasAttribute(Jdl.PRE_JOB)) {
           JobAd preJobAd = jobAd.getJobAdValue(Jdl.PRE_JOB);
-          if (preJobAd.size() != 0){
+          if (preJobAd.size() != 0) {
             partitionable.setPartitionablePreText(preJobAd);
           }
         }
         if (jobAd.hasAttribute(Jdl.POST_JOB)) {
           JobAd postJobAd = jobAd.getJobAdValue(Jdl.POST_JOB);
-          if (postJobAd.size() != 0){
+          if (postJobAd.size() != 0) {
             partitionable.setPartitionablePostText(postJobAd);
           }
         }
@@ -1839,7 +1838,6 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
         // Attribute not present in jobad.
       }
     }
-    
     //////////////////////
     // Tags ATTRIBUTES. //
     //////////////////////
@@ -1884,7 +1882,7 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
     } else {
       jMenuItemFileParsingError.setEnabled(false);
     }
-  }  /*
+  } /*
    * String getLocalExecutableText() { return
    * jobDef1.jTextFieldExecutable.getText().trim(); } String
    * getRemoteExecutableText() { return
@@ -1910,7 +1908,7 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
         jButtonBack.setEnabled(true);
         displayJPanelDesktop();
         //jTabbedJDL
-          //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
+        //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
         jTabbedJDL.setSelectedComponent(startUpSelectedTab);
         //jobDef1.jTextFieldExecutable.grabFocus();
       }
@@ -1970,7 +1968,7 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
           jButtonBack.setEnabled(true);
           displayJPanelDesktop();
           //jTabbedJDL
-            //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
+          //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
           jTabbedJDL.setSelectedComponent(startUpSelectedTab);
           //jobDef1.jTextFieldExecutable.grabFocus();
         }
@@ -2192,7 +2190,7 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
       jTabbedJDL.addTab(Utils.GUI_PANEL_NAMES[7], unknownPanel);
     } else {
       //jTabbedJDL
-        //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
+      //  .setSelectedIndex(GraphicUtils.STARTUP_SELECTED_TABBED_PANE_INDEX);
       jTabbedJDL.setSelectedComponent(startUpSelectedTab);
       jTabbedJDL.remove(unknownPanel);
     }
@@ -2258,7 +2256,7 @@ private void addAttributesFromJobAd(JobAd jobAd, boolean setDefault) {
   }
 
   /*****************************************************************************
-   * JDLEditorInterface methods implementation *
+   * JDLEditorInterface methods implementation
    ****************************************************************************/
   // get, set methods //
   public String getUserWorkingDirectory() {
