@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/10/11 17:14:09  fpacini
+#       added missing deps
+#
 #       Revision 1.5  2004/09/22 01:35:01  dimeglio
 #       Fixed missing parenthesis in AC_INIT
 #
@@ -106,20 +109,37 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["ARES found $have_ares"])
 
+have_glite_wms_common=no
 have_glite_wmsutils=no
+have_glite_wms_jdl=no
 have_lb=no
 have_dgas=no
+have_glite_dgas_common=no
+have_glite_security=no
 
 AC_GLITE
 
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+
+AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
 AC_GLITE_DGAS([], have_glite_dgas=yes, have_glite_dgas=no)
 AC_MSG_RESULT(["GLITE_DGAS found $have_glite_dgas"])
+
+AC_GLITE_DGAS_COMMON([], have_glite_dgas_common=yes, have_glite_dgas_common=no)
+AC_MSG_RESULT(["GLITE_DGAS_COMMON found $have_glite_dgas_common"])
+
+AC_VOMS([], have_voms=yes, have_voms=no)
+AC_MSG_RESULT(["VOMS found $have_voms"])
+
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
