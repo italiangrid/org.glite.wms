@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.4  2004/08/04 07:30:29  eronchie
+	Added cppunit
+
 	Revision 1.3  2004/07/23 14:50:08  eronchie
 	Added exception
-
+	
 	Revision 1.2  2004/07/23 08:27:03  eronchie
 	Updated
 	
@@ -190,7 +193,7 @@
 	<!-- component targets tag = do not remove = -->
 
 	<!-- Globus SSLUtils -->
- 	<target name="thirdparty-globus_ssl_utils" depends="globus,get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
+ 	<target name="thirdparty-globus_ssl_utils" depends="globus,cppunit,get.thirdparty-globus_ssl_utils.head, get.thirdparty-globus_ssl_utils.tag"/>
 	<target name="get.thirdparty-globus_ssl_utils.head" if="thirdparty-globus_ssl_utils.head">
 		<cvs-co package="org.glite.wms-utils.thirdparty-globus_ssl_utils" />
 	</target>
@@ -200,7 +203,7 @@
 	</target>
 
     	<!-- Tls -->
-    	<target name="tls" depends="boost,classads,globus,exception,get.tls.head, get.tls.tag"/>
+    	<target name="tls" depends="boost,classads,globus,cppunit,exception,get.tls.head, get.tls.tag"/>
     	<target name="get.tls.head" if="tls.head">
             <cvs-co package="org.glite.wms-utils.tls" />
     	</target>
@@ -210,7 +213,7 @@
     	</target>
 
 	<!-- Jobid -->
-    	<target name="jobid" depends="boost,classads,globus,exception,get.jobid.head, get.jobid.tag"/>
+    	<target name="jobid" depends="boost,classads,globus,cppunit,exception,get.jobid.head, get.jobid.tag"/>
     	<target name="get.jobid.head" if="jobid.head">
             <cvs-co package="org.glite.wms-utils.jobid" />
     	</target>
@@ -220,7 +223,7 @@
     	</target>
 
 	<!-- exception -->
-        <target name="exception" depends="get.exception.head, get.exception.tag"/>
+        <target name="exception" depends="cppunit,get.exception.head, get.exception.tag"/>
         <target name="get.exception.head" if="exception.head">
             <cvs-co package="org.glite.wms-utils.exception" />
         </target>

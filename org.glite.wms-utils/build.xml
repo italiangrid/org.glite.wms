@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/08/04 07:30:29  eronchie
+	Added cppunit
+
 	Revision 1.5  2004/07/29 07:31:26  dimeglio
 	Removed local envinfo target (must use common one)
-
+	
 	Revision 1.4  2004/07/29 07:28:43  dimeglio
 	Removed local envcheck task (must use common one)
 	
@@ -216,25 +219,25 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="thirdparty-globus_ssl_utils" unless="setenvonly" depends="globus">
+	<target name="thirdparty-globus_ssl_utils" unless="setenvonly" depends="globus,cppunit">
 		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
 		     target="${target}"
 		     inheritall="false" />
 	</target>
 
-	<target name="exception" unless="setenvonly" depends="boost,classads">
+	<target name="exception" unless="setenvonly" depends="boost,classads,cppunit">
 		<ant dir="${workspace.dir}/${subsystem.name}.exception"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
-        <target name="tls" unless="setenvonly" depends="boost,classads,globus,thirdparty-globus_ssl_utils,exception">
+        <target name="tls" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
                 <ant dir="${workspace.dir}/${subsystem.name}.tls"
                      target="${target}"
                      inheritall="false" />
         </target>
 
-	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,thirdparty-globus_ssl_utils,exception">
+	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobid"
                      target="${target}"
                      inheritall="false" />
