@@ -24,7 +24,7 @@
 
 #include "glite/lb/JobStatus.h"
 
-namespace errorcodes = wmproxyname;
+namespace errorcodes =  glite::wms::wmproxy::server ;  //Exception codes
 namespace jobid = glite::wmsutils::jobid;
 
 using namespace std;

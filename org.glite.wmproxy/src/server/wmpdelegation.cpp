@@ -24,7 +24,7 @@ extern "C" {
 }
 
 using namespace std;
-using namespace wmproxyname;
+using namespace glite::wms::wmproxy::server ;  //Exception codes
 using namespace glite::wmsutils::exception; //Exception
 
 const char* WMPDelegation::GRST_PROXYCACHE = "proxycache";

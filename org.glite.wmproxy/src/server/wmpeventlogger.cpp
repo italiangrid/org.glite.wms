@@ -30,7 +30,7 @@ namespace jobid = glite::wmsutils::jobid;
 
 
 using namespace std;
-using namespace wmproxyname;
+using namespace glite::wms::wmproxy::server ;  //Exception codes
 using namespace glite::wms::jdl; // DagAd
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception

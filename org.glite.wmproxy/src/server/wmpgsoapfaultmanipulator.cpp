@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace errorcodes = wmproxyname;
+namespace errorcodes = glite::wms::wmproxy::server ;  //Exception codes
 
 
 /**
