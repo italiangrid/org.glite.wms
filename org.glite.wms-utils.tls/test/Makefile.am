@@ -26,7 +26,8 @@ glite_wms_socketppClientTest_LDADD = \
 	$(GLITE_WMS_COMMON_UT_EXCEPTIONS_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS)
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/interface \
+	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS)
 

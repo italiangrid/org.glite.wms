@@ -1,5 +1,5 @@
-#include "socket++/GSISocketServer.h"
-#include "socket++/GSISocketAgent.h"
+#include "glite/wms/tls/socket++/GSISocketServer.h"
+#include "glite/wms/tls/socket++/GSISocketAgent.h"
 #include "socket++/exceptions.h"
 
 #include <iostream>

@@ -1,4 +1,4 @@
-#include "socket++/GSISocketClient.h"
+#include "glite/wms/tls/socket++/GSISocketClient.h"
 #include "socket++/exceptions.h"
 
 #include <iostream>

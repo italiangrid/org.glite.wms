@@ -28,18 +28,13 @@ libglite_wms_tls_gsisocket_pp_la_LIBADD = \
 
 socketppincludedir = $(includedir)/glite/wms/tls/socket++
 socketppinclude_HEADERS = \
-	GSISocketAgent.h \
-	GSISocketClient.h \
-	GSISocketServer.h \
-	SocketAgent.h \
-	SocketClient.h \
-	SocketServer.h \
 	exception_codes.h \
 	exceptions.h \
 	tokens.h \
 	errors.h
 
-AM_CPPFLAGS = -I$(top_srcdir)/src \
+AM_CPPFLAGS = -I$(top_srcdir)/interface \
+	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	-DWITH_SOCKET_EXCEPTIONS \

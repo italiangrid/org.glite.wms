@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/06/21 12:56:33  eronchie
+#       Start handling of interface headers
+#
 #       Revision 1.6  2004/06/16 15:57:56  eronchie
 #       Added configure options
 #       WARNING: work in progress
@@ -114,6 +117,7 @@ AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/socket++/Makefile])
 AC_CONFIG_FILES([src/ssl_helpers/Makefile])
