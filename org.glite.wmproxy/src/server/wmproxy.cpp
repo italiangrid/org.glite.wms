@@ -22,7 +22,7 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
-#include "logging.h"
+#include "commands/logging.h"
 
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
@@ -58,9 +58,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
-namespace utilities  = glite::wms::common::utilities;
+namespace utilities  	= glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
-
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 

@@ -7,8 +7,7 @@
 #ifndef GLITE_WMS_WMPROXY_WMPDISPATCHER_H
 #define GLITE_WMS_WMPROXY_WMPDISPATCHER_H
 
-#include "Task.h"
-
+#include "glite/wms/common/task/Task.h"
 #include "glite/wms/common/utilities/classad_utils.h" // InvalidValue
 
 
