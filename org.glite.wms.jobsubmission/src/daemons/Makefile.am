@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/08/10 12:01:43  eronchie
+#       Updated
+#
 #       Revision 1.6  2004/07/28 14:38:58  pandreet
 #       Proxyrenewal dependencies fixed
 #
@@ -51,9 +54,9 @@ noinst_HEADERS = \
 glite_wms_job_controller_SOURCES = jobcontroller.cpp \
 	ControllerLoop.cpp \
 	exceptions.cpp
-glite_wms_job_controller_LDADD = ../controller/libglite_wms_controller.la \
-	../controller/libglite_wms_controller_adapter.la \
-	../common/libglite_wms_js_common.la \
+glite_wms_job_controller_LDADD = ../controller/libglite_wms_jss_controller.la \
+	../controller/libglite_wms_jss_controller_adapter.la \
+	../common/libglite_wms_jss_common.la \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
@@ -75,10 +78,10 @@ glite_wms_job_controller_LDADD = ../controller/libglite_wms_controller.la \
 glite_wms_log_monitor_SOURCES = logmonitor.cpp \
 	MonitorLoop.cpp \
 	exceptions.cpp
-glite_wms_log_monitor_LDADD = ../controller/libglite_wms_controller.la \
-	../controller/libglite_wms_controller_adapter.la \
-	../logmonitor/libglite_wms_logmonitor.la \
-	../common/libglite_wms_js_common.la \
+glite_wms_log_monitor_LDADD = ../controller/libglite_wms_jss_controller.la \
+	../controller/libglite_wms_jss_controller_adapter.la \
+	../logmonitor/libglite_wms_jss_logmonitor.la \
+	../common/libglite_wms_jss_common.la \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
