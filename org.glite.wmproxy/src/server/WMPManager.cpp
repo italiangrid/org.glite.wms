@@ -87,7 +87,7 @@ public:
   }
 
 
-  void WMPManager::runCommand(std::string cmdname, std::string param, std::string &result)
+  void WMPManager::runCommand(std::string cmdname, std::vector<std::string> param, void* result,  wmp_fault_t &result)
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
