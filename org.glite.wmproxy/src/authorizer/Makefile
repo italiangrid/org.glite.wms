@@ -1,76 +1,43 @@
-C=g++
+cc=Gcc
+CPP=g++
+LIBS=
 COFLAGS=-O2
 CWFLAGS=
-ROOT=../../..
-REPOSITORY=$(ROOT)/repository
-STAGE=$(ROOT)/stage
-OBJFLAGS    = -g -Wall
+CIFLAGS=-I../..
+CMFLAGS=-DHAVE_STRINGSTREAM
 
-CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS)
+GLOBUS_LOCATION=$(REPOSITORY)/repository/globus/2.4.3-VDT-1.2.2/rhel30_gcc32
 
+GLOBUS_FLAVOR=gcc32dbg
+GLOBUS_FLAVOR_THREADS=gcc32dbgpthr
 
-LIB_DEST=../lib
+CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
+	-DWANT_NAMESPACES \
+	-DALLOW_EMPTY_CREDENTIALS \
+	-DLCMAPS_GSI_MODE \
+	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
+	-I$(REPOSITORY)/stage/include \
+	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include \
+	-I$(REPOSITORY)/stage/include/glite/security/lcas
 
+LDFLAGS= \
+	-L$(REPOSITORY)/stage/lib \
+	-llcas \
+	-llcmaps
 
-# gaclmanager opts
-#--------------------
-BOOST_LIBS=$(REPOSITORY)/boost/1.29.1/rhel30_gcc32/lib/release/libboost_fs.a \
-	$(REPOSITORY)/boost/1.29.1/rhel30_gcc32/lib/release/libboost_thread.a \
-	$(REPOSITORY)/boost/1.29.1/rhel30_gcc32/lib/release/libboost_regex.a
-
-CLASSAD_LIBS=$(REPOSITORY)/classads/0.9.6/rhel30_gcc32/lib/libclassad.a
-
-LIB_NAME_MGR=libgacl-manager.so
-
-SRC_MGR=gaclmanager.cpp  gaclexception.cpp
-
-INCLUDE_MGR=-I./ -I/usr/include/openssl/ -I/usr/kerberos/include \
-	-I$(ROOT)/org.glite.wms-utils.exception/interface \
-	-I$(ROOT)/org.gridsite.core/interface/
-
-LIBS_MGR=-lcurl -lz -lssl$(FLAVOR_EXT) -lcrypto_gcc32pthr -lxml2 -lm -lglite_wmsutils_exception \
-	-lgridsite  -lmcnab \
-	-L$(STAGE)/lib \
-	-L/usr/lib  -L$(REPOSITORY)/globus/2.4.3-VDT-1.2.2/rhel30_gcc32/lib
+all:	authorizer
 
 
-# gacladmin opts
-#--------------------
-SRC_ADMIN=gacladministator.cpp
-
-OBJ_ADMIN=wms-gacl-admin
-
-INCLUDE_ADMIN=-I./ $(INCLUDE_MGR)
-
-BOOST_LIBS=$(REPOSITORY)/boost/1.29.1/rhel30_gcc32/lib/release/libboost_fs.a \
-	$(REPOSITORY)/boost/1.29.1/rhel30_gcc32/lib/release/libboost_thread.a \
-	$(REPOSITORY)/boost/1.29.1/rhel30_gcc32/lib/release/libboost_regex.a
-
-CLASSAD_LIBS=$(REPOSITORY)/classads/0.9.6/rhel30_gcc32/lib/libclassad.a
-
-LIBS_ADMIN= -lgacl-manager -lglite_wms_util \
-	$(LIBS_MGR) -L ../lib \
-     	$(BOOST_LIBS) \
-     	$(CLASSAD_LIBS) \
-	-L./
+authorizer: 
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I. \
+			-I../server -I../utilities \
+	        -o libglite_wms_wmproxy_authorizer.so \
+	        wmpauthorizer.cpp \
+ 		$(LIBS) $(LDFLAGS)
 
 
-all: manager admin
+clean:
+		rm -f *.o *.so
 
-manager:
-	$(C)  $(CFLAGS) -shared \
-	-o $(LIB_NAME_MGR) $(SRC_MGR) \
-	$(INCLUDE_MGR) $(LIBS_MGR)
-
-
-
-admin:
-	$(C) $(OBJFLAGS) \
-	-o $(OBJ_ADMIN)\
-	$(SRC_ADMIN) \
-	$(INCLUDE_ADMIN) $(LIBS_ADMIN)
-
-
-
-
-
+distclean:
+		rm -f *.o *.so
