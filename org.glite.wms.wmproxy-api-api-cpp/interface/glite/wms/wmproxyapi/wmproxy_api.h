@@ -15,8 +15,29 @@ namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
-
-class BaseException
+/**
+* Base exception wrap
+*/
+struct BaseException {
+	BaseException::BaseException( std::string methodName, time_t Timestamp, std::string* ErrorCode, std::string* Description, std::vector<std::string> *FaultCause){
+	}
+	std::string                          methodName  ;
+	/// Element Timestamp of type xs:dateTime
+	time_t                               Timestamp     ;
+	/// Element ErrorCode of type xs:string
+	std::string*                         ErrorCode   ;
+	/// Element Description of type xs:string
+	std::string*                         Description ;
+	/// Vector of std::string with length 0..unbounded
+	std::vector<std::string           > *FaultCause   ;
+};
+struct AuthenticationException:BaseException{};
+struct AuthorizationException:BaseException{};
+struct InvalidArgumentException:BaseException{};
+struct GetQuotaManagementException:BaseException{};
+struct NoSuitableResourcesException:BaseException{};
+struct JobUnknownException:BaseException{};
+struct OperationNotAllowedException:BaseException{};
 
 /**
 * Used to specify the jobtype. multiple jobtype can be specified togheter by the bitwise (|) or operation
