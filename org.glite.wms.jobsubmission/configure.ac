@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.7  2004/07/27 13:46:37  pandreet
+#       LB dependencies fixed
+#
 #       Revision 1.6  2004/07/27 11:39:01  eronchie
 #       *** empty log message ***
 #
@@ -87,12 +90,15 @@ have_classads=no
 have_condorg=no
 have_globus=no
 have_globus_ssl=no
+have_ares=no
+have_expat=no
                                                                                 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_CONDORG(6.5.3, have_condorg=yes, have_condorg=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
-
+AC_ARES([], have_ares=yes, have_ares=no)
+AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_GLOBUS_SSL_UTILS([], have_globus_ssl=yes, have_globus_ssl=no)
                                                                                 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
@@ -100,6 +106,8 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["CONDORG found $have_condorg"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["GLOBUS_SSL found $have_globus_ssl"])
+AC_MSG_RESULT(["ARES found $have_ares"])
+AC_MSG_RESULT(["EXPAT found $have_expat"])
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
