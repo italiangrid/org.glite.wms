@@ -163,27 +163,6 @@ static bool insertPipePath (Command* cmd) {
   return cmd -> setParam("file", s.str());
 }
 
-  /*
-static bool doPurge(Command* cmd) {
-  edglog_fn("CFSI::doPurge");
-  edglog(info) << "Preparing to Purge." << std::endl;
-  std::string dg_jobid;
-  if ( cmd -> getParam("JobId", dg_jobid) ) {
-     const wmsutils::jobid::JobId jobid(dg_jobid);	  
-     edglog(warning) << "JobId object for purging created: "<< dg_jobid << std::endl;
-     bool result = purger::purgeStorage(jobid);
-     if (result) {
-        LogPurgeJob(cmd, true, false);
-     }
-     return result;
-  } else {
-    edglog(critical) << logger::setfunction("CommandFactoryServerImpl::doPurge()") << 
-      "Error in Purging: Job id not found in command. Not done." << std::endl;
-    return false;
-  }
-}
-  */
-
 bool setJobPaths(Command* cmd)
 {
   edglog_fn("CFSI::setJobPaths");

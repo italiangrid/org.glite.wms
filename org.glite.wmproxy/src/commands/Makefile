@@ -93,11 +93,13 @@ glitePipe:
 		$(LIBS)
 
 gliteWMPCommands: 
-		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server -DSHOW_EXECUTION \
-	       -o libgliteWMPCommands.so common.cpp \
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server \
+		-I ../../../org.glite.wms.purger/src -DSHOW_EXECUTION \
+	        -o libgliteWMPCommands.so common.cpp \
 	        Command.cpp ExecuteFunction.cpp \
 	        ForwardRequest.cpp \
 	        listjobmatch.cpp listfiles.cpp \
+		utils.cpp \
 		CommandFactoryServerImpl.cpp \
 		DagCommandFactoryServerImpl.cpp \
  		$(LIBS)
