@@ -1,6 +1,6 @@
-#include "glite/wmsui/api/Logging.h"
+#include "Logging.h"
 #include "glite/wmsui/api/JobExceptions.h"
-#include "edg/workload/partitioner/Partitioner.h"
+#include "glite/wmsui/partitioner/Partitioner.h"
 
 // Logging Class Includes:
 #include "glite/lb/producer.h"
@@ -8,7 +8,7 @@
 #define EDG_WL_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
 
 using namespace std ;
-using namespace glite::wmsustils::exception ; //Exception
+using namespace glite::wmsutils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
 using namespace glite::wms::jdl ; // DagAd
 

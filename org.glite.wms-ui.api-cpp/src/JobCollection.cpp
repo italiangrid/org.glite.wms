@@ -23,7 +23,7 @@
 
 using namespace glite::wmsustils::exception ;
 using namespace glite::wmsutils::jobid ;
-using namespace glite::wms::lb ;
+using namespace glite::lb ;
 using namespace std ;
 
 namespace glite {
@@ -429,7 +429,7 @@ void* JobCollection::cancelTo (void* ps) {
 void* JobCollection::statusTo (void* paramStruct) {
 	GLITE_STACK_TRY("JobCollection::statusTo (void* paramStruct)") ;
 	try{
-		glite::wms::lb::JobStatus *status  =   new   glite::wms::lb::JobStatus(  ) ;
+		glite::lb::JobStatus *status  =   new   glite::lb::JobStatus(  ) ;
 		*status = ( (struct paramStruct* )paramStruct )->job->getStatus()   ;
 	return  (void*)    new resultStruct ( SUCCESS , *status  )  ;
 	} catch  (exception &exc){

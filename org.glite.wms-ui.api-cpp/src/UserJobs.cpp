@@ -19,7 +19,7 @@ namespace api {
 using namespace std ;
 using namespace glite::wmsustils::exception ;
 using namespace glite::wmsutils::jobid ;
-using namespace glite::wms::lb ;
+using namespace glite::lb ;
 
 /******************************************************************
  method :  Constructors /Destructors

@@ -13,7 +13,7 @@
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
 
 using namespace std ;
-using namespace glite::wmsustils::exception ; //Exception
+using namespace glite::wmsutils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
 using namespace glite::wms::jdl ; // DagAd
 
@@ -77,7 +77,7 @@ void Request::setJobAd(const JobAd& ad){
 
 
 void Request::getOutput(const std::string& dir_path){
-	using namespace glite::wms::lb ;
+	using namespace glite::lb ;
 	GLITE_STACK_TRY("Request::getOutput(const std::string& nsHost , int nsPort , const std::string& lbHost , int lbPort)");
 	if (     (  type!= EWU_TYPE_ID)  && (type!= EWU_TYPE_SUBMITTED  )   )
 		//  Get Output is not allowed
@@ -104,8 +104,8 @@ void Request::getOutput(const std::string& dir_path){
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 }
 /**Private method, perform the job output recoursively (if needed) */
-void Request::getOutput(const std::string& dir_path , const std::string& nsRootPath  , const  glite::wms::lb::JobStatus& status ){
-	using namespace glite::wms::lb ;
+void Request::getOutput(const std::string& dir_path , const std::string& nsRootPath  , const  glite::lb::JobStatus& status ){
+	using namespace glite::lb ;
 	GLITE_STACK_TRY("Request::getOutput(const std::string& dir_path , const std::string& nsRootPath  , const JobStatus& status ) ");
 	vector <JobStatus> states = status.getValJobStatusList( JobStatus::CHILDREN_STATES ) ;
 	if ( states.size()>0 ){
@@ -253,9 +253,9 @@ std::vector<std::string> Request::listMatchingCE(const std::string& nsHost , int
 * getLogInfo
 * regist (private method)
 ***************************************************************************************/
-glite::wms::lb::JobStatus Request::getStatus(bool ad)  {
+glite::lb::JobStatus Request::getStatus(bool ad)  {
 	GLITE_STACK_TRY("Request::getStatus(bool ad)")  ;
-	using namespace glite::wms::lb ;
+	using namespace glite::lb ;
 	switch (type){
 		case EWU_TYPE_NONE:
 		case EWU_TYPE_DAG_AD:
@@ -266,17 +266,17 @@ glite::wms::lb::JobStatus Request::getStatus(bool ad)  {
 		}
 	// if (! jCollect) //TBD
 	userCred.checkProxy() ;
-	glite::wms::lb::Job    lbJob (*jid)   ;
-	glite::wms::lb::JobStatus  status ;
-	if (ad) status =  lbJob.status( glite::wms::lb::Job::STAT_CLASSADS );
+	glite::lb::Job    lbJob (*jid)   ;
+	glite::lb::JobStatus  status ;
+	if (ad) status =  lbJob.status( glite::lb::Job::STAT_CLASSADS );
 	else status = lbJob.status( 0 );
 	return    status ;
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
-std::vector <glite::wms::lb::Event> Request::getLogInfo() {
+std::vector <glite::lb::Event> Request::getLogInfo() {
 	GLITE_STACK_TRY("Request::getLogInfo()")   ;
-	using namespace glite::wms::lb ;
+	using namespace glite::lb ;
 	switch (type){
 		case EWU_TYPE_NONE:
 		case EWU_TYPE_DAG_AD:
@@ -286,7 +286,7 @@ std::vector <glite::wms::lb::Event> Request::getLogInfo() {
 			break;
 		}
 	userCred.checkProxy() ;
-	glite::wms::lb::Job    lbJob (*jid)   ;
+	glite::lb::Job    lbJob (*jid)   ;
 	return lbJob.log();
 	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
