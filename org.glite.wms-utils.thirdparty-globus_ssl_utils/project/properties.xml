@@ -23,65 +23,35 @@
 
 <project name="WMS thirdparty-globus_ssl_utils component thirdparty-globus_ssl_utils properties">
 
+	<!-- Include build properties to allow overwriting 
+	     of properties for subsystem                    -->
+	<property file="./project/build.properties" />	
+
 	<!-- ======================================================
-		 Component properties file for GLite WMS component thirdparty-globus_ssl_utils
+          Define corresponding subsystem properties
 		 ====================================================== -->
-		
-	<!-- Component name prefix -->
-	<property name="component.prefix" value="thirdparty-globus_ssl_utils" />
-	
+
 	<!-- Subsystem name -->
 	<property name="subsystem.name" value="${wms.subsystem.name}"/>
 		
 	<!-- Subsystem prefix -->
 	<property name="subsystem.prefix" value="${wms.subsystem.prefix}"/>
 
-	<!-- ====================================================== -->
-		
-	<!-- Subsystem properties file -->
-	<property name="subsystem.properties.file" value="../${subsystem.name}/project/properties.xml"/>	
-				
-	<!-- ====================================================== -->
-	
-	<!-- Component name -->
-	<property name="component.name" value="${subsystem.name}.${component.prefix}" />
-		
-	<!-- Component root directory -->
-	<property name="component.dir" location="../${component.name}" />
-	
-	<!-- Component project directory -->
-	<property name="component.project.dir" location="${component.dir}/project" />
-		
-	<!-- Component-specific property file -->
-	<property name="component.properties.file" location="${component.project.dir}/build.properties"/>
-	
-	<!-- Component-specific dependencies file -->
-	<property name="component.dependencies.file" value="${component.project.dir}/dependencies.properties" />
-		
-	<!-- Component taskdefs file -->
-	<property name="component.taskdefs.file" value="${component.project.dir}/taskdefs.xml" />
-		
-	<!-- Component compilerdefs file -->
-	<property name="component.compilerdefs.file" value="${component.project.dir}/compilerdefs.xml" />
-	
-	<!-- Subsystem common targets file -->
-	<property name="component.targets.file" value="${component.project.dir}/targets.xml" />
-	
-	<!-- Component cpp ant file -->
-	<property name="component.targets-cpp-ant.file" value="${component.project.dir}/targets-cpp-ant.xml" />
-	
-	<!-- Component external dependencies file -->
-	<property name="component.external-dependencies.file" value="${component.project.dir}/external-dependencies.xml" />			
+	<!-- ======================================================
+          Define component properties
+		 ====================================================== -->
+		 		
+	<!-- Component name prefix -->
+	<property name="component.prefix" value="thirdparty-globus_ssl_utils" />
 			
-	<!-- ====================================================== -->
+	<!-- ======================================================
+          Define general component properties
+		 ====================================================== -->
 	
-	<!-- Module name -->
-	<property name="module.name" value="${component.name}" />
-	
-	<!-- Module package name -->
-	<property name="module.package.name" value="${global.prefix}-${subsystem.prefix}-${component.prefix}" />
-			
-	<!-- Module level -->
-	<property name="module.level" value="component" />
-		
+	<import file="${component.general.properties.file}" />
+						
+	<!-- ======================================================
+		 Define extra properties here ...
+		 ====================================================== -->
+		 		
 </project>
