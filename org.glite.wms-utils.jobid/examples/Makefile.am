@@ -15,7 +15,7 @@ check_PROGRAMS = testjobid
 testjobid_SOURCES = testjobid.c
 testjobid_LDADD = \
 	$(JOBID) \
-	$(GLITE_WMSUTILS_EXCEPTIONS_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLOBUS_SSL_THR_LIBS) \
 	$(STDCPP)
 
