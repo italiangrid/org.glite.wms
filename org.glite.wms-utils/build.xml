@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.24  2004/10/28 18:31:51  dimeglio
+	Added envcheck to individual components
+
 	Revision 1.23  2004/10/26 13:24:26  dimeglio
 	Fixed spelling error in envchecks
-
+	
 	Revision 1.22  2004/10/26 13:17:09  dimeglio
 	Added dependency of clean on envchecks
 	
@@ -257,7 +260,7 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="exception" unless="setenvonly" depends="boost,classads,cppunit">
+	<target name="exception" unless="setenvonly" depends="envcheck, boost,classads,cppunit">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -273,7 +276,7 @@
 		</if>
 	</target>
 
-    	<target name="tls" unless="setenvonly" depends="boost,classads,globus,cppunit,exception">
+    	<target name="tls" unless="setenvonly" depends="envcheck, boost,classads,globus,cppunit,exception">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -289,7 +292,7 @@
 		</if>
     	</target>
 
-	<target name="jobid" unless="setenvonly" depends="boost,classads,globus,cppunit,exception">
+	<target name="jobid" unless="setenvonly" depends="envcheck, boost,classads,globus,cppunit,exception">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -306,7 +309,8 @@
     	</target>
 
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="exception,
+	<target name="buildmodules" depends="envcheck,
+						 exception,
 					     tls,
 					     jobid">
 		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
