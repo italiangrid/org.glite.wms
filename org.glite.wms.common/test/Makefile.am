@@ -88,7 +88,7 @@ ts_common_bin_PROGRAMS= \
 	$(WL_CMN_TSBIN3) \
 	$(WL_CMN_TSBIN7) 
 
-glite_wms_jobad_test_SOURCES = edg-wms-jobad-test.cpp
+glite_wms_jobad_test_SOURCES = glite-wms-jobad-test.cpp
 glite_wms_jobad_test_LDADD   = \
 	$(top_builddir)/src/utilities/libglite_wms_exceptions.la \
 	$(top_builddir)/src/utilities/libglite_wms_util.la \
