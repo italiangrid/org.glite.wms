@@ -21,11 +21,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.11  2004/06/14 15:38:42  eronchie
+	Added configure options
+	WARNING::: Work in progress
+
 	Revision 1.10  2004/06/14 13:11:04  dimeglio
 	Added global.configure.options.file loading
 	Refactored to use component.configure.options.file instead
 	of hard-coded path
-
+	
 	Revision 1.9  2004/06/14 12:24:08  eronchie
 	Added configure options
 	WARNING::: Work in progress

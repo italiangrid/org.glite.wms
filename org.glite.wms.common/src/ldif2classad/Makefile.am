@@ -30,8 +30,8 @@ ldif2classadinclude_HEADERS = \
 	exceptions.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(CLASSAD_CPPFLAGS) \
-	$(GLOBUS_LDAP_CPPFLAGS) \
+	$(CLASSAD_CFLAGS) \
+	$(GLOBUS_THR_CFLAGS) \
 	-DWITH_LDAP_EXCEPTIONS \
 	-DDONT_QUOTE_TRUE_FALSE
 

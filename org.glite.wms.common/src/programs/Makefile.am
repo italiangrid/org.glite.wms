@@ -19,7 +19,8 @@ glite_wms_get_configuration_LDADD   = \
 	$(CLASSAD_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(BOOST_CFLAGS) $(CLASSAD_CPPFLAGS) 
+	$(BOOST_CFLAGS) \
+	$(CLASSAD_CFLAGS) 
 
 MAINTAINERCLEANFILES = Makefile.in *~
 

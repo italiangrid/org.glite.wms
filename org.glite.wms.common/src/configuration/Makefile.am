@@ -48,7 +48,8 @@ EXTRA_DIST = JCConfiguration.h.G \
 	Configuration.def
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	$(BOOST_CPPFLAGS) $(CLASSAD_CPPFLAGS)
+	$(BOOST_CFLAGS) \
+	$(CLASSAD_CFLAGS)
 
 CLEANFILES = $(srcdir)/JCConfiguration.h \
         $(srcdir)/LMConfiguration.h \

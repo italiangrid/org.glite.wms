@@ -39,31 +39,36 @@ AC_REVISION([$Revision$])
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
-REPOSITORY=`pwd`/../../repository
+dnl REPOSITORY=`pwd`/../../repository
 STAGE=`pwd`/../../stage
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
 
-BOOST_CFLAGS=-I$REPOSITORY/boost/1.29.1/rhel30_gcc32/include
-AC_SUBST([BOOST_CFLAGS])
-BOOST_CPPFLAGS=$BOOST_CFLAGS
-AC_SUBST([BOOST_CPPFLAGS])
-BOOST_LIBS="-L$REPOSITORY/boost/1.29.1/rhel30_gcc32/lib/release -lboost_fs -lboost_thread -lpthread -lboost_regex -lc"
-AC_SUBST([BOOST_LIBS])
+have_boost=no
+have_classads=no
+have_globus=no
 
-CLASSAD_CFLAGS="-I$REPOSITORY/classads/0.9.5/rhel30_gcc32/include -DWANT_NAMESPACES"
-AC_SUBST([CLASSAD_CFLAGS])
-CLASSAD_CPPFLAGS=$CLASSAD_CFLAGS
-AC_SUBST([CLASSAD_CPPFLAGS])
-CLASSAD_LIBS="-L$REPOSITORY/classads/0.9.5/rhel30_gcc32/lib -lclassad"
-AC_SUBST([CLASSAD_LIBS])
+AC_BOOST([], have_boost=yes, have_boost=no)
+AC_CLASSADS([], have_classads=yes, have_classads=no)
+
+dnl BOOST_CFLAGS=-I$REPOSITORY/boost/1.29.1/rhel30_gcc32/include
+dnl AC_SUBST([BOOST_CFLAGS])
+dnl BOOST_CPPFLAGS=$BOOST_CFLAGS
+dnl AC_SUBST([BOOST_CPPFLAGS])
+dnl BOOST_LIBS="-L$REPOSITORY/boost/1.29.1/rhel30_gcc32/lib/release -lboost_fs -lboost_thread -lpthread -lboost_regex -lc"
+dnl AC_SUBST([BOOST_LIBS])
+
+dnl CLASSAD_CFLAGS="-I$REPOSITORY/classads/0.9.5/rhel30_gcc32/include -DWANT_NAMESPACES"
+dnl AC_SUBST([CLASSAD_CFLAGS])
+dnl CLASSAD_CPPFLAGS=$CLASSAD_CFLAGS
+dnl AC_SUBST([CLASSAD_CPPFLAGS])
+dnl CLASSAD_LIBS="-L$REPOSITORY/classads/0.9.5/rhel30_gcc32/lib -lclassad"
+dnl AC_SUBST([CLASSAD_LIBS])
 
 GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
 AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
 #GLOBUS_SSL_UTILS_LIBS="-L$STAGE/lib -lglobus_ssl_utils"
 #AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
-
-have_globus=no
 
 AC_GLOBUS([],have_globus=yes,have_globus=no)
 
