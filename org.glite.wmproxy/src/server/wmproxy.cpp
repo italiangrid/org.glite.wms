@@ -57,18 +57,11 @@ namespace utilities  = glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-
-
 using namespace std;
-
-
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
-
 std::string opt_conf_file("glite_wms.conf");
-
-
 
 int
 main(int argc, char* argv[])
@@ -77,28 +70,32 @@ main(int argc, char* argv[])
 	struct soap *soap;
 	char msg[100];
 
-
 	try {
+		configuration::NSConfiguration const* wmp_config= NULL ;
 		configuration::Configuration config(opt_conf_file, configuration::ModuleType::network_server);
-  		//configuration::WMConfiguration const* const wmp_config(config.wmp());
-                configuration::NSConfiguration const* const wmp_config(config.ns());
+		wmp_config =config.ns();
 
-		logger::threadsafe::edglog.open( wmp_config->log_file(), 
+/*
+configuration::Configuration config_3(opt_conf_file, configuration::ModuleType::network_server);
+configuration::NSConfiguration const* const wmp_config_3(config_3.ns());
+cout << "wmp_config_3(config.ns())>>>>" << wmp_config_3->log_level()  <<endl ;
+*/
+
+		logger::threadsafe::edglog.open( wmp_config->log_file(),
 						static_cast<logger::level_t>(wmp_config->log_level()) );
-
 		edglog_fn("   WMProxy::main");
+		edglog(fatal) << "Dispatcher= " << wmp_config->dispatcher_threads() << endl ;
 		edglog(fatal) << "--------------------------------------" << endl;
+		// edglog(fatal) << "Staging path..." <<  wmpConfig->sandbox_staging_path() <<endl;
 		edglog(fatal) << "Starting WMProxy Service..." << endl;
 		logger::threadsafe::edglog.activate_log_rotation (
 			wmp_config->log_file_max_size(),
 			wmp_config->log_rotation_base_file(),
 			wmp_config->log_rotation_max_file_number());
-
 		if (argc < 3) {
                         // Run as a FastCGI script
 			edglog(fatal) << "Running as a FastCGI program" << endl;
 			//waitForSeconds(5);
-
 			int thread_number;
 			try {
 				thread_number =  wmp_config->dispatcher_threads() ;
@@ -118,9 +115,9 @@ main(int argc, char* argv[])
 				WMProxy proxy;
 				proxy.serve();
 			}
-	    	} 
-		else 
-		{
+			edglog(fatal) << "Exiting the FastCGI loop..." << endl;
+
+		}else{
 			edglog(fatal) << "Running as a gSoap standalone Service" << endl;
         		soap = soap_new();
    			soap->accept_timeout = 60;     /* server times out after 10 minutes of inactivity */
@@ -137,16 +134,15 @@ main(int argc, char* argv[])
         		for (int i = 1; ; i++)
         		{
                 		s = soap_accept(soap);
-                		if (s < 0)
-                		{
+                		if (s < 0){
 					edglog(fatal) << "Failed to accept soap request " << endl;
                         		soap_print_fault(soap, stderr);
-                       			exit(-1);
+					exit(-1);
                 		}
-                		sprintf(msg, "%d: Accepted connection from IP = %d.%d.%d.%d socket = %d ... ", i, (int)(soap->ip>>24)&0xFF, (int)(soap->ip>>16)&0xFF, (int)(soap->ip>>8)&0xFF, (int)soap->ip&0xFF, s);
-				edglog(fatal) << msg << endl; 
+                		sprintf(msg, "%d: Accepted connection from IP = %d.%d.%d.%d socket = %d ... ", i, (int)(soap->ip>>24)&0xFF, 				(int)(soap->ip>>16)&0xFF, (int)(soap->ip>>8)&0xFF, (int)soap->ip&0xFF, s);
+				edglog(fatal) << msg << endl;
                 		soap_serve(soap);         // process request
-				edglog(fatal) << "Request served" << endl; 
+				edglog(fatal) << "Request served" << endl;
                 		soap_destroy(soap);       // delete class instances
                 		soap_end(soap);           // clean up everything and close socket
         		} //for
