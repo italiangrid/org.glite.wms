@@ -5,7 +5,7 @@
 
 // $Id$
 
-#include "edg/workload/planning/manager/JCDeliveryPolicy.h"
+#include "JCDeliveryPolicy.h"
 
 #include <string>
 #include <classad_distribution.h>

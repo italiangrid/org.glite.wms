@@ -48,10 +48,10 @@ namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace jdl = glite::wms::jdl;
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
 namespace manager {
+namespace server {
 
 namespace {
 
@@ -578,7 +578,7 @@ try {
   jdl::DAGAd dagad(input_ad);
 
   std::string const dag_id_str = jdl::get_edg_jobid(dagad);
-  common::jobid::JobId const dag_id(dag_id_str);
+  wmsutils::jobid::JobId const dag_id(dag_id_str);
 
   jdl::set_edg_jobid(*result, dag_id_str);
 
@@ -671,4 +671,7 @@ DAGManHelper::resolve(classad::ClassAd const* input_ad) const
   //  assert(result != 0);
 }
 
-}}}} // edg::workload::planning::dag
+} // server
+} // manager
+} // wms
+} // glite 

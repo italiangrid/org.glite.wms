@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/08/09 07:45:06  eronchie
+#       Updated
+#       WARNING: work in progress
+#
 #       Revision 1.2  2004/08/09 06:35:48  eronchie
 #       Added check macros
 #
@@ -53,6 +57,8 @@ AC_PROG_CPP
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AM_PROG_CC_C_O
+AC_PROG_YACC
+AM_PROG_LEX
 AC_PROG_LIBTOOL
 
 # Checks for libraries.

@@ -37,7 +37,7 @@ noinst_HEADERS = \
         WMFileListProxy.h \
         WMReal.h
 
-libedg_wl_manager_server_la_SOURCES = \
+libglite_wms_manager_server_la_SOURCES = \
         DAGManHelper.h \
         DAGManHelper.cpp \
         Dispatcher.h \
@@ -127,6 +127,7 @@ glite_wms_planned2submit_LDADD   = \
         $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
         $(CLASSAD_CFLAGS) \
         $(BOOST_CFLAGS)
 

@@ -70,10 +70,10 @@ get_input_name()
 
 } // {anonymous}
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
 namespace manager {
+namespace server {
 
 boost::mutex& submit_cancel_mutex()
 {
