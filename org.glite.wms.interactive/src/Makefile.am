@@ -28,7 +28,6 @@ glite_wms_pipe_input_LDADD = \
         $(ARES_LIBS) \
 	$(EXPAT_STATIC_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
-        $(GLOBUS_SSL_THR_LIBS) \
         $(GLOBUS_GSS_THR_LIBS) \
         -lnsl -ldl -lpthread \
 	-lstdc++ 
@@ -47,7 +46,6 @@ glite_wms_pipe_output_LDADD = \
         $(ARES_LIBS) \
 	$(EXPAT_STATIC_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
-        $(GLOBUS_SSL_THR_LIBS) \
         $(GLOBUS_GSS_THR_LIBS) \
 	-lnsl -ldl -lpthread -lstdc++
 
@@ -65,7 +63,6 @@ glite_wms_job_agent_LDADD = \
         $(ARES_LIBS) \
         $(EXPAT_STATIC_LIBS) \
         $(GLOBUS_COMMON_THR_LIBS) \
-        $(GLOBUS_SSL_THR_LIBS) \
         $(GLOBUS_GSS_THR_LIBS) \
         -lnsl -ldl -lpthread -lstdc++
 
