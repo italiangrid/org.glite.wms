@@ -19,8 +19,11 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.1  2004/05/26 18:45:05  eronchie
-#       Initial revision
+#       Revision 1.2  2004/05/31 14:03:30  eronchie
+#       Merged with code in the infnforge repository
+#
+#       Revision 1.1.1.1  2004/05/26 18:45:05  eronchie
+#       Import of wms jobid
 #
 #
 #
@@ -56,11 +59,11 @@ AC_SUBST([BOOST_CPPFLAGS])
 BOOST_LIBS="-L$REPOSITORY/boost/1.29.1/rhel30_gcc32/lib/release -lboost_fs -lboost_thread -lpthread -lboost_regex -lc"
 AC_SUBST([BOOST_LIBS])
 
-CLASSAD_CFLAGS=-I$REPOSITORY/classads/0.9.4/rhel30_gcc32/include
+CLASSAD_CFLAGS=-I$REPOSITORY/classads/0.9.5/rhel30_gcc32/include
 AC_SUBST([CLASSAD_CFLAGS])
 CLASSAD_CPPFLAGS=$CLASSAD_CFLAGS
 AC_SUBST([CLASSAD_CPPFLAGS])
-CLASSAD_LIBS="-L$REPOSITORY/classads/0.9.4/rhel30_gcc32/lib -lclassad"
+CLASSAD_LIBS="-L$REPOSITORY/classads/0.9.5/rhel30_gcc32/lib -lclassad"
 AC_SUBST([CLASSAD_LIBS])
 
 GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
@@ -70,7 +73,7 @@ AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
 
 GLITE_WORKLOAD_CFLAGS="-I$STAGE/include"
 AC_SUBST([GLITE_WORKLOAD_CFLAGS])
-GLITE_WORKLOAD_COMMON_LIBS="-L$STAGE/lib -lglite_wl_exceptions"
+GLITE_WORKLOAD_COMMON_LIBS="-L$STAGE/lib -lglite_wms_exceptions"
 AC_SUBST([GLITE_WORKLOAD_COMMON_LIBS])
 
 GLOBUS_COMMON_NOTHR_LIBS="-L$REPOSITORY/globus/2.4.3/rhel30_gcc32/lib -lglobus_common_gcc32"

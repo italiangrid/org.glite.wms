@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../common_namespace.h"
+#include "edg/workload/common/common_namespace.h"
 
 COMMON_NAMESPACE_BEGIN {
 

@@ -3,7 +3,8 @@
 *  author    : Alessandro Maraschini <alessandro.maraschini@datamat.it>
 *  copyright : (C) 2002 by DATAMAT
 ***************************************************************************/
-#include "../jobid/JobIdExceptions.h"
+
+#include "JobIdExceptions.h"
 
 COMMON_NAMESPACE_BEGIN{
 namespace jobid{

@@ -6,26 +6,27 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wl_jobid.la
+lib_LTLIBRARIES = libglite_wms_jobid.la
 
-libglite_wl_jobid_la_SOURCES = \
+libglite_wms_jobid_la_SOURCES = \
 	JobId.cpp \
 	JobIdExceptions.cpp \
 	manipulation.cpp \
 	jobid.c \
 	strmd5.c
 
-jobidincludedir = $(includedir)/glite/workload/jobid
+jobidincludedir = $(includedir)/glite/wms/jobid
 jobidinclude_HEADERS = \
 	JobId.h \
 	JobIdExceptions.h \
-	jobid-c.h \
+	jobid.h \
 	manipulation.h \
 	strmd5.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/.. \
-	$(GLOBUS_CFLAGS) $(BOOST_CFLAGS) \
 	$(GLITE_WORKLOAD_CFLAGS) \
+	$(GLOBUS_CFLAGS) \
+	$(BOOST_CFLAGS) \
 	-D_GNU_SOURCE
 
 MAINTAINERCLEANFILES = Makefile.in

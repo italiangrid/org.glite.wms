@@ -8,13 +8,13 @@
 
 STDCPP = -lstdc++
 
-WL_JOBID_TEST = testjobid 
+JOBID = $(top_builddir)/src/jobid/libglite_wms_jobid.la
 
-check_PROGRAMS = $(WL_JOBID_TEST) 
+check_PROGRAMS = testjobid 
 
 testjobid_SOURCES = testjobid.c
 testjobid_LDADD = \
-	$(top_builddir)/src/jobid/libglite_wl_jobid.la \
+	$(JOBID) \
 	$(GLITE_WORKLOAD_COMMON_LIBS) \
 	$(GLOBUS_LIBS) \
 	$(STDCPP)

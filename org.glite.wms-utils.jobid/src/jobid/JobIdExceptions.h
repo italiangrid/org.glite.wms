@@ -5,7 +5,7 @@
  * JobIdExceptions.h
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  */
-#include "glite/workload/common/utilities/Exceptions.h"
+#include "glite/wms/common/utilities/Exceptions.h"
 
 #define COMMON_JOBID_NAMESPACE_BEGIN namespace edg { namespace workload { namespace common {namespace jobid{
 COMMON_JOBID_NAMESPACE_BEGIN

@@ -4,10 +4,11 @@
  *  copyright : (C) 2002 by DATAMAT
  ***************************************************************************/
 
-#include "../jobid/JobId.h"
-#include <iostream>
-#include "../jobid/JobIdExceptions.h"
+#include "JobId.h"
 
+#include <iostream>
+
+#include "JobIdExceptions.h"
 
 COMMON_NAMESPACE_BEGIN{
 namespace jobid{

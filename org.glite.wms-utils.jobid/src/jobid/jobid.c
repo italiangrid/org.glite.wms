@@ -10,8 +10,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "../jobid/jobid-c.h"
-#include "../jobid/strmd5.h"
+#include "jobid.h"
+#include "strmd5.h"
 
 struct _edg_wlc_JobId {
     char		*id;	/* unique job identification */
@@ -40,16 +40,18 @@ int edg_wlc_JobIdRecreate(const char* bkserver, int port, const char *unique, ed
     if (!bkserver)
         return EINVAL;
 
-    gethostname(hostname, 100);
-    he = gethostbyname(hostname);
-    assert(he->h_length > 0);
-    gettimeofday(&tv, NULL);
-    srandom(tv.tv_usec);
+    if (unique == NULL) {
+	gethostname(hostname, 100);
+	he = gethostbyname(hostname);
+	assert(he->h_length > 0);
+	gettimeofday(&tv, NULL);
+	srandom(tv.tv_usec);
 
-    skip = strlen(hostname);
-    skip += sprintf(hostname + skip, "-IP:0x%x-pid:%d-rnd:%d-time:%d:%d",
+    	skip = strlen(hostname);
+    	skip += sprintf(hostname + skip, "-IP:0x%x-pid:%d-rnd:%d-time:%d:%d",
 		    *((int*)he->h_addr_list[0]), getpid(), (int)random(),
 		    (int)tv.tv_sec, (int)tv.tv_usec);
+    }
 
     *jobId = NULL;
     out = (edg_wlc_JobId) malloc (sizeof(*out));
@@ -177,6 +179,18 @@ int edg_wlc_JobIdParse(const char *idString, edg_wlc_JobId *jobId)
 
     /* extract the unique part */
     out->id = strdup(pom1+1);
+
+    for (pom1 = out->BShost; *pom1; pom1++)
+	if (isspace(*pom1)) break;
+
+    for (pom2 = out->id; *pom2; pom2++)
+	if (isspace(*pom2)) break;
+
+    if (*pom1 || *pom2) {
+	    free(pom);
+	    edg_wlc_JobIdFree(out);
+	    return EINVAL;
+    }
 
     free(pom);
     *jobId = out;
