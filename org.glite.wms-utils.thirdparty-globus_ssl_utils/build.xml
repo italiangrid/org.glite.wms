@@ -20,12 +20,15 @@
 
 	Revision history:
 	$Log$
+	Revision 1.9  2004/05/14 00:37:33  dimeglio
+	Replaced targets-cpp with targets-make
+
 	Revision 1.8  2004/05/14 00:24:20  dimeglio
 	Added command to load the system build.properties file before
 	loading the subsystem and global properties, but after baseline
 	and user properties
 	Removed references to local versions of global-only objects
-
+	
 	Revision 1.7  2004/05/13 19:36:44  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
 	
@@ -85,7 +88,7 @@
 	<!-- =========================================
 		 Load common targets file for this module type
 		 ========================================= -->
-	<import file="${global.targets-cpp.file}" />
+	<import file="${global.targets-make.file}" />
 	
 	<!-- =========================================
 		 Load version file 
