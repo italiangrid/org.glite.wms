@@ -107,7 +107,7 @@ bool set_user(std::string const& user)
     
 struct call_execute {
   call_execute(boost::shared_ptr<purchaser::ism_purchaser> p) { m_p = p; }
-  void operator()() { m_p->execute(); }
+  void operator()() { m_p->do_purchase(); }
   boost::shared_ptr<purchaser::ism_purchaser> m_p;
 }; 
  
@@ -256,6 +256,9 @@ try {
   
   boost::shared_ptr<void> ism_ii_purchaser_handle;
   boost::shared_ptr<void> ism_cemon_purchaser_handle;
+  boost::shared_ptr<purchaser::ism_purchaser> ismp1;
+  boost::shared_ptr<purchaser::ism_purchaser> ismp2;
+  boost::thread_group purchaser_thread_group;
 
   // Try to execute ISM purchaser thread
   if (string(brlib)=="libglite_wms_helper_broker_ism.so") {
@@ -302,7 +305,7 @@ try {
         get_err_stream() << "Cannot load " << prlib2 << " symbols: " << dlerror() << "\n";
         return EXIT_FAILURE;
     }
-    boost::shared_ptr<purchaser::ism_purchaser> ismp1( 
+    ismp1.reset( 
       create_ii_purchaser(
         ns_config->ii_contact(), ns_config->ii_port(),
         ns_config->ii_dn(),ns_config->ii_timeout(),
@@ -310,18 +313,18 @@ try {
     );
 
     // FIXME: It is not so nice but works...
-    boost::thread t1(call_execute(ismp1));
+    purchaser_thread_group.create_thread(call_execute(ismp1));
     
     // Try to execute ISM CEMON purchaser thread
     std::vector<std::string> cemonURLs = wm_config->ce_monitor_services();
     if (!cemonURLs.empty()) {
       
-      boost::shared_ptr<purchaser::ism_cemon_purchaser> ismp2(
+      ismp2.reset(
         create_cemon_purchaser(cemonURLs,"CE_MONITOR:ISM", 
           120, purchaser::loop, 120), destroy_cemon_purchaser
       );
       // FIXME: It is not so nice but works...
-      boost::thread t2(call_execute(ismp2));
+      purchaser_thread_group.create_thread(call_execute(ismp2));
     }
   }
   manager::Dispatcher dispatcher;
