@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.9  2004/08/12 09:51:37  eronchie
+	Updated
+
 	Revision 1.8  2004/08/11 13:54:16  eronchie
 	Updated classpath
-
+	
 	Revision 1.7  2004/08/11 13:43:20  eronchie
 	Updated
 	
@@ -149,6 +152,10 @@
                         <equals arg1="${org.glite.wms-ui.wrap-python.version}" arg2="HEAD" />
                 </condition>
 
+		<condition property="wrap-java.head">
+                        <equals arg1="${org.glite.wms-ui.wrap-java.version}" arg2="HEAD" />
+                </condition>
+
     	</target>
 
     	<presetdef name="cvs-co">
@@ -247,11 +254,22 @@
                         tag="${org.glite.wms-ui.wrap-python.version}" />
         </target>
 
+	<!-- wrap-java -->
+        <target name="wrap-java" depends="get.wrap-java.head, get.wrap-java.tag"/>
+        <target name="get.wrap-java.head" if="wrap-java.head">
+                <cvs-co package="org.glite.wms-ui.wrap-java" />
+        </target>
+        <target name="get.wrap-java.tag" unless="wrap-java.head">
+                <cvs-co package="org.glite.wms-ui.wrap-java"
+                        tag="${org.glite.wms-ui.wrap-java.version}" />
+        </target>
+
 	<!-- All project modules -->
  	<target name="project" depends="partitioner,
 					api-cpp,
   				        api-java,
-                                        wrap-python"/>
+                                        wrap-python,
+					wrap-java"/>
 
 
 	<!-- ====================================================

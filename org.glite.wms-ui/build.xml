@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.13  2004/08/12 09:51:37  eronchie
+	Updated
+
 	Revision 1.12  2004/08/11 13:54:16  eronchie
 	Updated classpath
-
+	
 	Revision 1.11  2004/08/11 13:43:20  eronchie
 	Updated
 	
@@ -303,7 +306,7 @@
 		</if>
 	</target>
 
-	<target name="api-java" unless="setenvonly" depends="jclassads, jglobus log4j, edg-java-security">
+	<target name="api-java" unless="setenvonly" depends="jclassads, jglobus, log4j, edg-java-security">
 		<if>
 			<isset property="small.memory" />
 			<then>
@@ -383,13 +386,27 @@
                 </if>
         </target>
 
+	<target name="wrap-java" unless="setenvonly" depends="boost,classads,globus">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms-ui.subsystem.dir}.wrap-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+                                        <arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms-ui.subsystem.dir}.wrap-java"
+                            target="${target}"
+                            inheritall="false" />
+                        </else>
+                </if>
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="partitioner,
 					     api-cpp,
    					     api-java,
 					     wrap-python,
-					     wrap-java,
- 					     cli-python,
-					     gui-java" />
+					     wrap-java" />
 		
 </project>
