@@ -13,11 +13,13 @@ lib_LTLIBRARIES = libglite_wms_broker.la
 brokerdir = $(includedir)/glite/wms/broker
 broker_HEADERS = \
 	RBSimpleISMImpl.h \
+	RBMaximizeFilesISMImpl.h \
 	RBSimpleImpl.h \
 	utility.h
 
 libglite_wms_broker_la_SOURCES = \
 	RBSimpleISMImpl.cpp \
+	RBMaximizeFilesISMImpl.cpp \
 	RBSimpleImpl.cpp \
 	RBMaximizeFilesImpl.cpp \
 	RBMinimizeAccessCostImpl.cpp
