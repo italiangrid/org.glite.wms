@@ -54,8 +54,7 @@ class Exception : public std::exception{
 	* @param code the code representing the thrown exception
 	* @param exception the name of the thrown exception
 	* @param method the name of the method that raised the exception
-	* @param source The source that raised the exception (could be the file path, the class Name, etc etc)
-	* @param line_number the number of the line in the file that raised the exception(if the source has been given as a file)  */
+	* @param source The source that raised the exception (could be the file path, the class Name, etc etc) */
 	Exception ( const std::string& source, const std::string& method,  int code,  const std::string& exception);
 
 	/**
@@ -114,15 +113,25 @@ class Exception : public std::exception{
 	*/
 	virtual void push_back (  const std::string& source, int line_number,  const std::string& method   ) ;
   protected:
+		/** Empty constructor*/
 		Exception();
+		/**  integer error code representing the cause of the error */
 		int                   error_code;
+		/**  string exception message representation*/
 		std::string          error_message ;
+		/**  line number where the exception was raised */
 		int                   line;
+		/** The name of the file where the exception was raised */
 		std::string          source_file;
+		/** the name of the exception */
 		std::string          exception_name;
+		/** the name of the method where the expceiton was raised */
 		std::string          method_name ;
+		/** a string representation of the stacktrace */
 		std::string          stack;
+		/** the actual internal stacktrace representation */
 		std::vector< std::string> stack_strings ;
+		/** the name of the ancestor exception */
 		std::string          ancestor ;
 }; //End  Exception Class
 }}}  // Closing namespace
