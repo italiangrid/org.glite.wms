@@ -100,7 +100,7 @@ public:
 /**
  *    Thrown when a thread is unable to be launched or to run
  */
-class ThreadException : public glite::wmsutils::exception::Exception {
+class ThreadException : public JobException {
 public:
     ThreadException(const std::string& file,
 		    int line,
