@@ -20,6 +20,7 @@ libglide_wms_broker_selectors_la_SOURCES = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src/selectors \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
