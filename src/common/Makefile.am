@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/07/30 08:15:40  eronchie
+#       purger.h is not located in interface but in src
+#
 #       Revision 1.5  2004/07/28 14:38:58  pandreet
 #       Proxyrenewal dependencies fixed
 #
@@ -66,7 +69,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	-I$(top_srcdir)/../org.glite.wms.purger/interface \
+	-I$(top_srcdir)/../org.glite.wms.purger/src \
 	-DENABLE_LOGGING -DENABLE_PURGER -DENABLE_RENEWAL
 
 MAINTAINERCLEANFILES = Makefile.in *~
