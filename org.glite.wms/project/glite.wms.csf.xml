@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.23  2004/05/19 23:21:45  dimeglio
+	Fixed errors in wms component CVS targets
+
 	Revision 1.22  2004/05/19 22:34:25  dimeglio
 	Environmental checks are implemented in the global file
-
+	
 	Revision 1.21  2004/05/19 22:01:13  dimeglio
 	Removed old unless condition
 	
@@ -269,7 +272,7 @@
 
 	<!-- ByPass -->
  	<target name="thirdparty-bypass" depends="get.thirdparty-bypass.head, get.thirdparty-bypass.tag"/>
-	<target name="get.thirdparty-bypass.head" if="thirdparty-globus_ssl_utils.head">
+	<target name="get.thirdparty-bypass.head" if="thirdparty-bypass.head">
 		<cvs-co package="org.glite.wms.thirdparty-bypass" />
 	</target>
 	<target name="get.thirdparty-bypass.tag" unless="thirdparty-bypass.head">
@@ -279,7 +282,7 @@
 
 	<!-- Globus GridFTP Server -->
  	<target name="thirdparty-globus_gridftp_server" depends="globus,get.thirdparty-globus_gridftp_server.head, get.thirdparty-globus_gridftp_server.tag"/>
-	<target name="get.thirdparty-globus_gridftp_server.head" if="thirdparty-globus_ssl_utils.head">
+	<target name="get.thirdparty-globus_gridftp_server.head" if="thirdparty-globus_gridftp_server.head">
 		<cvs-co package="org.glite.wms.thirdparty-globus_gridftp_server" />
 	</target>
 	<target name="get.thirdparty-globus_gridftp_server.tag" unless="thirdparty-globus_gridftp_server.head">
@@ -298,7 +301,7 @@
 	</target>
 
 	<!-- Common -->
- 	<target name="common" depends="boost,classads,globus,get.thirdparty-loki.head, get.thirdparty-loki.tag"/>
+ 	<target name="common" depends="boost,classads,globus,get.common.head, get.common.tag"/>
 	<target name="get.common.head" if="common.head">
 		<cvs-co package="org.glite.wms.common" />
 	</target>
@@ -308,7 +311,7 @@
 	</target>
 
 	<!-- JCommon -->
- 	<target name="jcommon" depends="jclassads,get.thirdparty-loki.head, get.thirdparty-loki.tag"/>
+ 	<target name="jcommon" depends="jclassads,get.jcommon.head, get.jcommon.tag"/>
 	<target name="get.jcommon.head" if="jcommon.head">
 		<cvs-co package="org.glite.wms.jcommon" />
 	</target>
