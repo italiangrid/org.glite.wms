@@ -28,17 +28,17 @@ glite_wms_purgeStorage_SOURCES = \
 	glite-wms-purgeStorage.cpp
 
 glite_wms_purgeStorage_LDADD = \
+	./libglite_wms_purger.la \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-	$(GLITE_LB_THR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
-	./libglite_wms_purger.la \
 	$(BOOST_LIBS) \
-	$(GLOBUS_THR_LIBS) \
+	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(ARES_LIBS) \
 	$(EXPAT_LIBS) 
