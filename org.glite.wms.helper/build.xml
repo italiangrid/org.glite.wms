@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/07/06 20:58:59  flammer
+	Updated configure & targets.
+
 	Revision 1.1  2004/07/02 13:11:39  monforte
 	Initial Helper porting to new build system
 	WARNING: work in progress
-
+	
 	Revision 1.1  2004/06/26 15:25:03  eronchie
 	Start handling matchmaking
 	WARNING: work in progress
@@ -67,6 +70,11 @@
 	<property file="${subsystem.dependencies.file}" />
 	<property file="${global.dependencies.file}"/>
 	
+	<!-- =========================================
+		 Load configure options (order is important)
+	 ========================================= -->
+	<import file="${global.configure.options.file}"/>
+	<import file="${component.configure.options.file}"/>
 	
 	<!-- =========================================
 		 Import task definitions (order is important)
@@ -75,16 +83,9 @@
 	<import file="${global.taskdefs.file}" />
 			
 	<!-- =========================================
-		 Load configure options
-		 ========================================= -->
-	<property file="${global.configure.options.file}"/>
-
-	<!-- =========================================
 		 Load common targets
 		 ========================================= -->
-	<import file="${global.targets-external-dependencies.file}"/>	
 	<import file="${global.targets-make.file}" />
-	<import file="${component.configure.options.file}"/>
 
 	<!-- =========================================
 		 Load version file 
