@@ -33,7 +33,7 @@ if [ -z "$GLITE_WMS_PATH" ]; then
 fi
 
 if [ -z "$PATH" ]; then
-   export PATH=$GLTIE_WMS_PATH
+   export PATH=$GLITE_WMS_PATH
 else
    export PATH=$PATH":"$GLITE_WMS_PATH
 fi
