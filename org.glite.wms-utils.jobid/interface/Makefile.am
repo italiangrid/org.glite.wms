@@ -9,6 +9,7 @@
 jobiddir = $(includedir)
 nobase_jobid_HEADERS = \
 	glite/wmsutils/jobid/cjobid.h \
+	glite/wmsutils/jobid/manipulation.h \
 	glite/wmsutils/jobid/JobIdExceptions.h \
 	glite/wmsutils/jobid/JobId.h
 

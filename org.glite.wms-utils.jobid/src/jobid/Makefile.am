@@ -19,7 +19,6 @@ libglite_wmsutils_cjobid_la_SOURCES = \
 
 jobidincludedir = $(includedir)/glite/wmsutils/jobid
 jobidinclude_HEADERS = \
-	manipulation.h \
 	strmd5.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
