@@ -1,11 +1,13 @@
 #!/bin/sh
 
+GLITE_WMS_LOCATION=${GLITE_WMS_LOCATION:-@prefix@}
+
 if [ -z $JGLOBUS_INSTALL_PATH ]; then
-   export JGLOBUS_INSTALL_PATH=@JGLOBUS_INSTALL_PATH@
+   export JGLOBUS_INSTALL_PATH=$GLITE_WMS_LOCATION/externals/jglobus-1.1/lib
 fi
 
 if [ -z $JCLASSAD_INSTALL_PATH ]; then
-   export CLASSADJ_INSTALL_PATH=@JCLASSAD_INSTALL_PATH@
+   export CLASSADJ_INSTALL_PATH=$GLITE_WMS_LOCATION/externals/jclassads-2.1
 fi
 
 if [ -z $JAVA_INSTALL_PATH ]; then
@@ -13,6 +15,6 @@ if [ -z $JAVA_INSTALL_PATH ]; then
 fi
 
 if [ -z $LOG4J_INSTALL_PATH ]; then
-   export LOG4J_INSTALL_PATH=@LOG4J_INSTALL_PATH@
+   export LOG4J_INSTALL_PATH=$GLITE_WMS_LOCATION/externals/share/java
 fi
 
