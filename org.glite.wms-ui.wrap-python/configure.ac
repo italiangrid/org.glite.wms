@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2004/12/10 09:49:01  amarasch
+#       Increased version
+#
 #       Revision 1.9  2004/12/09 15:05:21  eronchie
 #       Updated
 #
@@ -51,7 +54,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Wrap python], [0.1.0])
+AC_INIT([GLite WMS UI Wrap python], [1.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/NsWrapper.h])
