@@ -43,20 +43,22 @@ REPOSITORY=`pwd`/../../repository
 
 BOOST_CPPFLAGS=-I$REPOSITORY/boost/include
 AC_SUBST([BOOST_CPPFLAGS])
-BOOST_LIBS=-L$REPOSITORY/boost/lib/release/lib
+BOOST_LIBS="-L$REPOSITORY/boost/lib/release -lboost_fs -lboost_thread -lpthread -lboost_regex -lc"
 AC_SUBST([BOOST_LIBS])
 
 CLASSAD_CPPFLAGS=-I$REPOSITORY/classads/include
 AC_SUBST([CLASSAD_CPPFLAGS])
-CLASSAD_LIBS="-L$REPOSITORY/classads/lib -llibclassad.a"
+CLASSAD_LIBS="-L$REPOSITORY/classads/lib -lclassad"
 AC_SUBST([CLASSAD_LIBS])
 
 GLOBUS_CPPFLAGS=-I$REPOSITORY/globus/include/gcc32
 AC_SUBST([GLOBUS_CPPFLAGS])
 
 # Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_CXXCPP
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
