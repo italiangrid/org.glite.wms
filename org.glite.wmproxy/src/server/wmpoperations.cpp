@@ -596,22 +596,24 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobStart(jobStartResponse &jobStart_response, const string &job_id)",
 			WMS_OPERATION_NOT_ALLOWED, "The job has already been started");
+	} else {
+		// TBD Check the field INSTANCE to see if the register has been done by
+		// the same WMProxy manager
+		string proxy(getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
+			+ wmputilities::to_filename(*jid)
+			+ FILE_SEPARATOR + USER_PROXY_NAME);
+		
+		// Getting jdl
+		string jdl = status.getValString(JobStatus::JDL);
+		Ad *ad = new Ad(jdl);
+		
+		// Adding Proxy attributes
+		ad->setAttribute(JDL::CERT_SUBJ, wmputilities::getUserDN());
+		ad->setAttribute(JDLPrivate::USERPROXY, proxy);
+		
+		submit(ad->toString(), jid);
+		delete jid;
 	}
-
-	string proxy(getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
-		+ wmputilities::to_filename(*jid)
-		+ FILE_SEPARATOR + USER_PROXY_NAME);
-	
-	// Getting jdl
-	string jdl = status.getValString(JobStatus::JDL);
-	Ad *ad = new Ad(jdl);
-	
-	// Adding Proxy attributes
-	ad->setAttribute(JDL::CERT_SUBJ, wmputilities::getUserDN());
-	ad->setAttribute(JDLPrivate::USERPROXY, proxy);
-	
-	submit(ad->toString(), jid);
-	delete jid;
 
 	GLITE_STACK_CATCH();
 }
@@ -623,10 +625,18 @@ submit(const string &jdl, JobId *jid)
 	edglog_fn("   wmpoperations::submit");
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 
+	wmpmanager::WMPManager manager;
+	//task::Pipe<classad::ClassAd*> pipe;
+	//task::Task taskManager(manager, pipe, 1); // Single manager
+	
 	// Vector of parameters to runCommand()
 	vector<string> params;
 	params.push_back(jdl);
-	wmpmanager::WMPManager manager;
+	string document_root = getenv(DOCUMENT_ROOT);
+	params.push_back(document_root);
+	params.push_back(document_root + FILE_SEPARATOR
+		+ wmputilities::to_filename(*jid));
+	
 	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
 
 	if (wmp_fault.code != WMS_NO_ERROR) {
@@ -694,8 +704,8 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	
 	// TBC
 	wmpmanager::WMPManager manager;
-	task::Pipe<classad::ClassAd*> pipe;
-	task::Task taskManager(manager, pipe, 1); // Single manager
+	//task::Pipe<classad::ClassAd*> pipe;
+	//task::Task taskManager(manager, pipe, 1); // Single manager
 	wmp_fault_t wmp_fault;
 	
 	// Initializing logger
