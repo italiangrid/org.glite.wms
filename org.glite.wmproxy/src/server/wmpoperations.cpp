@@ -332,10 +332,7 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 	//TBD Check the result
 	
 	mode_t mode(755);
-	//edglog(fatal)<<"Creating job directory "<<dest_uri<<endl;
-	/*
-	*  NEW APPROACH:
-	*/
+	
 	// TBD WARNING! THIS IS SHALL BE PROVIDED BY an LCMAP METHOD
 	int userid = getuid();
 	// TBD WARNING! Still to be implemented
@@ -347,15 +344,11 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 			"vector<string> &jobids)",
 			WMS_IS_FAILURE, "Unable to create job local directory");
 	}
-	
-	// to_filename parameters
-	int level = 0; 
-   	bool extended_path = true ; 
-   
+
 	// Copying delegated Proxy to destination URI
 	wmputilities::fileCopy(delegated_proxy, document_root + "/"
-		+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid),
-			level, extended_path) + "/" + USER_PROXY_NAME);
+		+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid))
+		+ "/" + USER_PROXY_NAME);
 	
 	if (jobids.size() != 0) {
 		edglog(fatal)<<"Creating sub job directories for job:\n"<<jobid<<endl;
@@ -366,21 +359,25 @@ setJobFileSystem(const string &delegation_id, const string &jobid,
 				WMS_IS_FAILURE, "Unable to create sub jobs local directory");
 		} else {
 			string dest_uri =
-				wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid),
-				level, extended_path);
-			for (int i = 0; i < jobids.size(); i++) {
+				wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid));
+			string target;
+			string link;
+			for (unsigned int i = 0; i < jobids.size(); i++) {
+				string target = (document_root + "/" + dest_uri
+					 + "/" + USER_PROXY_NAME);
+				string link = document_root + "/"
+						+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]))
+						+ "/" + USER_PROXY_NAME;
 				edglog(fatal)<<"Creating proxy symbolic link in: "<<jobids[i]<<endl;
-				string command = "ln -s " 
-					+ document_root + "/" + dest_uri
-					+ "/" + USER_PROXY_NAME + " " // link target
-					+ document_root + "/"
-					+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]),
-						level, extended_path)
-					+ "/" + USER_PROXY_NAME; // link name
-					cerr << "Link Command: " << command << endl;
-					
-				//TBD Check result of operation!!
-				system(command.c_str());
+				if (symlink(target.c_str(), link.c_str())) {
+			      	edglog(fatal) << "\nError creating user proxy link:\n\t"
+			      		<< link << ".\n" << strerror(errno) << endl;
+			      
+			      	throw JobOperationException(__FILE__, __LINE__,
+						"setJobFileSystem(const string &delegation_id, const string "
+						"&jobid, vector<string> &jobids)", WMS_FATAL, 
+						"Unable to create symbolic link to proxy file");
+			    }
 			}
 		}
 	}
@@ -648,12 +645,11 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	}
 
 	WMPLogger wmplogger;
-
-	wmp_fault_t wmp_fault;
-	//wmp_fault.code = WMS_NO_ERROR; //TBD remove when WMPManager coded
+	
 	// Vector of parameters to runCommand()
 	vector<string> params;
-	//wmpmanager::WMPManager manager;
+	wmpmanager::WMPManager manager;
+	wmp_fault_t wmp_fault;
 	
 	switch (status.status) {
 		case JobStatus::SUBMITTED:
@@ -670,8 +666,8 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		case JobStatus::SCHEDULED:
 		case JobStatus::RUNNING:
 			params.push_back(jid->toString());
-			//wmp_fault = manager.runCommand("jobCancel", params,
-			//	jobCancel_response);
+			wmp_fault = manager.runCommand("jobCancel", params,
+				&jobCancel_response);
 			
 			if (wmp_fault.code != WMS_NO_ERROR) {
 				throw JobOperationException(__FILE__, __LINE__,
@@ -685,8 +681,8 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			// DONE_CODE = Failed (1)
 			if (status.getValInt(JobStatus::DONE_CODE) == 1) {
 				params.push_back(jid->toString());
-				//wmp_fault = manager.runCommand("jobCancel", params
-				//	jobCancel_response);
+				wmp_fault = manager.runCommand("jobCancel", params,
+					&jobCancel_response);
 				
 				if (wmp_fault.code != WMS_NO_ERROR) {
 					throw JobOperationException(__FILE__, __LINE__,
@@ -770,7 +766,8 @@ getQuota(getQuotaResponse &getQuota_response)
 	GLITE_STACK_TRY("getQuota(getQuotaResponse &getQuota_response)");
 	edglog_fn("   wmpoperations::getQuota");
 	
-	string uname = getenv("USER"); //TBC
+	//TBD Use LCAS method
+	string uname = "peppe";
 	pair<long, long> quotas;
 	if (!wmputilities::getUserQuota(quotas, uname)) {
 		throw JobOperationException(__FILE__, __LINE__,
@@ -790,7 +787,8 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	GLITE_STACK_TRY("getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)");
 	edglog_fn("   wmpoperations::getFreeQuota");
 	
-	string uname = getenv("USER"); //TBC
+	//TBD Use LCAS method
+	string uname = "peppe";
 	pair<long, long> quotas;
 	if (!wmputilities::getUserFreeQuota(quotas, uname)) {
 		throw JobOperationException(__FILE__, __LINE__,
@@ -878,14 +876,15 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl)
 	edglog_fn("   wmpoperations::jobListMatch");
 	int type = getType(jdl);
 
+	cerr<<"----------------- INSIDE listMatch"<<endl;
+	
 	if (type == TYPE_JOB) {
-		/*
-		org::glite::daemon::WMPManager manager;
-		wmp_fault_t wmp_fault = manager.runCommand("jobListMatch", jdl,
-			jobListMatch_response);
-		*/
-		wmp_fault_t wmp_fault;
-		wmp_fault.code = WMS_NO_ERROR;
+		vector<string> params;
+		wmpmanager::WMPManager manager;
+		params.push_back(jdl);
+		wmp_fault_t wmp_fault = manager.runCommand("jobListMatch", params,
+			&jobListMatch_response);
+			
 		if (wmp_fault.code != WMS_NO_ERROR) {
 			throw JobOperationException(__FILE__, __LINE__,
 				"jobListMatch(jobListMatchResponse &jobListMatch_response, "
@@ -899,8 +898,14 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl)
 			"Operation permitted only for normal job");
 	}
 
+	cerr<<"----------------- FUORI CICLO"<<endl;
+	for (int i = 0; (jobListMatch_response.CEIdAndRankList)->file->size(); i++) {
+		cerr<<"CICLO"<<endl;
+		cerr<<(*(*(jobListMatch_response.CEIdAndRankList)->file)[i]).name<<endl;
+	}
+	
 	/// To remove. Only to test
-	StringAndLongList *list = new StringAndLongList();
+	/*StringAndLongList *list = new StringAndLongList();
 	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
 	StringAndLongType *item = new StringAndLongType();
 	item->name = *(new string("First"));
@@ -911,7 +916,8 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl)
 	item2->size = 50;
 	file->push_back(item2);
 	list->file = file;
-	jobListMatch_response.CEIdAndRankList = list;
+	jobListMatch_response.CEIdAndRankList = list;*/
+	
 	edglog(severe) << "" << endl;
 	GLITE_STACK_CATCH();
 }

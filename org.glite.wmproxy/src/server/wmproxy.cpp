@@ -53,6 +53,10 @@ main(int argc, char* argv[])
 	struct soap *soap;
 	char msg[100];
 	try {
+		
+		//singleton_default<NS2WMProxy>::instance()
+			//.init(configuration::Configuration::instance()->wm()->input());
+		
 		singleton_default<WmproxyConfiguration>::instance().init(opt_conf_file, configuration::ModuleType::network_server);
 		logger::threadsafe::edglog.open( singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file(),
 				static_cast<logger::level_t>(singleton_default<WmproxyConfiguration>::instance().wmp_config->log_level()) );
