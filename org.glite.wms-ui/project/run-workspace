@@ -2,7 +2,7 @@
 
 cd ../..
 cvs co org.glite
-cvs co org.glite.wms
+cvs co org.glite.wms-ui
 
-cd org.glite.wms/project
-ant -f glite.wms.csf.xml
+cd org.glite.wms-ui/project
+ant -f glite.wms-ui.csf.xml

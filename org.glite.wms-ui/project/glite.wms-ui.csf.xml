@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
-	Revision 1.1  2004/07/25 18:39:48  eronchie
-	Initial revision
+	Revision 1.1  2004/07/25 18:53:47  eronchie
+	Renamed file
 
+	Revision 1.1.1.1  2004/07/25 18:39:48  eronchie
+	Added new WMS subsystem 
+	
 	Revision 1.46  2004/07/25 17:02:49  eronchie
 	Renamed in condor instead of condorg
 	

@@ -21,150 +21,16 @@
 
 	Revision history:
 	$Log$
-	Revision 1.1  2004/07/25 18:39:48  eronchie
-	Initial revision
+	Revision 1.2  2004/07/25 18:53:47  eronchie
+	Renamed file
 
-	Revision 1.39  2004/07/25 17:39:46  eronchie
-	Updated condorg.m4 file
-	Added condor among jobsubmission dependencies
-	
-	Revision 1.38  2004/07/23 10:00:03  eronchie
-	Added thirdparty
-	
-	Revision 1.37  2004/07/23 09:56:18  eronchie
-	Removed globus_ssl_utils dependency
-	It is moved out in org.glite.wms-utils
-	
-	Revision 1.36  2004/07/23 09:33:14  eronchie
-	Changed condor in condorg
-	
-	Revision 1.35  2004/07/23 08:51:27  eronchie
-	Removed tls, jobid, thirdparty-globus_ssl_utils
-	
-	Revision 1.34  2004/07/18 12:29:39  eronchie
-	Start adding purger
-	WARNING: work in progress
-	
-	Revision 1.33  2004/07/18 12:17:33  eronchie
-	Start integrating purger
-	
-	Revision 1.32  2004/07/18 11:40:12  eronchie
-	Removed temporarely condor
-	
-	Revision 1.31  2004/07/18 10:55:41  eronchie
-	Start adding checkpointing
-	WARNING: work in progress
-	
-	Revision 1.30  2004/07/16 16:25:44  flammer
-	Added tags for automated adding of components.
-	
-	Revision 1.29  2004/07/14 23:17:34  dimeglio
-	Added dependency of globus_ssl_utils on globus
-	
-	Revision 1.28  2004/07/10 07:22:06  eronchie
-	Updated internal dependencies
-	WARNING: work in progress
-	
-	Revision 1.27  2004/07/10 06:47:53  eronchie
-	Updated matchmaking internal dependencies
-	Added classad_plugin
-	
-	Revision 1.26  2004/07/10 06:23:19  eronchie
-	Start adding matchmaking dependency
-	WARNING: work in progress
-	
-	Revision 1.25  2004/07/06 18:06:12  flammer
-	Update of classpath definitions, targets & configure file.
-	
-	Revision 1.24  2004/07/06 08:47:22  eronchie
-	Removed jobadapter
-	Added helper
-	jobadapter was moved in helper
-	
-	Revision 1.23  2004/06/28 23:08:57  eronchie
-	Start adding new component
-	brokerinfo
-	classad_plugin
-	matchmaking
-	
-	Revision 1.21  2004/06/26 13:07:35  eronchie
-	*** empty log message ***
-	
-	Revision 1.20  2004/06/18 22:14:30  dimeglio
-	Removed antcalls from check target
-	
-	Revision 1.19  2004/06/07 14:37:20  dimeglio
-	Added conditional build of modules
-	with setenvonly flag
-	
-	Revision 1.18  2004/05/31 15:47:59  eronchie
-	Updated jdl dependences
-	
-	Revision 1.17  2004/05/26 19:35:04  eronchie
-	Added new sub-module org.glite.wms.jdl
-	
-	Revision 1.16  2004/05/26 18:52:54  eronchie
-	Added new sub-module org.glite.wms.jobid
-	
-	Revision 1.15  2004/05/26 18:27:46  eronchie
-	Added sub-module org.glite.wms.tls
-	
-	Revision 1.14  2004/05/25 11:42:12  eronchie
-	Removed jcommon and added jdlj
-	
-	Revision 1.13  2004/05/17 16:22:12  flammer
-	Unification of variable naming.
-	
-	Revision 1.12  2004/05/14 00:07:32  dimeglio
-	Added command to load the system build.properties file before
-	loading the global properties, but after baseline and user properties
-	Removed references to local versions of global-only objects
-	Added default Ant all and cleanAll targets
-	
-	Revision 1.11  2004/05/13 23:01:49  dimeglio
-	Removed commands to create module directories (this is a subsystem)
-	Replaced workspace.abs.dir with workspace.dir
-	
-	Revision 1.10  2004/05/13 19:50:11  dimeglio
-	Changed all occurrences of test3.wms to wms
-	
-	Revision 1.9  2004/05/13 19:37:04  dimeglio
-	Changed all occurrences of EGEE or egee to GLite and glite
-	
-	Revision 1.8  2004/05/13 14:26:25  flammer
-	Corrected target include.
-	
-	Revision 1.7  2004/05/13 09:45:47  flammer
-	Moved to new variable naming & including style.
-	
-	Revision 1.6  2004/05/05 17:05:25  dimeglio
-	Implemented stage and dist targets for the project
-	Dist is new default target (warning: this may change)
-	
-	Revision 1.5  2004/05/03 00:37:00  dimeglio
-	Removed XML comment sequence in CVS log entry
-	
-	Revision 1.4  2004/05/03 00:24:58  dimeglio
-	Fixed module name error (common > jcommon)
-	
-	Revision 1.3  2004/04/30 18:05:34  eronchie
-	Added jclassads dependency
-	Added jcommon dependency
-	
-	Revision 1.2  2004/04/30 16:22:06  eronchie
-	Added stage target
-	Added stage, distsrc, and distbin targets
-	Added DISTBIN, and WORKDIR
-	
-	Revision 1.1  2004/04/29 01:36:29  dimeglio
-	Added org.egee.test3.wms
 	
 -->
 
-<project name="wms" default="dist">
+<project name="wms-ui" default="dist">
 
 	<description>
-		Ant build file to build the GLite WMS Subsystem
+		Ant build file to build the GLite WMS UI Subsystem
 	</description>
 	
 	<!-- =========================================
@@ -361,98 +227,17 @@
                      inheritall="false" />
 	</target>
 
-	<target name="thirdparty-globus_gridftp_server" unless="setenvonly" depends="globus">
-		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_gridftp_server"
-		     target="${target}"
-                     inheritall="false" />
-	</target>
-
-	<target name="thirdparty-loki" unless="setenvonly">
-		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-loki"
-		     target="${target}"
-                     inheritall="false" />
-	</target>
-
 	<target name="common" unless="setenvonly" depends="boost,classads,globus">
 		<ant dir="${workspace.dir}/${subsystem.name}.common"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
-	<target name="jdl" unless="setenvonly" depends="boost,classads,globus,common">
-                <ant dir="${workspace.dir}/${subsystem.name}.jdl"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-        <target name="jdlj" unless="setenvonly" depends="jclassads">
-                <ant dir="${workspace.dir}/${subsystem.name}.jdlj"
-		     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="brokerinfo" unless="setenvonly" depends="boost,classads,common,jdl">
-                <ant dir="${workspace.dir}/${subsystem.name}.brokerinfo"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="classad_plugin" unless="setenvonly" depends="boost,classads,common,brokerinfo">
-                <ant dir="${workspace.dir}/${subsystem.name}.classad_plugin"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="matchmaking" unless="setenvonly" depends="boost,classads,common,classad_plugin">
-                <ant dir="${workspace.dir}/${subsystem.name}.matchmaking"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="helper" unless="setenvonly" depends="boost,classads,common,jdl">
-                <ant dir="${workspace.dir}/${subsystem.name}.helper"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="broker" unless="setenvonly" depends="boost,classads,common,jdl">
-                <ant dir="${workspace.dir}/${subsystem.name}.broker"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="checkpointing" unless="setenvonly" depends="boost,classads,common">
-                <ant dir="${workspace.dir}/${subsystem.name}.checkpointing"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="purger" unless="setenvonly" depends="boost,classads,globus">
-                <ant dir="${workspace.dir}/${subsystem.name}.purger"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
-	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condor,globus,common,jdl">
-                <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
-                     target="${target}"
-                     inheritall="false" />
-        </target>
-
 	<!-- Main proxy -->
-	<target name="buildmodules" depends="thirdparty-bypass,
-   					     thirdparty-globus_gridftp_server,
- 					     thirdparty-loki,
-					     common,
-					     jdl,
-   					     jdlj,
-					     brokerinfo,
-					     classad_plugin,
-					     matchmaking,
-					     broker,
-					     helper,
-					     checkpointing,
-					     jobsubmission,
-					     purger" />
+	<target name="buildmodules" depends="api-cpp,
+   					     api-jave,
+ 					     cli-python,
+					     gui-java,
+					     partitioner" />
 		
 </project>
