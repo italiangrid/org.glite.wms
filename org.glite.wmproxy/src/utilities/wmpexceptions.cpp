@@ -29,18 +29,23 @@ JobTimeoutException::JobTimeoutException(const std::string& file, int line,
 
 JobOperationException::JobOperationException(const std::string& file, int line,
 	const std::string& method, int code, const std::string& reason)
-	:JobException(file, line, method, code, "JobOperationException")
-    {
+	: JobException(file, line, method, code, "JobOperationException")
+{
 	error_message = "The Operation is not allowed: " + reason;
-	//error_message += reason;
 }
 
-ProxyOperationException::ProxyOperationException(const std::string& file, int line,
-	const std::string& method, int code, const std::string& reason)
-	:JobException(file, line, method, code, "JobOperationException")
-    {
-	error_message = "The Operation is not allowed: " + reason;
-	//error_message += reason;
+ProxyOperationException::ProxyOperationException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "ProxyOperationException")
+{
+	error_message = "Proxy exception: " + reason;
+}
+
+FileSystemException::FileSystemException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "FileSystemException")
+{
+	error_message += reason;
 }
 
 //} // wmproxy

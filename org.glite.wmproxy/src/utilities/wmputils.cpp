@@ -58,7 +58,7 @@ doPurge(std::string dg_jobid)
      	return purger::purgeStorage(jobid);
     } else {
    		edglog(critical) << logger::setfunction("CFSI::doPurge()") << 
-			"Error in Purging: Invalid Job Id. Purge not done." << std::endl; 
+			"Error in Purging: Invalid Job Id. Purge not done." << std::endl;
       return false; 
     } 
 }
@@ -90,8 +90,12 @@ getUserDN()
 	
 	user_dn = strdup(client_dn);
 	p = strstr(user_dn, "/CN=proxy"); ///TBC ITERATE????
-	if (p != NULL) {
+	/*if (p != NULL) {
 		*p = '\0';      
+	}*/
+	while (p != NULL) {
+		*p = '\0';
+		p = strstr(user_dn, "/CN=proxy");
 	}
 	p = strstr(user_dn, "/CN=limited proxy");
 	if (p != NULL) {
@@ -137,59 +141,39 @@ waitForSeconds(int seconds)
 	cerr<<"-----> End waiting"<<endl;
 }
 
-/*static bool copy_file(const std::string& from, const std::string& to)
+void 
+fileCopy(const std::string& source, const std::string& target)
 {
-  edglog_fn("CFSI::copyFile");
-  edglog(info) << "Copying file.." << std::endl;
-  edglog(debug) << "From: " << from << " To: " << to << std::endl;
-  std::ifstream in ( from.c_str() );
-
-  if( !in.good() ) {
-    return false;
-  }
-  std::ofstream out( to.c_str() );
+  edglog_fn("	fileCopy");
+  edglog(info)<<"Copying file..."<<std::endl;
+  edglog(debug)<<"Source: "<<source<<" Target: "<<target<<std::endl;
   
-  if( !out.good() ) {
-    return false;
+  std::ifstream in(source.c_str());
+  if (!in.good()) {
+    throw FileSystemException(__FILE__, __LINE__,
+		"fileCopy(const std::string& source, const std::string& target)",
+		WMS_IS_FAILURE, "Unable to copy file");
   }
-  out << in.rdbuf(); // read original file into target
+  std::ofstream out(target.c_str());
+  if (!out.good()) {
+    throw FileSystemException(__FILE__, __LINE__,
+		"fileCopy(const std::string& source, const std::string& target)",
+		WMS_IS_FAILURE, "Unable to copy file");
+  }
+  out<<in.rdbuf(); // read original file into target
   
   struct stat from_stat;
-  if(   stat(from.c_str(), &from_stat) ||
-        chown( to.c_str(), from_stat.st_uid, from_stat.st_gid ) ||
-        chmod( to.c_str(), from_stat.st_mode ) ) {
-    edglog(severe) << "Copy failed. From: " << from << " To: " << to << std::endl;
-    return false;
+  if (stat(source.c_str(), &from_stat) ||
+        chown(target.c_str(), from_stat.st_uid, from_stat.st_gid) ||
+        chmod(target.c_str(), from_stat.st_mode)) {
+    edglog(severe)<<"Copy failed. Source: "<<source<<" Target: "<<target<<std::endl;
+
+    throw FileSystemException(__FILE__, __LINE__,
+		"fileCopy(const std::string& source, const std::string& target)",
+		WMS_IS_FAILURE, "Unable to copy file");
   }
-  edglog(debug) << "Copy done." << std::endl;
-  return true;
-}*/
-
-void
-fileCopy(const string &source, const string &target) 
-{
-	char ch;
-	ifstream source_stream;
-  	ofstream target_stream;
-  	filebuf *source_buffer;
-  	filebuf *target_buffer;
-
-  	source_stream.open(source.c_str());
-  	target_stream.open(target.c_str());
-
-  	source_buffer=source_stream.rdbuf();
-  	target_buffer=source_stream.rdbuf();
-
-  	ch = source_buffer->sgetc();
-  	while (ch != EOF) {
-		target_buffer->sputc(ch);
-		ch = source_buffer->snextc();
-  	}
-
-  	target_stream.close();
-  	source_stream.close();
+  edglog(debug)<<"Copy done."<<std::endl;
 }
-
 
 std::string
 to_filename(glite::wmsutils::jobid::JobId j, int level, bool extended_path)
@@ -206,7 +190,7 @@ int execute (const string &command)
 	return system( command.c_str() );
 }
 
-int managedir( const std::string &dest_uri , int userid , std::vector<std::string> jobids)
+int managedir( const std::string &document_root , int userid , std::vector<std::string> jobids)
 { 
    int exit_code=0; 
    // Define File Separator 
@@ -229,7 +213,7 @@ int managedir( const std::string &dest_uri , int userid , std::vector<std::strin
    arguments += " -m 0770 "; // MODE 
    int level = 0; 
    bool extended_path = true ; 
-   const string executable = gliteDirmanExe + arguments + dest_uri + FILE_SEP; 
+   const string executable = gliteDirmanExe + arguments + document_root + FILE_SEP; 
    boost::char_separator<char> sep(FILE_SEP.c_str()); 
    // Iterate over the jobs 
    for (unsigned int i = 0 ; i < jobids.size() ; i++){ 

@@ -40,6 +40,12 @@ class ProxyOperationException : public JobException {
 		const std::string& method, int code, const std::string& reason);
 };
 
+class FileSystemException : public JobException {
+	public:
+	FileSystemException(const std::string& file, int line, 
+		const std::string& method, int code, const std::string& reason);
+};
+
 //} // wmproxy
 //} // wms
 //} // glite
