@@ -58,22 +58,38 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
-namespace utilities  	= glite::wms::common::utilities;
+namespace utilities  = glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 
-//typedef boost::scoped_ptr< glite::wms::common::utilities::FileList<std::string> > FileListPtr;
-//typedef boost::scoped_ptr< glite::wms::common::utilities::FileListMutex> FileListMutexPtr;
 
 using namespace std;
 
-//const configuration::NSConfiguration& configuration();
 const configuration::NSConfiguration* NSconf;
 
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
+
+
+
+
+
+
+
+template<typename T>
+void taskPipe ( task::PipeReader<T>&  runner , task::Pipe<T> &pipe , int num_threads ){
+	boost::thread_group m_group ;
+	assert (num_threads > 0);
+	// runner.read_from(pipe.read_end());
+	// task::ReaderFunctor<T> f (runner, pipe.read_end() );
+	// pipe.open_read_end(num_threads);
+	// while(num_threads--){
+	//	m_group.create_thread(f);
+	//}
+}
+
 
 
 
@@ -85,22 +101,17 @@ main(int argc, char* argv[])
 	int ssl_accept;
 	struct soap *soap;
 	struct soap *tsoap;
-	
-	
-	//try {
-	/*logger::threadsafe::edglog.open(
-	      configuration::Configuration::instance()->ns()->log_file(),
-     	      static_cast<logger::level_t>(configuration::Configuration::instance()->ns()->log_level()) );
-		
+
+	try {
+		logger::threadsafe::edglog.open( configuration::Configuration::instance()->ns()->log_file(),
+			static_cast<logger::level_t>(configuration::Configuration::instance()->ns()->log_level()) );
 		edglog_fn("   WMProxy::main");
 		edglog(fatal) << "--------------------------------------" << endl;
 		edglog(fatal) << "Starting WM Proxy..." << endl;
 		logger::threadsafe::edglog.activate_log_rotation (
 			configuration::Configuration::instance()->ns()->log_file_max_size(),
 			configuration::Configuration::instance()->ns()->log_rotation_base_file(),
-	        configuration::Configuration::instance()->ns()->log_rotation_max_file_number());*/
-	
-		
+			configuration::Configuration::instance()->ns()->log_rotation_max_file_number());
 		if (argc < 3) {
 			waitForSeconds(15);
 			std::auto_ptr<configuration::Configuration> conf;
@@ -108,15 +119,15 @@ main(int argc, char* argv[])
 				string file_name = "glite_wms.conf";
 				conf.reset(new configuration::Configuration(file_name, "NetworkServer"));
 			} catch( configuration::CannotOpenFile &file ) {
-			    //edglog(fatal) << "Cannot open file: " << file << std::endl;
+			    edglog(fatal) << "Cannot open file: " << file << std::endl;
 			    std::cout << "Cannot open file: " << file << std::endl;
 			} catch( configuration::CannotConfigure &error ) {
-			    //edglog(fatal) << "Cannot configure: " << error << std::endl;
+			    edglog(fatal) << "Cannot configure: " << error << std::endl;
 			    std::cout << "Cannot configure: " << error << std::endl;
 			} catch (exception ex) {
-				cerr<<"Error: "<<ex.what()<<endl;	
+				cerr<<"Error: "<<ex.what()<<endl;
 			}
-			
+
 			cerr<<"NS inst: " <<configuration::Configuration::instance()->wm();
 			cerr<<"ISB Size: " <<configuration::Configuration::instance()->ns()->max_input_sandbox_size();
 
@@ -124,27 +135,22 @@ main(int argc, char* argv[])
 			cerr<<"Config: "<<config<<endl;
 			NSconf = config -> ns();
 			cerr<<"NSconf: "<<NSconf<<endl;
-
-		    task::Pipe<classad::ClassAd*> pipe;
-		    Dispatcher dispatcher;
-		    //boost::condition  do_shutdown;
-  			//boost::mutex     mtx_shutdown;
-		    try {
-		    	cerr<<"Launching thread(s)..."<<endl;
-			  task::Task dispatchers(dispatcher, pipe, NSconf->dispatcher_threads());
-			  cerr<<"Launching thread(s)... finished"<<endl;
-			  //boost::mutex::scoped_lock lk( mtx_shutdown );
-			  //do_shutdown.wait(lk);
-			  //exit(0);
-		    } catch ( configuration::InvalidExpression &error ) {
-		      //edglog(fatal) << "Invalid Expression: " << error << std::endl;
-		    }
-	
-	    	// Running as a Fast CGI application
-	     	while (FCGI_Accept() >= 0) {
-	        	WMProxy proxy;
-	        	proxy.serve();
-	     	}	 
+			int thread_number;
+			try {
+				thread_number =  NSconf->dispatcher_threads() ;
+		    	} catch ( configuration::InvalidExpression &error ) {
+		      		edglog(fatal) << "Invalid Expression: " << error << std::endl;
+		    	}
+			task::Pipe<classad::ClassAd*> pipe;
+			Dispatcher dispatcher;
+			cerr<<"Launching thread(s)..."<<endl;
+			task::Task dispatchers(dispatcher, pipe, thread_number);
+			cerr<<"Launching thread(s)... finished"<<endl;
+			// Running as a Fast CGI application
+			while (FCGI_Accept() >= 0) {
+				WMProxy proxy;
+				proxy.serve();
+			}
 	    } else {}
 			/*cerr<<"Starting service..."<<endl;
 		    soap = soap_new();
@@ -199,11 +205,11 @@ main(int argc, char* argv[])
 	  		soap_end(soap);           // clean up everything and close socket
 			//cerr<<"Service stopped"<<endl;
 		}*/
-	/*} catch (exception &ex) {
-		//edglog(fatal) << "Exception caught: " << ex.what() << endl;
+	} catch (exception &ex) {
+		edglog(fatal) << "Exception caught: " << ex.what() << endl;
  	} catch ( ... ) {
-    	//edglog(fatal) << "Uncaught exception...." << endl;	 
-  	}*/
+    		edglog(fatal) << "Uncaught exception...." << endl;
+  	}
 	return 0;
 }
 
