@@ -468,6 +468,52 @@ JobWrapper::create_dgas_proxy_file(ostream& os,
 }
 
 ostream&
+JobWrapper::create_dgas_gianduia_lsf_files(ostream& os,
+                                           const string& jobid_to_filename) const
+{
+  //create dgas files for gianduia implementation
+  //if the job is LSF
+  os << "if [ -n \"${HLR_LOCATION}\" ]; then" << endl;
+  os << "  if [ -n \"${LSB_JOBID}\" ]; then" << endl;
+  os << "    echo \"GLITE_WMS_JOBID=$GLITE_WMS_JOBID\" >> /tmp/lsf_$LSB_JOBID" << endl;
+  os << "    echo \"HLR_LOCATION=$HLR_LOCATION\" >> /tmp/lsf_$LSB_JOBID" << endl;
+  os << "    cp ${X509_USER_PROXY} /tmp/lsf_$LSB_JOBID.proxy" << endl;
+  os << "    export GLITE_DGAS_LRMS_JOBID=$LSB_JOBID" << endl;
+  os << "  fi" << endl;
+  os << "fi" << endl << endl;
+  return os;
+}
+
+ostream&
+JobWrapper::create_dgas_gianduia_pbs_files(ostream& os,
+                                           const string& jobid_to_filename) const
+{
+  //create dgas files for gianduia implementation
+  //if the job is PBS
+  os << "if [ -n \"${HLR_LOCATION}\" ]; then" << endl;
+  os << "  if [ -n \"${PBS_JOBID}\" ]; then" << endl;
+  os << "    echo \"GLITE_WMS_JOBID=$GLITE_WMS_JOBID\" >> /tmp/pbs_$PBS_JOBID" << endl;
+  os << "    echo \"HLR_LOCATION=$HLR_LOCATION\" >> /tmp/pbs_$PBS_JOBID" << endl;
+  os << "    cp ${X509_USER_PROXY} /tmp/pbs_$PBS_JOBID.proxy" << endl;
+  os << "    export GLITE_DGAS_LRMS_JOBID=$PBS_JOBID" << endl;
+  os << "  fi" << endl;
+  os << "fi" << endl << endl;
+  return os;
+}
+
+ostream&
+JobWrapper::create_dgas_gianduia_tar_file(ostream& os,
+                                          const string& jobid_to_filename) const
+
+{
+  os << "if [ -n \"${GLITE_GIANDUIA_TAR_FILE}\" ]; then" << endl;
+  os << "   if [ -n \"${GLITE_DGAS_LRMS_JOBID}\" ]; then" << endl;
+  os << "      tar cv --remove-files --directory=/tmp/ -f $GLITE_GIANDUIA_TAR_FILE $GLITE_DGAS_LRMS_JOBID $GLITE_DGAS_LRMS_JOBID.proxy" << endl;
+  os << "   fi" << endl;
+  os << "fi" << endl << endl;
+}
+
+ostream&
 JobWrapper::doExit(ostream& os, 
 		   const string& maradonaprotocol, 
 		   bool create_subdir) const
@@ -822,6 +868,9 @@ JobWrapper::print(ostream& os) const
 
   // Handling dgas proxy
   create_dgas_proxy_file(os, m_jobid_to_filename);
+  create_dgas_gianduia_lsf_files(os, m_jobid_to_filename);
+  create_dgas_gianduia_pbs_files(os, m_jobid_to_filename);
+  create_dgas_gianduia_tar_file(os, m_jobid_to_filename);
 
   // set the umask
   set_umask(os);
