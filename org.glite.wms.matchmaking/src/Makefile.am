@@ -8,23 +8,23 @@
 
 lib_LTLIBRARIES = libglite_wms_matchmaking.la
 
-noinst_HEADERS = \
-	exceptions.h \
-	glue_attributes.h \
-	jdl_attributes.h \
-	matchmakerGlueImpl.h \
-	matchmaker.h \
-	utility.h
+matchmakingdir = $(includedir)/glite/wms/matchmaking
+matchmaking_HEADERS = \
+	utility.h \
+        matchmaker.h \
+        matchmakerGlueImpl.h \
+        exceptions.h \
+        jdl_attributes.h \
+        glue_attributes.h
 
 libglite_wms_matchmaking_la_SOURCES = \
-        matchmakerGlueImpl.cpp \
-        exceptions.cpp 
+	matchmakerGlueImpl.cpp \
+	exceptions.cpp 
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
-        $(BOOST_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) \
-        $(CLASSAD_CFLAGS) \
-	-DENABLE_SHARED_LIBRARY_FUNCTIONS
-
+	$(BOOST_CFLAGS) \
+	$(CLASSAD_CFLAGS)
+ 
 MAINTAINERCLEANFILES = Makefile.in
