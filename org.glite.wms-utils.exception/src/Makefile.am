@@ -17,10 +17,6 @@ utilitiesinclude_HEADERS = \
 	utils.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
-	-I$(top_srcdir)/src \
-	$(GLOBUS_THR_CFLAGS) \
-	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
-	-DB_THREAD_SAFE
+	-I$(top_srcdir)/src 
 
 MAINTAINERCLEANFILES = Makefile.in *.*~
