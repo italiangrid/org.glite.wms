@@ -309,7 +309,6 @@ void Request::regist(){
 			if (  jad->hasAttribute (  JDL::PREJOB ) ) res_number++ ;
 			if (  jad->hasAttribute (  JDL::POSTJOB ) ) res_number++ ;
 			dag =  log.registerJob (jad , res_number) ;
-			cout << "DAGAD returned: " << dag.toString(ExpDagAd::MULTI_LINES) << endl ;
 			// Release un-needed memory
 			delete jad ;
 			type = EWU_TYPE_DAG_AD ;
