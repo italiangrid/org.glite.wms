@@ -13,7 +13,7 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wmsutils/jobid/JobId.h"
 // NetworkServer
-#include "glite/wms/manager-ns/client/NSClient.h"
+#include "NSClient.h"
 
 using namespace glite::wmsustils::exception ;
 using namespace glite::wmsutils::jobid ;

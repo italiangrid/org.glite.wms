@@ -1,7 +1,7 @@
 #include "glite/wmsui/api/Request.h"
 #include "glite/wmsui/api/JobExceptions.h"
 /************************  Network Server ******************/
-#include "glite/wms/manager-ns/client/NSClient.h"
+#include "NSClient.h"
 /************************ Request Ad *******************/
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"

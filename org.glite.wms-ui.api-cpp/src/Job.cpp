@@ -16,7 +16,7 @@
 /**  CHKPT */
 #include "glite/wms/checkpointing/client/jobstate.h"//Checkpointing
 /**  NS */
-#include "glite/wms/manager-ns/client/NSClient.h"// NetworkServer
+#include "NSClient.h"// NetworkServer
 /*  Logging and Bookkeeping */
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/Event.h"
