@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.47  2004/08/04 07:34:45  eronchie
+	Added cppunit
+
 	Revision 1.46  2004/07/29 07:35:54  dimeglio
 	Removed local envinfo and envcheck target (must use common one)
-
+	
 	Revision 1.45  2004/07/28 17:55:43  eronchie
 	Added broker
 	
@@ -377,7 +380,7 @@
                      inheritall="false" />
 	</target>
 
-	<target name="common" unless="setenvonly" depends="boost,classads,globus">
+	<target name="common" unless="setenvonly" depends="boost,classads,globus,cppunit">
 		<ant dir="${workspace.dir}/${subsystem.name}.common"
 		     target="${target}"
                      inheritall="false" />

@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.53  2004/08/04 07:34:45  eronchie
+	Added cppunit
+
 	Revision 1.52  2004/07/28 17:55:43  eronchie
 	Added broker
-
+	
 	Revision 1.51  2004/07/28 17:50:55  eronchie
 	Added broker
 	
@@ -454,7 +457,7 @@
 	</target>
 
 	<!-- Common -->
- 	<target name="common" depends="boost,classads,globus,get.common.head, get.common.tag"/>
+ 	<target name="common" depends="boost,classads,globus,cppunit,get.common.head, get.common.tag"/>
 	<target name="get.common.head" if="common.head">
 		<cvs-co package="org.glite.wms.common" />
 	</target>
