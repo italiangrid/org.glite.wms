@@ -21,171 +21,13 @@
 
 	Revision history:
 	$Log$
-	Revision 1.1  2004/07/25 18:53:47  eronchie
-	Renamed file
+	Revision 1.2  2004/07/27 11:13:39  eronchie
+	Removed
 
-	Revision 1.1.1.1  2004/07/25 18:39:48  eronchie
-	Added new WMS subsystem 
-	
-	Revision 1.46  2004/07/25 17:02:49  eronchie
-	Renamed in condor instead of condorg
-	
-	Revision 1.45  2004/07/23 09:56:18  eronchie
-	Removed globus_ssl_utils dependency
-	It is moved out in org.glite.wms-utils
-	
-	Revision 1.44  2004/07/23 09:33:14  eronchie
-	Changed condor in condorg
-	
-	Revision 1.43  2004/07/23 08:51:28  eronchie
-	Removed tls, jobid, thirdparty-globus_ssl_utils
-	
-	Revision 1.42  2004/07/18 12:29:39  eronchie
-	Start adding purger
-	WARNING: work in progress
-	
-	Revision 1.41  2004/07/18 12:17:33  eronchie
-	Start integrating purger
-	
-	Revision 1.40  2004/07/18 11:40:12  eronchie
-	Removed temporarely condor
-	
-	Revision 1.39  2004/07/18 11:26:20  eronchie
-	Added condorg.m4 file
-	Start adding jobsubmission component
-	Condor package is still missing in the repository
-	
-	Revision 1.38  2004/07/18 10:55:41  eronchie
-	Start adding checkpointing
-	WARNING: work in progress
-	
-	Revision 1.37  2004/07/16 16:25:44  flammer
-	Added tags for automated adding of components.
-	
-	Revision 1.36  2004/07/14 23:17:34  dimeglio
-	Added dependency of globus_ssl_utils on globus
-	
-	Revision 1.35  2004/07/10 07:22:06  eronchie
-	Updated internal dependencies
-	WARNING: work in progress
-	
-	Revision 1.34  2004/07/10 06:47:53  eronchie
-	Updated matchmaking internal dependencies
-	Added classad_plugin
-	
-	Revision 1.33  2004/07/10 06:23:19  eronchie
-	Start adding matchmaking dependency
-	WARNING: work in progress
-	
-	Revision 1.32  2004/07/06 08:47:22  eronchie
-	Removed jobadapter
-	Added helper
-	jobadapter was moved in helper
-	
-	Revision 1.31  2004/07/06 08:43:20  eronchie
-	Updated m4 file
-	Added new components
-	
-	Revision 1.30  2004/06/28 23:08:57  eronchie
-	Start adding new component
-	brokerinfo
-	classad_plugin
-	matchmaking
-	
-	Revision 1.29  2004/06/26 13:49:09  eronchie
-	Temporarely removed classad_plugin
-	work in progress
-	
-	Revision 1.28  2004/06/26 13:07:35  eronchie
-	*** empty log message ***
-	
-	Revision 1.27  2004/05/26 19:35:04  eronchie
-	Added new sub-module org.glite.wms.jdl
-	
-	Revision 1.26  2004/05/26 18:52:55  eronchie
-	Added new sub-module org.glite.wms.jobid
-	
-	Revision 1.25  2004/05/26 18:27:46  eronchie
-	Added sub-module org.glite.wms.tls
-	
-	Revision 1.24  2004/05/25 11:42:46  eronchie
-	Removed jcommon and added jdlj
-	
-	Revision 1.23  2004/05/19 23:21:45  dimeglio
-	Fixed errors in wms component CVS targets
-	
-	Revision 1.22  2004/05/19 22:34:25  dimeglio
-	Environmental checks are implemented in the global file
-	
-	Revision 1.21  2004/05/19 22:01:13  dimeglio
-	Removed old unless condition
-	
-	Revision 1.20  2004/05/19 21:56:03  dimeglio
-	Removed old update conditions
-	
-	Revision 1.19  2004/05/19 21:48:59  dimeglio
-	Modifed logic to check out CVS modules
-	
-	Revision 1.18  2004/05/18 10:17:54  dimeglio
-	Modified not to use -r HEAD when checking out modules from HEAD
-	
-	Revision 1.17  2004/05/17 16:22:12  flammer
-	Unification of variable naming.
-	
-	Revision 1.16  2004/05/13 23:40:56  dimeglio
-	Removed one occurrence of Test2 WMS
-	
-	Revision 1.15  2004/05/13 23:07:19  dimeglio
-	Added ant-contrib target
-	Replaced workspace.abs.dir with workspace.dir
-	
-	Revision 1.14  2004/05/13 19:37:04  dimeglio
-	Changed all occurrences of EGEE or egee to GLite and glite
-	
-	Revision 1.13  2004/05/13 18:35:11  flammer
-	Added missing dependencies. Deleted duplicated external dependencies.
-	
-	Revision 1.12  2004/05/13 09:46:58  flammer
-	Moved to variable naming & include style.
-	
-	Revision 1.11  2004/05/05 23:21:04  dimeglio
-	Updated Jalopy dependencies
-	
-	Revision 1.10  2004/05/05 23:05:17  dimeglio
-	Removed import of external dependencies file, dependencies are
-	explicitly set. This is necessary to be able to run the subsystem CSF
-	without extracting org.egee manually
-	
-	Revision 1.9  2004/05/03 00:30:57  dimeglio
-	Added jcommon component to subsystem dependencies
-	
-	Revision 1.8  2004/05/03 00:28:12  dimeglio
-	Added jcommon component to subsystem dependencies
-	
-	Revision 1.7  2004/04/29 04:36:56  dimeglio
-	Fixed dependency spelling errors
-	
-	Revision 1.6  2004/04/29 04:05:04  dimeglio
-	Moved user property look up before dependencies properties
-	
-	Revision 1.5  2004/04/29 03:39:47  dimeglio
-	Added Import of  user and project properties
-	
-	Revision 1.4  2004/04/29 03:30:23  dimeglio
-	Replaced list of dependencies with common dependencies file
-	
-	Revision 1.3  2004/04/29 02:43:34  dimeglio
-	Added check for presence of junit.runner class
-	
-	Revision 1.2  2004/04/29 01:42:09  dimeglio
-	Added dependencies to csf files
-	
-	Revision 1.1  2004/04/29 01:36:29  dimeglio
-	Added org.egee.test3.wms
 	
 -->
 
-<project name="GLite Middleware WMS CSF" default="all">
+<project name="GLite Middleware WMS UI CSF" default="all">
 
 	<!-- overwrite default workspace directory -->
 	<property name="workspace.dir" value="../.." />
@@ -254,16 +96,16 @@
 				</or>
 			</and>
 		</condition>
-		<condition property="glite-wms.head">
+		<condition property="glite-wms-ui.head">
 			<and>
-				<equals arg1="${org.glite.wms.version}" arg2="HEAD" />
+				<equals arg1="${org.glite.wms-ui.version}" arg2="HEAD" />
 				<istrue value="${update}" />
 			</and>
 		</condition>
-		<condition property="glite-wms.tag">
+		<condition property="glite-wms-ui.tag">
 			<and>
 				<not>
-					<equals arg1="${org.glite.wms.version}" arg2="HEAD" />
+					<equals arg1="${org.glite.wms-ui.version}" arg2="HEAD" />
 				</not>
 				<istrue value="${update}" />
 			</and>
