@@ -43,7 +43,7 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
 	-I$(ARES)/include \
 	-I/tmp/fcgi/include \
-	-I../commands \
+	-I$(REPOSITORY)/org.glite.wms.wmproxy/src \
 	-I$(GSOAPPATH) \
 	-I$(REPOSITORY)/stage/include \
 	-I$(CLASSAD)/include \
