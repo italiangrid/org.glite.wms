@@ -6,9 +6,6 @@
 #include <map>
 #include <boost/bind.hpp>
 
-#include "glite/security/proxyrenewal/renewal.h"
-#include "purger.h"
-
 #include "CommandAdManipulation.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
@@ -18,7 +15,6 @@ namespace jobid = glite::wmsutils::jobid;
 namespace requestad = glite::wms::jdl;
 namespace common = glite::wms::manager::common;
 namespace utilities = glite::wms::common::utilities;
-namespace purger = glite::wms::purger;
 
 namespace glite {
 namespace wms {
@@ -140,9 +136,11 @@ void log_cancelled(common::ContextPtr const& context)
 
 namespace {
 
-void apply(std::vector<boost::function<void()> > const& input_cleaners)
+typedef std::vector<boost::function<void()> > cleaners_type;
+
+void apply(cleaners_type const& input_cleaners)
 {
-  for (std::vector<boost::function<void()> >::const_iterator it = input_cleaners.begin();
+  for (cleaners_type::const_iterator it = input_cleaners.begin();
        it != input_cleaners.end(); ++it) {
     (*it)();
   }
@@ -156,8 +154,6 @@ Request::~Request()
     switch (m_state) {
     case Request::UNRECOVERABLE:
       log_abort(m_id, m_lb_context, m_message);
-      edg_wlpr_UnregisterProxy(m_id, "");
-      purger::purgeStorage(m_id);
       apply(m_input_cleaners);
       break;
 
@@ -168,8 +164,6 @@ Request::~Request()
 
     case Request::CANCELLED:
       log_cancelled(m_lb_context);
-      edg_wlpr_UnregisterProxy(m_id, "");
-      purger::purgeStorage(m_id);
       apply(m_input_cleaners);
       break;
 

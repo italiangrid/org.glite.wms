@@ -21,6 +21,8 @@
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "TaskQueue.hpp"
 #include "Request.hpp"
+#include "glite/security/proxyrenewal/renewal.h"
+#include "purger.h"
 
 #include "glite/lb/producer.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
@@ -261,7 +263,7 @@ void retrieve_lb_info(RequestPtr const& req)
     previous_matches_simple.push_back(it->first);
   }
 
-  // check the system max retry count; abort if exceeded
+// check the system max retry count; abort if exceeded
   size_t max_retry_count = get_max_retry_count();
   if (max_retry_count <= 0
       || previous_matches.size() > max_retry_count) {
@@ -328,6 +330,12 @@ void do_transitions_for_cancel(
     case Request::RECOVERABLE:
       req->clear_jdl();
       req->state(Request::CANCELLED, "cancelled by user");
+      req->add_cleanup(
+        boost::bind(edg_wlpr_UnregisterProxy, req->id(), "")
+      );
+      req->add_cleanup(
+        boost::bind(purger::purgeStorage, req->id(), std::string())
+      );
       break;
     case Request::DELIVERED:
       req->clear_jdl();       // this, together with marked_cancelled(),
@@ -342,8 +350,15 @@ void do_transitions_for_cancel(
       // it may be in use (or shortly be) by the RequestHandler
       break;
     case Request::UNRECOVERABLE:
-      // do nothing; prefer to have the job aborted rather than cancelled,
-      // so the user knows that there is something wrong with this job
+      // don't change state; this will cause the job to be aborted rather than
+      // cancelled, so the user knows that there is something wrong with this
+      // job
+      req->add_cleanup(
+        boost::bind(edg_wlpr_UnregisterProxy, req->id(), "")
+      );
+      req->add_cleanup(
+        boost::bind(purger::purgeStorage, req->id(), std::string())
+      );
       break;
     case Request::CANCELLED:
       // do nothing; the job has already been cancelled
