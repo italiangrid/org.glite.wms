@@ -8,9 +8,9 @@
 
 noinst_LTLIBRARIES = libglite_wms_purger.la
 
-noinst_HEADERS     = purger.h
+#noinst_HEADERS     = purger.h
 
-#sbin_PROGRAMS      = edg-wl-purgeStorage
+sbin_PROGRAMS      = glite-wms-purgeStorage
 
 #wlpurgerdir = $(sysconfdir)/cron
 #wlpurger_DATA = edg-wl-purgeStorage-weekly.crontab \
@@ -24,27 +24,26 @@ noinst_HEADERS     = purger.h
 libglite_wms_purger_la_SOURCES = \
 	purger.cpp
 
-#edg_wl_purgeStorage_SOURCES = \
-#	edg-wl-purgeStorage.cpp
+glite_wms_purgeStorage_SOURCES = \
+	glite-wms-purgeStorage.cpp
 
-#edg_wl_purgeStorage_LDADD = \
-#	../common/jobid/libedg_wl_jobid.la \
-#	../common/utilities/libedg_wl_exceptions.la \
-#	../common/configuration/libedg_wl_conf.la \
-#	../common/utilities/libedg_wl_util.la \
-#	../common/logger/libedg_wl_logger.la \
-#	../logging/client/libedg_wl_logging.la \
-#	../logging/client/libedg_wl_loggingpp.la \
-#	libedg_wl_purger.la \
-#	$(BOOST_LIBS) $(GLOBUS_LIBS) $(CLASSAD_LIBS) \
-#	$(ARES_LIBS) $(EXPAT_LIBS)
+glite_wms_purgeStorage_LDADD = \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_LB_CLIENT_LIBS) \
+	./libglite_wms_purger.la \
+	$(BOOST_LIBS) \
+	$(GLOBUS_THR_LIBS) \
+	$(CLASSAD_LIBS) 
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/interface \
+	-I$(top_srcdir)/src
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(ARES_CFLAGS) \
-	$(GLOBUS_CFLAGS) \
-	$(EXPAT_CFLAGS) \
+	$(GLOBUS_THR_CFLAGS) \
 	-DWITH_LDAP_EXCEPTIONS 
 
 #EXTRA_DIST = edg-wl-purgeStorage-weekly.crontab \
