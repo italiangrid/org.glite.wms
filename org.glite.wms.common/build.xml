@@ -20,12 +20,16 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/05/05 17:09:42  dimeglio
+	Added definition of STAGE in configure.ac
+	Dist is new default target (warning: this may change)
+
 	Revision 1.1  2004/04/29 01:05:21  dimeglio
 	Added org.egee.test3.wms.common
-
+	
 -->
 
-<project name="common" default="export">
+<project name="common" default="dist">
 
 	<!-- =========================================
 		 Builds the EGEE Test 3 WMS Common Module

@@ -40,6 +40,7 @@ WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
 REPOSITORY=`pwd`/../../repository
+STAGE=`pwd`/../../stage
 DISTBIN=$WORKDIR/../../dist
 AC_SUBST(DISTBIN)
 
@@ -57,10 +58,10 @@ AC_SUBST([CLASSAD_CPPFLAGS])
 CLASSAD_LIBS="-L$REPOSITORY/classads/lib -lclassad"
 AC_SUBST([CLASSAD_LIBS])
 
-GLOBUS_SSL_UTILS_CFLAGS="-I\$(top_builddir)/../../org.egee/interface/org.egee.test3.wms.thirdparty-globus_ssl_utils"
+GLOBUS_SSL_UTILS_CFLAGS="-I$STAGE/include"
 AC_SUBST([GLOBUS_SSL_UTILS_CFLAGS])
-GLOBUS_SSL_UTILS_LIBS="-L\$(top_builddir)/../../org.egee/lib/org.egee.test3.wms.thirdparty-globus_ssl_utils -lglobus_ssl_utils"
-AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
+#GLOBUS_SSL_UTILS_LIBS="-L$STAGE/lib -lglobus_ssl_utils"
+#AC_SUBST([GLOBUS_SSL_UTILS_LIBS])
 
 GLOBUS_COMMON_NOTHR_LIBS="-L$REPOSITORY/globus/lib -lglobus_common_gcc32"
 AC_SUBST([GLOBUS_COMMON_NOTHR_LIBS])
