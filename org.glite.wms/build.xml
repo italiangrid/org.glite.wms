@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.46  2004/07/29 07:35:54  dimeglio
+	Removed local envinfo and envcheck target (must use common one)
+
 	Revision 1.45  2004/07/28 17:55:43  eronchie
 	Added broker
-
+	
 	Revision 1.44  2004/07/28 17:50:55  eronchie
 	Added broker
 	
@@ -236,23 +239,6 @@
 		  Public common targets
 	     =============================================== -->
 	
-	<target name="envinfo">
-		<!-- Workspace paths -->
-		<echo>*****************************************************************</echo>
-		<echo>*****************************************************************</echo>
-		<echo>****** ${subsystem.name}	</echo>
-		<echo>*****************************************************************</echo>
-		<echo>*****************************************************************</echo>
-		<echo>  </echo>
-		<echo>Global project path:	${global.dir}</echo>
-		<echo>Global project name:	${global.name}</echo>
-		<echo>Subsystem name:		${subsystem.name}</echo>
-	</target>
-
-	<target name="envcheck" depends="envinfo,defaultenvchecks" 
-		description="Check environment configuration">
-	</target>
-
 	<target name="localinit" depends="envcheck">
 
 		<echo> Preparing directories ... </echo>
