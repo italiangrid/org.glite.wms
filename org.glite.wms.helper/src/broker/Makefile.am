@@ -22,8 +22,7 @@ libglite_wms_helper_broker_ii_la_SOURCES = \
 	exceptions.cpp
 
 libglite_wms_helper_broker_ii_la_LIBADD = \
-	$(LD) \
-        $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la 
+	$(LD)
 
 libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         Helper.h \
@@ -31,8 +30,7 @@ libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         exceptions.cpp
 
 libglite_wms_helper_broker_ii_prefetch_la_LIBADD = \
-        $(LD) \
-        $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
+        $(LD)
 
 $(srcdir)/Helper_ii_prefetch.cpp: $(srcdir)/Helper_ii.cpp ; $(CXXCOMPILE) -D BROKER_HELPER_PREFETCH_INFO_FROM_II -E $(srcdir)/Helper_ii.cpp > $(srcdir)/Helper_ii_prefetch.cpp
 
@@ -42,8 +40,7 @@ libglite_wms_helper_broker_ism_la_SOURCES = \
 	exceptions.cpp
 
 libglite_wms_helper_broker_ism_la_LIBADD = \
-        $(LD) \
-        $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
+        $(LD)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
