@@ -14,6 +14,8 @@ JOBCONTROL_NAMESPACE_BEGIN {
 
 namespace controller {
 
+using namespace glite::wmsutils::jobid;
+
 JobController::JobController( edg_wll_Context *cont ) : jc_impl( JobControllerFactory::instance()->create_server( cont ) )
 {}
 
