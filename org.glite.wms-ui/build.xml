@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.9  2004/08/11 10:05:08  eronchie
+	Updated
+
 	Revision 1.8  2004/08/11 08:42:50  eronchie
 	Start adding partitioner
-
+	
 	Revision 1.7  2004/08/09 04:55:24  dimeglio
 	Replaced rtag with tag
 	
@@ -291,7 +294,7 @@
 		</if>
 	</target>
 
-	<target name="api-java" unless="setenvonly" depends="boost,classads,globus">
+	<target name="api-java" unless="setenvonly" depends="jclassads">
 		<if>
 			<isset property="small.memory" />
 			<then>
