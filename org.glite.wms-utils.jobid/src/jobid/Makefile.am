@@ -25,6 +25,7 @@ jobidinclude_HEADERS = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/.. \
 	$(GLITE_WORKLOAD_CFLAGS) \
+	$(GLITE_WORKLOAD_CFLAGS)/glite/wms/common \
 	$(GLOBUS_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	-D_GNU_SOURCE
