@@ -21,10 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.40  2004/07/26 17:15:09  eronchie
+	Start adding manager-ns component
+	WARNING: work in progress
+
 	Revision 1.39  2004/07/25 17:39:46  eronchie
 	Updated condorg.m4 file
 	Added condor among jobsubmission dependencies
-
+	
 	Revision 1.38  2004/07/23 10:00:03  eronchie
 	Added thirdparty
 	
@@ -424,6 +428,18 @@
                      inheritall="false" />
         </target>
 
+	<target name="manager-ns-versions" unless="setenvonly">
+                <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-versions"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
+	<target name="manager-ns-fsm" unless="setenvonly">
+                <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-fsm"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<target name="purger" unless="setenvonly" depends="boost,classads,globus">
                 <ant dir="${workspace.dir}/${subsystem.name}.purger"
                      target="${target}"
@@ -449,6 +465,8 @@
 					     broker,
 					     helper,
 					     checkpointing,
+					     manager-ns-versions,
+					     manager-ns-fsm,
 					     jobsubmission,
 					     purger" />
 		
