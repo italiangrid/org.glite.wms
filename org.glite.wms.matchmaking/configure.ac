@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/06/30 08:35:15  monforte
+#       Initial MatchMaking porting to new build system
+#
 #       Revision 1.1  2004/06/26 15:25:03  eronchie
 #       Start handling matchmaking
 #       WARNING: work in progress
@@ -90,11 +93,13 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 AC_GLITE
+AC_GLITE_WMS_COMMON
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([interface/Makefile])
 
 AC_OUTPUT

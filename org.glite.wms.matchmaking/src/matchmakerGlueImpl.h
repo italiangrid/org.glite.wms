@@ -26,9 +26,11 @@ class matchmakerGlueImpl : public MatchMakerImpl
   void checkRequirement(const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces=false);
   void checkRank       (const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces=false);
  private:
-#ifdef ENABLE_SHARED_LIBRARY_FUNCTIONS
+    // The following members have been added by Francesco Prelz...
+    // TODO: check if it is really necessary having this as static member
+    // and try to change the implementation...i don't like this design
+    // but there is no time for changes now...		
     static boost::scoped_ptr< classad::ClassAd > gang_match_storageAd;
-#endif
     std::vector<ldif2classad::LDIFObject> m_CE_info_cache;
     bool m_CE_info_prefetched;
 };

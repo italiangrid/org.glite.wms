@@ -11,10 +11,10 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-#include "glite/wms/common/ldif2classad/LDAPQuery.h"
-#include "glite/wms/common/ldif2classad/LDAPSynchConnection.h"
-#include "glite/wms/common/ldif2classad/LDAPForwardIterator.h"
-#include "glite/wms/common/ldif2classad/exceptions.h"
+#include <glite/wms/common/ldif2classad/LDAPQuery.h>
+#include <glite/wms/common/ldif2classad/LDAPSynchConnection.h>
+#include <glite/wms/common/ldif2classad/LDAPForwardIterator.h>
+#include <glite/wms/common/ldif2classad/exceptions.h>
 
 #include "glite/wms/common/utilities/Exceptions.h"
 #include "glite/wms/common/utilities/classad_utils.h"
@@ -153,11 +153,11 @@ namespace
     }
     return false;
   }
-  
-} //anonymous namespace
 
 boost::scoped_ptr< classad::ClassAd > matchmakerGlueImpl::gang_match_storageAd;
 	
+} //anonymous namespace
+
 matchmakerGlueImpl::matchmakerGlueImpl()
 {
   m_CE_info_prefetched = false;
