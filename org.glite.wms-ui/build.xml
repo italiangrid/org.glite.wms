@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.25  2004/10/13 16:51:27  dimeglio
+	Removed duplicate targets (cli-python, partitioner)
+
 	Revision 1.24  2004/10/13 15:15:16  eronchie
 	Updated
-
+	
 	Revision 1.23  2004/10/11 16:34:01  eronchie
 	Start adding configuration
 	
@@ -262,20 +265,20 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="partitioner" unless="setenvonly">
-        	<if>
-            		<isset property="small.memory" />
-            		<then>
-                		<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-                    			<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                		</exec>
-            		</then>
-            		<else>
-                		<ant dir="${wms-ui.subsystem.dir}.partitioner"
-	                	     target="${target}"
-	                	     inheritall="false" />
-            		</else>
-        	</if>
+	<target name="partitioner" unless="setenvonly" depends="boost,classads,globus">
+		<if>
+			<isset property="small.memory" />
+			<then>
+				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
+				</exec>
+			</then>
+			<else>
+				<ant dir="${wms-ui.subsystem.dir}.partitioner"
+	                    	     target="${target}"
+	                    	     inheritall="false" />
+			</else>
+		</if>
 	</target>
 
 	<target name="api-cpp" unless="setenvonly">
@@ -320,22 +323,6 @@
 			</then>
 			<else>
 				<ant dir="${wms-ui.subsystem.dir}.cli-python"
-	                    	     target="${target}"
-	                    	     inheritall="false" />
-			</else>
-		</if>
-	</target>
-
-	<target name="partitioner" unless="setenvonly" depends="boost,classads,globus">
-		<if>
-			<isset property="small.memory" />
-			<then>
-				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-				</exec>
-			</then>
-			<else>
-				<ant dir="${wms-ui.subsystem.dir}.partitioner"
 	                    	     target="${target}"
 	                    	     inheritall="false" />
 			</else>
@@ -403,22 +390,6 @@
                 		     target="${target}"
                 		     inheritall="false" />
            		 </else>
-        	</if>
-	</target>
-
-	<target name="cli-python" unless="setenvonly">
-        	<if>
-            		<isset property="small.memory" />
-            		<then>
-                		<exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
-                		</exec>
-            		</then>
-			<else>
-				<ant dir="${wms-ui.subsystem.dir}.cli-python"
-	                	     target="${target}"
-	                	     inheritall="false" />
-            		</else>
         	</if>
 	</target>
 
