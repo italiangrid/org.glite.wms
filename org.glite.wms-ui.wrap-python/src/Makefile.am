@@ -155,6 +155,7 @@ libglite_wmsui_NsWrapper_la_LDFLAGS = \
 	-rpath @prefix@
 libglite_wmsui_NsWrapper_la_LIBADD = \
 	-lc \
+	$(GLITE_SECURITY_VOMS_CPP_LIBS) \
 	$(GLITE_WMSUTILS_TLS_GSI_SOCKET_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -174,7 +175,6 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
 	-lstdc++
 
 #	../../networkserver/client/libnsclient.la \
-#	$(VOMS_CPP_LIBS) \
 #	$(SHARED_LIB_REQUESTAD) \
 #	$(SHARED_LIB_UTILITIES) \
 #	$(SHARED_LIB_LOGGER) \
@@ -285,7 +285,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLOBUS_THR_CFLAGS) \
 	$(GLOBUS_SSL_UTILS_CFLAGS) \
 	$(EXPAT_CFLAGS) \
-	$(VOMS_CFLAGS) \
 	-DWANT_NAMESPACES
 
 CLEANFILES = AdWrapper_wrap.cpp \
