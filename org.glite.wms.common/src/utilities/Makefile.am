@@ -25,7 +25,7 @@ lib_LTLIBRARIES = $(CMN_UT_EX) \
 glite_wms_quota_adjust_LDFLAGS = -all-static
 
 glite_wms_quota_adjust_SOURCES = \
-        edg_wms_quota_adjust.cpp
+        glite_wms_quota_adjust.cpp
 
 glite_wms_quota_adjust_LDADD = \
         ../configuration/libglite_wms_conf.la \
