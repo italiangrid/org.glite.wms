@@ -13,7 +13,17 @@
 	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 
 	Common build properties file for the EGEE test3 wms common component
-		
+	
+	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
+			 Joachim Flammer <Joachim.Flammer@cern.ch>
+	Version info: $Id$
+	Release: $Name$	
+	
+	Revision history:
+	$Log$
+	Revision 1.2  2004/05/13 11:45:59  flammer
+	Added correct header.
+
 -->
 
 <project name="test3 wms common component common properties">
