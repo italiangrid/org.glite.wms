@@ -18,8 +18,8 @@ namespace api {
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>
 */
-/**
-* Update all mandatory Exception Information*/
+
+/*** Update all mandatory Exception Information*/
 class JobCollectionException : public glite::wmsutils::exception::Exception {
 public:
    /**
@@ -95,6 +95,19 @@ public:
 			  int code,
 			  const std::string& reason);
 };//End CLass JobOperationException
+
+
+/**
+ *    Thrown when a thread is unable to be launched or to run
+ */
+class ThreadException : public glite::wmsutils::exception::Exception {
+public:
+    ThreadException(const std::string& file,
+		    int line,
+		    const std::string& method,
+		    int code,
+		    int jobNumber);
+};//End CLass   ThreadException
 
 } // api
 } // wmsui

@@ -65,12 +65,38 @@ JobOperationException::JobOperationException(const std::string& file,
 			  const std::string& method,
 			  int code,
 			  const std::string& reason)
-	:JobException(file, line, method, code,
-		 "JobOperationException")
+	:JobException(file, line, method, code, "JobOperationException")
     {
 	error_message = "The Operation is not allowed: " +reason;
 	error_message += reason;
 }
+
+ThreadException::ThreadException(const std::string& file,
+				 int line,
+				 const std::string& method,
+				 int code,
+				 int jobNumber)
+	: JobException(file, line, method, code, "ThreadException"){
+	switch (code){
+		case THREAD_INIT:
+			error_message = "pthread_attr_init";
+			break;
+		case THREAD_DETACH :
+			error_message = "pthread_attr_setdetachstate";
+			break;
+		case THREAD_SSL :
+			error_message = "SSL multi thread procedure";
+			break;
+		case THREAD_CREATE :
+			error_message = "pthread_create";
+			break;
+		default:            //THREAD_JOIN
+			error_message = "pthread_join";
+			break;
+		}
+	error_message += "pthread Fatal Error thrown for: " + error_message ;
+}
+
 
 } // api
 } // wmsui
