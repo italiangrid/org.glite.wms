@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.50  2004/07/28 16:33:24  eronchie
+	Start adding manager-ns-common
+	WARNING: Work in progress
+
 	Revision 1.49  2004/07/27 15:39:20  eronchie
 	Updated dependency
-
+	
 	Revision 1.48  2004/07/26 17:53:54  eronchie
 	Start adding manager-ns components
 	WARNING: Work in progress
@@ -332,6 +336,10 @@
                         <equals arg1="${org.glite.wms.manager-ns-versions.version}" arg2="HEAD" />
                 </condition>
 
+		<condition property="manager-ns-common.head">
+                        <equals arg1="${org.glite.wms.manager-ns-common.version}" arg2="HEAD" />
+                </condition>
+
 		<condition property="manager-ns-commands.head">
                         <equals arg1="${org.glite.wms.manager-ns-commands.version}" arg2="HEAD" />
                 </condition>
@@ -539,8 +547,18 @@
                     tag="${org.glite.wms.manager-ns-client.version}" />
         </target>
 
+	<!-- Manager NS Common -->
+        <target name="manager-ns-common" depends="get.manager-ns-common.head, get.manager-ns-common.tag"/>
+        <target name="get.manager-ns-common.head" if="manager-ns-common.head">
+            <cvs-co package="org.glite.wms.manager-ns-common" />
+        </target>
+        <target name="get.manager-ns-common.tag" unless="manager-ns-common.head">
+            <cvs-co package="org.glite.wms.manager-ns-common"
+                    tag="${org.glite.wms.manager-ns-common.version}" />
+        </target>
+
 	<!-- Manager NS Commands -->
-        <target name="manager-ns-commands" depends="boost, classads, globus, manager-ns-fsm, manager-ns-versions, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
+        <target name="manager-ns-commands" depends="boost, classads, globus, manager-ns-fsm, manager-ns-versions, manager-ns-common, purger, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
         <target name="get.manager-ns-commands.head" if="manager-ns-commands.head">
             <cvs-co package="org.glite.wms.manager-ns-commands" />
         </target>
@@ -615,6 +633,7 @@
 					purger,
 					manager-ns-fsm,
 					manager-ns-versions,
+					manager-ns-common,
 					manager-ns-commands,
 					manager-ns-client,
 					manager-ns-daemon,

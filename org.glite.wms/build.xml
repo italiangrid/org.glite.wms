@@ -21,9 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.43  2004/07/28 16:33:24  eronchie
+	Start adding manager-ns-common
+	WARNING: Work in progress
+
 	Revision 1.42  2004/07/27 15:39:20  eronchie
 	Updated dependency
-
+	
 	Revision 1.41  2004/07/26 17:53:54  eronchie
 	Start adding manager-ns components
 	WARNING: Work in progress
@@ -441,25 +445,32 @@
                      inheritall="false" />
         </target>
 
+	<target name="manager-ns-common" unless="setenvonly">
+                <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-common"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
 	<target name="manager-ns-fsm" unless="setenvonly" depends="boost,classads,globus">
                 <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-fsm"
                      target="${target}"
                      inheritall="false" />
         </target>
 
-	<target name="manager-ns-commands" unless="setenvonly" depends="boost,classads,common">
+	<target name="manager-ns-commands" unless="setenvonly" depends="boost,classads,common,manager-ns-fsm,manager-ns-versions,manager-ns-common,purger">
                 <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-commands"
                      target="${target}"
                      inheritall="false" />
         </target>
 
-	<target name="manager-ns-client" unless="setenvonly">
+	<target name="manager-ns-client" unless="setenvonly" depends="boost,classads,common, manager-ns-commands">
                 <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-client"
                      target="${target}"
                      inheritall="false" />
         </target>
 
-	<target name="manager-ns-daemon" unless="setenvonly">
+	<target name="manager-ns-daemon" unless="setenvonly" depends="boost,clas
+sads,common, manager-ns-commands">
                 <ant dir="${workspace.dir}/${subsystem.name}.manager-ns-daemon"
                      target="${target}"
                      inheritall="false" />
@@ -493,6 +504,7 @@
 					     purger,
 					     manager-ns-versions,
 					     manager-ns-fsm,
+					     manager-ns-common,
 					     manager-ns-commands,
 					     manager-ns-client,
 					     manager-ns-daemon,	
