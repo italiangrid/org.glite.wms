@@ -33,6 +33,8 @@ noinst_HEADERS = \
 	wmproxy.h \
 	wmputils.h
 
+vpath stdsoap2.cpp $(GLOBAL_LOCATION)
+
 glite_wms_wmproxy_server_SOURCES = \
 	wm.h \
 	NS2WMProxy.cpp \
@@ -48,7 +50,8 @@ glite_wms_wmproxy_server_SOURCES = \
 	WMPManager.cpp \
 	wmpoperations.cpp \
 	wmproxy.cpp \
-	wmputils.cpp
+	wmputils.cpp \
+	stdsoap2.cpp
 	
 #glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic
 
@@ -77,7 +80,7 @@ glite_wms_wmproxy_server_LDADD = \
 	$(EXPAT_LIBS) \
 	$(GRIDSITE_LIBS) \
 	$(XML2_LIBS) \
-	$(FASTCGI_CPP_LIBS)
+	$(FCGI_CPP_LIBS)
 
 wm.h :
 	@#Create the files
@@ -89,11 +92,12 @@ wm.h :
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .cpp"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) wm.h 
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) -I$(top_srcdir)/build/src/server/wm.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src/server \
+	-I$(GSOAP_LOCATION) \
 	$(GLITE_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
@@ -101,6 +105,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(GLOBUS_THR_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(MYPROXY_CFLAGS) \
+	$(FCGI_CFLAGS) \
 	-DWITH_FASTCGI 
 
 MAINTAINERCLEANFILES = Makefile.in
