@@ -19,8 +19,11 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.1  2004/08/08 17:03:21  eronchie
-#       Initial revision
+#       Revision 1.2  2004/08/09 06:35:48  eronchie
+#       Added check macros
+#
+#       Revision 1.1.1.1  2004/08/08 17:03:21  eronchie
+#       Start adding manager component
 #
 #
 #
@@ -77,12 +80,54 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
+have_boost=no
+have_classads=no
 have_globus=no
-                                                                               
+have_ares=no
+have_expat=no
+
+AC_BOOST([], have_boost=yes, have_boost=no)
+AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_ARES([], have_ares=yes, have_ares=no)
+AC_EXPAT([], have_expat=yes, have_expat=no)
+                                                                               
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_MSG_RESULT(["ARES found $have_ares"])
+AC_MSG_RESULT(["EXPAT found $have_expat"])
+
+have_glite_wms_common=no
+have_glite_wmsutils=no
+have_glite_wms_jdl=no
+have_glite_wms_helper=no
+have_glite_wms_jss=no
+have_glite_lb=no
+have_glite_security=no
 
 AC_GLITE
+
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+
+AC_GLITE_WMS_HELPER([], have_glite_wms_helper=yes, have_glite_wms_helper=no)
+AC_MSG_RESULT(["GLITE_WMS_HELPER found $have_glite_wms_helper"])
+
+AC_GLITE_WMS_JSS([], have_glite_wms_jss=yes, have_glite_wms_jss=no)
+AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
+
+AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
+AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
