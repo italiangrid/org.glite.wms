@@ -41,6 +41,7 @@
 #include "glite/wms/jdl/RequestAdExceptions.h"
 
 // RequestAd
+#include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 
@@ -59,7 +60,7 @@
 
 // Default name of the delegated Proxy that is copied inside private job
 // directory
-const std::string USER_PROXY_NAME = "/proxy";
+const std::string USER_PROXY_NAME = "proxy";
 using namespace std;
 using namespace glite::lb; // JobStatus
 using namespace glite::wms::wmproxy::server ;  //Exception codes
@@ -316,11 +317,11 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 }
 
 void
-setJobFileSystem(const string &delegation_id, const string &dest_uri, 
-	const vector<string> &children_dest_uris)
+setJobFileSystem(const string &delegation_id, const string &jobid, 
+	const vector<string> &jobids)
 {
-	GLITE_STACK_TRY("setJobFileSystem(const string &delegation_id, const "
-		"string &dest_uri, const vector<string> &children_dest_uris)");
+	GLITE_STACK_TRY("setJobFileSystem(const string &delegation_id, const string jobid, "
+		"const vector<string> &jobids)");
 		
 	// Getting delegated Proxy file name
 	string delegated_proxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
@@ -329,50 +330,55 @@ setJobFileSystem(const string &delegation_id, const string &dest_uri,
 	
 	// Creating destination URI path
 	mode_t mode(755);
-	edglog(fatal)<<"Creating job directory "<<dest_uri<<endl;
+	//edglog(fatal)<<"Creating job directory "<<dest_uri<<endl;
 	/*
 	*  NEW APPROACH:
 	*/
 	// TBD WARNING! THIS IS SHALL BE PROVIDED BY an LCMAP METHOD
 	int userid = getuid();
 	// TBD WARNING! Still to be implemented
-	/*if (wmputilities::managedir(dest_uri, userid)) {
+	string document_root = getenv("DOCUMENT_ROOT");
+	vector<string> job;
+	job.push_back(jobid);
+	if (wmputilities::managedir(document_root, userid, job)) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"setJobFileSystem(const string &delegation_id, const string "
-			"&dest_uri, const vector<string> &children_dest_uris)",
+			"setJobFileSystem(const string &delegation_id, const string jobid, "
+			"const vector<string> &jobids)",
 			WMS_IS_FAILURE, "Unable to create job local directory");
-	}*/
+	}
 	
+	// to_filename parameters
+	int level = 0; 
+   	bool extended_path = true ; 
+   
 	// Copying delegated Proxy to destination URI
-	wmputilities::fileCopy(delegated_proxy, dest_uri + USER_PROXY_NAME);
+	//wmputilities::fileCopy(delegated_proxy, document_root + "/"
+		//+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid), level, extended_path) + "/" + USER_PROXY_NAME);
 	
-	if (children_dest_uris.size() != 0) {
-		/*#ifdef WIN
-			// Windows File Separator
-			const string FILE_SEP = "\\";
-		#else
-		    // Linux File Separator
-			const string FILE_SEP = "/";
-		#endif*/
-		
-		vector<string> jobids;
-		for (unsigned int i = 0; i < children_dest_uris.size(); i++) {
-			edglog(fatal)<<"Creating sub job directory "<<children_dest_uris[i]<<endl;
-			if (wmputilities::managedir(children_dest_uris[i], userid, jobids)) {
-				throw JobOperationException(__FILE__, __LINE__,
-					"setJobFileSystem(const string &delegation_id, const string "
-					"&dest_uri, const vector<string> &children_dest_uris)",
-					WMS_IS_FAILURE, "Unable to create job local directory");
+	if (jobids.size() != 0) {
+		//edglog(fatal)<<"Creating sub job directory "<<children_dest_uris[i]<<endl;
+		if (wmputilities::managedir(document_root, userid, jobids)) {
+			throw JobOperationException(__FILE__, __LINE__,
+				"setJobFileSystem(const string &delegation_id, const string jobid, "
+				"const vector<string> &jobids)",
+				WMS_IS_FAILURE, "Unable to create sub jobs local directory");
+		} else {
+			string dest_uri = "";//wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobid), level, extended_path);
+			for (int i = 0; i < jobids.size(); i++) {
+				edglog(fatal)<<"Creating proxy symbolic link in: "<<jobids[i]<<endl;
+				string command = "ln -s " 
+					+ document_root + "/" + dest_uri
+					+ "/" + USER_PROXY_NAME + " " // link target
+					+ document_root + "/"
+					+ wmputilities::to_filename(glite::wmsutils::jobid::JobId(jobids[i]), level, extended_path)
+					+ "/" + USER_PROXY_NAME; // link name
+					cerr << "Link Command: " << command << endl;
+					
+				//TBD Check result of operation!!
+				system(command.c_str());
 			}
-			
-			//TBD Check result of operation
-			edglog(fatal)<<"Creating proxy symbolic link in: "<<children_dest_uris[i]<<endl;
-			//string command = "ln -s " + dest_uri + FILE_SEP + delegated_proxy
-			//	+ " " + children_dest_uris[i] + FILE_SEP + delegated_proxy;
-			string command = "ln -s " + dest_uri + USER_PROXY_NAME
-				+ " " + children_dest_uris[i] + USER_PROXY_NAME;
-			system(command.c_str());
 		}
+		
 	}
 	
   	GLITE_STACK_CATCH();
@@ -419,8 +425,8 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	wmplogger.registerJob(jad);
 	
 	// Creating private job directory with delegated Proxy
-	vector<string> null;
-	setJobFileSystem(delegation_id, dest_uri, null);
+	vector<string> jobids;
+	setJobFileSystem(delegation_id, jid->toString(), jobids);
 	
 	// Registering for Proxy renewal
 	if (jad->hasAttribute(JDL::MYPROXY)) {
@@ -488,6 +494,7 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 	wmplogger.init(NS_ADDRESS, NS_PORT, jid);
 	
 	// Checking for partitionable registration needs
+	vector<string> jobids;
 	if (jad) { ///TBC
 		// Partitionable job registration
 		jobListMatchResponse jobListMatch_response;
@@ -499,13 +506,13 @@ regist(jobRegisterResponse &jobRegister_response, const string &delegation_id,
 		if (jad->hasAttribute(JDL::POSTJOB)) {
 			res_num++;
 		}
-		wmplogger.registerPartitionable(dag, res_num);
+		jobids = wmplogger.registerPartitionable(dag, res_num);
 	} else {
-		wmplogger.registerDag(dag);
+		jobids = wmplogger.registerDag(dag);
 	}
 	
 	// Creating private job directory with delegated Proxy
-	//setJobFileSystem(dest_uri, delegation_id, wmplogger.getDestURIs());
+	setJobFileSystem(delegation_id, jid->toString(), jobids);
 	
 	// Logging delegation id & original jdl
 	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
