@@ -1,6 +1,6 @@
 #include <iostream>
 #include <boost/utility.hpp>
-#include "ism.h"
+#include "glite/wms/ism/ism.h"
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"

@@ -41,6 +41,7 @@ namespace utilities     = common::utilities;
 namespace logger        = common::logger;
 
 namespace ism {
+namespace purchaser {
 
 namespace 
 {
@@ -358,6 +359,7 @@ void ism_ii_purchaser::operator()()
 	} while( mode );							
 }
 
+}
 }
 }
 }

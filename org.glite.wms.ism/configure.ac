@@ -19,8 +19,11 @@
 #
 #       Revision history: 
 #       $Log$
-#       Revision 1.1  2004/09/21 12:02:49  eronchie
-#       Initial revision
+#       Revision 1.2  2004/09/21 12:48:58  eronchie
+#       Updated
+#
+#       Revision 1.1.1.1  2004/09/21 12:02:49  eronchie
+#       Moved ism from manager component into the new component ism
 #
 #
                                                                                                                                                              
@@ -30,7 +33,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS ISM], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/ism.h])
+AC_CONFIG_SRCDIR([src/ism.cpp])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project

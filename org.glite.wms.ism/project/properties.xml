@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
-	Revision 1.1  2004/09/21 12:02:49  eronchie
-	Initial revision
+	Revision 1.2  2004/09/21 12:49:00  eronchie
+	Updated
 
+	Revision 1.1.1.1  2004/09/21 12:02:49  eronchie
+	Moved ism from manager component into the new component ism
+	
 	Revision 1.9  2004/08/04 07:36:11  eronchie
 	Added cppunit among m4files.list
 	
@@ -72,7 +75,7 @@
 		 ====================================================== -->
 		 		
 	<!-- Component name prefix -->
-	<property name="component.prefix" value="common" />
+	<property name="component.prefix" value="ism" />
 			
 	<!-- ======================================================
           Define general component properties

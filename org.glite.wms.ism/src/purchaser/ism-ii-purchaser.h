@@ -11,6 +11,7 @@
 namespace glite {
 namespace wms {
 namespace ism {
+namespace purchaser {
 
 class ism_ii_purchaser
 {
@@ -33,6 +34,7 @@ class ism_ii_purchaser
 		size_t interval;
 };
 		
+} // namespace purchaser
 } // namespace ism
 } // namespace wms
 } // namespace glite
