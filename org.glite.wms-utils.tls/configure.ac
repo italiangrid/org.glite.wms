@@ -19,6 +19,11 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.13  2004/08/04 12:15:39  eronchie
+#       Added AC_CPPUNIT
+#       CPPUNIT_CFLAGS
+#       CPPUNIT_LIBS
+#
 #       Revision 1.12  2004/08/04 10:10:42  eronchie
 #       Start adding unittest
 #
@@ -90,9 +95,13 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 have_globus=no
+have_cppunit=no
                                                                                
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
+AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 
 AC_GLITE
 
