@@ -6,10 +6,9 @@
 ## *
 ## *********************************************************************
 
-if AMC_BUILD_UI_CLIENT
-lib_LTLIBRARIES = libedg_wl_userinterface_client.la
+lib_LTLIBRARIES = libglite_wmsui_client.la
 
-clientdir = $(includedir)/edg/workload/userinterface/client
+clientdir = $(includedir)/glite/wmsui/client
 client_HEADERS = \
 	CredentialException.h \
 	Job.h \
@@ -23,9 +22,8 @@ client_HEADERS = \
 	UserJobs.h \
 	exception_codes.h \
         userinterface_namespace.h
-endif
 
-libedg_wl_userinterface_client_la_SOURCES = Job.cpp \
+libglite_wmsui_client_la_SOURCES = Job.cpp \
 	Request.cpp \
 	Logging.cpp \
 	JobCollection.cpp \
@@ -34,7 +32,8 @@ libedg_wl_userinterface_client_la_SOURCES = Job.cpp \
 	UserCredential.cpp \
 	UserJobs.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/interface \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(BOOST_CFLAGS) \
