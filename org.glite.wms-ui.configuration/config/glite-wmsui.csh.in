@@ -11,6 +11,10 @@ if ( -r "$GLITE_SYSCONFIG" ) then
   endif
 endif
 
+if ( ! $?GLITE_LOCATION ) then
+  setenv GLITE_LOCATION "@prefix@"
+endif
+
 if ( ! $?GLITE_WMS_LOCATION ) then
   setenv GLITE_WMS_LOCATION "@prefix@"
 endif
