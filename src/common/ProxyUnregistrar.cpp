@@ -4,7 +4,7 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #ifdef ENABLE_RENEWAL
-#include "glite/wms/proxyrenewal/renewal.h"
+#include "glite/security/proxyrenewal/renewal.h"
 #endif
 #include "../jobcontrol_namespace.h"
 

@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/07/28 14:38:58  pandreet
+#       Proxyrenewal dependencies fixed
+#
 #       Revision 1.5  2004/07/28 13:51:38  pandreet
 #       Purger dependencies fixed
 #
@@ -45,7 +48,6 @@ noinst_HEADERS = \
 	SizeFile.h \
 	Timer.h
 
-PROXYRENEWAL =
 GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
 
@@ -75,7 +77,7 @@ glite_wms_lm_job_status_LDADD = libglite_wms_logmonitor.la \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(ARES_LIBS) $(EXPAT_LIBS) \
-	$(PROXYRENEWAL) $(GLITE_WMS_PURGER_LIBS)
+	$(GLITE_SECURITY_NOTHR_RENEWAL_LIBS) $(GLITE_WMS_PURGER_LIBS)
 
 libglite_wms_logmonitor_la_SOURCES = CondorMonitor.cpp \
 	EventAd.cpp \
