@@ -28,7 +28,8 @@ AC_DEFUN(AC_GLOBUS,
     AC_MSG_RESULT(["GLOBUS thread flavor is $with_globus_thr_flavor"])
 
     ac_cv_globus_nothr_valid=no
-    ac_cv_globus_thr_valid=no
+    ac_cv_globus_thr_valid1=no
+    ac_cv_globus_thr_valid2=no
 
     GLOBUS_NOTHR_CFLAGS="$with_globus_prefix/include/$with_globus_nothr_flavor"
     GLOBUS_THR_CFLAGS="$with_globus_prefix/include/$with_globus_thr_flavor"
@@ -112,10 +113,10 @@ AC_DEFUN(AC_GLOBUS,
 	     #include "globus_gss_assist.h"
 	   ],
            [globus_gss_assist_ex aex],
-	   [ac_cv_globus_thr_valid=yes],
-           [ac_cv_globus_thr_valid=no])
+	   [ac_cv_globus_thr_valid1=yes],
+           [ac_cv_globus_thr_valid1=no])
         CFLAGS=$ac_save_CFLAGS
-        AC_MSG_RESULT([$ac_cv_globus_thr_valid])
+        AC_MSG_RESULT([$ac_cv_globus_thr_valid1])
     fi
 
     dnl
@@ -134,7 +135,9 @@ AC_DEFUN(AC_GLOBUS,
                                                                                 
     AC_MSG_CHECKING([for ldap thr])
                                                                                 
-    test -n "$ac_globus_thr_ldap" && GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ldap -I$GLOBUS_THR_CFLAGS"
+    if test -n "$ac_globus_thr_ldap" -a -z x$ac_globus_thr_ldap != x$ac_globus_thr_ssl ; then 
+      GLOBUS_THR_CFLAGS="-I$ac_globus_thr_ldap -I$GLOBUS_THR_CFLAGS"
+    fi
 
     if test -n "$ac_globus_thr_ldap" -a -n "$ac_globus_ldlib" ; then
         dnl
