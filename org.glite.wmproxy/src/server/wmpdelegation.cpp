@@ -132,7 +132,8 @@ WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 	} catch (ProxyOperationException &poe) {
 		throw poe;	
 	}
-	char *delegated_proxy = GRSTx509CachedProxyKeyFind(getProxyDir(), 
+	//char *delegated_proxy = GRSTx509CachedProxyKeyFind(getProxyDir(), 
+	char *delegated_proxy = GRSTx509CachedProxyFind(getProxyDir(), 
 		(char*) delegation_id.c_str(), user_dn);
 	if (delegated_proxy == NULL) {
 		throw JobOperationException(__FILE__, __LINE__,
