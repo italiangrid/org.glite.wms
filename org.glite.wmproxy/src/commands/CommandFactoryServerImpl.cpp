@@ -1179,62 +1179,23 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
   if( name == "JobSubmit" ) {        
     state.reset( new ExecuteFunction(createContext) );
     cmd -> fsm -> push (state);
-    // state.reset(new ReceiveLong("SandboxSize") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(checkJobSize) );
-    // cmd -> fsm -> push(state);   
-    // state.reset(new SendBoolean("CheckSizePassed") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(evaluateCheckSize) );
-    // cmd -> fsm -> push(state);
     // state.reset(new ExecuteFunction(checkUserQuota) );
     // cmd -> fsm -> push(state);
     // state.reset(new SendBoolean("CheckQuotaPassed") );
     // cmd -> fsm -> push(state);
     // state.reset(new ExecuteFunction(evaluateCheckQuota) );
     // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(checkSpace) );
-    // cmd -> fsm -> push(state);
-    // state.reset(new SendBoolean("CheckPassed") );
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(insertCertificateSubject) );
-    cmd -> fsm -> push(state);
-    state.reset( new ExecuteFunction(setJobPaths) );
-    cmd -> fsm -> push(state);
-    state.reset( new ExecuteFunction(createReducedPathDirs) );
-    cmd -> fsm -> push(state);
-#ifdef WITH_GLOBUS_FTP_CLIENT_API
-    // state.reset(new SendString("InputSandboxPath") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new SendString("OutputSandboxPath") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ReceiveBoolean("ClientCreateDirsPassed") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(evaluateClientCreateDirs) );
-    // cmd -> fsm -> push(state);
-#endif
-    state.reset(new ExecuteFunction(createStagingDirectories) );
-    cmd -> fsm -> push(state);
-    // state.reset(new SendInt("SDCreationError") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new SendString("SDCreationMessage") );
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
-    cmd -> fsm -> push(state);
-    // state.reset(new SendBoolean("ProxyRenewalDone"));
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(proxyRenewalCheck));
-    cmd -> fsm -> push(state);
-    // state.reset(new SendString("InputSandboxPath") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ReceiveBoolean("TransferDone") );
-    // cmd -> fsm -> push(state);
+    //state.reset(new ExecuteFunction(insertCertificateSubject) );
+    //cmd -> fsm -> push(state);
+    //state.reset(new ExecuteFunction(createStagingDirectories) );
+    //cmd -> fsm -> push(state);
+    //state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
+    //cmd -> fsm -> push(state);
     state.reset( new ForwardRequest() );
     cmd -> fsm -> push(state);
   } 
   else if (name == "JobCancel") {
     cmd -> setParam("JobId", param);
-
     state.reset(new ExecuteFunction(setJobPaths) );
     cmd -> fsm -> push(state);
     state.reset(new ExecuteFunction(createContext) );
@@ -1244,87 +1205,29 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
     state.reset( new ForwardRequest() );
     cmd -> fsm -> push(state);    
   }
-  /*
-  else if (name == "JobPurge") {
-    // state.reset(new ReceiveString("JobId") );
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(setJobPaths) );
-    cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(createContext) );
-    cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(doPurge) );
-    cmd -> fsm -> push(state);
-  }
-  */
   else if (name == "ListJobMatch") {
     // state.reset(new ReceiveString("jdl"));
     // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(insertCertificateSubject) );
-    cmd -> fsm -> push(state);     
     state.reset(new ExecuteFunction(insertPipePath));
     cmd -> fsm -> push(state);
     state.reset(new ForwardRequest());
     cmd -> fsm -> push(state);
     state.reset(new ExecuteFunction(listjobmatchex)); 
     cmd -> fsm -> push(state);
-    // state.reset(new SendVector("MatchResult"));
-    // cmd -> fsm -> push(state); 
   }
   else if( name == "DagSubmit" ) {        
     state.reset( new ExecuteFunction(createContext) );
     cmd -> fsm -> push (state);
-    // state.reset(new ReceiveLong("SandboxSize") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(checkJobSize) );
-    // cmd -> fsm -> push(state);   
-    // state.reset(new SendBoolean("CheckSizePassed") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(evaluateCheckSize) );
-    // cmd -> fsm -> push(state);
     // state.reset(new ExecuteFunction(checkUserQuota) );
     // cmd -> fsm -> push(state);
     // state.reset(new SendBoolean("CheckQuotaPassed") );
     // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(evaluateCheckQuota) );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(checkSpace) );
-    // cmd -> fsm -> push(state);
-    // state.reset(new SendBoolean("CheckPassed") );
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(insertCertificateSubject) );
-    cmd -> fsm -> push(state);
-#ifdef WITH_GLOBUS_FTP_CLIENT_API
-    state.reset(new ExecuteFunction(setJobPaths) );
-    cmd -> fsm -> push(state);
-    state.reset( new ExecuteFunction(createReducedPathDirs) );
-    cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(setSandboxRootPath) );
-    // cmd -> fsm -> push(state);
-    // state.reset(new SendString("SandboxRootPath") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ReceiveBoolean("ClientCreateDirsPassed") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new ExecuteFunction(evaluateClientCreateDirs) );
-    // cmd -> fsm -> push(state);
-#endif
-    state.reset(new ExecuteFunction(dag::createStagingDirectories) );
-    cmd -> fsm -> push(state);
-    // state.reset(new SendInt("SDCreationError") );
-    // cmd -> fsm -> push(state);
-    // state.reset(new SendString("SDCreationMessage") );
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
-    cmd -> fsm -> push(state);
-    // state.reset(new SendBoolean("ProxyRenewalDone"));
-    // cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(proxyRenewalCheck));
-    cmd -> fsm -> push(state);
-    // logger::threadsafe::edglog << logger::setlevel(logger::fatal) << "Send String ... " << std::endl;
-    // state.reset(new SendString("InputSandboxPath") );
-    // cmd -> fsm -> push(state);
-    // logger::threadsafe::edglog << logger::setlevel(logger::fatal) << "Send String Done!" << std::endl;
-    // state.reset(new ReceiveBoolean("TransferDone") );
-    // cmd -> fsm -> push(state);
+    //state.reset(new ExecuteFunction(insertCertificateSubject) );
+    //cmd -> fsm -> push(state);
+    //state.reset(new ExecuteFunction(dag::createStagingDirectories) );
+    //cmd -> fsm -> push(state);
+    //state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
+    //cmd -> fsm -> push(state);
     state.reset( new ForwardRequest() );
     cmd -> fsm -> push(state);
   } 
