@@ -5,25 +5,33 @@
 *********************************************************************/
 /* Open SSL include files */
 #include <globus_common.h>
+
 #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
+
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
+
 /**  JDL  */
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wms/jdl/jdl_attributes.h"  // Constant attribute values
 #include "glite/wms/jdl/JDLAttributes.h" // JobAd attribute names
+
 /**  CHKPT */
 #include "glite/wms/checkpointing/jobstate.h"//Checkpointing
+
 /**  NS */
 #include "NSClient.h"// NetworkServer
+
 /*  Logging and Bookkeeping */
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/Event.h"
 #include "glite/lb/Job.h"
 #include "glite/lb/producer.h"  // some methods are needed
+
 // Dgas
 #include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
+
 /* C++ Userinterface Api Implementation */
 #include "glite/wmsui/api/Job.h"
 #include "glite/wmsui/api/JobExceptions.h"
