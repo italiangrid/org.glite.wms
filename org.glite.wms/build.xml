@@ -21,10 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.27  2004/07/10 06:47:53  eronchie
+	Updated matchmaking internal dependencies
+	Added classad_plugin
+
 	Revision 1.26  2004/07/10 06:23:19  eronchie
 	Start adding matchmaking dependency
 	WARNING: work in progress
-
+	
 	Revision 1.25  2004/07/06 18:06:12  flammer
 	Update of classpath definitions, targets & configure file.
 	
@@ -371,7 +375,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="matchmaking" unless="setenvonly" depends="boost,classads,common">
+	<target name="matchmaking" unless="setenvonly" depends="boost,classads,common,classad_plugin">
                 <ant dir="${workspace.dir}/${subsystem.name}.matchmaking"
                      target="${target}"
                      inheritall="false" />

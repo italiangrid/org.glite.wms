@@ -21,10 +21,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.34  2004/07/10 06:47:53  eronchie
+	Updated matchmaking internal dependencies
+	Added classad_plugin
+
 	Revision 1.33  2004/07/10 06:23:19  eronchie
 	Start adding matchmaking dependency
 	WARNING: work in progress
-
+	
 	Revision 1.32  2004/07/06 08:47:22  eronchie
 	Removed jobadapter
 	Added helper
@@ -441,7 +445,7 @@
         </target>
 
 	<!-- Matchmaking -->
-        <target name="matchmaking" depends="boost,classads,globus,common,get.matchmaking.head, get.matchmaking.tag"/>
+        <target name="matchmaking" depends="boost,classads,globus,common,classad_plugin,get.matchmaking.head, get.matchmaking.tag"/>
         <target name="get.matchmaking.head" if="matchmaking.head">
                 <cvs-co package="org.glite.wms.matchmaking" />
         </target>
