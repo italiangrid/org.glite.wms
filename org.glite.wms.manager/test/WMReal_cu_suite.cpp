@@ -30,6 +30,7 @@ void
 WMReal_test::setUp()
 {
   wm_real = new WMReal();
+
 }
 
 void
@@ -47,6 +48,8 @@ WMReal_test::test_submit()
   std::string jobid_value("https://lxb1420.cern.ch:9000/BqXQcCpXqnF92nvj94PZVw");
   std::string seqcode_key("LB_sequence_code");
   std::string seqcode_value("0000");
+  std::string type_key("type");
+  std::string type_value("job");
 
 
   ClassAd *classad =  new ClassAd();
@@ -54,6 +57,7 @@ WMReal_test::test_submit()
 
   classad->InsertAttr(jobid_key,jobid_value);
   classad->InsertAttr(seqcode_key,seqcode_value);
+  classad->InsertAttr(type_key,type_value);
 
   try{
     wm_real->submit(classad);
