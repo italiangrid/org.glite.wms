@@ -30,7 +30,7 @@ class WMPLogger  {
 
 		void init(const std::string &nsHost, int nsPort,
 			glite::wmsutils::jobid::JobId *id);
-		void init(edg_wll_Context &ctx ){ this->ctx = ctx;};
+		// void init(edg_wll_Context &ctx ){ this->ctx = ctx;};
 
 		std::string getSequence();
 		
@@ -54,7 +54,7 @@ class WMPLogger  {
 		void logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode,
 			const char *reason, bool retry );
 		void logEnqueuedJob(std::string jdl, const std::string &proxy_path,
-			std::string host_proxy, const std::string &file_queue,
+			const std::string &host_cert, const std::string &host_key, const std::string &file_queue,
 			bool mode, const char *reason, bool retry, bool test);
 
 
@@ -62,7 +62,8 @@ class WMPLogger  {
 		
 	private:
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
-		void testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_proxy);
+		void testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_cert, const std::string &host_key);
+		int setX509Param(const std::string &name , const std::string &value ,  edg_wll_ContextParam lbX509code );
 		void reset_user_proxy( const std::string &proxy_path );
 		const char * error_message(const char *api);
 		std::string dest_uri;

@@ -397,7 +397,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, b
 
 
 void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
-			std::string host_proxy, const std::string &file_queue,
+			const std::string &host_cert, const std::string &host_key, const std::string &file_queue,
 			bool mode, const char *reason, bool retry, bool test){
 
     if (!test) logEnqueuedJob(jdl, file_queue, mode, reason, retry);
@@ -415,52 +415,46 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 				 jdl.c_str(),
 				 (mode ? "OK" : "FAIL"),
 				 reason);
-      testAndLog( res, with_hp, lap, host_proxy );
+      this->testAndLog( res, with_hp, lap, host_cert, host_key );
     } while( res != 0 );
   }
 
+
+int WMPLogger::setX509Param(const std::string &name , const std::string &value ,  edg_wll_ContextParam lbX509code ){
+	if(value.length() == 0 ){
+		edglog(warning) <<name<< " not set inside configuration file." << std::endl
+      			<< "Trying with a default NULL and hoping for the best." << std::endl;
+       		return edg_wll_SetParam( ctx, lbX509code, NULL );
+       	}else {
+       		edglog(info) << name <<" found = \"" << value << "\"." << std::endl;
+       		return  edg_wll_SetParam( ctx, lbX509code, value.c_str() );
+       	}
+}
+
 void
-WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_proxy)
+WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &host_cert, const std::string &host_key)
   {
     edglog_fn("NS2WM::test&Log");
-    int          ret;
     if( code ) {
-
       switch( code ) {
       case EINVAL:
 	edglog(critical) << "Critical error in L&B calls: EINVAL." << std::endl;
 	code = 0; // Don't retry...
 	break;
-
       case EDG_WLL_ERROR_GSS:
 	edglog(severe) << "Severe error in SSL layer while communicating with L&B daemons." << std::endl;
-
 	if( with_hp ) {
 	  edglog(severe) << "The log with the host certificate has just been done. Giving up." << std::endl;
 	  code = 0; // Don't retry...
+	}else {
+	  edglog(info) << "Retrying using cert and key certificate..." << std::endl;
+	  if   ( setX509Param("Host Cert" , host_cert , EDG_WLL_PARAM_X509_CERT) 
+		| setX509Param("Host Cert" , host_key , EDG_WLL_PARAM_X509_KEY) )  {
+	    		edglog(severe) << "Cannot set some host credential inside the context. Giving up." << std::endl;
+	    		code = 0; // Don't retry.
+	 } else with_hp = true; // Set and retry (code is still != 0)
 	}
-	else {
-	  edglog(info) << "Retrying using host proxy certificate..." << std::endl;
-
-	  if( host_proxy.length() == 0 ) {
-	    edglog(warning) << "Host proxy file not set inside configuration file." << std::endl
-			    << "Trying with a default NULL and hoping for the best." << std::endl;
-	    ret = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, NULL );
-	  }
-	  else {
-	    edglog(info) << "Host proxy file found = \"" << host_proxy << "\"." << std::endl;
-	    ret = edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
-	  }
-
-	  if( ret ) {
-	    edglog(severe) << "Cannot set the host proxy inside the context. Giving up." << std::endl;
-	    code = 0; // Don't retry.
-	  }
-	  else with_hp = true; // Set and retry (code is still != 0)
-	}
-
 	break;
-
       default:
 	if( ++lap > 3 ) {
 	  edglog(error) << "L&B call retried " << lap << " times always failed." << std::endl
@@ -472,16 +466,13 @@ WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &ho
 	  edglog(info) << "Try n. " << lap << "/3" << std::endl;
 	  sleep( 60 );
 	}
-
 	break;
       }
     }
     else // The logging call worked fine, do nothing
       edglog(debug) << "L&B call succeeded." << std::endl;
-
     return;
   }
-
 
 void
 WMPLogger::reset_user_proxy( const std::string &proxy_path ){
