@@ -6,25 +6,22 @@
 ## *
 ## *********************************************************************
 
-if AMC_BUILD_PARTITIONER
-SUBDIRS = test
+lib_LTLIBRARIES = \
+	libglite_wmsui_partitioner.la 
 
-noinst_LTLIBRARIES = \
-	libedg_wl_partitioner.la 
-
-noinst_HEADERS = \
+lib_HEADERS = \
         Partition.h \
 	Partitioner.h \
 	Bin.h \
 	Binlist.h 
-endif
 
-libedg_wl_partitioner_la_SOURCES = \
+libglite_wmsui_partitioner_la_SOURCES = \
 	Partition.cpp \
 	Partitioner.cpp \
 	Binlist.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/interface \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) 
 
