@@ -11,6 +11,7 @@
  * This file contains implementations for Socket Agent used for message
  * exchange between Client and Server.
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
+ * @author Marco Pappalardo marco.pappalardo@ct.infn.it
  * @author comments by Marco Pappalardo marco.pappalardo@ct.infn.it and Salvatore Monforte
  */
 
@@ -19,7 +20,7 @@
 #include <memory.h>
 #include <sys/time.h>
 #include <errno.h>
-
+#include <arpa/inet.h>
 /** This class header file. */
 #include "glite/wmsutils/tls/socket++/SocketAgent.h"
 
@@ -273,7 +274,7 @@ bool SocketAgent::readbuffer(char* buf, unsigned int size)
  * Returns the host name.
  * @param the string to fill with host name.
  */
-std::string SocketAgent::HostName()
+std::string SocketAgent::PeerName()
 {
 
   struct hostent*
@@ -283,6 +284,22 @@ std::string SocketAgent::HostName()
   return std::string(hp->h_name);
   
 }
+
+/**                                                                                               
+ * Returns peer entity ip address.                                                                
+ * @return peer entity ip address.                                                                
+ */ 
+std::string SocketAgent::PeerAddr() { 
+  return std::string(inet_ntoa(peeraddr_in.sin_addr));
+} 
+ 
+/**                                                                                               
+ * Returns peer entity ip port.                                                                   
+ * @return peer entity ip port.                                                                   
+ */ 
+int SocketAgent::PeerPort() {
+  return peeraddr_in.sin_port; 
+} 
 
 } // namespace socket_pp
 } // namespace tls
