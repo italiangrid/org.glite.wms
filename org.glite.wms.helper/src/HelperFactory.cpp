@@ -9,10 +9,11 @@
 #include <utility>
 #include <classad_distribution.h>
 #include <boost/utility.hpp>
+#include <map>
 
 #include "glite/wms/helper/HelperFactory.h"
 #include "glite/wms/helper/HelperImpl.h"
-#include "glite/wms/thirdparty/loki/Factory.h"
+
 
 using namespace std;
 using namespace classad;
@@ -25,8 +26,7 @@ HelperFactory* HelperFactory::s_instance = 0;
 
 class HelperFactory::Impl: boost::noncopyable
 {
-  typedef Loki::Factory<product_type, std::string, product_creator_type> factory_type;
-  typedef Loki::DefaultFactoryError<std::string, product_type> error_type;
+  typedef std::map<std::string, product_creator_type> factory_type;
   factory_type m_factory;
 
 public:
@@ -40,21 +40,25 @@ public:
 bool
 HelperFactory::Impl::register_helper(std::string const& id, product_creator_type creator)
 {
-  return m_factory.Register(id, creator);
+  return m_factory.insert(std::make_pair(id, creator)).second;
 }
 
 bool
 HelperFactory::Impl::unregister_helper(std::string const& id)
 {
-  return m_factory.Unregister(id);
+  return m_factory.erase(id) == 1;
 }
 
 HelperFactory::product_type*
 HelperFactory::Impl::create_helper(std::string const& id)
-try {
-  return m_factory.CreateObject(id);
-} catch (error_type const&) {
-  return 0;
+{
+   factory_type::iterator i = m_factory.find(id);
+   if (i == m_factory.end())
+   {
+      throw NoCreateHelperException();
+
+   }
+   return (i->second)();
 }
 
 std::vector<std::string>
@@ -62,8 +66,7 @@ HelperFactory::Impl::list() const
 {
   std::vector<std::string> result;
 
-  factory_type::IdToProductMap m = m_factory.List();
-  for (factory_type::IdToProductMap::iterator it = m.begin(); it != m.end(); ++it) {
+  for (factory_type::const_iterator it = m_factory.begin(); it != m_factory.end(); ++it) {
     result.push_back(it->first);
   }
 

@@ -17,11 +17,21 @@
 #include <boost/utility.hpp>
 #endif
 
+#include <exception>
+
 namespace glite {
 namespace wms {
 namespace helper {
 
 class HelperImpl;
+
+struct NoCreateHelperException : public std::exception
+{
+    const char* what() const throw () 
+    { 
+       return "Unknown Helper"; 
+    }
+};
 
 class HelperFactory: boost::noncopyable
 {
