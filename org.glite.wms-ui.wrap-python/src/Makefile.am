@@ -107,8 +107,6 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(ARES_LIBS) \
 	$(BOOST_LIBS) \
@@ -122,7 +120,7 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
 #	$(SHARED_LIB_REQUESTAD) \
 #	$(SHARED_LIB_UTILITIES) \
 #	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la \
+#	../../thirdparty/trio/libtrio.la 
 
 libglite_wmsui_LogWrapper_la_SOURCES = \
 	LogWrapper_wrap.cpp \
@@ -140,8 +138,6 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
 	$(CLASSAD_LIBS) \
         $(ARES_LIBS) \
         $(BOOST_LIBS) \
@@ -155,7 +151,7 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
 #	$(SHARED_LIB_REQUESTAD) \
 #	$(SHARED_LIB_UTILITIES) \
 #	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la \
+#	../../thirdparty/trio/libtrio.la 
 
 libglite_wmsui_NsWrapper_la_SOURCES = \
 	NsWrapper_wrap.cpp \
@@ -178,8 +174,6 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
 	$(GLITE_DGAS_JOBAUTHCLIENT_LIBS) \
 	$(GLITE_DGAS_COMMON_XMLUTIL_LIBS) \
 	$(CLASSAD_LIBS) \
@@ -196,7 +190,7 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
 #	$(SHARED_LIB_REQUESTAD) \
 #	$(SHARED_LIB_UTILITIES) \
 #	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la \
+#	../../thirdparty/trio/libtrio.la 
 
 libglite_wmsui_AdWrapper_la_SOURCES = \
 	AdWrapper_wrap.cpp \
@@ -214,8 +208,6 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
-	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(CLASSAD_LIBS) \
         $(ARES_LIBS) \
@@ -230,7 +222,7 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
 #	$(SHARED_LIB_UTILITIES) \
 #	$(SHARED_LIB_REQUESTAD) \
 #	$(SHARED_LIB_LOGGER) \
-#	../../thirdparty/trio/libtrio.la \
+#	../../thirdparty/trio/libtrio.la 
 
 LbWrapper_wrap.cpp : glite_wmsui_LbWrapper.i
 	@#Create the files
