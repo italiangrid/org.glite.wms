@@ -71,13 +71,16 @@ namespace server {
 
 		      assert( !cmd -> isDone() );
 		      do {
-			  
 		        if( cmd -> state().forwardRequest() ) {
 			      is_forwarded = true;
+
+/*   SEQUENCE CODE SET by wmpoperations
 			      char* seq_str = edg_wll_GetSequenceCode(*cmd->getLogContext());
-			      std::string seq_code(seq_str);		    
+			      std::string seq_code(seq_str);
 			      free( seq_str );
-			      cmd->setParam("SeqCode", seq_code);	    
+			      cmd->setParam("SeqCode", seq_code);
+*/
+
 			      // Dispatch the Command
 			      write_end().write(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
 			      // To be used in case the Dispatcher in not a task::pipereader
@@ -85,59 +88,59 @@ namespace server {
 			      // wmp_dispatcher.dispatch(static_cast<classad::ClassAd*>(cmd->asClassAd().Copy()));
 			      edglog(fatal) << "Command Forwarded." << std::endl;
 		        }
-		    
+
 		      } while( cmd -> execute() && !cmd -> isDone() );
-		      
+
 		      if (cmdname == "ListJobMatch") {
                         // Fill result struct with data
-			// cmd -> setParam("jdl", jdl); 
-			std::vector<std::string> temp_list; 
-			if ( cmd -> getParam("MatchResult", temp_list) ) { 
-			  if (temp_list.size() > 1 && temp_list.front() == std::string(GLITE_WMS_WMPMATCHMAKINGERROR)) { 
+			// cmd -> setParam("jdl", jdl);
+			std::vector<std::string> temp_list;
+			if ( cmd -> getParam("MatchResult", temp_list) ) {
+			  if (temp_list.size() > 1 && temp_list.front() == std::string(GLITE_WMS_WMPMATCHMAKINGERROR)) {
 			    fault.code = 1; //MATCHMAKINGERR_CODE
 			    fault.message = std::string(GLITE_WMS_WMPMATCHMAKINGERROR);
-			    edglog(critical) << "Error during MatchMaking:\n\t" << temp_list[1] << std::endl; 
+			    edglog(critical) << "Error during MatchMaking:\n\t" << temp_list[1] << std::endl;
 			  } else {
 			    /*
 			    struct StringAndLongType {
-			      std::string name; 
-			      long size; 
-			    }; 
- 
+			      std::string name;
+			      long size;
+			    };
+
 			    struct StringAndLongList {
-			      std::vector<StringAndLongType*> *file; 
+			      std::vector<StringAndLongType*> *file;
 			    };
 			    */
-			    
+
 			    for(std::vector<std::string>::const_iterator it = temp_list.begin();
 				it != temp_list.end(); it++) {
-			      try { 
- 				static boost::regex  expression( "(\\S.+)\\s=\\s(\\S.+)" ); 
+			      try {
+ 				static boost::regex  expression( "(\\S.+)\\s=\\s(\\S.+)" );
 				boost::smatch        pieces;
 				std::string          ceid, rank;
 				if( boost::regex_match( *it, pieces, expression) ) {
- 				  ceid.assign  (pieces[1].first, pieces[1].second); 
-				  rank.assign  (pieces[2].first, pieces[2].second); 
+ 				  ceid.assign  (pieces[1].first, pieces[1].second);
+				  rank.assign  (pieces[2].first, pieces[2].second);
 				  StringAndLongType* item;
 				  item -> name.assign(ceid);
-				  item -> size = std::atoi(rank.c_str()); 
+				  item -> size = std::atoi(rank.c_str());
 				  ((StringAndLongList*)result)->file->push_back( item );
-				} 
-			      } 
-			      catch( boost::bad_expression& e ) { 
-				edglog(critical) << e.what() << std::endl; 
-			      } 
-			    } 
+				}
+			      }
+			      catch( boost::bad_expression& e ) {
+				edglog(critical) << e.what() << std::endl;
+			      }
+			    }
 
 			  }
-			} else { 
-			  // l.push_back(std::string(EDG_WL_NSMATCHMAKINGERROR)); 
-			  // l.push_back(std::string("Unknown Error. No MatchResult: please check.")); 
-			  edglog(critical) << "Error during MatchMaking:\n\tUnknown Error. No MatchResult: please check." << std::endl; 
+			} else {
+			  // l.push_back(std::string(EDG_WL_NSMATCHMAKINGERROR));
+			  // l.push_back(std::string("Unknown Error. No MatchResult: please check."));
+			  edglog(critical) << "Error during MatchMaking:\n\tUnknown Error. No MatchResult: please check." << std::endl;
 			  fault.code = 2; //MATCHMAKING_NORESULT_CODE
 			  fault.message = std::string(GLITE_WMS_WMPMATCHMAKINGERROR);
-			  edglog(critical) << "Error during MatchMaking:\n\tUnknown Error. No MatchResult: please check." << std::endl; 
-			} 
+			  edglog(critical) << "Error during MatchMaking:\n\tUnknown Error. No MatchResult: please check." << std::endl;
+			}
 
 
                       } else if (cmdname == "JobSubmit" || cmdname == "DagSubmit") {
@@ -147,7 +150,7 @@ namespace server {
                         cmd -> setParam("Ciccio", "PincoPallo");
 		        cmd -> getParam("JobId", ((jobSubmitResponse*)result)->jobIdStruct->id);
                       }
-		      
+
                       // Here we should log the attribute list returned.
 		      // For any command possible
                       if (cmd -> isDone() && cmdname != "ListJobMatch") {
