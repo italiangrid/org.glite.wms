@@ -20,6 +20,7 @@ libglite_wms_broker_la_SOURCES = \
 	RBSimpleImpl.cpp 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/selectors \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
