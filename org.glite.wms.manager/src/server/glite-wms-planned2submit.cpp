@@ -9,15 +9,19 @@
 #include <fstream>
 #include <boost/scoped_ptr.hpp>
 #include <classad_distribution.h>
-#include "edg/workload/common/utilities/classad_utils.h"
-#include "edg/workload/common/requestad/convert.h"
-#include "edg/workload/jobcontrol/controller/SubmitAdapter.h"
-#include "edg/workload/common/configuration/Configuration.h"
 
-namespace jobcontrol = edg::workload::jobcontrol::controller;
-namespace requestad = edg::workload::common::requestad;
-namespace configuration = edg::workload::common::configuration;
-namespace utilities = edg::workload::common::utilities;
+#include "glite/wms/common/utilities/classad_utils.h"
+
+#include "glite/wms/jdl/convert.h"
+
+#include "SubmitAdapter.h"
+
+#include "glite/wms/common/configuration/Configuration.h"
+
+namespace jss = glite::wms::jobsubmission;
+namespace jdl = glite::wms::jdl;
+namespace configuration = glite::wms::common::configuration;
+namespace utilities = glite::wms::common::utilities;
 
 namespace {
 
@@ -68,7 +72,7 @@ try {
 
   boost::scoped_ptr<classad::ClassAd> input_ad(utilities::parse_classad(is));
 
-  jobcontrol::SubmitAdapter sad(*input_ad);
+  jss::controller::SubmitAdapter sad(*input_ad);
 
   boost::scoped_ptr<classad::ClassAd> submit_ad(
     sad.adapt_for_submission(sequence_code)
@@ -78,7 +82,7 @@ try {
     std::cerr << "SubmitAdapter::adapt_for_submission() failed\n";
     return EXIT_FAILURE;
   }
-  requestad::to_submit_stream(os, *submit_ad);
+  jdl::to_submit_stream(os, *submit_ad);
 
 } catch (std::exception& e) {
   std::cerr << e.what() << "\n";
