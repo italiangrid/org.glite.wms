@@ -1,41 +1,20 @@
-#
-#       Copyright (c) 2004 on behalf of the EU EGEE Project:
-#       The European Organization for Nuclear Research (CERN),
-#       Istituto Nazionale di Fisica Nucleare (INFN), Italy
-#       Datamat Spa, Italy
-#       Centre National de la Recherche Scientifique (CNRS), France
-#       CS Systeme d'Information (CSSI), France
-#       Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
-#       Universiteit van Amsterdam (UvA), Netherlands
-#       University of Helsinki (UH.HIP), Finland
-#       University of Bergen (UiB), Norway
-#       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
-#
-#       Authors: Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
-#       Version info: $Id$
-#       Release: $Name$
-#
-#       Revision history:
-#       $Log$
-#       Revision 1.2  2004/07/05 14:55:56  eronchie
-#       Start handling helper
-#       WARNING: work in progress
-#
-#       Revision 1.1  2004/07/02 13:11:39  monforte
-#       Initial Helper porting to new build system
-#       WARNING: work in progress
-#
-#       Revision 1.1  2004/06/26 15:25:03  eronchie
-#       Start handling matchmaking
-#       WARNING: work in progress
-#
-#
-#
+## *********************************************************************
+## *
+## * Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
+## * For license conditions see LICENSE file or
+## * http://www.edg.org/license.html
+## *
+## *********************************************************************
 
 ## Process this file with automake to produce Makefile.in
 
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
+
 ## Subdirectories list
-SUBDIRS = interface src examples 
+SUBDIRS=interface src examples
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
@@ -44,7 +23,7 @@ stage:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
 	dot_seen=no; \
         target="install"; \
-	prefix_arg=@prefix@; \
+	prefix_arg="@prefix@"; \
         list='$(SUBDIRS)'; for subdir in $$list; do \
           echo "Making $$target $$prefix_arg in $$subdir"; \
           if test "$$subdir" = "."; then \
