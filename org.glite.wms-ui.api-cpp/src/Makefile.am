@@ -13,6 +13,12 @@ client_HEADERS = \
 	CredentialException.h \
 	Logging.h 
 
+GLITE_WMS_MANAGER_NS_CLIENT_LIBS = -L$(top_srcdir)/../org.glite.wms.manager-ns-client/build/src \
+        -L$(top_srcdir)/../org.glite.wms.manager-ns-commands/build/src \
+        -L$(top_srcdir)/../org.glite.wms.manager-ns-fsm/build/src \
+        -L$(top_srcdir)/../org.glite.wms.manager-ns-versions/build/src \
+        -lglite_wms_manager_ns_client -lnsclientcommands -lnsfsm -lglite_wms_manager-ns-versions
+
 libglite_wmsui_client_la_SOURCES = Job.cpp \
 	Request.cpp \
 	Logging.cpp \
@@ -21,6 +27,9 @@ libglite_wmsui_client_la_SOURCES = Job.cpp \
 	JobExceptions.cpp \
 	UserCredential.cpp \
 	UserJobs.cpp
+
+libglite_wmsui_client_la_LIBADD = \
+        $(GLITE_WMS_MANAGER_NS_CLIENT_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
