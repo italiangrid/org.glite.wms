@@ -7,7 +7,7 @@
 ## *********************************************************************
 
 noinst_LTLIBRARIES = \
-	lib_glite_wmproxy_commands.la \
+	lib_glite_wms_wmproxy_commands.la \
 	lib_glite_pipe.la
 
 noinst_HEADERS = \
@@ -25,13 +25,12 @@ noinst_HEADERS = \
 	JobId.h \
 	exception_codes.h \
 	listjobmatch.h \
-	gsimkdirex.h \
 	listfiles.h \
 	logging.h \
 	MatchingPipe.h \
 	MatchingPipeFiller.h
 
-lib_glite_wmproxy_commands_la_SOURCES = \
+lib_glite_wms_wmproxy_commands_la_SOURCES = \
 	common.cpp \
 	Command.cpp \
 	ExecuteFunction.cpp \
@@ -52,8 +51,7 @@ AM_CPPFLAGS = \
 	$(BOOST_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
-	-DSHOW_EXECUTION \
-	-DWITH_GLOBUS_FTP_CLIENT_API
+	-DSHOW_EXECUTION
 
 MAINTAINERCLEANFILES = Makefile.in
 
