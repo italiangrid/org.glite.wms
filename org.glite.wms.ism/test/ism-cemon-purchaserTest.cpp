@@ -12,7 +12,7 @@ int main(void)
   vector<string> services;
   services.push_back("http://lxb2022.cern.ch:8080/ce-monitor/services/CEMonitor");
   
-  ism_cemon_purchaser icp(services,"CE_MONITOR", 30, ism_cemon_purchaser::once);
+  ism_cemon_purchaser icp(services,"CE_MONITOR:http://ISM", 30, ism_cemon_purchaser::once);
   try { 
   icp();
   } catch(std::exception& e) {
