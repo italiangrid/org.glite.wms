@@ -115,6 +115,23 @@
 			<xsd:element name="OperationNotAllowedFault" type="glitenstypes:OperationNotAllowedFaultType"/>
 		</schema>
 	</wsdl:types>
+	
+<wsdl:message name="getProxyReqRequest">
+ <wsdl:part name="delegationID" type="xsd:string"/>
+</wsdl:message>
+
+<wsdl:message name="getProxyReqResponse">
+ <wsdl:part name="request" type="xsd:string"/>
+</wsdl:message>
+
+<wsdl:message name="putProxyRequest">
+ <wsdl:part name="delegationID" type="xsd:string"/>
+ <wsdl:part name="proxy" type="xsd:string"/>
+</wsdl:message>
+
+<wsdl:message name="putProxyResponse">
+</wsdl:message>
+
 	<wsdl:message name="getVersionRequest">
 	</wsdl:message>
 	<wsdl:message name="getVersionResponse">
@@ -254,6 +271,18 @@
 		<wsdl:part name="jdl" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:portType name="WMProxy_PortType">
+	
+<wsdl:operation name="getProxyReq">
+  <wsdl:documentation>Service definition of function ns__getProxyReq</wsdl:documentation>
+  <wsdl:input name="getProxyReqRequest" message="glitens:getProxyReqRequest"/>
+  <wsdl:output name="getProxyReqResponse" message="glitens:getProxyReqResponse"/>
+ </wsdl:operation>
+ <wsdl:operation name="putProxy">
+  <wsdl:documentation>Service definition of function ns__putProxy</wsdl:documentation>
+  <wsdl:input name="putProxyRequest" message="glitens:putProxyRequest"/>
+  <wsdl:output name="putProxyResponse" message="glitens:putProxyResponse"/>
+ </wsdl:operation>
+ 
 		<wsdl:operation name="getVersion">
 			<wsdl:documentation>
 					This operation gets the version of the service.
@@ -689,6 +718,24 @@ To better clarify, an example of the correct sequence of operations for submitti
 	</wsdl:portType>
 	<wsdl:binding name="WMProxy" type="glitens:WMProxy_PortType">
 		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		
+<wsdl:operation name="getProxyReq">
+  <wsdl:input>
+   <soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+  </wsdl:input>
+  <wsdl:output>
+   <soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+  </wsdl:output>
+ </wsdl:operation>
+ <wsdl:operation name="putProxy">
+  <wsdl:input>
+   <soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+  </wsdl:input>
+  <wsdl:output>
+   <soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+  </wsdl:output>
+ </wsdl:operation>
+ 
 		<wsdl:operation name="getVersion">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
@@ -1051,7 +1098,7 @@ To better clarify, an example of the correct sequence of operations for submitti
 					This is the service that allows accessing the submission and control functionality of the WMS
             </wsdl:documentation>
 		<wsdl:port name="WMProxy_PortType" binding="glitens:WMProxy">
-			<soap:address location="https://10.3.1.43:443"/>
+			<soap:address location="https://10.3.1.43:4473/wmProxy.fcgi"/>
 			<!--soap:address location="http://10.3.1.43:8080/axis/"/-->
 		</wsdl:port>
 	</wsdl:service>
