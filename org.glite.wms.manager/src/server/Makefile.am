@@ -11,11 +11,6 @@ MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
 GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
-GLITE_WMS_RLS_LIBS = $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
-GLITE_WMS_BROKER_LIBS = $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la
-GLITE_WMS_BROKERINFO_LIBS = $(top_srcdir)/../org.glite.wms.brokerinfo/build/src/libglite_wms_brokerinfo.la
-GLITE_WMS_MATCHMAKING_LIBS = $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la
-
 lib_LTLIBRARIES = libglite_wms_manager_server.la 
 
 libexec_SCRIPTS = \
@@ -87,10 +82,6 @@ glite_wms_planner_LDADD   = \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-	$(GLITE_WMS_BROKER_LIBS) \
-	$(GLITE_WMS_BROKERINFO_LIBS) \
-	$(GLITE_WMS_MATCHMAKING_LIBS) \
-	$(GLITE_WMS_RLS_LIBS) \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_DL_LIBS) \
