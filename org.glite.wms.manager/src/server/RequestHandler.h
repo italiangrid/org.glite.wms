@@ -38,4 +38,4 @@ public:
 
 }}}} // glite::wms::manager::server
 
-#endif // EDG_WORKLOAD_PLANNING_MANAGER_REQUESTHANDLER_H
+#endif // GLITE_WMS_MANAGER_REQUESTHANDLER_H

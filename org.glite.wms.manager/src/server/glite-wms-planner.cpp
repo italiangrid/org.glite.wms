@@ -70,7 +70,7 @@ try {
     return EXIT_FAILURE;
   }
 
-  configuration::Configuration config("edg_wl.conf",
+  configuration::Configuration config("glite_wms.conf",
                                       configuration::ModuleType::workload_manager);
   configuration::CommonConfiguration const* const common_config(config.common());
 
@@ -78,7 +78,7 @@ try {
   // FIXME: dynamic broker helper. This should be replaced by a configurable
   // FIXME: Helper Factory.
 
-  char *brlib = getenv("EDG_WL_BROKER_HELPER_LIB");
+  char *brlib = getenv("GLITE_WMS_BROKER_HELPER_LIB");
   if (brlib == NULL) {
     if (common_config->use_cache_instead_of_gris()) {
       brlib = "libedg_wl_helper_broker_prefetch.so.0";

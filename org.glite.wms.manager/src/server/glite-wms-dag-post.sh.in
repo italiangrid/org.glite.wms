@@ -7,9 +7,9 @@
 # 0: job exit status = 0 && jw exit status  = 0
 # 1: otherwise
 
-EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
-. ${EDG_WL_LOCATION}/etc/edg-wl-vars.sh
-. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
+GLITE_WMS_LOCATION=${GLITE_WMS_LOCATION:-@prefix@}
+. ${GLITE_WMS_LOCATION}/etc/glite-wms-vars.sh
+. ${GLITE_WMS_LOCATION}/etc/profile.d/glite-wms.sh
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <stdout_file> <maradona_file>" >&2

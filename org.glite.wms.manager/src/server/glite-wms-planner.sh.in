@@ -1,8 +1,8 @@
 #!/bin/sh
 
-EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
-. ${EDG_WL_LOCATION}/etc/edg-wl-vars.sh
-. ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
+GLITE_WMS_LOCATION=${GLITE_WMS_LOCATION:-@prefix@}
+. ${GLITE_WMS_LOCATION}/etc/glite-wms-vars.sh
+. ${GLITE_WMS_LOCATION}/etc/profile.d/glite-wms.sh
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <input_file> <output_file>" >&2
@@ -18,10 +18,10 @@ if [ ! -r ${input_file} ]; then
 fi
 # the output file may exist, just ignore it, the planner will overwrite it
 
-planner=${EDG_WL_LOCATION}/libexec/edg-wl-planner
-planned2submit=${EDG_WL_LOCATION}/libexec/edg-wl-planned2submit
-logev=${EDG_WL_LOCATION}/bin/edg-wl-logev
-eval_ad_expr=${EDG_WL_LOCATION}/libexec/edg-wl-eval_ad_expr
+planner=${GLITE_WMS_LOCATION}/libexec/glite-wms-planner
+planned2submit=${GLITE_WMS_LOCATION}/libexec/glite-wms-planned2submit
+logev=${GLITE_WMS_LOCATION}/bin/glite-wms-logev
+eval_ad_expr=${GLITE_WMS_LOCATION}/libexec/glite-wms-eval_ad_expr
 
 if [ ! -x ${planner} ]; then
     echo "${planner} does not exist or is not executable"
@@ -43,7 +43,7 @@ fi
 initial_sequence_code="UI=2:NS=0:WM=0:BH=1:JSS=0:LM=0:LRMS=0:APP=0"
 sequence_code=${initial_sequence_code}
 
-job_id=`${eval_ad_expr} ${input_file} "edg_jobid"`
+job_id=`${eval_ad_expr} ${input_file} "glite_jobid"`
 if [ $? -ne 0 ]; then
     echo "Cannot get the job id" >&2
     exit 1
