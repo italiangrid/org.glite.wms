@@ -319,7 +319,7 @@ string getStringParametricJobTemplate (vector<string>attributes, vector<string> 
 }
 /*****************************************************************
 getProxyRequest
-******************************************************************
+******************************************************************/
 std::string getProxyRequest(std::string &request, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
@@ -330,7 +330,7 @@ std::string getProxyRequest(std::string &request, ConfigContext *cfs){
 }
 /*****************************************************************
 putProxy
-*****************************************************************
+*****************************************************************/
 void putProxy(std::string &delegationId, std::string &proxy, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
@@ -338,7 +338,7 @@ void putProxy(std::string &delegationId, std::string &proxy, ConfigContext *cfs)
 	if (wmp.ns1__putProxy(delegationId, proxy, response) == SOAP_OK) {
 		//OK
 	} else soapErrorMng(wmp) ;
-} */
+} 
 
 } // wmproxy-api namespace
 } // wms namespace
