@@ -1,5 +1,5 @@
 <wsdl:definitions
- xmlns:glitens="http://glite.org/wms/wmproxy" 
+ xmlns:glitens="http://glite.org/wms/wmproxy"
  xmlns:glitenstypes="http://glite.org/wms/wmproxy" 
  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
  xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
@@ -170,7 +170,7 @@
 	<wsdl:message name="getMaxInputSandboxSizeRequest">
 	</wsdl:message>
 	<wsdl:message name="getMaxInputSandboxSizeResponse">
-		<wsdl:part name="size" type="xsd:double"/>
+		<wsdl:part name="size" type="xsd:long"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxDestURIRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
@@ -429,7 +429,7 @@ To better clarify, an example of the correct sequence of operations for submitti
 
 					Input: no input.
 
-					Output: double containing the size in bytes.
+					Output: long containing the size in bytes.
 
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
@@ -478,7 +478,7 @@ To better clarify, an example of the correct sequence of operations for submitti
 					
 					Input: no input.
 					
-					Output: long containing soft limit quota (in bytes) i.e. the limit that the user is expected to remain below. 
+					Output: long containing soft limit quota (in bytes) i.e. the limit that the user is expected to remain below.
 					Output: long containing hard limit quota (in bytes) i.e. the real quota limit that cannot be exceeded.
 					
 					Faults:
