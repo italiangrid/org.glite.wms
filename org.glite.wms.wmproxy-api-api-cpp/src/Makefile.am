@@ -18,10 +18,7 @@
 lib_LTLIBRARIES = libglite_wms_wmproxy_api_cpp.la
 
 libglite_wms_wmproxy_api_cpp_la_SOURCES = \
-	ChkptException.cpp \
-	jobstate.cpp \
-	stepper.cpp \
-	step.cpp 
+	wmproxy_api.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
