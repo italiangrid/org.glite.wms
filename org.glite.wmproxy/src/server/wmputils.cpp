@@ -1,19 +1,46 @@
+/*
+	Copyright (c) Members of the EGEE Collaboration. 2004.
+	See http://public.eu-egee.org/partners/ for details on the copyright holders.
+	For license conditions see the license file or http://www.eu-egee.org/license.html
+*/
+
 #include "wmputils.h"
 
 #include <iostream>
 
 using namespace std;
 	
-static void
-waitForAWhile(int seconds)
+void
+waitForSeconds(int seconds)
 {
-	fprintf(stderr, "----- Waiting for a while -----\n");
+	cerr<<"-----> Waiting for "<<seconds<<" seconds..."<<endl;
 	time_t startTime = time(NULL);
 	time_t endTime = time(NULL);
+	int counter = 0;
 	while((endTime - startTime) < seconds) {
+		if ((endTime%3600) != counter) {
+			switch (counter%4) {
+				case 0:
+					cerr<<"-"<<endl;
+					break;
+				case 1:
+					cerr<<"\\"<<endl;
+					break;
+				case 2:
+					cerr<<"|"<<endl;
+					break;
+				case 3:
+					cerr<<"/"<<endl;
+					break;
+				default:
+					break;
+			}
+			counter = endTime%3600;
+		}
 		endTime = time(NULL);
 	}
-	fprintf(stderr, "----- End waiting -----\n");
+	cerr<<"-----> End waiting"<<endl;
 }
+
 
 

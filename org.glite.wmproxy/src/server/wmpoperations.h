@@ -1,68 +1,64 @@
-#ifndef  GLITE_WMS_WMPROXY_WMPOPERATIONS_H
-#define GLITE_WMS_WMPROXY_WMPOPERATIONS_H
-
 /*
 	Copyright (c) Members of the EGEE Collaboration. 2004.
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
 
-#include "glite/lb/JobStatus.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wms/jdl/ExpDagAd.h"
+#ifndef GLITE_WMS_WMPROXY_WMPOPERATIONS_H
+#define GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 
-#include "wmplogger.h"
-#include "wmpgsoapfaultmanipulator.h"
 #include "wmpresponsestruct.h"
 
 //namespace glite {
 //namespace wms {
 //namespace wmproxyname {
 
+// Web service available operations.
+// All methods are void, response values are inserted in the corresponding
+// response structure.
+// For more information about arguments see Web Service Description Language
+// file (wsdl).
+
 void ping(pingResponse &ping_response);
 
 void getVersion(getVersionResponse &getVersion_response);
 
-void jobRegister(jobRegisterResponse &jobRegister_response, string &jdl);
+void jobRegister(jobRegisterResponse &jobRegister_response, const std::string &jdl);
 
-void jobStart(jobStartResponse &jobStart_response, string jobId);
+void jobStart(jobStartResponse &jobStart_response, std::string jobId);
 
-void jobSubmit(jobSubmitResponse &jobSubmit_response, string jdl)  ;
+void jobSubmit(jobSubmitResponse &jobSubmit_response, std::string jdl)  ;
 
-void jobCancel(jobCancelResponse &jobCancel_response, string jobId);
+void jobCancel(jobCancelResponse &jobCancel_response, std::string jobId);
 
-void getMaxInputSandboxSize(getMaxInputSandboxSizeResponse &getMaxInputSandboxSize_response);
+void getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
+	&getMaxInputSandboxSize_response);
 
-void getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response, string jobId);
+void getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
+	std::string jobId);
 
 void getQuota(getQuotaResponse &getQuota_response);
 
 void getFreeQuota(getFreeQuotaResponse &getFreeQuota_response);
 
-void jobPurge(jobPurgeResponse &jobPurge_response, string jobId);
+void jobPurge(jobPurgeResponse &jobPurge_response, std::string jobId);
 
-void getOutputFileList(getOutputFileListResponse &getOutputFileList_response, string jobId);
+void getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
+	std::string jobId);
 
-void jobListMatch(jobListMatchResponse &jobListMatch_response, string jdl);
+void jobListMatch(jobListMatchResponse &jobListMatch_response, std::string jdl);
 
-void getJobTemplate(getJobTemplateResponse &getJobTemplate_response, JobTypeList jobType, string executable, string arguments, string requirements, string rank);
+void getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
+	JobTypeList jobType, std::string executable, std::string arguments,
+	std::string requirements, std::string rank);
 
-void getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response, GraphStructType dependencies, string requirements, string rank);
+void getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
+	GraphStructType dependencies, std::string requirements, std::string rank);
 
-void getCollectionTemplate(getCollectionTemplateResponse &getCollectionTemplate_response, int jobNumber, string requirements, string rank);
+void getCollectionTemplate(getCollectionTemplateResponse
+	&getCollectionTemplate_response, int jobNumber, std::string requirements,
+	std::string rank);
 
-
-glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid);
-
-void regist(glite::wms::jdl::JobAd *jad, glite::wmsutils::jobid::JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri);
-
-void regist(glite::wms::jdl::ExpDagAd *dag, glite::wmsutils::jobid::JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri);
-
-void regist(glite::wms::jdl::ExpDagAd *dag, glite::wmsutils::jobid::JobId *jid, WMPLogger &wmplogger);
-
-void regist(glite::wms::jdl::JobAd *jad, glite::wmsutils::jobid::JobId *jid, WMPLogger &wmplogger);
-
-void start(jobStartResponse &jobStart_response, glite::wmsutils::jobid::JobId *jid, WMPLogger &wmplogger);
 
 //} // wmproxy
 //} // wms

@@ -4,12 +4,13 @@
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
 
-
 #include "wmpoperations.h"
 
 #include "wmproxy.h"
 #include "wmplogger.h"
+#include "wmpexpdagad.h"
 
+// Exceptions
 #include "wmpexceptions.h"
 #include "exception_codes.h"
 #include "glite/wms/jdl/JobAdExceptions.h"
@@ -24,13 +25,10 @@
 #include "glite/lb/Job.h"
 #include "glite/lb/JobStatus.h"
 
-//#include "glite/wmsutils/JobId.h" //JobId
+// AdConverter class for jdl convertion and templates
 #include "glite/wms/jdl/adconverter.h"
 
-// VARIOUS
-//#include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
-
-using namespace std ;
+using namespace std;
 using namespace glite::wmsutils::exception; //Exception
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wms::jdl; // DagAd, AdConverter
@@ -50,59 +48,102 @@ enum type {
 	TYPE_COLLECTION,
 };
 
+// "private" methods prototypes
+glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid);
+
+void registJob(jobRegisterResponse &jobRegister_response, const string &jdl);
+
+void registDag(jobRegisterResponse &jobRegister_response, const string &jdl);
+
+void start(jobStartResponse &jobStart_response, JobId *jid, WMPLogger &wmplogger);
+
+
+/**
+ * Converts JobIdStruct vector into a GraphStructType vector pointer
+ */
+vector<GraphStructType*> *
+convertJobIdStruct(vector<JobIdStruct*> &job_struct)
+{
+	vector<GraphStructType*> *graph_struct_type = new vector<GraphStructType*>;
+	GraphStructType *graph_struct = NULL;
+	for (unsigned int i = 0; i < job_struct.size(); i++) {
+		graph_struct = new GraphStructType();
+		graph_struct->id = job_struct[i]->jobid.toString(); // should be equal to: jid->toString()
+		graph_struct->name = *(job_struct[i]->nodeName);
+		graph_struct->childrenJobNum = job_struct[i]->children.size();
+		graph_struct->childrenJob = convertJobIdStruct(job_struct[i]->children);
+		graph_struct_type->push_back(graph_struct);
+	}
+	return graph_struct_type;
+}
+	
 /**
  * Returns an int value representing the type of the job described by the jdl
+ * If type is not specified -> Job  change it in the future?
  */
 int
 getJobType(string jdl)
 {
 	GLITE_STACK_TRY("getJobType(string jdl)");
-	Ad *in_ad = new Ad(jdl);
-	if (in_ad->hasAttribute(JDL::TYPE)) {
-		string type = (in_ad->getStringValue(JDL::TYPE))[0];
-		cerr<<"Type: "<<type<<endl;
-		if (type == JDL_TYPE_DAG) {
-			cerr<<"DAG"<<endl;
-			return TYPE_DAG;
-		} else if (type ==JDL_TYPE_JOB) {
-			cerr<<"JOB"<<endl;
-			return TYPE_JOB;
-		//} else if (type == JDL_TYPE_COLLECTION) {
-		//	return TYPE_COLLECTION;
+	
+	int return_value = TYPE_JOB;
+	try {
+		Ad *in_ad = new Ad(jdl);
+		if (in_ad->hasAttribute(JDL::TYPE, JDL_TYPE_DAG)) {
+			return_value = TYPE_DAG;
 		}
-	} else {
-		cerr<<"No Type"<<endl;
-		return TYPE_JOB; // If type is not specified -> Job  change it in the future?
+		/*
+		if (in_ad->hasAttribute(JDL::TYPE)) {
+			string type = (in_ad->getStringValue(JDL::TYPE))[0];
+			if (type == JDL_TYPE_DAG) {
+				return_value = TYPE_DAG;
+			} else if (type == JDL_TYPE_JOB) {
+				return_value = TYPE_JOB;
+			//} else if (type == JDL_TYPE_COLLECTION) {
+			//	return_value = TYPE_COLLECTION;
+			}
+		}
+		*/
+		delete in_ad;
+	} catch (Exception &exc) {
+		cerr<<"---->> getJobType() Exception: "<<exc.what()<<endl;
+		throw exc;
+	} catch (exception &ex) {
+		cerr<<"---->> getJobType() exception: "<<ex.what()<<endl;
+		throw ex;
 	}
+	return return_value;
+	
 	GLITE_STACK_CATCH();
 }
 
 /**
-* Converts a JobTypeList type to an int value representing the type of the job
-*/
+ * Converts a JobTypeList type to an int value representing the type of the job
+ */
 int
 convertJobTypeListToInt(JobTypeList job_type_list)
 {
 	GLITE_STACK_TRY("convertJobTypeListToInt(JobTypeList job_type_list)");
+	
 	int type = 0;
-	for (int i = 0; i < (*(job_type_list.jobType)).size(); i++) {
+	for (unsigned int i = 0; i < job_type_list.jobType->size(); i++) {
 		switch ((*job_type_list.jobType)[i]) {
-			case PARAMETRIC:
+			case WMS_PARAMETRIC:
 				type |= AdConverter::ADCONV_JOBTYPE_PARAMETRIC;
 				break;
-			case NORMAL:
+			case WMS_NORMAL:
 				type |= AdConverter::ADCONV_JOBTYPE_NORMAL;
 				break;
-			case INTERACTIVE:
+			case WMS_INTERACTIVE:
 				type |= AdConverter::ADCONV_JOBTYPE_INTERACTIVE;
 				break;
-			case MPI:
+			case WMS_MPI:
 				type |= AdConverter::ADCONV_JOBTYPE_MPICH;
 				break;
-			case PARTITIONABLE:
+			case WMS_PARTITIONABLE:
 				type |= AdConverter::ADCONV_JOBTYPE_PARTITIONABLE;
 				break;
-			case CHECKPOINTABLE:
+			case WMS_CHECKPOINTABLE:
 				type |= AdConverter::ADCONV_JOBTYPE_CHECKPOINTABLE;
 				break;
 			default:
@@ -110,6 +151,7 @@ convertJobTypeListToInt(JobTypeList job_type_list)
 		}
 	}
 	return type;
+	
 	GLITE_STACK_CATCH();
 }
 
@@ -130,7 +172,7 @@ void
 getVersion(getVersionResponse &getVersion_response)
 {
 	GLITE_STACK_TRY("getVersion(getVersionResponse &getVersion_response)");
-/*
+	/*
 	org::glite::daemon::WMPManager manager;
 	return manager.runCommand("getVersion", getVersion_response);
 	*/
@@ -139,136 +181,129 @@ getVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_CATCH();
 }
 
-
-/**
-	1 - createId()
-	2 - getDestURI()
-	3 - prendere il jdl ed aggiungere:
-		- InputSandboxDestURI = - A quello dell'utente se lo ha specificato
-							   - A quello ottenuto con la chiamata a getDestURI()
-		- WMProxyDestURI = A quello ottenuto con la chiamata a getDestURI()
-				Tale URI serve per sapere dove vengono memorizzati file tipo il proxy. Tale URI è
-				quindi necessario anche se l'utente ne fornisce uno di un suo server.
-	4 - prendere il jdl e modificare l'ISB in modo tale che abbia solo path assoluti.
-		se il path è un URI lo si lascia così
-		se il path è assoluto o relativo, lo si cambia in un path assoluto formato da:
-			WMProxyDestURI + nome file
-	5 - settare, per ogni tipo di job,  il jdl originale come user tag: TAG_NAME = jdl_Original, TAG_VALUE = jdl
-		logUserTag(jobId, jdl_Original)
-	6 - register()
-
-	Se l'utente dopo la register, fa una richiesta getDestURI(), allora deve essere ritornato lo stesso URI ottenuto
-	dalla getDestURI durante la register. Tale valore lo si ottiene chiedendo ad LB il jdl del job identificato col
-	jobid nella chiamata getDestURI(). Dal JDL si ricava l'informazione prendendo il WMProxyDestURI.
-
-*/
-
 void
-jobRegister(jobRegisterResponse &jobRegister_response, string &jdl)
+jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl)
 {
 	GLITE_STACK_TRY("jobRegister(jobRegisterResponse &jobRegister_response, string jdl)");
 
-	int type = getJobType(jdl);
-	if ((type != TYPE_DAG) && (type != TYPE_JOB)) { // Registration is not allowed
-		throw JobOperationException(__FILE__, __LINE__,
-			"jobRegister(jobRegisterResponse &jobRegister_response, string jdl)",
-			WMS_OPERATION_NOT_ALLOWED, "Job Register not allowed");
-	} else { // Registration is allowed
-
-		// Creating unique identifier
-		JobId *jid = new JobId() ;
-		if (LB_PORT == 0 ) {
-			jid->setJobId(LB_ADDRESS);
-		} else  {
-			jid->setJobId(LB_ADDRESS, LB_PORT);
-		}
-
-		// Getting Input Sandbox Destination URI to insert as WMProxyDestURI Attribute
-		getSandboxDestURIResponse getSandboxDestURI_response;
-		try  {
-			getSandboxDestURI(getSandboxDestURI_response, jid->toString());
-		} catch (Exception &exc) {
-			throw exc;
-		} catch (exception &ex) {
-			throw ex;
-		}
-		string dest_uri = getSandboxDestURI_response.path;
-
-		if (type == TYPE_DAG) {
-			try {
-				ExpDagAd *dag = new ExpDagAd(jdl);
-				regist(dag, jid, jobRegister_response, dest_uri);
-				delete dag;
-				delete jid;
-			} catch (Exception &exc) {
-				throw exc;
-			} catch (exception &ex) {
-				throw ex;
-			}
-		} else if (type == TYPE_JOB) {
-			try {
-				JobAd *jad = new JobAd(jdl);
-				regist(jad, jid, jobRegister_response, dest_uri);
-				delete jad;
-				delete jid;
-			//} catch (AdSyntaxException &ase) {
-			//	throw ase;
-			} catch (Exception &exc) {
-				throw exc;
-			} catch (exception &ex) {
-				cerr<<"--->> Ellipses"<<endl;
+	try {
+		switch (getJobType(jdl)) {
+			case TYPE_DAG:
+				cerr<<"---->> DAG"<<endl;
+				registDag(jobRegister_response, jdl);
+				break;
+			case TYPE_JOB:
+				cerr<<"---->> JOB"<<endl;
+				registJob(jobRegister_response, jdl);
+				break;
+			default:
 				throw JobOperationException(__FILE__, __LINE__,
-					"jobRegister(jobRegisterResponse &jobRegister_response, string &jdl)",
-					WMS_JDL_PARSING, "Jdl parsing error");
-			}
+					"jobRegister(jobRegisterResponse &jobRegister_response, string jdl)",
+					WMS_OPERATION_NOT_ALLOWED, "Job Register not allowed");
 		}
+	} catch (Exception &exc) {
+		cerr<<"---->> jobRegister() Exception: "<<exc.what()<<endl;
+		throw exc;
+	} catch (exception &ex) {
+		cerr<<"---->> jobRegister() exception: "<<ex.what()<<endl;
+		throw ex;
 	}
 
 	GLITE_STACK_CATCH();
 }
 
 void
-regist(JobAd *jad, JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri)
+registJob(jobRegisterResponse &jobRegister_response, const string &jdl)
 {
-	GLITE_STACK_TRY("regist(JobAd *jad, JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri)");
+	GLITE_STACK_TRY("registJob(jobRegisterResponse &jobRegister_response, const string &jdl)");
 
-	// Adding WMProxyDestURI and InputSandboxDestURI attributes and original jdl as a User Tag
+	// Creating job instance
+	JobAd *jad = NULL;
 	try {
-		JobAd *job_ad = new JobAd();
-		if (jad->hasAttribute(JDL::USERTAGS))  {
-			//jod_ad = jad->getAd(JDL::USERTAGS); // UNCOMMENT ONCE IMPLEMENTED!!!
-			jad->delAttribute(JDL::USERTAGS);
-		}
-		job_ad->setAttribute(JDL::JDL_ORIGINAL, jad->toString());
-		jad->setAttribute(JDL::USERTAGS, job_ad);
-		delete job_ad;
+		cerr<<"---->> jdl before parse: "<<jdl<<endl;
+		jad = new JobAd(jdl);
+		jad->check(); // This changes ISB files to absolute paths
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
+		throw JobOperationException(__FILE__, __LINE__,
+			"registJob(jobRegisterResponse &jobRegister_response, const string &jdl)",
+			WMS_JDL_PARSING, "Jdl parsing error");
+	}
+	
+	// Modifing jdl to set InputSandbox with only absolute paths
+	// Alex method??? do it with the check method??
+	
+	// Creating unique identifier
+	JobId *jid = new JobId();
+	if (LB_PORT == 0 ) {
+		jid->setJobId(LB_ADDRESS);
+	} else  {
+		jid->setJobId(LB_ADDRESS, LB_PORT);
+	}
+	
+	// Getting Input Sandbox Destination URI to insert as WMProxyDestURI
+	// attribute
+	getSandboxDestURIResponse getSandboxDestURI_response;
+	try {
+		getSandboxDestURI(getSandboxDestURI_response, jid->toString());
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
+		throw ex;
+	}
+	string dest_uri = getSandboxDestURI_response.path;
+	
+	// Adding WMProxyDestURI and InputSandboxDestURI attributes
+	try {
 		if (!jad->hasAttribute(JDL::ISB_DEST_URI)) {
 			jad->setAttribute(JDL::ISB_DEST_URI, dest_uri);
 		}
 		jad->setAttribute(JDL::WMPROXY_DEST_URI, dest_uri);
-	//} catch (AdSyntaxException &ase) {
-	//	throw ase;
 	} catch (Exception &exc) {
 		throw exc;
 	} catch (exception &ex) {
-		cerr<<"--->> Ellipses"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"regist(JobAd *jad, JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri)",
-			WMS_JDL_PARSING, "Jdl parsing error");
+		throw ex;
 	}
-
-	// Modifing jdl to set InputSandbox with only absolute paths
-	// Alex method???
 
 	WMPLogger wmplogger;
 	wmplogger.init(LB_ADDRESS, LB_PORT, jid);
 
-	// Perform the Logging RegisterJobSync
-	regist(jad, jid, wmplogger);
+	jad->setAttribute(JDL::JOBID, jid->toString());
+	if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)) { // CHECK IT
+		// Partitioning job registration
+		jobListMatchResponse jobListMatch_response;
+		try {
+			jobListMatch(jobListMatch_response, jad->toSubmissionString());
+		} catch (Exception &exc) {
+			throw JobOperationException(__FILE__, __LINE__,
+					"registJob(jobRegisterResponse &jobRegister_response, const string &jdl)",
+					exc.getCode(), (string) exc.what());
+		} catch (exception &ex) {
+			throw ex;
+		}
+		int res_number = (jobListMatch_response.CEIdList->Item)->size(); // TBD JobSteps Check
+		if (jad->hasAttribute(JDL::PREJOB)) {
+			res_number++;
+		}
+		if (jad->hasAttribute(JDL::POSTJOB)) {
+			res_number++;
+		}
+		wmplogger.registerJob(jad, res_number);
+	} else {
+		// Normal job registration
+		wmplogger.registerJob(jad);
+	}
+	delete jad;
+	
+	// Logging original jdl
+	cerr<<"---->> jdl original: "<<jdl<<endl;
+	wmplogger.logOriginalJdl(jdl);
 
 	GraphStructType *job_id_struct = new GraphStructType();
 	job_id_struct->id = jid->toString();
-	job_id_struct->name = "name";
+	delete jid;
+	job_id_struct->name = "";
 	job_id_struct->childrenJobNum = 0;
 	job_id_struct->childrenJob = new vector<GraphStructType*>;
 
@@ -277,47 +312,141 @@ regist(JobAd *jad, JobId *jid, jobRegisterResponse &jobRegister_response, string
 	GLITE_STACK_CATCH();
 }
 
-void
-regist(ExpDagAd *dag, JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri)
+/*void
+setChildrenDestinationURI(WMPExpDagAd *dag, string dest_uri)
 {
-	GLITE_STACK_TRY("regist(ExpDagAd *dag, JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri)");
-
-	// Adding WMProxyDestURI and InputSandboxDestURI attributes and original jdl as a User Tag
-	try {
-		/*JobAd *job_ad = new JobAd();
-		if (dag->hasAttribute(JDL::USERTAGS))  {
-			//jod_ad = dag->getAd(JDL::USERTAGS);
-			dag->delAttribute(JDL::USERTAGS);
+		// Adding WMProxyDestURI and InputSandboxDestURI attributes to children
+		JobIdStruct structure = dag->getStructure();
+		vector<JobIdStruct*> children = structure.children;
+		for (unsigned int i = 0; i < children.size(); i++) {
+			try {
+				dag->getNodeAttribute(children[i]->nodeName, JDL::ISB_DEST_URI);
+			} catch (Exception &exc) {
+				// Attribute not present
+				dag->setNodeAttribute(children[i]->nodeName, JDL::ISB_DEST_URI,
+					dest_uri);
+			}
+			if (children[i]->children->size() != 0) {
+				// RECURSIVE CALL!!!
+			}
 		}
-		job_ad->setAttribute(JDL::JDL_ORIGINAL, dag->toString());
-		if (!dag->hasAttribute(JDL::ISB_DEST_URI)) {
+		
+		
+		//struct JobIdStruct{
+		//	glite::wmsutils::jobid::JobId jobid ;
+		//	std::string* nodeName ;
+		//	std::vector< JobIdStruct* > children ;
+		//};
+}*/
+
+void
+setDestinationURI(WMPExpDagAd *dag, string dest_uri)
+{
+	try {
+		/*try {
+			dag->getAttribute(JDL::ISB_DEST_URI);
+		} catch (Exception &exc) {
+			// Attribute not present
+			dag->removeAttribute(JDL::ISB_DEST_URI);
 			dag->setAttribute(JDL::ISB_DEST_URI, dest_uri);
 		}
 		dag->setAttribute(JDL::WMPROXY_DEST_URI, dest_uri);
 		*/
+		/*
+		JobIdStruct structure = dag->getStructure();
+		vector<JobIdStruct*> children = structure.children;
+		for (unsigned int i = 0; i < children.size(); i++) {
+			try {
+				dag->getNodeAttribute(children[i]->nodeName, JDL::ISB_DEST_URI);
+			} catch (Exception &exc) {
+				// Attribute not present
+				dag->removeNodeAttribute(JDL::ISB_DEST_URI);
+				dag->setNodeAttribute(children[i]->nodeName, JDL::ISB_DEST_URI,
+					dest_uri);
+			}
+			dag->setNodeAttribute(children[i]->nodeName, JDL::WMP_DEST_URI,
+					dest_uri);
+		}*/
+		//setChildrenDestinationURI(dag, dest_uri);
 	} catch (Exception &exc) {
 		throw exc;
 	} catch (exception &ex) {
-		cerr<<"--->> Ellipses"<<endl;
+		throw ex;
+	}
+}
+
+	
+void
+registDag(jobRegisterResponse &jobRegister_response, const string &jdl)
+{
+	GLITE_STACK_TRY("registDag(jobRegisterResponse &jobRegister_response, const string &jdl)");
+
+	// Creating job instance
+	WMPExpDagAd *dag = NULL;
+	try {
+		cerr<<"---->> jdl before parse: "<<jdl<<endl;
+		dag = new WMPExpDagAd(jdl);
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
 		throw JobOperationException(__FILE__, __LINE__,
-			"regist(ExpDagAd *dag, JobId *jid, jobRegisterResponse &jobRegister_response, string dest_uri)",
+			"registDag(jobRegisterResponse &jobRegister_response, const string &jdl)",
 			WMS_JDL_PARSING, "Jdl parsing error");
 	}
-
+	
 	// Modifing jdl to set InputSandbox with only absolute paths
-	// Alex method???
+	// Alex method??? do it with the check method??
+	
+	// Creating unique identifier
+	JobId *jid = new JobId();
+	if (LB_PORT == 0 ) {
+		jid->setJobId(LB_ADDRESS);
+	} else  {
+		jid->setJobId(LB_ADDRESS, LB_PORT);
+	}
+	
+	// Getting Input Sandbox Destination URI to insert as WMProxyDestURI
+	// attribute
+	getSandboxDestURIResponse getSandboxDestURI_response;
+	try {
+		getSandboxDestURI(getSandboxDestURI_response, jid->toString());
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
+		throw ex;
+	}
+	string dest_uri = getSandboxDestURI_response.path;
+	
+	// Adding WMProxyDestURI and InputSandboxDestURI attributes
+	try {
+		if (!dag->hasAttribute(JDL::ISB_DEST_URI)) {
+			dag->setReserved(JDL::ISB_DEST_URI, dest_uri);
+		}
+		dag->setReserved(JDL::WMPROXY_DEST_URI, dest_uri);
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
+		throw ex;
+	}
 
 	WMPLogger wmplogger;
 	wmplogger.init(LB_ADDRESS, LB_PORT, jid);
+	delete jid;
+	wmplogger.setDestinationURI(dest_uri);
 
-	// Perform the Logging RegisterJobSync
-	regist(dag, jid, wmplogger);
-
+	dag->setAttribute(WMPExpDagAd::EDG_JOBID, jid->toString());
+	wmplogger.registerDag(dag);
+	delete dag;
+	
+	// Logging original jdl
+	wmplogger.logOriginalJdl(jdl);
+	
 	GraphStructType *job_id_struct = new GraphStructType();
-	job_id_struct->id = jid->toString();
-	job_id_struct->name = "name";
-	//job_id_struct->childrenJobNum = job_id_struct->childrenJobs.size();
-	//job_id_struct->childrenJob =convertJobIdVector(job_id_struct->childrenJobs);
+	JobIdStruct job_struct = dag->getJobIdStruct();
+	job_id_struct->id = job_struct.jobid.toString(); // should be equal to: jid->toString()
+	job_id_struct->name = *job_struct.nodeName;
+	job_id_struct->childrenJobNum = job_struct.children.size();
+	job_id_struct->childrenJob = convertJobIdStruct(job_struct.children);
 
 	jobRegister_response.jobIdStruct = job_id_struct;
 
@@ -340,6 +469,7 @@ jobStart(jobStartResponse &jobStart_response, string jobId)
 	} catch (exception &ex) {
 		throw ex;
 	}
+	delete jid;
 
 	// Running wmproxy command
 	/*wmpmanager::WMPManager manager;
@@ -355,7 +485,6 @@ jobStart(jobStartResponse &jobStart_response, string jobId)
 	GLITE_STACK_CATCH();
 }
 
-// Private method, perform the submission
 void
 start(jobStartResponse &jobStart_response, JobId *jid, WMPLogger &wmplogger)
 {
@@ -364,34 +493,38 @@ start(jobStartResponse &jobStart_response, JobId *jid, WMPLogger &wmplogger)
 	JobStatus stat = getStatus(jid);
 	string jdl = stat.getValString(JobStatus::JDL);
 	cerr<<"jdl: "<<jdl<<endl;
-	int type = getJobType(jdl);
+	
+	int type = TYPE_JOB;
+	try {
+		type = getJobType(jdl);
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
+		throw ex;
+	}
 
-	//// Put in register
-	//// BEGIN
 	if (type == TYPE_DAG) {
-		ExpDagAd *dag = new ExpDagAd(jdl);
+		WMPExpDagAd *dag = new WMPExpDagAd(jdl);
 		wmplogger.transfer(WMPLogger::START, dag->toString());
-		dag->setAttribute(ExpDagAd::SEQUENCE_CODE, wmplogger.getSequence());
+		dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, wmplogger.getSequence());
 		wmplogger.logUserTags(dag->getSubAttributes(JDL::USERTAGS));
-		jdl = dag->toString() ;
+		jdl = dag->toString();
 		delete dag;
 	} else if (type == TYPE_JOB) {
-		// it's a Normal Job
 		JobAd *jad = new JobAd(jdl);
-		wmplogger.transfer ( WMPLogger::START, jad->toSubmissionString () ) ;
+		wmplogger.transfer(WMPLogger::START, jad->toSubmissionString());
 		jad->setAttribute(JDL::LB_SEQUENCE_CODE, wmplogger.getSequence());
-		// UserTags implementation
 		jdl = jad->toSubmissionString();
 		if (jad->hasAttribute(JDL::USERTAGS)) {
 			wmplogger.logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
 		}
 		delete jad;
 	}
-	//// END
+
 	try {
 		/*wmpmanager::WMPManager manager;
-		wmp_fault_t wmp_fault = manager.runCommand("JobStart", jid,  jobStart_response);*/
-		wmplogger.transfer(WMPLogger::OK, jdl) ;
+		wmp_fault_t wmp_fault = manager.runCommand("JobStart", jid, jobStart_response);*/
+		wmplogger.transfer(WMPLogger::OK, jdl);
 	} catch (Exception &exc) {
 		wmplogger.transfer(WMPLogger::FAIL, jdl, exc.what());
 		throw exc;
@@ -416,6 +549,8 @@ jobSubmit(jobSubmitResponse &jobSubmit_response, string jdl)
 		throw JobOperationException(__FILE__, __LINE__,
 				"jobSubmit(jobSubmitResponse &jobSubmit_response, string jdl)",
 				exc.getCode(), (string) exc.what());
+	} catch (exception &ex) {
+		throw ex;
 	}
 
 	// Getting job identifier from register response
@@ -429,6 +564,8 @@ jobSubmit(jobSubmitResponse &jobSubmit_response, string jdl)
 		throw JobOperationException(__FILE__, __LINE__,
 				"jobSubmit(jobSubmitResponse &jobSubmit_response, string jdl)",
 				exc.getCode(), (string) exc.what());
+	} catch (exception &ex) {
+		throw ex;
 	}
 
 	jobSubmit_response.jobIdStruct = jobRegister_response.jobIdStruct;
@@ -443,6 +580,7 @@ jobCancel(jobCancelResponse &jobCancel_response, string jobId)
 
   	JobId *jid = new JobId(jobId);
 	JobStatus status = getStatus(jid);
+	delete jid;
 	switch (status.status) {
 		case JobStatus::SUBMITTED:
 		case JobStatus::WAITING:
@@ -509,7 +647,6 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response, string 
 	org::glite::daemon::WMPManager manager;
 	wmp_fault_t wmp_fault = manager.runCommand("getSandboxDestURI", jid,  getSandboxDestURI_response);
 	*/
-	cerr<<"sand jid: "<<jid<<endl;
 	wmp_fault_t wmp_fault;
 	wmp_fault.code = WMS_NO_ERROR;
 	if (wmp_fault.code != WMS_NO_ERROR) {
@@ -602,7 +739,15 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, string jdl)
 {
 	GLITE_STACK_TRY("jobListMatch(jobListMatchResponse &jobListMatch_response, string jdl)");
 
-	int type = getJobType(jdl);
+	int type = TYPE_JOB;
+	try {
+		type = getJobType(jdl);
+	} catch (Exception &exc) {
+		throw exc;
+	} catch (exception &ex) {
+		throw ex;
+	}
+	
 	if (type == TYPE_JOB) {
 		/*
 		org::glite::daemon::WMPManager manager;
@@ -631,9 +776,10 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response, JobTypeList jobT
 	GLITE_STACK_TRY("getJobTemplate(getJobTemplateResponse &getJobTemplate_response, JobTypeList jobType, string executable, string arguments, string requirements, string rank)");
 
 	string vo = "Fake VO"; // get it from proxy, it should be the default one
-	AdConverter *converter = new AdConverter();
-	getJobTemplate_response.jdl = (converter->createJobTemplate(convertJobTypeListToInt(jobType), executable, arguments, requirements, rank, vo))->toString();
-	delete converter;
+	AdConverter converter;
+	getJobTemplate_response.jdl =
+		(converter.createJobTemplate(convertJobTypeListToInt(jobType),
+		executable, arguments, requirements, rank, vo))->toString();
 
 	GLITE_STACK_CATCH();
 }
@@ -645,9 +791,8 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response, GraphStructType 
 	GLITE_STACK_TRY("getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response, GraphStructType dependencies, string requirements, string rank)");
 
 	string vo = "Fake VO";
-	AdConverter *converter = new AdConverter();
-	//getDAGTemplate_response.jdl = converter->createDAGTemplate( dependencies, requirements, rank, vo);  // TO CONVERT dependencies
-	delete converter;
+	AdConverter converter;
+	//getDAGTemplate_response.jdl = converter.createDAGTemplate( dependencies, requirements, rank, vo);  // TO CONVERT dependencies
 
 	GLITE_STACK_CATCH();
 }
@@ -659,78 +804,24 @@ getCollectionTemplate(getCollectionTemplateResponse &getCollectionTemplate_respo
 	GLITE_STACK_TRY("getCollectionTemplate(getCollectionTemplateResponse &getCollectionTemplate_response, int job_number, string requirements, string rank)");
 
 	string vo = "Fake VO";
-	AdConverter *converter = new AdConverter();
-	//getCollectionTemplate_response.jdl = new string(converter->createCollectionTemplate(job_number, requirements, rank, vo)->toString());
-	delete converter;
+	AdConverter converter;
+	//getCollectionTemplate_response.jdl = new string(converter.createCollectionTemplate(job_number, requirements, rank, vo)->toString());
 
 	GLITE_STACK_CATCH();
 }
-
 
 glite::lb::JobStatus
 getStatus(JobId *jid)
 {
 	GLITE_STACK_TRY("getStatus(JobId *jid)");
 
-	glite::lb::Job lbJob(*jid);
-	glite::lb::JobStatus status;
-	status = lbJob.status(glite::lb::Job::STAT_CLASSADS); // to get also jdl
-	//status = lbJob.status(0); // minimal information about the job
-	return status ;
+	glite::lb::Job lb_job(*jid);
+	return lb_job.status(glite::lb::Job::STAT_CLASSADS); // to get also jdl
+	// lb_job.status(0) minimal information about the job
 
 	GLITE_STACK_CATCH();
 }
 
-
-void
-regist(ExpDagAd *dag, JobId *jid, WMPLogger &wmplogger)
-{
-	GLITE_STACK_TRY("regist(ExpDagAd *dag, JobId *jid, WMPLogger &wmplogger)");
-	cerr<<"regist jid: "<<*jid<<endl;
-	dag->setAttribute(ExpDagAd::EDG_JOBID, jid->toString());
-	wmplogger.registerDag(dag);
-
-	GLITE_STACK_CATCH();
-}
-
-void
-regist(JobAd *jad, JobId *jid, WMPLogger &wmplogger)
-{
-	GLITE_STACK_TRY("regist(JobAd *jad, JobId *jid, WMPLogger &wmplogger)");
-
-	jad->setAttribute(JDL::JOBID, jid->toString());
-	if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)) {  // CHECK IT
-		// Partitioning job registration:
-		jobListMatchResponse jobListMatch_response;
-		try {
-			jobListMatch(jobListMatch_response, jad->toSubmissionString());
-		} catch (Exception &exc) {
-			throw JobOperationException(__FILE__, __LINE__,
-					"regist(JobAd *jad, JobId *jid, WMPLogger &wmplogger)",
-					exc.getCode(), (string) exc.what());
-		}
-		int res_number = 0 ; // TBD JobSteps Check
-		res_number = (jobListMatch_response.CEIdList->Item)->size();
-		if (jad->hasAttribute(JDL::PREJOB))  {
-			res_number++;
-		}
-		if (jad->hasAttribute(JDL::POSTJOB)) {
-			res_number++;
-		}
-		//ExpDagAd *dag = wmplogger.registerJob(jad, res_number);
-		wmplogger.registerJob(jad, res_number);
-		// Release un-needed memory
-		//delete jad;
-		//type = TYPE_DAG;
-		// throw JobOperationException( __FILE__ , __LINE__ ,"Dag regist" , WMS_JOBOP_ALLOWED , "Submission not performed...it is a partitioning" ) ;
-	} else {
-		// Normal job registering:
-		cerr<<"jobad: "<<jad->toString()<<endl;
-		wmplogger.registerJob(jad);
-	}
-
-	GLITE_STACK_CATCH();
-}
 
 //} // wmproxy
 //} // wms

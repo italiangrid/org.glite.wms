@@ -1,9 +1,15 @@
-#ifndef  GLITE_WMS_WMPROXY_WMPLOGGER_H
+/*
+	Copyright (c) Members of the EGEE Collaboration. 2004.
+	See http://public.eu-egee.org/partners/ for details on the copyright holders.
+	For license conditions see the license file or http://www.eu-egee.org/license.html
+*/
+
+#ifndef GLITE_WMS_WMPROXY_WMPLOGGER_H
 #define GLITE_WMS_WMPROXY_WMPLOGGER_H
 
 // DagAd
+#include "wmpexpdagad.h"
 #include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/ExpDagAd.h"
 
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
@@ -29,9 +35,9 @@ class WMPLogger  {
 
 		void init(const std::string &nsHost, int nsPort, glite::wmsutils::jobid::JobId *id);
 
-		glite::wms::jdl::ExpDagAd *registerJob(glite::wms::jdl::JobAd *ad, int resource);
+		WMPExpDagAd *registerJob(glite::wms::jdl::JobAd *ad, int resource);
 		void registerJob(glite::wms::jdl::JobAd *ad);
-		void registerDag(glite::wms::jdl::ExpDagAd *ad);
+		void registerDag(WMPExpDagAd *ad);
 
 		void transfer(txType tx, const std::string &jdl, const char *error = "");
 
@@ -39,13 +45,16 @@ class WMPLogger  {
 
 		void logUserTags(classad::ClassAd *userTags);
 		void logUserTags(std::vector<std::pair<std::string, classad::ExprTree*> > userTags);
-
+		
+		void setDestinationURI(std::string dest_uri);
+		
+		void logOriginalJdl(const std::string &jdl);
+		
 	private:
-		void registerSubJobs(glite::wms::jdl::ExpDagAd *ad, edg_wlc_JobId *subjobs);
+		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
 		const char * error_message(const char *api);
-
+		std::string dest_uri;
 		glite::wmsutils::jobid::JobId *id;
-		static pthread_mutex_t dgtransfer_mutex;
 		edg_wll_Context ctx;
 		std::string nsHost;
 		int nsPort;

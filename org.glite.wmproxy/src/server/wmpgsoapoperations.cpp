@@ -10,9 +10,9 @@
 #include "soapH.h"
 
 #include "wmpoperations.h"
-#include "wmpgsoapfaultmanipulator.h"
 #include "wmpresponsestruct.h"
 
+// Exceptions
 #include "wmpexceptions.h"
 #include "exception_codes.h"
 #include "glite/wms/jdl/JobAdExceptions.h"
@@ -27,19 +27,20 @@ using namespace errorcodes;
 using namespace glite::wms::jdl; // AdSyntaxException
 using namespace glite::wmsutils::exception; // Exception
 
- namespace {
+namespace {
 
- /**
-*Converts int to string
-*/
+/**
+ * Converts int to string
+ */
 string
 itos(int i)
 {
- stringstream s;
- s << i;
- return s.str();
- }
+	stringstream s;
+	s << i;
+	return s.str();
+}
 
+// To remove
 vector<string> *
 convertStackVector(vector<string> stack)
 {
@@ -48,17 +49,20 @@ convertStackVector(vector<string> stack)
 		string element;
 		for (int i = 0; i < stack.size(); i++) {
 			element = &(stack[i][0]);
-			(*returnVector).push_back(element);
+			returnVector->push_back(element);
 		}
 	}
 	return returnVector;
 }
 
+/**
+ * Converts a ns1__JobTypeList pointer to JobTypeList pointer
+ */
 JobTypeList *
 convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
 {
 	vector<JobType> *type_vector = new vector<JobType>;
-	for (int i = 0; i < (*(job_type_list->jobType)).size(); i++) {
+	for (int i = 0; i < job_type_list->jobType->size(); i++) {
 		switch ((*(job_type_list->jobType))[i]) {
 			case PARAMETRIC:
 				type_vector->push_back(WMS_PARAMETRIC);
@@ -88,8 +92,8 @@ convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
 }
 
 /**
-* Converts a GraphStructType vector pointer to ns2__GraphStructType vector pointer
-*/
+ * Converts a GraphStructType vector pointer to ns2__GraphStructType vector pointer
+ */
 vector<ns1__GraphStructType*> *
 convertToGSOAPGraphStructTypeVector(vector<GraphStructType*> *graph_struct_type_vector)
 {
@@ -98,47 +102,50 @@ convertToGSOAPGraphStructTypeVector(vector<GraphStructType*> *graph_struct_type_
 	}
 	vector<ns1__GraphStructType*> *returnVector = new vector<ns1__GraphStructType*>;
 	ns1__GraphStructType *element = NULL;
-	for (int i = 0; i < (*graph_struct_type_vector).size(); i++) {
+	for (int i = 0; i < graph_struct_type_vector->size(); i++) {
 		element = new ns1__GraphStructType;
 		element->id = (*graph_struct_type_vector)[i]->id;
 		element->name = (*graph_struct_type_vector)[i]->name;
 		element->childrenJobNum = (*graph_struct_type_vector)[i]->childrenJobNum;
 		if (!(*graph_struct_type_vector)[i]) { // Vector not NULL
-			element->childrenJob = convertToGSOAPGraphStructTypeVector((*graph_struct_type_vector)[i]->childrenJob);
+			element->childrenJob = convertToGSOAPGraphStructTypeVector(
+				(*graph_struct_type_vector)[i]->childrenJob);
 		} else {
 			element->childrenJob = new vector<ns1__GraphStructType*>;
 		}
-		(*returnVector).push_back(element);
+		returnVector->push_back(element);
 	}
 	return returnVector;
 }
 
 /**
-* Converts a ns2__GraphStructType vector pointer to GraphStructType vector pointer
-*/
+ * Converts a ns2__GraphStructType vector pointer to GraphStructType vector pointer
+ */
 vector<GraphStructType*> *
-convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*> *graph_struct_type_vector)
+convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*> 
+	*graph_struct_type_vector)
 {
 	vector<GraphStructType*> *returnVector = new vector<GraphStructType*>;
 	GraphStructType *element = NULL;
-	for (int i = 0; i < (*graph_struct_type_vector).size(); i++) {
+	for (int i = 0; i < graph_struct_type_vector->size(); i++) {
 		element = new GraphStructType();
 		element->id = (*graph_struct_type_vector)[i]->id;
 		element->name = (*graph_struct_type_vector)[i]->name;
 		element->childrenJobNum = (*graph_struct_type_vector)[i]->childrenJobNum;
 		if (!(*graph_struct_type_vector)[i]) { // Vector not NULL
-			element->childrenJob = convertFromGSOAPGraphStructTypeVector((*graph_struct_type_vector)[i]->childrenJob);
+			element->childrenJob = convertFromGSOAPGraphStructTypeVector(
+				(*graph_struct_type_vector)[i]->childrenJob);
 		} else {
 			element->childrenJob = new vector<GraphStructType*>;
 		}
-		(*returnVector).push_back(element);
+		returnVector->push_back(element);
 	}
 	return returnVector;
 }
 
 /**
-* Converts a ns2__GraphStructType pointer to GraphStructType pointer
-*/
+ * Converts a ns2__GraphStructType pointer to GraphStructType pointer
+ */
 GraphStructType*
 convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
 {
@@ -147,43 +154,12 @@ convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
 	element->name = graph_struct_type->name;
 	element->childrenJobNum = graph_struct_type->childrenJobNum;
 	if (!graph_struct_type) { // Element not NULL
-		element->childrenJob = convertFromGSOAPGraphStructTypeVector(graph_struct_type->childrenJob);
+		element->childrenJob = convertFromGSOAPGraphStructTypeVector(
+			graph_struct_type->childrenJob);
 	} else {
 		element->childrenJob = new vector<GraphStructType*>;
 	}
 	return element;
-}
-
-void
-waitForSeconds(int seconds)
-{
-	fprintf(stderr, "-----> Waiting for %d seconds...\n", seconds);
-	time_t startTime = time(NULL);
-	time_t endTime = time(NULL);
-	int counter = 0;
-	while((endTime - startTime) < seconds) {
-		if ((endTime%3600) != counter) {
-			switch (counter%4) {
-				case 0:
-					fprintf(stderr, "-");
-					break;
-				case 1:
-					fprintf(stderr, "\\");
-					break;
-				case 2:
-					fprintf(stderr, "|");
-					break;
-				case 3:
-					fprintf(stderr, "/");
-					break;
-				default:
-					break;
-			}
-			counter = endTime%3600;
-		}
-		endTime = time(NULL);
-	}
-	fprintf(stderr, "\n-----> End waiting\n");
 }
 
 int
@@ -290,7 +266,8 @@ setFaultDetails(struct soap *soap, int type, void *sp)
 }
 
 void
-setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp, string error_code, string description, vector<string> stack)
+setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
+	string error_code, string description, vector<string> stack)
 {
 	// Generating a fault
 	ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(code);
@@ -308,9 +285,11 @@ setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
 }
 
 void
-setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp, string error_code, string description)
+setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
+	string error_code, string description)
 {
-	setSOAPFault(soap, code, method_name, time_stamp, error_code, description, *(new vector<string>));
+	setSOAPFault(soap, code, method_name, time_stamp, error_code, description,
+		*(new vector<string>));
 }
 
 } // namespace
@@ -391,15 +370,6 @@ ns2__jobRegister(struct soap *soap, string jdl, struct ns2__jobRegisterResponse 
 		}
 		//job_id_struct->childrenJob = new vector<ns1__GraphStructType*>;
 		response._jobIdStruct = job_id_struct;
-
-		/*response._jobIdStruct->id = jobRegister_response.jobIdStruct->id;
-		response._jobIdStruct->name = jobRegister_response.jobIdStruct->name;
-		response._jobIdStruct->childrenJobNum = jobRegister_response.jobIdStruct->childrenJobNum;
-		if (!(jobRegister_response.jobIdStruct->childrenJob)) {
-			response._jobIdStruct->childrenJob = convertToGSOAPGraphStructTypeVector(jobRegister_response.jobIdStruct->childrenJob);
-		} else {
-			response._jobIdStruct->childrenJob = new vector<ns1__GraphStructType*>;
-		}*/
 	} catch (Exception &exc) {
 		// Generating a fault
     		/* FIRST METHOD
@@ -525,7 +495,6 @@ ns2__getMaxInputSandboxSize(struct soap *soap, struct ns2__getMaxInputSandboxSiz
 
 	int return_value = SOAP_OK;
 
-	waitForSeconds(4);
 	getMaxInputSandboxSizeResponse getMaxInputSandboxSize_response;
 	try {
 		getMaxInputSandboxSize(getMaxInputSandboxSize_response);

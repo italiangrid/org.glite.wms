@@ -1,4 +1,10 @@
-#ifndef  GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
+/*
+	Copyright (c) Members of the EGEE Collaboration. 2004.
+	See http://public.eu-egee.org/partners/ for details on the copyright holders.
+	For license conditions see the license file or http://www.eu-egee.org/license.html
+*/
+
+#ifndef GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
 #define GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
 
 #include <string>
@@ -25,18 +31,18 @@ enum JobType {
 // Base fault type to hold all kinds of fault
 struct BaseFaultType
 {
-    std::string                        methodName;
-    time_t                              timestamp;
-    std::string*                        errorCode;
-    std::string*                        description;
-    std::vector<std::string> 			*faultCause;
+    std::string methodName;
+    time_t timestamp;
+    std::string *errorCode;
+    std::string *description;
+    std::vector<std::string> *faultCause;
 };
 
 // Struct used to communicate with wmp manager
 struct wmp_fault_t {
     int code;
-    string message;
-    vector<string> stack;
+    std::string message;
+    std::vector<std::string> stack;
 };
 
 
@@ -52,8 +58,8 @@ struct StringList {
 };
 
 struct StringAndLongType {
-    std::string                         name;
-    long                               size;
+    std::string name;
+    long size;
 };
 
 struct NameAndSizeList {
@@ -61,9 +67,9 @@ struct NameAndSizeList {
 };
 
 struct GraphStructType {
-    std::string                         id;
-    std::string                         name;
-    int                                  childrenJobNum;
+    std::string id;
+    std::string name;
+    int childrenJobNum;
     std::vector<GraphStructType*> *childrenJob;
 };
 
@@ -71,66 +77,66 @@ struct GraphStructType {
 // Response structures
 
 struct pingResponse {
-  bool                                isUp;
+  bool isUp;
 };
 
 struct getVersionResponse {
-  std::string                        version;
+  std::string version;
 };
 
 struct jobRegisterResponse {
-  GraphStructType*               jobIdStruct;
+  GraphStructType *jobIdStruct;
 };
 
 struct jobStartResponse {
 };
 
 struct jobSubmitResponse {
-  GraphStructType*               jobIdStruct;
+  GraphStructType *jobIdStruct;
 };
 
 struct jobCancelResponse {
 };
 
 struct getMaxInputSandboxSizeResponse {  
-  int                                 size;
+  int size;
 };
 
 struct getSandboxDestURIResponse {
-  std::string                        path;
+  std::string path;
 };
 
 struct getQuotaResponse {
-  long                              softLimit;
-  long                              hardLimit;
+  long softLimit;
+  long hardLimit;
 };
 
 struct getFreeQuotaResponse {
-  long                              softLimit;
-  long                              hardLimit;
+  long softLimit;
+  long hardLimit;
 };
 
 struct jobPurgeResponse {
 };
 
 struct getOutputFileListResponse {
-  NameAndSizeList*               OutputFiles;
+  NameAndSizeList *OutputFiles;
 };
 
 struct jobListMatchResponse {
-  StringList                    *CEIdList;
+  StringList *CEIdList;
 };
 
 struct getJobTemplateResponse {
-  std::string                        jdl;
+  std::string jdl;
 };
 
 struct getDAGTemplateResponse {
-  std::string                        jdl;
+  std::string jdl;
 };
 
 struct getCollectionTemplateResponse {
-  std::string                        jdl;
+  std::string jdl;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
