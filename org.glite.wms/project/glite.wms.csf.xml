@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.8  2004/05/03 00:28:12  dimeglio
+	Added jcommon component to subsystem dependencies
+
 	Revision 1.7  2004/04/29 04:36:56  dimeglio
 	Fixed dependency spelling errors
-
+	
 	Revision 1.6  2004/04/29 04:05:04  dimeglio
 	Moved user property look up before dependencies properties
 	
@@ -287,6 +290,14 @@
 			package="org.egee.test3.wms.common"
 			dest="${workspace.dir}"
 			tag="${org.egee.test3.wms.common.version}"/>
+	</target>
+	
+	<!-- JCommon -->
+ 	<target name="jcommon" depends="jclassads">		
+		<cvs command="checkout"
+			package="org.egee.test3.wms.jcommon"
+			dest="${workspace.dir}"
+			tag="${org.egee.test3.wms.jcommon.version}"/>
 	</target>
 	
 	<!-- ====================================================
