@@ -166,7 +166,7 @@ WMPEventLogger::registerJob(JobAd *jad)
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, getSequence());
 	int register_result ;
 	if (lbProxy_b){
-		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_JOB_SIMPLE, getUserDN(),
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_JOB_SIMPLE, 
 			jad->toSubmissionString().c_str(),
 			str_addr, 0, NULL, NULL) ;
 	}else{
@@ -179,7 +179,7 @@ WMPEventLogger::registerJob(JobAd *jad)
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerJob(JobAd* jad)",
 			WMS_OPERATION_NOT_ALLOWED,
-			error_message("edg_wll_RegisterJobSync"));
+			error_message("edg_wll_RegisterJob"));
 	}
 	if (jad->hasAttribute(JDL::USERTAGS)) {
 		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
@@ -252,7 +252,7 @@ WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 	edg_wlc_JobId *subjobs = NULL;
 	int register_result;
 	if (lbProxy_b){
-		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED, getUserDN(),
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_PARTITIONED, 
 			dag->toString(WMPExpDagAd::NO_NODES).c_str(), //TBD NO_NODES??
 			str_addr, res_num, //TBD or dag->size()??
 			NULL, &subjobs) ;
@@ -267,7 +267,7 @@ WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerPartitionable(WMPExpDagAd *dag, int res_num)",
 			WMS_OPERATION_NOT_ALLOWED,
-			error_message("edg_wll_RegisterJobSync"));
+			error_message("edg_wll_RegisterJob"));
 	}
 	logUserTags(dag->getSubAttributes(JDL::USERTAGS));
 	
@@ -292,7 +292,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, getSequence());
 	int register_result ;
 	if (lbProxy_b){
-		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_DAG, getUserDN(),
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_DAG, 
 			dag->toString(WMPExpDagAd::NO_NODES).c_str(), str_addr, dag->size(),
 			NULL, &subjobs) ;
 	}else{
@@ -305,7 +305,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerDag(WMPExpDagAd *dag)",
 			WMS_OPERATION_NOT_ALLOWED,
-			error_message("edg_wll_RegisterJobSync"));
+			error_message("edg_wll_RegisterJob"));
 	}
 	logUserTags(dag->getSubAttributes(JDL::USERTAGS));
 	
