@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.5  2004/04/29 03:39:47  dimeglio
+	Added Import of  user and project properties
+
 	Revision 1.4  2004/04/29 03:30:23  dimeglio
 	Replaced list of dependencies with common dependencies file
-
+	
 	Revision 1.3  2004/04/29 02:43:34  dimeglio
 	Added check for presence of junit.runner class
 	
@@ -104,6 +107,15 @@
 	<!-- *****************************************************-->
 	<!-- Environmental checks                                 -->
 	<!-- *****************************************************-->
+	
+	<!-- Location of user property files -->
+	<property name="user.properties.file" location="${user.home}/${application.prefix}.build.properties"/>
+	
+	<!-- Load user-specific property files -->
+	<property file="${user.properties.file}"/>
+	
+	<!-- Load module-specific property file -->
+	<property file="build.properties"/>
 	
 	<!-- All environmental checks -->
 	<target name="envchecks" depends="oscheck,javacheck,antcheck,gcccheck" />
