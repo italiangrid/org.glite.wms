@@ -19,7 +19,7 @@
 #        Release: $Name$
 #
 
-TESTS=  WMFactory_cu
+TESTS=  WMFactory_cu WMReal_cu
 
 COMMON_LD_FLAGS= \
 	$(CPPUNIT_LIBS) \
@@ -31,13 +31,13 @@ COMMON_LD_FLAGS= \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_WMS_JDL_LIBS) \
 	$(GLOBUS_COMMON_THR_LIBS) \
 	$(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_HELPERS_LIBS) \
 	$(GLITE_WMSUTILS_TLS_SSL_THR_HELPERS_LIBS) \
+        $(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
 	$(BOOST_LIBS)
@@ -45,7 +45,8 @@ COMMON_LD_FLAGS= \
 lib_LTLIBRARIES = libglite_wms_manager_mocks.la
 
 libglite_wms_manager_mocks_la_SOURCES=	mockJC.cpp \
-	mockPurger.cpp
+	mockPurger.cpp \
+	mockLB.cpp
 
 check_PROGRAMS = WMFactory_cu \
 		WMReal_cu
@@ -56,6 +57,7 @@ WMFactory_cu_SOURCES = \
 	../src/common/WMFactory.cpp
 
 WMFactory_cu_LDADD= -L../src/common/ -lglite_wms_manager_common \
+	-lglite_wms_manager_mocks \
 		$(COMMON_LD_FLAGS)
 
 WMReal_cu_SOURCES = \
