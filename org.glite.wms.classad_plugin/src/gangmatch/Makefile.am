@@ -19,6 +19,7 @@ libglite_wms_gangmatch_classad_plugin_la_CPPFLAGS = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS)
  

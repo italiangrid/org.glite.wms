@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/06/26 13:24:23  eronchie
+#       Start adding classad_plugin
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/06/26 13:00:44  eronchie
 #       Start adding classad_plugin
 #       WARNING: work in progress
@@ -97,6 +101,5 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/gangmatch/Makefile])
-AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT

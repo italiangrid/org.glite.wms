@@ -9,7 +9,7 @@
 
 #define ENABLE_SHARED_LIBRARY_FUNCTIONS
 
-#include <classad-plugin-loader.h>
+#include "classad-plugin-loader.h"
 #include <classad_distribution.h>
 #include <fnCall.h>
 
