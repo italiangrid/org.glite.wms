@@ -29,7 +29,6 @@ typedef boost::xtime timestamp_type;
 typedef boost::tuple<timestamp_type, ce_ad_ptr> ism_entry_type;
 typedef std::map<ce_id_type, ism_entry_type> ism_type;
 
-timestamp_type get_current_time();
 ism_type& get_ism();
 boost::mutex& get_ism_mutex();
 
@@ -38,8 +37,6 @@ ism_type::value_type make_ism_entry(
   timestamp_type const& xt,
   ce_ad_ptr const& ce_ad
 );
-
-ce_id_type get_ce_id(ce_ad_ptr const& ad);
 
 std::ostream& operator<<(std::ostream& os, ism_type::value_type const& value);
 

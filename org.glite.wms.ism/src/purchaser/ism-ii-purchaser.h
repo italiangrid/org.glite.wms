@@ -3,11 +3,13 @@
 // Copyright (c) 2004 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
-// $Id: 
+// $Id$
 
-#ifndef _GLITE_WMS_ISM_PURCHASER_ISM_II_PURCHASER_H_
-#define _GLITE_WMS_ISM_PURCHASER_ISM_II_PURCHASER_H_
+#ifndef GLITE_WMS_ISM_PURCHASER_ISM_II_PURCHASER_H
+#define GLITE_WMS_ISM_PURCHASER_ISM_II_PURCHASER_H
 
+#include <string>
+ 
 namespace glite {
 namespace wms {
 namespace ism {
@@ -15,25 +17,41 @@ namespace purchaser {
 
 class ism_ii_purchaser
 {
- public:
-		enum exec_mode_t { _once_ = 0, _loop_ }; 
-		
-		ism_ii_purchaser(const std::string& hostname, const int port, const std::string& dn, const int timeout);
-		void operator()();
+public:
+  enum exec_mode_t {
+    once,
+    loop
+  }; 
+                
+  ism_ii_purchaser(
+    std::string const& hostname,
+    int port,
+    std::string const& distinguished_name,
+    int timeout = 30,
+    exec_mode_t mode = loop,
+    size_t interval = 30
+  );
 
-		exec_mode_t exec_mode() const { return mode; }
-		void exec_mode(exec_mode_t mode) { this -> mode = mode; }
+  void operator()();
 
-		size_t sleep_interval() const { return this -> interval; }
-	    void sleep_interval(size_t interval) { this -> interval = interval; }
-		
- private:		
-		std::string hostname, dn;
-		int port,timeout;
-		exec_mode_t mode;
-		size_t interval;
+  exec_mode_t exec_mode() const
+  {
+    return m_mode;
+  }
+  size_t sleep_interval() const
+  {
+    return m_interval;
+  }
+
+private:                
+  std::string m_hostname;
+  int m_port;
+  std::string m_dn;
+  int m_timeout;
+  exec_mode_t m_mode;
+  size_t m_interval;
 };
-		
+                
 } // namespace purchaser
 } // namespace ism
 } // namespace wms

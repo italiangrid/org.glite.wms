@@ -3,8 +3,10 @@
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
-// $Id: 
+// $Id$
 
+#include "ism-ii-purchaser.h"
+#include <vector>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -20,22 +22,17 @@
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
-#include "glite/wms/common/logger/edglog.h"
-#include "glite/wms/common/logger/manipulators.h"
+#include "glite/wms/common/logger/logger_utils.h"
 
-#include "ism-ii-purchaser.h"
 #include "glite/wms/ism/ism.h"
-
-#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
-#define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 using namespace std;
 
-namespace exception =glite::wmsutils::exception;
+namespace exception = glite::wmsutils::exception;
 
 namespace glite {
 namespace wms {
-	
+
 namespace ldif2classad  = common::ldif2classad;
 namespace utilities     = common::utilities;
 namespace logger        = common::logger;
@@ -43,323 +40,401 @@ namespace logger        = common::logger;
 namespace ism {
 namespace purchaser {
 
-namespace 
-{
-typedef boost::shared_ptr< classad::ClassAd >      gluece_info_type;		
-typedef std::map< std::string, gluece_info_type >  gluece_info_container_type;
+namespace {
+
+typedef boost::shared_ptr<classad::ClassAd>      gluece_info_type;
+typedef std::map<std::string, gluece_info_type>  gluece_info_container_type;
 typedef gluece_info_container_type::const_iterator gluece_info_const_iterator;
 typedef gluece_info_container_type::iterator       gluece_info_iterator;
 
 
-bool mergeInfo(const string& filter,
-			   ldif2classad::LDAPConnection& IIconnection,
-			   ldif2classad::LDIFObject& o)
+bool mergeInfo(
+  string const& filter,
+  ldif2classad::LDAPConnection& IIconnection,
+  ldif2classad::LDIFObject& o
+)
 {
-	edglog( debug ) << "Filtering and merging: " << filter << endl << flush;
-	vector<string> all_attributes;
-	ldif2classad::LDAPQuery query(&IIconnection, filter, all_attributes);
-	query.execute();
-	if(!query.tuples()->empty()) {
-		
-		ldif2classad::LDAPForwardIterator ldap_it(query.tuples());
-		ldap_it.first();
-		if(ldap_it.current()) {
-			
-			o.merge( *ldap_it );
-			return true;
-		}
-		else edglog( error )  << "Bad filter...!" << endl <<flush;
-	}
-	return false;	
+  Debug("Filtering and merging: " << filter);
+  vector<string> all_attributes;
+  ldif2classad::LDAPQuery query(&IIconnection, filter, all_attributes);
+  query.execute();
+  if (!query.tuples()->empty()) {
+
+    ldif2classad::LDAPForwardIterator ldap_it(query.tuples());
+    ldap_it.first();
+    if (ldap_it.current()) {
+
+      o.merge(*ldap_it);
+      return true;
+    } else {
+      Error("Bad filter...!");
+    }
+  }
+  return false;
 }
 
-string getClusterName (ldif2classad::LDIFObject &ldif_CE)
+string getClusterName(ldif2classad::LDIFObject& ldif_CE)
 {
-	std::string cluster;
-	std::vector<std::string> foreignKeys;
-	std::string reg_string;
-	ldif_CE.EvaluateAttribute("GlueCEInfoHostName", cluster);
-    try {
-	    reg_string.assign("GlueClusterUniqueID");
-	    reg_string.append("\\s*=\\s*([^\\s]+)");
-        ldif_CE.EvaluateAttribute("GlueForeignKey", foreignKeys);
-        static boost::regex get_cluid( reg_string );
-        boost::smatch result_cluid;
-        bool found = false;
+  std::string cluster;
+  std::string reg_string("GlueClusterUniqueID\\s*=\\s*([^\\s]+)");
+  ldif_CE.EvaluateAttribute("GlueCEInfoHostName", cluster);
+  try {
+    std::vector<std::string> foreignKeys;
+    ldif_CE.EvaluateAttribute("GlueForeignKey", foreignKeys);
+    static boost::regex get_cluid(reg_string);
+    boost::smatch result_cluid;
+    bool found = false;
 
-		// Looking for one GlueForeignKey (it is possibly multi-valued)
-		// With the specified attribute.
-		for( std::vector<std::string>::const_iterator key = foreignKeys.begin();
-			key != foreignKeys.end(); key++) {
-			
-				if( boost::regex_match(*key, result_cluid, get_cluid) ) {
-					
-					cluster.assign(result_cluid[1].first,result_cluid[1].second);
-					found = true;
-					break;
-				}
-		}
-		if (!found) {
-			
-			edglog( warning ) << "Cannot find " << "GlueClusterUniqueID" << 
-					" assignment. Using " << cluster << "." << endl;
-		}
-	} catch( ldif2classad::LDAPNoEntryEx& ) {
-	
-		// The GlueForeignKey was not found.
-		// We keep the gatekeeper name.
-	} catch( boost::bad_expression& e ){
-	
-		edglog( error ) << "Bad regular expression " << reg_string <<
-				". Cannot parse "<< "GlueForeignKey" << ". Using " << cluster << "." << endl;
-	}
-	return cluster;
+    // Looking for one GlueForeignKey (it is possibly multi-valued)
+    // With the specified attribute.
+    for( std::vector<std::string>::const_iterator key = foreignKeys.begin();
+         key != foreignKeys.end(); key++) {
+
+      if( boost::regex_match(*key, result_cluid, get_cluid) ) {
+
+        cluster.assign(result_cluid[1].first,result_cluid[1].second);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+
+      Warning("Cannot find GlueClusterUniqueID assignment. Using "
+              << cluster << ".");
+    }
+  } catch( ldif2classad::LDAPNoEntryEx& ) {
+
+    // The GlueForeignKey was not found.
+    // We keep the gatekeeper name.
+  } catch( boost::bad_expression& e ){
+
+    Error("Bad regular expression " << reg_string
+          << ". Cannot parse GlueForeignKey. Using " << cluster << ".");
+  }
+  return cluster;
 }
 
 /*
  * Prefetch GlueCEUniqueIDs
  * This method obtains the GlueCEUniqueIDs from the information index
  */
-void prefetchGlueCEinfo(const std::string& hostname, 
-				const int port, 
-				const std::string& dn, 
-				const int timeout, 
-				gluece_info_container_type& gluece_info_container)
+void prefetchGlueCEinfo(const std::string& hostname,
+                        int port,
+                        const std::string& dn,
+                        int timeout,
+                        gluece_info_container_type& gluece_info_container)
 {
-  edglog_fn(prefetchGlueCEUniqueIDs);     	
-
-  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
-  
-  IIconnection.reset( new ldif2classad::LDAPSynchConnection( dn,
-							     hostname,
-							     port,
-							     timeout));
+  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection(
+    new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
+  );
 
   vector<string> reqAttributes;
-  
+
   reqAttributes.push_back("GlueCEUniqueID");
   reqAttributes.push_back("GlueSubClusterUniqueID");
-  reqAttributes.push_back("GlueCEInfoHostName"); 
-  reqAttributes.push_back("GlueForeignKey"); 
+  reqAttributes.push_back("GlueCEInfoHostName");
+  reqAttributes.push_back("GlueForeignKey");
   reqAttributes.push_back("GlueClusterUniqueID");
   reqAttributes.push_back("GlueInformationServiceURL");
-  
+
   string filter("objectclass=GlueCE");
-  
+
   ldif2classad::LDAPQuery query(IIconnection.get(), filter, reqAttributes);
-  
-  edglog( debug ) << "Filtering Information Index (GlueCEUniqueIDs): " << filter << endl;
-  
-  try { 
 
-    IIconnection -> open();
+  Debug("Filtering Information Index (GlueCEUniqueIDs): " << filter);
+
+  try {
+
+    IIconnection->open();
     query.execute();
-    if( !query.tuples() -> empty() ) {
-	
-	  utilities::ii_attributes::const_iterator multi_attrs_begin, multi_attrs_end;
-	  boost::tie(multi_attrs_begin,multi_attrs_end) = utilities::ii_attributes::multiValued();
-		
-      ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );   
-      ldap_it.first();
-	  
-	  bool all_merge_query_fail = true;
-	  
-      while( ldap_it.current() ) {		
-			  
-		ldif2classad::LDIFObject ldif_CE = (*ldap_it);
-		string GlueCEUniqueID;
-		ldif_CE.EvaluateAttribute("GlueCEUniqueID", GlueCEUniqueID);
-		
-		string cluster;
-		string closese;
+    if (!query.tuples()->empty()) {
 
-		cluster.assign("(&(objectclass=GlueSubCluster)(GlueSubClusterUniqueID=" + getClusterName(ldif_CE) + "))");
-		closese.assign("(&(objectClass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + GlueCEUniqueID + "))");
-		
-		if( mergeInfo(cluster, *IIconnection, ldif_CE) &&
-			mergeInfo(closese, *IIconnection, ldif_CE) ) {
-				
-				all_merge_query_fail = false;
-		}
-		
-		boost::shared_ptr<classad::ClassAd> ceAd(ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end));
-		gluece_info_container[GlueCEUniqueID] = ceAd;
-	  	ldap_it.next();
+      utilities::ii_attributes::const_iterator multi_attrs_begin;
+      utilities::ii_attributes::const_iterator multi_attrs_end;
+      boost::tie(multi_attrs_begin,multi_attrs_end)
+        = utilities::ii_attributes::multiValued();
+
+      ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );
+      ldap_it.first();
+
+      bool all_merge_query_fail = true;
+
+      while (ldap_it.current()) {
+
+        ldif2classad::LDIFObject ldif_CE(*ldap_it);
+        string GlueCEUniqueID;
+        ldif_CE.EvaluateAttribute("GlueCEUniqueID", GlueCEUniqueID);
+
+        string cluster("(&(objectclass=GlueSubCluster)(GlueSubClusterUniqueID=" + getClusterName(ldif_CE) + "))");
+        string closese("(&(objectClass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + GlueCEUniqueID + "))");
+
+        if (mergeInfo(cluster, *IIconnection, ldif_CE)
+            && mergeInfo(closese, *IIconnection, ldif_CE)) {
+
+          all_merge_query_fail = false;
+        }
+
+        boost::shared_ptr<classad::ClassAd> ceAd(
+          ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end)
+        );
+        gluece_info_container[GlueCEUniqueID] = ceAd;
+        ldap_it.next();
       } // while( ldap_it.current() )
     }
   }
-  catch( ldif2classad::LDAPNoEntryEx& ) {
-    
-    edglog( severe ) << "Unexpected result while searching the IS..." << endl;
+  catch (ldif2classad::LDAPNoEntryEx&) {
+
+    Error("Unexpected result while searching the IS...");
     //throw matchmaking::ISQueryError(
-	//			    NSconf->ii_contact(),
-	//			    NSconf->ii_port(),
-	//			    NSconf->ii_dn(),
-	//			    filter);
+    //                          NSconf->ii_contact(),
+    //                          NSconf->ii_port(),
+    //                          NSconf->ii_dn(),
+    //                          filter);
   }
   catch( ldif2classad::QueryException& e) {
-    
-    edglog( warning ) << e.what() << endl;
-    //throw matchmaking::ISQueryError( 
-	//			    NSconf->ii_contact(),
-	//			    NSconf->ii_port(),
-	//			    NSconf->ii_dn(),
-	//			    filter);
+
+    Warning(e.what());
+    //throw matchmaking::ISQueryError(
+    //                          NSconf->ii_contact(),
+    //                          NSconf->ii_port(),
+    //                          NSconf->ii_dn(),
+    //                          filter);
   }
   catch( ldif2classad::ConnectionException& e) {
-    
-    edglog( warning ) << e.what() << endl;
+
+    Warning(e.what());
     //throw matchmaking::ISConnectionError(
-	//				 NSconf->ii_contact(),
-	//				 NSconf->ii_port(),
-	//				 NSconf->ii_dn());
+    //                               NSconf->ii_contact(),
+    //                               NSconf->ii_port(),
+    //                               NSconf->ii_dn());
   }
 }
 
 bool expand_information_service_info(gluece_info_type& gluece_info)
 {
-	string isURL;
-    bool result = false;
-	try {
-			
-		isURL.assign( utilities::evaluate_attribute(*gluece_info, "GlueInformationServiceURL") );
-		static boost::regex  expression_gisu( "\\S.*://(.*):([0-9]+)/(.*)" );
-		boost::smatch        pieces_gisu;
-		string                isbasedn, isport, ishost;
+  string isURL;
+  bool result = false;
+  try {
 
-		if( boost::regex_match(isURL, pieces_gisu, expression_gisu) ) {
+    isURL = utilities::evaluate_attribute(*gluece_info, "GlueInformationServiceURL");
+    static boost::regex  expression_gisu("\\S.*://(.*):([0-9]+)/(.*)");
+    boost::smatch        pieces_gisu;
 
-	   		ishost.assign  (pieces_gisu[1].first, pieces_gisu[1].second);
-    		isport.assign  (pieces_gisu[2].first, pieces_gisu[2].second);
-        	isbasedn.assign(pieces_gisu[3].first, pieces_gisu[3].second);
+    if (boost::regex_match(isURL, pieces_gisu, expression_gisu)) {
 
-        	gluece_info -> InsertAttr( "InformationServiceDN",   isbasedn);
-        	gluece_info -> InsertAttr( "InformationServiceHost", ishost);
-        	gluece_info -> InsertAttr( "InformationServicePort", std::atoi(isport.c_str()) );
-    		result = true;
-		}
-	}
-    catch( utilities::InvalidValue& e ) {
+      string ishost(pieces_gisu[1].first, pieces_gisu[1].second);
+      string isport(pieces_gisu[2].first, pieces_gisu[2].second);
+      string isbasedn(pieces_gisu[3].first, pieces_gisu[3].second);
 
-	   edglog( error ) << "Cannot evaluate GlueInformationServiceURL..." << endl;
-	   result = false;	
-	}
-	return result;
+      gluece_info->InsertAttr("InformationServiceDN", isbasedn);
+      gluece_info->InsertAttr("InformationServiceHost", ishost);
+      gluece_info->InsertAttr("InformationServicePort",
+                              boost::lexical_cast<int>(isport));
+      result = true;
+    }
+  } catch (utilities::InvalidValue& e) {
+    Error("Cannot evaluate GlueInformationServiceURL...");
+    result = false;
+  }
+  return result;
 }
 
 bool fetch_gluece_info(gluece_info_type& gluece_info)
 {
-	std::string is_dn;
-	std::string is_host;
-	int is_port;
-	try {
-		is_dn.assign( utilities::evaluate_attribute(*gluece_info, "InformationServiceDN") );
-	}
-	catch( utilities::InvalidValue& e ) {
-		edglog( warning ) << "Cannot evaluate InformationServiceDN..." << endl;
-		return false;
-	}
-	try {
-	    is_host.assign( utilities::evaluate_attribute(*gluece_info, "InformationServiceHost") );
-	}
-	catch( utilities::InvalidValue& e ) {
-		edglog( warning ) << "Cannot evaluate InformationServiceHost..." << endl;
-		return false;
-	}
-	try {
-	    is_port = utilities::evaluate_attribute(*gluece_info, "InformationServicePort");
-	}
-	catch( utilities::InvalidValue& e ) {
-		edglog( warning ) << "Cannot evaluate InformationServicePort..." << endl;
-		return false;
-	}
+  std::string is_dn;
+  try {
+    is_dn = utilities::evaluate_attribute(*gluece_info, "InformationServiceDN");
+  } catch (utilities::InvalidValue& e) {
+    Warning("Cannot evaluate InformationServiceDN...");
+    return false;
+  }
+
+  std::string is_host;
+  try {
+    is_host = utilities::evaluate_attribute(*gluece_info, "InformationServiceHost");
+  } catch (utilities::InvalidValue& e) {
+    Warning("Cannot evaluate InformationServiceHost...");
+    return false;
+  }
+
+  int is_port;
+  try {
+    is_port = utilities::evaluate_attribute(*gluece_info, "InformationServicePort");
+  } catch (utilities::InvalidValue& e) {
+    Warning("Cannot evaluate InformationServicePort...");
+    return false;
+  }
+
+  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection(
+    new ldif2classad::LDAPSynchConnection(is_dn, is_host, is_port, 20)
+  );
+
+  std::vector<std::string> all_attributes;
+  std::string filter("(&(objectclass=GlueCE)(GlueCEUniqueID=");
+  std::string gluece_id(utilities::evaluate_attribute(*gluece_info, "GlueCEUniqueID"));
+
+  filter += gluece_id + "))";
+
+  ldif2classad::LDAPQuery query(IIconnection.get(), filter, all_attributes);
+
+  try {
+
+    IIconnection->open();
+    query.execute();
+    if (!query.tuples()->empty())  {
+
+      utilities::ii_attributes::const_iterator multi_attrs_begin;
+      utilities::ii_attributes::const_iterator multi_attrs_end;
+      boost::tie(multi_attrs_begin, multi_attrs_end)
+        = utilities::ii_attributes::multiValued();
+
+      ldif2classad::LDAPForwardIterator ldap_it(query.tuples());
+      ldap_it.first();
+
+      boost::scoped_ptr<classad::ClassAd> ceAd(
+        ldap_it->asClassAd(multi_attrs_begin, multi_attrs_end)
+      );
+      gluece_info->Update(*ceAd);
+    } // if GRIS query not empty
+
+  } catch (ldif2classad::ConnectionException& e) {
+    Warning(e.what());
+    return false;
+  } catch (ldif2classad::QueryException& e) {
+    Warning(e.what());
+    return false;
+  } catch (ldif2classad::LDAPNoEntryEx&) {
+    Error("Unexpected result while searching the IS..." << gluece_id);
+    return false;
+  }
+  return true;
+}
+
+boost::scoped_ptr<classad::ClassAd> requirements_ad;
+
+void insert_aux_requirements(gluece_info_type& gluece_info)
+{
+  if (!requirements_ad) {
+    
+    std::string requirements_str(
+      "[ \
+        CloseOutputSECheck = IsUndefined(other.OutputSE) \
+          ||   member(other.OutputSE, GlueCESEBindGroupSEUniqueID); \
+        AuthorizationCheck = member(other.CertificateSubject, GlueCEAccessControlBaseRule) \
+          ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule); \
+      ]"
+    );
+
+    try {
+      requirements_ad.reset(utilities::parse_classad(requirements_str));
+    }
+    catch(...) {
+      std::cout << "Ops!" << std::endl;
+      exit( -1 );
+    }
+  }
+  gluece_info->Update(*requirements_ad);
+}
+
+bool expand_glueceid_info(gluece_info_type& gluece_info)
+{
+  string ce_str;
+  ce_str.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEUniqueID"));
+  static boost::regex  expression_ceid("(.+/[^\\-]+-(.+))-(.+)");
+  boost::smatch  pieces_ceid;
+  string gcrs, type, name;
   
-	boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
-	IIconnection.reset( new ldif2classad::LDAPSynchConnection( is_dn,
-							is_host,
-							is_port,
-							20));
-	
-	std::vector<std::string> all_attributes;
-	std::string filter( "(&(objectclass=GlueCE)(GlueCEUniqueID=" );
-	std::string gluece_id( utilities::evaluate_attribute(*gluece_info, "GlueCEUniqueID") );
-	
-	filter.append(gluece_id).append(std::string("))"));
-	
-	ldif2classad::LDAPQuery query( IIconnection.get(), filter, all_attributes);
-
-	try {
-
-		IIconnection -> open();
-		query.execute();
-		if( (!query.tuples() -> empty()) )  {
-			
-			utilities::ii_attributes::const_iterator multi_attrs_begin, multi_attrs_end;
-			boost::tie(multi_attrs_begin,multi_attrs_end) = utilities::ii_attributes::multiValued();
-
-		    ldif2classad::LDAPForwardIterator ldap_it(query.tuples());
-		    ldap_it.first();
-
-		    boost::scoped_ptr<classad::ClassAd> ceAd((*ldap_it).asClassAd(multi_attrs_begin, multi_attrs_end));
-			(*gluece_info).Update(*ceAd);
-		} // if GRIS query not empty
-	}
-	catch( ldif2classad::ConnectionException& e) {
-	    edglog( warning ) << e.what() << endl;
-		return false;
+  if (boost::regex_match(ce_str, pieces_ceid, expression_ceid)) {
+    
+    gcrs.assign(pieces_ceid[1].first, pieces_ceid[1].second);
+    try {
+      type.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEInfoLRMSType"));
+    } 
+    catch(utilities::InvalidValue& e) {
+      // Try to fall softly in case the attribute is missing...
+      type.assign(pieces_ceid[2].first, pieces_ceid[2].second);
+      Warning("Cannot evaluate GlueCEInfoLRMSType using value from contact string: " << type);
     }
-    catch( ldif2classad::QueryException& e) {
-	    edglog( warning ) << e.what() << endl;
-		return false;
-	}
-    catch( ldif2classad::LDAPNoEntryEx& ) {
-		edglog( severe ) << "Unexpected result while searching the IS..." << gluece_id << endl;
-		return false;
+    // ... or in case the attribute is empty.
+    if (type.length() == 0) type.assign(pieces_ceid[2].first, pieces_ceid[2].second);
+    name.assign(pieces_ceid[3].first, pieces_ceid[3].second);
+  }
+  else { 
+    Warning("Cannot parse CEid=" << ce_str);
+    return false;
+  }
+  gluece_info -> InsertAttr("GlobusResourceContactString", gcrs);
+  gluece_info -> InsertAttr("LRMSType", type);
+  gluece_info -> InsertAttr("QueueName", name);
+  gluece_info -> InsertAttr("CEid", ce_str);
+  return true;
+}
+
+} // {anonymous}
+
+ism_ii_purchaser::ism_ii_purchaser(
+  std::string const& hostname,
+  int port,
+  std::string const& distinguished_name,
+  int timeout,
+  exec_mode_t mode,
+  size_t interval
+)
+  : m_hostname(hostname),
+    m_port(port),
+    m_dn(distinguished_name),
+    m_timeout(timeout),
+    m_mode(mode),
+    m_interval(interval)
+{
+}
+
+namespace {
+
+timestamp_type get_current_time(void)
+{
+  timestamp_type current_time;
+
+  boost::xtime_get(&current_time, boost::TIME_UTC);
+  
+  return current_time;
+}
+
+}
+
+void ism_ii_purchaser::operator()()
+{
+  gluece_info_container_type gluece_info_container;
+
+  prefetchGlueCEinfo(m_hostname, m_port, m_dn, m_timeout, gluece_info_container);
+
+  do {
+
+    for (gluece_info_iterator it = gluece_info_container.begin();
+         it != gluece_info_container.end(); ++it) {
+      try {
+        expand_information_service_info(it->second);
+        fetch_gluece_info(it->second);
+        insert_aux_requirements(it->second);
+	expand_glueceid_info(it->second);
+        boost::mutex::scoped_lock l(get_ism_mutex());
+        get_ism().insert(
+          make_ism_entry(it->first, get_current_time(), it->second)
+        );
+      } catch(...) {
+        Warning("Caught exception while fetching " << it->first
+                << " IS information.");
+      }
     }
-	return true;
+
+    if (m_mode == loop) {
+      sleep(m_interval);
+    }
+
+  } while (m_mode);
 }
 
-}; // anonymous namespace closure
-
-ism_ii_purchaser::ism_ii_purchaser(const std::string& hostname, 
-					const int port, 
-					const std::string& dn, 
-					const int timeout)
-{
-	this->hostname.assign(hostname);
-	this->port = port;
-	this->dn.assign(dn);
-	this->timeout = timeout;
-	this->mode = ism_ii_purchaser::_once_;
-	this->interval = 30;
-}
-
-
-void ism_ii_purchaser::operator()() 
-{
-	gluece_info_container_type gluece_info_container;
-	
-	prefetchGlueCEinfo(hostname, port, dn, timeout, gluece_info_container);
-	
-	do {
-	
-		for(gluece_info_iterator it = gluece_info_container.begin(); 
-					it != gluece_info_container.end(); it++) {
-			try {
-				expand_information_service_info(it->second);
-				fetch_gluece_info(it->second);
-				boost::mutex::scoped_lock l(get_ism_mutex());
-				get_ism().insert(make_ism_entry(it->first, get_current_time(), it->second));
-			}
-			catch(...) {
-				edglog( warning ) << "Caught exception while fetching " << it->first << " IS information." << endl;
-			}
-		}
-		if( mode ) sleep( interval );
-	} while( mode );							
-}
-
-}
-}
-}
-}
+} // namespace purchaser
+} // namespace ism
+} // namespace wms
+} // namespace glite
