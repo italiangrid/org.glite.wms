@@ -240,10 +240,10 @@ logthread_LDADD   = \
 	$(BOOST_LIBS)
 
 proctest_SOURCES = proctest.cpp
-proctest_LDADD   = ../process/libegee_wl_process.la
+proctest_LDADD   = $(top_builddir)/src/process/libegee_wl_process.la
 
 regain_SOURCES = regain.cpp
-regain_LDADD   = ../process/libegee_wl_process.la
+regain_LDADD   = $(top_builddir)/src/process/libegee_wl_process.la
 
 testjobid_SOURCES = testjobid.c
 testjobid_LDADD = \
@@ -255,8 +255,8 @@ testjobid_LDADD = \
 gsi_mkdir_SOURCES = gsi-mkdir.cpp
 gsi_mkdir_LDADD   = \
 	$(top_builddir)/src/logger/libegee_wl_logger.la \
-        ../utilities/libegee_wl_util.la \
-        ../utilities/libegee_wl_globus_ftp_util.la \
+        $(top_builddir)/src/utilities/libegee_wl_util.la \
+        $(top_builddir)/src/utilities/libegee_wl_globus_ftp_util.la \
 	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
 	$(BOOST_LIBS) \
         $(CLASSAD_LIBS)

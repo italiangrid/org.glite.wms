@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "edg/workload/common/jobid/jobid.h"
+#include "../src/jobid/jobid.h"
 
 int main(int argc, char* argv[])
 {

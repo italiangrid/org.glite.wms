@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "edg/workload/common/configuration/cwrapper.h"
+#include "../src/configuration/cwrapper.h"
 
 int main( void )
 {
