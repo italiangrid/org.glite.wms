@@ -448,8 +448,11 @@ WMPLogger::testAndLog( int &code, bool &with_hp, int &lap, const std::string &ho
 	  code = 0; // Don't retry...
 	}else {
 	  edglog(info) << "Retrying using cert and key certificate..." << std::endl;
-	  if   ( setX509Param("Host Cert" , host_cert , EDG_WLL_PARAM_X509_CERT) 
-		| setX509Param("Host Cert" , host_key , EDG_WLL_PARAM_X509_KEY) )  {
+	  // unsetting proxy parameters: 
+	  edg_wll_SetParam( ctx, EDG_WLL_PARAM_X509_PROXY , NULL );
+	  // Setting usercert and userkey instead:
+	  if   ( setX509Param("Host Cert" , host_cert , EDG_WLL_PARAM_X509_CERT)
+		| setX509Param("Host Key" , host_key , EDG_WLL_PARAM_X509_KEY) )  {
 	    		edglog(severe) << "Cannot set some host credential inside the context. Giving up." << std::endl;
 	    		code = 0; // Don't retry.
 	 } else with_hp = true; // Set and retry (code is still != 0)
