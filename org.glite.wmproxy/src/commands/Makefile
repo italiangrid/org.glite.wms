@@ -6,7 +6,7 @@ CWFLAGS=
 CIFLAGS=-I../..
 CMFLAGS=-DHAVE_STRINGSTREAM
 
-REPOSITORY=/home/marcop/develop/ws
+#REPOSITORY=/home/fpacini/CVS_REP/cern
 REPLIBS=$(REPOSITORY)/stage/lib
 INTERFACE=$(REPOSITORY)/org.glite.wms.wmproxy-interface/interface
 
@@ -104,9 +104,7 @@ gliteWMPCommands:
 
 
 clean:
-		rm -f *.o soapH.h soapStub.h soapC.cpp soapC.c soapClient.cpp soapClient.c \
-			soapServer.cpp soapServer.c soap*Proxy.h *.xml
+		rm -f *.o *.so
 
 distclean:
-		rm -f *.o *.xsd *.xml *.nsmap *.log soapH.h soapStub.h soapC.cpp soapC.c soapClient.cpp \
-			soapClient.c soapServer.cpp soapServer.c soap*Proxy.h
+		rm -f *.o *.so
