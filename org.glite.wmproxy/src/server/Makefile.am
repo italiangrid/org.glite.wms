@@ -78,7 +78,7 @@ wmProxy_LDADD = \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
 	$(GRIDSITE_LIBS) \
-	$(XML2) \
+	$(XML2_LIBS) \
 	$(FASTCGI_CPP_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
@@ -87,7 +87,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GLOBUS_CFLAGS) \
+	$(GLOBUS_THR_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(MYPROXY_CFLAGS)
 
