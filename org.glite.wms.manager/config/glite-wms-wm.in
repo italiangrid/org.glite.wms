@@ -10,17 +10,22 @@
 # $Id$
 
 # chkconfig: 345 94 06 
-EDG_WL_LOCATION=${EDG_WL_LOCATION:-@prefix@}
+
+GLITE_LOCATION=${GLITE_LOCATION:-@prefix@}
+EDG_WL_LOCATION=${EDG_WL_LOCATION:-/opt/edg-4prototype}
 
 . ${EDG_WL_LOCATION}/etc/edg-wl-vars.sh
 . ${EDG_WL_LOCATION}/libexec/edg-wl-services-certs.sh
 . ${EDG_WL_LOCATION}/etc/profile.d/edg-wl.sh
 . ${EDG_WL_LOCATION}/etc/profile.d/edg-wl-config.sh
  
+GLITE_WMS_CONFIG_DIR=${EDG_WL_LOCATION}/etc/
+export GLITE_WMS_CONFIG_DIR
+
 this_script_name=$0
 
-program_name=edg-wl-workload_manager
-binpath=${EDG_WL_LOCATION}/bin/${program_name}
+program_name=glite-wms-workload_manager
+binpath=${GLITE_LOCATION}/bin/${program_name}
 pid_file=${EDG_WL_TMP}/${program_name}.pid
 
 #set -x
