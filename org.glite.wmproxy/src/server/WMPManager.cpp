@@ -23,7 +23,7 @@
 #include "glite/wms/common/utilities/classad_utils.h" 
 #include "glite/wms/common/logger/edglog.h" 
 #include "glite/wms/common/logger/manipulators.h" 
-#include "commands/logging.h" 
+#include "utilities/logging.h" 
 #include "utilities/wmpexception_codes.h"
 #include <string>
 
@@ -185,7 +185,7 @@ namespace server {
                       }
 	              return fault;
 
-	      } 
+	      }
 	      catch (commands::bad&) {
 	        edglog(fatal) << "Bad Command." << std::endl;
 	      }

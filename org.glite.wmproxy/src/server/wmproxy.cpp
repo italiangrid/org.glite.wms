@@ -4,37 +4,44 @@
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
 
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "wmproxy.h"
+
 // Fast CGI
 #include <fcgi_stdio.h>
 #include "fcgio.h"
 #include "fcgi_config.h"
+
 // gSOAP
 #include "WMProxy.nsmap"
 #include "soapWMProxyObject.h"
+
 // Logging
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
-#include "commands/logging.h"
+#include "utilities/logging.h"
 
-#include "NS2WMProxy.h"
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
+
 // Exceptions
 #include "utilities/wmpexception_codes.h"
 #include "glite/wmsutils/jobid/JobId.h"
+
+// Server
+#include "NS2WMProxy.h"
 #include "wmpoperations.h"
 #include "wmpdispatcher.h"
 #include "wmpconfiguration.h"
 #include "utilities/wmputils.h"
-#include <iostream>
-#include <string>
-#include <vector>
 
 namespace utilities  	= glite::wms::common::utilities;
 namespace task          = glite::wms::common::task;

@@ -25,7 +25,7 @@
 //Logger
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
-#include "commands/logging.h"
+#include "utilities/logging.h"
 #include "commands/listfiles.h"
 
 // Delegation
@@ -929,7 +929,8 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	// OUTPUT stage area = SandboxDestURIResponse/output
 	getSandboxDestURIResponse getSandboxDestURI_response;
 	getSandboxDestURI(getSandboxDestURI_response, jid);
-	string output_uri = getSandboxDestURI_response.path + "/output" ;
+	string output_uri = getSandboxDestURI_response.path + FILE_SEPARATOR
+		+ "output";
 	edglog(debug)<<"\noutput_uri = " << output_uri <<endl;
 	edglog(debug)<<"\nnow calling path... " << output_uri <<endl;
 	

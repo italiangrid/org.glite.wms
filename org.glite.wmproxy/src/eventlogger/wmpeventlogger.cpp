@@ -11,7 +11,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 // edglog macro definitions
-#include "commands/logging.h"
+#include "utilities/logging.h"
 #include "utilities/wmpexception_codes.h"
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmputils.h"

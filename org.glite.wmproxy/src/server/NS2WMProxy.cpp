@@ -10,7 +10,7 @@
 #include "NS2WMProxy.h"
 #include <classad_distribution.h>
 #include "commands/Command.h"
-#include "commands/logging.h"
+#include "utilities/logging.h"
 #include "glite/lb/producer.h"
 #include "glite/lb/context.h"
 #include "glite/wms/common/utilities/classad_utils.h"

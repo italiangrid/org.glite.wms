@@ -12,7 +12,7 @@
 #include <boost/pool/detail/singleton.hpp>
 #include "glite/wmsutils/exception/Exception.h"
 
-#include "commands/logging.h"
+#include "utilities/logging.h"
 #include "NS2WMProxy.h"
 #include "WMPManager.h"
 
