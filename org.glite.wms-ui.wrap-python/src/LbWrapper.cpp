@@ -22,7 +22,7 @@
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
 
 using namespace std ;
-using namespace glite::wms::lb ;
+using namespace glite::lb ;
 using namespace glite::wmsutils::exception ;
 
 glite::lb::Job lbJob;
