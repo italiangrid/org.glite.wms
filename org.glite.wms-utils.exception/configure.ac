@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2004/08/17 10:41:47  eronchie
+#       Added optimize option
+#
 #       Revision 1.5  2004/07/23 08:02:09  eronchie
 #       Updated configure.ac
 #
@@ -89,6 +92,8 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 AC_GLITE
+
+AC_OPTIMIZE
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
