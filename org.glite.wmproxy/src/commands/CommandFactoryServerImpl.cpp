@@ -1155,7 +1155,7 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
 
   CommandState::shared_ptr state;
   
-  if( name == "JobSubmit" ) {        
+  if( name == "JobSubmit" || name == "DagSubmit" ) {        
     state.reset( new ExecuteFunction(createContext) );
     cmd -> fsm -> push (state);
     // state.reset(new ExecuteFunction(checkUserQuota) );
@@ -1174,7 +1174,6 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
     cmd -> fsm -> push(state);
   } 
   else if (name == "JobCancel") {
-    cmd -> setParam("JobId", param);
     state.reset(new ExecuteFunction(setJobPaths) );
     cmd -> fsm -> push(state);
     state.reset(new ExecuteFunction(createContext) );
@@ -1194,22 +1193,22 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr, const std::
     state.reset(new ExecuteFunction(listjobmatchex)); 
     cmd -> fsm -> push(state);
   }
-  else if( name == "DagSubmit" ) {        
-    state.reset( new ExecuteFunction(createContext) );
-    cmd -> fsm -> push (state);
+  // else if( name == "DagSubmit" ) {        
+    // state.reset( new ExecuteFunction(createContext) );
+    // cmd -> fsm -> push (state);
     // state.reset(new ExecuteFunction(checkUserQuota) );
     // cmd -> fsm -> push(state);
     // state.reset(new SendBoolean("CheckQuotaPassed") );
     // cmd -> fsm -> push(state);
-    //state.reset(new ExecuteFunction(insertCertificateSubject) );
-    //cmd -> fsm -> push(state);
-    //state.reset(new ExecuteFunction(dag::createStagingDirectories) );
-    //cmd -> fsm -> push(state);
-    //state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
-    //cmd -> fsm -> push(state);
-    state.reset( new ForwardRequest() );
-    cmd -> fsm -> push(state);
-  } 
+    // state.reset(new ExecuteFunction(insertCertificateSubject) );
+    // cmd -> fsm -> push(state);
+    // state.reset(new ExecuteFunction(dag::createStagingDirectories) );
+    // cmd -> fsm -> push(state);
+    // state.reset(new ExecuteFunction(stagingDirectoryCreationPostControl));
+    // cmd -> fsm -> push(state);
+    // state.reset( new ForwardRequest() );
+    // cmd -> fsm -> push(state);
+  // } 
   else {
     delete cmd;
     cmd = 0;
