@@ -17,11 +17,19 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/10/08 09:53:59  pandreet
+#       LICENSE in rpm; defined summary and description
+#
 #       Revision 1.1  2004/07/08 15:11:03  pandreet
 #       Basic build files for checkpointing
 #
 
 ## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = LICENSE
+
+docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
+doc_DATA = LICENSE
 
 ## Subdirectories list
 SUBDIRS = src test interface
