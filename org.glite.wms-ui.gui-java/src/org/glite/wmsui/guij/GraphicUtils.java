@@ -42,7 +42,7 @@ import javax.swing.border.EmptyBorder;
  * @author Giuseppe Avellino <giuseppe.avellino@datamat.it>
  */
 public class GraphicUtils {
-  static final int STARTUP_SELECTED_TABBED_PANE_INDEX = 1;
+  //static final int STARTUP_SELECTED_TABBED_PANE_INDEX = 1;
 
   // Screen proportion.
   static final double SCREEN_WIDTH_PROPORTION = 0.8;

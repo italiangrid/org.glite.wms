@@ -209,7 +209,7 @@ public class ExprChecker {
       Iterator iterator = jobAdAttributeToAdd.attributes();
       String attribute = "";
       for (; iterator.hasNext();) {
-        attribute = (String) iterator.next();
+        attribute = iterator.next().toString();
         if (!jobAd.hasAttribute(attribute)) {
           try {
             jobAd

@@ -142,8 +142,8 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
   }
 
   private void jbInit() throws Exception {
-    isDebugging |= (Logger.getRootLogger().getLevel() == Level.DEBUG) ? true
-        : false;
+    isDebugging = isDebugging
+        || ((Logger.getRootLogger().getLevel() == Level.DEBUG) ? true : false);
     // Set application type. The type of application affects on some settings.
     Utils.setApplicationType(Utils.FRAME);
     // Set the items selectable from Edit menu.
@@ -1460,11 +1460,6 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
             return false;
           }
           parserErrorMsg = exprChecker.getErrorMsg().trim();
-        } catch (java.text.ParseException pe) {
-          if (isDebugging) {
-            pe.printStackTrace();
-          }
-          return false;
         } catch (Exception e) {
           if (isDebugging) {
             e.printStackTrace();
@@ -1501,6 +1496,7 @@ public class JobSubmitter extends JFrame implements JobSubmitterInterface {
         }
       }
     }
+    parserErrorMsg = parserErrorMsg.trim();
     if (!type.equals(Jdl.TYPE_DAG)) {
       if (parserErrorMsg.equals("") && (jobAd != null) && (jobAd.size() != 0)) {
         NSPanel selectedRB = (NSPanel) jTabbedPaneRB.getSelectedComponent();
