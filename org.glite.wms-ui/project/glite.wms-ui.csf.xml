@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.13  2004/10/12 18:03:03  harakaly
+	Typo fix
+
 	Revision 1.12  2004/10/11 16:34:01  eronchie
 	Start adding configuration
-
+	
 	Revision 1.11  2004/08/12 12:14:24  eronchie
 	Updated
 	
@@ -287,7 +290,7 @@
 
 	<!-- configuration -->
         <target name="configuration" depends="get.configuration.head, get.configuration.tag"/>
-        <target name="get.configuraiton.head" if="configuration.head">
+        <target name="get.configuration.head" if="configuration.head">
                 <cvs-co package="org.glite.wms-ui.configuration" />
         </target>
         <target name="get.configuration.tag" unless="configuration.head">
