@@ -20,9 +20,14 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2004/04/30 16:22:06  eronchie
+	Added stage target
+	Added stage, distsrc, and distbin targets
+	Added DISTBIN, and WORKDIR
+
 	Revision 1.1  2004/04/29 01:36:29  dimeglio
 	Added org.egee.test3.wms
-
+	
 -->
 
 <project name="test3-wms" default="export">
@@ -114,6 +119,13 @@
 			<param name="target" value="export"/>
 		</antcall>
 	</target>
+
+        <target name="stage" depends="localinit">
+                <antcall target="buildmodules">
+                        <param name="target" value="stage"/>
+                </antcall>
+        </target>
+
 
 	<target name="dist" depends="localinit">
 		<antcall target="buildmodules">
