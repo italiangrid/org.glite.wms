@@ -9,7 +9,7 @@
 #include <list>
 #include <string>
 #include "glite/lb/producer.h"
-#define EDG_WL_LOG_DESTINATION "EDG_WL_LOG_DESTINATION"
+#define GLITE_WMS_LOG_DESTINATION "GLITE_WMS_LOG_DESTINATION"
 /**
  * Provide a wrapper for the locallogger client methods
  * it allows the user to log all the information the job needs at submission time both for simple jobs and for dags
@@ -32,7 +32,7 @@ class LOG {
 	/**
 	* Initialise logging context. Must be  called before any other operation just after the constructor
 	* @param locallogger server address in the form <host name> [:<port number>] if no port is specified, deafult port 9002 will be used
-	* the value is nevetheless overriden by EDG_WL_LOG_DESTINATION env variable, if present
+	* the value is nevetheless overriden by GLITE_WMS_LOG_DESTINATION env variable, if present
 	*/
 	void init ( const std::string& locallogger ) ;
 	/**

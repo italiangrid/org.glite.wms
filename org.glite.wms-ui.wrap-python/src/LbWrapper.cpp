@@ -226,7 +226,7 @@ int Status::getStatus (const string& jobid , int level) {
 		vector <vector<QueryRecord> >cond ;
 		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
 		// the Server will fill the result vector anyway, even when exception is raised
-		if ( ! getenv ( "EDG_WL_QUERY_RESULTS") ) server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
+		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
 		server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states_v ) ;
 	}catch (Exception &exc){
 			// cout << "Status::queryStates common Error: " << exc.getExceptionName() << ": " << exc.printStackTrace() << endl ;
