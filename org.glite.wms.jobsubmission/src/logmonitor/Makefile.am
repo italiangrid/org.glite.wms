@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2004/08/10 12:30:04  eronchie
+#       Added jss
+#
 #       Revision 1.7  2004/08/10 12:01:43  eronchie
 #       Updated
 #
@@ -60,10 +63,10 @@ libexec_PROGRAMS = glite-wms-lm-job_status
 
 glite_wms_lm_job_status_SOURCES = jobstatus.cpp \
 	JobStatusExtractor.cpp
-glite_wms_lm_job_status_LDADD = libglite_wms_logmonitor.la \
-	../controller/libglite_wms_controller.la \
-	../controller/libglite_wms_controller_adapter.la \
-	../common/libglite_wms_js_common.la \
+glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
+	../controller/libglite_wms_jss_controller.la \
+	../controller/libglite_wms_jss_controller_adapter.la \
+	../common/libglite_wms_jss_common.la \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
