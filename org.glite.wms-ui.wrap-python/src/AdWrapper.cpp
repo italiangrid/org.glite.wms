@@ -42,6 +42,7 @@ int AdWrapper::get_error (string& err){
 }
 bool AdWrapper::fromFile(const string  &jdl_file ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+	jad->clear();
 	jad->fromFile(jdl_file ) ;
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
@@ -50,6 +51,7 @@ bool AdWrapper::fromFile(const string  &jdl_file ){
 void AdWrapper::printChar( const std::string &ch ) {  cout << ch << flush ;  };
 bool AdWrapper::fromString(const string  &jdl ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+	jad->clear();
 	jad->fromString( jdl ) ;
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
