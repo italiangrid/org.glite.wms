@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.42  2004/07/27 15:39:20  eronchie
+	Updated dependency
+
 	Revision 1.41  2004/07/26 17:53:54  eronchie
 	Start adding manager-ns components
 	WARNING: Work in progress
-
+	
 	Revision 1.40  2004/07/26 17:15:09  eronchie
 	Start adding manager-ns component
 	WARNING: work in progress
@@ -468,7 +471,7 @@
                      inheritall="false" />
         </target>
 
-	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condor,globus,common,jdl">
+	<target name="jobsubmission" unless="setenvonly" depends="boost,classads,condor,globus,common,purger,jdl">
                 <ant dir="${workspace.dir}/${subsystem.name}.jobsubmission"
                      target="${target}"
                      inheritall="false" />
@@ -487,9 +490,9 @@
 					     broker,
 					     helper,
 					     checkpointing,
+					     purger,
 					     manager-ns-versions,
 					     manager-ns-fsm,
-					     purger,
 					     manager-ns-commands,
 					     manager-ns-client,
 					     manager-ns-daemon,	

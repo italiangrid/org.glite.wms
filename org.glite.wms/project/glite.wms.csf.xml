@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.49  2004/07/27 15:39:20  eronchie
+	Updated dependency
+
 	Revision 1.48  2004/07/26 17:53:54  eronchie
 	Start adding manager-ns components
 	WARNING: Work in progress
-
+	
 	Revision 1.47  2004/07/26 17:15:09  eronchie
 	Start adding manager-ns component
 	WARNING: work in progress
@@ -537,7 +540,7 @@
         </target>
 
 	<!-- Manager NS Commands -->
-        <target name="manager-ns-commands" depends="boost, classads, globus, purger, manager-ns-fsm, manager-ns-versions, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
+        <target name="manager-ns-commands" depends="boost, classads, globus, manager-ns-fsm, manager-ns-versions, get.manager-ns-commands.head, get.manager-ns-commands.tag"/>
         <target name="get.manager-ns-commands.head" if="manager-ns-commands.head">
             <cvs-co package="org.glite.wms.manager-ns-commands" />
         </target>
@@ -587,7 +590,7 @@
         </target>
 
 	<!-- JobSubmission -->
-        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jdl,get.jobsubmission.head, get.jobsubmission.tag"/>
+        <target name="jobsubmission" depends="boost,classads,globus,condor,common,jdl,purger,get.jobsubmission.head, get.jobsubmission.tag"/>
         <target name="get.jobsubmission.head" if="jobsubmission.head">
             <cvs-co package="org.glite.wms.jobsubmission" />
         </target>
