@@ -5,12 +5,9 @@
 
 #include "glite/wms/common/logger/logstream.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "../../common/EventLogger.h"
-#include "../../common/IdContainer.h"
-#include "../../controller/JobController.h"
-#include "../../logmonitor/exceptions.h"
-#include "../../logmonitor/AbortedContainer.h"
+#include "../..//common/EventLogger.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/LMConfiguration.h"
 
 #include "EventGlobusResourceDown.h"
 #include "MonitorData.h"
@@ -30,53 +27,48 @@ EventGlobusResourceDown::EventGlobusResourceDown( ULogEvent *event, MonitorData 
 EventGlobusResourceDown::~EventGlobusResourceDown( void )
 {}
 
+
 void EventGlobusResourceDown::process_event( void )
 {
-  jccommon::IdContainer::iterator        position;
-  controller::JobController              controller( *this->ei_data->md_logger );
+  const configuration::LMConfiguration   *conf = configuration::Configuration::instance()->lm();
+
+  time_t                                  epoch;
+  ULogEvent                              *tmpevent;
+  char                                    wbuf[30];
+  string                                  when, reason;
+  GlobusSubmitFailedEvent                *gsf;
   logger::StatePusher                    pusher( elog::cedglog, "EventGlobusResourceDown::process_event()" );
 
   elog::cedglog << logger::setlevel( logger::info ) << "Got a Globus resource down event." << endl
 		<< "For cluster: " << this->ei_condor << endl
 		<< "On ce: " << this->egrd_event->rmContact << endl;
+  
+  elog::cedglog << logger::setlevel( logger::info )
+		<< "Attaching globus timeout to cluster " << this->ei_condor << endl;
 
-  position = this->ei_data->md_container->position_by_condor_id( this->ei_condor );
+  epoch = time( NULL ) + conf->globus_down_timeout();
+  asctime_r( &this->egrd_event->eventTime, wbuf );
+  when.assign( wbuf, 24 );
 
-  if( position == this->ei_data->md_container->end() )
-    elog::cedglog << logger::setlevel( logger::warning ) << ei_s_notsub << endl;
-  else {
-    elog::cedglog << logger::setlevel( logger::info ) << ei_s_edgideq << position->edg_id() << endl;
+  elog::cedglog << logger::setlevel( logger::info )
+		<< "Globus timeout will happen in " << conf->globus_down_timeout() << " seconds." << endl
+		<< logger::setlevel( logger::debug ) << "At: " << when << endl;
 
-    if( this->ei_data->md_isDagLog )
-      elog::cedglog << ei_s_subnodeof << this->ei_data->md_dagId << endl;
+  // Define a fake globus_submit_failed event which will be processed if the timeout expired
+  // This event replicates the behaviour that we want when the timer expired
+  reason.assign( "LM message: the timeout attached to the globus-down event expired." );
+  tmpevent = instantiateEvent( ULOG_GLOBUS_SUBMIT_FAILED );
+  tmpevent->cluster = this->egrd_event->cluster;
+  tmpevent->proc = tmpevent->subproc = 0;
 
-    if( this->ei_data->md_aborted->insert(this->ei_condor) ) {
-      elog::cedglog << logger::setlevel( logger::fatal ) << ei_s_failedinsertion << endl;
+  localtime_r( &epoch, &tmpevent->eventTime );
 
-      throw CannotExecute( ei_s_failedinsertion );
-    }
-
-    this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( position->edg_id(), position->sequence_code() );
-    this->ei_data->md_logger->globus_resource_down_event();
-
-    elog::cedglog << logger::setlevel( logger::info ) << "Forwarding remove request to JC." << endl;
-
-    if( this->ei_data->md_isDagLog ) {
-      elog::cedglog << logger::setlevel( logger::debug )
-		    << "Forwarding request by Condor Id..." << endl;
-
-      controller.cancel( this->egrd_event->cluster, this->ei_data->md_logfile_name.c_str(), false );
-    }
-    else {
-      elog::cedglog << logger::setlevel( logger::debug )
-		    << "Forwarding request by EDG Id..." << endl;
-
-      controller.cancel( glite::wmsutils::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
-    }
-
-    this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->egrd_event->eventNumber );
-  }
-
+  gsf = dynamic_cast< GlobusSubmitFailedEvent* >( tmpevent );
+  gsf->reason = new char[128]; 
+  strncpy( gsf->reason, reason.c_str(), 128 );
+  
+  this->ei_data->md_timer->start_timer( epoch, tmpevent );
+  
   return;
 }
 

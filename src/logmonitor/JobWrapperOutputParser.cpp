@@ -141,7 +141,7 @@ JWOP::status_type JobWrapperOutputParser::parse_file( int &retcode, string &erro
 		      << "Stuttgard - Naples: 3 - 3" << endl
 		      << "Naples win the UEFA cup !!!" << endl;
       else {
-	errors.append( "Cannot read JobWrapper output, both from Condor and from Maradona." );
+	errors.append( "Cannot read JobWrapper output, both from Condor and from Maradona. " );
 
 	elog::cedglog << logger::setlevel( logger::null ) << errors
 		      << logger::setlevel( logger::ugly )

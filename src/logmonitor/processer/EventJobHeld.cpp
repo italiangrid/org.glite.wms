@@ -109,18 +109,9 @@ void EventJobHeld::process_event( void )
       this->ei_data->md_logger->job_held_event( reason );
 
       elog::cedglog << logger::setlevel( logger::info ) << "Forwarding remove request to JC." << endl;
-      if( this->ei_data->md_isDagLog ) {
-	elog::cedglog << logger::setlevel( logger::debug )
-		      << "Forwarding request by Condor Id..." << endl;
 
-	controller.cancel( this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str(), false );
-      }
-      else {
-	elog::cedglog << logger::setlevel( logger::debug )
-		      << "Forwarding request by EDG Id..." << endl;
+      controller.cancel( this->ejh_event->cluster, this->ei_data->md_logfile_name.c_str(), false );	
 
-	controller.cancel( glite::wmsutils::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
-      }
 
 #if (CONDORG_VERSION >= 653)
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(),

@@ -9,11 +9,13 @@ enum generic_event_t {
   null_event,
   cancelled_event,
   force_remove,
-  cannot_cancel_event
+  cannot_cancel_event,
+  user_cancelled_event
 };
 
 enum job_statuses_t {
-  undefined_status = -1
+  undefined_status = -1,
+  no_resubmission
 };
 
 extern const char *generic_events_string[];

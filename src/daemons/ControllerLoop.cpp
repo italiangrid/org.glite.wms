@@ -356,17 +356,17 @@ try {
 
 	  if( source == configuration::ModuleType::workload_manager )
 	    this->cl_logger->job_cancel_requested_event( configuration::ModuleType::module_name(source) );
-
+	  
+	  // See lcg2 bug: 3883
+	  boost::filesystem::path        logfile( remreq->get_logfile(), boost::filesystem::system_specific );
+	  
 	  this->cl_stream << logger::setlevel( logger::debug ) << "Executing remove request..." << endl;
 
-	  if( source == configuration::ModuleType::log_monitor ) {
-	    boost::filesystem::path        logfile( remreq->get_logfile(), boost::filesystem::system_specific );
-
+	  if( !logfile.is_null() )
 	    controller.cancel( glite::wmsutils::jobid::JobId(jobid), logfile.file_path().c_str(), force );
-	  }
 	  else
 	    controller.cancel( glite::wmsutils::jobid::JobId(jobid), NULL, force );
-
+	  
 	  break;
 	}
 	case controller::Request::condorremove: {

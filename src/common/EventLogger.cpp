@@ -94,7 +94,7 @@ void EventLogger::testCode( int &code, bool retry )
 #ifdef ENABLE_LOGGING
     case EDG_WLL_ERROR_GSS:
       ts::edglog << logger::setlevel( logger::severe )
-		 << "Severe error in SSL layer while communicating with L&B daemons." << endl
+		 << "Severe error in GSS layer while communicating with L&B daemons." << endl
 		 << "Cause = \"" << cause << "\"." << endl;
 
       if( this->el_hostProxy ) {

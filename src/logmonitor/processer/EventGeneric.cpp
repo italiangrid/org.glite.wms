@@ -104,6 +104,12 @@ void EventGeneric::finalProcess( int cn, const string &message )
 		    << "This event can be discarded..." << endl;
 
       break;
+    case jccommon::user_cancelled_event:
+      elog::cedglog << logger::setlevel( logger::info )
+		    << "Job cancelled by the user, no resubmission should be triggered off. "  << endl;
+      // no resubmission, the job has been cancelled by the user
+      this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), ULOG_GENERIC, jccommon::no_resubmission );
+      break;
     case jccommon::cancelled_event:
       elog::cedglog << logger::setlevel( logger::info )
 		    << "Attaching force remove timeout to cluster " << this->ei_condor << endl;
@@ -130,7 +136,7 @@ void EventGeneric::finalProcess( int cn, const string &message )
 		    << "This is try n. " << position->retry_count() << endl;
 
       this->ei_data->md_container->increment_pointer_retry_count( position );
-      controller.cancel( this->eg_event->cluster );
+      controller.cancel( this->eg_event->cluster, this->ei_data->md_logfile_name.c_str() );
 
       break;
     }

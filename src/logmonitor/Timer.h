@@ -88,7 +88,8 @@ public:
 
   Timer &start_timer( std::time_t expire, ULogEvent *ptr );
   Timer &remove_all_timeouts( int condorid );
-  Timer &remove_timeout( int condorid );
+  // Looking for a timeout attached to the event eventcode for the job condorid
+  Timer &remove_timeout( int condorid, int eventcode );
   Timer &remove_timeout( EventIterator &evIt );
 
   inline const std::string &filename( void ) const { return this->t_filename; }

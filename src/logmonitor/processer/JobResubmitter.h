@@ -4,6 +4,7 @@
 #include <classad_distribution.h>
 
 #include "glite/wms/common/utilities/FileList.h"
+#include "../../common/IdContainer.h"
 
 JOBCONTROL_NAMESPACE_BEGIN {
 
@@ -20,7 +21,7 @@ public:
   JobResubmitter( jccommon::EventLogger *logger );
   ~JobResubmitter( void );
 
-  void resubmit( int laststatus, const std::string &edgid, const std::string &sequence_code );
+  void resubmit( int laststatus, const std::string &edgid, const std::string &sequence_code, jccommon::IdContainer *container = NULL );
 
 private:
   FileList                 jr_list;

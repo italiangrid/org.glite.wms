@@ -67,18 +67,7 @@ void EventGlobusSubmitFailed::process_event( void )
 
     elog::cedglog << logger::setlevel( logger::info ) << "Forwarding remove request to JC." << endl;
 
-    if( this->ei_data->md_isDagLog ) {
-      elog::cedglog << logger::setlevel( logger::debug )
-		    << "Forwarding request by Condor Id..." << endl;
-
-      controller.cancel( this->egsf_event->cluster, this->ei_data->md_logfile_name.c_str() );
-    }
-    else {
-      elog::cedglog << logger::setlevel( logger::debug )
-		    << "Forwarding request by EDG Id..." << endl;
-
-      controller.cancel( glite::wmsutils::jobid::JobId(position->edg_id()), this->ei_data->md_logfile_name.c_str() );
-    }
+    controller.cancel( this->egsf_event->cluster, this->ei_data->md_logfile_name.c_str(), false );
 
     this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), this->egsf_event->eventNumber );
   }

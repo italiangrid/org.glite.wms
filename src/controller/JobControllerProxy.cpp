@@ -13,8 +13,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-
-
 #include "glite/lb/producer.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -95,7 +93,7 @@ catch( RequestException &err ) {
 bool JobControllerProxy::cancel( const glite::wmsutils::jobid::JobId &id, const char *logfile, bool force )
 {
   bool                          good;
-  string                        proxyfile;
+  string                        proxyfile, lf;
   ifstream                      ifs;
   RemoveRequest                 request( id.toString(), this->jcp_source, force );
   jccommon::Files               files( id );
@@ -111,6 +109,12 @@ bool JobControllerProxy::cancel( const glite::wmsutils::jobid::JobId &id, const 
       proxyfile.assign( glite::wms::jdl::get_x509_user_proxy(*jobad, good) );
 
       if( good ) request.set_proxyfile( proxyfile );
+      
+      if ( !logfile ) { // See lcg2 bug 3883
+	lf.assign( glite::wms::jdl::get_log(*jobad, good) );
+	if( good ) request.set_logfile( lf );
+      }
+      
     }
 
     ifs.close();

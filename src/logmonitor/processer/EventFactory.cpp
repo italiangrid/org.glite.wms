@@ -25,6 +25,7 @@
 #include "EventAborted.h"
 #include "EventGlobusSubmitFailed.h"
 #include "EventGlobusResourceDown.h"
+#include "EventGlobusResourceUp.h"
 #include "EventJobHeld.h"
 #include "EventGeneric.h"
 
@@ -71,6 +72,9 @@ EventInterface *EventFactory::create_processor( ULogEvent *event, bool removeTim
   case ULOG_GLOBUS_RESOURCE_DOWN:
     processer = new EventGlobusResourceDown( event, this->ef_data.get() );
     break;
+  case ULOG_GLOBUS_RESOURCE_UP:
+    processer = new EventGlobusResourceUp( event, this->ef_data.get() );
+    break;					
   case ULOG_JOB_HELD:
     processer = new EventJobHeld( event, this->ef_data.get() );
     break;

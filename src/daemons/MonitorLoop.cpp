@@ -347,7 +347,9 @@ try {
 
       for( logIt = logBegin; logIt != logEnd; ++logIt ) {
 	name.assign( logIt->leaf() );
-	if( !boost::filesystem::is_directory(*logIt) && !boost::regex_match(name, expr) && (filemap.count(name) == 0) ) {
+ 	if ( !boost::filesystem::exists(*logIt) ) // see lcg2 bug 3807
+ 	  ; // ignore
+ 	else if( !boost::filesystem::is_directory(*logIt) && !boost::regex_match(name, expr) && (filemap.count(name) == 0) ) {
 	  this->ml_stream << logger::setlevel( logger::low )
 			  << "Adding new condor log file: " << logIt->file_path() << endl;
           
@@ -388,8 +390,7 @@ try {
 	  }
 	} while( loop && (status == logmonitor::CondorMonitor::event_read) );
 
-	//if( !loop ) {
-	  if( (status == logmonitor::CondorMonitor::no_events) && filemapIt->second->file_completed() ) {
+	if( (status == logmonitor::CondorMonitor::no_events) && filemapIt->second->file_completed() ) {
 	    this->ml_stream << logger::setlevel( logger::info ) 
 			    << "No more jobs in condor log file." << endl
 			    << "Scheduling for removal." << endl;
@@ -403,7 +404,7 @@ try {
 
 	    removables.push_back( filemapIt );
 	  }
-//	}
+
       }
 
       if( loop ) {
