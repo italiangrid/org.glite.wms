@@ -20,9 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.11  2004/05/13 23:01:49  dimeglio
+	Removed commands to create module directories (this is a subsystem)
+	Replaced workspace.abs.dir with workspace.dir
+
 	Revision 1.10  2004/05/13 19:50:11  dimeglio
 	Changed all occurrences of test3.wms to wms
-
+	
 	Revision 1.9  2004/05/13 19:37:04  dimeglio
 	Changed all occurrences of EGEE or egee to GLite and glite
 	
@@ -129,8 +133,18 @@
 		<antcall target="defaultenvchecks" />
 	</target>
 
-
 	<target name="localinit" depends="envcheck">
+
+		<echo> Preparing directories ... </echo>
+		
+		<mkdir dir="${stage.bin.dir}" />
+		<mkdir dir="${stage.lib.dir}" />
+		<mkdir dir="${stage.java.dir}" />
+		<mkdir dir="${stage.inc.dir}" />
+		<mkdir dir="${stage.int.dir}" />
+
+		<mkdir dir="${dist.dir}" />
+
 	</target>
 
 	<target name="init" depends="localinit">
@@ -226,47 +240,47 @@
 	     =============================================== -->
 
 	<target name="globus_ssl_utils">
-		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
+		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_ssl_utils"
 		     target="${target}"
 		     inheritall="false" />
 	</target>
 
 	<target name="bypass">
-		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-bypass"
+		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-bypass"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
 	<target name="globus_gridftp_server" depends="globus">
-		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-globus_gridftp_server"
+		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-globus_gridftp_server"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
 	<target name="loki">
-		<ant dir="${workspace.abs.dir}/${subsystem.name}.thirdparty-loki"
+		<ant dir="${workspace.dir}/${subsystem.name}.thirdparty-loki"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
 	<target name="common" depends="boost,classads,globus,globus_ssl_utils">
-		<ant dir="${workspace.abs.dir}/${subsystem.name}.common"
+		<ant dir="${workspace.dir}/${subsystem.name}.common"
 		     target="${target}"
                      inheritall="false" />
 	</target>
 
         <target name="jcommon" depends="jclassads">
-                <ant dir="${workspace.abs.dir}/${subsystem.name}.jcommon"
+                <ant dir="${workspace.dir}/${subsystem.name}.jcommon"
 		     target="${target}"
                      inheritall="false" />
         </target>
 
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="globus_ssl_utils,
-					     bypass,
-   					     globus_gridftp_server,
-  					     loki,
-					     common, 
-						 jcommon" />
+									     bypass,
+				   					     globus_gridftp_server,
+				  					     loki,
+									     common, 
+										 jcommon" />
 		
 </project>
