@@ -40,7 +40,7 @@ namespace server {
 int signal_counter=0;
 
 void signal_handling_init(){
-  signal_counter=1;
+  signal_counter=2;
 }
 
 bool received_quit_signal(){
