@@ -39,6 +39,7 @@
 #include "glite/wms/jdl/ManipulationExceptions.h"
 
 #include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
@@ -61,6 +62,10 @@ namespace {
 typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
 
 std::string const helper_id("BrokerHelper");
+
+//FIXME: should be moved back to ckassad_plugin if/when only this DL is used
+//FIXME: for matchmaking.
+glite::wms::classad_plugin::classad_plugin_loader init;
 
 helper::HelperImpl* create_helper()
 {
