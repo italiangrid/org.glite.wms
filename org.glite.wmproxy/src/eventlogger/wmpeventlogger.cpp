@@ -356,16 +356,13 @@ Logging Events: Accepted,Aborted, Refused, Cancel, Purge
 // Actual LB log call
 bool WMPLogger::logEvent(event_name event, const char* reason){
 		switch (event){
-			case LOG_FEFUSE:
-				return !edg_wll_LogRefused (ctx, EDG_WLL_SOURCE_WM_PROXY, (char *) (retrieveHostName().c_str()), "", reason);
-				break;
 			case LOG_ACCEPT:
 				return !edg_wll_LogAccepted(ctx,  EDG_WLL_SOURCE_WM_PROXY , (retrieveHostName().c_str()),"","");
 				break;
 			case LOG_CANCEL:
 				return !edg_wll_LogCancelREQ(ctx, reason);
 				break;
-			case LOG_PURGE:
+			case LOG_CLEAR:
 				return !edg_wll_LogClearUSER(ctx);
 				break;
 			case LOG_ABORT:
@@ -424,40 +421,6 @@ void WMPLogger::logEvent(event_name  event, const char* reason,bool retry, bool 
 }
 
 
-
-
-
-void
-WMPLogger::logAccepted(const std::string &jid)
-{
-	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY, lb_host.c_str(),
-		str_addr, jid.c_str());
-}
-
-void
-WMPLogger::logRefused(const std::string &jid)
-{
-	/*char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY, lb_host.c_str(),
-		str_addr, jid.c_str());*/
-}
-
-void
-WMPLogger::logAbort(const char *reason)
-{
-	char str_addr[1024];
-	sprintf(str_addr, "%s%s%d", lb_host.c_str(), ":", lb_port);
-	edg_wll_LogAbort(ctx, reason);
-}
-
-
-
-
-
-
 void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &file_queue, bool mode, const char *reason, bool retry ){
 	int i=0;
 	edglog_fn("WMPLogger::logEnqueuedJobN");
@@ -502,7 +465,7 @@ void WMPLogger::logEnqueuedJob(std::string jdl, const std::string &proxy_path,
 				jdl.c_str(),
 				(mode ? "OK" : "FAIL"),
 				reason);
-		this->testAndLog( res, with_hp, lap, host_cert, host_key );
+		testAndLog( res, with_hp, lap, host_cert, host_key );
 	}while( res != 0 );
 }
 

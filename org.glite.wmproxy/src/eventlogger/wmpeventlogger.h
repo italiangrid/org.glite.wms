@@ -28,10 +28,9 @@ class WMPLogger  {
 
 	public:
 		enum event_name {
-			LOG_FEFUSE,
 			LOG_ACCEPT,
 			LOG_CANCEL,
-			LOG_PURGE,
+			LOG_CLEAR,
 			LOG_ABORT
 		};
 		WMPLogger();
@@ -55,9 +54,6 @@ class WMPLogger  {
 		bool logEvent(event_name event,  const char* reason);
 		void logEvent(event_name event,  const char* reason, bool retry);
 		void logEvent(event_name  event, const char* reason, bool retry, bool test);
-		void logAccepted(const std::string &jid);
-		void logRefused(const std::string &jid);
-		void logAbort(const char *reason = "");
 
 		void logUserTag(std::string name, const std::string &value);
 		void logUserTags(classad::ClassAd *userTags);
