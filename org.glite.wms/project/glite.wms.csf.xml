@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.26  2004/05/26 18:52:55  eronchie
+	Added new sub-module org.glite.wms.jobid
+
 	Revision 1.25  2004/05/26 18:27:46  eronchie
 	Added sub-module org.glite.wms.tls
-
+	
 	Revision 1.24  2004/05/25 11:42:46  eronchie
 	Removed jcommon and added jdlj
 	
@@ -202,6 +205,9 @@
 		<condition property="tls.head">
                         <equals arg1="${org.glite.wms.tls.version}" arg2="HEAD" />
                 </condition>
+		<condition property="jobid.head">
+                        <equals arg1="${org.glite.wms.jobid.version}" arg2="HEAD" />
+                </condition>
 		<condition property="jdlj.head">
 			<equals arg1="${org.glite.wms.jdlj.version}" arg2="HEAD" />
 		</condition>
@@ -268,6 +274,7 @@
   				        thirdparty-loki,
 				        common,
 				        tls,
+					jobid,
  				        jdlj"/>
 
 	<!-- Globus SSLUtils -->
@@ -328,6 +335,16 @@
         <target name="get.tls.tag" unless="tls.head">
                 <cvs-co package="org.glite.wms.tls"
                         tag="${org.glite.wms.tls.version}" />
+        </target>
+
+	<!-- Jobid -->
+        <target name="jobid" depends="boost,classads,globus,get.jobid.head, get.jobid.tag"/>
+        <target name="get.jobid.head" if="jobid.head">
+                <cvs-co package="org.glite.wms.jobid" />
+        </target>
+        <target name="get.jobid.tag" unless="jobid.head">
+                <cvs-co package="org.glite.wms.jobid"
+                        tag="${org.glite.wms.jobid.version}" />
         </target>
 
 	<!-- Jdlj -->

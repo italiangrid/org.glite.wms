@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.16  2004/05/26 18:52:54  eronchie
+	Added new sub-module org.glite.wms.jobid
+
 	Revision 1.15  2004/05/26 18:27:46  eronchie
 	Added sub-module org.glite.wms.tls
-
+	
 	Revision 1.14  2004/05/25 11:42:12  eronchie
 	Removed jcommon and added jdlj
 	
@@ -303,6 +306,12 @@
                      inheritall="false" />
         </target>
 
+	<target name="jobid" depends="boost,classads,globus,globus_ssl_utils,common">
+                <ant dir="${workspace.dir}/${subsystem.name}.jobid"
+                     target="${target}"
+                     inheritall="false" />
+        </target>
+
         <target name="jdlj" depends="jclassads">
                 <ant dir="${workspace.dir}/${subsystem.name}.jdlj"
 		     target="${target}"
@@ -316,6 +325,7 @@
  					     loki,
 					     common,
 					     tls,
+					     jobid,
    					     jdlj" />
 		
 </project>
