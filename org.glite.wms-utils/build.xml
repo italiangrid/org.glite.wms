@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.4  2004/07/29 07:28:43  dimeglio
+	Removed local envcheck task (must use common one)
+
 	Revision 1.3  2004/07/23 10:43:13  eronchie
 	Removed s
-
+	
 	Revision 1.2  2004/07/23 07:56:24  eronchie
 	Added wms-utils
 	WARNING: work in progress
@@ -90,7 +93,7 @@
 		  Public common targets
 	     =============================================== -->
 	
-	<target name="envinfo">
+	<target name="envinfo2">
 		<!-- Workspace paths -->
 		<echo>*****************************************************************</echo>
 		<echo>*****************************************************************</echo>
@@ -101,10 +104,6 @@
 		<echo>Global project path:	${global.dir}</echo>
 		<echo>Global project name:	${global.name}</echo>
 		<echo>Subsystem name:		${subsystem.name}</echo>
-	</target>
-
-	<target name="envcheck" depends="envinfo,defaultenvchecks" 
-		description="Check environment configuration">
 	</target>
 
 	<target name="localinit" depends="envcheck">
