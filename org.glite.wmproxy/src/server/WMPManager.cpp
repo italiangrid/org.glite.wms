@@ -48,7 +48,8 @@ namespace server {
   {
   }
 
-  wmp_fault_t WMPManager::runCommand(const std::string& cmdname, const std::vector<std::string>& param, void* result)
+  wmp_fault_t WMPManager::runCommand(const std::string& cmdname,
+  	const std::vector<std::string>& param, void* result)
   {
     commands::Command *cmd=NULL;
     edglog_fn("Manager::run");
