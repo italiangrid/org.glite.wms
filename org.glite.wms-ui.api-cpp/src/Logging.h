@@ -26,7 +26,7 @@ class Logging  {
 	Logging( ) ;
 	virtual ~Logging( )  throw() { edg_wll_FreeContext(ctx); };
 	void init (  const std::string& nsHost , int nsPort , glite::wmsutils::jobid::JobId* id ) ;
-	glite::wms::jdl::ExpDagAd* registerJob( edg::workload::common::requestad::JobAd* ad , int resource ) ;
+	glite::wms::jdl::ExpDagAd* registerJob( glite::wms::jdl::JobAd* ad , int resource ) ;
 	void registerJob( glite::wms::jdl::JobAd* ad ) ;
 	void registerDag( glite::wms::jdl::ExpDagAd* ad   ) ;
 	void transfer(  txType tx, const std::string& jdl ,  const char* error ="" ) ;
