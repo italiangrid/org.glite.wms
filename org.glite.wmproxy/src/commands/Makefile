@@ -6,19 +6,11 @@ CWFLAGS=
 CIFLAGS=-I../..
 CMFLAGS=-DWITH_FASTCGI
 
-GSOAPVER=2.7.0
-SOAPPARSER=/home/pacio/cern/repository/gsoap/2.7.0/rhel30_gcc32/wsdl2h
-GSOAP=/home/pacio/cern/repository/gsoap/2.7.0/rhel30_gcc32/soapcpp2
-SOAPH=/home/pacio/cern/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.h
-SOAPC=/home/pacio/cern/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.c
-SOAPCPP=/home/pacio/cern/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.cpp
-
-REPOSITORY=/home/marcop/develop/ws
-GSOAPPATH=/home/pacio/cern/repository/gsoap/2.7.0/rhel30_gcc32
+REPOSITORY=/home/fpacini/CVS_REP/cern
 REPLIBS=$(REPOSITORY)/stage/lib
 INTERFACE=$(REPOSITORY)/org.glite.wms.wmproxy-interface/interface
 
-GLOBUS_LOCATION=$(REPOSITORY)/repository/globus/2.4.3-VDT-1.2.0/rhel30_gcc32
+GLOBUS_LOCATION=$(REPOSITORY)/repository/globus/2.4.3-VDT-1.2.2/rhel30_gcc32
 CLASSAD=$(REPOSITORY)/repository/classads/0.9.6/rhel30_gcc32
 BOOST=$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32
 ARES=$(REPOSITORY)/repository/ares/1.1.1/rhel30_gcc32
@@ -36,10 +28,8 @@ GLOBUS_COMMON_LIBS = -lglobus_common_gcc32dbg
 
 CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-DWANT_NAMESPACES \
-	-I/usr/include/httpd -I/usr/include/apr-0 \
 	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
 	-I$(ARES)/include \
-	-I$(GSOAPPATH) \
 	-I$(REPOSITORY)/stage/include \
 	-I$(CLASSAD)/include \
 	-I$(BOOST)/include/boost \
@@ -95,9 +85,9 @@ LDCLIENTFLAGS= -lssl \
 all:	glitePipe wmCommands
 
 glitePipe:	
-		$(CPP) $(CFLAGS) $(CMFLAGS) -I. -DSHOW_EXECUTION \
-		    -o glitePipe MatchingPipe.cpp MatchingPipeFiller.cpp \
-		$(LDFLAGS)
+		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I. -DSHOW_EXECUTION \
+		    -o libglitePipe.so MatchingPipe.cpp MatchingPipeFiller.cpp \
+		$(LIBS)
 
 wmCommands: 
 		$(CPP) $(CFLAGS) $(CMFLAGS) -DSHOW_EXECUTION \
