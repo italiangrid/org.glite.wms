@@ -48,6 +48,11 @@ class AdWrapper {
 	* convert the current Ad intance into a DagAd instance
 	*/
 	bool toDagAd () ;
+	/**
+	*convert the current partitionable job into a DagAd
+	*@param jobids the jobids of the sub jobs of the dag to be created
+	*/
+	bool  toDagAd( const std::vector <std::string>&  jobids);
 	/**Check the JobAd attributes and  values
 	*/
 	bool check();

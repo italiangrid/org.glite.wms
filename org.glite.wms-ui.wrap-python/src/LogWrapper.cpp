@@ -170,7 +170,7 @@ void LOG::log_start (const std::string& host , int port , const std::string& jdl
        getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
        log_error ( error_message ) ;
    }
-  };
+  }
 void LOG::log_tag (const std::string& attrName  , const std::string& attrValue ){
 	error_code= 0 ;
 	if (      edg_wll_LogUserTag( ctx,  attrName.c_str() ,  attrValue.c_str()  )   ){
@@ -182,21 +182,17 @@ void LOG::log_tag (const std::string& attrName  , const std::string& attrValue )
 		log_error ( error_message ) ;
 	}
 }
-
 void LOG::log_jobid(const std::string& j ){
 	glite::wmsutils::jobid::JobId jobid (j) ;
 	edg_wll_SetLoggingJob(  ctx , jobid.getId() ,NULL, EDG_WLL_SEQ_NORMAL) ;
-} ;
-
+}
 void LOG::free (){
 	error_code= 0 ; 
 	edg_wll_FreeContext( ctx ) ;
-} ;
-
+}
 std::string LOG::getSequence(){    
 	error_code= 0 ; return edg_wll_GetSequenceCode( ctx ) ; 
-};
-
+}
 void LOG::log_listener( const std::string& jobid, const std::string& host , int port  ) {
    error_code= 0 ;
    if (jobid!= "")
@@ -210,8 +206,7 @@ void LOG::log_listener( const std::string& jobid, const std::string& host , int 
          if (edg_wll_LogAbort ( ctx , "edg_wll_LogListener method failed"   )) cerr << "\n\n\nLB - Warning  edg_wll_LogAbort Failed  ! ! ! "<<flush;
          log_error ( "Unable to perform edg_wll_LogListener LB api to " + string ( getenv ( GLITE_WMS_LOG_DESTINATION) )  ) ;
    }
-};
-
+}
 void LOG::log_tr_ok ( const std::string& jdl , const std::string&  host , int port ){
 	char str_addr [1024];
 	error_code= 0 ;
@@ -224,8 +219,7 @@ void LOG::log_tr_ok ( const std::string& jdl , const std::string&  host , int po
 	   getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
 	   log_error (  error_message ) ;
 	}
-} ;
-
+}
 void LOG::log_tr_fail ( const std::string& jdl , const std::string&  host , int port, const char* exc ){
 	char str_addr [1024];
 	error_code= 0 ;
@@ -236,35 +230,21 @@ void LOG::log_tr_fail ( const std::string& jdl , const std::string&  host , int 
 		str_addr ,
 		jdl.c_str(), exc,"")) cerr << "\n\n\nLB - Warning edg_wll_LogTransferFAIL ! ! ! "<<flush;
 	if (edg_wll_LogAbort ( ctx ,  exc )) cerr << "\n\n\nLB - Warning   edg_wll_LogTransferFAIL! ! ! "<<flush;
-} ;
-
+}
 // DagAd New feature implementation:
 std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns ){
 	vector <string> jobids ;
 	error_code= false ;
 	//  array of subjob ID's
 	edg_wlc_JobId* subjobs = NULL ;
-	// array of Jdls
-	char **jdls_char , **zero_char ;
-	jdls_char = (char**) malloc(sizeof(char*) * (jdls.size()+1));
-	zero_char = jdls_char ;
-	jdls_char[jdls.size()] = NULL;
-	vector<string>::const_iterator iter ;
-	int i = 0 ;
-	for (  iter = jdls.begin() ; iter!=jdls.end() ; iter++, i++){
-		*jdls_char = (char*) malloc ( iter->size() + 1 ) ;
-		sprintf ( *jdls_char  , "%s" ,  iter->c_str() ) ;
-		jdls_char++;
-	}
 	// Register The Dag
 	edg_wlc_JobId id = NULL;
 	try{
 		glite::wmsutils::jobid::JobId jid (jobid );
 		id = jid.getId();
 	} catch (exception &exc) {  log_error ( "Unable parse JobId: " + jobid ) ;       return jobids ;  }
-
-	if (      edg_wll_RegisterJobSync( ctx,  id , EDG_WLL_REGJOB_DAG, jdl.c_str(),
-	ns.c_str() ,    length,   NULL,   &subjobs  ) ){
+	if (edg_wll_RegisterJobSync( ctx,  id , 	jdls.size()==0?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
+		ns.c_str() ,    length,   NULL,   &subjobs  ) ){
 		char error_message [1024];
 		char *msg, *dsc ;
 		edg_wll_Error( ctx , &msg , &dsc ) ;
@@ -273,29 +253,43 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 		log_error ( error_message ) ;
 		return jobids ;
 	}
-	// Register the Sub Jobs
-	// cout << "Performing register Sub Jobs....." << endl ;
-	if (      edg_wll_RegisterSubjobs (  ctx,  id  , zero_char, 
-	ns.c_str(), 
-	subjobs )     ){
-		char error_message [1024];
-		char *msg, *dsc ;
-		edg_wll_Error( ctx , &msg , &dsc ) ;
-		sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform   edg_wll_RegisterSubjobs  at: ",
-		getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
-		log_error ( error_message ) ;
-		return jobids ;
-	}
-	// cout << "register Sub Jobs done properly" << endl ;
-	for ( unsigned int i = 0 ; i < jdls.size() ; i++ ){
-                // Fill vector of jobids strings
+	// Fill the jobids value
+	for ( unsigned int i = 0 ; i < length ; i++ ){
+		// Fill vector of jobids strings
 		jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
-                // Free allocated array cells (jdls_char/zero_char)
-                std::free(zero_char[i]);
-        }
-        std::free(zero_char);
+	}
+	// Register the Sub Jobs (needed when it's a pure dag (not a partitioner)
+	if (jdls.size()>0){
+		// array of Jdls
+		char **jdls_char , **zero_char ;
+		jdls_char = (char**) malloc(sizeof(char*) * (jdls.size()+1));
+		zero_char = jdls_char ;
+		jdls_char[jdls.size()] = NULL;
+		vector<string>::const_iterator iter ;
+		int i = 0 ;
+		for (  iter = jdls.begin() ; iter!=jdls.end() ; iter++, i++){
+			*jdls_char = (char*) malloc ( iter->size() + 1 ) ;
+			sprintf ( *jdls_char  , "%s" ,  iter->c_str() ) ;
+			jdls_char++;
+		}
+		// cout << "Performing register Sub Jobs....." << endl ;
+		if (      edg_wll_RegisterSubjobs (  ctx,  id  , zero_char,
+		ns.c_str(),
+		subjobs )     ){
+			char error_message [1024];
+			char *msg, *dsc ;
+			edg_wll_Error( ctx , &msg , &dsc ) ;
+			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform   edg_wll_RegisterSubjobs  at: ",
+			getenv ( GLITE_WMS_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+			log_error ( error_message ) ;
+			return jobids ;
+		}
+		// cout << "register Sub Jobs done properly" << endl ;
+		std::free(zero_char);
+	}
 	return jobids ;
-} ;
+}
+
 
 
 
