@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.19  2004/10/11 17:04:48  eronchie
+	Removed ssl_utils as tls dependency
+
 	Revision 1.18  2004/10/11 17:02:48  eronchie
 	Removed ssl_utils as jobid dependency
-
+	
 	Revision 1.17  2004/09/29 13:19:52  flammer
 	Only update of formatting os small.memory lines.
 	
@@ -278,7 +281,7 @@
 		</if>
 	</target>
 
-    	<target name="tls" unless="setenvonly" depends="boost,classads,globus,cppunit,thirdparty-globus_ssl_utils,exception">
+    	<target name="tls" unless="setenvonly" depends="boost,classads,globus,cppunit,exception">
 		<if>
 			<isset property="small.memory" />
 			<then>
