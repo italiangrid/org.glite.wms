@@ -17,6 +17,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/07/18 11:53:35  eronchie
+#       Added AC_GLITE_LB check
+#       WARNING: work in progress
+#
 #       Revision 1.1  2004/07/06 10:05:38  pandreet
 #       Basic build files for jobsubmission
 #
@@ -88,7 +92,8 @@ have_glite_wms_common=no
 have_glite_wms_jobid=no
 have_glite_wms_tls=no
 have_glite_wms_jdl=no
-                                                                                
+have_lite_lb=no                                                          
+                      
 AC_GLITE
                                                                                 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
@@ -102,6 +107,9 @@ AC_MSG_RESULT(["GLITE_WMS_TLS found $have_glite_wms_tls"])
 
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
