@@ -20,10 +20,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2004/07/28 15:52:50  eronchie
+	Updated
+
 	Revision 1.2  2004/07/28 10:14:40  eronchie
 	Added m4files.list property
 	Removed AC_WMS_COMMON
-
+	
 	Revision 1.1  2004/07/08 15:11:03  pandreet
 	Basic build files for checkpointing
 	
@@ -64,6 +67,6 @@
 	      Define extra properties here ...
 	     ====================================================== -->
 	
-	<property name="m4files.list" value="boost.m4 classads.m4 glite.m4"/>
+	<property name="m4files.list" value="boost.m4 classads.m4 glite.m4 glite_wmsutils.m4"/>
 		
 </project>
