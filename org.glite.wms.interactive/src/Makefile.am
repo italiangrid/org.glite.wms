@@ -18,7 +18,6 @@ glite_wms_pipe_input_SOURCES = glite_wms_pipe_input.c
 glite_wms_pipe_input_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_pipe_input_LDADD = \
 	$(GLITE_WMS_TP_BYPASS_LIBS) \
-	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -36,7 +35,6 @@ glite_wms_pipe_output_SOURCES = glite_wms_pipe_output.c
 glite_wms_pipe_output_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_pipe_output_LDADD = \
 	$(GLITE_WMS_TP_BYPASS_LIBS) \
-	$(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -53,7 +51,6 @@ glite_wms_job_agent_SOURCES = glite_wms_job_agent.c
 glite_wms_job_agent_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_agent_LDADD = \
         $(GLITE_WMS_TP_BYPASS_LIBS) \
-        $(GLITE_WMSUTILS_THP_GLOBUS_SSL_UTILS_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
