@@ -28,7 +28,6 @@ glite_wms_socketppClientTest_LDADD = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
-	$(GLITE_WMS_COMMON_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in *~
