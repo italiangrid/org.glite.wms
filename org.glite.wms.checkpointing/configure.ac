@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2004/07/27 11:26:23  eronchie
+#       Start using AC_GLITE_WMSUTILS
+#
 #       Revision 1.2  2004/07/23 17:13:13  eronchie
 #       Updatreds
 #
@@ -74,22 +77,15 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 
 have_glite_wms_common=no
-have_glite_wms_jobid=no
-have_glite_wms_tls=no
+have_glite_wmsutils=no
                                                                                 
 AC_GLITE
                                                                                 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
-AC_GLITE_WMSUTILS_EXCEPTION([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_EXCEPTION found $have_glite_wms_common"])
-
-AC_GLITE_WMSUTILS_JOBID([], have_glite_wms_jobid=yes, have_glite_wms_jobid=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_JOBID found $have_glite_wms_jobid"])
-
-AC_GLITE_WMSUTILS_TLS([], have_glite_wms_tls=yes, have_glite_wms_tls=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS_TLS found $have_glite_wms_tls"])
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
