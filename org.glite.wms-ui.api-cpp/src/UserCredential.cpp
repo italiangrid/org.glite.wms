@@ -7,8 +7,13 @@
 #include "glite/wmsui/api/UserCredential.h"
 #include "CredentialException.h"
 #include <sys/types.h> // in order to get pid
-#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
 #include <iostream>  //cout
+
+#include <globus_openssl.h>  // globus_result_t
+#include <globus_gsi_system_config.h>  //GLOBUS_GSI_SYSCONFIG_CHECK_KEYFILE
+#include <globus_gsi_credential.h>  // globus_gsi_cred_handle
+#include <globus_gsi_proxy.h>  // GLOBUS_GSI_PROXY_MODULE
+#include <openssl/safestack.h>  // sk_X509_new_null
 
 namespace glite {
 namespace wmsui {
@@ -91,91 +96,116 @@ string UserCredential::getIssuer      (const string& cred_path){
  method: getInfo
 *******************************************************************/
 void UserCredential::getInfo(string& subj, string& issuer, int& cred_type, int& strength, int& time_left, const string& cred_path ) {
-   GLITE_STACK_TRY("getInfo(string& subj, string& issuer, int& cred_type, int& strength, int& time_left, const string& cred_path ) ");
+	GLITE_STACK_TRY("getInfo(string& subj, string& issuer, int& cred_type, int& strength, int& time_left, const string& cred_path ) ");
+	pthread_mutex_lock( &mutex);  //LOCK RESOURCES
+	try{
+		proxy_file = NULL;
+		globus_gsi_cred_handle_t  proxy_cred = NULL ;
+		EVP_PKEY     *proxy_pubkey= NULL ;
+		// globus_gsi_cert_utils_cert_type_t   cert_type;
+		char *tmp ;
+		time_t                lifetime;
 
-   pcd = NULL;
-   proxy_file = NULL;
-   pthread_mutex_lock( &mutex);  //LOCK RESOURCES
-   /* initialize SSLeay and the error strings */
-   ERR_load_prxyerr_strings(0);
-   SSLeay_add_ssl_algorithms();
-   pcd = proxy_cred_desc_new();
+		// Activation modesl:
+		globus_module_activate(GLOBUS_OPENSSL_MODULE) ;
+		globus_module_deactivate(GLOBUS_GSI_PROXY_MODULE);
+		globus_module_activate(GLOBUS_GSI_CREDENTIAL_MODULE) ;
+		globus_module_activate(GLOBUS_GSI_SYSCONFIG_MODULE );
 
-   /* Determine proxy file name*/
-   try{  //TBD sure is needed? If the proxy not found, the lock keeps locking?
-           if (cred_path !="")
-             proxy_file = (char *)cred_path.c_str();
-           else{
-              proxy_get_filenames(pcd, 1, NULL, NULL, &proxy_file, NULL, NULL);
-              if (!proxy_file) {
-                 throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
-                 }
-              }
-           /* Find proxy file */
-           if (stat(proxy_file,&stx) != 0) {
-              throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED, "find" );
-           }
-           /* Load proxy */
-           pcd->type=CRED_TYPE_PROXY;
-           if (proxy_load_user_cert(pcd, proxy_file, NULL, NULL))
-              throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED, "load" );
-           if ((pcd->upkey = X509_get_pubkey(pcd->ucert)) == NULL)
-              throw   CredKeyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED );
-           /* The things we will need to know below: subject, issuer,
-           strength, validity, type */
-           ASN1_UTCTIME *        asn1_time = NULL;
-           time_t                time_after;
-           time_t                time_now;
-           /* subject */
-           subj=X509_NAME_oneline(X509_get_subject_name(pcd->ucert),NULL,0);
-           /* issuer */
-           issuer=X509_NAME_oneline(X509_get_issuer_name(pcd->ucert),NULL,0);
-           /* validity: set time_diff to time to expiration (in seconds) */
-           asn1_time = ASN1_UTCTIME_new();
-           X509_gmtime_adj(asn1_time,0);
-           time_now = ASN1_UTCTIME_mktime(asn1_time);
-           time_after = ASN1_UTCTIME_mktime(X509_get_notAfter(pcd->ucert));
-           time_left = (int)time_after - time_now ;
-           /* strength: set strength to key size (in bits) */
-           strength = 8 * EVP_PKEY_size(pcd->upkey);
-           /* cred type: limited or full */
-           if (subj.find ("/CN=limited proxy")>=0 )
-              cred_type=2;    //            LIMITED_PROXY
-           else
-              cred_type = 1 ; //            FULL_PROXY
-           pthread_mutex_unlock( &mutex);  //   UNLOCK RESOURCES
-   }catch (CredProxyException &exc){
-          pthread_mutex_unlock( &mutex);  //   UNLOCK RESOURCES
-          throw exc ;
-   }
-   GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+		// Check the file:
+		if (cred_path !=""){
+			proxy_file = (char *)cred_path.c_str();
+			if (GLOBUS_GSI_SYSCONFIG_CHECK_KEYFILE( proxy_file , NULL ) != GLOBUS_SUCCESS)   // Warning: NULL pointer passed
+				throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
+		}else{
+			if (GLOBUS_GSI_SYSCONFIG_GET_PROXY_FILENAME( &proxy_file, GLOBUS_PROXY_FILE_INPUT) != GLOBUS_SUCCESS )
+				throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
+		}
+		if ( globus_gsi_cred_handle_init(&proxy_cred, NULL) != GLOBUS_SUCCESS )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "initialize" );
+		if ( globus_gsi_cred_read_proxy(proxy_cred, proxy_file) !=GLOBUS_SUCCESS)
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "get" );
+		// subject
+		if    (globus_gsi_cred_get_subject_name(proxy_cred, &tmp) != GLOBUS_SUCCESS  )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "read subject" );
+		subj = string (tmp) ;
+	#ifdef WIN32
+		OPENSSL_free(tmp);
+	#else
+		free(tmp);
+	#endif
+		// issuer
+		if (globus_gsi_cred_get_issuer_name(proxy_cred, &tmp) != GLOBUS_SUCCESS  )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "read issuer" );
+		issuer = string (tmp) ;
+	#ifdef WIN32
+		OPENSSL_free(tmp);
+	#else
+		free(tmp);
+	#endif
+		// validity
+		if (globus_gsi_cred_get_lifetime(proxy_cred, &lifetime ) != GLOBUS_SUCCESS  )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "read validity" );
+		time_left = (int) lifetime ;
+
+		if (globus_gsi_cred_get_key(proxy_cred, &proxy_pubkey ) != GLOBUS_SUCCESS  )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "read key" );
+
+		// Strength
+		strength = 8 * EVP_PKEY_size(proxy_pubkey);
+
+		// type: restricted, limited or full
+/*
+		globus_gsi_cert_utils_proxy_type_t cert_type ;
+		if ( globus_gsi_cred_check_proxy(proxy_cred, &cert_type) !=GLOBUS_SUCCESS)
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "read type" );
+*/
+
+		globus_gsi_cred_handle_t  handle ;
+		globus_gsi_cert_utils_cert_type_t  cert_type ;
+
+		if (  globus_gsi_cred_get_cert_type ( handle , &cert_type ) !=GLOBUS_SUCCESS )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "read type" );
+
+		cred_type = (int) cert_type ;
+		globus_module_deactivate(GLOBUS_OPENSSL_MODULE);
+		globus_module_deactivate(GLOBUS_GSI_PROXY_MODULE);
+		globus_module_deactivate(GLOBUS_GSI_CREDENTIAL_MODULE) ;
+		pthread_mutex_unlock( &mutex);  //   UNLOCK RESOURCES
+	}catch (CredProxyException &exc){
+		pthread_mutex_unlock( &mutex);  //   UNLOCK RESOURCES
+		throw exc ;
+	}
+	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
 /******************************************************************
  method:  destroy
 *******************************************************************/
 void UserCredential::destroy(const string& cred_path ) {
-      GLITE_STACK_TRY("destroy(const string& cred_path ) ");
-      string proxy_path;
-      char uid [128] ;
-      sprintf (uid, "%i" , getuid() ) ;
-
-      if (cred_path != "")
-         //  NO Cred Path Specified
-         proxy_path = getenv(X509_USER_PROXY) ;
-      else
-         //  Cred Path Specified
-         proxy_path = cred_path ;
-      if (proxy_path == "")
-         // X509_USER_PROXY not set
-         proxy_path = string(DEFAULT_SECURE_TMP_DIR) +
-                               string(FILE_SEPERATOR) +
-                               string(X509_USER_PROXY_FILE) +
-                               string (uid) ;
-      pthread_mutex_lock( &mutex);  //   LOCK RESOURCES
-      remove(proxy_path.c_str() );
-      pthread_mutex_unlock( &mutex);  //  UNLOCK RESOURCES
-      GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
+	GLITE_STACK_TRY("destroy(const string& cred_path ) ");
+	string proxy_path;
+	char uid [128] ;
+	sprintf (uid, "%i" , getuid() ) ;
+	if (cred_path != "")
+			//  NO Cred Path Specified
+			proxy_path = getenv("X509_USER_PROXY") ;
+	else
+			//  Cred Path Specified
+			proxy_path = cred_path ;
+/*
+	if (proxy_path == ""){   //TBD
+		// X509_USER_PROXY not set
+		proxy_path = string(DEFAULT_SECURE_TMP_DIR) +
+				string(FILE_SEPERATOR) +
+				string(X509_USER_PROXY_FILE) +
+				string (uid) ;
+	}
+*/
+	pthread_mutex_lock( &mutex);  //   LOCK RESOURCES
+	if (proxy_path == "") remove(proxy_path.c_str() );
+	pthread_mutex_unlock( &mutex);  //  UNLOCK RESOURCES
+	GLITE_STACK_CATCH() ; //Exiting from method: remove line from stack trace
 };
 
 /******************************************************************
@@ -291,10 +321,16 @@ private method: load_voms
 // void UserCredential::load_voms (){
 void UserCredential::load_voms ( vomsdata& d  ){
 	string METHOD("load_voms(vomsdata vo)");
+	if   (proxy_file ==NULL)
+		if (GLOBUS_GSI_SYSCONFIG_GET_PROXY_FILENAME( &proxy_file, GLOBUS_PROXY_FILE_INPUT) != GLOBUS_SUCCESS )
+			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
+
+/* OLD IMPLEMENTATION
 	if (proxy_file ==""){
 		proxy_get_filenames(pcd, 1, NULL, NULL, &proxy_file, NULL, NULL);
 		if (!proxy_file)  throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
 	}
+*/
 	d.data.clear() ;
 	BIO *in = NULL;
 	X509 *x = NULL;   // It is not used anymore. should be equal to pcd->ucert
