@@ -24,7 +24,7 @@
 
 #include "glite/lb/JobStatus.h"
 
-namespace errorcodes =  glite::wms::wmproxy::server ;  //Exception codes
+namespace errorcodes = glite::wms::wmproxy::server;  //Exception codes
 namespace jobid = glite::wmsutils::jobid;
 
 using namespace std;
@@ -351,7 +351,6 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 
 	int return_value = SOAP_OK;
 
-	cerr<<"jdl: "<<jdl<<endl;
 	jobRegisterResponse jobRegister_response;
 
 	try {

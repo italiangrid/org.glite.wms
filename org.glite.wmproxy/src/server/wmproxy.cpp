@@ -68,10 +68,14 @@ main(int argc, char* argv[])
 			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file_max_size(),
 			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_base_file(),
 			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_max_file_number())) {
-				cout << "Unable to create default log file: " << endl <<  singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_base_file() << endl ;
+				cout << "Unable to create default log file: " << endl <<  
+					singleton_default<WmproxyConfiguration>::instance()
+					.wmp_config->log_rotation_base_file() << endl ;
 				cerr << "System exiting..."<< endl ;
 				return 1;
 		}
+		cerr<<"----- Log file: "<<singleton_default<WmproxyConfiguration>::instance()
+			.wmp_config->log_rotation_base_file()<<endl;
 		if (argc < 3) {
             // Run as a FastCGI script
 			edglog(fatal) << "Running as a FastCGI program" << endl;
@@ -107,7 +111,7 @@ main(int argc, char* argv[])
 			}
 			edglog(fatal) << "Exiting the FastCGI loop..." << endl;
 
-		}else{
+		} else {
 			edglog(fatal) << "Running as a gSoap standalone Service" << endl;
         		soap = soap_new();
    			soap->accept_timeout = 60;     /* server times out after 10 minutes of inactivity */
