@@ -112,7 +112,7 @@ libglite_wmsui_native_la_LIBADD = \
 org_glite_wmsui_apij_Api.lo: org_glite_wmsui_apij_Api.cpp
 	/bin/touch org_glite_wmsui_apij_Api.h
 	javah -jni \
-	-d . -classpath $(prefix)/share/java \
+	-d . -classpath $(prefix)/share/java/glite-wms-ui-apij.jar \
 	org.glite.wmsui.apij.Api
 	/usr/bin/libtool $(CXX) -c $(CFLAGS) -DHAVE_CONFIG_H \
 	-I. -I. -I../.. $(AM_CPPFLAGS) \

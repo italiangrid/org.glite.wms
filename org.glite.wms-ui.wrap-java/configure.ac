@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.2  2004/08/12 10:35:12  eronchie
+#       Updated
+#
 #       Revision 1.1  2004/08/12 10:25:50  eronchie
 #       Updated
 #
@@ -31,7 +34,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS UI Wrap java], [0.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/NsWrapper.h])
+AC_CONFIG_SRCDIR([src/org_glite_wmsui_apij_Api.cpp])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
