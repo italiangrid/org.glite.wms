@@ -5,7 +5,7 @@
 
 // $Id$
 
-#include "glite/wms/helper/HelperImpl.h"
+#include "HelperImpl.h"
 #include <fstream>
 #include <stdexcept>
 #include <boost/scoped_ptr.hpp>

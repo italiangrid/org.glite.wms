@@ -6,38 +6,35 @@
 ## *
 ## *********************************************************************
 
-if AMC_BUILD_W_MANAGER
 lib_LTLIBRARIES = libglite_wms_helper.la
 
-plhelperincludedir = $(includedir)/glite/wms/helper
-plhelperinclude_HEADERS = \
+helperdir = $(includedir)/glite/wms/helper
+helper_HEADERS = \
 	CopyHelper.h \
-	Factory.h \
-	Helper.h \
 	exceptions.h \
 	HelperFactory.h \
+	Helper.h \
 	HelperImpl.h \
 	Request.h \
-	RequestStateMachine.h 
-endif
+	RequestStateMachine.h
 
 libglite_wms_helper_la_SOURCES = \
-	Helper.h \
-	Helper.cpp \
-	exceptions.h \
-	exceptions.cpp \
-	HelperFactory.h \
-	HelperFactory.cpp \
-	HelperImpl.h \
-	HelperImpl.cpp \
-	Request.h \
-	Request.cpp \
-	RequestStateMachine.h \
-	RequestStateMachine.cpp
+        Helper.h \
+        Helper.cpp \
+        exceptions.h \
+        exceptions.cpp \
+        HelperFactory.h \
+        HelperFactory.cpp \
+        HelperImpl.h \
+        HelperImpl.cpp \
+        Request.h \
+        Request.cpp \
+        RequestStateMachine.h \
+        RequestStateMachine.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/.. \
-	$(CLASSAD_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) \
-	$(BOOST_CFLAGS)
-
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+	$(GLITE_CFLAGS) \
+	$(BOOST_CFLAGS) \
+	$(CLASSAD_CFLAGS)
+ 
 MAINTAINERCLEANFILES = Makefile.in

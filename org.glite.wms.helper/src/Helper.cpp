@@ -5,10 +5,10 @@
 
 // $Id$
 
-#include "glite/wms/helper/Helper.h"
-#include "glite/wms/helper/HelperImpl.h"
-#include "glite/wms/helper/HelperFactory.h"
-#include "glite/wms/helper/exceptions.h"
+#include "Helper.h"
+#include "HelperImpl.h"
+#include "HelperFactory.h"
+#include "exceptions.h"
 
 namespace glite {
 namespace wms {

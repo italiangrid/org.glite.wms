@@ -7,8 +7,8 @@
 
 #include <fstream>
 #include <classad_distribution.h>
-#include "glite/wms/helper/CopyHelper.h"
-#include "glite/wms/helper/HelperFactory.h"
+#include "CopyHelper.h"
+#include "HelperFactory.h"
 
 namespace glite {
 namespace wms {

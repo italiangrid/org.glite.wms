@@ -5,9 +5,9 @@
 
 // $Id$
 
-#include "glite/wms/helper/exceptions.h"
+#include "exceptions.h"
 #include <string>
-#include "glite/wms/common/requestad/ManipulationExceptions.h"
+#include "glite/wms/jdl/ManipulationExceptions.h"
 
 namespace glite {
 namespace wms {
@@ -87,7 +87,7 @@ try
   m_impl.reset();
 }
 
-CannotGetAttribute::CannotGetAttribute(common::requestad::CannotGetAttribute const& e,
+CannotGetAttribute::CannotGetAttribute(glite::wms::jdl::CannotGetAttribute const& e,
                                        std::string const& helper)
 try
   : HelperError(helper)
@@ -207,7 +207,7 @@ try
   m_impl.reset();
 }
 
-CannotSetAttribute::CannotSetAttribute(common::requestad::CannotSetAttribute const& e,
+CannotSetAttribute::CannotSetAttribute(glite::wms::jdl::CannotSetAttribute const& e,
                                        std::string const& helper)
 try 
   : HelperError(helper)

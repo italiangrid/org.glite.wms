@@ -13,14 +13,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem/exception.hpp>
 
-namespace gltie {
+namespace glite {
 namespace wms {
 
-namespace common {
-namespace requestad {
+namespace jdl {
 class CannotGetAttribute;
 class CannotSetAttribute;
-}}
+}
 
 namespace helper {
 
@@ -58,7 +57,7 @@ public:
   CannotGetAttribute(std::string const& attribute,
                      std::string const& attribute_type,
                      std::string const& helper);
-  CannotGetAttribute(glite::wms::common::requestad::CannotGetAttribute const& e,
+  CannotGetAttribute(glite::wms::jdl::CannotGetAttribute const& e,
                      std::string const& helper);
   ~CannotGetAttribute() throw();
   char const* what() const throw();
@@ -89,7 +88,7 @@ class CannotSetAttribute: public HelperError
 
 public:
   CannotSetAttribute(std::string const& attribute, std::string const& helper);
-  CannotSetAttribute(glite::wms::common::requestad::CannotSetAttribute const& e,
+  CannotSetAttribute(glite::wms::jdl::CannotSetAttribute const& e,
                      std::string const& helper);
   ~CannotSetAttribute() throw();
   char const* what() const throw();

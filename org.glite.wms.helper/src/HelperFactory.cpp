@@ -10,8 +10,8 @@
 #include <classad_distribution.h>
 #include <boost/utility.hpp>
 
-#include "glite/wms/helper/HelperFactory.h"
-#include "glite/wms/helper/HelperImpl.h"
+#include "HelperFactory.h"
+#include "HelperImpl.h"
 #include "glite/wms/thirdparty/loki/Factory.h"
 
 using namespace std;

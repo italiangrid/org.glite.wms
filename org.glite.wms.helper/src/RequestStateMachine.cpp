@@ -10,9 +10,9 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <classad_distribution.h>
-#include "glite/wms/helper/RequestStateMachine.h"
-#include "glite/wms/helper/Helper.h"
-#include "glite/wms/common/logger_utils.h"
+#include "RequestStateMachine.h"
+#include "Helper.h"
+#include "logger_utils.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 
 namespace utilities = glite::wms::common::utilities;

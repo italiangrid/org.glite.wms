@@ -9,12 +9,11 @@
 #define GLITE_WMS_HELPER_COPYHELPER_H
 
 #ifndef GLITE_WMS_HELPER_HELPERIMPL_H
-#include "glite/wms/helper/HelperImpl.h"
+#include "HelperImpl.h"
 #endif
 
-namespace edg {
-namespace workload {
-namespace planning {
+namespace glite {
+namespace wms {
 namespace helper {
 
 class CopyHelper: public HelperImpl

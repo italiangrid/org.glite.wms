@@ -5,10 +5,10 @@
 
 // $Id$
 
-#include "glite/wms/helper/Request.h"
+#include "Request.h"
 #include <stdexcept>
 #include <classad_distribution.h>
-#include "glite/wms/helper/RequestStateMachine.h"
+#include "RequestStateMachine.h"
 
 namespace glite {
 namespace wms {
