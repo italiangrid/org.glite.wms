@@ -21,13 +21,15 @@
 //namespace wms {
 //namespace wmproxy {
 
+
+
 class WMPLogger  {
 
 	public:
-		enum txType {
-			START,
-			OK,
-			FAIL
+		enum log_type {
+			ACCEPTED,
+			ABORT,
+			REFUSED
 		};
 
 		WMPLogger();
@@ -35,13 +37,11 @@ class WMPLogger  {
 
 		void init(const std::string &nsHost, int nsPort, glite::wmsutils::jobid::JobId *id);
 
-		//WMPExpDagAd *registerJob(glite::wms::jdl::JobAd *ad, int res_num);
-		
 		void registerJob(glite::wms::jdl::JobAd *ad);
 		void registerDag(WMPExpDagAd *ad);
 		void registerDag(WMPExpDagAd *ad, int res_num);
 
-		void transfer(txType tx, const std::string &jdl, const char *error = "");
+		void log(log_type tx, const std::string &jid, const char *reason = "");
 
 		std::string getSequence();
 
@@ -58,8 +58,9 @@ class WMPLogger  {
 		std::string dest_uri;
 		glite::wmsutils::jobid::JobId *id;
 		edg_wll_Context ctx;
-		std::string nsHost;
-		int nsPort;
+		//std::string ll_host;
+		std::string lb_host;
+		int lb_port;
 };
 
 //} // wmproxy
