@@ -24,6 +24,10 @@ extern "C" {
 	#include "glite/security/lcmaps/lcmaps.h"
 }
 
+#ifndef ALLOW_EMPTY_CREDENTIALS
+#define ALLOW_EMPTY_CREDENTIALS
+#endif
+
 #include <dlfcn.h>
 
 namespace glite {
@@ -128,16 +132,20 @@ WMPAuthorizer::mapUser()
   	int npols = 0; // this makes LCMAPS check all policies
   	char * user_dn = NULL;
   	char * request = NULL;
-  	char ** namep = NULL;
+  	char * temp = "";
+  	char ** namep = &temp;
+  	//char ** namep = NULL;
   	char ** policynames = NULL; // this makes LCMAPS check all policies
   	gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
   	struct passwd *  user_info   = NULL;
   	uid_t user_id; 
 
   	user_dn = wmputilities::getUserDN();
+  	cerr<<"User DN: "<<user_dn<<endl;
   	// Initialize LCMAPS
   	//retval = lcmaps_init(lcmaps_logfile);
   	FILE* lcas_logfile = this->lcas_logfile; //TBC use a different file???
+  	//FILE * file = fopen("/home/gridsite/lcmaps.log", "a");
   	retval = lcmaps_init(lcas_logfile);
   	if (retval) {
     	edglog(info) << "LCMAPS initialization failure." << endl;
@@ -158,13 +166,17 @@ WMPAuthorizer::mapUser()
   	// Send user mapping request to LCMAPS 
   	retval = lcmaps_run_and_return_username(user_dn, user_cred_handle, request, 
   		namep, npols, policynames);
+  	
+  	//retval = lcmaps_run_without_credentials_and_return_username(user_dn,
+  		//request, namep, npols, policynames);
+  	
   	if (retval) {
     	edglog(info) << "LCAS failed authorization: User " << user_dn 
     		<< " is not authorized" << endl;
     	throw AuthorizationException(__FILE__, __LINE__,
         	"int lcas_get_fabric_authorization();",
         	wmputilities::WMS_NOT_AUTHORIZED_USER,
-        	"LCMAPS failed to map user credential.");
+        	("LCMAPS failed to map user credential. retval = " + retval));
   	}
   
   	// Setting value for username private member
