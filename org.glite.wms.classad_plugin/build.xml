@@ -21,17 +21,21 @@
 
 	Revision history:
 	$Log$
-	Revision 1.1  2004/06/26 13:00:44  eronchie
+	Revision 1.2  2004/06/26 13:30:44  eronchie
 	Start adding classad_plugin
 	WARNING: work in progress
 
+	Revision 1.1  2004/06/26 13:00:44  eronchie
+	Start adding classad_plugin
+	WARNING: work in progress
+	
 	
 -->
 
 <project name="classad_plugin" default="dist">
 	
 	<!-- =========================================
-		 Builds the GLite WMS Common Module
+		 Builds the GLite WMS ClassAdPlugin Module
 		 ========================================= -->
 	
 	<!-- =========================================
