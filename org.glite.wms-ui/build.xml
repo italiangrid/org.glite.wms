@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.12  2004/08/11 13:54:16  eronchie
+	Updated classpath
+
 	Revision 1.11  2004/08/11 13:43:20  eronchie
 	Updated
-
+	
 	Revision 1.10  2004/08/11 12:15:30  eronchie
 	WARNING: work in progress
 	
@@ -300,7 +303,7 @@
 		</if>
 	</target>
 
-	<target name="api-java" unless="setenvonly" depends="jclassads, jglobus log4j">
+	<target name="api-java" unless="setenvonly" depends="jclassads, jglobus log4j, edg-java-security">
 		<if>
 			<isset property="small.memory" />
 			<then>

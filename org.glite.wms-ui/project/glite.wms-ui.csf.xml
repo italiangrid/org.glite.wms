@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.8  2004/08/11 13:54:16  eronchie
+	Updated classpath
+
 	Revision 1.7  2004/08/11 13:43:20  eronchie
 	Updated
-
+	
 	Revision 1.6  2004/08/11 12:15:31  eronchie
 	WARNING: work in progress
 	
@@ -225,7 +228,7 @@
 	</target>
 
 	<!-- api-java -->
- 	<target name="api-java" depends="jglobus, jclassads, log4j, get.api-java.head, get.api-java.tag"/>
+ 	<target name="api-java" depends="jglobus, jclassads, log4j, edg-java-security, get.api-java.head, get.api-java.tag"/>
 	<target name="get.api-java.head" if="api-java.head">
 		<cvs-co package="org.glite.wms-ui.api-java" />
 	</target>
