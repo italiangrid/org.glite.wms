@@ -15,6 +15,7 @@
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wmsutils/jobid/cjobid.h"
+#include "eventlogger/wmpeventlogger.h"
 
 namespace classad {
   class ClassAd;
@@ -30,6 +31,7 @@ namespace commands {
 }
 namespace server {
 namespace commands=glite::wms::wmproxy::commands;
+namespace eventlogger = glite::wms::wmproxy::eventlogger;
 
 typedef boost::scoped_ptr< glite::wms::common::utilities::FileList<std::string> > FileListPtr;
 typedef boost::scoped_ptr< glite::wms::common::utilities::FileListMutex> FileListMutexPtr;
@@ -76,7 +78,7 @@ private:
    * Stores the sequence code for Purger activities, in case of submit.
    * @param cmd the Command classad object related to the edg_job_submit as provided by NS.
    */
-  void storeSequenceCode(classad::ClassAd*, WMPLogger* wmplogger=NULL);
+  void storeSequenceCode(classad::ClassAd*, eventlogger::WMPLogger* wmplogger=NULL);
   /*
    * Stores the user id for Purger quota activities.
    * @param cmd the Command classad object related to the edg_job_submit as provided by NS.

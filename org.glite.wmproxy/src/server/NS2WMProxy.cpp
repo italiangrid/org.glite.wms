@@ -36,6 +36,8 @@ namespace logger     = common::logger;
 namespace commands   = glite::wms::wmproxy::commands;
 namespace requestad  = glite::wms::jdl;
 
+namespace eventlogger = glite::wms::wmproxy::eventlogger;
+
 namespace {
 
 void f_forward(utilities::FileList<std::string>& filelist,
@@ -130,7 +132,7 @@ static bool copy_file(const std::string& from, const std::string& to)
 } 
 
 
-void NS2WMProxy::storeSequenceCode (classad::ClassAd* cmdAd, WMPLogger *wmplogger)
+void NS2WMProxy::storeSequenceCode (classad::ClassAd* cmdAd, eventlogger::WMPLogger *wmplogger)
 {
   edglog_fn("NS2WM::stSeqCode");
   edglog(fatal) << "Storing Seq_Code." << std::endl;
@@ -400,7 +402,7 @@ void NS2WMProxy::submit(classad::ClassAd* cmdAd)
   //
   // Initialize the logging context
   //
-  WMPLogger wmplogger;
+  eventlogger::WMPLogger wmplogger;
   wmplogger.setLoggingJob(jobid ,seq_code.c_str() );
   ((classad::ClassAd*)(cmdAd->Lookup("Arguments"))) -> InsertAttr("SeqCode", wmplogger.getSequence());
 
