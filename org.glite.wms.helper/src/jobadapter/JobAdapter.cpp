@@ -636,6 +636,7 @@ try {
   jw->job_id_to_filename(jobid_to_file); 
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
+  jw->globus_resource_contact_string(globusresourcecontactstring);
   
   if (!b_wmpisb_base_uri) {
     //check if there is the protocol in the inputsandbox path. 

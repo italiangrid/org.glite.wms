@@ -121,6 +121,13 @@ JobWrapper::gatekeeper_hostname(const string& gatekeeper)
   m_gatekeeper_hostname = gatekeeper;
 }
 
+void
+JobWrapper::globus_resource_contact_string(
+                const string& globus_resource_contact_string)
+{
+  m_globus_resource_contact_string = globus_resource_contact_string;
+}
+
 void 
 JobWrapper::environment(const vector<string>& env)
 {

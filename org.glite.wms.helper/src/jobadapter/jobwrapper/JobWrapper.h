@@ -163,6 +163,14 @@ public:
   void gatekeeper_hostname(const std::string& scode);
 
   /**
+   * Declare globus_resource_contact_string
+   * @param globus_resource_contact_string
+   * \ingroup jobadapter
+   */
+  void globus_resource_contact_string(
+                  const std::string& globus_resource_contact_string);
+
+  /**
    * Declare which environment variables must be exported.
    * @param env    list of the environment variables
    * \ingroup jobadapter
@@ -324,6 +332,9 @@ protected:
   
   // gatekeeper hostname
   std::string              m_gatekeeper_hostname;
+
+  // globus resource contact string
+  std::string              m_globus_resource_contact_string;
 
   // environment variable
   std::vector<std::string> m_environment;
