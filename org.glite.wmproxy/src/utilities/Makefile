@@ -16,7 +16,8 @@ all:	utilities
 
 utilities: 
 		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I../server \
-	        -o libglite_wms_wmproxy_utilities.so wmputils.cpp \
+	        -o libglite_wms_wmproxy_utilities.so \
+	        wmputils.cpp wmpexceptions.cpp\
  		$(LIBS)
 
 
