@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.3  2004/07/06 18:19:11  flammer
+	Update of classpath definitions, targets & configure file.
+
 	Revision 1.2  2004/06/14 18:14:35  eronchie
 	Added Configure options
 	WARNING work in progress
-
+	
 	Revision 1.1.1.1  2004/05/26 18:45:05  eronchie
 	Import of wms jobid
 	
@@ -35,11 +38,11 @@
 	
 	<!-- =========================================
 		 Builds the GLite WMS jobid Module
-		 ========================================= -->
+	     ========================================= -->
 	
 	<!-- =========================================
 	     Import properties (order is important)
-		 ========================================= -->
+	     ========================================= -->
 
 	<!-- import baseline & user properties -->
 	<import file="../org.glite/project/baseline.properties.xml" />
@@ -60,39 +63,37 @@
 		
 	<!-- =========================================
 		 Load dependency property files (order is important)
-		 ========================================= -->
+	     ========================================= -->
 	<property file="${user.dependencies.file}"/>
 	<property file="${component.dependencies.file}" />
 	<property file="${subsystem.dependencies.file}" />
 	<property file="${global.dependencies.file}"/>
 	
-	
+	<!-- =========================================
+                 Load configure options (order is important)
+             ========================================= -->
+        <import file="${global.configure.options.file}"/>
+	<import file="${component.configure.options.file}"/>	
+
 	<!-- =========================================
 		 Import task definitions (order is important)
-		 ========================================= -->
+	     ========================================= -->
 	<import file="${subsystem.taskdefs.file}" />
 	<import file="${global.taskdefs.file}" />
 	
-	<!-- =========================================
-                 Load configure options
-                 ========================================= -->
-        <property file="${global.configure.options.file}"/>
-                                                                               
         <!-- =========================================
                  Load common targets
-                 ========================================= -->
-        <import file="${global.targets-external-dependencies.file}"/>
+             ========================================= -->
         <import file="${global.targets-make.file}" />
-        <import file="${component.configure.options.file}"/>		
 		
 	<!-- =========================================
 		 Load version file 
-		 ========================================= -->
+	     ========================================= -->
 	<property file="${module.version.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets
-		 ============================================== -->
+	     ============================================== -->
 	
 	<target name="localinit"
 		description="Module specific initialization tasks">
