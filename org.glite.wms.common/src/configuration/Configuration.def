@@ -1,0 +1,334 @@
+%style wide
+
+class ConfBase {
+
+  wrapper {
+    context = configuration::Configuration::instance();
+  }
+
+  section normal {
+
+    parameter int( LogLevel );
+    parameter unsigned int( LogRotationMaxFileNumber = 5 );
+    parameter std::streamsize( LogFileMaxSize = 100000000 );
+
+    template( bool )
+    inline @ATTRTYPE@ @.@( @ATTRTYPE@ def = @ATTRDEF@ ) <const> { return this->getBool( @ATTRNAME@, def ); }
+
+    template( int )
+    inline @ATTRTYPE@ @.@( @ATTRTYPE@ def = @ATTRDEF@ ) <const> { return this->getInt( @ATTRNAME@, def ); }
+
+    template( unsigned int, long, size_t, std::streamsize )
+    inline @ATTRTYPE@ @.@( @ATTRTYPE@ def = @ATTRDEF@ ) <const> { return static_cast<@ATTRTYPE@>( this->getInt(@ATTRNAME@, def) ); }
+
+    template( double )
+    inline @ATTRTYPE@ @.@( @ATTRTYPE@ def = @ATTRDEF@ ) <const> { return this->getDouble( @ATTRNAME@, def ); }
+
+    template( std::string )
+    inline @ATTRTYPE@ @.@( const @ATTRTYPE@ &def = @ATTRDEF@ ) <const> { return this->getString( @ATTRNAME@, def ); }
+
+    template( std::vector<std::string> )
+    inline @ATTRTYPE@ @.@( void ) <const> { return this->getVector(@ATTRNAME@); }
+
+    ctemplate( bool -> int, std::streamsize -> long, unsigned int, int, long, size_t, double )
+    @ATTRTYPE@ @CLASSPREFIX@@.@( config_error_t *error )
+    {
+      const configuration::Configuration   *general = @CLASSCONTEXT@;
+      @CONTEXTTYPE@  config;
+      @ATTRTYPE@     res( 0 );
+
+      if( general == NULL ) {
+        edg_wlcc_SetConfigurationError( "Configuration not initialized" );
+        *error = edg_wlcc_uninitialized;
+      }
+      else {
+        config = general->@CONTEXTFUNC@();
+
+        res = static_cast<@ATTRTYPE@>( config->@FUNCNAME@() );
+        *error = edg_wlcc_OK;
+      }
+ 
+      return res;
+    }
+
+    ctemplate( std::string -> char * )
+    @ATTRTYPE@ @CLASSPREFIX@@.@( @ATTRTYPE@ copy, size_t *len, config_error_t *error )
+    {
+      const configuration::Configuration   *general = @CLASSCONTEXT@;
+      @CONTEXTTYPE@ config;
+      string  attr;
+
+      if( general == NULL ) {
+        edg_wlcc_SetConfigurationError( "Configuration not initialized" );
+        *error = edg_wlcc_uninitialized;
+
+        copy = NULL;
+      }
+      else {
+        config = general->@CONTEXTFUNC@();
+
+        attr.assign( config->@FUNCNAME@() );
+        *error = edg_wlcc_OK;
+
+        if( copy == NULL ) {
+          copy = reinterpret_cast<char *>(malloc(attr.length() + 1));
+          *len = attr.length();
+          strcpy( copy, attr.c_str() );
+        }
+        else if( *len < attr.length() ) {
+          copy = NULL;
+          edg_wlcc_SetConfigurationError( "Must reallocate output string." );
+          *error = edg_wlcc_mustrealloc;
+        }
+        else {
+          strcpy( copy, attr.c_str() );
+          *len = attr.length();
+        }
+      }
+
+      return copy;
+    }
+  }
+
+  section fileparse {
+
+    parameter std::string( LogFile );
+    parameter std::string( LogRotationBaseFile = "[[LogFile]]" );
+    parameter std::string( LockFile );
+
+    template( std::string )
+    inline @ATTRTYPE@ @.@( const @ATTRTYPE@ &def = @ATTRDEF@ ) <const> { return this->getAndParseFileName(@ATTRNAME@, def); }
+
+    ctemplate( std::string -> char * )
+    @ATTRTYPE@ @CLASSPREFIX@@.@( @ATTRTYPE@ copy, size_t *len, config_error_t *error )
+    {
+      const configuration::Configuration   *general = @CLASSCONTEXT@;
+      @CONTEXTTYPE@ config;
+      string  attr;
+
+      if( general == NULL ) {
+        edg_wlcc_SetConfigurationError( "Configuration not initialized" );
+        *error = edg_wlcc_uninitialized;
+
+        copy = NULL;
+      }
+      else {
+        config = general->@CONTEXTFUNC@();
+
+        attr.assign( config->@FUNCNAME@() );
+        *error = edg_wlcc_OK;
+
+        if( copy == NULL ) {
+          copy = reinterpret_cast<char *>(malloc(attr.length() + 1));
+          *len = attr.length();
+          strcpy( copy, attr.c_str() );
+        }
+        else if( *len < attr.length() ) {
+          copy = NULL;
+          edg_wlcc_SetConfigurationError( "Must reallocate output string." );
+          *error = edg_wlcc_mustrealloc;
+        }
+        else {
+          strcpy( copy, attr.c_str() );
+          *len = attr.length();
+        }
+      }
+
+      return copy;
+    }
+  }
+
+  section parse {
+
+    template( std::string )
+    inline @ATTRTYPE@ @.@( const @ATTRTYPE@ &def = @ATTRDEF@ ) <const> { return this->getAndParseString(@ATTRNAME@, def); }
+
+    ctemplate( std::string -> char * )
+    @ATTRTYPE@ @CLASSPREFIX@@.@( @ATTRTYPE@ copy, size_t *len, config_error_t *error )
+    {
+      const configuration::Configuration  *general = @CLASSCONTEXT@;
+      @CONTEXTTYPE@ config;
+      string  attr;
+
+      if( general == NULL ) {
+        edg_wlcc_SetConfigurationError( "Configuration not initialized" );
+        *error = edg_wlcc_uninitialized;
+
+        copy = NULL;
+      }
+      else {
+        config = general->@CONTEXTFUNC@();
+
+        attr.assign( config->@FUNCNAME@() );
+        *error = edg_wlcc_OK;
+
+        if( copy == NULL ) {
+          copy = reinterpret_cast<char *>(malloc(attr.length() + 1));
+          *len = attr.length();
+          strcpy( copy, attr.c_str() );
+        }
+        else if( *len < attr.length() ) {
+          copy = NULL;
+          edg_wlcc_SetConfigurationError( "Must reallocate output string." );
+          *error = edg_wlcc_mustrealloc;
+        }
+        else {
+          strcpy( copy, attr.c_str() );
+          *len = attr.length();
+        }
+      }
+
+      return copy;
+    }
+  }
+
+}
+
+class CommonConfiguration {
+
+  defaultvalue int = 0;
+  defaultvalue std::string = "";
+
+  wrapper {
+    prefix = edg_wlcc_Common_;
+    contexttype = const configuration::CommonConfiguration *;
+    contextfunc = common;
+  }
+
+  copy ConfBase.parse;
+  copy ConfBase.fileparse;
+
+  parameter std::string( DGUser = "dguser" ) section parse;
+  parameter std::string( HostProxyFile ) section fileparse;
+}
+
+class JCConfiguration {
+
+  defaultvalue bool = false;
+  defaultvalue int = 0;
+  defaultvalue std::string = "";
+
+  wrapper {
+    prefix = edg_wlcc_JobController_;
+    contexttype = const configuration::JCConfiguration *;
+    contextfunc = jc;
+  }
+
+  copy ConfBase.parse;
+  copy ConfBase.fileparse;
+  copy ConfBase.normal;
+
+  parameter bool( UseFakeForProxy ) section normal;
+  parameter bool( UseFakeForReal ) section normal;
+
+  parameter int( ContainerRefreshThreshold = 1000 ) section normal;
+
+  parameter std::string( CondorSubmit ) section fileparse;
+  parameter std::string( CondorRemove ) section fileparse;
+  parameter std::string( CondorQuery ) section fileparse;
+  parameter std::string( CondorSubmitDag ) section fileparse;
+  parameter std::string( CondorRelease ) section fileparse;
+
+  parameter std::string( Input ) section fileparse;
+  parameter std::string( SubmitFileDir ) section fileparse;
+  parameter std::string( OutputFileDir ) section fileparse;
+}
+
+class LMConfiguration {
+
+  defaultvalue bool = true;
+  defaultvalue int = 0;
+  defaultvalue size_t = 0;
+  defaultvalue std::string = "";
+
+  wrapper {
+    prefix = edg_wlcc_LogMonitor_;
+    contexttype = const configuration::LMConfiguration *;
+    contextfunc = lm;
+  }
+
+  copy ConfBase.normal;
+  copy ConfBase.parse;
+  copy ConfBase.fileparse;
+
+  parameter bool( RemoveJobFiles = true ) section normal;
+  parameter bool( UseMaradonaFile = true ) section normal;
+  parameter int( JobsPerCondorLog = 1000 ) section normal;
+  parameter int( MainLoopDuration = 3 ) section normal;
+  parameter int( AbortedJobsTimeout = 600 ) section normal;
+  parameter int( ForceCancellationRetries = 10 ) section normal;
+  parameter size_t( ContainersCompactThreshold = 1000 ) section normal;
+  parameter std::string( CondorLogDir ) section fileparse;
+  parameter std::string( CondorLogRecycleDir ) section fileparse;
+  parameter std::string( ExternalLogFile ) section fileparse;
+  parameter std::string( MonitorInternalDir ) section fileparse;
+  parameter std::string( IdRepositoryName ) section fileparse;
+  parameter std::string( MaradonaTransportProtocol = "gsiftp://${HOSTNAME}" ) section parse; 
+}
+
+class NSConfiguration {
+
+  defaultvalue int = 0;
+  defaultvalue std::string = "";
+  defaultvalue bool = false;
+  defaultvalue double = 0.0;
+
+  wrapper {
+    prefix = edg_wlcc_NetworkServer_;
+    contexttype = const configuration::NSConfiguration *;
+    contextfunc = ns;
+  }
+
+  copy ConfBase.normal;
+  copy ConfBase.parse;
+  copy ConfBase.fileparse;
+  parameter int( BacklogSize = 16 ) section normal;
+  parameter int( ListeningPort ) section normal;
+  parameter int( MasterThreads ) section normal;
+  parameter int( DispatcherThreads ) section normal;
+
+  parameter std::string( SandboxStagingPath = "${EDG_WL_SANDBOX_DIR}" ) section fileparse;
+
+  parameter double( MaxInputSandboxSize = 10000000 ) section normal;
+  parameter bool( EnableQuotaManagement = false ) section normal; 
+  parameter bool( EnableDynamicQuotaAdjustment = false) section normal;
+  parameter long( QuotaAdjustmentAmount = 10000 ) section normal;
+  parameter double( QuotaInsensibleDiskPortion = 0.0 ) section normal;  
+
+#
+#  Parameters to query the II for the schema...
+#
+  parameter int( II_Port = 2170 ) section normal;
+  parameter int( Gris_Port = 2135 ) section normal;
+  parameter int( II_Timeout = 60 ) section normal;
+  parameter int( GrisTimeout = 60 ) section normal;
+  parameter std::string( II_DN ) section normal;
+  parameter std::string( Gris_DN ) section normal;
+  parameter std::string( II_Contact ) section normal;
+}
+
+class WMConfiguration {
+
+  defaultvalue bool = false;
+  defaultvalue int = 0;
+  defaultvalue std::string = "";
+
+  wrapper {
+    prefix = edg_wlcc_WorkloadManager_;
+    contexttype = const configuration::WMConfiguration *;
+    contextfunc = wm;
+  }
+
+  copy ConfBase.normal;
+  copy ConfBase.parse;
+  copy ConfBase.fileparse;
+
+  parameter bool(Fake = false) section normal;
+  parameter int(PipeDepth = 10) section normal;
+  parameter int(WorkerThreads = 1) section normal;
+  parameter int(InputIterations = 1) section normal;
+  parameter int(MaxRetryCount = 10) section normal;
+  parameter std::string(Input = "${EDG_WL_TMP}/workload_manager/input.fl") section fileparse;
+  parameter std::string(DispatcherType = "filelist") section normal;
+
+}

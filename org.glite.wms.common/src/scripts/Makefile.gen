@@ -1,0 +1,18 @@
+
+
+
+
+
+SUFFIXES = .G
+
+GENERATOR_GENERATING_CODE = $(wildcard $(srcdir)/*.cpp.G)
+GENERATOR_GENERATE_CODE = $(patsubst %.cpp.G,%.cpp,$(GENERATOR_GENERATING_CODE))
+
+GENERATOR_GENERATING_HEADS = $(wildcard $(srcdir)/*.h.G)
+GENERATOR_GENERATE_HEADS = $(patsubst %.h.G,%.h,$(GENERATOR_GENERATING_HEADS))
+
+$(GENERATOR_GENERATE_CODE): %.cpp: %.cpp.G $(GENERATOR_DEFINITION_FILE)
+	$(RUNPERL) $(top_srcdir)/src/scripts/generator.pl $(GENERATOR_DEFINITION_FILE) -c $<
+
+$(GENERATOR_GENERATE_HEADS): %.h: %.h.G $(GENERATOR_DEFINITION_FILE)
+	$(RUNPERL) $(top_srcdir)/src/scripts/generator.pl $(GENERATOR_DEFINITION_FILE) -H $<

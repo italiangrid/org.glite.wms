@@ -1,0 +1,99 @@
+#
+#       Copyright (c) 2004 on behalf of the EU EGEE Project:
+#       The European Organization for Nuclear Research (CERN),
+#       Istituto Nazionale di Fisica Nucleare (INFN), Italy
+#       Datamat Spa, Italy
+#       Centre National de la Recherche Scientifique (CNRS), France
+#       CS Systeme d'Information (CSSI), France
+#       Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+#       Universiteit van Amsterdam (UvA), Netherlands
+#       University of Helsinki (UH.HIP), Finland
+#       University of Bergen (UiB), Norway
+#       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+#
+#       Common configure.ac file for the all EGEE modules
+#
+#       Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>
+#       Version info: $Id$
+#       Release: $Name:$
+#
+#       Revision history:
+#       $Log$
+#
+                                                                                                                                                             
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT([EGEE WMS Common], [0.0.0])
+AC_CONFIG_AUX_DIR([./project])
+AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
+AC_CONFIG_SRCDIR([src/common_namespace.h])
+
+# Notices.
+AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
+See LICENCE file for details
+])
+AC_REVISION([$Revision$])
+
+#Environment.
+WORKDIR=`pwd`
+AC_SUBST(WORKDIR)
+
+REPOSITORY=`pwd`/../../repository
+
+BOOST_CPPFLAGS=-I$REPOSITORY/boost/include
+AC_SUBST([BOOST_CPPFLAGS])
+BOOST_LIBS=-L$REPOSITORY/boost/lib/release/lib
+AC_SUBST([BOOST_LIBS])
+
+CLASSAD_CPPFLAGS=-I$REPOSITORY/classads/include
+AC_SUBST([CLASSAD_CPPFLAGS])
+CLASSAD_LIBS="-L$REPOSITORY/classads/lib -llibclassad.a"
+AC_SUBST([CLASSAD_LIBS])
+
+GLOBUS_CPPFLAGS=-I$REPOSITORY/globus/include/gcc32
+AC_SUBST([GLOBUS_CPPFLAGS])
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+AM_PROG_CC_C_O
+AC_PROG_LIBTOOL
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_CHECK_HEADERS([fcntl.h mntent.h sys/vfs.h syslog.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_CHECK_MEMBERS([struct stat.st_rdev])
+AC_TYPE_UID_T
+AC_CHECK_TYPES([ptrdiff_t])
+
+# Checks for library functions.
+AC_HEADER_STDC
+AC_FUNC_ERROR_AT_LINE
+AC_FUNC_GETMNTENT
+AC_FUNC_MEMCMP
+AC_FUNC_STAT
+AC_FUNC_STRFTIME
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
+
+# Configuration items
+AC_PREFIX_DEFAULT([`pwd`/../../opt/egee])
+AM_CONFIG_HEADER([src/autogen/config.h])
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([src/scripts/Makefile])
+AC_CONFIG_FILES([src/configuration/Makefile])
+AC_CONFIG_FILES([src/ldif2classad/Makefile])
+AC_CONFIG_FILES([src/logger/Makefile])
+AC_CONFIG_FILES([src/utilities/Makefile])
+                                                                                                                                                             
+AC_OUTPUT

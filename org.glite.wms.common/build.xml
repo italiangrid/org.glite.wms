@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+	Copyright (c) 2004 on behalf of the EU EGEE Project: 
+	The European Organization for Nuclear Research (CERN), 
+	Istituto Nazionale di Fisica Nucleare (INFN), Italy
+	Datamat Spa, Italy
+	Centre National de la Recherche Scientifique (CNRS), France
+	CS Systeme d'Information (CSSI), France
+	Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+	Universiteit van Amsterdam (UvA), Netherlands
+	University of Helsinki (UH.HIP), Finland
+	University of Bergen (UiB), Norway
+	Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+
+	Build file for the EGEE Test WMS Common module
+	
+	Authors: Alberto Di Meglio <alberto.di.meglio@cern.ch>		
+	Version info: $Id$
+	Release: $Name$
+
+	Revision history:
+	$Log$
+	Revision 1.1  2004/04/29 01:05:21  dimeglio
+	Added org.egee.test3.wms.common
+
+-->
+
+<project name="common" default="export">
+
+	<!-- =========================================
+		 Builds the EGEE Test 3 WMS Common Module
+		 ========================================= -->
+	
+	<!-- Import properties -->
+	<import file="../org.egee/project/properties.xml" />
+	<import file="${workspace.dir}/${test3.wms.subsystem}/project/properties.xml" />
+
+	<!-- Import task definitions -->
+	<import file="${master.project.dir}/taskdefs.xml" />
+	<import file="${subsystem.project.dir}/taskdefs.xml" />
+	
+	<!-- Package name -->
+	<property name="package.name" value="${package.prefix}-${ant.project.name}" />
+
+	<!-- Module name -->
+	<property name="module.name" value="${subsystem.name}.${ant.project.name}" />
+
+	<!-- Load dependencies files -->
+	<property file="${dependencies.file}"/>
+	<property file="${subsystem.dependencies.file}"/>
+
+	<!-- Load version file -->
+	<property file="${version.file}"/>
+
+	<!-- Import common public targets -->
+	<import file="${master.project.dir}/targets-cpp.xml" />
+	
+	<!-- ==============================================
+		 Local private targets
+		 ============================================== -->
+	
+	<target name="localinit"
+		description="Module specific initialization tasks">
+	</target>
+		
+	<target name="localcompile"
+		description="Module specific compile tasks">
+	</target>
+	
+	<target name="localclean"
+		description="Module specific cleaning tasks">
+	</target>
+	
+</project>		

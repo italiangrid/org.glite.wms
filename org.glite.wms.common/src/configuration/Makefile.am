@@ -1,0 +1,69 @@
+## *********************************************************************
+## *
+## * Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
+## * For license conditions see LICENSE file or
+## * http://www.edg.org/license.html
+## *
+## *********************************************************************
+
+lib_LTLIBRARIES = libegee_wl_conf.la \
+	libegee_wl_conf_wrapper.la
+
+libegee_wl_conf_la_SOURCES = \
+	Configuration.cpp \
+	JCConfiguration.cpp \
+	NSConfiguration.cpp \
+	LMConfiguration.cpp \
+	WMConfiguration.cpp \
+	CommonConfiguration.cpp \
+	confbase.cpp \
+	exceptions.cpp \
+	ModuleType.cpp
+
+libegee_wl_conf_wrapper_la_SOURCES = \
+	initializer.cpp \
+	cwrapper.cpp
+
+configurationincludedir = $(includedir)/egee/workload/common/configuration
+configurationinclude_HEADERS = \
+	CommonConfiguration.h \
+	confbase.h \
+	Configuration.h \
+	cwrapper.h \
+	exceptions.h \
+	initializer.h \
+	JCConfiguration.h \
+	LMConfiguration.h \
+	ModuleType.h \
+	NSConfiguration.h \
+	WMConfiguration.h
+
+EXTRA_DIST = JCConfiguration.h.G \
+	LMConfiguration.h.G \
+	NSConfiguration.h.G \
+	WMConfiguration.h.G \
+	CommonConfiguration.h.G \
+	cwrapper.h.G \
+	cwrapper.cpp.G \
+	Configuration.def
+
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+			  $(BOOST_CPPFLAGS) $(CLASSAD_CPPFLAGS)
+
+CLEANFILES = $(srcdir)/JCConfiguration.h \
+        $(srcdir)/LMConfiguration.h \
+        $(srcdir)/NSConfiguration.h \
+        $(srcdir)/WMConfiguration.h \
+        $(srcdir)/CommonConfiguration.h \
+        $(srcdir)/cwrapper.{cpp,h}
+
+MAINTAINERCLEANFILES = \
+	Makefile.in \
+	*~
+
+GENERATOR_DEFINITION_FILE = $(srcdir)/Configuration.def
+
+Configuration.cpp:	JCConfiguration.h LMConfiguration.h NSConfiguration.h WMConfiguration.h CommonConfiguration.h
+initializer.cpp:	cwrapper.h cwrapper.cpp
+
+include $(top_srcdir)/src/scripts/Makefile.gen

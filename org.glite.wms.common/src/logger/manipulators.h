@@ -1,0 +1,131 @@
+#ifndef EDG_WORKLOAD_COMMON_LOGGER_MANIPULATORS_H
+#define EDG_WORKLOAD_COMMON_LOGGER_MANIPULATORS_H
+
+#include <iostream>
+#include <string>
+
+#include "common_namespace.h"
+
+#include "common.h"
+
+COMMON_NAMESPACE_BEGIN {
+
+namespace logger {
+
+class Logbuf;
+namespace threadsafe { class logstream; };
+
+class StatePusher {
+public:
+  StatePusher( std::ostream &os, const char *func = NULL );
+  StatePusher( std::ostream &os, const std::string &func );
+  StatePusher( threadsafe::logstream &os, const char *func = NULL );
+  StatePusher( threadsafe::logstream &os, const std::string &func );
+  ~StatePusher( void );
+
+private:
+  void setState( const char *func );
+
+  StatePusher( const StatePusher &fp ); // Not implemented
+  StatePusher &operator=( const StatePusher &fp ); // Not implemented
+
+  Logbuf                *fp_buffer;
+  DataContainerSingle    fp_data;
+};
+
+#ifndef LOGGER_FUTURE_IMPLEMENTATION
+class setfunction {
+  friend std::ostream &operator<<( std::ostream &os, const setfunction &sf );
+  friend threadsafe::logstream &operator<<( threadsafe::logstream &os, const setfunction &sf );
+
+public:
+  setfunction( const char *func );
+  setfunction( const std::string &func );
+
+private:
+  std::string   sf_function;
+};
+#endif /* !LOGGER_FUTURE_IMPLEMENTATION */
+
+class settimeformat {
+  friend std::ostream &operator<<( std::ostream &os, const settimeformat &sf );
+  friend threadsafe::logstream &operator<<( threadsafe::logstream &os, const settimeformat &sf );
+
+public:
+  settimeformat( const char *format );
+  settimeformat( const std::string &func );
+
+private:
+  std::string   stf_format;
+};
+
+class setlevel {
+  friend std::ostream &operator<<( std::ostream &os, const setlevel &sf );
+  friend threadsafe::logstream &operator<<( threadsafe::logstream &os, const setlevel &sf );
+
+public:
+  setlevel( level_t lev );
+
+private:
+  level_t      sl_level;
+};
+
+class setcurrent {
+  friend std::ostream &operator<<( std::ostream &os, const setcurrent &sf );
+  friend threadsafe::logstream &operator<<( threadsafe::logstream &os, const setcurrent &sf );
+
+public:
+  setcurrent( level_t lev );
+
+private:
+  level_t      sc_level;
+};
+
+class setmultiline {
+  friend std::ostream &operator<<( std::ostream &os, const setmultiline &sm );
+  friend threadsafe::logstream &operator<<( threadsafe::logstream &os, const setmultiline &sm );
+
+public:
+  setmultiline( bool multi, const char *prefix = NULL );
+
+private:
+  bool         sm_multi;
+  const char  *sm_prefix;
+};
+
+class setshowseverity {
+  friend std::ostream &operator<<( std::ostream &os, const setshowseverity &ss );
+  friend threadsafe::logstream &operator<<( threadsafe::logstream &os, const setshowseverity &ss );
+
+public:
+  setshowseverity( bool show );
+
+private:
+  bool     ss_show;
+};
+
+#ifndef LOGGER_FUTURE_IMPLEMENTATION
+std::ostream &operator<<( std::ostream &os, const setfunction &sf );
+#endif /* !LOGGER_FUTURE_IMPLEMENTATION */
+std::ostream &operator<<( std::ostream &os, const settimeformat &stf );
+std::ostream &operator<<( std::ostream &os, const setlevel &sl );
+std::ostream &operator<<( std::ostream &os, const setcurrent &sc );
+std::ostream &operator<<( std::ostream &os, const setmultiline &sc );
+
+#ifndef LOGGER_FUTURE_IMPLEMENTATION
+threadsafe::logstream &operator<<( threadsafe::logstream &os, const setfunction &sf );
+#endif /* !LOGGER_FUTURE_IMPLEMENTATION */
+threadsafe::logstream &operator<<( threadsafe::logstream &os, const settimeformat &sf );
+threadsafe::logstream &operator<<( threadsafe::logstream &os, const setlevel &sf );
+threadsafe::logstream &operator<<( threadsafe::logstream &os, const setcurrent &sf );
+threadsafe::logstream &operator<<( threadsafe::logstream &os, const setmultiline &sf );
+
+}; // Namespace logger
+
+} COMMON_NAMESPACE_END;
+
+#endif /* EDG_WORKLOAD_COMMON_LOGGER_MANIPULATORS_H */
+
+// Local Variables:
+// mode: c++
+// End:
