@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.8  2004/08/09 02:41:53  dimeglio
+	Set default value for failonerror
+
 	Revision 1.7  2004/08/08 19:48:03  dimeglio
 	Added small.memory type of build
-
+	
 	Revision 1.6  2004/08/04 07:30:29  eronchie
 	Added cppunit
 	
@@ -176,13 +179,33 @@
 		</antcall>
 	</target>
 
-	<target name="tag" depends="clean">
+	<target name="tag" if="do.cvs.tag"
+		description="Apply tags.">
+		
+		<antcall target="buildmodules">
+			<param name="target" value="tag"/>
+		</antcall>
 
-		<!-- This target is not recursive
-			 It is only used to set private tags
-			 Tagging is done by the build system -->
-		<!-- TODO -->		
-
+		<!-- TO DO: Add logic to update dependecies.properties file with new components tags -->
+		
+		<!-- Increment build number -->
+		<propertyfile file="${module.version.file}">
+		  <entry  key="module.version" value="${module.version}"/>
+		  <entry  key="module.build" type="int" default="1" operation="+"/>
+		  <entry  key="module.age" value="${module.age}"/>
+		</propertyfile>
+		<exec dir="${module.project.dir}" executable="cvs">
+			<arg line="ci -m &quot;Incremented build number&quot; version.properties" />
+		</exec>
+		<var name="module.build" unset="true"/>
+    	<property file="${module.version.file}" />
+    	
+		<!-- CVS Label -->
+		<property name="cvs.label" value="${module.package.name}_B_${module.build}" />
+		<exec dir="${workspace.abs.dir}" executable="cvs">
+			<arg line="rtag -aFR ${cvs.label} ${module.name}" />
+		</exec>
+	
 	</target>
 
 	<target name="all" depends="localinit">
@@ -226,7 +249,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.thirdparty-globus_ssl_utils" executable="${env.ANT_HOME}/bin/ant" failonerror="true">
+				<exec dir="${wms-utils.subsystem.dir}.thirdparty-globus_ssl_utils" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
 				</exec>
 			</then>
@@ -242,7 +265,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.exception" executable="${env.ANT_HOME}/bin/ant" failonerror="true">
+				<exec dir="${wms-utils.subsystem.dir}.exception" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
 				</exec>
 			</then>
@@ -258,7 +281,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.tls" executable="${env.ANT_HOME}/bin/ant" failonerror="true">
+				<exec dir="${wms-utils.subsystem.dir}.tls" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
 				</exec>
 			</then>
@@ -274,7 +297,7 @@
 		<if>
 			<isset property="small.memory" />
 			<then>
-				<exec dir="${wms-utils.subsystem.dir}.jobid" executable="${env.ANT_HOME}/bin/ant" failonerror="true">
+				<exec dir="${wms-utils.subsystem.dir}.jobid" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
 					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap}"/>
 				</exec>
 			</then>
