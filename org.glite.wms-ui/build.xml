@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.6  2004/08/09 04:35:29  dimeglio
+	Fixed inheritance of do.cvs.tag property
+
 	Revision 1.5  2004/08/09 03:05:28  dimeglio
 	Fixed inheritance of failonerror property
-
+	
 	Revision 1.4  2004/08/09 02:41:46  dimeglio
 	Set default value for failonerror
 	
@@ -255,7 +258,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.api-cpp" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -271,7 +274,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.api-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -287,7 +290,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.cli-python" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -303,7 +306,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.gui-java" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
@@ -319,7 +322,7 @@
 			<isset property="small.memory" />
 			<then>
 				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${env.ANT_HOME}/bin/ant" failonerror="${failonerror}">
-					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror}"/>
+					<arg line="${target} -Dsmall.memory=true -Dbootstrap=${bootstrap} -Dfailonerror=${failonerror} -Ddo.cvs.tag=${do.cvs.tag}"/>
 				</exec>
 			</then>
 			<else>
