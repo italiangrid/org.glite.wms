@@ -15,7 +15,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
 
-#include "../streamdescriptor.h"
+#include "../utilities/streamdescriptor.h"
 
 #include "logbuf.h"
 
