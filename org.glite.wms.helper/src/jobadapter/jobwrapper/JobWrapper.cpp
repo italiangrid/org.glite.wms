@@ -999,11 +999,6 @@ JobWrapper::print(ostream& os) const
   // set the jdl environment variables
   set_environment(os, m_environment);
 
-  send_dgas_gianduia_lsf_files(os, m_globus_resource_contact_string,
-                               m_gatekeeper_hostname);
-  send_dgas_gianduia_pbs_files(os, m_globus_resource_contact_string,
-                               m_gatekeeper_hostname);
-
   // set the umask
   set_umask(os);
  
@@ -1066,6 +1061,12 @@ JobWrapper::print(ostream& os) const
 		  "The job finished correctly!", 
 		  "OK", 
 		  "$status");
+
+  // dgas
+  send_dgas_gianduia_lsf_files(os, m_globus_resource_contact_string,
+                               m_gatekeeper_hostname);
+  send_dgas_gianduia_pbs_files(os, m_globus_resource_contact_string,
+                               m_gatekeeper_hostname);
   
   // Copy back the Maradona file
   os << "doExit 0" << endl;
