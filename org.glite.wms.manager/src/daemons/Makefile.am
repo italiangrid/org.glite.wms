@@ -5,16 +5,11 @@
 ## * http://www.edg.org/license.html
 ## *
 ## *********************************************************************
-CXXFLAGS = -g
 
 MNGR_COMMON = $(top_builddir)/src/common/libglite_wms_manager_common.la
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
 GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
-GLITE_WMS_RLS_LIBS = $(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la
-GLITE_WMS_BROKER_LIBS = $(top_srcdir)/../org.glite.wms.broker/build/src/libglite_wms_broker.la
-GLITE_WMS_BROKERINFO_LIBS = $(top_srcdir)/../org.glite.wms.brokerinfo/build/src/libglite_wms_brokerinfo.la
-GLITE_WMS_MATCHMAKING_LIBS = $(top_srcdir)/../org.glite.wms.matchmaking/build/src/libglite_wms_matchmaking.la
 
 bin_PROGRAMS = \
         glite-wms-workload_manager
@@ -27,7 +22,7 @@ glite_wms_workload_manager_LDADD   = \
         $(GLITE_WMS_HELPER_LIBS) \
         $(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
-	 $(top_srcdir)/../stage/lib/libglite_ce_monitor_client.la \
+	$(top_srcdir)/../stage/lib/libglite_ce_monitor_client.la \
         $(top_srcdir)/../repository/gsoap/2.7.0/rhel30_gcc32/lib/libgsoap.a \
 	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
         $(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
@@ -45,10 +40,6 @@ glite_wms_workload_manager_LDADD   = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
-        $(GLITE_WMS_BROKER_LIBS) \
-	$(GLITE_WMS_BROKERINFO_LIBS) \
-	$(GLITE_WMS_MATCHMAKING_LIBS) \
-	$(GLITE_WMS_RLS_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
