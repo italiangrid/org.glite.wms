@@ -67,11 +67,11 @@ struct NodeStruct {
 /**
 * Used to define the jobid hierarchy of a job or a dag. the nodeName is mandatory only when the jobid refers to a dag node
 */
-struct JobIdStruct{
+struct JobIdApi {
 	/** */
 	std::string jobid ;
 	std::string* nodeName ;
-	std::vector< JobIdStruct* > children ;
+	std::vector< JobIdApi* > children ;
 };
 /**
 * Used to configure non-default properties such as:
@@ -99,7 +99,7 @@ std::string getVersion(ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the structure associated to the registered job, with its jobid(s)
 */
-JobIdStruct jobRegister (const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
+JobIdApi jobRegister (const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 * Register the job and than submit it to the networkserver
 * @param jdl the jdl string representation of the job
@@ -107,7 +107,7 @@ JobIdStruct jobRegister (const std::string &jdl, const std::string &delegationId
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the structure associated to the registered job, with its jobid(s)
 */
-JobIdStruct jobSubmit(const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
+JobIdApi jobSubmit(const std::string &jdl, const std::string &delegationId, ConfigContext *cfs=NULL);
 /**
 * Submit the job to the networkserver.Before being submitted,a jobRegister must be issued
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
@@ -132,7 +132,13 @@ long getMaxInputSandboxSize(ConfigContext *cfs=NULL);
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
 * @return the uniqe URI associated to the provided jobid
 */
-std::string  getSandboxDestURI(const std::string &jobid, ConfigContext *cfs=NULL);
+std::vector<std::string>  getSandboxDestURI(const std::string &jobid, ConfigContext *cfs=NULL);
+/**
+* Retrieve the total amount of user free space quota
+* @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
+*@return a pair containing the soft and the hard limit quota
+**/
+std::pair<long, long> getFreeQuota(ConfigContext *cfs=NULL);
 /**
 * Retrieve the total amount of user space quota
 * @param cfs define configuration context if non-default parameter(s) used (NULL otherwise)
