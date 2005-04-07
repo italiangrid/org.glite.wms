@@ -54,6 +54,8 @@ AC_CHECK_FUNCS([memset])
 
 have_boost=no
 have_classads=no
+have_globus=no
+have_gridsite=no
                                                                                 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
@@ -61,13 +63,21 @@ AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 
+AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
+AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
+
 have_glite_wms_common=no
 have_glite_wmsutils=no
                                                                                 
 AC_GLITE
 
-AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+AC_GSOAP
+
+#AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+#AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])

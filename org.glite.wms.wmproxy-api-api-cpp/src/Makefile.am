@@ -25,20 +25,20 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 	stdsoap2.cpp
 
 
-vpath stdsoap2.cpp $(GLOBAL_LOCATION)
+vpath stdsoap2.cpp $(GSOAP_LOCATION)
 
 
 wm.h :
 	@#Create the files
-	@echo "wsdl2h compiling .h "
+	@echo "wsdl2h parsing .wsdl"
 	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
 	-t$(GSOAP_LOCATION)/typemap.dat \
 	$(GLITE_LOCATION)/interface/WMProxy.wsdl
 
 soapC.cpp : wm.h
 	@#Create the files
-	@echo "gsoap compiling .cpp"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) -I$(top_srcdir)/build/src/wm.h
+	@echo "gsoap compiling .h"
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/wm.h
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
@@ -48,6 +48,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	-DWITH_OPENSSL
+
 
 MAINTAINERCLEANFILES = Makefile.in
 
