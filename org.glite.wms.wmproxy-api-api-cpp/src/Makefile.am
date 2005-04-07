@@ -38,7 +38,6 @@ wm.h :
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	cp $(GSOAP_LOCATION)/sdtsoap2.cpp $(top_srcdir)/src
 	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/wm.h
 
 

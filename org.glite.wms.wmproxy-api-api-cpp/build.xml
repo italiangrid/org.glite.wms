@@ -86,6 +86,7 @@
 	
 	<target name="localcompile"
 		description="Module specific compile tasks">
+		<copy file="${repository}/${ext.gsoap.subdir}/stdsoap2.cpp" todir="${module.src.dir}" />
 	</target>
 
 	<target name="localclean"
