@@ -25,7 +25,7 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 	stdsoap2.cpp
 
 
-vpath stdsoap2.cpp $(GSOAP_LOCATION)
+#vpath stdsoap2.cpp $(GSOAP_LOCATION)
 
 
 wm.h :
