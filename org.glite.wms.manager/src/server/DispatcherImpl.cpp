@@ -20,7 +20,4 @@ DispatcherImpl::~DispatcherImpl()
 {
 }
 
-} // server
-} // manager
-} // wms
-} // glite
+}}}}

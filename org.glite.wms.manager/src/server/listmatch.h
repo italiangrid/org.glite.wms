@@ -14,7 +14,12 @@ namespace wms {
 namespace manager {
 namespace server {
             
-bool match(classad::ClassAd const& jdl, std::string const& result_file);
+bool match(
+  classad::ClassAd const& jdl, 
+  std::string const& result_file,
+  int number_of_results, 
+  bool include_brokerinfo
+);
 
 
 } // namespace server

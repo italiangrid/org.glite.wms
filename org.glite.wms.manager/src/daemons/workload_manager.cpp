@@ -80,9 +80,9 @@ void set_err_stream(std::ostream& os)
 }
 
 /*bool ssl_init()
-{
+  {
   return edg_wlc_SSLInitialization() == 0 && edg_wlc_SSLLockingInit() == 0;
-}*/
+  }*/
 
 // change the uid and gid to those of user
 // no-op if user corresponds to the current effective uid
@@ -130,7 +130,7 @@ public:
     while (!manager::received_quit_signal()) {
       m_fn();
       sleep(m_sec);
-     }
+    }
   }
 
 private:
@@ -140,7 +140,7 @@ private:
  
 int
 main(int argc, char* argv[])
-try {
+  try {
 
   program_name = argv[0];
   
@@ -173,12 +173,12 @@ try {
 
   manager::signal_handling_init();
 
-/* removed ssl_helpers */
-//  if (!ssl_init()) {
-//    get_err_stream() << program_name << ": "
-//                     << "cannot initialize SSL\n";
-//    return EXIT_FAILURE;
-//  }
+  /* removed ssl_helpers */
+  //  if (!ssl_init()) {
+  //    get_err_stream() << program_name << ": "
+  //                     << "cannot initialize SSL\n";
+  //    return EXIT_FAILURE;
+  //  }
 
   configuration::Configuration config(opt_conf_file,
                                       configuration::ModuleType::workload_manager);
@@ -316,9 +316,9 @@ try {
     destroy_ii_purchaser = (purchaser::ii::destroy_t*) dlsym(prh1, "destroy_ii_purchaser");
 
     if ((!create_ii_purchaser) || (!destroy_ii_purchaser)) {
-        get_err_stream() << "Cannot load " << prlib1
-                         << " symbols: " << dlerror() << "\n";
-        return EXIT_FAILURE;
+      get_err_stream() << "Cannot load " << prlib1
+                       << " symbols: " << dlerror() << "\n";
+      return EXIT_FAILURE;
     }
 
     // Try to enable purchasing from dimp file
@@ -342,19 +342,19 @@ try {
       destroy_file_purchaser = (purchaser::file::destroy_t*) dlsym(prh, "destroy_file_purchaser");
 
       if ((!create_file_purchaser) || (!destroy_file_purchaser)) {
-          get_err_stream() << "Cannot load " << prlib
-			   << " symbols: " << dlerror() << "\n";
+        get_err_stream() << "Cannot load " << prlib
+                         << " symbols: " << dlerror() << "\n";
       } else {
         // Try to load ISM status from dump file
         ismp1.reset(create_file_purchaser(wm_config->ism_dump()),
-					  destroy_file_purchaser);
+                    destroy_file_purchaser);
         ismp1->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
         try {
           ismp1->do_purchase();
         }
         catch(...) { // FIXME: Catch a specific exception
           get_err_stream() << "Cannot load ISM status from "
-			   << wm_config->ism_dump() << "\n";
+                           << wm_config->ism_dump() << "\n";
         }
       }
     }
@@ -394,7 +394,7 @@ try {
     if ((!create_cemon_purchaser) || (!destroy_cemon_purchaser) ||
         (!create_cemon_asynch_purchaser) || (!destroy_cemon_asynch_purchaser)) {
       get_err_stream() << "Cannot load " << prlib1
-  		       << " symbols: " << dlerror() << "\n";
+                       << " symbols: " << dlerror() << "\n";
       return EXIT_FAILURE;
     }
          
@@ -403,7 +403,7 @@ try {
         ns_config->ii_contact(), ns_config->ii_port(),
         ns_config->ii_dn(),ns_config->ii_timeout(),
         purchaser::loop, 240, manager::received_quit_signal),
-	destroy_ii_purchaser
+      destroy_ii_purchaser
     );
     ismp1->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
     // FIXME: It is not so nice but works...
@@ -417,18 +417,18 @@ try {
       std::string certificate_file;
       certificate_file.assign(common_config->host_proxy_file())
       
-      // Try to get the certificate path from the evironment variable GLITE_CERT_DIR if
-      // possible, otherwise defaults to /etc/grid-security/certificates.
-      char* certificate_path = getenv("GLITE_CERT_DIR");
+        // Try to get the certificate path from the evironment variable GLITE_CERT_DIR if
+        // possible, otherwise defaults to /etc/grid-security/certificates.
+        char* certificate_path = getenv("GLITE_CERT_DIR");
       if (!certificate_path) {
         certificate_path = "/etc/grid-security/certificates";
       } 
       ismp2.reset(
         create_cemon_purchaser(certificate_file, certificate_path,
                                cemonURLs,"CE_MONITOR:ISM",
- 			       120, purchaser::loop, 120,
-			       manager::received_quit_signal),
-         destroy_cemon_purchaser
+                               120, purchaser::loop, 120,
+                               manager::received_quit_signal),
+        destroy_cemon_purchaser
       );
       ismp2->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
       // FIXME: It is not so nice but works...
@@ -441,19 +441,20 @@ try {
       ismp3.reset(
         create_cemon_asynch_purchaser("CE_MONITOR:ISM", cemon_asynch_port,
                                       purchaser::loop, 30, 
- 				      manager::received_quit_signal),
+                                      manager::received_quit_signal),
         destroy_cemon_asynch_purchaser
       );
       ismp3->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
       purchaser_thread_group.create_thread(call_execute(ismp3));
     }
 
-    ism::call_update_ism_entries cuie; 	
+    ism::call_update_ism_entries cuie;  
     boost::thread ism_update(run_in_loop(cuie,wm_config->ism_update_rate()));
 
     ism::call_dump_ism_entries cdie;
     boost::thread ism_dump(run_in_loop(cdie,wm_config->ism_dump_rate()));
   }
+
   manager::Dispatcher dispatcher;
   manager::RequestHandler request_handler;
 
@@ -461,10 +462,10 @@ try {
   task::Task d(dispatcher, d2rh);
   task::Task r(request_handler, d2rh, wm_config->worker_threads());
   
-} catch (std::exception& e) {
-  get_err_stream() << "std::exception " << e.what() << "\n";
-  return EXIT_FAILURE;
-} catch (...) {
-  get_err_stream() << "uknown exception\n";
-  return EXIT_FAILURE;
-}
+  } catch (std::exception& e) {
+    get_err_stream() << "std::exception " << e.what() << "\n";
+    return EXIT_FAILURE;
+  } catch (...) {
+    get_err_stream() << "uknown exception\n";
+    return EXIT_FAILURE;
+  }

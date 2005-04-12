@@ -7,7 +7,7 @@
 
 #include "RequestHandler.h"
 #include <string>
-#include <boost/thread/xtime.hpp>
+#include <ctime>
 #include <classad_distribution.h>
 #include "WorkloadManager.h"
 #include "CommandAdManipulation.h"
@@ -44,7 +44,7 @@ RequestHandler::RequestHandler()
 }
 
 void
-RequestHandler::run()
+RequestHandler::operator()()
 try {
 
   Info("RequestHandler: starting");
@@ -54,9 +54,7 @@ try {
   while (!received_quit_signal()) {
 
     RequestPtr req(read_end().read());
-    boost::xtime current_time;
-    boost::xtime_get(&current_time, boost::TIME_UTC);
-    req->last_processed(current_time);
+    req->last_processed(std::time(0));
 
     try {
 
@@ -64,11 +62,21 @@ try {
         req->state(Request::PROCESSING);
         
         if (req->marked_match()) {
-           Info("considering match " << req->id());
+          std::string filename;
+          int number;
+          bool include_brokerinfo;
+          boost::tie(filename, number, include_brokerinfo) = req->match_parameters();
            
-           if (!match(*req->jdl(), req->match_result_file())) {
-              Info("Failed match for " << req->id());
-           }
+          Info(
+            "considering match " << req->id()
+            << ' ' << filename
+            << ' ' << number
+            << ' ' << include_brokerinfo
+          );
+
+          if (!match(*req->jdl(), filename, number, include_brokerinfo)) {
+             Info("Failed match for " << req->id());
+          }
         } else {
            Info("considering (re)submit of " << req->id());
            wm.submit(req->jdl());

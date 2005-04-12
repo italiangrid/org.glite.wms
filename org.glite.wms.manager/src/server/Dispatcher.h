@@ -8,10 +8,8 @@
 #ifndef GLITE_WMS_MANAGER_SERVER_DISPATCHER_H
 #define GLITE_WMS_MANAGER_SERVER_DISPATCHER_H
 
-#include <boost/utility.hpp>
-#include <boost/scoped_ptr.hpp>
-#include "glite/wms/common/task/Task.h"
-#include "TaskQueue.hpp"
+#include <boost/shared_ptr.hpp>
+#include "pipedefs.h"
 
 namespace classad {
 class ClassAd;
@@ -25,16 +23,14 @@ namespace server {
 class DispatcherImpl;
 
 class Dispatcher:
-    public glite::wms::common::task::PipeWriter<RequestPtr>,
-    boost::noncopyable
+    public glite::wms::common::task::PipeWriter<RequestPtr, queue_type>
 {
-  boost::scoped_ptr<DispatcherImpl> m_impl;
+  boost::shared_ptr<DispatcherImpl> m_impl;
 
 public:
   Dispatcher();
-  virtual ~Dispatcher();
 
-  virtual void run();
+  void operator()();
 };
 
 

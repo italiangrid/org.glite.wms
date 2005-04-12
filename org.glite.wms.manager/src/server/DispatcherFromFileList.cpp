@@ -8,9 +8,13 @@
 #include "DispatcherFromFileList.h"
 #include <algorithm>
 #include <cctype>
+#include <ctime>
 #include <boost/thread/xtime.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
+#include <cstdio>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 #include "DispatcherFactory.h"
 #include "signal_handling.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -23,7 +27,6 @@
 #include "Request.hpp"
 #include "glite/security/proxyrenewal/renewal.h"
 #include "purger.h"
-
 #include "glite/lb/producer.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
@@ -215,7 +218,7 @@ void flush_lb_events(common::ContextPtr const& context, jobid::JobId const& id)
          "edg_wll_LogFlush failed for " << id
       << " (" << common::get_lb_message(context) << ")"
     );
-  }  
+  }
 }
 
 int get_max_retry_count()
@@ -297,26 +300,18 @@ void retrieve_lb_info(RequestPtr const& req)
   req->jdl(job_ad.release());
 }
 
-bool operator<(boost::xtime const& rhs, boost::xtime const& lhs)
+bool older_than(RequestPtr const& req, std::time_t threshold)
 {
-  return
-       rhs.sec < lhs.sec
-    || rhs.sec == lhs.sec && rhs.nsec < lhs.nsec;
-}
-
-bool older_than(RequestPtr const& req, boost::xtime const& time)
-{
-  return req->last_processed() < time;
+  return req->last_processed() < threshold;
 }
 
 void do_transitions_for_cancel(
   RequestPtr const& req,
-  boost::xtime const& current_time,
-  task::PipeWriteEnd<RequestPtr>& write_end
+  std::time_t current_time,
+  pipe_type::write_end_type& write_end
 )
 {
-  boost::xtime threshold = current_time;
-  threshold.sec -= 300;         // 5 minutes
+  std::time_t threshold = current_time - 300; // 5 minutes
   Request::State state = req->state();
 
   if (req->jdl() || older_than(req, threshold)) {
@@ -367,14 +362,33 @@ void do_transitions_for_cancel(
   }
 }
 
+bool is_request_expired(RequestPtr const& req)
+{
+  return req->expiry_time() < std::time(0);
+}
+
+bool is_proxy_expired(jobid::JobId const& id)
+{
+  std::string proxy_file = common::get_user_x509_proxy(id);
+
+  std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
+  if (!rfd) return true;
+  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
+
+  ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
+  if (!rcert) return true;
+  boost::shared_ptr<X509> cert(rcert, ::X509_free);
+
+  return X509_cmp_current_time(X509_get_notAfter(rcert)) <= 0;
+}
+
 void do_transitions_for_submit(
   RequestPtr const& req,
-  boost::xtime const& current_time,
-  task::PipeWriteEnd<RequestPtr>& write_end
+  std::time_t current_time,
+  pipe_type::write_end_type& write_end
 )
 {
-  boost::xtime threshold = current_time;
-  threshold.sec -= 300;         // 5 minutes
+  std::time_t threshold = current_time - 300; // 5 minutes
   Request::State state = req->state();
 
   switch (state) {
@@ -386,6 +400,16 @@ void do_transitions_for_submit(
 
       try {
 
+        if (is_request_expired(req)) {
+          req->state(Request::UNRECOVERABLE, "request expired");
+          break;
+        }
+
+        if (is_proxy_expired(req->id())) {
+          req->state(Request::UNRECOVERABLE, "proxy expired");
+          break;
+        }
+
         // retrieve from the LB possibly missing information needed to
         // process the request, e.g. the jdl, the previous matches, etc.
         retrieve_lb_info(req);
@@ -394,15 +418,21 @@ void do_transitions_for_submit(
         write_end.write(req);
 
       } catch (HitMaxRetryCount& e) {
-        Info("hit max retry count (" << e.count() << ") for " << req->id());
-        req->state(Request::UNRECOVERABLE);
+        std::ostringstream os;
+        os << "hit max retry count (" << e.count() << ") for " << req->id();
+        Info(os.str());
+        req->state(Request::UNRECOVERABLE, os.str());
       } catch (HitJobRetryCount& e) {
-        Info("hit job retry count (" << e.count() << ") for " << req->id());
-        req->state(Request::UNRECOVERABLE);
+        std::ostringstream os;
+        os << "hit job retry count (" << e.count() << ") for " << req->id();
+        Info(os.str());
+        req->state(Request::UNRECOVERABLE, os.str());
       } catch (CannotRetrieveJDL& e) {
-        Info("cannot retrieve jdl for " << req->id() << "; keep retrying");
-        req->state(Request::RECOVERABLE);
-      }        
+        std::ostringstream os;
+        os << "cannot retrieve jdl for " << req->id() << "; keep retrying";
+        Info(os.str());
+        req->state(Request::RECOVERABLE, os.str());
+      }
     }
     break;
 
@@ -438,11 +468,11 @@ void do_transitions_for_submit(
   }
 }
 
-void do_transitions_for_match( 
+void do_transitions_for_match(
   RequestPtr const& req,
-  task::PipeWriteEnd<RequestPtr>& write_end
+  pipe_type::write_end_type& write_end
 )
-{ 
+{
   switch (req->state()) {
 
   case Request::WAITING:
@@ -450,7 +480,7 @@ void do_transitions_for_match(
     req->state(Request::READY);
     write_end.write(req);
     break;
-  
+
   case Request::DELIVERED:
     Info(req->id() << " delivered");
     break;
@@ -467,11 +497,10 @@ void do_transitions_for_match(
 
 void do_transitions(
   TaskQueue& tq,
-  task::PipeWriteEnd<RequestPtr>& write_end
+  pipe_type::write_end_type& write_end
 )
 {
-  boost::xtime current_time;
-  boost::xtime_get(&current_time, boost::TIME_UTC);
+  std::time_t current_time = std::time(0);
 
   for (TaskQueue::iterator it = tq.begin(); it != tq.end(); ++it) {
     RequestPtr req(it->second);
@@ -533,14 +562,23 @@ aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
   } else if (command == "jobcancel") {
     return jobid::JobId(common::cancel_command_get_id(command_ad));
   } else if (command == "match") {
-    	//Do I need to create a jobid?, should I create it in this way?
-      jobid::JobId match_jobid;
+    bool id_exists;
+    jobid::JobId match_jobid;
+    
+    std::string jobidstr(
+      requestad::get_edg_jobid(
+	    *common::match_command_get_ad(command_ad),
+        id_exists
+      )
+    );
       
-      //is unique created???
-      match_jobid.setJobId("localhost", 6000, "");
-      //add jobid in jdj (needed?????)      
-      
-      return match_jobid;
+    if (id_exists) { 
+      match_jobid.fromString(jobidstr);   
+    } else {
+      match_jobid.setJobId("localhost", 6000, "");    
+    }
+
+    return match_jobid;
   }
 
   // the following is just to avoid a warning about "control reaches end of
@@ -612,12 +650,12 @@ get_new_requests(
         } else if (command == "jobcancel") {
           log_cancel_req(request->lb_context());
         }
-        
+
 
       } else {
         //match can't be canceled or whatever
         assert(command != "match");
-        
+
         RequestPtr request = it->second;
 
         if (command == "jobsubmit") {
@@ -646,13 +684,13 @@ get_new_requests(
           request->add_cleanup(cleanup);
 
         } else if (command == "jobcancel") {
-        
+
           log_cancel_req(request->lb_context());
           request->mark_cancelled();
           cleanup_guard.dismiss();
           request->add_cleanup(cleanup);
-        
-        } 
+
+        }
 
       }
 
@@ -665,7 +703,7 @@ get_new_requests(
 }
 
 
-} // {anonymous} 
+} // {anonymous}
 
 DispatcherFromFileList::DispatcherFromFileList(boost::shared_ptr<extractor_type> extractor)
   : m_extractor(extractor)
@@ -673,7 +711,7 @@ DispatcherFromFileList::DispatcherFromFileList(boost::shared_ptr<extractor_type>
 }
 
 void
-DispatcherFromFileList::run(task::PipeWriteEnd<RequestPtr>& write_end)
+DispatcherFromFileList::run(pipe_type::write_end_type& write_end)
 try {
 
   Info("Dispatcher: starting");

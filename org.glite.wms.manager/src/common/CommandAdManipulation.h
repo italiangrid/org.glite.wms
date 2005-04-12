@@ -52,11 +52,23 @@ resubmit_command_get_id(classad::ClassAd const& command_ad);
 std::string
 resubmit_command_get_lb_sequence_code(classad::ClassAd const& command_ad);
 
+classad::ClassAd*
+match_command_create(
+  classad::ClassAd* job_ad,
+  std::string const& file,
+  int number_of_result = -1,    // unlimited
+  bool include_brokerinfo = false
+);
+
 classad::ClassAd const*
 match_command_get_ad(classad::ClassAd const& match_command_ad);
 
 std::string
 match_command_get_file(classad::ClassAd const& match_command_ad);
+
+int match_command_get_number_of_results(classad::ClassAd const& match_command_ad);
+
+bool match_command_get_include_brokerinfo(classad::ClassAd const& match_command_ad);
 
 }}}} // glite::wms::manager::common
 

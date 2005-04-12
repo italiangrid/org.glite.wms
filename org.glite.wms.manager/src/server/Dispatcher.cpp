@@ -53,18 +53,11 @@ Dispatcher::Dispatcher()
 {
 }
 
-Dispatcher::~Dispatcher()
-{
-}
-
 void
-Dispatcher::run()
+Dispatcher::operator()()
 {
   m_impl->run(write_end());     // the pipe write end is not available at
                                 // construction time
 }
 
-} // namespace server
-} // namespace manager
-} // namespace wms
-} // namespace glite
+}}}} // glite::wms::manager::server

@@ -8,9 +8,8 @@
 #ifndef GLITE_WMS_MANAGER_SERVER_REQUESTHANDLER_H
 #define GLITE_WMS_MANAGER_SERVER_REQUESTHANDLER_H
 
-#include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include "glite/wms/common/task/Task.h"
+#include "pipedefs.h"
 
 namespace classad {
 class ClassAd;
@@ -21,18 +20,15 @@ namespace wms {
 namespace manager {
 namespace server {
 
-class Request;
-
 class RequestHandler:
-    public glite::wms::common::task::PipeReader<boost::shared_ptr<Request> >,
-    boost::noncopyable
+    public glite::wms::common::task::PipeReader<RequestPtr, queue_type>
 {
   class Impl;
   boost::shared_ptr<Impl> m_impl;
 
 public:
   RequestHandler();
-  void run();
+  void operator()();
 };
 
 

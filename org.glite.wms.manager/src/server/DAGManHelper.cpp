@@ -251,13 +251,21 @@ public:
   }
   fs::path pre(jobid::JobId const& node_id) const
   {
-    std::string const edg_wl_location = std::getenv("GLITE_WMS_LOCATION");
-    return fs::path(edg_wl_location, fs::system_specific) << "libexec/glite-wms-planner.sh";
+    char const* getenv_GLITE_WMS_LOCATION = std::getenv("GLITE_WMS_LOCATION");
+    assert(getenv_GLITE_WMS_LOCATION);
+    std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
+    return
+      fs::path(glite_wms_location, fs::system_specific)
+        << "libexec/glite-wms-planner.sh";
   }
   fs::path post(jobid::JobId const& node_id) const
   {
-    std::string const edg_wl_location = std::getenv("GLITE_WMS_LOCATION");
-    return fs::path(edg_wl_location, fs::system_specific) << "libexec/glite-wms-dag-post.sh";
+    char const* getenv_GLITE_WMS_LOCATION = std::getenv("GLITE_WMS_LOCATION");
+    assert(getenv_GLITE_WMS_LOCATION);
+    std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
+    return
+      fs::path(glite_wms_location, fs::system_specific)
+        << "libexec/glite-wms-dag-post.sh";
   }
   fs::path standard_output(jobid::JobId const& node_id) const
   {
@@ -543,6 +551,7 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
   std::ostringstream arguments;
   arguments << "-f"
             << " -l " << paths.base_submit_dir().file_path()
+            << " -NoEventChecks"
             << " -Debug " << dagman_log_level
             << " -Lockfile " << paths.lock_file()
             << " -Dag " << paths.dag_description().file_path()

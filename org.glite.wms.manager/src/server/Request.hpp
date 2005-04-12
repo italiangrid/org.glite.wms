@@ -1,7 +1,7 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
-#include <boost/thread/xtime.hpp>
+#include <ctime>
 #include <classad_distribution.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -58,9 +58,10 @@ public:
   }
   State state() const { return m_state; }
   std::string message() const { return m_message; }
-  void last_processed(boost::xtime const& t) { m_last_processed = t; }
-  boost::xtime last_processed() const { return m_last_processed; }
+  void last_processed(time_t t) { m_last_processed = t; }
+  std::time_t last_processed() const { return m_last_processed; }
   glite::wms::manager::common::ContextPtr lb_context() const { return m_lb_context; }
+  
   classad::ClassAd const* jdl() const { return m_jdl.get(); }
   void jdl(classad::ClassAd* jdl) { m_jdl.reset(jdl); }
   void clear_jdl() { m_jdl.reset(); }
@@ -71,16 +72,20 @@ public:
   void mark_resubmitted() { m_resubmitted = true; }
   bool marked_resubmitted() const { return m_resubmitted; }
 
-  void mark_match(std::string const& result_file) {
-    m_match_result_file = result_file;
+  bool marked_match() const { return !m_match_parameters.get<0>().empty(); }
+  boost::tuple<std::string, int, bool> match_parameters() const 
+  {
+    return m_match_parameters;
   }
-  bool marked_match() const { return !m_match_result_file.empty(); }
   
-  std::string match_result_file() const { return m_match_result_file; }
-
   void add_cleanup(boost::function<void()> const& cleanup)
   {
     m_input_cleaners.push_back(cleanup);
+  }
+  
+  std::time_t expiry_time() const
+  {
+    return m_expiry_time;
   }
 
 private:
@@ -90,12 +95,17 @@ private:
   input_cleaners_type m_input_cleaners;
   State m_state;
   std::string m_message;
-  boost::xtime m_last_processed;
+  std::time_t m_last_processed;
   glite::wms::manager::common::ContextPtr m_lb_context;
   bool m_cancelled;
   bool m_resubmitted;
-  //distingue a match from submit and cancel
-  std::string m_match_result_file;
+  
+  //match options: file name, number of results and include or not brokerinfo
+  boost::tuple<std::string, int, bool> m_match_parameters;
+  std::time_t m_expiry_time;
+  
+  bool Request::retrieve_lb_info();
+  
 };
 
 }}}}

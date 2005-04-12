@@ -12,6 +12,7 @@
 #include <boost/shared_ptr.hpp>
 #include "DispatcherImpl.h"
 #include "glite/wms/common/utilities/FLExtractor.h"
+#include "pipedefs.h"
 
 namespace glite {
 namespace wms {
@@ -29,7 +30,7 @@ private:
 public:
   DispatcherFromFileList(boost::shared_ptr<extractor_type> extractor);
 
-  void run(glite::wms::common::task::PipeWriteEnd<RequestPtr>& write_end);
+  void run(pipe_type::write_end_type& write_end);
 };
 
 }}}} // glite::wms::manager::server

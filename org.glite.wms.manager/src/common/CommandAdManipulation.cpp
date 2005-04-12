@@ -42,6 +42,10 @@ std::string const command_requirements(
   "      && isClassad(other.arguments.ad)"
   "      && isString(other.arguments.ad.CertificateSubject)"
   "      && isString(other.arguments.file)"
+  "      && (isUndefined(other.arguments.number_of_results)"
+  "          || isInteger(other.arguments.number_of_results))"
+  "      && (isUndefined(other.arguments.include_brokerinfo)"
+  "          || isBoolean(other.arguments.include_brokerinfo))"
   "     )"
   "]"
 );
@@ -156,6 +160,28 @@ cancel_command_get_lb_sequence_code(classad::ClassAd const& command_ad)
   return utilities::evaluate_expression(command_ad, "arguments.lb_sequence_code");
 }
 
+classad::ClassAd*
+match_command_create(
+  classad::ClassAd* jdl,
+  std::string const& file,
+  int number_of_results,
+  bool include_brokerinfo
+)
+{
+  std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
+
+  result->InsertAttr("version", std::string("1.0.0"));
+  result->InsertAttr("command", std::string("match"));
+  std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
+  args->Insert("ad", jdl);
+  args->InsertAttr("file", file);
+  args->InsertAttr("number_of_results", number_of_results);
+  args->InsertAttr("include_brokerinfo", include_brokerinfo);
+  result->Insert("arguments", args.release());
+
+  return result.release();
+}
+
 classad::ClassAd const*
 match_command_get_ad(classad::ClassAd const& match_command_ad)
 {
@@ -168,5 +194,18 @@ match_command_get_file(classad::ClassAd const& match_command_ad)
   return utilities::evaluate_expression(match_command_ad, "arguments.file");
 }
 
-}}}} // glite::wms::manager::common
+int match_command_get_number_of_results(classad::ClassAd const& match_command_ad)
+try {
+  return utilities::evaluate_expression(match_command_ad, "arguments.number_of_results");
+} catch (utilities::InvalidValue&) {
+  return -1;
+}
 
+bool match_command_get_include_brokerinfo(classad::ClassAd const& match_command_ad)
+try {
+  return utilities::evaluate_expression(match_command_ad, "arguments.include_brokerinfo");
+} catch (utilities::InvalidValue&) {
+  return false;
+}
+
+}}}} // glite::wms::manager::common
