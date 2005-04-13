@@ -15,16 +15,6 @@
 #
 # WARNING: work in progress
 
-lib_LTLIBRARIES = libglite_wms_wmproxy_api_cpp.la
-
-libglite_wms_wmproxy_api_cpp_la_SOURCES = \
-	wm.h \
-	soapC.cpp \
-	soapClient.cpp \
-	wmproxy_api.cpp \
-	stdsoap2.cpp
-
-
 #vpath stdsoap2.cpp $(GSOAP_LOCATION)
 
 
@@ -39,6 +29,17 @@ soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
 	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/wm.h
+
+
+
+lib_LTLIBRARIES = libglite_wms_wmproxy_api_cpp.la
+
+libglite_wms_wmproxy_api_cpp_la_SOURCES = \
+	wm.h \
+	soapC.cpp \
+	soapClient.cpp \
+	wmproxy_api.cpp \
+	stdsoap2.cpp
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
