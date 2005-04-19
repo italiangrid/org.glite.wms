@@ -52,9 +52,9 @@ InteractiveJobWrapper::make_bypass_transfer(ostream& os,
      << "done" << endl	  
      << endl;
 
-  string libfile("/opt/glite/lib/libglite-wms-grid-console-agent.so");
+  string libfile("/opt/glite/lib/libglite-wms-grid-console-agent.so.0");
   
-  os << "globus-url-copy " << prefix << libfile << " file://${workdir}/libglite-wms-grid-console-agent.so" << endl
+  os << "globus-url-copy " << prefix << libfile << " file://${workdir}/libglite-wms-grid-console-agent.so.0" << endl
      << endl;
   
   return os << endl;  
