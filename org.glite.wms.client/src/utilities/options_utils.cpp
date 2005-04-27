@@ -46,8 +46,8 @@ const char* Options::LONG_VO		= "vo";
 const char* Options::LONG_OUTPUT	= "output";
 const char Options::SHORT_OUTPUT	= 'o' ;
 // input
-const char* Options::LONG_INPUT		= "input" ;
-const char Options::SHORT_INPUT		= 'i' ;
+const char* Options::LONG_INPUT	= "input" ;
+const char Options::SHORT_INPUT	= 'i' ;
 // config
 const char*Options::LONG_CONFIG	= "config";
 const char Options::SHORT_CONFIG	= 'c' ;
@@ -55,8 +55,8 @@ const char Options::SHORT_CONFIG	= 'c' ;
 const char* Options::LONG_RESOURCE = "resource";
 const char Options::SHORT_RESOURCE = 'r' ;
 // validity
-const char* Options::LONG_VALID		= "valid" ;
-const char Options::SHORT_VALID		= 'v' ;
+const char* Options::LONG_VALID	= "valid" ;
+const char Options::SHORT_VALID	= 'v' ;
 // verbosity
 const char* Options::LONG_VERBOSE 	= "verbose-level";
 const char Options::SHORT_VERBOSE = 'l';
@@ -76,6 +76,9 @@ const char Options::short_required_arg = ':' ;
 const char Options::short_no_arg = ' ' ;
 
 
+/*
+*	Long options for the job-submit
+*/
 const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_CONFIGVO,         	required_argument,		0,		Options::CONFIGVO	},
 	{	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
@@ -96,7 +99,9 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
-
+/*
+*	Long options for the job-status
+*/
 const struct option Options::statusLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -118,7 +123,9 @@ const struct option Options::statusLongOpts[] = {
 	{0, 0, 0, 0}
 };
 
-
+/*
+*	Long options for the job-logging-info
+*/
 const struct option Options::loginfoLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -131,6 +138,9 @@ const struct option Options::loginfoLongOpts[] = {
 	{0, 0, 0, 0}
 };
 
+/*
+*	Long options for the job-cancel
+*/
 const struct option Options::cancelLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -147,7 +157,9 @@ const struct option Options::cancelLongOpts[] = {
 };
 
 
-
+/*
+*	Long options for the job-list-match
+*/
 const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -162,6 +174,9 @@ const struct option Options::lsmatchLongOpts[] = {
 	{0, 0, 0, 0}
 };
 
+/*
+*	Long options for the job-output
+*/
 const struct option Options::outputLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -174,7 +189,9 @@ const struct option Options::outputLongOpts[] = {
 	{0, 0, 0, 0}
 };
 
-
+/*
+*	Long options for the job-attach
+*/
 const struct option Options::attachLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
@@ -193,36 +210,64 @@ const struct option Options::attachLongOpts[] = {
 *	short usage constants
 */
 const string Options::USG_ALL = "--" + string(LONG_ALL) ;
+
 const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t<file_path>" ;
+
 const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
+
 const string Options::USG_CONFIGVO  = "--" + string(LONG_CONFIGVO) + "\t<file_path>" ;
+
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
+
 const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t<directory_path>"	;
+
 const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_EXCLUDE + "\t<status_value>";
+
 const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t [MM:DD:]hh:mm[:[CC]YY]";
+
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
+
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
+
 const string Options::USG_LMRS = "--" + string(LONG_LMRS ) + "\t<lmrs_type>" 	;
+
 const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>" ;
+
 const string Options::USG_NOGUI = "--" + string(LONG_NOGUI);
+
 const string Options::USG_NOINT = "--" + string(LONG_NOINT) ;
+
 const string Options::USG_NOLISTEN  = "--" + string(LONG_NOLISTEN);
+
 const string Options::USG_NOMSG	 = "--" + string(LONG_NOMSG);
+
 const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OUTPUT + "\t<file_path>";
+
 const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t<port_num>";
+
 const string Options::USG_RANK = "--" + string(LONG_RANK ) ;
+
 const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHORT_RESOURCE + "\t<ce_id>";
+
 const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t<status_value>";
+
 const string Options::USG_TO = "--" + string(LONG_TO)+ "\t[MM:DD:]hh:mm[:[CC]YY]";
+
 const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t<tag name>=<tag value>";
+
 const string Options::USG_VALID = "--" + string(LONG_VALID ) ;
+
 const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHORT_VERBOSE + "\t[0|1|2|3]";
+
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
+
 const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t<vo_name>";
 
-
-
-
+/*
+*	prints the help usage message for the job-submit
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -252,7 +297,11 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
-
+/*
+*	prints the help usage message for the job-status
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::status_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -281,7 +330,11 @@ void Options::status_usage(const char* &exename, const bool &long_usg){
 	}
 };
 
-
+/*
+*	prints the help usage message for the job-logging-info
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::loginfo_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -301,6 +354,11 @@ void Options::loginfo_usage(const char* &exename, const bool &long_usg){
 	}
 };
 
+/*
+*	prints the help usage message for the job-cancel
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::cancel_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -324,7 +382,11 @@ void Options::cancel_usage(const char* &exename, const bool &long_usg){
 	}
 };
 
-
+/*
+*	prints the help usage message for the job-list-match
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -347,6 +409,11 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 	}
 };
 
+/*
+*	prints the help usage message for the job-output
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -366,6 +433,12 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
+
+/*
+*	prints the help usage message for the job-attach
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
 void Options::attach_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
@@ -388,7 +461,10 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 	}
 };
 
-
+/*
+*	constructor
+*	@param command command to be handled
+*/
 Options::Options (const WMPCommands &command){
 	jdlFile = NULL ;
 	// init of the string attributes
@@ -421,7 +497,7 @@ Options::Options (const WMPCommands &command){
 	valid = NULL ;
 	port = NULL ;
 	verbosity = NULL ;
-	// short option string definition
+	// definitions of short and long options
 	switch (command){
 		case (JOBSUBMIT) :{
 			// short options
@@ -530,6 +606,12 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			}
 			break ;
 		}
+		case(DIR) : {
+			if (dir){
+				value = new string (*dir) ;
+			}
+			break ;
+		}
 		case(LOGFILE) : {
 			if (logfile){
 				value = new string (*logfile) ;
@@ -585,11 +667,11 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 	};
 	return value ;
 };
+
 /*
 *	gets the value of the option string-attribute
 *	@param attribute name of the attribute
 */
-
 long* Options::getLongAttribute (const OptsAttributes &attribute){
 	long *value = NULL ;
 	switch (attribute){
@@ -606,6 +688,11 @@ long* Options::getLongAttribute (const OptsAttributes &attribute){
 	};
 	return value ;
 };
+
+/*
+*	gets the value of the option int-attribute
+*	@param attribute name of the attribute
+*/
 int* Options::getIntAttribute (const OptsAttributes &attribute){
 	int *value = NULL ;
 	switch (attribute){
@@ -671,7 +758,7 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 *	gets the value of the option list of strings-attribute
 *	@param attribute name of the attribute
 */
-vector<string> Options::getListAttribute (const Options::OptsAttributes &attribute){
+const vector<string> Options::getListAttribute (const Options::OptsAttributes &attribute){
 	vector<string> *vect ;
 	switch (attribute){
 		case(USERTAG) : {
@@ -685,8 +772,19 @@ vector<string> Options::getListAttribute (const Options::OptsAttributes &attribu
 	};
 	return (*vect);
 };
+const vector<string> Options::getJobIds () {
+	return jobIds;
+};
 
-
+string* Options::getPath2Jdl () {
+	return jdlFile;
+};
+/*
+*	sets the value of the option attribute
+*	@param in_opt code assigned to the option
+*	(the last parameter in the long option struct assigned to each option)
+*	@param command line options
+*/
 void Options::setAttribute (const int &in_opt, const char **argv) {
 	switch (in_opt){
 		case ( Options::SHORT_OUTPUT ) : {
@@ -898,21 +996,11 @@ void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	int *indexptr  = (int*) malloc (sizeof(int));
 	/*
-	if ( cmdType == JOBSUBMIT ||
-	      cmdType == JOBMATCH ) {
-	      	jdlFile = new string  (argv[argc-1] );
-	      	cout << "jdl=" << jdlFile<< "\n";
-		//checkFile (jdlFile);
-	 }
-
-	if (cmdType == JOBATTACH){
-		jobIds.push_back(argv[c-1]);
-	}
-	*/
 	cout << "---->argc=" << argc << "\n";
 	cout << "---->optopt=" << optopt << "\n" ;
 	cout << "---->optind=" << optind << "\n";
 	cout << "---->argv=" << argv[optind]<< "\n";
+	*/
 	do {
 		// option parsing
 		next_opt = getopt_long (argc,

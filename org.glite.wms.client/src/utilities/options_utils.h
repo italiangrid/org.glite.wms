@@ -95,16 +95,17 @@ class Options
 		*	gets the value of the option list of strings-attribute
 		*	@param attribute name of the attribute
 		*/
-		std::vector<std::string> getListAttribute (const Options::OptsAttributes &attribute);
-
-	private:
+		const std::vector<std::string> getListAttribute (const Options::OptsAttributes &attribute);
 		/*
-		*	sets the value of the option attribute
-		*	@param in_opt code assigned to the option
-		*	(the last parameter in the long option struct assigned to each option)
-		*	@param command line options
+		*	gets the list of job identifiers
+		*	@return a vector with the list of jobid's
 		*/
-		void setAttribute (const int &in_opt, const char **argv);
+		const std::vector<std::string> getJobIds( );
+		/*
+		*	gets the path to the JDL file
+		*	@return the filepath string
+		*/
+		std::string* Options::getPath2Jdl ();
 		/*
 		*	displays the usage help message for the submission
 		*	@param exename name of the programme executable
@@ -147,6 +148,16 @@ class Options
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void attach_usage(const char* &exename, const bool &long_usg=false) ;
+
+	private:
+		/*
+		*	sets the value of the option attribute
+		*	@param in_opt code assigned to the option
+		*	(the last parameter in the long option struct assigned to each option)
+		*	@param command line options
+		*/
+		void setAttribute (const int &in_opt, const char **argv);
+
 		/*
 		*	constants for help messages
 		*/
