@@ -64,29 +64,27 @@ CURL=-L/usr/lib -lcurl
 #$(BOOST_LIBS) \
 #-lcrypto
 
+COMMON_LD_FLAGS=\
+-L../services \
+-L../utilities \
+-lglite_wms_client_utils \
+-lglite_wms_client_services
 
 
-
-job_submit_SOURCE=../utilities/options_utils.cpp  \
-../services/jobsubmit.cpp \
-wmp-job-submit.cpp
+job_submit_SOURCE=wmp-job-submit.cpp
 job_submit_OBJ=glite-job-submit
 job_submit_CFLAGS=$(CFLAGS)
-job_submit_DEPS=$(LDFLAGS)
+job_submit_DEPS=$(COMMON_LD_FLAGS)
 
-job_status_SOURCE=../utilities/options_utils.cpp  \
-../services/jobstatus.cpp \
-wmp-job-status.cpp
+job_status_SOURCE=wmp-job-status.cpp
 job_status_OBJ=glite-job-status
 job_status_CFLAGS=$(CFLAGS)
-job_status_DEPS=$(LDFLAGS)
+job_status_DEPS=$(COMMON_LD_FLAGS)
 
-job_attach_SOURCE=../utilities/options_utils.cpp  \
-../services/jobattach.cpp \
-wmp-job-attach.cpp
+job_attach_SOURCE=wmp-job-attach.cpp
 job_attach_OBJ=glite-job-attach
 job_attach_CFLAGS=$(CFLAGS)
-job_attach_DEPS=$(LDFLAGS)
+job_attach_DEPS=$(COMMON_LD_FLAGS)
 
 
 all: submit status attach

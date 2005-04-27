@@ -1,23 +1,30 @@
 #include <utilities/options_utils.h>
 #include <iostream>
+// wmproxy API
+#include "glite/wms/wmproxyapi/wmproxy_api.h"
 
 using namespace std ;
+using namespace glite::wms::wmproxyapi;
 
+/*
+*	main
+*/
 int main (int argc,char **argv){
+
+	ConfigContext *cfs = NULL;
+	string *endpoint = NULL ;
+	string *del_id ;
+	string jdl_string = "";
 	try {
+		// reads the user options
 		Options opts (Options::JOBSUBMIT) ;
 		opts.readOptions(argc, (const char**)argv);
-		string* config = opts.getStringAttribute(Options::CONFIG) ;
-		string* vo = opts.getStringAttribute(Options::VO) ;
-		bool help = opts.getBoolAttribute (Options::HELP);
-		if (config ){
-			cout << "config=" << *config << endl ;
-		}
-		if (vo){
-			cout << "vo=" << *vo << endl ;
-		}
+/*
+		// init of the context
+		cfs = new ConfigContext("", *endpoint, GLITE_TRUSTED_CERTS);
+		jobid = jobSubmit ( jdl_string , *del_id, cfs);
+*/
 
-		//cout << "HELP=" << help << endl ;
 	} catch (exception &ex) {
 		cout << flush << ex.what() << "\n" ;
 	}
