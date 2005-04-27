@@ -45,10 +45,10 @@ all: libutils
 libutils:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
-	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_utils.so utils.cpp
+	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_utils.so utils.cpp options_utils.cpp
 	@echo "DONE"
 utils:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
-	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-utils glite-wmp-utils.cpp utils.cpp
+	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-utils glite-wmp-utils.cpp utils.cpp options_utils.cpp
 	@echo "DONE"

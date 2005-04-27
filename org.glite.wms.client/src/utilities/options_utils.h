@@ -1,9 +1,12 @@
-#include "glite/wms/jdl/Ad.h"
+
 
 extern "C" {
 #include <getopt.h>
 }
 
+
+#include <string>
+#include <vector>
 
 class Options
 {

@@ -1,5 +1,5 @@
 
-#include "utilities/options_utils.h"
+#include "options_utils.h"
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -772,10 +772,17 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 	};
 	return (*vect);
 };
+/*
+*	gets the list of job identifiers
+*	@return a vector with the list of jobid's
+*/
 const vector<string> Options::getJobIds () {
 	return jobIds;
 };
-
+/*
+*	gets the path to the JDL file
+*	@return the filepath string
+*/
 string* Options::getPath2Jdl () {
 	return jdlFile;
 };
