@@ -81,13 +81,27 @@ job_status_OBJ=glite-job-status
 job_status_CFLAGS=$(CFLAGS)
 job_status_DEPS=$(COMMON_LD_FLAGS)
 
+job_loginfo_SOURCE=wmp-job-logging-info.cpp
+job_loginfo_OBJ=glite-job-logging-info
+job_loginfo_CFLAGS=$(CFLAGS)
+job_loginfo_DEPS=$(COMMON_LD_FLAGS)
+
+job_cancel_SOURCE=wmp-job-cancel.cpp
+job_cancel_OBJ=glite-job-cancel
+job_cancel_CFLAGS=$(CFLAGS)
+job_cancel_DEPS=$(COMMON_LD_FLAGS)
+
+job_output_SOURCE=wmp-job-output.cpp
+job_output_OBJ=glite-job-output
+job_output_CFLAGS=$(CFLAGS)
+job_output_DEPS=$(COMMON_LD_FLAGS)
+
 job_attach_SOURCE=wmp-job-attach.cpp
 job_attach_OBJ=glite-job-attach
 job_attach_CFLAGS=$(CFLAGS)
 job_attach_DEPS=$(COMMON_LD_FLAGS)
 
-
-all: submit status attach
+all: submit status attach loginfo cancel output
 
 submit:	$(job_submit_SOURCE)
 		@echo "building "$(job_submit__OBJ)" ..."
@@ -111,6 +125,39 @@ status:	$(job_status_SOURCE)
 			-o  $(job_status_OBJ)  \
 			$(job_status_SOURCE)
 		@mv $(job_status_OBJ) $(bin_dir)
+
+loginfo:	$(job_loginfo_SOURCE)
+		@echo "building "$(job_loginfo_OBJ)" ..."
+
+		@if ! test -d $(bin_dir) ; then \
+			mkdir $(bin_dir) ; \
+		fi
+		$(CPP) -g -Wall  $(job_loginfo_CFLAGS) $(job_loginfo_DEPS) \
+			-o  $(job_loginfo_OBJ)  \
+			$(job_loginfo_SOURCE)
+		@mv $(job_loginfo_OBJ) $(bin_dir)
+
+cancel:	$(job_cancel_SOURCE)
+		@echo "building "$(job_cancel_OBJ)" ..."
+
+		@if ! test -d $(bin_dir) ; then \
+			mkdir $(bin_dir) ; \
+		fi
+		$(CPP) -g -Wall  $(job_cancel_CFLAGS) $(job_cancel_DEPS) \
+			-o  $(job_cancel_OBJ)  \
+			$(job_cancel_SOURCE)
+		@mv $(job_cancel_OBJ) $(bin_dir)
+
+output:	$(job_output_SOURCE)
+		@echo "building "$(job_output_OBJ)" ..."
+
+		@if ! test -d $(bin_dir) ; then \
+			mkdir $(bin_dir) ; \
+		fi
+		$(CPP) -g -Wall  $(job_output_CFLAGS) $(job_output_DEPS) \
+			-o  $(job_output_OBJ)  \
+			$(job_output_SOURCE)
+		@mv $(job_output_OBJ) $(bin_dir)
 
 attach:	$(job_attach_SOURCE)
 		@echo "building "$(job_attach_OBJ)" ..."

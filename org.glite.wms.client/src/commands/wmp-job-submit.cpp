@@ -3,6 +3,8 @@
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
+#include "services/jobsubmit.h"
+
 using namespace std ;
 using namespace glite::wms::wmproxyapi;
 
