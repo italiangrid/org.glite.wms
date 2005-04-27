@@ -47,11 +47,11 @@ libservices:
 	@echo "compiling services....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_services.so  \
-	jobattach.cpp  jobstatus.cpp  jobsubmit.cpp
+	jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp
 	@echo "DONE"
-utils:
+services:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-services \
-	 jobattach.cpp  jobstatus.cpp  jobsubmit.cpp
+	jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp
 	@echo "DONE"
