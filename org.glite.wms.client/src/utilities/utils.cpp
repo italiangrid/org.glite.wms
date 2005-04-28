@@ -1,11 +1,12 @@
 // PRIMITIVE
 #include <netdb.h> // gethostbyname (resolveHost)
 #include <iostream> // cin/cout     (answerYes)
-#include <fstream> // filestream (ifstream)
+#include <fstream>  // ifstream (check prefix)
 // EXTERNAL
 #include <boost/lexical_cast.hpp> // types conversion (checkLB/NS)
 // HEADER
 #include "utils.h"
+#include "excman.h"
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
@@ -15,23 +16,23 @@
 #include "glite/wms/jdl/ExpDagAd.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/RequestAdExceptions.h"
 #include "glite/wms/jdl/adconverter.h"
 
 namespace glite {
 namespace wms{
 namespace client {
 namespace utilities {
-
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
 using namespace glite::wms::jdl ;
 
 const string DEFAULT_LB_PROTOCOL		=	"https";
 const string PROTOCOL				=	"://";
+const string DEFAULT_UI_CONFILE 		=	"glite_wmsui_conf";
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_NS_PORT	=	7772;
-
-
+const unsigned int DEFAULT_ERR_CODE	=	7772;
 /*************************************
 *** General Utilities Static methods *
 **************************************/
@@ -53,11 +54,13 @@ bool answerYes (const std::string& question, bool defaultAnswer){
 /**********************************
 *** NS, LB, Host Static methods ***
 ***********************************/
-bool resolveHost(const std::string& hostname, std::string& resolved_name){
+void resolveHost(const std::string& hostname, std::string& resolved_name){
     struct hostent *result = NULL;
-    if( (result = gethostbyname(hostname.c_str())) == NULL ) return true;
-    resolved_name = result -> h_name;
-    return false;
+    if( (result = gethostbyname(hostname.c_str())) == NULL ){
+    	throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
+				"Wrong Value","Unable to resolve host: "+hostname);
+    }
+    resolved_name=result->h_name;
 }
 std::vector<std::string> getLbs(const std::vector<std::vector<std::string> >& lbGroup, int nsNum){
 	std::vector<std::string> lbs ;
@@ -65,7 +68,8 @@ std::vector<std::string> getLbs(const std::vector<std::vector<std::string> >& lb
 	switch (lbGroupSize){
 		case 0:
 			// No LB provided
-			throw "ERROR: empty LB value";
+			throw WmsClientException(__FILE__,__LINE__,"getLbs",DEFAULT_ERR_CODE,
+				"Empty Value","No Lb found in Configuration File");
 		case 1:
 			// One lb group provided: it's the one
 			return lbGroup[0] ;
@@ -74,7 +78,8 @@ std::vector<std::string> getLbs(const std::vector<std::vector<std::string> >& lb
 	}
 	if (nsNum>(int)lbGroupSize){
 		// requested LB number is out of available LBs
-		throw "ERROR: LB request number out of limit";
+		throw WmsClientException(__FILE__,__LINE__,"getLbs",DEFAULT_ERR_CODE,
+				"Mismatch Value","LB request number out of limit");
 	}else if (nsNum>=0){
 		// Retrieving the requested LB by provided nsNum
 		return lbGroup[nsNum];
@@ -97,8 +102,8 @@ std::pair <std::string, unsigned int>checkAd(	const std::string& adFullAddress,
 		ad.first=DEFAULT_PROTOCOL;
 		protInd=0;
 	}else if (protInd==0){
-		cerr << "ERROR: no protocol specified";
-		throw ;
+		throw WmsClientException(__FILE__,__LINE__,"checkAd",DEFAULT_ERR_CODE,
+				"Wrong Value","Wrong Protocol Specified for: "+adFullAddress);
 	}
 	// Look for port
 	unsigned int portInd=adFullAddress.find(":",protInd+1);
@@ -110,8 +115,8 @@ std::pair <std::string, unsigned int>checkAd(	const std::string& adFullAddress,
 		try{
 			ad.second=boost::lexical_cast<unsigned int>(adFullAddress.substr(portInd+1));
 		}catch(boost::bad_lexical_cast &){
-			cerr << "ERROR: Failed to parse integer port: " <<  adFullAddress;
-			throw ;
+			throw WmsClientException(__FILE__,__LINE__,"checkAd",DEFAULT_ERR_CODE,
+				"Wrong Value","Failed to parse integer port for: "+adFullAddress);
 		}
 	}
 	// Add host
@@ -119,33 +124,54 @@ std::pair <std::string, unsigned int>checkAd(	const std::string& adFullAddress,
 	return ad;
 }
 std::pair <std::string, unsigned int>checkLb(const std::string& lbFullAddress){
-	return checkAd( lbFullAddress,DEFAULT_LB_PROTOCOL+PROTOCOL, DEFAULT_LB_PORT);
+	try{
+		return checkAd( lbFullAddress,DEFAULT_LB_PROTOCOL+PROTOCOL, DEFAULT_LB_PORT);
+	}catch (WmsClientException &exc){
+		throw WmsClientException(__FILE__,__LINE__,"checkLb",DEFAULT_ERR_CODE,
+			"Wrong Configuration Value",string(exc.what()));
+	}
 }
 std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress){
-	return checkAd( nsFullAddress,"", DEFAULT_NS_PORT);
+	try{
+		return checkAd( nsFullAddress,"", DEFAULT_NS_PORT);
+	}catch (WmsClientException &exc){
+		throw WmsClientException(__FILE__,__LINE__,"checkNs",DEFAULT_ERR_CODE,
+			"Wrong Configuration Value",string(exc.what()));
+	}
 }
-
+/**********************************
+*** NS, LB, Host Static methods ***
+***********************************/
+bool checkPrefix(){
+	// Creating possible paths
+	vector <string> paths ;
+	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
+	if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
+	paths.push_back("/opt/glite");
+	paths.push_back("usr/local");
+	// Look for conf-file:
+	string tbFound;
+	bool found = false;
+	for (unsigned int i=0 ;i<paths.size();i++){
+		tbFound=paths[i]+"/etc/"+DEFAULT_UI_CONFILE ;
+		ifstream f (tbFound.c_str());
+		if(f.good()){
+			found = true;
+		}
+	}
+	return found; // SUCCESS
+}
 void checkJobIds(std::vector<std::string> jobids){
 	std::vector<std::string>::iterator it ;
 	for (it = jobids.begin() ; it != jobids.end() ; it++){
-		try {
 			JobId jid (*it);
-		} catch (WrongIdException &exc) {
-			cerr << "ERROR: wrong jobid format: " << *it << "\n";
-			cerr << exc.what( )<< "\n";
-			throw exception( );
-		}
 	}
 }
-
-
 std::string getJdlString (std::string path){
-
 	string jdl = "";
 	//try{
 		Ad *ad = new Ad( );
 		ad->fromFile(path);
-		//if (ad.hasAttribute(JDL::TYPE) ){ ?????????
 
 		if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
 			ExpDagAd dag( ad->toString() );
@@ -166,8 +192,25 @@ std::string getJdlString (std::string path){
 			throw exception( );
 	}
 	*/
-
 	return jdl ;
+}
+
+void jobAdExample(){
+try{
+	string jdl = "[ executable = \"ciccio\" ; arguments= \"bella secco\" ]";
+	JobAd jad(jdl);
+	cout << "STR=" << jad.toString() << endl;
+	jad.toSubmissionString();
+}catch (AdSemanticMandatoryException &exc){
+	cout << "SEMANTIC MANDATORY" << endl ;
+	throw;
+}catch (RequestAdException &exc){
+	cout << "REQUESTAD" << endl ;
+	throw;
+}catch (glite::wmsutils::exception::Exception &exc){
+	cout << "Exception is here" << endl ;
+	throw;
+}
 }
 
 
@@ -176,3 +219,4 @@ std::string getJdlString (std::string path){
 } // wms
 } // client
 } // utilities
+

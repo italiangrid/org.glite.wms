@@ -39,7 +39,13 @@ std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress);
  * @param resolved to be filled with DNS record A host entry.
  * @return whether there has been an error (true) or success (false)
  */
-bool resolveHost(const std::string& hostname, std::string& resolved);
+void resolveHost(const std::string& hostname, std::string& resolved);
+/**
+ * Check the WMS client installation path
+ * @return if any error occurred (true) or if succeed (false)
+ */
+bool checkPrefix();
+
 /**
  * Check the format of the jobids
  * the format is <protocol>://<lb host>:<lb port>/<unique_string>
@@ -54,6 +60,7 @@ void checkJobIds(std::vector<std::string> jobids) ;
  * @throw               in case of any format error // EXCEPTION !!!!!
  */
 std::string getJdlString (std::string path);
+void jobAdExample();
 } // glite
 } // wms
 } // client
