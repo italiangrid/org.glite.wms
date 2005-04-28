@@ -1,12 +1,16 @@
-
-
+#ifndef GLITE_WMS_CLIENT_OPTIONSUTILS_H
+#define GLITE_WMS_CLIENT_OPTIONSUTILS_H
 extern "C" {
 #include <getopt.h>
 }
 
-
 #include <string>
 #include <vector>
+
+namespace glite {
+namespace wms{
+namespace client {
+namespace utilities {
 
 class Options
 {
@@ -108,7 +112,7 @@ class Options
 		*	gets the path to the JDL file
 		*	@return the filepath string
 		*/
-		std::string* Options::getPath2Jdl ();
+		std::string Options::getPath2Jdl ();
 		/*
 		*	displays the usage help message for the submission
 		*	@param exename name of the programme executable
@@ -331,5 +335,10 @@ class Options
 		*	jobIds vector
 		*/
 		std::vector<std::string> jobIds ;
-
 };
+} // glite
+} // wms
+} // client
+} // utilities
+#endif
+

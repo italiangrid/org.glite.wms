@@ -1,11 +1,30 @@
 // PRIMITIVE
 #include <netdb.h> // gethostbyname (resolveHost)
 #include <iostream> // cin/cout     (answerYes)
+#include <fstream> // filestream (ifstream)
 // EXTERNAL
 #include <boost/lexical_cast.hpp> // types conversion (checkLB/NS)
 // HEADER
 #include "utils.h"
+// JobId
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
+// Ad's
+#include "glite/wms/jdl/Ad.h"
+#include "glite/wms/jdl/JobAd.h"
+#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/wms/jdl/jdl_attributes.h"
+#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/adconverter.h"
+
+namespace glite {
+namespace wms{
+namespace client {
+namespace utilities {
+
 using namespace std ;
+using namespace glite::wmsutils::jobid ;
+using namespace glite::wms::jdl ;
 
 const string DEFAULT_LB_PROTOCOL		=	"https";
 const string PROTOCOL				=	"://";
@@ -105,3 +124,55 @@ std::pair <std::string, unsigned int>checkLb(const std::string& lbFullAddress){
 std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress){
 	return checkAd( nsFullAddress,"", DEFAULT_NS_PORT);
 }
+
+void checkJobIds(std::vector<std::string> jobids){
+	std::vector<std::string>::iterator it ;
+	for (it = jobids.begin() ; it != jobids.end() ; it++){
+		try {
+			JobId jid (*it);
+		} catch (WrongIdException &exc) {
+			cerr << "ERROR: wrong jobid format: " << *it << "\n";
+			cerr << exc.what( )<< "\n";
+			throw exception( );
+		}
+	}
+}
+
+
+std::string getJdlString (std::string path){
+
+	string jdl = "";
+	//try{
+		Ad *ad = new Ad( );
+		ad->fromFile(path);
+		//if (ad.hasAttribute(JDL::TYPE) ){ ?????????
+
+		if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
+			ExpDagAd dag( ad->toString() );
+			dag.expand( );
+			jdl = dag.toString() ;
+		} else if( ad->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
+				ExpDagAd *dag = AdConverter::collection2dag (ad);
+				dag->expand( );
+				jdl = dag->toString() ;
+		} else {
+			jdl = ad->toString();
+		};
+		//} //hasAttribute(JDL::TYPE)?????????
+	/*
+	} catch (WrongIdException &exc) {
+			cerr << "ERROR: wrong jobid format: " << *it << "\n";
+			cerr << exc.what( )<< "\n";
+			throw exception( );
+	}
+	*/
+
+	return jdl ;
+}
+
+
+
+} // glite
+} // wms
+} // client
+} // utilities

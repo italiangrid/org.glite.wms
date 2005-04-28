@@ -1,14 +1,16 @@
 
 #include "options_utils.h"
 #include <stdio.h>
+// i/o streams
 #include <iostream>
 #include <fstream>
 
-
-
+namespace glite {
+namespace wms{
+namespace client {
+namespace utilities {
 
 using namespace std;
-
 /*
  * Help messages
 */
@@ -223,7 +225,7 @@ const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t<directory_path>"	
 
 const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_EXCLUDE + "\t<status_value>";
 
-const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t [MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
@@ -251,7 +253,7 @@ const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHO
 
 const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t<status_value>";
 
-const string Options::USG_TO = "--" + string(LONG_TO)+ "\t[MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_TO = "--" + string(LONG_TO)+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t<tag name>=<tag value>";
 
@@ -261,7 +263,7 @@ const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHO
 
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 
-const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t<vo_name>";
+const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
 
 /*
 *	prints the help usage message for the job-submit
@@ -783,8 +785,12 @@ const vector<string> Options::getJobIds () {
 *	gets the path to the JDL file
 *	@return the filepath string
 */
-string* Options::getPath2Jdl () {
-	return jdlFile;
+string Options::getPath2Jdl () {
+	if (!jdlFile) {
+		cerr << "ERROR (getPath2Jdl )> no path to JDL has been set\n";
+		throw exception();
+	}
+	return *jdlFile;
 };
 /*
 *	sets the value of the option attribute
@@ -793,9 +799,10 @@ string* Options::getPath2Jdl () {
 *	@param command line options
 */
 void Options::setAttribute (const int &in_opt, const char **argv) {
+cout << "setAttribute > start in_opt=" << in_opt << "\n";
 	switch (in_opt){
 		case ( Options::SHORT_OUTPUT ) : {
-			if (output){
+cout << "1\n";			if (output){
 				// DUPLICATE  OPT !!!
 				throw "output - DUPLICATE  OPT !!!" ;
 			} else {
@@ -804,7 +811,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 		case ( Options::SHORT_INPUT ) : {
-			if (input){
+cout << "2\n";				if (input){
 				// DUPLICATE  OPT !!!
 				throw "input - DUPLICATE  OPT !!!" ;
 			} else {
@@ -912,7 +919,9 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 		case ( Options::HELP ) : {
+	cout << "setAttribute > help \n";
 			help = true ;
+			break;
 		};
 		case ( Options::LMRS ) : {
 			if (lmrs){
@@ -1025,7 +1034,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		// sets attribute
 		if (next_opt != -1 ){
 			cout << "int_ptr=" << *indexptr << "\n" ;
-			setAttribute (submitLongOpts[*indexptr].val, argv);
+			setAttribute (longOpts[*indexptr].val, argv);
 		}
 		/*
 		cout << "optopt=" << optopt << "\n" ;
@@ -1035,42 +1044,83 @@ void Options::readOptions(const int &argc, const char **argv){
 		*/
 
 	} while (next_opt != -1);
-	// checks the JDL file option for the submission and list-match
-	if ( cmdType == JOBSUBMIT ||
-	   	cmdType == JOBMATCH  ){
-		if ( optind == (argc-1) ){
-			 ifstream file(argv[optind]);
-        		if (!file.good()) {
-				cout << "no such JDL file ! \n";
-                		throw exception( ) ;
-       			 }
-		} else {
-			cout << "no JDL file option !\n" ;
-			throw exception( ) ;
+
+	// check to be done only if the help message has not been requested
+	if (!help) {
+		// checks the JDL file option for the submission and list-match
+		if ( cmdType == JOBSUBMIT ||
+			cmdType == JOBMATCH  ){
+			if ( optind == (argc-1) ){
+				ifstream file(argv[optind]);
+				if (!file.good()) {
+					cout << "no such JDL file ! \n";
+					throw exception( ) ;
+				}
+				jdlFile = new string(argv[ optind ]) ;
+			} else {
+				cout << "no JDL file option !\n" ;
+				throw exception( ) ;
+			}
 		}
-	}
-	// JobId option in job-attach
-	if ( cmdType == JOBATTACH ){
-		if ( optind == (argc-1) ){
-			jobIds.push_back(argv[optind]);
-		} else {
-			cout << "no JOBID option !\n" ;
-			throw exception( ) ;
+		// JobId option in job-attach
+		if ( cmdType == JOBATTACH ){
+			if ( optind == (argc-1) ){
+				jobIds.push_back(argv[optind]);
+			} else {
+				cout << "no JOBID option !\n" ;
+				throw exception( ) ;
+			}
 		}
-	}
-	// list of jobids in status, logginginfo and cancel
-	if ( cmdType == JOBSTATUS  ||
-	      cmdType == JOBLOGINFO ||
-	      cmdType == JOBCANCEL ) {
-	      	if (optind == argc ){
-			cout << "no JOBID option !\n" ;
-			throw exception( ) ;
+		// list of jobids in status, logginginfo and cancel
+		if ( cmdType == JOBSTATUS  ||
+		cmdType == JOBLOGINFO ||
+		cmdType == JOBCANCEL ) {
+			if (optind == argc ){
+				cout << "no JOBID option !\n" ;
+				throw exception( ) ;
+			}
+			for (int i = optind ; i < argc ; i++ ){
+				jobIds.push_back(argv[i]);
+			}
 		}
-		for (int i = optind ; i < argc ; i++ ){
-			jobIds.push_back(argv[i]);
+	} else {
+		switch (cmdType){
+			case (JOBSUBMIT ) :{
+				submit_usage(argv[0]);
+				break;
+			} ;
+			case (JOBSTATUS ) :{
+				status_usage(argv[0]);
+				break;
+			} ;
+			case (JOBLOGINFO ) :{
+				loginfo_usage(argv[0]);
+				break;
+			} ;
+			case (JOBCANCEL ) :{
+				cancel_usage(argv[0]);
+				break;
+			} ;
+			case (JOBOUTPUT ) :{
+				output_usage(argv[0]);
+				break;
+			} ;
+			case ( JOBMATCH) :{
+				lsmatch_usage(argv[0]);
+				break;
+			} ;
+			case ( JOBATTACH) :{
+				attach_usage(argv[0]);
+				break;
+			} ;
+			default :{
+				break;
+			} ;
 		}
+		exit(0);
 	}
 };
-
-
-
+} // glite
+} // wms
+} // client
+} // utilities

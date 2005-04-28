@@ -7,6 +7,12 @@
 #include <string>
 #include <vector>
 #include <map>
+
+namespace glite {
+namespace wms{
+namespace client {
+namespace utilities {
+
 /**
  * Resolves an hostname, supposed to be an alias, into its CNAME.
  * @param hostname the hostanem to resolve.
@@ -34,4 +40,22 @@ std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress);
  * @return whether there has been an error (true) or success (false)
  */
 bool resolveHost(const std::string& hostname, std::string& resolved);
+/**
+ * Check the format of the jobids
+ * the format is <protocol>://<lb host>:<lb port>/<unique_string>
+ * @param jobids vectors containing the list of jobids to be checked
+ * @throw               in case of any format error // EXCEPTION !!!!!
+ */
+void checkJobIds(std::vector<std::string> jobids) ;
+/**
+ * Get the string of the JDL read by a file
+ * @param path the path of the JDL file
+ *@return the JDL string
+ * @throw               in case of any format error // EXCEPTION !!!!!
+ */
+std::string getJdlString (std::string path);
+} // glite
+} // wms
+} // client
+} // utilities
 #endif
