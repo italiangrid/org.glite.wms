@@ -6,7 +6,6 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 using namespace std ;
 using namespace glite::wms::jdl ;
-
 /******************
 * JDL is still an AD (no type switched)
 *******************/
@@ -33,9 +32,14 @@ void setDefaultValues(glite::wms::jdl::JobAd* jdl,glite::wms::jdl::Ad& conf){
 	// OTHER values:
 	// HLRLOCATION, MYPROXYSERVER RETRYCOUNT
 	const string attributes[]={JDL::HLR_LOCATION,JDL::MYPROXY,JDL::RETRYCOUNT};
-	cout << "attrub" << attributes[0];
+	// sizeof (attribute) does not seem to work properly
+	unsigned int SIZEOF_ATTRIBUTES = 3 ;
+	for (unsigned int i = 0 ; i<SIZEOF_ATTRIBUTES; i++){
+		if( conf.hasAttribute(attributes[i]) && !jdl->hasAttribute(attributes[i]) ){
+			jdl->setAttribute(attributes[i],conf.getString(attributes[i]));
+		}
+	}
 }
-
 /******************
 * JDL is a Dag
 *******************/
@@ -49,4 +53,3 @@ void setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,glite::wms::jdl::Ad& conf){
 		jdl->setDefaultReq(conf.getString(JDL::REQUIREMENTS));
 	}
 }
-
