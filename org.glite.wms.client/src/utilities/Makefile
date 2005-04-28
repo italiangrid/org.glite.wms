@@ -41,14 +41,19 @@ WMPCLIENT_C_FLAGS= \
 	-I$(CLASSAD)/include \
 	-I$(stage)/include
 
+WMPCLIENT_FILES= utils.cpp \
+	adutils.cpp \
+	excman.cpp \
+	options_utils.cpp
+
 all: libutils
 libutils:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
-	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_utils.so utils.cpp options_utils.cpp
+	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_utils.so  $(WMPCLIENT_FILES)
 	@echo "DONE"
 utils:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
-	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-utils glite-wmp-utils.cpp utils.cpp options_utils.cpp
+	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-utils glite-wmp-utils.cpp $(WMPCLIENT_FILES)
 	@echo "DONE"
