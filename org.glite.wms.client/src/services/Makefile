@@ -36,7 +36,7 @@ WMPCLIENT_LD_FLAGS= \
 #	-lboost_regex \
 #	-lcrypto
 
-WMPCLIENT_C_FLAGS= \
+WMPCLIENT_C_FLAGS= -I../ \
 	-I$(stage)/include
 #	-I$(BOOST)/include \
 #	-I$(CLASSAD)/include \
