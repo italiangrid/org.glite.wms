@@ -85,6 +85,7 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
+AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([wmproxy-api-cpp.dox])
 
 AC_OUTPUT
