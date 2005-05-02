@@ -18,7 +18,7 @@
 
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"
-#include "requestad/extractfiles.h"
+#include "glite/wms/jdl/extractfiles.h"
 
 // CURL
 #include <curl/curl.h>
