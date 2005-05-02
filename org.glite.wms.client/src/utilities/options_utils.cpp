@@ -213,7 +213,7 @@ const struct option Options::attachLongOpts[] = {
 */
 const string Options::USG_ALL = "--" + string(LONG_ALL) ;
 
-const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t<file_path>" ;
+const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t<file_path>" ;
 
 const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
 
@@ -231,7 +231,7 @@ const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
-const string Options::USG_LMRS = "--" + string(LONG_LMRS ) + "\t<lmrs_type>" 	;
+const string Options::USG_LMRS = "--" + string(LONG_LMRS ) + "\t\t<lmrs_type>" 	;
 
 const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>" ;
 
@@ -253,11 +253,11 @@ const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHO
 
 const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t<status_value>";
 
-const string Options::USG_TO = "--" + string(LONG_TO)+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_TO = "--" + string(LONG_TO) + "\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t<tag name>=<tag value>";
 
-const string Options::USG_VALID = "--" + string(LONG_VALID ) ;
+const string Options::USG_VALID = "--" + string(LONG_VALID ) + "\t\thh:mm";
 
 const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHORT_VERBOSE + "\t[0|1|2|3]";
 
@@ -483,6 +483,7 @@ Options::Options (const WMPCommands &command){
 	resource = NULL ;
 	status = NULL;
 	to = NULL;
+	valid = NULL ;
 	vo = NULL;
 	// init of the boolean attributes
 	all  = false ;
@@ -492,11 +493,9 @@ Options::Options (const WMPCommands &command){
 	noint  = false ;
 	nolisten = false  ;
 	nomsg = false  ;
-	noversion  = false ;
 	rank = false  ;
 	version  = false ;
 	// init of the numerical attributes
-	valid = NULL ;
 	port = NULL ;
 	verbosity = NULL ;
 	// definitions of short and long options
@@ -632,6 +631,12 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			}
 			break ;
 		}
+		case(VALID) : {
+			if (valid){
+				value = new string (*valid) ;
+			}
+			break ;
+		}
 		case(TO) : {
 			if (to){
 				value = new string (*to) ;
@@ -664,27 +669,6 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 		}
 		default : {
 
-			break ;
-		}
-	};
-	return value ;
-};
-
-/*
-*	gets the value of the option string-attribute
-*	@param attribute name of the attribute
-*/
-long* Options::getLongAttribute (const OptsAttributes &attribute){
-	long *value = NULL ;
-	switch (attribute){
-		case(VALID) : {
-			if (valid){
-				value = (long*)malloc(sizeof(long));
-				*value = *valid ;
-			}
-			break ;
-		}
-		default : {
 			break ;
 		}
 	};
@@ -733,10 +717,6 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			value = version ;
 			break ;
 		}
-		case(NOVERSION) : {
-			value = noversion  ;
-			break ;
-		}
 		case(NOMSG) : {
 			value = nomsg ;
 			break ;
@@ -765,6 +745,7 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 	switch (attribute){
 		case(USERTAG) : {
 			vect = &usertag ;
+			break;
 		}
 		default : {
 			cout << "getListAttribute> no attribute !\n";
@@ -773,6 +754,96 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 		}
 	};
 	return (*vect);
+};
+
+const string Options::getAttributeUsage (const Options::OptsAttributes &attribute){
+	string msg = "";
+	switch (attribute){
+		case(CONFIGVO) : {
+			msg = USG_CONFIGVO;
+			break ;
+		}
+		case(VO) : {
+			msg = USG_VO ;
+			break ;
+		}
+		case(DIR) : {
+			msg = USG_DIR ;
+			break ;
+		}
+		case(LOGFILE) : {
+			msg = USG_LOGFILE ;
+			break ;
+		}
+		case(CHKPT) : {
+			msg = USG_CHKPT ;
+			break ;
+		}
+		case(LMRS) : {
+			msg = USG_LMRS ;
+			break ;
+		}
+		case(TO) : {
+			msg = USG_TO ;
+			break ;
+		}
+		case(OUTPUT) : {
+			msg = USG_OUTPUT ;
+			break ;
+		}
+		case(INPUT) : {
+			msg = USG_INPUT ;
+			break ;
+		}
+		case(CONFIG) : {
+			msg = USG_CONFIG ;
+			break ;
+		}
+		case(RESOURCE) : {
+			msg = USG_RESOURCE ;
+			break ;
+		}
+		case(HELP) : {
+			msg = USG_HELP  ;
+			break ;
+		}
+		case(VERSION) : {
+			msg = USG_VERSION ;
+			break ;
+		}
+		case(NOMSG) : {
+			msg = USG_NOMSG ;
+			break ;
+		}
+		case(NOGUI) : {
+			msg = USG_NOGUI ;
+			break ;
+		}
+		case(NOLISTEN) : {
+			msg = USG_NOLISTEN ;
+			break ;
+		}
+		case(USERTAG) : {
+			msg = USG_USERTAG ;
+			break ;
+		}
+		case(PORT) : {
+			msg = USG_PORT ;
+			break ;
+		}
+		case(VALID) : {
+			msg = USG_VALID ;
+			break ;
+		}
+		case(VERBOSE) : {
+			msg = USG_VERBOSE ;
+			break ;
+		}
+		default : {
+			break ;
+		}
+	}
+		return msg ;
 };
 /*
 *	gets the list of job identifiers
@@ -799,10 +870,9 @@ string Options::getPath2Jdl () {
 *	@param command line options
 */
 void Options::setAttribute (const int &in_opt, const char **argv) {
-cout << "setAttribute > start in_opt=" << in_opt << "\n";
 	switch (in_opt){
 		case ( Options::SHORT_OUTPUT ) : {
-cout << "1\n";			if (output){
+		if (output){
 				// DUPLICATE  OPT !!!
 				throw "output - DUPLICATE  OPT !!!" ;
 			} else {
@@ -811,7 +881,7 @@ cout << "1\n";			if (output){
 			break ;
 		};
 		case ( Options::SHORT_INPUT ) : {
-cout << "2\n";				if (input){
+			if (input){
 				// DUPLICATE  OPT !!!
 				throw "input - DUPLICATE  OPT !!!" ;
 			} else {
@@ -842,8 +912,7 @@ cout << "2\n";				if (input){
 				// DUPLICATE  OPT !!!
 				throw "valid - DUPLICATE  OPT !!!" ;
 			} else {
-				valid = (long*) malloc (sizeof(long));
-				*valid = atol (optarg);
+				valid = new string(optarg);
 			}
 			break ;
 		};
@@ -919,7 +988,6 @@ cout << "2\n";				if (input){
 			break ;
 		};
 		case ( Options::HELP ) : {
-	cout << "setAttribute > help \n";
 			help = true ;
 			break;
 		};
@@ -1120,6 +1188,9 @@ void Options::readOptions(const int &argc, const char **argv){
 		exit(0);
 	}
 };
+
+
+
 } // glite
 } // wms
 } // client

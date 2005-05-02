@@ -37,7 +37,6 @@ class Options
 			NOINT ,
 			NOLISTEN ,
 			NOMSG ,
-			NOVERSION,
 			OUTPUT ,
 			PORT ,
 			RANK ,
@@ -87,11 +86,6 @@ class Options
 		*	gets the value of the option string-attribute
 		*	@param attribute name of the attribute
 		*/
-		long* getLongAttribute (const Options::OptsAttributes &attribute);
-				/*
-		*	gets the value of the option string-attribute
-		*	@param attribute name of the attribute
-		*/
 		int* getIntAttribute (const Options::OptsAttributes &attribute);
 		/*
 		*	gets the value of the option string-attribute
@@ -103,6 +97,8 @@ class Options
 		*	@param attribute name of the attribute
 		*/
 		const std::vector<std::string> getListAttribute (const Options::OptsAttributes &attribute);
+
+		const std::string getAttributeUsage (const Options::OptsAttributes &attribute);
 		/*
 		*	gets the list of job identifiers
 		*	@return a vector with the list of jobid's
@@ -281,6 +277,7 @@ class Options
 		std::string* resource ;
 		std::string* status ;
 		std::string* to ;
+		std::string* valid ;
 		std::string* vo ;
 		/*
 		*	boolean attributes
@@ -292,13 +289,11 @@ class Options
 		bool noint ;
 		bool nolisten ;
 		bool nomsg ;
-		bool noversion ;
 		bool rank ;
 		bool version ;
 		/*
 		*	numerical attributes
 		*/
-		long *valid ;
 		int *port ;
 		int *verbosity ;
 		/*

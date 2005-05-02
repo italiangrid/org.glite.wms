@@ -60,7 +60,70 @@ void checkJobIds(std::vector<std::string> jobids) ;
  * @throw               in case of any format error // EXCEPTION !!!!!
  */
 std::string getJdlString (std::string path);
+
+
 void jobAdExample();
+
+/*
+*	extract the tokens from the input string by a given separator
+*	<field_1><separator><fields_2>....... etc
+*	@param  instr input string
+*	@sep string separator between the tokens
+*	@return a vector of strings with the extracted tokens
+*/
+const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep);
+
+/*
+*	convert the input time string to number of seconds form 1970
+*	the formats of the input time string could be:
+*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
+*		- MM<sep>DD<sep>hh<sep>mm
+*		- hh<sep>mm
+*	where MM=month, DD=day of the month, YYYY=year
+*		  hh=hours , min=minutes
+*	(check also if the number of fields is equal to the nf parameter)
+*	@st the input time string
+*	@sep field separator
+*	@now the current time
+*	@nf number of the fields expected in the input string
+*	@return the number of seconds
+*	@throw ---------------------------------- in case any format error in the input string
+*/
+const long getTime(const std::string &st, const std::string &sep, const time_t &now, const unsigned int &nf = 0) ;
+
+/*const std::vector<pair<char,std::string> > extractTime(const std::string &st, const std::string &sep) ;
+const int getTime(const  std::vector<pair<char,std::string> >&vt, const time_t &now) ;
+*
+*/
+/*
+* 	check if the input time string is related to the future
+*	the formats of the input time string could be:
+*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
+*		- MM<sep>DD<sep>hh<sep>mm
+*		- hh<sep>mm
+*	where MM=month, DD=day of the month, YYYY=year
+*		  hh=hours , min=minutes
+*	(if nf is a positve parameter check that the number of fields is equal to nf)
+*	@st the input time string
+*	@nf number of the fields expected in the input string ( 0 , no check)
+*	@return true in case of success
+*/
+bool isAfter (const std::string &st, const unsigned int &nf = 0) ;
+/*
+* 	check if the input time string is related to the past
+*	the formats of the input time string could be:
+*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
+*		- MM<sep>DD<sep>hh<sep>mm
+*		- hh<sep>mm
+*	where MM=month, DD=day of the month, YYYY=year
+*		  hh=hours , min=minutes
+*	(if nf is a positvecheck that the number of fields is equal to nf)
+*	@st the input time string
+*	@nf number of the fields expected in the input string ( 0 , no check)
+*	@return true in case of success
+*/
+bool isBefore (const std::string &st, const unsigned int &nf = 0);
+
 } // glite
 } // wms
 } // client
