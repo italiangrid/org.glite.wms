@@ -41,11 +41,11 @@ const string TIME_SEPARATOR				=	":";
 const string DEFAULT_UI_CONFILE 		=	"glite_wmsui_conf";
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_NS_PORT	=	7772;
-const unsigned int DEFAULT_ERR_CODE	=	7772;
+const unsigned int DEFAULT_ERR_CODE	=	1;
 /*************************************
 *** General Utilities Static methods *
 **************************************/
-bool answerYes (const std::string& question, bool defaultAnswer){
+bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 	string possible=" [y/n]";
 	possible +=(defaultAnswer?"y":"n");
 	possible +=" :";
@@ -63,7 +63,7 @@ bool answerYes (const std::string& question, bool defaultAnswer){
 /**********************************
 *** NS, LB, Host Static methods ***
 ***********************************/
-void resolveHost(const std::string& hostname, std::string& resolved_name){
+void Utils::resolveHost(const std::string& hostname, std::string& resolved_name){
     struct hostent *result = NULL;
     if( (result = gethostbyname(hostname.c_str())) == NULL ){
     	throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
@@ -71,7 +71,7 @@ void resolveHost(const std::string& hostname, std::string& resolved_name){
     }
     resolved_name=result->h_name;
 }
-std::vector<std::string> getLbs(const std::vector<std::vector<std::string> >& lbGroup, int nsNum){
+std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string> >& lbGroup, int nsNum){
 	std::vector<std::string> lbs ;
 	unsigned int lbGroupSize=lbGroup.size();
 	switch (lbGroupSize){
@@ -100,7 +100,8 @@ std::vector<std::string> getLbs(const std::vector<std::vector<std::string> >& lb
 	}
 	return lbs;
 }
-std::pair <std::string, unsigned int>checkAd(	const std::string& adFullAddress,
+/** Static private method **/
+std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 						const std::string& DEFAULT_PROTOCOL,
 						unsigned int DEFAULT_PORT){
 	pair<string, unsigned int> ad;
@@ -132,7 +133,8 @@ std::pair <std::string, unsigned int>checkAd(	const std::string& adFullAddress,
 	ad.first+=adFullAddress.substr(0,portInd);
 	return ad;
 }
-std::pair <std::string, unsigned int>checkLb(const std::string& lbFullAddress){
+
+std::pair <std::string, unsigned int> Utils::checkLb(const std::string& lbFullAddress){
 	try{
 		return checkAd( lbFullAddress,DEFAULT_LB_PROTOCOL+PROTOCOL, DEFAULT_LB_PORT);
 	}catch (WmsClientException &exc){
@@ -140,7 +142,7 @@ std::pair <std::string, unsigned int>checkLb(const std::string& lbFullAddress){
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
-std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress){
+std::pair <std::string, unsigned int> Utils::checkNs(const std::string& nsFullAddress){
 	try{
 		return checkAd( nsFullAddress,"", DEFAULT_NS_PORT);
 	}catch (WmsClientException &exc){
@@ -149,9 +151,10 @@ std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress){
 	}
 }
 /**********************************
-*** NS, LB, Host Static methods ***
+*** general	***
 ***********************************/
-bool checkPrefix(){
+
+string Utils::checkPrefix(){
 	// Creating possible paths
 	vector <string> paths ;
 	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
@@ -161,22 +164,30 @@ bool checkPrefix(){
 	// Look for conf-file:
 	string tbFound;
 	bool found = false;
-	for (unsigned int i=0 ;i<paths.size();i++){
+	unsigned int i;
+	for (i=0;i<paths.size();i++){
 		tbFound=paths[i]+"/etc/"+DEFAULT_UI_CONFILE ;
 		ifstream f (tbFound.c_str());
 		if(f.good()){
 			found = true;
+			break;
 		}
 	}
-	return found; // SUCCESS
+	if (!found){
+		throw WmsClientException(__FILE__,__LINE__,"checkNs",DEFAULT_ERR_CODE,
+			"Wrong Configuration Settings","Unable to find UI install path");
+	}
+	return paths[i];
 }
-void checkJobIds(std::vector<std::string> jobids){
+void Utils::checkJobIds(std::vector<std::string> jobids){
 	std::vector<std::string>::iterator it ;
 	for (it = jobids.begin() ; it != jobids.end() ; it++){
 			JobId jid (*it);
 	}
 }
-std::string getJdlString (std::string path){
+
+
+std::string Utils::getJdlString (std::string path){
 	string jdl = "";
 	//try{
 		Ad *ad = new Ad( );
@@ -208,26 +219,29 @@ std::string getJdlString (std::string path){
 
 }
 
-void jobAdExample(){
-try{
-	string jdl = "[ executable = \"ciccio\" ; arguments= \"bella secco\" ]";
-	JobAd jad(jdl);
-	cout << "STR=" << jad.toString() << endl;
-	jad.toSubmissionString();
-}catch (AdSemanticMandatoryException &exc){
-	cout << "SEMANTIC MANDATORY" << endl ;
-	throw;
-}catch (RequestAdException &exc){
-	cout << "REQUESTAD" << endl ;
-	throw;
-}catch (glite::wmsutils::exception::Exception &exc){
-	cout << "Exception is here" << endl ;
-	throw;
-}
+void Utils::jobAdExample(){
+	try{
+		string jdl = "[ executable = \"ciccio\" arguments= \"bella secco\" ]";
+		JobAd jad(jdl);
+		cout << "STR=" << jad.toString() << endl;
+		jad.toSubmissionString();
+	}catch (AdSyntaxException &exc){
+		cout << " Syntax caught.." << endl ;
+		cout << "MSG:" << exc.what() << endl ;
+		throw;
+	}catch (AdSemanticMandatoryException &exc){
+		cout << "SEMANTIC MANDATORY" << endl ;
+		throw;
+	}catch (RequestAdException &exc){
+		cout << "REQUESTAD" << endl ;
+		throw;
+	}catch (glite::wmsutils::exception::Exception &exc){
+		cout << "Exception is here" << endl ;
+		throw;
+	}
 }
 
-
-const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep){
+const std::vector<std::string> Utils::extractFields(const std::string &instr, const std::string &sep){
 	vector<string> vt ;
 	// extracts the fields from the input string
 	boost::char_separator<char> separator(sep.c_str());
@@ -239,7 +253,7 @@ const std::vector<std::string> extractFields(const std::string &instr, const std
 	}
 	return vt;
 }
-const long getTime(const std::string &st,
+const long Utils::getTime(const std::string &st,
 			const std::string &sep,
 			const time_t &now,
 			const unsigned int &nf){
@@ -305,7 +319,7 @@ const long getTime(const std::string &st,
 	return  mktime(&ts) ;
 }
 
-bool isAfter (const std::string &st, const unsigned int &nf){
+bool Utils::isAfter (const std::string &st, const unsigned int &nf){
 	// current time
 	time_t now = time(NULL);
 /*
@@ -334,7 +348,7 @@ cout << "true ...\n";
 	}
 }
 
-bool isBefore (const std::string &st, const unsigned int &nf){
+bool Utils::isBefore (const std::string &st, const unsigned int &nf){
 	// current time
 	time_t now = time(NULL);
 	//converts the input  time string to the vector to seconds from 1970
