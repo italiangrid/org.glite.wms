@@ -4,6 +4,8 @@
 // i/o streams
 #include <iostream>
 #include <fstream>
+// exceptions
+#include "excman.h"
 
 namespace glite {
 namespace wms{
@@ -11,6 +13,9 @@ namespace client {
 namespace utilities {
 
 using namespace std;
+
+const unsigned int DEFAULT_ERR_CODE      =       0;
+
 /*
  * Help messages
 */
@@ -581,7 +586,9 @@ Options::Options (const WMPCommands &command){
 			break;
 		} ;
 		default : {
-			throw "constructor> unknown command" ;
+			throw WmsClientException(__FILE__,__LINE__,"Options",
+				DEFAULT_ERR_CODE,
+				"Wrong Input Parameter","unknown command");
 		} ;
 	};
 	// command type attribute
@@ -590,7 +597,6 @@ Options::Options (const WMPCommands &command){
 
 /*
 *	gets the value of the option string-attribute
-*	@param attribute name of the attribute
 */
 string* Options::getStringAttribute (const OptsAttributes &attribute){
 	string *value = NULL ;
@@ -668,7 +674,7 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			break ;
 		}
 		default : {
-
+			// returns NULL
 			break ;
 		}
 	};
@@ -677,7 +683,6 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 
 /*
 *	gets the value of the option int-attribute
-*	@param attribute name of the attribute
 */
 int* Options::getIntAttribute (const OptsAttributes &attribute){
 	int *value = NULL ;
@@ -697,6 +702,7 @@ int* Options::getIntAttribute (const OptsAttributes &attribute){
 			break ;
 		}
 		default : {
+			// returns NULL
 			break ;
 		}
 	};
@@ -704,7 +710,6 @@ int* Options::getIntAttribute (const OptsAttributes &attribute){
 };
 /*
 *	gets the value of the option string-attribute
-*	@param attribute name of the attribute
 */
 bool Options::getBoolAttribute (const OptsAttributes &attribute){
 	bool value = false ;
@@ -730,6 +735,7 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			break ;
 		}
 		default : {
+			// returns false
 			break ;
 		}
 	};
@@ -738,7 +744,6 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 
 /*
 *	gets the value of the option list of strings-attribute
-*	@param attribute name of the attribute
 */
 const vector<string> Options::getListAttribute (const Options::OptsAttributes &attribute){
 	vector<string> *vect ;
@@ -748,14 +753,15 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 			break;
 		}
 		default : {
-			cout << "getListAttribute> no attribute !\n";
-			throw exception();
+			// returns an empty vector
 			break ;
 		}
 	};
 	return (*vect);
 };
-
+/*
+*	gets the short help usage message for an option attribute
+*/
 const string Options::getAttributeUsage (const Options::OptsAttributes &attribute){
 	string msg = "";
 	switch (attribute){
@@ -840,10 +846,11 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			break ;
 		}
 		default : {
+			// returns an empty string
 			break ;
 		}
 	}
-		return msg ;
+	return msg ;
 };
 /*
 *	gets the list of job identifiers
@@ -858,8 +865,10 @@ const vector<string> Options::getJobIds () {
 */
 string Options::getPath2Jdl () {
 	if (!jdlFile) {
-		cerr << "ERROR (getPath2Jdl )> no path to JDL has been set\n";
-		throw exception();
+		throw WmsClientException(__FILE__,__LINE__,"getPath2Jdl" ,
+				DEFAULT_ERR_CODE,
+				"Missing Option",
+				"no path to JDL file has been set");
 	}
 	return *jdlFile;
 };
@@ -870,38 +879,35 @@ string Options::getPath2Jdl () {
 *	@param command line options
 */
 void Options::setAttribute (const int &in_opt, const char **argv) {
+	string* dupl = NULL;
 	switch (in_opt){
 		case ( Options::SHORT_OUTPUT ) : {
-		if (output){
-				// DUPLICATE  OPT !!!
-				throw "output - DUPLICATE  OPT !!!" ;
+			if (output){
+				dupl = new string(LONG_OUTPUT) ;
 			} else {
 				output = new string (optarg);
 			}
 			break ;
 		};
-		case ( Options::SHORT_INPUT ) : {
+		case ( Options::SHORT_INPUT) : {
 			if (input){
-				// DUPLICATE  OPT !!!
-				throw "input - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_INPUT) ;
 			} else {
 				input = new string (optarg);
 			}
 			break ;
 		};
-		case ( Options::SHORT_CONFIG ) : {
+		case ( Options::SHORT_CONFIG) : {
 			if (config){
-				// DUPLICATE  OPT !!!
-				throw "input - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_CONFIG) ;
 			} else {
 				config = new string (optarg);
 			}
 			break ;
 		};
-		case ( Options::SHORT_RESOURCE ) : {
+		case ( Options::SHORT_RESOURCE) : {
 			if (resource){
-				// DUPLICATE  OPT !!!
-				throw "resource - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_RESOURCE) ;
 			} else {
 				resource = new string (optarg);
 			}
@@ -909,8 +915,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_VALID ) : {
 			if (valid){
-				// DUPLICATE  OPT !!!
-				throw "valid - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_VALID) ;
 			} else {
 				valid = new string(optarg);
 			}
@@ -918,8 +923,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_VERBOSE ) : {
 			if (verbosity){
-				// DUPLICATE  OPT !!!
-				throw "vebose - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_VERBOSE) ;
 			}else {
 				verbosity = (int*) malloc (sizeof(int));
 				*verbosity = atoi (optarg);
@@ -928,8 +932,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_STATUS ) : {
 			if (status){
-				// DUPLICATE  OPT !!!
-				throw "status - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_STATUS) ;
 			} else {
 				status = new string (optarg);
 			}
@@ -937,8 +940,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_EXCLUDE ) : {
 			if (exclude){
-				// DUPLICATE  OPT !!!
-				throw "exclude - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_EXCLUDE) ;
 			} else {
 				exclude = new string (optarg);
 			}
@@ -950,8 +952,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::CHKPT ) : {
 			if (chkpt){
-				// DUPLICATE  OPT !!!
-				throw "chkpt - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_CHKPT) ;
 			} else {
 				chkpt = new string (optarg);
 			}
@@ -959,8 +960,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::CONFIGVO ) : {
 			if (configvo){
-				// DUPLICATE  OPT !!!
-				throw "configvo- DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_CONFIGVO) ;
 			} else {
 				configvo = new string (optarg);
 			}
@@ -971,8 +971,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::DIR ) : {
 			if (dir){
-				// DUPLICATE  OPT !!!
-				throw "dir - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_DIR ) ;
 			} else {
 				dir = new string (optarg);
 			}
@@ -980,8 +979,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::FROM ) : {
 			if (from){
-				// DUPLICATE  OPT !!!
-				throw "from- DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_FROM) ;
 			} else {
 				from = new string (optarg);
 			}
@@ -993,8 +991,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::LMRS ) : {
 			if (lmrs){
-				// DUPLICATE  OPT !!!
-				throw "lmrs- DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_LMRS) ;
 			} else {
 				lmrs = new string (optarg);
 			}
@@ -1002,8 +999,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::LOGFILE ) : {
 			if (logfile){
-				// DUPLICATE  OPT !!!
-				throw "logfile- DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_LOGFILE) ;
 			} else {
 				logfile = new string (optarg);
 			}
@@ -1027,8 +1023,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_PORT ) : {
 			if (port){
-				// DUPLICATE  OPT !!!
-				throw "port - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_PORT) ;
 			}else {
 				port= (int*) malloc (sizeof(int));
 				*port = atoi (optarg);
@@ -1041,8 +1036,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::TO ) : {
 			if (to){
-				// DUPLICATE  OPT !!!
-				throw "to - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_TO) ;
 			} else {
 				to = new string (optarg);
 			}
@@ -1058,18 +1052,27 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::VO ) : {
 			if (vo){
-				// DUPLICATE  OPT !!!
-				throw "vo - DUPLICATE  OPT !!!" ;
+				dupl = new string(LONG_VO) ;
 			}else {
 				vo = new string (optarg);
 			}
 			break ;
 		};
 		default : {
-			throw "setAttribute > no option ! " ;
+			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
+				DEFAULT_ERR_CODE,
+				"Input Option Error",
+				"unknow option"  );
 			break ;
 		};
 	};
+
+	if (dupl) {
+		throw WmsClientException(__FILE__,__LINE__,"setAttribute",
+				DEFAULT_ERR_CODE,
+				"Input Option Error",
+				string("option already specified: " + *dupl) );
+	}
 };
 
 /*
@@ -1079,12 +1082,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	int *indexptr  = (int*) malloc (sizeof(int));
-	/*
-	cout << "---->argc=" << argc << "\n";
-	cout << "---->optopt=" << optopt << "\n" ;
-	cout << "---->optind=" << optind << "\n";
-	cout << "---->argv=" << argv[optind]<< "\n";
-	*/
 	do {
 		// option parsing
 		next_opt = getopt_long (argc,
@@ -1092,24 +1089,19 @@ void Options::readOptions(const int &argc, const char **argv){
                                                 shortOpts,
                                                	longOpts,
                                                 indexptr );
-		cout << "next_opt=" << next_opt << "\n" ;
+		//cout << "next_opt=" << next_opt << "\n" ;
 
 		// error
 		if (next_opt == '?') {
-			cout << "option error ! \n";
-			throw exception( ) ;
+			throw WmsClientException(__FILE__,__LINE__,
+				"readOptions", DEFAULT_ERR_CODE,
+				"Input Option Error", "unknown exception");
 		}
 		// sets attribute
 		if (next_opt != -1 ){
-			cout << "int_ptr=" << *indexptr << "\n" ;
+			//cout << "int_ptr=" << *indexptr << "\n" ;
 			setAttribute (longOpts[*indexptr].val, argv);
 		}
-		/*
-		cout << "optopt=" << optopt << "\n" ;
-		cout << "optind=" << optind << "\n";
-		cout << "argv=" << argv[optind]<< "\n";
-		cout << "-------------------------------\n";
-		*/
 
 	} while (next_opt != -1);
 
@@ -1121,13 +1113,16 @@ void Options::readOptions(const int &argc, const char **argv){
 			if ( optind == (argc-1) ){
 				ifstream file(argv[optind]);
 				if (!file.good()) {
-					cout << "no such JDL file ! \n";
-					throw exception( ) ;
+					throw WmsClientException(__FILE__,__LINE__,
+					"readOptions", DEFAULT_ERR_CODE,
+					"Input Option Error",
+					"no such JDL file :" + string(argv[optind]) );
 				}
 				jdlFile = new string(argv[ optind ]) ;
 			} else {
-				cout << "no JDL file option !\n" ;
-				throw exception( ) ;
+					throw WmsClientException(__FILE__,__LINE__,
+					"readOptions", DEFAULT_ERR_CODE,
+					"Missing Option", "no JDL file option specified");
 			}
 		}
 		// JobId option in job-attach
@@ -1135,8 +1130,9 @@ void Options::readOptions(const int &argc, const char **argv){
 			if ( optind == (argc-1) ){
 				jobIds.push_back(argv[optind]);
 			} else {
-				cout << "no JOBID option !\n" ;
-				throw exception( ) ;
+				throw WmsClientException(__FILE__,__LINE__,
+				"readOptions", DEFAULT_ERR_CODE,
+				"Missing Option", "no JOBID option specified");
 			}
 		}
 		// list of jobids in status, logginginfo and cancel
@@ -1144,8 +1140,9 @@ void Options::readOptions(const int &argc, const char **argv){
 		cmdType == JOBLOGINFO ||
 		cmdType == JOBCANCEL ) {
 			if (optind == argc ){
-				cout << "no JOBID option !\n" ;
-				throw exception( ) ;
+				throw WmsClientException(__FILE__,__LINE__,
+				"readOptions", DEFAULT_ERR_CODE,
+				"Missing Option", "no JOBID option specified");
 			}
 			for (int i = optind ; i < argc ; i++ ){
 				jobIds.push_back(argv[i]);
