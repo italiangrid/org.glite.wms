@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "options_utils.h"
 namespace glite {
 namespace wms{
 	// Wms Client Configuration class declaration
@@ -17,11 +18,10 @@ namespace wms{
 	}
 namespace client {
 namespace utilities {
-class Options ;
 class Utils{
 public:
-	Utils(glite::wms::common::configuration::WMCConfiguration *wmcConf,
-			Options *wmcOpt);
+	Utils(Options *wmcOpt);
+	// TBD ,glite::wms::common::configuration::WMCConfiguration *wmcConf=NULL);
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -135,9 +135,13 @@ private:
 	*	@return a vector of strings with the extracted tokens
 	*/
 	static const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep);
-		
-	glite::wms::common::configuration::WMCConfiguration *wmcConf;
-	Options *wmcOpt;
+
+	// Ad configuration files:
+	glite::wms::common::configuration::WMCConfiguration
+		*wmcConf;
+	// Option files:	
+	Options
+		*wmcOpt;
 
 
 }; // end class definition

@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "excman.h"
 #include "adutils.h"
-#include "options_utils.h"
+
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 // #include "glite/wmsutils/jobid/JobIdExceptions.h"
@@ -52,7 +52,8 @@ const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_NS_PORT	=	7772;
 const unsigned int DEFAULT_ERR_CODE	=	1;
 
-Utils::Utils(glite::wms::common::configuration::WMCConfiguration *wmcConf, Options *wmcOpt){
+Utils::Utils(Options *wmcOpt){
+	// TBD remove,glite::wms::common::configuration::WMCConfiguration *wmcConf){
 	// Constructor
 	checkPrefix();
 	this->wmcOpt=wmcOpt;
@@ -190,7 +191,7 @@ void Utils::checkPrefix(){
 		else {pathDefault="";}
 	}
 	// CREATE Configuration
-	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(pathUser,pathDefault).ad());
+	// wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(pathUser,pathDefault).ad());
 }
 void Utils::checkJobIds(std::vector<std::string> jobids){
 	std::vector<std::string>::iterator it ;
