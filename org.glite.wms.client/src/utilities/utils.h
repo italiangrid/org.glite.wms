@@ -20,6 +20,8 @@ namespace utilities {
 class Options ;
 class Utils{
 public:
+	Utils(glite::wms::common::configuration::WMCConfiguration *wmcConf,
+			Options *wmcOpt);
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -51,16 +53,9 @@ public:
 	*/
 	void resolveHost(const std::string& hostname, std::string& resolved);
 	/**
-	* Check the WMS client installation path
-	* @return The string representation of the installation path
-	*/
-	std::string checkPrefix();
-
-	/**
 	* Check the format of the jobids
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
 	* @param jobids vectors containing the list of jobids to be checked
-	* @throw               in case of any format error // EXCEPTION !!!!!
 	*/
 	void checkJobIds(std::vector<std::string> jobids) ;
 	/**
@@ -70,32 +65,13 @@ public:
 	* @throw               in case of any format error // EXCEPTION !!!!!
 	*/
 	std::string getJdlString (std::string path);
+
 	void jobAdExample();
-	/*
-	*	extract the tokens from the input string by a given separator
-	*	<field_1><separator><fields_2>....... etc
-	*	@param  instr input string
-	*	@sep string separator between the tokens
-	*	@return a vector of strings with the extracted tokens
+	/** Exit from the process. If ncessary prompt some information
+	@param exitCode command exit code, 0 in case of success, error otherwise
 	*/
-	const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep);
-	/*
-	*	convert the input time string to number of seconds form 1970
-	*	the formats of the input time string could be:
-	*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
-	*		- MM<sep>DD<sep>hh<sep>mm
-	*		- hh<sep>mm
-	*	where MM=month, DD=day of the month, YYYY=year
-	*		  hh=hours , min=minutes
-	*	(check also if the number of fields is equal to the nf parameter)
-	*	@st the input time string
-	*	@sep field separator
-	*	@now the current time
-	*	@nf number of the fields expected in the input string
-	*	@return the number of seconds
-	*	@throw ---------------------------------- in case any format error in the input string
-	*/
-	const long getTime(const std::string &st, const std::string &sep, const time_t &now, const unsigned int &nf = 0) ;
+	void ending(unsigned int exitCode=0);
+
 	/*const std::vector<pair<char,std::string> > extractTime(const std::string &st, const std::string &sep) ;
 	const int getTime(const  std::vector<pair<char,std::string> >&vt, const time_t &now) ;
 	*
@@ -113,7 +89,7 @@ public:
 	*	@nf number of the fields expected in the input string ( 0 , no check)
 	*	@return true in case of success
 	*/
-	bool isAfter (const std::string &st, const unsigned int &nf = 0) ;
+	static bool isAfter (const std::string &st, const unsigned int &nf = 0) ;
 	/*
 	* 	check if the input time string is related to the past
 	*	the formats of the input time string could be:
@@ -127,8 +103,39 @@ public:
 	*	@nf number of the fields expected in the input string ( 0 , no check)
 	*	@return true in case of success
 	*/
-	bool isBefore (const std::string &st, const unsigned int &nf = 0);
+	static bool isBefore (const std::string &st, const unsigned int &nf = 0);
 private:
+	/**
+	* Check the WMS client installation path
+	* @return The string representation of the installation path and loads general info
+	*/
+	void checkPrefix();
+	/*
+	*	convert the input time string to number of seconds form 1970
+	*	the formats of the input time string could be:
+	*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
+	*		- MM<sep>DD<sep>hh<sep>mm
+	*		- hh<sep>mm
+	*	where MM=month, DD=day of the month, YYYY=year
+	*		  hh=hours , min=minutes
+	*	(check also if the number of fields is equal to the nf parameter)
+	*	@st the input time string
+	*	@sep field separator
+	*	@now the current time
+	*	@nf number of the fields expected in the input string
+	*	@return the number of seconds
+	*	@throw ---------------------------------- in case any format error in the input string
+	*/
+	static const long getTime(const std::string &st, const std::string &sep, const time_t &now, const unsigned int &nf = 0) ;
+	/*
+	*	extract the tokens from the input string by a given separator
+	*	<field_1><separator><fields_2>....... etc
+	*	@param  instr input string
+	*	@sep string separator between the tokens
+	*	@return a vector of strings with the extracted tokens
+	*/
+	static const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep);
+		
 	glite::wms::common::configuration::WMCConfiguration *wmcConf;
 	Options *wmcOpt;
 

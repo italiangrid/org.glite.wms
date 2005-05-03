@@ -11,10 +11,11 @@
 // HEADER
 #include "utils.h"
 #include "excman.h"
+#include "adutils.h"
 #include "options_utils.h"
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/JobIdExceptions.h"
+// #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 // Configuration
 #include "glite/wms/common/configuration/WMCConfiguration.h"
@@ -46,10 +47,17 @@ namespace configuration = glite::wms::common::configuration;
 const string DEFAULT_LB_PROTOCOL		=	"https";
 const string PROTOCOL						=	"://";
 const string TIME_SEPARATOR				=	":";
-const string DEFAULT_UI_CONFILE 		=	"glite_wmsui_conf";
+const string DEFAULT_UI_CONFILE 		=	"glite_wms_client.conf";
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_NS_PORT	=	7772;
 const unsigned int DEFAULT_ERR_CODE	=	1;
+
+Utils::Utils(glite::wms::common::configuration::WMCConfiguration *wmcConf, Options *wmcOpt){
+	// Constructor
+	checkPrefix();
+	this->wmcOpt=wmcOpt;
+}
+
 /*************************************
 *** General Utilities Static methods *
 **************************************/
@@ -158,34 +166,31 @@ std::pair <std::string, unsigned int> Utils::checkNs(const std::string& nsFullAd
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
+
 /**********************************
 *** general	***
 ***********************************/
-
-string Utils::checkPrefix(){
-	// Creating possible paths
+void Utils::checkPrefix(){
+	// Look for default user config file and check validity
+	string pathUser=string(getenv("GLITE_WMS_LOCATION"))+"/"+DEFAULT_UI_CONFILE;
+	ifstream ucf (pathUser.c_str()); if(!ucf.good()){pathUser="";}
+	// Look for GLITE installation path
 	vector <string> paths ;
 	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
 	if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
 	paths.push_back("/opt/glite");
 	paths.push_back("usr/local");
 	// Look for conf-file:
-	string tbFound;
-	bool found = false;
+	string pathDefault;
 	unsigned int i;
 	for (i=0;i<paths.size();i++){
-		tbFound=paths[i]+"/etc/"+DEFAULT_UI_CONFILE ;
-		ifstream f (tbFound.c_str());
-		if(f.good()){
-			found = true;
-			break;
-		}
+		pathDefault=paths[i]+"/etc/"+DEFAULT_UI_CONFILE ;
+		ifstream f (pathDefault.c_str());
+		if(f.good()){break;}
+		else {pathDefault="";}
 	}
-	if (!found){
-		throw WmsClientException(__FILE__,__LINE__,"checkNs",DEFAULT_ERR_CODE,
-			"Wrong Configuration Settings","Unable to find UI install path");
-	}
-	return paths[i];
+	// CREATE Configuration
+	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(pathUser,pathDefault).ad());
 }
 void Utils::checkJobIds(std::vector<std::string> jobids){
 	std::vector<std::string>::iterator it ;
@@ -193,8 +198,6 @@ void Utils::checkJobIds(std::vector<std::string> jobids){
 			JobId jid (*it);
 	}
 }
-
-
 std::string Utils::getJdlString (std::string path){
 	string jdl = "";
 	//try{
@@ -260,7 +263,8 @@ void Utils::jobAdExample(){
 	}
 	*/
 }
-
+void Utils::ending(unsigned int exitCode){
+}
 const std::vector<std::string> Utils::extractFields(const std::string &instr, const std::string &sep){
 	vector<string> vt ;
 	// extracts the fields from the input string
