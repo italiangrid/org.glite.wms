@@ -10,8 +10,8 @@
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
 // Exceptions
-#include "utilities/wmpexceptions.h"
-#include "utilities/wmpexception_codes.h"
+//#include "utilities/wmpexceptions.h"
+//#include "utilities/wmpexception_codes.h"
 
 #include <iostream>
 #include <vector>
