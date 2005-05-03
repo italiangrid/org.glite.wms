@@ -1,13 +1,16 @@
-#include <utilities/options_utils.h>
+
 #include <iostream>
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
+// utilities
+#include "utilities/options_utils.h"
+#include "utilities/utils.h"
 
 #include "services/jobloginfo.h"
 
 using namespace std ;
-// wmproxy API
-#include "glite/wms/wmproxyapi/wmproxy_api.h"
+using namespace glite::wms::client::utilities ;
+using namespace glite::wms::wmproxyapi;
 
 /*
 *	main
