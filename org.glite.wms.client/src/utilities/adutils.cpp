@@ -6,6 +6,18 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 using namespace std ;
 using namespace glite::wms::jdl ;
+
+
+glite::wms::jdl::Ad loadConfiguration(const string& pathUser , const string& pathDefault){
+	glite::wms::jdl::Ad adUser, adDefault;
+	// Load ad from file (if necessary)
+	if (pathUser!="")  {adUser.fromFile   (pathUser);}
+	if (pathDefault!=""){adDefault.fromFile(pathDefault);}
+	// Override possible user values over the default ones:
+	adDefault.merge(adUser);
+	return adDefault;
+}
+
 /******************
 * JDL is still an AD (no type switched)
 *******************/
