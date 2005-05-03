@@ -7,8 +7,12 @@
 using namespace std ;
 using namespace glite::wms::jdl ;
 
+namespace glite {
+namespace wms{
+namespace client {
+namespace utilities {
 
-glite::wms::jdl::Ad loadConfiguration(const string& pathUser , const string& pathDefault){
+glite::wms::jdl::Ad loadConfiguration(const std::string& pathUser ,const std::string& pathDefault){;
 	glite::wms::jdl::Ad adUser, adDefault;
 	// Load ad from file (if necessary)
 	if (pathUser!="")  {adUser.fromFile   (pathUser);}
@@ -65,3 +69,9 @@ void setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,glite::wms::jdl::Ad& conf){
 		jdl->setDefaultReq(conf.getString(JDL::REQUIREMENTS));
 	}
 }
+
+
+} // glite
+} // wms
+} // client
+} // utilities

@@ -24,11 +24,12 @@ WMPCLIENT_LD_FLAGS= \
 	-L$(BOOST)/lib/release \
 	-L$(CLASSAD)/lib \
 	-L$(stage)/lib \
-	-lglite_wms_jdl \
 	-lglite_wmsutils_exception \
 	-lglite_wms_util \
+	-lglite_wms_conf \
 	-lglite_wmsutils_jobid  \
 	-lglite_wmsutils_cjobid \
+	-lglite_wms_jdl \
 	-lclassad \
 	-lboost_fs \
 	-lboost_thread \

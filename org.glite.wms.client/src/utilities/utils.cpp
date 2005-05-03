@@ -191,7 +191,7 @@ void Utils::checkPrefix(){
 		else {pathDefault="";}
 	}
 	// CREATE Configuration
-	// wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(pathUser,pathDefault).ad());
+	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(pathUser,pathDefault).ad());
 }
 void Utils::checkJobIds(std::vector<std::string> jobids){
 	std::vector<std::string>::iterator it ;

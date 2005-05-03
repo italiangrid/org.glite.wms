@@ -11,17 +11,17 @@
 using namespace std ;
 using namespace glite::wms::client::utilities;
 
-Utils utils;
+Utils *utils =NULL;
 
 void answer(){
 	// ANSWER
-	utils.answerYes("ciao secco ti chiami ale false?", false);
+	utils->answerYes("ciao secco ti chiami ale false?", false);
 }
 
 void resolve(){
 	// RESOLVE
 	string resolved;
-	utils.resolveHost("http://matrix",resolved);
+	utils->resolveHost("http://matrix",resolved);
 }
 
 void getLbs(){
@@ -39,21 +39,26 @@ void getLbs(){
 		}
 		lbGroup.push_back(lbs);
 	}
-	std::vector<std::string> lbResult=utils.getLbs(lbGroup,2);
+	std::vector<std::string> lbResult=utils->getLbs(lbGroup,2);
 	for (unsigned int i=0;i<lbResult.size();i++) cout << "LB: "<<lbResult[i]<< endl ;
 }
 
 void checkLBNS(const string tc){
 	cout << endl<<"=======>" << tc << endl ;
-	std::pair <std::string, unsigned int> ad = utils.checkLb(tc);
+	std::pair <std::string, unsigned int> ad = utils->checkLb(tc);
 	cout << "found LB: "<< ad.first << "     :      " << ad.second << endl ;
-	ad = utils.checkNs(tc);
+	ad = utils->checkNs(tc);
 	cout << "found NS: "<< ad.first << "     :      " << ad.second << endl ;
 }
 
 int main(int argc,char *argv[]){
+	// SUBMIT
+	Options *opts = new Options(Options::JOBSUBMIT) ;
+	opts->readOptions(argc, (const char**)argv);
+	utils=new Utils(opts);
+
 	WMS_EXCM_TRY()
-		utils.jobAdExample();
+		utils->jobAdExample();
 		answer();
 		resolve();
 	WMS_EXCM_CATCH(WMS_ERROR)
