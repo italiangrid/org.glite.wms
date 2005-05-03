@@ -11,9 +11,15 @@
 // HEADER
 #include "utils.h"
 #include "excman.h"
+#include "options_utils.h"
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
+
+// Configuration
+#include "glite/wms/common/configuration/WMCConfiguration.h"
+
+
 // Ad's
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/JobAd.h"
@@ -34,6 +40,8 @@ namespace utilities {
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
 using namespace glite::wms::jdl ;
+namespace configuration = glite::wms::common::configuration;
+
 
 const string DEFAULT_LB_PROTOCOL		=	"https";
 const string PROTOCOL						=	"://";
@@ -220,14 +228,25 @@ std::string Utils::getJdlString (std::string path){
 }
 
 void Utils::jobAdExample(){
+	/*
 	try{
 		string jdl = "[ executable = \"ciccio\" arguments= \"bella secco\" ]";
 		JobAd jad(jdl);
 		cout << "STR=" << jad.toString() << endl;
 		jad.toSubmissionString();
+		glite::wms::jdl::Ad jab;
+		jab.fromFile("dag.jdl");
+		ExpDagAd dagad(new DAGAd(*jab.ad()));
+		dagad.getSubmissionStrings();
+		dagad.expand();
+		cout << "DAGAD.tostring ->" << dagad.toString() << endl ;
+
+
+
 	}catch (AdSyntaxException &exc){
-		cout << " Syntax caught.." << endl ;
-		cout << "MSG:" << exc.what() << endl ;
+		cout << " Syntax caught, calling what" << endl ;
+		string prova= exc.what();
+		cout << "Done.\nWHAT:#" << prova <<"#"<< endl ;
 		throw;
 	}catch (AdSemanticMandatoryException &exc){
 		cout << "SEMANTIC MANDATORY" << endl ;
@@ -239,6 +258,7 @@ void Utils::jobAdExample(){
 		cout << "Exception is here" << endl ;
 		throw;
 	}
+	*/
 }
 
 const std::vector<std::string> Utils::extractFields(const std::string &instr, const std::string &sep){

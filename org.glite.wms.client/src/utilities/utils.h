@@ -9,9 +9,15 @@
 #include <map>
 namespace glite {
 namespace wms{
+	// Wms Client Configuration class declaration
+	namespace common {
+		namespace configuration{
+			class WMCConfiguration ;
+		}
+	}
 namespace client {
 namespace utilities {
-
+class Options ;
 class Utils{
 public:
 	/**
@@ -122,6 +128,11 @@ public:
 	*	@return true in case of success
 	*/
 	bool isBefore (const std::string &st, const unsigned int &nf = 0);
+private:
+	glite::wms::common::configuration::WMCConfiguration *wmcConf;
+	Options *wmcOpt;
+
+
 }; // end class definition
 
 } // glite
