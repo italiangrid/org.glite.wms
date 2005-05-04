@@ -863,14 +863,8 @@ const vector<string> Options::getJobIds () {
 *	gets the path to the JDL file
 *	@return the filepath string
 */
-string Options::getPath2Jdl () {
-	if (!jdlFile) {
-		throw WmsClientException(__FILE__,__LINE__,"getPath2Jdl" ,
-				DEFAULT_ERR_CODE,
-				"Missing Option",
-				"no path to JDL file has been set");
-	}
-	return *jdlFile;
+string* Options::getPath2Jdl () {
+	return jdlFile ;
 };
 /*
 *	sets the value of the option attribute

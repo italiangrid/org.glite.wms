@@ -80,24 +80,32 @@ class Options
 		/*
 		*	gets the value of the option string-attribute
 		*	@param attribute name of the attribute
+		*	@return the pointer to the string attribute value (NULL if the attribute has not been set)
 		*/
 		std::string* getStringAttribute (const Options::OptsAttributes &attribute);
 		/*
 		*	gets the value of the option string-attribute
 		*	@param attribute name of the attribute
+		*	@return the pointer to the int attribute value (NULL if the attribute has not been set)
 		*/
 		int* getIntAttribute (const Options::OptsAttributes &attribute);
 		/*
 		*	gets the value of the option string-attribute
 		*	@param attribute name of the attribute
+		*	@return the value of the boolean attribute
 		*/
 		bool getBoolAttribute (const Options::OptsAttributes &attribute);
 		/*
 		*	gets the value of the option list of strings-attribute
 		*	@param attribute name of the attribute
+		*	@return the vector with list
 		*/
 		const std::vector<std::string> getListAttribute (const Options::OptsAttributes &attribute);
-
+		/*
+		*	gets the short help usage message for an option attribute
+		*	@param attribute name of the attribute
+		*	@return the description string of the attribute
+		*/
 		const std::string getAttributeUsage (const Options::OptsAttributes &attribute);
 		/*
 		*	gets the list of job identifiers
@@ -106,9 +114,9 @@ class Options
 		const std::vector<std::string> getJobIds( );
 		/*
 		*	gets the path to the JDL file
-		*	@return the filepath string
+		*	@return a pointer to the string of the JDL pathname
 		*/
-		std::string Options::getPath2Jdl ();
+		std::string* Options::getPath2Jdl ();
 		/*
 		*	displays the usage help message for the submission
 		*	@param exename name of the programme executable
