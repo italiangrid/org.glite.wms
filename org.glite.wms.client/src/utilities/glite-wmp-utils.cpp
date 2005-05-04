@@ -52,20 +52,29 @@ void checkLBNS(const string tc){
 }
 
 int main(int argc,char *argv[]){
+try{
+	WMS_EXCM_TRY()
 	// SUBMIT
 	Options *opts = new Options(Options::JOBSUBMIT) ;
 	opts->readOptions(argc, (const char**)argv);
 	utils=new Utils(opts);
+	
+	WMS_EXCM_CATCH(WMS_FATAL)
 
 	WMS_EXCM_TRY()
 		utils->jobAdExample();
 		answer();
 		resolve();
 	WMS_EXCM_CATCH(WMS_ERROR)
+
 	WMS_EXCM_TRY()
 		getLbs();
 		checkLBNS("https://address:123456");
 		checkLBNS("://address");
 	WMS_EXCM_CATCH(WMS_ERROR)
+
 	return 0;
+} catch (std::exception &exc){
+	 cout << "FATAL standard Exception: " << exc.what() << endl ;
+}
 }

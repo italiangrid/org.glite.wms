@@ -58,13 +58,6 @@ public:
 	* @param jobids vectors containing the list of jobids to be checked
 	*/
 	void checkJobIds(std::vector<std::string> jobids) ;
-	/**
-	* Get the string of the JDL read by a file
-	* @param path the path of the JDL file
-	*@return the JDL string
-	* @throw               in case of any format error // EXCEPTION !!!!!
-	*/
-	std::string getJdlString (std::string path);
 
 	void jobAdExample();
 	/** Exit from the process. If ncessary prompt some information
@@ -109,7 +102,9 @@ private:
 	* Check the WMS client installation path
 	* @return The string representation of the installation path and loads general info
 	*/
-	void checkPrefix();
+	std::string checkPrefix(const std::string& vo);
+	void checkVo();
+	/** Look for possible configuration file */
 	/*
 	*	convert the input time string to number of seconds form 1970
 	*	the formats of the input time string could be:
@@ -137,11 +132,11 @@ private:
 	static const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep);
 
 	// Ad configuration files:
-	glite::wms::common::configuration::WMCConfiguration
-		*wmcConf;
-	// Option files:	
-	Options
-		*wmcOpt;
+	glite::wms::common::configuration::WMCConfiguration *wmcConf;
+	// Option files:
+	Options *wmcOpt;
+	// General configuration inner values
+	std::string prefix;
 
 
 }; // end class definition

@@ -1,27 +1,25 @@
 // PRIMITIVE
 #include <netdb.h> // gethostbyname (resolveHost)
 #include <iostream> // cin/cout     (answerYes)
-
 #include <fstream> // filestream (ifstream, check prefix)
 #include <time.h> // time (getTime)
 #include <sstream> //to convert number in to string
-
-// EXTERNAL
+// BOOST
 #include <boost/lexical_cast.hpp> // types conversion (checkLB/NS)
-// HEADER
+#include <boost/tokenizer.hpp>
+#include <boost/filesystem/operations.hpp>  // prefix & files procedures
+#include <boost/filesystem/path.hpp> // prefix & files procedures
+// GLITE
+#include "glite/wmsutils/jobid/JobId.h" // JobId
+// #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h" // proxy/voms utilities
+#include  "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
+// COMPONENT
 #include "utils.h"
 #include "excman.h"
 #include "adutils.h"
 
-// JobId
-#include "glite/wmsutils/jobid/JobId.h"
-// #include "glite/wmsutils/jobid/JobIdExceptions.h"
-
-// Configuration
-#include "glite/wms/common/configuration/WMCConfiguration.h"
-
-
-// Ad's
+/*
+// Ad's not used
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wms/jdl/ExpDagAd.h"
@@ -29,9 +27,9 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 #include "glite/wms/jdl/adconverter.h"
+*/
 
-//Boost
-#include <boost/tokenizer.hpp>
+
 
 namespace glite {
 namespace wms{
@@ -40,23 +38,23 @@ namespace utilities {
 
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
-using namespace glite::wms::jdl ;
+// using namespace glite::wms::jdl ;
 namespace configuration = glite::wms::common::configuration;
 
 
+const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG_VO";
 const string DEFAULT_LB_PROTOCOL		=	"https";
-const string PROTOCOL						=	"://";
-const string TIME_SEPARATOR				=	":";
-const string DEFAULT_UI_CONFILE 		=	"glite_wms_client.conf";
+const string PROTOCOL				=	"://";
+const string TIME_SEPARATOR			=	":";
+
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_NS_PORT	=	7772;
-const unsigned int DEFAULT_ERR_CODE	=	1;
+
 
 Utils::Utils(Options *wmcOpt){
 	// TBD remove,glite::wms::common::configuration::WMCConfiguration *wmcConf){
-	// Constructor
-	checkPrefix();
 	this->wmcOpt=wmcOpt;
+	this->checkVo();
 }
 
 /*************************************
@@ -171,10 +169,70 @@ std::pair <std::string, unsigned int> Utils::checkNs(const std::string& nsFullAd
 /**********************************
 *** general	***
 ***********************************/
-void Utils::checkPrefix(){
-	// Look for default user config file and check validity
-	string pathUser=string(getenv("GLITE_WMS_LOCATION"))+"/"+DEFAULT_UI_CONFILE;
-	ifstream ucf (pathUser.c_str()); if(!ucf.good()){pathUser="";}
+
+/**********************************
+*** Virtual Organisation methods
+***********************************/
+
+/* VO check priority:
+	- cedrtificate extension
+	- config option
+	- env variable
+	- JDL (submit||listmatch)
+*/
+// This method is used by getVoPath
+string getDefaultVo(){
+/*
+	const vector<std::string> vonames= glite::wms::wmproxyapiutils::getFQANs(
+		glite::wms::wmproxyapiutils::getProxyFile(NULL);
+	);
+	if (vonames.size()){return vonames[0];}
+	else
+*/
+	return "";
+}
+void Utils::checkVo(){
+	string voPath, voName;
+	// certificate extension - point to vo plain name
+	if(getDefaultVo()!=""){
+		voName=getDefaultVo();
+		cout << "proxy certificate extension" << endl ;
+		// return string (getenv("$HOME"))+"/.glite/"+ getDefaultVo()+"/"+DEFAULT_UI_CONFILE; // VO TBD lower-case??
+		parseVo(CERT_EXTENSION,voPath,voName);
+	}
+	// config option- point to the file
+	else if (wmcOpt->getStringAttribute (Options::VO)){
+		cout << "config option..." << endl ;
+		voName=*(wmcOpt->getStringAttribute (Options::VO));
+		parseVo(VO_OPT,voPath,voName);
+	}
+	// config option- point to the file
+	else if (wmcOpt->getStringAttribute (Options::CONFIG)){
+		cout << "config option..." << endl ;
+		voPath= *(wmcOpt->getStringAttribute (Options::CONFIG));
+		parseVo(CONFIG_OPT,voPath,voName);
+	}
+	// env variable point to the file
+	else if(getenv(WMS_CLIENT_CONFIG)){
+		cout << "env option..." << endl ;
+		voName=string(getenv(WMS_CLIENT_CONFIG));
+		parseVo(CONFIG_VAR,voPath,voName);
+	}
+	// JDL specified(submit||listmatch) read the vo plain name
+	else if (wmcOpt->getPath2Jdl()){
+		cout << "JDL option..." << endl ;
+		voPath=*(wmcOpt->getPath2Jdl());
+		parseVo(JDL_FILE,voPath,voName);
+	}else{
+		// If this point is reached no VO found
+		throw WmsClientException(__FILE__,__LINE__,
+				"getVoPath", DEFAULT_ERR_CODE,
+				"Empty value","Unable to find any VirtualOrganisation");
+	}
+	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(voPath,checkPrefix(voName)));
+}
+
+string Utils::checkPrefix(const string& vo){
 	// Look for GLITE installation path
 	vector <string> paths ;
 	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
@@ -183,15 +241,14 @@ void Utils::checkPrefix(){
 	paths.push_back("usr/local");
 	// Look for conf-file:
 	string pathDefault;
-	unsigned int i;
-	for (i=0;i<paths.size();i++){
-		pathDefault=paths[i]+"/etc/"+DEFAULT_UI_CONFILE ;
-		ifstream f (pathDefault.c_str());
-		if(f.good()){break;}
-		else {pathDefault="";}
+	for (unsigned int i=0;i<paths.size();i++){
+		pathDefault=paths[i]+"/etc/"+vo ;
+		if( boost::filesystem::exists(boost::filesystem::path(pathDefault)) ){
+			return pathDefault ;
+		}
 	}
-	// CREATE Configuration
-	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(pathUser,pathDefault).ad());
+	// Unable to find any file
+	return "";
 }
 void Utils::checkJobIds(std::vector<std::string> jobids){
 	std::vector<std::string>::iterator it ;
@@ -199,38 +256,6 @@ void Utils::checkJobIds(std::vector<std::string> jobids){
 			JobId jid (*it);
 	}
 }
-std::string Utils::getJdlString (std::string path){
-	string jdl = "";
-	//try{
-		Ad *ad = new Ad( );
-		ad->fromFile(path);
-
-
-		if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
-			ExpDagAd dag( ad->toString() );
-			dag.expand( );
-			jdl = dag.toString() ;
-		} else if( ad->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
-				// collection
-				ExpDagAd *dag = AdConverter::collection2dag (ad);
-				dag->expand( );
-				jdl = dag->toString() ;
-		} else {
-			// normal job
-			jdl = ad->toString();
-		};
-		//} //hasAttribute(JDL::TYPE)?????????
-	/*
-	} catch (WrongIdException &exc) {
-			cerr << "ERROR: wrong jobid format: " << *it << "\n";
-			cerr << exc.what( )<< "\n";
-			throw exception( );
-	}
-	*/
-	return jdl ;
-
-}
-
 void Utils::jobAdExample(){
 	/*
 	try{
@@ -244,9 +269,6 @@ void Utils::jobAdExample(){
 		dagad.getSubmissionStrings();
 		dagad.expand();
 		cout << "DAGAD.tostring ->" << dagad.toString() << endl ;
-
-
-
 	}catch (AdSyntaxException &exc){
 		cout << " Syntax caught, calling what" << endl ;
 		string prova= exc.what();

@@ -13,6 +13,11 @@ enum severity{
 	WMS_ERROR,
 	WMS_FATAL
 };
+
+enum errCode{
+	DEFAULT_ERR_CODE
+};
+
 class WmsClientException: public glite::wmsutils::exception::Exception {
 public:
 	   WmsClientException(const std::string& file, int line,const std::string& method,

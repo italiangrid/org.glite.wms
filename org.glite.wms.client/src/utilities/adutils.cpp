@@ -1,9 +1,12 @@
-// HEADER
-#include "adutils.h"
+// JDL
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wms/jdl/ExpDagAd.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/RequestAdExceptions.h"
+// HEADER
+#include "adutils.h"
+#include "excman.h"
 using namespace std ;
 using namespace glite::wms::jdl ;
 
@@ -11,15 +14,67 @@ namespace glite {
 namespace wms{
 namespace client {
 namespace utilities {
+const string DEFAULT_UI_CONFILE		=	"glite_wms_client.conf";
+/******************************
+*  AdUtils class methods:
+*******************************/
+void parseVo(voSrc src, std::string& voPath, std::string& voName){
+	switch (src){
+		case CERT_EXTENSION:
+		case VO_OPT:
+		case JDL_FILE:
+			// Only vo Provided, generate file name:
+			voPath=string (getenv("$HOME"))+
+				"/.glite/"+ voName +"/" +
+				DEFAULT_UI_CONFILE;
+		default:
+			break;
+	}
+	// Parse File Name and extrapolate VoName (cross-check)
+	glite::wms::jdl::Ad ad;
+	try{
+		ad.fromFile(voPath);
+	}catch (AdSemanticPathException &exc){
+		// The file Does not exist
+		switch (src){
+			case JDL_FILE:
+			case CERT_EXTENSION:
+				voPath="";
+				return; //In these cases vo file might not be there
+			default:
+				throw;
+		}
+	}
+	// Check VoName
+	if(
+		(voName!="")&&(voName!=ad.getString(JDL::VIRTUAL_ORGANISATION))
+	){
+		throw WmsClientException(__FILE__,__LINE__,"AdUtils",DEFAULT_ERR_CODE,
+				"Wrong Match","No matching VO: "+voName +" inside the file:\n"+voPath);
+	}
+	// voName is definitely set
+	voName=ad.getString(JDL::VIRTUAL_ORGANISATION);
+}
 
-glite::wms::jdl::Ad loadConfiguration(const std::string& pathUser ,const std::string& pathDefault){;
+
+/******************************
+*  General Static Methods
+*******************************/
+classad::ClassAd* loadConfiguration(const std::string& pathUser ,const std::string& pathDefault){;
 	glite::wms::jdl::Ad adUser, adDefault;
 	// Load ad from file (if necessary)
-	if (pathUser!="")  {adUser.fromFile   (pathUser);}
-	if (pathDefault!=""){adDefault.fromFile(pathDefault);}
+	if (pathUser!="")  {
+		adUser.fromFile   (pathUser);
+		cout << "ADUSER= "<< adUser.toLines() << endl ;
+	}
+	if (pathDefault!=""){
+		adDefault.fromFile(pathDefault);
+		cout << "ADDEFAULT= "<< adDefault.toLines() << endl ;
+	}
 	// Override possible user values over the default ones:
 	adDefault.merge(adUser);
-	return adDefault;
+	cout << "AdConfiguration file created: "<< adDefault.toLines() << endl ;
+	return adDefault.ad();
 }
 
 /******************

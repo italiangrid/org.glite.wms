@@ -14,7 +14,7 @@ namespace utilities {
 
 using namespace std;
 
-const unsigned int DEFAULT_ERR_CODE      =       0;
+// const unsigned int DEFAULT_ERR_CODE      =       0;
 
 /*
  * Help messages
