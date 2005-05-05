@@ -6,6 +6,8 @@
 #include <fstream>
 // exceptions
 #include "excman.h"
+// utils
+#include "utils.h"
 
 namespace glite {
 namespace wms{
@@ -13,8 +15,6 @@ namespace client {
 namespace utilities {
 
 using namespace std;
-
-// const unsigned int DEFAULT_ERR_CODE      =       0;
 
 /*
  * Help messages
@@ -29,7 +29,6 @@ const char* Options::HELP_VERSION = "version  1.0.2" ;
 */
 const char* Options::LONG_ALL 		= "all";
 const char* Options::LONG_CHKPT	= "chkpt";
-const char* Options::LONG_CONFIGVO	= "config-vo";
 const char* Options::LONG_DEBUG	= "debug";
 const char* Options::LONG_DIR	= "dir";
 const char* Options::LONG_FROM		= "from";
@@ -45,6 +44,7 @@ const char* Options::LONG_TO		= "to";
 const char* Options::LONG_USERTAG	= "user-tag";
 const char* Options::LONG_VERSION	= "version";
 const char* Options::LONG_VO		= "vo";
+
 
 /*
 *	LONG OPTION STRINGS & SHORT CHARs
@@ -87,10 +87,10 @@ const char Options::short_no_arg = ' ' ;
 *	Long options for the job-submit
 */
 const struct option Options::submitLongOpts[] = {
-	{	Options::LONG_CONFIGVO,         	required_argument,		0,		Options::CONFIGVO	},
-	{	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+        {	Options::LONG_DEBUG,             	required_argument,		0,		Options::DBG},
 	{	Options::LONG_CHKPT,              	required_argument,		0,		Options::CHKPT},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_LMRS,              	required_argument,		0,		Options::LMRS},
 	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
@@ -118,13 +118,12 @@ const struct option Options::statusLongOpts[] = {
 	{	Options::LONG_FROM,              	required_argument,		0,		Options::FROM},
 	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_CONFIGVO,         	required_argument,		0,		Options::CONFIGVO	},
 	{	Options::LONG_USERTAG,         	required_argument,		0,		Options::USERTAG	},
 	{	Options::LONG_STATUS,         	required_argument,		0,		Options::SHORT_STATUS},
 	{	Options::LONG_EXCLUDE,         	required_argument,		0,		Options::SHORT_EXCLUDE},
-	{	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_DEBUG,			no_argument,			0,		Options::DBG	},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
@@ -154,12 +153,11 @@ const struct option Options::cancelLongOpts[] = {
 	{	Options::LONG_ALL,			no_argument,			0,		Options::ALL	},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_CONFIGVO,         	required_argument,		0,		Options::CONFIGVO	},
-	{	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_DEBUG,			no_argument,			0,		Options::DBG	},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{0, 0, 0, 0}
 };
 
@@ -172,10 +170,9 @@ const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_CONFIGVO,         	required_argument,		0,		Options::CONFIGVO	},
-	{	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{ 	Options::LONG_DEBUG,              	required_argument,		0,		Options::DBG},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
@@ -221,8 +218,6 @@ const string Options::USG_ALL = "--" + string(LONG_ALL) ;
 const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t<file_path>" ;
 
 const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
-
-const string Options::USG_CONFIGVO  = "--" + string(LONG_CONFIGVO) + "\t<file_path>" ;
 
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
 
@@ -282,7 +277,6 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "Options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
-	cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_RESOURCE << "\n";
 	cerr << "\t" << USG_NOLISTEN << "\n";
@@ -292,7 +286,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_TO << "\n";
 	cerr << "\t" << USG_VALID << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
-	cerr << "\t" << USG_CONFIGVO << "\n";
+        cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_CHKPT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
@@ -321,11 +315,10 @@ void Options::status_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_FROM << "\n";
 	cerr << "\t" << USG_TO << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
-	cerr << "\t" << USG_CONFIGVO << "\n";
+        cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_USERTAG<< "\n";
 	cerr << "\t" << USG_STATUS << "\n";
 	cerr << "\t" << USG_EXCLUDE << "\n";
-	cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -376,8 +369,7 @@ void Options::cancel_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_ALL << "\n";
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
-	cerr << "\t" << USG_CONFIGVO << "\n";
-	cerr << "\t" << USG_VO << "\n";
+        cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -403,8 +395,7 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_VERSION << "\n\n";
 	cerr << "\t" << USG_RANK << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
-	cerr << "\t" << USG_CONFIGVO << "\n";
-	cerr << "\t" << USG_VO << "\n";
+        cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -477,7 +468,6 @@ Options::Options (const WMPCommands &command){
 	// init of the string attributes
 	chkpt = NULL;
 	config = NULL;
-	configvo = NULL;
 	dir = NULL;
 	exclude = NULL;
 	from = NULL;
@@ -489,7 +479,6 @@ Options::Options (const WMPCommands &command){
 	status = NULL;
 	to = NULL;
 	valid = NULL ;
-	vo = NULL;
 	// init of the boolean attributes
 	all  = false ;
 	debug  = false ;
@@ -587,7 +576,7 @@ Options::Options (const WMPCommands &command){
 		} ;
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"Options",
-				DEFAULT_ERR_CODE,
+				Utils::DEFAULT_ERR_CODE,
 				"Wrong Input Parameter","unknown command");
 		} ;
 	};
@@ -601,18 +590,6 @@ Options::Options (const WMPCommands &command){
 string* Options::getStringAttribute (const OptsAttributes &attribute){
 	string *value = NULL ;
 	switch (attribute){
-		case(CONFIGVO) : {
-			if (configvo){
-				value = new string (*configvo) ;
-			}
-			break ;
-		}
-		case(VO) : {
-			if (vo){
-				value = new string (*vo) ;
-			}
-			break ;
-		}
 		case(DIR) : {
 			if (dir){
 				value = new string (*dir) ;
@@ -664,6 +641,12 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 		case(CONFIG) : {
 			if (config){
 				value = new string (*config) ;
+			}
+			break ;
+		}
+                case(VO) : {
+			if (vo){
+				value = new string (*vo) ;
 			}
 			break ;
 		}
@@ -765,14 +748,6 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 const string Options::getAttributeUsage (const Options::OptsAttributes &attribute){
 	string msg = "";
 	switch (attribute){
-		case(CONFIGVO) : {
-			msg = USG_CONFIGVO;
-			break ;
-		}
-		case(VO) : {
-			msg = USG_VO ;
-			break ;
-		}
 		case(DIR) : {
 			msg = USG_DIR ;
 			break ;
@@ -845,6 +820,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_VERBOSE ;
 			break ;
 		}
+                case(VO) : {
+			msg = USG_VO ;
+			break ;
+		}
 		default : {
 			// returns an empty string
 			break ;
@@ -899,7 +878,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
-		case ( Options::SHORT_RESOURCE) : {
+
+  		case ( Options::SHORT_RESOURCE) : {
 			if (resource){
 				dupl = new string(LONG_RESOURCE) ;
 			} else {
@@ -952,14 +932,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
-		case ( Options::CONFIGVO ) : {
-			if (configvo){
-				dupl = new string(LONG_CONFIGVO) ;
-			} else {
-				configvo = new string (optarg);
-			}
-			break ;
-		};
 		case ( Options::DBG ) : {
 			debug = true ;
 		};
@@ -996,6 +968,14 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 				dupl = new string(LONG_LOGFILE) ;
 			} else {
 				logfile = new string (optarg);
+			}
+			break ;
+		};
+                case ( Options::VO) : {
+			if (vo){
+				dupl = new string(LONG_VO) ;
+			} else {
+				vo = new string (optarg);
 			}
 			break ;
 		};
@@ -1044,17 +1024,9 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			version = true ;
 			break ;
 		};
-		case ( Options::VO ) : {
-			if (vo){
-				dupl = new string(LONG_VO) ;
-			}else {
-				vo = new string (optarg);
-			}
-			break ;
-		};
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
-				DEFAULT_ERR_CODE,
+				Utils::DEFAULT_ERR_CODE,
 				"Input Option Error",
 				"unknow option"  );
 			break ;
@@ -1063,7 +1035,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 
 	if (dupl) {
 		throw WmsClientException(__FILE__,__LINE__,"setAttribute",
-				DEFAULT_ERR_CODE,
+				Utils::DEFAULT_ERR_CODE,
 				"Input Option Error",
 				string("option already specified: " + *dupl) );
 	}
@@ -1084,11 +1056,10 @@ void Options::readOptions(const int &argc, const char **argv){
                                                	longOpts,
                                                 indexptr );
 		//cout << "next_opt=" << next_opt << "\n" ;
-
 		// error
 		if (next_opt == '?') {
 			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
+				"readOptions", Utils::DEFAULT_ERR_CODE,
 				"Input Option Error", "unknown exception");
 		}
 		// sets attribute
@@ -1108,14 +1079,14 @@ void Options::readOptions(const int &argc, const char **argv){
 				ifstream file(argv[optind]);
 				if (!file.good()) {
 					throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
+					"readOptions", Utils::DEFAULT_ERR_CODE,
 					"Input Option Error",
 					"no such JDL file :" + string(argv[optind]) );
 				}
 				jdlFile = new string(argv[ optind ]) ;
 			} else {
 					throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
+					"readOptions", Utils::DEFAULT_ERR_CODE,
 					"Missing Option", "no JDL file option specified");
 			}
 		}
@@ -1125,7 +1096,7 @@ void Options::readOptions(const int &argc, const char **argv){
 				jobIds.push_back(argv[optind]);
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
+				"readOptions", Utils::DEFAULT_ERR_CODE,
 				"Missing Option", "no JOBID option specified");
 			}
 		}
@@ -1135,7 +1106,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		cmdType == JOBCANCEL ) {
 			if (optind == argc ){
 				throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
+				"readOptions", Utils::DEFAULT_ERR_CODE,
 				"Missing Option", "no JOBID option specified");
 			}
 			for (int i = optind ; i < argc ; i++ ){

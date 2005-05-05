@@ -24,7 +24,6 @@ class Options
 			ALL = 500 ,
 			CHKPT ,
 			CONFIG ,
-			CONFIGVO ,
 			DBG , //debug
 			DIR ,
 			EXCLUDE ,
@@ -46,8 +45,8 @@ class Options
 			USERTAG,
 			VALID,
 			VERBOSE ,
-			VERSION ,
-			VO
+			VERSION,
+                        VO
 		} ;
 		/*
 		*	Type of command
@@ -176,13 +175,13 @@ class Options
 		static const char* HELP_VERSION  ;
 		static const char* HELP_COPYRIGHT ;
 		static const char* HELP_EMAIL ;
-		/*
+
+                /*
 		*	long option std::strings
 		*	(no short options defined for this set)
 		*/
 		static const char* LONG_ALL ;
 		static const char* LONG_CHKPT	;
-		static const char* LONG_CONFIGVO ;
 		static const char* LONG_DEBUG ;
 		static const char* LONG_DIR ;
 		static const char* LONG_FROM ;
@@ -197,8 +196,7 @@ class Options
 		static const char* LONG_TO	;
 		static const char* LONG_USERTAG ;
 		static const char* LONG_VERSION;
-		static const char* LONG_VO	;
-
+                static const char* LONG_VO;
 
 		/*
 		*	long option std::strings and corresponding
@@ -238,7 +236,6 @@ class Options
 		static const std::string USG_ALL ;
 		static const std::string USG_CHKPT	;
 		static const std::string USG_CONFIG	;
-		static const std::string USG_CONFIGVO ;
 		static const std::string USG_DEBUG ;
 		static const std::string USG_DIR ;
 		static const std::string USG_EXCLUDE ;
@@ -262,7 +259,7 @@ class Options
 		static const std::string USG_VERBOSE ;
 		static const std::string USG_VERBOSITY ;
 		static const std::string USG_VERSION;
-		static const std::string USG_VO	;
+                static const std::string USG_VO;
 		/*
 		*	require/not-require char for short option
 		*	(used by definition of the short options)
@@ -274,7 +271,6 @@ class Options
 		*/
 		std::string* chkpt ;
 		std::string* config ;
-		std::string* configvo ;
 		std::string* dir ;
 		std::string* exclude ;
 		std::string* from ;
@@ -287,6 +283,7 @@ class Options
 		std::string* to ;
 		std::string* valid ;
 		std::string* vo ;
+
 		/*
 		*	boolean attributes
 		*/
