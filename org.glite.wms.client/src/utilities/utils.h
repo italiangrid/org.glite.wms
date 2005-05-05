@@ -61,9 +61,11 @@ public:
 	/**
 	* Check the format of a list of jobids
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
-        *@throw  WrongIdException  in case of bad format of one of the jobids in the list
+        *@param jobids the input list
+        *@param wrongs returns the list of eventually bad format jobids
+        *@return the list of correct jobids
 	*/
-	static void checkJobIds(std::vector<std::string> jobids) ;
+	static std::vector<std::string> checkJobIds(std::vector<std::string> jobids, std::vector<std::string> &wrongs);
 
 	/** Exit from the process. If ncessary prompt some information
 	@param exitCode command exit code, 0 in case of success, error otherwise

@@ -21,6 +21,7 @@
 
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 // Configuration
 #include "glite/wms/common/configuration/WMCConfiguration.h"
@@ -32,7 +33,6 @@ namespace utilities {
 
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
-// using namespace glite::wms::jdl ;
 namespace configuration = glite::wms::common::configuration;
 
 
@@ -245,11 +245,18 @@ string Utils::checkJobId(std::string jobid){
         return jobid;
 }
 
-void Utils::checkJobIds(std::vector<std::string> jobids){
+std::vector<std::string> Utils::checkJobIds(std::vector<std::string> jobids, std::vector<std::string> &wrongs){
         std::vector<std::string>::iterator it ;
+	vector<std::string> goods;
 	for (it = jobids.begin() ; it != jobids.end() ; it++){
-		Utils::checkJobId(*it);
+        	try{
+			Utils::checkJobId(*it);
+                        goods.push_back(*it);
+   		} catch (WrongIdException &exc){
+			wrongs.push_back(*it);
+                }
 	}
+        return goods;
 }
 void Utils::ending(unsigned int exitCode){
 }
