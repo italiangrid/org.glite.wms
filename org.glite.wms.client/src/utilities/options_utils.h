@@ -100,7 +100,7 @@ class Options
 		*	@return the vector with list
 		*/
 		const std::vector<std::string> getListAttribute (const Options::OptsAttributes &attribute);
-		/*
+                /*
 		*	gets the short help usage message for an option attribute
 		*	@param attribute name of the attribute
 		*	@return the description string of the attribute

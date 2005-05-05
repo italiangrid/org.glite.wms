@@ -137,6 +137,7 @@ const struct option Options::loginfoLongOpts[] = {
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_VERBOSE,              required_argument,	0,		Options::SHORT_VERBOSE},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_DEBUG,			no_argument,			0,		Options::DBG	},
@@ -170,9 +171,9 @@ const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
-        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{ 	Options::LONG_DEBUG,              	required_argument,		0,		Options::DBG},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
@@ -182,14 +183,15 @@ const struct option Options::lsmatchLongOpts[] = {
 *	Long options for the job-output
 */
 const struct option Options::outputLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
-	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
-	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
-	{ 	Options::LONG_DIR, 	             	required_argument,		0,		Options::DIR},
-	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
-	{ 	Options::LONG_DEBUG,              	required_argument,		0,		Options::DBG},
-	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_VERSION,	no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_HELP,		no_argument,			0,	Options::HELP	},
+	{ 	Options::LONG_INPUT,        required_argument,		0,	Options::SHORT_INPUT},
+	{ 	Options::LONG_DIR, 	        required_argument,		0,	Options::DIR},
+	{	Options::LONG_CONFIG,    required_argument,		0,	Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           	required_argument,		0,	Options::VO},
+	{	Options::LONG_NOINT,	no_argument,			0,	Options::NOINT	},
+	{ 	Options::LONG_DEBUG,      required_argument,		0,	Options::DBG},
+	{	Options::LONG_LOGFILE,    required_argument,		0,	Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 
@@ -344,6 +346,8 @@ void Options::loginfo_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_VERSION << "\n\n";
 	cerr << "\t" << USG_VERBOSE << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
+        cerr << "\t" << USG_CONFIG << "\n";
+        cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -422,6 +426,7 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
+        cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -448,6 +453,7 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOLISTEN << "\n";
 	cerr << "\t" << USG_NOGUI << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
+ 	cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -1093,7 +1099,15 @@ void Options::readOptions(const int &argc, const char **argv){
 		// JobId option in job-attach
 		if ( cmdType == JOBATTACH ){
 			if ( optind == (argc-1) ){
-				jobIds.push_back(argv[optind]);
+                        	string jobid = Utils::checkJobId (argv[optind]);
+                                if ( jobid.size( ) >0 ){
+					jobIds.push_back(jobid);
+                                } else {
+				throw WmsClientException(__FILE__,__LINE__,
+					"readOptions", DEFAULT_ERR_CODE,
+					"Wrong Option",
+                                        "bad JobId format (" + string(argv[optind]) + ")");
+                                }
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
 				"readOptions", DEFAULT_ERR_CODE,
@@ -1112,6 +1126,14 @@ void Options::readOptions(const int &argc, const char **argv){
 			for (int i = optind ; i < argc ; i++ ){
 				jobIds.push_back(argv[i]);
 			}
+                        vector<string> wrongs ;
+                        jobIds = Utils::checkJobIds ( jobIds, wrongs ) ;
+                        if ( ! wrongs.empty() ){
+				vector<string>::iterator it;
+    				for ( it = wrongs.begin() ; it != wrongs.end( ) ; it++){
+					cerr << "warning : bad JobId format (" + *it + ")";
+     				}
+                        }
 		}
 	} else {
 		switch (cmdType){
@@ -1150,8 +1172,6 @@ void Options::readOptions(const int &argc, const char **argv){
 		exit(0);
 	}
 };
-
-
 
 } // glite
 } // wms
