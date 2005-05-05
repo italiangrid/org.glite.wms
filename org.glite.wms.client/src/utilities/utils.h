@@ -53,13 +53,19 @@ public:
 	*/
 	void resolveHost(const std::string& hostname, std::string& resolved);
 	/**
-	* Check the format of the jobids
+	* Check the format of a jobid string
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
-	* @param jobids vectors containing the list of jobids to be checked
+	* @param jobid jobid string to be checked
+        * @return the jobid string
+        *@throw WmsClientException in case of bad format
 	*/
-	void checkJobIds(std::vector<std::string> jobids) ;
-
-	void jobAdExample();
+        static std::string Utils::checkJobId(std::string jobid);
+	/**
+	* Check the format of a list of jobids
+	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
+        *@throw  WrongIdException  in case of bad format of one of the jobids in the list
+	*/
+	static void checkJobIds(std::vector<std::string> jobids) ;
 	/** Exit from the process. If ncessary prompt some information
 	@param exitCode command exit code, 0 in case of success, error otherwise
 	*/
@@ -97,6 +103,11 @@ public:
 	*	@return true in case of success
 	*/
 	static bool isBefore (const std::string &st, const unsigned int &nf = 0);
+
+	/*
+        *	Default error code
+        */
+        static const unsigned int DEFAULT_ERR_CODE ;
 private:
 	/**
 	* Check the WMS client installation path
@@ -137,7 +148,6 @@ private:
 	Options *wmcOpt;
 	// General configuration inner values
 	std::string prefix;
-
 
 }; // end class definition
 

@@ -18,18 +18,12 @@
 #include "excman.h"
 #include "adutils.h"
 
-/*
-// Ad's not used
-#include "glite/wms/jdl/Ad.h"
-#include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/ExpDagAd.h"
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/RequestAdExceptions.h"
-#include "glite/wms/jdl/adconverter.h"
-*/
 
+// JobId
+#include "glite/wmsutils/jobid/JobId.h"
 
+// Configuration
+#include "glite/wms/common/configuration/WMCConfiguration.h"
 
 namespace glite {
 namespace wms{
@@ -81,7 +75,7 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 void Utils::resolveHost(const std::string& hostname, std::string& resolved_name){
     struct hostent *result = NULL;
     if( (result = gethostbyname(hostname.c_str())) == NULL ){
-    	throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
+    	throw WmsClientException(__FILE__,__LINE__,"resolveHost",Utils::DEFAULT_ERR_CODE,
 				"Wrong Value","Unable to resolve host: "+hostname);
     }
     resolved_name=result->h_name;
@@ -92,7 +86,7 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 	switch (lbGroupSize){
 		case 0:
 			// No LB provided
-			throw WmsClientException(__FILE__,__LINE__,"getLbs",DEFAULT_ERR_CODE,
+			throw WmsClientException(__FILE__,__LINE__,"getLbs",Utils::DEFAULT_ERR_CODE,
 				"Empty Value","No Lb found in Configuration File");
 		case 1:
 			// One lb group provided: it's the one
@@ -102,7 +96,7 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 	}
 	if (nsNum>(int)lbGroupSize){
 		// requested LB number is out of available LBs
-		throw WmsClientException(__FILE__,__LINE__,"getLbs",DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"getLbs",Utils::DEFAULT_ERR_CODE,
 				"Mismatch Value","LB request number out of limit");
 	}else if (nsNum>=0){
 		// Retrieving the requested LB by provided nsNum
@@ -127,7 +121,7 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 		ad.first=DEFAULT_PROTOCOL;
 		protInd=0;
 	}else if (protInd==0){
-		throw WmsClientException(__FILE__,__LINE__,"checkAd",DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"checkAd",Utils::DEFAULT_ERR_CODE,
 				"Wrong Value","Wrong Protocol Specified for: "+adFullAddress);
 	}
 	// Look for port
@@ -140,7 +134,7 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 		try{
 			ad.second=boost::lexical_cast<unsigned int>(adFullAddress.substr(portInd+1));
 		}catch(boost::bad_lexical_cast &){
-			throw WmsClientException(__FILE__,__LINE__,"checkAd",DEFAULT_ERR_CODE,
+			throw WmsClientException(__FILE__,__LINE__,"checkAd",Utils::DEFAULT_ERR_CODE,
 				"Wrong Value","Failed to parse integer port for: "+adFullAddress);
 		}
 	}
@@ -153,7 +147,7 @@ std::pair <std::string, unsigned int> Utils::checkLb(const std::string& lbFullAd
 	try{
 		return checkAd( lbFullAddress,DEFAULT_LB_PROTOCOL+PROTOCOL, DEFAULT_LB_PORT);
 	}catch (WmsClientException &exc){
-		throw WmsClientException(__FILE__,__LINE__,"checkLb",DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"checkLb",Utils::DEFAULT_ERR_CODE,
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
@@ -161,7 +155,7 @@ std::pair <std::string, unsigned int> Utils::checkNs(const std::string& nsFullAd
 	try{
 		return checkAd( nsFullAddress,"", DEFAULT_NS_PORT);
 	}catch (WmsClientException &exc){
-		throw WmsClientException(__FILE__,__LINE__,"checkNs",DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"checkNs",Utils::DEFAULT_ERR_CODE,
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
@@ -250,42 +244,19 @@ string Utils::checkPrefix(const string& vo){
 	// Unable to find any file
 	return "";
 }
+
+string Utils::checkJobId(std::string jobid){
+	JobId jid (jobid);
+        return jobid;
+}
+
 void Utils::checkJobIds(std::vector<std::string> jobids){
-	std::vector<std::string>::iterator it ;
+        std::vector<std::string>::iterator it ;
 	for (it = jobids.begin() ; it != jobids.end() ; it++){
-			JobId jid (*it);
+		Utils::checkJobId(*it);
 	}
 }
-void Utils::jobAdExample(){
-	/*
-	try{
-		string jdl = "[ executable = \"ciccio\" arguments= \"bella secco\" ]";
-		JobAd jad(jdl);
-		cout << "STR=" << jad.toString() << endl;
-		jad.toSubmissionString();
-		glite::wms::jdl::Ad jab;
-		jab.fromFile("dag.jdl");
-		ExpDagAd dagad(new DAGAd(*jab.ad()));
-		dagad.getSubmissionStrings();
-		dagad.expand();
-		cout << "DAGAD.tostring ->" << dagad.toString() << endl ;
-	}catch (AdSyntaxException &exc){
-		cout << " Syntax caught, calling what" << endl ;
-		string prova= exc.what();
-		cout << "Done.\nWHAT:#" << prova <<"#"<< endl ;
-		throw;
-	}catch (AdSemanticMandatoryException &exc){
-		cout << "SEMANTIC MANDATORY" << endl ;
-		throw;
-	}catch (RequestAdException &exc){
-		cout << "REQUESTAD" << endl ;
-		throw;
-	}catch (glite::wmsutils::exception::Exception &exc){
-		cout << "Exception is here" << endl ;
-		throw;
-	}
-	*/
-}
+
 void Utils::ending(unsigned int exitCode){
 }
 const std::vector<std::string> Utils::extractFields(const std::string &instr, const std::string &sep){
@@ -311,7 +282,7 @@ const long Utils::getTime(const std::string &st,
 		ostringstream err ;
 		err <<  "incorrect number of fields(the expected number was " << nf << ")";
 		throw WmsClientException(__FILE__,__LINE__,
-			"getTime", DEFAULT_ERR_CODE,
+			"getTime", Utils::DEFAULT_ERR_CODE,
 			"wrong format of the input time string", err.str() );
 	}
 	// reads the fields of the vector and get the number of seconds from 1970
@@ -356,7 +327,7 @@ const long Utils::getTime(const std::string &st,
 		}
 		default:{
 			throw WmsClientException(__FILE__,__LINE__,
-				"getTime", DEFAULT_ERR_CODE,
+				"getTime", Utils::DEFAULT_ERR_CODE,
 				"Wrong Time Value",
 				string("incorrect number of fields (" + st + ")"));
 		}
@@ -369,19 +340,13 @@ const long Utils::getTime(const std::string &st,
 bool Utils::isAfter (const std::string &st, const unsigned int &nf){
 	// current time
 	time_t now = time(NULL);
-/*
-	cout << "isAfter()> debug- (1)now=[" << now << "]\n\n";
-	struct tm *ns = localtime(&now);
-	strcpy((char *)ns->tm_zone,timezone());
-	now = mktime(&ns);
-*/
 	//converts the input  time string to the vector to seconds from 1970
 	time_t sec = getTime(st, TIME_SEPARATOR, now, nf);
 	cout << "isAfter()> debug- sec=[" << sec << "]\n\n";
 	cout << "isAfter()> debug- now=[" << now << "]\n\n";
 	if (sec < 0){
 		throw WmsClientException(__FILE__,__LINE__,
-			"isAfter", DEFAULT_ERR_CODE,
+			"isAfter", Utils::DEFAULT_ERR_CODE,
 			"Wrong Time Value",
 			string("the string is not a valid time expression (" + st + ")") );
 	}
@@ -402,7 +367,7 @@ bool Utils::isBefore (const std::string &st, const unsigned int &nf){
 	int sec = getTime(st, TIME_SEPARATOR, now, nf);
 	if (sec < 0){
 		throw WmsClientException(__FILE__,__LINE__,
-			"isBefore", DEFAULT_ERR_CODE,
+			"isBefore", Utils::DEFAULT_ERR_CODE,
 			"Wrong Time Value",
 			string("invalid time expression (" + st + ")"));
 	}
