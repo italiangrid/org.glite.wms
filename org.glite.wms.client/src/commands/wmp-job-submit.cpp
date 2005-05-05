@@ -19,17 +19,12 @@ using namespace glite::wms::wmproxyapi;
 *	main
 */
 int main (int argc,char **argv){
-
-	ConfigContext *cfs = NULL;
-	string *endpoint = NULL ;
-	string *del_id ;
-	string jdl = "";
 	try {
 		JobSubmit js ;
 		js.readOptions(argc, argv );
-
+                js.submission( );
 	} catch ( WmsClientException&ex) {
-		cout << flush << ex.what() << "\n" ;
+		cerr << flush << ex.what() << "\n" ;
 	}
 
 };

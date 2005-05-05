@@ -31,23 +31,24 @@ EXPAT=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32
 CLASSAD=$(REPOSITORY)/repository/classads/0.9.6/rhel30_gcc32
 BOOST=$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32
 
-REPLIBS=-L$(REPOSITORY)/stage/lib
+
 
 BOOST_LIBS=-L$(BOOST_LOCATION)/lib/release \
 -lboost_fs -lboost_thread -lboost_regex
 CLASSAD_LIBS=-L$(CLASSAD)/lib  -lclassad -lclassad_dl
 ARES_LIBS=-lares
-GSI_PLUGIN=/home/peppe/webservices/gsoap/gsoap-gsi-plugin-2.0
+GSI_PLUGIN=/home/msotty/webservices/gsoap/gsoap-gsi-plugin-2.0
 
 CIFLAGS=-I../ \
 -I$(REPOSITORY)/stage/include \
--I$(CLASSAD)/include
+-I$(CLASSAD)/include \
+-I$(BOOST)/include
 
 CFLAGS= -DDEBUG -DWANT_NAMESPACES -DWITH_OPENSSL\
 $(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(CMFLAGS)
 
-JDL_LIB=-lglite_wms_jdl \
--lglite_wms_util
+JDL_LIB=-lglite_wms_jdl
+
 JOBID_LIB=-lglite_wmsutils_jobid \
 -lglite_wmsutils_cjobid
 EXC_LIB=-lglite_wmsutils_exception
@@ -56,25 +57,25 @@ GRIDSITE_LIBS=-lgridsite -lxml2
 
 CURL=-L/usr/lib -lcurl
 
-#LDFLAGS=$(REPLIBS) \
-#$(EXC_LIB) \
-#$(JDL_LIB) \
-#$(JOBID_LIB) \
-#$(CLASSAD_LIBS) \
-#$(BOOST_LIBS) \
-#-lcrypto
+STAGELIBS=-L$(REPOSITORY)/stage/lib \
+-lglite_wms_util \
+-lglite_wms_wmproxy_api_cpp \
+-lglite_wms_util \
+-lglite_wms_client_utils \
+-lglite_wms_client_services
 
 COMMON_LD_FLAGS=\
 -L../services \
 -L../utilities \
--lglite_wms_client_utils \
--lglite_wms_client_services
-
+$(STAGELIBS) \
+$(CURL) \
+$(GRIDSITE_LIBS)
 
 job_submit_SOURCE=wmp-job-submit.cpp
 job_submit_OBJ=glite-job-submit
 job_submit_CFLAGS=$(CFLAGS)
-job_submit_DEPS=$(COMMON_LD_FLAGS)
+job_submit_DEPS=$(COMMON_LD_FLAGS)\
+$(JDL_LIB)
 
 job_status_SOURCE=wmp-job-status.cpp
 job_status_OBJ=glite-job-status
