@@ -37,9 +37,10 @@ WMPCLIENT_LD_FLAGS= \
 #	-lcrypto
 
 WMPCLIENT_C_FLAGS= -I../ \
-	-I$(stage)/include
-#	-I$(BOOST)/include \
-#	-I$(CLASSAD)/include \
+	-I$(stage)/include	\
+        -I$(CLASSAD)/include \
+	-I$(BOOST)/include
+
 
 
 all: libservices
