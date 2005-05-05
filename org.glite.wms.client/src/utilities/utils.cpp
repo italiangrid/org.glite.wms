@@ -76,7 +76,7 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 void Utils::resolveHost(const std::string& hostname, std::string& resolved_name){
     struct hostent *result = NULL;
     if( (result = gethostbyname(hostname.c_str())) == NULL ){
-    	throw WmsClientException(__FILE__,__LINE__,"resolveHost",Utils::DEFAULT_ERR_CODE,
+    	throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
 				"Wrong Value","Unable to resolve host: "+hostname);
     }
     resolved_name=result->h_name;
@@ -87,7 +87,7 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 	switch (lbGroupSize){
 		case 0:
 			// No LB provided
-			throw WmsClientException(__FILE__,__LINE__,"getLbs",Utils::DEFAULT_ERR_CODE,
+			throw WmsClientException(__FILE__,__LINE__,"getLbs",DEFAULT_ERR_CODE,
 				"Empty Value","No Lb found in Configuration File");
 		case 1:
 			// One lb group provided: it's the one
@@ -97,7 +97,7 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 	}
 	if (nsNum>(int)lbGroupSize){
 		// requested LB number is out of available LBs
-		throw WmsClientException(__FILE__,__LINE__,"getLbs",Utils::DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"getLbs",DEFAULT_ERR_CODE,
 				"Mismatch Value","LB request number out of limit");
 	}else if (nsNum>=0){
 		// Retrieving the requested LB by provided nsNum
@@ -122,7 +122,7 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 		ad.first=DEFAULT_PROTOCOL;
 		protInd=0;
 	}else if (protInd==0){
-		throw WmsClientException(__FILE__,__LINE__,"checkAd",Utils::DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"checkAd",DEFAULT_ERR_CODE,
 				"Wrong Value","Wrong Protocol Specified for: "+adFullAddress);
 	}
 	// Look for port
@@ -135,7 +135,7 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 		try{
 			ad.second=boost::lexical_cast<unsigned int>(adFullAddress.substr(portInd+1));
 		}catch(boost::bad_lexical_cast &){
-			throw WmsClientException(__FILE__,__LINE__,"checkAd",Utils::DEFAULT_ERR_CODE,
+			throw WmsClientException(__FILE__,__LINE__,"checkAd",DEFAULT_ERR_CODE,
 				"Wrong Value","Failed to parse integer port for: "+adFullAddress);
 		}
 	}
@@ -148,7 +148,7 @@ std::pair <std::string, unsigned int> Utils::checkLb(const std::string& lbFullAd
 	try{
 		return checkAd( lbFullAddress,DEFAULT_LB_PROTOCOL+PROTOCOL, DEFAULT_LB_PORT);
 	}catch (WmsClientException &exc){
-		throw WmsClientException(__FILE__,__LINE__,"checkLb",Utils::DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"checkLb",DEFAULT_ERR_CODE,
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
@@ -156,7 +156,7 @@ std::pair <std::string, unsigned int> Utils::checkWmp(const std::string& wmpFull
 	try{
 		return checkAd( wmpFullAddress,"", DEFAULT_WMP_PORT);
 	}catch (WmsClientException &exc){
-		throw WmsClientException(__FILE__,__LINE__,"checkNs",Utils::DEFAULT_ERR_CODE,
+		throw WmsClientException(__FILE__,__LINE__,"checkNs",DEFAULT_ERR_CODE,
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
@@ -276,7 +276,7 @@ const long Utils::getTime(const std::string &st,
 		ostringstream err ;
 		err <<  "incorrect number of fields(the expected number was " << nf << ")";
 		throw WmsClientException(__FILE__,__LINE__,
-			"getTime", Utils::DEFAULT_ERR_CODE,
+			"getTime", DEFAULT_ERR_CODE,
 			"wrong format of the input time string", err.str() );
 	}
 	// reads the fields of the vector and get the number of seconds from 1970
@@ -321,7 +321,7 @@ const long Utils::getTime(const std::string &st,
 		}
 		default:{
 			throw WmsClientException(__FILE__,__LINE__,
-				"getTime", Utils::DEFAULT_ERR_CODE,
+				"getTime", DEFAULT_ERR_CODE,
 				"Wrong Time Value",
 				string("incorrect number of fields (" + st + ")"));
 		}
@@ -340,7 +340,7 @@ bool Utils::isAfter (const std::string &st, const unsigned int &nf){
 	cout << "isAfter()> debug- now=[" << now << "]\n\n";
 	if (sec < 0){
 		throw WmsClientException(__FILE__,__LINE__,
-			"isAfter", Utils::DEFAULT_ERR_CODE,
+			"isAfter", DEFAULT_ERR_CODE,
 			"Wrong Time Value",
 			string("the string is not a valid time expression (" + st + ")") );
 	}
@@ -361,7 +361,7 @@ bool Utils::isBefore (const std::string &st, const unsigned int &nf){
 	int sec = getTime(st, TIME_SEPARATOR, now, nf);
 	if (sec < 0){
 		throw WmsClientException(__FILE__,__LINE__,
-			"isBefore", Utils::DEFAULT_ERR_CODE,
+			"isBefore", DEFAULT_ERR_CODE,
 			"Wrong Time Value",
 			string("invalid time expression (" + st + ")"));
 	}

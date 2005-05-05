@@ -102,11 +102,6 @@ public:
 	*	@return true in case of success
 	*/
 	static bool isBefore (const std::string &st, const unsigned int &nf = 0);
-
-	/*
-        *	Default error code
-        */
-        static const unsigned int DEFAULT_ERR_CODE ;
 private:
 	/**
 	* Check the WMS client installation path

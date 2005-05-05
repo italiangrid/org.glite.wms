@@ -53,7 +53,7 @@ void checkLBNS(const string tc){
 
 int main(int argc,char *argv[]){
 try{
-	Options *opts
+	Options *opts ;
 	WMS_EXCM_TRY()
 	// SUBMIT
 	opts= new Options(Options::JOBSUBMIT) ;

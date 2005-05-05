@@ -576,7 +576,7 @@ Options::Options (const WMPCommands &command){
 		} ;
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"Options",
-				Utils::DEFAULT_ERR_CODE,
+				DEFAULT_ERR_CODE,
 				"Wrong Input Parameter","unknown command");
 		} ;
 	};
@@ -1026,7 +1026,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
-				Utils::DEFAULT_ERR_CODE,
+				DEFAULT_ERR_CODE,
 				"Input Option Error",
 				"unknow option"  );
 			break ;
@@ -1035,7 +1035,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 
 	if (dupl) {
 		throw WmsClientException(__FILE__,__LINE__,"setAttribute",
-				Utils::DEFAULT_ERR_CODE,
+				DEFAULT_ERR_CODE,
 				"Input Option Error",
 				string("option already specified: " + *dupl) );
 	}
@@ -1059,7 +1059,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		// error
 		if (next_opt == '?') {
 			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", Utils::DEFAULT_ERR_CODE,
+				"readOptions", DEFAULT_ERR_CODE,
 				"Input Option Error", "unknown exception");
 		}
 		// sets attribute
@@ -1079,14 +1079,14 @@ void Options::readOptions(const int &argc, const char **argv){
 				ifstream file(argv[optind]);
 				if (!file.good()) {
 					throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", Utils::DEFAULT_ERR_CODE,
+					"readOptions", DEFAULT_ERR_CODE,
 					"Input Option Error",
 					"no such JDL file :" + string(argv[optind]) );
 				}
 				jdlFile = new string(argv[ optind ]) ;
 			} else {
 					throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", Utils::DEFAULT_ERR_CODE,
+					"readOptions", DEFAULT_ERR_CODE,
 					"Missing Option", "no JDL file option specified");
 			}
 		}
@@ -1096,7 +1096,7 @@ void Options::readOptions(const int &argc, const char **argv){
 				jobIds.push_back(argv[optind]);
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", Utils::DEFAULT_ERR_CODE,
+				"readOptions", DEFAULT_ERR_CODE,
 				"Missing Option", "no JOBID option specified");
 			}
 		}
@@ -1106,7 +1106,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		cmdType == JOBCANCEL ) {
 			if (optind == argc ){
 				throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", Utils::DEFAULT_ERR_CODE,
+				"readOptions", DEFAULT_ERR_CODE,
 				"Missing Option", "no JOBID option specified");
 			}
 			for (int i = optind ; i < argc ; i++ ){
