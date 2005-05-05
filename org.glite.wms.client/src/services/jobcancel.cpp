@@ -57,21 +57,21 @@ void JobCancel::readOptions (int argc,char **argv){
 		err << opts->getAttributeUsage(Options::VO) << "\n";
 		err << opts->getAttributeUsage(Options::CONFIG) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
  	// user proxy
 	proxyFile = (char*)getProxyFile(NULL);
 	if (!proxyFile){
 		throw WmsClientException(__FILE__,__LINE__,
-				"getProxyFile", Utils::DEFAULT_ERR_CODE,
+				"getProxyFile", DEFAULT_ERR_CODE,
 				"Missing Proxy", "unable to determine the proxy file" );
 	}
  	// trusted Certs
 	trustedCert =  (char*)getTrustedCert(NULL);
 	if (!trustedCert){
 		throw WmsClientException(__FILE__,__LINE__,
-			"getProxyFile", Utils::DEFAULT_ERR_CODE,
+			"getProxyFile", DEFAULT_ERR_CODE,
 			"Directory Not Found", "unable to determine the trusted certificate directory" );
 	}
         // list of jobids
@@ -85,14 +85,14 @@ void JobCancel::cancel ( ){
 	// checks that the jobids vector is not empty
         if (jobIds.empty()){
 		throw WmsClientException(__FILE__,__LINE__,
-			"cancel", Utils::DEFAULT_ERR_CODE,
+			"cancel", DEFAULT_ERR_CODE,
 			"Missing Information",
                         "unknown jobid(s)" );
         }
         // checks that the config-context is not null
         if (!cfgCxt){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  Utils::DEFAULT_ERR_CODE,
+			"submission",  DEFAULT_ERR_CODE,
 			"Null Pointer Error", "null pointer to ConfigContext object"   );
         }
 	// performs cancelling

@@ -36,7 +36,6 @@ namespace wms{
 namespace client {
 namespace services {
 
-const unsigned int Utils::DEFAULT_ERR_CODE      =       7772;
 /*
 *	default constructor
 */
@@ -85,7 +84,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		err << opts->getAttributeUsage(Options::INPUT) << "\n";
 		err << opts->getAttributeUsage(Options::RESOURCE) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
         // config & vo(no together)
@@ -96,7 +95,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		err << opts->getAttributeUsage(Options::VO) << "\n";
 		err << opts->getAttributeUsage(Options::CONFIG) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
 	// lmrs has to be used with input o resource
@@ -107,7 +106,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		err << opts->getAttributeUsage(Options::RESOURCE) << "\n";
 		err << "or\n" + opts->getAttributeUsage(Options::INPUT) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
 	// "valid" & "to" (no together)
@@ -118,7 +117,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		err << opts->getAttributeUsage(Options::VALID) << "\n";
 		err << opts->getAttributeUsage(Options::TO) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
 	if (valid){
@@ -126,13 +125,13 @@ void JobSubmit::readOptions (int argc,char **argv){
 			if (! Utils::isAfter(*valid, 2) ){
 
 				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", Utils::DEFAULT_ERR_CODE,
+					"readOptions", DEFAULT_ERR_CODE,
 					"Invalid Time Value", "time is out of limit" );
 			}
 		} catch (WmsClientException &exc) {
 			err << exc.what() << " (use: " << opts->getAttributeUsage(Options::VALID) << ")\n";
 			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Wrong Time Value",err.str() );
 		}
 	}
@@ -141,13 +140,13 @@ void JobSubmit::readOptions (int argc,char **argv){
 			if (! Utils::isAfter(*to) ){
 
 				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", Utils::DEFAULT_ERR_CODE,
+					"readOptions", DEFAULT_ERR_CODE,
 					"Invalid Time Value", "time is out of limit" );
 			}
 		} catch (WmsClientException &exc) {
 			err << exc.what() << " (use: " << opts->getAttributeUsage(Options::TO) <<")\n";
 			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",Utils::DEFAULT_ERR_CODE,
+				"readOptions",DEFAULT_ERR_CODE,
 				"Wrong Time Value",err.str() );
 		}
 	}
@@ -167,14 +166,14 @@ void JobSubmit::readOptions (int argc,char **argv){
 	proxyFile =  (char*)getProxyFile(NULL);
 	if (!proxyFile){
 		throw WmsClientException(__FILE__,__LINE__,
-				"getProxyFile", Utils::DEFAULT_ERR_CODE,
+				"getProxyFile", DEFAULT_ERR_CODE,
 				"Missing Proxy", "unable to determine the proxy file" );
 	}
  	// trusted Certs
 	trustedCert =  (char*)getTrustedCert(NULL);
 	if (!trustedCert){
 		throw WmsClientException(__FILE__,__LINE__,
-				"getProxyFile", Utils::DEFAULT_ERR_CODE,
+				"getProxyFile", DEFAULT_ERR_CODE,
 				"Directory Not Found", "unable to determine the trusted certificate directory" );
 	}
         // configuration context
@@ -227,19 +226,19 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 		err << "not enough free quota on the server for InputSandbox file (freequota=" ;
 		err << freequota << " bytes)\n";
 		throw WmsClientException( __FILE__,__LINE__,
-						"transferFiles",  Utils::DEFAULT_ERR_CODE,
+						"transferFiles",  DEFAULT_ERR_CODE,
 						"User FreeQuota Error" , err.str());
 	}
 	// checks the user proxy pathname
 	if (!proxyFile){
 		throw WmsClientException(__FILE__,__LINE__,
-			"transferFiles", Utils::DEFAULT_ERR_CODE,
+			"transferFiles", DEFAULT_ERR_CODE,
 			"Missing Proxy", "unable to determine the proxy file" );
 	}
 	// checks the trusted cert dir
 	if (!trustedCert){
 		throw WmsClientException(__FILE__,__LINE__,
-			"getProxyFile", Utils::DEFAULT_ERR_CODE,
+			"getProxyFile", DEFAULT_ERR_CODE,
 			"Directory Not Found", "unable to determine the trusted certificate directory" );
 	}
 	// curl init
@@ -275,7 +274,7 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 			hd_src = fopen(source.c_str(), "rb");
 			if (hd_src == NULL) {
 					throw WmsClientException(__FILE__,__LINE__,
-						"transferFiles",  Utils::DEFAULT_ERR_CODE,
+						"transferFiles",  DEFAULT_ERR_CODE,
 						"File Not Found", "no such file : " + it->first  );
 			}
 			curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
@@ -301,7 +300,7 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 				err << "couldn't transfer the InputSandbox file : " << source ;
 				err << "to " << destination << "\nhttp error code: " << httpcode ;
 				throw WmsClientException(__FILE__,__LINE__,
-						"transferFiles",  Utils::DEFAULT_ERR_CODE,
+						"transferFiles",  DEFAULT_ERR_CODE,
 						"File Transfer Error", err.str()  );
 			} else {
 				if ( debug ) {
@@ -590,7 +589,7 @@ void JobSubmit::submission ( ){
 	ad = new Ad( );
         if (! jdlFile){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  Utils::DEFAULT_ERR_CODE,
+			"submission",  DEFAULT_ERR_CODE,
 			"Missing Information",
                         "uknown JDL file pathame"   );
         }
@@ -615,12 +614,12 @@ void JobSubmit::submission ( ){
 
 	if ( ! delegID){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  Utils::DEFAULT_ERR_CODE,
+			"submission",  DEFAULT_ERR_CODE,
 			"Null Pointer Error", "null pointer to DelegationID String"   );
         }
 	if (!cfgCxt){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  Utils::DEFAULT_ERR_CODE,
+			"submission",  DEFAULT_ERR_CODE,
 			"Null Pointer Error", "null pointer to ConfigContext object"   );
         }
 	// Register
@@ -694,7 +693,7 @@ bool JobSubmit::checkFreeQuota ( std::vector<std::pair<std::string,std::string> 
 				path =(char*) checkFileExistence( (it->first).c_str());
 				if ( !path) {
 					throw WmsClientException(__FILE__,__LINE__,
-						"checkFileExistence",  Utils::DEFAULT_ERR_CODE,
+						"checkFileExistence",  DEFAULT_ERR_CODE,
 						"File Not Found", "no such file : " + it->first  );
 				}
 				// size of
