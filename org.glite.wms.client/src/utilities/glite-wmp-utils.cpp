@@ -53,13 +53,20 @@ void checkLBNS(const string tc){
 
 int main(int argc,char *argv[]){
 try{
-	Options *opts ;
 	WMS_EXCM_TRY()
+	Options *opts ;
 	// SUBMIT
 	opts= new Options(Options::JOBSUBMIT) ;
 	opts->readOptions(argc, (const char**)argv);
-	WMS_EXCM_CATCH(WMS_ERROR)
-	WMS_EXCM_TRY()
+	cout << "MAIN::Checking options.."<< endl ;
+	if (!opts->getStringAttribute(Options::VO)){
+		cout << "MAIN::UTILS constructor: wmcOpt UNCE"<< endl ;
+	}
+
+
+	cout << "Arrived so far..." << endl ;
+
+
 	utils=new Utils(opts);
 	WMS_EXCM_CATCH(WMS_FATAL)
 

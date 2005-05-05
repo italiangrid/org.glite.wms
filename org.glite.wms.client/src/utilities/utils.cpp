@@ -15,14 +15,10 @@
 #include  "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // COMPONENT
 #include "utils.h"
-#include "excman.h"
 #include "adutils.h"
-
-
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
-
 // Configuration
 #include "glite/wms/common/configuration/WMCConfiguration.h"
 
@@ -49,7 +45,11 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 **************************************/
 Utils::Utils(Options *wmcOpt){
 	this->wmcOpt=wmcOpt;
-	this->checkVo();
+	cout << "Checking options.."<< endl ;
+	if (!wmcOpt->getStringAttribute(Options::VO)){
+		cout << "UTILS constructor: wmcOpt UNCE"<< endl ;
+	}
+	this->checkConf();
 }
 
 /*************************************
@@ -69,6 +69,12 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 		else if((*c=='n')||(*c=='N')){return false;}
 		else if (*c=='\0'){return defaultAnswer;}
 	}
+}
+void Utils::ending(unsigned int exitCode){
+}
+void Utils::errMsg(severity sev,glite::wmsutils::exception::Exception& exc){
+	cout <<"TBD parameters" << endl ;
+	cout << glite::wms::client::utilities::errMsg(sev,exc,false)<< endl;
 }
 /**********************************
 *** WMP, LB, Host Static methods ***
@@ -161,9 +167,13 @@ std::pair <std::string, unsigned int> Utils::checkWmp(const std::string& wmpFull
 	}
 }
 /**********************************
-*** Virtual Organisation methods
+Virtual Organisation methods
+VO check priority:
+	- cedrtificate extension
+	- config option
+	- env variable
+	- JDL (submit||listmatch)
 ***********************************/
-// This method is used by getVoPath
 string getDefaultVo(){
 /*
 	const vector<std::string> vonames= glite::wms::wmproxyapiutils::getFQANs(
@@ -171,21 +181,17 @@ string getDefaultVo(){
 	);
 	if (vonames.size()){return vonames[0];}
 	else
+	THIS METHOD IS TO BE IMPLEMENTED
 */
 	return "";
 }
-/* VO check priority:
-	- cedrtificate extension
-	- config option
-	- env variable
-	- JDL (submit||listmatch)
-*/
-void Utils::checkVo(){
+
+void Utils::checkConf(){
 	string voPath, voName;
 	// certificate extension - point to vo plain name
 	if(getDefaultVo()!=""){
-		voName=getDefaultVo();
 		cout << "proxy certificate extension" << endl ;
+		voName=getDefaultVo();
 		// return string (getenv("$HOME"))+"/.glite/"+ getDefaultVo()+"/"+DEFAULT_UI_CONFILE; // VO TBD lower-case??
 		parseVo(CERT_EXTENSION,voPath,voName);
 	}
@@ -240,11 +246,14 @@ string Utils::checkPrefix(const string& vo){
 	return "";
 }
 
+/**********************************
+JobId checks Methods
+***********************************/
+
 string Utils::checkJobId(std::string jobid){
 	JobId jid (jobid);
         return jobid;
 }
-
 std::vector<std::string> Utils::checkJobIds(std::vector<std::string> jobids, std::vector<std::string> &wrongs){
         std::vector<std::string>::iterator it ;
 	vector<std::string> goods;
@@ -258,8 +267,9 @@ std::vector<std::string> Utils::checkJobIds(std::vector<std::string> jobids, std
 	}
         return goods;
 }
-void Utils::ending(unsigned int exitCode){
-}
+/**********************************
+Time Checks methods
+***********************************/
 const std::vector<std::string> Utils::extractFields(const std::string &instr, const std::string &sep){
 	vector<string> vt ;
 	// extracts the fields from the input string
@@ -378,6 +388,7 @@ bool Utils::isBefore (const std::string &st, const unsigned int &nf){
 		return false ;
 	}
 }
+
 } // glite
 } // wms
 } // client

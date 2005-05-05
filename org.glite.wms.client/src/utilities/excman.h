@@ -6,7 +6,7 @@
 #include "glite/wmsutils/exception/Exception.h"
 namespace glite{namespace wms{namespace client{namespace utilities{
 #define WMS_EXCM_TRY()try{
-#define WMS_EXCM_CATCH(sev)}catch (glite::wmsutils::exception::Exception &exc){cout << errMsg(sev,exc);}
+#define WMS_EXCM_CATCH(sev)}catch (glite::wmsutils::exception::Exception &exc){cout << errMsg(sev,exc,true);}
 enum severity{
 	WMS_NONE,
 	WMS_WARNING,
@@ -24,8 +24,8 @@ public:
 	   		int code,const std::string& exception_name, const std::string& error);
 };
 // Static methods:
-const std::string errMsg(severity sev,glite::wmsutils::exception::Exception& exc, bool debug=false);
-const std::string errMsg(severity sev,const std::string& title,const std::string& err, bool debug=false);
+const std::string errMsg(severity sev,glite::wmsutils::exception::Exception& exc, bool debug);
+const std::string errMsg(severity sev,const std::string& title,const std::string& err, bool debug);
 }}}} // ending namespaces
 
 #endif

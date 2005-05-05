@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "excman.h"
 #include "options_utils.h"
 namespace glite {
 namespace wms{
@@ -104,13 +105,15 @@ public:
 	*	@return true in case of success
 	*/
 	static bool isBefore (const std::string &st, const unsigned int &nf = 0);
+	void errMsg(severity sev,glite::wmsutils::exception::Exception& exc);
+
 private:
 	/**
 	* Check the WMS client installation path
 	* @return The string representation of the installation path and loads general info
 	*/
 	std::string checkPrefix(const std::string& vo);
-	void checkVo();
+	void checkConf();
 	/** Look for possible configuration file */
 	/*
 	*	convert the input time string to number of seconds form 1970
