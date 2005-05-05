@@ -21,7 +21,6 @@ namespace utilities {
 class Utils{
 public:
 	Utils(Options *wmcOpt);
-	// TBD ,glite::wms::common::configuration::WMCConfiguration *wmcConf=NULL);
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -43,8 +42,7 @@ public:
 	/* Check the NS value, the format is
 	[<protocol>://]<ns host>[:<ns port>]
 	*/
-	std::pair <std::string, unsigned int>checkNs(const std::string& nsFullAddress);
-
+	std::pair <std::string, unsigned int>checkWmp(const std::string& wmpFullAddress);
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -66,6 +64,7 @@ public:
         *@throw  WrongIdException  in case of bad format of one of the jobids in the list
 	*/
 	static void checkJobIds(std::vector<std::string> jobids) ;
+
 	/** Exit from the process. If ncessary prompt some information
 	@param exitCode command exit code, 0 in case of success, error otherwise
 	*/

@@ -47,22 +47,24 @@ void checkLBNS(const string tc){
 	cout << endl<<"=======>" << tc << endl ;
 	std::pair <std::string, unsigned int> ad = utils->checkLb(tc);
 	cout << "found LB: "<< ad.first << "     :      " << ad.second << endl ;
-	ad = utils->checkNs(tc);
+	ad = utils->checkWmp(tc);
 	cout << "found NS: "<< ad.first << "     :      " << ad.second << endl ;
 }
 
 int main(int argc,char *argv[]){
 try{
+	Options *opts
 	WMS_EXCM_TRY()
 	// SUBMIT
-	Options *opts = new Options(Options::JOBSUBMIT) ;
+	opts= new Options(Options::JOBSUBMIT) ;
 	opts->readOptions(argc, (const char**)argv);
+	WMS_EXCM_CATCH(WMS_ERROR)
+	WMS_EXCM_TRY()
 	utils=new Utils(opts);
-	
 	WMS_EXCM_CATCH(WMS_FATAL)
 
+/*
 	WMS_EXCM_TRY()
-		utils->jobAdExample();
 		answer();
 		resolve();
 	WMS_EXCM_CATCH(WMS_ERROR)
@@ -72,7 +74,7 @@ try{
 		checkLBNS("https://address:123456");
 		checkLBNS("://address");
 	WMS_EXCM_CATCH(WMS_ERROR)
-
+*/
 	return 0;
 } catch (std::exception &exc){
 	 cout << "FATAL standard Exception: " << exc.what() << endl ;

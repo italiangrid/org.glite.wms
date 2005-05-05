@@ -5,7 +5,7 @@
 #include <time.h> // time (getTime)
 #include <sstream> //to convert number in to string
 // BOOST
-#include <boost/lexical_cast.hpp> // types conversion (checkLB/NS)
+#include <boost/lexical_cast.hpp> // types conversion (checkLB/WMP)
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem/operations.hpp>  // prefix & files procedures
 #include <boost/filesystem/path.hpp> // prefix & files procedures
@@ -42,11 +42,12 @@ const string PROTOCOL				=	"://";
 const string TIME_SEPARATOR			=	":";
 
 const unsigned int DEFAULT_LB_PORT	=	9000;
-const unsigned int DEFAULT_NS_PORT	=	7772;
+const unsigned int DEFAULT_WMP_PORT	=	7772;
 
-
+/*************************************
+*** Constructor **********************
+**************************************/
 Utils::Utils(Options *wmcOpt){
-	// TBD remove,glite::wms::common::configuration::WMCConfiguration *wmcConf){
 	this->wmcOpt=wmcOpt;
 	this->checkVo();
 }
@@ -70,7 +71,7 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 	}
 }
 /**********************************
-*** NS, LB, Host Static methods ***
+*** WMP, LB, Host Static methods ***
 ***********************************/
 void Utils::resolveHost(const std::string& hostname, std::string& resolved_name){
     struct hostent *result = NULL;
@@ -102,7 +103,7 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 		// Retrieving the requested LB by provided nsNum
 		return lbGroup[nsNum];
 	}else for (unsigned int i=0; i< lbGroupSize; i++){
-		// No NS number provided, gathering all LB
+		// No WMP number provided, gathering all LB
 		for (unsigned int j=0;j<lbGroup[i].size();j++){
 			lbs.push_back(lbGroup[i][j]);
 		}
@@ -151,29 +152,17 @@ std::pair <std::string, unsigned int> Utils::checkLb(const std::string& lbFullAd
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
-std::pair <std::string, unsigned int> Utils::checkNs(const std::string& nsFullAddress){
+std::pair <std::string, unsigned int> Utils::checkWmp(const std::string& wmpFullAddress){
 	try{
-		return checkAd( nsFullAddress,"", DEFAULT_NS_PORT);
+		return checkAd( wmpFullAddress,"", DEFAULT_WMP_PORT);
 	}catch (WmsClientException &exc){
 		throw WmsClientException(__FILE__,__LINE__,"checkNs",Utils::DEFAULT_ERR_CODE,
 			"Wrong Configuration Value",string(exc.what()));
 	}
 }
-
-/**********************************
-*** general	***
-***********************************/
-
 /**********************************
 *** Virtual Organisation methods
 ***********************************/
-
-/* VO check priority:
-	- cedrtificate extension
-	- config option
-	- env variable
-	- JDL (submit||listmatch)
-*/
 // This method is used by getVoPath
 string getDefaultVo(){
 /*
@@ -185,6 +174,12 @@ string getDefaultVo(){
 */
 	return "";
 }
+/* VO check priority:
+	- cedrtificate extension
+	- config option
+	- env variable
+	- JDL (submit||listmatch)
+*/
 void Utils::checkVo(){
 	string voPath, voName;
 	// certificate extension - point to vo plain name
@@ -256,7 +251,6 @@ void Utils::checkJobIds(std::vector<std::string> jobids){
 		Utils::checkJobId(*it);
 	}
 }
-
 void Utils::ending(unsigned int exitCode){
 }
 const std::vector<std::string> Utils::extractFields(const std::string &instr, const std::string &sep){
