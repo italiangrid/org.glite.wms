@@ -1,7 +1,10 @@
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 
+// options utilities
 #include "utilities/options_utils.h"
+#include "utilities/utils.h"
+// wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
 // Ad's
@@ -106,7 +109,11 @@ class JobSubmit {
 		/*
                 *	handles the input options
                 */
-		glite::wms::client::utilities::Options *opts ;
+		glite::wms::client::utilities::Options *wmcOpts ;
+		/*
+                *	utilities object
+                */
+                glite::wms::client::utilities::Utils::Utils *wmcUtils ;
                 /*
                 *	configuration contex
                 */

@@ -60,24 +60,12 @@ void JobCancel::readOptions (int argc,char **argv){
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
- 	// user proxy
-	proxyFile = (char*)getProxyFile(NULL);
-	if (!proxyFile){
-		throw WmsClientException(__FILE__,__LINE__,
-				"getProxyFile", DEFAULT_ERR_CODE,
-				"Missing Proxy", "unable to determine the proxy file" );
-	}
- 	// trusted Certs
-	trustedCert =  (char*)getTrustedCert(NULL);
-	if (!trustedCert){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getProxyFile", DEFAULT_ERR_CODE,
-			"Directory Not Found", "unable to determine the trusted certificate directory" );
-	}
-        // list of jobids
- 	jobIds = opts->getJobIds( );
         // configuration context
-        cfgCxt = new ConfigContext(proxyFile, wmpEndPoint, trustedCert);
+        cfgCxt = new ConfigContext("", wmpEndPoint, "");
+	// user proxy
+	proxyFile =  (char*)getProxyFile(cfgCxt);
+ 	// trusted Certs
+	trustedCert =  (char*)getTrustedCert(cfgCxt);
 };
 
 void JobCancel::cancel ( ){

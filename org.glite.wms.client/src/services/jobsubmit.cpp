@@ -64,8 +64,9 @@ JobSubmit::JobSubmit( ){
         wmpEndPoint = NULL ;
         proxyFile = NULL ;
         trustedCert = NULL ;
-	// option object
-	opts = NULL ;
+	// utilities objects
+	wmcOpts = NULL ;
+	wmcUtils = NULL ;
         // Ad
         ad = NULL;
         dag = NULL;
@@ -73,49 +74,52 @@ JobSubmit::JobSubmit( ){
 
 void JobSubmit::readOptions (int argc,char **argv){
 	ostringstream err ;
+        vector<string> wrongids;
 	// init of option objects object
-        opts = new Options(Options::JOBSUBMIT) ;
-	opts->readOptions(argc, (const char**)argv);
+        wmcOpts = new Options(Options::JOBSUBMIT) ;
+	wmcOpts->readOptions(argc, (const char**)argv);
+        // utilities
+        wmcUtils = new Utils (wmcOpts);
 	// input & resource (no together)
-	input = opts->getStringAttribute(Options::INPUT);
-	resource = opts->getStringAttribute(Options::RESOURCE);
+	input = wmcOpts->getStringAttribute(Options::INPUT);
+	resource = wmcOpts->getStringAttribute(Options::RESOURCE);
 	if (input && resource){
 		err << "the following options cannot be specified together:\n" ;
-		err << opts->getAttributeUsage(Options::INPUT) << "\n";
-		err << opts->getAttributeUsage(Options::RESOURCE) << "\n\n";
+		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
         // config & vo(no together)
-        config= opts->getStringAttribute( Options::CONFIG ) ;
-        vo = opts->getStringAttribute( Options::VO ) ;
+        config= wmcOpts->getStringAttribute( Options::CONFIG ) ;
+        vo = wmcOpts->getStringAttribute( Options::VO ) ;
 	if (vo && config){
 		err << "the following options cannot be specified together:\n" ;
-		err << opts->getAttributeUsage(Options::VO) << "\n";
-		err << opts->getAttributeUsage(Options::CONFIG) << "\n\n";
+		err << wmcOpts->getAttributeUsage(Options::VO) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
 	// lmrs has to be used with input o resource
-	lmrs = opts->getStringAttribute(Options::LMRS);
+	lmrs = wmcOpts->getStringAttribute(Options::LMRS);
 	if (lmrs && !( resource || input) ){
 		err << "LRMS option cannot be specified without a resource:\n";
-		err << "use " + opts->getAttributeUsage(Options::LMRS) << " with\n";
-		err << opts->getAttributeUsage(Options::RESOURCE) << "\n";
-		err << "or\n" + opts->getAttributeUsage(Options::INPUT) << "\n\n";
+		err << "use " + wmcOpts->getAttributeUsage(Options::LMRS) << " with\n";
+		err << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		err << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
 	// "valid" & "to" (no together)
-	valid = opts->getStringAttribute(Options::VALID);
-	to = opts->getStringAttribute(Options::TO);
+	valid = wmcOpts->getStringAttribute(Options::VALID);
+	to = wmcOpts->getStringAttribute(Options::TO);
 	if (valid && to){
 		err << "the following options cannot be specified together:\n" ;
-		err << opts->getAttributeUsage(Options::VALID) << "\n";
-		err << opts->getAttributeUsage(Options::TO) << "\n\n";
+		err << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::TO) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
@@ -129,7 +133,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 					"Invalid Time Value", "time is out of limit" );
 			}
 		} catch (WmsClientException &exc) {
-			err << exc.what() << " (use: " << opts->getAttributeUsage(Options::VALID) << ")\n";
+			err << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Wrong Time Value",err.str() );
@@ -144,40 +148,31 @@ void JobSubmit::readOptions (int argc,char **argv){
 					"Invalid Time Value", "time is out of limit" );
 			}
 		} catch (WmsClientException &exc) {
-			err << exc.what() << " (use: " << opts->getAttributeUsage(Options::TO) <<")\n";
+			err << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Wrong Time Value",err.str() );
 		}
 	}
 
-        logfile = opts->getStringAttribute(Options::LOGFILE );
-	chkpt=  opts->getStringAttribute( Options::CHKPT) ;
-	ouput=  opts->getStringAttribute( Options::OUTPUT ) ;
+        logfile = wmcOpts->getStringAttribute(Options::LOGFILE );
+	chkpt=  wmcOpts->getStringAttribute( Options::CHKPT) ;
+	ouput=  wmcOpts->getStringAttribute( Options::OUTPUT ) ;
 
-        nomsg=  opts->getBoolAttribute (Options::NOMSG);
-	nogui =  opts->getBoolAttribute (Options::NOGUI);
-	nolisten =  opts->getBoolAttribute (Options::NOLISTEN);
-	noint=  opts->getBoolAttribute (Options::NOINT) ;
-	version =  opts->getBoolAttribute (Options::VERSION);
+        nomsg=  wmcOpts->getBoolAttribute (Options::NOMSG);
+	nogui =  wmcOpts->getBoolAttribute (Options::NOGUI);
+	nolisten =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
+	noint=  wmcOpts->getBoolAttribute (Options::NOINT) ;
+	version =  wmcOpts->getBoolAttribute (Options::VERSION);
+
         // path to the JDL file
-	jdlFile = opts->getPath2Jdl( );
-	// user proxy
-	proxyFile =  (char*)getProxyFile(NULL);
-	if (!proxyFile){
-		throw WmsClientException(__FILE__,__LINE__,
-				"getProxyFile", DEFAULT_ERR_CODE,
-				"Missing Proxy", "unable to determine the proxy file" );
-	}
- 	// trusted Certs
-	trustedCert =  (char*)getTrustedCert(NULL);
-	if (!trustedCert){
-		throw WmsClientException(__FILE__,__LINE__,
-				"getProxyFile", DEFAULT_ERR_CODE,
-				"Directory Not Found", "unable to determine the trusted certificate directory" );
-	}
+	jdlFile = wmcOpts->getPath2Jdl( );
         // configuration context
-        cfgCxt = new ConfigContext(proxyFile, wmpEndPoint, trustedCert);
+        cfgCxt = new ConfigContext("", wmpEndPoint, "");
+	// user proxy
+	proxyFile =  (char*)getProxyFile(cfgCxt);
+ 	// trusted Certs
+	trustedCert =  (char*)getTrustedCert(cfgCxt);
 }
 
 
@@ -238,7 +233,7 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 	// checks the trusted cert dir
 	if (!trustedCert){
 		throw WmsClientException(__FILE__,__LINE__,
-			"getProxyFile", DEFAULT_ERR_CODE,
+			"transferFiles", DEFAULT_ERR_CODE,
 			"Directory Not Found", "unable to determine the trusted certificate directory" );
 	}
 	// curl init
@@ -587,6 +582,7 @@ void JobSubmit::submission ( ){
 	bool isdag = false;
 	// ClassAd
 	ad = new Ad( );
+
         if (! jdlFile){
 		throw WmsClientException(__FILE__,__LINE__,
 			"submission",  DEFAULT_ERR_CODE,
