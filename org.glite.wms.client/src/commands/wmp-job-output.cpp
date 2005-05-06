@@ -3,26 +3,27 @@
 // utilities
 #include "utilities/options_utils.h"
 #include "utilities/utils.h"
-// wmproxy API
-#include "glite/wms/wmproxyapi/wmproxy_api.h"
+// exceptions
+#include "utilities/excman.h"
 
 #include "services/joboutput.h"
 
 using namespace std ;
+using namespace glite::wms::client::services ;
 using namespace glite::wms::client::utilities ;
-using namespace glite::wms::wmproxyapi;
-
 /*
 *	main
 */
 int main (int argc,char **argv){
 	try {
-		// reads the user options
-		Options opts (Options::JOBOUTPUT) ;
-		opts.readOptions(argc, (const char**)argv);
+		JobOutput job ;
+                // reads the user options
+		job.readOptions (argc, argv);
+                // performs the main operations
+                job.getOutput( );
 
-	} catch (exception &ex) {
+	} catch (WmsClientException &ex) {
 		cout << flush << ex.what() << "\n" ;
 	}
-
+	return 0;
 };

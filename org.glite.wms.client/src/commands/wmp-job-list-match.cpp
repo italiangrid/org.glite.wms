@@ -1,35 +1,30 @@
 
 #include <iostream>
-// wmproxy API
-#include "glite/wms/wmproxyapi/wmproxy_api.h"
 // utilities
 #include "utilities/options_utils.h"
 #include "utilities/utils.h"
+// exceptions
+#include "utilities/excman.h"
 
 #include "services/jobloginfo.h"
 
 using namespace std ;
+using namespace glite::wms::client::services ;
 using namespace glite::wms::client::utilities ;
-using namespace glite::wms::wmproxyapi;
 
 /*
 *	main
 */
 int main (int argc,char **argv){
-
-	ConfigContext *cfs = NULL;
-	string *endpoint = NULL ;
-	string *del_id ;
-	string jdl_string = "";
 	try {
-		// reads the user options
-		Options opts (Options::JOBMATCH) ;
-		opts.readOptions(argc, (const char**)argv);
+		JobListMatch job ;
+                // reads the user options
+		job.readOptions (argc, argv);
+                // performs the main operations
+                job.listMatch( );
 
-
-
-	} catch (exception &ex) {
+	} catch (WmsClientException &ex) {
 		cout << flush << ex.what() << "\n" ;
 	}
-
+	return 0;
 };
