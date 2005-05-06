@@ -21,7 +21,7 @@ namespace client {
 namespace utilities {
 class Utils{
 public:
-	Utils(Options *wmcOpt);
+	Utils(Options *wmcOpts);
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -36,6 +36,17 @@ public:
 	*/
 	std::vector<std::string> getLbs(const std::vector<std::vector<std::string> >& lbGroup,int nsNum=-1);
 	/**
+	* Extrapolate the list of possible WMProxy addresses
+	* @return  a vector of strings containg the list of addresses
+	*/
+	std::vector<std::string> getWmps( );
+
+	/* gets a wmproxy URL randomically extracted by the list of the URL's specified as input
+        * @param wmps list of URL
+        * @return the extracted URL string; after the execution, the vector specified as input doesn't contain the extracted URL
+        */  
+        const std::string Utils::getWmpURL(std::vector<std::string> &wmps );
+        /**
 	* Check the LB value, the format is
 	[<protocol>://]<lb host>[:<lb port>]
 	*/
@@ -66,7 +77,7 @@ public:
         *@param wrongs returns the list of eventually bad format jobids
         *@return the list of correct jobids
 	*/
-	static std::vector<std::string> checkJobIds(std::vector<std::string> jobids, std::vector<std::string> &wrongs);
+	std::vector<std::string> checkJobIds(std::vector<std::string> &wrongs);
 
 	/** Exit from the process. If ncessary prompt some information
 	@param exitCode command exit code, 0 in case of success, error otherwise
@@ -114,6 +125,14 @@ private:
 	*/
 	std::string checkPrefix(const std::string& vo);
 	void checkConf();
+	/*
+        *  generates a random number included in the range[min,max]
+        * @param min the minimum value of the range
+        * @param max the maxium value of the range
+        * @return the generated number
+        */
+        const int getRandom ( const int &min, const int &max );
+
 	/** Look for possible configuration file */
 	/*
 	*	convert the input time string to number of seconds form 1970
@@ -144,7 +163,7 @@ private:
 	// Ad configuration files:
 	glite::wms::common::configuration::WMCConfiguration *wmcConf;
 	// Option files:
-	Options *wmcOpt;
+	Options *wmcOpts;
 	// General configuration inner values
 	std::string prefix;
 

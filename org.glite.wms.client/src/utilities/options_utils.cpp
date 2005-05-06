@@ -485,6 +485,7 @@ Options::Options (const WMPCommands &command){
 	status = NULL;
 	to = NULL;
 	valid = NULL ;
+        vo = NULL ;
 	// init of the boolean attributes
 	all  = false ;
 	debug  = false ;
@@ -940,7 +941,9 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::DBG ) : {
 			debug = true ;
+                        break ;
 		};
+
 		case ( Options::DIR ) : {
 			if (dir){
 				dupl = new string(LONG_DIR ) ;
@@ -979,8 +982,10 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::VO) : {
 			if (vo){
+                        cout << "vo dupl !\n";
 				dupl = new string(LONG_VO) ;
 			} else {
+   					cout << "vo set !\n";
 				vo = new string (optarg);
 			}
 			break ;
@@ -1038,7 +1043,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
 	};
-
 	if (dupl) {
 		throw WmsClientException(__FILE__,__LINE__,"setAttribute",
 				DEFAULT_ERR_CODE,
@@ -1047,6 +1051,42 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 	}
 };
 
+void Options::printUsage(const char* exename) {
+        switch (cmdType){
+                case (JOBSUBMIT ) :{
+                        submit_usage(exename);
+                        break;
+                } ;
+                case (JOBSTATUS ) :{
+                        status_usage(exename);
+                        break;
+                } ;
+                case (JOBLOGINFO ) :{
+                        loginfo_usage(exename);
+                        break;
+                } ;
+                case (JOBCANCEL ) :{
+                        cancel_usage(exename);
+                        break;
+                } ;
+                case (JOBOUTPUT ) :{
+                        output_usage(exename);
+                        break;
+                } ;
+                case ( JOBMATCH) :{
+                        lsmatch_usage(exename);
+                        break;
+                } ;
+                case ( JOBATTACH) :{
+                        attach_usage(exename);
+                        break;
+                } ;
+                default :{
+                        break;
+                } ;
+        }
+        exit(-1);
+ }
 /*
 *	reads the input options for submission
 *	@param argv option string
@@ -1054,6 +1094,10 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	int *indexptr  = (int*) malloc (sizeof(int));
+        if (argc == 1){
+        	cerr << "\nerror: no input argument specifies\n\n";
+                printUsage (argv[0]);
+        }
 	do {
 		// option parsing
 		next_opt = getopt_long (argc,
@@ -1061,12 +1105,11 @@ void Options::readOptions(const int &argc, const char **argv){
                                                 shortOpts,
                                                	longOpts,
                                                 indexptr );
-		//cout << "next_opt=" << next_opt << "\n" ;
+		cout << "next_opt=" << next_opt << "\n" ;
 		// error
 		if (next_opt == '?') {
-			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
-				"Input Option Error", "unknown exception");
+        		cerr << "\nerror: uknown arguments\n\n";
+               		 printUsage (argv[0]);
 		}
 		// sets attribute
 		if (next_opt != -1 ){
@@ -1084,16 +1127,13 @@ void Options::readOptions(const int &argc, const char **argv){
 			if ( optind == (argc-1) ){
 				ifstream file(argv[optind]);
 				if (!file.good()) {
-					throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
-					"Input Option Error",
-					"no such JDL file :" + string(argv[optind]) );
+					cerr << "\nerror: JDL file not found (" + string(argv[optind]) +")\n\n";
+					printUsage (argv[0]);
 				}
 				jdlFile = new string(argv[ optind ]) ;
 			} else {
-					throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
-					"Missing Option", "no JDL file option specified");
+				cerr <<  "\nerror: no JDL file option specified\n\n";
+				printUsage (argv[0]);
 			}
 		}
 		// JobId option in job-attach
@@ -1109,68 +1149,27 @@ void Options::readOptions(const int &argc, const char **argv){
                                         "bad JobId format (" + string(argv[optind]) + ")");
                                 }
 			} else {
-				throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
-				"Missing Option", "no JOBID option specified");
+				cerr <<  "\nerror: no JobId option specified\n\n";
+				printUsage (argv[0]);
 			}
 		}
 		// list of jobids in status, logginginfo and cancel
 		if ( cmdType == JOBSTATUS  ||
 		cmdType == JOBLOGINFO ||
-		cmdType == JOBCANCEL ) {
+		cmdType == JOBCANCEL ||
+                cmdType == JOBOUTPUT ) {
 			if (optind == argc ){
-				throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
-				"Missing Option", "no JOBID option specified");
+				cerr <<  "\nerror: no JobId option specified\n\n";
+				printUsage (argv[0]);
 			}
 			for (int i = optind ; i < argc ; i++ ){
 				jobIds.push_back(argv[i]);
 			}
-                        vector<string> wrongs ;
-                        jobIds = Utils::checkJobIds ( jobIds, wrongs ) ;
-                        if ( ! wrongs.empty() ){
-				vector<string>::iterator it;
-    				for ( it = wrongs.begin() ; it != wrongs.end( ) ; it++){
-					cerr << "warning : bad JobId format (" + *it + ")";
-     				}
-                        }
+
 		}
 	} else {
-		switch (cmdType){
-			case (JOBSUBMIT ) :{
-				submit_usage(argv[0]);
-				break;
-			} ;
-			case (JOBSTATUS ) :{
-				status_usage(argv[0]);
-				break;
-			} ;
-			case (JOBLOGINFO ) :{
-				loginfo_usage(argv[0]);
-				break;
-			} ;
-			case (JOBCANCEL ) :{
-				cancel_usage(argv[0]);
-				break;
-			} ;
-			case (JOBOUTPUT ) :{
-				output_usage(argv[0]);
-				break;
-			} ;
-			case ( JOBMATCH) :{
-				lsmatch_usage(argv[0]);
-				break;
-			} ;
-			case ( JOBATTACH) :{
-				attach_usage(argv[0]);
-				break;
-			} ;
-			default :{
-				break;
-			} ;
-		}
-		exit(0);
-	}
+ 		printUsage (argv[0]);
+   	}
 };
 
 } // glite

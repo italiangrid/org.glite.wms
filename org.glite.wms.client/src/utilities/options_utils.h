@@ -167,6 +167,11 @@ class Options
 		*	@param command line options
 		*/
 		void setAttribute (const int &in_opt, const char **argv);
+		/*
+                *	prints on the std output the help usage message for the command
+                *	which was being handled and exits from the execution
+                */
+                void printUsage(const char* exename ) ;
 
 		/*
 		*	constants for help messages
