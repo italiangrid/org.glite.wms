@@ -9,6 +9,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem/operations.hpp>  // prefix & files procedures
 #include <boost/filesystem/path.hpp> // prefix & files procedures
+#include <boost/nondet_random.hpp> //to get random numbers
 // GLITE
 #include "glite/wmsutils/jobid/JobId.h" // JobId
 // #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h" // proxy/voms utilities
@@ -21,6 +22,8 @@
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 // Configuration
 #include "glite/wms/common/configuration/WMCConfiguration.h"
+// WMProxy API's
+#include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 
 namespace glite {
 namespace wms{
@@ -29,7 +32,10 @@ namespace utilities {
 
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
+using namespace boost ;
+using namespace glite::wms::wmproxyapiutils;
 namespace configuration = glite::wms::common::configuration;
+
 
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG_VO";
@@ -43,12 +49,13 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 /*************************************
 *** Constructor **********************
 **************************************/
-Utils::Utils(Options *wmcOpt){
-	this->wmcOpt=wmcOpt;
-	cout << "Checking options.."<< endl ;
-	if (!wmcOpt->getStringAttribute(Options::VO)){
-		cout << "UTILS constructor: wmcOpt UNCE"<< endl ;
+Utils::Utils(Options *wmcOpts){
+	this->wmcOpts=wmcOpts;
+	cout << "Checking vo..."<< endl ;
+	if (!wmcOpts->getStringAttribute(Options::VO)){
+		cout << "UTILS constructor: wmcOpts UNCE"<< endl ;
 	}
+	cout << "Checking conf.."<< endl ;
 	this->checkConf();
 }
 
@@ -115,6 +122,35 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 		}
 	}
 	return lbs;
+
+}
+std::vector<std::string> Utils::getWmps( ){
+	std::vector<std::string> wmps ;
+        if (wmcConf){
+		wmps = wmcConf->wm_proxy_end_points( );
+        }
+	return wmps;
+}
+
+
+const int Utils::getRandom (const unsigned int &max ){
+	/*
+	BOOST_STATIC_ASSERT(random_device::min_value == integer_traits<random_device::result_type>::const_min);
+	BOOST_STATIC_ASSERT(random_device::max_value == integer_traits<random_device::result_type>::const_max);
+	random_device rd;
+	random_device::result_type random_value = rd() %max ;
+	cout << "random_value=" << random_value << "\n" ;
+	return random_value;
+	*/
+        return 0;
+}
+
+const std::string Utils::getWmpURL(std::vector<std::string> &wmps ){
+	std::string url ;
+        if ( ! wmps.empty()){
+		url = wmps[getRandom(wmps.size( )) ];
+        }
+	return url;
 }
 /** Static private method **/
 std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
@@ -196,15 +232,16 @@ void Utils::checkConf(){
 		parseVo(CERT_EXTENSION,voPath,voName);
 	}
 	// config option- point to the file
-	else if (wmcOpt->getStringAttribute (Options::VO)){
+	else if (wmcOpts->getStringAttribute (Options::VO)){
 		cout << "config option..." << endl ;
-		voName=*(wmcOpt->getStringAttribute (Options::VO));
+		voName=*(wmcOpts->getStringAttribute (Options::VO));
+                cout << "voName=" << voName << "\n";
 		parseVo(VO_OPT,voPath,voName);
 	}
 	// config option- point to the file
-	else if (wmcOpt->getStringAttribute (Options::CONFIG)){
+	else if (wmcOpts->getStringAttribute (Options::CONFIG)){
 		cout << "config option..." << endl ;
-		voPath= *(wmcOpt->getStringAttribute (Options::CONFIG));
+		voPath= *(wmcOpts->getStringAttribute (Options::CONFIG));
 		parseVo(CONFIG_OPT,voPath,voName);
 	}
 	// env variable point to the file
@@ -214,9 +251,9 @@ void Utils::checkConf(){
 		parseVo(CONFIG_VAR,voPath,voName);
 	}
 	// JDL specified(submit||listmatch) read the vo plain name
-	else if (wmcOpt->getPath2Jdl()){
+	else if (wmcOpts->getPath2Jdl()){
 		cout << "JDL option..." << endl ;
-		voPath=*(wmcOpt->getPath2Jdl());
+		voPath=*(wmcOpts->getPath2Jdl());
 		parseVo(JDL_FILE,voPath,voName);
 	}else{
 		// If this point is reached no VO found
@@ -235,15 +272,18 @@ string Utils::checkPrefix(const string& vo){
 	paths.push_back("/opt/glite");
 	paths.push_back("usr/local");
 	// Look for conf-file:
-	string pathDefault;
+	string defpath = "";
 	for (unsigned int i=0;i<paths.size();i++){
-		pathDefault=paths[i]+"/etc/"+vo ;
-		if( boost::filesystem::exists(boost::filesystem::path(pathDefault)) ){
-			return pathDefault ;
-		}
+		defpath =paths[i]+"/etc/"+vo ;
+		if ( checkPathExistence( defpath.c_str())  ) {
+			break;
+		} else{
+                	// Unable to find any file
+			defpath = "";
+                }
 	}
-	// Unable to find any file
-	return "";
+
+	return defpath;
 }
 
 /**********************************
@@ -254,17 +294,42 @@ string Utils::checkJobId(std::string jobid){
 	JobId jid (jobid);
         return jobid;
 }
-std::vector<std::string> Utils::checkJobIds(std::vector<std::string> jobids, std::vector<std::string> &wrongs){
+std::vector<std::string> Utils::checkJobIds(std::vector<std::string> &wrongs){
         std::vector<std::string>::iterator it ;
 	vector<std::string> goods;
-	for (it = jobids.begin() ; it != jobids.end() ; it++){
-        	try{
-			Utils::checkJobId(*it);
-                        goods.push_back(*it);
-   		} catch (WrongIdException &exc){
-			wrongs.push_back(*it);
+        vector<std::string> jobids;
+        if (wmcOpts) {
+		jobids = wmcOpts->getJobIds( );
+                for (it = jobids.begin() ; it != jobids.end() ; it++){
+                        try{
+                                Utils::checkJobId(*it);
+                                goods.push_back(*it);
+                        } catch (WrongIdException &exc){
+                                wrongs.push_back(*it);
+                        }
                 }
-	}
+		if (goods.empty()) {
+			throw WmsClientException(__FILE__,__LINE__,
+				"getVoPath", DEFAULT_ERR_CODE,
+				"Wrong JobId(s)",
+                                "bad format for the input JobId(s)");
+
+                } else
+		// the found wrongs jobids
+                if ( ! wrongs.empty() ){
+			// ERROR MESSAGES !!!
+			cerr << "\nWARNING: bad format for the following jobid(s) :\n" ;
+                        for ( it = wrongs.begin( ) ; it !=  wrongs.end( ) ; it++ ){
+				cerr << " - " << *it << "\n";
+                        }
+                        if ( ! answerYes ("Do you wish to continue", "yes") ){
+				throw WmsClientException(__FILE__,__LINE__,
+					"getVoPath", DEFAULT_ERR_CODE,
+					"Wrong JobId(s)",
+                                	"execution interrupted by user");
+                        }
+                 }
+        }
         return goods;
 }
 /**********************************
@@ -291,10 +356,17 @@ const long Utils::getTime(const std::string &st,
 	// checks the number of fields (only if nf>0 !)
 	if (nf >0 && vt.size() != nf ){
 		ostringstream err ;
-		err <<  "incorrect number of fields(the expected number was " << nf << ")";
+                char c = 'X' ;
+		err <<  "expected format is " ;
+                for (unsigned int i = 0; i < nf ; i++){
+                	if (i > 0) err << ":";
+			err << c << c ;
+                        c++;
+                }
 		throw WmsClientException(__FILE__,__LINE__,
 			"getTime", DEFAULT_ERR_CODE,
-			"wrong format of the input time string", err.str() );
+                        "Wrong Time Value",
+			"invalid time string (" + err.str() +")" );
 	}
 	// reads the fields of the vector and get the number of seconds from 1970
 	struct tm ts  = {0,0,0,0,0,0,0} ;
@@ -340,54 +412,64 @@ const long Utils::getTime(const std::string &st,
 			throw WmsClientException(__FILE__,__LINE__,
 				"getTime", DEFAULT_ERR_CODE,
 				"Wrong Time Value",
-				string("incorrect number of fields (" + st + ")"));
+				string("invalid time string (" + st + ")"));
 		}
 	}
 	// number of second
-	cout << "debug- month : " << ts.tm_mon << "\nday : " << ts.tm_mday << "\nh: " << ts.tm_hour << "\nmin: " << ts.tm_min << "\nyear : " << ts.tm_year <<"\n";
+	//cout << "debug- month : " << ts.tm_mon << "\nday : " << ts.tm_mday << "\nh: " << ts.tm_hour << "\nmin: " << ts.tm_min << "\nyear : " << ts.tm_year <<"\n";
 	return  mktime(&ts) ;
 }
 
-bool Utils::isAfter (const std::string &st, const unsigned int &nf){
-	// current time
+const long Utils::checkTime ( const std::string &st, const Options::TimeOpts &opt ){
+	long sec = 0;
+        // current time
 	time_t now = time(NULL);
 	//converts the input  time string to the vector to seconds from 1970
-	time_t sec = getTime(st, TIME_SEPARATOR, now, nf);
-	cout << "isAfter()> debug- sec=[" << sec << "]\n\n";
-	cout << "isAfter()> debug- now=[" << now << "]\n\n";
-	if (sec < 0){
+        switch (opt){
+		case (Options::TIME_VALID):{
+			sec = getTime(st, TIME_SEPARATOR, now, 2);
+                        break;
+                }
+                default :{
+                	sec = getTime(st, TIME_SEPARATOR, now);
+                        break;
+                }
+        }
+	if (sec > 0){
+		 switch (opt){
+                 	case (Options::TIME_TO):
+                        case (Options::TIME_VALID):{
+				if (sec <= now){
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkTime", DEFAULT_ERR_CODE,
+					"Invalid Time Value",
+					"the time value is out of limit ("+ st + ")");
+                                }
+                                break;
+                	}
+                        case (Options::TIME_FROM):{
+				if (sec > now){
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkTime", DEFAULT_ERR_CODE,
+					"Invalid Time Value",
+					"time value should be earlier than the current time");
+                                }
+                                break;
+                	}
+                        default :{
+				break;
+                        }
+    		}
+	} else {
 		throw WmsClientException(__FILE__,__LINE__,
 			"isAfter", DEFAULT_ERR_CODE,
 			"Wrong Time Value",
 			string("the string is not a valid time expression (" + st + ")") );
 	}
-	cout << "debug- now=[" << now << "]\n\n";
-	if  ( now < sec ){
-cout << "true ...\n";
-		return true ;
-	} else{
-		cout << "false ...\n";
-		return false ;
-	}
+ 	return sec;
 }
 
-bool Utils::isBefore (const std::string &st, const unsigned int &nf){
-	// current time
-	time_t now = time(NULL);
-	//converts the input  time string to the vector to seconds from 1970
-	int sec = getTime(st, TIME_SEPARATOR, now, nf);
-	if (sec < 0){
-		throw WmsClientException(__FILE__,__LINE__,
-			"isBefore", DEFAULT_ERR_CODE,
-			"Wrong Time Value",
-			string("invalid time expression (" + st + ")"));
-	}
-	if  ( now > sec ){
-		return true ;
-	} else{
-		return false ;
-	}
-}
+
 
 } // glite
 } // wms

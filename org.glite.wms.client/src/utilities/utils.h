@@ -45,7 +45,7 @@ public:
         * @param wmps list of URL
         * @return the extracted URL string; after the execution, the vector specified as input doesn't contain the extracted URL
         */  
-        const std::string Utils::getWmpURL(std::vector<std::string> &wmps );
+        static const std::string getWmpURL(std::vector<std::string> &wmps );
         /**
 	* Check the LB value, the format is
 	[<protocol>://]<lb host>[:<lb port>]
@@ -83,40 +83,22 @@ public:
 	@param exitCode command exit code, 0 in case of success, error otherwise
 	*/
 	void ending(unsigned int exitCode=0);
-
-	/*const std::vector<pair<char,std::string> > extractTime(const std::string &st, const std::string &sep) ;
-	const int getTime(const  std::vector<pair<char,std::string> >&vt, const time_t &now) ;
-	*
-	*/
 	/*
-	* 	check if the input time string is related to the future
+	* 	convert the input time string to the number of seconds since 1st of January 1970
+        *	and if a type of option is specified, check if it is a valid value for that option
+        *	(is later or earlier)
 	*	the formats of the input time string could be:
 	*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
 	*		- MM<sep>DD<sep>hh<sep>mm
 	*		- hh<sep>mm
 	*	where MM=month, DD=day of the month, YYYY=year
 	*		  hh=hours , min=minutes
-	*	(if nf is a positve parameter check that the number of fields is equal to nf)
 	*	@st the input time string
-	*	@nf number of the fields expected in the input string ( 0 , no check)
-	*	@return true in case of success
+	*	@opts type of time option
+	*	@return the number of seconds since 1st of January 1970
 	*/
-	static bool isAfter (const std::string &st, const unsigned int &nf = 0) ;
-	/*
-	* 	check if the input time string is related to the past
-	*	the formats of the input time string could be:
-	*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
-	*		- MM<sep>DD<sep>hh<sep>mm
-	*		- hh<sep>mm
-	*	where MM=month, DD=day of the month, YYYY=year
-	*		  hh=hours , min=minutes
-	*	(if nf is a positvecheck that the number of fields is equal to nf)
-	*	@st the input time string
-	*	@nf number of the fields expected in the input string ( 0 , no check)
-	*	@return true in case of success
-	*/
-	static bool isBefore (const std::string &st, const unsigned int &nf = 0);
-	void errMsg(severity sev,glite::wmsutils::exception::Exception& exc);
+	static const long checkTime ( const std::string &st, const Options::TimeOpts &opt = Options::TIME_NO_OPT);
+        void errMsg(severity sev,glite::wmsutils::exception::Exception& exc);
 
 private:
 	/**
@@ -131,7 +113,7 @@ private:
         * @param max the maxium value of the range
         * @return the generated number
         */
-        const int getRandom ( const int &min, const int &max );
+       static const int getRandom (const unsigned int &max );
 
 	/** Look for possible configuration file */
 	/*
