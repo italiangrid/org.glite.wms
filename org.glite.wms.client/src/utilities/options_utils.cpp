@@ -22,7 +22,7 @@ using namespace std;
 const char* Options::HELP_COPYRIGHT = "Copyright (C) 2003 by DATAMAT SpA";
 const char* Options::HELP_EMAIL = "fabrizio.pacini@datamat.it";
 const char* Options::HELP_UI = "WMS User Interface" ;
-const char* Options::HELP_VERSION = "version  1.0.2" ;
+const char* Options::HELP_VERSION = "version  1.0 alpha" ;
 
 /*
 *	LONG OPTION STRINGS
@@ -896,8 +896,10 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_VALID ) : {
 			if (valid){
+cout << "valid - dupl attr \n";
 				dupl = new string(LONG_VALID) ;
 			} else {
+   cout << "valid - set attr \n";
 				valid = new string(optarg);
 			}
 			break ;
@@ -982,7 +984,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
                 case ( Options::VO) : {
 			if (vo){
-                        cout << "vo dupl !\n";
+                       		 cout << "vo dupl !\n";
 				dupl = new string(LONG_VO) ;
 			} else {
    					cout << "vo set !\n";
@@ -1095,15 +1097,15 @@ void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	int *indexptr  = (int*) malloc (sizeof(int));
         if (argc == 1){
-        	cerr << "\nerror: no input argument specifies\n\n";
+        	cerr << "\nerror: no input argument specified\n\n";
                 printUsage (argv[0]);
         }
 	do {
 		// option parsing
-		next_opt = getopt_long (argc,
+		next_opt = getopt_long_only (argc,
                                                  (char* const*)argv,
                                                 shortOpts,
-                                               	longOpts,
+                                            	longOpts,
                                                 indexptr );
 		cout << "next_opt=" << next_opt << "\n" ;
 		// error
@@ -1113,8 +1115,12 @@ void Options::readOptions(const int &argc, const char **argv){
 		}
 		// sets attribute
 		if (next_opt != -1 ){
-			//cout << "int_ptr=" << *indexptr << "\n" ;
-			setAttribute (longOpts[*indexptr].val, argv);
+			cout << "int_ptr=" << *indexptr << "\n" ;
+                        if ( *indexptr >= 0 ){
+				setAttribute (longOpts[*indexptr].val, argv);
+    			} else{
+				setAttribute (next_opt, argv);
+                        }
 		}
 
 	} while (next_opt != -1);
