@@ -24,7 +24,7 @@ void parseVo(voSrc src, std::string& voPath, std::string& voName){
 		case VO_OPT:
 		case JDL_FILE:
 			// Only vo Provided, generate file name:
-			voPath=string (getenv("$HOME"))+
+			voPath=string (getenv("HOME"))+
 				"/.glite/"+ voName +"/" +
 				DEFAULT_UI_CONFILE;
 		default:
