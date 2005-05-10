@@ -1,4 +1,4 @@
-// $Id$
+// $Id:
 
 /**
  * @file tokens.cpp
@@ -136,10 +136,10 @@ int get_token(void *arg, void **token, size_t *token_length)
     num_read = 0;
     /* decode the token length from network byte order: 4 byte, big endian */
 
-    *token_length  = (((size_t) token_length_buffer[0]) << 24) & 0xffff;
-    *token_length |= (((size_t) token_length_buffer[1]) << 16) & 0xffff;
-    *token_length |= (((size_t) token_length_buffer[2]) <<  8) & 0xffff;
-    *token_length |= (((size_t) token_length_buffer[3])      ) & 0xffff;
+    *token_length  = ((size_t) token_length_buffer[0]) << 24;
+    *token_length |= ((size_t) token_length_buffer[1]) << 16;
+    *token_length |= ((size_t) token_length_buffer[2]) <<  8;
+    *token_length |= ((size_t) token_length_buffer[3]);
 
     if(*token_length > 1<<24)
     {

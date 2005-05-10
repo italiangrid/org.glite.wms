@@ -210,6 +210,9 @@ namespace socket_pp {
 	      if( delegated_cred != GSS_C_NO_CREDENTIAL ) {
 		
 		gss_buffer_desc deleg_proxy_filename;
+		OM_uint32       release_major_status, release_minor_status;
+		std::string     proxy_filename;
+
 		major_status = gss_export_cred(&minor_status,
 					       delegated_cred,
 					       NULL,
@@ -217,8 +220,13 @@ namespace socket_pp {
 					       &deleg_proxy_filename);
 		
 		if (major_status == GSS_S_COMPLETE) {
+		  proxy_filename.assign( (char*) deleg_proxy_filename.value );
+		}
+		
+		release_major_status = gss_release_buffer(&release_minor_status, &deleg_proxy_filename);
+
+		if (major_status == GSS_S_COMPLETE) {
 		  
-		  std::string proxy_filename( (char*) deleg_proxy_filename.value );     
 		  size_t equal_pos = proxy_filename.find('=');
 		  if( equal_pos != std::string::npos ) ctx.delegated_credentials_file = proxy_filename.substr( equal_pos+1 );
 		  else ctx.delegated_credentials_file = proxy_filename;

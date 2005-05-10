@@ -1,4 +1,4 @@
-// $Id$
+// $Id:
 
 /**
  * @file GSISocketAgent.cpp
@@ -190,10 +190,10 @@ bool GSISocketAgent::Receive(int& i)
 
       memcpy((char*)int_buffer, output_token.value, output_token.length);
 	
-      i  = (((unsigned int) int_buffer[0]) << 24) & 0xffff;
-      i |= (((unsigned int) int_buffer[1]) << 16) & 0xffff;
-      i |= (((unsigned int) int_buffer[2]) <<  8) & 0xffff;
-      i |= (((unsigned int) int_buffer[3])      ) & 0xffff;
+      i  = ((unsigned int) int_buffer[0]) << 24;
+      i |= ((unsigned int) int_buffer[1]) << 16;
+      i |= ((unsigned int) int_buffer[2]) <<  8;
+      i |= ((unsigned int) int_buffer[3]);
 
     } 
     gss_release_buffer(&min_stat, &output_token);
