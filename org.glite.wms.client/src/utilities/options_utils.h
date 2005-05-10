@@ -26,6 +26,7 @@ class Options
 			CONFIG ,
 			DBG , //debug
 			DIR ,
+                        ENDPOINT,
 			EXCLUDE ,
 			FROM ,
 			HELP ,
@@ -195,6 +196,7 @@ class Options
 		static const char* LONG_CHKPT	;
 		static const char* LONG_DEBUG ;
 		static const char* LONG_DIR ;
+                static const char* LONG_ENDPOINT ;
 		static const char* LONG_FROM ;
 		static const char* LONG_HELP ;
 		static const char* LONG_LMRS	;
@@ -249,6 +251,7 @@ class Options
 		static const std::string USG_CONFIG	;
 		static const std::string USG_DEBUG ;
 		static const std::string USG_DIR ;
+                static const std::string USG_ENDPOINT ;
 		static const std::string USG_EXCLUDE ;
 		static const std::string USG_FROM ;
 		static const std::string USG_HELP ;
@@ -283,6 +286,7 @@ class Options
 		std::string* chkpt ;
 		std::string* config ;
 		std::string* dir ;
+		std::string* endpoint;
 		std::string* exclude ;
 		std::string* from ;
 		std::string* input ;

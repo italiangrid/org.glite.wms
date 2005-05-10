@@ -30,7 +30,8 @@ const char* Options::HELP_VERSION = "version  1.0 alpha" ;
 const char* Options::LONG_ALL 		= "all";
 const char* Options::LONG_CHKPT	= "chkpt";
 const char* Options::LONG_DEBUG	= "debug";
-const char* Options::LONG_DIR	= "dir";
+const char* Options::LONG_DIR	= 		"dir";
+const char* Options::LONG_ENDPOINT	= "endpoint";
 const char* Options::LONG_FROM		= "from";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_LMRS		= "lmrs";
@@ -89,6 +90,7 @@ const char Options::short_no_arg = ' ' ;
 const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
         {	Options::LONG_DEBUG,             	required_argument,		0,		Options::DBG},
+         {	Options::LONG_ENDPOINT,             	required_argument,		0,		Options::ENDPOINT},
 	{	Options::LONG_CHKPT,              	required_argument,		0,		Options::CHKPT},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_LMRS,              	required_argument,		0,		Options::LMRS},
@@ -169,6 +171,7 @@ const struct option Options::cancelLongOpts[] = {
 const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+ 	{	Options::LONG_ENDPOINT,             	required_argument,		0,		Options::ENDPOINT},
 	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
@@ -225,6 +228,8 @@ const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
 
 const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t<directory_path>"	;
 
+const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ "\t<endpoint_URL>";
+
 const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_EXCLUDE + "\t<status_value>";
 
 const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
@@ -279,6 +284,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "Options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
+        cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_RESOURCE << "\n";
 	cerr << "\t" << USG_NOLISTEN << "\n";
@@ -397,6 +403,7 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 	cerr << "Options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
+        cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_RANK << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
@@ -475,6 +482,7 @@ Options::Options (const WMPCommands &command){
 	chkpt = NULL;
 	config = NULL;
 	dir = NULL;
+        endpoint = NULL;
 	exclude = NULL;
 	from = NULL;
 	input = NULL;
@@ -609,7 +617,13 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			}
 			break ;
 		}
-		case(CHKPT) : {
+		case(ENDPOINT) : {
+			if (endpoint){
+				value = new string (*endpoint) ;
+			}
+			break ;
+		}
+                case(CHKPT) : {
 			if (chkpt){
 				value = new string (*chkpt) ;
 			}
@@ -767,6 +781,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_CHKPT ;
 			break ;
 		}
+                case(ENDPOINT) : {
+			msg = USG_ENDPOINT ;
+			break ;
+		}
 		case(LMRS) : {
 			msg = USG_LMRS ;
 			break ;
@@ -885,7 +903,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
-
   		case ( Options::SHORT_RESOURCE) : {
 			if (resource){
 				dupl = new string(LONG_RESOURCE) ;
@@ -951,6 +968,14 @@ cout << "valid - dupl attr \n";
 				dupl = new string(LONG_DIR ) ;
 			} else {
 				dir = new string (optarg);
+			}
+			break ;
+		};
+                case ( Options::ENDPOINT) : {
+			if (config){
+				dupl = new string(LONG_ENDPOINT) ;
+			} else {
+				endpoint = new string (optarg);
 			}
 			break ;
 		};
