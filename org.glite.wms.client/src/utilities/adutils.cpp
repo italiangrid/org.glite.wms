@@ -3,6 +3,7 @@
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wms/jdl/ExpDagAd.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/JdlAttributeList.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 // HEADER
 #include "adutils.h"
@@ -39,16 +40,19 @@ void parseVo(voSrc src, std::string& voPath, std::string& voName){
 		switch (src){
 			case JDL_FILE:
 			case CERT_EXTENSION:
+			case VO_OPT:
 				voPath="";
 				return; //In these cases vo file might not be there
 			default:
 				throw;
 		}
 	}
+	if (!ad.hasAttribute(JDL::VIRTUAL_ORGANISATION)){
+		throw WmsClientException(__FILE__,__LINE__,"AdUtils",DEFAULT_ERR_CODE,
+				"Empty Value","Unable to find VirtualOrganisation inside the file:\n"+voPath);
+	}
 	// Check VoName
-	if(
-		(voName!="")&&(voName!=ad.getString(JDL::VIRTUAL_ORGANISATION))
-	){
+	if((voName!="")&&(voName!=ad.getString(JDL::VIRTUAL_ORGANISATION))){
 		throw WmsClientException(__FILE__,__LINE__,"AdUtils",DEFAULT_ERR_CODE,
 				"Wrong Match","No matching VO: "+voName +" inside the file:\n"+voPath);
 	}
@@ -125,6 +129,18 @@ void setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,glite::wms::jdl::Ad& conf){
 	}
 }
 
+std::vector<std::string> getUnknown(Ad* jdl){
+	std::vector< std::string > attributes = jdl->attributes();
+	std::vector< std::string >::iterator iter;
+	glite::wms::jdl::JdlAttributeList jdlAttribute;
+	for (iter=attributes.begin();iter!=attributes.end() ; ++iter){
+		if (jdlAttribute.findAttribute(*iter)){
+			attributes.erase(iter);
+		}
+	}
+	return attributes;
+
+}
 
 } // glite
 } // wms

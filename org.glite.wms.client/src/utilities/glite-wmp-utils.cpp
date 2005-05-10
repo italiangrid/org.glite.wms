@@ -56,11 +56,11 @@ try{
 	WMS_EXCM_TRY()
 	Options *opts ;
 	// SUBMIT
-	opts= new Options(Options::JOBSUBMIT) ;
+	opts= new Options(Options::JOBSUBMIT);
 	opts->readOptions(argc, (const char**)argv);
 	cout << "MAIN::Checking options.."<< endl ;
 	if (!opts->getStringAttribute(Options::VO)){
-		cout << "MAIN::UTILS constructor: wmcOpt UNCE"<< endl ;
+		cout << "MAIN:: wmcOpt UNCE"<< endl ;
 	}
 
 

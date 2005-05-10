@@ -1,4 +1,4 @@
-// PRIMITIVE
+	// PRIMITIVE
 #include <netdb.h> // gethostbyname (resolveHost)
 #include <iostream> // cin/cout     (answerYes)
 #include <fstream> // filestream (ifstream, check prefix)
@@ -14,9 +14,6 @@
 #include "glite/wmsutils/jobid/JobId.h" // JobId
 // #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h" // proxy/voms utilities
 #include  "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
-// COMPONENT
-#include "utils.h"
-#include "adutils.h"
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
@@ -24,6 +21,9 @@
 #include "glite/wms/common/configuration/WMCConfiguration.h"
 // WMProxy API's
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
+// COMPONENT
+#include "utils.h"
+#include "adutils.h"
 
 namespace glite {
 namespace wms{
@@ -53,16 +53,12 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 Utils::Utils(Options *wmcOpts){
 	this->wmcOpts=wmcOpts;
 	cout << "Checking vo..."<< endl ;
-	if (!wmcOpts->getStringAttribute(Options::VO)){
-		cout << "UTILS constructor: wmcOpts UNCE"<< endl ;
-	}
  	// debug information
         debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
         logFile = wmcOpts->getStringAttribute (Options::LOGFILE);
 	cout << "Checking conf.."<< endl ;
 	this->checkConf();
 }
-
 /*************************************
 *** General Utilities Static methods *
 **************************************/
@@ -252,33 +248,32 @@ void Utils::checkConf(){
 	string voPath, voName;
 	// certificate extension - point to vo plain name
 	if(getDefaultVo()!=""){
-		cout << "proxy certificate extension" << endl ;
+		cout << "checkConf:proxy certificate extension" << endl ;
 		voName=getDefaultVo();
-		// return string (getenv("$HOME"))+"/.glite/"+ getDefaultVo()+"/"+DEFAULT_UI_CONFILE; // VO TBD lower-case??
 		parseVo(CERT_EXTENSION,voPath,voName);
 	}
 	// config option- point to the file
 	else if (wmcOpts->getStringAttribute (Options::VO)){
-		cout << "config option..." << endl ;
+		cout << "checkConf:config option..." << flush ;
 		voName=*(wmcOpts->getStringAttribute (Options::VO));
-                cout << "voName=" << voName << "\n";
+                cout << " ..." << voName << "\n";
 		parseVo(VO_OPT,voPath,voName);
 	}
 	// config option- point to the file
 	else if (wmcOpts->getStringAttribute (Options::CONFIG)){
-		cout << "config option..." << endl ;
+		cout << "checkConf:config option..." << endl ;
 		voPath= *(wmcOpts->getStringAttribute (Options::CONFIG));
 		parseVo(CONFIG_OPT,voPath,voName);
 	}
 	// env variable point to the file
 	else if(getenv(WMS_CLIENT_CONFIG)){
-		cout << "env option..." << endl ;
+		cout << "checkConf:env option..." << endl ;
 		voName=string(getenv(WMS_CLIENT_CONFIG));
 		parseVo(CONFIG_VAR,voPath,voName);
 	}
 	// JDL specified(submit||listmatch) read the vo plain name
 	else if (wmcOpts->getPath2Jdl()){
-		cout << "JDL option..." << endl ;
+		cout << "checkConf:JDL option..." << endl ;
 		voPath=*(wmcOpts->getPath2Jdl());
 		parseVo(JDL_FILE,voPath,voName);
 	}else{
@@ -308,7 +303,6 @@ string Utils::checkPrefix(const string& vo){
 			defpath = "";
                 }
 	}
-
 	return defpath;
 }
 

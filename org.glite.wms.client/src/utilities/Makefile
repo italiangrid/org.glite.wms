@@ -24,6 +24,8 @@ WMPCLIENT_LD_FLAGS= \
 	-L$(BOOST)/lib/release \
 	-L$(CLASSAD)/lib \
 	-L$(stage)/lib \
+	-lglite_wms_wmproxy_api_cpp \
+	-lgridsite \
 	-lglite_wmsutils_exception \
 	-lglite_wms_util \
 	-lglite_wms_conf \
