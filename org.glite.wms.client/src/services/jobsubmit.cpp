@@ -73,8 +73,9 @@ JobSubmit::JobSubmit( ){
 };
 
 void JobSubmit::readOptions (int argc,char **argv){
-	ostringstream err ;
+	ostringstream info ;
         vector<string> wrongids;
+        vector<string> wmps;
 	// init of option objects object
         wmcOpts = new Options(Options::JOBSUBMIT) ;
 	wmcOpts->readOptions(argc, (const char**)argv);
@@ -84,82 +85,92 @@ void JobSubmit::readOptions (int argc,char **argv){
 	input = wmcOpts->getStringAttribute(Options::INPUT);
 	resource = wmcOpts->getStringAttribute(Options::RESOURCE);
 	if (input && resource){
-		err << "the following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n\n";
+		info << "the following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
+				"Input Option Error", info.str());
 	}
         // config & vo(no together)
         config= wmcOpts->getStringAttribute( Options::CONFIG ) ;
         vo = wmcOpts->getStringAttribute( Options::VO ) ;
 	if (vo && config){
-		err << "the following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::VO) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
+		info << "the following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::VO) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
+				"Input Option Error", info.str());
 	}
 	// lmrs has to be used with input o resource
 	lmrs = wmcOpts->getStringAttribute(Options::LMRS);
 	if (lmrs && !( resource || input) ){
-		err << "LRMS option cannot be specified without a resource:\n";
-		err << "use " + wmcOpts->getAttributeUsage(Options::LMRS) << " with\n";
-		err << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
-		err << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n\n";
+		info << "LRMS option cannot be specified without a resource:\n";
+		info << "use " + wmcOpts->getAttributeUsage(Options::LMRS) << " with\n";
+		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		info << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
+				"Input Option Error", info.str());
 	}
 	// "valid" & "to" (no together)
 	valid = wmcOpts->getStringAttribute(Options::VALID);
 	to = wmcOpts->getStringAttribute(Options::TO);
 	if (valid && to){
-		err << "the following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::TO) << "\n\n";
+		info << "the following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::TO) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
+				"Input Option Error", info.str());
 	}
 	if (valid){
 		try{
-			if (! Utils::isAfter(*valid, 2) ){
+			if (! Utils::checkTime(*valid, Options::TIME_VALID) ){
 
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
-					"Invalid Time Value", "time is out of limit" );
+					"Invalid Time Value", "" );
 			}
 		} catch (WmsClientException &exc) {
-			err << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
+			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Wrong Time Value",err.str() );
+				"Wrong Time Value",info.str() );
 		}
 	}
 	if (to){
 		try{
-			if (! Utils::isAfter(*to) ){
+			if (! Utils::checkTime(*valid, Options::TIME_TO) ){
 
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
 					"Invalid Time Value", "time is out of limit" );
 			}
 		} catch (WmsClientException &exc) {
-			err << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
+			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Wrong Time Value",err.str() );
+				"Wrong Time Value",info.str() );
 		}
+	}
+	// "debug" & "nomsg" (no together)
+        nomsg=  wmcOpts->getBoolAttribute (Options::NOMSG);
+	debug = wmcOpts->getBoolAttribute (Options::DBG);
+	if (nomsg && debug){
+		info << "the following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::DBG) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::NOMSG) << "\n\n";
+		throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Input Option Error", info.str());
 	}
 
         logfile = wmcOpts->getStringAttribute(Options::LOGFILE );
 	chkpt=  wmcOpts->getStringAttribute( Options::CHKPT) ;
 	ouput=  wmcOpts->getStringAttribute( Options::OUTPUT ) ;
 
-        nomsg=  wmcOpts->getBoolAttribute (Options::NOMSG);
 	nogui =  wmcOpts->getBoolAttribute (Options::NOGUI);
 	nolisten =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
 	noint=  wmcOpts->getBoolAttribute (Options::NOINT) ;
@@ -167,8 +178,30 @@ void JobSubmit::readOptions (int argc,char **argv){
 
         // path to the JDL file
 	jdlFile = wmcOpts->getPath2Jdl( );
-        // configuration context
-        cfgCxt = new ConfigContext("", wmpEndPoint, "");
+	// get
+        wmps = wmcUtils->getWmps( ) ;
+        while ( ! wmps.empty( ) ) {
+ 		wmpEndPoint = (string*)wmcUtils->getWmpURL(wmps);
+                if ( wmpEndPoint  ){
+        		cfgCxt = new ConfigContext("", *wmpEndPoint, "");
+			try {
+                        	if ( debug || logfile ){
+					info << "trying to contact EndPoint : " << *wmpEndPoint << "\n";
+                                        if (debug)  cout << info;
+                                }
+   				getVersion(cfgCxt);
+                                // if no exception is thrown (available wmproxy; exit from the loop)
+                                break;
+  			} catch (BaseException &bex) {
+				wmpEndPoint = NULL ;
+                        }
+    		}
+	}
+	if ( wmps.empty( ) && ! wmpEndPoint ){
+                throw WmsClientException(__FILE__,__LINE__,
+                        "getWmpURL", DEFAULT_ERR_CODE,
+                        "Missing infomration", "no WMProxy URL specified" );
+        }
 	// user proxy
 	proxyFile =  (char*)getProxyFile(cfgCxt);
  	// trusted Certs
@@ -337,7 +370,7 @@ void JobSubmit::normalJob( )
 	// output message
 	outmsg = "****************************************************************************\n";
 	outmsg += "your job has been successfully submitted by the end point:\n\n";
-	outmsg += "\t" +  string(wmpEndPoint)+ "\n\n";
+	outmsg += "\t" +  string(*wmpEndPoint)+ "\n\n";
 	outmsg += "with the jobid:\n\n\t" + jobid + "\n\n";
 	//  node name (if it is set)
 	if ( jobIds.nodeName ){
@@ -448,7 +481,7 @@ void JobSubmit::dagJob( )
                 }
 */
         outmsg += "your " + x1 + " has been successfully submitted by the end point:\n\n";
-        outmsg += "\t" + string(wmpEndPoint)+ "\n\n";
+        outmsg += "\t" + string(*wmpEndPoint)+ "\n\n";
         outmsg += x2 + "\t" + jobid + "\n\n";
         if (debug){
                 cout << x1 << "\n";
@@ -686,10 +719,10 @@ bool JobSubmit::checkFreeQuota ( std::vector<std::pair<std::string,std::string> 
 			// number of bytes to be transferred
 			for ( it = files.begin() ;  it != files.end() ; it++ ) {
 				// pathname
-				path =(char*) checkFileExistence( (it->first).c_str());
+				path =(char*) checkPathExistence( (it->first).c_str());
 				if ( !path) {
 					throw WmsClientException(__FILE__,__LINE__,
-						"checkFileExistence",  DEFAULT_ERR_CODE,
+						"checkPathExistence",  DEFAULT_ERR_CODE,
 						"File Not Found", "no such file : " + it->first  );
 				}
 				// size of

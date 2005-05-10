@@ -135,7 +135,7 @@ class JobSubmit {
                 /*
                 *	WMProxy endpoint
                 */
-                char* wmpEndPoint ;
+               std::string* wmpEndPoint ;
 		/*
                 * 	proxy file pathname
                 */
