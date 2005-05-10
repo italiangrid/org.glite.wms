@@ -1,5 +1,7 @@
 // HEADER
 #include "excman.h"
+#include "fstream" // file streams
+#include "sstream" // file streams
 using namespace std ;
 namespace glite{namespace wms{namespace client{namespace utilities{
 WmsClientException::WmsClientException (const string& file, int line, const string& method,
@@ -15,6 +17,9 @@ const std::string errMsg(severity sev,const string& title, const string& err, bo
 	string result = "**** ";
 	// Add the severity Message
 	switch (sev){
+        	case WMS_INFO:
+		result+="Info: ";
+		break;
 		case WMS_WARNING:
 		result+="Warning: ";
 		break;
@@ -30,4 +35,16 @@ const std::string errMsg(severity sev,const string& title, const string& err, bo
 	result+=title+" ****\n"+err +"\n";
 	return result;
 };
+void logMsg (std::string file, std::string msg){
+	/*
+        ostringstream lm ;
+        time_t now = time(NULL);
+	struct tm *ns = localtime(&now);
+	lm << tm->tm_year << "." << tm-> tm_mon << "." << tm-> tm_mday << "-" ;
+        lm << tm-> tm_hour << ":" << tm->tm_min << ":" << tm->tm_sec ;
+	ifstream  f (file, io_base::app);
+ 	if ( f.good( ) ){
+
+  	}*/
+}
 }}}} // ending namespaces

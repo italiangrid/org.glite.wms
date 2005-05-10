@@ -9,6 +9,7 @@ namespace glite{namespace wms{namespace client{namespace utilities{
 #define WMS_EXCM_CATCH(sev)}catch (glite::wmsutils::exception::Exception &exc){cout << errMsg(sev,exc,true);}
 enum severity{
 	WMS_NONE,
+        WMS_INFO,
 	WMS_WARNING,
 	WMS_ERROR,
 	WMS_FATAL
@@ -26,6 +27,7 @@ public:
 // Static methods:
 const std::string errMsg(severity sev,glite::wmsutils::exception::Exception& exc, bool debug);
 const std::string errMsg(severity sev,const std::string& title,const std::string& err, bool debug);
+void logMsg(std::string file, std::string msg);
 }}}} // ending namespaces
 
 #endif
