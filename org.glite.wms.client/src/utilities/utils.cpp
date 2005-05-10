@@ -39,6 +39,7 @@ namespace configuration = glite::wms::common::configuration;
 
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG_VO";
+const char*  WMS_CLIENT_ENDPOINT			= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const string DEFAULT_LB_PROTOCOL		=	"https";
 const string PROTOCOL				=	"://";
 const string TIME_SEPARATOR			=	":";
@@ -55,6 +56,9 @@ Utils::Utils(Options *wmcOpts){
 	if (!wmcOpts->getStringAttribute(Options::VO)){
 		cout << "UTILS constructor: wmcOpts UNCE"<< endl ;
 	}
+ 	// debug information
+        debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
+        logFile = wmcOpts->getStringAttribute (Options::LOGFILE);
 	cout << "Checking conf.."<< endl ;
 	this->checkConf();
 }
@@ -81,7 +85,11 @@ void Utils::ending(unsigned int exitCode){
 }
 void Utils::errMsg(severity sev,glite::wmsutils::exception::Exception& exc){
 	cout <<"TBD parameters" << endl ;
-	cout << glite::wms::client::utilities::errMsg(sev,exc,false)<< endl;
+        string msg = glite::wms::client::utilities::errMsg(sev,exc,false);
+        /*if (sev == WMS_INFO )){
+
+        }*/
+	cerr << msg << endl;
 }
 /**********************************
 *** WMP, LB, Host Static methods ***
@@ -126,8 +134,18 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 }
 std::vector<std::string> Utils::getWmps( ){
 	std::vector<std::string> wmps ;
-        if (wmcConf){
-		wmps = wmcConf->wm_proxy_end_points( );
+	char *ep = NULL;
+        string *eps = NULL;
+      	eps =wmcOpts->getStringAttribute(Options::ENDPOINT);
+        if (eps){
+		wmps.push_back(*eps);
+        } else {
+        ep = getenv( WMS_CLIENT_ENDPOINT );
+                if (ep){
+			wmps.push_back(ep);
+  		} else if (wmcConf){
+				wmps = wmcConf->wm_proxy_end_points( );
+    		}
         }
 	return wmps;
 }
@@ -145,10 +163,18 @@ const int Utils::getRandom (const unsigned int &max ){
         return 0;
 }
 
-const std::string Utils::getWmpURL(std::vector<std::string> &wmps ){
-	std::string url ;
+const std::string* Utils::getWmpURL(std::vector<std::string> &wmps ){
+	string *url = NULL;
+        vector<string>::iterator it = wmps.begin ( );
         if ( ! wmps.empty()){
-		url = wmps[getRandom(wmps.size( )) ];
+        	if ( wmps.size( ) == 1){
+                	url = new string(wmps[0]);
+                        wmps.erase( it );
+                } else {
+                	int elem = getRandom(wmps.size( )) ;
+			url = new string( wmps[elem] );
+                        wmps.erase( it + elem );
+   		}
         }
 	return url;
 }

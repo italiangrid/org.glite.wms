@@ -45,7 +45,7 @@ public:
         * @param wmps list of URL
         * @return the extracted URL string; after the execution, the vector specified as input doesn't contain the extracted URL
         */  
-        static const std::string getWmpURL(std::vector<std::string> &wmps );
+        static const std::string *getWmpURL(std::vector<std::string> &wmps );
         /**
 	* Check the LB value, the format is
 	[<protocol>://]<lb host>[:<lb port>]
@@ -146,6 +146,10 @@ private:
 	glite::wms::common::configuration::WMCConfiguration *wmcConf;
 	// Option files:
 	Options *wmcOpts;
+        // debug flag (from options)
+        bool debugInfo;
+        //Log file pathname
+        std::string* logFile ;
 	// General configuration inner values
 	std::string prefix;
 
