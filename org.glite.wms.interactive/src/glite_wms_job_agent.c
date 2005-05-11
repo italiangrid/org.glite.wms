@@ -29,7 +29,7 @@ int main(int argc,  char **argv) {
 
  int size=BUF_SIZE;
  
- char *agent_location="./libglite-wms-grid-console-agent.so";
+ char *agent_location="./libglite-wms-grid-console-agent.so.0";
  
  if(argc!=4){
   printf("Usage: %s <remote_host> <remote_port> <exe>\n",argv[0]);
