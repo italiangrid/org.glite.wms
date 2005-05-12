@@ -9,6 +9,7 @@
 #include "NsWrapper.h"
 #include "glite/lb/producer.h"
 #include <pem.h>
+#include "openssl/ssl.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
@@ -181,68 +182,64 @@ std::string NS::dgas_jobAuth(const std::string& jobid ,const std::string& hlr ){
 return "" ;
 } ;
 
-   
 /************************************************
 *   UserCredential VOMS implementation
 *************************************************/
 /******************************************************************
  method :load_chain
-*******************************************************************/
-STACK_OF(X509) *load_chain(char *certfile)
-{
-  STACK_OF(X509_INFO) *sk=NULL;
-  STACK_OF(X509) *stack=NULL, *ret=NULL;
-  BIO *in=NULL;
-  X509_INFO *xi;
-  int first = 1;
-
-  if(!(stack = sk_X509_new_null())) {
-    printf("memory allocation failure\n");
-  BIO_free(in);
-  sk_X509_INFO_free(sk);
-    throw  5;
- } 
-  if(!(in=BIO_new_file(certfile, "r"))) {
-    printf("error opening the file, %s\n",certfile);
-    // goto end;
-  BIO_free(in);
-  sk_X509_INFO_free(sk);
-    throw 5;
-  }
-
-  /* This loads from a file, a stack of x509/crl/pkey sets */
-  if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
-    printf("error reading the file, %s\n",certfile);
-    // goto end;
-  BIO_free(in);
-  sk_X509_INFO_free(sk);
-    throw 5;
-  }
-
-  /* scan over it and pull out the certs */
-  while (sk_X509_INFO_num(sk)) {
-    /* skip first cert */
-    if (first) {
-      first = 0;
-      continue;
-    }
-    xi=sk_X509_INFO_shift(sk);
-    if (xi->x509 != NULL) {
-      sk_X509_push(stack,xi->x509);
-      xi->x509=NULL;
-    }
-    X509_INFO_free(xi);
-  }
-  if(!sk_X509_num(stack)) {
-    printf("no certificates in file, %s\n",certfile);
-    sk_X509_free(stack);
-  BIO_free(in);
-  sk_X509_INFO_free(sk);
-    // goto end;
-    throw 5;
-  }
-  ret=stack;
-  return(ret);
+******************************************************************/
+STACK_OF(X509) *load_chain(char *certfile){
+	STACK_OF(X509_INFO) *sk=NULL;
+	STACK_OF(X509) *stack=NULL;
+	BIO *in=NULL;
+	X509_INFO *xi;
+	int first = 1;
+	if(!(stack = sk_X509_new_null())) {
+		cerr <<"UserCredential: memory allocation failure" <<endl ;
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		return stack;
+	}
+	if(!(in=BIO_new_file(certfile, "r"))) {
+		cerr <<"UserCredential: error opening the file: "<< certfile << endl;
+		// goto end;
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		return stack;
+	}
+	// This loads from a file, a stack of x509/crl/pkey sets
+	if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+		cerr <<"UserCredential: error reading the file: "<<certfile<< endl ;
+		// goto end;
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		return stack;
+	}
+	// Scan over it and pull out the certs
+	while (sk_X509_INFO_num(sk)){
+		//  skip first cert
+		if (first) {
+			first = 0;
+			continue;
+		}
+		xi=sk_X509_INFO_shift(sk);
+		if (xi->x509 != NULL) {
+			sk_X509_push(stack,xi->x509);
+			xi->x509=NULL;
+		}
+		X509_INFO_free(xi);
+	}
+	if(!sk_X509_num(stack)) {
+		cerr << "UserCredential: no certificates in file: "<< certfile << endl ;
+		sk_X509_free(stack);
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		// goto end;
+		return stack;
+	}
+	BIO_free(in);
+	sk_X509_INFO_free(sk);
+	return stack;
 }
 
 
@@ -330,33 +327,43 @@ int UserCredential::getExpiration(){
 	return 0 ;
 }
 
-
 /******************************************************************
 private method: load_voms
 *******************************************************************/
-// void UserCredential::load_voms (){
 int  UserCredential::load_voms ( vomsdata& d  ){
-	string METHOD("load_voms(vomsdata vo)");
-	// vomsdata d ;
+	BIO  *in = NULL;
+	X509 *x  = NULL;
 	d.data.clear() ;
-	BIO *in = NULL;
-	X509 *x = NULL;   // It is not used anymore. should be equal to pcd->ucert
+	STACK_OF(X509) *chain = NULL;
+	SSLeay_add_ssl_algorithms();
+	char *of   = const_cast<char *>(proxy_file.c_str());
 	in = BIO_new(BIO_s_file());
 	if (in) {
-		if (BIO_read_filename(in, proxy_file.c_str()) > 0) {
+		if (BIO_read_filename(in, of) > 0) {
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
-			STACK_OF(X509) *chain = load_chain(   (char*)(proxy_file.c_str() )   );
-			if ( d.Retrieve( x , chain, RECURSE_CHAIN)  ){
-				vo_data_error = VERR_NONE ;
-				return 0;
+			if(!x){
+				// Couldn't find a valid proxy.
+				vo_data_error =VERR_FORMAT;
 			}
+			chain = load_chain(of);
+			d.SetVerificationType((verify_type)(VERIFY_SIGN | VERIFY_KEY));
+			if (!d.Retrieve(x, chain, RECURSE_CHAIN)){
+				d.SetVerificationType((verify_type)(VERIFY_NONE));
+				if (d.Retrieve(x, chain, RECURSE_CHAIN)){
+					// WARNING: Unable to verify signature!"
+				}
+			}
+			sk_X509_free(chain);
+		}else {
+			// Couldn't find a valid proxy.
+			vo_data_error =VERR_FORMAT;
 		}
 	}
 	vo_data_error = d.error ;
-	return 1 ;
-} ;
-
-
+	// Release memory
+	BIO_free(in);
+	return (vo_data_error==VERR_NONE);
+}
 /******************************************************************
  method: getDefaultVoName
  this private method is used by getDefaultGroups and getGroups methods
@@ -388,6 +395,7 @@ std::string  UserCredential::getDefaultVoName (){
 	}
 	return string (  v.voname );
 };
+
 
 
 /******************************************************************
