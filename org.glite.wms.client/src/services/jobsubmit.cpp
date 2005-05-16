@@ -25,6 +25,7 @@
 #include "glite/wms/jdl/adconverter.h"
 
 
+
 using namespace std ;
 using namespace glite::wms::client::utilities ;
 using namespace glite::wms::wmproxyapi;
@@ -41,24 +42,26 @@ namespace services {
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-	 logfile = NULL ;
-	 chkpt  = NULL;
-	 lmrs = NULL ;
-	 to = NULL ;
-	 ouput = NULL ;
-	 input  = NULL;
-	 config = NULL ;
-	 resource = NULL ;
-         vo = NULL ;
+         dgOpt = NULL;
+	 logOpt = NULL ;
+	 chkptOpt  = NULL;
+	 lmrsOpt = NULL ;
+	 toOpt = NULL ;
+	 outOpt = NULL ;
+	 inOpt  = NULL;
+	 cfgOpt = NULL ;
+	 resourceOpt = NULL ;
+         voOpt = NULL ;
 	// init of the valid attribute (long type)
-	valid = 0 ;
+	validOpt = 0 ;
 	// init of the boolean attributes
-	nomsg = false ;
-	nogui = false ;
-	nolisten = false ;
-	noint  = false;
-	version  = false;
-        debug = false ;
+        autodgOpt = false;
+	nomsgOpt = false ;
+	noguiOpt = false ;
+	nolistenOpt = false ;
+	nointOpt  = false;
+	versionOpt  = false;
+        dbgOpt = false ;
          jdlFile = NULL ;
 	// parameters
         wmpEndPoint = NULL ;
@@ -67,10 +70,10 @@ JobSubmit::JobSubmit( ){
 	// utilities objects
 	wmcOpts = NULL ;
 	wmcUtils = NULL ;
-        // Ad
-        ad = NULL;
-        dag = NULL;
 };
+
+
+
 
 void JobSubmit::readOptions (int argc,char **argv){
 	ostringstream info ;
@@ -82,9 +85,9 @@ void JobSubmit::readOptions (int argc,char **argv){
         // utilities
         wmcUtils = new Utils (wmcOpts);
 	// input & resource (no together)
-	input = wmcOpts->getStringAttribute(Options::INPUT);
-	resource = wmcOpts->getStringAttribute(Options::RESOURCE);
-	if (input && resource){
+	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
+	if (inOpt && resourceOpt ){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n\n";
@@ -93,9 +96,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error", info.str());
 	}
         // config & vo(no together)
-        config= wmcOpts->getStringAttribute( Options::CONFIG ) ;
-        vo = wmcOpts->getStringAttribute( Options::VO ) ;
-	if (vo && config){
+        cfgOpt = wmcOpts->getStringAttribute( Options::CONFIG ) ;
+        voOpt = wmcOpts->getStringAttribute( Options::VO ) ;
+	if (voOpt && cfgOpt){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::VO) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
@@ -104,8 +107,8 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error", info.str());
 	}
 	// lmrs has to be used with input o resource
-	lmrs = wmcOpts->getStringAttribute(Options::LMRS);
-	if (lmrs && !( resource || input) ){
+	lmrsOpt = wmcOpts->getStringAttribute(Options::LMRS);
+	if (lmrsOpt && !( resourceOpt || inOpt ) ){
 		info << "LRMS option cannot be specified without a resource:\n";
 		info << "use " + wmcOpts->getAttributeUsage(Options::LMRS) << " with\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
@@ -115,9 +118,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error", info.str());
 	}
 	// "valid" & "to" (no together)
-	valid = wmcOpts->getStringAttribute(Options::VALID);
-	to = wmcOpts->getStringAttribute(Options::TO);
-	if (valid && to){
+	validOpt = wmcOpts->getStringAttribute(Options::VALID);
+	toOpt = wmcOpts->getStringAttribute(Options::TO);
+	if (validOpt && toOpt){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::TO) << "\n\n";
@@ -125,9 +128,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", info.str());
 	}
-	if (valid){
+	if (validOpt){
 		try{
-			if (! Utils::checkTime(*valid, Options::TIME_VALID) ){
+			if (! Utils::checkTime(*validOpt, Options::TIME_VALID) ){
 
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
@@ -140,9 +143,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Wrong Time Value",info.str() );
 		}
 	}
-	if (to){
+	if (toOpt){
 		try{
-			if (! Utils::checkTime(*valid, Options::TIME_TO) ){
+			if (! Utils::checkTime(*validOpt, Options::TIME_TO) ){
 
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
@@ -156,9 +159,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 		}
 	}
 	// "debug" & "nomsg" (no together)
-        nomsg=  wmcOpts->getBoolAttribute (Options::NOMSG);
-	debug = wmcOpts->getBoolAttribute (Options::DBG);
-	if (nomsg && debug){
+        nomsgOpt =  wmcOpts->getBoolAttribute (Options::NOMSG);
+	dbgOpt = wmcOpts->getBoolAttribute (Options::DBG);
+	if (nomsgOpt && dbgOpt){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::DBG) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::NOMSG) << "\n\n";
@@ -167,14 +170,14 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error", info.str());
 	}
 
-        logfile = wmcOpts->getStringAttribute(Options::LOGFILE );
-	chkpt=  wmcOpts->getStringAttribute( Options::CHKPT) ;
-	ouput=  wmcOpts->getStringAttribute( Options::OUTPUT ) ;
+        logOpt = wmcOpts->getStringAttribute(Options::LOGFILE );
+	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
+	outOpt =  wmcOpts->getStringAttribute( Options::OUTPUT ) ;
 
-	nogui =  wmcOpts->getBoolAttribute (Options::NOGUI);
-	nolisten =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
-	noint=  wmcOpts->getBoolAttribute (Options::NOINT) ;
-	version =  wmcOpts->getBoolAttribute (Options::VERSION);
+	noguiOpt =  wmcOpts->getBoolAttribute (Options::NOGUI);
+	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
+	nointOpt =  wmcOpts->getBoolAttribute (Options::NOINT) ;
+	versionOpt =  wmcOpts->getBoolAttribute (Options::VERSION);
 
         // path to the JDL file
 	jdlFile = wmcOpts->getPath2Jdl( );
@@ -185,9 +188,9 @@ void JobSubmit::readOptions (int argc,char **argv){
                 if ( wmpEndPoint  ){
         		cfgCxt = new ConfigContext("", *wmpEndPoint, "");
 			try {
-                        	if ( debug || logfile ){
+                        	if ( dbgOpt || logOpt ){
 					info << "trying to contact EndPoint : " << *wmpEndPoint << "\n";
-                                        if (debug)  cout << info;
+                                        if (dbgOpt)  cout << info;
                                 }
    				getVersion(cfgCxt);
                                 // if no exception is thrown (available wmproxy; exit from the loop)
@@ -202,10 +205,48 @@ void JobSubmit::readOptions (int argc,char **argv){
                         "getWmpURL", DEFAULT_ERR_CODE,
                         "Missing infomration", "no WMProxy URL specified" );
         }
+
+        // Delegation ID
+        dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
+        autodgOpt = wmcOpts->getBoolAttribute(Options::AUTODG);
+	if ( ! dgOpt && ! autodgOpt ){
+		info << "a mandatory attribute is missing:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
+                info << "\tor\n";
+                info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
+		throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Missing Information", info.str());
+	} else if ( dgOpt && autodgOpt ){
+		info << "the following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
+                info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
+		throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Input Option Error", info.str());
+	} else if (autodgOpt){
+        	// Automatic Delegation
+        	dgOpt = wmcUtils->getUniqueString( );
+                if (!dgOpt ){
+                	throw WmsClientException(__FILE__,__LINE__,
+				"readOptions", DEFAULT_ERR_CODE,
+				"Missing Information", "error during the automatic generation of the delegation string"  );
+       		}
+                string proxy = getProxyReq(*dgOpt, cfgCxt) ;
+        	// sends the proxy to the endpoint service
+        	putProxy(*dgOpt, proxy, cfgCxt);
+        }
 	// user proxy
 	proxyFile =  (char*)getProxyFile(cfgCxt);
  	// trusted Certs
 	trustedCert =  (char*)getTrustedCert(cfgCxt);
+}
+
+
+void JobSubmit::printUsageMsg (const char* exename ){
+	 if (wmcOpts){
+		wmcOpts->printUsage (exename);
+  	}
 }
 
 
@@ -273,7 +314,7 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 	curl_global_init(CURL_GLOBAL_ALL);
  	curl = curl_easy_init();
 	 if(curl) {
-	 	if ( debug ) {
+	 	if ( dbgOpt ) {
 			cout << "Input Sandbox file transferring ....\n" << endl;
 			cout << "user proxy : " << proxyFile << endl;
 			cout << "transferring of number " << paths.size() << " files" << endl;
@@ -314,7 +355,7 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 			// curl options: destination
 			destination = it->second;
 			curl_easy_setopt(curl,CURLOPT_URL, destination.c_str());
-			if ( debug ) {
+			if ( dbgOpt ) {
 				cout << "InputSandbox file : " << source << endl;
 				cout << "destination URI : " << destination << endl;
 				cout << "size : " << file_info.st_size << " byte"<< endl;
@@ -331,7 +372,7 @@ std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::str
 						"transferFiles",  DEFAULT_ERR_CODE,
 						"File Transfer Error", err.str()  );
 			} else {
-				if ( debug ) {
+				if ( dbgOpt ) {
 						cout << "success" << endl ;
 				}
 			}
@@ -380,7 +421,7 @@ void JobSubmit::normalJob( )
 		}
 	}
 	// verbose msg
-	if (debug){
+	if (dbgOpt){
 		cout << "assigned jobid : " << jobid  << endl;
 		cout << "retrieving InputSanbox files ...." << endl;
 	}
@@ -393,7 +434,7 @@ void JobSubmit::normalJob( )
 			fprintf (stderr, "jobid: %s", jobid.c_str() );
 			exit(-1);
 		}
-		if (debug){
+		if (dbgOpt){
 			cout << "destination URI = " << *dest_uri << endl;
 		}
 		// InputSandbox files
@@ -413,12 +454,12 @@ void JobSubmit::normalJob( )
 		}
 	}
 	outmsg += "****************************************************************************\n";
-	if (debug){
+	if (dbgOpt){
 		cout << "\nstarting the job : " << jobid << "\n";
 	}
 	// START
 	jobStart(id, cfgCxt);
-	if (debug){
+	if (dbgOpt){
 		cout << "\n job start: success\n";
 		cout << "the job has been successfully submitted\n";
 	}
@@ -483,7 +524,7 @@ void JobSubmit::dagJob( )
         outmsg += "your " + x1 + " has been successfully submitted by the end point:\n\n";
         outmsg += "\t" + string(*wmpEndPoint)+ "\n\n";
         outmsg += x2 + "\t" + jobid + "\n\n";
-        if (debug){
+        if (dbgOpt){
                 cout << x1 << "\n";
                 cout << "(" << x2  << ") jobid : " << jobid  << endl;
                 cout << "retrieving InputSanbox files ...." << endl;
@@ -511,14 +552,14 @@ void JobSubmit::dagJob( )
                         exit(-1);
                 }
                 paths = dag->getInputSandbox();
-                if (debug){
+                if (dbgOpt){
                         cout << "this  job has " << paths.size() << " InputSB files" << endl;
                         cout << "destination URI = " << *dest_uri << "\n\n";
                 }
                 // MAIN JOB: InputSB files to be transferred to the DestURI
                 toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, "");
         } else {
-                if (debug){
+                if (dbgOpt){
                         cout << "this job doesn't have any InputSB files" << endl;
                 }
         }
@@ -544,7 +585,7 @@ void JobSubmit::dagJob( )
                                 // child: jobid
                                 jobid = Utils::checkJobId(child->jobid);
                                 outmsg += "\tjobid\t: " + jobid + "\n";
-                                if (debug){
+                                if (dbgOpt){
                                         cout << x1 << x2 << "\n";
                                         cout << "assigned jobid : " << jobid  << endl;
                                         cout << "retrieving InputSanbox files ...." << endl;
@@ -567,7 +608,7 @@ void JobSubmit::dagJob( )
                                 }
                                 // Children: InputSandbox files
                                 paths = dag->getNodeStringValue(node, JDL::INPUTSB);
-                                if (debug){
+                                if (dbgOpt){
                                         cout << "this job has " << paths.size() << " InputSB files" << endl;
                                         cout << "destination URI = " << *dest_uri << "\n\n";
                                 }
@@ -586,12 +627,12 @@ void JobSubmit::dagJob( )
 		outmsg += result;
 	}
 	outmsg += "*************************************************************\n";
-	if (debug){
+	if (dbgOpt){
 		cout << "\nstarting the job : " << jobid << "\n";
 	}
 	// START
 	jobStart(id, cfgCxt);
-	if (debug){
+	if (dbgOpt){
 		cout << "\n job start: success\n";
 		cout << "the job has been successfully submitted\n";
 	}
@@ -615,7 +656,6 @@ void JobSubmit::submission ( ){
 	bool isdag = false;
 	// ClassAd
 	ad = new Ad( );
-
         if (! jdlFile){
 		throw WmsClientException(__FILE__,__LINE__,
 			"submission",  DEFAULT_ERR_CODE,
@@ -623,25 +663,36 @@ void JobSubmit::submission ( ){
                         "uknown JDL file pathame"   );
         }
 	ad->fromFile (*jdlFile);
-	// DAG
+
         if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
-		isdag = true;
-                dag = new  ExpDagAd ( ad->toString() );
-                if ( debug ) {
-                        cout << "\nyou have submitted a DAG job " << endl ;
+        	// DAG
+                if ( dbgOpt ) {
+                        cout << "\nJobType: DAG" << endl ;
                 }
+                isdag = true;
+                dag = new  ExpDagAd ( ad->toString() );
                 // expands the DAG loading all JDL files
                 dag->expand( );
-
-
-                // .............
-
-                jdlString = new string (ad->toString() );
-        }  else{
-        	jdlString = new string (ad->toString() );
+                jdlString = new string (dag->toString() );
+        }  else if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
+		// collection
+                if ( dbgOpt ) {
+                        cout << "\nJobType: COLLECTION" << endl ;
+                }
+                classad::ClassAd * class_ad = ad->ad();
+         	 if ( ! class_ad ){
+			throw WmsClientException(__FILE__,__LINE__,
+				"submission",  DEFAULT_ERR_CODE,
+				"Invalid JDL",
+                        	"invalid collection JDL"   );
+      		}
+        	collect = new CollectionAd( *class_ad );
+        	jdlString = new string (collect->toString() );
+        } else {
+		jdlString = new string (ad->toString() );
         }
 
-	if ( ! delegID){
+	if ( ! dgOpt){
 		throw WmsClientException(__FILE__,__LINE__,
 			"submission",  DEFAULT_ERR_CODE,
 			"Null Pointer Error", "null pointer to DelegationID String"   );
@@ -652,7 +703,7 @@ void JobSubmit::submission ( ){
 			"Null Pointer Error", "null pointer to ConfigContext object"   );
         }
 	// Register
-        jobIds = jobRegister (*jdlString, *delegID, cfgCxt);
+        jobIds = jobRegister (*jdlString, *dgOpt, cfgCxt);
 	// handles the results
         if (isdag){
 		dagJob( );
@@ -738,7 +789,7 @@ bool JobSubmit::checkFreeQuota ( std::vector<std::pair<std::string,std::string> 
 				}
 				fclose (fptr);
 			}
-			if ( debug ) {
+			if ( dbgOpt ) {
 				cout << "\nuser free quota = " << limit;
 				if ( not_exceed ){
 					cout << " ok\n";
@@ -763,7 +814,7 @@ std::vector<std::pair<string,string> > getInputSandboxFiles(Ad *ad){
 				fprintf (stderr, "jobid: %s", jobid.c_str() );
 				exit(-1);
 			}
-		if (debug){
+		if (dbgOpt){
 			cout << "destination URI = " << *dest_uri << endl;
 		}
 		// InputSandbox files

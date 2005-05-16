@@ -28,6 +28,7 @@ const char* Options::HELP_VERSION = "version  1.0 alpha" ;
 *	LONG OPTION STRINGS
 */
 const char* Options::LONG_ALL 		= "all";
+const char* Options::LONG_AUTODG 	= "autodg";
 const char* Options::LONG_CHKPT	= "chkpt";
 const char* Options::LONG_DEBUG	= "debug";
 const char* Options::LONG_DIR	= 		"dir";
@@ -77,6 +78,9 @@ const char Options::SHORT_EXCLUDE = 'e';
 // port
 const char* Options::LONG_PORT		= "port";
 const char Options::SHORT_PORT 	= 'p';
+// delegation
+const char* Options::LONG_DELEGATION	= "delegation";
+const char Options::SHORT_DELEGATION 	= 'd';
 
 // argument chars for short option definition string
 // (semicolon or white space)
@@ -88,15 +92,17 @@ const char Options::short_no_arg = ' ' ;
 *	Long options for the job-submit
 */
 const struct option Options::submitLongOpts[] = {
-	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
-        {	Options::LONG_DEBUG,             	required_argument,		0,		Options::DBG},
-         {	Options::LONG_ENDPOINT,             	required_argument,		0,		Options::ENDPOINT},
-	{	Options::LONG_CHKPT,              	required_argument,		0,		Options::CHKPT},
+	{	Options::LONG_LOGFILE,           required_argument,		0,		Options::LOGFILE},
+        {	Options::LONG_DEBUG,             	no_argument,		0,		Options::DBG},
+         {	Options::LONG_AUTODG,             	no_argument,		0,		Options::AUTODG},
+        {	Options::LONG_DELEGATION,  required_argument,		0,		Options::SHORT_DELEGATION},
+        {	Options::LONG_ENDPOINT,        required_argument,		0,		Options::ENDPOINT},
+	{	Options::LONG_CHKPT,            	required_argument,		0,		Options::CHKPT},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
-	{	Options::LONG_LMRS,              	required_argument,		0,		Options::LMRS},
+	{	Options::LONG_LMRS,              		required_argument,		0,		Options::LMRS},
 	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
-	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
+	{ 	Options::LONG_INPUT,              		required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_RESOURCE,         	required_argument,		0,		Options::SHORT_RESOURCE},
 	{	Options::LONG_VALID,              	required_argument,		0,		Options::SHORT_VALID},
@@ -171,6 +177,7 @@ const struct option Options::cancelLongOpts[] = {
 const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+        {	Options::LONG_DELEGATION,  required_argument,		0,		Options::SHORT_DELEGATION},
  	{	Options::LONG_ENDPOINT,             	required_argument,		0,		Options::ENDPOINT},
 	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
@@ -208,23 +215,42 @@ const struct option Options::attachLongOpts[] = {
 	{	Options::LONG_NOLISTEN,			no_argument,		0,		Options::NOLISTEN	},
 	{	Options::LONG_NOGUI,			no_argument,		0,			Options::NOGUI},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           	required_argument,		0,	Options::VO},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
 	{ 	Options::LONG_DEBUG,              	required_argument,		0,		Options::DBG},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
-
+/*
+*	Long options for the job-submit
+*/
+const struct option Options::delegationLongOpts[] = {
+	{	Options::LONG_LOGFILE,           required_argument,		0,		Options::LOGFILE},
+        {	Options::LONG_DEBUG,             	no_argument,		0,		Options::DBG},
+         {	Options::LONG_AUTODG,             	no_argument,		0,		Options::AUTODG},
+        {	Options::LONG_DELEGATION,  required_argument,		0,		Options::SHORT_DELEGATION},
+        {	Options::LONG_ENDPOINT,        required_argument,		0,		Options::ENDPOINT},
+        {	Options::LONG_CONFIG,    required_argument,		0,	Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           	required_argument,		0,	Options::VO},
+	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+	{0, 0, 0, 0}
+};
 /*
 *	short usage constants
 */
 const string Options::USG_ALL = "--" + string(LONG_ALL) ;
+
+const string Options::USG_AUTODG = "--" + string(LONG_AUTODG) ;
 
 const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t<file_path>" ;
 
 const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
 
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
+
+const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<delegation_string>";
 
 const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t<directory_path>"	;
 
@@ -280,8 +306,12 @@ const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
 void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
 	cerr << HELP_COPYRIGHT << "\n\n" ;
-	cerr << "Usage: " << exename <<   " [options]  <jdl_file>\n\n";
-	cerr << "Options:\n" ;
+	cerr << "Usage: " << exename <<   " [delegation] ][options]  <jdl_file>\n\n";
+	cerr << "delegation:\n" ;
+	cerr << "\t" << USG_DELEGATION << "\n";
+	cerr << "\t\tor\n";
+	cerr << "\t" << USG_AUTODG << "\n\n";
+	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
@@ -471,7 +501,33 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
-
+/*
+*	prints the help usage message for the job-submit
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
+void Options::delegation_usage(const char* &exename, const bool &long_usg){
+	cerr << HELP_UI << " " << HELP_VERSION << "\n" ;
+	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "Usage: " << exename <<   " [delegation] ][options]  <jdl_file>\n\n";
+	cerr << "delegation:\n" ;
+	cerr << "\t" << USG_DELEGATION << "\n";
+	cerr << "\t\tor\n";
+	cerr << "\t" << USG_AUTODG << "\n\n";
+	cerr << "options:\n" ;
+	cerr << "\t" << USG_HELP << "\n";
+        cerr << "\t" << USG_ENDPOINT << "\n";
+	cerr << "\t" << USG_CONFIG << "\n";
+        cerr << "\t" << USG_VO << "\n";
+	cerr << "\t" << USG_OUTPUT << "\n";
+	cerr << "\t" << USG_DEBUG << "\n";
+	cerr << "\t" << USG_LOGFILE << "\n\n";
+	cerr << "Please report any bug at:\n" ;
+	cerr << "\t" << HELP_EMAIL << "\n";
+	if (long_usg){
+		cerr  << exename << " full help\n\n" ;
+	}
+};
 /*
 *	constructor
 *	@param command command to be handled
@@ -481,6 +537,7 @@ Options::Options (const WMPCommands &command){
 	// init of the string attributes
 	chkpt = NULL;
 	config = NULL;
+        delegation = NULL;
 	dir = NULL;
         endpoint = NULL;
 	exclude = NULL;
@@ -496,6 +553,7 @@ Options::Options (const WMPCommands &command){
         vo = NULL ;
 	// init of the boolean attributes
 	all  = false ;
+        autodg = false;
 	debug  = false ;
 	help = false  ;
 	nogui  = false ;
@@ -512,7 +570,8 @@ Options::Options (const WMPCommands &command){
 		case (JOBSUBMIT) :{
 			// short options
 			asprintf (&shortOpts,
-				"%c%c%c%c%c%c%c%c%c%c",
+				"%c%c%c%c%c%c%c%c%c%c%c%c",
+				Options::SHORT_DELEGATION, 	short_required_arg,
 				Options::SHORT_OUTPUT, 	short_required_arg,
 				Options::SHORT_INPUT,		short_required_arg,
 				Options::SHORT_CONFIG,	short_required_arg,
@@ -561,7 +620,8 @@ Options::Options (const WMPCommands &command){
 		case(JOBMATCH) :{
 			// short options
 			asprintf (&shortOpts,
-				"%c%c%c%c" ,
+				"%c%c%c%c%c%c" ,
+                                Options::SHORT_DELEGATION, 	short_required_arg,
 				Options::SHORT_OUTPUT, 	short_required_arg,
 				Options::SHORT_CONFIG,	short_required_arg);
 			// long options
@@ -589,6 +649,17 @@ Options::Options (const WMPCommands &command){
 			longOpts = attachLongOpts ;
 			break;
 		} ;
+                case (JOBDELEGATION) :{
+			// short options
+			asprintf (&shortOpts,
+				"%c%c%c%c%c%c",
+				Options::SHORT_DELEGATION, 	short_required_arg,
+				Options::SHORT_OUTPUT, 	short_required_arg,
+				Options::SHORT_CONFIG,	short_required_arg);
+			// long options
+			longOpts = delegationLongOpts ;
+			break ;
+		} ;
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"Options",
 				DEFAULT_ERR_CODE,
@@ -614,6 +685,12 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 		case(LOGFILE) : {
 			if (logfile){
 				value = new string (*logfile) ;
+			}
+			break ;
+		}
+                case(DELEGATION) : {
+			if (delegation){
+				value = new string (*delegation) ;
 			}
 			break ;
 		}
@@ -718,6 +795,10 @@ int* Options::getIntAttribute (const OptsAttributes &attribute){
 bool Options::getBoolAttribute (const OptsAttributes &attribute){
 	bool value = false ;
 	switch (attribute){
+        	case(AUTODG) : {
+			value = autodg ;
+			break ;
+		}
 		case(HELP) : {
 			value = help  ;
 			break ;
@@ -736,6 +817,10 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 		}
 		case(NOLISTEN) : {
 			value = nolisten ;
+			break ;
+		}
+                case(DBG) : {
+			value = debug ;
 			break ;
 		}
 		default : {
@@ -779,6 +864,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(CHKPT) : {
 			msg = USG_CHKPT ;
+			break ;
+		}
+                case(DELEGATION) : {
+			msg = USG_DELEGATION ;
 			break ;
 		}
                 case(ENDPOINT) : {
@@ -903,6 +992,14 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
+                case ( Options::SHORT_DELEGATION) : {
+			if (config){
+				dupl = new string(LONG_DELEGATION) ;
+			} else {
+				delegation = new string (optarg);
+			}
+			break ;
+		};
   		case ( Options::SHORT_RESOURCE) : {
 			if (resource){
 				dupl = new string(LONG_RESOURCE) ;
@@ -913,10 +1010,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		case ( Options::SHORT_VALID ) : {
 			if (valid){
-cout << "valid - dupl attr \n";
 				dupl = new string(LONG_VALID) ;
 			} else {
-   cout << "valid - set attr \n";
 				valid = new string(optarg);
 			}
 			break ;
@@ -948,6 +1043,10 @@ cout << "valid - dupl attr \n";
 		};
 		case ( Options::ALL ) : {
 			all = true ;
+			break ;
+		};
+                case ( Options::AUTODG ) : {
+			autodg = true ;
 			break ;
 		};
 		case ( Options::CHKPT ) : {
@@ -1108,6 +1207,10 @@ void Options::printUsage(const char* exename) {
                         attach_usage(exename);
                         break;
                 } ;
+                case ( JOBDELEGATION) :{
+                        delegation_usage(exename);
+                        break;
+                } ;
                 default :{
                         break;
                 } ;
@@ -1121,10 +1224,12 @@ void Options::printUsage(const char* exename) {
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	int *indexptr  = (int*) malloc (sizeof(int));
-        if (argc == 1){
+/*
+        if (argc != 1){
         	cerr << "\nerror: no input argument specified\n\n";
                 printUsage (argv[0]);
         }
+*/
 	do {
 		// option parsing
 		next_opt = getopt_long_only (argc,
@@ -1132,10 +1237,10 @@ void Options::readOptions(const int &argc, const char **argv){
                                                 shortOpts,
                                             	longOpts,
                                                 indexptr );
-		cout << "next_opt=" << next_opt << "\n" ;
+		//cout << "next_opt=" << next_opt << "\n" ;
 		// error
 		if (next_opt == '?') {
-        		cerr << "\nerror: uknown arguments\n\n";
+        		cerr << "Error: wrong argument\n";
                		 printUsage (argv[0]);
 		}
 		// sets attribute
@@ -1158,12 +1263,12 @@ void Options::readOptions(const int &argc, const char **argv){
 			if ( optind == (argc-1) ){
 				ifstream file(argv[optind]);
 				if (!file.good()) {
-					cerr << "\nerror: JDL file not found (" + string(argv[optind]) +")\n\n";
+					cerr << "\nError: JDL file not found (" + string(argv[optind]) +")\n\n";
 					printUsage (argv[0]);
 				}
 				jdlFile = new string(argv[ optind ]) ;
 			} else {
-				cerr <<  "\nerror: no JDL file option specified\n\n";
+				cerr <<  "\nError: no JDL file option specified\n\n";
 				printUsage (argv[0]);
 			}
 		}

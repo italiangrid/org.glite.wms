@@ -31,6 +31,7 @@ namespace services {
 JobListMatch::JobListMatch(){
 	// init of the string attributes
         config = NULL ;
+        delegation = NULL;
         vo = NULL ;
         output  = NULL;
         logfile = NULL;
@@ -65,6 +66,9 @@ void JobListMatch::readOptions (int argc,char **argv) {
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
+
+        // delegation
+        delegation = opts->getStringAttribute( Options::DELEGATION ) ;
 
 	output=  opts->getStringAttribute( Options::OUTPUT ) ;
 	logfile = opts->getStringAttribute(Options::LOGFILE );
@@ -124,18 +128,25 @@ void JobListMatch::getListMatching ( ){
 	vector <pair<string , long> > ::iterator it ;
 	ostringstream msg ;
         checkAd ( );
+	// check the needed parameters
         if (!jdlString){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE,
+			"getListMatching",  DEFAULT_ERR_CODE,
 			"Null Pointer Error", "null pointer to JDL string"   );
+        }
+        if (!delegation){
+		throw WmsClientException(__FILE__,__LINE__,
+			"getListMatching",  DEFAULT_ERR_CODE,
+			"Null Pointer Error", "null pointer to delegation string"   );
         }
 	if (!cfgCxt){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE,
+			"getListMatching",  DEFAULT_ERR_CODE,
 			"Null Pointer Error", "null pointer to ConfigContext object"   );
         }
 
-        list = jobListMatch(*jdlString, cfgCxt);
+
+        list = jobListMatch(*jdlString, *delegation, cfgCxt);
 
         msg << "\n***************************************************************************\n";
         msg << "                         COMPUTING ELEMENT IDs LIST ";

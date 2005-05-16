@@ -41,6 +41,7 @@ class JobListMatch {
                 *	string input arguments
                 */
 		std::string*	config ;
+		std::string*	delegation;
 		std::string*	vo ;
 		std::string*	output ;
  		std::string*	logfile;

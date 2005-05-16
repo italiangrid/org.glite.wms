@@ -22,9 +22,11 @@ class Options
 		*/
 		enum OptsAttributes{
 			ALL = 500 ,
+                        AUTODG ,
 			CHKPT ,
 			CONFIG ,
 			DBG , //debug
+                        DELEGATION,
 			DIR ,
                         ENDPOINT,
 			EXCLUDE ,
@@ -65,7 +67,8 @@ class Options
 			JOBLOGINFO,
 			JOBMATCH,
 			JOBOUTPUT,
-			JOBATTACH
+			JOBATTACH,
+                        JOBDELEGATION
 		};
 		/*
 		*	default constructor
@@ -165,7 +168,17 @@ class Options
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void attach_usage(const char* &exename, const bool &long_usg=false) ;
-
+		/*
+		*	displays the usage help message for the delegate-proxy command
+		*	@param exename name of the programme executable
+		*	@param long displays the long usage help if it is "true"
+		*/
+		void delegation_usage(const char* &exename, const bool &long_usg=false) ;
+                /*
+                *	prints on the std output the help usage message for the command
+                *	which was being handled and exits from the execution
+                */
+                void printUsage(const char* exename ) ;
 	private:
 		/*
 		*	sets the value of the option attribute
@@ -174,12 +187,6 @@ class Options
 		*	@param command line options
 		*/
 		void setAttribute (const int &in_opt, const char **argv);
-		/*
-                *	prints on the std output the help usage message for the command
-                *	which was being handled and exits from the execution
-                */
-                void printUsage(const char* exename ) ;
-
 		/*
 		*	constants for help messages
 		*/
@@ -193,6 +200,7 @@ class Options
 		*	(no short options defined for this set)
 		*/
 		static const char* LONG_ALL ;
+                static const char* LONG_AUTODG ;
 		static const char* LONG_CHKPT	;
 		static const char* LONG_DEBUG ;
 		static const char* LONG_DIR ;
@@ -242,15 +250,20 @@ class Options
 		// port
 		static const char* LONG_PORT ;
 		static const char SHORT_PORT ;
+		// port
+		static const char* LONG_DELEGATION ;
+		static const char SHORT_DELEGATION ;
 
-		/*
+                /*
 		*	short usage constants
 		*/
 		static const std::string USG_ALL ;
+                static const std::string USG_AUTODG ;
 		static const std::string USG_CHKPT	;
 		static const std::string USG_CONFIG	;
 		static const std::string USG_DEBUG ;
 		static const std::string USG_DIR ;
+                static const std::string USG_DELEGATION ;
                 static const std::string USG_ENDPOINT ;
 		static const std::string USG_EXCLUDE ;
 		static const std::string USG_FROM ;
@@ -285,6 +298,7 @@ class Options
 		*/
 		std::string* chkpt ;
 		std::string* config ;
+                std::string* delegation ;
 		std::string* dir ;
 		std::string* endpoint;
 		std::string* exclude ;
@@ -303,6 +317,7 @@ class Options
 		*	boolean attributes
 		*/
 		bool all ;
+                bool autodg ;
 		bool debug ;
 		bool help ;
 		bool nogui ;
@@ -330,6 +345,7 @@ class Options
 		static const struct option lsmatchLongOpts[]  ;
 		static const struct option outputLongOpts[]  ;
 		static const struct option attachLongOpts[]  ;
+                static const struct option delegationLongOpts[]  ;
 		/*
 		*	pointer to the long options of the command
 		*/

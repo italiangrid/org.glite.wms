@@ -10,6 +10,7 @@
 // Ad's
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/wms/jdl/collectionad.h"
 
 namespace glite {
 namespace wms{
@@ -33,7 +34,11 @@ class JobSubmit {
 		*	performs the operations to submit the job(s)
 		*/
 		void submission ( ) ;
-
+                /*
+		*	print the help usage message on the std output
+                *	@param exename the executable name
+		*/
+                void printUsageMsg (const char* exename );
 
 	private
                 :/*
@@ -74,38 +79,32 @@ class JobSubmit {
 		/*
                 *	string input arguments
                 */
-		std::string* logfile ;
-		std::string* chkpt ;
-		std::string* lmrs ;
-		std::string* to ;
-		std::string* ouput ;
-		std::string* input ;
-		std::string* config ;
-		std::string* resource ;
-		std::string* valid ;
-                std::string* vo ;
+		std::string* logOpt ;
+		std::string* chkptOpt ;
+		std::string* dgOpt ;
+		std::string* lmrsOpt ;
+		std::string* toOpt ;
+		std::string* outOpt ;
+		std::string* inOpt ;
+		std::string* cfgOpt ;
+		std::string* resourceOpt ;
+		std::string* validOpt ;
+                std::string* voOpt ;
 		/*
                 *	boolean input arguments
                 */
-		bool nomsg ;
-		bool nogui ;
-		bool nolisten ;
-		bool noint ;
-		bool version ;
-                bool debug ;
+                bool autodgOpt ;
+		bool nomsgOpt ;
+		bool noguiOpt ;
+		bool nolistenOpt ;
+		bool nointOpt ;
+		bool versionOpt ;
+                bool dbgOpt ;
 
                 /*
                 * JobId's
                 */
                 glite::wms::wmproxyapi::JobIdApi jobIds ;
-		/*
-                *	Ad
-                */
-                glite::wms::jdl::Ad *ad ;
-		/*
-                *	dagad
-                */
-                glite::wms::jdl::ExpDagAd *dag ;
 		/*
                 *	handles the input options
                 */
@@ -118,6 +117,12 @@ class JobSubmit {
                 *	configuration contex
                 */
                 glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
+		/*
+                *	Ad-objects
+		*/
+                glite::wms::jdl::Ad *ad ;
+		glite::wms::jdl::ExpDagAd *dag  ;
+        	glite::wms::jdl::CollectionAd *collect ;
 
 
 		/*
@@ -128,10 +133,7 @@ class JobSubmit {
 		*	string of the user JDL
 		*/
 		std::string *jdlString ;
-                /*
-                *	user delegation-ID
-                */
-                std::string* delegID ;
+
                 /*
                 *	WMProxy endpoint
                 */
