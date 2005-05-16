@@ -99,6 +99,7 @@ public:
 	*/
 	static const long checkTime ( const std::string &st, const Options::TimeOpts &opt = Options::TIME_NO_OPT);
         void errMsg(severity sev,glite::wmsutils::exception::Exception& exc);
+	void errMsg(severity sev,const std::string& title,const std::string& err);
 
 private:
 	/**

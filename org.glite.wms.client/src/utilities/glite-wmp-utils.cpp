@@ -54,20 +54,17 @@ void checkLBNS(const string tc){
 int main(int argc,char *argv[]){
 try{
 	WMS_EXCM_TRY()
-	Options *opts ;
-	// SUBMIT
-	opts= new Options(Options::JOBSUBMIT);
-	opts->readOptions(argc, (const char**)argv);
-	cout << "MAIN::Checking options.."<< endl ;
-	if (!opts->getStringAttribute(Options::VO)){
-		cout << "MAIN:: wmcOpt UNCE"<< endl ;
+	try{
+		Options *opts ;
+		// SUBMIT
+		opts= new Options(Options::JOBSUBMIT);
+		opts->readOptions(argc, (const char**)argv);
+		cout << "MAIN::Checking options.."<< endl ;
+		utils=new Utils(opts);
+		resolve();
+	}catch (glite::wmsutils::exception::Exception &exc){
+		utils->errMsg(WMS_ERROR, exc);
 	}
-
-
-	cout << "Arrived so far..." << endl ;
-
-
-	utils=new Utils(opts);
 	WMS_EXCM_CATCH(WMS_FATAL)
 
 /*

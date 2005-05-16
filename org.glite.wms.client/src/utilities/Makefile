@@ -13,31 +13,33 @@ repository=$(REPOSITORY)/repository
 stage=$(REPOSITORY)/stage
 BOOST=$(repository)/boost/1.29.1/rhel30_gcc32
 CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
-
-GEN_LD_FLAGS=-L$(GLITE_REP)/lib \
-	-L$(GLOBUS_LOCATION)/lib \
-	-lglite_wmsutils_exception \
-	-lglite_wmsutils_jobid  \
-	-lglite_wmsutils_cjobid  \
+CURL=-L/usr/lib -lcurl
 
 WMPCLIENT_LD_FLAGS= \
 	-L$(BOOST)/lib/release \
 	-L$(CLASSAD)/lib \
 	-L$(stage)/lib \
-	-lglite_wms_wmproxy_api_cpp \
-	-lgridsite \
 	-lglite_wmsutils_exception \
 	-lglite_wms_util \
 	-lglite_wms_conf \
 	-lglite_wmsutils_jobid  \
 	-lglite_wmsutils_cjobid \
 	-lglite_wms_jdl \
-	-lclassad \
+	-lclassad 
+
+
+
+WMPCLIENT_LD_EXE_FLAGS= \
+	$(WMPCLIENT_LD_FLAGS) \
+	$(CURL) \
+	-lglite_wms_wmproxy_api_cpp \
+	-lgridsite \
+	-lcrypto \
 	-lboost_fs \
 	-lboost_thread \
 	-lboost_signals \
 	-lboost_regex \
-	-lcrypto
+	-lxml2
 
 WMPCLIENT_C_FLAGS= \
 	-I$(BOOST)/include \
@@ -58,5 +60,5 @@ libutils:
 utils:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
-	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-utils glite-wmp-utils.cpp $(WMPCLIENT_FILES)
+	$(WMPCLIENT_LD_EXE_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-utils glite-wmp-utils.cpp $(WMPCLIENT_FILES)
 	@echo "DONE"

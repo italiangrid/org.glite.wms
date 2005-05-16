@@ -47,6 +47,9 @@ const string TIME_SEPARATOR			=	":";
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_WMP_PORT	=	7772;
 
+
+
+
 /*************************************
 *** Constructor **********************
 **************************************/
@@ -63,6 +66,10 @@ Utils::Utils(Options *wmcOpts){
 *** General Utilities Static methods *
 **************************************/
 bool Utils::answerYes (const std::string& question, bool defaultAnswer){
+	if (this->wmcOpts->getBoolAttribute(Options::NOINT)){
+		// No interaction required
+		return defaultAnswer ;
+	}
 	string possible=" [y/n]";
 	possible +=(defaultAnswer?"y":"n");
 	possible +=" :";
@@ -78,25 +85,28 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 	}
 }
 void Utils::ending(unsigned int exitCode){
+
+}
+void Utils::errMsg(severity sev,const std::string& title,const std::string& err){
+	string msg = glite::wms::client::utilities::errMsg(sev,title,err,wmcOpts->getBoolAttribute(Options::DBG));
 }
 void Utils::errMsg(severity sev,glite::wmsutils::exception::Exception& exc){
-	cout <<"TBD parameters" << endl ;
-        string msg = glite::wms::client::utilities::errMsg(sev,exc,false);
-        /*if (sev == WMS_INFO )){
-
-        }*/
-	cerr << msg << endl;
+		string msg = glite::wms::client::utilities::errMsg(sev,exc,wmcOpts->getBoolAttribute(Options::DBG));
+		/*if (sev == WMS_INFO )){
+		}*/
+		cerr << msg << endl;
 }
+
 /**********************************
 *** WMP, LB, Host Static methods ***
 ***********************************/
 void Utils::resolveHost(const std::string& hostname, std::string& resolved_name){
-    struct hostent *result = NULL;
-    if( (result = gethostbyname(hostname.c_str())) == NULL ){
-    	throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
-				"Wrong Value","Unable to resolve host: "+hostname);
-    }
-    resolved_name=result->h_name;
+	struct hostent *result = NULL;
+	if( (result = gethostbyname(hostname.c_str())) == NULL ){
+		throw WmsClientException(__FILE__,__LINE__,"resolveHost",DEFAULT_ERR_CODE,
+					"Wrong Value","Unable to resolve host: "+hostname);
+	}
+	resolved_name=result->h_name;
 }
 std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string> >& lbGroup, int nsNum){
 	std::vector<std::string> lbs ;
