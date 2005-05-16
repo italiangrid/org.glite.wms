@@ -1,15 +1,15 @@
 	// PRIMITIVE
-#include <netdb.h> // gethostbyname (resolveHost)
-#include <iostream> // cin/cout     (answerYes)
-#include <fstream> // filestream (ifstream, check prefix)
-#include <time.h> // time (getTime)
-#include <sstream> //to convert number in to string
+#include "netdb.h" // gethostbyname (resolveHost)
+#include "iostream" // cin/cout     (answerYes)
+#include "fstream" // filestream (ifstream, check prefix)
+#include "time.h" // time (getTime)
+#include "sstream" //to convert number in to string
 // BOOST
-#include <boost/lexical_cast.hpp> // types conversion (checkLB/WMP)
-#include <boost/tokenizer.hpp>
-#include <boost/filesystem/operations.hpp>  // prefix & files procedures
-#include <boost/filesystem/path.hpp> // prefix & files procedures
-#include <boost/nondet_random.hpp> //to get random numbers
+#include "boost/lexical_cast.hpp" // types conversion (checkLB/WMP)
+#include "boost/tokenizer.hpp"
+#include "boost/filesystem/operations.hpp"  // prefix & files procedures
+#include "boost/filesystem/path.hpp" // prefix & files procedures
+#include "boost/nondet_random.hpp" //to get random numbers
 // GLITE
 #include "glite/wmsutils/jobid/JobId.h" // JobId
 // #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h" // proxy/voms utilities
@@ -20,10 +20,18 @@
 // Configuration
 #include "glite/wms/common/configuration/WMCConfiguration.h"
 // WMProxy API's
+#include "glite/wms/wmproxyapi/wmproxy_api.h"
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 // COMPONENT
 #include "utils.h"
 #include "adutils.h"
+// encoding
+#include "openssl/md5.h"
+//gettimeofday
+#include "sys/time.h"
+#include "unistd.h"
+
+
 
 namespace glite {
 namespace wms{
@@ -33,6 +41,7 @@ namespace utilities {
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
 using namespace boost ;
+using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapiutils;
 namespace configuration = glite::wms::common::configuration;
 
@@ -55,11 +64,10 @@ const unsigned int DEFAULT_WMP_PORT	=	7772;
 **************************************/
 Utils::Utils(Options *wmcOpts){
 	this->wmcOpts=wmcOpts;
-	cout << "Checking vo..."<< endl ;
  	// debug information
         debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
         logFile = wmcOpts->getStringAttribute (Options::LOGFILE);
-	cout << "Checking conf.."<< endl ;
+	cout << "Checking conf.." << endl ;
 	this->checkConf();
 }
 /*************************************
@@ -129,9 +137,9 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 	}else if (nsNum>=0){
 		// Retrieving the requested LB by provided nsNum
 		return lbGroup[nsNum];
-	}else for (unsigned int i=0; i< lbGroupSize; i++){
+	}else for (unsigned int i=0; i < lbGroupSize; i++){
 		// No WMP number provided, gathering all LB
-		for (unsigned int j=0;j<lbGroup[i].size();j++){
+		for (unsigned int j=0;j < lbGroup[i].size();j++){
 			lbs.push_back(lbGroup[i][j]);
 		}
 	}
@@ -159,11 +167,11 @@ std::vector<std::string> Utils::getWmps( ){
 
 const int Utils::getRandom (const unsigned int &max ){
 	/*
-	BOOST_STATIC_ASSERT(random_device::min_value == integer_traits<random_device::result_type>::const_min);
-	BOOST_STATIC_ASSERT(random_device::max_value == integer_traits<random_device::result_type>::const_max);
+	BOOST_STATIC_ASSERT(random_device::min_value == integer_traits"random_device::result_type>::const_min);
+	BOOST_STATIC_ASSERT(random_device::max_value == integer_traits"random_device::result_type>::const_max);
 	random_device rd;
 	random_device::result_type random_value = rd() %max ;
-	cout << "random_value=" << random_value << "\n" ;
+	cout "" "random_value=" "" random_value "" "\n" ;
 	return random_value;
 	*/
         return 0;
@@ -244,7 +252,7 @@ VO check priority:
 ***********************************/
 string getDefaultVo(){
 /*
-	const vector<std::string> vonames= glite::wms::wmproxyapiutils::getFQANs(
+	const vector"std::string> vonames= glite::wms::wmproxyapiutils::getFQANs(
 		glite::wms::wmproxyapiutils::getProxyFile(NULL);
 	);
 	if (vonames.size()){return vonames[0];}
@@ -256,6 +264,7 @@ string getDefaultVo(){
 
 void Utils::checkConf(){
 	string voPath, voName;
+        ostringstream info ;
 	// certificate extension - point to vo plain name
 	if(getDefaultVo()!=""){
 		cout << "checkConf:proxy certificate extension" << endl ;
@@ -292,19 +301,32 @@ void Utils::checkConf(){
 				"getVoPath", DEFAULT_ERR_CODE,
 				"Empty value","Unable to find any VirtualOrganisation");
 	}
+        if (debugInfo || logFile){
+        	info << "Info - VO : " << voName << endl;
+        	info << "Info - ConfigFile : " << voPath << endl;
+		if (debugInfo){
+                        cout << "\n" << info.str( );
+  		}
+		/*
+                if (logFile){
+			logMsg( *logFile, info.str( ) );
+                }
+                */
+
+        }
 	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(voPath,checkPrefix(voName)));
 }
 
 string Utils::checkPrefix(const string& vo){
 	// Look for GLITE installation path
-	vector <string> paths ;
+	vector<string> paths ;
 	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
 	if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
 	paths.push_back("/opt/glite");
 	paths.push_back("usr/local");
 	// Look for conf-file:
 	string defpath = "";
-	for (unsigned int i=0;i<paths.size();i++){
+	for (unsigned int i=0;i < paths.size();i++){
 		defpath =paths[i]+"/etc/"+vo ;
 		if ( checkPathExistence( defpath.c_str())  ) {
 			break;
@@ -372,7 +394,7 @@ const std::vector<std::string> Utils::extractFields(const std::string &instr, co
 	boost::tokenizer<boost::char_separator<char> > tok(instr, separator);
 	for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
 		token != tok.end(); token++) {
-		//cout  << "debug- token="<< *token << "\n";
+		//cout  "" "debug- token=""" *token "" "\n";
     		vt.push_back(*token);
 	}
 	return vt;
@@ -446,7 +468,7 @@ const long Utils::getTime(const std::string &st,
 		}
 	}
 	// number of second
-	//cout << "debug- month : " << ts.tm_mon << "\nday : " << ts.tm_mday << "\nh: " << ts.tm_hour << "\nmin: " << ts.tm_min << "\nyear : " << ts.tm_year <<"\n";
+	//cout "" "debug- month : " "" ts.tm_mon "" "\nday : " "" ts.tm_mday "" "\nh: " "" ts.tm_hour "" "\nmin: " "" ts.tm_min "" "\nyear : " "" ts.tm_year """\n";
 	return  mktime(&ts) ;
 }
 
@@ -498,9 +520,115 @@ const long Utils::checkTime ( const std::string &st, const Options::TimeOpts &op
 	}
  	return sec;
 }
+/*
+*	base64 encoder
+*/
+const int Utils::base64Encoder(void *enc, int enc_size, char *out,  int out_max_size)
+{
+    static const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    unsigned char* enc_buf = (unsigned char*)enc;
+    int out_size = 0;
+    unsigned int  bits = 0;
+    unsigned int  shift = 0;
+    while ( out_size < out_max_size ) {
+        if ( enc_size>0 ) {
+            // Shift in byte
+            bits <<= 8;
+            bits |= *enc_buf;
+            shift += 8;
+            // Next byte
+            enc_buf++;
+            enc_size--;
+        } else if ( shift>0 ) {
+            // Pad last bits to 6 bits - will end next loop
+            bits <<= 6 - shift;
+            shift = 6;
+        } else {
+            // Terminate with Mime style '='
+            *out = '=';
+            out_size++;
+            return out_size;
+        }
+        // Encode 6 bit segments
+        while ( shift>=6 ) {
+            shift -= 6;
+            *out = b64[ (bits >> shift) & 0x3F ];
+            out++;
+            out_size++;
+        }
+    }
+    // Output overflow
+    return -1;
+}
+
+/*
+*	converts the input string to a md5base64-format string
+*/
+const char * Utils::str2md5Base64(const char *s)
+{
+    MD5_CTX md5;
+    unsigned char d[16];
+    char buf[50];
+    int l;
+    MD5_Init(&md5);
+    MD5_Update(&md5, s, strlen(s));
+    MD5_Final(d, &md5);
+    l = base64Encoder(d, 16, buf, sizeof(buf) - 1);
+    if (l < 1) {
+        return NULL;
+   }
+    buf[l - 1] = 0;
+    return strdup(buf);
+}
+/*
+* generate a unique string
+*/
+string* Utils::getUniqueString (){
+
+        struct hostent* he;
+        struct timeval tv;
+        int skip;
+        // to hold string for encrypt
+        char hostname[1024];
+        char* unique = NULL ;
+        // generation of the string
+        gethostname(hostname, 100);
+        he = gethostbyname(hostname);
+        assert(he->h_length > 0);
+        gettimeofday(&tv, NULL);
+        srandom(tv.tv_usec);
+        skip = strlen(hostname);
+        skip += sprintf(hostname + skip, "-IP:0x%x-pid:%d-rnd:%d-time:%d:%d",
+                    *((int*)he->h_addr_list[0]), getpid(), (int)random(),
+                    (int)tv.tv_sec, (int)tv.tv_usec);
+        //gets back the generated del-id
+       unique = ((char*)str2md5Base64(hostname) );
+       if (unique){
+       		return ( new string(unique));
+       } else{
+       		return NULL;
+       }
 
 
-
+}
+/*
+* save message into a  file
+*/
+void Utils::toFile (std::string path, std::string msg) {
+        time_t now = time(NULL);
+        struct tm *tn = localtime(&now);
+	char *date = asctime(tn);
+        ofstream outputstream(path.c_str(), ios::app);
+        if (outputstream.is_open() ) {
+        	if (date) {
+               	 	outputstream << date << ends;
+                 }
+                outputstream << msg<< ends;
+                outputstream.close();
+        } else {
+               // errMsg(WMS_WARNING, "i/o error", "could not save the result into: " +path );
+        }
+}
 } // glite
 } // wms
 } // client

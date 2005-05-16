@@ -84,20 +84,32 @@ public:
 	*/
 	void ending(unsigned int exitCode=0);
 	/*
-	* 	convert the input time string to the number of seconds since 1st of January 1970
-        *	and if a type of option is specified, check if it is a valid value for that option
-        *	(is later or earlier)
-	*	the formats of the input time string could be:
-	*		- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
-	*		- MM<sep>DD<sep>hh<sep>mm
-	*		- hh<sep>mm
-	*	where MM=month, DD=day of the month, YYYY=year
-	*		  hh=hours , min=minutes
-	*	@st the input time string
-	*	@opts type of time option
-	*	@return the number of seconds since 1st of January 1970
+	*  convert the input time string to the number of seconds since 1st of January 1970
+        * and if a type of option is specified, check if it is a valid value for that option
+        * (is later or earlier)
+	* the formats of the input time string could be:
+	*	- MM<sep>DD<sep>hh<sep>mm<sep>YYYY
+	*	- MM<sep>DD<sep>hh<sep>mm
+	*	- hh<sep>mm
+	* where MM=month, DD=day of the month, YYYY=year hh=hours , min=minutes
+	* @st the input time string
+	* @opts type of time option
+	* @return the number of seconds since 1st of January 1970
 	*/
 	static const long checkTime ( const std::string &st, const Options::TimeOpts &opt = Options::TIME_NO_OPT);
+	/*
+	* generate a unique string
+        * @return the generated string 
+	*/
+        std::string* getUniqueString ( ) ;
+	/*
+        * save the input message into a file
+        * @param path pathname of the file
+	* @param msg message to be saved
+        */
+        static void toFile (std::string path, std::string msg);
+
+
         void errMsg(severity sev,glite::wmsutils::exception::Exception& exc);
 	void errMsg(severity sev,const std::string& title,const std::string& err);
 
@@ -142,8 +154,24 @@ private:
 	*	@return a vector of strings with the extracted tokens
 	*/
 	static const std::vector<std::string> extractFields(const std::string &instr, const std::string &sep);
+        /*
+        * perforns the base64 enconding of the input object
+        *@param enc the object to be encoded
+        *@param enc_size encoding size
+        *@param out output string
+        *@param out_max_size max size of the output string
+        *@return the size of the output string, -1 in case of error during the encoding
+        */
+        const int base64Encoder(void *enc, int enc_size, char *out,  int out_max_size);
+	/*
+        * converts the input string to a md5base64 string
+        * @param the input string
+        * @return the result of the conversion
+        */
+        const char *str2md5Base64(const char *s);
 
-	// Ad configuration files:
+
+        // Ad configuration files:
 	glite::wms::common::configuration::WMCConfiguration *wmcConf;
 	// Option files:
 	Options *wmcOpts;
