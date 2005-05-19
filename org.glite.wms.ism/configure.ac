@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.10  2005/05/19 11:33:44  eronchie
+#       Removed temporarely example
+#
 #       Revision 1.9  2005/02/28 10:50:17  monforte
 #       *** empty log message ***
 #
@@ -169,7 +172,7 @@ AC_MSG_RESULT(["GLITE_CE found $have_glite_ce"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([example/Makefile])
+dnl AC_CONFIG_FILES([example/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/purchaser/Makefile])
