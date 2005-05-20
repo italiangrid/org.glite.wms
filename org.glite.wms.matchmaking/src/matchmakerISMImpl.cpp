@@ -102,6 +102,9 @@ void matchmakerISMImpl::checkRequirement(const classad::ClassAd* requestAd, matc
   
   for (ism::ism_type::const_iterator it = ism::get_ism().begin(); it != ism::get_ism().end(); it++) {
 
+    // We should skip the entry if the expiry time is less or equal to 0
+    if (ism::is_void_ism_entry(it->second)) continue;
+
     boost::shared_ptr<classad::ClassAd> ceAd(static_cast<classad::ClassAd*>(boost::tuples::get<2>((*it).second)->Copy()));
     ceAd->SetParentScope(0);
   
@@ -109,7 +112,7 @@ void matchmakerISMImpl::checkRequirement(const classad::ClassAd* requestAd, matc
     // ...we should check for authorization first...
     classad::ExprTree *expr;
     string requirement;
-    requirement.assign( "AuthorizationCheck" );
+    requirement.assign( "AuthorizationCheck && CloseOutputSECheck" );
     classad::ClassAdParser parser;
     parser.ParseExpression(requirement, expr);
     ceAd -> Insert("requirements", expr);
@@ -198,8 +201,7 @@ void matchmakerISMImpl::checkRank(const classad::ClassAd* requestAd, match_table
     ism::ism_type::const_iterator ism_entry = ism::get_ism().find( CEid );
     if( ism_entry != ism::get_ism().end() ) {
       
-      boost::shared_ptr<classad::ClassAd> ceAd = boost::tuples::get<1>(ism_entry->second)->Copy();
-      ceAd->SetParentScope(0);
+      boost::shared_ptr<classad::ClassAd> ceAd = boost::tuples::get<2>(ism_entry->second);
       try {
         mit -> second.setRank( utilities::right_rank(*ceAd, *requestAd) );
         unable_to_rank_all = false;
