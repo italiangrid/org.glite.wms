@@ -9,22 +9,19 @@
 GSISOCKET_PP = $(top_builddir)/src/socket++/libglite_wmsutils_tls_gsisocket_pp.la
 SOCKET_PP = $(top_builddir)/src/socket++/libglite_wmsutils_socket_pp.la
 
-TESTS = glite-wmsutils-tls-socketpp-socketClient
+TESTS = gsiclient
 
-check_PROGRAMS = glite-wmsutils-tls-socketpp-socketClient 
+check_PROGRAMS = $(TESTS)
 
-glite_wmsutils_tls_socketpp_socketClient_SOURCES = socketClient_cu_suite.cpp \
-	socketClient_cu_suite.h \
-	socketClient_cu_main.cpp
-glite_wmsutils_tls_socketpp_socketClient_LDADD = \
+gsiclient_SOURCES = GSIServerClient.cpp
+gsiclient_LDADD = \
 	$(GSISOCKET_PP) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLOBUS_GSS_THR_LIBS) \
-	$(CPPUNIT_LIBS)
+	$(GLOBUS_GSS_THR_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
-	-I$(top_srcdir)/src \
-	-I$(top_srcidr)/test \
+	-I$(top_srcdir)/src/socket++ \
+	-I$(top_srcdir)/test \
 	$(GLITE_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(CPPUNIT_CFLAGS)
