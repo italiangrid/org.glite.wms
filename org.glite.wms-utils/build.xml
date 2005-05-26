@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.27  2005/05/26 15:21:48  zurek
+	inserted module.build.file
+
 	Revision 1.26  2004/10/29 22:54:37  dimeglio
 	Use envset target
-
+	
 	Revision 1.25  2004/10/28 22:59:26  dimeglio
 	Quoted ant command line parameters
 	
@@ -154,6 +157,7 @@
 		 Load version file 
 	     ========================================= -->
 	<property file="${module.version.file}"/>
+	<property file="${module.build.file}"/>
 	
 	<!-- ===============================================
 		  Public common targets
