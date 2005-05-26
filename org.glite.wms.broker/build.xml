@@ -21,10 +21,13 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2005/05/26 15:19:33  zurek
+	inserted module.build.file
+
 	Revision 1.1  2004/07/02 08:48:27  monforte
 	Initial Broker porting to new build system
 	WARNING: work in progress...
-
+	
 	Revision 1.1  2004/06/26 15:25:03  eronchie
 	Start handling matchmaking
 	WARNING: work in progress
@@ -90,6 +93,7 @@
 		 Load version file 
 		 ========================================= -->
 	<property file="${module.version.file}"/>
+	<property file="${module.build.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets
