@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2005/05/26 15:21:45  zurek
+	inserted module.build.file
+
 	Revision 1.1  2004/08/11 14:52:43  eronchie
 	Start adding wrap-python
-
+	
 	
 -->
 
@@ -83,6 +86,7 @@
 		 Load version file 
 	     ========================================= -->
 	<property file="${module.version.file}"/>
+	<property file="${module.build.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets
