@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2005/05/26 15:20:02  zurek
+	inserted module.build.file
+
 	Revision 1.1  2004/07/08 15:11:03  pandreet
 	Basic build files for checkpointing
-
+	
 	
 	
 -->
@@ -84,6 +87,7 @@
 		 Load version file 
 	     ========================================= -->
 	<property file="${module.version.file}"/>
+	<property file="${module.build.file}"/>
 	
 	<!-- ==============================================
 		 Local private targets
