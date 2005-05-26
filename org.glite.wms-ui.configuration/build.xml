@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.2  2005/05/26 15:21:33  zurek
+	inserted module.build.file
+
 	Revision 1.1  2004/10/13 15:30:29  eronchie
 	Start adding configuration
-
+	
 	
 	
 -->
@@ -84,6 +87,7 @@
 		 Load version file 
 	     ========================================= -->
 	<property file="${module.version.file}"/>
+	<property file="${module.build.file}"/>
 		
 	<!-- ==============================================
 		 Local private targets
