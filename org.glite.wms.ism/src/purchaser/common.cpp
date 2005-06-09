@@ -54,7 +54,7 @@ bool insert_aux_requirements(gluece_info_type& gluece_info)
     std::string requirements_str(
       "[ \
         CloseOutputSECheck = IsUndefined(other.OutputSE) \
-          ||   member(other.OutputSE, GlueCESEBindGroupSEUniqueID); \
+          ||   member(other.OutputSE,GlueCESEBindGroupSEUniqueID); \
         AuthorizationCheck = member(other.CertificateSubject, GlueCEAccessControlBaseRule) \
           ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule); \
       ]"

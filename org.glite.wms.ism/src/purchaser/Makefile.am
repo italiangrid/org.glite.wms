@@ -8,12 +8,16 @@
 
 lib_LTLIBRARIES    = \
 	libglite_wms_ism_ii_purchaser.la \
+	libglite_wms_ism_iise_purchaser.la \
 	libglite_wms_ism_cemon_purchaser.la \
 	libglite_wms_ism_cemon_asynch_purchaser.la \
 	libglite_wms_ism_file_purchaser.la 
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
         ism-ii-purchaser.cpp
+
+libglite_wms_ism_iise_purchaser_la_SOURCES = \
+        ism-iise-purchaser.cpp
 
 libglite_wms_ism_cemon_purchaser_la_SOURCES = \
 	ism-cemon-purchaser.cpp

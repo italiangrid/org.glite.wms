@@ -10,7 +10,13 @@
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 #include "glite/ce/monitor-client-api-c/CEEvent.h"
-#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
+#include "glite/ce/monitor-client-api-c/Dialect.h"
+#include "glite/ce/monitor-client-api-c/Topic.h"
+#include "glite/ce/monitor-client-api-c/GenericException.h"
+#include "glite/ce/monitor-client-api-c/TopicNotSupportedException.h"
+#include "glite/ce/monitor-client-api-c/DialectNotSupportedException.h"
+#include "glite/ce/monitor-client-api-c/ServiceNotFoundException.h"
+#include "glite/ce/monitor-client-api-c/AuthenticationException.h"
 
 #include "glite/wms/common/ldif2classad/LDIFObject.h"
 
@@ -57,14 +63,18 @@ void ism_cemon_purchaser::do_purchase()
   do {
     
     gluece_info_container_type gluece_info_container;
-    
+    Topic ce_topic(m_topic);
+    ce_topic.addDialect( new DialectW("ISM_LDIF") );
     for(vector<string>::const_iterator service_it = m_services.begin(); 
 	service_it != m_services.end(); ++service_it) {
+      
+      boost::scoped_ptr<CEEvent> ceE(new CEEvent(m_certfile,m_certpath));
 
-      boost::scoped_ptr<CEEvent> ceE(new CEEvent(certfile,certpath));
-      ceE->setParam(service_it->c_str(),m_topic.c_str());
+      ceE->setServiceURL(*service_it);
+      ceE->setRequestParam(&ce_topic);
 
-      if (ceE->getEvent()) {
+      try { 
+        ceE->getEvent();
 	size_t n = 0;
 	if (n=ceE->getNumberOfMessages()) {
 	
@@ -96,10 +106,12 @@ void ism_cemon_purchaser::do_purchase()
 	  std::vector<classad::ExprTree*>  CloseSE_exprs;
           boost::escaped_list_separator<char> gluece_sep("","\n","");
 	  boost::tokenizer<boost::escaped_list_separator<char> > gluece_tok(gluece_str,gluece_sep);
-          string currentObjectClass;
-	  for(boost::tokenizer< boost::escaped_list_separator<char> >::iterator gluece_tok_it = gluece_tok.begin(); 
+	  bool parsingCESEBind = false;
+          for(boost::tokenizer< boost::escaped_list_separator<char> >::iterator gluece_tok_it = gluece_tok.begin(); 
 	      gluece_tok_it != gluece_tok.end(); ++gluece_tok_it) {
-	  
+	    
+            if (gluece_tok_it->empty()) continue;
+
 	    string ldif_entry;
 	    ldif_entry.assign(*gluece_tok_it);
 	    static boost::regex  ldif_regex("([[:alnum:]]+):[\\s]+(.+)");
@@ -109,25 +121,28 @@ void ism_cemon_purchaser::do_purchase()
 	      string attribute(ldif_pieces[1].first, ldif_pieces[1].second);
 	      string value(ldif_pieces[2].first, ldif_pieces[2].second);
 	      
-	      if (!strcasecmp(attribute.c_str(),"ObjectClass")) {
-                currentObjectClass.assign(value);
-              	if (!strcasecmp(value.c_str(), "GlueCESEBind")) { // start parsing a new bind
-		  CloseSE_exprs.push_back(new classad::ClassAd());
-                }
-		continue;
+              if (!strcasecmp(attribute.c_str(),"dn")) {  // begin parsing a new dn
+            
+                // reset all flags and continue 
+                parsingCESEBind = false;
+                continue;
               }
-              
-              static string ignore_attrs("entryTtl modifyTimestamp dn Objectclass");
-              if (!strcasecmp(currentObjectClass.c_str(),"GlueCESEBind")) {
+              if (!strcasecmp(attribute.c_str(),"ObjectClass")) {
+                if (!strcasecmp(value.c_str(), "GlueCESEBind")) { // start parsing a new bind
+                  parsingCESEBind = true;
+                  CloseSE_exprs.push_back(new classad::ClassAd());
+                }
+                continue;
+              } 
+              if (parsingCESEBind) {
                 if (!strcasecmp(attribute.c_str(), "GlueCESEBindSEUniqueID")) {
                   static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("name", value);  
                 }
                 else if (!strcasecmp(attribute.c_str(), "GlueCESEBindCEAccesspoint")) {
                   static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("mount", value);
                 }
-              }
-	      else if (ignore_attrs.find(attribute) == string::npos) {
-			
+              }	
+              else {
 	         ldif_ce.add(attribute,value);
 	      }
             }
@@ -141,18 +156,12 @@ void ism_cemon_purchaser::do_purchase()
 	  
           if (!GlueCEUniqueID.empty()) {
 	    Debug("CEMonitor info for " << GlueCEUniqueID << "... Ok" << endl);
-            // Check whether the gluece_info has already been inserted into the ISM, on not...
-	    //if (gluece_info_history.find(GlueCEUniqueID) == gluece_info_history.end()) {
 
               gluece_info_type ceAd(
                 ldif_ce.asClassAd(m_multi_attributes.begin(), m_multi_attributes.end())
               );
 	      ceAd->Insert("CloseStorageElements", classad::ExprList::MakeExprList(CloseSE_exprs));		
 	      gluece_info_container[GlueCEUniqueID] = ceAd;
-            //}
-            //else {
-            //  Debug(GlueCEUniqueID << "...already in ISM");
-            //}
           }
 	  else {
 	    Warning("Unable to evaluate GlueCEUniqueID" << endl);
@@ -160,9 +169,12 @@ void ism_cemon_purchaser::do_purchase()
 	} // while
        }
       }
-      else {
-	Error("Unable to get event from CEMonitor. Error #" << ceE->getErrorCode() 
-	      << " '" << ceE->getErrorMessage() << "'" << endl);
+      catch(CEException& e) {
+	Error("Unabl to get event from CEMonitor:" << e.getMethod() << ", " << e.getErrorCode() << ", " <<
+	  e.getDescription() << ", " << e.getFaultCause() << endl);
+      }
+      catch (AbsException& e) {
+	Error("Unable to get event from CEMonitor: " << e.what() << endl);
       }
     } // for_each service
     {
@@ -170,27 +182,30 @@ void ism_cemon_purchaser::do_purchase()
     for (gluece_info_iterator it = gluece_info_container.begin();
          it != gluece_info_container.end(); ++it) {
 	
-      if ((m_skip_predicate.empty() || !m_skip_predicate(it->first)) && 
-            get_ism().find(it->first) == get_ism().end()) {
+      if ((m_skip_predicate.empty() || !m_skip_predicate(it->first))) {
 
         insert_aux_requirements(it->second);
-	expand_glueceid_info(it->second);
-        get_ism().insert(
-	  make_ism_entry(it->first, static_cast<int>(get_current_time().sec), it->second)
-        );
+	if (expand_glueceid_info(it->second)) {
+       
+          int TTLCEinfo = 0;
+          if (!it->second->EvaluateAttrNumber("TTLCEinfo", TTLCEinfo)) TTLCEinfo = 300;
+        
+          get_ism()[it->first] = boost::make_tuple(static_cast<int>(get_current_time().sec), TTLCEinfo, it->second, update_uf_type());
+        }
       }
     }
     } // end of scope needed to unlock the mutex
-    if (m_mode == loop) {
-      sleep(m_interval);
-    }
+    if (m_mode) { sleep(m_interval); }
     
   } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 }
 
 // the class factories
 
-extern "C" ism_cemon_purchaser* create_cemon_purchaser(std::vector<std::string> const& service,
+extern "C" ism_cemon_purchaser* create_cemon_purchaser(
+    std::string const& cert_file,
+    std::string const& cert_path,
+    std::vector<std::string> const& service,
     std::string const& topic,
     int rate,
     exec_mode_t mode,
@@ -198,7 +213,7 @@ extern "C" ism_cemon_purchaser* create_cemon_purchaser(std::vector<std::string> 
     exit_predicate_type exit_predicate,
     skip_predicate_type skip_predicate
 ) {
-    return new ism_cemon_purchaser(service, topic, rate, mode, interval, exit_predicate, skip_predicate);
+    return new ism_cemon_purchaser(cert_file, cert_path,service, topic, rate, mode, interval, exit_predicate, skip_predicate);
 }
 
 extern "C" void destroy_cemon_purchaser(ism_cemon_purchaser* p) {

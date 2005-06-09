@@ -158,6 +158,68 @@ void prefetchGlueCEinfo(const std::string& hostname,
     Warning(e.what());
   }
 }
+bool fetch_gluece_se_bind_info(ldif2classad::LDAPConnection* IIconnection,
+                       std::string const& gluece_id,
+                       gluece_info_type& gluece_info)
+{
+  bool result = false;
+  string CloseSE_filter("(&(objectclass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + gluece_id + "))");
+  ldif2classad::LDAPQuery CloseSE_query(IIconnection, CloseSE_filter, vector<string>());
+
+  try {
+    CloseSE_query.execute();
+    if (!CloseSE_query.tuples()->empty()) {
+      try {
+        ldif2classad::LDAPForwardIterator CloseSE_it( CloseSE_query.tuples() );
+        CloseSE_it.first();
+	std::vector<classad::ExprTree*>  CloseSE_exprs;
+        while (CloseSE_it.current()) {
+          vector<string> CloseSEs;
+          CloseSE_it->EvaluateAttribute("GlueCESEBindGroupSEUniqueID",CloseSEs);
+	
+          for(vector<string>::const_iterator it=CloseSEs.begin(); it!=CloseSEs.end(); it++) {
+
+            string CloseSEInfo_filter("(&(objectclass=GlueCESEBind)(GlueCESEBindSEUniqueID=" + *it + "))");
+            ldif2classad::LDAPQuery CloseSEInfo_query(IIconnection, CloseSEInfo_filter, vector<string>());
+            try {
+              CloseSEInfo_query.execute();
+              if (!CloseSEInfo_query.tuples()->empty()) {
+
+                ldif2classad::LDAPForwardIterator CloseSEInfo_it( CloseSEInfo_query.tuples() );
+                CloseSEInfo_it.first();
+                CloseSE_exprs.push_back(new classad::ClassAd());
+                string name, mount;
+                CloseSEInfo_it->EvaluateAttribute("GlueCESEBindSEUniqueID", name);
+		CloseSEInfo_it->EvaluateAttribute("GlueCESEBindCEAccesspoint", mount);
+                static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("name" , name);
+                static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("mount", mount);
+              }
+              else {
+                Warning("No entries while filtering " << CloseSEInfo_filter << endl);
+              }
+            }
+            catch( ldif2classad::QueryException& e) {
+              Warning(e.what() << endl);
+            }
+          }
+          CloseSE_it.next();
+        }
+        gluece_info->Insert("CloseStorageElements", classad::ExprList::MakeExprList(CloseSE_exprs));
+	result = true;
+      }
+      catch( ldif2classad::LDAPNoEntryEx& ) {
+        Warning("No entries while filtering " << CloseSE_query.what() << endl);
+      }
+    }
+    else {
+      Warning("No tuples executing query " << CloseSE_query.what() << endl);
+    }
+  }
+  catch( ldif2classad::QueryException& e) {
+    Warning(e.what() << endl);
+  }
+  return result;
+}
 
 bool fetch_gluece_info(ldif2classad::LDAPConnection* IIconnection,
 		       std::string const& gluece_id,
@@ -215,7 +277,8 @@ bool ism_ii_purchaser_entry_update::operator()(int a,boost::shared_ptr<classad::
 {
   boost::scoped_ptr<ldif2classad::LDAPConnection>
     IIconnection(new ldif2classad::LDAPSynchConnection(m_ldap_dn, m_ldap_server, m_ldap_port, m_ldap_timeout));
-    return fetch_gluece_info(IIconnection.get(), m_id, ad) &&
+    return fetch_gluece_info        (IIconnection.get(), m_id, ad) &&
+           fetch_gluece_se_bind_info(IIconnection.get(), m_id, ad) &&
            expand_glueceid_info(ad) &&
            insert_aux_requirements(ad);
 }

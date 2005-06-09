@@ -65,6 +65,11 @@ struct update_ism_entry
   bool operator()(ism_entry_type entry);
 };
 
+bool is_expired_ism_entry(const ism_entry_type& entry);
+
+// Returns whether the ism entry is assigned an expiry_time less or equal to 0, or not
+bool is_void_ism_entry(const ism_entry_type& entry);
+
 std::string get_ism_dump(void);
 
 struct call_dump_ism_entries

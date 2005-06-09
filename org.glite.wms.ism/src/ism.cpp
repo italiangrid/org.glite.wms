@@ -104,6 +104,20 @@ bool update_ism_entry::operator()(ism_entry_type entry)
 	boost::tuples::get<2>(entry));
 }
 
+// Returns whether the entry has expired, or not
+bool is_expired_ism_entry(const ism_entry_type& entry)
+{
+  boost::xtime ct;
+  boost::xtime_get(&ct, boost::TIME_UTC);
+  int diff = ct.sec - boost::tuples::get<0>(entry);
+  return (diff > boost::tuples::get<1>(entry));
+}
+
+bool is_void_ism_entry(const ism_entry_type& entry)
+{
+  return (boost::tuples::get<1>(entry)<=0);
+}
+
 // get IsmDump file
 std::string get_ism_dump(void)
 {

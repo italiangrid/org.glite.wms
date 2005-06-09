@@ -16,10 +16,20 @@ int main(void)
 {
   logger::edglog.open(std::clog, glite::wms::common::logger::debug);
   vector<string> services;
-  services.push_back("http://lxb2022.cern.ch:8080/ce-monitor/services/CEMonitor");
+  services.push_back("https://lxde01.pd.infn.it:8443/ce-monitor/services/CEMonitor");
   vector<string> blacklist;
-  blacklist.push_back("lxb2022.cern.ch:2119/blah-lsf-jra1_high"); 
-  ism_cemon_purchaser icp(services,"CE_MONITOR:ISM", 30, once);
+  
+  // Get the certificate file name from the configuration file
+  std::string certificate_file;
+  //certificate_file.assign(common_config->host_proxy_file())
+
+  // Try to get the certificate path from the evironment variable GLITE_CERT_DIR if
+  // possible, otherwise defaults to /etc/grid-security/certificates.
+  char* certificate_path = getenv("GLITE_CERT_DIR");
+  if (!certificate_path) {
+    certificate_path = "/etc/grid-security/certificates";
+  }
+  ism_cemon_purchaser icp(certificate_file, certificate_path, services,"CE_MONITOR", 30, once);
   icp.skip_predicate(is_in_black_list(blacklist));
   try { 
   icp();

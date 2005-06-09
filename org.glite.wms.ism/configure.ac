@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.11  2005/06/09 15:38:20  monforte
+#       *** empty log message ***
+#
 #       Revision 1.10  2005/05/19 11:33:44  eronchie
 #       Removed temporarely example
 #
@@ -78,7 +81,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [1.0.4])
+AC_INIT([GLite WMS ISM], [1.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
@@ -172,7 +175,7 @@ AC_MSG_RESULT(["GLITE_CE found $have_glite_ce"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
-dnl AC_CONFIG_FILES([example/Makefile])
+AC_CONFIG_FILES([example/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/purchaser/Makefile])
