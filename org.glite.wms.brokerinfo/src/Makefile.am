@@ -27,12 +27,17 @@ libglite_wms_sici_la_SOURCES = \
 
 libglite_wms_sici_la_LIBADD = \
 	$(GLITE_DATA_LIBS) \
-	$(CGSI_GSOAP_STATIC_LIBS) \
-	$(GSOAP_LIBS) \
-	env.o
+	$(SEC_GSOAP_PLUGIN_STATIC_NOTHR_LIBS) \
+	$(ARES_LIBS) \
+	env.o \
+	stdsoap2_2.6.2.o
 
+	
 env.o: $(GLITE_DATA_CFLAGS) ; \
 	ar x $(GLITE_DATA_LIBS) env.o
+
+stdsoap2_2.6.2.o: $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c ; \
+        $(CC) $(GSOAP_CFLAGS) -c  $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c -o stdsoap2_2.6.2.o
 
 libglite_wms_rls_la_SOURCES = 
 

@@ -33,12 +33,10 @@ namespace dli = glite::wms::brokerinfo::dli;
 /**
  * Constructor for DataLocationInterface
  *
- * @param vo       Virtual Organisation 
  * @param endpoint SOAP endpoint (URL) of the remote catalogue
  *                 example: http://localhost:8085/
  */
-dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string vo,
-						          std::string endpoint)
+dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string endpoint)
 {
   // Initialise SOAP
   //
@@ -47,8 +45,7 @@ dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string vo,
   m_endpoint = endpoint;
 } // Constructor
 
-dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string vo,
-                                                          std::string endpoint,
+dli::DataLocationInterfaceSOAP::DataLocationInterfaceSOAP(std::string endpoint,
                                                           int timeout)
 {
   // Initialise SOAP
@@ -142,19 +139,16 @@ dli::DataLocationInterfaceSOAP::~DataLocationInterfaceSOAP()
 /*  Class factories that can be used for a plug-in                           */
 /*****************************************************************************/
 
-extern "C" dli::DataLocationInterfaceSOAP* create(const std::string& vo, 
-						  const std::string& endpoint)
+extern "C" dli::DataLocationInterfaceSOAP* create(const std::string& endpoint)
 {
-  return new dli::DataLocationInterfaceSOAP(vo, endpoint);
+  return new dli::DataLocationInterfaceSOAP(endpoint);
 }
 
-extern "C" dli::DataLocationInterfaceSOAP* create_with_timeout(const std::string& vo,
-                                                  const std::string& endpoint,
-                                                  int timeout)
+extern "C" dli::DataLocationInterfaceSOAP* create_with_timeout(const std::string& endpoint,
+                                                               int timeout)
 {
-  return new dli::DataLocationInterfaceSOAP(vo, endpoint);
+  return new dli::DataLocationInterfaceSOAP(endpoint);
 }
-
 
 extern "C" void destroy(dli::DataLocationInterfaceSOAP* p) {
   delete p;
@@ -181,4 +175,3 @@ std::string& URLArray::operator[](int i) const
   assert(__ptr && i >= 0 && i < __size);
   return __ptr[i];
 } // URLArray::operator
-

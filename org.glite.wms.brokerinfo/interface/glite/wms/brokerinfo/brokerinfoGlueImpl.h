@@ -34,27 +34,27 @@ private:
    * is registered in the IS. If yes, the SE is valid and 0 is returned, 
    * otherwise -1. 
    */
-  int  validSE(std::string SEid);
+  int  validSE(const std::string& SEid);
 
   /**
    * Contact the Information Service (IS) and return the URL (endpoint) of the
    * server the provides the StorageIndex Catalog(SI).
    * If no service is found, "" is returned.
    */
-  std::string getSICIurl(std::string vo);
+  std::string getSICIurl(const std::string& vo);
 
   /**
    * Contact the Information Service (IS) and return the URL (endpoint) of the
    * server the provides the DataLocationInterface(DLI).
    * If no service is found, "" is returned.
    */
-  std::string getDLIurl(std::string vo);
+  std::string getDLIurl(const std::string& vo);
 
   /*
    * Check the configuration file of the Networkserver if RLS is used for
    * a certain VO. In case the RLS is used, 0 is returned, Otherwise -1.
    */
-  int checkRlsUsage(std::string vo);
+  int checkRlsUsage(const std::string& vo);
 
 };
 

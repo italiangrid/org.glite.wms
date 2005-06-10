@@ -19,11 +19,17 @@
 #ifndef GLITE_WMS_BROKERINFO_STORAGE_INDEX_CATALOG_INTERFACE_H
 #define GLITE_WMS_BROKERINFO_STORAGE_INDEX_CATALOG_INTERFACE_H 
 
-
 #include <string>
 #include <vector>
 
 #include <stdsoap2.h>
+#include <classad_distribution.h>
+
+extern "C" {
+//   #include "cgsi_plugin.h"
+   #include "glite/security/glite_gsplugin.h"
+}
+
 
 namespace glite {
 namespace wms {
@@ -57,9 +63,12 @@ public:
    *
    * @param list output parameter
    *
+   * @param classad JDL classad 
+   *
    */
    virtual
-   void listSEbyGUID ( const std::string &guid, std::vector<std::string> & list);
+   void listSEbyGUID ( const std::string &guid, std::vector<std::string> & list, 
+                       const  classad::ClassAd & classad);
 
   /**
    * Fill the list with the SEs containing replicas related to the lfn
@@ -68,9 +77,12 @@ public:
    *
    * @param list output parameter
    *
+   * @param classad JDL classad
+   *
    */
    virtual
-   void listSEbyLFN ( const std::string &lfn, std::vector<std::string> & list);
+   void listSEbyLFN ( const std::string &lfn, std::vector<std::string> & list,
+                      const classad::ClassAd & classad);
 
   /**
    * Destructor: clean up the SOAP environment
@@ -81,6 +93,7 @@ public:
 private:
   struct soap m_soap;     // gSOAP structure for message exchange
   std::string m_endpoint; // endpoint (URL) of the data catalogue to contact
+  glite_gsplugin_Context ctx; // gsoap plugin context
 
 };
 

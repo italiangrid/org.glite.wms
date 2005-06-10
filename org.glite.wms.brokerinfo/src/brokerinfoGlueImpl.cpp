@@ -36,6 +36,7 @@
 
 #include "glite/wms/jdl/ManipulationExceptions.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/PrivateAdManipulation.h"
 
 #include "glite/wmsutils/exception/Exception.h"
 
@@ -382,6 +383,9 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                                                                                 
    edglog_fn(retrieveSFNsInfo);
 
+   edglog(debug) << "ClassAd..." << endl;
+   edglog(debug) << requestAd << endl;
+
    try {
       // The vo in JDL is needed for RLS Catalog queries
       //
@@ -413,8 +417,11 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                                                                                 
    // Check if Storage Index Catalog and Data Catalog endpoints are set in the jdl
    // If it is not the case, it try to get them frome the Information Service
+
    try {
-      dliEndpoint = requestad::get_data_catalog(requestAd);
+      vector<string> v;
+      requestad::get_data_catalog(requestAd, v);
+      dliEndpoint = v[0];
       dliEndpointSet = true;
    }
    catch(...) {
@@ -425,10 +432,12 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          }
       }
    }
-
-              
+                                                                                                           
+                                                                                                           
    try {
-      siciEndpoint = requestad::get_storage_index(requestAd);
+      vector<string> v;
+      requestad::get_storage_index(requestAd, v);
+      siciEndpoint = v[0];
       siciEndpointSetInJdl = true;
    }
    catch(...) {
@@ -450,13 +459,19 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    //
    // We check the prefix of InputData's fields we got from the JDL. We have the following
    // possibilities:
-   //    - If RLSCatalog is not set for the given VO:
-   //        * lfn, guid, lds, query  -> use DLI
-   //        * si-lfn, si-guid  -> use SI
-   //    - If RLSCatalog is set for the given VO:
-   //        * lfn, guid   -> use RLS
-   //        * lds, query  -> use DLI
-   //        * si-lfn, si-guid  -> use SI
+   //
+   // PREFIX                                 CATALOG to be used
+   //
+   // 1)lfn, guid                            SI if the SIendpoint is set in the JDL
+   //                                        i.e.:StorageIndex="http://lxb2021.cern.ch:9992/AliEn/Service/FC";
+   //
+   // 2)lfn, guid                            RLS if the SIendpoint is NOT set in the JDL -AND-
+   //                                            RLSCatalog is set for the given VO.
+   //                                        If RLS doesn't work for any reason, we try DLI
+   //
+   // 3)si-guid, si-lfn                      StorageIndex, no matter if the endpoint is set or not
+   //
+   // 4)query, lds                           DLI
    //
    //
    dli::create_t* createDli; dli::create_t_with_timeout* createDli_with_timeout;
@@ -479,8 +494,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
    for(BrokerInfoData::LFN_container_type::const_iterator lfn = input_data.begin(); lfn != input_data.end();lfn++) {
 
-//enzo
-//cout << "-----------------------" << *lfn << "----------------------------------\n";
+      edglog(debug)  << "trying to resolve: " << *lfn << endl;
 
       try {
          BrokerInfoData::SFN_container_type resolved_sfn;
@@ -566,10 +580,10 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      }
                      if ( dlsym_Ok ) {
                         if ( timeout == 0 ) {
-                           dli = createDli(vo, dliEndpoint);
+                           dli = createDli(dliEndpoint);
                         }
                         else {
-                           dli = createDli_with_timeout(vo, dliEndpoint, timeout);
+                           dli = createDli_with_timeout(dliEndpoint, timeout);
                         }
                         dliInUse = true;
                         if ((*lfn).find(ldsPrefix.c_str()) == 0) {
@@ -665,18 +679,20 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                                                                                 
                         string noPrefix = *lfn;
                         string::size_type colon_pos;
+
                         if ((colon_pos = noPrefix.find(":"))!=string::npos) {
                            // Remove any prefix before the leading colon. Including the colon.
                            colon_pos++;
                            noPrefix.erase(0,colon_pos);
                         }
 
+
                         if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
                              (*lfn).find(lfnPrefix.c_str()) == 0 ) {
-                           sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn);
+                           sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd);
                         }
                         else {
-                           sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn);
+                           sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd);
                         }
                      }
                   }
@@ -687,18 +703,20 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
             }
             else {
                string noPrefix = *lfn;
+
                string::size_type colon_pos;
                if ((colon_pos = noPrefix.find(":"))!=string::npos) {
                   // Remove any prefix before the leading colon. Including the colon.
                   colon_pos++;
                   noPrefix.erase(0,colon_pos);
                }
+
                if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
                     (*lfn).find(lfnPrefix.c_str()) == 0 ) {
-                  sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn);
+                  sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd);
                }
                else {
-                  sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn);
+                  sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd);
                }
             }
          }
@@ -755,13 +773,10 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      }
                      if (validSE(SE) == 0) {
                         bid.m_involvedSEs.insert(SE);
-//enzo
-//cout << "SE inserted after validity check: " << SE << endl;
+                        edglog(debug) << SE << ": " << "is a valid SE"<< endl;
                      }
                      else {
-                        edglog(warning) << SE << ": " << "in not a valid SE"<< endl;
-//enzo
-//cout <<  SE << ": " << "in not a valid SE"<< endl;
+                        edglog(warning) << SE << ": " << "is *not* a valid SE"<< endl;
                      }
                   }
                }
@@ -774,32 +789,18 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
             edglog(debug) << "No replica(s) found!" << endl;
 
          }
-                      
                                                                                                 
       }
       catch( std::exception& ex ) {
-           edglog(warning) << ex.what() << endl;
-//enzo
-//cout << ex.what() << endl;
-      }
-      catch(char *faultstring) {
-        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
-        //
-        edglog(warning) << "gsoap Exception : " << faultstring << endl;
-//enzo
-//cout  << "gsoap Exception : " << faultstring << endl;
+           edglog(warning) <<  ex.what() << endl;
       }
       catch(const char *faultstring) {
-        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
         //
-        edglog(warning) <<  faultstring << endl;
-//enzo
-//cout  <<  faultstring << endl;
+        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+        // or any other exception due to failures in getting the proxy from the classad
+        edglog(warning) << faultstring << endl;
       }
-
-                                                                                                
    } //for
-
 
    if ( rlsInUse ) {
       destroyRls(replica);
@@ -816,18 +817,15 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
        dlclose(siciLibHandle);
    }
                                                                                                 
-                                                                                                
+   edglog(debug) << "finishing retrieveSFNsInfo" << endl;
 }
-
-
-
 
 /**
  * Contact the Information Service (IS) and check if the given SE (SEid)
  * is registered in the IS. If yes, the SE is valid and 0 is returned, 
  * otherwise -1. 
  */
-int brokerinfoGlueImpl::validSE(std::string SEid)
+int brokerinfoGlueImpl::validSE( const std::string& SEid)
 {
   int valid = -1; // default value: SE is not valid and not in IS
 
@@ -889,12 +887,15 @@ int brokerinfoGlueImpl::validSE(std::string SEid)
  * server that provides the StorageIndex Catalog (SI).
  * If no service is found, "" is returned.
  */
-std::string brokerinfoGlueImpl::getSICIurl(std::string vo)
+std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
 {
                                                                                                                              
   string url = "";
-                                                                                                                             
-  edglog(debug) << "Contact IS for StorageIndex. " << endl;
+
+  edglog_fn(getSICIurl);
+
+  edglog(debug) << "Contacting IS for StorageIndex endpoint..." << endl;
+  edglog(debug) << "Irrelevant operation if you are trying to contact another catalog. " << endl;
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
                                                                                                                              
   vector<string> attributes;
@@ -945,6 +946,10 @@ std::string brokerinfoGlueImpl::getSICIurl(std::string vo)
   catch ( ldif2classad::ConnectionException& e) {
     edglog(warning) << e.what() << endl;
   }
+
+//
+//cout << "getSICIurl: " << url << endl;
+
   return url;
 } // getSICIurl
 
@@ -954,12 +959,15 @@ std::string brokerinfoGlueImpl::getSICIurl(std::string vo)
  * server the provides the DataLocationInterface(DLI).
  * If no service is found, "" is returned.
  */
-std::string brokerinfoGlueImpl::getDLIurl(std::string vo)
+std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
 {
 
   string url = "";
 
-  edglog(debug) << "Contact IS for DataLocationInterface. " << endl;
+  edglog_fn(getDLIurl);
+
+  edglog(debug) << "Contacting IS for DataLocationInterface endpoint. " << endl;
+  edglog(debug) << "Irrelevant operation if you are trying to contact another catalog. " << endl;
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
   
   vector<string> attributes;
@@ -1010,6 +1018,10 @@ std::string brokerinfoGlueImpl::getDLIurl(std::string vo)
   catch ( ldif2classad::ConnectionException& e) {
     edglog(warning) << e.what() << endl;
   }
+
+//
+//cout << "getDLIurl: " << url << endl;
+
   return url;
 } // getDLIurl
 
@@ -1018,7 +1030,7 @@ std::string brokerinfoGlueImpl::getDLIurl(std::string vo)
  * Check the configuration file of the Networkserver if RLS is used for
  * a certain VO. In case the RLS is used, 0 is returned, Otherwise -1.
  */
-int brokerinfoGlueImpl::checkRlsUsage(std::string vo)
+int brokerinfoGlueImpl::checkRlsUsage(const std::string& vo)
 {
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
 

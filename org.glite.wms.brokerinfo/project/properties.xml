@@ -19,11 +19,17 @@
 	Version info: $Id$
 	Release: $Name$	
 	
-	Revision history:
-	$Log$
+	Revision 1.7.2.2  2005/04/13 10:31:19  eronchie
+	Removed  in the log message
+	
+	Revision 1.7.2.1  2005/04/11 12:13:22  eronchie
+	Added AC_OPTIMIZE
+	Added disable-optimization
+	Added optimize.m4
+	
 	Revision 1.7  2004/12/09 11:18:13  eronchie
 	Updated data info
-
+	
 	Revision 1.6  2004/12/09 10:18:37  eronchie
 	Moved gsoap_base.m4 in gsoap.m4
 	
@@ -79,6 +85,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 gsoap.m4 replica.m4 cgsi-gsoap.m4 glite_data.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 gsoap.m4 replica.m4 cgsi-gsoap.m4 glite_data.m4 optimize.m4 ares.m4 glite_security.m4"/>
 		 						
 </project>

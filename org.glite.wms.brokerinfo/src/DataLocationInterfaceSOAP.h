@@ -23,7 +23,6 @@
 #include <string>
 #include <vector>
 
-//it must be the one belonging to gsoap 2.6.2
 #include <stdsoap2.h>
 
 
@@ -38,12 +37,20 @@ public:
   /**
    * Constructor for DataLocationInterface
    *
-   * @param vo       Virtual Organisation 
    * @param endpoint SOAP endpoint (URL) of the remote catalogue
    *                 example: http://localhost:8085/
    */
-  DataLocationInterfaceSOAP(std::string vo,
-			    std::string endpoint);
+  DataLocationInterfaceSOAP(std::string endpoint);
+
+  /**
+   * Constructor for DataLocationInterface
+   *
+   * @param endpoint SOAP endpoint (URL) of the remote catalogue
+   *                 example: http://localhost:8085/
+   * @param timeout  connection and IO timeout
+   */
+  DataLocationInterfaceSOAP(std::string endpoint,
+                            int timeout);
 
   /**
    * Constructor for DataLocationInterface
@@ -93,11 +100,10 @@ private:
   std::string m_endpoint; // endpoint (URL) of the data catalogue to contact
 };
 
-typedef DataLocationInterfaceSOAP* create_t(const std::string&, 
-					    const std::string&);
+typedef DataLocationInterfaceSOAP* create_t(const std::string&);
+
 typedef DataLocationInterfaceSOAP* create_t_with_timeout(const std::string&,
-                                            const std::string&,
-                                            int timeout);
+                                                         int timeout);
 typedef void destroy_t(DataLocationInterfaceSOAP*);
 
 
