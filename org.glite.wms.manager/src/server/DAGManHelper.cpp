@@ -99,7 +99,7 @@ jc_submit_file_dir()
 
   std::string path_str = jc_config->submit_file_dir();
 
-  return fs::path(path_str, fs::system_specific);
+  return fs::path(path_str, fs::native);
 }
 
 fs::path
@@ -114,7 +114,7 @@ jc_output_file_dir()
 
   std::string path_str = jc_config->output_file_dir();
 
-  return fs::path(path_str, fs::system_specific);
+  return fs::path(path_str, fs::native);
 }
 
 fs::path
@@ -129,7 +129,7 @@ lm_condor_log_dir()
 
   std::string path_str = lm_config->condor_log_dir();
 
-  return fs::path(path_str, fs::system_specific);
+  return fs::path(path_str, fs::native);
 }
 
 fs::path
@@ -144,7 +144,7 @@ sandbox_dir()
 
   std::string path_str = ns_config->sandbox_staging_path();
 
-  return fs::path(path_str, fs::system_specific);
+  return fs::path(path_str, fs::native);
 }
 
 std::string
@@ -199,9 +199,9 @@ class Paths
 public:
   Paths(jobid::JobId const& dag_id)
     : m_dag_id(dag_id),
-      m_base_submit_dir(jc_submit_file_dir() << jobid::get_reduced_part(dag_id) << ("dag." + jobid::to_filename(dag_id))),
-      m_base_output_dir(jc_output_file_dir() << jobid::get_reduced_part(dag_id) << jobid::to_filename(dag_id)),
-      m_dag_log(lm_condor_log_dir() << ("dag." + jobid::to_filename(dag_id) + ".log")),
+      m_base_submit_dir(jc_submit_file_dir() / jobid::get_reduced_part(dag_id) / ("dag." + jobid::to_filename(dag_id))),
+      m_base_output_dir(jc_output_file_dir() / jobid::get_reduced_part(dag_id) / jobid::to_filename(dag_id)),
+      m_dag_log(lm_condor_log_dir() / ("dag." + jobid::to_filename(dag_id) + ".log")),
       m_sandbox_dir(sandbox_dir())
   {}
 
@@ -219,7 +219,7 @@ public:
   }
   fs::path dag_description() const
   {
-    return m_base_submit_dir << dag_description_file;
+    return m_base_submit_dir / dag_description_file;
   }
   std::string lock_file() const
   {
@@ -227,11 +227,11 @@ public:
   }
   fs::path lib_log() const
   {
-    return m_base_output_dir << "dag.lib.out";
+    return m_base_output_dir / "dag.lib.out";
   }
   fs::path debug_log() const
   {
-    return m_base_output_dir << "dag.dagman.out";
+    return m_base_output_dir / "dag.dagman.out";
   }
   fs::path dag_log() const
   {
@@ -239,15 +239,15 @@ public:
   }
   fs::path rescue() const
   {
-    return m_base_submit_dir << dag_description_file + ".rescue";
+    return m_base_submit_dir / (dag_description_file + ".rescue");
   }
   fs::path ad(jobid::JobId const& node_id) const
   {
-    return m_base_submit_dir << "ad." + jobid::to_filename(node_id);
+    return m_base_submit_dir / ("ad." + jobid::to_filename(node_id));
   }
   fs::path submit(jobid::JobId const& node_id) const
   {
-    return m_base_submit_dir << "Condor." + jobid::to_filename(node_id) + ".submit";
+    return m_base_submit_dir / ("Condor." + jobid::to_filename(node_id) + ".submit");
   }
   fs::path pre(jobid::JobId const& node_id) const
   {
@@ -255,8 +255,8 @@ public:
     assert(getenv_GLITE_WMS_LOCATION);
     std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
     return
-      fs::path(glite_wms_location, fs::system_specific)
-        << "libexec/glite-wms-planner.sh";
+      fs::path(glite_wms_location, fs::native)
+        / "libexec/glite-wms-planner.sh";
   }
   fs::path post(jobid::JobId const& node_id) const
   {
@@ -264,17 +264,17 @@ public:
     assert(getenv_GLITE_WMS_LOCATION);
     std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
     return
-      fs::path(glite_wms_location, fs::system_specific)
-        << "libexec/glite-wms-dag-post.sh";
+      fs::path(glite_wms_location, fs::native)
+        / "libexec/glite-wms-dag-post.sh";
   }
   fs::path standard_output(jobid::JobId const& node_id) const
   {
-    //    return m_base_output_dir << jobid::get_reduced_part(node_id) << jobid::to_filename(node_id) << "StandardOutput";
-    return m_base_output_dir << jobid::to_filename(node_id) << "StandardOutput";
+    //    return m_base_output_dir / jobid::get_reduced_part(node_id) / jobid::to_filename(node_id) / "StandardOutput";
+    return m_base_output_dir / jobid::to_filename(node_id) / "StandardOutput";
   }
   fs::path maradona(jobid::JobId const& node_id) const
   {
-    return m_sandbox_dir << jobid::get_reduced_part(node_id) << jobid::to_filename(node_id) << "Maradona.output";
+    return m_sandbox_dir / jobid::get_reduced_part(node_id) / jobid::to_filename(node_id) / "Maradona.output";
   }
 
 };
@@ -302,10 +302,10 @@ public:
     fs::path submit_file = m_paths->submit(node_id);
     fs::ofstream os(submit_file);
     assert(os);
-    os << "log = " << m_paths->dag_log().file_path() << "\n";
+    os << "log = " << m_paths->dag_log().native_file_string() << '\n';
 
     jdl::DAGNodeInfo new_node_info = node_info;
-    new_node_info.description_file_for_ad(submit_file.file_path());
+    new_node_info.description_file_for_ad(submit_file.native_file_string());
     // TODO should change node type too
     m_dagad->replace_node(name, new_node_info);
   }
@@ -419,7 +419,7 @@ public:
 
     boost::scoped_ptr<classad::ClassAd> transformed_ad(m_transform(*ad));
     assert(transformed_ad);
-    os << utilities::unparse_classad(*transformed_ad) << "\n";
+    os << utilities::unparse_classad(*transformed_ad) << '\n';
   }
 };
 
@@ -443,14 +443,14 @@ public:
     assert(ad);
     jobid::JobId node_id = jdl::get_edg_jobid(*ad);
 
-    std::string pre_file = m_paths->pre(node_id).file_path();
-    std::string pre_args = m_paths->ad(node_id).file_path()
-      + " " + m_paths->submit(node_id).file_path();
+    std::string pre_file = m_paths->pre(node_id).native_file_string();
+    std::string pre_args = m_paths->ad(node_id).native_file_string()
+      + ' ' + m_paths->submit(node_id).native_file_string();
     new_node_info.pre(pre_file, pre_args);
 
-    std::string post_file = m_paths->post(node_id).file_path();
-    std::string post_args = m_paths->standard_output(node_id).file_path() + " "
-      + m_paths->maradona(node_id).file_path();
+    std::string post_file = m_paths->post(node_id).native_file_string();
+    std::string post_args = m_paths->standard_output(node_id).native_file_string() + ' '
+      + m_paths->maradona(node_id).native_file_string();
     new_node_info.post(post_file, post_args);
 
     m_dagad->replace_node(name, new_node_info);
@@ -466,33 +466,33 @@ struct InsertJobInSubmitFile
     std::string const& node_name = node.first;
     jdl::DAGNodeInfo const& node_info = node.second;
 
-    os << "JOB " << node_name << " " << node_info.description_file() << "\n";
+    os << "JOB " << node_name << ' ' << node_info.description_file() << '\n';
 
     std::string pre;
     std::string pre_args;
     boost::tie(pre, pre_args) = node_info.pre();
     if (!pre.empty()) {
-      os << "SCRIPT PRE " << node_name << " " << pre;
+      os << "SCRIPT PRE " << node_name << ' ' << pre;
       if (!pre_args.empty()) {
-        os << " " << pre_args;
+        os << ' ' << pre_args;
       }
-      os << "\n";
+      os << '\n';
     }
 
     std::string post;
     std::string post_args;
     boost::tie(post, post_args) = node_info.post();
     if (!post.empty()) {
-      os << "SCRIPT POST " << node_name << " " << post;
+      os << "SCRIPT POST " << node_name << ' ' << post;
       if (!post_args.empty()) {
-        os << " " << post_args;
+        os << ' ' << post_args;
       }
-      os << "\n";
+      os << '\n';
     }
 
     int retry_count = node_info.retry_count();
     if (retry_count > 0) {
-      os << "RETRY " << node_name << " " << node_info.retry_count() << "\n";
+      os << "RETRY " << node_name << ' ' << node_info.retry_count() << '\n';
     }
 
     return osp;
@@ -510,7 +510,7 @@ struct InsertDependencyInSubmitFile
 
     os << "PARENT " << dependency.first->first
        << " CHILD " << dependency.second->first
-       << "\n";
+       << '\n';
 
     return osp;
   }
@@ -538,8 +538,8 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
   jdl::set_executable(result, condor_dagman);
   jdl::set_getenv(result, "true");
 
-  jdl::set_output(result, paths.lib_log().file_path());
-  jdl::set_error_(result, paths.lib_log().file_path());
+  jdl::set_output(result, paths.lib_log().native_file_string());
+  jdl::set_error_(result, paths.lib_log().native_file_string());
   jdl::set_remove_kill_sig(result, "SIGUSR1");
 
   int dagman_log_level = get_dagman_log_level();
@@ -550,13 +550,13 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
   }
   std::ostringstream arguments;
   arguments << "-f"
-            << " -l " << paths.base_submit_dir().file_path()
+            << " -l " << paths.base_submit_dir().native_file_string()
             << " -NoEventChecks"
             << " -Debug " << dagman_log_level
             << " -Lockfile " << paths.lock_file()
-            << " -Dag " << paths.dag_description().file_path()
-            << " -Rescue " << paths.rescue().file_path()
-            << " -Condorlog " << paths.dag_log().file_path();
+            << " -Dag " << paths.dag_description().native_file_string()
+            << " -Rescue " << paths.rescue().native_file_string()
+            << " -Condorlog " << paths.dag_log().native_file_string();
   jdl::set_arguments(result, arguments.str());
   jdl::set_ce_id(result, "dagman");
 
@@ -565,7 +565,7 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
     dagman_log_rotate = 0;
   }
   std::ostringstream environment;
-  environment << "_CONDOR_DAGMAN_LOG=" << paths.debug_log().file_path()
+  environment << "_CONDOR_DAGMAN_LOG=" << paths.debug_log().native_file_string()
               << ";_CONDOR_MAX_DAGMAN_LOG=" << dagman_log_rotate;
   result.InsertAttr("environment", environment.str());
 }
@@ -619,7 +619,7 @@ try {
   // generate dag description
   fs::ofstream dag_description(paths.dag_description());
   assert(dag_description);
-  to_dag_description(dag_description, dagad) << "\n";
+  to_dag_description(dag_description, dagad) << '\n';
 
   // create the job ad, to be then converted by the JC to a submit file
   create_dagman_job_ad(*result, paths);
@@ -629,7 +629,7 @@ try {
   // at start up if it exists. But this causes the dagman submission event to be
   // lost because we use the same log file both for the dagman job and for its
   // subjobs
-  fs::ofstream lf(paths.base_submit_dir() << paths.lock_file());
+  fs::ofstream lf(paths.base_submit_dir() / paths.lock_file());
   assert(lf);
 
   base_submit_dir_undo.dismiss();

@@ -74,10 +74,10 @@ fs::path get_input_sandbox_path(jobid::JobId const& id)
   configuration::NSConfiguration const& ns_config
     = *configuration::Configuration::instance()->ns();
 
-  return fs::path(ns_config.sandbox_staging_path(), fs::system_specific)
-    << jobid::get_reduced_part(id)
-    << jobid::to_filename(id)
-    << "input";  
+  return fs::path(ns_config.sandbox_staging_path(), fs::native)
+    / jobid::get_reduced_part(id)
+    / jobid::to_filename(id)
+    / "input";  
 }
 
 class planning_error: public std::exception
@@ -204,7 +204,14 @@ void add_brokerinfo_to_isb(classad::ClassAd& jdl)
   bool isb_exists = false;
   std::vector<std::string> isb;
   requestad::get_input_sandbox(jdl, isb, isb_exists);
-  isb.push_back(".BrokerInfo");
+  bool isb_base_uri_exists = false;
+  std::string isb_base_uri =
+    requestad::get_wmpinput_sandbox_base_uri(jdl, isb_base_uri_exists);
+  if (isb_base_uri_exists) {
+    isb.push_back(isb_base_uri + "/input/.BrokerInfo");
+  } else {
+    isb.push_back(".BrokerInfo");
+  }
   requestad::set_input_sandbox(jdl, isb);
 }
 
@@ -302,8 +309,8 @@ Plan(classad::ClassAd const& jdl)
     brokerinfo->Insert("DataAccessProtocol", DAC->Copy());
   }
 
-  fs::path brokerinfo_file(get_input_sandbox_path(job_id) << ".BrokerInfo");
-  std::ofstream brokerinfo_os(brokerinfo_file.file_path().c_str());
+  fs::path brokerinfo_file(get_input_sandbox_path(job_id) / ".BrokerInfo");
+  std::ofstream brokerinfo_os(brokerinfo_file.native_file_string().c_str());
   assert(brokerinfo_os);
 
   brokerinfo_os << utilities::unparse_classad(*brokerinfo) << std::endl;
