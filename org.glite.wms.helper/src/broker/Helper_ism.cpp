@@ -198,31 +198,48 @@ try {
 
   // Add the .Brokerinfo files to the InputSandbox
   bool input_sandbox_exists = false;
+  bool wmpinput_sandbox_base_uri_exists = false;
+
   std::vector<std::string> ISB;
+
   requestad::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
-  ISB.push_back(".BrokerInfo");
+  std::string WMPInputSandboxBaseURI(requestad::get_wmpinput_sandbox_base_uri(input_ad, wmpinput_sandbox_base_uri_exists));
+
+  if (wmpinput_sandbox_base_uri_exists) ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
+  else ISB.push_back(".BrokerInfo");
+  
   requestad::set_input_sandbox(*result, ISB);
 
   requestad::set_ce_id(*result, ce_it->first);
   matchmaking::match_info const& ce_info = ce_it->second;
   classad::ClassAd const* ce_ad = ce_info.getAd();
 
-  requestad::set_globus_resource_contact_string(
-    *result,
-    utilities::evaluate_attribute(*ce_ad, "GlobusResourceContactString")
-  );
-  requestad::set_queue_name(
-    *result,
-    utilities::evaluate_attribute(*ce_ad, "QueueName")
-  );
-  requestad::set_lrms_type(
-    *result,
-    utilities::evaluate_attribute(*ce_ad, "LRMSType")
-  );
-  requestad::set_ce_id(
-    *result,
-    utilities::evaluate_attribute(*ce_ad, "CEid")
-  );
+  try {
+
+    requestad::set_globus_resource_contact_string(
+      *result,
+      utilities::evaluate_attribute(*ce_ad, "GlobusResourceContactString")
+    );
+    requestad::set_queue_name(
+      *result,
+      utilities::evaluate_attribute(*ce_ad, "QueueName")
+    );
+    requestad::set_lrms_type(
+      *result,
+      utilities::evaluate_attribute(*ce_ad, "LRMSType")
+    );
+    requestad::set_ce_id(
+      *result,
+      utilities::evaluate_attribute(*ce_ad, "CEid")
+    );
+
+  } catch (utilities::InvalidValue const& e) {
+
+    edglog(error) << e.what() << " for CE id " << ce_it->first << std::endl;
+    
+    throw helper::HelperError("BrokerHelper");
+
+  }
 
   return result;
 

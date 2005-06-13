@@ -156,10 +156,9 @@ try {
     utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
     if (!outputsandboxdesturi.empty()) {
       b_osb_dest_uri = true;
-      std::cout << "trovato uri" << std::endl;
     }
   }
- 
+  
   /* Not Mandatory */
   vector<string>  inputsandbox;
   bool b_isb;
@@ -167,27 +166,28 @@ try {
 
   /* Not Mandatory */
   bool b_wmpisb_base_uri = false;
-  if (!inputsandbox.empty()) {
-    string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
+  string wmpisb_base_uri;
+  //if (!inputsandbox.empty()) {
+    wmpisb_base_uri.append(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
     if (!wmpisb_base_uri.empty()) {
-      std::cout << "trovato" << wmpisb_base_uri << std::endl;
+      b_wmpisb_base_uri = true;
     }
-  }
+  //}
 
   string inputsandboxpath;
   if (!b_wmpisb_base_uri) {
     /* Mandatory */
     inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
-    if (inputsandboxpath.empty()) { 
+    if (inputsandboxpath.empty()) {
       throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
                                           inputsandboxpath,
                                           "not empty",
                                           helper_id);
     }
   }
-
+	  
   string outputsandboxpath;
-  if (!b_osb_dest_uri) {	  
+  if (!b_osb_dest_uri && !b_wmpisb_base_uri) {
     /* Mandatory */
     outputsandboxpath.append(jdl::get_output_sandbox_path(*m_ad));
     if (outputsandboxpath.empty()) {
@@ -313,7 +313,20 @@ try {
   } else {
     jdl::set_grid_type(*result, "condor");
     if (is_condor_resource || lrmstype == "condor") {
-      jdl::set_remote_job_universe(*result, 5);
+      // condor resource, as per Nate Mueller's May 4, 2005 recipe
+      jdl::set_remote_job_universe(*result, 9);
+      jdl::set_remote_job_grid_type(*result, "condor");
+      jdl::set_remote_requirements(*result, "true");
+      jdl::set_remote_remote_schedd(*result, gatekeeper_hostname);
+      jdl::set_remote_remote_pool(*result, queuename);
+      jdl::set_remote_globus_resource(*result, "BOGUS");
+      jdl::set_remote_remote_job_universe(*result, 5);
+      // FIXME: these should obviously not be hardwired.
+      jdl::set_remote_remote_requirements(*result, "((Arch == \"INTEL\") && (Opsys == \"LINUX\")) && HasFileTransfer");
+      jdl::set_remote_remote_file_system_domain(*result, gatekeeper_hostname);
+      jdl::set_remote_remote_uid_system_domain(*result, gatekeeper_hostname);
+      jdl::set_remote_remote_should_transfer_files(*result, "YES");
+      jdl::set_remote_remote_when_to_transfer_output(*result, "ON_EXIT");
     } else {
       // blah resource
       jdl::set_remote_job_universe(*result, 9);
@@ -338,6 +351,10 @@ try {
                                           helper_id);
     }
 
+    // Virtual Organization is used to compose remote Condor daemons
+    // unique name, but we don't really care if it's empty
+    string vo(jdl::get_virtual_organisation(*m_ad));
+
     string hostandcertificatesubject(local_host_name);
     hostandcertificatesubject.append("/");
     hostandcertificatesubject.append(certificatesubject);
@@ -355,18 +372,42 @@ try {
 
     string hashedcertificatesubject(md5_hex_hash.str());
 
+    jdl::set_daemon_unique_name(*result, hashedcertificatesubject);
+
     string remote_schedd(hashedcertificatesubject);
     remote_schedd.append("@");
     remote_schedd.append(gatekeeper_hostname);
-    jdl::set_remote_schedd(*result, remote_schedd);
+    jdl::set_remote_schedd(*result, "$$(Name)");
+
+    string schedd_requirements("Name==\"");
+    schedd_requirements.append(remote_schedd);
+    schedd_requirements.append("\"");
+    jdl::set_condor_requirements(*result, schedd_requirements);
+
+    jdl::set_globus_resource(*result, "$$(Name)");
 
     jdl::set_copy_to_spool(*result, false);
     jdl::set_should_transfer_files(*result, "YES");
     jdl::set_when_to_transfer_output(*result, "ON_EXIT");
     jdl::set_transfer_input_files(*result, userproxy);
 
-    /* FIXME user.proxy should be basename of userproxy */
-    condor_submit_environment.assign("X509_USER_PROXY=user.proxy");
+    // Compute proxy file basename: remove trailing whitespace and slashes. 
+    string userproxy_basename(userproxy);
+    char c = userproxy_basename[userproxy_basename.length()-1];
+    while (c == '/' || c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+      userproxy_basename.erase(userproxy_basename.length()-1);
+      c = userproxy_basename[userproxy_basename.length()-1];
+    }
+
+    // Then remove leading dirname.
+    userproxy_basename.assign(userproxy_basename.substr(userproxy_basename.rfind('/')+1));
+    condor_submit_environment.assign("X509_USER_PROXY=");
+    condor_submit_environment.append(userproxy_basename);
+    if (is_blahp_resource || is_condor_resource) {
+      // Handle remotely-managed environment additions.
+      // (GRAM cannot do this).
+      condor_submit_environment.append(";$$(GLITE_ENV:)");
+    }
     jdl::set_remote_env(*result,condor_submit_environment);
 
     // Build the jobmanager-fork contact string.
@@ -450,7 +491,7 @@ try {
   hlrlocation.append(" '");
   string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
   if (!hlrvalue.empty()) {
-    if (is_blahp_resource) {
+    if (is_blahp_resource || is_condor_resource) {
       condor_submit_environment.append(";EDG_WL_HLR_LOCATION=");
       condor_submit_environment.append(hlrvalue);
       jdl::set_remote_env(*result,condor_submit_environment);
@@ -512,7 +553,7 @@ try {
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
   
   if (ljobtype == "mpich") {
-//    if (is_blahp_resource) {
+//    if (is_blahp_resource || is_condor_resource) {
 //      throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
 //                                          jobtype,
 //                                          "not be 'mpich' for non-globus resources",
@@ -532,7 +573,7 @@ try {
     /* node number is mandatory for the mpich job */
     int    nodenumber = jdl::get_node_number(*m_ad);
 
-    if (is_blahp_resource) {
+    if (is_blahp_resource || is_condor_resource) {
       jdl::set_remote_remote_nodenumber(*result, nodenumber);
     }
 
@@ -544,11 +585,19 @@ try {
     globusrsl.append(nn);
     globusrsl.append(")");
     
+    string exec;
+    string::size_type pos = executable.find("./");
+    if (pos == string::npos) {
+      exec.append(executable);
+    } else {
+      exec.append(executable.substr(pos+2));
+    }
+
     if (llrmstype == "lsf") {
-      jw = new jobwrapper::MpiLsfJobWrapper(executable);
+      jw = new jobwrapper::MpiLsfJobWrapper(exec);
     }
     else if (llrmstype == "pbs") {
-      jw = new jobwrapper::MpiPbsJobWrapper(executable);
+      jw = new jobwrapper::MpiPbsJobWrapper(exec);
     } else {
       // not possible;
     }
@@ -577,6 +626,7 @@ try {
                                           "contains BYPASS_SHADOW_HOST",
                                           helper_id);
     }
+    env.push_back("LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"); 
 
     string::size_type pos = executable.find("./");
     if (pos == string::npos) {
@@ -621,7 +671,11 @@ try {
     } else {
        jw->vo(vo);	    
     }
-    jw->dsupload(url::URL(job_id));
+    try {
+      jw->dsupload(url::URL(job_id));
+    } catch (url::ExInvalidURL& ex) {
+      throw CannotCreateJobWrapper(ex.parameter());
+    }
   }
 	
   jdl::set_globus_rsl(*result, globusrsl);
@@ -633,53 +687,63 @@ try {
   jw->create_subdir();
   jw->arguments(arguments);
   jw->job_Id(job_id);
-  jw->job_id_to_filename(jobid_to_file); 
+  jw->job_id_to_filename(jobid_to_file);
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
-  
-  if (!b_wmpisb_base_uri) {
+ 
+  if (!b_wmpisb_base_uri) { 
     //check if there is the protocol in the inputsandbox path. 
     //if no the protocol gsiftp:// is added to the inputsandboxpath.
-    if (inputsandboxpath.find("://") == string::npos) {
-      string new_inputsandboxpath("gsiftp://");
-      new_inputsandboxpath.append(local_host_name);
-      new_inputsandboxpath.append(inputsandboxpath);
-      jw->input_sandbox(url::URL(new_inputsandboxpath), inputsandbox);    
-    } else { 
-      jw->input_sandbox(url::URL(inputsandboxpath), inputsandbox);
+    try {
+      if (inputsandboxpath.find("://") == string::npos) {
+        string new_inputsandboxpath("gsiftp://");
+        new_inputsandboxpath.append(local_host_name);
+        new_inputsandboxpath.append(inputsandboxpath);
+        jw->input_sandbox(url::URL(new_inputsandboxpath), inputsandbox);    
+      } else { 
+        jw->input_sandbox(url::URL(inputsandboxpath), inputsandbox);
+      } 
+    } catch (url::ExInvalidURL& ex) {
+      throw CannotCreateJobWrapper(ex.parameter());
     }
   } else {
     jw->wmp_input_sandbox_support(inputsandbox);
   }
 
-  if (!b_osb_dest_uri) {
+//  if (!b_osb_dest_uri) {
+  if (!b_wmpisb_base_uri) {
     //check if there is the protocol in the outputsandbox path. 
     //if no the protocol gsiftp:// is added to the outputsandboxpath.
-    if (outputsandboxpath.find("://") == string::npos) {
-      string new_outputsandboxpath("gsiftp://");     
-      new_outputsandboxpath.append(local_host_name);
-      new_outputsandboxpath.append(outputsandboxpath);
-      jw->output_sandbox(url::URL(new_outputsandboxpath), outputsandbox);
-    } else {  
-      jw->output_sandbox(url::URL(outputsandboxpath), outputsandbox);
+    try {
+      if (outputsandboxpath.find("://") == string::npos) {
+        string new_outputsandboxpath("gsiftp://");     
+        new_outputsandboxpath.append(local_host_name);
+        new_outputsandboxpath.append(outputsandboxpath);
+        jw->output_sandbox(url::URL(new_outputsandboxpath), outputsandbox);
+      } else {  
+        jw->output_sandbox(url::URL(outputsandboxpath), outputsandbox);
+      }
+    } catch (url::ExInvalidURL& ex) {
+      throw CannotCreateJobWrapper(ex.parameter());
     }
-  } else {
+  } else if (b_osb_dest_uri) {
     jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
+//  } else {
+//    jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
   }
 
   //check if we need to support new Input/Output Sandboxes in WMProxy
   if (b_osb_dest_uri || b_wmpisb_base_uri) {
     jw->wmp_support();
   }
-  
   // end preparation JobWrapper file
 
   config::LMConfiguration const* logconfig = config::Configuration::instance()->lm();
   
-  // Mandatory
-  // Maradone file path
   if (!b_wmpisb_base_uri) {
+    // Mandatory
+    // Maradone file path
     string maradonapr(logconfig->maradona_transport_protocol());
 
     config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
@@ -692,7 +756,7 @@ try {
     maradona_path <<= "Maradona.output";
     jw->maradonaprotocol(maradonapr, maradona_path.file_path());
   } else {
-    jw->maradonaprotocol(wmpisb_base_uri, "Maradona.output");
+    jw->maradonaprotocol(wmpisb_base_uri, "/Maradona.output");
   }
 
   config::JCConfiguration const* jcconfig = config::Configuration::instance()->jc();
@@ -751,7 +815,7 @@ try {
   output_file_path.append(jobid_to_file);
   output_file_path.append("/");
 
-  if (is_blahp_resource) {
+  if (is_blahp_resource || is_condor_resource) {
     // Condor-C will not move Standard Output and Error to the absolute
     // path specified in the submit file, but to the Initial Dir.
     // This defaults to /tmp, so StandardOutput/Error files from different

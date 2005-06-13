@@ -19,8 +19,25 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.13  2005/02/28 10:22:32  monforte
-#       merging RC1->HEAD
+#       Revision 1.14  2005/06/13 08:18:08  monforte
+#       Merge RC1 -> HEAD
+#
+#       Revision 1.12.2.9  2005/06/08 15:01:04  eronchie
+#       Added (
+#       Increased version
+#
+#       Revision 1.12.2.8  2005/04/17 18:33:29  eronchie
+#       Removed temporarely test/Makefile
+#
+#       Revision 1.12.2.7  2005/04/15 16:18:27  vmedici
+#       unit test
+#
+#       Revision 1.12.2.6  2005/04/06 08:38:18  fprelz
+#       Increased revision number, as already done by 'dimeglio' on
+#       org.glite.wms.helper/project/version.properties
+#
+#       Revision 1.12.2.5  2005/03/14 10:45:23  eronchie
+#       Increased version
 #
 #       Revision 1.12.2.4  2005/02/18 14:35:41  eronchie
 #       Updated
@@ -92,7 +109,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [1.0.3])
+AC_INIT([GLite WMS Helper], [1.0.6])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
@@ -147,7 +164,7 @@ have_globus=no
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
-
+AC_CPPUNIT(1.10.2,have_cppunit=yes, have_cppunit=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
@@ -185,6 +202,7 @@ AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
+# AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/broker/Makefile])

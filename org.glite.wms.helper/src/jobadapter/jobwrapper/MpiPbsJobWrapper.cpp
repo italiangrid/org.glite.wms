@@ -66,6 +66,13 @@ MpiPbsJobWrapper::execute_job(ostream& os,
   os << "HOSTFILE=${PBS_NODEFILE}" << endl
      << endl;
 
+  os << "for i in `cat $HOSTFILE`; do" << '\n'
+     << "  ssh $i mkdir -p `pwd`" << '\n'
+     << "  /usr/bin/scp -rp ./* $i:`pwd`" << '\n'
+     << "  ssh $i chmod 755 `pwd`/" << job << '\n'
+     << "done" << '\n'
+     << endl;
+
   if (arguments != "") {
     os << "mpirun -np " << node << " -machinefile ${HOSTFILE} "
        << "  \"" << job << "\"" << " " << arguments << " $*";

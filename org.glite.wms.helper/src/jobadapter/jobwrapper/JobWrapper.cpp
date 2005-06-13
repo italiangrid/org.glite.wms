@@ -166,7 +166,7 @@ JobWrapper::wmp_support(void)
   m_wmp_support = true;
 }
 
-void 
+void
 JobWrapper::wmp_input_sandbox_support(const std::vector<std::string>& input_base_files)
 {
   copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_wmp_input_base_files));
@@ -180,14 +180,14 @@ JobWrapper::wmp_input_sandbox_support(const std::vector<std::string>& input_base
       std::cerr << "ERROR" ;
     }
     string filename = it->substr(pos);
-    m_wmp_input_files.push_back(filename); 
+    m_wmp_input_files.push_back(filename);
   }
 
 }
 
-void 
+void
 JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_files,
-                                  const std::vector<std::string>& output_dest_files)
+                                       const std::vector<std::string>& output_dest_files)
 {
   copy(output_files.begin(), output_files.end(), back_inserter(m_wmp_output_files));
   copy(output_dest_files.begin(), output_dest_files.end(), back_inserter(m_wmp_output_dest_files));
@@ -1001,15 +1001,13 @@ JobWrapper::print(ostream& os) const
 
   // set the umask
   set_umask(os);
- 
+
   // transfer input sandbox
-  
-//  prepare_transfer(os, m_input_files);
   if (m_wmp_support) {
     prepare_transfer(os, m_wmp_input_base_files);
     make_transfer_wmp_support(os, true);
-  } else { 
-    prepare_transfer(os, m_input_files); 
+  } else {
+    prepare_transfer(os, m_input_files);
     make_transfer(os, m_input_base_url, true);
   }
 
@@ -1047,6 +1045,7 @@ JobWrapper::print(ostream& os) const
   
   // transfer output sandbox
   os << "error=0" << endl;
+
   if (m_wmp_support) {
     prepare_transfer(os, m_wmp_output_dest_files);
     make_transfer_wmp_support(os, false);

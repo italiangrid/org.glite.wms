@@ -50,16 +50,22 @@ void
 URL::parse(string url)
 {
   string::size_type pos = url.find("://");
+  string ur(url);
 
+  string msg("Could not find ");
   if (pos == string::npos) {
-    throw ExInvalidURL("there is not ://");
+    msg.append("\'://\' in URL ");
+    msg.append(ur);
+    throw ExInvalidURL(msg.c_str());
   }
   string protocol = url.substr(0, pos);
   url      = url.substr(pos+3);
 
   pos      = url.find("/");
   if (pos == string::npos) {
-    throw ExInvalidURL("there is not /");
+    msg.append("\'/\' in URL ");
+    msg.append(ur);
+    throw ExInvalidURL(msg.c_str());
   }
   string hostpart = url.substr(0, pos);
 
@@ -76,8 +82,10 @@ URL::parse(string url)
     // -*- Check port value -*-
     for(string::const_iterator it = port.begin();
 	it != port.end(); it++){
-      if(!isdigit(*it)){
-	throw ExInvalidURL("the port is wrong");
+      if(!isdigit(*it)) {
+        msg.append("\'correct port number\' in URL ");
+        msg.append(ur);
+	throw ExInvalidURL(msg.c_str());
       }
     }
   }
