@@ -16,6 +16,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.6  2005/06/14 15:44:49  giaco
+#       don't build example and test
+#
 #       Revision 1.5  2005/06/09 15:38:19  monforte
 #       *** empty log message ***
 #
@@ -38,7 +41,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 ## Subdirectories list
-SUBDIRS = interface src example test
+SUBDIRS = interface src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
