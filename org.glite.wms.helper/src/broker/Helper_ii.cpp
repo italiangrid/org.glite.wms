@@ -196,15 +196,15 @@ try {
   const configuration::NSConfiguration* ns_conf
     = configuration::Configuration::instance()->ns();
 
-  fs::path p(ns_conf->sandbox_staging_path(), fs::system_specific);
+  fs::path p(ns_conf->sandbox_staging_path(), fs::native);
 
   std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
   jobid::JobId dg_jobid(dg_jobid_str);
-  p <<= jobid::get_reduced_part(dg_jobid);
-  p <<= jobid::to_filename(dg_jobid);
+  p /= jobid::get_reduced_part(dg_jobid);
+  p /= jobid::to_filename(dg_jobid);
 
-  fs::path      BIfile(p << "input/.BrokerInfo");
-  std::ofstream BIfilestream(BIfile.file_path().c_str());
+  fs::path      BIfile(p / "input/.BrokerInfo");
+  std::ofstream BIfilestream(BIfile.native_file_string().c_str());
 
   if (!BIfilestream) {
     throw glite::wms::helper::broker::CannotCreateBrokerinfo(BIfile);

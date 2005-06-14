@@ -53,7 +53,7 @@ CannotCreateBrokerinfo::what() const throw()
 {
   if (m_impl) {
     if (m_impl->m_what.empty()) {
-      m_impl->m_what = helper() + ": cannot create the brokerinfo file at " + m_impl->m_path.file_path();
+      m_impl->m_what = helper() + ": cannot create the brokerinfo file at " + m_impl->m_path.native_file_string();
     }
     return m_impl->m_what.c_str();
   } else {
@@ -176,4 +176,3 @@ NoCompatibleCEs::what() const throw()
 }
 
 }}}} // glite::wms::helper::broker
-

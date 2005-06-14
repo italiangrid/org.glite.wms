@@ -63,11 +63,10 @@ using namespace classad;
 namespace config = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
-
 namespace jobwrapper = glite::wms::helper::jobadapter::jobwrapper;
 namespace url = glite::wms::helper::jobadapter::url;
-
 namespace jdl = glite::wms::jdl;
+namespace fs = boost::filesystem;
 
 namespace {
 std::string const helper_id("JobAdapterHelper");
@@ -748,13 +747,13 @@ try {
 
     config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
   
-    boost::filesystem::path maradona_path(
-      boost::filesystem::normalize_path(nsconfig->sandbox_staging_path()),
-      boost::filesystem::system_specific);
-    maradona_path <<= jobid::get_reduced_part(job_id);
-    maradona_path <<= jobid_to_file;
-    maradona_path <<= "Maradona.output";
-    jw->maradonaprotocol(maradonapr, maradona_path.file_path());
+    fs::path maradona_path(
+      fs::normalize_path(nsconfig->sandbox_staging_path()),
+      fs::native);
+    maradona_path /= jobid::get_reduced_part(job_id);
+    maradona_path /= jobid_to_file;
+    maradona_path /= "Maradona.output";
+    jw->maradonaprotocol(maradonapr, maradona_path.native_file_string());
   } else {
     jw->maradonaprotocol(wmpisb_base_uri, "/Maradona.output");
   }
@@ -765,29 +764,29 @@ try {
   string jw_name("JobWrapper.");
   jw_name.append(jobid_to_file);
   jw_name.append(".sh");
-  boost::filesystem::path jw_path(
-    boost::filesystem::normalize_path(jcconfig->submit_file_dir()),
-    boost::filesystem::system_specific);
+  fs::path jw_path(
+    fs::normalize_path(jcconfig->submit_file_dir()),
+    fs::native);
   if (!dag_id.empty()) {
-    jw_path <<= jobid::get_reduced_part(dag_id);
+    jw_path /= jobid::get_reduced_part(dag_id);
     string jw_dagid_name("dag.");
     jw_dagid_name.append(dagid_to_file);
-    jw_path <<= jw_dagid_name;
+    jw_path /= jw_dagid_name;
   } else {  
-    jw_path <<= jobid::get_reduced_part(job_id);
+    jw_path /= jobid::get_reduced_part(job_id);
   }
-  jw_path <<= jw_name;
+  jw_path /= jw_name;
 
   try { 
-    boost::filesystem::create_parents(jw_path.branch());
-  } catch(boost::filesystem::filesystem_error &err) {
-    throw CannotCreateJobWrapper(jw_path.file_path());
+    fs::create_parents(jw_path.branch_path());
+  } catch(fs::filesystem_error &err) {
+    throw CannotCreateJobWrapper(jw_path.native_file_string());
   }
 
   // write the JobWrapper in the submit file path
-  ofstream ofJW(jw_path.file_path().c_str());
+  ofstream ofJW(jw_path.native_file_string().c_str());
   if (!ofJW) {
-    throw CannotCreateJobWrapper(jw_path.file_path());
+    throw CannotCreateJobWrapper(jw_path.native_file_string());
   }	  
   ofJW << *jw;
 
@@ -798,7 +797,7 @@ try {
   
   // Mandatory
   // the new executable value is the jobwrapper file path
-  jdl::set_executable(*result, jw_path.file_path());
+  jdl::set_executable(*result, jw_path.native_file_string());
 
   // Prepare the output file path
   
