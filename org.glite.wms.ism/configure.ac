@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.12  2005/06/14 15:45:23  giaco
+#       don't build test
+#
 #       Revision 1.11  2005/06/09 15:38:20  monforte
 #       *** empty log message ***
 #
@@ -179,6 +182,6 @@ AC_CONFIG_FILES([example/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/purchaser/Makefile])
-AC_CONFIG_FILES([test/Makefile])
+dnl AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT
