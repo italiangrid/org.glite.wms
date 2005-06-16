@@ -415,11 +415,11 @@ main(int argc, char* argv[])
       
       // Get the certificate file name from the configuration file
       std::string certificate_file;
-      certificate_file.assign(common_config->host_proxy_file())
+      certificate_file.assign(common_config->host_proxy_file());
       
         // Try to get the certificate path from the evironment variable GLITE_CERT_DIR if
         // possible, otherwise defaults to /etc/grid-security/certificates.
-        char* certificate_path = getenv("GLITE_CERT_DIR");
+      char* certificate_path = getenv("GLITE_CERT_DIR");
       if (!certificate_path) {
         certificate_path = "/etc/grid-security/certificates";
       } 
