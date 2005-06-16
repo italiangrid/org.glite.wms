@@ -19,8 +19,16 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.7  2005/02/28 10:23:15  monforte
-#       Merging RC1->HEAD
+#       Revision 1.8  2005/06/16 08:17:49  monforte
+#       *** empty log message ***
+#
+#       Revision 1.6.2.4  2005/05/05 12:23:54  monforte
+#       Integration with CEMON 1.2
+#
+#       Revision 1.6.2.3  2005/04/11 10:49:32  eronchie
+#       Added AC_OPTIMIZE
+#       Added optimize.m4
+#       Added --disable-optimization
 #
 #       Revision 1.6.2.2  2005/02/08 15:09:07  fprelz
 #       Increased minor version because of thread safety bug fix in candidate
@@ -56,7 +64,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Matchmaking], [1.0.2])
+AC_INIT([GLite WMS Matchmaking], [1.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])
@@ -117,6 +125,7 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 AC_GLITE
+AC_OPTIMIZE
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
