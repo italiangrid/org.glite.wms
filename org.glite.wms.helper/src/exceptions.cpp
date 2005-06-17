@@ -36,19 +36,19 @@ HelperError::helper() const
   return m_helper;
 }
 
-class NoSuchHelper::Impl
+struct NoSuchHelper::Impl
 {
-public:
   std::string m_what;
 };
 
 NoSuchHelper::NoSuchHelper(std::string const& helper)
-try
   : HelperError(helper)
 {
-  m_impl.reset(new Impl);
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl);
+  } catch (...) {
+    m_impl.reset();
+  }
 }
 
 NoSuchHelper::~NoSuchHelper() throw()
@@ -59,48 +59,51 @@ char const*
 NoSuchHelper::what() const throw()
 {
   if (m_impl) {
-    if (m_impl->m_what.empty()) {
-      m_impl->m_what = helper() + ": no such helper";
-    }
+    m_impl->m_what = helper() + ": no such helper";
     return m_impl->m_what.c_str();
   } else {
     return "HelperError: no such helper";
   }
 }
 
-class CannotGetAttribute::Impl
+struct CannotGetAttribute::Impl
 {
-public:
   std::string m_what;
   std::string m_attribute;
   std::string m_type;
 };
 
-CannotGetAttribute::CannotGetAttribute(std::string const& attribute_name,
-                                       std::string const& attribute_type,
-                                       std::string const& helper)
-try
+CannotGetAttribute::CannotGetAttribute(
+  std::string const& attribute_name,
+  std::string const& attribute_type,
+  std::string const& helper
+)
   : HelperError(helper)
 {
-  m_impl.reset(new Impl);
-  m_impl->m_attribute = attribute_name;
-  m_impl->m_type = attribute_type;
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl);
+    m_impl->m_attribute = attribute_name;
+    m_impl->m_type = attribute_type;
+  } catch (...) {
+    m_impl.reset();
+  }
 }
 
-CannotGetAttribute::CannotGetAttribute(glite::wms::jdl::CannotGetAttribute const& e,
-                                       std::string const& helper)
-try
+CannotGetAttribute::CannotGetAttribute(
+  glite::wms::jdl::CannotGetAttribute const& e,
+  std::string const& helper
+)
   : HelperError(helper)
 {
-  m_impl.reset(new Impl);
-  m_impl->m_attribute = e.parameter();
-  m_impl->m_type = "unknown";
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl);
+    m_impl->m_attribute = e.parameter();
+    m_impl->m_type = "unknown";
+  } catch (...) {
+    m_impl.reset();
+  }
 }
-  
+
 CannotGetAttribute::~CannotGetAttribute() throw()
 {
 }
@@ -121,38 +124,40 @@ char const*
 CannotGetAttribute::what() const throw()
 {
   if (m_impl) {
-    if (m_impl->m_what.empty()) {
-      m_impl->m_what = helper() + ": attribute " + attribute()
-        + " does not exist or has the wrong type (expected " + attribute_type() + ")";
-    }
+    m_impl->m_what
+      = helper() + ": attribute " + attribute()
+      + " does not exist or has the wrong type (expected "
+      + attribute_type() + ")";
     return m_impl->m_what.c_str();
   } else {
     return "HelperError: CannotGetAttribute";
   }
 }
 
-class InvalidAttributeValue::Impl
+struct InvalidAttributeValue::Impl
 {
-public:
   std::string m_what;
   std::string m_attribute;
   std::string m_value;
   std::string m_expected;
 };
 
-InvalidAttributeValue::InvalidAttributeValue(std::string const& attribute,
-                                             std::string const& value,
-                                             std::string const& expected,
-                                             std::string const& helper)
-try
+InvalidAttributeValue::InvalidAttributeValue(
+  std::string const& attribute,
+  std::string const& value,
+  std::string const& expected,
+  std::string const& helper
+)
   : HelperError(helper)
 {
-  m_impl.reset(new Impl);
-  m_impl->m_attribute = attribute;
-  m_impl->m_value = value;
-  m_impl->m_expected = expected;
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl);
+    m_impl->m_attribute = attribute;
+    m_impl->m_value = value;
+    m_impl->m_expected = expected;
+  } catch (...) {
+    m_impl.reset();
+  }
 }
 
 InvalidAttributeValue::~InvalidAttributeValue() throw()
@@ -181,43 +186,47 @@ char const*
 InvalidAttributeValue::what() const throw()
 {
   if (m_impl) {
-    if (m_impl->m_what.empty()) {
-      m_impl->m_what = helper() + ": invalid value " + value()
-        + " for attribute " + attribute() + " (expecting " + expected() + ")";
-    }
+    m_impl->m_what
+      = helper() + ": invalid value " + value()
+      + " for attribute " + attribute() + " (expecting " + expected() + ")";
     return m_impl->m_what.c_str();
   } else {
     return "HelperError: InvalidAttributeValue";
   }
 }
 
-class CannotSetAttribute::Impl
+struct CannotSetAttribute::Impl
 {
-public:
   std::string m_what;
   std::string m_attribute;
 };
 
-CannotSetAttribute::CannotSetAttribute(std::string const& attribute,
-                                       std::string const& helper)
-try 
+CannotSetAttribute::CannotSetAttribute(
+  std::string const& attribute,
+  std::string const& helper
+)
   : HelperError(helper)
 {
-  m_impl.reset(new Impl);
-  m_impl->m_attribute = attribute;
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl);
+    m_impl->m_attribute = attribute;
+  } catch (...) {
+    m_impl.reset();
+  }
 }
 
-CannotSetAttribute::CannotSetAttribute(glite::wms::jdl::CannotSetAttribute const& e,
-                                       std::string const& helper)
-try 
+CannotSetAttribute::CannotSetAttribute(
+  glite::wms::jdl::CannotSetAttribute const& e,
+  std::string const& helper
+)
   : HelperError(helper)
 {
-  m_impl.reset(new Impl);
-  m_impl->m_attribute = e.parameter();
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl);
+    m_impl->m_attribute = e.parameter();
+  } catch (...) {
+    m_impl.reset();
+  }
 }
 
 CannotSetAttribute::~CannotSetAttribute() throw()
@@ -234,9 +243,7 @@ char const*
 CannotSetAttribute::what() const throw()
 {
   if (m_impl) {
-    if (m_impl->m_what.empty()) {
-      m_impl->m_what = helper() + ": cannot set attribute " + attribute();
-    }
+    m_impl->m_what = helper() + ": cannot set attribute " + attribute();
     return m_impl->m_what.c_str();
   } else {
     return "HelperError: CannotSetAttribute";
@@ -253,17 +260,20 @@ public:
 };
 
 namespace {
-boost::filesystem::filesystem_error generic_fs_error("unknown");
+boost::filesystem::filesystem_error generic_fs_error("unknown", "unknown");
 }
 
-FileSystemError::FileSystemError(std::string const& helper,
-                                 boost::filesystem::filesystem_error const& e)
-try
+FileSystemError::FileSystemError(
+  std::string const& helper,
+  boost::filesystem::filesystem_error const& e
+)
   : HelperError(helper)
 {
-  m_impl.reset(new Impl(e));
-} catch (...) {
-  m_impl.reset();
+  try {
+    m_impl.reset(new Impl(e));
+  } catch (...) {
+    m_impl.reset();
+  }
 }
 
 FileSystemError::~FileSystemError() throw()
@@ -283,4 +293,3 @@ FileSystemError::what() const throw()
 }
 
 }}} // glite::wms::helper
-
