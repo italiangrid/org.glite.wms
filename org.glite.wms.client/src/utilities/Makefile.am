@@ -15,13 +15,12 @@
 #
 
 
-lib_LTLIBRARIES = \
-	libglite_wms_client_utilities.la
-
+noinst_LTLIBRARIES = libglite_wms_client_utilities.la
 
 noinst_HEADERS = \
 	adutils.h \
 	excman.h \
+	logman.h \
 	options_utils.h \
 	utils.h
 
@@ -29,6 +28,7 @@ noinst_HEADERS = \
 libglite_wms_client_utilities_la_SOURCES = \
 	adutils.cpp \
 	excman.cpp \
+	logman.cpp \
 	options_utils.cpp \
 	utils.cpp
 

@@ -10,20 +10,18 @@
 
 using namespace std ;
 using namespace glite::wms::client::services ;
-using namespace glite::wms::client::utilities ;
+using namespace glite::wmsutils::exception;
 /*
 *	main
 */
 int main (int argc,char **argv){
+	JobOutput job ;
+        // reads the user options
 	try {
-		JobOutput job ;
-                // reads the user options
-		job.readOptions (argc, argv);
-                // performs the main operations
+		job.readOptions(argc, argv);
                 job.getOutput( );
-
-	} catch (WmsClientException &ex) {
-		cout << flush << ex.what() << "\n" ;
+	} catch (Exception &exc) {
+		job.excMsg("", exc, argv[0]);
 	}
 	return 0;
 };

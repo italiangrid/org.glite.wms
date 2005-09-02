@@ -61,9 +61,8 @@ try{
 		opts->readOptions(argc, (const char**)argv);
 		cout << "MAIN::Checking options.."<< endl ;
 		utils=new Utils(opts);
-		resolve();
 	}catch (glite::wmsutils::exception::Exception &exc){
-		utils->errMsg(WMS_ERROR, exc);
+		cerr << exc.what();
 	}
 	WMS_EXCM_CATCH(WMS_FATAL)
 

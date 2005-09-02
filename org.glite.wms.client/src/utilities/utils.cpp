@@ -1,18 +1,20 @@
 	// PRIMITIVE
 #include "netdb.h" // gethostbyname (resolveHost)
-#include "iostream" // cin/cout     (answerYes)
-#include "fstream" // filestream (ifstream, check prefix)
+#include "iostream" // cin/cout     ()
+#include "fstream" // filestream (ifstream)
 #include "time.h" // time (getTime)
 #include "sstream" //to convert number in to string
+#include <stdlib.h>	// srandom
+#include <sys/stat.h> //mkdir
 // BOOST
 #include "boost/lexical_cast.hpp" // types conversion (checkLB/WMP)
 #include "boost/tokenizer.hpp"
 #include "boost/filesystem/operations.hpp"  // prefix & files procedures
 #include "boost/filesystem/path.hpp" // prefix & files procedures
-#include "boost/nondet_random.hpp" //to get random numbers
+#include "boost/filesystem/exception.hpp" //managing boost errors
+#include <boost/lexical_cast.hpp> // string->int conversion
 // GLITE
 #include "glite/wmsutils/jobid/JobId.h" // JobId
-// #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h" // proxy/voms utilities
 #include  "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
@@ -24,14 +26,16 @@
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 // COMPONENT
 #include "utils.h"
-#include "adutils.h"
 // encoding
 #include "openssl/md5.h"
 //gettimeofday
 #include "sys/time.h"
 #include "unistd.h"
-
-
+// fstat
+#include "sys/types.h"
+#include "sys/stat.h"
+#include "unistd.h"
+#include "fcntl.h"
 
 namespace glite {
 namespace wms{
@@ -40,43 +44,68 @@ namespace utilities {
 
 using namespace std ;
 using namespace glite::wmsutils::jobid ;
-using namespace boost ;
+//using namespace boost ;
+using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapiutils;
+using namespace glite::wmsutils::exception;
 namespace configuration = glite::wms::common::configuration;
+namespace fs = boost::filesystem ;
 
 
-
-const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG_VO";
-const char*  WMS_CLIENT_ENDPOINT			= 	"GLITE_WMS_WMPROXY_ENDPOINT";
-const string DEFAULT_LB_PROTOCOL		=	"https";
-const string PROTOCOL				=	"://";
-const string TIME_SEPARATOR			=	":";
+const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG";
+const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
+const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
+const string DEFAULT_LB_PROTOCOL	=	"https";
+const string DEFAULT_OUTSTORAGE		=	"/tmp";
+const string DEFAULT_ERRSTORAGE		=	"/tmp";
+const string PROTOCOL			=	"://";
+const string TIME_SEPARATOR		=	":";
 
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_WMP_PORT	=	7772;
 
 
+const string Utils::JOBID_FILE_HEADER = "###Submitted Job Ids###";
 
+const string PROTOCOL_SEPARATOR= "://";
+
+const char* COMPRESS_MODE ="wb6 " ;
+const int OFFSET = 16;
 
 /*************************************
 *** Constructor **********************
 **************************************/
+
+
 Utils::Utils(Options *wmcOpts){
 	this->wmcOpts=wmcOpts;
- 	// debug information
-        debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
-        logFile = wmcOpts->getStringAttribute (Options::LOGFILE);
-	cout << "Checking conf.." << endl ;
+	// Ad utilities
+	wmcAd = new AdUtils (wmcOpts);
+	// verbosity level
+        vbLevel = (LogLevel)wmcOpts->getVerbosityLevel();
+	// checks and reads the configuration file
 	this->checkConf();
+	// debug information
+	debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
+	// log-file
+	logInfo = new Log ( this->generateLogFile() , vbLevel);
 }
 /*************************************
-*** General Utilities Static methods *
+*** Destructor **********************
 **************************************/
-bool Utils::answerYes (const std::string& question, bool defaultAnswer){
-	if (this->wmcOpts->getBoolAttribute(Options::NOINT)){
+Utils::~Utils( ){
+	if (wmcAd){ free(wmcAd); }
+        if (logInfo){ free(logInfo); }
+}
+
+/*************************************
+*** General Utilities methods *
+**************************************/
+bool Utils::answerYes (const std::string& question, bool defaultAnswer, bool defaultValue){
+	if ( this->wmcOpts->getBoolAttribute(Options::NOINT)){
 		// No interaction required
-		return defaultAnswer ;
+		return defaultValue ;
 	}
 	string possible=" [y/n]";
 	possible +=(defaultAnswer?"y":"n");
@@ -84,7 +113,7 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 	char x[128];
 	char *c;
 	while (1){
-		cout << question << possible << endl ;
+		cout << question << possible << " " ;
 		cin.getline(x,128);
 		c=&x[0]; //cut off the \n char
 		if((*c=='y')||(*c=='Y')){return true;}
@@ -92,18 +121,165 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer){
 		else if (*c=='\0'){return defaultAnswer;}
 	}
 }
-void Utils::ending(unsigned int exitCode){
 
+void Utils::ending(unsigned int exitCode){
+	exit(exitCode);
 }
-void Utils::errMsg(severity sev,const std::string& title,const std::string& err){
-	string msg = glite::wms::client::utilities::errMsg(sev,title,err,wmcOpts->getBoolAttribute(Options::DBG));
+
+bool Utils::askForFileOverwriting(const std::string &path){
+	bool ow = true;
+	// checks if the output file already exists
+	if ( isFile(path ) ){
+		// if the file exists ......
+		string info = Utils::getAbsolutePath(path) + " file already exists";
+		// writes a warning msg in the log file
+		if (logInfo){ logInfo->print(WMS_WARNING, "Ouput file:", info, false);}
+		ostringstream q;
+		q << "\n\n" + info + "\n";
+		q  << "Do you want to overwrite it ?";
+		if (  ! this->answerYes( q.str(), false, true) ){ ow = false; }
+	}
+	return ow;
 }
-void Utils::errMsg(severity sev,glite::wmsutils::exception::Exception& exc){
-		string msg = glite::wms::client::utilities::errMsg(sev,exc,wmcOpts->getBoolAttribute(Options::DBG));
-		/*if (sev == WMS_INFO )){
-		}*/
-		cerr << msg << endl;
+
+
+std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, const enum WmcMenu &type){
+	std::vector<std::string> chosen;
+	ostringstream out ;
+        ostringstream question ;
+	string line = "";
+        char x[512];
+	int len = 0;
+        int size = items.size();
+	bool ask = true;
+	bool multiple = false;
+	// if the vector is empty or contains only one items, no menu is shown
+	if (size < 2 ){
+		return items;
+	}
+	// type of question
+	switch (type){
+		case (Utils::MENU_JOBID) :{
+			question << "Choose one or more jobId(s) in the list - [1-" << size
+			<< "]all (use , as separator or - for a range):";
+			multiple = true;
+			break;
+		};
+		case (Utils::MENU_SINGLEJOBID) :{
+			question << "Choose one jobId in the list :";
+			break;
+		};
+		case (Utils::MENU_CE) :{
+			question << "Choose one or more resource(s) in the list - [1-" << size
+			<< "]all (use , as separator- for a range):";
+			multiple = true ;
+			break;
+		};
+		case (Utils::MENU_SINGLECE) :{
+			question << "Choose one resource in the list :";
+			break;
+		};
+		default :{
+			break;
+		};
+	}
+	// MENU ============
+	out <<"------------------------------------------------------------------\n";
+	for (int i = 0; i < size; i++){
+		out << (i+1) << " : " << items[i] << "\n";
+	}
+	if (multiple) { out << "a : all\n" ; }
+	out << "q : quit\n";
+	out <<"------------------------------------------------------------------\n\n";
+	cout << out.str();
+	// ===============
+	while (ask){
+		// Question --------
+		ask = false;
+		cout << question.str() <<  " " ;
+		cin.getline(x,128);
+		// Processing the reply -----------
+		line = string(Utils::cleanString(x));
+		len = line.size( );
+		if ( len == 0 ){
+			// Empty space
+			if ( ! answerYes ( "Do you wish to continue ?", false, true)){
+				// exits from the programme execution
+				cout << "bye\n";
+				Utils::ending(1);
+			} else{
+				// cancellation of all jobs
+				return items;
+			}
+		} else {
+			// a= all jobs
+			if(line=="a" && multiple) {
+				return items;
+			} else if (line=="q") {
+				// q = quit ; exits from the programme execution
+				cout << "bye\n";
+				Utils::ending(1);
+			}
+
+			// checks for a single-job choice
+			try {
+				int n = boost::lexical_cast<unsigned int>((char*)Utils::cleanString((char*)line.c_str()) );
+				if ( n>=1 && n <= size ){
+					chosen.push_back(items[(int)(n-1)]);
+				} else {ask = true; continue;}
+				break;
+			} catch(boost::bad_lexical_cast &exc) { /* do nothing */ }
+			if (multiple) {
+				// range: <n1>-<n2>
+				string::size_type pos =line.find("-",string::npos) ;
+				if ( pos != string::npos) {
+					// reads the range limits
+					string s1 = line.substr(0, pos);
+					string s2 = line.substr(pos+1, line.size()-pos);
+
+					try {
+						// string-to-int conversion
+						int n1 = boost::lexical_cast<unsigned int>((char*)Utils::cleanString((char*)s1.c_str()) );
+						int n2 = boost::lexical_cast<unsigned int>((char*)Utils::cleanString((char*)s2.c_str()) );
+						// range extraction
+						if ((n1 >= 1 && n1 <= size)  && (n2 >= n1 && n2 <= size) ) {
+							for (int i=n1; i < (n2+1) ; i++) {
+								chosen.push_back(items[(int)(i-1)]);
+							}
+							break; // exits from the while-loop
+						} else {ask = true ; continue;}
+					} catch(boost::bad_lexical_cast &exc) { ask = true; }
+				} else {
+
+					// checks for a multiple-job choice
+					if (chosen.empty()){
+						// some of the jobs ......
+						line +=  string( " " );
+						boost::char_separator<char> separator(",");
+						boost::tokenizer<boost::char_separator<char> > tok(line, separator);
+						for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+							token != tok.end(); ++token) {
+							string ch = *token;
+							int cc = atoi(ch.c_str());
+							if (cc >= 1 && cc <= size) {
+								chosen.push_back(items[(int)(cc-1)]);
+							} else {
+								ask = true ;
+								break;
+							} // if (cc)
+						} //for
+					} //if (chosen)
+				} // if (pos) - else
+			} else{
+				ask = true;
+				continue;
+			} // if (multiple).else
+		} //while
+	}
+
+	return chosen;
 }
+
 
 /**********************************
 *** WMP, LB, Host Static methods ***
@@ -146,52 +322,166 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 	return lbs;
 
 }
-std::vector<std::string> Utils::getWmps( ){
+
+/*
+* methods to get WMProxy URL's
+*/
+const int Utils::getRandom (const unsigned int &max ){
+	unsigned int r = 0;
+        if (max>0){
+		srand( ((int)time(NULL) * max) );
+                r = rand() % max ;
+ 	 }
+        return r;
+}
+std::vector<std::string> Utils::getWmps(){
 	std::vector<std::string> wmps ;
 	char *ep = NULL;
-        string *eps = NULL;
-      	eps =wmcOpts->getStringAttribute(Options::ENDPOINT);
-        if (eps){
-		wmps.push_back(*eps);
-        } else {
-        ep = getenv( WMS_CLIENT_ENDPOINT );
-                if (ep){
-			wmps.push_back(ep);
-  		} else if (wmcConf){
-				wmps = wmcConf->wm_proxy_end_points( );
-    		}
-        }
+	string *eps = NULL;
+	// URL by the command line options
+	eps = wmcOpts->getStringAttribute(Options::ENDPOINT);
+	if (eps){ wmps.push_back(*eps);}
+	else {
+		// URL by the environment
+		ep = getenv(  GLITE_WMS_WMPROXY_ENDPOINT);
+		if (ep){ wmps.push_back(ep);}
+		else if (wmcConf){
+			// URL's by the configuration file
+			wmps = wmcConf->wm_proxy_end_points();
+		}
+	}
 	return wmps;
 }
 
 
-const int Utils::getRandom (const unsigned int &max ){
-	/*
-	BOOST_STATIC_ASSERT(random_device::min_value == integer_traits"random_device::result_type>::const_min);
-	BOOST_STATIC_ASSERT(random_device::max_value == integer_traits"random_device::result_type>::const_max);
-	random_device rd;
-	random_device::result_type random_value = rd() %max ;
-	cout "" "random_value=" "" random_value "" "\n" ;
-	return random_value;
-	*/
-        return 0;
-}
 
-const std::string* Utils::getWmpURL(std::vector<std::string> &wmps ){
+
+std::string* Utils::getWmpURL( ){
 	string *url = NULL;
+        ConfigContext *cfg = NULL;
+        string version = "";
+        vector<string> wmps = this->getWmps( ) ;
         vector<string>::iterator it = wmps.begin ( );
-        if ( ! wmps.empty()){
-        	if ( wmps.size( ) == 1){
-                	url = new string(wmps[0]);
-                        wmps.erase( it );
-                } else {
-                	int elem = getRandom(wmps.size( )) ;
+	while ( ! wmps.empty( ) ) {
+		if ( wmps.size( ) == 1){
+			url = new string(wmps[0]);
+			logInfo->print (WMS_DEBUG, "The EndPoint URL is", *url);
+			return url;
+		} else {
+			int elem = getRandom(wmps.size( )) ;
 			url = new string( wmps[elem] );
-                        wmps.erase( it + elem );
-   		}
-        }
+			wmps.erase( it + elem );
+		}
+		cfg = new ConfigContext("", *url, "");
+		logInfo->print (WMS_DEBUG, "trying to contact EndPoint", *url );
+		try {
+			version = getVersion(cfg);
+			// if no exception is thrown (available wmproxy; exit from the loop)
+			break;
+		} catch (BaseException &bex) {
+			logInfo->print (WMS_WARNING, "EndPoint not available", *url);
+			delete (url);
+		}
+	}
+	logInfo->print (WMS_DEBUG, "ENDPOINT_URL_ERROR", "no valid EndPoint URL has been found");
 	return url;
 }
+
+/*
+* Gets the ErrorStorage pathname
+*/
+const std::string Utils::getErrorStorage( ){
+	string storage = "";
+        if (wmcConf){ ;
+		storage = wmcConf->error_storage();
+	 }
+	return storage;
+ }
+/*
+* Get&check the OuputStorage pathname
+*/
+std::string Utils::getOutputStorage( ){
+	string storage = "" ;
+	// Default Storage location:
+	if (wmcConf){storage = wmcConf->output_storage();}
+	else {storage = DEFAULT_OUTSTORAGE; }
+	if(!this->isDirectory(storage)){
+		throw WmsClientException(__FILE__,__LINE__,"getOutputStorage",DEFAULT_ERR_CODE,
+				"Configuration Error",
+				"Output Storage pathname doesn't exist (check the configuration file): "+storage);
+	}
+	return storage ;
+ }
+
+ /*
+ * Gets the default Log File pathname
+ * /<OutStorage-path>/<commandname>_<UID>_<PID>_<timestamp>.log
+ */
+const std::string Utils::getDefaultLog ( ){
+        //
+        ostringstream filepath ;
+        string appl_name = "";
+        // error storage pathname
+	string storage = this->getErrorStorage( );
+        if (Utils::isDirectory(storage)){
+                filepath << Utils::normalizePath(storage) << "/";
+        } else {
+		filepath << DEFAULT_ERRSTORAGE << "/";
+        }
+        //application name
+        appl_name = wmcOpts->getApplicationName();
+        if (appl_name.size( ) == 0){
+                filepath << "wms-client_" ;
+        } else{
+                filepath << appl_name << "_";
+	}
+        filepath << getuid( ) << "_"  << getpid( ) << "_" << time(NULL) << ".log";
+        return  filepath.str();
+}
+
+/*
+* Gets the log filename
+*/
+std::string* Utils::getLogFileName ( ){
+	string path = "";
+        string *log = NULL;
+        if (logInfo){
+        	// if logInfo object has been already set
+        	log = logInfo->getPathName( );
+        } else if (wmcOpts->getStringAttribute(Options::LOGFILE)){
+        	// by --log option
+        	log = wmcOpts->getStringAttribute(Options::LOGFILE) ;
+        } else  if (wmcOpts->getBoolAttribute(Options::DBG)){
+		log = new string(this->getDefaultLog( ));
+	}
+        return log;
+};
+
+/*
+* Generate the log filename
+*/
+std::string* Utils::generateLogFile ( ){
+	string path = "";
+        string *log = NULL;
+	 if (wmcOpts->getStringAttribute(Options::LOGFILE)){
+        	// by --log option
+        	log = wmcOpts->getStringAttribute(Options::LOGFILE) ;
+        } else  if (wmcOpts->getBoolAttribute(Options::DBG)){
+		log = new string(this->getDefaultLog( ));
+	}
+        return log;
+};
+/*
+* get the UI version
+*/
+std::string Utils::getVersionMessage( ){
+	ostringstream info ;
+	char ws = (char)32;
+	info << Options::HELP_UI << ws << Options::HELP_VERSION << "\n";
+        info << Options::HELP_COPYRIGHT << "\n";
+        return info.str( );
+}
+
 /** Static private method **/
 std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 						const std::string& DEFAULT_PROTOCOL,
@@ -250,93 +540,137 @@ VO check priority:
 	- env variable
 	- JDL (submit||listmatch)
 ***********************************/
-string getDefaultVo(){
-/*
-	const vector"std::string> vonames= glite::wms::wmproxyapiutils::getFQANs(
-		glite::wms::wmproxyapiutils::getProxyFile(NULL);
-	);
-	if (vonames.size()){return vonames[0];}
-	else
-	THIS METHOD IS TO BE IMPLEMENTED
-*/
+vector<string> parseFQAN(const string &fqan){
+	vector<string> returnvector;
+	boost::char_separator<char> separator("/");
+	boost::tokenizer<boost::char_separator<char> >tok(fqan, separator);
+	for(boost::tokenizer<boost::char_separator<char> >::iterator
+		token = tok.begin(); token != tok.end(); token++) {
+		returnvector.push_back(*token);
+	}
+	return returnvector;
+}
+
+string FQANtoVO(const std::string fqan){
+	unsigned int pos = fqan.find("/", 0);
+	if(pos != string::npos) {
+		return  (parseFQAN(fqan.substr(pos,fqan.size())))[0];
+	}
+	// TBD display warning message
 	return "";
+
+}
+string getDefaultVo(){
+	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
+	if (proxy){
+		const vector <std::string> fqans= glite::wms::wmproxyapiutils::getFQANs(proxy);
+		if (fqans.size()){return FQANtoVO(fqans[0]);}
+		else {return "";};
+	} else {
+		throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
+			DEFAULT_ERR_CODE,
+			"Proxy File Not Found", "Unable to find a valid proxy file");
+	}
 }
 
 void Utils::checkConf(){
 	string voPath, voName;
-        ostringstream info ;
-	// certificate extension - point to vo plain name
-	if(getDefaultVo()!=""){
-		cout << "checkConf:proxy certificate extension" << endl ;
-		voName=getDefaultVo();
-		parseVo(CERT_EXTENSION,voPath,voName);
-	}
-	// config option- point to the file
-	else if (wmcOpts->getStringAttribute (Options::VO)){
-		cout << "checkConf:config option..." << flush ;
-		voName=*(wmcOpts->getStringAttribute (Options::VO));
-                cout << " ..." << voName << "\n";
-		parseVo(VO_OPT,voPath,voName);
-	}
-	// config option- point to the file
-	else if (wmcOpts->getStringAttribute (Options::CONFIG)){
-		cout << "checkConf:config option..." << endl ;
-		voPath= *(wmcOpts->getStringAttribute (Options::CONFIG));
-		parseVo(CONFIG_OPT,voPath,voName);
-	}
-	// env variable point to the file
-	else if(getenv(WMS_CLIENT_CONFIG)){
-		cout << "checkConf:env option..." << endl ;
-		voName=string(getenv(WMS_CLIENT_CONFIG));
-		parseVo(CONFIG_VAR,voPath,voName);
-	}
-	// JDL specified(submit||listmatch) read the vo plain name
-	else if (wmcOpts->getPath2Jdl()){
-		cout << "checkConf:JDL option..." << endl ;
-		voPath=*(wmcOpts->getPath2Jdl());
-		parseVo(JDL_FILE,voPath,voName);
-	}else{
-		// If this point is reached no VO found
+        // config-file pathname
+        string* cfg = wmcOpts->getStringAttribute( Options::CONFIG ) ;
+        // vo-name
+        string *vo = wmcOpts->getStringAttribute( Options::VO ) ;
+        // they can't set together !
+	if (vo && cfg){
+        	ostringstream err ;
+		err << "the following options cannot be specified together:\n" ;
+		err << wmcOpts->getAttributeUsage(Options::VO) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"getVoPath", DEFAULT_ERR_CODE,
-				"Empty value","Unable to find any VirtualOrganisation");
+				"readOptions",DEFAULT_ERR_CODE,
+				"Input Option Error", err.str());
 	}
-        if (debugInfo || logFile){
-        	info << "Info - VO : " << voName << endl;
-        	info << "Info - ConfigFile : " << voPath << endl;
-		if (debugInfo){
-                        cout << "\n" << info.str( );
-  		}
-		/*
-                if (logFile){
-			logMsg( *logFile, info.str( ) );
-                }
-                */
-
-        }
-	wmcConf=new glite::wms::common::configuration::WMCConfiguration(loadConfiguration(voPath,checkPrefix(voName)));
+	voSrc src =NONE;
+	if(getDefaultVo()!=""){
+		// certificate extension - point to vo plain name
+		if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "proxy certificate extension",true);}
+		voName=getDefaultVo();
+		src=CERT_EXTENSION;
+	}
+	// OTHER OPTIONS PARSING.........
+	if (vo){
+		// vo option point to the file
+		if (src==NONE){
+			voName=*vo;
+			src=VO_OPT;
+			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--vo option", true);}
+		}else {
+			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "--vo option ignored","" , true);}
+		}
+	}else if (cfg){
+		*cfg = Utils::getAbsolutePath (*cfg);
+		// config option point to the file
+		if (src==NONE){
+			src=CONFIG_OPT;
+			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--config option",true);}
+		}
+		// Store config path value
+		voPath= *cfg;
+	}else if(getenv(WMS_CLIENT_CONFIG)){
+		// env variable point to the file
+		if (src==NONE){
+			src=CONFIG_VAR;
+			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "ENV option",true);}
+		}
+		// Store config path value
+		voPath=string(getenv(WMS_CLIENT_CONFIG));
+	}else if (wmcOpts->getPath2Jdl()){
+		// JDL specified(submit||listmatch) read the vo plain name
+		if (src==NONE){
+			src=JDL_FILE;
+			voPath=*(wmcOpts->getPath2Jdl());
+			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "JDL option",true);}
+		}
+	}else if (src==NONE){
+		// If this point is reached no possible VO source found
+		throw WmsClientException(__FILE__,__LINE__,
+				"checkConf", DEFAULT_ERR_CODE,
+				"Empty value",
+				(voName=="")?("Unable to find any VirtualOrganisation"):"Unable to find any configuration file");
+	}
+	// Eventually Parse fields
+	wmcAd->parseVo(src,voPath,voName);
+	// Print Info
+	errMsg (WMS_DEBUG, "VirtualOrganisation value:", voName);
+	// check the Installation path
+	checkPrefix( );
+	string cf = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
+	wmcConf=new glite::wms::common::configuration::WMCConfiguration( wmcAd->loadConfiguration(voPath, cf)  );
 }
-
-string Utils::checkPrefix(const string& vo){
+void Utils::checkPrefix( ){
 	// Look for GLITE installation path
 	vector<string> paths ;
 	if (getenv("GLITE_WMS_LOCATION")){ paths.push_back (string(getenv("GLITE_WMS_LOCATION")) );}
 	if (getenv("GLITE_LOCATION")){ paths.push_back (string(getenv("GLITE_LOCATION")) );}
 	paths.push_back("/opt/glite");
-	paths.push_back("usr/local");
+	paths.push_back("/usr/local");
 	// Look for conf-file:
 	string defpath = "";
 	for (unsigned int i=0;i < paths.size();i++){
-		defpath =paths[i]+"/etc/"+vo ;
-		if ( checkPathExistence( defpath.c_str())  ) {
+		defpath =paths[i];
+		if ( isFile((defpath + "/bin/" + wmcOpts->getApplicationName()))){
 			break;
-		} else{
-                	// Unable to find any file
+		}else{
+                	// Unable to find path
 			defpath = "";
                 }
 	}
-	return defpath;
+	if (defpath.size()==0) {
+		errMsg(WMS_WARNING, "Unable to find glite installation",
+		"no installation in /opt/glite or in /usr/local ; neither GLITE_WMS_LOCATION nor GLITE_LOCATION are set", true);
+	}
+	prefix=defpath;
 }
+std::string Utils::getPrefix(){return prefix;}
 
 /**********************************
 JobId checks Methods
@@ -346,44 +680,105 @@ string Utils::checkJobId(std::string jobid){
 	JobId jid (jobid);
         return jobid;
 }
-std::vector<std::string> Utils::checkJobIds(std::vector<std::string> &wrongs){
+
+ std::vector<std::string> Utils::checkJobIds(std::vector<std::string> &jobids){
         std::vector<std::string>::iterator it ;
-	vector<std::string> goods;
-        vector<std::string> jobids;
+        vector<std::string> wrongs;
+	vector<std::string> rights;
         if (wmcOpts) {
-		jobids = wmcOpts->getJobIds( );
                 for (it = jobids.begin() ; it != jobids.end() ; it++){
                         try{
                                 Utils::checkJobId(*it);
-                                goods.push_back(*it);
+				rights.push_back(*it);
                         } catch (WrongIdException &exc){
-                                wrongs.push_back(*it);
+                        	wrongs.push_back(*it);
                         }
                 }
-		if (goods.empty()) {
-			throw WmsClientException(__FILE__,__LINE__,
-				"getVoPath", DEFAULT_ERR_CODE,
-				"Wrong JobId(s)",
-                                "bad format for the input JobId(s)");
-
-                } else
 		// the found wrongs jobids
-                if ( ! wrongs.empty() ){
-			// ERROR MESSAGES !!!
-			cerr << "\nWARNING: bad format for the following jobid(s) :\n" ;
-                        for ( it = wrongs.begin( ) ; it !=  wrongs.end( ) ; it++ ){
-				cerr << " - " << *it << "\n";
-                        }
-                        if ( ! answerYes ("Do you wish to continue", "yes") ){
+                if ( ! wmcOpts->getBoolAttribute(Options::NOINT) && ! wrongs.empty() ){
+			if (rights.size()){
+				ostringstream err ;
+				err << "bad format for the following jobid(s) :\n";
+				for ( it = wrongs.begin( ) ; it !=  wrongs.end( ) ; it++ ){
+					err << " - " << *it << "\n";
+				}
+				logInfo->print(WMS_WARNING, "Wrong JobId(s)", err.str() );
+				if (! answerYes ("Do you wish to continue ?", true, true) ){
+					cout << "bye\n";
+					ending(0);
+				}
+			}else{
+				// Not even a right jobid
 				throw WmsClientException(__FILE__,__LINE__,
-					"getVoPath", DEFAULT_ERR_CODE,
-					"Wrong JobId(s)",
-                                	"execution interrupted by user");
-                        }
-                 }
+					"checkJobIds", DEFAULT_ERR_CODE,
+					"Wrong Input Value",
+					"all parsed jobids in bad format" );
+			}
+
+
+
+		}
         }
-        return goods;
+	return rights;
 }
+
+string Utils::getUnique(std::string jobid){
+	JobId jid (jobid);
+        return jid.getUnique();
+}
+
+/**********************************
+Resource checks Methods
+***********************************/
+
+void Utils::checkResource(const std::string& resource){
+	// resource must have at least a slash separator
+	if ( resource.find("\\")==string::npos ){
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkResource", DEFAULT_ERR_CODE,
+			"Wrong Resource Value",
+			"invalid resource value ("+resource+")" );
+	}
+}
+
+ std::vector<std::string> Utils::checkResources(std::vector<std::string> &resources){
+	std::vector<std::string>::iterator it;
+	vector<std::string> wrongs;
+	vector<std::string> rights;
+	if (wmcOpts) {
+		for (it = resources.begin(); it != resources.end(); it++){
+			try{
+				Utils::checkResource(*it);
+				rights.push_back(*it);
+			} catch (WmsClientException &exc){
+				wrongs.push_back(*it);
+			}
+		}
+		// the found wrongs resources
+		if ( ! wmcOpts->getBoolAttribute(Options::NOINT) && ! wrongs.empty() ){
+			if (rights.size()){
+				ostringstream err ;
+				err << "bad format for the following resource(s) :\n";
+				for ( it = wrongs.begin( ) ; it !=  wrongs.end( ) ; it++ ){
+					err << " - " << *it << "\n";
+				}
+				logInfo->print(WMS_WARNING, "Wrong Resource(s)", err.str() );
+				if (! answerYes ("Do you wish to continue ?", true, true) ){
+					cout << "bye\n";
+					ending(0);
+				}
+			}else{
+				// Not even a right resource
+				throw WmsClientException(__FILE__,__LINE__,
+					"checkResources", DEFAULT_ERR_CODE,
+					"Wrong Input Value",
+					"all parsed resources in bad format" );
+			}
+		}
+	}
+	return rights;
+}
+
 /**********************************
 Time Checks methods
 ***********************************/
@@ -394,7 +789,6 @@ const std::vector<std::string> Utils::extractFields(const std::string &instr, co
 	boost::tokenizer<boost::char_separator<char> > tok(instr, separator);
 	for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
 		token != tok.end(); token++) {
-		//cout  "" "debug- token=""" *token "" "\n";
     		vt.push_back(*token);
 	}
 	return vt;
@@ -467,8 +861,6 @@ const long Utils::getTime(const std::string &st,
 				string("invalid time string (" + st + ")"));
 		}
 	}
-	// number of second
-	//cout "" "debug- month : " "" ts.tm_mon "" "\nday : " "" ts.tm_mday "" "\nh: " "" ts.tm_hour "" "\nmin: " "" ts.tm_min "" "\nyear : " "" ts.tm_year """\n";
 	return  mktime(&ts) ;
 }
 
@@ -514,12 +906,126 @@ const long Utils::checkTime ( const std::string &st, const Options::TimeOpts &op
     		}
 	} else {
 		throw WmsClientException(__FILE__,__LINE__,
-			"isAfter", DEFAULT_ERR_CODE,
+			"checkTime", DEFAULT_ERR_CODE,
 			"Wrong Time Value",
 			string("the string is not a valid time expression (" + st + ")") );
 	}
  	return sec;
 }
+
+
+
+
+std::string* Utils::getDelegationId ( ){
+	string* delegation = NULL ;
+        bool autodg = false;
+        string *unique = NULL;
+        if (wmcOpts){
+                delegation = wmcOpts->getStringAttribute(Options::DELEGATION);
+ 		autodg = wmcOpts->getBoolAttribute(Options::AUTODG);
+                if ( delegation && autodg){
+                        ostringstream err;
+                        err << "the following options cannot be specified together:\n" ;
+                        err << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
+                        err << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
+                        throw WmsClientException(__FILE__,__LINE__,
+                                        "getDelegationId",DEFAULT_ERR_CODE,
+                                        "Input Option Error", err.str());
+		}  else if (delegation) {
+                        unique = new string(*delegation);
+                        logInfo->print  (WMS_DEBUG, "Delegation ID:", *unique);
+                } else if (autodg ){
+                        // Automatic Generation
+                        unique = getUniqueString();
+                        logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *unique);
+                } else {
+			ostringstream err ;
+                        err << "a mandatory attribute is missing:\n" ;
+                        err << wmcOpts->getAttributeUsage(Options::DELEGATION) ;
+                        err << "\nto use a proxy previously delegated or\n";
+                        err << wmcOpts->getAttributeUsage(Options::AUTODG) ;
+			err << "\nto perform automatic delegation";
+                        throw WmsClientException(__FILE__,__LINE__,
+                                        "getDelegationId", EINVAL ,
+                                        "Missing Information", err.str());
+                }
+        }
+        return unique;
+}
+/*
+* Performs the operations to delegate a user proxy to the endpoint
+*/
+
+const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id){
+        string proxy = "";
+        int index = 0;
+        vector<string> urls ;
+        // flag to stop while-loop
+	bool success = false;
+        // number of enpoint URL's
+        int n = 0;
+	string *endpoint = wmcOpts->getStringAttribute(Options::ENDPOINT);
+        // checks if ConfigContext already contains the WMProxy URL
+        if (endpoint){
+                urls.push_back(*endpoint);
+        } else {
+                // list of endpoints from configuration file
+                urls = getWmps ( );
+        }
+        if (!cfg){
+		cfg = new ConfigContext("", "", "");
+	}
+        while ( ! urls.empty( ) ){
+       		int size = urls.size();
+       		if (size > 1){
+                	// randomic extraction of one URL from the list
+       			index = getRandom(size);
+           	} else{
+			index = 0;
+    		}
+                // setting of the EndPoint ConfigContext field
+                cfg->endpoint=urls[index];
+                // Removes the extracted URL from the list
+                urls.erase ( (urls.begin( ) + index) );
+                // jobRegister
+                logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfg->endpoint);
+                try{
+			// Proxy Request
+                        proxy = getProxyReq(id, cfg) ;
+			 // sends the proxy to the endpoint service
+                        putProxy(id, proxy, cfg);
+                        success = true;
+                } catch (BaseException &exc) {
+                	if (n==1) {
+                        	ostringstream err ;
+                                err << "Unable to delegate credential to the service: " << cfg->endpoint << "\n";
+                                err << errMsg(exc) ;
+                        	// in case of any error on the only specified endpoint
+                		throw WmsClientException(__FILE__,__LINE__,
+                        		"delegateProxy", ECONNABORTED,
+                        		"Operation failed", err.str());
+                        } else {
+                        	logInfo->print  (WMS_INFO, "Operation failed:", errMsg(exc));
+                        	sleep(1);
+                       	 	if (urls.empty( )){
+                			throw WmsClientException(__FILE__,__LINE__,
+                        		"delegateProxy", ECONNABORTED,
+                        		"Operation failed",
+                        		"Unable to delegate the credential to any specified endpoint");
+                                }
+                   	 }
+                }
+                // exits from the loop in case of successful delegation
+                if (success){ break;}
+       }
+       logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier: ",  id);
+       // returns the Endpoint URL
+       return cfg->endpoint;;
+}
+
+/****************************************************
+* Utility methods for strings
+****************************************************/
 /*
 *	base64 encoder
 */
@@ -580,10 +1086,12 @@ const char * Utils::str2md5Base64(const char *s)
     buf[l - 1] = 0;
     return strdup(buf);
 }
+
+
 /*
 * generate a unique string
 */
-string* Utils::getUniqueString (){
+std::string* Utils::getUniqueString (){
 
         struct hostent* he;
         struct timeval tv;
@@ -608,27 +1116,316 @@ string* Utils::getUniqueString (){
        } else{
        		return NULL;
        }
-
-
 }
 /*
-* save message into a  file
+* gets a char stripe
 */
-void Utils::toFile (std::string path, std::string msg) {
-        time_t now = time(NULL);
-        struct tm *tn = localtime(&now);
-	char *date = asctime(tn);
-        ofstream outputstream(path.c_str(), ios::app);
-        if (outputstream.is_open() ) {
-        	if (date) {
-               	 	outputstream << date << ends;
-                 }
-                outputstream << msg<< ends;
-                outputstream.close();
-        } else {
-               // errMsg(WMS_WARNING, "i/o error", "could not save the result into: " +path );
-        }
+const std::string Utils::getStripe (const int &len, const std::string &ch, const std::string &msg){
+	int max = len;
+        int size = 0;
+        string stripe = "";
+        string fs = "";
+	if (len > 0){
+        	size = msg.size( );
+                if (size > 0){ max = (len / 2) - ((size  / 2) +1) ; }
+                // build the stripe
+                for (int i = 0; i < max ; i++){
+			stripe += ch ;
+                }
+                if (size > 0){
+			fs = stripe + " " + msg + " " + stripe;
+                } else {
+			fs = stripe ;
+                }
+ 	}
+	return fs ;
 }
+/*
+* removes white spaces form the begininng and from the end of the input string
+*/
+const char* Utils::cleanString(char *str)
+{
+    int ii = 0;
+    int len = 0;
+    unsigned int p = 0;
+    string *s = NULL;
+   // erases white space at the beginning of the string
+    for (ii = 0; str[ii] == ' ' || str[ii] == '\t'; ii++);
+    str = &(str[ii]);
+
+    len = strlen (str);
+    // erases white space at the end of the string
+    if (len > 0) {
+        for (ii = len - 1; (str[ii] == ' ' || str[ii] == '\t'); ii--);
+        str[ii + 1] = '\0';
+    }
+    s = new string(str);
+    p = s->find("\n");
+    if ( p != string::npos ){
+        *s = s->substr (0, ii);
+    }
+    return ((char*)s->c_str()) ;
+}
+/*
+* Converts the input integer to a string, adding a "zero"-digit ahead if it has one digit ( 0< d < )
+*/
+std::string Utils::twoDigits(unsigned int d ){
+	ostringstream dd ;
+        if (d<10){ dd << "0" << d ;}
+        else { dd <<  d ;}
+	return dd.str();
+};
+/*
+*	adds the star (*) wildcard to the input pathname
+*/
+const std::string Utils::addStarWildCard2Path(std::string& path){
+        if ( path.compare( path.length()-1, 1, "/" ) != 0 ){
+                path += "/";
+        }
+        path += "*";
+        return path;
+ }
+
+
+/*********************************************
+* Utility method for files
+**********************************************/
+
+/*
+* Checks whether the pathname represents a file
+*/
+const bool Utils::isFile (const std::string &pathname){
+        bool is_valid = false;
+        if ( checkPathExistence(pathname.c_str() ) ){
+                try{
+                        fs::path cp (normalizePath(pathname), fs::system_specific);
+                        is_valid = !( fs::is_directory(cp)) ;
+                }catch (fs::filesystem_error &ex){ }
+        }
+        return is_valid;
+}
+/*
+* Checks whether the pathname represents a directory
+*/
+const bool Utils::isDirectory (const std::string &pathname){
+	bool is_valid = false;
+	if ( checkPathExistence(pathname.c_str()) ){
+		try{
+			fs::path cp (Utils::normalizePath(pathname), fs::system_specific);
+        		is_valid =  fs::is_directory(cp) ;
+		}catch (fs::filesystem_error &ex){ }
+	}
+        return is_valid;
+}
+/*
+* Gets the absolute path of the file
+*/
+const std::string Utils::getAbsolutePath(const std::string &file ){
+	string path = file ;
+	char* pwd = getenv ("PWD");
+	if (path.find("./")==0){
+		// PWD path  (./)
+		if (pwd) {
+			string leaf = path.substr(1,string::npos);
+			if ( leaf.find("/",0) !=0 ) {
+				path = normalizePath(pwd) + "/"  + leaf;
+			} else {
+				path = normalizePath(pwd) + leaf;
+			}
+		}
+	} else if (path.find("/") ==0 ){
+		// ABsolute Path
+		path = normalizePath(path);
+	} else {
+		// Relative path: append PWD
+		if (pwd){
+			path = normalizePath(pwd) + "/" + path;
+		}
+	}
+	return path;
+}
+
+int Utils::getFileSize (const std::string &path) {
+	struct stat file_info;
+	if (isFile(path)) {
+		int hd = open(path.c_str(), O_RDONLY) ;
+ 		 if (hd < 0) {
+			throw WmsClientException(__FILE__,__LINE__,
+				"open",  DEFAULT_ERR_CODE,
+				"File i/o Error", "unable to open the file : " + path );
+		}
+                fstat(hd, &file_info);
+                close(hd) ;
+        } else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"getFileSize",  DEFAULT_ERR_CODE,
+			"File i/o Error", "no such file : " + path );
+        }
+        return file_info.st_size ;
+}
+bool Utils::removeFile(const std::string &file) {
+	bool result = false;
+	try{
+		fs::path cp (file, fs::system_specific);
+		if ( fs::is_directory(cp))  {
+			throw WmsClientException(__FILE__,__LINE__,
+				"removeFile",  DEFAULT_ERR_CODE,
+				"File i/o Error", "this path is not a valid file : " + file );
+		}
+		 fs::remove (cp);
+	}catch (fs::filesystem_error &ex){
+		throw WmsClientException(__FILE__,__LINE__,
+			"removeFile",  DEFAULT_ERR_CODE,
+			"File i/o Error", "no such file : " + file );
+	}
+	return result;
+}
+/*
+* reads a  file
+*/
+std::string* Utils::fromFile (const std::string &path) {
+	ostringstream bfr;
+        string s = "";
+	string *txt = NULL;
+	if (isFile(path)) {
+		ifstream inputstream(path.c_str()) ;
+             	if (inputstream.is_open() ) {
+			while(getline(inputstream, s)){ bfr << s << "\n";}
+   			inputstream.close();
+			txt = new string(bfr.str());
+		}
+ 	}
+        return txt;
+}
+
+/*
+* saves message into a  file
+*/
+int Utils::toFile (const std::string &path, const std::string &msg, const bool &interactive,const bool &append) {
+	int result = -1;
+	ios::openmode mode ;
+	if (append ) {
+		mode = ios::app ;
+	} else {
+		mode = ios::trunc ;
+	}
+	ofstream outputstream(path.c_str(), mode);
+        if (outputstream.is_open()) {
+                outputstream << msg  << "\n";
+                outputstream.close();
+                result = 0;
+        }
+        return result;
+}
+/*
+* stores a jobid in a file
+*/
+const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid){
+	string outmsg = "";
+        string *fromfile = NULL;
+	try {
+        	// reads the file if it already exists
+		fromfile =Utils::fromFile(path);
+       		if (fromfile){
+                        if ( fromfile->find(Utils::JOBID_FILE_HEADER)==string::npos){
+                        	string *outfile = wmcOpts->getStringAttribute (Options::OUTPUT);
+                                if (outfile &&
+                                	Utils::answerYes("\nThe following pathname is not a valid submission output file:\n"+
+                                        	string(Utils::getAbsolutePath(*outfile) ) +
+                                        "\nDo you want to overwrite it ?"   , false, true )  ){
+						// no list of jobid's
+ 						outmsg = Utils::JOBID_FILE_HEADER + "\n";
+       					} else {
+						return (-1);
+                                        }
+                        } else {
+                        	// list of jobid's = yes
+				outmsg = string(cleanString((char*)fromfile->c_str()));
+                                if ( outmsg.find("\n", outmsg.size())==string::npos){outmsg +="\n";}
+                        }
+    		} else {
+                	// the file doesn't exist (new file)
+			outmsg = Utils::JOBID_FILE_HEADER + "\n";
+   		}
+	} catch (WmsClientException &exc){
+		outmsg = Utils::JOBID_FILE_HEADER + "\n";
+        }
+        outmsg += jobid ;
+	return (toFile(path, outmsg));
+}
+/*
+ * removes '/' characters at the end of the of the input pathname
+ */
+ const std::string Utils::normalizePath( const std::string &fpath ) {
+  string                   modified;
+  string::const_iterator   last, next;
+  string::reverse_iterator check;
+
+  last = fpath.begin();
+  do {
+    next = find( last, fpath.end(), '/' );
+
+    if( next != fpath.end() ) {
+      modified.append( last, next + 1 );
+
+      for( last = next; *last == '/'; ++last );
+    }
+    else modified.append( last, fpath.end() );
+  } while( next != fpath.end() );
+
+  check = modified.rbegin();
+  if( *check == '/' ) modified.assign( modified.begin(), modified.end() - 1 );
+
+  return modified;
+}
+
+std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
+	string tmp = "";
+	// looks for the end of the protocol string
+	unsigned int p =uri.find(PROTOCOL_SEPARATOR);
+ 	if (p!=string::npos) { tmp = uri.substr(p+PROTOCOL_SEPARATOR.size(), uri.size());}
+	// looks for the end of the host:port string
+	 p = tmp.find("/");
+	if (p!=string::npos){ tmp = tmp.substr(p+1, uri.size());}
+	return tmp;
+
+}
+
+std::string  Utils::getFileName (const std::string& path) {
+	string tmp = "";
+	int size = path.size( );
+	unsigned int p =path.rfind("/", size);
+ 	if (p!=string::npos) { tmp = path.substr(p+1, size);}
+	return tmp;
+}
+/*
+* gets a file
+*/
+std::vector<std::string> Utils::getItemsFromFile (const std::string &path, const enum WmcInputType type){
+	vector<string> items;
+        string *bfr = fromFile(path);
+	if (bfr){
+		boost::char_separator<char> separator("\n");
+		boost::tokenizer<boost::char_separator<char> > tok(*bfr, separator);
+		for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+			token != tok.end(); ++token) {
+                        string it = *token;
+                        it = string(Utils::cleanString( (char*) it.c_str()) );
+			if(   (it.find("#")==0)||it.find("//")==0){
+				// It's a comment, skip line
+			}else {
+				// Append line
+				items.push_back(string(Utils::cleanString((char*)it.c_str())));
+			}
+                }
+  	} else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"getItemsFromFile",  DEFAULT_ERR_CODE,
+			"File i/o Error", "invalid input file : " + path );
+        }
+        return items;
+}
+
 } // glite
 } // wms
 } // client

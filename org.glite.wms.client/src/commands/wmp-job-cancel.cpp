@@ -8,23 +8,20 @@
 
 #include "services/jobcancel.h"
 using namespace std ;
-using namespace glite::wms::client::utilities ;
-using namespace glite::wms::wmproxyapi;
+using namespace glite::wms::client::services ;
+using namespace glite::wmsutils::exception;
 
 /*
 *	main
 */
 int main (int argc,char **argv){
-
-	vector<string> jobids;
+	JobCancel job ;
+        // reads the user options
 	try {
-		// reads the user options
-		Options opts (Options::JOBCANCEL) ;
-		opts.readOptions(argc, (const char**)argv);
-		// gets the jobids
-		jobids = opts.getJobIds( );
-	} catch (exception &ex) {
-		cout << flush << ex.what() << "\n" ;
+		job.readOptions(argc, argv);
+                job.cancel( );
+	} catch (Exception &exc) {
+		job.excMsg("", exc, argv[0]);
 	}
-
+	return 0;
 };

@@ -15,6 +15,7 @@ BOOST=$(repository)/boost/1.29.1/rhel30_gcc32
 CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
 CURL=-L/usr/lib -lcurl
 
+
 WMPCLIENT_LD_FLAGS= \
 	-L$(BOOST)/lib/release \
 	-L$(CLASSAD)/lib \
@@ -25,7 +26,7 @@ WMPCLIENT_LD_FLAGS= \
 	-lglite_wmsutils_jobid  \
 	-lglite_wmsutils_cjobid \
 	-lglite_wms_jdl \
-	-lclassad 
+	-lclassad
 
 
 
@@ -49,12 +50,13 @@ WMPCLIENT_C_FLAGS= \
 WMPCLIENT_FILES= utils.cpp \
 	adutils.cpp \
 	excman.cpp \
+ 	logman.cpp \
 	options_utils.cpp
 
 all: libutils
 libutils:
 	@echo "compiling utils....."
-	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
+	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES -DWITH_OPENSSL \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_utils.so  $(WMPCLIENT_FILES)
 	@echo "DONE"
 utils:

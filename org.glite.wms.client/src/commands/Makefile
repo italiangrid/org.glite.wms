@@ -36,7 +36,7 @@ BOOST=$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32
 BOOST_LIBS=-L$(BOOST_LOCATION)/lib/release \
 -lboost_fs -lboost_thread -lboost_regex
 CLASSAD_LIBS=-L$(CLASSAD)/lib  -lclassad -lclassad_dl
-ARES_LIBS=-lares
+ARES_LIBS=-L$(ARES)/lib -lares
 GSI_PLUGIN=/home/msotty/webservices/gsoap/gsoap-gsi-plugin-2.0
 
 CIFLAGS=-I../ \
@@ -53,59 +53,109 @@ JOBID_LIB=-lglite_wmsutils_jobid \
 -lglite_wmsutils_cjobid
 EXC_LIB=-lglite_wmsutils_exception
 
-GRIDSITE_LIBS=-lgridsite -lxml2
-
+#GRIDSITE_LIBS=-lgridsite -lxml2
+GRIDSITE_GLOBUS_STAGE_LIBS=-lgridsite_globus
+GRIDSITE_GLOBUS_LIBS = -L/usr/lib -lxml2
 CURL=-L/usr/lib -lcurl
+LIBTAR=-L/usr/local/lib -ltar
+ZLIB=-L/usr/local/lib -lz
+
+LB_LIBRARIES=\
+-L$(GLOBUS_LOCATION)/lib \
+-L$(EXPAT)/lib \
+-lglite_lb_client_gcc32 \
+-lglite_lb_clientpp_gcc32 \
+-lexpat \
+-lglobus_gsi_proxy_core_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_gsi_credential_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_gsi_callback_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_oldgaa_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_gsi_sysconfig_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_gsi_cert_utils_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_openssl_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_proxy_ssl_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_openssl_error_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_ftp_client_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_ftp_control_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_io_$(GLOBUS_FLAVOR_THREADS) \
+-lssl_$(GLOBUS_FLAVOR_THREADS) \
+-lcrypto_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_gss_assist_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_gssapi_gsi_$(GLOBUS_FLAVOR_THREADS) \
+-lglobus_common_$(GLOBUS_FLAVOR_THREADS)
 
 STAGELIBS=-L$(REPOSITORY)/stage/lib \
 -lglite_wms_util \
 -lglite_wms_wmproxy_api_cpp \
 -lglite_wms_util \
 -lglite_wms_client_utils \
--lglite_wms_client_services
+-lglite_wms_client_services \
+-lglite_lb_common_gcc32 \
+-lglite_wms_globus_ftp_util \
+-lglite_wms_logger \
+-lglite_security_gss_gcc32 \
+$(ARES_LIBS) \
+$(LB_LIBRARIES) \
+$(GRIDSITE_GLOBUS_STAGE_LIBS) \
+$(GRIDSITE_GLOBUS_LIBS) \
+$(LIBTAR) \
+$(ZLIB)
 
 COMMON_LD_FLAGS=\
 -L../services \
 -L../utilities \
 $(STAGELIBS) \
 $(CURL) \
-$(GRIDSITE_LIBS)
+$(GRIDSITE_GLOBUS_LIBS) \
+$(BOOST_LIBS)
+
 
 job_submit_SOURCE=wmp-job-submit.cpp
-job_submit_OBJ=glite-job-submit
+job_submit_OBJ=glite-wms-job-submit
 job_submit_CFLAGS=$(CFLAGS)
 job_submit_DEPS=$(COMMON_LD_FLAGS)\
 $(JDL_LIB)
 
 job_status_SOURCE=wmp-job-status.cpp
-job_status_OBJ=glite-job-status
+job_status_OBJ=glite-wms-job-status
 job_status_CFLAGS=$(CFLAGS)
 job_status_DEPS=$(COMMON_LD_FLAGS)
 
 job_loginfo_SOURCE=wmp-job-logging-info.cpp
-job_loginfo_OBJ=glite-job-logging-info
+job_loginfo_OBJ=glite-wms-job-logging-info
 job_loginfo_CFLAGS=$(CFLAGS)
 job_loginfo_DEPS=$(COMMON_LD_FLAGS)
 
 job_cancel_SOURCE=wmp-job-cancel.cpp
-job_cancel_OBJ=glite-job-cancel
+job_cancel_OBJ=glite-wms-job-cancel
 job_cancel_CFLAGS=$(CFLAGS)
 job_cancel_DEPS=$(COMMON_LD_FLAGS)
 
+job_match_SOURCE=wmp-job-list-match.cpp
+job_match_OBJ=glite-wms-job-list-match
+job_match_CFLAGS=$(CFLAGS)
+job_match_DEPS=$(COMMON_LD_FLAGS)\
+$(JDL_LIB)
+
 job_output_SOURCE=wmp-job-output.cpp
-job_output_OBJ=glite-job-output
+job_output_OBJ=glite-wms-job-output
 job_output_CFLAGS=$(CFLAGS)
 job_output_DEPS=$(COMMON_LD_FLAGS)
 
 job_attach_SOURCE=wmp-job-attach.cpp
-job_attach_OBJ=glite-job-attach
+job_attach_OBJ=glite-wms-job-attach
 job_attach_CFLAGS=$(CFLAGS)
 job_attach_DEPS=$(COMMON_LD_FLAGS)
 
-all: submit status attach loginfo cancel output
+delegate_proxy_SOURCE=wmp-job-delegate-proxy.cpp
+delegate_proxy_OBJ=glite-wms-job-delegate-proxy
+delegate_proxy_CFLAGS=$(CFLAGS)
+delegate_proxy_DEPS=$(COMMON_LD_FLAGS)
+
+all: submit status loginfo cancel match output  attach delegation
 
 submit:	$(job_submit_SOURCE)
-		@echo "building "$(job_submit__OBJ)" ..."
+		@echo "building "$(job_submit_OBJ)" ..."
 
 		@if ! test -d $(bin_dir) ; then \
 			mkdir $(bin_dir) ; \
@@ -149,6 +199,18 @@ cancel:	$(job_cancel_SOURCE)
 			$(job_cancel_SOURCE)
 		@mv $(job_cancel_OBJ) $(bin_dir)
 
+match:	$(job_match_SOURCE)
+		@echo "building "$(job_match_OBJ)" ..."
+
+		@if ! test -d $(bin_dir) ; then \
+			mkdir $(bin_dir) ; \
+		fi
+
+		$(CPP) -g -Wall  $(job_match_CFLAGS) $(job_match_DEPS) \
+			-o  $(job_match_OBJ)  \
+			$(job_match_SOURCE)
+		@mv $(job_match_OBJ) $(bin_dir)
+
 output:	$(job_output_SOURCE)
 		@echo "building "$(job_output_OBJ)" ..."
 
@@ -171,6 +233,16 @@ attach:	$(job_attach_SOURCE)
 			$(job_attach_SOURCE)
 		@mv $(job_attach_OBJ) $(bin_dir)
 
+delegation:	 $(delegate_proxy_SOURCE)
+		@echo "building "$(delegate_proxy_OBJ)" ..."
+
+		@if ! test -d $(bin_dir) ; then \
+			mkdir $(bin_dir) ; \
+		fi
+		$(CPP) -g -Wall  $(delegate_proxy_CFLAGS) $(delegate_proxy_DEPS) \
+			-o  $(delegate_proxy_OBJ)  \
+			$(delegate_proxy_SOURCE)
+		@mv $(delegate_proxy_OBJ) $(bin_dir)
 clean:
 		rm -f *.o *.so
 
