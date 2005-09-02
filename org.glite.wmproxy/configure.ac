@@ -15,10 +15,10 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS wmproxy], [0.1.1])
+AC_INIT([GLite WMS wmproxy], [1.1.5])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/server/wmproxy.h])
+AC_CONFIG_SRCDIR([src/server/wmproxy.cpp])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -36,6 +36,8 @@ AC_PROG_CPP
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AM_PROG_CC_C_O
+AC_PROG_YACC
+AM_PROG_LEX
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
@@ -47,18 +49,23 @@ AC_CHECK_HEADERS([unistd.h])
 AC_C_CONST
 AC_C_INLINE
 AC_HEADER_TIME
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
 
 # Checks for library functions.
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
+
+
+AC_OPTIMIZE
 
 have_boost=no
-have_classads=no                                                                
-have_globus=no
+have_classads=no                                                       have_globus=no
 have_ares=no
 have_expat=no
 have_fcgi=no
-have_xml2=no
 have_gridsite=no
  
 AC_BOOST([], have_boost=yes, have_boost=no)
@@ -79,21 +86,85 @@ AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_FCGI([], have_fcgi=yes, have_fcgi=no)
 AC_MSG_RESULT(["FCGI found $have_fcgi"])
 
-AC_XML2([], have_xml2=yes, have_xml2=no)
-AC_MSG_RESULT(["XML2 found $have_xml2"])
-
 AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 
+if test "$have_globus" = "no"; then
+  AC_MSG_RESULT(["Please verify GLOBUS package"])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_RESULT(["Please verify BOOST package"])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_RESULT(["Please verify CLASSADS package"])
+fi
+
+if test "$have_ares" = "no"; then
+  AC_MSG_RESULT(["Please verify ARES package"])
+fi
+
+if test "$have_expat" = "no"; then
+  AC_MSG_RESULT(["Please verify EXPAT package"])
+fi
+
+if test "$have_fcgi" = "no"; then
+  AC_MSG_RESULT(["Please verify FCGI package"])
+fi
+
+if test "$have_gridiste" = "no"; then
+  AC_MSG_RESULT(["Please verify GRIDSITE package"])
+fi
+
+if test "$have_globus" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_ares" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_expat" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_fcgi" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_gridsite" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+have_glite_wms_common=no
 have_glite_wmsutils=no
+have_glite_wms_jdl=no
 have_glite_lb=no
 have_glite_security=no                                                                                
+have_glite_wms_chkpt=no
+have_glite_wms_part=no
+
 AC_GLITE
 
 AC_GSOAP
 
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
+
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
+
+AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
@@ -101,11 +172,27 @@ AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
+AC_GLITE_WMS_CHKPT([], have_glite_wms_chkpt=yes, have_glite_wms_chkpt=no)
+AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
+
+AC_GLITE_WMS_PARTITIONER([], have_glite_wms_part=yes, have_glite_wms_part=no)
+AC_MSG_RESULT(["GLITE_WMS_PARTITIONER found $have_glite_wms_part"])
+
+AC_SEC_LCAS
+AC_SEC_LCMAPS
+AC_SEC_LCMAPS_WITHOUT_GSI
+
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([src/utilities/Makefile])
+AC_CONFIG_FILES([src/eventlogger/Makefile])
+AC_CONFIG_FILES([src/authorizer/Makefile])
+AC_CONFIG_FILES([src/commands/Makefile])
+AC_CONFIG_FILES([src/dirmanager/Makefile])
 AC_CONFIG_FILES([src/server/Makefile])
 #AC_CONFIG_FILES([test/Makefile])
 #AC_CONFIG_FILES([interface/Makefile])
