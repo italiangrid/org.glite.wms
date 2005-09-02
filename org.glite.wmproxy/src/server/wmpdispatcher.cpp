@@ -3,67 +3,74 @@
   See http://public.eu-egee.org/partners/ for details on the copyright holders.
   For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmpdispatcher.cpp
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
+
+// Boost
+#include <boost/pool/detail/singleton.hpp>
 
 #include "wmpdispatcher.h"
+
+#include "wmp2wm.h"
+#include "wmpmanager.h"
+
+// Logger
+#include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/pool/detail/singleton.hpp>
+
+// Exception
 #include "glite/wmsutils/exception/Exception.h"
 
-#include "utilities/logging.h"
-#include "NS2WMProxy.h"
-#include "WMPManager.h"
+// Configuration
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/ModuleType.h"
+#include "glite/wms/common/configuration/exceptions.h"
 
 
-namespace logger         = glite::wms::common::logger;
-using namespace glite::wmsutils::exception; //Exception
-using namespace boost::details::pool; //Exception
-using namespace glite::wms::wmproxy::server;
+namespace server        = glite::wms::wmproxy::server;
+namespace logger        = glite::wms::common::logger;
+namespace configuration = glite::wms::common::configuration;
+namespace eventlogger   = glite::wms::wmproxy::eventlogger;
+namespace wmsutilities  = glite::wms::common::utilities;
 
+using namespace boost::details::pool;
+
+WMPDispatcher::WMPDispatcher(eventlogger::WMPEventLogger * wmpeventlogger)
+{
+	singleton_default<server::WMP2WM>::instance()
+		.init(configuration::Configuration::instance()->wm()->input(),
+		wmpeventlogger);
+}
+
+WMPDispatcher::~WMPDispatcher() {}
 
 void
-WMPDispatcher::run()
+WMPDispatcher::write(classad::ClassAd *class_ad)
 {
-try {
-  edglog_fn("Dispatcher::run");
-  int i = 0;
-  while (true) {
-	try {
-    	  boost::scoped_ptr< classad::ClassAd > cmdAd( read_end().read() );
-    	  // std::cerr<<"Counter: "<<i<<std::endl;
-	  // i++;
-	  std::string cmdName;
-	  try {
-	    cmdName.assign(glite::wms::common::utilities::evaluate_attribute(*cmdAd, "Command"));
-	    edglog(critical) << "Command to dispatch: " << cmdName << std::endl;
-	  } catch(glite::wms::common::utilities::InvalidValue &e) {
-	    
-	    edglog(fatal) << "Missing Command name while Dispatching." << std::endl;
-	  }
-  
-	  if ( cmdName == "JobSubmit" || cmdName == "DagSubmit" ) { 
-	    singleton_default<NS2WMProxy>::instance().submit(cmdAd.get());
-	  }
-          else if ( cmdName == "ListJobMatch" ) {
-            singleton_default<NS2WMProxy>::instance().match(cmdAd.get());
-	  }
-	  else if ( cmdName == "JobCancel" ) {
-	    singleton_default<NS2WMProxy>::instance().cancel(cmdAd.get());
-	  } else {
-	    edglog(fatal) << "No forwarding procedure defined for this command." << std::endl;
-	  }
-	  
-	  //} catch(utilities::Exception& e) {
-	} catch(Exception& e) {
-	  edglog(fatal) << "Exception Caught:" << e.what() << std::endl;
-	} catch(std::exception& ex ) {
-	  edglog(fatal) << "Exception Caught:" << ex.what() << std::endl;
+	GLITE_STACK_TRY("WMPDispatcher::write");
+	edglog_fn("WMPDispatcher::write");
+	std::string cmdName;
+  	try {
+    	cmdName.assign(wmsutilities::evaluate_attribute(*class_ad, "Command"));
+    	edglog(debug)<<"Command to dispatch: "<<cmdName<<std::endl;
+  	} catch(wmsutilities::InvalidValue &e) {
+    	edglog(error)<<"Missing Command name while Dispatching"<<std::endl;
 	}
-  }
-} catch (glite::wms::common::task::Eof& eof) {
-  edglog(fatal) << "Pipe Closed." << std::endl;
-}
+  
+	if (cmdName == "JobSubmit") { 
+    	singleton_default<server::WMP2WM>::instance().submit(class_ad);
+  	} else if (cmdName == "ListJobMatch") {
+        singleton_default<server::WMP2WM>::instance().match(class_ad);
+  	} else if (cmdName == "JobCancel") {
+    	singleton_default<server::WMP2WM>::instance().cancel(class_ad);
+  	} else {
+    	edglog(error)<<"No forwarding procedure defined for this command" 
+    		<<std::endl;
+  	}
+	GLITE_STACK_CATCH();
 }
  

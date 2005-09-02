@@ -3,6 +3,10 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmpresponsestruct.h
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
 #ifndef GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
 #define GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
@@ -77,6 +81,14 @@ struct GraphStructType {
     std::vector<GraphStructType*> *childrenJob;
 };
 
+struct DestURIStructType {
+	std::string id;
+    std::vector<std::string> *destURIs;
+};
+
+struct DestURIsStructType {
+	std::vector<DestURIStructType*> *Item;
+};
 
 // Response structures
 
@@ -103,7 +115,11 @@ struct getMaxInputSandboxSizeResponse {
 };
 
 struct getSandboxDestURIResponse {
-  std::string path;
+  StringList *path;
+};
+
+struct getSandboxBulkDestURIResponse {
+  DestURIsStructType *destURIsStruct;
 };
 
 struct getQuotaResponse {
@@ -152,6 +168,20 @@ struct getIntParametricJobTemplateResponse {
   
 struct getStringParametricJobTemplateResponse {
     std::string jdl;
+};
+
+struct getACLItemsResponse {
+	StringList *items;
+};
+
+struct addACLItemsResponse {
+};
+
+struct removeACLItemResponse {
+};
+
+struct getDelegatedProxyInfoResponse {
+	StringList *items;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H

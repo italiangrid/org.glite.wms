@@ -10,9 +10,10 @@
 #include "wmpexception_codes.h"
 #include "glite/wmsutils/exception/Exception.h"
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace utilities {
 
 class JobException : public glite::wmsutils::exception::Exception {
 	protected:
@@ -20,6 +21,11 @@ class JobException : public glite::wmsutils::exception::Exception {
 		int code, const std::string& exception_name);
 };
 
+/*class CannotStartException : public glite::wmsutils::exception::Exception {
+	public: 
+	CannotStartException(const std::string& file, int line, 
+		const std::string& method, int code, const std::string& reason);
+};*/
 
 class JobTimeoutException : public JobException {
 	public:
@@ -40,6 +46,12 @@ class ProxyOperationException : public JobException {
 		const std::string& method, int code, const std::string& reason);
 };
 
+class NotAVOMSProxyException : public JobException {
+	public:
+	NotAVOMSProxyException(const std::string& file, int line, 
+		const std::string& method, int code, const std::string& reason);
+};
+
 class FileSystemException : public JobException {
 	public:
 	FileSystemException(const std::string& file, int line, 
@@ -52,8 +64,21 @@ class AuthorizationException : public JobException {
 		const std::string& method, int code, const std::string& reason);
 };
 
-//} // wmproxy
-//} // wms
-//} // glite
+class AuthenticationException : public JobException {
+	public:
+	AuthenticationException(const std::string& file, int line,
+		const std::string& method, int code, const std::string& reason);
+};
+
+class GaclException : public JobException {
+	public:
+	GaclException(const std::string& file, int line,
+		const std::string& method, int code, const std::string& reason);
+};
+
+} // utilities
+} // wmproxy
+} // wms
+} // glite
 
 #endif // GLITE_WMS_WMPROXY_WMPEXCEPTIONS_H

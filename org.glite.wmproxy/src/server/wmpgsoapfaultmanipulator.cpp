@@ -3,57 +3,28 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
- 
-#include "wmpgsoapfaultmanipulator.h"
-#include "wmpexception_codes.h"
+//
+// File: wmpgsoapfaultmanipulator.cpp
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
+// Boost
 #include <boost/lexical_cast.hpp>
 
-#include <iostream>
-#include <string>
-#include <vector>
+// gSOAP
+#include "soapH.h"
 
-using namespace std;
+#include "utilities/wmpexception_codes.h"
 
-namespace errorcodes = glite::wms::wmproxy::server ;  //Exception codes
+//Logger
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/logger_utils.h"
+#include "utilities/logging.h"
+
+namespace logger       = glite::wms::common::logger;
+namespace wmputilities = glite::wms::wmproxy::utilities; //Exception codes
 
 
-/**
- * Constructor
- *
- * @param soap the instance of soap struct
- * @param faul_type the type of the fault
- */
-SOAPFault::SOAPFault(struct soap *soap, int fault_type)
-{
-	this->soap = soap;
-
-	soap_fault_type = getServiceFaultType(fault_type);
-	//sp = (ns1__BaseFaultType*) initializeStackPointer(soap_fault_type);
-	initializeStackPointer(fault_type);
-	soap_receiver_fault(soap, "Stack dump", NULL);
-	if (soap->version == 2) {
-		soap->fault->SOAP_ENV__Detail = (struct SOAP_ENV__Detail*)
-			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
-		soap->fault->SOAP_ENV__Detail->__type = soap_fault_type;
-		soap->fault->SOAP_ENV__Detail->fault = sp;
-	} else {
-		soap->fault->detail = (struct SOAP_ENV__Detail*)
-			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
-		soap->fault->detail->__type = soap_fault_type;
-		soap->fault->detail->fault = sp;
-	}
-}
-
-/**
- * Destructor
- */
-SOAPFault::~SOAPFault()
-{
-	// free even if I have soap_malloc??
-}
-
-namespace {
 // To remove
 vector<string> *
 convertStackVector(vector<string> stack)
@@ -61,59 +32,59 @@ convertStackVector(vector<string> stack)
 	vector<string> *returnVector = new vector<string>;
 	if (&stack) {
 		string element;
-		for (int i = 0; i < stack.size(); i++) {
+		for (unsigned int i = 0; i < stack.size(); i++) {
 			element = &(stack[i][0]);
 			returnVector->push_back(element);
 		}
 	}
 	return returnVector;
 }
-}
 
 int
-SOAPFault::getServiceFaultType(int code)
+getServiceFaultType(int code)
 {
 	switch (code) {
-		case errorcodes::WMS_AUTHENTICATION_ERROR: // AuthenticationFault
+		case wmputilities::WMS_AUTHENTICATION_ERROR: // AuthenticationFault
 			return SOAP_TYPE_ns1__AuthenticationFaultType;
 			break;
 
-		case errorcodes::WMS_NOT_AUTHORIZED_USER: // AuthorizationFault
-		case errorcodes::WMS_PROXY_ERROR:
-		case errorcodes::WMS_DELEGATION_ERROR:
+		case wmputilities::WMS_NOT_AUTHORIZED_USER: // AuthorizationFault
+		case wmputilities::WMS_PROXY_ERROR:
+		case wmputilities::WMS_DELEGATION_ERROR:
 			return SOAP_TYPE_ns1__AuthorizationFaultType;
 			break;
 
-		case errorcodes::WMS_JDL_PARSING: // InvalidArgumentFault
-		case errorcodes::WMS_INVALID_ARGUMENT:
+		case wmputilities::WMS_JDL_PARSING: // InvalidArgumentFault
+		case wmputilities::WMS_INVALID_ARGUMENT:
 			return SOAP_TYPE_ns1__InvalidArgumentFaultType;
 			break;
 
-		case errorcodes::WMS_NOT_ENOUGH_QUOTA: // GetQuotaManagementFault
-		case errorcodes::WMS_NOT_ENOUGH_SPACE: // ?
+		case wmputilities::WMS_NOT_ENOUGH_QUOTA: // GetQuotaManagementFault
+		case wmputilities::WMS_NOT_ENOUGH_SPACE: // ?
 			return SOAP_TYPE_ns1__GetQuotaManagementFaultType;
 			break;
 
-		case errorcodes::WMS_NO_SUITABLE_RESOURCE: // NoSuitableResourcesFault
-		case errorcodes::WMS_MATCHMAKING: // ?
+		case wmputilities::WMS_NO_SUITABLE_RESOURCE: // NoSuitableResourcesFault
+		case wmputilities::WMS_MATCHMAKING: // ?
 			return SOAP_TYPE_ns1__NoSuitableResourcesFaultType;
 			break;
 
-		case errorcodes::WMS_JOB_NOT_FOUND: // JobUnknownFault
+		case wmputilities::WMS_JOB_NOT_FOUND: // JobUnknownFault
 			return SOAP_TYPE_ns1__JobUnknownFaultType;
 			break;
 
-		case errorcodes::WMS_JOB_NOT_DONE: // OperationNotAllowedFault
-		case errorcodes::WMS_OPERATION_NOT_ALLOWED: // Generated inside wmproxy code
+		case wmputilities::WMS_JOB_NOT_DONE: // OperationNotAllowedFault
+		case wmputilities::WMS_OPERATION_NOT_ALLOWED: // Generated inside wmproxy code
 			return SOAP_TYPE_ns1__OperationNotAllowedFaultType;
 			break;
 
-		case errorcodes::WMS_FATAL:
-		case errorcodes::WMS_SANDBOX_IO:
-		case errorcodes::WMS_WRONG_COMMAND:
-		case errorcodes::WMS_JOB_SIZE:
-		case errorcodes::WMS_IS_FAILURE:
-		case errorcodes::WMS_MULTI_ATTRIBUTE_FAILURE:
+		case wmputilities::WMS_FATAL:
+		case wmputilities::WMS_SANDBOX_IO:
+		case wmputilities::WMS_WRONG_COMMAND:
+		case wmputilities::WMS_JOB_SIZE:
+		case wmputilities::WMS_IS_FAILURE:
+		case wmputilities::WMS_MULTI_ATTRIBUTE_FAILURE:
+		case wmputilities::WMS_LOGGING_ERROR:
 			return SOAP_TYPE_ns1__GenericFaultType;
 			break;
 
@@ -126,7 +97,7 @@ SOAPFault::getServiceFaultType(int code)
 }
 
 void *
-SOAPFault::initializeStackPointer(int code)
+initializeStackPointer(int code)
 {
 	void *sp = NULL;
 	switch(getServiceFaultType(code)) {
@@ -159,7 +130,7 @@ SOAPFault::initializeStackPointer(int code)
 }
 
 void
-SOAPFault::setFaultDetails(struct soap *soap, int type, void *sp)
+setFaultDetails(struct soap *soap, int type, void *sp)
 {
 	if (soap->version == 2) {
 		soap->fault->SOAP_ENV__Detail = (struct SOAP_ENV__Detail*)
@@ -177,14 +148,31 @@ SOAPFault::setFaultDetails(struct soap *soap, int type, void *sp)
 }
 
 void
-SOAPFault::setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
-	int error_code, string description, vector<string> stack)
+setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time_stamp,
+	int error_code, const string &description, vector<string> stack)
 {
+	// Logging fault
+	edglog(debug)
+		<<"------------------------------- Fault Description "
+			"--------------------------------"
+		<<endl;
+	edglog(debug)<<"Method: "<<method_name<<endl;
+	edglog(debug)<<"Code: "<<boost::lexical_cast<std::string>(code)<<endl;
+	edglog(debug)<<"Description: "<<description<<endl;
+	edglog(debug)<<"Stack: "<<endl;
+	for (int i = 0; i < stack.size(); i++) {
+		edglog(debug)<<stack[i]<<endl;
+	}
+	edglog(debug)
+			<<"----------------------------------------"
+				"------------------------------------------"
+			<<endl;
+	
 	// Generating a fault
 	ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(code);
 
 	// Filling fault fields
-	sp->methodName = *(new string(method_name));
+	sp->methodName = method_name;
 	sp->Timestamp = time_stamp;
 	sp->ErrorCode = new string(boost::lexical_cast<std::string>(error_code));
 	sp->Description = new string(description);
@@ -196,225 +184,9 @@ SOAPFault::setSOAPFault(struct soap *soap, int code, string method_name, time_t 
 }
 
 void
-SOAPFault::setSOAPFault(struct soap *soap, int code, string method_name, time_t time_stamp,
-	int error_code, string description)
+setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time_stamp,
+	int error_code, const string &description)
 {
 	setSOAPFault(soap, code, method_name, time_stamp, error_code, description,
 		*(new vector<string>));
 }
-
-/**
- * Returns the soap fault type
- * @return the soap fault type
- */
-int 
-SOAPFault::getType()
-{
-	if (soap->version == 2) {
-		return  soap->fault->SOAP_ENV__Detail->__type;
-	} else {
-		return soap->fault->detail->__type;
-	}
-}
-
-/**
- * Sets the soap fault type
- * @param type the soap fault type
- */
-void
-SOAPFault::setType(int type)
-{
-	if (soap->version == 2) {
-		soap->fault->SOAP_ENV__Detail->__type = type;
-	} else {
-		soap->fault->detail->__type = type;
-	}
-}
-
-
-void 
-SOAPFault::setMethodName(void *sp, string name)
-{
-	base_fault->methodName = name;
-}
-
-void 
-SOAPFault::setMethodName(string name)
-{
-	((ns1__BaseFaultType*)sp)->methodName = name;
-}
-
-string 
-SOAPFault::getMethodName()
-{
-	return base_fault->methodName;
-}
-
-void SOAPFault::setTimestamp(time_t time)
-{
-	((ns1__BaseFaultType*)sp)->Timestamp = time;
-}
-
-time_t
-SOAPFault::getTimestamp()
-{
-	return base_fault->Timestamp;
-}
-
-void
-SOAPFault::setErrorCode(string *code)
-{
-	((ns1__BaseFaultType*)sp)->ErrorCode = code;
-}
-
-string
-SOAPFault::getErrorCode()
-{
-	return *base_fault->ErrorCode;
-}
-
-void
-SOAPFault::setDescription(string *description)
-{
-	((ns1__BaseFaultType*)sp)->Description = description;
-}
-
-string
-SOAPFault::getDescription()
-{
-	return *base_fault->Description;
-}
-
-void
-SOAPFault::setFaultCause(vector<string> *cause)
-{
-	((ns1__BaseFaultType*)sp)->FaultCause = cause;
-}
-
-
-vector<string>
-SOAPFault::getFaultCause()
-{
-	return *base_fault->FaultCause;
-}
-
-void *
-SOAPFault::getFaultStackPointer() {
-	if (soap->version == 2) {
-		if (soap->fault->SOAP_ENV__Detail->fault == NULL) {
-			return NULL;
-		} else {
-			return soap->fault->SOAP_ENV__Detail->fault;
-		}
-	} else {
-		if (soap->fault->detail->fault == NULL) {
-			return NULL;
-		} else {
-			return soap->fault->detail->fault;
-		}
-	}
-}
-
-/*void
-SOAPFault::setFaultStackPointer(void *sp) {
-	if (soap->version == 2) {
-		soap->fault->SOAP_ENV__Detail->fault = sp;
-	} else {
-		soap->fault->detail->fault = sp;
-	}
-}
-
-void
-SOAPFault::setFaultDetails(int type, void *sp) {
-	if (soap->version == 2) {
-		soap->fault->SOAP_ENV__Detail = (struct SOAP_ENV__Detail*)
-			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
-		soap->fault->SOAP_ENV__Detail->__type = type; // stack type
-		soap->fault->SOAP_ENV__Detail->fault = sp; // point to stack
-		soap->fault->SOAP_ENV__Detail->__any = NULL; // no other XML data
-	} else {
-		soap->fault->detail = (struct SOAP_ENV__Detail*) 
-			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
-		soap->fault->detail->__type = type; // stack type
-		soap->fault->detail->fault = sp; // point to stack
-		soap->fault->detail->__any = NULL; // no other XML data
-	}
-}
-
-
-void
-SOAPFault::setFaultDetails() {
-	if (soap->version == 2) {
-		soap->fault->SOAP_ENV__Detail = (struct SOAP_ENV__Detail*)
-			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
-		soap->fault->SOAP_ENV__Detail->__type = soap_fault_type; // stack type
-		soap->fault->SOAP_ENV__Detail->fault = sp; // point to stack
-		soap->fault->SOAP_ENV__Detail->__any = NULL; // no other XML data
-	} else {
-		soap->fault->detail = (struct SOAP_ENV__Detail*) 
-			soap_malloc(soap, sizeof(struct SOAP_ENV__Detail));
-		soap->fault->detail->__type = soap_fault_type; // stack type
-		soap->fault->detail->fault = sp; // point to stack
-		soap->fault->detail->__any = NULL; // no other XML data
-	}
-}*/
-
-
-
-/**
- * Provides a mapping from network server proxy faults to service faults
- * (defined inside wsdl file)
- * 
- * @param code network server proxy fault code
- * @return service fault code
- */
-/*int
-SOAPFault::getServiceFaultCode(int code) {
-	switch (code) {
-		case errorcodes::WMS_AUTHENTICATION_ERROR: // AuthenticationFault
-			return SOAP_TYPE_ns1__AuthenticationFaultType;
-			break;
-
-		case errorcodes::WMS_NOT_AUTHORIZED_USER: // AuthorizationFault
-			return SOAP_TYPE_ns1__AuthorizationFaultType;
-			break;
-
-		case errorcodes::WMS_JDL_PARSING: // InvalidArgumentFault
-			return SOAP_TYPE_ns1__InvalidArgumentFaultType;
-			break;
-
-		case errorcodes::WMS_NOT_ENOUGH_QUOTA: // GetQuotaManagementFault
-		case errorcodes::WMS_NOT_ENOUGH_SPACE: // ?
-			return SOAP_TYPE_ns1__GetQuotaManagementFaultType;
-			break;
-
-		case errorcodes::WMS_NO_SUITABLE_RESOURCE: // NoSuitableResourcesFault
-		case errorcodes::WMS_MATCHMAKING: // ?
-			return SOAP_TYPE_ns1__NoSuitableResourcesFaultType;
-			break;
-
-		case errorcodes::WMS_JOB_NOT_FOUND: // JobUnknownFault
-			return SOAP_TYPE_ns1__JobUnknownFaultType;
-			break;
-
-		case errorcodes::WMS_JOB_NOT_DONE: // OperationNotAllowedFault
-		case errorcodes::WMS_OPERATION_NOT_ALLOWED: // Generated inside wmproxy code
-			return SOAP_TYPE_ns1__OperationNotAllowedFaultType;
-			break;
-
-		case errorcodes::WMS_FATAL:
-		case errorcodes::WMS_SANDBOX_IO:
-		case errorcodes::WMS_WRONG_COMMAND:
-		case errorcodes::WMS_JOB_SIZE:
-		case errorcodes::WMS_IS_FAILURE:
-		case errorcodes::WMS_MULTI_ATTRIBUTE_FAILURE:
-			return SOAP_TYPE_ns1__GenericFaultType;
-			break;
-
-		default:
-			return SOAP_TYPE_ns1__GenericFaultType;
-			break;
-
-		// WMS_CONNECTION_ERROR -> soap server
-	}
-}*/

@@ -6,60 +6,45 @@
 ## *
 ## *********************************************************************
 
-noinst_LTLIBRARIES = \
-	lib_glite_wms_wmproxy_commands.la \
-	lib_glite_pipe.la
+lib_LTLIBRARIES = \
+	libglite_wms_wmproxy_commands.la \
+	libglite_wms_wmproxy_pipe.la
+
 
 noinst_HEADERS = \
-	DagCommandFactoryServerImpl.h \
-	CommandFactory.h \
 	CommandFactoryImpl.h \
 	CommandFactoryServerImpl.h \
+	CommandFactory.h \
 	Command.h \
 	CommandState.h \
 	ExecuteFunction.h \
 	ForwardRequest.h \
-	common_dag.h \
-	common.h \
 	const.h \
-	JobId.h \
-	exception_codes.h \
-	listjobmatch.h \
 	listfiles.h \
-	logging.h \
-	MatchingPipe.h \
-	MatchingPipeFiller.h
+	listjobmatch.h \
+        MatchingPipe_nb.h \
+	MatchingPipe.h
 
-lib_glite_wms_wmproxy_commands_la_SOURCES = \
-	common.cpp \
+libglite_wms_wmproxy_commands_la_SOURCES = \
 	Command.cpp \
 	ExecuteFunction.cpp \
 	ForwardRequest.cpp \
-	listjobmatch.cpp \
 	listfiles.cpp \
-	CommandFactoryServerImpl.cpp \
-	DagCommandFactoryServerImpl.cpp
+	listjobmatch.cpp \
+	CommandFactoryServerImpl.cpp
 
-lib_glite_pipe_la_SOURCES = \
-	MatchingPipe.cpp \
-	MatchingPipeFiller.cpp
+libglite_wms_wmproxy_pipe_la_SOURCES = \
+        MatchingPipe_nb.cpp \
+	MatchingPipe.cpp
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/server \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GLITE_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) \
+	$(GLOBUS_NOTHR_CFLAGS) \
 	-DSHOW_EXECUTION
 
 MAINTAINERCLEANFILES = Makefile.in
-
-
-
-
-
-
-
 
 

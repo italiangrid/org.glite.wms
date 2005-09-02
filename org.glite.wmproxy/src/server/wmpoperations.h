@@ -3,15 +3,16 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmpoperations.h
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
 #ifndef GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 #define GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 
 #include "wmpresponsestruct.h"
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxyname {
 
 // Web service available operations.
 // All methods are void, response values are inserted in the corresponding
@@ -37,6 +38,9 @@ void getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 void getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	const std::string &job_id);
 
+void getSandboxBulkDestURI(getSandboxBulkDestURIResponse
+	&getSandboxBulkDestURI_response, const std::string &job_id);
+	
 void getQuota(getQuotaResponse &getQuota_response);
 
 void getFreeQuota(getFreeQuotaResponse &getFreeQuota_response);
@@ -47,7 +51,7 @@ void getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	const std::string &job_id);
 
 void jobListMatch(jobListMatchResponse &jobListMatch_response,
-	const std::string &jdl);
+	const std::string &jdl, const std::string &delegation_id);
 
 void getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 	JobTypeList job_type, const std::string &executable, 
@@ -63,16 +67,33 @@ void getCollectionTemplate(getCollectionTemplateResponse
 	const std::string &requirements,
 	const std::string &rank);
 
+void getIntParametricJobTemplate(getIntParametricJobTemplateResponse
+	&getIntParametricJobTemplate_response, StringList *attributes, int param,
+	int parameterStart, int parameterStep, const std::string &requirements,
+	const std::string &rank);
+	
+void getStringParametricJobTemplate(getStringParametricJobTemplateResponse
+	&getStringParametricJobTemplate_response, StringList *attributes,
+	StringList *param, const std::string &requirements, const std::string &rank);
+	
 void getProxyReq(getProxyReqResponse &getProxyReq_response,
 	const std::string &delegation_id);
 
 void putProxy(putProxyResponse &putProxyReq_response, 
 	const std::string &delegation_id, const std::string &proxy);
 
+std::vector<std::string> getACLItems(getACLItemsResponse &getACLItems_response,
+	const std::string &job_id);
 	
-//} // wmproxy
-//} // wms
-//} // glite
+void addACLItems(addACLItemsResponse &addACLItems_response,
+	const std::string &job_id, StringList * dnlist);
+	
+void removeACLItem(removeACLItemResponse &removeACLItem_response,
+	const std::string &job_id, const std::string &item);
+
+std::vector<std::string> getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
+	&getDelegatedProxyInfo_response, const std::string &job_id);
+	
 
 #endif // GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 

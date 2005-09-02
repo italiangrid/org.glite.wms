@@ -86,11 +86,13 @@ namespace commands {
     while ((n = ::read(pipefd, buf, sizeof(buf))) > 0 ) {
       buffer.append(std::string(buf));
     }
+    // classad::ClassAdParser parser;
+    // classad::ClassAd* jdlad = parser.ParseClassAd(buffer);
     buf[0]='\0';
     return buffer;
   }
-  
-}
-}
-}
-}
+
+} // namespace commands
+} // namespace wmproxy
+} // namespace wms
+} // namespace glite

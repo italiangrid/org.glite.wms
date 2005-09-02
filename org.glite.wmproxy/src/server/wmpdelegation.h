@@ -3,6 +3,10 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmpdelegation.h
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
 #ifndef GLITE_WMS_WMPROXY_WMPDELEGATION_H
 #define GLITE_WMS_WMPROXY_WMPDELEGATION_H
@@ -16,20 +20,12 @@ namespace server {
  * WMPDelegation class provides a set of utility methods to work on
  * Proxy delegation.
  *
- * @brief utility methods to work on Proxy delegation
  * @version 1.0
  * @date 2004
  * @author Giuseppe Avellino <giuseppe.avellino@datamat.it>
 */
 class WMPDelegation {
 public:
-	
-	/**
-	 * Gets the user Distinguished Name of the user. This is the DN of the request
-	 * environment
-	 * @return the user DN
-	 */
-	//static char* getUserDN();
 	
 	/**
 	 * Gets a delegated Proxy request. A Proxy request must be done in order
@@ -56,7 +52,7 @@ public:
 	 * delegation identifier passed as argument and to the specific user. The
 	 * user is represented by the Distinguished Name contained inside the request
 	 * environment
-	 * @param the delegation id identifing the delegated session
+	 * @param delegation_id the delegation id identifing the delegated session
 	 * @return the user DN
 	 */
 	static std::string getDelegatedProxyPath(const std::string &delegation_id);
@@ -72,9 +68,11 @@ private:
 	
 	// The proxy cache directory environment variable name
 	static const char* GRST_PROXYCACHE;
+	
 	// The document root environment variable name. The directory where the
 	// delegated Proxy are saved is: $DOCUMENT_ROOT/$GRST_PROXYCACHE
 	static const char* DOCUMENT_ROOT;
+	
 	// the Distinguished Name environment variable name
 	static const char* SSL_CLIENT_DN;
 	

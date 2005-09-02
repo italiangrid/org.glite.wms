@@ -11,7 +11,7 @@
 #include <classad_distribution.h>
 #include "Command.h"
 #include "CommandState.h"
-#include "logging.h"
+#include "utilities/logging.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 
 #include "glite/wms/common/logger/edglog.h"

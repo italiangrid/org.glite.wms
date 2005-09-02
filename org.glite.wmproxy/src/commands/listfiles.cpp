@@ -41,7 +41,7 @@ void list_files( const fs::path& p, std::vector<std::string>& v)
         if ( !fs::is_directory( *dir_itr ) )
         {
 #ifdef DEBUG  
-	  std::cout << dir_itr->file_path() << "\n";
+	  edglog(debug) << dir_itr->file_path() << "\n";
 #endif	
 	  v.push_back( dir_itr->file_path() );
         }

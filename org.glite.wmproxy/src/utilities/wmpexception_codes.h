@@ -42,8 +42,13 @@ enum {
       WMS_LOGGING_ERROR,
       WMS_AUTHZ_ERROR,
       WMS_USERMAP_ERROR,
-      WMS_NO_ERROR,                            NSE_NO_ERROR = WMS_NO_ERROR
-
+      WMS_FILE_SYSTEM_ERROR,
+      WMS_NO_ERROR,                            NSE_NO_ERROR = WMS_NO_ERROR,
+      WMS_GACL_ERROR,
+      WMS_GACL_FILE,
+      WMS_GACL_ITEM_NOT_FOUND,
+      WMS_NOT_A_VOMS_PROXY,
+      WMS_PROXY_EXPIRED
 };
 
 } // namespace utilities

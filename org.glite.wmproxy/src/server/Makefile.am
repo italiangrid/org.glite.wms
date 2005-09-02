@@ -15,53 +15,58 @@
 #
 # WARNING: work in progress
 
-bin_PROGRAMS = glite_wms_wmproxy_server
+WMPROXY_UTILITIES = $(top_builddir)/src/utilities/libglite_wms_wmproxy_utilities.la
+WMPROXY_EVENTLOGGER = $(top_builddir)/src/eventlogger/libglite_wms_wmproxy_eventlogger.la
+WMPROXY_AUTHZ = $(top_builddir)/src/authorizer/libglite_wms_wmproxy_authorizer.la
+WMPROXY_COMMANDS = $(top_builddir)/src/commands/libglite_wms_wmproxy_commands.la \
+$(top_builddir)/src/commands/libglite_wms_wmproxy_pipe.la
 
-noinst_HEADERS = \
-	exceptions.h \
-	NS2WMProxy.h \
-	wmpdelegation.h \
-	wmpdispatcher.h \
-	wmpeventlogger.h \
-	wmpexception_codes.h \
-	wmpexceptions.h \
-	wmpexpdagad.h \
-	wmpgsoapfaultmanipulator.h \
-	WMPManager.h \
-	wmpoperations.h \
-	wmpresponsestruct.h \
-	wmproxy.h \
-	wmputils.h
+wm.h :
+	@#Create the files
+	@echo "wsdl2h parsing .wsdl"
+	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
+	-t$(GSOAP_LOCATION)/typemap.dat \
+	$(GLITE_LOCATION)/interface/WMProxy.wsdl
 
-vpath stdsoap2.cpp $(GLOBAL_LOCATION)
+soapC.cpp : wm.h
+	@#Create the files
+	@echo "gsoap compiling .h"
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/server/wm.h 
 
 glite_wms_wmproxy_server_SOURCES = \
 	wm.h \
-	NS2WMProxy.cpp \
 	soapC.cpp \
 	soapServer.cpp \
-	wmpdelegation.cpp \
-	wmpdispatcher.cpp \
-	wmpeventlogger.cpp \
-	wmpexceptions.cpp \
-	wmpexpdagad.cpp \
-	wmpgsoapfaultmanipulator.cpp \
-	wmpgsoapoperations.cpp \
-	WMPManager.cpp \
-	wmpoperations.cpp \
 	wmproxy.cpp \
-	wmputils.cpp \
+	wmpoperations.cpp \
+	wmpgsoapoperations.cpp \
+	wmpgsoapfaultmanipulator.cpp \
+	wmpdispatcher.cpp \
+	wmpconfiguration.cpp \
+	wmpdelegation.cpp \
+	wmpmanager.cpp \
+	wmp2wm.cpp \
 	stdsoap2.cpp
+
+
+bin_PROGRAMS = glite_wms_wmproxy_server
+
+noinst_HEADERS = \
+	wmp2wm.h \
+	wmpconfiguration.h \
+	wmpdelegation.h \
+	wmpdispatcher.h \
+	wmpgsoapfaultmanipulator.h \
+	wmpmanager.h \
+	wmpoperations.h \
+	wmpresponsestruct.h 
 	
-#glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic
+glite_wms_wmproxy_server_LDFLAGS = -Xlinker --export-dynamic
 
 glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	$(GLOBUS_SSL_LIBS) \
-	$(GLOBUS_GSS_LIBS) \
-	$(GLOBUS_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
@@ -71,41 +76,35 @@ glite_wms_wmproxy_server_LDADD = \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLITE_WMSUI_PARTITIONER_LIBS) \
-	$(GLITE_WMS_PURGER_LIBS) \
-	$(GLITE_WMS_WMPROXY_CMD_LIBS) \
+	$(GLITE_WMS_PARTITIONER_LIBS) \
+	$(WMPROXY_UTILITIES) \
+	$(WMPROXY_EVENTLOGGER) \
+	$(WMPROXY_AUTHZ) \
+	$(WMPROXY_COMMANDS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
-	$(XML2_LIBS) \
+	$(SEC_LCMAPS_LIBS) \
+	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
+	$(VOMS_LIBS) \
 	$(FCGI_CPP_LIBS)
-
-wm.h :
-	@#Create the files
-	@echo "wsdl2h compiling .h "
-	$(GSOAP_LOCATION)/wsdl2h -o wm.h \
-        -t$(GSOAP_LOCATION)/typemap.dat \
-        $(GLITE_LOCATION)/interface/WMProxy.wsdl
-
-soapC.cpp : wm.h
-	@#Create the files
-	@echo "gsoap compiling .cpp"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) -I$(top_srcdir)/build/src/server/wm.h 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src/server \
 	-I$(GSOAP_LOCATION) \
+	$(GLOBUS_NOTHR_CFLAGS) \
 	$(GLITE_CFLAGS) \
 	$(EXPAT_CFLAGS) \
 	$(ARES_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) \
+	$(GRIDSITE_GLOBUS_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(MYPROXY_CFLAGS) \
 	$(FCGI_CFLAGS) \
+	-DHAVE_STRINGSTREAM \
+	-DWANT_NAMESPACES \
 	-DWITH_FASTCGI 
 
 MAINTAINERCLEANFILES = Makefile.in

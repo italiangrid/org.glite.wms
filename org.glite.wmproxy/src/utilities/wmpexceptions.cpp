@@ -6,19 +6,25 @@
 
 #include "wmpexceptions.h"
 
-//namespace glite {
-//namespace wms {
-//namespace wmproxy {
+namespace glite {
+namespace wms {
+namespace wmproxy {
+namespace utilities {
 
 using namespace std;
 using namespace glite::wmsutils::exception;
-
-
 
 JobException::JobException(const std::string& file, int line,
 	const std::string& method, int code, const std::string& exception_name)
 	: Exception(file, line, method, code, exception_name)
 {}
+
+/*CannotStartException::CannotStartException(const std::string& file, int line,
+	const std::string& method, int code, const std::string& reason)
+	: Exception(file, line, method, code, "CannotStartException")
+{
+      error_message = reason;
+}*/
 
 JobTimeoutException::JobTimeoutException(const std::string& file, int line,
 	const std::string& method, int code)
@@ -41,6 +47,13 @@ ProxyOperationException::ProxyOperationException(const std::string& file,
 	error_message = "Proxy exception: " + reason;
 }
 
+NotAVOMSProxyException::NotAVOMSProxyException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "NotAVOMSProxyException")
+{
+	error_message = reason;
+}
+
 FileSystemException::FileSystemException(const std::string& file,
 	int line, const std::string& method, int code, const std::string& reason)
 	: JobException(file, line, method, code, "FileSystemException")
@@ -55,7 +68,21 @@ AuthorizationException::AuthorizationException(const std::string& file,
 	error_message += reason;
 }
 
+AuthenticationException::AuthenticationException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "AuthenticationException")
+{
+	error_message += reason;
+}
 
-//} // wmproxy
-//} // wms
-//} // glite
+GaclException::GaclException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "GaclException")
+{
+	error_message += reason;
+}
+
+} // utilities
+} // wmproxy
+} // wms
+} // glite

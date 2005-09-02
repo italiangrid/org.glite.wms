@@ -6,8 +6,8 @@
  
 // $Id
 
-#ifndef _GLITE_WMS_WMPROXY_COMMANDS_MATCHINGPIPE_H_
-#define _GLITE_WMS_WMPROXY_COMMANDS_MATCHINGPIPE_H_
+#ifndef GLITE_WMS_WMPROXY_COMMANDS_MATCHINGPIPE_H
+#define GLITE_WMS_WMPROXY_COMMANDS_MATCHINGPIPE_H
 
 #include <classad_distribution.h>
 #include <string>
@@ -29,6 +29,7 @@ namespace wms {
 namespace wmproxy {
 namespace commands {
 
+
 /**
  * A PipeWrapper for listmatch results retrieval.
  *
@@ -38,6 +39,8 @@ namespace commands {
  */
 class MatchingPipe
 {
+ public:
+
   int pipefd;
   bool ispipeopen;
   std::string pipepath;
@@ -72,9 +75,9 @@ class MatchingPipe
   std::string read();
 };
   
-}
-}
-}
-}
+} // namespace commands
+} // namespace wmproxy
+} // namespace wms
+} // namespace glite
 
 #endif

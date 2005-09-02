@@ -98,7 +98,6 @@ int check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group , uid_
 		return ADJUST_DIRECTORY_ERR_STAT;
 	}
 	if (S_ISDIR(stat_result.st_mode)) {
-		printf("\n\nOKKIO AMICO IN QUESTO CASO FACCIO PATATRAC di chown.......");
 		ret = chown(dir, -1, new_group);
 		if (ret < 0){
 			// fprintf(stderr,"Cannot change group of %s to 0%o:%s\n",dir,new_group,strerror(errno));
@@ -207,13 +206,16 @@ int main (int argc, char *argv[]){
 		}
 		}
 	}
-	if (opt_verbose) printf("%s: Changing directories to group %d and mode 0%o\n",argv[0],new_group, new_mode);
+	if (opt_verbose) {
+		printf("%s: Changing directories to group %d and mode 0%o\n",argv[0],new_group, new_mode);
+	}
 	summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR;
 
 	for (i=optind; i<argc; i++){
 		summary_status |= check_dir(argv[i], opt_create, new_mode, new_group , create_uid );
 	}
-	if (summary_status!=ADJUST_DIRECTORY_ERR_NO_ERROR)
+	if (summary_status!=ADJUST_DIRECTORY_ERR_NO_ERROR) {
 		printf("Warning!! some error occurred");
+	}
 	exit(summary_status);
 }

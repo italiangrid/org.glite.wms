@@ -3,159 +3,187 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
+//
+// File: wmproxy.cpp
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
-#include "wmproxy.h"
+#include <string>
+#include <vector>
+#include <iostream>
+
 // Fast CGI
 #include <fcgi_stdio.h>
 #include "fcgio.h"
 #include "fcgi_config.h"
+
 // gSOAP
 #include "WMProxy.nsmap"
 #include "soapWMProxyObject.h"
+
 // Logging
+#include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/common/utilities/edgstrstream.h"
-#include "utilities/logging.h"
 
-#include "NS2WMProxy.h"
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/ModuleType.h"
-#include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-// Exceptions
-#include "utilities/wmpexception_codes.h"
-#include "glite/wmsutils/jobid/JobId.h"
-#include "wmpoperations.h"
-#include "wmpdispatcher.h"
+#include "glite/wms/common/configuration/WMPConfiguration.h"
+
+// fstream
+#include "glite/wms/common/utilities/FileList.h"
+
 #include "wmpconfiguration.h"
 #include "utilities/wmputils.h"
-#include <iostream>
-#include <string>
-#include <vector>
 
-namespace utilities  	= glite::wms::common::utilities;
-namespace task          = glite::wms::common::task;
+#include "wmpgsoapfaultmanipulator.h"
+
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-namespace wmproxyserver = glite::wms::wmproxy::server;
+namespace wmputilities  = glite::wms::wmproxy::utilities;
 
-using namespace boost::details::pool;
 using namespace std;
+using namespace boost::details::pool;
+
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
 
-std::string opt_conf_file("glite_wms.conf");
+const std::string opt_conf_file("glite_wms.conf");
+
+int
+logRemoteHostInfo()
+{
+	try {
+		string msg = "Remote Host IP: ";
+		string msg2 = "Remote CLIENT S DN: ";
+		string msg3 = "Remote GRST CRED: ";
+		edglog(info)
+			<<"-------------------------------- Incoming Request "
+				"--------------------------------"
+			<<endl;
+		
+		if (getenv("REMOTE_ADDR")) {
+			msg += string(getenv("REMOTE_ADDR"));
+			if (getenv("REMOTE_PORT")) {
+				msg += ":" + string(getenv("REMOTE_PORT"));
+			}
+		} else {
+			msg += "Not Available";
+		}
+		msg += " - Remote Host Name: ";
+		if (getenv("REMOTE_HOST")) {
+			msg += string(getenv("REMOTE_HOST"));
+		} else {
+			msg += "Not Available";
+		}
+		if (getenv("SSL_CLIENT_S_DN")) {
+			msg2 += string(getenv("SSL_CLIENT_S_DN"));
+		} else {
+			msg2 += "Not Available";
+		}
+		if (getenv("GRST_CRED_2")) {
+			msg3 += string(getenv("GRST_CRED_2"));
+		} else {
+			msg3 += "Not Available";
+		}
+		
+		edglog(info)<<msg<<endl;
+	    edglog(info)<<msg2<<endl;
+		edglog(info)<<msg3<<endl;
+		edglog(info)
+			<<"----------------------------------------"
+				"------------------------------------------"
+		<<endl;
+		
+		return 0;
+	} catch (exception &ex) {
+		edglog(fatal) << "Exception caught: " << ex.what() << endl;
+		return -1;
+	}
+}
+
 int
 main(int argc, char* argv[])
 {
-	int m, s;
-	struct soap *soap;
-	char msg[100];
 	try {
-		glite::wms::wmproxy::utilities::waitForSeconds(10);
-		
-		singleton_default<WmproxyConfiguration>::instance().init(opt_conf_file, configuration::ModuleType::network_server);
-		logger::threadsafe::edglog.open( singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file(),
-				static_cast<logger::level_t>(singleton_default<WmproxyConfiguration>::instance().wmp_config->log_level()) );
-		edglog_fn("   WMProxy::main");
-		edglog(fatal) << "--------------------------------------" << endl;
-		// Open log file destination:
-		if (logger::threadsafe::edglog.activate_log_rotation (
-			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_file_max_size(),
-			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_base_file(),
-			singleton_default<WmproxyConfiguration>::instance().wmp_config->log_rotation_max_file_number())) {
-				cout << "Unable to create default log file: " << endl <<  
-					singleton_default<WmproxyConfiguration>::instance()
-					.wmp_config->log_rotation_base_file() << endl ;
-				cerr << "System exiting..."<< endl ;
-				return 1;
-		}
-		cerr<<"----- Log file: "<<singleton_default<WmproxyConfiguration>::instance()
-			.wmp_config->log_rotation_base_file()<<endl;
-		if (argc < 3) {
-            // Run as a FastCGI script
-			edglog(fatal) << "Running as a FastCGI program" << endl;
-			
-			cerr<<"---- NS2WMProxy"<<endl;
-			/*string file_name = "glite_wms.conf";
-			std::auto_ptr<configuration::Configuration> conf;
-			conf.reset(new configuration::Configuration(file_name, "NetworkServer"));
-			singleton_default<wmproxyserver::NS2WMProxy>::instance()
-				.init(configuration::Configuration::instance()->wm()->input());*/
-			cerr<<"---- NS2WMProxy END"<<endl;
-			
-			int thread_number;
-			try {
-				thread_number =  singleton_default<WmproxyConfiguration>::instance()
-					.wmp_config->dispatcher_threads() ;
-	    	} catch ( configuration::InvalidExpression &error ) {
-	      		edglog(fatal) << "ERROR: Unable to read value from Configuration file" << error << std::endl;
-			return 1;
-	    	}
-			task::Pipe<classad::ClassAd*> pipe;
-			WMPDispatcher dispatcher;
-			cerr<<"Launching thread(s)..."<<endl;
-			edglog(fatal) << "Launching " << thread_number << " dispatcher thread(s)" << endl;
-			task::Task dispatchers(dispatcher, pipe, thread_number);
-			cerr<<"Launching thread(s)... finished"<<endl;
-			
-			// Running as a Fast CGI application
-			edglog(fatal) << "Entering the FastCGI accept loop..." << endl;
-			while (FCGI_Accept() >= 0) {
-				WMProxy proxy;
-				proxy.serve();
-			}
-			edglog(fatal) << "Exiting the FastCGI loop..." << endl;
+		// Debug only
+		//wmputilities::waitForSeconds(10);
+					
+		std::fstream edglog_stream;
+		singleton_default<WMProxyConfiguration>::instance().init(opt_conf_file,
+        	configuration::ModuleType::workload_manager_proxy);
+        string log_file = singleton_default<WMProxyConfiguration>
+			::instance().wmp_config->log_file();
 
-		} else {
-			edglog(fatal) << "Running as a gSoap standalone Service" << endl;
-        		soap = soap_new();
-   			soap->accept_timeout = 60;     /* server times out after 10 minutes of inactivity */
-                	soap->recv_timeout = 30;       /* if read stalls, then timeout after 60 seconds */
-                	edglog(fatal) << "Binding socket... " << argv[2] << endl;
-        		m = soap_bind(soap, argv[1], atoi(argv[2]), 100);
-        		if (m < 0)
-        		{
-				edglog(fatal) << "Failed to bind socket " << argv[2] << endl;
-                		soap_print_fault(soap, stderr);
-                		exit(-1);
-        		}
-        		edglog(fatal) << "Socket connection successful: master socket = " << m << endl;
-        		for (int i = 1; ; i++)
-        		{
-                		s = soap_accept(soap);
-                		if (s < 0){
-					edglog(fatal) << "Failed to accept soap request " << endl;
-                        		soap_print_fault(soap, stderr);
-					exit(-1);
-                		}
-                		sprintf(msg, "%d: Accepted connection from IP = %d.%d.%d.%d socket = %d ... ", i, (int)(soap->ip>>24)&0xFF, 				(int)(soap->ip>>16)&0xFF, (int)(soap->ip>>8)&0xFF, (int)soap->ip&0xFF, s);
-				edglog(fatal) << msg << endl;
-                		soap_serve(soap);         // process request
-				edglog(fatal) << "Request served" << endl;
-                		soap_destroy(soap);       // delete class instances
-                		soap_end(soap);           // clean up everything and close socket
-        		} //for
-		} //else
-        } catch( configuration::CannotOpenFile &file ) {
-                    edglog(fatal) << "Cannot open file: " << file << std::endl;
-                    std::cout << "Cannot open file: " << file << std::endl;
-        } catch( configuration::CannotConfigure &error ) {
-                    edglog(fatal) << "Cannot configure: " << error << std::endl;
-                    std::cout << "Cannot configure: " << error << std::endl;
+		// Checking for log file
+		if (!log_file.empty()) {
+			if (!std::ifstream(log_file.c_str())) {
+		    	std::ofstream(log_file.c_str());
+		    }
+			edglog_stream.open(log_file.c_str(), std::ios::in | std::ios::out
+				| std::ios::ate);
+		}
+		if (edglog_stream) {
+			logger::threadsafe::edglog.open(edglog_stream,
+				static_cast<logger::level_t>(singleton_default<WMProxyConfiguration>
+				::instance().wmp_config->log_level()));
+		}
+		
+		edglog_fn("wmproxy::main");
+		edglog(info)
+			<<"------- Starting Server Instance -------"
+			<<endl;
+		
+		// Opening log file destination
+		logger::threadsafe::edglog.activate_log_rotation (
+			singleton_default<WMProxyConfiguration>::instance()
+				.wmp_config->log_file_max_size(),
+			singleton_default<WMProxyConfiguration>::instance()
+				.wmp_config->log_rotation_base_file(),
+			singleton_default<WMProxyConfiguration>::instance()
+				.wmp_config->log_rotation_max_file_number());
+		edglog(debug)<<"Log file: "<<singleton_default<WMProxyConfiguration>::instance()
+			.wmp_config->log_rotation_base_file()<<endl;
+		
+		// Initializing signal handler for 'graceful' stop/restart
+		//wmputilities::initsignalhandler();
+		
+		// Running as a Fast CGI application
+		edglog(info) << "Running as a FastCGI program" << endl;
+		edglog(info) << "Entering the FastCGI accept loop..." << endl;
+		edglog(info)
+			<<"----------------------------------------"
+			<<endl;
+		while (FCGI_Accept() >= 0) {
+			WMProxy proxy;
+			if (logRemoteHostInfo()) {
+				setSOAPFault(&proxy, -1, "logRemoteHostInfo", time(NULL),
+					-1, "Unable to log remote host info\n(please contact server administrator)");
+				soap_print_fault(&proxy, stderr);
+				soap_send_fault(&proxy); 
+				soap_destroy(&proxy);
+				soap_end(&proxy); 
+				soap_done(&proxy);
+				continue; 
+			}
+			proxy.serve();
+		}
+		edglog(info) << "Exiting the FastCGI loop..." << endl;
+		
+    } catch (configuration::CannotOpenFile &file) {
+	    edglog(fatal) << "Cannot open file: " << file << std::endl;
+    } catch (configuration::CannotConfigure &error) {
+        edglog(fatal) << "Cannot configure: " << error << std::endl;
 	} catch (exception &ex) {
 		edglog(fatal) << "Exception caught: " << ex.what() << endl;
- 	} catch ( ... ) {
-    		edglog(fatal) << "Uncaught exception...." << endl;
+ 	} catch (...) {
+    	edglog(fatal) << "Uncaught exception...." << endl;
   	}
 	return 0;
 }
-
-
 
 //} // wmproxy
 //} // wms
