@@ -16,6 +16,10 @@
 # WARNING: work in progress
 
 
+envC.cpp : env.h
+	@#Create the files
+	@echo "gsoap compiling .h"
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) -penv $(top_srcdir)/src/lbclient/env.h
 
 lb.h :
 	@#Create the files
@@ -24,31 +28,26 @@ lb.h :
 	-t$(GSOAP_LOCATION)/typemap.dat \
 	$(GLITE_LOCATION)/interface/LB.wsdl
 
-soapC.cpp : lb.h
+lbClientLib.cpp : lb.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/lbservices/lb.h
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) -n -plb $(top_srcdir)/build/src/lbclient/lb.h
 
 
 
-lib_LTLIBRARIES = libglite_wms_wmproxy_api_cpp.la
+lib_LTLIBRARIES = libglite_wms_client_lb.la
 
-libglite_wms_wmproxy_api_cpp_la_SOURCES = \
-	wm.h \
-	soapC.cpp \
-	soapClient.cpp \
-	wmproxy_api.cpp \
-	wmproxy_api_utilities.cpp \
+libglite_wms_client_lb_la_SOURCES = \
+	lb.h \
+	envC.cpp \
+	lbClientLib.cpp \
 	stdsoap2.cpp
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	-I$(top_srcdir)/interface \
 	-I$(GSOAP_LOCATION) \
 	$(GLITE_CFLAGS) \
-	$(CLASSAD_CFLAGS) \
-	$(BOOST_CFLAGS) \
-	-DWITH_OPENSSL
+	-DWITH_OPENSSL -DWITH_NONAMESPACES
 
 
 MAINTAINERCLEANFILES = Makefile.in
