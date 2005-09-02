@@ -6,75 +6,79 @@
 ## *
 ## *********************************************************************
 
-noinst_LTLIBRARIES = libglite_wms_client_jobattach.la \
-libglite_wms_client_jobsubmit.la \
-libglite_wms_client_joboutput.la \
-libglite_wms_client_jobcancel.la \
-libglite_wms_client_joblistmatch.la \
-libglite_wms_client_jobstatus.la \
-libglite_wms_client_jobloginfo.la
-
+noinst_LTLIBRARIES = \
+	libglite_wms_client_delegateproxy.la \
+	libglite_wms_client_jobsubmit.la \
+	libglite_wms_client_joboutput.la \
+	libglite_wms_client_jobcancel.la \
+	libglite_wms_client_jobstatus.la \
+	libglite_wms_client_joblistmatch.la
+	
 noinst_HEADERS     = \
-	jobattach.h \
+	delegateproxy.h \
 	jobcancel.h \
 	joblistmatch.h \
-	jobloginfo.h \
 	joboutput.h \
-	jobstatus.h \
-	jobsubmit.h
+	jobsubmit.h \
+	job.h \
+	lbapi.h \
+	listener.h
 
 
-libglite_wms_client_jobattach_la_SOURCES = \
-	jobattach.cpp
+libglite_wms_client_delegateproxy_la_SOURCES = \
+	delegateproxy.cpp \
+	job.cpp
+
+#libglite_wms_client_jobattach_la_SOURCES = \
+#	jobattach.cpp \
+#	lbapi.cpp \
+#	job.cpp
 
 libglite_wms_client_jobsubmit_la_SOURCES = \
-	jobsubmit.cpp
+	jobsubmit.cpp \
+	lbapi.cpp \
+	job.cpp \
+	listener.cpp
 
 libglite_wms_client_joboutput_la_SOURCES = \
-	joboutput.cpp
+	joboutput.cpp \
+	lbapi.cpp \
+	job.cpp
 
 libglite_wms_client_jobcancel_la_SOURCES = \
-	jobcancel.cpp
+	jobcancel.cpp \
+	lbapi.cpp \
+	job.cpp
 
 libglite_wms_client_joblistmatch_la_SOURCES = \
-	joblistmatch.cpp
+	joblistmatch.cpp \
+	job.cpp
 
 libglite_wms_client_jobstatus_la_SOURCES = \
-	jobstatus.cpp
+	jobstatus.cpp \
+	lbapi.cpp \
+	job.cpp
 
-libglite_wms_client_jobloginfo_la_SOURCES = \
-	jobloginfo.cpp
+#libglite_wms_client_jobloginfo_la_SOURCES = \
+#	jobloginfo.cpp \
+#	lbapi.cpp \
+#	job.cpp
 
-
-
-glite_wms_purgeStorage_SOURCES = \
-	glite-wms-purgeStorage.cpp
-
-glite_wms_purgeStorage_LDADD = \
-	$(GLITE_WMSUTILS_JOBID_LIBS) \
-	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLITE_WMS_COMMON_CONF_LIBS) \
-	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-	./libglite_wms_purger.la \
-	$(BOOST_LIBS) \
-	$(GLOBUS_SSL_NOTHR_LIBS) \
-	$(GLOBUS_COMMON_NOTHR_LIBS) \
-	$(GLOBUS_GSS_NOTHR_LIBS) \
-	$(CLASSAD_LIBS) \
-	$(ARES_LIBS) \
-	$(EXPAT_LIBS) \
-	-lstdc++ 
+#libglite_wms_client_jobgetchkpt_la_SOURCES = \
+#	jobgetchkpt.cpp \
+#	lbapi.cpp \
+#	job.cpp
 
 AM_CPPFLAGS = \
 	$(GLITE_CFLAGS) \
-	-I$(top_srcdir)/src \
+        -I$(top_srcdir)/src \
+        -I$(top_srcdir)/build/src \
+	$(GLOBUS_NOTHR_CFLAGS) \
+	$(GRIDSITE_GLOBUS_CFLAGS) \
+	$(GRIDSITE_GLOBUS_OPENSSL_CFLAGS) \
 	$(BOOST_CFLAGS) \
-	$(CLASSAD_CFLAGS)
-
-
+	$(CLASSAD_CFLAGS) \
+	-DWITH_GRID_FTP
+	
 MAINTAINERCLEANFILES = Makefile.in
 

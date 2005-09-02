@@ -1,20 +1,20 @@
 
 #include "delegateproxy.h"
 // streams
-#include <sstream>
-#include <iostream>
+#include "sstream"
+#include "iostream"
+// time fncts
+#include "time.h"
 // exceptions
 #include "utilities/excman.h"
-// wmp-client utilities
-#include "utilities/utils.h"
-#include "utilities/options_utils.h"
-
 
 // wmproxy-api
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 
-
+// wmp-client utilities
+#include "utilities/utils.h"
+#include "utilities/options_utils.h"
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -26,146 +26,96 @@ namespace wms{
 namespace client {
 namespace services {
 
+const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"};
 
 /*
-*	default constructor
+*	Default constructor
 */
 DelegateProxy::DelegateProxy( ){
 	// init of the string attributes
          dgOpt = NULL;
-	 logOpt = NULL ;
-	 outOpt = NULL ;
-	 cfgOpt = NULL ;
-         voOpt = NULL ;
 	// init of the boolean attributes
         autodgOpt = false;
-        dbgOpt = false ;
-	// parameters
-        wmpEndPoint = NULL ;
-	// utilities objects
-	wmcOpts = NULL ;
-	wmcUtils = NULL ;
 };
-
+/*
+*	Default destructor
+*/
+DelegateProxy::~DelegateProxy( ){
+         if(dgOpt) { delete(dgOpt); }
+};
+/*
+* Handles the command line arguments
+*/
 void DelegateProxy::readOptions (int argc,char **argv){
-	ostringstream info ;
-        vector<string> wrongids;
-        vector<string> wmps;
-	// init of option objects object
-        wmcOpts = new Options(Options::JOBDELEGATION) ;
-	wmcOpts->readOptions(argc, (const char**)argv);
-        // utilities
-        wmcUtils = new Utils (wmcOpts);
-        // config & vo(no together)
-        cfgOpt = wmcOpts->getStringAttribute( Options::CONFIG ) ;
-        voOpt = wmcOpts->getStringAttribute( Options::VO ) ;
-	if (voOpt && cfgOpt){
-		info << "the following options cannot be specified together:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::VO) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	}
-
-        dbgOpt = wmcOpts->getBoolAttribute (Options::DBG);
-        logOpt = wmcOpts->getStringAttribute(Options::LOGFILE );
-	outOpt =  wmcOpts->getStringAttribute( Options::OUTPUT ) ;	// get
-        wmps = wmcUtils->getWmps( ) ;
-        while ( ! wmps.empty( ) ) {
- 		wmpEndPoint = (string*)wmcUtils->getWmpURL(wmps);
-                if ( wmpEndPoint  ){
-        		cfgCxt = new ConfigContext("", *wmpEndPoint, "");
-			try {
-                        	if ( dbgOpt || logOpt ){
-					info << "trying to contact EndPoint : " << *wmpEndPoint << "\n";
-                                        if (dbgOpt)  cout << info;
-                                }
-   				getVersion(cfgCxt);
-                                // if no exception is thrown (available wmproxy; exit from the loop)
-                                break;
-  			} catch (BaseException &bex) {
-				wmpEndPoint = NULL ;
-                        }
-    		}
-	}
-	if ( wmps.empty( ) && ! wmpEndPoint ){
+        string opts = Job::readOptions  (argc, argv, Options::JOBDELEGATION);
+        // writes the information on the specified option in the log file
+        logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false);
+        logInfo->print(WMS_INFO, "Options specified:", opts, false);
+        // checks if the proxy file pathname is set
+	if (proxyFile) {
+        	logInfo->print (WMS_DEBUG, "Proxy File:", proxyFile);
+ 	} else {
                 throw WmsClientException(__FILE__,__LINE__,
-                        "getWmpURL", DEFAULT_ERR_CODE,
-                        "Missing infomration", "no WMProxy URL specified" );
+                                "readOptions",DEFAULT_ERR_CODE,
+                                "Invalid Credential",
+                                "No valid proxy file pathname" );
         }
-
-        // Delegation ID
-        dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
-        autodgOpt = wmcOpts->getBoolAttribute(Options::AUTODG);
-	if ( ! dgOpt && ! autodgOpt ){
-		info << "a mandatory attribute is missing:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-                info << "\tor\n";
-                info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Missing Information", info.str());
-	} else if ( dgOpt && autodgOpt ){
-		info << "the following options cannot be specified together:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-                info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	} else if (autodgOpt){
-        	// Automatic Delegation
-        	dgOpt = wmcUtils->getUniqueString( );
-                if (!dgOpt ){
-                	throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
-				"Missing Information", "error during the automatic generation of the delegation string"  );
-       		}
-        }
-
 };
-
-void DelegateProxy::printUsageMsg (const char* exename ){
-	 if (wmcOpts){
-		wmcOpts->printUsage (exename);
-  	}
-}
+/*
+* Performs the main operations
+*/
 void DelegateProxy::delegation ( ){
-	ostringstream msg ;
+	postOptionchecks();
+	ostringstream out ;
 	string proxy = "" ;
-        char* endpoint = NULL;
-	if ( !dgOpt){
+	if (!cfgCxt){ cfgCxt = new ConfigContext("","","");}
+        // Delegation ID String
+        dgOpt = wmcUtils->getDelegationId ();
+	if ( ! dgOpt  ){
 		throw WmsClientException(__FILE__,__LINE__,
-			"delegation",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to DelegationID String"   );
-        }
-	if (!cfgCxt){
-		throw WmsClientException(__FILE__,__LINE__,
-			"delegation",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to ConfigContext object"   );
-        }
-        // gets Proxy
-        proxy = getProxyReq(*dgOpt, cfgCxt) ;
-        // sends the proxy to the endpoint service
-        putProxy(*dgOpt, proxy, cfgCxt);
+				"delegation",DEFAULT_ERR_CODE,
+				"Missing Information", "no proxy delegation ID" );
+	}
+        logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
+
+        // DELEGATION (return the EnPoint URL where the proxy has been delegated)
+        endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
 	// output message
-	msg << "*************************************************************\n";
-	msg << "DELEGATION OPERATION :\n\n\n";
-	msg << "your proxy has been successfully stored" ;
-	endpoint = (char*)getEndPoint(cfgCxt) ;
-        if (endpoint){
-		msg << "in the endpoint:\n\n" << endpoint;
-         }
-	msg << "\t" << endpoint << "\n\n";
-	msg << "with the delegation identifier :\t" << *dgOpt << "\n\n";
-	msg << "*************************************************************\n";
+        // OUTPUT MESSAGE ============================================
+	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
+	out << "Your proxy has been successfully delegated to the WMProxy:\n" ;
+	out << *endPoint << "\n\n";
+	out << "with the delegation identifier: " << *dgOpt << "\n";
+	out << infoToFile( ) ;
+	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
+	out << getLogFileMsg ( ) << "\n";
+        // ==============================================================
         // prints the message on the standard output
-	cout << msg.str() ;
-
-        if (outOpt){
-		msg << "\nproxy :\n\n" << proxy << "\n";
-                Utils::toFile (*outOpt, msg.str());
-        }
-
+	cout << out.str() ;
 };
+
+
+std::string DelegateProxy::infoToFile( ){
+	string rm = "";
+	if (outOpt){
+		char ws = (char)32;
+		time_t now = time(NULL);
+		struct tm *ns = localtime(&now);
+		// date
+		ostringstream date;
+		date << Utils::twoDigits(ns->tm_mday) << ws << monthStr[ns->tm_mon]  << ws <<  (ns->tm_year+1900) << "," << ws;
+		date << Utils::twoDigits(ns->tm_hour) << ":" << Utils::twoDigits(ns->tm_min) << ":" << Utils::twoDigits(ns->tm_sec) << ws;
+		string msg = "glite-wms-delegate proxy (" + date.str() + ")\n";
+		msg += "=========================================================================\n";
+		msg += "WMProxy: " + *endPoint + "\ndelegation ID: " + *dgOpt + "\n";
+		if( wmcUtils->toFile(*outOpt, msg, wmcOpts->getBoolAttribute(Options::NOINT),true) < 0 ){
+			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
+		} else {
+			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
+			rm += "\nThe DelegateProxy result  has been saved in the following file:\n";
+			rm += Utils::getAbsolutePath(*outOpt) + "\n";
+		}
+	}
+        return rm;
+}
 }}}} // ending namespaces

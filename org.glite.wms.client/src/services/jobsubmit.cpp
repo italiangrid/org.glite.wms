@@ -4,18 +4,13 @@
 // streams
 #include <sstream>
 #include <iostream>
-// CURL
-#include <curl/curl.h>
-// fstat
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 // exceptions
 #include "utilities/excman.h"
 // wmp-client utilities
 #include "utilities/utils.h"
+#include "utilities/adutils.h"
 #include "utilities/options_utils.h"
+
 // wmproxy-api
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 // Ad attributes and JDL methods
@@ -23,7 +18,13 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/extractfiles.h"
 #include "glite/wms/jdl/adconverter.h"
+// BOOST
+#include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/exception.hpp"
+#include "boost/tokenizer.hpp" //lrms checks
 
+// CURL
+#include "curl/curl.h"
 
 
 using namespace std ;
@@ -31,88 +32,108 @@ using namespace glite::wms::client::utilities ;
 using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapiutils;
 using namespace glite::wms::jdl;
+using namespace glite::wmsutils::exception;
+namespace fs = boost::filesystem;
+
 
 namespace glite {
 namespace wms{
 namespace client {
 namespace services {
 
+
 /*
 *	default constructor
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-         dgOpt = NULL;
-	 logOpt = NULL ;
-	 chkptOpt  = NULL;
-	 lmrsOpt = NULL ;
-	 toOpt = NULL ;
-	 outOpt = NULL ;
-	 inOpt  = NULL;
-	 cfgOpt = NULL ;
-	 resourceOpt = NULL ;
-         voOpt = NULL ;
+	dgOpt = NULL;
+	chkptOpt  = NULL;
+	collectOpt = NULL;
+	fileProto= NULL;
+	lrmsOpt = NULL ;
+	toOpt = NULL ;
+	inOpt  = NULL;
+	resourceOpt = NULL ;
+	startOpt = NULL ;
 	// init of the valid attribute (long type)
 	validOpt = 0 ;
 	// init of the boolean attributes
-        autodgOpt = false;
 	nomsgOpt = false ;
-	noguiOpt = false ;
 	nolistenOpt = false ;
-	nointOpt  = false;
-	versionOpt  = false;
-        dbgOpt = false ;
-         jdlFile = NULL ;
-	// parameters
-        wmpEndPoint = NULL ;
-        proxyFile = NULL ;
-        trustedCert = NULL ;
-	// utilities objects
-	wmcOpts = NULL ;
-	wmcUtils = NULL ;
+	startJob = false ;
+	// JDL file
+	jdlFile = NULL ;
+	// Ad's
+	jobAd = NULL;
+	dagAd = NULL;
+	collectAd = NULL;
+	// shadow
+	jobShadow = NULL;
+	// time opt
+	expireTime = 0;
+	// Transfer Files Message
+	transferMsg = "";
+};
+
+/*
+*	Default destructor
+*/
+JobSubmit::~JobSubmit( ){
+	if (dgOpt){ delete(dgOpt); }
+	if (collectOpt){ delete(collectOpt); }
+	if (chkptOpt){ delete(chkptOpt); }
+	if (fileProto){ delete(fileProto); }
+	if (lrmsOpt){ delete(lrmsOpt); }
+	if (toOpt){ delete(toOpt); }
+	if (inOpt){ delete(inOpt); }
+	if (jdlFile){ delete(jdlFile); }
+	if (jobAd){ delete(jobAd); }
+	if (dagAd){ delete(dagAd); }
+	if (collectAd){ delete(collectAd); }
+	if ( jobShadow){ delete( jobShadow); }
+	if ( startOpt){ delete( startOpt); }
 };
 
 
-
-
+/*
+* Handle the command line options
+*/
 void JobSubmit::readOptions (int argc,char **argv){
 	ostringstream info ;
-        vector<string> wrongids;
-        vector<string> wmps;
-	// init of option objects object
-        wmcOpts = new Options(Options::JOBSUBMIT) ;
-	wmcOpts->readOptions(argc, (const char**)argv);
-        // utilities
-        wmcUtils = new Utils (wmcOpts);
+	vector<string> wrongids;
+	vector<string> resources;
+	string opts = Job::readOptions  (argc, argv, Options::JOBSUBMIT);
+
 	// input & resource (no together)
 	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
 	if (inOpt && resourceOpt ){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	}
-        // config & vo(no together)
-        cfgOpt = wmcOpts->getStringAttribute( Options::CONFIG ) ;
-        voOpt = wmcOpts->getStringAttribute( Options::VO ) ;
-	if (voOpt && cfgOpt){
-		info << "the following options cannot be specified together:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::VO) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	}
-	// lmrs has to be used with input o resource
-	lmrsOpt = wmcOpts->getStringAttribute(Options::LMRS);
-	if (lmrsOpt && !( resourceOpt || inOpt ) ){
-		info << "LRMS option cannot be specified without a resource:\n";
-		info << "use " + wmcOpts->getAttributeUsage(Options::LMRS) << " with\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
-		info << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n\n";
+		throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Input Option Error", info.str());
+	}
+	if (inOpt){
+		// Retrieve and check resources from file
+		resources= wmcUtils->getItemsFromFile(*inOpt, Utils::CE_TYPE);
+		resources = wmcUtils->checkResources (resources);
+		if ( resources.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+			resources = wmcUtils->askMenu(resources, Utils::MENU_SINGLECE);
+			if (!resources.empty()){
+				resourceOpt = new string(resources[0]);
+			}
+		}
+	}
+	// lrms has to be used with input o resource
+	lrmsOpt = wmcOpts->getStringAttribute(Options::LRMS);
+	if (lrmsOpt && !( resourceOpt || inOpt ) ){
+		info << "LRMS option cannot be specified without a resource:\n";
+		info << "use " + wmcOpts->getAttributeUsage(Options::LRMS) << " with\n";
+		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		info << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", info.str());
@@ -123,19 +144,14 @@ void JobSubmit::readOptions (int argc,char **argv){
 	if (validOpt && toOpt){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::TO) << "\n\n";
+		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", info.str());
 	}
 	if (validOpt){
 		try{
-			if (! Utils::checkTime(*validOpt, Options::TIME_VALID) ){
-
-				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
-					"Invalid Time Value", "" );
-			}
+			expireTime =  Utils::checkTime(*validOpt, Options::TIME_VALID) ;
 		} catch (WmsClientException &exc) {
 			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
 			throw WmsClientException(__FILE__,__LINE__,
@@ -143,14 +159,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Wrong Time Value",info.str() );
 		}
 	}
-	if (toOpt){
+	if (toOpt) {
 		try{
-			if (! Utils::checkTime(*validOpt, Options::TIME_TO) ){
-
-				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
-					"Invalid Time Value", "time is out of limit" );
-			}
+		expireTime= Utils::checkTime(*toOpt, Options::TIME_TO) ;
 		} catch (WmsClientException &exc) {
 			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
 			throw WmsClientException(__FILE__,__LINE__,
@@ -158,673 +169,1152 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Wrong Time Value",info.str() );
 		}
 	}
-	// "debug" & "nomsg" (no together)
-        nomsgOpt =  wmcOpts->getBoolAttribute (Options::NOMSG);
-	dbgOpt = wmcOpts->getBoolAttribute (Options::DBG);
-	if (nomsgOpt && dbgOpt){
-		info << "the following options cannot be specified together:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::DBG) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::NOMSG) << "\n\n";
+	if (startOpt &&
+	(registerOnly || inOpt || resourceOpt || toOpt || validOpt || chkptOpt || collectOpt ||
+		(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
+		wmcOpts->getBoolAttribute(Options::AUTODG)  )){
+		info <<"it can not be used together the following options:\n";
+		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::CHKPT) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::COLLECTION) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
+				"Input Option Error: " +wmcOpts->getAttributeUsage(Options::START),
+				info.str());
+	}
+	// register-only & start
+	startOpt = wmcOpts->getStringAttribute(Options::START);   // TBDMS: double call
+	if (wmcOpts->getBoolAttribute(Options::REGISTERONLY)){
+		if (startOpt){
+			info << "the following options cannot be specified together:\n" ;
+			info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
+			info << wmcOpts->getAttributeUsage(Options::START) << "\n";
+			throw WmsClientException(__FILE__,__LINE__,
+					"readOptions",DEFAULT_ERR_CODE,
+					"Input Option Error", info.str());
+		}
+		startJob = false;
+		if (wmcOpts->getBoolAttribute(Options::TRANSFER)) {
+			registerOnly = false ;
+		} else{
+			registerOnly = true;
+		}
+	} else{
+		if (wmcOpts->getBoolAttribute(Options::TRANSFER)){
+			info << wmcOpts->getAttributeUsage(Options::TRANSFER) ;
+			info << ": this option can only be used with " ;
+			info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
+			throw WmsClientException(__FILE__,__LINE__,
+					"readOptions",DEFAULT_ERR_CODE,
+					"Input Option Error", info.str());
+		}
+		registerOnly = false;
+		startJob = true;
 	}
 
-        logOpt = wmcOpts->getStringAttribute(Options::LOGFILE );
+	// file Protocol
+	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
+	if (!fileProto) {
+		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
+	} else  if (startOpt) {
+		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transferring)", "", true );
+	}
+
+	// writes the information on the specified option in the log file
+	logInfo->print(WMS_INFO,   ">>>>>>> Function Called:", wmcOpts->getApplicationName( ), false);
+	logInfo->print(WMS_INFO, ">>>>>>> Options specified:", opts ,false);
+	startOpt = wmcOpts->getStringAttribute(Options::START);   // TBDMS: double call
+	if (!startOpt){
+		// Delegation ID
+		dgOpt = wmcUtils->getDelegationId ();
+		if ( ! dgOpt  ){
+			throw WmsClientException(__FILE__,__LINE__,
+					"readOptions",DEFAULT_ERR_CODE,
+					"Missing Information",
+					"no proxy delegation ID" );
+		}
+	}
+	// checks the JobId argument for the --start option
+	if (startOpt){*startOpt = Utils::checkJobId(*startOpt);}
+	// --chkpt
 	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
-	outOpt =  wmcOpts->getStringAttribute( Options::OUTPUT ) ;
-
-	noguiOpt =  wmcOpts->getBoolAttribute (Options::NOGUI);
+	// --nolisten
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
-	nointOpt =  wmcOpts->getBoolAttribute (Options::NOINT) ;
-	versionOpt =  wmcOpts->getBoolAttribute (Options::VERSION);
-
-        // path to the JDL file
+	// --collect
+	collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
+	// path to the JDL file
 	jdlFile = wmcOpts->getPath2Jdl( );
-	// get
-        wmps = wmcUtils->getWmps( ) ;
-        while ( ! wmps.empty( ) ) {
- 		wmpEndPoint = (string*)wmcUtils->getWmpURL(wmps);
-                if ( wmpEndPoint  ){
-        		cfgCxt = new ConfigContext("", *wmpEndPoint, "");
-			try {
-                        	if ( dbgOpt || logOpt ){
-					info << "trying to contact EndPoint : " << *wmpEndPoint << "\n";
-                                        if (dbgOpt)  cout << info;
-                                }
-   				getVersion(cfgCxt);
-                                // if no exception is thrown (available wmproxy; exit from the loop)
-                                break;
-  			} catch (BaseException &bex) {
-				wmpEndPoint = NULL ;
-                        }
-    		}
-	}
-	if ( wmps.empty( ) && ! wmpEndPoint ){
-                throw WmsClientException(__FILE__,__LINE__,
-                        "getWmpURL", DEFAULT_ERR_CODE,
-                        "Missing infomration", "no WMProxy URL specified" );
-        }
-
-        // Delegation ID
-        dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
-        autodgOpt = wmcOpts->getBoolAttribute(Options::AUTODG);
-	if ( ! dgOpt && ! autodgOpt ){
-		info << "a mandatory attribute is missing:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-                info << "\tor\n";
-                info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
+	// checks if the proxy file pathname is set
+	if (proxyFile) {
+		// Proxy file set, do nothing
+	} else {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Missing Information", info.str());
-	} else if ( dgOpt && autodgOpt ){
-		info << "the following options cannot be specified together:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-                info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	} else if (autodgOpt){
-        	// Automatic Delegation
-        	dgOpt = wmcUtils->getUniqueString( );
-                if (!dgOpt ){
-                	throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
-				"Missing Information", "error during the automatic generation of the delegation string"  );
-       		}
-                string proxy = getProxyReq(*dgOpt, cfgCxt) ;
-        	// sends the proxy to the endpoint service
-        	putProxy(*dgOpt, proxy, cfgCxt);
-        }
-	// user proxy
-	proxyFile =  (char*)getProxyFile(cfgCxt);
- 	// trusted Certs
-	trustedCert =  (char*)getTrustedCert(cfgCxt);
+				"Invalid Credential",
+				"No valid proxy file pathname" );
+	}
 }
-
-
-void JobSubmit::printUsageMsg (const char* exename ){
-	 if (wmcOpts){
-		wmcOpts->printUsage (exename);
-  	}
-}
-
-
-  /*
-  *	callback called during file uploading by curl
- *	in case if verbosity is on
-*/
- size_t JobSubmit::readCallback(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-	size_t retcode;
-   	retcode = fread(ptr, size, nmemb, (FILE*)stream);
-	fprintf(stderr, "%d byte read\n", retcode);
-	return retcode;
- }
-
 
 /*
-*  Uploads a set of files to the Destination URIs
-*	@param paths InputSB files
-*/
-std::string JobSubmit::transferFiles (std::vector<std::pair<std::string,std::string> > paths)
-{
-	// curl struct
-	CURL *curl = NULL;
-	// curl result code
-	CURLcode res;
-	// file struct
-	struct stat file_info;
-	FILE * hd_src  = NULL;
-	// vector iterator
-	vector <pair<string , string> >::iterator it ;
-	// source and destination
-	string source = "" ;
-	string destination = "" ;
-	// local filepath
-	string file = "" ;
-	// result message
-	string result = "";
-	int hd = 0;
-	long	httpcode = 0;
-	long freequota=0;
-	// error messages
-	ostringstream err ;
-	// checks user free quota
-	if ( ! checkFreeQuota (paths, freequota) ){
-		err << "not enough free quota on the server for InputSandbox file (freequota=" ;
-		err << freequota << " bytes)\n";
-		throw WmsClientException( __FILE__,__LINE__,
-						"transferFiles",  DEFAULT_ERR_CODE,
-						"User FreeQuota Error" , err.str());
-	}
-	// checks the user proxy pathname
-	if (!proxyFile){
-		throw WmsClientException(__FILE__,__LINE__,
-			"transferFiles", DEFAULT_ERR_CODE,
-			"Missing Proxy", "unable to determine the proxy file" );
-	}
-	// checks the trusted cert dir
-	if (!trustedCert){
-		throw WmsClientException(__FILE__,__LINE__,
-			"transferFiles", DEFAULT_ERR_CODE,
-			"Directory Not Found", "unable to determine the trusted certificate directory" );
-	}
-	// curl init
-	curl_global_init(CURL_GLOBAL_ALL);
- 	curl = curl_easy_init();
-	 if(curl) {
-	 	if ( dbgOpt ) {
-			cout << "Input Sandbox file transferring ....\n" << endl;
-			cout << "user proxy : " << proxyFile << endl;
-			cout << "transferring of number " << paths.size() << " files" << endl;
-			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-			curl_easy_setopt(curl, CURLOPT_READFUNCTION,  JobSubmit::readCallback);
-		}
-		// result message
-		result = "\nInputSandbox file(s)  :\n";
-		// curl options: proxy
-		curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-  		curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-		curl_easy_setopt(curl, CURLOPT_SSLCERT,	proxyFile);
-  		curl_easy_setopt(curl, CURLOPT_SSLKEY, proxyFile);
-		curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
-		// curl option: trusted cert dir
-                curl_easy_setopt(curl, CURLOPT_CAPATH, trustedCert);
-		// curl options: no verify the ssl properties
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-   		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-		// enable uploading
-		curl_easy_setopt(curl, CURLOPT_PUT, 1);
-		// name of the file to be transferred
-		for ( it = paths.begin() ; it != paths.end() ; it++ ){
-			// curl options: source
-			source = it->first ;
-			hd_src = fopen(source.c_str(), "rb");
-			if (hd_src == NULL) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"transferFiles",  DEFAULT_ERR_CODE,
-						"File Not Found", "no such file : " + it->first  );
-			}
-			curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
-			// curl options: file size
-			hd = open(source.c_str(), O_RDONLY) ;
-			fstat(hd, &file_info);
-			close(hd) ;
-			curl_easy_setopt(curl,CURLOPT_INFILESIZE, file_info.st_size);
-			// curl options: destination
-			destination = it->second;
-			curl_easy_setopt(curl,CURLOPT_URL, destination.c_str());
-			if ( dbgOpt ) {
-				cout << "InputSandbox file : " << source << endl;
-				cout << "destination URI : " << destination << endl;
-				cout << "size : " << file_info.st_size << " byte"<< endl;
-				cout << "\ntransferring ..... " ;
-			}
-			// transferring ......
-			res = curl_easy_perform(curl);
-			// result
-			if ( res != 0 ){
-				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
-				err << "couldn't transfer the InputSandbox file : " << source ;
-				err << "to " << destination << "\nhttp error code: " << httpcode ;
-				throw WmsClientException(__FILE__,__LINE__,
-						"transferFiles",  DEFAULT_ERR_CODE,
-						"File Transfer Error", err.str()  );
-			} else {
-				if ( dbgOpt ) {
-						cout << "success" << endl ;
-				}
-			}
-			// result string message
-			result += "-> " + source + "\n";
-			result += "to " + destination + "\n\n";
-			fclose(hd_src);
-		}
-		// cleanup
-		curl_easy_cleanup(curl);
-	}
-        return result;
-}
-
- /*
-*	handles the result of the register for a normal job
-*/
-void JobSubmit::normalJob( )
-{
-	// jobid and nodename
-	string id = "";
-	string jobid = "";
-	string node = "";
-	// final output message
-	string outmsg = "";
-	// file transferring message
-	string result = "";
-	// Destination URI
-	string *dest_uri = NULL;
-	// InputSB files
-	vector <string> paths ;
-	vector <pair<string, string> > to_bcopied ;
-	// JOB-ID
-        jobid = Utils::checkJobId (jobIds.jobid);
-	id = jobid ;
-	// output message
-	outmsg = "****************************************************************************\n";
-	outmsg += "your job has been successfully submitted by the end point:\n\n";
-	outmsg += "\t" +  string(*wmpEndPoint)+ "\n\n";
-	outmsg += "with the jobid:\n\n\t" + jobid + "\n\n";
-	//  node name (if it is set)
-	if ( jobIds.nodeName ){
-		node =*jobIds.nodeName;
-		if (node.size() > 0 ){
-			outmsg += "node: " + node + "\n\n";
-		}
-	}
-	// verbose msg
-	if (dbgOpt){
-		cout << "assigned jobid : " << jobid  << endl;
-		cout << "retrieving InputSanbox files ...." << endl;
-	}
-	// INPUTSANDBOX
-	if (ad->hasAttribute(JDL::INPUTSB)){
-		// http destination URI
-		dest_uri = getInputSBDestURI(jobid);
-		if (!dest_uri){
-			fprintf (stderr, "\nerror: unable to retrieve the InputSandbox destination URI\n");
-			fprintf (stderr, "jobid: %s", jobid.c_str() );
-			exit(-1);
-		}
-		if (dbgOpt){
-			cout << "destination URI = " << *dest_uri << endl;
-		}
-		// InputSandbox files
-		if (!ad){
-			fprintf (stderr, "fatal error: unable to read the Job Description\n");
-			exit(-1);
-		}
-		// gets the InputSandbox files
-		paths = ad->getStringValue  (JDL::INPUTSB) ;
-		// gets the InputSandbox files to be transferred to destinationURIs
-		toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri,"");
-		// InputSandbox file transferring
-		result = transferFiles (to_bcopied);
-		// result output message
-		if (result.size()>0){
-			outmsg += result;
-		}
-	}
-	outmsg += "****************************************************************************\n";
-	if (dbgOpt){
-		cout << "\nstarting the job : " << jobid << "\n";
-	}
-	// START
-	jobStart(id, cfgCxt);
-	if (dbgOpt){
-		cout << "\n job start: success\n";
-		cout << "the job has been successfully submitted\n";
-	}
-	// displays the output message
-	fprintf (stdout, "\n%s", outmsg.c_str());
- /*
-	// saves the result
-	if (fout){
-		if ( ex_utilities::saveToFile(*fout, outmsg) < 0 ){
-			fprintf (stderr, "\nwarning: unable to write the result in %s\n", fout->c_str());
-		} else{
-			fprintf (stdout, "\nThis message has been saved in %s\n", fout->c_str() );
-		}
-	}
- */
-}
-  /*
-*	handles the result of the register for a DAG job
-*/
-void JobSubmit::dagJob( )
-{
-	// jobid and node-name
-	string jobid = "";
-	string id = "";
-	string node = "";
-	// destURI protocol
-	string protocol = "";
-	// Destination URI
-	string *dest_uri = NULL;
-	// final output message
-	string outmsg = "";
-	// transferring files message
-	string result = "";
-	// var-msg
-	string x1, x2 = "";
-
-	// InputSB files
-	vector <string> paths ;
-	vector <pair<string, string> > to_bcopied ;
-	// children
-	vector <JobIdApi*> children;
-	JobIdApi* child = NULL;
-	// iterators
-	vector <JobIdApi*>::iterator it;
-	ostringstream oss;
-
- 	// MAIN JOB ====================
-        // jobid
-        jobid = Utils::checkJobId (jobIds.jobid);
-        id = jobid ;
-        outmsg = "****************************************************************************\n";
-        outmsg += "REGISTER OPERATION :\n\n\n";
-/*
-                if (jobtype == COLLECTION){
-                        x1 = "job collection";
-                        x2 = "\tjob n.1 :\n\t=======================================\n";
-                } else{
-                        x1 = "DAG job" ;
-                        x2 = "root's job" ;
-                }
-*/
-        outmsg += "your " + x1 + " has been successfully submitted by the end point:\n\n";
-        outmsg += "\t" + string(*wmpEndPoint)+ "\n\n";
-        outmsg += x2 + "\t" + jobid + "\n\n";
-        if (dbgOpt){
-                cout << x1 << "\n";
-                cout << "(" << x2  << ") jobid : " << jobid  << endl;
-                cout << "retrieving InputSanbox files ...." << endl;
-        }
-        // MAIN JOB: node name (if it is set)
-        if ( jobIds.nodeName ){
-                node =*jobIds.nodeName;
-                if (node.size() > 0 ){
-                        outmsg += "node: " + node + "\n\n";
-                } else {
-                        outmsg += "node name is unknown\n\n";
-                }
-        }
-        if (!dag){
-                fprintf (stderr, "fatal error: unable to read the DAG Job Description\n");
-                exit(-1);
-        }
-        // MAIN JOB: InputSandox files
-        if (dag->hasAttribute(JDL::INPUTSB)) {
-                // MAIN JOB: http destination URI
-                dest_uri = getInputSBDestURI(jobid);
-                if (!dest_uri){
-                        fprintf (stderr, "\nerror: unable to retrieve the InputSandbox destination URI\n");
-                        fprintf (stderr, "(main job) jobid: %s", jobid.c_str() );
-                        exit(-1);
-                }
-                paths = dag->getInputSandbox();
-                if (dbgOpt){
-                        cout << "this  job has " << paths.size() << " InputSB files" << endl;
-                        cout << "destination URI = " << *dest_uri << "\n\n";
-                }
-                // MAIN JOB: InputSB files to be transferred to the DestURI
-                toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, "");
-        } else {
-                if (dbgOpt){
-                        cout << "this job doesn't have any InputSB files" << endl;
-                }
-        }
-                // CHILDREN ====================
-        children = jobIds.children ;
-         // Second part of the result message (children)
-        if ( ! children.empty() ){
-/*
-                        if (jobtype == COLLECTION){
-                                oss << ++n;
-                                x1 = "\tjob n." + oss.str() + ":\n" ;
-                                x2 = "\t=======================================\n";
-                        } else {
-                                x1 = "\tchildren";
-                                x2 = "\t=======================================\n\n";
-                        }
-*/
-		outmsg = outmsg.append (x1);
-		outmsg = outmsg.append (x2);
-                for ( it = children.begin() ; it != children.end(); it++){
-                        child = *it;
-                        if (child){
-                                // child: jobid
-                                jobid = Utils::checkJobId(child->jobid);
-                                outmsg += "\tjobid\t: " + jobid + "\n";
-                                if (dbgOpt){
-                                        cout << x1 << x2 << "\n";
-                                        cout << "assigned jobid : " << jobid  << endl;
-                                        cout << "retrieving InputSanbox files ...." << endl;
-                                }
-                                //child:  node name
-                                if ( ! child->nodeName ){
-                                        cerr << "error:\nunable to retrieve the node name for child (" << jobid << ")\n";
-                                        exit(-1);
-                                }
-                                node = *(child->nodeName);
-                                if ( node != "" ){
-                                        outmsg += "\tnode\t: " + node + "\n";
-                                }
-                                dest_uri = getInputSBDestURI(jobid);
-                                if (!dest_uri){
-                                        fprintf (stderr, "\nerror: unable to retrieve the InputSandbox destination URI\n");
-                                        fprintf (stderr, "jobid: %s", jobid.c_str() );
-                                        fprintf (stderr, "node: %s", node.c_str() );
-                                        exit(-1);
-                                }
-                                // Children: InputSandbox files
-                                paths = dag->getNodeStringValue(node, JDL::INPUTSB);
-                                if (dbgOpt){
-                                        cout << "this job has " << paths.size() << " InputSB files" << endl;
-                                        cout << "destination URI = " << *dest_uri << "\n\n";
-                                }
-                                toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri,"");
-                                outmsg += "\t-----------------------------------------------------------------\n";
-                        }
-                }
-        } else {
-                outmsg += "\nno chlidren\n\n";
-        }
-        // InputSandbox file transferring
-        result = transferFiles (to_bcopied);
-
-	// result output message
-	if (result.size()>0){
-		outmsg += result;
-	}
-	outmsg += "*************************************************************\n";
-	if (dbgOpt){
-		cout << "\nstarting the job : " << jobid << "\n";
-	}
-	// START
-	jobStart(id, cfgCxt);
-	if (dbgOpt){
-		cout << "\n job start: success\n";
-		cout << "the job has been successfully submitted\n";
-	}
-	// Displays the output message
-	fprintf (stdout, "\n%s", outmsg.c_str());
-        /*
-	// saves the result
-	if (fout){
-		if ( ex_utilities::saveToFile(*fout, outmsg) < 0 ){
-			fprintf (stderr, "\nwarning: unable to write the result in %s\n", fout->c_str());
-		} else{
-			fprintf (stdout, "\nThis message has been saved in %s\n", fout->c_str() );
-		}
-	}
-        */
-}
-/*
-*	performs the submission operations
+* performs the main operation for the submission
 */
 void JobSubmit::submission ( ){
-	bool isdag = false;
-	// ClassAd
-	ad = new Ad( );
-        if (! jdlFile){
-		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE,
-			"Missing Information",
-                        "uknown JDL file pathame"   );
-        }
-	ad->fromFile (*jdlFile);
-
-        if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
-        	// DAG
-                if ( dbgOpt ) {
-                        cout << "\nJobType: DAG" << endl ;
-                }
-                isdag = true;
-                dag = new  ExpDagAd ( ad->toString() );
-                // expands the DAG loading all JDL files
-                dag->expand( );
-                jdlString = new string (dag->toString() );
-        }  else if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
-		// collection
-                if ( dbgOpt ) {
-                        cout << "\nJobType: COLLECTION" << endl ;
-                }
-                classad::ClassAd * class_ad = ad->ad();
-         	 if ( ! class_ad ){
-			throw WmsClientException(__FILE__,__LINE__,
-				"submission",  DEFAULT_ERR_CODE,
-				"Invalid JDL",
-                        	"invalid collection JDL"   );
-      		}
-        	collect = new CollectionAd( *class_ad );
-        	jdlString = new string (collect->toString() );
-        } else {
-		jdlString = new string (ad->toString() );
-        }
-
-	if ( ! dgOpt){
-		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to DelegationID String"   );
-        }
+	// proxy validity must be at least 20 minutes
+	postOptionchecks(20);
+	ostringstream out ;
+	string jobid = "";
+	bool toBretrieved = false;
 	if (!cfgCxt){
 		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to ConfigContext object"   );
-        }
-	// Register
-        jobIds = jobRegister (*jdlString, *dgOpt, cfgCxt);
-	// handles the results
-        if (isdag){
-		dagJob( );
-        } else{
-		normalJob( );
-        }
+			"submission",  DEFAULT_ERR_CODE ,
+			"Null Pointer Error",
+			"null pointer to ConfigContext object"   );
+	}
+	// in case of --start option
+	if (startOpt){
+		jobid = *startOpt;
+		jobStarter(jobid);
+	} else {  // startOpt = FALSE
+		if (!wmcOpts){
+			throw WmsClientException(__FILE__,__LINE__,
+				"submission",  DEFAULT_ERR_CODE ,
+				"Null Pointer Error",
+				"null pointer to wmcOpts URL object"   );
+		}
+		// checks that the needed attributes are not null
+		if ( ! dgOpt){
+			throw WmsClientException(__FILE__,__LINE__,
+				"submission",  DEFAULT_ERR_CODE,
+				"Null Pointer Error",
+				"null pointer to DelegationID String"   );
+		}
+		// if the autodelegation is needed
+		if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
+			endPoint = new string(wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
+		}
+		// reads and checks the JDL('s)
+		wmsJobType jobtype ;
+		this->checkAd(toBretrieved, jobtype);
+		// Perform Submission when:
+		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
+		jobid = jobRegOrSub(startJob && !toBretrieved);
+		// Perform File Transfer when:
+		// (Registeronly is NOT specified [or specified with --tranfer-file]) AND (some file are to be transferred)
+		if (toBretrieved){
+			try{
+				// JOBTYPE
+				switch (jobtype) {
+					case (WMS_JOB) : {
+						jobid = this->normalJob( );
+						break;
+					}
+					case WMS_DAG:
+					case WMS_PARAMETRIC:
+						jobid = this->dagJob( );
+						break;
+					case (WMS_COLLECTION) : {
+							jobid = this->collectionJob( );
+							break;
+					}
+					default : {
+							throw WmsClientException(__FILE__,__LINE__,
+								"submission",  DEFAULT_ERR_CODE ,
+								"Uknown JobType",
+								"unable to process the job (check the JDL)");
+					}
+				}
+			}catch (Exception &exc){
+				throw WmsClientException(__FILE__,__LINE__,
+					"submission",  DEFAULT_ERR_CODE ,
+					"The job has been successfully registered (the JobId is: " + jobid + "),"
+					" but an error occurred while transferring files:",
+					string (exc.what()));
+			}
+		} else{
+			if (!toBretrieved){
+				logInfo->print(WMS_DEBUG, "No local files in the InputSandbox to be transferred", "") ;
+			}
+			try {
+				if (!startJob) {
+					transferMsg = "To complete the operation start the job by issuing a submission with the option:\n";
+					transferMsg += " --start " + jobid + "\n";
+				}
+			} catch (BaseException &exc) {
+				throw WmsClientException(__FILE__,__LINE__,
+					"jobSubmit", ECONNABORTED,
+					"WMProxy Server Error", errMsg(exc));
+			}
+		}
+		logInfo->print(WMS_DEBUG, "The JobId is: ", jobid) ;
+		// Perform JobStart when:
+		// (RegisterOnly has not been specified in CLI) AND (There were files to transfer)
+		if (startJob && toBretrieved){
+			// Perform JobStart
+			jobStarter(jobid);
+		}
 
-};
 
+	}  // startOpt = FALSE branch
+	// HEADER OF THE OUTPUT MESSAGE (submission)============================================
+	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
+	if (registerOnly){
+		out << "The job has been successfully registered to the WMProxy\n";
+	} else if (startOpt){
+		out << "The job has been successfully started to the WMProxy\n";
+	} else {
+
+		// OUTPUT MESSAGE (register+start)============================================
+		out << "The job has been successfully submitted to the WMProxy\n";
+	}
+	/// OUTPUT MESSAGE (jobid and other information)============================================
+	out << "Your job identifier is:\n\n";
+	out << jobid << "\n";
+	if (jobShadow!=NULL){
+		jobShadow->setJobId(jobid);
+		out << "Input Stream  location: " << jobShadow->getPipeIn() <<"\n";
+		out << "Output Stream  location: " << jobShadow->getPipeOut() <<"\n";
+		if (jobShadow->isLocalConsole()){
+			out << "Shadow process Id: " << jobShadow->getPid() << "\n";
+			if (wmcOpts->getBoolAttribute(Options::DBG)){
+				out << "Interactive Listening Host: " << jobShadow->getHost() <<"\n";
+				out << "Interactive Listening Port: " << jobShadow->getPort() <<"\n";
+			}
+		}else {
+			out << "Remote Shadow console set: " << jobShadow->getHost() <<"\n";
+		}
+	}
+	// saves the result
+	if (outOpt){
+		if ( wmcUtils->saveJobIdToFile(*outOpt, jobid) < 0 ){
+			logInfo->print (WMS_WARNING, "unable to write the jobid to the output file " , Utils::getAbsolutePath(*outOpt));
+		} else{
+			logInfo->print (WMS_DEBUG, "The JobId has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
+			out << "\nThe job identifier has been saved in the following file:\n";
+			out << Utils::getAbsolutePath(*outOpt) << "\n";
+		}
+	}
+	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
+
+	if (transferMsg.size() > 0) {
+		out << transferMsg << "\n";
+		logInfo->print (WMS_INFO, transferMsg , "", false);
+	}
+	out << getLogFileMsg ( ) << "\n";
+	// ==============================================================
+	// Displays the output message
+	cout << out.str() ;
+	// Interactive Jobs management:
+	if (jobShadow!=NULL){
+		if (jobShadow->isLocalConsole()){
+			// Interactive console needed
+			logInfo->print(WMS_DEBUG,"Running Listener",jobid);
+			Listener listener(jobShadow);
+			listener.run();
+		}
+	}
+}
 /*====================================
 	private methods
 ==================================== */
+/*
+* reads and checks the JDL file
+*/
+void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
+	jobtype = WMS_JOB;
+	toBretrieved =true ;
+	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
+	if (collectOpt) {
+		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
+			Utils::getAbsolutePath( *collectOpt));
+		jobtype = WMS_COLLECTION ;
+		try {
+			fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific);
+			if ( fs::is_directory( cp ) ) {
+				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
+			}
+		} catch ( const fs::filesystem_error & ex ){
+			throw WmsClientException(__FILE__,__LINE__,
+				"submission",  DEFAULT_ERR_CODE,
+				"Invalid JDL collection Path",
+				ex.what()  );
+		}
+		collectAd = AdConverter::createCollectionFromPath (*collectOpt);
+		collectAd->setLocalAccess(true);
+		// Simple Ad manipulation
+		AdUtils::setDefaultValuesAd(collectAd,wmcConf);
+		// Collect Ad manipulation
+		AdUtils::setDefaultValues(collectAd,wmcConf);
+		// JDL string
+		collectAd = collectAd->check();
+		toBretrieved =collectAd->gettoBretrieved();
+/*		if (toBretrieved){
+			// ISB ZIP management
+			collectAd->setAttribute(JDL::ZIPPED_ISB , *tarFileName+Utils::getZipExtension());
+		}
+*/
+		jdlString = new string(collectAd->toString());
+	} else {
+		// ClassAd
+		jobAd = new Ad();
+		if (! jdlFile){
+			throw WmsClientException(__FILE__,__LINE__,
+				"checkAd",  DEFAULT_ERR_CODE,
+				"JDL File Missing",
+				"uknown JDL file pathame (Last Argument of the command must be a JDL file)"   );
+		}
+		logInfo->print (WMS_DEBUG, "The JDL files is:", Utils::getAbsolutePath(*jdlFile));
+		jobAd->fromFile (*jdlFile);
+		// Adds ExpireTime JDL attribute
+		if ((int)expireTime>0) {
+			jobAd->addAttribute (JDL::EXPIRY_TIME, (double)expireTime);
+		}
+		// Simple Ad manipulation (common)
+		AdUtils::setDefaultValuesAd(jobAd,wmcConf);
+		if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
+			logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted", "");
+			jobtype = WMS_COLLECTION ;
+			try{
+				collectAd = new CollectionAd(*(jobAd->ad()));
+				collectAd->setLocalAccess(true);
+				// Collect Ad manipulation
+				AdUtils::setDefaultValues(collectAd,wmcConf);
+				// JDL string
+				collectAd = collectAd->check();
+				toBretrieved =collectAd->gettoBretrieved();
+/*				if (toBretrieved){
+					// ISB ZIP management
+					collectAd->setAttribute(JDL::ZIPPED_ISB , *tarFileName+Utils::getZipExtension());
+				}
+*/
+				jdlString = new string(collectAd->toString());
+			}catch (Exception &ex){
+				throw WmsClientException(__FILE__,__LINE__,
+					"submission",  DEFAULT_ERR_CODE,
+					"Invalid JDL collection",
+					ex.what()   );
+			}
+		}  else if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {  // DAG
+				logInfo->print (WMS_DEBUG, "A DAG job is being submitted.", "");
+				jobtype = WMS_DAG ;
+				dagAd = new ExpDagAd (jobAd->toString());
+				dagAd->setLocalAccess(true);
+				AdUtils::setDefaultValues(dagAd,wmcConf);
+				// expands the DAG loading all JDL files
+				dagAd->getSubmissionStrings();
+				toBretrieved=dagAd->gettoBretrieved();
+/*
+				if (toBretrieved){
+					// ISB ZIP management
+					dagAd->setAttribute(JDL::ZIPPED_ISB , *tarFileName+Utils::getZipExtension());
+				}
+*/
+				// JDL string for the DAG
+				jdlString = new string(dagAd->toString()) ;
+		}else{   // JOB
+			// WMS_JOB
+			jobtype = WMS_JOB ;
+			// resource <ce_id> ----> SubmitTo JDL attribute
+			if (resourceOpt) {
+				if (jobAd->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
+					throw WmsClientException(__FILE__,__LINE__,
+						"checkAd",  DEFAULT_ERR_CODE,
+						"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
+						"cannot be used for  DAG, collection, partitionable and parametric jobs");
+				}else{jobAd->setAttribute(JDL::SUBMIT_TO, *resourceOpt);}
+			}
+			if (  jobAd->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
+				// Interactive Job management
+				logInfo->print (WMS_DEBUG, "An interactive job is being submitted.", "");
+				jobShadow = new Shadow();
+				jobShadow->setPrefix(wmcUtils->getPrefix()+"/bin");
+				// Insert jdl attributes port/pipe/host inside shadow(if present)
+				if (jobAd->hasAttribute(JDL::SHPORT)){
+					jobShadow->setPort(jobAd->getInt ( JDL::SHPORT ));
+				}
+				if (jobAd->hasAttribute(JDL::SHPIPEPATH)){
+					jobShadow->setPipe(jobAd->getString(JDL::SHPIPEPATH));
+				}else{
+					jobAd->setAttribute(JDL::SHPIPEPATH,jobShadow->getPipe());
+				}
+				if (jobAd->hasAttribute(JDL::SHHOST)){
+					jobShadow->setHost(jobAd->getString(JDL::SHHOST));
+				}else{
+					jobAd->setAttribute(JDL::SHHOST,jobShadow->getHost());
+				}
+				// Launch console
+				if (jobShadow->isLocalConsole()){
+					logInfo->print(WMS_DEBUG,"Running console shadow","");
+					jobShadow->console();
+					logInfo->print(WMS_DEBUG,"Console properly started","");
+					// Insert listenin port number (if necessary replace old value)
+					if (jobAd->hasAttribute(JDL::SHPORT)){jobAd->delAttribute(JDL::SHPORT);}
+					jobAd->setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
+				}
+			}
+			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
+				// MpiCh Job:
+				if (lrmsOpt){
+					// Override previous value (if present)
+					if (jobAd->hasAttribute(JDL::LRMS_TYPE)){jobAd->delAttribute(JDL::LRMS_TYPE);}
+					jobAd->setAttribute(JDL::LRMS_TYPE,*lrmsOpt);
+				}
+				// Check queue
+				// boost::char_separator<char> separator("-");
+				// boost::tokenizer<boost::char_separator<char> > tok(line, separator);
+			}
+			JobAd *pass= new JobAd(*(jobAd->ad()));
+			AdUtils::setDefaultValues(pass,wmcConf);
+			// check JobAd without restoring attributes
+			pass->check(false);
+			toBretrieved=pass->gettoBretrieved();
+/*
+			if (toBretrieved){
+				// ISB ZIP management
+				pass->setAttribute(JDL::ZIPPED_ISB , *tarFileName+Utils::getZipExtension());
+			}
+*/
+			jdlString = new string(pass->toString());
+			// Parametric support
+			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)){
+				jobtype = WMS_PARAMETRIC;
+				dagAd=AdConverter::bulk2dag(pass);
+				AdUtils::setDefaultValues(dagAd,wmcConf);
+				dagAd->getSubmissionStrings();
+				toBretrieved=dagAd->gettoBretrieved();
+			}
+			delete(pass);
+		}
+	}
+	// --resource : incompatible argument
+	if( (resourceOpt) && (jobtype!= WMS_JOB)){
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkAd",  DEFAULT_ERR_CODE,
+			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
+			"cannot be used for  DAG, collection, partitionable and parametric jobs");
+	}
+}
 
+std::string JobSubmit::jobRegOrSub(bool submit ) {
+	vector<string> urls ;
+	int index = 0;
+	// flag to stop while-loop
+	bool success = false;
+	// number of enpoint URL's
+	int n = 0;
+	// checks if jdlstring is not null
+	if (!jdlString){
+		throw WmsClientException(__FILE__,__LINE__,
+			"submission",  DEFAULT_ERR_CODE ,
+			"Null Pointer Error",
+			"null pointer to JDL string");
+	}
+	// checks if ConfigContext already contains the WMProxy URL
+	if (endPoint){
+		urls.push_back(*endPoint);
+	} else {
+		// list of endpoints from configuration file
+		urls = wmcUtils->getWmps ( );
+	}
+	// initial number of Url's
+	n = urls.size( );
+	if (!cfgCxt){
+		cfgCxt = new ConfigContext("", "", "");
+	}
+	while ( ! urls.empty( ) ){
+		int size = urls.size();
+		if (size > 1){
+			// randomic extraction of one URL from the list
+			index = wmcUtils->getRandom(size);
+		} else{
+			index = 0;
+		}
+		// endpoint URL
+		endPoint = new string(urls[index]);
+		// setting of the EndPoint ConfigContext field
+		cfgCxt->endpoint=urls[index];
+		// Removes the extracted URL from the list
+		urls.erase ( (urls.begin( ) + index) );
+		// jobRegister
+		logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);
+				string method ;
+				if (submit){ method = "submit";}
+				else {method = "register";}
+		try{
+			if (submit){
+				logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
+				//Suibmitting....
+				jobIds = jobSubmit(*jdlString, *dgOpt, cfgCxt);
+			}else {
+				logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
+				// registering ...
+				jobIds = jobRegister(*jdlString , *dgOpt, cfgCxt);
+			}
+			success = true;
+		} catch (BaseException &exc) {
+			if (n==1) {
+				ostringstream err ;
+				err << "Unable to "<< method << " the job to the service: " << *endPoint << "\n";
+				err << errMsg(exc) ;
+				// in case of any error on the only specified endpoint
+				throw WmsClientException(__FILE__,__LINE__,
+					"job"+method, ECONNABORTED,
+					"Operation failed", err.str());
+			} else {
+				logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
+				sleep(1);
+				if (urls.empty( )){
+					throw WmsClientException(__FILE__,__LINE__,
+					"job"+method, ECONNABORTED,
+					"Operation failed",
+					"Unable to " +method +" the job to any specified endpoint");
+				}
+			}
+		}
+		// exits from the loop in case of success
+		if (success){ break;}
+	}
+	return jobIds.jobid;
+}
+
+void JobSubmit::jobStarter(const std::string &jobid ) {
+	vector<string> urls ;
+	int index = 0;
+	// flag to stop while-loop
+	bool success = false;
+	// number of enpoint URL's
+	int n = 0;
+	// checks if ConfigContext already contains the WMProxy URL
+	if (endPoint){
+		urls.push_back(*endPoint);
+	} else {
+		// list of endpoints from configuration file
+		urls = wmcUtils->getWmps ( );
+	}
+	// initial number of Url's
+	n = urls.size( );
+	if (!cfgCxt){
+		cfgCxt = new ConfigContext("", "", "");
+	}
+	while ( ! urls.empty( ) ){
+		int size = urls.size();
+		if (size > 1){
+			// randomic extraction of one URL from the list
+			index = wmcUtils->getRandom(size);
+		} else{
+			index = 0;
+		}
+		// endpoint URL
+		endPoint = new string(urls[index]);
+		// setting of the EndPoint ConfigContext field
+		cfgCxt->endpoint=urls[index];
+		// Removes the extracted URL from the list
+		urls.erase ( (urls.begin( ) + index) );
+		// Prints this message only if the --start option has been requested
+		// (without --start it has been already printed before the job registration)
+		if (startOpt){ logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);}
+		// JobStart if --register-only has not been requested
+		try {
+			// START
+			logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
+			jobStart(jobid, cfgCxt);
+			success = true;
+		} catch (BaseException &exc) {
+			if (n==1) {
+				ostringstream err ;
+				err << "Unable to start the job to the service: " << *endPoint << "\n";
+				err << errMsg(exc) ;
+				// in case of any error on the only specified endpoint
+				throw WmsClientException(__FILE__,__LINE__,
+					"jobStart", ECONNABORTED,
+					"Operation failed", err.str());
+			} else {
+				logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
+				sleep(1);
+				if (urls.empty( )){
+					throw WmsClientException(__FILE__,__LINE__,
+					"jobStart", ECONNABORTED,
+					"Operation failed",
+					"Unable to start the job to any specified endpoint");
+				}
+			}
+		}
+		// exits from the loop in case of success
+		if (success){ break;}
+	}
+}
 /*
 *	contacts the endpoint configurated in the context
 *	in order to retrieve the http(s) destionationURI of the job
 *	identified by the jobid
 */
-std::string* JobSubmit::getInputSBDestURI(const std::string &jobid)
-{
+//std::string* JobSubmit::getInputSBDestURI(const std::string &jobid, std::string &defURI) {
+std::string* JobSubmit::getInputSBDestURI(const std::string &jobid,const std::string &child ) {
 	string *dest_uri = NULL;
-	vector <string> dest ;
-	vector <string>::iterator it ;
-	if (cfgCxt){
-		dest = getSandboxDestURI (jobid, (ConfigContext *)cfgCxt);
-		for (it = dest.begin() ; it != dest.end() ; it++){
-			dest_uri = new string( *it );
-			if ( dest_uri->substr (0, 4) == "http" ){
-				break;
-			} else {
-				dest_uri = NULL;
-			}
+	string look_for = "";
+	vector<string> jobids;
+	vector< pair<string ,vector<string > > >::iterator it1 ;
+	vector<string>::iterator it2;
+	bool found = false;
+	// The destinationURI's vector is empty: the WMProxy service is called
+	if (dsURIs.empty( )){
+		try{
+			dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
+		} catch (BaseException &exc){
+			throw WmsClientException(__FILE__,__LINE__,
+				"getSandboxDestURI ", ECONNABORTED,
+				"WMProxy Server Error", errMsg(exc));
 		}
-		//input DestURI
-		if (dest_uri){
-			*dest_uri += "/input" ;
+		if (dsURIs.empty( )){
+			throw WmsClientException(__FILE__,__LINE__,
+				"getSandboxDestURI ", ECONNABORTED,
+				"WMProxy Server Error",
+				"The server doesn't have information on InputSBDestURI for :" + jobid );
 		}
 	}
-	return dest_uri;
+
+	if (child.size()>0){
+		// if the input parameter child is set ....
+		look_for = child ;
+	} else {
+		// parent (if the input string "child" is empty)
+		look_for = jobid;
+	}
+ 	// Looks for the destURI's of the job
+	for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
+		if (it1->first == look_for) { // parent or child found
+			for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
+				// Looks for the destURi for file transferring
+				if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
+					dest_uri = new string( *it2 );
+					break;
+					// loop-exit if "TAR-destURI" has been already found
+					/*if (found){
+						dsURIs.erase(it1);
+						break;
+					} else {
+						found = true ;
+						logInfo->print(WMS_DEBUG, "DestinationURI:", *dest_uri);
+					}*/
+				}
+				/*
+				// Looks for the destURI for TAR file creation
+				if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
+					defURI = string (*it2);
+					// loop-exit if "fileTransfer-destURI" has been already found
+					if (found){
+						dsURIs.erase(it1);
+						break;
+					} else {
+						found = true ;
+					}
+				}
+				*/
+			}
+
+		}
+	}
+	return dest_uri ;
 }
 /*
 *	checks if the user free quota (on the server endpoint) could support (in size) the transferring of a set of files
 */
 bool JobSubmit::checkFreeQuota ( std::vector<std::pair<std::string,std::string> > files, long &limit )
- {
-	int hd = 0;
-	char *path = "";
-	struct stat file_info;
+{
 	FILE* fptr = NULL;
 	vector<pair<string,string> >::iterator it ;
 	bool not_exceed = true;
 	// results of getFrewQuota
 	pair<long, long> free_quota ;
 	long size = 0;
+	ostringstream lim;
+	ostringstream s;
 	if (cfgCxt) {
 		// gets the user free quota from the endpoint
-		free_quota = getFreeQuota(cfgCxt);
+		try{
+			logInfo->print(WMS_DEBUG, "Requesting for user free quota on the server", "");
+			free_quota = getFreeQuota(cfgCxt);
+		} catch (BaseException &exc){
+				throw WmsClientException(__FILE__,__LINE__,
+					"getFreeQuota", ECONNABORTED,
+					"WMProxy Server Error", errMsg(exc));
+		}
 		// soft limit
 		limit = free_quota.first;
 		// if the previous function gets back a negative number
 		// the user free quota is not set on the server and
 		// no check is performed (this functions returns not exceed=true)
 		if ( limit  > 0 ) {
+			lim << limit ;
+			logInfo->print (WMS_DEBUG, "User free quota (bytes): ", lim.str());
 			// number of bytes to be transferred
 			for ( it = files.begin() ;  it != files.end() ; it++ ) {
-				// pathname
-				path =(char*) checkPathExistence( (it->first).c_str());
-				if ( !path) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"checkPathExistence",  DEFAULT_ERR_CODE,
-						"File Not Found", "no such file : " + it->first  );
-				}
-				// size of
-				hd = open(path, O_RDONLY) ;
-				fstat(hd, &file_info);
-				close(hd) ;
 				// adds up the size of the size
-				size += file_info.st_size ;
+				size += Utils::getFileSize( (it->first).c_str());
+				s << size ;
+				logInfo->print (WMS_DEBUG, "Size of the InputSanbox files (bytes): ", s.str() );
 				if ( size > limit) {
 					not_exceed = false;
 					fclose (fptr);
 					break;
 				}
 				fclose (fptr);
+			} // for
+			logInfo->print (WMS_DEBUG, "Size of the InputSanbox files (bytes): ", s.str() );
+			if (not_exceed) {
+				logInfo->print (WMS_DEBUG, "The InputSandbox size doesn't exceed the user free quota:", "file transferring is allowed" );
+			} else {
+				logInfo->print (WMS_DEBUG, "The InputSandbox size exceeds the user free quota:", "file transferring is not allowed" );
 			}
-			if ( dbgOpt ) {
-				cout << "\nuser free quota = " << limit;
-				if ( not_exceed ){
-					cout << " ok\n";
-					cout << "\nfree quota is " << limit << "\nInputSandbox file size is " << size << " byte." << endl;
-				} else{
-					cout << "failed: over-quota (not enough user free quota to transfer the file(s) )\n";
+		} else {
+			logInfo->print (WMS_DEBUG, "User free quota is not set on the server:", "file transferring is allowed" );
+		}
+	} // if cfgCxt
+	return not_exceed ;
+}
+
+// use globus-url-copy
+void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > &paths) {
+	string protocol = "";
+	pair<string,string> it ;
+	//TBDMS: globus-url-copy searched several times
+	while (!paths.empty()) {
+		it = paths[0];
+		// Protocol has to be added only if not yet present
+		protocol = (it.first.find("://")==string::npos)?"file://":"";
+		  // command
+		string cmd= "globus-url-copy " + string (protocol+it.first) + " " + string( it.second );
+		if (getenv("GLOBUS_LOCATION")){
+			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
+		}else if (Utils::isDirectory ("/opt/globus/bin")){
+			cmd="/opt/globus/bin/"+cmd;
+		}else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"gsiFtpGetFiles", ECONNABORTED,
+				"File Transferring Error",
+				"Unable to find globus-url-copy executable");
+		}
+		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)\n" , cmd);
+		if ( system( cmd.c_str() ) ){
+			ostringstream info;
+                	info << it.first << "\n";
+   			info << "to " << it.second;
+			throw WmsClientException(__FILE__,__LINE__,
+				"gsiFtpTransfer", ECONNABORTED,"File Transferring Error",
+				"unable to transfer the file " + info.str());
+		} else{
+			paths.erase(paths.begin());
+			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)", "TRANSFER DONE");
+		}
+	}
+}
+// use CURL
+/*
+* Performs the InputSB file transferring by curl
+*/
+void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > paths)
+{
+	// curl struct
+	CURL *curl = NULL;
+	// curl result code
+	CURLcode res;
+	// file struct
+	FILE * hd_src  = NULL;
+	struct stat file_info;
+	int fsize = 0;
+	int hd = 0;
+	// vector iterator
+	vector <pair<string , string> >::iterator it ;
+	// local filepath
+	string file = "" ;
+	// result message
+	string result = "";
+	long	httpcode = 0;
+	if ( !paths.empty() ){
+		// checks the user proxy pathname
+		if (!proxyFile){
+			throw WmsClientException(__FILE__,__LINE__,
+				"transferFiles", DEFAULT_ERR_CODE,
+				"Missing Proxy",
+				"unable to determine the proxy file" );
+		}
+		// checks the trusted cert dir
+		if (!trustedCert){
+			throw WmsClientException(__FILE__,__LINE__,
+				"transferFiles", DEFAULT_ERR_CODE,
+				"Directory Not Found",
+				"unable to determine the trusted certificate directory" );
+		}
+		logInfo->print (WMS_DEBUG, "curl SSL option - Proxy File", string( proxyFile)  );
+		logInfo->print (WMS_DEBUG, "curl SSL option - Trusted Cert Path", string( trustedCert)  );
+		// curl init
+		curl_global_init(CURL_GLOBAL_ALL);
+		curl = curl_easy_init();
+		if(curl) {
+			if ( wmcOpts->getBoolAttribute(Options::DBG) ) {
+				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+			}
+			// curl options: proxy
+			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
+			curl_easy_setopt(curl, CURLOPT_SSLCERT, proxyFile);
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, proxyFile);
+			curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
+			// curl option: trusted cert dir
+			curl_easy_setopt(curl, CURLOPT_CAPATH, trustedCert);
+			// curl options: no verify the ssl properties
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+			// enable uploading
+			curl_easy_setopt(curl, CURLOPT_PUT, 1);
+			// name of the file to be transferred
+			for ( it = paths.begin() ; it != paths.end() ; it++ ){
+				// curl options: source (first element of the vector)
+				hd_src = fopen((it->first).c_str(), "rb");
+				if (hd_src == NULL) {
+					throw WmsClientException(__FILE__,__LINE__,
+						"transferFiles",  DEFAULT_ERR_CODE,
+						"File Not Found", "no such file : " + it->first  );
+				}
+				// Reads the local file
+				curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
+				// curl options: file size
+				hd = open((it->first).c_str(), O_RDONLY) ;
+				fstat(hd, &file_info);
+				close(hd) ;
+				fsize = file_info.st_size;
+				if (fsize >0){
+					curl_easy_setopt(curl,CURLOPT_INFILESIZE, file_info.st_size);
+					// curl options: destination (the 2nd elemnt of the vector)
+					curl_easy_setopt(curl,CURLOPT_URL, (it->second).c_str());
+					// log-debug message
+					ostringstream info ;
+					info << "\nInputSandbox file : " << it->first<< "\n";
+					info << "destination URI : " << it->second ;
+					info << "\nsize : " << fsize << " byte(s)"<< "\n";
+					logInfo->print(WMS_DEBUG, "InputSandbox File Transferring", info.str());
+					// transferring ......
+					res = curl_easy_perform(curl);
+					// result
+					if ( res != 0 ){
+						ostringstream err;
+						curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
+						err << "couldn't transfer the InputSandbox file : " << it->first ;
+						err << "to " << it->second << "\nhttp error code: " << httpcode ;
+						throw WmsClientException(__FILE__,__LINE__,
+								"transferFiles",  DEFAULT_ERR_CODE,
+								"File Transfer Error", err.str()  );
+					}
+				} else {
+					ostringstream warn;
+					warn << it->first << ": Invalid  File Size (" << fsize << "bytes)";
+					logInfo->print(WMS_WARNING, warn.str(), it->first);
+				}
+				fclose(hd_src);
+			}
+			// cleanup
+			curl_easy_cleanup(curl);
+		}
+	} else {
+		logInfo->print (WMS_DEBUG, "JDL_INPUTSB", "No local InputSB files to be transferred");
+	}
+}
+
+
+void JobSubmit::toBCopiedFileList(const std::string &jobid, const std::string &child,const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied){
+	string* dest_uri = NULL;
+	if (!paths.empty()){
+		dest_uri = getInputSBDestURI(jobid, child);
+		if (!dest_uri){
+			throw WmsClientException(__FILE__,__LINE__,"getInputSBDestURI",DEFAULT_ERR_CODE,
+			"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
+		}
+		// gets the InputSandbox files to be transferred to destinationURIs
+		toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, isb_uri);
+	}
+}
+/*
+* Message for InputSB files that need to be transferred
+*/
+std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string& jobid){
+	std::vector<std::pair<std::string,std::string> >::iterator it ;
+	ostringstream info;
+	if (paths.empty( ) ) {
+		info << "To complete the submission:\n";
+		info << "- no local file in the InputSandbox files to be transferred\n";
+		info << "- ";
+	} else {
+		info << "To complete the operation, the following InputSandbox files need to be transferred:\n";
+		info << "==========================================================================================================\n";
+		for (it = paths.begin(); it != paths.end( ); ++it) {
+		 	info << "InputSandbox file : " << it->first << "\n";
+   			info << "Destination URI : " << it->second << "\n";
+			info << "-----------------------------------------------------------------------------\n";
+		}
+		info << "\nthen " ;
+	}
+	info << "start the job by issuing a submissiong with the option:\n --start " << jobid << "\n";
+	return info.str();
+}
+/*
+*  reads the JobRegister results for a normal job and performs the transferring of the
+*  local InputSandbox files (called by the main method: submission)
+*/
+std::string JobSubmit::normalJob(){
+	// jobid and nodename
+	string jobid = "";
+	string node = "";
+	// InputSB files
+	long freequota ;
+	vector <string> paths ;
+	vector <pair<string, string> > to_bcopied ;
+	if (!jobAd){
+		throw WmsClientException(__FILE__,__LINE__,
+			"JobSubmit::normalJob",  DEFAULT_ERR_CODE,
+			"Null Pointer Error",
+			"null pointer to Ad object" );
+	}
+	// JOB-ID
+	jobid = jobIds.jobid ;
+	Utils::checkJobId(jobid);
+	// INPUTSANDBOX
+	if (jobAd->hasAttribute(JDL::INPUTSB)){
+		// gets the InputSandbox files
+		string isb_uri= jobAd->hasAttribute(JDL::ISB_BASE_URI)?jobAd->getString(JDL::ISB_BASE_URI):"";
+		paths = jobAd->getStringValue  (JDL::INPUTSB) ;
+		// InputSandbox file transferring
+		this->toBCopiedFileList(jobid,"",isb_uri, paths, to_bcopied);
+		// checks user free quota
+		if ( ! to_bcopied.empty( ) && ! checkFreeQuota (to_bcopied, freequota) ){
+			ostringstream err ;
+			err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
+			err << freequota << " bytes)";
+			throw WmsClientException( __FILE__,__LINE__,
+					"transferFiles",  DEFAULT_ERR_CODE,
+					"User FreeQuota Error" ,
+					err.str());
+		}
+		try {
+			if (registerOnly) {
+				// If --register-only: message with ISB files list to be printed out
+				transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
+			} else {
+				// File Transferring according to the chosen protocol
+				if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
+					this->curlTransfer (to_bcopied);
+				} else {
+					this->gsiFtpTransfer (to_bcopied);
+				}
+				if (!startJob){
+					transferMsg = "To complete the operation start the job by issuing a submission with the option:\n"
+					" --start " + jobid + "\n";
+				}
+			}
+
+		} catch (WmsClientException &exc) {
+			ostringstream err ;
+			err << exc.what() << "\n\n";
+			err << transferFilesList(to_bcopied, jobid) << "\n";
+			throw WmsClientException( __FILE__,__LINE__,
+					"transferFiles",  DEFAULT_ERR_CODE,
+					"File Transferring Error" ,
+					err.str());
+		}
+	}
+	return jobid;
+}
+/*
+*  reads the JobRegister results for a normal job and performs the transferring of the
+*  local InputSandbox files (called by the main method: submission)
+*/
+std::string  JobSubmit::dagJob(){
+	// jobid and node-name
+	string jobid = "";
+	string child = "";
+	string node = "";
+	// InputSB files
+	long freequota ;
+	vector <string> paths ;
+	vector <pair<string, string> > to_bcopied ;
+	std::vector<std::pair<std::string,std::string> > copied ;
+	// children
+	vector <JobIdApi*> children;
+	// iterators
+	vector <JobIdApi*>::iterator it;
+	if (!dagAd){
+		throw WmsClientException(__FILE__,__LINE__,
+		"JobSubmit::dagJob",  DEFAULT_ERR_CODE,
+		"Null Pointer Error",
+		"null pointer to dagAd object" );
+	}
+	// MAIN JOB ====================
+	// jobid
+	jobid = jobIds.jobid ;
+	Utils::checkJobId(jobid);
+	// MAIN JOB: InputSandox files
+	string isb_uri;
+	if (dagAd->hasAttribute(JDL::INPUTSB)) {
+		// InputSB files to be transferred to the DestURI
+		isb_uri=dagAd->hasAttribute(JDL::ISB_BASE_URI)?dagAd->getAttribute(ExpDagAd::ISB_DEST_URI ):"";
+		paths = dagAd->getInputSandbox();
+		this-> toBCopiedFileList(jobid, "", isb_uri, paths, to_bcopied);
+	}
+	// CHILDREN ====================
+	children = jobIds.children ;
+	if ( ! children.empty() ){
+		for ( it = children.begin() ; it != children.end(); it++){
+			if (*it){
+				// child: jobid
+				child = (*it)->jobid ;
+				Utils::checkJobId(child);
+				//child:  node name
+				if ( ! (*it)->nodeName ){
+					throw WmsClientException(__FILE__,__LINE__,
+						"JobSubmit::dagJob",  DEFAULT_ERR_CODE,
+						"Null Pointer Error",
+						"unable to retrieve the node name for the child job: " + child );
+				}
+				node = *((*it)->nodeName);
+				ostringstream info;
+				info << "JobId node : " << child << "\n";
+				info << "Node name : " << node << "\n";
+				logInfo->print(WMS_DEBUG, "DAG_CHILD_NODE",  info.str(), false);
+				// child: InputSandbox files
+				if (dagAd->hasNodeAttribute(node, JDL::INPUTSB) ){
+					if (dagAd->hasNodeAttribute(node, JDL::ISB_BASE_URI)){
+						isb_uri=dagAd->getNodeAttribute(node, JDL::ISB_BASE_URI);
+					}else {
+						isb_uri="";
+					}
+					paths = dagAd->getNodeStringValue(node, JDL::INPUTSB);
+					this->toBCopiedFileList(jobid, child, isb_uri, paths, to_bcopied);
 				}
 			}
 		}
 	}
-	return not_exceed ;
- }
-/*
-std::vector<std::pair<string,string> > getInputSandboxFiles(Ad *ad){
-
-	if (ad){
-		 if (ad->hasAttribute(requestad::JDL::INPUTSB)){
-			// http destination URI
-			dest_uri = ex_utilities::getInputSBDestURI(jobid, cfs);
-			if (!dest_uri){
-				fprintf (stderr, "\nerror: unable to retrieve the InputSandbox destination URI\n");
-				fprintf (stderr, "jobid: %s", jobid.c_str() );
-				exit(-1);
+	// checks user free quota
+	if (  ! to_bcopied.empty( ) && ! checkFreeQuota (to_bcopied, freequota) ){
+		ostringstream err ;
+		err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
+		err << freequota << " bytes)";
+		throw WmsClientException( __FILE__,__LINE__,
+				"transferFiles",  DEFAULT_ERR_CODE,
+				"User FreeQuota Error" ,
+				err.str());
+	}
+	try {
+		if (registerOnly) {
+			// If --register-only: message with ISB files list to be printed out
+			transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
+		} else {
+			// File Transferring according to the chosen protocol
+			if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
+				this->curlTransfer (to_bcopied);
+			} else {
+				this->gsiFtpTransfer (to_bcopied);
 			}
-		if (dbgOpt){
-			cout << "destination URI = " << *dest_uri << endl;
+			if (!startJob){
+				transferMsg = "To complete the operation start the job by issuing a submission with the option:\n --start "
+				+ jobid + "\n";
+			}
 		}
-		// InputSandbox files
-		if (!ad){
-			fprintf (stderr, "fatal error: unable to read the Job Description\n");
-			exit(-1);
+	} catch (WmsClientException &exc) {
+			ostringstream err ;
+			err << exc.what() << "\n\n";
+			err << transferFilesList(to_bcopied, jobid) << "\n";
+			throw WmsClientException( __FILE__,__LINE__,
+					"transferFiles",  DEFAULT_ERR_CODE,
+					"File Transferring Error" ,
+					err.str());
+	}
+	return jobid;
+}
+
+/*
+* Gets the list of InputSB in the "list" vector for "node"
+*/
+vector<string> JobSubmit::getNodeFileList (const string &node, vector< pair<string ,vector<string > > > &list){
+	const vector<string> empty;
+	vector< pair<string ,vector<string > > >::iterator it ;
+	for ( it = list.begin() ; it != list.end( ) ; it++ ){
+		if (node == it->first){
+			return it->second ;
 		}
-		// gets the InputSandbox files
-		paths = ad->getStringValue  (requestad::JDL::INPUTSB) ;
-  	}
- }
- */
+	}
+	return empty;
+}
+/*
+*  reads the JobRegister results for a normal job and performs the transferring of the
+*  local InputSandbox files (called by the main method: submission)
+*/
+std::string JobSubmit::collectionJob() {
+	// jobid and node-name
+	string jobid = "";
+	string child = "";
+	string node = "";
+	// InputSB files
+	long freequota ;
+	vector<string> paths;
+	vector <pair<string, string> > to_bcopied ;
+
+	if (!collectAd){
+		throw WmsClientException(__FILE__,__LINE__,
+		"JobSubmit::collectionJob",  DEFAULT_ERR_CODE,
+		"Null Pointer Error",
+		"null pointer to dagAd object" );
+	}
+	// MAIN JOB ====================
+	// jobid
+	jobid = jobIds.jobid;
+	Utils::checkJobId(jobid);
+	// Main InputSandbox
+	if (collectAd->hasAttribute(JDL::INPUTSB)){
+		// InputSB files to be transferred to the DestURI
+		paths = collectAd->getStringValue(JDL::INPUTSB);
+		string isb_uri= collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
+		this->toBCopiedFileList(jobid, "",isb_uri, paths, to_bcopied);
+	}
+	// checks user free quota
+	if (  ! to_bcopied.empty( ) && ! checkFreeQuota (to_bcopied, freequota) ){
+		ostringstream err ;
+		err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
+		err << freequota << " bytes)";
+		throw WmsClientException( __FILE__,__LINE__,
+				"transferFiles",  DEFAULT_ERR_CODE,
+				"User FreeQuota Error" ,
+				err.str());
+	}
+	try {
+		if (registerOnly) {
+			// If --register-only: message with ISB files list to be printed out
+			transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
+		} else {
+			// File Transferring according to the chosen protocol
+			if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
+				this->curlTransfer (to_bcopied);
+			} else {
+				this->gsiFtpTransfer (to_bcopied);
+			}
+			if (!startJob){
+				transferMsg = "To complete the operation start the job by issuing a submission with the option:"
+				"\n --start " + jobid + "\n";
+			}
+		}
+	} catch (WmsClientException &exc) {
+			ostringstream err ;
+			err << exc.what() << "\n\n";
+			err << transferFilesList(to_bcopied, jobid) << "\n";
+			throw WmsClientException( __FILE__,__LINE__,
+					"transferFiles",  DEFAULT_ERR_CODE,
+					"File Transferring Error" ,
+					err.str());
+	}
+	return jobid;
+}
+
 }}}} // ending namespaces

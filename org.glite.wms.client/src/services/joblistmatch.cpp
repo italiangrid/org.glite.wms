@@ -30,137 +30,254 @@ namespace services {
 
 JobListMatch::JobListMatch(){
 	// init of the string attributes
-        config = NULL ;
-        delegation = NULL;
-        vo = NULL ;
-        output  = NULL;
-        logfile = NULL;
+        dgOpt= NULL;
 	// init of the boolean attributes
-        version = false ;
-        rank = false ;
-        noint = false;
-        debug  = false;
-	// options
-        opts = NULL;
-	// context
-        cfgCxt = NULL ;
+        rankOpt  = false ;
 	// parameters
         jdlFile = NULL ;
         jdlString = NULL ;
-        wmpEndPoint = NULL;
+        //Ad
+        jobAd = NULL;
   };
-
+/*
+*	Default destructor
+*/
+JobListMatch::~JobListMatch( ){
+	if (dgOpt) { delete(dgOpt);}
+	if (jdlFile) { delete(jdlFile);}
+        if (jdlString) { delete(jdlString);}
+        if (jobAd) { delete(jobAd);}
+};
+/*
+* performs the main operations
+*/
 void JobListMatch::readOptions (int argc,char **argv) {
-	ostringstream err ;
-	// init of option objects object
-        opts = new Options(Options::JOBMATCH) ;
-	opts->readOptions(argc, (const char**)argv);
-        // config & vo(no together)
-        config= opts->getStringAttribute( Options::CONFIG ) ;
-        vo = opts->getStringAttribute( Options::VO ) ;
-	if (vo && config){
-		err << "the following options cannot be specified together:\n" ;
-		err << opts->getAttributeUsage(Options::VO) << "\n";
-		err << opts->getAttributeUsage(Options::CONFIG) << "\n\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
+	Job::readOptions  (argc, argv, Options::JOBMATCH);
+ 	// path to the JDL file
+  	jdlFile = wmcOpts->getPath2Jdl( );
+	// rank
+        rankOpt =  wmcOpts->getBoolAttribute (Options::RANK);
+        // Delegation ID
+        dgOpt = wmcUtils->getDelegationId ();
+         if ( ! dgOpt  ){
+                throw WmsClientException(__FILE__,__LINE__,
+                                "readOptions",DEFAULT_ERR_CODE,
+                                "Missing Information",
+                                "no proxy delegation ID" );
+         }
+	// checks if the proxy file pathname is set
+        if (proxyFile) {
+        	logInfo->print (WMS_DEBUG, "Proxy File", proxyFile);
+ 	} else {
+                throw WmsClientException(__FILE__,__LINE__,
+                                "readOptions",DEFAULT_ERR_CODE,
+                                "Invalid Credential",
+                                "No valid proxy file pathname" );
+        }
+	// checks if the output file already exists
+	if (outOpt && ! wmcUtils->askForFileOverwriting(*outOpt) ){
+		cout << "bye\n";
+		getLogFileMsg ( );
+		Utils::ending(ECONNABORTED);
 	}
+};
+/*
+* performs the main operations
+*/
+void JobListMatch::listMatching ( ){
+	postOptionchecks();
+	const int tab = 50 ;
+        const string ws = " ";
+        int spaces = 0 ;
+        string ce = "";
+        vector <pair<string , long> > list ;
+	vector <pair<string , long> > ::iterator it ;
+	ostringstream out ;
+	ostringstream os;
+        // Reads and checks the JDL
+        checkAd( );
+        // list matching ....
+        list = jobMatching( );
+	if (list.empty()){
+		// if no resource has been found
+		out << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " failure") ) << "\n";
+		out << "No Computing Element matching your job requirements has been found!";
+	} else {
 
-        // delegation
-        delegation = opts->getStringAttribute( Options::DELEGATION ) ;
 
-	output=  opts->getStringAttribute( Options::OUTPUT ) ;
-	logfile = opts->getStringAttribute(Options::LOGFILE );
-
-        version =  opts->getBoolAttribute (Options::VERSION);
-        rank =  opts->getBoolAttribute (Options::RANK);
-	debug =  opts->getBoolAttribute (Options::DBG);
-	noint=  opts->getBoolAttribute (Options::NOINT) ;
-        // configuration context
-        cfgCxt = new ConfigContext("", wmpEndPoint, "");
+		out  << wmcUtils->getStripe(74, "=") << "\n\n";
+		out << "\t\t     COMPUTING ELEMENT IDs LIST ";
+		out << "\n The following CE(s) matching your job requirements have been found:\n";
+		out << "\n\t*CEId*";
+		if (rankOpt) {
+			spaces = tab -14 ;
+			for ( int i = 0; i < spaces ; i++ ) { out << ws ; }
+			out << "*Rank*\n";
+		}
+		out << "\n";
+		for ( it = list.begin( ) ; it != list.end( ); it++ ){
+			ce = it->first ;
+			out << " - " << it->first ;
+			if(rankOpt) {
+				spaces = tab - ce.size ( );
+				for ( int i = 0; i < spaces ; i++ ) { out << ws ; }
+				out << it->second ;
+			}
+			out << "\n";
+		}
+	}
+        // saves the result
+        if (outOpt){
+        	string tofile = "\n" + out.str() + "\n" + wmcUtils->getStripe(74, "=") + "\n";
+                if ( wmcUtils->toFile(*outOpt, tofile, true) < 0 ){
+                        logInfo->print (WMS_WARNING, "Unable to write the list of CeId's to the output file: " , Utils::getAbsolutePath(*outOpt));
+                } else{
+                        logInfo->print (WMS_DEBUG, "Computing Element(s) matching your job requirements have been stored in the file:",
+				Utils::getAbsolutePath(*outOpt), false);
+			os << wmcUtils->getStripe(84, "=" , string (wmcOpts->getApplicationName() + " success") ) << "\n";
+                        os << "\nComputing Element(s) matching your job requirements have been stored in the file:\n";
+                        os << Utils::getAbsolutePath(*outOpt) << "\n";
+			os << "\n" << wmcUtils->getStripe(84, "=") << "\n\n";
+			cout << os.str();
+                }
+        } else{
+		// if no output file ....
+		out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
+		cout << out.str( );
+	}
+	// log file info
+	cout << getLogFileMsg ( ) << "\n";
 };
 
+/***********************************************
+* private methods
+************************************************/
+/*
+* checks the JDL
+*/
 void JobListMatch::checkAd ( ){
-	bool isdag = true;
-	if ( !ad ){
-		ad = new Ad ( );
+	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
+	if ( !jobAd ){
+		jobAd = new Ad ( );
         }
 	if (! jdlFile){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
-			"Missing Information",
-                        "uknown JDL file pathame"   );
+			"JDL File Missing",
+                         "uknown JDL file pathame  (Last argument of the command must be a JDL file)"   );
         }
-	ad->fromFile (*jdlFile);
+	jobAd->fromFile (*jdlFile);
         // check submitTo
-	 if ( ad->hasAttribute(JDL::SUBMIT_TO) ){
+	 if ( jobAd->hasAttribute(JDL::SUBMIT_TO) ){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
         		"submitTo" ,
                         "Forcing CEId for job-list-match does not make sense");
         }
 
-        if ( ad->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
-		isdag = true;
-                dag = new  ExpDagAd ( ad->toString() );
-                if ( debug ) {
-                        cout << "\nyou have submitted a DAG job " << endl ;
-                }
-                // expands the DAG loading all JDL files
-                dag->expand( );
-
-                jdlString = new string( dag->toString( ) );
-	} else {
-        	jdlString = new string( ad->toString( ) );
- 	}
-
-        if (debug){
-		cout << "\n***************************************************************************\n";
-                cout << "\tJDL :\n";
-                cout << *jdlString ;
-		cout << "***************************************************************************\n";
-        }
+	if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkAd",  DEFAULT_ERR_CODE,
+        		"Not supported Type" ,
+                        "Collection type is not supported for list match");
+        } else if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkAd",  DEFAULT_ERR_CODE,
+        		"Not supported Type" ,
+                        "DAG type is not supported for list match");
+	}
+	// Simple Ad manipulation
+	AdUtils::setDefaultValuesAd(jobAd,wmcConf);
+	JobAd *pass= new JobAd(*(jobAd->ad()));
+	AdUtils::setDefaultValues(pass,wmcConf);
+	// JDL STRING
+	jdlString = new string(pass->toSubmissionString());
+	logInfo->print(WMS_DEBUG, "JDL" , *jdlString );
 };
 
-void JobListMatch::getListMatching ( ){
+/*
+* Retrieves the list of matching resources
+*/
+std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 	vector <pair<string , long> > list ;
-	vector <pair<string , long> > ::iterator it ;
-	ostringstream msg ;
-        checkAd ( );
-	// check the needed parameters
+	vector<string> urls ;
+        int index = 0;
+	// flag to stop while-loop
+	bool success = false;
+        // number of enpoint URL's
+        int n = 0;
+	// checks if jdlstring is not null
         if (!jdlString){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getListMatching",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to JDL string"   );
+                throw WmsClientException(__FILE__,__LINE__,
+                        "jobMatching",  DEFAULT_ERR_CODE ,
+                        "Null Pointer Error",
+                        "Null pointer to JDL string");
         }
-        if (!delegation){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getListMatching",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to delegation string"   );
+         if ( ! dgOpt  ){
+                throw WmsClientException(__FILE__,__LINE__,
+                                "readOptions",DEFAULT_ERR_CODE,
+                                "Null Pointer Error",
+                                "Null pinter to delegation ID string" );
+         }
+	 // if the autodelegation is needed
+	if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
+		endPoint = new string(wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
+	}
+        // checks if ConfigContext already contains the WMProxy URL
+        if (endPoint){
+                urls.push_back(*endPoint);
+        } else {
+                // list of endpoints from configuration file
+                urls = wmcUtils->getWmps ( );
         }
-	if (!cfgCxt){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getListMatching",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to ConfigContext object"   );
-        }
-
-
-        list = jobListMatch(*jdlString, *delegation, cfgCxt);
-
-        msg << "\n***************************************************************************\n";
-        msg << "                         COMPUTING ELEMENT IDs LIST ";
-        msg << "\n The following CE(s) matching your job requirements have been found:\n";
-        msg << "\n\t\t*CEId*";
-        if (rank){
-                msg << "\t\t\t*Rank*\n";
-        }
-        for ( it = list.begin( ) ; it != list.end( ); it++ ){
-                msg << "\t\t" << it->first << "\t\t\t" << it->second << "\n";
-        }
-        msg << "\n***************************************************************************\n";
-	
-        cout << msg ;
-};
+         if (!cfgCxt){
+		cfgCxt = new ConfigContext("", "", "");
+	}
+       	while ( ! urls.empty( ) ){
+       		int size = urls.size();
+       		if (size > 1){
+                	// randomic extraction of one URL from the list
+       			index =  wmcUtils->getRandom(size);
+           	} else{
+			index = 0;
+    		}
+                // endpoint URL
+                endPoint = new string(urls[index]);
+                // setting of the EndPoint ConfigContext field
+                cfgCxt->endpoint=urls[index];
+                // Removes the extracted URL from the list
+                urls.erase ( (urls.begin( ) + index) );
+                // jobRegister
+                logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);
+                try{
+                	// ListMatch
+                        list = jobListMatch(*jdlString, *dgOpt, cfgCxt);
+                        success = true;
+                } catch (BaseException &exc) {
+                	if (n==1) {
+                        	ostringstream err ;
+                                err << "Unable to perform operation on the server:" << *endPoint << "\n";
+                                err << errMsg(exc) ;
+                        	// in case of any error on the only specified endpoint
+                		throw WmsClientException(__FILE__,__LINE__,
+                        		"jobListMatch", ECONNABORTED,
+                        		"Operation failed", err.str());
+                        } else {
+				logInfo->print  (WMS_INFO, "Operation failed:", errMsg(exc));
+                        	sleep(1);
+                       	 	if (urls.empty( )){
+                			throw WmsClientException(__FILE__,__LINE__,
+                        		"jobListMatch", ECONNABORTED,
+                        		"Operation failed",
+                        		"unable to perform the operation on the specified endpoint(s)");
+                                }
+                   	 }
+                }
+                // exits from the loop in case of success
+                if (success){ break;}
+       }
+       return list ;
+}
 
 }}}} // ending namespaces
+

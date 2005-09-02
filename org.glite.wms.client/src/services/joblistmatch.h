@@ -1,8 +1,11 @@
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H
 
+// inheritance
+#include "job.h"
 // options utilities
 #include "utilities/options_utils.h"
+#include "utilities/utils.h"
 // wmproxy API
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
@@ -15,13 +18,17 @@ namespace wms{
 namespace client {
 namespace services {
 
-class JobListMatch {
+class JobListMatch : public Job {
 
 	public :
         	/*
-		*	default constructor
+		*	Default constructor
 		*/
 		JobListMatch( );
+                /*
+		*	Default destructor
+		*/
+		~JobListMatch( );
 		/*
 		*	reads the command-line user arguments and sets all the class attributes
 		*	@param argc number of the input arguments
@@ -31,8 +38,13 @@ class JobListMatch {
                 /*
 		*	performs the main operations
 		*/
-                void getListMatching( ) ;
+                void listMatching( ) ;
+
   	private :
+                /*
+                * Retrieves the list of matching resources
+                */
+                std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) ;
         	/*
                 *	check the input JDL
                 */
@@ -40,34 +52,15 @@ class JobListMatch {
         	 /*
                 *	string input arguments
                 */
-		std::string*	config ;
-		std::string*	delegation;
-		std::string*	vo ;
-		std::string*	output ;
- 		std::string*	logfile;
+		std::string* dgOpt;
         	/*
                 *	boolean input arguments
                 */
-                bool version ;
-                bool rank ;
-                bool noint;
-                bool debug ;
-		/*
-                *	handles the input options
-                */
-		glite::wms::client::utilities::Options *opts ;
-                /*
-                *	configuration contex
-                */
-                glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
+                bool rankOpt ;
 		/*
                 *	Ad
                 */
-                glite::wms::jdl::Ad *ad ;
-		/*
-                *	Dag
-                */
-                glite::wms::jdl::ExpDagAd *dag ;
+                glite::wms::jdl::Ad *jobAd ;
                 /*
 		*	path to the JDL file
 		*/
@@ -76,10 +69,6 @@ class JobListMatch {
 		*	string of the user JDL
 		*/
 		std::string *jdlString ;
-                /*
-                *	WMProxy endpoint
-                */
-                char* wmpEndPoint ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H

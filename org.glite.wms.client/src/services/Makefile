@@ -13,46 +13,29 @@ repository=$(REPOSITORY)/repository
 stage=$(REPOSITORY)/stage
 BOOST=$(repository)/boost/1.29.1/rhel30_gcc32
 CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
+GLOBUS=$(repository)/globus/2.4.3-VDT-1.2.0/rhel30_gcc32
 
-GEN_LD_FLAGS=-L$(GLITE_REP)/lib \
-#	-L$(GLOBUS_LOCATION)/lib \
-#	-lglite_wmsutils_exception \
-#	-lglite_wmsutils_jobid  \
-#	-lglite_wmsutils_cjobid  \
+GEN_LD_FLAGS=-L$(GLITE_REP)/lib 
 
-WMPCLIENT_LD_FLAGS= \
-#	-L$(BOOST)/lib/release \
-#	-L$(CLASSAD)/lib \
-#	-L$(stage)/lib \
-#	-lglite_wms_jdl \
-#	-lglite_wmsutils_exception \
-#	-lglite_wms_util \
-#	-lglite_wmsutils_jobid  \
-#	-lglite_wmsutils_cjobid \
-#	-lclassad \
-#	-lboost_fs \
-#	-lboost_thread \
-#	-lboost_signals \
-#	-lboost_regex \
-#	-lcrypto
+WMPCLIENT_LD_FLAGS= 
 
 WMPCLIENT_C_FLAGS= -I../ \
 	-I$(stage)/include	\
         -I$(CLASSAD)/include \
-	-I$(BOOST)/include
-
+	-I$(BOOST)/include \
+        -I$(GLOBUS)/include/gcc32 
 
 
 all: libservices
 libservices:
 	@echo "compiling services....."
-	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
+	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES -DWITH_GRID_FTP \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_services.so  \
-	jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp
+	lbapi.cpp job.cpp jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp
 	@echo "DONE"
 services:
 	@echo "compiling utils....."
-	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES \
+	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES -DWITH_GRID_FTP \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-services \
-	jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp
+	jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp
 	@echo "DONE"
