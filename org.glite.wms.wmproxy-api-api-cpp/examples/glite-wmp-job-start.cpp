@@ -12,6 +12,7 @@
 using namespace std;
 using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapi::examples::utilities;
+namespace exc = glite::wmsutils::exception;
 
 static const char* LONGOPT_SERVICE = "endpoint" ;
 static const char* LONGOPT_JOBID = "jobid";
@@ -150,108 +151,112 @@ int main (int argc,char **argv)
 	string errmsg = "";
 	bool verbose = false ;
 	ConfigContext *cfs = NULL;
+ 	try {
+                // check options
+                do {
+                        next_option = getopt_long (argc,
+                                                argv,
+                                                short_options,
+                                                long_options,
+                                                NULL);
 
-	// check options
-	do {
-		next_option = getopt_long (argc,
-					argv,
-					short_options,
-					long_options,
-					NULL);
+                        switch(next_option) {
+                                case SHORTOPT_SERVICE: {
+                                        service = new string(optarg);
+                                        //cout << "debug - service=[" << *service << "]" << endl;
+                                        break;
+                                }
+                                case SHORTOPT_JOBID: {
+                                        jobid = new string(optarg);
+                                        //cout << "debug - jobid=[" << *jobid << "]" << endl;
+                                        break;
+                                }
+                                case SHORTOPT_OUTPUT: {
+                                        fout = new string(optarg);
+                                        //cout << "debug - out=[" << *fout << "]" << endl;
+                                        break;
+                                }
+                                case SHORTOPT_HELP: {
+                                        long_usage (prg_name);
+                                        break;
+                                }
+                                case SHORTOPT_VERBOSE: {
+                                        verbose = true ;
+                                        break;
+                                }
+                                case -1: {
+                                        break;
+                                }
+                                default:{
+                                        short_usage (prg_name);
+                                        break;
+                                }
 
-		switch(next_option) {
-			case SHORTOPT_SERVICE: {
-				service = new string(optarg);
-				//cout << "debug - service=[" << *service << "]" << endl;
-				break;
-			}
-			case SHORTOPT_JOBID: {
-				jobid = new string(optarg);
-				//cout << "debug - jobid=[" << *jobid << "]" << endl;
-				break;
-			}
-			case SHORTOPT_OUTPUT: {
-				fout = new string(optarg);
-				//cout << "debug - out=[" << *fout << "]" << endl;
-				break;
-			}
-			case SHORTOPT_HELP: {
-				long_usage (prg_name);
-				break;
-			}
-			case SHORTOPT_VERBOSE: {
-				verbose = true ;
-				break;
-			}
-			case -1: {
-				break;
-			}
-			default:{
-				short_usage (prg_name);
-				break;
-			}
+                        } // switch
+                } while (next_option != -1);
 
-		} // switch
-	} while (next_option != -1);
-
-	// checks if the mandatory attribute are missing
-	// service
-	if ( !service ){
-		serv_ev = getenv (GLITE_WMPROXY_ENDPOINT);
-		if ( ! serv_ev ){
-			fprintf (stderr, "error: unknown wmproxy endpoint URL\n");
-			fprintf (stderr, "set the %s environment variable\n",GLITE_WMPROXY_ENDPOINT );
-			fprintf(stderr, "or use the --%s <endpoint_URL> (-%c <endpoint_URL>) option\n",
-						LONGOPT_SERVICE, SHORTOPT_SERVICE);
-			short_usage(prg_name);
-		} else {
-			service = new string(serv_ev);
-		}
-	}
+                // checks if the mandatory attribute are missing
+                // service
+                if ( !service ){
+                        serv_ev = getenv (GLITE_WMPROXY_ENDPOINT);
+                        if ( ! serv_ev ){
+                                fprintf (stderr, "error: unknown wmproxy endpoint URL\n");
+                                fprintf (stderr, "set the %s environment variable\n",GLITE_WMPROXY_ENDPOINT );
+                                fprintf(stderr, "or use the --%s <endpoint_URL> (-%c <endpoint_URL>) option\n",
+                                                        LONGOPT_SERVICE, SHORTOPT_SERVICE);
+                                short_usage(prg_name);
+                        } else {
+                                service = new string(serv_ev);
+                        }
+                }
 
 
-	if ( verbose ){
-		cout << "\nendpoint : " << *service << endl ;
-	}
+                if ( verbose ){
+                        cout << "\nendpoint : " << *service << endl ;
+                }
 
-	// jobid
-	if ( !jobid ){
-		errmsg = errmsg.assign("--").append(LONGOPT_JOBID).append(" <job identifier>");
-		fprintf (stderr, "error: the following mandatory option is missing:\n%s\n", errmsg.c_str() );
-		short_usage(prg_name);
-	} else {
-		// checks if the jobid string is a path to file
-		string * j_id =  jobidFromFile ( *jobid );
-		if ( j_id ) {
-			jobid = new string ( *j_id ) ;
-		}
-	}
+                // jobid
+                if ( !jobid ){
+                        errmsg = errmsg.assign("--").append(LONGOPT_JOBID).append(" <job identifier>");
+                        fprintf (stderr, "error: the following mandatory option is missing:\n%s\n", errmsg.c_str() );
+                        short_usage(prg_name);
+                } else {
+                        // checks if the jobid string is a path to file
+                        string * j_id =  jobidFromFile ( *jobid );
+                        if ( j_id ) {
+                                jobid = new string ( *j_id ) ;
+                        }
+                }
 
-	if ( verbose ){
-		cout << "\nStarting job ...." << endl ;
-		cout << "jobid : " << *jobid << endl;
-		cout << "endpoint :  " << *service << endl ;
-	}
+                if ( verbose ){
+                        cout << "\nStarting job ...." << endl ;
+                        cout << "jobid : " << *jobid << endl;
+                        cout << "endpoint :  " << *service << endl ;
+                }
 
-	try {
+                try {
 
-		// config context
-		cfs = new ConfigContext("", service->c_str(), GLITE_TRUSTED_CERTS);
+                        // config context
+                        cfs = new ConfigContext("", service->c_str(), "");
 
-		// start
-	 	jobStart(*jobid, cfs);
+                        // start
+                        jobStart(*jobid, cfs);
 
-		cout << "\nsuccess " << *service << endl ;
+                        cout << "\nsuccess " << *service << endl ;
 
-		// displays result message (in case it is saved into the user file)
-		getOperationResult( *jobid, *service, fout );
+                        // displays result message (in case it is saved into the user file)
+                        getOperationResult( *jobid, *service, fout );
 
-	} catch( BaseException &b_ex) {
-		fprintf ( stderr, "Unable to start the job\nException caught:\n" );
-		errmsg = handle_exception ( b_ex );
-		fprintf (stderr, "%s\n", errmsg.c_str() );
-		exit (-1);
-	}
-
+                } catch( BaseException &b_ex) {
+                        fprintf ( stderr, "Unable to start the job\nException caught:\n" );
+                        errmsg = handle_exception ( b_ex );
+                        fprintf (stderr, "%s\n", errmsg.c_str() );
+                        exit (-1);
+                }
+        } catch( exc::Exception &ex) {
+                fprintf ( stderr, "\nerror : unable to submit the job (Exception caught)\n" );
+		cerr << flush << ex.what ( ) << "\n";
+                exit (-1);
+        }
 	return 0;
 }

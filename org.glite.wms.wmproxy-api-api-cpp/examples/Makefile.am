@@ -27,11 +27,8 @@ WMS_JDL_LIBS = -lglite_wms_jdl
 CURL = -L/usr/lib -lcurl
 
 
-#ex_wmproxy_api_cpp_bindir = $(prefix)/examples
-
-
-
-check_PROGRAMS = \
+wmpex_bindir = $(prefix)/examples
+wmpex_bin_PROGRAMS = \
 	glite-wmp-job-delegate-proxy \
 	glite-wmp-job-register \
 	glite-wmp-job-start \
@@ -40,12 +37,9 @@ check_PROGRAMS = \
 	glite-wmp-job-output
 
 glite_wmp_job_delegate_proxy_SOURCES = \
-	glite-wmp-job-delegation.cpp \
-	glite-wmp-job-utilities.cpp \
-	wmp_job_examples.h
-
+	glite-wmp-job-delegate-proxy.cpp \
+	glite-wmp-job-utilities.cpp
 glite_wmp_job_delegate_proxy_LDFLAGS = -Xlinker --export-dynamic
-
 glite_wmp_job_delegate_proxy_LDADD = \
 	$(WMPROXY_API_CPP) \
 	$(WMS_COMMON_UT_UTIL_LIBS) \
@@ -53,7 +47,6 @@ glite_wmp_job_delegate_proxy_LDADD = \
 	$(WMSUTILS_CJOBID_LIBS) \
 	$(WMSUTILS_EXCEPTION) \
 	$(WMS_JDL_LIBS) \
-	$(WMS_CHKPT_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(GRIDSITE_LIBS) \
@@ -71,7 +64,6 @@ glite_wmp_job_register_LDADD = \
 	$(WMSUTILS_CJOBID_LIBS) \
 	$(WMSUTILS_EXCEPTION) \
 	$(WMS_JDL_LIBS) \
-	$(WMS_CHKPT_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(GRIDSITE_LIBS) \
@@ -89,7 +81,6 @@ glite_wmp_job_start_LDADD = \
 	$(WMSUTILS_CJOBID_LIBS) \
 	$(WMSUTILS_EXCEPTION) \
 	$(WMS_JDL_LIBS) \
-	$(WMS_CHKPT_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(GRIDSITE_LIBS) \
@@ -107,7 +98,6 @@ glite_wmp_job_submit_LDADD = \
 	$(WMSUTILS_CJOBID_LIBS) \
 	$(WMSUTILS_EXCEPTION) \
 	$(WMS_JDL_LIBS) \
-	$(WMS_CHKPT_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(CURL) \
@@ -127,7 +117,6 @@ glite_wmp_job_cancel_LDADD = \
 	$(WMSUTILS_CJOBID_LIBS) \
 	$(WMSUTILS_EXCEPTION) \
 	$(WMS_JDL_LIBS) \
-	$(WMS_CHKPT_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(GRIDSITE_LIBS) \
@@ -146,7 +135,6 @@ glite_wmp_job_output_LDADD = \
 	$(WMSUTILS_CJOBID_LIBS) \
 	$(WMSUTILS_EXCEPTION) \
 	$(WMS_JDL_LIBS) \
-	$(WMS_CHKPT_LIBS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(CURL) \

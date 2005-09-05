@@ -9,9 +9,9 @@
 
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
+
 // Exceptions
-//#include "utilities/wmpexceptions.h"
-//#include "utilities/wmpexception_codes.h"
+#include "glite/wmsutils/exception/Exception.h"
 
 #include <iostream>
 #include <vector>
@@ -30,16 +30,81 @@ namespace utilities {
 
 // environment variable for the wmproxy service URL
 #define GLITE_WMPROXY_ENDPOINT 	"GLITE_WMPROXY_ENDPOINT"
-#define GLITE_TRUSTED_CERTS			 "/etc/grid-security/certificates"
 
-
-char* clean(char *str);
-
+/*
+*	removes the white spaces at the beginning and
+*	at the end of the input string
+*	@param str input string
+*/
+const char* clean(char *str);
+/*
+*	reads the jobid from a file
+*	@param path filepath
+*	@return a pointer to the jobid string
+*/
 std::string* jobidFromFile (const std::string &path);
-
-std::string handle_exception (const glite::wms::wmproxyapi::BaseException &b_ex );
-
+/*
+*	gets a string with messages of the input exception
+*	@param b_ex input BaseException
+*	@return the error message of the exception
+*/
+const std::string handle_exception (const glite::wms::wmproxyapi::BaseException &b_ex );
+/*
+*	save the text in the input string buffer into a file
+*	@param path filepath
+*	@param bfr input string buffer
+*	@return 0 in case of success; -1 in case of any error
+*/
 int saveToFile (const std::string &path, const std::string &bfr) ;
+
+/*
+*	contacts the endpoint configurated in the context
+*	in order to retrieve the http(s) destionationURI of the job
+*	identified by jobid
+*	@param jobid the identifier of the job
+*	@param cfs context
+*	@return a string with the http(s) destinationURI('s) (or NULL in case of error)
+*
+*/
+std::string* getInputSBDestURI(const std::string &jobid, const ConfigContext *cfs);
+/*
+*	performs user proxy delegation with del_id delegation identifier string
+*	@param cfs context (proxy, endpoint, trusted certificates)
+*	@param del_id identifier of the delegation operation
+*	@param verbose verbosity
+*	@return a string with the user proxy
+*/
+const std::string makeDelegation (ConfigContext *cfs, const std::string &del_id, const bool &verbose = false);
+/*
+*	peforms proxy delegation automatically generating the delegation identifier string
+*	@param cfs context (proxy, endpoint, trusted certificates)
+*	@param verbose verbosity
+*/
+std::string* makeAutomaticDelegation (ConfigContext *cfs, const bool &verbose = false);
+/*
+*	checks if the user free quota could support (in size) the transferring of a set of files
+*	to the endpoint specified in the context
+*	@param files the set of files to be transferred
+*	@param cfs context (proxy, endpoint, trusted certificates)
+*	@param verbose verbosity
+*/
+bool checkFreeQuota ( const std::vector<std::pair<std::string,std::string> > &files, ConfigContext *cfs, const bool &verbose = false );
+/*
+*	removes dir-separator characters at the end of the input path
+*	if they are present
+*	@param fpath the input pathname
+*	@return the normalized pathname
+*/
+std::string normalize_path( const std::string &fpath );
+/*
+*	adds a wildcard at the end of the input pathname
+*	@param path the input pathname
+*	@param wc the wildcard
+*	@return the pathame with the wildcard at the end
+*
+*/
+std::string addWildCards2Path(std::string& path, const std::string &wc);
+
 
 
 } //glite

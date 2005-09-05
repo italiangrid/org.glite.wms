@@ -17,4 +17,5 @@
 
 wmproxy_api_cppdir = $(includedir)
 nobase_wmproxy_api_cpp_HEADERS = \
-        glite/wms/wmproxyapi/wmproxy_api.h
+        glite/wms/wmproxyapi/wmproxy_api.h \
+	glite/wms/wmproxyapi/wmproxy_api_utilities.h
