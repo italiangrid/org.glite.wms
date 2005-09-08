@@ -16,6 +16,7 @@
 // Ad attributes and JDL methods
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/PrivateAttributes.h"
 #include "glite/wms/jdl/extractfiles.h"
 #include "glite/wms/jdl/adconverter.h"
 // BOOST
@@ -25,6 +26,7 @@
 
 // CURL
 #include "curl/curl.h"
+
 
 
 using namespace std ;
@@ -41,6 +43,9 @@ namespace wms{
 namespace client {
 namespace services {
 
+
+const string ISBFILE_DEFAULT = "ISBfiles";
+const int MAX_FILE_SIZE =  2140000000;	//2147 48 36 47
 
 /*
 *	default constructor
@@ -64,6 +69,7 @@ JobSubmit::JobSubmit( ){
 	startJob = false ;
 	// JDL file
 	jdlFile = NULL ;
+
 	// Ad's
 	jobAd = NULL;
 	dagAd = NULL;
@@ -74,12 +80,24 @@ JobSubmit::JobSubmit( ){
 	expireTime = 0;
 	// Transfer Files Message
 	transferMsg = "";
+	// TAR filename
+	tarFileName = Utils::getUniqueString ( )  ;
+	if (tarFileName){
+		*tarFileName = ISBFILE_DEFAULT + "_" + *tarFileName + Utils::getArchiveExtension( );
+	} else{
+		ostringstream oss;
+		oss << ISBFILE_DEFAULT << "_" << getpid( ) << "_" << getuid( ) <<Utils::getArchiveExtension( );
+		tarFileName = new string (oss.str());
+	}
+	// As default  file archiving and compression is allowed
+	zipAllowed = true;
 };
 
 /*
 *	Default destructor
 */
 JobSubmit::~JobSubmit( ){
+
 	if (dgOpt){ delete(dgOpt); }
 	if (collectOpt){ delete(collectOpt); }
 	if (chkptOpt){ delete(chkptOpt); }
@@ -90,9 +108,11 @@ JobSubmit::~JobSubmit( ){
 	if (jdlFile){ delete(jdlFile); }
 	if (jobAd){ delete(jobAd); }
 	if (dagAd){ delete(dagAd); }
-	if (collectAd){ delete(collectAd); }
+	if (collectAd){ delete(collectAd); };
 	if ( jobShadow){ delete( jobShadow); }
 	if ( startOpt){ delete( startOpt); }
+	if ( tarFileName){ delete( tarFileName); }
+
 };
 
 
@@ -104,7 +124,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 	vector<string> wrongids;
 	vector<string> resources;
 	string opts = Job::readOptions  (argc, argv, Options::JOBSUBMIT);
-
+	// writes the information on the specified option in the log file
+	logInfo->print(WMS_INFO,   ">>>>>>> Function Called:", wmcOpts->getApplicationName( ), false);
+	logInfo->print(WMS_INFO, ">>>>>>> Options specified:", opts ,false);
 	// input & resource (no together)
 	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
@@ -117,12 +139,20 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error", info.str());
 	}
 	if (inOpt){
-		// Retrieve and check resources from file
+		// Retrieves and check resources from file
 		resources= wmcUtils->getItemsFromFile(*inOpt, Utils::CE_TYPE);
 		resources = wmcUtils->checkResources (resources);
-		if ( resources.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
-			resources = wmcUtils->askMenu(resources, Utils::MENU_SINGLECE);
-			if (!resources.empty()){
+		if (resources.empty()){
+			// Not even a right resource
+			throw WmsClientException(__FILE__,__LINE__,
+				"readOptions", DEFAULT_ERR_CODE,
+				"Wrong Input Value",
+				"all parsed resources in bad format" );
+		} else{
+			if ( resources.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+				resources = wmcUtils->askMenu(resources, Utils::MENU_SINGLECE);
+				resourceOpt = new string(resources[0]);
+			} else {
 				resourceOpt = new string(resources[0]);
 			}
 		}
@@ -159,6 +189,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Wrong Time Value",info.str() );
 		}
 	}
+	// --to
 	if (toOpt) {
 		try{
 		expireTime= Utils::checkTime(*toOpt, Options::TIME_TO) ;
@@ -169,6 +200,13 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Wrong Time Value",info.str() );
 		}
 	}
+	// --chkpt
+	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
+	// --collect
+	collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
+	// register-only & start
+	startOpt = wmcOpts->getStringAttribute(Options::START);
+	registerOnly = wmcOpts->getBoolAttribute(Options::REGISTERONLY);
 	if (startOpt &&
 	(registerOnly || inOpt || resourceOpt || toOpt || validOpt || chkptOpt || collectOpt ||
 		(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
@@ -188,25 +226,16 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error: " +wmcOpts->getAttributeUsage(Options::START),
 				info.str());
 	}
-	// register-only & start
-	startOpt = wmcOpts->getStringAttribute(Options::START);   // TBDMS: double call
-	if (wmcOpts->getBoolAttribute(Options::REGISTERONLY)){
-		if (startOpt){
-			info << "the following options cannot be specified together:\n" ;
-			info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
-			info << wmcOpts->getAttributeUsage(Options::START) << "\n";
-			throw WmsClientException(__FILE__,__LINE__,
-					"readOptions",DEFAULT_ERR_CODE,
-					"Input Option Error", info.str());
-		}
+	bool transfer_files = wmcOpts->getBoolAttribute(Options::TRANSFER);
+	if (registerOnly){
 		startJob = false;
-		if (wmcOpts->getBoolAttribute(Options::TRANSFER)) {
+		if ( transfer_files) {
 			registerOnly = false ;
 		} else{
 			registerOnly = true;
 		}
 	} else{
-		if (wmcOpts->getBoolAttribute(Options::TRANSFER)){
+		if (transfer_files){
 			info << wmcOpts->getAttributeUsage(Options::TRANSFER) ;
 			info << ": this option can only be used with " ;
 			info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
@@ -217,7 +246,8 @@ void JobSubmit::readOptions (int argc,char **argv){
 		registerOnly = false;
 		startJob = true;
 	}
-
+	// checks the JobId argument for the --start option
+	if (startOpt){startOpt = new string(Utils::checkJobId(*startOpt));}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
 	if (!fileProto) {
@@ -225,11 +255,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 	} else  if (startOpt) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transferring)", "", true );
 	}
-
-	// writes the information on the specified option in the log file
-	logInfo->print(WMS_INFO,   ">>>>>>> Function Called:", wmcOpts->getApplicationName( ), false);
-	logInfo->print(WMS_INFO, ">>>>>>> Options specified:", opts ,false);
-	startOpt = wmcOpts->getStringAttribute(Options::START);   // TBDMS: double call
 	if (!startOpt){
 		// Delegation ID
 		dgOpt = wmcUtils->getDelegationId ();
@@ -240,14 +265,10 @@ void JobSubmit::readOptions (int argc,char **argv){
 					"no proxy delegation ID" );
 		}
 	}
-	// checks the JobId argument for the --start option
-	if (startOpt){*startOpt = Utils::checkJobId(*startOpt);}
-	// --chkpt
-	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
+
+
 	// --nolisten
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
-	// --collect
-	collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
 	// path to the JDL file
 	jdlFile = wmcOpts->getPath2Jdl( );
 	// checks if the proxy file pathname is set
@@ -301,13 +322,22 @@ void JobSubmit::submission ( ){
 		// reads and checks the JDL('s)
 		wmsJobType jobtype ;
 		this->checkAd(toBretrieved, jobtype);
+/*
+<<<<<<< jobsubmit.cpp
+		jobid = jobRegOrSub(startJob);
+		//if (registerOnly || toBretrieved) {
+		if (toBretrieved) {
+=======
+*/
 		// Perform Submission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		jobid = jobRegOrSub(startJob && !toBretrieved);
+		logInfo->print(WMS_DEBUG, "The JobId is: ", jobid) ;
 		// Perform File Transfer when:
-		// (Registeronly is NOT specified [or specified with --tranfer-file]) AND (some file are to be transferred)
+		// (Registeronly is NOT specified [or specified with --tranfer-file]) AND (some files are to be transferred)
 		if (toBretrieved){
 			try{
+//>>>>>>> 1.8.2.72
 				// JOBTYPE
 				switch (jobtype) {
 					case (WMS_JOB) : {
@@ -337,28 +367,19 @@ void JobSubmit::submission ( ){
 					string (exc.what()));
 			}
 		} else{
-			if (!toBretrieved){
-				logInfo->print(WMS_DEBUG, "No local files in the InputSandbox to be transferred", "") ;
-			}
-			try {
-				if (!startJob) {
-					transferMsg = "To complete the operation start the job by issuing a submission with the option:\n";
-					transferMsg += " --start " + jobid + "\n";
-				}
-			} catch (BaseException &exc) {
-				throw WmsClientException(__FILE__,__LINE__,
-					"jobSubmit", ECONNABORTED,
-					"WMProxy Server Error", errMsg(exc));
+			logInfo->print(WMS_DEBUG, "No local files in the InputSandbox to be transferred", "") ;
+			if (!startJob) {
+				transferMsg = "To complete the operation start the job by issuing a submission with the option:\n";
+				transferMsg += " --start " + jobid + "\n";
 			}
 		}
-		logInfo->print(WMS_DEBUG, "The JobId is: ", jobid) ;
+
 		// Perform JobStart when:
 		// (RegisterOnly has not been specified in CLI) AND (There were files to transfer)
 		if (startJob && toBretrieved){
 			// Perform JobStart
 			jobStarter(jobid);
 		}
-
 
 	}  // startOpt = FALSE branch
 	// HEADER OF THE OUTPUT MESSAGE (submission)============================================
@@ -368,7 +389,6 @@ void JobSubmit::submission ( ){
 	} else if (startOpt){
 		out << "The job has been successfully started to the WMProxy\n";
 	} else {
-
 		// OUTPUT MESSAGE (register+start)============================================
 		out << "The job has been successfully submitted to the WMProxy\n";
 	}
@@ -470,6 +490,11 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		}
 		logInfo->print (WMS_DEBUG, "The JDL files is:", Utils::getAbsolutePath(*jdlFile));
 		jobAd->fromFile (*jdlFile);
+		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
+		zipAllowed = ( ! jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+		if (!zipAllowed){
+			logInfo->print (WMS_DEBUG, "File compression is not allowed by user", "");
+		}
 		// Adds ExpireTime JDL attribute
 		if ((int)expireTime>0) {
 			jobAd->addAttribute (JDL::EXPIRY_TIME, (double)expireTime);
@@ -564,9 +589,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					if (jobAd->hasAttribute(JDL::LRMS_TYPE)){jobAd->delAttribute(JDL::LRMS_TYPE);}
 					jobAd->setAttribute(JDL::LRMS_TYPE,*lrmsOpt);
 				}
-				// Check queue
-				// boost::char_separator<char> separator("-");
-				// boost::tokenizer<boost::char_separator<char> > tok(line, separator);
 			}
 			JobAd *pass= new JobAd(*(jobAd->ad()));
 			AdUtils::setDefaultValues(pass,wmcConf);
@@ -749,77 +771,70 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 	}
 }
 /*
-*	contacts the endpoint configurated in the context
-*	in order to retrieve the http(s) destionationURI of the job
-*	identified by the jobid
+*       contacts the endpoint configurated in the context
+*       in order to retrieve the destionationURIs of the job
+*       identified by the jobid
 */
-//std::string* JobSubmit::getInputSBDestURI(const std::string &jobid, std::string &defURI) {
-std::string* JobSubmit::getInputSBDestURI(const std::string &jobid,const std::string &child ) {
-	string *dest_uri = NULL;
-	string look_for = "";
-	vector<string> jobids;
-	vector< pair<string ,vector<string > > >::iterator it1 ;
-	vector<string>::iterator it2;
-	bool found = false;
-	// The destinationURI's vector is empty: the WMProxy service is called
-	if (dsURIs.empty( )){
-		try{
-			dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
-		} catch (BaseException &exc){
-			throw WmsClientException(__FILE__,__LINE__,
-				"getSandboxDestURI ", ECONNABORTED,
-				"WMProxy Server Error", errMsg(exc));
-		}
-		if (dsURIs.empty( )){
-			throw WmsClientException(__FILE__,__LINE__,
-				"getSandboxDestURI ", ECONNABORTED,
-				"WMProxy Server Error",
-				"The server doesn't have information on InputSBDestURI for :" + jobid );
-		}
-	}
-
-	if (child.size()>0){
-		// if the input parameter child is set ....
-		look_for = child ;
-	} else {
-		// parent (if the input string "child" is empty)
-		look_for = jobid;
-	}
- 	// Looks for the destURI's of the job
-	for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
-		if (it1->first == look_for) { // parent or child found
-			for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
-				// Looks for the destURi for file transferring
-				if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
-					dest_uri = new string( *it2 );
-					break;
-					// loop-exit if "TAR-destURI" has been already found
-					/*if (found){
-						dsURIs.erase(it1);
-						break;
-					} else {
-						found = true ;
-						logInfo->print(WMS_DEBUG, "DestinationURI:", *dest_uri);
-					}*/
-				}
-				/*
-				// Looks for the destURI for TAR file creation
-				if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
-					defURI = string (*it2);
-					// loop-exit if "fileTransfer-destURI" has been already found
-					if (found){
-						dsURIs.erase(it1);
-						break;
-					} else {
-						found = true ;
-					}
-				}
-				*/
-			}
-
-		}
-	}
-	return dest_uri ;
+std::string* JobSubmit::getInputSBDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
+        string *dest_uri = NULL;
+        string look_for = "";
+        vector<string> jobids;
+        vector< pair<string ,vector<string > > >::iterator it1 ;
+        vector<string>::iterator it2;
+        bool found = false;
+        // The destinationURI's vector is empty: the WMProxy service is called
+        if (dsURIs.empty( )){
+                try{
+                        dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
+                } catch (BaseException &exc){
+                        throw WmsClientException(__FILE__,__LINE__,
+                                "getSandboxDestURI ", ECONNABORTED,
+                                "WMProxy Server Error", errMsg(exc));
+                }
+                if (dsURIs.empty( )){
+                        throw WmsClientException(__FILE__,__LINE__,
+                                "getSandboxDestURI ", ECONNABORTED,
+                                "WMProxy Server Error",
+                                "The server doesn't have information on InputSBDestURI for :" + jobid );
+                }
+        }
+        if (child.size()>0){
+                // if the input parameter child is set ....
+                look_for = child ;
+        } else {
+                // parent (if the input string "child" is empty)
+                look_for = jobid;
+        }
+        // Looks for the destURI's of the job
+        for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
+                if (it1->first == look_for) { // parent or child found
+                        for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
+                                // Looks for the destURi for file transferring
+                                if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
+                                        dest_uri = new string( *it2 );
+                                        // loop-exit if "TAR/ZIP-destURI" has been already found
+                                       if (found){
+                                                break;
+                                        } else {
+                                                found = true ;
+                                                logInfo->print(WMS_DEBUG, "DestinationURI:", *dest_uri);
+                                        }
+                                }
+                                // Looks for the destURI for TAR/ZIP file creation
+                                if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
+                                        zipURI = string (*it2);
+                                        // loop-exit if "fileTransfer-destURI" has been already found
+                                        if (found){
+                                                break;
+                                        } else {
+                                                found = true ;
+                                        }
+                                }
+                        }
+                }
+		if (found) break;
+        }
+        return dest_uri ;
 }
 /*
 *	checks if the user free quota (on the server endpoint) could support (in size) the transferring of a set of files
@@ -832,6 +847,7 @@ bool JobSubmit::checkFreeQuota ( std::vector<std::pair<std::string,std::string> 
 	// results of getFrewQuota
 	pair<long, long> free_quota ;
 	long size = 0;
+	long max_isbsize = 0;
 	ostringstream lim;
 	ostringstream s;
 	if (cfgCxt) {
@@ -865,14 +881,30 @@ bool JobSubmit::checkFreeQuota ( std::vector<std::pair<std::string,std::string> 
 				}
 				fclose (fptr);
 			} // for
-			logInfo->print (WMS_DEBUG, "Size of the InputSanbox files (bytes): ", s.str() );
 			if (not_exceed) {
 				logInfo->print (WMS_DEBUG, "The InputSandbox size doesn't exceed the user free quota:", "file transferring is allowed" );
 			} else {
 				logInfo->print (WMS_DEBUG, "The InputSandbox size exceeds the user free quota:", "file transferring is not allowed" );
 			}
 		} else {
-			logInfo->print (WMS_DEBUG, "User free quota is not set on the server:", "file transferring is allowed" );
+			// User quota is not set on the server: check of Max InputSB size
+			logInfo->print (WMS_DEBUG, "User free quota is not set on the server:", " requesting for max InputSandbox size on the server" );
+			try{
+				max_isbsize = getMaxInputSandboxSize(cfgCxt);
+			} catch (BaseException &exc){
+					throw WmsClientException(__FILE__,__LINE__,
+						"getMaxInputSandboxSize", ECONNABORTED,
+						"WMProxy Server Error", errMsg(exc));
+			}
+			if (max_isbsize>0 ) {
+				if (size < max_isbsize) {
+					logInfo->print (WMS_DEBUG, "The InputSandbox size doesn't exceed the max size allowed on the server:", "file transferring is allowed" );
+					not_exceed = true;
+				} else  {
+					logInfo->print (WMS_DEBUG, "The InputSandbox size exceeds the max size allowed on the server:", "file transferring is not allowed" );
+					not_exceed = false;;
+				}
+			}
 		}
 	} // if cfgCxt
 	return not_exceed ;
@@ -1026,18 +1058,46 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 }
 
 
-void JobSubmit::toBCopiedFileList(const std::string &jobid, const std::string &child,const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied){
+std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
+						const std::string &child,
+						const std::string &isb_uri,
+						const std::vector <std::string> &paths,
+						std::vector <std::pair<std::string, std::string> > &to_bcopied){
 	string* dest_uri = NULL;
+	string zip_uri = "";
 	if (!paths.empty()){
-		dest_uri = getInputSBDestURI(jobid, child);
+		dest_uri = getInputSBDestURI(jobid, child, zip_uri);
 		if (!dest_uri){
 			throw WmsClientException(__FILE__,__LINE__,"getInputSBDestURI",DEFAULT_ERR_CODE,
 			"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
 		}
-		// gets the InputSandbox files to be transferred to destinationURIs
-		toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, isb_uri);
+		if (zipAllowed) {
+			// Gets the InputSandbox files to be included into tar.gz file to be transferred to the server
+			// ("zip_uri" is needed to create the file paths into the tar file that will be transferred to "dest_uri")
+			toBcopied(JDL::INPUTSB, paths, to_bcopied, zip_uri, isb_uri);
+		} else {
+			// Gets the InputSandbox files to be transferred to the server
+			// (The files will be directly transferred to "dest_uri")
+			toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, isb_uri);
+		}
 	}
+	return dest_uri ;
 }
+
+/*
+* Archives and compresses the InputSandbox files
+*/
+std::string JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied,
+							const std::string &destURI){
+	string file = Utils::archiveFiles(to_bcopied, "/tmp", *tarFileName) ;
+	// Compress the tar file
+	file = Utils::compressFile (file) ;
+	to_bcopied.clear( );
+	// Inserts in the vector the single zip file to be transferred to the server
+	to_bcopied.push_back(make_pair(file, string(destURI + "/" + Utils::getFileName(file)) ) );
+	return file ;
+}
+
 /*
 * Message for InputSB files that need to be transferred
 */
@@ -1069,10 +1129,14 @@ std::string JobSubmit::normalJob(){
 	// jobid and nodename
 	string jobid = "";
 	string node = "";
+	// DestinationURI string (for file transferring)
+	string *destURI = NULL;
 	// InputSB files
 	long freequota ;
 	vector <string> paths ;
 	vector <pair<string, string> > to_bcopied ;
+	// gzip file
+	string gzip = "";
 	if (!jobAd){
 		throw WmsClientException(__FILE__,__LINE__,
 			"JobSubmit::normalJob",  DEFAULT_ERR_CODE,
@@ -1088,42 +1152,65 @@ std::string JobSubmit::normalJob(){
 		string isb_uri= jobAd->hasAttribute(JDL::ISB_BASE_URI)?jobAd->getString(JDL::ISB_BASE_URI):"";
 		paths = jobAd->getStringValue  (JDL::INPUTSB) ;
 		// InputSandbox file transferring
-		this->toBCopiedFileList(jobid,"",isb_uri, paths, to_bcopied);
-		// checks user free quota
-		if ( ! to_bcopied.empty( ) && ! checkFreeQuota (to_bcopied, freequota) ){
-			ostringstream err ;
-			err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
-			err << freequota << " bytes)";
-			throw WmsClientException( __FILE__,__LINE__,
-					"transferFiles",  DEFAULT_ERR_CODE,
-					"User FreeQuota Error" ,
-					err.str());
-		}
-		try {
+		destURI = this->toBCopiedFileList(jobid, "", isb_uri, paths, to_bcopied);
+		// if the vector is not empty, file transferring is performed
+		if (! to_bcopied.empty( ) ){
+			// checks user free quota
+			if (  ! checkFreeQuota (to_bcopied, freequota) ){
+				ostringstream err ;
+				err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
+				err << freequota << " bytes)";
+				throw WmsClientException( __FILE__,__LINE__,
+						"transferFiles",  DEFAULT_ERR_CODE,
+						"User FreeQuota Error" ,
+						err.str());
+			}
 			if (registerOnly) {
 				// If --register-only: message with ISB files list to be printed out
-				transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
+				transferMsg = transferFilesList (to_bcopied, jobid) + "\n";
 			} else {
-				// File Transferring according to the chosen protocol
-				if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
-					this->curlTransfer (to_bcopied);
-				} else {
-					this->gsiFtpTransfer (to_bcopied);
+				// Creates a zip file with the ISB files to be transferred if file compression is allowed
+				if (zipAllowed) {
+					gzip = createZipFile(to_bcopied, *destURI);
+					logInfo->print (WMS_DEBUG, "InputSandbox files in: " + gzip, "");
+				}
+				try {
+					// File Transferring according to the chosen protocol
+					if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
+						this->curlTransfer (to_bcopied);
+					} else {
+						this->gsiFtpTransfer (to_bcopied);
+					}
+
+				} catch (WmsClientException &exc) {
+					ostringstream err ;
+					err << exc.what() << "\n\n";
+					err << transferFilesList(to_bcopied, jobid) << "\n";
+					throw WmsClientException( __FILE__,__LINE__,
+							"transferFiles",  DEFAULT_ERR_CODE,
+							"File Transferring Error" ,
+							err.str());
+				}
+				// Removes the temporary zip file if it exists
+				if (gzip.size()>0 && Utils::isFile(gzip)) {
+					try {
+						//Utils::removeFile(gzip);
+						logInfo->print (WMS_DEBUG, "Temporary archive for InputSandbox files removed", "(" + gzip + ")");
+					} catch (WmsClientException &exc) {
+						logInfo->print(WMS_WARNING,"Unable to remove temporary file created for the InputSandbox files", exc.what( ) );
+					}
 				}
 				if (!startJob){
-					transferMsg = "To complete the operation start the job by issuing a submission with the option:\n"
-					" --start " + jobid + "\n";
+					transferMsg = "To complete the operation start the job by issuing a submission with the option:\n --start "
+					+ jobid + "\n";
 				}
 			}
-
-		} catch (WmsClientException &exc) {
-			ostringstream err ;
-			err << exc.what() << "\n\n";
-			err << transferFilesList(to_bcopied, jobid) << "\n";
-			throw WmsClientException( __FILE__,__LINE__,
-					"transferFiles",  DEFAULT_ERR_CODE,
-					"File Transferring Error" ,
-					err.str());
+		} else {
+			logInfo->print (WMS_DEBUG, "No local files in the InputSandbox to be transferred", "");
+			if (!startJob){
+				transferMsg = "To complete the operation start the job by issuing a submission with the option:\n --start "
+				+ jobid + "\n";
+			}
 		}
 	}
 	return jobid;
@@ -1137,6 +1224,8 @@ std::string  JobSubmit::dagJob(){
 	string jobid = "";
 	string child = "";
 	string node = "";
+	string *destURI = NULL;
+	string zip_uri = "";
 	// InputSB files
 	long freequota ;
 	vector <string> paths ;
@@ -1146,6 +1235,8 @@ std::string  JobSubmit::dagJob(){
 	vector <JobIdApi*> children;
 	// iterators
 	vector <JobIdApi*>::iterator it;
+	// gzip file
+	string gzip = "";
 	if (!dagAd){
 		throw WmsClientException(__FILE__,__LINE__,
 		"JobSubmit::dagJob",  DEFAULT_ERR_CODE,
@@ -1162,7 +1253,9 @@ std::string  JobSubmit::dagJob(){
 		// InputSB files to be transferred to the DestURI
 		isb_uri=dagAd->hasAttribute(JDL::ISB_BASE_URI)?dagAd->getAttribute(ExpDagAd::ISB_DEST_URI ):"";
 		paths = dagAd->getInputSandbox();
-		this-> toBCopiedFileList(jobid, "", isb_uri, paths, to_bcopied);
+		if (!paths.empty()) {
+			destURI = this-> toBCopiedFileList(jobid, "", isb_uri, paths, to_bcopied) ;
+		}
 	}
 	// CHILDREN ====================
 	children = jobIds.children ;
@@ -1192,45 +1285,78 @@ std::string  JobSubmit::dagJob(){
 						isb_uri="";
 					}
 					paths = dagAd->getNodeStringValue(node, JDL::INPUTSB);
-					this->toBCopiedFileList(jobid, child, isb_uri, paths, to_bcopied);
+					this->toBCopiedFileList(jobid, child, isb_uri, paths, to_bcopied );
 				}
 			}
 		}
 	}
-	// checks user free quota
-	if (  ! to_bcopied.empty( ) && ! checkFreeQuota (to_bcopied, freequota) ){
-		ostringstream err ;
-		err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
-		err << freequota << " bytes)";
-		throw WmsClientException( __FILE__,__LINE__,
-				"transferFiles",  DEFAULT_ERR_CODE,
-				"User FreeQuota Error" ,
-				err.str());
-	}
-	try {
+	if (! to_bcopied.empty( ) ){
+		// checks user free quota
+		if (  ! checkFreeQuota (to_bcopied, freequota) ){
+			ostringstream err ;
+			err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
+			err << freequota << " bytes)";
+			throw WmsClientException( __FILE__,__LINE__,
+					"transferFiles",  DEFAULT_ERR_CODE,
+					"User FreeQuota Error" ,
+					err.str());
+		}
 		if (registerOnly) {
 			// If --register-only: message with ISB files list to be printed out
-			transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
+			transferMsg = transferFilesList (to_bcopied, jobid) + "\n";
 		} else {
-			// File Transferring according to the chosen protocol
-			if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
-				this->curlTransfer (to_bcopied);
-			} else {
-				this->gsiFtpTransfer (to_bcopied);
+			// Destination URI (in case this info has not been retrieved before)
+			if (!destURI) {
+				destURI = getInputSBDestURI (jobid, child, zip_uri);
+				if (!destURI){
+					throw WmsClientException(__FILE__,__LINE__,"getInputSBDestURI",DEFAULT_ERR_CODE,
+					"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
+				}
 			}
+			// Creates a zip file with the ISB files to be transferred if file compression is allowed
+			if (zipAllowed) {
+				gzip = createZipFile(to_bcopied,*destURI);
+				logInfo->print (WMS_DEBUG, "InputSandbox files in: " + gzip, "");
+			}
+			// File Transferring according to the chosen protocol
+			try {
+
+				if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
+					this->curlTransfer (to_bcopied);
+				} else {
+					this->gsiFtpTransfer (to_bcopied);
+				}
+			} catch (WmsClientException &exc) {
+				ostringstream err ;
+				err << exc.what() << "\n\n";
+				err << transferFilesList(to_bcopied, jobid) << "\n";
+				throw WmsClientException( __FILE__,__LINE__,
+					"transferFiles",  DEFAULT_ERR_CODE,
+					"File Transferring Error" ,
+					err.str());
+			}
+			// Removes the temporary Zip file if it exists
+			if (gzip.size()>0 && Utils::isFile(gzip)) {
+				try {
+					//Utils::removeFile(gzip);
+					logInfo->print (WMS_DEBUG, "Temporary archive for InputSandbox files removed", "(" + gzip + ")");
+				} catch (WmsClientException &exc) {
+					logInfo->print(WMS_WARNING,"Unable to remove temporary file created for the InputSandbox files", exc.what( ) );
+				}
+			}
+			// Info message for start in case of register only
 			if (!startJob){
 				transferMsg = "To complete the operation start the job by issuing a submission with the option:\n --start "
 				+ jobid + "\n";
 			}
 		}
-	} catch (WmsClientException &exc) {
-			ostringstream err ;
-			err << exc.what() << "\n\n";
-			err << transferFilesList(to_bcopied, jobid) << "\n";
-			throw WmsClientException( __FILE__,__LINE__,
-					"transferFiles",  DEFAULT_ERR_CODE,
-					"File Transferring Error" ,
-					err.str());
+	} else {
+		logInfo->print (WMS_DEBUG, "No local files in the InputSandbox to be transferred", "");
+		// Info message for start in case of register only
+		if (!startJob){
+			transferMsg += "To complete the operation start the job by issuing a submission with the option:\n --start "
+			+ jobid + "\n";
+		}
 	}
 	return jobid;
 }
@@ -1257,11 +1383,12 @@ std::string JobSubmit::collectionJob() {
 	string jobid = "";
 	string child = "";
 	string node = "";
+	string* destURI = NULL;
+	string gzip = "";
 	// InputSB files
 	long freequota ;
 	vector<string> paths;
 	vector <pair<string, string> > to_bcopied ;
-
 	if (!collectAd){
 		throw WmsClientException(__FILE__,__LINE__,
 		"JobSubmit::collectionJob",  DEFAULT_ERR_CODE,
@@ -1277,43 +1404,66 @@ std::string JobSubmit::collectionJob() {
 		// InputSB files to be transferred to the DestURI
 		paths = collectAd->getStringValue(JDL::INPUTSB);
 		string isb_uri= collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
-		this->toBCopiedFileList(jobid, "",isb_uri, paths, to_bcopied);
-	}
-	// checks user free quota
-	if (  ! to_bcopied.empty( ) && ! checkFreeQuota (to_bcopied, freequota) ){
-		ostringstream err ;
-		err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
-		err << freequota << " bytes)";
-		throw WmsClientException( __FILE__,__LINE__,
-				"transferFiles",  DEFAULT_ERR_CODE,
-				"User FreeQuota Error" ,
-				err.str());
-	}
-	try {
-		if (registerOnly) {
-			// If --register-only: message with ISB files list to be printed out
-			transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
-		} else {
-			// File Transferring according to the chosen protocol
-			if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
-				this->curlTransfer (to_bcopied);
-			} else {
-				this->gsiFtpTransfer (to_bcopied);
+		destURI = this->toBCopiedFileList(jobid, "", isb_uri, paths, to_bcopied);
+		if (  ! to_bcopied.empty( ) ){
+			// checks user free quota
+			if (  ! checkFreeQuota (to_bcopied, freequota) ){
+				ostringstream err ;
+				err << "not enough free quota on the server for the InputSandbox files (freequota=" ;
+				err << freequota << " bytes)";
+				throw WmsClientException( __FILE__,__LINE__,
+						"transferFiles",  DEFAULT_ERR_CODE,
+						"User FreeQuota Error" ,
+						err.str());
 			}
+			if (registerOnly) {
+				// If --register-only: message with ISB files list to be printed out
+				transferMsg += transferFilesList (to_bcopied, jobid) + "\n";
+			} else {
+				// Creates a zip file with the ISB files to be transferred if file compression is allowed
+				if (zipAllowed) {
+					gzip = createZipFile(to_bcopied, *destURI);
+					logInfo->print (WMS_DEBUG, "InputSandbox files in: " + gzip, "");
+				}
+				// File Transferring according to the chosen protocol
+				try {
+					if (fileProto!= NULL && *fileProto== Options::TRANSFER_FILES_CURL_PROTO ) {
+						this->curlTransfer (to_bcopied);
+					} else {
+						this->gsiFtpTransfer (to_bcopied);
+					}
+				} catch (WmsClientException &exc) {
+					ostringstream err ;
+					err << exc.what() << "\n\n";
+					err << transferFilesList(to_bcopied, jobid) << "\n";
+					throw WmsClientException( __FILE__,__LINE__,
+							"transferFiles",  DEFAULT_ERR_CODE,
+							"File Transferring Error" ,
+							err.str());
+				}
+				// Removes the temporary Zip file if it exists
+				if (gzip.size()>0 && Utils::isFile(gzip)) {
+					try {
+						//Utils::removeFile(gzip);
+						logInfo->print (WMS_DEBUG, "Temporary archive for InputSandbox files removed", "(" + gzip + ")");
+					} catch (WmsClientException &exc) {
+						logInfo->print(WMS_WARNING,"Unable to remove temporary file created for the InputSandbox files", exc.what( ) );
+					}
+				}
+				// Info message for start in case of register only
+				if (!startJob){
+					transferMsg = "To complete the submission start the job running this command with the option --start " + jobid + "\n";
+				}
+			}
+		} else {
+			logInfo->print (WMS_DEBUG, "No local files in the InputSandbox to be transferred", "");
+			// Info message for start in case of register only
 			if (!startJob){
-				transferMsg = "To complete the operation start the job by issuing a submission with the option:"
-				"\n --start " + jobid + "\n";
+				transferMsg = "To complete the submission start the job running this command with the option --start " + jobid + "\n";
 			}
 		}
-	} catch (WmsClientException &exc) {
-			ostringstream err ;
-			err << exc.what() << "\n\n";
-			err << transferFilesList(to_bcopied, jobid) << "\n";
-			throw WmsClientException( __FILE__,__LINE__,
-					"transferFiles",  DEFAULT_ERR_CODE,
-					"File Transferring Error" ,
-					err.str());
 	}
+
 	return jobid;
 }
 

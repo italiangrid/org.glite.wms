@@ -59,10 +59,10 @@ class JobSubmit : public Job {
                  *	in order to retrieve the http(s) destionationURI of the job
                  *	identified by the jobid
                  *	@param jobid the identifier of the job
-		 *	@param
+		 *	@param zipURI this parameter returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
                  *	@return a pointer to the string with the http(s) destinationURI (or NULL in case of error)
                 */
-                std::string* getInputSBDestURI(const std::string &jobid, const std::string &child) ;
+                std::string* getInputSBDestURI(const std::string &jobid,const std::string &child, std::string &zipURI) ;
 
                 /*
                 *	Checks if the UserFreeQuota is set for the user on the EndPoint; if it is, checks that
@@ -100,23 +100,34 @@ class JobSubmit : public Job {
                 void curlTransfer (std::vector<std::pair<std::string,std::string> > paths);
 
 		/*
-                *	reads the list of input pathnames for the job ( identified by the input jobid) and matches them with the local files, resolving evantually wildcards,
+                *	Reads the list of input pathnames for the job ( identified by the input jobid) and matches them with the local files, resolving evantually wildcards,
                 *	 and the remote destinationURI's; gets back a list of pair: local file, remote destinationURI's where to transfer the local file.
                 *	@param jobid the identifier of the job
                 *	@param paths input pathnames to be checked
-                *	@param to_bcopied the vector containing the resulting list of pairs (it is empty if no file has to be transferred)
+                *	@param to_bcopied at the end of the execution it returns a vector containing the resulting list of pairs (it is empty if no file has to be transferred)
+		*	@return the pointer to the destination URI string to be used for the file transferring
                 */
-                void toBCopiedFileList(const std::string &jobid, const std::string &child,const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied);
+                std::string* toBCopiedFileList(const std::string &jobid,const std::string &child,const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied);
+		/*
+		* Archives a group of files into a tar file and creates and compresses the archive.
+		* These files represent the InputSandbox of the job to be copied to the WMProxy server.
+		* They are archived creating a filesystem tree based on the destinationURI path of the job provided as input.
+		* @param to_bcopied the list of files to be archived that will be copied to the WMProxy server
+		* @param destURI the destinationURI of the job where the gzip file has to be transferred
+		*
+		 */
+		std::string JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied, const std::string &destURI);
 		/*
 		*	Gets the list of the InputSandbox files to be transferred to the DestinationURI's
 		*	@param paths the list of files that still need to be transferred
-		*	@return the string message
+		*	@param jobid the identifier of the job
+		*	@return  the message with the list of the files in the input vector 'paths'
 		*/
 		std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string& jobid) ;
                 /*
                 *	looks for the node name in the list (nodename; vector of list of files) and returns the associated list of files
                 *	@param node the node index (the name of the node to be looked for in the list)
-                *	@param list vector (index=nodename; vector of files); the vector of files contains a list of pathnames
+                *	@param list at the end of the execution it returns a vector (index=nodename; vector of files); the vector of files contains a list of pathnames
                 *	@return the list of files of the input node
                 */
                 std::vector<std::string> getNodeFileList (const std::string &node, std::vector< std::pair<std::string ,std::vector<std::string > > > &list);
@@ -124,7 +135,7 @@ class JobSubmit : public Job {
                 * 	reads the JobRegister results for a normal job and performs the transferring of the
                 *  	local InputSandbox files (called by the main method: submission)
                 */
-                std::string normalJob( );
+                std::string normalJob();
                 /*
                 * 	reads the JobRegister results for a DAG  job and performs the transferring of the
                 *  	local InputSandbox files (called by the main method: submission)
@@ -134,15 +145,14 @@ class JobSubmit : public Job {
                 * 	reads the JobRegister results for a collection of jobs  and performs the transferring of the
                 *  	local InputSandbox files (called by the main method: submission)
                 */
-                std::string collectionJob( );
-		/*
+                std::string collectionJob();
+		/**
                 * reads and checks the JDL file of which pathname is  specified in the jdlFile attribute of this class
                 *@param jobtype the code of the JobType (see wmsJobType enum)
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
                 */
                 void JobSubmit::checkAd(bool &filestoBtransferred, wmsJobType &jobtype);
-
-		/*
+		/**
                 *	string input arguments
                 */
 		std::string* chkptOpt ;
@@ -155,7 +165,7 @@ class JobSubmit : public Job {
 		std::string* resourceOpt ;
 		std::string* validOpt ;
 		std::string* startOpt ;
-		/*
+		/**
                 *	boolean input arguments
                 */
 		bool nomsgOpt ;
@@ -164,8 +174,7 @@ class JobSubmit : public Job {
                 bool registerOnly;
 		bool startJob;
 		std::string transferMsg;
-
-		/*
+		/**
 		* Time attributes
 		*/
 		long expireTime ;
@@ -173,24 +182,32 @@ class JobSubmit : public Job {
                 * JobId's
                 */
                 glite::wms::wmproxyapi::JobIdApi jobIds ;
-		/*
+		/**
                 *	Ad-objects
 		*/
                 glite::wms::jdl::Ad *jobAd ;
 		glite::wms::jdl::ExpDagAd *dagAd  ;
         	glite::wms::jdl::CollectionAd *collectAd ;
-		/*
-                * jobShadow for interactive jobs
+		/**
+                * JobShadow for interactive jobs
                 */
                 Shadow *jobShadow ;
-		/*
+		/**
 		*	path to the JDL file
 		*/
 		std::string *jdlFile ;
-		/*
+		/**
 		*	string of the user JDL
 		*/
 		std::string *jdlString ;
+		/**
+		* The name of the ISB tar/zip files
+		*/
+		std::string* tarFileName ;
+		/**
+		*
+		*/
+		bool zipAllowed ;
 		/**
 		* List of Destination URI's
 		*/
