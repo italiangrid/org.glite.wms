@@ -152,7 +152,7 @@ void Job::excMsg(const std::string& header, glite::wmsutils::exception::Exceptio
 std::string Job::getLogFileMsg ( ) {
 	string msg = "";
 	string *log = wmcUtils->getLogFileName( ) ;
-	if (wmcOpts->getBoolAttribute(Options::DBG) &&  log ){
+	if (log){
                 msg += string ("\t\t*** Log file created ***\n");
 		msg += string("Possible Errors and Debug messages have been printed in the following file:\n");
                 msg += *log + string("\n");
