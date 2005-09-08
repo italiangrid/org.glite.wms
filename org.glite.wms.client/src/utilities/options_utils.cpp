@@ -921,9 +921,7 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			break ;
 		}
 		case(START) : {
-			if (start){
-				value = new string(*start);
-			}
+			value = start;
 			break ;
 		}
 		default : {
