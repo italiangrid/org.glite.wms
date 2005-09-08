@@ -88,6 +88,16 @@ public:
         * @return the installation path string representation
         */
         std::string getPrefix();
+	/**
+	* Gets the extension used for archive files
+	* @return the file extension string
+	*/
+	static std::string getArchiveExtension( ) ;
+	/**
+	* Gets the extension used for compressed files
+	* @return the file extension string
+	*/
+	static std::string getZipExtension( ) ;
         /**
 	* Extrapolate the list of possible WMProxy addresses
 	* @return  a vector of strings containg the list of addresses
@@ -311,6 +321,20 @@ public:
 	*	@return the name of the file
 	*/
 	static std::string  getFileName (const std::string& path) ;
+	/*
+	*	Compresses a file with gzip
+	*	@param filename the pathname of the file to be compressed
+	*	@param the path of the gzip file
+	*/
+	static std::string compressFile(const std::string &filename) ;
+	/*
+	*	Create a tar file
+	*	@param files the list of the files to be archived in the tar file
+	*	@param dir the pathname of the directory where the tar file has to be created
+	*	@param filename the name (without .tar extension) of the tar file to be created
+	*	@return the pathname of the tar file
+	*/
+	static std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> > files, const std::string &dir, const std::string &filename) ;
  	 /*
         *	header for JobId output files
         */
