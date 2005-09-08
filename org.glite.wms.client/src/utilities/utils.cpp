@@ -36,6 +36,10 @@
 #include "sys/stat.h"
 #include "unistd.h"
 #include "fcntl.h"
+// tar & gzip
+#include "libtar.h"
+#include "zlib.h"
+#define local
 
 namespace glite {
 namespace wms{
@@ -72,6 +76,10 @@ const string PROTOCOL_SEPARATOR= "://";
 
 const char* COMPRESS_MODE ="wb6 " ;
 const int OFFSET = 16;
+
+// Archives & Compressed files
+const char* GZ_SUFFIX = ".gz";
+const char* TAR_SUFFIX = ".tar";
 
 /*************************************
 *** Constructor **********************
@@ -733,7 +741,7 @@ Resource checks Methods
 
 void Utils::checkResource(const std::string& resource){
 	// resource must have at least a slash separator
-	if ( resource.find("\\")==string::npos ){
+	if ( resource.find("/")==string::npos ){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkResource", DEFAULT_ERR_CODE,
 			"Wrong Resource Value",
@@ -756,7 +764,13 @@ void Utils::checkResource(const std::string& resource){
 		}
 		// the found wrongs resources
 		if ( ! wmcOpts->getBoolAttribute(Options::NOINT) && ! wrongs.empty() ){
-			if (rights.size()){
+			if (rights.empty()){
+				// Not even a right resource
+				throw WmsClientException(__FILE__,__LINE__,
+					"checkResources", DEFAULT_ERR_CODE,
+					"Wrong Input Value",
+					"all parsed resources in bad format" );
+			} else{
 				ostringstream err ;
 				err << "bad format for the following resource(s) :\n";
 				for ( it = wrongs.begin( ) ; it !=  wrongs.end( ) ; it++ ){
@@ -767,17 +781,12 @@ void Utils::checkResource(const std::string& resource){
 					cout << "bye\n";
 					ending(0);
 				}
-			}else{
-				// Not even a right resource
-				throw WmsClientException(__FILE__,__LINE__,
-					"checkResources", DEFAULT_ERR_CODE,
-					"Wrong Input Value",
-					"all parsed resources in bad format" );
 			}
 		}
 	}
 	return rights;
 }
+
 
 /**********************************
 Time Checks methods
@@ -1425,6 +1434,101 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path, const
         }
         return items;
 }
+
+/*********************************
+* Get-FileExtensions methods
+**********************************/
+std::string Utils::getArchiveExtension( ) { return TAR_SUFFIX; }
+std::string Utils::getZipExtension( ) { return GZ_SUFFIX; }
+ /****************************
+ *  utility methods for TAR and ZIP files
+ ****************************/
+std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> > files, const std::string &dir, const std::string &filename) {
+       vector<pair<string,string> >::iterator it;
+       TAR *t =NULL;
+      tartype_t *type = NULL ;
+     string f  = "";
+       string m = "";
+       string tar = normalizePath(dir) + "/" + filename;
+       int r = tar_open ( &t,  (char*)tar.c_str(),
+               type,
+               O_CREAT|O_WRONLY,
+               S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
+       if ( r != 0 ){
+               throw WmsClientException(__FILE__,__LINE__,
+                       "archiveFiles",  DEFAULT_ERR_CODE,
+                       "File i/o Error", "Unable to create tar file for InputSandbox: " + tar );
+       }
+       for (it = files.begin( ); it != files.end( ) ; it++ ){
+               f = getAbsolutePathFromURI (it->second);
+               r = tar_append_file (t, (char*) (it->first).c_str(), (char*)f.c_str());
+               if (r!=0){
+                       m = "error in adding the file "+ it->first + " to " + tar ;
+                       char* em = strerror(errno);
+                       if (em) { m += string("\n(") + string(em) + ")"; }
+                       throw WmsClientException(__FILE__,__LINE__,
+                               "archiveFiles",  DEFAULT_ERR_CODE,
+                               "File i/o Error",
+                               "Unable to create tar file - " + m);
+               }
+       }
+       tar_append_eof(t);
+       tar_close (t);
+       return tar ;
+
+ }
+ std::string  Utils::compressFile(const std::string &file) {
+         FILE  *in = NULL;
+         gzFile out;
+         int size = 0;
+         int len = 0;
+         int err= 0;
+         string m = "";
+         string gz = file  + GZ_SUFFIX ;
+         in = fopen(file.c_str(), "rb");
+          if (in == NULL) {
+                 char* em = strerror(errno);
+                 if (em) { m = string(em) + ": " + file;}
+                 else { m = "error in opening file for gzip compression: " + file;}
+                 throw WmsClientException(__FILE__,__LINE__,
+                         "compressFile",  DEFAULT_ERR_CODE,
+                         "File i/o Error",  m);
+         }
+         out = gzopen(gz.c_str(), COMPRESS_MODE);
+          if (out == NULL) {
+                 throw WmsClientException(__FILE__,__LINE__,
+                         "compressFile",  DEFAULT_ERR_CODE,
+                         "File i/o Error",
+                         "Unable to create gzip file: " + gz);
+         }
+         size = Utils::getFileSize(file) ;
+         if (size > 0) {
+                 local char* buf = (char*) malloc(size+OFFSET);
+                 for (;;) {
+                         len = (int)fread(buf, 1, sizeof(buf), in);
+                         if (ferror(in)) {
+                                 throw WmsClientException(__FILE__,__LINE__,
+                                         "compressFile",  DEFAULT_ERR_CODE,
+                                         "File i/o Error", "Unable to create gzip file: " + gz);
+                         }
+                         if (len == 0) break;
+                         if (gzwrite(out, buf, (unsigned)len) != len)  {
+                                 throw WmsClientException(__FILE__,__LINE__,
+                                  "compressFile",  DEFAULT_ERR_CODE,
+                                 "File i/o Error", gzerror(out, &err) );
+                         }
+                 }
+                 fclose(in);
+               gzclose(out) ;
+                 unlink(file.c_str());
+
+         } else{
+                 throw WmsClientException(__FILE__,__LINE__,
+                         "compressFile",  DEFAULT_ERR_CODE,
+                         "File i/o Error", "Invalid file size: " + file);
+         }
+         return gz;
+ }
 
 } // glite
 } // wms
