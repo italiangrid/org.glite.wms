@@ -44,10 +44,15 @@ const char* Options::HELP_VERSION = "version  1.0" ;
 /*
 * Protocols for file transferring operations
 */
-const string Options::TRANSFER_FILES_DEF_PROTO = "gsiftp" ;
+
 const string Options::TRANSFER_FILES_CURL_PROTO = "https" ;
+const string Options::TRANSFER_FILES_GUC_PROTO = "gsiftp" ;
+const string Options::TRANSFER_FILES_DEF_PROTO = Options::TRANSFER_FILES_GUC_PROTO ;
 const string Options::DESTURI_ZIP_PROTO = "https" ;
-const char* Options::TRANSFER_FILES_PROTOCOLS[ ] = { "gsiftp","https"};
+const char* Options::TRANSFER_FILES_PROTOCOLS[ ] = {
+	Options::TRANSFER_FILES_CURL_PROTO.c_str(),
+	Options::TRANSFER_FILES_GUC_PROTO.c_str()
+};
 
 /*
 * Verbosity level
