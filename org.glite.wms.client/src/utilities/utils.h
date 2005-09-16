@@ -98,6 +98,13 @@ public:
 	* @return the file extension string
 	*/
 	static std::string getZipExtension( ) ;
+	/**
+	* Extracts from the input string the name of the archive filename according to
+	* the default archive extension
+	* @return the name of the archive file or an empty string if the input name is unvalid
+	*
+	*/
+	static std::string getArchiveFilename (const std::string file);
         /**
 	* Extrapolate the list of possible WMProxy addresses
 	* @return  a vector of strings containg the list of addresses
@@ -204,7 +211,7 @@ public:
 	* @opts type of time option
 	* @return the number of seconds since 1st of January 1970
 	*/
-	static const long checkTime ( const std::string &st, const Options::TimeOpts &opt = Options::TIME_NO_OPT);
+	static const long checkTime ( const std::string &st, int &days,  int &hours, int &minutes, const Options::TimeOpts &opt = Options::TIME_NO_OPT);
 	/*
 	* generate a unique string
         * @return the generated string
@@ -259,9 +266,9 @@ public:
 	/**
 	* Removes a file
 	* @param file the pathname of the file to be removed
-	* @return "true" if the file has been successfully removed; "false" otherwise
+	*@throw WmsClientException if an error occurred during the operation
 	*/
-	static bool Utils::removeFile(const std::string &file) ;
+	static void removeFile(const std::string &file) ;
 	/*
         * reads <nbytes> bytes from a file; if nbytes is set to the default value (=0),
         * the entire text of the file is read
@@ -327,15 +334,13 @@ public:
 	*	@param the path of the gzip file
 	*/
 	static std::string compressFile(const std::string &filename) ;
-	/*
-	*	Create a tar file
-	*	@param files the list of the files to be archived in the tar file
-	*	@param dir the pathname of the directory where the tar file has to be created
-	*	@param filename the name (without .tar extension) of the tar file to be created
-	*	@return the pathname of the tar file
+	/**
+	*	Gets back the path of the URI removing information on the protocol, hostname and port
+	*	@param uri the input URI
+	*	@return the string with the absolute path extracted
 	*/
-	static std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> > files, const std::string &dir, const std::string &filename) ;
- 	 /*
+ 	static std::string getAbsolutePathFromURI (const std::string& uri) ;
+	 /*
         *	header for JobId output files
         */
         static const std::string JOBID_FILE_HEADER ;
@@ -401,13 +406,6 @@ private:
         * @return the result of the conversion
         */
  	static  const char *str2md5Base64(const char *s);
-	/**
-	*	Gets back the path of the URI removing information on the protocol, hostname and port
-	*	@param uri the input URI
-	*	@return the string with the absolute path extracted
-	*/
- 	static std::string getAbsolutePathFromURI (const std::string& uri) ;
-
         // Ad configuration files:
 	glite::wms::common::configuration::WMCConfiguration *wmcConf;
 	// Option files:

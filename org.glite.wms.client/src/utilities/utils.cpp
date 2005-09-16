@@ -36,8 +36,7 @@
 #include "sys/stat.h"
 #include "unistd.h"
 #include "fcntl.h"
-// tar & gzip
-#include "libtar.h"
+//gzip
 #include "zlib.h"
 #define local
 
@@ -648,7 +647,7 @@ void Utils::checkConf(){
 	// Eventually Parse fields
 	wmcAd->parseVo(src,voPath,voName);
 	// Print Info
-	errMsg (WMS_DEBUG, "VirtualOrganisation value:", voName);
+	if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "VirtualOrganisation value :", voName,true);}
 	// check the Installation path
 	checkPrefix( );
 	string cf = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
@@ -873,11 +872,11 @@ const long Utils::getTime(const std::string &st,
 	return  mktime(&ts) ;
 }
 
-const long Utils::checkTime ( const std::string &st, const Options::TimeOpts &opt ){
+const long Utils::checkTime ( const std::string &st, int &days,  int &hours, int &minutes, const Options::TimeOpts &opt){
 	long sec = 0;
         // current time
 	time_t now = time(NULL);
-	//converts the input  time string to the vector to seconds from 1970
+	// converts the input  time string to the vector to seconds from 1970
         switch (opt){
 		case (Options::TIME_VALID):{
 			sec = getTime(st, TIME_SEPARATOR, now, 2);
@@ -919,6 +918,14 @@ const long Utils::checkTime ( const std::string &st, const Options::TimeOpts &op
 			"Wrong Time Value",
 			string("the string is not a valid time expression (" + st + ")") );
 	}
+	hours = (sec-now) / 3600 ;
+	if (hours > 23) {
+		days = hours / 24 ;
+		hours = hours % 24 ;
+	} else {
+		days = 0;
+	}
+	minutes = ((sec-now) % 3600) / 60 ;
  	return sec;
 }
 
@@ -1253,7 +1260,9 @@ const std::string Utils::getAbsolutePath(const std::string &file ){
 	}
 	return path;
 }
-
+/*
+* Gets the size of a file
+*/
 int Utils::getFileSize (const std::string &path) {
 	struct stat file_info;
 	if (isFile(path)) {
@@ -1272,8 +1281,11 @@ int Utils::getFileSize (const std::string &path) {
         }
         return file_info.st_size ;
 }
-bool Utils::removeFile(const std::string &file) {
-	bool result = false;
+
+/*
+* Deletes a file
+*/
+void Utils::removeFile(const std::string &file) {
 	try{
 		fs::path cp (file, fs::system_specific);
 		if ( fs::is_directory(cp))  {
@@ -1282,15 +1294,15 @@ bool Utils::removeFile(const std::string &file) {
 				"File i/o Error", "this path is not a valid file : " + file );
 		}
 		 fs::remove (cp);
-	}catch (fs::filesystem_error &ex){
+	} catch (fs::filesystem_error &ex) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"removeFile",  DEFAULT_ERR_CODE,
 			"File i/o Error", "no such file : " + file );
 	}
-	return result;
 }
+
 /*
-* reads a  file
+* Reads the content of a  file
 */
 std::string* Utils::fromFile (const std::string &path) {
 	ostringstream bfr;
@@ -1308,7 +1320,7 @@ std::string* Utils::fromFile (const std::string &path) {
 }
 
 /*
-* saves message into a  file
+* Saves message into a  file
 */
 int Utils::toFile (const std::string &path, const std::string &msg, const bool &interactive,const bool &append) {
 	int result = -1;
@@ -1327,7 +1339,7 @@ int Utils::toFile (const std::string &path, const std::string &msg, const bool &
         return result;
 }
 /*
-* stores a jobid in a file
+* Stores a jobid in a file
 */
 const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid){
 	string outmsg = "";
@@ -1439,15 +1451,28 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path, const
 * Get-FileExtensions methods
 **********************************/
 std::string Utils::getArchiveExtension( ) { return TAR_SUFFIX; }
+
 std::string Utils::getZipExtension( ) { return GZ_SUFFIX; }
+
+std::string Utils::getArchiveFilename (const std::string file){
+	string tar = "";
+	string ext =getArchiveExtension( ) ;
+	string::size_type pos = file.find(getArchiveExtension( ));
+	if (pos != string::npos){
+		pos += ext.size( );
+		tar = file.substr(0,pos);
+	}
+	return tar ;
+}
  /****************************
  *  utility methods for TAR and ZIP files
  ****************************/
+/*
 std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> > files, const std::string &dir, const std::string &filename) {
        vector<pair<string,string> >::iterator it;
        TAR *t =NULL;
-      tartype_t *type = NULL ;
-     string f  = "";
+     tartype_t *type = NULL ;
+       string f  = "";
        string m = "";
        string tar = normalizePath(dir) + "/" + filename;
        int r = tar_open ( &t,  (char*)tar.c_str(),
@@ -1477,6 +1502,7 @@ std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> >
        return tar ;
 
  }
+ */
  std::string  Utils::compressFile(const std::string &file) {
          FILE  *in = NULL;
          gzFile out;
