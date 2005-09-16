@@ -8,6 +8,8 @@
 
 lib_LTLIBRARIES    = \
 	libglite_wms_ism_ii_purchaser.la \
+        libglite_wms_ism_ii_gris_purchaser.la \
+	libglite_wms_ism_rgma_purchaser.la \
 	libglite_wms_ism_iise_purchaser.la \
 	libglite_wms_ism_cemon_purchaser.la \
 	libglite_wms_ism_cemon_asynch_purchaser.la \
@@ -15,6 +17,12 @@ lib_LTLIBRARIES    = \
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
         ism-ii-purchaser.cpp
+
+libglite_wms_ism_ii_gris_purchaser_la_SOURCES = \
+        ism-ii-gris-purchaser.cpp
+
+libglite_wms_ism_rgma_purchaser_la_SOURCES = \
+        ism-rgma-purchaser.cpp
 
 libglite_wms_ism_iise_purchaser_la_SOURCES = \
         ism-iise-purchaser.cpp
@@ -24,6 +32,12 @@ libglite_wms_ism_cemon_purchaser_la_SOURCES = \
 
 libglite_wms_ism_cemon_asynch_purchaser_la_SOURCES = \
         ism-cemon-asynch-purchaser.cpp
+
+libglite_wms_ism_rgma_purchaser_la_LIBADD = \
+        $(GLITE_LOCATION)/lib/libglite-rgma-cpp-impl.a \
+        $(GLITE_LOCATION)/lib/libglite-rgma-cpp.a \
+        $(GLITE_LOCATION)/lib/librgma-cpp.a \
+        -L$(GLITE_LOCATION)/../repository/xerces-c/2.5/rhel30_gcc32/lib/ -lxerces-c
 
 libglite_wms_ism_cemon_purchaser_la_LIBADD = \
 	$(GLITE_LOCATION)/lib/libglite_ce_monitor_client.a 
