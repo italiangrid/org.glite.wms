@@ -23,7 +23,8 @@ WMPCLIENT_C_FLAGS= -I../ \
 	-I$(stage)/include	\
         -I$(CLASSAD)/include \
 	-I$(BOOST)/include \
-        -I$(GLOBUS)/include/gcc32 
+        -I$(GLOBUS)/include/gcc32 \
+	-I/usr/local/lib
 
 
 all: libservices

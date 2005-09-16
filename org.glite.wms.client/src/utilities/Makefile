@@ -45,7 +45,7 @@ WMPCLIENT_LD_EXE_FLAGS= \
 WMPCLIENT_C_FLAGS= \
 	-I$(BOOST)/include \
 	-I$(CLASSAD)/include \
-	-I$(stage)/include
+	-I$(stage)/include 
 
 WMPCLIENT_FILES= utils.cpp \
 	adutils.cpp \
