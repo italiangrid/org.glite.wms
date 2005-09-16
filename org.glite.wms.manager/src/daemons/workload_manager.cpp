@@ -30,9 +30,11 @@
 #include "glite/wms/common/logger/logstream_ts.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
+#include "glite/wms/ism/purchaser/ism-ii-gris-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-cemon-asynch-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-file-purchaser.h"
+#include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
 
 namespace manager = glite::wms::manager::server;
 namespace configuration = glite::wms::common::configuration;
@@ -46,7 +48,7 @@ namespace {
 std::string program_name;
 bool opt_daemon = false;
 std::string opt_pid_file;
-std::string opt_conf_file("edg_wl.conf");
+std::string opt_conf_file("glite_wms.conf");
 
 void usage(std::ostream& os)
 {
@@ -130,7 +132,7 @@ public:
     while (!manager::received_quit_signal()) {
       m_fn();
       sleep(m_sec);
-    }
+     }
   }
 
 private:
@@ -272,9 +274,15 @@ main(int argc, char* argv[])
   // force the creation of the TaskQueue before entering multithreading
   manager::the_task_queue();
 
+  purchaser::ii_gris::create_t* create_ii_gris_purchaser = 0;
+  purchaser::ii_gris::destroy_t* destroy_ii_gris_purchaser = 0;
+
   purchaser::ii::create_t* create_ii_purchaser = 0;
   purchaser::ii::destroy_t* destroy_ii_purchaser = 0;
-  
+
+  purchaser::rgma::create_t* create_rgma_purchaser = 0;
+  purchaser::rgma::destroy_t* destroy_rgma_purchaser = 0;
+
   purchaser::cemon::create_t* create_cemon_purchaser = 0;
   purchaser::cemon::destroy_t* destroy_cemon_purchaser = 0;
 
@@ -283,9 +291,12 @@ main(int argc, char* argv[])
 
   purchaser::file::create_t* create_file_purchaser = 0;
   purchaser::file::destroy_t* destroy_file_purchaser = 0;
+  purchaser::file::set_purchaser_entry_update_fns_t* set_purchaser_entry_update_fns = 0;
 
   // boost::shared_ptr<void> ism_purchasers_handle;
   boost::shared_ptr<void> ism_ii_purchaser_handle;
+  boost::shared_ptr<void> ism_ii_gris_purchaser_handle;
+  boost::shared_ptr<void> ism_rgma_purchaser_handle;
   boost::shared_ptr<void> ism_cemon_purchaser_handle;
   boost::shared_ptr<void> ism_cemon_asynch_purchaser_handle;
   boost::shared_ptr<void> ism_file_purchaser_handle;
@@ -295,117 +306,221 @@ main(int argc, char* argv[])
   boost::shared_ptr<purchaser::ism_purchaser> ismp3;
   
   boost::thread_group purchaser_thread_group;
+  
   // Try to execute ISM purchaser thread
   if (std::string(brlib).find("_ism") != std::string::npos) {
-  
-    char* prlib1 = "libglite_wms_ism_ii_purchaser.so";
-    void* prh1 = dlopen(prlib1,RTLD_NOW | RTLD_GLOBAL);  // GLOBAL to make the II update 
-                                                         // methods available to the file purchaser);
-    if (!prh1) {
+    
+    bool enable_purchasing_from_rgma  = wm_config->enable_purchasing_from_rgma();
+    bool disable_purchasing_from_gris = wm_config->disable_purchasing_from_gris();
+       
+    const char* prlib_ii      = "libglite_wms_ism_ii_purchaser.so"; 
+    const char* prlib_ii_gris = "libglite_wms_ism_ii_gris_purchaser.so";
+    
+    void* prh_ii      = dlopen(prlib_ii,RTLD_NOW);
+    void* prh_ii_gris = dlopen(prlib_ii_gris,RTLD_NOW);
+    
+    if (!prh_ii || !prh_ii_gris) {
+      
       get_err_stream() << program_name << ": "
-                       << "cannot load ism purchaser lib (" << prlib1 << "\n";
+                       << "cannot load ism ii purchasers lib \n";
+      std::string dlerr(dlerror());
+      get_err_stream() << program_name << ": "
+                       << "dlerror returns: " << dlerr << "\n";
+      return EXIT_FAILURE;
+    }
+    const char* prlib_rgma = "libglite_wms_ism_rgma_purchaser.so";
+    
+    void* prh_rgma = 0;
+    if (enable_purchasing_from_rgma && 
+        !(prh_rgma=dlopen(prlib_rgma,RTLD_NOW))) {
+      get_err_stream() << program_name << ": "
+                       << "cannot load ism rgma purchasers lib \n";
+      std::string dlerr(dlerror());
+      get_err_stream() << program_name << ": "
+                       << "dlerror returns: " << dlerr << "\n";
+      return EXIT_FAILURE;
+    }
+
+    if (!enable_purchasing_from_rgma) {
+      if (disable_purchasing_from_gris) {
+        ism_ii_purchaser_handle.reset(prh_ii, dlclose);
+   
+        create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh_ii, "create_ii_purchaser");
+        destroy_ii_purchaser = (purchaser::ii::destroy_t*) dlsym(prh_ii, "destroy_ii_purchaser");
+
+        if ((!create_ii_purchaser) || (!destroy_ii_purchaser)) {
+            get_err_stream() << "Cannot load " << prlib_ii
+                             << " symbols: " << dlerror() << "\n";
+            return EXIT_FAILURE;
+        }
+      }
+      else {
+        ism_ii_gris_purchaser_handle.reset(prh_ii_gris, dlclose);
+   
+        create_ii_gris_purchaser  = (purchaser::ii_gris::create_t*)  dlsym(prh_ii_gris, "create_ii_gris_purchaser");
+        destroy_ii_gris_purchaser = (purchaser::ii_gris::destroy_t*) dlsym(prh_ii_gris, "destroy_ii_gris_purchaser");
+
+        if ((!create_ii_gris_purchaser) || (!destroy_ii_gris_purchaser)) {
+            get_err_stream() << "Cannot load " << prlib_ii_gris
+                             << " symbols: " << dlerror() << "\n";
+            return EXIT_FAILURE;
+        }
+      }
+    }
+    else {
+      ism_rgma_purchaser_handle.reset(prh_rgma, dlclose);
+      create_rgma_purchaser  = (purchaser::rgma::create_t*)  dlsym(prh_rgma, "create_rgma_purchaser");
+      destroy_rgma_purchaser = (purchaser::rgma::destroy_t*) dlsym(prh_rgma, "destroy_rgma_purchaser");
+
+      if ((!create_rgma_purchaser) || (!destroy_rgma_purchaser)) {
+        get_err_stream() << "Cannot load " << prlib_rgma
+                         << " symbols: " << dlerror() << "\n";
+        return EXIT_FAILURE;
+      }
+    }
+    char* prlib_cemon = "libglite_wms_ism_cemon_purchaser.so";
+    void* prh_cemon = dlopen(prlib_cemon,RTLD_NOW);
+    if (!prh_cemon) {
+      get_err_stream() << program_name << ": "
+                       << "cannot load ism purchaser lib (" << prlib_cemon << "\n";
       std::string dlerr(dlerror());
       get_err_stream() << program_name << ": "
                        << "dlerror returns: " << dlerr << "\n";
       return EXIT_FAILURE;
     }
     
-    ism_ii_purchaser_handle.reset(prh1, dlclose);
+    ism_cemon_purchaser_handle.reset(prh_cemon, dlclose);
 
-    create_ii_purchaser  = (purchaser::ii::create_t*)  dlsym(prh1, "create_ii_purchaser");
-    destroy_ii_purchaser = (purchaser::ii::destroy_t*) dlsym(prh1, "destroy_ii_purchaser");
-
-    if ((!create_ii_purchaser) || (!destroy_ii_purchaser)) {
-      get_err_stream() << "Cannot load " << prlib1
-                       << " symbols: " << dlerror() << "\n";
+    char* prlib_cemon_asynch = "libglite_wms_ism_cemon_asynch_purchaser.so";
+    void* prh_cemon_asynch = dlopen(prlib_cemon_asynch,RTLD_NOW);
+    if (!prh_cemon_asynch) {
+      get_err_stream() << program_name << ": "
+                       << "cannot load ism purchaser lib (" << prlib_cemon_asynch << "\n";
+      std::string dlerr(dlerror());
+      get_err_stream() << program_name << ": "
+                       << "dlerror returns: " << dlerr << "\n";
       return EXIT_FAILURE;
     }
-
-    // Try to enable purchasing from dimp file
+    
+    // Try to enable purchasing from dump file
     // NOTE: This depends on the successful load of the II purchaser above
     if (wm_config->enable_ism_dump()) {
     
-      char* prlib = "libglite_wms_ism_file_purchaser.so";
-      void* prh = dlopen(prlib,RTLD_NOW);
-      if (!prh) {
+      char* prlib_file = "libglite_wms_ism_file_purchaser.so";
+      void* prh_file = dlopen(prlib_file,RTLD_NOW);
+      if (!prh_file) {
         get_err_stream() << program_name << ": "
-                         << "cannot load ism purchaser lib (" << prlib << "\n";
+                         << "cannot load ism purchaser lib (" << prlib_file << "\n";
         std::string dlerr(dlerror());
         get_err_stream() << program_name << ": "
                          << "dlerror returns: " << dlerr << "\n";
         return EXIT_FAILURE;
       }
-    
-      ism_file_purchaser_handle.reset(prh, dlclose);
 
-      create_file_purchaser  = (purchaser::file::create_t*)  dlsym(prh, "create_file_purchaser");
-      destroy_file_purchaser = (purchaser::file::destroy_t*) dlsym(prh, "destroy_file_purchaser");
+      ism_file_purchaser_handle.reset(prh_file, dlclose);
 
-      if ((!create_file_purchaser) || (!destroy_file_purchaser)) {
-        get_err_stream() << "Cannot load " << prlib
-                         << " symbols: " << dlerror() << "\n";
+      create_file_purchaser  = (purchaser::file::create_t*)  dlsym(prh_file, "create_file_purchaser");
+      destroy_file_purchaser = (purchaser::file::destroy_t*) dlsym(prh_file, "destroy_file_purchaser");
+      set_purchaser_entry_update_fns = (purchaser::file::set_purchaser_entry_update_fns_t*) dlsym(prh_file, "set_purchaser_entry_update_fns");
+
+      if ((!create_file_purchaser) || (!destroy_file_purchaser) ||
+           (!set_purchaser_entry_update_fns)) {
+          get_err_stream() << "Cannot load " << prlib_file
+			   << " symbols: " << dlerror() << "\n";
       } else {
+
+        // Set the update entry function factory functions
+        purchaser::ii::create_entry_update_fn_t*        create_ii_entry_update_fn      = 0;
+        purchaser::ii_gris::create_entry_update_fn_t*   create_ii_gris_entry_update_fn = 0;
+        purchaser::cemon::create_entry_update_fn_t*     create_cemon_entry_update_fn   = 0;
+        purchaser::rgma::create_entry_update_fn_t* create_rgma_entry_update_fn    = 0;
+
+        create_ii_entry_update_fn = (purchaser::ii::create_entry_update_fn_t*) 
+          dlsym(prh_ii,"create_ii_entry_update_fn");
+        create_ii_gris_entry_update_fn = (purchaser::ii_gris::create_entry_update_fn_t*) 
+          dlsym(prh_ii_gris,"create_ii_gris_entry_update_fn");
+        create_cemon_entry_update_fn = (purchaser::cemon::create_entry_update_fn_t*)
+          dlsym(prh_cemon,"create_cemon_entry_update_fn");
+        
+        if(enable_purchasing_from_rgma) 
+          create_rgma_entry_update_fn = (purchaser::rgma::create_entry_update_fn_t*)
+            dlsym(prh_rgma,"create_rgma_entry_update_fn");
+
+        if ((!create_ii_entry_update_fn) || (!create_ii_gris_entry_update_fn) ||
+          (!create_cemon_entry_update_fn) ) {
+          get_err_stream() << "Cannot load ism entry update function symbols: " << dlerror() << "\n";
+          return EXIT_FAILURE;
+        }
+
+        set_purchaser_entry_update_fns(
+          create_ii_entry_update_fn,
+          create_ii_gris_entry_update_fn,
+          create_cemon_entry_update_fn,
+          create_rgma_entry_update_fn
+        );
+
         // Try to load ISM status from dump file
         ismp1.reset(create_file_purchaser(wm_config->ism_dump()),
-                    destroy_file_purchaser);
+					  destroy_file_purchaser);
         ismp1->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
         try {
           ismp1->do_purchase();
         }
         catch(...) { // FIXME: Catch a specific exception
           get_err_stream() << "Cannot load ISM status from "
-                           << wm_config->ism_dump() << "\n";
+			   << wm_config->ism_dump() << "\n";
         }
       }
     }
 
-    char* prlib2 = "libglite_wms_ism_cemon_purchaser.so";
-    void* prh2 = dlopen(prlib2,RTLD_NOW);
-    if (!prh2) {
-      get_err_stream() << program_name << ": "
-                       << "cannot load ism purchaser lib (" << prlib2 << "\n";
-      std::string dlerr(dlerror());
-      get_err_stream() << program_name << ": "
-                       << "dlerror returns: " << dlerr << "\n";
-      return EXIT_FAILURE;
-    }
-    
-    ism_cemon_purchaser_handle.reset(prh2, dlclose);
+    ism_cemon_asynch_purchaser_handle.reset(prh_cemon_asynch, dlclose);
 
-    char* prlib3 = "libglite_wms_ism_cemon_asynch_purchaser.so";
-    void* prh3 = dlopen(prlib3,RTLD_NOW);
-    if (!prh3) {
-      get_err_stream() << program_name << ": "
-                       << "cannot load ism purchaser lib (" << prlib3 << "\n";
-      std::string dlerr(dlerror());
-      get_err_stream() << program_name << ": "
-                       << "dlerror returns: " << dlerr << "\n";
-      return EXIT_FAILURE;
-    }
+    create_cemon_purchaser  = (purchaser::cemon::create_t*)  dlsym(prh_cemon, "create_cemon_purchaser");
+    destroy_cemon_purchaser = (purchaser::cemon::destroy_t*) dlsym(prh_cemon, "destroy_cemon_purchaser");
 
-    ism_cemon_asynch_purchaser_handle.reset(prh3, dlclose);
-
-    create_cemon_purchaser  = (purchaser::cemon::create_t*)  dlsym(prh2, "create_cemon_purchaser");
-    destroy_cemon_purchaser = (purchaser::cemon::destroy_t*) dlsym(prh2, "destroy_cemon_purchaser");
-
-    create_cemon_asynch_purchaser  = (purchaser::cemon_asynch::create_t*)  dlsym(prh3, "create_cemon_asynch_purchaser");
-    destroy_cemon_asynch_purchaser = (purchaser::cemon_asynch::destroy_t*) dlsym(prh3, "destroy_cemon_asynch_purchaser");
+    create_cemon_asynch_purchaser  = (purchaser::cemon_asynch::create_t*)  dlsym(prh_cemon_asynch, "create_cemon_asynch_purchaser");
+    destroy_cemon_asynch_purchaser = (purchaser::cemon_asynch::destroy_t*) dlsym(prh_cemon_asynch, "destroy_cemon_asynch_purchaser");
 
     if ((!create_cemon_purchaser) || (!destroy_cemon_purchaser) ||
         (!create_cemon_asynch_purchaser) || (!destroy_cemon_asynch_purchaser)) {
-      get_err_stream() << "Cannot load " << prlib1
-                       << " symbols: " << dlerror() << "\n";
+      get_err_stream() << "Cannot load " << prlib_cemon << "/" << prlib_cemon_asynch 
+  		       << " symbols: " << dlerror() << "\n";
       return EXIT_FAILURE;
     }
-         
-    ismp1.reset(
-      create_ii_purchaser(
-        ns_config->ii_contact(), ns_config->ii_port(),
-        ns_config->ii_dn(),ns_config->ii_timeout(),
-        purchaser::loop, 240, manager::received_quit_signal),
-      destroy_ii_purchaser
-    );
+    if (enable_purchasing_from_rgma) {
+      ismp1.reset(
+        create_rgma_purchaser(
+          wm_config->rgma_query_timeout(),
+          purchaser::loop,
+	  wm_config->rgma_consumer_ttl(),
+	  wm_config->rgma_consumer_life_cycle(), 
+          wm_config->ism_rgma_purchasing_rate(), 
+          manager::received_quit_signal),
+	  destroy_rgma_purchaser
+      );
+    }
+    else
+    if (disable_purchasing_from_gris) {     
+      ismp1.reset(
+        create_ii_purchaser(
+          ns_config->ii_contact(), ns_config->ii_port(),
+          ns_config->ii_dn(),ns_config->ii_timeout(),
+          purchaser::loop, wm_config->ism_ii_purchasing_rate(), manager::received_quit_signal),
+	  destroy_ii_purchaser
+      );
+    }
+    else {
+      ismp1.reset(
+        create_ii_gris_purchaser(
+          ns_config->ii_contact(), ns_config->ii_port(),
+          ns_config->ii_dn(),ns_config->ii_timeout(),
+          purchaser::loop, wm_config->ism_ii_purchasing_rate(), manager::received_quit_signal),
+          destroy_ii_gris_purchaser
+      );
+    }
+
     ismp1->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
+    
     // FIXME: It is not so nice but works...
     purchaser_thread_group.create_thread(call_execute(ismp1));
     
@@ -417,18 +532,18 @@ main(int argc, char* argv[])
       std::string certificate_file;
       certificate_file.assign(common_config->host_proxy_file());
       
-        // Try to get the certificate path from the evironment variable GLITE_CERT_DIR if
-        // possible, otherwise defaults to /etc/grid-security/certificates.
+      // Try to get the certificate path from the evironment variable GLITE_CERT_DIR if
+      // possible, otherwise defaults to /etc/grid-security/certificates.
       char* certificate_path = getenv("GLITE_CERT_DIR");
       if (!certificate_path) {
         certificate_path = "/etc/grid-security/certificates";
       } 
       ismp2.reset(
         create_cemon_purchaser(certificate_file, certificate_path,
-                               cemonURLs,"CE_MONITOR:ISM",
-                               120, purchaser::loop, 120,
-                               manager::received_quit_signal),
-        destroy_cemon_purchaser
+                               cemonURLs,"CE_MONITOR",
+ 			       120, purchaser::loop, wm_config->ism_cemon_purchasing_rate(),
+			       manager::received_quit_signal),
+         destroy_cemon_purchaser
       );
       ismp2->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
       // FIXME: It is not so nice but works...
@@ -439,22 +554,26 @@ main(int argc, char* argv[])
     if (cemon_asynch_port>0) {
 
       ismp3.reset(
-        create_cemon_asynch_purchaser("CE_MONITOR:ISM", cemon_asynch_port,
-                                      purchaser::loop, 30, 
-                                      manager::received_quit_signal),
+        create_cemon_asynch_purchaser("CE_MONITOR", cemon_asynch_port,
+                                      purchaser::loop, wm_config->ism_cemon_asynch_purchasing_rate(), 
+ 				      manager::received_quit_signal),
         destroy_cemon_asynch_purchaser
       );
       ismp3->skip_predicate(purchaser::is_in_black_list(wm_config->ism_black_list()));
       purchaser_thread_group.create_thread(call_execute(ismp3));
     }
-
-    ism::call_update_ism_entries cuie;  
+    
+//    purchaser_thread_group.join_all();
+    
+    ism::call_update_ism_entries cuie; 	
     boost::thread ism_update(run_in_loop(cuie,wm_config->ism_update_rate()));
+//    ism_update.join();
 
     ism::call_dump_ism_entries cdie;
     boost::thread ism_dump(run_in_loop(cdie,wm_config->ism_dump_rate()));
+//    ism_dump.join();
   }
-
+  
   manager::Dispatcher dispatcher;
   manager::RequestHandler request_handler;
 
