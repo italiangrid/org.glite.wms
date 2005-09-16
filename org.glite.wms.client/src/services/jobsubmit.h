@@ -11,7 +11,6 @@
 #include "listener.h"
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
-
 // Ad's
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/ExpDagAd.h"
@@ -22,7 +21,9 @@ namespace wms{
 namespace client {
 namespace services {
 
-
+/**
+* Type of Jobs
+*/
 enum wmsJobType {
 	WMS_JOB, //normal
         WMS_DAG,
@@ -30,10 +31,7 @@ enum wmsJobType {
         WMS_PARAMETRIC
 };
 
-
-
 class JobSubmit : public Job {
-
 	public :
 		/*
 		*	Default constructor
@@ -44,7 +42,7 @@ class JobSubmit : public Job {
 		*/
 		~JobSubmit ( );
 		/*
-		*	Reads the command-line user arguments and sets all the class attributes
+		*	Processes the command-line user arguments
 		*	@param argc number of the input arguments
 		*	@param argv string of the input arguments
 		*/
@@ -53,34 +51,70 @@ class JobSubmit : public Job {
 		*	Performs the operations to submit the job(s)
 		*/
 		void submission ( ) ;
-	private
-                :/*
-                 *	Contacts the endpoint configurated in the context
-                 *	in order to retrieve the http(s) destionationURI of the job
-                 *	identified by the jobid
-                 *	@param jobid the identifier of the job
+	private:
+		/**
+                 *	Contacts the server in order to retrieve the list of all destionationURI's of the job (with the available protocols).
+		 *  	In case of compound jobs (DAG, collections etc..), it also retrieves the URIs of the nodes.
+		 * 	The request is done using the JobId. Compound jobs are identified by the parent's JobId
+                 *	@param jobid the string with the JobId
 		 *	@param zipURI this parameter returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
-                 *	@return a pointer to the string with the http(s) destinationURI (or NULL in case of error)
+                 *	@return a pointer to the string with the destinationURI having the protocol that will be used for any file transferring
+		 *	(or NULL in case the destinationURI with the chosen protocol is not available )
                 */
                 std::string* getInputSBDestURI(const std::string &jobid,const std::string &child, std::string &zipURI) ;
-
-                /*
-                *	Checks if the UserFreeQuota is set for the user on the EndPoint; if it is, checks that
-                *	the size of the InputSB file to be transferred doesn't exceed this quota
-                *	@param files the set of files to be transferred
-                *	@param limit this parameter returns the value of the user free quota
-                *	@return true if the user freequota is enough or no free quota has been set on the server (false, otherwise)
-                */
-                //bool checkFreeQuota ( std::vector<std::pair<std::string,std::string> > files, long &limit ) ;
-void jobISBFiles(vector<std::string> &paths);
-void collectionISBFiles(vector<std::string> &paths);
-void dagISBFiles(vector<std::string> &paths, const bool &children=true);
-int getInputSandboxSize(const wmsJobType &jobtype);
-void checkInputSandboxSize (const wmsJobType &jobtype) ;
-std::string JobSubmit::getDagISBURI (const std::string &node="");
+		/**
+		* Retrieves from the user all the local files of the job input sandbox that have been referenced in the JDL describing
+		* a normal job.
+		* @param paths returns the list of local files found in the JDL InputSandbox
+		*/
+		void jobISBFiles(vector<std::string> &paths);
+		/**
+		* Retrieves from the user all the local files of the job input sandbox that have been referenced in the JDL describing
+		* a collection.
+		* @param paths returns the list of local files of the job input sandbox that have been referenced in the JDL
+		*/
+		void collectionISBFiles(vector<std::string> &paths);
+		/**
+		* Retrieves from the user all the local files of the job input sandbox that have been referenced in the JDL.
+		* This method is executed when jobs are represented as DAG
+		* @param paths returns the list of local files of the job input sandbox that have been referenced in the JDL
+		*/
+		void dagISBFiles(vector<std::string> &paths, const bool &children=true);
+		/**
+		* Retrieves the list of local files that have been referenced in the JDL calling one of the xxxxxISBFiles( ) methods
+		* (according to the type of the job) and gets back the total size (in bytes) of these files.
+		* @param jobtype the type of job described in the JDL (according to the tags defined in the wmsJobType enum type)
+		*/
+		int getInputSandboxSize(const wmsJobType &jobtype);
+		/**
+		* Checks if the total size of the local files, that have been referenced in the JDL,  is compatible with the limitation that
+		* can be set on the server :
+		* 	- the first limitation is the available User Free Quota (the remaining free part of available user disk quota)
+		* 	- the second one is the max InputSanbox size
+		* The max InputSanbox size is checked only if theUser Free Quota has been set. The submission operations go on
+		* if eitheir the total size of the file doesn't exceed the fixed limitation or no limitation has been set on the server.
+		* This method takes care of contacting the server to retrieve the information on these limitations.
+		* (according to the type of the job) and gets back the total size (in bytes) of these files.
+		* @param jobtype the type of job described in the JDL (according to the tags defined in the wmsJobType enum type)
+		*/
+		void checkInputSandboxSize (const wmsJobType &jobtype) ;
+		/**
+		* Returns a string with the InputSandbox URI information eventually set in JDL by user for
+		* one of the nodes in a DAG. Empty string is returned if no InputSandbox URI has been referenced in the JDL for the specified node.
+		* Children nodes is indicated by its name specified in the input string parameter. Providing no input parameter, the
+		* method looks for the InputSandbox URI of the parent node
+		* @param the string with the name of the child node (default value is "empty string"= parent node)
+		* @return the string representing the URI (empty string if no URI is defined for the specified node)
+		*/
+		std::string JobSubmit::getDagISBURI (const std::string &node="");
 		/*
-                * Performs either registration or submission of the job
-		*@param submit perform submission (true) or registration (false)
+                * Performs either registration or submission.
+		* The WMProxy submission service, that performs both registration and start of the job, is invoked
+		* if no local files are referenced in the JDL InputSandbox. If there are files that needed
+		* to be transferred to the server, only the jobRegistration is performed.
+		* After the file transferring, the jobStarter method will be called.
+		* @param submit perform submission (true) or registration (false)
+		* @return a string contained the identifier with which the job has been registered
                 */
 		std::string jobRegOrSub(bool submit);
 
@@ -89,30 +123,26 @@ std::string JobSubmit::getDagISBURI (const std::string &node="");
 		* @param jobid the identifier of the job to be started
 		*/
 		void jobStarter(const std::string &jobid);
-
-
-
 		/*
-                *	Reads the list of input pathnames for the job ( identified by the input jobid) and matches them with the local files, resolving evantually wildcards,
+                *	Reads the list of input pathnames  and matches them with the local files, resolving evantually wildcards,
                 *	 and the remote destinationURI's; gets back a list of pair: local file, remote destinationURI's where to transfer the local file.
-                *	@param jobid the identifier of the job
+		*  	For compound jobs providing the JobId of a node ("child" input parameter), the InputSandbox of this node in the JDL is processed (if it is specified).
+                *	@param jobid a string with the JobId (the parent's jobid in case of compound jobs)
+		*	@param child a string with the JobId of the child node (default value is "empty string")
                 *	@param paths input pathnames to be checked
                 *	@param to_bcopied at the end of the execution it returns a vector containing the resulting list of pairs (it is empty if no file has to be transferred)
 		*	@return the pointer to the destination URI string to be used for the file transferring
                 */
-                std::string* toBCopiedFileList(const std::string &jobid,const std::string &child,const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied);
+                std::string* toBCopiedFileList(const std::string &jobid, const std::string &child, const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied);
 		/*
-		* Archives a group of files into a tar file and creates and compresses the archive.
-		* These files represent the InputSandbox of the job to be copied to the WMProxy server.
-		* They are archived creating a filesystem tree based on the destinationURI path of the job provided as input.
+		* Collects a group of files into one or more tar files which are gzip compressed.
+		* The number of archives depends on the size limit of tar archives.
 		* @param to_bcopied the list of files to be archived that will be copied to the WMProxy server
 		* @param destURI the destinationURI of the job where the gzip file has to be transferred
-		*
 		 */
-
-void createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied, const std::string &destURI) ;
+		void createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied, const std::string &destURI) ;
 		                /*
-		* 	Performs the transferring a set of local files to one(more) remote machine(s) by gsiftp
+		* 	Performs the transferring a set of local files to one(more) remote machine(s) by globus-url-copy (gsiftp protocol)
  		*	@param paths list of files to be transferred (each pair is <source,destination>)
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
