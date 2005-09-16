@@ -236,6 +236,10 @@ class Options
 		*/
 		static const std::string TRANSFER_FILES_CURL_PROTO;
 		/*
+		* Default protocol for file transferring operations by globus-url-copy
+		*/
+		static const std::string TRANSFER_FILES_GUC_PROTO;
+		/*
 		* LIst of protocol allowed for file transferring operations
 		*/
 		static const char* TRANSFER_FILES_PROTOCOLS[ ];
