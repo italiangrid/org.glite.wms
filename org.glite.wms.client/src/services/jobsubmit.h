@@ -71,7 +71,13 @@ class JobSubmit : public Job {
                 *	@param limit this parameter returns the value of the user free quota
                 *	@return true if the user freequota is enough or no free quota has been set on the server (false, otherwise)
                 */
-                bool checkFreeQuota ( std::vector<std::pair<std::string,std::string> > files, long &limit ) ;
+                //bool checkFreeQuota ( std::vector<std::pair<std::string,std::string> > files, long &limit ) ;
+void jobISBFiles(vector<std::string> &paths);
+void collectionISBFiles(vector<std::string> &paths);
+void dagISBFiles(vector<std::string> &paths, const bool &children=true);
+int getInputSandboxSize(const wmsJobType &jobtype);
+void checkInputSandboxSize (const wmsJobType &jobtype) ;
+std::string JobSubmit::getDagISBURI (const std::string &node="");
 		/*
                 * Performs either registration or submission of the job
 		*@param submit perform submission (true) or registration (false)
@@ -84,20 +90,7 @@ class JobSubmit : public Job {
 		*/
 		void jobStarter(const std::string &jobid);
 
-                /*
-		* 	Performs the transferring a set of local files to one(more) remote machine(s) by gsiftp
- 		*	@param paths list of files to be transferred (each pair is <source,destination>)
-                *	@throw WmsClientException if any error occurs during the operations
-                *	(the local file doesn't exists, defective credential, errors on remote machine)
-		*/
-		void gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > &paths);
-                /*
-                * 	Performs the transferring a set of local files to one(more) remote machine(s) by curl (https protocol)
-                *	@param paths list of files to be transferred (each pair is <source,destination>)
-                *	@throw WmsClientException if any error occurs during the operations
-                *	(the local file doesn't exists, defective credential, errors on remote machine)
-                */
-                void curlTransfer (std::vector<std::pair<std::string,std::string> > paths);
+
 
 		/*
                 *	Reads the list of input pathnames for the job ( identified by the input jobid) and matches them with the local files, resolving evantually wildcards,
@@ -116,7 +109,22 @@ class JobSubmit : public Job {
 		* @param destURI the destinationURI of the job where the gzip file has to be transferred
 		*
 		 */
-		std::string JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied, const std::string &destURI);
+
+void createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied, const std::string &destURI) ;
+		                /*
+		* 	Performs the transferring a set of local files to one(more) remote machine(s) by gsiftp
+ 		*	@param paths list of files to be transferred (each pair is <source,destination>)
+                *	@throw WmsClientException if any error occurs during the operations
+                *	(the local file doesn't exists, defective credential, errors on remote machine)
+		*/
+		void gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > &paths);
+                /*
+                * 	Performs the transferring a set of local files to one(more) remote machine(s) by curl (https protocol)
+                *	@param paths list of files to be transferred (each pair is <source,destination>)
+                *	@throw WmsClientException if any error occurs during the operations
+                *	(the local file doesn't exists, defective credential, errors on remote machine)
+                */
+                void curlTransfer (std::vector<std::pair<std::string,std::string> > paths);
 		/*
 		*	Gets the list of the InputSandbox files to be transferred to the DestinationURI's
 		*	@param paths the list of files that still need to be transferred
@@ -124,36 +132,53 @@ class JobSubmit : public Job {
 		*	@return  the message with the list of the files in the input vector 'paths'
 		*/
 		std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string& jobid) ;
-                /*
-                *	looks for the node name in the list (nodename; vector of list of files) and returns the associated list of files
-                *	@param node the node index (the name of the node to be looked for in the list)
-                *	@param list at the end of the execution it returns a vector (index=nodename; vector of files); the vector of files contains a list of pathnames
-                *	@return the list of files of the input node
-                */
-                std::vector<std::string> getNodeFileList (const std::string &node, std::vector< std::pair<std::string ,std::vector<std::string > > > &list);
-                /*
-                * 	reads the JobRegister results for a normal job and performs the transferring of the
-                *  	local InputSandbox files (called by the main method: submission)
-                */
+		/**
+		* Uploads the local files in the InputSandbox to the WMProxy server. If file compression is allowed, all files are collected
+		* in one or more tar file archives which are gzip compressed. The number of archives depends on the size limit of
+		* tar archives. If compression is not allowed, each file is separately uploaded in succession.
+		* The transferring is performed using either the defined default protocol (Options::TRANSFER_FILES_DEF_PROTO)
+		* or the protocol chosen by the --proto option.
+		* On the base of this choice, the specific "xxxxxTransfer" function is called.
+		* @paths a vector containing the list of local files and for each file the relative destinationURI information
+		* (to be used in case of single file transferring or as relative path in the creation of the tar archive)
+		* @destURI a string with the destinationURI where to transfer the tar archives
+		*/
+		 void transferFiles(std::vector<std::pair<std::string,std::string> > &paths, const std::string &destURI, const std::string &jobid);
+		/**
+		*  Reads the results of the registration operation for a job represented as a DAG  from the JobIdApi structure.
+		* This method is only executed if the JDL InputSandbox contains local files that need
+		* to be transferred to the WMProxy server.
+		* The transferring of the files is performed if this operation has been selected.
+		* In case of  it has not been requested (and the operation ends with the only registration),
+		* an info message with the list these file is provided.
+		*/
                 std::string normalJob();
-                /*
-                * 	reads the JobRegister results for a DAG  job and performs the transferring of the
-                *  	local InputSandbox files (called by the main method: submission)
-                */
+		/**
+		*  Reads the results of the registration operation for a job represented as a DAG  from the JobIdApi structure.
+		* This method is only executed if the JDL InputSandbox contains local files that need
+		* to be transferred to the WMProxy server.
+		* The transferring of the files is performed if this operation has been selected.
+		* In case of  it has not been requested (and the operation ends with the only registration),
+		* an info message with the list these file is provided.
+		*/
                 std::string dagJob( );
-                /*
-                * 	reads the JobRegister results for a collection of jobs  and performs the transferring of the
-                *  	local InputSandbox files (called by the main method: submission)
-                */
+		/**
+		*  Reads the results of the registration operation for a collection from the JobIdApi structure.
+		* This method is only executed if the JDL InputSandbox contains local files that need
+		* to be transferred to the WMProxy server.
+		* The transferring of the files is performed if this operation has been selected.
+		* In case of  it has not been requested (and the operation ends with the only registration),
+		* an info message with the list these file is provided.
+		*/
                 std::string collectionJob();
 		/**
-                * reads and checks the JDL file of which pathname is  specified in the jdlFile attribute of this class
-                *@param jobtype the code of the JobType (see wmsJobType enum)
+                * Checks the user JDL
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
+		*@param jobtype returns the code of the JobType (see wmsJobType enum )
                 */
                 void JobSubmit::checkAd(bool &filestoBtransferred, wmsJobType &jobtype);
 		/**
-                *	string input arguments
+                *	String input arguments
                 */
 		std::string* chkptOpt ;
 		std::string* collectOpt;
@@ -166,19 +191,21 @@ class JobSubmit : public Job {
 		std::string* validOpt ;
 		std::string* startOpt ;
 		/**
-                *	boolean input arguments
+                *	Boolean input arguments
                 */
 		bool nomsgOpt ;
 		bool nolistenOpt ;
-
                 bool registerOnly;
 		bool startJob;
-		std::string transferMsg;
+		/**
+		* Final Warning Message
+		*/
+		std::string infoMsg;
 		/**
 		* Time attributes
 		*/
 		long expireTime ;
-                /*
+                /**
                 * JobId's
                 */
                 glite::wms::wmproxyapi::JobIdApi jobIds ;
@@ -200,10 +227,15 @@ class JobSubmit : public Job {
 		*	string of the user JDL
 		*/
 		std::string *jdlString ;
+
+int isbSize ;
+std::string isbURI;
+std::vector< std::pair<std::string ,std::string > > dagISBURIs;
+
 		/**
 		* The name of the ISB tar/zip files
 		*/
-		std::string* tarFileName ;
+std::vector<std::string> gzFiles;
 		/**
 		*
 		*/
