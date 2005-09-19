@@ -11,6 +11,7 @@ namespace manager {
 namespace server {
 
 typedef boost::shared_ptr<Request> RequestPtr;
+typedef boost::shared_ptr<Request const> RequestConstPtr;
 
 // should be JobId, but JobId is not safe
 typedef std::map<std::string, RequestPtr> TaskQueue;

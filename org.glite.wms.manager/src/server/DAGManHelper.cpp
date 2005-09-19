@@ -565,7 +565,8 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
     dagman_log_rotate = 0;
   }
   std::ostringstream environment;
-  environment << "_CONDOR_DAGMAN_LOG=" << paths.debug_log().native_file_string()
+  environment << "_CONDOR_DAGMAN_LOG="
+              << paths.debug_log().native_file_string()
               << ";_CONDOR_MAX_DAGMAN_LOG=" << dagman_log_rotate;
   result.InsertAttr("environment", environment.str());
 }

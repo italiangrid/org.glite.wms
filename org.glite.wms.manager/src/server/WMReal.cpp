@@ -8,6 +8,7 @@
 #include "WMReal.h"
 #include <algorithm>
 #include <cctype>
+#include <boost/bind.hpp>
 #include "WMFactory.h"
 #include "lb_utils.h"
 #include "glite/wms/common/logger/logger_utils.h"
@@ -85,15 +86,25 @@ void Cancel(glite::wmsutils::jobid::JobId const& id)
 }
 
 void log_match(
-  glite::wmsutils::jobid::JobId const& job_id,
   common::ContextPtr const& context,
-  char const* ce_id
+  std::string const& ce_id
 )
 {
-  int lb_error = edg_wll_LogMatch(context.get(), ce_id); 
-  if (lb_error != 0) {
-    Warning("edg_wll_LogMatch failed for " << job_id
-            << " (" << common::get_lb_message(context) << ")");
+  int lb_error;
+  common::ContextPtr ctx;
+  boost::tie(lb_error, ctx) = common::lb_log(
+    boost::bind(edg_wll_LogMatchProxy, _1, ce_id.c_str()),
+    context
+  );
+  if (lb_error) {
+    Warning(
+      common::get_logger_message(
+        "edg_wll_LogMatchProxy",
+        lb_error,
+        context,
+        ctx
+      )
+    );
   }
 }
 
@@ -124,7 +135,7 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
 
   boost::scoped_ptr<classad::ClassAd> planned_ad(Plan(request_ad));
   std::string ce_id = requestad::get_ce_id(*planned_ad);
-  log_match(jobid, context, ce_id.c_str());
+  log_match(context, ce_id);
 
   Deliver(*planned_ad, context);
 }

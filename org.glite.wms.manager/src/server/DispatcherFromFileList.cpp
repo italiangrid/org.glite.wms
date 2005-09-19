@@ -29,7 +29,6 @@
 #include "purger.h"
 #include "glite/lb/producer.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "CommandAdManipulation.h"
 #include "lb_utils.h"
 
@@ -39,30 +38,6 @@ namespace utilities = glite::wms::common::utilities;
 namespace jobid = glite::wmsutils::jobid;
 namespace requestad = glite::wms::jdl;
 namespace common = glite::wms::manager::common;
-
-namespace {
-
-class HitMaxRetryCount
-{
-  int m_n;
-public:
-  HitMaxRetryCount(int n): m_n(n) {}
-  int count() const { return m_n; }
-};
-
-class HitJobRetryCount
-{
-  int m_n;
-public:
-  HitJobRetryCount(int n): m_n(n) {}
-  int count() const { return m_n; }
-};
-
-class CannotRetrieveJDL
-{
-};
-
-}
 
 namespace glite {
 namespace wms {
@@ -172,11 +147,18 @@ void log_dequeued(common::ContextPtr const& context)
   int lb_error;
   common::ContextPtr ctx;
   boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogDeQueued, _1, input_name.c_str(), local_jobid),
+    boost::bind(edg_wll_LogDeQueuedProxy, _1, input_name.c_str(), local_jobid),
     context
   );
   if (lb_error) {
-    Warning(common::get_logger_message("edg_wll_LogDeQueued", lb_error, context, ctx));
+    Warning(
+      common::get_logger_message(
+        "edg_wll_LogDeQueuedProxy",
+        lb_error,
+        context,
+        ctx
+      )
+    );
   }
 }
 
@@ -186,11 +168,18 @@ log_cancel_req(common::ContextPtr const& context)
   int lb_error;
   common::ContextPtr ctx;
   boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogCancelREQ, _1, "CANCELLATION REQUEST"),
+    boost::bind(edg_wll_LogCancelREQProxy, _1, "CANCELLATION REQUEST"),
     context
   );
   if (lb_error) {
-    Warning(common::get_logger_message("edg_wll_LogCancelREQ", lb_error, context, ctx));
+    Warning(
+      common::get_logger_message(
+        "edg_wll_LogCancelREQProxy",
+        lb_error,
+        context,
+        ctx
+      )
+    );
   }
 }
 
@@ -201,103 +190,19 @@ void log_pending(RequestPtr const& req)
   int lb_error;
   common::ContextPtr ctx;
   boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogPending, _1, req->message().c_str()),
+    boost::bind(edg_wll_LogPendingProxy, _1, req->message().c_str()),
     context
   );
   if (lb_error) {
-    Warning(common::get_logger_message("edg_wll_LogPending", lb_error, context, ctx));
-  }
-}
-
-void flush_lb_events(common::ContextPtr const& context, jobid::JobId const& id)
-{
-  struct timeval* timeout = 0;
-  int lb_error = edg_wll_LogFlush(context.get(), timeout);
-  if (lb_error) {
     Warning(
-         "edg_wll_LogFlush failed for " << id
-      << " (" << common::get_lb_message(context) << ")"
+      common::get_logger_message(
+        "edg_wll_LogPendingProxy",
+        lb_error,
+        context,
+        ctx
+      )
     );
   }
-}
-
-int get_max_retry_count()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-
-  if (!config) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-
-  return wm_config->max_retry_count();
-}
-
-void retrieve_lb_info(RequestPtr const& req)
-{
-  // this can currently happen only in case of a resubmission, for we need the
-  // original jdl and the previous matches
-  if (!req->marked_resubmitted()) {
-    return;
-  }
-
-  common::ContextPtr context = req->lb_context();
-  jobid::JobId jobid = req->id();
-
-  // flush the lb events since we'll query the server
-  flush_lb_events(context, jobid);
-
-  // retrieve previous matches; continue if failure
-  typedef std::vector<std::pair<std::string,int> > matches_type;
-  matches_type const previous_matches = common::get_previous_matches(context.get(), jobid);
-
-  // in principle this warning should happen only if the req is a resubmit
-  if (previous_matches.empty()) {
-    Warning("cannot retrieve previous matches for " << jobid);
-  }
-
-  std::vector<std::string> previous_matches_simple;
-  for (matches_type::const_iterator it = previous_matches.begin();
-       it != previous_matches.end(); ++it) {
-    previous_matches_simple.push_back(it->first);
-  }
-
-// check the system max retry count; abort if exceeded
-  size_t max_retry_count = get_max_retry_count();
-  if (max_retry_count <= 0
-      || previous_matches.size() > max_retry_count) {
-    throw HitMaxRetryCount(max_retry_count);
-  }
-
-  // retrieve original jdl
-  std::string const job_ad_str = common::get_original_jdl(context.get(), jobid);
-  if (job_ad_str.empty()) {
-    throw CannotRetrieveJDL();
-  }
-  std::auto_ptr<classad::ClassAd> job_ad(utilities::parse_classad(job_ad_str));
-
-  // check the job max retry count; abort if exceeded
-  bool count_valid = false;
-  size_t job_retry_count = requestad::get_retry_count(*job_ad, count_valid);
-  if (!count_valid) {
-    job_retry_count = 0;
-  }
-  if (job_retry_count <= 0
-      || previous_matches.size() > job_retry_count) {
-    throw HitJobRetryCount(job_retry_count);
-  }
-
-  // in practice the actual retry limit is
-  // max(0, min(job_retry_count, max_retry_count))
-
-  requestad::set_edg_previous_matches(*job_ad, previous_matches_simple);
-  requestad::set_edg_previous_matches_ex(*job_ad, previous_matches);
-
-  req->jdl(job_ad.release());
 }
 
 bool older_than(RequestPtr const& req, std::time_t threshold)
@@ -362,11 +267,6 @@ void do_transitions_for_cancel(
   }
 }
 
-bool is_request_expired(RequestPtr const& req)
-{
-  return req->expiry_time() < std::time(0);
-}
-
 bool is_proxy_expired(jobid::JobId const& id)
 {
   std::string proxy_file = common::get_user_x509_proxy(id);
@@ -398,48 +298,20 @@ void do_transitions_for_submit(
     if (older_than(req, threshold)) {
       Info("considering (re)submit of " << req->id());
 
-      try {
-
-        if (is_request_expired(req)) {
-          req->state(Request::UNRECOVERABLE, "request expired");
-          break;
-        }
-
-        if (is_proxy_expired(req->id())) {
-          req->state(Request::UNRECOVERABLE, "proxy expired");
-          break;
-        }
-
-        // retrieve from the LB possibly missing information needed to
-        // process the request, e.g. the jdl, the previous matches, etc.
-        retrieve_lb_info(req);
-
-        req->state(Request::READY);
-        write_end.write(req);
-
-      } catch (HitMaxRetryCount& e) {
-        std::ostringstream os;
-        os << "hit max retry count (" << e.count() << ") for " << req->id();
-        Info(os.str());
-        req->state(Request::UNRECOVERABLE, os.str());
-      } catch (HitJobRetryCount& e) {
-        std::ostringstream os;
-        os << "hit job retry count (" << e.count() << ") for " << req->id();
-        Info(os.str());
-        req->state(Request::UNRECOVERABLE, os.str());
-      } catch (CannotRetrieveJDL& e) {
-        std::ostringstream os;
-        os << "cannot retrieve jdl for " << req->id() << "; keep retrying";
-        Info(os.str());
-        req->state(Request::RECOVERABLE, os.str());
+      if (is_proxy_expired(req->id())) {
+        req->state(Request::UNRECOVERABLE, "proxy expired");
+        break;
       }
+
+      req->state(Request::READY);
+      write_end.write(req);
     }
     break;
 
   case Request::RECOVERABLE:
 
     log_pending(req);
-    Info("postponing " << req->id());
+    Info("postponing " << req->id() << " (" << req->message() << ')');
     req->state(Request::WAITING);
     break;
 
@@ -452,7 +324,7 @@ void do_transitions_for_submit(
     break;
 
   case Request::UNRECOVERABLE:
-    Info(req->id() << " failed");
+    Info(req->id() << " failed (" << req->message() << ')');
     break;
 
   case Request::READY:
@@ -491,9 +363,15 @@ void do_transitions_for_match(
     // the job to enter a stable state
     break;
 
+  case Request::RECOVERABLE:
+  case Request::UNRECOVERABLE:
+  case Request::CANCELLED:
+    // not applicable
+    assert(!"a match request cannot be in a"
+           "RECOVERABLE, UNRECOVERABLE or CANCELLED state");
+    break;
   }
 }
-
 
 void do_transitions(
   TaskQueue& tq,
@@ -526,10 +404,11 @@ bool is_done(std::pair<std::string, RequestPtr> const& id_req)
 
 void remove_done(TaskQueue& tq)
 {
-  TaskQueue::iterator it = std::find_if(tq.begin(), tq.end(), is_done);
-  while (it != tq.end()) {
-    tq.erase(it);
-    it = std::find_if(tq.begin(), tq.end(), is_done);
+  TaskQueue::iterator cur = tq.begin();
+  TaskQueue::iterator const last = tq.end();
+  while ((cur = std::find_if(cur, last, is_done)) != last) {
+    TaskQueue::iterator tmp = cur++;
+    tq.erase(tmp);
   }
 }
 
@@ -567,7 +446,7 @@ aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
     
     std::string jobidstr(
       requestad::get_edg_jobid(
-	    *common::match_command_get_ad(command_ad),
+        *common::match_command_get_ad(command_ad),
         id_exists
       )
     );
@@ -643,8 +522,8 @@ get_new_requests(
         RequestPtr request(new Request(*command_ad, cleanup, id));
         tq.insert(std::make_pair(id.toString(), request));
 
-		//logging
-		
+        //logging
+                
         if (command == "jobsubmit" || command == "jobresubmit") {
           log_dequeued(request->lb_context());
         } else if (command == "jobcancel") {
@@ -653,42 +532,67 @@ get_new_requests(
 
 
       } else {
-        //match can't be canceled or whatever
-        assert(command != "match");
 
         RequestPtr request = it->second;
 
         if (command == "jobsubmit") {
-          // this really shouldn't happen, just ignore this new request
-          Info("ignoring submit " << id);
+
+          if (request->marked_match()) {
+            // abort the submit, via a fake request
+            cleanup_guard.dismiss();
+            Request fake_request(*command_ad, cleanup, id);
+            std::string message("already existing match request");
+            Info(message << ' ' << id);
+            fake_request.state(Request::UNRECOVERABLE, message);
+          } else {
+            // ignore
+            Info("ignoring submit " << id);
+          }
 
         } else if (command == "jobresubmit") {
-          // during normal running a resubmit can be seen at this point only
-          // if the status of this job is either DELIVERED, PROCESSING (this
-          // case is possible because the submit request can be passed to the
-          // JC, fail and be resubmitted by the LM before the RequestHandler
-          // thread could mark it as DELIVERED) or CANCELLED (this case is
-          // possible because the cancel request can be processed - and passed
-          // to the JC, moving the request to the CANCELLED state - while the
-          // job failed and was resubmitted by the LM)
 
-          // but during start up, w/o the appropriate checks on the status of
-          // a job, still to be done) also an initial state (i.e. WAITING) is
-          // possible because all the requests are read in one shot from the
-          // input
+          if (request->marked_match()) {
+            // ignore the resubmit
+            Info("ignoring resubmit, already existing match request " << id);
+          } else {
+            // during normal running a resubmit can be seen at this point only
+            // if the status of this job is either DELIVERED, PROCESSING (this
+            // case is possible because the submit request can be passed to the
+            // JC, fail and be resubmitted by the LM before the RequestHandler
+            // thread could mark it as DELIVERED) or CANCELLED (this case is
+            // possible because the cancel request can be processed - and passed
+            // to the JC, moving the request to the CANCELLED state - while the
+            // job failed and was resubmitted by the LM)
 
-          Debug("jobresubmit " << id << " when in state " << request->state());
-          log_dequeued(request->lb_context());
-          request->mark_resubmitted();
-          cleanup_guard.dismiss();
-          request->add_cleanup(cleanup);
+            // but during start up, w/o the appropriate checks on the status of
+            // a job, still to be done) also an initial state (i.e. WAITING) is
+            // possible because all the requests are read in one shot from the
+            // input
+
+            Debug("jobresubmit " << id << " when in state " << request->state());
+            log_dequeued(request->lb_context());
+            request->mark_resubmitted();
+            cleanup_guard.dismiss();
+            request->add_cleanup(cleanup);
+          }
 
         } else if (command == "jobcancel") {
 
-          log_cancel_req(request->lb_context());
-          request->mark_cancelled();
-          cleanup_guard.dismiss();
-          request->add_cleanup(cleanup);
+          if (request->marked_match()) {
+            // ignore the cancel
+            Info("ignoring cancel, already existing match request " << id);
+          } else {
+            log_cancel_req(request->lb_context());
+            request->mark_cancelled();
+            cleanup_guard.dismiss();
+            request->add_cleanup(cleanup);
+          }
+
+        } else if (command == "match") {
+
+          // ignore the match, independently if the existing request with the
+          // same id is a (re)submit, cancel or match
+          Info("ignoring match " << id);
 
         }
 
@@ -696,6 +600,8 @@ get_new_requests(
 
     } catch (utilities::ClassAdError& e) {
       Info(e.what() << " for " << command_ad_str);
+    } catch (common::CannotCreateLBContext& e) {
+      Info("Cannot create LB context (error code = " << e.error_code() << ')');
     } catch (InvalidRequest& e) {
       Info("Invalid request: " << command_ad_str);
     }
@@ -742,4 +648,3 @@ try {
 }
 
 }}}} // glite::wms::manager::server
-

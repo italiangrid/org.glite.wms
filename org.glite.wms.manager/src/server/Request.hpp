@@ -45,8 +45,8 @@ public:
 
 public:
   Request(
-    classad::ClassAd const& command_ad, 
-    boost::function<void()> const& cleanup, 
+    classad::ClassAd const& command_ad,
+    boost::function<void()> const& cleanup,
     glite::wmsutils::jobid::JobId const& id
   );
   ~Request();
@@ -61,9 +61,9 @@ public:
   void last_processed(time_t t) { m_last_processed = t; }
   std::time_t last_processed() const { return m_last_processed; }
   glite::wms::manager::common::ContextPtr lb_context() const { return m_lb_context; }
-  
+
   classad::ClassAd const* jdl() const { return m_jdl.get(); }
-  void jdl(classad::ClassAd* jdl) { m_jdl.reset(jdl); }
+  void jdl(classad::ClassAd* jdl);
   void clear_jdl() { m_jdl.reset(); }
 
   void mark_cancelled() { m_cancelled = true; }
@@ -73,16 +73,16 @@ public:
   bool marked_resubmitted() const { return m_resubmitted; }
 
   bool marked_match() const { return !m_match_parameters.get<0>().empty(); }
-  boost::tuple<std::string, int, bool> match_parameters() const 
+  boost::tuple<std::string, int, bool> match_parameters() const
   {
     return m_match_parameters;
   }
-  
+
   void add_cleanup(boost::function<void()> const& cleanup)
   {
     m_input_cleaners.push_back(cleanup);
   }
-  
+
   std::time_t expiry_time() const
   {
     return m_expiry_time;
@@ -99,13 +99,11 @@ private:
   glite::wms::manager::common::ContextPtr m_lb_context;
   bool m_cancelled;
   bool m_resubmitted;
-  
+
   //match options: file name, number of results and include or not brokerinfo
   boost::tuple<std::string, int, bool> m_match_parameters;
   std::time_t m_expiry_time;
-  
-  bool Request::retrieve_lb_info();
-  
+
 };
 
 }}}}
