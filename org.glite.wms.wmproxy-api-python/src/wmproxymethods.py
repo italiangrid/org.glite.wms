@@ -236,6 +236,8 @@ class Wmproxy:
 			self.remote.jobPurge(jobId)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def jobStart(self, jobId):
 		"""
@@ -247,6 +249,8 @@ class Wmproxy:
 			self.remote.jobStart(jobId)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def putProxy(self, delegationID, proxy):
 		"""
@@ -260,6 +264,8 @@ class Wmproxy:
 			self.remote.putProxy(delegationID, proxy)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 
 	def addACLItems(self, jobId, items):
@@ -273,6 +279,8 @@ class Wmproxy:
 			self.remote.addACLItems(jobId, items)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 
 	def getACLItems(self, jobId):
@@ -286,6 +294,8 @@ class Wmproxy:
 			return parseStructType(self.remote.getACLItems(jobId))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getSandboxBulkDestURI(self, jobId):
 		"""
@@ -302,6 +312,8 @@ class Wmproxy:
 			return destUris
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getSandboxDestURI(self, jobId):
 		"""
@@ -315,6 +327,8 @@ class Wmproxy:
 			return self.remote.getSandboxDestURI(jobId)[0]
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def jobCancel(self, jobId):
 		"""
@@ -326,6 +340,8 @@ class Wmproxy:
 			self.remote.jobCancel(jobId)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getStringParametricJobTemplate(self, attributes, param, requirements, rank):
 		"""
@@ -342,6 +358,8 @@ class Wmproxy:
 			return self.remote.getStringParametricJobTemplate(attributes, param, requirements, rank)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getJobTemplate(self, jobType, executable, arguments, requirements, rank):
 		"""
@@ -359,6 +377,8 @@ class Wmproxy:
 			return self.remote.getJobTemplate(jobType, executable, arguments, requirements, rank)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getFreeQuota(self):
 		"""
@@ -372,6 +392,8 @@ class Wmproxy:
 			return parseStructType(self.remote.getFreeQuota(),'softLimit''hardLimit')
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 
 	def getProxyReq(self, delegationID):
@@ -386,6 +408,8 @@ class Wmproxy:
 			return self.remote.getProxyReq(delegationID)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getVersion(self):
 		"""
@@ -397,6 +421,8 @@ class Wmproxy:
 			return self.remote.getVersion()
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getIntParametricJobTemplate(self, attributes, param, parameterStart, parameterStep, requirements, rank):
 		"""
@@ -415,6 +441,8 @@ class Wmproxy:
 			return self.remote.getIntParametricJobTemplate(attributes, param, parameterStart, parameterStep, requirements, rank)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 
 	def getDAGTemplate(self, dependencies, requirements, rank):
@@ -431,6 +459,8 @@ class Wmproxy:
 			return self.remote.getDAGTemplate(dependencies, requirements, rank)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def jobSubmit(self, jdl, delegationId):
 		"""
@@ -444,6 +474,8 @@ class Wmproxy:
 			return JobIdStruct(self.remote.jobSubmit(jdl, delegationId))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 
 	def jobRegister(self, jdl, delegationId):
@@ -458,6 +490,8 @@ class Wmproxy:
 			return JobIdStruct(self.remote.jobRegister(jdl, delegationId))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def removeACLItem(self, jobId, item):
 		"""
@@ -471,6 +505,8 @@ class Wmproxy:
 			self.remote.removeACLItem(jobId, item)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getMaxInputSandboxSize(self):
 		"""
@@ -482,6 +518,8 @@ class Wmproxy:
 			return int(self.remote.getMaxInputSandboxSize())
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 
 	def getTotalQuota(self):
@@ -496,6 +534,8 @@ class Wmproxy:
 			return parseStructType(self.remote.getTotalQuota(),'softLimit''hardLimit')
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getOutputFileList(self, jobId):
 		"""
@@ -508,6 +548,8 @@ class Wmproxy:
 			return self.remote.getOutputFileList(jobId)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
 	def getDelegatedProxyInfo(self, jobId):
 		"""
@@ -520,4 +562,6 @@ class Wmproxy:
 			return parseStructType(self.remote.getDelegatedProxyInfo(jobId))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
 
