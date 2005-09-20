@@ -26,15 +26,16 @@ public:
     int port,
     std::string const& distinguished_name,
     int timeout = 30,
-    exec_mode_t mode = loop,
     size_t interval = 30,
-    exit_predicate_type exit_predicate = exit_predicate_type(),
     skip_predicate_type skip_predicate = skip_predicate_type()	
   );
   
   void do_purchase();
 
   void operator()();
+
+  update_function_type update_function() const;
+
 
 private:                
   std::string m_hostname;
@@ -52,8 +53,8 @@ public:
 private:
   std::string m_id;
   std::string m_ldap_server;
-  std::string m_ldap_dn;
   int m_ldap_port;
+  std::string m_ldap_dn;
   int m_ldap_timeout;
 };
 
