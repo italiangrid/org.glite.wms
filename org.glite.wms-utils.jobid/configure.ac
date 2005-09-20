@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17  2005/09/20 10:41:49  eronchie
+#       Started merging with rc1.4
+#
 #       Revision 1.16  2004/12/10 07:33:42  eronchie
 #       Increased version
 #
@@ -57,7 +60,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Jobid], [1.0.0])
+AC_INIT([GLite WMS Utils Jobid], [1.0.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobid/strmd5.h])
@@ -106,15 +109,22 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror strtol])
 
 have_globus=no
-                                                                                
+
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
-have_glite_wmsutils_exception=no
-                                                                                
+if test "$have_globus" = "no"; then
+  AC_MSG_RESULT(["Please verify GLOBUS package"])
+fi
+
+if test "$have_globus" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi                                                                                
 AC_GLITE
 
-GLITE_WMSUTILS_EXCEPTION_LIBS="-L$GLITE_LOCATION/lib -lglite_wmsutils_exception"AC_SUBST(GLITE_WMSUTILS_EXCEPTION_LIBS)
+GLITE_WMSUTILS_EXCEPTION_LIBS="-L$GLITE_LOCATION/lib -lglite_wmsutils_exception"
+
+AC_SUBST(GLITE_WMSUTILS_EXCEPTION_LIBS)
 
 AC_OPTIMIZE
 

@@ -39,22 +39,12 @@ public:
     JobId() ;
     /**
      * Instantiates a JobId object from the passed dg_jobId in string format.
-     * @param  jobid a string representig a classAd expression
+     * @param  job_id_string a string representig a classAd expression
      * @throws  WrongIdException When a string is passed in a wrong format
      */
-    JobId(const std::string& jobid ) ;
-    /**
-     * Instantiates a JobId object from the passed JobId instance
-     * @param jobid a JobId instance to copy from
-     * @throws  WrongIdException When a string is passed in a wrong format
-     */
-    JobId(const JobId& jobid );
-    /**
-     * Instantiates a JobId object from the passed  JobId internal reference
-     * @param  jobid the JobId internal reference
-     * @throws  WrongIdException When a string is passed in a wrong format
-     */
-    JobId(const edg_wlc_JobId& jobid);
+    JobId(const std::string& job_id_string);
+    JobId(const JobId&);
+    JobId(const edg_wlc_JobId&);
     /**
      * Destructor
      * Destroy the Job Id instance
