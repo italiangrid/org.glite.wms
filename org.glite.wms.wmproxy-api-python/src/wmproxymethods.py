@@ -5,10 +5,10 @@ Python API for Wmproxy Web Service
 from WMPClient import WMPSOAPProxy
 import SOAPpy  #Error Type
 import os  #getDefaultProxy method
+import socket # socket error mapping
 
 DEBUGMODE=1
 ### Static methods/classes: ###
-
 def parseStructType(struct,*fields):
 	"""
 	with fielsd: Parses a SOAPPy.Types.structType returning a dictionary of parsed attributes
@@ -65,7 +65,7 @@ class JobIdStruct:
 		"""
 		Equal to getJobId
 		"""
-		return getJobId()
+		return self.getJobId()
 
 	def getChildren(self):
 		"""
@@ -83,21 +83,36 @@ class JobIdStruct:
 		"""
 		return self.nodeName
 
-class BaseExeption:
+class BaseExeption(Exception):
 	"""
 	Base Exception Class deinfe a structure for
 	all exception thrown in this module
 	"""
+	origin  = ""
+	errType = ""
+	methodName =""
+	description=""
+	args=[]
+
 	def __repr__(self):
-		result ="\n\t "+self.errType+" raised by "+self.origin
-		result+="\n\t "+self.error['methodName'] +" " +self.error['Description']
+		result ="\n\t "
+		if self.errType:
+			result+=self.errType
+		if self.origin:
+			result+=" raised by "+self.origin
+		if self.methodName:
+			result+="\n\t "+self.methodName
+		if self.description:
+			result+=" " + self.description
+		if DEBUGMODE:
+			print "Debug mode ON"
+			for fc in self.args:
+				try:
+					result+="\n\t "+ fc
+				except:
+					result+="\n\t "+ repr(fc)
 		return result
-	def getOrigin(self):
-		return self.origin
-	def getErrType(self):
-		return self.errType
-	def getError():
-		return self.error
+
 
 class HTTPException(BaseExeption):
 	"""
@@ -107,21 +122,20 @@ class HTTPException(BaseExeption):
 		self.origin  = "HTTP Server"
 		self.errType = "Error"
 		self.error   = err
+		self.methodName =""
+		self.description=""
 
-
-class ApiException(BaseExeption):
+class SocketException(BaseExeption):
 	"""
-	Specify a structure for Server exceptions
+	Socket-Connection Error
+	input: a socket.err error
 	"""
-	def __init__(self, method, message):
-		self.origin  = "Wmproxy Api Python"
-		self.errType = "Method not supported"
-		self.error   = { \
-			'ErrorCode':"INTERNAL", \
-			'methodName':method, \
-			'Description':"Method unavailable", \
-			'FaultCause':message}
-
+	def __init__(self, err):
+		self.origin  = "Socket Connection"
+		self.errType = "Error"
+		self.errorCode   = 105
+		for ar in err.args:
+			self.args.append(ar)
 
 class WMPException(BaseExeption):
 	"""
@@ -130,7 +144,26 @@ class WMPException(BaseExeption):
 	def __init__(self, err):
 		self.origin  = err[0]
 		self.errType = err[1]
-		self.error   = parseStructType (err[2][0],'ErrorCode','Timestamp','methodName','Description','FaultCause')
+		error = err[2][0]
+		self.errorCode   = error["ErrorCode"]
+		self.timestamp   = error["Timestamp"]
+		self.methodName  = error["methodName"]
+		self.description = error["Description"]
+		for ar in error["FaultCause"]:
+			self.args.append(ar)
+
+
+class ApiException(BaseExeption):
+	"""
+	Exception raised directly from server
+	"""
+	def __init__(self, method, message):
+		self.origin  = "Wmproxy Api Python"
+		self.errType = "Method not supported"
+		self.errorCode   = 105
+		self.methodName  = method
+		self.description = message
+
 
 def getDefaultProxy():
 	""" retrieve PROXY Default Certificate File name"""
@@ -155,7 +188,7 @@ class Wmproxy:
 		self.proxy=proxy
 		self.remote=""
 		self.init=0
-
+		
 	def soapInit(self):
 		#Perform initialisation  (if necessary)
 		if self.init==0:
@@ -190,7 +223,9 @@ class Wmproxy:
 		"""
 		self.init=0
 		self.proxy=proxy
-
+	"""
+	ACTUAL WEB SERVICE METHODS
+	"""
 	def jobListMatch(self, jdl, delegationId):
 		"""
 		Method (tested):  jobListMatch
@@ -206,7 +241,10 @@ class Wmproxy:
 				result.append(parseStructType(jlm[i]))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
-
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getCollectionTemplate(self, jobNumber, requirements, rank):
 		"""
@@ -224,6 +262,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def jobPurge(self, jobId):
@@ -238,6 +278,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def jobStart(self, jobId):
 		"""
@@ -251,6 +293,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def putProxy(self, delegationID, proxy):
 		"""
@@ -266,6 +310,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def addACLItems(self, jobId, items):
@@ -281,6 +327,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def getACLItems(self, jobId):
@@ -296,6 +344,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getSandboxBulkDestURI(self, jobId):
 		"""
@@ -314,6 +364,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getSandboxDestURI(self, jobId):
 		"""
@@ -329,6 +381,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def jobCancel(self, jobId):
 		"""
@@ -342,6 +396,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getStringParametricJobTemplate(self, attributes, param, requirements, rank):
 		"""
@@ -360,6 +416,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getJobTemplate(self, jobType, executable, arguments, requirements, rank):
 		"""
@@ -379,11 +437,12 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getFreeQuota(self):
 		"""
 		Method (tested):  getFreeQuota
-		AuthorizationException: LCMAPS failed to map user credential
 		OUT = softLimit (long)
 		OUT = hardLimit (long)
 		"""
@@ -394,12 +453,13 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def getProxyReq(self, delegationID):
 		"""
 		Method (tested):  getProxyReq
-		ProxyOperationException: Proxy exception: Provided delegation id not valid
 		IN =  delegationID (string)
 		OUT = request (string)
 		"""
@@ -410,6 +470,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getVersion(self):
 		"""
@@ -423,6 +485,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getIntParametricJobTemplate(self, attributes, param, parameterStart, parameterStep, requirements, rank):
 		"""
@@ -443,6 +507,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def getDAGTemplate(self, dependencies, requirements, rank):
@@ -461,6 +527,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def jobSubmit(self, jdl, delegationId):
 		"""
@@ -476,6 +544,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def jobRegister(self, jdl, delegationId):
@@ -492,10 +562,12 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def removeACLItem(self, jobId, item):
 		"""
-		Method (not tested ):  removeACLItem
+		Method (not tested):  removeACLItem
 		IN =  jobId (string)
 		IN =  item (string)
 		"""
@@ -507,6 +579,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getMaxInputSandboxSize(self):
 		"""
@@ -520,6 +594,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 
 	def getTotalQuota(self):
@@ -536,6 +612,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getOutputFileList(self, jobId):
 		"""
@@ -550,6 +628,8 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getDelegatedProxyInfo(self, jobId):
 		"""
@@ -564,4 +644,6 @@ class Wmproxy:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
