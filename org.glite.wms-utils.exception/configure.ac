@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2005/09/20 10:20:52  eronchie
+#       Started merged with 1.4
+#
 #       Revision 1.10  2004/12/10 07:31:35  eronchie
 #       Increased version
 #
@@ -55,7 +58,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Exception], [1.0.0])
+AC_INIT([GLite WMS Utils Exception], [1.0.2])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Exception.cpp])

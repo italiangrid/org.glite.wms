@@ -17,6 +17,7 @@ pthread_mutex_t METHOD_MUTEX  ;  // This mutex is used in order to lock the file
 * Exception Class Implementation
 ************************************/
 //Constructor/Destructor
+
 Exception::Exception () {
 	line = 0;
 };
@@ -33,6 +34,7 @@ void Exception::push_back (const string& source, int line_number,  const string&
 	line = line_number;
 	method_name = method;
 	error_message = "";
+	exception_name = "";
 }
 
 Exception::Exception( const std::string& file, int line_number,  const std::string& method,  int code, const std::string& name)
@@ -58,7 +60,8 @@ int Exception::getCode(){
 
 const char* Exception::what() const throw(){
   if (!ancestor.empty()) return ancestor.c_str();
-   return error_message.c_str();
+
+  return error_message.c_str();
 };
 
 string Exception::getExceptionName(){
@@ -96,14 +99,17 @@ vector<string> Exception::getStackTrace(){
 
 string Exception::dbgMessage(){
    string result ;
-   result = "";
-   // Exception name should be displayed only once
-   if (stack_strings.size()==0){result +=exception_name;};
+   //Adding exception Name
+   result = exception_name;
+
    //Adding error msg
    if (error_message!="") result +=": " + string(what());
+
    if (result != "") result+="\n";
+
    //Adding  Source
    result +="\tat " + method_name  +"[" +source_file;
+
    //Adding line number
    if (line!=0){
       char buffer [1024] ;
