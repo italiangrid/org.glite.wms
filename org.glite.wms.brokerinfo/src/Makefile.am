@@ -23,15 +23,15 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
 
-# libglite_wms_sici_la_SOURCES = 
-#	StorageIndexCatalogInterface.cpp 
+libglite_wms_sici_la_SOURCES = \
+	StorageIndexCatalogInterface.cpp 
 
-# libglite_wms_sici_la_LIBADD = 
-#	$(GLITE_DATA_LIBS) 
-#	$(SEC_GSOAP_PLUGIN_STATIC_NOTHR_LIBS) 
-#	$(ARES_LIBS) 
-#	env.o 
-#	stdsoap2_2.6.2.o
+libglite_wms_sici_la_LIBADD = \
+	$(GLITE_DATA_LIBS) \
+	$(SEC_GSOAP_PLUGIN_STATIC_NOTHR_LIBS) \
+	$(ARES_LIBS) \
+	env.o \
+	stdsoap2_2.6.2.o
 
 	
 env.o: $(GLITE_DATA_CFLAGS) ; \

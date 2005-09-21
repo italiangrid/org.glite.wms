@@ -17,6 +17,12 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.3  2005/09/21 13:22:05  monforte
+#       Merge against glite-wms-brokerinfo_branch_1_2_4
+#
+#       Revision 1.2.6.1  2005/08/02 10:16:21  emartel
+#       added unit test
+#
 #       Revision 1.2  2004/10/08 15:03:26  monforte
 #       rls integration
 #
@@ -36,7 +42,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 # Subdirectories list
-SUBDIRS = interface src
+SUBDIRS = interface src test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project

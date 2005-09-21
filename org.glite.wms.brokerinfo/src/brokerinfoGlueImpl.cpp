@@ -28,6 +28,7 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
@@ -160,6 +161,7 @@ bool  brokerinfoGlueImpl::retrieveCloseSEsInfoFromISM(const BrokerInfoData::CEid
 	  static_cast<classad::ClassAd*>(*expr_it)->EvaluateAttrString("name", SEid);
 	  static_cast<classad::ClassAd*>(*expr_it)->EvaluateAttrString("mount", SEmount);
 	  BrokerInfoData::CloseSEInfo_type CloseSEInfo(new classad::ClassAd(*static_cast<classad::ClassAd*>(*expr_it)));
+	  CloseSEInfo->InsertAttr("GlueCESEBindCEAccessPoint", SEmount);
 	  bid.m_CloseSEInfo_map[SEid] = CloseSEInfo;
 	  edglog( debug ) << CEid << " is close to " << SEid << " mountable on " << SEmount << endl;
 	}
@@ -497,10 +499,11 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
       edglog(debug)  << "trying to resolve: " << *lfn << endl;
 
       try {
-         BrokerInfoData::SFN_container_type resolved_sfn;
 
-         // lfn:: or guid:: prefix ?
-         bool lfn_or_guid_found = ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0);
+      BrokerInfoData::SFN_container_type resolved_sfn;
+                                                                                                                             
+      bool lfn_or_guid_found = ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0);
+      bool rls_success = false;
 
          if ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) {
 
@@ -524,6 +527,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                         replica = createRls(vo);
                         rlsInUse = true;
                         resolved_sfn = replica->listReplica(*lfn);
+                        if( !resolved_sfn.empty() ) rls_success = true;
                      }
                   }
                }
@@ -543,11 +547,13 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
 
          // If the prefix is "lfn" or "guid" but we didn't manage to load the rls plug-in
-         //      or the RLSCatalog is not configured for the given vo, we try with the dli catalog
+         //      or the RLSCatalog is not configured for the given vo 
+         //      or RLS didn't work for whatever reason,
+         //      we try with the dli catalog
 
          if ( 
             (    ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)    )   || 
-            (    ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) && (!rlsInUse)                     )
+            (    ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) && (!rls_success)                  )
             ) {
             if ( !dliInUse ) {
                if ( dliEndpointSet ) {
@@ -895,8 +901,9 @@ std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
   edglog_fn(getSICIurl);
 
   edglog(debug) << "Contacting IS for StorageIndex endpoint..." << endl;
-  edglog(debug) << "Irrelevant operation if you are trying to contact another catalog. " << endl;
+  
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
+  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
                                                                                                                              
   vector<string> attributes;
   attributes.push_back("GlueServiceAccessPointURL");
@@ -905,7 +912,9 @@ std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
                                                                                                                              
   string filter;
   filter = "(&(objectclass=GlueService)" +
-           string("(GlueServiceType=StorageIndex)") +
+           string("(GlueServiceType=")   +
+           string( WMconf -> si_service_name() )+
+           string(")") +
            string("(GlueServiceAccessControlRule=") + vo + string("))");
                                                                                                                              
   boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
@@ -946,10 +955,6 @@ std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
   catch ( ldif2classad::ConnectionException& e) {
     edglog(warning) << e.what() << endl;
   }
-
-//
-//cout << "getSICIurl: " << url << endl;
-
   return url;
 } // getSICIurl
 
@@ -967,8 +972,9 @@ std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
   edglog_fn(getDLIurl);
 
   edglog(debug) << "Contacting IS for DataLocationInterface endpoint. " << endl;
-  edglog(debug) << "Irrelevant operation if you are trying to contact another catalog. " << endl;
+
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
+  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
   
   vector<string> attributes;
   attributes.push_back("GlueServiceAccessPointURL");
@@ -977,7 +983,9 @@ std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
 
   string filter;	
   filter = "(&(objectclass=GlueService)" +
-           string("(GlueServiceType=DataLocationInterface)") +
+           string("(GlueServiceType=")   +
+           string( WMconf -> dli_service_name() ) +
+           string(")")                   +
            string("(GlueServiceAccessControlRule=") + vo + string("))");
 
   boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
@@ -1018,10 +1026,6 @@ std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
   catch ( ldif2classad::ConnectionException& e) {
     edglog(warning) << e.what() << endl;
   }
-
-//
-//cout << "getDLIurl: " << url << endl;
-
   return url;
 } // getDLIurl
 

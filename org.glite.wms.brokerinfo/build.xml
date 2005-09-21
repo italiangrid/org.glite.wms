@@ -21,8 +21,8 @@
 
 	Revision history:
 	$Log$
-	Revision 1.4  2005/06/10 14:26:23  monforte
-	Merge RC1 -> HEAD
+	Revision 1.5  2005/09/21 13:22:05  monforte
+	Merge against glite-wms-brokerinfo_branch_1_2_4
 
 	Revision 1.2.2.1  2005/02/12 01:53:06  glbuild
 	Changed start time

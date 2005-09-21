@@ -147,8 +147,9 @@ extern "C" dli::DataLocationInterfaceSOAP* create(const std::string& endpoint)
 extern "C" dli::DataLocationInterfaceSOAP* create_with_timeout(const std::string& endpoint,
                                                                int timeout)
 {
-  return new dli::DataLocationInterfaceSOAP(endpoint);
+  return new dli::DataLocationInterfaceSOAP(endpoint, timeout);
 }
+
 
 extern "C" void destroy(dli::DataLocationInterfaceSOAP* p) {
   delete p;

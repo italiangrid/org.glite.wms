@@ -85,6 +85,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 gsoap.m4 replica.m4 cgsi-gsoap.m4 glite_data.m4 optimize.m4 ares.m4 glite_security.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 gsoap.m4 cgsi-gsoap.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_ism.m4 replica.m4 cgsi-gsoap.m4 glite_data.m4 optimize.m4 ares.m4 glite_security.m4"/>
 		 						
 </project>

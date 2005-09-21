@@ -19,8 +19,32 @@
 #
 #       Revision history:
 #       $Log$
-#       Revision 1.14  2005/06/10 14:26:23  monforte
-#       Merge RC1 -> HEAD
+#       Revision 1.15  2005/09/21 13:22:05  monforte
+#       Merge against glite-wms-brokerinfo_branch_1_2_4
+#
+#       Revision 1.10.2.12.2.8  2005/09/06 12:08:32  eronchie
+#       Moved on some WMS macros after AC_GLITE
+#
+#       Revision 1.10.2.12.2.7  2005/09/05 17:33:38  emartel
+#       imported wmsutils, wms_common, wms_ism, wms_ism macros
+#
+#       Revision 1.10.2.12.2.6  2005/08/17 12:12:14  eronchie
+#       Increased version
+#
+#       Revision 1.10.2.12.2.5  2005/08/17 12:11:36  eronchie
+#       Added ERROR message that breaks configure
+#
+#       Revision 1.10.2.12.2.4  2005/08/04 15:06:51  monforte
+#       Fix to bug #9964
+#
+#       Revision 1.10.2.12.2.3  2005/08/02 10:25:28  emartel
+#       added unit test
+#
+#       Revision 1.10.2.12.2.2  2005/07/28 14:58:40  eronchie
+#       Increased version
+#
+#       Revision 1.10.2.12.2.1  2005/07/28 10:22:17  emartel
+#       fixed bug 9757 related to DLI timeout
 #
 #       Revision 1.10.2.12  2005/05/09 16:49:53  emartel
 #       increased version
@@ -102,7 +126,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Brokerinfo], [1.2.4])
+AC_INIT([GLite WMS Brokerinfo], [2.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glue_attributes.h])
@@ -156,23 +180,75 @@ have_globus=no
 have_ares=no
 have_cgsi_gsoap=no
 have_replica=no
+
 have_data=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
+AC_MSG_RESULT(["BOOST found $have_boost"])
+
 AC_CLASSADS([], have_classads=yes, have_classads=no)
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+
 AC_GLOBUS([], have_globus=yes, have_globus=no)
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
 AC_ARES([], have_ares=yes, have_ares=no)
+AC_MSG_RESULT(["ARES found $have_ares"])
+
 AC_GSOAP
 AC_CGSI_GSOAP
-AC_REPLICA([], have_replica=yes, have_replica=no)
 
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
-AC_MSG_RESULT(["BOOST found $have_boost"])
-AC_MSG_RESULT(["GLOBUS found $have_globus"])
+AC_REPLICA([], have_replica=yes, have_replica=no)
 AC_MSG_RESULT(["REPLICA found $have_replica"])
+
+if test "$have_boost" = "no"; then
+  AC_MSG_RESULT(["Please verify BOOST package"])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_RESULT(["Please verify CLASSADS package"])
+fi
+
+if test "$have_globus" = "no"; then
+  AC_MSG_RESULT(["Please verify GLOBUS package"])
+fi
+
+if test "$have_ares" = "no"; then
+  AC_MSG_RESULT(["Please verify ARES package"])
+fi
+
+if test "$have_replica" = "no"; then
+  AC_MSG_RESULT(["Please verify REPLICA package"])
+fi
+
+if test "$have_globus" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_ares" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_replica" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
 
 AC_OPTIMIZE
 AC_GLITE
+AC_GLITE_WMSUTILS
+AC_GLITE_WMS_JDL
+AC_GLITE_WMS_COMMON
+AC_GLITE_WMS_ISM
+
+AC_SEC_GSOAP_PLUGIN
 
 AC_SEC_GSOAP_PLUGIN
 
@@ -185,6 +261,6 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([test/Makefile])
 
 AC_OUTPUT
-
