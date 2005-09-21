@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.5  2005/09/21 13:33:25  monforte
+	Merge against glite-wms-matchmaking_branch_1_1_0
+
 	Revision 1.4  2005/06/16 08:17:49  monforte
 	*** empty log message ***
-
+	
 	Revision 1.2.2.1  2005/02/12 01:56:43  glbuild
 	Changed start time
 	

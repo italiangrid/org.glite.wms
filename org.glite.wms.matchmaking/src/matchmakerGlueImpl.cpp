@@ -520,8 +520,8 @@ void matchmakerGlueImpl::checkRequirement(const classad::ClassAd* requestAd, mat
 	  string ce_str;
 	  
 	  ce_str.assign( utilities::evaluate_attribute(*ceAd, GS_GLUECE_UNIQUEID) );
-	  static boost::regex  expression_ceid( "(.+/[^\\-]+-(.+))-(.+)" );
-	  boost::smatch        pieces_ceid;
+	  static boost::regex  expression_ceid( "(.+/[^\\-]+-([^\\-]+))-(.+)" );
+          boost::smatch        pieces_ceid;
 	  string  	       gcrs, type, name;
 	  
 	  if( boost::regex_match(ce_str, pieces_ceid, expression_ceid) ) {
