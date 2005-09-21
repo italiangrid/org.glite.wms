@@ -115,7 +115,7 @@ So far: proxy time left*/
 void Job::postOptionchecks(unsigned int proxyMinTime){
 	// Check Proxy time validity
 	if (proxyFile!=NULL){
-		int proxyTimeLeft =getProxyTimeLeft(proxyFile);
+		unsigned int proxyTimeLeft =getProxyTimeLeft(proxyFile);
 		if (proxyTimeLeft<0){
 			throw WmsClientException(__FILE__,__LINE__,
 				"postOptionchecks",DEFAULT_ERR_CODE,

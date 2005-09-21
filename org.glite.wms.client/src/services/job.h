@@ -67,12 +67,6 @@ class Job{
 		char* trustedCert ;
 		/** configuration contex */
 		glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
-	private :
-        	/*
-                * Prints the Ui version on the standard output and ends the execution of the programme
-                */
-                void getVersion ( );
-
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOB_H
