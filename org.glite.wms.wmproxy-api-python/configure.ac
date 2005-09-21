@@ -11,14 +11,14 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+#       Authors: Alessandro Maraschini <alessandro.maraschini@datamat.it>
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS wmproxy-api-python], [1.1.2])
+AC_INIT([GLite WMS wmproxy-api-python], [1.5.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/wmproxy_api.cpp])
+AC_CONFIG_SRCDIR([src/wmproxymethods.py])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -31,26 +31,26 @@ WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
 
 # Checks for programs.
-AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_CXX
-AC_PROG_CXXCPP
-AM_PROG_CC_C_O
+#AC_PROG_CC
+#AC_PROG_CPP
+#AC_PROG_CXX
+#AC_PROG_CXXCPP
+#AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
 
 # Checks for header files.
-AC_CHECK_HEADERS([unistd.h])
+#AC_CHECK_HEADERS([unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
-AC_HEADER_TIME
+#AC_C_CONST
+#AC_C_INLINE
+#AC_HEADER_TIME
 
 # Checks for library functions.
-AC_HEADER_STDC
-AC_CHECK_FUNCS([memset])
+#AC_HEADER_STDC
+#AC_CHECK_FUNCS([memset])
 
 AC_GLITE
 
