@@ -19,11 +19,17 @@
 	Version info: $Id$
 	Release: $Name$	
 	
-	Revision history:
-	$Log$
+	Revision 1.3.2.2  2005/04/13 10:32:29  eronchie
+	Removed in the log messages
+	
+	Revision 1.3.2.1  2005/04/11 11:02:30  eronchie
+	Added optimize.m4
+	Added disable-optimization
+	Added AC_OPTIMIZE
+	
 	Revision 1.3  2004/07/28 10:56:16  eronchie
 	Added m4files.list property
-
+	
 	Revision 1.2  2004/07/16 14:56:56  flammer
 	Corrected input path of build.properties.
 	
@@ -67,6 +73,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="globus.m4 boost.m4 classads.m4 glite.m4 glite_wms_common.m4"/>
+	<property name="m4files.list" value="globus.m4 boost.m4 classads.m4 glite.m4 glite_wms_common.m4 optimize.m4"/>
 	 						
 </project>

@@ -19,6 +19,14 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2005/09/21 13:29:28  monforte
+#       Merge against glite-wms-classad_plugin_branch_1_0_0
+#
+#       Revision 1.7.2.1  2005/04/11 11:02:30  eronchie
+#       Added optimize.m4
+#       Added --disable-optimization
+#       Added AC_OPTIMIZE
+#
 #       Revision 1.7  2004/12/10 07:45:27  eronchie
 #       Increased version
 #
@@ -47,7 +55,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ClassAd_Plugin], [1.0.0])
+AC_INIT([GLite WMS ClassAd_Plugin], [2.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/classad_plugin_loader.h])
@@ -106,6 +114,7 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 
 have_glite_wms_common=no
 
+AC_OPTIMIZE
 AC_GLITE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
