@@ -56,7 +56,7 @@ namespace configuration = glite::wms::common::configuration;
 namespace fs = boost::filesystem ;
 
 
-const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMSUI_CONFIG";
+const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
 const string DEFAULT_LB_PROTOCOL	=	"https";
@@ -75,7 +75,8 @@ const string PROTOCOL_SEPARATOR= "://";
 
 const char* COMPRESS_MODE ="wb6 " ;
 const int OFFSET = 16;
-
+// File protocol string
+const string FILE_PROTOCOL = "file://" ;
 // Archives & Compressed files
 const char* GZ_SUFFIX = ".gz";
 const char* TAR_SUFFIX = ".tar";
@@ -1374,8 +1375,8 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
         outmsg += jobid ;
 	return (toFile(path, outmsg));
 }
-/*
- * removes '/' characters at the end of the of the input pathname
+/**
+ * Removes '/' characters at the end of the of the input pathname
  */
  const std::string Utils::normalizePath( const std::string &fpath ) {
   string                   modified;
@@ -1399,7 +1400,20 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
 
   return modified;
 }
-
+/**
+ * Removes the file protocol string at the beginning of the path if it is present
+ */
+ const std::string Utils::normalizeFile( const std::string &fpath ) {
+	string file = "";
+	unsigned int pos = fpath.find(FILE_PROTOCOL) ;
+	if ( pos != string::npos){
+		// removes the file protocol at the beginning of the path
+		file = fpath.substr(pos+FILE_PROTOCOL.size( ), fpath.size());
+	} else {
+		file = fpath;
+	}
+	return file;
+}
 std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 	string tmp = "";
 	// looks for the end of the protocol string

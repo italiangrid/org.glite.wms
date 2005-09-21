@@ -312,6 +312,12 @@ public:
         * @return the normalized pathname
  	*/
 	 static const std::string normalizePath( const std::string &fpath ) ;
+	/**
+	* Removes the file protocol string at the beginning of the path if it is present
+	* @param fpath the input pathname
+        * @return the normalized pathname
+	*/
+	 static const std::string normalizeFile( const std::string &fpath ) ;
 	 /*
          * removes white spaces form the begininng and from the end of the input string
          * @param str the input string
