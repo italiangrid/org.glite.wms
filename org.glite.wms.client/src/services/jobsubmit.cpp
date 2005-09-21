@@ -39,12 +39,14 @@ namespace glite {
 namespace wms{
 namespace client {
 namespace services {
-
+const string FILE_PROTOCOL = "file://" ;
 const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
+
+const int WMPROXY_OLD_VERSION = 1;
 // Max size (bytes) allowed for tar files
-//const long MAX_TAR_SIZE = 2147483647; 	//2147 48 36 47
-const int MAX_TAR_SIZE =  620000;
+const long MAX_TAR_SIZE = 2147483647;
+//const int MAX_TAR_SIZE =  620000;
 // Max file size for globus-url-copy
 const long MAX_GUC_SIZE = 2147483647;
 //const long MAX_GUC_SIZE = 617372;
@@ -88,6 +90,8 @@ JobSubmit::JobSubmit( ){
 	// InputSandox attributes
 	isbSize = 0;
 	isbURI = "";
+	// Major version of the server
+	wmpVersion = 0;
 };
 
 /*
@@ -122,9 +126,9 @@ void JobSubmit::readOptions (int argc,char **argv){
 	int h = 0;
 	int m = 0;
 	string opts = Job::readOptions  (argc, argv, Options::JOBSUBMIT);
-	// writes the information on the specified option in the log file
-	logInfo->print(WMS_INFO,   ">>>>>>> Function Called:", wmcOpts->getApplicationName( ), false);
-	logInfo->print(WMS_INFO, ">>>>>>> Options specified:", opts ,false);
+	// writes the information on the specified option in the log file, it has been created
+	logInfo->print(WMS_INFO,   "Function : " + wmcOpts->getApplicationName( ),
+					"\n Options : " + opts, false);
 	// input & resource (no together)
 	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
@@ -262,7 +266,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	if (startOpt){startOpt = new string(Utils::checkJobId(*startOpt));}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
-	 if (startOpt && fileProto) {
+	if (startOpt && fileProto) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transferring)\n", "", true );
 	}  else if (registerOnly && fileProto) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (register-only operation doesn't need any file transferring)\n", "", true );
@@ -336,14 +340,7 @@ void JobSubmit::submission ( ){
 		// reads and checks the JDL('s)
 		wmsJobType jobtype ;
 		this->checkAd(toBretrieved, jobtype);
-/*
-<<<<<<< jobsubmit.cpp
-		jobid = jobRegOrSub(startJob);
-		//if (registerOnly || toBretrieved) {
-		if (toBretrieved) {
-=======
-*/
-		// Perform Submission when:
+		// Perform sSubmission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		jobid = jobRegOrSub(startJob && !toBretrieved);
 		logInfo->print(WMS_DEBUG, "The JobId is: ", jobid) ;
@@ -351,7 +348,6 @@ void JobSubmit::submission ( ){
 		// (Registeronly is NOT specified [or specified with --tranfer-file]) AND (some files are to be transferred)
 		if (toBretrieved){
 			try{
-//>>>>>>> 1.8.2.72
 				// JOBTYPE
 				switch (jobtype) {
 					case (WMS_JOB) : {
@@ -536,7 +532,7 @@ void JobSubmit::jobISBFiles(vector<string> &paths){
 			extractFiles(JDL::INPUTSB,
 				files,
 				paths,
-				glite::wms::jdl::EXISTENCE,
+				glite::wms::jdl::ONLYLOCAL,
 				"", isbURI );
 		}
 	}
@@ -548,7 +544,6 @@ void JobSubmit::jobISBFiles(vector<string> &paths){
 void JobSubmit::collectionISBFiles (vector<string> &paths){
 	vector< pair<string ,vector< string > > > nodes;
 	vector<string> files;
-	vector<string>::iterator it;
 	if (collectAd && collectAd->hasAttribute(JDL::INPUTSB)){
 		files = collectAd->getStringValue(JDL::INPUTSB);
 		// Puts in "paths" only the local files
@@ -568,11 +563,6 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 	vector<string> nodes;
 	vector<string> node_files;
 	vector<string>::iterator it;
-
-// ========================== TBR
-vector<string>::iterator it1;
-// ========================== TBR
-
 	if (dagAd){
 		// parent's ISB
 		if (dagAd->hasAttribute(JDL::INPUTSB)){
@@ -611,6 +601,7 @@ vector<string>::iterator it1;
 int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 	vector<string> isb_files ;
 	vector<string>::iterator it;
+	string file = "";
 	int size = 0 ;
 	int fs = 0;
 	if (isbSize > 0) {
@@ -643,8 +634,10 @@ int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 		}
 		// Gets the total size of the ISB files
 		for (it = isb_files.begin(); it != isb_files.end(); ++it){
+			// Remove file protocol string
+			file = Utils::normalizeFile(*it);
 			// size for one of the files in the ISB list
-			fs = Utils::getFileSize(*it);
+			fs = Utils::getFileSize(file);
 			if (fileProto && *fileProto == Options::TRANSFER_FILES_GUC_PROTO && fs > MAX_GUC_SIZE){
 				ostringstream err ;
 				err << "The file exceeds the file size limit of " << MAX_GUC_SIZE << " bytes allowed by ";
@@ -665,7 +658,7 @@ int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 					err.str());
 			}
 			// adds the size of the file to the total ISB size
- 			size += fs ;
+			size += fs ;
 		}
 		this->isbSize = size;
 	}
@@ -739,8 +732,8 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 						"InputSandboxSize Error" , err.str());
 				} else {
 					ostringstream q;
-					q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the max size limit (" << max_isbsize << " bytes)";
-					logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
+					q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the max size limit of " << max_isbsize << " bytes: ";
+					logInfo->print (WMS_DEBUG, q.str(), "file transferring is allowed" );
 				}
 			} else {
 				// User quota is not set on the server: check of Max InputSB size
@@ -808,11 +801,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		if (toBretrieved){
 			// InputSB URI
 			isbURI = collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
-			// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-			zipAllowed = ( ! collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-			if (!zipAllowed) {
-				logInfo->print (WMS_DEBUG, "File compression is not allowed by user", "");
-			}
+			// checks if file archiving and compression is allowed
+			this->checkZipAllowed(jobtype);
 			// Checks the size of the ISB
 			this->checkInputSandboxSize (jobtype);
 			// Adds the ZIPPED_ISB attribute to the JDL
@@ -836,11 +826,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		}
 		logInfo->print (WMS_DEBUG, "The JDL files is:", Utils::getAbsolutePath(*jdlFile));
 		jobAd->fromFile (*jdlFile);
-		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-		zipAllowed = ( ! jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-		if (!zipAllowed){
-			logInfo->print (WMS_DEBUG, "File compression is not allostd::vector<std::string> getNodes();wed by user", "");
-		}
 		// Adds ExpireTime JDL attribute
 		if ((int)expireTime>0) {
 			jobAd->addAttribute (JDL::EXPIRY_TIME, (double)expireTime);
@@ -861,11 +846,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				if (toBretrieved){
 					// InputSB URI
 					isbURI = collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
-					// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-					zipAllowed = ( ! collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-					if (!zipAllowed) {
-						logInfo->print (WMS_DEBUG, "File compression is not allostd::vector<std::string> getNodes();wed by user", "");
-					}
+					// checks if file archiving and compression is allowed
+					this->checkZipAllowed(jobtype);
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
@@ -883,7 +865,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					ex.what()   );
 			}
 		}  else if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {  // DAG
-				logInfo->print (WMS_DEBUG, "A DAG job is being submitted.", "");
+				logInfo->print (WMS_DEBUG, "A DAG job is being submitted", "");
 				jobtype = WMS_DAG ;
 				dagAd = new ExpDagAd (jobAd->toString());
 				dagAd->setLocalAccess(true);
@@ -891,14 +873,11 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				// expands the DAG loading all JDL files
 				dagAd->getSubmissionStrings();
 				toBretrieved=dagAd->gettoBretrieved();
-				if (toBretrieved){
+				if (toBretrieved) {
 					// InputSB URI of the parent node
 					isbURI = getDagISBURI ( );
-					// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-					zipAllowed = ( ! dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-					if (!zipAllowed) {
-						logInfo->print (WMS_DEBUG, "File compression is not allostd::vector<std::string> getNodes();wed by user", "");
-					}
+					// checks if file archiving and compression is allowed
+					this->checkZipAllowed(jobtype);
 					// checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
@@ -906,7 +885,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 						dagAd->setAttribute(ExpDagAd::ZIPPED_ISB, gzFiles);
 					}
 				}
-
 				// JDL string for the DAG
 				jdlString = new string(dagAd->toString()) ;
 		}else{   // JOB
@@ -964,7 +942,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			pass->check(false);
 			// InputSandbox Files
 			toBretrieved=pass->gettoBretrieved();
-			jdlString = new string(pass->toString());
+			jdlString = new string(pass->toString());;
 			// Parametric support
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)){
 				jobtype = WMS_PARAMETRIC;
@@ -976,8 +954,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				if (toBretrieved){
 					// InputSB URI
 					isbURI = getDagISBURI( );
-					// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-					zipAllowed = ( ! dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+					// checks if file archiving and compression is allowed
+					this->checkZipAllowed(jobtype);
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
@@ -990,8 +968,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				if (toBretrieved){
 					// InputSB URI
 					isbURI = jobAd->hasAttribute(JDL::ISB_BASE_URI)?jobAd->getString(JDL::ISB_BASE_URI):"";
-					// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-					zipAllowed = ( ! pass->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || pass->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+					// checks if file archiving and compression is allowed
+					this->checkZipAllowed(jobtype);
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
@@ -1001,9 +979,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 						}
 					}
 				}
-			}
-			if (!zipAllowed) {
-				logInfo->print (WMS_DEBUG, "File compression is not allowed by user", "");
 			}
 			delete(pass);
 		}
@@ -1018,7 +993,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		logInfo->print (WMS_DEBUG, "The job is being submitted to this resource: ", *resourceOpt );
 	}
 	// if --nolisten has been selected for a not interactive job
-	 if (nolistenOpt && jobShadow==NULL) {
+	if (nolistenOpt && jobShadow==NULL) {
 		logInfo->print (WMS_WARNING, "--nolisten: option ignored (the job is not interactive)\n", "", true );
 	}
 }
@@ -1026,8 +1001,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 *Performs:
 *	- Job registration when --register-only is selected
 *	-  Job submission otherwise
- */
-std::string JobSubmit::jobRegOrSub(bool submit ) {
+*/
+std::string JobSubmit::jobRegOrSub(const bool &submit) {
 	vector<string> urls ;
 	int index = 0;
 	// flag to stop while-loop
@@ -1113,7 +1088,7 @@ std::string JobSubmit::jobRegOrSub(bool submit ) {
 * Performs Job start when:
 *	- start option is selected
 *	- job has been already registered and ready to be started
- */
+*/
 
 void JobSubmit::jobStarter(const std::string &jobid ) {
 	vector<string> urls ;
@@ -1181,74 +1156,203 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 		if (success){ break;}
 	}
 }
-/*
-*       contacts the endpoint configurated in the context
+/**
+*       Contacts the endpoint configurated in the context
 *       in order to retrieve the destionationURIs of the job
 *       identified by the jobid
 */
-std::string* JobSubmit::getInputSBDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
-        string *dest_uri = NULL;
-        string look_for = "";
-        vector<string> jobids;
-        vector< pair<string ,vector<string > > >::iterator it1 ;
-        vector<string>::iterator it2;
-        bool found = false;
-        // The destinationURI's vector is empty: the WMProxy service is called
-        if (dsURIs.empty( )){
-                try{
-                        dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
-                } catch (BaseException &exc){
-                        throw WmsClientException(__FILE__,__LINE__,
-                                "getSandboxDestURI ", ECONNABORTED,
-                                "WMProxy Server Error", errMsg(exc));
-                }
-                if (dsURIs.empty( )){
-                        throw WmsClientException(__FILE__,__LINE__,
-                                "getSandboxDestURI ", ECONNABORTED,
-                                "WMProxy Server Error",
-                                "The server doesn't have information on InputSBDestURI for :" + jobid );
-                }
-        }
-        if (child.size()>0){
-                // if the input parameter child is set ....
-                look_for = child ;
-        } else {
-                // parent (if the input string "child" is empty)
-                look_for = jobid;
-        }
-        // Looks for the destURI's of the job
-        for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
-                if (it1->first == look_for) { // parent or child found
-                        for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
-                                // Looks for the destURi for file transferring
-                                if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
-                                        dest_uri = new string( *it2 );
-                                        // loop-exit if "TAR/ZIP-destURI" has been already found
-                                       if (found){
-				    		logInfo->print(WMS_DEBUG, "DestinationURI:", *dest_uri);
-                                                break;
-                                        } else {
-                                                found = true ;
-                                        }
-                                }
-                                // Looks for the destURI for TAR/ZIP file creation
-                                if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
-                                        zipURI = string (*it2);
-                                        // loop-exit if "fileTransfer-destURI" has been already found
-                                        if (found){
-                                                break;
-                                        } else {
-                                                found = true ;
-                                        }
-                                }
-                        }
-                }
+
+std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
+	string *dest_uri = NULL;
+	string look_for = "";
+	vector<string> jobids;
+	vector< pair<string ,vector<string > > >::iterator it1 ;
+	vector<string>::iterator it2;
+	bool found = false;
+	// The destinationURI's vector is empty: the WMProxy service is called
+	if (dsURIs.empty( )){
+		try{
+			logInfo->print(WMS_DEBUG, "Requesting for SandboxBulkDestinationURI" , "");
+			dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
+		} catch (BaseException &exc){
+			throw WmsClientException(__FILE__,__LINE__,
+				"getSandboxDestURI ", ECONNABORTED,
+				"WMProxy Server Error", errMsg(exc));
+		}
+		if (dsURIs.empty( )){
+			throw WmsClientException(__FILE__,__LINE__,
+				"getBulkDestURI ", ECONNABORTED,
+				"WMProxy Server Error",
+				"The server doesn't have information on InputSBDestURI for :" + jobid );
+		}
+	}
+	if (child.size()>0){
+		// if the input parameter child is set ....
+		look_for = child ;
+	} else {
+		// parent (if the input string "child" is empty)
+		look_for = jobid;
+	}
+	// Looks for the destURI's of the job
+	for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
+		if (it1->first == look_for) { // parent or child found
+			for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
+				// Looks for the destURi for file transferring
+				if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
+					dest_uri = new string( *it2 );
+					// Prints out the info on URI's
+					// (In compound jobs URI's of children nodes are only written in the log file, if it exists)
+					if (jobid.compare(look_for) == 0) {
+						logInfo->print(WMS_DEBUG,  "DestinationURI:  " +*dest_uri, "");
+					} else {
+						logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *dest_uri, false);
+					}
+					// loop-exit if "TAR/ZIP-destURI" has been already found
+					if (found){ break; }
+					else { found = true ;}
+				}
+				// Looks for the destURI for TAR/ZIP file creation
+				if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
+					zipURI = string (*it2);
+					// loop-exit if "fileTransfer-destURI" has been already found
+					if (found){ break; }
+					else { found = true ;}
+				}
+			}
+		}
 		if (found) break;
-        }
-        return dest_uri ;
+	}
+	return dest_uri ;
 }
 
+std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
+	vector<string> uris ;
+	vector<string>::iterator it1 ;
+	string *dest_uri = NULL;
+	bool parent = false;
+	bool found = false;
+	try {
+		if (child.size()>0){
+			logInfo->print(WMS_DEBUG, "Requesting for SandboxDestinationURI for child node: " , child);
+			// if the input parameter child is set ....
+			uris = getSandboxDestURI(child, (ConfigContext *)cfgCxt);
+		} else {
+			logInfo->print(WMS_DEBUG, "Requesting for SandboxDestinationURI" , "");
+			// parent (if the input string "child" is empty)
+			uris = getSandboxDestURI(jobid, (ConfigContext *)cfgCxt);
+			parent = true;
 
+		}
+	} catch (BaseException &exc){
+		throw WmsClientException(__FILE__,__LINE__,
+			"getSbDestURI ", ECONNABORTED,
+			"WMProxy Server Error", errMsg(exc));
+	}
+	// Looks for the destURI's of the job
+	for (it1 =uris.begin() ; it1 != uris.end() ; it1++) {
+		// Looks for the destURi for file transferring
+		if ( it1->substr (0, (fileProto->size())) ==  *fileProto){
+			dest_uri = new string( *it1 );
+			if (parent) {
+				logInfo->print(WMS_DEBUG,  "DestinationURI:  " +*dest_uri, "");
+			} else {
+				logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *dest_uri);
+			}
+			// loop-exit if "TAR/ZIP-destURI" has been already found
+			if (found){ break; }
+			else { found = true ;}
+		}
+		// Looks for the destURI for TAR/ZIP file creation
+		if (it1->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
+			zipURI = string (*it1);
+			// loop-exit if "fileTransfer-destURI" has been already found
+			if (found){ break; }
+			else { found = true ;}
+		}
+	}
+	return dest_uri ;
+}
+
+/*
+* According to the version of the WMProxy, the DestinationURI is retrieved
+* either with the "Bulk" service or with the "single-node" service.
+* For compund jobs, the WMProxy "Bulk" method gets back one-shot a list
+* with the URI's of the parent and all its children nodes; instead with the other method,
+* the WMProxy in each call can only get back the URIs for one
+* node
+*/
+std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) {
+	string version = "";
+	if (wmpVersion == 0) {
+		try {
+			logInfo->print (WMS_DEBUG, "Requesting version of the WMProxy server", "");
+			version = getVersion((ConfigContext *)cfgCxt);
+			logInfo->print (WMS_DEBUG, "WMProxy version: ", version);
+			wmpVersion = atoi (version.substr(0,1).c_str() );
+		}catch (BaseException &exc){
+			logInfo->print (WMS_WARNING, "Unable to get the version of the WMProxy server", "");
+			wmpVersion = WMPROXY_OLD_VERSION;
+		}
+	}
+	if (wmpVersion  > WMPROXY_OLD_VERSION) {
+		// bulk service
+		return getBulkDestURI(jobid, child, zipURI);
+	} else {
+		// single node service
+		return getSbDestURI(jobid, child, zipURI);
+	}
+}
+/*
+* 
+*
+*/
+void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
+	string version = "";
+	if (wmpVersion == 0) {
+		try {
+			logInfo->print (WMS_DEBUG, "Requesting version of the WMProxy server", "");
+			version = getVersion((ConfigContext *)cfgCxt);
+			logInfo->print (WMS_DEBUG, "WMProxy version: ", version);
+			wmpVersion = atoi (version.substr(0,1).c_str() );
+		}catch (BaseException &exc){
+			logInfo->print (WMS_WARNING, "Unable to get the version of the WMProxy server", "");
+			wmpVersion = WMPROXY_OLD_VERSION;
+		}
+	}
+
+	if (wmpVersion > WMPROXY_OLD_VERSION) {
+		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
+		switch (jobtype) {
+			case (WMS_JOB) : {
+				this->zipAllowed = ( ! jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				break;
+			}
+			case WMS_DAG: {
+				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
+				zipAllowed = ( ! dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				break;
+			}
+			case WMS_PARAMETRIC: {
+				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
+				zipAllowed = ( ! dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				break;
+			}
+			case (WMS_COLLECTION) : {
+				this->zipAllowed = ( ! collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				break;
+			}
+			default : {
+				this->zipAllowed = false;
+			}
+		}
+		if (!zipAllowed){
+			logInfo->print (WMS_DEBUG, "File archiving and file compression disabled by user in the JDL", "");
+		}
+	} else {
+		this->zipAllowed = false;
+		logInfo->print (WMS_DEBUG, "The WMProxy server doesn't support file archiving and file compression", "");
+	}
+}
 /*
 * File transferring by globus-url-copy (gsiftp protocol)
 */
@@ -1260,8 +1364,8 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 	while (!paths.empty()) {
 		it = paths[0];
 		// Protocol has to be added only if not yet present
-		protocol = (it.first.find("://")==string::npos)?"file://":"";
-		  // command
+		protocol = (it.first.find("://")==string::npos)?FILE_PROTOCOL:"";
+		// command
 		string cmd= "globus-url-copy " + string (protocol+it.first) + " " + string( it.second );
 		if (getenv("GLOBUS_LOCATION")){
 			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
@@ -1274,13 +1378,10 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 				"Unable to find globus-url-copy executable");
 		}
 		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)\n" , cmd);
-bool dummy = true;
-if (dummy==false){
-//		if ( system( cmd.c_str() ) ){
-
+	if ( system( cmd.c_str() ) ){
 			ostringstream info;
-                	info << it.first << "\n";
-   			info << "to " << it.second;
+			info << it.first << "\n";
+			info << "to " << it.second;
 			throw WmsClientException(__FILE__,__LINE__,
 				"gsiFtpTransfer", ECONNABORTED,"File Transferring Error",
 				"unable to transfer the file " + info.str());
@@ -1319,11 +1420,8 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 	// destination
 	string destination = "";
 	// result message
-	//string result = "";
 	long	httpcode = 0;
 	if ( !paths.empty() ){
-		file = paths[0].first ;
-		destination = paths[0].second ;
 		// checks the user proxy pathname
 		if (!proxyFile){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -1360,6 +1458,10 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 			curl_easy_setopt(curl, CURLOPT_PUT, 1);
 			// name of the file to be transferred
 			while(!paths.empty()){
+				// path to local file (to be transferred)
+				file = Utils::normalizeFile(paths[0].first);
+				// destinationURI where to transfer the file
+				destination = paths[0].second ;
 				// curl options: source (first element of the vector)
 				hd_src = fopen(file.c_str(), "rb");
 				if (hd_src == NULL) {
@@ -1436,9 +1538,9 @@ std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 	string* dest_uri = NULL;
 	string zip_uri = "";
 	if (!paths.empty()){
-		dest_uri = getInputSBDestURI(jobid, child, zip_uri);
+		dest_uri = getInputSbDestinationURI(jobid, child, zip_uri);
 		if (!dest_uri){
-			throw WmsClientException(__FILE__,__LINE__,"getInputSBDestURI",DEFAULT_ERR_CODE,
+			throw WmsClientException(__FILE__,__LINE__,"getInputSbDestinationURI",DEFAULT_ERR_CODE,
 			"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
 		}
 		if (zipAllowed) {
@@ -1461,8 +1563,9 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 	vector <pair<string, string> >::iterator it ;
 	int r = 0;
 	TAR *t =NULL;
- 	tartype_t *type = NULL ;
+	tartype_t *type = NULL ;
 	string file = "";
+	string path = "";
 	string tar = "";
 	bool check_size;
 	int tar_size = 0;
@@ -1499,9 +1602,11 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 					}
 				}
 			}
-			// file = name of the file in the archive
-			file = Utils::getAbsolutePathFromURI (it->second);
-			r = tar_append_file (t, (char*) (it->first).c_str(), (char*)file.c_str());
+			// local file to add to the archive
+			file = Utils::normalizeFile(it->first);
+			// name of the file in the archive
+			path = Utils::getAbsolutePathFromURI (it->second);
+			r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
 			if (r!=0){
 				string m = "Error in adding the file "+ it->first + " to " + tar ;
 				char* em = strerror(errno);
@@ -1542,8 +1647,8 @@ std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::
 		info << "To complete the operation, the following InputSandbox files need to be transferred:\n";
 		info << "==========================================================================================================\n";
 		for (it = paths.begin(); it != paths.end( ); ++it) {
-		 	info << "InputSandbox file : " << it->first << "\n";
-   			info << "Destination URI : " << it->second << "\n";
+			info << "InputSandbox file : " << it->first << "\n";
+			info << "Destination URI : " << it->second << "\n";
 			info << "-----------------------------------------------------------------------------\n";
 		}
 		info << "\nthen " ;
@@ -1636,8 +1741,9 @@ std::string  JobSubmit::dagJob(){
 	string jobid = "";
 	string child = "";
 	string node = "";
-	string *destURI = NULL;
+	//string *destURI = NULL;
 	string zip_uri = "";
+	string *dest_uri = NULL;
 	// InputSB files
 	vector <string> paths ;
 	vector <pair<string, string> > to_bcopied ;
@@ -1663,7 +1769,13 @@ std::string  JobSubmit::dagJob(){
 		// InputSB file of the parent node
 		paths = dagAd->getInputSandbox();
 		// Extracts all the local file
-		destURI = this-> toBCopiedFileList(jobid, "", this->isbURI, paths, to_bcopied) ;
+		dest_uri = toBCopiedFileList(jobid, "", this->isbURI, paths, to_bcopied) ;
+	} else {
+		dest_uri = getInputSbDestinationURI (jobid, "", zip_uri);
+		if (!dest_uri){
+			throw WmsClientException(__FILE__,__LINE__,"getInputSbDestinationURI",DEFAULT_ERR_CODE,
+					"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
+		}
 	}
 	// CHILDREN ====================
 	children = jobIds.children ;
@@ -1682,9 +1794,8 @@ std::string  JobSubmit::dagJob(){
 				}
 				node = *((*it)->nodeName);
 				ostringstream info;
-				info << "JobId node : " << child << "\n";
-				info << "Node name : " << node << "\n";
-				logInfo->print(WMS_DEBUG, "DAG_CHILD_NODE",  info.str(), false);
+				info << "DAG child node\nNode name : " << node << " - JobId : " << child ;
+				logInfo->print(WMS_DEBUG,  info.str(), "", false);
 				// child: InputSandbox files
 				if (dagAd->hasNodeAttribute(node, JDL::INPUTSB) ){
 					// ISB files for the child node
@@ -1700,16 +1811,8 @@ std::string  JobSubmit::dagJob(){
 			// If --register-only: message with ISB files list to be printed out
 			infoMsg = transferFilesList (to_bcopied, jobid) + "\n";
 		} else {
-			// Destination URI (in case this info has not been retrieved before)
-			if (!destURI) {
-				destURI = getInputSBDestURI (jobid, child, zip_uri);
-				if (!destURI){
-					throw WmsClientException(__FILE__,__LINE__,"getInputSBDestURI",DEFAULT_ERR_CODE,
-					"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
-				}
-			}
 			// Transfers the ISB local files to the server
-			transferFiles (to_bcopied, *destURI, jobid);
+			transferFiles (to_bcopied, *dest_uri, jobid);
 		}
 	}
 	// Info message for start in case of register only

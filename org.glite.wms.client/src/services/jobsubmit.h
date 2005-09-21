@@ -61,7 +61,10 @@ class JobSubmit : public Job {
                  *	@return a pointer to the string with the destinationURI having the protocol that will be used for any file transferring
 		 *	(or NULL in case the destinationURI with the chosen protocol is not available )
                 */
-                std::string* getInputSBDestURI(const std::string &jobid,const std::string &child, std::string &zipURI) ;
+                std::string* getBulkDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) ;
+
+
+std::string* getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI);
 		/**
 		* Retrieves from the user all the local files of the job input sandbox that have been referenced in the JDL describing
 		* a normal job.
@@ -116,7 +119,7 @@ class JobSubmit : public Job {
 		* @param submit perform submission (true) or registration (false)
 		* @return a string contained the identifier with which the job has been registered
                 */
-		std::string jobRegOrSub(bool submit);
+		std::string jobRegOrSub(const bool &submit);
 
 		/*
 		* Performs job starting
@@ -134,6 +137,8 @@ class JobSubmit : public Job {
 		*	@return the pointer to the destination URI string to be used for the file transferring
                 */
                 std::string* toBCopiedFileList(const std::string &jobid, const std::string &child, const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied);
+
+		std::string* getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) ;
 		/*
 		* Collects a group of files into one or more tar files which are gzip compressed.
 		* The number of archives depends on the size limit of tar archives.
@@ -208,6 +213,15 @@ class JobSubmit : public Job {
                 */
                 void JobSubmit::checkAd(bool &filestoBtransferred, wmsJobType &jobtype);
 		/**
+		* Determines whether the files of the InputSandbox can be collected into a tar archive and compressed.
+		* This method checks the JDL whether the user has disabled the file archiving and compression setting
+		* the "ZIP_ALLOWED" attribute to FALSE.
+		* In case this attribute is set to TRUE or not present, it checks the version of the WMProxy server
+		* in order to estabilish whether it supports this kind of features.
+		*
+		*/
+		void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) ;
+		/**
                 *	String input arguments
                 */
 		std::string* chkptOpt ;
@@ -274,6 +288,10 @@ std::vector<std::string> gzFiles;
 		* List of Destination URI's
 		*/
 		std::vector< std::pair<std::string ,std::vector<std::string > > > dsURIs ;
+		/*
+		* Major Version number of the server
+		*/
+		int wmpVersion;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
