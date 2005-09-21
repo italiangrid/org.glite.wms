@@ -30,7 +30,7 @@ WmsClientException::WmsClientException (const string& file, int line, const stri
 */
 const std::string errMsg(severity sev, const std::string &header, const std::string& err, const bool &debug, std::string* path){
 
-	const string stripe="-----------------------------------------";
+	const string stripe= "-----------------------------------------";
         char ws=(char)32;
 	ostringstream px ;
         string mglog = "";
@@ -101,6 +101,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
         	ofstream outstream(path->c_str(), ios::app);
         	if (outstream.is_open() ) {
                         // to file
+			outstream << stripe << "\n";
 			outstream << mglog ;
 			// closes the file
                         outstream.close ( );
