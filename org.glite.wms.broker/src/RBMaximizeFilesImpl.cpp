@@ -14,6 +14,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <classad_distribution.h>
+
 #include "glite/wms/jdl/ManipulationExceptions.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 
@@ -111,12 +113,16 @@ match_table_t* RBMaximizeFilesImpl::findSuitableCEs(const classad::ClassAd* requ
 	std::accumulate( suitableCEs -> begin(), suitableCEs -> end(), &deletingCEs, insertUnRankedCEsInVector() );
 	std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
 	
- 		
-	const set<string>& CEs_class( nFiles2CEs[max_files] );
+        bool FullListMatchResult = false;
+	if (!requestAd->EvaluateAttrBool("FullListMatchResult", FullListMatchResult) || !FullListMatchResult) {
+ 	
+	  // Remove all CEs which does not belong to the class of CEs with maximum available files
+	  const set<string>& CEs_class( nFiles2CEs[max_files] );
 	
-	deletingCEs.clear();
-	std::accumulate( suitableCEs -> begin(), suitableCEs -> end(), &deletingCEs, insertNotInClassCEsInVector(CEs_class) );
-  	std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
+	  deletingCEs.clear();
+	  std::accumulate( suitableCEs -> begin(), suitableCEs -> end(), &deletingCEs, insertNotInClassCEsInVector(CEs_class) );
+  	  std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
+	}
   }
   return suitableCEs;
 }

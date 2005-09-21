@@ -20,12 +20,11 @@ namespace broker {
 
 namespace 
 {
-  static boost::minstd_rand f_rnd;
+  static boost::minstd_rand f_rnd(time(0));
 }
 	
 stochasticRankSelector::stochasticRankSelector()
 {
-  f_rnd.seed(time(0));
   m_unirand01.reset( new boost::uniform_01<boost::minstd_rand>(f_rnd) );
 }
  
@@ -37,37 +36,52 @@ matchmaking::match_const_iterator stochasticRankSelector::selectBestCE(const mat
 {
   if( match_table.empty() ) return match_table.end();
 
-  double rank_sum = 0.0;
-  double rank_min = 0.0;
-  
   vector<double> rank;
+
+  double rank_sum = 0.0;
 
   for(matchmaking::match_table_t::const_iterator it = match_table.begin(); it != match_table.end(); it++) {
 
-    double k = it -> second.getRank(); 
-  	    
-    if( k < rank_min ) rank_min = k;  
-    
-    rank_sum += k;    
-    rank.push_back( k );
+    double r = it -> second.getRank();
+    rank.push_back( r );
+    rank_sum += r;
   }
 
-  double traslation = 0.0;
+  double rank_mean      =  rank_sum / (double)(rank.size());
+  double rank_variance  =  0.0;
+  double rank_deviation =  0.0;
+
+  // We smooth rank values according to the following function:
+  // f(x) = atan( V * (x - mean ) / dev ) + PI
+  // Thanks to Alessio Gianelle for his usefull support and suggestions.
+
+  static const double PI = std::atan(1.0)*4.0;
+  static const double V = PI;
+
+  // Computing the variance and standard deviation of rank samples...
+
+  for(size_t r=0; r < rank.size(); r++)
+          rank_variance += pow(( rank[r] - rank_mean), 2);
+
+  rank_variance /= (double)(rank.size());
+  rank_deviation = rank_variance > 0 ? sqrt( rank_variance ) : V;
+  rank_sum = 0.0;
+
+  for(size_t r=0; r < rank.size(); r++) {
+    double x = rank[r];
+    rank[r] = atan( V * (x - rank_mean) / rank_deviation ) + PI;
+    rank_sum += rank[r];
+  }
+
   double prob_sum   = 0.0;
-  
-  // if rank_min is less than 0 then we need to translate the
-  // ranks in order to have only positive values...
-  if( rank_min != 0.0 ) traslation =  - 2.0 * rank_min;
- 
-  double p = (*m_unirand01)() * (rank_sum + rank.size()*traslation);
-  
+  double p = (*m_unirand01)() * rank_sum;
   size_t i = 0;
   matchmaking::match_table_t::const_iterator best = match_table.begin();
   do {
-    prob_sum += (rank[i++]+traslation) ;
-    if(prob_sum >= p) break;
+    prob_sum += rank[i++];
+    if ( p < prob_sum ) break;
   } while( ++best != match_table.end() );
-  
+
   return best;
 }	
 
