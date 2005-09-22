@@ -490,8 +490,9 @@ doPurge(std::string dg_jobid)
 	if ( dg_jobid.length() ) { 
   		edglog(debug)<<"JobId object for purging created: "
   			<<dg_jobid<<std::endl;
-  		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
-  			boost::filesystem::system_specific);
+  		/*boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
+  			boost::filesystem::system_specific); */ // Boost 1.29.1
+		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)));
   		return purger::purgeStorageEx(path, edg_wll_LogClearUSER);
     } else {
    		edglog(critical)

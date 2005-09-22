@@ -2072,8 +2072,8 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		edglog(debug)<<"Output URI: " << output_uri <<endl;
 		
 		// Searching files inside directory
-		const boost::filesystem::path p(outputpath,
-			boost::filesystem::system_specific);
+		///const boost::filesystem::path p(outputpath, boost::filesystem::system_specific); // Boost 1.29.1
+		const boost::filesystem::path p(outputpath);
 		std::vector<std::string> found;
 		glite::wms::wmproxy::commands::list_files(p, found);
 		edglog(debug)<<"List size is (hidden files included): "
