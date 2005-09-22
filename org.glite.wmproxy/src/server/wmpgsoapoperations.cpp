@@ -672,7 +672,7 @@ ns1__getJobTemplate(struct soap *soap, ns1__JobTypeList *job_type_list,
 			getJobTemplate(getJobTemplate_response, 
 				*convertFromGSOAPJobTypeList(job_type_list), executable,
 				arguments, requirements, rank);
-			response.jdl = getJobTemplate_response.jdl;
+			response._jdl = getJobTemplate_response.jdl;
 		} catch (Exception &exc) {
 		 	setSOAPFault(soap, exc.getCode(), "getJobTemplate", time(NULL),
 		 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -713,7 +713,7 @@ ns1__getDAGTemplate(struct soap *soap, ns1__GraphStructType *dependencies,
 			getDAGTemplate(getDAGTemplate_response,
 				*convertFromGSOAPGraphStructType(dependencies), requirements,
 				rank);
-			response.jdl = getDAGTemplate_response.jdl;
+			response._jdl = getDAGTemplate_response.jdl;
 		} catch (Exception &exc) {
 		 	setSOAPFault(soap, exc.getCode(), "getDAGTemplate", time(NULL),
 		 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -748,7 +748,7 @@ ns1__getCollectionTemplate(struct soap *soap, int job_number,
 	try  {
 		getCollectionTemplate(getCollectionTemplate_response, job_number,
 			requirements, rank);
-		response.jdl = getCollectionTemplate_response.jdl;
+		response._jdl = getCollectionTemplate_response.jdl;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getCollectionTemplate", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -790,7 +790,7 @@ ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
 			getIntParametricJobTemplate(getIntParametricJobTemplate_response,
 				convertToStringList(attributes), param, parameter_start, parameter_step,
 				requirements, rank);
-			response.jdl = getIntParametricJobTemplate_response.jdl;
+			response._jdl = getIntParametricJobTemplate_response.jdl;
 		} catch (Exception &exc) {
 		 	setSOAPFault(soap, exc.getCode(), "getIntParametricJobTemplate",
 		 		time(NULL), exc.getCode(), (string) exc.what(),
@@ -834,7 +834,7 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 			getStringParametricJobTemplate(getStringParametricJobTemplate_response,
 				convertToStringList(attributes), convertToStringList(param),
 				requirements, rank);
-			response.jdl = getStringParametricJobTemplate_response.jdl;
+			response._jdl = getStringParametricJobTemplate_response.jdl;
 		} catch (Exception &exc) {
 		 	setSOAPFault(soap, exc.getCode(), "getCollectionTemplate", time(NULL),
 		 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -866,7 +866,7 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 	getProxyReqResponse getProxyReq_response;
 	try  {
 		getProxyReq(getProxyReq_response, delegation_id);
-		response.request = getProxyReq_response.request;
+		response._request = getProxyReq_response.request;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getProxyReq", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -1012,11 +1012,11 @@ ns1__removeACLItem(struct soap *soap, string jobId, string item,
 }
 
 int
-ns1__getDelegatedProxyInfo(struct soap *soap, string jobId,
+ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	struct ns1__getDelegatedProxyInfoResponse &response)
 {
-	GLITE_STACK_TRY("ns1__getDelegatedProxyInfo(struct soap *soap, string jobId,"
-		"struct ns1__getDelegatedProxyInfoResponse &response)");
+	GLITE_STACK_TRY("ns1__getDelegatedProxyInfo(struct soap *soap, string "
+		"delegation_id, struct ns1__getDelegatedProxyInfoResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getDelegatedProxyInfo");
 	edglog(info)<<"getDelegatedProxyInfo operation called"<<endl;
 	
@@ -1028,7 +1028,7 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string jobId,
 	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
 	try  {
 		vector<string> returnvector = getDelegatedProxyInfo(
-			getDelegatedProxyInfo_response, jobId);
+			getDelegatedProxyInfo_response, delegation_id);
 		for (unsigned int i = 0; i < returnvector.size(); i++) {
 			list->Item->push_back(returnvector[i]);
 		}
@@ -1044,6 +1044,68 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string jobId,
 	}
 	
 	edglog(info)<<"getDelegatedProxyInfo operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelist,
+	struct ns1__enableFilePerusalResponse &response)
+{
+	GLITE_STACK_TRY("ns1__enableFilePerusal(struct soap *soap, string jobId, "
+		"ns1__StringList *filelist, struct ns1__enableFilePerusalResponse "
+		"&response)");
+	edglog_fn("wmpgsoapoperations::ns1__enableFilePerusal");
+	edglog(info)<<"enableFilePerusal operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+	
+	enableFilePerusalResponse enableFilePerusal_response;
+	try  {
+		
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, exc.getCode(), "enableFilePerusal", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "enableFilePerusal", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"enableFilePerusal operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunks,
+	struct ns1__getPerusalFilesResponse &response)
+{
+	GLITE_STACK_TRY("ns1__getPerusalFiles(struct soap *soap, string jobId, "
+		"string file, bool allChunks, struct ns1__getPerusalFilesResponse "
+		"&response)");
+	edglog_fn("wmpgsoapoperations::ns1__getPerusalFiles");
+	edglog(info)<<"getPerusalFiles operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+	
+	getPerusalFilesResponse getPerusalFiles_response;
+	try  {
+		
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, exc.getCode(), "getPerusalFiles", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getPerusalFiles", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"getPerusalFiles operation completed\n"<<endl;
 
 	return return_value;
 	GLITE_STACK_CATCH();

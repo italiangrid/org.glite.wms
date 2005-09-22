@@ -679,12 +679,14 @@ WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
 	
 	time_t timeleft = 0;
 	X509 *x = NULL;
-	BIO *in = BIO_new(BIO_s_file());
+	BIO *in = NULL;
+	in = BIO_new(BIO_s_file());
 	if (in) {
 		BIO_set_close(in, BIO_CLOSE);
-		if (BIO_read_filename( in, pxfile.c_str() ) > 0) {
+		if (BIO_read_filename(in, pxfile.c_str() ) > 0) {
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
 			if (!x) {
+				BIO_free(in);
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
         		throw AuthorizationException(__FILE__, __LINE__,
@@ -723,19 +725,21 @@ WMPAuthorizer::getNotBefore(const string &pxfile)
 	
 	long sec = 0;
 	X509 *x = NULL;
-	BIO* in = BIO_new(BIO_s_file());
+	BIO *in = NULL;
+	in = BIO_new(BIO_s_file());
 	if (in) {
 		BIO_set_close(in, BIO_CLOSE);
 		if (BIO_read_filename(in, pxfile.c_str()) > 0) {
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
 			if (!x) {
+				BIO_free(in);
         		edglog(severe)<<"Error in PEM_read_bio_X509: Proxy file "
         			"doesn't exist or has bad permissions"<<endl;
         		throw AuthorizationException(__FILE__, __LINE__,
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHZ_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
-			sec =  ASN1_UTCTIME_get(X509_get_notBefore(x));
+			sec = ASN1_UTCTIME_get(X509_get_notBefore(x));
 			free(x);
 		} else {
 			BIO_free(in);
@@ -775,10 +779,11 @@ WMPAuthorizer::checkProxy(const string &proxy)
 			"Proxy validity starting time in the future"
 			"\nPlease check client date/time");
 	}
-	edglog(debug)<<"Time Left: " + boost::lexical_cast<std::string>(
-		getProxyTimeLeft(proxy))<<endl;
+	
+	long timeleft = getProxyTimeLeft(proxy);
+	edglog(debug)<<"Time Left: "<<timeleft<<endl;
 
-	if (getProxyTimeLeft(proxy) <= 1) {
+	if (timeleft <= 1) {
 		edglog(info)<<"The delegated Proxy has expired"<<endl;
 		throw ProxyOperationException(__FILE__, __LINE__,
 			"checkProxy()", wmputilities::WMS_PROXY_EXPIRED,

@@ -29,7 +29,7 @@ namespace wmputilities = glite::wms::wmproxy::utilities; //Exception codes
 vector<string> *
 convertStackVector(vector<string> stack)
 {
-	vector<string> *returnVector = new vector<string>;
+	vector<string> *returnVector = new vector<string>(0);
 	if (&stack) {
 		string element;
 		for (unsigned int i = 0; i < stack.size(); i++) {
@@ -125,6 +125,9 @@ initializeStackPointer(int code)
 		case SOAP_TYPE_ns1__OperationNotAllowedFaultType:
 			sp = new ns1__OperationNotAllowedFaultType;
 			break;
+		default:
+			sp = new ns1__GenericFaultType;
+			break;
 	}
 	return sp;
 }
@@ -160,7 +163,7 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 	edglog(debug)<<"Code: "<<boost::lexical_cast<std::string>(code)<<endl;
 	edglog(debug)<<"Description: "<<description<<endl;
 	edglog(debug)<<"Stack: "<<endl;
-	for (int i = 0; i < stack.size(); i++) {
+	for (unsigned int i = 0; i < stack.size(); i++) {
 		edglog(debug)<<stack[i]<<endl;
 	}
 	edglog(debug)

@@ -184,4 +184,11 @@ struct getDelegatedProxyInfoResponse {
 	StringList *items;
 };
 
+struct enableFilePerusalResponse {
+};
+
+struct getPerusalFilesResponse {
+	StringList *files;
+};
+
 #endif // GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H

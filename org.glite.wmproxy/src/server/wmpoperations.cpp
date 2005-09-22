@@ -83,7 +83,7 @@
 	
 
 // WMProxy software version
-const std::string WMP_MAJOR_VERSION = "1";
+const std::string WMP_MAJOR_VERSION = "2";
 const std::string WMP_MINOR_VERSION = "0";
 const std::string WMP_RELEASE_VERSION = "0";
 const std::string WMP_POINT_VERSION = ".";
@@ -551,7 +551,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 		if (outcome) {
 			edglog(critical)
 				<<"Unable to create sub jobs local directories for job:\n\t"
-				<<jobid<<"\n"<<strerror(errno)<<" errno code: "<<errno<<endl;
+				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
 				"setJobFileSystem()", wmputilities::WMS_FATAL,
 				"Unable to create sub jobs local directories\n(please contact "
@@ -1721,11 +1721,24 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	edglog_fn("wmpoperations::getSandboxDestURI");
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
-	// Authorizing user
+	JobId *jobid = new JobId(jid);
+	
+	//** Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-	auth->authorize();
+		
+	// Getting delegated proxy inside job directory
+	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
+	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	
+	try {
+		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
+	} catch (NotAVOMSProxyException &navp) {
+		auth->authorize("", jid);
+	}
 	delete auth;
 	
 	getSandboxDestURI_response.path = new StringList;
@@ -2570,29 +2583,34 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 
 vector<string>
 getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
-	&getDelegatedProxyInfo_response, const string &job_id)
+	&getDelegatedProxyInfo_response, const string &delegation_id)
 {
 	GLITE_STACK_TRY("getDelegatedProxyInfo()");
 	edglog_fn("wmpoperations::getDelegatedProxyInfo");
-	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
-	JobId *jid = new JobId(job_id);
+	// Checking delegation id
+	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
+	if (delegation_id == "") {
+		edglog(error)<<"Provided delegation ID not valid"<<endl;
+  		throw ProxyOperationException(__FILE__, __LINE__,
+			"getDelegatedProxyInfo()", wmputilities::WMS_DELEGATION_ERROR,
+			"Delegation id not valid");
+	}
 	
 	//** Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-		
-	// Getting delegated proxy inside job directory
-	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
-	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	
+	// Getting delegated proxy from SSL Proxy cache
+	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
+	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
 	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
 		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
+		auth->authorize(vomsproxy.getDefaultFQAN());
 	} catch (NotAVOMSProxyException &navp) {
-		auth->authorize("", job_id);
+		auth->authorize();
 	}
 	delete auth;
 
@@ -2608,8 +2626,6 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 		edglog(debug)<<"No drain"<<endl;
 	}
 	//** END
-	
-	string jobpath = wmputilities::getJobDirectoryPath(*jid);
 	
 	long timeleft = authorizer::WMPAuthorizer::getProxyTimeLeft(delegatedproxy);
 	if (timeleft < 0) {

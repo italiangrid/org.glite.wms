@@ -18,6 +18,11 @@
 #include <netdb.h> // gethostbyname
 #include <unistd.h>
 
+#include <stdlib.h>
+
+#include <sys/wait.h>
+
+
 // boost
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -294,6 +299,18 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 	GLITE_STACK_CATCH();
 }
 
+/* // TBR
+ * ----- WARNING!! ----------------------------------------------------------
+ * This method is a patch to grant correct behaviour for components using old
+ * version of OpenSSL library.
+ * 
+ * it converts:
+ * - emailAddress to Email
+ * - UID          to USERID
+ * 
+ * N.B. To be removed when all components will use OpenSSL 0.9.7
+ * --------------------------------------------------------------------------
+ */
 string
 convertDNEMailAddress(const string & dn)
 {
@@ -302,10 +319,15 @@ convertDNEMailAddress(const string & dn)
 	
 	edglog(debug)<<"Original DN: "<<dn<<endl;
 	string newdn = dn;
-        string toreplace = "emailAddress";
+    string toreplace = "emailAddress";
 	unsigned int pos = dn.rfind(toreplace, dn.size());
 	if (pos != string::npos) {
 		newdn.replace(pos, toreplace.size(), "Email");
+	}
+    toreplace = "UID";
+	pos = newdn.rfind(toreplace, newdn.size());
+	if (pos != string::npos) {
+		newdn.replace(pos, toreplace.size(), "USERID");
 	}
 	edglog(debug)<<"Converted DN: "<<newdn<<endl;
 	return newdn;
@@ -642,7 +664,6 @@ computeFileSize(const string & path)
     return size;
     GLITE_STACK_CATCH();
 }
-
 /*
 int 
 managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
@@ -711,7 +732,7 @@ managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
     GLITE_STACK_CATCH();
 }
 */
-
+/*
 int 
 managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	std::vector<std::string> jobids)
@@ -783,7 +804,8 @@ managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	path.erase(0, pos);
 		   	reduceddir = path.substr(1, path.find(FILE_SEP, 1));
 		   	
-		   	run += document_root + FILE_SEP + sandboxdir + FILE_SEP + reduceddir + " ";
+		   	run += document_root + FILE_SEP + sandboxdir
+		   			+ FILE_SEP + reduceddir + " ";
 		   	
 		    path = document_root + FILE_SEP + allpath;
 		    run2 += path + " "
@@ -792,29 +814,11 @@ managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		    	+ path + FILE_SEP + PEEK_DIRECTORY + " ";
 		}
 		edglog(debug)<<"Executing: \n\t"<<run<<endl;
-		edglog(debug)<<"Command-1 string size: "<<run.size()<<endl;
-		int outcome = system(run.c_str());
-                perror("PERROR 1: ");		
-	   	if (outcome) {
-		   	edglog(debug)<<"OUTCOME 1: "<<outcome<<endl;
-			edglog(debug)<<"WEXITSTATUS 1: "<<WEXITSTATUS(outcome)<<endl;
-			return 1;
-			
+	   	if (system(run.c_str())) {
+		   	return 1;
 	   	}
 	   	edglog(debug)<<"Executing: \n\t"<<run2<<endl;
-		edglog(debug)<<"Command-2 string size: "<<run2.size()<<endl;
-		outcome = system(run2.c_str());
-		perror("PERROR 2: ");
-	   	if (outcome) {
-			edglog(debug)<<"OUTCOME 2: "<<outcome<<endl;
-                        if(WIFEXITED(outcome))
-			  edglog(debug)<<"WEXITSTATUS 2: "<<WEXITSTATUS(outcome)<<endl;
-                        if(WIFSIGNALED(outcome))
-                          edglog(debug)<<"WTERMSIG 2: "<<WTERMSIG(outcome)<<endl; 
-                        if(WIFSTOPPED(outcome))
-                          edglog(debug)<<"WSTOPSIG 2: "<<WSTOPSIG(outcome)<<endl;
-                        if(WCOREDUMP(outcome))
-                          edglog(debug)<<"COREDUMPED 2"<<endl;
+	   	if (system(run2.c_str())) {
 		   	return 1;
 	   	}
 	}
@@ -826,6 +830,204 @@ managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
     return exit_code;
     GLITE_STACK_CATCH();
 }
+*/
+
+void
+doExecv(const string &command, const vector<string> &params,
+	const vector<string> &dirs, unsigned int startIndex, unsigned int endIndex)
+{
+	char **argvs;
+	// +3 -> difference between index, command at first position, NULL at the end
+	int size = params.size() + endIndex - startIndex + 3;
+	argvs = (char **) calloc(size, sizeof(char *));
+	
+	unsigned int i = 0;
+	
+	argvs[i] = (char *) malloc(command.length() + 1);
+	strcpy(argvs[i++], (command).c_str());
+	
+	for (unsigned int j = 0; j < params.size(); j++) {
+		argvs[i] = (char *) malloc(params[j].length() + 1);
+		strcpy(argvs[i++], (params[j]).c_str());
+	}
+	for (unsigned int j = startIndex; j <= endIndex; j++) {
+		argvs[i] = (char *) malloc(dirs[j].length() + 1);
+		strcpy(argvs[i++], (dirs[j]).c_str());
+	}
+	argvs[i] = (char *) 0;
+	
+	for (unsigned int j = 0; j <= i; j++) {
+		edglog(debug)<<"Command Item: "<<argvs[j]<<endl;
+	}
+	switch (vfork()) {
+		case -1:
+			// Unable to fork
+			break;
+		case 0:
+			// child
+			edglog(debug)<<"CHILD BEGIN"<<endl;
+	        /* qui sopra hai fatto tutte le manipolazioni sulle dir e costruito
+	        il vettore per la exec */
+	        
+	        if (execv(command.c_str(), argvs)) {
+	        	unsigned int middle = startIndex + (endIndex - startIndex) % 2;
+	        	doExecv(command, params, dirs, startIndex, middle);
+	        	doExecv(command, params, dirs, middle + 1, endIndex);
+	        	edglog(debug)<<"ERROR"<<endl;
+				//return;
+		   	}
+	        /* qui sotto fai la gestione di errno e se becchi E2BIG splitti  */
+	        edglog(debug)<<"CHILD END"<<endl;
+	        break;
+        default:
+        	// parent
+	    	/* qui ci sara' da fare la gestione degli errori per la wait */
+	    	int status;
+	    	edglog(debug)<<"START WAITING..."<<endl;
+	    	wait(&status);
+	    	edglog(debug)<<"...END WAITING"<<endl;
+	    	break;
+	}
+	for (unsigned int j = 0; j <= i; j++) {
+		free(argvs[j]);
+	}
+    free(argvs);
+}
+
+int 
+managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
+	std::vector<std::string> jobids)
+{
+	GLITE_STACK_TRY("managedir()");
+	edglog_fn("wmputils::managedir");
+	
+	time_t starttime = time(NULL);
+	
+	int exit_code = 0; 
+	unsigned int size = jobids.size();
+	edglog(debug)<<"job id vector size: "<<size<<endl;
+	
+	if (size != 0) {
+	   	// Try to find managedirexecutable 
+	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
+	   	if (glite_path == NULL) {
+	   		glite_path = getenv(GLITE_LOCATION);
+	   	}
+	   	string gliteDirmanExe = (glite_path == NULL)
+	   		? (FILE_SEP + "opt" + FILE_SEP + "glite")
+	   		:(string(glite_path)); 
+	   	gliteDirmanExe += FILE_SEP + "bin" + FILE_SEP + "glite_wms_wmproxy_dirmanager";
+	   	
+	   	int level = 0; 
+	   	bool extended_path = true ; 
+	  
+	   	string dirpermissions = " -m 0773 ";
+	   	string user = " -c " + boost::lexical_cast<std::string>(userid); // UID
+	   	string group = " -g " + boost::lexical_cast<std::string>(getgid()); // GROUP
+	   
+	   	string executable;
+	   	string path;
+	   	string allpath;
+	   	string sandboxdir;
+		string reduceddir;
+		
+		int pos;
+		
+		// Vector contains at least one element
+		path = to_filename (glite::wmsutils::jobid::JobId(jobids[0]),
+		   		level, extended_path);
+		pos = path.find(FILE_SEP, 0);
+		sandboxdir = document_root + FILE_SEP + path.substr(0, pos) + FILE_SEP;
+		// Creating SanboxDir directory if needed
+		if (!fileExists(sandboxdir)) {
+			string run = gliteDirmanExe + user + group + dirpermissions
+		   		+ sandboxdir;
+		   	edglog(debug)<<"Creating SandboxDir..."<<endl;
+			edglog(debug)<<"Executing: \n\t"<<run<<endl;
+			if (system(run.c_str())) {
+		   		return 1;
+		   	}
+		}
+		
+		//string run = gliteDirmanExe + user + group + dirpermissions;
+		
+		vector<string> redparams;
+		redparams.push_back("-c");
+		string juser2 = boost::lexical_cast<std::string>(userid);
+		redparams.push_back(juser2);
+		redparams.push_back("-g");
+		string group2 = boost::lexical_cast<std::string>(getgid());
+		redparams.push_back(group2);
+		redparams.push_back("-m");
+		redparams.push_back("0773");
+		
+		vector<string> jobparams;
+		jobparams.push_back("-c");
+		juser2 = boost::lexical_cast<std::string>(jobdiruserid);
+		jobparams.push_back(juser2);
+		jobparams.push_back("-g");
+		group2 = boost::lexical_cast<std::string>(getgid());
+		jobparams.push_back(group2);
+		jobparams.push_back("-m");
+		jobparams.push_back("0770");
+	
+		const int INPUT_SB_DIRECTORY_LEN = INPUT_SB_DIRECTORY.length() + 2;
+		const int OUTPUT_SB_DIRECTORY_LEN = OUTPUT_SB_DIRECTORY.length() + 2;
+		const int PEEK_DIRECTORY_LEN = PEEK_DIRECTORY.length() + 2;
+		
+		vector<string> reddirs;
+		vector<string> jobdirs;
+	   	for (unsigned int i = 0; i < jobids.size(); i++) {
+	   		edglog(debug)<<"CICLING..."<<endl;
+		   	path = to_filename(glite::wmsutils::jobid::JobId(jobids[i]),
+		   		level, extended_path);
+		   	allpath = path;
+		   	pos = path.find(FILE_SEP, 0);
+		   	sandboxdir = path.substr(0, pos);
+		   	path.erase(0, pos);
+		   	reduceddir = path.substr(1, path.find(FILE_SEP, 1));
+		   	
+		   	reddirs.push_back(document_root + FILE_SEP + sandboxdir
+		   			+ FILE_SEP + reduceddir);
+		   	//run += document_root + FILE_SEP + sandboxdir
+		   		//	+ FILE_SEP + reduceddir + " ";
+		   	
+		    path = document_root + FILE_SEP + allpath;
+		    edglog(debug)<<"INSIDE CICLING middle... "<<endl;
+		   
+		    jobdirs.push_back(path);
+		    jobdirs.push_back(path + FILE_SEP + INPUT_SB_DIRECTORY);
+		    jobdirs.push_back(path + FILE_SEP + OUTPUT_SB_DIRECTORY);
+		    jobdirs.push_back(path + FILE_SEP + PEEK_DIRECTORY);
+		    
+		    edglog(debug)<<"INSIDE CICLING end... "<<endl;
+		}
+		
+		//argvs[j] = NULL;
+		
+		//edglog(debug)<<"Executing: \n\t"<<run<<endl;
+	   	/*if (system(run.c_str())) {
+		   	return 1;
+	   	}*/
+	   	for (unsigned int j = 0; j < reddirs.size(); j++) {
+			edglog(debug)<<"DIRS VEC ITEM: "<<reddirs[j]<<endl;
+		}
+	   	doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1);
+	   	for (unsigned int j = 0; j < jobdirs.size(); j++) {
+			edglog(debug)<<"DIRS VEC ITEM: "<<jobdirs[j]<<endl;
+		}
+	   	doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1);
+        
+	}
+	time_t stoptime = time(NULL);
+	edglog(debug)<<"______ STARTING TIME: "<<starttime<<endl;
+	edglog(debug)<<"______ STOPPING TIME: "<<stoptime<<endl;
+	edglog(debug)<<"______ ELAPSED TIME: "<<(stoptime - starttime)<<endl;
+	
+    return exit_code;
+    GLITE_STACK_CATCH();
+}
+
 
 bool 
 isNull(string field)

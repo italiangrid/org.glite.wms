@@ -45,8 +45,8 @@ void setFaultDetails(struct soap *soap, int type, void *sp);
  * @param description fault description
  * @param stack a vector containing the fault stack
  */
-void setSOAPFault(struct soap *soap, int code, const string &method_name,
-	time_t time_stamp, int error_code, const string &description,
+void setSOAPFault(struct soap *soap, int code, const std::string &method_name,
+	time_t time_stamp, int error_code, const std::string &description,
 	std::vector<std::string> stack);
 
 /**
@@ -60,7 +60,7 @@ void setSOAPFault(struct soap *soap, int code, const string &method_name,
  * @param error_code error code
  * @param description fault description
  */
-void setSOAPFault(struct soap *soap, int code, const string &method_name,
-	time_t time_stamp, int error_code, const string &description);
+void setSOAPFault(struct soap *soap, int code, const std::string &method_name,
+	time_t time_stamp, int error_code, const std::string &description);
 	
 #endif // GLITE_WMS_WMPROXY_WMPGSOAPFAULTMANIPULATOR_H

@@ -97,12 +97,23 @@ logRemoteHostInfo()
 			<<"----------------------------------------"
 				"------------------------------------------"
 		<<endl;
-		
+
 		return 0;
 	} catch (exception &ex) {
-		edglog(fatal) << "Exception caught: " << ex.what() << endl;
+		edglog(fatal)<<"Exception caught: "<<ex.what()<<endl;
 		return -1;
 	}
+}
+
+void
+sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
+{
+	setSOAPFault(&proxy, code, method, time(NULL), code, msg);
+	soap_print_fault(&proxy, stderr);
+	soap_send_fault(&proxy); 
+	soap_destroy(&proxy);
+	soap_end(&proxy); 
+	soap_done(&proxy);
 }
 
 int
@@ -152,35 +163,44 @@ main(int argc, char* argv[])
 		//wmputilities::initsignalhandler();
 		
 		// Running as a Fast CGI application
-		edglog(info) << "Running as a FastCGI program" << endl;
-		edglog(info) << "Entering the FastCGI accept loop..." << endl;
+		edglog(info)<<"Running as a FastCGI program"<<endl;
+		edglog(info)<<"Entering the FastCGI accept loop..."<<endl;
 		edglog(info)
 			<<"----------------------------------------"
 			<<endl;
+		
 		while (FCGI_Accept() >= 0) {
 			WMProxy proxy;
 			if (logRemoteHostInfo()) {
-				setSOAPFault(&proxy, -1, "logRemoteHostInfo", time(NULL),
-					-1, "Unable to log remote host info\n(please contact server administrator)");
-				soap_print_fault(&proxy, stderr);
-				soap_send_fault(&proxy); 
-				soap_destroy(&proxy);
-				soap_end(&proxy); 
-				soap_done(&proxy);
+				sendFault(proxy, "logRemoteHostInfo",
+					"Unable to log remote host info"
+					"\n(please contact server administrator)", 1);
 				continue; 
 			}
 			proxy.serve();
 		}
-		edglog(info) << "Exiting the FastCGI loop..." << endl;
+		edglog(info)<<"Exiting the FastCGI loop..."<<endl;
 		
     } catch (configuration::CannotOpenFile &file) {
-	    edglog(fatal) << "Cannot open file: " << file << std::endl;
+    	string msg = "Cannot open file: " + string(file.what());
+	    edglog(fatal)<<msg<<std::endl;
+	    WMProxy proxy;
+	   	sendFault(proxy, "main", msg, -4);
     } catch (configuration::CannotConfigure &error) {
-        edglog(fatal) << "Cannot configure: " << error << std::endl;
+    	string msg = "Cannot configure: " + string(error.what());
+	    edglog(fatal)<<msg<<std::endl;
+        WMProxy proxy;
+	   	sendFault(proxy, "main", msg, -3);
 	} catch (exception &ex) {
-		edglog(fatal) << "Exception caught: " << ex.what() << endl;
+		string msg = "Exception caught: " + string(ex.what());
+	    edglog(fatal)<<msg<<std::endl;
+		WMProxy proxy;
+	   	sendFault(proxy, "main", msg, -2);
  	} catch (...) {
-    	edglog(fatal) << "Uncaught exception...." << endl;
+    	string msg = "Uncaught exception";
+	    edglog(fatal)<<msg<<std::endl;
+		WMProxy proxy;
+	   	sendFault(proxy, "main", msg, -1);
   	}
 	return 0;
 }
