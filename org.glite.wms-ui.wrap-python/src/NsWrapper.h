@@ -111,7 +111,7 @@ private :
  * it allows to check the proxy cerfticate's parameters such us validity, retrieve issuer etc etc.
  * it also allows to manipulate VirtualOrganisation certificate properties, retreving, if present, VO default names and groups
  *
- * @brief User Certificate manipulation wrap
+ * @brief LB Event wrapper class
  * @version 0.1
  * @date 15 April 2002
  * @author Alessandro Maraschini <alessandro.maraschini@datamat.it>

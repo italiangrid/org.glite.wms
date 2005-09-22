@@ -67,7 +67,13 @@ bool AdWrapper::toDagAd (){
 }
 bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-	glite::wms::partitioner::Partitioner part ( jad->ad(),jobids);
+	if (jad==NULL){
+		error_code= true;
+		error = "Fatal Error: JobAd instance empty. Unable to create Dag";
+		return true;
+	}
+	(    (glite::wms::jdl::JobAd*)  jad)->check(false);
+	 glite::wms::partitioner::Partitioner part ( jad->ad(),jobids);
 	cAd=new DAGAd( part.createDag()->ad() );
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
@@ -228,8 +234,10 @@ string AdWrapper::getAd( const string& name  ) {
 *************************************************************************************************************/
 DagWrapper::DagWrapper( ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-		if (cAd==NULL){error_code=true;error = "Fatal Error: This method must be used after the AdWrapper::toDagAd method"; }
-		else{ 
+		if (cAd==NULL){
+			error_code=true;
+			error = "Fatal Error: This method must be used after the AdWrapper::toDagAd method";
+		}else{
 			dagad= new ExpDagAd (cAd) ;  
 		}
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
