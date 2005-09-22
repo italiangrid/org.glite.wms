@@ -76,7 +76,7 @@ bool expand_glueceid_info(gluece_info_type& gluece_info)
 {
   string ce_str;
   ce_str.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEUniqueID"));
-  static boost::regex  expression_ceid("(.+/[^\\-]+-(.+))-(.+)");
+  static boost::regex  expression_ceid("(.+/[^\\-]+-([^\\-]+))-(.+)");
   boost::smatch  pieces_ceid;
   string gcrs, type, name;
   

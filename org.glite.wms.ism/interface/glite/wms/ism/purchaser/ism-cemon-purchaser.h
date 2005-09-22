@@ -35,7 +35,6 @@ public:
   );
 
   void do_purchase();
-
   void operator()();
 
 private:
@@ -45,6 +44,13 @@ private:
   int m_rate;
   std::vector<std::string> m_multi_attributes;
   std::vector<std::string> m_services;
+};
+
+class ism_cemon_purchaser_entry_update
+{
+public:
+  ism_cemon_purchaser_entry_update() {}
+  bool operator()(int a,boost::shared_ptr<classad::ClassAd>& ad);
 };
 
 namespace cemon {
@@ -60,6 +66,9 @@ typedef ism_cemon_purchaser* create_t(std::string const& certfile,
     skip_predicate_type skip_predicate = skip_predicate_type()
 );
 typedef void destroy_t(ism_cemon_purchaser*);
+
+// type of the entry update function factory
+typedef boost::function<bool(int&, ad_ptr)> create_entry_update_fn_t();
 }
 
 } // namespace purchaser

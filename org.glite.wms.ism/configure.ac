@@ -19,17 +19,61 @@
 #
 #       Revision history: 
 #       $Log$
-#       Revision 1.12  2005/06/14 15:45:23  giaco
-#       don't build test
+#       Revision 1.13  2005/09/22 11:25:23  monforte
+#       Merge against glite-wms-ism_branch_1_1_0
 #
-#       Revision 1.11  2005/06/09 15:38:20  monforte
-#       *** empty log message ***
+#       Revision 1.7.2.12.2.12  2005/09/05 14:24:23  eronchie
+#       Added XERCES dependencies
 #
-#       Revision 1.10  2005/05/19 11:33:44  eronchie
-#       Removed temporarely example
+#       Revision 1.7.2.12.2.11  2005/08/17 13:04:17  eronchie
+#       Increased version
 #
-#       Revision 1.9  2005/02/28 10:50:17  monforte
-#       *** empty log message ***
+#       Revision 1.7.2.12.2.10  2005/08/17 13:02:39  eronchie
+#       Added ERROR message that breaks configure
+#
+#       Revision 1.7.2.12.2.9  2005/08/04 14:38:35  monforte
+#       Fixed bug #y9963
+#
+#       Revision 1.7.2.12.2.8  2005/08/03 09:15:37  emartel
+#       increased version
+#
+#       Revision 1.7.2.12.2.7  2005/07/28 14:37:25  eronchie
+#       Decreased version
+#
+#       Revision 1.7.2.12.2.6  2005/07/27 10:37:35  emartel
+#       version increased due to the release of the first rgma purchaser working version
+#
+#       Revision 1.7.2.12.2.5  2005/07/20 16:18:26  emartel
+#       increased version
+#
+#       Revision 1.7.2.12.2.4  2005/07/07 15:09:43  monforte
+#       Increased version numbers
+#
+#       Revision 1.7.2.12.2.3  2005/06/27 14:43:33  monforte
+#       Added entry update function factory methods needed to avoid the RTLD_GLOBAL
+#       flag while loading the ism purchasers lib from the manager.
+#
+#       Revision 1.7.2.12.2.2  2005/06/21 14:45:54  monforte
+#       change in Globus Contact string parsing to acccomodate condor CE names in the 'queue' field
+#
+#       Revision 1.7.2.12.2.1  2005/06/21 13:40:35  monforte
+#       Fix for bug #8942, #8663
+#
+#       Revision 1.7.2.13  2005/06/20 15:15:54  monforte
+#       fix for bug #8942 #8663
+#
+#       Revision 1.7.2.12  2005/05/05 12:16:30  monforte
+#       Integration with CEMON 1.2
+#
+#       Revision 1.7.2.11  2005/04/06 08:06:34  fprelz
+#       Increased revision number, as already done by 'dimeglio' on
+#       org.glite.wms.ism/project/version.properties
+#
+#       Revision 1.7.2.10  2005/03/10 10:45:25  monforte
+#       Enhancement: The IsmBlackList configuration parameter supports now :regular-expression specification.
+#
+#       Revision 1.7.2.9  2005/03/08 08:46:53  monforte
+#       Fixed: Skipping GlueCE info with unsupported GlueCEUniqueID format.
 #
 #       Revision 1.7.2.8  2005/02/15 12:18:14  monforte
 #       Fixed CE SE binding
@@ -84,7 +128,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [1.1.0])
+AC_INIT([GLite WMS ISM], [2.0.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
@@ -138,14 +182,48 @@ have_cppunit=no
 have_globus=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
+
+AC_CLASSADS([], have_classads=yes, have_classads=no)
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+
+AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
+
+AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+if test "$have_globus" = "no"; then
+  AC_MSG_RESULT(["Please verify GLOBUS package"])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_RESULT(["Please verify BOOST package"])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_RESULT(["Please verify CLASSADS package"])
+fi
+
+if test "$have_cppunit" = "no"; then
+  AC_MSG_RESULT(["Please verify CPPUNIT package"])
+fi
+
+if test "$have_globus" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_cppunit" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
 
 have_glite_wms_common=no
 have_glite_wms_jdl=no
@@ -156,6 +234,7 @@ have_glite_ce=no
 AC_GLITE
 
 AC_GSOAP
+AC_XERCES
 
 AC_OPTIMIZE
 

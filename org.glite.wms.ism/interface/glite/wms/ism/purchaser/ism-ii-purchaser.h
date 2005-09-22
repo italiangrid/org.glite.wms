@@ -26,17 +26,14 @@ public:
     int port,
     std::string const& distinguished_name,
     int timeout = 30,
+    exec_mode_t mode = loop,
     size_t interval = 30,
+    exit_predicate_type exit_predicate = exit_predicate_type(),
     skip_predicate_type skip_predicate = skip_predicate_type()	
   );
   
   void do_purchase();
-
   void operator()();
-
-  update_function_type update_function() const;
-
-
 private:                
   std::string m_hostname;
   int m_port;
@@ -47,15 +44,8 @@ private:
 class ism_ii_purchaser_entry_update
 {
 public:
-  ism_ii_purchaser_entry_update(std::string const& id, std::string const& hn, int p, std::string const& dn, int timeout) :
-    m_id(id), m_ldap_server(hn), m_ldap_port(p), m_ldap_dn(dn), m_ldap_timeout(timeout)  {}
+  ism_ii_purchaser_entry_update() {}
   bool operator()(int a,boost::shared_ptr<classad::ClassAd>& ad);
-private:
-  std::string m_id;
-  std::string m_ldap_server;
-  int m_ldap_port;
-  std::string m_ldap_dn;
-  int m_ldap_timeout;
 };
 
 namespace ii {
@@ -71,6 +61,9 @@ typedef ism_ii_purchaser* create_t(std::string const& hostname,
   );
 
 typedef void destroy_t(ism_ii_purchaser*);
+
+// type of the entry update function factory
+typedef boost::function<bool(int&, ad_ptr)> create_entry_update_fn_t();
 }
 
 } // namespace purchaser

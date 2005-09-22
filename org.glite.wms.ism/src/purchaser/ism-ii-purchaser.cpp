@@ -4,7 +4,6 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 // $Id$
-
 #include <boost/mem_fn.hpp>
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 
@@ -15,21 +14,20 @@
 
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 
-#include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/common/configuration/WMConfiguration.h"
-
 using namespace std;
 
 namespace glite {
 namespace wms {
 
-namespace ldif2classad  = common::ldif2classad;
+namespace ldif2classad	= common::ldif2classad;
 
 namespace ism {
 namespace purchaser {
 
 namespace {
+
+boost::condition f_purchasing_cycle_run_condition;
+boost::mutex     f_purchasing_cycle_run_mutex;
 
 bool mergeInfo(
   string const& filter,
@@ -71,19 +69,19 @@ string getClusterName(ldif2classad::LDIFObject& ldif_CE)
     // Looking for one GlueForeignKey (it is possibly multi-valued)
     // With the specified attribute.
     for( std::vector<std::string>::const_iterator key = foreignKeys.begin();
-         key != foreignKeys.end(); key++) {
+	 key != foreignKeys.end(); key++) {
 
       if( boost::regex_match(*key, result_cluid, get_cluid) ) {
 
-        cluster.assign(result_cluid[1].first,result_cluid[1].second);
-        found = true;
-        break;
+	cluster.assign(result_cluid[1].first,result_cluid[1].second);
+	found = true;
+	break;
       }
     }
     if (!found) {
 
       Warning("Cannot find GlueClusterUniqueID assignment. Using "
-              << cluster << ".");
+	      << cluster << ".");
     }
   } catch( ldif2classad::LDAPNoEntryEx& ) {
 
@@ -92,7 +90,7 @@ string getClusterName(ldif2classad::LDIFObject& ldif_CE)
   } catch( boost::bad_expression& e ){
 
     Error("Bad regular expression " << reg_string
-          << ". Cannot parse GlueForeignKey. Using " << cluster << ".");
+	  << ". Cannot parse GlueForeignKey. Using " << cluster << ".");
   }
   return cluster;
 }
@@ -101,18 +99,8 @@ string getClusterName(ldif2classad::LDIFObject& ldif_CE)
  * Prefetch GlueCEUniqueIDs
  * This method obtains the GlueCEUniqueIDs from the information index
  */
-void prefetchGlueCEinfo(
-  const std::string& hostname,
-  int port,
-  const std::string& dn,
-  int timeout,
-  gluece_info_container_type& gluece_info_container
-)
+void prefetchGlueCEinfo(ldif2classad::LDAPConnection* IIconnection, gluece_info_container_type& gluece_info_container) 
 {
-  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection(
-    new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
-  );
-
   vector<string> reqAttributes;
 
   reqAttributes.push_back("GlueCEUniqueID");
@@ -120,7 +108,7 @@ void prefetchGlueCEinfo(
 
   string filter("objectclass=GlueCE");
 
-  ldif2classad::LDAPQuery query(IIconnection.get(), filter, reqAttributes);
+  ldif2classad::LDAPQuery query(IIconnection, filter, reqAttributes);
 
   Debug("Filtering Information Index (GlueCEUniqueIDs): " << filter);
 
@@ -133,22 +121,22 @@ void prefetchGlueCEinfo(
       utilities::ii_attributes::const_iterator multi_attrs_begin;
       utilities::ii_attributes::const_iterator multi_attrs_end;
       boost::tie(multi_attrs_begin,multi_attrs_end)
-        = utilities::ii_attributes::multiValued();
+	= utilities::ii_attributes::multiValued();
 
       ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );
       ldap_it.first();
 
       while (ldap_it.current()) {
 
-        ldif2classad::LDIFObject ldif_CE(*ldap_it);
-        string GlueCEUniqueID;
-        ldif_CE.EvaluateAttribute("GlueCEUniqueID", GlueCEUniqueID);
+	ldif2classad::LDIFObject ldif_CE(*ldap_it);
+	string GlueCEUniqueID;
+	ldif_CE.EvaluateAttribute("GlueCEUniqueID", GlueCEUniqueID);
 
-        boost::shared_ptr<classad::ClassAd> ceAd(
-          ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end)
-        );
-        gluece_info_container[GlueCEUniqueID] = ceAd;
-        ldap_it.next();
+	boost::shared_ptr<classad::ClassAd> ceAd(
+	  ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end)
+	);
+	gluece_info_container[GlueCEUniqueID] = ceAd;
+	ldap_it.next();
       } // while( ldap_it.current() )
     }
   }
@@ -166,113 +154,91 @@ void prefetchGlueCEinfo(
   }
 }
 
-bool
-fetch_gluece_se_bind_info(
-  ldif2classad::LDAPConnection* IIconnection,
-  std::string const& gluece_id,
-  gluece_info_type& gluece_info
-)
+/*
+ * Prefetch GlueCEUniqueIDs
+ * This method obtains the GlueCEUniqueIDs from the information index
+ */
+void prefetchGlueCEinfo(const std::string& hostname,
+			int port,
+			const std::string& dn,
+			int timeout,
+			gluece_info_container_type& gluece_info_container)
+{
+  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection(
+    new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
+  );
+  prefetchGlueCEinfo(IIconnection.get(), gluece_info_container);
+}
+
+bool fetch_gluece_se_bind_info(ldif2classad::LDAPConnection* IIconnection,
+                       std::string const& gluece_id,
+                       gluece_info_type& gluece_info)
 {
   bool result = false;
-  string CloseSE_filter(
-    "(&(objectclass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID="
-    + gluece_id
-    + "))"
-  );
-  ldif2classad::LDAPQuery CloseSE_query(
-    IIconnection,
-    CloseSE_filter,
-    vector<string>()
-  );
+  string CloseSE_filter("(&(objectclass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + gluece_id + "))");
+  ldif2classad::LDAPQuery CloseSE_query(IIconnection, CloseSE_filter, vector<string>());
 
   try {
     CloseSE_query.execute();
     if (!CloseSE_query.tuples()->empty()) {
       try {
-        ldif2classad::LDAPForwardIterator CloseSE_it(CloseSE_query.tuples());
+        ldif2classad::LDAPForwardIterator CloseSE_it( CloseSE_query.tuples() );
         CloseSE_it.first();
-        std::vector<classad::ExprTree*>  CloseSE_exprs;
+	std::vector<classad::ExprTree*>  CloseSE_exprs;
         while (CloseSE_it.current()) {
           vector<string> CloseSEs;
-          CloseSE_it->EvaluateAttribute(
-            "GlueCESEBindGroupSEUniqueID",
-            CloseSEs
-          );
+          CloseSE_it->EvaluateAttribute("GlueCESEBindGroupSEUniqueID",CloseSEs);
+	
+          for(vector<string>::const_iterator it=CloseSEs.begin(); it!=CloseSEs.end(); it++) {
 
-          for (vector<string>::const_iterator it = CloseSEs.begin();
-               it!=CloseSEs.end();
-               ++it) {
-
-            string CloseSEInfo_filter(
-              "(&(objectclass=GlueCESEBind)(GlueCESEBindSEUniqueID="
-              + *it
-              + "))"
-            );
-            ldif2classad::LDAPQuery CloseSEInfo_query(
-              IIconnection,
-              CloseSEInfo_filter,
-              vector<string>()
-            );
+            string CloseSEInfo_filter("(&(objectclass=GlueCESEBind)(GlueCESEBindSEUniqueID=" + *it + "))");
+            ldif2classad::LDAPQuery CloseSEInfo_query(IIconnection, CloseSEInfo_filter, vector<string>());
             try {
               CloseSEInfo_query.execute();
               if (!CloseSEInfo_query.tuples()->empty()) {
 
-                ldif2classad::LDAPForwardIterator CloseSEInfo_it(
-                  CloseSEInfo_query.tuples()
-                );
+                ldif2classad::LDAPForwardIterator CloseSEInfo_it( CloseSEInfo_query.tuples() );
                 CloseSEInfo_it.first();
                 CloseSE_exprs.push_back(new classad::ClassAd());
-                string name;
-                string mount;
-                CloseSEInfo_it->EvaluateAttribute(
-                  "GlueCESEBindSEUniqueID",
-                  name
-                );
-                CloseSEInfo_it->EvaluateAttribute(
-                  "GlueCESEBindCEAccesspoint",
-                  mount
-                );
-                static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("name", name);
+                string name, mount;
+                CloseSEInfo_it->EvaluateAttribute("GlueCESEBindSEUniqueID", name);
+		CloseSEInfo_it->EvaluateAttribute("GlueCESEBindCEAccesspoint", mount);
+                static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("name" , name);
                 static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("mount", mount);
-              } else {
-                Warning(
-                  "No entries while filtering " << CloseSEInfo_filter << endl
-                );
               }
-            } catch( ldif2classad::QueryException& e) {
+              else {
+                Warning("No entries while filtering " << CloseSEInfo_filter << endl);
+              }
+            }
+            catch( ldif2classad::QueryException& e) {
               Warning(e.what() << endl);
             }
           }
           CloseSE_it.next();
         }
-        gluece_info->Insert(
-          "CloseStorageElements",
-          classad::ExprList::MakeExprList(CloseSE_exprs)
-        );
-        result = true;
-      } catch (ldif2classad::LDAPNoEntryEx&) {
+        gluece_info->Insert("CloseStorageElements", classad::ExprList::MakeExprList(CloseSE_exprs));
+	result = true;
+      }
+      catch( ldif2classad::LDAPNoEntryEx& ) {
         Warning("No entries while filtering " << CloseSE_query.what() << endl);
       }
-    } else {
+    }
+    else {
       Warning("No tuples executing query " << CloseSE_query.what() << endl);
     }
-  } catch( ldif2classad::QueryException& e) {
+  }
+  catch( ldif2classad::QueryException& e) {
     Warning(e.what() << endl);
   }
   return result;
 }
 
-bool
-fetch_gluece_info(
-  ldif2classad::LDAPConnection* IIconnection,
-  std::string const& gluece_id,
-  gluece_info_type& gluece_info
-)
+bool fetch_gluece_info(ldif2classad::LDAPConnection* IIconnection,
+		       std::string const& gluece_id,
+		       gluece_info_type& gluece_info)
 {
   std::vector<std::string> all_attributes;
-  std::string filter(
-    "(&(objectclass=GlueCE)(GlueCEUniqueID=" + gluece_id + "))"
-  );
+  std::string filter("(&(objectclass=GlueCE)(GlueCEUniqueID=" + gluece_id + "))");
 
   ldif2classad::LDAPQuery query(IIconnection, filter, all_attributes);
 
@@ -285,33 +251,24 @@ fetch_gluece_info(
       utilities::ii_attributes::const_iterator multi_attrs_begin;
       utilities::ii_attributes::const_iterator multi_attrs_end;
       boost::tie(multi_attrs_begin, multi_attrs_end)
-        = utilities::ii_attributes::multiValued();
+	= utilities::ii_attributes::multiValued();
 
       ldif2classad::LDAPForwardIterator ldap_it(query.tuples());
       ldap_it.first();
       ldif2classad::LDIFObject ldif_CE(*ldap_it);
+      
+      string cluster("(&(objectclass=GlueSubCluster)(GlueSubClusterUniqueID=" + getClusterName(ldif_CE) + "))");
+      string closese("(&(objectClass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID=" + gluece_id + "))");
 
-      string cluster(
-        "(&(objectclass=GlueSubCluster)(GlueSubClusterUniqueID="
-        + getClusterName(ldif_CE)
-        + "))"
-      );
-      string closese(
-        "(&(objectClass=GlueCESEBindGroup)(GlueCESEBindGroupCEUniqueID="
-        + gluece_id +
-        "))"
-      );
-
-      if (mergeInfo(cluster, *IIconnection, ldif_CE)
-          && mergeInfo(closese, *IIconnection, ldif_CE)) {
-
-        boost::scoped_ptr<classad::ClassAd> ceAd(
-          ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end)
-        );
-
-        gluece_info->Update(*ceAd);
-        return true;
-      }
+      if (mergeInfo(cluster, *IIconnection, ldif_CE) && 
+	  mergeInfo(closese, *IIconnection, ldif_CE)) {
+	
+	boost::scoped_ptr<classad::ClassAd> 
+	  ceAd(ldif_CE.asClassAd(multi_attrs_begin, multi_attrs_end));
+	
+	gluece_info->Update(*ceAd);
+	return true;
+      } 
     }
 
   } catch (ldif2classad::ConnectionException& e) {
@@ -326,41 +283,28 @@ fetch_gluece_info(
   }
   return false;
 }
-
 } // {anonymous}
 
-bool
-ism_ii_purchaser_entry_update::operator()(
-  int a,
-  boost::shared_ptr<classad::ClassAd>& ad
-)
+bool ism_ii_purchaser_entry_update::operator()(int a,boost::shared_ptr<classad::ClassAd>& ad)
 {
-  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection(
-    new ldif2classad::LDAPSynchConnection(
-      m_ldap_dn,
-      m_ldap_server,
-      m_ldap_port,
-      m_ldap_timeout)
-  );
-  return fetch_gluece_info(IIconnection.get(), m_id, ad)
-    && fetch_gluece_se_bind_info(IIconnection.get(), m_id, ad)
-    && expand_glueceid_info(ad)
-    && insert_aux_requirements(ad);
+  boost::mutex::scoped_lock l(f_purchasing_cycle_run_mutex);
+  f_purchasing_cycle_run_condition.notify_one();
 }
-
+  
 ism_ii_purchaser::ism_ii_purchaser(
   std::string const& hostname,
   int port,
   std::string const& distinguished_name,
   int timeout,
+  exec_mode_t mode,
   size_t interval,
+  exit_predicate_type exit_predicate,
   skip_predicate_type skip_predicate
-)
-  : ism_purchaser(interval, skip_predicate),
-    m_hostname(hostname),
-    m_port(port),
-    m_dn(distinguished_name),
-    m_timeout(timeout)
+) : ism_purchaser(mode, interval, exit_predicate, skip_predicate),
+  m_hostname(hostname),
+  m_port(port),
+  m_dn(distinguished_name),
+  m_timeout(timeout)
 {
 }
 
@@ -373,95 +317,82 @@ void ism_ii_purchaser::do_purchase()
 {
   do {
     try {
-
       gluece_info_container_type gluece_info_container;
-      prefetchGlueCEinfo(
-        m_hostname,
-        m_port,
-        m_dn,
-        m_timeout,
-        gluece_info_container
+      vector<gluece_info_iterator> gluece_info_container_updated_entries;
+
+      boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection(
+        new ldif2classad::LDAPSynchConnection(m_dn, m_hostname, m_port, m_timeout)
       );
+      prefetchGlueCEinfo(IIconnection.get(), gluece_info_container);
+      for (gluece_info_iterator it = gluece_info_container.begin();
+           it != gluece_info_container.end(); ++it) {
+
+       // Skips CE info according to the specified predicate...
+       if (m_skip_predicate.empty() || !m_skip_predicate(it->first)) {
+         	
+         bool purchasing_ok = 
+           fetch_gluece_info(IIconnection.get(), it->first, it->second) &&
+           fetch_gluece_se_bind_info(IIconnection.get(), it->first, it->second) &&
+           expand_glueceid_info(it->second) &&
+           insert_aux_requirements(it->second);
+         if (purchasing_ok) {
+           it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
+           gluece_info_container_updated_entries.push_back(it);
+         }
+       }
+      }
       {
-        boost::mutex::scoped_lock l(get_ism_mutex());
-        for (gluece_info_iterator it = gluece_info_container.begin();
-             it != gluece_info_container.end();
-             ++it) {
+        boost::mutex::scoped_lock l(get_ism_mutex());	
+        while(!gluece_info_container_updated_entries.empty()) {
+	  
+          ism_type::value_type ism_entry = make_ism_entry(
+            gluece_info_container_updated_entries.back()->first, 
+            static_cast<int>(get_current_time().sec), 
+            gluece_info_container_updated_entries.back()->second, 
+            ism_ii_purchaser_entry_update());
 
-          // Check whether the gluece_info has already been inserted into the
-          // ISM, on not...
-          if ((m_skip_predicate.empty() || !m_skip_predicate(it->first))
-              && get_ism().find(it->first) == get_ism().end()) {
-
-            boost::tuple<std::string, int, std::string> isinfo;
-            if (split_information_service_url(*it->second, isinfo)) {
-
-              ism_type::value_type ism_entry(
-                make_ism_entry(
-                  it->first,
-                  static_cast<int>(get_current_time().sec),
-                  it->second,
-                  ism_ii_purchaser_entry_update(
-                    it->first,
-                    boost::tuples::get<0>(isinfo),
-                    boost::tuples::get<1>(isinfo),
-                    boost::tuples::get<2>(isinfo),
-                    m_timeout
-                  )
-                )
-              );
-
-              if (update_ism_entry()(ism_entry.second)) {
-                get_ism().insert(ism_entry);
-              }
-            }
-            else {
-              Warning(
-                "Cannot evaluate GlueInformationServiceURL for "
-                << it->first
-                << endl
-              );
-            }
-          } else {
-            Debug(
-              "Purchasing from  " << it->first << " skipped...already in ISM"
-            );
-          }
-        } // for
+	  get_ism().insert(ism_entry);
+          gluece_info_container_updated_entries.pop_back();            
+        } // while
       } // unlock the mutex
       if (m_mode) {
-        sleep(m_interval);
+        boost::xtime xt;
+        boost::xtime_get(&xt, boost::TIME_UTC);
+        xt.sec += m_interval;
+        boost::mutex::scoped_lock l(f_purchasing_cycle_run_mutex);
+        f_purchasing_cycle_run_condition.timed_wait(l, xt);
       }
-    } catch (...) {            // TODO: Check which exception may arrive
-                               // here and remove catch all
+    }
+    catch (...) { // TODO: Check which exception may arrive here... and remove catch all
       Warning("Failed to purchase info from " << m_hostname << ":" << m_port);
     }
   } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 }
 
-update_function_type
-ism_ii_purchaser::update_function() const
-{
-  return update_function_type();
-}
-
 // the class factories
-extern "C"
-boost::shared_ptr<ism_ii_purchaser>
-create_purchaser(glite::wms::common::configuration::Configuration const& config)
+extern "C" ism_ii_purchaser* create_ii_purchaser(std::string const& hostname,
+    int port,
+    std::string const& distinguished_name,
+    int timeout,
+    exec_mode_t mode,
+    size_t interval,
+    exit_predicate_type exit_predicate,
+    skip_predicate_type skip_predicate) 
 {
-  std::string hostname = config.ns()->ii_contact();
-  int port = config.ns()->ii_port();
-  std::string dn = config.ns()->ii_dn();
-  int timeout = config.ns()->ii_timeout();
-  size_t interval = config.wm()->ism_ii_purchasing_rate();
-  glite::wms::ism::purchaser::skip_predicate_type skip_predicate(
-    glite::wms::ism::purchaser::is_in_black_list(config.wm()->ism_black_list())
-  );
-
-  return boost::shared_ptr<ism_ii_purchaser>(
-    new ism_ii_purchaser(hostname, port, dn, timeout, interval, skip_predicate)
-  );
+    return new ism_ii_purchaser(hostname, port, distinguished_name, timeout, mode, interval, exit_predicate, skip_predicate);
 }
 
-}}}} // glite::wms::ism::purchaser
+extern "C" void destroy_ii_purchaser(ism_ii_purchaser* p) {
+    delete p;
+}
+
+// the entry update function factory
+extern "C" boost::function<bool(int&, ad_ptr)> create_ii_entry_update_fn() 
+{
+  return ism_ii_purchaser_entry_update();
+}
+
+} // namespace purchaser
+} // namespace ism
+} // namespace wms
+} // namespace glite

@@ -1,6 +1,5 @@
 // File: ism-purchaser.h
-// Author: Salvatore Monforte
-// Author: Francesco Giacomini
+// Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
 // Copyright (c) 2004 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
@@ -10,14 +9,8 @@
 #define GLITE_WMS_ISM_PURCHASER_ISM_PURCHASER_H
 
 #include <string>
-#include <boost/shared_ptr.hpp>
-#include "common.h"
-
-namespace classad {
-class ClassAd;
-}
-typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;
-
+#include <boost/function.hpp>
+ 
 namespace glite {
 namespace wms {
 namespace ism {
@@ -25,19 +18,16 @@ namespace purchaser {
 
 typedef boost::function<bool(void)> exit_predicate_type;
 typedef boost::function<bool(std::string const&)> skip_predicate_type;
-typedef boost::function<bool(int&, ClassAdPtr)> update_function_type;
 
 class ism_purchaser
 {
 public:
-  ism_purchaser(
-    size_t interval,
-    skip_predicate_type skip_predicate = skip_predicate_type()
-  )
-    : m_mode(once), m_interval(interval),
-      m_skip_predicate(skip_predicate)
-  {
-  }
+  ism_purchaser(exec_mode_t mode, 
+    size_t interval, 
+    exit_predicate_type exit_predicate = exit_predicate_type(),
+    skip_predicate_type skip_predicate = skip_predicate_type()) :
+	m_mode(mode), m_interval(interval), m_exit_predicate(exit_predicate), m_skip_predicate(skip_predicate) {}
+
   virtual ~ism_purchaser() {}
   virtual void do_purchase() = 0;
   virtual void operator()() = 0;
@@ -51,34 +41,24 @@ public:
     return m_interval;
   }
 
-  void loop_mode(exit_predicate_type const& p) {
-    m_exit_predicate = p;
+  void exit_predicate(exit_predicate_type const& p) {
+    m_exit_predicate = p; 
   }
 
   void skip_predicate(skip_predicate_type const &p) {
     m_skip_predicate = p;
   }
 
-  virtual update_function_type update_function() const = 0;
-
-protected:
-  exit_predicate_type exit_predicate() const
-  {
-    return m_exit_predicate;
-  }
-
-  skip_predicate_type skip_predicate() const
-  {
-    return m_skip_predicate;
-  }
-
-protected:
+protected:               
   exec_mode_t m_mode;
-  exit_predicate_type m_exit_predicate;
   size_t m_interval;
+  exit_predicate_type m_exit_predicate;
   skip_predicate_type m_skip_predicate;
 };
 
-}}}}
+} // namespace purchaser
+} // namespace ism
+} // namespace wms
+} // namespace glite
 
 #endif
