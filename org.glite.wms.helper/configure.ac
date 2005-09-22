@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.15  2005/09/22 11:42:50  eronchie
+#       Started merging with rc1.4
+#
 #       Revision 1.14  2005/06/13 08:18:08  monforte
 #       Merge RC1 -> HEAD
 #
@@ -109,7 +112,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [1.0.6])
+AC_INIT([GLite WMS Helper], [1.0.12])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
@@ -160,14 +163,51 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 have_boost=no
 have_classads=no
 have_globus=no
+have_cppunit=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
-AC_CLASSADS([], have_classads=yes, have_classads=no)
-AC_GLOBUS([], have_globus=yes, have_globus=no)
-AC_CPPUNIT(1.10.2,have_cppunit=yes, have_cppunit=no)
-AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
+
+AC_CLASSADS([], have_classads=yes, have_classads=no)
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+
+AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+AC_CPPUNIT(1.10.2,have_cppunit=yes, have_cppunit=no)
+AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
+
+if test "$have_globus" = "no"; then
+  AC_MSG_RESULT(["Please verify GLOBUS package"])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_RESULT(["Please verify BOOST package"])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_RESULT(["Please verify CLASSADS package"])
+fi
+
+if test "$have_cppunit" = "no"; then
+  AC_MSG_RESULT(["Please verify CPPUNIT package"])
+fi
+
+if test "$have_globus" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_boost" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_classads" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_cppunit" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
 
 have_glite_wmsutils=no
 have_glite_wms_common=no

@@ -12,34 +12,12 @@
 #ifndef GLITE_WMS_HELPER_JOBADAPTER_JOBWRAPPER_JOB_WRAPPER_H
 #define GLITE_WMS_HELPER_JOBADAPTER_JOBWRAPPER_JOB_WRAPPER_H
 
-#ifndef GLITE_WMS_X_STRING
-#define GLITE_WMS_X_STRING
 #include <string>
-#endif
-
-#ifndef GLTIE_WMS_X_VECTOR
-#define GLTIE_WMS_X_VECTOR
 #include <vector>
-#endif
-
-#ifndef GLITE_WMS_X_IOSTREAM
-#define GLITE_WMS_X_IOSTREAM
 #include <iostream>
-#endif
-
-#ifndef GLITE_WMS_X_UTILITY
-#define GLITE_WMS_X_UTILITY
 #include <utility>
-#endif
-
-#ifndef GLITE_WMS_X_BOOST_SHARED_PTR_HPP
-#define GLITE_WMS_X_BOOST_SHARED_PTR_HPP
 #include <boost/shared_ptr.hpp>
-#endif
-
-#ifndef GLITE_WMS_HELPER_JOBADAPTER_URL_URL_H
 #include "jobadapter/url/URL.h"
-#endif
 
 namespace classad {
 class ExprList;
@@ -211,18 +189,27 @@ public:
    * @param input_base_files location of all the files in the input sandbox
    * \ingroup jobadapter
    */
-   void wmp_input_sandbox_support(const std::vector<std::string>& input_base_files);
+   void wmp_input_sandbox_support(const url::URL& base_url,
+                                  const std::vector<std::string>& input_base_files);
 
   /**
    * Declare which files are in the output sandbox and where they have to be mov
 ed.
-   * @param output_files 
+   * @param output_files
    * @param output_dest_files
    * \ingroup jobadapter
    */
   void wmp_output_sandbox_support(const std::vector<std::string>& output_files,
                                   const std::vector<std::string>& output_dest_files);
- 
+
+  /**
+   * Declare the token file.
+   * @param base_url
+   * @param file
+   * \ingroup token
+   */
+  void token(std::string const& token_file);
+   
 protected:
   virtual std::ostream& print(std::ostream& os) const;
   
@@ -258,11 +245,20 @@ protected:
 
   virtual std::ostream& prepare_transfer(std::ostream&                   os,
 			                 const std::vector<std::string>& file) const;
+  virtual std::ostream& prepare_transfer_wmp_support(
+                                         std::ostream&                   os,
+                                         const std::vector<std::string>& file,
+                                         const std::vector<std::string>& filetransfer) const;
+
   virtual std::ostream& make_transfer(std::ostream&   os,
 		  		      const url::URL& prefix,
 				      const bool&     input) const;
   virtual std::ostream& make_transfer_wmp_support(std::ostream&   os,
-                                                  const bool&     input) const;
+		                                  const bool&     input) const;
+
+  virtual std::ostream& rm_token(std::ostream& os,
+                                 const std::string& file) const;
+
   virtual std::ostream& execute_job(std::ostream&      os,
 			            const std::string& arguments,
 			            const std::string& job,
@@ -352,6 +348,8 @@ protected:
   std::vector<std::string> m_wmp_input_base_files;
   std::vector<std::string> m_wmp_output_files;
   std::vector<std::string> m_wmp_output_dest_files;
+
+  std::string              m_token_file;
   
 protected:
   // default value of the brokerinfo file

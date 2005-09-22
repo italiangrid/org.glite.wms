@@ -166,18 +166,21 @@ JobWrapper::wmp_support(void)
   m_wmp_support = true;
 }
 
-void
-JobWrapper::wmp_input_sandbox_support(const std::vector<std::string>& input_base_files)
+void 
+JobWrapper::wmp_input_sandbox_support(const url::URL& base_url,
+                                      const vector<string>& input_base_files)
 {
+  m_input_base_url = base_url;
+
   copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_wmp_input_base_files));
 
-  for (std::vector<std::string>::const_iterator it = input_base_files.begin();
+  for (vector<string>::const_iterator it = input_base_files.begin();
       it != input_base_files.end(); it++) {
 
     string::size_type pos = it->find_last_of("/");
     if (pos == string::npos) {
       // throw ExInvalidURL("there is not ://");
-      std::cerr << "ERROR" ;
+      cerr << "ERROR" ;
     }
     string filename = it->substr(pos);
     m_wmp_input_files.push_back(filename);
@@ -185,12 +188,18 @@ JobWrapper::wmp_input_sandbox_support(const std::vector<std::string>& input_base
 
 }
 
-void
-JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_files,
-                                       const std::vector<std::string>& output_dest_files)
+void 
+JobWrapper::wmp_output_sandbox_support(const vector<string>& output_files,
+	                               const vector<string>& output_dest_files)
 {
   copy(output_files.begin(), output_files.end(), back_inserter(m_wmp_output_files));
   copy(output_dest_files.begin(), output_dest_files.end(), back_inserter(m_wmp_output_dest_files));
+}
+
+void
+JobWrapper::token(std::string const& token_file)
+{
+  m_token_file = token_file;
 }
 
 ostream&
@@ -310,7 +319,7 @@ JobWrapper::set_lb_sequence_code(ostream& os,
 				 const string& scode,
 				 const string& ecode) const
 {
-  os << "GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent" << " \\" << endl
+  os << "GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT" << " \\" << endl
      << " --jobid=" << "\"" << "$GLITE_WMS_JOBID" << "\"" << " \\" << endl
      << " --source=LRMS" << " \\" << endl
      << " --sequence=" << "\"" << "$GLITE_WMS_SEQUENCE_CODE" << "\"" << "\\" << endl
@@ -333,7 +342,7 @@ JobWrapper::set_lb_sequence_code(ostream& os,
 }
 
 ostream& 
-JobWrapper::check_globus(std::ostream& os) const
+JobWrapper::check_globus(ostream& os) const
 {
   os << "if [ -z \"${GLOBUS_LOCATION}\" ]; then" << endl
      << "  echo \"GLOBUS_LOCATION undefined\"" << endl
@@ -373,6 +382,42 @@ JobWrapper::prepare_transfer(ostream& os,
     os << " \"" << *it << "\"";
   }
   return os << "; do" << endl;
+}
+
+ostream&
+JobWrapper::prepare_transfer_wmp_support(ostream& os,
+                             const vector<string>& file,
+                             const vector<string>& filetransfer) const
+{
+  os << "\n# transfer files foollowing the formula OS[i] OSDestUri[i]" << endl;
+
+  os << "k=1" << endl
+     << "for f in";
+  for (vector<string>::const_iterator it = file.begin();
+       it != file.end(); ++it) {
+    os << " \"" << *it << "\"";
+  }
+  os << "; do" << endl
+     << "  output_sandbox_dest_uri_files[k]=\"$f\"" << endl
+     << "  k=$(($k+1))" << endl
+     << "done" << endl << endl;
+
+  os << "k=1" << endl
+     << "for f in";
+  for (vector<string>::const_iterator it = filetransfer.begin();
+       it != filetransfer.end(); ++it) {
+    os << " \"" << *it << "\"";
+  }
+  os << "; do" << endl
+     << "  output_sandbox_files[k]=\"$f\"" << endl
+     << "  k=$(($k+1))" << endl
+     << "done" << endl << endl;
+
+  os << "i=" << filetransfer.size() << endl
+     << "j=1" << endl
+     << "while [ $j -le $i ]; do" << endl;
+
+  return os;
 }
 
 ostream&
@@ -439,15 +484,8 @@ ostream&
 JobWrapper::make_transfer_wmp_support(ostream& os,
                           const bool& input) const
 {
-  // source and destination must be '/' terminated
-//  string value = prefix.as_string();
-//  if (value[value.size() - 1] != '/') {
-//    value.append( 1, '/' );
-//  }
-
-  os << "  file=`basename $f`" << endl;
-
   if (input) {
+    os << "  file=`basename $f`" << endl;
     os << "  globus-url-copy ${f} file://${workdir}/${file}" <<
        endl
        << "  if [ $? != 0 ]; then" << endl
@@ -455,7 +493,6 @@ JobWrapper::make_transfer_wmp_support(ostream& os,
        << "    echo \"Cannot download ${file} from ${f}\" >> \"${maradona}\"" << endl << endl;
 
     string imessage("Cannot download ${file} from ${f}");
-//    imessage.append(value);
 
     os << "    "; this->set_lb_sequence_code(os,
                     "Done",
@@ -463,33 +500,26 @@ JobWrapper::make_transfer_wmp_support(ostream& os,
                     "FAILED",
                     "0");
 
-    os << "    doExit 1" << endl;
+    os << "    doExit 1" << endl
+       << "  fi" << endl;
   } else {
-    os << "  if [ -r \"${file}\" ]; then" << endl;
 
-//    os << "    output=`dirname $f`" << endl
-//       << "    if [ \"x${output}\" = \"x.\" ]; then" << endl
-//       << "      ff=$f" << endl
-//       << "    else" << endl
-//       << "      ff=${f##*/}" << endl
-//       << "    fi" << endl;
+    os << "  globus-url-copy file://${workdir}/${output_sandbox_files[$j]} ${output_sandbox_dest_uri_files[$j]}" << endl
+       << "  if [ $? != 0 ]; then" << endl
+       << "    echo \"Cannot upload ${output_sandbox_files[$j]} into ${output_sandbox_dest_uri_files[$j]}\"" << endl
+       << "    echo \"Cannot upload ${output_sandbox_files[$j]} into ${output_sandbox_dest_uri_files[$j]}\" >> \"${maradona}\"" << endl << endl;
 
-    os << "    globus-url-copy file://${workdir}/${file} ${f}" << endl
-       << "    if [ $? != 0 ]; then" << endl
-       << "      echo \"Cannot upload ${file} into ${f}\"" << endl
-       << "      echo \"Cannot upload ${file} into ${f}\" >> \"${maradona}\"" << endl << endl;
+    string omessage("Cannot upload ${output_sandbox_files[$j]} into ${output_sandbox_dest_uri_files[$j]}");
 
-    string omessage("Cannot upload ${file} into ${f}");
-//    omessage.append(value);
-
-    os << "      "; this->set_lb_sequence_code(os,
+    os << "    "; this->set_lb_sequence_code(os,
                        "Done",
                        omessage,
                        "FAILED",
                        "0");
 
-    os << "      doExit 1" << endl
-       << "    fi" << endl;
+    os << "    doExit 1" << endl
+       << "  fi" << endl
+       << "  j=$(($j+1))" << endl;
   }
   return os << "  fi" << endl
             << "done" << endl
@@ -500,6 +530,39 @@ ostream&
 JobWrapper::make_bypass_transfer(ostream& os,
 				 const string& prefix) const
 {
+  return os;
+}
+
+ostream&
+JobWrapper::rm_token(ostream& os,
+                     const string& file) const
+{
+  os << endl
+     << "value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm " << file << "`" << endl
+     << "result=$?" << endl
+     << "if [ $result -eq 0 ]; then" << endl;
+  os << "  "; this->set_lb_sequence_code(os,
+                  "ReallyRunning",
+                  "The job is really running!",
+                  "",
+                  "");
+  os << "  echo \"Take token: ${GLITE_WMS_SEQUENCE_CODE}\""  << endl
+     << "else" << endl
+     << "  echo \"Cannot take token!\"" << endl
+     << "  echo \"Cannot take token!\" >> \"${maradona}\"" << endl << endl;
+
+  string omessage("Cannot take token!");
+
+  os << "  "; this->set_lb_sequence_code(os,
+                       "Done",
+                       omessage,
+                       "FAILED",
+                       "0");
+
+  os << "  doExit 1" << endl
+     << "fi" << endl
+     << endl;
+
   return os;
 }
 
@@ -960,6 +1023,9 @@ JobWrapper::print(ostream& os) const
   // name of the gatekeeper node
   if (m_gatekeeper_hostname != "") {
     check_set_environment(os, "GLITE_WMS_LOG_DESTINATION", m_gatekeeper_hostname);
+    // for compatibility with LCG also set the environment variable
+    // EDG_WL_LOG DESTINATION with the name of the gatekeeper node
+    check_set_environment(os, "EDG_WL_LOG_DESTINATION", m_gatekeeper_hostname);
   }
   // set the environment variable GLTIE_WMS_JOBID
   if (m_jobid != "") {
@@ -970,8 +1036,17 @@ JobWrapper::print(ostream& os) const
   set_environment(os, "GLITE_WMS_SEQUENCE_CODE", "$1");
   os << "shift" << endl << endl;
   // check and set the environment variable GLITE_WMS_LOCATION
-  string edg_location_value("${GLITE_LOCATION:-/opt/glite}");
-  check_set_environment(os, "GLITE_WMS_LOCATION", edg_location_value);  
+  string glite_location_value("${GLITE_LOCATION:-/opt/glite}");
+  check_set_environment(os, "GLITE_WMS_LOCATION", glite_location_value);
+  // check and set the environment variable EDG_WL_LOCATION
+  string edg_location_value("${EDG_LOCATION:-/opt/edg}");
+  check_set_environment(os, "EDG_WL_LOCATION", edg_location_value);
+
+  // check and set lb_logevent
+  os << "LB_LOGEVENT=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent" << endl
+    << "if [ ! -f \"$LB_LOGEVENT\" ]; then" << endl
+     << "  LB_LOGEVENT=${EDG_WL_LOCATION}/bin/edg-wl-logev" << endl
+     << "fi" << endl << endl;
 
   // create subdirectory and cd into it if requested
   if (m_create_subdir) {
@@ -1026,6 +1101,9 @@ JobWrapper::print(ostream& os) const
   // update the environment variable GLITE_WMS_SEQUENCE_CODE
   set_lb_sequence_code(os, "Running", "The job starts running!", "", "");
 
+  // make glite-gridftp-rm token
+  rm_token(os, m_token_file);
+
   // execute job
   execute_job(os, m_arguments, m_job, 
 	      m_standard_input, m_standard_output, m_standard_error,
@@ -1047,7 +1125,7 @@ JobWrapper::print(ostream& os) const
   os << "error=0" << endl;
 
   if (m_wmp_support) {
-    prepare_transfer(os, m_wmp_output_dest_files);
+    prepare_transfer_wmp_support(os, m_wmp_output_dest_files, m_wmp_output_files);
     make_transfer_wmp_support(os, false);
   } else {
     prepare_transfer(os, m_output_files);
@@ -1073,8 +1151,8 @@ JobWrapper::print(ostream& os) const
   return os;
 }
 
-std::ostream&
-operator<<(std::ostream& os, const JobWrapper& jw)
+ostream&
+operator<<(ostream& os, const JobWrapper& jw)
 {
   return jw.print(os);
 }

@@ -82,7 +82,7 @@ URL::parse(string url)
     // -*- Check port value -*-
     for(string::const_iterator it = port.begin();
 	it != port.end(); it++){
-      if(!isdigit(*it)) {
+      if (!isdigit(*it)) {
         msg.append("\'correct port number\' in URL ");
         msg.append(ur);
 	throw ExInvalidURL(msg.c_str());

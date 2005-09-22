@@ -44,6 +44,7 @@
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
@@ -60,13 +61,13 @@
 using namespace std;
 using namespace classad;
 
+namespace fs = boost::filesystem;
 namespace config = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
 namespace jobwrapper = glite::wms::helper::jobadapter::jobwrapper;
 namespace url = glite::wms::helper::jobadapter::url;
 namespace jdl = glite::wms::jdl;
-namespace fs = boost::filesystem;
 
 namespace {
 std::string const helper_id("JobAdapterHelper");
@@ -160,29 +161,24 @@ try {
   
   /* Not Mandatory */
   vector<string>  inputsandbox;
-  bool b_isb;
   utilities::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
   /* Not Mandatory */
   bool b_wmpisb_base_uri = false;
-  string wmpisb_base_uri;
-  //if (!inputsandbox.empty()) {
-    wmpisb_base_uri.append(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
-    if (!wmpisb_base_uri.empty()) {
-      b_wmpisb_base_uri = true;
-    }
-  //}
+  string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
+  if (!wmpisb_base_uri.empty()) {
+    b_wmpisb_base_uri = true;
+  }
 
+  /* Mandatory */
+  // InputSandboxPath is always included
   string inputsandboxpath;
-  if (!b_wmpisb_base_uri) {
-    /* Mandatory */
-    inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
-    if (inputsandboxpath.empty()) {
-      throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
-                                          inputsandboxpath,
-                                          "not empty",
-                                          helper_id);
-    }
+  inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
+  if (inputsandboxpath.empty()) { 
+    throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
+                                        inputsandboxpath,
+                                        "not empty",
+                                        helper_id);
   }
 	  
   string outputsandboxpath;
@@ -305,6 +301,8 @@ try {
   /* Mandatory */
   jdl::set_universe(*result, "grid"); 
 
+  config::JCConfiguration const* jcconfig = config::Configuration::instance()->jc();
+
   if (!is_blahp_resource && !is_condor_resource) {
     jdl::set_grid_type(*result, "globus");
     jdl::set_copy_to_spool(*result, false);
@@ -390,7 +388,7 @@ try {
     jdl::set_when_to_transfer_output(*result, "ON_EXIT");
     jdl::set_transfer_input_files(*result, userproxy);
 
-    // Compute proxy file basename: remove trailing whitespace and slashes. 
+    // Compute proxy file basename: remove trailing whitespace and slashes.
     string userproxy_basename(userproxy);
     char c = userproxy_basename[userproxy_basename.length()-1];
     while (c == '/' || c == ' ' || c == '\n' || c == '\r' || c == '\t') {
@@ -400,14 +398,26 @@ try {
 
     // Then remove leading dirname.
     userproxy_basename.assign(userproxy_basename.substr(userproxy_basename.rfind('/')+1));
-    condor_submit_environment.assign("X509_USER_PROXY=");
-    condor_submit_environment.append(userproxy_basename);
-    if (is_blahp_resource || is_condor_resource) {
-      // Handle remotely-managed environment additions.
-      // (GRAM cannot do this).
-      condor_submit_environment.append(";$$(GLITE_ENV:)");
+
+    if (! is_condor_resource) {
+      condor_submit_environment.assign("X509_USER_PROXY=");
+      condor_submit_environment.append(userproxy_basename);
     }
+
+    // Handle remotely-managed environment additions.
+    // (GRAM cannot do this).
+    if (!condor_submit_environment.empty()) condor_submit_environment.append(";");
+
+    condor_submit_environment.append("$$(GLITE_ENV:UNDEFINED)");
+
     jdl::set_remote_env(*result,condor_submit_environment);
+
+    // Cause the job to pop out of the Condor queue if no successful
+    // match with 'B' daemons could occur in 15 (default) minutes.
+    utilities::oedgstrstream periodic_hold_expression;
+    periodic_hold_expression << "Matched =!= TRUE && CurrentTime > QDate + ";
+    periodic_hold_expression << jcconfig->maximum_time_allowed_for_condor_match();
+    jdl::set_periodic_hold(*result,periodic_hold_expression.str());
 
     // Build the jobmanager-fork contact string.
     string::size_type pos = globusresourcecontactstring.find("/");
@@ -422,7 +432,7 @@ try {
 
     jdl::set_site_name(*result,gatekeeper_hostname);
     jdl::set_site_gatekeeper(*result,gatekeeper_fork);
-  }
+  } /* End of blah || condor case */
 
   jdl::set_globus_scheduler(*result, globusresourcecontactstring);
   jdl::set_x509_user_proxy(*result, userproxy);
@@ -552,12 +562,6 @@ try {
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
   
   if (ljobtype == "mpich") {
-//    if (is_blahp_resource || is_condor_resource) {
-//      throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
-//                                          jobtype,
-//                                          "not be 'mpich' for non-globus resources",
-//                                          helper_id);
-//    }
     /* lowercase all lrmstype characters */
     string llrmstype(lrmstype);
     std::transform(llrmstype.begin(), llrmstype.end(), llrmstype.begin(), ::tolower);    
@@ -583,7 +587,7 @@ try {
     globusrsl.append(")(hostCount=");
     globusrsl.append(nn);
     globusrsl.append(")");
-    
+   
     string exec;
     string::size_type pos = executable.find("./");
     if (pos == string::npos) {
@@ -591,11 +595,11 @@ try {
     } else {
       exec.append(executable.substr(pos+2));
     }
-
+ 
     if (llrmstype == "lsf") {
       jw = new jobwrapper::MpiLsfJobWrapper(exec);
     }
-    else if (llrmstype == "pbs") {
+    else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
       jw = new jobwrapper::MpiPbsJobWrapper(exec);
     } else {
       // not possible;
@@ -625,7 +629,8 @@ try {
                                           "contains BYPASS_SHADOW_HOST",
                                           helper_id);
     }
-    env.push_back("LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"); 
+
+    env.push_back("LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH");
 
     string::size_type pos = executable.find("./");
     if (pos == string::npos) {
@@ -679,6 +684,10 @@ try {
 	
   jdl::set_globus_rsl(*result, globusrsl);
   
+  /* Mandatory for shallow resubmission */
+  config::WMConfiguration const* wmconfig = config::Configuration::instance()->wm();
+  string token_file(wmconfig->token_file());
+
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
   jw->standard_error(stderror);
@@ -691,26 +700,39 @@ try {
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
  
-  if (!b_wmpisb_base_uri) { 
-    //check if there is the protocol in the inputsandbox path. 
-    //if no the protocol gsiftp:// is added to the inputsandboxpath.
-    try {
-      if (inputsandboxpath.find("://") == string::npos) {
-        string new_inputsandboxpath("gsiftp://");
-        new_inputsandboxpath.append(local_host_name);
-        new_inputsandboxpath.append(inputsandboxpath);
-        jw->input_sandbox(url::URL(new_inputsandboxpath), inputsandbox);    
-      } else { 
-        jw->input_sandbox(url::URL(inputsandboxpath), inputsandbox);
-      } 
-    } catch (url::ExInvalidURL& ex) {
-      throw CannotCreateJobWrapper(ex.parameter());
+  //check if there is the protocol in the inputsandbox path.
+  //if no the protocol gsiftp:// is added to the inputsandboxpath.
+  try { 
+    if (inputsandboxpath.find("://") == string::npos) {
+      string new_inputsandboxpath("gsiftp://");
+      new_inputsandboxpath.append(local_host_name);
+      new_inputsandboxpath.append(inputsandboxpath);
+      url::URL url_(new_inputsandboxpath);
+      if (!b_wmpisb_base_uri) {
+        jw->input_sandbox(url_, inputsandbox);
+      } else {
+        jw->wmp_input_sandbox_support(url_, inputsandbox);
+      }
+      // set token for the shallow resubmission
+      std::string::size_type const pos = new_inputsandboxpath.rfind("/input");
+      std::string const token_path(new_inputsandboxpath, 0, pos);
+      jw->token(token_path + '/' + token_file);
+    } else {
+      url::URL url_(inputsandboxpath);
+      if (!b_wmpisb_base_uri) {
+        jw->input_sandbox(url_, inputsandbox);
+      } else {
+        jw->wmp_input_sandbox_support(url_, inputsandbox);
+      }
+      // set token for the shallow resubmission
+      std::string::size_type const pos = inputsandboxpath.rfind("/input");
+      std::string const token_path(inputsandboxpath, 0, pos);
+      jw->token(token_path + '/' + token_file);
     }
-  } else {
-    jw->wmp_input_sandbox_support(inputsandbox);
+  } catch (url::ExInvalidURL& ex) {
+    throw CannotCreateJobWrapper(ex.parameter());
   }
 
-//  if (!b_osb_dest_uri) {
   if (!b_wmpisb_base_uri) {
     //check if there is the protocol in the outputsandbox path. 
     //if no the protocol gsiftp:// is added to the outputsandboxpath.
@@ -728,8 +750,6 @@ try {
     }
   } else if (b_osb_dest_uri) {
     jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
-//  } else {
-//    jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
   }
 
   //check if we need to support new Input/Output Sandboxes in WMProxy
@@ -750,6 +770,7 @@ try {
     fs::path maradona_path(
       fs::normalize_path(nsconfig->sandbox_staging_path()),
       fs::native);
+
     maradona_path /= jobid::get_reduced_part(job_id);
     maradona_path /= jobid_to_file;
     maradona_path /= "Maradona.output";
@@ -757,8 +778,6 @@ try {
   } else {
     jw->maradonaprotocol(wmpisb_base_uri, "/Maradona.output");
   }
-
-  config::JCConfiguration const* jcconfig = config::Configuration::instance()->jc();
 
   // read the submit file path
   string jw_name("JobWrapper.");

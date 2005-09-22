@@ -226,15 +226,17 @@ try {
   // Add the .Brokerinfo files to the InputSandbox
   bool input_sandbox_exists = false;
   bool wmpinput_sandbox_base_uri_exists = false;
-  
+
   std::vector<std::string> ISB;
   
   requestad::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
   std::string WMPInputSandboxBaseURI(requestad::get_wmpinput_sandbox_base_uri(input_ad, wmpinput_sandbox_base_uri_exists));
-  
-  if (wmpinput_sandbox_base_uri_exists) ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
-  else ISB.push_back(".BrokerInfo");
-  
+
+  if (wmpinput_sandbox_base_uri_exists) 
+    ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
+  else 
+    ISB.push_back(".BrokerInfo");
+
   requestad::set_input_sandbox(*result, ISB);
 
   requestad::set_ce_id(*result, ce_it->first);
@@ -259,11 +261,11 @@ try {
       *result,
       utilities::evaluate_attribute(*ce_ad, "CEid")
     );
-
+  
   } catch (utilities::InvalidValue const& e) {
 
     edglog(error) << e.what() << " for CE id " << ce_it->first << std::endl;
-    
+
     throw helper::HelperError("BrokerHelper");
 
   }

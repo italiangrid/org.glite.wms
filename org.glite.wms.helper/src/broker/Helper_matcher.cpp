@@ -170,7 +170,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   
   try {
     suitableCEs.reset(rb.findSuitableCEs(&input_ad));
-    
+    std::string vo(requestad::get_virtual_organisation(input_ad)); 
     std::vector<classad::ExprTree*> hosts;
     if (!suitableCEs->empty() ) {
             
@@ -181,7 +181,10 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       for (matchmaking::match_vector_t::const_iterator it = suitableCEs_vector.begin(); 
            it != suitableCEs_vector.end(); 
            ++it) {
-          
+        
+        BI->retrieveCloseSEsInfo(it->first);
+        BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
+  
         std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
         ceinfo->InsertAttr("ce_id", it->first);
         ceinfo->InsertAttr("rank", it->second.getRank());

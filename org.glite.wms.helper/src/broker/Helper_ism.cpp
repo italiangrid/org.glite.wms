@@ -94,7 +94,7 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
 {
   std::auto_ptr<classad::ClassAd> result;
 
-  static boost::regex  expression( "(.+/[^\\-]+-(.+))-(.+)" );
+  static boost::regex  expression( "(.+/[^\\-]+-([^\\-]+))-(.+)" );
   boost::smatch        pieces;
   std::string gcrs, type, name;
   if (boost::regex_match(ce_id, pieces, expression)) {
@@ -117,7 +117,7 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
   } else {
     throw helper::InvalidAttributeValue(requestad::JDL::SUBMIT_TO,
                                         ce_id,
-                                        "match (.+/[^\\-]+-(.+))-(.+)",
+                                        "match (.+/[^\\-]+-([^\\-]+))-(.+)",
                                         helper_id);
   }
 
@@ -205,8 +205,10 @@ try {
   requestad::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
   std::string WMPInputSandboxBaseURI(requestad::get_wmpinput_sandbox_base_uri(input_ad, wmpinput_sandbox_base_uri_exists));
 
-  if (wmpinput_sandbox_base_uri_exists) ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
-  else ISB.push_back(".BrokerInfo");
+  if (wmpinput_sandbox_base_uri_exists) 
+    ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
+  else 
+    ISB.push_back(".BrokerInfo");
   
   requestad::set_input_sandbox(*result, ISB);
 
@@ -236,7 +238,7 @@ try {
   } catch (utilities::InvalidValue const& e) {
 
     edglog(error) << e.what() << " for CE id " << ce_it->first << std::endl;
-    
+
     throw helper::HelperError("BrokerHelper");
 
   }
