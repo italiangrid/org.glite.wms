@@ -27,7 +27,7 @@ void Logging::init ( const string& nsHost  , int nsPort, glite::wmsutils::jobid:
 	this->id = id;
 	this->nsHost  = nsHost;
 	this->nsPort = nsPort;
-	//cout << "Logging::init For: "<< id->toString() << endl ;
+	// cout << "Logging::init For: "<< id->toString() << endl ;
 	string METHOD = "lbInit(const string& nsHost)"  ;
 	if   ( ! getenv ( GLITE_LB_LOG_DESTINATION) )
 		if (edg_wll_SetParamString( ctx, EDG_WLL_PARAM_DESTINATION, nsHost.c_str() ) )
@@ -51,7 +51,7 @@ ExpDagAd* Logging::registerJob(JobAd* jad , int res_number  ){
 	if (jCollect) pthread_mutex_lock( & dgtransfer_mutex);    //LOCK RESOURCES    -->
 	string jdl = jad->toSubmissionString() ;
 	edg_wlc_JobId* subjobs = NULL ;
-	//cout << "Logging:: Registering partitioning job" << endl ;
+	// cout << "Logging:: Registering partitioning job" << endl ;
 	if ( edg_wll_RegisterJobSync( ctx,   id->getId()  , EDG_WLL_REGJOB_PARTITIONED,  jad->toSubmissionString().c_str()  , str_addr,    res_number  ,   NULL,   &subjobs  )) {
 		if (jCollect) pthread_mutex_unlock( & dgtransfer_mutex);    //UN LOCK RESOURCES    -->
 		throw JobOperationException     ( __FILE__ , __LINE__ ,  "Logging::registerJob" , WMS_JOBOP_ALLOWED ,  error_message( "edg_wll_RegisterJobSync" ) ) ;
@@ -61,10 +61,10 @@ ExpDagAd* Logging::registerJob(JobAd* jad , int res_number  ){
 	vector<string> jobids ;
 	for ( int i= 0 ; i< res_number ; i++ )
 		jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
-	//cout << "Logging::Creating Partitioner  " << endl ;
+	// cout << "Logging::Creating Partitioner  " << endl ;
 	jad->check() ;
-	glite::wms::partitioner::Partitioner part ( jad->ad() , jobids   ) ;
-	//cout << "Logging::Creating dagad " << endl ;
+	 glite::wms::partitioner::Partitioner part ( jad->ad() , jobids   ) ;
+	// cout << "Logging::Creating dagad " << endl ;
 	ExpDagAd* dagad = new ExpDagAd   (part.createDag() );
 	// cout << "Logging:: created DAG:" << dagad->toString(ExpDagAd::MULTI_LINES) << endl << "Logging::Registering partitioning SUB job" << endl ;
 	registerSubJobs ( dagad , subjobs)  ;
@@ -77,7 +77,7 @@ void Logging::registerSubJobs( glite::wms::jdl::ExpDagAd* ad , edg_wlc_JobId* su
 	// array of Jdls
 	char **jdls_char , **zero_char ;
 	vector<string>::iterator iter ;
-	//cout << "Logging::Creating N Sub Jobs of size: " << jdls.size()  << endl ;
+	// cout << "Logging::Creating N Sub Jobs of size: " << jdls.size()  << endl ;
 	jdls_char = (char**) malloc(sizeof(char*) * (jdls.size()+1));
 	zero_char =jdls_char ;
 	jdls_char[jdls.size()] = NULL;
@@ -85,10 +85,10 @@ void Logging::registerSubJobs( glite::wms::jdl::ExpDagAd* ad , edg_wlc_JobId* su
 	for (  iter = jdls.begin() ; iter!=jdls.end() ; iter++, i++){
 		*zero_char = (char*) malloc ( iter->size() + 1 ) ;
 		sprintf ( *zero_char  , "%s" ,  iter->c_str() ) ;
-		//cout << "Logging::Created Sub: " <<  *zero_char << endl ;
+		// cout << "Logging::Created Sub: " <<  *zero_char << endl ;
 		zero_char++;
 	}
-	//cout << "\n\nLogging::Performing edg_wll_RegisterSubjobs (Dag father is) : "<< id->toString() << endl ;
+	// cout << "\n\nLogging::Performing edg_wll_RegisterSubjobs (Dag father is) : "<< id->toString() << endl ;
 	if (      edg_wll_RegisterSubjobs (  ctx,   id->getId()   , jdls_char, str_nsAddr, subjobs )     )
 		throw JobOperationException     ( __FILE__ , __LINE__ ,  "Logging::registerJob" , WMS_JOBOP_ALLOWED , error_message( "edg_wll_RegisterSubjobs") ) ;
 
@@ -96,7 +96,7 @@ void Logging::registerSubJobs( glite::wms::jdl::ExpDagAd* ad , edg_wlc_JobId* su
 	for ( unsigned int i = 0 ; i < jdls.size() ; i++ )  std::free(jdls_char[i]);
         std::free(jdls_char);
 
-	//cout << "edg_wll_RegisterSubjobs Done" << endl ;
+	// cout << "edg_wll_RegisterSubjobs Done" << endl ;
 } ;
 void Logging::registerDag( glite::wms::jdl::ExpDagAd* ad ){
 	//  array of subjob ID's
@@ -109,10 +109,10 @@ void Logging::registerDag( glite::wms::jdl::ExpDagAd* ad ){
 		 str_addr,    ad->size()  ,   NULL,   &subjobs  ) )
 			throw JobOperationException     ( __FILE__ , __LINE__ ,  "Logging::registerJob" , WMS_JOBOP_ALLOWED ,  error_message("edg_wll_RegisterJobSync") ) ;
 	registerSubJobs (ad , subjobs)  ;
-	//cout << "Sub Jobs Registered. now unparsing JobIds..." << endl ;
+	// cout << "Sub Jobs Registered. now unparsing JobIds..." << endl ;
 	vector<string> jobids ;
 	for ( unsigned int i= 0 ; i< ad->size() ; i++ ){
-		//cout << "Appending jobid..." <<  edg_wlc_JobIdUnparse( subjobs[i]  )  << endl ;
+		// cout << "Appending jobid..." <<  edg_wlc_JobIdUnparse( subjobs[i]  )  << endl ;
 		jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
 	}
 	// Insert the sub-jobids into the DagAd
@@ -129,11 +129,11 @@ void Logging::transfer(  txType tx, const std::string& jdl , const char* error  
 	break;
 	case OK:
 	if (edg_wll_LogTransferOK( ctx, EDG_WLL_SOURCE_NETWORK_SERVER , nsHost.c_str(), str_addr , jdl.c_str(), error, "" ))
-		//cout << error_message( "edg_wll_LogTransferOK") << endl ;
+		// cout << error_message( "edg_wll_LogTransferOK") << endl ;
 	break;
 	case FAIL:
 	if (edg_wll_LogTransferFAIL( ctx, EDG_WLL_SOURCE_NETWORK_SERVER , nsHost.c_str(), str_addr , jdl.c_str(), error, "" ))
-		//cout << error_message( "edg_wll_LogTransferFAIL") << endl  ;
+		// cout << error_message( "edg_wll_LogTransferFAIL") << endl  ;
 	edg_wll_LogAbort (ctx ,  error );
 	break;
 	}
@@ -146,7 +146,7 @@ void Logging::logUserTags( std::vector<  std::pair<  std::string  ,     classad:
 		if (  userTags[i].second->GetKind () != classad::ExprTree::CLASSAD_NODE )
 			throw JobOperationException     ( __FILE__ , __LINE__ ,  "Logging::logUserTags" , WMS_JOBOP_ALLOWED , "Wrong UserTags value for " + userTags[i].first ) ;
 		glite::wmsutils::jobid::JobId subJobid(  userTags[i].first   ) ;
-		//cout << "logUserTags log for:: " << subJobid.toString() << endl ;
+		// cout << "logUserTags log for:: " << subJobid.toString() << endl ;
 		edg_wll_SetLoggingJob(  ctx , subJobid.getId() ,  NULL, EDG_WLL_SEQ_NORMAL) ;
 		logUserTags (  (classad::ClassAd*)(userTags[i].second)  ) ;
 	}
