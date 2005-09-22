@@ -418,7 +418,7 @@ vector<string> getSandboxDestURI(const string &jobid, ConfigContext *cfs){
 				vect.push_back (make_pair((*list)[i]->id, uris ) );
 			}
 		}
-	}
+	} else soapErrorMng(wmp) ;
 	return vect;
 }
 /*****************************************************************
@@ -517,7 +517,7 @@ string  getJobTemplate (int jobType, const string &executable,const string &argu
 	soapAuthentication (wmp, cfs);
 	ns1__getJobTemplateResponse response;
 	if (wmp.ns1__getJobTemplate(createJobTypeList(jobType), executable, arguments, requirements, rank, response) == SOAP_OK) {
-		tpl = response.jdl ;
+		tpl = response._jdl ;
  		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return tpl ;
@@ -532,7 +532,7 @@ string getDAGTemplate(NodeStruct dependencies, const string &requirements,const 
 	soapAuthentication (wmp, cfs);
 	ns1__getDAGTemplateResponse response;
 	if (wmp.ns1__getDAGTemplate( node2soap(&dependencies), requirements, rank, response) == SOAP_OK) {
-		tpl = response.jdl ;
+		tpl = response._jdl ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return tpl ;
@@ -547,7 +547,7 @@ string getCollectionTemplate(int jobNumber, const string &requirements,const str
 	soapAuthentication (wmp, cfs);
 	ns1__getCollectionTemplateResponse response;
 	if (wmp.ns1__getCollectionTemplate(jobNumber, requirements, rank, response) == SOAP_OK) {
-		tpl = response.jdl ;
+		tpl = response._jdl ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return tpl ;
@@ -567,7 +567,7 @@ string getIntParametricJobTemplate (vector<string> attributes , int parameters ,
 	soapAuthentication (wmp, cfs);
 	ns1__getIntParametricJobTemplateResponse response;
 	if (wmp.ns1__getIntParametricJobTemplate(createStringList(attributes), parameters, start, step, requirements, rank, response) == SOAP_OK) {
-		tpl = response.jdl ;
+		tpl = response._jdl ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return tpl ;
@@ -581,7 +581,7 @@ string getStringParametricJobTemplate (vector<string>attributes, vector<string> 
 	soapAuthentication (wmp, cfs);
 	ns1__getStringParametricJobTemplateResponse response;
 	if (wmp.ns1__getStringParametricJobTemplate(createStringList(attributes), createStringList(parameters), requirements, rank, response) == SOAP_OK) {
-		tpl = response.jdl ;
+		tpl = response._jdl ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return tpl;
@@ -595,7 +595,7 @@ string getProxyReq(const string &delegationId, ConfigContext *cfs){
 	soapAuthentication (wmp, cfs);
 	ns1__getProxyReqResponse response;
 	if (wmp.ns1__getProxyReq(delegationId, response) == SOAP_OK) {
-		proxy = response.request;
+		proxy = response._request;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return proxy;
