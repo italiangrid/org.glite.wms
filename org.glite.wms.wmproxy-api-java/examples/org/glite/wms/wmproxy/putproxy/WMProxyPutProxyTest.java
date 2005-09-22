@@ -38,8 +38,6 @@ public class WMProxyPutProxyTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("DELEGATION-ID		= [" +delegationId+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("PROPERTIES-FILE		= [" + propFile+ "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("proxy			= [" + proxyFile+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 
@@ -55,7 +53,7 @@ public class WMProxyPutProxyTest {
 
 		// Create proxy from "ProxyRequest" result
 		System.out.println ("creating Proxy  .....");
-		proxy = client.createProxyfromCertReq ( certReq, delegationId, propFile );
+		proxy = client.createProxyfromCertReq ( certReq );
 		System.out.println ("proxy = [\n." + proxy + "]" );
 
 		System.out.println ("putting Proxy .....");
@@ -78,12 +76,11 @@ public class WMProxyPutProxyTest {
 
 
 		// input parameters
-		if ((args == null) || (args.length < 4))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <Properties-FIle> <proxyFile>)");
+		if ((args == null) || (args.length < 3))
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <proxyFile>)");
 		url = args[0];
 		delegationId = args[1];
-		propFile = args[2];
-		proxyFile = args[3];
+		proxyFile = args[2];
 
 		runTest (url, delegationId, propFile, proxyFile);
 

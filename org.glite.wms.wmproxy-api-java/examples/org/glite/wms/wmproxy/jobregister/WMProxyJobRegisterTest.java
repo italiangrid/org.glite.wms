@@ -3,38 +3,36 @@
  * Copyright (c) Members of the EGEE Collaboration. 2004.
  * See http://eu-egee.org/partners/ for details on the copyright holders.
  * For license conditions see the license file or http://eu-egee.org/license.html
+ *
+ * author : Marco Sottilaro (marco.sottilaro@datamat.it)
+ * Please report any bug at:  egee@datamat.it
+ *
  */
 
 package org.glite.wms.wmproxy.jobregister;
 
 import org.glite.wms.wmproxy.WMProxyAPI;
 import org.glite.wms.wmproxy.JobIdStructType;
-
 import org.glite.wms.jdlj.JobAd ;
 
 /*
 	Test of  "jobRegister" method in org.glite.wms.wmproxy.WMProxyAPI
 
 */
-
-
 public class WMProxyJobRegisterTest {
-
+	/**
+	* Default constructor
+	*/
 	public WMProxyJobRegisterTest ( ) { }
-
-	/*
+	/**
 		 Prints the results
 	*/
 	private static void printResult (JobIdStructType entry) {
-
 		JobIdStructType children[ ] = null;
 		int size = 0;
-
 		if ( entry != null ) {
-
 			// id
 			System.out.println ("jobID	= [" + entry.getId ( ) + "]" );
-
 			// name
 			System.out.println ("name	= [" +  entry.getName ( ) + "]" );
 
@@ -52,12 +50,10 @@ public class WMProxyJobRegisterTest {
 				}
 			} else
 				System.out.println ("no children" );
-
 		}
 	}
-
 	/*
-	*	starts the test
+	*	Starts the test
 	*	@param url service URL
 	*  	@param jdlFile the path location of the JDL file
 	*  	@param delegationID the id to identify the delegation
@@ -65,40 +61,31 @@ public class WMProxyJobRegisterTest {
 	*	@param proxyFile the path location of the user proxy file
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String jdlFile, String delegationId, String proxyFile ) throws java.lang.Exception {
-
+	public static void runTest ( String url, String proxyFile, String delegationId, String jdlFile ) throws java.lang.Exception {
 		//jdl
 		String jdlString = "";
-
 		// output results
 		JobIdStructType result = null;
-
 		// reads jdl
 		JobAd jad = new JobAd ( );
 		jad.fromFile ( jdlFile );
 		jdlString = jad.toString ( );
-
-		
 		// Prints out the input parameters
 		System.out.println ("TEST : JobRegister");
 		System.out.println ("************************************************************************************************************************************");
 		System.out.println ("WS URL	 		= [" + url + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("DELEGATION-ID		= [" +delegationId+ "]" );
+		System.out.println ("proxy			= [" + proxyFile+ "]" );
+		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");		System.out.println ("DELEGATION-ID		= [" +delegationId+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("JDL-FILE		= [" + jdlFile+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("JDL			= [" + jdlString + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("proxy			= [" + proxyFile+ "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-
 		// test
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("testing ....");
+		System.out.println ("Testing ....");
 		result= client.jobRegister( jdlString, delegationId );
-
-
 		// test results
 		if ( result != null ) {
 			System.out.println ("RESULT:");
@@ -106,31 +93,24 @@ public class WMProxyJobRegisterTest {
 			printResult ( result );
 			System.out.println("=======================================================================");
 		}
-
 		// end
-		System.out.println ("end of the test");
-
+		System.out.println ("End of the test");
 	}
 
 	public static void main(String[] args) throws Exception {
-
 		// input parameters
 		String url = "" ;
 		String jdlFile = "" ;
 		String delegationId = "";
 		String proxyFile = "";
-
-		// reads the  input arguments
+		// Reads the  input arguments
 		if ((args == null) || (args.length < 4))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <JDL-FIlePath> <delegationID> <proxyFile>)");
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <delegationID> <JDL-FIlePath>)");
 		url = args[0];
-		jdlFile = args[1];
+		proxyFile = args[1];
 		delegationId = args[2];
-		proxyFile = args[3];
-
-
-
-		runTest ( url, jdlFile, delegationId, proxyFile);
+		jdlFile = args[3];
+		runTest ( url, proxyFile, delegationId, jdlFile);
 
 	}
 }

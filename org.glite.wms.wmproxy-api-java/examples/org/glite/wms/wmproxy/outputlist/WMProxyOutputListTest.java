@@ -18,98 +18,70 @@ import org.glite.wms.wmproxy.StringAndLongType ;
 */
 
 public class WMProxyOutputListTest {
-
-	public WMProxyOutputListTest ( ) { }
-
-	private static void printResult (StringAndLongList list) {
-
-	StringAndLongType vect [ ] = null ;
-		StringAndLongType file = null;
-		int size = 0;
-
-		if ( list!= null ) {
-
-			vect = (StringAndLongType[ ] ) list.getFile ( );
-
-			if ( vect != null ){
-				size = vect.length ;
-				System.out.println ("number of files = [" + size + "]" );
-				if ( size  > 0 ) {
-					for (int i = 0; i < size ; i++){
-						file = vect [i];
-						System.out.println ("file n. " + (i+1) );
-						System.out.println ("--------------------------------------------");
-						System.out.println ("name		= [" + file.getName ( ) + "]" );
-						System.out.println ("size		= [" + file.getSize ( ) + "]" );
-
-					}
-				}
-			}
-		}
-
-
-/*
-
-		//vect = ( StringAndLongType[ ] ) list.getFile ( );
-		System.out.println ("===\n"+ list.toString( ) +"===\n" );
-					for (int i = 0; i < 2 ; i++){
-						file = list.getFile(i);
-						System.out.println ("file n. " + (i+1) );
-						System.out.println ("--------------------------------------------");
-						System.out.println ("name		= [" + file.getName ( ) + "]" );
-						System.out.println ("size		= [" + file.getSize ( ) + "]" );
-
-					}
-
-*/
-
-
-	}
-
 	/*
-	*	starts the test
+	* Default constructor
+	*/
+	public WMProxyOutputListTest ( ) { }
+	/*
+	*	Starts the test
 	*	@param url service URL
 	*  	@param jobID the id to identify the job
 	*	@param proxyFile  the path location of the user proxy file
 	*	@throws.Exception if any error occurs
 	*/
-	public static void main(String[] args) throws Exception {
-
-		String url = "" ;
-		String jobId = "" ;
-		String proxyFile = "";
+	private static void runTest ( String url, String proxyFile, String jobId ) throws java.lang.Exception {
 		StringAndLongList result = null;
-
-		// Read the input arguments
-		if ((args == null) || (args.length < 3))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <JobId> <proxyFile>)");
-		url = args[0];
-		jobId = args[1];
-		proxyFile = args[2];
-
+		StringAndLongType[ ] list = null;
+		int size = 0;
 		// Print out the input parameters
 		System.out.println ("TEST : OutputList");
 		System.out.println ("************************************************************************************************************************************");
 		System.out.println ("WS URL		= [" + url + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("JOB-ID		= [" + jobId + "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("proxy		= [" + proxyFile + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		// testing ...
+		System.out.println ("JOB-ID		= [" + jobId + "]" );
+		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		// Testing ...
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("testing ....");
+		System.out.println ("Testing ....");
 		result = client.getOutputFileList(jobId);
+		System.out.println ("End of the test\n" );
 		// test results
+		System.out.println ("Result:");
+		System.out.println ("=======================================================================");
 		if ( result != null ) {
-			System.out.println ("RESULT:");
-			System.out.println ("=======================================================================");
-			printResult ( result );
-			System.out.println("=======================================================================");
+			// list of files+their size
+			list = (StringAndLongType[ ] ) result.getFile ( );
+			if ( list != null ){
+				for (int i = 0; i < size ; i++){
+					System.out.println ("file n. " + (i+1) );
+					System.out.println ("--------------------------------------------");
+					System.out.println ("name		= [" + list[i].getName ( ) + "]" );
+					System.out.println ("size		= [" + list[i].getSize ( ) + "]" );
+				}
+			} else {
+				System.out.println ( "No output files for this job!");
+			}
+		} else {
+			System.out.println ( "NULLL!");
 		}
-
-		System.out.println ("end of the test" );
-
-	 }
-
- }
+		System.out.println("=======================================================================");
+	}
+	/*
+	* main
+	*/
+	public static void main(String[] args) throws Exception {
+		String url = "" ;
+		String jobId = "" ;
+		String proxyFile = "";
+		// Reads the input arguments
+		if ((args == null) || (args.length < 3))
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <JobId> )");
+		url = args[0];
+		proxyFile = args[1];
+		jobId = args[2];
+		// Launches the test
+		runTest(url, proxyFile, jobId);
+	}
+}
