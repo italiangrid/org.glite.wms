@@ -1282,7 +1282,8 @@ std::string Options::readOptions(const int &argc, const char **argv){
         // the name of the the specific command (submit, cancel, etc.....)
 	// that has called this method
         try{
-        	fs::path cp (Utils::normalizePath(argv[0]), fs::system_specific);
+        	//fs::path cp (Utils::normalizePath(argv[0]), fs::system_specific);  boost 1.29.1
+		fs::path cp (Utils::normalizePath(argv[0]));
  		applName = cp.leaf( );
         } catch (fs::filesystem_error &ex){
 		applName = getDefaultApplicationName( );

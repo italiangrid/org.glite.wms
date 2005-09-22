@@ -779,7 +779,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			Utils::getAbsolutePath( *collectOpt));
 		jobtype = WMS_COLLECTION ;
 		try {
-			fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific);
+			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
+			fs::path cp ( Utils::normalizePath(*collectOpt));
 			if ( fs::is_directory( cp ) ) {
 				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
 			}
