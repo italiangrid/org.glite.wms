@@ -41,14 +41,14 @@ void list_files( const fs::path& p, std::vector<std::string>& v)
         if ( !fs::is_directory( *dir_itr ) )
         {
 #ifdef DEBUG  
-	  edglog(debug) << dir_itr->file_path() << "\n";
+	  edglog(debug) << dir_itr->native_file_string() << "\n";
 #endif	
-	  v.push_back( dir_itr->file_path() );
+	  v.push_back( dir_itr->native_file_string() );
         }
       }
       catch ( const std::exception & ex )
       {
-        edglog( warning) << dir_itr->file_path() << " " << ex.what() << std::endl;
+        edglog( warning) << dir_itr->native_file_string() << " " << ex.what() << std::endl;
       }
     }
   }

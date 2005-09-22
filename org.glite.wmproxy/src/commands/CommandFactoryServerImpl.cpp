@@ -177,7 +177,7 @@ static bool createContext(Command* cmd) {
 
     //boost::filesystem::path seqfile( path + "/" + ".edg_wll_seq", boost::filesystem::system_specific);  Boost 1.29.1
     boost::filesystem::path seqfile( path + "/" + ".edg_wll_seq");
-    std::ifstream seqfilestream( seqfile.file_path().c_str() );
+    std::ifstream seqfilestream( seqfile.native_file_string().c_str() );
     if( seqfilestream ) {
       seqfilestream >> sequence_code;
     } 
