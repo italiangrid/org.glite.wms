@@ -338,6 +338,8 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	        	"LCMAPS termination failure.");
 	  	}
 
+		fclose(logfile);
+
 	  	// Setting value for userid private member
 	  	this->userid = user_info->pw_uid;
 	}
