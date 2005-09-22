@@ -83,7 +83,7 @@ class JobIdStruct:
 		"""
 		return self.nodeName
 
-class BaseExeption(Exception):
+class BaseException(Exception):
 	"""
 	Base Exception Class deinfe a structure for
 	all exception thrown in this module
@@ -114,7 +114,7 @@ class BaseExeption(Exception):
 		return result
 
 
-class HTTPException(BaseExeption):
+class HTTPException(BaseException):
 	"""
 	Specify a structure for HTTP protocol exceptions
 	"""
@@ -125,7 +125,7 @@ class HTTPException(BaseExeption):
 		self.methodName =""
 		self.description=""
 
-class SocketException(BaseExeption):
+class SocketException(BaseException):
 	"""
 	Socket-Connection Error
 	input: a socket.err error
@@ -137,7 +137,7 @@ class SocketException(BaseExeption):
 		for ar in err.args:
 			self.args.append(ar)
 
-class WMPException(BaseExeption):
+class WMPException(BaseException):
 	"""
 	Specify a structure for Wmproxy Server exceptions
 	"""
@@ -153,7 +153,7 @@ class WMPException(BaseExeption):
 			self.args.append(ar)
 
 
-class ApiException(BaseExeption):
+class ApiException(BaseException):
 	"""
 	Exception raised directly from server
 	"""
