@@ -42,7 +42,7 @@ public class WMProxyFreeQuotaTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		// testing ...
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("testing....");
+		System.out.println ("Testing....");
 		client.getFreeQuota(softLimit, hardLimit) ;
 
 		// result

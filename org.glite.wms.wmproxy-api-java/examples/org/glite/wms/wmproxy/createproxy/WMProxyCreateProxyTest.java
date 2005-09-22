@@ -21,11 +21,10 @@ public class WMProxyCreateProxyTest {
 	*	starts the test
 	*	@param url service URL
 	*  	@param delegationID the id to identify the delegation
-	*	@param propFile the path location of the configuration file
 	*	@param proxyFile the path location of the user proxy file
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest(String url, String delegationId, String propFile, String proxyFile)
+	public static void runTest(String url, String delegationId, String proxyFile)
 					throws java.lang.Exception  {
 
 		String certReq = "";
@@ -37,7 +36,7 @@ public class WMProxyCreateProxyTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("DELEGATION-ID		= [" +delegationId+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("PROPERTIES-FILE		= [" + propFile+ "]" );
+		System.out.println ("PROXY-FILE		= [" + proxyFile+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 
 		// client object
@@ -53,7 +52,7 @@ public class WMProxyCreateProxyTest {
 
 		// Create Proxy from "ProxyRequest" result
 		System.out.println ("createProxy calling .....");
-		result = client.createProxyfromCertReq ( certReq, delegationId, propFile );
+		result = client.createProxyfromCertReq ( certReq );
 
 		// end: Display result
 		System.out.println ("end of the test\nresult = [\n" + result + "]" );
@@ -64,18 +63,16 @@ public class WMProxyCreateProxyTest {
 
 		String url = "" ;
 		String delegationId = "";
-		String propFile = "";
 		String proxyFile = "";
 
 		// input parameters
-		if ((args == null) || (args.length < 4))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <Properties-FIle> <ProxyFile>)");
+		if ((args == null) || (args.length < 3))
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID>  <ProxyFile>)");
 		url = args[0];
 		delegationId = args[1];
-		propFile = args[2];
-		proxyFile = args[3];
+		proxyFile = args[2];
 
-		runTest(url, delegationId, propFile, proxyFile);
+		runTest(url, delegationId, proxyFile);
 
  	}
  }

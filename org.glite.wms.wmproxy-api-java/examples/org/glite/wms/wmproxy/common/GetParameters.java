@@ -98,47 +98,37 @@ public class GetParameters {
 		return config;
 	}
 
-
 	private String getParameter ( String parameter ) throws java.lang.NoSuchFieldException {
-
  		int start, end = 0;
 		String line = "";
-
 		start = this.configBuffer.indexOf ( parameter ) ;
-
 		if ( start > 0 ){
-
 			end = this.configBuffer.indexOf ("\n", start ) ;
-
 			if ( end > start )
 				line = this.configBuffer.substring ( start, end );
 			else
-				throw new NoSuchFieldException ("jobtype parameter: mismatch error in the configuration input file");
-		}
-
+				throw new NoSuchFieldException ("mismatch error in the configuration input file (parameter=" + parameter +")");
+		} else
+			throw new NoSuchFieldException ("mismatch error in the configuration input file (missing parameter=" + parameter +")");
 		return line ;
 	}
 
 	public JobTypeList getJobType ( ) throws java.lang.NoSuchFieldException, java.lang.IllegalArgumentException {
-
 		String line, label, value, list = "";
 		JobType type = null;
 		JobType[ ] typeArray = null;
 		JobTypeList typeList = null;
 		StringTokenizer tokens = null;
 		int start, end, ntok = 0;
-
 		String format = this.JOBTYPE + this.SEPARATOR_TOKEN + START_LIST_TOKEN + "element 1 " + SEPARATOR_LIST_TOKEN +
 					"element 2" + SEPARATOR_LIST_TOKEN + "...." + END_LIST_TOKEN ;
-
 		// Acquires the JobType line from the configuration file
 		line = this.getParameter ( this.JOBTYPE ) ;
 		System.out.println ( "jobtype 	= [" + line + "]");
-
 		// Splits up label and the list of values basing on the Separator Token
 		tokens = new StringTokenizer(line, this.SEPARATOR_TOKEN);
 		if ( tokens.countTokens() != 2)
-			throw new IllegalArgumentException( "bad format for job type (" + line + ")\n right format is" + format  );
+			throw new IllegalArgumentException( "bad format for job type (" + line + ")\n right format is " + format  );
 
 		label = (String) tokens.nextElement ( );
 		list =(String)  tokens.nextElement ( );

@@ -2,6 +2,8 @@
 /*
  * Copyright (c) Members of the EGEE Collaboration. 2004.
  * See http://eu-egee.org/partners/ for details on the copyright holders.
+  * author : Marco Sottilaro (marco.sottilaro@datamat.it)
+ * Please report any bug at:  egee@datamat.it
  * For license conditions see the license file or http://eu-egee.org/license.html
  */
 
@@ -45,42 +47,32 @@ public class WMProxyDAGTemplateTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("proxy	 		= [" + proxyFile + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-
-		// Read configuration file
-		System.out.println ("==================================================================================================");
-
+		System.out.println ("JDL input attributes:");
 		// rank
 		rank = "other.GlueCEStateEstimatedResponseTime";
 		System.out.println ( "rank		= [" + rank + "]");
-
 		// requirements
 		requirements = "true";
 		System.out.println ( "requirements	= [" + requirements + "]");
-		System.out.println ("==================================================================================================");
-		// end reading configuration file
-
+		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		// GRAPH
 		GraphStructType[ ]  nodes = new GraphStructType[2];
 		nodes[0] = new GraphStructType() ;
 		nodes[0].setName("B");
 		nodes[1] = new GraphStructType() ;
 		nodes[1].setName("C");
-
 		graphDependencies = new GraphStructType( );
 		graphDependencies.setChildrenJob( nodes );
-
-
 		// testing ...
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("testing....");
-
+		System.out.println ("Testing....\n");
 		result = client.getDAGTemplate(graphDependencies, requirements, rank);
-
+		System.out.println ("\nEnd of the test\nResult:");
 		// result
 		System.out.println ("=========================================================================================================================================================");
 		System.out.println ("result=[" + result+ "]");
-		System.out.println ("=========================================================================================================================================================");
-		System.out.println ("end of the test" );
 
+		System.out.println ("=========================================================================================================================================================");
 	}
 
 	public static void main(String[] args) throws java.lang.Exception {

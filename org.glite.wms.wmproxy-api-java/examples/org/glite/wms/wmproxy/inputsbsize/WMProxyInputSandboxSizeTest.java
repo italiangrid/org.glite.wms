@@ -30,7 +30,7 @@ public class WMProxyInputSandboxSizeTest {
 		double result = 0;
 
 		// Prints out the input parameters
-		System.out.println ("TEST : InputSandboxSize");
+		System.out.println ("TEST : MAX-InputSandboxSize");
 		System.out.println ("************************************************************************************************************************************");
 		System.out.println ("WS URL	 		= [" + url + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
@@ -39,12 +39,11 @@ public class WMProxyInputSandboxSizeTest {
 
 		// testing ...
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("testing ....");
+		System.out.println ("Testing ....\n");
 		result = client.getMaxInputSandboxSize();
-
+		System.out.println ("\nEnd of the test. Result:");
 		// prints the result +  end
-		System.out.println ("result=[" + result + "]");
-		System.out.println ("end of the test" );
+		System.out.println ("MAX InputSandbox size = [" + result + "]");
 	 }
 
 	public static void main(String[] args) throws java.lang.Exception {
