@@ -1,7 +1,7 @@
 cc=Gcc
 CPP=g++
 LIBS=
-COFLAGS=-O2
+COFLAGS=-O2 -Wall
 CWFLAGS=
 CIFLAGS=-I../..
 CMFLAGS=-DHAVE_STRINGSTREAM
@@ -38,10 +38,10 @@ GLITE_LIBS=-lgridsite \
         -lglite_wms_conf 
 
 CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
-	-DWANT_NAMESPACES \
 	-DALLOW_EMPTY_CREDENTIALS \
 	-DLCMAPS_GSI_MODE \
 	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
+	-I$(REPOSITORY)/org.glite.wms.wmproxy/src \
 	-I$(REPOSITORY)/stage/include \
 	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include
 
@@ -49,54 +49,45 @@ LDFLAGS= \
 	-L$(GLOBUS_LOCATION)/lib
 
 
-AD_CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(OBJFLAGS) \
+ADMIN_CFLAGS=$(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(OBJFLAGS) \
         -DWANT_NAMESPACES \
         -DALLOW_EMPTY_CREDENTIALS \
         -DLCMAPS_GSI_MODE \
-        -I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
-        -I$(REPOSITORY)/stage/include \
-        -I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include \
-        -I../../src
+	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
+	-I$(REPOSITORY)/stage/include \
+	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include
 
 
-AD_LDFLAGS= \
-	-L./ \
-	-L../utilities \
-        -L$(GLOBUS_LOCATION)/lib \
-        -L$(REPLIBS) \
-        -L$(CLASSAD)/lib \
-        -L$(BOOST)/lib/release \
-        -L$(ARES)/lib \
-        -L$(EXPAT)/lib \
-        -L$(REPOSITORY)/repository/org.glite.wms.wmproxy/src/authorizer \
-        -L$(REPOSITORY)/stage/lib \
-        -L$(EXPAT_LOCATION)/lib \
-        -lcurl -lz -lssl$(FLAVOR_EXT) -lcrypto_gcc32pthr -lxml2 -lm \
-        -lvomsc \
-         -llcas \
-        -lexpat \
-        -llcmaps \
-        $(GLITE_LIBS) \
-        $(BOOST_LIBS) \
-        $(CLASSAD_LIBS) \
-        $(ARES_LIBS) 
+ADMIN_LDFLAGS=-L$(REPOSITORY)/stage/lib \
+-lgridsite \
+-lssl$(FLAVOR_EXT) \
+-lxml2
 
 
-all:	authorizer
+all:	authorizer install gacladmin
 
+gacl :
+		$(CPP) -shared	$(CFLAGS) $(CMFLAGS) -I. \
+		-o	wmpgaclmanager.o \
+		wmpgaclmanager.cpp
 
 authorizer:
-		$(CPP) -shared $(CFLAGS) $(CMFLAGS) -I. \
-		-I../server -I../utilities \
+		$(CPP) -shared \
+		$(CFLAGS) $(CMFLAGS) -I. \
 	        -o libglite_wms_wmproxy_authorizer.so \
-	        wmpauthorizer.cpp wmpgaclmanager.cpp \
- 		$(LIBS) $(LDFLAGS)
+	        wmpauthorizer.cpp wmpvomsauthz.cpp wmpgaclmanager.cpp
 
 
 gacladmin:
-	$(CPP) -g -Wall $(CFLAGS) $(AD_CFLAGS)  $(AD_LDFLAGS)  \
+	$(CPP) -g -Wall -DGLITE_GACL_ADMIN \
+		$(CMFLAGS) $(ADMIN_CFLAGS)  $(ADMIN_LDFLAGS) \
 		-o wmp-gacl-admin \
-		wmpgacladmin.cpp
+		wmpgacladmin.cpp wmpgaclmanager.cpp wmpauthorizer.cpp
+
+
+install:
+		echo "Installing lib ..."
+		cp -f libglite_wms_wmproxy_authorizer.so $(REPOSITORY)/stage/lib
 
 clean:
 		rm -f *.o *.so

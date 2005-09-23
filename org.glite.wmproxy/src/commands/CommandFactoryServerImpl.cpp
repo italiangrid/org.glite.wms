@@ -1,4 +1,4 @@
-/*
+/* 
  * CommandFactoryServerImpl.cpp
  *
  * Copyright (c) 2001, 2002 EU DataGrid.
@@ -175,8 +175,7 @@ static bool createContext(Command* cmd) {
     assert (cmd -> getParam("JobPath", path));
     assert (cmd -> getParam("JobId", dg_jobid));
 
-    //boost::filesystem::path seqfile( path + "/" + ".edg_wll_seq", boost::filesystem::system_specific);  Boost 1.29.1
-    boost::filesystem::path seqfile( path + "/" + ".edg_wll_seq");
+    boost::filesystem::path seqfile( path + "/" + ".edg_wll_seq"); 
     std::ifstream seqfilestream( seqfile.native_file_string().c_str() );
     if( seqfilestream ) {
       seqfilestream >> sequence_code;

@@ -2,8 +2,7 @@ CC=gcc
 CPP=g++
 LIBS=
 COFLAGS=-O2
-#CWFLAGS=-Wall
-CWFLAGS=
+CWFLAGS=-Wall
 
 CIFLAGS=-I$(REPOSITORY)/org.glite.wms.wmproxy/src
 CMFLAGS=-DWITH_FASTCGI -DHAVE_STRINGSTREAM
@@ -56,10 +55,6 @@ LDFLAGS= \
 	-L$(BOOST)/lib/release \
 	-L$(ARES)/lib \
 	-L$(EXPAT)/lib \
-	-L../commands \
-	-L../utilities \
-	-L../eventlogger \
-	-L../authorizer \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
 	-lglite_lb_clientpp_gcc32 \
@@ -75,7 +70,7 @@ LDFLAGS= \
 	-lglite_wms_logger \
 	-lglite_wms_conf \
 	-lglite_wmsutils_exception \
-	-lglite_wmsui_partitioner \
+	-lglite_wms_partitioner \
 	-lglite_wms_wmproxy_pipe \
 	-lglite_wms_wmproxy_commands \
 	-lglite_wms_wmproxy_utilities \
@@ -91,8 +86,8 @@ LDFLAGS= \
 	-lboost_regex \
 	-lexpat \
 	-lgridsite_globus \
-	-llcas \
 	-llcmaps \
+	-llcmaps_return_poolindex_without_gsi \
 	-lvomsc \
 	-lxml2 \
 	-lfcgi++
@@ -117,29 +112,35 @@ wsdl:
 		$(GSOAP) -I$(GSOAPPATH) wm.h
 		rm *.xml
 
-wmClient:	wm.h wmclient.cpp $(SOAPH) $(SOAPCPP)
+BUILD=/home/peppe/Repository/r12/org.glite.wms.wmproxy/build
+
+wmClient:		$(BUILD)/src/server/wm.h wmclient.cp $(SOAPH) $(SOAPCPP)
 			@echo "wmclient....."
-			@$(CPP) -I. $(C1FLAGS) -I$(GSOAPPATH) -DWITH_OPENSSL \
-				-o wmClient wmclient.cpp soapC.cpp soapClient.cpp \
+			@$(CPP) -I $(BUILD)/src/server \
+				-I. $(C1FLAGS) -I$(GSOAPPATH) -L$(REPLIBS) -DWITH_OPENSSL \
+				-o wmClient wmclient.cp $(BUILD)/src/server/soapC.cpp $(BUILD)/src/server/soapClient.cpp \
 				$(SOAPCPP) $(LIBS) $(LD1FLAGS)
 
 wmProxy:        wm.h \
-                                wmproxy.cpp wmproxy.h \
+                                wmproxy.cpp \
                                 wmpoperations.cpp wmpoperations.h  \
                                 wmpgsoapoperations.cpp \
 								wmpconfiguration.h wmpconfiguration.cpp \
+								wmpgsoapfaultmanipulator.h wmpgsoapfaultmanipulator.cpp \
                                 wmpdelegation.cpp wmpdelegation.h \
-                                wmpexpdagad.cpp wmpexpdagad.h \
-                                wmpdispatcher.cpp wmpdispatcher.h\
-                                WMPManager.h NS2WMProxy.h wmpresponsestruct.h $(SOAPH) $(SOAPCPP)
+                                wmpdispatcher.cpp wmpdispatcher.h \
+                                wmpmanager.cpp wmpmanager.h \
+                                wmp2wm.cpp wmp2wm.h \
+                                wmpresponsestruct.h $(SOAPH) $(SOAPCPP)
 			@echo "wmproxy....."
-			$(CPP) -I. $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
+			$(CPP) -I../utilities $(CFLAGS) $(CMFLAGS) $(EXTRALIBFLAGS) \
                                 -o wmProxy wmproxy.cpp soapC.cpp soapServer.cpp \
                                 wmpoperations.cpp \
                                 wmpgsoapoperations.cpp \
+                                wmpgsoapfaultmanipulator.cpp \
                                 wmpdispatcher.cpp wmpconfiguration.cpp\
-                                wmpexpdagad.cpp wmpdelegation.cpp \
-                                WMPManager.cpp NS2WMProxy.cpp \
+                                wmpdelegation.cpp \
+                                wmpmanager.cpp wmp2wm.cpp \
                                 $(SOAPCPP) $(LIBS) $(LDFLAGS) 
 
 

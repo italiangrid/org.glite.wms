@@ -20,9 +20,6 @@
 
 #include <stdlib.h>
 
-#include <sys/wait.h>
-
-
 // boost
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -299,18 +296,6 @@ parseAddressPort(const string &addressport, pair<string, int> &addresspair)
 	GLITE_STACK_CATCH();
 }
 
-/* // TBR
- * ----- WARNING!! ----------------------------------------------------------
- * This method is a patch to grant correct behaviour for components using old
- * version of OpenSSL library.
- * 
- * it converts:
- * - emailAddress to Email
- * - UID          to USERID
- * 
- * N.B. To be removed when all components will use OpenSSL 0.9.7
- * --------------------------------------------------------------------------
- */
 string
 convertDNEMailAddress(const string & dn)
 {
@@ -490,9 +475,7 @@ doPurge(std::string dg_jobid)
 	if ( dg_jobid.length() ) { 
   		edglog(debug)<<"JobId object for purging created: "
   			<<dg_jobid<<std::endl;
-  		/*boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
-  			boost::filesystem::system_specific); */ // Boost 1.29.1
-		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)));
+  		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)));
   		return purger::purgeStorageEx(path, edg_wll_LogClearUSER);
     } else {
    		edglog(critical)
@@ -665,7 +648,7 @@ computeFileSize(const string & path)
     return size;
     GLITE_STACK_CATCH();
 }
-/*
+
 int 
 managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	std::vector<std::string> jobids)
@@ -732,7 +715,7 @@ managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
     return exit_code;
     GLITE_STACK_CATCH();
 }
-*/
+
 /*
 int 
 managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
@@ -833,70 +816,9 @@ managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 }
 */
 
-void
-doExecv(const string &command, const vector<string> &params,
-	const vector<string> &dirs, unsigned int startIndex, unsigned int endIndex)
-{
-	char **argvs;
-	// +3 -> difference between index, command at first position, NULL at the end
-	int size = params.size() + endIndex - startIndex + 3;
-	argvs = (char **) calloc(size, sizeof(char *));
-	
-	unsigned int i = 0;
-	
-	argvs[i] = (char *) malloc(command.length() + 1);
-	strcpy(argvs[i++], (command).c_str());
-	
-	for (unsigned int j = 0; j < params.size(); j++) {
-		argvs[i] = (char *) malloc(params[j].length() + 1);
-		strcpy(argvs[i++], (params[j]).c_str());
-	}
-	for (unsigned int j = startIndex; j <= endIndex; j++) {
-		argvs[i] = (char *) malloc(dirs[j].length() + 1);
-		strcpy(argvs[i++], (dirs[j]).c_str());
-	}
-	argvs[i] = (char *) 0;
-	
-	for (unsigned int j = 0; j <= i; j++) {
-		edglog(debug)<<"Command Item: "<<argvs[j]<<endl;
-	}
-	switch (vfork()) {
-		case -1:
-			// Unable to fork
-			break;
-		case 0:
-			// child
-			edglog(debug)<<"CHILD BEGIN"<<endl;
-	        /* qui sopra hai fatto tutte le manipolazioni sulle dir e costruito
-	        il vettore per la exec */
-	        
-	        if (execv(command.c_str(), argvs)) {
-	        	unsigned int middle = startIndex + (endIndex - startIndex) % 2;
-	        	doExecv(command, params, dirs, startIndex, middle);
-	        	doExecv(command, params, dirs, middle + 1, endIndex);
-	        	edglog(debug)<<"ERROR"<<endl;
-				//return;
-		   	}
-	        /* qui sotto fai la gestione di errno e se becchi E2BIG splitti  */
-	        edglog(debug)<<"CHILD END"<<endl;
-	        break;
-        default:
-        	// parent
-	    	/* qui ci sara' da fare la gestione degli errori per la wait */
-	    	int status;
-	    	edglog(debug)<<"START WAITING..."<<endl;
-	    	wait(&status);
-	    	edglog(debug)<<"...END WAITING"<<endl;
-	    	break;
-	}
-	for (unsigned int j = 0; j <= i; j++) {
-		free(argvs[j]);
-	}
-    free(argvs);
-}
-
+/*
 int 
-managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
+managedir( const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	std::vector<std::string> jobids)
 {
 	GLITE_STACK_TRY("managedir()");
@@ -906,7 +828,6 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	
 	int exit_code = 0; 
 	unsigned int size = jobids.size();
-	edglog(debug)<<"job id vector size: "<<size<<endl;
 	
 	if (size != 0) {
 	   	// Try to find managedirexecutable 
@@ -923,9 +844,14 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	bool extended_path = true ; 
 	  
 	   	string dirpermissions = " -m 0773 ";
+	   	string jobdirpermissions = " -m 0770 "; // MODE
+	   	
 	   	string user = " -c " + boost::lexical_cast<std::string>(userid); // UID
+	   	//string jobdiruser = " -c " + boost::lexical_cast<std::string>(jobdiruserid); // UID
+	   	
 	   	string group = " -g " + boost::lexical_cast<std::string>(getgid()); // GROUP
-	   
+	   	//string jobdirgroup ...
+	   	
 	   	string executable;
 	   	string path;
 	   	string allpath;
@@ -950,36 +876,42 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	}
 		}
 		
-		//string run = gliteDirmanExe + user + group + dirpermissions;
+		string run = gliteDirmanExe + user + group + dirpermissions;
+		//string run2 = gliteDirmanExe + jobdiruser + group + jobdirpermissions;
 		
-		vector<string> redparams;
-		redparams.push_back("-c");
-		string juser2 = boost::lexical_cast<std::string>(userid);
-		redparams.push_back(juser2);
-		redparams.push_back("-g");
-		string group2 = boost::lexical_cast<std::string>(getgid());
-		redparams.push_back(group2);
-		redparams.push_back("-m");
-		redparams.push_back("0773");
 		
-		vector<string> jobparams;
-		jobparams.push_back("-c");
-		juser2 = boost::lexical_cast<std::string>(jobdiruserid);
-		jobparams.push_back(juser2);
-		jobparams.push_back("-g");
-		group2 = boost::lexical_cast<std::string>(getgid());
-		jobparams.push_back(group2);
-		jobparams.push_back("-m");
-		jobparams.push_back("0770");
+		char	**argvs;
+		//printf("How many arguments do you want to pass ");
+		//fgets(buffer,BUFSIZ,stdin);
+		//sscanf(buffer,"%d",&n);
+		argvs = (char **) calloc(4 * jobids.size() + 6, sizeof(char *));
+		
+		argvs[0] = (char *) malloc(3);
+		strcpy(argvs[0], "-c" + '\0');
+		
+		string juser = boost::lexical_cast<std::string>(jobdiruserid);
+		argvs[1] = (char *) malloc(juser.length() + 1);
+		strcpy(argvs[1], (juser + '\0').c_str());
+		
+		argvs[2] = (char *) malloc(3);
+		strcpy(argvs[2], "-g" + '\0');
+		
+		string group2 = boost::lexical_cast<std::string>(getgid());;
+		argvs[3] = (char *) malloc(juser.length() + 1);
+		strcpy(argvs[3], (group2 + '\0').c_str());
+		
+		argvs[4] = (char *) malloc(3);
+		strcpy(argvs[4], "-m" + '\0');
+		
+		argvs[5] = (char *) malloc(5);
+		strcpy(argvs[5], "0770" + '\0');
 	
 		const int INPUT_SB_DIRECTORY_LEN = INPUT_SB_DIRECTORY.length() + 2;
 		const int OUTPUT_SB_DIRECTORY_LEN = OUTPUT_SB_DIRECTORY.length() + 2;
 		const int PEEK_DIRECTORY_LEN = PEEK_DIRECTORY.length() + 2;
 		
-		vector<string> reddirs;
-		vector<string> jobdirs;
+		int j = 6;
 	   	for (unsigned int i = 0; i < jobids.size(); i++) {
-	   		edglog(debug)<<"CICLING..."<<endl;
 		   	path = to_filename(glite::wmsutils::jobid::JobId(jobids[i]),
 		   		level, extended_path);
 		   	allpath = path;
@@ -988,37 +920,32 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	path.erase(0, pos);
 		   	reduceddir = path.substr(1, path.find(FILE_SEP, 1));
 		   	
-		   	reddirs.push_back(document_root + FILE_SEP + sandboxdir
-		   			+ FILE_SEP + reduceddir);
-		   	//run += document_root + FILE_SEP + sandboxdir
-		   		//	+ FILE_SEP + reduceddir + " ";
+		   	run += document_root + FILE_SEP + sandboxdir
+		   			+ FILE_SEP + reduceddir + " ";
 		   	
 		    path = document_root + FILE_SEP + allpath;
-		    edglog(debug)<<"INSIDE CICLING middle... "<<endl;
-		   
-		    jobdirs.push_back(path);
-		    jobdirs.push_back(path + FILE_SEP + INPUT_SB_DIRECTORY);
-		    jobdirs.push_back(path + FILE_SEP + OUTPUT_SB_DIRECTORY);
-		    jobdirs.push_back(path + FILE_SEP + PEEK_DIRECTORY);
 		    
-		    edglog(debug)<<"INSIDE CICLING end... "<<endl;
+		    argvs[j++] = (char *) malloc(path.length() + 1);
+		    strcpy(argvs[j], (path + '\0').c_str());
+		   
+		    argvs[j++] = (char *) malloc(path.length() + INPUT_SB_DIRECTORY_LEN);
+		    strcpy(argvs[j], (path + FILE_SEP + INPUT_SB_DIRECTORY + '\0').c_str());
+		    
+		    argvs[j++] = (char *) malloc(path.length() + OUTPUT_SB_DIRECTORY_LEN);
+		    strcpy(argvs[j], (path + FILE_SEP + OUTPUT_SB_DIRECTORY + '\0').c_str());
+		    
+		    argvs[j++] = (char *) malloc(path.length() + PEEK_DIRECTORY_LEN);
+		    strcpy(argvs[j], (path + FILE_SEP + PEEK_DIRECTORY + '\0').c_str());
+		    
 		}
-		
-		//argvs[j] = NULL;
-		
-		//edglog(debug)<<"Executing: \n\t"<<run<<endl;
-	   	/*if (system(run.c_str())) {
+		edglog(debug)<<"Executing: \n\t"<<run<<endl;
+	   	if (system(run.c_str())) {
 		   	return 1;
-	   	}*/
-	   	for (unsigned int j = 0; j < reddirs.size(); j++) {
-			edglog(debug)<<"DIRS VEC ITEM: "<<reddirs[j]<<endl;
-		}
-	   	doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1);
-	   	for (unsigned int j = 0; j < jobdirs.size(); j++) {
-			edglog(debug)<<"DIRS VEC ITEM: "<<jobdirs[j]<<endl;
-		}
-	   	doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1);
-        
+	   	}
+	   	//edglog(debug)<<"Executing: \n\t"<<run2<<endl;
+	   	if (execv(gliteDirmanExe.c_str(), argvs)) {
+		   	return 1;
+	   	}
 	}
 	time_t stoptime = time(NULL);
 	edglog(debug)<<"______ STARTING TIME: "<<starttime<<endl;
@@ -1028,7 +955,7 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
     return exit_code;
     GLITE_STACK_CATCH();
 }
-
+*/
 
 bool 
 isNull(string field)
