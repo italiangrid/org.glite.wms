@@ -855,37 +855,40 @@ doExecv(const string &command, const vector<string> &params,
 	}
 	argvs[i] = (char *) 0;
 	
-	for (unsigned int j = 0; j <= i; j++) {
+	/*for (unsigned int j = 0; j <= i; j++) {
 		edglog(debug)<<"Command Item: "<<argvs[j]<<endl;
-	}
+	}*/
 	switch (vfork()) {
 		case -1:
 			// Unable to fork
 			break;
 		case 0:
 			// child
-			edglog(debug)<<"CHILD BEGIN"<<endl;
+		//	edglog(info)<<"CHILD BEGIN"<<endl;
 	        /* qui sopra hai fatto tutte le manipolazioni sulle dir e costruito
 	        il vettore per la exec */
 	        
 	        if (execv(command.c_str(), argvs)) {
-	        	edglog(debug)<<"Command line too long, splitting..."<<endl;
-	        	unsigned int middle = startIndex + (endIndex - startIndex) % 2;
+                        edglog(info)<<"ERRNO: "<<errno<<endl;
+	        	edglog(info)<<"Command line too long, splitting..."<<endl;
+	        	unsigned int middle = startIndex + (endIndex - startIndex) / 2;
+                        edglog(info)<<"INDEX: "<<startIndex<<" "<<middle<<endl;
+                        edglog(info)<<"INDEX2: "<<middle+1<<" "<<endIndex<<endl; 
 	        	doExecv(command, params, dirs, startIndex, middle);
 	        	doExecv(command, params, dirs, middle + 1, endIndex);
 	        	
 				//return;
 		   	}
 	        /* qui sotto fai la gestione di errno e se becchi E2BIG splitti  */
-	        edglog(debug)<<"CHILD END"<<endl;
+	        //edglog(info)<<"CHILD END"<<endl;
 	        break;
         default:
         	// parent
 	    	/* qui ci sara' da fare la gestione degli errori per la wait */
 	    	int status;
-	    	edglog(debug)<<"START WAITING..."<<endl;
+	    	//edglog(info)<<"START WAITING..."<<endl;
 	    	wait(&status);
-	    	edglog(debug)<<"...END WAITING"<<endl;
+	    	//edglog(info)<<"...END WAITING"<<endl;
 	    	break;
 	}
 	for (unsigned int j = 0; j <= i; j++) {
@@ -905,7 +908,7 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	
 	int exit_code = 0; 
 	unsigned int size = jobids.size();
-	edglog(debug)<<"job id vector size: "<<size<<endl;
+	edglog(info)<<"job id vector size: "<<size<<endl;
 	
 	if (size != 0) {
 	   	// Try to find managedirexecutable 
@@ -1009,20 +1012,20 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	/*if (system(run.c_str())) {
 		   	return 1;
 	   	}*/
-	   	for (unsigned int j = 0; j < reddirs.size(); j++) {
+	   	/*for (unsigned int j = 0; j < reddirs.size(); j++) {
 			edglog(debug)<<"DIRS VEC ITEM: "<<reddirs[j]<<endl;
-		}
+		}*/
 	   	doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1);
-	   	for (unsigned int j = 0; j < jobdirs.size(); j++) {
+	   	/*for (unsigned int j = 0; j < jobdirs.size(); j++) {
 			edglog(debug)<<"DIRS VEC ITEM: "<<jobdirs[j]<<endl;
-		}
+		}*/
 	   	doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1);
         
 	}
 	time_t stoptime = time(NULL);
-	edglog(debug)<<"______ STARTING TIME: "<<starttime<<endl;
-	edglog(debug)<<"______ STOPPING TIME: "<<stoptime<<endl;
-	edglog(debug)<<"______ ELAPSED TIME: "<<(stoptime - starttime)<<endl;
+	edglog(info)<<"______ STARTING TIME: "<<starttime<<endl;
+	edglog(info)<<"______ STOPPING TIME: "<<stoptime<<endl;
+	edglog(info)<<"______ ELAPSED TIME: "<<(stoptime - starttime)<<endl;
 	
     return exit_code;
     GLITE_STACK_CATCH();
