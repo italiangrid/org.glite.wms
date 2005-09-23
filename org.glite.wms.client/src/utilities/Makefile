@@ -11,7 +11,7 @@ CMFLAGS=
 REPOSITORY=../../../
 repository=$(REPOSITORY)/repository
 stage=$(REPOSITORY)/stage
-BOOST=$(repository)/boost/1.29.1/rhel30_gcc32
+BOOST=$(repository)/boost/1.32.0/rhel30_gcc32
 CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
 CURL=-L/usr/lib -lcurl
 
