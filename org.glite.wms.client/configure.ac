@@ -14,6 +14,8 @@
 #       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 #
 
+set -x
+
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS client], [1.1.3])
 AC_CONFIG_AUX_DIR([./project])
@@ -65,6 +67,8 @@ have_gridsite=no
 have_ares=no
 have_expat=no
 have_gridsite=no
+have_libtar=no
+have_zlib=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_MSG_RESULT(["BOOST found $have_boost"])
@@ -83,6 +87,12 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
 AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
+
+AC_LIBTAR([], have_libtar=yes, have_libtar=no)
+AC_MSG_RESULT(["LIBTAR found $have_libtar"])
+
+AC_ZLIB([], have_zlib=yes, have_zlib=no)
+AC_MSG_RESULT(["ZLIB found $have_zlib"])
 
 AC_GSOAP
 
@@ -110,6 +120,14 @@ if test "$have_gridsite" = "no"; then
   AC_MSG_RESULT(["Please verify GRIDSITE package"])
 fi
 
+if test "$have_libtar" = "no"; then
+  AC_MSG_RESULT(["Please verify LIBTAR package"])
+fi
+
+if test "$have_zlib" = "no"; then
+  AC_MSG_RESULT(["Please verify ZLIB package"])
+fi
+
 if test "$have_globus" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
@@ -131,6 +149,14 @@ if test "$have_expat" = "no"; then
 fi
 
 if test "$have_gridsite" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_libtar" = "no"; then
+  AC_MSG_ERROR([Cannot continue building])
+fi
+
+if test "$have_zlib" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
