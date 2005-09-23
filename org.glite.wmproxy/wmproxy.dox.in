@@ -17,7 +17,7 @@
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = "WMPROXY"
+PROJECT_NAME           = "WMProxy"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
@@ -47,7 +47,7 @@ OUTPUT_LANGUAGE        = English
 # Private class members and static file members will be hidden unless 
 # the EXTRACT_PRIVATE and EXTRACT_STATIC tags are set to YES
 
-EXTRACT_ALL            = NO
+EXTRACT_ALL            = YES
 
 # If the EXTRACT_PRIVATE tag is set to YES all private members of a class 
 # will be included in the documentation.
@@ -57,7 +57,7 @@ EXTRACT_PRIVATE        = NO
 # If the EXTRACT_STATIC tag is set to YES all static members of a file 
 # will be included in the documentation.
 
-EXTRACT_STATIC         = NO
+EXTRACT_STATIC         = YES
 
 # If the HIDE_UNDOC_MEMBERS tag is set to YES, Doxygen will hide all 
 # undocumented members of documented classes, files or namespaces. 
@@ -65,14 +65,14 @@ EXTRACT_STATIC         = NO
 # various overviews, but no documentation section is generated. 
 # This option has no effect if EXTRACT_ALL is enabled.
 
-HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_MEMBERS     = NO
 
 # If the HIDE_UNDOC_CLASSES tag is set to YES, Doxygen will hide all 
 # undocumented classes that are normally visible in the class hierarchy. 
 # If set to NO (the default) these class will be included in the various 
 # overviews. This option has no effect if EXTRACT_ALL is enabled.
 
-HIDE_UNDOC_CLASSES     = YES
+HIDE_UNDOC_CLASSES     = NO
 
 # If the BRIEF_MEMBER_DESC tag is set to YES (the default) Doxygen will 
 # include brief member descriptions after the members that are listed in 
@@ -305,13 +305,13 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = \
-	@top_srcdir@/interface/glite/wms/checkpointing/ChkptException.h \
-	@top_srcdir@/interface/glite/wms/checkpointing/checkpointing.h \
-        @top_srcdir@/interface/glite/wms/checkpointing/checkpointing_namespace.h \
-        @top_srcdir@/interface/glite/wms/checkpointing/error_code.h \
-        @top_srcdir@/interface/glite/wms/checkpointing/jobstate.h \
-        @top_srcdir@/interface/glite/wms/checkpointing/step.h \
-        @top_srcdir@/interface/glite/wms/checkpointing/stepper.h
+		   src/server/wmpconfiguration.h \
+		   src/server/wmpdelegation.h \
+		   src/server/wmp2wm.h \
+		   src/server/wmpgsoapfaultmanipulator.h \
+                   src/utilities/wmputils.h \
+                   src/authorizer/wmpvomsauthz.h \
+                   src/authorizer/wmpauthorizer.h        
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
