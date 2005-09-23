@@ -337,7 +337,7 @@ NETWORK SERVER  methods:
 		else jnsPort = -( jnsPort ) ;
 		// sprintf (str_port , "%d" , jnsPort );
 		sprintf (str_port , "%s%s%d" , nsHost.c_str(),":",nsPort );
-		edg_wll_Context ctx = *lbVect[  getCtx( env, obj , LB_CTX  ) ]  ;
+		edg_wll_Context ctx = *lbVect[getCtx(env, obj,LB_CTX)]  ;
 		try{
 lock() ;
 		glite::wms::manager::ns::client::NSClient nsClient ( ct , jnsPort , ( glite::wms::common::logger::level_t)nsLevel ) ;
@@ -358,7 +358,7 @@ lock() ;
 			cerr << error_message(ctx , "Wanrning: edg_wll_LogTransferFAIL Failed ") << endl ;
 		if (edg_wll_LogAbort ( ctx  , exc.what() ))
 			cerr <<  error_message(ctx, "Warning: edg_wll_LogAbort Failed") << endl ;
-		// edg_wll_FreeContext(*lbVect[  getCtx( env, obj , LB_CTX  ) ] ) ; // needed before throwing the exception sure? TBD
+		// edg_wll_FreeContext(*lbVect[getCtx(env, obj,LB_CTX)] ) ; // needed before throwing the exception sure? TBD
 unlock() ;
 		log_error (env , "Unable to submit the job: " + string (exc.what() )  ) ;
 		}catch (...){ unlock();   log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper");    }
@@ -545,16 +545,17 @@ LOGGING methods:
 		const char *jd = env->GetStringUTFChars(jdl, 0);
 		const char *id = env->GetStringUTFChars(jobId, 0);
 		const char *ns = env->GetStringUTFChars(nsAddr, 0);
-		// edg_wlc_SSLInitialization();
 		try{
 			glite::wmsutils::jobid::JobId jid ( id );
 lock();
-			if ( edg_wll_RegisterJobSync ( *lbVect[  getCtx( env, obj , LB_CTX  ) ]  , jid.getId() ,  EDG_WLL_JOB_SIMPLE ,    jd, ns, 0 ,   NULL, NULL) ){
+			if (edg_wll_RegisterJobSync (*lbVect[getCtx(env, obj,LB_CTX)],
+				jid.getId(),EDG_WLL_JOB_SIMPLE,jd,ns,0,NULL,NULL)){
 				char error_message [1024];
 				char *msg, *dsc ;
-				edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]  , &msg , &dsc ) ;
-				sprintf ( error_message , "%s%s%s%s%s%s%s%s%s", "Unable to Register the Job:\n", jid.toString().c_str() ,"\nto the LB logger at: ",
-				getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (", dsc , " )" )  ;
+				edg_wll_Error(   *lbVect[getCtx(env, obj,LB_CTX)],&msg , &dsc ) ;
+				sprintf ( error_message , "%s%s%s%s%s%s%s%s%s", "Unable to Register the Job:\n",
+					jid.toString().c_str() ,"\nto the LB logger at: ",
+				getenv(GLITE_LB_LOG_DESTINATION),"\n",msg," (",dsc," )");
 				log_error (env , error_message) ;
 			}
 unlock() ;
@@ -575,7 +576,7 @@ unlock() ;
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_lb_1logSync
 	(JNIEnv *env, jobject obj, jstring jdl){
 		const char *jd = env->GetStringUTFChars(jdl, 0);
-		if ( edg_wll_LogEventSync( *lbVect[  getCtx( env, obj , LB_CTX  ) ] , EDG_WLL_EVENT_CHKPT , EDG_WLL_FORMAT_CHKPT , "1" , jd ) )
+		if ( edg_wll_LogEventSync(*lbVect[getCtx(env, obj,LB_CTX)] , EDG_WLL_EVENT_CHKPT , EDG_WLL_FORMAT_CHKPT , "1" , jd ) )
 			log_error (env , "Unable to log the sync event to LB" ) ;
 		env->ReleaseStringUTFChars( jdl, jd);
 	}
@@ -608,7 +609,7 @@ unlock() ;
 		char str_port [1024];
 		sprintf (str_port , "%s%s%d" , nsHost.c_str(),":",nsPort );
 		lock();
-		if (edg_wll_LogTransferSTART( *lbVect[  getCtx( env, obj , LB_CTX  ) ] ,
+		if (edg_wll_LogTransferSTART(*lbVect[getCtx(env, obj,LB_CTX)] ,
 		EDG_WLL_SOURCE_NETWORK_SERVER ,
 		addr, str_port , jd, "", "" ))  cerr << "\n\n\nJNI::edg_wll_LogTransferSTART failed"<<flush;
 		unlock();
@@ -634,7 +635,7 @@ unlock() ;
 	* Signature: ()Ljava/lang/String;
 	*/
 	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_lb_1getSequence
-	(JNIEnv *env, jobject obj){   return  env->NewStringUTF ( edg_wll_GetSequenceCode(*lbVect[  getCtx( env, obj , LB_CTX  ) ] )  );  }
+	(JNIEnv *env, jobject obj){   return  env->NewStringUTF ( edg_wll_GetSequenceCode(*lbVect[getCtx(env, obj,LB_CTX)] )  );  }
 
 
 
@@ -651,15 +652,15 @@ unlock() ;
 		if ( string(id).length() >1 ){
 			try{
 				glite::wmsutils::jobid::JobId jid ( id )  ;
-				if ( edg_wll_SetLoggingJob(*lbVect[  getCtx( env, obj , LB_CTX  ) ]  , jid.getId() , NULL , EDG_WLL_SEQ_DUPLICATE) )
+				if ( edg_wll_SetLoggingJob(*lbVect[getCtx(env, obj,LB_CTX)],jid.getId() , NULL , EDG_WLL_SEQ_DUPLICATE) )
 					log_error (env , "Error found while performing edg_wll_SetLoggingJob LB method") ;
 			}catch(exception &exc){   log_error (env , exc.what() ) ;  return ;
 			}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper\n");   return ; }
 		}
-		if ( edg_wll_LogListener(  *lbVect[  getCtx( env, obj , LB_CTX  ) ]  , "InteractiveListener" , string(addr).c_str() ,   (uint16_t) port) ){
+		if ( edg_wll_LogListener(  *lbVect[getCtx(env, obj,LB_CTX)],"InteractiveListener" , string(addr).c_str() ,   (uint16_t) port) ){
 			char error_message [1024];
 			char *msg, *dsc ;
-			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
+			edg_wll_Error(   *lbVect[getCtx(env, obj,LB_CTX)]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogListener  at: ",
 			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
@@ -705,7 +706,7 @@ unlock() ;
 		if  (step<0)   ec[0].value.i = EDG_WLL_EVENT_LISTENER ; else
 		//Normal behaviour: chkpt
 		ec[0].value.i = EDG_WLL_EVENT_CHKPT;
-		error = edg_wll_QueryEvents(  *lbVect[  getCtx( env, obj , LB_CTX  ) ] , jc, ec, &events );
+		error = edg_wll_QueryEvents(  *lbVect[getCtx(env, obj,LB_CTX)] , jc, ec, &events );
 		if ( error == ENOENT ) {  log_error (env , "No events found: ENOENT") ; return  env->NewStringUTF( "" ) ; }
 		if ( error ) {  log_error (env , "Query failed") ;   return  env->NewStringUTF( "" ) ; }
 		for ( cnt=0; events[cnt].type; cnt++ ); // counts the number of events
@@ -749,10 +750,10 @@ unlock() ;
 		const char *tName = env->GetStringUTFChars(name, 0);
 		const char *tValue = env->GetStringUTFChars(value, 0);
 
-		if (  edg_wll_LogUserTag( *lbVect[  getCtx( env, obj , LB_CTX  ) ]  ,  tName , tValue   )      ) {
+		if (  edg_wll_LogUserTag(*lbVect[getCtx(env, obj,LB_CTX)], tName , tValue   )      ) {
 			char error_message [1024];
 			char *msg, *dsc ;
-			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
+			edg_wll_Error(   *lbVect[getCtx(env, obj,LB_CTX)]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogUserTag   at: ",
 			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
@@ -1198,7 +1199,7 @@ DAGAD implementation methods:
 	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_dagToString
 	(JNIEnv *env, jobject obj, jint level  ){
 	lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
+		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		return  env->NewStringUTF(  dagad->toString(  (glite::wms::jdl::ExpDagAd::level) level ).c_str()   ) ;
 	};
@@ -1211,7 +1212,7 @@ DAGAD implementation methods:
 	*/
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dag_1getSubmissionStrings
 	(JNIEnv *, jobject){
-		// glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
+		// glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 		// return  env->NewStringUTF(  dagad->toString(  level )   ) ;
 	};
 
@@ -1223,20 +1224,20 @@ DAGAD implementation methods:
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dag_1logUserTags
 	(JNIEnv *env, jobject obj, jstring   jobid  ){
 	lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
+		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		std::vector<  std::pair<  std::string  ,     classad::ExprTree* > > userTags = dagad->getSubAttributes ( "UserTags"  ) ;
 		for (unsigned int i = 0 ; i < userTags.size() ; i++ ){
 			if (  userTags[i].second->GetKind () != classad::ExprTree::CLASSAD_NODE )  cerr << "CLASSAD error" << endl ;
 			glite::wmsutils::jobid::JobId subJobid(  userTags[i].first   ) ;
-			edg_wll_SetLoggingJob(  *lbVect[  getCtx( env, obj , LB_CTX  ) ] , subJobid.getId() ,  NULL, EDG_WLL_SEQ_NORMAL) ;
-			logUserTags (  (classad::ClassAd*)(userTags[i].second)   ,  *lbVect[  getCtx( env, obj , LB_CTX  ) ]   ) ;
+			edg_wll_SetLoggingJob(  *lbVect[getCtx(env, obj,LB_CTX)] , subJobid.getId() ,  NULL, EDG_WLL_SEQ_NORMAL) ;
+			logUserTags (  (classad::ClassAd*)(userTags[i].second)   ,  *lbVect[getCtx(env, obj,LB_CTX)]   ) ;
 		}
 		// Ripristinate the old logging job Id
 		const char *id = env->GetStringUTFChars(jobid, 0);
 		try{
 			glite::wmsutils::jobid::JobId jid ( id )  ;
-			edg_wll_SetLoggingJob(  *lbVect[  getCtx( env, obj , LB_CTX  ) ] , jid.getId() ,  NULL, EDG_WLL_SEQ_NORMAL) ;
+			edg_wll_SetLoggingJob(  *lbVect[getCtx(env, obj,LB_CTX)] , jid.getId() ,  NULL, EDG_WLL_SEQ_NORMAL) ;
 		}catch(exception &exc){   log_error (env , exc.what() ) ;  return ;
 		}catch (...){ log_error (env, "Fatal Error: Unpredictalbe exception thrown by JNI wrapper\n");   return ; }
 		env->ReleaseStringUTFChars( jobid ,  id ) ;
@@ -1251,7 +1252,7 @@ DAGAD implementation methods:
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dagSetAttribute
 	(JNIEnv *env, jobject obj, jint  name  , jstring  value ){
 	lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
+		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		const char *val = env->GetStringUTFChars(value, 0);
 		dagad->setAttribute (   (glite::wms::jdl::ExpDagAd::attribute) name , string(val) ) ;
@@ -1271,10 +1272,10 @@ DAGAD implementation methods:
 		const char *str_addr = env->GetStringUTFChars( nsAddress , 0);
 		// Retrieving the dagad
 	lock();
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
+		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		// Retrieving the LB context
-		edg_wll_Context ctx = *lbVect[  getCtx( env, obj , LB_CTX  ) ]  ;
+		edg_wll_Context ctx = *lbVect[getCtx(env, obj,LB_CTX)]  ;
 		//  array of subjob ID's
 		edg_wlc_JobId* subjobs = NULL ;
 		// Register the job
@@ -1283,7 +1284,7 @@ DAGAD implementation methods:
 			str_addr,    dagad->size()  ,   NULL,   &subjobs  ) ){
 			char error_message [1024];
 			char *msg, *dsc ;
-			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
+			edg_wll_Error(   *lbVect[getCtx(env, obj,LB_CTX)]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform  edg_wll_RegisterJobSync   at: ",
 			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
@@ -1306,7 +1307,7 @@ DAGAD implementation methods:
 		if (      edg_wll_RegisterSubjobs (  ctx,   id.getId()   , jdls_char, str_addr, subjobs )     ){
 			char error_message [1024];
 			char *msg, *dsc ;
-			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
+			edg_wll_Error(   *lbVect[getCtx(env, obj,LB_CTX)]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogUserTag   at: ",
 			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
@@ -1334,7 +1335,7 @@ DAGAD implementation methods:
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_logDefaultValues
 	(JNIEnv *env, jobject  obj, jboolean boom  ){
 		lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX  ) ]  ;
+		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 		unlock() ;
 		dagad->setDefaultValues ( boom ) ;
 	};
@@ -1352,7 +1353,7 @@ DAGAD implementation methods:
 		const char *str_addr = env->GetStringUTFChars( nsAddress , 0);
 
 		// Retrieving the LB context
-		edg_wll_Context ctx = *lbVect[  getCtx( env, obj , LB_CTX  ) ]  ;
+		edg_wll_Context ctx = *lbVect[getCtx(env, obj,LB_CTX)]  ;
 		//  array of subjob ID's
 		edg_wlc_JobId* subjobs = NULL ;
 		// Register the job
@@ -1375,7 +1376,7 @@ DAGAD implementation methods:
 			jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
 		}
 		glite::wms::jdl::ExpDagAd* dagad =NULL;
-		glite::wms::partitioner::Partitioner part (  glite::wms::common::utilities::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
+		 glite::wms::partitioner::Partitioner part (  glite::wms::common::utilities::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
 		dagad= new glite::wms::jdl::ExpDagAd ( part.createDag() ) ;
 
 
@@ -1396,7 +1397,7 @@ DAGAD implementation methods:
 		if (      edg_wll_RegisterSubjobs (  ctx,   id.getId()   , jdls_char, str_addr, subjobs )     ){
 			char error_message [1024];
 			char *msg, *dsc ;
-			edg_wll_Error(   *lbVect[  getCtx( env, obj , LB_CTX  ) ]   , &msg , &dsc ) ;
+			edg_wll_Error(   *lbVect[getCtx(env, obj,LB_CTX)]   , &msg , &dsc ) ;
 			sprintf ( error_message , "%s%s%s%s%s%s%s","Unable to perform edg_wll_LogUserTag   at: ",
 			getenv ( GLITE_LB_LOG_DESTINATION) , "\n" , msg , " (" , dsc , " )" )  ;
 			log_error (env ,   error_message ) ;
