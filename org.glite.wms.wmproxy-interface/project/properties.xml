@@ -53,4 +53,11 @@
 	      Define extra properties here ...
 	     ====================================================== -->
 
+        <property name="build.package.summary" value="WMProxy wsdl" />
+
+        <property name="build.package.description" value="WMProxy wsdl: wsdl file for WMProxy service" />
+
+        <property name="build.rpm.spec.arch" value="noarch" />
+
+
 </project>

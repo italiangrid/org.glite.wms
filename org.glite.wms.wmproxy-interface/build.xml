@@ -17,7 +17,7 @@
 	Author: Alessandro Maraschini <alessandro.maraschini@datamat.it>
 -->
 
-<project name="wmproxy-interface" default="init">
+<project name="wmproxy-interface" default="dist">
 
 	<!-- ==============================================
 	      Builds the GLite wms wmproxy-interface component
@@ -79,18 +79,18 @@
 	<!-- ==============================================
 		 Local private targets
 	     ============================================== -->
-	
-	<target name="localinit"
+
+	<target name="localinit" 
 		description="Module specific initialization tasks">
 
                 <!-- Set compile classpaths -->
                 <path id="compile.classpath"/>
- 
-                <!-- Set test classpaths -->
+
+                 <!-- Set test classpaths -->
                 <path id="test.classpath"/>
- 
-	</target>
-	
+
+        </target>
+
 	<target name="localcompile"
 		description="Module specific compile tasks">
 	</target>
@@ -99,13 +99,39 @@
 		description="Module specific cleaning tasks">
 	</target>
 
-	<target name="stage"
+        <target name="compile" depends="localinit"
+                description="Compiles the source code.">
+                <echo>Nothing to compile</echo>
+        </target>
+
+        <target name="doc" depends="compile"
+                description="Create documentation.">
+        </target>
+
+
+	<target name="stage" depends="init"
                 description="Stage wsdl to stage area">
+
+		<echo>Staging service wsdl to stage area...</echo>
+
                 <copy toDir="${stage.int.dir}">
                         <fileset dir="${module.int.dir}">
                                 <include name="*.wsdl" />
                                 <include name="*.xsd" />
                         </fileset>
                 </copy>
-        </target>	
-</project>		
+		<echo>Done!</echo>
+        </target>
+
+       <target name="localdistbin" description="Custom actions to be done before creating the tarball">
+                 <mkdir dir="tempbuild/interface" />
+                 <copy toDir="tempbuild/interface">
+                         <fileset dir="${module.int.dir}">
+                                 <include name="*.wsdl"/>
+                                 <include name="*.xsd"/>
+                         </fileset>
+                 </copy>
+         </target>
+
+</project>
+
