@@ -31,7 +31,7 @@ class ExecuteFunction : public CommandState
    * Constructor
    * @param s the name of the attribute whose value is to be sent.
    */
-  ExecuteFunction(boost::function<bool, Command*> fn);
+  ExecuteFunction(boost::function<bool(Command*)> fn);
   
   /**
    * Describes the action this state must perform.
@@ -42,7 +42,7 @@ class ExecuteFunction : public CommandState
   bool execute (Command* cmd);
 
  private:
-  boost::function<bool, Command*> fn;
+  boost::function<bool(Command*)> fn;
 };
 
 }

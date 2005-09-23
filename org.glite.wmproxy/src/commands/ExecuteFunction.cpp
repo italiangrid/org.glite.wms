@@ -14,7 +14,7 @@ namespace wms {
 namespace wmproxy {
 namespace commands {
 
-ExecuteFunction::ExecuteFunction(boost::function<bool, Command*> f)
+ExecuteFunction::ExecuteFunction(boost::function<bool(Command*)> f)
 {
  fn = f;
 } 
