@@ -51,8 +51,14 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.edg.info.Consumer;
-import org.edg.info.ResultSet;
+import org.glite.rgma.Consumer;
+import org.glite.rgma.stubs.servlet.ConsumerServletImpl;
+import org.glite.rgma.stubs.servlet.ConsumerFactoryServletImpl;
+import org.glite.rgma.stubs.servlet.ResultSetImpl;
+import org.glite.rgma.QueryProperties;
+import org.glite.rgma.ResultSet;
+import org.glite.rgma.TimeInterval;
+import org.glite.rgma.Units;
 import org.glite.wms.jdlj.Jdl;
 import org.glite.wms.jdlj.JobAd;
 import org.glite.wms.jdlj.JobAdException;
@@ -2531,7 +2537,7 @@ class CurrentTimeThread extends Thread {
  private MultipleJobPanel multipleJobPanel;
  private String selectStatement = "select * from JobStatusRaw";
  private String whereClause = "";
- private final int consumerType = Consumer.CONTINUOUS;
+ private final QueryProperties consumerType = QueryProperties.CONTINUOUS;
  private Consumer consumer = null;
  private ServletConnection producer;
  public UpdateThread(MultipleJobPanel multipleJobPanel) {
@@ -2557,7 +2563,9 @@ class CurrentTimeThread extends Thread {
  try {
  logger.debug("selectStatement: " + selectStatement);
  logger.debug("consumerType: " + consumerType);
- consumer = new Consumer(selectStatement, consumerType);
+ ConsumerFactoryServletImpl factory = new ConsumerFactoryServletImpl(); 
+ TimeInterval timeInt = new TimeInterval(60, Units.SECONDS);
+ consumer = factory.createConsumer(timeInt, selectStatement, consumerType);
  consumer.start();
  } catch (Exception e) {
  logger.debug("Consumer Constructor (or start()) Exception");
@@ -2605,7 +2613,9 @@ class CurrentTimeThread extends Thread {
  // If consumer == null try to create it again.
  if (consumer == null) {
  try {
- consumer = new Consumer(selectStatement, consumerType);
+ ConsumerFactoryServletImpl factory = new ConsumerFactoryServletImpl();
+ TimeInterval timeInt = new TimeInterval(60, Units.SECONDS);
+ consumer = factory.createConsumer(timeInt, selectStatement, consumerType);
  consumer.start();
  } catch (Exception e) {
  logger.debug("Consumer Constructor (or start()) Exception");
@@ -2660,7 +2670,7 @@ class UpdateThread extends Thread {
 
   private String whereClause = "";
 
-  private final int consumerType = Consumer.CONTINUOUS;
+  private final QueryProperties consumerType = QueryProperties.CONTINUOUS;
 
   private Consumer consumer = null;
 
@@ -2701,17 +2711,19 @@ class UpdateThread extends Thread {
               Thread.sleep(Utils.RGMA_UPDATE_RATE);
               if (consumer == null) {
                 try {
-                  consumer = new Consumer(selectStatement, consumerType);
-                  consumer.start();
+                  ConsumerFactoryServletImpl factory = new ConsumerFactoryServletImpl();
+                  TimeInterval timeInt = new TimeInterval(60, Units.SECONDS);
+                  consumer = factory.createConsumer(timeInt, selectStatement, consumerType);
+                  consumer.start(timeInt);
                 } catch (Exception e) {
                   logger.debug("Consumer Constructor (or start()) Exception");
                   e.printStackTrace();
                 }
                 logger.debug("consumer: " + consumer);
               }
-              resultSet = consumer.popIfPossible();
+              resultSet = consumer.popAll();
               if (resultSet != null) {
-                logger.debug("resultSet.size(): " + resultSet.size());
+                //logger.debug("resultSet.size(): " + resultSet.size());
                 String jobIdText = "";
                 int index = -1;
                 //resultSet.next();
