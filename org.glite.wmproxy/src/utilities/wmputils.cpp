@@ -855,7 +855,7 @@ doExecv(const string &command, const vector<string> &params,
 	}
 	argvs[i] = (char *) 0;
 	
-	switch (vfork()) {
+	switch (fork()) {
 		case -1:
 			// Unable to fork
 			throw FileSystemException(__FILE__, __LINE__,
