@@ -15,6 +15,7 @@
 #
 
 
-SUBDIRS = utilities lbclient services commands
+#SUBDIRS = utilities lbclient services commands
+SUBDIRS = utilities services commands
 
 MAINTAINERCLEANFILES = Makefile.in
