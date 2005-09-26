@@ -855,40 +855,37 @@ doExecv(const string &command, const vector<string> &params,
 	}
 	argvs[i] = (char *) 0;
 	
-	/*for (unsigned int j = 0; j <= i; j++) {
-		edglog(debug)<<"Command Item: "<<argvs[j]<<endl;
-	}*/
 	switch (vfork()) {
 		case -1:
 			// Unable to fork
+			throw FileSystemException(__FILE__, __LINE__,
+				"doExecv()", WMS_IS_FAILURE, "Unable to fork process"
+				"\n(please contact server administartor");
 			break;
 		case 0:
 			// child
-		//	edglog(info)<<"CHILD BEGIN"<<endl;
-	        /* qui sopra hai fatto tutte le manipolazioni sulle dir e costruito
-	        il vettore per la exec */
-	        
 	        if (execv(command.c_str(), argvs)) {
-                        edglog(info)<<"ERRNO: "<<errno<<endl;
-	        	edglog(info)<<"Command line too long, splitting..."<<endl;
-	        	unsigned int middle = startIndex + (endIndex - startIndex) / 2;
-                        edglog(info)<<"INDEX: "<<startIndex<<" "<<middle<<endl;
-                        edglog(info)<<"INDEX2: "<<middle+1<<" "<<endIndex<<endl; 
-	        	doExecv(command, params, dirs, startIndex, middle);
-	        	doExecv(command, params, dirs, middle + 1, endIndex);
-	        	
-				//return;
-		   	}
-	        /* qui sotto fai la gestione di errno e se becchi E2BIG splitti  */
-	        //edglog(info)<<"CHILD END"<<endl;
+	        	if (errno == E2BIG) {
+        			edglog(info)<<"Command line too long, splitting..."<<endl;
+        			unsigned int middle = startIndex
+        				+ (endIndex - startIndex) / 2;
+                    edglog(info)<<"Calling from index "<<startIndex
+                    	<<" to "<<middle<<endl;
+                    edglog(info)<<"Calling from index "<<middle + 1
+                    	<<" to "<<endIndex<<endl; 
+        			doExecv(command, params, dirs, startIndex, middle);
+        			doExecv(command, params, dirs, middle + 1, endIndex);
+	        	} else {
+	        		throw FileSystemException(__FILE__, __LINE__,
+						"doExecv()", WMS_IS_FAILURE, "Unable to execute command"
+						"\n(please contact server administartor");
+				}
+	        }
 	        break;
         default:
         	// parent
-	    	/* qui ci sara' da fare la gestione degli errori per la wait */
 	    	int status;
-	    	//edglog(info)<<"START WAITING..."<<endl;
 	    	wait(&status);
-	    	//edglog(info)<<"...END WAITING"<<endl;
 	    	break;
 	}
 	for (unsigned int j = 0; j <= i; j++) {
@@ -908,7 +905,7 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	
 	int exit_code = 0; 
 	unsigned int size = jobids.size();
-	edglog(info)<<"job id vector size: "<<size<<endl;
+	edglog(info)<<"Job id vector size: "<<size<<endl;
 	
 	if (size != 0) {
 	   	// Try to find managedirexecutable 
@@ -919,32 +916,25 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	string gliteDirmanExe = (glite_path == NULL)
 	   		? (FILE_SEP + "opt" + FILE_SEP + "glite")
 	   		:(string(glite_path)); 
-	   	gliteDirmanExe += FILE_SEP + "bin" + FILE_SEP + "glite_wms_wmproxy_dirmanager";
+	   	gliteDirmanExe += FILE_SEP + "bin" + FILE_SEP
+	   		+ "glite_wms_wmproxy_dirmanager";
 	   	
-	   	int level = 0; 
+	   	string useridtxt = boost::lexical_cast<std::string>(userid);
+	   	string grouptxt = boost::lexical_cast<std::string>(getgid());
+	   	
+		int level = 0; 
 	   	bool extended_path = true ; 
-	  
-	   	string dirpermissions = " -m 0773 ";
-	   	string user = " -c " + boost::lexical_cast<std::string>(userid); // UID
-	   	string group = " -g " + boost::lexical_cast<std::string>(getgid()); // GROUP
-	   
-	   	string executable;
-	   	string path;
-	   	string allpath;
-	   	string sandboxdir;
-		string reduceddir;
-		
-		int pos;
-		
 		// Vector contains at least one element
-		path = to_filename (glite::wmsutils::jobid::JobId(jobids[0]),
+		string path = to_filename (glite::wmsutils::jobid::JobId(jobids[0]),
 		   		level, extended_path);
-		pos = path.find(FILE_SEP, 0);
-		sandboxdir = document_root + FILE_SEP + path.substr(0, pos) + FILE_SEP;
+		int pos = path.find(FILE_SEP, 0);
+		string sandboxdir = document_root + FILE_SEP + path.substr(0, pos) + FILE_SEP;
 		// Creating SanboxDir directory if needed
 		if (!fileExists(sandboxdir)) {
-			string run = gliteDirmanExe + user + group + dirpermissions
-		   		+ sandboxdir;
+			string run = gliteDirmanExe
+				+ " -c " + useridtxt
+				+ " -g " + grouptxt
+				+ " -m 0773 " + sandboxdir;
 		   	edglog(debug)<<"Creating SandboxDir..."<<endl;
 			edglog(debug)<<"Executing: \n\t"<<run<<endl;
 			if (system(run.c_str())) {
@@ -952,36 +942,33 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	}
 		}
 		
-		//string run = gliteDirmanExe + user + group + dirpermissions;
-		
+		// Creating parameters vector for reduced directories creation
 		vector<string> redparams;
 		redparams.push_back("-c");
-		string juser2 = boost::lexical_cast<std::string>(userid);
-		redparams.push_back(juser2);
+		string juser = useridtxt;
+		redparams.push_back(juser);
 		redparams.push_back("-g");
-		string group2 = boost::lexical_cast<std::string>(getgid());
-		redparams.push_back(group2);
+		string group = grouptxt;
+		redparams.push_back(group);
 		redparams.push_back("-m");
 		redparams.push_back("0773");
 		
+		// Creating parameters vector for job directories creation
 		vector<string> jobparams;
 		jobparams.push_back("-c");
-		juser2 = boost::lexical_cast<std::string>(jobdiruserid);
-		jobparams.push_back(juser2);
+		juser = boost::lexical_cast<std::string>(jobdiruserid);
+		jobparams.push_back(juser);
 		jobparams.push_back("-g");
-		group2 = boost::lexical_cast<std::string>(getgid());
-		jobparams.push_back(group2);
+		group = grouptxt;
+		jobparams.push_back(group);
 		jobparams.push_back("-m");
 		jobparams.push_back("0770");
 	
-		/*const int INPUT_SB_DIRECTORY_LEN = INPUT_SB_DIRECTORY.length() + 2;
-		const int OUTPUT_SB_DIRECTORY_LEN = OUTPUT_SB_DIRECTORY.length() + 2;
-		const int PEEK_DIRECTORY_LEN = PEEK_DIRECTORY.length() + 2;*/
-		
 		vector<string> reddirs;
 		vector<string> jobdirs;
+	   	string allpath;
+		string reduceddir;
 	   	for (unsigned int i = 0; i < jobids.size(); i++) {
-	   		edglog(debug)<<"CICLING..."<<endl;
 		   	path = to_filename(glite::wmsutils::jobid::JobId(jobids[i]),
 		   		level, extended_path);
 		   	allpath = path;
@@ -990,37 +977,20 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	path.erase(0, pos);
 		   	reduceddir = path.substr(1, path.find(FILE_SEP, 1));
 		   	
+		   	// Reduced directories
 		   	reddirs.push_back(document_root + FILE_SEP + sandboxdir
 		   			+ FILE_SEP + reduceddir);
-		   	//run += document_root + FILE_SEP + sandboxdir
-		   		//	+ FILE_SEP + reduceddir + " ";
 		   	
-		    path = document_root + FILE_SEP + allpath;
-		    edglog(debug)<<"INSIDE CICLING middle... "<<endl;
-		   
+		   	// Job directories
+		   	path = document_root + FILE_SEP + allpath;
 		    jobdirs.push_back(path);
 		    jobdirs.push_back(path + FILE_SEP + INPUT_SB_DIRECTORY);
 		    jobdirs.push_back(path + FILE_SEP + OUTPUT_SB_DIRECTORY);
 		    jobdirs.push_back(path + FILE_SEP + PEEK_DIRECTORY);
-		    
-		    edglog(debug)<<"INSIDE CICLING end... "<<endl;
 		}
 		
-		//argvs[j] = NULL;
-		
-		//edglog(debug)<<"Executing: \n\t"<<run<<endl;
-	   	/*if (system(run.c_str())) {
-		   	return 1;
-	   	}*/
-	   	/*for (unsigned int j = 0; j < reddirs.size(); j++) {
-			edglog(debug)<<"DIRS VEC ITEM: "<<reddirs[j]<<endl;
-		}*/
 	   	doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1);
-	   	/*for (unsigned int j = 0; j < jobdirs.size(); j++) {
-			edglog(debug)<<"DIRS VEC ITEM: "<<jobdirs[j]<<endl;
-		}*/
 	   	doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1);
-        
 	}
 	time_t stoptime = time(NULL);
 	edglog(info)<<"______ STARTING TIME: "<<starttime<<endl;
@@ -1038,10 +1008,10 @@ isNull(string field)
 	GLITE_STACK_TRY("isNull()");
 	bool is_null = false ;
 	int p1 = field.size() - 5 ;
-	int p2 = field.find ("=NULL");
+	int p2 = field.find("=NULL");
 	
-	if ( p1 > 0 &&  p1==p2 ){
-	        is_null= true;
+	if (p1 > 0 && p1 == p2) {
+		is_null = true;
 	}
 	return is_null;
 	GLITE_STACK_CATCH();
