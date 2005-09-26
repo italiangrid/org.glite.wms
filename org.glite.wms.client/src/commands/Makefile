@@ -23,29 +23,29 @@ GLOBUS_FLAVOR=gcc32dbg
 GLOBUS_FLAVOR_THREADS=gcc32dbgpthr
 
 GLOBUS_LOCATION=$(REPOSITORY)/repository/globus/2.4.3-VDT-1.2.2/rhel30_gcc32
-BOOST_LOCATION=$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32
+BOOST_LOCATION=$(REPOSITORY)/repository/boost/1.32.0/rhel30_gcc32
 EXPAT_LOCATION=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32/
 
 ARES=$(REPOSITORY)/repository/ares/1.1.1/rhel30_gcc32
 EXPAT=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32
 CLASSAD=$(REPOSITORY)/repository/classads/0.9.6/rhel30_gcc32
-BOOST=$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32
+BOOST=$(REPOSITORY)/repository/boost/1.32.0/rhel30_gcc32
 
 
 
-BOOST_LIBS=-L$(BOOST_LOCATION)/lib/release \
--lboost_fs -lboost_thread -lboost_regex
+BOOST_LIBS=-L$(BOOST_LOCATION)/lib \
+-lboost_filesystem-gcc-mt -lboost_regex-gcc-mt -lboost_thread-gcc-mt -lpthread 
 CLASSAD_LIBS=-L$(CLASSAD)/lib  -lclassad -lclassad_dl
 ARES_LIBS=-L$(ARES)/lib -lares
 GSI_PLUGIN=/home/msotty/webservices/gsoap/gsoap-gsi-plugin-2.0
 
 CIFLAGS=-I../ \
+-I$(BOOST)/include \
 -I$(REPOSITORY)/stage/include \
--I$(CLASSAD)/include \
--I$(BOOST)/include
+-I$(CLASSAD)/include 
 
 CFLAGS= -DDEBUG -DWANT_NAMESPACES -DWITH_OPENSSL\
-$(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(CMFLAGS)
+$(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(CMFLAGS) -pthread
 
 JDL_LIB=-lglite_wms_jdl
 
@@ -161,7 +161,7 @@ submit:	$(job_submit_SOURCE)
 			mkdir $(bin_dir) ; \
 		fi
 
-		$(CPP) -g -Wall  $(job_submit_CFLAGS) $(job_submit_DEPS) \
+		$(CPP) -g -Wall $(job_submit_CFLAGS) $(job_submit_DEPS)\
 			-o  $(job_submit_OBJ)  \
 			$(job_submit_SOURCE)
 		@mv $(job_submit_OBJ) $(bin_dir)
