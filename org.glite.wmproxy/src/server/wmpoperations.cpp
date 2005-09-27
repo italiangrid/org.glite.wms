@@ -2780,7 +2780,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			edglog(debug)<<"Good perusal file: "<<found[i]<<endl;
 			good.push_back(found[i]);
 		}
-		if (allChucks) {
+		if (allChunks) {
 			if (currentfilename.find(fileName + PERUSAL_DATE_INFO_SEPARATOR)
 					== 0) {
 				edglog(debug)<<"Good old global perusal file: "<<found[i]<<endl;
