@@ -95,7 +95,8 @@ const std::string WMP_VERSION = WMP_MAJOR_VERSION
 const std::string MARADONA_FILE = "Maradona.output";
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
 const std::string TEMP_PERUSAL_FILE_NAME = "tempperusalfile";
-const long FILE_TRANSFER_SIZE_LIMIT = 1000000;
+const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
+const long FILE_TRANSFER_SIZE_LIMIT = 50;
 
 // Document root variable
 const char * DOCUMENT_ROOT = "DOCUMENT_ROOT";
@@ -2759,7 +2760,9 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	
 	vector<string> good;
 	for (unsigned int i = 0; i < found.size(); i++) {
-		if (found[i].rfind(fileName + ".") == 0) {
+		edglog(debug)<<"Found file: "<<found[i]<<endl;
+		if (wmputilities::getFileName(found[i]).rfind(fileName + ".") == 0) {
+			edglog(debug)<<"Good file: "<<found[i]<<endl;
 			good.push_back(found[i]);	
 		}
 	}
@@ -2791,7 +2794,9 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		
 		string startdate = good[0].substr(good[0].rfind(".") + 1,
 			good[0].length() - 1);
+		edglog(debug)<<"START Date: "<<startdate<<endl;
 		string enddate = startdate;
+		edglog(debug)<<"END Date: "<<enddate<<endl;
 			
 		fstream outfile(tempfile.c_str(), ios::out);
 		if (!outfile.good()) {
@@ -2806,21 +2811,26 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		
 		for (unsigned int i = 0; i < size; i++) {
 			filesize = wmputilities::computeFileSize(good[i]);
-			enddate = good[i].substr(good[i].rfind(".") + 1,
-					good[i].length() - 1);
 			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
 				outfile.close();
-				rename(tempfile.c_str(), string(fileName + "_" + enddate + "_"
+				rename(tempfile.c_str(), 
+					string(peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
 					+ startdate).c_str());
 				returnvector.push_back(protocol + "://" + serverhost + ":"
-					+ port + peekdir + fileName + "_" + enddate + "_"
+					+ port + peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
 					+ startdate);
 				fstream outfile(tempfile.c_str(), ios::out);
 				if (!outfile.good()) {
 					// eccezione
 				}
 				totalfilesize = 0;
+				enddate = good[i].substr(good[i].rfind(".") + 1,
+                                        good[i].length() - 1);
+
 				startdate = enddate;
+			} else {
+			enddate = good[i].substr(good[i].rfind(".") + 1,
+                                        good[i].length() - 1);
 			}
 			ifstream infile(good[i].c_str());
 			if (!infile.good()) {
@@ -2832,10 +2842,11 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			totalfilesize += filesize;
 		}
 		outfile.close();
-		rename(tempfile.c_str(), string(fileName + "_" + enddate + "_"
-			+ startdate).c_str());
+		rename(tempfile.c_str(), 
+                                        string(peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
+                                        + startdate).c_str());
 		returnvector.push_back(protocol + "://" + serverhost + ":"
-			+ port + peekdir + fileName + "_" + enddate + "_"
+			+ port + peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
 			+ startdate);
 	}
 	
