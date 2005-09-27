@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.32  2005/09/27 09:11:16  eronchie
+	Removed wms-ui.partitioner from UI
+
 	Revision 1.31  2005/05/26 15:21:21  zurek
 	inserted module.build.file
-
+	
 	Revision 1.30  2004/10/29 22:54:26  dimeglio
 	Use envset target
 	
@@ -280,22 +283,6 @@
 
 	<!-- component targets definitions tag = do not remove = -->
 
-	<target name="partitioner" unless="setenvonly" depends="envset, boost,classads,globus">
-		<if>
-			<isset property="small.memory" />
-			<then>
-				<exec dir="${wms-ui.subsystem.dir}.partitioner" executable="${antExec}" failonerror="${failonerror}">
-					<arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
-				</exec>
-			</then>
-			<else>
-				<ant dir="${wms-ui.subsystem.dir}.partitioner"
-	                    	     target="${target}"
-	                    	     inheritall="false" />
-			</else>
-		</if>
-	</target>
-
 	<target name="api-cpp" unless="setenvonly" depends="envset">
 		<if>
 			<isset property="small.memory" />
@@ -410,7 +397,6 @@
 
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="envset,
-						 partitioner,
 					     api-cpp,
    					     api-java,
 					     wrap-python,

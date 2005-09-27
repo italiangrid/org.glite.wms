@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.15  2005/09/27 09:11:16  eronchie
+	Removed wms-ui.partitioner from UI
+
 	Revision 1.14  2004/10/18 23:00:41  dimeglio
 	Added oscheck to various targets
-
+	
 	Revision 1.13  2004/10/12 18:03:03  harakaly
 	Typo fix
 	
@@ -150,11 +153,6 @@
 	
 		<!-- condition property tag = do not remove = -->
 
-		<condition property="partitioner.head">
-                        <equals arg1="${org.glite.wms-ui.partitioner.version}" arg2=
-"HEAD" />
-                </condition>
-
 		<condition property="api-cpp.head">
 			<equals arg1="${org.glite.wms-ui.api-cpp.version}" arg2="HEAD" />
 		</condition>
@@ -243,18 +241,8 @@
 
 	<!-- component targets tag = do not remove = -->
 
-	<!-- partitioner -->
-        <target name="partitioner" depends="boost, classads, get.partitioner.head, get.partitioner.tag"/>
-        <target name="get.partitioner.head" if="partitioner.head">
-                <cvs-co package="org.glite.wms-ui.partitioner" />
-        </target>
-        <target name="get.partitioner.tag" unless="partitioner.head">
-                <cvs-co package="org.glite.wms-ui.partitioner"
-                        tag="${org.glite.wms-ui.partitioner.version}" />
-        </target>
-
 	<!-- api-cpp -->
- 	<target name="api-cpp" depends="boost, classads, globus, partitioner, get.api-cpp.head, get.api-cpp.tag"/>
+ 	<target name="api-cpp" depends="boost, classads, globus, get.api-cpp.head, get.api-cpp.tag"/>
 	<target name="get.api-cpp.head" if="api-cpp.head">
 		<cvs-co package="org.glite.wms-ui.api-cpp" />
 	</target>
@@ -324,8 +312,7 @@
         </target>
 
 	<!-- All project modules -->
- 	<target name="project" depends="partitioner,
-					api-cpp,
+ 	<target name="project" depends="api-cpp,
   				        api-java,
                                         wrap-python,
 					wrap-java,
