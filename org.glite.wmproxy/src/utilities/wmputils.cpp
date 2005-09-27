@@ -844,6 +844,9 @@ void
 doExecv(const string &command, const vector<string> &params,
 	const vector<string> &dirs, unsigned int startIndex, unsigned int endIndex)
 {
+	GLITE_STACK_TRY("doExecv()");
+	edglog_fn("wmputils::doExecv");
+	
 	char **argvs;
 	// +3 -> difference between index, command at first position, NULL at the end
 	int size = params.size() + endIndex - startIndex + 3;
@@ -901,6 +904,8 @@ doExecv(const string &command, const vector<string> &params,
 		free(argvs[j]);
 	}
     free(argvs);
+    
+    GLITE_STACK_CATCH();
 }
 
 int 
