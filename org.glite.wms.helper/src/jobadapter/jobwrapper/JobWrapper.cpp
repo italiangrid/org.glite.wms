@@ -485,9 +485,13 @@ JobWrapper::make_transfer_wmp_support(ostream& os,
                           const bool& input) const
 {
   if (input) {
-    os << "  file=`basename $f`" << endl;
-    os << "  globus-url-copy ${f} file://${workdir}/${file}" <<
-       endl
+    os << "  file=`basename $f`" << endl
+       << "  tmpdemo=`echo $f | awk -F \"://\" '{print $1}'`" << endl
+       << "  if [ \"$tmpdemo\" == \"gsiftp\" ]; then" << endl
+       << "    globus-url-copy ${f} file://${workdir}/${file}" << endl
+       << "  elif [ \"$tmpdemo\" == \"https\" ]; then" << endl
+       << "    htcp ${f} file://${workdir}/${file}" << endl
+       << "  fi" << endl
        << "  if [ $? != 0 ]; then" << endl
        << "    echo \"Cannot download ${file} from ${f}\"" << endl
        << "    echo \"Cannot download ${file} from ${f}\" >> \"${maradona}\"" << endl << endl;
@@ -504,7 +508,13 @@ JobWrapper::make_transfer_wmp_support(ostream& os,
        << "  fi" << endl;
   } else {
 
-    os << "  globus-url-copy file://${workdir}/${output_sandbox_files[$j]} ${output_sandbox_dest_uri_files[$j]}" << endl
+//    os << "  globus-url-copy file://${workdir}/${output_sandbox_files[$j]} ${output_sandbox_dest_uri_files[$j]}" << endl
+    os << "  tmpdemo=`echo ${output_sandbox_dest_uri_files[$j]} | awk -F \"://\" '{print $1}'`" << endl
+       << "  if [ \"$tmpdemo\" == \"gsiftp\" ]; then" << endl
+       << "    globus-url-copy file://${workdir}/${output_sandbox_files[$j]} ${output_sandbox_dest_uri_files[$j]}" << endl
+       << "  elif [ \"$tmpdemo\" == \"https\" ]; then" << endl
+       << "    htcp file://${workdir}/${output_sandbox_files[$j]} ${output_sandbox_dest_uri_files[$j]}" << endl
+       << "  fi" << endl
        << "  if [ $? != 0 ]; then" << endl
        << "    echo \"Cannot upload ${output_sandbox_files[$j]} into ${output_sandbox_dest_uri_files[$j]}\"" << endl
        << "    echo \"Cannot upload ${output_sandbox_files[$j]} into ${output_sandbox_dest_uri_files[$j]}\" >> \"${maradona}\"" << endl << endl;
