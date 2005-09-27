@@ -2817,17 +2817,17 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			boost::lexical_cast<std::string>(conf.getDefaultPort()) : "";
 		string serverhost = getServerHost();
 		
+		string filetoreturn;
 		for (unsigned int i = 0; i < size; i++) {
 			filesize = wmputilities::computeFileSize(good[i]);
+			filetoreturn = peekdir + fileName
+				+ PERUSAL_DATE_INFO_SEPARATOR + startdate
+				+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
 			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
 				outfile.close();
-				rename(tempfile.c_str(), string(peekdir
-					+ fileName + PERUSAL_DATE_INFO_SEPARATOR + enddate
-					+ PERUSAL_DATE_INFO_SEPARATOR + startdate).c_str());
+				rename(tempfile.c_str(), filetoreturn.c_str());
 				returnvector.push_back(protocol + "://" + serverhost + ":"
-					+ port + peekdir + fileName
-					+ PERUSAL_DATE_INFO_SEPARATOR + enddate
-					+ PERUSAL_DATE_INFO_SEPARATOR + startdate);
+					+ port + filetoreturn);
 				fstream outfile(tempfile.c_str(), ios::out);
 				if (!outfile.good()) {
 					edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
@@ -2852,16 +2852,16 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			}
 			outfile << infile.rdbuf();
 			infile.close();
-			remove(good[i].c_str());
+			//remove(good[i].c_str());
 			totalfilesize += filesize;
 		}
 		outfile.close();
-		rename(tempfile.c_str(), string(peekdir + fileName
-			+ PERUSAL_DATE_INFO_SEPARATOR + enddate + PERUSAL_DATE_INFO_SEPARATOR
-			+ startdate).c_str());
+		filetoreturn = peekdir + fileName
+			+ PERUSAL_DATE_INFO_SEPARATOR + startdate
+			+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
+		rename(tempfile.c_str(), filetoreturn.c_str());
 		returnvector.push_back(protocol + "://" + serverhost + ":" + port
-			+ peekdir + fileName + PERUSAL_DATE_INFO_SEPARATOR
-			+ enddate + PERUSAL_DATE_INFO_SEPARATOR + startdate);
+			+ filetoreturn);
 	}
 	
 	return returnvector;
