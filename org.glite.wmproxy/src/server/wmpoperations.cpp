@@ -2766,6 +2766,17 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	
 	vector<string> returnvector;
 	//TBD if allChunks == true insert in returnvector old files
+	if (allChunks) {
+		const boost::filesystem::path p(peekdir);
+		vector<string> found;
+		glite::wms::wmproxy::commands::list_files(p, found);
+		vector<string> goodpeek;
+		for (unsigned int i = 0; i < found.size(); i++) {
+			if (found[i].rfind(fileName + "_") == 0) {
+				goodpeek.push_back(found[i]);	
+			}
+		}
+	}
 	
 	unsigned int size = good.size();
 	if (size != 0) {
