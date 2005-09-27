@@ -341,7 +341,7 @@ public class Job  {
 	public void attach ( Listener ls ) throws   Exception
 	{  attach (ls , 0 ) ; }
 	/**
-	* Attach the Job with the spècified implemented listener
+	* Attach the Job with the specified implemented listener
 	* @param ls an implementation of the Listener interface
 	* @param port the interactive port where the console listener listens to
 	* @throws UnsupportedOperationException  The Operation required is not allowed for the Job
@@ -798,7 +798,8 @@ public class Job  {
 		api.initialise() ;
 		if    (jobType == JOB_AD){
 			// PERFORM REGISTRATION:
-			if (jad.hasAttribute (Jdl.JOBTYPE) ) if (  jad.getStringValue(Jdl.JOBTYPE).contains(  Jdl.JOBTYPE_PARTITIONABLE ) ) {
+			if( (jad.hasAttribute (Jdl.JOBTYPE)) &&
+			(jad.getStringValue(Jdl.JOBTYPE).contains(Jdl.JOBTYPE_PARTITIONABLE))){
 				// PERFORM A LIST MATCH
 				int res_number = ((Vector)listMatchingCE(nsAddr).getResult()).size() ;
 				// Pre-post check (if pre-post job present res_number incremented)
@@ -806,11 +807,14 @@ public class Job  {
 				if (  jad.hasAttribute ( Jdl.POST_JOB ) ) res_number++ ;
 				// Register jobs (perform a registration for res_number jobs and create jobids)
 				// and Switch to DAG
-				api.registerPart( jid.toString() , jad.toString(), jad.toSubmissionString(), nsAddr.getAddress(), res_number );
+				api.registerPart(jid.toString(),jad.toString(),jad.toSubmissionString(),nsAddr.getAddress(),res_number);
 				jobType = DAG_AD ;
 				jdl = api.dagToString ( 1  ) ;  // Submission String
 				api.dag_logUserTags ( jid.toString() ) ;
-			}  else  api.lb_register(jid.toString() , jdl , nsAddr.getAddress() );  // ANY JOB (but partitionable)
+			}else{
+				// ANY JOB (but partitionable)
+				api.lb_register(jid.toString(),jdl,nsAddr.getAddress());
+			}
 			//					SPECIAL features:
 			if (jad.hasAttribute (Jdl.JOBTYPE) ){
 				//	1	Interactive:
