@@ -95,6 +95,8 @@ const std::string WMP_VERSION = WMP_MAJOR_VERSION
 const std::string MARADONA_FILE = "Maradona.output";
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
 const std::string TEMP_PERUSAL_FILE_NAME = "tempperusalfile";
+const std::string PERUSAL_EXTERNAL_PEEK_FILE = ".externalpeek";
+const std::string PERUSAL_NOT_ENABLED_FILE = ".notenabledpeek";
 const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
 const long FILE_TRANSFER_SIZE_LIMIT = 50;
 
@@ -2679,15 +2681,20 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	if (authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::enableFilePerusal()", wmputilities::WMS_AUTHZ_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
 	}
 	//** END
 	
-	string peekdir = wmputilities::getPeekDirectoryPath(*jid);
-	string filename = peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME;
+	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
+	if (wmputilities::fileExists(peekdir + PERUSAL_NOT_ENABLED_FILE)) {
+		throw JobOperationException(__FILE__, __LINE__,
+	    	"wmpoperations::enableFilePerusal()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+	    	"Perusal not enabled for this job");
+	}
+	string filename = peekdir + PERUSAL_FILE_2_PEEK_NAME;
 	
 	unsigned int size = fileList->Item->size();
 	if (size != 0) {
@@ -2741,42 +2748,43 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_AUTHZ_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
 	}
 	//** END
 	
-	//TBD check to see if peek directory is remote i.e. user specified
-	// attribute PerusalFilesDestURI
-	
-	string peekdir = wmputilities::getPeekDirectoryPath(*jid);
-	//string filename = peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME;
+	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
+	if (wmputilities::fileExists(peekdir + PERUSAL_NOT_ENABLED_FILE)) {
+		throw JobOperationException(__FILE__, __LINE__,
+	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+	    	"Perusal not enabled for this job");
+	}
+	if (wmputilities::fileExists(peekdir + PERUSAL_EXTERNAL_PEEK_FILE)) {
+		throw JobOperationException(__FILE__, __LINE__,
+	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+	    	"Remote perusal peek directory set");
+	}
 	
 	const boost::filesystem::path p(peekdir);
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
 	vector<string> good;
-	for (unsigned int i = 0; i < found.size(); i++) {
-		edglog(debug)<<"Found file: "<<found[i]<<endl;
-		if (wmputilities::getFileName(found[i]).rfind(fileName + ".") == 0) {
-			edglog(debug)<<"Good file: "<<found[i]<<endl;
-			good.push_back(found[i]);	
-		}
-	}
-	
 	vector<string> returnvector;
-	//TBD if allChunks == true insert in returnvector old files
-	if (allChunks) {
-		const boost::filesystem::path p(peekdir);
-		vector<string> found;
-		glite::wms::wmproxy::commands::list_files(p, found);
-		vector<string> goodpeek;
-		for (unsigned int i = 0; i < found.size(); i++) {
-			if (found[i].rfind(fileName + "_") == 0) {
-				goodpeek.push_back(found[i]);	
+	string currentfilename;
+	for (unsigned int i = 0; i < found.size(); i++) {
+		currentfilename = wmputilities::getFileName(found[i]);
+		if (currentfilename.find(fileName + ".") == 0) {
+			edglog(debug)<<"Good perusal file: "<<found[i]<<endl;
+			good.push_back(found[i]);
+		}
+		if (allChucks) {
+			if (currentfilename.find(fileName + PERUSAL_DATE_INFO_SEPARATOR)
+					== 0) {
+				edglog(debug)<<"Good old global perusal file: "<<found[i]<<endl;
+				returnvector.push_back(found[i]);	
 			}
 		}
 	}
@@ -2786,21 +2794,21 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		// Sorting vector
 		sort(good.begin(), good.end());
 		
-		string peekdir = wmputilities::getPeekDirectoryPath(*jid);
-		string tempfile = peekdir + FILE_SEPARATOR + TEMP_PERUSAL_FILE_NAME;
+		string tempfile = peekdir + TEMP_PERUSAL_FILE_NAME;
 		
 		long filesize = 0;
 		long totalfilesize = 0;
 		
 		string startdate = good[0].substr(good[0].rfind(".") + 1,
 			good[0].length() - 1);
-		edglog(debug)<<"START Date: "<<startdate<<endl;
 		string enddate = startdate;
-		edglog(debug)<<"END Date: "<<enddate<<endl;
 			
 		fstream outfile(tempfile.c_str(), ios::out);
 		if (!outfile.good()) {
-			// eccezione
+			edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
+				"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
+				"temporary file\n(please contact server administrator)");
 		}
 		
 		WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
@@ -2813,41 +2821,47 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			filesize = wmputilities::computeFileSize(good[i]);
 			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
 				outfile.close();
-				rename(tempfile.c_str(), 
-					string(peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
-					+ startdate).c_str());
+				rename(tempfile.c_str(), string(peekdir
+					+ fileName + PERUSAL_DATE_INFO_SEPARATOR + enddate
+					+ PERUSAL_DATE_INFO_SEPARATOR + startdate).c_str());
 				returnvector.push_back(protocol + "://" + serverhost + ":"
-					+ port + peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
-					+ startdate);
+					+ port + peekdir + fileName
+					+ PERUSAL_DATE_INFO_SEPARATOR + enddate
+					+ PERUSAL_DATE_INFO_SEPARATOR + startdate);
 				fstream outfile(tempfile.c_str(), ios::out);
 				if (!outfile.good()) {
-					// eccezione
+					edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
+					throw FileSystemException(__FILE__, __LINE__,
+						"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
+						"temporary file\n(please contact server administrator)");
 				}
 				totalfilesize = 0;
 				enddate = good[i].substr(good[i].rfind(".") + 1,
-                                        good[i].length() - 1);
-
+                	good[i].length() - 1);
 				startdate = enddate;
 			} else {
-			enddate = good[i].substr(good[i].rfind(".") + 1,
-                                        good[i].length() - 1);
+				enddate = good[i].substr(good[i].rfind(".") + 1,
+                	good[i].length() - 1);
 			}
 			ifstream infile(good[i].c_str());
 			if (!infile.good()) {
-				// eccezione
+				edglog(severe)<<good[i]<<": !infile.good()"<<endl;
+				throw FileSystemException(__FILE__, __LINE__,
+					"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
+					"input file\n(please contact server administrator)");
 			}
 			outfile << infile.rdbuf();
 			infile.close();
-			// remove infile
+			remove(good[i].c_str());
 			totalfilesize += filesize;
 		}
 		outfile.close();
-		rename(tempfile.c_str(), 
-                                        string(peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
-                                        + startdate).c_str());
-		returnvector.push_back(protocol + "://" + serverhost + ":"
-			+ port + peekdir + FILE_SEPARATOR + fileName + "_" + enddate + "_"
-			+ startdate);
+		rename(tempfile.c_str(), string(peekdir + fileName
+			+ PERUSAL_DATE_INFO_SEPARATOR + enddate + PERUSAL_DATE_INFO_SEPARATOR
+			+ startdate).c_str());
+		returnvector.push_back(protocol + "://" + serverhost + ":" + port
+			+ peekdir + fileName + PERUSAL_DATE_INFO_SEPARATOR
+			+ enddate + PERUSAL_DATE_INFO_SEPARATOR + startdate);
 	}
 	
 	return returnvector;
