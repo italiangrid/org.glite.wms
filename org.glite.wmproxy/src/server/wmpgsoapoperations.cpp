@@ -1093,9 +1093,17 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunk
 	
 	int return_value = SOAP_OK;
 	
+	ns1__StringList *list = new ns1__StringList();
+	list->Item = new vector<string>;
+	
 	getPerusalFilesResponse getPerusalFiles_response;
 	try  {
-		
+		vector<string> returnvector = getPerusalFiles(getPerusalFiles_response,
+			jobId, file, allChunks);
+		for (unsigned int i = 0; i < returnvector.size(); i++) {
+			list->Item->push_back(returnvector[i]);
+		}
+		response._fileList = list;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getPerusalFiles", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
