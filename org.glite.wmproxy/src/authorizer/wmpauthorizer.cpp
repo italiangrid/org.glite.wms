@@ -441,7 +441,7 @@ WMPAuthorizer::setJobGacl(string jobid )
 									authorizer::GaclManager::WMPGACL_WRITE |
 									authorizer::GaclManager::WMPGACL_READ;
  	string user_dn = wmputilities::getUserDN() ;
-	edglog(info)<<"userDN: "<<user_dn<<endl;
+	edglog(debug)<<"userDN: "<<user_dn<<endl;
 
 	// main user job directory
 	string job_dir = wmputilities::getJobDirectoryPath(jobid) ;

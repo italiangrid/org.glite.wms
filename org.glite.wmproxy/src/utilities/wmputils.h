@@ -134,6 +134,15 @@ std::string getOutputSBDirectoryPath(glite::wmsutils::jobid::JobId jid,
 	int level = 0);
 
 /** 
+ * Returns the job peek directory path
+ * @param jid the job identifier of the job
+ * @param level level, default value is 0
+ * @return output sandbox directory absolute path
+ */
+std::string getPeekDirectoryPath(glite::wmsutils::jobid::JobId jid,
+	int level = 0);
+
+/** 
  * Returns the job delegated Proxy path
  * @param jid the job identifier of the job
  * @param level level, default value is 0

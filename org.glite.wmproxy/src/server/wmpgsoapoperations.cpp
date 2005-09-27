@@ -1063,7 +1063,8 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 	
 	enableFilePerusalResponse enableFilePerusal_response;
 	try  {
-		
+		enableFilePerusal(enableFilePerusal_response, jobId,
+			convertToStringList(filelist));
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "enableFilePerusal", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());

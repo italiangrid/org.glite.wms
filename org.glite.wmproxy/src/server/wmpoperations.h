@@ -86,13 +86,20 @@ std::vector<std::string> getACLItems(getACLItemsResponse &getACLItems_response,
 	const std::string &job_id);
 	
 void addACLItems(addACLItemsResponse &addACLItems_response,
-	const std::string &job_id, StringList * dnlist);
+	const std::string &job_id, StringList *dnlist);
 	
 void removeACLItem(removeACLItemResponse &removeACLItem_response,
 	const std::string &job_id, const std::string &item);
 
 std::vector<std::string> getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
 	&getDelegatedProxyInfo_response, const std::string &job_id);
+
+void enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
+	const std::string &job_id, StringList *fileList);
+	
+std::vector<std::string> getPerusalFiles(getPerusalFilesResponse
+	&getPerusalFiles_response, const std::string &job_id, const std::string
+	&fileName, bool allChunks);
 	
 
 #endif // GLITE_WMS_WMPROXY_WMPOPERATIONS_H

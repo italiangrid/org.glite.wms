@@ -422,6 +422,15 @@ getOutputSBDirectoryPath(jobid::JobId jid, int level)
 }
 
 string
+getPeekDirectoryPath(jobid::JobId jid, int level)
+{
+	GLITE_STACK_TRY("getPeekDirectoryPath()");
+	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
+		+ to_filename(jid, level) + FILE_SEP + PEEK_DIRECTORY);
+	GLITE_STACK_CATCH();
+}
+
+string
 getJobDelegatedProxyPath(jobid::JobId jid, int level)
 {	
 	GLITE_STACK_TRY("getJobDelegatedProxyPath(JobId jid)");

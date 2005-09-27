@@ -93,6 +93,9 @@ const std::string WMP_VERSION = WMP_MAJOR_VERSION
 
 
 const std::string MARADONA_FILE = "Maradona.output";
+const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
+const std::string TEMP_PERUSAL_FILE_NAME = "tempperusalfile";
+const long FILE_TRANSFER_SIZE_LIMIT = 1000000;
 
 // Document root variable
 const char * DOCUMENT_ROOT = "DOCUMENT_ROOT";
@@ -2641,6 +2644,197 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 	
 	GLITE_STACK_CATCH();
 }
+
+void
+enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
+	const string &job_id, StringList * fileList)
+{
+	GLITE_STACK_TRY("enableFilePerusal()");
+	edglog_fn("wmpoperations::enableFilePerusal");
+	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	
+	JobId *jid = new JobId(job_id);
+	
+	//** Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+	
+	// Getting delegated proxy inside job directory
+	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
+	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	
+	try {
+		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
+	} catch (NotAVOMSProxyException &navp) {
+		auth->authorize("", job_id);
+	}
+	delete auth;
+
+	// GACL Authorizing
+	edglog(debug)<<"Checking for drain..."<<endl;
+	if (authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"Unavailable service (the server is temporarily drained)");
+	} else {
+		edglog(debug)<<"No drain"<<endl;
+	}
+	//** END
+	
+	string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+	string filename = peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME;
+	
+	unsigned int size = fileList->Item->size();
+	if (size != 0) {
+		fstream file2peek(filename.c_str(), ios::out);
+		for (unsigned int i = 0; i < size; i++) {
+	    	file2peek << (*(fileList->Item))[i] + "\n";
+		}
+	    file2peek.close();
+	} else {
+		// Removing file2peek file if needed
+		if (wmputilities::fileExists(filename)) {
+			remove(filename.c_str());
+		}
+	}
+
+	edglog(info)<<"enableFilePerusal successfully"<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
+vector<string>
+getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
+	const string &job_id, const string &fileName, bool allChunks)
+{
+	GLITE_STACK_TRY("getPerusalFiles()");
+	edglog_fn("wmpoperations::getPerusalFiles");
+	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	
+	JobId *jid = new JobId(job_id);
+	
+	//** Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+	
+	// Getting delegated proxy inside job directory
+	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
+	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	
+	try {
+		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
+	} catch (NotAVOMSProxyException &navp) {
+		auth->authorize("", job_id);
+	}
+	delete auth;
+
+	// GACL Authorizing
+	edglog(debug)<<"Checking for drain..."<<endl;
+	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"Unavailable service (the server is temporarily drained)");
+	} else {
+		edglog(debug)<<"No drain"<<endl;
+	}
+	//** END
+	
+	//TBD check to see if peek directory is remote i.e. user specified
+	// attribute PerusalFilesDestURI
+	
+	string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+	//string filename = peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME;
+	
+	const boost::filesystem::path p(peekdir);
+	vector<string> found;
+	glite::wms::wmproxy::commands::list_files(p, found);
+	
+	vector<string> good;
+	for (unsigned int i = 0; i < found.size(); i++) {
+		if (found[i].rfind(fileName + ".") == 0) {
+			good.push_back(found[i]);	
+		}
+	}
+	
+	vector<string> returnvector;
+	//TBD if allChunks == true insert in returnvector old files
+	
+	unsigned int size = good.size();
+	if (size != 0) {
+		// Sorting vector
+		sort(good.begin(), good.end());
+		
+		string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+		string tempfile = peekdir + FILE_SEPARATOR + TEMP_PERUSAL_FILE_NAME;
+		
+		long filesize = 0;
+		long totalfilesize = 0;
+		
+		string startdate = good[0].substr(good[0].rfind(".") + 1,
+			good[0].length() - 1);
+		string enddate = startdate;
+			
+		fstream outfile(tempfile.c_str(), ios::out);
+		if (!outfile.good()) {
+			// eccezione
+		}
+		
+		WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
+		string protocol = conf.getDefaultProtocol();
+		string port = (conf.getDefaultPort() != 0) ? 
+			boost::lexical_cast<std::string>(conf.getDefaultPort()) : "";
+		string serverhost = getServerHost();
+		
+		for (unsigned int i = 0; i < size; i++) {
+			filesize = wmputilities::computeFileSize(good[i]);
+			enddate = good[i].substr(good[i].rfind(".") + 1,
+					good[i].length() - 1);
+			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
+				outfile.close();
+				rename(tempfile.c_str(), string(fileName + "_" + enddate + "_"
+					+ startdate).c_str());
+				returnvector.push_back(protocol + "://" + serverhost + ":"
+					+ port + peekdir + fileName + "_" + enddate + "_"
+					+ startdate);
+				fstream outfile(tempfile.c_str(), ios::out);
+				if (!outfile.good()) {
+					// eccezione
+				}
+				totalfilesize = 0;
+				startdate = enddate;
+			}
+			ifstream infile(good[i].c_str());
+			if (!infile.good()) {
+				// eccezione
+			}
+			outfile << infile.rdbuf();
+			infile.close();
+			// remove infile
+			totalfilesize += filesize;
+		}
+		outfile.close();
+		rename(tempfile.c_str(), string(fileName + "_" + enddate + "_"
+			+ startdate).c_str());
+		returnvector.push_back(protocol + "://" + serverhost + ":"
+			+ port + peekdir + fileName + "_" + enddate + "_"
+			+ startdate);
+	}
+	
+	return returnvector;
+	
+	edglog(info)<<"getPerusalFiles successfully"<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
 //} // server
 //} // wmproxy
 //} // wms
