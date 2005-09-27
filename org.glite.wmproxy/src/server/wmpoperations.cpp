@@ -2853,7 +2853,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			}
 			outfile << infile.rdbuf();
 			infile.close();
-			//remove(good[i].c_str());
+			remove(good[i].c_str());
 			totalfilesize += filesize;
 		}
 		outfile.close();
