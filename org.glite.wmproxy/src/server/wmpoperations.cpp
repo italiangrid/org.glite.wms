@@ -2771,6 +2771,12 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
+	WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
+	string protocol = conf.getDefaultProtocol();
+	string port = (conf.getDefaultPort() != 0) ? 
+		boost::lexical_cast<std::string>(conf.getDefaultPort()) : "";
+	string serverhost = getServerHost();
+		
 	vector<string> good;
 	vector<string> returnvector;
 	string currentfilename;
@@ -2784,7 +2790,8 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			if (currentfilename.find(fileName + PERUSAL_DATE_INFO_SEPARATOR)
 					== 0) {
 				edglog(debug)<<"Good old global perusal file: "<<found[i]<<endl;
-				returnvector.push_back(found[i]);	
+				returnvector.push_back(protocol + "://" + serverhost + ":"
+					+ port + found[i]);	
 			}
 		}
 	}
@@ -2811,12 +2818,6 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 				"temporary file\n(please contact server administrator)");
 		}
 		
-		WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-		string protocol = conf.getDefaultProtocol();
-		string port = (conf.getDefaultPort() != 0) ? 
-			boost::lexical_cast<std::string>(conf.getDefaultPort()) : "";
-		string serverhost = getServerHost();
-		
 		string filetoreturn;
 		for (unsigned int i = 0; i < size; i++) {
 			filesize = wmputilities::computeFileSize(good[i]);
@@ -2828,7 +2829,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 				rename(tempfile.c_str(), filetoreturn.c_str());
 				returnvector.push_back(protocol + "://" + serverhost + ":"
 					+ port + filetoreturn);
-				fstream outfile(tempfile.c_str(), ios::out);
+				outfile.open(tempfile.c_str(), ios::out);
 				if (!outfile.good()) {
 					edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
 					throw FileSystemException(__FILE__, __LINE__,
