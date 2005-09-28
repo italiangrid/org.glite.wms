@@ -54,6 +54,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/../org.glite.wms.common/src/utilities \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
+	$(LIBTAR_CFLAGS) \
+	$(ZLIB_CFLAGS) \
 	-DHAVE_STRINGSTREAM
 
 MAINTAINERCLEANFILES = Makefile.in
