@@ -131,15 +131,40 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 			}
 		} // END OUTPUT CHECK
 		break;
-		case OP_ATTACH:
+		case OP_PERUSAL:
 		{
+			if (status.getValInt(JobStatus::CHILDREN_NUM) !=0){
+				throw WmsClientException(__FILE__,__LINE__,
+				"checkCodes", DEFAULT_ERR_CODE,
+				"Perusal not allowed",
+				"Operation supported only by jobs");
+			}
+			switch (status.status){
+				case JobStatus::DONE:
+				case JobStatus::SCHEDULED:
+				case JobStatus::ABORTED:
+				case JobStatus::RUNNING:
+					// No problems with Perusal
+					break;
 
+				case JobStatus::WAITING:
+				case JobStatus::SUBMITTED:
+				case JobStatus::READY:
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkCodes", DEFAULT_ERR_CODE,
+					"Perusal not yet allowed,try again later...",
+					"Current Job Status is: "+status.name() );
+				default:
+					// CANCELLED or other unexpected status codes
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkCodes", DEFAULT_ERR_CODE,
+					"Perusal not allowed",
+					"Current Job Status is: "+status.name() );
+			}
 		}
 		break;
+		case OP_ATTACH:
 		case OP_CHKPT:
-		{
-		}
-		break;
 		default:
 			throw WmsClientException(__FILE__,__LINE__,
 			"checkCodes", DEFAULT_ERR_CODE,
