@@ -138,6 +138,8 @@ class WMProxyConfiguration {
 	    double maxinputsandboxsize;
 	    std::string sandboxstagingpath;
 	    
+	    int minperusaltimeinterval;
+	    
 	    bool lbproxyavailable;
 	    std::string lbserver;
 	    std::pair<std::string, int> lbserverpair;
