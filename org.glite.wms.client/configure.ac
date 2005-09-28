@@ -14,8 +14,6 @@
 #       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 #
 
-set -x
-
 AC_PREREQ(2.57)
 AC_INIT([GLite WMS client], [1.1.3])
 AC_CONFIG_AUX_DIR([./project])
