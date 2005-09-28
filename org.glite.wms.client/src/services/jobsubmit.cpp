@@ -54,7 +54,7 @@ const long MAX_GUC_SIZE = 2147483647;
 const long MAX_CURL_SIZE = 2147483647;
 //const long MAX_CURL_SIZE =617371;
 /*
-*	default constructor
+*	Default constructor
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
@@ -115,7 +115,7 @@ JobSubmit::~JobSubmit( ){
 
 
 /*
-* Handle the command line options
+* Handles the command line options
 */
 void JobSubmit::readOptions (int argc,char **argv){
 	ostringstream info ;
@@ -374,8 +374,8 @@ std::string JobSubmit::getEndPoint( ) {
 	}
 	return endpoint;
 }
-/*
-* performs the main operation for the submission
+/**
+* Performs the main operation for the submission
 */
 void JobSubmit::submission ( ){
 	// proxy validity must be at least 20 minutes
@@ -540,9 +540,12 @@ void JobSubmit::submission ( ){
 }
 
 /*====================================
-	private methods
+	PRIVATE METHODS
 ==================================== */
 
+/**
+* Retrieves the list of InputSandbox URI's for a DAG
+*/
 std::string JobSubmit::getDagISBURI (const std::string &node){
 	vector<string> nodes;
 	vector<string>::iterator it1;
@@ -1193,8 +1196,9 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 }
 /**
 *       Contacts the endpoint configurated in the context
-*       in order to retrieve the destionationURIs of the job
+*       in order to retrieve the list of the destionationURIs of the job
 *       identified by the jobid
+*	(for compund jobs it gets back the URIs of the parents and all its children nodes)
 */
 
 std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
@@ -1259,7 +1263,9 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 	}
 	return dest_uri ;
 }
-
+/**
+* Gets the InputSandboxURI for a job or one of it child node
+*/
 std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
 	vector<string> uris ;
 	vector<string>::iterator it1 ;

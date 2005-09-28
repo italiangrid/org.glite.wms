@@ -290,15 +290,22 @@ class JobSubmit : public Job {
 		*	string of the user JDL
 		*/
 		std::string *jdlString ;
-
-int isbSize ;
-std::string isbURI;
-std::vector< std::pair<std::string ,std::string > > dagISBURIs;
-
+		/**
+		* Totale size of the ISB files /in bytes)
+		*/
+		int isbSize ;
+		/**
+		* InputSandbox URI (Normal jobs)
+		*/
+		std::string isbURI;
+		/**
+		* Vector of InputSandbox URI's (compund jobs)
+		*/
+		std::vector< std::pair<std::string ,std::string > > dagISBURIs;
 		/**
 		* The name of the ISB tar/zip files
 		*/
-std::vector<std::string> gzFiles;
+		std::vector<std::string> gzFiles;
 		/**
 		*
 		*/
@@ -314,4 +321,3 @@ std::vector<std::string> gzFiles;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
-
