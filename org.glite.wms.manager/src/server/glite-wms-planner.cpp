@@ -26,7 +26,7 @@
 
 #include "signal_handling.h"
 #include "CommandAdManipulation.h"
-#include "jobdir.h"
+//#include "jobdir.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
