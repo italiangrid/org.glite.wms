@@ -86,7 +86,7 @@ JobSubmit::JobSubmit( ){
 	// Transfer Files Message
 	infoMsg = "";
 	// As default  file archiving and compression is allowed
-	zipAllowed = true;
+	zipAllowed = false;
 	// InputSandox attributes
 	isbSize = 0;
 	isbURI = "";
@@ -509,7 +509,7 @@ void JobSubmit::submission ( ){
 	// saves the result
 	if (outOpt){
 		if ( wmcUtils->saveJobIdToFile(*outOpt, jobid) < 0 ){
-			logInfo->print (WMS_WARNING, "unable to write the jobid to the output file " , Utils::getAbsolutePath(*outOpt));
+			logInfo->print (WMS_WARNING, "Unable to write the jobid to the output file " , Utils::getAbsolutePath(*outOpt));
 		} else{
 			logInfo->print (WMS_DEBUG, "The JobId has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
 			out << "\nThe job identifier has been saved in the following file:\n";
@@ -1337,24 +1337,36 @@ std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const
 */
 void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
 	if (wmpVersion > WMPROXY_OLD_VERSION) {
-		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
+		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 		switch (jobtype) {
 			case (WMS_JOB) : {
-				this->zipAllowed = ( ! jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+					zipAllowed = jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				} else {
+					// Default value if the JDL attribute is not present
+					zipAllowed = false;
+				}
 				break;
 			}
-			case WMS_DAG: {
-				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-				zipAllowed = ( ! dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-				break;
-			}
+			case WMS_DAG:
 			case WMS_PARAMETRIC: {
-				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
-				zipAllowed = ( ! dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
+				if (dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+					zipAllowed = dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				} else {
+					// Default value if the JDL attribute is not present
+					zipAllowed = false;
+				}
 				break;
 			}
 			case (WMS_COLLECTION) : {
-				this->zipAllowed = ( ! collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) || collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
+				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				} else {
+					// Default value if the JDL attribute is not present
+					zipAllowed = false;
+				}
 				break;
 			}
 			default : {
@@ -1406,7 +1418,7 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 			// Removes the zip file just transferred
 			if (zipAllowed) {
 				try {
-					//Utils::removeFile(it.first);
+					Utils::removeFile(it.first);
 				} catch (WmsClientException &exc) {
 					logInfo->print (WMS_WARNING,
 						"The following error occured during the removal of the file:",
