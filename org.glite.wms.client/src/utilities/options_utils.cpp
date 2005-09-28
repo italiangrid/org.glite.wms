@@ -72,6 +72,7 @@ const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
 const char* Options::LONG_LOGFILE	= "logfile";
+const char* Options::LONG_NODESRES = "nodes-resources";
 const char* Options::LONG_NODISPLAY = "nodisplay";
 const char* Options::LONG_NOGUI		= "nogui";
 const char* Options::LONG_NOINT	= "noint";
@@ -84,6 +85,7 @@ const char* Options::LONG_SET		= "set";
 const char* Options::LONG_START = "start";
 const char* Options::LONG_TO		= "to";
 const char* Options::LONG_TRANSFER = "transfer-files";
+const char* Options::LONG_UNSET		= "unset";
 const char* Options::LONG_USERTAG	= "user-tag";
 const char* Options::LONG_VERSION	= "version";
 const char* Options::LONG_VO		= "vo";
@@ -150,6 +152,7 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_OUTPUT,            	required_argument,		0,		Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_CONFIG,            	required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_NODESRES,  		required_argument,		0,		Options::NODESRES},
 	{	Options::LONG_RESOURCE,  		required_argument,		0,		Options::SHORT_RESOURCE},
 	{	Options::LONG_VALID,              	required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_NOMSG,		no_argument,			0,		Options::NOMSG	},
@@ -289,6 +292,7 @@ const struct option Options::perusalLongOpts[]  = {
 	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
 	{	Options::LONG_GET,			no_argument,			0,	Options::GET},
 	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
+	{ 	Options::LONG_UNSET, 	        	no_argument,			0,	Options::UNSET},
 	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::FILENAME},
 	{ 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
 	{ 	Options::LONG_DIR,        		required_argument,		0,	Options::DIR},
@@ -340,6 +344,8 @@ const string Options::USG_LRMS = "--" + string(LONG_LRMS ) + "\t\t<lrms_type>" 	
 
 const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>" ;
 
+const string Options::USG_NODESRES = "--" + string(LONG_NODESRES)+ "\t<ce_id>" ;
+
 const string Options::USG_NODISPLAY = "--" + string(LONG_NODISPLAY);
 
 const string Options::USG_NOGUI = "--" + string(LONG_NOGUI);
@@ -372,6 +378,8 @@ const string Options::USG_TO = "--" + string(LONG_TO) + "\t\t[MM:DD:]hh:mm[:[CC]
 
 const string Options::USG_TRANSFER = "--" + string(LONG_TRANSFER ) ;
 
+const string Options::USG_UNSET  = "--" + string(LONG_UNSET) ;
+
 const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t<tag name>=<tag value>";
 
 const string Options::USG_VALID = "--" + string(LONG_VALID ) +  ", -" + SHORT_V + "\thh:mm";
@@ -400,6 +408,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
         cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_RESOURCE << "\n";
+	cerr << "\t" << USG_NODESRES << "\n";
 	cerr << "\t" << USG_NOLISTEN << "\n";
 	cerr << "\t" << USG_NOMSG << "\n";
 	cerr << "\t" << USG_LRMS << "\n";
@@ -626,8 +635,8 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "Usage: " << exename <<   "  [operation] [files] [options] [jobId]\n\n";
 	cerr << "operation (mandatory):\n";
 	cerr << "\t" << USG_GET << "\n";
-	cerr << "\t" << "or\n";
 	cerr << "\t" << USG_SET << "\n\n";
+	cerr << "\t" << USG_UNSET << "\n\n";
 	cerr << "files (mandatory):\n";
 	cerr << "\t" << USG_FILENAME << " (*)\n";
 	cerr << "\t" << USG_INPUT << "\n";
@@ -669,6 +678,7 @@ Options::Options (const WMPCommands &command){
 	input = NULL;
 	lrms = NULL;
 	logfile = NULL;
+	nodesres = NULL;
 	output = NULL;
 	resource = NULL ;
 	start = NULL;
@@ -692,6 +702,7 @@ Options::Options (const WMPCommands &command){
 	set = false;
         registeronly = false;
 	transfer = false;
+	unset = false;
 	version  = false ;
         // verbosity level
         verbosityLevel = WMSLOG_UNDEF;
@@ -860,6 +871,7 @@ Options::~Options( ) {
 	if ( input ) { delete(input  );}
 	if ( lrms) { delete( lrms);}
 	if (logfile ) { delete(logfile );}
+	if (nodesres) { delete(nodesres);}
 	if (output  ) { delete( output );}
 	if (port ) { free(port);}
 	if (resource) { delete(resource);}
@@ -1001,6 +1013,12 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			}
 			break ;
 		}
+		case(NODESRES) : {
+			if (nodesres){
+				value = new string (*nodesres) ;
+			}
+			break ;
+		}
 		case(START) : {
 			value = start;
 			break ;
@@ -1056,6 +1074,10 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 		}
 		case(SET) : {
 			value = set  ;
+			break ;
+		}
+		case(UNSET) : {
+			value = unset  ;
 			break ;
 		}
 		case(HELP) : {
@@ -1256,6 +1278,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_RESOURCE ;
 			break ;
 		}
+		case(NODESRES) : {
+			msg = USG_NODESRES ;
+			break ;
+		}
 		case(HELP) : {
 			msg = USG_HELP  ;
 			break ;
@@ -1302,6 +1328,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(SET) : {
 			msg = USG_SET ;
+			break ;
+		}
+		case(UNSET) : {
+			msg = USG_UNSET ;
 			break ;
 		}
 		case(NODISPLAY) : {
@@ -1737,6 +1767,15 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 			}
 			break ;
 		};
+		case ( Options::NODESRES) : {
+			if (nodesres){
+				dupl = new string(LONG_NODESRES) ;
+			} else {
+				nodesres = new string (optarg);
+                                msg += px + LONG_NODESRES + ws + *nodesres  + ";" + ws ;
+			}
+			break ;
+		};
 		case ( Options::VALID ) : {
 			if (valid){
 				dupl = new string(LONG_VALID) ;
@@ -2037,11 +2076,26 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
                      	 }
                         break ;
 		};
+		case ( Options::UNSET ) : {
+                	if (set){
+				dupl = new string(LONG_UNSET) ;
+    			} else {
+				set = true;
+  				msg += px + LONG_UNSET + ";" + ws ;
+                     	 }
+                        break ;
+		};
 		// it could be specified more than once
 		case ( Options::FILENAME ) : {
 			string file = optarg;
-			filenames.push_back(file);
-			msg += px + LONG_SET + ws + file + ";" + ws ;
+			if (Utils::contains(filenames, file )) {
+				errMsg(WMS_WARNING,
+					string(px + LONG_SET + ws + file) + ": ignored",
+					" file specified more than once", true);
+			} else{
+				filenames.push_back(file);
+				msg += px + LONG_SET + ws + file + ";" + ws ;
+			}
 			break ;
 		};
 		// it could be specified more than once

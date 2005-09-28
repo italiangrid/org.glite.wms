@@ -48,6 +48,7 @@ class Options
    			LISTONLY,
 			LRMS ,
 			LOGFILE ,
+			NODESRES,
 			NODISPLAY,
 			NOGUI ,
 			NOINT ,
@@ -64,6 +65,7 @@ class Options
 			STATUS ,
 			TO ,
 			TRANSFER,
+			UNSET,
 			USERTAG,
 			VALID,
 			VERBOSE ,
@@ -294,6 +296,7 @@ class Options
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
 		static const char* LONG_LOGFILE;
+		static const char* LONG_NODESRES;
 		static const char* LONG_NODISPLAY;
 		static const char* LONG_NOGUI	;
 		static const char* LONG_NOINT ;
@@ -306,6 +309,7 @@ class Options
 		static const char* LONG_START ;
 		static const char* LONG_TO	;
 		static const char* LONG_TRANSFER	;
+		static const char* LONG_UNSET ;
 		static const char* LONG_USERTAG ;
 		static const char* LONG_VERSION;
                 static const char* LONG_VO;
@@ -375,6 +379,7 @@ class Options
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
 		static const std::string USG_LOGFILE;
+		static const std::string USG_NODESRES	;
 		static const std::string USG_NODISPLAY	;
 		static const std::string USG_NOGUI	;
 		static const std::string USG_NOINT ;
@@ -391,6 +396,7 @@ class Options
 		static const std::string USG_STATUS ;
 		static const std::string USG_TO	;
 		static const std::string USG_TRANSFER	;
+		static const std::string USG_UNSET ;
 		static const std::string USG_USERTAG ;
 		static const std::string USG_VALID ;
 		static const std::string USG_VERBOSE ;
@@ -410,6 +416,7 @@ class Options
                 std::string* collection ;
 		std::string* config ;
                 std::string* delegation ;
+		std::string* nodesres;
 		std::string* dir ;
 		std::string* endpoint;
 		std::string* exclude ;
@@ -442,6 +449,7 @@ class Options
 		bool nomsg ;
 		bool rank ;
                 bool registeronly;
+		bool unset;
 		bool set ;
 		bool transfer ;
 		bool version ;
