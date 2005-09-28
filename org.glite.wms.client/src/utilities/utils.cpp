@@ -150,7 +150,6 @@ bool Utils::askForFileOverwriting(const std::string &path){
 	return ow;
 }
 
-
 std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, const enum WmcMenu &type){
 	std::vector<std::string> chosen;
 	ostringstream out ;
@@ -1388,6 +1387,57 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
         outmsg += jobid ;
 	return (toFile(path, outmsg));
 }
+/*
+* Stores a jobid in a file
+*/
+const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list){
+	string msg = "";
+	bool ask = true;
+	string line = "";
+	char* x ;
+	int len = 0;
+	int result = 0;
+	int size = list.size();
+	for(int i = 0 ; i < size ; i++){
+		msg += list [i] + "\n";
+	}
+	// checks if the output file already exists
+	if ( isFile(path ) ){
+		// if the file exists ......
+		string info = Utils::getAbsolutePath(path) + " file already exists";
+		// writes a warning msg in the log file
+		if (logInfo){ logInfo->print(WMS_WARNING, "Ouput file:", info, false);}
+		ostringstream q;
+		q << "\n\n" + info + "\n";
+		q  << "Do you want to append (a) or to overwrite (o)  ?";
+		q << "Press the /'q/' key for not saving.\n";
+
+		while (ask){
+			// Question --------
+			ask = false;
+			cout << q.str() <<  " " ;
+			cin.getline(x,128);
+			// Processing the reply -----------
+			line = string(Utils::cleanString(x));
+			len = line.size( );
+			if (len > 0) {
+				if (line=="a") {
+					result = this->toFile(path, msg, true);
+				} else if (line=="o") {
+					result = this->toFile(path, msg, false);
+				} else if (line=="q") {
+					/* do nothing*/
+					result = -1;
+				} else {
+					ask = true;
+				}
+			} else {
+				result = this->toFile(path, msg);
+			}
+		}
+	}
+	return result;
+}
 /**
  * Removes '/' characters at the end of the of the input pathname
  */
@@ -1582,7 +1632,20 @@ std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> >
          }
          return gz;
  }
-
+ /**
+* Checks if a vector of strings contains a string item
+*/
+bool Utils::contains (const std::vector<std::string> &vect, std::string item) {
+	bool found = false;
+	int size = vect.size( );
+	for (int i = 0 ; i < size ; i++) {
+		if (vect[i] == item ){
+			found = true;
+			break;
+		}
+	}
+	return found ;
+}
 } // glite
 } // wms
 } // client
