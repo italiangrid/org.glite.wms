@@ -142,7 +142,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	if (inOpt){
 		// Retrieves and check resources from file
-		resources= wmcUtils->getItemsFromFile(*inOpt, Utils::CE_TYPE);
+		resources= wmcUtils->getItemsFromFile(*inOpt);
 		resources = wmcUtils->checkResources (resources);
 		if (resources.empty()){
 			// Not even a right resource
@@ -300,6 +300,80 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 }
 
+std::string JobSubmit::getEndPoint( ) {
+	string endpoint = "";
+	string version = "";
+	string *opt = NULL;
+	int n, index  = 0;
+	bool success = false;
+	vector<string> urls;
+	// checks if endpoint already contains the WMProxy URL
+	if (endPoint){
+		endpoint = string(*endPoint);
+	} else {
+		// if the autodelegation is needed
+		if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
+			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
+		} else {
+			// --endpoint option
+			opt = wmcOpts->getStringAttribute(Options::ENDPOINT);
+			if (opt) {
+				urls.push_back(*opt);
+			} else {
+				// list of endpoints from the configuration file
+				urls = wmcUtils->getWmps ( );
+			}
+			// initial number of Url's
+			n = urls.size( );
+			if (!cfgCxt){
+				cfgCxt = new ConfigContext("", "", "");
+			}
+			while ( ! urls.empty( ) ){
+				int size = urls.size();
+				if (size > 1){
+					// randomic extraction of one URL from the list
+					index = wmcUtils->getRandom(size);
+				} else{
+					index = 0;
+				}
+				// endpoint URL
+				endpoint = string(urls[index]);
+				// setting of the EndPoint ConfigContext field
+				cfgCxt->endpoint =endpoint;
+				// Removes the extracted URL from the list
+				urls.erase ( (urls.begin( ) + index) );
+				try {
+					logInfo->print (WMS_DEBUG, "Contacting the WMProxy server (request for the version): ", endpoint);
+					version = getVersion((ConfigContext *)cfgCxt);
+					logInfo->print (WMS_DEBUG, "WMProxy version: ", version);
+					wmpVersion = atoi (version.substr(0,1).c_str() );
+					success = true;
+				}catch (BaseException &exc){
+
+					if (n==1) {
+						ostringstream err ;
+						err << "Unable to connect to the service: " << endpoint << "\n";
+						err << errMsg(exc) ;
+						// in case of any error on the only specified endpoint
+						throw WmsClientException(__FILE__,__LINE__,
+							"getEndPoint", ECONNABORTED,
+							"Operation failed", err.str());
+					} else {
+						logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
+						sleep(1);
+						if (urls.empty( )){
+							throw WmsClientException(__FILE__,__LINE__,
+							"getEndPoint", ECONNABORTED,
+							"Operation failed", "Unable to contact any specified enpoints");
+						}
+					}
+				}
+				if (success){break;}
+			}
+		}
+	}
+	return endpoint;
+}
 /*
 * performs the main operation for the submission
 */
@@ -333,10 +407,7 @@ void JobSubmit::submission ( ){
 				"Null Pointer Error",
 				"null pointer to DelegationID String"   );
 		}
-		// if the autodelegation is needed
-		if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
-			endPoint = new string(wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
-		}
+		endPoint =  new string(this->getEndPoint());
 		// reads and checks the JDL('s)
 		wmsJobType jobtype ;
 		this->checkAd(toBretrieved, jobtype);
@@ -1004,12 +1075,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 *	-  Job submission otherwise
 */
 std::string JobSubmit::jobRegOrSub(const bool &submit) {
-	vector<string> urls ;
-	int index = 0;
-	// flag to stop while-loop
-	bool success = false;
-	// number of enpoint URL's
-	int n = 0;
 	// checks if jdlstring is not null
 	if (!jdlString){
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1017,71 +1082,40 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			"Null Pointer Error",
 			"null pointer to JDL string");
 	}
-	// checks if ConfigContext already contains the WMProxy URL
-	if (endPoint){
-		urls.push_back(*endPoint);
-	} else {
-		// list of endpoints from configuration file
-		urls = wmcUtils->getWmps ( );
+
+	// checks if jdlstring is not null
+	if (!endPoint){
+		throw WmsClientException(__FILE__,__LINE__,
+			"submission",  DEFAULT_ERR_CODE ,
+			"Null Pointer Error",
+			"null pointer to endPoint string");
 	}
-	// initial number of Url's
-	n = urls.size( );
-	if (!cfgCxt){
-		cfgCxt = new ConfigContext("", "", "");
-	}
-	while ( ! urls.empty( ) ){
-		int size = urls.size();
-		if (size > 1){
-			// randomic extraction of one URL from the list
-			index = wmcUtils->getRandom(size);
-		} else{
-			index = 0;
+	// jobRegister
+	logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
+			string method ;
+			if (submit){ method = "submit";}
+			else {method = "register";}
+	try{
+		if (submit){
+			logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
+			//Suibmitting....
+			jobIds = jobSubmit(*jdlString, *dgOpt, cfgCxt);
+		}else {
+			logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
+			// registering ...
+			jobIds = jobRegister(*jdlString , *dgOpt, cfgCxt);
 		}
-		// endpoint URL
-		endPoint = new string(urls[index]);
-		// setting of the EndPoint ConfigContext field
-		cfgCxt->endpoint=urls[index];
-		// Removes the extracted URL from the list
-		urls.erase ( (urls.begin( ) + index) );
-		// jobRegister
-		logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);
-				string method ;
-				if (submit){ method = "submit";}
-				else {method = "register";}
-		try{
-			if (submit){
-				logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
-				//Suibmitting....
-				jobIds = jobSubmit(*jdlString, *dgOpt, cfgCxt);
-			}else {
-				logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
-				// registering ...
-				jobIds = jobRegister(*jdlString , *dgOpt, cfgCxt);
-			}
-			success = true;
-		} catch (BaseException &exc) {
-			if (n==1) {
-				ostringstream err ;
-				err << "Unable to "<< method << " the job to the service: " << *endPoint << "\n";
-				err << errMsg(exc) ;
-				// in case of any error on the only specified endpoint
-				throw WmsClientException(__FILE__,__LINE__,
-					"job"+method, ECONNABORTED,
-					"Operation failed", err.str());
-			} else {
-				logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
-				sleep(1);
-				if (urls.empty( )){
-					throw WmsClientException(__FILE__,__LINE__,
-					"job"+method, ECONNABORTED,
-					"Operation failed",
-					"Unable to " +method +" the job to any specified endpoint");
-				}
-			}
-		}
-		// exits from the loop in case of success
-		if (success){ break;}
+	} catch (BaseException &exc) {
+		ostringstream err ;
+		err << "Unable to "<< method << " the job to the service: " << this->getEndPoint()<< "\n";
+		err << errMsg(exc) ;
+		// in case of any error on the only specified endpoint
+		throw WmsClientException(__FILE__,__LINE__,
+			"job"+method, ECONNABORTED,
+			"Operation failed", err.str());
 	}
+
+
 	return jobIds.jobid;
 }
 
@@ -1283,18 +1317,6 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 * node
 */
 std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) {
-	string version = "";
-	if (wmpVersion == 0) {
-		try {
-			logInfo->print (WMS_DEBUG, "Requesting version of the WMProxy server", "");
-			version = getVersion((ConfigContext *)cfgCxt);
-			logInfo->print (WMS_DEBUG, "WMProxy version: ", version);
-			wmpVersion = atoi (version.substr(0,1).c_str() );
-		}catch (BaseException &exc){
-			logInfo->print (WMS_WARNING, "Unable to get the version of the WMProxy server", "");
-			wmpVersion = WMPROXY_OLD_VERSION;
-		}
-	}
 	if (wmpVersion  > WMPROXY_OLD_VERSION) {
 		// bulk service
 		return getBulkDestURI(jobid, child, zipURI);
@@ -1308,19 +1330,6 @@ std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const
 *
 */
 void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
-	string version = "";
-	if (wmpVersion == 0) {
-		try {
-			logInfo->print (WMS_DEBUG, "Requesting version of the WMProxy server", "");
-			version = getVersion((ConfigContext *)cfgCxt);
-			logInfo->print (WMS_DEBUG, "WMProxy version: ", version);
-			wmpVersion = atoi (version.substr(0,1).c_str() );
-		}catch (BaseException &exc){
-			logInfo->print (WMS_WARNING, "Unable to get the version of the WMProxy server", "");
-			wmpVersion = WMPROXY_OLD_VERSION;
-		}
-	}
-
 	if (wmpVersion > WMPROXY_OLD_VERSION) {
 		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is true)
 		switch (jobtype) {

@@ -1,6 +1,6 @@
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
-
+#include "listener.h"
 // inheritance
 #include "job.h"
 // options utilities
@@ -8,7 +8,7 @@
 #include "utilities/utils.h"
 #include "utilities/logman.h"
 //listener for interactive jobs
-#include "listener.h"
+//#include "listener.h"
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 // Ad's
@@ -52,19 +52,38 @@ class JobSubmit : public Job {
 		*/
 		void submission ( ) ;
 	private:
+		/*
+		* Gets the enpoint URL where the operations are performed. If no call to the WMProxy has been previously done, the --endpoint option is checked.
+		* If the user has not specified the URL by this option, the endpoint is determinated by some random attempts to contact one of url's specified in the configuration files.
+		* The proxy delegation is performed on the choosen endpoint if the autodelegation has been requested by the user (--autm-delegation).
+		* @return the string with the enpoint URL
+		*/
+		std::string getEndPoint ( ) ;
 		/**
                  *	Contacts the server in order to retrieve the list of all destionationURI's of the job (with the available protocols).
 		 *  	In case of compound jobs (DAG, collections etc..), it also retrieves the URIs of the nodes.
-		 * 	The request is done using the JobId. Compound jobs are identified by the parent's JobId
+		 * 	The request is done using the JobId. Compound jobs are identified by the parent's JobId.
+		 * 	The method gets back the URI's of a child node if its jobid is specified for the input parameter "child"; in case of empty string for it,
+		 *	the URI's are referred to the parent node.
                  *	@param jobid the string with the JobId
+		 *	@param child the string with the child JobId
 		 *	@param zipURI this parameter returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
                  *	@return a pointer to the string with the destinationURI having the protocol that will be used for any file transferring
 		 *	(or NULL in case the destinationURI with the chosen protocol is not available )
                 */
                 std::string* getBulkDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) ;
 
-
-std::string* getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI);
+		/**
+                 *	Contacts the server in order to retrieve the  destionationURI's of the job (with the available protocols).
+		 * 	The request is done using the JobId. Compound jobs are identified by the parent's JobId
+		  * 	The method gets back the URI's of a child node if its jobid is specified for the input parameter "child"; in case of empty string for it,
+		 *	the URI's are referred to the parent node.
+                 *	@param jobid the string with the JobId
+		 *	@param zipURI this parameter returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
+                 *	@return a pointer to the string with the destinationURI having the protocol that will be used for any file transferring
+		 *	(or NULL in case the destinationURI with the chosen protocol is not available )
+                */
+		std::string* getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI);
 		/**
 		* Retrieves from the user all the local files of the job input sandbox that have been referenced in the JDL describing
 		* a normal job.
