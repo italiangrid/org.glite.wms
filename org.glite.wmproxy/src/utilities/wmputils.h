@@ -52,6 +52,7 @@ std::string getFileName(const std::string &path);
  */
 void fileCopy(const std::string &source, const std::string &target);
 
+void setFlagFile(const std::string &file, bool flag);
 
 
 //

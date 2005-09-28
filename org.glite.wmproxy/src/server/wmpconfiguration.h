@@ -73,6 +73,12 @@ class WMProxyConfiguration {
 		double getMaxInputSandboxSize();
 		
 		/**
+		 * Returns the value of the configuration attribute MinPerusalTimeInterval
+		 * @return the attribute value
+		 */
+		int getMinPerusalTimeInterval();
+		
+		/**
 		 * Returns the value of the configuration attribute SandboxStagingPath
 		 * @return the attribute value
 		 */
@@ -91,7 +97,6 @@ class WMProxyConfiguration {
 		 * @return the attribute value
 		 */
 		int getDefaultPort();
-		
 		
 		std::vector<std::pair<std::string, int> > getProtocols();
 		

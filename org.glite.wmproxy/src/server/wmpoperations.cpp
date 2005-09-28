@@ -95,9 +95,10 @@ const std::string WMP_VERSION = WMP_MAJOR_VERSION
 const std::string MARADONA_FILE = "Maradona.output";
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
 const std::string TEMP_PERUSAL_FILE_NAME = "tempperusalfile";
-const std::string PERUSAL_EXTERNAL_PEEK_FILE = ".externalpeek";
-const std::string PERUSAL_NOT_ENABLED_FILE = ".notenabledpeek";
+const std::string DISABLED_PEEK_FLAG_FILE = ".disabledpeek";
+const std::string EXTERNAL_PEEK_FLAG_FILE = ".externalpeek";
 const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
+const int DEFAULT_PERUSAL_TIME_INTERVAL = 10; // seconds
 const long FILE_TRANSFER_SIZE_LIMIT = 50;
 
 // Document root variable
@@ -685,7 +686,7 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 	}
 	jad->setAttribute(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
-		
+
 	GLITE_STACK_CATCH();
 }
 
@@ -857,7 +858,8 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri)
 	/*if (dag->hasAttribute(JDL::CERT_SUBJ)) {
 		dag->removeAttribute(JDL::CERT_SUBJ);
 	}*/
-	dag->setReserved(JDL::CERT_SUBJ, wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
+	dag->setReserved(JDL::CERT_SUBJ,
+		wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
 	
 	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
 	/*if (dag->hasAttribute(JDLPrivate::USERPROXY)) {
@@ -1333,6 +1335,33 @@ submit(const string &jdl, JobId *jid)
 			edglog(debug)<<"Logging checkpointable for job: "<<jobidstring<<endl;
 			logCheckpointable(&wmplogger, jad, jobidstring);
 		}
+		
+		// Adding attribute for perusal functionalities
+		string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
+		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
+			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
+				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
+					+ PERUSAL_FILE_2_PEEK_NAME);
+				if (jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+					wmputilities::setFlagFile(peekdir
+					+ EXTERNAL_PEEK_FLAG_FILE, true);
+				} else {
+					jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+				}
+				
+				int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+				if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
+					time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
+				}
+				time = max(time, conf.getMinPerusalTimeInterval());
+				jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
+			} else {
+				wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
+					true);
+			}
+		} else {
+			wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE, true);	
+		}
 		delete jad;
 	} else {
 		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
@@ -1356,7 +1385,39 @@ submit(const string &jdl, JobId *jid)
 	    			delete jad;
 	    		}
 	    	}
-	    }
+	    	
+	    	// Adding attribute for perusal functionalities
+	    	string peekdir = wmputilities::getPeekDirectoryPath(jobid)
+	    		+ FILE_SEPARATOR;
+			if (dag->hasNodeAttribute(jobid, JDL::PU_FILE_ENABLE)) {
+				if (dag->getNodeBool(jobid, JDL::PU_FILE_ENABLE)) {
+					dag->setNodeAttribute(jobid, JDLPrivate::PU_LIST_FILE_URI,
+						peekdir + PERUSAL_FILE_2_PEEK_NAME);
+					if (dag->hasNodeAttribute(jobid, JDL::PU_FILES_DEST_URI)) {
+						wmputilities::setFlagFile(peekdir
+							+ EXTERNAL_PEEK_FLAG_FILE, true);
+					} else {
+						dag->setNodeAttribute(jobid, JDL::PU_FILES_DEST_URI,
+							peekdir);
+					}
+					
+					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+					if (dag->hasNodeAttribute(jobid, JDL::PU_TIME_INTERVAL)) {
+						time = max(time, dag->getNodeInt(jobid,
+							JDL::PU_TIME_INTERVAL));
+					}
+					time = max(time, conf.getMinPerusalTimeInterval());
+					dag->setNodeAttribute(jobid, JDL::PU_TIME_INTERVAL, time);
+				} else {
+					wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
+						true);	
+				}
+			} else {
+				wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
+					true);	
+			}
+		}
+	    
 	    delete dag;
 	    wmplogger.setLoggingJob(parentjobid.toString(), seqcode);
 	}
@@ -2689,7 +2750,7 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	//** END
 	
 	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
-	if (wmputilities::fileExists(peekdir + PERUSAL_NOT_ENABLED_FILE)) {
+	if (wmputilities::fileExists(peekdir + DISABLED_PEEK_FLAG_FILE)) {
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"wmpoperations::enableFilePerusal()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 	    	"Perusal not enabled for this job");
@@ -2756,12 +2817,12 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	//** END
 	
 	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
-	if (wmputilities::fileExists(peekdir + PERUSAL_NOT_ENABLED_FILE)) {
+	if (wmputilities::fileExists(peekdir + DISABLED_PEEK_FLAG_FILE)) {
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 	    	"Perusal not enabled for this job");
 	}
-	if (wmputilities::fileExists(peekdir + PERUSAL_EXTERNAL_PEEK_FILE)) {
+	if (wmputilities::fileExists(peekdir + EXTERNAL_PEEK_FLAG_FILE)) {
 		throw JobOperationException(__FILE__, __LINE__,
 	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 	    	"Remote perusal peek directory set");

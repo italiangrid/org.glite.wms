@@ -89,6 +89,7 @@ const string SANDBOX_DIRECTORY = "SandboxDir";
 const std::string USER_PROXY_NAME = "user.proxy";
 const std::string USER_PROXY_NAME_BAK = ".user.proxy.bak";
 
+
 string
 getSandboxDirName()
 {
@@ -1015,6 +1016,27 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
     GLITE_STACK_CATCH();
 }
 
+void
+setFlagFile(const string &file, bool flag)
+{
+	GLITE_STACK_TRY("setFlagFile()");
+	edglog_fn("wmputils::setFlagFile");
+	
+	if (flag) {
+		fstream outfile(file.c_str(), ios::out);
+		if (!outfile.good()) {
+			edglog(severe)<<file<<": !outfile.good()"<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
+				"setFlagFile()", WMS_IS_FAILURE, "Unable to set flag file"
+				"\n(please contact server administrator)");
+		}
+		outfile << "flag";
+		outfile.close();
+	} else {
+		remove(file.c_str());	
+	}
+	GLITE_STACK_CATCH();
+}
 
 bool 
 isNull(string field)

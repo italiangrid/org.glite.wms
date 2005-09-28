@@ -116,6 +116,7 @@ WMProxyConfiguration::loadConfiguration()
 	// return 0
 	lbproxyavailable = wmp_config->lbproxy();
 	maxinputsandboxsize = wmp_config->max_input_sandbox_size();
+	minperusaltimeinterval = wmp_config->min_perusal_time_interval();
 	
 	// If attribute ListMatchRootPath not present in configuration file then
 	// wmp_config->list_match_root_path() returns ""
@@ -184,6 +185,12 @@ double
 WMProxyConfiguration::getMaxInputSandboxSize()
 {
 	return this->maxinputsandboxsize;
+};
+
+int
+WMProxyConfiguration::getMinPerusalTimeInterval()
+{
+	return this->minperusaltimeinterval;
 };
 
 // Used only to check if the value is the same as $DOCUMENT_ROOT
