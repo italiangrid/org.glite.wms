@@ -193,7 +193,7 @@ void JobOutput::getOutput ( ){
 		if (size==1) { err ="Unable to retrieve the output"; }
 		else { err ="Unable to retrieve the output for any job"; }
 		throw WmsClientException(__FILE__,__LINE__,
-				"cancel", ECONNABORTED,
+				"output", ECONNABORTED,
 				"Operation Failed",
 				err  );
 	}

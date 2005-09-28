@@ -34,11 +34,15 @@ libservices:
 	@echo "compiling services....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES -DWITH_GRID_FTP -pthread \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_services.so  \
-	lbapi.cpp job.cpp jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp
+	lbapi.cpp job.cpp jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  \
+	jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp \
+	jobperusal.cpp
 	@echo "DONE"
 services:
 	@echo "compiling utils....."
 	$(CPP)  -Wall  -DHAVE_CONFIG_H  -DWANT_NAMESPACES -DWITH_GRID_FTP -pthread \
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-services \
-	jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp
+	lbapi.cpp job.cpp jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  \
+	jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp \
+	jobperusal.cpp
 	@echo "DONE"
