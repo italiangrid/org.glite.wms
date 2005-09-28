@@ -28,7 +28,8 @@ class Status{
 			OP_CANCEL,
 			OP_OUTPUT,
 			OP_ATTACH,
-			OP_CHKPT
+			OP_CHKPT,
+			OP_PERUSAL
 		};
 		/** Default Constructor
 		* @param status an instance of lb status
