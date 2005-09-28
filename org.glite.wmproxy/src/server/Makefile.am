@@ -89,7 +89,9 @@ glite_wms_wmproxy_server_LDADD = \
 	$(SEC_LCMAPS_LIBS) \
 	$(SEC_LCMAPS_RETURN_WITHOUT_GSI_LIBS) \
 	$(VOMS_LIBS) \
-	$(FCGI_CPP_LIBS)
+	$(FCGI_CPP_LIBS) \
+	$(LIBTAR_LIBS) \
+	$(ZLIB_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/server \
 	-I$(top_srcdir)/src \
