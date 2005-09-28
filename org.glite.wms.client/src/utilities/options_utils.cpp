@@ -34,7 +34,7 @@ std::string glite_wms_client_toLower ( const std::string &src){
         return result;
 }
 /*
- * Help messages
+ * Help Info messages
 */
 const char* Options::HELP_COPYRIGHT = "Copyright (C) 2005 by DATAMAT SpA";
 const char* Options::HELP_EMAIL = "egee@datamat.it";
@@ -44,7 +44,6 @@ const char* Options::HELP_VERSION = "version  1.0" ;
 /*
 * Protocols for file transferring operations
 */
-
 const string Options::TRANSFER_FILES_CURL_PROTO = "https" ;
 const string Options::TRANSFER_FILES_GUC_PROTO = "gsiftp" ;
 const string Options::TRANSFER_FILES_DEF_PROTO = Options::TRANSFER_FILES_GUC_PROTO ;
@@ -57,10 +56,8 @@ const char* Options::TRANSFER_FILES_PROTOCOLS[ ] = {
 /*
 * Verbosity level
 */
-
 const unsigned int Options::DEFAULT_VERBOSITY = 1;
 const unsigned int Options::MAX_VERBOSITY = 3;
-
 /*
 *	LONG OPTION STRINGS
 */
@@ -70,10 +67,12 @@ const char* Options::LONG_COLLECTION	= "collection";
 const char* Options::LONG_DEBUG	= "debug";
 const char* Options::LONG_DIR	= 		"dir";
 const char* Options::LONG_FROM		= "from";
+const char* Options::LONG_GET		= "get";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
 const char* Options::LONG_LOGFILE	= "logfile";
+const char* Options::LONG_NODISPLAY = "nodisplay";
 const char* Options::LONG_NOGUI		= "nogui";
 const char* Options::LONG_NOINT	= "noint";
 const char* Options::LONG_NOLISTEN	= "nolisten";
@@ -81,6 +80,7 @@ const char* Options::LONG_NOMSG	= "nomsg";
 const char* Options::LONG_PROTO	= "proto";
 const char* Options::LONG_RANK 	= "rank";
 const char* Options::LONG_REGISTERONLY = "register-only";
+const char* Options::LONG_SET		= "set";
 const char* Options::LONG_START = "start";
 const char* Options::LONG_TO		= "to";
 const char* Options::LONG_TRANSFER = "transfer-files";
@@ -103,6 +103,9 @@ const char Options::SHORT_INPUT	= 'i' ;
 // config
 const char*Options::LONG_CONFIG	= "config";
 const char Options::SHORT_CONFIG	= 'c' ;
+// filename
+const char* Options::LONG_FILENAME	= "filename";
+const char Options::SHORT_FILENAME 	= 'f';
 // resource
 const char* Options::LONG_RESOURCE = "resource";
 const char Options::SHORT_RESOURCE = 'r' ;
@@ -123,74 +126,70 @@ const char Options::SHORT_PORT 	= 'p';
 // delegation
 const char* Options::LONG_DELEGATION	= "delegationid";
 const char Options::SHORT_DELEGATION 	= 'd';
-
-// argument chars for short option definition string
-// (semicolon or white space)
+// Semicolon and white-space strings used in the definition of the short options
 const char Options::short_required_arg = ':' ;
 const char Options::short_no_arg = ' ' ;
-
-
 /*
-*	Long options for the job-submit
+*	Long options for job-submit
 */
 const struct option Options::submitLongOpts[] = {
-	{	Options::LONG_LOGFILE,           required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_LOGFILE,           	required_argument,		0,		Options::LOGFILE},
         {	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
-        {	Options::LONG_AUTODG,           no_argument,			0,		Options::SHORT_AUTODG},
+        {	Options::LONG_AUTODG,           	no_argument,			0,		Options::SHORT_AUTODG},
         {	Options::LONG_REGISTERONLY,	no_argument,			0,		Options::REGISTERONLY},
-	{	Options::LONG_PROTO	,	required_argument,			0,		Options::PROTO},
-	{	Options::LONG_TRANSFER,	no_argument,			0,		Options::TRANSFER},
-	{	Options::LONG_START,		required_argument,			0,		Options::START},
+	{	Options::LONG_PROTO	,		required_argument,		0,		Options::PROTO},
+	{	Options::LONG_TRANSFER,		no_argument,			0,		Options::TRANSFER},
+	{	Options::LONG_START,			required_argument,		0,		Options::START},
          {	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
-        {	Options::LONG_ENDPOINT,        required_argument,		0,		Options::SHORT_E},
+        {	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CHKPT,            	required_argument,		0,		Options::CHKPT},
-        {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_LRMS,              	required_argument,		0,		Options::LRMS},
-	{	Options::LONG_TO,              	required_argument,		0,		Options::TO},
-	{	Options::LONG_OUTPUT,            required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
+	{	Options::LONG_OUTPUT,            	required_argument,		0,		Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
-	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_RESOURCE,       required_argument,		0,		Options::SHORT_RESOURCE},
+	{	Options::LONG_CONFIG,            	required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_RESOURCE,  		required_argument,		0,		Options::SHORT_RESOURCE},
 	{	Options::LONG_VALID,              	required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_NOMSG,		no_argument,			0,		Options::NOMSG	},
 	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
-	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
+	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
 /*
-*	Long options for the job-status
+*	Long options for job-status
 */
 const struct option Options::statusLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{	Options::LONG_ALL,			no_argument,			0,		Options::ALL	},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
-	{ 	Options::LONG_VERBOSE,         required_argument,		0,		Options::SHORT_V},
+	{ 	Options::LONG_VERBOSE,         	required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_FROM,              	required_argument,		0,		Options::FROM},
-	{	Options::LONG_TO,              	required_argument,		0,		Options::TO},
-	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
+	{	Options::LONG_CONFIG,            	required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_USERTAG,         	required_argument,		0,		Options::USERTAG	},
 	{	Options::LONG_STATUS,         	required_argument,		0,		Options::SHORT_STATUS},
 	{	Options::LONG_EXCLUDE,         	required_argument,		0,		Options::SHORT_E},
-	{	Options::LONG_OUTPUT,            required_argument,		0,		Options::SHORT_OUTPUT},
-	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
-        {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
-	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
-	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_OUTPUT,            	required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
+        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
+	{	Options::LONG_DEBUG,			no_argument,			0,		Options::DBG	},
+	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 
 /*
-*	Long options for the job-logging-info
+*	Long options for  job-logging-info
 */
 const struct option Options::loginfoLongOpts[] = {
-	{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
-	{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
-	{ 	Options::LONG_VERBOSE,              	required_argument,		0,		Options::SHORT_V},
-	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
+{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
+{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
+	{ 	Options::LONG_VERBOSE,            required_argument,		0,		Options::SHORT_V},
+	{	Options::LONG_CONFIG,              required_argument,		0,		Options::SHORT_CONFIG},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
@@ -198,34 +197,31 @@ const struct option Options::loginfoLongOpts[] = {
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
-
 /*
-*	Long options for the job-cancel
+*	Long options for job-cancel
 */
 const struct option Options::cancelLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
-	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
-	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
-	{	Options::LONG_CONFIG,             required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_OUTPUT,             required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_VERSION,	no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_HELP,		no_argument,			0,		Options::HELP	},
+	{ 	Options::LONG_INPUT,          	required_argument,		0,		Options::SHORT_INPUT},
+	{	Options::LONG_CONFIG,    	required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_OUTPUT,       required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
-	{	Options::LONG_LOGFILE,            required_argument,		0,		Options::LOGFILE},
-        {	Options::LONG_VO,             	 required_argument,		0,		Options::VO	},
+	{	Options::LONG_LOGFILE,      required_argument,		0,		Options::LOGFILE},
+        {	Options::LONG_VO,             	 required_argument,	0,		Options::VO	},
 	{0, 0, 0, 0}
 };
-
-
 /*
-*	Long options for the job-list-match
+*	Long options for job-list-match
 */
 const struct option Options::lsmatchLongOpts[] = {
-	{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION},
-	{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
+	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
         {	Options::LONG_AUTODG,             	no_argument,			0,		Options::SHORT_AUTODG},
-        {	Options::LONG_DELEGATION,  		required_argument,		0,		Options::SHORT_DELEGATION},
- 	{	Options::LONG_ENDPOINT,           	required_argument,		0,		Options::SHORT_E},
-	{ 	Options::LONG_RANK,              		no_argument,			0,		Options::RANK},
+        {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
+ 	{	Options::LONG_ENDPOINT,           required_argument,		0,		Options::SHORT_E},
+	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
@@ -234,19 +230,18 @@ const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
-
 /*
-*	Long options for the job-output
+*	Long options for job-output
 */
 const struct option Options::outputLongOpts[] = {
-	{	Options::LONG_VERSION,		no_argument,			0,	Options::VERSION	},
-	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
-	{ 	Options::LONG_OUTPUT,        	required_argument,		0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_VERSION,	no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_HELP,		no_argument,			0,	Options::HELP	},
+	{ 	Options::LONG_OUTPUT,       required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
-	{	Options::LONG_LISTONLY,			no_argument,			0,		Options::LISTONLY},
-	{ 	Options::LONG_DIR, 	        	required_argument,		0,	Options::DIR},
-	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
-        {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
+	{	Options::LONG_LISTONLY,	no_argument,			0,	Options::LISTONLY},
+	{ 	Options::LONG_DIR, 	        required_argument,		0,	Options::DIR},
+	{	Options::LONG_CONFIG,    	required_argument,		0,	Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           	required_argument,		0,	Options::VO},
 	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
 	{ 	Options::LONG_DEBUG,      	no_argument,			0,	Options::DBG},
 	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
@@ -254,38 +249,60 @@ const struct option Options::outputLongOpts[] = {
 };
 
 /*
-*	Long options for the job-attach
+*	Long options for  job-attach
 */
 const struct option Options::attachLongOpts[] = {
-	{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
-	{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
-	{	Options::LONG_PORT,              		required_argument,		0,		Options::SHORT_PORT},
-	{	Options::LONG_NOLISTEN,			no_argument,			0,		Options::NOLISTEN	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+	{	Options::LONG_PORT,              	required_argument,		0,		Options::SHORT_PORT},
+	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
 	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_VO,           			required_argument,		0,		Options::VO},
-	{ 	Options::LONG_INPUT,              		required_argument,		0,		Options::SHORT_INPUT},
+	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
+	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
 	{ 	Options::LONG_DEBUG,              	no_argument,			0,		Options::DBG},
 	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 /*
-*	Long options for the job-submit
+*	Long options for job-submit
 */
 const struct option Options::delegationLongOpts[] = {
-	{	Options::LONG_LOGFILE,			required_argument,		0,		Options::LOGFILE},
-	{	Options::LONG_DEBUG,             		no_argument,			0,		Options::DBG},
+	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
 	{	Options::LONG_AUTODG,             	no_argument,			0,		Options::SHORT_AUTODG},
-	{	Options::LONG_DELEGATION,  		required_argument,		0,		Options::SHORT_DELEGATION},
-	{	Options::LONG_ENDPOINT,        		required_argument,		0,		Options::SHORT_E},
-	{	Options::LONG_CONFIG,    			required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_VO,           			required_argument,		0,		Options::VO},
+	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
+	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
+	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
-	{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
+	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+	{0, 0, 0, 0}
+};
+
+/*
+*	Long options for  job-perusal
+*/
+const struct option Options::perusalLongOpts[]  = {
+	{	Options::LONG_ALL			,no_argument,			0,	Options::ALL	},
+	{	Options::LONG_VERSION,		no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
+	{	Options::LONG_GET,			no_argument,			0,	Options::GET},
+	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
+	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::FILENAME},
+	{ 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
+	{ 	Options::LONG_DIR,        		required_argument,		0,	Options::DIR},
+	{ 	Options::LONG_OUTPUT,        	required_argument,		0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
+	{	Options::LONG_NODISPLAY,		no_argument,			0,	Options::NODISPLAY	},
+	{	Options::LONG_NOINT,			no_argument,			0,	Options::NOINT	},
+	{ 	Options::LONG_DEBUG,      		no_argument,			0,	Options::DBG},
+	{	Options::LONG_LOGFILE,    		required_argument,		0,	Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 /*
-*	short usage constants
+*	Short usage constants
 */
 const string Options::USG_ALL = "--" + string(LONG_ALL) ;
 
@@ -307,7 +324,11 @@ const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHO
 
 const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_E + "\t<status_value>";
 
+const string Options::USG_FILENAME = "--" + string(LONG_FILENAME) + ", -" + SHORT_FILENAME +  "\t<filename>";
+
 const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
+
+const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
@@ -318,6 +339,8 @@ const string Options::USG_LISTONLY = "--" + string(LONG_LISTONLY) ;
 const string Options::USG_LRMS = "--" + string(LONG_LRMS ) + "\t\t<lrms_type>" 	;
 
 const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>" ;
+
+const string Options::USG_NODISPLAY = "--" + string(LONG_NODISPLAY);
 
 const string Options::USG_NOGUI = "--" + string(LONG_NOGUI);
 
@@ -339,6 +362,8 @@ const string Options::USG_REGISTERONLY = "--" + string(LONG_REGISTERONLY) ;
 
 const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHORT_RESOURCE + "\t<ce_id>";
 
+const string Options::USG_SET  = "--" + string(LONG_SET) ;
+
 const string Options::USG_START = "--" + string(LONG_START) + "\t<jobid>";
 
 const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t<status_value>";
@@ -358,7 +383,7 @@ const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
 
 /*
-*	prints the help usage message for the job-submit
+*	Prints the help usage message for the job-submit
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -402,7 +427,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 };
 
 /*
-*	prints the help usage message for the job-status
+*	Prints the help usage message for the job-status
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -432,9 +457,8 @@ void Options::status_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
-
 /*
-*	prints the help usage message for the job-logging-info
+*	Prints the help usage message for the job-logging-info
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -458,9 +482,8 @@ void Options::loginfo_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
-
 /*
-*	prints the help usage message for the job-cancel
+*	Prints the help usage message for the job-cancel
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -486,7 +509,7 @@ void Options::cancel_usage(const char* &exename, const bool &long_usg){
 };
 
 /*
-*	prints the help usage message for the job-list-match
+*	Prints the help usage message for the job-list-match
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -514,9 +537,8 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
-
 /*
-*	prints the help usage message for the job-output
+*	Prints the help usage message for the job-output
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -541,9 +563,8 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
 };
-
 /*
-*	prints the help usage message for the job-attach
+*	Prints the help usage message for the job-attach
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -569,7 +590,7 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 	}
 };
 /*
-*	prints the help usage message for the job-submit
+*	Prints the help usage message for the job-submit
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
@@ -595,7 +616,43 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 	}
 };
 /*
-*	constructor
+*	Prints the help usage message for the job-output
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
+void Options::perusal_usage(const char* &exename, const bool &long_usg){
+	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
+	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "Usage: " << exename <<   "  [operation] [files] [options] [jobId]\n\n";
+	cerr << "operation (mandatory):\n";
+	cerr << "\t" << USG_GET << "\n";
+	cerr << "\t" << "or\n";
+	cerr << "\t" << USG_SET << "\n\n";
+	cerr << "files (mandatory):\n";
+	cerr << "\t" << USG_FILENAME << " (*)\n";
+	cerr << "\t" << USG_INPUT << "\n";
+	cerr << "\t" << USG_ALL << " (**)\n";
+	cerr << "options:\n" ;
+	cerr << "\t" << USG_HELP << "\n";
+	cerr << "\t" << USG_VERSION << "\n";
+	cerr << "\t" << USG_CONFIG << "\n";
+        cerr << "\t" << USG_VO << "\n";
+	cerr << "\t" << USG_DIR << "\n";
+	cerr << "\t" << USG_OUTPUT << "\n";
+        cerr << "\t" << USG_NODISPLAY << "\n";
+	cerr << "\t" << USG_NOINT << "\n";
+	cerr << "\t" << USG_DEBUG << "\n";
+	cerr << "\t" << USG_LOGFILE << "\n\n";
+	cerr << "\t" << "(*) It can be specified more than once with " <<  USG_SET << "\n";
+	cerr << "\t" << "(**) only with " <<  USG_GET << "\n\n";
+	cerr << "Please report any bug at:\n" ;
+	cerr << "\t" << HELP_EMAIL << "\n";
+	if (long_usg){
+		cerr  << exename << " full help\n\n" ;
+	}
+};
+/*
+*	Default constructor
 *	@param command command to be handled
 */
 Options::Options (const WMPCommands &command){
@@ -623,13 +680,16 @@ Options::Options (const WMPCommands &command){
 	all  = false ;
         autodg = false;
 	debug  = false ;
+	get = false;
 	help = false  ;
         listonly = false;
+	nodisplay = false ;
 	nogui  = false ;
 	noint  = false ;
 	nolisten = false  ;
 	nomsg = false  ;
 	rank = false  ;
+	set = false;
         registeronly = false;
 	transfer = false;
 	version  = false ;
@@ -747,7 +807,6 @@ Options::Options (const WMPCommands &command){
 		} ;
                 case (JOBDELEGATION) :{
 			// short options
-
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c%c%c",
 				Options::SHORT_E,  			short_required_arg, // endpoint
@@ -761,6 +820,20 @@ Options::Options (const WMPCommands &command){
 			numOpts = (sizeof(delegationLongOpts)/sizeof(option)) -1;
 			break ;
 		} ;
+		case (JOBPERUSAL) :{
+			// short options
+			asprintf (&shortOpts,
+				"%c%c%c%c%c%c%c%c",
+				Options::SHORT_INPUT, 		short_required_arg,
+				Options::SHORT_OUTPUT, 		short_required_arg,
+				Options::SHORT_CONFIG,		short_required_arg,
+				Options::SHORT_FILENAME,		short_required_arg);
+
+			// long options
+			longOpts = perusalLongOpts ;
+			numOpts = (sizeof(perusalLongOpts)/sizeof(option)) -1;
+			break ;
+		} ;
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"Options",
 				DEFAULT_ERR_CODE,
@@ -768,10 +841,12 @@ Options::Options (const WMPCommands &command){
                                 "unknown command");
 		} ;
 	};
-
 	// command type attribute
 	cmdType = command ;
 };
+/**
+* Default destructor
+*/
 Options::~Options( ) {
 	if (chkpt  ) { delete(chkpt  );}
 	if (collection ) { delete(collection );}
@@ -780,23 +855,24 @@ Options::~Options( ) {
 	if ( dir) { delete(dir );}
 	if (endpoint  ) { delete(endpoint  );}
 	if ( exclude) { delete( exclude);}
+	if (fileprotocol) { delete(fileprotocol);}
 	if (from ) { delete( from);}
 	if ( input ) { delete(input  );}
 	if ( lrms) { delete( lrms);}
 	if (logfile ) { delete(logfile );}
 	if (output  ) { delete( output );}
-	if ( resource) { delete(resource);}
+	if (port ) { free(port);}
+	if (resource) { delete(resource);}
 	if (start ) { delete( start);}
 	if (status ) { delete( status);}
 	if (to) { delete(to);}
 	if (valid ) { delete(valid);}
-	if (vo) { delete(vo);}
-	if (fileprotocol) { delete(fileprotocol);}
 	if (verbosity  ) { free (verbosity );}
-	if (port ) { free(port);}
+	if (vo) { delete(vo);}
+
 }
-/*
-* checks if a string option is defined for a specific operation
+/**
+* Checks whether  a string option is defined for a specific operation
 */
 const int Options::checkOpts(const std::string& opt) {
 	int r = 0;
@@ -830,7 +906,7 @@ const int Options::checkOpts(const std::string& opt) {
 };
 
 /*
-*	gets the value of the option string-attribute
+*	Gets the value of the option string-attribute
 */
 string* Options::getStringAttribute (const OptsAttributes &attribute){
 	string *value = NULL ;
@@ -938,7 +1014,7 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 };
 
 /*
-*	gets the value of the option int-attribute
+*	Gets the value of the option int-attribute
 */
 int* Options::getIntAttribute (const OptsAttributes &attribute){
 	int *value = NULL ;
@@ -965,13 +1041,21 @@ int* Options::getIntAttribute (const OptsAttributes &attribute){
 	return value ;
 };
 /*
-*	gets the value of the option string-attribute
+*	Gets the value of the option string-attribute
 */
 bool Options::getBoolAttribute (const OptsAttributes &attribute){
 	bool value = false ;
 	switch (attribute){
         	case(AUTODG) : {
 			value = autodg ;
+			break ;
+		}
+		case(GET) : {
+			value = get  ;
+			break ;
+		}
+		case(SET) : {
+			value = set  ;
 			break ;
 		}
 		case(HELP) : {
@@ -984,6 +1068,10 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 		}
 		case(VERSION) : {
 			value = version ;
+			break ;
+		}
+		case(NODISPLAY) : {
+			value = nodisplay ;
 			break ;
 		}
 		case(NOMSG) : {
@@ -1033,7 +1121,11 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 	vector<string> *vect ;
 	switch (attribute){
 		case(USERTAG) : {
-			vect = &usertag ;
+			vect = &usertags ;
+			break;
+		}
+		case(FILENAME) : {
+			vect = &filenames ;
 			break;
 		}
 		default : {
@@ -1084,6 +1176,10 @@ const int Options::getVerbosityLevel ( ){
 const string Options::getAttributeUsage (const Options::OptsAttributes &attribute){
 	string msg = "";
 	switch (attribute){
+		case(ALL) : {
+			msg = USG_ALL ;
+			break ;
+		}
 		case(COLLECTION) : {
 			msg = USG_COLLECTION ;
 			break ;
@@ -1200,6 +1296,22 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_VO ;
 			break ;
 		}
+		case(GET) : {
+			msg = USG_GET ;
+			break ;
+		}
+		case(SET) : {
+			msg = USG_SET ;
+			break ;
+		}
+		case(NODISPLAY) : {
+			msg = USG_NODISPLAY ;
+			break ;
+		}
+		case(FILENAME) : {
+			msg = USG_FILENAME ;
+			break ;
+		}
 		default : {
 			// returns an empty string
 			break ;
@@ -1208,11 +1320,18 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 	return msg ;
 };
 /*
-*	gets the list of job identifiers
+*	Gets the list of job identifiers
 *	@return a vector with the list of jobid's
 */
 const vector<string> Options::getJobIds () {
 	return jobIds;
+};
+/*
+*	Gets the  job identifier for method that need only one JobId
+*	@return a vector with the list of jobid's
+*/
+const string Options::getJobId () {
+	return singleId;
 };
 /*
 *	gets the path to the JDL file
@@ -1257,6 +1376,10 @@ void Options::printUsage(const char* exename) {
                         delegation_usage(exename);
                         break;
                 } ;
+		case ( JOBPERUSAL) :{
+                        perusal_usage(exename);
+                        break;
+                } ;
                 default :{
                         break;
                 } ;
@@ -1277,6 +1400,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	//extern int optind ;
         string opts = "";
+	string jobid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
         // the name of the the specific command (submit, cancel, etc.....)
@@ -1354,7 +1478,6 @@ std::string Options::readOptions(const int &argc, const char **argv){
 		// ========================================
 		if (  cmdType == JOBSUBMIT   ||
 			cmdType == JOBMATCH  ){
-
 			// all the options have been processed by getopt (JDL file is missing)
 			if (argc==optind &&  !collection && !start ){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -1390,27 +1513,49 @@ std::string Options::readOptions(const int &argc, const char **argv){
 				}
                         }
 		} else
-			// ========================================
-			// JobAttach : checks the last argument (JobId)
-			// ========================================
-			if ( cmdType == JOBATTACH ){
+
+			// =========================================================
+			// JobPerusal /JobAttach : need only one jobid as last argument
+			// ========================================================
+			 if ( cmdType == JOBPERUSAL){
+			 	string unvalid = "";
 				// all the options have been processed by getopt (JobId file is missing)
-				if (argc==optind){
+				if (optind == argc ){
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", EINVAL,
 						"Wrong Option: " + string(last_arg)  ,
-						"Last argument of the command must be aJobId" );
+						"Last argument of the command must be a JobId" );
 				}
-                                string jobid = Utils::checkJobId (last_arg);
-                                if ( jobid.size( ) >0 ){
-                                        jobIds.push_back(jobid);
-                                } else {
-                                        throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", EINVAL,
-                                                "Wrong Option: " + string(last_arg) ,
-                                                "Last argument of the command must be a JobId");
+                                for (int i = optind ; i < argc ; i++ ){
+					 jobid = Utils::checkJobId (argv[i]);
+					if ( jobid.size( ) >0 ) {
+     						jobIds.push_back(argv[i]);
+					} else {
+						unvalid += string(argv[i]) + " " ;
+					}
                                 }
-                } else
+				 if (jobIds.empty()) {
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", EINVAL,
+						"Wrong Input Arguments"  ,
+						"Last argument of the command must be a JobId" );
+				} else if (jobIds.size() > 1){
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", EINVAL,
+						"Too many arguments" ,
+						"Too many JobId's: the command only accept one JobId" );
+
+				} else if (unvalid.size() > 0) {
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", EINVAL,
+						"Wrong Input Arguments" ,
+						"Unvalid arguments: " + unvalid );
+
+				} else {
+					this->singleId = string(jobIds[0]);
+				}
+
+		} else
 			// =========================================================
 			// JobStatus/LogInfo/Cancel/Outpout : checks the last argument (JobId(s))
 			// ========================================================
@@ -1432,7 +1577,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
                                 if ( input && ! jobIds.empty( )){
                                         throw WmsClientException(__FILE__,__LINE__,
                                                         "readOptions", EINVAL,
-                                                        "Too many arguments specified",
+                                                        "Too many arguments",
                                                         "JobId(s) mustn't be specified with the option:\n" + getAttributeUsage(Options::INPUT));
                                 } else  if ( jobIds.empty( ) && ! input){
                                         throw WmsClientException(__FILE__,__LINE__,
@@ -1461,35 +1606,39 @@ std::string Options::getDefaultApplicationName() {
 	string name = "";
         switch (cmdType){
                 case (JOBSUBMIT ) :{
-                        name = "glite-job-submit";
+                        name = "glite-wms-job-submit";
                         break;
                 } ;
                 case (JOBSTATUS ) :{
-			name = "glite-job-status";
+			name = "glite-wms-job-status";
                         break;
                 } ;
                 case (JOBLOGINFO ) :{
-			name = "glite-job-logging-info";
+			name = "glite-wms-job-logging-info";
                         break;
                 } ;
                 case (JOBCANCEL ) :{
-			name = "glite-job-cancel";
+			name = "glite-wms-job-cancel";
                         break;
                 } ;
                 case (JOBOUTPUT ) :{
-			name = "glite-job-output";
+			name = "glite-wms-job-output";
                         break;
                 } ;
                 case ( JOBMATCH) :{
-			name = "glite-job-list-match";
+			name = "glite-wms-job-list-match";
                         break;
                 } ;
                 case ( JOBATTACH) :{
-			name = "glite-job-attach";
+			name = "glite-wms-job-attach";
                         break;
                 } ;
                 case ( JOBDELEGATION) :{
-			name = "glite-job-delegate-proxy";
+			name = "glite-wms-job-delegate-proxy";
+                        break;
+                } ;
+		case ( JOBPERUSAL) :{
+			name = "glite-wms-job-perusal";
                         break;
                 } ;
                 default :{
@@ -1706,7 +1855,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_START) ;
 			} else {
 				start = new string(optarg);
-				msg += px + LONG_START + ";" + ws ;
+				msg += px + LONG_START + ws + *start + ";" + ws ;
 			}
 			break ;
 		};
@@ -1765,7 +1914,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_LOGFILE) ;
 			} else {
 				logfile = new string (optarg);
-				msg += px + LONG_LOGFILE + ";" + ws ;
+				msg += px + LONG_LOGFILE + ws + *logfile + ";" + ws ;
 			}
 			break ;
 		};
@@ -1783,8 +1932,9 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_PORT) ;
 			}else {
 				port= (unsigned int*) malloc (sizeof(int));
-				msg += px + LONG_PORT  + ";" + ws ;
 				*port = atoi (optarg);
+
+				msg += px + LONG_PORT  + ws + boost::lexical_cast<string>(*port)+ ";" + ws ;
 			}
 			break ;
 		};
@@ -1793,7 +1943,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_TO) ;
 			} else {
 				to = new string (optarg);
-				msg += px + LONG_TO + ";" + ws ;
+				msg += px + LONG_TO + ws + *to + ";" + ws ;
 			}
 			break ;
 		};
@@ -1860,12 +2010,47 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
                       }
                         break ;
 		};
-		case ( Options::USERTAG ) : {
-			usertag.push_back(optarg);
-			msg += px + LONG_USERTAG + ";" + ws ;
+		case ( Options::NODISPLAY ) : {
+                	if (nodisplay){
+				dupl = new string(LONG_NODISPLAY) ;
+    			} else {
+				nodisplay = true;
+  				msg += px + LONG_NODISPLAY + ";" + ws ;
+                      }
+                        break ;
+		};
+		case ( Options::GET ) : {
+                	if (get){
+				dupl = new string(LONG_GET) ;
+    			} else {
+				get = true;
+  				msg += px + LONG_GET + ";" + ws ;
+                     	 }
+                        break ;
+		};
+		case ( Options::SET ) : {
+                	if (set){
+				dupl = new string(LONG_SET) ;
+    			} else {
+				set = true;
+  				msg += px + LONG_SET + ";" + ws ;
+                     	 }
+                        break ;
+		};
+		// it could be specified more than once
+		case ( Options::FILENAME ) : {
+			string file = optarg;
+			filenames.push_back(file);
+			msg += px + LONG_SET + ws + file + ";" + ws ;
 			break ;
 		};
-
+		// it could be specified more than once
+		case ( Options::USERTAG ) : {
+			string tag = optarg ;
+			usertags.push_back(tag);
+			msg += px + LONG_USERTAG + ws + tag + ";" + ws ;
+			break ;
+		};
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
 				DEFAULT_ERR_CODE,

@@ -40,12 +40,15 @@ class Options
 			DIR ,
                         ENDPOINT,
 			EXCLUDE ,
+			GET,
+			FILENAME,
 			FROM ,
 			HELP ,
 			INPUT ,
    			LISTONLY,
 			LRMS ,
 			LOGFILE ,
+			NODISPLAY,
 			NOGUI ,
 			NOINT ,
 			NOLISTEN ,
@@ -56,6 +59,7 @@ class Options
 			RANK ,
                         REGISTERONLY,
 			RESOURCE ,
+			SET,
 			START ,
 			STATUS ,
 			TO ,
@@ -83,7 +87,8 @@ class Options
 			JOBMATCH,
 			JOBOUTPUT,
 			JOBATTACH,
-                        JOBDELEGATION
+                        JOBDELEGATION,
+			JOBPERUSAL
 		};
 		/*
 		*	Default constructor
@@ -93,159 +98,161 @@ class Options
 		*	Default destructor
 		*/
 		 ~Options( );
-		/*
-		*	 reads the input options for the submission
+		/**
+		*	 Reads the input options for the submission
 		*	@param argv options
 		*	@return a string with the list of the specified options
 		*/
 		std::string readOptions(const int &argc, const char **argv);
-
-
-
-		/*
-		*	 check if the file exists
-		*	@param file path
-		*	@throw Exception if the file doesn't exist
-		*/
-		void checkFile (std::string file );
-		/*
-		*	gets the value of the option string-attribute
+		/**
+		*	Returns the value of the option string-attribute
 		*	@param attribute name of the attribute
 		*	@return the pointer to the string attribute value (NULL if the attribute has not been set)
 		*/
 		std::string* getStringAttribute (const Options::OptsAttributes &attribute);
-		/*
-		*	gets the value of the option string-attribute
+		/**
+		*	Returns the value of the option string-attribute
 		*	@param attribute name of the attribute
 		*	@return the pointer to the int attribute value (NULL if the attribute has not been set)
 		*/
 		int* getIntAttribute (const Options::OptsAttributes &attribute);
-		/*
-		*	gets the value of the option string-attribute
+		/**
+		*	Returns the value of the option string-attribute
 		*	@param attribute name of the attribute
 		*	@return the value of the boolean attribute
 		*/
 		bool getBoolAttribute (const Options::OptsAttributes &attribute);
-		/*
-		*	gets the value of the option list of strings-attribute
+		/**
+		*	Returns the value of the option list of strings-attribute
 		*	@param attribute name of the attribute
 		*	@return the vector with list
 		*/
 		const std::vector<std::string> getListAttribute (const Options::OptsAttributes &attribute);
-                /*
-		*	gets the short help usage message for an option attribute
+                /**
+		*	Returns the short help usage message for an option attribute
 		*	@param attribute name of the attribute
 		*	@return the description string of the attribute
 		*/
 		const std::string getAttributeUsage (const Options::OptsAttributes &attribute);
-		/*
-		*	gets the list of job identifiers
+		/**
+		*	Returns the list of job identifiers
 		*	@return a vector with the list of jobid's
 		*/
 		const std::vector<std::string> getJobIds( );
-		/*
-		*	gets the path to the JDL file
+		/**
+		*	Returns the job identifiers for commands that need only one JobId
+		*	@return the string with the JobId
+		*/
+		const std::string getJobId( );
+		/**
+		*	Returns the path to the JDL file
 		*	@return a pointer to the string of the JDL pathname
 		*/
 		std::string* Options::getPath2Jdl ();
-		/*
-		*	displays the usage help message for the submission
+		/**
+		*	Displays the usage help message for the submission
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void submit_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	displays the usage help message for the submission command
+		/**
+		*	Displays the usage help message for the submission command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void status_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	displays the usage help message for the status command
+		/**
+		*	Displays on the standard output the usage help message for the status command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void loginfo_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	displays the usage help message for the cancel command
+		/**
+		*	Displays on the standard output  the usage help message for the cancel command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void cancel_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	displays the usage help message for the listmatch command
+		/**
+		*	Displays on the standard output the usage help message for the listmatch command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void lsmatch_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	Displays the usage help message for the output command
+		/**
+		*	Displays on the standard output the usage help message for the output command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void output_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	Displays the usage help message for the attach command
+		/**
+		*	Displays on the standard output the usage help message for the attach command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void attach_usage(const char* &exename, const bool &long_usg=false) ;
-		/*
-		*	Displays the usage help message for the delegate-proxy command
+		/**
+		*	Displays on the standard output  the usage help message for the delegate-proxy command
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void delegation_usage(const char* &exename, const bool &long_usg=false) ;
-                /*
+		/**
+		*	Displays on the standard output  the usage help message for the job-perusal command
+		*	@param exename name of the programme executable
+		*	@param long displays the long usage help if it is "true"
+		*/
+		void perusal_usage(const char* &exename, const bool &long_usg=false) ;
+                /**
                 *	Prints on the std output the help usage message for the command
                 *	which was being handled and exits from the execution
                 */
                 void printUsage(const char* exename ) ;
-                /*
+                /**
                 *	Gets a string with the name of the application
                 *	@return the string with the name
                 */
 		std::string Options::getApplicationName() ;
-                /**
+                /***
                 *	Gets the level of verbosity for the log info
                 *	@return the level
                 */
                 const int getVerbosityLevel ( );
-                /*
+                /**
 		*	Constants for the help and version messages
 		*/
 		static const char* HELP_UI  ;
 		static const char* HELP_VERSION  ;
 		static const char* HELP_COPYRIGHT ;
 		static const char* HELP_EMAIL ;
-                /*
+                /**
 		*	Constants for the verbosity level
 		*/
 		static const unsigned int DEFAULT_VERBOSITY;
 		static const unsigned int MAX_VERBOSITY;
-		/*
+		/**
 		* Default protocol for file transferring operations
 		*/
 		static const std::string TRANSFER_FILES_DEF_PROTO;
-		/*
+		/**
 		* Default protocol for file archives and file compression
 		*/
 		static const std::string DESTURI_ZIP_PROTO;
-		/*
+		/**
 		* Default protocol for file transferring operations by CURL
 		*/
 		static const std::string TRANSFER_FILES_CURL_PROTO;
-		/*
+		/**
 		* Default protocol for file transferring operations by globus-url-copy
 		*/
 		static const std::string TRANSFER_FILES_GUC_PROTO;
-		/*
+		/**
 		* LIst of protocol allowed for file transferring operations
 		*/
 		static const char* TRANSFER_FILES_PROTOCOLS[ ];
 
 	private:
-        	/*
+        	/**
                 * Gets the default name of the application that is being executed
                 */
         	std::string getDefaultApplicationName() ;
@@ -257,14 +264,14 @@ class Options
 		*	@return 1 if the option is defined, 0 if it isn't and -1 if the input string doesn't represent a valid option
 		*/
 		const int checkOpts(const std::string& opt) ;
-		/*
+		/**
 		* Maps the common short option to the correspondent OptsAttributes enumeration code
 		* @param opt the short option code
 		* @return the OptsAttributes enumeration code
 		*/
 		const int checkCommonShortOpts (const int &opt);
-		/*
-		*	sets the value of the option attribute
+		/**
+		*	Sets the value of the option attribute
 		*	@param in_opt code assigned to the option
 		*	(the last parameter in the long option struct assigned to each option)
 		*	@param command line options
@@ -272,8 +279,8 @@ class Options
 		*/
 		void setAttribute (const int &in_opt, const char **argv, std::string &msg);
 
-                /*
-		*	long option std::strings
+                /**
+		*	Long options
 		*	(no short options defined for this set)
 		*/
 		static const char* LONG_ALL ;
@@ -282,10 +289,12 @@ class Options
 		static const char* LONG_DEBUG ;
 		static const char* LONG_DIR ;
 		static const char* LONG_FROM ;
+		static const char* LONG_GET ;
 		static const char* LONG_HELP ;
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
 		static const char* LONG_LOGFILE;
+		static const char* LONG_NODISPLAY;
 		static const char* LONG_NOGUI	;
 		static const char* LONG_NOINT ;
 		static const char* LONG_NOLISTEN ;
@@ -293,6 +302,7 @@ class Options
 		static const char* LONG_PROTO	;
 		static const char* LONG_RANK ;
                 static const char* LONG_REGISTERONLY ;
+		static const char* LONG_SET ;
 		static const char* LONG_START ;
 		static const char* LONG_TO	;
 		static const char* LONG_TRANSFER	;
@@ -300,7 +310,7 @@ class Options
 		static const char* LONG_VERSION;
                 static const char* LONG_VO;
 
-		/*
+		/**
 		*	long option std::strings and corresponding
 		*	short option characters
 		*/
@@ -316,6 +326,9 @@ class Options
 		// config
 		static const char* LONG_CONFIG	;
 		static const char SHORT_CONFIG ;
+		// filename
+		static const char* LONG_FILENAME;
+		static const char SHORT_FILENAME ;
 		// resource
 		static const char* LONG_RESOURCE ;
 		static const char SHORT_RESOURCE ;
@@ -341,7 +354,7 @@ class Options
 		static int FLAG_ENDPOINT ;
 		static int FLAG_EXCLUDE ;
 
-		/*
+		/**
 		*	short usage constants
 		*/
 		static const std::string USG_ALL ;
@@ -354,12 +367,15 @@ class Options
                 static const std::string USG_DELEGATION ;
                 static const std::string USG_ENDPOINT ;
 		static const std::string USG_EXCLUDE ;
+		static const std::string USG_FILENAME;
 		static const std::string USG_FROM ;
+		static const std::string USG_GET ;
 		static const std::string USG_HELP ;
 		static const std::string USG_INPUT ;
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
 		static const std::string USG_LOGFILE;
+		static const std::string USG_NODISPLAY	;
 		static const std::string USG_NOGUI	;
 		static const std::string USG_NOINT ;
 		static const std::string USG_NOLISTEN ;
@@ -370,6 +386,7 @@ class Options
 		static const std::string USG_RANK ;
                 static const std::string USG_REGISTERONLY ;
 		static const std::string USG_RESOURCE ;
+		static const std::string USG_SET ;
 		static const std::string USG_START ;
 		static const std::string USG_STATUS ;
 		static const std::string USG_TO	;
@@ -380,13 +397,13 @@ class Options
 		static const std::string USG_VERBOSITY ;
 		static const std::string USG_VERSION;
                 static const std::string USG_VO;
-		/*
+		/**
 		*	require/not-require char for short option
 		*	(used by definition of the short options)
 		*/
 		static const char short_required_arg ;
 		static const char short_no_arg ;
-		/*
+		/**
 		*	std::string attributes
 		*/
 		std::string* chkpt ;
@@ -409,33 +426,37 @@ class Options
 		std::string* valid ;
 		std::string* vo ;
 
-		/*
+		/**
 		*	boolean attributes
 		*/
 		bool all ;
                 bool autodg ;
 		bool debug ;
+		bool get ;
 		bool help ;
                 bool listonly ;
+		bool nodisplay ;
 		bool nogui ;
 		bool noint ;
 		bool nolisten ;
 		bool nomsg ;
 		bool rank ;
                 bool registeronly;
+		bool set ;
 		bool transfer ;
 		bool version ;
-		/*
+		/**
 		*	numerical attributes
 		*/
 		unsigned int *port ;
 		unsigned int *verbosity ;
-		/*
-		*	listing-attributes
+		/**
+		*	Listing-attributes
 		*/
-		std::vector<std::string> usertag;
-		/*
-		*	long options for each command
+		std::vector<std::string> usertags;
+		std::vector<std::string> filenames;;
+		/**
+		*	Long options for each command
 		*/
 		static const struct option submitLongOpts[]  ;
 		static const struct option statusLongOpts[]  ;
@@ -445,33 +466,39 @@ class Options
 		static const struct option outputLongOpts[]  ;
 		static const struct option attachLongOpts[]  ;
                 static const struct option delegationLongOpts[]  ;
-		/*
+		static const struct option perusalLongOpts[]  ;
+		/**
 		*	pointer to the long options of the command
 		*/
 		const struct option *longOpts  ;
-		/*
+		/**
 		*	pointer to the short options of the command
 		*/
 		char* shortOpts  ;
 
 		unsigned int numOpts ;
-		/*
+		/**
 		*	type of user command
 		*/
 		WMPCommands cmdType ;
-                /*
+                /**
                 *
                 */
 		std::string applName ;
-		/*
+		/**
 		*	path of the user JDL file
 		*/
 		std::string* jdlFile ;
-		/*
+		/**
 		*	jobIds vector
 		*/
 		std::vector<std::string> jobIds ;
-		/*
+		/**
+		* Single JobId
+		*	(commands that needed only one id)
+		*/
+		std::string singleId ;
+		/**
                 *
                 */
                  LogLevel verbosityLevel ;
