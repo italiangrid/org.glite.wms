@@ -52,6 +52,8 @@ std::string getFileName(const std::string &path);
  */
 void fileCopy(const std::string &source, const std::string &target);
 
+void uncompressFile(const std::string &filename, const std::string &startingpath);
+
 void setFlagFile(const std::string &file, bool flag);
 
 

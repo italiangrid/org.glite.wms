@@ -76,6 +76,8 @@
 
 #include "authorizer/wmpgaclmanager.h"
 
+#include "libtar.h"
+
 //namespace glite {
 //namespace wms {
 //namespace wmproxy {
@@ -1321,6 +1323,16 @@ submit(const string &jdl, JobId *jid)
 	int type = getType(jdl);
 	if (type == TYPE_JOB) {
 		JobAd * jad = new JobAd(jdl);
+		
+		// Looking for Zipped ISB
+		if (jad->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+			vector<string> files = jad->getStringValue(JDLPrivate::ZIPPED_ISB);
+			string targetdir = getenv(DOCUMENT_ROOT);
+			for (unsigned int i = 0; i < files.size(); i++) {
+				wmputilities::uncompressFile(files[i], targetdir);
+			}
+		}
+		
 		if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
 			edglog(debug)<<"Logging listener"<<endl;
 			if (wmplogger.logListener(jad->getString(JDL::SHHOST).c_str(), 
@@ -1365,6 +1377,16 @@ submit(const string &jdl, JobId *jid)
 		delete jad;
 	} else {
 		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
+		
+		// Looking for Zipped ISB
+		if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+			vector<string> files = dag->getAttribute(ExpDagAd::ZIPPED_ISB);
+			string targetdir = getenv(DOCUMENT_ROOT);
+			for (unsigned int i = 0; i < files.size(); i++) {
+				wmputilities::uncompressFile(files[i], targetdir);
+			}
+		}
+		
 	    JobIdStruct jobidstruct = dag->getJobIdStruct();
 	    JobId parentjobid = jobidstruct.jobid;
 	    vector<JobIdStruct*> children = jobidstruct.children;

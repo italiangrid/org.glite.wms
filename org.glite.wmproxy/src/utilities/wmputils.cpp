@@ -48,6 +48,10 @@
 #include "wmpexceptions.h"
 #include "wmpexception_codes.h"
 
+// ISB compression functionalities
+#include "zlib.h"
+#include "libtar.h"
+
 
 using namespace std;
 
@@ -599,6 +603,94 @@ waitForSeconds(int seconds)
 	}
 	edglog(debug)<<"End waiting"<<endl;
 	GLITE_STACK_CATCH();
+}
+
+void 
+gzUncompress(gzFile in, FILE * out, char * file)
+{
+	long filesize = computeFileSize(string(file));
+    char buf[filesize];
+    int len;
+    
+    for (;;) {
+        len = gzread(in, buf, sizeof(buf));
+        if (len < 0) {
+        	edglog(severe)<<"Error in gzread, file: "<<string(file)<<std::endl;
+	    	throw FileSystemException(__FILE__, __LINE__,
+				"uncompressFile()", WMS_IS_FAILURE,
+				"Unable to uncompress ISB file\n(please contact server administrator)");
+        }
+        if (len == 0) {
+        	break;
+        }
+        if ((int)fwrite(buf, 1, (unsigned)len, out) != len) {
+            edglog(severe)<<"Error in fwrite, file: "<<string(file)<<std::endl;
+	    	throw FileSystemException(__FILE__, __LINE__,
+				"uncompressFile()", WMS_IS_FAILURE,
+				"Unable to uncompress ISB file\n(please contact server administrator)");
+	        }
+    }
+    if (fclose(out)) {
+    	edglog(severe)<<"Error in fclose, file: "<<string(file)<<std::endl;
+    	throw FileSystemException(__FILE__, __LINE__,
+			"uncompressFile()", WMS_IS_FAILURE,
+			"Unable to uncompress ISB file\n(please contact server administrator)");
+    }
+    if (gzclose(in) != Z_OK) {
+    	edglog(severe)<<"Error in gzclose, file: "<<string(file)<<std::endl;
+    	throw FileSystemException(__FILE__, __LINE__,
+			"uncompressFile()", WMS_IS_FAILURE,
+			"Unable to uncompress ISB file\n(please contact server administrator)");
+    }
+}
+
+void 
+uncompressFile(const string &filename, const string &startingpath)
+{
+	char * file = const_cast<char*>(filename.c_str());
+	char * prefix = const_cast<char*>(startingpath.c_str());
+	
+    char buf[1024];
+    char * infile; 
+    char * outfile;
+    FILE * out;
+    gzFile in;
+    
+    uInt len = (uInt)strlen(file);
+    strcpy(buf, file);
+
+    if (len > 3 && (strcmp(file + len - 3, ".gz") == 0)) {
+        infile = file;
+        outfile = buf;
+        outfile[len - 3] = '\0';
+    } else {
+        outfile = file;
+        infile = buf;
+        strcat(infile, ".gz");
+    }
+    in = gzopen(infile, "rb");
+    if (in == NULL) {
+    	edglog(severe)<<"Error in gzopen, file: "<<string(file)<<std::endl;
+    	throw FileSystemException(__FILE__, __LINE__,
+			"uncompressFile()", WMS_IS_FAILURE,
+			"Unable to uncompress ISB file\n(please contact server administrator)");
+    }
+    out = fopen(outfile, "wb");
+    if (out == NULL) {
+        edglog(severe)<<"Error in opening output file: "<<string(outfile)<<std::endl;
+    	throw FileSystemException(__FILE__, __LINE__,
+			"uncompressFile()", WMS_IS_FAILURE,
+			"Unable to uncompress ISB file\n(please contact server administrator)");
+    }
+    gzUncompress(in, out, file);
+    unlink(infile);
+    
+    TAR * tarfile = NULL;
+	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
+    tar_extract_all(tarfile, prefix);
+    tar_close(tarfile);
+    
+    fclose(out);
 }
 
 void 
