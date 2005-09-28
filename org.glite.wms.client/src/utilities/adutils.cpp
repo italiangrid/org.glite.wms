@@ -139,8 +139,7 @@ classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,const 
 	if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Configuration values:",adDefault.toLines(),true);}
 	return adDefault.ad();
 }
-void setDefaultValuesAd(glite::wms::jdl::Ad* jdl){
-}
+
 std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	std::vector< std::string > attributes = jdl->attributes();
 	std::vector< std::string >::iterator iter;
@@ -160,16 +159,28 @@ void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& a
 		jdl->setAttribute(attrName,attrValue);
 	}
 }
+void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue){
+	if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
+		// Set Default Attribute ONLY when TRUE
+		jdl->setAttribute(attrName,attrValue);
+	}
+}
 /******************
 * JDL is still an AD (no type switched)
 *******************/
 void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	// HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION
+	// Strings attributes:
+	// HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
 	setMissing(jdl,JDL::MYPROXY,conf->my_proxy_server());
 	setMissing(jdl,JDL::HLR_LOCATION,conf->hlrlocation());
 	setMissing(jdl,JDL::VIRTUAL_ORGANISATION,conf->virtual_organisation());
+	setMissing(jdl,JDL::JOB_PROVENANCE,conf->job_provenance());
+	// Boolean Attributes:
+	// ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
+	setMissing(jdl,JDL::ALLOW_ZIPPED_ISB,conf->allow_zipped_isb());
+	setMissing(jdl,JDL::PU_FILE_ENABLE,conf->perusal_file_enable());
 }
 /******************
 * JDL is a JobAd
@@ -181,9 +192,12 @@ void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
 	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
 	// REQUIREMENTS
 	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
-
+	// (SHALLOW) RETRYCOUNT
 	if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
 		jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
+	}
+	if(   (!jdl->hasAttribute(JDL::SHALLOWRETRYCOUNT)) ){
+		jdl->setAttribute(JDL::SHALLOWRETRYCOUNT,conf->shallow_retry_count());
 	}
 }
 /******************
@@ -207,6 +221,7 @@ void AdUtils::setDefaultValues(glite::wms::jdl::CollectionAd* jdl,
 	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
 	// REQUIREMENTS
 	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
+	// RETRYCOUNT
 	if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
 		jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
 	}
