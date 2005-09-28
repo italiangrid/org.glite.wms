@@ -39,7 +39,9 @@ public:
 		MENU_JOBID,
 		MENU_CE,
 		MENU_SINGLECE,
-		MENU_SINGLEJOBID
+		MENU_SINGLEJOBID,
+		MENU_FILE,
+		MENU_SINGLEFILE,
 	};
 	enum WmcInputType{
 		JOBID_TYPE,
@@ -295,11 +297,10 @@ public:
         /*
         * reads a file and gets the list of items contained in it
         * @param the pathname of the file to be read
-	* @param type the type of items
         * @return the vector containg the list of items
         * @throw WmsClientException if the file doesn't exist or in case of any error occured during the reading operations
         */
-        std::vector<std::string> getItemsFromFile (const std::string &path, const enum WmcInputType type);
+        std::vector<std::string> getItemsFromFile (const std::string &path);
         /*
 	* adds the star (*) wildcard to the input pathname
         * @param path the input pathname

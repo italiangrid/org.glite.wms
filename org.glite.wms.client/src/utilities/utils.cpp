@@ -187,6 +187,16 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 			question << "Choose one resource in the list :";
 			break;
 		};
+		case (Utils::MENU_FILE) :{
+			question << "Choose one or more file(s) in the list - [1-" << size
+			<< "]all (use , as separator- for a range):";
+			multiple = true ;
+			break;
+		};
+		case (Utils::MENU_SINGLEFILE) :{
+			question << "Choose one file in the list :";
+			break;
+		};
 		default :{
 			break;
 		};
@@ -1437,9 +1447,9 @@ std::string  Utils::getFileName (const std::string& path) {
 	return tmp;
 }
 /*
-* gets a file
+* Reads a file
 */
-std::vector<std::string> Utils::getItemsFromFile (const std::string &path, const enum WmcInputType type){
+std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 	vector<string> items;
         string *bfr = fromFile(path);
 	if (bfr){
