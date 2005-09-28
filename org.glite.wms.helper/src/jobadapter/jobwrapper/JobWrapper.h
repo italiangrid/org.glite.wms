@@ -208,7 +208,20 @@ ed.
    * @param file
    * \ingroup token
    */
-  void token(std::string const& token_file);
+  void token(const std::string& token_file);
+
+  /**
+    * Set the support of Perusal.
+    * \ingroup jobadapter
+    */
+
+  void perusal_support(void);
+
+  void perusal_timeinterval(int perusaltimeinterval);
+
+  void perusal_filesdesturi(const std::string& filesdesturi);
+
+  void perusal_listfileuri(const std::string& listfileuri);
    
 protected:
   virtual std::ostream& print(std::ostream& os) const;
@@ -294,6 +307,13 @@ protected:
   virtual std::ostream& doReplicaFilewithLFN(std::ostream& os) const;
   virtual std::ostream& doReplicaFilewithSE(std::ostream& os) const;
   virtual std::ostream& doReplicaFilewithLFNAndSE(std::ostream& os) const;
+
+  virtual std::ostream& do_perusal(std::ostream& os) const;
+  virtual std::ostream& do_call_perusal(std::ostream& os,
+	                                const std::string& triggerfile,
+	                                const std::string& desturl,
+	                                int pollingtime) const;
+  virtual std::ostream& do_kill_perusal(std::ostream& os) const;
 	
 protected:
   // executable, stdin, stdout, stderr, and arguments
@@ -350,6 +370,11 @@ protected:
   std::vector<std::string> m_wmp_output_dest_files;
 
   std::string              m_token_file;
+
+  bool			   m_perusal_support;
+  int 			   m_perusal_timeinterval;
+  std::string		   m_perusal_filesdesturi;
+  std::string		   m_perusal_listfileuri;
   
 protected:
   // default value of the brokerinfo file

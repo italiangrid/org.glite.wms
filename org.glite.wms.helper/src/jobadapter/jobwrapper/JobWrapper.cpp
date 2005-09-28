@@ -33,7 +33,7 @@ namespace jobwrapper {
 const string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
 
 JobWrapper::JobWrapper(const string& job)
-  : m_job(job), m_create_subdir(false), m_nodes(0), m_wmp_support(false)
+  : m_job(job), m_create_subdir(false), m_nodes(0), m_wmp_support(false), m_perusal_support(false)
 {  
 }
 
@@ -197,9 +197,33 @@ JobWrapper::wmp_output_sandbox_support(const vector<string>& output_files,
 }
 
 void
-JobWrapper::token(std::string const& token_file)
+JobWrapper::token(const string& token_file)
 {
   m_token_file = token_file;
+}
+
+void
+JobWrapper::perusal_support(void)
+{
+  m_perusal_support = true;
+}
+
+void
+JobWrapper::perusal_timeinterval(int perusaltimeinterval)
+{
+  m_perusal_timeinterval = perusaltimeinterval;
+}
+
+void
+JobWrapper::perusal_filesdesturi(const string& filesdesturi)
+{
+  m_perusal_filesdesturi = filesdesturi;
+}
+
+void 
+JobWrapper::perusal_listfileuri(const string& listfileuri)
+{
+  m_perusal_listfileuri = listfileuri;
 }
 
 ostream&
@@ -1008,12 +1032,106 @@ JobWrapper::doReplicaFilewithLFNAndSE(ostream& os) const
   return os;  
 }
 		    
+ostream&
+JobWrapper::do_perusal(ostream& os) const
+{
+  os << "function send_partial_file {" << '\n'
+     << "  # Use local variables to avoid conflicts with main program" << '\n'
+     << "  local TRIGGERFILE=$1" << '\n'
+     << "  local DESTURL=$2" << '\n'
+     << "  local POLL_INTERVAL=$3" << '\n'
+     << "  local FILESUFFIX=partialtrf" << '\n'
+     << "  local GLOBUS_RETURN_CODE" << '\n'
+     << "  local SLICENAME" << '\n'
+     << "  local LISTFILE=`pwd`/listfile.$!" << '\n'
+     << "  local LAST_CYCLE=\"\"" << '\n'
+     << "  local SLEEP_PID" << '\n'
+     << "  local MD5" << '\n'
+     << "  local OLDSIZE" << '\n'
+     << "  local NEWSIZE" << '\n'
+     << "  local COUNTER" << '\n'
+     << "  # Loop forever (need to be killed by main program)" << '\n'
+     << "  while [ -z \"$LAST_CYCLE\" ] ; do" << '\n'
+     << "    # Go to sleep, but be ready to wake up when the user job finishes" << '\n'
+     << "    sleep $POLL_INTERVAL & SLEEP_PID=$!" << '\n'
+     << "    trap 'LAST_CYCLE=\"y\"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2" << '\n'
+     << "    wait $SLEEP_PID >/dev/null 2>&1" << '\n'
+     << "    # Retrive the list of files to be monitored" << '\n'
+//     << "    echo \"DEBUG: retrieving file list\"" << '\n'
+     << "    globus-url-copy ${TRIGGERFILE} file://$LISTFILE >/dev/null 2>&1" << '\n'
+     << "    # Skip iteration if unable to get the list" << '\n'
+     << "    # (can be used to switch off monitoring)" << '\n'
+     << "    if [ \"$?\" -ne \"0\" ] ; then" << '\n'
+     << "      continue" << '\n'
+     << "    fi" << '\n'
+//     << "    echo \"DEBUG: files are `cat $LISTFILE`\"" << '\n'
+     << "    for SRCFILE in `cat $LISTFILE` ; do" << '\n'
+     << "      # SRCFILE must contain the full path" << '\n'
+     << "      if [ \"$SRCFILE\" == \"`basename $SRCFILE`\" ] ; then" << '\n'
+     << "        SRCFILE=`pwd`/$SRCFILE" << '\n'
+     << "      fi" << '\n'
+     << "      if [ -f $SRCFILE ] ; then" << '\n'
+     << "        # Point to the \"state\" variables of the current file" << '\n'
+     << "        # (we will use indirect reference)" << '\n'
+     << "        MD5=`echo $SRCFILE | md5sum | awk '{ print $1 }'`" << '\n'
+     << "        OLDSIZE=\"OLDSIZE_$MD5\"" << '\n'
+     << "        COUNTER=\"COUNTER_$MD5\"" << '\n'
+     << "        # Initialize variables if referenced for the first time" << '\n'
+     << "        if [ -z \"${!OLDSIZE}\" ]; then eval local $OLDSIZE=0; fi" << '\n'
+     << "        if [ -z \"${!COUNTER}\" ]; then eval local $COUNTER=1; fi" << '\n'
+     << "        # Make a snapshot of the current file" << '\n'
+     << "        cp $SRCFILE ${SRCFILE}.${FILESUFFIX}" << '\n'
+     << "        let \"NEWSIZE = `stat -t ${SRCFILE}.${FILESUFFIX} | awk '{ print $2 }'`\"" << '\n'
+//     << "        echo \"DEBUG: OLDSIZE=${!OLDSIZE}  NEWSIZE=${NEWSIZE}\"" << '\n'
+     << "        if [ \"${NEWSIZE}\" -gt \"${!OLDSIZE}\" ] ; then" << '\n'
+     << "          let \"DIFFSIZE = NEWSIZE - $OLDSIZE\"" << '\n'
+     << "          SLICENAME=$SRCFILE.`date +%Y%m%d%H%m%S`_${!COUNTER}" << '\n'
+     << "          tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME" << '\n'
+//     << "          echo \"DEBUG: prepare slice `basename $SLICENAME` ($DIFFSIZE bytes)\"" << '\n'
+     << "          globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`" << '\n'
+     << "          GLOBUS_RETURN_CODE=$?" << '\n'
+//     << "          echo \"DEBUG: copy returned $GLOBUS_RETURN_CODE\"" << '\n'
+     << "          rm ${SRCFILE}.${FILESUFFIX} $SLICENAME" << '\n'
+     << "          if [ \"$GLOBUS_RETURN_CODE\" -eq \"0\" ] ; then" << '\n'
+     << "            let \"$OLDSIZE = NEWSIZE\"" << '\n'
+     << "            let \"$COUNTER += 1\"" << '\n'
+     << "          fi # else we will send this chunk toghether with the next one" << '\n'
+     << "        fi # else the file size didn't increase" << '\n'
+     << "      fi" << '\n'
+     << "    done" << '\n'
+     << "  done" << '\n'
+     << "  # Do some cleanup" << '\n'
+     << "  if [ -f \"$LISTFILE\" ] ; then rm $LISTFILE ; fi" << '\n'
+     << "}" << '\n';
+  return os;
+}
+
+ostream&
+JobWrapper::do_call_perusal(ostream& os, 
+			    const string& triggerfile,
+			    const string& desturl,
+			    int pollingtime) const
+{
+  os << "send_partial_file " << triggerfile 
+     << " " << desturl
+     << " " << pollingtime
+     << " send_pid=$!" << '\n';
+  return os;
+}
+
+ostream&
+JobWrapper::do_kill_perusal(ostream& os) const
+{
+  os << "kill -USR2 $send_pid" << '\n'
+     << "wait $send_pid " << '\n';
+  return os;
+}
 
 ostream&
 JobWrapper::print(ostream& os) const
 {
   // set shell	
-  set_shell(os);	
+  set_shell(os);
 
   // write the doExit function
   doExit(os, m_maradonaprotocol, m_create_subdir);
@@ -1028,7 +1146,10 @@ JobWrapper::print(ostream& os) const
     doReplicaFilewithSE(os);
     doReplicaFilewithLFNAndSE(os);
   }
-	
+
+  if (m_perusal_support) {
+    do_perusal(os);
+  }
   // check and set the environment variable GLITE_WMS_LOG_DESTINATION with the 
   // name of the gatekeeper node
   if (m_gatekeeper_hostname != "") {
@@ -1111,6 +1232,13 @@ JobWrapper::print(ostream& os) const
   // update the environment variable GLITE_WMS_SEQUENCE_CODE
   set_lb_sequence_code(os, "Running", "The job starts running!", "", "");
 
+  if (m_perusal_support) {
+    do_call_perusal(os,
+		    m_perusal_listfileuri,
+		    m_perusal_filesdesturi,
+		    m_perusal_timeinterval);
+  }
+
   // make glite-gridftp-rm token
   rm_token(os, m_token_file);
 
@@ -1122,12 +1250,16 @@ JobWrapper::print(ostream& os) const
   // log job return code to JSS
   os << "status=$?" << endl;
 
+  if (m_perusal_support) {
+    do_kill_perusal(os);
+  }
+
   // replica the outputdata
   if (m_outputdata != 0) {	  
     handle_output_data(os);
   }
 	
-  os << "echo \"job exit status = ${status}\"" << endl; 
+  os << "echo \"job exit status = ${status}\"" << endl;
   os << "echo \"job exit status = ${status}\" >> \"${maradona}\"" << endl
      << endl; 
   

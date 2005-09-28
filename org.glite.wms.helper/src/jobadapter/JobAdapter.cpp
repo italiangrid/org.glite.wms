@@ -641,7 +641,38 @@ try {
   } else {
     jw = new jobwrapper::JobWrapper(executable);
   }
-  
+ 
+  // PerusalFileEnable is not mandatory
+  bool b_perusal;
+  bool perusal = jdl::get_perusal_file_enable(*m_ad, b_perusal);
+  if (b_perusal & perusal) {
+    // PerusalTimeInterval is mandatory
+    int perusaltimeinterval = jdl::get_perusal_time_interval(*m_ad);
+
+    // PerusalFilesDestURI is mandatory
+    string perusalfilesdesturi = jdl::get_perusal_files_dest_uri(*m_ad);
+    if (perusalfilesdesturi.empty()) {
+      throw helper::InvalidAttributeValue(jdl::JDL::PU_FILES_DEST_URI,
+                                          perusalfilesdesturi,
+                                          "not empty",
+                                          helper_id);
+    }
+
+    // PerusalListFileURI is mandatory
+    string perusallistfileuri = jdl::get_perusal_list_file_uri(*m_ad);
+    if (perusallistfileuri.empty()) {
+      throw helper::InvalidAttributeValue(jdl::JDLPrivate::PU_LIST_FILE_URI,
+                                          perusallistfileuri,
+                                          "not empty",
+                                          helper_id);
+    }
+    jw->perusal_support();
+    jw->perusal_timeinterval(perusaltimeinterval);
+    jw->perusal_filesdesturi(perusalfilesdesturi);
+    jw->perusal_listfileuri(perusallistfileuri);
+  }
+ 
+ 
   // OutputData is not mandatory
   bool b_od;
   ExprTree* odtree = jdl::get_output_data(*m_ad, b_od);
