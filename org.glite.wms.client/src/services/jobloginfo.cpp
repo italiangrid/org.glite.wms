@@ -44,7 +44,7 @@ void JobLogInfo::readOptions (int argc,char **argv){
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	// JobId's
         if (inOpt){
-        	jobIds = wmcUtils->getItemsFromFile(*inOpt, Utils::JOBID_TYPE);
+        	jobIds = wmcUtils->getItemsFromFile(*inOpt);
         } else {
         	jobIds = wmcOpts->getJobIds();
         }
