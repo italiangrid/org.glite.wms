@@ -85,7 +85,7 @@
 	
 
 // WMProxy software version
-const std::string WMP_MAJOR_VERSION = "1";
+const std::string WMP_MAJOR_VERSION = "2";
 const std::string WMP_MINOR_VERSION = "0";
 const std::string WMP_RELEASE_VERSION = "0";
 const std::string WMP_POINT_VERSION = ".";
