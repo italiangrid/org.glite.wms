@@ -1324,7 +1324,9 @@ submit(const string &jdl, JobId *jid)
 			vector<string> files = jad->getStringValue(JDLPrivate::ZIPPED_ISB);
 			string targetdir = getenv(DOCUMENT_ROOT);
 			for (unsigned int i = 0; i < files.size(); i++) {
+				edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
 				wmputilities::uncompressFile(files[i], targetdir);
+				remove(files[i].c_str());
 			}
 		}
 		
@@ -1391,7 +1393,9 @@ submit(const string &jdl, JobId *jid)
 			vector<string> files = dag->getAttribute(ExpDagAd::ZIPPED_ISB);
 			string targetdir = getenv(DOCUMENT_ROOT);
 			for (unsigned int i = 0; i < files.size(); i++) {
+				edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
 				wmputilities::uncompressFile(files[i], targetdir);
+				remove(files[i].c_str());
 			}
 		}
 		
