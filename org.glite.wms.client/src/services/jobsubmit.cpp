@@ -132,10 +132,12 @@ void JobSubmit::readOptions (int argc,char **argv){
 	// input & resource (no together)
 	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
-	if (inOpt && resourceOpt ){
+	nodesresOpt = wmcOpts->getStringAttribute(Options::NODESRES);
+	if (inOpt && (resourceOpt||nodesresOpt) ){
 		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::NODESRES) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", info.str());
@@ -224,13 +226,14 @@ void JobSubmit::readOptions (int argc,char **argv){
 	startOpt = wmcOpts->getStringAttribute(Options::START);
 	registerOnly = wmcOpts->getBoolAttribute(Options::REGISTERONLY);
 	if (startOpt &&
-	(registerOnly || inOpt || resourceOpt || toOpt || validOpt || chkptOpt || collectOpt ||
+	(registerOnly || inOpt || resourceOpt || nodesresOpt || toOpt || validOpt || chkptOpt || collectOpt ||
 		(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
 		wmcOpts->getBoolAttribute(Options::AUTODG)  )){
-		info <<"it can not be used together the following options:\n";
+		info << "the following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::NODESRES) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::CHKPT) << "\n";
@@ -824,6 +827,9 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		AdUtils::setDefaultValuesAd(collectAd,wmcConf);
 		// Collect Ad manipulation
 		AdUtils::setDefaultValues(collectAd,wmcConf);
+		if (nodesresOpt) {
+			collectAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+		}
 		// JDL string
 		collectAd = collectAd->check();
 		toBretrieved =collectAd->gettoBretrieved();
@@ -865,10 +871,14 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted", "");
 			jobtype = WMS_COLLECTION ;
 			try{
+
 				collectAd = new CollectionAd(*(jobAd->ad()));
 				collectAd->setLocalAccess(true);
 				// Collect Ad manipulation
 				AdUtils::setDefaultValues(collectAd,wmcConf);
+				if (nodesresOpt) {
+					collectAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+				}
 				// JDL string
 				collectAd = collectAd->check();
 				toBretrieved =collectAd->gettoBretrieved();
@@ -896,6 +906,9 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		}  else if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {  // DAG
 				logInfo->print (WMS_DEBUG, "A DAG job is being submitted", "");
 				jobtype = WMS_DAG ;
+				if (nodesresOpt) {
+					jobAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+				}
 				dagAd = new ExpDagAd (jobAd->toString());
 				dagAd->setLocalAccess(true);
 				AdUtils::setDefaultValues(dagAd,wmcConf);
@@ -975,6 +988,9 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			// Parametric support
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)){
 				jobtype = WMS_PARAMETRIC;
+				if (nodesresOpt) {
+					pass->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+				}
 				dagAd=AdConverter::bulk2dag(pass);
 				AdUtils::setDefaultValues(dagAd, wmcConf);
 				dagAd->getSubmissionStrings();
@@ -1020,6 +1036,11 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			"cannot be used for  DAG, collection, partitionable and parametric jobs");
 	} else if (resourceOpt) {
 		logInfo->print (WMS_DEBUG, "The job is being submitted to this resource: ", *resourceOpt );
+	}else if( (nodesresOpt) && (jobtype == WMS_JOB)){
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkAd",  DEFAULT_ERR_CODE,
+			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::NODESRES),
+			"cannot be used for jobs");
 	}
 	// if --nolisten has been selected for a not interactive job
 	if (nolistenOpt && jobShadow==NULL) {

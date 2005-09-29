@@ -251,6 +251,7 @@ class JobSubmit : public Job {
 		std::string* toOpt ;
 		std::string* inOpt ;
 		std::string* resourceOpt ;
+		std::string* nodesresOpt ;
 		std::string* validOpt ;
 		std::string* startOpt ;
 		/**
