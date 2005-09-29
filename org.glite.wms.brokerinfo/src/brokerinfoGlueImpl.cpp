@@ -137,11 +137,52 @@ void brokerinfoGlueImpl::retrieveCloseSAsInfo(const BrokerInfoData::VO_name_type
 
 bool  brokerinfoGlueImpl::retrieveCloseSEsInfoFromISM(const BrokerInfoData::CEid_type& CEid,
 						      BrokerInfoData& bid) {
+
+  //
+  // db   d8b   db  .d8b.  d8888b. d8b   db d888888b d8b   db  d888b
+  // 88   I8I   88 d8' `8b 88  `8D 888o  88   `88'   888o  88 88' Y8b
+  // 88   I8I   88 88ooo88 88oobY' 88V8o 88    88    88V8o 88 88
+  // Y8   I8I   88 88~~~88 88`8b   88 V8o88    88    88 V8o88 88  ooo
+  // `8b d8'8b d8' 88   88 88 `88. 88  V888   .88.   88  V888 88. ~8~
+  //  `8b8' `8d8'  YP   YP 88   YD VP   V8P Y888888P VP   V8P  Y888P
+  //
+  //
+  //  .o88b.  .d8b.  db      db        d888888b db   db d888888b .d8888. 
+  // d8P  Y8 d8' `8b 88      88        `~~88~~' 88   88   `88'   88'  YP 
+  // 8P      88ooo88 88      88           88    88ooo88    88    `8bo.   
+  // 8b      88~~~88 88      88           88    88~~~88    88      `Y8b. 
+  // Y8b  d8 88   88 88booo. 88booo.      88    88   88   .88.   db   8D 
+  //  `Y88P' YP   YP Y88888P Y88888P      YP    YP   YP Y888888P `8888Y' 
+  //                                                                  
+  //                                                                  
+  // d88888b db    db d8b   db  .o88b. d888888b d888888b  .d88b.  d8b   db 
+  // 88'     88    88 888o  88 d8P  Y8 `~~88~~'   `88'   .8P  Y8. 888o  88 
+  // 88ooo   88    88 88V8o 88 8P         88       88    88    88 88V8o 88 
+  // 88~~~   88    88 88 V8o88 8b         88       88    88    88 88 V8o88 
+  // 88      88b  d88 88  V888 Y8b  d8    88      .88.   `8b  d8' 88  V888 
+  // YP      ~Y8888P' VP   V8P  `Y88P'    YP    Y888888P  `Y88P'  VP   V8P 
+  //                                                                    
+  //                                                                    
+  // db   d8b   db d888888b d888888b db   db   d888888b .d8888. .88b  d88. 
+  // 88   I8I   88   `88'   `~~88~~' 88   88     `88'   88'  YP 88'YbdP`88 
+  // 88   I8I   88    88       88    88ooo88      88    `8bo.   88  88  88 
+  // Y8   I8I   88    88       88    88~~~88      88      `Y8b. 88  88  88 
+  // `8b d8'8b d8'   .88.      88    88   88     .88.   db   8D 88  88  88 
+  //  `8b8' `8d8'  Y888888P    YP    YP   YP   Y888888P `8888Y' YP  YP  YP 
+  //                                                                    
+  //                                                                    
+  // db       .d88b.   .o88b. db   dD d88888b d8888b. 
+  // 88      .8P  Y8. d8P  Y8 88 ,8P' 88'     88  `8D 
+  // 88      88    88 8P      88,8P   88ooooo 88   88 
+  // 88      88    88 8b      88`8b   88~~~~~ 88   88 
+  // 88booo. `8b  d8' Y8b  d8 88 `88. 88.     88  .8D 
+  // Y88888P  `Y88P'   `Y88P' YP   YD Y88888P Y8888D' 
+  //                                               
   bool result = true;
   edglog_fn(retrieveCloseSAsInfoFromISM);
   bid.m_CloseSEInfo_map.clear();
   bid.m_referredCEid.assign( CEid );
-  boost::mutex::scoped_lock l(ism::get_ism_mutex());
+  //boost::mutex::scoped_lock l(ism::get_ism_mutex());
   ism::ism_type::const_iterator ce_it = ism::get_ism().find(CEid);
   if (ce_it != ism::get_ism().end()) {
     // Retrieve the CloseStorageElements expression list
