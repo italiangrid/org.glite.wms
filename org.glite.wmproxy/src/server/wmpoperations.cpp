@@ -1294,14 +1294,6 @@ submit(const string &jdl, JobId *jid)
 			"Unable to set User Proxy for LB context");
 	}
 	
-	wmpmanager::WMPManager manager(&wmplogger);
-	
-	// Vector of parameters to runCommand()
-	vector<string> params;
-	params.push_back(jdl);
-	params.push_back(proxy);
-	params.push_back(wmputilities::getJobDirectoryPath(*jid));
-	
 	// Checking if the value is the same as $DOCUMENT_ROOT
 	string envsandboxpath = getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
 		+ wmputilities::getSandboxDirName();
@@ -1318,7 +1310,8 @@ submit(const string &jdl, JobId *jid)
    			"SandboxStagingPath value inside configuration file is different "
    			"from $DOCUMENT_ROOT/<sandbox dir>\n(please contact server administrator)");
 	}
-	params.push_back(string(getenv(DOCUMENT_ROOT)));
+	
+	string jdltostart = jdl;
 	
 	int type = getType(jdl);
 	if (type == TYPE_JOB) {
@@ -1352,12 +1345,18 @@ submit(const string &jdl, JobId *jid)
 		string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
 		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
 			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
+				edglog(debug)<<"Enabling perusal functionalities..."<<endl;
+				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+					<<endl;
 				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
 					+ PERUSAL_FILE_2_PEEK_NAME);
 				if (jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+					edglog(debug)<<"Disabling perusal functionalities..."<<endl;
 					wmputilities::setFlagFile(peekdir
 					+ EXTERNAL_PEEK_FLAG_FILE, true);
 				} else {
+					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+						<<endl;
 					jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
 				}
 				
@@ -1366,14 +1365,20 @@ submit(const string &jdl, JobId *jid)
 					time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
 				}
 				time = max(time, conf.getMinPerusalTimeInterval());
+				edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
 				jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
+				
+				jdltostart = jad->toSubmissionString();
 			} else {
+				edglog(debug)<<"Disabling perusal functionalities..."<<endl;
 				wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
 					true);
 			}
 		} else {
+			edglog(debug)<<"Disabling perusal functionalities..."<<endl;
 			wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE, true);	
 		}
+		
 		delete jad;
 	} else {
 		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
@@ -1408,17 +1413,23 @@ submit(const string &jdl, JobId *jid)
 	    		}
 	    	}
 	    	
-	    	// Adding attribute for perusal functionalities
+	    	// Adding attributes for perusal functionalities
 	    	string peekdir = wmputilities::getPeekDirectoryPath(jobid)
 	    		+ FILE_SEPARATOR;
 			if (dag->hasNodeAttribute(jobid, JDL::PU_FILE_ENABLE)) {
 				if (dag->getNodeBool(jobid, JDL::PU_FILE_ENABLE)) {
+					edglog(debug)<<"Enabling perusal functionalities..."<<endl;
+					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+						<<endl;
 					dag->setNodeAttribute(jobid, JDLPrivate::PU_LIST_FILE_URI,
 						peekdir + PERUSAL_FILE_2_PEEK_NAME);
 					if (dag->hasNodeAttribute(jobid, JDL::PU_FILES_DEST_URI)) {
+						edglog(debug)<<"Setting external perusal URI..."<<endl;
 						wmputilities::setFlagFile(peekdir
 							+ EXTERNAL_PEEK_FLAG_FILE, true);
 					} else {
+						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+							<<endl;
 						dag->setNodeAttribute(jobid, JDL::PU_FILES_DEST_URI,
 							peekdir);
 					}
@@ -1429,12 +1440,18 @@ submit(const string &jdl, JobId *jid)
 							JDL::PU_TIME_INTERVAL));
 					}
 					time = max(time, conf.getMinPerusalTimeInterval());
+					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
+						<<endl;
 					dag->setNodeAttribute(jobid, JDL::PU_TIME_INTERVAL, time);
+					
+					jdltostart = dag->toString();
 				} else {
+					edglog(debug)<<"Disabling perusal functionalities..."<<endl;
 					wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
 						true);	
 				}
 			} else {
+				edglog(debug)<<"Disabling perusal functionalities..."<<endl;
 				wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
 					true);	
 			}
@@ -1443,6 +1460,14 @@ submit(const string &jdl, JobId *jid)
 	    delete dag;
 	    wmplogger.setLoggingJob(parentjobid.toString(), seqcode);
 	}
+	
+	wmpmanager::WMPManager manager(&wmplogger);
+	// Vector of parameters to runCommand()
+	vector<string> params;
+	params.push_back(jdltostart);
+	params.push_back(proxy);
+	params.push_back(wmputilities::getJobDirectoryPath(*jid));
+	params.push_back(string(getenv(DOCUMENT_ROOT)));
 	
 	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
 	
@@ -2837,6 +2862,12 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		edglog(debug)<<"No drain"<<endl;
 	}
 	//** END
+	
+	if (fileName == "") {
+		throw JobOperationException(__FILE__, __LINE__,
+	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_INVALID_ARGUMENT, 
+	    	"Provided file name not valid");
+	}
 	
 	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
 	if (wmputilities::fileExists(peekdir + DISABLED_PEEK_FLAG_FILE)) {
