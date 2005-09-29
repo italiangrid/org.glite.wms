@@ -387,7 +387,7 @@ public class WMProxyAPI{
 	*  @throws JobUnknownFaultType the given job has not been registered to the system.
 	*
 	*/
-	public StringList getSandboxDestURI(java.lang.String jobId)
+	public org.glite.wms.wmproxy.StringList getSandboxDestURI(java.lang.String jobId)
 			throws 	java.rmi.RemoteException,
 					org.glite.wms.wmproxy.AuthorizationFaultType,
 					org.glite.wms.wmproxy.GenericFaultType,
@@ -539,15 +539,33 @@ public class WMProxyAPI{
         */
         public org.glite.wms.wmproxy.StringAndLongList jobListMatch (java.lang.String jdl, java.lang.String delegationId)
                         throws  java.rmi.RemoteException,
-                                        org.glite.wms.wmproxy.AuthorizationFaultType,
-                                        org.glite.wms.wmproxy.GenericFaultType,
-                                        org.glite.wms.wmproxy.AuthenticationFaultType,
-                                        org.glite.wms.wmproxy.NoSuitableResourcesFaultType,
-                                        org.glite.wms.wmproxy.InvalidArgumentFaultType {
+				org.glite.wms.wmproxy.AuthorizationFaultType,
+				org.glite.wms.wmproxy.AuthenticationFaultType,
+				org.glite.wms.wmproxy.GenericFaultType,
+				org.glite.wms.wmproxy.NoSuitableResourcesFaultType,
+				org.glite.wms.wmproxy.InvalidArgumentFaultType {
                 logger.debug ("INPUT: JDL=[" + jdl + "] - deleagtionId=[" + delegationId + "]");
                 return this.serviceStub.jobListMatch(jdl, delegationId);
         }
 
+	public void enableFilePerusal (java.lang.String  jobId, org.glite.wms.wmproxy.StringList fileList)
+			throws  java.rmi.RemoteException,
+					org.glite.wms.wmproxy.AuthenticationFaultType,
+                                        org.glite.wms.wmproxy.AuthorizationFaultType,
+					org.glite.wms.wmproxy.JobUnknownFaultType,
+					org.glite.wms.wmproxy.GenericFaultType {
+		logger.debug ("INPUT: jobId=[" +jobId + "]");
+		this.serviceStub.enableFilePerusal(jobId, fileList);
+	 }
+	public  org.glite.wms.wmproxy.StringList getPerusalFiles (java.lang.String  jobId, java.lang.String file, boolean allchunks)
+			throws  java.rmi.RemoteException,
+					org.glite.wms.wmproxy.AuthenticationFaultType,
+                                        org.glite.wms.wmproxy.AuthorizationFaultType,
+					org.glite.wms.wmproxy.JobUnknownFaultType,
+					org.glite.wms.wmproxy.GenericFaultType {
+		logger.debug ("INPUT: jobId=[" + jobId + "] - file=[" +file + "] - allchunck=[" + allchunks + "]");
+		return this.serviceStub.getPerusalFiles(jobId, file, allchunks);
+	 }
 	/**
 	*  Returns a JDL template for the requested job type.
 	*  @param jobType the job type description
