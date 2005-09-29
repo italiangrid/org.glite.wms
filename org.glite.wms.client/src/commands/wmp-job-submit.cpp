@@ -2,7 +2,6 @@
 #include <iostream>
 // utilities
 #include "utilities/options_utils.h"
-#include "utilities/utils.h"
 // exceptions
 #include "utilities/excman.h"
 
