@@ -19,6 +19,7 @@
 #WMPROXY_API_CPP = $(top_builddir)/src/libglite_wms_wmproxy_api_cpp.la
 
 WMPROXY_ATTACH = $(top_builddir)/src/services/libglite_wms_client_jobattach.la
+WMPROXY_PERUSAL= $(top_builddir)/src/services/libglite_wms_client_jobperusal.la
 WMPROXY_CANCEL = $(top_builddir)/src/services/libglite_wms_client_jobcancel.la
 WMPROXY_DELEGATE = $(top_builddir)/src/services/libglite_wms_client_delegateproxy.la
 WMPROXY_LISTMATCH = $(top_builddir)/src/services/libglite_wms_client_joblistmatch.la
@@ -36,7 +37,8 @@ bin_PROGRAMS = \
 	glite-wms-job-delegate-proxy \
 	glite-wms-job-submit \
 	glite-wms-job-list-match \
-	glite-wms-job-output
+	glite-wms-job-output \
+	glite-wms-job-perusal
 
 
 glite_wms_job_delegate_proxy_SOURCES = \
@@ -182,6 +184,35 @@ glite_wms_job_output_LDADD = \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
+glite_wms_job_perusal_SOURCES = \
+	wmp-job-perusal.cpp
+glite_wms_job_perusal_LDFLAGS = -Xlinker --export-dynamic
+glite_wms_job_perusal_LDADD = \
+	$(GLITE_LB_NOTHR_COMMON_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
+	$(GLITE_WMS_WMPROXY_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_WMS_COMMON_CONF_LIBS) \
+	$(GLITE_WMS_COMMON_UT_FTP_LIBS) \
+	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMS_JDL_LIBS) \
+	$(WMPROXY_PERUSAL) \
+	$(WMPROXY_STATUS) \
+	$(WMPROXY_UTILS) \
+	$(GLOBUS_COMMON_NOTHR_LIBS) \
+	$(GLOBUS_SSL_NOTHR_LIBS) \
+	$(GLOBUS_GSS_NOTHR_LIBS) \
+	$(GLOBUS_FTP_CLIENT_NOTHR_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(BOOST_LIBS) \
+	$(ARES_LIBS) \
+	$(EXPAT_LIBS) \
+	$(GRIDSITE_GLOBUS_LIBS) \
+	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
 #glite_job_status_SOURCES = \
 #        wmp-job-status.cpp

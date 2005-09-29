@@ -12,7 +12,8 @@ noinst_LTLIBRARIES = \
 	libglite_wms_client_joboutput.la \
 	libglite_wms_client_jobcancel.la \
 	libglite_wms_client_jobstatus.la \
-	libglite_wms_client_joblistmatch.la
+	libglite_wms_client_joblistmatch.la	\
+	libglite_wms_client_jobperusal.la
 	
 noinst_HEADERS     = \
 	delegateproxy.h \
@@ -52,6 +53,11 @@ libglite_wms_client_jobcancel_la_SOURCES = \
 
 libglite_wms_client_joblistmatch_la_SOURCES = \
 	joblistmatch.cpp \
+	job.cpp
+
+libglite_wms_client_jobperusal_la_SOURCES = \
+	jobperusal.cpp \
+	lbapi.cpp \
 	job.cpp
 
 libglite_wms_client_jobstatus_la_SOURCES = \
