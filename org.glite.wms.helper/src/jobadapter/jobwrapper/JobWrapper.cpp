@@ -1058,7 +1058,12 @@ JobWrapper::do_perusal(ostream& os) const
      << "    wait $SLEEP_PID >/dev/null 2>&1" << '\n'
      << "    # Retrive the list of files to be monitored" << '\n'
 //     << "    echo \"DEBUG: retrieving file list\"" << '\n'
-     << "    globus-url-copy ${TRIGGERFILE} file://$LISTFILE >/dev/null 2>&1" << '\n'
+     << "    tmpdemo=`echo $TRIGGERFILE | awk -F \"://\" '{print $1}'`" << '\n'
+     << "    if [ \"$tmpdemo\" == \"gsiftp\" ]; then" << '\n'
+     << "      globus-url-copy ${TRIGGERFILE} file://${LISTFILE}" << '\n'
+     << "    elif [ \"$tmpdemo\" == \"https\" ]; then" << '\n'
+     << "      htcp ${TRIGGERFILE} file://${file}" << '\n'
+     << "    fi" << '\n'
      << "    # Skip iteration if unable to get the list" << '\n'
      << "    # (can be used to switch off monitoring)" << '\n'
      << "    if [ \"$?\" -ne \"0\" ] ; then" << '\n'
@@ -1087,8 +1092,12 @@ JobWrapper::do_perusal(ostream& os) const
      << "          let \"DIFFSIZE = NEWSIZE - $OLDSIZE\"" << '\n'
      << "          SLICENAME=$SRCFILE.`date +%Y%m%d%H%m%S`_${!COUNTER}" << '\n'
      << "          tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME" << '\n'
-//     << "          echo \"DEBUG: prepare slice `basename $SLICENAME` ($DIFFSIZE bytes)\"" << '\n'
-     << "          globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`" << '\n'
+     << "          tmpdemo=`echo $DESTURL | awk -F \"://\" '{print $1}'`" << '\n'
+     << "          if [ \"$tmpdemo\" == \"gsiftp\" ]; then" << '\n'
+     << "            globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`" << '\n'
+     << "          elif [ \"$tmpdemo\" == \"https\" ]; then" << '\n'
+     << "            htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME`" << '\n'
+     << "          fi" << '\n'
      << "          GLOBUS_RETURN_CODE=$?" << '\n'
 //     << "          echo \"DEBUG: copy returned $GLOBUS_RETURN_CODE\"" << '\n'
      << "          rm ${SRCFILE}.${FILESUFFIX} $SLICENAME" << '\n'
@@ -1115,7 +1124,7 @@ JobWrapper::do_call_perusal(ostream& os,
   os << "send_partial_file " << triggerfile 
      << " " << desturl
      << " " << pollingtime
-     << " send_pid=$!" << '\n';
+     << " & send_pid=$!" << '\n';
   return os;
 }
 
