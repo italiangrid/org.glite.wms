@@ -129,7 +129,21 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer, bool def
 		else if (*c=='\0'){return defaultAnswer;}
 	}
 }
-
+bool Utils::makeQuestion (const std::string& question, bool defaultAnswer, bool defaultValue){
+	string possible=" [y/n]";
+	possible +=(defaultAnswer?"y":"n");
+	possible +=" :";
+	char x[128];
+	char *c;
+	while (1){
+		cout << question << possible << " " ;
+		cin.getline(x,128);
+		c=&x[0]; //cut off the \n char
+		if((*c=='y')||(*c=='Y')){return true;}
+		else if((*c=='n')||(*c=='N')){return false;}
+		else if (*c=='\0'){return defaultAnswer;}
+	}
+}
 void Utils::ending(unsigned int exitCode){
 	exit(exitCode);
 }
@@ -372,7 +386,7 @@ std::vector<std::string> Utils::getWmps(){
 
 
 
-
+/*
 std::string* Utils::getWmpURL( ){
 	string *url = NULL;
         ConfigContext *cfg = NULL;
@@ -403,6 +417,7 @@ std::string* Utils::getWmpURL( ){
 	logInfo->print (WMS_DEBUG, "ENDPOINT_URL_ERROR", "no valid EndPoint URL has been found");
 	return url;
 }
+*/
 
 /*
 * Gets the ErrorStorage pathname
@@ -488,15 +503,32 @@ std::string* Utils::generateLogFile ( ){
 	}
         return log;
 };
+
+
 /*
 * get the UI version
-*/
+*//*
 std::string Utils::getVersionMessage( ){
 	ostringstream info ;
 	char ws = (char)32;
 	info << Options::HELP_UI << ws << Options::HELP_VERSION << "\n";
         info << Options::HELP_COPYRIGHT << "\n";
         return info.str( );
+}
+*/
+/**
+* Gets the UI version
+*/
+std::string Utils::getClientVersion( ) {
+	ostringstream clt ;
+	ostringstream srv ;
+	string endpoint = "";
+	string version = "";
+	char ws = (char)32;
+	clt << Options::HELP_UI << ws << Options::HELP_VERSION << "\n";
+        clt << Options::HELP_COPYRIGHT << "\n\n";
+	return clt.str();
+
 }
 
 /** Static private method **/
@@ -947,35 +979,35 @@ std::string* Utils::getDelegationId ( ){
         bool autodg = false;
         string *unique = NULL;
         if (wmcOpts){
-                delegation = wmcOpts->getStringAttribute(Options::DELEGATION);
- 		autodg = wmcOpts->getBoolAttribute(Options::AUTODG);
-                if ( delegation && autodg){
-                        ostringstream err;
-                        err << "the following options cannot be specified together:\n" ;
-                        err << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-                        err << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
-                        throw WmsClientException(__FILE__,__LINE__,
-                                        "getDelegationId",DEFAULT_ERR_CODE,
-                                        "Input Option Error", err.str());
+		delegation = wmcOpts->getStringAttribute(Options::DELEGATION);
+		autodg = wmcOpts->getBoolAttribute(Options::AUTODG);
+		if ( delegation && autodg){
+			ostringstream err;
+			err << "the following options cannot be specified together:\n" ;
+			err << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
+			err << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
+			throw WmsClientException(__FILE__,__LINE__,
+					"getDelegationId",DEFAULT_ERR_CODE,
+					"Input Option Error", err.str());
 		}  else if (delegation) {
-                        unique = new string(*delegation);
-                        logInfo->print  (WMS_DEBUG, "Delegation ID:", *unique);
-                } else if (autodg ){
-                        // Automatic Generation
-                        unique = getUniqueString();
-                        logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *unique);
-                } else {
+			unique = new string(*delegation);
+			logInfo->print  (WMS_DEBUG, "Delegation ID:", *unique);
+		} else if (autodg ){
+			// Automatic Generation
+			unique = getUniqueString();
+			logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *unique);
+		} else {
 			ostringstream err ;
-                        err << "a mandatory attribute is missing:\n" ;
-                        err << wmcOpts->getAttributeUsage(Options::DELEGATION) ;
-                        err << "\nto use a proxy previously delegated or\n";
-                        err << wmcOpts->getAttributeUsage(Options::AUTODG) ;
+			err << "a mandatory attribute is missing:\n" ;
+			err << wmcOpts->getAttributeUsage(Options::DELEGATION) ;
+			err << "\nto use a proxy previously delegated or\n";
+			err << wmcOpts->getAttributeUsage(Options::AUTODG) ;
 			err << "\nto perform automatic delegation";
-                        throw WmsClientException(__FILE__,__LINE__,
-                                        "getDelegationId", EINVAL ,
-                                        "Missing Information", err.str());
-                }
-        }
+			throw WmsClientException(__FILE__,__LINE__,
+					"getDelegationId", EINVAL ,
+					"Missing Information", err.str());
+		}
+	}
         return unique;
 }
 /*

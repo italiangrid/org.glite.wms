@@ -30,7 +30,7 @@ namespace services {
 
 JobListMatch::JobListMatch(){
 	// init of the string attributes
-        dgOpt= NULL;
+   //    dgOpt= NULL;
 	// init of the boolean attributes
         rankOpt  = false ;
 	// parameters
@@ -43,7 +43,7 @@ JobListMatch::JobListMatch(){
 *	Default destructor
 */
 JobListMatch::~JobListMatch( ){
-	if (dgOpt) { delete(dgOpt);}
+//	if (dgOpt) { delete(dgOpt);}
 	if (jdlFile) { delete(jdlFile);}
         if (jdlString) { delete(jdlString);}
         if (jobAd) { delete(jobAd);}

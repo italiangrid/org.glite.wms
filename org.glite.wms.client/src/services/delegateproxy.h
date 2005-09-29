@@ -47,11 +47,11 @@ class DelegateProxy : public Job {
 		/*
                 *	string input arguments
                 */
-		std::string* dgOpt ;
+//		std::string* dgOpt ;
 		/*
                 *	boolean input arguments
                 */
-                bool autodgOpt ;
+  //              bool autodgOpt ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H

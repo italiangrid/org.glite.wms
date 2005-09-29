@@ -31,18 +31,11 @@ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June", "July",
 /*
 *	Default constructor
 */
-DelegateProxy::DelegateProxy( ){
-	// init of the string attributes
-         dgOpt = NULL;
-	// init of the boolean attributes
-        autodgOpt = false;
-};
+DelegateProxy::DelegateProxy( ){ };
 /*
 *	Default destructor
 */
-DelegateProxy::~DelegateProxy( ){
-         if(dgOpt) { delete(dgOpt); }
-};
+DelegateProxy::~DelegateProxy( ){ };
 /*
 * Handles the command line arguments
 */

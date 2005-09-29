@@ -52,7 +52,7 @@ class JobListMatch : public Job {
         	 /*
                 *	string input arguments
                 */
-		std::string* dgOpt;
+//		std::string* dgOpt;
         	/*
                 *	boolean input arguments
                 */

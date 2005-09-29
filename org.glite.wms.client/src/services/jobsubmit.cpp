@@ -53,12 +53,13 @@ const long MAX_GUC_SIZE = 2147483647;
 // Max file size for CURL
 const long MAX_CURL_SIZE = 2147483647;
 //const long MAX_CURL_SIZE =617371;
+
 /*
 *	Default constructor
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-	dgOpt = NULL;
+//	dgOpt = NULL;
 	chkptOpt  = NULL;
 	collectOpt = NULL;
 	fileProto= NULL;
@@ -98,7 +99,6 @@ JobSubmit::JobSubmit( ){
 *	Default destructor
 */
 JobSubmit::~JobSubmit( ){
-	if (dgOpt){ delete(dgOpt); }
 	if (collectOpt){ delete(collectOpt); }
 	if (chkptOpt){ delete(chkptOpt); }
 	if (fileProto){ delete(fileProto); }
@@ -276,8 +276,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	// Delegation ID
 	if (!startOpt){
-		// Delegation ID
-		dgOpt = wmcUtils->getDelegationId ();
+		if (dgOpt == NULL) {dgOpt = wmcUtils->getDelegationId ();}
 		if ( ! dgOpt  ){
 			throw WmsClientException(__FILE__,__LINE__,
 					"readOptions",DEFAULT_ERR_CODE,
@@ -303,73 +302,28 @@ void JobSubmit::readOptions (int argc,char **argv){
 std::string JobSubmit::getEndPoint( ) {
 	string endpoint = "";
 	string version = "";
-	string *opt = NULL;
-	int n, index  = 0;
-	bool success = false;
 	vector<string> urls;
-	// checks if endpoint already contains the WMProxy URL
-	if (endPoint){
-		endpoint = string(*endPoint);
-	} else {
-		// if the autodelegation is needed
-		if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
+	if  (wmpVersion == 0) {
+		// checks if endpoint already contains the WMProxy URL
+		if (endPoint){
+			endpoint = string(*endPoint);
+		} else if (autodgOpt && dgOpt==NULL) {
+			// delegationId
+			dgOpt = wmcUtils->getDelegationId( );
+			// if the autodelegation is needed
 			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
+		}
+		Job::getEndPointVersion(endpoint, version);
+		logInfo->print (WMS_DEBUG, "Endpoint: " + endpoint + " Version: " + version, "");
+		wmpVersion = atoi (version.substr(0,1).c_str() );
+	} else {
+		if (endPoint) {
+			endpoint = string(*endPoint);
 		} else {
-			// --endpoint option
-			opt = wmcOpts->getStringAttribute(Options::ENDPOINT);
-			if (opt) {
-				urls.push_back(*opt);
-			} else {
-				// list of endpoints from the configuration file
-				urls = wmcUtils->getWmps ( );
-			}
-			// initial number of Url's
-			n = urls.size( );
-			if (!cfgCxt){
-				cfgCxt = new ConfigContext("", "", "");
-			}
-			while ( ! urls.empty( ) ){
-				int size = urls.size();
-				if (size > 1){
-					// randomic extraction of one URL from the list
-					index = wmcUtils->getRandom(size);
-				} else{
-					index = 0;
-				}
-				// endpoint URL
-				endpoint = string(urls[index]);
-				// setting of the EndPoint ConfigContext field
-				cfgCxt->endpoint =endpoint;
-				// Removes the extracted URL from the list
-				urls.erase ( (urls.begin( ) + index) );
-				try {
-					logInfo->print (WMS_DEBUG, "Contacting the WMProxy server (request for the version): ", endpoint);
-					version = getVersion((ConfigContext *)cfgCxt);
-					logInfo->print (WMS_DEBUG, "WMProxy version: ", version);
-					wmpVersion = atoi (version.substr(0,1).c_str() );
-					success = true;
-				}catch (BaseException &exc){
-
-					if (n==1) {
-						ostringstream err ;
-						err << "Unable to connect to the service: " << endpoint << "\n";
-						err << errMsg(exc) ;
-						// in case of any error on the only specified endpoint
-						throw WmsClientException(__FILE__,__LINE__,
-							"getEndPoint", ECONNABORTED,
-							"Operation failed", err.str());
-					} else {
-						logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
-						sleep(1);
-						if (urls.empty( )){
-							throw WmsClientException(__FILE__,__LINE__,
-							"getEndPoint", ECONNABORTED,
-							"Operation failed", "Unable to contact any specified enpoints");
-						}
-					}
-				}
-				if (success){break;}
-			}
+			throw WmsClientException(__FILE__,__LINE__,
+				"getEndPoint",  DEFAULT_ERR_CODE ,
+				"Null Pointer Error",
+				"null pointer to endPoint object"   );
 		}
 	}
 	return endpoint;

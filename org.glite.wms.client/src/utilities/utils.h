@@ -55,6 +55,8 @@ public:
 	* @return the answer value or the default value in case of interaction is not allowed
 	*/
 	bool answerYes (const std::string& question, bool defaultAnswer=false, bool defaultValue=false);
+	static bool makeQuestion (const std::string& question, bool defaultAnswer, bool defaultValue);
+
 	/**
 	* Prompt the users if they want to overwrite a file if it already exists
 	* @param path the pathname of the file
@@ -87,7 +89,7 @@ public:
 	/** Gets a wmproxy URL randomically extracted by the list of the URL's specified as input
         * @return the extracted URL string; after the execution, the vector specified as input doesn't contain the extracted URL
         */
-        std::string *getWmpURL(  );
+  //      std::string *getWmpURL(  );
 	/*** Retrieve the client installation path
         * @return the installation path string representation
         */
@@ -132,7 +134,7 @@ public:
         /**
         * Get the version message
         */
-        static std::string getVersionMessage( );
+    	static std::string getClientVersion( );
 
         glite::wms::common::configuration::WMCConfiguration* getConf(){return wmcConf;}
         /***

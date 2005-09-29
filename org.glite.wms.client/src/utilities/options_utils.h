@@ -223,10 +223,10 @@ class Options
                 /**
 		*	Constants for the help and version messages
 		*/
-		static const char* HELP_UI  ;
-		static const char* HELP_VERSION  ;
-		static const char* HELP_COPYRIGHT ;
-		static const char* HELP_EMAIL ;
+		static const std::string HELP_UI  ;
+		static const std::string HELP_VERSION  ;
+		static const std::string HELP_COPYRIGHT ;
+		static const std::string HELP_EMAIL ;
                 /**
 		*	Constants for the verbosity level
 		*/

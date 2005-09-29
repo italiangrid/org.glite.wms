@@ -33,13 +33,22 @@ std::string glite_wms_client_toLower ( const std::string &src){
         std::transform(result.begin(), result.end(), result.begin(), ::tolower);
         return result;
 }
-/*
+
+// constants for WMProxy  client software version
+const std::string WMP_CLT_MAJOR_VERSION = "1";
+const std::string WMP_CLT_MINOR_VERSION = "2";
+const std::string WMP_CLT_RELEASE_VERSION = "0";
+const std::string WMP_CLT_POINT_VERSION = ".";
+
+/**
  * Help Info messages
 */
-const char* Options::HELP_COPYRIGHT = "Copyright (C) 2005 by DATAMAT SpA";
-const char* Options::HELP_EMAIL = "egee@datamat.it";
-const char* Options::HELP_UI = "WMS User Interface" ;
-const char* Options::HELP_VERSION = "version  1.0" ;
+const std::string Options::HELP_COPYRIGHT = "Copyright (C) 2005 by DATAMAT SpA";
+const std::string Options::HELP_EMAIL = "egee@datamat.it";
+const std::string Options::HELP_UI = "WMS User Interface" ;
+const std::string Options::HELP_VERSION = "version  " + WMP_CLT_MAJOR_VERSION
+        + WMP_CLT_POINT_VERSION + WMP_CLT_MINOR_VERSION
+        + WMP_CLT_POINT_VERSION + WMP_CLT_RELEASE_VERSION; ;
 
 /*
 * Protocols for file transferring operations
@@ -271,6 +280,7 @@ const struct option Options::attachLongOpts[] = {
 *	Long options for job-submit
 */
 const struct option Options::delegationLongOpts[] = {
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
 	{	Options::LONG_AUTODG,             	no_argument,			0,		Options::SHORT_AUTODG},
@@ -635,7 +645,7 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "Usage: " << exename <<   "  [operation] [files] [options] [jobId]\n\n";
 	cerr << "operation (mandatory):\n";
 	cerr << "\t" << USG_GET << "\n";
-	cerr << "\t" << USG_SET << "\n\n";
+	cerr << "\t" << USG_SET << "\n";
 	cerr << "\t" << USG_UNSET << "\n\n";
 	cerr << "files (mandatory):\n";
 	cerr << "\t" << USG_FILENAME << " (*)\n";
@@ -1064,6 +1074,10 @@ int* Options::getIntAttribute (const OptsAttributes &attribute){
 bool Options::getBoolAttribute (const OptsAttributes &attribute){
 	bool value = false ;
 	switch (attribute){
+		case(ALL) : {
+			value = all ;
+			break ;
+		}
         	case(AUTODG) : {
 			value = autodg ;
 			break ;
@@ -1472,37 +1486,31 @@ std::string Options::readOptions(const int &argc, const char **argv){
 			}
 		} ;
 
-	} else { // Error (argc==1) : No arguments have been specified
-		if ( (cmdType == JOBSUBMIT) ||
-			cmdType == JOBMATCH  ){
-                                throw WmsClientException(__FILE__,__LINE__,
-                                        "readOptions", EINVAL,
-                                        "Arguments Error"  ,
-                                        "Last argument of the command must be a JDL file" );
-		} else if ( cmdType == JOBATTACH ){
-                        throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", EINVAL,
-                                                "Arguments Error" ,
-                                                "Last argument of the command must be a JobId");
-  		} else if ( cmdType == JOBSTATUS  ||
-                        cmdType == JOBLOGINFO ||
-                        cmdType == JOBCANCEL ||
-                        cmdType == JOBOUTPUT ) {
-                                        throw WmsClientException(__FILE__,__LINE__,
-                                                        "readOptions", EINVAL,
-                                                        "Arguments Error",
-                                                        "Last argument(s) of the command must be a JobId or a list of JobId's");
-		} else{
-  			printUsage (argv[0]);
-		}
 	}
-	// JDL file & JobId's
-	if (!help) {
-        	// Prints the UI version on the stdout and exits from the execution
-		if (version){
-                	cout << "\n" << Utils::getVersionMessage( )<< "\n";
-			Utils::ending(0);
-                 }
+	 if (!help && !version) {
+		// Error (argc==1) : No arguments have been specified
+		if (argc==1) {
+			if ( (cmdType == JOBSUBMIT) ||
+				cmdType == JOBMATCH  ){
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", EINVAL,
+						"Arguments Error"  ,
+						"Last argument of the command must be a JDL file" );
+			} else if ( cmdType == JOBATTACH ){
+				throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", EINVAL,
+							"Arguments Error" ,
+							"Last argument of the command must be a JobId");
+			} else if ( cmdType == JOBSTATUS  ||
+				cmdType == JOBLOGINFO ||
+				cmdType == JOBCANCEL ||
+				cmdType == JOBOUTPUT ) {
+						throw WmsClientException(__FILE__,__LINE__,
+								"readOptions", EINVAL,
+								"Arguments Error",
+								"Last argument(s) of the command must be a JobId or a list of JobId's");
+			}
+		} else
 		 // ========================================
 		// JobSubmit - Match: checks the JDL file option
 		// ========================================
@@ -1624,8 +1632,16 @@ std::string Options::readOptions(const int &argc, const char **argv){
                         }
                 }
 	} else {
-		// --help
-                printUsage (argv[0]);
+		// -- version
+		if (version){
+			cout << Utils::getClientVersion( );
+			if ( ! Utils::makeQuestion ("Do you want to display the WMProxy server version ?", false, true)) {
+				Utils::ending(0);
+			}
+		} else if (help){
+			// --help
+                	printUsage (argv[0]);
+		}
    	}
         return opts;
 };
@@ -2077,10 +2093,10 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
                         break ;
 		};
 		case ( Options::UNSET ) : {
-                	if (set){
+                	if (unset){
 				dupl = new string(LONG_UNSET) ;
     			} else {
-				set = true;
+				unset = true;
   				msg += px + LONG_UNSET + ";" + ws ;
                      	 }
                         break ;

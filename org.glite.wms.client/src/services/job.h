@@ -43,6 +43,13 @@ class Job{
 		* @return the string containg the information
 		*/
 		std::string Job::getLogFileMsg ( ) ;
+		/**
+		*
+		*/
+		void getEndPointVersion(std::string &endpoint, std::string &version) ;
+
+	private:
+		std::string getServerVersion( );
 	protected:
 		/** Common post-options Checks (proxy time left..)*/
 		void postOptionchecks(unsigned int proxyMinTime=0);
@@ -51,6 +58,8 @@ class Job{
 		std::string* outOpt ;	// --output <file>
 		std::string* cfgOpt ; // --config <file>
 		std::string* voOpt ;	// --vo <VO_Name>
+		std::string* dgOpt ;		// --delegationid
+		bool autodgOpt ;	// --autm-delegation,
 		bool nointOpt ;		// --noint
 		bool dbgOpt ;		// --debug
 		/** handles the input options*/
