@@ -245,7 +245,7 @@ class JobSubmit : public Job {
                 */
 		std::string* chkptOpt ;
 		std::string* collectOpt;
-		std::string* dgOpt ;
+//		std::string* dgOpt ;
 		std::string* fileProto;
 		std::string* lrmsOpt ;
 		std::string* toOpt ;
