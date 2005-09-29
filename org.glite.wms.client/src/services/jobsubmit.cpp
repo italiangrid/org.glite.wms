@@ -1311,15 +1311,19 @@ std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const
 *
 */
 void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
+	string message = "";
 	if (wmpVersion > WMPROXY_OLD_VERSION) {
 		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 		switch (jobtype) {
 			case (WMS_JOB) : {
 				if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 					zipAllowed = jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+					if (zipAllowed) { message ="allowed by user in the JDL";
+					} else { message ="disabled by user in the JDL"; }
 				} else {
 					// Default value if the JDL attribute is not present
 					zipAllowed = false;
+					message ="disabled by default";
 				}
 				break;
 			}
@@ -1328,9 +1332,12 @@ void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
 				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 				if (dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 					zipAllowed = dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+					if (zipAllowed) { message ="allowed by user in the JDL";
+					} else { message ="disabled by user in the JDL"; }
 				} else {
 					// Default value if the JDL attribute is not present
 					zipAllowed = false;
+					message ="disabled by default";
 				}
 				break;
 			}
@@ -1338,9 +1345,12 @@ void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
 				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+					if (zipAllowed) { message ="allowed by user in the JDL";
+					} else { message ="disabled by user in the JDL"; }
 				} else {
 					// Default value if the JDL attribute is not present
 					zipAllowed = false;
+					message ="disabled by default";
 				}
 				break;
 			}
@@ -1348,9 +1358,7 @@ void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
 				this->zipAllowed = false;
 			}
 		}
-		if (!zipAllowed){
-			logInfo->print (WMS_DEBUG, "File archiving and file compression disabled by user in the JDL", "");
-		}
+		logInfo->print (WMS_DEBUG, "File archiving and file compression "+ message , "");
 	} else {
 		this->zipAllowed = false;
 		logInfo->print (WMS_DEBUG, "The WMProxy server doesn't support file archiving and file compression", "");
@@ -1587,8 +1595,10 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 			"File i/o Error", "Unable to create tar file for InputSandbox: " + tar );
 		}
 		for (it = to_bcopied.begin( ); it != to_bcopied.end( ); ++it){
+			// local file to add to the archive
+			file = Utils::normalizeFile(it->first);
 			if (check_size){
-				tar_size += Utils::getFileSize(it->first);
+				tar_size += Utils::getFileSize(file);
 				if (tar_size > MAX_TAR_SIZE){
 					tar_append_eof(t);
 					tar_close (t);
@@ -1605,13 +1615,11 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 					}
 				}
 			}
-			// local file to add to the archive
-			file = Utils::normalizeFile(it->first);
 			// name of the file in the archive
 			path = Utils::getAbsolutePathFromURI (it->second);
 			r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
 			if (r!=0){
-				string m = "Error in adding the file "+ it->first + " to " + tar ;
+				string m = "Error in adding the file "+ file+ " to " + tar ;
 				char* em = strerror(errno);
 				if (em) { m += string("\n(") + string(em) + ")"; }
 				throw WmsClientException(__FILE__,__LINE__,
