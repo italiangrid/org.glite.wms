@@ -308,7 +308,7 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
 */
- std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, ConfigContext *cfs=NULL);
+ std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
  
 /*
 * Returns the available user space quota on the storage managed by the WM.
@@ -385,6 +385,11 @@ std::vector <std::pair<std::string , long> > getOutputFileList (const std::strin
 * @see AuthenticationException, AuthorizationException, InvalidArgumentException, GenericException, BaseException
 */
 std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
 /**
 * Creates a valid template ready for submission for a job
 * @param type The jobtype of the job. Multiple jobtype can be specified toghether through the bitwise '|' operator

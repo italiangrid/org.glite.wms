@@ -219,14 +219,36 @@ JobIdApi* jobidSoap2cpp (ns1__JobIdStructType *s_id){
 	}
 	return result ;
 }
-
 /*****************************************************************
-listSoap2cpp
+destURISoap2cpp
+Tranform the soap destURI structure into cpp primitive object structure
+******************************************************************/
+std::vector< std::pair<std::string ,std::vector<std::string > > > destURISoap2cpp(ns1__DestURIsStructType* dest_uris){
+	vector<string> uris;
+	vector<ns1__DestURIStructType*> *list = NULL;
+	vector< pair<string ,vector<string > > > result;
+	if (dest_uris) {
+		list = dest_uris->Item;
+		if (list) {
+			for (int i = 0; i < list->size(); i++) {
+				if (!uris.empty()) { uris.clear ( ); }
+				if ((*list)[i]->Item) {
+					for (int j = 0; j < (*list)[i]->Item->size(); j++) {
+						uris.push_back( (*((*list)[i]->Item))[j] );}
+					}
+				result.push_back (make_pair((*list)[i]->id, uris ) );
+			}
+		}
+	}
+	return result;
+}
+/*****************************************************************
+fileSoap2cpp
 Tranform the soap string&long list structure into cpp primitive object structure
 **************************************************************/
-vector <pair<string , long> > listSoap2cpp (ns1__StringAndLongList *s_list){
+vector <pair<string , long> > fileSoap2cpp (ns1__StringAndLongList *s_list){
 	vector <pair<string , long> > result ;
-	if (s_list->file){
+	if (s_list && s_list->file){
 		std::vector<ns1__StringAndLongType*> s_vect=*(s_list->file);
 		for (unsigned int i = 0 ; i< s_vect.size() ; i++){
 			result.push_back( pair<string , long> (s_vect[i]->name,(long)(s_vect[i]->size)));
@@ -234,10 +256,30 @@ vector <pair<string , long> > listSoap2cpp (ns1__StringAndLongList *s_list){
 	}
 	return result ;
 }
-
+/*****************************************************************
+soap2cpp
+Tranform the soap string list structure into cpp primitive object structure
+**************************************************************/
+std::vector <std::string> listSoap2cpp (ns1__StringList *s_list){
+	vector <string> empty;
+	if (s_list && s_list->Item){
+		return *(s_list->Item);
+	}
+	return empty ;
+}
+/*****************************************************************
+vect2soap
+Tranform the cpp vector object into a soap string-list
+**************************************************************/
+ns1__StringList *vect2soap(const std::vector<std::string> &attributes){
+	ns1__StringList *result =new ns1__StringList;
+	result->Item=new vector<string>;
+	for (unsigned int i = 0; i<attributes.size();i++){ result->Item->push_back(attributes[i]);}
+	return result ;
+}
 
 /*****************************************************************
-
+node2soap
 Tranform the soap string&long list structure into cpp primitive object structure
 ******************************************************************/
 ns1__GraphStructType* node2soap(NodeStruct *c_node){
@@ -386,7 +428,6 @@ vector<string> getSandboxDestURI(const string &jobid, ConfigContext *cfs){
 	soapAuthentication (wmp, cfs);
 	ns1__getSandboxDestURIResponse response;
 	if (wmp.ns1__getSandboxDestURI(jobid, response) == SOAP_OK) {
-
 		ns1_string_list = response._path;
 		if (ns1_string_list) {
 			for (unsigned int i = 0; i < ns1_string_list->Item->size(); i++) {
@@ -398,16 +439,19 @@ vector<string> getSandboxDestURI(const string &jobid, ConfigContext *cfs){
 	return vect;
 }
 
+/*****************************************************************
+getSandboxBulkDestURI
+******************************************************************/
  std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, ConfigContext *cfs){
 	WMProxy wmp;
 	vector< pair<string ,vector<string > > > vect;
 	vector<string> uris;
 	soapAuthentication (wmp, cfs);
 	ns1__getSandboxBulkDestURIResponse response;
-	//ns1__StringList *ids = new ns1__StringList();
 	if ( wmp.ns1__getSandboxBulkDestURI(jobid, response) == SOAP_OK) {
-	 	vector<ns1__DestURIStructType*> *list = response._DestURIsStructType->Item;
-		if (list) {
+		vect = destURISoap2cpp(response._DestURIsStructType);
+		/*if (list) {
+			vector<ns1__DestURIStructType*> *list = response._DestURIsStructType->Item;
 			for (int i = 0; i < list->size(); i++) {
 				if (!uris.empty()) { uris.clear ( ); }
 				if ((*list)[i]->Item) {
@@ -417,7 +461,7 @@ vector<string> getSandboxDestURI(const string &jobid, ConfigContext *cfs){
 				}
 				vect.push_back (make_pair((*list)[i]->id, uris ) );
 			}
-		}
+		}*/
 	} else soapErrorMng(wmp) ;
 	return vect;
 }
@@ -470,7 +514,7 @@ vector <pair<string , long> > getOutputFileList (const string &jobid, ConfigCont
 	soapAuthentication (wmp, cfs);
 	ns1__getOutputFileListResponse response;
 	if (wmp.ns1__getOutputFileList(jobid, response) == SOAP_OK) {
-		vect = listSoap2cpp (response._OutputFileAndSizeList);
+		vect = fileSoap2cpp (response._OutputFileAndSizeList);
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return vect ;
@@ -485,10 +529,45 @@ vector <pair<string , long> > jobListMatch (const string &jdl, const string &del
 	soapAuthentication (wmp, cfs);
 	ns1__jobListMatchResponse response;
 	if (wmp.ns1__jobListMatch(jdl, delegationId, response) == SOAP_OK) {
-		 vect = listSoap2cpp (response._CEIdAndRankList);
+		 vect = fileSoap2cpp (response._CEIdAndRankList);
 		 soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
 	return vect ;
+}
+
+/*****************************************************************
+enableFilePerusal
+******************************************************************/
+void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, ConfigContext *cfs){
+	WMProxy wmp;
+	ns1__StringList *ns1_string_list;
+	soapAuthentication (wmp, cfs);
+	ns1__enableFilePerusalResponse response;
+	ns1_string_list = vect2soap(files);
+	if (ns1_string_list == NULL){
+
+
+
+	}
+	if (wmp.ns1__enableFilePerusal(jobid, ns1_string_list, response) == SOAP_OK) {
+		soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+}
+
+/*****************************************************************
+getPerusalFiles
+******************************************************************/
+std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, ConfigContext *cfs ){
+	WMProxy wmp;
+	ns1__StringList *ns1_string_list;
+	vector<string> vect;
+	soapAuthentication (wmp, cfs);
+	ns1__getPerusalFilesResponse response;
+	if (wmp.ns1__getPerusalFiles(jobid, file, allchunks, response) == SOAP_OK) {
+		vect = listSoap2cpp (response._fileList);
+		soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+	return vect;
 }
 /*****************************************************************
 getJobTemplate
@@ -555,18 +634,13 @@ string getCollectionTemplate(int jobNumber, const string &requirements,const str
 /*****************************************************************
 getIntParametricJobTemplate
 ******************************************************************/
-ns1__StringList *createStringList ( vector<string> &attributes){
-	ns1__StringList *result =new ns1__StringList;
-	result->Item=new vector<string>;
-	for (unsigned int i = 0; i<attributes.size();i++) result->Item->push_back(attributes[i]);
-	return result ;
-}
+
 string getIntParametricJobTemplate (vector<string> attributes , int parameters , int start , int step , const string &requirements, const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
 	soapAuthentication (wmp, cfs);
 	ns1__getIntParametricJobTemplateResponse response;
-	if (wmp.ns1__getIntParametricJobTemplate(createStringList(attributes), parameters, start, step, requirements, rank, response) == SOAP_OK) {
+	if (wmp.ns1__getIntParametricJobTemplate(vect2soap(attributes), parameters, start, step, requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
@@ -580,7 +654,7 @@ string getStringParametricJobTemplate (vector<string>attributes, vector<string> 
 	string tpl = "";
 	soapAuthentication (wmp, cfs);
 	ns1__getStringParametricJobTemplateResponse response;
-	if (wmp.ns1__getStringParametricJobTemplate(createStringList(attributes), createStringList(parameters), requirements, rank, response) == SOAP_OK) {
+	if (wmp.ns1__getStringParametricJobTemplate(vect2soap(attributes), vect2soap(parameters), requirements, rank, response) == SOAP_OK) {
 		tpl = response._jdl ;
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
