@@ -101,7 +101,9 @@ const std::string DISABLED_PEEK_FLAG_FILE = ".disabledpeek";
 const std::string EXTERNAL_PEEK_FLAG_FILE = ".externalpeek";
 const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
 const int DEFAULT_PERUSAL_TIME_INTERVAL = 10; // seconds
-const long FILE_TRANSFER_SIZE_LIMIT = 50;
+// File size limit of globus URL copy
+const long FILE_TRANSFER_SIZE_LIMIT = 2147000000; 
+// 2 Giga = 2 * 1.073.741.824 = 2.147.483.648
 
 // Document root variable
 const char * DOCUMENT_ROOT = "DOCUMENT_ROOT";
@@ -1345,7 +1347,8 @@ submit(const string &jdl, JobId *jid)
 		string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
 		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
 			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
-				edglog(debug)<<"Enabling perusal functionalities..."<<endl;
+				edglog(debug)<<"Enabling perusal functionalities for job: "
+					<<jid->toString()<<endl;
 				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
 					<<endl;
 				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
@@ -1400,10 +1403,10 @@ submit(const string &jdl, JobId *jid)
 	    char * seqcode = wmplogger.getSequence();
 	    for (unsigned int i = 0; i < children.size(); i++) {
 	    	JobId jobid = children[i]->jobid;
+	    	string jobidstring = jobid.toString();
 	    	if (dag->hasNodeAttribute(jobid, JDL::JOBTYPE)) {
 	    		string type = dag->getNodeStringValue(jobid, JDL::JOBTYPE)[0];
 	    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
-	    			string jobidstring = jobid.toString();
 	    			edglog(debug)<<"Logging checkpointable for subjob: "
 	    				<<jobidstring<<endl;
 	    			JobAd *jad = new JobAd(jdls[i]);
@@ -1418,7 +1421,8 @@ submit(const string &jdl, JobId *jid)
 	    		+ FILE_SEPARATOR;
 			if (dag->hasNodeAttribute(jobid, JDL::PU_FILE_ENABLE)) {
 				if (dag->getNodeBool(jobid, JDL::PU_FILE_ENABLE)) {
-					edglog(debug)<<"Enabling perusal functionalities..."<<endl;
+					edglog(debug)<<"Enabling perusal functionalities for job: "
+						<<jobidstring<<endl;
 					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
 						<<endl;
 					dag->setNodeAttribute(jobid, JDLPrivate::PU_LIST_FILE_URI,
