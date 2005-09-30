@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2005/09/30 18:32:47  fprelz
+#       Added LB reputability 'successFraction' classad function.
+#
 #       Revision 1.9  2005/09/30 14:23:02  fprelz
 #       Initial addition of classad function support for LB reputability rank.
 #
@@ -58,7 +61,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ClassAd_Plugin], [2.0.0])
+AC_INIT([GLite WMS ClassAd_Plugin], [2.0.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/classad_plugin_loader.h])
