@@ -608,6 +608,9 @@ waitForSeconds(int seconds)
 void 
 gzUncompress(gzFile in, FILE * out, char * file)
 {
+	GLITE_STACK_TRY("gzUncompress()");
+	edglog_fn("wmputils::gzUncompress");
+	
 	long filesize = computeFileSize(string(file));
     char buf[filesize];
     int len;
@@ -642,11 +645,15 @@ gzUncompress(gzFile in, FILE * out, char * file)
 			"uncompressFile()", WMS_IS_FAILURE,
 			"Unable to uncompress ISB file\n(please contact server administrator)");
     }
+    GLITE_STACK_CATCH();
 }
 
 void 
 uncompressFile(const string &filename, const string &startingpath)
 {
+	GLITE_STACK_TRY("uncompressFile()");
+	edglog_fn("wmputils::uncompressFile");
+	
 	char * file = const_cast<char*>(filename.c_str());
 	char * prefix = const_cast<char*>(startingpath.c_str());
 	
@@ -691,6 +698,7 @@ uncompressFile(const string &filename, const string &startingpath)
     tar_close(tarfile);
     
     fclose(out);
+    GLITE_STACK_CATCH();
 }
 
 void 
