@@ -6,17 +6,14 @@
 ## *
 ## *********************************************************************
 
-## Subdirectories list
-SUBDIRS = gangmatch lb_rank
-
-lib_LTLIBRARIES = libglite_wms_classad_plugin_loader.la
-
-classad_plugindir = $(includedir)/glite/wms/classad_plugin
-classad_plugin_HEADERS = \
-	classad_plugin_loader.h
+lib_LTLIBRARIES = libglite_wms_lb_rank_classad_plugin.la
  
-libglite_wms_classad_plugin_loader_la_SOURCES = \
-	classad_plugin_loader.cpp
+libglite_wms_lb_rank_classad_plugin_la_SOURCES = \
+	lb_rank_classad_plugin.cpp \
+	successFraction.cpp 
+
+libglite_wms_lb_rank_classad_plugin_la_CPPFLAGS = \
+	-fPIC -shared
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \

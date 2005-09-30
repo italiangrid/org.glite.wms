@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2005/09/30 14:23:02  fprelz
+#       Initial addition of classad function support for LB reputability rank.
+#
 #       Revision 1.8  2005/09/21 13:29:28  monforte
 #       Merge against glite-wms-classad_plugin_branch_1_0_0
 #
@@ -126,6 +129,7 @@ AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/gangmatch/Makefile])
+AC_CONFIG_FILES([src/lb_rank/Makefile])
 
 AC_OUTPUT
 
