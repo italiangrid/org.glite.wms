@@ -50,7 +50,7 @@
 
 	<property name="wsdl.src.dir" location="../org.glite.lb.ws-interface/interface" />
 	<property name="wsdl.src.file" location="${wsdl.src.dir}/LB.wsdl" />
-        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 ares.m4 expat.m4 gridsite.m4 glite.m4 gsoap.m4 libtar.m4 zlib.m4 optimize.m4 glite_wms.m4 glite_wmsutils.m4 glite_lb.m4 glite_wms_wmproxy.m4"/>
+        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 ares.m4 expat.m4 gridsite.m4 glite.m4 gsoap.m4 libtar.m4 zlib.m4 optimize.m4 glite_wms.m4 glite_wmsutils.m4 glite_lb.m4 glite_wms_wmproxy.m4 glite_security.m4"/>
 
 
 </project>
