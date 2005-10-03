@@ -182,53 +182,13 @@ std::string Job::getLogFileMsg ( ) {
 /**
 * Endpoint version
 */
-void Job::getEndPointVersion(std::string &endpoint, std::string &version, const bool &info) {
+void Job::getEndPointVersion(std::string &endpoint, std::string &version, const bool &all) {
 	string *opt = NULL;
 	int n, index  = 0;
 	bool success = false;
 	vector<string> urls;
 	if (!cfgCxt){ cfgCxt = new ConfigContext("", "", "");}
-	// The "endpoint" input parameter is not empty
-
-	// Checks if endpoint already contains the WMProxy URL
-	// (it could be set inside or outside this method)
-/*	if (endPoint){
-		cfgCxt->endpoint = string(*endPoint);
-		// if the autodelegation is needed
-
-		if (autodgOpt) {
-			// Delegation ID
-			dgOpt = wmcUtils->getDelegationId ();
-			if ( ! dgOpt  ){
-				throw WmsClientException(__FILE__,__LINE__,
-						"readOptions",DEFAULT_ERR_CODE,
-						"Missing Information",
-						"" );
-			}
-			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
-
-			if (info) {
-				logInfo->print (WMS_INFO, "Getting the version from the service", cfgCxt->endpoint, true);
-			} else {
-				logInfo->print (WMS_DEBUG, "Getting the version from the service", cfgCxt->endpoint);
-			}
-			version = getVersion((ConfigContext *)cfgCxt);
-
-		try {
-			if (info) {
-				logInfo->print (WMS_INFO, "Getting the version from the service", cfgCxt->endpoint, true);
-			} else {
-				logInfo->print (WMS_DEBUG, "Getting the version from the service", cfgCxt->endpoint);
-			}
-			version = getVersion((ConfigContext *)cfgCxt);
-			endpoint = string (cfgCxt->endpoint);
-		} catch (BaseException &exc) {
-			throw WmsClientException(__FILE__,__LINE__,
-					"getVersion", ECONNABORTED,
-					"Operation failed", errMsg(exc) );
-		}
-
-	} else {*/	if (endpoint.size() > 0){
+	if (endpoint.size() > 0){
 				urls.push_back(endpoint);
 			} else if (endPoint){
 				urls.push_back(*endPoint);
@@ -257,14 +217,21 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 				// Removes the extracted URL from the list
 				urls.erase ( (urls.begin( ) + index) );
 				try {
-					if (info) {
-						logInfo->print (WMS_INFO, "Getting the version from the service", cfgCxt->endpoint, true);
+					if (all) {
+						cout << "\nGetting the version from the service " << cfgCxt->endpoint << "\n\n";
 					} else {
 						logInfo->print (WMS_DEBUG, "Getting the version from the service", cfgCxt->endpoint);
 					}
 					version = getVersion((ConfigContext *)cfgCxt);
 					endpoint = string (cfgCxt->endpoint);
-					success = true;
+
+					if (all ) {
+						cout << "Version " << version << "\n\n";
+
+					} else {
+						// exits from this loop if not all endpoints
+						success = true;
+					}
 				}catch (BaseException &exc){
 					if (n==1) {
 						ostringstream err ;
@@ -286,8 +253,6 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 				}
 				if (success){break;}
 			}
-		//}
-	//}
 }
 /**
 * Contacts the endpoint to retrieve the version
@@ -298,9 +263,6 @@ void Job::printServerVersion( ) {
 	string version = "";
 	if (endPoint){ endpoint = string(*endPoint);}
 	getEndPointVersion (endpoint, version, true);
-	//srv << "WMProxy:\t" << endpoint << "\n";
-	srv << "Version: " << version << "\n";
-	cout << srv.str() << "\n";
 }
 /**
 * Prints the UI version

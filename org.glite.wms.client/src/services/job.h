@@ -48,8 +48,9 @@ class Job{
 		* the endpoint referred to it will be contacts.
 		* @endpoint the URL of the endpoint
 		* @version the version number
+		* @all if TRUE, it contacts all endpoints specified in the configuration
 		*/
-		void getEndPointVersion(std::string &endpoint, std::string &version, const bool &info=false);
+		void getEndPointVersion(std::string &endpoint, std::string &version, const bool &all=false);
 
 	private:
 		 /**
