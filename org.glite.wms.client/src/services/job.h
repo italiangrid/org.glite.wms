@@ -44,12 +44,22 @@ class Job{
 		*/
 		std::string Job::getLogFileMsg ( ) ;
 		/**
-		*
+		* Contacts the endpoint to retrieve the version. If a valid URL is pecified as input,
+		* the endpoint referred to it will be contacts.
+		* @endpoint the URL of the endpoint
+		* @version the version number
 		*/
-		void getEndPointVersion(std::string &endpoint, std::string &version) ;
+		void getEndPointVersion(std::string &endpoint, std::string &version, const bool &info=false);
 
 	private:
-		std::string getServerVersion( );
+		 /**
+        	* Gets the version message
+        	*/
+    		void printClientVersion( );
+		/**
+		* Contacts the endpoint to retrieve the version
+		*/
+		void printServerVersion( );
 	protected:
 		/** Common post-options Checks (proxy time left..)*/
 		void postOptionchecks(unsigned int proxyMinTime=0);
