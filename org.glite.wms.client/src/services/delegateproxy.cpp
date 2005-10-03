@@ -101,7 +101,7 @@ std::string DelegateProxy::infoToFile( ){
 		string msg = "glite-wms-delegate proxy (" + date.str() + ")\n";
 		msg += "=========================================================================\n";
 		msg += "WMProxy: " + *endPoint + "\ndelegation ID: " + *dgOpt + "\n";
-		if( wmcUtils->toFile(*outOpt, msg, wmcOpts->getBoolAttribute(Options::NOINT),true) < 0 ){
+		if( wmcUtils->toFile(*outOpt, msg, true) < 0 ){
 			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
 		} else {
 			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
