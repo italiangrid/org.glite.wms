@@ -1020,7 +1020,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			pass->check(false);
 			// InputSandbox Files
 			toBretrieved=pass->gettoBretrieved();
-			jdlString = new string(pass->toString());;
 			// PARAMETRIC  ===============================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)){
 				jobtype = WMS_PARAMETRIC;
@@ -1031,36 +1030,33 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				AdUtils::setDefaultValues(dagAd, wmcConf);
 				dagAd->getSubmissionStrings();
 				toBretrieved = dagAd->gettoBretrieved();
-				// ZIP ISB file(s) for PARAMETRIC JOBS
 				if (toBretrieved){
-					// InputSB URI
+					// isbURI is needed by checkInputSandboxSize
 					isbURI = getDagISBURI( );
-					// Checks the size of the ISB
-					this->checkInputSandboxSize (jobtype);
-					if (zipAllowed){
-						// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-						dagAd->setAttribute(ExpDagAd::ZIPPED_ISB, gzFiles);
-					}
 				}
-
 			} else {
 				if (toBretrieved){
-					// InputSB URI
-					isbURI = jobAd->hasAttribute(JDL::ISB_BASE_URI)?jobAd->getString(JDL::ISB_BASE_URI):"";
-					// Checks the size of the ISB
-					this->checkInputSandboxSize (jobtype);
-					if (zipAllowed) {
-						// Adds the ZIPPED_ISB attribute to the JDL
-						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
-							pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
-						}
-					}
-					// processed JDL
-					jdlString = new string(pass->toSubmissionString());
-					delete(pass);
+					// isbURI is needed by checkInputSandboxSize
+					isbURI=jobAd->hasAttribute(JDL::ISB_BASE_URI)?jobAd->getString(JDL::ISB_BASE_URI):"";
 				}
-
 			}
+			// ZIP ISB file(s) Management
+			if (toBretrieved){
+				// Checks the size of the ISB
+				this->checkInputSandboxSize (jobtype);
+				if (zipAllowed) {
+					// Adds the ZIPPED_ISB attribute to the JDL
+					for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
+						pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
+					}
+				}
+				if (jobtype==WMS_PARAMETRIC){
+					jdlString = new string(pass->toString());
+				}else if  (jobtype==WMS_JOB){
+					jdlString = new string(pass->toSubmissionString());
+				}
+			}
+			delete(pass);
 		}
 	}
 	// --resource : incompatible argument
