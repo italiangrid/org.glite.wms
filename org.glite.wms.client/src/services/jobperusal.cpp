@@ -207,7 +207,7 @@ void JobPerusal::jobPerusal ( ){
 	vector<string> paths;
 	postOptionchecks();
 	// checks the status of the job
-	//checkStatus( );
+	checkStatus( );
 	// Operation
 	if (setOpt){
 		setPerusal( );
@@ -235,9 +235,7 @@ void JobPerusal::checkStatus( ){
 	lbApi.setJobId(jobId);
 	logInfo->print(WMS_DEBUG, "Checking the status of the job", "");
 	Status status=lbApi.getStatus(true,true);
-cout << "#### checkStatus> 1\n";
 	code = status.checkCodes(Status::OP_PERUSAL, warnings);
-cout << "#### checkStatus> 2\n";
 	if (warnings.size()>0){ logInfo->print(WMS_WARNING, warnings, "", true);}
 	if (code == 0){
 		cfgCxt = new ConfigContext("", "", "");
