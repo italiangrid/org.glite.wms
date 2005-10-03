@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Vector;
 import javax.swing.JOptionPane;
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 import org.glite.wmsui.apij.Api;
 
 /**

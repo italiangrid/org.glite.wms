@@ -14,8 +14,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
-import org.glite.wms.jdlj.Jdl;
-import org.glite.wms.jdlj.JobAd;
+import org.glite.jdl.Jdl;
+import org.glite.jdl.JobAd;
 import org.glite.wmsui.apij.Api;
 
 /**

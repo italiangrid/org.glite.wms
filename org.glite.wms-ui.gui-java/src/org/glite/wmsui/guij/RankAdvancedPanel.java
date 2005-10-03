@@ -37,7 +37,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Jdl;
+import org.glite.jdl.Jdl;
 import condor.classad.ClassAdParser;
 
 /**

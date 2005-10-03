@@ -9,7 +9,7 @@
 
 package org.glite.wmsui.guij;
 
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 
 /**
  * Implementation of the JobSubmitterInterface interface.

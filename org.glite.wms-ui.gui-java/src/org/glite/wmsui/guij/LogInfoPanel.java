@@ -46,7 +46,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 import org.glite.wmsui.apij.Job;
 import org.glite.wmsui.apij.JobId;
 import org.glite.wmsui.apij.Result;

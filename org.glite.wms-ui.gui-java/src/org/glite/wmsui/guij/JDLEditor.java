@@ -49,10 +49,10 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.glite.wms.jdlj.Ad;
-import org.glite.wms.jdlj.Jdl;
-import org.glite.wms.jdlj.JobAd;
-import org.glite.wms.jdlj.JobAdException;
+import org.glite.jdl.Ad;
+import org.glite.jdl.Jdl;
+import org.glite.jdl.JobAd;
+import org.glite.jdl.JobAdException;
 import condor.classad.ClassAdWriter;
 import condor.classad.RecordExpr;
 

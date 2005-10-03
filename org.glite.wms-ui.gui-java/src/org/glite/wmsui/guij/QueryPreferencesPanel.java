@@ -29,7 +29,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 
 /**
  * Implementation of the QueryPreferencesPanel class.

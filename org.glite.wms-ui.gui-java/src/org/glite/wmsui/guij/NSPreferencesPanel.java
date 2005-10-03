@@ -39,7 +39,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 import condor.classad.Constant;
 import condor.classad.ListExpr;
 

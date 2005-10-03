@@ -39,8 +39,8 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.ExtractFiles;
-import org.glite.wms.jdlj.Jdl;
+import org.glite.jdl.ExtractFiles;
+import org.glite.jdl.Jdl;
 
 /**
  * Implementation of the JobDef1Panel class.

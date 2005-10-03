@@ -24,8 +24,8 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Jdl;
-import org.glite.wms.jdlj.JobAd;
+import org.glite.jdl.Jdl;
+import org.glite.jdl.JobAd;
 
 public class PartitionablePanel extends JPanel {
   static Logger logger = Logger.getLogger(JDLEditor.class.getName());

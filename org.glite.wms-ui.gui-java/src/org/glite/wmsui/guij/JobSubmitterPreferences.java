@@ -30,7 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 import condor.classad.Constant;
 import condor.classad.ListExpr;
 

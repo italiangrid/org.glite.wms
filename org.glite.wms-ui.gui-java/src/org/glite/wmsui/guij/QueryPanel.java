@@ -41,8 +41,8 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
-import org.glite.wms.jdlj.JobAd;
+import org.glite.jdl.Ad;
+import org.glite.jdl.JobAd;
 import org.glite.wmsui.apij.JobStatus;
 
 /**

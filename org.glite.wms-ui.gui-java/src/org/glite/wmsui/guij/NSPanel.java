@@ -54,10 +54,10 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
-import org.glite.wms.jdlj.Jdl;
-import org.glite.wms.jdlj.JobAd;
-import org.glite.wms.jdlj.JobState;
+import org.glite.jdl.Ad;
+import org.glite.jdl.Jdl;
+import org.glite.jdl.JobAd;
+import org.glite.jdl.JobState;
 
 /**
  * Implementation of the NSPanel class. The NS Panels contain some information

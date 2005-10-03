@@ -19,9 +19,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
-import org.glite.wms.jdlj.JobAd;
-import org.glite.wms.jdlj.JobAdException;
+import org.glite.jdl.Ad;
+import org.glite.jdl.JobAd;
+import org.glite.jdl.JobAdException;
 
 public class UnknownPanel extends JPanel {
   static Logger logger = Logger.getLogger(JDLEditor.class.getName());

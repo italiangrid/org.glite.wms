@@ -26,7 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Ad;
+import org.glite.jdl.Ad;
 import condor.classad.Constant;
 import condor.classad.ListExpr;
 

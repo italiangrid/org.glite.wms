@@ -39,7 +39,7 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.glite.wms.jdlj.Jdl;
+import org.glite.jdl.Jdl;
 
 /**
  * Implementation of the JobTypePanel class.

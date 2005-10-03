@@ -27,9 +27,9 @@ import javax.naming.directory.InvalidAttributeValueException;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import org.glite.wms.jdlj.Jdl;
-import org.glite.wms.jdlj.JobAd;
-import org.glite.wms.jdlj.JobAdException;
+import org.glite.jdl.Jdl;
+import org.glite.jdl.JobAd;
+import org.glite.jdl.JobAdException;
 import org.glite.wmsui.apij.Api;
 
 /**

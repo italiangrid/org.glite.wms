@@ -10,7 +10,7 @@
 package org.glite.wmsui.guij;
 
 import java.awt.event.ActionEvent;
-import org.glite.wms.jdlj.JobAd;
+import org.glite.jdl.JobAd;
 
 /**
  * Implementation of the JDLEditorInterface interface.
