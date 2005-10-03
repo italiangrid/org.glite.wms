@@ -152,7 +152,12 @@ delegate_proxy_OBJ=glite-wms-job-delegate-proxy
 delegate_proxy_CFLAGS=$(CFLAGS)
 delegate_proxy_DEPS=$(COMMON_LD_FLAGS)
 
-all: submit status loginfo cancel match output  attach delegation
+job_perusal_SOURCE=wmp-job-perusal.cpp
+job_perusal_OBJ=glite-wms-job-perusal
+job_perusal_CFLAGS=$(CFLAGS)
+job_perusal_DEPS=$(COMMON_LD_FLAGS)
+
+all: submit status loginfo cancel match output  attach delegation perusal
 
 submit:	$(job_submit_SOURCE)
 		@echo "building "$(job_submit_OBJ)" ..."
@@ -243,6 +248,17 @@ delegation:	 $(delegate_proxy_SOURCE)
 			-o  $(delegate_proxy_OBJ)  \
 			$(delegate_proxy_SOURCE)
 		@mv $(delegate_proxy_OBJ) $(bin_dir)
+perusal:	$(job_perusal_SOURCE)
+		@echo "building "$(job_perusal_OBJ)" ..."
+
+		@if ! test -d $(bin_dir) ; then \
+			mkdir $(bin_dir) ; \
+		fi
+		$(CPP) -g -Wall  $(job_perusal_CFLAGS) $(job_perusal_DEPS) \
+			-o  $(job_perusal_OBJ)  \
+			$(job_perusal_SOURCE)
+		@mv $(job_perusal_OBJ) $(bin_dir)
+
 clean:
 		rm -f *.o *.so
 
