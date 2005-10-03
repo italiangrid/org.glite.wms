@@ -9,8 +9,8 @@
 package org.glite.wmsui.apij;
 import java.util.* ;
 import java.io.File ;
-import  org.glite.wms.jdlj.JobAd ;
-import  org.glite.wms.jdlj.Ad ;
+import  org.glite.jdl.JobAd ;
+import  org.glite.jdl.Ad ;
 import java.util.Random ;    // Randomize onto lb Addresses
 import org.globus.gsi.GlobusCredentialException;
 import java.io.IOException ;

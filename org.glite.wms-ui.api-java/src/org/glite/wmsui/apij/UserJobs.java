@@ -9,7 +9,7 @@
 package org.glite.wmsui.apij;
 import java.util.* ;
 import java.io.File ;
-import  org.glite.wms.jdlj.Ad ;
+import  org.glite.jdl.Ad ;
 import org.globus.gsi.GlobusCredentialException;
 import java.lang.Math ; // to perform the power
 /**

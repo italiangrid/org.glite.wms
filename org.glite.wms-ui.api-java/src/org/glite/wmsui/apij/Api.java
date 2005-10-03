@@ -9,7 +9,7 @@
 package org.glite.wmsui.apij;
 
 import java.util.* ;
-import  org.glite.wms.jdlj.Ad ;
+import  org.glite.jdl.Ad ;
 import java.lang.RuntimeException ;
 /**
  * The Api class provides static native implementation of common C/C++ operation not generally allowed by the JVM

@@ -6,7 +6,7 @@
 * Contributors are mentioned in the code there appropriate.
 */
 package org.glite.wmsui.apij;
-import  org.glite.wms.jdlj.JobAd ;
+import  org.glite.jdl.JobAd ;
 import java.net.InetAddress ;
 import java.util.StringTokenizer ;
 import java.net.UnknownHostException ; //InetAddress Exc

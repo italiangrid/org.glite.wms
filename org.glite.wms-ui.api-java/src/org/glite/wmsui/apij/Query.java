@@ -8,7 +8,7 @@
 */
 package org.glite.wmsui.apij ;
 import java.util.* ;
-import  org.glite.wms.jdlj.Ad ;
+import  org.glite.jdl.Ad ;
 import javax.naming.directory.InvalidAttributeValueException ;
 /**
  * LB QeuryServer Class Wrapped.

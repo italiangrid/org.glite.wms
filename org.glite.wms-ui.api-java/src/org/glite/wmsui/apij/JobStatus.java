@@ -8,7 +8,7 @@
 */
 package org.glite.wmsui.apij;
 import java.util.* ;
-import  org.glite.wms.jdlj.Ad ;
+import  org.glite.jdl.Ad ;
 /**
  * LB JobStatus Class Wrap.
  * <p>This class represents the status of a job, retrieved from the LB server.
