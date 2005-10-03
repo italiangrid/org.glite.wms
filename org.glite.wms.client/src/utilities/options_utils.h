@@ -210,6 +210,10 @@ class Options
                 *	which was being handled and exits from the execution
                 */
                 void printUsage(const char* exename ) ;
+		/**
+		* Gets the message string with the version of the UI client
+		*/
+		static std::string getVersionMessage( );
                 /**
                 *	Gets a string with the name of the application
                 *	@return the string with the name

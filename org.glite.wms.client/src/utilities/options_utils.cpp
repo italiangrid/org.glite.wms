@@ -322,37 +322,37 @@ const string Options::USG_ALL = "--" + string(LONG_ALL) ;
 
 const string Options::USG_AUTODG = "--" + string(LONG_AUTODG) + ", -" + SHORT_AUTODG ;
 
-const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t<file_path>" ;
+const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t\t<file_path>" ;
 
-const string Options::USG_COLLECTION = "--" + string(LONG_COLLECTION)	 + "\t<dir_path>" ;
+const string Options::USG_COLLECTION = "--" + string(LONG_COLLECTION)	 + "\t\t<dir_path>" ;
 
-const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
+const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t\t<file_path>"	;
 
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
 
 const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<delegation_string>";
 
-const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t\t<directory_path>"	;
+const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t\t\t<directory_path>"	;
 
-const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHORT_E + "\t<endpoint_URL>";
+const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHORT_E + "\t\t<endpoint_URL>";
 
-const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_E + "\t<status_value>";
+const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_E + "\t\t<status_value>";
 
 const string Options::USG_FILENAME = "--" + string(LONG_FILENAME) + ", -" + SHORT_FILENAME +  "\t<filename>";
 
-const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
-const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
+const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t\t<file_path>";
 
 const string Options::USG_LISTONLY = "--" + string(LONG_LISTONLY) ;
 
-const string Options::USG_LRMS = "--" + string(LONG_LRMS ) + "\t\t<lrms_type>" 	;
+const string Options::USG_LRMS = "--" + string(LONG_LRMS ) + "\t\t\t<lrms_type>" 	;
 
-const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>" ;
+const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t\t<file_path>" ;
 
 const string Options::USG_NODESRES = "--" + string(LONG_NODESRES)+ "\t<ce_id>" ;
 
@@ -366,39 +366,39 @@ const string Options::USG_NOLISTEN  = "--" + string(LONG_NOLISTEN);
 
 const string Options::USG_NOMSG	 = "--" + string(LONG_NOMSG);
 
-const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OUTPUT + "\t<file_path>";
+const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OUTPUT + "\t\t<file_path>";
 
-const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t<port_num>";
+const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t\t<port_num>";
 
-const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t<protocol>";
+const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t\t<protocol>";
 
 const string Options::USG_RANK = "--" + string(LONG_RANK ) ;
 
 const string Options::USG_REGISTERONLY = "--" + string(LONG_REGISTERONLY) ;
 
-const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHORT_RESOURCE + "\t<ce_id>";
+const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHORT_RESOURCE + "\t\t<ce_id>";
 
 const string Options::USG_SET  = "--" + string(LONG_SET) ;
 
-const string Options::USG_START = "--" + string(LONG_START) + "\t<jobid>";
+const string Options::USG_START = "--" + string(LONG_START) + "\t\t\t<jobid>";
 
-const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t<status_value>";
+const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t\t<status_value>";
 
-const string Options::USG_TO = "--" + string(LONG_TO) + "\t\t[MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_TO = "--" + string(LONG_TO) + "\t\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_TRANSFER = "--" + string(LONG_TRANSFER ) ;
 
 const string Options::USG_UNSET  = "--" + string(LONG_UNSET) ;
 
-const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t<tag name>=<tag value>";
+const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t\t<tag name>=<tag value>";
 
-const string Options::USG_VALID = "--" + string(LONG_VALID ) +  ", -" + SHORT_V + "\thh:mm";
+const string Options::USG_VALID = "--" + string(LONG_VALID ) +  ", -" + SHORT_V + "\t\thh:mm";
 
-const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHORT_V + "\t[0|1|2|3]";
+const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHORT_V + "\t\t[0|1|2|3]";
 
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 
-const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
+const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t\t<vo_name>";
 
 /*
 *	Prints the help usage message for the job-submit
@@ -406,8 +406,7 @@ const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::submit_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " <delegation-opts> [options]  <jdl_file>\n\n";
 	cerr << "delegation-opts:\n" ;
 	cerr << "\t" << USG_DELEGATION << "\n";
@@ -451,8 +450,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::status_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" <<  HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr <<  "\n\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " [options]   <job Id(s)>\n\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
@@ -482,8 +480,7 @@ void Options::status_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::loginfo_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" <<  HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " [options]   <job Id(s)>\n\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
@@ -507,8 +504,7 @@ void Options::loginfo_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::cancel_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" <<  HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " [options]   <job Id(s)>\n\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
@@ -533,8 +529,7 @@ void Options::cancel_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
         cerr << "Usage: " << exename <<   " <delegation-opts> [options]  <jdl_file>\n\n";
 	cerr << "delegation-opts:\n" ;
 	cerr << "\t" << USG_DELEGATION << "\n";
@@ -562,8 +557,7 @@ void Options::lsmatch_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::output_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " [options]   <job Id(s)>\n\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
@@ -588,8 +582,7 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::attach_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " [options]   <job Id>\n\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
@@ -614,8 +607,7 @@ void Options::attach_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::delegation_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " <delegation-opts> [options]\n\n";
         cerr << "delegation-opts:\n" ;
 	cerr << "\t" << USG_DELEGATION << "\n";
@@ -640,8 +632,7 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::perusal_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n\n" << HELP_UI << " " << HELP_VERSION << "\n" ;
-	cerr << HELP_COPYRIGHT << "\n\n" ;
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   "  [operation] [files] [options] [jobId]\n\n";
 	cerr << "operation (mandatory):\n";
 	cerr << "\t" << USG_GET << "\n";
@@ -892,6 +883,14 @@ Options::~Options( ) {
 	if (verbosity  ) { free (verbosity );}
 	if (vo) { delete(vo);}
 
+}
+
+std::string Options::getVersionMessage( ) {
+	ostringstream msg;
+	char ws = (char)32;
+	msg << Options::HELP_UI << ws << Options::HELP_VERSION << "\n";
+        msg << Options::HELP_COPYRIGHT << "\n";
+	return msg.str();
 }
 /**
 * Checks whether  a string option is defined for a specific operation
@@ -1188,7 +1187,7 @@ const int Options::getVerbosityLevel ( ){
                         info << this->getAttributeUsage(Options::DBG) << "\n";
                         info << this->getAttributeUsage(Options::NOMSG) ;
                         throw WmsClientException(__FILE__,__LINE__,
-                                        "getLogLevel",EINVAL,
+                                        "getLogLevel",DEFAULT_ERR_CODE,
                                         "Input Option Error", info.str());
                 }
 		if (nomsg){
@@ -1462,7 +1461,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 			// checks if the option is defined for the specific command
 			if ( checkOpts(argv[optind] ) == 0 ){
 				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", EINVAL,
+					"readOptions", DEFAULT_ERR_CODE,
 					"Arguments Error"  ,
 					string (argv[optind]) + string (": unrecognized option") );
 			} else {
@@ -1472,7 +1471,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 				// error
 				if (next_opt == '?') {
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Arguments Error"  ,
 						"Invalid Option" );
 				}
@@ -1493,12 +1492,12 @@ std::string Options::readOptions(const int &argc, const char **argv){
 			if ( (cmdType == JOBSUBMIT) ||
 				cmdType == JOBMATCH  ){
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Arguments Error"  ,
 						"Last argument of the command must be a JDL file" );
 			} else if ( cmdType == JOBATTACH ){
 				throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", EINVAL,
+							"readOptions", DEFAULT_ERR_CODE,
 							"Arguments Error" ,
 							"Last argument of the command must be a JobId");
 			} else if ( cmdType == JOBSTATUS  ||
@@ -1506,7 +1505,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 				cmdType == JOBCANCEL ||
 				cmdType == JOBOUTPUT ) {
 						throw WmsClientException(__FILE__,__LINE__,
-								"readOptions", EINVAL,
+								"readOptions", DEFAULT_ERR_CODE,
 								"Arguments Error",
 								"Last argument(s) of the command must be a JobId or a list of JobId's");
 			}
@@ -1519,7 +1518,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 			// all the options have been processed by getopt (JDL file is missing)
 			if (argc==optind &&  !collection && !start ){
 				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", EINVAL,
+					"readOptions", DEFAULT_ERR_CODE,
 					"Wrong Option: " + string(last_arg)  ,
 					"Last argument of the command must be a JDL file" );
 			}
@@ -1529,14 +1528,14 @@ std::string Options::readOptions(const int &argc, const char **argv){
                                         ostringstream err ;
                                         err << "JDL file (as last argument) and the option --" << LONG_COLLECTION << " are incompatible";
                                         throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", EINVAL,
+                                                "readOptions", DEFAULT_ERR_CODE,
                                                 "Wrong Option",
                                                 err.str() );
                                 } else if (start){
                                         ostringstream err ;
                                         err << "JDL file (as last argument) and the option --" << LONG_START << " are incompatible";
                                         throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", EINVAL,
+                                                "readOptions", DEFAULT_ERR_CODE,
                                                 "Wrong Option",
                                                 err.str() );
                                 }
@@ -1545,7 +1544,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 			 	//
 			 	if (!collection && !start) {
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option: " + string(last_arg)  ,
 						"Last argument of the command must be a JDL file" );
 				}
@@ -1560,7 +1559,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 				// all the options have been processed by getopt (JobId file is missing)
 				if (optind == argc ){
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option: " + string(last_arg)  ,
 						"Last argument of the command must be a JobId" );
 				}
@@ -1574,18 +1573,18 @@ std::string Options::readOptions(const int &argc, const char **argv){
                                 }
 				 if (jobIds.empty()) {
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Input Arguments"  ,
 						"Last argument of the command must be a JobId" );
 				} else if (jobIds.size() > 1){
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Too many arguments" ,
 						"Too many JobId's: the command only accept one JobId" );
 
 				} else if (unvalid.size() > 0) {
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Input Arguments" ,
 						"Unvalid arguments: " + unvalid );
 
@@ -1605,7 +1604,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 				// all the options have been processed by getopt (JobId file is missing)
 				if ( ! input && argc==optind){
 					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", EINVAL,
+						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option: " + string(last_arg)  ,
 						"Last argument of the command must be a JobId or a list of JobId's" );
 				}
@@ -1614,24 +1613,24 @@ std::string Options::readOptions(const int &argc, const char **argv){
                                 }
                                 if ( input && ! jobIds.empty( )){
                                         throw WmsClientException(__FILE__,__LINE__,
-                                                        "readOptions", EINVAL,
+                                                        "readOptions", DEFAULT_ERR_CODE,
                                                         "Too many arguments",
                                                         "JobId(s) mustn't be specified with the option:\n" + getAttributeUsage(Options::INPUT));
                                 } else  if ( jobIds.empty( ) && ! input){
                                         throw WmsClientException(__FILE__,__LINE__,
-                                                        "readOptions", EINVAL,
+                                                        "readOptions", DEFAULT_ERR_CODE,
                                                         "Wrong Option",
                                                         "Last argument(s) of the command must be a JobId or a list of JobId's");
                                 }
                 } else{
 			if (optind < argc ){
                                 throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", EINVAL,
+                                                "readOptions", DEFAULT_ERR_CODE,
                                                 "Too many arguments specified",
                                                 "Invalid option: " + string(argv[optind]) );
                         }
                 }
-	} else {
+	} /*else {
 		// -- version
 		if (version){
 			cout << Utils::getClientVersion( );
@@ -1643,6 +1642,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
                 	printUsage (argv[0]);
 		}
    	}
+	*/
         return opts;
 };
 /************************************************
