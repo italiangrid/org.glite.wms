@@ -126,7 +126,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	if (unsetOpt && allOpt) {
 		logInfo->print(WMS_WARNING,
 			wmcOpts->getAttributeUsage(Options::ALL) +
-			": ignored (unset operation always disable all perusal files", "" );
+			": ignored (unset operation always disables all perusal files", "" );
 	}
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
