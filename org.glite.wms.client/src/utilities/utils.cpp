@@ -385,40 +385,6 @@ std::vector<std::string> Utils::getWmps(){
 }
 
 
-
-/*
-std::string* Utils::getWmpURL( ){
-	string *url = NULL;
-        ConfigContext *cfg = NULL;
-        string version = "";
-        vector<string> wmps = this->getWmps( ) ;
-        vector<string>::iterator it = wmps.begin ( );
-	while ( ! wmps.empty( ) ) {
-		if ( wmps.size( ) == 1){
-			url = new string(wmps[0]);
-			logInfo->print (WMS_DEBUG, "The EndPoint URL is", *url);
-			return url;
-		} else {
-			int elem = getRandom(wmps.size( )) ;
-			url = new string( wmps[elem] );
-			wmps.erase( it + elem );
-		}
-		cfg = new ConfigContext("", *url, "");
-		logInfo->print (WMS_DEBUG, "trying to contact EndPoint", *url );
-		try {
-			version = getVersion(cfg);
-			// if no exception is thrown (available wmproxy; exit from the loop)
-			break;
-		} catch (BaseException &bex) {
-			logInfo->print (WMS_WARNING, "EndPoint not available", *url);
-			delete (url);
-		}
-	}
-	logInfo->print (WMS_DEBUG, "ENDPOINT_URL_ERROR", "no valid EndPoint URL has been found");
-	return url;
-}
-*/
-
 /*
 * Gets the ErrorStorage pathname
 */
@@ -503,33 +469,6 @@ std::string* Utils::generateLogFile ( ){
 	}
         return log;
 };
-
-
-/*
-* get the UI version
-*//*
-std::string Utils::getVersionMessage( ){
-	ostringstream info ;
-	char ws = (char)32;
-	info << Options::HELP_UI << ws << Options::HELP_VERSION << "\n";
-        info << Options::HELP_COPYRIGHT << "\n";
-        return info.str( );
-}
-*/
-/**
-* Gets the UI version
-*/
-std::string Utils::getClientVersion( ) {
-	ostringstream clt ;
-	ostringstream srv ;
-	string endpoint = "";
-	string version = "";
-	char ws = (char)32;
-	clt << Options::HELP_UI << ws << Options::HELP_VERSION << "\n";
-        clt << Options::HELP_COPYRIGHT << "\n\n";
-	return clt.str();
-
-}
 
 /** Static private method **/
 std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
@@ -1004,7 +943,7 @@ std::string* Utils::getDelegationId ( ){
 			err << wmcOpts->getAttributeUsage(Options::AUTODG) ;
 			err << "\nto perform automatic delegation";
 			throw WmsClientException(__FILE__,__LINE__,
-					"getDelegationId", EINVAL ,
+					"getDelegationId", DEFAULT_ERR_CODE ,
 					"Missing Information", err.str());
 		}
 	}
@@ -1076,7 +1015,7 @@ const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id
                 // exits from the loop in case of successful delegation
                 if (success){ break;}
        }
-       logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier: ",  id);
+       logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  id);
        // returns the Endpoint URL
        return cfg->endpoint;;
 }
@@ -1367,7 +1306,7 @@ std::string* Utils::fromFile (const std::string &path) {
 /*
 * Saves message into a  file
 */
-int Utils::toFile (const std::string &path, const std::string &msg, const bool &interactive,const bool &append) {
+int Utils::toFile (const std::string &path, const std::string &msg, const bool &append) {
 	int result = -1;
 	ios::openmode mode ;
 	if (append ) {
@@ -1441,8 +1380,8 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 		if (logInfo){ logInfo->print(WMS_WARNING, "Ouput file:", info, false);}
 		ostringstream q;
 		q << "\n\n" + info + "\n";
-		q  << "Do you want to append (a) or to overwrite (o)  ?";
-		q << "Press the /'q/' key for not saving.\n";
+		q  << "Do you want to append (a) or to overwrite (o) ?\n";
+		q << "Press the 'q' key for not saving.\n";
 
 		while (ask){
 			// Question --------
@@ -1463,10 +1402,10 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 				} else {
 					ask = true;
 				}
-			} else {
-				result = this->toFile(path, msg);
 			}
 		}
+	} else {
+		result = this->toFile(path, msg);
 	}
 	return result;
 }
@@ -1573,45 +1512,7 @@ std::string Utils::getArchiveFilename (const std::string file){
 	}
 	return tar ;
 }
- /****************************
- *  utility methods for TAR and ZIP files
- ****************************/
-/*
-std::string Utils::archiveFiles(std::vector<std::pair<std::string,std::string> > files, const std::string &dir, const std::string &filename) {
-       vector<pair<string,string> >::iterator it;
-       TAR *t =NULL;
-     tartype_t *type = NULL ;
-       string f  = "";
-       string m = "";
-       string tar = normalizePath(dir) + "/" + filename;
-       int r = tar_open ( &t,  (char*)tar.c_str(),
-               type,
-               O_CREAT|O_WRONLY,
-               S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
-       if ( r != 0 ){
-               throw WmsClientException(__FILE__,__LINE__,
-                       "archiveFiles",  DEFAULT_ERR_CODE,
-                       "File i/o Error", "Unable to create tar file for InputSandbox: " + tar );
-       }
-       for (it = files.begin( ); it != files.end( ) ; it++ ){
-               f = getAbsolutePathFromURI (it->second);
-               r = tar_append_file (t, (char*) (it->first).c_str(), (char*)f.c_str());
-               if (r!=0){
-                       m = "error in adding the file "+ it->first + " to " + tar ;
-                       char* em = strerror(errno);
-                       if (em) { m += string("\n(") + string(em) + ")"; }
-                       throw WmsClientException(__FILE__,__LINE__,
-                               "archiveFiles",  DEFAULT_ERR_CODE,
-                               "File i/o Error",
-                               "Unable to create tar file - " + m);
-               }
-       }
-       tar_append_eof(t);
-       tar_close (t);
-       return tar ;
 
- }
- */
  std::string  Utils::compressFile(const std::string &file) {
          FILE  *in = NULL;
          gzFile out;

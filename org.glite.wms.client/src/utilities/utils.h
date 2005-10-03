@@ -86,11 +86,9 @@ public:
         * @return the generated number
         */
        static const int getRandom (const unsigned int &max );
-	/** Gets a wmproxy URL randomically extracted by the list of the URL's specified as input
-        * @return the extracted URL string; after the execution, the vector specified as input doesn't contain the extracted URL
-        */
-  //      std::string *getWmpURL(  );
-	/*** Retrieve the client installation path
+
+	/**
+	*  Retrieves the client installation path
         * @return the installation path string representation
         */
         std::string getPrefix();
@@ -131,10 +129,7 @@ public:
         * @return the pathname string
         */
         std::string* getLogFileName ( );
-        /**
-        * Get the version message
-        */
-    	static std::string getClientVersion( );
+
 
         glite::wms::common::configuration::WMCConfiguration* getConf(){return wmcConf;}
         /***
@@ -290,7 +285,7 @@ public:
         * @param interactive if the flag is true, question if it can be replaced is asked in case the file already exists
         * @return 0 in case of success (-1 otherwise)
         */
-         int toFile (const std::string &path, const std::string &msg, const bool &interactive=false, const bool &append=false);
+         int toFile (const std::string &path, const std::string &msg, const bool &append=false);
 	/**
         * Saves the identifier of a submitted job in the specified file
         * @param path the pathname of the file
