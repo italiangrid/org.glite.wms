@@ -368,6 +368,7 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 		out << "Your" << ws << subj << ws <<  verb << ws << "been successfully enabled for the job:\n";
 		out << jobId << "\n";
 		// saves the result
+cout << "####outOpt="<<*outOpt<<"- paths.size()=" << paths.size() << "\n";
 		if (outOpt){
 			if ( wmcUtils->saveListToFile(*outOpt,  peekFiles) < 0 ){
 				logInfo->print (WMS_WARNING, "unable to save"+ ws + count + ws + "your" + ws + subj + ws + "in the output file " ,
