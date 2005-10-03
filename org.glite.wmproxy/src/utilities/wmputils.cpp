@@ -695,7 +695,7 @@ uncompressFile(const string &filename, const string &startingpath)
     unlink(infile);
 
     TAR * tarfile = NULL;
-    tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_VERBOSE);
+    tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
     tar_extract_all(tarfile, prefix);
     tar_close(tarfile);
     
