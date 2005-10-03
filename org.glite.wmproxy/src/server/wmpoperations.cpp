@@ -1323,10 +1323,10 @@ submit(const string &jdl, JobId *jid)
 		if (jad->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 			vector<string> files = jad->getStringValue(JDLPrivate::ZIPPED_ISB);
 			string targetdir = getenv(DOCUMENT_ROOT);
+			string jobpath = wmputilities::getInputSBDirectoryPath(*jid) + FILE_SEPARATOR;
 			for (unsigned int i = 0; i < files.size(); i++) {
 				edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
-				wmputilities::uncompressFile(files[i], targetdir);
-				remove(files[i].c_str());
+				wmputilities::uncompressFile(jobpath + files[i], targetdir);
 			}
 		}
 		
@@ -1392,10 +1392,10 @@ submit(const string &jdl, JobId *jid)
 		if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 			vector<string> files = dag->getAttribute(ExpDagAd::ZIPPED_ISB);
 			string targetdir = getenv(DOCUMENT_ROOT);
+			string jobpath = wmputilities::getInputSBDirectoryPath(*jid) + FILE_SEPARATOR;
 			for (unsigned int i = 0; i < files.size(); i++) {
 				edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
-				wmputilities::uncompressFile(files[i], targetdir);
-				remove(files[i].c_str());
+				wmputilities::uncompressFile(jobpath + files[i], targetdir);
 			}
 		}
 		

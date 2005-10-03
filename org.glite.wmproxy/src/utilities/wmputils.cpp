@@ -612,7 +612,7 @@ gzUncompress(gzFile in, FILE * out, char * file)
 	edglog_fn("wmputils::gzUncompress");
 	
 	long filesize = computeFileSize(string(file));
-    char buf[filesize];
+    char buf[filesize + 1];
     int len;
     
     for (;;) {
@@ -653,14 +653,16 @@ uncompressFile(const string &filename, const string &startingpath)
 {
 	GLITE_STACK_TRY("uncompressFile()");
 	edglog_fn("wmputils::uncompressFile");
-	
+	edglog(debug)<<"Uncompressing file: "<<filename<<endl;
+	edglog(debug)<<"Starting path: "<<startingpath<<endl;
+		
 	char * file = const_cast<char*>(filename.c_str());
 	char * prefix = const_cast<char*>(startingpath.c_str());
 	
-    char buf[1024];
-    char * infile; 
-    char * outfile;
-    FILE * out;
+    char buf[2048];
+    char * infile = NULL; 
+    char * outfile = NULL;
+    FILE * out = NULL;
     gzFile in;
     
     uInt len = (uInt)strlen(file);
@@ -691,13 +693,14 @@ uncompressFile(const string &filename, const string &startingpath)
     }
     gzUncompress(in, out, file);
     unlink(infile);
-    
+
     TAR * tarfile = NULL;
-	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
+    tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_VERBOSE);
     tar_extract_all(tarfile, prefix);
     tar_close(tarfile);
     
-    fclose(out);
+    remove(outfile);
+ 
     GLITE_STACK_CATCH();
 }
 
