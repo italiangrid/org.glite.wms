@@ -129,21 +129,7 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer, bool def
 		else if (*c=='\0'){return defaultAnswer;}
 	}
 }
-bool Utils::makeQuestion (const std::string& question, bool defaultAnswer, bool defaultValue){
-	string possible=" [y/n]";
-	possible +=(defaultAnswer?"y":"n");
-	possible +=" :";
-	char x[128];
-	char *c;
-	while (1){
-		cout << question << possible << " " ;
-		cin.getline(x,128);
-		c=&x[0]; //cut off the \n char
-		if((*c=='y')||(*c=='Y')){return true;}
-		else if((*c=='n')||(*c=='N')){return false;}
-		else if (*c=='\0'){return defaultAnswer;}
-	}
-}
+
 void Utils::ending(unsigned int exitCode){
 	exit(exitCode);
 }
@@ -151,7 +137,7 @@ void Utils::ending(unsigned int exitCode){
 bool Utils::askForFileOverwriting(const std::string &path){
 	bool ow = true;
 	// checks if the output file already exists
-	if ( isFile(path ) ){
+	if ( isFile(path) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
 		// if the file exists ......
 		string info = Utils::getAbsolutePath(path) + " file already exists";
 		// writes a warning msg in the log file
@@ -1373,7 +1359,7 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 		msg += list [i] + "\n";
 	}
 	// checks if the output file already exists
-	if ( isFile(path ) ){
+	if ( isFile(path ) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
 		// if the file exists ......
 		string info = Utils::getAbsolutePath(path) + " file already exists";
 		// writes a warning msg in the log file
@@ -1402,6 +1388,8 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 				} else {
 					ask = true;
 				}
+			} else {
+					ask = true;
 			}
 		}
 	} else {
