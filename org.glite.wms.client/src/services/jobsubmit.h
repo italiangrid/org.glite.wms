@@ -231,21 +231,12 @@ class JobSubmit : public Job {
 		*@param jobtype returns the code of the JobType (see wmsJobType enum )
                 */
                 void JobSubmit::checkAd(bool &filestoBtransferred, wmsJobType &jobtype);
-		/**
-		* Determines whether the files of the InputSandbox can be collected into a tar archive and compressed.
-		* This method checks the JDL whether the user has disabled the file archiving and compression setting
-		* the "ZIP_ALLOWED" attribute to FALSE.
-		* In case this attribute is set to TRUE or not present, it checks the version of the WMProxy server
-		* in order to estabilish whether it supports this kind of features.
-		*
-		*/
-		void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) ;
+
 		/**
                 *	String input arguments
                 */
 		std::string* chkptOpt ;
 		std::string* collectOpt;
-//		std::string* dgOpt ;
 		std::string* fileProto;
 		std::string* lrmsOpt ;
 		std::string* toOpt ;

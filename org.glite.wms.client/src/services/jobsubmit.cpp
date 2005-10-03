@@ -159,6 +159,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 			} else {
 				resourceOpt = new string(resources[0]);
 			}
+			logInfo->print(WMS_DEBUG,   "--input: The job will be submitted to the resource", *resourceOpt);
 		}
 	}
 	// lrms has to be used with input o resource
@@ -266,7 +267,12 @@ void JobSubmit::readOptions (int argc,char **argv){
 		startJob = true;
 	}
 	// checks the JobId argument for the --start option
-	if (startOpt){startOpt = new string(Utils::checkJobId(*startOpt));}
+	if (startOpt){
+		startOpt = new string(Utils::checkJobId(*startOpt));
+	} else{
+		// Delegation-id (--delegation or autogeneration in case of --autm-delegation)
+		dgOpt = wmcUtils->getDelegationId ();
+	}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
 	if (startOpt && fileProto) {
@@ -276,16 +282,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	if (!fileProto) {
 		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-	}
-	// Delegation ID
-	if (!startOpt){
-		if (dgOpt == NULL) {dgOpt = wmcUtils->getDelegationId ();}
-		if ( ! dgOpt  ){
-			throw WmsClientException(__FILE__,__LINE__,
-					"readOptions",DEFAULT_ERR_CODE,
-					"Missing Information",
-					"no proxy delegation ID" );
-		}
 	}
 	// --nolisten
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
@@ -317,7 +313,7 @@ std::string JobSubmit::getEndPoint( ) {
 			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
 		}
 		Job::getEndPointVersion(endpoint, version);
-		logInfo->print (WMS_DEBUG, "Endpoint: " + endpoint + " Version: " + version, "");
+		logInfo->print (WMS_DEBUG, "Version:", version);
 		wmpVersion = atoi (version.substr(0,1).c_str() );
 	} else {
 		if (endPoint) {
@@ -340,12 +336,6 @@ void JobSubmit::submission ( ){
 	ostringstream out ;
 	string jobid = "";
 	bool toBretrieved = false;
-	if (!cfgCxt){
-		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE ,
-			"Null Pointer Error",
-			"null pointer to ConfigContext object"   );
-	}
 	// in case of --start option
 	if (startOpt){
 		jobid = *startOpt;
@@ -364,7 +354,13 @@ void JobSubmit::submission ( ){
 				"Null Pointer Error",
 				"null pointer to DelegationID String"   );
 		}
+		// Endpoint
 		endPoint =  new string(this->getEndPoint());
+		cfgCxt = new ConfigContext ("", *endPoint, "");
+		// AutoDeleagation
+		if (wmcOpts->getBoolAttribute(Options::AUTODG)){
+			wmcUtils->delegateProxy (cfgCxt, *dgOpt);
+		};
 		// reads and checks the JDL('s)
 		wmsJobType jobtype ;
 		this->checkAd(toBretrieved, jobtype);
@@ -801,10 +797,11 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 *  Checks the user JDL
 */
 void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
+	vector<string>::iterator it ;
+	string message = "";
 	jobtype = WMS_JOB;
 	toBretrieved =true ;
 	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
-	vector<string>::iterator it;
 	if (collectOpt) {
 		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
 			Utils::getAbsolutePath( *collectOpt));
@@ -836,19 +833,39 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		if (toBretrieved){
 			// InputSB URI
 			isbURI = collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
-			// checks if file archiving and compression is allowed
-			this->checkZipAllowed(jobtype);
 			// Checks the size of the ISB
 			this->checkInputSandboxSize (jobtype);
-			// Adds the ZIPPED_ISB attribute to the JDL
-			if (zipAllowed){
-				// Adds the ZIPPED_ISB attribute to the JDL
-				for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
-					collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
-				}
-			}
-		}
+			// checks if file archiving and compression is allowed
+			if (wmpVersion > WMPROXY_OLD_VERSION) {
 
+				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
+				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+					if (zipAllowed) { message ="allowed by user in the JDL";}
+					else { message ="disabled by user in the JDL"; }
+					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
+					if (zipAllowed) {
+						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
+							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
+						}
+					}
+				} else {
+					// Default value if the JDL attribute is not present
+					zipAllowed = false;
+					message ="disabled by default";
+					// adds the attribute with the default value (FALSE)
+					collectAd->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+				}
+				logInfo->print (WMS_DEBUG, "File archiving and file compression", message);
+			} else {
+				logInfo->print (WMS_DEBUG, "The WMProxy server doesn't support file archiving and file compression", "");
+				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) {
+					collectAd->delAttribute(JDL::ALLOW_ZIPPED_ISB);
+				}
+				collectAd->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+			}
+
+		}
 		jdlString = new string(collectAd->toString());
 	} else {
 		// ClassAd
@@ -867,11 +884,31 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		}
 		// Simple Ad manipulation (common)
 		AdUtils::setDefaultValuesAd(jobAd,wmcConf);
+		// checks if file archiving and compression is allowed
+		if (wmpVersion > WMPROXY_OLD_VERSION) {
+			if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+				zipAllowed = jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				if (zipAllowed) { message ="allowed by user in the JDL";}
+				else { message ="disabled by user in the JDL"; }
+			} else {
+				// Default value if the JDL attribute is not present
+				zipAllowed = false;
+				message ="disabled by default";
+				jobAd->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+			}
+			logInfo->print (WMS_DEBUG, "File archiving and file compression", message);
+		} else {
+			logInfo->print (WMS_DEBUG, "The WMProxy server doesn't support file archiving and file compression", "");
+			if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)) {
+				jobAd->delAttribute(JDL::ALLOW_ZIPPED_ISB);
+			}
+			jobAd->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+		}
+		// COLLECTION ========================================
 		if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
 			logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted", "");
 			jobtype = WMS_COLLECTION ;
 			try{
-
 				collectAd = new CollectionAd(*(jobAd->ad()));
 				collectAd->setLocalAccess(true);
 				// Collect Ad manipulation
@@ -885,12 +922,10 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				if (toBretrieved){
 					// InputSB URI
 					isbURI = collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
-					// checks if file archiving and compression is allowed
-					this->checkZipAllowed(jobtype);
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
-					if (zipAllowed){
-						// Adds the ZIPPED_ISB attribute to the JDL
+					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
+					if (zipAllowed) {
 						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 						}
@@ -903,7 +938,9 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					"Invalid JDL collection",
 					ex.what()   );
 			}
-		}  else if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {  // DAG
+		}  else
+		// DAG  ========================================
+		if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
 				logInfo->print (WMS_DEBUG, "A DAG job is being submitted", "");
 				jobtype = WMS_DAG ;
 				if (nodesresOpt) {
@@ -918,19 +955,16 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				if (toBretrieved) {
 					// InputSB URI of the parent node
 					isbURI = getDagISBURI ( );
-					// checks if file archiving and compression is allowed
-					this->checkZipAllowed(jobtype);
 					// checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
-						// Adds the ZIPPED_ISB attribute to the JDL
+						// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
 						dagAd->setAttribute(ExpDagAd::ZIPPED_ISB, gzFiles);
 					}
 				}
 				// JDL string for the DAG
 				jdlString = new string(dagAd->toString()) ;
-		}else{   // JOB
-			// WMS_JOB
+		}else{
 			jobtype = WMS_JOB ;
 			// resource <ce_id> ----> SubmitTo JDL attribute
 			if (resourceOpt) {
@@ -941,6 +975,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 						"cannot be used for  DAG, collection, partitionable and parametric jobs");
 				}else{jobAd->setAttribute(JDL::SUBMIT_TO, *resourceOpt);}
 			}
+			// INTERACTIVE =================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
 				// Interactive Job management
 				logInfo->print (WMS_DEBUG, "An interactive job is being submitted.", "");
@@ -970,6 +1005,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					jobAd->setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
 				}
 			}
+			// MPICH ==================================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_MPICH)){
 				// MpiCh Job:
 				if (lrmsOpt){
@@ -985,7 +1021,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			// InputSandbox Files
 			toBretrieved=pass->gettoBretrieved();
 			jdlString = new string(pass->toString());;
-			// Parametric support
+			// PARAMETRIC  ===============================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)){
 				jobtype = WMS_PARAMETRIC;
 				if (nodesresOpt) {
@@ -999,33 +1035,32 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				if (toBretrieved){
 					// InputSB URI
 					isbURI = getDagISBURI( );
-					// checks if file archiving and compression is allowed
-					this->checkZipAllowed(jobtype);
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
-						// Adds the ZIPPED_ISB attribute to the JDL
+						// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
 						dagAd->setAttribute(ExpDagAd::ZIPPED_ISB, gzFiles);
 					}
 				}
+
 			} else {
-				// ZIP ISB file(s) for NORMAL JOBS
 				if (toBretrieved){
 					// InputSB URI
 					isbURI = jobAd->hasAttribute(JDL::ISB_BASE_URI)?jobAd->getString(JDL::ISB_BASE_URI):"";
-					// checks if file archiving and compression is allowed
-					this->checkZipAllowed(jobtype);
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
-					if (zipAllowed){
+					if (zipAllowed) {
 						// Adds the ZIPPED_ISB attribute to the JDL
 						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 							pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 						}
 					}
+					// processed JDL
+					jdlString = new string(pass->toSubmissionString());
+					delete(pass);
 				}
+
 			}
-			delete(pass);
 		}
 	}
 	// --resource : incompatible argument
@@ -1035,7 +1070,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 			"cannot be used for  DAG, collection, partitionable and parametric jobs");
 	} else if (resourceOpt) {
-		logInfo->print (WMS_DEBUG, "The job is being submitted to this resource: ", *resourceOpt );
+		logInfo->print (WMS_DEBUG, "--resource: The job will be submitted to this resource: ", *resourceOpt );
 	}else if( (nodesresOpt) && (jobtype == WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
@@ -1306,65 +1341,8 @@ std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const
 		return getSbDestURI(jobid, child, zipURI);
 	}
 }
-/*
-* 
-*
-*/
-void JobSubmit::checkZipAllowed(const wmsJobType &jobtype) {
-	string message = "";
-	if (wmpVersion > WMPROXY_OLD_VERSION) {
-		// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
-		switch (jobtype) {
-			case (WMS_JOB) : {
-				if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-					zipAllowed = jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-					if (zipAllowed) { message ="allowed by user in the JDL";
-					} else { message ="disabled by user in the JDL"; }
-				} else {
-					// Default value if the JDL attribute is not present
-					zipAllowed = false;
-					message ="disabled by default";
-				}
-				break;
-			}
-			case WMS_DAG:
-			case WMS_PARAMETRIC: {
-				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
-				if (dagAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-					zipAllowed = dagAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-					if (zipAllowed) { message ="allowed by user in the JDL";
-					} else { message ="disabled by user in the JDL"; }
-				} else {
-					// Default value if the JDL attribute is not present
-					zipAllowed = false;
-					message ="disabled by default";
-				}
-				break;
-			}
-			case (WMS_COLLECTION) : {
-				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
-				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
-					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
-					if (zipAllowed) { message ="allowed by user in the JDL";
-					} else { message ="disabled by user in the JDL"; }
-				} else {
-					// Default value if the JDL attribute is not present
-					zipAllowed = false;
-					message ="disabled by default";
-				}
-				break;
-			}
-			default : {
-				this->zipAllowed = false;
-			}
-		}
-		logInfo->print (WMS_DEBUG, "File archiving and file compression "+ message , "");
-	} else {
-		this->zipAllowed = false;
-		logInfo->print (WMS_DEBUG, "The WMProxy server doesn't support file archiving and file compression", "");
-	}
-}
-/*
+
+/**
 * File transferring by globus-url-copy (gsiftp protocol)
 */
 
