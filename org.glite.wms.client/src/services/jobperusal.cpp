@@ -266,14 +266,14 @@ void JobPerusal::getPerusal (std::vector<std::string> &paths){
 		uris = getPerusalFiles (jobId, file , allOpt, cfgCxt);
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
-			"getPerusalFiles", ECONNABORTED,
+			"getPerusal", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
 	if (uris.size()>0) {
 		this->gsiFtpGetFiles(uris, paths, errors);
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
-				"getPerusalFiles", DEFAULT_ERR_CODE,
+				"getPerusal", DEFAULT_ERR_CODE,
 				"Get Files Error",
 				"GET - The following error(s) occured while transferring the file(s):\n" + errors);
 		} else if  (errors.size( )>0){
@@ -330,18 +330,23 @@ void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vec
 		}
 		// local path
 		local = *dirOpt + "/" + Utils::getFileName (uris[i]) ;
-		// COMMAND
-		cmd+=string(uris[i]) + " file://"  + local;
-		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
-		// launches the command
-		code = system( cmd.c_str() ) ;
-		if ( code != 0 ) {
-			errors +=	"globus-url-copy - unable to download: " + uris[i] + "(error code: " + boost::lexical_cast<string>(code) + ")";
-		} else if (! Utils::isFile(local)) {
-			errors +=	"globus-url-copy - unable to download: " + uris[i] ;
+
+		if (wmcUtils->askForFileOverwriting(local)){
+			// COMMAND
+			cmd+=string(uris[i]) + " file://"  + local;
+			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
+			// launches the command
+			code = system( cmd.c_str() ) ;
+			if ( code != 0 ) {
+				errors +=	"Error(globus-url-copy) unable to download: " + uris[i] + "(error code: " + boost::lexical_cast<string>(code) + ")\n";
+			} else if (! Utils::isFile(local)) {
+				errors +=	"Error(globus-url-copy)  unable to download: " + uris[i]  + " to " + local + "\n";
+			} else {
+				// Saves the local path
+				paths.push_back(local);
+			}
 		} else {
-			// Saves the local path
-			paths.push_back(local);
+			errors += "Warning - existing file not overwritten: " + local + "\n";
 		}
          }
 }
@@ -358,17 +363,16 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 	if (paths.size() == 1 ) {
 		subj = "perusal file";
 		verb = "has";
-		count = "the name of";
+		count = "name of";
 	} else {
 		subj = "perusal files";
 		verb = "have";
-		count = "the list of";
+		count = "list of";
 	}
 	if (operation == PERUSAL_SET) {
 		out << "Your" << ws << subj << ws <<  verb << ws << "been successfully enabled for the job:\n";
 		out << jobId << "\n";
 		// saves the result
-cout << "####outOpt="<<*outOpt<<"- paths.size()=" << paths.size() << "\n";
 		if (outOpt){
 			if ( wmcUtils->saveListToFile(*outOpt,  peekFiles) < 0 ){
 				logInfo->print (WMS_WARNING, "unable to save"+ ws + count + ws + "your" + ws + subj + ws + "in the output file " ,
@@ -380,7 +384,7 @@ cout << "####outOpt="<<*outOpt<<"- paths.size()=" << paths.size() << "\n";
 		}
 	} else if (operation == PERUSAL_GET) {
 		if (paths.empty()) {
-			out << "No" << ws << subj << ws << verb << ws << "retrieved  for the job:\n";
+			out << "No" << ws << subj << ws << "to be retrieved  for the job:\n";
 			out << jobId << "\n";
 		} else {
 			out << "Your" << ws << subj << ws << verb << ws << "been successfully stored in:\n";
