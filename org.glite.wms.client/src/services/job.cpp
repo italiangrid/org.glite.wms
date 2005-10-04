@@ -186,6 +186,7 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 	string *opt = NULL;
 	int n, index  = 0;
 	bool success = false;
+	bool result = false;
 	vector<string> urls;
 	if (!cfgCxt){ cfgCxt = new ConfigContext("", "", "");}
 	if (endpoint.size() > 0){
@@ -227,7 +228,7 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 
 					if (all ) {
 						cout << "Version " << version << "\n\n";
-
+						result = true;
 					} else {
 						// exits from this loop if not all endpoints
 						success = true;
@@ -244,7 +245,7 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 					} else {
 						logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
 						sleep(1);
-						if (urls.empty( )){
+						if (urls.empty( ) && result == false){
 							throw WmsClientException(__FILE__,__LINE__,
 							"getEndPoint", ECONNABORTED,
 							"Operation failed", "Unable to contact any specified enpoints");
