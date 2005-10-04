@@ -760,8 +760,8 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 						"InputSandboxSize Error" , err.str());
 				} else {
 					ostringstream q;
-					q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the max size limit of " << max_isbsize << " bytes: ";
-					logInfo->print (WMS_DEBUG, q.str(), "file transferring is allowed" );
+					q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the max size limit of " << max_isbsize << " bytes:";
+					logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
 				}
 			} else {
 				// User quota is not set on the server: check of Max InputSB size
@@ -804,14 +804,18 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 	toBretrieved =true ;
 	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
 	if (collectOpt) {
-		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
-			Utils::getAbsolutePath( *collectOpt));
+
 		jobtype = WMS_COLLECTION ;
 		try {
 			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
 			fs::path cp ( Utils::normalizePath(*collectOpt));
 			if ( fs::is_directory( cp ) ) {
 				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
+			} else {
+				throw WmsClientException(__FILE__,__LINE__,
+					"submission",  DEFAULT_ERR_CODE,
+					"Invalid JDL collection Path",
+					"--colection: no valid collection directory (" + *collectOpt + ")"  );
 			}
 		} catch ( const fs::filesystem_error & ex ){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -819,6 +823,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				"Invalid JDL collection Path",
 				ex.what()  );
 		}
+		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
+			Utils::getAbsolutePath( *collectOpt));
 		collectAd = AdConverter::createCollectionFromPath (*collectOpt);
 		collectAd->setLocalAccess(true);
 		// Simple Ad manipulation
@@ -1051,11 +1057,12 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 						pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 					}
 				}
-				if (jobtype==WMS_PARAMETRIC){
-					jdlString = new string(pass->toString());
-				}else if  (jobtype==WMS_JOB){
-					jdlString = new string(pass->toSubmissionString());
-				}
+			}
+			// Submission string
+			if (jobtype==WMS_PARAMETRIC){
+				jdlString = new string(pass->toString());
+			}else if  (jobtype==WMS_JOB){
+				jdlString = new string(pass->toSubmissionString());
 			}
 			delete(pass);
 		}
