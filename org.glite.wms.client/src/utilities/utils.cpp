@@ -1468,11 +1468,12 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 			token != tok.end(); ++token) {
                         string it = *token;
                         it = string(Utils::cleanString( (char*) it.c_str()) );
-			if(   (it.find("#")==0)||it.find("//")==0){
+			if (   (it.find("#")==0)||it.find("//")==0) {
 				// It's a comment, skip line
-			}else {
+			} else if (Utils::contains(items, it) == false) {
 				// Append line
-				items.push_back(string(Utils::cleanString((char*)it.c_str())));
+				//items.push_back(string(Utils::cleanString((char*)it.c_str())));
+				items.push_back(it);
 			}
                 }
   	} else {
