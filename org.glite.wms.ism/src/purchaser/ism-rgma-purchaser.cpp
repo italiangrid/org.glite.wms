@@ -846,8 +846,7 @@ bool ExportClassAd( ClassAd* ad, Tuple& tuple )
    ClassAdParser parser;
    if ( ! ad ) { Error("Empty ClassAd pointer passed"); return false; }
 
-   ResultSetMetaData row;
-   if ( !( row = tuple.getMetaData() ) ) { Error("Wrong tuple passed"); return false; }
+   ResultSetMetaData row = tuple.getMetaData();
 
    if ( row.begin() == row.end() ) {
       Warning("trying to create a classAd from an empty tuple");
