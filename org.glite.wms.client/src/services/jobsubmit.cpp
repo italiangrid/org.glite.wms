@@ -1383,7 +1383,7 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 			// Removes the zip file just transferred
 			if (zipAllowed) {
 				try {
-		//			Utils::removeFile(it.first);
+					Utils::removeFile(it.first);
 				} catch (WmsClientException &exc) {
 					logInfo->print (WMS_WARNING,
 						"The following error occured during the removal of the file:",
