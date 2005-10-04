@@ -322,25 +322,25 @@ const string Options::USG_ALL = "--" + string(LONG_ALL) ;
 
 const string Options::USG_AUTODG = "--" + string(LONG_AUTODG) + ", -" + SHORT_AUTODG ;
 
-const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t\t<file_path>" ;
+const string Options::USG_CHKPT = "--" + string(LONG_CHKPT )	 + "\t\t<file_path>" ;
 
-const string Options::USG_COLLECTION = "--" + string(LONG_COLLECTION)	 + "\t\t<dir_path>" ;
+const string Options::USG_COLLECTION = "--" + string(LONG_COLLECTION)	 + "\t<dir_path>" ;
 
-const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t\t<file_path>"	;
+const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
 
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
 
 const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<delegation_string>";
 
-const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t\t\t<directory_path>"	;
+const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t\t<directory_path>"	;
 
-const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHORT_E + "\t\t<endpoint_URL>";
+const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHORT_E + "\t<endpoint_URL>";
 
-const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_E + "\t\t<status_value>";
+const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_E + "\t<status_value>";
 
 const string Options::USG_FILENAME = "--" + string(LONG_FILENAME) + ", -" + SHORT_FILENAME +  "\t<filename>";
 
-const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t\t[MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_FROM  = "--" + string(LONG_FROM )+ "\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
@@ -350,11 +350,11 @@ const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_IN
 
 const string Options::USG_LISTONLY = "--" + string(LONG_LISTONLY) ;
 
-const string Options::USG_LRMS = "--" + string(LONG_LRMS ) + "\t\t\t<lrms_type>" 	;
+const string Options::USG_LRMS = "--" + string(LONG_LRMS ) + "\t\t<lrms_type>" 	;
 
-const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t\t<file_path>" ;
+const string Options::USG_LOGFILE = "--" + string(LONG_LOGFILE )+ "\t<file_path>" ;
 
-const string Options::USG_NODESRES = "--" + string(LONG_NODESRES)+ "\t<ce_id>" ;
+const string Options::USG_NODESRES = "--" + string(LONG_NODESRES)+ " <ce_id>" ;
 
 const string Options::USG_NODISPLAY = "--" + string(LONG_NODISPLAY);
 
@@ -366,39 +366,39 @@ const string Options::USG_NOLISTEN  = "--" + string(LONG_NOLISTEN);
 
 const string Options::USG_NOMSG	 = "--" + string(LONG_NOMSG);
 
-const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OUTPUT + "\t\t<file_path>";
+const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OUTPUT + "\t<file_path>";
 
-const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t\t<port_num>";
+const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t<port_num>";
 
-const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t\t<protocol>";
+const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t<protocol>";
 
 const string Options::USG_RANK = "--" + string(LONG_RANK ) ;
 
 const string Options::USG_REGISTERONLY = "--" + string(LONG_REGISTERONLY) ;
 
-const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHORT_RESOURCE + "\t\t<ce_id>";
+const string Options::USG_RESOURCE = "--" + string(LONG_RESOURCE ) + ", -" + SHORT_RESOURCE + "\t<ce_id>";
 
 const string Options::USG_SET  = "--" + string(LONG_SET) ;
 
-const string Options::USG_START = "--" + string(LONG_START) + "\t\t\t<jobid>";
+const string Options::USG_START = "--" + string(LONG_START) + "\t\t<jobid>";
 
-const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t\t<status_value>";
+const string Options::USG_STATUS = "--" + string(LONG_STATUS ) + ", -" + SHORT_STATUS + "\t<status_value>";
 
-const string Options::USG_TO = "--" + string(LONG_TO) + "\t\t\t[MM:DD:]hh:mm[:[CC]YY]";
+const string Options::USG_TO = "--" + string(LONG_TO) + "\t\t[MM:DD:]hh:mm[:[CC]YY]";
 
 const string Options::USG_TRANSFER = "--" + string(LONG_TRANSFER ) ;
 
 const string Options::USG_UNSET  = "--" + string(LONG_UNSET) ;
 
-const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t\t<tag name>=<tag value>";
+const string Options::USG_USERTAG = "--" + string(LONG_USERTAG ) + "\t<tag name>=<tag value>";
 
-const string Options::USG_VALID = "--" + string(LONG_VALID ) +  ", -" + SHORT_V + "\t\thh:mm";
+const string Options::USG_VALID = "--" + string(LONG_VALID ) +  ", -" + SHORT_V + "\thh:mm";
 
 const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHORT_V + "\t\t[0|1|2|3]";
 
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 
-const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t\t<vo_name>";
+const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
 
 /*
 *	Prints the help usage message for the job-submit
@@ -425,9 +425,9 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_VALID << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
-	cerr << "\t" << USG_PROTO << "\n";
         cerr << "\t" << USG_REGISTERONLY << "\n";
 	cerr << "\t" << USG_TRANSFER << " (*)\n";
+	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_START << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
 	cerr << "\t" << USG_CHKPT << "\n";
