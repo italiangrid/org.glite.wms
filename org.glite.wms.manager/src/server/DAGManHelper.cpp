@@ -613,14 +613,27 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
 
 // return ce id GlueCEUniqueID
 std::string
-nodes_collocation_match(jdl::DAGAd const& dag_ad)
+nodes_collocation_match(jdl::DAGAd const& dag)
 {
+  std::string result;
+
+  classad::ExprTree* reqs(dag.get_generic(jdl::JDL::REQUIREMENTS)->Copy());
+  classad::ExprTree* rank(dag.get_generic(jdl::JDL::RANK)->Copy());
+  classad::ExprTree* vo(
+    dag.get_generic(jdl::JDL::VIRTUAL_ORGANISATION)->Copy()
+  );
+
+  if (!(reqs && rank && vo)) {
+    return result;
+  }
+
   classad::ClassAd jdl;
+  jdl.Insert("Requirements", reqs);
+  jdl.Insert("Rank", rank);
+  jdl.Insert("VirtualOrganisation", vo);
   std::auto_ptr<classad::ClassAd> match_result(
     helper::Helper("MatcherHelper").resolve(&jdl)
   );
-
-  std::string result;
 
   matches_type matches;
   try {
