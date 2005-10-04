@@ -10,13 +10,20 @@ namespace wms {
 namespace manager {
 namespace server {
 
-inline bool operator<(RequestPtr const& rhs, RequestPtr const& lhs)
+inline bool operator<(RequestPtr const& lhs, RequestPtr const& rhs)
 {
-  if (!rhs->marked_match() && lhs->marked_match()) {
+  if (!lhs->marked_match() && rhs->marked_match()) {
     return true;
-  } else {
-    return rhs->last_processed() < lhs->last_processed();
+  } else if (lhs->marked_match() && rhs->marked_match()) {
+    bool lhs_has_include_brokerinfo = lhs->match_parameters().get<2>();
+    bool rhs_has_include_brokerinfo = rhs->match_parameters().get<2>();
+    if (lhs_has_include_brokerinfo && !rhs_has_include_brokerinfo) {
+      // lhs comes from the dag planner && rhs is interactive
+      return true;
+    }
   }
+
+  return lhs->last_processed() > rhs->last_processed();
 }
 
 template<typename Q> class queue_adaptor;
