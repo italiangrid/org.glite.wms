@@ -47,12 +47,15 @@ glite_wms_workload_manager_LDADD   = \
         $(GLOBUS_COMMON_THR_LIBS) \
         $(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
+	$(LOG4CXX_LIBS) \
 	$(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/../org.glite.wms.manager/src/server \
 	$(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(BOOST_CFLAGS)
+	$(BOOST_CFLAGS) \
+	$(GLOBUS_THR_CFLAGS) \
+        $(LOG4CXX_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in

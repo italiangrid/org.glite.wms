@@ -20,9 +20,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.7  2005/10/04 11:39:44  eronchie
+	Applied changes due to rgma api
+
 	Revision 1.6  2004/10/22 12:24:34  eronchie
 	Added optimize support
-
+	
 	Revision 1.5  2004/10/13 22:02:23  eronchie
 	Added ism dependency
 	
@@ -78,6 +81,6 @@
                                                                                                                           
         <property name="build.package.description" value="WMS manager: service and task queue" />
 
-	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 ares.m4 glite.m4 glite_lb.m4 glite_wmsutils.m4 glite_security.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_helper.m4 glite_wms_jss.m4 glite_wms_ism.m4 cppunit.m4 optimize.m4"/>
+	<property name="m4files.list" value="globus.m4 classads.m4 boost.m4 expat.m4 ares.m4 log4cxx.m4 glite.m4 glite_lb.m4 glite_wmsutils.m4 glite_security.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_helper.m4 glite_wms_jss.m4 glite_wms_ism.m4 cppunit.m4 optimize.m4"/>
 	
 </project>

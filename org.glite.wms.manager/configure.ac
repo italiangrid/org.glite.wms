@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.14  2005/10/04 11:39:44  eronchie
+#       Applied changes due to rgma api
+#
 #       Revision 1.13  2004/12/09 17:33:28  giaco
 #       set version number to 1.0.0
 #
@@ -139,6 +142,8 @@ AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["ARES found $have_ares"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
+
+AM_PATH_LOG4CXX
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
