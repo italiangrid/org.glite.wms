@@ -1,6 +1,6 @@
 
 import org.glite.wmsui.apij.* ;
-import org.glite.wms.jdlj.* ;
+import org.glite.jdl.* ;
 import java.io.File ;
 import java.util.* ;
 
