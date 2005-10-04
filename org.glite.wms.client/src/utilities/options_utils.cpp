@@ -346,7 +346,7 @@ const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
-const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t\t<file_path>";
+const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
 const string Options::USG_LISTONLY = "--" + string(LONG_LISTONLY) ;
 
@@ -2106,7 +2106,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 			string file = optarg;
 			if (Utils::contains(filenames, file )) {
 				errMsg(WMS_WARNING,
-					string(px + LONG_SET + ws + file) + ": ignored",
+					string(px + LONG_FILENAME + ws + file) + ": ignored",
 					" file specified more than once", true);
 			} else{
 				filenames.push_back(file);
