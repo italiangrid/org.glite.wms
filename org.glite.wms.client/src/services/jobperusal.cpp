@@ -103,7 +103,11 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-	} else if (getOpt && peekFiles.size() > 1){
+	} else if (allOpt && peekFiles.size() > 0) {
+		err << "The following options cannot be specified together:\n" ;
+		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
+	}else if (getOpt && peekFiles.size() > 1){
 		err << wmcOpts->getAttributeUsage(Options::GET) << " : no multiple filename can be specified.\n";
 		err <<  "Use the following option only once to get a perusal file:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
@@ -112,7 +116,11 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The unset operation disables all perusal files; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
-	} else if (unsetOpt && peekFiles.size() >0 ) {
+	} else if (inOpt && allOpt) {
+		err << "The following options cannot be specified together:\n" ;
+		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
+	}  else if (unsetOpt && peekFiles.size() >0 ) {
 		err << "The unset operation disables all perusal files; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
@@ -134,7 +142,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"Input Option Error", err.str());
 	}
 	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
-	// Files
+	// --input
         if (inOpt) {
         	peekFiles = wmcUtils->getItemsFromFile(*inOpt);
 		if (peekFiles.empty()) {
@@ -155,21 +163,26 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"Input Option Error", err.str());
 
 		} else if (getOpt && nointOpt == false) {
-				cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inOpt) << "\n";
-				cout << wmcUtils->getStripe(74, "-") << "\n";
-				peekFiles = wmcUtils->askMenu(peekFiles, Utils::MENU_SINGLEFILE);
+			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inOpt) << "\n";
+			cout << wmcUtils->getStripe(74, "-") << "\n";
+			peekFiles = wmcUtils->askMenu(peekFiles, Utils::MENU_SINGLEFILE);
 		} else if (nointOpt == false) {
 			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inOpt) << "\n";
 			peekFiles =  wmcUtils->askMenu(peekFiles, Utils::MENU_FILE);
 		}
-     }
-	if ( peekFiles.empty ()>0 && ( setOpt ||  (getOpt && !allOpt)))  {
+    	 }
+	 // other incompatible
+	if ( peekFiles.empty ()  && ( setOpt ||  (getOpt && !allOpt)))  {
+		err << "No valid perusal file specified; use one of these options:\n";
+		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		if (getOpt) { err << wmcOpts->getAttributeUsage(Options::ALL) << "\n"; }
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Arguments Error",
-				"No valid perusal files specified");
+			"readOptions",DEFAULT_ERR_CODE,
+			"Input Arguments Error",
+			err.str());
 	}
-	/**
+	/*
 	* The jobid
 	*/
 	jobId = wmcOpts->getJobId( );
