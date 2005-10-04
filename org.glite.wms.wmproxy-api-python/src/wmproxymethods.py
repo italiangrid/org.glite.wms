@@ -647,14 +647,23 @@ class Wmproxy:
 
         def getPerusalFiles(self, jobId, file, allChunks):
 		"""
-		Method: (not tested) getPerusalFiles
+		Method: (tested) getPerusalFiles
 		IN =  jobId (string)
 		IN =  file (string)
-		IN =  allChunks (boolean)
+		IN =  allChunks (boolean expressed as integer)
 		OUT = fileList (StringList)
 		"""
 		try:
-			return self.remote.getPerusalFiles(jobId, file, allChunks)
+			self.soapInit()
+			files = parseStructType(self.remote.getPerusalFiles(jobId, file, allChunks))
+			if not files:
+				return []
+			else:
+				files=files[0]
+				if type(files) == type("str"):
+					return [files]
+				else:
+					return files
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
@@ -664,11 +673,12 @@ class Wmproxy:
 
         def enableFilePerusal(self, jobId, fileList):
 		"""
-		Method: (not tested) enableFilePerusal
+		Method: (tested) enableFilePerusal
 		IN =  jobId (string)
 		IN =  fileList (StringList)
 		"""
 		try:
+			self.soapInit()
 			self.remote.enableFilePerusal(jobId, fileList)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
