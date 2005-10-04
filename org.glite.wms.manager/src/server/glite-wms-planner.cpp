@@ -26,7 +26,7 @@
 
 #include "signal_handling.h"
 #include "CommandAdManipulation.h"
-//#include "jobdir.h"
+#include "match_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
@@ -102,51 +102,11 @@ public:
   }
 };
 
-typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;
-typedef boost::tuple<std::string, double, ClassAdPtr> match_type;
-typedef std::vector<match_type> matches_type;
-
-bool fill_matches(classad::ClassAd const& response, matches_type& matches)
-try {
-
-  std::string reason(utilities::evaluate_attribute(response, "reason"));
-  if (reason != "ok") {
-    throw planning_error(reason);
-  }
-
-  classad::ExprList const* match_result(
-    utilities::evaluate_attribute(response, "match_result")
-  );
-
-  for (classad::ExprList::const_iterator it = match_result->begin();
-       it != match_result->end(); ++it) {
-    assert(utilities::is_classad(*it));
-    classad::ClassAd const& match(*static_cast<classad::ClassAd const*>(*it));
-
-    std::string ce_id(utilities::evaluate_attribute(match, "ce_id"));
-    double rank(utilities::evaluate_attribute(match, "rank"));
-    classad::ClassAd const* brokerinfo(
-      utilities::evaluate_attribute(match, "brokerinfo")
-    );
-    matches.push_back(
-      boost::make_tuple(
-        ce_id,
-        rank,
-        ClassAdPtr(static_cast<classad::ClassAd*>(brokerinfo->Copy()))
-      )
-    );
-  }
-
-  return !matches.empty();
-
-} catch (utilities::InvalidValue&) {
-  throw planning_error(
-    "invalid response: " + utilities::unparse_classad(response)
-  );
-}
-
 std::auto_ptr<classad::ClassAd>
-make_planned_jdl(classad::ClassAd const& jdl, match_type const& the_match)
+make_planned_jdl(
+  classad::ClassAd const& jdl,
+  manager::match_type const& the_match
+)
 {
   std::auto_ptr<classad::ClassAd> result(new classad::ClassAd(jdl));
 
@@ -198,10 +158,14 @@ make_match_request(classad::ClassAd const& jdl, std::string const& output_file)
   return utilities::unparse_classad(cmd);
 }
 
-bool get_matches(std::string& s, matches_type& matches)
-{
+bool get_matches(std::string const& s, manager::matches_type& matches)
+try {
   boost::scoped_ptr<classad::ClassAd> response(utilities::parse_classad(s));
-  return response && fill_matches(*response, matches);
+  bool const include_brokerinfo = true;
+  return response
+    && manager::fill_matches(*response, matches, include_brokerinfo);
+} catch (manager::MatchError& e) {
+  throw planning_error(e.what());
 }
 
 void add_brokerinfo_to_isb(classad::ClassAd& jdl)
@@ -220,128 +184,8 @@ void add_brokerinfo_to_isb(classad::ClassAd& jdl)
   requestad::set_input_sandbox(jdl, isb);
 }
 
-template<typename Container, typename T>
-T variance(Container const& c, T mean)
-{
-  T v = T();
-  size_t n = 0;
-  typename Container::const_iterator first = c.begin();
-  typename Container::const_iterator const last = c.end();
-  for ( ; first != last; ++first, ++n) {
-    T t = *first - mean;
-    v += t * t;
-  }
-
-  return n ? v / n : v;  
-}
-
-class rank_less_than
-  : public std::unary_function<match_type, bool>
-{
-  double m_rank;
-public:
-  rank_less_than(double rank)
-    : m_rank(rank)
-  {
-  }
-  bool operator()(match_type const& match)
-  {
-    return match.get<1>() < m_rank;
-  }
-};
-
-matches_type::const_iterator
-select_best_ce_max_rank(matches_type const& matches)
-{
-  assert(!matches.empty());
-  matches_type::const_iterator const begin(matches.begin());
-
-  double max_rank = begin->get<1>();
-  matches_type::const_iterator it(
-    find_if(begin, matches.end(), rank_less_than(max_rank))
-  );
-
-  boost::minstd_rand f_rnd;
-  boost::uniform_smallint<size_t> distrib(0, distance(begin, it) - 1);
-  boost::variate_generator<
-    boost::minstd_rand,
-    boost::uniform_smallint<size_t>
-    > rand(f_rnd, distrib);
-
-  return begin + rand();
-}
-
-double get_p(double sum)
-{
-  boost::minstd_rand dist(std::time(0));
-  boost::uniform_01<boost::minstd_rand> rand(dist);
-  return rand() * sum;
-}
-
-matches_type::const_iterator
-select_best_ce_stochastic(matches_type const& matches)
-{
-  assert(!matches.empty());
-
-  vector<double> ranks;
-  ranks.reserve(matches.size());
-  double rank_sum = 0.;
-  matches_type::const_iterator b = matches.begin();
-  matches_type::const_iterator e = matches.end();
-  for (; b != e; ++b) {
-    double r = b->get<1>();
-    ranks.push_back(r);
-    rank_sum += r;
-  }
-  double rank_mean     = rank_sum / ranks.size();
-  double rank_variance = variance(ranks, rank_mean);
-  // We smooth rank values according to the following function:
-  // f(x) = atan( V * (x - mean ) / dev ) + PI
-  // Thanks to Alessio Gianelle for his usefull support and suggestions.
-  static const double PI = std::atan(1.) * 4.;
-  static const double V = PI;
-  // Computing the variance and standard deviation of rank samples...
-  double rank_deviation = rank_variance > 0 ? sqrt(rank_variance) : V;
-
-  rank_sum = 0.;
-  for (size_t r = 0; r < ranks.size(); ++r) {
-    ranks[r] = atan(V * (ranks[r] - rank_mean) / rank_deviation) + PI;
-    rank_sum += ranks[r];
-  }
-
-  double const p(get_p(rank_sum));
-  double prob_sum = 0.;
-  size_t i = 0;
-  matches_type::const_iterator best = matches.begin();
-  do {
-    prob_sum += ranks[i++];
-    if (p < prob_sum) {
-      break;
-    }
-  } while (++best != matches.end());
-
-  return best;
-}
-
-matches_type::const_iterator
-select_best_ce(matches_type const& matches, bool use_fuzzy_rank)
-{
-  assert(!matches.empty());
-
-  if (use_fuzzy_rank) {
-    return select_best_ce_stochastic(matches);
-  } else {
-    return select_best_ce_max_rank(matches);
-  }
-}
-
 // alternative implementation: instead of opening a named pipe, just let the wm
 // create a file with a specified name and poll the file existence
-
-fs::path get_jobdir_base_dir()
-{
-  return fs::path("/tmp/jobdir", fs::native);
-}
 
 std::auto_ptr<classad::ClassAd>
 Plan(classad::ClassAd const& jdl)
@@ -378,7 +222,7 @@ Plan(classad::ClassAd const& jdl)
     fl.push_back(make_match_request(jdl, output_file));
   }
 
-  std::string match_result;
+  std::string match_response;
   bool done = false;
   while (!done) {
 
@@ -411,20 +255,20 @@ Plan(classad::ClassAd const& jdl)
     if (nread == 0) {           // EOF
       done = true;
     } else {
-      match_result.append(buf, buf + nread);
+      match_response.append(buf, buf + nread);
     }
 
   }
 
-  matches_type matches;
-  if (!get_matches(match_result, matches)) {
+  manager::matches_type matches;
+  if (!get_matches(match_response, matches)) {
     throw planning_error("no matching resource");
   }
 
   bool use_fuzzy_rank = false;
   requestad::get_fuzzy_rank(jdl, use_fuzzy_rank);
-  matches_type::const_iterator the_match(
-    select_best_ce(matches, use_fuzzy_rank)
+  manager::matches_type::const_iterator the_match(
+    manager::select_best_ce(matches, use_fuzzy_rank)
   );
   assert(the_match != matches.end());
 
@@ -434,7 +278,7 @@ Plan(classad::ClassAd const& jdl)
   );
 
   // dump the brokerinfo to file
-  ClassAdPtr brokerinfo = the_match->get<2>();
+  manager::ClassAdPtr brokerinfo = the_match->get<2>();
   classad::ExprTree const* DAC = jdl.Lookup("DataAccessProtocol");
   if (DAC) {
     brokerinfo->Insert("DataAccessProtocol", DAC->Copy());
