@@ -711,7 +711,7 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 		// User free quota -----------
 		try{
 			// Gets the user-free quota from the WMProxy server
-			logInfo->print(WMS_DEBUG, "Requesting for user free quota on the server", "");
+			logInfo->print(WMS_DEBUG, "Getting the User FreeQuota from the server", cfgCxt->endpoint);
 			free_quota = getFreeQuota(cfgCxt);
 		} catch (BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -726,7 +726,7 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 		if (limit >0) {
 			if (isbsize > limit  ) {
 				ostringstream err ;
-				err << "Not enough user free quota (" << limit << " bytes) on the server for the InputSandbox files (" ;
+				err << "Not enough User FreeQuota (" << limit << " bytes) on the server for the InputSandbox files (" ;
 				err << isbsize << " bytes)";
 				throw WmsClientException( __FILE__,__LINE__,
 					"checkInputSandboxSize",  DEFAULT_ERR_CODE,
@@ -734,15 +734,15 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 					err.str());
 			} else {
 				ostringstream q;
-				q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the user free quota (" << limit << " bytes)";
+				q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the User FreeQuota (" << limit << " bytes)";
 				logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
 			}
 		} else {
 			// User quota is not set on the server: check of Max InputSB size
-			logInfo->print (WMS_DEBUG, "User free quota is not set on the server:", " requesting for max InputSandbox size on the server" );
+			logInfo->print (WMS_DEBUG, "The User FreeQuota is not set", "");
 			try{
 				// Gets the maxISb size from the WMProxy server
-				logInfo->print(WMS_DEBUG, "Requesting for max ISB size on the server", "");
+				logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", cfgCxt->endpoint );
 				max_isbsize = getMaxInputSandboxSize(cfgCxt);
 			} catch (BaseException &exc){
 					throw WmsClientException(__FILE__,__LINE__,
@@ -754,7 +754,7 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 				if (isbsize > max_isbsize) {
 					ostringstream err ;
 					err << "The size of the InputSandbox (" << isbsize <<" bytes) ";
-					err << "exceeds the ISB size limit on the server (" << max_isbsize << " bytes)";
+					err << "exceeds the MAX InputSandbox size limit on the server (" << max_isbsize << " bytes)";
 					throw WmsClientException( __FILE__,__LINE__,
 						"checkInputSandboxSize",  DEFAULT_ERR_CODE,
 						"InputSandboxSize Error" , err.str());
@@ -765,7 +765,7 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 				}
 			} else {
 				// User quota is not set on the server: check of Max InputSB size
-				logInfo->print (WMS_DEBUG, "max ISB size is not set on the server", "");
+				logInfo->print (WMS_DEBUG, "The max ISB size is not set on the server", "");
 			}
 		}
 	}
@@ -1218,7 +1218,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 	// The destinationURI's vector is empty: the WMProxy service is called
 	if (dsURIs.empty( )){
 		try{
-			logInfo->print(WMS_DEBUG, "Requesting for SandboxBulkDestinationURI" , "");
+			logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , cfgCxt->endpoint);
 			dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
 		} catch (BaseException &exc){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -1229,7 +1229,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 			throw WmsClientException(__FILE__,__LINE__,
 				"getBulkDestURI ", ECONNABORTED,
 				"WMProxy Server Error",
-				"The server doesn't have information on InputSBDestURI for :" + jobid );
+				"The server doesn't have any information on InputSBDestURI for :" + jobid );
 		}
 	}
 	if (child.size()>0){
@@ -1281,11 +1281,11 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 	bool found = false;
 	try {
 		if (child.size()>0){
-			logInfo->print(WMS_DEBUG, "Requesting for SandboxDestinationURI for child node: " , child);
+			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI for child node: " , child);
 			// if the input parameter child is set ....
 			uris = getSandboxDestURI(child, (ConfigContext *)cfgCxt);
 		} else {
-			logInfo->print(WMS_DEBUG, "Requesting for SandboxDestinationURI" , "");
+			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , cfgCxt->endpoint);
 			// parent (if the input string "child" is empty)
 			uris = getSandboxDestURI(jobid, (ConfigContext *)cfgCxt);
 			parent = true;
