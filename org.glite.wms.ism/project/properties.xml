@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.8  2005/10/04 08:34:03  eronchie
+	Applied XERCES and LOG4CXX macros
+
 	Revision 1.7  2005/09/22 11:25:24  monforte
 	Merge against glite-wms-ism_branch_1_1_0
-
+	
 	Revision 1.4.4.3.10.2  2005/09/05 14:24:23  eronchie
 	Added XERCES dependencies
 	
@@ -113,6 +116,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 cppunit.m4 globus.m4 gsoap.m4 xerces.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 glite_ce.m4 optimize.m4"/>
+        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 cppunit.m4 globus.m4 gsoap.m4 xerces.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 glite_ce.m4 optimize.m4 log4cxx.m4"/>
         <property name="build.rpm.spec.requires" value="glite-essentials-cpp" />
 </project>

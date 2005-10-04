@@ -37,7 +37,8 @@ libglite_wms_ism_rgma_purchaser_la_LIBADD = \
         $(GLITE_LOCATION)/lib/libglite-rgma-cpp-impl.a \
         $(GLITE_LOCATION)/lib/libglite-rgma-cpp.a \
         $(GLITE_LOCATION)/lib/librgma-cpp.a \
-        -L$(GLITE_LOCATION)/../repository/xerces-c/2.5/rhel30_gcc32/lib/ -lxerces-c
+        $(XERCESC_LIBS) \
+        $(LOG4CXX_LIBS) 
 
 libglite_wms_ism_cemon_purchaser_la_LIBADD = \
 	$(GLITE_LOCATION)/lib/libglite_ce_monitor_client.a 
@@ -56,6 +57,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	$(GSOAP_CFLAGS) \
+	$(LOG4CXX_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
         -DGSOAP_VER_27
 

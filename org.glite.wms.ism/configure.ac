@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.14  2005/10/04 08:34:03  eronchie
+#       Applied XERCES and LOG4CXX macros
+#
 #       Revision 1.13  2005/09/22 11:25:23  monforte
 #       Merge against glite-wms-ism_branch_1_1_0
 #
@@ -192,6 +195,8 @@ AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+AM_PATH_LOG4CXX
 
 if test "$have_globus" = "no"; then
   AC_MSG_RESULT(["Please verify GLOBUS package"])
