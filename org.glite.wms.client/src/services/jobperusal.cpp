@@ -359,7 +359,7 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 	string ws = " ";
 	int size = 0;
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
-	if (paths.size() == 1 ) {
+	if (peekFiles.size() == 1 ) {
 		subj = "perusal file";
 		verb = "has";
 		count = "name of";
