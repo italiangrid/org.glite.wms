@@ -49,10 +49,10 @@ const long MAX_TAR_SIZE = 2147483647;
 //const int MAX_TAR_SIZE =  620000;
 // Max file size for globus-url-copy
 const long MAX_GUC_SIZE = 2147483647;
-//const long MAX_GUC_SIZE = 617372;
+//const long MAX_GUC_SIZE = 620000;
 // Max file size for CURL
 const long MAX_CURL_SIZE = 2147483647;
-//const long MAX_CURL_SIZE =617371;
+//const long MAX_CURL_SIZE = 620000;
 
 /*
 *	Default constructor
@@ -628,6 +628,7 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 	vector<string> isb_files ;
 	vector<string>::iterator it;
+	ostringstream err ;
 	string file = "";
 	int size = 0 ;
 	int fs = 0;
@@ -665,24 +666,24 @@ int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 			file = Utils::normalizeFile(*it);
 			// size for one of the files in the ISB list
 			fs = Utils::getFileSize(file);
-			if (fileProto && *fileProto == Options::TRANSFER_FILES_GUC_PROTO && fs > MAX_GUC_SIZE){
-				ostringstream err ;
-				err << "The file exceeds the file size limit of " << MAX_GUC_SIZE << " bytes allowed by ";
-				err << Options::TRANSFER_FILES_GUC_PROTO << " protocol\n";
-				err << "file: " << (*it) << "\nsize: " << fs << " bytes";
+			if (fileProto && *fileProto == Options::TRANSFER_FILES_GUC_PROTO
+				&& (fs > MAX_GUC_SIZE || fs > MAX_TAR_SIZE) ){
+				err << (*it) << "  (" << fs << " bytes)\n";
+				err << "The file exceeds the size limit allowed by:\n";
+				if (fs > MAX_GUC_SIZE ){ err << "- " << Options::TRANSFER_FILES_GUC_PROTO << " protocol (" << MAX_GUC_SIZE <<" bytes)\n";}
+				if (fs > MAX_TAR_SIZE ){ err << "- tar archive tool (" << MAX_TAR_SIZE <<" bytes)\n";}
+			} else if ( fileProto && *fileProto == Options::TRANSFER_FILES_CURL_PROTO
+				&& (fs > MAX_CURL_SIZE || fs > MAX_TAR_SIZE)){
+				err << (*it) << "  (" << fs << " bytes)\n";
+				err << "The file exceeds the size limit allowed by:\n";
+				if (fs > MAX_CURL_SIZE ){ err << "- " << Options::TRANSFER_FILES_CURL_PROTO << " protocol (" << MAX_GUC_SIZE <<" bytes)\n";}
+				if (fs > MAX_TAR_SIZE ){ err << "- tar archive tool (" << MAX_TAR_SIZE <<" bytes)\n";}
+			}
+			if (err.str().size()>0){
 				throw WmsClientException(__FILE__,__LINE__,
-					"getInputSandboxSize",  DEFAULT_ERR_CODE ,
-					"File Size Error",
-					err.str());
-			} else if ( fileProto && *fileProto == Options::TRANSFER_FILES_CURL_PROTO && fs > MAX_CURL_SIZE){
-				ostringstream err ;
-				err << "The file exceeds the file size limit of " << MAX_CURL_SIZE << " bytes allowed by ";
-				err << Options::TRANSFER_FILES_CURL_PROTO << " protocol\n";
-				err << "file: " << (*it) << "\nsize: " << fs <<  " bytes";
-				throw WmsClientException(__FILE__,__LINE__,
-					"getInputSandboxSize",  DEFAULT_ERR_CODE ,
-					"File Size Error",
-					err.str());
+						"getInputSandboxSize",  DEFAULT_ERR_CODE ,
+						"File Size Error",
+						err.str());
 			}
 			// adds the size of the file to the total ISB size
 			size += fs ;
@@ -1375,7 +1376,7 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 			// Removes the zip file just transferred
 			if (zipAllowed) {
 				try {
-					Utils::removeFile(it.first);
+		//			Utils::removeFile(it.first);
 				} catch (WmsClientException &exc) {
 					logInfo->print (WMS_WARNING,
 						"The following error occured during the removal of the file:",
