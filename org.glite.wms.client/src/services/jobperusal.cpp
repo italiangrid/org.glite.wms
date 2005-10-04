@@ -233,9 +233,8 @@ void JobPerusal::checkStatus( ){
 	int code = 0;
 	LbApi lbApi;
 	lbApi.setJobId(jobId);
-	logInfo->print(WMS_DEBUG, "Checking the status of the job", "");
 	Status status=lbApi.getStatus(true,true);
-	code = status.checkCodes(Status::OP_PERUSAL, warnings);
+	//code = status.checkCodes(Status::OP_PERUSAL, warnings);
 	if (warnings.size()>0){ logInfo->print(WMS_WARNING, warnings, "", true);}
 	if (code == 0){
 		cfgCxt = new ConfigContext("", "", "");
