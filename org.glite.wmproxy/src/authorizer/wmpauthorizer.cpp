@@ -8,6 +8,10 @@
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 //
 
+// added to build on IA64
+#include <pwd.h>
+#include <sys/types.h>
+
 #include <openssl/pem.h>
 
 #include "wmpauthorizer.h"
