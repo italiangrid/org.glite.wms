@@ -6,6 +6,7 @@
 // $Id$
 
 #include "DAGManHelper.h"
+#include "match_utils.h"
 #include <memory>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -15,11 +16,14 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/shared_ptr.hpp>
 #include <classad_distribution.h>
 #include "glite/wms/helper/HelperFactory.h"
+#include "glite/wms/helper/Helper.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/jobid/JobIdExceptions.h"
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
@@ -38,6 +42,7 @@ namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace jdl = glite::wms::jdl;
+namespace helper = glite::wms::helper;
 
 namespace glite {
 namespace wms {
@@ -329,37 +334,72 @@ get_node_file(classad::ExprTree const* et)
   return std::make_pair(node, file);
 }
 
+boost::shared_ptr<classad::ExprTree>
+make_requirements(std::string const& ce_id)
+{
+  boost::shared_ptr<classad::ExprTree> result;
+
+  if (!ce_id.empty()) {
+    classad::ExprTree* expr = 0;
+    std::string expr_string("other.GlueCEUniqueID == ");
+    expr_string += ce_id;
+    classad::ClassAdParser parser;
+    if (parser.ParseExpression(expr_string, expr)) {
+      result.reset(expr);
+    }
+  }
+
+  return result;
+}
+
 // consider the ISB; replace references to files in other node OSBs with actual
 // paths
 class NodeAdTransformation
 {
   jdl::DAGAd const* m_dagad;
+  boost::shared_ptr<classad::ExprTree> m_ce_id_requirements;
+
 public:
-  NodeAdTransformation(jdl::DAGAd const* dagad)
-    : m_dagad(dagad)
+  NodeAdTransformation(jdl::DAGAd const& dagad, std::string const& ce_id)
+    : m_dagad(&dagad), m_ce_id_requirements(make_requirements(ce_id))
   {
   }
   classad::ClassAd* operator()(classad::ClassAd const& ad) const
   {
-    std::auto_ptr<classad::ClassAd> result(static_cast<classad::ClassAd*>(ad.Copy()));
+    std::auto_ptr<classad::ClassAd> result(
+      static_cast<classad::ClassAd*>(ad.Copy())
+    );
 
     jdl::set_x509_user_proxy(*result, jdl::get_x509_user_proxy(*m_dagad));
-    jdl::set_certificate_subject(*result, jdl::get_certificate_subject(*m_dagad));
+    jdl::set_certificate_subject(
+      *result,
+      jdl::get_certificate_subject(*m_dagad)
+    );
     jdl::set_edg_dagid(*result, jdl::get_edg_jobid(*m_dagad));
 
+    if (m_ce_id_requirements) {
+      result->Insert("Requirements", m_ce_id_requirements->Copy());
+    }
+
     // manage isb
-    boost::scoped_ptr<classad::ExprTree const> et(result->Remove(jdl::JDL::INPUTSB));
+    boost::scoped_ptr<classad::ExprTree const> et(
+      result->Remove(jdl::JDL::INPUTSB)
+    );
     if (!et) {
       return result.release();
     }
 
     // can it be a single value or is it always a list?
     // assume the latter for the moment
-    classad::ExprList const* el = dynamic_cast<classad::ExprList const*>(et.get());    
+    classad::ExprList const* el(
+      dynamic_cast<classad::ExprList const*>(et.get())
+    );
 
     std::auto_ptr<classad::ExprList> new_isb(new classad::ExprList);
 
-    for (classad::ExprList::const_iterator it = el->begin(); it != el->end(); ++it) {
+    for (classad::ExprList::const_iterator it = el->begin();
+         it != el->end();
+         ++it) {
 
       if (utilities::is_attribute_reference(*it)) {
         std::string node;
@@ -571,6 +611,33 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
   result.InsertAttr("environment", environment.str());
 }
 
+// return ce id GlueCEUniqueID
+std::string
+nodes_collocation_match(jdl::DAGAd const& dag_ad)
+{
+  classad::ClassAd jdl;
+  std::auto_ptr<classad::ClassAd> match_result(
+    helper::Helper("MatcherHelper").resolve(&jdl)
+  );
+
+  std::string result;
+
+  matches_type matches;
+  try {
+    if (fill_matches(*match_result, matches)) {
+      bool use_fuzzy_rank = false;
+      jdl::get_fuzzy_rank(jdl, use_fuzzy_rank);
+      matches_type::const_iterator it(
+        select_best_ce(matches, use_fuzzy_rank)
+      );
+      result = it->get<0>();
+    }
+  } catch (MatchError&) {
+  }
+
+  return result;
+}
+
 classad::ClassAd* f_resolve(classad::ClassAd const& input_ad)
 try {
 
@@ -592,6 +659,15 @@ try {
     boost::bind(fs::remove_all, paths.base_submit_dir())
   );
 
+  // do collocation of nodes, if so requested
+  std::string ce_id;
+  if (!jdl::get_nodes_collocation(dagad)) {
+    ce_id = nodes_collocation_match(dagad);
+    if (ce_id.empty()) {
+      throw;
+    }
+  }
+
   jdl::DAGAd::node_iterator node_b;
   jdl::DAGAd::node_iterator node_e;
 
@@ -600,7 +676,7 @@ try {
 
   // dump description ads to file, applying a transformation first
   boost::tie(node_b, node_e) = dagad.nodes();
-  NodeAdTransformation node_ad_transformation(&dagad);
+  NodeAdTransformation node_ad_transformation(dagad, ce_id);
   std::for_each(node_b, node_e, DumpAdToFile(node_ad_transformation, &paths));
 
   // generate pre and post scripts
@@ -672,7 +748,4 @@ DAGManHelper::resolve(classad::ClassAd const* input_ad) const
   //  assert(result != 0);
 }
 
-} // server
-} // manager
-} // wms
-} // glite 
+}}}} // glite::wms::manager::server
