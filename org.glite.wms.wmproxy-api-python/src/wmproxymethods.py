@@ -316,7 +316,7 @@ class Wmproxy:
 
 	def addACLItems(self, jobId, items):
 		"""
-		Method (not tested):  addACLItems
+		Method (tested):  addACLItems
 		IN =  jobId (string)
 		IN =  items (StringList)
 		"""
@@ -401,14 +401,13 @@ class Wmproxy:
 
 	def getStringParametricJobTemplate(self, attributes, param, requirements, rank):
 		"""
-		Method (not tested):  getStringParametricJobTemplate
+		Method (tested):  getStringParametricJobTemplate
 		IN =  attributes (StringList)
 		IN =  param (StringList)
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
 		"""
-		raise ApiException("getStringParametricJobTemplate","not yet supported")
 		try:
 			self.soapInit()
 			return self.remote.getStringParametricJobTemplate(attributes, param, requirements, rank)
@@ -490,7 +489,7 @@ class Wmproxy:
 
 	def getIntParametricJobTemplate(self, attributes, param, parameterStart, parameterStep, requirements, rank):
 		"""
-		Method (not tested):  getIntParametricJobTemplate
+		Method (tested):  getIntParametricJobTemplate
 		IN =  attributes (StringList)
 		IN =  param (int)
 		IN =  parameterStart (int)
@@ -499,7 +498,6 @@ class Wmproxy:
 		IN =  rank (string)
 		OUT = jdl (string)
 		"""
-		raise ApiException("getIntParametricJobTemplate","not yet supported")
 		try:
 			self.soapInit()
 			return self.remote.getIntParametricJobTemplate(attributes, param, parameterStart, parameterStep, requirements, rank)
@@ -640,6 +638,38 @@ class Wmproxy:
 		try:
 			self.soapInit()
 			return parseStructType(self.remote.getDelegatedProxyInfo(jobId))
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+        def getPerusalFiles(self, jobId, file, allChunks):
+		"""
+		Method: (not tested) getPerusalFiles
+		IN =  jobId (string)
+		IN =  file (string)
+		IN =  allChunks (boolean)
+		OUT = fileList (StringList)
+		"""
+		try:
+			return self.remote.getPerusalFiles(jobId, file, allChunks)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+        def enableFilePerusal(self, jobId, fileList):
+		"""
+		Method: (not tested) enableFilePerusal
+		IN =  jobId (string)
+		IN =  fileList (StringList)
+		"""
+		try:
+			self.remote.enableFilePerusal(jobId, fileList)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
