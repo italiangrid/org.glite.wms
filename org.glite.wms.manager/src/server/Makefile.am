@@ -30,7 +30,7 @@ noinst_HEADERS = \
 	signal_handling.h \
 	listmatch.h \
 	WMReal.h
-		
+
 libglite_wms_manager_server_la_SOURCES = \
 	listmatch.h \
 	listmatch.cpp\
@@ -55,8 +55,9 @@ libglite_wms_manager_server_la_SOURCES = \
 	WMReal.h \
 	WMReal.cpp \
 	signal_handling.h \
-	signal_handling.cpp 
-	
+	signal_handling.cpp \
+	match_utils.h \
+	match_utils.cpp
 
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
@@ -129,7 +130,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/../org.glite.wms.purger/src
 
 EXTRA_DIST = glite-wms-planner.sh.in \
-        	glite-wms-dag-post.sh.in
+	glite-wms-dag-post.sh.in
 
 CLEANFILES = glite-wms-planner.sh \
 	glite-wms-dag-post.sh
