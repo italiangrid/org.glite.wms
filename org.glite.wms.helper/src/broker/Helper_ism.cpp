@@ -21,6 +21,7 @@
 #include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
+#include "glite/wms/ism/ism.h"
 //#include "edg/workload/planning/broker/RBMaximizeFilesImpl.h"
 //#include "edg/workload/planning/broker/RBMinimizeAccessCostImpl.h"
 #include "glite/wms/matchmaking/exceptions.h"
@@ -161,10 +162,14 @@ try {
   }
 
   matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
-
+  
+  // ism should be locked before calling retrieveCloseSEsInfo
+  { // begin ism usage scope
+  boost::mutex::scoped_lock l(ism::get_ism_mutex());
   // update the brokerinfo
   BI->retrieveCloseSEsInfo(ce_it->first);
   BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
+  } // end of ism usage scope
 
   const configuration::NSConfiguration* ns_conf
     = configuration::Configuration::instance()->ns();
