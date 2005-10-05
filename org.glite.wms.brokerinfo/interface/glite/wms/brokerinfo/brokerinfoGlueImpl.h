@@ -56,6 +56,12 @@ private:
    */
   int checkRlsUsage(const std::string& vo);
 
+  /*
+   * Put the result of the matching of a given logical file name in the BrokerInfoData
+   */
+  void put_results_in_bi_data( const std::string& lfn, 
+                               const BrokerInfoData::SFN_container_type& resolved_sfn, 
+                               BrokerInfoData& bid);
 };
 
 } // namespace brokerinfo
