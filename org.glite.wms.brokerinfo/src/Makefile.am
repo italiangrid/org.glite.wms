@@ -9,9 +9,7 @@
 lib_LTLIBRARIES = \
 	libglite_wms_brokerinfo.la \
 	libglite_wms_rls.la \
-	libglite_wms_dli.la
-
-# libglite_wms_sici.la
+	libglite_wms_dli_sici.la 
 
 brokerinfodir = $(includedir)/glite/wms/brokerinfo
 brokerinfo_HEADERS = \
@@ -23,22 +21,18 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
 
-#libglite_wms_sici_la_SOURCES = \
-#	StorageIndexCatalogInterface.cpp 
+libglite_wms_dli_sici_la_SOURCES = \
+	datalocationinterfaceClientLib.cpp \
+	storageindexClientLib.cpp \
+	StorageIndexCatalogInterface.cpp \
+	DataLocationInterfaceSOAP.cpp
 
-#libglite_wms_sici_la_LIBADD = \
-#	$(GLITE_DATA_LIBS) \
-#	$(SEC_GSOAP_PLUGIN_STATIC_NOTHR_LIBS) \
-#	$(ARES_LIBS) \
-#	env.o \
-#	stdsoap2_2.6.2.o
 
-	
-env.o: $(GLITE_DATA_CFLAGS) ; \
-	ar x $(GLITE_DATA_LIBS) env.o
-
-stdsoap2_2.6.2.o: $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c ; \
-        $(CC) $(GSOAP_CFLAGS) -c  $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c -o stdsoap2_2.6.2.o
+libglite_wms_dli_sici_la_LIBADD = \
+	$(SEC_GSOAP_PLUGIN_STATIC_NOTHR_LIBS) \
+	$(ARES_LIBS) \
+	stdsoap2_2.6.2.o \
+	envC.o
 
 libglite_wms_rls_la_SOURCES = 
 
@@ -46,22 +40,38 @@ libglite_wms_rls_la_LIBADD = \
 	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
 	$(REPLICA_MANAGER_LIBS)
 
-libglite_wms_dli_la_SOURCES = \
-        soapC.cpp \
-	soapClient.cpp \
-	DataLocationInterfaceSOAP.cpp
 
-libglite_wms_dli_la_LIBADD = \
-	$(GSOAP_LIBS)
+stdsoap2_2.6.2.o: $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c ; \
+	$(CC) $(GSOAP_CFLAGS) -DWITH_NONAMESPACES -c  $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c -o stdsoap2_2.6.2.o
 
-soapClient.cpp: $(srcdir)/DataLocationInterface.h ; \
-	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
+envC.o: envC.cpp ; \
+	$(CC) -c envC.cpp -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include -I. -o envC.o
 
-soapC.cpp: $(srcdir)/DataLocationInterface.h ; \
-	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
 
-soapH.h: $(srcdir)/DataLocationInterface.h ; \
-	$(SOAPCPP2) $(srcdir)/DataLocationInterface.h 
+envC.cpp: $(srcdir)/env.h; \
+	$(SOAPCPP2) -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include \
+	-d. -penv $(srcdir)/env.h 
+
+
+datalocationinterfaceClientLib.cpp: $(srcdir)/DataLocationInterface.h ; \
+	$(SOAPCPP2) -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include \
+	-d. -n -pdatalocationinterface $(srcdir)/DataLocationInterface.h
+
+
+#datalocationinterface.h: $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl ; \
+#	$(WSDL2H) -o ./datalocationinterface.h $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl 
+
+
+storageindexClientLib.cpp: storageindex.h ; \
+        $(SOAPCPP2) -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include \
+        -d. -n -pstorageindex ./storageindex.h
+
+
+
+storageindex.h: $(GLITE_LOCATION)/interface/org.glite.data-storageindex-2.0.0.wsdl ; \
+        $(WSDL2H) -o ./storageindex.h $(GLITE_LOCATION)/interface/org.glite.data-storageindex-2.0.0.wsdl
+
+
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
@@ -70,7 +80,7 @@ AM_CPPFLAGS = \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
-	$(GSOAP_CFLAGS) \
-	$(CGSI_GSOAP_CFLAGS)
+	$(GSOAP_CFLAGS)	
+
  
 MAINTAINERCLEANFILES = Makefile.in
