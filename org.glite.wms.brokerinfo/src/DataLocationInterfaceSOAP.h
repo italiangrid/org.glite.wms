@@ -25,6 +25,14 @@
 
 #include <stdsoap2.h>
 
+extern "C" {
+   #include "glite/security/glite_gsplugin.h"
+}
+
+#include <classad_distribution.h>
+
+
+
 
 namespace glite {
 namespace wms {
@@ -37,20 +45,15 @@ public:
   /**
    * Constructor for DataLocationInterface
    *
-   * @param endpoint SOAP endpoint (URL) of the remote catalogue
-   *                 example: http://localhost:8085/
    */
-  DataLocationInterfaceSOAP(std::string endpoint);
+  DataLocationInterfaceSOAP();
 
   /**
    * Constructor for DataLocationInterface
    *
-   * @param endpoint SOAP endpoint (URL) of the remote catalogue
-   *                 example: http://localhost:8085/
    * @param timeout  connection and IO timeout
    */
-  DataLocationInterfaceSOAP(std::string endpoint,
-                            int timeout);
+  DataLocationInterfaceSOAP(int timeout);
 
   /**
    * List all replicas of a given InputDataType. A replica needs to contain
@@ -67,6 +70,9 @@ public:
    *        InputDataTypes but is free to support any subset.
    * @param inputData     Actutual InputData variable
    *
+   * @param endpoint SOAP endpoint (URL) of the remote catalogue
+   *                           example: http://localhost:8085/
+   *
    * @returns a vector of URLs that represent the locations of where
    *          the InputData is located. The URL can either be a full URL
    *          of the form    protocol://hostname/pathname
@@ -74,7 +80,9 @@ public:
    *          where hostname is a registered SEId.
    */
   virtual std::vector<std::string> listReplicas(std::string inputDataType,
-						std::string inputData);
+						std::string inputData,
+                                                const classad::ClassAd& ad,
+                                                const std::string& endpoint);
 
   /**
    * Destructor: clean up the SOAP environment
@@ -82,17 +90,20 @@ public:
   virtual ~DataLocationInterfaceSOAP();
 
 private:
-  DataLocationInterfaceSOAP(){};
+   //DataLocationInterfaceSOAP(){};
 
   struct soap m_soap;     // gSOAP structure for message exchange
-  std::string m_endpoint; // endpoint (URL) of the data catalogue to contact
+
+  glite_gsplugin_Context ctx; // gsoap plugin context
+
+//  std::string m_endpoint; // endpoint (URL) of the data catalogue to contact
 };
 
-typedef DataLocationInterfaceSOAP* create_t(const std::string&);
+typedef DataLocationInterfaceSOAP* create_dli_t();
 
-typedef DataLocationInterfaceSOAP* create_t_with_timeout(const std::string&,
-                                                         int timeout);
-typedef void destroy_t(DataLocationInterfaceSOAP*);
+typedef DataLocationInterfaceSOAP* create_dli_with_timeout_t(int timeout);
+
+typedef void destroy_dli_t(DataLocationInterfaceSOAP*);
 
 
 } // namespace dli

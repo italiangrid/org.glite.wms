@@ -42,19 +42,16 @@ public:
   /**
    * Constructor for StorageIndexCatalogInterface
    *
-   * @param endpoint SOAP endpoint (URL) of the remote catalogue
-   *
    */
-   StorageIndexCatalogInterface(const std::string &endpoint );
+   StorageIndexCatalogInterface( );
 
   /**
    * Constructor for StorageIndexCatalogInterface
    *
-   * @param endpoint SOAP endpoint (URL) of the remote catalogue
    * @param timeout connenction and IO timeout 
    *
    */
-   StorageIndexCatalogInterface(const std::string &endpoint, int timeout );
+   StorageIndexCatalogInterface(int timeout );
 
   /**
    * Fill the list with the SEs conteining replicas related to the guid
@@ -65,10 +62,13 @@ public:
    *
    * @param classad JDL classad 
    *
+   * @param endpoint SOAP endpoint (URL) of the remote catalogue
+   *
    */
    virtual
    void listSEbyGUID ( const std::string &guid, std::vector<std::string> & list, 
-                       const  classad::ClassAd & classad);
+                       const  classad::ClassAd & classad,
+                       const std::string &endpoint);
 
   /**
    * Fill the list with the SEs containing replicas related to the lfn
@@ -79,10 +79,13 @@ public:
    *
    * @param classad JDL classad
    *
+   * @param endpoint SOAP endpoint (URL) of the remote catalogue
+   *
    */
    virtual
    void listSEbyLFN ( const std::string &lfn, std::vector<std::string> & list,
-                      const classad::ClassAd & classad);
+                      const classad::ClassAd & classad,
+                      const std::string &endpoint);
 
   /**
    * Destructor: clean up the SOAP environment
@@ -92,14 +95,14 @@ public:
   
 private:
   struct soap m_soap;     // gSOAP structure for message exchange
-  std::string m_endpoint; // endpoint (URL) of the data catalogue to contact
+  //std::string m_endpoint; // endpoint (URL) of the data catalogue to contact
   glite_gsplugin_Context ctx; // gsoap plugin context
 
 };
 
-typedef StorageIndexCatalogInterface* create_t(const std::string&);
+typedef StorageIndexCatalogInterface* create_t();
 
-typedef StorageIndexCatalogInterface* create_t_with_timeout(const std::string&, int timeout);
+typedef StorageIndexCatalogInterface* create_t_with_timeout( int timeout);
 
 typedef void destroy_t(StorageIndexCatalogInterface*);
 
