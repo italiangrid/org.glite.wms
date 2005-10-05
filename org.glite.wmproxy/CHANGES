@@ -11,9 +11,10 @@
 - Add new operation getSandboxBulkDestURI: returns
   the destination URI for a DAG/Collection and all its 
   nodes in one call. Improves job submission peformances.
+- Clean up file descriptors management.
 - Fix bug #11250 : Add compatibility with external components 
   using OpenSSL version older than 0.9.7 (e.g. gridFTP server 
-  uses OpenSSL 0.9.6). See 
+  uses OpenSSL 0.9.6). See e.g.:
   http://bugzilla.globus.org/bugzilla/show_bug.cgi?id=575
   for reference.
 * Fri Sept 30 2005 Fabrizio Pacini <egee@datamat.it>
