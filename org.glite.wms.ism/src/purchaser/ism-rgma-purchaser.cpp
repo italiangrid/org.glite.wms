@@ -846,14 +846,15 @@ bool ExportClassAd( ClassAd* ad, Tuple& tuple )
    ClassAdParser parser;
    if ( ! ad ) { Error("Empty ClassAd pointer passed"); return false; }
 
-   ResultSetMetaData row = tuple.getMetaData();
+   ResultSetMetaData* row = NULL;
+   if ( !( row = tuple.getMetaData() ) ) { Error("Wrong tuple passed"); return false; }
 
-   if ( row.begin() == row.end() ) {
+   if ( row->begin() == row->end() ) {
       Warning("trying to create a classAd from an empty tuple");
       return false;
    }
 
-   for (ResultSetMetaData::iterator rowIt = row.begin(); rowIt < row.end(); rowIt++ )
+   for (ResultSetMetaData::iterator rowIt = row->begin(); rowIt < row->end(); rowIt++ )
    {
       utilities::edgstrstream exprstream;
       string name = rowIt->getColumnName();
