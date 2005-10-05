@@ -61,10 +61,11 @@ JobPerusal::~JobPerusal ()  {
 }
 void JobPerusal::readOptions ( int argc,char **argv)  {
 	ostringstream err ;
+	string files = "";
  	string opts = Job::readOptions  (argc, argv, Options::JOBPERUSAL);
-        // writes the information on the specified option in the log file
-        logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false);
-        logInfo->print(WMS_INFO, "Options specified:", opts, false);
+        // writes the information on the specified option in the log file, it has been created
+	logInfo->print(WMS_INFO,   "Function : " + wmcOpts->getApplicationName( ),
+					"\n Options : " + opts, false);
         // --get
 	getOpt = wmcOpts->getBoolAttribute(Options::GET);
 	// --set
@@ -125,7 +126,6 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 	}
-
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
@@ -169,6 +169,11 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		} else if (nointOpt == false) {
 			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inOpt) << "\n";
 			peekFiles =  wmcUtils->askMenu(peekFiles, Utils::MENU_FILE);
+		}
+		// Writes in the log file the list of filenames chosen by the input file
+		for (int i = 0; i < peekFiles.size() ; i++) { files += peekFiles[i] + "; ";}
+		if (files.size()>0){
+			logInfo->print (WMS_INFO, "filenames from the input file:", files, false);
 		}
     	 }
 	 // other incompatible

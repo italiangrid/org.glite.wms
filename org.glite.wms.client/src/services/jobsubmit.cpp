@@ -59,7 +59,6 @@ const long MAX_CURL_SIZE = 2147483647;
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-//	dgOpt = NULL;
 	chkptOpt  = NULL;
 	collectOpt = NULL;
 	fileProto= NULL;
@@ -110,7 +109,6 @@ JobSubmit::~JobSubmit( ){
 	if (dagAd){ delete(dagAd); }
 	if (collectAd){ delete(collectAd); };
 	if ( jobShadow){ delete( jobShadow); }
-	if ( startOpt){ delete( startOpt); }
 };
 
 
@@ -134,7 +132,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
 	nodesresOpt = wmcOpts->getStringAttribute(Options::NODESRES);
 	if (inOpt && (resourceOpt||nodesresOpt) ){
-		info << "the following options cannot be specified together:\n" ;
+		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::NODESRES) << "\n";
@@ -177,7 +175,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	validOpt = wmcOpts->getStringAttribute(Options::VALID);
 	toOpt = wmcOpts->getStringAttribute(Options::TO);
 	if (validOpt && toOpt){
-		info << "the following options cannot be specified together:\n" ;
+		info << "The following options cannot be specified together:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
@@ -230,7 +228,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	(registerOnly || inOpt || resourceOpt || nodesresOpt || toOpt || validOpt || chkptOpt || collectOpt ||
 		(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
 		wmcOpts->getBoolAttribute(Options::AUTODG)  )){
-		info << "the following options cannot be specified together:\n" ;
+		info << "The following options cannot be specified together with --start:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
@@ -243,7 +241,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error: " +wmcOpts->getAttributeUsage(Options::START),
+				"Input Option Error",
 				info.str());
 	}
 	bool transfer_files = wmcOpts->getBoolAttribute(Options::TRANSFER);

@@ -1,3 +1,14 @@
+/**
+*        Copyright (c) Members of the EGEE Collaboration. 2004.
+*        See http://public.eu-egee.org/partners/ for details on the copyright holders.
+*        For license conditions see the license file or http://www.eu-egee.org/license.html
+*
+* 	Authors:	Alessandro Maraschini <alessandro.maraschini@datamat.it>
+* 			Marco Sottilaro <marco.sottilaro@datamat.it>
+*
+*	$Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
+*/
+
 #ifndef GLITE_WMS_CLIENT_SERVICES_DELEGATEPROXY_H
 #define GLITE_WMS_CLIENT_SERVICES_DELEGATEPROXY_H
 
@@ -19,39 +30,31 @@ namespace services {
 class DelegateProxy : public Job {
 
 	public :
-		/*
+		/**
 		*	Default constructor
 		*/
 		DelegateProxy ( );
-                /*
+                /**
 		*	Default destructor
 		*/
 		~DelegateProxy( ) ;
-		/*
-		*	reads the command-line user arguments and sets all the class attributes
+		/**
+		*	Reads the command-line user arguments and sets all the class attributes
 		*	@param argc number of the input arguments
 		*	@param argv string of the input arguments
 		*/
 		void readOptions (int argc,char **argv) ;
-                /*
-		*	performs the operations to submit the job(s)
+                /**
+		*	Performs the operations to submit the job(s)
 		*/
 		void delegation ( ) ;
 	private :
-        	/*
+        	/**
                 * Saves the result of the DelegateProxy operation result to the outputfile specified by .--output option
                 * @return the info message on the pathname of the file; an empty string in case of error
                 */
-        	std::string DelegateProxy::infoToFile( );
+        	std::string infoToFile( );
 
-		/*
-                *	string input arguments
-                */
-//		std::string* dgOpt ;
-		/*
-                *	boolean input arguments
-                */
-  //              bool autodgOpt ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
