@@ -50,10 +50,9 @@ p3=$3
 
 # launching the test...
 # ------------------------
-CMD="java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3}"
-echo $CMD
-$CMD
-
+CMD="${package}.${class} ${p1} ${p2} ${p3}"
+echo "java ${CMD}"
+java -classpath ${classpath} ${CMD}
 
 
 

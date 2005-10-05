@@ -1,20 +1,19 @@
 
 #############################################
 #
-#	WMProxyGetProxyTest:
+#	WMProxyInputSandboxSizeTest:
 #
 #	input parameters:
 #		- p1 = endpoint URL
-#		- p2 = delegation ID
-#		- p3 = proxy file pathname
+#		- p2 = proxy file pathname
 #
 ##############################################
 
 
 top=../../../../../../../
 top_src=../../../../../
-package=org.glite.wms.wmproxy.getproxy
-class=WMProxyGetProxyTest
+package=org.glite.wms.wmproxy.inputsbsize
+class=WMProxyInputSandboxSizeTest
 
 AXIS=`more ../axis.cfg`
 AXIS_LOC=${top}$AXIS
@@ -46,11 +45,10 @@ done
 #----------------
 p1=$1
 p2=$2
-p3=$3
 
 # launching the test...
 # ------------------------
 set -x
-java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3}
+java -classpath ${classpath} ${package}.${class} ${p1} ${p2} 
 
 
