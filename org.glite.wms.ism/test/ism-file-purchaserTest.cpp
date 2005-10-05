@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     ism_file_purchaser icp(dump_file, once);
 
     icp();
-    boost::mutex::scoped_lock l(get_ism_mutex());
+    boost::recursive_mutex::scoped_lock l(get_ism_mutex());
 
     for (ism_type::iterator pos=get_ism().begin();
       pos!= get_ism().end(); ++pos) {

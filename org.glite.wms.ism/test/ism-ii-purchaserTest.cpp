@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     if( options.is_present('b') ) icp.skip_predicate(is_in_black_list(wm_config->ism_black_list()));
 
     icp();
-    boost::mutex::scoped_lock l(get_ism_mutex());
+    boost::recursive_mutex::scoped_lock l(get_ism_mutex());
 
     for (ism_type::iterator pos=get_ism().begin();
       pos!= get_ism().end(); ++pos) {
