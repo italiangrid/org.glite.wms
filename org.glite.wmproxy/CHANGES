@@ -1,0 +1,20 @@
+====== WMProxy version 2.0.0 (gLite 1.5) ====== 
+- Add proxycache purger program (to be added to crontab 
+  on WMS node).
+- Add support for tar gzipped input sandboxes. 
+- Add new operations for the support of job file perusal:
+  enableFilePerusal, getPerusalFiles
+- Change the way dirmanager is called for the creation
+  of sandboxes directories on the WMS node for compound 
+  jobs: partially removes dependency of submission time  
+  on number of nodes. Improves job submission peformances.  
+- Add new operation getSandboxBulkDestURI: returns
+  the destination URI for a DAG/Collection and all its 
+  nodes in one call. Improves job submission peformances.
+- Fix bug #11250 : Add compatibility with external components 
+  using OpenSSL version older than 0.9.7 (e.g. gridFTP server 
+  uses OpenSSL 0.9.6). See 
+  http://bugzilla.globus.org/bugzilla/show_bug.cgi?id=575
+  for reference.
+* Fri Sept 30 2005 Fabrizio Pacini <egee@datamat.it>
+====== WMProxy version 1.0.0 (gLite 1.4) ====== 
