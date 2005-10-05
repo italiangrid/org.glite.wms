@@ -353,38 +353,39 @@ void brokerinfoGlueImpl::retrieveSEsInfo(const classad::ClassAd& requestAd, Brok
   }
 }
 
+
 void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, BrokerInfoData& bid)
 {
+   edglog_fn(retrieveSFNsInfo);
  
    bool rlsInUse = false;
-   bool dliInUse = false;
-   bool siciInUse = false;
- 
-   const string   lfnPrefix = "lfn";
-   const string   guidPrefix = "guid";
-   const string   ldsPrefix = "lds";
-   const string   queryPrefix = "query";
-   const string   silfnPrefix = "si-lfn";
-   const string   siguidPrefix = "si-guid";
-                                                                                                
-                                                                                                
-   string   dliEndpoint = "";
-   string   siciEndpoint = "";
-                                                                                                
-   bool     dliEndpointSet = false;
+   bool dli_siciInUse = false;
 
-   bool     siciEndpointSetInJdl = false;
-   bool     siciEndpointSetInSI = false;
-   bool     siciEndpointSet = false;
-                                                                                                
-   bool     rlsConfig = false; // Determine if RLS is configured
-   bool     voInJdl   = false;
-                                                                                                
+   dli::create_dli_t* createDli; dli::create_dli_with_timeout_t* createDli_with_timeout;
+   dli::destroy_dli_t* destroyDli; 
+   dli::DataLocationInterfaceSOAP* dli;
+
+   rls::create_t* createRls;  rls::destroy_t* destroyRls; 
+   rls::ReplicaServiceReal* replica;
+
+   sici::create_t* createSici;  sici::create_t_with_timeout* createSici_with_timeout;
+   sici::destroy_t* destroySici;
+   sici::StorageIndexCatalogInterface* sici;
+
+   string rlsLib = "libglite_wms_rls.so";
+   string dli_siciLib = "libglite_wms_dli_sici.so";
+
+   void *rlsLibHandle;
+   void *dli_siciLibHandle;
+
+                                                                                                        
+   int timeout = (configuration::Configuration::instance()->ns())->dli_si_catalog_timeout();
+
+   bool  rlsConfig = false; // Determine if RLS is configured
+
+   bool  voInJdl   = false;
    string   vo = "";
-   BrokerInfoData::LFN_container_type input_data;
                                                                                                 
-   edglog_fn(retrieveSFNsInfo);
-
    edglog(debug) << "ClassAd..." << endl;
    edglog(debug) << requestAd << endl;
 
@@ -397,17 +398,6 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    catch (...){
    }
                                                                                                 
-   try {
-      // The InputData field is used to specify a list of LFN, GUID, LDS or Query
-      //
-      requestad::get_input_data(requestAd, input_data);
-   }
-   catch (...){
-      edglog(error) << "cannot get input data from jdl" << endl;
-      return;
-   }
-                                                                                                
-                                                                                                
    // Check if we have the RLS configured for the VO. If this is the case,
    // requests for InputDataType lfn and guid are sent to RLS.
    //
@@ -416,415 +406,631 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          rlsConfig = true;
       }
    }
-                                                                                                
-   // Check if Storage Index Catalog and Data Catalog endpoints are set in the jdl
-   // If it is not the case, it try to get them frome the Information Service
 
+   bool dataReq = false;
+   classad::ExprTree* classAdList;
    try {
-      vector<string> v;
-      requestad::get_data_catalog(requestAd, v);
-      dliEndpoint = v[0];
-      dliEndpointSet = true;
+      classAdList = glite::wms::jdl::get_data_requirements(requestAd);
+      dataReq = true; 
    }
    catch(...) {
+   }
+
+   if ( dataReq ) {
+
+      string dliEndpoint; bool getDliFromIS = false;
       if ( voInJdl ) {
-         dliEndpoint = getDLIurl(vo);
-         if  ( dliEndpoint != "") {
-            dliEndpointSet = true;
-         }
+         dliEndpoint = getDLIurl( vo );
+         if ( dliEndpoint != "" ) getDliFromIS = true;
       }
-   }
-                                                                                                           
-                                                                                                           
-   try {
-      vector<string> v;
-      requestad::get_storage_index(requestAd, v);
-      siciEndpoint = v[0];
-      siciEndpointSetInJdl = true;
-   }
-   catch(...) {
+
+      string siEndpoint; bool getSiFromIS = false;
       if ( voInJdl ) {
-         siciEndpoint = getSICIurl(vo);
-         if  ( siciEndpoint != "") {
-            siciEndpointSetInSI = true;
-         }
+         siEndpoint = getSICIurl( vo );
+         if ( siEndpoint != "" ) getSiFromIS = true;
       }
-   }
 
-   if ( siciEndpointSetInSI || siciEndpointSetInJdl ) {
-      siciEndpointSet = true;
-   }
 
-   // Due to the different SOAP versions used in the three catalog interfaces, we load the
-   // client dynamically as a plug-in in order to avoid SOAP version
-   // clashes.
-   //
-   // We check the prefix of InputData's fields we got from the JDL. We have the following
-   // possibilities:
-   //
-   // PREFIX                                 CATALOG to be used
-   //
-   // 1)lfn, guid                            SI if the SIendpoint is set in the JDL
-   //                                        i.e.:StorageIndex="http://lxb2021.cern.ch:9992/AliEn/Service/FC";
-   //
-   // 2)lfn, guid                            RLS if the SIendpoint is NOT set in the JDL -AND-
-   //                                            RLSCatalog is set for the given VO.
-   //                                        If RLS doesn't work for any reason, we try DLI
-   //
-   // 3)si-guid, si-lfn                      StorageIndex, no matter if the endpoint is set or not
-   //
-   // 4)query, lds                           DLI
-   //
-   //
-   dli::create_t* createDli; dli::create_t_with_timeout* createDli_with_timeout;
-   dli::destroy_t* destroyDli; void *dliLibHandle;
-   dli::DataLocationInterfaceSOAP* dli;
-                                                                                                            
-   rls::create_t* createRls;  rls::destroy_t* destroyRls; void *rlsLibHandle;
-   rls::ReplicaServiceReal* replica;
-                                                                                                            
-   sici::create_t* createSici;  sici::create_t_with_timeout* createSici_with_timeout;
-   sici::destroy_t* destroySici; void *siciLibHandle;
-   sici::StorageIndexCatalogInterface* sici;
+      classad::ExprList* expr_list = static_cast<classad::ExprList*>(classAdList) ;
+      for ( classad::ExprList::iterator it = expr_list->begin(); it < expr_list->end(); it++ ){
 
-              
-   string dliLib = "libglite_wms_dli.so";
-   string rlsLib = "libglite_wms_rls.so";
-   string siciLib = "libglite_wms_sici.so";
+         string dataCatalogType;
+         bool getDataCatalog = false;
+         try {
+            dataCatalogType = glite::wms::jdl::get_data_catalog_type( *( static_cast<classad::ClassAd*>(*it) ) );
+            getDataCatalog = true;
+         } 
+         catch (...){
+         }
 
-   int timeout = (configuration::Configuration::instance()->ns())->dli_si_catalog_timeout();
+         string dataCatalogEndpoint;
+         bool getDataCatalogEndpoint = false;
+         try {
+            vector<string> v;
+            requestad::get_data_catalog(*( static_cast<classad::ClassAd*>(*it) ), v);
+            dataCatalogEndpoint = v[0]; 
+            getDataCatalogEndpoint = true;
+         }
+         catch (...){
+         }
 
-   for(BrokerInfoData::LFN_container_type::const_iterator lfn = input_data.begin(); lfn != input_data.end();lfn++) {
+         if ( getDataCatalog ) {
 
-      edglog(debug)  << "trying to resolve: " << *lfn << endl;
+            bool validCatalogType = true;
 
-      try {
+            if ( dataCatalogType == "RLS" ) {
 
-      BrokerInfoData::SFN_container_type resolved_sfn;
-                                                                                                                             
-      bool lfn_or_guid_found = ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0);
-      bool rls_success = false;
+               if ( !rlsInUse ) {
 
-         if ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) {
+                  // RLSCatalog property in WMS configuration not used anymore
+                  //if ( rlsConfig ) {
 
-            if ( !rlsInUse ) {
-
-               if ( rlsConfig ) {
-                  rlsLibHandle = dlopen (rlsLib.c_str(), RTLD_NOW);
-                  if (rlsLibHandle == NULL) {
-                     edglog(warning) << "cannot load RLS helper lib " << rlsLib << endl;
-                     edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                  }
-                  else {
-                     createRls = (rls::create_t*)dlsym(rlsLibHandle,"create");
-                     destroyRls = (rls::destroy_t*)dlsym(rlsLibHandle,"destroy");
-                     if (!createRls || !destroyRls) {
-                        edglog(warning) << "cannot load RLS helper symbols" << endl;
+                     rlsLibHandle = dlopen (rlsLib.c_str(), RTLD_NOW);
+                     if (rlsLibHandle == NULL) {
+                        edglog(warning) << "cannot load RLS helper lib " << rlsLib << endl;
                         edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                        dlclose(rlsLibHandle);
                      }
                      else {
-                        replica = createRls(vo);
-                        rlsInUse = true;
-                        resolved_sfn = replica->listReplica(*lfn);
-                        if( !resolved_sfn.empty() ) rls_success = true;
-                     }
-                  }
-               }
-               else {
-                  if ( voInJdl ) { 
-                     edglog(warning) << "RLS catalog is not set for " << vo << endl;
-                  }
-                  else {
-                     edglog(warning) << "JDL doesn't contain the VO" << endl;
-                  }
-               }
-            }
-            else {
-               resolved_sfn = replica->listReplica(*lfn);
-            }
-         }
-
-
-         // If the prefix is "lfn" or "guid" but we didn't manage to load the rls plug-in
-         //      or the RLSCatalog is not configured for the given vo 
-         //      or RLS didn't work for whatever reason,
-         //      we try with the dli catalog
-
-         if ( 
-            (    ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)    )   || 
-            (    ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) && (!rls_success)                  )
-            ) {
-            if ( !dliInUse ) {
-               if ( dliEndpointSet ) {
-                  dliLibHandle = dlopen (dliLib.c_str(), RTLD_NOW);
-                  if (dliLibHandle == NULL) {
-                     edglog(warning) << "cannot load DLI helper lib " << dliLib << endl;
-                     edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                  }
-                  else {
-                     bool dlsym_Ok = true;
-                     if ( timeout == 0 ) {
-                        createDli = (dli::create_t*)dlsym(dliLibHandle,"create");
-                        destroyDli = (dli::destroy_t*)dlsym(dliLibHandle,"destroy");
-                        if (!createDli || !destroyDli) {
-                           dlsym_Ok = false;
-                           edglog(warning) << "cannot load DLI helper symbols" << endl;
+                        createRls = (rls::create_t*)dlsym(rlsLibHandle,"create");
+                        destroyRls = (rls::destroy_t*)dlsym(rlsLibHandle,"destroy");
+                        if (!createRls || !destroyRls) {
+                           edglog(warning) << "cannot load RLS helper symbols" << endl;
                            edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                           dlclose(dliLibHandle);
+                           dlclose(rlsLibHandle);
                         }
+                        else {
+                           replica = createRls(vo);
+                           rlsInUse = true;
+                        }
+                     }
+
+                  //}
+                  //else {
+                  //   if ( voInJdl ) {
+                  //      edglog(warning) << "RLS catalog is not set for " << vo << endl;
+                  //   }
+                  //   else {
+                  //      edglog(warning) << "JDL doesn't contain the VO" << endl;
+                  //   }
+                  //}
+
+               } //if ( !rlsInUse )
+
+            }
+            else if ( dataCatalogType == "DLI" || dataCatalogType == "SI") {
+
+               if ( !dli_siciInUse ) {
+
+                     dli_siciLibHandle = dlopen (dli_siciLib.c_str(), RTLD_NOW);
+                     if (dli_siciLibHandle == NULL) {
+                        edglog(warning) << "cannot load DLI_SI helper lib " << dli_siciLib << endl;
+                        edglog(warning) << "dlerror returns: " << dlerror() << endl;
                      }
                      else {
-                        createDli_with_timeout = (dli::create_t_with_timeout*)dlsym(dliLibHandle,"create_with_timeout");
-                        destroyDli = (dli::destroy_t*)dlsym(dliLibHandle,"destroy");
-                        if (!createDli_with_timeout || !destroyDli) {
-                           dlsym_Ok = false;
-                           edglog(warning) << "cannot load DLI helper symbols" << endl;
-                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                           dlclose(dliLibHandle);
-                        }
-                     }
-                     if ( dlsym_Ok ) {
+                        bool dlsym_Ok = true;
                         if ( timeout == 0 ) {
-                           dli = createDli(dliEndpoint);
+                           createDli = (dli::create_dli_t*)dlsym(dli_siciLibHandle,"create_dli");
+                           destroyDli = (dli::destroy_dli_t*)dlsym(dli_siciLibHandle,"destroy_dli");
+                           createSici = (sici::create_t*)dlsym(dli_siciLibHandle,"create");
+                           destroySici = (sici::destroy_t*)dlsym(dli_siciLibHandle,"destroy");
+
+                           if (!createDli || !destroyDli || !createSici || !destroySici) {
+                              dlsym_Ok = false;
+                              edglog(warning) << "cannot load DLI_SI helper symbols" << endl;
+                              edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                              dlclose(dli_siciLibHandle);
+                           }
                         }
                         else {
-                           dli = createDli_with_timeout(dliEndpoint, timeout);
+                           createDli_with_timeout = (dli::create_dli_with_timeout_t*)dlsym(dli_siciLibHandle,"create_dli_with_timeout");
+                           destroyDli = (dli::destroy_dli_t*)dlsym(dli_siciLibHandle,"destroy_dli");
+                           createSici_with_timeout = (sici::create_t_with_timeout*)dlsym(dli_siciLibHandle,"create_with_timeout");
+                           destroySici = (sici::destroy_t*)dlsym(dli_siciLibHandle,"destroy");
+
+
+                           if (!createDli_with_timeout || !destroyDli || !createSici_with_timeout || !destroySici) {
+                              dlsym_Ok = false;
+                              edglog(warning) << "cannot load DLI_SI helper symbols" << endl;
+                              edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                              dlclose(dli_siciLibHandle);
+                           }
                         }
-                        dliInUse = true;
-                        if ((*lfn).find(ldsPrefix.c_str()) == 0) {
-                           resolved_sfn = dli->listReplicas(ldsPrefix.c_str(), *lfn);
-                        }
-                        else {
-                           if ((*lfn).find(queryPrefix.c_str()) == 0) {
-                              resolved_sfn = dli->listReplicas(queryPrefix.c_str(), *lfn);
+                        if ( dlsym_Ok ) {
+                           if ( timeout == 0 ) {
+                              dli = createDli();
+                              sici = createSici();
                            }
                            else {
-                              if ((*lfn).find(lfnPrefix.c_str()) == 0) {
-                                 resolved_sfn = dli->listReplicas(lfnPrefix.c_str(), *lfn);
+                              dli = createDli_with_timeout(timeout);
+                              sici = createSici_with_timeout(timeout);
+                           }
+                           dli_siciInUse = true;
+                        }
+                     }
+//                  }
+//                  else {
+//                     edglog(warning) << "cannot get any dli endpoint, neither from JDL nor from IS" << endl;
+//                  }
+
+               } // if ( !dli_siciInUse )
+
+                 
+            }
+            else {
+               validCatalogType = false; 
+               edglog(warning) <<dataCatalogType<<": unknown DataCatalogType type" << std::endl;
+            }
+
+            if ( validCatalogType ) {
+               // the list of LFNs from the JDL
+               BrokerInfoData::LFN_container_type input_data;
+               bool getInputData = false;
+               try {
+                  requestad::get_input_data(*( static_cast<classad::ClassAd*>(*it) ), input_data);
+                  getInputData = true;
+               }
+               catch (...){
+                  edglog(error) << "cannot get input data from jdl" << endl;
+               }
+               if ( getInputData ){
+                  // the list of SFNs matching each LFN
+                  BrokerInfoData::SFN_container_type resolved_sfn;
+
+                  for(BrokerInfoData::LFN_container_type::const_iterator lfn = input_data.begin(); lfn != input_data.end();lfn++){
+                     try {
+
+                        edglog(debug) << "trying to resolve " << *lfn << std::endl;
+                        // the list of SFNs matching each LFN
+                        BrokerInfoData::SFN_container_type resolved_sfn;
+   
+                        if ( rlsInUse && (dataCatalogType == "RLS") ) {
+                           resolved_sfn = replica->listReplica(*lfn);
+                        }
+                        else if ( dli_siciInUse && (dataCatalogType == "DLI") ) {
+
+                           std::string endpoint = "";
+                           if ( getDataCatalogEndpoint ) endpoint = dataCatalogEndpoint;
+                           else if ( getDliFromIS ) endpoint = dliEndpoint;
+   
+                           if ( endpoint != "" ) {
+                              if ((*lfn).find("lds") == 0) {
+                                 resolved_sfn = dli->listReplicas("lds", *lfn, requestAd, endpoint);
                               }
-                              else {
-                                 if ((*lfn).find(guidPrefix.c_str()) == 0) {
-                                    resolved_sfn = dli->listReplicas(guidPrefix.c_str(), *lfn);
-                                 }
+                              else if ((*lfn).find("query") == 0) {
+                                 resolved_sfn = dli->listReplicas("query", *lfn, requestAd, endpoint);
                               }
+                              else if ((*lfn).find("lfn") == 0) {
+                                 resolved_sfn = dli->listReplicas("lfn", *lfn, requestAd, endpoint);
+                              }
+                              else if ((*lfn).find("guid") == 0) {
+                                 resolved_sfn = dli->listReplicas("guid", *lfn, requestAd, endpoint);
+                              }
+                              else edglog(warning) << "unknown prefix while using DLI" << std::endl;
+                           }
+                           else 
+                              edglog(warning) << "Cannot get any dli endpoint, neither from JDL nor from IS" << endl;
+   
+                        }
+                        else if ( dli_siciInUse && (dataCatalogType == "SI") ) {
+
+                          string noPrefix = *lfn;
+                                                                                                                                
+                          string::size_type colon_pos;
+                          if ((colon_pos = noPrefix.find(":"))!=string::npos) {
+                             // Remove any prefix before the leading colon. Including the colon.
+                             colon_pos++;
+                             noPrefix.erase(0,colon_pos);
+                           }
+
+                           std::string endpoint = "";
+                           if ( getDataCatalogEndpoint ) endpoint = dataCatalogEndpoint;
+                           else if ( getSiFromIS ) endpoint = dliEndpoint;
+
+                           if ( endpoint != "" ) {
+                              if ( (*lfn).find("lfn") == 0 ) {
+                                 sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, endpoint);
+                              }
+                              else if ( (*lfn).find("guid") == 0 ){
+                                 sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, endpoint);
+                              }
+                              else edglog(warning) << "unknown prefix while using SI" << std::endl;
+                           }
+                           else
+                              edglog(warning) << "Cannot get any si endpoint, neither from JDL nor from IS" << endl;
+
+                        }
+                        else edglog(warning) << "cannot perform " << *lfn <<"'s resolution" << std::endl;
+   
+   
+                        if( !resolved_sfn.empty() ) {
+                           put_results_in_bi_data( *lfn, resolved_sfn, bid);
+                        }
+                        else {
+                           edglog(debug) << "No replica(s) found!" << endl;
+                        }
+         
+                     }
+                     catch( std::exception& ex ) {
+                        edglog(warning) <<  ex.what() << endl;
+                     }
+                     catch(const char *faultstring) {
+                        //
+                        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+                        // or any other exception due to failures in getting the proxy from the classad
+                        edglog(warning) << faultstring << endl;
+                     }
+                                                                                                                                
+                  } // for
+
+               
+               } // if ( getInputData )
+       
+
+            }  // if  ( validCatalogType )
+   
+
+         } // ( getDataCatalog )
+         else edglog(warning) << "cannot get DataCatalogType" << std::endl;
+            
+      } // for
+
+
+
+   }
+   else {
+      // This block assure the backward compatibility for what concern the data format in the JDL
+      //
+      // Due to the different SOAP versions used in the three catalog interfaces, we load the
+      // client dynamically as a plug-in in order to avoid SOAP version
+      // clashes.
+      //
+      // We check the prefix of InputData's fields we got from the JDL. We have the following
+      // possibilities:
+      //
+      // PREFIX                                 CATALOG to be used
+      //
+      // 1)lfn, guid                            SI if the SIendpoint is set in the JDL
+      //                                        i.e.:StorageIndex="http://lxb2021.cern.ch:9992/AliEn/Service/FC";
+      //
+      // 2)lfn, guid                            RLS if the SIendpoint is NOT set in the JDL -AND-
+      //                                            RLSCatalog is set for the given VO.
+      //                                        If RLS doesn't work for any reason, we try DLI
+      //
+      // 3)si-guid, si-lfn                      StorageIndex, no matter if the endpoint is set or not
+      //
+      // 4)query, lds                           DLI
+      //
+      //
+      const string   lfnPrefix = "lfn";
+      const string   guidPrefix = "guid";
+      const string   ldsPrefix = "lds";
+      const string   queryPrefix = "query";
+      const string   silfnPrefix = "si-lfn";
+      const string   siguidPrefix = "si-guid";
+   
+      string   dliEndpoint = "";
+      string   siciEndpoint = "";
+                                                                                                                                
+      bool     dliEndpointSet = false;
+                                                                                                                                
+      bool     siciEndpointSetInJdl = false;
+      bool     siciEndpointSetInSI = false;
+      bool     siciEndpointSet = false;
+   
+      // Check if Storage Index Catalog and Data Catalog endpoints are set in the jdl
+      // If it is not the case, it try to get them from the Information Service
+      try {
+         vector<string> v;
+         requestad::get_data_catalog(requestAd, v);
+         dliEndpoint = v[0];
+         dliEndpointSet = true;
+      }
+      catch(...) {
+         if ( voInJdl ) {
+            dliEndpoint = getDLIurl(vo);
+            if  ( dliEndpoint != "") {
+               dliEndpointSet = true;
+            }
+         }
+      }
+      try {
+         vector<string> v;
+         requestad::get_storage_index(requestAd, v);
+         siciEndpoint = v[0];
+         siciEndpointSetInJdl = true;
+      }
+      catch(...) {
+         if ( voInJdl ) {
+            siciEndpoint = getSICIurl(vo);
+            if  ( siciEndpoint != "") {
+               siciEndpointSetInSI = true;
+            }
+         }
+      }
+                                                                                                                                
+      if ( siciEndpointSetInSI || siciEndpointSetInJdl ) {
+         siciEndpointSet = true;
+      }
+   
+      BrokerInfoData::LFN_container_type input_data;
+   
+      try {
+         // The InputData field is used to specify a list of LFN, GUID, LDS or Query
+         //
+         requestad::get_input_data(requestAd, input_data);
+      }
+      catch (...){
+         edglog(error) << "cannot get input data from jdl" << endl;
+         return;
+      }
+   
+      for(BrokerInfoData::LFN_container_type::const_iterator lfn = input_data.begin(); lfn != input_data.end();lfn++) {
+   
+         edglog(debug)  << "trying to resolve: " << *lfn << endl;
+   
+         try {
+   
+            BrokerInfoData::SFN_container_type resolved_sfn;
+   
+            bool lfn_or_guid_found = ((*lfn).find(lfnPrefix.c_str()) == 0) || ((*lfn).find(guidPrefix.c_str()) == 0);
+            bool rls_success = false;
+   
+            if ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) {
+   
+               if ( !rlsInUse ) {
+   
+                  if ( rlsConfig ) {
+                     rlsLibHandle = dlopen (rlsLib.c_str(), RTLD_NOW);
+                     if (rlsLibHandle == NULL) {
+                        edglog(warning) << "cannot load RLS helper lib " << rlsLib << endl;
+                        edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                     }
+                     else {
+                        createRls = (rls::create_t*)dlsym(rlsLibHandle,"create");
+                        destroyRls = (rls::destroy_t*)dlsym(rlsLibHandle,"destroy");
+                        if (!createRls || !destroyRls) {
+                           edglog(warning) << "cannot load RLS helper symbols" << endl;
+                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                           dlclose(rlsLibHandle);
+                        }
+                        else {
+                           replica = createRls(vo);
+                           rlsInUse = true;
+                        }
+                     }
+                  }
+                  else {
+                     if ( voInJdl ) { 
+                        edglog(warning) << "RLS catalog is not set for " << vo << endl;
+                     }
+                     else {
+                        edglog(warning) << "JDL doesn't contain the VO" << endl;
+                     }
+                  }
+               } //if ( !rlsInUse ) 
+   
+               if ( rlsInUse ) {
+                  resolved_sfn = replica->listReplica(*lfn);
+                  if( !resolved_sfn.empty() ) rls_success = true;
+               }
+   
+            } // if ( lfn_or_guid_found && (!siciEndpointSetInJdl) )
+   
+   
+            // If the prefix is "lfn" or "guid" but we didn't manage to load the rls plug-in
+            //      or the RLSCatalog is not configured for the given vo 
+            //      or RLS didn't work for whatever reason,
+            //      we try with the dli catalog
+
+            bool dli_to_be_used =  
+                 // conditions under which dli is used
+                 (    ((*lfn).find(ldsPrefix.c_str()) == 0) || ((*lfn).find(queryPrefix.c_str()) == 0)       ) ||
+                 (    ( lfn_or_guid_found && (!siciEndpointSetInJdl) ) && (!rls_success)                     ) ;
+
+            bool sici_to_be_used = 
+                 // conditions under which si is used
+                 (    ((*lfn).find(silfnPrefix.c_str()) == 0) || ((*lfn).find(siguidPrefix.c_str()) == 0)    ) ||
+                 (    lfn_or_guid_found && siciEndpointSetInJdl                                              ) ;
+
+   
+            if ( dli_to_be_used || sici_to_be_used ) {
+
+               if ( !dli_siciInUse ) {
+                     dli_siciLibHandle = dlopen (dli_siciLib.c_str(), RTLD_NOW);
+                     if (dli_siciLibHandle == NULL) {
+                        edglog(warning) << "cannot load DLI_SI helper lib " << dli_siciLib << endl;
+                        edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                     }
+                     else {
+                        bool dlsym_Ok = true;
+                        if ( timeout == 0 ) {
+                           createDli = (dli::create_dli_t*)dlsym(dli_siciLibHandle,"create_dli");
+                           destroyDli = (dli::destroy_dli_t*)dlsym(dli_siciLibHandle,"destroy_dli");
+                           createSici = (sici::create_t*)dlsym(dli_siciLibHandle,"create");
+                           destroySici = (sici::destroy_t*)dlsym(dli_siciLibHandle,"destroy");
+                                                                                                                             
+                           if (!createDli || !destroyDli || !createSici || !destroySici) {
+                              dlsym_Ok = false;
+                              edglog(warning) << "cannot load DLI_SI helper symbols" << endl;
+                              edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                              dlclose(dli_siciLibHandle);
                            }
                         }
+                        else {
+                           createDli_with_timeout = (dli::create_dli_with_timeout_t*)dlsym(dli_siciLibHandle,"create_dli_with_timeout");
+                           destroyDli = (dli::destroy_dli_t*)dlsym(dli_siciLibHandle,"destroy_dli");
+                           createSici_with_timeout = (sici::create_t_with_timeout*)dlsym(dli_siciLibHandle,"create_with_timeout");
+                           destroySici = (sici::destroy_t*)dlsym(dli_siciLibHandle,"destroy");
+                                                                                                                             
+                                                                                                                             
+                           if (!createDli_with_timeout || !destroyDli || !createSici_with_timeout || !destroySici) {
+                              dlsym_Ok = false;
+                              edglog(warning) << "cannot load DLI_SI helper symbols" << endl;
+                              edglog(warning) << "dlerror returns: " << dlerror() << endl;
+                              dlclose(dli_siciLibHandle);
+                           }
+                        }
+                        if ( dlsym_Ok ) {
+                           if ( timeout == 0 ) {
+                              dli = createDli();
+                              sici = createSici();
+                           }
+                           else {
+                              dli = createDli_with_timeout(timeout);
+                              sici = createSici_with_timeout(timeout);
+                           }
+                           dli_siciInUse = true;
+                        }
                      }
-                  }
-               }
-               else {
+
+               } // if( !dli_siciInUse )
+
+
+               if ( dli_to_be_used && !dliEndpointSet )
                   edglog(warning) << "cannot find dli endpoint" << endl;
-               }
-            }
-            else {
-               if ((*lfn).find(ldsPrefix.c_str()) == 0) {
-                  resolved_sfn = dli->listReplicas(ldsPrefix.c_str(), *lfn);
-               }
-               else {
-                  if ((*lfn).find(queryPrefix.c_str()) == 0) {
-                     resolved_sfn = dli->listReplicas(queryPrefix.c_str(), *lfn);
-                  }
-                  else {
-                     if ((*lfn).find(lfnPrefix.c_str()) == 0) {
-                        resolved_sfn = dli->listReplicas(lfnPrefix.c_str(), *lfn);
-                     }
-                     else {
-                        if ((*lfn).find(guidPrefix.c_str()) == 0) {
-                           resolved_sfn = dli->listReplicas(guidPrefix.c_str(), *lfn);
-                        }
-                     }
-                  }
-               }
-            }
-         }
-
-         if ( 
-            (   ((*lfn).find(silfnPrefix.c_str()) == 0) || ((*lfn).find(siguidPrefix.c_str()) == 0)    )    ||
-                ( lfn_or_guid_found && siciEndpointSetInJdl )
-            ) {
-                                                                                                
-            if ( !siciInUse ) {
-                                                                                                
-               if ( siciEndpointSet ) {
-                  siciLibHandle = dlopen (siciLib.c_str(), RTLD_NOW);
-                  if (siciLibHandle == NULL) {
-                     edglog(warning) << "cannot load SI helper lib " << siciLib << endl;
-                     edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                  }
-                  else {
-                     bool dlsym_Ok = true;
-                     if ( timeout == 0 ) {
-                        createSici = (sici::create_t*)dlsym(siciLibHandle,"create");
-                        destroySici = (sici::destroy_t*)dlsym(siciLibHandle,"destroy");
-                        if (!createSici || !destroySici) {
-                           dlsym_Ok = false;
-                           edglog(warning) << "cannot load SI helper symbols" << endl;
-                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                           dlclose(siciLibHandle);
-                        }
-                     }
-                     else {
-                        createSici_with_timeout = (sici::create_t_with_timeout*)dlsym(siciLibHandle,"create_with_timeout");
-                        destroySici = (sici::destroy_t*)dlsym(siciLibHandle,"destroy");
-                        if (!createSici_with_timeout || !destroySici) {
-                           dlsym_Ok = false;
-                           edglog(warning) << "cannot load SI helper symbols" << endl;
-                           edglog(warning) << "dlerror returns: " << dlerror() << endl;
-                           dlclose(siciLibHandle);
-                        }
-                     }
-                     if ( dlsym_Ok ) {
-                        if ( timeout == 0 ) {
-                           sici = createSici(siciEndpoint);
-                        }
-                        else {
-                           sici = createSici_with_timeout(siciEndpoint, timeout);
-                        }
-                        siciInUse = true;
-                                                                                                
-                        string noPrefix = *lfn;
-                        string::size_type colon_pos;
-
-                        if ((colon_pos = noPrefix.find(":"))!=string::npos) {
-                           // Remove any prefix before the leading colon. Including the colon.
-                           colon_pos++;
-                           noPrefix.erase(0,colon_pos);
-                        }
-
-
-                        if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
-                             (*lfn).find(lfnPrefix.c_str()) == 0 ) {
-                           sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd);
-                        }
-                        else {
-                           sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd);
-                        }
-                     }
-                  }
-               }
-               else {
+               else if ( sici_to_be_used && !siciEndpointSet )
                   edglog(warning) << "cannot find si endpoint" << endl;
+
+   
+               if ( dli_siciInUse && dliEndpointSet && dli_to_be_used) { 
+                  if ((*lfn).find(ldsPrefix.c_str()) == 0) {
+                     resolved_sfn = dli->listReplicas(ldsPrefix.c_str(), *lfn, requestAd, dliEndpoint);
+                  }
+                  else if ((*lfn).find(queryPrefix.c_str()) == 0) {
+                        resolved_sfn = dli->listReplicas(queryPrefix.c_str(), *lfn, requestAd, dliEndpoint);
+                  }
+                  else if ((*lfn).find(lfnPrefix.c_str()) == 0) {
+                           resolved_sfn = dli->listReplicas(lfnPrefix.c_str(), *lfn, requestAd, dliEndpoint);
+                  }
+                  else if ((*lfn).find(guidPrefix.c_str()) == 0) {
+                     resolved_sfn = dli->listReplicas(guidPrefix.c_str(), *lfn, requestAd, dliEndpoint);
+                  }
                }
-            }
-            else {
-               string noPrefix = *lfn;
 
-               string::size_type colon_pos;
-               if ((colon_pos = noPrefix.find(":"))!=string::npos) {
-                  // Remove any prefix before the leading colon. Including the colon.
-                  colon_pos++;
-                  noPrefix.erase(0,colon_pos);
-               }
-
-               if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
-                    (*lfn).find(lfnPrefix.c_str()) == 0 ) {
-                  sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd);
-               }
-               else {
-                  sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd);
-               }
-            }
-         }
-
-         if ( ((*lfn).find(lfnPrefix.c_str()) != 0) && ((*lfn).find(guidPrefix.c_str()) != 0) &&                                                                                                
-              ((*lfn).find(ldsPrefix.c_str()) != 0) && ((*lfn).find(queryPrefix.c_str()) != 0) &&
-              ((*lfn).find(silfnPrefix.c_str()) != 0) && ((*lfn).find(siguidPrefix.c_str()) != 0)   ) {
-                   
-            edglog(warning) << "wrong prefix: " << *lfn << endl;
-         }
-
-
-         if( !resolved_sfn.empty() ) {
-                                                                                                
-            bid.m_LFN2SFN_map[*lfn] = resolved_sfn;
-                                                                                                
-            // static boost::regex  expression( "(.*):[\\s/]*([^\\s/]+)/.*" );
-            static boost::regex  expression( "^\\s*([^:]*):[\\s/]*([^\\s:/]+)(:[0-9]+)?/.*" );
-                                                                                                
-            // Here we check that each returned SFN corresponds to a URL
-            // of the general form:  protocol://SE-hostname/filepath
-            // Only if this is the case, the an SE is included into the bid.
-            // If the return SFN is only a hostname, we check if the SEid
-            // is registered in the Information System: if yes, fine too.
-            //
-            for(BrokerInfoData::SFN_container_type::const_iterator sfn = resolved_sfn.begin();
-              sfn != resolved_sfn.end(); sfn++) {
-                                                                                                
-               edglog(debug) << *sfn << endl;
-//enzo
-//cout <<"sfn returned by the catalog: "<< *sfn << endl;
-                                                                                                
-               try {
-                
-                  boost::smatch pieces;
-                  std::string   SE_name;
-                                                                                                
-                  if( boost::regex_match(*sfn, pieces, expression) ) {
-                     SE_name.assign(pieces[2].first, pieces[2].second);
-                     bid.m_involvedSEs.insert(SE_name);
-//
-//cout<<"SE inserted: " << SE_name << endl;
+               if ( dli_siciInUse && siciEndpointSet && sici_to_be_used) { 
+                  string noPrefix = *lfn;
+   
+                  string::size_type colon_pos;
+                  if ((colon_pos = noPrefix.find(":"))!=string::npos) {
+                     // Remove any prefix before the leading colon. Including the colon.
+                     colon_pos++;
+                     noPrefix.erase(0,colon_pos);
+                  }
+   
+                  if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
+                       (*lfn).find(lfnPrefix.c_str()) == 0 ) {
+                     sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
                   }
                   else {
-                     // If the SFN doesn't match the regular expression, we assume
-                     // that only the SE name (SEid) has been returned. We check
-                     // if the string really corresponds to a valid SE in the IS.
-                     //
-                     string SE = *sfn;
-                     string str = "://";
-                     int pos = SE.find (str,0);
-                     if (pos != string::npos){
-                        SE.erase(0, pos+str.length());
-                     }
-                     if (validSE(SE) == 0) {
-                        bid.m_involvedSEs.insert(SE);
-                        edglog(debug) << SE << ": " << "is a valid SE"<< endl;
-                     }
-                     else {
-                        edglog(warning) << SE << ": " << "is *not* a valid SE"<< endl;
-                     }
+                     sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
                   }
                }
-               catch( std::exception& ex ) {
-                  edglog(warning) << ex.what() << endl;
-               }
+            } // if ( dli_to_be_used || si_to_be_used )
+   
+            if ( ((*lfn).find(lfnPrefix.c_str()) != 0) && ((*lfn).find(guidPrefix.c_str()) != 0) &&                                                                                                
+                 ((*lfn).find(ldsPrefix.c_str()) != 0) && ((*lfn).find(queryPrefix.c_str()) != 0) &&
+                 ((*lfn).find(silfnPrefix.c_str()) != 0) && ((*lfn).find(siguidPrefix.c_str()) != 0)   ) {
+                      
+               edglog(warning) << "wrong prefix: " << *lfn << endl;
             }
+   
+            if( !resolved_sfn.empty() ) {
+               put_results_in_bi_data( *lfn, resolved_sfn, bid);
+            }
+            else {
+               edglog(debug) << "No replica(s) found!" << endl;
+            }
+                                                                                                   
          }
-         else {
-            edglog(debug) << "No replica(s) found!" << endl;
+         catch( std::exception& ex ) {
+              edglog(warning) <<  ex.what() << endl;
+         }
+         catch(const char *faultstring) {
+           //
+           // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+           // or any other exception due to failures in getting the proxy from the classad
+           edglog(warning) << faultstring << endl;
+         }
+   
+                                                                                                   
+      } //for
 
-         }
-                                                                                                
-      }
-      catch( std::exception& ex ) {
-           edglog(warning) <<  ex.what() << endl;
-      }
-      catch(const char *faultstring) {
-        //
-        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
-        // or any other exception due to failures in getting the proxy from the classad
-        edglog(warning) << faultstring << endl;
-      }
-   } //for
+   } //else dataReq
+
 
    if ( rlsInUse ) {
       destroyRls(replica);
       dlclose(rlsLibHandle);
    }
 
-   if ( dliInUse ) {
+   if ( dli_siciInUse ) {
       destroyDli(dli);
-      dlclose(dliLibHandle);
+      destroySici(sici);
+      dlclose(dli_siciLibHandle);
    }
 
-   if ( siciInUse) {
-       destroySici(sici);
-       dlclose(siciLibHandle);
-   }
-                                                                                                
    edglog(debug) << "finishing retrieveSFNsInfo" << endl;
 }
+
+
+void brokerinfoGlueImpl::put_results_in_bi_data( const std::string& lfn,
+                                                 const BrokerInfoData::SFN_container_type& resolved_sfn, 
+                                                 BrokerInfoData& bid)
+{
+
+   edglog_fn(put_results_in_bi_data);
+   bid.m_LFN2SFN_map[lfn] = resolved_sfn;
+                                                                                                                    
+   // static boost::regex  expression( "(.*):[\\s/]*([^\\s/]+)/.*" );
+   static boost::regex  expression( "^\\s*([^:]*):[\\s/]*([^\\s:/]+)(:[0-9]+)?/.*" );
+                                                                                                                    
+   // Here we check that each returned SFN corresponds to a URL
+   // of the general form:  protocol://SE-hostname/filepath
+   // Only if this is the case, the SE is included into the bid.
+   // If the return SFN is only a hostname, we check if the SEid
+   // is registered in the Information System: if yes, fine too.
+   //
+   for(BrokerInfoData::SFN_container_type::const_iterator sfn = resolved_sfn.begin();
+     sfn != resolved_sfn.end(); sfn++) {
+                                                                                                                    
+      edglog(debug) << *sfn << endl;
+                                                                                                                    
+      try {
+                                                                                                                    
+         boost::smatch pieces;
+         std::string   SE_name;
+                                                                                                                    
+         if( boost::regex_match(*sfn, pieces, expression) ) {
+            SE_name.assign(pieces[2].first, pieces[2].second);
+            bid.m_involvedSEs.insert(SE_name);
+         }
+         else {
+            // If the SFN doesn't match the regular expression, we assume
+            // that only the SE name (SEid) has been returned. We check
+            // if the string really corresponds to a valid SE in the IS.
+            //
+            string SE = *sfn;
+            string str = "://";
+            int pos = SE.find (str,0);
+            if (pos != string::npos){
+               SE.erase(0, pos+str.length());
+            }
+            if (validSE(SE) == 0) {
+               bid.m_involvedSEs.insert(SE);
+               edglog(debug) << SE << ": " << "is a valid SE"<< endl;
+            }
+            else {
+               edglog(warning) << SE << ": " << "is *not* a valid SE"<< endl;
+            }
+         }
+      }
+      catch( std::exception& ex ) {
+         edglog(warning) << ex.what() << endl;
+      }
+   }
+
+}
+
 
 /**
  * Contact the Information Service (IS) and check if the given SE (SEid)
@@ -901,7 +1107,6 @@ std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
   edglog_fn(getSICIurl);
 
   edglog(debug) << "Contacting IS for StorageIndex endpoint..." << endl;
-  
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
   const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
                                                                                                                              
@@ -955,6 +1160,8 @@ std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
   catch ( ldif2classad::ConnectionException& e) {
     edglog(warning) << e.what() << endl;
   }
+
+
   return url;
 } // getSICIurl
 
@@ -972,7 +1179,6 @@ std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
   edglog_fn(getDLIurl);
 
   edglog(debug) << "Contacting IS for DataLocationInterface endpoint. " << endl;
-
   const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
   const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
   
@@ -1026,6 +1232,8 @@ std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
   catch ( ldif2classad::ConnectionException& e) {
     edglog(warning) << e.what() << endl;
   }
+
+
   return url;
 } // getDLIurl
 
@@ -1045,10 +1253,10 @@ int brokerinfoGlueImpl::checkRlsUsage(const std::string& vo)
   }
 
   return -1;
-} // checkRlsUsage
+}// checkRlsUsage
 
 
 
-    } // namespace brokerinfo
-  } // namespace wms
+} // namespace brokerinfo
+} // namespace wms
 } // namespace glite
