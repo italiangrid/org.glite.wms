@@ -202,7 +202,7 @@ void ism_cemon_asynch_purchaser::do_purchase()
                  ((!strcasecmp(dialect.c_str(), "ISM_CLASSAD")) && 
                   parse_classad_event_messages(consumer, gluece_info_container)) ) {
                  
-              boost::mutex::scoped_lock l(get_ism_mutex());
+              boost::recursive_mutex::scoped_lock l(get_ism_mutex());
 	      for (gluece_info_iterator it = gluece_info_container.begin();
                 it != gluece_info_container.end(); ++it) {
 

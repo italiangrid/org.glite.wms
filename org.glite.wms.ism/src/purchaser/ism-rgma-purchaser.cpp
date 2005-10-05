@@ -1454,7 +1454,7 @@ Debug("CONSUMER REFRESHED");
       }
 
       {
-         boost::mutex::scoped_lock l(get_ism_mutex());	
+         boost::recursive_mutex::scoped_lock l(get_ism_mutex());	
          while(!gluece_info_container_updated_entries.empty()) {
 	  
             ism_type::value_type ism_entry = make_ism_entry(

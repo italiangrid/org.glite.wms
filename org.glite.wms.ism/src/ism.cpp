@@ -26,9 +26,9 @@ ism_type::value_type make_ism_entry(
   return std::make_pair(id, boost::make_tuple(ut, et, ad, uf));
 }
 
-boost::mutex& get_ism_mutex(void)
+boost::recursive_mutex& get_ism_mutex(void)
 {
-  static boost::mutex ism_mutex;
+  static boost::recursive_mutex ism_mutex;
 
   return ism_mutex;
 }
@@ -53,7 +53,7 @@ operator<<(std::ostream& os, ism_type::value_type const& value)
 void call_update_ism_entries::operator()()
 {
   bool value = true;
-  boost::mutex::scoped_lock l(get_ism_mutex());
+  boost::recursive_mutex::scoped_lock l(get_ism_mutex());
   boost::xtime ct;
   boost::xtime_get(&ct, boost::TIME_UTC);
 
@@ -132,7 +132,7 @@ std::string get_ism_dump(void)
 
 void call_dump_ism_entries::operator()()
 {
-  boost::mutex::scoped_lock l(get_ism_mutex());
+  boost::recursive_mutex::scoped_lock l(get_ism_mutex());
   std::ofstream             outf(get_ism_dump().c_str());
   
   for (ism_type::iterator pos=get_ism().begin();

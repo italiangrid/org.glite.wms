@@ -344,7 +344,7 @@ void ism_iise_purchaser::do_purchase()
       gluese_info_container_type gluese_info_container;
       prefetchGlueSEinfo(m_hostname, m_port, m_dn, m_timeout, gluese_info_container);
       {
-      boost::mutex::scoped_lock l(get_ism_mutex());	
+      boost::recursive_mutex::scoped_lock l(get_ism_mutex());	
       for (gluese_info_iterator it = gluese_info_container.begin();
 	   it != gluese_info_container.end(); ++it) {
 	

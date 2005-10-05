@@ -14,6 +14,7 @@
 #include <boost/function.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
 namespace classad {
@@ -42,7 +43,7 @@ typedef boost::tuple<int, int, ad_ptr, update_uf_type> ism_entry_type;
 typedef std::map<id_type, ism_entry_type> ism_type;
 
 ism_type& get_ism();
-boost::mutex& get_ism_mutex();
+boost::recursive_mutex& get_ism_mutex();
 
 ism_type::value_type make_ism_entry(
   std::string const& id, // resource identifier

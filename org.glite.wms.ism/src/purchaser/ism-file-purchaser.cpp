@@ -54,7 +54,7 @@ void ism_file_purchaser::do_purchase()
     
     Debug("Loading ISM status from dump file: " << m_filename << "\n");
    
-    boost::mutex::scoped_lock l(get_ism_mutex());
+    boost::recursive_mutex::scoped_lock l(get_ism_mutex());
     while(!src.eof()) {
       try {
 	boost::scoped_ptr<classad::ClassAd> ad(utilities::parse_classad(src));
