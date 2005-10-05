@@ -7,7 +7,7 @@
 * 			Marco Sottilaro <marco.sottilaro@datamat.it>
 */
 
-// $Id$
+// 	$Id$
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOB_H
 #define GLITE_WMS_CLIENT_SERVICES_JOB_H
@@ -62,7 +62,6 @@ class Job{
 		* @all if TRUE, it contacts all endpoints specified in the configuration
 		*/
 		void getEndPointVersion(std::string &endpoint, std::string &version, const bool &all=false);
-
 	private:
 		 /**
         	* Gets the version message
@@ -80,7 +79,7 @@ class Job{
 		std::string* outOpt ;	// --output <file>
 		std::string* cfgOpt ; // --config <file>
 		std::string* voOpt ;	// --vo <VO_Name>
-		std::string* dgOpt ;		// --delegationid
+		std::string* dgOpt ;	// --delegationid
 		bool autodgOpt ;	// --autm-delegation,
 		bool nointOpt ;		// --noint
 		bool dbgOpt ;		// --debug

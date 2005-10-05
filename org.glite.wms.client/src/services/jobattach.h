@@ -6,8 +6,9 @@
 * 	Authors:	Alessandro Maraschini <alessandro.maraschini@datamat.it>
 * 			Marco Sottilaro <marco.sottilaro@datamat.it>
 *
-*	$Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
 */
+
+// 	$Id$
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBATTACH_H
 #define GLITE_WMS_CLIENTSERVICES_JOBATTACH_H

@@ -1,3 +1,14 @@
+/**
+*        Copyright (c) Members of the EGEE Collaboration. 2004.
+*        See http://public.eu-egee.org/partners/ for details on the copyright holders.
+*        For license conditions see the license file or http://www.eu-egee.org/license.html
+*
+*       Authors:        Alessandro Maraschini <alessandro.maraschini@datamat.it>
+*                       Marco Sottilaro <marco.sottilaro@datamat.it>
+*/
+
+//      $Id$
+
 #ifndef GLITE_WMS_CLIENT_UTILS
 #define GLITE_WMS_CLIENT_UTILS
 /**
@@ -24,11 +35,11 @@ namespace client {
 namespace utilities {
 class Utils{
 public:
-	/***
+	/**
         * Default constructor
         */
 	Utils(Options *wmcOpts);
-        /***
+        /**
         * Default destructor
         */
 	~Utils( );
@@ -47,7 +58,7 @@ public:
 		JOBID_TYPE,
 		CE_TYPE
 	};
-	/***
+	/**
 	* Prompt the users (if --noint option is not active) a question with Y/N answer
 	* @param question the question to be prompted to the user
 	* @param defaultAnswer the default answer if noint is active or enter is typed (true= "YES")
@@ -55,17 +66,13 @@ public:
 	* @return the answer value or the default value in case of interaction is not allowed
 	*/
 	bool answerYes (const std::string& question, bool defaultAnswer=false, bool defaultValue=false);
-	static bool makeQuestion (const std::string& question, bool defaultAnswer, bool defaultValue);
-
 	/**
 	* Prompt the users if they want to overwrite a file if it already exists
 	* @param path the pathname of the file
-	* @
+	* @return TRUE if the file can be saved to the indicated path (if it doesn't exists or overwriting is allowed), FALSE otherwise
 	*/
 	bool askForFileOverwriting(const std::string &path);
-
-	bool askForFileAppending(const std::string &path, const std::string &msg);
-	/***
+	/**
 	* Asks users to chose either all or some items in a list; the question is printed on the std-output;
         * users insert their reply on the the std-input
 	* @param jobids a vector contatining the list of jobids in which perform the choice
@@ -73,7 +80,7 @@ public:
 	* @return the list of chosen items
 	*/
         std::vector<std::string> askMenu(const std::vector<std::string> &items, const enum WmcMenu &type);
-	/***
+	/**
 	* Extrapolate the list of possible LB address associated with the specified NS address index (or all when no index specified)
 	* @param lbGroup a map of all the LB available. Each vector contains the LBs for a certain NS
 	* @param nsNum the NetworkServer address to be referred to whn extrapolating
@@ -86,40 +93,39 @@ public:
         * @return the generated number
         */
        static const int getRandom (const unsigned int &max );
-
 	/**
 	*  Retrieves the client installation path
         * @return the installation path string representation
         */
         std::string getPrefix();
-	/***
+	/**
 	* Gets the extension used for archive files
 	* @return the file extension string
 	*/
 	static std::string getArchiveExtension( ) ;
-	/***
+	/**
 	* Gets the extension used for compressed files
 	* @return the file extension string
 	*/
 	static std::string getZipExtension( ) ;
-	/***
+	/**
 	* Extracts from the input string the name of the archive filename according to
 	* the default archive extension
 	* @return the name of the archive file or an empty string if the input name is unvalid
 	*
 	*/
 	static std::string getArchiveFilename (const std::string file);
-        /***
+        /**
 	* Extrapolate the list of possible WMProxy addresses
 	* @return  a vector of strings containg the list of addresses
 	*/
 	std::vector<std::string> getWmps( );
-        /***
+        /**
         * Gets the ErrorStorage pathname
         * @return the pathname string
         */
         const std::string getErrorStorage( );
-        /***
+        /**
         * Gets the OuputStorage pathname
         * @return the pathname string
         */
@@ -129,10 +135,12 @@ public:
         * @return the pathname string
         */
         std::string* getLogFileName ( );
-
-
+	/**
+        * Gets the conf pathname
+        * @return the pathname string
+        */
         glite::wms::common::configuration::WMCConfiguration* getConf(){return wmcConf;}
-        /***
+        /**
 	* Check the LB value, the format is
 	[<protocol>://]<lb host>[:<lb port>]
 	*/
@@ -141,14 +149,14 @@ public:
 	[<protocol>://]<ns host>[:<ns port>]
 	*/
 	std::pair <std::string, unsigned int>checkWmp(const std::string& wmpFullAddress);
-	/***
+	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
 	* @param resolved to be filled with DNS record A host entry.
 	* @return whether there has been an error (true) or success (false)
 	*/
 	void resolveHost(const std::string& hostname, std::string& resolved);
-	/***
+	/**
 	* Check the format of a jobid string
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
 	* @param jobid jobid string to be checked
@@ -156,7 +164,7 @@ public:
         *@throw WmsClientException in case of bad format
 	*/
         static std::string checkJobId(std::string jobid);
-	/***
+	/**
 	* Check the format of a list of jobids
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
         * In case the list contains some bad id's, question whether the user want to continue is asked
@@ -164,7 +172,7 @@ public:
 	*@return the list of the rights jobid's
 	*/
 	std::vector<std::string>  checkJobIds(std::vector<std::string> &jobids);
-	/***
+	/**
 	* Check the format of a jobid string
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
 	* @param jobid jobid string to be checked
@@ -172,22 +180,22 @@ public:
         *@throw WmsClientException in case of bad format
 	*/
         static void checkResource(const std::string& resource);
-	/***
+	/**
 	* Check the format of a list of jobids
 	* the format is <protocol>://<lb host>:<lb port>/<unique_string>
         * In case the list contains some bad id's, question whether the user want to continue is asked
         *@param jobids the list of input jobid's (at the end of execution, bad format id's has been removed);
 	*@return the list of the rights jobid's
 	*/
-	std::vector<std::string>  checkResources(std::vector<std::string> &resources);
-	/***
+	std::vector<std::string> checkResources(std::vector<std::string> &resources);
+	/**
 	* Get the unique string of the input JobId
 	* @param jobid the input jobid
         * @return the unique string
         *@throw WmsClientException in case of bad format
 	*/
 	static std::string getUnique(std::string jobid);
-        /***
+        /**
 	* Builds a char stripe
 	* @param len the length of the stripe to be built
         * @param ch the character to be used for the stripe
@@ -195,7 +203,7 @@ public:
         * @return the built stripe
 	*/
         const std::string getStripe (const int &len, const std::string &ch, const std::string &msg = "");
-	/*** Exit from the process. If ncessary prompt some information
+	/** Exit from the process. If ncessary prompt some information
 	@param exitCode command exit code, 0 in case of success, error otherwise
 	*/
 	static void ending(unsigned int exitCode=0);
@@ -232,14 +240,6 @@ public:
         */
         const std::string delegateProxy(glite::wms::wmproxyapi::ConfigContext *cfg, const std::string &id);
         /**
-        * get the level of verbosity on the std-output according to the following user option arguments:
-        * --nomsg : only error and result messages are printed
-        * --debug : info and warning messages are printed as well
-        * neither of these two options: warning, error and result messages are printed
-        * @return the verbosity level ( WMSLOG_NONE=0,WMSLOG_INFO,WMSLOG_WARNING,WMSLOG_ERROR,WMSLOG_FATAL)
-        *
-                */
-        /**
         * checks if a pathname is a valid file
         *@param pathname the pathname that has to be checked
         *@return true if the pathname is a valid file (false, otherwise)
@@ -264,7 +264,7 @@ public:
         * @throw WmsClientException if the file doesn't exist or in case it is not possible to open the file
         */
         static int getFileSize (const std::string &path) ;
-	/***
+	/**
 	* Removes a file
 	* @param file the pathname of the file to be removed
 	*@throw WmsClientException if an error occurred during the operation
@@ -366,15 +366,15 @@ public:
         static const std::string JOBID_FILE_HEADER ;
 
 private:
-	/***
+	/**
 	* Check the WMS client installation path
 	*/
 	void checkPrefix();
-	/***
+	/**
 	* Check the WMS client configuration file
 	*/
 	void checkConf();
-	/*** Look for possible configuration file */
+	/** Look for possible configuration file */
 	/**
 	*	convert the input time string to number of seconds form 1970
 	*	the formats of the input time string could be:

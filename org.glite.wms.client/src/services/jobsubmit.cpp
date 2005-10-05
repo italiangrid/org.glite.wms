@@ -1,3 +1,14 @@
+/**
+*        Copyright (c) Members of the EGEE Collaboration. 2004.
+*        See http://public.eu-egee.org/partners/ for details on the copyright holders.
+*        For license conditions see the license file or http://www.eu-egee.org/license.html
+*
+*       Authors:        Alessandro Maraschini <alessandro.maraschini@datamat.it>
+*                       Marco Sottilaro <marco.sottilaro@datamat.it>
+*/
+
+//      $Id$
+
 
 
 #include "jobsubmit.h"
@@ -1331,8 +1342,7 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 * either with the "Bulk" service or with the "single-node" service.
 * For compund jobs, the WMProxy "Bulk" method gets back one-shot a list
 * with the URI's of the parent and all its children nodes; instead with the other method,
-* the WMProxy in each call can only get back the URIs for one
-* node
+* the WMProxy in each call can only get back the URIs for one node
 */
 std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) {
 	if (wmpVersion  > WMPROXY_OLD_VERSION) {

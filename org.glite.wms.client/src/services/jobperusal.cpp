@@ -1,3 +1,14 @@
+/**
+*        Copyright (c) Members of the EGEE Collaboration. 2004.
+*        See http://public.eu-egee.org/partners/ for details on the copyright holders.
+*        For license conditions see the license file or http://www.eu-egee.org/license.html
+*
+*       Authors:        Alessandro Maraschini <alessandro.maraschini@datamat.it>
+*                       Marco Sottilaro <marco.sottilaro@datamat.it>
+*/
+
+//      $Id$
+
 #include "jobperusal.h"
 #include <string>
 #include <sys/stat.h> //mkdir
@@ -19,7 +30,6 @@
 #include"lbapi.h"
 //BOOST
 #include "boost/lexical_cast.hpp" // types conversion
-
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -59,6 +69,9 @@ JobPerusal::~JobPerusal ()  {
 	if (outOpt ) { free(outOpt);}
 	if (dirOpt ) { free(dirOpt);}
 }
+/**
+* Reads the input arguments
+*/
 void JobPerusal::readOptions ( int argc,char **argv)  {
 	ostringstream err ;
 	string files = "";
@@ -125,13 +138,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The unset operation disables all perusal files; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-	}
-	if (err.str().size() > 0) {
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
-	}
-	if (unsetOpt && allOpt) {
+	}else if (unsetOpt && allOpt) {
 		logInfo->print(WMS_WARNING,
 			wmcOpts->getAttributeUsage(Options::ALL) +
 			": ignored (unset operation always disables all perusal files", "" );
@@ -219,7 +226,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
 }
 /**
-* Perfroms the main operations
+* Performs the main operations
 */
 void JobPerusal::jobPerusal ( ){
 	vector<string> paths;
@@ -228,13 +235,13 @@ void JobPerusal::jobPerusal ( ){
 	checkStatus( );
 	// Operation
 	if (setOpt){
-		setPerusal( );
+		perusalSet( );
 		printResult(PERUSAL_SET, paths);
 	} else if (getOpt) {
-		getPerusal(paths);
+		perusalGet(paths);
 		printResult(PERUSAL_GET, paths);
 	} else if (unsetOpt) {
-		unsetPerusal( );
+		perusalUnset( );
 		printResult(PERUSAL_UNSET, paths);
 	}
 }
@@ -265,7 +272,7 @@ void JobPerusal::checkStatus( ){
 * GET operation
 */
 
-void JobPerusal::getPerusal (std::vector<std::string> &paths){
+void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	vector<string> uris;
 	string errors = "";
 	string file = "";
@@ -273,7 +280,7 @@ void JobPerusal::getPerusal (std::vector<std::string> &paths){
 		logInfo->print(WMS_INFO, "GET  - Connecting to the service", cfgCxt->endpoint);
 		if (peekFiles.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
-				"getPerusal",DEFAULT_ERR_CODE,
+				"perusalGet",DEFAULT_ERR_CODE,
 				"Input Arguments Error",
 				"No valid perusal files specified");
 		} else {
@@ -282,14 +289,14 @@ void JobPerusal::getPerusal (std::vector<std::string> &paths){
 		uris = getPerusalFiles (jobId, file , allOpt, cfgCxt);
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
-			"getPerusal", ECONNABORTED,
+			"perusalGet", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
 	if (uris.size()>0) {
 		this->gsiFtpGetFiles(uris, paths, errors);
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
-				"getPerusal", DEFAULT_ERR_CODE,
+				"perusalGet", DEFAULT_ERR_CODE,
 				"Get Files Error",
 				"GET - The following error(s) occured while transferring the file(s):\n" + errors);
 		} else if  (errors.size( )>0){
@@ -301,7 +308,7 @@ void JobPerusal::getPerusal (std::vector<std::string> &paths){
 /**
 * SET operation
 */
-void JobPerusal::setPerusal ( ){
+void JobPerusal::perusalSet ( ){
 	try {
 		logInfo->print(WMS_INFO, "SET  - Connecting to the service", cfgCxt->endpoint);
 		enableFilePerusal (jobId, peekFiles, cfgCxt);
@@ -314,7 +321,7 @@ void JobPerusal::setPerusal ( ){
 /**
 * UNSET operation
 */
-void JobPerusal::unsetPerusal ( ){
+void JobPerusal::perusalUnset( ){
 	vector<string> empty;
 	try {
 		logInfo->print(WMS_INFO, "UNSET  - Connecting to the service", cfgCxt->endpoint);
@@ -325,7 +332,9 @@ void JobPerusal::unsetPerusal ( ){
 			"WMProxy Server Error", errMsg(exc));
 	}
 }
-
+/**
+* File downloading
+*/
 void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
 	string local = "";
 	int code = 0;
@@ -366,7 +375,9 @@ void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vec
 		}
          }
 }
-
+/**
+* Prints out the final results on the std-out
+*/
 void JobPerusal::printResult(const perusalOperations &operation, std::vector<std::string> &paths){
 	ostringstream out;
 	string subj = "";

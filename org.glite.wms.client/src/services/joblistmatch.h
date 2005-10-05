@@ -6,8 +6,10 @@
 * 	Authors:	Alessandro Maraschini <alessandro.maraschini@datamat.it>
 * 			Marco Sottilaro <marco.sottilaro@datamat.it>
 *
-*	$Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
 */
+
+// 	$Id$
+
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBLISTMATCH_H
@@ -41,13 +43,13 @@ class JobListMatch : public Job {
 		*/
 		~JobListMatch( );
 		/*
-		*	reads the command-line user arguments and sets all the class attributes
+		*	Reads the command-line user arguments and sets all the class attributes
 		*	@param argc number of the input arguments
 		*	@param argv string of the input arguments
 		*/
 		void readOptions (int argc,char **argv) ;
                 /*
-		*	performs the main operations
+		*	Performs the main operations
 		*/
                 void listMatching( ) ;
 
@@ -60,10 +62,6 @@ class JobListMatch : public Job {
                 *	check the input JDL
                 */
         	void checkAd ( ) ;
-        	 /*
-                *	string input arguments
-                */
-//		std::string* dgOpt;
         	/*
                 *	boolean input arguments
                 */
@@ -73,11 +71,11 @@ class JobListMatch : public Job {
                 */
                 glite::wms::jdl::Ad *jobAd ;
                 /*
-		*	path to the JDL file
+		*	Path to the JDL file
 		*/
 		std::string *jdlFile ;
 		/*
-		*	string of the user JDL
+		*	String with the user JDL
 		*/
 		std::string *jdlString ;
 };

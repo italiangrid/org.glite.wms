@@ -1,4 +1,4 @@
-/**
+/***
 *        Copyright (c) Members of the EGEE Collaboration. 2004.
 *        See http://public.eu-egee.org/partners/ for details on the copyright holders.
 *        For license conditions see the license file or http://www.eu-egee.org/license.html
@@ -6,8 +6,10 @@
 * 	Authors:	Alessandro Maraschini <alessandro.maraschini@datamat.it>
 * 			Marco Sottilaro <marco.sottilaro@datamat.it>
 *
-*	$Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
 */
+
+// 	$Id$
+
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBPERUSAL_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBPERUSAL_H
@@ -25,7 +27,7 @@ namespace wms{
 namespace client {
 namespace services {
 
-/**
+/***
 * Type of  Operations
 */
 enum perusalOperations {
@@ -38,52 +40,69 @@ enum perusalOperations {
 class JobPerusal  : public Job {
 
 	public :
-        	/*
+        	/**
                 *	Default constructor
                 */
 		JobPerusal ( );
-                 /*
+                 /**
                 * Default destructror
                 */
                 ~JobPerusal();
-		/*
-		*	reads the command-line user arguments and sets all the class attributes
+		/**
+		*	Reads the command-line user arguments and sets all the class attributes
 		*	@param argc number of the input arguments
 		*	@param argv string of the input arguments
 		*/
                void readOptions ( int argc,char **argv)   ;
-
+		/**
+                *	Performs the main operations
+                */
 		void jobPerusal ( ) ;
 
         private :
-		void getPerusal (std::vector <std::string> &paths) ;
-
-		void setPerusal ( ) ;
-		void JobPerusal::unsetPerusal ( );
-
-		void checkStatus( );
-		void gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
-
-		void printResult(const perusalOperations &operation, std::vector<std::string> &paths);
-
-		/*
-		* Retrieves the output files
+		/**
+		* Performs the perusal-get operation: retrieves a list of DestinationURI's of
+		* the peek files available on the server and downloads the files to the local machine
+		* @param paths gets the list of local pathnames to the downloaded files
 		*/
-		//bool retrieveFiles (std::ostringstream &msg, const std::string& jobid, const std::string& dirAbs, const bool &child = false);
-        	/*
- 		* checks the status of the jobs
-		* @param jobids the list of identifiers of the jobs of which the status has to be retrieved
- 		*/
-		//void checkStatus( std::vector<std::string> &jobids);
-
-
-        	 /*
+		void perusalGet (std::vector <std::string> &paths) ;
+		/**
+		* Performs the perusal-set operation: enables the job-peeking for one or
+		* more files
+		*/
+		void perusalSet ( ) ;
+		/**
+		* Performs the perusal-unset operation: disabled the job-peeking for all
+		* the files previously set
+		*/
+		void perusalUnset ( );
+		/**
+		* Retireves the status of the job in order to check whether its status allows
+		* retrieving of its peek files
+		*/
+		void checkStatus( );
+		/**
+		* Performs downloading of the peeks files to the local machine from
+		* the Destination URI's provided as input; it gets back a list of pathnames
+		* of the downloaded files
+		* @param uris the list of Destination URi's of the files to be retrieved
+		* @param paths gets the list of local pathnames to the downloaded files
+		* @param errors string with information on errors occurred during the downloading operations
+		*/
+		void gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+		/**
+		* Prints out information on the operation results on the standard output
+		* @param operation type of operation (set, get or unset)
+		* @param paths the list of local pathnames to the downloaded files
+		*/
+		void printResult(const perusalOperations &operation, std::vector<std::string> &paths);
+        	 /**
                 *	String input arguments
                 */
 		std::string* inOpt ; 		// --input <file>
 		std::string* outOpt ; 	// --ouput <path>
 		std::string* dirOpt ; 		// --dir <path>
-		 /*
+		 /**
                 *	Boolean input arguments
                 */
 		bool getOpt ;
@@ -92,12 +111,12 @@ class JobPerusal  : public Job {
 		bool allOpt ;
                 bool nodisplayOpt ;
 		bool nointOpt;
-		/**
-		* JobID
+		/***
+		* JobId
 		*/
 		std::string jobId ;
-                /**
-                * List of the files
+                /***
+                * List of the files provided as input
                 */
                 std::vector<std::string> peekFiles ;
 

@@ -6,8 +6,10 @@
 * 	Authors:	Alessandro Maraschini <alessandro.maraschini@datamat.it>
 * 			Marco Sottilaro <marco.sottilaro@datamat.it>
 *
-*	$Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
 */
+
+// 	$Id$
+
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
@@ -85,16 +87,27 @@ class JobSubmit : public Job {
                 std::string* getBulkDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) ;
 
 		/**
-                 *	Contacts the server in order to retrieve the  destionationURI's of the job (with the available protocols).
-		 * 	The request is done using the JobId. Compound jobs are identified by the parent's JobId
-		  * 	The method gets back the URI's of a child node if its jobid is specified for the input parameter "child"; in case of empty string for it,
-		 *	the URI's are referred to the parent node.
+                 * 	According to the version of the WMProxy, the DestinationURI is retrieved
+		* 	either with the "Bulk" service or with the "single-node" service.
+		* 	For compund jobs, the WMProxy "Bulk" method gets back one-shot a list
+		* 	with the URI's of the parent and all its children nodes; instead with the other method,
+		* 	the WMProxy in each call can only get back the URIs for one node
                  *	@param jobid the string with the JobId
-		 *	@param zipURI this parameter returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
+		 *	@param zipURI returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
                  *	@return a pointer to the string with the destinationURI having the protocol that will be used for any file transferring
 		 *	(or NULL in case the destinationURI with the chosen protocol is not available )
                 */
 		std::string* getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI);
+		/*
+		*	Contacts the server in order to retrieve the  destionationURI of the job (with the available protocols).
+		* 	The request is done using the JobId.  In case of compound jobs, providing an empty string as input for the "child" parameter,
+		*	the method gets back the information on the URI's of the parents node; otherwise the URI's are referred to the child node which
+		* 	jobid is provided as input of the "child" input parameter.
+		*	@param jobid the jobid string of the parent node (empty string for child nodes of compound jobs)
+		*	@param child the jobid string of the child node of which retrieves the URI's (only for compound jobs; empty string to retrieve the parent's URIs)
+		* 	@param zipURI returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
+		*/
+		std::string* getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) ;
 		/**
 		* Retrieves from the user all the local files of the job input sandbox that have been referenced in the JDL describing
 		* a normal job.
@@ -168,7 +181,6 @@ class JobSubmit : public Job {
                 */
                 std::string* toBCopiedFileList(const std::string &jobid, const std::string &child, const std::string &isb_uri, const std::vector <std::string> &paths, std::vector <std::pair<std::string, std::string> > &to_bcopied);
 
-		std::string* getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) ;
 		/*
 		* Collects a group of files into one or more tar files which are gzip compressed.
 		* The number of archives depends on the size limit of tar archives.

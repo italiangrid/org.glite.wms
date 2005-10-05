@@ -6,8 +6,10 @@
 * 	Authors:	Alessandro Maraschini <alessandro.maraschini@datamat.it>
 * 			Marco Sottilaro <marco.sottilaro@datamat.it>
 *
-*	$Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
 */
+
+// $Id: DAGAd.cpp,v 1.11 2005/07/04 14:57:17 amarasch Exp
+
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_LISTENER_H
 #define GLITE_WMS_CLIENT_SERVICES_LISTENER_H
@@ -91,6 +93,10 @@ class Shadow{
 		* @return the pid number
 		*/
 		int getPid();
+		/**
+		* Retrieve the JobId
+		* @return the string representation of the jobid
+		*/
 		glite::wmsutils::jobid::JobId getJobId(){return jobid;}
 		/**
 		* Read a char from the Output buffer
@@ -101,7 +107,7 @@ class Shadow{
 		* Destroy all appended files/processes/streams, release memory
 		*/
 		void detach();
-		/*** Launch the console-shadow process and retrieve host&port info*/
+		/** Launch the console-shadow process and retrieve host&port info*/
 		void console();
 		/**Retrieve the name of the pipe*/
 		std::string getPipe();		
