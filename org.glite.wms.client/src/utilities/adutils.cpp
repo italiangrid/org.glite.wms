@@ -104,7 +104,7 @@ bool AdUtils::checkConfigurationAd(glite::wms::jdl::Ad& ad, const string& path){
 	try{
 		ad.fromFile(path);
 	}catch (RequestAdException &exc){
-		if (vbLevel==WMSLOG_WARNING){errMsg(WMS_WARNING, "Unable to load conf file: ",path,true);}
+		if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_WARNING, "Unable to load conf file: ",path,true);}
 		return true;
 	}
 	if (ad.hasAttribute(JDL_WMS_CLIENT)) {
