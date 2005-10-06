@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.16  2005/10/06 10:19:00  eronchie
+#       Removed one macro
+#
 #       Revision 1.15  2005/09/21 13:22:05  monforte
 #       Merge against glite-wms-brokerinfo_branch_1_2_4
 #
@@ -247,8 +250,6 @@ AC_GLITE_WMSUTILS
 AC_GLITE_WMS_JDL
 AC_GLITE_WMS_COMMON
 AC_GLITE_WMS_ISM
-
-AC_SEC_GSOAP_PLUGIN
 
 AC_SEC_GSOAP_PLUGIN
 
