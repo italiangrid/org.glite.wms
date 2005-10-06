@@ -425,7 +425,7 @@ WMPAuthorizer::checkGaclUserAuthZ()
 		}
 
 	} else {
-		edglog(info)<<"Variable for VOMS_GACL_FILE is not set "<<fqan<<endl;
+		edglog(warning)<< "unknown voms fqan: " << VOMS_GACL_VAR << " environment variable not set" << endl;
 	}
 	GLITE_STACK_CATCH();
 }
