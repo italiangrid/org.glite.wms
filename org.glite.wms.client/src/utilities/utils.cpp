@@ -546,16 +546,15 @@ string getDefaultVo(){
 			"Proxy File Not Found", "Unable to find a valid proxy file");
 	}
 }
-
 void Utils::checkConf(){
 	string voPath, voName;
-        // config-file pathname
-        string* cfg = wmcOpts->getStringAttribute( Options::CONFIG ) ;
-        // vo-name
-        string *vo = wmcOpts->getStringAttribute( Options::VO ) ;
-        // they can't set together !
+	// config-file pathname
+	string* cfg = wmcOpts->getStringAttribute( Options::CONFIG ) ;
+	// vo-name
+	string *vo = wmcOpts->getStringAttribute( Options::VO ) ;
+	// they can't set together !
 	if (vo && cfg){
-        	ostringstream err ;
+		ostringstream err ;
 		err << "the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::VO) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
@@ -584,19 +583,19 @@ void Utils::checkConf(){
 		*cfg = Utils::getAbsolutePath (*cfg);
 		// config option point to the file
 		if (src==NONE){
-			src=CONFIG_OPT;
 			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--config option",true);}
 		}
 		// Store config path value
 		voPath= *cfg;
+		src=CONFIG_OPT;
 	}else if(getenv(WMS_CLIENT_CONFIG)){
 		// env variable point to the file
 		if (src==NONE){
-			src=CONFIG_VAR;
 			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "ENV option",true);}
 		}
 		// Store config path value
 		voPath=string(getenv(WMS_CLIENT_CONFIG));
+		src=CONFIG_VAR;
 	}else if (wmcOpts->getPath2Jdl()){
 		// JDL specified(submit||listmatch) read the vo plain name
 		if (src==NONE){
