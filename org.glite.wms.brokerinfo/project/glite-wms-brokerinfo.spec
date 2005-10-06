@@ -1,4 +1,4 @@
-Summary:"files for gLite wms brokerinfo"
+Summary:gLite WMS Brokerinfo
 Name:glite-wms-brokerinfo
 Version:@MODULE.VERSION@
 Release:@MODULE.BUILD@
@@ -15,7 +15,7 @@ Source:glite-wms-brokerinfo-@MODULE.VERSION@_bin.tar.gz
 %define	__spec_install_post	%{nil}
 
 %description
-This is the gLite WMS Brokerinfo package
+The gLite WMS Brokerinfo package
 
 %prep
  
