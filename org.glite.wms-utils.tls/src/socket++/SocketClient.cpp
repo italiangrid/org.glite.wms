@@ -1,9 +1,8 @@
-/**
+/***************************************************************************
  *  filename  : SocketClient.cpp
  *  authors   : Salvatore Monforte <salvatore.monforte@ct.infn.it>
- *  authors   : Marco Pappalardo <marco.pappalardo@ct.infn.it>
  *  copyright : (C) 2001 by INFN
- */
+ ***************************************************************************/
 
 // $Id$
 
@@ -160,23 +159,7 @@ bool SocketClient::Send(int i)
 {
   return agent -> Send(i);
 }
-
-/**
- * Send a long value.
- * @param i the long value to send.
- * @return true on success, false otherwise.
- */
 bool SocketClient::Send(long i)
-{
-  return agent -> Send((int)i);
-}
-
-/**
- * Send a long long value.
- * @param i the long long value to send.
- * @return true on success, false otherwise.
- */
-bool SocketClient::Send(long long i)
 {
   return agent -> Send(i);
 }
@@ -200,23 +183,7 @@ bool SocketClient::Receive(int& i)
 {
   return agent -> Receive(i);
 }
-
-/**
- * Receive a long value.
- * @param i a long to fill.
- * @return true on success, false otherwise.
- */
 bool SocketClient::Receive(long& i)
-{
-  return agent -> Receive((int)i);
-}
-
-/**
- * Receive a long long value.
- * @param i a long long to fill.
- * @return true on success, false otherwise.
- */ 
-bool SocketClient::Receive(long long& i)
 {
   return agent -> Receive(i);
 }

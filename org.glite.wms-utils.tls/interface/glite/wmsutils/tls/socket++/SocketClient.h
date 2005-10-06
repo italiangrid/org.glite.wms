@@ -1,9 +1,8 @@
-/**
+/***************************************************************************
  *  filename  : SocketClient.h
  *  authors   : Salvatore Monforte <salvatore.monforte@ct.infn.it>
- *  authors   : Marco Pappalardo <marco.pappalardo@ct.infn.it>
  *  copyright : (C) 2001 by INFN
- */
+ ***************************************************************************/
 
 // $Id$
 
@@ -78,12 +77,6 @@ class SocketClient
    */
   bool Send(long); 
   /**
-   * Send a long long value.
-   * @param i the long long value to send.
-   * @return true on success, false otherwise.
-   */
-  bool Send(long long); 
-  /**
    * Receive an int value.
    * @param i an int to fill.
    * @return true on success, false otherwise.
@@ -94,13 +87,7 @@ class SocketClient
    * @param i a long to fill.
    * @return true on success, false otherwise.
    */
-  bool Receive(long&);  
-  /**
-   * Receive a long long value.
-   * @param i a long long to fill.
-   * @return true on success, false otherwise.
-   */
-  bool Receive(long long&);
+  bool Receive(long&);
  
   /**
    * Receive a string value.

@@ -384,8 +384,8 @@ namespace socket_pp {
 	      
 #ifdef WITH_SOCKET_EXCEPTIONS
 	    } 
-	    catch(...) {
-	      gss_release_cred(&minor_status, &(ctx.credential)); 
+	    catch(...) { 
+	      gss_release_cred(&minor_status, &(ctx.credential));
 	      SocketServer::KillAgent(sa);
 	      sa = NULL;
 	      throw;

@@ -105,16 +105,6 @@ bool SocketAgent::Send(int i)
  */
 bool SocketAgent::Send(long l)
 {
-  return Send((int) l);
-}
-
-/**
- * Sends a long value.
- * @param l the value to be sent.
- * @return true on success, false otherwise.
- */
-bool SocketAgent::Send(long long l)
-{
   unsigned char long_buffer[8];
  
   for( int i=0 ; i<8; i++) 
@@ -155,16 +145,7 @@ bool SocketAgent::Receive( int& i )
   return result;
 }
 
-/**
- * Receive a long value.
- * @param i a long to fill.
- * @return true on success, false otherwise.
- */
-bool SocketAgent::Receive( long& i ) {
-  return Receive((int) i);
-}
-
-bool SocketAgent::Receive( long long& l )
+bool SocketAgent::Receive( long& l )
 {
   bool result;
   l=0;
@@ -172,7 +153,7 @@ bool SocketAgent::Receive( long long& l )
   
   if( result = readbuffer((char*)long_buffer,8))  {
     for (int i=0; i<8; i++) {
-      l  |= (((long long) long_buffer[i]) << (56-i*8)) & ((1L << 64) - 1);
+      l  |= (((unsigned long) long_buffer[i]) << (56-i*8)) & ((1L << 64) - 1);
     }     
   }
   return result;
