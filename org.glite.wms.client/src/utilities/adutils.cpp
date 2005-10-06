@@ -153,13 +153,18 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 }
 
 // STATIC METHODS:
-
-void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& attrValue){
-	if(   (!jdl->hasAttribute(attrName)) &&  attrValue!="" ){
-		jdl->setAttribute(attrName,attrValue);
+void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
+	if (attrValue!=""){
+		if(!jdl->hasAttribute(attrName)){
+			jdl->setAttribute(attrName,attrValue);
+		}else if (force){
+			// Override previous value
+			jdl->delAttribute(attrName);
+			jdl->setAttribute(attrName,attrValue);
+		}
 	}
 }
-void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue){
+void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue, bool force=false){
 	if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
 		// Set Default Attribute ONLY when TRUE
 		jdl->setAttribute(attrName,attrValue);
@@ -175,7 +180,7 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 	// HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
 	setMissing(jdl,JDL::MYPROXY,conf->my_proxy_server());
 	setMissing(jdl,JDL::HLR_LOCATION,conf->hlrlocation());
-	setMissing(jdl,JDL::VIRTUAL_ORGANISATION,conf->virtual_organisation());
+	setMissing(jdl,JDL::VIRTUAL_ORGANISATION,conf->virtual_organisation(),true);
 	setMissing(jdl,JDL::JOB_PROVENANCE,conf->job_provenance());
 	// Boolean Attributes:
 	// ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
