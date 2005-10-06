@@ -176,7 +176,7 @@ try {
   p /= jobid::get_reduced_part(dg_jobid);
   p /= jobid::to_filename(dg_jobid);
 
-  fs::path      BIfile(p / "input/.BrokerInfo", fs::portable_posix_name);
+  fs::path      BIfile((p / "input/.BrokerInfo").native_file_string(), fs::portable_posix_name);
   std::ofstream BIfilestream(BIfile.native_file_string().c_str());
 
   if (!BIfilestream) {
