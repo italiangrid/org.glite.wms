@@ -254,6 +254,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		sprintf(*zero_char, "%s", iter->c_str());
 		zero_char++;
 	}
+        edglog(debug)<<"Registering DAG subjobs to LB"<<endl;
 	if (edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char, str_nsAddr,
 			subjobs)) {
 		string msg = error_message("edg_wll_RegisterSubjobs");
@@ -354,10 +355,12 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 void
 WMPEventLogger::logUserTag(string name, const string &value)
 {
-	GLITE_STACK_TRY("logUserTags()");
+	GLITE_STACK_TRY("logUserTag()");
+        edglog_fn("WMPEventlogger::logUserTag()");
 	
 	Ad *classad = new Ad();
 	classad->setAttribute(name, value);
+        edglog(debug)<<"Logging user tags to LB"<<endl;
 	logUserTags(classad->ad());
 	delete classad;
 	
@@ -415,6 +418,7 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 				WMS_OPERATION_NOT_ALLOWED, "Unable to Parse Expression");
 		}
  		if (val.IsStringValue(attrValue)) {
+                        edglog(debug)<<"Logging user tag to LB"<<endl;
 			if (edg_wll_LogUserTag(ctx, (vect[i].first).c_str(),
 					attrValue.c_str())) {
 				string msg = error_message("edg_wll_LogUserTag");
@@ -433,14 +437,17 @@ void
 WMPEventLogger::setLoggingJob(const std::string &jid, const char* seq_code)
 {
 	GLITE_STACK_TRY("setLoggingJob()");
+        edglog_fn("WMPEventlogger::setLoggingJob()");
 	
 	glite::wmsutils::jobid::JobId jobid(jid);
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
+                edglog(debug)<<"Setting job for logging to LBProxy"<<endl;
 		edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, 
 			getUserDN(), EDG_WLL_SEQ_NORMAL);
 	} else {
 #endif  //HAVE_LBPROXY
+                edglog(debug)<<"Setting job for logging to LB"<<endl;
 		edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code, EDG_WLL_SEQ_NORMAL);
 #ifdef HAVE_LBPROXY
 	}
@@ -506,6 +513,7 @@ WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
 bool
 WMPEventLogger::logAbortEventSync(char* reason)
 {
+        edglog_fn("WMPEventlogger::logAbortEventSync");
 	edglog(debug)<<"Logging Abort event (sync)"<<endl;
 	//TBC Checks possibility to do it with LBProxy
 #ifdef HAVE_LBPROXY
