@@ -163,7 +163,8 @@ try {
   matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
   
   // update the brokerinfo
-  BI->retrieveCloseSEsInfo(ce_it->first);
+  std::string CEid(ce_it->first);
+  BI->retrieveCloseSEsInfo(CEid);
   BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
 
   const configuration::NSConfiguration* ns_conf
