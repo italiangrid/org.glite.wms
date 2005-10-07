@@ -14,6 +14,80 @@ doExit() {
   exit $stat
 }
 
+function send_partial_file {
+  # Use local variables to avoid conflicts with main program
+  local TRIGGERFILE=$1
+  local DESTURL=$2
+  local POLL_INTERVAL=$3
+  local FILESUFFIX=partialtrf
+  local GLOBUS_RETURN_CODE
+  local SLICENAME
+  local LISTFILE=`pwd`/listfile.$!
+  local LAST_CYCLE=""
+  local SLEEP_PID
+  local MD5
+  local OLDSIZE
+  local NEWSIZE
+  local COUNTER
+  # Loop forever (need to be killed by main program)
+  while [ -z "$LAST_CYCLE" ] ; do
+    # Go to sleep, but be ready to wake up when the user job finishes
+    sleep $POLL_INTERVAL & SLEEP_PID=$!
+    trap 'LAST_CYCLE="y"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2
+    wait $SLEEP_PID >/dev/null 2>&1
+    # Retrive the list of files to be monitored
+    tmpdemo=`echo $TRIGGERFILE | awk -F "://" '{print $1}'`
+    if [ "$tmpdemo" == "gsiftp" ]; then
+      globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
+    elif [ "$tmpdemo" == "https" ]; then
+      htcp ${TRIGGERFILE} file://${file}
+    fi
+    # Skip iteration if unable to get the list
+    # (can be used to switch off monitoring)
+    if [ "$?" -ne "0" ] ; then
+      continue
+    fi
+    for SRCFILE in `cat $LISTFILE` ; do
+      # SRCFILE must contain the full path
+      if [ "$SRCFILE" == "`basename $SRCFILE`" ] ; then
+        SRCFILE=`pwd`/$SRCFILE
+      fi
+      if [ -f $SRCFILE ] ; then
+        # Point to the "state" variables of the current file
+        # (we will use indirect reference)
+        MD5=`echo $SRCFILE | md5sum | awk '{ print $1 }'`
+        OLDSIZE="OLDSIZE_$MD5"
+        COUNTER="COUNTER_$MD5"
+        # Initialize variables if referenced for the first time
+        if [ -z "${!OLDSIZE}" ]; then eval local $OLDSIZE=0; fi
+        if [ -z "${!COUNTER}" ]; then eval local $COUNTER=1; fi
+        # Make a snapshot of the current file
+        cp $SRCFILE ${SRCFILE}.${FILESUFFIX}
+        let "NEWSIZE = `stat -t ${SRCFILE}.${FILESUFFIX} | awk '{ print $2 }'`"
+        if [ "${NEWSIZE}" -gt "${!OLDSIZE}" ] ; then
+          let "DIFFSIZE = NEWSIZE - $OLDSIZE"
+          SLICENAME=$SRCFILE.`date +%Y%m%d%H%m%S`_${!COUNTER}
+          tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME
+          tmpdemo=`echo $DESTURL | awk -F "://" '{print $1}'`
+          if [ "$tmpdemo" == "gsiftp" ]; then
+            globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
+          elif [ "$tmpdemo" == "https" ]; then
+            htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
+          fi
+          GLOBUS_RETURN_CODE=$?
+          rm ${SRCFILE}.${FILESUFFIX} $SLICENAME
+          if [ "$GLOBUS_RETURN_CODE" -eq "0" ] ; then
+            let "$OLDSIZE = NEWSIZE"
+            let "$COUNTER += 1"
+          fi # else we will send this chunk toghether with the next one
+        fi # else the file size didn't increase
+      fi
+    done
+  done
+  # Do some cleanup
+  if [ -f "$LISTFILE" ] ; then rm $LISTFILE ; fi
+}
+
 if [ "${__input_base_url}:-1" != "/" ]; then
   __input_base_url="${__input_base_url}/"
 fi
@@ -186,6 +260,10 @@ export GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
  --node=$host\
  || echo $GLITE_WMS_SEQUENCE_CODE`
 
+if [ $__perusal_support -eq 1 ]; then
+  send_partial_file ${__perusal_listfileuri} ${__perusal_filesdesturi} ${__perusal_timeinterval} & send_pid=$!
+fi
+
 value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm $__token_file`
 result=$?
 if [ $result -eq 0 ]; then
@@ -221,6 +299,10 @@ fi
 ./glite-wms-job-agent "${BYPASS_SHADOW_HOST} ${BYPASS_SHADOW_PORT} ${__job} ${__arguments} $*"
 
 status=$?
+
+kill -USR2 $send_pid
+wait $send_pid 
+
 echo "job exit status = ${status}"
 echo "job exit status = ${status}" >> "${maradona}"
 
