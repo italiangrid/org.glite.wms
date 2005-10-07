@@ -4,6 +4,7 @@
  *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
  *              Rosario Peluso <rosario.peluso@pd.infn.it>
  *              Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
+ *              Marco Cecchi <marco.cecchi@cnaf.infn.it>
  *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
  *  For license conditions see LICENSE file or
  *  http://www.edg.org/license.html
@@ -18,6 +19,8 @@
 #include <utility>
 #include <boost/shared_ptr.hpp>
 #include "jobadapter/url/URL.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 
 namespace classad {
 class ExprList;
@@ -32,21 +35,17 @@ namespace jobwrapper {
 class JobWrapper
 {
   friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
+  bool dump_vars(std::ostream&) const;
 
 public:
   /**
-   *  Default constructor.
    *  Initializes the object passing the parameters to the job wrapper.
    *  \param job
    *  \ingroup jobadapter
    */
   JobWrapper(const std::string& job);
 
-  /**
-   *  Default destructor.
-   *  \ingroup jobadapter
-   */
-  virtual ~JobWrapper(void);
+  virtual ~JobWrapper();
 
 public:
   /**
@@ -180,35 +179,36 @@ public:
 
    /**
     * Set the support of Input/Output Sandboxes in WMProxy.
+    * @param wm
     * \ingroup jobadapter
     */
    void wmp_support(void);
-  
+
    /**
    * Declare which files are in the input sandbox and where they are located.
-   * @param input_base_files location of all the files in the input sandbox
+   * @param base_url location of all the files in the input sandbox
+   * @param files    list of files in the input sandbox
    * \ingroup jobadapter
    */
-   void wmp_input_sandbox_support(const url::URL& base_url,
+  void wmp_input_sandbox_support(const url::URL& base_url,
                                   const std::vector<std::string>& input_base_files);
 
   /**
-   * Declare which files are in the output sandbox and where they have to be mov
-ed.
-   * @param output_files
-   * @param output_dest_files
+   * Declare which files are in the output sandbox and where they have to be moved.
+   * @param base_url location the files in the output sandbox have to be moved to
+   * @param files    list of files in the output sandbox
    * \ingroup jobadapter
    */
   void wmp_output_sandbox_support(const std::vector<std::string>& output_files,
-                                  const std::vector<std::string>& output_dest_files);
-
+				 const std::vector<std::string>& output_dest_files);   
+   
   /**
    * Declare the token file.
    * @param base_url
    * @param file
    * \ingroup token
    */
-  void token(const std::string& token_file);
+  void token(std::string const& token_file);
 
   /**
     * Set the support of Perusal.
@@ -216,105 +216,15 @@ ed.
     */
 
   void perusal_support(void);
-
   void perusal_timeinterval(int perusaltimeinterval);
-
   void perusal_filesdesturi(const std::string& filesdesturi);
-
   void perusal_listfileuri(const std::string& listfileuri);
-   
+
 protected:
-  virtual std::ostream& print(std::ostream& os) const;
-  
-  virtual std::ostream& set_shell(std::ostream& os) const;
-  
-  virtual std::ostream& set_subdir(std::ostream&      os,
-		                   const std::string& dir) const;
-  virtual std::ostream& clean_subdir(std::ostream& os) const;
-  
-  virtual std::ostream& check_workdir(std::ostream& os) const;
-  virtual std::ostream& set_workdir(std::ostream& os) const;
-  
-  virtual std::ostream& set_environment(std::ostream&                   os,
-		  		        const std::vector<std::string>& env) const;
-  virtual std::ostream& set_environment(std::ostream&      os,
-			                const std::string& variable,
-					const std::string& value) const;
-  virtual std::ostream& check_set_environment(std::ostream& os,
-                                        const std::string&  variable,
-                                        const std::string&  value) const;
 
-  virtual std::ostream& set_umask(std::ostream& os) const;
-  
-  virtual std::ostream& check_file_mod(std::ostream&      os,
-		                       const std::string& file) const;
-  
-  virtual std::ostream& set_lb_sequence_code(std::ostream&      os,
-  	                                     const std::string& event,
-					     const std::string& reason,
-					     const std::string& scode,
-					     const std::string& ecode) const;
-  virtual std::ostream& check_globus(std::ostream& os) const;
+  virtual std::ostream& print(std::ostream& os) const;  
+  bool fill_out_script(std::string const&, std::ostream&) const;
 
-  virtual std::ostream& prepare_transfer(std::ostream&                   os,
-			                 const std::vector<std::string>& file) const;
-  virtual std::ostream& prepare_transfer_wmp_support(
-                                         std::ostream&                   os,
-                                         const std::vector<std::string>& file,
-                                         const std::vector<std::string>& filetransfer) const;
-
-  virtual std::ostream& make_transfer(std::ostream&   os,
-		  		      const url::URL& prefix,
-				      const bool&     input) const;
-  virtual std::ostream& make_transfer_wmp_support(std::ostream&   os,
-		                                  const bool&     input) const;
-
-  virtual std::ostream& rm_token(std::ostream& os,
-                                 const std::string& file) const;
-
-  virtual std::ostream& execute_job(std::ostream&      os,
-			            const std::string& arguments,
-			            const std::string& job,
-			            const std::string& stdi,
-			            const std::string& stdo,
-			            const std::string& stde,
-				    int                node) const;
-
-  virtual std::ostream& make_bypass_transfer(std::ostream& os,
-		  			     const std::string& prefix) const;
-
-  virtual std::ostream& create_maradona_file(std::ostream& os,
-		  			     const std::string& jobid_to_filename) const;
-
-  virtual std::ostream& send_dgas_gianduia_lsf_files(std::ostream& os,
-                                  const std::string& globus_resource_contact_string,
-                                  const std::string& gatekeeper) const;
-
-  virtual std::ostream& send_dgas_gianduia_pbs_files(std::ostream& os,
-                                  const std::string& globus_resource_contact_string,
-                                  const std::string& gatekeeper) const;
-
-  virtual std::ostream& doExit(std::ostream& os,
-		  	       const std::string& maradonaprotocol,
-			       bool create_subdir) const;
-
-  virtual std::ostream& handle_output_data(std::ostream& os) const;
-
-  virtual std::ostream& doDSUploadTmp(std::ostream& os) const;
-  virtual std::ostream& doDSUpload(std::ostream& os) const;
-  virtual std::ostream& doCheckReplicaFile(std::ostream& os) const;
-  virtual std::ostream& doReplicaFile(std::ostream& os) const;
-  virtual std::ostream& doReplicaFilewithLFN(std::ostream& os) const;
-  virtual std::ostream& doReplicaFilewithSE(std::ostream& os) const;
-  virtual std::ostream& doReplicaFilewithLFNAndSE(std::ostream& os) const;
-
-  virtual std::ostream& do_perusal(std::ostream& os) const;
-  virtual std::ostream& do_call_perusal(std::ostream& os,
-	                                const std::string& triggerfile,
-	                                const std::string& desturl,
-	                                int pollingtime) const;
-  virtual std::ostream& do_kill_perusal(std::ostream& os) const;
-	
 protected:
   // executable, stdin, stdout, stderr, and arguments
   std::string              m_job;
@@ -323,61 +233,39 @@ protected:
   std::string              m_standard_error;
   std::string              m_arguments;
   std::string              m_maradonaprotocol;
-  
-  // input sandbox
+
   url::URL                 m_input_base_url;
   std::vector<std::string> m_input_files;
 
-  // output sandbox
   url::URL                 m_output_base_url;
   std::vector<std::string> m_output_files;
 
-  // brokerinfo file
   std::string              m_brokerinfo;
-
-  // create subdirectory?
   bool                     m_create_subdir;
-
-  // job id
   std::string              m_jobid;
-
-  // job id file name
   std::string              m_jobid_to_filename;
-  
-  // gatekeeper hostname
   std::string              m_gatekeeper_hostname;
-
-  // globus resource contact string
   std::string              m_globus_resource_contact_string;
-
-  // environment variable
   std::vector<std::string> m_environment;
-
-  // node number
-  int                      m_nodes;
-
-  // List of OutputData
+  int                      m_nodes; // nodes for parallel jobs
   boost::shared_ptr<classad::ExprList> m_outputdata;
-  
   std::string              m_vo;
-
   std::string              m_dsupload;
 
-  bool                     m_wmp_support;
+  bool	                  m_wmp_support;
   std::vector<std::string> m_wmp_input_files;
   std::vector<std::string> m_wmp_input_base_files;
   std::vector<std::string> m_wmp_output_files;
   std::vector<std::string> m_wmp_output_dest_files;
-
+  
   std::string              m_token_file;
 
-  bool			   m_perusal_support;
-  int 			   m_perusal_timeinterval;
-  std::string		   m_perusal_filesdesturi;
-  std::string		   m_perusal_listfileuri;
+  bool                     m_perusal_support;
+  int                      m_perusal_timeinterval;
+  std::string              m_perusal_filesdesturi;
+  std::string              m_perusal_listfileuri;
   
 protected:
-  // default value of the brokerinfo file
   static const std::string s_brokerinfo_default;
 };
 

@@ -63,17 +63,7 @@ public:
   virtual ~InteractiveJobWrapper(void);
 
 protected:
-  virtual std::ostream& make_bypass_transfer(std::ostream& os,
-		  			     const std::string& prefix) const;
-
-  virtual std::ostream& execute_job(std::ostream&      os,
-                                    const std::string& arguments,
-                                    const std::string& job,
-                                    const std::string& stdi,
-                                    const std::string& stdo,
-                                    const std::string& stde,
-                                    int                node) const;
-  
+  virtual std::ostream& print(std::ostream& os) const;
 };
 
 } // namespace jobwrapper

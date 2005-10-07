@@ -4,6 +4,7 @@
  *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
  *              Rosario Peluso <rosario.peluso@pd.infn.it>
  *              Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
+ *              Marco Cecchi <marco.cecchi@cnaf.infn.it>
  *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
  *  For license conditions see LICENSE file or
  *  http://www.edg.org/license.html
@@ -66,16 +67,8 @@ public:
   virtual ~MpiLsfJobWrapper(void);
 
 protected:
-  virtual std::ostream& set_subdir(std::ostream&      os,
-                                   const std::string& dir) const;
+  virtual std::ostream& print(std::ostream& os) const;
 
-  virtual std::ostream& execute_job(std::ostream&      os,
-		                    const std::string& arguments,
-                                    const std::string& job,
-                                    const std::string& stdi,
-                                    const std::string& stdo,
-                                    const std::string& stde,
-				    int                node) const;
 };
 
 } // namespace jobwrapper
