@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.16  2005/10/07 15:45:20  eronchie
+#       Added templates handling
+#
 #       Revision 1.15  2005/09/22 11:42:50  eronchie
 #       Started merging with rc1.4
 #
@@ -240,6 +243,7 @@ AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
+AC_CONFIG_FILES([config/Makefile])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([examples/Makefile])
 # AC_CONFIG_FILES([test/Makefile])
