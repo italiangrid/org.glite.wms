@@ -1318,6 +1318,7 @@ submit(const string &jdl, JobId *jid)
 	int type = getType(jdl);
 	if (type == TYPE_JOB) {
 		JobAd * jad = new JobAd(jdl);
+		jad->setLocalAccess(false);
 		
 		// Looking for Zipped ISB
 		if (jad->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
@@ -1387,6 +1388,7 @@ submit(const string &jdl, JobId *jid)
 		delete jad;
 	} else {
 		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
+		dag->setLocalAccess(false);
 		
 		// Looking for Zipped ISB
 		if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
