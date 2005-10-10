@@ -475,7 +475,7 @@ getServerHost() {
     struct hostent *server = NULL;
     char * servername = getenv("SERVER_NAME");
     if (servername) {
-	    edglog(debug)<<"SERVER_NAME: "<<string(servername)<<endl;
+	    edglog(debug)<<"Server name: "<<string(servername)<<endl;
 		if ((server = gethostbyname(servername)) == NULL) {
 			edglog(critical)<<"Unable to get server address"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
@@ -1111,9 +1111,7 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1);
 	}
 	time_t stoptime = time(NULL);
-	edglog(info)<<"______ STARTING TIME: "<<starttime<<endl;
-	edglog(info)<<"______ STOPPING TIME: "<<stoptime<<endl;
-	edglog(info)<<"______ ELAPSED TIME: "<<(stoptime - starttime)<<endl;
+	edglog(debug)<<"Directory creation elapsed time: "<<(stoptime - starttime)<<endl;
 	
     return exit_code;
     GLITE_STACK_CATCH();
