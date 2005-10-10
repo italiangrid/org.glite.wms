@@ -57,12 +57,12 @@ public class WMProxyJobListMatchTest {
 		System.out.println ("delegationID		= [" + delegationID + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");		System.out.println ("proxy			= [" + proxyFile+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("JDL			= [" + jdlString + "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		// Reads JDL
 		JobAd jad = new JobAd ( );
 		jad.fromFile ( jdlFile );
 		jdlString = jad.toString ( );
+		System.out.println ("jdlString		= [" + jdlString + "]" );
+		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		// Test
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
 		System.out.println ("Testing ....");
