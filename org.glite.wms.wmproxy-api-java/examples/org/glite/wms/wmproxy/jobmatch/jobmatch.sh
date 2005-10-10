@@ -39,13 +39,9 @@ for p in \
 	${top}stage/share/java/glite-security-util-java.jar \
 	${top}stage/share/java/glite-security-delegation-java.jar \
 	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	 ${top}repository/bcprov-jdk14/1.22/share/jars/jce-jdk13-122.jar \
-	$AXIS_LOC/axis.jar \
-	$AXIS_LOC/jaxrpc.jar \
-	$AXIS_LOC/log4j-1.2.8.jar \
-	$AXIS_LOC/commons-logging.jar \
-	$AXIS_LOC/commons-discovery.jar \
-	$AXIS_LOC/saaj.jar
+	${top}repository/bcprov-jdk14/1.22/share/jars/jce-jdk13-122.jar \
+	${top}repository/jclassads/2.2/share/classad.jar \
+	$AXIS_LOC/*.jar 
 do
 	if ! printenv JSS_CLASSPATH | grep -q "${p}"; then
 		if [ -n "${classpath}" ]; then
@@ -64,6 +60,7 @@ p4=$4
 
 # launching the test...
 # ------------------------
+set -x
 java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3} ${p4}
 
 
