@@ -98,76 +98,6 @@ void WMP2WM::init(const std::string &filename,
   	edglog(debug)<<"wmp2wm initialization done"<<std::endl;
 }
 
-void WMP2WM::storeSequenceCode (classad::ClassAd* cmdAd)
-{
-	edglog_fn("wmp2wm::storeSequenceCode");
-  	edglog(debug)<<"Storing Seq_Code"<<std::endl;
-
-  	std::string seq_code;
-  	try {
-   		seq_code.assign(wmsutilities::evaluate_expression(*cmdAd,
-   			"Arguments.SeqCode")); 
-   		std::string seq_path(wmsutilities::evaluate_expression(*cmdAd,
-   			"Arguments.JobPath"));
-   		std::string seq_file(seq_path + "/" + SEQFILENAME);
-   		std::string jdl( wmsutilities::evaluate_expression(*cmdAd,
-   			"Arguments.jdl"));
-   		classad::ClassAdParser parser;
-   		classad::ClassAd* jdlad = parser.ParseClassAd(jdl);
-   		std::string type(wmsutilities::evaluate_expression(*jdlad, "type"));
-
-   		edglog(debug)<<"Sequence Code: "<<seq_code<<std::endl;
-   		edglog(debug)<<"Sequence Code file: "<<seq_file<<std::endl;
-
-   		std::ofstream ostr(seq_file.c_str());
-   		if (ostr) {
-     		ostr<<seq_code<<std::endl;
-     		ostr.close();
-
-     		if (type == std::string("dag")) {
-       			std::string to_root ( wmsutilities::evaluate_expression(*cmdAd, 
-       				"Arguments.SandboxRootPath" ));
-       			storeDAGSequenceCode(jdlad, seq_file, to_root);
-     		}
-		} else {
-   			edglog(error)<<"Error during sequence file creation"<<std::endl;
-   		}
-  	} catch (wmsutilities::InvalidValue& e) {
-    	edglog(critical)<<"Job path not found\n\t"<<seq_code<<std::endl;
-  	} catch (std::exception& e) {
-    	edglog(critical)<<"Exception during sequence code storaging"
-    		<<e.what()<<std::endl;
-	}
-}
-
-void WMP2WM::storeDAGSequenceCode(classad::ClassAd* jdlad, std::string seqfile, 
-	std::string to_root_path) {
-
-	edglog_fn("wmp2wm::storeDAGSequenceCode" );
-  edglog(debug)<<"Storing Seq_Code for Nodes"<<std::endl; 
- 
-  	requestad::DAGAd dagad(*jdlad);                                                    
-  	requestad::DAGAd::node_iterator node_b;
-  	requestad::DAGAd::node_iterator node_e; 
-  	boost::tie(node_b, node_e) = dagad.nodes();
-
-  	while (node_b != node_e) {
-    	const requestad::DAGNodeInfo& node_info = (*node_b).second; 
-    	const classad::ClassAd* ad = node_info.description_ad(); 
-    	std::string id; 
-    	if (!ad->EvaluateAttrString("edg_jobid", id) ) { 
-      		edglog(critical)<<"Error while retrieving jobId from classad"
-      			<<std::endl; 
-    	} 
- 
-		std::string to_path( std::string(to_root_path) + "/"
-			+ wmputilities::to_filename(wmsutils::jobid::JobId(id))
-			+ "/" + SEQFILENAME); 
-    	wmputilities::fileCopy(seqfile, to_path);
-    	node_b++; 
-  	} 
-}
-
 std::string WMP2WM::convertProtocol(classad::ClassAd* cmdAd) {
 	edglog_fn("wmp2wm::convertProtocol");
   	edglog(debug)<<"Converting to common protocol"<<std::endl;
@@ -266,9 +196,6 @@ void WMP2WM::submit(classad::ClassAd* cmdAd)
     		e.what(), (*m_filelist).filename().c_str(), jdl.c_str());
     	edglog(critical)<<"Submit EnQueued FAIL"<<std::endl;
   	}
-
-  	// Save the sequence code on an hidden file.
-  	storeSequenceCode(cmdAd);
 
   	edglog(debug)<<"Submit Forwarded"<<std::endl; 
 }
