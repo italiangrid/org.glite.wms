@@ -1401,7 +1401,7 @@ submit(const string &jdl, JobId *jid)
 		}
 		
 		// Adding attribute for perusal functionalities
-		string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
+		string peekdir = wmputilities::getPeekDirectoryPath(*jid);
 		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
 			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
 				edglog(debug)<<"Enabling perusal functionalities for job: "
@@ -1409,12 +1409,8 @@ submit(const string &jdl, JobId *jid)
 				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
 					<<endl;
 				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
-					+ PERUSAL_FILE_2_PEEK_NAME);
-				if (jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
-					edglog(debug)<<"Disabling perusal functionalities..."<<endl;
-					wmputilities::setFlagFile(peekdir
-					+ EXTERNAL_PEEK_FLAG_FILE, true);
-				} else {
+					 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+				if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
 					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
 						<<endl;
 					jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
@@ -1429,14 +1425,7 @@ submit(const string &jdl, JobId *jid)
 				jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
 				
 				jdltostart = jad->toSubmissionString();
-			} else {
-				edglog(debug)<<"Disabling perusal functionalities..."<<endl;
-				wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
-					true);
 			}
-		} else {
-			edglog(debug)<<"Disabling perusal functionalities..."<<endl;
-			wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE, true);	
 		}
 		
 		delete jad;
@@ -1477,8 +1466,7 @@ submit(const string &jdl, JobId *jid)
 	    	}
 	    	
 	    	// Adding attributes for perusal functionalities
-	    	string peekdir = wmputilities::getPeekDirectoryPath(jobid)
-	    		+ FILE_SEPARATOR;
+	    	string peekdir = wmputilities::getPeekDirectoryPath(jobid);
 			if (dag->hasNodeAttribute(jobid, JDL::PU_FILE_ENABLE)) {
 				if (dag->getNodeBool(jobid, JDL::PU_FILE_ENABLE)) {
 					edglog(debug)<<"Enabling perusal functionalities for job: "
@@ -1486,12 +1474,8 @@ submit(const string &jdl, JobId *jid)
 					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
 						<<endl;
 					dag->setNodeAttribute(jobid, JDLPrivate::PU_LIST_FILE_URI,
-						peekdir + PERUSAL_FILE_2_PEEK_NAME);
-					if (dag->hasNodeAttribute(jobid, JDL::PU_FILES_DEST_URI)) {
-						edglog(debug)<<"Setting external perusal URI..."<<endl;
-						wmputilities::setFlagFile(peekdir
-							+ EXTERNAL_PEEK_FLAG_FILE, true);
-					} else {
+						peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+					if (!dag->hasNodeAttribute(jobid, JDL::PU_FILES_DEST_URI)) {
 						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
 							<<endl;
 						dag->setNodeAttribute(jobid, JDL::PU_FILES_DEST_URI,
@@ -1509,15 +1493,7 @@ submit(const string &jdl, JobId *jid)
 					dag->setNodeAttribute(jobid, JDL::PU_TIME_INTERVAL, time);
 					
 					jdltostart = dag->toString();
-				} else {
-					edglog(debug)<<"Disabling perusal functionalities..."<<endl;
-					wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
-						true);	
 				}
-			} else {
-				edglog(debug)<<"Disabling perusal functionalities..."<<endl;
-				wmputilities::setFlagFile(peekdir + DISABLED_PEEK_FLAG_FILE,
-					true);	
 			}
 		}
 	    
