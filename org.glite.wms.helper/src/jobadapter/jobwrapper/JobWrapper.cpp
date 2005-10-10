@@ -16,10 +16,13 @@
 #include <fstream>
 
 #include <classad_distribution.h>
+
+#include "glite/wms/jdl/JobAdManipulation.h"
 #include "JobWrapper.h"
 
 namespace url = glite::wms::helper::jobadapter::url;
 namespace configuration = glite::wms::common::configuration;
+namespace jdl = glite::wms::jdl;
 
 using namespace std;
 using namespace classad;
@@ -84,6 +87,10 @@ JobWrapper::create_subdir(void)
 void
 JobWrapper::brokerinfo(const string& file)
 {
+  assert(file.find_first_of("/") == string::npos);
+  assert(file != "");
+
+  m_brokerinfo = file;
 }
 
 void
@@ -221,7 +228,6 @@ JobWrapper::perusal_listfileuri(const string& listfileuri)
   m_perusal_listfileuri = listfileuri;
 }
 
-
 namespace {
 
 bool 
@@ -262,7 +268,7 @@ dump_string_vector(std::ostream& os, const std::string& var_names, std::vector<s
   int i = 0;
 
   if(values.empty()) {
-    os << "declare -a " << var_names << "\n";
+    os << "declare -a " << var_names << '\n';
   }
   else {
     for(std::vector<std::string>::const_iterator it = values.begin(); it != values.end() ; ++it )  {
@@ -273,7 +279,37 @@ dump_string_vector(std::ostream& os, const std::string& var_names, std::vector<s
   return os;
 }
 
+bool
+dump_classad_exprlist(std::ostream& os,
+                      std::string var_output_file,
+                      std::string var_output_lfn,
+                      std::string var_output_se,
+                      boost::shared_ptr<classad::ExprList> const outputdata)
+{
+  ExprList::const_iterator it;
+  bool check;
+  int i = 0;
+
+  if( outputdata != 0 ) {
+    for (it = outputdata->begin(); it != outputdata->end(); ++it) {
+      ClassAd* ad = dynamic_cast<ClassAd*>(*it);
+      if (ad != 0) {
+        os << var_output_file << '[' << i << "]=\"" << jdl::get_output_file(*ad) << "\"\n";
+        os << var_output_lfn << '[' << i << "]=\"" << jdl::get_logical_file_name(*ad, check) << "\"\n";
+        os << var_output_se << '[' << i << "]=\"" << jdl::get_storage_element(*ad, check) << "\"\n";
+        ++i;
+      }
+    }
+  }
+  else {
+    os << "declare -a " << var_output_file << '\n';
+    os << "declare -a " << var_output_lfn << '\n';
+    os << "declare -a " << var_output_se << '\n';
+  }
+  return os;
 }
+
+} // anonymous namespace
 
 bool 
 JobWrapper::dump_vars(std::ostream& os) const
@@ -308,7 +344,9 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump_bool(os, "__perusal_support", m_perusal_support) &&
     dump_numeric(os, "__perusal_timeinterval", m_perusal_timeinterval) &&
     dump_string(os, "__perusal_filesdesturi", m_perusal_filesdesturi) &&
-    dump_string(os, "__perusal_listfileuri", m_perusal_listfileuri);
+    dump_string(os, "__perusal_listfileuri", m_perusal_listfileuri) &&
+    dump_bool(os, "__handle_ouput_data", m_outputdata == 0) && 
+    dump_classad_exprlist(os, "__output_file", "__output_lfn", "__output_se", m_outputdata);
 }
 
 bool 
