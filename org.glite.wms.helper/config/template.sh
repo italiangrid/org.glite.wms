@@ -250,7 +250,16 @@ GLITE_WMS_SEQUENCE_CODE="$1"
 shift
 
 if [ -z "${GLITE_WMS_LOCATION}" ]; then
-  export GLITE_WMS_LOCATION="${__edg_location}"
+  export GLITE_WMS_LOCATION="${GLITE_LOCATION:-/opt/glite}"
+fi
+
+if [ -z "${EDG_WL_LOCATION}" ]; then
+  export EDG_WL_LOCATION="${EDG_LOCATION:-/opt/edg}"
+fi
+
+LB_LOGEVENT="${GLITE_WMS_LOCATION}/bin/glite-lb-logevent"
+if [ ! -f \"$LB_LOGEVENT\" ]; then
+  LB_LOGEVENT="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
 
 if [ $__create_subdir -eq 1 ]; then
@@ -274,6 +283,7 @@ if [ ! -w . ]; then
 
   exit 1
 fi
+workdir="`pwd`"
 
 if [ -n "${__brokerinfo}" ]; then
   export GLITE_WMS_RB_BROKERINFO="`pwd`/${__brokerinfo}"
