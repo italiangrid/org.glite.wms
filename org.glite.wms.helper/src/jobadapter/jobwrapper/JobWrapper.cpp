@@ -318,7 +318,6 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump_bool(os, "__create_subdir", m_create_subdir) &&
     dump_string(os, "__gatekeeper_hostname", m_gatekeeper_hostname) &&
     dump_string(os, "__jobid", m_jobid) &&
-    dump_string(os, "__edg_location", "${GLITE_LOCATION:-/opt/glite}") &&
     dump_string(os, "__job", m_job) &&
     dump_string(os, "__standard_input", m_standard_input) &&
     dump_string(os, "__standard_output", m_standard_output) &&
