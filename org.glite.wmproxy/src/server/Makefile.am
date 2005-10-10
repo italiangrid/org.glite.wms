@@ -31,7 +31,7 @@ wm.h :
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/server/wm.h 
+	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION):$(GSOAP_LOCATION)/import $(top_srcdir)/build/src/server/wm.h 
 
 glite_wms_wmproxy_server_SOURCES = \
 	wm.h \

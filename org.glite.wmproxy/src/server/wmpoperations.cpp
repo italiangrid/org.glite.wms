@@ -184,6 +184,57 @@ void jobpurge(jobPurgeResponse &jobPurge_response, JobId *jid, bool checkstate
 	= true);
 
 
+int
+logRemoteHostInfo()
+{
+	try {
+		string msg = "Remote Host IP: ";
+		string msg2 = "Remote CLIENT S DN: ";
+		string msg3 = "Remote GRST CRED: ";
+		edglog(info)
+			<<"-------------------------------- Incoming Request "
+				"--------------------------------"
+			<<endl;
+		
+		if (getenv("REMOTE_ADDR")) {
+			msg += string(getenv("REMOTE_ADDR"));
+			if (getenv("REMOTE_PORT")) {
+				msg += ":" + string(getenv("REMOTE_PORT"));
+			}
+		} else {
+			msg += "Not Available";
+		}
+		msg += " - Remote Host Name: ";
+		if (getenv("REMOTE_HOST")) {
+			msg += string(getenv("REMOTE_HOST"));
+		} else {
+			msg += "Not Available";
+		}
+		if (getenv("SSL_CLIENT_S_DN")) {
+			msg2 += string(getenv("SSL_CLIENT_S_DN"));
+		} else {
+			msg2 += "Not Available";
+		}
+		if (getenv("GRST_CRED_2")) {
+			msg3 += string(getenv("GRST_CRED_2"));
+		} else {
+			msg3 += "Not Available";
+		}
+		
+		edglog(info)<<msg<<endl;
+	    edglog(info)<<msg2<<endl;
+		edglog(info)<<msg3<<endl;
+		edglog(info)
+			<<"----------------------------------------"
+				"------------------------------------------"
+		<<endl;
+
+		return 0;
+	} catch (exception &ex) {
+		edglog(fatal)<<"Exception caught: "<<ex.what()<<endl;
+		return -1;
+	}
+}
 
 /**
  * Converts JobIdStruct vector into a JobIdStructType vector pointer
@@ -344,6 +395,7 @@ getVersion(getVersionResponse &getVersion_response)
 {
 	GLITE_STACK_TRY("getVersion()");
 	edglog_fn("wmpoperations::getVersion");
+	logRemoteHostInfo();
 	
 	getVersion_response.version = WMP_VERSION;
 	edglog(info)<<"Version retrieved: "<<getVersion_response.version<<endl;
@@ -446,6 +498,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 {
 	GLITE_STACK_TRY("jobRegister()");
 	edglog_fn("wmpoperations::jobRegister");
+	logRemoteHostInfo();
 	
 	// Checking delegation id
 	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
@@ -1134,6 +1187,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 {
 	GLITE_STACK_TRY("jobStart()");
 	edglog_fn("wmpoperations::jobStart");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -1497,6 +1551,7 @@ jobSubmit(jobSubmitResponse &jobSubmit_response,
 {
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpoperations::jobSubmit");
+	logRemoteHostInfo();
 	
 	// Checking delegation id
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
@@ -1589,6 +1644,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 {
 	GLITE_STACK_TRY("jobCancel()");
 	edglog_fn("wmpoperations::jobCancel");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -1812,6 +1868,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 {
 	GLITE_STACK_TRY("getMaxInputSandboxSize()");
 	edglog_fn("wmpoperations::getMaxInputSandboxSize");
+	logRemoteHostInfo();
 
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -1843,6 +1900,7 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 {
 	GLITE_STACK_TRY("getSandboxDestURI()");
 	edglog_fn("wmpoperations::getSandboxDestURI");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);
@@ -1884,6 +1942,7 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 {
 	GLITE_STACK_TRY("getSandboxBulkDestURI()");
 	edglog_fn("wmpoperations::getSandboxBulkDestURI");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);
@@ -1958,6 +2017,7 @@ getQuota(getQuotaResponse &getQuota_response)
 {
 	GLITE_STACK_TRY("getQuota()");
 	edglog_fn("wmpoperations::getQuota");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -1985,6 +2045,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 {
 	GLITE_STACK_TRY("getFreeQuota()");
 	edglog_fn("wmpoperations::getFreeQuota");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2123,6 +2184,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 {
 	GLITE_STACK_TRY("jobPurge()");
 	edglog_fn("wmpoperations::jobPurge");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);
@@ -2159,6 +2221,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 {
 	GLITE_STACK_TRY("getOutputFileList()");
 	edglog_fn("wmpoperations::getOutputFileList");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	
 	JobId *jobid = new JobId(jid);
@@ -2310,6 +2373,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	GLITE_STACK_TRY("jobListMatch(jobListMatchResponse &jobListMatch_response, "
 		"const string &jdl, const string &delegation_id)");
 	edglog_fn("wmpoperations::jobListMatch");
+	logRemoteHostInfo();
 	
 	// Checking delegation id
 	edglog(debug)<<"Delegation ID: "<<delegation_id<<endl;
@@ -2354,6 +2418,7 @@ getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 {
 	GLITE_STACK_TRY("getJobTemplate()");
 	edglog_fn("wmpoperations::getJobTemplate");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2377,6 +2442,7 @@ getDAGTemplate(getDAGTemplateResponse &getDAGTemplate_response,
 {
 	GLITE_STACK_TRY("getDAGTemplate()");
 	edglog_fn("wmpoperations::getDAGTemplate");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2400,6 +2466,7 @@ getCollectionTemplate(getCollectionTemplateResponse
 {
 	GLITE_STACK_TRY("getCollectionTemplate()");
 	edglog_fn("wmpoperations::getCollectionTemplate");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2424,6 +2491,7 @@ getIntParametricJobTemplate(getIntParametricJobTemplateResponse
 {
 	GLITE_STACK_TRY("getIntParametricJobTemplate()");
 	edglog_fn("wmpoperations::getIntParametricJobTemplate");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2448,6 +2516,7 @@ getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 {
 	GLITE_STACK_TRY("getStringParametricJobTemplate()");
 	edglog_fn("wmpoperations::getStringParametricJobTemplate");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2471,6 +2540,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 {
 	GLITE_STACK_TRY("getProxyReq()");
 	edglog_fn("wmpoperations::getProxyReq");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2499,6 +2569,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 {
 	GLITE_STACK_TRY("putProxy()");
 	edglog_fn("wmpoperations::putProxy");
+	logRemoteHostInfo();
 	
 	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
@@ -2525,6 +2596,7 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 {
 	GLITE_STACK_TRY("getACLItems()");
 	edglog_fn("wmpoperations::getACLItems");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -2582,6 +2654,7 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 {
 	GLITE_STACK_TRY("addACLItems()");
 	edglog_fn("wmpoperations::addACLItems");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -2646,6 +2719,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 {
 	GLITE_STACK_TRY("removeACLItem()");
 	edglog_fn("wmpoperations::removeACLItem");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -2710,6 +2784,7 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 {
 	GLITE_STACK_TRY("getDelegatedProxyInfo()");
 	edglog_fn("wmpoperations::getDelegatedProxyInfo");
+	logRemoteHostInfo();
 	
 	// Checking delegation id
 	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
@@ -2772,6 +2847,7 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 {
 	GLITE_STACK_TRY("enableFilePerusal()");
 	edglog_fn("wmpoperations::enableFilePerusal");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);
@@ -2839,6 +2915,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 {
 	GLITE_STACK_TRY("getPerusalFiles()");
 	edglog_fn("wmpoperations::getPerusalFiles");
+	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
 	JobId *jid = new JobId(job_id);

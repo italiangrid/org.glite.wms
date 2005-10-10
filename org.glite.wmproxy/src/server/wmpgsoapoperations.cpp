@@ -50,8 +50,8 @@ JobTypeList *
 convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
 {
 	vector<JobType> *type_vector = new vector<JobType>;
-	for (unsigned int i = 0; i < job_type_list->jobType->size(); i++) {
-		switch ((*(job_type_list->jobType))[i]) {
+	for (unsigned int i = 0; i < job_type_list->jobType.size(); i++) {
+		switch ((job_type_list->jobType)[i]) {
 			case ns1__JobType__PARAMETRIC:
 				type_vector->push_back(WMS_PARAMETRIC);
 				break;
@@ -96,10 +96,10 @@ convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*>
 			element->id = (*graph_struct_type_vector)[i]->id;
 			element->name = (*graph_struct_type_vector)[i]->name;
 			if ((*graph_struct_type_vector)[i]) { // Vector not NULL
-				element->childrenJob = convertToGSOAPJobIdStructTypeVector(
+				element->childrenJob = *convertToGSOAPJobIdStructTypeVector(
 					(*graph_struct_type_vector)[i]->childrenJob);
 			} else {
-				element->childrenJob = new vector<ns1__JobIdStructType*>;
+				element->childrenJob = *(new vector<ns1__JobIdStructType*>);
 			}
 			returnVector->push_back(element);
 		}
@@ -120,12 +120,12 @@ convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*>
 	for (unsigned int i = 0; i < graph_struct_type_vector->size(); i++) {
 		element = new GraphStructType();
 		element->name = (*graph_struct_type_vector)[i]->name;
-		if ((*graph_struct_type_vector)[i]->childrenJob) { // Vector not NULL
+		//if ((*graph_struct_type_vector)[i]->childrenJob) { // Vector not NULL
 			element->childrenJob = convertFromGSOAPGraphStructTypeVector(
-				(*graph_struct_type_vector)[i]->childrenJob);
-		} else {
-			element->childrenJob = new vector<GraphStructType*>;
-		}
+				&((*graph_struct_type_vector)[i]->childrenJob));
+		//} else {
+			//element->childrenJob = new vector<GraphStructType*>;
+		//}
 		returnVector->push_back(element);
 	}
 	return returnVector;
@@ -139,12 +139,12 @@ convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
 {
 	GraphStructType *element = new GraphStructType();
 	element->name = graph_struct_type->name;
-	if (graph_struct_type) { // Element not NULL
+	//if (graph_struct_type) { // Element not NULL
 		element->childrenJob = convertFromGSOAPGraphStructTypeVector(
-			graph_struct_type->childrenJob);
-	} else {
-		element->childrenJob = new vector<GraphStructType*>;
-	}
+			&(graph_struct_type->childrenJob));
+	//} else {
+		//element->childrenJob = new vector<GraphStructType*>;
+	//}
 	return element;
 }
 
@@ -156,11 +156,11 @@ convertToStringList(ns1__StringList *ns1_string_list) {
 	StringList *string_list = new StringList();
 	string_list->Item = new vector<string>();
 	if (ns1_string_list) {
-		if (ns1_string_list->Item) {
-			for (unsigned int i = 0; i < ns1_string_list->Item->size(); i++) {
-				string_list->Item->push_back((*(ns1_string_list->Item))[i]);
+		//if (ns1_string_list->Item) {
+			for (unsigned int i = 0; i < ns1_string_list->Item.size(); i++) {
+				string_list->Item->push_back((ns1_string_list->Item)[i]);
 			}
-		}
+		//}
 	}
 	return string_list;
 }
@@ -222,10 +222,10 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 		job_id_struct->name = jobRegister_response.jobIdStruct->name;
 		if (jobRegister_response.jobIdStruct->childrenJob) {
 			job_id_struct->childrenJob =
-				convertToGSOAPJobIdStructTypeVector(jobRegister_response
+				*convertToGSOAPJobIdStructTypeVector(jobRegister_response
 				.jobIdStruct->childrenJob);
 		} else {
-			job_id_struct->childrenJob = new vector<ns1__JobIdStructType*>;
+			job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
 		}
 		response._jobIdStruct = job_id_struct;
 	} catch (Exception &exc) {
@@ -293,10 +293,10 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
 		job_id_struct->name = jobSubmit_response.jobIdStruct->name;
 		if (jobSubmit_response.jobIdStruct->childrenJob) {
 			job_id_struct->childrenJob =
-				convertToGSOAPJobIdStructTypeVector(jobSubmit_response
+				*convertToGSOAPJobIdStructTypeVector(jobSubmit_response
 				.jobIdStruct->childrenJob);
 		} else {
-			job_id_struct->childrenJob = new vector<ns1__JobIdStructType*>;
+			job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
 		}
 		response._jobIdStruct = job_id_struct;
 	} catch (Exception &exc) {
@@ -392,13 +392,13 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id,
 	getSandboxDestURIResponse getSandboxDestURI_response;
 	
 	response._path = new ns1__StringList();
-	response._path->Item = new vector<string>(0);
+	response._path->Item = *(new vector<string>(0));
 	try {
 		getSandboxDestURI(getSandboxDestURI_response, job_id);
 		//response._path->Item = getSandboxDestURI_response.path->Item;
 		for (unsigned int i = 0; 
 				i < getSandboxDestURI_response.path->Item->size(); i++) {
-			response._path->Item->push_back(
+			response._path->Item.push_back(
 				(*(getSandboxDestURI_response.path->Item))[i]);
 		}
 	} catch (Exception &exc) {
@@ -442,12 +442,12 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id,
 			destURIStruct->id = 
 				(*getSandboxBulkDestURI_response.destURIsStruct->Item)[i]->id;
 			destURIStruct->Item = 
-				(*getSandboxBulkDestURI_response.destURIsStruct->Item)[i]->destURIs;
+				*((*getSandboxBulkDestURI_response.destURIsStruct->Item)[i]->destURIs);
 			uris->push_back(destURIStruct);
 			
 		}
 		response._DestURIsStructType = new ns1__DestURIsStructType();
-		response._DestURIsStructType->Item = uris;
+		response._DestURIsStructType->Item = *uris;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getSandboxBulkDestURI", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -571,7 +571,7 @@ ns1__getOutputFileList(struct soap *soap, string job_id,
 	getOutputFileListResponse getOutputFileList_response;
 	
 	response._OutputFileAndSizeList = new ns1__StringAndLongList();
-	response._OutputFileAndSizeList->file = new vector<ns1__StringAndLongType*>(0);
+	response._OutputFileAndSizeList->file = *(new vector<ns1__StringAndLongType*>(0));
 	ns1__StringAndLongType *item = NULL;
 
 	try {
@@ -585,7 +585,7 @@ ns1__getOutputFileList(struct soap *soap, string job_id,
 					(*getOutputFileList_response.OutputFileAndSizeList->file)[i]->name;
 				item->size = 
 					(*getOutputFileList_response.OutputFileAndSizeList->file)[i]->size;
-				response._OutputFileAndSizeList->file->push_back(item);
+				response._OutputFileAndSizeList->file.push_back(item);
 			}
 		}
 		
@@ -619,7 +619,7 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 	jobListMatchResponse jobListMatch_response;
 	
 	response._CEIdAndRankList = new ns1__StringAndLongList();
-	response._CEIdAndRankList->file = new vector<ns1__StringAndLongType*>;
+	response._CEIdAndRankList->file = *(new vector<ns1__StringAndLongType*>);
 	ns1__StringAndLongType *item = NULL;
 	
 	try {
@@ -629,7 +629,7 @@ ns1__jobListMatch(struct soap *soap, string jdl, string delegation_id,
 			item = new ns1__StringAndLongType();
 			item->name = (*jobListMatch_response.CEIdAndRankList->file)[i]->name;
 			item->size = (*jobListMatch_response.CEIdAndRankList->file)[i]->size;
-			response._CEIdAndRankList->file->push_back(item);
+			response._CEIdAndRankList->file.push_back(item);
 		}
 		
 	} catch (Exception &exc) {
@@ -854,7 +854,7 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 
 int
 ns1__getProxyReq(struct soap *soap, string delegation_id,
-	ns1__getProxyReqResponse &response)
+	struct ns1__getProxyReqResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getProxyReq(struct soap *soap, string delegation_id, "
 		"ns1__getProxyReqResponse &response)");
@@ -925,13 +925,13 @@ ns1__getACLItems(struct soap *soap, string jobId,
 	int return_value = SOAP_OK;
 	
 	ns1__StringList *list = new ns1__StringList();
-	list->Item = new vector<string>;
+	list->Item = *(new vector<string>);
 	
 	getACLItemsResponse getACLItems_response;
 	try  {
 		vector<string> returnvector = getACLItems(getACLItems_response, jobId);
 		for (unsigned int i = 0; i < returnvector.size(); i++) {
-			list->Item->push_back(returnvector[i]);
+			list->Item.push_back(returnvector[i]);
 		}
 		response._items = list;
 	} catch (Exception &exc) {
@@ -1023,14 +1023,14 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	int return_value = SOAP_OK;
 	
 	ns1__StringList *list = new ns1__StringList();
-	list->Item = new vector<string>;
+	list->Item = *(new vector<string>);
 	
 	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
 	try  {
 		vector<string> returnvector = getDelegatedProxyInfo(
 			getDelegatedProxyInfo_response, delegation_id);
 		for (unsigned int i = 0; i < returnvector.size(); i++) {
-			list->Item->push_back(returnvector[i]);
+			list->Item.push_back(returnvector[i]);
 		}
 		response._items = list;
 	} catch (Exception &exc) {
@@ -1094,14 +1094,14 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunk
 	int return_value = SOAP_OK;
 	
 	ns1__StringList *list = new ns1__StringList();
-	list->Item = new vector<string>;
+	list->Item = *(new vector<string>);
 	
 	getPerusalFilesResponse getPerusalFiles_response;
 	try  {
 		vector<string> returnvector = getPerusalFiles(getPerusalFiles_response,
 			jobId, file, allChunks);
 		for (unsigned int i = 0; i < returnvector.size(); i++) {
-			list->Item->push_back(returnvector[i]);
+			list->Item.push_back(returnvector[i]);
 		}
 		response._fileList = list;
 	} catch (Exception &exc) {

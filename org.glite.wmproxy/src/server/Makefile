@@ -8,14 +8,14 @@ CIFLAGS=-I$(REPOSITORY)/org.glite.wms.wmproxy/src
 CMFLAGS=-DWITH_FASTCGI -DHAVE_STRINGSTREAM
 #CMFLAGS=
 
-GSOAPVER=2.7
-SOAPPARSER=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/wsdl2h
-GSOAP=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/soapcpp2
-SOAPH=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.h
-SOAPC=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.c
-SOAPCPP=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32/stdsoap2.cpp
+GSOAPVER=2.7.6b
+SOAPPARSER=$(REPOSITORY)/repository/gsoap/$(GSOAPVER)/rhel30_gcc32/wsdl2h
+GSOAP=$(REPOSITORY)/repository/gsoap/$(GSOAPVER)/rhel30_gcc32/soapcpp2
+SOAPH=$(REPOSITORY)/repository/gsoap/$(GSOAPVER)/rhel30_gcc32/stdsoap2.h
+SOAPC=$(REPOSITORY)/repository/gsoap/$(GSOAPVER)/rhel30_gcc32/stdsoap2.c
+SOAPCPP=$(REPOSITORY)/repository/gsoap/$(GSOAPVER)/rhel30_gcc32/stdsoap2.cpp
 
-GSOAPPATH=$(REPOSITORY)/repository/gsoap/2.7.0/rhel30_gcc32
+GSOAPPATH=$(REPOSITORY)/repository/gsoap/$(GSOAPVER)/rhel30_gcc32
 REPLIBS=$(REPOSITORY)/stage/lib
 INTERFACE=$(REPOSITORY)/org.glite.wms.wmproxy-interface/interface
 
@@ -46,7 +46,7 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-I$(REPOSITORY)/stage/include \
 	-I$(CLASSAD)/include \
 	-I$(BOOST)/include/boost \
-	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include 
+	-I$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32/include
 
 LDFLAGS= \
 	-L$(GLOBUS_LOCATION)/lib \
@@ -112,7 +112,7 @@ wsdl:
 		$(GSOAP) -I$(GSOAPPATH) wm.h
 		rm *.xml
 
-BUILD=/home/peppe/Repository/r12/org.glite.wms.wmproxy/build
+BUILD=$(REPOSITORY)/org.glite.wms.wmproxy/build
 
 wmClient:		$(BUILD)/src/server/wm.h wmclient.cp $(SOAPH) $(SOAPCPP)
 			@echo "wmclient....."

@@ -24,6 +24,7 @@
 namespace logger       = glite::wms::common::logger;
 namespace wmputilities = glite::wms::wmproxy::utilities; //Exception codes
 
+using namespace std;
 
 // To remove
 vector<string> *
@@ -179,7 +180,7 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 	sp->Timestamp = time_stamp;
 	sp->ErrorCode = new string(boost::lexical_cast<std::string>(error_code));
 	sp->Description = new string(description);
-	sp->FaultCause = convertStackVector(stack);
+	sp->FaultCause = *convertStackVector(stack);
 	
 	// Sending fault
 	soap_receiver_fault(soap, "Stack dump", NULL);

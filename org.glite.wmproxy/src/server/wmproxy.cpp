@@ -53,58 +53,6 @@ using namespace boost::details::pool;
 
 const std::string opt_conf_file("glite_wms.conf");
 
-int
-logRemoteHostInfo()
-{
-	try {
-		string msg = "Remote Host IP: ";
-		string msg2 = "Remote CLIENT S DN: ";
-		string msg3 = "Remote GRST CRED: ";
-		edglog(info)
-			<<"-------------------------------- Incoming Request "
-				"--------------------------------"
-			<<endl;
-		
-		if (getenv("REMOTE_ADDR")) {
-			msg += string(getenv("REMOTE_ADDR"));
-			if (getenv("REMOTE_PORT")) {
-				msg += ":" + string(getenv("REMOTE_PORT"));
-			}
-		} else {
-			msg += "Not Available";
-		}
-		msg += " - Remote Host Name: ";
-		if (getenv("REMOTE_HOST")) {
-			msg += string(getenv("REMOTE_HOST"));
-		} else {
-			msg += "Not Available";
-		}
-		if (getenv("SSL_CLIENT_S_DN")) {
-			msg2 += string(getenv("SSL_CLIENT_S_DN"));
-		} else {
-			msg2 += "Not Available";
-		}
-		if (getenv("GRST_CRED_2")) {
-			msg3 += string(getenv("GRST_CRED_2"));
-		} else {
-			msg3 += "Not Available";
-		}
-		
-		edglog(info)<<msg<<endl;
-	    edglog(info)<<msg2<<endl;
-		edglog(info)<<msg3<<endl;
-		edglog(info)
-			<<"----------------------------------------"
-				"------------------------------------------"
-		<<endl;
-
-		return 0;
-	} catch (exception &ex) {
-		edglog(fatal)<<"Exception caught: "<<ex.what()<<endl;
-		return -1;
-	}
-}
-
 void
 sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
 {
@@ -169,14 +117,8 @@ main(int argc, char* argv[])
 			<<"----------------------------------------"
 			<<endl;
 		
-		while (FCGI_Accept() >= 0) {
+		for (;;) {
 			WMProxy proxy;
-			if (logRemoteHostInfo()) {
-				sendFault(proxy, "logRemoteHostInfo",
-					"Unable to log remote host info"
-					"\n(please contact server administrator)", 1);
-				continue; 
-			}
 			proxy.serve();
 		}
 		edglog(info)<<"Exiting the FastCGI loop..."<<endl;
