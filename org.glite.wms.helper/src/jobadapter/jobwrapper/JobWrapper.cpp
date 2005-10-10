@@ -345,7 +345,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump_numeric(os, "__perusal_timeinterval", m_perusal_timeinterval) &&
     dump_string(os, "__perusal_filesdesturi", m_perusal_filesdesturi) &&
     dump_string(os, "__perusal_listfileuri", m_perusal_listfileuri) &&
-    dump_bool(os, "__handle_ouput_data", m_outputdata != 0) && 
+    dump_bool(os, "__output_data", m_outputdata != 0) && 
     dump_classad_exprlist(os, "__output_file", "__output_lfn", "__output_se", m_outputdata);
 }
 
