@@ -33,18 +33,18 @@ jobadapterTest_LDADD   = \
         $(CLASSAD_LIBS) \
         $(BOOST_LIBS)
 
-#jobwrapperTest_SOURCES = jobwrapperTest.cpp
-#jobwrapperTest_LDADD   = \
-#	$(JOBWRAPPER) \
-#	$(URL) \
-#	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#	$(GLITE_WMSUTILS_JOBID_LIBS) \
-#	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-#	$(GLITE_WMS_JDL_LIBS) \
-#	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-#	$(GLOBUS_SSL_THR_LIBS) \
-#        $(CLASSAD_LIBS) \
-#	$(BOOST_LIBS)
+jobwrapperTest_SOURCES = jobwrapperTest.cpp
+jobwrapperTest_LDADD   = \
+	$(JOBWRAPPER) \
+	$(URL) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+	$(GLITE_WMSUTILS_CJOBID_LIBS) \
+	$(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLOBUS_SSL_THR_LIBS) \
+   $(CLASSAD_LIBS) \
+	$(BOOST_LIBS)
 
 urlTest_SOURCES = urlTest.cpp
 urlTest_LDADD   = $(URL)
