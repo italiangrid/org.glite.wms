@@ -37,18 +37,10 @@ private:
   int  validSE(const std::string& SEid);
 
   /**
-   * Contact the Information Service (IS) and return the URL (endpoint) of the
-   * server the provides the StorageIndex Catalog(SI).
-   * If no service is found, "" is returned.
+   * Queries the IS for the catalog url throught ServiceDiscovery
    */
-  std::string getSICIurl(const std::string& vo);
-
-  /**
-   * Contact the Information Service (IS) and return the URL (endpoint) of the
-   * server the provides the DataLocationInterface(DLI).
-   * If no service is found, "" is returned.
-   */
-  std::string getDLIurl(const std::string& vo);
+  void get_catalog_url(const std::string& vo, const std::string& service_name, 
+                       std::vector<std::string>& url_list);
 
   /*
    * Check the configuration file of the Networkserver if RLS is used for
