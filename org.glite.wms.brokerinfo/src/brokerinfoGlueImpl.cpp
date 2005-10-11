@@ -602,7 +602,12 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
                            if  ( prefix != "" ) {
                               if ( getDataCatalogEndpoint ) {
-                                 resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dataCatalogEndpoint);
+                                 try {
+                                    resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dataCatalogEndpoint);
+                                 }
+                                 catch (const char *faultstring){
+                                    edglog(warning) << faultstring << endl;
+                                 }
                               }
                               else if ( getDliFromIS ) {
                                  for ( vector<string>::const_iterator it=dli_url_list.begin(); it != dli_url_list.end(); it++){
@@ -635,13 +640,18 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                            }
 /////////////////////////////////////////////this piece of code handles multiple endpoint
                            if ( getDataCatalogEndpoint ) { 
-                              if ( (*lfn).find("lfn") == 0 ) {
-                                 sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, dataCatalogEndpoint);
+                              try {
+                                 if ( (*lfn).find("lfn") == 0 ) {
+                                    sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, dataCatalogEndpoint);
+                                 }
+                                 else if ( (*lfn).find("guid") == 0 ){
+                                    sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, dataCatalogEndpoint);
+                                 }
+                                 else edglog(warning) << "unknown prefix while using SI" << std::endl;
                               }
-                              else if ( (*lfn).find("guid") == 0 ){
-                                 sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, dataCatalogEndpoint);
+                              catch (const char *faultstring) {
+                                 edglog(warning) << faultstring << endl;
                               }
-                              else edglog(warning) << "unknown prefix while using SI" << std::endl;
                            }
                            else if ( getSiFromIS ){
                               for ( vector<string>::const_iterator it=si_url_list.begin(); it != si_url_list.end(); it++){
@@ -942,7 +952,12 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                   else if ((*lfn).find(guidPrefix.c_str()) == 0) prefix = guidPrefix;
                                                                                                                              
                   if ( dliEndpointSetInJdl ) {
-                     resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dliEndpoint);
+                     try{
+                        resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dliEndpoint);
+                     }
+                     catch (const char *faultstring) {
+                        edglog(warning) << faultstring << endl;
+                     } 
                   }
                   else if ( dliEndpointSetInIS ) {
                      for ( vector<string>::const_iterator it=dli_url_list.begin(); it != dli_url_list.end(); it++){
@@ -972,11 +987,16 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                   }
 ///////////////////////////////////////////this piece of code handles multiple endpoint
                   if ( siciEndpointSetInJdl ) {
-                     if ( (*lfn).find(silfnPrefix.c_str()) == 0 || (*lfn).find(lfnPrefix.c_str()) == 0 ) {
-                        sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
+                     try {
+                        if ( (*lfn).find(silfnPrefix.c_str()) == 0 || (*lfn).find(lfnPrefix.c_str()) == 0 ) {
+                           sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
+                        }
+                        else 
+                           sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
                      }
-                     else 
-                        sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
+                     catch (const char *faultstring) {
+                        edglog(warning) << faultstring << endl;
+                     }
                   }
                   else if ( siciEndpointSetInIS ){
                      for ( vector<string>::const_iterator it=si_url_list.begin(); it != si_url_list.end(); it++){
