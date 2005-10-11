@@ -1,5 +1,5 @@
 ====== WMProxy version 2.0.0 (gLite 1.5) ====== 
-- Porting to gsoap 2.7.6d
+- Porting to gsoap 2.7.6b
 - Apply patch for building on IA64 (authorizer/wmpauthorizer.cpp)
 - Add proxycache purger program (to be added to crontab 
   on WMS node).
