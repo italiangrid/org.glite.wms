@@ -34,14 +34,9 @@ for p in \
 	${top}stage/share/java/glite-security-trustmanager.jar \
 	${top}stage/share/java/glite-security-util-java.jar \
 	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	$AXIS_LOC/axis.jar \
-	$AXIS_LOC/jaxrpc.jar \
-	$AXIS_LOC/log4j-1.2.8.jar \
-	$AXIS_LOC/commons-logging.jar \
-	$AXIS_LOC/commons-discovery.jar \
-	$AXIS_LOC/saaj.jar \
+	$AXIS_LOC/*.jar \
 	${top}stage/share/java/glite-wms-jdlj.jar \
-        ${top}repository/jclassads/2.1/share/classad.jar 
+        ${top}repository/jclassads/2.2/share/classad.jar
 
 do
 	if ! printenv JSS_CLASSPATH | grep -q "${p}"; then
@@ -61,6 +56,8 @@ p4=$4
 
 # launching the test...
 # ------------------------
-java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3} ${p4}
+CMD="${package}.${class} ${p1} ${p2} ${p3} ${p4}"
+echo "java ${CMD}"
+java -classpath ${classpath} ${CMD}
 
 

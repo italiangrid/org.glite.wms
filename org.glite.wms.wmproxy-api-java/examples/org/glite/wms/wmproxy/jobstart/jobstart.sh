@@ -27,12 +27,7 @@ for p in \
 	${top}stage/share/java/glite-security-trustmanager.jar \
 	${top}stage/share/java/glite-security-util-java.jar \
 	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	${top}repository/axis/1.2/share/axis-1.2/webapps/axis/WEB-INF/lib/axis.jar \
-	${top}repository/axis/1.2/share/axis-1.2/webapps/axis/WEB-INF/lib/jaxrpc.jar \
-	${top}repository/axis/1.2/share/axis-1.2/webapps/axis/WEB-INF/lib/log4j-1.2.8.jar \
-	${top}repository/axis/1.2/share/axis-1.2/webapps/axis/WEB-INF/lib/commons-logging.jar \
-	${top}repository/axis/1.2/share/axis-1.2/webapps/axis/WEB-INF/lib/commons-discovery.jar \
-	${top}repository/axis/1.2/share/axis-1.2/webapps/axis/WEB-INF/lib/saaj.jar
+	${AXIS_LOC}/*.jar
 do
 	if ! printenv JSS_CLASSPATH | grep -q "${p}"; then
 		if [ -n "${classpath}" ]; then
