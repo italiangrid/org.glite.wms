@@ -2818,6 +2818,81 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 }
 
 void
+checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
+{
+	GLITE_STACK_TRY("checkPerusalFlag()");
+	edglog_fn("wmpoperations::checkPerusalFlag");
+	
+	WMPEventLogger wmplogger(wmputilities::getEndpoint());
+	WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	
+	// Setting user proxy
+	if (wmplogger.setUserProxy(delegatedproxy)) {
+		edglog(critical)<<"Unable to set User Proxy for LB context"<<endl;
+		throw AuthenticationException(__FILE__, __LINE__,
+			"checkPerusalFlag()", wmputilities::WMS_AUTHENTICATION_ERROR,
+			"Unable to set User Proxy for LB context");
+	}
+	
+	string jdl = wmplogger.retrieveRegJobEvent(jid->toString()).jdl;
+	int type = getType(jdl);
+	if (type == TYPE_JOB) {
+		JobAd * jad = new JobAd(jdl);
+		jad->setLocalAccess(false);
+		
+		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
+			if (!jad->getBool(JDL::PU_FILE_ENABLE)) {
+				edglog(debug)<<"Perusal not enabled for this job"<<endl;
+				throw JobOperationException(__FILE__, __LINE__,
+			    	"checkPerusalFlag()",
+			    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+			    	"Perusal not enabled for this job");
+			}
+		} else {
+			edglog(debug)<<"Perusal not enabled for this job"<<endl;
+			throw JobOperationException(__FILE__, __LINE__,
+		    	"checkPerusalFlag()",
+		    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+		    	"Perusal not enabled for this job");
+		}
+		if (checkremotepeek) {
+			if (jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+				string uri = jad->getString(JDL::PU_FILES_DEST_URI);
+				string serveruri = wmputilities::getPeekDirectoryPath(*jid);
+				if (uri != serveruri) {
+					edglog(debug)<<"Remote perusal peek directory set"<<endl;
+					throw JobOperationException(__FILE__, __LINE__,
+				    	"checkPerusalFlag()",
+				    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+				    	"Remote perusal peek directory set"
+				    	"\nURI: " + uri);
+				}
+			} else {
+				// Should be present, something went wrong
+				edglog(critical)<<"No perusal file dest URI attribute present"<<endl;
+				throw JobOperationException(__FILE__, __LINE__,
+			    	"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE, 
+			    	"No perusal file dest URI attribute present"
+			    	"\n(please contact server administrator)");
+			}
+		}
+		
+		delete jad;
+	} else {
+		edglog(debug)<<"Perusal service not available for dag or collection type"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+	    	"checkPerusalFlag()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+	    	"Perusal service not available for dag or collection type");
+	}
+	
+	GLITE_STACK_CATCH();
+}
+
+void
 enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	const string &job_id, StringList * fileList)
 {
@@ -2858,13 +2933,10 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	}
 	//** END
 	
-	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
-	if (wmputilities::fileExists(peekdir + DISABLED_PEEK_FLAG_FILE)) {
-		throw JobOperationException(__FILE__, __LINE__,
-	    	"wmpoperations::enableFilePerusal()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
-	    	"Perusal not enabled for this job");
-	}
-	string filename = peekdir + PERUSAL_FILE_2_PEEK_NAME;
+	checkPerusalFlag(jid, delegatedproxy, false);
+	
+	string filename = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR
+		+ PERUSAL_FILE_2_PEEK_NAME;
 	
 	unsigned int size = fileList->Item->size();
 	if (size != 0) {
@@ -2932,18 +3004,9 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	    	"Provided file name not valid");
 	}
 	
-	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
-	if (wmputilities::fileExists(peekdir + DISABLED_PEEK_FLAG_FILE)) {
-		throw JobOperationException(__FILE__, __LINE__,
-	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
-	    	"Perusal not enabled for this job");
-	}
-	if (wmputilities::fileExists(peekdir + EXTERNAL_PEEK_FLAG_FILE)) {
-		throw JobOperationException(__FILE__, __LINE__,
-	    	"wmpoperations::getPerusalFiles()", wmputilities::WMS_OPERATION_NOT_ALLOWED, 
-	    	"Remote perusal peek directory set");
-	}
+	checkPerusalFlag(jid, delegatedproxy, true);
 	
+	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
 	const boost::filesystem::path p(peekdir);
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
