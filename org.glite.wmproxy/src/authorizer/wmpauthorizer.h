@@ -99,7 +99,9 @@ public:
      * by jobid
      * @param jobid the identifier of the job
      */
-    static void setJobGacl(std::string jobid);
+    static void setJobGacl(const std::string &jobid);
+    
+    static void setJobGacl(std::vector<std::string> &jobids);
 
     /**
      * Checks if exec permission is denied for any user

@@ -431,51 +431,115 @@ WMPAuthorizer::checkGaclUserAuthZ()
 }
 
 void
-WMPAuthorizer::setJobGacl(string jobid )
+WMPAuthorizer::setJobGacl(vector<string> &jobids)
 {
 	GLITE_STACK_TRY("setJobGacl()");
-	edglog_fn("WMPAuthorizer::setJobGacl");
+	edglog_fn("WMPAuthorizer::setJobGacl vector");
 	
-	vector<string> gacl_files;
-	vector<string>::iterator it ;
-	string errmsg = "";
-	// Creates a gacl file in the job directory
-	authorizer::WMPgaclPerm permission = authorizer::GaclManager::WMPGACL_READ |
-									authorizer::GaclManager::WMPGACL_LIST |
-									authorizer::GaclManager::WMPGACL_WRITE |
-									authorizer::GaclManager::WMPGACL_READ;
- 	string user_dn = wmputilities::getUserDN() ;
-	edglog(debug)<<"userDN: "<<user_dn<<endl;
-
-	// main user job directory
-	string job_dir = wmputilities::getJobDirectoryPath(jobid) ;
-	// paths of the gacl files
-	gacl_files.push_back(job_dir + "/" + authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-	gacl_files.push_back(job_dir + "/" + INPUT_SB_DIRECTORY + "/" + authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-	gacl_files.push_back(job_dir + "/" + OUTPUT_SB_DIRECTORY + "/" + authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-	gacl_files.push_back(job_dir + "/" + PEEK_DIRECTORY + "/" + authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-	// creates the gacl files
-	for (it = gacl_files.begin(); it != gacl_files.end(); it++) {
+	unsigned int size = jobids.size();
+	if (size != 0) {
+		string user_dn = wmputilities::getUserDN();
+		string errmsg = "";
+		
+		// Creates a gacl file in the job directory
+		authorizer::WMPgaclPerm permission =
+			authorizer::GaclManager::WMPGACL_READ |
+			authorizer::GaclManager::WMPGACL_LIST |
+			authorizer::GaclManager::WMPGACL_WRITE |
+			authorizer::GaclManager::WMPGACL_READ;
+	 	
+		// main user job directory
+		string filename = wmputilities::getJobDirectoryPath(jobids[0]) + "/" 
+			+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE;
+		
 		try {
-			authorizer::GaclManager gacl(*it, true);
+			authorizer::GaclManager gacl(filename, true);
 			// adds the new user credential entry
 			gacl.addEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, user_dn);
 			// allow permission
-			gacl.allowPermission( authorizer::GaclManager::WMPGACL_PERSON_TYPE,
+			gacl.allowPermission(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
 					user_dn, permission);
-			gacl.saveGacl( );
+			gacl.saveGacl();
 		} catch (GaclException &exc) {
-				errmsg = "internal server error: unable to set the gacl user properties  ";
-				errmsg += " (please contact server administrator)\n";
-				errmsg += "please report the following message:\n" ;
-				errmsg += exc.what ( );
-				edglog(critical)<<errmsg<<endl;
-			throw GaclException(__FILE__, __LINE__,
-				"setJobGacl()",
-				wmputilities::WMS_GACL_FILE,
-				errmsg);
+			errmsg = "internal server error: unable to set the gacl user properties";
+			errmsg += "\n(please contact server administrator)\n";
+			errmsg += "please report the following message:\n" ;
+			errmsg += exc.what();
+			edglog(critical)<<errmsg<<endl;
+			throw GaclException(__FILE__, __LINE__, "setJobGacl()",
+				wmputilities::WMS_GACL_FILE, errmsg);
+		}
+		ifstream infile(filename.c_str());
+		if (!infile.good()) {
+			edglog(severe)<<filename<<": !filename.good()"<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
+				"setJobGacl()", WMS_IS_FAILURE, "Unable to open gacl "
+				"input file\n(please contact server administrator)");
+		}
+		string gacltext = "";
+		string s;
+		while (getline(infile, s, '\n')) {
+			gacltext += s + "\n";
+		}
+		infile.close();
+		
+		fstream outfile;
+		for (unsigned int i = 1; i < size; i++) {
+			filename = wmputilities::getJobDirectoryPath(jobids[i]) + "/"
+				+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE;
+			outfile.open(filename.c_str(), ios::out);
+			if (!outfile.good()) {
+				edglog(severe)<<outfile<<": !outfile.good()"<<endl;
+				throw FileSystemException(__FILE__, __LINE__,
+					"setJobGacl()", WMS_IS_FAILURE, "Unable to open gacl "
+					"output file\n(please contact server administrator)");
+			}
+			outfile<<gacltext;
+			outfile.close();
 		}
 	}
+	
+	GLITE_STACK_CATCH();
+}
+
+void
+WMPAuthorizer::setJobGacl(const string &jobid)
+{
+	GLITE_STACK_TRY("setJobGacl()");
+	edglog_fn("WMPAuthorizer::setJobGacl string");
+	
+	string user_dn = wmputilities::getUserDN();
+	string errmsg = "";
+	
+	// Creates a gacl file in the job directory
+	authorizer::WMPgaclPerm permission =
+		authorizer::GaclManager::WMPGACL_READ |
+		authorizer::GaclManager::WMPGACL_LIST |
+		authorizer::GaclManager::WMPGACL_WRITE |
+		authorizer::GaclManager::WMPGACL_READ;
+ 	
+	// main user job directory
+	string filename = wmputilities::getJobDirectoryPath(jobid) + "/"
+		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE;
+	
+	try {
+		authorizer::GaclManager gacl(filename, true);
+		// adds the new user credential entry
+		gacl.addEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, user_dn);
+		// allow permission
+		gacl.allowPermission( authorizer::GaclManager::WMPGACL_PERSON_TYPE,
+				user_dn, permission);
+		gacl.saveGacl( );
+	} catch (GaclException &exc) {
+		errmsg = "internal server error: unable to set the gacl user properties  ";
+		errmsg += " (please contact server administrator)\n";
+		errmsg += "please report the following message:\n" ;
+		errmsg += exc.what ( );
+		edglog(critical)<<errmsg<<endl;
+		throw GaclException(__FILE__, __LINE__, "setJobGacl()",
+			wmputilities::WMS_GACL_FILE, errmsg);
+	}
+		
 	GLITE_STACK_CATCH();
 }
 

@@ -653,12 +653,13 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 			    }
 			}
 		}
-		for (unsigned int i = 0; i < jobids.size(); i++) {
-			authorizer::WMPAuthorizer::setJobGacl(jobids[i]);
-		}
+		// Creating gacl file in the private job directory
+		authorizer::WMPAuthorizer::setJobGacl(jobid);
+		authorizer::WMPAuthorizer::setJobGacl(jobids);
+	} else {
+		// Creating gacl file in the private job directory
+		authorizer::WMPAuthorizer::setJobGacl(jobid);
 	}
-	// Creating gacl file in the private job directory
-	authorizer::WMPAuthorizer::setJobGacl(jobid);
 
 	GLITE_STACK_CATCH();
 }
