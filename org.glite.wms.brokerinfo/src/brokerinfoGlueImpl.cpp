@@ -14,6 +14,8 @@
 #include <DataLocationInterfaceSOAP.h>
 #include <StorageIndexCatalogInterface.h>
 
+#include <ServiceDiscovery.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -381,6 +383,9 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                                                                                         
    int timeout = (configuration::Configuration::instance()->ns())->dli_si_catalog_timeout();
 
+   std::string dli_service_name = (configuration::Configuration::instance()->wm())->dli_service_name();
+   std::string si_service_name = (configuration::Configuration::instance()->wm())->si_service_name();
+
    bool  rlsConfig = false; // Determine if RLS is configured
 
    bool  voInJdl   = false;
@@ -418,16 +423,16 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
    if ( dataReq ) {
 
-      string dliEndpoint; bool getDliFromIS = false;
+      vector<string> dli_url_list; bool getDliFromIS = false;
       if ( voInJdl ) {
-         dliEndpoint = getDLIurl( vo );
-         if ( dliEndpoint != "" ) getDliFromIS = true;
+         get_catalog_url( vo, dli_service_name, dli_url_list );
+         if ( ! dli_url_list.empty() ) getDliFromIS = true;
       }
 
-      string siEndpoint; bool getSiFromIS = false;
+      vector<string> si_url_list; bool getSiFromIS = false;
       if ( voInJdl ) {
-         siEndpoint = getSICIurl( vo );
-         if ( siEndpoint != "" ) getSiFromIS = true;
+         get_catalog_url( vo, si_service_name, si_url_list );
+         if ( ! si_url_list.empty() ) getSiFromIS = true;
       }
 
 
@@ -587,60 +592,86 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                            resolved_sfn = replica->listReplica(*lfn);
                         }
                         else if ( dli_siciInUse && (dataCatalogType == "DLI") ) {
+///////////////////////////////////// this piece of code handles multiple endpoint
+                           string prefix = "";
+                           if ((*lfn).find("lds") == 0) prefix = "lds";
+                           else if ((*lfn).find("query") == 0) prefix = "query";
+                           else if  ((*lfn).find("lfn") == 0) prefix = "lfn";
+                           else if ((*lfn).find("guid") == 0) prefix = "guid";
+                           else edglog(warning) << "unknown prefix while using DLI" << std::endl;
 
-                           std::string endpoint = "";
-                           if ( getDataCatalogEndpoint ) endpoint = dataCatalogEndpoint;
-                           else if ( getDliFromIS ) endpoint = dliEndpoint;
-   
-                           if ( endpoint != "" ) {
-                              if ((*lfn).find("lds") == 0) {
-                                 resolved_sfn = dli->listReplicas("lds", *lfn, requestAd, endpoint);
+                           if  ( prefix != "" ) {
+                              if ( getDataCatalogEndpoint ) {
+                                 resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dataCatalogEndpoint);
                               }
-                              else if ((*lfn).find("query") == 0) {
-                                 resolved_sfn = dli->listReplicas("query", *lfn, requestAd, endpoint);
-                              }
-                              else if ((*lfn).find("lfn") == 0) {
-                                 resolved_sfn = dli->listReplicas("lfn", *lfn, requestAd, endpoint);
-                              }
-                              else if ((*lfn).find("guid") == 0) {
-                                 resolved_sfn = dli->listReplicas("guid", *lfn, requestAd, endpoint);
-                              }
-                              else edglog(warning) << "unknown prefix while using DLI" << std::endl;
+                              else if ( getDliFromIS ) {
+                                 for ( vector<string>::const_iterator it=dli_url_list.begin(); it != dli_url_list.end(); it++){
+                                    try{
+                                       resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, *it);
+                                       if ( ! resolved_sfn.empty() ) break;
+                                    }
+                                    catch(const char *faultstring) {
+                                    //
+                                    // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+                                    // or any other exception due to failures in getting the proxy from the classad
+                                    edglog(warning) << faultstring << endl;
+                                    }
+                                 } 
+                              } 
+                              else 
+                                 edglog(warning) << "Cannot get any dli endpoint, neither from JDL nor from IS" << endl;
                            }
-                           else 
-                              edglog(warning) << "Cannot get any dli endpoint, neither from JDL nor from IS" << endl;
-   
+//////////////////////////////////////////////////////////end
                         }
                         else if ( dli_siciInUse && (dataCatalogType == "SI") ) {
 
-                          string noPrefix = *lfn;
+                           string noPrefix = *lfn;
                                                                                                                                 
-                          string::size_type colon_pos;
-                          if ((colon_pos = noPrefix.find(":"))!=string::npos) {
-                             // Remove any prefix before the leading colon. Including the colon.
-                             colon_pos++;
-                             noPrefix.erase(0,colon_pos);
+                           string::size_type colon_pos;
+                           if ((colon_pos = noPrefix.find(":"))!=string::npos) {
+                              // Remove any prefix before the leading colon. Including the colon.
+                              colon_pos++;
+                              noPrefix.erase(0,colon_pos);
                            }
-
-                           std::string endpoint = "";
-                           if ( getDataCatalogEndpoint ) endpoint = dataCatalogEndpoint;
-                           else if ( getSiFromIS ) endpoint = dliEndpoint;
-
-                           if ( endpoint != "" ) {
+/////////////////////////////////////////////this piece of code handles multiple endpoint
+                           if ( getDataCatalogEndpoint ) { 
                               if ( (*lfn).find("lfn") == 0 ) {
-                                 sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, endpoint);
+                                 sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, dataCatalogEndpoint);
                               }
                               else if ( (*lfn).find("guid") == 0 ){
-                                 sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, endpoint);
+                                 sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, dataCatalogEndpoint);
                               }
                               else edglog(warning) << "unknown prefix while using SI" << std::endl;
                            }
+                           else if ( getSiFromIS ){
+                              for ( vector<string>::const_iterator it=si_url_list.begin(); it != si_url_list.end(); it++){
+                                 try{
+                                    if ( (*lfn).find("lfn") == 0 ) {
+                                       sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, *it);
+                                    }
+                                    else if ( (*lfn).find("guid") == 0 ){
+                                       sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, *it);
+                                    }
+                                    else {
+                                       edglog(warning) << "unknown prefix while using SI" << std::endl;
+                                       break;
+                                    }
+   
+                                    if ( ! resolved_sfn.empty() ) break;
+                                 }
+                                 catch(const char *faultstring) {
+                                    //
+                                    // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+                                    // or any other exception due to failures in getting the proxy from the classad
+                                    edglog(warning) << faultstring << endl;
+                                 } 
+                              }
+                           }
                            else
                               edglog(warning) << "Cannot get any si endpoint, neither from JDL nor from IS" << endl;
-
+/////////////////////////////////////////////////////////////end
                         }
                         else edglog(warning) << "cannot perform " << *lfn <<"'s resolution" << std::endl;
-   
    
                         if( !resolved_sfn.empty() ) {
                            put_results_in_bi_data( *lfn, resolved_sfn, bid);
@@ -653,12 +684,12 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      catch( std::exception& ex ) {
                         edglog(warning) <<  ex.what() << endl;
                      }
-                     catch(const char *faultstring) {
+//                     catch(const char *faultstring) {
                         //
                         // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
                         // or any other exception due to failures in getting the proxy from the classad
-                        edglog(warning) << faultstring << endl;
-                     }
+//                        edglog(warning) << faultstring << endl;
+//                     }
                                                                                                                                 
                   } // for
 
@@ -710,11 +741,16 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    
       string   dliEndpoint = "";
       string   siciEndpoint = "";
-                                                                                                                                
+
+      vector<string> dli_url_list;
+      vector<string> si_url_list;
+
+      bool     dliEndpointSetInJdl = false;
+      bool     dliEndpointSetInIS = false;
       bool     dliEndpointSet = false;
                                                                                                                                 
       bool     siciEndpointSetInJdl = false;
-      bool     siciEndpointSetInSI = false;
+      bool     siciEndpointSetInIS = false;
       bool     siciEndpointSet = false;
    
       // Check if Storage Index Catalog and Data Catalog endpoints are set in the jdl
@@ -723,13 +759,13 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          vector<string> v;
          requestad::get_data_catalog(requestAd, v);
          dliEndpoint = v[0];
-         dliEndpointSet = true;
+         dliEndpointSetInJdl = true;
       }
       catch(...) {
          if ( voInJdl ) {
-            dliEndpoint = getDLIurl(vo);
-            if  ( dliEndpoint != "") {
-               dliEndpointSet = true;
+            get_catalog_url(vo, dli_service_name, dli_url_list );
+            if  ( ! dli_url_list.empty() ) {
+               dliEndpointSetInIS = true;
             }
          }
       }
@@ -741,16 +777,21 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
       }
       catch(...) {
          if ( voInJdl ) {
-            siciEndpoint = getSICIurl(vo);
-            if  ( siciEndpoint != "") {
-               siciEndpointSetInSI = true;
+            get_catalog_url(vo, si_service_name, si_url_list);
+            if  ( ! si_url_list.empty() ) {
+               siciEndpointSetInIS = true;
             }
          }
       }
                                                                                                                                 
-      if ( siciEndpointSetInSI || siciEndpointSetInJdl ) {
+      if ( siciEndpointSetInIS || siciEndpointSetInJdl ) {
          siciEndpointSet = true;
       }
+
+      if ( dliEndpointSetInIS || dliEndpointSetInJdl ) {
+         dliEndpointSet = true;
+      }
+
    
       BrokerInfoData::LFN_container_type input_data;
    
@@ -893,18 +934,31 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
    
                if ( dli_siciInUse && dliEndpointSet && dli_to_be_used) { 
-                  if ((*lfn).find(ldsPrefix.c_str()) == 0) {
-                     resolved_sfn = dli->listReplicas(ldsPrefix.c_str(), *lfn, requestAd, dliEndpoint);
+///////////////////////////////////// this piece of code handles multiple endpoint
+                  string prefix = "";
+                  if ((*lfn).find(ldsPrefix.c_str()) == 0) prefix = ldsPrefix;
+                  else if ((*lfn).find(queryPrefix.c_str()) == 0) prefix = queryPrefix;
+                  else if  ((*lfn).find(lfnPrefix.c_str()) == 0) prefix = lfnPrefix;
+                  else if ((*lfn).find(guidPrefix.c_str()) == 0) prefix = guidPrefix;
+                                                                                                                             
+                  if ( dliEndpointSetInJdl ) {
+                     resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dliEndpoint);
                   }
-                  else if ((*lfn).find(queryPrefix.c_str()) == 0) {
-                        resolved_sfn = dli->listReplicas(queryPrefix.c_str(), *lfn, requestAd, dliEndpoint);
+                  else if ( dliEndpointSetInIS ) {
+                     for ( vector<string>::const_iterator it=dli_url_list.begin(); it != dli_url_list.end(); it++){
+                        try{
+                           resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, *it);
+                           if ( ! resolved_sfn.empty() ) break;
+                        }
+                        catch(const char *faultstring) {
+                           //
+                           // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+                           // or any other exception due to failures in getting the proxy from the classad
+                           edglog(warning) << faultstring << endl;
+                        }
+                     }
                   }
-                  else if ((*lfn).find(lfnPrefix.c_str()) == 0) {
-                           resolved_sfn = dli->listReplicas(lfnPrefix.c_str(), *lfn, requestAd, dliEndpoint);
-                  }
-                  else if ((*lfn).find(guidPrefix.c_str()) == 0) {
-                     resolved_sfn = dli->listReplicas(guidPrefix.c_str(), *lfn, requestAd, dliEndpoint);
-                  }
+//////////////////////////////////////////////////////////end
                }
 
                if ( dli_siciInUse && siciEndpointSet && sici_to_be_used) { 
@@ -916,14 +970,34 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      colon_pos++;
                      noPrefix.erase(0,colon_pos);
                   }
-   
-                  if ( (*lfn).find(silfnPrefix.c_str()) == 0 ||
-                       (*lfn).find(lfnPrefix.c_str()) == 0 ) {
-                     sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
+///////////////////////////////////////////this piece of code handles multiple endpoint
+                  if ( siciEndpointSetInJdl ) {
+                     if ( (*lfn).find(silfnPrefix.c_str()) == 0 || (*lfn).find(lfnPrefix.c_str()) == 0 ) {
+                        sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
+                     }
+                     else 
+                        sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
                   }
-                  else {
-                     sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
+                  else if ( siciEndpointSetInIS ){
+                     for ( vector<string>::const_iterator it=si_url_list.begin(); it != si_url_list.end(); it++){
+                        try{
+                           if ( (*lfn).find(silfnPrefix.c_str()) == 0 || (*lfn).find(lfnPrefix.c_str()) == 0 ) {
+                              sici->listSEbyLFN(noPrefix.c_str(), resolved_sfn, requestAd, *it);
+                           }
+                           else 
+                              sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, *it);
+
+                           if ( ! resolved_sfn.empty() ) break;
+                        }
+                        catch(const char *faultstring) {
+                            //
+                            // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
+                            // or any other exception due to failures in getting the proxy from the classad
+                            edglog(warning) << faultstring << endl;
+                        }
+                     }
                   }
+////////////////////////////////////////////end
                }
             } // if ( dli_to_be_used || si_to_be_used )
    
@@ -945,12 +1019,12 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          catch( std::exception& ex ) {
               edglog(warning) <<  ex.what() << endl;
          }
-         catch(const char *faultstring) {
+//         catch(const char *faultstring) {
            //
            // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
            // or any other exception due to failures in getting the proxy from the classad
-           edglog(warning) << faultstring << endl;
-         }
+//           edglog(warning) << faultstring << endl;
+//         }
    
                                                                                                    
       } //for
@@ -993,7 +1067,7 @@ void brokerinfoGlueImpl::put_results_in_bi_data( const std::string& lfn,
    for(BrokerInfoData::SFN_container_type::const_iterator sfn = resolved_sfn.begin();
      sfn != resolved_sfn.end(); sfn++) {
                                                                                                                     
-      edglog(debug) << *sfn << endl;
+      edglog(debug) <<*sfn << endl;
                                                                                                                     
       try {
                                                                                                                     
@@ -1094,148 +1168,60 @@ int brokerinfoGlueImpl::validSE( const std::string& SEid)
 } // validSE
 
 
-/**
- * Contact the Information Service (IS) and return the URL (endpoint) of the
- * server that provides the StorageIndex Catalog (SI).
- * If no service is found, "" is returned.
- */
-std::string brokerinfoGlueImpl::getSICIurl(const std::string& vo)
-{
-                                                                                                                             
-  string url = "";
-
-  edglog_fn(getSICIurl);
-
-  edglog(debug) << "Contacting IS for StorageIndex endpoint..." << endl;
-  const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
-  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
-                                                                                                                             
-  vector<string> attributes;
-  attributes.push_back("GlueServiceAccessPointURL");
-  attributes.push_back("GlueServiceType");
-  attributes.push_back("GlueServiceAccessControlRule");
-                                                                                                                             
-  string filter;
-  filter = "(&(objectclass=GlueService)" +
-           string("(GlueServiceType=")   +
-           string( WMconf -> si_service_name() )+
-           string(")") +
-           string("(GlueServiceAccessControlRule=") + vo + string("))");
-                                                                                                                             
-  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
-  IIconnection.reset( new ldif2classad::LDAPSynchConnection(NSconf -> ii_dn(),
-                                                     NSconf -> ii_contact(),
-                                                     NSconf -> ii_port(),
-                                                     NSconf -> ii_timeout()) );
-                                                                                                                             
-  ldif2classad::LDAPQuery query(IIconnection.get(),filter,attributes);
-                                                                                                                             
-  try {
-    IIconnection -> open();
-    query.execute();
-                                                                                                                             
-    if( !query.tuples() -> empty() ) {
-      try {
-        ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );
-        ldap_it.first();
-                                                                                                                             
-        while( ldap_it.current() ) {
-          std::string currentURL, currentType, currentVO;
-          (*ldap_it).EvaluateAttribute("GlueServiceAccessPointURL", currentURL);
-          url=currentURL;
-          ldap_it.next();
-        }
-      }
-      catch( ldif2classad::LDAPNoEntryEx&) {
-        edglog(warning) << "InformationIndex search (no entry): " <<  query.what() << endl;
-      }
-    }
-    else {
-      edglog(warning) << "InformationIndex search (no tuples): " << query.what() << endl;
-    }
-  } // try connection
-  catch( ldif2classad::QueryException& e) {
-    edglog(warning) << e.what() << endl;
-  }
-  catch ( ldif2classad::ConnectionException& e) {
-    edglog(warning) << e.what() << endl;
-  }
-
-
-  return url;
-} // getSICIurl
-
 
 /**
  * Contact the Information Service (IS) and return the URL (endpoint) of the
  * server the provides the DataLocationInterface(DLI).
  * If no service is found, "" is returned.
  */
-std::string brokerinfoGlueImpl::getDLIurl(const std::string& vo)
+void brokerinfoGlueImpl::get_catalog_url(const std::string& vo, const std::string& service_name,
+                                         std::vector<std::string>& list)
 {
-
-  string url = "";
-
-  edglog_fn(getDLIurl);
-
-  edglog(debug) << "Contacting IS for DataLocationInterface endpoint. " << endl;
-  const configuration::NSConfiguration* NSconf = configuration::Configuration::instance() -> ns();
-  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
+//  string url = "";
+                                                                                       
+  edglog_fn(get_catalog_url);
   
-  vector<string> attributes;
-  attributes.push_back("GlueServiceAccessPointURL");
-  attributes.push_back("GlueServiceType");
-  attributes.push_back("GlueServiceAccessControlRule");
+  edglog(debug) << "Contacting IS for " << service_name<< " service. " << endl;       
+  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
 
-  string filter;	
-  filter = "(&(objectclass=GlueService)" +
-           string("(GlueServiceType=")   +
-           string( WMconf -> dli_service_name() ) +
-           string(")")                   +
-           string("(GlueServiceAccessControlRule=") + vo + string("))");
+   SDServiceList *sl=NULL;
+   SDException ex;
 
-  boost::scoped_ptr<ldif2classad::LDAPConnection> IIconnection;
-  IIconnection.reset( new ldif2classad::LDAPSynchConnection(NSconf -> ii_dn(),
-						     NSconf -> ii_contact(),
-						     NSconf -> ii_port(),
-						     NSconf -> ii_timeout()) );
-    
-  ldif2classad::LDAPQuery query(IIconnection.get(),filter,attributes);
-    
-  try {
-    IIconnection -> open();
-    query.execute();
-      
-    if( !query.tuples() -> empty() ) {
-      try {
-	ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );   
-	ldap_it.first();
-	
-	while( ldap_it.current() ) {
-	  std::string currentURL, currentType, currentVO;
-	  (*ldap_it).EvaluateAttribute("GlueServiceAccessPointURL", currentURL); 
-	  url=currentURL;
-	  ldap_it.next();
-	}
-      } 
-      catch( ldif2classad::LDAPNoEntryEx&) {
-	edglog(warning) << "InformationIndex search (no entry): " <<  query.what() << endl;
+   char **names = new (char*)[1];
+
+   names[0] = new char[vo.length() +1];
+   strcpy(names[0], vo.c_str());
+
+   SDVOList vos = {1, names};
+
+   sl = SD_listServices( service_name.c_str(), NULL, &vos, &ex);
+   if (sl != NULL) { 
+
+      if ( sl->numServices > 0 )  {
+
+         for(int k=0; k < sl->numServices; k++) {
+   //         edglog(debug) <<"EndPoint["<<k<<"]: "<< sl->services[k]->endpoint  << endl;
+              list.push_back( strdup(sl->services[k]->endpoint) ) ;
+         }
       }
-    }
-    else {
-      edglog(warning) << "InformationIndex search (no tuples): " << query.what() << endl;  
-    }
-  } // try connection 
-  catch( ldif2classad::QueryException& e) {
-    edglog(warning) << e.what() << endl;
-  }
-  catch ( ldif2classad::ConnectionException& e) {
-    edglog(warning) << e.what() << endl;
-  }
-
-
-  return url;
-} // getDLIurl
+      else {
+         edglog(warning) << "No endpoints found" << endl;
+      }
+                                                                                                                             
+      SD_freeServiceList(sl);
+      delete []names[0];
+      delete []names;
+   }
+   else {
+      if (ex.status == SDStatus_SUCCESS) {
+         edglog(warning) << "No such services" << endl;
+      }
+      else {
+         edglog(error) <<"Call failed: " <<  ex.reason << endl;
+         SD_freeException(&ex);
+      }
+   }
+}
 
 
 /*

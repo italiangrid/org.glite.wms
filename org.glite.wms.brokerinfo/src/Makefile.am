@@ -53,13 +53,13 @@ envC.cpp: $(srcdir)/env.h; \
 	-d. -penv $(srcdir)/env.h 
 
 
-datalocationinterfaceClientLib.cpp: $(srcdir)/DataLocationInterface.h ; \
+datalocationinterfaceClientLib.cpp: datalocationinterface.h ; \
 	$(SOAPCPP2) -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include \
-	-d. -n -pdatalocationinterface $(srcdir)/DataLocationInterface.h
+	-d. -n -pdatalocationinterface datalocationinterface.h
 
 
-#datalocationinterface.h: $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl ; \
-#	$(WSDL2H) -o ./datalocationinterface.h $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl 
+datalocationinterface.h: $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl ; \
+	$(WSDL2H) -o ./datalocationinterface.h $(GLITE_LOCATION)/interface/DataLocationInterface.wsdl 
 
 
 storageindexClientLib.cpp: storageindex.h ; \

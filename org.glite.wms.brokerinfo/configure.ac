@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17  2005/10/11 13:59:09  emartel
+#       service discovery
+#
 #       Revision 1.16  2005/10/06 10:19:00  eronchie
 #       Removed one macro
 #
@@ -199,7 +202,6 @@ AC_ARES([], have_ares=yes, have_ares=no)
 AC_MSG_RESULT(["ARES found $have_ares"])
 
 AC_GSOAP
-AC_CGSI_GSOAP
 
 AC_REPLICA([], have_replica=yes, have_replica=no)
 AC_MSG_RESULT(["REPLICA found $have_replica"])
@@ -252,6 +254,7 @@ AC_GLITE_WMS_COMMON
 AC_GLITE_WMS_ISM
 
 AC_SEC_GSOAP_PLUGIN
+AC_GLITE_SERVICE_DISCOVERY
 
 AC_GLITE_DATA([], have_data=yes, have_data=no)
 AC_MSG_RESULT(["GLITE_DATA found $have_data"])

@@ -7,6 +7,7 @@ glite_wms_brokerinfo_catalog_accesTest_SOURCES = \
 
 glite_wms_brokerinfo_catalog_accesTest_LDADD = \
 	$(top_srcdir)/build/src/libglite_wms_brokerinfo.la \
+	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_JDL_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
@@ -25,11 +26,13 @@ glite_wms_brokerinfo_catalog_accesTest_LDADD = \
 
 
 
+
 CXXFLAGS = -g
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
         -I$(top_srcdir)/src \
         -I$(top_srcidr)/test \
+	-I$(GLITE_LOCATION)/include \
         $(GSOAP_CFLAGS) \
         $(GLITE_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
