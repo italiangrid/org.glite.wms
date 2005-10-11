@@ -105,7 +105,7 @@ class JobOutput  : public Job {
                 */
                 std::vector<std::string> jobIds ;
 		/**
-		* Info on the  files of children nodes
+		* Info on the  files of the child nodes
 		*/
 		std::string childrenFileList ;
 		/**
