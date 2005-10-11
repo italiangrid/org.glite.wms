@@ -19,13 +19,13 @@ public class WMProxyJobCancelTest {
 
 	public WMProxyJobCancelTest ( ) { }
 	/*
-	*	starts the test
+	*	Starts the test
 	*	@param url service URL
 	*	@param proxyFile the path location of the user proxy file
 	*  	@param jobID the id to identify the job
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url,  String proxyFile, String jobId, ) throws java.lang.Exception {
+	public static void runTest ( String url,  String proxyFile, String jobId ) throws java.lang.Exception {
 		// Prints  the input parameters
 		System.out.println ("TEST : JobCancel");
 		System.out.println ("************************************************************************************************************************************");
