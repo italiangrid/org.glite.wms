@@ -360,7 +360,7 @@ WMPEventLogger::logUserTag(string name, const string &value)
 	
 	Ad *classad = new Ad();
 	classad->setAttribute(name, value);
-        edglog(debug)<<"Logging user tags to LB"<<endl;
+        //edglog(debug)<<"Logging user tags to LB"<<endl;
 	logUserTags(classad->ad());
 	delete classad;
 	
@@ -418,7 +418,7 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 				WMS_OPERATION_NOT_ALLOWED, "Unable to Parse Expression");
 		}
  		if (val.IsStringValue(attrValue)) {
-                        edglog(debug)<<"Logging user tag to LB"<<endl;
+                        edglog(debug)<<"Logging user tag to LB: " << vect[i].first).c_str() <<endl;
 			if (edg_wll_LogUserTag(ctx, (vect[i].first).c_str(),
 					attrValue.c_str())) {
 				string msg = error_message("edg_wll_LogUserTag");
