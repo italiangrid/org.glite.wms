@@ -6,15 +6,15 @@
 #	input parameters:
 #		- p1 = endpoint URL
 #		- p2 = proxy file pathname
-#		- p3 = jobid
+#		- p3 = configuration file
 #
 ##############################################
 
 
 top=../../../../../../../
 top_src=../../../../../
-package=org.glite.wms.wmproxy.jobcancel
-class=WMProxyJobCancelTest
+package=org.glite.wms.wmproxy.intparamtemplate
+class=WMProxyIntParametricTemplateTest
 
 AXIS=`more ../axis.cfg`
 AXIS_LOC=${top}$AXIS

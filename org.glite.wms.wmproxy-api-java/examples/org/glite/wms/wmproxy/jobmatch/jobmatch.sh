@@ -60,7 +60,8 @@ p4=$4
 
 # launching the test...
 # ------------------------
-set -x
-java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3} ${p4}
+CMD="${package}.${class} ${p1} ${p2} ${p3} ${p4}"
+echo "java ${CMD}"
+java -classpath ${classpath} ${CMD}
 
 
