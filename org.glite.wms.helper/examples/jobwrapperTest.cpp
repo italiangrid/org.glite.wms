@@ -12,6 +12,7 @@
 #include <fstream>
 
 #include "jobadapter/jobwrapper/JobWrapper.h"
+#include "glite/wms/common/configuration/Configuration.h"
 
 using std::ofstream;
 using std::cout;
@@ -22,6 +23,7 @@ using std::string;
 
 using namespace glite::wms::helper::jobadapter::url;
 using namespace glite::wms::helper::jobadapter::jobwrapper;
+using namespace glite::wms::common::configuration;
 
 int
 main(int argc, char* argv[])
@@ -36,6 +38,7 @@ main(int argc, char* argv[])
   vector<string> output_files;
   output_files.push_back("outputfile1");
 
+  Configuration config("glite_wms.conf", "WorkloadManager");
   JobWrapper *jw;
   
   try {
