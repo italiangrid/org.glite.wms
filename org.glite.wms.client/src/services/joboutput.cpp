@@ -361,7 +361,7 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 				for (unsigned int i = 0; i < files.size( ); i++){
 					try{
 						//fs::path cp (Utils::normalizePath(files[i].first), fs::system_specific); boost 1.29.1
-						fs::path cp (Utils::normalizePath(files[i].first));
+						fs::path cp (Utils::normalizePath(files[i].first), fs::native);
 						filename = cp.leaf( );
 					} catch (fs::filesystem_error &ex){ }
 						paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );

@@ -1450,7 +1450,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 	// that has called this method
         try{
         	//fs::path cp (Utils::normalizePath(argv[0]), fs::system_specific);  boost 1.29.1
-		fs::path cp (Utils::normalizePath(argv[0]));
+		fs::path cp (Utils::normalizePath(argv[0]), fs::native);
  		applName = cp.leaf( );
         } catch (fs::filesystem_error &ex){
 		applName = getDefaultApplicationName( );

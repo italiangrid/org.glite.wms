@@ -1181,7 +1181,7 @@ const bool Utils::isFile (const std::string &pathname){
         if ( checkPathExistence(pathname.c_str() ) ){
                 try{
                       //  fs::path cp (normalizePath(pathname), fs::system_specific); // Boost 1.29.1
-			fs::path cp (normalizePath(pathname));
+			fs::path cp (normalizePath(pathname), fs::native);
                         is_valid = !( fs::is_directory(cp)) ;
                 }catch (fs::filesystem_error &ex){ }
         }
@@ -1195,7 +1195,7 @@ const bool Utils::isDirectory (const std::string &pathname){
 	if ( checkPathExistence(pathname.c_str()) ){
 		try{
 			 //fs::path cp (Utils::normalizePath(pathname), fs::system_specific); // Boost 1.29.1
-			fs::path cp (Utils::normalizePath(pathname));
+			fs::path cp (Utils::normalizePath(pathname), fs::native);
         		is_valid =  fs::is_directory(cp) ;
 		}catch (fs::filesystem_error &ex){ }
 	}
@@ -1256,7 +1256,7 @@ int Utils::getFileSize (const std::string &path) {
 void Utils::removeFile(const std::string &file) {
 	try{
 		//fs::path cp (file, fs::system_specific); // Boost 1.29.1
-		fs::path cp (file);
+		fs::path cp (file, fs::native);
 		if ( fs::is_directory(cp))  {
 			throw WmsClientException(__FILE__,__LINE__,
 				"removeFile",  DEFAULT_ERR_CODE,
