@@ -144,16 +144,16 @@ dli::DataLocationInterfaceSOAP::listReplicas(std::string inputDataType,
 
    std::vector<std::string> urlVector;
 
-   URLArray urlList;
+   //URLArray urlList;
 
-//   struct ns1__listReplicasResponse theList;
+   struct ns1__listReplicasResponse theList;
   
    // Call listReplicas and handle potential SOAP Faults
    //
-//   if (soap_call_ns1__listReplicas(&m_soap, endpoint.c_str(), "",
-//                                  inputDataType, inputData, theList)) {
-   if (soap_call_ns__listReplicas(&m_soap, endpoint.c_str(), "",
-                                   inputDataType, inputData, &urlList)) {
+   if (soap_call_ns1__listReplicas(&m_soap, endpoint.c_str(), "",
+                                  inputDataType, inputData, theList)) {
+//   if (soap_call_ns__listReplicas(&m_soap, endpoint.c_str(), "",
+//                                   inputDataType, inputData, &urlList)) {
       // In case of a SOAP Fault, throw an error string that the server sent
       //
       std::string ex;
@@ -197,13 +197,13 @@ dli::DataLocationInterfaceSOAP::listReplicas(std::string inputDataType,
     
    // Convert the URLArray into a vector that we then return to the caller
    
-   for (int i=0; i < urlList.__size; i++ ) {
-     urlVector.push_back(urlList[i]);
-   }
-
-   //for (int i=0; i < (theList.urlList)->__size; i++ )  {
-   //   urlVector.push_back(  ((theList.urlList)->__ptritem)[i]  );
+   //for (int i=0; i < urlList.__size; i++ ) {
+   //  urlVector.push_back(urlList[i]);
    //}
+
+   for (int i=0; i < (theList.urlList)->__size; i++ )  {
+      urlVector.push_back(  ((theList.urlList)->__ptritem)[i]  );
+   }
 
    return urlVector;
 } // listReplicas
@@ -253,7 +253,7 @@ extern "C" void destroy_dli(dli::DataLocationInterfaceSOAP* p) {
  * URLArray: class to implement a string array in gSOAP. The class is
  *           defined in DataLocationInterface.h
  */
-
+/*
 URLArray::URLArray()
 { __ptr = NULL;
   __size = 0;
@@ -265,4 +265,4 @@ std::string& URLArray::operator[](int i) const
   assert(__ptr && i >= 0 && i < __size);
   return __ptr[i];
 } // URLArray::operator
-
+*/

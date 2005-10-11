@@ -105,7 +105,9 @@ void glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::listSEbyGUID( c
 ////////////////////////////////////////////////////////
    struct ns1__listSEbyGUIDResponse output;
    
-   char  *guidCopy = strdup(guid.c_str());
+   char  *guidCopy = new char[guid.length() + 1];
+   
+   strcpy(guidCopy, guid.c_str());
    
    if (soap_call_ns1__listSEbyGUID(&m_soap, endpoint.c_str(), NULL, guidCopy, output) ) {
       delete [] guidCopy;
@@ -195,8 +197,10 @@ glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::listSEbyLFN( const s
 
    struct ns1__listSEbyLFNResponse output;
 				                    
-   char  *lfnCopy = strdup(lfn.c_str());
+   char  *lfnCopy = new char[lfn.length() + 1];
    
+   strcpy(lfnCopy, lfn.c_str());   
+ 
    if( soap_call_ns1__listSEbyLFN(&m_soap, endpoint.c_str(), NULL, lfnCopy, output) ) {
       delete [] lfnCopy;
 
