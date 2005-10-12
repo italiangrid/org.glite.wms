@@ -15,7 +15,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS wmproxy-api-cpp], [1.1.2])
+AC_INIT([GLite WMS wmproxy-api-cpp], [1.2.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/wmproxy_api.cpp])
@@ -106,7 +106,7 @@ AC_GSOAP
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
-#AM_CONFIG_HEADER([src/autogen/config.h])
+AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([interface/Makefile])
