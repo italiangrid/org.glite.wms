@@ -204,14 +204,13 @@ JobIdApi* jobidSoap2cpp (ns1__JobIdStructType *s_id){
 	// jobid
 	result->jobid=s_id->id ;
 	// node name
-	result->nodeName=NULL ;
-	if (s_id->name!=NULL) {
+	if (s_id->name) {
 		result->nodeName= new string(*(s_id->name));
 	} else {
 		result->nodeName=NULL ;
 	}
 	// children
-	children =s_id->childrenJob;
+	children = s_id->childrenJob;
 	for (unsigned int i = 0 ; i< children.size(); i++){
 		result->children.push_back(jobidSoap2cpp( children[i] ) );
 	}
@@ -286,25 +285,19 @@ node2soap
 Tranform the soap string&long list structure into cpp primitive object structure
 ******************************************************************/
 ns1__GraphStructType* node2soap(NodeStruct *c_node){
-
 	ns1__GraphStructType *s_node = new ns1__GraphStructType();
 	if (c_node){
-		if (s_node->name == NULL){s_node->name = new string(); }
 		if (c_node->nodeName){
+			s_node->name = new string();
 			*(s_node->name)  = *(c_node->nodeName);
+		} else {
+			s_node->name = NULL;
 		}
-
-
-
-		/*
-		if(c_node->childrenNodes.size()>0) s_node->childrenJob=new vector<ns1__GraphStructType*>;
-		*/
 		for(unsigned int i=0; i<c_node->childrenNodes.size();i++){
 			s_node->childrenJob.push_back(node2soap(c_node->childrenNodes[i]));
 		}
 	}
 	return s_node;
-
 }
 /*****************************************************************
 ConfigContext Constructor/Destructor
@@ -465,18 +458,6 @@ getSandboxBulkDestURI
 	ns1__getSandboxBulkDestURIResponse response;
 	if ( wmp.ns1__getSandboxBulkDestURI(jobid, response) == SOAP_OK) {
 		vect = destURISoap2cpp(response._DestURIsStructType);
-		/*if (list) {
-			vector<ns1__DestURIStructType*> *list = response._DestURIsStructType->Item;
-			for (int i = 0; i < list->size(); i++) {
-				if (!uris.empty()) { uris.clear ( ); }
-				if ((*list)[i]->Item) {
-					for (int j = 0; j < (*list)[i]->Item->size(); j++) {
-						uris.push_back( (*((*list)[i]->Item))[j] );
-					}
-				}
-				vect.push_back (make_pair((*list)[i]->id, uris ) );
-			}
-		}*/
 	} else soapErrorMng(wmp) ;
 	return vect;
 }
@@ -559,11 +540,6 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 	soapAuthentication (wmp, cfs);
 	ns1__enableFilePerusalResponse response;
 	ns1_string_list = vect2soap(files);
-	if (ns1_string_list == NULL){
-
-
-
-	}
 	if (wmp.ns1__enableFilePerusal(jobid, ns1_string_list, response) == SOAP_OK) {
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
