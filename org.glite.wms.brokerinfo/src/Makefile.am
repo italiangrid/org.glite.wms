@@ -22,7 +22,7 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	brokerinfoGlueImpl.cpp
 
 libglite_wms_brokerinfo_la_LIBADD = \
-	$(GLITE_LOCATION)/lib/libglite-sd-c.a
+	$(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS)
 
 libglite_wms_dli_sici_la_SOURCES = \
 	datalocationinterfaceClientLib.cpp \
