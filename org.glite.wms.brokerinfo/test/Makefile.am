@@ -23,9 +23,7 @@ glite_wms_brokerinfo_catalog_accesTest_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS)
 
-#$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
-
-
+#$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)
 
 
 CXXFLAGS = -g
