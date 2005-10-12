@@ -813,7 +813,7 @@ doExecv(const string &command, const vector<string> &params,
 			break;
 		case 0:
 			// child
-	        if (int outcome = execv(command.c_str(), argvs)) {
+	        if (execv(command.c_str(), argvs)) {
 	        	if (errno == E2BIG) {
         			edglog(info)<<"Command line too long, splitting..."<<endl;
         			unsigned int middle = startIndex
