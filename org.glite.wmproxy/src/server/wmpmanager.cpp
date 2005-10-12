@@ -131,7 +131,8 @@ WMPManager::runCommand(const std::string& cmdname,
 		      		is_forwarded = true;
 					if (cmdname == "JobSubmit") {
 						#ifndef HAVE_LBPROXY
-						std::string seqcode = wmpeventlogger->getUserTagSequenceCode();
+						std::string seqcode = wmpeventlogger
+							->getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 						wmpeventlogger->setSequenceCode(const_cast<char*>(seqcode.c_str()));
 						wmpeventlogger->incrementSequenceCode();
 						#endif //HAVE_LBPROXY

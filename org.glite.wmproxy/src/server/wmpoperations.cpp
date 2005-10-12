@@ -1669,7 +1669,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
 				"Unable to set User Proxy for LB context");
 		}
-		string parentjdl = wmplogger.getUserTagJDLOriginal();
+		string parentjdl = wmplogger.getUserTag(WMPEventLogger::QUERY_JDL_ORIGINAL);
 		
 		Ad * parentad = new Ad();
 		int type = getType(parentjdl, parentad);

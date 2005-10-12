@@ -68,7 +68,6 @@ class WMPEventLogger  {
 		char * getSequence();
 		void setSequenceCode(const std::string &seqcode);
 		void incrementSequenceCode();
-		std::string getUserTagSequenceCode();
 		
 		// Proxy renewal
 		char * registerProxyRenewal(const std::string &proxy_path,
@@ -102,11 +101,12 @@ class WMPEventLogger  {
 
 		int setUserProxy(const std::string &proxy);
 		
-		bool retrieveEvent(const std::string &jobid_str, event_name eventname);
+		//bool retrieveEvent(const std::string &jobid_str, event_name eventname);
 		regJobEvent retrieveRegJobEvent(const std::string &jobid_str);
 		bool isRegisterEventOnly();
 		
-		std::string getUserTagJDLOriginal();
+		std::string getUserTag(const std::string &tagname);
+		
 		
 		/**
 		 * Gets the full status of the job represented by the input job id
@@ -115,6 +115,9 @@ class WMPEventLogger  {
 		 */
 		static glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid,
 			const std::string &delegatedproxy, bool childreninfo = false);
+			
+		static const std::string QUERY_SEQUENCE_CODE;
+		static const std::string QUERY_JDL_ORIGINAL;
 
 	private:
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
@@ -133,6 +136,7 @@ class WMPEventLogger  {
 		std::string delegatedproxy;
 		int desturiport;
 		static const char *GLITE_WMS_LOG_DESTINATION;
+		
 		static const int LB_RENEWAL_PORT = 7512;
 		static const int LOG_RETRY_COUNT = 3;
 };

@@ -59,6 +59,8 @@ using namespace glite::wmsutils::exception; //Exception
 const char *WMPEventLogger::GLITE_WMS_LOG_DESTINATION 
 	= "GLITE_WMS_LOG_DESTINATION";
 
+const string WMPEventLogger::QUERY_SEQUENCE_CODE = "lb_sequence_code";
+const string WMPEventLogger::QUERY_JDL_ORIGINAL = "jdl_original";
 
 WMPEventLogger::WMPEventLogger(const string &endpoint)
 {
@@ -198,6 +200,7 @@ WMPEventLogger::registerJob(JobAd *jad)
 	edglog(debug)<<"str_addr: "<<str_addr<<endl;
 	char * seqcode = getSequence();
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
+	
 	int register_result;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
@@ -206,7 +209,7 @@ WMPEventLogger::registerJob(JobAd *jad)
 			jad->toSubmissionString().c_str(),
 			str_addr, 0, NULL, NULL) ;
 		edglog(debug)<<"edg_wll_RegisterJobProxy() exit code: "<<register_result<<endl;
-	}else {
+	} else {
 #endif  //HAVE_LBPROXY
 		edglog(debug)<<"Registering normal job to LB"<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
@@ -216,6 +219,7 @@ WMPEventLogger::registerJob(JobAd *jad)
 #ifdef HAVE_LBPROXY
 	}
 #endif  //HAVE_LBPROXY
+
 	if (register_result) {
 		string msg = error_message("edg_wll_RegisterJob");
 		edglog(severe)<<msg<<endl;
@@ -223,7 +227,6 @@ WMPEventLogger::registerJob(JobAd *jad)
 			"WMPEventLogger::registerJob(JobAd* jad)",
 			WMS_OPERATION_NOT_ALLOWED, msg);
 	}
-	//logUserTag(JDL::LB_SEQUENCE_CODE, string(seqcode));
 	if (jad->hasAttribute(JDL::USERTAGS)) {
 		logUserTags((classad::ClassAd*) jad->delAttribute(JDL::USERTAGS));
 	}
@@ -254,16 +257,30 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 		sprintf(*zero_char, "%s", iter->c_str());
 		zero_char++;
 	}
-        edglog(debug)<<"Registering DAG subjobs to LB"<<endl;
-	if (edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char, str_nsAddr,
-			subjobs)) {
+	
+	int register_result;
+#ifdef HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Registering DAG subjobs to LB Proxy"<<endl;
+		register_result = edg_wll_RegisterSubjobsProxy(ctx, id->getId(), jdls_char,
+			str_nsAddr, subjobs);
+	} else {
+#endif  //HAVE_LBPROXY
+		edglog(debug)<<"Registering DAG subjobs to LB"<<endl;
+		register_result = edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char,
+			str_nsAddr, subjobs);
+#ifdef HAVE_LBPROXY
+	}
+#endif  //HAVE_LBPROXY
+
+	if (register_result) {
 		string msg = error_message("edg_wll_RegisterSubjobs");
 		edglog(critical)<<msg<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"WMPEventLogger::registerSubJobs()",
 			WMS_OPERATION_NOT_ALLOWED, msg);
 	}
-	for (unsigned int i = 0; i < jdls.size(); i++ ) {
+	for (unsigned int i = 0; i < jdls.size(); i++) {
 		std::free(jdls_char[i]);
 	}
     std::free(jdls_char);
@@ -315,18 +332,19 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering DAG to LB Proxy"<<endl;
-		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
-			dag->toString().c_str(), str_addr, size,
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
 			NULL, &subjobs) ;
 	} else {
 #endif  //HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG to LB"<<endl;
-		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_REGJOB_DAG,
-			dag->toString().c_str(), str_addr, size,
+		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
+			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
 			NULL, &subjobs);
 #ifdef HAVE_LBPROXY
 	}
 #endif  //HAVE_LBPROXY
+
 	if (register_result) {
 		string msg = error_message("edg_wll_RegisterJob");
 		edglog(critical)<<msg<<endl;
@@ -386,16 +404,7 @@ WMPEventLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree
 		setLoggingJob(userTags[i].first);
 		logUserTags((classad::ClassAd*)(userTags[i].second));
 	}
-#ifdef HAVE_LBPROXY
-	if (lbProxy_b) { 
-		edg_wll_SetLoggingJobProxy(ctx, id->getId(), NULL, getUserDN(),
-			EDG_WLL_SEQ_NORMAL); 
-	} else {
-#endif  //HAVE_LBPROXY
-		edg_wll_SetLoggingJob(ctx, id->getId(), NULL, EDG_WLL_SEQ_NORMAL);
-#ifdef HAVE_LBPROXY
-	}
-#endif  //HAVE_LBPROXY
+	setLoggingJob(id->toString());
 
 	GLITE_STACK_CATCH();
 }
@@ -410,7 +419,21 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 	classad::Value val;
 	string attrValue;
 	userTags->GetComponents(vect);
-	for (unsigned int i = 0; i< vect.size(); i++) {
+	
+	// Pointer to a function
+	int (*fp) (_edg_wll_Context*, const char*, const char*);
+#ifdef HAVE_LBPROXY
+	if (lbProxy_b) {
+		fp = &edg_wll_LogUserTagProxy;
+	} else {
+#endif  //HAVE_LBPROXY
+        edglog(debug)<<"Setting job for logging to LB"<<endl;
+		fp = &edg_wll_LogUserTag;
+#ifdef HAVE_LBPROXY
+	}
+#endif  //HAVE_LBPROXY
+
+	for (unsigned int i = 0; i < vect.size(); i++) {
 		if (!userTags->EvaluateExpr(vect[i].second, val)) {
 			edglog(error)<<"Unable to Parse Expression"<<endl;
 			throw JobOperationException(__FILE__, __LINE__,
@@ -419,8 +442,7 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 		}
  		if (val.IsStringValue(attrValue)) {
             edglog(debug)<<"Logging user tag to LB: "<<vect[i].first<<endl;
-			if (edg_wll_LogUserTag(ctx, (vect[i].first).c_str(),
-					attrValue.c_str())) {
+			if (fp(ctx, (vect[i].first).c_str(), attrValue.c_str())) {
 				string msg = error_message("edg_wll_LogUserTag");
 				edglog(critical)<<msg<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
@@ -753,7 +775,7 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 	
 	GLITE_STACK_CATCH();
 }
-
+/*
 bool
 WMPEventLogger::retrieveEvent(const std::string &jobid_str, event_name eventname)
 {
@@ -811,7 +833,7 @@ WMPEventLogger::retrieveEvent(const std::string &jobid_str, event_name eventname
   	
   	GLITE_STACK_CATCH();
 }
-
+*/
 regJobEvent
 WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 {
@@ -849,7 +871,20 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
   	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
   	ec[0].value.i = EDG_WLL_EVENT_REGJOB;
   	
-  	int error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+  	int error;
+
+#ifdef HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Quering LBProxy"<<endl;
+		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+	} else { // end switch LB PROXY
+#endif  //HAVE_LBPROXY
+		edglog(debug)<< "Quering LB"<<endl;
+		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+#ifdef HAVE_LBPROXY
+	} // end switch LB normal
+#endif  //HAVE_LBPROXY
+
   	if (error == ENOENT) { // no events found
    		return event;
   	}
@@ -872,6 +907,12 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 	  		event.parent = string(edg_wlc_JobIdUnparse(events[0].regJob.parent));
 	  	}
   	}
+  	
+  	/*for (unsigned i = 0; i < sizeof(events) / sizeof(events[0]); i++) {
+  		edg_wll_FreeEvent(events[i]);
+	}
+	free(events);*/
+
   	return event;
   	
   	GLITE_STACK_CATCH();
@@ -933,51 +974,77 @@ WMPEventLogger::isRegisterEventOnly()
 }
 
 string
-WMPEventLogger::getUserTagSequenceCode() 
+WMPEventLogger::getUserTag(const string &tagname)
 {
-	GLITE_STACK_TRY("getUserTagSequenceCode()");
-	edglog_fn("WMPEventLogger::getUserTagSequenceCode");
+	GLITE_STACK_TRY("retrieveRegJobEvent()");
+	edglog_fn("WMPEventlogger::retrieveRegJobEvent");
 	
-	glite::lb::Job lbjob(*id);
-	setJobLoggingProxy(lbjob, this->delegatedproxy);
+	string jobid_str = id->toString();
 	
-	std::vector<glite::lb::Event> events = lbjob.log();
-	glite::lb::Event event;
-	for (unsigned int i = 0; i < events.size(); i++) {
-		event = events[i];
-		if (event.type == glite::lb::Event::USERTAG) {
-			if (event.getValString(glite::lb::Event::NAME) == "lb_sequence_code") {
-				return event.getValString(glite::lb::Event::VALUE);	
-			}
-		}
-	}
-	return "";
-	
-	GLITE_STACK_CATCH();
-}
+	edg_wlc_JobId jobid;
+  	edg_wll_Event * events = NULL;
+  	edg_wll_QueryRec jc[2];
+  	edg_wll_QueryRec ec[2];
+  	
+  	// parse the jobID string
+  	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
+    	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
+    	throw JobOperationException(__FILE__, __LINE__,
+			"std::string WMPEventLogger::retrieveEvent()",
+			WMS_OPERATION_NOT_ALLOWED, "Error during edg_wlc_JobIdParse");
+  	}
 
-string
-WMPEventLogger::getUserTagJDLOriginal() 
-{
-	GLITE_STACK_TRY("getUserJDLOriginal()");
-	edglog_fn("WMPEventLogger::getUserJDLOriginal");
+  	memset(jc, 0, sizeof jc);
+  	memset(ec, 0, sizeof ec);
+  
+  	// job condition: JOBID = jobid
+  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	jc[0].value.j = jobid;
+  
+  	// event condition: Event type = REGJOB
+  	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
+  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	ec[0].value.i = EDG_WLL_EVENT_USERTAG;
+  	
+  	int error;
+
+#ifdef HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Quering LBProxy"<<endl;
+		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+	} else { // end switch LB PROXY
+#endif  //HAVE_LBPROXY
+		edglog(debug)<< "Quering LB"<<endl;
+		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+#ifdef HAVE_LBPROXY
+	} // end switch LB normal
+#endif  //HAVE_LBPROXY
+
+  	if (error == ENOENT) { // no events found
+   		return "";
+  	}
+  	if (error) {
+   		///TBC throw an exception???
+   		//log_error("Query failed");
+    	return "";
+	}
+  	
+  	edg_wll_Event event;
 	
-	glite::lb::Job lbjob(*id);
-	setJobLoggingProxy(lbjob, this->delegatedproxy);
-	
-	std::vector<glite::lb::Event> events = lbjob.log();
-	glite::lb::Event event;
-	for (unsigned int i = 0; i < events.size(); i++) {
+	// Events array is set to a NULL event wich type = 0
+	for (unsigned int i = 0; events[i].type != 0; i++) {
 		event = events[i];
-		if (event.type == glite::lb::Event::USERTAG) {
-			if (event.getValString(glite::lb::Event::NAME) == "jdl_original") {
-				return event.getValString(glite::lb::Event::VALUE);	
-			}
+		if (string(event.userTag.name) == tagname) {
+			edglog(debug)<<"Found " + string(tagname)
+				+ " user tag, value: "<<event.userTag.value<<endl;
+			return event.userTag.value;
 		}
 	}
-	return "";
-	
-	GLITE_STACK_CATCH();
+  	
+  	return "";
+  	
+  	GLITE_STACK_CATCH();
 }
 
 glite::lb::JobStatus

@@ -116,7 +116,7 @@ BUILD=$(REPOSITORY)/org.glite.wms.wmproxy/build
 
 wmClient:		$(BUILD)/src/server/wm.h wmclient.cp $(SOAPH) $(SOAPCPP)
 			@echo "wmclient....."
-			@$(CPP) -I $(BUILD)/src/server \
+			$(CPP) -I $(BUILD)/src/server \
 				-I. $(C1FLAGS) -I$(GSOAPPATH) -L$(REPLIBS) -DWITH_OPENSSL \
 				-o wmClient wmclient.cp $(BUILD)/src/server/soapC.cpp $(BUILD)/src/server/soapClient.cpp \
 				$(SOAPCPP) $(LIBS) $(LD1FLAGS)
