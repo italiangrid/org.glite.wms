@@ -813,7 +813,7 @@ doExecv(const string &command, const vector<string> &params,
 			break;
 		case 0:
 			// child
-	        if (execv(command.c_str(), argvs)) {
+	        if (int outcome = execv(command.c_str(), argvs)) {
 	        	if (errno == E2BIG) {
         			edglog(info)<<"Command line too long, splitting..."<<endl;
         			unsigned int middle = startIndex
@@ -835,6 +835,11 @@ doExecv(const string &command, const vector<string> &params,
         	// parent
 	    	int status;
 	    	wait(&status);
+	    	if (status) {
+	    		throw FileSystemException(__FILE__, __LINE__,
+					"doExecv()", WMS_IS_FAILURE, "Unable to create job local "
+					"directory\n(please contact server administartor)");
+	    	}
 	    	break;
 	}
 	for (unsigned int j = 0; j <= i; j++) {
