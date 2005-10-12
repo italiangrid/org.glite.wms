@@ -199,7 +199,7 @@ Tranform the soap jobid structure into cpp primitive object structure
 ******************************************************************/
 
 JobIdApi* jobidSoap2cpp (ns1__JobIdStructType *s_id){
-	vector<ns1__JobIdStructType*> *children = NULL ;
+	vector<ns1__JobIdStructType*  > children ;
 	JobIdApi *result = new JobIdApi ;
 	// jobid
 	result->jobid=s_id->id ;
@@ -212,10 +212,8 @@ JobIdApi* jobidSoap2cpp (ns1__JobIdStructType *s_id){
 	}
 	// children
 	children =s_id->childrenJob;
-	if (children){
-		for (unsigned int i = 0 ; i< children->size(); i++){
-			result->children.push_back(jobidSoap2cpp( (*children)[i] ) );
-		}
+	for (unsigned int i = 0 ; i< children.size(); i++){
+		result->children.push_back(jobidSoap2cpp( children[i] ) );
 	}
 	return result ;
 }
@@ -225,18 +223,19 @@ Tranform the soap destURI structure into cpp primitive object structure
 ******************************************************************/
 std::vector< std::pair<std::string ,std::vector<std::string > > > destURISoap2cpp(ns1__DestURIsStructType* dest_uris){
 	vector<string> uris;
-	vector<ns1__DestURIStructType*> *list = NULL;
+	vector<ns1__DestURIStructType*> list ;
+	ns1__DestURIStructType item_list;
 	vector< pair<string ,vector<string > > > result;
 	if (dest_uris) {
 		list = dest_uris->Item;
-		if (list) {
-			for (int i = 0; i < list->size(); i++) {
-				if (!uris.empty()) { uris.clear ( ); }
-				if ((*list)[i]->Item) {
-					for (int j = 0; j < (*list)[i]->Item->size(); j++) {
-						uris.push_back( (*((*list)[i]->Item))[j] );}
-					}
-				result.push_back (make_pair((*list)[i]->id, uris ) );
+		for (int i = 0; i < list.size(); i++) {
+			if (!uris.empty()) { uris.clear ( ); }
+			if (list[i]) {
+				item_list = *list[i];
+				for (int j = 0; j < item_list.Item.size(); j++) {
+					uris.push_back( item_list.Item[j] );
+				}
+				result.push_back (make_pair((*list[i]).id, uris ) );
 			}
 		}
 	}
@@ -248,10 +247,12 @@ Tranform the soap string&long list structure into cpp primitive object structure
 **************************************************************/
 vector <pair<string , long> > fileSoap2cpp (ns1__StringAndLongList *s_list){
 	vector <pair<string , long> > result ;
-	if (s_list && s_list->file){
-		std::vector<ns1__StringAndLongType*> s_vect=*(s_list->file);
-		for (unsigned int i = 0 ; i< s_vect.size() ; i++){
-			result.push_back( pair<string , long> (s_vect[i]->name,(long)(s_vect[i]->size)));
+	if (s_list){
+		std::vector<ns1__StringAndLongType*> s_vect = (*s_list).file;
+		for (unsigned int i = 0 ; i < s_vect.size() ; i++){
+			if (s_vect[i]){
+				result.push_back( pair<string , long> (s_vect[i]->name,(long)(s_vect[i]->size)));
+			}
 		}
 	}
 	return result ;
@@ -262,8 +263,8 @@ Tranform the soap string list structure into cpp primitive object structure
 **************************************************************/
 std::vector <std::string> listSoap2cpp (ns1__StringList *s_list){
 	vector <string> empty;
-	if (s_list && s_list->Item){
-		return *(s_list->Item);
+	if (s_list){
+		return (*s_list).Item;
 	}
 	return empty ;
 }
@@ -273,8 +274,10 @@ Tranform the cpp vector object into a soap string-list
 **************************************************************/
 ns1__StringList *vect2soap(const std::vector<std::string> &attributes){
 	ns1__StringList *result =new ns1__StringList;
-	result->Item=new vector<string>;
-	for (unsigned int i = 0; i<attributes.size();i++){ result->Item->push_back(attributes[i]);}
+	// result.Item is std::vector<std::string>
+	for (unsigned int i = 0; i<attributes.size();i++){
+		(*result).Item.push_back(attributes[i]);
+	}
 	return result ;
 }
 
@@ -283,13 +286,25 @@ node2soap
 Tranform the soap string&long list structure into cpp primitive object structure
 ******************************************************************/
 ns1__GraphStructType* node2soap(NodeStruct *c_node){
+
 	ns1__GraphStructType *s_node = new ns1__GraphStructType();
-	s_node->name=c_node->nodeName;
-	if(c_node->childrenNodes.size()>0) s_node->childrenJob=new vector<ns1__GraphStructType*>;
-	for(unsigned int i=0; i<c_node->childrenNodes.size();i++){
-		s_node->childrenJob->push_back(node2soap(c_node->childrenNodes[i]));
+	if (c_node){
+		if (s_node->name == NULL){s_node->name = new string(); }
+		if (c_node->nodeName){
+			*(s_node->name)  = *(c_node->nodeName);
+		}
+
+
+
+		/*
+		if(c_node->childrenNodes.size()>0) s_node->childrenJob=new vector<ns1__GraphStructType*>;
+		*/
+		for(unsigned int i=0; i<c_node->childrenNodes.size();i++){
+			s_node->childrenJob.push_back(node2soap(c_node->childrenNodes[i]));
+		}
 	}
 	return s_node;
+
 }
 /*****************************************************************
 ConfigContext Constructor/Destructor
@@ -430,8 +445,8 @@ vector<string> getSandboxDestURI(const string &jobid, ConfigContext *cfs){
 	if (wmp.ns1__getSandboxDestURI(jobid, response) == SOAP_OK) {
 		ns1_string_list = response._path;
 		if (ns1_string_list) {
-			for (unsigned int i = 0; i < ns1_string_list->Item->size(); i++) {
-				vect.push_back((*(ns1_string_list->Item))[i]);
+			for (unsigned int i = 0; i < (*ns1_string_list).Item.size(); i++) {
+				vect.push_back((*ns1_string_list).Item[i]);
 			}
 		}
 		soapDestroy(wmp.soap) ;
@@ -574,19 +589,19 @@ getJobTemplate
 ******************************************************************/
 ns1__JobTypeList *createJobTypeList(int type) {
 	ns1__JobTypeList * result  = new ns1__JobTypeList;
-	result->jobType= new std::vector<enum ns1__JobType     > ;
+	//result->jobType ;//= new std::vector<enum ns1__JobType     > ;
 	if ( type & JOBTYPE_PARTITIONABLE ){
-		result->jobType->push_back( ns1__JobType__PARTITIONABLE );
+		result->jobType.push_back( ns1__JobType__PARTITIONABLE );
 	} if ( type & JOBTYPE_CHECKPOINTABLE ){
-		result->jobType->push_back(ns1__JobType__CHECKPOINTABLE);
+		result->jobType.push_back(ns1__JobType__CHECKPOINTABLE);
 	} if ( type & JOBTYPE_PARAMETRIC ) {
-		result->jobType->push_back(ns1__JobType__PARAMETRIC);
+		result->jobType.push_back(ns1__JobType__PARAMETRIC);
 	} if ( type & JOBTYPE_INTERACTIVE ) {
-		result->jobType->push_back(ns1__JobType__INTERACTIVE);
+		result->jobType.push_back(ns1__JobType__INTERACTIVE);
 	} if ( type & JOBTYPE_MPICH ) {
-		result->jobType->push_back(ns1__JobType__MPI);
-	} if ( result->jobType->size() ==0 ){
-	result->jobType->push_back(ns1__JobType__NORMAL);
+		result->jobType.push_back(ns1__JobType__MPI);
+	} if ( result->jobType.size() ==0 ){
+		result->jobType.push_back(ns1__JobType__NORMAL);
 	}
 	return result ;
 }

@@ -28,7 +28,7 @@ wm.h :
 soapC.cpp : wm.h
 	@#Create the files
 	@echo "gsoap compiling .h"
-	$(GSOAP_LOCATION)/soapcpp2 -I$(GSOAP_LOCATION) $(top_srcdir)/build/src/wm.h
+	$(GSOAP_LOCATION)/soapcpp2  -I$(GSOAP_LOCATION):$(GSOAP_LOCATION)/import $(top_srcdir)/build/src/wm.h
 
 
 
@@ -44,12 +44,13 @@ libglite_wms_wmproxy_api_cpp_la_SOURCES = \
 
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-	-I$(top_srcdir)/interface \
 	-I$(GSOAP_LOCATION) \
-	$(GLITE_CFLAGS) \
+	$(GRIDSITE_OPENSSL_CFLAGS) \
 	$(CLASSAD_CFLAGS) \
-	$(BOOST_CFLAGS) \
-	-DWITH_OPENSSL
+	$(BOOST_CFLAGS)  \
+	-I$(top_srcdir)/interface \
+	$(GLITE_CFLAGS) \
+	-DWITH_OPENSSL 
 
 
 MAINTAINERCLEANFILES = Makefile.in
