@@ -53,9 +53,9 @@
 	      Define extra properties here ...
 	     ====================================================== -->
 
-        <property name="build.package.summary" value="WMProxy client API for Java" />
-                                                                                                                          
-        <property name="build.package.description" value="WMProxy client API for Java" />
+        <property name="build.package.summary" value="Files for gLite WMS WMProxy client Java API" />
+        <property name="build.package.description" value="gLite WMS WMProxy client Java API library" />
 
         <property name="build.rpm.spec.arch" value="noarch" />
+
 </project>
