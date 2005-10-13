@@ -548,24 +548,26 @@ WMPAuthorizer::checkJobDrain()
 {
 	GLITE_STACK_TRY("checkJobDrain");
 	edglog_fn("WMPAuthorizer::checkJobDrain");
-	
+
 	bool exec = true;
-	string gacl_file = "";
+	string drain_file = "";
 	string errmsg = "";
 	char* doc_root = getenv (DOCUMENT_ROOT);
 
 	if (doc_root){
 		// gacl file: path location
-		gacl_file = gacl_file.assign(doc_root).append("/")
-			.append(authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-		edglog(debug) <<"checkJobDrain> gacl_file = "<<gacl_file<<endl;
+		drain_file = gacl_file.assign(doc_root).append("/")
+			.append(authorizer::GaclManager::WMPGACL_DEFAULT_DRAIN_FILE);
+		edglog(debug) <<"checkJobDrain> drain_file = "<<gacl_file<<endl;
 		// the drain is ony checked if the gacl file exists (if it doesn't no exception is thrown)
-		if (utilities::fileExists(gacl_file)){
-			authorizer::GaclManager gacl(gacl_file) ;
-			exec = gacl.checkAllowPermission(
-				authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
-				authorizer::GaclManager::WMPGACL_ANYUSER_CRED,
-				authorizer::GaclManager::WMPGACL_EXEC);
+		if (utilities::fileExists(drain_file)){
+			authorizer::GaclManager gacl(drain_file) ;
+			if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_ANYUSER_TYPE)){
+				exec = gacl.checkAllowPermission(
+					authorizer::GaclManager::WMPGACL_ANYUSER_TYPE,
+					authorizer::GaclManager::WMPGACL_ANYUSER_CRED,
+					authorizer::GaclManager::WMPGACL_EXEC);
+			}
 		}
 	} else {
 		string msg = "Internal server error: information on the document root "

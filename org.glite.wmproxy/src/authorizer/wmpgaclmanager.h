@@ -59,7 +59,7 @@ class GaclManager {
 	* @param rawvalue the raw that the credential has to contain
 	* @return true if the gacl contains the specified credential entry, false otherwise
 	*/
-	bool hasEntry(const WMPgaclCredType &type, const std::string &rawvalue);
+	bool hasEntry(const WMPgaclCredType &type, const std::string rawvalue="");
 
 	/**
 	*	Adds a credential entry to the gacl
@@ -85,7 +85,7 @@ class GaclManager {
 	*	@throw GaclException if the credential deosn't exist in the gacl
 	*/
 	void removeEntry ( const WMPgaclCredType &type,
-					const std::string &rawvalue) ;
+					const std::string rawvalue="") ;
 	/**
 	*	Removes from the gacl file a set of entry
 	*	@param vect vector of credential (credential type , rawvalue )
@@ -285,9 +285,10 @@ class GaclManager {
 	// ====================================
 
 	/**
-	*	Gacl default filename
+	*	Gacl default filenames
 	*/
 	static const char* WMPGACL_DEFAULT_FILE ;
+	static const char* GaclManager::WMPGACL_DEFAULT_DRAIN_FILE ;
 	/**
 	* Function result : SUCCES
 	*/

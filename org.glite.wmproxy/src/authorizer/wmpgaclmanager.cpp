@@ -63,8 +63,9 @@ const char* GaclManager::WMPGACL_DNLIST_TAG = "url" ;
 const char* GaclManager::WMPGACL_DNS_TAG = "hostname";
 const char* GaclManager::WMPGACL_VOMS_TAG = "fqan";
 
-// default filename
+// default filenames
 const char* GaclManager::WMPGACL_DEFAULT_FILE = GRST_ACL_FILE;
+const char* GaclManager::WMPGACL_DEFAULT_DRAIN_FILE = ".drain";
 
 const int GaclManager::WMPGACL_SUCCESS = 0;
 const int GaclManager::WMPGACL_ERROR = -1;
@@ -182,7 +183,7 @@ void GaclManager::addEntry (const WMPgaclCredType &type, const string &rawvalue,
 	setAllowPermission(type, rawvalue, permission);
 };
 
-bool GaclManager::hasEntry(const WMPgaclCredType &type, const string &rawvalue){
+bool GaclManager::hasEntry(const WMPgaclCredType &type, const string rawvalue){
 	if (loadCredential(type,rawvalue)== WMPGACL_SUCCESS){
 		return true ;
 	} else{
@@ -211,7 +212,7 @@ void GaclManager::addEntries (const vector<pair<WMPgaclCredType, string> > &vect
 * 	@param create true = replace the gacl file with a new one
 */
 void GaclManager::removeEntry (const WMPgaclCredType &type,
-			const string &rawvalue )
+			const string rawvalue )
 {
 	#ifndef GLITE_GACL_ADMIN
 	edglog_fn("GaclManager::removeEntry");
