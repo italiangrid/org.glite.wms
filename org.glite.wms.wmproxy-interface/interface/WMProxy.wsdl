@@ -5,7 +5,12 @@
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
 	targetNamespace="http://glite.org/wms/wmproxy" name="WMProxy">
- 
+	
+	<!-- ==== Import wsdl file for delegation services (client version 1.5 or greater)==== -->
+	<wsdl:import
+			namespace="http://www.gridsite.org/namespaces/delegation-1"
+			location="www.gridsite.org-delegation-1.0.0.wsdl" />
+			
 	<!-- ==== Types definition ==== -->
 	<wsdl:types>
 		<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://glite.org/wms/wmproxy">
@@ -1619,12 +1624,21 @@
 	<wsdl:service name="WMProxy">
 		<wsdl:documentation>
 					Workload Manager Proxy service
-					This is the service that allows accessing the submission and control functionality of the WMS
-            </wsdl:documentation>
+					This is the service that allows accessing the submission and control functionalities of the WMS
+        </wsdl:documentation>
         <wsdl:port name="WMProxy_PortType" binding="glitens:WMProxy">
             <!-- ghemon.cnaf.infn.it -->
             <soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
 			<!--soap:address location="https://10.100.4.52:7443/glite_wms_wmproxy_server"/-->
         </wsdl:port>
+		
+		<wsdl:documentation>
+					Workload Manager Proxy delegation service
+					This is the service that allows delegation funcionalities
+        </wsdl:documentation>
+		<wsdl:port name="WMProxyDelegation_PortType" binding="delegation:DelegationSoapBinding">
+			<soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
+			<!--soap:address location="https://10.100.4.52:7443/glite_wms_wmproxy_server"/-->
+		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>
