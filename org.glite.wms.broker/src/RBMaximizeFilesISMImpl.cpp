@@ -26,7 +26,9 @@
 #include "utility.h"
 
 #include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/logger/manipulators.h"
+#include "glite/wms/ism/ism.h"
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 
@@ -56,7 +58,9 @@ RBMaximizeFilesISMImpl::~RBMaximizeFilesISMImpl()
 matchmaking::match_table_t* RBMaximizeFilesISMImpl::findSuitableCEs(const classad::ClassAd* requestAd)
 {
   matchmaking::match_table_t* suitableCEs = 0;
-  if (requestAd) { 
+  if (requestAd) {
+    boost::recursive_mutex::scoped_lock l(ism::get_ism_mutex());
+    Debug("RBMaximizeFilesISMImpl::findSuitableCEs acquired lock on ism\n"); 
     matchmaking::MatchMaker<matchmaking::matchmakerISMImpl> MM;
     suitableCEs = new matchmaking::match_table_t;
     MM.checkRequirement(requestAd, *suitableCEs, m_prefetch);
@@ -116,6 +120,7 @@ matchmaking::match_table_t* RBMaximizeFilesISMImpl::findSuitableCEs(const classa
       std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
     }
   }
+  Debug("RBMaximizeFilesISMImpl::findSuitableCEs released lock on ism\n");
   return suitableCEs;
 }
 
