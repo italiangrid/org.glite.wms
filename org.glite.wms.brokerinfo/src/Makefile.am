@@ -22,7 +22,9 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	brokerinfoGlueImpl.cpp
 
 libglite_wms_brokerinfo_la_LIBADD = \
-	$(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS)
+	ServiceDiscovery.o\
+	ServiceDiscoveryICommon.o
+
 
 libglite_wms_dli_sici_la_SOURCES = \
 	datalocationinterfaceClientLib.cpp \
@@ -32,9 +34,8 @@ libglite_wms_dli_sici_la_SOURCES = \
 
 
 libglite_wms_dli_sici_la_LIBADD = \
-	$(SEC_GSOAP_PLUGIN_STATIC_NOTHR_LIBS) \
+	$(SEC_GSOAP_PLUGIN_STATIC_262_NOTHR_LIBS) \
 	$(ARES_LIBS) \
-	stdsoap2_2.6.2.o \
 	envC.o
 
 libglite_wms_rls_la_SOURCES = 
@@ -43,9 +44,11 @@ libglite_wms_rls_la_LIBADD = \
 	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
 	$(REPLICA_MANAGER_LIBS)
 
+ServiceDiscovery.o: $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS); \
+	ar x $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS) ServiceDiscovery.o
 
-stdsoap2_2.6.2.o: $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c ; \
-	$(CC) $(GSOAP_CFLAGS) -DWITH_NONAMESPACES -c  $(GLITE_LOCATION)/lib/stdsoap2_2.6.2.c -o stdsoap2_2.6.2.o
+ServiceDiscoveryICommon.o: $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS); \
+	ar x $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS) ServiceDiscoveryICommon.o
 
 envC.o: envC.cpp ; \
 	$(CC) -c envC.cpp -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include -I. -o envC.o
