@@ -69,6 +69,7 @@ Job::Job(){
 	logInfo  = NULL;
         cfgCxt = NULL;
         endPoint = NULL ;
+	wmpVersion = 0;
 }
 /*
 *	Default destructor
@@ -266,6 +267,36 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 				}
 				if (success){break;}
 			}
+}
+
+std::string Job::getEndPoint( ) {
+	string endpoint = "";
+	string version = "";
+	vector<string> urls;
+	if  (wmpVersion == 0) {
+		// checks if endpoint already contains the WMProxy URL
+		if (endPoint){
+			endpoint = string(*endPoint);
+		} else if (autodgOpt && dgOpt==NULL) {
+			// delegationId
+			dgOpt = wmcUtils->getDelegationId( );
+			// if the autodelegation is needed
+			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
+		}
+		Job::getEndPointVersion(endpoint, version);
+		logInfo->print (WMS_DEBUG, "Version:", version);
+		wmpVersion = atoi (version.substr(0,1).c_str() );
+	} else {
+		if (endPoint) {
+			endpoint = string(*endPoint);
+		} else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"getEndPoint",  DEFAULT_ERR_CODE ,
+				"Null Pointer Error",
+				"null pointer to endPoint object"   );
+		}
+	}
+	return endpoint;
 }
 /**
 * Contacts the endpoint to retrieve the version

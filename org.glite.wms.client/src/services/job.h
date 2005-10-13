@@ -53,7 +53,7 @@ class Job{
 		*  Returns a string with the information on the log filename
 		* @return the string containg the information
 		*/
-		std::string Job::getLogFileMsg ( ) ;
+		virtual std::string Job::getLogFileMsg ( ) ;
 		/**
 		* Contacts the endpoint to retrieve the version. If a valid URL is pecified as input,
 		* the endpoint referred to it will be contacts.
@@ -61,7 +61,9 @@ class Job{
 		* @version the version number
 		* @all if TRUE, it contacts all endpoints specified in the configuration
 		*/
-		void getEndPointVersion(std::string &endpoint, std::string &version, const bool &all=false);
+		virtual void getEndPointVersion(std::string &endpoint, std::string &version, const bool &all=false);
+
+		virtual std::string getEndPoint( ) ;
 	private:
 		 /**
         	* Gets the version message
@@ -97,6 +99,10 @@ class Job{
 		char* trustedCert ;
 		/** configuration contex */
 		glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
+		/*
+		* Major Version number of the server
+		*/
+		int wmpVersion;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOB_H

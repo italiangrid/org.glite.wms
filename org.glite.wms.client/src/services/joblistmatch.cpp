@@ -38,8 +38,6 @@ namespace services {
 
 
 JobListMatch::JobListMatch(){
-	// init of the string attributes
-   //    dgOpt= NULL;
 	// init of the boolean attributes
         rankOpt  = false ;
 	// parameters
@@ -52,7 +50,6 @@ JobListMatch::JobListMatch(){
 *	Default destructor
 */
 JobListMatch::~JobListMatch( ){
-//	if (dgOpt) { delete(dgOpt);}
 	if (jdlFile) { delete(jdlFile);}
         if (jdlString) { delete(jdlString);}
         if (jobAd) { delete(jobAd);}
@@ -226,11 +223,16 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
                 throw WmsClientException(__FILE__,__LINE__,
                                 "readOptions",DEFAULT_ERR_CODE,
                                 "Null Pointer Error",
-                                "Null pinter to delegation ID string" );
+                                "Null pointer to delegation ID string" );
          }
 	 // if the autodelegation is needed
 	if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
-		endPoint = new string(wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
+ 		logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
+		// Endpoint
+		endPoint =  new string(this->getEndPoint());
+		cfgCxt = new ConfigContext ("", *endPoint, "");
+		//  endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
+		wmcUtils->delegateProxy (cfgCxt, *dgOpt, wmpVersion);
 	}
         // checks if ConfigContext already contains the WMProxy URL
         if (endPoint){

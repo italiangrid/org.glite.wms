@@ -69,7 +69,7 @@ void DelegateProxy::delegation ( ){
 	postOptionchecks();
 	ostringstream out ;
 	string proxy = "" ;
-	if (!cfgCxt){ cfgCxt = new ConfigContext("","","");}
+//	if (!cfgCxt){ cfgCxt = new ConfigContext("","","");}
         // Delegation ID String
         dgOpt = wmcUtils->getDelegationId ();
 	if ( ! dgOpt  ){
@@ -78,8 +78,13 @@ void DelegateProxy::delegation ( ){
 				"Missing Information", "no proxy delegation ID" );
 	}
         logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
+	// Endpoint
+	endPoint =  new string(this->getEndPoint());
+	cfgCxt = new ConfigContext ("", *endPoint, "");
         // DELEGATION (return the EnPoint URL where the proxy has been delegated)
-        endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
+      //  endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
+	wmcUtils->delegateProxy (cfgCxt, *dgOpt, wmpVersion);
+
 	// output message
         // OUTPUT MESSAGE ============================================
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";

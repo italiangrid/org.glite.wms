@@ -71,7 +71,7 @@ class JobSubmit : public Job {
 		* The proxy delegation is performed on the choosen endpoint if the autodelegation has been requested by the user (--autm-delegation).
 		* @return the string with the enpoint URL
 		*/
-		std::string getEndPoint ( ) ;
+	//	std::string getEndPoint ( ) ;
 		/**
                  *	Contacts the server in order to retrieve the list of all destionationURI's of the job (with the available protocols).
 		 *  	In case of compound jobs (DAG, collections etc..), it also retrieves the URIs of the nodes.
@@ -332,7 +332,7 @@ class JobSubmit : public Job {
 		/*
 		* Major Version number of the server
 		*/
-		int wmpVersion;
+	//	int wmpVersion;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H

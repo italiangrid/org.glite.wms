@@ -54,7 +54,6 @@ const string FILE_PROTOCOL = "file://" ;
 const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
 
-const int WMPROXY_OLD_VERSION = 1;
 // Max size (bytes) allowed for tar files
 const long MAX_TAR_SIZE = 2147483647;
 //const int MAX_TAR_SIZE =  620000;
@@ -303,7 +302,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"No valid proxy file pathname" );
 	}
 }
-
+/*
 std::string JobSubmit::getEndPoint( ) {
 	string endpoint = "";
 	string version = "";
@@ -333,6 +332,7 @@ std::string JobSubmit::getEndPoint( ) {
 	}
 	return endpoint;
 }
+*/
 /**
 * Performs the main operation for the submission
 */
@@ -849,7 +849,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			// Checks the size of the ISB
 			this->checkInputSandboxSize (jobtype);
 			// checks if file archiving and compression is allowed
-			if (wmpVersion > WMPROXY_OLD_VERSION) {
+			if (wmpVersion > Options::WMPROXY_OLD_VERSION) {
 
 				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
@@ -898,7 +898,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		// Simple Ad manipulation (common)
 		AdUtils::setDefaultValuesAd(jobAd,wmcConf);
 		// checks if file archiving and compression is allowed
-		if (wmpVersion > WMPROXY_OLD_VERSION) {
+		if (wmpVersion > Options::WMPROXY_OLD_VERSION) {
 			if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 				zipAllowed = jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 				if (zipAllowed) { message ="allowed by user in the JDL";}
@@ -1343,7 +1343,7 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 * the WMProxy in each call can only get back the URIs for one node
 */
 std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) {
-	if (wmpVersion  > WMPROXY_OLD_VERSION) {
+	if (wmpVersion  > Options::WMPROXY_OLD_VERSION) {
 		// bulk service
 		return getBulkDestURI(jobid, child, zipURI);
 	} else {
