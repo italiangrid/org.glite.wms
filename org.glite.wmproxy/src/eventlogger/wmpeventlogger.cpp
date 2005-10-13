@@ -204,14 +204,14 @@ WMPEventLogger::registerJob(JobAd *jad)
 	int register_result;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Registering normal job to LB Proxy"<<endl;
+		edglog(debug)<<"Registering normal job to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
 			jad->toSubmissionString().c_str(),
 			str_addr, 0, NULL, NULL) ;
 		edglog(debug)<<"edg_wll_RegisterJobProxy() exit code: "<<register_result<<endl;
 	} else {
 #endif  //HAVE_LBPROXY
-		edglog(debug)<<"Registering normal job to LB"<<endl;
+		edglog(debug)<<"Registering normal job to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
 			jad->toSubmissionString().c_str(),
 			str_addr, 0, NULL, NULL) ;
@@ -261,12 +261,12 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	int register_result;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Registering DAG subjobs to LB Proxy"<<endl;
+		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterSubjobsProxy(ctx, id->getId(), jdls_char,
 			str_nsAddr, subjobs);
 	} else {
 #endif  //HAVE_LBPROXY
-		edglog(debug)<<"Registering DAG subjobs to LB"<<endl;
+		edglog(debug)<<"Registering DAG subjobs to LB..."<<endl;
 		register_result = edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char,
 			str_nsAddr, subjobs);
 #ifdef HAVE_LBPROXY
@@ -331,13 +331,13 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
     int register_result;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Registering DAG to LB Proxy"<<endl;
+		edglog(debug)<<"Registering DAG to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
 			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
 			NULL, &subjobs) ;
 	} else {
 #endif  //HAVE_LBPROXY
-		edglog(debug)<<"Registering DAG to LB"<<endl;
+		edglog(debug)<<"Registering DAG to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
 			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
 			NULL, &subjobs);
@@ -424,10 +424,11 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 	int (*fp) (_edg_wll_Context*, const char*, const char*);
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
+		edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 		fp = &edg_wll_LogUserTagProxy;
 	} else {
 #endif  //HAVE_LBPROXY
-        edglog(debug)<<"Setting job for logging to LB"<<endl;
+        edglog(debug)<<"Setting job for logging to LB..."<<endl;
 		fp = &edg_wll_LogUserTag;
 #ifdef HAVE_LBPROXY
 	}
@@ -464,12 +465,12 @@ WMPEventLogger::setLoggingJob(const std::string &jid, const char* seq_code)
 	glite::wmsutils::jobid::JobId jobid(jid);
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-                edglog(debug)<<"Setting job for logging to LB Proxy"<<endl;
+                edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 		edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, 
 			getUserDN(), EDG_WLL_SEQ_NORMAL);
 	} else {
 #endif  //HAVE_LBPROXY
-                edglog(debug)<<"Setting job for logging to LB"<<endl;
+                edglog(debug)<<"Setting job for logging to LB..."<<endl;
 		edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code, EDG_WLL_SEQ_NORMAL);
 #ifdef HAVE_LBPROXY
 	}
@@ -490,15 +491,15 @@ WMPEventLogger::logListener(const char* host, int port)
 	GLITE_STACK_TRY("logListener()");
 	edglog_fn("WMPEventlogger::logListener");
 	
-	edglog(debug) << "Logging Listener event" << endl;
+	edglog(debug) << "Logging Listener event..." << endl;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b){
-		edglog(debug) << "Logging to LB Proxy" << endl;
+		edglog(debug) << "Logging to LB Proxy..." << endl;
 		return edg_wll_LogListenerProxy(ctx, "InteractiveListener", 
 			host, (uint16_t) port);
 	} else {
 #endif  //HAVE_LBPROXY
-		edglog(debug) << "Logging to LB" << endl;
+		edglog(debug) << "Logging to LB..." << endl;
 		return edg_wll_LogListener(ctx, "InteractiveListener", 
 			host, (uint16_t) port);
 #ifdef HAVE_LBPROXY
@@ -514,15 +515,15 @@ WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
 	GLITE_STACK_TRY("logCheckpointable()");
 	edglog_fn("WMPEventlogger::logCheckpointable");
 	
-	edglog(debug) << "Logging Checkpointable event" << endl;
+	edglog(debug) << "Logging Checkpointable event..." << endl;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b){
-		edglog(debug) << "Logging to LB Proxy" << endl;
+		edglog(debug) << "Logging to LB Proxy..." << endl;
 		return edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_CHKPT,
 				  EDG_WLL_FORMAT_CHKPT, current_step, state);
 	} else {
 #endif  //HAVE_LBPROXY
-		edglog(debug) << "Logging to LB" << endl;
+		edglog(debug) << "Logging to LB..." << endl;
 		return edg_wll_LogEventSync(ctx, EDG_WLL_EVENT_CHKPT,
 				  EDG_WLL_FORMAT_CHKPT, current_step, state);
 #ifdef HAVE_LBPROXY
@@ -540,12 +541,12 @@ WMPEventLogger::logAbortEventSync(char* reason)
 	//TBC Checks possibility to do it with LBProxy
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Logging to LB Proxy"<<endl;
+		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		return edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_ABORT, EDG_WLL_FORMAT_ABORT,
 			reason);
 	} else { // end switch LB PROXY
 #endif  //HAVE_LBPROXY
-		edglog(debug) << "Logging to LB" << endl;
+		edglog(debug) << "Logging to LB..." << endl;
 		return edg_wll_LogEventSync(ctx, EDG_WLL_EVENT_ABORT, EDG_WLL_FORMAT_ABORT,
 			reason);
 #ifdef HAVE_LBPROXY
@@ -563,32 +564,32 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 	
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b){
-		edglog(debug) << "Logging to LB Proxy" << endl ;
+		edglog(debug) << "Logging to LB Proxy..." << endl ;
 		switch (event){
 			case LOG_ACCEPT:
-				edglog(debug) << "Logging Accept event" << endl ;
+				edglog(debug) << "Logging Accept event..." << endl ;
 				return edg_wll_LogAcceptedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
 					server.c_str(),"","");
 				break;
 			case LOG_CANCEL:
-				edglog(debug) << "Logging Cancel event" << endl ;
+				edglog(debug) << "Logging Cancel event..." << endl ;
 				return edg_wll_LogCancelREQProxy(ctx, reason);
 				break;
 			case LOG_CLEAR:
-				edglog(debug) << "Logging Clear event" << endl ;
+				edglog(debug) << "Logging Clear event..." << endl ;
 				//return edg_wll_LogClearUSERProxy(ctx);
 				return edg_wll_LogClearProxy(ctx, reason);
 				break;
 			case LOG_ABORT:
-				edglog(debug) << "Logging Abort event" << endl ;
+				edglog(debug) << "Logging Abort event..." << endl ;
 				return edg_wll_LogAbortProxy(ctx,reason);
 				break;
 			case LOG_ENQUEUE_OK:
-				edglog(debug) << "Logging Enqueue OK event" << endl ;
+				edglog(debug) << "Logging Enqueue OK event..." << endl ;
 				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "OK", "");
 				break;
 			case LOG_ENQUEUE_FAIL:
-				edglog(debug) << "Logging Enqueue FAIL event" << endl ;
+				edglog(debug) << "Logging Enqueue FAIL event..." << endl ;
 				return edg_wll_LogEnQueuedProxy (ctx, file_queue, jdl, "FAIL", reason);
 				break;
 			default:
@@ -597,32 +598,32 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 		}
 	} else { // end switch LB PROXY
 #endif  //HAVE_LBPROXY
-		edglog(debug) << "Logging to LB" << endl ;
+		edglog(debug) << "Logging to LB..." << endl ;
 		switch (event){
 			case LOG_ACCEPT:
-				edglog(debug) << "Logging Accept event" << endl ;
+				edglog(debug) << "Logging Accept event..." << endl ;
 				return edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY,
 					server.c_str(), "", "");
 				break;
 			case LOG_CANCEL:
-				edglog(debug) << "Logging Cancel event" << endl ;
+				edglog(debug) << "Logging Cancel event..." << endl ;
 				return edg_wll_LogCancelREQ(ctx, reason);
 				break;
 			case LOG_CLEAR:
-				edglog(debug) << "Logging Clear event" << endl ;
+				edglog(debug) << "Logging Clear event..." << endl ;
 				//return edg_wll_LogClearUSER(ctx);
 				return edg_wll_LogClear(ctx, reason);
 				break;
 			case LOG_ABORT:
-				edglog(debug) << "Logging Abort event" << endl ;
+				edglog(debug) << "Logging Abort event..." << endl ;
 				return edg_wll_LogAbort(ctx, reason);
 				break;
 			case LOG_ENQUEUE_OK:
-				edglog(debug) << "Logging Enqueue OK event" << endl ;
+				edglog(debug) << "Logging Enqueue OK event..." << endl ;
 				return edg_wll_LogEnQueued (ctx, file_queue, jdl, "OK", "");
 				break;
 			case LOG_ENQUEUE_FAIL:
-				edglog(debug) << "Logging Enqueue FAIL event" << endl ;
+				edglog(debug) << "Logging Enqueue FAIL event..." << endl ;
 				return edg_wll_LogEnQueued (ctx, file_queue, jdl, "FAIL", reason);
 				break;
 			default:
@@ -645,7 +646,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 {
 	GLITE_STACK_TRY("logEvent()");
 	edglog_fn("WMPEventLogger::logEvent");
-	edglog(debug) << "Logging "<< event<<" request" << std::endl;
+	edglog(debug) << "Logging "<< event<<" request..." << std::endl;
 	
 	int i=0;
 	bool logged = false;
@@ -875,11 +876,15 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy"<<endl;
+		edglog(debug)<<"Quering LB Proxy..."<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+		if (error == ENOENT) { // no events found
+	   		edglog(debug)<< "No events found quering LB Proxy. Quering LB..."<<endl;
+			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+	  	}
 	} else { // end switch LB PROXY
 #endif  //HAVE_LBPROXY
-		edglog(debug)<< "Quering LB"<<endl;
+		edglog(debug)<< "Quering LB..."<<endl;
 		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
 #ifdef HAVE_LBPROXY
 	} // end switch LB normal
@@ -1011,11 +1016,15 @@ WMPEventLogger::getUserTag(const string &tagname)
 
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Quering LB Proxy"<<endl;
+		edglog(debug)<<"Quering LB Proxy..."<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+		if (error == ENOENT) { // no events found
+	   		edglog(debug)<< "No events found quering LB Proxy. Quering LB..."<<endl;
+			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+	  	}
 	} else { // end switch LB PROXY
 #endif  //HAVE_LBPROXY
-		edglog(debug)<< "Quering LB"<<endl;
+		edglog(debug)<< "Quering LB..."<<endl;
 		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
 #ifdef HAVE_LBPROXY
 	} // end switch LB normal
