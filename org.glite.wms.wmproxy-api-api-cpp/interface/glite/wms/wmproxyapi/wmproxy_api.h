@@ -484,6 +484,7 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 */
 std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 
+std::string ns2getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
 * Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
 * @param delegationId The id of the delegation created previously (by a getProxyReq call)
@@ -493,6 +494,8 @@ std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi:
 * @see BaseException
 */
 void putProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+
+void ns2putProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
