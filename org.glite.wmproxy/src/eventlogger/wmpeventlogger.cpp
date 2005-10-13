@@ -238,7 +238,7 @@ void
 WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 {
 	GLITE_STACK_TRY("registerSubJobs()");
-	edglog_fn("WMPEventlogger::registerSubJobs()");
+	edglog_fn("WMPEventlogger::registerSubJobs");
 	
 	char str_nsAddr[1024];
 	sprintf(str_nsAddr, "%s", server.c_str());
@@ -374,7 +374,7 @@ void
 WMPEventLogger::logUserTag(string name, const string &value)
 {
 	GLITE_STACK_TRY("logUserTag()");
-        edglog_fn("WMPEventlogger::logUserTag()");
+    edglog_fn("WMPEventlogger::logUserTag");
 	
 	Ad *classad = new Ad();
 	classad->setAttribute(name, value);
@@ -390,7 +390,7 @@ WMPEventLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree
 	userTags)
 {
 	GLITE_STACK_TRY("logUserTags()");
-	edglog_fn("WMPEventlogger::logUserTags()");
+	edglog_fn("WMPEventlogger::logUserTags");
 	
 	for (unsigned int i = 0; i < userTags.size(); i++) {
 		if (userTags[i].second->GetKind() != classad::ExprTree::CLASSAD_NODE) {
@@ -413,7 +413,7 @@ void
 WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 {
 	GLITE_STACK_TRY("logUserTags()");
-	edglog_fn("WMPEventlogger::logUserTags()");
+	edglog_fn("WMPEventlogger::logUserTags");
 	
 	vector<pair<string, classad::ExprTree *> > vect;
 	classad::Value val;
@@ -459,12 +459,12 @@ void
 WMPEventLogger::setLoggingJob(const std::string &jid, const char* seq_code)
 {
 	GLITE_STACK_TRY("setLoggingJob()");
-        edglog_fn("WMPEventlogger::setLoggingJob()");
+        edglog_fn("WMPEventlogger::setLoggingJob");
 	
 	glite::wmsutils::jobid::JobId jobid(jid);
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-                edglog(debug)<<"Setting job for logging to LBProxy"<<endl;
+                edglog(debug)<<"Setting job for logging to LB Proxy"<<endl;
 		edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, 
 			getUserDN(), EDG_WLL_SEQ_NORMAL);
 	} else {
@@ -493,7 +493,7 @@ WMPEventLogger::logListener(const char* host, int port)
 	edglog(debug) << "Logging Listener event" << endl;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b){
-		edglog(debug) << "Logging to LBProxy" << endl;
+		edglog(debug) << "Logging to LB Proxy" << endl;
 		return edg_wll_LogListenerProxy(ctx, "InteractiveListener", 
 			host, (uint16_t) port);
 	} else {
@@ -517,7 +517,7 @@ WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
 	edglog(debug) << "Logging Checkpointable event" << endl;
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b){
-		edglog(debug) << "Logging to LBProxy" << endl;
+		edglog(debug) << "Logging to LB Proxy" << endl;
 		return edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_CHKPT,
 				  EDG_WLL_FORMAT_CHKPT, current_step, state);
 	} else {
@@ -540,7 +540,7 @@ WMPEventLogger::logAbortEventSync(char* reason)
 	//TBC Checks possibility to do it with LBProxy
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Logging to LBProxy"<<endl;
+		edglog(debug)<<"Logging to LB Proxy"<<endl;
 		return edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_ABORT, EDG_WLL_FORMAT_ABORT,
 			reason);
 	} else { // end switch LB PROXY
@@ -563,7 +563,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 	
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b){
-		edglog(debug) << "Logging to LBProxy" << endl ;
+		edglog(debug) << "Logging to LB Proxy" << endl ;
 		switch (event){
 			case LOG_ACCEPT:
 				edglog(debug) << "Logging Accept event" << endl ;
@@ -675,7 +675,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 	bool test, const char* file_queue, const char* jdl)
 {
 	GLITE_STACK_TRY("logEvent()");
-	edglog_fn("WMPEventlogger::logEvent()");
+	edglog_fn("WMPEventlogger::logEvent");
 	
 	if (!test) {
 		logEvent(event, reason, retry);
@@ -875,7 +875,7 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Quering LBProxy"<<endl;
+		edglog(debug)<<"Quering LB Proxy"<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
 	} else { // end switch LB PROXY
 #endif  //HAVE_LBPROXY

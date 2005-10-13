@@ -475,7 +475,7 @@ getServerHost() {
     struct hostent *server = NULL;
     char * servername = getenv("SERVER_NAME");
     if (servername) {
-	    edglog(debug)<<"Server name: "<<string(servername)<<endl;
+	    edglog(debug)<<"SERVER_NAME: "<<string(servername)<<endl;
 		if ((server = gethostbyname(servername)) == NULL) {
 			edglog(critical)<<"Unable to get server address"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
