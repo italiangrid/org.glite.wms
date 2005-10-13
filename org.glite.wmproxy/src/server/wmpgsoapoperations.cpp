@@ -861,12 +861,33 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::ns1__getProxyReq");
 	edglog(info)<<"getProxyReq operation called"<<endl;
 	
+	ns2__getProxyReqResponse ns2response;
+	int return_value = ns2__getProxyReq(soap, delegation_id, ns2response);
+	if (return_value == SOAP_OK) {
+		response._request = ns2response._getProxyReqReturn;
+	}
+	
+	edglog(info)<<"getProxyReq operation completed\n"<<endl;
+	
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns2__getProxyReq(struct soap *soap, string delegation_id,
+	struct ns2__getProxyReqResponse &response)
+{
+	GLITE_STACK_TRY("ns2__getProxyReq(struct soap *soap, string delegation_id, "
+		"ns2__getProxyReqResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__getProxyReq");
+	edglog(info)<<"getProxyReq operation called"<<endl;
+	
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
 	try  {
 		getProxyReq(getProxyReq_response, delegation_id);
-		response._request = getProxyReq_response.request;
+		response._getProxyReqReturn = getProxyReq_response.request;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getProxyReq", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -890,6 +911,25 @@ ns1__putProxy(struct soap *soap, string delegation_id, string proxy,
 	GLITE_STACK_TRY("ns1__putProxy(struct soap *soap, string delegation_id, "
 		"string proxy, struct ns1__putProxyResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__putProxy");
+	edglog(info)<<"putProxy operation called"<<endl;
+	
+	ns2__putProxyResponse ns2response;
+	int return_value = ns2__putProxy(soap, delegation_id, proxy, ns2response);
+	// no response conversion; no fields present
+	
+	edglog(info)<<"putProxy operation completed\n"<<endl;
+	
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns2__putProxy(struct soap *soap, string delegation_id, string proxy,
+	struct ns2__putProxyResponse &response)
+{
+	GLITE_STACK_TRY("ns2__putProxy(struct soap *soap, string delegation_id, "
+		"string proxy, struct ns2__putProxyResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__putProxy");
 	edglog(info)<<"putProxy operation called"<<endl;
 	
 	int return_value = SOAP_OK;

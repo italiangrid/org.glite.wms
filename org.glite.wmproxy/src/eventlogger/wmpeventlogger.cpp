@@ -378,7 +378,7 @@ WMPEventLogger::logUserTag(string name, const string &value)
 	
 	Ad *classad = new Ad();
 	classad->setAttribute(name, value);
-        //edglog(debug)<<"Logging user tags to LB"<<endl;
+    //edglog(debug)<<"Logging user tags to LB"<<endl;
 	logUserTags(classad->ad());
 	delete classad;
 	
@@ -1011,7 +1011,7 @@ WMPEventLogger::getUserTag(const string &tagname)
 
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Quering LBProxy"<<endl;
+		edglog(debug)<<"Quering LB Proxy"<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
 	} else { // end switch LB PROXY
 #endif  //HAVE_LBPROXY
@@ -1041,6 +1041,8 @@ WMPEventLogger::getUserTag(const string &tagname)
 			return event.userTag.value;
 		}
 	}
+	
+	edg_wll_FreeEvent(events);
   	
   	return "";
   	
