@@ -6,7 +6,8 @@ glite_wms_brokerinfo_catalog_accesTest_SOURCES = \
 
 
 glite_wms_brokerinfo_catalog_accesTest_LDADD = \
-	$(top_srcdir)/build/src/libglite_wms_brokerinfo.la \
+	$(top_srcdir)/build/src/.libs/libglite_wms_brokerinfo.a\
+	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS)\
 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
 	$(GLITE_WMS_JDL_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
