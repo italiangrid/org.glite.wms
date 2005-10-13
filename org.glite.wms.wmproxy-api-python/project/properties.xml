@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
-	Revision 1.1  2005/09/14 19:57:43  eronchie
-	Initial revision
+	Revision 1.2  2005/10/13 10:52:12  fpacini
+	package props added
 
+	Revision 1.1.1.1  2005/09/14 19:57:43  eronchie
+	Added new wmproxy component in wms subsystem
+	
 	
 -->
 
@@ -61,6 +64,10 @@
 		 ====================================================== -->
 		 
 	<property name="m4files.list" value="glite.m4"/>
-
+ 
+        <property name="build.package.summary" value="Files for gLite WMS WMProxy client Python API" />
+        <property name="build.package.description" value="gLite WMS WMProxy client Python API library" />
+        
+        <property name="build.rpm.spec.arch" value="noarch" />
 
 </project>
