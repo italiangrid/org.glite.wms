@@ -54,6 +54,7 @@ public class WMProxyOutputListTest {
 			// list of files+their size
 			list = (StringAndLongType[ ] ) result.getFile ( );
 			if ( list != null ){
+				size = list.length;
 				for (int i = 0; i < size ; i++){
 					System.out.println ("file n. " + (i+1) );
 					System.out.println ("--------------------------------------------");
