@@ -47,9 +47,6 @@ done
 %{prefix}/include/glite/wms/brokerinfo/brokerinfoGlueImpl.h
 %{prefix}/include/glite/wms/brokerinfo/brokerinfo.h
 %{prefix}/include/glite/wms/brokerinfo/glue_attributes.h
-%{prefix}/lib/libglite_wms_brokerinfo.so.0.0.0
-%{prefix}/lib/libglite_wms_brokerinfo.so.0
-%{prefix}/lib/libglite_wms_brokerinfo.so
 %{prefix}/lib/libglite_wms_brokerinfo.la
 %{prefix}/lib/libglite_wms_brokerinfo.a
 %{prefix}/lib/libglite_wms_rls.so.0.0.0
