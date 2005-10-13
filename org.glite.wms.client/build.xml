@@ -87,14 +87,10 @@
 	
 	<target name="localcompile"
 		description="Module specific compile tasks">
-		<copy file="${repository}/${ext.gsoap.subdir}/stdsoap2.cpp" todir="${module.src.dir}/lbclient" />
 	</target>
 
 	<target name="localclean"
 		description="Module specific cleaning tasks">
-		<delete>
-                        <fileset dir="${module.src.dir}" includes="**/stdsoap2.cpp" />
-                </delete>
 	</target>
 	
 </project>		
