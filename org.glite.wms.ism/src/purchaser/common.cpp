@@ -15,7 +15,7 @@ namespace ism {
 namespace purchaser {
 
 namespace {
-  boost::scoped_ptr<classad::ClassAd> requirements_ad;
+  boost::shared_ptr<classad::ClassAd> requirements_ad;
 }
 
 bool expand_information_service_info(gluece_info_type& gluece_info)
