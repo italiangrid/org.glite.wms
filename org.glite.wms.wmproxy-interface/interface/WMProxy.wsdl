@@ -1,6 +1,7 @@
 <wsdl:definitions
 	xmlns:glitens="http://glite.org/wms/wmproxy"
-	xmlns:glitenstypes="http://glite.org/wms/wmproxy" 
+	xmlns:glitenstypes="http://glite.org/wms/wmproxy"
+	xmlns:glitedelegns="http://www.gridsite.org/namespaces/delegation-1" 
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
 	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
@@ -1636,7 +1637,7 @@
 					Workload Manager Proxy delegation service
 					This is the service that allows delegation funcionalities
         </wsdl:documentation>
-		<wsdl:port name="WMProxyDelegation_PortType" binding="delegation:DelegationSoapBinding">
+		<wsdl:port name="WMProxyDelegation_PortType" binding="glitedelegns:DelegationSoapBinding">
 			<soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
 			<!--soap:address location="https://10.100.4.52:7443/glite_wms_wmproxy_server"/-->
 		</wsdl:port>
