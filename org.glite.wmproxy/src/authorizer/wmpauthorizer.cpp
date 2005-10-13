@@ -556,9 +556,9 @@ WMPAuthorizer::checkJobDrain()
 
 	if (doc_root){
 		// gacl file: path location
-		drain_file = gacl_file.assign(doc_root).append("/")
+		drain_file = drain_file.assign(doc_root).append("/")
 			.append(authorizer::GaclManager::WMPGACL_DEFAULT_DRAIN_FILE);
-		edglog(debug) <<"checkJobDrain> drain_file = "<<gacl_file<<endl;
+		edglog(debug) <<"checkJobDrain> drain_file = "<<drain_file<<endl;
 		// the drain is ony checked if the gacl file exists (if it doesn't no exception is thrown)
 		if (utilities::fileExists(drain_file)){
 			authorizer::GaclManager gacl(drain_file) ;
