@@ -40,7 +40,7 @@ class Job{
 		*	@param argv string of the input arguments
                 *	@return a string with the list of the specified options
 		*/
-		virtual std::string readOptions (int argc,char **argv,
+		virtual void readOptions (int argc,char **argv,
 			glite::wms::client::utilities::Options::WMPCommands);
                 /*
 		*	prints the error messages for an exception
