@@ -15,15 +15,11 @@ brokerinfodir = $(includedir)/glite/wms/brokerinfo
 brokerinfo_HEADERS = \
 	glue_attributes.h
 
-#libglite_wms_brokerinfo_la_LDFLAGS = -all-static
+libglite_wms_brokerinfo_la_LDFLAGS = -all-static
 
 libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
-
-libglite_wms_brokerinfo_la_LIBADD = \
-	ServiceDiscovery.o\
-	ServiceDiscoveryICommon.o
 
 
 libglite_wms_dli_sici_la_SOURCES = \
@@ -43,12 +39,6 @@ libglite_wms_rls_la_SOURCES =
 libglite_wms_rls_la_LIBADD = \
 	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
 	$(REPLICA_MANAGER_LIBS)
-
-ServiceDiscovery.o: $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS); \
-	ar x $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS) ServiceDiscovery.o
-
-ServiceDiscoveryICommon.o: $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS); \
-	ar x $(GLITE_SERVICE_DISCOVERY_API_C_STATIC_LIBS) ServiceDiscoveryICommon.o
 
 envC.o: envC.cpp ; \
 	$(CC) -c envC.cpp -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include -I. -o envC.o
