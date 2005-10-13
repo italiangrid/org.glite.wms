@@ -1087,22 +1087,10 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		edglog(debug)<<"Setting internal attributes for sub job: "<<jobids[i]<<endl;
 		edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 		
-		// Adding WMPISB_BASE_URI & INPUT_SANDBOX_PATH
-        /*edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
-		dag->setNodeAttribute(subjobid, JDL::WMPISB_BASE_URI, dest_uri);
-        edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
-		dag->setNodeAttribute(subjobid, JDLPrivate::INPUT_SANDBOX_PATH,
-			getInputSBDirectoryPath(jobidstring));
-        edglog(debug)<<"Setting attribute JDLPrivate::OUTPUT_SANDBOX_PATH"<<endl; 
-		dag->setNodeAttribute(subjobid, JDLPrivate::OUTPUT_SANDBOX_PATH,
-			getOutputSBDirectoryPath(jobidstring));
-        edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
-        dag->setNodeAttribute(subjobid, JDLPrivate::USERPROXY,
-            getJobDelegatedProxyPath(jobids[i]));*/
-        
+		// Adding WMPISB_BASE_URI, INPUT_SANDBOX_PATH, OUTPUT_SANDBOX_PATH
+		// & USERPROXY
         NodeAd nodead = dag->getNode(subjobid);
         
-        edglog(info)<<"____ nodead before: "<<nodead.toLines()<<endl;
         edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
 		nodead.setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
         edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
@@ -1114,30 +1102,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
         edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
         nodead.setAttribute(JDLPrivate::USERPROXY,
             getJobDelegatedProxyPath(jobids[i]));
-           
-        // Adding OutputSandboxDestURI attribute
-        /*if (dag->hasNodeAttribute(subjobid, JDL::OUTPUTSB)) {
-			vector<string> osbdesturi;
-			if (dag->hasNodeAttribute(subjobid, JDL::OSB_DEST_URI)) {
-				osbdesturi = wmputilities::computeOutputSBDestURI(
-					dag->getNodeStringValue(subjobid, JDL::OSB_DEST_URI),
-					dest_uri);
-				dag->delNodeAttribute(subjobid, JDL::OSB_DEST_URI);
-			} else if (dag->hasNodeAttribute(subjobid, JDL::OSB_BASE_DEST_URI)) {
-            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
-					dag->getNodeStringValue(subjobid, JDL::OUTPUTSB),
-					dag->getNodeStringValue(subjobid, JDL::OSB_BASE_DEST_URI)[0]);
-			} else {
-            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
-					dag->getNodeStringValue(subjobid, JDL::OUTPUTSB),
-					dest_uri + "/output");
-			}
-			if (osbdesturi.size() != 0) {
-                edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
-				dag->setNodeAttribute(subjobid, JDL::OSB_DEST_URI, osbdesturi);
-			}
-		}*/
-		
+
 		// Adding OutputSandboxDestURI attribute
         if (nodead.hasAttribute(JDL::OUTPUTSB)) {
 			vector<string> osbdesturi;
@@ -1162,7 +1127,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
                 }
 			}
 		}
-		edglog(info)<<"____ nodead after: "<<nodead.toLines()<<endl;
 		dag->replaceNode(subjobid, nodead);
 	}
 	
@@ -1496,52 +1460,9 @@ submit(const string &jdl, JobId *jid)
 	    for (unsigned int i = 0; i < children.size(); i++) {
 	    	JobId jobid = children[i]->jobid;
 	    	string jobidstring = jobid.toString();
-	    	
-	    	/*if (dag->hasNodeAttribute(jobid, JDL::JOBTYPE)) {
-	    		string type = dag->getNodeStringValue(jobid, JDL::JOBTYPE)[0];
-	    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
-	    			edglog(debug)<<"Logging checkpointable for subjob: "
-	    				<<jobidstring<<endl;
-	    			JobAd *jad = new JobAd(jdls[i]);
-	    			wmplogger.setLoggingJob(jobidstring, seqcode);
-	    			logCheckpointable(&wmplogger, jad, jobidstring);
-	    			delete jad;
-	    		}
-	    	}
-	    	
-	    	// Adding attributes for perusal functionalities
-	    	string peekdir = wmputilities::getPeekDirectoryPath(jobid);
-			if (dag->hasNodeAttribute(jobid, JDL::PU_FILE_ENABLE)) {
-				if (dag->getNodeBool(jobid, JDL::PU_FILE_ENABLE)) {
-					edglog(debug)<<"Enabling perusal functionalities for job: "
-						<<jobidstring<<endl;
-					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
-						<<endl;
-					dag->setNodeAttribute(jobid, JDLPrivate::PU_LIST_FILE_URI,
-						peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
-					if (!dag->hasNodeAttribute(jobid, JDL::PU_FILES_DEST_URI)) {
-						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
-							<<endl;
-						dag->setNodeAttribute(jobid, JDL::PU_FILES_DEST_URI,
-							peekdir);
-					}
-					
-					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
-					if (dag->hasNodeAttribute(jobid, JDL::PU_TIME_INTERVAL)) {
-						time = max(time, dag->getNodeInt(jobid,
-							JDL::PU_TIME_INTERVAL));
-					}
-					time = max(time, conf.getMinPerusalTimeInterval());
-					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
-						<<endl;
-					dag->setNodeAttribute(jobid, JDL::PU_TIME_INTERVAL, time);
-					
-					jdltostart = dag->toString();
-				}
-			}*/
-			
+
 			NodeAd nodead = dag->getNode(jobid);
-			edglog(info)<<"____ nodead before: "<<nodead.toLines()<<endl;
+
 			if (nodead.hasAttribute(JDL::JOBTYPE)) {
 	    		string type = nodead.getStringValue(JDL::JOBTYPE)[0];
 	    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
@@ -1584,7 +1505,6 @@ submit(const string &jdl, JobId *jid)
 					jdltostart = dag->toString();
 				}
 			}
-			edglog(info)<<"____ nodead after: "<<nodead.toLines()<<endl;
 		}
 	    
 	    delete dag;
