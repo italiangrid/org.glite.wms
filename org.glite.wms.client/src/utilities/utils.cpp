@@ -951,7 +951,7 @@ std::string* Utils::getDelegationId ( ){
 * Performs the operations to delegate a user proxy to the endpoint
 */
 
-const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id){
+const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id, const int version){
         string proxy = "";
         int index = 0;
         vector<string> urls ;
@@ -982,13 +982,20 @@ const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id
                 cfg->endpoint=urls[index];
                 // Removes the extracted URL from the list
                 urls.erase ( (urls.begin( ) + index) );
-                try{
+                try{	// Proxy Request
 			logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  cfg->endpoint);
-			// Proxy Request
-                        proxy = getProxyReq(id, cfg) ;
+			if  (version > Options::WMPROXY_OLD_VERSION){
+                        	proxy = ns2getProxyReq(id, cfg) ;
+   			} else {
+                        	proxy = getProxyReq(id, cfg) ;
+   			}
  			logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfg->endpoint);
 			 // sends the proxy to the endpoint service
-                        putProxy(id, proxy, cfg);
+			if  (version > Options::WMPROXY_OLD_VERSION){
+                        	ns2putProxy(id, proxy, cfg);
+   			} else {
+                        	putProxy(id, proxy, cfg);
+   			}
                         success = true;
                 } catch (BaseException &exc) {
                 	if (n==1) {

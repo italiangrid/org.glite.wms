@@ -40,6 +40,11 @@ const std::string WMP_CLT_MINOR_VERSION = "2";
 const std::string WMP_CLT_RELEASE_VERSION = "0";
 const std::string WMP_CLT_POINT_VERSION = ".";
 
+/*
+* Major Version for WMProxy servers that
+* don't contain new features like SandboxBulkDestURI and ns2-Delegation
+*/
+const int Options::WMPROXY_OLD_VERSION = 1;
 /**
  * Help Info messages
 */

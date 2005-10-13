@@ -247,6 +247,11 @@ class Options
 		static const std::string HELP_VERSION  ;
 		static const std::string HELP_COPYRIGHT ;
 		static const std::string HELP_EMAIL ;
+		/*
+		* Major Version for WMProxy servers that
+		* don't contain new features like SandboxBulkDestURI and ns2-Delegation
+		*/
+		static const int WMPROXY_OLD_VERSION;
                 /**
 		*	Constants for the verbosity level
 		*/

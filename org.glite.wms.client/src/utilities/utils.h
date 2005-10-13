@@ -236,9 +236,10 @@ public:
         * Performs the operations to delegate a user proxy to the endpoint
         * @param cfg the configuration context object
         * @param id the delegation identifier string to be used for the delegation
+        * @param version major version of the wmproxy server
         * @return the pointer to the string containing the EndPoint URL
         */
-        const std::string delegateProxy(glite::wms::wmproxyapi::ConfigContext *cfg, const std::string &id);
+        const std::string delegateProxy(glite::wms::wmproxyapi::ConfigContext *cfg, const std::string &id, const int version=0);
         /**
         * checks if a pathname is a valid file
         *@param pathname the pathname that has to be checked
