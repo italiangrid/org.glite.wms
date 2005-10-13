@@ -113,10 +113,10 @@ class Options
 		 ~Options( );
 		/**
 		*	 Reads the input options for the submission
+		*	@param argc number of options
 		*	@param argv options
-		*	@return a string with the list of the specified options
 		*/
-		std::string readOptions(const int &argc, const char **argv);
+		void readOptions(const int &argc, const char **argv);
 		/**
 		*	Returns the value of the option string-attribute
 		*	@param attribute name of the attribute
@@ -229,8 +229,13 @@ class Options
                 *	Gets a string with the name of the application
                 *	@return the string with the name
                 */
-		std::string Options::getApplicationName() ;
-                /***
+		std::string getApplicationName() ;
+                 /**
+                *	Gets a string with the list of the input options
+                *	@return the string with the name
+                */
+		std::string getOptionsInfo() ;
+		/***
                 *	Gets the level of verbosity for the log info
                 *	@return the level
                 */
@@ -294,7 +299,7 @@ class Options
 		*	@param command line options
                 *	@param msg appends the information message string on the option has been set to this string
 		*/
-		void setAttribute (const int &in_opt, const char **argv, std::string &msg);
+		void setAttribute (const int &in_opt, const char **argv);
 
                 /**
 		*	Long options
@@ -505,9 +510,17 @@ class Options
 		*/
 		WMPCommands cmdType ;
                 /**
-                *
+                * Application Name
                 */
 		std::string applName ;
+		 /**
+                * Input command string
+                */
+		std::string inCmd ;
+		 /**
+                * warnMsg
+                */
+		std::string warnsMsg;
 		/**
 		*	path of the user JDL file
 		*/

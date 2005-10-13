@@ -88,16 +88,20 @@ const char* TAR_SUFFIX = ".tar";
 
 Utils::Utils(Options *wmcOpts){
 	this->wmcOpts=wmcOpts;
-	// Ad utilities
-	wmcAd = new AdUtils (wmcOpts);
 	// verbosity level
         vbLevel = (LogLevel)wmcOpts->getVerbosityLevel();
+	logInfo = new Log (NULL , vbLevel);
+	logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false, true);
+        logInfo->print(WMS_INFO, "Options specified:", wmcOpts->getOptionsInfo( ), false,true);
+	// Ad utilities
+	wmcAd = new AdUtils (wmcOpts);
 	// checks and reads the configuration file
 	this->checkConf();
 	// debug information
 	debugInfo = wmcOpts->getBoolAttribute(Options::DBG);
 	// log-file
-	logInfo = new Log ( this->generateLogFile() , vbLevel);
+	string *log_file = this->generateLogFile();
+	if (log_file){ logInfo->createLogFile (*log_file);}
 }
 /*************************************
 *** Destructor **********************
@@ -559,13 +563,14 @@ void Utils::checkConf(){
 		err << wmcOpts->getAttributeUsage(Options::VO) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::CONFIG) << "\n\n";
 		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
+				"checkConf",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
 	voSrc src =NONE;
 	if(getDefaultVo()!=""){
 		// certificate extension - point to vo plain name
-		if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "proxy certificate extension",true);}
+		//if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "proxy certificate extension",true);}
+		logInfo->print (WMS_DEBUG, "Vo read from", "proxy certificate extension",true,true);
 		voName=getDefaultVo();
 		src=CERT_EXTENSION;
 	}
@@ -575,15 +580,18 @@ void Utils::checkConf(){
 		if (src==NONE){
 			voName=*vo;
 			src=VO_OPT;
-			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--vo option", true);}
+			//if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--vo option", true);}
+			logInfo->print (WMS_DEBUG, "Vo read from", "--vo option", true);
 		}else {
-			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "--vo option ignored","" , true);}
+			logInfo->print (WMS_DEBUG, "--vo option ignored","" , true,true);
+			//	if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "--vo option ignored","" , true);}
 		}
 	}else if (cfg){
 		*cfg = Utils::getAbsolutePath (*cfg);
 		// config option point to the file
 		if (src==NONE){
-			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--config option",true);}
+			logInfo->print (WMS_DEBUG, "Vo read from", "--config option",true,true);
+			//if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "--config option",true);}
 		}
 		// Store config path value
 		voPath= *cfg;
@@ -591,7 +599,8 @@ void Utils::checkConf(){
 	}else if(getenv(WMS_CLIENT_CONFIG)){
 		// env variable point to the file
 		if (src==NONE){
-			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "ENV option",true);}
+			//if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "ENV option",true);}
+			logInfo->print (WMS_DEBUG, "Vo read from", "ENV option",true,true);
 		}
 		// Store config path value
 		voPath=string(getenv(WMS_CLIENT_CONFIG));
@@ -601,7 +610,8 @@ void Utils::checkConf(){
 		if (src==NONE){
 			src=JDL_FILE;
 			voPath=*(wmcOpts->getPath2Jdl());
-			if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "JDL option",true);}
+			//if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "Vo read from", "JDL option",true);}
+			logInfo->print (WMS_DEBUG, "Vo read from", "JDL option",true,true);
 		}
 	}else if (src==NONE){
 		// If this point is reached no possible VO source found
@@ -613,7 +623,8 @@ void Utils::checkConf(){
 	// Eventually Parse fields
 	wmcAd->parseVo(src,voPath,voName);
 	// Print Info
-	if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "VirtualOrganisation value :", voName,true);}
+	//if (vbLevel==WMSLOG_DEBUG){errMsg (WMS_DEBUG, "VirtualOrganisation value :", voName,true);}
+	logInfo->print(WMS_DEBUG, "VirtualOrganisation value :", voName,true,true);
 	// check the Installation path
 	checkPrefix( );
 	string cf = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
@@ -638,8 +649,10 @@ void Utils::checkPrefix( ){
                 }
 	}
 	if (defpath.size()==0) {
-		errMsg(WMS_WARNING, "Unable to find glite installation",
-		"no installation in /opt/glite or in /usr/local ; neither GLITE_WMS_LOCATION nor GLITE_LOCATION are set", true);
+		//errMsg(WMS_WARNING, "Unable to find glite installation",
+		//"no installation in /opt/glite or in /usr/local ; neither GLITE_WMS_LOCATION nor GLITE_LOCATION are set", true);
+		logInfo->print(WMS_WARNING, "Unable to find glite installation",
+		"no installation in /opt/glite or in /usr/local ; neither GLITE_WMS_LOCATION nor GLITE_LOCATION are set", true,true);
 	}
 	prefix=defpath;
 }
@@ -969,11 +982,11 @@ const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id
                 cfg->endpoint=urls[index];
                 // Removes the extracted URL from the list
                 urls.erase ( (urls.begin( ) + index) );
-                // jobRegister
-                logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfg->endpoint);
                 try{
+			logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  cfg->endpoint);
 			// Proxy Request
                         proxy = getProxyReq(id, cfg) ;
+ 			logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfg->endpoint);
 			 // sends the proxy to the endpoint service
                         putProxy(id, proxy, cfg);
                         success = true;

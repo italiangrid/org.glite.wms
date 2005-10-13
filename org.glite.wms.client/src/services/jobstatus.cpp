@@ -62,7 +62,7 @@ JobStatus::~JobStatus( ){
 *	Reads the command-line user arguments and sets all the class attributes
 */
 void JobStatus::readOptions (int argc,char **argv){
-	string opts = Job::readOptions  (argc, argv, Options::JOBSTATUS);
+	Job::readOptions  (argc, argv, Options::JOBSTATUS);
         // input file
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	// JobId's
@@ -75,9 +75,6 @@ void JobStatus::readOptions (int argc,char **argv){
 	if ( jobIds.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
         	jobIds = wmcUtils->askMenu(jobIds, Utils::MENU_JOBID);
          }
-         // writes the information on the specified option in the log file
-        logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false);
-        logInfo->print(WMS_INFO, "Options specified:", opts, false);
          // checks if the proxy file pathname is set
 	if (proxyFile) {
         	logInfo->print (WMS_DEBUG, "Proxy File:", proxyFile);

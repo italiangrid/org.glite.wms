@@ -28,7 +28,8 @@ namespace utilities{
 Log::Log (std::string* path, LogLevel level){
         dbgLevel = level;
 	// check writing permission
-	if (path){
+	if (path){	this->createLogFile(*path);
+		/*
 		ofstream outputstream(path->c_str(), ios::app);
 		if (outputstream.is_open() ) {
 			logFile = new string (*path) ;
@@ -42,6 +43,7 @@ Log::Log (std::string* path, LogLevel level){
 				logFile = NULL;
 			}
 		}
+		*/
 	} else{
 		logFile = NULL;
 	}
@@ -53,21 +55,51 @@ Log::Log (std::string* path, LogLevel level){
 Log::~Log( ) {
 	if (logFile) { delete(logFile);}
 }
+
+void Log::createLogFile(const std::string &path){
+	ofstream outputstream(path.c_str(), ios::app);
+	if (outputstream.is_open() ) {
+		logFile = new string (path) ;
+		if (logCache.size() > 0 ) {
+			// writes the content of the cache into the new file
+			outputstream << logCache ;
+			// cleans the cache
+			logCache = string("");
+		 }
+		outputstream.close ( );
+	} else {
+		if ( dbgLevel >= WMSLOG_WARNING ){
+			errMsg (WMS_WARNING,
+				"I/O error",
+				"unable to open the logfile: " + path ,
+				true);
+			logFile = NULL;
+		}
+	}
+}
 /*
 *Write the exception messsage in the file
 */
-void Log::print (severity sev, const std::string &header,glite::wmsutils::exception::Exception &exc, const bool debug) {
+void Log::print (severity sev, const std::string &header,glite::wmsutils::exception::Exception &exc, const bool debug, const bool cache) {
 	bool dbg = false;
+	string message = "";
+	const string stripe= "-----------------------------------------";
         if ( debug &&  (int)sev >= (int)dbgLevel){ dbg = true;}
-        errMsg(sev, header, exc, dbg, logFile);
+        message = errMsg(sev, header, exc, dbg, logFile);
+	// adds the message to the internal cache
+	if (cache) { logCache += stripe + "\n" + message ;}
 }
 /*
 * Write the messsage string in the file
 */
-void Log::print (severity sev, const std::string &header, const std::string &msg, const bool debug) {
+void Log::print (severity sev, const std::string &header, const std::string &msg, const bool debug, const bool cache) {
 	bool dbg = false;
+	string message = "";
+	const string stripe= "------------------------------------------";
         if ( debug && (int)sev >= (int)dbgLevel){ dbg = true;}
-        errMsg(sev, header, msg, dbg, logFile);
+        message = errMsg(sev, header, msg, dbg, logFile);
+	// adds the message to the internal cache
+	if (cache) { logCache +=  stripe + "\n" + message ;}
 }
 /*
 * Gets the log file pathname

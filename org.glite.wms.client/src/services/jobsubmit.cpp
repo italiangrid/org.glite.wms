@@ -134,10 +134,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 	int d = 0;
 	int h = 0;
 	int m = 0;
-	string opts = Job::readOptions  (argc, argv, Options::JOBSUBMIT);
-	// writes the information on the specified option in the log file, it has been created
-	logInfo->print(WMS_INFO,   "Function : " + wmcOpts->getApplicationName( ),
-					"\n Options : " + opts, false);
+	Job::readOptions  (argc, argv, Options::JOBSUBMIT);
 	// input & resource (no together)
 	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	resourceOpt = wmcOpts->getStringAttribute(Options::RESOURCE);
@@ -1245,7 +1242,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 			throw WmsClientException(__FILE__,__LINE__,
 				"getBulkDestURI ", ECONNABORTED,
 				"WMProxy Server Error",
-				"The server doesn't have any information on InputSBDestURI for :" + jobid );
+				"The server doesn't have any information on InputSBDestURI for :" + jobid + "\n(please contact the server administrator");
 		}
 	}
 	if (child.size()>0){
@@ -1261,6 +1258,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 			for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
 				// Looks for the destURi for file transferring
 				if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
+
 					dest_uri = new string( *it2 );
 					// Prints out the info on URI's
 					// (In compound jobs URI's of children nodes are only written in the log file, if it exists)
@@ -1271,14 +1269,14 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 					}
 					// loop-exit if "TAR/ZIP-destURI" has been already found
 					if (found){ break; }
-					else { found = true ;}
+					else { found = true ;;}
 				}
 				// Looks for the destURI for TAR/ZIP file creation
 				if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
 					zipURI = string (*it2);
 					// loop-exit if "fileTransfer-destURI" has been already found
-					if (found){ break; }
-					else { found = true ;}
+					if (found){ break;}
+					else { found = true ; }
 				}
 			}
 		}
@@ -1713,6 +1711,7 @@ std::string JobSubmit::normalJob( ){
 		paths = jobAd->getStringValue  (JDL::INPUTSB) ;
 		// InputSandbox file transferring
 		destURI = this->toBCopiedFileList(jobid, "", this->isbURI, paths, to_bcopied);
+
 		// if the vector is not empty, file transferring is performed
 		if (! to_bcopied.empty( ) ){
 			if (registerOnly) {
@@ -1773,10 +1772,6 @@ std::string  JobSubmit::dagJob(){
 		dest_uri = toBCopiedFileList(jobid, "", this->isbURI, paths, to_bcopied) ;
 	} else {
 		dest_uri = getInputSbDestinationURI (jobid, "", zip_uri);
-		if (!dest_uri){
-			throw WmsClientException(__FILE__,__LINE__,"getInputSbDestinationURI",DEFAULT_ERR_CODE,
-					"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
-		}
 	}
 	// CHILDREN ====================
 	children = jobIds.children ;

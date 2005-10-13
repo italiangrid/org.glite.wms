@@ -44,12 +44,14 @@ class Log {
 		* Default destructor
 		*/
 		~Log( ) ;
+
+		void createLogFile(const std::string &path);
                 /*
                 * prints the exception messages
                 * @param exc the exception
                 * @param debug flag indicating whether the formatted message have to be printed on the std-output
                 */
-                void print (severity sev, const std::string &header,glite::wmsutils::exception::Exception &exc, bool debug=true);
+                void print (severity sev, const std::string &header,glite::wmsutils::exception::Exception &exc, const bool debug=true, const bool cache=false);
                 /*
 		* prints a formatted error description of the input exception
                 * @param sev severity of the message (WMS_NONE, WMS_INFO, WMS_WARNING, WMS_ERROR, WMS_FATAL)
@@ -57,7 +59,7 @@ class Log {
                 *@param msg the message string
                 * @param debug flag indicating whether the formatted message have to be printed on the std-output
                 */
-                void print (severity sev, const std::string &header, const std::string &msg, bool debug=true);
+                void print (severity sev, const std::string &header, const std::string &msg, const bool debug=true, const bool cache=false);
 		/*
                 * get the absolute pathname of the log file
                 *@return the pathname string
@@ -66,11 +68,15 @@ class Log {
 
 
 	private :
-        	/*
+        	/**
                 * log-file pathname
                 */
                 std::string* logFile ;
-                /*
+        	/**
+                * log-cache
+                */
+		std::string logCache;
+                /**
                 * debugging messages on the std-output
                 */
 		glite::wms::client::utilities::LogLevel dbgLevel ;

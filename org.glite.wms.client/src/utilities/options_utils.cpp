@@ -1433,16 +1433,23 @@ void Options::printUsage(const char* exename) {
 * Returns the name of the command is being executed
 */
 std::string Options::getApplicationName() {
-	return applName;
+	return this->applName;
  }
-
+/**
+*	Gets a string with the list of the input options
+*/
+std::string Options::getOptionsInfo(){
+	if (warnsMsg.size()>0){
+		return string( this->inCmd + "\n" + warnsMsg );
+	} else{
+		return this->inCmd;
+	}
+ }
 /**
 *	reads the input options for submission
 */
-std::string Options::readOptions(const int &argc, const char **argv){
+void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
-	//extern int optind ;
-        string opts = "";
 	string jobid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
@@ -1480,7 +1487,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
 				// according to the specific wms command
 				if (next_opt != -1 ){
 					next_opt = checkCommonShortOpts(next_opt);
-					setAttribute (next_opt, argv, opts);
+					setAttribute (next_opt, argv);
 				}
 			}
 		} ;
@@ -1630,20 +1637,7 @@ std::string Options::readOptions(const int &argc, const char **argv){
                                                 "Invalid option: " + string(argv[optind]) );
                         }
                 }
-	} /*else {
-		// -- version
-		if (version){
-			cout << Utils::getClientVersion( );
-			if ( ! Utils::makeQuestion ("Do you want to display the WMProxy server version ?", false, true)) {
-				Utils::ending(0);
-			}
-		} else if (help){
-			// --help
-                	printUsage (argv[0]);
-		}
-   	}
-	*/
-        return opts;
+	}
 };
 /************************************************
 * private methods
@@ -1724,7 +1718,7 @@ const int Options::checkCommonShortOpts (const int &opt ) {
 /**
 *	sets the value of the option attribute
 */
-void Options::setAttribute (const int &in_opt, const char **argv, std::string &msg) {
+void Options::setAttribute (const int &in_opt, const char **argv) {
 	string* dupl = NULL;
         string px = "--";
         string ws = " ";
@@ -1734,7 +1728,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_AUTODG) ;
 			} else {
 				autodg = true;
-				msg += px + LONG_AUTODG + ";" + ws ;
+				inCmd += px + LONG_AUTODG + ";" + ws ;
 			}
 			break ;
 		};
@@ -1743,7 +1737,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_OUTPUT) ;
 			} else {
 				output = new string (optarg);
-                                msg += px + LONG_OUTPUT + ws + *output + ";" + ws ;
+                                inCmd += px + LONG_OUTPUT + ws + *output + ";" + ws ;
 			}
 			break ;
 		};
@@ -1752,7 +1746,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_INPUT) ;
 			} else {
 				input = new string (optarg);
-                                msg += px + LONG_INPUT + ws + *input  + ";" + ws ;
+                                inCmd += px + LONG_INPUT + ws + *input  + ";" + ws ;
 			}
 			break ;
 		};
@@ -1761,7 +1755,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_CONFIG) ;
 			} else {
 				config = new string (optarg);
-				msg += px + LONG_CONFIG + ws + *config +  ";" + ws ;
+				inCmd += px + LONG_CONFIG + ws + *config +  ";" + ws ;
 			}
 			break ;
 		};
@@ -1770,7 +1764,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_DELEGATION) ;
 			} else {
 				delegation = new string (optarg);
-				msg += px + LONG_DELEGATION + ws + *delegation +  ";" + ws ;
+				inCmd += px + LONG_DELEGATION + ws + *delegation +  ";" + ws ;
 			}
 			break ;
 		};
@@ -1779,7 +1773,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_RESOURCE) ;
 			} else {
 				resource = new string (optarg);
-                                msg += px + LONG_RESOURCE + ws + *resource  + ";" + ws ;
+                                inCmd += px + LONG_RESOURCE + ws + *resource  + ";" + ws ;
 			}
 			break ;
 		};
@@ -1788,7 +1782,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_NODESRES) ;
 			} else {
 				nodesres = new string (optarg);
-                                msg += px + LONG_NODESRES + ws + *nodesres  + ";" + ws ;
+                                inCmd += px + LONG_NODESRES + ws + *nodesres  + ";" + ws ;
 			}
 			break ;
 		};
@@ -1797,7 +1791,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_VALID) ;
 			} else {
 				valid = new string(optarg);
-                                msg += px + LONG_VALID + ws + *valid +  ";" + ws ;
+                                inCmd += px + LONG_VALID + ws + *valid +  ";" + ws ;
 			}
 			break ;
 		};
@@ -1808,7 +1802,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				verbosity = (unsigned int*) malloc (sizeof(int));
                                 ostringstream v ;
                                 v << *verbosity ;
-                                msg += px + LONG_VERBOSE + ws + v.str()+ ";" + ws ;
+                                inCmd += px + LONG_VERBOSE + ws + v.str()+ ";" + ws ;
 				*verbosity = atoi (optarg);
 			}
 			break ;
@@ -1818,7 +1812,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_STATUS) ;
 			} else {
 				status = new string (optarg);
-                                msg += px + LONG_STATUS + ws + *status +";" + ws ;
+                                inCmd += px + LONG_STATUS + ws + *status +";" + ws ;
 			}
 			break ;
 		};
@@ -1827,7 +1821,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_EXCLUDE) ;
 			} else {
 				exclude = new string (optarg);
-				msg += px + LONG_EXCLUDE + ws + *exclude +";" + ws ;
+				inCmd += px + LONG_EXCLUDE + ws + *exclude +";" + ws ;
 			}
 			break;
 		} ;
@@ -1836,7 +1830,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_ENDPOINT) ;
 			} else {
 				endpoint = new string (optarg);
-				msg += px + LONG_ENDPOINT + ws + *endpoint  + ";" + ws ;
+				inCmd += px + LONG_ENDPOINT + ws + *endpoint  + ";" + ws ;
 			}
 			break ;
 		};
@@ -1845,7 +1839,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_CHKPT) ;
 			} else {
 				chkpt = new string (optarg);
-                                msg += px + LONG_CHKPT + ws + *chkpt +";" + ws;
+                                inCmd += px + LONG_CHKPT + ws + *chkpt +";" + ws;
 			}
 			break ;
 		};
@@ -1854,7 +1848,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_COLLECTION) ;
 			} else {
 				collection = new string (optarg);
-                                msg += px + LONG_COLLECTION + ws + *collection  + ";" + ws ;
+                                inCmd += px + LONG_COLLECTION + ws + *collection  + ";" + ws ;
 			}
 			break ;
 		};
@@ -1863,7 +1857,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_DIR ) ;
 			} else {
 				dir = new string (optarg);
-                                msg += px + LONG_DIR + ws + *dir + ";" + ws  ;
+                                inCmd += px + LONG_DIR + ws + *dir + ";" + ws  ;
 			}
 			break ;
 		};
@@ -1873,7 +1867,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_FROM) ;
 			} else {
 				from = new string (optarg);
-                                msg += px + LONG_FROM + ws + *from + ";" + ws  ;
+                                inCmd += px + LONG_FROM + ws + *from + ";" + ws  ;
 			}
 			break ;
 		};
@@ -1901,7 +1895,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 					 *fileprotocol +": Unrecognised File Transferring Protocol\n" + "List of available protocols: " + list );
 				}
 
-				msg += px + LONG_PROTO + ";" + ws ;
+				inCmd += px + LONG_PROTO + ";" + ws ;
 			}
 			break ;
 		};
@@ -1910,13 +1904,13 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_START) ;
 			} else {
 				start = new string(optarg);
-				msg += px + LONG_START + ws + *start + ";" + ws ;
+				inCmd += px + LONG_START + ws + *start + ";" + ws ;
 			}
 			break ;
 		};
 		case ( Options::HELP ) : {
 			help = true ;
-                        msg += px + LONG_HELP + ";" + ws ;
+                        inCmd += px + LONG_HELP + ";" + ws ;
 			break;
 		};
                 case ( Options::ALL ) : {
@@ -1924,7 +1918,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_ALL) ;
 			} else {
 				all = true;
-				msg += px + LONG_ALL + ";" + ws ;
+				inCmd += px + LONG_ALL + ";" + ws ;
 			}
 			break ;
 		};
@@ -1933,7 +1927,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_LISTONLY) ;
 			} else {
 				listonly = true;
-				msg += px + LONG_LISTONLY + ";" + ws ;
+				inCmd += px + LONG_LISTONLY + ";" + ws ;
 			}
 			break ;
 		};
@@ -1942,7 +1936,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_REGISTERONLY) ;
 			} else {
 				registeronly = true;
-				msg += px + LONG_REGISTERONLY + ";" + ws ;
+				inCmd += px + LONG_REGISTERONLY + ";" + ws ;
 			}
 			break ;
 		};
@@ -1951,7 +1945,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_TRANSFER) ;
 			} else {
 				transfer = true;
-				msg += px + LONG_TRANSFER + ";" + ws ;
+				inCmd += px + LONG_TRANSFER + ";" + ws ;
 			}
 			break ;
 		};
@@ -1960,7 +1954,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_LRMS) ;
 			} else {
 				lrms = new string (optarg);
-				msg += px + LONG_LRMS + ";" + ws ;
+				inCmd += px + LONG_LRMS + ";" + ws ;
 			}
 			break ;
 		};
@@ -1969,7 +1963,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_LOGFILE) ;
 			} else {
 				logfile = new string (optarg);
-				msg += px + LONG_LOGFILE + ws + *logfile + ";" + ws ;
+				inCmd += px + LONG_LOGFILE + ws + *logfile + ";" + ws ;
 			}
 			break ;
 		};
@@ -1978,7 +1972,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_VO) ;
 			} else {
 				vo = new string (optarg);
-				msg += px + LONG_VO + ";" + ws ;
+				inCmd += px + LONG_VO + ";" + ws ;
 			}
 			break ;
 		};
@@ -1989,7 +1983,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				port= (unsigned int*) malloc (sizeof(int));
 				*port = atoi (optarg);
 
-				msg += px + LONG_PORT  + ws + boost::lexical_cast<string>(*port)+ ";" + ws ;
+				inCmd += px + LONG_PORT  + ws + boost::lexical_cast<string>(*port)+ ";" + ws ;
 			}
 			break ;
 		};
@@ -1998,7 +1992,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_TO) ;
 			} else {
 				to = new string (optarg);
-				msg += px + LONG_TO + ws + *to + ";" + ws ;
+				inCmd += px + LONG_TO + ws + *to + ";" + ws ;
 			}
 			break ;
 		};
@@ -2007,7 +2001,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_DEBUG) ;
     			} else {
 				debug = true;
-  				msg += px + LONG_DEBUG + ";" + ws ;
+  				inCmd += px + LONG_DEBUG + ";" + ws ;
                       }
 			break ;
 		};
@@ -2016,7 +2010,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_RANK) ;
     			} else {
 				rank = true;
-  				msg += px + LONG_RANK  + ";" + ws ;
+  				inCmd += px + LONG_RANK  + ";" + ws ;
                       }
                         break ;
 		};
@@ -2025,7 +2019,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_NOGUI) ;
     			} else {
 				nogui= true;
- 				msg += px + LONG_NOGUI + ";" + ws ;
+ 				inCmd += px + LONG_NOGUI + ";" + ws ;
                        }
                         break ;
 		};
@@ -2034,7 +2028,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_NOINT) ;
     			} else {
 				noint= true;
-  				msg += px + LONG_NOINT + ";" + ws ;
+  				inCmd += px + LONG_NOINT + ";" + ws ;
                       }
                         break ;
 		};
@@ -2043,7 +2037,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_NOLISTEN) ;
     			} else {
 				nolisten= true;
-  				msg += px + LONG_NOLISTEN + ";" + ws ;
+  				inCmd += px + LONG_NOLISTEN + ";" + ws ;
                       }
                         break ;
 		};
@@ -2052,7 +2046,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_NOMSG) ;
     			} else {
 				nomsg = true;
-  				msg += px + LONG_NOMSG + ";" + ws ;
+  				inCmd += px + LONG_NOMSG + ";" + ws ;
                       }
                         break ;
 		};
@@ -2061,7 +2055,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_VERSION) ;
     			} else {
 				version = true;
-  				msg += px + LONG_VERSION + ";" + ws ;
+  				inCmd += px + LONG_VERSION + ";" + ws ;
                       }
                         break ;
 		};
@@ -2070,7 +2064,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_NODISPLAY) ;
     			} else {
 				nodisplay = true;
-  				msg += px + LONG_NODISPLAY + ";" + ws ;
+  				inCmd += px + LONG_NODISPLAY + ";" + ws ;
                       }
                         break ;
 		};
@@ -2079,7 +2073,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_GET) ;
     			} else {
 				get = true;
-  				msg += px + LONG_GET + ";" + ws ;
+  				inCmd += px + LONG_GET + ";" + ws ;
                      	 }
                         break ;
 		};
@@ -2088,7 +2082,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_SET) ;
     			} else {
 				set = true;
-  				msg += px + LONG_SET + ";" + ws ;
+  				inCmd += px + LONG_SET + ";" + ws ;
                      	 }
                         break ;
 		};
@@ -2097,7 +2091,7 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 				dupl = new string(LONG_UNSET) ;
     			} else {
 				unset = true;
-  				msg += px + LONG_UNSET + ";" + ws ;
+  				inCmd += px + LONG_UNSET + ";" + ws ;
                      	 }
                         break ;
 		};
@@ -2105,20 +2099,26 @@ void Options::setAttribute (const int &in_opt, const char **argv, std::string &m
 		case ( Options::FILENAME ) : {
 			string file = optarg;
 			if (Utils::contains(filenames, file )) {
-				errMsg(WMS_WARNING,
+				warnsMsg += errMsg(WMS_WARNING,
 					string(px + LONG_FILENAME + ws + file) + ": ignored",
 					" file specified more than once", true);
 			} else{
 				filenames.push_back(file);
-				msg += px + LONG_SET + ws + file + ";" + ws ;
+				inCmd += px + LONG_SET + ws + file + ";" + ws ;
 			}
 			break ;
 		};
 		// it could be specified more than once
 		case ( Options::USERTAG ) : {
 			string tag = optarg ;
-			usertags.push_back(tag);
-			msg += px + LONG_USERTAG + ws + tag + ";" + ws ;
+			if (Utils::contains(usertags, tag )) {
+				warnsMsg += errMsg(WMS_WARNING,
+					string(px + LONG_USERTAG + ws + tag) + ": ignored",
+					"tag specified more than once", true);
+			} else {
+				usertags.push_back(tag);
+				inCmd += px + LONG_USERTAG + ws + tag + ";" + ws ;
+			}
 			break ;
 		};
 		default : {

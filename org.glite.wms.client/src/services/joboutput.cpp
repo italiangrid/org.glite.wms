@@ -82,10 +82,7 @@ JobOutput::~JobOutput ()  {
 }
 void JobOutput::readOptions ( int argc,char **argv)  {
 	ostringstream err ;
- 	string opts = Job::readOptions  (argc, argv, Options::JOBOUTPUT);
-        // writes the information on the specified option in the log file
-        logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false);
-        logInfo->print(WMS_INFO, "Options specified:", opts, false);
+ 	Job::readOptions  (argc, argv, Options::JOBOUTPUT);
         // --input
         // input file
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);

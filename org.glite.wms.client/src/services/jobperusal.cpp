@@ -75,10 +75,7 @@ JobPerusal::~JobPerusal ()  {
 void JobPerusal::readOptions ( int argc,char **argv)  {
 	ostringstream err ;
 	string files = "";
- 	string opts = Job::readOptions  (argc, argv, Options::JOBPERUSAL);
-        // writes the information on the specified option in the log file, it has been created
-	logInfo->print(WMS_INFO,   "Function : " + wmcOpts->getApplicationName( ),
-					"\n Options : " + opts, false);
+ 	Job::readOptions  (argc, argv, Options::JOBPERUSAL);
         // --get
 	getOpt = wmcOpts->getBoolAttribute(Options::GET);
 	// --set

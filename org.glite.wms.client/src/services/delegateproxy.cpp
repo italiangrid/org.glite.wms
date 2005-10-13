@@ -51,10 +51,7 @@ DelegateProxy::~DelegateProxy( ){ };
 * Handles the command line arguments
 */
 void DelegateProxy::readOptions (int argc,char **argv){
-        string opts = Job::readOptions  (argc, argv, Options::JOBDELEGATION);
-        // writes the information on the specified option in the log file
-        logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false);
-        logInfo->print(WMS_INFO, "Options specified:", opts, false);
+        Job::readOptions  (argc, argv, Options::JOBDELEGATION);
         // checks if the proxy file pathname is set
 	if (proxyFile) {
         	logInfo->print (WMS_DEBUG, "Proxy File:", proxyFile);
@@ -81,7 +78,6 @@ void DelegateProxy::delegation ( ){
 				"Missing Information", "no proxy delegation ID" );
 	}
         logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
-
         // DELEGATION (return the EnPoint URL where the proxy has been delegated)
         endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
 	// output message

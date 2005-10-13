@@ -91,15 +91,19 @@ Job::~Job(){
 /*
 * Handles the command line options common to all services
 */
-std::string Job::readOptions (int argc,char **argv, Options::WMPCommands command){
+void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	// init of option objects object
 	wmcOpts = new Options(command) ;
-	string opts = wmcOpts->readOptions(argc, (const char**)argv);
+	wmcOpts->readOptions(argc, (const char**)argv);
+	logInfo = new Log (NULL,  (LogLevel)wmcOpts->getVerbosityLevel( ));
 	// utilities
 	wmcUtils    = new Utils (wmcOpts);
 	// LOG file and verbisty level on the stdoutput
 	logOpt      =  wmcUtils->getLogFileName( ) ;
-	logInfo     = new Log (logOpt,  (LogLevel)wmcOpts->getVerbosityLevel( ));
+	if (logOpt){
+		logInfo->createLogFile(*logOpt);
+	}
+//	logInfo     = new Log (logOpt,  (LogLevel)wmcOpts->getVerbosityLevel( ));
 	// input & resource (no together)
 	outOpt      = wmcOpts->getStringAttribute( Options::OUTPUT ) ;
 	nointOpt    = wmcOpts->getBoolAttribute (Options::NOINT) ;
@@ -137,8 +141,6 @@ std::string Job::readOptions (int argc,char **argv, Options::WMPCommands command
 	if (wmcOpts->getBoolAttribute(Options::HELP)){
   		wmcOpts->printUsage ((wmcOpts->getApplicationName( )).c_str());
 	}
-        // returns the info string on the options
-        return opts;
 }
 /** After option parseing, some common check can be performed.
 So far: proxy time left*/
