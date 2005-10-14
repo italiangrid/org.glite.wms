@@ -126,6 +126,12 @@ initializeStackPointer(int code)
 		case SOAP_TYPE_ns1__OperationNotAllowedFaultType:
 			sp = new ns1__OperationNotAllowedFaultType;
 			break;
+			
+		// Delegation fault
+		case SOAP_TYPE_ns2__DelegationException:
+			sp = new ns2__DelegationException;
+			break;
+			
 		default:
 			sp = new ns1__GenericFaultType;
 			break;
