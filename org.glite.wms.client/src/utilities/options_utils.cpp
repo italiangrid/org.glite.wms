@@ -897,6 +897,14 @@ std::string Options::getVersionMessage( ) {
         msg << Options::HELP_COPYRIGHT << "\n";
 	return msg.str();
 }
+std::vector<std::string> Options::getProtocols() {
+	vector<string> protos;
+	unsigned int size = sizeof(Options::TRANSFER_FILES_PROTOCOLS) / sizeof(char*);
+	for (unsigned int i = 0; i < size ; i++){
+		protos.push_back(string(Options::TRANSFER_FILES_PROTOCOLS[i]));
+	}
+	return protos;
+}
 /**
 * Checks whether  a string option is defined for a specific operation
 */
@@ -1727,6 +1735,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 	string* dupl = NULL;
         string px = "--";
         string ws = " ";
+	string list = "";
+	bool found = false;
 	switch (in_opt){
 		case ( Options::SHORT_AUTODG ) : {
 			if (autodg){
@@ -1882,17 +1892,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			} else {
 				fileprotocol = new string (optarg);
 				// checks if the chosen protocol is supported
-				int size = sizeof(Options::TRANSFER_FILES_PROTOCOLS) / sizeof(char*);
-				bool found = false;
-				string list = "";
-				for (int i = 0; i < size ; i++){
-					if (list.size()>0){ list += ", ";}
-					list += string(Options::TRANSFER_FILES_PROTOCOLS[i]);
-					if (fileprotocol->compare( string(Options::TRANSFER_FILES_PROTOCOLS[i]) )==0){
-						found = true;
-						break;
-					}
-				}
+				found = Utils::checkProtocol(*fileprotocol, list);
 				if ( ! found){
 					throw WmsClientException(__FILE__,__LINE__,
 					"setAttribute",DEFAULT_ERR_CODE,
@@ -2141,6 +2141,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 				string("option already specified: " + *dupl) );
 	}
 };
+
+
 } // glite
 } // wms
 } // client

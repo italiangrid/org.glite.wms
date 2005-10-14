@@ -147,6 +147,11 @@ class Options
 		*	@return the description string of the attribute
 		*/
 		const std::string getAttributeUsage (const Options::OptsAttributes &attribute);
+                /**
+		*	Returns the list of available protocols
+		*	@return a vector with the list of available protocols
+		*/
+		std::vector<std::string> getProtocols() ;
 		/**
 		*	Returns the list of job identifiers
 		*	@return a vector with the list of jobid's
