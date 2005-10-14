@@ -355,7 +355,7 @@ public:
 	*	@param list return a string with the list with the available protocols
 	*	@return TRUE if the protocol is allowed, FALSE otherwise
 	*/
-	static bool checkProtocol(const std::string &proto, std::string list) ;
+	static bool checkProtocol(const std::string &proto, std::string &list) ;
 	/**
 	*	Compresses a file with gzip
 	*	@param filename the pathname of the file to be compressed

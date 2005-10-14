@@ -897,7 +897,7 @@ std::string Options::getVersionMessage( ) {
         msg << Options::HELP_COPYRIGHT << "\n";
 	return msg.str();
 }
-std::vector<std::string> Options::getProtocols() {
+const std::vector<std::string> Options::getProtocols() {
 	vector<string> protos;
 	unsigned int size = sizeof(Options::TRANSFER_FILES_PROTOCOLS) / sizeof(char*);
 	for (unsigned int i = 0; i < size ; i++){

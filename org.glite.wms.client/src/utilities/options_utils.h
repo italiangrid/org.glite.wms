@@ -151,7 +151,7 @@ class Options
 		*	Returns the list of available protocols
 		*	@return a vector with the list of available protocols
 		*/
-		std::vector<std::string> getProtocols() ;
+		static const std::vector<std::string> getProtocols() ;
 		/**
 		*	Returns the list of job identifiers
 		*	@return a vector with the list of jobid's

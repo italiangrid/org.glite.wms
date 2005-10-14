@@ -1481,13 +1481,13 @@ std::string  Utils::getProtocol (const std::string& uri) {
 	bool found = false;
 	unsigned int p =uri.find("//");
 	if (p!=string::npos) {
-		proto = uri.substr(0, p);
+		proto = uri.substr(0, p-1);
 		found = Utils::checkProtocol(proto, list);
 		if (!found) {
 			throw WmsClientException(__FILE__,__LINE__,
 				"getProtocol",  DEFAULT_ERR_CODE,
 				"Protocol Error",
-				"This URI have a not allowed protocol:" + uri + " (list of available protocols: " +list  );
+				"This URI have a not allowed protocol:" + uri + " (list of available protocols: " +list +")" );
 		}
 	} else {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1498,9 +1498,9 @@ std::string  Utils::getProtocol (const std::string& uri) {
 	return proto;
 }
 
-bool Utils::checkProtocol(const std::string &proto, std::string list) {
+bool Utils::checkProtocol(const std::string &proto, std::string &list) {
 	bool found = false;
-	vector<string> protos;
+	vector<string> protos = Options::getProtocols();
 	int size = protos.size();
 	for (int i = 0; i < size ; i++){
 		if (list.size()>0){ list += ", ";}
