@@ -300,7 +300,7 @@ public:
 	* @param list the vector containing the list to be saved
         * @return 0 if the list has been successfully saved (-1 otherwise)
         */
-	 const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list);
+	 const int saveListToFile (const std::string &path, const std::vector<std::string> &list);
         /**
         * Reads a file and gets the list of items contained in it
         * @param the pathname of the file to be read
@@ -337,11 +337,25 @@ public:
 	*/
 	static std::string twoDigits(unsigned int d );
 	/**
-	*	Extract the filename from the input path (checking if the file exists on the local machine)
+	*	Extracts the filename from the input path (checking if the file exists on the local machine)
 	*	@param path the input file pathname
 	*	@return the name of the file
 	*/
 	static std::string  getFileName (const std::string& path) ;
+	/**
+	*	Extracts the protocol from the input URI
+	*	throws an exception if the input URI doesn't have protocol string
+	*	@param path the input URI
+	*	@return the string with the protocol
+	*/
+	static std::string  getProtocol (const std::string& uri) ;
+	/**
+	*	Checks whether a protocol string is allowed for this client interface
+	*	@param proto the string with the protocol to be checked
+	*	@param list return a string with the list with the available protocols
+	*	@return TRUE if the protocol is allowed, FALSE otherwise
+	*/
+	static bool checkProtocol(const std::string &proto, std::string list) ;
 	/**
 	*	Compresses a file with gzip
 	*	@param filename the pathname of the file to be compressed
