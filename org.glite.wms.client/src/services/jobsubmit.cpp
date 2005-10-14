@@ -850,14 +850,13 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			this->checkInputSandboxSize (jobtype);
 			// checks if file archiving and compression is allowed
 			if (wmpVersion > Options::WMPROXY_OLD_VERSION) {
-
 				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 					if (zipAllowed) { message ="allowed by user in the JDL";}
 					else { message ="disabled by user in the JDL"; }
 					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-					if (zipAllowed) {
+					if (zipAllowed && !registerOnly) {
 						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 						}
@@ -938,7 +937,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-					if (zipAllowed) {
+					if (zipAllowed && !registerOnly) {
 						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 						}
@@ -1057,7 +1056,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			if (toBretrieved){
 				// Checks the size of the ISB
 				this->checkInputSandboxSize (jobtype);
-				if (zipAllowed) {
+				if (zipAllowed && !registerOnly) {
 					// Adds the ZIPPED_ISB attribute to the JDL
 					for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 						pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
