@@ -17,10 +17,12 @@
 
 ## Process this file with automake to produce Makefile.in
 
-EXTRA_DIST = LICENSE
+EXTRA_DIST = LICENSE \
+CHANGES
 
 docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
-doc_DATA = LICENSE
+doc_DATA = LICENSE \
+CHANGES
 
 ## Subdirectories list
 #SUBDIRS = src interface examples
