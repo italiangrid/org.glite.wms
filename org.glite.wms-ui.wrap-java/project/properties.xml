@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.7  2005/10/14 15:44:54  fpacini
+	add java.m4
+
 	Revision 1.6  2005/01/31 10:41:59  amarasch
 	Partitioner component moved from wms-ui into wms subsystem
-
+	
 	Revision 1.5  2004/12/20 17:04:36  amarasch
 	Checkpointing and partitioning libraries added
 	
@@ -75,7 +78,7 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-        <property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 glite_wmsutils.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms_partitioner.m4"/>
+        <property name="m4files.list" value="globus.m4 classads.m4 boost.m4 glite.m4 cppunit.m4 expat.m4 ares.m4 glite_wmsutils.m4 glite_wms.m4 glite_lb.m4 glite_dgas.m4 glite_dgas_common.m4 glite_security.m4 glite_wms_partitioner.m4 java.m4"/>
 
 
 

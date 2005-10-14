@@ -101,18 +101,21 @@ have_classads=no
 have_globus=no
 have_expat=no
 have_ares=no
+have_java=no
 
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_ARES([], have_ares=yes, have_ares=no)
+AC_JAVA([], have_java=yes, have_java=no)
 
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
 AC_MSG_RESULT(["ARES found $have_ares"])
+AC_MSG_RESULT(["JAVA found $have_java"])
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
