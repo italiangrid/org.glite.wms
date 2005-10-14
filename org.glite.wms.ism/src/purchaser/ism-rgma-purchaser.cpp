@@ -810,8 +810,10 @@ bool ParseValue(const string& v, utilities::edgstrstream& s)
          if( lower_v == "true" || lower_v == "false" || lower_v == "undefined" ) {
             s << lower_v;
          }
+         // RGMA pubblish boolean values as "T" and "F" but ClassAD wouldn't recognize them.
+         else if ( lower_v == "t")  s << "true";
+         else if ( lower_v == "f")  s << "false";
          else {
-
             // Quotes the value for the attribute if alphanumeric...
             s << "\"" << v << "\"";
          }
