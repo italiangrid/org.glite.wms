@@ -9,10 +9,11 @@
 #include <algorithm>
 #include <cctype>
 #include <ctime>
+#include <cstdio>
 #include <boost/thread/xtime.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
-#include <cstdio>
+#include <boost/regex.hpp>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include "DispatcherFactory.h"
@@ -52,7 +53,8 @@ DispatcherImpl* create_dispatcher()
 {
   configuration::Configuration const* const config
     = configuration::Configuration::instance();
-  if (!config || config->get_module() != configuration::ModuleType::workload_manager) {
+  if (!config
+      || config->get_module() != configuration::ModuleType::workload_manager) {
     Fatal("empty or invalid configuration");
   }
   configuration::WMConfiguration const* const wm_config = config->wm();
@@ -62,10 +64,10 @@ DispatcherImpl* create_dispatcher()
   std::string file(wm_config->input());
 
   // the extractor is shared between the dispatcher and the cleanup functions
-  // (see CleanUp below); the latter can live beyond the scope of the dispatcher
-  // build the extractor outside the dispatcher to make this sharing more
-  // apparent (i.e. the extractor does not belong to the dispatcher) even if it
-  // could be built within the dispatcher ctor
+  // (see CleanUp below); the latter can live beyond the scope of the
+  // dispatcher build the extractor outside the dispatcher to make this
+  // sharing more apparent (i.e. the extractor does not belong to the
+  // dispatcher) even if it could be built within the dispatcher ctor
 
   typedef DispatcherFromFileList::extractor_type extractor_type;
   boost::shared_ptr<extractor_type> extractor(new extractor_type(file));
@@ -96,7 +98,9 @@ struct Register
   }
   ~Register()
   {
-    DispatcherFactory::instance()->unregister_dispatcher(normalize(dispatcher_id));
+    DispatcherFactory::instance()->unregister_dispatcher(
+      normalize(dispatcher_id)
+    );
   }
 };
 
@@ -137,6 +141,23 @@ get_input_name()
   }
 
   return wm_config->input();
+}
+
+bool
+is_recovery_enabled()
+{
+  configuration::Configuration const* const config
+    = configuration::Configuration::instance();
+
+  if (!config) {
+    Fatal("empty or invalid configuration");
+  }
+  configuration::WMConfiguration const* const wm_config = config->wm();
+  if (!wm_config) {
+    Fatal("empty WM configuration");
+  }
+
+  return wm_config->enable_recovery();
 }
 
 void log_dequeued(common::ContextPtr const& context)
@@ -443,18 +464,18 @@ aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
   } else if (command == "match") {
     bool id_exists;
     jobid::JobId match_jobid;
-    
+
     std::string jobidstr(
       requestad::get_edg_jobid(
         *common::match_command_get_ad(command_ad),
         id_exists
       )
     );
-      
-    if (id_exists) { 
-      match_jobid.fromString(jobidstr);   
+
+    if (id_exists) {
+      match_jobid.fromString(jobidstr);
     } else {
-      match_jobid.setJobId("localhost", 6000, "");    
+      match_jobid.setJobId("localhost", 6000, "");
     }
 
     return match_jobid;
@@ -484,17 +505,434 @@ public:
   jobid::JobId id() const { return m_id; }
 };
 
-void
-get_new_requests(
-  boost::shared_ptr<utilities::FLExtractor<std::string> >& extractor,
+typedef utilities::FLExtractor<std::string> extractor_type;
+typedef std::vector<extractor_type::iterator> requests_type;
+
+typedef std::vector<
+  boost::tuple<
+    std::string,                // command
+    extractor_type::iterator,   // iterator
+    ClassAdPtr                  // already parsed command classad
+  >
+> requests_for_id_type;         // requests for a specific id
+
+typedef boost::tuple<
+  std::string,                  // jobid
+  requests_for_id_type
+> id_requests_type;
+
+typedef std::vector<id_requests_type> id_to_requests_type;
+
+class id_equals
+{
+  std::string m_id;
+public:
+  id_equals(std::string const& id)
+    : m_id(id)
+  {
+  }
+  bool operator()(id_to_requests_type::value_type const& v) const
+  {
+    std::string const& id = v.get<0>();
+    return m_id == id;
+  }
+};
+
+void catalog_requests_by_id(
+  boost::shared_ptr<extractor_type> const& extractor,
+  requests_type const& requests,
+  id_to_requests_type& id_to_requests
+)
+{
+  requests_type::const_iterator b = requests.begin();
+  requests_type::const_iterator const e = requests.end();
+  for ( ; b != e; ++b) {
+    extractor_type::iterator const request_it = *b;
+
+    boost::function<void()> cleanup(CleanUp(extractor, request_it));
+    // if the request is not valid, cleanup automatically
+    utilities::scope_guard cleanup_guard(cleanup);
+
+    try {
+      std::string const command_ad_str(*request_it);
+      ClassAdPtr command_ad(
+        utilities::parse_classad(command_ad_str)
+      );
+
+      RequestChecker request_checker(*command_ad);
+      std::string command = request_checker.command();
+      jobid::JobId id = request_checker.id();
+
+      id_to_requests_type::iterator it(
+        std::find_if(
+          id_to_requests.begin(),
+          id_to_requests.end(),
+          id_equals(id.toString())
+        )
+      );
+
+      if (it != id_to_requests.end()) {
+        it->get<1>().push_back(
+          boost::make_tuple(command, request_it, command_ad)
+        );
+      } else {
+        id_to_requests.push_back(
+          boost::make_tuple(
+            id.toString(),
+            requests_for_id_type()
+          )
+        );
+        id_to_requests.back().get<1>().push_back(
+          boost::make_tuple(command, request_it, command_ad)
+        );
+      }
+
+      cleanup_guard.dismiss();
+
+    } catch (utilities::ClassAdError& e) {
+      Info(e.what());
+    } catch (InvalidRequest& e) {
+      Info(e.str());
+    }
+  }
+}
+
+bool is_match(requests_for_id_type::value_type const& v)
+{
+  std::string const& command = v.get<0>();
+  return command == "match";
+}
+
+bool some_match(requests_for_id_type const& requests_for_id)
+{
+  return
+    std::find_if(
+      requests_for_id.begin(),
+      requests_for_id.end(),
+      is_match
+    ) != requests_for_id.end();
+}
+
+bool is_not_resubmit(requests_for_id_type::value_type const& v)
+{
+  std::string const& command = v.get<0>();
+  return command != "jobresubmit";
+}
+
+typedef boost::shared_ptr<edg_wll_JobStat> JobStatusPtr;
+
+void delete_job_status(edg_wll_JobStat* p)
+{
+  edg_wll_FreeStatus(p);
+  delete p;
+}
+
+JobStatusPtr job_status(jobid::JobId const& id)
+{
+  std::string const x509_proxy = common::get_user_x509_proxy(id);
+  std::string const sequence_code;
+  common::ContextPtr context(
+    common::create_context(id, x509_proxy, sequence_code)
+  );
+  int const flags = 0;
+  JobStatusPtr status(new edg_wll_JobStat, delete_job_status);
+  if (!edg_wll_JobStatusProxy(
+        context.get(),
+        id.getId(),
+        flags,
+        status.get())
+     ) {
+    return status;
+  } else {
+    return JobStatusPtr();
+  }
+}
+
+bool is_waiting(JobStatusPtr const& status)
+{
+  return status->state == EDG_WLL_JOB_WAITING;
+}
+
+bool is_ready_scheduled_running(JobStatusPtr const& status)
+{
+  return
+    status->state == EDG_WLL_JOB_READY
+    || status->state == EDG_WLL_JOB_SCHEDULED
+    || status->state == EDG_WLL_JOB_RUNNING;
+}
+
+bool is_finished(JobStatusPtr const& status)
+{
+  return
+    status->state == EDG_WLL_JOB_DONE
+    || status->state == EDG_WLL_JOB_CLEARED
+    || status->state == EDG_WLL_JOB_ABORTED
+    || status->state == EDG_WLL_JOB_CANCELLED
+    || status->state == EDG_WLL_JOB_PURGED;
+}
+
+bool is_cancelled(JobStatusPtr const& status)
+{
+  return status->state == EDG_WLL_JOB_CANCELLED;
+}
+
+class clean_ignore
+{
+  boost::shared_ptr<extractor_type> m_extractor;
+  std::string m_id;
+public:
+  clean_ignore(
+    boost::shared_ptr<extractor_type> const& extractor,
+    std::string const& id
+  )
+    : m_extractor(extractor), m_id(id)
+  {
+  }
+  void operator()(requests_for_id_type::value_type const& v) const
+  {
+    Debug("ignoring " << v.get<0>() << " request for " << m_id);
+    CleanUp(m_extractor, v.get<1>())();
+  }
+};
+
+void single_request_recovery(
+  id_requests_type const& id_requests,
+  boost::shared_ptr<extractor_type> const& extractor,
   TaskQueue& tq
 )
 {
-  typedef utilities::FLExtractor<std::string> extractor_type;
-  typedef std::vector<extractor_type::iterator> new_requests_type;
-  new_requests_type new_requests(extractor->get_all_available());
+  std::string const& id = id_requests.get<0>();
+  requests_for_id_type const& requests_for_id = id_requests.get<1>();
+  assert(requests_for_id.size() == 1);
+  requests_for_id_type::value_type const& req = requests_for_id.front();
+  std::string const& command = req.get<0>();
+ 
+  JobStatusPtr status(job_status(jobid::JobId(id)));
 
-  for (new_requests_type::iterator it = new_requests.begin();
+  bool valid = true;
+  if (command == "match" && !status) {
+    Info("matching");
+  } else if (command == "jobsubmit" && is_waiting(status)) {
+    Info("submitting");
+  } else if (command == "jobcancel" && !is_cancelled(status)) {
+    Info("cancelling");
+  } else if (command == "jobresubmit" && is_waiting(status)) {
+    Info("resubmitting");
+  } else {
+    assert(false && "invalid command");
+    valid = false;
+  }
+
+  if (valid) {
+    extractor_type::iterator const& request_it = req.get<1>();
+    boost::function<void()> cleanup(CleanUp(extractor, request_it));
+    ClassAdPtr const& command_ad = req.get<2>();
+    RequestPtr request(new Request(*command_ad, cleanup, id));
+    tq.insert(std::make_pair(id, request));
+  } else {
+    clean_ignore(extractor, id)(req);
+  }
+}
+
+std::string summary(requests_for_id_type const& requests_for_id)
+{
+  std::string result;
+
+  requests_for_id_type::const_iterator b = requests_for_id.begin();
+  requests_for_id_type::const_iterator const e = requests_for_id.end();
+  for ( ; b != e; ++b) {
+    std::string const& command = b->get<0>();
+    result += toupper(command[0]);
+  }
+
+  return result;
+}
+
+bool is_cancel(requests_for_id_type::value_type const& v)
+{
+  std::string const& command = v.get<0>();
+  return command == "cancel";
+}
+
+void multiple_request_recovery(
+  id_requests_type const& id_requests,
+  boost::shared_ptr<extractor_type> const& extractor,
+  TaskQueue& tq
+)
+{
+  std::string const& id = id_requests.get<0>();
+  requests_for_id_type const& requests_for_id = id_requests.get<1>();
+  assert(requests_for_id.size() > 1);
+
+  JobStatusPtr status(job_status(jobid::JobId(id)));
+
+  std::string summary(summary(requests_for_id));
+  std::string status_summary(" (status ");
+  if (status) {
+    status_summary += boost::lexical_cast<std::string>(status->state) + ')';
+  } else {
+    status_summary += "not available)";
+  }
+  Info("multiple requests [" << summary << "] for " << id << status_summary);
+
+  // invalid patterns
+  boost::regex const nonmatch_match_nonmatch_re("[^M]*M[^M]*");
+  boost::regex const nonsubmit_submit_re("[^S]+S.*");
+  boost::regex const more_submits_re("S.*S.*");
+
+  // possible patterns
+  boost::regex const more_matches_re("M+");
+  boost::regex const a_cancel_re(".*C.*");
+  boost::regex const no_cancel_re("[^C]*");
+
+  if (boost::regex_match(summary, nonmatch_match_nonmatch_re)
+      || boost::regex_match(summary, nonsubmit_submit_re)
+      || boost::regex_match(summary, more_submits_re)
+     ) {
+
+    Info("invalid pattern; ignoring all requests");
+    std::for_each(
+      requests_for_id.begin(),
+      requests_for_id.end(),
+      clean_ignore(extractor, id)
+    );
+
+  } else if (boost::regex_match(summary, more_matches_re) && !status) {
+
+    Info("matching");
+
+    requests_for_id_type::value_type const& match_req(requests_for_id.back());
+    
+    extractor_type::iterator request_it = match_req.get<1>();
+    ClassAdPtr const& command_ad = match_req.get<2>();
+
+    boost::function<void()> cleanup(CleanUp(extractor, request_it));
+    RequestPtr request(new Request(*command_ad, cleanup, id));
+    tq.insert(std::make_pair(id, request));
+    
+    std::for_each(
+      requests_for_id.begin(),
+      boost::prior(requests_for_id.end()),
+      clean_ignore(extractor, id)
+    );
+
+  } else if (boost::regex_match(summary, a_cancel_re)
+             && !is_cancelled(status)) {
+
+    Info("cancelling");
+
+    // find the request corresponding to a cancel
+    requests_for_id_type::const_iterator const cancel_it(
+      std::find_if(requests_for_id.begin(), requests_for_id.end(), is_cancel)
+    );
+    assert(cancel_it != requests_for_id.end());
+    extractor_type::iterator request_it = cancel_it->get<1>();
+    ClassAdPtr const& command_ad = cancel_it->get<2>();
+
+    boost::function<void()> cleanup(CleanUp(extractor, request_it));
+    RequestPtr request(new Request(*command_ad, cleanup, id));
+    tq.insert(std::make_pair(id, request));
+
+    std::for_each(
+      requests_for_id.begin(),
+      cancel_it,
+      clean_ignore(extractor, id)
+    );
+    std::for_each(
+      boost::next(cancel_it),
+      requests_for_id.end(),
+      clean_ignore(extractor, id)
+    );
+
+  } else if (boost::regex_match(summary, no_cancel_re)
+             && is_waiting(status)) {
+
+    // take the last request, which must be a resubmit
+    Info("resubmitting");
+
+    requests_for_id_type::value_type const& last_resubmit(
+      requests_for_id.back()
+    );
+    extractor_type::iterator request_it = last_resubmit.get<1>();
+    ClassAdPtr const& command_ad = last_resubmit.get<2>();
+
+    boost::function<void()> cleanup(CleanUp(extractor, request_it));
+    RequestPtr request(new Request(*command_ad, cleanup, id));
+    tq.insert(std::make_pair(id, request));
+
+    std::for_each(
+      requests_for_id.begin(),
+      boost::prior(requests_for_id.end()),
+      clean_ignore(extractor, id)
+    );
+
+  } else {
+
+    Info("invalid pattern; ignoring all requests");
+    std::for_each(
+      requests_for_id.begin(),
+      requests_for_id.end(),
+      clean_ignore(extractor, id)
+    );
+
+  }
+}
+
+class recover
+{
+  boost::shared_ptr<extractor_type> m_extractor;
+  TaskQueue* m_tq;
+public:
+  recover(
+    boost::shared_ptr<extractor_type> const& extractor,
+    TaskQueue& tq
+  )
+    : m_extractor(extractor), m_tq(&tq)
+  {
+  }
+  void operator()(id_to_requests_type::value_type const& id_requests) const
+  {
+    std::string const& id = id_requests.get<0>();
+    requests_for_id_type const& requests_for_id = id_requests.get<1>();
+    assert(!requests_for_id.empty());
+    Info("recovering " << id);
+    if (requests_for_id.size() == 1) {
+      single_request_recovery(id_requests, m_extractor, *m_tq);
+    } else {
+
+      multiple_request_recovery(id_requests, m_extractor, *m_tq);
+    }
+  }
+
+
+};
+
+void
+recovery(
+  boost::shared_ptr<extractor_type> const& extractor,
+  TaskQueue& tq
+)
+{
+  requests_type requests(extractor->get_all_available());
+  id_to_requests_type id_to_requests;
+  catalog_requests_by_id(extractor, requests, id_to_requests);
+
+  std::for_each(
+    id_to_requests.begin(),
+    id_to_requests.end(),
+    recover(extractor, tq)
+  );
+}
+
+void
+get_new_requests(
+  boost::shared_ptr<extractor_type>& extractor,
+  TaskQueue& tq
+)
+{
+  requests_type new_requests(extractor->get_all_available());
+
+  for (requests_type::iterator it = new_requests.begin();
        it != new_requests.end(); ++it) {
 
     extractor_type::iterator request_it = *it;
@@ -514,22 +952,34 @@ get_new_requests(
       std::string command = request_checker.command();
       jobid::JobId id = request_checker.id();
 
+      JobStatusPtr status(job_status(id));
+
       TaskQueue::iterator it = tq.find(id.toString());
 
       if (it == tq.end()) {
 
-        cleanup_guard.dismiss();
-        RequestPtr request(new Request(*command_ad, cleanup, id));
-        tq.insert(std::make_pair(id.toString(), request));
+        if (((command == "jobsubmit" || command == "jobresubmit")
+             && is_waiting(status))
+            || (command == "jobcancel" && !is_cancelled(status))
+           ) {
 
-        //logging
-                
-        if (command == "jobsubmit" || command == "jobresubmit") {
-          log_dequeued(request->lb_context());
-        } else if (command == "jobcancel") {
-          log_cancel_req(request->lb_context());
+          Info("new " << command << " for " << id);
+
+          cleanup_guard.dismiss();
+          RequestPtr request(new Request(*command_ad, cleanup, id));
+          tq.insert(std::make_pair(id.toString(), request));
+
+          if (command == "jobsubmit" || command == "jobresubmit") {
+            log_dequeued(request->lb_context());
+          } else if (command == "jobcancel") {
+            log_cancel_req(request->lb_context());
+          }
+
+        } else {
+
+          Info("ignoring " << command << " for " << id);
+
         }
-
 
       } else {
 
@@ -557,19 +1007,22 @@ get_new_requests(
           } else {
             // during normal running a resubmit can be seen at this point only
             // if the status of this job is either DELIVERED, PROCESSING (this
-            // case is possible because the submit request can be passed to the
-            // JC, fail and be resubmitted by the LM before the RequestHandler
-            // thread could mark it as DELIVERED) or CANCELLED (this case is
-            // possible because the cancel request can be processed - and passed
-            // to the JC, moving the request to the CANCELLED state - while the
-            // job failed and was resubmitted by the LM)
+            // case is possible because the submit request can be passed to
+            // the JC, fail and be resubmitted by the LM before the
+            // RequestHandler thread could mark it as DELIVERED) or CANCELLED
+            // (this case is possible because the cancel request can be
+            // processed - and passed to the JC, moving the request to the
+            // CANCELLED state - while the job failed and was resubmitted by
+            // the LM)
 
-            // but during start up, w/o the appropriate checks on the status of
-            // a job, still to be done) also an initial state (i.e. WAITING) is
-            // possible because all the requests are read in one shot from the
-            // input
+            // but during start up, w/o the appropriate checks on the status
+            // of a job, still to be done) also an initial state
+            // (i.e. WAITING) is possible because all the requests are read in
+            // one shot from the input
 
-            Debug("jobresubmit " << id << " when in state " << request->state());
+            Debug(
+              "jobresubmit " << id << " when in state " << request->state()
+            );
             log_dequeued(request->lb_context());
             request->mark_resubmitted();
             cleanup_guard.dismiss();
@@ -608,10 +1061,11 @@ get_new_requests(
   }
 }
 
-
 } // {anonymous}
 
-DispatcherFromFileList::DispatcherFromFileList(boost::shared_ptr<extractor_type> extractor)
+DispatcherFromFileList::DispatcherFromFileList(
+  boost::shared_ptr<extractor_type> extractor
+)
   : m_extractor(extractor)
 {
 }
@@ -623,6 +1077,14 @@ try {
   Info("Dispatcher: starting");
 
   TaskQueue& tq(the_task_queue());
+
+  if (is_recovery_enabled()) {
+    Info("Dispatcher: doing recovery");
+    recovery(m_extractor, tq);
+  } else {
+    Info("Dispatcher: recovery disabled");
+  }
+
   while (!received_quit_signal()) {
 
     do_transitions(tq, write_end);
