@@ -174,19 +174,10 @@ static bool createContext(Command* cmd) {
     std::string path;
     assert (cmd -> getParam("JobPath", path));
     assert (cmd -> getParam("JobId", dg_jobid));
-
-    boost::filesystem::path seqfile( path + "/" + ".edg_wll_seq"); 
-    std::ifstream seqfilestream( seqfile.native_file_string().c_str() );
-    if( seqfilestream ) {
-      seqfilestream >> sequence_code;
-    } 
-    else {
-      glitelogTag(severe)  << std::endl;
-      glitelogHead(severe) << path << "/.edg_wll_seq does not exist " << std::endl; 
-      glitelogTag(severe)  << std::endl;
-      edglog(severe) << path << "/.edg_wll_seq does not exist " << std::endl; 
-      return false; 
-    }
+    
+    assert (cmd -> getParam("SeqCode", sequence_code));
+    
+    edglog(debug)<<"Cancel seqcode: "<<sequence_code<<std::endl;
   }
   
 

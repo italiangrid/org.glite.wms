@@ -2253,7 +2253,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		edglog(debug)<<"Output URI: " << output_uri <<endl;
 		
 		// Searching files inside directory
-		const boost::filesystem::path p(outputpath);
+		const boost::filesystem::path p(outputpath, boost::filesystem::native);
 		std::vector<std::string> found;
 		glite::wms::wmproxy::commands::list_files(p, found);
 		edglog(debug)<<"List size is (hidden files included): "
@@ -3034,7 +3034,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	checkPerusalFlag(jid, delegatedproxy, true);
 	
 	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
-	const boost::filesystem::path p(peekdir);
+	const boost::filesystem::path p(peekdir, boost::filesystem::native);
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	

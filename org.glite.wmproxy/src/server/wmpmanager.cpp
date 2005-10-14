@@ -112,6 +112,7 @@ WMPManager::runCommand(const std::string& cmdname,
 	            	cmd -> setParam("JobPath", param[1]);
 	                cmd -> setParam ("SandboxRootPath", param[2]);
 	                cancelseqcode = param[3];
+	                cmd->setParam("SeqCode", cancelseqcode);
             	} else {
             		param_err = true;
             	}
