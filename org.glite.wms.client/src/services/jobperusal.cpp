@@ -175,7 +175,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			peekFiles =  wmcUtils->askMenu(peekFiles, Utils::MENU_FILE);
 		}
 		// Writes in the log file the list of filenames chosen by the input file
-		for (int i = 0; i < peekFiles.size() ; i++) { files += peekFiles[i] + "; ";}
+		for (unsigned int i = 0; i < peekFiles.size() ; i++) { files += peekFiles[i] + "; ";}
 		if (files.size()>0){
 			logInfo->print (WMS_INFO, "filenames from the input file:", files, false);
 		}
