@@ -807,6 +807,8 @@ doExecv(const string &command, const vector<string> &params,
 	switch (fork()) {
 		case -1:
 			// Unable to fork
+			edglog(critical)<<"Unable to fork process during job local "
+				"directory creation"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
 				"doExecv()", WMS_IS_FAILURE, "Unable to fork process"
 				"\n(please contact server administartor");
@@ -815,7 +817,7 @@ doExecv(const string &command, const vector<string> &params,
 			// child
 	        if (execv(command.c_str(), argvs)) {
 	        	if (errno == E2BIG) {
-        			edglog(info)<<"Command line too long, splitting..."<<endl;
+        			edglog(debug)<<"Command line too long, splitting..."<<endl;
         			unsigned int middle = startIndex
         				+ (endIndex - startIndex) / 2;
                     edglog(info)<<"Calling from index "<<startIndex
@@ -825,6 +827,8 @@ doExecv(const string &command, const vector<string> &params,
         			doExecv(command, params, dirs, startIndex, middle);
         			doExecv(command, params, dirs, middle + 1, endIndex);
 	        	} else {
+	        		edglog(critical)<<"Unable to execute command during job local "
+						"directory creation"<<endl;
 	        		throw FileSystemException(__FILE__, __LINE__,
 						"doExecv()", WMS_IS_FAILURE, "Unable to execute command"
 						"\n(please contact server administartor");
@@ -836,6 +840,8 @@ doExecv(const string &command, const vector<string> &params,
 	    	int status;
 	    	wait(&status);
 	    	if (status) {
+	    		edglog(critical)<<"Unable to create job local directory, "
+					"exit code: "<<status<<endl;
 	    		throw FileSystemException(__FILE__, __LINE__,
 					"doExecv()", WMS_IS_FAILURE, "Unable to create job local "
 					"directory\n(please contact server administartor)");
@@ -985,7 +991,7 @@ isNull(string field)
 	int p1 = field.size() - 5 ;
 	int p2 = field.find("=NULL");
 	
-	if (p1 > 0 && p1 == p2) {
+	if ((p1 > 0) && (p1 == p2)) {
 		is_null = true;
 	}
 	return is_null;
