@@ -54,6 +54,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/interface \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \
+   $(GLOBUS_THR_CFLAGS) \
 	$(CLASSAD_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in Helper_ii_prefetch.*

@@ -21,8 +21,8 @@
 	
 	Revision history:
 	$Log$
-	Revision 1.6  2005/06/13 08:18:08  monforte
-	Merge RC1 -> HEAD
+	Revision 1.7  2005/10/14 08:26:27  mcecchi
+	RB/Gpbox interaction
 
 	Revision 1.4.2.3  2005/04/15 16:18:27  vmedici
 	unit test
@@ -86,6 +86,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 replica.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_matchmaking.m4 glite_wms_broker.m4 glite_wms_brokerinfo.m4 glite_wms_ism.m4 optimize.m4 cppunit.m4"/>
+	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 replica.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_matchmaking.m4 glite_wms_broker.m4 glite_wms_brokerinfo.m4 glite_wms_ism.m4 optimize.m4 cppunit.m4 glite_gpbox.m4 glite_security.m4"/>
 
 </project>
