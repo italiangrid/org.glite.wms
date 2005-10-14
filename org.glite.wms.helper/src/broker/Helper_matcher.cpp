@@ -23,7 +23,7 @@
 #include "Helper_matcher.h"
 #include "globus_gss_assist.h"
 
-#include "glite/gpbox/pep/Clientcc.h"
+#include "glite/gpbox/Clientcc.h"
 
 #include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"

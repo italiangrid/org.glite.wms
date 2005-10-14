@@ -24,7 +24,7 @@
 #include "Helper.h"
 #include "globus_gss_assist.h"
 
-#include "glite/gpbox/pep/Clientcc.h"
+#include "glite/gpbox/Clientcc.h"
 
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/security/voms/voms_api.h"
