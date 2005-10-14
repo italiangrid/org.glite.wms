@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.15  2005/10/14 17:14:50  emartel
+#       added service discovery
+#
 #       Revision 1.14  2005/10/04 11:39:44  eronchie
 #       Applied changes due to rgma api
 #
@@ -155,6 +158,7 @@ have_glite_security=no
 have_glite_wms_ism=no
 
 AC_GLITE
+AC_GLITE_SERVICE_DISCOVERY
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
