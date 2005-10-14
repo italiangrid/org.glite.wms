@@ -85,7 +85,6 @@ namespace matchmaking   = glite::wms::matchmaking;
   #define print(msg) std::cout << msg << '\n'
 #endif
 
-
 namespace glite {
 namespace wms {
 namespace helper {
