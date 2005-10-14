@@ -1,10 +1,15 @@
 top=../../../../../../../
 top_src=../../../../../
 package=org.glite.wms.wmproxy.getproxy
-class=WMProxyGetProxyTest
+class_1=WMProxyGetProxyTest
+class_2=WMProxyGrstGetProxyTest
 
-java_file=${class}.java
-class_file=${class}.class
+java_file_1=${class_1}.java
+class_file_1=${class_1}.class
+
+java_file_2=${class_2}.java
+class_file_2=${class_2}.class
+
 
 #rm class file
 # ------------------
@@ -35,5 +40,5 @@ done
 
 set -x
 
-javac -classpath ${classpath} ${class}.java
+javac -classpath ${classpath} ${java_file_1} ${java_file_2}
 

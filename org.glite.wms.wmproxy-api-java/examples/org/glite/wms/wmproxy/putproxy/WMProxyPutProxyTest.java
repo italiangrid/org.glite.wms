@@ -9,7 +9,6 @@ package org.glite.wms.wmproxy.putproxy;
 
 import org.glite.wms.wmproxy.WMProxyAPI;
 
-
 public class WMProxyPutProxyTest {
 
 /*
@@ -18,7 +17,7 @@ public class WMProxyPutProxyTest {
 */
 	WMProxyPutProxyTest ( ) { }
 	/*
-	*	starts the test
+	*	Starts the test
 	*	@param url service URL
 	*  	@param delegationID the id to identify the delegation
 	*  	@param propFile the path location of the user properties file
@@ -32,7 +31,7 @@ public class WMProxyPutProxyTest {
 		String proxy = "" ;
 		String result = "" ;
 
-		System.out.println ("TEST : PutProxy");
+		System.out.println ("TEST : WMProxy Delegation");
 		System.out.println ("************************************************************************************************************************************");
 		System.out.println ("WS URL			= [" + url + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
@@ -40,48 +39,36 @@ public class WMProxyPutProxyTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("proxy			= [" + proxyFile+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-
-
-		// test
+		// Test
 		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
 		System.out.println ("Testing ....");
-
 		// Proxy Request
-		System.out.println ("performing Proxy-Request .....");
+		System.out.println ("Performing Proxy-Request .....");
 		certReq = client.getProxyReq ( delegationId );
 		System.out.println ("getProxy result [\n." + certReq + "]" );
-
-		// Create proxy from "ProxyRequest" result
-		System.out.println ("creating Proxy  .....");
-		proxy = client.createProxyfromCertReq ( certReq );
-		System.out.println ("proxy = [\n." + proxy + "]" );
-
-		System.out.println ("putting Proxy .....");
+		System.out.println ("Delegating Credential .....");
 		// Put prxoy
-		client.putProxy (delegationId, proxy);
-
+		client.putProxy (delegationId, certReq);
 		// end
-		System.out.println ("end of the test\n");
-
+		System.out.println ("End of the test\n");
+		// end
+		System.out.println ("Your credential has been successfully delegated.\nEnd of the test\n");
 	}
-
+	/**
+	*	main
+	*/
 	public static void main(String[] args) throws Exception {
-
-		// input parameters
 		String url = "" ;
 		String delegationId = "";
 		String propFile = "";
 		String proxyFile = "";
-
-
-
 		// input parameters
 		if ((args == null) || (args.length < 3))
 			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <proxyFile>)");
 		url = args[0];
 		delegationId = args[1];
 		proxyFile = args[2];
-
+		// Launches the test
 		runTest (url, delegationId, propFile, proxyFile);
 
 
