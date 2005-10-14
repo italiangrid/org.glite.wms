@@ -182,7 +182,8 @@ glite_wms_job_output_LDADD = \
 	$(ARES_LIBS) \
 	$(EXPAT_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
-	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
+	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
+	$(CURL)
 
 glite_wms_job_perusal_SOURCES = \
 	wmp-job-perusal.cpp
