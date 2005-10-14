@@ -30,7 +30,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.util.Date ;
 
-
+import org.gridsite.www.namespaces.delegation_1.*;
 
 
 import org.glite.security.delegation.GrDPX509Util;
@@ -128,7 +128,9 @@ public class WMProxyAPI{
 		this.setUpService ( );
 	}
 	/**
-	*  Gets a proxy identified by the delegationId string
+	*  Gets a proxy identified by the delegationId string.
+	*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
+	*  but it will be soon deprecated.
 	*  @param delegationID the id to identify the delegation
 	*  @return a string representing the proxy
 	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
@@ -137,80 +139,78 @@ public class WMProxyAPI{
 			logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
 			return this.serviceStub.getProxyReq(delegationId) ;
 	}
-
 	/**
-	*  Generates a proxy from the input certificate and from the user proxy file on the user local machine
-	* (which path has to be specified as input parameter in one of the class costructors)
-	*  This service is called after the getProxyReq
-	*  the input proxy string of this service is the string got by getProxyReq.
-	*  @param certReq Service certificate request
-	*  @return the generated proxy certificate
-	*  @throws Exception If any error occurs during the creation of the proxy
-	*  @throws  FileNotException If proxy file doesn't exist
-	*  @throws CertificateException in case of any error during the local proxy loading operations
-	*  @throws CertificateExpiredException if the local proxy has expired
+	*  Gets a proxy identified by the delegationId string.
+	*  @param delegationID the id to identify the delegation
+	*  @return a string representing the proxy
+	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
+	*  @since WMProxy server version 2.0.0
 	*/
-
-	public String createProxyfromCertReq(java.lang.String certReq)
-	throws    java.lang.Exception,
-			java.io.FileNotFoundException,
-			java.security.cert.CertificateException,
-			java.security.cert.CertificateExpiredException {
-		byte[ ] proxy = null;
-		ByteArrayInputStream stream = null;
-		CertificateFactory cf = null;
-		X509Certificate cert = null ;
-		long lifetime = 0;
-		// generator object
-		GrDProxyGenerator generator = new GrDProxyGenerator ( );
-		// user proxy file
-		File file = new File ( this.proxyFile);
-		if ( file.isFile ( ) != true ) {
-			throw new FileNotFoundException ( "proxy file not found at: "+ this.proxyFile );
-		}
-		try{
-			// gets the local proxy as array of bye
-			proxy = GrDPX509Util.getFilesBytes( file );
-			// reads the proxy time-left
-			stream = new ByteArrayInputStream(proxy);
-			cf = CertificateFactory.getInstance("X.509");
-			cert = (X509Certificate)cf.generateCertificate(stream);
- 			stream.close();
-			Date now = new Date ( );
-			lifetime =( cert.getNotAfter().getTime ( ) - now.getTime() ) / 3600000  ; // in hour ! (TBC in secs)
-		} catch (Exception exc){
-			String errmsg = "an error occured during loading the loading of the local proxy\n";
-			errmsg += "(" + this.proxyFile +"):\n" + exc.toString();
-			throw new CertificateException (errmsg);
-		}
-		// checks if the proxy is still valid
-		if (lifetime < 0 ){
-			throw new CertificateExpiredException ("the local proxy has expired(" + this.proxyFile +")" );
-		}
-		// sets the lifetime
-		generator.setLifetime ((int)lifetime);
-		// creates the new proxy
-		proxy =  generator.x509MakeProxyCert(certReq.getBytes( ) , proxy, "");
-		// converts the proxy from byte[] to String
-		return new String(proxy);
+	public java.lang.String grstGetProxyReq (java.lang.String delegationId) throws java.rmi.RemoteException {
+			logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
+			return this.grstStub.getProxyReq(delegationId) ;
 	}
 
+
 	/**
-	*  Sends a user proxy to the WMProxy server delegating the user credential.
-	*  The proxy is identified by a delegationId string (this string will be used to call some services accepting a delegationId string as input parameter like  jobRegister, jobSubmit, etc)
-	*  This service is called after the following services: createProxyfromCertReq and getProxyReq ;
-	*  the input proxy string of this service is the string got by a previous call to createProxyfromCertReq.
+	* This method allows delegating user credential to the WMProxy server:
+	* it creates a proxy from the input certificate (got by a previous call to the createProxyfromCertReq server).
+	* The created proxy is sent to the server and identified by a delegationId string.
+	* This string can be used to call some services accepting a delegationId string as input parameter
+	*  (like  jobRegister, jobSubmit, etc) until its expiration time.
+	*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
+	*  but it will be soon deprecated. The server version can be retrieved by calling the getVersion service
 	*  @param delegationId the id used to identify the delegation
-	*  @param proxy the user  proxy
-	*  @throws RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
+	*  @param cert the input certificate
+	*  @throws java.rmi.RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
+	* @throws java.io.FileNotFoundException if the local user proxy is not found
+	* @throws java.security.cert.CertificateException if any error occurs during the generation of the proxy from the input certificate
+	* @throws java.security.cert.CertificateExpiredException if the user proxy has expired
+	* @see #getVersion
 	*
 	*/
-	public void putProxy(java.lang.String delegationId, java.lang.String proxy) throws java.rmi.RemoteException {
-		logger.debug ("INPUT: proxy=[" + proxy + "]");
+	public void putProxy(java.lang.String delegationId, java.lang.String cert)
+		throws 	java.rmi.RemoteException,
+				java.lang.Exception,
+				java.io.FileNotFoundException,
+				java.security.cert.CertificateException,
+				java.security.cert.CertificateExpiredException {
+		logger.debug ("INPUT: cert=[" + cert+ "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
+		logger.debug ("Creating proxy from certificate (CreateProxyfromCertReq)");
+		String proxy = this.createProxyfromCertReq(cert);
+		logger.debug ("Delegating credential (putProxy)");
 		this.serviceStub.putProxy(delegationId, proxy) ;
 	}
-
+	/**
+	* This method allows delegating user credential to the WMProxy server using the GridSite package:
+	* it creates a proxy from the input certificate (got by a previous call to the createProxyfromCertReq server).
+	* The created proxy is sent to the server and identified by a delegationId string.
+	* This string can be used to call some services accepting a delegationId string as input parameter
+	*  (like  jobRegister, jobSubmit, etc) until its expiration time.
+	*  @param delegationId the id used to identify the delegation
+	*  @param cert the input certificate
+	*  @throws java.rmi.RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
+	* @throws java.io.FileNotFoundException if the local user proxy is not found
+	* @throws java.security.cert.CertificateException if any error occurs during the generation of the proxy from the input certificate
+	* @throws java.security.cert.CertificateExpiredException if the user proxy has expired
+	* @since WMProxy server version 2.0.0 (the server version can be retrieved by calling the getVersion service)
+	* @see #getVersion
+	*
+	*/
+	public void grstPutProxy(java.lang.String delegationId, java.lang.String cert)
+		throws 	java.rmi.RemoteException,
+				 java.lang.Exception,
+				java.io.FileNotFoundException,
+				java.security.cert.CertificateException,
+				java.security.cert.CertificateExpiredException {
+		logger.debug ("INPUT: cert=[" + cert + "]");
+		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
+		logger.debug ("Creating proxy from certificate (CreateProxyfromCertReq)");
+		String proxy = this.createProxyfromCertReq(cert);
+		logger.debug ("Delegating credential (putProxy)");
+		this.serviceStub.putProxy(delegationId,proxy) ;
+	}
 	/**
 	* Gets the Version of the WMProxy services
 	* @return the version numbers
@@ -712,20 +712,77 @@ public class WMProxyAPI{
 							org.glite.wms.wmproxy.InvalidArgumentFaultType {
 		return this.serviceStub.getStringParametricJobTemplate(attributes, param, requirements, rank);
 	}
+	/**
+	*  Generates a proxy from the input certificate and from the user proxy file on the user local machine
+	* (which path has to be specified as input parameter in one of the class costructors)
+	*  This service is called after the getProxyReq
+	*  the input proxy string of this service is the string got by getProxyReq.
+	*  @param certReq Service certificate request
+	*  @return the generated proxy certificate
+	*  @throws Exception If any error occurs during the creation of the proxy
+	*  @throws  FileNotException If proxy file doesn't exist
+	*  @throws CertificateException in case of any error during the local proxy loading operations
+	*  @throws CertificateExpiredException if the local proxy has expired
+	*/
+
+	private String createProxyfromCertReq(java.lang.String certReq)
+	throws    java.lang.Exception,
+			java.io.FileNotFoundException,
+			java.security.cert.CertificateException,
+			java.security.cert.CertificateExpiredException {
+		byte[ ] proxy = null;
+		ByteArrayInputStream stream = null;
+		CertificateFactory cf = null;
+		X509Certificate cert = null ;
+		long lifetime = 0;
+		// generator object
+		GrDProxyGenerator generator = new GrDProxyGenerator ( );
+		// user proxy file
+		File file = new File ( this.proxyFile);
+		if ( file.isFile ( ) != true ) {
+			throw new FileNotFoundException ( "proxy file not found at: "+ this.proxyFile );
+		}
+		try{
+			// gets the local proxy as array of bye
+			proxy = GrDPX509Util.getFilesBytes( file );
+			// reads the proxy time-left
+			stream = new ByteArrayInputStream(proxy);
+			cf = CertificateFactory.getInstance("X.509");
+			cert = (X509Certificate)cf.generateCertificate(stream);
+ 			stream.close();
+			Date now = new Date ( );
+			lifetime =( cert.getNotAfter().getTime ( ) - now.getTime() ) / 3600000  ; // in hour ! (TBC in secs)
+		} catch (Exception exc){
+			String errmsg = "an error occured while loading the local proxy  ("  + this.proxyFile +"): \n";
+			errmsg += exc.toString();
+			throw new CertificateException (errmsg);
+		}
+		// checks if the proxy is still valid
+		if (lifetime < 0 ){
+			throw new CertificateExpiredException ("the local proxy has expired(" + this.proxyFile +")" );
+		}
+		// sets the lifetime
+		generator.setLifetime ((int)lifetime);
+		// creates the new proxy
+		proxy =  generator.x509MakeProxyCert(certReq.getBytes( ) , proxy, "");
+		// converts the proxy from byte[] to String
+		return new String(proxy);
+	}
 	 /**
 	*
-	* sets up the service
+	* Sets up the service
 	*
 	*/
 	private void setUpService ( ) throws javax.xml.rpc.ServiceException,
 					java.net.MalformedURLException,
 					java.io.FileNotFoundException {
-
 		String protocol = "";
 		// Gets a stub to the service
 		this.serviceLocator = new WMProxyLocator( );
-		// pointer to Stub object
+		// pointer to GliteWMProxy Stub object
 		this.serviceStub = (WMProxyStub) serviceLocator.getWMProxy_PortType( this.serviceURL ) ;
+		// pointer to Gridsite Stub object
+		this.grstStub = (DelegationSoapBindingStub) serviceLocator.getWMProxyDelegation_PortType( this.serviceURL ) ;
 		// Checks for https protocol
 		protocol = serviceURL.getProtocol( ).trim( );
 		logger.debug(protocol);
@@ -738,16 +795,17 @@ public class WMProxyAPI{
 			else
 				throw new FileNotFoundException ("proxy file not found : " + proxyFile);
 		}
-
 	}
-	/* Service URL */
+	/** Service URL */
 	private URL serviceURL = null;
-	/* Proxy file location */
+	/** Proxy file location */
 	private String proxyFile= null;
-	/* Service location */
+	/** Service location */
 	private WMProxyLocator serviceLocator= null;
-	/* Service stub */
+	/** Glite WMProxy Service Stub */
 	private WMProxyStub serviceStub= null ;
-	/* Log manager */
+	/** GridSite Service Stub */
+	private DelegationSoapBindingStub grstStub = null;
+	/** Log manager */
 	private Logger logger= null ;
 }
