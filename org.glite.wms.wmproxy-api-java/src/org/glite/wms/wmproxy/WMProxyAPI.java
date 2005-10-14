@@ -141,10 +141,12 @@ public class WMProxyAPI{
 	}
 	/**
 	*  Gets a proxy identified by the delegationId string.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 2.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
 	*  @param delegationID the id to identify the delegation
 	*  @return a string representing the proxy
 	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @since WMProxy server version 2.0.0
+	*  @since wms.wmproxy-api-java version 1.2.0
 	*/
 	public java.lang.String grstGetProxyReq (java.lang.String delegationId) throws java.rmi.RemoteException {
 			logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
@@ -159,7 +161,7 @@ public class WMProxyAPI{
 	* This string can be used to call some services accepting a delegationId string as input parameter
 	*  (like  jobRegister, jobSubmit, etc) until its expiration time.
 	*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
-	*  but it will be soon deprecated. The server version can be retrieved by calling the getVersion service
+	*  but it will be soon deprecated; the version of the server can be retrieved by calling the getVersion service.
 	*  @param delegationId the id used to identify the delegation
 	*  @param cert the input certificate
 	*  @throws java.rmi.RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
@@ -188,13 +190,14 @@ public class WMProxyAPI{
 	* The created proxy is sent to the server and identified by a delegationId string.
 	* This string can be used to call some services accepting a delegationId string as input parameter
 	*  (like  jobRegister, jobSubmit, etc) until its expiration time.
+	* This method can be only used invoking WMProxy servers with versions greater than or equal to 2.0.0
 	*  @param delegationId the id used to identify the delegation
 	*  @param cert the input certificate
 	*  @throws java.rmi.RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
 	* @throws java.io.FileNotFoundException if the local user proxy is not found
 	* @throws java.security.cert.CertificateException if any error occurs during the generation of the proxy from the input certificate
 	* @throws java.security.cert.CertificateExpiredException if the user proxy has expired
-	* @since WMProxy server version 2.0.0 (the server version can be retrieved by calling the getVersion service)
+	*  @since wms.wmproxy-api-java version 1.2.0
 	* @see #getVersion
 	*
 	*/
@@ -547,7 +550,24 @@ public class WMProxyAPI{
                 logger.debug ("INPUT: JDL=[" + jdl + "] - deleagtionId=[" + delegationId + "]");
                 return this.serviceStub.jobListMatch(jdl, delegationId);
         }
-
+	/**
+	* Enables file perusal functionalities if not disabled with the specific jdl attribute during job
+	* register operation.
+	* Calling this operation, the user enables perusal for job identified by jobId, for files specified with fileList.
+	* After this operation, the URIs of perusal files generated during job execution can be retrieved by calling the getPerusalFiles service
+	* An empty fileList disables perusal.
+	* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	* @param jobid the string with the job identifier
+	* @param fileList the list of filenames to be enabled
+	* @throws AuthenticationFaultType An authentication problem occurred
+	* @throws AuthorizationFaultType The user is not authorized to perform this operation
+	* @throws InvalidArgumentFaultType If the given JDL is not valid
+	* @throws JobUnknownFaultType The provided jobId has not been registered to the system
+	* @throws OperationNotAllowedFaultType perusal was disabled with the specific jdl attribute.
+	* @see #getPerusalFiles
+	* @see #getVersion
+	*/
 	public void enableFilePerusal (java.lang.String  jobId, org.glite.wms.wmproxy.StringList fileList)
 			throws  java.rmi.RemoteException,
 					org.glite.wms.wmproxy.AuthenticationFaultType,
@@ -557,6 +577,29 @@ public class WMProxyAPI{
 		logger.debug ("INPUT: jobId=[" +jobId + "]");
 		this.serviceStub.enableFilePerusal(jobId, fileList);
 	 }
+	 /**
+	* Gets the URIs of perusal files generated during job execution for the specified file file.
+	* If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
+	* previous getPerusalFiles operation. Default value is false.
+	* Perusal files have to be presiuosly enabled by calling the enableFilePerusal service
+	* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+	*  the version of the server can be retrieved by calling the getVersion service.
+	* @param jobid the string with the job identifier
+	* @param allchuncks boolean value to specify when to get all chuncks
+	* @param jobid the string with the job identifier
+	* @param file the name of the perusal file be enabled
+	* @param jobid the string with the job identifier
+	* @param file the name of the perusal file be enabled
+	* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+	* @throws AuthenticationFaultType An authentication problem occurred
+	* @throws AuthorizationFaultType The user is not authorized to perform this operation
+	* @throws InvalidArgumentFaultType If the given JDL is not valid
+	* @throws JobUnknownFaultType The provided jobId has not been registered to the system
+	* @throws OperationNotAllowedFaultType perusal was disabled with the specific jdl attribute.
+	* @see #enableFilePerusal
+	* @see #getVersion
+	* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
+	*/
 	public  org.glite.wms.wmproxy.StringList getPerusalFiles (java.lang.String  jobId, java.lang.String file, boolean allchunks)
 			throws  java.rmi.RemoteException,
 					org.glite.wms.wmproxy.AuthenticationFaultType,
