@@ -985,14 +985,14 @@ const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id
                 try{	// Proxy Request
 			logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  cfg->endpoint);
 			if  (version > Options::WMPROXY_OLD_VERSION){
-                        	proxy = ns2getProxyReq(id, cfg) ;
+                        	proxy = grstGetProxyReq(id, cfg) ;
    			} else {
                         	proxy = getProxyReq(id, cfg) ;
    			}
  			logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfg->endpoint);
 			 // sends the proxy to the endpoint service
 			if  (version > Options::WMPROXY_OLD_VERSION){
-                        	ns2putProxy(id, proxy, cfg);
+                        	grstPutProxy(id, proxy, cfg);
    			} else {
                         	putProxy(id, proxy, cfg);
    			}
@@ -1473,6 +1473,43 @@ std::string  Utils::getFileName (const std::string& path) {
 	unsigned int p =path.rfind("/", size);
  	if (p!=string::npos) { tmp = path.substr(p+1, size);}
 	return tmp;
+}
+
+std::string  Utils::getProtocol (const std::string& uri) {
+	string proto = "";
+	string list = "";
+	bool found = false;
+	unsigned int p =uri.find("//");
+	if (p!=string::npos) {
+		proto = uri.substr(0, p);
+		found = Utils::checkProtocol(proto, list);
+		if (!found) {
+			throw WmsClientException(__FILE__,__LINE__,
+				"getProtocol",  DEFAULT_ERR_CODE,
+				"Protocol Error",
+				"This URI have a not allowed protocol:" + uri + " (list of available protocols: " +list  );
+		}
+	} else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"getProtocol",  DEFAULT_ERR_CODE,
+			"Protocol Error",
+			"This URI doesn't have protocol :" + uri );
+	}
+	return proto;
+}
+
+bool Utils::checkProtocol(const std::string &proto, std::string list) {
+	bool found = false;
+	vector<string> protos;
+	int size = protos.size();
+	for (int i = 0; i < size ; i++){
+		if (list.size()>0){ list += ", ";}
+		list += string(protos[i]);
+		if (! found && proto.compare( protos[i] )==0){
+			found = true;
+		}
+	}
+	return found;
 }
 /*
 * Reads a file
