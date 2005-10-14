@@ -147,15 +147,18 @@ class WMPException(BaseException):
 	Specify a structure for Wmproxy Server exceptions
 	"""
 	def __init__(self, err):
-		self.origin  = err[0]
-		self.errType = err[1]
-		error = err[2][0]
-		self.errorCode   = error["ErrorCode"]
-		self.timestamp   = error["Timestamp"]
-		self.methodName  = error["methodName"]
-		self.description = error["Description"]
-		for ar in error["FaultCause"]:
-			self.args.append(ar)
+		try:
+			self.origin  = err[0]
+			self.errType = err[1]
+			error = err[2][0]
+			self.errorCode   = error["ErrorCode"]
+			self.timestamp   = error["Timestamp"]
+			self.methodName  = error["methodName"]
+			self.description = error["Description"]
+			for ar in error["FaultCause"]:
+				self.args.append(ar)
+		except:
+			raise err
 
 
 class ApiException(BaseException):
@@ -676,7 +679,7 @@ class Wmproxy:
 		Method: getPerusalFiles
 		IN =  jobId (string)
 		IN =  file (string)
-		IN =  allChunks (boolean expressed as integer)
+		IN =  allChunks (boolean)
 		OUT = fileList (StringList)
 		"""
 		try:
