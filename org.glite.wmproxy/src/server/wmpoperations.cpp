@@ -1265,6 +1265,14 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 	}
 	
 	regJobEvent event = wmplogger.retrieveRegJobEvent(job_id);
+	if (event.jdl == "") {
+		edglog(critical)<<"No Register event found quering LB; unable to get "
+			"registered jdl"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"jobStart()", wmputilities::WMS_IS_FAILURE,
+			"Unable to get registered jdl"
+			"\n(please contact server administrator)");
+	}
 	
 	if (event.parent != "") {
 		string msg = "the job is a DAG subjob. The parent is: "
@@ -2849,6 +2857,15 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	}
 	
 	string jdl = wmplogger.retrieveRegJobEvent(jid->toString()).jdl;
+	if (jdl == "") {
+		edglog(critical)<<"No Register event found quering LB; unable to get "
+			"registered jdl"<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE,
+			"Unable to check perusal availability"
+			"\n(please contact server administrator)");
+	}
+	
 	int type = getType(jdl);
 	if (type == TYPE_JOB) {
 		JobAd * jad = new JobAd(jdl);

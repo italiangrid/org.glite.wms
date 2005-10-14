@@ -378,7 +378,6 @@ WMPEventLogger::logUserTag(string name, const string &value)
 	
 	Ad *classad = new Ad();
 	classad->setAttribute(name, value);
-    //edglog(debug)<<"Logging user tags to LB"<<endl;
 	logUserTags(classad->ad());
 	delete classad;
 	
@@ -776,65 +775,7 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 	
 	GLITE_STACK_CATCH();
 }
-/*
-bool
-WMPEventLogger::retrieveEvent(const std::string &jobid_str, event_name eventname)
-{
-	GLITE_STACK_TRY("retrieveEvent()");
-	edglog_fn("WMPEventlogger::retrieveEvent");
-	
-	edg_wlc_JobId jobid;
-  	edg_wll_Event * events = NULL;
-  	edg_wll_QueryRec jc[2];
-  	edg_wll_QueryRec ec[2];
-  	
-  	regJobEvent event;
-  	event.instance = "";
-  	event.jdl = "";
-  	
-  	// parse the jobID string
-  	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
-  		edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
-    	throw JobOperationException(__FILE__, __LINE__,
-			"std::string WMPEventLogger::retrieveEvent()",
-			WMS_OPERATION_NOT_ALLOWED, "Error during edg_wlc_JobIdParse");
-  	}
 
-  	memset(jc, 0, sizeof jc);
-  	memset(ec, 0, sizeof ec);
-  
-  	// job condition: JOBID = jobid
-  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
-  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	jc[0].value.j = jobid;
-  
-  	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
-  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
-  	switch (eventname) {
-  		case LOG_ENQUEUE:
-  			ec[0].value.i = EDG_WLL_EVENT_ENQUEUED;
-  			break;
-  		case LOG_ABORT:
-  			ec[0].value.i = EDG_WLL_EVENT_ABORT;
-  			break;
-  		default:
-  			break;
-  	}
-
-  	int error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-  	if (error == ENOENT) { // no events found
-   		return false;
-  	}
-  	if (error) {
-  		//TBC throw an exception???
-   		//log_error("Query failed");
-    	return false;
-	}
-  	return true;
-  	
-  	GLITE_STACK_CATCH();
-}
-*/
 regJobEvent
 WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 {
@@ -842,23 +783,22 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 	edglog_fn("WMPEventlogger::retrieveRegJobEvent");
 	
 	edg_wlc_JobId jobid;
-  	edg_wll_Event * events = NULL;
-  	edg_wll_QueryRec jc[2];
-  	edg_wll_QueryRec ec[2];
-  	
-  	regJobEvent event;
-  	event.instance = "";
-  	event.jdl = "";
-  	event.parent = "";
-  	
   	// parse the jobID string
   	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
     	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
     	throw JobOperationException(__FILE__, __LINE__,
-			"std::string WMPEventLogger::retrieveEvent()",
-			WMS_OPERATION_NOT_ALLOWED, "Error during edg_wlc_JobIdParse");
+			"retrieveEvent()", WMS_OPERATION_NOT_ALLOWED,
+			"Error during edg_wlc_JobIdParse");
   	}
-
+	
+	regJobEvent event;
+  	event.instance = "";
+  	event.jdl = "";
+  	event.parent = "";
+  	
+	edg_wll_Event * events = NULL;
+  	edg_wll_QueryRec jc[2];
+  	edg_wll_QueryRec ec[2];
   	memset(jc, 0, sizeof jc);
   	memset(ec, 0, sizeof ec);
   
@@ -866,11 +806,13 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
   	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
   	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
   	jc[0].value.j = jobid;
+  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
   
   	// event condition: Event type = REGJOB
   	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
   	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
   	ec[0].value.i = EDG_WLL_EVENT_REGJOB;
+  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
   	
   	int error;
 
@@ -899,7 +841,6 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
     	return event;
 	}
   	
-  	// TBC regJobs.ns, is it correct??? I'm getting "instance"
   	// Getting first event found
   	if (events) {
   		if (events[0].regJob.src_instance) {
@@ -911,12 +852,11 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 	  	if (events[0].regJob.parent) {
 	  		event.parent = string(edg_wlc_JobIdUnparse(events[0].regJob.parent));
 	  	}
+	  	
+	  	for (int i = 0; events[i].type; i++) {
+			edg_wll_FreeEvent(&events[i]);
+		}
   	}
-  	
-  	/*for (unsigned i = 0; i < sizeof(events) / sizeof(events[0]); i++) {
-  		edg_wll_FreeEvent(events[i]);
-	}
-	free(events);*/
 
   	return event;
   	
@@ -984,13 +924,8 @@ WMPEventLogger::getUserTag(const string &tagname)
 	GLITE_STACK_TRY("retrieveRegJobEvent()");
 	edglog_fn("WMPEventlogger::retrieveRegJobEvent");
 	
-	string jobid_str = id->toString();
-	
 	edg_wlc_JobId jobid;
-  	edg_wll_Event * events = NULL;
-  	edg_wll_QueryRec jc[2];
-  	edg_wll_QueryRec ec[2];
-  	
+	string jobid_str = id->toString();
   	// parse the jobID string
   	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
     	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
@@ -999,6 +934,9 @@ WMPEventLogger::getUserTag(const string &tagname)
 			WMS_OPERATION_NOT_ALLOWED, "Error during edg_wlc_JobIdParse");
   	}
 
+  	edg_wll_Event * events = NULL;
+  	edg_wll_QueryRec jc[2];
+  	edg_wll_QueryRec ec[2];
   	memset(jc, 0, sizeof jc);
   	memset(ec, 0, sizeof ec);
   
@@ -1006,13 +944,16 @@ WMPEventLogger::getUserTag(const string &tagname)
   	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
   	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
   	jc[0].value.j = jobid;
+  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
   
   	// event condition: Event type = REGJOB
   	ec[0].attr = EDG_WLL_QUERY_ATTR_EVENT_TYPE;
   	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
   	ec[0].value.i = EDG_WLL_EVENT_USERTAG;
+  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
   	
   	int error;
+  	string returnvalue = "";
 
 #ifdef HAVE_LBPROXY
 	if (lbProxy_b) {
@@ -1031,29 +972,29 @@ WMPEventLogger::getUserTag(const string &tagname)
 #endif  //HAVE_LBPROXY
 
   	if (error == ENOENT) { // no events found
-   		return "";
+   		return returnvalue;
   	}
   	if (error) {
    		///TBC throw an exception???
    		//log_error("Query failed");
-    	return "";
+    	return returnvalue;
 	}
-  	
-  	edg_wll_Event event;
-	
+
 	// Events array is set to a NULL event wich type = 0
-	for (unsigned int i = 0; events[i].type != 0; i++) {
-		event = events[i];
-		if (string(event.userTag.name) == tagname) {
-			edglog(debug)<<"Found " + string(tagname)
-				+ " user tag, value: "<<event.userTag.value<<endl;
-			return event.userTag.value;
+	for (int i = 0; events[i].type; i++) {
+		if (string(events[i].userTag.name) == tagname) {
+			returnvalue = events[i].userTag.value;
+			edglog(debug)<<"Found " + string(tagname) + " user tag, value: "
+				<<returnvalue<<endl;
+			break;
 		}
 	}
 	
-	edg_wll_FreeEvent(events);
+	for (int i = 0; events[i].type; i++) {
+		edg_wll_FreeEvent(&events[i]);
+	}
   	
-  	return "";
+  	return returnvalue;
   	
   	GLITE_STACK_CATCH();
 }

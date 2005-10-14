@@ -135,13 +135,11 @@ class WMPEventLogger  {
 		std::string desturiprotocol;
 		std::string delegatedproxy;
 		int desturiport;
-		static const char *GLITE_WMS_LOG_DESTINATION;
 		
+		static const char * GLITE_WMS_LOG_DESTINATION;
 		static const int LB_RENEWAL_PORT = 7512;
 		static const int LOG_RETRY_COUNT = 3;
 };
-
-typedef WMPEventLogger WMPLogger;
 
 } // eventlogger
 } // wmproxy
