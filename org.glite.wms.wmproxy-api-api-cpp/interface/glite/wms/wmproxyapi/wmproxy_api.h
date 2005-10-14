@@ -394,8 +394,10 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 * Calling this operation, the user enables perusal for job identified by jobId, for files specified with fileList.
 * After this operation, the URIs of perusal files generated during job execution can be retrieved by calling the getPerusalFiles service
 * An empty fileList disables perusal.
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+*  the version of the server can be retrieved by calling the getVersion service.
 * @param jobid the string with the job identifier
-* @param file the name of the perusal file be enabled
+* @param files vector with the list of filenames to be enabled
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
 * @throws AuthenticationException An authentication problem occurred
 * @throws AuthorizationException The user is not authorized to perform this operation
@@ -403,7 +405,8 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 * @throws JobUnknownException The provided jobId has not been registered to the system
 * @throws BaseException Any other error occurred
 * @throws OperationNotAllowedException perusal was disabled with the specific jdl attribute.
-* @see getPerusalFiles
+* @see #getPerusalFiles
+* @see #getVersion
 * @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 */
 void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
@@ -412,6 +415,8 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
 * previous getPerusalFiles operation. Default value is false.
 * Perusal files have to be presiuosly enabled by calling the enableFilePerusal service
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+*  the version of the server can be retrieved by calling the getVersion service.
 * @param jobid the string with the job identifier
 * @param allchuncks boolean value to specify when to get all chuncks
 * @param jobid the string with the job identifier
@@ -423,10 +428,10 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * @throws JobUnknownException The provided jobId has not been registered to the system
 * @throws OperationNotAllowedException perusal was disabled with the specific jdl attribute
 * @throws BaseException Any other error occurred
+* @see #enableFilePerusal
+* @see #getVersion
 * @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
-* @see enabledPerusalFiles
 */
-
 std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 
 /**
