@@ -296,7 +296,7 @@ WMPEventLogger::generateSubjobsIds(int res_num)
 	edglog_fn("WMPEventlogger::generateSubjobsIds");
 	
 	subjobs = NULL;
-	edg_wll_GenerateSubjobIds(ctx, id->getId(), res_num, NULL, &subjobs);
+	edg_wll_GenerateSubjobIds(ctx, id->getId(), res_num, "WMPROXY", &subjobs);
 	vector<string> jobids;
 	for (int i = 0; i < res_num; i++) {
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
@@ -319,13 +319,13 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 	sprintf(str_addr, "%s", server.c_str());
 	
 	int size;
-	if (subjobs) {
+	/*if (subjobs) {
 		size = 0;
-	} else {
+	} else {*/
 		size = dag->size();
-	}
+	//}
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(getSequence())); //TBC needed???
-	
+	edglog(debug)<<"str_addr: "<<str_addr<<" size: "<<size<<endl;	
     vector<string> jobids;
 
     int register_result;
@@ -334,13 +334,13 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 		edglog(debug)<<"Registering DAG to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
 			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
-			NULL, &subjobs) ;
+			"WMPROXY", &subjobs) ;
 	} else {
 #endif  //HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
 			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
-			NULL, &subjobs);
+			"WMPROXY", &subjobs);
 #ifdef HAVE_LBPROXY
 	}
 #endif  //HAVE_LBPROXY
