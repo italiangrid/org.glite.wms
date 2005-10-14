@@ -63,7 +63,7 @@ class JobIdStruct:
 
 	def __repr__ (self):
 		"""
-		Equal to getJobId
+		Equal to toString
 		"""
 		return self.getJobId()
 
@@ -72,9 +72,14 @@ class JobIdStruct:
 		Return, if the istance represents a dag, the list of all its sons (as a list of JobIdStruct)
 		"""
 		return self.children
+	def toString(self):
+		"""
+		Return the JobId string representation
+		"""
+		return self.jobid
 	def getJobId(self):
 		"""
-		Return the JobId
+		Equal to toString
 		"""
 		return self.jobid
 	def getNodeName(self):
@@ -172,9 +177,19 @@ def getDefaultProxy():
 	except:
 			return '/tmp/x509up_u'+ repr(os.getuid())
 def getDefaultNs():
-	""" retrieve Wmproxy defaultt namespace name"""
+	"""
+	retrieve Wmproxy default namespace string representation
+	"""
 	return "http://glite.org/wms/wmproxy"
-
+def getGrstNs():
+	"""
+	GridSite Delegation namespace string representation
+	PutProxy and getProxyReq services requires gridsite specific namespace
+	WARNING: for backward compatibility with WMPROXY server (version <= 1.x.x)
+	deprecated PutProxy and getProxyReq sevices are still provided with
+	wmproxy default namespace
+	"""
+	return "http://www.gridsite.org/namespaces/delegation-1"
 class Wmproxy:
 	"""
 	Provide all WMProxy web services
@@ -196,7 +211,6 @@ class Wmproxy:
 				self.proxy=getDefaultProxy()
 			if not self.ns:
 				self.ns=getDefaultNs()
-			print "Init calling service for:", self.proxy
 			self.remote = WMPSOAPProxy(self.url,namespace=self.ns, key_file=self.proxy, cert_file=self.proxy)
 			self.init=1
 
@@ -223,12 +237,17 @@ class Wmproxy:
 		"""
 		self.init=0
 		self.proxy=proxy
+
+	def methods(self):
+		self.soapInit()
+		return self.remote.methods
+
 	"""
 	ACTUAL WEB SERVICE METHODS
 	"""
 	def jobListMatch(self, jdl, delegationId):
 		"""
-		Method (tested):  jobListMatch
+		Method:  jobListMatch
 		IN =  jdl (string)
 		IN =  delegationId (string)
 		OUT = CEIdAndRankList (StringAndLongList)
@@ -248,13 +267,12 @@ class Wmproxy:
 
 	def getCollectionTemplate(self, jobNumber, requirements, rank):
 		"""
-		Method (not tested):  getCollectionTemplate
+		Method:  getCollectionTemplate
 		IN =  jobNumber (int)
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
 		"""
-		raise ApiException("getCollectionTemplate","not yet supported")
 		try:
 			self.soapInit()
 			return self.remote.getCollectionTemplate(jobNumber, requirements, rank)
@@ -268,7 +286,7 @@ class Wmproxy:
 
 	def jobPurge(self, jobId):
 		"""
-		Method (tested):  jobPurge
+		Method:  jobPurge
 		IN =  jobId (string)
 		"""
 		try:
@@ -283,7 +301,7 @@ class Wmproxy:
 
 	def jobStart(self, jobId):
 		"""
-		Method (tested):  jobStart
+		Method:  jobStart
 		IN =  jobId (string)
 		"""
 		try:
@@ -296,27 +314,10 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def putProxy(self, delegationID, proxy):
-		"""
-		Method (tested):  putProxy
-		ProxyOperationException: Proxy exception: Provided delegation id not valid
-		IN =  delegationID (string)
-		IN =  proxy (string)
-		"""
-		try:
-			self.soapInit()
-			self.remote.putProxy(delegationID, proxy)
-		except SOAPpy.Types.faultType, err:
-			raise WMPException(err)
-		except SOAPpy.Errors.HTTPError, err:
-			raise HTTPException(err)
-		except socket.error, err:
-			raise SocketException(err)
-
 
 	def addACLItems(self, jobId, items):
 		"""
-		Method (tested):  addACLItems
+		Method:  addACLItems
 		IN =  jobId (string)
 		IN =  items (StringList)
 		"""
@@ -333,7 +334,7 @@ class Wmproxy:
 
 	def getACLItems(self, jobId):
 		"""
-		Method (tested):  getACLItems
+		Method:  getACLItems
 		IN =  jobId (string)
 		OUT = a list of strings containing the ACL Items to add.
 		"""
@@ -349,7 +350,7 @@ class Wmproxy:
 
 	def getSandboxBulkDestURI(self, jobId):
 		"""
-		Method (tested):  getSandboxBulkDestURI
+		Method:  getSandboxBulkDestURI
 		IN =  jobId (string)
 		OUT = A dictonary containing, for each jobid (string), its destUris in all available protocols (list of strings)
 		"""
@@ -369,7 +370,7 @@ class Wmproxy:
 
 	def getSandboxDestURI(self, jobId):
 		"""
-		Method (tested):  getSandboxDestURI
+		Method:  getSandboxDestURI
 		TBD test better
 		IN =  jobId (string)
 		OUT = dstUri in all available protocols( list of strings)
@@ -386,7 +387,7 @@ class Wmproxy:
 
 	def jobCancel(self, jobId):
 		"""
-		Method (tested):  jobCancel
+		Method:  jobCancel
 		IN =  jobId (string)
 		"""
 		try:
@@ -401,7 +402,7 @@ class Wmproxy:
 
 	def getStringParametricJobTemplate(self, attributes, param, requirements, rank):
 		"""
-		Method (tested):  getStringParametricJobTemplate
+		Method:  getStringParametricJobTemplate
 		IN =  attributes (StringList)
 		IN =  param (StringList)
 		IN =  requirements (string)
@@ -441,9 +442,10 @@ class Wmproxy:
 
 	def getFreeQuota(self):
 		"""
-		Method (tested):  getFreeQuota
+		Method:  getFreeQuota
 		OUT = softLimit (long)
 		OUT = hardLimit (long)
+		return a dictionary with soft&hard Limits
 		"""
 		try:
 			self.soapInit()
@@ -455,10 +457,34 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
+	def putProxy(self, delegationID, proxy):
+		"""
+		Method:  putProxy
+		ProxyOperationException: Proxy exception: Provided delegation id not valid
+		WARNING: for backward compatibility putProxy is provided with both namespaces:
+		defaultWmproxy namespace for WMPROXY servers (version <= 1.x.x)
+		gridsite namespace for WMPROXY servers (version > 1.x.x)
+		see getDefaultProxy() and  getDefaultNs() methods
+		IN =  delegationID (string)
+		IN =  proxy (string)
+		"""
+		try:
+			self.soapInit()
+			self.remote.putProxy(delegationID, proxy)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
 	def getProxyReq(self, delegationID):
 		"""
-		Method (tested):  getProxyReq
+		Method:  getProxyReq
+		WARNING: for backward compatibility getProxyReq is provided with both namespaces:
+		defaultWmproxy namespace for WMPROXY servers (version <= 1.x.x)
+		gridsite namespace for WMPROXY servers (version > 1.x.x)
+		see getDefaultProxy() and  getDefaultNs() methods
 		IN =  delegationID (string)
 		OUT = request (string)
 		"""
@@ -474,7 +500,7 @@ class Wmproxy:
 
 	def getVersion(self):
 		"""
-		Method (tested):  getVersion
+		Method:  getVersion
 		OUT = version (string)
 		"""
 		try:
@@ -489,7 +515,7 @@ class Wmproxy:
 
 	def getIntParametricJobTemplate(self, attributes, param, parameterStart, parameterStep, requirements, rank):
 		"""
-		Method (tested):  getIntParametricJobTemplate
+		Method:  getIntParametricJobTemplate
 		IN =  attributes (StringList)
 		IN =  param (int)
 		IN =  parameterStart (int)
@@ -530,7 +556,7 @@ class Wmproxy:
 
 	def jobSubmit(self, jdl, delegationId):
 		"""
-		Method (tested):  jobSubmit
+		Method:  jobSubmit
 		IN =  jdl (string)
 		IN =  delegationId (string)
 		OUT = jobIdStruct (JobIdStruct)
@@ -548,7 +574,7 @@ class Wmproxy:
 
 	def jobRegister(self, jdl, delegationId):
 		"""
-		Method (tested):  jobRegister
+		Method:  jobRegister
 		IN =  jdl (string)
 		IN =  delegationId (string)
 		OUT = jobIdStruct (JobIdStruct)
@@ -582,7 +608,7 @@ class Wmproxy:
 
 	def getMaxInputSandboxSize(self):
 		"""
-		Method (tested):  getMaxInputSandboxSize
+		Method:  getMaxInputSandboxSize
 		OUT = size (long)
 		"""
 		try:
@@ -598,7 +624,7 @@ class Wmproxy:
 
 	def getTotalQuota(self):
 		"""
-		Method (tested):  getTotalQuota
+		Method:  getTotalQuota
 		AuthorizationException: LCMAPS failed to map user credential
 		OUT = softLimit (long)
 		OUT = hardLimit (long)
@@ -615,7 +641,7 @@ class Wmproxy:
 
 	def getOutputFileList(self, jobId):
 		"""
-		Method (tested):  getOutputFileList
+		Method:  getOutputFileList
 		IN =  jobId (string)
 		OUT = OutputFileAndSizeList (StringAndLongList)
 		"""
@@ -631,7 +657,7 @@ class Wmproxy:
 
 	def getDelegatedProxyInfo(self, jobId):
 		"""
-		Method (tested):  getDelegatedProxyInfo
+		Method:  getDelegatedProxyInfo
 		IN =  jobId (string)
 		OUT = list of strings containing Delegated Proxy information
 		"""
@@ -647,7 +673,7 @@ class Wmproxy:
 
         def getPerusalFiles(self, jobId, file, allChunks):
 		"""
-		Method: (tested) getPerusalFiles
+		Method: getPerusalFiles
 		IN =  jobId (string)
 		IN =  file (string)
 		IN =  allChunks (boolean expressed as integer)
@@ -673,7 +699,7 @@ class Wmproxy:
 
         def enableFilePerusal(self, jobId, fileList):
 		"""
-		Method: (tested) enableFilePerusal
+		Method: enableFilePerusal
 		IN =  jobId (string)
 		IN =  fileList (StringList)
 		"""
