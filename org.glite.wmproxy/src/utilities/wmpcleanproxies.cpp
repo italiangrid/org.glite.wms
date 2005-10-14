@@ -185,7 +185,7 @@ std::string removeExpiredProxies(const string& proxycache){
 	int valid = 0;
 	int ne = 0;
 	try{
-		const boost::filesystem::path cp(proxycache);
+		const boost::filesystem::path cp(proxycache, boost::filesystem::native);
 		ne = listFiles(cp, proxies, err);
 		if ( !  fs::is_directory(cp) ) {
 			throw ProxyCacheException(__FILE__, "removeExpiredProxies",

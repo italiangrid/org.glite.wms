@@ -501,10 +501,11 @@ doPurge(std::string dg_jobid)
 	GLITE_STACK_TRY("doPurge()");
 	edglog_fn("wmputils::doPurge");
 	
-	if ( dg_jobid.length() ) { 
+	if (dg_jobid.length()) {
   		edglog(debug)<<"JobId object for purging created: "
   			<<dg_jobid<<std::endl;
-  		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)));
+  		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
+  			boost::filesystem::native);
   		return purger::purgeStorageEx(path, edg_wll_LogClearUSER);
     } else {
    		edglog(critical)
