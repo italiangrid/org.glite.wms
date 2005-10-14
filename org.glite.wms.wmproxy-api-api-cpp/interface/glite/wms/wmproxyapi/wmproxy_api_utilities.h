@@ -15,6 +15,11 @@
 namespace glite {
 namespace wms {
 namespace wmproxyapiutils {
+/*
+* Gets the current time
+* @return the seconds elapsed since Jan 1, 1970
+*/
+const time_t getTime( );
 /**
 * 	Checks if an absolute path exists on the local machine
 *	@param path the pathname to be checked

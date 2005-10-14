@@ -17,11 +17,18 @@ namespace wmproxyapiutils {
 
 using namespace std ;
 using namespace glite::wms::wmproxyapi;
+/*
+* Gets the current time
+* @return the seconds elapsed since Jan 1, 1970
+*/
+const time_t getTime( ){
+	time_t now = time(NULL);
+	struct tm *ns = localtime(&now);
+	return mktime (ns);
+}
 
 /**
-
-* @param path the pathname to be checked
-* @return the path string if it exists, NULL otherwise
+Checks the existance of the input pathname
 **/
 const char* checkPathExistence(const char* path){
 	ifstream f_in(path);
