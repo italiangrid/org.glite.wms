@@ -68,13 +68,6 @@ class JobOutput  : public Job {
 		*	@param msg the message to be added
 		*/
 		void createWarnMsg(const std::string &msg ) ;
-#if defined(WITH_GRID_FTP_API) || defined(WITH_GRID_FTP)
-		 /**
-                *	File downloading by gsiftp
-                *	@param files list of files to be downloaded and their destination
-                */
-                void gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
-  #else
   		/**
 		*	struct for files
 		*/
@@ -87,8 +80,8 @@ class JobOutput  : public Job {
                 *	File downloading by curl
                 *	@param files list of files to be downloaded and their destination
                 */
-                void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
-  #endif
+		void gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
+		void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
         	 /**
                 *	String input arguments
                 */
@@ -124,7 +117,6 @@ class JobOutput  : public Job {
 		* List of warning messages
 		*/
 		std::string* warnsList ;
-
   };
 }}}} // ending namespaces
 

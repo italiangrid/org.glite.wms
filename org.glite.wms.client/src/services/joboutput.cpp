@@ -29,21 +29,14 @@
 // BOOST
 #include "boost/filesystem/path.hpp" // path
 #include "boost/filesystem/exception.hpp" //managing boost errors
-
-#if defined (WITH_GRID_FTP_API)
-#include "glite/wms/common/utilities/globus_ftp_utils.h"
-#elif ! defined (WITH_GRID_FTP_API)
 // CURL
 #include "curl/curl.h"
-#endif
+
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
 using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapiutils;
-#ifdef WITH_GRID_FTP_API
-using namespace glite::wms::common::utilities::globus;
-#endif
 namespace fs = boost::filesystem ;
 
 namespace glite {
@@ -317,6 +310,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, const std::string& dirAbs, const bool &child){
 		vector <pair<string , long> > files ;
 		vector <pair<string,string> > paths ;
+		string file_proto = "";
 		string filename = "";
 		bool result = true;
 		try {
@@ -356,19 +350,22 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 				// Actually retrieving files
 				logInfo->print(WMS_DEBUG, "Retrieving Files for: ", jobid);
 				for (unsigned int i = 0; i < files.size( ); i++){
-					try{
-						//fs::path cp (Utils::normalizePath(files[i].first), fs::system_specific); boost 1.29.1
-						fs::path cp (Utils::normalizePath(files[i].first), fs::native);
-						filename = cp.leaf( );
-					} catch (fs::filesystem_error &ex){ }
-						paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );
+					if (file_proto.size()==0){
+						file_proto = Utils::getProtocol (files[i].first);
+					}
+					filename = Utils::getFileName(files[i].first);
+					paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );
 				}
-				// actually downloads the files
-#if defined(WITH_GRID_FTP_API) || defined(WITH_GRID_FTP)
-				this->gsiFtpGetFiles (paths);
-#else
-				this->curlGetFiles (paths);
-#endif
+				if (file_proto == Options::TRANSFER_FILES_GUC_PROTO){
+					// Downloads the files
+					this->gsiFtpGetFiles (paths);
+				} else if (file_proto == Options::TRANSFER_FILES_CURL_PROTO){
+					this->curlGetFiles (paths);
+				} else {
+					throw WmsClientException(__FILE__,__LINE__,
+						"jobOutput", ECONNABORTED,
+						"File Protocol Error", "protocol not supported: " + file_proto);
+				}
 				msg << "Output sandbox files for the job:" << endl << jobid<<endl ;
 				msg << "have been successfully retrieved and stored in the directory:"<<endl<<dirAbs << "\n\n";
 			} else {
@@ -428,47 +425,12 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 	}
 }
 
-#if defined (WITH_GRID_FTP_API)
-/*
-*	gsiFtpGetFiles Method   (WITH_GRID_FTP_API)
-*/
-void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
-        vector <pair<std::string , string> >::iterator it ;
-        if (globus_module_activate(GLOBUS_FTP_CLIENT_MODULE) < 0 ){
-                        throw WmsClientException(__FILE__,__LINE__,
-                                "globus_module_activate", ECONNABORTED,
-                                "File Transferring Error",
-                                "unable to activate GLOBUS_FTP_CLIENT_MODULE");
-         }
-  	 for ( it = paths.begin( ) ; it != paths.end( ) ; it++ ){
-         	ostringstream info;
-		// log-debug message
-                info << "OutputSandbox file :" << it->first << "\n";
-                info << "destination : " << it->second << "\n";
-                logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)\n", info.str());
-		if (get (string(it->first), string(it->second)) ){
-                		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)", "TRANSFER FAILED");
-				 if (globus_module_deactivate_all() < 0 ){
-					logInfo->print(WMS_WARNING, "File Transferring (gsiftp)", "Deactivation of Globus Modules failed");
-         			};
-        			throw WmsClientException(__FILE__,__LINE__,
-                			"utilities::globus::put", ECONNABORTED,
-                        		"File Transferring Error",
-                                         "unable to get the file:\n" + info.str());
-                   }
-         }
-         if (globus_module_deactivate_all() < 0 ){
-		logInfo->print(WMS_WARNING, "File Transferring (gsiftp)", "Deactivation of Globus Modules failed");
-         };
-}
-#elif defined (WITH_GRID_FTP)
 /*
 *	gsiFtpGetFiles Method  (WITH_GRID_FTP)
 */
 void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
         vector <pair<std::string , string> >::iterator it ;
 	int code = 0;
-        //globus_module_activate(GLOBUS_FTP_CLIENT_MODULE);
 	 for ( it = paths.begin( ) ; it != paths.end( ) ; it++ ){
 		// command
 		string cmd= "globus-url-copy ";
@@ -493,11 +455,11 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 			throw WmsClientException(__FILE__,__LINE__,
 				"utilities::globus::put", ECONNABORTED,
 				"File Transferring Error",
-				"unable to get the file:\n" + info.str());
+				"unable to download the file: " +  it->first +"\nto: "+ it->second  );
                    }
          }
 }
-#else
+
 /*
 * writing callback for curl operations
 */
@@ -523,7 +485,7 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 	string destination = "" ;
 	string file = "" ;
 	CURLcode res;
-	string *proxy = NULL;
+	char curl_errorstr[CURL_ERROR_SIZE];
 	// user proxy
 	if ( !paths.empty()){
                 // checks the user proxy pathname
@@ -552,7 +514,7 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
                         curl_easy_setopt(curl, CURLOPT_SSLCERT, proxyFile);
                         curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-                        curl_easy_setopt(curl, CURLOPT_SSLKEY,      proxy->c_str());
+                        curl_easy_setopt(curl, CURLOPT_SSLKEY, proxyFile );
                         curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
                         //trusted certificate directory
                         curl_easy_setopt(curl, CURLOPT_CAPATH, trustedCert);
@@ -560,9 +522,11 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
                         // verbose message
-                        if ( Job::dbgOpt ){
+                        if ( wmcOpts->getBoolAttribute(Options::DBG)){
                                 curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
                         }
+			// enables error message buffer
+			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
                         // files to be downloaded
                         for ( it = paths.begin( ) ; it != paths.end( ) ; it++ ){
 				// source
@@ -581,11 +545,12 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
                                 // downloading
                                 res = curl_easy_perform(curl);
-                                if (res < 0){
+                                if (res != 0){
                                 	ostringstream err ;
                                         err << "Failed to perform the downloading of the file:\n";
                                         err << "from " << source << "\n";
                                         err << "to " << destination<< "\n";
+					err << curl_errorstr << "\n";
                                         throw WmsClientException(__FILE__,__LINE__,
                                         	"transferFiles", DEFAULT_ERR_CODE,
                                         	"File Transfer Error",
@@ -595,6 +560,5 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                 }
  	}
 }
-#endif
 }}}} // ending namespaces
 
