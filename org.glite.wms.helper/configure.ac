@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17  2005/10/14 09:12:08  eronchie
+#       Added security and gbox macros
+#
 #       Revision 1.16  2005/10/07 15:45:20  eronchie
 #       Added templates handling
 #
@@ -239,6 +242,14 @@ AC_MSG_RESULT(["GLITE_WMS_BROKERINFO found $have_glite_wms_brokerinfo"])
 AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])
 AC_MSG_RESULT(["GLITE_WMS_MATCHMAKING found $have_glite_wms_matchmaking"])
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
+
+have_security=no
+have_gpbox=no
+AC_GLITE_SECURITY([], have_security=yes, have_security=no)
+AC_MSG_RESULT(["GLITE_GLITE_SECURITY found $have_security"])
+
+AC_GLITE_GPBOX([], have_gpbox=yes, have_gpbox=no)
+AC_MSG_RESULT(["GLITE_GLITE_GPBOX found $have_gpbox"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
