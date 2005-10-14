@@ -124,7 +124,7 @@ create_context_proxy(
   errcode |= edg_wll_SetLoggingJobProxy(
     context,
     id,
-    sequence_code.c_str(),
+    sequence_code.empty() ? 0 : sequence_code.c_str(),
     user_dn.c_str(),
     flag
   );
@@ -236,7 +236,8 @@ get_original_jdl(edg_wll_Context context, jobid::JobId const& id)
   event_conditions[2].attr    = EDG_WLL_QUERY_ATTR_UNDEF;
 
   edg_wll_Event* events = 0;
-  edg_wll_QueryEvents(context, job_conditions, event_conditions, &events);
+  //  edg_wll_QueryEvents(context, job_conditions, event_conditions, &events);
+  edg_wll_QueryEventsProxy(context, job_conditions, event_conditions, &events);
 
   if (events) {
     for (int i = 0; events[i].type; ++i) {
