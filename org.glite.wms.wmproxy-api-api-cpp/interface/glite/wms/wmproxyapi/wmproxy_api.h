@@ -94,6 +94,8 @@ struct JobUnknownException:BaseException{};
 struct OperationNotAllowedException:BaseException{};
 /** Proxy file errors */
 struct ProxyFileException:BaseException{};
+/** Error during delegation operations with Gridsite methods (grstXXXX)  - since 1.2.0*/
+struct DelegationException:BaseException{};
 /** Generic problem. More details in the message*/
 struct GenericException:BaseException{};
 
@@ -386,7 +388,44 @@ std::vector <std::pair<std::string , long> > getOutputFileList (const std::strin
 */
 std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jdl, const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 
+/**
+* Enables file perusal functionalities if not disabled with the specific jdl attribute during job
+* register operation.
+* Calling this operation, the user enables perusal for job identified by jobId, for files specified with fileList.
+* After this operation, the URIs of perusal files generated during job execution can be retrieved by calling the getPerusalFiles service
+* An empty fileList disables perusal.
+* @param jobid the string with the job identifier
+* @param file the name of the perusal file be enabled
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given JDL is not valid
+* @throws JobUnknownException The provided jobId has not been registered to the system
+* @throws BaseException Any other error occurred
+* @throws OperationNotAllowedException perusal was disabled with the specific jdl attribute.
+* @see getPerusalFiles
+* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
+*/
 void enableFilePerusal (const std::string &jobid, const std::vector<std::string> &files, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**
+* Gets the URIs of perusal files generated during job execution for the specified file file.
+* If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
+* previous getPerusalFiles operation. Default value is false.
+* Perusal files have to be presiuosly enabled by calling the enableFilePerusal service
+* @param jobid the string with the job identifier
+* @param allchuncks boolean value to specify when to get all chuncks
+* @param jobid the string with the job identifier
+* @param file the name of the perusal file be enabled
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws InvalidArgumentException If the given JDL is not valid
+* @throws JobUnknownException The provided jobId has not been registered to the system
+* @throws OperationNotAllowedException perusal was disabled with the specific jdl attribute
+* @throws BaseException Any other error occurred
+* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
+* @see enabledPerusalFiles
+*/
 
 std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 
@@ -475,27 +514,66 @@ std::string getIntParametricJobTemplate (std::vector<std::string> attributes , i
 std::string getStringParametricJobTemplate (std::vector<std::string>attributes, std::vector<std::string> parameters,
 				const std::string &requirements,const std::string &rank, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
-* Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call
+*  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call
+*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
+*  but it will be soon deprecated. The version of the server can be retrieved by calling the getVersion service
 * @param delegationId The id of the delegation to be created
-* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters 
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
 * @return The string representing the request, which has to be used as input while performing a putProxy for the created delegation Id
-* @throws BaseException If the request failed
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #getVersion
 * @see BaseException
+* @see getVersion
 */
 std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
-
-std::string ns2getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**
+*  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call.
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+*  the version of the server can be retrieved by calling the getVersion service.
+* @param delegationId The id of the delegation to be created
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return The string representing the request, which has to be used as input while performing a putProxy for the created delegation Id
+* @throws BaseException::DelegationException If the request failed
+* @throws BaseException Any other error occurred
+* @see #getVersion
+* @see BaseException
+* @see getVersion
+*/
+std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
 * Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
+*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
+*  but it will be soon deprecated. The version of the server can be retrieved by calling the getVersion service
 * @param delegationId The id of the delegation created previously (by a getProxyReq call)
 * @param request The string request got by a previous call of a getProxyReq
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationException The user is not authorized to perform this operation
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
 * @see #getProxyReq
+* @see #getVersion
 * @see BaseException
 */
 void putProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
-
-void ns2putProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**
+* Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
+*  the version of the server can be retrieved by calling the getVersion service.
+* @param delegationId The id of the delegation created previously (by a getProxyReq call)
+* @param request The string request got by a previous call of a getProxyReq
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @throws DelegationException If the request failed
+* @throws GenericException A generic problem occurred
+* @throws BaseException Any other error occurred
+* @see #getProxyReq
+* @see #getVersion
+* @see BaseException
+*/
+void grstPutProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace

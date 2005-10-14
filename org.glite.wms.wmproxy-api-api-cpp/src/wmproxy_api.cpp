@@ -22,6 +22,7 @@ namespace wms {
 namespace wmproxyapi {
 
 
+
 /*****************************************************************
 Performs SSL object destruction
 ******************************************************************/
@@ -43,6 +44,9 @@ BaseException* createWmpException (BaseException *b_ex ,const string &method ,  
 	return b_ex ;
 }
 
+/**
+* Creates a BaseException object for the WMProxy standard methods
+*/
 BaseException* createWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
@@ -75,6 +79,9 @@ BaseException* createWmpException(struct soap *soap){
 							break;
 						case SOAP_TYPE_ns1__AuthenticationFaultType:
 							b_ex=new AuthenticationException;
+							break;
+						case SOAP_TYPE_ns1__AuthorizationFaultType:
+							b_ex=new AuthorizationException;
 							break;
 						case SOAP_TYPE_ns1__GenericFaultType:
 							b_ex=new GenericException;
@@ -109,7 +116,6 @@ BaseException* createWmpException(struct soap *soap){
 
 		if (b_ex == NULL){
 			b_ex=new BaseException ;
-
 			char *faultstring =  (char*)*soap_faultstring(soap);
 			char *faultcode = (char*)*soap_faultcode(soap);
 			if (faultstring){
@@ -123,9 +129,82 @@ BaseException* createWmpException(struct soap *soap){
 				b_ex->ErrorCode = NULL;
 			}
 			// Timestamp
-			time_t now = time(NULL);
-			struct tm *ns = localtime(&now);
-			b_ex->Timestamp = mktime (ns);
+			b_ex->Timestamp = getTime();
+		}
+		// Fault cause
+		if (b_ex){
+			const char **s = soap_faultdetail(soap);
+			if (s && *s ){
+				b_ex->FaultCause = new vector<string>;
+				(b_ex->FaultCause)->push_back(string(*s));
+			} else{
+					b_ex->FaultCause = NULL ;
+			}
+		}
+	}  // if (soap)
+	return b_ex;
+}
+
+/**
+* Creates a BaseException object for the WMProxy standard methods using GridSite
+*/
+BaseException* grstCreateWmpException(struct soap *soap){
+	SOAP_ENV__Fault  *fault = NULL;
+	SOAP_ENV__Detail *detail = NULL;
+	BaseException *b_ex =NULL;
+	char *faultstring =  NULL;
+	char *faultcode = NULL;
+	if (soap){
+		if (!*soap_faultcode(soap)){ soap_set_fault(soap);}
+		// soap fault string
+		faultstring =  (char*)*soap_faultstring(soap);
+		// soap fault code
+		faultcode = (char*)*soap_faultcode(soap);
+		// pointer to the fault description
+		fault = soap->fault ;
+		if (fault){
+        		detail = soap->fault->detail ;
+			if (detail) {
+				ns2__DelegationException *ex = (ns2__DelegationException*)detail->fault;
+				if ( ex ) {
+					if (detail->__type ==SOAP_TYPE_ns2__DelegationException ) {
+						b_ex=new DelegationException;
+					} else {
+						b_ex=new BaseException ;
+					}
+					// method name
+					b_ex->methodName = "" ;
+					// Timestamp
+					b_ex->Timestamp = getTime ();
+					// no Error Code
+					if (faultcode){ b_ex->ErrorCode = new string(faultcode);
+					}else { b_ex->ErrorCode = NULL; }
+					// Description
+					if ( ex->message ) {
+						b_ex->Description   = new string(*(ex->message))  ;
+					} else if (fault->faultstring){
+						b_ex->Description = new string(fault->faultstring);
+					} else {
+						b_ex->Description = NULL;
+					}
+				} // if(ex)
+			} // if (detail)
+		} // if (fault)
+		if (b_ex == NULL){
+			b_ex=new BaseException ;
+
+			char *faultstring =  (char*)*soap_faultstring(soap);
+			char *faultcode = (char*)*soap_faultcode(soap);
+			if (faultstring){
+				b_ex->Description = new string(faultstring);
+			} else{
+				b_ex->Description = NULL;
+			}
+			// Timestamp
+			b_ex->Timestamp = getTime ();
+			// Error Code
+			if (faultcode){ b_ex->ErrorCode = new string(faultcode);
+			}else { b_ex->ErrorCode = NULL;}
 		}
 		// Fault cause
 		if (b_ex){
@@ -160,12 +239,12 @@ void soapErrorMng (const WMProxy &wmp){
 	}
 }
 
-void ns2soapErrorMng (const DelegationSoapBinding &deleg){
+void grstSoapErrorMng (const DelegationSoapBinding &deleg){
 	char **fault = NULL ;
 	char **details = NULL ;
         string msg = "";
         // retrieve information on the exception
-        BaseException *b_ex =createWmpException (deleg.soap);
+        BaseException *b_ex =grstCreateWmpException (deleg.soap);
 	soapDestroy(deleg.soap);
  	if (b_ex){
 		throw *b_ex ;
@@ -213,7 +292,7 @@ void soapAuthentication(WMProxy &wmp,ConfigContext *cfs){
 Performs SSL initialisation
 Updates configuration properties
 ******************************************************************/
-void ns2soapAuthentication(DelegationSoapBinding &deleg,ConfigContext *cfs){
+void grstSoapAuthentication(DelegationSoapBinding &deleg,ConfigContext *cfs){
 	deleg.endpoint = (cfs->endpoint).c_str();
 	const char *proxy = getProxyFile(cfs) ;
 	const char *trusted = getTrustedCert(cfs) ;
@@ -226,7 +305,7 @@ void ns2soapAuthentication(DelegationSoapBinding &deleg,ConfigContext *cfs){
 				NULL, /* optional cacert file to store trusted certificates (needed to verify server) */
 				trusted, /* optional capath to direcoty with trusted certificates */
 				NULL /* if randfile!=NULL: use a file with random data to seed randomness */
-			))ns2soapErrorMng(deleg);
+			))grstSoapErrorMng(deleg);
 		} else {
 			throw *createWmpException (new ProxyFileException ,
                         	"Trusted Certificates Location  Error" ,
@@ -712,15 +791,15 @@ string getProxyReq(const string &delegationId, ConfigContext *cfs){
 	return proxy;
 }
 
-string ns2getProxyReq(const string &delegationId, ConfigContext *cfs){
+string grstGetProxyReq(const string &delegationId, ConfigContext *cfs){
 	DelegationSoapBinding deleg;
 	string proxy = "";
-	ns2soapAuthentication(deleg, cfs);
+	grstSoapAuthentication(deleg, cfs);
 	ns2__getProxyReqResponse response;
 	if (deleg.ns2__getProxyReq(delegationId, response) == SOAP_OK) {
 		proxy = response._getProxyReqReturn;
 		soapDestroy(deleg.soap) ;
-	} else ns2soapErrorMng(deleg) ;
+	} else grstSoapErrorMng(deleg) ;
 	return proxy;
 }
 
@@ -753,9 +832,9 @@ void putProxy(const string &delegationId, const string &request, ConfigContext *
 	} else soapErrorMng(wmp) ;
 }
 
-void ns2putProxy(const string &delegationId, const string &request, ConfigContext *cfs){
+void grstPutProxy(const string &delegationId, const string &request, ConfigContext *cfs){
 	DelegationSoapBinding deleg;
-	ns2soapAuthentication (deleg, cfs);
+	grstSoapAuthentication (deleg, cfs);
 	time_t timeleft ;
 	char *certtxt;
 	// gets the path to the user proxy file
@@ -771,11 +850,11 @@ void ns2putProxy(const string &delegationId, const string &request, ConfigContex
 		timeleft) ){
 		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	}
-	ns2soapAuthentication (deleg, cfs);
+	grstSoapAuthentication (deleg, cfs);
 	ns2__putProxyResponse response;
 	if (deleg.ns2__putProxy(delegationId, certtxt, response) == SOAP_OK) {
 		soapDestroy(deleg.soap) ;
-	} else ns2soapErrorMng(deleg) ;
+	} else grstSoapErrorMng(deleg) ;
 }
 } // wmproxy-api namespace
 } // wms namespace
