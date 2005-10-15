@@ -85,7 +85,7 @@ public:
    bool pop_gluece_all_tuples ( glite::rgma::ResultSet & out);
    glite::rgma::Consumer* get_gluece_consumer() { return m_gluece_consumer; }
    bool get_gluece_query_status() { return m_gluece_query_status; }
-   ~gluece_query() { if (m_gluece_consumer != NULL) m_gluece_consumer->close(); delete m_gluece_consumer; }
+   ~gluece_query() { if (m_gluece_consumer != NULL) {m_gluece_consumer->close(); delete m_gluece_consumer;} }
    static void destroy_gluece_query_instance() { if (m_gluece_query != NULL ) delete m_gluece_query; }
 };
 
@@ -106,7 +106,10 @@ public:
    bool pop_AccessControlBaseRule_all_tuples ( glite::rgma::ResultSet & out);
    glite::rgma::Consumer* get_AccessControlBaseRule_consumer() { return m_AccessControlBaseRule_consumer; }
    bool get_AccessControlBaseRule_query_status() { return m_AccessControlBaseRule_query_status; }
-   ~AccessControlBaseRule_query() { if (m_AccessControlBaseRule_consumer != NULL) m_AccessControlBaseRule_consumer->close(); delete m_AccessControlBaseRule_consumer; }
+   ~AccessControlBaseRule_query() { if (m_AccessControlBaseRule_consumer != NULL) {
+                                       m_AccessControlBaseRule_consumer->close(); delete m_AccessControlBaseRule_consumer;
+                                    } 
+                                  }
    static void destroy_AccessControlBaseRule_query_instance() { if (m_AccessControlBaseRule_query != NULL ) delete m_AccessControlBaseRule_query; }
 };
 
@@ -126,7 +129,7 @@ public:
    bool pop_SubCluster_all_tuples ( glite::rgma::ResultSet & out);
    glite::rgma::Consumer* get_SubCluster_consumer() { return m_SubCluster_consumer; }
    bool get_SubCluster_query_status() { return m_SubCluster_query_status; }
-   ~SubCluster_query() { if (m_SubCluster_consumer != NULL) m_SubCluster_consumer->close(); delete m_SubCluster_consumer; }
+   ~SubCluster_query() { if (m_SubCluster_consumer != NULL) {m_SubCluster_consumer->close(); delete m_SubCluster_consumer;} }
    static void destroy_SubCluster_query_instance() { if (m_SubCluster_query != NULL ) delete m_SubCluster_query; }
 };
 
@@ -149,7 +152,11 @@ public:
    bool pop_SoftwareRunTimeEnvironment_all_tuples ( glite::rgma::ResultSet & out);
    glite::rgma::Consumer* get_SoftwareRunTimeEnvironment_consumer() { return m_SoftwareRunTimeEnvironment_consumer; }
    bool get_SoftwareRunTimeEnvironment_query_status() { return m_SoftwareRunTimeEnvironment_query_status; }
-   ~SoftwareRunTimeEnvironment_query() { if (m_SoftwareRunTimeEnvironment_consumer != NULL) m_SoftwareRunTimeEnvironment_consumer->close(); delete m_SoftwareRunTimeEnvironment_consumer; }
+   ~SoftwareRunTimeEnvironment_query() { if (m_SoftwareRunTimeEnvironment_consumer != NULL) {
+                                            m_SoftwareRunTimeEnvironment_consumer->close(); 
+                                            delete m_SoftwareRunTimeEnvironment_consumer;
+                                         }
+                                       }
    static void destroy_SoftwareRunTimeEnvironment_query_instance() { if (m_SoftwareRunTimeEnvironment_query != NULL ) delete m_SoftwareRunTimeEnvironment_query; }
 };
 
@@ -170,7 +177,7 @@ public:
    bool pop_CESEBind_all_tuples ( glite::rgma::ResultSet & out);
    glite::rgma::Consumer* get_CESEBind_consumer() { return m_CESEBind_consumer; }
    bool get_CESEBind_query_status() { return m_CESEBind_query_status; }
-   ~CESEBind_query() { if (m_CESEBind_consumer != NULL) m_CESEBind_consumer->close(); delete m_CESEBind_consumer; }
+   ~CESEBind_query() { if (m_CESEBind_consumer != NULL) {m_CESEBind_consumer->close(); delete m_CESEBind_consumer;} }
    static void destroy_CESEBind_query_instance() { if (m_CESEBind_query != NULL ) delete m_CESEBind_query; }
 };
 
