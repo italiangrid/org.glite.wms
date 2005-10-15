@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20  2005/10/15 07:53:29  eronchie
+#       Increased version
+#
 #       Revision 1.19  2005/09/20 10:59:57  eronchie
 #       Started merging with rc1.4
 #
@@ -64,7 +67,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Tls], [1.0.2])
+AC_INIT([GLite WMS Utils Tls], [1.0.3])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ssl_helpers/ssl_inits.h])
