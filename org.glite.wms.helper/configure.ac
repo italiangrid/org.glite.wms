@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.18  2005/10/15 11:57:04  eronchie
+#       Increased version
+#
 #       Revision 1.17  2005/10/14 09:12:08  eronchie
 #       Added security and gbox macros
 #
@@ -118,7 +121,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [1.0.12])
+AC_INIT([GLite WMS Helper], [1.5.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])
