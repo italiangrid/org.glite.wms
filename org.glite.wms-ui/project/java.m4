@@ -90,13 +90,13 @@ AC_DEFUN(AC_JAVA,
     CFLAGS=$ac_save_CFLAGS
     LIBS=$ac_save_LIBS
 
-    if test x$ac_cv_java_valid = xno ; then
-        AC_MSG_RESULT([java status: **** suitable version NOT FOUND])
-    else
-        AC_MSG_RESULT([java status: **** suitable version FOUND])
-    fi
+dnl    if test x$ac_cv_java_valid = xno ; then
+dnl        AC_MSG_RESULT([java status: **** suitable version NOT FOUND])
+dnl    else
+dnl        AC_MSG_RESULT([java status: **** suitable version FOUND])
+dnl    fi
                                                                                 
-    AC_MSG_RESULT([java *required* version: $1])
+dnl    AC_MSG_RESULT([java *required* version: $1])
     AC_MSG_RESULT([java *found* version: $JAVA_VERSION])
 
     if test "x$ac_cv_java_valid" = "xyes" ; then
