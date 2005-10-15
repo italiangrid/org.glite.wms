@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.16  2005/10/15 12:04:48  eronchie
+#       Increased version
+#
 #       Revision 1.15  2005/10/14 17:14:50  emartel
 #       added service discovery
 #
@@ -73,7 +76,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Manager], [1.0.0])
+AC_INIT([GLite WMS Manager], [1.5.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/WMImpl.h])
