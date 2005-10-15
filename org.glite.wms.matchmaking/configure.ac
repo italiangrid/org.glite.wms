@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2005/10/15 12:16:26  eronchie
+#       Increased version
+#
 #       Revision 1.9  2005/09/21 13:33:25  monforte
 #       Merge against glite-wms-matchmaking_branch_1_1_0
 #
@@ -67,7 +70,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Matchmaking], [2.0.0])
+AC_INIT([GLite WMS Matchmaking], [1.5.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])
