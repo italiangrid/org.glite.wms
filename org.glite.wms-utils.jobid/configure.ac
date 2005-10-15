@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.18  2005/10/15 07:55:00  eronchie
+#       Increased version
+#
 #       Revision 1.17  2005/09/20 10:41:49  eronchie
 #       Started merging with rc1.4
 #
@@ -60,7 +63,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Utils Jobid], [1.0.1])
+AC_INIT([GLite WMS Utils Jobid], [1.0.2])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobid/strmd5.h])
