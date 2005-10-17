@@ -193,6 +193,17 @@ def getGrstNs():
 	wmproxy default namespace
 	"""
 	return "http://www.gridsite.org/namespaces/delegation-1"
+
+"""
+Converters:
+"""
+
+def b2b(b_in):
+	"""
+	Boolean to SOAPPy boolean
+	"""
+	return SOAPpy.Types.booleanType(b_in)
+
 class Wmproxy:
 	"""
 	Provide all WMProxy web services
@@ -206,7 +217,19 @@ class Wmproxy:
 		self.proxy=proxy
 		self.remote=""
 		self.init=0
-		
+
+	"""
+	Provide all WMProxy web services
+	"""
+	def close(self):
+		"""
+		Default Constructor
+		"""
+		self.ns=""
+		self.proxy=""
+		self.remote=""
+		self.init=0
+
 	def soapInit(self):
 		#Perform initialisation  (if necessary)
 		if self.init==0:
@@ -360,9 +383,11 @@ class Wmproxy:
 		destUris={}
 		try:
 			self.soapInit()
-			dests= self.remote.getSandboxBulkDestURI(jobId)[0]
+			dests= self.remote.getSandboxBulkDestURI(jobId)
+			if type(dests[0]) == type([]):
+				dests=dests[0]
 			for dest in dests:
-				destUris[ dest.__getitem__("id")]=dest.__getitem__("Item")
+				destUris[ dest.__getitem__("id")] = dest.__getitem__("Item")
 			return destUris
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
@@ -424,7 +449,7 @@ class Wmproxy:
 
 	def getJobTemplate(self, jobType, executable, arguments, requirements, rank):
 		"""
-		Method (not tested):  getJobTemplate
+		Method (not yet supported):  getJobTemplateFalse
 		IN =  jobType (JobTypeList)
 		IN =  executable (string)
 		IN =  arguments (string)
@@ -540,7 +565,7 @@ class Wmproxy:
 
 	def getDAGTemplate(self, dependencies, requirements, rank):
 		"""
-		Method (not tested):  getDAGTemplate
+		Method (not yes supported):  getDAGTemplate
 		IN =  dependencies (GraphStructType)
 		IN =  requirements (string)
 		IN =  rank (string)
@@ -594,7 +619,7 @@ class Wmproxy:
 
 	def removeACLItem(self, jobId, item):
 		"""
-		Method (not tested):  removeACLItem
+		Method (not yet supported):  removeACLItem
 		IN =  jobId (string)
 		IN =  item (string)
 		"""
@@ -684,7 +709,11 @@ class Wmproxy:
 		"""
 		try:
 			self.soapInit()
-			files = parseStructType(self.remote.getPerusalFiles(jobId, file, allChunks))
+			if allChunks:
+				allChunks=True
+			else:
+				allChunks=False
+			files = parseStructType(self.remote.getPerusalFiles(jobId, file, b2b(allChunks)))
 			if not files:
 				return []
 			else:
