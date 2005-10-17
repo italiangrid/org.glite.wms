@@ -632,7 +632,7 @@ JobStatusPtr job_status(jobid::JobId const& id)
   std::string const x509_proxy = common::get_user_x509_proxy(id);
   std::string const sequence_code;
   common::ContextPtr context(
-    common::create_context(id, x509_proxy, sequence_code)
+    common::create_context_proxy(id, x509_proxy, sequence_code)
   );
   int const flags = 0;
   JobStatusPtr status(new edg_wll_JobStat, delete_job_status);
