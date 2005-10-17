@@ -15,7 +15,7 @@ LD = $(GLITE_WMS_BROKER_LIBS) \
 	$(GLITE_WMS_MATCHMAKING_LIBS) \
 	$(GLITE_WMS_BROKERINFO_LIBS) \
 	$(GLITE_GPBOX_LIBS) \
-   $(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
+  $(GLITE_SECURITY_VOMS_CPP_THR_LIBS) \
 	$(GLITE_WMS_ISM_LIBS)
 
 libglite_wms_helper_broker_ii_la_SOURCES = \
@@ -30,8 +30,8 @@ libglite_wms_helper_broker_ii_la_LIBADD = \
 
 libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         Helper.h \
-        gpbox_utils.cpp \
         Helper_ii_prefetch.cpp \
+        gpbox_utils.cpp \
         Helper_matcher_prefetch.cpp \
         exceptions.cpp
 
