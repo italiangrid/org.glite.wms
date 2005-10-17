@@ -114,11 +114,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-	} else if (allOpt && peekFiles.size() > 0) {
-		err << "The following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
-	}else if (getOpt && peekFiles.size() > 1){
+	} else if (getOpt && peekFiles.size() > 1){
 		err << wmcOpts->getAttributeUsage(Options::GET) << " : no multiple filename can be specified.\n";
 		err <<  "Use the following option only once to get a perusal file:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
