@@ -17,6 +17,7 @@
 #include <classad_distribution.h>
 
 #include "Helper_matcher.h"
+#include "globus_gss_assist.h"
 
 #include "glite/gpbox/Clientcc.h"
 
@@ -68,6 +69,7 @@ namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::wms::jdl;
 namespace utilities     = glite::wms::common::utilities;
 namespace matchmaking   = glite::wms::matchmaking;
+namespace gpbox_utils   = glite::wms::helper::gpbox_utils;
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
@@ -79,15 +81,12 @@ namespace matcher {
 
 namespace {
 
-//#define GPBOXDEBUG  1
-void print(std::string msg)
-{
+//#define GPBOXDEBUG 1
 #ifndef GPBOXDEBUG
-  Info(msg);
+  #define print(msg) Info(msg)
 #else
-  std::cout << msg << '\n';
+  #define print(msg) std::cout << msg << '\n';
 #endif
-}
 
 typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
 
@@ -189,7 +188,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
   boost::scoped_ptr<matchmaking::match_table_t> suitableCEs;
   std::string mm_error;
 
-print("Joblistmatch");
+  print("Joblistmatch");
   
   try {
     suitableCEs.reset(rb.findSuitableCEs(&input_ad));
@@ -197,7 +196,8 @@ print("Joblistmatch");
     std::string vo(requestad::get_virtual_organisation(input_ad));    
     std::vector<classad::ExprTree*> hosts;
     std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
-print(x509_user_proxy_file_name);
+    
+    print(x509_user_proxy_file_name);
 
     // Start interaction with G-Pbox
     if ( !suitableCEs->empty() ) {
@@ -205,15 +205,15 @@ print(x509_user_proxy_file_name);
         = configuration::Configuration::instance();
       assert(config);
 
+      gpbox_utils::dump_suitable_CEs(suitableCEs);
       boost::timer perf_timer;
-dump_suitable_CEs(suitableCEs);
-perf_timer.restart();
+      perf_timer.restart();
 
       const configuration::CommonConfiguration* common_conf = config->common();
       assert(common_conf);
 
       const std::string broker_subject(
-        get_proxy_distinguished_name(common_conf->host_proxy_file())
+        gpbox_utils::get_proxy_distinguished_name(common_conf->host_proxy_file())
       );
 
       const configuration::WMConfiguration* WM_conf = config->wm();
@@ -222,9 +222,9 @@ perf_timer.restart();
       std::string Pbox_host_name(WM_conf->pbox_host_name());
       if( !broker_subject.empty() and !Pbox_host_name.empty() ) {
         try {
-print(Pbox_host_name);
-print(WM_conf->pbox_port_num());
-print(WM_conf->pbox_safe_mode());
+          print(Pbox_host_name);
+          print(WM_conf->pbox_port_num());
+          print(WM_conf->pbox_safe_mode());
 
           Connection PEP_connection(
                                     Pbox_host_name,
@@ -233,9 +233,9 @@ print(WM_conf->pbox_safe_mode());
                                     WM_conf->pbox_safe_mode()
                                    );
 
-print("gpbox: connection open");
+          print("gpbox: connection open");
 
-          if (!filter_gpbox_authorizations(*suitableCEs, 
+          if (!gpbox_utils::filter_gpbox_authorizations(*suitableCEs, 
                                            PEP_connection, 
                                            x509_user_proxy_file_name)) {
             //TODO
@@ -243,7 +243,7 @@ print("gpbox: connection open");
         }
         catch (...) { // exception no_conn from API 
                       // PEP_connection not properly propagated
-print("gpbox: no connection!!!");
+          print("gpbox: no connection!!!");
           // no connection to the Pbox server, the WM goes on 
           // without screening the list of suitable CEs
         }; //try
@@ -252,11 +252,11 @@ print("gpbox: no connection!!!");
         print("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
       }
 
-print("END G-Pbox");
-print(perf_timer.elapsed());
-dump_suitable_CEs(suitableCEs);
-//END G-Pbox interaction
+      print("END G-Pbox");
+      print(perf_timer.elapsed());
+      gpbox_utils::dump_suitable_CEs(suitableCEs);
     } // if ( !suitableCEs->empty() )
+    //END G-Pbox interaction
 
     if (!suitableCEs->empty() ) {
       matchmaking::match_vector_t suitableCEs_vector(suitableCEs->begin(), suitableCEs->end());
