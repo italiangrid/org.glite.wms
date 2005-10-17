@@ -21,14 +21,16 @@ LD = $(GLITE_WMS_BROKER_LIBS) \
 libglite_wms_helper_broker_ii_la_SOURCES = \
         Helper.h \
         Helper_ii.cpp \
+        gpbox_utils.cpp \
         Helper_matcher.cpp \
-	exceptions.cpp
+        exceptions.cpp
 
 libglite_wms_helper_broker_ii_la_LIBADD = \
 	$(LD)
 
 libglite_wms_helper_broker_ii_prefetch_la_SOURCES = \
         Helper.h \
+        gpbox_utils.cpp \
         Helper_ii_prefetch.cpp \
         Helper_matcher_prefetch.cpp \
         exceptions.cpp
@@ -42,8 +44,9 @@ $(srcdir)/Helper_matcher_prefetch.cpp: $(srcdir)/Helper_matcher.cpp ; $(CXXCOMPI
 libglite_wms_helper_broker_ism_la_SOURCES = \
         Helper.h \
         Helper_ism.cpp \
+        gpbox_utils.cpp \
         Helper_matcher_ism.cpp \
-	exceptions.cpp
+        exceptions.cpp
 
 libglite_wms_helper_broker_ism_la_LIBADD = \
         $(LD)
