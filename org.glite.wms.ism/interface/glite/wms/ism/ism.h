@@ -47,10 +47,10 @@ boost::recursive_mutex& get_ism_mutex();
 
 ism_type::value_type make_ism_entry(
   std::string const& id, // resource identifier
-  int const& ut,	 // update time
+  int ut,	 // update time
   ad_ptr const& ad,	 // resource descritpion
   update_uf_type  const& uf = update_uf_type(), // update function
-  int const& et = 300    // expiry time with defualt 5*60 
+  int et = time(0) + 600    // expiry time with defualt 5*60 
 );
 
 std::ostream& operator<<(std::ostream& os, ism_type::value_type const& value);

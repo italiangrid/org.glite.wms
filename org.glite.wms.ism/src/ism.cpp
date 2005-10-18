@@ -17,10 +17,10 @@ namespace ism {
 
 ism_type::value_type make_ism_entry(
   std::string const& id,    // resource identifier
-  int const& ut,            // update time
+  int ut,            // update time
   ad_ptr const& ad,         // resource descritpion
   update_uf_type const& uf, // update function
-  int const& et             // expiry time with defualt 5*60
+  int et             // expiry time with defualt 5*60
 )
 {
   return std::make_pair(id, boost::make_tuple(ut, et, ad, uf));
@@ -52,42 +52,32 @@ operator<<(std::ostream& os, ism_type::value_type const& value)
 
 void call_update_ism_entries::operator()()
 {
-  bool value = true;
   boost::recursive_mutex::scoped_lock l(get_ism_mutex());
-  boost::xtime ct;
-  boost::xtime_get(&ct, boost::TIME_UTC);
+
+  time_t current_time = time(0);
 
   for (ism_type::iterator pos=get_ism().begin(); 
        pos!= get_ism().end(); ++pos) {
     
     // Check the state of the ClassAd information
-    if (boost::tuples::get<2>(pos->second) != NULL) {
+    if (boost::tuples::get<2>(pos->second).get()) {
       
-      // If the ClassAd information is not NULL, go on with the updating
-      int diff = ct.sec - boost::tuples::get<0>(pos->second);
-      
+      time_t updated_on = boost::tuples::get<0>(pos->second);
+      time_t expires_on = boost::tuples::get<1>(pos->second);      
+ 
       // Check if .. is greater than expiry time
-      if (diff > boost::tuples::get<1>(pos->second)) {
+      if (current_time > expires_on) {
         // Check if function object wrapper is not empty
         if (!boost::tuples::get<3>(pos->second).empty()) {
-          value = update_ism_entry()(pos->second);
-          if (value == false) {
-  	    // Reset ClassAd
-            // (boost::tuples::get<2>(pos->second)).reset();
-            get_ism().erase(pos);
-          } else {
-	    // Update ism entry
-            boost::xtime_get(&ct, boost::TIME_UTC);
-            pos->second = make_tuple(ct.sec,
-                                     boost::tuples::get<1>(pos->second),
-                                     boost::tuples::get<2>(pos->second),
-                                     boost::tuples::get<3>(pos->second));
-	  }
+          if (!update_ism_entry()(pos->second)) {
+             // Reset ClassAd
+             boost::tuples::get<2>(pos->second).reset();
+          }
+          pos->second = make_tuple(static_cast<int>(current_time),
+                                   static_cast<int>(expires_on),
+                                   boost::tuples::get<2>(pos->second),
+                                   boost::tuples::get<3>(pos->second));
         }
-        else {
-          // If the function object wrapper is empty, remove the entry
-          get_ism().erase(pos);
-        } 
       }
     } else {
       // If the ClassAd information is NULL, remove the entry by ism
