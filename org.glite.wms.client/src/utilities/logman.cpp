@@ -28,22 +28,8 @@ namespace utilities{
 Log::Log (std::string* path, LogLevel level){
         dbgLevel = level;
 	// check writing permission
-	if (path){	this->createLogFile(*path);
-		/*
-		ofstream outputstream(path->c_str(), ios::app);
-		if (outputstream.is_open() ) {
-			logFile = new string (*path) ;
-			outputstream.close ( );
-		} else {
-			if ( level >= WMSLOG_WARNING ){
-				errMsg (WMS_WARNING,
-					"I/O error",
-					"unable to open the logfile: " + *path ,
-					true);
-				logFile = NULL;
-			}
-		}
-		*/
+	if (path){
+		this->createLogFile(*path);
 	} else{
 		logFile = NULL;
 	}

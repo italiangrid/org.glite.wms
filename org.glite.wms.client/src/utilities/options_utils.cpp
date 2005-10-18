@@ -159,7 +159,7 @@ const struct option Options::submitLongOpts[] = {
          {	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
         {	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
-	{	Options::LONG_CHKPT,            	required_argument,		0,		Options::CHKPT},
+//TBD	{	Options::LONG_CHKPT,            	required_argument,		0,		Options::CHKPT},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_LRMS,              	required_argument,		0,		Options::LRMS},
 	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
@@ -435,7 +435,7 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_START << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
-	cerr << "\t" << USG_CHKPT << "\n";
+//TBD	cerr << "\t" << USG_CHKPT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n";
@@ -1459,11 +1459,12 @@ std::string Options::getOptionsInfo(){
 	}
  }
 /**
-*	reads the input options for submission
+*	Reads the input options for submission
 */
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	string jobid = "";
+	string unvalid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
         // the name of the the specific command (submit, cancel, etc.....)
@@ -1575,7 +1576,6 @@ void Options::readOptions(const int &argc, const char **argv){
 			// JobPerusal /JobAttach : need only one jobid as last argument
 			// ========================================================
 			 if ( cmdType == JOBPERUSAL){
-			 	string unvalid = "";
 				// all the options have been processed by getopt (JobId file is missing)
 				if (optind == argc ){
 					throw WmsClientException(__FILE__,__LINE__,
@@ -1586,7 +1586,7 @@ void Options::readOptions(const int &argc, const char **argv){
                                 for (int i = optind ; i < argc ; i++ ){
 					 jobid = Utils::checkJobId (argv[i]);
 					if ( jobid.size( ) >0 ) {
-     						jobIds.push_back(argv[i]);
+     						jobIds.push_back(jobid);
 					} else {
 						unvalid += string(argv[i]) + " " ;
 					}
@@ -1629,7 +1629,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						"Last argument of the command must be a JobId or a list of JobId's" );
 				}
                                 for (int i = optind ; i < argc ; i++ ){
-                                        jobIds.push_back(argv[i]);
+     						jobIds.push_back(argv[i]);
                                 }
                                 if ( input && ! jobIds.empty( )){
                                         throw WmsClientException(__FILE__,__LINE__,
@@ -1897,7 +1897,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 					throw WmsClientException(__FILE__,__LINE__,
 					"setAttribute",DEFAULT_ERR_CODE,
 					"Wrong Value",
-					 *fileprotocol +": Unrecognised File Transferring Protocol\n" + "List of available protocols: " + list );
+					 "--" + string(LONG_PROTO) + " - Unrecognised File Transferring Protocol: " + *fileprotocol + " \n" + "List of available protocols: " + list );
 				}
 
 				inCmd += px + LONG_PROTO + ";" + ws ;

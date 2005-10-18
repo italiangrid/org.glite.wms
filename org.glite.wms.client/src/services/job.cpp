@@ -101,10 +101,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	wmcUtils    = new Utils (wmcOpts);
 	// LOG file and verbisty level on the stdoutput
 	logOpt      =  wmcUtils->getLogFileName( ) ;
-	if (logOpt){
-		logInfo->createLogFile(*logOpt);
-	}
-//	logInfo     = new Log (logOpt,  (LogLevel)wmcOpts->getVerbosityLevel( ));
+	if (logOpt){ logInfo->createLogFile(*logOpt);}
 	// input & resource (no together)
 	outOpt      = wmcOpts->getStringAttribute( Options::OUTPUT ) ;
 	nointOpt    = wmcOpts->getBoolAttribute (Options::NOINT) ;

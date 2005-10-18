@@ -195,20 +195,28 @@ public:
         *@throw WmsClientException in case of bad format
 	*/
 	static std::string getUnique(std::string jobid);
+	/**
+	* Get a string with the list of the items
+	* @param items vector with the items to put in the string list
+	* @return the string with the list of input items
+	*/
+	static const std::string getList (const std::vector<std::string> &items);
+
         /**
-	* Builds a char stripe
+	* Build a char stripe
 	* @param len the length of the stripe to be built
         * @param ch the character to be used for the stripe
         * @param msg the message that can be put in the middle
         * @return the built stripe
 	*/
         const std::string getStripe (const int &len, const std::string &ch, const std::string &msg = "");
-	/** Exit from the process. If ncessary prompt some information
-	@param exitCode command exit code, 0 in case of success, error otherwise
+	/**
+	* Exit from the process. If ncessary prompt some information
+	* @param exitCode command exit code, 0 in case of success, error otherwise
 	*/
 	static void ending(unsigned int exitCode=0);
 	/**
-	*  convert the input time string to the number of seconds since 1st of January 1970
+	*  Convert the input time string to the number of seconds since 1st of January 1970
         * and if a type of option is specified, check if it is a valid value for that option
         * (is later or earlier)
 	* the formats of the input time string could be:

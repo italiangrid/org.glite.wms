@@ -36,16 +36,15 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
         string mglog = "";
         string mgout = "";
         WmcStdStream ss = (WmcStdStream)0;
-        // PREFIX MSG: timestamp
-        time_t now = time(NULL);
+	time_t now = time(NULL);
+	// PREFIX MSG: timestamp
         struct tm *ns = localtime(&now);
         // PREFIX MSG: time stamp: day-month
         px << Utils::twoDigits(ns->tm_mday) << ws << monthStr[ns->tm_mon] << ws << (ns->tm_year+1900) <<"," << ws;
         // PREFIX MSG: time stamp: hh::mm:ss
-       	px << Utils::twoDigits(ns->tm_hour) << ":" << Utils::twoDigits(ns->tm_min) << ":" << Utils::twoDigits(ns->tm_sec) << ws;
+ 	px << Utils::twoDigits(ns->tm_hour) << ":" << Utils::twoDigits(ns->tm_min) << ":" << Utils::twoDigits(ns->tm_sec) << ws;
         // PREFIX MSG: pid
         px << "-I- PID:" << ws << getpid( ) << ws   ;
-
 	switch (sev){
         	case WMS_DEBUG:{
                         // log message
@@ -93,6 +92,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
 			break;
 		}
 		default:{
+			mglog += header + ws + err + string("\n");
 			break;
    		}
 	}

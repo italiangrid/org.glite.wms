@@ -87,12 +87,19 @@ const char* TAR_SUFFIX = ".tar";
 
 
 Utils::Utils(Options *wmcOpts){
+	string ids = "";
 	this->wmcOpts=wmcOpts;
 	// verbosity level
         vbLevel = (LogLevel)wmcOpts->getVerbosityLevel();
 	logInfo = new Log (NULL , vbLevel);
-	logInfo->print(WMS_INFO, "Function Called:", wmcOpts->getApplicationName( ), false, true);
-        logInfo->print(WMS_INFO, "Options specified:", wmcOpts->getOptionsInfo( ), false,true);
+	string file_header = Utils::getStripe(80, "*")+ "\n";
+	file_header += string(Options::HELP_UI) +  " - " + string(Options::HELP_VERSION) +  " - Log File\n";
+	file_header += Utils::getStripe(80, "*");
+	logInfo->print(WMS_UNDEF, file_header, "", false, true);
+	logInfo->print(WMS_INFO, "Function:", wmcOpts->getApplicationName( ), false, true);
+        logInfo->print(WMS_INFO, "Options:", wmcOpts->getOptionsInfo( ), false,true);
+	ids = Utils::getList(wmcOpts->getJobIds( ));
+	if (ids.size() > 0){ logInfo->print(WMS_INFO, "JobId(s):", ids, false,true);}
 	// Ad utilities
 	wmcAd = new AdUtils (wmcOpts);
 	// checks and reads the configuration file
@@ -907,10 +914,6 @@ const long Utils::checkTime ( const std::string &st, int &days,  int &hours, int
 	minutes = ((sec-now) % 3600) / 60 ;
  	return sec;
 }
-
-
-
-
 std::string* Utils::getDelegationId ( ){
 	string* delegation = NULL ;
         bool autodg = false;
@@ -1188,7 +1191,18 @@ const std::string Utils::addStarWildCard2Path(std::string& path){
         return path;
  }
 
-
+ /**
+*	Gets a string with the list of the items
+*/
+const std::string Utils::getList (const std::vector<std::string> &items){
+	string info = "" ;
+	unsigned int size = items.size();
+	for(unsigned int i = 0; i < size; i++ ){
+		if (info.size()>0){ info += " ; "; }
+		info += items[i];
+	}
+	return info;
+ }
 /*********************************************
 * Utility method for files
 **********************************************/

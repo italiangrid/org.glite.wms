@@ -69,7 +69,7 @@ const long MAX_CURL_SIZE = 2147483647;
 */
 JobSubmit::JobSubmit( ){
 	// init of the string attributes
-	chkptOpt  = NULL;
+	chkptOpt  = NULL; // TBD
 	collectOpt = NULL;
 	fileProto= NULL;
 	lrmsOpt = NULL ;
@@ -109,7 +109,7 @@ JobSubmit::JobSubmit( ){
 */
 JobSubmit::~JobSubmit( ){
 	if (collectOpt){ delete(collectOpt); }
-	if (chkptOpt){ delete(chkptOpt); }
+	 if (chkptOpt){ delete(chkptOpt); } //TBD
 	if (fileProto){ delete(fileProto); }
 	if (lrmsOpt){ delete(lrmsOpt); }
 	if (toOpt){ delete(toOpt); }
@@ -164,73 +164,20 @@ void JobSubmit::readOptions (int argc,char **argv){
 			} else {
 				resourceOpt = new string(resources[0]);
 			}
-			logInfo->print(WMS_DEBUG,   "--input: The job will be submitted to the resource", *resourceOpt);
+			logInfo->print(WMS_DEBUG,   "--input option: The job will be submitted to the resource", *resourceOpt);
 		}
 	}
-	// lrms has to be used with input o resource
-	lrmsOpt = wmcOpts->getStringAttribute(Options::LRMS);
-	if (lrmsOpt && !( resourceOpt || inOpt ) ){
-		info << "LRMS option cannot be specified without a resource:\n";
-		info << "use " + wmcOpts->getAttributeUsage(Options::LRMS) << " with\n";
-		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
-		info << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	}
-	// "valid" & "to" (no together)
-	validOpt = wmcOpts->getStringAttribute(Options::VALID);
-	toOpt = wmcOpts->getStringAttribute(Options::TO);
-	if (validOpt && toOpt){
-		info << "The following options cannot be specified together:\n" ;
-		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
-		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", info.str());
-	}
-	// --valid
-	if (validOpt){
-		try{
-			expireTime =  Utils::checkTime(*validOpt, d, h, m, Options::TIME_VALID) ;
-		} catch (WmsClientException &exc) {
-			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
-			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Wrong Time Value",info.str() );
-		}
-	}
-	// --to
-	if (toOpt) {
-		try{
-			expireTime= Utils::checkTime(*toOpt, d, h, m,Options::TIME_TO) ;
-		} catch (WmsClientException &exc) {
-			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
-			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Wrong Time Value",info.str() );
-		}
-	}
-	// Info message for --to / --valid
-	if (expireTime > 0 && (h > 0 || m > 0 ) ){
-		ostringstream info;
-		info << "The job request will expire in ";
-		if (d > 0){ info << d << " days, ";}
-		if (h > 0){ info << h << " hours and ";}
-		info << m << " minutes";
-		if (validOpt) {
-			logInfo->print(WMS_DEBUG,  info.str( ) , "(--valid option)");
-		} else if (toOpt)  {
-			logInfo->print(WMS_DEBUG,  info.str( ) , "(--to option)");
-		}
-	}
-	// --chkpt
+	// --chkpt TBD !!!
 	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
 	// --collect
 	collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
 	// register-only & start
 	startOpt = wmcOpts->getStringAttribute(Options::START);
 	registerOnly = wmcOpts->getBoolAttribute(Options::REGISTERONLY);
+	// --valid & --to
+	validOpt = wmcOpts->getStringAttribute(Options::VALID);
+	toOpt = wmcOpts->getStringAttribute(Options::TO);
+	// --start: incompatible options
 	if (startOpt &&
 	(registerOnly || inOpt || resourceOpt || nodesresOpt || toOpt || validOpt || chkptOpt || collectOpt ||
 		(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
@@ -251,7 +198,29 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"Input Option Error",
 				info.str());
 	}
+	// "valid" & "to" (no together)
+	if (validOpt && toOpt){
+		info << "The following options cannot be specified together:\n" ;
+		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::TO) << "\n";
+		throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Input Option Error", info.str());
+	}
+	// lrms has to be used with input o resource
+	lrmsOpt = wmcOpts->getStringAttribute(Options::LRMS);
+	if (lrmsOpt && !( resourceOpt || inOpt ) ){
+		info << "LRMS option cannot be specified without a resource:\n";
+		info << "use " + wmcOpts->getAttributeUsage(Options::LRMS) << " with\n";
+		info << wmcOpts->getAttributeUsage(Options::RESOURCE) << "\n";
+		info << "or\n" + wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Input Option Error", info.str());
+	}
+	// --transfer-files
 	bool transfer_files = wmcOpts->getBoolAttribute(Options::TRANSFER);
+	// Flags for --register-only , --transfer-files, --start
 	if (registerOnly){
 		startJob = false;
 		if ( transfer_files) {
@@ -288,6 +257,42 @@ void JobSubmit::readOptions (int argc,char **argv){
 	if (!fileProto) {
 		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
 	}
+	// --valid
+	if (validOpt){
+		try{
+			expireTime =  Utils::checkTime(*validOpt, d, h, m, Options::TIME_VALID) ;
+		} catch (WmsClientException &exc) {
+			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::VALID) << ")\n";
+			throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Wrong Time Value",info.str() );
+		}
+	}
+	// --to
+	if (toOpt) {
+		try{
+			expireTime= Utils::checkTime(*toOpt, d, h, m,Options::TIME_TO) ;
+		} catch (WmsClientException &exc) {
+			info << exc.what() << " (use: " << wmcOpts->getAttributeUsage(Options::TO) <<")\n";
+			throw WmsClientException(__FILE__,__LINE__,
+				"readOptions",DEFAULT_ERR_CODE,
+				"Wrong Time Value",info.str() );
+		}
+	}
+	// Info message for --to / --valid
+	if (expireTime > 0 && (h > 0 || m > 0 ) ){
+		ostringstream info;
+
+		info << "The job request will expire in ";
+		if (d > 0){ info << d << " days, ";}
+		if (h > 0){ info << h << " hours and ";}
+		info << m << " minutes";
+		if (validOpt) {
+			logInfo->print(WMS_DEBUG,  "--valid option:", info.str( ) );
+		} else if (toOpt)  {
+			logInfo->print(WMS_DEBUG, "--to option:", info.str( ) );
+		}
+	}
 	// --nolisten
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
 	// path to the JDL file
@@ -302,37 +307,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 				"No valid proxy file pathname" );
 	}
 }
-/*
-std::string JobSubmit::getEndPoint( ) {
-	string endpoint = "";
-	string version = "";
-	vector<string> urls;
-	if  (wmpVersion == 0) {
-		// checks if endpoint already contains the WMProxy URL
-		if (endPoint){
-			endpoint = string(*endPoint);
-		} else if (autodgOpt && dgOpt==NULL) {
-			// delegationId
-			dgOpt = wmcUtils->getDelegationId( );
-			// if the autodelegation is needed
-			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
-		}
-		Job::getEndPointVersion(endpoint, version);
-		logInfo->print (WMS_DEBUG, "Version:", version);
-		wmpVersion = atoi (version.substr(0,1).c_str() );
-	} else {
-		if (endPoint) {
-			endpoint = string(*endPoint);
-		} else {
-			throw WmsClientException(__FILE__,__LINE__,
-				"getEndPoint",  DEFAULT_ERR_CODE ,
-				"Null Pointer Error",
-				"null pointer to endPoint object"   );
-		}
-	}
-	return endpoint;
-}
-*/
+
 /**
 * Performs the main operation for the submission
 */
@@ -1079,7 +1054,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 			"cannot be used for  DAG, collection, partitionable and parametric jobs");
 	} else if (resourceOpt) {
-		logInfo->print (WMS_DEBUG, "--resource: The job will be submitted to this resource: ", *resourceOpt );
+		logInfo->print (WMS_DEBUG, "--resource option: The job will be submitted to this resource", *resourceOpt );
 	}else if( (nodesresOpt) && (jobtype == WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
@@ -1122,10 +1097,12 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
 			//Suibmitting....
 			jobIds = jobSubmit(*jdlString, *dgOpt, cfgCxt);
+			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
 		}else {
 			logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
 			// registering ...
 			jobIds = jobRegister(*jdlString , *dgOpt, cfgCxt);
+			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
 		}
 	} catch (BaseException &exc) {
 		ostringstream err ;
@@ -1210,7 +1187,10 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 			}
 		}
 		// exits from the loop in case of success
-		if (success){ break;}
+		if (success){
+			logInfo->print(WMS_DEBUG, "The job has been successfully started" , "", false);
+			break;
+		}
 	}
 }
 /**

@@ -128,7 +128,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
 	}  else if (unsetOpt && peekFiles.size() >0 ) {
-		err << "The unset operation disables all perusal files; the following options cannot be specified together:\n" ;
+		err << "The unset operation disables all perusal files of the job; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 	}else if (unsetOpt && allOpt) {

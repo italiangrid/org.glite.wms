@@ -54,18 +54,29 @@ JobCancel::~JobCancel( ) {
 *	Reads the command-line user arguments and sets all the class attributes
 */
 void JobCancel::readOptions (int argc,char **argv){
+	unsigned int njobs = 0;
 	Job::readOptions  (argc, argv, Options::JOBCANCEL);
         // input file
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	// JobId's
         if (inOpt){
-        	jobIds = wmcUtils->getItemsFromFile(*inOpt);
+		// From input file
+		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(*inOpt));
+		jobIds = wmcUtils->getItemsFromFile(*inOpt);
+		jobIds = wmcUtils->checkJobIds (jobIds);
+		logInfo->print (WMS_DEBUG, "JobId(s) in the input file:", Utils::getList (jobIds), false);
         } else {
+		// from command line
         	jobIds = wmcOpts->getJobIds();
+		jobIds = wmcUtils->checkJobIds (jobIds);
         }
-        jobIds = wmcUtils->checkJobIds (jobIds);
-	if ( jobIds.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+	njobs = jobIds.size( ) ;
+	if (njobs > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
         	jobIds = wmcUtils->askMenu(jobIds,Utils::MENU_JOBID);
+		if (jobIds.size() != njobs) {
+			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds), false);
+		}
          }
          // checks if the proxy file pathname is set
 	if (proxyFile) {
@@ -85,7 +96,7 @@ void JobCancel::readOptions (int argc,char **argv){
 };
 
 /**
-* perfroms the main operations
+* Perfoms the main operations
 */
 void JobCancel::cancel ( ){
 	postOptionchecks();
@@ -120,18 +131,17 @@ void JobCancel::cancel ( ){
                 for (it = jobIds.begin() ; it != jobIds.end() ; it++){
 			// JobId
 			string jobid = *it;
-			logInfo->print(WMS_DEBUG, "Checking status for the job:", "["+jobid+"]" );
+			logInfo->print(WMS_DEBUG, "Checking the status of the job:",  jobid );
 			lbApi.setJobId(jobid);
 			try{
 				// Retrieves the job status
 				Status status =   lbApi.getStatus(true) ;
-
 				// Checks if the status code allows the cancellation
 				status.checkCodes(Status::OP_CANCEL, warns );
 				if (warns.size()>0){
 				// JobId
 					glite::wmsutils::jobid::JobId jobid= status.getJobId();
-					logInfo->print(WMS_WARNING, jobid.toString() + ": " + warns, "trying to retrieve its output...", true);
+					logInfo->print(WMS_WARNING, jobid.toString() + ": " + warns, "trying to cancel the job...", true);
 				}
 				// EndPoint URL
 				cfgCxt->endpoint= status.getEndpoint();

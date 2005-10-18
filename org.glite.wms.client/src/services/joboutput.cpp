@@ -74,6 +74,7 @@ JobOutput::~JobOutput ()  {
 	if (dirOpt ) { free(dirOpt);}
 }
 void JobOutput::readOptions ( int argc,char **argv)  {
+	unsigned int njobs = 0;
 	ostringstream err ;
  	Job::readOptions  (argc, argv, Options::JOBOUTPUT);
         // --input
@@ -81,13 +82,21 @@ void JobOutput::readOptions ( int argc,char **argv)  {
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);
 	// JobId's
         if (inOpt){
+		// From input file
+		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(*inOpt));
         	jobIds = wmcUtils->getItemsFromFile(*inOpt);
+		logInfo->print (WMS_DEBUG, "JobId(s) in the input file:", Utils::getList (jobIds), false);
         } else {
         	jobIds = wmcOpts->getJobIds();
         }
         jobIds = wmcUtils->checkJobIds (jobIds);
-	if ( jobIds.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+	njobs = jobIds.size( ) ;
+	if ( njobs > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
         	jobIds = wmcUtils->askMenu(jobIds, Utils::MENU_JOBID);
+		if (jobIds.size() != njobs) {
+			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds), false);
+		}
          }
         // --dir , OutputStorage or DEFAULT_OUTPUT value
         dirOpt = wmcOpts->getStringAttribute(Options::DIR);
@@ -170,7 +179,6 @@ void JobOutput::getOutput ( ){
 			if (size == 1){ throw exc ;}
 			string wmsg = (*it) + ": not allowed to retrieve the output" + exc.what( );
 			// if the request is for multiple jobs, a failed-string is built for the final message
-			logInfo->print(WMS_WARNING, wmsg , "", true);
 			createWarnMsg(wmsg);
 			// goes on with the following job
 			continue ;
@@ -181,14 +189,19 @@ void JobOutput::getOutput ( ){
 		out << "\t\t\tJOB GET OUTPUT OUTCOME\n\n";
 		if (listOnlyOpt && hasFiles){
 			out << parentFileList  << childrenFileList ;
+			// Prints the results into the log file
+			logInfo->print(WMS_INFO,  string(parentFileList+childrenFileList), "", false );
 		} else {
 			out << msg.str() ;
+			// Prints the results into the log file
+			logInfo->print (WMS_INFO,  msg.str() , "", false );
 		}
 		out << wmcUtils->getStripe(80, "=" , "" ) << "\n\n";
 		// Warnings/errors messages
 		if (  wmcOpts->getBoolAttribute(Options::DBG) && warnsList) {
 			out << *warnsList << "\n";
 		}
+
 	} else {
 		string err = "";
 		if (size==1) { err ="Unable to retrieve the output"; }
@@ -213,12 +226,12 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	bool createDir=false;
 	bool checkChildren = true;
 	// JobId
-	glite::wmsutils::jobid::JobId jobid= status.getJobId();
+	glite::wmsutils::jobid::JobId jobid = status.getJobId();
+	logInfo->print(WMS_DEBUG,"Checking the status of the job:" , jobid.toString());
 	// Check Status (if needed)
 	int code = status.checkCodes(Status::OP_OUTPUT, warnings, child);
 	if (warnings.size()>0){
 		wmsg = jobid.toString() + ": " + warnings ;
-		logInfo->print(WMS_WARNING, wmsg, "", true);
 		createWarnMsg(wmsg);
 	}
 	if (!listOnlyOpt &&  (code == 0 || ! child )){
@@ -261,10 +274,8 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	std::vector<Status> children = status.getChildrenStates();
 	if (children.size()){
 		ostringstream msgVago ;
-		//msg << "   Children files retrieved/purged:" <<endl;
 		for (unsigned int i = 0 ;i<children.size();i++){
 			retrieveOutput (msgVago,children[i],dirAbs+logName+"_"+ children[i].getJobId().getUnique(), true);
-			//msg << " - "<<children[i].getJobId().toString() <<endl;
 		}
 	}
 	bool parent = status.hasParent ( ) ;
@@ -323,15 +334,7 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 			if (exc.Description){ desc =" (" + *(exc.Description)+ ")"; }
 			if (child) {
 				string wmsg = jobid + ": not allowed to retrieve the output" + desc ;
-				logInfo->print(WMS_WARNING, wmsg , "" , true );
-				if (warnsList){
-					*warnsList += "- " + wmsg + "\n";
-				} else if (wmsg.size()>0){
-					warnsList = new string( );
-					*warnsList = "The following errors occurred during the operation:\n";
-					*warnsList += "=========================================================\n";
-					*warnsList += wmsg + "\n";
-				}
+				createWarnMsg (wmsg);
 				result = false ;
 			} else {
 				throw WmsClientException(__FILE__,__LINE__,
@@ -415,13 +418,16 @@ void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, 
 */
 void JobOutput::createWarnMsg(const std::string &msg ){
 	int size = msg.size();
-	if (warnsList && size >0 ){
-		*warnsList += "- " + msg + "\n";
-	} else if (size>0 ){
-		warnsList = new string( );
-		*warnsList = "The following warnings/errors have been found during the operation:\n";
-		*warnsList += "========================================================================\n";
-		*warnsList += "- " + msg + "\n";
+	if (size>0) {
+		logInfo->print(WMS_WARNING, msg , "" , true );
+		if (warnsList ){
+			*warnsList += "- " + msg + "\n";
+		} else if (size>0 ){
+			warnsList = new string( );
+			*warnsList = "The following warnings/errors have been found during the operation:\n";
+			*warnsList += "========================================================================\n";
+			*warnsList += "- " + msg + "\n";
+		}
 	}
 }
 
