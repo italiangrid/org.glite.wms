@@ -1542,32 +1542,31 @@ void Options::readOptions(const int &argc, const char **argv){
 					"readOptions", DEFAULT_ERR_CODE,
 					"Wrong Option: " + string(last_arg)  ,
 					"Last argument of the command must be a JDL file" );
-			}
-                        if (Utils::isFile( last_arg ) && argc !=optind ) {
-                                // check that --collection is not set
-                                if (collection){
-                                        ostringstream err ;
-                                        err << "JDL file (as last argument) and the option --" << LONG_COLLECTION << " are incompatible";
-                                        throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", DEFAULT_ERR_CODE,
-                                                "Wrong Option",
-                                                err.str() );
-                                } else if (start){
-                                        ostringstream err ;
-                                        err << "JDL file (as last argument) and the option --" << LONG_START << " are incompatible";
-                                        throw WmsClientException(__FILE__,__LINE__,
-                                                "readOptions", DEFAULT_ERR_CODE,
-                                                "Wrong Option",
-                                                err.str() );
-                                }
+			} else if (Utils::isFile( last_arg )){
+				// check that --collection is not set
+				if (collection){
+					ostringstream err ;
+					err << "JDL file (as last argument) and the option --" << LONG_COLLECTION << " are incompatible";
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option",
+						err.str() );
+				} else if (start) {
+					ostringstream err ;
+					err << "JDL file (as last argument) and the option --" << LONG_START << " are incompatible";
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option",
+						err.str() );
+				}
                         	jdlFile = new string(last_arg) ;
-  			 } else{
-			 	//
+
+  			 } else {
 			 	if (!collection && !start) {
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
-						"Wrong Option: " + string(last_arg)  ,
-						"Last argument of the command must be a JDL file" );
+						"File Not Found" ,
+						"Last argument of the command must be a JDL file (no such file: "+ string(last_arg) + ")" );
 				}
                         }
 		} else
