@@ -145,8 +145,8 @@ So far: proxy time left*/
 void Job::postOptionchecks(unsigned int proxyMinTime){
 	// Check Proxy time validity
 	if (proxyFile!=NULL){
-		unsigned int proxyTimeLeft =getProxyTimeLeft(proxyFile);
-		if (proxyTimeLeft<0){
+		int proxyTimeLeft =getProxyTimeLeft(proxyFile);
+		if (proxyTimeLeft<=0){
 			throw WmsClientException(__FILE__,__LINE__,
 				"postOptionchecks",DEFAULT_ERR_CODE,
 				"Proxy validity Error", "Certificate is expired");
