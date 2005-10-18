@@ -25,6 +25,13 @@ namespace glite {
 namespace wms {
 namespace ism {
 
+enum {
+  update_time_entry = 0,
+  expiry_time_entry,
+  ad_ptr_entry,
+  update_function_entry
+};
+
 // resource identifier
 typedef std::string id_type;
 // resource descritpion
