@@ -66,7 +66,7 @@ namespace utilities     = glite::wms::common::utilities;
 namespace matchmaking   = glite::wms::matchmaking;
 namespace gpbox_utils   = glite::wms::helper::gpbox_utils;
 
-#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
+#define edglog(level)   logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 namespace glite {
@@ -75,13 +75,6 @@ namespace helper {
 namespace broker {
 
 namespace {
-
-//#define GPBOXDEBUG 1
-#ifndef GPBOXDEBUG
-  #define print(msg) Info(msg)
-#else
-  #define print(msg) std::cout << msg << '\n';
-#endif
 
 typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
 
@@ -188,8 +181,7 @@ try {
     = configuration::Configuration::instance();
   assert(config);
 
-  print("Start G-Pbox interaction");
-  gpbox_utils::dump_suitable_CEs(suitable_CEs);
+  Info("Start gpbox interaction");
   boost::timer perf_timer;
   perf_timer.restart();
 
@@ -207,9 +199,9 @@ try {
   if( !broker_subject.empty() and !Pbox_host_name.empty() ) {
     try {
 
-      print(Pbox_host_name);
-      print(WM_conf->pbox_port_num());
-      print(WM_conf->pbox_safe_mode());
+      Info(Pbox_host_name);
+      Info(WM_conf->pbox_port_num());
+      Info(WM_conf->pbox_safe_mode());
 
       Connection PEP_connection(
                                 Pbox_host_name,
@@ -218,30 +210,29 @@ try {
                                 WM_conf->pbox_safe_mode()
                                );
 
-      print("gpbox: connection open");
+      Info("gpbox: connection open");
 
       if (!gpbox_utils::filter_gpbox_authorizations(*suitable_CEs, 
                                        PEP_connection, 
                                        gpbox_utils::get_user_x509_proxy(dg_jobid))) {
-        //TODO
+        //TODO: throws proper exception
       }
     }
     catch (...) { // exception no_conn from API 
                   // PEP_connection not properly propagated
-      print("gpbox: no connection!!!");
+      Info("gpbox: no connection!!!");
       // no connection to the Pbox server, the RB goes on 
       // without screening the list of suitable CEs
     }; //try
   }
   else {
-    print("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
+    Info("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
   }
 
-  print("END G-Pbox:");
-  print(perf_timer.elapsed());
-  gpbox_utils::dump_suitable_CEs(suitable_CEs);
+  Info("End gpbox:");
+  Info(perf_timer.elapsed());
   if (suitable_CEs->empty()) {
-    print("Empty CE list after G-Pbox screening");
+    Info("Empty CE list after G-Pbox screening");
     throw NoCompatibleCEs();
   }
   // End of G-Pbox interaction

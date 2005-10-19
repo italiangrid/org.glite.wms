@@ -40,28 +40,12 @@ namespace requestad     = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
 namespace matchmaking   = glite::wms::matchmaking;
 
-//#define GPBOXDEBUG 1
-#ifndef GPBOXDEBUG
-  #define print(msg) Info(msg)
-#else
-  #define print(msg) std::cout << msg << '\n';
-#endif
+#define print(msg) Info(msg)
 
 namespace glite {
 namespace wms {
 namespace helper {
 namespace gpbox_utils {
-
-void 
-dump_suitable_CEs( boost::scoped_ptr<matchmaking::match_table_t> const& suitable_CEs ) {
-  #ifdef GPBOXDEBUG
-    for (matchmaking::match_table_t::const_iterator it = suitable_CEs->begin();
-         it != suitable_CEs->end();
-         ++it) {
-      print(it->first);
-    }
-  #endif
-}
 
 std::string
 get_user_x509_proxy(jobid::JobId const& jobid)
