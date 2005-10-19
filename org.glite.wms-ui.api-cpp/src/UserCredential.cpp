@@ -57,12 +57,16 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 /******************************************************************
 private method: getProxy
 *******************************************************************/
-char* getProxy ( const string &cred_path){
+const char* getProxy ( const string &cred_path){
 	char* result ;
-	if (cred_path=="")
-		if (GLOBUS_GSI_SYSCONFIG_GET_PROXY_FILENAME( &result, GLOBUS_PROXY_FILE_INPUT) != GLOBUS_SUCCESS )
-			throw   CredProxyException(__FILE__ , __LINE__ , "getProxy", WMS_CRED  , "determine" );
-	return result ;
+	if (cred_path==""){
+		if (GLOBUS_GSI_SYSCONFIG_GET_PROXY_FILENAME
+			(&result,GLOBUS_PROXY_FILE_INPUT)!=GLOBUS_SUCCESS){
+			throw   CredProxyException(__FILE__,__LINE__,"getProxy",WMS_CRED,"determine");
+		}
+		return result ;
+	}else{ return cred_path.c_str();}
+
 }
 /******************************************************************
  method: checkProxy
@@ -120,13 +124,13 @@ string UserCredential::getSubject     (const string& cred_path){
  method: getCredType: DEPRECATED
 *******************************************************************/
 int UserCredential::getCredType    (const string& cred_path) {
-	throw  ProxyException ( __FILE__ , __LINE__ , "DEPRECATED UserCredential::getSubject" );
+	throw  ProxyException ( __FILE__ , __LINE__ , "DEPRECATED use of UserCredential::getCredType" );
 }
 /******************************************************************
  method: getStrenght DEPRECATED
 *******************************************************************/
 int UserCredential::getStrenght    (const string& cred_path) {
-	throw  ProxyException ( __FILE__ , __LINE__ , "DEPRECATED UserCredential::getSubject" );
+	throw  ProxyException ( __FILE__ , __LINE__ , "DEPRECATED use of UserCredential::getStrenght" );
 };
 /******************************************************************
  method: getTimeLeft
@@ -147,7 +151,7 @@ int UserCredential::getTimeLeft (const string& cred_path) {
  method: getInfo DEPRECATED
 *******************************************************************/
 void UserCredential::getInfo(string& subj, string& issuer, int& cred_type, int& strength, int& time_left, const string& cred_path ) {
-	throw  ProxyException ( __FILE__ , __LINE__ , "DEPRECATED UserCredential::getInfo");
+	throw  ProxyException ( __FILE__ , __LINE__ , "DEPRECATED use of UserCredential::getInfo");
 };
 
 /******************************************************************
@@ -221,28 +225,47 @@ private method: load_voms
 *******************************************************************/
 void UserCredential::load_voms ( vomsdata& d  ){
 	string METHOD("load_voms(vomsdata vo)");
-	if   (proxy_file ==NULL)
-		if (GLOBUS_GSI_SYSCONFIG_GET_PROXY_FILENAME( &proxy_file, GLOBUS_PROXY_FILE_INPUT) != GLOBUS_SUCCESS )
+	if   (proxy_file ==NULL){
+		if (GLOBUS_GSI_SYSCONFIG_GET_PROXY_FILENAME( &proxy_file, GLOBUS_PROXY_FILE_INPUT) != GLOBUS_SUCCESS ){
 			throw   CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_CRED  , "determine" );
+		}
+	}
 	d.data.clear() ;
 	BIO *in = NULL;
-	X509 *x = NULL;   // It is not used anymore. should be equal to pcd->ucert
+	X509 *x = NULL;
 	in = BIO_new(BIO_s_file());
+	SSLeay_add_ssl_algorithms();
 	if (in) {
-		if (BIO_read_filename(in, proxy_file) > 0) {
+		if (BIO_read_filename(in,proxy_file)>0){
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
-			STACK_OF(X509) *chain = load_chain(  proxy_file );
-			// if ( d.Retrieve( pcd->ucert , chain, RECURSE_CHAIN)  )
-			if ( d.Retrieve( x , chain, RECURSE_CHAIN)  ){
-				return ;
+			if(!x){
+				throw CredProxyException(__FILE__ , __LINE__ ,
+					METHOD,  WMS_VO_LOAD  , "read bio" );
 			}
-			//  if this point is reached then exception is thrown
-			throw CredProxyException(__FILE__ , __LINE__ ,METHOD,  WMS_VO_LOAD  , "retrieve" );
+			STACK_OF(X509) *chain = load_chain(proxy_file);
+			d.SetVerificationType((verify_type)(VERIFY_SIGN|VERIFY_KEY));
+			if (!d.Retrieve( x , chain, RECURSE_CHAIN)  ){
+				d.SetVerificationType((verify_type)(VERIFY_NONE));
+				if (d.Retrieve(x, chain, RECURSE_CHAIN)){
+					throw CredProxyException(__FILE__,__LINE__,
+						METHOD,WMS_VO_LOAD,"retrieve");
+				}
+			}
+			sk_X509_free(chain);
+		} else{
+			throw CredProxyException(__FILE__,__LINE__ ,
+				METHOD,WMS_VO_LOAD,"read BIO filename");
 		}
-		throw CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_VO_LOAD  , "BIO_read_filename" );
+	} else {
+		throw CredProxyException(__FILE__,__LINE__ ,
+			METHOD,WMS_VO_LOAD,"read in");
 	}
-	throw CredProxyException(__FILE__ , __LINE__ ,METHOD, WMS_VO_LOAD  , "BIO_new" );
-} ;
+	if (d.error!=VERR_NONE){
+		// throw CredProxyException(__FILE__,__LINE__ , METHOD,WMS_VO_LOAD,"parse");
+	}
+	// Release memory
+	BIO_free(in);
+}
 
 
 /******************************************************************
