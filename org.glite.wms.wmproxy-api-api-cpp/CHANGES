@@ -2,7 +2,7 @@
 
 WARNING: 
 The following new features can only be used when contacting WMProxy servers
-which version is greater than or equal to 2.0.0
+which version numbers are greater than or equal to 2.0.0
 
 - Add new methods for the support of credential delegation operations 
   based on Gridsite: grstGetProxy, grstPutProxy
