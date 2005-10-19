@@ -241,7 +241,10 @@ std::vector<std::string> Request::listMatchingCE(const std::string& nsHost , int
 		throw JobOperationException     ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Matching CE not allowed" ) ;
 	vector<string> resources;
 	// Nsclient instance:
-	nsClient =   new glite::wms::manager::ns::client::NSClient   ( nsHost, nsPort , (glite::wms::common::logger::level_t) loggerLevel)    ;
+	nsClient = new glite::wms::manager::ns::client::NSClient(nsHost,nsPort,(glite::wms::common::logger::level_t)loggerLevel);
+	if (!jad->hasAttribute(JDL::VIRTUAL_ORGANISATION)){
+		jad->setAttribute (JDL::VIRTUAL_ORGANISATION,userCred.getDefaultVoName()) ;
+	}
 	nsClient->listJobMatch ( jad->toSubmissionString() , resources ) ;
 	delete nsClient ;
 	return resources ;
