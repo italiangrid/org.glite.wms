@@ -196,7 +196,7 @@ try {
   assert(WM_conf);
 
   std::string Pbox_host_name(WM_conf->pbox_host_name());
-  if( !broker_subject.empty() and !Pbox_host_name.empty() ) {
+  if( !broker_subject.empty() && !Pbox_host_name.empty() ) {
     try {
 
       Info(Pbox_host_name);
@@ -212,13 +212,13 @@ try {
 
       Info("gpbox: connection open");
 
-      if (!gpbox_utils::filter_gpbox_authorizations(*suitable_CEs, 
+      if ( !gpbox_utils::filter_gpbox_authorizations(*suitable_CEs, 
                                        PEP_connection, 
-                                       gpbox_utils::get_user_x509_proxy(dg_jobid))) {
+                                       gpbox_utils::get_user_x509_proxy(dg_jobid)) )
+      {
         //TODO: throws proper exception
       }
-    }
-    catch (...) { // exception no_conn from API 
+    } catch (...) { // exception no_conn from API 
                   // PEP_connection not properly propagated
       Info("gpbox: no connection!!!");
       // no connection to the Pbox server, the RB goes on 
@@ -231,7 +231,7 @@ try {
 
   Info("End gpbox:");
   Info(perf_timer.elapsed());
-  if (suitable_CEs->empty()) {
+  if ( suitable_CEs->empty() ) {
     Info("Empty CE list after G-Pbox screening");
     throw NoCompatibleCEs();
   }

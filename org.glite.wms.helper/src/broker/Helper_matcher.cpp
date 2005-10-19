@@ -212,7 +212,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       assert(WM_conf);
 
       std::string Pbox_host_name(WM_conf->pbox_host_name());
-      if( !broker_subject.empty() and !Pbox_host_name.empty() ) {
+      if( !broker_subject.empty() && !Pbox_host_name.empty() ) {
         try {
           Info(Pbox_host_name);
           Info(WM_conf->pbox_port_num());
@@ -227,13 +227,13 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 
           Info("gpbox: connection open");
 
-          if (!gpbox_utils::filter_gpbox_authorizations(*suitableCEs, 
+          if ( !gpbox_utils::filter_gpbox_authorizations(*suitableCEs, 
                                            PEP_connection, 
-                                           x509_user_proxy_file_name)) {
+                                           x509_user_proxy_file_name) ) 
+          {
             //TODO: throw proper exception
           }
-        }
-        catch (...) { // exception no_conn from API 
+        } catch (...) { // exception no_conn from API 
                       // PEP_connection not properly propagated
           Info("gpbox: no connection!!!");
           // no connection to the Pbox server, the WM goes on 

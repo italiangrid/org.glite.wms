@@ -40,8 +40,6 @@ namespace requestad     = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
 namespace matchmaking   = glite::wms::matchmaking;
 
-#define print(msg) Info(msg)
-
 namespace glite {
 namespace wms {
 namespace helper {
@@ -55,8 +53,7 @@ get_user_x509_proxy(jobid::JobId const& jobid)
 
   int err_code = edg_wlpr_GetProxy(jobid.getId(), &c_x509_proxy);
 
-  if (err_code == 0) {
-
+  if ( err_code == 0 ) {
     return null_string;
   } 
   else {
@@ -88,24 +85,24 @@ get_proxy_distinguished_name(std::string const& proxy_file)
   static std::string const null_string;
  
   std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
-  if (!rfd) {
+  if ( !rfd ) {
     return null_string;
   }
   boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
 
   ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
-  if (!rcert) {
+  if ( !rcert ) {
     return null_string;
   }
   boost::shared_ptr<X509> cert(rcert, ::X509_free);
 
   ::X509_NAME* name = ::X509_get_subject_name(rcert);
-  if (!name) {
+  if ( !name ) {
     return null_string;
   }
 
   char* cp = ::X509_NAME_oneline(name, NULL, 0);
-  if (!cp) {
+  if ( !cp ) {
     return null_string;
   }
   boost::shared_ptr<char> cp_(cp, ::free);
@@ -124,7 +121,7 @@ get_tag(matchmaking::match_info const& info)
   ad->EvaluateExpr("GlueCEPolicyPriority", value);
   std::string result;
   value.IsStringValue(result);
-  if (result.empty()) {
+  if( result.empty() ) {
     // sometimes this attribute is published as string (as it should), 
     // sometimes as int, so we need to handle this.
 
@@ -149,23 +146,23 @@ load_chain(const char *certfile)
   X509_INFO *xi;
   int first = 1;
 
-  if(!(stack = sk_X509_new_null())) {
+  if( !(stack = sk_X509_new_null()) ) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  if(!(in=BIO_new_file(certfile, "r"))) {
+  if( !(in=BIO_new_file(certfile, "r")) ) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
   boost::shared_ptr<BIO> _in(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
-  if(!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+  if( !(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL)) ) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
   // scan over it and pull out the certs
-  while (sk_X509_INFO_num(sk)) {
+  while ( sk_X509_INFO_num(sk) ) {
     /* skip first cert */
     if (first) {
       first = 0;
@@ -173,13 +170,13 @@ load_chain(const char *certfile)
     }
     xi=sk_X509_INFO_shift(sk);
     boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
-    if (xi->x509 != NULL) {
+    if ( xi->x509 != NULL ) {
       sk_X509_push(stack,xi->x509);
       xi->x509 = NULL;
     }
   }
-  if(!sk_X509_num(stack)) {
-    print("no certificates in file");
+  if( !sk_X509_num(stack) ) {
+    Info("no certificates in file");
     sk_X509_free(stack);
     sk_X509_INFO_free(sk);
     return NULL;
@@ -199,12 +196,12 @@ VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs
   in = BIO_new(BIO_s_file());
   boost::shared_ptr<BIO> _in(in, ::BIO_free);
 
-  if (in) {
-    if (BIO_read_filename(in, user_cert_file_name.c_str()) > 0) {
+  if ( in ) {
+    if ( BIO_read_filename(in, user_cert_file_name.c_str()) > 0 ) {
       x = PEM_read_bio_X509(in, NULL, 0, NULL);
       chain = load_chain(user_cert_file_name.c_str());
-      if (x && chain) {
-        if (v.Retrieve(x, chain, RECURSE_CHAIN)) {
+      if ( x && chain ) {
+        if ( v.Retrieve(x, chain, RECURSE_CHAIN) ) {
           voms vomsdefault;
           v.DefaultData(vomsdefault);
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
@@ -226,9 +223,9 @@ VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs
       }
     }
 
-    if (x)
+    if ( x )
       X509_free(x);
-    if (chain)
+    if ( chain )
       sk_X509_free(chain);
   
     return true;
@@ -245,35 +242,40 @@ filter_gpbox_authorizations(
   std::string const& user_cert_file_name
 )
 {
-  if(user_cert_file_name.empty())
+  if( user_cert_file_name.empty() ) {
     return false;
+  }
 
   const std::string user_subject(
     get_proxy_distinguished_name(user_cert_file_name)
   );
-  if(user_subject.empty())
-    return false;
 
-  print(user_subject);
+  if( user_subject.empty() ) {
+    return false;
+  }
+
+  Info(user_subject);
 
   Attributes CE_attributes;
   std::string ce_names;
   std::string ce_tags;
 
-  for (matchmaking::match_table_t::iterator it = suitable_CEs.begin();
+  for( matchmaking::match_table_t::iterator it = suitable_CEs.begin();
        it != suitable_CEs.end();
-       ++it) {
+       ++it ) {
     ce_names += it->first + '#';
     std::string tag(get_tag(it->second)); 
     ce_tags += tag.empty() ? "-1" : tag + '#';
   }
-  if (!ce_names.empty())
+  if ( !ce_names.empty() ) {
     ce_names.erase(ce_names.size() - 1);
-  if (!ce_tags.empty())
+  }
+  if ( !ce_tags.empty() ) {
     ce_tags.erase(ce_tags.size() - 1);
+  }
 
-  print(ce_names);
-  print(ce_tags);
+  Info(ce_names);
+  Info(ce_tags);
 
   CE_attributes.push_back(Attribute("aggregation-tag", ce_tags, STRING));
 
@@ -285,29 +287,33 @@ filter_gpbox_authorizations(
     Attributes USER_attribs;
     PEP_request.SetAttr(USER_attribs, SUBJ);
   
-    if(VOMS_proxy_init(user_cert_file_name,USER_attribs)) {
+    if( VOMS_proxy_init(user_cert_file_name,USER_attribs) ) {
+
       PEP_request.SetAttr(USER_attribs, SUBJ);
 
       EvalResults evaluation_of_results;
       static std::string const null_string;
 
       if( PEP_request.Send(null_string, 0, 0, 0, evaluation_of_results) ) { 
-        print("filter_gbox_authorizations: PEP Send returned true");
- 	      for (EvalResults::iterator iter = evaluation_of_results.begin(); 
-             iter != evaluation_of_results.end(); 
-             ++iter) {
+
+        Info("filter_gbox_authorizations: PEP Send returned true");
+
+        EvalResults::iterator const end_it = evaluation_of_results.end();
+ 	      for ( EvalResults::iterator iter = evaluation_of_results.begin(); 
+        iter != end_it; 
+        ++iter) {
 
           answer PEP_request_answer = iter->GetResult();
           // INDET may even be returned from an exception coming to the API 
           // Send, so we don't even check it (since the policy (permit) is
           // according)), its content being untrustable
 
-          print(iter->GetId());
+          Info(iter->GetId());
           // IMPORTANT: NOTA means that G-Pbox cannot match the request with any found policy
           // hence this will result in a DENY whilst PERMIT and UNDET are passed on 
-          if(PEP_request_answer == DENY or PEP_request_answer == NOTA) {
+          if( PEP_request_answer == DENY || PEP_request_answer == NOTA ) {
             suitable_CEs.erase(iter->GetId());
-            print("!!!erased CE");
+            Info("!!!erased CE");
           }
         }
       }
@@ -316,12 +322,11 @@ filter_gpbox_authorizations(
       }
     }
     else {
-      print("VOMS_proxy_init returned false");
+      Info("VOMS_proxy_init returned false");
       return false;
     }
-  }
-  catch(...) {
-    print("filter_gbox_authorizations: PEP Send returned false");
+  } catch(...) {
+    Info("filter_gbox_authorizations: PEP Send returned false");
     return false;
   }
 
