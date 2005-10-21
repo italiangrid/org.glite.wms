@@ -631,49 +631,35 @@ JobStatusPtr job_status(jobid::JobId const& id)
 {
   std::string const x509_proxy = common::get_user_x509_proxy(id);
   std::string const sequence_code;
-  common::ContextPtr context(
-    common::create_context_proxy(id, x509_proxy, sequence_code)
-  );
-  int const flags = 0;
-  JobStatusPtr status(new edg_wll_JobStat, delete_job_status);
-  if (!edg_wll_JobStatusProxy(
-        context.get(),
-        id.getId(),
-        flags,
-        status.get())
-     ) {
-    return status;
-  } else {
+  try {
+    common::ContextPtr context(
+      common::create_context_proxy(id, x509_proxy, sequence_code)
+    );
+    int const flags = 0;
+    JobStatusPtr status(new edg_wll_JobStat, delete_job_status);
+    if (!edg_wll_JobStatusProxy(
+          context.get(),
+          id.getId(),
+          flags,
+          status.get())
+       ) {
+      return status;
+    } else {
+      return JobStatusPtr();
+    }
+  } catch (common::CannotCreateLBContext const&) {
     return JobStatusPtr();
   }
 }
 
 bool is_waiting(JobStatusPtr const& status)
 {
-  return status->state == EDG_WLL_JOB_WAITING;
-}
-
-bool is_ready_scheduled_running(JobStatusPtr const& status)
-{
-  return
-    status->state == EDG_WLL_JOB_READY
-    || status->state == EDG_WLL_JOB_SCHEDULED
-    || status->state == EDG_WLL_JOB_RUNNING;
-}
-
-bool is_finished(JobStatusPtr const& status)
-{
-  return
-    status->state == EDG_WLL_JOB_DONE
-    || status->state == EDG_WLL_JOB_CLEARED
-    || status->state == EDG_WLL_JOB_ABORTED
-    || status->state == EDG_WLL_JOB_CANCELLED
-    || status->state == EDG_WLL_JOB_PURGED;
+  return status && status->state == EDG_WLL_JOB_WAITING;
 }
 
 bool is_cancelled(JobStatusPtr const& status)
 {
-  return status->state == EDG_WLL_JOB_CANCELLED;
+  return status && status->state == EDG_WLL_JOB_CANCELLED;
 }
 
 class clean_ignore
@@ -975,6 +961,12 @@ get_new_requests(
             log_cancel_req(request->lb_context());
           }
 
+        } if (command == "match" && !status) {
+
+          cleanup_guard.dismiss();
+          RequestPtr request(new Request(*command_ad, cleanup, id));
+          tq.insert(std::make_pair(id.toString(), request));
+          
         } else {
 
           Info("ignoring " << command << " for " << id);
