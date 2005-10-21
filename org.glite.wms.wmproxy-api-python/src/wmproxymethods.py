@@ -1,3 +1,4 @@
+
 """
 Python API for Wmproxy Web Service
 """
@@ -7,7 +8,13 @@ import SOAPpy  #Error Type
 import os  #getDefaultProxy method
 import socket # socket error mapping
 
-DEBUGMODE=1
+class Config:
+	DEBUGMODE=1
+	def debug(self, msg):
+		if self.DEBUGMODE:
+			print msg
+
+
 ### Static methods/classes: ###
 def parseStructType(struct,*fields):
 	"""
@@ -20,8 +27,7 @@ def parseStructType(struct,*fields):
 			try:
 				result[field]=struct.__getitem__(field)
 			except:
-				if DEBUGMODE:
-					print "parseStructType: Unable to find field: " , field
+				debug("parseStructType: Unable to find field: " + field)
 				result[field]=""
 		return result
 	else:
@@ -44,7 +50,7 @@ class JobIdStruct:
 		"""
 		Default constructor
 		"""
-   		self.children = []
+		self.children = []
 		self.nodeName = ""
 		# Mandatory field
 		self.jobid=soapStruct.__getitem__("id")
@@ -100,17 +106,19 @@ class BaseException(Exception):
 	args=[]
 
 	def __repr__(self):
-		result ="\n\t "
+		return self.toString()
+
+	def toString(self):
+		result =""
 		if self.errType:
 			result+=self.errType
 		if self.origin:
 			result+=" raised by "+self.origin
 		if self.methodName:
-			result+="\n\t "+self.methodName
+			result+=" (method "+self.methodName+") "
 		if self.description:
-			result+=" " + self.description
-		if DEBUGMODE:
-			print "Debug mode ON"
+			result+="\n" + self.description
+		if Config.DEBUGMODE:
 			for fc in self.args:
 				try:
 					result+="\n\t "+ fc
@@ -129,6 +137,8 @@ class HTTPException(BaseException):
 		self.error   = err
 		self.methodName =""
 		self.description=""
+		self.args=[]
+
 
 class SocketException(BaseException):
 	"""
@@ -139,6 +149,7 @@ class SocketException(BaseException):
 		self.origin  = "Socket Connection"
 		self.errType = "Error"
 		self.errorCode   = 105
+		self.args=[]
 		for ar in err.args:
 			self.args.append(ar)
 
@@ -146,19 +157,38 @@ class WMPException(BaseException):
 	"""
 	Specify a structure for Wmproxy Server exceptions
 	"""
+	def parseWmp(self, err):
+		error = err[2][0]
+		self.errorCode   = error["ErrorCode"]
+		self.timestamp   = error["Timestamp"]
+		self.methodName  = error["methodName"]
+		self.description = error["Description"]
+		for ar in error["FaultCause"]:
+			self.args.append(ar)
+
+	def parseExt(self, err):
+		self.origin  = err[0]
+		self.errType = err[1]
+		self.methodName =""
+		error = err[2][0]
+		if error:
+			self.description =error[0]
+			self.args.append(self.description)
+		else:
+			self.args.append(self.origin)
+			self.args.append(self.errType)			
 	def __init__(self, err):
+		self.error   = err
+		self.origin  = err[0]
+		self.errType = err[1]
+		self.args=[]
 		try:
-			self.origin  = err[0]
-			self.errType = err[1]
-			error = err[2][0]
-			self.errorCode   = error["ErrorCode"]
-			self.timestamp   = error["Timestamp"]
-			self.methodName  = error["methodName"]
-			self.description = error["Description"]
-			for ar in error["FaultCause"]:
-				self.args.append(ar)
+			self.parseWmp(err)
 		except:
-			raise err
+			try:
+				self.parseExt(err)
+			except:
+				raise err
 
 
 class ApiException(BaseException):
@@ -179,20 +209,7 @@ def getDefaultProxy():
 			return os.environ['X509_USER_PROXY']
 	except:
 			return '/tmp/x509up_u'+ repr(os.getuid())
-def getDefaultNs():
-	"""
-	retrieve Wmproxy default namespace string representation
-	"""
-	return "http://glite.org/wms/wmproxy"
-def getGrstNs():
-	"""
-	GridSite Delegation namespace string representation
-	PutProxy and getProxyReq services requires gridsite specific namespace
-	WARNING: for backward compatibility with WMPROXY server (version <= 1.x.x)
-	deprecated PutProxy and getProxyReq sevices are still provided with
-	wmproxy default namespace
-	"""
-	return "http://www.gridsite.org/namespaces/delegation-1"
+
 
 """
 Converters:
@@ -217,26 +234,44 @@ class Wmproxy:
 		self.proxy=proxy
 		self.remote=""
 		self.init=0
+	"""
+	Static Methods
+	"""
+	def getDefaultNs(self):
+		"""
+		retrieve Wmproxy default namespace string representation
+		"""
+		return "http://glite.org/wms/wmproxy"
+	def getGrstNs(self):
+		"""
+		GridSite Delegation namespace string representation
+		PutProxy and getProxyReq services requires gridsite specific namespace
+		WARNING: for backward compatibility with WMPROXY server (version <= 1.x.x)
+		deprecated PutProxy and getProxyReq sevices are still provided with
+		wmproxy default namespace
+		"""
+		return "http://www.gridsite.org/namespaces/delegation-1"
 
-	"""
-	Provide all WMProxy web services
-	"""
+
 	def close(self):
 		"""
-		Default Constructor
+		Default Destructor
+		reset values
 		"""
 		self.ns=""
 		self.proxy=""
 		self.remote=""
 		self.init=0
-
 	def soapInit(self):
-		#Perform initialisation  (if necessary)
+		"""
+		Perform initialisation  (if necessary)
+		Establish connection with remote server
+		"""
 		if self.init==0:
 			if not self.proxy:
 				self.proxy=getDefaultProxy()
 			if not self.ns:
-				self.ns=getDefaultNs()
+				self.ns=self.getDefaultNs()
 			self.remote = WMPSOAPProxy(self.url,namespace=self.ns, key_file=self.proxy, cert_file=self.proxy)
 			self.init=1
 
@@ -485,7 +520,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def putProxy(self, delegationID, proxy):
+	def putProxy(self, delegationID, proxy, ns =""):
 		"""
 		Method:  putProxy
 		ProxyOperationException: Proxy exception: Provided delegation id not valid
@@ -494,10 +529,16 @@ class Wmproxy:
 		gridsite namespace for WMPROXY servers (version > 1.x.x)
 		see getDefaultProxy() and  getDefaultNs() methods
 		IN =  delegationID (string)
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
 		IN =  proxy (string)
 		"""
 		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
 			self.soapInit()
+			self.setNamespace(oldNs)
 			self.remote.putProxy(delegationID, proxy)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
@@ -506,7 +547,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getProxyReq(self, delegationID):
+	def getProxyReq(self, delegationID, ns =""):
 		"""
 		Method:  getProxyReq
 		WARNING: for backward compatibility getProxyReq is provided with both namespaces:
@@ -514,10 +555,16 @@ class Wmproxy:
 		gridsite namespace for WMPROXY servers (version > 1.x.x)
 		see getDefaultProxy() and  getDefaultNs() methods
 		IN =  delegationID (string)
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
 		OUT = request (string)
 		"""
 		try:
+			if ns!=self.ns:
+				oldNs=self.ns
+				self.setNamespace(ns)
 			self.soapInit()
+			self.setNamespace(oldNs)
 			return self.remote.getProxyReq(delegationID)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
@@ -525,6 +572,9 @@ class Wmproxy:
 			raise HTTPException(err)
 		except socket.error, err:
 			raise SocketException(err)
+
+
+
 
 	def getVersion(self):
 		"""
