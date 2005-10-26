@@ -194,6 +194,7 @@ AC_CONFIG_FILES([src/utilities/Makefile])
 AC_CONFIG_FILES([src/services/Makefile])
 AC_CONFIG_FILES([src/lbclient/Makefile])
 AC_CONFIG_FILES([src/commands/Makefile])
+AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([wms-client.dox])
 
 AC_OUTPUT

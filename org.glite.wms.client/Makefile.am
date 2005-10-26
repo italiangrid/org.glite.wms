@@ -25,7 +25,7 @@ doc_DATA = LICENSE \
 CHANGES
 
 ## Subdirectories list
-SUBDIRS = src
+SUBDIRS = src doc
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
