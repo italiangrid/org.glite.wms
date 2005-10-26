@@ -96,7 +96,7 @@ displays command usage
 <configfile>
 
 .IP
-if the command is launched with this option, the configuration file pointed to by filepath is used instead of the standard configuration file.
+if the command is launched with this option, the configuration file pointed by filepath is used. This option is meaningless when used toghether with "--vo" option
 .PP
 .HP
 \fB--vo\fR
@@ -106,19 +106,7 @@ if the command is launched with this option, the configuration file pointed to b
 this option allows the user to specify the Virtual Organisation she/he is currently working for.
 If the user proxy contains VOMS extensions then the VO specified through this option is overridden by the
 default VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).
-The following precedence rule is followed for determining the user's VO:
-
-- the default VO from the user proxy (if it contains VOMS extensions)
-
-- the VO specified through the --vo or --config-vo options
-
-- the VO specified in the configuration file pointed by the GLITE_WMSUI_CONFIG_VO environment variable
-
-- the VirtualOrganisation attribute in the JDL (if the user proxy contains VOMS extensions this value is overridden as above)
-
-- the default VO specified in the $GLITE_WMS_LOCATION/etc/glite_wmsui_cmd_var.conf (DefaultVO field) configuration file
-
-If none of the listed trials has success an error is returned and the command is aborted.
+This option is meaningless when used toghether with "--vo" option
 .PP
 .HP
 \fB--debug\fR
