@@ -241,6 +241,11 @@ public:
         */
         std::string* getDelegationId ( );
         /**
+        * Gets the virtualOrganisation associated to this option
+	* @return the point to the virtualOrganisation string
+        */
+        std::string* getVirtualOrganisation(){return virtualOrganisation;}
+        /**
         * Performs the operations to delegate a user proxy to the endpoint
         * @param cfg the configuration context object
         * @param id the delegation identifier string to be used for the delegation
@@ -395,8 +400,9 @@ private:
 	void checkPrefix();
 	/**
 	* Check the WMS client configuration file
+	@return definite VirtualOrganisation found value
 	*/
-	void checkConf();
+	std::string* checkConf();
 	/** Look for possible configuration file */
 	/**
 	*	convert the input time string to number of seconds form 1970
@@ -463,6 +469,8 @@ private:
         Log* logInfo ;
 	// General configuration inner values
 	std::string prefix;
+	// Virutal Organisation value
+	std::string *virtualOrganisation;
 }; // end class definition
 
 } // glite

@@ -809,6 +809,9 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		collectAd = AdConverter::createCollectionFromPath (*collectOpt);
 		collectAd->setLocalAccess(true);
 		// Simple Ad manipulation
+		if (!collectAd->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
+			collectAd->setAttribute(JDL::VIRTUAL_ORGANISATION, wmcUtils->getVirtualOrganisation());
+		}
 		AdUtils::setDefaultValuesAd(collectAd,wmcConf);
 		// Collect Ad manipulation
 		AdUtils::setDefaultValues(collectAd,wmcConf);
@@ -870,6 +873,9 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			jobAd->addAttribute (JDL::EXPIRY_TIME, (double)expireTime);
 		}
 		// Simple Ad manipulation (common)
+		if (!jobAd->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
+			jobAd->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
+		}
 		AdUtils::setDefaultValuesAd(jobAd,wmcConf);
 		// checks if file archiving and compression is allowed
 		if (wmpVersion > Options::WMPROXY_OLD_VERSION) {
