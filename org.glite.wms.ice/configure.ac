@@ -21,7 +21,7 @@ AC_PREREQ(2.57)
 AC_INIT([GLite WMS ICE], [1.5.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
-AC_CONFIG_SRCDIR([src/main.h])
+AC_CONFIG_SRCDIR([src/ice-core.h])
 
 # Notices.
 AC_COPYRIGHT([Copyright (c) 2004 The EU EGEE Project
@@ -40,6 +40,7 @@ AC_PROG_CXX
 AC_PROG_CXXCPP
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
+AM_PATH_LOG4CPP
 
 # Checks for libraries.
 
@@ -58,17 +59,26 @@ AC_HEADER_TIME
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-have_boost=no                                                                                
-AC_BOOST([], have_boost=yes, have_boost=no)
-AC_MSG_RESULT(["BOOST found $have_boost"])
+have_classads=no
+have_boost=no
+have_glite_wmsutils=no
 
-
-AC_OPTIMIZE                                                                                
+AC_OPTIMIZE
 AC_GLITE
+
+AC_CLASSADS([], have_classads=yes, have_classads=no)
+AC_GSOAP([])
+AC_BOOST([], have_boost=yes, have_boost=no)
+AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
+
+AC_MSG_RESULT(["CLASSADS found $have_classads"])
+AC_MSG_RESULT(["BOOST found $have_boost"])
+AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([src/util/Makefile])
 
 AC_OUTPUT

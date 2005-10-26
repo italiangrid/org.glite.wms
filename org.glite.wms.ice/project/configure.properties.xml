@@ -21,5 +21,5 @@
 -->
 <project name="wms ice component configuration properties">
 <property name="configure.args"
-               value="--prefix=${workspace.abs.dir}/stage --with-dist-location=${with.dist.location} --with-glite-location=${with.glite.location} --disable-optimization --with-boost-prefix=${with.boost.prefix} --enable-boost_debug=${enable.boost.debug}"/>
+               value="--prefix=${workspace.abs.dir}/stage --with-dist-location=${with.dist.location} --with-glite-location=${with.glite.location} --disable-optimization --with-boost-prefix=${with.boost.prefix} --enable-boost_debug=${enable.boost.debug} --with-gsoap-location=${with.gsoap.prefix} --with-gsoap-version=${ext.gsoap.version} --with-classads-prefix=${with.classads.prefix} --with-log4cpp-prefix=${with.log4cpp.prefix}"/>
 </project>

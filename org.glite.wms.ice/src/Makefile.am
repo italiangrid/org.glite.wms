@@ -12,7 +12,35 @@
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
 
-AM_CPPFLAGS = -I$(top_srcdir)/src
+SUBDIRS = util
+
+bin_PROGRAMS = putFL tryICE
+
+putFL_SOURCES = putFL.cpp
+
+tryICE_SOURCES = tryICE.cpp
+
+putFL_LDADD = -L$(GLITE_LOCATION)/lib \
+		-lglite_ce_cream_client_soap \
+		-lglite_ce_cream_client_util \
+		../src/util/libglite_wms_ice_util.la \
+		$(LOG4CPP_LIBS) \
+		$(CLASSAD_LIBS) \
+		$(BOOST_FS_LIBS) \
+		$(BOOST_THREAD_LIBS) \
+		$(BOOST_REGEX_LIBS) \
+		-lglite_wms_util 
+
+tryICE_LDADD = -L$(GLITE_LOCATION)/lib -lglite_ce_cream_client_soap -lglite_ce_cream_client_util ../src/util/libglite_wms_ice_util.la $(LOG4CPP_LIBS) $(CLASSAD_LIBS) 
+
+AM_CPPFLAGS = -I$(top_srcdir)/src \
+		-I$(top_srcdir)/src/autogen \
+		-I$(GLITE_LOCATION)/include \
+		$(GSOAP_CFLAGS) \
+		$(CLASSAD_CFLAGS) \
+		$(BOOST_CFLAGS) \
+		-UHAVE_CONFIG_H \
+		$(LOG4CPP_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
 
