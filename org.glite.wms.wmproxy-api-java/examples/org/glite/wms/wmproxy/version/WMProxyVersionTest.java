@@ -8,6 +8,7 @@
  package org.glite.wms.wmproxy.version ;
 
 import org.glite.wms.wmproxy.WMProxyAPI;
+import org.glite.wms.wmproxy.BaseException;
 /*
 
 	Test of  "getVersion" method in org.glite.wms.wmproxy.WMProxyAPI
@@ -25,7 +26,7 @@ public class WMProxyVersionTest {
 	*	@param proxyFile the path location of the user proxy file
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String proxyFile ) throws java.lang.Exception {
+	public static void runTest ( String url, String proxyFile ) throws org.glite.wms.wmproxy.BaseException {
 
 		String result = "";
 
@@ -40,21 +41,28 @@ public class WMProxyVersionTest {
 
 		String url = "";
 		String proxyFile = "";
+		try {
+			// input parameters
+			if ((args == null) || (args.length < 2))
+				throw new BaseException ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile>)");
+			url = args[0];
+			proxyFile = args[1];
 
-		// input parameters
-		if ((args == null) || (args.length < 2))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile>)");
-		url = args[0];
-		proxyFile = args[1];
+			System.out.println ("TEST : Version");
+			System.out.println ("************************************************************************************************************************************");
+			System.out.println ("WS URL	 	= [" + url + "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+			System.out.println ("proxyFile	 = [" + proxyFile + "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 
-		System.out.println ("TEST : Version");
-		System.out.println ("************************************************************************************************************************************");
-		System.out.println ("WS URL	 	= [" + url + "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("proxyFile	 = [" + proxyFile + "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+			runTest ( url, proxyFile);
+		} catch (BaseException exc) {
+			System.out.println("\nException caught:\n");
+			System.out.println("Message:\n----------\n"+ exc.getMessage() + "\n");
+			System.err.println("Stack Trace:\n------------");
+                        exc.printStackTrace();
+		}
 
-		runTest ( url, proxyFile);
 	 }
 
  }

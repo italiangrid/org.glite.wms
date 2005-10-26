@@ -84,18 +84,20 @@ public class WMProxyAPI{
 	*  @param url WMProxy service URL
 	*  @param proxyFile the path location of the user proxy file
 	*  @throws  ServiceException If any error in calling the service
-	*  @throws MalformedURLException malformed service URL specified as input
-	*  @throws  FileNotFoundException Unable to find the user proxy file
-	*
+	*  @throws ServiceURLException malformed service URL specified as input
+	*  @throws CredentialException in case of any error with the user proxy file
 	*/
-	public WMProxyAPI (String url, String proxyFile)
-			throws 	javax.xml.rpc.ServiceException,
-					java.net.MalformedURLException,
-					java.io.FileNotFoundException {
+	public WMProxyAPI (String url, String proxyFile) throws org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServiceURLException,
+					org.glite.wms.wmproxy.CredentialException {
 		logger = Logger.getLogger(WMProxyAPI.class);
 		logger.debug ("url=[" + url + "] - proxyFile = [" + proxyFile + "]");
-		// service URL
-		this.serviceURL = new URL (url);
+		try {
+			// service URL
+			this.serviceURL = new URL (url);
+		} catch (java.net.MalformedURLException exc) {
+			throw new org.glite.wms.wmproxy.ServiceURLException (exc.getMessage());
+		}
 		// proxyFile
 		this.proxyFile = proxyFile;
 		// Sets up the connection
@@ -107,21 +109,25 @@ public class WMProxyAPI{
 	*  @param proxyFile the path location of the user proxy file
 	*  @param logPropFille the path location of the log4j properties file
 	*  @throws ServiceException If any error occurs in calling the service
-	*  @throws MalformedURLException malformed service URL specified as input
-	*  @throws FileNotFoundException Unable to find the user proxy file
-	*
+	*  @throws CredentialException in case of any error with the user proxy file
+	*  @throws ServiceURLException malformed service URL specified as input
 	*/
-	public WMProxyAPI (String url, String proxyFile, String logPropFile)
-				throws 	javax.xml.rpc.ServiceException,
-						java.net.MalformedURLException,
-						java.io.FileNotFoundException {
+	public WMProxyAPI (String url, String proxyFile, String logPropFile) throws org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.ServiceURLException,
+					org.glite.wms.wmproxy.CredentialException {
+
 		// logger
 		if ( logPropFile != null)
 			PropertyConfigurator.configure(logPropFile);
 		logger = Logger.getLogger(WMProxyAPI.class);
 		logger.debug ("INPUT: url=[" + url + "] - proxyFile = [" + proxyFile + "]");
-		// service URL
-		this.serviceURL = new URL (url);
+		try {
+			// service URL
+			this.serviceURL = new URL (url);
+		} catch (java.net.MalformedURLException exc) {
+			// MalformedURLException -> ServiceURLException
+			throw new org.glite.wms.wmproxy.ServiceURLException (exc.getMessage());
+		}
 		// proxyFile
 		this.proxyFile = proxyFile;
 		// Sets up the connection
@@ -131,13 +137,35 @@ public class WMProxyAPI{
 	*  Gets a proxy identified by the delegationId string.
 	*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
 	*  but it will be soon deprecated.
-	*  @param delegationID the id to identify the delegation
-	*  @return a string representing the proxy
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
+	* @param delegationID the id to identify the delegation
+	* @return the string representing the proxy
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
 	*/
-	public java.lang.String getProxyReq (java.lang.String delegationId) throws java.rmi.RemoteException {
-			logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
+	public java.lang.String getProxyReq (java.lang.String delegationId)
+		throws org.glite.wms.wmproxy.AuthenticationFaultException,
+			org.glite.wms.wmproxy.AuthorizationFaultException,
+			org.glite.wms.wmproxy.ServiceException {
+		logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
+		try {
 			return this.serviceStub.getProxyReq(delegationId) ;
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
 	*  Gets a proxy identified by the delegationId string.
@@ -145,12 +173,26 @@ public class WMProxyAPI{
 	*  the version of the server can be retrieved by calling the getVersion service.
 	*  @param delegationID the id to identify the delegation
 	*  @return a string representing the proxy
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @since wms.wmproxy-api-java version 1.2.0
+	*  @throws CredentialException a problem occurred during the operations of retrieving the proxy
+	* @throws ServiceException a problem occurred during the remote call to the WMProxy server
+	* @since 1.2.0
 	*/
-	public java.lang.String grstGetProxyReq (java.lang.String delegationId) throws java.rmi.RemoteException {
-			logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
+	public java.lang.String grstGetProxyReq (java.lang.String delegationId)
+		throws org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException {
+		logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
+		try {
 			return this.grstStub.getProxyReq(delegationId) ;
+		} catch ( org.gridsite.www.namespaces.delegation_1.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 
@@ -162,27 +204,45 @@ public class WMProxyAPI{
 	*  (like  jobRegister, jobSubmit, etc) until its expiration time.
 	*  This method remains to keep compatibility with the version 1.0.0 of WMProxy servers,
 	*  but it will be soon deprecated; the version of the server can be retrieved by calling the getVersion service.
-	*  @param delegationId the id used to identify the delegation
-	*  @param cert the input certificate
-	*  @throws java.rmi.RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
-	* @throws java.io.FileNotFoundException if the local user proxy is not found
-	* @throws java.security.cert.CertificateException if any error occurs during the generation of the proxy from the input certificate
-	* @throws java.security.cert.CertificateExpiredException if the user proxy has expired
+	* @param delegationId the id used to identify the delegation
+	* @param cert the input certificate
+	* @throws CredentialException if any error occurs during the creation of the proxy from the input certificate
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	* @see #getVersion
 	*
 	*/
 	public void putProxy(java.lang.String delegationId, java.lang.String cert)
-		throws 	java.rmi.RemoteException,
-				java.lang.Exception,
-				java.io.FileNotFoundException,
-				java.security.cert.CertificateException,
-				java.security.cert.CertificateExpiredException {
+		throws org.glite.wms.wmproxy.AuthenticationFaultException,
+			org.glite.wms.wmproxy.AuthorizationFaultException,
+			org.glite.wms.wmproxy.CredentialException,
+			org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: cert=[" + cert+ "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
 		logger.debug ("Creating proxy from certificate (CreateProxyfromCertReq)");
+		// Creates the proxy to be delegated from the input certificate
 		String proxy = this.createProxyfromCertReq(cert);
-		logger.debug ("Delegating credential (putProxy)");
-		this.serviceStub.putProxy(delegationId, proxy) ;
+		try {
+			// Delegating user proxy
+			logger.debug ("Delegating credential (putProxy)");
+			this.serviceStub.putProxy(delegationId, proxy) ;
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
 	* This method allows delegating user credential to the WMProxy server using the GridSite package:
@@ -193,47 +253,63 @@ public class WMProxyAPI{
 	* This method can be only used invoking WMProxy servers with versions greater than or equal to 2.0.0
 	*  @param delegationId the id used to identify the delegation
 	*  @param cert the input certificate
-	*  @throws java.rmi.RemoteException If any error occurs during the execution of the remote method call to the WMProxy server
-	* @throws java.io.FileNotFoundException if the local user proxy is not found
-	* @throws java.security.cert.CertificateException if any error occurs during the generation of the proxy from the input certificate
-	* @throws java.security.cert.CertificateExpiredException if the user proxy has expired
-	*  @since wms.wmproxy-api-java version 1.2.0
+	* @throws CredentialException a problem occurred during the operations of delegation
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @since 1.2.0
 	* @see #getVersion
-	*
 	*/
 	public void grstPutProxy(java.lang.String delegationId, java.lang.String cert)
-		throws 	java.rmi.RemoteException,
-				 java.lang.Exception,
-				java.io.FileNotFoundException,
-				java.security.cert.CertificateException,
-				java.security.cert.CertificateExpiredException {
+		throws org.glite.wms.wmproxy.CredentialException,
+		org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: cert=[" + cert + "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
 		logger.debug ("Creating proxy from certificate (CreateProxyfromCertReq)");
 		String proxy = this.createProxyfromCertReq(cert);
 		logger.debug ("Delegating credential (putProxy)");
-		this.serviceStub.putProxy(delegationId,proxy) ;
+		try {
+			this.serviceStub.putProxy(delegationId,proxy) ;
+		} catch (org.gridsite.www.namespaces.delegation_1.DelegationException exc)  {
+			// DelegationException -> CredentialException
+			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
+		} catch (java.rmi.RemoteException exc)  {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+ 		} catch (Exception exc )  {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
-	* Gets the Version of the WMProxy services
-	* @return the version numbers
-	* @exception RemoteException a problem occurred during the remote call to the WMProxy server
-	* @throws AuthenticationFaultType an authentication problem occurred
-	* @throws GenericFaultType a generic problem occurred
-	*
+	* Gets the version numbers of the WMProxy services
+	* @return the string with the version numbers
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
-
 	public java.lang.String getVersion()
-			throws java.rmi.RemoteException,
-				org.glite.wms.wmproxy.GenericFaultType,
-				org.glite.wms.wmproxy.AuthenticationFaultType {
-		return this.serviceStub.getVersion() ;
+			throws org.glite.wms.wmproxy.AuthenticationFaultException,
+				org.glite.wms.wmproxy.ServiceException {
+		try {
+			return this.serviceStub.getVersion() ;
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
-	*   Registers a job for submission.The unique identifier assigned to the job is returned to the client.
-	*  This operation only registers the job and assigns it with an identifier.
-	*  The processing of the job (matchmaking, scheduling etc.) within the WM is not started.
+	* Registers a job for submission.The unique identifier assigned to the job is returned to the client.
+	* This operation only registers the job and assigns it with an identifier.
+	* The processing of the job (matchmaking, scheduling etc.) within the WM is not started.
 	* The job is "held" by the system in the "Registered" status until the jobStart operation is called.
 	* Between the two calls the client can perform all preparatory actions needed by the job to run
 	* (e.g. the registration of input data, the upload of the job input sandbox files etc); especially
@@ -241,28 +317,42 @@ public class WMProxyAPI{
 	* The service supports registration (and consequently submission) of simple jobs, parametric jobs, partitionable jobs, DAGs and collections of jobs.
 	* The description is always provided through a single JDL description.
 	* When a clients requests for registration of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs (all those requests represent in fact a set of jobs),
-	*  the operations returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
-	*  @param jdl the job jdl representation.
-	*  @param delegationId the id used to identify the delegation
-	*  @return the structure containing the id of the registered job
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericFaultType a generic problem occurred
-	*  @throws AuthenticationFaultType a generic authentication problem occurred
-	*  @throws InvalidArgumentFaultType the given JDL expression is not valid
-	*
+	* the operations returns a structure containing the main identifier of the complex object and the identifiers of all related sub jobs.
+	* @param jdl the job jdl representation.
+	* @param delegationId the id used to identify the delegation
+	* @return the structure containing the id of the registered job
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws InvalidArgumentFaultException the given JDL expression is not valid
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public org.glite.wms.wmproxy.JobIdStructType jobRegister(java.lang.String jdl, java.lang.String delegationId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.InvalidArgumentFaultType {
+			throws org.glite.wms.wmproxy.AuthenticationFaultException,
+				org.glite.wms.wmproxy.InvalidArgumentFaultException,
+				org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: JDL=[" + jdl + "]");
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
-		return this.serviceStub.jobRegister (jdl, delegationId) ;
+		try {
+			return this.serviceStub.jobRegister (jdl, delegationId) ;
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		}  catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception -> ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
-	*  Triggers the submission a previously registered job. It starts the actual processing of the registered job within the Workload Manager.
+	* Triggers the submission a previously registered job. It starts the actual processing of the registered job within the Workload Manager.
 	* It is assumed that when this operation is called, all the work preparatory to the job
 	* (e.g. input sandbox upload, registration of input data to the Data Management service etc.) has been completed by the client.<BR>
 	* Here follows an example of the sequence of operations to be performed for submitting a job:<BR>
@@ -272,28 +362,53 @@ public class WMProxyAPI{
 	* <LI> transfer of the job Input Sandbox file to the returned destURI (using GridFTP)
 	* <LI> jobStart(jobId).Triggers the submission for a previously registered job
 	* </UL>
-	*  @param jobId the id of the job
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericFaultType a generic problem occurred
-	*  @throws AuthenticationFaultType a generic authentication problem occurred
-	*  @throws OperationNotAllowedFaultType the current job status does not allow requested operation.
-	*  @throws InvalidArgumentFaultType the given job Id is not valid
-	*  @throws JobUnknownFaultType the given job has not been registered to the system.
+	* @param jobId the id of the job
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws JobUnknownFaultException the given job has not been registered to the system
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	*  @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public void jobStart(java.lang.String jobId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-					org.glite.wms.wmproxy.OperationNotAllowedFaultType,
-					org.glite.wms.wmproxy.InvalidArgumentFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
-		this.serviceStub.jobStart ( jobId ) ;
+		try {
+			this.serviceStub.jobStart ( jobId ) ;
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.OperationNotAllowedFaultType exc) {
+			// OperationNotAllowedFault
+			throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			//
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
-	*  Submits a job: performs registration and triggers the submission
+	* Submits a job: performs registration and triggers the submission
 	* The JDL description of the job provided by the client is validated by the service,
 	* registered to the LB and finally passed to the Workload Manager.
 	* The unique identifier assigned to the job is returned to the client.
@@ -303,68 +418,120 @@ public class WMProxyAPI{
 	* the description is always provided through a single JDL description.
 	* When a clients requests for submission of a complex object, i.e. parametric and partitionable jobs, DAGs and collections of jobs
 	* (all those requests represent in fact a set of jobs), the operations returns a structure containing the main identifier of the complex object
-	*  and the identifiers of all related sub jobs.
-	*  @param jobId the id of the job
-	*  @param delegationId the id used to identify the delegation
-	*  @return the id of the job
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericException a generic problem occurred
-	*  @throws AuthorizationFaultType client is not authorized to perform this operation
-	*  @throws AuthenticationFaultType a generic authentication problem occurred
-	*  @throws InvalidArgumentFaultType the given job JDL expression is not valid
+	* and the identifiers of all related sub jobs.
+	* @param jobId the id of the job
+	* @param delegationId the id used to identify the delegation
+	* @return the id of the job
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public org.glite.wms.wmproxy.JobIdStructType jobSubmit(java.lang.String jdl, java.lang.String delegationId)
-			throws java.rmi.RemoteException,
-				org.glite.wms.wmproxy.AuthorizationFaultType,
-				org.glite.wms.wmproxy.GenericFaultType,
-				org.glite.wms.wmproxy.AuthenticationFaultType,
-				org.glite.wms.wmproxy.InvalidArgumentFaultType {
-			logger.debug ("INPUT: JDL=[" + jdl + "]\n");
-			logger.debug ("INPUT: delegationId=[" +delegationId + "]");
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+
+		logger.debug ("INPUT: JDL=[" + jdl + "]\n");
+		logger.debug ("INPUT: delegationId=[" +delegationId + "]");
+		try {
 			return this.serviceStub.jobSubmit(jdl, delegationId) ;
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
-	*  This operation cancels a previously submitted job identified by its JobId. If the job is still managed by the WM then it is removed from the WM tasks queue.
+	* This operation cancels a previously submitted job identified by its JobId. If the job is still managed by the WM then it is removed from the WM tasks queue.
 	* If the job has been already sent to the CE, the WM simply forwards the request to the CE.
 	* For suspending/releasing and sending signals to a submitted job the user has to check that the job has been scheduled to a CE
 	* and access directly the corresponding operations made available by the CE service.
-	*  @param jobId the id of the job
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericFaultType a generic problem occurred.
-	*  @throws AuthorizationFaultType client is not authorized to perform this operation.
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws OperationNotAllowedFaultType current job status does not allow requested operation
-	*  @throws InvalidArgumentFaultType the given job Id is not valid.
-	*  @throws JobUnknownFaultType the given job has not been registered to the system
-	*
+	* @param jobId the id of the job
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws JobUnknownFaultException the given job has not been registered to the system
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public void jobCancel(java.lang.String jobId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-					org.glite.wms.wmproxy.OperationNotAllowedFaultType,
-					org.glite.wms.wmproxy.InvalidArgumentFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
-		this.serviceStub.jobCancel(jobId);
-
+		try {
+			this.serviceStub.jobCancel(jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.OperationNotAllowedFaultType exc) {
+			// OperationNotAllowedFault
+			throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+		 	// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
 	* Returns the maximum Input sandbox size (in bytes) a user can count on for a job submission if using the space managed by the WM.
 	* This is a static value in the WM configuration (on a job-basis) set by the VO administrator
 	*  @return the size of the InputSandbox (in bytes)
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericFaultType a genric problem occurred
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public double getMaxInputSandboxSize()
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType {
-		return this.serviceStub.getMaxInputSandboxSize();
+		throws org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		try {
+			return this.serviceStub.getMaxInputSandboxSize();
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
@@ -379,30 +546,53 @@ public class WMProxyAPI{
 	* those files will be directly downloaded (by the JobWrapper) on the WN where the job will run without transiting on the WMS machine.
 	* The same applies to the output sandbox files list, i.e. the user can specify in the JDL the complete URIs for the files of the output sandbox;
 	* those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP/HTTPS servers without transiting on the WMS machine.
-	*  @param jobId string containing the JobId
-	*  @return the list of the Sandbox destionation URI's strings
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericFaultType a generic problem occurred
-	*  @throws AuthorizationFaultType client is not authorized to perform this operation.
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws OperationNotAllowedFaultType current job status does not allow requested operation.
-	*  @throws InvalidArgumentFaultType the given job Id is not valid.
-	*  @throws JobUnknownFaultType the given job has not been registered to the system.
-	*
+	* @param jobId string containing the JobId
+	* @return the list of the Sandbox destionation URI's strings
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws JobUnknownFaultException the given job has not been registered to the system
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public org.glite.wms.wmproxy.StringList getSandboxDestURI(java.lang.String jobId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-					org.glite.wms.wmproxy.OperationNotAllowedFaultType,
-					org.glite.wms.wmproxy.InvalidArgumentFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
-		return this.serviceStub.getSandboxDestURI(jobId);
+		try {
+			return this.serviceStub.getSandboxDestURI(jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.OperationNotAllowedFaultType exc) {
+			// OperationNotAllowedFault
+			throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			//. InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
-	* Returns the list of destination URIs associated to a compound job (i.e. a DAG a Collection or a parametric jobs) and all of its sub-jobs in a complex structure containing:*
+	* Returns the list of destination URIs associated to a compound job (i.e. a DAG a Collection or a parametric jobs) and all of its sub-jobs in a complex structure containing:
 	* <UL>
 	* <LI> the job id
 	* <LI> the corresponding list of destination URIs (can be more than one if different transfer protocols are supported, e.g. gsiftp, https etc.)
@@ -410,145 +600,263 @@ public class WMProxyAPI{
 	* The structure contains an element (structure above) for the compound job id provided (at first position) and one further element for any sub nodes.
 	* It contains only one element if the job id provided as imnput is the identifier of a simple job.
 	* The location is created in the storage managed by the WMS and the corresponding URI is returned to the operation caller if no problems has been arised during creation.
-	* Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE.	* 	* File upload can be performed by the GridFTP/HTTPS server available on the WMS node(using file-transferring tools like curl and globus-url-copy).
+	* Files of the job input sandbox that have been referenced in the JDL as relative or absolute paths are expected to be found in the returned location when the job lands on the CE.	 	* File upload can be performed by the GridFTP/HTTPS server available on the WMS node(using file-transferring tools like curl and globus-url-copy).
 	* The user can also specify in the JDL the complete URI of files that are stored on a GridFTP/HTTPS server (e.g. managed by her organisation);
 	* those files will be directly downloaded (by the JobWrapper) on the WN where the job will run without transiting on the WMS machine.
 	* The same applies to the output sandbox files list, i.e. the user can specify in the JDL the complete URIs for the files of the output sandbox;
 	* those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP/HTTPS servers without transiting on the WMS machine.
-	*  @param jobId string containing the JobId
-	*  @return the list of the Sandbox destionation URI's strings
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws GenericFaultType a generic problem occurred
-	*  @throws AuthorizationFaultType client is not authorized to perform this operation.
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws OperationNotAllowedFaultType current job status does not allow requested operation.
-	*  @throws InvalidArgumentFaultType the given job Id is not valid.
-	*  @throws JobUnknownFaultType the given job has not been registered to the system.
+	* @param jobId string containing the JobId
+	* @return the list of the Sandbox destionation URI's strings
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws JobUnknownFaultException the given job has not been registered to the system
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-					org.glite.wms.wmproxy.OperationNotAllowedFaultType,
-					org.glite.wms.wmproxy.InvalidArgumentFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
-		return this.serviceStub.getSandboxBulkDestURI(jobId);
+		try {
+			return this.serviceStub.getSandboxBulkDestURI(jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.OperationNotAllowedFaultType exc) {
+			// OperationNotAllowedFault
+			throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
 	* Returns the total space quota assigned to the user on the storage managed by the WM
 	* The fault GetQuotaManagementFault is returned if the quota management is not active on the WM.
-	*  @param softLimit the returned value of the soft limit free quota i.e. the difference between quota soft limit and user's disk usage.
-	*  @param hardLimit  the returned value of the hard limit quota (in bytes) i.e. the real quota limit that cannot be exceeded.
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws GetQuotaManagementFaultType quota management is not active on the WM.
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	* @param softLimit the returned value of the soft limit free quota i.e. the difference between quota soft limit and user's disk usage.
+	* @param hardLimit  the returned value of the hard limit quota (in bytes) i.e. the real quota limit that cannot be exceeded.
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws GetQuotaManagementFaultException quota management is not active on the WM.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public void getTotalQuota (javax.xml.rpc.holders.LongHolder softLimit, javax.xml.rpc.holders.LongHolder hardLimit)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.GetQuotaManagementFaultType,
-				 	org.glite.wms.wmproxy.GenericFaultType,
-					 org.glite.wms.wmproxy.AuthenticationFaultType {
-		this.serviceStub.getTotalQuota(softLimit, hardLimit);
+		throws org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.GetQuotaManagementFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		try {
+			this.serviceStub.getTotalQuota(softLimit, hardLimit);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GetQuotaManagementFaultType exc) {
+			// GetQuotaManagementFault
+			throw new org.glite.wms.wmproxy.GetQuotaManagementFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
 	* Returns the remaining free part of available user disk quota (in bytes).
 	* The fault GetQuotaManagementFault is returned if the quota management is not active.
-	*  @param softLimit the returned value of the soft limit free quota i.e. the difference between quota soft limit and user's disk usage.
-	*  @param hardLimit  the returned value of the hard limit quota (in bytes) i.e. the real quota limit that cannot be exceeded.
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws GetQuotaManagementFaultType quota management is not active on the WM.
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	* @param softLimit the returned value of the soft limit free quota i.e. the difference between quota soft limit and user's disk usage.
+	* @param hardLimit  the returned value of the hard limit quota (in bytes) i.e. the real quota limit that cannot be exceeded.
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws GetQuotaManagementFaultException quota management is not active on the WM.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public void getFreeQuota (javax.xml.rpc.holders.LongHolder softLimit, javax.xml.rpc.holders.LongHolder hardLimit)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.GetQuotaManagementFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType {
-		this.serviceStub. getFreeQuota(softLimit, hardLimit);
+		throws org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.GetQuotaManagementFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		try {
+			this.serviceStub. getFreeQuota(softLimit, hardLimit);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GetQuotaManagementFaultType exc) {
+			// GetQuotaManagementFault
+			throw new org.glite.wms.wmproxy.GetQuotaManagementFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
-	*  Removes from the WM managed space all files related to the job identified by the jobId provided as input.
+	* Removes from the WM managed space all files related to the job identified by the jobId provided as input.
 	* It can only be applied for job related files that are managed by the WM.
 	* E.g. Input/Output sandbox files that have been specified in the JDL through a URI will be not subjected to this management.
-	*  @param jobId the identifier of the job
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType the given job Id is not valid.
-	*  @throws JobUnknownFaultType the given job has not been registered to the system.
-	*  @throws OperationNotAllowedFaultType current job status does not allow requested operation
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	* @param jobId the identifier of the job
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws JobUnknownFaultException the given job has not been registered to the system
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public void jobPurge(java.lang.String jobId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					 org.glite.wms.wmproxy.GenericFaultType,
-					 org.glite.wms.wmproxy.AuthenticationFaultType,
-					 org.glite.wms.wmproxy.OperationNotAllowedFaultType,
-					 org.glite.wms.wmproxy.InvalidArgumentFaultType,
-					 org.glite.wms.wmproxy.JobUnknownFaultType {
-		logger.debug ("INPUT: jobid=[" + jobId + "]");
-		this.serviceStub.jobPurge(jobId);
-	}
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 
+		logger.debug ("INPUT: jobid=[" + jobId + "]");
+		try {
+			this.serviceStub.jobPurge(jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.OperationNotAllowedFaultType exc) {
+			// OperationNotAllowedFault
+			throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		}  catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
 	/**
 	* Returns the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
 	* It can only be applied for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
-	*  @param jobId the identifier of the job
-	*  @return  the list of objects containing the file URI and the corresponding size in bytes
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType the given job Id is not valid.
-	*  @throws JobUnknownFaultType the given job has not been registered to the system
-	*  @throws OperationNotAllowedFaultType current job status does not allow requested operation
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	* @param jobId the identifier of the job
+	* @return  the list of objects containing the file URI and the corresponding size in bytes
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws JobUnknownFaultException the given job has not been registered to the system
+	* @throws InvalidArgumentFaultException the given job Id is not valid
+	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public org.glite.wms.wmproxy.StringAndLongList getOutputFileList (java.lang.String jobId)
-			throws 	java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.GenericFaultType,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-					org.glite.wms.wmproxy.OperationNotAllowedFaultType,
-					org.glite.wms.wmproxy.InvalidArgumentFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobid=[" + jobId + "]");
-		return this.serviceStub.getOutputFileList (jobId);
+		try {
+			return this.serviceStub.getOutputFileList (jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.OperationNotAllowedFaultType exc) {
+			// OperationNotAllowedFault
+			throw new org.glite.wms.wmproxy.OperationNotAllowedFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		}  catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
         /**
         * Returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
 	* The fault NoSuitableResourcesFault is returned if there are no resources matching job constraints.
-        *  @param jdl the job description
-        *  @param delegationId the string used previously to delegate credential
-        *  @return the list of the found resources and their rank values
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType the given job JDL expression is not valid.
-	*  @throws NoSuitableResourcesFault no suitable resources matching job requirements have been found.
-	*  @throws GenericFaultType a generic problem occurred
-        *
+        * @param jdl the job description
+        * @param delegationId the string used previously to delegate credential
+        * @return the list of the found resources and their rank values
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws NoSuitableResourcesFaultException no suitable resources matching job requirements have been found.
+	* @throws InvalidArgumentFaultException the given job JDL expression is not valid
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
         */
         public org.glite.wms.wmproxy.StringAndLongList jobListMatch (java.lang.String jdl, java.lang.String delegationId)
-                        throws  java.rmi.RemoteException,
-				org.glite.wms.wmproxy.AuthorizationFaultType,
-				org.glite.wms.wmproxy.AuthenticationFaultType,
-				org.glite.wms.wmproxy.GenericFaultType,
-				org.glite.wms.wmproxy.NoSuitableResourcesFaultType,
-				org.glite.wms.wmproxy.InvalidArgumentFaultType {
+                			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.NoSuitableResourcesFaultException,
+					org.glite.wms.wmproxy.ServiceException {
                 logger.debug ("INPUT: JDL=[" + jdl + "] - deleagtionId=[" + delegationId + "]");
-                return this.serviceStub.jobListMatch(jdl, delegationId);
+               	try {
+			return this.serviceStub.jobListMatch(jdl, delegationId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+ 		 } catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.NoSuitableResourcesFaultType exc) {
+			// NoSuitableResourcesFault
+			throw new org.glite.wms.wmproxy.NoSuitableResourcesFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
         }
 	/**
 	* Enables file perusal functionalities if not disabled with the specific jdl attribute during job
@@ -560,22 +868,45 @@ public class WMProxyAPI{
 	*  the version of the server can be retrieved by calling the getVersion service.
 	* @param jobid the string with the job identifier
 	* @param fileList the list of filenames to be enabled
-	* @throws AuthenticationFaultType An authentication problem occurred
-	* @throws AuthorizationFaultType The user is not authorized to perform this operation
-	* @throws InvalidArgumentFaultType If the given JDL is not valid
-	* @throws JobUnknownFaultType The provided jobId has not been registered to the system
-	* @throws OperationNotAllowedFaultType perusal was disabled with the specific jdl attribute.
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws InvalidArgumentFaultException the given jobId is not valid
+	* @throws OperationNotAllowedFaultException perusal was disabled with the specific jdl attribute.
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	* @see #getPerusalFiles
 	* @see #getVersion
 	*/
 	public void enableFilePerusal (java.lang.String  jobId, org.glite.wms.wmproxy.StringList fileList)
-			throws  java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-                                        org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType,
-					org.glite.wms.wmproxy.GenericFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobId=[" +jobId + "]");
-		this.serviceStub.enableFilePerusal(jobId, fileList);
+		try {
+			this.serviceStub.enableFilePerusal(jobId, fileList);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		}  catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}  catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	 }
 	 /**
 	* Gets the URIs of perusal files generated during job execution for the specified file file.
@@ -591,23 +922,46 @@ public class WMProxyAPI{
 	* @param jobid the string with the job identifier
 	* @param file the name of the perusal file be enabled
 	* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
-	* @throws AuthenticationFaultType An authentication problem occurred
-	* @throws AuthorizationFaultType The user is not authorized to perform this operation
-	* @throws InvalidArgumentFaultType If the given JDL is not valid
-	* @throws JobUnknownFaultType The provided jobId has not been registered to the system
-	* @throws OperationNotAllowedFaultType perusal was disabled with the specific jdl attribute.
+	* @throws AuthenticationFaultException An authentication problem occurred
+	* @throws AuthorizationFaultException The user is not authorized to perform this operation
+	* @throws InvalidArgumentFaultException If the given jobId is not valid
+	* @throws JobUnknownFaultException The provided jobId has not been registered to the system
+	* @throws OperationNotAllowedFaultexception perusal was disabled with the specific jdl attribute
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	* @see #enableFilePerusal
 	* @see #getVersion
-	* @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 	*/
 	public  org.glite.wms.wmproxy.StringList getPerusalFiles (java.lang.String  jobId, java.lang.String file, boolean allchunks)
-			throws  java.rmi.RemoteException,
-					org.glite.wms.wmproxy.AuthenticationFaultType,
-                                        org.glite.wms.wmproxy.AuthorizationFaultType,
-					org.glite.wms.wmproxy.JobUnknownFaultType,
-					org.glite.wms.wmproxy.GenericFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.JobUnknownFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: jobId=[" + jobId + "] - file=[" +file + "] - allchunck=[" + allchunks + "]");
-		return this.serviceStub.getPerusalFiles(jobId, file, allchunks);
+		try {
+			return this.serviceStub.getPerusalFiles(jobId, file, allchunks);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		}  catch (org.glite.wms.wmproxy.JobUnknownFaultType exc) {
+			// JobUnknownFault
+			throw new org.glite.wms.wmproxy.JobUnknownFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	 }
 	/**
 	*  Returns a JDL template for the requested job type.
@@ -617,27 +971,44 @@ public class WMProxyAPI{
 	*  @param requirements  a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
 	*  @param rank a string representing the expression for the rank (which is an attribute of double type) of the resources
 	*  @return the jdl template of the job
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType one or more of the given input parameters is not valid.
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public java.lang.String getJobTemplate (org.glite.wms.wmproxy.JobTypeList jobType,
 										java.lang.String executable,
 										java.lang.String arguments,
 										java.lang.String requirements,
 										java.lang.String rank)
-				throws 	java.rmi.RemoteException,
-						org.glite.wms.wmproxy.AuthorizationFaultType,
-						org.glite.wms.wmproxy.GenericFaultType,
-						org.glite.wms.wmproxy.AuthenticationFaultType,
-						org.glite.wms.wmproxy.InvalidArgumentFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+
 		logger.debug ("INPUT: executable=[" + executable + "] - arguments=[" + arguments + "]");
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
-		return this.serviceStub.getJobTemplate(jobType, executable, arguments, requirements, rank);
-
+		try {
+			return this.serviceStub.getJobTemplate(jobType, executable, arguments, requirements, rank);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
 	*  Returns a JDL template for a DAG.
@@ -645,25 +1016,43 @@ public class WMProxyAPI{
 	*  @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
 	*  @param rank a string representing the expression for the rank (which is an attribute of double type) for all the nodes of the dag
 	*  @return the jdl template of the DAG
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType one or more of the given input parameters is not valid.
-	*  @throws GenericFaultType a generic problem occurred
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*
 	*/
 	public java.lang.String getDAGTemplate (org.glite.wms.wmproxy.GraphStructType dependencies,
 										java.lang.String requirements,
 										java.lang.String rank)
-				throws	 java.rmi.RemoteException,
-						org.glite.wms.wmproxy.AuthorizationFaultType,
-						org.glite.wms.wmproxy.GenericFaultType,
-						org.glite.wms.wmproxy.AuthenticationFaultType,
-						org.glite.wms.wmproxy.InvalidArgumentFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
-		return this.serviceStub.getDAGTemplate(dependencies, requirements, rank);
-
+		try {
+			return this.serviceStub.getDAGTemplate(dependencies, requirements, rank);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
+
 
 	/**
 	*  Returns a JDL template for a collection of jobs, that is a set of independent jobs that can be submitted, controlled and monitored as a single entity.
@@ -671,25 +1060,42 @@ public class WMProxyAPI{
 	*  @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
 	*  @param rank a string representing the expression for the rank (which is an attribute of double type) of the resources
 	*  @return the jdl template of the collection
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType one or more of the given input parameters is not valid.
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public java.lang.String getCollectionTemplate (int jobNumber,
 					java.lang.String requirements,
 					java.lang.String rank)
-					throws	 java.rmi.RemoteException,
-							org.glite.wms.wmproxy.AuthorizationFaultType,
-							org.glite.wms.wmproxy.GenericFaultType,
-							org.glite.wms.wmproxy.AuthenticationFaultType,
-							org.glite.wms.wmproxy.InvalidArgumentFaultType {
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
-		return this.serviceStub.getCollectionTemplate( jobNumber, requirements, rank);
-
+		try {
+			return this.serviceStub.getCollectionTemplate( jobNumber, requirements, rank);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
+
 
 	/**
 	*  Returns a JDL template for a parametric of job, which is a job having one or more parametric attributes in the JDL.
@@ -702,12 +1108,10 @@ public class WMProxyAPI{
 	*  @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
 	*  @param rank a string representing the expression for the rank (which is an attribute of double type) of the resources
 	*  @return the jdl template
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType one or more of the given input parameters is not valid.
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public java.lang.String getIntParametricJobTemplate (org.glite.wms.wmproxy.StringList attributes,
 													int param,
@@ -715,16 +1119,33 @@ public class WMProxyAPI{
 													int parameterStep,
 													java.lang.String requirements,
 													java.lang.String rank)
-					throws 	java.rmi.RemoteException,
-							org.glite.wms.wmproxy.AuthorizationFaultType,
-							org.glite.wms.wmproxy.GenericFaultType,
-							org.glite.wms.wmproxy.AuthenticationFaultType,
-							org.glite.wms.wmproxy.InvalidArgumentFaultType {
-
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
 		logger.debug ("INPUT: param=[" + param + "] - parameterStart=[" + parameterStart + "] - parameterStep=[" + parameterStep + "]");
 		logger.debug ("INPUT: requirements=[" + requirements + "] - rank=[" + rank + "]");
-		return this.serviceStub.getIntParametricJobTemplate(attributes, param, parameterStart, parameterStep, requirements, rank);
-
+		try {
+			return this.serviceStub.getIntParametricJobTemplate(attributes, param, parameterStart, parameterStep, requirements, rank);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 
 	/**
@@ -737,23 +1158,41 @@ public class WMProxyAPI{
 	*  @param requirements a string representing the expression describing all the Job requirements (which is an attribute of boolean type)
 	*  @param rank a string representing the expression for the rank (which is an attribute of double type) of the resources
 	*  @return the jdl template
-	*  @throws RemoteException a problem occurred during the remote call to the WMProxy server
-	*  @throws AuthenticationFaultType a generic authentication problem occurred.
-	*  @throws AuthorizationFaultType the client is not authorized to perform this operation.
-	*  @throws InvalidArgumentFaultType one or more of the given input parameters is not valid.
-	*  @throws GenericFaultType a generic problem occurred
-	*
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
 	public java.lang.String getStringParametricJobTemplate (org.glite.wms.wmproxy.StringList attributes,
 													 org.glite.wms.wmproxy.StringList param,
 													 java.lang.String requirements,
 													  java.lang.String rank)
-					throws 	java.rmi.RemoteException,
-							org.glite.wms.wmproxy.AuthorizationFaultType,
-							org.glite.wms.wmproxy.GenericFaultType,
-							org.glite.wms.wmproxy.AuthenticationFaultType,
-							org.glite.wms.wmproxy.InvalidArgumentFaultType {
-		return this.serviceStub.getStringParametricJobTemplate(attributes, param, requirements, rank);
+
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		try {
+			return this.serviceStub.getStringParametricJobTemplate(attributes, param, requirements, rank);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
 	}
 	/**
 	*  Generates a proxy from the input certificate and from the user proxy file on the user local machine
@@ -762,70 +1201,69 @@ public class WMProxyAPI{
 	*  the input proxy string of this service is the string got by getProxyReq.
 	*  @param certReq Service certificate request
 	*  @return the generated proxy certificate
-	*  @throws Exception If any error occurs during the creation of the proxy
-	*  @throws  FileNotException If proxy file doesn't exist
-	*  @throws CertificateException in case of any error during the local proxy loading operations
-	*  @throws CertificateExpiredException if the local proxy has expired
+	*  @throws CredentialException in case of any error with the local user proxy
 	*/
 
 	private String createProxyfromCertReq(java.lang.String certReq)
-	throws    java.lang.Exception,
-			java.io.FileNotFoundException,
-			java.security.cert.CertificateException,
-			java.security.cert.CertificateExpiredException {
+				throws org.glite.wms.wmproxy.CredentialException {
 		byte[ ] proxy = null;
 		ByteArrayInputStream stream = null;
 		CertificateFactory cf = null;
 		X509Certificate cert = null ;
 		long lifetime = 0;
-		// generator object
-		GrDProxyGenerator generator = new GrDProxyGenerator ( );
-		// user proxy file
-		File file = new File ( this.proxyFile);
-		if ( file.isFile ( ) != true ) {
-			throw new FileNotFoundException ( "proxy file not found at: "+ this.proxyFile );
+		try {
+			// generator object
+			GrDProxyGenerator generator = new GrDProxyGenerator ( );
+			// user proxy file
+			File file = new File ( this.proxyFile);
+			if ( file.isFile ( ) != true ) {
+				throw new org.glite.wms.wmproxy.CredentialException  ( "proxy file not found at: "+ this.proxyFile );
+			}
+			try{
+				// gets the local proxy as array of bye
+				proxy = GrDPX509Util.getFilesBytes( file );
+				// reads the proxy time-left
+				stream = new ByteArrayInputStream(proxy);
+				cf = CertificateFactory.getInstance("X.509");
+				cert = (X509Certificate)cf.generateCertificate(stream);
+				stream.close();
+				Date now = new Date ( );
+				lifetime =( cert.getNotAfter().getTime ( ) - now.getTime() ) / 3600000  ; // in hour ! (TBC in secs)
+			} catch (Exception exc){
+				String errmsg = "an error occured while loading the local proxy  ("  + this.proxyFile +"): \n";
+				errmsg += exc.toString();
+				throw new  org.glite.wms.wmproxy.CredentialException (errmsg);
+			}
+			// checks if the proxy is still valid
+			if (lifetime < 0 ){
+				throw new org.glite.wms.wmproxy.CredentialException ("the local proxy has expired (" + this.proxyFile +")" );
+			}
+			// sets the lifetime
+			generator.setLifetime ((int)lifetime);
+			// creates the new proxy
+			proxy =  generator.x509MakeProxyCert(certReq.getBytes( ) , proxy, "");
+			// converts the proxy from byte[] to String
+			return new String(proxy);
+		} catch (Exception exc) {
+ 			throw new org.glite.wms.wmproxy.CredentialException (exc.getMessage());
 		}
-		try{
-			// gets the local proxy as array of bye
-			proxy = GrDPX509Util.getFilesBytes( file );
-			// reads the proxy time-left
-			stream = new ByteArrayInputStream(proxy);
-			cf = CertificateFactory.getInstance("X.509");
-			cert = (X509Certificate)cf.generateCertificate(stream);
- 			stream.close();
-			Date now = new Date ( );
-			lifetime =( cert.getNotAfter().getTime ( ) - now.getTime() ) / 3600000  ; // in hour ! (TBC in secs)
-		} catch (Exception exc){
-			String errmsg = "an error occured while loading the local proxy  ("  + this.proxyFile +"): \n";
-			errmsg += exc.toString();
-			throw new CertificateException (errmsg);
-		}
-		// checks if the proxy is still valid
-		if (lifetime < 0 ){
-			throw new CertificateExpiredException ("the local proxy has expired(" + this.proxyFile +")" );
-		}
-		// sets the lifetime
-		generator.setLifetime ((int)lifetime);
-		// creates the new proxy
-		proxy =  generator.x509MakeProxyCert(certReq.getBytes( ) , proxy, "");
-		// converts the proxy from byte[] to String
-		return new String(proxy);
 	}
 	 /**
-	*
 	* Sets up the service
-	*
 	*/
-	private void setUpService ( ) throws javax.xml.rpc.ServiceException,
-					java.net.MalformedURLException,
-					java.io.FileNotFoundException {
+	private void setUpService ( ) throws org.glite.wms.wmproxy.ServiceException,
+					org.glite.wms.wmproxy.CredentialException {
 		String protocol = "";
-		// Gets a stub to the service
-		this.serviceLocator = new WMProxyLocator( );
-		// pointer to GliteWMProxy Stub object
-		this.serviceStub = (WMProxyStub) serviceLocator.getWMProxy_PortType( this.serviceURL ) ;
-		// pointer to Gridsite Stub object
-		this.grstStub = (DelegationSoapBindingStub) serviceLocator.getWMProxyDelegation_PortType( this.serviceURL ) ;
+		try {
+			// Gets a stub to the service
+			this.serviceLocator = new WMProxyLocator( );
+			// pointer to GliteWMProxy Stub object
+			this.serviceStub = (WMProxyStub) serviceLocator.getWMProxy_PortType( this.serviceURL ) ;
+			// pointer to Gridsite Stub object
+			this.grstStub = (DelegationSoapBindingStub) serviceLocator.getWMProxyDelegation_PortType( this.serviceURL ) ;
+		} catch (javax.xml.rpc.ServiceException exc) {
+			throw new org.glite.wms.wmproxy.ServiceException (exc.getMessage());
+		}
 		// Checks for https protocol
 		protocol = serviceURL.getProtocol( ).trim( );
 		logger.debug(protocol);
@@ -836,8 +1274,38 @@ public class WMProxyAPI{
 			if ( file.isFile ( ) == true )
 				System.setProperty("gridProxyFile", proxyFile);
 			else
-				throw new FileNotFoundException ("proxy file not found : " + proxyFile);
+				throw new org.glite.wms.wmproxy.CredentialException ("proxy file not found : " + proxyFile);
 		}
+	}
+	/*
+	* Creates an exception message from the input exception object
+	*/
+	private String createExceptionMessage(BaseFaultType exc){
+		String message = "";
+
+		String ec = exc.getErrorCode();
+		String[] cause = (String[])exc.getFaultCause();
+		// fault description
+		String desc = exc.getDescription();
+		if (desc.length()>0) { message = desc + "\n";}
+		// method
+		String meth = exc.getMethodName() ;
+		if (meth.length()>0) { message += "Method: " + meth + "\n";}
+		// time stamp
+		String ts = "";
+		java.util.Calendar  calendar = exc.getTimestamp();
+		if (calendar != null){
+			ts = calendar.getTime().toString();
+		}
+		if (ts.length()>0) { message += "TimeStamp: " + ts + "\n";}
+		// error code
+		if (ec.length()>0) { message += "ErrorCode: " + ec + "\n";}
+		// fault cause(s)
+		for (int i = 0; i < cause.length; i++) {
+			if (i==0) { message += "Cause: " + cause[i] + "\n";}
+			else { message += cause[i] + "\n" ;}
+		}
+		return message;
 	}
 	/** Service URL */
 	private URL serviceURL = null;

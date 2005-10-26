@@ -12,6 +12,7 @@
 package org.glite.wms.wmproxy.jobregister;
 
 import org.glite.wms.wmproxy.WMProxyAPI;
+import org.glite.wms.wmproxy.BaseException;
 import org.glite.wms.wmproxy.JobIdStructType;
 import org.glite.wms.jdlj.JobAd ;
 
@@ -61,14 +62,18 @@ public class WMProxyJobRegisterTest {
 	*	@param proxyFile the path location of the user proxy file
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String proxyFile, String delegationId, String jdlFile ) throws java.lang.Exception {
+	public static void runTest ( String url, String proxyFile, String delegationId, String jdlFile ) throws  org.glite.wms.wmproxy.BaseException {
 		//jdl
 		String jdlString = "";
 		// output results
 		JobIdStructType result = null;
 		// reads jdl
 		JobAd jad = new JobAd ( );
-		jad.fromFile ( jdlFile );
+		try {
+			jad.fromFile ( jdlFile );
+		} catch (Exception exc) {
+			throw new BaseException(exc.getMessage());
+		}
 		jdlString = jad.toString ( );
 		// Prints out the input parameters
 		System.out.println ("TEST : JobRegister");
@@ -103,14 +108,20 @@ public class WMProxyJobRegisterTest {
 		String jdlFile = "" ;
 		String delegationId = "";
 		String proxyFile = "";
-		// Reads the  input arguments
-		if ((args == null) || (args.length < 4))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <delegationID> <JDL-FIlePath>)");
-		url = args[0];
-		proxyFile = args[1];
-		delegationId = args[2];
-		jdlFile = args[3];
-		runTest ( url, proxyFile, delegationId, jdlFile);
-
+		try {
+			// Reads the  input arguments
+			if ((args == null) || (args.length < 4))
+				throw new BaseException ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <delegationID> <JDL-FIlePath>)");
+			url = args[0];
+			proxyFile = args[1];
+			delegationId = args[2];
+			jdlFile = args[3];
+			runTest ( url, proxyFile, delegationId, jdlFile);
+		} catch (BaseException exc) {
+			System.out.println("\nException caught:\n");
+			System.out.println("Message:\n----------\n"+ exc.getMessage() + "\n");
+			System.err.println("Stack Trace:\n------------");
+                        exc.printStackTrace();
+		}
 	}
 }
