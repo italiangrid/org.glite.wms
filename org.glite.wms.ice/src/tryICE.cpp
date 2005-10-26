@@ -74,14 +74,15 @@ int main(int argc, char*argv[]) {
 	    creamClient.Authenticate( R.getProxyCertificate() );
 
 	    cout << "\tSubmiting JDL ["<<newJDL<<"] to ["<<CREAM.c_str()<<"]["<<CREAMD.c_str()<<"]"<<endl; 
-	    url_jid = creamClient.Register( CREAM.c_str(), 
-					    CREAMD.c_str(), 
-					    "", // deleg ID not needed because this client
-					    // will always do auto_delegation
-					    newJDL, // JDL
-					    R.getProxyCertificate(), // cert file for auto deleg.
-					    true /*autostart*/ );
-
+	    creamClient.Register( CREAM.c_str(), 
+				  CREAMD.c_str(), 
+				  "", // deleg ID not needed because this client
+				  // will always do auto_delegation
+				  newJDL, // JDL
+				  R.getProxyCertificate(), // cert file for auto deleg.
+				  url_jid,
+				  true /*autostart*/ );
+	    
 	    cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
 	  } catch(soap_proxy::soap_ex& ex) {
 	    cerr << "\tsubmit ex: "<<ex.what() << endl;
@@ -89,6 +90,16 @@ int main(int argc, char*argv[]) {
 	    // HERE MUST RESUBMIT
 	    cout << "\tResubmiting unsuccesfull request..."<<endl;
 	    submitter.ungetRequest(j);
+	  } catch(soap_proxy::auth_ex& ex) {
+	    cerr << "\terror initializing cream client authN: " << ex.what() << endl;
+	    // MUST LOG TO LB
+	    // HERE MUST RESUBMIT
+	    cout << "\tResubmiting unsuccesfull request..."<<endl;
+	    submitter.ungetRequest(j);
+	  } catch(cream_exceptions::BaseException& base) {
+	    // TODO
+	  } catch(cream_exceptions::InternalException& intern) {
+	    // TODO
 	  }
 	  // no failure: put jobids and status in cache
 	  // and remove last request from WM's filelist

@@ -51,7 +51,7 @@ namespace glite {
 	    const bool& start_listener,
 	    const bool& start_poller,
 	    const std::string& CreamUrl)
-	  throw(glite::wms::ice::util::iceInit_ex&);
+	  throw(glite::wms::ice::iceInit_ex&);
 
 	virtual ~ice();
 	

@@ -20,7 +20,7 @@ ice::ice(const string& NS_FL,
 	 const int& listenPort,
 	 const bool& start_listener,
 	 const bool& start_poller,
-	 const std::string& CreamUrl) throw(util::iceInit_ex&)
+	 const std::string& CreamUrl) throw(iceInit_ex&)
   : status_listener_started(false), 
     ns_filelist(NS_FL), 
     wm_filelist(WM_FL),
@@ -35,7 +35,7 @@ ice::ice(const string& NS_FL,
     job_cache = 
       new util::jobCache(jobcache_persist_file+".snapshot", 
 			 jobcache_persist_file);
-  } catch(exception& ex) { throw util::iceInit_ex(ex.what()); }
+  } catch(exception& ex) { throw iceInit_ex(ex.what()); }
 
   // the following line just create a eventStatusListener object and 
   // a CEConsumer that initialize the SOAP runtime
@@ -59,7 +59,7 @@ ice::ice(const string& NS_FL,
     
     try {this->startJobStatusListener();}
     catch(util::thread_start_ex& ex) {
-      throw util::iceInit_ex(ex.what()); 
+      throw iceInit_ex(ex.what()); 
     }  
     cout << "listener started succesfully!"<<endl;
   }    
@@ -70,7 +70,7 @@ ice::ice(const string& NS_FL,
     flns.open(NS_FL.c_str());
   }
   catch(std::exception& ex) {
-    throw util::iceInit_ex(ex.what());
+    throw iceInit_ex(ex.what());
   }
 }
 

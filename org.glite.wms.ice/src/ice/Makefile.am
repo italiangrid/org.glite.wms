@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-lib_LTLIBRARIES = libglite_wms_ice_util.la
+lib_LTLIBRARIES = libglite_wms_ice.la
 
-libglite_wms_ice_util_la_SOURCES = eventStatusListener.cpp jnlFileManager.cpp jobCache.cpp thread.cpp
+libglite_wms_ice_la_SOURCES = ice-core.cpp jobRequest.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
@@ -16,6 +16,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(GLITE_LOCATION)/include \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \
+		$(BOOST_CFLAGS) \
 		-DWITH_OPENSSL \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H

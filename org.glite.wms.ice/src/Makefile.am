@@ -12,7 +12,7 @@
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
 
-SUBDIRS = util
+SUBDIRS = util ice
 
 bin_PROGRAMS = putFL tryICE
 
@@ -23,7 +23,9 @@ tryICE_SOURCES = tryICE.cpp
 putFL_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
+		-lglite_ce_monitor_consumer \
 		../src/util/libglite_wms_ice_util.la \
+		../src/ice/libglite_wms_ice.la \
 		$(LOG4CPP_LIBS) \
 		$(CLASSAD_LIBS) \
 		$(BOOST_FS_LIBS) \
@@ -31,10 +33,21 @@ putFL_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_REGEX_LIBS) \
 		-lglite_wms_util 
 
-tryICE_LDADD = -L$(GLITE_LOCATION)/lib -lglite_ce_cream_client_soap -lglite_ce_cream_client_util ../src/util/libglite_wms_ice_util.la $(LOG4CPP_LIBS) $(CLASSAD_LIBS) 
+tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
+		-lglite_ce_cream_client_soap \
+		-lglite_ce_cream_client_util \
+		$(LOG4CPP_LIBS) $(CLASSAD_LIBS) \
+		-lglite_ce_monitor_consumer \
+		../src/util/libglite_wms_ice_util.la \
+		../src/ice/libglite_wms_ice.la \
+		-lglite_wms_util \
+		$(BOOST_FS_LIBS) \
+		$(BOOST_THREAD_LIBS) \
+		$(BOOST_REGEX_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
-		-I$(top_srcdir)/src/autogen \
+		-I$(top_srcdir)/src/util \
+		-I$(top_srcdir)/src/ice \
 		-I$(GLITE_LOCATION)/include \
 		$(GSOAP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
