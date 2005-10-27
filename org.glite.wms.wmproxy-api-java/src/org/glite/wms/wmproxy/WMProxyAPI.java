@@ -183,7 +183,7 @@ public class WMProxyAPI{
 		logger.debug ("INPUT: delegationId=[" +delegationId + "]" );
 		try {
 			return this.grstStub.getProxyReq(delegationId) ;
-		} catch ( org.gridsite.www.namespaces.delegation_1.DelegationException exc)  {
+		} catch ( org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
 			// DelegationException -> CredentialException
 			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
 		} catch (java.rmi.RemoteException exc)  {
@@ -268,7 +268,7 @@ public class WMProxyAPI{
 		logger.debug ("Delegating credential (putProxy)");
 		try {
 			this.serviceStub.putProxy(delegationId,proxy) ;
-		} catch (org.gridsite.www.namespaces.delegation_1.DelegationException exc)  {
+		} catch (org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
 			// DelegationException -> CredentialException
 			throw new org.glite.wms.wmproxy.CredentialException(exc.getMessage1());
 		} catch (java.rmi.RemoteException exc)  {
