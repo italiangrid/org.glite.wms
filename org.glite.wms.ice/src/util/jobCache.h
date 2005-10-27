@@ -13,7 +13,7 @@
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
 
-#define OPERATION_SEPARATOR ':'
+#define OPERATION_SEPARATOR ":"
 #define MAX_OPERATION_COUNTER 10
 
 namespace api = glite::ce::cream_client_api;

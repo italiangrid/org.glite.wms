@@ -61,6 +61,7 @@ void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&)
 
   is.close();
   string tmpName = filename+"."+string_manipulation::make_string(::getpid());
+  cerr << "Creating an empty file ["<<tmpName<<"]"<<endl;
   os.open(tmpName.c_str(), ios::out);
   if(!os)
     throw jnlFile_ex("Error truncating journal file, Step 1: creating an empty file");
@@ -87,7 +88,7 @@ void jnlFileManager::log(const operation& op, const string& param)
    */
   if(readonly) throw jnlFileReadOnly_ex("Cannot append: journal file is in readonly mode");//return;
   
-  string toWrite = string_manipulation::make_string((int)op) + "#" + param;
+  string toWrite = string_manipulation::make_string((int)op) + param;
   os << toWrite << endl;
 
   if( (!os.good()) || (os.bad()) )

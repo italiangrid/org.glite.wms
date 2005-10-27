@@ -32,15 +32,21 @@ int main(int argc, char*argv[]) {
   string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
   string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
 
-  glite::wms::ice::ice submitter(argv[1], 
-				 argv[2], 
-				 argv[3], 
-				 atoi(argv[4]), 
-				 false/* do not start listener */, 
-				 true/* start poller */, 
-				 10, 
-				 CREAM,
-				 argv[6]);
+  glite::wms::ice::ice* submitter;
+  try {
+    submitter = new glite::wms::ice::ice(argv[1], 
+					 argv[2], 
+					 argv[3], 
+					 atoi(argv[4]), 
+					 false/* do not start listener */, 
+					 true/* start poller */, 
+					 10, 
+					 CREAM,
+					 argv[6]);
+  } catch(glite::wms::ice::iceInit_ex& ex) {
+    cerr << ex.what() <<endl;
+    exit(1);
+  }
   vector<string> requests;
   soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
   creamClient.printOnConsole( true );
@@ -53,7 +59,7 @@ int main(int argc, char*argv[]) {
 
     //cout << "********** Getting requests from filelist..."<<endl;
 
-    submitter.getNextRequests(requests);
+    submitter->getNextRequests(requests);
     
     if(requests.size( ))
       cout << "************* Found " << requests.size( ) << " request(s)"<<endl;
@@ -65,7 +71,7 @@ int main(int argc, char*argv[]) {
 	catch(std::exception& ex) {
 	  cerr << "\tunaprse ex: "<<ex.what()<<endl;
 	  cout << "\tRemoving BAD request..."<<endl;
-	  submitter.removeRequest(j);
+	  submitter->removeRequest(j);
 	  continue;
 	}
 
@@ -96,27 +102,29 @@ int main(int argc, char*argv[]) {
 	    
 	    cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
 	  } catch(soap_proxy::soap_ex& ex) {
-	    cerr << "\tsubmit ex: "<<ex.what() << endl;
+	    cerr << "\tsoap ex: "<<ex.what() << endl;
 	    // MUST LOG TO LB
 	    // HERE MUST RESUBMIT
-	    cout << "\tResubmiting unsuccesfull request..."<<endl;
-	    submitter.ungetRequest(j);
+	    exit(1);
 	  } catch(soap_proxy::auth_ex& ex) {
-	    cerr << "\terror initializing cream client authN: " << ex.what() << endl;
+	    cerr << "\tauthN ex: " << ex.what() << endl;
 	    // MUST LOG TO LB
-	    // HERE MUST RESUBMIT
-	    cout << "\tResubmiting unsuccesfull request..."<<endl;
-	    submitter.ungetRequest(j);
+	    exit(1);
 	  } catch(cream_exceptions::BaseException& base) {
-	    // TODO
+	    // MUST LOG TO LB
+	    cerr << "Base ex: "<<base.what()<<endl;
+	    submitter->ungetRequest(j);
 	  } catch(cream_exceptions::InternalException& intern) {
 	    // TODO
+	    // MUST LOG TO LB
+	    cerr << "Internal ex: "<<intern.what()<<endl;
+	    exit(1);
 	  }
 	  // no failure: put jobids and status in cache
 	  // and remove last request from WM's filelist
-	  submitter.getJobCache()->put(R.getGridJobID( ), url_jid[1], job_statuses::PENDING);
+	  submitter->getJobCache()->put(R.getGridJobID( ), url_jid[1], job_statuses::PENDING);
 	  cout << "\tRemoving submitted request..."<<endl;
-	  submitter.removeRequest(j);
+	  submitter->removeRequest(j);
 	}
 	if(R.getCommand() == R.jobcancel) {
 	  cout << "\tThis request is a Cancel..."<<endl;

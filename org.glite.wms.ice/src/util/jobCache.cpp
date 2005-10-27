@@ -142,7 +142,7 @@ void jobCache::put(const string& grid,
 {
   lockJournalManager lJ(jnlMgr);
   Mutex M(&mutexHash);
-  string param = makeClassad(grid, cream, status);
+  string param = string(OPERATION_SEPARATOR) + makeClassad(grid, cream, status);
   
   /**
    * Updates journal file
@@ -188,10 +188,18 @@ void jobCache::remove_by_grid_jobid(const string& gid)
   cream_grid_hash.erase(cj.jobid);
   
   operation_counter++;
-  if(operation_counter>=MAX_OPERATION_COUNTER) {
-    this->dump(); // can raise a jnlFile_ex
-    jnlMgr->truncate(); // can raise a jnlFile_ex
-    operation_counter = 0;
+  try {
+    if(operation_counter>=MAX_OPERATION_COUNTER) {
+      this->dump(); // can raise a jnlFile_ex
+      jnlMgr->truncate(); // can raise a jnlFile_ex
+      operation_counter = 0;
+    }
+  } catch(jnlFile_ex& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
+  } catch(jnlFileReadOnly_ex& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
   }
 }
 

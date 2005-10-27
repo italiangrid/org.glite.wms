@@ -76,17 +76,21 @@ void eventStatusPoller::updateJobCache()
   }
 
   for(unsigned int j=0; j<jobInfoList->size(); j++) {
-    cerr << "Going to update jobcache with "
-	 << "[grid_jobid="<<jobInfoList->at(j)->GridJobId
-	 <<", cream_jobid="<< jobInfoList->at(j)->CREAMJobId
-	 << ", status="<<jobInfoList->at(j)->status<<"]\n";
+ //    cerr << "Going to update jobcache with "
+// 	 << "[grid_jobid="<<jobInfoList->at(j)->GridJobId
+// 	 <<", cream_jobid="<< jobInfoList->at(j)->CREAMJobId
+// 	 << ", status="<<jobInfoList->at(j)->status<<"]\n";
     
     glite::ce::cream_client_api::job_statuses::job_status 
       stNum = getStatusNum(jobInfoList->at(j)->status);
 
-    jobs->put(jobInfoList->at(j)->GridJobId,
-	      jobInfoList->at(j)->CREAMJobId,
-	      stNum);
+    try {jobs->put(jobInfoList->at(j)->GridJobId,
+		   jobInfoList->at(j)->CREAMJobId,
+		   stNum);
+    } catch(exception& ex) {
+      cerr << "eventStatusPoller::updateJobCache - jobCache::put raised an ex: "<<ex.what()<<endl;
+      exit(1);
+    }
   }
 }
 
