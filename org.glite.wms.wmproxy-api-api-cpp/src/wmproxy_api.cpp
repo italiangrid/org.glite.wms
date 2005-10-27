@@ -151,11 +151,14 @@ BaseException* createWmpException(struct soap *soap){
 BaseException* grstCreateWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
+//>>>>	_DelegationException *ex = NULL;
+	_ns2__DelegationException *ex2 = NULL;
 	BaseException *b_ex =NULL;
 	char *faultstring =  NULL;
 	char *faultcode = NULL;
+	string message = "";
 	if (soap){
-		if (!*soap_faultcode(soap)){ soap_set_fault(soap);}
+		if (!*soap_faultcode(soap)){soap_set_fault(soap);}
 		// soap fault string
 		faultstring =  (char*)*soap_faultstring(soap);
 		// soap fault code
@@ -163,60 +166,40 @@ BaseException* grstCreateWmpException(struct soap *soap){
 		// pointer to the fault description
 		fault = soap->fault ;
 		if (fault){
+
         		detail = soap->fault->detail ;
 			if (detail) {
-				ns2__DelegationException *ex = (ns2__DelegationException*)detail->fault;
-				if ( ex ) {
-					if (detail->__type ==SOAP_TYPE_ns2__DelegationException ) {
-						b_ex=new DelegationException;
+				 if (detail->__type == SOAP_TYPE__ns2__DelegationException ) {
+					ex2 = (_ns2__DelegationException*)detail->fault;
+				} else { ex2 = NULL; }
+				// if type is ns2__DelegationExceptionType
+				if (ex2) {
+					b_ex = new GrstDelegationException ;
+					if (ex2->message) {
+						message = *(ex2->message) ;
+					} else if (faultstring) {
+						message = string(faultstring);
 					} else {
-						b_ex=new BaseException ;
+						message = "unknown reason";
 					}
-					// method name
-					b_ex->methodName = "" ;
-					// Timestamp
-					b_ex->Timestamp = getTime ();
-					// no Error Code
-					if (faultcode){ b_ex->ErrorCode = new string(faultcode);
-					}else { b_ex->ErrorCode = NULL; }
-					// Description
-					if ( ex->message ) {
-						b_ex->Description   = new string(*(ex->message))  ;
-					} else if (fault->faultstring){
-						b_ex->Description = new string(fault->faultstring);
+				} else {
+					// other types
+					b_ex = new BaseException;
+					if (faultstring) {
+						message = string(faultstring);
 					} else {
-						b_ex->Description = NULL;
+						message = "unknown reason";
 					}
-				} // if(ex)
-			} // if (detail)
-		} // if (fault)
-		if (b_ex == NULL){
-			b_ex=new BaseException ;
-
-			char *faultstring =  (char*)*soap_faultstring(soap);
-			char *faultcode = (char*)*soap_faultcode(soap);
-			if (faultstring){
-				b_ex->Description = new string(faultstring);
-			} else{
-				b_ex->Description = NULL;
-			}
-			// Timestamp
-			b_ex->Timestamp = getTime ();
-			// Error Code
-			if (faultcode){ b_ex->ErrorCode = new string(faultcode);
-			}else { b_ex->ErrorCode = NULL;}
-		}
-		// Fault cause
-		if (b_ex){
-			const char **s = soap_faultdetail(soap);
-			if (s && *s ){
-				b_ex->FaultCause = new vector<string>;
-				(b_ex->FaultCause)->push_back(string(*s));
-			} else{
-					b_ex->FaultCause = NULL ;
-			}
-		}
-	}  // if (soap)
+				}
+				// fault message
+				b_ex->Description = new string(message);
+				// method name (unfortunately unknown)
+				b_ex->methodName = "" ;
+				// timestamp
+				b_ex->Timestamp = getTime ();
+			} // detail
+		} //fault
+	} //soap
 	return b_ex;
 }
 /*****************************************************************
