@@ -364,9 +364,9 @@ string jobCache::makeClassad(const string& grid,
    apiutil::string_manipulation::trim(_grid, "\"");
    apiutil::string_manipulation::trim(_cream, "\"");
    string expr = string("[Job=[grid_jobid=\"") + _grid + "\";cream_jobid=\"" + 
-     _cream + "\";status=\"" + 
-     apiutil::string_manipulation::make_string((int)status) + 
-     "\"]]";
+     _cream + "\";status=\"" 
+     + apiutil::string_manipulation::make_string((int)status) 
+     + "\"]]";
 
    return expr;
  }

@@ -13,10 +13,15 @@ jobRequest::jobRequest(const string& request) throw(util::ClassadSyntax_ex&, uti
 
 void jobRequest::unparse(const string& request) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&)
 {
-  classad::ClassAd *ad;
-  classad::ExprTree *tree;
-  string jobExpr, _command, _jdl;
+  classad::ClassAd *ad = NULL;
+  classad::ExprTree *tree = NULL;
+  string jobExpr(""), _command(""), _jdl("");
   
+
+  grid_jobid = "";
+  jdl = "";
+  certfile = "";
+
   ad = parser.ParseClassAd(request);
   
   if(!ad)

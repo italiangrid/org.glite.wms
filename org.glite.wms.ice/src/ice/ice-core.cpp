@@ -165,5 +165,6 @@ void ice::ungetRequest(const unsigned int& reqNum)
     flns.push_back(tmp);
   } catch(std::exception& ex) {
     cerr << ex.what() << endl;
+    exit(1);
   }
 }

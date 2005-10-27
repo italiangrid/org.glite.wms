@@ -66,7 +66,7 @@ int main(int argc, char*argv[]) {
     
     for(unsigned int j=0; j < requests.size( ); j++)
       {
-	cout << "\tUnparsing request ["<<requests[j]<<"]"<<endl;
+	cout << "-----> Unparsing request ["<<requests[j]<<"]"<<endl;
 	try {R.unparse(requests[j]);}
 	catch(std::exception& ex) {
 	  cerr << "\tunaprse ex: "<<ex.what()<<endl;
@@ -114,6 +114,8 @@ int main(int argc, char*argv[]) {
 	    // MUST LOG TO LB
 	    cerr << "Base ex: "<<base.what()<<endl;
 	    submitter->ungetRequest(j);
+	    submitter->removeRequest(j);
+	    continue; // process next request
 	  } catch(cream_exceptions::InternalException& intern) {
 	    // TODO
 	    // MUST LOG TO LB
@@ -122,8 +124,15 @@ int main(int argc, char*argv[]) {
 	  }
 	  // no failure: put jobids and status in cache
 	  // and remove last request from WM's filelist
-	  submitter->getJobCache()->put(R.getGridJobID( ), url_jid[1], job_statuses::PENDING);
-	  cout << "\tRemoving submitted request..."<<endl;
+	  try {
+	    submitter->getJobCache()->put(R.getGridJobID( ), 
+					  url_jid[1], 
+					  job_statuses::PENDING);
+	  } catch(exception& ex) {
+	    cerr << "put in cache raised an ex: "<<ex.what()<<endl;
+	    exit(1);
+	  }
+	  cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
 	  submitter->removeRequest(j);
 	}
 	if(R.getCommand() == R.jobcancel) {

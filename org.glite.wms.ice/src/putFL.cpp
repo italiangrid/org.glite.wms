@@ -32,10 +32,10 @@ static string jdl[] = {
     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
     "[arguments = [ X509UserProxy=\"/tmp/x509up_u20\";ad = [executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
     "[arguments = [ ad = [executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID1\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID2\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID3\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\"id = \"JOBID4\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID8\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\"id = \"JOBID9\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
     ""
   };
 
