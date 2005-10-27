@@ -8,6 +8,7 @@
 #include "iceInit_ex.h"
 #include "jobCache.h"
 #include "eventStatusListener.h"
+#include "eventStatusPoller.h"
 #include "thread.h"
 #include "glite/wms/common/utilities/FLExtractor.h"
 
@@ -34,10 +35,12 @@ namespace glite {
       class ice {
 	glite::wms::ice::util::jobCache* job_cache;
 	glite::wms::ice::util::eventStatusListener* listener;
+	glite::wms::ice::util::eventStatusPoller* poller;
 	bool status_listener_started;
 	std::string ns_filelist;
 	std::string wm_filelist;
-	glite::wms::ice::util::thread* listenerThread;
+	glite::wms::ice::util::thread* listenerThread, *pollerThread;
+	
 
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;
@@ -50,13 +53,17 @@ namespace glite {
 	    const int& tcpport,
 	    const bool& start_listener,
 	    const bool& start_poller,
-	    const std::string& CreamUrl)
+	    const int&  poller_delay,
+	    const std::string& CreamUrl,
+	    const std::string& hostCert)
 	  throw(glite::wms::ice::iceInit_ex&);
 
 	virtual ~ice();
 	
 	void startJobStatusListener() throw(glite::wms::ice::util::thread_start_ex&);
 	void stopJobStatusListener();
+	void startJobStatusPoller() throw(glite::wms::ice::util::thread_start_ex&);
+	void stopJobStatusPoller();
 	void clearRequests();
 	void getNextRequests(std::vector<std::string>&); 
 	void removeRequest(const unsigned int&);

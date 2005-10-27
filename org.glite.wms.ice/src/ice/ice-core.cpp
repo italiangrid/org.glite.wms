@@ -20,7 +20,9 @@ ice::ice(const string& NS_FL,
 	 const int& listenPort,
 	 const bool& start_listener,
 	 const bool& start_poller,
-	 const std::string& CreamUrl) throw(iceInit_ex&)
+	 const int&  poller_delay,
+	 const std::string& CreamUrl,
+	 const string& hostCert) throw(iceInit_ex&)
   : status_listener_started(false), 
     ns_filelist(NS_FL), 
     wm_filelist(WM_FL),
@@ -64,6 +66,24 @@ ice::ice(const string& NS_FL,
     cout << "listener started succesfully!"<<endl;
   }    
 
+  if(start_poller) {
+    cout << "Creating a Cream status poller object..."<<endl;
+    poller = new util::eventStatusPoller(hostCert, CreamUrl, poller_delay);
+    poller->setJobCache(job_cache);
+    
+    cout << "Creating thread object for Cream status poller..."<<endl;
+    
+    pollerThread = new util::thread(*poller);
+    
+    cout << "Starting Cream status poller thread..."<<endl;
+    
+    try {this->startJobStatusPoller();}
+    catch(util::thread_start_ex& ex) {
+      throw iceInit_ex(ex.what()); 
+    }  
+    cout << "poller started succesfully!"<<endl;
+  }
+
   cout << "Initializing File Extractor object..."<<endl;
 
   try{
@@ -92,8 +112,19 @@ void ice::startJobStatusListener() throw(util::thread_start_ex&)
 }
 
 //______________________________________________________________________________
+void ice::startJobStatusPoller() throw(util::thread_start_ex&)
+{
+  pollerThread->start();
+}
+
+//______________________________________________________________________________
 void ice::stopJobStatusListener() {
   listenerThread->stop();
+}
+
+//______________________________________________________________________________
+void ice::stopJobStatusPoller() {
+  pollerThread->stop();
 }
 
 //______________________________________________________________________________

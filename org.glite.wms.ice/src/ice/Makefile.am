@@ -14,6 +14,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
 		-I$(top_srcdir)/src/ice \
 		-I$(GLITE_LOCATION)/include \
+		$(LOG4CPP_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(BOOST_CFLAGS) \

@@ -24,18 +24,29 @@ int main(int argc, char*argv[]) {
    *                  argv[3]: job cache persistency file
    *                  argv[4]: TCP port for event status listener
    *                  argv[5]: Cream endpoint (host:port)
+   *                  argv[6]: host's certificate
    */
 
-  if(argc<6) return 1;
+  if(argc<7) return 1;
 
-  glite::wms::ice::ice submitter(argv[1], argv[2], argv[3], atoi(argv[4]), false, false, "");
+  string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
+  string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
+
+  glite::wms::ice::ice submitter(argv[1], 
+				 argv[2], 
+				 argv[3], 
+				 atoi(argv[4]), 
+				 false/* do not start listener */, 
+				 true/* start poller */, 
+				 10, 
+				 CREAM,
+				 argv[6]);
   vector<string> requests;
   soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
   creamClient.printOnConsole( true );
   creamClient.printDebug( true );
   
-  string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
-  string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
+
   vector<string> url_jid;
   glite::wms::ice::jobRequest R;
   while(true) {

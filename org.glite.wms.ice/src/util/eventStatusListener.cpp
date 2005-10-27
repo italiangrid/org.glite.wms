@@ -70,7 +70,8 @@ void glite::wms::ice::util::eventStatusListener::acceptJobStatus(void)
 }
 
 //______________________________________________________________________________
-void glite::wms::ice::util::eventStatusListener::updateJobCache(void) {
+void glite::wms::ice::util::eventStatusListener::updateJobCache(void) 
+{
   if(!jobs)
     {
       LOG << logger::INFO << lflags << "Cache not initialized. Skipping"
