@@ -151,8 +151,8 @@ BaseException* createWmpException(struct soap *soap){
 BaseException* grstCreateWmpException(struct soap *soap){
 	SOAP_ENV__Fault  *fault = NULL;
 	SOAP_ENV__Detail *detail = NULL;
-//>>>>	_DelegationException *ex = NULL;
-	_ns2__DelegationException *ex2 = NULL;
+
+	ns2__DelegationExceptionType *ex2 = NULL;
 	BaseException *b_ex =NULL;
 	char *faultstring =  NULL;
 	char *faultcode = NULL;
@@ -169,8 +169,8 @@ BaseException* grstCreateWmpException(struct soap *soap){
 
         		detail = soap->fault->detail ;
 			if (detail) {
-				 if (detail->__type == SOAP_TYPE__ns2__DelegationException ) {
-					ex2 = (_ns2__DelegationException*)detail->fault;
+				 if (detail->__type == SOAP_TYPE_ns2__DelegationExceptionType ) {
+					ex2 = (ns2__DelegationExceptionType*)detail->fault;
 				} else { ex2 = NULL; }
 				// if type is ns2__DelegationExceptionType
 				if (ex2) {
