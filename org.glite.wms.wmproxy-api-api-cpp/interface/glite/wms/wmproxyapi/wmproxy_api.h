@@ -95,7 +95,7 @@ struct OperationNotAllowedException:BaseException{};
 /** Proxy file errors */
 struct ProxyFileException:BaseException{};
 /** Error during delegation operations with Gridsite methods (grstXXXX)  - since 1.2.0*/
-struct DelegationException:BaseException{};
+struct GrstDelegationException:BaseException{};
 /** Generic problem. More details in the message*/
 struct GenericException:BaseException{};
 
@@ -394,7 +394,7 @@ std::vector <std::pair<std::string , long> > jobListMatch (const std::string &jd
 * Calling this operation, the user enables perusal for job identified by jobId, for files specified with fileList.
 * After this operation, the URIs of perusal files generated during job execution can be retrieved by calling the getPerusalFiles service
 * An empty fileList disables perusal.
-* This method can be only used with servers which version numbers are greater than or equal to 2.0.0;
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
 *  the version of the server can be retrieved by calling the getVersion service.
 * @param jobid the string with the job identifier
 * @param files vector with the list of filenames to be enabled
@@ -415,7 +415,7 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
 * previous getPerusalFiles operation. Default value is false.
 * Perusal files have to be presiuosly enabled by calling the enableFilePerusal service
-* This method can be only used with servers which version numbers are greater than or equal to 2.0.0;
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
 *  the version of the server can be retrieved by calling the getVersion service.
 * @param jobid the string with the job identifier
 * @param allchuncks boolean value to specify when to get all chuncks
@@ -536,7 +536,7 @@ std::string getStringParametricJobTemplate (std::vector<std::string>attributes, 
 std::string getProxyReq(const std::string &delegationId, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
 *  Creates a delegation identifier for the current proxy certificate. This method must be followed by a putProxy call.
-* This method can be only used with servers which version numbers are greater than or equal to 2.0.0;
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
 *  the version of the server can be retrieved by calling the getVersion service.
 * @param delegationId The id of the delegation to be created
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
@@ -566,7 +566,7 @@ std::string grstGetProxyReq(const std::string &delegationId, glite::wms::wmproxy
 void putProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
 * Associates the current proxy certificate file with a previously created delegation id.This method must be called after a getProxyReq call
-* This method can be only used with servers which version numbers are greater than or equal to 2.0.0;
+* This method can be only used invoking WMProxy servers with version greater than or equal to 2.0.0;
 *  the version of the server can be retrieved by calling the getVersion service.
 * @param delegationId The id of the delegation created previously (by a getProxyReq call)
 * @param request The string request got by a previous call of a getProxyReq
