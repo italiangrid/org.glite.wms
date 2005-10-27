@@ -19,7 +19,7 @@ eventStatusPoller::eventStatusPoller(const std::string& certfile,
     delay(_d),
     cream_service(_cream_service), 
     creamClient( NULL ), 
-    jobInfoList( NULL )
+    _jobinfolist( NULL )
 {
   try {
     creamClient = new CreamProxy(false);
@@ -34,11 +34,18 @@ eventStatusPoller::eventStatusPoller(const std::string& certfile,
 //______________________________________________________________________________
 bool eventStatusPoller::getStatus(void) 
 {
-  //  vector<string> empty;
-  glite::ce::cream_client_api::soap_proxy::JobInfoList* jobinfolist = NULL;
+  /** 
+   * _jobinfolist is assigned the return value of CreamProxy::Info(...)
+   * This call allocates ( via new() ) the object that it returns;
+   * the caller of this call must take care of memory deallocation.
+   */
+  if(_jobinfolist)
+    delete(_jobinfolist);
+  _jobinfolist = NULL;
+
   creamClient->clearSoap();
   try {
-    jobinfolist = creamClient->Info(cream_service.c_str(),
+    _jobinfolist = creamClient->Info(cream_service.c_str(),
 				    empty, 
 				    empty, 
 				    -1, // SINCE
@@ -57,8 +64,8 @@ bool eventStatusPoller::getStatus(void)
     cerr << "CreamProxy::Info raised a DelegationException exception\n";
     return false;
   }
-  if(jobinfolist)
-    jobInfoList = &(jobinfolist->jobInfo);
+//   if(_jobinfolist)
+//     jobInfoVector = &(_jobinfolist->jobInfo);
   return true;
 }
 
@@ -70,25 +77,29 @@ void eventStatusPoller::updateJobCache()
       cerr << "Cache not initialized. Skipping update operation\n";
       return;
     }
-  if(!jobInfoList) {
-    cerr << "jobInfoList field is NULL. Wont update the job cache\n";
+  if(!_jobinfolist) {
+    cerr << "_jobinfolist internal variable is NULL. Wont update the job cache\n";
     return;
   }
 
-  for(unsigned int j=0; j<jobInfoList->size(); j++) {
- //    cerr << "Going to update jobcache with "
-// 	 << "[grid_jobid="<<jobInfoList->at(j)->GridJobId
-// 	 <<", cream_jobid="<< jobInfoList->at(j)->CREAMJobId
-// 	 << ", status="<<jobInfoList->at(j)->status<<"]\n";
+  for(unsigned int j=0; j<_jobinfolist->jobInfo.size(); j++) {
+    //   cerr << "Going to update jobcache with "
+    // 	 << "[grid_jobid="<<jobInfoList->at(j)->GridJobId
+    // 	 <<", cream_jobid="<< jobInfoList->at(j)->CREAMJobId
+    // 	 << ", status="<<jobInfoList->at(j)->status<<"]\n";
     
     glite::ce::cream_client_api::job_statuses::job_status 
-      stNum = getStatusNum(jobInfoList->at(j)->status);
+      stNum = getStatusNum(_jobinfolist->jobInfo.at(j)->status);
 
-    try {jobs->put(jobInfoList->at(j)->GridJobId,
-		   jobInfoList->at(j)->CREAMJobId,
-		   stNum);
+    try {
+      jobs->put(_jobinfolist->jobInfo.at(j)->GridJobId,
+		_jobinfolist->jobInfo.at(j)->CREAMJobId,
+		stNum);
     } catch(exception& ex) {
-      cerr << "eventStatusPoller::updateJobCache - jobCache::put raised an ex: "<<ex.what()<<endl;
+      cerr << "eventStatusPoller::updateJobCache - jobCache::put raised an ex: "
+	   << ex.what()<<endl;
+      delete(_jobinfolist);
+      _jobinfolist = NULL;
       exit(1);
     }
   }
@@ -101,7 +112,7 @@ void eventStatusPoller::run()
   while(!endpolling) {
     if(getStatus())
       updateJobCache();
-    cout << "eventStatusPoller::run - called run" << endl;
+    //    cout << "eventStatusPoller::run - called run" << endl;
     sleep(delay);
   }
   cout << "eventStatusPoller::run - ending..." << endl;

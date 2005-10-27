@@ -27,7 +27,8 @@ namespace glite {
 	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
 	  //	  glite::ce::cream_client_api::soap_proxy::JobInfoList* jobinfolist;
 	  std::vector<std::string> empty;
-	  std::vector<SOAP_JOBINFO*> *jobInfoList;
+	  glite::ce::cream_client_api::soap_proxy::JobInfoList* _jobinfolist;
+	  //	  std::vector<SOAP_JOBINFO*> *jobInfoVector;
 
 	public:
 	  eventStatusPoller(const std::string& certfile,

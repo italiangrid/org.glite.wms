@@ -87,10 +87,13 @@ int main(int argc, char*argv[]) {
 	    //string newJDL = JDLHelper.manipulate(R.getUserJDL());
 	    string newJDL = R.getUserJDL();
 	    
-	    cout << "\tAuthenticating with proxy ["<< R.getProxyCertificate()<<"]"<<endl;
+	    cout << "\tAuthenticating with proxy ["
+		 << R.getProxyCertificate()<<"]"<<endl;
 	    creamClient.Authenticate( R.getProxyCertificate() );
 
-	    cout << "\tSubmiting JDL ["<<newJDL<<"] to ["<<CREAM.c_str()<<"]["<<CREAMD.c_str()<<"]"<<endl; 
+	    cout << "\tSubmiting JDL ["<<newJDL<<"] to ["
+		 <<CREAM.c_str()<<"]["<<CREAMD.c_str()<<"]"<<endl; 
+	    
 	    creamClient.Register( CREAM.c_str(), 
 				  CREAMD.c_str(), 
 				  "", // deleg ID not needed because this client
