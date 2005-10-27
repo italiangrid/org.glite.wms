@@ -7,6 +7,9 @@
 #include <cstdio>
 #include <cerrno>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 extern int errno;
 
@@ -32,7 +35,7 @@ jnlFileManager::jnlFileManager(const string& file)
       throw jnlFile_ex(strerror(errno));
     } else {
       os.open(filename.c_str(), ios::out);
-      if(!os)
+      if(!((void*)os))
 	throw jnlFile_ex("Error creating an empty journal file");
       os.close();
       isempty=true;
@@ -42,7 +45,7 @@ jnlFileManager::jnlFileManager(const string& file)
   if(!stat_buf.st_size) isempty=true;
 
   is.open(filename.c_str(), ios::in);
-  if(!is)
+  if(!((void*)is))
     throw jnlFile_ex("Error opening journal file for read");
   
   pthread_mutex_init(&mutexJnlFile, NULL);
@@ -51,6 +54,8 @@ jnlFileManager::jnlFileManager(const string& file)
 //______________________________________________________________________________
 void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&) 
 {
+  ofstream _os;
+
   /**
    * Before to call this method the journal file must be NOT put in readonly 
    * mode by calling the readonly(false) method
@@ -62,16 +67,25 @@ void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&)
   is.close();
   string tmpName = filename+"."+string_manipulation::make_string(::getpid());
   cerr << "Creating an empty file ["<<tmpName<<"]"<<endl;
-  os.open(tmpName.c_str(), ios::out);
-  if(!os)
+  _os.open(tmpName.c_str(), ios::out);
+  if(!_os)
     throw jnlFile_ex("Error truncating journal file, Step 1: creating an empty file");
-  os.close();
+  _os.close();
+//   int empty = open(tmpName.c_str(), O_CREAT|O_TRUNC|O_RDWR|O_LARGEFILE, 
+// 		   S_IRWXU);
+//   if(-1==empty) {
+//     int saveerr = errno;
+//     throw jnlFile_ex(string("Error truncating journal file, Step 1: creating an empty file; error is:")+strerror(saveerr));
+//   }
+//   close(empty);
   if(-1==::rename(tmpName.c_str(), filename.c_str()))
     throw jnlFile_ex(strerror(errno));
-
+  os.close();
   os.open(filename.c_str(), ios::app);
-  if(!os)
-    throw jnlFile_ex("Error truncating journal file, Step 2: renaming");
+  if(!((void*)os))
+    throw jnlFile_ex("Error truncating journal file, Step 2: open renamed file in append mode");
+
+  
 
   isempty = true;
   savedoff = 0;
@@ -119,7 +133,7 @@ void jnlFileManager::readonly_mode(const bool& flag)
       throw jnlFile_ex("Error closing journal");
     is.open(filename.c_str(), ios::in);
 
-    if(!is)
+    if(!((void*)is))
       throw jnlFile_ex("Error putting journal in readonly mode");
     readonly = true;
     is.seekg(savedoff);
@@ -132,7 +146,7 @@ void jnlFileManager::readonly_mode(const bool& flag)
       throw jnlFile_ex("Error closing journal");
     os.open(filename.c_str(), ios::app);
 
-    if(!os)
+    if(!((void*)os))
       throw jnlFile_ex("Error putting journal in readonly mode");
     readonly=false;
     return;
