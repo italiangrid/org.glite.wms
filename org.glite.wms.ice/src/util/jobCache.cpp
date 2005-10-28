@@ -140,8 +140,8 @@ void jobCache::put(const string& grid,
 		   const api::job_statuses::job_status& status)
   throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
-  lockJournalManager lJ(jnlMgr);
-  Mutex M(&mutexHash);
+  lockJournalManager lJ(jnlMgr); // locks the journal manager
+  Mutex M(&mutexHash); // locks the memory cache (the map<>)
   string param = string(OPERATION_SEPARATOR) + makeClassad(grid, cream, status);
   
   /**

@@ -46,7 +46,11 @@ int main(int argc, char*argv[]) {
   } catch(glite::wms::ice::iceInit_ex& ex) {
     cerr << ex.what() <<endl;
     exit(1);
+  } catch(...) {
+    cerr << "something catched..."<<endl;
+    exit(1);
   }
+  
   vector<string> requests;
   soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
   creamClient.printOnConsole( true );
@@ -115,24 +119,30 @@ int main(int argc, char*argv[]) {
 	    exit(1);
 	  } catch(cream_exceptions::BaseException& base) {
 	    // MUST LOG TO LB
-	    cerr << "Base ex: "<<base.what()<<endl;
+	    cerr << "\tBase ex: "<<base.what()<<endl;
 	    submitter->ungetRequest(j);
 	    submitter->removeRequest(j);
 	    continue; // process next request
 	  } catch(cream_exceptions::InternalException& intern) {
 	    // TODO
 	    // MUST LOG TO LB
-	    cerr << "Internal ex: "<<intern.what()<<endl;
+	    cerr << "\tInternal ex: "<<intern.what()<<endl;
 	    exit(1);
 	  }
 	  // no failure: put jobids and status in cache
 	  // and remove last request from WM's filelist
 	  try {
+	    cout << "\tGoing to put submitted job in cache ["
+		 << R.getGridJobID( ) << "] ["<<url_jid[1]<<"] ["
+		 << job_statuses::PENDING<<"]"<<endl;
 	    submitter->getJobCache()->put(R.getGridJobID( ), 
 					  url_jid[1], 
 					  job_statuses::PENDING);
 	  } catch(exception& ex) {
-	    cerr << "put in cache raised an ex: "<<ex.what()<<endl;
+	    cerr << "\tput in cache raised an ex: "<<ex.what()<<endl;
+	    exit(1);
+	  } catch(...) {
+	    cerr << "\tCatched unknown exception..."<<endl;
 	    exit(1);
 	  }
 	  cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;

@@ -88,13 +88,16 @@ void eventStatusPoller::updateJobCache()
     // 	 <<", cream_jobid="<< jobInfoList->at(j)->CREAMJobId
     // 	 << ", status="<<jobInfoList->at(j)->status<<"]\n";
     
+    //glite::ce::cream_client_api::job_statuses::job_status 
     glite::ce::cream_client_api::job_statuses::job_status 
       stNum = getStatusNum(_jobinfolist->jobInfo.at(j)->status);
+//     if(stNum == -1)
+//       stNum = glite::ce::cream_client_api::job_statuses::UNKNOWN;
 
     try {
       jobs->put(_jobinfolist->jobInfo.at(j)->GridJobId,
 		_jobinfolist->jobInfo.at(j)->CREAMJobId,
-		stNum);
+		(glite::ce::cream_client_api::job_statuses::job_status)stNum);
     } catch(exception& ex) {
       cerr << "eventStatusPoller::updateJobCache - jobCache::put raised an ex: "
 	   << ex.what()<<endl;

@@ -68,7 +68,12 @@ ice::ice(const string& NS_FL,
 
   if(start_poller) {
     cout << "Creating a Cream status poller object..."<<endl;
-    poller = new util::eventStatusPoller(hostCert, CreamUrl, poller_delay);
+    try {
+      poller = new util::eventStatusPoller(hostCert, CreamUrl, poller_delay);
+    } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
+      throw iceInit_ex(ex.what());
+    }
+    
     poller->setJobCache(job_cache);
     
     cout << "Creating thread object for Cream status poller..."<<endl;
@@ -77,8 +82,9 @@ ice::ice(const string& NS_FL,
     
     cout << "Starting Cream status poller thread..."<<endl;
     
-    try {this->startJobStatusPoller();}
-    catch(util::thread_start_ex& ex) {
+    try {
+      this->startJobStatusPoller();
+    } catch(util::thread_start_ex& ex) {
       throw iceInit_ex(ex.what()); 
     }  
     cout << "poller started succesfully!"<<endl;
