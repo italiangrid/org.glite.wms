@@ -159,7 +159,6 @@ const struct option Options::submitLongOpts[] = {
          {	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
         {	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
-//TBD	{	Options::LONG_CHKPT,            	required_argument,		0,		Options::CHKPT},
         {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
 	{	Options::LONG_LRMS,              	required_argument,		0,		Options::LRMS},
 	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
@@ -335,11 +334,11 @@ const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_
 
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
 
-const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<delegation_string>";
+const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<id_string>";
 
 const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t\t<directory_path>"	;
 
-const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHORT_E + "\t<endpoint_URL>";
+const string Options::USG_ENDPOINT  = "--" + string(LONG_ENDPOINT )+ ", -" + SHORT_E + "\t<service_URL>";
 
 const string Options::USG_EXCLUDE  = "--" + string(LONG_EXCLUDE )+ ", -" + SHORT_E + "\t<status_value>";
 
@@ -658,7 +657,7 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
-	cerr << "\t" << "(*) It can be specified more than once with " <<  USG_SET << "\n";
+	cerr << "\t" << "(*) With " <<  USG_SET << " multiple files can be specified by repeating the option several times\n";
 	cerr << "\t" << "(**) only with " <<  USG_GET << "\n\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
@@ -909,7 +908,7 @@ const std::vector<std::string> Options::getProtocols() {
 * Checks whether  a string option is defined for a specific operation
 */
 const int Options::checkOpts(const std::string& opt) {
-	int r = 0;
+	int r = -1;
 	if (opt.compare (0,2,"--")==0){
 		string lg = opt.substr(2, (opt.size()-2));
 		for (unsigned int i = 0; i < numOpts ; i++){
@@ -933,8 +932,6 @@ const int Options::checkOpts(const std::string& opt) {
 				}
 			}
 		}
-	} else {
-		r = -1 ;
 	}
 	return r ;
 };
@@ -1467,6 +1464,7 @@ void Options::readOptions(const int &argc, const char **argv){
 	string unvalid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
+	string arg = "";
         // the name of the the specific command (submit, cancel, etc.....)
 	// that has called this method
         try{
@@ -1478,31 +1476,31 @@ void Options::readOptions(const int &argc, const char **argv){
         }
 	if (argc>1){
 		// option parsing
-		while (next_opt != -1 && optind < argc){
-			// checks if the option is defined for the specific command
-			if ( checkOpts(argv[optind] ) == 0 ){
+		while (next_opt != -1){
+			// string with the option currently being parsed
+			if (optind < argc){ arg = argv[optind]; }
+			else { arg = ""; }
+			// Returns the "val"-field of the struct "option"
+			next_opt = getopt_long (argc, (char* const*)argv,
+						shortOpts, longOpts, NULL);
+			// error
+			if (next_opt == '?') {
 				throw WmsClientException(__FILE__,__LINE__,
 					"readOptions", DEFAULT_ERR_CODE,
 					"Arguments Error"  ,
-					string (argv[optind]) + string (": unrecognized option") );
-			} else {
-				// Returns the "val"-field of the struct "option"
-				next_opt = getopt_long (argc, (char* const*)argv,
-							shortOpts, longOpts, NULL);
-				// error
-				if (next_opt == '?') {
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"Arguments Error"  ,
-						"Invalid Option" );
-				}
-				// Some operations have common short option letters
-				// it determines which one has been specified
-				// according to the specific wms command
-				if (next_opt != -1 ){
-					next_opt = checkCommonShortOpts(next_opt);
-					setAttribute (next_opt, argv);
-				}
+					"Invalid Option" );
+			} else if ( next_opt != -1 && arg.size() > 0 && checkOpts(arg) < 0  ){
+				throw WmsClientException(__FILE__,__LINE__,
+					"readOptions", DEFAULT_ERR_CODE,
+					"Arguments Error"  ,
+					string (arg) + string (": unrecognized option") );
+			} else
+			// Some operations have common short option letters
+			// it determines which one has been specified
+			// according to the specific wms command
+			if (next_opt != -1 ){
+				next_opt = checkCommonShortOpts(next_opt);
+				setAttribute (next_opt, argv);
 			}
 		} ;
 
@@ -1536,37 +1534,35 @@ void Options::readOptions(const int &argc, const char **argv){
 		// ========================================
 		if (  cmdType == JOBSUBMIT   ||
 			cmdType == JOBMATCH  ){
-			// all the options have been processed by getopt (JDL file is missing)
-			if (argc==optind &&  !collection && !start ){
-				throw WmsClientException(__FILE__,__LINE__,
-					"readOptions", DEFAULT_ERR_CODE,
-					"Wrong Option: " + string(last_arg)  ,
-					"Last argument of the command must be a JDL file" );
-			} else if (Utils::isFile( last_arg )){
-				// check that --collection is not set
-				if (collection){
+			if (!collection && !start){
+				 if (optind < (argc-1) ){
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option",
+						"Wrong Input Argument: " + string(argv[optind]) );
+				} else if ( (optind == (argc-1)) && Utils::isFile( argv[optind] ) ) {
+					jdlFile = new string(argv[optind] ) ;
+				} else {
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option",
+						"Last argument must be a JDL file");
+				}
+  			 } else {
+ 				if (optind < argc && collection) {
 					ostringstream err ;
 					err << "JDL file (as last argument) and the option --" << LONG_COLLECTION << " are incompatible";
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
-				} else if (start) {
+				} else if (optind < argc && start) {
 					ostringstream err ;
 					err << "JDL file (as last argument) and the option --" << LONG_START << " are incompatible";
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
-				}
-                        	jdlFile = new string(last_arg) ;
-
-  			 } else {
-			 	if (!collection && !start) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"File Not Found" ,
-						"Last argument of the command must be a JDL file (no such file: "+ string(last_arg) + ")" );
 				}
                         }
 		} else
@@ -1727,6 +1723,24 @@ const int Options::checkCommonShortOpts (const int &opt ) {
 	}
 	return r;
 }
+
+const std::string  Options::checkArg(const std::string &opt, const std::string &arg, const Options::OptsAttributes &code, const std::string&shortopt){
+	if (arg.compare(0, 1, "-") == 0){
+		string err = "Invalid argument value for the option:";
+		string usage = getAttributeUsage(code);
+		if (usage.size()>0){
+			err +=  "\n"  + usage;
+		} else{
+			err += "\n--" + opt ;
+			if (shortopt.size()>0){ err +=  ", -" + string(shortopt) ;}
+		}
+		throw WmsClientException(__FILE__,__LINE__,
+			"checkArg", DEFAULT_ERR_CODE,
+			"Wrong Argument Option" , err);
+	}
+	return arg;
+
+}
 /**
 *	sets the value of the option attribute
 */
@@ -1750,7 +1764,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (output){
 				dupl = new string(LONG_OUTPUT) ;
 			} else {
-				output = new string (optarg);
+				output = new string (checkArg(LONG_OUTPUT , optarg , Options::OUTPUT, string(1, Options::SHORT_OUTPUT)) );
                                 inCmd += px + LONG_OUTPUT + ws + *output + ";" + ws ;
 			}
 			break ;
@@ -1759,7 +1773,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (input){
 				dupl = new string(LONG_INPUT) ;
 			} else {
-				input = new string (optarg);
+				input = new string (checkArg(LONG_INPUT ,optarg,Options::INPUT, string(1, Options::SHORT_INPUT))  );
                                 inCmd += px + LONG_INPUT + ws + *input  + ";" + ws ;
 			}
 			break ;
@@ -1768,7 +1782,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (config){
 				dupl = new string(LONG_CONFIG) ;
 			} else {
-				config = new string (optarg);
+				config = new string (checkArg(LONG_CONFIG ,optarg, Options::CONFIG, string(1, Options::SHORT_CONFIG)) );
 				inCmd += px + LONG_CONFIG + ws + *config +  ";" + ws ;
 			}
 			break ;
@@ -1777,7 +1791,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (delegation){
 				dupl = new string(LONG_DELEGATION) ;
 			} else {
-				delegation = new string (optarg);
+				delegation = new string (checkArg( LONG_DELEGATION,optarg, Options::DELEGATION, string(1, Options::SHORT_DELEGATION)));
 				inCmd += px + LONG_DELEGATION + ws + *delegation +  ";" + ws ;
 			}
 			break ;
@@ -1786,7 +1800,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (resource){
 				dupl = new string(LONG_RESOURCE) ;
 			} else {
-				resource = new string (optarg);
+				resource = new string (checkArg(LONG_RESOURCE ,optarg, Options::RESOURCE, string(1,  Options::SHORT_RESOURCE)));
                                 inCmd += px + LONG_RESOURCE + ws + *resource  + ";" + ws ;
 			}
 			break ;
@@ -1795,7 +1809,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (nodesres){
 				dupl = new string(LONG_NODESRES) ;
 			} else {
-				nodesres = new string (optarg);
+				nodesres = new string (checkArg( LONG_NODESRES, optarg,Options::NODESRES ) );
                                 inCmd += px + LONG_NODESRES + ws + *nodesres  + ";" + ws ;
 			}
 			break ;
@@ -1804,7 +1818,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (valid){
 				dupl = new string(LONG_VALID) ;
 			} else {
-				valid = new string(optarg);
+				valid = new string(checkArg(LONG_VALID ,optarg,Options::VALID) );
                                 inCmd += px + LONG_VALID + ws + *valid +  ";" + ws ;
 			}
 			break ;
@@ -1817,7 +1831,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                                 ostringstream v ;
                                 v << *verbosity ;
                                 inCmd += px + LONG_VERBOSE + ws + v.str()+ ";" + ws ;
-				*verbosity = atoi (optarg);
+				string arg =checkArg(LONG_VERBOSE,optarg, Options::VERBOSE);
+				*verbosity = atoi (arg.c_str());
 			}
 			break ;
 		};
@@ -1825,7 +1840,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (status){
 				dupl = new string(LONG_STATUS) ;
 			} else {
-				status = new string (optarg);
+				status = new string (checkArg( LONG_STATUS,optarg,Options::STATUS, string(1, Options::SHORT_STATUS ) ) );
                                 inCmd += px + LONG_STATUS + ws + *status +";" + ws ;
 			}
 			break ;
@@ -1834,7 +1849,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (exclude) {
 				dupl = new string(LONG_EXCLUDE) ;
 			} else {
-				exclude = new string (optarg);
+				exclude = new string (checkArg(LONG_EXCLUDE ,optarg, Options::EXCLUDE, string(1,Options::SHORT_E)) );
 				inCmd += px + LONG_EXCLUDE + ws + *exclude +";" + ws ;
 			}
 			break;
@@ -1843,7 +1858,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (endpoint){
 				dupl = new string(LONG_ENDPOINT) ;
 			} else {
-				endpoint = new string (optarg);
+				endpoint = new string (checkArg( LONG_ENDPOINT,optarg, Options::ENDPOINT, string(1,Options::SHORT_E) ) );
 				inCmd += px + LONG_ENDPOINT + ws + *endpoint  + ";" + ws ;
 			}
 			break ;
@@ -1852,7 +1867,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (chkpt){
 				dupl = new string(LONG_CHKPT) ;
 			} else {
-				chkpt = new string (optarg);
+				chkpt = new string (checkArg( LONG_CHKPT, optarg, Options::CHKPT) );
                                 inCmd += px + LONG_CHKPT + ws + *chkpt +";" + ws;
 			}
 			break ;
@@ -1861,7 +1876,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (chkpt){
 				dupl = new string(LONG_COLLECTION) ;
 			} else {
-				collection = new string (optarg);
+				collection = new string (checkArg(LONG_COLLECTION, optarg, Options::COLLECTION) );
                                 inCmd += px + LONG_COLLECTION + ws + *collection  + ";" + ws ;
 			}
 			break ;
@@ -1870,7 +1885,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (dir){
 				dupl = new string(LONG_DIR ) ;
 			} else {
-				dir = new string (optarg);
+				dir = new string (checkArg(LONG_DIR, optarg , Options::DIR) );
                                 inCmd += px + LONG_DIR + ws + *dir + ";" + ws  ;
 			}
 			break ;
@@ -1880,7 +1895,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (from){
 				dupl = new string(LONG_FROM) ;
 			} else {
-				from = new string (optarg);
+				from = new string (checkArg(LONG_FROM, optarg, Options::FROM) );
                                 inCmd += px + LONG_FROM + ws + *from + ";" + ws  ;
 			}
 			break ;
@@ -1889,7 +1904,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (from){
 				dupl = new string(LONG_PROTO) ;
 			} else {
-				fileprotocol = new string (optarg);
+				fileprotocol = new string (checkArg(LONG_PROTO ,optarg, Options::PROTO) );
 				// checks if the chosen protocol is supported
 				found = Utils::checkProtocol(*fileprotocol, list);
 				if ( ! found){
@@ -1907,7 +1922,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (start){
 				dupl = new string(LONG_START) ;
 			} else {
-				start = new string(optarg);
+				start = new string(checkArg(LONG_START ,optarg, Options::START) );
 				inCmd += px + LONG_START + ws + *start + ";" + ws ;
 			}
 			break ;
@@ -1957,7 +1972,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (lrms){
 				dupl = new string(LONG_LRMS) ;
 			} else {
-				lrms = new string (optarg);
+				lrms = new string (checkArg(LONG_LRMS,optarg,Options::LRMS ) );
 				inCmd += px + LONG_LRMS + ";" + ws ;
 			}
 			break ;
@@ -1966,7 +1981,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (logfile){
 				dupl = new string(LONG_LOGFILE) ;
 			} else {
-				logfile = new string (optarg);
+				logfile = new string (checkArg(LONG_LOGFILE ,optarg,Options::LOGFILE ) );
 				inCmd += px + LONG_LOGFILE + ws + *logfile + ";" + ws ;
 			}
 			break ;
@@ -1975,7 +1990,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (vo){
 				dupl = new string(LONG_VO) ;
 			} else {
-				vo = new string (optarg);
+				vo = new string (checkArg(LONG_VO,optarg,Options::VO ) );
 				inCmd += px + LONG_VO + ";" + ws ;
 			}
 			break ;
@@ -1985,7 +2000,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 				dupl = new string(LONG_PORT) ;
 			}else {
 				port= (unsigned int*) malloc (sizeof(int));
-				*port = atoi (optarg);
+				string arg = checkArg(LONG_PORT ,optarg, Options::PORT, string(1,Options::SHORT_PORT)) ;
+				*port = atoi (arg.c_str());
 
 				inCmd += px + LONG_PORT  + ws + boost::lexical_cast<string>(*port)+ ";" + ws ;
 			}
@@ -1995,7 +2011,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			if (to){
 				dupl = new string(LONG_TO) ;
 			} else {
-				to = new string (optarg);
+				to = new string (checkArg(LONG_TO,optarg,Options::TO ) );
 				inCmd += px + LONG_TO + ws + *to + ";" + ws ;
 			}
 			break ;
@@ -2101,7 +2117,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		// it could be specified more than once
 		case ( Options::FILENAME ) : {
-			string file = optarg;
+			string file = checkArg(LONG_FILENAME ,optarg, Options::FILENAME ) ;
 			if (Utils::contains(filenames, file )) {
 				warnsMsg += errMsg(WMS_WARNING,
 					string(px + LONG_FILENAME + ws + file) + ": ignored",
@@ -2114,7 +2130,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		};
 		// it could be specified more than once
 		case ( Options::USERTAG ) : {
-			string tag = optarg ;
+			string tag = checkArg(LONG_USERTAG  ,optarg, Options::USERTAG)  ;
 			if (Utils::contains(usertags, tag )) {
 				warnsMsg += errMsg(WMS_WARNING,
 					string(px + LONG_USERTAG + ws + tag) + ": ignored",

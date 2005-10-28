@@ -293,9 +293,17 @@ class Options
 		*	using this class. It checks both long and short option. The check is based on
 		*	the fields defined for the long option arrays (submitLongOpts, etc....)
 		*	@param the option string to be checked
-		*	@return 1 if the option is defined, 0 if it isn't and -1 if the input string doesn't represent a valid option
+		*	@return 1 if the option is defined, -1 if the input string doesn't represent a valid option
 		*/
 		const int checkOpts(const std::string& opt) ;
+		/**
+		*	Checks if an argument value of the input option doesn't have its first character equal to "-"
+		* 	@param opt the long name of the option
+		*	@param arg the string with the value of the argument option
+		*	@param shortopt the short option character (if defined)
+		*	@return the string with the argument value if it is valid
+		*/
+		const std::string  Options::checkArg(const std::string &opt, const std::string &arg,  const Options::OptsAttributes &code , const std::string &shortopt="" );
 		/**
 		* Maps the common short option to the correspondent OptsAttributes enumeration code
 		* @param opt the short option code
