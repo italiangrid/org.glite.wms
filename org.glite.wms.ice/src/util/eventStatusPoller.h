@@ -3,10 +3,10 @@
 
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "eventStatusPoller_ex.h"
-#include "jobCache.h"
+//#include "jobCache.h"
 #include "runnable.h"
 
-class glite::wms::ice::util::jobCache;
+//class glite::wms::ice::util::jobCache;
 class glite::ce::cream_client_api::soap_proxy::CreamProxy;
 class glite::ce::cream_client_api::soap_proxy::JobInfoList;
 
@@ -18,7 +18,7 @@ namespace glite {
       namespace util {
 
 	class eventStatusPoller : public runnable {
-	  glite::wms::ice::util::jobCache* jobs;
+	  //	  glite::wms::ice::util::jobCache* jobs;
 /* 	  std::string grid_JOBID, cream_JOBID; */
 /* 	  glite::ce::cream_client_api::job_statuses::job_status status; */
 	  bool endpolling;
@@ -38,7 +38,7 @@ namespace glite {
 
 	  virtual ~eventStatusPoller() { if(creamClient) delete(creamClient); }
 
-	  void setJobCache(glite::wms::ice::util::jobCache* _jobs) { jobs = _jobs; }
+	  //void setJobCache(glite::wms::ice::util::jobCache* _jobs) { jobs = _jobs; }
 	  bool getStatus(void);
 	  void updateJobCache(void);
 	  virtual void run(void);

@@ -16,6 +16,9 @@
 #define OPERATION_SEPARATOR ":"
 #define MAX_OPERATION_COUNTER 10
 
+#define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
+#define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"
+
 namespace api = glite::ce::cream_client_api;
 
 namespace glite {
@@ -53,13 +56,14 @@ namespace glite {
 	class jobCache {
 
 	private:
+	  static jobCache *_instance;
+	  static std::string jnlFile;
+	  static std::string snapFile;
 
 	  std::map<std::string, CreamJob> hash;
 	  std::map<std::string, std::string> cream_grid_hash;
 	  pthread_mutex_t mutexHash;
 	  pthread_mutex_t mutexSnapFile;
-	  std::string jnlFile;
-	  std::string snapFile;
 	  int operation_counter;
 	  classad::ClassAdParser parser;
 	  classad::ClassAdUnParser unp;
@@ -83,9 +87,15 @@ namespace glite {
 				  const std::string&, 
 				  const api::job_statuses::job_status&);
 
-	public:
+	protected:
 	  jobCache(const std::string&, const std::string&) 
 	    throw(jnlFile_ex&, ClassadSyntax_ex&);
+	  
+	public:
+
+	  static jobCache* getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&);
+	  static void setJournalFile(const std::string& jnl) { jnlFile = jnl; }
+	  static void setSnapshotFile(const std::string& snap) { snapFile = snap; }
 
 	  virtual ~jobCache();
 

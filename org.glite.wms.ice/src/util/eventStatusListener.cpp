@@ -2,6 +2,7 @@
 #include "eventStatusListener.h"
 #include "glite/ce/cream-client-api-c/logger.h"
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "jobCache.h"
 #include <unistd.h>
 #include <string>
 #include <iostream>
@@ -72,15 +73,20 @@ void glite::wms::ice::util::eventStatusListener::acceptJobStatus(void)
 //______________________________________________________________________________
 void glite::wms::ice::util::eventStatusListener::updateJobCache(void) 
 {
-  if(!jobs)
-    {
-      LOG << logger::INFO << lflags << "Cache not initialized. Skipping"
-	  << logger::endlog;
-      return;
-    }
+//   if(!jobs)
+//     {
+//       LOG << logger::INFO << lflags << "Cache not initialized. Skipping"
+// 	  << logger::endlog;
+//       return;
+//     }
   LOG << logger::INFO << lflags << "Going to update jobcache with "
       << "[grid_jobid="<<grid_JOBID<<", cream_jobid="
       << cream_JOBID << ", status="<<status<<"]"<<logger::endlog;
 
-  jobs->put(grid_JOBID, cream_JOBID, status);
+  try {
+    jobCache::getInstance()->put(grid_JOBID, cream_JOBID, status);
+  } catch(std::exception& ex) {
+    cerr << ex.what() << endl;
+    exit(1);
+  }
 }

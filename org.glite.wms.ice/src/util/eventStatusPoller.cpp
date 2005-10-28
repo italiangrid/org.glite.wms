@@ -1,5 +1,6 @@
 
 #include "eventStatusPoller.h"
+#include "jobCache.h"
 #include <vector>
 
 using namespace glite::wms::ice::util;
@@ -14,8 +15,7 @@ eventStatusPoller::eventStatusPoller(const std::string& certfile,
 				     const std::string& _cream_service,
 				     const int& _d)
   throw(eventStatusPoller_ex&)
-  : jobs(NULL),
-    endpolling(false), 
+  : endpolling(false), 
     delay(_d),
     cream_service(_cream_service), 
     creamClient( NULL ), 
@@ -54,11 +54,11 @@ bool eventStatusPoller::getStatus(void)
   } catch(soap_ex&) { 
     cerr << "CreamProxy::Info raised a soap_ex exception\n";
     return false; 
-  } catch(BaseException&) {
-    cerr << "CreamProxy::Info raised a BaseException exception\n";
+  } catch(BaseException& ex) {
+    cerr << "CreamProxy::Info raised a BaseException exception: "<< ex.what()<<endl;
     return false; 
-  } catch(InternalException&) {
-    cerr << "CreamProxy::Info raised an InternalException exception\n";
+  } catch(InternalException& ex) {
+    cerr << "CreamProxy::Info raised an InternalException exception: "<< ex.what()<<endl;
     return false; 
   } catch(DelegationException&) {
     cerr << "CreamProxy::Info raised a DelegationException exception\n";
@@ -72,11 +72,11 @@ bool eventStatusPoller::getStatus(void)
 //______________________________________________________________________________
 void eventStatusPoller::updateJobCache() 
 {
-  if(!jobs)
-    {
-      cerr << "Cache not initialized. Skipping update operation\n";
-      return;
-    }
+//   if(!jobs)
+//     {
+//       cerr << "Cache not initialized. Skipping update operation\n";
+//       return;
+//     }
   if(!_jobinfolist) {
     cerr << "_jobinfolist internal variable is NULL. Wont update the job cache\n";
     return;
@@ -95,10 +95,10 @@ void eventStatusPoller::updateJobCache()
 //       stNum = glite::ce::cream_client_api::job_statuses::UNKNOWN;
 
     try {
-      jobs->put(_jobinfolist->jobInfo.at(j)->GridJobId,
-		_jobinfolist->jobInfo.at(j)->CREAMJobId,
-		(glite::ce::cream_client_api::job_statuses::job_status)stNum);
-    } catch(exception& ex) {
+      jobCache::getInstance()->put(_jobinfolist->jobInfo.at(j)->GridJobId,
+				   _jobinfolist->jobInfo.at(j)->CREAMJobId,
+				   (glite::ce::cream_client_api::job_statuses::job_status)stNum);
+    } catch(std::exception& ex) {
       cerr << "eventStatusPoller::updateJobCache - jobCache::put raised an ex: "
 	   << ex.what()<<endl;
       delete(_jobinfolist);
@@ -115,7 +115,7 @@ void eventStatusPoller::run()
   while(!endpolling) {
     if(getStatus())
       updateJobCache();
-    //    cout << "eventStatusPoller::run - called run" << endl;
+
     sleep(delay);
   }
   cout << "eventStatusPoller::run - ending..." << endl;

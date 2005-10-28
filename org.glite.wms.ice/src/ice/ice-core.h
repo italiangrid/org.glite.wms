@@ -6,7 +6,6 @@
 #include <pthread.h>
 #include "ClassadSyntax_ex.h"
 #include "iceInit_ex.h"
-#include "jobCache.h"
 #include "eventStatusListener.h"
 #include "eventStatusPoller.h"
 #include "thread.h"
@@ -33,7 +32,7 @@ namespace glite {
       };
       
       class ice {
-	glite::wms::ice::util::jobCache* job_cache;
+	//glite::wms::ice::util::jobCache* job_cache;
 	glite::wms::ice::util::eventStatusListener* listener;
 	glite::wms::ice::util::eventStatusPoller* poller;
 	bool status_listener_started;
@@ -68,7 +67,7 @@ namespace glite {
 	void getNextRequests(std::vector<std::string>&); 
 	void removeRequest(const unsigned int&);
 	void ungetRequest(const unsigned int&);
-	glite::wms::ice::util::jobCache* getJobCache(void) { return job_cache; };
+	//	glite::wms::ice::util::jobCache* getJobCache(void) { return job_cache; };
       }; // class ice
 
     } // namespace ice

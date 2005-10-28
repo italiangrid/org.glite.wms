@@ -29,14 +29,26 @@ using namespace std;
 using namespace glite::wms::ice::util;
 namespace apiutil = glite::ce::cream_client_api::util;
 
+jobCache* jobCache::_instance = 0;
+string jobCache::jnlFile = DEFAULT_JNLFILE;
+string jobCache::snapFile = DEFAULT_SNAPFILE;
+
+//______________________________________________________________________________
+jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
+  if(!_instance)
+    _instance = new jobCache(snapFile, jnlFile); // can throw jnlFile_ex or 
+                                                 // ClassadSyntax_ex
+  return _instance;
+}
+
 //______________________________________________________________________________
 jobCache::jobCache(const string& _snapFile,
 		   const string& journalFile) 
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
   : hash(),
     cream_grid_hash(),
-    jnlFile( journalFile ),
-    snapFile(_snapFile),
+    //jnlFile( journalFile ),
+    //snapFile(_snapFile),
     operation_counter(0)
 { 
   pthread_mutex_init(&mutexSnapFile, NULL);
@@ -162,7 +174,12 @@ void jobCache::put(const string& grid,
    */
   operation_counter++;
   if(operation_counter>=MAX_OPERATION_COUNTER) {
-    this->dump(); // can raise a jnlFile_ex
+    try {
+      this->dump(); // can raise a jnlFile_ex
+    } catch(std::exception& ex) {
+      cerr << "dump raised an std::exception: "<<ex.what()<<endl;
+      exit(1);
+    }
     jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
     operation_counter = 0;
   }
@@ -199,6 +216,9 @@ void jobCache::remove_by_grid_jobid(const string& gid)
     exit(1);
   } catch(jnlFileReadOnly_ex& ex) {
     cerr << ex.what()<<endl;
+    exit(1);
+  } catch(...) {
+    cerr << "Something catched!"<<endl;
     exit(1);
   }
 }
@@ -294,9 +314,16 @@ void jobCache::dump() throw (jnlFile_ex&)
     
     map<string, CreamJob>::iterator it;
     for(it=hash.begin(); it!=hash.end(); it++) {
-      string param = makeClassad((*it).first, 
-				 (*it).second.jobid, 
-				 (*it).second.status);
+      cout << "Dumping:"<<endl;
+      cout << "it.first="<<(*it).first 
+	   << " - it.second.jobid="<<(*it).second.jobid 
+	   << " - it.second.status="<<(*it).second.status<<endl;
+      string param = this->makeClassad((*it).first, 
+				       (*it).second.jobid, 
+				       (*it).second.status);
+      
+      //     cout << "param="<<param<<endl;
+
       try{tmpOs << param << endl;}
       catch(std::exception&ex) {
 	tmpOs.close(); // redundant: ofstream's dtor also closes the file
@@ -314,6 +341,9 @@ void jobCache::dump() throw (jnlFile_ex&)
     {
       string err = string("Error renaming temp snapshot file into snapshot file")+
 	strerror(errno);
+
+      cerr << "error renaming: "<<err;
+
       throw jnlFile_ex(err);
     }
 }
@@ -363,6 +393,9 @@ string jobCache::makeClassad(const string& grid,
    string _cream= cream;
    apiutil::string_manipulation::trim(_grid, "\"");
    apiutil::string_manipulation::trim(_cream, "\"");
+
+   cout << "trimmed _grid="<<_grid<<" - _cream="<<_cream<<endl;
+
    string expr = string("[Job=[grid_jobid=\"") + _grid + "\";cream_jobid=\"" + 
      _cream + "\";status=\"" 
      + apiutil::string_manipulation::make_string((int)status) 

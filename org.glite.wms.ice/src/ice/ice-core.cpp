@@ -33,15 +33,18 @@ ice::ice(const string& NS_FL,
        << jobcache_persist_file << "] and snapshot file ["
        << jobcache_persist_file+".snapshot" << "]..."<<endl;
 
-  try {
-    job_cache = 
-      new util::jobCache(jobcache_persist_file+".snapshot", 
-			 jobcache_persist_file);
-  } catch(exception& ex) { throw iceInit_ex(ex.what()); }
+//   try {
+//     job_cache = 
+//       new util::jobCache(jobcache_persist_file+".snapshot", 
+// 			 jobcache_persist_file);
+//   } catch(exception& ex) { throw iceInit_ex(ex.what()); }
 
   // the following line just create a eventStatusListener object and 
   // a CEConsumer that initialize the SOAP runtime
 
+  glite::wms::ice::util::jobCache::setJournalFile(jobcache_persist_file);
+  glite::wms::ice::util::jobCache::setSnapshotFile(jobcache_persist_file+".snapshot");
+  
   if(start_listener) {
     cout << "Creating a CEMon listener object..."<<endl;
     listener = new util::eventStatusListener(listenPort);
@@ -51,7 +54,13 @@ ice::ice(const string& NS_FL,
       cout << "Retrying in 5 seconds..." <<endl;
       sleep(5);
     }
-    listener->setJobCache(job_cache);
+
+//     try {
+//       listener->setJobCache( jobCache::getInstance() );
+//     } catch(std::exception& ex) {
+//       cerr << ex.what() << endl;
+//       exit(1);
+//     }
     
     cout << "Creating thread object for CEMon listener..."<<endl;
     
@@ -73,8 +82,13 @@ ice::ice(const string& NS_FL,
     } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
       throw iceInit_ex(ex.what());
     }
-    
-    poller->setJobCache(job_cache);
+
+//     try {
+//       poller->setJobCache( jobCache::getInstance() );
+//     } catch(std::exception& ex) {
+//       cerr << ex.what() << endl;
+//       exit(1);
+//     }
     
     cout << "Creating thread object for Cream status poller..."<<endl;
     
@@ -89,7 +103,7 @@ ice::ice(const string& NS_FL,
     }  
     cout << "poller started succesfully!"<<endl;
   }
-
+  //sleep(1000);
   cout << "Initializing File Extractor object..."<<endl;
 
   try{
@@ -97,6 +111,9 @@ ice::ice(const string& NS_FL,
   }
   catch(std::exception& ex) {
     throw iceInit_ex(ex.what());
+  } catch(...) {
+    cerr << "ice::ice - unknown exception caugth"<<endl;
+    exit(1);
   }
 }
 
@@ -108,7 +125,7 @@ ice::~ice()
     delete(listenerThread);
   }
   if(listener) delete(listener);
-  if(job_cache) delete(job_cache);
+  //if(job_cache) delete(job_cache);
 }
 
 //______________________________________________________________________________

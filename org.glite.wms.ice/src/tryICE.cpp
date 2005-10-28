@@ -1,8 +1,10 @@
 
 #include "ice-core.h"
 #include "jobRequest.h"
+#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+
 #include <string>
 #include <iostream>
 #include <unistd.h>
@@ -135,9 +137,9 @@ int main(int argc, char*argv[]) {
 	    cout << "\tGoing to put submitted job in cache ["
 		 << R.getGridJobID( ) << "] ["<<url_jid[1]<<"] ["
 		 << job_statuses::PENDING<<"]"<<endl;
-	    submitter->getJobCache()->put(R.getGridJobID( ), 
-					  url_jid[1], 
-					  job_statuses::PENDING);
+	    glite::wms::ice::util::jobCache::getInstance()->put(R.getGridJobID( ), 
+								url_jid[1], 
+								job_statuses::PENDING);
 	  } catch(exception& ex) {
 	    cerr << "\tput in cache raised an ex: "<<ex.what()<<endl;
 	    exit(1);
