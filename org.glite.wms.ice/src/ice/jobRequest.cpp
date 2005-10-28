@@ -57,6 +57,12 @@ void jobRequest::unparse(const string& request) throw(util::ClassadSyntax_ex&, u
       unp.Unparse(jdl, tree);
     }
 
+    if((tree=ad->Lookup("id"))==NULL)
+      throw util::JobRequest_ex("attribute 'id' not found");
+    else {
+        unp.Unparse(grid_jobid, tree);
+    }
+
     ad = parser.ParseClassAd(jdl);
 
     if((tree=ad->Lookup("X509UserProxy"))==NULL)
