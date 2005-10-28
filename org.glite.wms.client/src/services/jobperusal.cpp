@@ -37,14 +37,14 @@ using namespace glite::wms::wmproxyapi;
 using namespace glite::wms::wmproxyapiutils;
 
 namespace glite {
-namespace wms{
+namespace wms {
 namespace client {
 namespace services {
 
 const string DEFAULT_STORAGE_LOCATION = "/tmp";
 const string DISPLAY_CMD = "more";
 /*
-* Default constructor
+* 	Default constructor
 */
 JobPerusal::JobPerusal () : Job() {
 	// init of the string  options
@@ -75,6 +75,9 @@ JobPerusal::~JobPerusal ()  {
 void JobPerusal::readOptions ( int argc,char **argv)  {
 	ostringstream err ;
 	string files = "";
+	string dircfg = "";
+	string logname = "";
+	// Reads the input options
  	Job::readOptions  (argc, argv, Options::JOBPERUSAL);
         // --get
 	getOpt = wmcOpts->getBoolAttribute(Options::GET);
@@ -96,7 +99,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << wmcOpts->getAttributeUsage(Options::GET) << " | ";
 		err << wmcOpts->getAttributeUsage(Options::SET) << " | ";
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
-	} if (setOpt && allOpt) {
+	} else if (setOpt && allOpt) {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::SET) << " | ";
 		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
@@ -131,11 +134,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The unset operation disables all perusal files of the job; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-	}else if (unsetOpt && allOpt) {
-		logInfo->print(WMS_WARNING,
-			wmcOpts->getAttributeUsage(Options::ALL) +
-			": ignored (unset operation always disables all perusal files", "" );
-	}
+	}else
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
@@ -191,32 +190,70 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	* The jobid
 	*/
 	jobId = wmcOpts->getJobId( );
-	// --dir
-	dirOpt = wmcOpts->getStringAttribute(Options::DIR);
-	if (dirOpt) {
-		if (Utils::isDirectory(*dirOpt)) {
-			*dirOpt = Utils::normalizePath(*dirOpt);
-		} else {
-			err << wmcOpts->getAttributeUsage(Options::OUTPUT) << "\n";
-			err << "unvalid path: " << *dirOpt << "\n";
-			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error",err.str());
-		}
-	} else {
-		dirOpt = new string(DEFAULT_STORAGE_LOCATION);
-		*dirOpt += "/" + Utils::getUnique(jobId);
-	}
-	if (! Utils::isDirectory(*dirOpt)) {
-		if (mkdir(dirOpt->c_str(), 0755)){
-			// Error while creating directory
-			throw WmsClientException(__FILE__,__LINE__,
-			"retrieveOutput", ECONNABORTED,
-			"Unable create dir: ",*dirOpt);
-		}
-	}
 	// output file
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
+	// File directory for --get
+	dirOpt = wmcOpts->getStringAttribute(Options::DIR);
+	// WARNING MESSAGES
+	// =================================
+	// -all ignored if with --unset
+	if (unsetOpt && allOpt) {
+		logInfo->print(WMS_WARNING,
+			wmcOpts->getAttributeUsage(Options::ALL) +
+			": ignored (unset operation always disables all perusal files)", "" );
+	}
+	nodisplayOpt = wmcOpts->getBoolAttribute(Options::NODISPLAY);
+	// --nodisplay ignored if with --unset
+	 if (unsetOpt && nodisplayOpt) {
+			logInfo->print(WMS_WARNING,
+			wmcOpts->getAttributeUsage(Options::NODISPLAY) +
+			": ignored (no files to be displayed on the standard output with --unset operation)", "" );
+	}
+	// --nodisplay ignored if with --set
+	 if (setOpt && nodisplayOpt) {
+		logInfo->print(WMS_WARNING,
+		wmcOpts->getAttributeUsage(Options::NODISPLAY) +
+		": ignored (no files to be displayed on the standard output with --set operation)", "" );
+	}
+	// --output ignored if with --unset
+	 if (unsetOpt && outOpt) {
+		logInfo->print(WMS_WARNING,
+		wmcOpts->getAttributeUsage(Options::OUTPUT) +
+		": ignored (no useful information to be saved into a file)", "" );
+	}
+	// --dir ignored if with --unset
+	 if (dirOpt && setOpt) {
+		logInfo->print(WMS_WARNING,
+		wmcOpts->getAttributeUsage(Options::DIR) +
+		": ignored (no files to be retrieved)", "" );
+	} else if (dirOpt && unsetOpt)  {
+		logInfo->print(WMS_WARNING,
+		wmcOpts->getAttributeUsage(Options::DIR) +
+		": ignored (no files to be retrieved)", "" );
+	} else {
+		// Directory path for file downloading (only for --get)
+		if (!dirOpt){
+			char* environ=getenv("LOGNAME");
+			if (environ){logname="/"+string(environ);}
+			else{logname="/jobPerusal";}
+			dircfg = Utils::getAbsolutePath(wmcUtils->getOutputStorage()) ;
+			logInfo->print(WMS_DEBUG, "Output Storage (by configuration file):", dircfg);
+			dirOpt = new string (dircfg + logname + "_" + Utils::getUnique(jobId));
+		} else {
+			*dirOpt = Utils::getAbsolutePath(*dirOpt);
+			logInfo->print(WMS_DEBUG, "Output Storage (by --dir option):", *dirOpt);
+		}
+		// makes directory
+		if (! Utils::isDirectory(*dirOpt)) {
+			logInfo->print(WMS_DEBUG, "Creating directory:", *dirOpt);
+			if (mkdir(dirOpt->c_str(), 0755)){
+				// Error while creating directory
+				throw WmsClientException(__FILE__,__LINE__,
+				"retrieveOutput", ECONNABORTED,
+				"Unable create dir: ",*dirOpt);
+			}
+		}
+	}
 }
 /**
 * Performs the main operations
@@ -378,6 +415,7 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 	string count = "";
 	string cmd = "";
 	string ws = " ";
+	string header = "";
 	int size = 0;
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
 	if (peekFiles.size() == 1 ) {
@@ -394,8 +432,9 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 		out << jobId << "\n";
 		// saves the result
 		if (outOpt){
-			if ( wmcUtils->saveListToFile(*outOpt,  peekFiles) < 0 ){
-				logInfo->print (WMS_WARNING, "unable to save"+ ws + count + ws + "your" + ws + subj + ws + "in the output file " ,
+			header = "Perusal files enabled for the job" + jobId + " :";
+			if ( wmcUtils->saveListToFile(*outOpt,  peekFiles, header) < 0 ){
+				logInfo->print (WMS_WARNING, "unable to save the result into the output file " ,
 						 Utils::getAbsolutePath(*outOpt));
 			} else {
 				out << "\nThe" + ws + count + ws + "your" + ws + subj + ws + "been saved in the following file:\n";
@@ -407,12 +446,13 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 			out << "No" << ws << subj << ws << "to be retrieved  for the job:\n";
 			out << jobId << "\n";
 		} else {
-			out << "Your" << ws << subj << ws << verb << ws << "been successfully stored in:\n";
+			out << "Filenames of the retrieved files have been successfully stored in:\n";
 			out << *dirOpt << "\n";
 			if (outOpt){
-				if ( wmcUtils->saveListToFile(*outOpt, paths) < 0 ){
+				header = "Perusal files retrieved for the job " + jobId + " :";
+				if ( wmcUtils->saveListToFile(*outOpt, paths, header) < 0 ){
 					logInfo->print (WMS_WARNING, "unable to save"+ ws + count +  ws + "your" + ws + subj + ws + "in the output file " ,
-							Utils::getAbsolutePath(*outOpt));
+						Utils::getAbsolutePath(*outOpt));
 				} else {
 					out << "\nThe"<< ws << count <<  ws << "your" << ws << subj << ws << "is stored in the file:\n";
 					out << Utils::getAbsolutePath(*outOpt) << "\n";
@@ -420,7 +460,7 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 			}
 		}
 	} else if (operation == PERUSAL_UNSET) {
-		out << "Your" << ws << subj << ws <<  verb << ws << "been successfully disabled for the job:\n";
+		out << "Perusal has been successfully disabled for the job:\n";
 		out << jobId << "\n";
 	}
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
