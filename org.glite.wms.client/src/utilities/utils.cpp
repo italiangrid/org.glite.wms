@@ -1238,13 +1238,17 @@ const bool Utils::isDirectory (const std::string &pathname){
 const std::string Utils::getAbsolutePath(const std::string &file ){
 	string path = file ;
 	char* pwd = getenv ("PWD");
-	if (path.find("./")==0){
+	if (path.find("./")==0 || path.compare(".")==0){
 		// PWD path  (./)
 		if (pwd) {
 			string leaf = path.substr(1,string::npos);
-			if ( leaf.find("/",0) !=0 ) {
-				path = normalizePath(pwd) + "/"  + leaf;
-			} else {
+			if (leaf.size()>0) {
+				if ( leaf.find("/",0) !=0 ) {
+					path = normalizePath(pwd) + "/"  + leaf;
+				} else {
+					path = normalizePath(pwd) + leaf;
+				}
+			} else{
 				path = normalizePath(pwd) + leaf;
 			}
 		}
