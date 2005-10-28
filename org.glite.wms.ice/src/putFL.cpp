@@ -40,43 +40,44 @@ static string jdl[] = {
   };
 
 int main(int argc, char* argv[]) {
-  if(argc<2) return 1;
+  if(argc<3) return 1;
    
   int j, howmany;
   FileList<string> fl;
-  while(true) {
-    j=0;
-    //int howmany = getRandom(6);
-    cout << "\n******** Num of entries to put in filelist: ";
-    cin >> howmany;
-    //cout << "************ New bunch of entries..."<<endl;
 
-    while(j<howmany) {
-      int whichOneToAdd = getRandom(8);
-      
-      cout << (j+1)<<": Adding string [" << jdl[whichOneToAdd] << "] to filelist..." << endl;
-      {
-	try{
-	  fl.open(argv[1]);
-	}
-	catch(std::exception& ex) {
-	  cerr << ex.what()<<endl;
-	  _exit(1);
-	}
-	FileListMutex mx(fl);
-	FileListLock  lock(mx);
-	try {
-	  fl.push_back(jdl[whichOneToAdd]);
-	} catch(std::exception& ex) {
-	  cerr << ex.what()<<endl;
-	  _exit(1);
-	}
-      }
-      j++;
-    }
+  ifstream is;
+  is.open(argv[2]);
+
+
+  //  j=0;
+
+  //  cout << "\n******** Num of entries to put in filelist: ";
+  //  cin >> howmany;
+  string buf;
+  while(is.peek()!=EOF) {
+    //int whichOneToAdd = getRandom(8);
+    std::getline(is, buf, '\n');
     
-    //int k;
-    //cin >> k;
+    cout << ": Adding string [" 
+	 << buf
+	 << "] to filelist..." << endl;
+    {
+      try{
+	fl.open(argv[1]);
+      }
+      catch(std::exception& ex) {
+	cerr << ex.what()<<endl;
+	_exit(1);
+      }
+      FileListMutex mx(fl);
+      FileListLock  lock(mx);
+      try {
+	fl.push_back(buf);
+      } catch(std::exception& ex) {
+	cerr << ex.what()<<endl;
+	_exit(1);
+      }
+    }
   }
 }
 
