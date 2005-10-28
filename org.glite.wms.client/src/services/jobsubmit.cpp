@@ -788,7 +788,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 
 		jobtype = WMS_COLLECTION ;
 		try {
-			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
+			// fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
 			fs::path cp ( Utils::normalizePath(*collectOpt));
 			if ( fs::is_directory( cp ) ) {
 				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
@@ -810,7 +810,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		collectAd->setLocalAccess(true);
 		// Simple Ad manipulation
 		if (!collectAd->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
-			collectAd->setAttribute(JDL::VIRTUAL_ORGANISATION, wmcUtils->getVirtualOrganisation());
+			collectAd->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
 		}
 		AdUtils::setDefaultValuesAd(collectAd,wmcConf);
 		// Collect Ad manipulation
@@ -1359,7 +1359,7 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 			throw WmsClientException(__FILE__,__LINE__,
 				"gsiFtpGetFiles", ECONNABORTED,
 				"File Transferring Error",
-				"Unable to find globus-url-copy executable");
+				"Unable to find globus-url-copy (please set GLOBUS_LOCATION env variable)");
 		}
 		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)\n" , cmd);
 	if ( system( cmd.c_str() ) ){
