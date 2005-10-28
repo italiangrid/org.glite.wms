@@ -840,24 +840,28 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
    		//log_error("Query failed");
     	return event;
 	}
+	
+  	// Getting last event found
+    int i = 0;
+    while (events[i].type) {
+    	i++;
+    }
+    i--;
   	
-  	// Getting first event found
-  	if (events) {
-  		if (events[0].regJob.src_instance) {
-	  		event.instance = events[0].regJob.src_instance;
-  		}
-	  	if (events[0].regJob.jdl) {
-	  		event.jdl = events[0].regJob.jdl;
-	  	}
-	  	if (events[0].regJob.parent) {
-	  		event.parent = string(edg_wlc_JobIdUnparse(events[0].regJob.parent));
-	  	}
-	  	
-	  	for (int i = 0; events[i].type; i++) {
-			edg_wll_FreeEvent(&events[i]);
-		}
+  	if (events[i].regJob.src_instance) {
+  		event.instance = events[i].regJob.src_instance;
+	}
+  	if (events[i].regJob.jdl) {
+  		event.jdl = events[i].regJob.jdl;
   	}
-
+  	if (events[i].regJob.parent) {
+  		event.parent = string(edg_wlc_JobIdUnparse(events[i].regJob.parent));
+  	}
+  	
+  	for (int i = 0; events[i].type; i++) {
+		edg_wll_FreeEvent(&events[i]);
+	}
+	
   	return event;
   	
   	GLITE_STACK_CATCH();

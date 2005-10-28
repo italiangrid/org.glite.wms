@@ -127,11 +127,6 @@ initializeStackPointer(int code)
 			sp = new ns1__OperationNotAllowedFaultType;
 			break;
 			
-		// Delegation fault
-		case SOAP_TYPE_ns2__DelegationException:
-			sp = new ns2__DelegationException;
-			break;
-			
 		default:
 			sp = new ns1__GenericFaultType;
 			break;
@@ -178,19 +173,32 @@ setSOAPFault(struct soap *soap, int code, const string &method_name, time_t time
 				"------------------------------------------"
 			<<endl;
 	
-	// Generating a fault
-	ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(code);
-
-	// Filling fault fields
-	sp->methodName = method_name;
-	sp->Timestamp = time_stamp;
-	sp->ErrorCode = new string(boost::lexical_cast<std::string>(error_code));
-	sp->Description = new string(description);
-	sp->FaultCause = *convertStackVector(stack);
+	if (code == SOAP_TYPE_ns2__DelegationExceptionType) {
+		// Generating a fault
+		ns2__DelegationExceptionType *sp = new ns2__DelegationExceptionType;
+		
+		// Filling fault field
+		sp->message = new string(description);
+		
+		// Sending fault
+		soap_receiver_fault(soap, "Stack dump", NULL);
+		setFaultDetails(soap, SOAP_TYPE_ns2__DelegationExceptionType, sp);
+	} else {
+		// Generating a fault
+		ns1__BaseFaultType *sp = (ns1__BaseFaultType*)initializeStackPointer(code);
 	
-	// Sending fault
-	soap_receiver_fault(soap, "Stack dump", NULL);
-	setFaultDetails(soap, getServiceFaultType(code), sp);
+		// Filling fault fields
+		sp->methodName = method_name;
+		sp->Timestamp = time_stamp;
+		sp->ErrorCode = new string(boost::lexical_cast<std::string>(error_code));
+		sp->Description = new string(description);
+		sp->FaultCause = *convertStackVector(stack);
+		
+		// Sending fault
+		soap_receiver_fault(soap, "Stack dump", NULL);
+	
+		setFaultDetails(soap, getServiceFaultType(code), sp);
+	}
 }
 
 void

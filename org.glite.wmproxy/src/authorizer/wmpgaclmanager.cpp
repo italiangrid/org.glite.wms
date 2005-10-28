@@ -259,13 +259,16 @@ void GaclManager::removeEntry (const WMPgaclCredType &type,
 									edglog(debug) << "comparison between voms fqan ..." << endl;
 									#endif
 									found = authorizer::WMPAuthorizer::compareFQAN( rawvalue, nv->value);
+									edglog(debug) << "compareFQAN = " << found << "\n";
 								} else{
 									#ifndef GLITE_GACL_ADMIN
 									edglog(debug) << "checking rawvalue ..." << endl;
 									#endif
 									if ( strcmp (rawvalue.c_str(), nv->value ) == 0){
-									found = true;
+										 edglog(debug) << "rawvalue found" << endl;
+										found = true;
 									}
+									
 								} // if(VOMS_CRED)
 							} // if (name)
 						} // if (nv)

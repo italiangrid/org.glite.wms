@@ -10,10 +10,12 @@
 namespace fs = boost::filesystem ;
 using namespace std;
 
+ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July", "Aug", "Sept", "Oct", "Nov", "Dec"};
+
 enum ExcCode{
-	UNVALID_PROXY,
+	INVALID_PROXY,
 	PROXY_ERROR,
-	UNVALID_PATH,
+	INVALID_PATH,
  };
 
  /**
@@ -66,7 +68,7 @@ private :
 /*
  * removes '/' characters at the end of the of the input pathname
  */
- const std::string normalizePath( const std::string &fpath ) {
+ std::string normalizePath( const std::string &fpath ) {
   string                   modified;
   string::const_iterator   last, next;
   string::reverse_iterator check;
@@ -88,6 +90,31 @@ private :
 
   return modified;
 }
+std::string getAbsolutePath(std::string &file ){
+        string path = file ;
+        char* pwd = getenv ("PWD");
+        if (path.find("./")==0 || path.compare(".") == 0 ){
+                // PWD path  (./)
+                if (pwd) {
+                        string leaf = path.substr(1,string::npos);
+                        if ( leaf.find("/",0) !=0 ) {
+                                path = normalizePath(pwd) + "/"  + leaf;
+                        } else {
+                                path = normalizePath(pwd) + leaf;
+                        }
+                }
+        } else if (path.find("/") ==0 ){
+                // ABsolute Path
+                path = normalizePath(path);
+        } else {
+                // Relative path: append PWD
+                if (pwd){
+                        path = normalizePath(pwd) + "/" + path;
+                }
+        }
+        return path;
+}
+
 
 int listFiles ( const fs::path& p, vector<string>& v, string& err ) {
 	int ne = 0;
@@ -106,6 +133,26 @@ int listFiles ( const fs::path& p, vector<string>& v, string& err ) {
 		}
 	}
 	return ne ;
+}
+
+std::string twoDigits(unsigned int d ){
+        ostringstream dd ;
+        if (d<10){ dd << "0" << d ;}
+        else { dd <<  d ;}
+        return dd.str();
+};
+
+std::string getTimeStamp() {
+	string ws = " ";
+	ostringstream px;
+	time_t now = time(NULL);
+	// PREFIX MSG: timestamp
+        struct tm *ns = localtime(&now);
+        // PREFIX MSG: time stamp: day-month
+        px << twoDigits(ns->tm_mday) << ws << monthStr[ns->tm_mon] << ws << (ns->tm_year+1900) <<"," << ws;
+        // PREFIX MSG: time stamp: hh::mm:ss
+ 	px << twoDigits(ns->tm_hour) << ":" << twoDigits(ns->tm_min) << ":" << twoDigits(ns->tm_sec) << ws << ns->tm_zone;
+	return px.str();
 }
 
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s) {
@@ -154,7 +201,7 @@ const long get_time_left(const string &file) {
 			} else{
 				throw ProxyCacheException(__FILE__,
 				"PEM_read_bio_X509", -1,
-				"unvalid proxy file");
+				"invalid proxy file");
 			}
 
 		} else {
@@ -176,7 +223,7 @@ const long get_time_left(const string &file) {
 /**
 * Cancels the expired proxies in the proxycache directory
 */
-std::string removeExpiredProxies(const string& proxycache){
+std::string removeExpiredProxies(string& proxycache){
 	string err="";
 	string msg="";
 	vector<string> proxies;
@@ -189,13 +236,16 @@ std::string removeExpiredProxies(const string& proxycache){
 		ne = listFiles(cp, proxies, err);
 		if ( !  fs::is_directory(cp) ) {
 			throw ProxyCacheException(__FILE__, "removeExpiredProxies",
-				UNVALID_PATH, "No such directory: " + proxycache);
-		} else {
+				INVALID_PATH, "No such directory: " + proxycache);
+		} else {	
+			proxycache = getAbsolutePath(proxycache);
+			proxycache = normalizePath(proxycache);
+			 cout << "\nStarted on " << getTimeStamp() << "\n";
 			cout << "\nPurging the proxy cache at : " << proxycache << "\n\n";
 		}
 	}catch (fs::filesystem_error &ex){
 		throw ProxyCacheException(__FILE__, "removeExpiredProxies",
-		UNVALID_PATH, ex.what( ));
+		INVALID_PATH, "invalid directory (" + proxycache + "): " + ex.what( ));
 	}
 		if (proxies.empty()) {
 			msg = "The directory is empty: " + proxycache;
@@ -213,7 +263,9 @@ std::string removeExpiredProxies(const string& proxycache){
 					}
 				} catch (ProxyCacheException &exc) {
 					ne++;
-					err += " - " + (*it) + " (" + exc.what( ) + ")\n";
+					string e = exc.what( ) ;
+					if (e.size() == 0) { e = "invalid proxy file";  } 
+					err += " - " + (*it) + " (" + e + ")\n";
 				}
 			}
 
@@ -251,6 +303,7 @@ void usage(char *exe){
 
 int main (int argc,char **argv){
 	int exit_code = 0;
+	string path = "";
 	if ( argc < 2 || strcmp(argv[1],"--help") == 0 ) {
 		usage(argv[0]);
 	} else if (argc > 2) {
@@ -259,15 +312,16 @@ int main (int argc,char **argv){
 		exit_code = -1;
 	} else {
 		try{
-			string msg = removeExpiredProxies (normalizePath(argv[1]));
+			path = normalizePath(argv[1]);
+			string msg = removeExpiredProxies (path);
 			cout << "================================================================\n\n";
 			cout << "\tPROXY-CACHE PURGER\n\n";
 			cout << msg << "\n";
 			cout << "================================================================\n";
 
 		} catch (ProxyCacheException &exc){
-			if (exc.getCode()==UNVALID_PATH ){
-				cerr << "Error -  unvalid proxy cache path (" << exc.what() << ")\n";
+			if (exc.getCode()==INVALID_PATH ){
+				cerr << "Error -  invalid proxy cache path (" << exc.what() << ")\n";
 			} else{
 				cerr << "Error: " << exc.what( ) << "\n";
 			}

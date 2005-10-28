@@ -373,60 +373,63 @@ WMPAuthorizer::checkGaclUserAuthZ()
 		if (fqan.find("VOMS") == 0 && pos > 0) {
 			fqan = fqan.erase(0, pos);
 		}
-		edglog(info)<<"fqan="<<fqan<<endl;
-		string dn = string(wmputilities::getUserDN());
-		edglog(info)<<"dn="<<dn<<endl;
-		// Gacl-Mgr
-		try {
-			string gaclfile;
-			if (getenv("GLITE_WMS_LOCATION")) {
-				gaclfile = string(getenv("GLITE_WMS_LOCATION")) + "/etc/"
+	} else {
+		edglog(warning)<<"Unknown voms fqan: "<<VOMS_GACL_VAR
+			<<" environment variable not set"<<endl;
+		fqan = "";
+	}
+	edglog(info)<<"fqan="<<fqan<<endl;
+	string dn = string(wmputilities::getUserDN());
+	edglog(info)<<"dn="<<dn<<endl;
+	// Gacl-Mgr
+	try {
+		string gaclfile;
+		if (getenv("GLITE_WMS_LOCATION")) {
+			gaclfile = string(getenv("GLITE_WMS_LOCATION")) + "/etc/"
+				+ WMPAuthorizer::VOMS_GACL_FILE;
+		} else {
+			if (getenv("GLITE_LOCATION")) {
+				gaclfile = string(getenv("GLITE_LOCATION")) + "/etc/"
 					+ WMPAuthorizer::VOMS_GACL_FILE;
 			} else {
-				if (getenv("GLITE_LOCATION")) {
-					gaclfile = string(getenv("GLITE_LOCATION")) + "/etc/"
-						+ WMPAuthorizer::VOMS_GACL_FILE;
-				} else {
-					gaclfile = "/opt/glite/etc/" + WMPAuthorizer::VOMS_GACL_FILE;
-				}
+				gaclfile = "/opt/glite/etc/" + WMPAuthorizer::VOMS_GACL_FILE;
 			}
-			GaclManager gacl(gaclfile);
-			// checks exec permssion
-			if (fqan != "") {
-				// FQAN authorization
-				exec = gacl.checkAllowPermission(GaclManager::WMPGACL_VOMS_TYPE,
-					fqan, GaclManager::WMPGACL_EXEC);
-				execDN = !gacl.checkDenyPermission(GaclManager::WMPGACL_PERSON_TYPE,
-					dn,	GaclManager::WMPGACL_EXEC);
-			} else {
-				// DN authorization
+		}
+		GaclManager gacl(gaclfile);
+		// checks exec permssion
+		if (fqan != "") {
+			// FQAN authorization
+			exec = gacl.checkAllowPermission(GaclManager::WMPGACL_VOMS_TYPE,
+				fqan, GaclManager::WMPGACL_EXEC);
+			if (gacl.hasEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE, dn))  {
 				execDN = gacl.checkAllowPermission(GaclManager::WMPGACL_PERSON_TYPE,
-					dn,	GaclManager::WMPGACL_EXEC );
-			}
-			exec = exec && execDN;
-		} catch (GaclException &exc){
-				errmsg = "Internal server error: missing information on authorization";
-				errmsg += "\n(please contact server administrator)\n";
-				errmsg += "please report the following message:\n";
-				errmsg += exc.what();
-				edglog(critical)<<errmsg<<endl;
-			throw GaclException(__FILE__, __LINE__,
-				"checkGaclUserAuthZ()",
-				wmputilities::WMS_GACL_FILE,
-				errmsg);
+                                    dn,     GaclManager::WMPGACL_EXEC);
+			 } else execDN = true ;
+		} else {
+			exec = true;
+			// DN authorization
+			execDN = gacl.checkAllowPermission(GaclManager::WMPGACL_PERSON_TYPE,
+				dn,	GaclManager::WMPGACL_EXEC );
 		}
-		// checks exec permission
-		if (!exec) {
-			edglog(info)<<"Authorization error: user not authorized"<<endl;
-			throw AuthorizationException(__FILE__, __LINE__,
-				"checkGaclUserAuthZ()",
-				wmputilities::WMS_AUTHZ_ERROR, "Authorization error: "
-				"user not authorized");
-		}
-
-	} else {
-		edglog(warning)<< "unknown voms fqan: " << VOMS_GACL_VAR << " environment variable not set" << endl;
+		exec = exec && execDN;
+	} catch (GaclException &exc){
+			errmsg = "User not authorized:\n";
+			errmsg += exc.what();
+			edglog(critical)<<errmsg<<endl;
+		throw GaclException(__FILE__, __LINE__,
+			"checkGaclUserAuthZ()",
+			wmputilities::WMS_GACL_FILE,
+			errmsg);
 	}
+	// checks exec permission
+	if (!exec) {
+		edglog(info)<<"Authorization error: user not authorized"<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+			"checkGaclUserAuthZ()",
+			wmputilities::WMS_AUTHZ_ERROR, "Authorization error: "
+			"user not authorized");
+	}
+	
 	GLITE_STACK_CATCH();
 }
 
@@ -675,11 +678,11 @@ WMPAuthorizer::compareFQAN(const string &ref, const string &in )
 	vector<string>::iterator it1, it2, it3 ;
 
 	// v1=<referring-vect>
-	v1= authorizer::WMPAuthorizer::parseFQAN( ref );
+	v1= authorizer::WMPAuthorizer::parseFQAN( in );
 	// v2=<input-vect>
-	v2= authorizer::WMPAuthorizer::parseFQAN( in );
+	v2= authorizer::WMPAuthorizer::parseFQAN( ref );
 
-	for ( it1 = v1.begin() ; it1 != v2.end( ) ; it1++ ) {
+	for ( it1 = v1.begin() ; it1 != v1.end( ) ; it1++ ) {
 		// checks if  the <input-vect> is empty
 		if ( v2.empty( ) ) {
 			// checks if the remaining elements of the <ref-vect> are NULL

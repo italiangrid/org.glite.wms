@@ -120,12 +120,8 @@ convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*>
 	for (unsigned int i = 0; i < graph_struct_type_vector->size(); i++) {
 		element = new GraphStructType();
 		element->name = (*graph_struct_type_vector)[i]->name;
-		//if ((*graph_struct_type_vector)[i]->childrenJob) { // Vector not NULL
-			element->childrenJob = convertFromGSOAPGraphStructTypeVector(
-				&((*graph_struct_type_vector)[i]->childrenJob));
-		//} else {
-			//element->childrenJob = new vector<GraphStructType*>;
-		//}
+		element->childrenJob = convertFromGSOAPGraphStructTypeVector(
+			&((*graph_struct_type_vector)[i]->childrenJob));
 		returnVector->push_back(element);
 	}
 	return returnVector;
@@ -139,12 +135,8 @@ convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
 {
 	GraphStructType *element = new GraphStructType();
 	element->name = graph_struct_type->name;
-	//if (graph_struct_type) { // Element not NULL
-		element->childrenJob = convertFromGSOAPGraphStructTypeVector(
-			&(graph_struct_type->childrenJob));
-	//} else {
-		//element->childrenJob = new vector<GraphStructType*>;
-	//}
+	element->childrenJob = convertFromGSOAPGraphStructTypeVector(
+		&(graph_struct_type->childrenJob));
 	return element;
 }
 
@@ -156,11 +148,9 @@ convertToStringList(ns1__StringList *ns1_string_list) {
 	StringList *string_list = new StringList();
 	string_list->Item = new vector<string>();
 	if (ns1_string_list) {
-		//if (ns1_string_list->Item) {
-			for (unsigned int i = 0; i < ns1_string_list->Item.size(); i++) {
-				string_list->Item->push_back((ns1_string_list->Item)[i]);
-			}
-		//}
+		for (unsigned int i = 0; i < ns1_string_list->Item.size(); i++) {
+			string_list->Item->push_back((ns1_string_list->Item)[i]);
+		}
 	}
 	return string_list;
 }
@@ -861,33 +851,12 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 	edglog_fn("wmpgsoapoperations::ns1__getProxyReq");
 	edglog(info)<<"getProxyReq operation called"<<endl;
 	
-	ns2__getProxyReqResponse ns2response;
-	int return_value = ns2__getProxyReq(soap, delegation_id, ns2response);
-	if (return_value == SOAP_OK) {
-		response._request = ns2response._getProxyReqReturn;
-	}
-	
-	edglog(info)<<"getProxyReq operation completed\n"<<endl;
-	
-	return return_value;
-	GLITE_STACK_CATCH();
-}
-
-int
-ns2__getProxyReq(struct soap *soap, string delegation_id,
-	struct ns2__getProxyReqResponse &response)
-{
-	GLITE_STACK_TRY("ns2__getProxyReq(struct soap *soap, string delegation_id, "
-		"ns2__getProxyReqResponse &response)");
-	edglog_fn("wmpgsoapoperations::ns2__getProxyReq");
-	edglog(info)<<"getProxyReq operation called"<<endl;
-	
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
 	try  {
 		getProxyReq(getProxyReq_response, delegation_id);
-		response._getProxyReqReturn = getProxyReq_response.request;
+		response._request = getProxyReq_response.request;
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getProxyReq", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -913,12 +882,55 @@ ns1__putProxy(struct soap *soap, string delegation_id, string proxy,
 	edglog_fn("wmpgsoapoperations::ns1__putProxy");
 	edglog(info)<<"putProxy operation called"<<endl;
 	
-	ns2__putProxyResponse ns2response;
-	int return_value = ns2__putProxy(soap, delegation_id, proxy, ns2response);
-	// no response conversion; no fields present
+	int return_value = SOAP_OK;
+
+	putProxyResponse putProxy_response;
+	try  {
+		putProxy(putProxy_response, delegation_id, proxy);
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, exc.getCode(), "putProxy", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "putProxy", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
 	
 	edglog(info)<<"putProxy operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+
+int
+ns2__getProxyReq(struct soap *soap, string delegation_id,
+	struct ns2__getProxyReqResponse &response)
+{
+	GLITE_STACK_TRY("ns2__getProxyReq(struct soap *soap, string delegation_id, "
+		"ns2__getProxyReqResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__getProxyReq");
+	edglog(info)<<"getProxyReq operation called"<<endl;
 	
+	int return_value = SOAP_OK;
+
+	getProxyReqResponse getProxyReq_response;
+	try  {
+		getProxyReq(getProxyReq_response, delegation_id);
+		response._getProxyReqReturn = getProxyReq_response.request;
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getProxyReq", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getProxyReq", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	 
+	edglog(info)<<"getProxyReq operation completed\n"<<endl;
+
 	return return_value;
 	GLITE_STACK_CATCH();
 }
@@ -938,11 +950,11 @@ ns2__putProxy(struct soap *soap, string delegation_id, string proxy,
 	try  {
 		putProxy(putProxy_response, delegation_id, proxy);
 	} catch (Exception &exc) {
-	 	setSOAPFault(soap, exc.getCode(), "putProxy", time(NULL),
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "putProxy", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
 		return_value = SOAP_FAULT;
 	} catch (exception &ex) {
-	 	setSOAPFault(soap, WMS_IS_FAILURE, "putProxy", time(NULL),
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "putProxy", time(NULL),
 	 		WMS_IS_FAILURE, (string) ex.what());
 		return_value = SOAP_FAULT;
 	}

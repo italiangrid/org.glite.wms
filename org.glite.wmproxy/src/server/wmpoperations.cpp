@@ -829,6 +829,32 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		defaultport);
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 
+	// Adding attribute for perusal functionalities
+	string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+	if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
+		if (jad->getBool(JDL::PU_FILE_ENABLE)) {
+			edglog(debug)<<"Enabling perusal functionalities for job: "
+				<<jid->toString()<<endl;
+			edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+				<<endl;
+			jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
+				 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+			if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+				edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+					<<endl;
+				jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+			}
+			
+			int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+			if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
+				time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
+			}
+			time = max(time, conf.getMinPerusalTimeInterval());
+			edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
+			jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
+		}
+	}
+	
 	setAttributes(jad, jid, dest_uri);
 	
 	// Initializing logger
@@ -1127,6 +1153,34 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
                 }
 			}
 		}
+		
+		// Adding attributes for perusal functionalities
+    	string peekdir = wmputilities::getPeekDirectoryPath(subjobid);
+		if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
+			if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
+				edglog(debug)<<"Enabling perusal functionalities for job: "
+					<<jobidstring<<endl;
+				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+					<<endl;
+				nodead.setAttribute(JDLPrivate::PU_LIST_FILE_URI,
+					peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+				if (!nodead.hasAttribute(JDL::PU_FILES_DEST_URI)) {
+					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+						<<endl;
+					nodead.setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+				}
+				
+				int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+				if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
+					time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
+				}
+				time = max(time, conf.getMinPerusalTimeInterval());
+				edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
+					<<endl;
+				nodead.setAttribute(JDL::PU_TIME_INTERVAL, time);
+			}
+		}
+			
 		dag->replaceNode(subjobid, nodead);
 	}
 	
@@ -1265,6 +1319,14 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 	}
 	
 	regJobEvent event = wmplogger.retrieveRegJobEvent(job_id);
+
+	if (event.parent != "") {
+		string msg = "the job is a DAG subjob. The parent is: "
+			+ event.parent;
+		edglog(error)<<msg<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
+	}
 	if (event.jdl == "") {
 		edglog(critical)<<"No Register event found quering LB; unable to get "
 			"registered jdl"<<endl;
@@ -1272,14 +1334,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 			"jobStart()", wmputilities::WMS_IS_FAILURE,
 			"Unable to get registered jdl"
 			"\n(please contact server administrator)");
-	}
-	
-	if (event.parent != "") {
-		string msg = "the job is a DAG subjob. The parent is: "
-			+ event.parent;
-		edglog(error)<<msg<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 	}
 	
 	edglog(debug)<<"JDL to Start:\n"<<event.jdl<<endl;
@@ -1415,34 +1469,6 @@ submit(const string &jdl, JobId *jid)
 			logCheckpointable(&wmplogger, jad, jobidstring);
 		}
 		
-		// Adding attribute for perusal functionalities
-		string peekdir = wmputilities::getPeekDirectoryPath(*jid);
-		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
-			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
-				edglog(debug)<<"Enabling perusal functionalities for job: "
-					<<jid->toString()<<endl;
-				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
-					<<endl;
-				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
-					 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
-				if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
-					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
-						<<endl;
-					jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
-				}
-				
-				int time = DEFAULT_PERUSAL_TIME_INTERVAL;
-				if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
-					time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
-				}
-				time = max(time, conf.getMinPerusalTimeInterval());
-				edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
-				jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
-				
-				jdltostart = jad->toSubmissionString();
-			}
-		}
-		
 		delete jad;
 	} else {
 		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
@@ -1482,37 +1508,6 @@ submit(const string &jdl, JobId *jid)
 	    			delete jad;
 	    		}
 	    	}
-	    	
-	    	// Adding attributes for perusal functionalities
-	    	string peekdir = wmputilities::getPeekDirectoryPath(jobid);
-			if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
-				if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
-					edglog(debug)<<"Enabling perusal functionalities for job: "
-						<<jobidstring<<endl;
-					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
-						<<endl;
-					nodead.setAttribute(JDLPrivate::PU_LIST_FILE_URI,
-						peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
-					if (!nodead.hasAttribute(JDL::PU_FILES_DEST_URI)) {
-						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
-							<<endl;
-						nodead.setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
-					}
-					
-					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
-					if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
-						time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
-					}
-					time = max(time, conf.getMinPerusalTimeInterval());
-					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
-						<<endl;
-					nodead.setAttribute(JDL::PU_TIME_INTERVAL, time);
-					
-					dag->replaceNode(jobid, nodead);
-					
-					jdltostart = dag->toString();
-				}
-			}
 		}
 	    
 	    delete dag;
@@ -2017,7 +2012,7 @@ getQuota(getQuotaResponse &getQuota_response)
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-	auth->authorize();
+	auth->authorize(wmputilities::getEnvFQAN());
 	edglog(debug)<<"User Name: "<<auth->getUserName()<<endl;
 	
 	pair<long, long> quotas;
@@ -2045,7 +2040,7 @@ getFreeQuota(getFreeQuotaResponse &getFreeQuota_response)
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
-	auth->authorize();
+	auth->authorize(wmputilities::getEnvFQAN());
 	edglog(debug)<<"User Name: "<<auth->getUserName()<<endl;
 	
 	pair<long, long> quotas;
@@ -3032,7 +3027,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	}
 	
 	checkPerusalFlag(jid, delegatedproxy, true);
-	
+
 	string peekdir = wmputilities::getPeekDirectoryPath(*jid) + FILE_SEPARATOR;
 	const boost::filesystem::path p(peekdir, boost::filesystem::native);
 	vector<string> found;
