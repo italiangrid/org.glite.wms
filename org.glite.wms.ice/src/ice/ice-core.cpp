@@ -159,7 +159,11 @@ void ice::clearRequests()
 //______________________________________________________________________________
 void ice::getNextRequests(vector<string>& ops) 
 {
-  requests = fle.get_all_available();
+  try{requests = fle.get_all_available();}
+  catch(exception& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
+  }
   for(unsigned int j=0; j<requests.size(); j++)  
     ops.push_back(*requests[j]);
 }

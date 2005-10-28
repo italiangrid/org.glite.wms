@@ -47,8 +47,6 @@ jobCache::jobCache(const string& _snapFile,
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
   : hash(),
     cream_grid_hash(),
-    //jnlFile( journalFile ),
-    //snapFile(_snapFile),
     operation_counter(0)
 { 
   pthread_mutex_init(&mutexSnapFile, NULL);
@@ -86,7 +84,6 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
    * by its dtor. This ensure file closing under any circumstance 
    * (unexpected exception raising, forgotting to call ::close() etc.)
    */
-  //fileStreamOpenManager fom(&is, snapFile.c_str(), ios::in );
   ifstream tmpIs(snapFile.c_str(), ios::in );
   /**
    * Loads jobs from snapshot file
@@ -94,7 +91,6 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
   Mutex M(&mutexSnapFile);
   string Buf;
   while(tmpIs.peek() != EOF) {
-    //this->getNextLine(Buf);
     getline(tmpIs, Buf, '\n');
     if(tmpIs.fail() || tmpIs.bad()) {
       tmpIs.close(); // redundant: ifstream's dtor also closes file
@@ -207,6 +203,7 @@ void jobCache::remove_by_grid_jobid(const string& gid)
   operation_counter++;
   try {
     if(operation_counter>=MAX_OPERATION_COUNTER) {
+      cout << "Dumping snapshot and truncating journal file"<<endl;
       this->dump(); // can raise a jnlFile_ex
       jnlMgr->truncate(); // can raise a jnlFile_ex
       operation_counter = 0;
@@ -296,6 +293,9 @@ void jobCache::dump() throw (jnlFile_ex&)
     apiutil::string_manipulation::make_string(::getpid());
 
   int saveerr = 0;
+
+  //  cout << "Unlinking...."<<endl;
+
   if(-1==::unlink(tmpSnapFile.c_str()))
     {
       saveerr = errno;
@@ -307,22 +307,27 @@ void jobCache::dump() throw (jnlFile_ex&)
       }
     }
   ofstream ofs;
+
+  //  cout << "Step #..."<<endl;
+
   {
     ofstream tmpOs(tmpSnapFile.c_str(), ios::out);
     if ((void*)tmpOs == 0) 
       throw jnlFile_ex("Error opening temp snapshot file");
     
+    //    cout << "stream aperto!"<<endl;
+
     map<string, CreamJob>::iterator it;
     for(it=hash.begin(); it!=hash.end(); it++) {
-      cout << "Dumping:"<<endl;
-      cout << "it.first="<<(*it).first 
-	   << " - it.second.jobid="<<(*it).second.jobid 
-	   << " - it.second.status="<<(*it).second.status<<endl;
+      //      cout << "Dumping snapshot file and:"<<endl;
+      //      cout << "it.first="<<(*it).first 
+// 	   << " - it.second.jobid="<<(*it).second.jobid 
+// 	   << " - it.second.status="<<(*it).second.status<<endl;
       string param = this->makeClassad((*it).first, 
 				       (*it).second.jobid, 
 				       (*it).second.status);
       
-      //     cout << "param="<<param<<endl;
+      //      cout << "param="<<param<<endl;
 
       try{tmpOs << param << endl;}
       catch(std::exception&ex) {
@@ -335,14 +340,14 @@ void jobCache::dump() throw (jnlFile_ex&)
       }
     }
     tmpOs.close(); // redundant: ofstream's dtor also closes the file
-  } 
-  
+  }
+  //  cout << "Renaming..."<<endl;
   if(-1==::rename(tmpSnapFile.c_str(), snapFile.c_str()))
     {
       string err = string("Error renaming temp snapshot file into snapshot file")+
 	strerror(errno);
 
-      cerr << "error renaming: "<<err;
+      cerr << "error renaming: "<<err<<endl;
 
       throw jnlFile_ex(err);
     }
@@ -394,7 +399,7 @@ string jobCache::makeClassad(const string& grid,
    apiutil::string_manipulation::trim(_grid, "\"");
    apiutil::string_manipulation::trim(_cream, "\"");
 
-   cout << "trimmed _grid="<<_grid<<" - _cream="<<_cream<<endl;
+   //cout << "trimmed _grid="<<_grid<<" - _cream="<<_cream<<endl;
 
    string expr = string("[Job=[grid_jobid=\"") + _grid + "\";cream_jobid=\"" + 
      _cream + "\";status=\"" 

@@ -66,7 +66,7 @@ void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&)
 
   is.close();
   string tmpName = filename+"."+string_manipulation::make_string(::getpid());
-  cerr << "Creating an empty file ["<<tmpName<<"]"<<endl;
+  //  cerr << "Creating an empty file ["<<tmpName<<"]"<<endl;
   ::unlink(tmpName.c_str());
   _os.open(tmpName.c_str(), ios::out);
   if(!_os)

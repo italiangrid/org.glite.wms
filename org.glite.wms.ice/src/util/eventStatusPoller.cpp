@@ -45,20 +45,21 @@ bool eventStatusPoller::getStatus(void)
 
   creamClient->clearSoap();
   try {
+    //cout << "Calling remote Cream jobInfo..."<<endl;
     _jobinfolist = creamClient->Info(cream_service.c_str(),
 				    empty, 
 				    empty, 
 				    -1, // SINCE
 				    -1  // TO
 				    );
-  } catch(soap_ex&) { 
-    cerr << "CreamProxy::Info raised a soap_ex exception\n";
+  } catch(soap_ex& ex) { 
+    cerr << "CreamProxy::Info raised a soap_ex exception: " << ex.what() << endl;
     return false; 
   } catch(BaseException& ex) {
-    cerr << "CreamProxy::Info raised a BaseException exception: "<< ex.what()<<endl;
+    cerr << "CreamProxy::Info raised a BaseException exception: " << ex.what() << endl;
     return false; 
   } catch(InternalException& ex) {
-    cerr << "CreamProxy::Info raised an InternalException exception: "<< ex.what()<<endl;
+    cerr << "CreamProxy::Info raised an InternalException exception: " << ex.what() << endl;
     return false; 
   } catch(DelegationException&) {
     cerr << "CreamProxy::Info raised a DelegationException exception\n";
@@ -113,8 +114,14 @@ void eventStatusPoller::run()
 {
   endpolling = false;
   while(!endpolling) {
-    if(getStatus())
-      updateJobCache();
+    if(getStatus()) {
+      try{
+	updateJobCache();
+      }
+      catch(...) {
+	cerr << "inside ::run - catched something"<<endl;
+      }
+    }
 
     sleep(delay);
   }

@@ -14,13 +14,13 @@
 
 SUBDIRS = util ice
 
-bin_PROGRAMS = putFL tryICE tryJobCache
+bin_PROGRAMS = putFL tryICE
 
 putFL_SOURCES = putFL.cpp
 
 tryICE_SOURCES = tryICE.cpp
 
-tryJobCache_SOURCES = tryJobCache.cpp
+### tryJobCache_SOURCES = tryJobCache.cpp
 
 putFL_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_soap \
@@ -47,12 +47,12 @@ tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS)
 
-tryJobCache_LDADD = ../src/util/libglite_wms_ice_util.la \
-			-lglite_ce_cream_client_soap \
-			-lglite_ce_cream_client_util \
-			$(LOG4CPP_LIBS) \
-			$(CLASSAD_LIBS) \
-			-lglite_ce_monitor_consumer
+###tryJobCache_LDADD = ../src/util/libglite_wms_ice_util.la \
+###			-lglite_ce_cream_client_soap \
+###			-lglite_ce_cream_client_util \
+###			$(LOG4CPP_LIBS) \
+###			$(CLASSAD_LIBS) \
+###			-lglite_ce_monitor_consumer
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
