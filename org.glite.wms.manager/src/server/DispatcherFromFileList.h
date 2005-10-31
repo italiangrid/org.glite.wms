@@ -10,8 +10,6 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
-#include "DispatcherImpl.h"
-#include "glite/wms/common/utilities/FLExtractor.h"
 #include "pipedefs.h"
 
 namespace glite {
@@ -19,24 +17,17 @@ namespace wms {
 namespace manager {
 namespace server {
 
-class DispatcherFromFileList: public DispatcherImpl
+class DispatcherFromFileList:
+    public glite::wms::common::task::PipeWriter<RequestPtr, queue_type>
 {
-public:
-  typedef glite::wms::common::utilities::FLExtractor<std::string> extractor_type;
-
-private:
-  boost::shared_ptr<extractor_type> m_extractor;
+  class Impl;
+  boost::shared_ptr<Impl> m_impl;
 
 public:
-  DispatcherFromFileList(boost::shared_ptr<extractor_type> extractor);
-
-  void run(pipe_type::write_end_type& write_end);
+  DispatcherFromFileList(std::string const& input_file);
+  void operator()();
 };
 
 }}}} // glite::wms::manager::server
 
 #endif
-
-// Local Variables:
-// mode: c++
-// End:

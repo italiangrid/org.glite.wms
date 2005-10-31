@@ -16,8 +16,8 @@
 #include <boost/regex.hpp>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#include "DispatcherFactory.h"
 #include "signal_handling.h"
+#include "glite/wms/common/utilities/FLExtractor.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -47,101 +47,25 @@ namespace server {
 
 namespace {
 
-std::string dispatcher_id("FileList");
-
-DispatcherImpl* create_dispatcher()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  if (!config
-      || config->get_module() != configuration::ModuleType::workload_manager) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-  std::string file(wm_config->input());
-
-  // the extractor is shared between the dispatcher and the cleanup functions
-  // (see CleanUp below); the latter can live beyond the scope of the
-  // dispatcher build the extractor outside the dispatcher to make this
-  // sharing more apparent (i.e. the extractor does not belong to the
-  // dispatcher) even if it could be built within the dispatcher ctor
-
-  typedef DispatcherFromFileList::extractor_type extractor_type;
-  boost::shared_ptr<extractor_type> extractor(new extractor_type(file));
-  if (!extractor) {
-    Fatal("cannot build FileList extractor");
-  }
-
-  Info("reading from " << file);
-
-  return new DispatcherFromFileList(extractor);
-}
-
-std::string normalize(std::string const& id)
-{
-  std::string result(id);
-  std::transform(result.begin(), result.end(), result.begin(), ::tolower);
-  return result;
-}
-
-struct Register
-{
-  Register()
-  {
-    DispatcherFactory::instance()->register_dispatcher(
-      normalize(dispatcher_id),
-      create_dispatcher
-    );
-  }
-  ~Register()
-  {
-    DispatcherFactory::instance()->unregister_dispatcher(
-      normalize(dispatcher_id)
-    );
-  }
-};
-
-Register r;
+typedef utilities::FLExtractor<std::string> extractor_type;
+typedef boost::shared_ptr<extractor_type> ExtractorPtr;
+typedef extractor_type::iterator extractor_iterator;
 
 class CleanUp
 {
-  typedef DispatcherFromFileList::extractor_type extractor_type;
-  typedef extractor_type::iterator extractor_iterator;
-
-  boost::shared_ptr<extractor_type> m_extractor;
+  ExtractorPtr m_extractor;
   extractor_iterator m_it;
 
 public:
-  CleanUp(boost::shared_ptr<extractor_type> e, extractor_iterator i)
+  CleanUp(ExtractorPtr e, extractor_iterator i)
     : m_extractor(e), m_it(i)
   {
   }
-
   void operator()()
   {
     m_extractor->erase(m_it);
   }
 };
-
-std::string
-get_input_name()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-
-  if (!config) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-
-  return wm_config->input();
-}
 
 bool
 is_recovery_enabled()
@@ -160,15 +84,14 @@ is_recovery_enabled()
   return wm_config->enable_recovery();
 }
 
-void log_dequeued(common::ContextPtr const& context)
+void log_dequeued(common::ContextPtr const& context, std::string const& input)
 {
-  std::string input_name(get_input_name());
   char const* const local_jobid = ""; // not needed because no real local id
 
   int lb_error;
   common::ContextPtr ctx;
   boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogDeQueuedProxy, _1, input_name.c_str(), local_jobid),
+    boost::bind(edg_wll_LogDeQueuedProxy, _1, input.c_str(), local_jobid),
     context
   );
   if (lb_error) {
@@ -539,7 +462,7 @@ public:
 };
 
 void catalog_requests_by_id(
-  boost::shared_ptr<extractor_type> const& extractor,
+  ExtractorPtr extractor,
   requests_type const& requests,
   id_to_requests_type& id_to_requests
 )
@@ -664,13 +587,10 @@ bool is_cancelled(JobStatusPtr const& status)
 
 class clean_ignore
 {
-  boost::shared_ptr<extractor_type> m_extractor;
+  ExtractorPtr m_extractor;
   std::string m_id;
 public:
-  clean_ignore(
-    boost::shared_ptr<extractor_type> const& extractor,
-    std::string const& id
-  )
+  clean_ignore(ExtractorPtr extractor, std::string const& id)
     : m_extractor(extractor), m_id(id)
   {
   }
@@ -683,7 +603,7 @@ public:
 
 void single_request_recovery(
   id_requests_type const& id_requests,
-  boost::shared_ptr<extractor_type> const& extractor,
+  ExtractorPtr extractor,
   TaskQueue& tq
 )
 {
@@ -742,7 +662,7 @@ bool is_cancel(requests_for_id_type::value_type const& v)
 
 void multiple_request_recovery(
   id_requests_type const& id_requests,
-  boost::shared_ptr<extractor_type> const& extractor,
+  ExtractorPtr extractor,
   TaskQueue& tq
 )
 {
@@ -866,13 +786,10 @@ void multiple_request_recovery(
 
 class recover
 {
-  boost::shared_ptr<extractor_type> m_extractor;
+  ExtractorPtr m_extractor;
   TaskQueue* m_tq;
 public:
-  recover(
-    boost::shared_ptr<extractor_type> const& extractor,
-    TaskQueue& tq
-  )
+  recover(ExtractorPtr extractor, TaskQueue& tq)
     : m_extractor(extractor), m_tq(&tq)
   {
   }
@@ -894,10 +811,7 @@ public:
 };
 
 void
-recovery(
-  boost::shared_ptr<extractor_type> const& extractor,
-  TaskQueue& tq
-)
+recovery(ExtractorPtr extractor, TaskQueue& tq)
 {
   requests_type requests(extractor->get_all_available());
   id_to_requests_type id_to_requests;
@@ -912,8 +826,9 @@ recovery(
 
 void
 get_new_requests(
-  boost::shared_ptr<extractor_type>& extractor,
-  TaskQueue& tq
+  ExtractorPtr extractor,
+  TaskQueue& tq,
+  std::string const& input
 )
 {
   requests_type new_requests(extractor->get_all_available());
@@ -956,7 +871,7 @@ get_new_requests(
           tq.insert(std::make_pair(id.toString(), request));
 
           if (command == "jobsubmit" || command == "jobresubmit") {
-            log_dequeued(request->lb_context());
+            log_dequeued(request->lb_context(), input);
           } else if (command == "jobcancel") {
             log_cancel_req(request->lb_context());
           }
@@ -1015,7 +930,7 @@ get_new_requests(
             Debug(
               "jobresubmit " << id << " when in state " << request->state()
             );
-            log_dequeued(request->lb_context());
+            log_dequeued(request->lb_context(), input);
             request->mark_resubmitted();
             cleanup_guard.dismiss();
             request->add_cleanup(cleanup);
@@ -1055,33 +970,48 @@ get_new_requests(
 
 } // {anonymous}
 
-DispatcherFromFileList::DispatcherFromFileList(
-  boost::shared_ptr<extractor_type> extractor
-)
-  : m_extractor(extractor)
+struct DispatcherFromFileList::Impl
 {
+  std::string m_input;
+};
+
+DispatcherFromFileList::DispatcherFromFileList(
+  std::string const& input
+)
+  : m_impl(new Impl)
+{
+  m_impl->m_input = input;
 }
 
-void
-DispatcherFromFileList::run(pipe_type::write_end_type& write_end)
+void DispatcherFromFileList::operator()()
 try {
 
   Info("Dispatcher: starting");
+
+  std::string const input_file(m_impl->m_input);
+  ExtractorPtr extractor(new extractor_type(input_file));
+
+  if (extractor) {
+    Info("Dispatcher: reading from " << input_file);
+  } else {
+    Error("Dispatcher: cannot read from " << input_file << ". Exiting...");
+    return;
+  }
 
   TaskQueue& tq(the_task_queue());
 
   if (is_recovery_enabled()) {
     Info("Dispatcher: doing recovery");
-    recovery(m_extractor, tq);
+    recovery(extractor, tq);
   } else {
     Info("Dispatcher: recovery disabled");
   }
 
   while (!received_quit_signal()) {
 
-    do_transitions(tq, write_end);
+    do_transitions(tq, write_end());
     remove_done(tq);
-    get_new_requests(m_extractor, tq);
+    get_new_requests(extractor, tq, input_file);
 
     // wait one second
     boost::xtime xt;

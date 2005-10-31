@@ -22,10 +22,7 @@ libexec_PROGRAMS = \
 	glite-wms-planned2submit
 
 noinst_HEADERS = \
-       DispatcherFactory.h \
         DispatcherFromFileList.h \
-        Dispatcher.h \
-        DispatcherImpl.h \
         RequestHandler.h \
 	signal_handling.h \
 	listmatch.h \
@@ -42,14 +39,8 @@ libglite_wms_manager_server_la_SOURCES = \
 	plan.cpp \
 	DAGManHelper.h \
 	DAGManHelper.cpp \
-	Dispatcher.h \
-	Dispatcher.cpp \
-	DispatcherFactory.h \
-	DispatcherFactory.cpp \
 	DispatcherFromFileList.h \
 	DispatcherFromFileList.cpp \
-	DispatcherImpl.h \
-	DispatcherImpl.cpp \
 	RequestHandler.h \
 	RequestHandler.cpp \
 	WMReal.h \
