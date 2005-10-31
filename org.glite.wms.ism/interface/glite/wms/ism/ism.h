@@ -37,27 +37,30 @@ typedef std::string id_type;
 // resource descritpion
 typedef boost::shared_ptr<classad::ClassAd> ad_ptr;
 // update function
-typedef boost::function<bool(int&, ad_ptr)> update_uf_type;
+typedef boost::function<bool(int&, ad_ptr)> update_function_type;
 
 // 1. update time
 // 2. expiry time
 // 3. resource descritpion
 // 4. update function
-typedef boost::tuple<int, int, ad_ptr, update_uf_type> ism_entry_type;
+typedef boost::tuple<int, int, ad_ptr, update_function_type> ism_entry_type;
 
 // 1. resource identifier
 // 2. ism entry type
 typedef std::map<id_type, ism_entry_type> ism_type;
 
+// type specification for the mutex in ism
+typedef boost::recursive_mutex ism_mutex_type;
+
 ism_type& get_ism();
-boost::recursive_mutex& get_ism_mutex();
+ism_mutex_type& get_ism_mutex();
 
 ism_type::value_type make_ism_entry(
   std::string const& id, // resource identifier
-  int ut,	 // update time
+  int update_time,	 // update time
   ad_ptr const& ad,	 // resource descritpion
-  update_uf_type  const& uf = update_uf_type(), // update function
-  int et = time(0) + 600    // expiry time with defualt 5*60 
+  update_function_type  const& uf = update_function_type(), // update function
+  int expiry_time = 300    // expiry time with defualt 5*60 
 );
 
 std::ostream& operator<<(std::ostream& os, ism_type::value_type const& value);
@@ -82,9 +85,7 @@ std::string get_ism_dump(void);
 
 struct call_dump_ism_entries
 {
-  call_dump_ism_entries() {};
   void operator()();
-  ~call_dump_ism_entries() { (*this)(); }
 };
 
 } // ism

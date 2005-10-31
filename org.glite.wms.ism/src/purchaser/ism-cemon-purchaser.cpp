@@ -199,7 +199,7 @@ void ism_cemon_purchaser::do_purchase()
       }
     } // for_each service
     {
-    boost::recursive_mutex::scoped_lock l(get_ism_mutex());
+    ism_mutex_type::scoped_lock l(get_ism_mutex());
     for (gluece_info_iterator it = gluece_info_container.begin();
          it != gluece_info_container.end(); ++it) {
 	

@@ -202,7 +202,7 @@ void ism_cemon_asynch_purchaser::do_purchase()
                  ((!strcasecmp(dialect.c_str(), "ISM_CLASSAD")) && 
                   parse_classad_event_messages(consumer, gluece_info_container)) ) {
                  
-              boost::recursive_mutex::scoped_lock l(get_ism_mutex());
+              ism_mutex_type::scoped_lock l(get_ism_mutex());
 	      for (gluece_info_iterator it = gluece_info_container.begin();
                 it != gluece_info_container.end(); ++it) {
 
@@ -212,7 +212,7 @@ void ism_cemon_asynch_purchaser::do_purchase()
                   if (expand_glueceid_info(it->second)) {
 		    int TTLCEinfo = 0;
                     if (!it->second->EvaluateAttrNumber("TTLCEinfo", TTLCEinfo)) TTLCEinfo = 300; 
-                    get_ism()[it->first] =  boost::make_tuple(static_cast<int>(get_current_time().sec), TTLCEinfo, it->second, update_uf_type());
+                    get_ism()[it->first] =  boost::make_tuple(static_cast<int>(get_current_time().sec), TTLCEinfo, it->second, update_function_type());
                   }
                 }
               }
