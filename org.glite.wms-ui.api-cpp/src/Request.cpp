@@ -203,6 +203,9 @@ void Request::submit ( ){
 		// it's a Normal Job
 		log.transfer ( Logging::START, jad->toSubmissionString () ) ;
 		jad->setAttribute (  JDL::LB_SEQUENCE_CODE, log.getSequence()  );
+		if (!jad->hasAttribute(JDL::VIRTUAL_ORGANISATION)){
+			jad->setAttribute(JDL::VIRTUAL_ORGANISATION,userCred.getDefaultVoName());
+		}
 		// UserTags implementation:
 		jdl = jad->toSubmissionString () ;
 		if (  jad->hasAttribute  (   JDL::USERTAGS  )   ){
