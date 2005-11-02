@@ -3,10 +3,8 @@
 
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "eventStatusPoller_ex.h"
-//#include "jobCache.h"
 #include "runnable.h"
 
-//class glite::wms::ice::util::jobCache;
 class glite::ce::cream_client_api::soap_proxy::CreamProxy;
 class glite::ce::cream_client_api::soap_proxy::JobInfoList;
 

@@ -119,8 +119,10 @@ void eventStatusPoller::updateJobCache()
 //     if(stNum == -1)
 //       stNum = glite::ce::cream_client_api::job_statuses::UNKNOWN;
 
+    string gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid(_jobinfolist->jobInfo.at(j)->CREAMJobId);
+
     try {
-      jobCache::getInstance()->put(_jobinfolist->jobInfo.at(j)->GridJobId,
+      jobCache::getInstance()->put(gid,
 				   _jobinfolist->jobInfo.at(j)->CREAMJobId,
 				   (glite::ce::cream_client_api::job_statuses::job_status)stNum);
     } catch(std::exception& ex) {
