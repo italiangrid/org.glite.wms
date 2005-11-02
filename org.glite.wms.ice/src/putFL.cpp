@@ -19,27 +19,31 @@ using namespace std;
 int getRandom(double);
 //bool checkClassad(string);
 
-static string jdl[] = {
-    "[arguments = [ ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up__u202\"executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up_u202\";executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID1\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID2\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID3\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ id = \"JOBID4\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ ad = [executable=\"/bin/echo\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up_u202\";executable=\"/bin/echo\"; type=\"job\"; QueueName = \"grid01\"; VirtualOrganisation = \"EGEE\"; BatchSystem = \"lsf\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u20\";ad = [executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ ad = [executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID8\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\"id = \"JOBID9\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-    ""
-  };
+// static string jdl[] = {
+//     "[arguments = [ ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up__u202\"executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up_u202\";executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID1\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID2\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID3\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ id = \"JOBID4\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ ad = [executable=\"/bin/echo\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up_u202\";executable=\"/bin/echo\"; type=\"job\"; QueueName = \"grid01\"; VirtualOrganisation = \"EGEE\"; BatchSystem = \"lsf\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u20\";ad = [executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ ad = [executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID8\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\"id = \"JOBID9\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
+//     ""
+//   };
 
 int main(int argc, char* argv[]) {
+  /**
+   * Usage: putFL <filelist> <jdlfile>
+   *
+   */
   if(argc<3) return 1;
    
   int j, howmany;
@@ -58,9 +62,9 @@ int main(int argc, char* argv[]) {
     //int whichOneToAdd = getRandom(8);
     std::getline(is, buf, '\n');
     
-    cout << ": Adding string [" 
+    cout << "Adding string <" 
 	 << buf
-	 << "] to filelist..." << endl;
+	 << "> to filelist..." << endl;
     {
       try{
 	fl.open(argv[1]);

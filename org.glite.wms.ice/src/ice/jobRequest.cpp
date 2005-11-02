@@ -45,31 +45,38 @@ void jobRequest::unparse(const string& request) throw(util::ClassadSyntax_ex&, u
 
   if((tree=ad->Lookup("arguments"))==NULL)
     throw util::JobRequest_ex("attribute 'arguments' not found");
+
+  
+  unp.Unparse(_jdl, tree);
+
+  //cerr << "_jdl = <"<<_jdl<<">"<<endl;
+
+  ad = parser.ParseClassAd(_jdl);
+  if(!ad)
+    throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing request's 'ad' tree");
+  
+  if((tree=ad->Lookup("ad"))==NULL)
+    throw util::JobRequest_ex("attribute 'ad' not found");
   else {
-    unp.Unparse(_jdl, tree);
-    ad = parser.ParseClassAd(_jdl);
-    if(!ad)
-      throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing user's JDL");
-    
-    if((tree=ad->Lookup("ad"))==NULL)
-      throw util::JobRequest_ex("attribute 'ad' not found");
-    else {
-      unp.Unparse(jdl, tree);
-    }
+    unp.Unparse(jdl, tree);
+  }
+  
+  ad = parser.ParseClassAd(jdl);
+  if(!ad)
+    throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing JDL");
 
-    if((tree=ad->Lookup("id"))==NULL)
-      throw util::JobRequest_ex("attribute 'id' not found");
-    else {
-        unp.Unparse(grid_jobid, tree);
-    }
-
-    ad = parser.ParseClassAd(jdl);
-
-    if((tree=ad->Lookup("X509UserProxy"))==NULL)
-      throw util::JobRequest_ex("attribute 'X509UserProxy' not found in JDL");
-    else {
-      unp.Unparse(certfile, tree);
-      glite::ce::cream_client_api::util::string_manipulation::trim(certfile, "\"");
-    }
+  if((tree=ad->Lookup("id"))==NULL)
+    throw util::JobRequest_ex("attribute 'id' not found");
+  else {
+    unp.Unparse(grid_jobid, tree);
+  }
+  
+  ad = parser.ParseClassAd(jdl);
+  
+  if((tree=ad->Lookup("X509UserProxy"))==NULL)
+    throw util::JobRequest_ex("attribute 'X509UserProxy' not found in JDL");
+  else {
+    unp.Unparse(certfile, tree);
+    glite::ce::cream_client_api::util::string_manipulation::trim(certfile, "\"");
   }
 }

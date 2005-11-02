@@ -73,21 +73,16 @@ bool eventStatusPoller::getStatus(void)
 //______________________________________________________________________________
 void eventStatusPoller::updateJobCache() 
 {
-//   if(!jobs)
-//     {
-//       cerr << "Cache not initialized. Skipping update operation\n";
-//       return;
-//     }
   if(!_jobinfolist) {
     cerr << "_jobinfolist internal variable is NULL. Wont update the job cache\n";
     return;
   }
 
   for(unsigned int j=0; j<_jobinfolist->jobInfo.size(); j++) {
-    //   cerr << "Going to update jobcache with "
-    // 	 << "[grid_jobid="<<jobInfoList->at(j)->GridJobId
-    // 	 <<", cream_jobid="<< jobInfoList->at(j)->CREAMJobId
-    // 	 << ", status="<<jobInfoList->at(j)->status<<"]\n";
+//     cerr << "Going to update jobcache with "
+//      	 << "[grid_jobid="<<_jobinfolist->jobInfo[j]->GridJobId
+//      	 <<", cream_jobid="<< _jobinfolist->jobInfo[j]->CREAMJobId
+//      	 << ", status="<< _jobinfolist->jobInfo[j]->status<<"]\n";
     
     //glite::ce::cream_client_api::job_statuses::job_status 
     glite::ce::cream_client_api::job_statuses::job_status 
@@ -100,7 +95,7 @@ void eventStatusPoller::updateJobCache()
 				   _jobinfolist->jobInfo.at(j)->CREAMJobId,
 				   (glite::ce::cream_client_api::job_statuses::job_status)stNum);
     } catch(std::exception& ex) {
-      cerr << "eventStatusPoller::updateJobCache - jobCache::put raised an ex: "
+      cerr << "eventStatusPoller::updateJobCache - jobCache::put(...) raised an ex: "
 	   << ex.what()<<endl;
       delete(_jobinfolist);
       _jobinfolist = NULL;
@@ -115,6 +110,7 @@ void eventStatusPoller::run()
   endpolling = false;
   while(!endpolling) {
     if(getStatus()) {
+      cout << "eventStatusPoller::getStatus OK - Updating jobCache..."<<endl;
       try{
 	updateJobCache();
       }

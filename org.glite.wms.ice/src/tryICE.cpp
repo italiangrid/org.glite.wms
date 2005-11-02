@@ -54,13 +54,16 @@ int main(int argc, char*argv[]) {
   }
   
   vector<string> requests;
+  requests.reserve(1000);
   soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
   creamClient.printOnConsole( true );
   creamClient.printDebug( true );
   
 
   vector<string> url_jid;
+  url_jid.reserve(2);
   glite::wms::ice::jobRequest R;
+  
   while(true) {
 
     //cout << "********** Getting requests from filelist..."<<endl;
@@ -68,14 +71,16 @@ int main(int argc, char*argv[]) {
     submitter->getNextRequests(requests);
     
     if(requests.size( ))
-      cout << "************* Found " << requests.size( ) << " request(s)"<<endl;
+      cout << "************* Found " << requests.size( ) << " new request(s)"<<endl;
     
+    //sleep(1000);
+
     for(unsigned int j=0; j < requests.size( ); j++)
       {
-	cout << "-----> Unparsing request ["<<requests[j]<<"]"<<endl;
+	cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
 	try {R.unparse(requests[j]);}
 	catch(std::exception& ex) {
-	  cerr << "\tunaprse ex: "<<ex.what()<<endl;
+	  cerr << "\tunparse ex: "<<ex.what()<<endl;
 	  cout << "\tRemoving BAD request..."<<endl;
 	  submitter->removeRequest(j);
 	  continue;
@@ -114,15 +119,23 @@ int main(int argc, char*argv[]) {
 	    cerr << "\tsoap ex: "<<ex.what() << endl;
 	    // MUST LOG TO LB
 	    // HERE MUST RESUBMIT
+	    submitter->ungetRequest(j);
+	    // Removing current request from WM's output FL
+	    submitter->removeRequest(j);
+	    continue; // process next request
 	    exit(1);
 	  } catch(soap_proxy::auth_ex& ex) {
 	    cerr << "\tauthN ex: " << ex.what() << endl;
+	    // The CreamProxy::Authenticate(...) failed
+	    // or the certificate is expired
 	    // MUST LOG TO LB
 	    exit(1);
 	  } catch(cream_exceptions::BaseException& base) {
 	    // MUST LOG TO LB
+	    // Resubmitting request to WM's input FL
 	    cerr << "\tBase ex: "<<base.what()<<endl;
 	    submitter->ungetRequest(j);
+	    // Removing current request from WM's output FL
 	    submitter->removeRequest(j);
 	    continue; // process next request
 	  } catch(cream_exceptions::InternalException& intern) {
@@ -130,7 +143,16 @@ int main(int argc, char*argv[]) {
 	    // MUST LOG TO LB
 	    cerr << "\tInternal ex: "<<intern.what()<<endl;
 	    exit(1);
+	  } catch(cream_exceptions::DelegationException& deleg) {
+	    // MUST LOG TO LB
+	    // Resubmitting request to WM's input FL
+	    cerr << "\Delegation ex: "<<deleg.what()<<endl;
+	    submitter->ungetRequest(j);
+	    // Removing current request from WM's output FL
+	    submitter->removeRequest(j);
+	    continue; // process next request
 	  }
+
 	  // no failure: put jobids and status in cache
 	  // and remove last request from WM's filelist
 	  try {

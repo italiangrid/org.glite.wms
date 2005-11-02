@@ -96,7 +96,7 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
       tmpIs.close(); // redundant: ifstream's dtor also closes file
       throw jnlFile_ex("Error reading snapshot file");
     }
-
+    //cout << "jobCache::loadSnapshot - unparsing <"<<Buf<<">"<<endl;
     Job J = this->unparse(Buf);
     hash[J.grid_jobid] = J.cream_job;
     cream_grid_hash[J.cream_job.jobid] = J.grid_jobid;
@@ -119,7 +119,9 @@ void jobCache::loadJournal(void)
 
   string line;
   while(jnlMgr->getNextOperation(line)) {
+    //    cerr << "loadJournal - before chomp <"<<line<<">"<<endl;
     apiutil::string_manipulation::chomp(line);
+    //    cerr << "loadJournal - after chomp <"<<line<<">"<<endl;
     string match = string("^[0-9]+") + OPERATION_SEPARATOR + ".+";
     if(!apiutil::string_manipulation::matches(line, match.c_str()))
       throw jnlFile_ex(string("Bad journal line ")+line);
@@ -363,7 +365,7 @@ Job jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   ad = parser.ParseClassAd(Buf);
   
   if(!ad)
-    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire classad");
+    throw ClassadSyntax_ex((string("ClassAd parser returned a NULL pointer parsing entire classad ")+Buf).c_str());
 
   if((jobtree=ad->Lookup("Job"))!=NULL) {    
     unp.Unparse(jobExpr, jobtree);
