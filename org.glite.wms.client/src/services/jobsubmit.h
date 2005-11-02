@@ -65,13 +65,6 @@ class JobSubmit : public Job {
 		*/
 		void submission ( ) ;
 	private:
-		/*
-		* Gets the enpoint URL where the operations are performed. If no call to the WMProxy has been previously done, the --endpoint option is checked.
-		* If the user has not specified the URL by this option, the endpoint is determinated by some random attempts to contact one of url's specified in the configuration files.
-		* The proxy delegation is performed on the choosen endpoint if the autodelegation has been requested by the user (--autm-delegation).
-		* @return the string with the enpoint URL
-		*/
-	//	std::string getEndPoint ( ) ;
 		/**
                  *	Contacts the server in order to retrieve the list of all destionationURI's of the job (with the available protocols).
 		 *  	In case of compound jobs (DAG, collections etc..), it also retrieves the URIs of the nodes.
@@ -93,11 +86,10 @@ class JobSubmit : public Job {
 		* 	with the URI's of the parent and all its children nodes; instead with the other method,
 		* 	the WMProxy in each call can only get back the URIs for one node
                  *	@param jobid the string with the JobId
-		 *	@param zipURI returns the DestinationURI associated to the default protocol for ZIP files (according to the value of Options::DESTURI_ZIP_PROTO)
                  *	@return a pointer to the string with the destinationURI having the protocol that will be used for any file transferring
 		 *	(or NULL in case the destinationURI with the chosen protocol is not available )
                 */
-		std::string* getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI);
+		std::string* getSbDestURI(const std::string &jobid, const std::string &child);
 		/*
 		*	Contacts the server in order to retrieve the  destionationURI of the job (with the available protocols).
 		* 	The request is done using the JobId.  In case of compound jobs, providing an empty string as input for the "child" parameter,
@@ -144,15 +136,26 @@ class JobSubmit : public Job {
 		* @param jobtype the type of job described in the JDL (according to the tags defined in the wmsJobType enum type)
 		*/
 		void checkInputSandboxSize (const wmsJobType &jobtype) ;
-		/**
-		* Returns a string with the InputSandbox URI information eventually set in JDL by user for
-		* one of the nodes in a DAG. Empty string is returned if no InputSandbox URI has been referenced in the JDL for the specified node.
-		* Children nodes is indicated by its name specified in the input string parameter. Providing no input parameter, the
-		* method looks for the InputSandbox URI of the parent node
-		* @param the string with the name of the child node (default value is "empty string"= parent node)
-		* @return the string representing the URI (empty string if no URI is defined for the specified node)
+		/*
+		* Return the InputSandbox URIs for the parent node of a DAG.
+		* This information is retrieved by the user JDL.
 		*/
-		std::string JobSubmit::getDagISBURI (const std::string &node="");
+		std::string getDagISBUri( );
+		/*
+		* Fills the input vector with the list of the InputSandbox URIs for all nodes of a DAG.
+		* This information is retrieved by the user JDL.
+		* @param uris the vector to be filled
+		*/
+		void getDagNodesISBUris (std::vector<std::pair<std::string,std::string > > &uris);
+
+		/*
+		* Return the InputSandbox URIs for the child node of a DAG which name is provided as input.
+		* This information is retrieved by the vector provided as input (@see #getDagNodesISBUris)
+		* @param uris the list of pairs <node,URI>
+		* @param node the string with the node name
+		* @return th string representing the URI; empty string if the vector doesn't contain the uri for the specified node
+		*/
+		std::string getNodeISBUri(const std::vector<std::pair<std::string,std::string > > &uris, const std::string node);
 		/*
                 * Performs either registration or submission.
 		* The WMProxy submission service, that performs both registration and start of the job, is invoked

@@ -56,13 +56,10 @@ const string TMP_DEFAULT_LOCATION = "/tmp";
 
 // Max size (bytes) allowed for tar files
 const long MAX_TAR_SIZE = 2147483647;
-//const int MAX_TAR_SIZE =  620000;
 // Max file size for globus-url-copy
 const long MAX_GUC_SIZE = 2147483647;
-//const long MAX_GUC_SIZE = 620000;
 // Max file size for CURL
 const long MAX_CURL_SIZE = 2147483647;
-//const long MAX_CURL_SIZE = 620000;
 
 /*
 *	Default constructor
@@ -480,51 +477,43 @@ void JobSubmit::submission ( ){
 /**
 * Retrieves the list of InputSandbox URI's for a DAG
 */
-std::string JobSubmit::getDagISBURI (const std::string &node){
+void JobSubmit::getDagNodesISBUris(vector<pair<string,string > > &uris){
 	vector<string> nodes;
 	vector<string>::iterator it1;
-	vector<pair<string,string > >::iterator it2;
-	string tmp = "";
 	string uri = "";
-	if (dagAd) {
-		// ISB URI for the DAG parent node
-		if (node.size() == 0 ){
-			if( isbURI.size()==0) {
-				uri = dagAd->hasAttribute(JDL::ISB_BASE_URI)?dagAd->getAttribute(ExpDagAd::ISB_DEST_URI ):"";
-			} else {
-				uri = this->isbURI;
+	nodes = dagAd->getNodes();
+	for (it1 = nodes.begin( ); it1 != nodes.end(); it1++){
+		// Checks if the node has ISB attribute
+		if (dagAd->hasNodeAttribute(string(*it1), JDL::ISB_BASE_URI)){
+			uri = dagAd->getNodeAttribute(string(*it1), JDL::ISB_BASE_URI );
+			if (uri.size() > 0){
+				uris.push_back(make_pair((*it1), uri));
 			}
-		} else {
-			// ISB URI for a DAG child node
-			if ( dagISBURIs.empty()){
-				// Looks for the all ISB URI in the JDL
-				// list of the nodes
-				nodes = dagAd->getNodes();
-				for (it1 = nodes.begin( ); it1 != nodes.end(); it1++){
-					// Checks if the node has ISB attribute
-					if (dagAd->hasNodeAttribute(string(*it1), JDL::ISB_BASE_URI)){
-						tmp = dagAd->getNodeAttribute(string(*it1), JDL::ISB_BASE_URI );
-						dagISBURIs.push_back(make_pair((*it1), tmp));
-						// Looks for the ISB URI of the input node
-						if (node == string(*it1)){
-							uri = uri.assign(tmp);
-						}
-					}
-				}
-			} else {
-				// Looks for the ISB URI of the node in the filled vector
-				for (it2 = dagISBURIs.begin( ); it2 != dagISBURIs.end(); it2++){
-					// Looks for the ISB URI of the input node
-					if (node == string(it2->first)){
-						uri = string(it2->second);
-						break;
-					}
-				}
-			}
+		}
+	}
+}
+
+std::string JobSubmit::getNodeISBUri(const vector<pair<string,string > > &uris, const std::string node){
+	string uri = "";
+	int size = uris.size( );
+	for (int i = 0; i < size ; i++){
+		if (node.compare(uris[i].first) == 0){
+			uri = string(uris[i].second);
+			break;
 		}
 	}
 	return uri;
 }
+std::string JobSubmit::getDagISBUri( ){
+	string uri = "";
+	if( isbURI.size()==0) {
+		uri = dagAd->hasAttribute(JDL::ISB_BASE_URI)?dagAd->getAttribute(ExpDagAd::ISB_DEST_URI ):"";
+	} else {
+		uri = this->isbURI;
+	}
+	return uri;
+}
+
 /**
 * Retrieves the paths of the local InputSandbox files from the
 * from the JDL of a normal job
@@ -571,6 +560,7 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 	vector<string> nodes;
 	vector<string> node_files;
 	vector<string>::iterator it;
+	vector<pair<string, string> > uris;
 	if (dagAd){
 		// parent's ISB
 		if (dagAd->hasAttribute(JDL::INPUTSB)){
@@ -585,6 +575,7 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 		if (children) {
 			// List of the nodes (their names)
 			nodes = dagAd->getNodes();
+			getDagNodesISBUris (uris);
 
 			for (it = nodes.begin( ); it != nodes.end(); ++it){
 				if (dagAd->hasNodeAttribute(string(*it), JDL::INPUTSB)){
@@ -595,7 +586,7 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 						node_files,
 						paths,
 						glite::wms::jdl::ONLYLOCAL,
-						"", this->getDagISBURI(*it) );
+						"", getNodeISBUri(uris, *it) );
 					node_files.clear( );
 				}
 			}
@@ -788,8 +779,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 
 		jobtype = WMS_COLLECTION ;
 		try {
-			// fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
-			fs::path cp ( Utils::normalizePath(*collectOpt));
+			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
+			fs::path cp ( Utils::normalizePath(*collectOpt), fs::native);
 			if ( fs::is_directory( cp ) ) {
 				*collectOpt= Utils::addStarWildCard2Path(*collectOpt);
 			} else {
@@ -947,7 +938,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				toBretrieved=dagAd->gettoBretrieved();
 				if (toBretrieved) {
 					// InputSB URI of the parent node
-					isbURI = getDagISBURI ( );
+					isbURI = getDagISBUri ( );
 					// checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					if (zipAllowed){
@@ -1025,7 +1016,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				toBretrieved = dagAd->gettoBretrieved();
 				if (toBretrieved){
 					// isbURI is needed by checkInputSandboxSize
-					isbURI = getDagISBURI( );
+					isbURI = getDagISBUri( );
 				}
 			} else {
 				if (toBretrieved){
@@ -1207,77 +1198,81 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 */
 
 std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
-	string *dest_uri = NULL;
-	string look_for = "";
-	vector<string> jobids;
-	vector< pair<string ,vector<string > > >::iterator it1 ;
-	vector<string>::iterator it2;
-	bool found = false;
-	// The destinationURI's vector is empty: the WMProxy service is called
-	if (dsURIs.empty( )){
-		try{
-			logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , cfgCxt->endpoint);
-			dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
-		} catch (BaseException &exc){
-			throw WmsClientException(__FILE__,__LINE__,
-				"getSandboxDestURI ", ECONNABORTED,
-				"WMProxy Server Error", errMsg(exc));
-		}
-		if (dsURIs.empty( )){
-			throw WmsClientException(__FILE__,__LINE__,
-				"getBulkDestURI ", ECONNABORTED,
-				"WMProxy Server Error",
-				"The server doesn't have any information on InputSBDestURI for :" + jobid + "\n(please contact the server administrator");
-		}
-	}
-	if (child.size()>0){
-		// if the input parameter child is set ....
-		look_for = child ;
-	} else {
-		// parent (if the input string "child" is empty)
-		look_for = jobid;
-	}
-	// Looks for the destURI's of the job
-	for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
-		if (it1->first == look_for) { // parent or child found
-			for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
-				// Looks for the destURi for file transferring
-				if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
+        string *dest_uri = NULL;
+        string look_for = "";
+        vector<string> jobids;
+        vector< pair<string ,vector<string > > >::iterator it1 ;
+        vector<string>::iterator it2;
+	// if zipAllowed=FALSE end_loop=TRUE (do not execute the 2nd check with ZIP_DEFAULT_PROTO)
+        bool end_loop = !zipAllowed;
 
-					dest_uri = new string( *it2 );
-					// Prints out the info on URI's
-					// (In compound jobs URI's of children nodes are only written in the log file, if it exists)
-					if (jobid.compare(look_for) == 0) {
-						logInfo->print(WMS_DEBUG,  "DestinationURI:  " +*dest_uri, "");
-					} else {
-						logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *dest_uri, false);
+        // The destinationURI's vector is empty: the WMProxy service is called
+        if (dsURIs.empty( )){
+                try{
+
+                        logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , cfgCxt->endpoint);
+                        dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
+                } catch (BaseException &exc){
+                        throw WmsClientException(__FILE__,__LINE__,
+                                "getSandboxDestURI ", ECONNABORTED,
+                                "WMProxy Server Error", errMsg(exc));
+                }
+                if (dsURIs.empty( )){
+                        throw WmsClientException(__FILE__,__LINE__,
+                                "getBulkDestURI ", ECONNABORTED,
+                                "WMProxy Server Error",
+                                "The server doesn't have any information on InputSBDestURI for :" + jobid + "\n(please contact the server administrator");
+                }
+        }
+        if (child.size()>0){
+                // if the input parameter child is set ....
+                look_for = child ;
+        } else {
+                // parent (if the input string "child" is empty)
+                look_for = jobid;
+        }
+        // Looks for the destURI's of the job
+        for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
+                if (it1->first == look_for) { // parent or child found
+                        for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
+                                // 1st check >>>> Looks for the destURi for file transferring
+                                if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
+                                        dest_uri = new string( *it2 );
+                                        // Prints out the info on URI's
+                                        // (In compound jobs URI's of children nodes are only written in the log file, if it exists)
+                                        if (jobid.compare(look_for) == 0) {
+                                                logInfo->print(WMS_DEBUG,  "DestinationURI:  " +*dest_uri, "");
+                                        } else {
+                                                logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *dest_uri, false);
+                                        }
+                                        // loop-exit if "TAR/ZIP-destURI" has been already found or is not needed
+                                        if (end_loop){ break; }
+                                        else {  end_loop = true ;}
+				}
+				if (zipAllowed) {
+					// 2nd check >>> Looks for the destURI for TAR/ZIP file creation
+					if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
+						zipURI = string (*it2);
+						// loop-exit if "fileTransfer-destURI" has been already found
+						if (end_loop){ break;}
+						else { end_loop = true ; }
 					}
-					// loop-exit if "TAR/ZIP-destURI" has been already found
-					if (found){ break; }
-					else { found = true ;;}
-				}
-				// Looks for the destURI for TAR/ZIP file creation
-				if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
-					zipURI = string (*it2);
-					// loop-exit if "fileTransfer-destURI" has been already found
-					if (found){ break;}
-					else { found = true ; }
-				}
+                        	}
 			}
-		}
-		if (found) break;
-	}
-	return dest_uri ;
+                }
+                if (end_loop) break;
+        }
+        return dest_uri ;
 }
+
 /**
 * Gets the InputSandboxURI for a job or one of it child node
 */
-std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string &child, std::string &zipURI) {
+std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string &child) {
 	vector<string> uris ;
 	vector<string>::iterator it1 ;
 	string *dest_uri = NULL;
 	bool parent = false;
-	bool found = false;
 	try {
 		if (child.size()>0){
 			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI for child node: " , child);
@@ -1297,7 +1292,7 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 	}
 	// Looks for the destURI's of the job
 	for (it1 =uris.begin() ; it1 != uris.end() ; it1++) {
-		// Looks for the destURi for file transferring
+		// 1rst check >>> Looks for the destURi for file transferring
 		if ( it1->substr (0, (fileProto->size())) ==  *fileProto){
 			dest_uri = new string( *it1 );
 			if (parent) {
@@ -1305,16 +1300,7 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 			} else {
 				logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *dest_uri);
 			}
-			// loop-exit if "TAR/ZIP-destURI" has been already found
-			if (found){ break; }
-			else { found = true ;}
-		}
-		// Looks for the destURI for TAR/ZIP file creation
-		if (it1->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
-			zipURI = string (*it1);
-			// loop-exit if "fileTransfer-destURI" has been already found
-			if (found){ break; }
-			else { found = true ;}
+			break;
 		}
 	}
 	return dest_uri ;
@@ -1333,7 +1319,7 @@ std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const
 		return getBulkDestURI(jobid, child, zipURI);
 	} else {
 		// single node service
-		return getSbDestURI(jobid, child, zipURI);
+		return getSbDestURI(jobid, child);
 	}
 }
 
@@ -1359,7 +1345,7 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 			throw WmsClientException(__FILE__,__LINE__,
 				"gsiFtpGetFiles", ECONNABORTED,
 				"File Transferring Error",
-				"Unable to find globus-url-copy (please set GLOBUS_LOCATION env variable)");
+				"Unable to find globus-url-copy executable");
 		}
 		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)\n" , cmd);
 	if ( system( cmd.c_str() ) ){
@@ -1696,7 +1682,6 @@ std::string JobSubmit::normalJob( ){
 		paths = jobAd->getStringValue  (JDL::INPUTSB) ;
 		// InputSandbox file transferring
 		destURI = this->toBCopiedFileList(jobid, "", this->isbURI, paths, to_bcopied);
-
 		// if the vector is not empty, file transferring is performed
 		if (! to_bcopied.empty( ) ){
 			if (registerOnly) {
@@ -1732,6 +1717,7 @@ std::string  JobSubmit::dagJob(){
 	// InputSB files
 	vector <string> paths ;
 	vector <pair<string, string> > to_bcopied ;
+	vector <pair<string, string> > isb_uris; ;
 	// children
 	vector <JobIdApi*> children;
 	// iterators
@@ -1761,6 +1747,7 @@ std::string  JobSubmit::dagJob(){
 	// CHILDREN ====================
 	children = jobIds.children ;
 	if ( ! children.empty() ){
+		getDagNodesISBUris( isb_uris);
 		for ( it = children.begin() ; it != children.end(); it++){
 			if (*it){
 				// child: jobid
@@ -1781,8 +1768,8 @@ std::string  JobSubmit::dagJob(){
 				if (dagAd->hasNodeAttribute(node, JDL::INPUTSB) ){
 					// ISB files for the child node
 					paths = dagAd->getNodeStringValue(node, JDL::INPUTSB);
-					// Extracts the local ISB files for all DAG nodes
-					this->toBCopiedFileList(jobid, child, this->getDagISBURI(node), paths, to_bcopied );
+						// Extracts the local ISB files for all DAG nodes
+						this->toBCopiedFileList(jobid, child,  getNodeISBUri(isb_uris, node), paths, to_bcopied );
 				}
 			}
 		}
