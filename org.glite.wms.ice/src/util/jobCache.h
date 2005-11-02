@@ -120,6 +120,9 @@ namespace glite {
 	  api::job_statuses::job_status getStatus_by_cream_jobid(const std::string&);
 	  void dump(void) throw(jnlFile_ex&);
 	  void print(FILE*);
+
+	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;
+	  
 	};
       }
     }

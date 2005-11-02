@@ -29,6 +29,8 @@ eventStatusPoller::eventStatusPoller(const std::string& certfile,
   } catch(auth_ex& auth) {
     throw eventStatusPoller_ex(auth.what());
   }
+
+  jobs_to_query.reserve(1000);
 }
 
 //______________________________________________________________________________
@@ -44,22 +46,29 @@ bool eventStatusPoller::getStatus(void)
   _jobinfolist = NULL;
 
   creamClient->clearSoap();
+
+  jobs_to_query.clear();
+  jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
+
   try {
     //cout << "Calling remote Cream jobInfo..."<<endl;
     _jobinfolist = creamClient->Info(cream_service.c_str(),
-				    empty, 
-				    empty, 
-				    -1, // SINCE
-				    -1  // TO
-				    );
+				     jobs_to_query, 
+				     empty, 
+				     -1, // SINCE
+				     -1  // TO
+				     );
   } catch(soap_ex& ex) { 
-    cerr << "CreamProxy::Info raised a soap_ex exception: " << ex.what() << endl;
+    cerr << "CreamProxy::Info raised a soap_ex exception: " 
+	 << ex.what() << endl;
     return false; 
   } catch(BaseException& ex) {
-    cerr << "CreamProxy::Info raised a BaseException exception: " << ex.what() << endl;
+    cerr << "CreamProxy::Info raised a BaseException exception: " 
+	 << ex.what() << endl;
     return false; 
   } catch(InternalException& ex) {
-    cerr << "CreamProxy::Info raised an InternalException exception: " << ex.what() << endl;
+    cerr << "CreamProxy::Info raised an InternalException exception: " 
+	 << ex.what() << endl;
     return false; 
   } catch(DelegationException&) {
     cerr << "CreamProxy::Info raised a DelegationException exception\n";
@@ -71,6 +80,26 @@ bool eventStatusPoller::getStatus(void)
 }
 
 //______________________________________________________________________________
+void eventStatusPoller::checkJobs() {
+  for(unsigned int j=0; j<_jobinfolist->jobInfo.size(); j++) {
+
+    glite::ce::cream_client_api::job_statuses::job_status 
+      stNum = getStatusNum(_jobinfolist->jobInfo.at(j)->status);
+
+    if((stNum == glite::ce::cream_client_api::job_statuses::DONE_FAILED) ||
+       (stNum == glite::ce::cream_client_api::job_statuses::ABORTED))
+      {
+	// resubmit
+      }
+
+    if( api::job_statuses::isFinished( stNum ) )
+      {
+	// purge
+      }
+  }
+}
+
+//______________________________________________________________________________
 void eventStatusPoller::updateJobCache() 
 {
   if(!_jobinfolist) {
@@ -79,10 +108,10 @@ void eventStatusPoller::updateJobCache()
   }
 
   for(unsigned int j=0; j<_jobinfolist->jobInfo.size(); j++) {
-//     cerr << "Going to update jobcache with "
-//      	 << "[grid_jobid="<<_jobinfolist->jobInfo[j]->GridJobId
-//      	 <<", cream_jobid="<< _jobinfolist->jobInfo[j]->CREAMJobId
-//      	 << ", status="<< _jobinfolist->jobInfo[j]->status<<"]\n";
+    cerr << "Going to update jobcache with "
+     	 << "[grid_jobid="<<_jobinfolist->jobInfo[j]->GridJobId
+     	 <<", cream_jobid="<< _jobinfolist->jobInfo[j]->CREAMJobId
+     	 << ", status="<< _jobinfolist->jobInfo[j]->status<<"]\n";
     
     //glite::ce::cream_client_api::job_statuses::job_status 
     glite::ce::cream_client_api::job_statuses::job_status 
@@ -111,6 +140,7 @@ void eventStatusPoller::run()
   while(!endpolling) {
     if(getStatus()) {
       cout << "eventStatusPoller::getStatus OK - Updating jobCache..."<<endl;
+      checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
       try{
 	updateJobCache();
       }

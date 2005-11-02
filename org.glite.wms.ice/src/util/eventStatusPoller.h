@@ -18,17 +18,16 @@ namespace glite {
       namespace util {
 
 	class eventStatusPoller : public runnable {
-	  //	  glite::wms::ice::util::jobCache* jobs;
-/* 	  std::string grid_JOBID, cream_JOBID; */
-/* 	  glite::ce::cream_client_api::job_statuses::job_status status; */
+
 	  bool endpolling;
 	  int delay;
 	  std::string cream_service;
 	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
-	  //	  glite::ce::cream_client_api::soap_proxy::JobInfoList* jobinfolist;
+
+	  std::vector<std::string> jobs_to_query;
+
 	  std::vector<std::string> empty;
 	  glite::ce::cream_client_api::soap_proxy::JobInfoList* _jobinfolist;
-	  //	  std::vector<SOAP_JOBINFO*> *jobInfoVector;
 
 	public:
 	  eventStatusPoller(const std::string& certfile,
@@ -38,9 +37,9 @@ namespace glite {
 
 	  virtual ~eventStatusPoller() { if(creamClient) delete(creamClient); }
 
-	  //void setJobCache(glite::wms::ice::util::jobCache* _jobs) { jobs = _jobs; }
 	  bool getStatus(void);
 	  void updateJobCache(void);
+	  void checkJobs(void);
 	  virtual void run(void);
 	  virtual void stop() { endpolling=true; }
 	};

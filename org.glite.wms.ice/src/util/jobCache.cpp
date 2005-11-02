@@ -118,7 +118,10 @@ void jobCache::loadJournal(void)
   lockJournalManager lJ(jnlMgr);
 
   string line;
+  //  string lastline="";
   while(jnlMgr->getNextOperation(line)) {
+//     if(line == lastline) continue;
+//     lastline = line;
     //    cerr << "loadJournal - before chomp <"<<line<<">"<<endl;
     apiutil::string_manipulation::chomp(line);
     //    cerr << "loadJournal - after chomp <"<<line<<">"<<endl;
@@ -158,7 +161,6 @@ void jobCache::put(const string& grid,
    * Updates journal file
    *
    */
-  
   jnlMgr->readonly_mode(false);
   jnlMgr->log(PUT, param); // can raise jnlFile_ex and jnlFileReadOnly_ex
 
@@ -172,6 +174,7 @@ void jobCache::put(const string& grid,
    */
   operation_counter++;
   if(operation_counter>=MAX_OPERATION_COUNTER) {
+    //cout << "Dumping jobCache snapshot and truncating journal file"<<endl;
     try {
       this->dump(); // can raise a jnlFile_ex
     } catch(std::exception& ex) {
@@ -205,7 +208,7 @@ void jobCache::remove_by_grid_jobid(const string& gid)
   operation_counter++;
   try {
     if(operation_counter>=MAX_OPERATION_COUNTER) {
-      cout << "Dumping snapshot and truncating journal file"<<endl;
+      //cout << "Dumping snapshot and truncating journal file"<<endl;
       this->dump(); // can raise a jnlFile_ex
       jnlMgr->truncate(); // can raise a jnlFile_ex
       operation_counter = 0;
@@ -320,8 +323,9 @@ void jobCache::dump() throw (jnlFile_ex&)
     //    cout << "stream aperto!"<<endl;
 
     map<string, CreamJob>::iterator it;
+    //cout << "jobCache in memory contains "<<hash.size()<<" elements"<<endl;
     for(it=hash.begin(); it!=hash.end(); it++) {
-      //      cout << "Dumping snapshot file and:"<<endl;
+      cout << "Dumping snapshot file"<<endl;
       //      cout << "it.first="<<(*it).first 
 // 	   << " - it.second.jobid="<<(*it).second.jobid 
 // 	   << " - it.second.status="<<(*it).second.status<<endl;
@@ -430,18 +434,12 @@ void jobCache::getOperation(const string& S,
 }
 
 //______________________________________________________________________________
-// int main(int argc, char *argv[]) {
-
-//   jobCache *cache;
-//   try {
-//     cache = new jobCache(argv[1], argv[2]);
-//     cache->print(stdout);
-//   } catch(std::exception& ex) {
-//     cerr << ex.what()<<endl;
-//   }
-
-//   try{cache->dump();}
-//   catch(std::exception ex) {
-//     cerr << ex.what()<<endl;
-//   }
-// }
+void jobCache::getActiveCreamJobIDs(vector<string>& target) 
+{
+  map<string, CreamJob>::const_iterator it;
+  for( it = hash.begin(); it != hash.end(); it++) {
+    if( api::job_statuses::isFinished((*it).second.status) ) 
+      continue;
+    target.push_back((*it).second.jobid);
+  }
+}
