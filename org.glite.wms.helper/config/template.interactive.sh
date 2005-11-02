@@ -377,11 +377,11 @@ else
   done
 fi
 
-if [ -e "${__jobid}" ]; then
-  chmod +x "${__jobid}" 2> /dev/null
+if [ -e "${__job}" ]; then
+  chmod +x "${__job}" 2> /dev/null
 else
-  echo "${__jobid} not found or unreadable"
-  echo "${__jobid} not found or unreadable" >> "${maradona}"
+  echo "${__job} not found or unreadable"
+  echo "${__job} not found or unreadable" >> "${maradona}"
 
   export GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
    --jobid="$GLITE_WMS_JOBID" \
