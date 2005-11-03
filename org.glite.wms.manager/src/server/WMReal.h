@@ -22,9 +22,6 @@ public:
   void cancel(glite::wmsutils::jobid::JobId const& request_id);
 };
 
-} // server
-} // manager
-} // wms
-} // glite
+}}}} // glite::wms::manager::server
 
-#endif // GLITE_WMS_MANAGER_SERVER_WMREAL_H
+#endif

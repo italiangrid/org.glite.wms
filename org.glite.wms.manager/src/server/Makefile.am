@@ -48,7 +48,9 @@ libglite_wms_manager_server_la_SOURCES = \
 	signal_handling.h \
 	signal_handling.cpp \
 	match_utils.h \
-	match_utils.cpp
+	match_utils.cpp \
+	filelist_recovery.h \
+	filelist_recovery.cpp
 
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic

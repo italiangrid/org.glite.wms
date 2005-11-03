@@ -1,5 +1,12 @@
-#ifndef TASK_QUEUE_HPP
-#define TASK_QUEUE_HPP
+// File: TaskQueue.hpp
+// Author: Francesco Giacomini
+// Copyright (c) Members of the EGEE Collaboration 2004
+// For license conditions see http://public.eu-egee.org/license/license.html
+
+// $Id$
+
+#ifndef GLITE_WMS_MANAGER_SERVER_TASKQUEUE_HPP
+#define GLITE_WMS_MANAGER_SERVER_TASKQUEUE_HPP
 
 #include <map>
 #include <boost/shared_ptr.hpp>
@@ -18,8 +25,9 @@ typedef std::map<std::string, RequestPtr> TaskQueue;
 
 TaskQueue& the_task_queue();
 
-glite::wms::manager::common::ContextPtr get_context(glite::wmsutils::jobid::JobId const& id);
+glite::wms::manager::common::ContextPtr
+get_context(glite::wmsutils::jobid::JobId const& id);
 
-}}}}
+}}}} // glite::wms::manager::server
 
 #endif

@@ -11,10 +11,6 @@
 #include <boost/shared_ptr.hpp>
 #include "pipedefs.h"
 
-namespace classad {
-class ClassAd;
-}
-
 namespace glite {
 namespace wms {
 namespace manager {

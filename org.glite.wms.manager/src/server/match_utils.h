@@ -1,11 +1,12 @@
 // File: match_utils.h
 // Author: Francesco Giacomini
-// Copyright (c) 2005 INFN
+// Copyright (c) Members of the EGEE Collaboration 2004
+// For license conditions see http://public.eu-egee.org/license/license.html
 
 // $Id$
 
-#ifndef GLITE_WMS_MANAGER_SERVER_CE_SELECTION_H
-#define GLITE_WMS_MANAGER_SERVER_CE_SELECTION_H
+#ifndef GLITE_WMS_MANAGER_SERVER_MATCH_UTILS_H
+#define GLITE_WMS_MANAGER_SERVER_MATCH_UTILS_H
 
 #include <string>
 #include <vector>

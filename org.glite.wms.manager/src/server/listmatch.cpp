@@ -1,18 +1,16 @@
-/*
- * File: listmatch.cpp
- * Author: Marco Pappalardo <Marco.Pappalardo@ct.infn.it>
- * Author: Cinzia Di Giusto <Cinzia.DiGiusto@cnaf.infn.it>
- * Author: Francesco Giacomini
- * Author: Francesco Prelz
- */
+// File: listmatch.cpp
+// Author: Marco Pappalardo <Marco.Pappalardo@ct.infn.it>
+// Author: Cinzia Di Giusto <Cinzia.DiGiusto@cnaf.infn.it>
+// Author: Francesco Giacomini
+// Author: Francesco Prelz
+// Copyright (c) Members of the EGEE Collaboration 2004
+// For license conditions see http://public.eu-egee.org/license/license.html
 
 #include <iostream>
 #include <fstream>
-
 #include <boost/lexical_cast.hpp>
 #include "listmatch.h"
 #include "glite/wms/common/utilities/classad_utils.h"
-
 #include "glite/wms/helper/Helper.h"
 #include "glite/wms/helper/exceptions.h"
 

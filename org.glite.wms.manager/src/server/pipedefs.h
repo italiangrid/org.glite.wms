@@ -1,3 +1,10 @@
+// File: pipedefs.h
+// Author: Francesco Giacomini
+// Copyright (c) Members of the EGEE Collaboration 2004
+// For license conditions see http://public.eu-egee.org/license/license.html
+
+// $Id$
+
 #ifndef GLITE_WMS_MANAGER_SERVER_PIPEDEFS_H
 #define GLITE_WMS_MANAGER_SERVER_PIPEDEFS_H
 

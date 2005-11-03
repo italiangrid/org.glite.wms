@@ -1,3 +1,10 @@
+// File: TaskQueue.cpp
+// Author: Francesco Giacomini
+// Copyright (c) Members of the EGEE Collaboration 2004
+// For license conditions see http://public.eu-egee.org/license/license.html
+
+// $Id$
+
 #include "TaskQueue.hpp"
 
 namespace common = glite::wms::manager::common;

@@ -1,16 +1,23 @@
-#ifndef REQUEST_HPP
-#define REQUEST_HPP
+// File: Request.hpp
+// Author: Francesco Giacomini
+// Copyright (c) Members of the EGEE Collaboration 2004
+// For license conditions see http://public.eu-egee.org/license/license.html
 
+// $Id$
+
+#ifndef GLITE_WMS_MANAGER_SERVER_REQUEST_HPP
+#define GLITE_WMS_MANAGER_SERVER_REQUEST_HPP
+
+#include <string>
+#include <vector>
 #include <ctime>
 #include <classad_distribution.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
-#include "../common/lb_utils.h"
-#include <string>
-#include <vector>
-#include "glite/wmsutils/jobid/JobId.h"
 #include <boost/utility.hpp>
+#include "lb_utils.h"
+#include "glite/wmsutils/jobid/JobId.h"
 
 typedef boost::shared_ptr<classad::ClassAd> ClassAdPtr;
 
@@ -30,6 +37,9 @@ public:
   std::string str() const { return m_str; }
 };
 
+std::pair<std::string, glite::wmsutils::jobid::JobId>
+check_request(classad::ClassAd const& command_ad);
+
 class Request: boost::noncopyable
 {
 public:
@@ -45,9 +55,10 @@ public:
 
 public:
   Request(
-    classad::ClassAd const& command_ad,
-    boost::function<void()> const& cleanup,
-    glite::wmsutils::jobid::JobId const& id
+    classad::ClassAd& command_ad,
+    std::string const& command,
+    glite::wmsutils::jobid::JobId const& id,
+    boost::function<void()> const& cleanup
   );
   ~Request();
   glite::wmsutils::jobid::JobId id() const { return m_id; }
@@ -106,6 +117,6 @@ private:
 
 };
 
-}}}}
+}}}} // glite::wms::manager::server
 
 #endif

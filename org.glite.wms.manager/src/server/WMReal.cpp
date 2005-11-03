@@ -79,12 +79,6 @@ void Deliver(
   controller::JobController(&c_context).submit(&ad);
 }
 
-void Cancel(glite::wmsutils::jobid::JobId const& id)
-{
-  edg_wll_Context c_context = get_context(id).get();
-  controller::JobController(&c_context).cancel(id);
-}
-
 void log_match(
   common::ContextPtr const& context,
   std::string const& ce_id
@@ -141,9 +135,34 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
 }
 
 void
-WMReal::cancel(glite::wmsutils::jobid::JobId const& request_id)
+WMReal::cancel(glite::wmsutils::jobid::JobId const& id)
 {
-  Cancel(request_id);
+  // query lb for the last match
+  // if ce was cream, enqueue the cancel to the xyz fl
+  // otherwise pass it to the jc
+  edg_wll_Context c_context = get_context(id).get();
+  controller::JobController(&c_context).cancel(id);
 }
 
 }}}} // glite::wms::manager::server
+
+/*
+void Deliver(
+  classad::ClassAd const& ad,
+  common::ContextPtr const& context
+)
+{
+  if (requestad::get_ce_id(ad) == "cream") {
+    // log enqueue start
+    requestad::set_sequence_code(ad, context.get_sequence_code());
+    {
+      FileListLock l(m);
+      enqueue(utilities::unparse_classad(ad));
+    }
+    // log enqueue ok
+  } else {
+    edg_wll_Context c_context = context.get();
+    controller::JobController(&c_context).submit(&ad);
+  }
+}
+*/
