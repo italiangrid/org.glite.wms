@@ -48,47 +48,38 @@ X509_NAME_cmp_no_set( X509_NAME *a, X509_NAME *b)
     X509_NAME_ENTRY *na,*nb;
 
     if (sk_X509_NAME_ENTRY_num(a->entries) !=
-        sk_X509_NAME_ENTRY_num(b->entries))
-    {
+        sk_X509_NAME_ENTRY_num(b->entries)) {
         return(sk_X509_NAME_ENTRY_num(a->entries) -
                sk_X509_NAME_ENTRY_num(b->entries));
     }
 
-    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
-    {
+    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--) {
         na = sk_X509_NAME_ENTRY_value(a->entries,i);
         nb = sk_X509_NAME_ENTRY_value(b->entries,i);
         j = na->value->length-nb->value->length;
 
-        if (j)
-        {
-            return(j);
+        if (j) {
+            return j;
         }
 
         j = memcmp(na->value->data,
                    nb->value->data,
                    na->value->length);
-        if (j)
-        {
-            return(j);
+        if (j) {
+            return j;
         }
-
-        /*j=na->set-nb->set; */
-        /* if (j) return(j); */
     }
 
-    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
-    {
+    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--) {
         na = sk_X509_NAME_ENTRY_value(a->entries,i);
         nb = sk_X509_NAME_ENTRY_value(b->entries,i);
         j = OBJ_cmp(na->object,nb->object);
 
-        if (j)
-        {
-            return(j);
+        if (j) {
+            return j;
         }
     }
-    return(0);
+    return 0;
 }
 
 static int 
@@ -103,22 +94,18 @@ proxy_check_proxy_name(X509 * cert)
 
     subject = ::X509_get_subject_name(cert);
     ne = ::X509_NAME_get_entry(subject, X509_NAME_entry_count(subject)-1);
-    if ( !OBJ_cmp(ne->object,OBJ_nid2obj(NID_commonName)) )
-    {
+    if ( !OBJ_cmp(ne->object,OBJ_nid2obj(NID_commonName)) ) {
         data = ::X509_NAME_ENTRY_get_data(ne);
         if ((data->length == 5 &&
              !memcmp(data->data,"proxy",5)) ||
             (data->length == 13 &&
-             !memcmp(data->data,"limited proxy",13)))
-        {
+             !memcmp(data->data,"limited proxy",13))) {
 
-            if (data->length == 13)
-            {
-                ret = 2; /* its a limited proxy */
+            if (data->length == 13) {
+                ret = 2; // its a limited proxy
             }
-            else
-            {
-                ret = 1; /* its a proxy */
+            else {
+                ret = 1; // its a proxy
             }
 
             name = ::X509_NAME_dup(X509_get_issuer_name(cert));
@@ -135,8 +122,7 @@ proxy_check_proxy_name(X509 * cert)
             ::X509_NAME_ENTRY_free(ne);
             ne = NULL;
 
-            if ( X509_NAME_cmp_no_set(name, subject) )
-            {
+            if ( X509_NAME_cmp_no_set(name, subject) ) {
                 ret = -1;
             }
             ::X509_NAME_free(name);
@@ -155,7 +141,7 @@ get_real_cert(X509 *base, STACK_OF(X509) *stk)
   if (!proxy_check_proxy_name(base))
     return base;
 
-  /* Determine id data */
+  // Determine id data
   for (i = 0; i < sk_X509_num(stk); i++) {
     cert = sk_X509_value(stk, i);
     if (!proxy_check_proxy_name(cert)) {
@@ -304,7 +290,7 @@ load_chain(const char *certfile)
   }
   // scan over it and pull out the certs
   while ( sk_X509_INFO_num(sk) ) {
-    /* skip first cert */
+    // skip first cert
     if (first) {
       first = 0;
       continue;
@@ -356,6 +342,9 @@ VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs
           }
         
           *x_real = get_real_cert(x, chain);
+          if (*x_real == NULL) {
+            return false;
+          }
         }
         else {
           return false;
@@ -418,8 +407,6 @@ filter_gpbox_authorizations(
   try {
   
     if( VOMS_proxy_init(user_cert_file_name,USER_attribs, &user_real_cert) ) {
-
-      Info(user_real_cert);
 
       const std::string user_subject(
         get_proxy_distinguished_name_from_cert(user_real_cert)
