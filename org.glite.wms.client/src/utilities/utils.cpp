@@ -1379,16 +1379,18 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
 	return (toFile(path, outmsg));
 }
 /*
-* Stores a jobid in a file
+* Stores a list in a file
 */
-const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list){
+const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header){
 	string msg = "";
 	bool ask = true;
 	string line = "";
 	char* x ;
 	int len = 0;
+	int size = 0;
 	int result = 0;
-	int size = list.size();
+	if (header.size( )>0){ msg = header + "\n";}
+	size = list.size();
 	for(int i = 0 ; i < size ; i++){
 		msg += list [i] + "\n";
 	}
@@ -1402,7 +1404,6 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 		q << "\n\n" + info + "\n";
 		q  << "Do you want to append (a) or to overwrite (o) ?\n";
 		q << "Press the 'q' key for not saving.\n";
-
 		while (ask){
 			// Question --------
 			ask = false;
@@ -1423,7 +1424,7 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 					ask = true;
 				}
 			} else {
-					ask = true;
+				ask = true;
 			}
 		}
 	} else {

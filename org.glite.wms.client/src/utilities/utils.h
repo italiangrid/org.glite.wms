@@ -311,9 +311,10 @@ public:
         * Saves a list of items in the specified file
         * @param path the pathname of the file
 	* @param list the vector containing the list to be saved
+	* @param header the string to be saved at the beginning of the file
         * @return 0 if the list has been successfully saved (-1 otherwise)
         */
-	 const int saveListToFile (const std::string &path, const std::vector<std::string> &list);
+	 const int saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header="");
         /**
         * Reads a file and gets the list of items contained in it
         * @param the pathname of the file to be read
