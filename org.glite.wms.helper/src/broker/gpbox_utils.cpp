@@ -458,7 +458,7 @@ filter_gpbox_authorizations(
       return false;
     }
   } catch(...) {
-    Info("filter_gbox_authorizations: PEP Send returned false");
+    Info("PEP Send returned false");
     return false;
   }
 
