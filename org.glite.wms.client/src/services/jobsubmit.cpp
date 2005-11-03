@@ -1205,7 +1205,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
         vector<string>::iterator it2;
 	// if zipAllowed=FALSE end_loop=TRUE (do not execute the 2nd check with ZIP_DEFAULT_PROTO)
         bool end_loop = !zipAllowed;
-
+	bool found = false;
         // The destinationURI's vector is empty: the WMProxy service is called
         if (dsURIs.empty( )){
                 try{
@@ -1231,9 +1231,11 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
                 // parent (if the input string "child" is empty)
                 look_for = jobid;
         }
+
         // Looks for the destURI's of the job
         for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
                 if (it1->first == look_for) { // parent or child found
+
                         for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
                                 // 1st check >>>> Looks for the destURi for file transferring
                                 if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
@@ -1245,6 +1247,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
                                         } else {
                                                 logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *dest_uri, false);
                                         }
+					found = true;
                                         // loop-exit if "TAR/ZIP-destURI" has been already found or is not needed
                                         if (end_loop){ break; }
                                         else {  end_loop = true ;}
@@ -1254,13 +1257,13 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 					if ( it2->substr (0, (Options::DESTURI_ZIP_PROTO.size()) ) == Options::DESTURI_ZIP_PROTO){
 						zipURI = string (*it2);
 						// loop-exit if "fileTransfer-destURI" has been already found
-						if (end_loop){ break;}
-						else { end_loop = true ; }
+						if (end_loop){  break;}
+						else {  end_loop = true ; }
 					}
                         	}
 			}
                 }
-                if (end_loop) break;
+                if (end_loop && found) break;
         }
         return dest_uri ;
 }
