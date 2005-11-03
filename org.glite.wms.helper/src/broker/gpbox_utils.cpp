@@ -3,37 +3,32 @@
 
 #include <openssl/pem.h>
 #include <openssl/x509.h>
+#include <openssl/asn1.h>
 #include <openssl/bio.h>
 
 #include "globus_gss_assist.h"
 
 #include "glite/gpbox/Clientcc.h"
-#include "glite/wms/common/utilities/classad_utils.h"
-
 #include "glite/wms/ism/ism.h"
-
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/logger_utils.h"
-
+#include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
-
 #include "glite/wms/matchmaking/matchmaker.h"
 #include "glite/wms/matchmaking/exceptions.h"
-
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
-
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/security/voms/voms_api.h"
+
 
 namespace jobid         = glite::wmsutils::jobid;
 namespace requestad     = glite::wms::jdl;
@@ -44,6 +39,132 @@ namespace glite {
 namespace wms {
 namespace helper {
 namespace gpbox_utils {
+
+
+static int
+X509_NAME_cmp_no_set( X509_NAME *a, X509_NAME *b)
+{
+    int             i,j;
+    X509_NAME_ENTRY *na,*nb;
+
+    if (sk_X509_NAME_ENTRY_num(a->entries) !=
+        sk_X509_NAME_ENTRY_num(b->entries))
+    {
+        return(sk_X509_NAME_ENTRY_num(a->entries) -
+               sk_X509_NAME_ENTRY_num(b->entries));
+    }
+
+    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
+    {
+        na = sk_X509_NAME_ENTRY_value(a->entries,i);
+        nb = sk_X509_NAME_ENTRY_value(b->entries,i);
+        j = na->value->length-nb->value->length;
+
+        if (j)
+        {
+            return(j);
+        }
+
+        j = memcmp(na->value->data,
+                   nb->value->data,
+                   na->value->length);
+        if (j)
+        {
+            return(j);
+        }
+
+        /*j=na->set-nb->set; */
+        /* if (j) return(j); */
+    }
+
+    for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
+    {
+        na = sk_X509_NAME_ENTRY_value(a->entries,i);
+        nb = sk_X509_NAME_ENTRY_value(b->entries,i);
+        j = OBJ_cmp(na->object,nb->object);
+
+        if (j)
+        {
+            return(j);
+        }
+    }
+    return(0);
+}
+
+static int 
+proxy_check_proxy_name(X509 * cert)
+{
+    int               ret = 0;
+    X509_NAME *       subject;
+    X509_NAME *       name = NULL;
+    X509_NAME_ENTRY * ne = NULL;
+    ASN1_STRING *     data;
+
+
+    subject = ::X509_get_subject_name(cert);
+    ne = ::X509_NAME_get_entry(subject, X509_NAME_entry_count(subject)-1);
+    if ( !OBJ_cmp(ne->object,OBJ_nid2obj(NID_commonName)) )
+    {
+        data = ::X509_NAME_ENTRY_get_data(ne);
+        if ((data->length == 5 &&
+             !memcmp(data->data,"proxy",5)) ||
+            (data->length == 13 &&
+             !memcmp(data->data,"limited proxy",13)))
+        {
+
+            if (data->length == 13)
+            {
+                ret = 2; /* its a limited proxy */
+            }
+            else
+            {
+                ret = 1; /* its a proxy */
+            }
+
+            name = ::X509_NAME_dup(X509_get_issuer_name(cert));
+            ne = ::X509_NAME_ENTRY_create_by_NID(NULL,
+                                               NID_commonName,
+                                               V_ASN1_APP_CHOOSE,
+                                               (ret == 2) ?
+                                               (unsigned char *)
+                                               "limited proxy" :
+                                               (unsigned char *)"proxy",
+                                               -1);
+
+            ::X509_NAME_add_entry(name,ne,X509_NAME_entry_count(name),0);
+            ::X509_NAME_ENTRY_free(ne);
+            ne = NULL;
+
+            if ( X509_NAME_cmp_no_set(name, subject) )
+            {
+                ret = -1;
+            }
+            ::X509_NAME_free(name);
+        }
+    }
+    return ret;
+}
+
+
+X509 *
+get_real_cert(X509 *base, STACK_OF(X509) *stk)
+{
+  X509 *cert = NULL;
+  int i;
+
+  if (!proxy_check_proxy_name(base))
+    return base;
+
+  /* Determine id data */
+  for (i = 0; i < sk_X509_num(stk); i++) {
+    cert = sk_X509_value(stk, i);
+    if (!proxy_check_proxy_name(cert)) {
+      return (X509 *)ASN1_dup((int (*)())i2d_X509, 
+            (char * (*)())d2i_X509, (char *)cert);
+    }
+  }
+  return NULL;
+}
 
 std::string
 get_user_x509_proxy(jobid::JobId const& jobid)
@@ -59,7 +180,7 @@ get_user_x509_proxy(jobid::JobId const& jobid)
   else {
     // currently no proxy is registered if renewal is not requested
     // try to get the original user proxy from the input sandbox
-    boost::shared_ptr<char> _c_x509_proxy(c_x509_proxy, ::free);
+    boost::shared_ptr<char> c_x509_proxy_(c_x509_proxy, ::free);
 
     configuration::Configuration const* const config
       = configuration::Configuration::instance();
@@ -79,6 +200,26 @@ get_user_x509_proxy(jobid::JobId const& jobid)
   }
 }
 
+static std::string 
+get_proxy_distinguished_name_from_cert(X509* cert)
+{
+  static std::string const null_string;
+  boost::shared_ptr<X509> cert_(cert, ::X509_free);
+
+  ::X509_NAME* name = ::X509_get_subject_name(cert);
+  if ( !name ) {
+    return null_string;
+  }
+
+  char* cp = ::X509_NAME_oneline(name, NULL, 0);
+  if ( !cp ) {
+    return null_string;
+  }
+  boost::shared_ptr<char> cp_(cp, ::free);
+
+  return std::string(cp);
+}
+
 std::string 
 get_proxy_distinguished_name(std::string const& proxy_file)
 {
@@ -88,13 +229,13 @@ get_proxy_distinguished_name(std::string const& proxy_file)
   if ( !rfd ) {
     return null_string;
   }
-  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
+  boost::shared_ptr<std::FILE> rfd_(rfd, std::fclose);
 
   ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
   if ( !rcert ) {
     return null_string;
   }
-  boost::shared_ptr<X509> cert(rcert, ::X509_free);
+  boost::shared_ptr<X509> cert_(rcert, ::X509_free);
 
   ::X509_NAME* name = ::X509_get_subject_name(rcert);
   if ( !name ) {
@@ -110,7 +251,7 @@ get_proxy_distinguished_name(std::string const& proxy_file)
   return std::string(cp);
 }
 
-std::string
+static std::string
 get_tag(matchmaking::match_info const& info)
 {
   static std::string const null_string;
@@ -137,7 +278,7 @@ get_tag(matchmaking::match_info const& info)
   return result;
 }
 
-STACK_OF(X509) *
+static STACK_OF(X509) *
 load_chain(const char *certfile)
 {
   STACK_OF(X509_INFO) *sk = NULL;
@@ -154,7 +295,7 @@ load_chain(const char *certfile)
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  boost::shared_ptr<BIO> _in(in, ::BIO_free);
+  boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
   if( !(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL)) ) {
@@ -169,7 +310,7 @@ load_chain(const char *certfile)
       continue;
     }
     xi=sk_X509_INFO_shift(sk);
-    boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
+    boost::shared_ptr<X509_INFO> xi_(xi, ::X509_INFO_free);
     if ( xi->x509 != NULL ) {
       sk_X509_push(stack,xi->x509);
       xi->x509 = NULL;
@@ -185,8 +326,8 @@ load_chain(const char *certfile)
   return stack;
 }
 
-bool
-VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs)
+static bool
+VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs, X509 **x_real)
 { 
   vomsdata v;
   X509 *x = NULL;
@@ -194,7 +335,7 @@ VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs
   STACK_OF(X509) *chain = NULL;
 
   in = BIO_new(BIO_s_file());
-  boost::shared_ptr<BIO> _in(in, ::BIO_free);
+  boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   if ( in ) {
     if ( BIO_read_filename(in, user_cert_file_name.c_str()) > 0 ) {
@@ -206,13 +347,15 @@ VOMS_proxy_init(const std::string& user_cert_file_name, Attributes& USER_attribs
           v.DefaultData(vomsdefault);
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
           for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
-	         for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
-	           std::string name = (*j).group;
-	           if ((*j).role != std::string("NULL"))
-	             name += "/Role=" + (*j).role;
-	           USER_attribs.push_back(Attribute("group", name, STRING));
-	         }
+	          for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
+	            std::string name = (*j).group;
+	            if ((*j).role != std::string("NULL"))
+	              name += "/Role=" + (*j).role;
+	            USER_attribs.push_back(Attribute("group", name, STRING));
+	          }
           }
+        
+          *x_real = get_real_cert(x, chain);
         }
         else {
           return false;
@@ -246,16 +389,6 @@ filter_gpbox_authorizations(
     return false;
   }
 
-  const std::string user_subject(
-    get_proxy_distinguished_name(user_cert_file_name)
-  );
-
-  if( user_subject.empty() ) {
-    return false;
-  }
-
-  Info(user_subject);
-
   Attributes CE_attributes;
   std::string ce_names;
   std::string ce_tags;
@@ -279,16 +412,28 @@ filter_gpbox_authorizations(
 
   CE_attributes.push_back(Attribute("aggregation-tag", ce_tags, STRING));
 
+  Attributes USER_attribs;
+  X509 *user_real_cert;
+
   try {
-
-    PEPClient PEP_request(ce_names, "job-submission", user_subject);
-    PEP_request.Attach(&PEP_connection);
-    PEP_request.SetAttr(CE_attributes, RES);
-    Attributes USER_attribs;
-    PEP_request.SetAttr(USER_attribs, SUBJ);
   
-    if( VOMS_proxy_init(user_cert_file_name,USER_attribs) ) {
+    if( VOMS_proxy_init(user_cert_file_name,USER_attribs, &user_real_cert) ) {
 
+      Info(user_real_cert);
+
+      const std::string user_subject(
+        get_proxy_distinguished_name_from_cert(user_real_cert)
+      );
+
+      if( user_subject.empty() ) {
+        return false;
+      }
+
+      Info(user_subject);
+
+      PEPClient PEP_request(ce_names, "job-submission", user_subject);
+      PEP_request.Attach(&PEP_connection);
+      PEP_request.SetAttr(CE_attributes, RES);
       PEP_request.SetAttr(USER_attribs, SUBJ);
 
       EvalResults evaluation_of_results;
