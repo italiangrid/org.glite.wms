@@ -428,7 +428,7 @@ filter_gpbox_authorizations(
 
       if( PEP_request.Send(null_string, 0, 0, 0, evaluation_of_results) ) { 
 
-        Info("filter_gbox_authorizations: PEP Send returned true");
+        Info("PEP Send done");
 
         EvalResults::iterator const end_it = evaluation_of_results.end();
  	      for ( EvalResults::iterator iter = evaluation_of_results.begin(); 
