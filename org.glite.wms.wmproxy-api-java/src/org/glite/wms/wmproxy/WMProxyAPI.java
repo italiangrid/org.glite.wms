@@ -63,13 +63,6 @@ import org.apache.log4j.PropertyConfigurator;
 * <LI>DAG - a direct acyclic graph of dependent jobs
 * <LI>Collection - a set of independent jobs
 * <LI>Parametric - jobs with JDL's containing some parameters
-* <LI>registering ans submitting jobs ;
-* <LI>cancelling the job during its life-cycle ;
-* <LI>retrieving information on the location where the job input sandbox files can be stored ;
-* <LI>retrieving the output sandbox files list ;
-* <LI>retrieving a list of possible matching Computer Elements ;
-* <LI> getting JDL templates ;
-* <LI>getting information on the user disk quota on the server .
 * </UL>
  *
  * @author Marco Sottilaro <marco.sottilaro@datamat.it>
