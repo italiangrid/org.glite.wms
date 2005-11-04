@@ -16,8 +16,6 @@ ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
 
-
-
 url = ghemon
 ns ="http://glite.org/wms/wmproxy"
 
@@ -176,10 +174,10 @@ def runTextRunner():
 	#proxySuite.addTest( WmpTest("testputProxyGrst"))
 	""" RUNNER """
 	runner = unittest.TextTestRunner()
-	#runner.run (perusalSuite)
-	#runner.run (submitSuite)
-	#runner.run (templateSuite)
-	#runner.run (getURISuite)
+	runner.run (perusalSuite)
+	runner.run (submitSuite)
+	runner.run (templateSuite)
+	runner.run (getURISuite)
 	runner.run (proxySuite)
 
 
