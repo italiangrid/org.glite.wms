@@ -41,7 +41,7 @@ int main(int argc, char*argv[]) {
 					 argv[3], 
 					 atoi(argv[4]), 
 					 false/* do not start listener */, 
-					 true/* start poller */, 
+					 false/* start poller */, 
 					 10, 
 					 CREAM,
 					 argv[6]);
@@ -53,6 +53,10 @@ int main(int argc, char*argv[]) {
     exit(1);
   }
   
+
+
+  //exit(1);
+
   vector<string> requests;
   requests.reserve(1000);
   soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
@@ -93,10 +97,10 @@ int main(int argc, char*argv[]) {
 	if(R.getCommand( ) == R.jobsubmit) {
 
 	  cout << "\tThis request is a Submission..."<<endl;
-
+	  string newJDL;
 	  try {
 	    //string newJDL = JDLHelper.manipulate(R.getUserJDL());
-	    string newJDL = R.getUserJDL();
+	    newJDL = R.getUserJDL();
 	    
 	    cout << "\tAuthenticating with proxy ["
 		 << R.getProxyCertificate()<<"]"<<endl;
@@ -162,6 +166,8 @@ int main(int argc, char*argv[]) {
 // 	    glite::wms::ice::util::jobCache::getInstance()->put(R.getGridJobID( ), 
 // 								url_jid[1], 
 // 								job_statuses::PENDING);
+	    glite::wms::ice::util::jobCache::getInstance()->put(CreamJob(newJDL, url_jid[1], R.getGridJobID( ), job_statuses::PENDING);
+
 	  } catch(exception& ex) {
 	    cerr << "\tput in cache raised an ex: "<<ex.what()<<endl;
 	    exit(1);
