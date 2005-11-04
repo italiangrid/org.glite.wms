@@ -39,7 +39,6 @@ namespace glite {
 	std::string ns_filelist;
 	std::string wm_filelist;
 	glite::wms::ice::util::thread* listenerThread, *pollerThread;
-	
 
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;
@@ -67,6 +66,7 @@ namespace glite {
 	void getNextRequests(std::vector<std::string>&); 
 	void removeRequest(const unsigned int&);
 	void ungetRequest(const unsigned int&);
+
 	//	glite::wms::ice::util::jobCache* getJobCache(void) { return job_cache; };
       }; // class ice
 

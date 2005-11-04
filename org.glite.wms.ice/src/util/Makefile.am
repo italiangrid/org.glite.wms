@@ -8,7 +8,12 @@
 
 lib_LTLIBRARIES = libglite_wms_ice_util.la
 
-libglite_wms_ice_util_la_SOURCES = eventStatusListener.cpp jnlFileManager.cpp jobCache.cpp thread.cpp eventStatusPoller.cpp
+libglite_wms_ice_util_la_SOURCES = eventStatusListener.cpp \
+				jnlFileManager.cpp \
+				jobCache.cpp \
+				thread.cpp \
+				eventStatusPoller.cpp \
+				creamJob.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \

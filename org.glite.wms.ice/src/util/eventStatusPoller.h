@@ -7,6 +7,7 @@
 
 class glite::ce::cream_client_api::soap_proxy::CreamProxy;
 class glite::ce::cream_client_api::soap_proxy::JobInfoList;
+//class glite::ce::cream_client_api::soap_proxy::AbsIce;
 
 #define DELAY 10
 
@@ -26,6 +27,9 @@ namespace glite {
 
 	  std::vector<std::string> empty;
 	  glite::ce::cream_client_api::soap_proxy::JobInfoList* _jobinfolist;
+	  
+	  //	  glite::ce::cream_client_api::soap_proxy::AbsIce* absSubmitter;
+	  std::vector<std::string> url_pieces;
 
 	public:
 	  eventStatusPoller(const std::string& certfile,

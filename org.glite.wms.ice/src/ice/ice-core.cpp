@@ -33,15 +33,6 @@ ice::ice(const string& NS_FL,
        << jobcache_persist_file << "] and snapshot file ["
        << jobcache_persist_file+".snapshot" << "]..."<<endl;
 
-//   try {
-//     job_cache = 
-//       new util::jobCache(jobcache_persist_file+".snapshot", 
-// 			 jobcache_persist_file);
-//   } catch(exception& ex) { throw iceInit_ex(ex.what()); }
-
-  // the following line just create a eventStatusListener object and 
-  // a CEConsumer that initialize the SOAP runtime
-
   glite::wms::ice::util::jobCache::setJournalFile(jobcache_persist_file);
   glite::wms::ice::util::jobCache::setSnapshotFile(jobcache_persist_file+".snapshot");
   
@@ -55,13 +46,6 @@ ice::ice(const string& NS_FL,
       sleep(5);
     }
 
-//     try {
-//       listener->setJobCache( jobCache::getInstance() );
-//     } catch(std::exception& ex) {
-//       cerr << ex.what() << endl;
-//       exit(1);
-//     }
-    
     cout << "Creating thread object for CEMon listener..."<<endl;
     
     listenerThread = new util::thread(*listener);
@@ -83,13 +67,6 @@ ice::ice(const string& NS_FL,
       throw iceInit_ex(ex.what());
     }
 
-//     try {
-//       poller->setJobCache( jobCache::getInstance() );
-//     } catch(std::exception& ex) {
-//       cerr << ex.what() << endl;
-//       exit(1);
-//     }
-    
     cout << "Creating thread object for Cream status poller..."<<endl;
     
     pollerThread = new util::thread(*poller);

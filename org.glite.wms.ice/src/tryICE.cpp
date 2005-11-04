@@ -102,7 +102,7 @@ int main(int argc, char*argv[]) {
 		 << R.getProxyCertificate()<<"]"<<endl;
 	    creamClient.Authenticate( R.getProxyCertificate() );
 
-	    cout << "\tSubmiting JDL ["<<newJDL<<"] to ["
+	    cout << "\tSubmiting JDL <"<<newJDL<<"> to ["
 		 <<CREAM.c_str()<<"]["<<CREAMD.c_str()<<"]"<<endl; 
 	    
 	    creamClient.Register( CREAM.c_str(), 
@@ -146,7 +146,7 @@ int main(int argc, char*argv[]) {
 	  } catch(cream_exceptions::DelegationException& deleg) {
 	    // MUST LOG TO LB
 	    // Resubmitting request to WM's input FL
-	    cerr << "\Delegation ex: "<<deleg.what()<<endl;
+	    cerr << "\tDelegation ex: "<<deleg.what()<<endl;
 	    submitter->ungetRequest(j);
 	    // Removing current request from WM's output FL
 	    submitter->removeRequest(j);
@@ -159,9 +159,9 @@ int main(int argc, char*argv[]) {
 	    cout << "\tGoing to put submitted job in cache ["
 		 << R.getGridJobID( ) << "] ["<<url_jid[1]<<"] ["
 		 << job_statuses::PENDING<<"]"<<endl;
-	    glite::wms::ice::util::jobCache::getInstance()->put(R.getGridJobID( ), 
-								url_jid[1], 
-								job_statuses::PENDING);
+// 	    glite::wms::ice::util::jobCache::getInstance()->put(R.getGridJobID( ), 
+// 								url_jid[1], 
+// 								job_statuses::PENDING);
 	  } catch(exception& ex) {
 	    cerr << "\tput in cache raised an ex: "<<ex.what()<<endl;
 	    exit(1);

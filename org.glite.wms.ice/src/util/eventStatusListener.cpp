@@ -84,7 +84,7 @@ void glite::wms::ice::util::eventStatusListener::updateJobCache(void)
       << cream_JOBID << ", status="<<status<<"]"<<logger::endlog;
 
   try {
-    jobCache::getInstance()->put(grid_JOBID, cream_JOBID, status);
+    //    jobCache::getInstance()->put(grid_JOBID, cream_JOBID, status);
   } catch(std::exception& ex) {
     cerr << ex.what() << endl;
     exit(1);

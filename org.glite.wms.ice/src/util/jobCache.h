@@ -11,7 +11,10 @@
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "jnlFileManager.h"
 #include "ClassadSyntax_ex.h"
-#include "classad_distribution.h"
+#include "elementNotFound_ex.h"
+#include "creamJob.h" 
+
+//#include "classad_distribution.h"
 
 #define OPERATION_SEPARATOR ":"
 #define MAX_OPERATION_COUNTER 10
@@ -26,32 +29,6 @@ namespace glite {
     namespace ice {
       namespace util {
 
-	//______________________________________________________________________
-	class CreamJob {
-	public:
-	  std::string jobid;
-	  api::job_statuses::job_status status;
-	  
-	  CreamJob() : jobid( "" ), 
-	    status( api::job_statuses::UNKNOWN ) { };
-
-	  CreamJob(const CreamJob& j) {
-	    this->jobid = j.jobid;
-	    this->status = j.status;
-	  }
-
-	  CreamJob( const std::string& jid,
-		    const api::job_statuses::job_status s) 
-	    : jobid( jid ), status( s ) {}
-
-	};
-
-	//______________________________________________________________________
-	struct Job {
-	  std::string grid_jobid;
-	  CreamJob cream_job;
-	};
-
 	//______________________________________________________
 	class jobCache {
 
@@ -65,8 +42,6 @@ namespace glite {
 	  pthread_mutex_t mutexHash;
 	  pthread_mutex_t mutexSnapFile;
 	  int operation_counter;
-	  classad::ClassAdParser parser;
-	  classad::ClassAdUnParser unp;
 
 	  void loadJournal(void) 
 	    throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&);
@@ -78,14 +53,12 @@ namespace glite {
 	  std::ofstream os;
 	  glite::wms::ice::util::jnlFileManager* jnlMgr;
 
-	  Job unparse(const std::string&) throw(ClassadSyntax_ex&);
+	  CreamJob unparse(const std::string&) throw(ClassadSyntax_ex&);
+	  void toString(const CreamJob&, std::string&);
+
 	  void getOperation(const std::string&,
 			    operation&,
-			    std::string&) ;
-
-	  std::string makeClassad(const std::string&, 
-				  const std::string&, 
-				  const api::job_statuses::job_status&);
+			    std::string&);
 
 	protected:
 	  jobCache(const std::string&, const std::string&) 
@@ -99,30 +72,33 @@ namespace glite {
 
 	  virtual ~jobCache();
 
-	  void put(const std::string& grid_jobid, 
-		   const std::string& cream_jobid, 
-		   const api::job_statuses::job_status& status = api::job_statuses::UNKNOWN)
-	    throw(jnlFile_ex&, jnlFileReadOnly_ex&);
+	  void put(const CreamJob&) throw(jnlFile_ex&, jnlFileReadOnly_ex&);
+
+	  void updateStatusByCreamJobID(const std::string& cid, const api::job_statuses::job_status&) throw(elementNotFound_ex&);
+
+	  void updateStatusByGridJobID(const std::string& gid, const api::job_statuses::job_status&) throw(elementNotFound_ex&);
 
 	  void remove_by_grid_jobid(const std::string&) 
 	    throw (jnlFile_ex&, jnlFileReadOnly_ex&);
 
 	  void remove_by_cream_jobid(const std::string&) 
-	    throw (jnlFile_ex&, jnlFileReadOnly_ex&);
+	    throw (jnlFile_ex&, jnlFileReadOnly_ex&, elementNotFound_ex&);
 
-	  bool isFinished_by_grid_jobid(const std::string&);
-	  bool isFinished_by_cream_jobid(const std::string&);
+	  bool isFinished_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
+	  bool isFinished_by_cream_jobid(const std::string&) throw(elementNotFound_ex&);
 
-	  std::string get_grid_jobid_by_cream_jobid(const std::string&);
-	  std::string get_cream_jobid_by_grid_jobid(const std::string&);
-
-	  api::job_statuses::job_status getStatus_by_grid_jobid(const std::string&);
-	  api::job_statuses::job_status getStatus_by_cream_jobid(const std::string&);
+	  std::string get_grid_jobid_by_cream_jobid(const std::string&) throw(elementNotFound_ex&);
+	  std::string get_cream_jobid_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
+	  CreamJob getJobByCreamJobID(const std::string&) throw(elementNotFound_ex&);
+	  CreamJob getJobByGridJobID(const std::string&) throw(elementNotFound_ex&);
+	  api::job_statuses::job_status 
+	  getStatus_by_cream_jobid(const std::string&) throw(elementNotFound_ex&);
+	  api::job_statuses::job_status
+	  getStatus_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
+	  
 	  void dump(void) throw(jnlFile_ex&);
 	  void print(FILE*);
-
-	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;
-	  
+	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
 	};
       }
     }
