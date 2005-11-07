@@ -245,6 +245,12 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
          if (!cfgCxt){
 		cfgCxt = new ConfigContext("", "", "");
 	}
+	if(urls.empty()){
+		throw WmsClientException(__FILE__,__LINE__,
+		"getEndPointVersion", ECONNABORTED,
+		"Operation failed",
+		"Unable to find any endpoint where to connect");
+	}
        	while ( ! urls.empty( ) ){
        		int size = urls.size();
        		if (size > 1){

@@ -199,7 +199,7 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 	bool result = false;
 	vector<string> urls;
 	if (!cfgCxt){ cfgCxt = new ConfigContext("", "", "");}
-	if (endpoint.size() > 0){
+			if (endpoint.size() > 0){
 				urls.push_back(endpoint);
 			} else if (endPoint){
 				urls.push_back(*endPoint);
@@ -215,6 +215,12 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 			}
 			// initial number of Url's
 			n = urls.size( );
+			if (n==0){
+				throw WmsClientException(__FILE__,__LINE__,
+				"getEndPointVersion", ECONNABORTED,
+				"Operation failed",
+				"Unable to find any endpoint where to connect");
+			}
 			while ( ! urls.empty( ) ){
 				int size = urls.size();
 				if (size > 1){
