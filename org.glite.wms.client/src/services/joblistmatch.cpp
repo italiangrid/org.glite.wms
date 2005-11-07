@@ -207,12 +207,6 @@ void JobListMatch::checkAd ( ){
 */
 std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 	vector <pair<string , long> > list ;
-	vector<string> urls ;
-        int index = 0;
-	// flag to stop while-loop
-	bool success = false;
-        // number of enpoint URL's
-        int n = 0;
 	// checks if jdlstring is not null
         if (!jdlString){
                 throw WmsClientException(__FILE__,__LINE__,
@@ -220,80 +214,17 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
                         "Null Pointer Error",
                         "Null pointer to JDL string");
         }
-         if ( ! dgOpt  ){
-                throw WmsClientException(__FILE__,__LINE__,
-                                "readOptions",DEFAULT_ERR_CODE,
-                                "Null Pointer Error",
-                                "Null pointer to delegation ID string" );
-         }
-	 // if the autodelegation is needed
-	if (wmcOpts->getBoolAttribute(Options::AUTODG)) {
- 		logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
-		// Endpoint
-		endPoint =  new string(this->getEndPoint());
-		cfgCxt = new ConfigContext ("", *endPoint, "");
-		//  endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
-		wmcUtils->delegateProxy (cfgCxt, *dgOpt, wmpVersion);
-	}
-        // checks if ConfigContext already contains the WMProxy URL
-        if (endPoint){
-                urls.push_back(*endPoint);
-        } else {
-                // list of endpoints from configuration file
-                urls = wmcUtils->getWmps ( );
-        }
-         if (!cfgCxt){
-		cfgCxt = new ConfigContext("", "", "");
-	}
-	if(urls.empty()){
+	endPoint =  new string(this->getEndPoint());
+ 	try{
+		logInfo->print(WMS_INFO, "Connecting to the service", cfgCxt->endpoint);
+  		// ListMatch
+    		list = jobListMatch(*jdlString, *dgOpt, cfgCxt);
+      } catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
-		"getEndPointVersion", ECONNABORTED,
+		"jobListMatch", ECONNABORTED,
 		"Operation failed",
-		"Unable to find any endpoint where to connect");
-	}
-       	while ( ! urls.empty( ) ){
-       		int size = urls.size();
-       		if (size > 1){
-                	// randomic extraction of one URL from the list
-       			index =  wmcUtils->getRandom(size);
-           	} else{
-			index = 0;
-    		}
-                // endpoint URL
-                endPoint = new string(urls[index]);
-                // setting of the EndPoint ConfigContext field
-                cfgCxt->endpoint=urls[index];
-                // Removes the extracted URL from the list
-                urls.erase ( (urls.begin( ) + index) );
-                // jobRegister
-                logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);
-                try{
-                	// ListMatch
-                        list = jobListMatch(*jdlString, *dgOpt, cfgCxt);
-                        success = true;
-                } catch (BaseException &exc) {
-                	if (n==1) {
-                        	ostringstream err ;
-                                err << "Unable to perform operation on the server:" << *endPoint << "\n";
-                                err << errMsg(exc) ;
-                        	// in case of any error on the only specified endpoint
-                		throw WmsClientException(__FILE__,__LINE__,
-                        		"jobListMatch", ECONNABORTED,
-                        		"Operation failed", err.str());
-                        } else {
-				logInfo->print  (WMS_INFO, "Operation failed:", errMsg(exc));
-                        	sleep(1);
-                       	 	if (urls.empty( )){
-                			throw WmsClientException(__FILE__,__LINE__,
-                        		"jobListMatch", ECONNABORTED,
-                        		"Operation failed",
-                        		"unable to perform the operation on the specified endpoint(s)");
-                                }
-                   	 }
-                }
-                // exits from the loop in case of success
-                if (success){ break;}
-       }
+		"unable to perform the operation:"  + errMsg(exc));
+  	}
        return list ;
 }
 

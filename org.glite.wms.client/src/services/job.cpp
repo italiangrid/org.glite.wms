@@ -106,7 +106,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	outOpt      = wmcOpts->getStringAttribute( Options::OUTPUT ) ;
 	nointOpt    = wmcOpts->getBoolAttribute (Options::NOINT) ;
 	// Delegation
-	dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
+	//dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
 	autodgOpt = wmcOpts->getBoolAttribute(Options::AUTODG);
 	// endPoint URL and ConfigurationContext
  	endPoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
@@ -199,77 +199,79 @@ void Job::getEndPointVersion(std::string &endpoint, std::string &version, const 
 	bool result = false;
 	vector<string> urls;
 	if (!cfgCxt){ cfgCxt = new ConfigContext("", "", "");}
-			if (endpoint.size() > 0){
-				urls.push_back(endpoint);
-			} else if (endPoint){
-				urls.push_back(*endPoint);
+	if (endpoint.size() > 0){
+		// endpoint specified as input parameter of this method
+		urls.push_back(endpoint);
+	} else if (endPoint){
+		// endPoint specified in the endPoint attribute of this class
+		urls.push_back(*endPoint);
+	} else {
+		// --endpoint option
+		opt = wmcOpts->getStringAttribute(Options::ENDPOINT);
+		if (opt) {
+			urls.push_back(*opt);
+		} else {
+			// list of endpoints from the configuration file
+			urls = wmcUtils->getWmps ( );
+		}
+	}
+	// initial number of Url's
+	n = urls.size( );
+	if (n==0){
+		throw WmsClientException(__FILE__,__LINE__,
+		"getEndPointVersion", ECONNABORTED,
+		"Operation failed",
+		"Unable to find any endpoint where to connect");
+	}
+	while ( ! urls.empty( ) ){
+		int size = urls.size();
+		if (size > 1){
+			// randomic extraction of one URL from the list
+			index = wmcUtils->getRandom(size);
+		} else{
+			index = 0;
+		}
+		// setting of the EndPoint ConfigContext field
+		cfgCxt->endpoint = urls[index];
+		// Removes the extracted URL from the list
+		urls.erase ( (urls.begin( ) + index) );
+		try {
+			if (all) {
+				cout << "\nGetting the version from the service " << cfgCxt->endpoint << "\n\n";
 			} else {
-				// --endpoint option
-				opt = wmcOpts->getStringAttribute(Options::ENDPOINT);
-				if (opt) {
-					urls.push_back(*opt);
-				} else {
-					// list of endpoints from the configuration file
-					urls = wmcUtils->getWmps ( );
-				}
+				logInfo->print (WMS_DEBUG, "Getting the version from the service", cfgCxt->endpoint);
 			}
-			// initial number of Url's
-			n = urls.size( );
-			if (n==0){
-				throw WmsClientException(__FILE__,__LINE__,
-				"getEndPointVersion", ECONNABORTED,
-				"Operation failed",
-				"Unable to find any endpoint where to connect");
-			}
-			while ( ! urls.empty( ) ){
-				int size = urls.size();
-				if (size > 1){
-					// randomic extraction of one URL from the list
-					index = wmcUtils->getRandom(size);
-				} else{
-					index = 0;
-				}
-				// setting of the EndPoint ConfigContext field
-				cfgCxt->endpoint = urls[index];
-				// Removes the extracted URL from the list
-				urls.erase ( (urls.begin( ) + index) );
-				try {
-					if (all) {
-						cout << "\nGetting the version from the service " << cfgCxt->endpoint << "\n\n";
-					} else {
-						logInfo->print (WMS_DEBUG, "Getting the version from the service", cfgCxt->endpoint);
-					}
-					version = getVersion((ConfigContext *)cfgCxt);
-					endpoint = string (cfgCxt->endpoint);
+			version = getVersion((ConfigContext *)cfgCxt);
+			endpoint = string (cfgCxt->endpoint);
 
-					if (all ) {
-						cout << "Version " << version << "\n\n";
-						result = true;
-					} else {
-						// exits from this loop if not all endpoints
-						success = true;
-					}
-				}catch (BaseException &exc){
-					if (n==1) {
-						ostringstream err ;
-						err << "Unable to connect to the service: " << cfgCxt->endpoint << "\n";
-						err << errMsg(exc) ;
-						// in case of any error on the only specified endpoint
-						throw WmsClientException(__FILE__,__LINE__,
-							"getEndPoint", ECONNABORTED,
-							"Operation failed", err.str());
-					} else {
-						logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
-						sleep(1);
-						if (urls.empty( ) && result == false){
-							throw WmsClientException(__FILE__,__LINE__,
-							"getEndPoint", ECONNABORTED,
-							"Operation failed", "Unable to contact any specified enpoints");
-						}
-					}
-				}
-				if (success){break;}
+			if (all ) {
+				cout << "Version " << version << "\n\n";
+				result = true;
+			} else {
+				// exits from this loop if not all endpoints
+				success = true;
 			}
+		}catch (BaseException &exc){
+			if (n==1) {
+				ostringstream err ;
+				err << "Unable to connect to the service: " << cfgCxt->endpoint << "\n";
+				err << errMsg(exc) ;
+				// in case of any error on the only specified endpoint
+				throw WmsClientException(__FILE__,__LINE__,
+					"getEndPointVersion", ECONNABORTED,
+					"Operation failed", err.str());
+			} else {
+				logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
+				sleep(1);
+				if (urls.empty( ) && result == false){
+					throw WmsClientException(__FILE__,__LINE__,
+					"getEndPointVersion", ECONNABORTED,
+					"Operation failed", "Unable to contact any specified enpoints");
+				}
+			}
+		}
+		if (success){break;}
+	}
 }
 
 std::string Job::getEndPoint( ) {
@@ -280,15 +282,15 @@ std::string Job::getEndPoint( ) {
 		// checks if endpoint already contains the WMProxy URL
 		if (endPoint){
 			endpoint = string(*endPoint);
-		} else if (autodgOpt && dgOpt==NULL) {
-			// delegationId
-			dgOpt = wmcUtils->getDelegationId( );
-			// if the autodelegation is needed
-			endpoint = wmcUtils->delegateProxy (cfgCxt, *dgOpt);
 		}
 		Job::getEndPointVersion(endpoint, version);
 		logInfo->print (WMS_DEBUG, "Version:", version);
 		wmpVersion = atoi (version.substr(0,1).c_str() );
+		//dgOpt = wmcUtils->getDelegationId( );
+		 if (autodgOpt) {
+			// if the autodelegation is needed
+			delegateProxy ( );
+		}
 	} else {
 		if (endPoint) {
 			endpoint = string(*endPoint);
@@ -300,6 +302,38 @@ std::string Job::getEndPoint( ) {
 		}
 	}
 	return endpoint;
+}
+
+/*
+* Performs credential delegation
+*/
+std::string Job::delegateProxy( ){
+	string proxy = "";
+	// retrieves the WMP configuration context if it is not set
+	if (cfgCxt==NULL){ getEndPoint( );}
+	// delegation id string
+	if (dgOpt==NULL){dgOpt = wmcUtils->getDelegationId( );}
+	try{	// Proxy Request
+		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  cfgCxt->endpoint);
+		if  (wmpVersion > Options::WMPROXY_OLD_VERSION){
+			proxy = grstGetProxyReq(*dgOpt, cfgCxt) ;
+			logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfgCxt->endpoint);
+			grstPutProxy(*dgOpt, proxy, cfgCxt);
+
+		} else {
+			proxy = getProxyReq(*dgOpt, cfgCxt) ;
+			logInfo->print(WMS_INFO, "Delegating Credential to the service",  cfgCxt->endpoint);
+			putProxy(*dgOpt, proxy, cfgCxt);
+		}
+	} catch (BaseException &exc) {
+		throw WmsClientException(__FILE__,__LINE__,
+			"delegateProxy", ECONNABORTED,
+			"Operation failed",
+			"Unable to delegate the credential to the endpoint: " +cfgCxt->endpoint);
+       }
+       logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  *dgOpt);
+       // returns the Endpoint URL
+       return (*dgOpt);
 }
 /**
 * Contacts the endpoint to retrieve the version

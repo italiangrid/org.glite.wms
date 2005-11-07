@@ -69,21 +69,12 @@ void DelegateProxy::delegation ( ){
 	postOptionchecks();
 	ostringstream out ;
 	string proxy = "" ;
-//	if (!cfgCxt){ cfgCxt = new ConfigContext("","","");}
-        // Delegation ID String
-        dgOpt = wmcUtils->getDelegationId ();
-	if ( ! dgOpt  ){
-		throw WmsClientException(__FILE__,__LINE__,
-				"delegation",DEFAULT_ERR_CODE,
-				"Missing Information", "no proxy delegation ID" );
-	}
-        logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
 	// Endpoint
 	endPoint =  new string(this->getEndPoint());
-	cfgCxt = new ConfigContext ("", *endPoint, "");
-        // DELEGATION (return the EnPoint URL where the proxy has been delegated)
-      //  endPoint = new string (wmcUtils->delegateProxy (cfgCxt, *dgOpt) );
-	wmcUtils->delegateProxy (cfgCxt, *dgOpt, wmpVersion);
+	// Delegation ID String
+	if ( !dgOpt  ){ dgOpt = wmcUtils->getDelegationId ();}
+	logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
+	delegateProxy ();
 
 	// output message
         // OUTPUT MESSAGE ============================================

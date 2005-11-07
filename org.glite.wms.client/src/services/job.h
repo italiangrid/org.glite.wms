@@ -64,7 +64,14 @@ class Job{
 		virtual void getEndPointVersion(std::string &endpoint, std::string &version, const bool &all=false);
 
 		virtual std::string getEndPoint( ) ;
+		/**
+		* Performs credential delegation
+		* @param id the delegation identifier string to be used for the delegation
+		* @return the pointer to the string containing the EndPoint URL
+		*/
+       		 virtual std::string delegateProxy( );
 	private:
+
 		 /**
         	* Gets the version message
         	*/

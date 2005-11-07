@@ -9,8 +9,7 @@
 
 //      $Id$
 
-
-
+#include "lbapi.h"
 #include "jobsubmit.h"
 // wmp-client utilities
 #include "utilities/utils.h"
@@ -240,9 +239,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 	// checks the JobId argument for the --start option
 	if (startOpt){
 		startOpt = new string(Utils::checkJobId(*startOpt));
-	} else{
-		// Delegation-id (--delegation or autogeneration in case of --autm-delegation)
-		dgOpt = wmcUtils->getDelegationId ();
 	}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
@@ -319,26 +315,9 @@ void JobSubmit::submission ( ){
 		jobid = *startOpt;
 		jobStarter(jobid);
 	} else {  // startOpt = FALSE
-		if (!wmcOpts){
-			throw WmsClientException(__FILE__,__LINE__,
-				"submission",  DEFAULT_ERR_CODE ,
-				"Null Pointer Error",
-				"null pointer to wmcOpts URL object"   );
-		}
-		// checks that the needed attributes are not null
-		if ( ! dgOpt){
-			throw WmsClientException(__FILE__,__LINE__,
-				"submission",  DEFAULT_ERR_CODE,
-				"Null Pointer Error",
-				"null pointer to DelegationID String"   );
-		}
 		// Endpoint
 		endPoint =  new string(this->getEndPoint());
 		cfgCxt = new ConfigContext ("", *endPoint, "");
-		// AutoDeleagation
-		if (wmcOpts->getBoolAttribute(Options::AUTODG)){
-			wmcUtils->delegateProxy (cfgCxt, *dgOpt);
-		};
 		// reads and checks the JDL('s)
 		wmsJobType jobtype ;
 		this->checkAd(toBretrieved, jobtype);
@@ -1122,79 +1101,27 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 */
 
 void JobSubmit::jobStarter(const std::string &jobid ) {
-	vector<string> urls ;
-	int index = 0;
-	// flag to stop while-loop
-	bool success = false;
-	// number of enpoint URL's
-	int n = 0;
-	// checks if ConfigContext already contains the WMProxy URL
-	if (endPoint){
-		urls.push_back(*endPoint);
-	} else {
-		// list of endpoints from configuration file
-		urls = wmcUtils->getWmps ( );
+	// Retrieves the endpoint URL in case of --start
+	if (startOpt) {
+		LbApi lbApi;
+		lbApi.setJobId(jobid);
+		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
+		Status status=lbApi.getStatus(true,true);
+		endPoint = new string(status.getEndpoint());
+		cfgCxt = new ConfigContext("", *endPoint,"");
+		logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);
 	}
-	// initial number of Url's
-	n = urls.size( );
-	if (!cfgCxt){
-		cfgCxt = new ConfigContext("", "", "");
-	}
-	if(! urls.empty()){
+	try {
+		// START
+		logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
+		jobStart(jobid, cfgCxt);
+	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
-		"delegateProxy", ECONNABORTED,
+		"jobStart", ECONNABORTED,
 		"Operation failed",
-		"Unable to find any endpoint where to connect");
+		"Unable to start the job: " + errMsg(exc));
 	}
-	while ( ! urls.empty( ) ){
-		int size = urls.size();
-		if (size > 1){
-			// randomic extraction of one URL from the list
-			index = wmcUtils->getRandom(size);
-		} else{
-			index = 0;
-		}
-		// endpoint URL
-		endPoint = new string(urls[index]);
-		// setting of the EndPoint ConfigContext field
-		cfgCxt->endpoint=urls[index];
-		// Removes the extracted URL from the list
-		urls.erase ( (urls.begin( ) + index) );
-		// Prints this message only if the --start option has been requested
-		// (without --start it has been already printed before the job registration)
-		if (startOpt){ logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);}
-		// JobStart if --register-only has not been requested
-		try {
-			// START
-			logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
-			jobStart(jobid, cfgCxt);
-			success = true;
-		} catch (BaseException &exc) {
-			if (n==1) {
-				ostringstream err ;
-				err << "Unable to start the job to the service: " << *endPoint << "\n";
-				err << errMsg(exc) ;
-				// in case of any error on the only specified endpoint
-				throw WmsClientException(__FILE__,__LINE__,
-					"jobStart", ECONNABORTED,
-					"Operation failed", err.str());
-			} else {
-				logInfo->print  (WMS_INFO, "Connection failed:", errMsg(exc));
-				sleep(1);
-				if (urls.empty( )){
-					throw WmsClientException(__FILE__,__LINE__,
-					"jobStart", ECONNABORTED,
-					"Operation failed",
-					"Unable to start the job to any specified endpoint");
-				}
-			}
-		}
-		// exits from the loop in case of success
-		if (success){
-			logInfo->print(WMS_DEBUG, "The job has been successfully started" , "", false);
-			break;
-		}
-	}
+	logInfo->print(WMS_DEBUG, "The job has been successfully started" , "", false);
 }
 /**
 *       Contacts the endpoint configurated in the context
@@ -1519,8 +1446,13 @@ std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 	if (!paths.empty()){
 		dest_uri = getInputSbDestinationURI(jobid, child, zip_uri);
 		if (!dest_uri){
-			throw WmsClientException(__FILE__,__LINE__,"getInputSbDestinationURI",DEFAULT_ERR_CODE,
-			"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
+			if (child.size()==0){
+				throw WmsClientException(__FILE__,__LINE__,"getInputSbDestinationURI",DEFAULT_ERR_CODE,
+				"Missing Information","unable to retrieve the InputSB DestinationURI for the job: " +jobid  );
+			} else{
+				throw WmsClientException(__FILE__,__LINE__,"getInputSbDestinationURI",DEFAULT_ERR_CODE,
+				"Missing Information","unable to retrieve the InputSB DestinationURI for the child node: " + child  );
+			}
 		}
 		if (zipAllowed) {
 			// Gets the InputSandbox files to be included into tar.gz file to be transferred to the server
