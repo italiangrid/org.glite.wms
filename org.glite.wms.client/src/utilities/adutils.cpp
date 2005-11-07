@@ -121,27 +121,34 @@ bool AdUtils::checkConfigurationAd(glite::wms::jdl::Ad& ad, const string& path){
 /******************************
 *  General Static Methods
 *******************************/
-classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,const std::string& pathDefault){
-	glite::wms::jdl::Ad adUser, adDefault;
+classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
+	const std::string& pathDefault, const std::string& pathGeneral){
+	glite::wms::jdl::Ad adUser, adDefault, adGeneral;
 	// Load ad from file (if necessary)
 	if (pathDefault!=""){
 		if(!checkConfigurationAd(adDefault,pathDefault)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded default configuration file",pathDefault,true);}
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Vo specific configuration file",pathDefault,true);}
 		}
-	}	
+	}
 	if (pathUser!=""){
 		if (!checkConfigurationAd(adUser,pathUser)){
 			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded user configuration file",pathUser,true);}
 		}
 	}
-	// Override possible user values over the default ones:
-	adDefault.merge(adUser);
-	if (!adDefault.isSet()){
-		throw WmsClientException(__FILE__,__LINE__,"AdUtils::loadConfiguration",DEFAULT_ERR_CODE,
-				"wrong Configuration","Unable to find configuration file properly");
+	if (pathGeneral!=""){
+		if (!checkConfigurationAd(adGeneral,pathGeneral)){
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file",pathGeneral,true);}
+		}
 	}
-	if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Configuration values:",adDefault.toLines(),true);}
-	return adDefault.ad();
+	// Merge all configuration file found
+	adGeneral.merge(adDefault);
+	adGeneral.merge(adUser);
+	if (!adGeneral.isSet()){
+		throw WmsClientException(__FILE__,__LINE__,"AdUtils::loadConfiguration",DEFAULT_ERR_CODE,
+				"wrong Configuration","Unable to load any configuration file properly");
+	}
+	if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Configuration values:",adGeneral.toLines(),true);}
+	return adGeneral.ad();
 }
 
 std::vector<std::string> AdUtils::getUnknown(Ad* jdl){

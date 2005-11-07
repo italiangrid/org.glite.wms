@@ -630,8 +630,9 @@ std::string* Utils::checkConf(){
 	logInfo->print(WMS_DEBUG, "VirtualOrganisation value :", voName,true,true);
 	// check the Installation path
 	checkPrefix( );
-	string cf = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
-	wmcConf=new glite::wms::common::configuration::WMCConfiguration( wmcAd->loadConfiguration(voPath, cf)  );
+	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
+	string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
+	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral));
 	return new string(voName);
 }
 void Utils::checkPrefix( ){
@@ -963,14 +964,20 @@ const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id
         // checks if ConfigContext already contains the WMProxy URL
         if (endpoint){
                 urls.push_back(*endpoint);
-        } else {
+        }else {
                 // list of endpoints from configuration file
                 urls = getWmps ( );
         }
         if (!cfg){
 		cfg = new ConfigContext("", "", "");
 	}
-        while ( ! urls.empty( ) ){
+	if(! urls.empty()){
+		throw WmsClientException(__FILE__,__LINE__,
+		"delegateProxy", ECONNABORTED,
+		"Operation failed",
+		"Unable to find any endpoint where to connect");
+	}
+	while ( ! urls.empty( ) ){
        		int size = urls.size();
        		if (size > 1){
                 	// randomic extraction of one URL from the list
@@ -1019,7 +1026,7 @@ const std::string Utils::delegateProxy(ConfigContext *cfg, const std::string &id
                 }
                 // exits from the loop in case of successful delegation
                 if (success){ break;}
-       }
+	}
        logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  id);
        // returns the Endpoint URL
        return cfg->endpoint;;
