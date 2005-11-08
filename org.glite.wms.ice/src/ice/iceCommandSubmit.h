@@ -13,15 +13,15 @@ namespace glite {
             class iceCommandSubmit : public iceAbsCommand {
 	
             public:
-                iceCommandSubmit( const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, util::JobRequest_ex&);
+                iceCommandSubmit( const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
 
                 virtual ~iceCommandSubmit() {};
 
-                void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c );          
+                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c, const std::string& cream, const std::string& creamd );          
 
-                std::string jdl;
-                std::string certfile;
-
+                std::string _jdl;
+                std::string _certfile;
+                std::string _gridJobId;
             };
         }
     }

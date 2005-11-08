@@ -1,7 +1,7 @@
 
 #include "eventStatusPoller.h"
 #include "jobCache.h"
-#include "abs-ice-core.h"
+//#include "abs-ice-core.h"
 #include <vector>
 
 using namespace glite::wms::ice::util;

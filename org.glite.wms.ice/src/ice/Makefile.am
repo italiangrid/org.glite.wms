@@ -8,7 +8,7 @@
 
 lib_LTLIBRARIES = libglite_wms_ice.la
 
-libglite_wms_ice_la_SOURCES = ice-core.cpp jobRequest.cpp
+libglite_wms_ice_la_SOURCES = ice-core.cpp jobRequest.cpp iceCommandSubmit.cpp iceCommandCancel.cpp iceCommandFactory.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
@@ -18,6 +18,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(BOOST_CFLAGS) \
+		$(LOG4CPP_CFLAGS) \
 		-DWITH_OPENSSL \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H
