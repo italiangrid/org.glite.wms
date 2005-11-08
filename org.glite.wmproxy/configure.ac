@@ -176,6 +176,7 @@ have_glite_wms_common=no
 have_glite_wmsutils=no
 have_glite_wms_jdl=no
 have_glite_lb=no
+have_glite_jp=no
 have_glite_security=no                                                                                
 have_glite_wms_chkpt=no
 have_glite_wms_part=no
@@ -195,6 +196,9 @@ AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_GLITE_JP([], have_glite_jp=yes, have_glite_jp=no) 
+AC_MSG_RESULT(["GLITE_JP found $have_glite_jp"])
 
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
