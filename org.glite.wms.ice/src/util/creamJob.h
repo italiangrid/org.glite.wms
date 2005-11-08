@@ -47,6 +47,7 @@ namespace glite {
 	  { 
 	    status = st;
 	  }
+	  inline void setJobID(const std::string& cid) { jobid = cid; }
 	  inline std::string getGridJobID(void) const { return edg_jobid; }
 	  inline std::string getJobID(void) const { return jobid; }
 	  inline std::string getJDL(void) const { return jdl; }

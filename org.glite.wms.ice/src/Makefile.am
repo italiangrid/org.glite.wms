@@ -33,7 +33,8 @@ putFL_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
-		-lglite_wms_util 
+		-lglite_wms_util
+
 
 tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_soap \

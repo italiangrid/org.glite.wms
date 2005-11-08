@@ -1,4 +1,5 @@
 
+
 #include "ice-core.h"
 #include "jobRequest.h"
 #include "jobCache.h"
@@ -81,7 +82,7 @@ int main(int argc, char*argv[]) {
 
     for(unsigned int j=0; j < requests.size( ); j++)
       {
-	cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
+	cout << "----->  Unparsing request..."<<endl;// <"<<requests[j]<<">"<<endl;
 	try {R.unparse(requests[j]);}
 	catch(std::exception& ex) {
 	  cerr << "\tunparse ex: "<<ex.what()<<endl;
@@ -93,24 +94,35 @@ int main(int argc, char*argv[]) {
 	cout << "\tUnparse successfull..."<<endl;
 
 	//cout << "This request is a ["<<R.getCommand( )<<"]"<<endl;
-
+	string newJDL = R.getUserJDL();
+	glite::wms::ice::util::CreamJob *cj;
+	try {
+	  cj = new glite::wms::ice::util::CreamJob(newJDL, 
+						   "", 
+						   R.getGridJobID( ), 
+						   job_statuses::PENDING);
+	} catch(glite::wms::ice::util::ClassadSyntax_ex& ex) {
+	  cerr << ex.what()<<endl;
+	  exit(1);
+	}
+      
+	
 	if(R.getCommand( ) == R.jobsubmit) {
 
 	  cout << "\tThis request is a Submission..."<<endl;
-	  string newJDL;
 	  try {
 	    //string newJDL = JDLHelper.manipulate(R.getUserJDL());
-	    newJDL = R.getUserJDL();
 	    
 	    cout << "\tAuthenticating with proxy ["
 		 << R.getProxyCertificate()<<"]"<<endl;
 	    creamClient.Authenticate( R.getProxyCertificate() );
 
 	    cout << "\tSubmiting JDL <"<<newJDL<<"> to ["
-		 <<CREAM.c_str()<<"]["<<CREAMD.c_str()<<"]"<<endl; 
-	    
-	    creamClient.Register( CREAM.c_str(), 
-				  CREAMD.c_str(), 
+		 << cj->getCreamURL() << "]["
+		 << cj->getCreamDelegURL() << "]" << endl; 
+
+	    creamClient.Register( cj->getCreamURL().c_str(), 
+				  cj->getCreamDelegURL().c_str(), 
 				  "", // deleg ID not needed because this client
 				  // will always do auto_delegation
 				  newJDL, // JDL
@@ -118,6 +130,8 @@ int main(int argc, char*argv[]) {
 				  url_jid,
 				  true /*autostart*/ );
 	    
+	    cj->setJobID(url_jid[1]);
+
 	    cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
 	  } catch(soap_proxy::soap_ex& ex) {
 	    cerr << "\tsoap ex: "<<ex.what() << endl;
@@ -166,7 +180,7 @@ int main(int argc, char*argv[]) {
 // 	    glite::wms::ice::util::jobCache::getInstance()->put(R.getGridJobID( ), 
 // 								url_jid[1], 
 // 								job_statuses::PENDING);
-	    glite::wms::ice::util::jobCache::getInstance()->put(CreamJob(newJDL, url_jid[1], R.getGridJobID( ), job_statuses::PENDING);
+	    glite::wms::ice::util::jobCache::getInstance()->put( *cj );
 
 	  } catch(exception& ex) {
 	    cerr << "\tput in cache raised an ex: "<<ex.what()<<endl;

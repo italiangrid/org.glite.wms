@@ -14,8 +14,6 @@
 #include "elementNotFound_ex.h"
 #include "creamJob.h" 
 
-//#include "classad_distribution.h"
-
 #define OPERATION_SEPARATOR ":"
 #define MAX_OPERATION_COUNTER 10
 

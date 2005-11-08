@@ -1,43 +1,27 @@
 
-//#include "classad_distribution.h"
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileLocker.h"
 #include "glite/wms/common/utilities/FileListLock.h"
-//#include "glite/wms/common/utilities/FLExtractor.h"
+#include "glite/ce/cream-client-api-c/string_manipulation.h"
+// #include "glite/wmsutils/exception/Exception.h"
+// #include "glite/wmsutils/jobid/JobId.h"
+// #include "glite/wms/jdl/RequestAdExceptions.h"
+// #include "glite/wms/jdl/JobAd.h"
+#include "classad_distribution.h"
+
 #include <string>
 #include <iostream>
 #include <cstdlib>
 #include <sys/time.h>
 #include <unistd.h>
 #include <exception>
+#include <fstream>
 
 using namespace glite::wms::common::utilities;
-//using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
 
 int getRandom(double);
-//bool checkClassad(string);
-
-// static string jdl[] = {
-//     "[arguments = [ ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up__u202\"executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up_u202\";executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID1\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID2\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID3\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ id = \"JOBID4\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ ad = [executable=\"/bin/echo\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ ad = [X509UserProxy=\"/tmp/x509up_u202\";executable=\"/bin/echo\"; type=\"job\"; QueueName = \"grid01\"; VirtualOrganisation = \"EGEE\"; BatchSystem = \"lsf\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";ad = [executable=\"/bin/ls\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u20\";ad = [executable=\"/bin/rm\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ ad = [executable=\"/bin/sleep\"; type=\"job\"] ]; command = \"jobsubmit\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID6\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\";id = \"JOBID8\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     "[arguments = [ X509UserProxy=\"/tmp/x509up_u202\"id = \"JOBID9\" ]; command = \"jobcancel\"; version = \"1.0.0\" ]",
-//     ""
-//   };
 
 int main(int argc, char* argv[]) {
   /**
@@ -51,39 +35,93 @@ int main(int argc, char* argv[]) {
 
   ifstream is;
   is.open(argv[2]);
-
-
-  //  j=0;
-
-  //  cout << "\n******** Num of entries to put in filelist: ";
-  //  cin >> howmany;
   string buf;
+
+  //  glite::wms::jdl::JobAd tempJob;
+//   try {
+//     tempJob.fromStream(is);
+//   }
+//   catch(glite::wms::jdl::AdSyntaxException& ex) {
+//     // ERROR
+//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
+//     cerr << ex.what()<<endl;
+//     exit(1);
+//   }
+//   catch(glite::wms::jdl::AdClassAdException& ex) {
+//     // ERROR
+//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
+//     cerr << ex.what()<<endl;
+//     exit(1);
+//   }
+//   catch(glite::wms::jdl::AdMismatchException& ex) {
+//     // ERROR
+//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
+//     cerr << ex.what()<<endl;
+//     exit(1);
+//   }
+//   catch(glite::wms::jdl::AdListException& ex) {
+//     // ERROR
+//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
+//     cerr << ex.what()<<endl;
+//     exit(1);
+//   }
+//   catch(glite::wms::jdl::AdFormatException& ex) {
+//     // ERROR
+//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
+//     cerr << ex.what()<<endl;
+//     exit(1);
+//   }
+//   is.close();
+
+//   string id = string("JobAlvise-") 
+//     + glite::ce::cream_client_api::util::string_manipulation::make_string(time(NULL));
+
+//   tempJob.setAttribute("id", id);
+
+//   //  while(is.peek()!=EOF) {
+//   //int whichOneToAdd = getRandom(8);
+//   //std::getline(is, buf, '\n');
+  string Buf = "";
   while(is.peek()!=EOF) {
-    //int whichOneToAdd = getRandom(8);
     std::getline(is, buf, '\n');
-    
-    cout << "Adding string <" 
-	 << buf
-	 << "> to filelist..." << endl;
-    {
-      try{
-	fl.open(argv[1]);
-      }
-      catch(std::exception& ex) {
-	cerr << ex.what()<<endl;
-	_exit(1);
-      }
-      FileListMutex mx(fl);
-      FileListLock  lock(mx);
-      try {
-	fl.push_back(buf);
-      } catch(std::exception& ex) {
-	cerr << ex.what()<<endl;
-	_exit(1);
-      }
+    //    cout << "buf = "<<buf<<endl;
+    Buf += buf;
+    //    cout << "Buf = "<<Buf<<endl;
+  }
+
+  is.close();
+  classad::ClassAdParser parser;
+  classad::ClassAd *ad = parser.ParseClassAd( Buf.c_str() );
+  
+  if(!ad) {
+    cerr << "Error parsing classad"<<endl;
+    exit(1);
+  }
+
+  string request = "[arguments = [ ad = " + Buf
+    + " ]; command = \"jobsubmit\"; version = \"1.0.0\" ]";
+
+  cout << "Adding JDL <" 
+       << request << "> to filelist..." << endl;
+  {
+    try{
+      fl.open(argv[1]);
+    }
+    catch(std::exception& ex) {
+      cerr << ex.what()<<endl;
+      _exit(1);
+    }
+    FileListMutex mx(fl);
+    FileListLock  lock(mx);
+    try {
+      fl.push_back(request);
+    } catch(std::exception& ex) {
+      cerr << ex.what()<<endl;
+      _exit(1);
     }
   }
 }
+
 
 //______________________________________________________________________________
 int getRandom(double max) {

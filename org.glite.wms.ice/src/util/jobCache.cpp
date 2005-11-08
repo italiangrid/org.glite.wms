@@ -462,6 +462,9 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   apiutil::string_manipulation::trim(st, '"');
   apiutil::string_manipulation::trim(gid, '"');
   apiutil::string_manipulation::trim(jdl, '"');
+
+  cout << "jobCache::unparse - gid="<<gid<<endl;
+
   api::job_statuses::job_status stNum = api::job_statuses::getStatusNum(st);
   try {
     return CreamJob(jdl, cid, gid, stNum);
@@ -502,6 +505,7 @@ void jobCache::getActiveCreamJobIDs(vector<string>& target)
 //______________________________________________________________________________
 void jobCache::toString(const CreamJob& cj, string& target)
 {
+
   target = string("[grid_jobid=\"" + cj.getGridJobID() + "\";cream_jobid=\"" 
 		  + cj.getJobID() + "\";status=\"" 
 		  + apiutil::string_manipulation::make_string((int)cj.getStatus()) 

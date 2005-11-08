@@ -33,7 +33,7 @@ CreamJob::CreamJob(const string& _jdl,
       cj_unp.Unparse(ceid, jdltree);
       //classad::ClassAdUnParser::Unparse(ceid, jdltree);
     } else {
-    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'ce_id' attributes");
+    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'ce_id' attributes; Buf="+_jdl);
   }
 
   glite::ce::cream_client_api::util::string_manipulation::trim(ceid, "\"");
