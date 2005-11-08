@@ -97,6 +97,12 @@ int main(int argc, char* argv[]) {
     cerr << "Error parsing classad"<<endl;
     exit(1);
   }
+  string id = string("JobAlvise-") 
+    + glite::ce::cream_client_api::util::string_manipulation::make_string(time(NULL));
+  ad->InsertAttr("id", id );
+
+  classad::ClassAdUnParser unp;
+  unp.Unparse(Buf, ad);
 
   string request = "[arguments = [ ad = " + Buf
     + " ]; command = \"jobsubmit\"; version = \"1.0.0\" ]";
