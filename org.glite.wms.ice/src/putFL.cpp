@@ -102,6 +102,8 @@ int main(int argc, char* argv[]) {
   ad->InsertAttr("id", id );
 
   classad::ClassAdUnParser unp;
+  
+  Buf = "";
   unp.Unparse(Buf, ad);
 
   string request = "[arguments = [ ad = " + Buf
