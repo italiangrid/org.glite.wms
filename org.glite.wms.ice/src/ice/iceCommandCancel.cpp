@@ -2,6 +2,7 @@
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "glite/ce/cream-client-api-c/CEUrl.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -77,7 +78,15 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c, const string& cream, 
         log_dev->log( log4cpp::Priority::INFO,
                       "Removing job gridJobId [" + _gridJobId + "], "
                       "creamJobId [" + url_jid[1] +"]" );
-        c->Cancel( cream.c_str(), url_jid );
+
+	vector<string> pieces;
+	glite::ce::cream_client_api::util::CEUrl::parseJobID(_theJob.getJobID(), pieces);
+	string endpoint = pieces[0]+pieces[1]+":"
+	  + pieces[2] + "/ce-cream/services/CREAM";
+
+	cout <<"Sending cancellation requesto to ["<<endpoint<<"]"<<endl;
+
+        c->Cancel( endpoint.c_str(), url_jid );
     } catch(soap_proxy::soap_ex& ex) {
         cerr << "\tsoap ex: "<<ex.what() << endl;
         // MUST LOG TO LB
