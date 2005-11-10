@@ -14,6 +14,10 @@
 using namespace std;
 using namespace glite::ce::cream_client_api;
 
+#define USE_STATUS_POLLER true
+#define USE_STATUS_LISTENER false
+
+
 int main(int argc, char*argv[]) {
   
   /**
@@ -28,9 +32,9 @@ int main(int argc, char*argv[]) {
    *                  argv[3]: job cache persistency file
    *                  argv[4]: TCP port for event status listener
    *                  argv[5]: host's certificate
-  */
+   */
 
-  if(argc<7) return 1;
+  if(argc<6) return 1;
 
 //   string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
 //   string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
@@ -41,8 +45,8 @@ int main(int argc, char*argv[]) {
 					 argv[2], 
 					 argv[3], 
 					 atoi(argv[4]), 
-					 false/* do not start listener */, 
-					 false/* start poller */, 
+					 USE_STATUS_LISTENER, 
+					 USE_STATUS_POLLER, 
 					 10,
 					 argv[5]);
   } catch(glite::wms::ice::iceInit_ex& ex) {
