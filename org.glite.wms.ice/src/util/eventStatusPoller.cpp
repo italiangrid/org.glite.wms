@@ -2,7 +2,6 @@
 #include "eventStatusPoller.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-//#include "abs-ice-core.h"
 #include <vector>
 
 using namespace glite::wms::ice::util;
@@ -21,7 +20,6 @@ eventStatusPoller::eventStatusPoller(
   throw(eventStatusPoller_ex&)
   : endpolling(false), 
     delay(_d),
-    //    cream_service(_cream_service), 
     creamClient( NULL )
 {
   try {
@@ -50,8 +48,6 @@ bool eventStatusPoller::getStatus(void)
       if(_jobinfolist[k]) delete(_jobinfolist[k]);
     
   }
-  //    delete(_jobinfolist);
-  //  _jobinfolist = NULL;
   _jobinfolist.clear();
   
   creamClient->clearSoap();
@@ -74,7 +70,7 @@ bool eventStatusPoller::getStatus(void)
   for(endpointIT=endpoint_hash.begin(); endpointIT!=endpoint_hash.end();endpointIT++)
     {
       try {
-	cout << "Sending JobInfo requesto to ["<<endpointIT->first<<"]"<<endl;
+	cout << "Sending JobInfo request to ["<<endpointIT->first<<"]"<<endl;
 	_jobinfolist.push_back( creamClient->Info(endpointIT->first.c_str(),
 						  endpointIT->second, 
 						  empty, 
@@ -154,9 +150,6 @@ void eventStatusPoller::updateJobCache()
 	   << "\t\tstatus      = [" << _jobinfolist[k]->jobInfo[j]->status<<"]"<<endl;
       
       try {
-	//       jobCache::getInstance()->put(gid,
-	// 				   _jobinfolist->jobInfo.at(j)->CREAMJobId,
-	// 				   (glite::ce::cream_client_api::job_statuses::job_status)stNum);
 	jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
       } catch(std::exception& ex) {
 	cerr << "eventStatusPoller::updateJobCache - "

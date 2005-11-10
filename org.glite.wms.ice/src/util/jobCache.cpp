@@ -403,9 +403,10 @@ void jobCache::dump() throw (jnlFile_ex&)
       throw jnlFile_ex("Error opening temp snapshot file");
     
     map<string, CreamJob>::iterator it;
-
+    
+    cout << "Dumping snapshot file"<<endl;
+    
     for(it=hash.begin(); it!=hash.end(); it++) {
-      cout << "Dumping snapshot file"<<endl;
 
       string param;
       this->toString((*it).second, param);
