@@ -60,6 +60,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     if ( !_adAD->EvaluateAttrString( "id", _gridJobId ) ) {
         throw util::JobRequest_ex( "attribute 'id' inside 'ad' not found, or is not a string" );
     }
+    glite::ce::cream_client_api::util::string_manipulation::trim(_gridJobId, "\"");
 
     // Look for "X509UserProxy" attribute inside "ad"
     if ( !_adAD->EvaluateAttrString("X509UserProxy", _certfile) ) {
@@ -105,6 +106,9 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c, const string& cream, 
         // MUST LOG TO LB
         exit(1);
     } catch(cream_exceptions::BaseException& base) {
+        cout << "cream_exception::BaseException: " 
+             << base.what() << endl;
+        exit(1);
         // MUST LOG TO LB
 //         cerr << "Base ex: "<<base.what()<<endl;
 //         submitter->ungetRequest(j);

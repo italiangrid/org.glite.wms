@@ -509,7 +509,7 @@ void jobCache::toString(const CreamJob& cj, string& target)
   target = string("[grid_jobid=\"" + cj.getGridJobID() + "\";cream_jobid=\"" 
 		  + cj.getJobID() + "\";status=\"" 
 		  + apiutil::string_manipulation::make_string((int)cj.getStatus()) 
-		  + "\"; jdl=[" + cj.getJDL() + "]]");
+		  + "\"; jdl=" + cj.getJDL() + "]");
 }
 
 //______________________________________________________________________________
