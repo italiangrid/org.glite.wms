@@ -81,7 +81,7 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c, const string& cream, 
 
 	vector<string> pieces;
 	glite::ce::cream_client_api::util::CEUrl::parseJobID(_theJob.getJobID(), pieces);
-	string endpoint = pieces[0]+pieces[1]+":"
+	string endpoint = pieces[0] + "://" + pieces[1]+":"
 	  + pieces[2] + "/ce-cream/services/CREAM";
 
 	cout <<"Sending cancellation requesto to ["<<endpoint<<"]"<<endl;

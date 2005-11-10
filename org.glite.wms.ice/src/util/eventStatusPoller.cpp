@@ -63,7 +63,7 @@ bool eventStatusPoller::getStatus(void)
     string thisJob = jobs_to_query[j];
     pieces.clear();
     glite::ce::cream_client_api::util::CEUrl::parseJobID(jobs_to_query[j], pieces);
-    endpoint = pieces[0]+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
+    endpoint = pieces[0]+"://"+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
     endpoint_hash[endpoint].push_back(jobs_to_query[j]);
   }
 
@@ -127,11 +127,6 @@ void eventStatusPoller::checkJobs() {
 //______________________________________________________________________________
 void eventStatusPoller::updateJobCache() 
 {
-//   if(!_jobinfolist) {
-//     cerr << "_jobinfolist internal variable is NULL. Wont update the job cache\n";
-//     return;
-//   }
-
   for(unsigned int k=0; k<_jobinfolist.size(); k++) {
     if(!_jobinfolist[k]) {
       cerr << "_jobinfolist["<<k<<"] is NULL. Wont update the job cache\n";
@@ -167,9 +162,10 @@ void eventStatusPoller::run()
   endpolling = false;
   while(!endpolling) {
     if(getStatus()) {
-      cout << "eventStatusPoller::getStatus OK - Updating jobCache..."<<endl;
+      cout << "eventStatusPoller::getStatus OK"<<endl;// - Updating jobCache..."<<endl;
       checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
       try{
+	cout << "Updating jobCache..."<<endl;
 	updateJobCache();
       }
       catch(...) {
