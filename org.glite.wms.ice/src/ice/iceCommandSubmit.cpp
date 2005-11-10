@@ -77,37 +77,57 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c, const string& cream, 
 
     cout << "\tThis request is a Submission..."<<endl;
 
+    util::CreamJob *theJob;
+    try {
+      theJob = new util::CreamJob( _jdl,
+				   "",
+				   _gridJobId,
+				   job_statuses::UNKNOWN );
+    } catch(util::ClassadSyntax_ex& ex) {
+      cerr << ex.what()<<endl;
+      delete( theJob );
+      exit(1);
+    }
+
     try {
 	    
         cout << "\tAuthenticating with proxy ["
              << _certfile << "]" << endl;
         c->Authenticate( _certfile );
 
-        cout << "\tSubmiting JDL [" << _jdl << "] to ["
-             << cream << "][" << creamd << "]" << endl; 
+        cout << "\tSubmiting JDL " << _jdl << " to ["
+             << theJob->getCreamURL() << "][" << theJob->getCreamDelegURL()
+	     << "]" << endl; 
 	    
-        c->Register( cream.c_str(),
-                     creamd.c_str(),
-                     "", // deleg ID not needed because this client
-                     // will always do auto_delegation
-                     _jdl, // JDL
-                     _certfile, // cert file for auto deleg.
-                     url_jid,
-                     true /*autostart*/ );
+        c->Register( 
+		    /*cream.c_str(),
+		      creamd.c_str(),*/
+		    theJob->getCreamURL().c_str(),
+		    theJob->getCreamDelegURL().c_str(),
+		    "", // deleg ID not needed because this client
+		    // will always do auto_delegation
+		    _jdl, // JDL
+		    _certfile, // cert file for auto deleg.
+		    url_jid,
+		    true /*autostart*/ 
+		    );
 	    
         cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
     } catch(soap_proxy::soap_ex& ex) {
         cerr << "\tsoap ex: "<<ex.what() << endl;
         // MUST LOG TO LB
         // HERE MUST RESUBMIT
+	delete( theJob );
         exit(1);
     } catch(soap_proxy::auth_ex& ex) {
         cerr << "\tauthN ex: " << ex.what() << endl;
         // MUST LOG TO LB
+	delete( theJob );
         exit(1);
     } catch(cream_exceptions::BaseException& base) {
         cout << "cream_exception::BaseException: " 
              << base.what() << endl;
+	delete( theJob );
         exit(1);
         // MUST LOG TO LB
 //         cerr << "Base ex: "<<base.what()<<endl;
@@ -118,15 +138,27 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c, const string& cream, 
         // TODO
         // MUST LOG TO LB
         cerr << "Internal ex: "<<intern.what()<<endl;
+	delete( theJob );
         exit(1);
     }
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
+
+    theJob->setJobID(url_jid[1]);
+    theJob->setStatus(job_statuses::PENDING);
+
     try {
-        util::CreamJob theJob( _jdl, url_jid[1], _gridJobId, job_statuses::PENDING );
-        util::jobCache::getInstance()->put( theJob );
+      //        util::CreamJob theJob( _jdl, url_jid[1], _gridJobId, job_statuses::PENDING );
+       
+      //put(...) accepts arg by reference, but
+      // the implementation puts the arg in the memory hash by copying it. So
+      // passing a *pointer should not produce problems
+      util::jobCache::getInstance()->put( *theJob );
     } catch(exception& ex) {
         cerr << "put in cache raised an ex: "<<ex.what()<<endl;
+	delete( theJob );
         exit(1);
     }
+
+    delete( theJob );
 }

@@ -20,20 +20,22 @@ namespace glite {
 
 	  bool endpolling;
 	  int delay;
-	  std::string cream_service;
+	  //	  std::string cream_service;
 	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
 
 	  std::vector<std::string> jobs_to_query;
 
 	  std::vector<std::string> empty;
-	  glite::ce::cream_client_api::soap_proxy::JobInfoList* _jobinfolist;
+	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*>
+	    _jobinfolist;
+	  //	  glite::ce::cream_client_api::soap_proxy::JobInfoList* _jobinfolist;
 	  
 	  //	  glite::ce::cream_client_api::soap_proxy::AbsIce* absSubmitter;
 	  std::vector<std::string> url_pieces;
 
 	public:
 	  eventStatusPoller(const std::string& certfile,
-			    const std::string& _cream_service,
+			    //			    const std::string& _cream_service,
 			    const int& D=DELAY) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
 

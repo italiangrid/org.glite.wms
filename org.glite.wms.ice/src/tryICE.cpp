@@ -27,14 +27,13 @@ int main(int argc, char*argv[]) {
    *                  argv[2]: WM filelist
    *                  argv[3]: job cache persistency file
    *                  argv[4]: TCP port for event status listener
-   *                  argv[5]: Cream endpoint (host:port)
-   *                  argv[6]: host's certificate
-   */
+   *                  argv[5]: host's certificate
+  */
 
   if(argc<7) return 1;
 
-  string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
-  string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
+//   string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
+//   string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
 
   glite::wms::ice::ice* submitter;
   try {
@@ -44,9 +43,8 @@ int main(int argc, char*argv[]) {
 					 atoi(argv[4]), 
 					 false/* do not start listener */, 
 					 false/* start poller */, 
-					 10, 
-					 CREAM,
-					 argv[6]);
+					 10,
+					 argv[5]);
   } catch(glite::wms::ice::iceInit_ex& ex) {
     cerr << ex.what() <<endl;
     exit(1);
@@ -93,7 +91,7 @@ int main(int argc, char*argv[]) {
             
             //cout << "This request is a ["<<R.getCommand( )<<"]"<<endl;
             
-            cmd->execute( &creamClient, CREAM, CREAMD );
+            cmd->execute( &creamClient, "", "" );
             
             cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
             submitter->removeRequest(j);

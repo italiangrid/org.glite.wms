@@ -21,7 +21,7 @@ ice::ice(const string& NS_FL,
 	 const bool& start_listener,
 	 const bool& start_poller,
 	 const int&  poller_delay,
-	 const std::string& CreamUrl,
+	 //	 const std::string& CreamUrl,
 	 const string& hostCert) throw(iceInit_ex&)
   : status_listener_started(false), 
     ns_filelist(NS_FL), 
@@ -62,7 +62,7 @@ ice::ice(const string& NS_FL,
   if(start_poller) {
     cout << "Creating a Cream status poller object..."<<endl;
     try {
-      poller = new util::eventStatusPoller(hostCert, CreamUrl, poller_delay);
+      poller = new util::eventStatusPoller(hostCert, poller_delay);
     } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
       throw iceInit_ex(ex.what());
     }

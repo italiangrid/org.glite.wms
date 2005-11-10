@@ -1,6 +1,7 @@
 
 #include "eventStatusPoller.h"
 #include "jobCache.h"
+#include "glite/ce/cream-client-api-c/CEUrl.h"
 //#include "abs-ice-core.h"
 #include <vector>
 
@@ -14,15 +15,14 @@ using namespace std;
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
 				     const std::string& certfile,
-				     const std::string& _cream_service,
+				     // const std::string& _cream_service,
 				     const int& _d
 				     )
   throw(eventStatusPoller_ex&)
   : endpolling(false), 
     delay(_d),
-    cream_service(_cream_service), 
-    creamClient( NULL ), 
-    _jobinfolist( NULL )
+    //    cream_service(_cream_service), 
+    creamClient( NULL )
 {
   try {
     creamClient = new CreamProxy(false);
@@ -41,108 +41,129 @@ eventStatusPoller::eventStatusPoller(
 bool eventStatusPoller::getStatus(void) 
 {
   /** 
-   * _jobinfolist is assigned the return value of CreamProxy::Info(...)
+   * _jobinfolist is filled with return values of CreamProxy::Info(...)
    * This call allocates ( via new() ) the object that it returns;
    * the caller of this call must take care of memory deallocation.
    */
-  if(_jobinfolist)
-    delete(_jobinfolist);
-  _jobinfolist = NULL;
-
+  if(_jobinfolist.size()) {
+    for(unsigned k=0; k<_jobinfolist.size(); k++)
+      if(_jobinfolist[k]) delete(_jobinfolist[k]);
+    
+  }
+  //    delete(_jobinfolist);
+  //  _jobinfolist = NULL;
+  _jobinfolist.clear();
+  
   creamClient->clearSoap();
 
   jobs_to_query.clear();
   jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
-//   cout << "Will ask JobInfo for:"<<endl;
-//   for(vector<string>::iterator it=jobs_to_query.begin();
-//       it!=jobs_to_query.end(); it++)
-//     cout << *(it)<<endl;
 
-  try {
-    //cout << "Calling remote Cream jobInfo..."<<endl;
-    _jobinfolist = creamClient->Info(cream_service.c_str(),
-				     jobs_to_query, 
-				     empty, 
-				     -1, // SINCE
-				     -1  // TO
-				     );
-  } catch(soap_ex& ex) { 
-    cerr << "CreamProxy::Info raised a soap_ex exception: " 
-	 << ex.what() << endl;
-    return false; 
-  } catch(BaseException& ex) {
-    cerr << "CreamProxy::Info raised a BaseException exception: " 
-	 << ex.what() << endl;
-    return false; 
-  } catch(InternalException& ex) {
-    cerr << "CreamProxy::Info raised an InternalException exception: " 
-	 << ex.what() << endl;
-    return false; 
-  } catch(DelegationException&) {
-    cerr << "CreamProxy::Info raised a DelegationException exception\n";
-    return false;
+  map< string, vector<string> > endpoint_hash;
+  map< string, vector<string> >::iterator endpointIT;
+  vector<string> pieces;
+  string endpoint;
+  for(unsigned int j=0; j<jobs_to_query.size(); j++) {
+    string thisJob = jobs_to_query[j];
+    pieces.clear();
+    glite::ce::cream_client_api::util::CEUrl::parseJobID(jobs_to_query[j], pieces);
+    endpoint = pieces[0]+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
+    endpoint_hash[endpoint].push_back(jobs_to_query[j]);
   }
-//   if(_jobinfolist)
-//     jobInfoVector = &(_jobinfolist->jobInfo);
+
+  for(endpointIT=endpoint_hash.begin(); endpointIT!=endpoint_hash.end();endpointIT++)
+    {
+      try {
+	cout << "Sending JobInfo requesto to ["<<endpointIT->first<<"]"<<endl;
+	_jobinfolist.push_back( creamClient->Info(endpointIT->first.c_str(),
+						  endpointIT->second, 
+						  empty, 
+						  -1, // SINCE
+						  -1  // TO
+						  )
+				);
+      } catch(soap_ex& ex) { 
+	cerr << "CreamProxy::Info raised a soap_ex exception: " 
+	     << ex.what() << endl;
+	return false; 
+      } catch(BaseException& ex) {
+	cerr << "CreamProxy::Info raised a BaseException exception: " 
+	     << ex.what() << endl;
+	return false; 
+      } catch(InternalException& ex) {
+	cerr << "CreamProxy::Info raised an InternalException exception: " 
+	     << ex.what() << endl;
+	return false; 
+      } catch(DelegationException&) {
+	cerr << "CreamProxy::Info raised a DelegationException exception\n";
+	return false;
+      }
+    }
   return true;
 }
 
 //______________________________________________________________________________
 void eventStatusPoller::checkJobs() {
-  for(unsigned int j=0; j<_jobinfolist->jobInfo.size(); j++) {
-
-    glite::ce::cream_client_api::job_statuses::job_status 
-      stNum = getStatusNum(_jobinfolist->jobInfo[j]->status);
-
-    if((stNum == glite::ce::cream_client_api::job_statuses::DONE_FAILED) ||
-       (stNum == glite::ce::cream_client_api::job_statuses::ABORTED))
-      {
-	// resubmit
-      }
-
-    if( api::job_statuses::isFinished( stNum ) )
-      {
-	// purge
-	//	vector<string> pieces;
-// 	pieces.clear();
-// 	string endpoint;
-// 	glite::ce::cream_client_api::ceurl_util::parseJobID(jobinfolist->jobInfo[j]->CREAMJobId,pieces);
-// 	string endpoint = pieces[1] + ":" + pieces[2];
-      }
+  glite::ce::cream_client_api::job_statuses::job_status stNum;
+  for(unsigned int k=0; k<_jobinfolist.size(); k++) {
+    for(unsigned int j=0; j<_jobinfolist[k]->jobInfo.size(); j++) {
+      stNum = getStatusNum(_jobinfolist[k]->jobInfo[j]->status);
+      
+      if((stNum == glite::ce::cream_client_api::job_statuses::DONE_FAILED) ||
+	 (stNum == glite::ce::cream_client_api::job_statuses::ABORTED))
+	{
+	  // resubmit
+	}
+      
+      if( api::job_statuses::isFinished( stNum ) )
+	{
+	  // purge
+	  //	vector<string> pieces;
+	  // 	pieces.clear();
+	  // 	string endpoint;
+	  // 	glite::ce::cream_client_api::ceurl_util::parseJobID(jobinfolist->jobInfo[j]->CREAMJobId,pieces);
+	  // 	string endpoint = pieces[1] + ":" + pieces[2];
+	}
+    }
   }
 }
 
 //______________________________________________________________________________
 void eventStatusPoller::updateJobCache() 
 {
-  if(!_jobinfolist) {
-    cerr << "_jobinfolist internal variable is NULL. Wont update the job cache\n";
-    return;
-  }
+//   if(!_jobinfolist) {
+//     cerr << "_jobinfolist internal variable is NULL. Wont update the job cache\n";
+//     return;
+//   }
 
-  for(unsigned int j=0; j<_jobinfolist->jobInfo.size(); j++) {
-    
-    glite::ce::cream_client_api::job_statuses::job_status 
-      stNum = getStatusNum(_jobinfolist->jobInfo.at(j)->status);
-
-    string gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid(_jobinfolist->jobInfo.at(j)->CREAMJobId);
-
-    cerr << "Going to update jobcache with\n"
-     	 << "\t\tgrid_jobid  = [" << gid<<"]\n"
-     	 << "\t\tcream_jobid = [" << _jobinfolist->jobInfo[j]->CREAMJobId<<"]\n"
-     	 << "\t\tstatus      = [" << _jobinfolist->jobInfo[j]->status<<"]"<<endl;
-
-    try {
-//       jobCache::getInstance()->put(gid,
-// 				   _jobinfolist->jobInfo.at(j)->CREAMJobId,
-// 				   (glite::ce::cream_client_api::job_statuses::job_status)stNum);
-      jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
-    } catch(std::exception& ex) {
-      cerr << "eventStatusPoller::updateJobCache - jobCache::updateStatusByGridJobID(...) raised an ex: "
-	   << ex.what()<<endl;
-      delete(_jobinfolist);
-      _jobinfolist = NULL;
-      exit(1);
+  for(unsigned int k=0; k<_jobinfolist.size(); k++) {
+    if(!_jobinfolist[k]) {
+      cerr << "_jobinfolist["<<k<<"] is NULL. Wont update the job cache\n";
+      continue;
+    }
+    for(unsigned int j=0; j<_jobinfolist[k]->jobInfo.size(); j++) {
+      
+      glite::ce::cream_client_api::job_statuses::job_status 
+	stNum = getStatusNum(_jobinfolist[k]->jobInfo.at(j)->status);
+      
+      string gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid(_jobinfolist[k]->jobInfo.at(j)->CREAMJobId);
+      
+      cerr << "Going to update jobcache with\n"
+	   << "\t\tgrid_jobid  = [" << gid<<"]\n"
+	   << "\t\tcream_jobid = [" << _jobinfolist[k]->jobInfo[j]->CREAMJobId<<"]\n"
+	   << "\t\tstatus      = [" << _jobinfolist[k]->jobInfo[j]->status<<"]"<<endl;
+      
+      try {
+	//       jobCache::getInstance()->put(gid,
+	// 				   _jobinfolist->jobInfo.at(j)->CREAMJobId,
+	// 				   (glite::ce::cream_client_api::job_statuses::job_status)stNum);
+	jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
+      } catch(std::exception& ex) {
+	cerr << "eventStatusPoller::updateJobCache - "
+	     << "jobCache::updateStatusByGridJobID(...) raised an ex: "
+	     << ex.what()<<endl;
+	exit(1);
+      }
     }
   }
 }
