@@ -78,15 +78,6 @@ void JobCancel::readOptions (int argc,char **argv){
 			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds), false);
 		}
          }
-         // checks if the proxy file pathname is set
-	if (proxyFile) {
-        	logInfo->print (WMS_DEBUG, "Proxy File:", proxyFile);
- 	} else {
-                throw WmsClientException(__FILE__,__LINE__,
-                                "readOptions",DEFAULT_ERR_CODE,
-                                "Invalid Credential",
-                                "No valid proxy file pathname" );
-        }
 	// checks if the output file already exists
 	if (outOpt && ! wmcUtils->askForFileOverwriting(*outOpt) ){
 		cout << "bye\n";
@@ -105,8 +96,7 @@ void JobCancel::cancel ( ){
 	ostringstream out ;
 	string err = "";
 	string warns = "";
-	// flag for the "connecting"-info  message
-	bool info = true;
+
 	// checks that the jobids vector is not empty
         if (jobIds.empty()){
 		throw WmsClientException(__FILE__,__LINE__,
@@ -117,13 +107,6 @@ void JobCancel::cancel ( ){
         	ostringstream info;
                 for (it = jobIds.begin(); it != jobIds.end(); it++) { info << " - " << *it << "\n"; }
 		logInfo->print (WMS_DEBUG,"Request of cancellation for the following job(s):\n" + info.str() , "" );
-        }
-        // checks that the config-context is not null
-        if (!cfgCxt){
-		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE,
-			"Null Pointer Error",
-                        "null pointer to ConfigContext object"   );
         }
 	// ask users to be sure to want the job cancelling
          if ( wmcUtils->answerYes("\nAre you sure you want to remove specified job(s)", 1, 1) ){
@@ -144,7 +127,7 @@ void JobCancel::cancel ( ){
 					logInfo->print(WMS_WARNING, jobid.toString() + ": " + warns, "trying to cancel the job...", true);
 				}
 				// EndPoint URL
-				cfgCxt->endpoint= status.getEndpoint();
+				setEndPoint(status.getEndpoint());
 			} catch (WmsClientException &exc){
 				// cancellation not allowed due to its current status
 				// If the request contains only one jobid, an exception is thrown
@@ -158,15 +141,9 @@ void JobCancel::cancel ( ){
 
   			try{
                         	logInfo->print(WMS_DEBUG, "Request of cancelling for the job: ", *it );
-				// If --debug has not been requested, this message has to be printed only once
-				if ( info ){
-                                	logInfo->print(WMS_INFO, "Connecting to the service", cfgCxt->endpoint);
-				}
-				if ( ! wmcOpts->getBoolAttribute(Options::DBG)){
-					info = false ;
-				}
+				logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
 	                        //  performs cancelling
-                                jobCancel(*it, cfgCxt );
+                                jobCancel(*it, getContext( ) );
                                 logInfo->print(WMS_DEBUG, "Cancelling result:", "The request has been successfully sent");
                          	 // list of jobs successfully cancelled
                                 if (cancelled){

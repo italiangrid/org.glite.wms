@@ -52,15 +52,6 @@ DelegateProxy::~DelegateProxy( ){ };
 */
 void DelegateProxy::readOptions (int argc,char **argv){
         Job::readOptions  (argc, argv, Options::JOBDELEGATION);
-        // checks if the proxy file pathname is set
-	if (proxyFile) {
-        	logInfo->print (WMS_DEBUG, "Proxy File:", proxyFile);
- 	} else {
-                throw WmsClientException(__FILE__,__LINE__,
-                                "readOptions",DEFAULT_ERR_CODE,
-                                "Invalid Credential",
-                                "No valid proxy file pathname" );
-        }
 };
 /*
 * Performs the main operations
@@ -69,19 +60,15 @@ void DelegateProxy::delegation ( ){
 	postOptionchecks();
 	ostringstream out ;
 	string proxy = "" ;
+	string endpoint = "";
 	// Endpoint
-	endPoint =  new string(this->getEndPoint());
-	// Delegation ID String
-	if ( !dgOpt  ){ dgOpt = wmcUtils->getDelegationId ();}
-	logInfo->print (WMS_DEBUG, "Delegation Identifier string: " , *dgOpt);
-	delegateProxy ();
-
+	endpoint = delegateProxy( );
 	// output message
         // OUTPUT MESSAGE ============================================
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
 	out << "Your proxy has been successfully delegated to the WMProxy:\n" ;
-	out << *endPoint << "\n\n";
-	out << "with the delegation identifier: " << *dgOpt << "\n";
+	out << getEndPoint( ) << "\n\n";
+	out << "with the delegation identifier: " << getDelegationId( ) << "\n";
 	out << infoToFile( ) ;
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
 	out << getLogFileMsg ( ) << "\n";
@@ -103,7 +90,7 @@ std::string DelegateProxy::infoToFile( ){
 		date << Utils::twoDigits(ns->tm_hour) << ":" << Utils::twoDigits(ns->tm_min) << ":" << Utils::twoDigits(ns->tm_sec) << ws;
 		string msg = "glite-wms-delegate proxy (" + date.str() + ")\n";
 		msg += "=========================================================================\n";
-		msg += "WMProxy: " + *endPoint + "\ndelegation ID: " + *dgOpt + "\n";
+		msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID: " + *dgOpt + "\n";
 		if( wmcUtils->toFile(*outOpt, msg, true) < 0 ){
 			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
 		} else {

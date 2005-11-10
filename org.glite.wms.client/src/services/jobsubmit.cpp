@@ -9,8 +9,9 @@
 
 //      $Id$
 
-#include "lbapi.h"
+
 #include "jobsubmit.h"
+#include "lbapi.h"
 // wmp-client utilities
 #include "utilities/utils.h"
 #include "utilities/adutils.h"
@@ -237,8 +238,24 @@ void JobSubmit::readOptions (int argc,char **argv){
 		startJob = true;
 	}
 	// checks the JobId argument for the --start option
-	if (startOpt){
-		startOpt = new string(Utils::checkJobId(*startOpt));
+	if (startOpt) {
+		*startOpt =string(Utils::checkJobId(*startOpt));
+		// Retrieves the endpoint URL in case of --start
+		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
+		LbApi lbApi;
+		lbApi.setJobId(*startOpt);
+		Status status=lbApi.getStatus(true,true);
+		setEndPoint(status.getEndpoint());
+		// checks if --endpoint option has been specified with a different endpoint url
+		string *endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
+		if (endpoint && endpoint->compare(getEndPoint( )) !=0 ) {
+			logInfo->print(WMS_WARNING, "--endpoint " + string(*endpoint) + " : option ignored", "");
+		}
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+
+	} else {
+		// sets the attributes related to the endpoint
+		setEndPoint( );
 	}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
@@ -290,15 +307,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 	nolistenOpt =  wmcOpts->getBoolAttribute (Options::NOLISTEN);
 	// path to the JDL file
 	jdlFile = wmcOpts->getPath2Jdl( );
-	// checks if the proxy file pathname is set
-	if (proxyFile) {
-		// Proxy file set, do nothing
-	} else {
-		throw WmsClientException(__FILE__,__LINE__,
-				"readOptions",DEFAULT_ERR_CODE,
-				"Invalid Credential",
-				"No valid proxy file pathname" );
-	}
 }
 
 /**
@@ -314,10 +322,7 @@ void JobSubmit::submission ( ){
 	if (startOpt){
 		jobid = *startOpt;
 		jobStarter(jobid);
-	} else {  // startOpt = FALSE
-		// Endpoint
-		endPoint =  new string(this->getEndPoint());
-		cfgCxt = new ConfigContext ("", *endPoint, "");
+	} else {
 		// reads and checks the JDL('s)
 		wmsJobType jobtype ;
 		this->checkAd(toBretrieved, jobtype);
@@ -658,68 +663,67 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 	int tars;
 	// ISB size
 	isbsize = this->getInputSandboxSize(jobtype);
-	if (cfgCxt) {
-		// User free quota -----------
+	// User free quota -----------
+	try{
+		// Gets the user-free quota from the WMProxy server
+		logInfo->print(WMS_DEBUG, "Getting the User FreeQuota from the server", getEndPoint( ));
+		free_quota = getFreeQuota(getContext( ));
+	} catch (BaseException &exc){
+			throw WmsClientException(__FILE__,__LINE__,
+				"checkInputSandboxSize ", ECONNABORTED,
+				"WMProxy Server Error", errMsg(exc));
+	}
+	// soft limit
+	limit = free_quota.first;
+	// if the previous function gets back a negative number
+	// the user free quota is not set on the server and
+	// no check is performed (this functions returns not exceed=true)
+	if (limit >0) {
+		if (isbsize > limit  ) {
+			ostringstream err ;
+			err << "Not enough User FreeQuota (" << limit << " bytes) on the server for the InputSandbox files (" ;
+			err << isbsize << " bytes)";
+			throw WmsClientException( __FILE__,__LINE__,
+				"checkInputSandboxSize",  DEFAULT_ERR_CODE,
+				"UserFreeQuota Error" ,
+				err.str());
+		} else {
+			ostringstream q;
+			q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the User FreeQuota (" << limit << " bytes)";
+			logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
+		}
+	} else {
+		// User quota is not set on the server: check of Max InputSB size
+		logInfo->print (WMS_DEBUG, "The User FreeQuota is not set", "");
 		try{
-			// Gets the user-free quota from the WMProxy server
-			logInfo->print(WMS_DEBUG, "Getting the User FreeQuota from the server", cfgCxt->endpoint);
-			free_quota = getFreeQuota(cfgCxt);
+			// Gets the maxISb size from the WMProxy server
+			logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", getEndPoint( ) );
+			max_isbsize = getMaxInputSandboxSize(getContext( ));
 		} catch (BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
-					"checkInputSandboxSize ", ECONNABORTED,
+					"checkInputSandboxSize", ECONNABORTED,
 					"WMProxy Server Error", errMsg(exc));
 		}
-		// soft limit
-		limit = free_quota.first;
-		// if the previous function gets back a negative number
-		// the user free quota is not set on the server and
-		// no check is performed (this functions returns not exceed=true)
-		if (limit >0) {
-			if (isbsize > limit  ) {
+		// MAX ISB size -----------
+		if (max_isbsize>0 ) {
+			if (isbsize > max_isbsize) {
 				ostringstream err ;
-				err << "Not enough User FreeQuota (" << limit << " bytes) on the server for the InputSandbox files (" ;
-				err << isbsize << " bytes)";
+				err << "The size of the InputSandbox (" << isbsize <<" bytes) ";
+				err << "exceeds the MAX InputSandbox size limit on the server (" << max_isbsize << " bytes)";
 				throw WmsClientException( __FILE__,__LINE__,
 					"checkInputSandboxSize",  DEFAULT_ERR_CODE,
-					"UserFreeQuota Error" ,
-					err.str());
+					"InputSandboxSize Error" , err.str());
 			} else {
 				ostringstream q;
-				q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the User FreeQuota (" << limit << " bytes)";
+				q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the max size limit of " << max_isbsize << " bytes:";
 				logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
 			}
 		} else {
 			// User quota is not set on the server: check of Max InputSB size
-			logInfo->print (WMS_DEBUG, "The User FreeQuota is not set", "");
-			try{
-				// Gets the maxISb size from the WMProxy server
-				logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", cfgCxt->endpoint );
-				max_isbsize = getMaxInputSandboxSize(cfgCxt);
-			} catch (BaseException &exc){
-					throw WmsClientException(__FILE__,__LINE__,
-						"checkInputSandboxSize", ECONNABORTED,
-						"WMProxy Server Error", errMsg(exc));
-			}
-			// MAX ISB size -----------
-			if (max_isbsize>0 ) {
-				if (isbsize > max_isbsize) {
-					ostringstream err ;
-					err << "The size of the InputSandbox (" << isbsize <<" bytes) ";
-					err << "exceeds the MAX InputSandbox size limit on the server (" << max_isbsize << " bytes)";
-					throw WmsClientException( __FILE__,__LINE__,
-						"checkInputSandboxSize",  DEFAULT_ERR_CODE,
-						"InputSandboxSize Error" , err.str());
-				} else {
-					ostringstream q;
-					q << "The InputSandbox size (" << isbsize << " bytes) doesn't exceed the max size limit of " << max_isbsize << " bytes:";
-					logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
-				}
-			} else {
-				// User quota is not set on the server: check of Max InputSB size
-				logInfo->print (WMS_DEBUG, "The max ISB size is not set on the server", "");
-			}
+			logInfo->print (WMS_DEBUG, "The max ISB size is not set on the server", "");
 		}
 	}
+
 	// tar.gz files ---------
 	if (isbsize>0 ) {
 		// Number of the tar.gz files to be created
@@ -1048,6 +1052,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 *	-  Job submission otherwise
 */
 std::string JobSubmit::jobRegOrSub(const bool &submit) {
+	string method  = "";
 	// checks if jdlstring is not null
 	if (!jdlString){
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1055,34 +1060,27 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			"Null Pointer Error",
 			"null pointer to JDL string");
 	}
-
-	// checks if jdlstring is not null
-	if (!endPoint){
-		throw WmsClientException(__FILE__,__LINE__,
-			"submission",  DEFAULT_ERR_CODE ,
-			"Null Pointer Error",
-			"null pointer to endPoint string");
-	}
-	// jobRegister
-	logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
-			string method ;
-			if (submit){ method = "submit";}
-			else {method = "register";}
 	try{
 		if (submit){
+			// jobSubmit
+			method = "submit";
 			logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
+			logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
 			//Suibmitting....
-			jobIds = jobSubmit(*jdlString, *dgOpt, cfgCxt);
+			jobIds = jobSubmit(*jdlString, *dgOpt, getContext( ));
 			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
-		}else {
+		} else {
+			// jobRegister
+			method = "register";
 			logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
+			logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
 			// registering ...
-			jobIds = jobRegister(*jdlString , *dgOpt, cfgCxt);
+			jobIds = jobRegister(*jdlString , *dgOpt, getContext( ));
 			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
 		}
 	} catch (BaseException &exc) {
 		ostringstream err ;
-		err << "Unable to "<< method << " the job to the service: " << this->getEndPoint()<< "\n";
+		err << "Unable to "<< method << " the job to the service: " << getEndPoint()<< "\n";
 		err << errMsg(exc) ;
 		// in case of any error on the only specified endpoint
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1101,20 +1099,11 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 */
 
 void JobSubmit::jobStarter(const std::string &jobid ) {
-	// Retrieves the endpoint URL in case of --start
-	if (startOpt) {
-		LbApi lbApi;
-		lbApi.setJobId(jobid);
-		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
-		Status status=lbApi.getStatus(true,true);
-		endPoint = new string(status.getEndpoint());
-		cfgCxt = new ConfigContext("", *endPoint,"");
-		logInfo->print(WMS_INFO, "Connecting to the service", *endPoint);
-	}
+
 	try {
 		// START
 		logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
-		jobStart(jobid, cfgCxt);
+		jobStart(jobid, getContext( ));
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 		"jobStart", ECONNABORTED,
@@ -1143,8 +1132,8 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
         if (dsURIs.empty( )){
                 try{
 
-                        logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , cfgCxt->endpoint);
-                        dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)cfgCxt);
+                        logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , getEndPoint( ));
+                        dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)getContext( ));
                 } catch (BaseException &exc){
                         throw WmsClientException(__FILE__,__LINE__,
                                 "getSandboxDestURI ", ECONNABORTED,
@@ -1213,11 +1202,11 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 		if (child.size()>0){
 			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI for child node: " , child);
 			// if the input parameter child is set ....
-			uris = getSandboxDestURI(child, (ConfigContext *)cfgCxt);
+			uris = getSandboxDestURI(child, (ConfigContext *)getContext( ));
 		} else {
-			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , cfgCxt->endpoint);
+			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
 			// parent (if the input string "child" is empty)
-			uris = getSandboxDestURI(jobid, (ConfigContext *)cfgCxt);
+			uris = getSandboxDestURI(jobid, (ConfigContext *)getContext( ));
 			parent = true;
 
 		}
@@ -1328,20 +1317,6 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 	// result message
 	long	httpcode = 0;
 	if ( !paths.empty() ){
-		// checks the user proxy pathname
-		if (!proxyFile){
-			throw WmsClientException(__FILE__,__LINE__,
-				"curlTransfer", DEFAULT_ERR_CODE,
-				"Missing Proxy",
-				"unable to determine the proxy file" );
-		}
-		// checks the trusted cert dir
-		if (!trustedCert){
-			throw WmsClientException(__FILE__,__LINE__,
-				"curlTransfer", DEFAULT_ERR_CODE,
-				"Directory Not Found",
-				"unable to determine the trusted certificate directory" );
-		}
 		// curl init
 		curl_global_init(CURL_GLOBAL_ALL);
 		curl = curl_easy_init();
@@ -1352,11 +1327,11 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 			// curl options: proxy
 			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
 			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLCERT, proxyFile);
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, proxyFile);
+			curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath( ));
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath( ));
 			curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
 			// curl option: trusted cert dir
-			curl_easy_setopt(curl, CURLOPT_CAPATH, trustedCert);
+			curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
 			// curl options: no verify the ssl properties
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);

@@ -292,10 +292,13 @@ void JobPerusal::checkStatus( ){
 	//code = status.checkCodes(Status::OP_PERUSAL, warnings);
 	if (warnings.size()>0){ logInfo->print(WMS_WARNING, warnings, "", true);}
 	if (code == 0){
-		cfgCxt = new ConfigContext("", "", "");
 		// Initialize ENDPOINT (start a new (thread of) job (s)
-		cfgCxt->endpoint= status.getEndpoint();
-		logInfo->print(WMS_DEBUG, "Endpoint set to: ", cfgCxt->endpoint);
+		setEndPoint (status.getEndpoint());
+		// checks if --endpoint option has been specified with a different endpoint url
+		string *endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
+		if (endpoint && endpoint->compare(getEndPoint( )) !=0 ) {
+			logInfo->print(WMS_WARNING, "--endpoint " + string(*endpoint) + " : option ignored", "");
+		}
 	}
 }
 /**
@@ -307,7 +310,7 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	string errors = "";
 	string file = "";
 	try {
-		logInfo->print(WMS_INFO, "GET  - Connecting to the service", cfgCxt->endpoint);
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		if (peekFiles.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet",DEFAULT_ERR_CODE,
@@ -316,7 +319,7 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 		} else {
 			file = peekFiles[0] ;
 		}
-		uris = getPerusalFiles (jobId, file , allOpt, cfgCxt);
+		uris = getPerusalFiles (jobId, file , allOpt, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"perusalGet", ECONNABORTED,
@@ -340,8 +343,8 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 */
 void JobPerusal::perusalSet ( ){
 	try {
-		logInfo->print(WMS_INFO, "SET  - Connecting to the service", cfgCxt->endpoint);
-		enableFilePerusal (jobId, peekFiles, cfgCxt);
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		enableFilePerusal (jobId, peekFiles, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"enablePerusalFiles", ECONNABORTED,
@@ -354,8 +357,8 @@ void JobPerusal::perusalSet ( ){
 void JobPerusal::perusalUnset( ){
 	vector<string> empty;
 	try {
-		logInfo->print(WMS_INFO, "UNSET  - Connecting to the service", cfgCxt->endpoint);
-		enableFilePerusal (jobId, empty, cfgCxt);
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		enableFilePerusal (jobId, empty, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"enablePerusalFiles", ECONNABORTED,

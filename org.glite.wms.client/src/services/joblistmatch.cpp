@@ -61,25 +61,10 @@ void JobListMatch::readOptions (int argc,char **argv) {
 	Job::readOptions  (argc, argv, Options::JOBMATCH);
  	// path to the JDL file
   	jdlFile = wmcOpts->getPath2Jdl( );
+	//EndPoint
+	setEndPoint( );
 	// rank
         rankOpt =  wmcOpts->getBoolAttribute (Options::RANK);
-        // Delegation ID
-        dgOpt = wmcUtils->getDelegationId ();
-         if ( ! dgOpt  ){
-                throw WmsClientException(__FILE__,__LINE__,
-                                "readOptions",DEFAULT_ERR_CODE,
-                                "Missing Information",
-                                "no proxy delegation ID" );
-         }
-	// checks if the proxy file pathname is set
-        if (proxyFile) {
-        	logInfo->print (WMS_DEBUG, "Proxy File", proxyFile);
- 	} else {
-                throw WmsClientException(__FILE__,__LINE__,
-                                "readOptions",DEFAULT_ERR_CODE,
-                                "Invalid Credential",
-                                "No valid proxy file pathname" );
-        }
 	// checks if the output file already exists
 	if (outOpt && ! wmcUtils->askForFileOverwriting(*outOpt) ){
 		cout << "bye\n";
@@ -214,11 +199,10 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
                         "Null Pointer Error",
                         "Null pointer to JDL string");
         }
-	endPoint =  new string(this->getEndPoint());
  	try{
-		logInfo->print(WMS_INFO, "Connecting to the service", cfgCxt->endpoint);
+		logInfo->print(WMS_DEBUG, "Sending the request to the service", getEndPoint( ));
   		// ListMatch
-    		list = jobListMatch(*jdlString, *dgOpt, cfgCxt);
+    		list = jobListMatch(*jdlString, getDelegationId( ), getContext());
       } catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 		"jobListMatch", ECONNABORTED,

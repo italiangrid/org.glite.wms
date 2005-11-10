@@ -138,12 +138,6 @@ void JobOutput::getOutput ( ){
 			"JobId Error",
 			"No valid JobId for which the output can be retrieved" );
 	}
-        // checks that the config-context is not null
-        if (!cfgCxt){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getOutput",  DEFAULT_ERR_CODE,
-			"Null Pointer Error", "null pointer to ConfigContext object"   );
-        }
 	// number of jobs
 	size = jobIds.size ( );
 	// performs output retrieval
@@ -158,8 +152,7 @@ void JobOutput::getOutput ( ){
 		try{
 			Status status=lbApi.getStatus(true,true);
 			// Initialize ENDPOINT (start a new (thread of) job (s)
-			cfgCxt->endpoint= status.getEndpoint();
-			logInfo->print(WMS_DEBUG, "Endpoint set to: ",cfgCxt->endpoint);
+			setEndPoint (status.getEndpoint());
 			// Properly set destination Directory
 			if (dirOpt){
 				if ( size == 1 ){
@@ -282,7 +275,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	/* Purge logic: Job can be purged when
 	* enpoint has been specified (parent has specified)
 	* no parent is present */
-	bool purge = (!listOnlyOpt) && (cfgCxt->endpoint != "" ) && (! parent) ;
+	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (! parent) ;
 
 	// checks Children
 	if (checkChildren && children.size()>0){
@@ -309,7 +302,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 		try {
 			// Check Dir/purge
 			logInfo->print(WMS_DEBUG,  jobid.toString() + ": JobPurging", "");
-			jobPurge(jobid.toString(),cfgCxt);
+			jobPurge(jobid.toString(),getContext());
 		} catch (BaseException &exc) {
 			string wmsg =  "";
 			if (exc.Description){ wmsg +=" (" + *(exc.Description)+ ")"; }
@@ -327,7 +320,8 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 		try {
 			// gets the list of the out-files from the EndPoint
 			logInfo->print(WMS_DEBUG, "getOutputFileList calling for: ",jobid);
-			files = getOutputFileList(jobid, cfgCxt );
+			logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
+			files = getOutputFileList(jobid, getContext() );
 			hasFiles = hasFiles || (files.size()>0);
 		} catch (BaseException &exc) {
 			string desc = "";
@@ -494,22 +488,6 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 	char curl_errorstr[CURL_ERROR_SIZE];
 	// user proxy
 	if ( !paths.empty()){
-                // checks the user proxy pathname
-                if (!proxyFile){
-                        throw WmsClientException(__FILE__,__LINE__,
-                                "getFiles", DEFAULT_ERR_CODE,
-                                "Missing Proxy",
-                                "unable to determine the proxy file" );
-                }
-                // checks the trusted cert dir
-                if (!trustedCert){
-                        throw WmsClientException(__FILE__,__LINE__,
-                                "transferFiles", DEFAULT_ERR_CODE,
-                                "Directory Not Found",
-                                "unable to determine the trusted certificate directory" );
-                }
-                logInfo->print (WMS_DEBUG, "curl SSL option - Proxy File", string( proxyFile)  );
-                logInfo->print (WMS_DEBUG, "curl SSL option - Trusted Cert Path", string( trustedCert)  );
                 // curl init
                 curl_global_init(CURL_GLOBAL_ALL);
                 curl = curl_easy_init();
@@ -518,12 +496,12 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, storegprBody);
                         // user proxy
                         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
-                        curl_easy_setopt(curl, CURLOPT_SSLCERT, proxyFile);
+                        curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
                         curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-                        curl_easy_setopt(curl, CURLOPT_SSLKEY, proxyFile );
+                        curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath() );
                         curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
                         //trusted certificate directory
-                        curl_easy_setopt(curl, CURLOPT_CAPATH, trustedCert);
+                        curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
                         //ssl options (no verify)
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);

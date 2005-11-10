@@ -61,15 +61,6 @@ void JobLogInfo::readOptions (int argc,char **argv){
 	if ( jobIds.size( ) > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
         	jobIds = wmcUtils->askMenu(jobIds, Utils::MENU_JOBID);
          }
-         // checks if the proxy file pathname is set
-	if (proxyFile) {
-        	logInfo->print (WMS_DEBUG, "Proxy File:", proxyFile);
- 	} else {
-                throw WmsClientException(__FILE__,__LINE__,
-                                "readOptions",DEFAULT_ERR_CODE,
-                                "Invalid Credential",
-                                "No valid proxy file pathname" );
-        }
 	vbOpt =(unsigned int*) wmcOpts->getIntAttribute(Options::VERBOSE);
 	if (!vbOpt){
 		vbOpt = (unsigned int*)malloc(sizeof(int));

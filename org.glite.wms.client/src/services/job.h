@@ -54,24 +54,52 @@ class Job{
 		* @return the string containg the information
 		*/
 		virtual std::string Job::getLogFileMsg ( ) ;
-		/**
-		* Contacts the endpoint to retrieve the version. If a valid URL is pecified as input,
-		* the endpoint referred to it will be contacts.
-		* @endpoint the URL of the endpoint
-		* @version the version number
-		* @all if TRUE, it contacts all endpoints specified in the configuration
-		*/
-		virtual void getEndPointVersion(std::string &endpoint, std::string &version, const bool &all=false);
 
-		virtual std::string getEndPoint( ) ;
+
+
+
+
+virtual void setDelegationId ( );
+virtual const std::string getDelegationId ( );
+virtual const std::string delegateProxy( );
+
+virtual void setEndPoint ();
+virtual void setEndPoint (const std::string& jobid);
+
+virtual const std::string getEndPoint ();
+virtual glite::wms::wmproxyapi::ConfigContext* Job::getContext( );
+
+virtual const char* getProxyPath ( );
+virtual const char* getCertsPath ( );
+
+virtual const std::string Job::getWmpVersion (std::string &endpoint) ;
+virtual const int Job::getWmpVersion ( );
+
+	private:		/**
+		* Retrieves the version of one or more WMProxy services.
+		* A set of WMProxy to be contacted can be specified as input by the 'urls'  vector.
+		* If no urls is specified as input, the following objects are checked to retrieve to service to be contacted:
+		* the 'endPoint' private attribute of this class; the specific user environment variable ; the specific list in the configuration file.
+		* An exception is throw if either no endpoint is specified or
+		* all specified endpoints don't allow performing the requested operation.
+		* @param urls the list of the endpoint that can be contacted; at the end of the execution this parameter
+		* will contain a list of the endpoints that are not be contacted
+		* @param endpoint the url of the contacted endpoint
+		* @param version the version number of the contacted endpoint
+		* @param all if TRUE, it contacts all endpoints specified
+		*/
+		void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, std::string &version, const bool &all=false) ;
+
+
+
 		/**
 		* Performs credential delegation
 		* @param id the delegation identifier string to be used for the delegation
 		* @return the pointer to the string containing the EndPoint URL
 		*/
-       		 virtual std::string delegateProxy( );
-	private:
-
+       		 void delegateUserProxy(const std::string &endpoint);
+		virtual void setProxyPath ( );
+		virtual void setCertsPath ( );
 		 /**
         	* Gets the version message
         	*/
@@ -100,16 +128,18 @@ class Job{
 		glite::wms::client::utilities::Log *logInfo ;
 		/** endpoint*/
 		std::string* endPoint ;
-		/** proxy file pathname*/
-		char* proxyFile ;
-		/** trusted Certs dirname */
-		char* trustedCert ;
+
 		/** configuration contex */
 		glite::wms::wmproxyapi::ConfigContext *cfgCxt ;
 		/*
 		* Major Version number of the server
 		*/
 		int wmpVersion;
+		bool needDelegation ;
+		private :
+			std::string* proxyFile ;
+			std::string* trustedCerts ;
+			std::string* jobId ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOB_H
