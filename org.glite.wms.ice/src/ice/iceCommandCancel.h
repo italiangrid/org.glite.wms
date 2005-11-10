@@ -17,7 +17,7 @@ namespace glite {
 
                 virtual ~iceCommandCancel() {};
 
-                void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c, const std::string& cream, const std::string& creamd );          
+                void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c );          
             protected:
                 std::string _certfile;
                 std::string _gridJobId;

@@ -61,7 +61,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     glite::ce::cream_client_api::util::string_manipulation::trim(_certfile, "\"");
 }
 
-void iceCommandCancel::execute( soap_proxy::CreamProxy* c, const string& cream, const string& creamd )
+void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
 {
     log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
 

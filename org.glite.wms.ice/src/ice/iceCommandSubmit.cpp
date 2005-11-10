@@ -71,7 +71,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
 
 }
 
-void iceCommandSubmit::execute( soap_proxy::CreamProxy* c, const string& cream, const string& creamd )
+void iceCommandSubmit::execute( soap_proxy::CreamProxy* c )
 {
     vector<string> url_jid;
 

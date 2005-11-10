@@ -17,7 +17,7 @@ namespace glite {
 
                 virtual ~iceCommandSubmit() {};
 
-                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c, const std::string& cream, const std::string& creamd );          
+                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c );          
 
                 std::string _jdl;
                 std::string _certfile;

@@ -95,7 +95,7 @@ int main(int argc, char*argv[]) {
             
             //cout << "This request is a ["<<R.getCommand( )<<"]"<<endl;
             
-            cmd->execute( &creamClient, "", "" );
+            cmd->execute( &creamClient );
             
             cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
             submitter->removeRequest(j);

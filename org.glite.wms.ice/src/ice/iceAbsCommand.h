@@ -23,7 +23,7 @@ namespace glite {
                  * @param c the CreamProxy object used to interact
                  * with Cream.
                  */
-                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c, const std::string& cream, const std::string& creamd ) = 0;
+                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c ) = 0;
           
             protected:
 
