@@ -108,7 +108,7 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
     if( it != hash.end() )
       hash.erase( it );
     hash.insert( make_pair( cj.getGridJobID(), cj ) );
-
+    operation_counter++;
     cream_grid_hash[ cj.getJobID() ] = cj.getGridJobID();
   }
   tmpIs.close(); // redundant: ifstream's dtor also closes file
@@ -149,13 +149,16 @@ void jobCache::loadJournal(void)
 	hash.erase( it );
       hash.insert( make_pair(cj.getGridJobID(), cj) );
       cream_grid_hash[cj.getJobID()] = cj.getGridJobID();
+      operation_counter++;
     }
     
     if(op == ERASE) {
       hash.erase( cj.getGridJobID() );
       cream_grid_hash.erase( cj.getJobID() );
+      operation_counter++;
     }
   }
+  //  operation_counter += hash.size();
 }
 
 //______________________________________________________________________________
@@ -200,45 +203,6 @@ void jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 }
 
 //______________________________________________________________________________
-// void jobCache::put(const string& grid, 
-// 		   const string& cream, 
-// 		   const api::job_statuses::job_status& status)
-//   throw (jnlFile_ex&, jnlFileReadOnly_ex&)
-// {
-//   lockJournalManager lJ(jnlMgr); // locks the journal manager
-//   Mutex M(&mutexHash); // locks the memory cache (the map<>)
-//   string param = string(OPERATION_SEPARATOR) + makeClassad(grid, cream, status);
-  
-//   /**
-//    * Updates journal file
-//    *
-//    */
-//   jnlMgr->readonly_mode(false);
-//   jnlMgr->log(PUT, param); // can raise jnlFile_ex and jnlFileReadOnly_ex
-
-//   /**
-//    * Updates the memory cache
-//    */
-//   hash[grid] = CreamJob(cream, status);
-//   cream_grid_hash[cream] = grid;
-//   /**
-//    * checks if cache-dump and journal-truncation are needed
-//    */
-//   operation_counter++;
-//   if(operation_counter >= MAX_OPERATION_COUNTER) {
-//     //cout << "Dumping jobCache snapshot and truncating journal file"<<endl;
-//     try {
-//       this->dump(); // can raise a jnlFile_ex
-//     } catch(std::exception& ex) {
-//       cerr << "dump raised an std::exception: "<<ex.what()<<endl;
-//       exit(1);
-//     }
-//     jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
-//     operation_counter = 0;
-//   }
-// }
-
-//______________________________________________________________________________
 void jobCache::remove_by_grid_jobid(const string& gid)
   throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
@@ -265,6 +229,7 @@ void jobCache::remove_by_grid_jobid(const string& gid)
   cream_grid_hash.erase(cid);
   
   operation_counter++;
+  cout << "operation_counter="<<operation_counter<<endl;
   try {
     if(operation_counter>=MAX_OPERATION_COUNTER) {
       this->dump(); // can raise a jnlFile_ex
@@ -464,7 +429,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   apiutil::string_manipulation::trim(gid, '"');
   apiutil::string_manipulation::trim(jdl, '"');
 
-  cout << "jobCache::unparse - gid="<<gid<<endl;
+  //  cout << "jobCache::unparse - gid="<<gid<<endl;
 
   api::job_statuses::job_status stNum = api::job_statuses::getStatusNum(st);
   try {
@@ -518,7 +483,8 @@ void jobCache::updateStatusByCreamJobID(const std::string& cid,
 			      const api::job_statuses::job_status& status) 
   throw(elementNotFound_ex&)
 {
-  hash.find( get_grid_jobid_by_cream_jobid( cid ) )->second.setStatus( status );
+  this->updateStatusByGridJobID( get_grid_jobid_by_cream_jobid( cid ),
+				 status );
 }
 
 //______________________________________________________________________________
@@ -526,7 +492,51 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
 				       const api::job_statuses::job_status& status) 
   throw(elementNotFound_ex&)
 {
-  if( hash.find( gid ) == hash.end() )
+  lockJournalManager lJ(jnlMgr); // locks the journal manager
+  Mutex M(&mutexHash); // locks the memory cache (the map<>)
+
+  map<string, CreamJob>::iterator it = hash.find( gid );
+
+  if( it == hash.end() )
     throw elementNotFound_ex(string("Not found key ")+gid+" in job cache");
-  hash.find( gid )->second.setStatus(status);
+
+  string tmp;
+  it->second.setStatus( status );
+  this->toString( it->second, tmp );
+  string param = string(OPERATION_SEPARATOR) + tmp;
+
+  /**
+   * Updates journal file
+   *
+   */
+  jnlMgr->readonly_mode(false);
+  jnlMgr->log(PUT, param); // can raise jnlFile_ex and jnlFileReadOnly_ex
+
+  /**
+   * checks if cache-dump and journal-truncation are needed
+   */
+  operation_counter++;
+
+  cout << "operation_counter="<<operation_counter<<endl;
+
+  if(operation_counter >= MAX_OPERATION_COUNTER) {
+    //cout << "Dumping jobCache snapshot and truncating journal file"<<endl;
+    try {
+      this->dump(); // can raise a jnlFile_ex
+      jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
+      operation_counter = 0;
+    } catch(std::exception& ex) {
+      cerr << "dump raised an std::exception: "<<ex.what()<<endl;
+      exit(1);
+    } catch(jnlFile_ex& ex) {
+      cerr << ex.what()<<endl;
+      exit(1);
+    } catch(jnlFileReadOnly_ex& ex) {
+      cerr << ex.what()<<endl;
+      exit(1);
+    } catch(...) {
+      cerr << "Something catched!"<<endl;
+      exit(1);
+    }
+  }
 }

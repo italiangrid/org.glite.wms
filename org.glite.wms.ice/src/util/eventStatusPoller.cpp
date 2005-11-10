@@ -55,6 +55,10 @@ bool eventStatusPoller::getStatus(void)
   jobs_to_query.clear();
   jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
 
+//   for(unsigned l=0; l<jobs_to_query.size(); l++)
+//     cout << "::geStatus - active job="<<jobs_to_query.at(l)<<endl;
+
+
   map< string, vector<string> > endpoint_hash;
   map< string, vector<string> >::iterator endpointIT;
   vector<string> pieces;
@@ -65,6 +69,7 @@ bool eventStatusPoller::getStatus(void)
     glite::ce::cream_client_api::util::CEUrl::parseJobID(jobs_to_query[j], pieces);
     endpoint = pieces[0]+"://"+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
     endpoint_hash[endpoint].push_back(jobs_to_query[j]);
+    
   }
 
   for(endpointIT=endpoint_hash.begin(); endpointIT!=endpoint_hash.end();endpointIT++)
@@ -95,6 +100,9 @@ bool eventStatusPoller::getStatus(void)
 	return false;
       }
     }
+
+  //cout << "_jobinfolist size="<<_jobinfolist.size()<<endl;
+
   return true;
 }
 
@@ -139,7 +147,7 @@ void eventStatusPoller::updateJobCache()
       
       string gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid(_jobinfolist[k]->jobInfo.at(j)->CREAMJobId);
       
-      cerr << "Going to update jobcache with\n"
+      cerr << "Updating jobcache with\n"
 	   << "\t\tgrid_jobid  = [" << gid<<"]\n"
 	   << "\t\tcream_jobid = [" << _jobinfolist[k]->jobInfo[j]->CREAMJobId<<"]\n"
 	   << "\t\tstatus      = [" << _jobinfolist[k]->jobInfo[j]->status<<"]"<<endl;
@@ -165,7 +173,7 @@ void eventStatusPoller::run()
       cout << "eventStatusPoller::getStatus OK"<<endl;// - Updating jobCache..."<<endl;
       checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
       try{
-	cout << "Updating jobCache..."<<endl;
+	//cout << "Updating jobCache..."<<endl;
 	updateJobCache();
       }
       catch(...) {
