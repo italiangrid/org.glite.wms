@@ -64,7 +64,7 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c, const string& cream, 
 {
     log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
 
-    cout << "\tThis request is a Submission..."<<endl;
+    cout << "\tThis request is a Cancel..."<<endl;
     
     try {
 

@@ -1,7 +1,8 @@
 
 
 #include "ice-core.h"
-#include "jobRequest.h"
+#include "iceAbsCommand.h"
+#include "iceCommandFactory.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -54,32 +55,56 @@ int main(int argc, char*argv[]) {
     exit(1);
   }
   
-
-
-  //exit(1);
-
-  vector<string> requests;
-  requests.reserve(1000);
-  soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
-  creamClient.printOnConsole( true );
-  creamClient.printDebug( true );
+    vector<string> requests;
+    requests.reserve(1000);
+    soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
+    creamClient.printOnConsole( true );
+    creamClient.printDebug( true );
   
 
-  vector<string> url_jid;
-  url_jid.reserve(2);
-  glite::wms::ice::jobRequest R;
+    vector<string> url_jid;
+    url_jid.reserve(2);
+    //  glite::wms::ice::jobRequest R;
   
-  while(true) {
+    while(true) {
 
-    //cout << "********** Getting requests from filelist..."<<endl;
+        //cout << "********** Getting requests from filelist..."<<endl;
 
-    submitter->getNextRequests(requests);
+        submitter->getNextRequests(requests);
     
-    if(requests.size( ))
-      cout << "************* Found " << requests.size( ) << " new request(s)"<<endl;
+        if(requests.size( ))
+            cout << "************* Found " << requests.size( ) << " new request(s)"<<endl;
     
-    //sleep(1000);
+        //sleep(1000);
 
+        for(unsigned int j=0; j < requests.size( ); j++) {
+            cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
+            glite::wms::ice::iceAbsCommand* cmd = 0;
+            try {
+                cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
+            }
+            catch(std::exception& ex) {
+                cerr << "\tunparse ex: "<<ex.what()<<endl;
+                cout << "\tRemoving BAD request..."<<endl;
+                submitter->removeRequest(j);
+                continue;
+            }
+            cout << "\tUnparse successfull..."<<endl;
+            
+            //cout << "This request is a ["<<R.getCommand( )<<"]"<<endl;
+            
+            cmd->execute( &creamClient, CREAM, CREAMD );
+            
+            cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
+            submitter->removeRequest(j);
+        }
+        sleep(1);
+        requests.clear();
+    }
+    
+    return 0;
+
+#ifdef PIPPO
     for(unsigned int j=0; j < requests.size( ); j++)
       {
 	cout << "----->  Unparsing request..."<<endl;// <"<<requests[j]<<">"<<endl;
@@ -209,4 +234,6 @@ int main(int argc, char*argv[]) {
   }
   
   return 0;
+#endif
+
 }

@@ -14,15 +14,30 @@
 
 SUBDIRS = util ice
 
-bin_PROGRAMS = putFL tryICE
+bin_PROGRAMS = putFL putFL_cancel tryICE
 
 putFL_SOURCES = putFL.cpp
+
+putFL_cancel_SOURCES = putFL_cancel.cpp
 
 tryICE_SOURCES = tryICE.cpp
 
 ### tryJobCache_SOURCES = tryJobCache.cpp
 
 putFL_LDADD = -L$(GLITE_LOCATION)/lib \
+		-lglite_ce_cream_client_soap \
+		-lglite_ce_cream_client_util \
+		-lglite_ce_monitor_consumer \
+		../src/util/libglite_wms_ice_util.la \
+		../src/ice/libglite_wms_ice.la \
+		$(LOG4CPP_LIBS) \
+		$(CLASSAD_LIBS) \
+		$(BOOST_FS_LIBS) \
+		$(BOOST_THREAD_LIBS) \
+		$(BOOST_REGEX_LIBS) \
+		-lglite_wms_util
+
+putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
 		-lglite_ce_monitor_consumer \
