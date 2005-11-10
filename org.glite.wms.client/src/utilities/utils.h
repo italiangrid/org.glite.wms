@@ -235,12 +235,6 @@ public:
 	*/
         static std::string* getUniqueString ( ) ;
         /**
-        * Gets the delegation ID string: if the --delegation option has been specified its value arguments
-        * is returned; otherwise the autogeneration is performed
-	* @return the point to the delegation ID string
-        */
-        std::string* getDelegationId ( );
-        /**
         * Gets the virtualOrganisation associated to this option
 	* @return the point to the virtualOrganisation string
         */

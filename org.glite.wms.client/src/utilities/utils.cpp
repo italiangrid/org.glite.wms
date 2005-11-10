@@ -912,44 +912,6 @@ const long Utils::checkTime ( const std::string &st, int &days,  int &hours, int
 	minutes = ((sec-now) % 3600) / 60 ;
  	return sec;
 }
-std::string* Utils::getDelegationId ( ){
-	string* delegation = NULL ;
-        bool autodg = false;
-        string *unique = NULL;
-        if (wmcOpts){
-		delegation = wmcOpts->getStringAttribute(Options::DELEGATION);
-		autodg = wmcOpts->getBoolAttribute(Options::AUTODG);
-		if ( delegation && autodg){
-			ostringstream err;
-			err << "the following options cannot be specified together:\n" ;
-			err << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-			err << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
-			throw WmsClientException(__FILE__,__LINE__,
-					"getDelegationId",DEFAULT_ERR_CODE,
-					"Input Option Error", err.str());
-		}  else if (delegation) {
-			unique = new string(*delegation);
-			logInfo->print  (WMS_DEBUG, "Delegation ID:", *unique);
-		} else if (autodg ){
-			// Automatic Generation
-			unique = getUniqueString();
-			logInfo->print  (WMS_DEBUG, "Auto-Generation of the Delegation Identifier:", *unique);
-		} else {
-			ostringstream err ;
-			err << "a mandatory attribute is missing:\n" ;
-			err << wmcOpts->getAttributeUsage(Options::DELEGATION) ;
-			err << "\nto use a proxy previously delegated or\n";
-			err << wmcOpts->getAttributeUsage(Options::AUTODG) ;
-			err << "\nto perform automatic delegation";
-			throw WmsClientException(__FILE__,__LINE__,
-					"getDelegationId", DEFAULT_ERR_CODE ,
-					"Missing Information", err.str());
-		}
-	}
-        return unique;
-}
-
-
 
 /****************************************************
 * Utility methods for strings
