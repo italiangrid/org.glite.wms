@@ -68,10 +68,6 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
     cout << "\tThis request is a Cancel..."<<endl;
     
     try {
-
-        log_dev->log( log4cpp::Priority::INFO, 
-                      "Autenticating with proxy [" + _certfile + "]" );
-        c->Authenticate( _certfile );
         util::CreamJob _theJob( util::jobCache::getInstance()->getJobByGridJobID(_gridJobId) );
         vector<string> url_jid(1);   
         url_jid[1] = _theJob.getJobID();
@@ -91,10 +87,6 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
         cerr << "\tsoap ex: "<<ex.what() << endl;
         // MUST LOG TO LB
         // HERE MUST RESUBMIT
-        exit(1);
-    } catch(soap_proxy::auth_ex& ex) {
-        cerr << "\tauthN ex: " << ex.what() << endl;
-        // MUST LOG TO LB
         exit(1);
     } catch(cream_exceptions::BaseException& base) {
         // MUST LOG TO LB

@@ -36,12 +36,9 @@ int main(int argc, char*argv[]) {
 
   if(argc<6) return 1;
 
-//   string CREAM  = string("https://")+argv[5]+"/ce-cream/services/CREAM";
-//   string CREAMD = string("https://")+argv[5]+"/ce-cream/services/CREAMDelegation";
-
-  glite::wms::ice::ice* submitter;
+  glite::wms::ice::ice* iceManager;
   try {
-    submitter = new glite::wms::ice::ice(argv[1], 
+    iceManager = new glite::wms::ice::ice(argv[1], 
 					 argv[2], 
 					 argv[3], 
 					 atoi(argv[4]), 
@@ -62,17 +59,25 @@ int main(int argc, char*argv[]) {
     soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
     creamClient.printOnConsole( true );
     creamClient.printDebug( true );
-  
+    cout << "\tAuthenticating with WM's proxy ["
+	 << argv[5] << "]" << endl;
+    try {
+      creamClient.Authenticate( argv[5] );
+    }
+    catch(soap_proxy::auth_ex& ex) {
+      cerr << "\tauthN ex: " << ex.what() << endl;
+      // MUST LOG TO LB
+      exit(1);
+    }
 
     vector<string> url_jid;
     url_jid.reserve(2);
-    //  glite::wms::ice::jobRequest R;
   
     while(true) {
 
         //cout << "********** Getting requests from filelist..."<<endl;
 
-        submitter->getNextRequests(requests);
+        iceManager->getNextRequests(requests);
     
         if(requests.size( ))
             cout << "************* Found " << requests.size( ) << " new request(s)"<<endl;
@@ -88,7 +93,7 @@ int main(int argc, char*argv[]) {
             catch(std::exception& ex) {
                 cerr << "\tunparse ex: "<<ex.what()<<endl;
                 cout << "\tRemoving BAD request..."<<endl;
-                submitter->removeRequest(j);
+                iceManager->removeRequest(j);
                 continue;
             }
             cout << "\tUnparse successfull..."<<endl;
@@ -98,7 +103,7 @@ int main(int argc, char*argv[]) {
             cmd->execute( &creamClient );
             
             cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
-            submitter->removeRequest(j);
+            iceManager->removeRequest(j);
         }
         sleep(1);
         requests.clear();
@@ -114,7 +119,7 @@ int main(int argc, char*argv[]) {
 	catch(std::exception& ex) {
 	  cerr << "\tunparse ex: "<<ex.what()<<endl;
 	  cout << "\tRemoving BAD request..."<<endl;
-	  submitter->removeRequest(j);
+	  iceManager->removeRequest(j);
 	  continue;
 	}
 
@@ -164,9 +169,9 @@ int main(int argc, char*argv[]) {
 	    cerr << "\tsoap ex: "<<ex.what() << endl;
 	    // MUST LOG TO LB
 	    // HERE MUST RESUBMIT
-	    submitter->ungetRequest(j);
+	    iceManager->ungetRequest(j);
 	    // Removing current request from WM's output FL
-	    submitter->removeRequest(j);
+	    iceManager->removeRequest(j);
 	    continue; // process next request
 	    exit(1);
 	  } catch(soap_proxy::auth_ex& ex) {
@@ -179,9 +184,9 @@ int main(int argc, char*argv[]) {
 	    // MUST LOG TO LB
 	    // Resubmitting request to WM's input FL
 	    cerr << "\tBase ex: "<<base.what()<<endl;
-	    submitter->ungetRequest(j);
+	    iceManager->ungetRequest(j);
 	    // Removing current request from WM's output FL
-	    submitter->removeRequest(j);
+	    iceManager->removeRequest(j);
 	    continue; // process next request
 	  } catch(cream_exceptions::InternalException& intern) {
 	    // TODO
@@ -192,9 +197,9 @@ int main(int argc, char*argv[]) {
 	    // MUST LOG TO LB
 	    // Resubmitting request to WM's input FL
 	    cerr << "\tDelegation ex: "<<deleg.what()<<endl;
-	    submitter->ungetRequest(j);
+	    iceManager->ungetRequest(j);
 	    // Removing current request from WM's output FL
-	    submitter->removeRequest(j);
+	    iceManager->removeRequest(j);
 	    continue; // process next request
 	  }
 
@@ -217,7 +222,7 @@ int main(int argc, char*argv[]) {
 	    exit(1);
 	  }
 	  cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
-	  submitter->removeRequest(j);
+	  iceManager->removeRequest(j);
 	}
 	if(R.getCommand() == R.jobcancel) {
 	  cout << "\tThis request is a Cancel..."<<endl;

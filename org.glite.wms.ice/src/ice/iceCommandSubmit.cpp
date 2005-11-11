@@ -90,10 +90,6 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c )
     }
 
     try {
-	    
-        cout << "\tAuthenticating with proxy ["
-             << _certfile << "]" << endl;
-        c->Authenticate( _certfile );
 
         cout << "\tSubmiting JDL " << _jdl << " to ["
              << theJob->getCreamURL() << "][" << theJob->getCreamDelegURL()
@@ -117,11 +113,6 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c )
         cerr << "\tsoap ex: "<<ex.what() << endl;
         // MUST LOG TO LB
         // HERE MUST RESUBMIT
-	delete( theJob );
-        exit(1);
-    } catch(soap_proxy::auth_ex& ex) {
-        cerr << "\tauthN ex: " << ex.what() << endl;
-        // MUST LOG TO LB
 	delete( theJob );
         exit(1);
     } catch(cream_exceptions::BaseException& base) {
@@ -159,6 +150,5 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c )
 	delete( theJob );
         exit(1);
     }
-
     delete( theJob );
 }
