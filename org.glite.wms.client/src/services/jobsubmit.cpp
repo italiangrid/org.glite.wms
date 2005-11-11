@@ -1426,7 +1426,6 @@ std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 			}
 		}
 		if (zipAllowed) {
-	cout <<"##toBCopiedFileList>zipAllowed\n";
 			// Gets the InputSandbox files to be included into tar.gz file to be transferred to the server
 			// ("zip_uri" is needed to create the file paths into the tar file that will be transferred to "dest_uri")
 			toBcopied(JDL::INPUTSB, paths, to_bcopied, zip_uri, isb_uri);
