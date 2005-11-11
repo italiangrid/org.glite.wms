@@ -55,7 +55,8 @@ const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
 
 // Max size (bytes) allowed for tar files
-const long MAX_TAR_SIZE = 2147483647;
+//const long MAX_TAR_SIZE = 2147483647;
+const long MAX_TAR_SIZE = 617375;
 // Max file size for globus-url-copy
 const long MAX_GUC_SIZE = 2147483647;
 // Max file size for CURL
@@ -97,8 +98,6 @@ JobSubmit::JobSubmit( ){
 	// InputSandox attributes
 	isbSize = 0;
 	isbURI = "";
-	// Major version of the server
-	wmpVersion = 0;
 };
 
 /*
@@ -222,10 +221,8 @@ void JobSubmit::readOptions (int argc,char **argv){
 		startJob = false;
 		if ( transfer_files) {
 			registerOnly = false ;
-		} else{
-			registerOnly = true;
 		}
-	} else{
+	} else {
 		if (transfer_files){
 			info << wmcOpts->getAttributeUsage(Options::TRANSFER) ;
 			info << ": this option can only be used with " ;
@@ -234,7 +231,6 @@ void JobSubmit::readOptions (int argc,char **argv){
 					"readOptions",DEFAULT_ERR_CODE,
 					"Input Option Error", info.str());
 		}
-		registerOnly = false;
 		startJob = true;
 	}
 	// checks the JobId argument for the --start option
@@ -369,7 +365,6 @@ void JobSubmit::submission ( ){
 				infoMsg += " --start " + jobid + "\n";
 			}
 		}
-
 		// Perform JobStart when:
 		// (RegisterOnly has not been specified in CLI) AND (There were files to transfer)
 		if (startJob && toBretrieved){
@@ -759,7 +754,6 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 	toBretrieved =true ;
 	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
 	if (collectOpt) {
-
 		jobtype = WMS_COLLECTION ;
 		try {
 			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
@@ -801,14 +795,15 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			// Checks the size of the ISB
 			this->checkInputSandboxSize (jobtype);
 			// checks if file archiving and compression is allowed
-			if (wmpVersion > Options::WMPROXY_OLD_VERSION) {
+			if (getWmpVersion( ) > Options::WMPROXY_OLD_VERSION) {
 				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
 				if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 					zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 					if (zipAllowed) { message ="allowed by user in the JDL";}
 					else { message ="disabled by user in the JDL"; }
 					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-					if (zipAllowed && !registerOnly) {
+	/// >>>>>>>>				if (zipAllowed && !registerOnly) {
+					if (zipAllowed) {
 						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 						}
@@ -852,7 +847,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		}
 		AdUtils::setDefaultValuesAd(jobAd,wmcConf);
 		// checks if file archiving and compression is allowed
-		if (wmpVersion > Options::WMPROXY_OLD_VERSION) {
+		if (getWmpVersion( ) > Options::WMPROXY_OLD_VERSION) {
 			if (jobAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 				zipAllowed = jobAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 				if (zipAllowed) { message ="allowed by user in the JDL";}
@@ -892,7 +887,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					// Checks the size of the ISB
 					this->checkInputSandboxSize (jobtype);
 					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-					if (zipAllowed && !registerOnly) {
+// >>>>>>>>					if (zipAllowed && !registerOnly) {
+					if (zipAllowed) {
 						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
 						}
@@ -1011,7 +1007,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			if (toBretrieved){
 				// Checks the size of the ISB
 				this->checkInputSandboxSize (jobtype);
-				if (zipAllowed && !registerOnly) {
+//>>>>				if (zipAllowed && !registerOnly) {
+				if (zipAllowed) {
 					// Adds the ZIPPED_ISB attribute to the JDL
 					for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
 						pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
@@ -1239,7 +1236,7 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 * the WMProxy in each call can only get back the URIs for one node
 */
 std::string* JobSubmit::getInputSbDestinationURI(const std::string &jobid, const std::string &child, std::string &zipURI ) {
-	if (wmpVersion  > Options::WMPROXY_OLD_VERSION) {
+	if (getWmpVersion( )  > Options::WMPROXY_OLD_VERSION) {
 		// bulk service
 		return getBulkDestURI(jobid, child, zipURI);
 	} else {
@@ -1430,10 +1427,12 @@ std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 			}
 		}
 		if (zipAllowed) {
+	cout <<"##toBCopiedFileList>zipAllowed\n";
 			// Gets the InputSandbox files to be included into tar.gz file to be transferred to the server
 			// ("zip_uri" is needed to create the file paths into the tar file that will be transferred to "dest_uri")
 			toBcopied(JDL::INPUTSB, paths, to_bcopied, zip_uri, isb_uri);
 		} else {
+		cout <<"##toBCopiedFileList>zipAllowed NO\n";
 			// Gets the InputSandbox files to be transferred to the server
 			// (The files will be directly transferred to "dest_uri")
 			toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, isb_uri);
@@ -1459,8 +1458,12 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 	// number of tar.gz file to be created
 	int nf = gzFiles.size( );
 	if (nf > 0) {
+		// Checks the size of the file that is being created if more tar.gz files are needed
 		if (nf  > 1){ check_size = true;}
+		// path of the tar file is being created
 		tar = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename (gzFiles[index] );
+		logInfo->print(WMS_DEBUG,"Creating ZIP ISB file: "+ tar + Utils::getZipExtension( ), "");
+		// opens the tar file
 		r = tar_open ( &t,  (char*)tar.c_str(), type,
 			O_CREAT|O_WRONLY,
 			S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
@@ -1473,13 +1476,18 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 			// local file to add to the archive
 			file = Utils::normalizeFile(it->first);
 			if (check_size){
+				// Checks the size of the tar file
 				tar_size += Utils::getFileSize(file);
 				if (tar_size > MAX_TAR_SIZE){
+					// if the created file exceeds the max allowed size ...
 					tar_append_eof(t);
 					tar_close (t);
 					t = NULL ;
+					// File compression (tar.gz)
 					Utils::compressFile(tar);
+					// location of the new tar file to be created
 					tar = TMP_DEFAULT_LOCATION + "/" + Utils::getArchiveFilename( gzFiles[++index] );
+					logInfo->print(WMS_DEBUG,"Creating ZIP ISB file: "+ tar + Utils::getZipExtension( ), "");
 					r = tar_open ( &t,  (char*)tar.c_str(), type,
 						O_CREAT|O_WRONLY,
 						S_IRWXU, TAR_GNU |  TAR_NOOVERWRITE  );
@@ -1504,6 +1512,7 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 			}
 		}
 		if (t) {
+			// close the file
 			tar_append_eof(t);
 			tar_close (t);
 			Utils::compressFile (tar) ;
@@ -1522,18 +1531,34 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 /*
 * Message for InputSB files that need to be transferred
 */
-std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string& jobid){
+std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string &destURI,const std::string& jobid, const bool &zip){
 	std::vector<std::pair<std::string,std::string> >::iterator it ;
 	ostringstream info;
+	string header = "";
+	string label = "";
 	if (paths.empty( ) ) {
 		info << "To complete the submission:\n";
 		info << "- no local file in the InputSandbox files to be transferred\n";
 		info << "- ";
 	} else {
-		info << "To complete the operation, the following InputSandbox files need to be transferred:\n";
+		// Creates a zip file with the ISB files to be transferred if file compression is allowed
+		if (zipAllowed && zip) {
+			createZipFile(paths, destURI);
+			if (paths.size()==1) {
+				header = "To complete the operation, the following file containing the InputSandbox of the job needs to be transferred:";
+			} else {
+				header = "To complete the operation, the following files containing the InputSandbox of the job need to be transferred:";
+			}
+			label = "ISB ZIP file : ";
+		} else {
+			header = "To complete the operation, the following InputSandbox files need to be transferred:\n";
+			label = "InputSandbox file : " ;
+		}
+		// Message
+		info << header << "\n";
 		info << "==========================================================================================================\n";
 		for (it = paths.begin(); it != paths.end( ); ++it) {
-			info << "InputSandbox file : " << it->first << "\n";
+			info << label << it->first << "\n";
 			info << "Destination URI : " << it->second << "\n";
 			info << "-----------------------------------------------------------------------------\n";
 		}
@@ -1560,7 +1585,7 @@ void JobSubmit::transferFiles(std::vector<std::pair<std::string,std::string> > &
 	} catch (WmsClientException &exc) {
 		ostringstream err ;
 		err << exc.what() << "\n\n";
-		err << transferFilesList (to_bcopied, jobid) << "\n";
+		err << transferFilesList (to_bcopied, destURI, jobid, false) << "\n";
 		throw WmsClientException( __FILE__,__LINE__,
 				"transferFiles",  DEFAULT_ERR_CODE,
 				"File Transferring Error" ,
@@ -1602,7 +1627,7 @@ std::string JobSubmit::normalJob( ){
 		if (! to_bcopied.empty( ) ){
 			if (registerOnly) {
 				// If --register-only: message with ISB files list to be printed out
-				infoMsg = transferFilesList (to_bcopied, jobid) + "\n";
+				infoMsg = transferFilesList (to_bcopied, *destURI, jobid) + "\n";
 			} else {
 				// Transfers the ISB local files to the server
 				transferFiles (to_bcopied, *destURI, jobid);
@@ -1693,7 +1718,7 @@ std::string  JobSubmit::dagJob(){
 	if (! to_bcopied.empty( ) ){
 		if (registerOnly) {
 			// If --register-only: message with ISB files list to be printed out
-			infoMsg = transferFilesList (to_bcopied, jobid) + "\n";
+			infoMsg = transferFilesList (to_bcopied,*dest_uri, jobid) + "\n";
 		} else {
 			// Transfers the ISB local files to the server
 			transferFiles (to_bcopied, *dest_uri, jobid);
@@ -1740,7 +1765,7 @@ std::string JobSubmit::collectionJob() {
 		if (  ! to_bcopied.empty( ) ){
 			if (registerOnly) {
 				// If --register-only: message with ISB files list to be printed out
-				infoMsg += transferFilesList (to_bcopied, jobid) + "\n";
+				infoMsg += transferFilesList (to_bcopied,*destURI, jobid) + "\n";
 			} else {
 				// Transfers the ISB local files to the server
 				this->transferFiles(to_bcopied, *destURI, jobid);

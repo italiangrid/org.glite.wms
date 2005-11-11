@@ -77,6 +77,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	string files = "";
 	string dircfg = "";
 	string logname = "";
+	ostringstream warn;
 	// Reads the input options
  	Job::readOptions  (argc, argv, Options::JOBPERUSAL);
         // --get
@@ -130,16 +131,14 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
-	}  else if (unsetOpt && peekFiles.size() >0 ) {
-		err << "The unset operation disables all perusal files of the job; the following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-	}else
+	}
+
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
+
 	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
 	// --input
         if (inOpt) {
@@ -194,43 +193,53 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
 	// File directory for --get
 	dirOpt = wmcOpts->getStringAttribute(Options::DIR);
+	// --nodisplay
+	nodisplayOpt = wmcOpts->getBoolAttribute(Options::NODISPLAY);
 	// WARNING MESSAGES
 	// =================================
-	// -all ignored if with --unset
-	if (unsetOpt && allOpt) {
-		logInfo->print(WMS_WARNING,
-			wmcOpts->getAttributeUsage(Options::ALL) +
-			": ignored (unset operation always disables all perusal files)", "" );
-	}
-	nodisplayOpt = wmcOpts->getBoolAttribute(Options::NODISPLAY);
-	// --nodisplay ignored if with --unset
-	 if (unsetOpt && nodisplayOpt) {
+	// Ignored options with --unset
+	if (unsetOpt){
+		// each --filename specified
+		for (int i=0; i < peekFiles.size(); i++ ) {
+			warn << "--filename " + peekFiles[i]  + " (unset operation always disables all perusal files)\n";
+		}
+		// --all
+		if (allOpt) {
+			warn << wmcOpts->getAttributeUsage(Options::ALL)  << " (unset operation always disables all perusal files)\n";
+		}
+		// --nodisplay
+		if (nodisplayOpt) {
+			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output with unset operation)\n";
+		}
+		//--dir
+		if (dirOpt){
+			warn << "--dir " << *dirOpt << " (no files to be retrieved)\n";
+		}
+		//--output
+		if (outOpt) {
+			warn << "--output " << *outOpt <<" (no useful information to be saved into a file)\n";
+		}
+		if (warn.str().size()>0) {
 			logInfo->print(WMS_WARNING,
-			wmcOpts->getAttributeUsage(Options::NODISPLAY) +
-			": ignored (no files to be displayed on the standard output with --unset operation)", "" );
-	}
-	// --nodisplay ignored if with --set
-	 if (setOpt && nodisplayOpt) {
-		logInfo->print(WMS_WARNING,
-		wmcOpts->getAttributeUsage(Options::NODISPLAY) +
-		": ignored (no files to be displayed on the standard output with --set operation)", "" );
-	}
-	// --output ignored if with --unset
-	 if (unsetOpt && outOpt) {
-		logInfo->print(WMS_WARNING,
-		wmcOpts->getAttributeUsage(Options::OUTPUT) +
-		": ignored (no useful information to be saved into a file)", "" );
-	}
-	// --dir ignored if with --unset
-	 if (dirOpt && setOpt) {
-		logInfo->print(WMS_WARNING,
-		wmcOpts->getAttributeUsage(Options::DIR) +
-		": ignored (no files to be retrieved)", "" );
-	} else if (dirOpt && unsetOpt)  {
-		logInfo->print(WMS_WARNING,
-		wmcOpts->getAttributeUsage(Options::DIR) +
-		": ignored (no files to be retrieved)", "" );
-	} else {
+				"The following option(s) is(are) ignored:",
+				warn.str());
+		}
+	} else if (setOpt) {
+		//--dir
+		if (dirOpt){
+			warn << "--dir " << *dirOpt << " (no files to be retrieved)\n";
+		}
+		// --nodisplay
+		if (nodisplayOpt) {
+			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output with unset operation)\n";
+		}
+		if (warn.str().size()>0) {
+			logInfo->print(WMS_WARNING,
+				"The following option(s) is(are) ignored:",
+				warn.str());
+		}
+
+	} else if (getOpt) {
 		// Directory path for file downloading (only for --get)
 		if (!dirOpt){
 			char* environ=getenv("LOGNAME");
@@ -466,6 +475,7 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 		out << "Perusal has been successfully disabled for the job:\n";
 		out << jobId << "\n";
 	}
+
 	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
 	out << getLogFileMsg ( ) << "\n";
 	// Prints out the msg on the std out

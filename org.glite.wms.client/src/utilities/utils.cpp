@@ -129,8 +129,8 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer, bool def
 	string possible=" [y/n]";
 	possible +=(defaultAnswer?"y":"n");
 	possible +=" :";
-	char x[128];
-	char *c;
+	char x[1024];
+	char *c = (char*)malloc(128);
 	while (1){
 		cout << question << possible << " " ;
 		cin.getline(x,128);
@@ -139,6 +139,7 @@ bool Utils::answerYes (const std::string& question, bool defaultAnswer, bool def
 		else if((*c=='n')||(*c=='N')){return false;}
 		else if (*c=='\0'){return defaultAnswer;}
 	}
+	if(c){free(c);}
 }
 
 void Utils::ending(unsigned int exitCode){
@@ -166,7 +167,7 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 	ostringstream out ;
         ostringstream question ;
 	string line = "";
-        char x[512];
+        char x[1024];
 	int len = 0;
         int size = items.size();
 	bool ask = true;
@@ -227,7 +228,7 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 		cout << question.str() <<  " " ;
 		cin.getline(x,128);
 		// Processing the reply -----------
-		line = string(Utils::cleanString(x));
+		line = Utils::cleanString(string(x));
 		len = line.size( );
 		if ( len == 0 ){
 			// Empty space
@@ -251,7 +252,7 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 
 			// checks for a single-job choice
 			try {
-				int n = boost::lexical_cast<unsigned int>((char*)Utils::cleanString((char*)line.c_str()) );
+				int n = boost::lexical_cast<unsigned int>(Utils::cleanString(line) );
 				if ( n>=1 && n <= size ){
 					chosen.push_back(items[(int)(n-1)]);
 				} else {ask = true; continue;}
@@ -267,8 +268,8 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 
 					try {
 						// string-to-int conversion
-						int n1 = boost::lexical_cast<unsigned int>((char*)Utils::cleanString((char*)s1.c_str()) );
-						int n2 = boost::lexical_cast<unsigned int>((char*)Utils::cleanString((char*)s2.c_str()) );
+						int n1 = boost::lexical_cast<unsigned int>(Utils::cleanString(s1) );
+						int n2 = boost::lexical_cast<unsigned int>(Utils::cleanString(s2) );
 						// range extraction
 						if ((n1 >= 1 && n1 <= size)  && (n2 >= n1 && n2 <= size) ) {
 							for (int i=n1; i < (n2+1) ; i++) {
@@ -1033,29 +1034,38 @@ const std::string Utils::getStripe (const int &len, const std::string &ch, const
 /*
 * removes white spaces form the begininng and from the end of the input string
 */
-const char* Utils::cleanString(char *str)
-{
-    int ii = 0;
-    int len = 0;
-    unsigned int p = 0;
-    string *s = NULL;
-   // erases white space at the beginning of the string
-    for (ii = 0; str[ii] == ' ' || str[ii] == '\t'; ii++);
-    str = &(str[ii]);
 
-    len = strlen (str);
-    // erases white space at the end of the string
-    if (len > 0) {
-        for (ii = len - 1; (str[ii] == ' ' || str[ii] == '\t'); ii--);
-        str[ii + 1] = '\0';
-    }
-    s = new string(str);
-    p = s->find("\n");
-    if ( p != string::npos ){
-        *s = s->substr (0, ii);
-    }
-    return ((char*)s->c_str()) ;
+const std::string Utils::cleanString(std::string str) {
+	int len = 0;
+	string ws = " "; //white space char
+	len = str.size( );
+	if (len > 0) {
+		// erases white space at the beginning of the string
+		while (len>1) {
+			if ( str.compare(0,1,ws) == 0) {
+				str = str.substr(1, len);
+			} else {
+				break;
+			}
+			len = str.size();
+		}
+		// erases white space at the end of the string
+		while (len>1) {
+			if( str.compare(len-1,1,ws) == 0 ) {
+				str = str.substr(0, len-1);
+			} else {
+				break;
+			}
+			len = str.size();
+		}
+		// 1 white space
+		if (len == 1 & str.compare(ws)==0) {
+			str = "";
+		}
+	}
+	return str;
 }
+
 /*
 * Converts the input integer to a string, adding a "zero"-digit ahead if it has one digit ( 0< d < )
 */
@@ -1253,7 +1263,7 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
                                         }
                         } else {
                         	// list of jobid's = yes
-				outmsg = string(cleanString((char*)fromfile->c_str()));
+				outmsg = cleanString((char*)fromfile->c_str());
                                 if ( outmsg.find("\n", outmsg.size())==string::npos){outmsg +="\n";}
                         }
     		} else {
@@ -1272,8 +1282,8 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
 const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header){
 	string msg = "";
 	bool ask = true;
-	string line = "";
-	char* x ;
+	string answer = "";
+	char  x[1024] = "";
 	int len = 0;
 	int size = 0;
 	int result = 0;
@@ -1298,14 +1308,14 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 			cout << q.str() <<  " " ;
 			cin.getline(x,128);
 			// Processing the reply -----------
-			line = string(Utils::cleanString(x));
-			len = line.size( );
+			answer = answer.assign(Utils::cleanString(x));
+			len = answer.size( );
 			if (len > 0) {
-				if (line=="a") {
+				if (answer.compare("a")==0) {
 					result = this->toFile(path, msg, true);
-				} else if (line=="o") {
+				} else if (answer.compare("o")==0) {
 					result = this->toFile(path, msg, false);
-				} else if (line=="q") {
+				} else if (answer.compare("q")==0) {
 					/* do nothing*/
 					result = -1;
 				} else {
@@ -1427,12 +1437,11 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 		for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
 			token != tok.end(); ++token) {
                         string it = *token;
-                        it = string(Utils::cleanString( (char*) it.c_str()) );
+                        it = Utils::cleanString( (char*) it.c_str()) ;
 			if (   (it.find("#")==0)||it.find("//")==0) {
 				// It's a comment, skip line
 			} else if (Utils::contains(items, it) == false) {
 				// Append line
-				//items.push_back(string(Utils::cleanString((char*)it.c_str())));
 				items.push_back(it);
 			}
                 }

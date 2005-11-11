@@ -331,7 +331,7 @@ public:
          * @param str the input string
          * @return the string without white spaces
          */
-         static const char* cleanString(char *str);
+         static const std::string cleanString(std::string str);
          /**
 	* Converts the input integer to a string, adding a "zero"-digit ahead if it has one digit ( 0< d < 9)
 	*/

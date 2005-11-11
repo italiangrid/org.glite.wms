@@ -209,9 +209,10 @@ class JobSubmit : public Job {
 		*	Gets the list of the InputSandbox files to be transferred to the DestinationURI's
 		*	@param paths the list of files that still need to be transferred
 		*	@param jobid the identifier of the job
+		*	@param zip if TRUE, creates tar.gz file if file compression is allowed
 		*	@return  the message with the list of the files in the input vector 'paths'
 		*/
-		std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string& jobid) ;
+		std::string transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string &destURI,const std::string& jobid, const bool &zip=true) ;
 		/**
 		* Uploads the local files in the InputSandbox to the WMProxy server. If file compression is allowed, all files are collected
 		* in one or more tar file archives which are gzip compressed. The number of archives depends on the size limit of

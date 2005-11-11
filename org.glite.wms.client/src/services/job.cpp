@@ -226,11 +226,9 @@ void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, s
 	}
 	while ( ! urls.empty( ) ){
 		n = urls.size( );
-		cout << "###checkWmpList> n = " << n << "\n";
 		if (n > 1){
 			// randomic extraction of one URL from the list
 			index = wmcUtils->getRandom(n);
-		cout << "###checkWmpList> index = " << index << "\n";
 		} else {
 			index = 0;
 		}
@@ -240,12 +238,10 @@ void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, s
 		// Retrieves the version of the server
 		try {
 			version = getWmpVersion (endpoint);
-			if (autodgOpt && all == false) {
-				delegateUserProxy(endpoint);
-			}
 			if (all) {
-				cout << "Version " << version << "\n\n";
+				logInfo->print(WMS_INFO, "WMProxy Version: " + version, "" );
 			} else {
+				logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
 				// Credential Delegation in case autodelegation has been requested
 				if (autodgOpt) { delegateUserProxy(endpoint); }
 				break;
@@ -289,14 +285,11 @@ void Job::setEndPoint( ) {
         	char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
 		if (ep){
   			endpoint = new string (ep);
-	cout << "###endpoint=" << endpoint << "\n";
 			logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", *endpoint );
 			// Gets the server version
 			version = getWmpVersion (*endpoint);
-	cout << "###1 \n";
 			// Performs CredentialDelegation if auto-delegation has been requested
 			if (autodgOpt){ delegateUserProxy(*endpoint);}
-	cout << "###2 \n";
                 } else {
 			// list of endpoints from the configuration file
 			logInfo->print(WMS_DEBUG, "Getting Endpoint URL from configuration file", "" );
@@ -391,19 +384,16 @@ const std::string Job::delegateProxy( ) {
 void Job::delegateUserProxy(const std::string &endpoint) {
 	string proxy = "";
 	string id = getDelegationId( );
-cout << "###delegateUserProxy>  id = " << id << "\n";
 	try{
 		ConfigContext *cfg = new ConfigContext (getProxyPath(), endpoint, getCertsPath());
 		// Proxy Request
 		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  endpoint);
-		if  (wmpVersion > Options::WMPROXY_OLD_VERSION){
-cout << "###delegateUserProxy>  1\n";
+		if  (getWmpVersion() > Options::WMPROXY_OLD_VERSION){
 			proxy = grstGetProxyReq(*dgOpt, cfg) ;
 			logInfo->print(WMS_DEBUG, "Delegating Credential to the service",  endpoint);
 			grstPutProxy(*dgOpt, proxy, cfg);
 
 		} else {
-cout << "###delegateUserProxy>  2\n";
 			proxy = getProxyReq(*dgOpt, cfg) ;
 			logInfo->print(WMS_DEBUG, "Delegating Credential to the service",  endpoint);
 			putProxy(*dgOpt, proxy, cfg);
