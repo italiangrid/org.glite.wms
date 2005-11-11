@@ -3,6 +3,7 @@
 #include "glite/wms/jdl/JobAd.h"
 #include "glite/wms/jdl/ExpDagAd.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JdlAttributeList.h"
 #include "glite/wms/jdl/RequestAdExceptions.h"
 #include "glite/wms/jdl/collectionad.h"
@@ -19,6 +20,8 @@ namespace client {
 namespace utilities {
 const string DEFAULT_UI_CONFILE		=	"glite_wms.conf";  //Used in utils as well
 const string JDL_WMS_CLIENT		=	"WmsClient";
+const string JDL_WMPROXY_ENDPOINT	=	"WmProxyEndPoints";
+const string JDL_LB_ENDPOINT		=	"LBEndPoints";
 /******************************
 *Default constructor
 ******************************/
@@ -73,7 +76,6 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 			case JDL_FILE:
 				// If voName already read then
 				// user config file may not be there
-				cout << "AdSemantic returning when VO is.." << voName << endl ;
 				if (voName!=""){return;}
 				// otherwise continue and raise Exception...
 			default:
@@ -89,14 +91,18 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	if (ad.hasAttribute(JDL_WMS_CLIENT) && (src!=JDL_FILE)) {
 		Ad app=ad.getAd(JDL_WMS_CLIENT);
 		ad.clear();
-  		ad.merge(app);
+  		ad = app;
 	}
+	// Check VIRTUAL ORGANISATION attribute:
 	if (!ad.hasAttribute(JDL::VIRTUAL_ORGANISATION)){
-		// In some cases VO might not be there
-		throw WmsClientException(__FILE__,__LINE__,"AdUtils::parseVo",DEFAULT_ERR_CODE,
-				"Empty Value","Unable to find Mandatory VirtualOrganisation inside the file:\n"+voPath);
+		if (voName==""){
+			// In these cases Vo name is impossible to track
+			throw WmsClientException(__FILE__,__LINE__,
+				"AdUtils::parseVo",DEFAULT_ERR_CODE,"Empty Value",
+				"Unable to find Mandatory VirtualOrganisation inside the file:\n"+voPath);
+		}else {return;}
 	}
-	// Check VoName
+	// Check VoName definitely present (refer to previous check)
 	if (voName==""){voName=ad.getString(JDL::VIRTUAL_ORGANISATION);}
 	else if ((glite_wms_client_toLower(voName))!=glite_wms_client_toLower(ad.getString(JDL::VIRTUAL_ORGANISATION))){
 		throw WmsClientException(__FILE__,__LINE__,"AdUtils::parseVo",DEFAULT_ERR_CODE,
@@ -114,7 +120,21 @@ bool AdUtils::checkConfigurationAd(glite::wms::jdl::Ad& ad, const string& path){
 	if (ad.hasAttribute(JDL_WMS_CLIENT)) {
 		Ad app=ad.getAd(JDL_WMS_CLIENT);
 		ad.clear();
-  		ad.merge(app);
+		ad=app;
+	}
+	// Check WMP/LB ENDPOINTS attribute:
+	string ListOfStringAttrs []= {JDL_WMPROXY_ENDPOINT, JDL_LB_ENDPOINT};
+	for (unsigned int i = 0 ; i < 2; i++){
+		if (ad.hasAttribute(ListOfStringAttrs[i])){
+			classad::ExprTree *tree = ad.lookUp(ListOfStringAttrs[i]);
+			// This Expression MUST be of List type
+			if (tree->GetKind() != classad::ExprTree::EXPR_LIST_NODE){
+				vector< classad::ExprTree * > vect;
+				vect.push_back(tree->Copy());
+				ad.delAttribute(ListOfStringAttrs[i]);
+				ad.setAttributeExpr (ListOfStringAttrs[i],new classad::ExprList(vect));
+			}
+		}
 	}
 	return false;
 }
@@ -125,21 +145,22 @@ classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
 	const std::string& pathDefault, const std::string& pathGeneral){
 	glite::wms::jdl::Ad adUser, adDefault, adGeneral;
 	// Load ad from file (if necessary)
+	if (pathGeneral!=""){
+		if (!checkConfigurationAd(adGeneral,pathGeneral)){
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file:\n",pathGeneral,true);}
+		}
+	}	
 	if (pathDefault!=""){
 		if(!checkConfigurationAd(adDefault,pathDefault)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Vo specific configuration file",pathDefault,true);}
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Vo specific configuration file:\n",pathDefault,true);}
 		}
 	}
 	if (pathUser!=""){
 		if (!checkConfigurationAd(adUser,pathUser)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded user configuration file",pathUser,true);}
+			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded user configuration file:\n",pathUser,true);}
 		}
 	}
-	if (pathGeneral!=""){
-		if (!checkConfigurationAd(adGeneral,pathGeneral)){
-			if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded generic configuration file",pathGeneral,true);}
-		}
-	}
+
 	// Merge all configuration file found
 	adGeneral.merge(adDefault);
 	adGeneral.merge(adUser);
@@ -164,8 +185,24 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 }
 
 // STATIC METHODS:
-void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
-	if (attrValue!=""){
+void setMissingString(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
+		if (confAd.hasAttribute(attrName)){
+			string attrValue=confAd.getString(attrName);
+			confAd.delAttribute(attrName);
+			if(!jdl->hasAttribute(attrName)){
+				jdl->setAttribute(attrName,attrValue);
+			}else if (force){
+				// Override previous value
+				jdl->delAttribute(attrName);
+				jdl->setAttribute(attrName,attrValue);
+			}
+		}
+
+}
+void setMissingInt(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
+	if (confAd.hasAttribute(attrName)){
+		int attrValue=confAd.getInt(attrName);
+		confAd.delAttribute(attrName);
 		if(!jdl->hasAttribute(attrName)){
 			jdl->setAttribute(attrName,attrValue);
 		}else if (force){
@@ -175,10 +212,18 @@ void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& a
 		}
 	}
 }
-void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue, bool force=false){
-	if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
-		// Set Default Attribute ONLY when TRUE
-		jdl->setAttribute(attrName,attrValue);
+void setMissingBool(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
+	if (confAd.hasAttribute(attrName)){
+		bool attrValue=confAd.getBool(attrName);
+		confAd.delAttribute(attrName);
+		if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
+			// Set Default Attribute ONLY when TRUE
+			jdl->setAttribute(attrName,attrValue);
+		}else if (force){
+			// Override previous value
+			jdl->delAttribute(attrName);
+			jdl->setAttribute(attrName,attrValue);
+		}
 	}
 }
 /******************
@@ -187,16 +232,56 @@ void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue,
 void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	// Strings attributes:
-	// HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
-	setMissing(jdl,JDL::MYPROXY,conf->my_proxy_server());
-	setMissing(jdl,JDL::HLR_LOCATION,conf->hlrlocation());
-	setMissing(jdl,JDL::VIRTUAL_ORGANISATION,conf->virtual_organisation(),true);
-	setMissing(jdl,JDL::JOB_PROVENANCE,conf->job_provenance());
-	// Boolean Attributes:
-	// ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
-	setMissing(jdl,JDL::ALLOW_ZIPPED_ISB,conf->allow_zipped_isb());
-	setMissing(jdl,JDL::PU_FILE_ENABLE,conf->perusal_file_enable());
+	// Default JDL values:
+	try{
+		if (conf->jdl_default_attributes()){
+			Ad confAd(*(conf->jdl_default_attributes()));
+			// Default String Attrs: HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
+			setMissingString(jdl,JDL::MYPROXY,confAd);
+			setMissingString(jdl,JDL::HLR_LOCATION,confAd);
+			setMissingString(jdl,JDL::JOB_PROVENANCE,confAd);
+			setMissingString(jdl,JDL::VIRTUAL_ORGANISATION,confAd,true);
+			// Default Boolean Attributes:  ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
+			setMissingBool(jdl,JDL::ALLOW_ZIPPED_ISB,confAd);
+			setMissingBool(jdl,JDL::PU_FILE_ENABLE,confAd);
+			// Switching Type - dedicated values
+			if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_COLLECTION)){
+				// COLLECTION TYPE
+				setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
+			}else if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_DAG)){
+				// DAG TYPE
+				// Nothing to do so far...
+			}else if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_JOB)
+				||!jdl->hasAttribute(JDL::TYPE)){
+				// JOB TYPE
+				setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
+				setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
+			}else {
+				// UNKNOWN TYPE: ERROR
+				throw WmsClientException(__FILE__,__LINE__,
+					"AdUtils::setDefaultValuesAd",DEFAULT_ERR_CODE,
+					"wrong conf attribute","unknown type: "+jdl->getString(JDL::TYPE));
+			}
+			// Other possible user values
+			std::vector< std::string > attrs= confAd.attributes ();
+			for (unsigned int i = 0 ; i<attrs.size(); i++){
+				string attrName =attrs[i] ;
+				if( 	glite_wms_client_toLower(attrName)!=JDL::RANK &&
+					glite_wms_client_toLower(attrName)!=JDL::REQUIREMENTS){
+					if (!jdl->hasAttribute(attrs[i])){
+						cout << "AdUtils::setDefaultValuesAd setting possible value: " <<attrs[i]<< endl ;
+						jdl->setAttributeExpr (attrs[i],confAd.lookUp(attrs[i]));
+					}
+				}
+			}
+		}
+	}catch(RequestAdException &exc){
+		// Some classAd exception occurred
+		throw WmsClientException(__FILE__,__LINE__,
+			"AdUtils::setDefaultValuesAd",DEFAULT_ERR_CODE,
+			"wrong conf attribute", exc.what());
+
+	}
 }
 /******************
 * JDL is a JobAd
@@ -204,16 +289,16 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	// RANK
-	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
-	// REQUIREMENTS
-	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
-	// (SHALLOW) RETRYCOUNT
-	if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
-		jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
-	}
-	if(   (!jdl->hasAttribute(JDL::SHALLOWRETRYCOUNT)) ){
-		jdl->setAttribute(JDL::SHALLOWRETRYCOUNT,conf->shallow_retry_count());
+	if (conf->jdl_default_attributes()){
+		Ad confAd(*(conf->jdl_default_attributes()));
+		// RANK
+		if(confAd.hasAttribute(JDL::RANK)){
+			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+		}
+		// REQUIREMENTS
+		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
+			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
+		}
 	}
 }
 /******************
@@ -222,10 +307,17 @@ void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
 void AdUtils::setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	// RANK
-	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank()); }
-	// REQUIREMENTS
-	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements()); }
+	if (conf->jdl_default_attributes()){
+		Ad confAd(*(conf->jdl_default_attributes()));
+		// RANK
+		if(confAd.hasAttribute(JDL::RANK)){
+			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+		}
+		// REQUIREMENTS
+		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
+			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
+		}
+	}
 }
 /******************
 * JDL is a CollectionAd
@@ -233,13 +325,16 @@ void AdUtils::setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
 void AdUtils::setDefaultValues(glite::wms::jdl::CollectionAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	// RANK
-	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
-	// REQUIREMENTS
-	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
-	// RETRYCOUNT
-	if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
-		jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
+	if (conf->jdl_default_attributes()){
+		Ad confAd(*(conf->jdl_default_attributes()));
+		// RANK
+		if(confAd.hasAttribute(JDL::RANK)){
+			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+		}
+		// REQUIREMENTS
+		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
+			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
+		}
 	}
 }
 
