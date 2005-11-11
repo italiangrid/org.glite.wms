@@ -179,6 +179,9 @@ void JobListMatch::checkAd ( ){
                         "DAG type is not supported for list match");
 	}
 	// Simple Ad manipulation
+	if (!jobAd->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
+		jobAd->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
+	}
 	AdUtils::setDefaultValuesAd(jobAd,wmcConf);
 	JobAd *pass= new JobAd(*(jobAd->ad()));
 	AdUtils::setDefaultValues(pass,wmcConf);
