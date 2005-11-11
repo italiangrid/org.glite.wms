@@ -55,8 +55,7 @@ const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
 
 // Max size (bytes) allowed for tar files
-//const long MAX_TAR_SIZE = 2147483647;
-const long MAX_TAR_SIZE = 617375;
+const long MAX_TAR_SIZE = 2147483647;
 // Max file size for globus-url-copy
 const long MAX_GUC_SIZE = 2147483647;
 // Max file size for CURL
