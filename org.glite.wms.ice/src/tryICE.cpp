@@ -59,7 +59,7 @@ int main(int argc, char*argv[]) {
     soap_proxy::CreamProxy creamClient( /*automatic_delegation*/ true );
     creamClient.printOnConsole( true );
     creamClient.printDebug( true );
-    cout << "\tAuthenticating with WM's proxy ["
+    cout << "Authenticating with WM's proxy ["
 	 << argv[5] << "]" << endl;
     try {
       creamClient.Authenticate( argv[5] );

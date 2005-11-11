@@ -10,11 +10,9 @@ using namespace glite::ce::cream_client_api::cream_exceptions;
 using namespace glite::ce::cream_client_api::job_statuses;
 using namespace std;
 
-
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
-				     const std::string& certfile,
-				     // const std::string& _cream_service,
+				     const string& certfile,
 				     const int& _d
 				     )
   throw(eventStatusPoller_ex&)
@@ -53,11 +51,14 @@ bool eventStatusPoller::getStatus(void)
   creamClient->clearSoap();
 
   jobs_to_query.clear();
-  jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
+  try {
+    jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
+  } catch(exception& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
+  }
 
-//   for(unsigned l=0; l<jobs_to_query.size(); l++)
-//     cout << "::geStatus - active job="<<jobs_to_query.at(l)<<endl;
-
+  //  cout << "Active jobs to query status of: "<<jobs_to_query.size()<<endl;
 
   map< string, vector<string> > endpoint_hash;
   map< string, vector<string> >::iterator endpointIT;
@@ -107,26 +108,76 @@ bool eventStatusPoller::getStatus(void)
 }
 
 //______________________________________________________________________________
-void eventStatusPoller::checkJobs() {
+void eventStatusPoller::checkJobs() 
+{
+
+  /**
+   * THIS PROCEDURE CAN BE OPTIMIZED: NOW FOR EACH JOB THERE'S A 
+   * JobPurge REQUEST SENT TO CREAM; IN FUTURE MULTIPLE JOBIDS
+   * TO PURGE ON THE SAME CREAM MUST BE PUT IN A VECTOR AND THE A
+   * SINGLE REQUEST WITH THIS VECTOR MUST BE SENT TO THAT CREAM
+   */
+
   glite::ce::cream_client_api::job_statuses::job_status stNum;
+  string cid, addrURL ;
+  vector<string> pieces, jobs_to_purge;
+
+  pieces.reserve(3);
+  jobs_to_purge.reserve(1);
+
   for(unsigned int k=0; k<_jobinfolist.size(); k++) {
     for(unsigned int j=0; j<_jobinfolist[k]->jobInfo.size(); j++) {
       stNum = getStatusNum(_jobinfolist[k]->jobInfo[j]->status);
-      
+      cid = _jobinfolist[k]->jobInfo[j]->CREAMJobId;
       if((stNum == glite::ce::cream_client_api::job_statuses::DONE_FAILED) ||
 	 (stNum == glite::ce::cream_client_api::job_statuses::ABORTED))
 	{
+	  // Removes jobid from cache
+	  try {
+	    jobCache::getInstance()->remove_by_cream_jobid(cid);
+	  } catch(elementNotFound_ex& ex) {
+	    cerr << "Cannot remove ["<<cid
+		 << "] from job cache: " << ex.what() << endl;
+	  } catch(exception& ex) {
+	    cerr << ex.what()<<endl;
+	    exit(1);
+	  }
+	  /**
+	   * NOW MUST RESUBMIT THIS JOB
+	   *
+	   */
 	  // resubmit
 	}
       
       if( api::job_statuses::isFinished( stNum ) )
 	{
-	  // purge
-	  //	vector<string> pieces;
-	  // 	pieces.clear();
-	  // 	string endpoint;
-	  // 	glite::ce::cream_client_api::ceurl_util::parseJobID(jobinfolist->jobInfo[j]->CREAMJobId,pieces);
-	  // 	string endpoint = pieces[1] + ":" + pieces[2];
+	  // Removes jobid from cache
+	  
+	  try {
+	    jobCache::getInstance()->remove_by_cream_jobid(cid);
+	  } catch(elementNotFound_ex& ex) {
+	    cerr << "Cannot remove ["<<cid
+		 << "] from job cache: " << ex.what() << endl;
+	  } catch(exception& ex) {
+	    cerr << ex.what()<<endl;
+	    exit(1);
+	  }
+	  // Purges jobid from CREAM server
+	  pieces.clear();
+	  glite::ce::cream_client_api::util::CEUrl::parseJobID( cid, pieces );
+	  addrURL = pieces[0] + "://" + pieces[1] + ":" + pieces[2] +
+	    "/ce-cream/services/CREAM";
+	  jobs_to_purge.clear();
+	  jobs_to_purge.push_back( cid );
+	  try {
+	    cout << "Calling JobPurge for jobid ["<<cid<<"]"<<endl;
+	    creamClient->Purge(addrURL.c_str(), jobs_to_purge );
+	  } catch(BaseException& s) {
+	    cerr << s.what()<<endl;
+	  } catch(InternalException& severe) {
+	    cerr << severe.what()<<endl;
+	    exit(1);
+	  }
 	}
     }
   }
@@ -145,7 +196,13 @@ void eventStatusPoller::updateJobCache()
       glite::ce::cream_client_api::job_statuses::job_status 
 	stNum = getStatusNum(_jobinfolist[k]->jobInfo.at(j)->status);
       
-      string gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid(_jobinfolist[k]->jobInfo.at(j)->CREAMJobId);
+      string gid;
+      try {
+	gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid(_jobinfolist[k]->jobInfo.at(j)->CREAMJobId);
+      } catch(exception& ex) {
+	cerr << ex.what()<<endl;
+	exit(1);
+      }
       
       cerr << "Updating jobcache with\n"
 	   << "\t\tgrid_jobid  = [" << gid<<"]\n"
@@ -170,18 +227,16 @@ void eventStatusPoller::run()
   endpolling = false;
   while(!endpolling) {
     if(getStatus()) {
-      cout << "eventStatusPoller::getStatus OK"<<endl;// - Updating jobCache..."<<endl;
-      checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
+      cout << "eventStatusPoller::getStatus OK"<<endl;
       try{
-	//cout << "Updating jobCache..."<<endl;
 	updateJobCache();
       }
       catch(...) {
 	cerr << "inside ::run - catched something"<<endl;
       }
     }
-
+    checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
     sleep(delay);
   }
-  cout << "eventStatusPoller::run - ending..." << endl;
+  cout << "eventStatusPoller::run - thread is ending..." << endl;
 }

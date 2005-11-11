@@ -89,6 +89,9 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
    * by its dtor. This ensure file closing under any circumstance 
    * (unexpected exception raising, forgotting to call ::close() etc.)
    */
+
+  //  cout << "Loading SNAPSHOT..."<<endl;
+
   ifstream tmpIs(snapFile.c_str(), ios::in );
   /**
    * Loads jobs from snapshot file
@@ -104,6 +107,10 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
 
     CreamJob cj = this->unparse(Buf); // can raise a ClassadSyntax_ex
     // hash[cj.getGridJobID()] = cj;
+
+//     cout << "Found in SNAPSHOT job: "<<cj.getGridJobID()<<" -> ("
+// 	 << cj.getJobID() << ", " << cj.getStatus() <<")"<<endl;
+
     map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
     if( it != hash.end() )
       hash.erase( it );
@@ -129,6 +136,8 @@ void jobCache::loadJournal(void)
 
   string line;
 
+  //  cout << "Loading JOURNAL..."<<endl;
+
   while(jnlMgr->getNextOperation(line)) {
 
     apiutil::string_manipulation::chomp(line);
@@ -142,11 +151,17 @@ void jobCache::loadJournal(void)
     this->getOperation(line, op, restOfLine);
     
     CreamJob cj = this->unparse(restOfLine); // can raise ClassadSyntax_ex
-    
+        
+
+
     if(op == PUT) {
       map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
       if(it != hash.end() )
 	hash.erase( it );
+
+//       cout << "Inserting from JOURNAL job: "<<cj.getGridJobID()<<" -> ("
+// 	 << cj.getJobID() << ", " << cj.getStatus() <<")"<<endl;
+
       hash.insert( make_pair(cj.getGridJobID(), cj) );
       cream_grid_hash[cj.getJobID()] = cj.getGridJobID();
       operation_counter++;
@@ -224,12 +239,13 @@ void jobCache::remove_by_grid_jobid(const string& gid)
 
   string cid = it->second.getJobID();
   this->toString(it->second, to_string);
+  to_string = string(OPERATION_SEPARATOR) + to_string;
   jnlMgr->log(ERASE, to_string); // can raise jnlFile_ex and jnlFileReadOnly_ex
   hash.erase(gid);
   cream_grid_hash.erase(cid);
   
   operation_counter++;
-  cout << "operation_counter="<<operation_counter<<endl;
+  //cout << "operation_counter="<<operation_counter<<endl;
   try {
     if(operation_counter>=MAX_OPERATION_COUNTER) {
       this->dump(); // can raise a jnlFile_ex
@@ -261,7 +277,7 @@ string jobCache::get_grid_jobid_by_cream_jobid(const std::string& id)
 {
   Mutex M(&mutexHash);
   if(cream_grid_hash.find( id ) == cream_grid_hash.end() )
-    throw elementNotFound_ex(string("Not found key ")+id+" in job cache");
+    throw elementNotFound_ex(string("Not found the key ")+id+" in job cache");
   return cream_grid_hash[id];
 }
 
@@ -271,7 +287,7 @@ string jobCache::get_cream_jobid_by_grid_jobid(const std::string& id)
 {
   Mutex M(&mutexHash);
   if( hash.find( id ) == hash.end( ) )
-    throw elementNotFound_ex(string("Not found key ")+id+" in job cache");
+    throw elementNotFound_ex(string("Not found the key ")+id+" in job cache");
   
   return hash.find( id )->second.getJobID();
 }
@@ -288,7 +304,7 @@ CreamJob jobCache::getJobByGridJobID(const std::string& gid)
   throw (elementNotFound_ex&)
 {
   if( hash.find( gid ) == hash.end( ) )
-    throw elementNotFound_ex(string("Not found key ")+gid+" in job cache");
+    throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
   return hash.find( gid )->second;
 }
 
@@ -315,7 +331,7 @@ jobCache::getStatus_by_grid_jobid(const string& gid)
 {
   Mutex M(&mutexHash);
   if( hash.find( gid ) == hash.end() )
-    throw elementNotFound_ex(string("Not found key ")+gid+" in job cache");
+    throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
   return hash.find( gid )->second.getStatus();
 }
 
@@ -329,15 +345,17 @@ jobCache::getStatus_by_cream_jobid(const string& cid)
 }
 
 //______________________________________________________________________________
-void jobCache::print(FILE* out) {
+void jobCache::print(ostream& os) {
   Mutex M(&mutexHash);
   map<string, CreamJob>::iterator it;
   for(it=hash.begin(); it!=hash.end(); it++) {
-    fprintf(
-	    out, "%s -> ( %s, %d )\n", (*it).first.c_str(), 
-	    (*it).second.getJobID().c_str(),
-	    (*it).second.getStatus()
-	    );
+    os << (*it).first.c_str() << " -> ("
+       << (*it).second.getJobID() <<", "<<(*it).second.getStatus()<<")"<<endl;
+//     fprintf(
+// 	    out, "%s -> ( %s, %d )\n", (*it).first.c_str(), 
+// 	    (*it).second.getJobID().c_str(),
+// 	    (*it).second.getStatus()
+// 	    );
   }
 }
 
@@ -431,7 +449,20 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
 
   //  cout << "jobCache::unparse - gid="<<gid<<endl;
 
-  api::job_statuses::job_status stNum = api::job_statuses::getStatusNum(st);
+  // cout << "jobCache::unparse - st="<<st<<endl;
+
+  //api::job_statuses::job_status stNum = api::job_statuses::getStatusNum(st);
+  api::job_statuses::job_status stNum;
+  try {
+    stNum = 
+      (api::job_statuses::job_status)apiutil::string_manipulation::string2int(st);
+  } catch(apiutil::NumericException& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
+  }
+
+  //cout << "jobCache::unparse - stNum="<<stNum<<endl;
+
   try {
     return CreamJob(jdl, cid, gid, stNum);
   } catch(ClassadSyntax_ex& ex) {
@@ -462,8 +493,8 @@ void jobCache::getActiveCreamJobIDs(vector<string>& target)
 {
   map<string, CreamJob>::const_iterator it;
   for( it = hash.begin(); it != hash.end(); it++) {
-    if( api::job_statuses::isFinished((*it).second.getStatus()) ) 
-      continue;
+//     if( api::job_statuses::isFinished((*it).second.getStatus()) ) 
+//       continue;
     target.push_back((*it).second.getJobID());
   }
 }
@@ -498,7 +529,7 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
   map<string, CreamJob>::iterator it = hash.find( gid );
 
   if( it == hash.end() )
-    throw elementNotFound_ex(string("Not found key ")+gid+" in job cache");
+    throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
 
   string tmp;
   it->second.setStatus( status );
@@ -517,7 +548,7 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
    */
   operation_counter++;
 
-  cout << "operation_counter="<<operation_counter<<endl;
+  //cout << "operation_counter="<<operation_counter<<endl;
 
   if(operation_counter >= MAX_OPERATION_COUNTER) {
     //cout << "Dumping jobCache snapshot and truncating journal file"<<endl;

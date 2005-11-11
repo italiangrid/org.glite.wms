@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <ostream>
 #include "jnlFile_ex.h"
 #include "jobCacheOperation.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -95,7 +96,7 @@ namespace glite {
 	  getStatus_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
 	  
 	  void dump(void) throw(jnlFile_ex&);
-	  void print(FILE*);
+	  void print(std::ostream&);
 	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
 	};
       }
