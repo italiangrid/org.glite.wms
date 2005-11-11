@@ -12,8 +12,8 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     iceAbsCommand( )
 {
     // Sample classad
-    // [ Arguments = [ Force = false; LogFile = "/var/glitewms/logmonitor/CondorG.log/CondorG.1130511338.log"; ProxyFile = "/var/glitewms/SandboxDir/GZ/https_3a_2f_2ftigerman.cnaf.infn.it_3a9000_2fGZnxUvN6Ktfda5TRS68YZg/user.proxy"; SequenceCode = "UI=000000:NS=0000000008:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000"; JobId = "https://tigerman.cnaf.infn.it:9000/GZnxUvN6Ktfda5TRS68YZg" ]; Command = "Cancel"; Source = 2; Protocol = "1.0.0" ]
-    
+    // [ version = "1.0.0"; command = "jobcancel"; arguments = [ id = "https://gundam.cnaf.infn.it:9000/mm6jfVKnjutb9JNFaF1HuQ"; lb_sequence_code = "UI=000004:NS=0000000006:WM=000000:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000" ] ]
+
     classad::ClassAdParser parser;
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
@@ -31,34 +31,27 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
         throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandCancel" );
     }
 
-    string _protocolStr;
+    string _versionStr;
     // Parse the "version" attribute
-    if ( !_rootAD->EvaluateAttrString( "Protocol", _protocolStr ) ) {
-        throw util::JobRequest_ex("attribute 'Protocol' not found or is not a string");
+    if ( !_rootAD->EvaluateAttrString( "version", _versionStr ) ) {
+        throw util::JobRequest_ex("attribute 'version' not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
-    if ( _protocolStr.compare("1.0.0") ) {
-        throw util::JobRequest_ex("Wrong 'Protocol' for jobCancel: expected 1.0.0, got " + _protocolStr );
+    if ( _versionStr.compare("1.0.0") ) {
+        throw util::JobRequest_ex("Wrong 'Protocol' for jobCancel: expected 1.0.0, got " + _versionStr );
     }
 
     classad::ClassAd *_argumentsAD = 0;
     // Parse the "arguments" attribute
-    if ( !_rootAD->EvaluateAttrClassAd( "Arguments", _argumentsAD ) ) {
-        throw util::JobRequest_ex("attribute 'Arguments' not found or is not a classad");
+    if ( !_rootAD->EvaluateAttrClassAd( "arguments", _argumentsAD ) ) {
+        throw util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
     }
 
-    // Look for "JobId" attribute inside "Arguments"
-    if ( !_argumentsAD->EvaluateAttrString( "JobId", _gridJobId ) ) {
-        throw util::JobRequest_ex( "attribute 'JobId' inside 'Arguments' not found, or is not a string" );
+    // Look for "id" attribute inside "Arguments"
+    if ( !_argumentsAD->EvaluateAttrString( "id", _gridJobId ) ) {
+        throw util::JobRequest_ex( "attribute 'id' inside 'arguments' not found, or is not a string" );
     }
 
-    // Look for "ProxyFile" attribute inside "Arguments"
-    // FIXME: Is this necessary?
-    if ( !_argumentsAD->EvaluateAttrString("Proxyfile", _certfile) ) {
-        throw util::JobRequest_ex("attribute 'Proxyfile' not found in 'Arguments', or is not a string");
-    }
-
-    glite::ce::cream_client_api::util::string_manipulation::trim(_certfile, "\"");
 }
 
 void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
@@ -99,6 +92,8 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
         // MUST LOG TO LB
         cerr << "Internal ex: "<<intern.what()<<endl;
         exit(1);
+    } catch( util::elementNotFound_ex& ex ) {
+        cerr << "Element not found ex: " << ex.what() << endl;
     }
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
