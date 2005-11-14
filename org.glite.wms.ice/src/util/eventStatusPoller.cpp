@@ -8,6 +8,7 @@ using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api::soap_proxy;
 using namespace glite::ce::cream_client_api::cream_exceptions;
 using namespace glite::ce::cream_client_api::job_statuses;
+using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
 //______________________________________________________________________________
@@ -61,19 +62,29 @@ bool eventStatusPoller::getStatus(void)
   //  cout << "Active jobs to query status of: "<<jobs_to_query.size()<<endl;
 
   map< string, vector<string> > endpoint_hash;
-  map< string, vector<string> >::iterator endpointIT;
-  vector<string> pieces;
-  string endpoint;
-  for(unsigned int j=0; j<jobs_to_query.size(); j++) {
-    string thisJob = jobs_to_query[j];
-    pieces.clear();
-    glite::ce::cream_client_api::util::CEUrl::parseJobID(jobs_to_query[j], pieces);
-    endpoint = pieces[0]+"://"+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
-    endpoint_hash[endpoint].push_back(jobs_to_query[j]);
-    
+  try {
+    CEUrl::organise_by_endpoint(jobs_to_query, endpoint_hash, 
+			     "/ce-cream/services/CREAM");
+  } catch(CEUrl::ceid_syntax_ex& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
   }
 
-  for(endpointIT=endpoint_hash.begin(); endpointIT!=endpoint_hash.end();endpointIT++)
+//   map< string, vector<string> >::iterator endpointIT;
+//   vector<string> pieces;
+//   string endpoint;
+//   for(unsigned int j=0; j<jobs_to_query.size(); j++) {
+//     string thisJob = jobs_to_query[j];
+//     pieces.clear();
+//     glite::ce::cream_client_api::util::CEUrl::parseJobID(jobs_to_query[j], pieces);
+//     endpoint = pieces[0]+"://"+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
+//     endpoint_hash[endpoint].push_back(jobs_to_query[j]);
+    
+//   }
+
+  for(map< string, vector<string> >::iterator endpointIT=endpoint_hash.begin(); 
+      endpointIT!=endpoint_hash.end();
+      ++endpointIT)
     {
       try {
 	cout << "Sending JobInfo request to ["<<endpointIT->first<<"]"<<endl;
@@ -84,6 +95,14 @@ bool eventStatusPoller::getStatus(void)
 						  -1  // TO
 						  )
 				);
+// 	cout << "_jobinfolist after getStatus has size "
+// 	     << _jobinfolist.size() << endl;
+
+// 	for(unsigned u=0; u<_jobinfolist.size(); ++u) {
+// 	  for(unsigned y=0; y<_jobinfolist[u]->jobInfo.size(); ++y)
+// 	    cout << _jobinfolist[u]->jobInfo[y]->CREAMJobId<<endl;
+// 	}
+	  
       } catch(soap_ex& ex) { 
 	cerr << "CreamProxy::Info raised a soap_ex exception: " 
 	     << ex.what() << endl;
@@ -119,11 +138,11 @@ void eventStatusPoller::checkJobs()
    */
 
   glite::ce::cream_client_api::job_statuses::job_status stNum;
-  string cid, addrURL ;
+  string cid, addrURL;
   vector<string> pieces, jobs_to_purge;
 
   pieces.reserve(3);
-  jobs_to_purge.reserve(1);
+  jobs_to_purge.reserve(50);
 
   for(unsigned int k=0; k<_jobinfolist.size(); k++) {
     for(unsigned int j=0; j<_jobinfolist[k]->jobInfo.size(); j++) {
@@ -133,6 +152,10 @@ void eventStatusPoller::checkJobs()
 	 (stNum == glite::ce::cream_client_api::job_statuses::ABORTED))
 	{
 	  // Removes jobid from cache
+	  cout << "JobID ["
+	       <<cid
+	       <<"] is failed or aborted. Removing from cache and resubmitting..."
+	       <<endl;
 	  try {
 	    jobCache::getInstance()->remove_by_cream_jobid(cid);
 	  } catch(elementNotFound_ex& ex) {
@@ -149,29 +172,38 @@ void eventStatusPoller::checkJobs()
 	  // resubmit
 	}
       
-      if( api::job_statuses::isFinished( stNum ) )
+      if( api::job_statuses::isFinished( stNum ) ) {
+
+	// schedule this job for future purge
+	jobs_to_purge.push_back(cid);
+
+	// Removes jobid from cache
+	cout << "JobID ["<<cid<<"] is finished. Removing..."<<endl;
+	try {
+	  jobCache::getInstance()->remove_by_cream_jobid(cid);
+	} catch(elementNotFound_ex& ex) {
+	  cerr << "Cannot remove ["<<cid
+	       << "] from job cache: " << ex.what() << endl;
+	} catch(exception& ex) {
+	  cerr << ex.what()<<endl;
+	  exit(1);
+	}
+      }
+
+      if(!jobs_to_purge.size()) return;
+
+      map<string, vector<string> > endpoint_jobs;
+      CEUrl::organise_by_endpoint(jobs_to_purge, 
+				  endpoint_jobs, 
+				  "/ce-cream/services/CREAM");
+      
+      for(map<string, vector<string> >::iterator it=endpoint_jobs.begin();
+	  it!=endpoint_jobs.end();
+	  ++it) 
 	{
-	  // Removes jobid from cache
-	  
 	  try {
-	    jobCache::getInstance()->remove_by_cream_jobid(cid);
-	  } catch(elementNotFound_ex& ex) {
-	    cerr << "Cannot remove ["<<cid
-		 << "] from job cache: " << ex.what() << endl;
-	  } catch(exception& ex) {
-	    cerr << ex.what()<<endl;
-	    exit(1);
-	  }
-	  // Purges jobid from CREAM server
-	  pieces.clear();
-	  glite::ce::cream_client_api::util::CEUrl::parseJobID( cid, pieces );
-	  addrURL = pieces[0] + "://" + pieces[1] + ":" + pieces[2] +
-	    "/ce-cream/services/CREAM";
-	  jobs_to_purge.clear();
-	  jobs_to_purge.push_back( cid );
-	  try {
-	    cout << "Calling JobPurge for jobid ["<<cid<<"]"<<endl;
-	    creamClient->Purge(addrURL.c_str(), jobs_to_purge );
+	    cout << "Calling JobPurge for host ["<<it->first<<"]"<<endl;
+	    creamClient->Purge(it->first.c_str(), it->second );
 	  } catch(BaseException& s) {
 	    cerr << s.what()<<endl;
 	  } catch(InternalException& severe) {
@@ -207,7 +239,8 @@ void eventStatusPoller::updateJobCache()
       cerr << "Updating jobcache with\n"
 	   << "\t\tgrid_jobid  = [" << gid<<"]\n"
 	   << "\t\tcream_jobid = [" << _jobinfolist[k]->jobInfo[j]->CREAMJobId<<"]\n"
-	   << "\t\tstatus      = [" << _jobinfolist[k]->jobInfo[j]->status<<"]"<<endl;
+	   << "\t\tstatus      = [" << _jobinfolist[k]->jobInfo[j]->status<<"]"
+	   <<endl;
       
       try {
 	jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);

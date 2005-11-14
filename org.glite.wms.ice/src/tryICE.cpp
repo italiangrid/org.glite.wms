@@ -80,7 +80,8 @@ int main(int argc, char*argv[]) {
         iceManager->getNextRequests(requests);
     
         if(requests.size( ))
-            cout << "************* Found " << requests.size( ) << " new request(s)"<<endl;
+            cout << "************* Found " 
+		 << requests.size( ) << " new request(s)" << endl;
     
         //sleep(1000);
 
@@ -135,7 +136,8 @@ int main(int argc, char*argv[]) {
 						   job_statuses::PENDING);
 	} catch(glite::wms::ice::util::ClassadSyntax_ex& ex) {
 	  cerr << ex.what()<<endl;
-	  exit(1);
+	  //exit(1);
+	  continue;
 	}
       
 	
@@ -173,7 +175,7 @@ int main(int argc, char*argv[]) {
 	    // Removing current request from WM's output FL
 	    iceManager->removeRequest(j);
 	    continue; // process next request
-	    exit(1);
+	    //exit(1);
 	  } catch(soap_proxy::auth_ex& ex) {
 	    cerr << "\tauthN ex: " << ex.what() << endl;
 	    // The CreamProxy::Authenticate(...) failed
