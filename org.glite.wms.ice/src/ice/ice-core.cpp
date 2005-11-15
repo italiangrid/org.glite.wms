@@ -171,6 +171,14 @@ void ice::ungetRequest(const unsigned int& reqNum)
 
 //______________________________________________________________________________
 void ice::doOnJobFailure(const string& gid) {
-  // find request number related to gid
-  // call ungetRequest for number found at the previous step
+  string resub_request = "[ version = \"1.0.0\"; command = \"jobresubmit\"; arguments = [ id = \"" + gid + "\" ] ]";
+  FileListMutex mx(flns);
+  FileListLock  lock(mx);
+  try {
+    cout << "Putting >"<<resub_request<<"< to NS filelist"<<endl;
+    flns.push_back(resub_request);
+  } catch(std::exception& ex) {
+    cerr << ex.what() << endl;
+    exit(1);
+  }
 }

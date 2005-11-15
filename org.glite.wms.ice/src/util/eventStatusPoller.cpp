@@ -12,10 +12,7 @@
 #include <vector>
 
 using namespace glite::wms::ice::util;
-//using namespace glite::wms::ice;
-using namespace glite::ce::cream_client_api;//::soap_proxy;
-
-//using namespace glite::ce::cream_client_api::cream_exceptions;
+using namespace glite::ce::cream_client_api;
 using namespace glite::ce::cream_client_api::job_statuses;
 using namespace glite::ce::cream_client_api::util;
 using namespace std;
@@ -123,11 +120,26 @@ void eventStatusPoller::checkJobs()
       if((stNum == glite::ce::cream_client_api::job_statuses::DONE_FAILED) ||
 	 (stNum == glite::ce::cream_client_api::job_statuses::ABORTED))
 	{
-	  // Removes jobid from cache
 	  cout << "JobID ["
 	       <<cid
 	       <<"] is failed or aborted. Removing from cache and resubmitting..."
 	       <<endl;
+	  /**
+	   * NOW MUST RESUBMIT THIS JOB
+	   *
+	   */
+	  if(iceManager)
+	    {
+	      iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
+	      try {
+		jobCache::getInstance()->remove_by_cream_jobid(cid);
+	      } catch(exception& ex) {
+		cerr << ex.what() << endl;
+		exit(1);
+	      }
+	    }
+
+	  // Removes jobid from cache
 	  try {
 	    jobCache::getInstance()->remove_by_cream_jobid(cid);
 	  } catch(elementNotFound_ex& ex) {
@@ -137,14 +149,9 @@ void eventStatusPoller::checkJobs()
 	    cerr << ex.what()<<endl;
 	    exit(1);
 	  }
-	  /**
-	   * NOW MUST RESUBMIT THIS JOB
-	   *
-	   */
-	  
-	  // resubmit
-	  if(iceManager)
-	    iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
+
+	  continue;
+
 	}
       
       if( api::job_statuses::isFinished( stNum ) ) {
@@ -237,7 +244,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
   if(!jobs_to_purge.size()) return;
   
   map<string, vector<string> > endpoint_jobs;
-  endpoint_jobs.reserve(jobs_to_purge.size());
+  //  endpoint_jobs.reserve(jobs_to_purge.size());
   
   CEUrl::organise_by_endpoint(jobs_to_purge, 
 			      endpoint_jobs, 

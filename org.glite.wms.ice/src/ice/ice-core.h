@@ -72,7 +72,7 @@ namespace glite {
 	void stopListener();
 	void stopPoller();
 
-	virtual void doOnJobFailure(const std::string& gid);
+	virtual void doOnJobFailure(const std::string&);
 
       }; // class ice
 
