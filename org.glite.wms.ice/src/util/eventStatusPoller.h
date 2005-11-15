@@ -25,6 +25,7 @@ namespace glite {
 	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*> _jobinfolist;
 	  std::vector<std::string> url_pieces;
 	  absice* iceManager;
+	  void purgeJobs(const std::vector<std::string>&);
 
 	public:
 	  eventStatusPoller(const std::string& certfile,

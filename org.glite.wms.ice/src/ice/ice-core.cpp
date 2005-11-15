@@ -57,12 +57,6 @@ ice::ice(const string& NS_FL,
 //______________________________________________________________________________
 ice::~ice() 
 { 
-  if(listenerThread) {
-    listenerThread->join();
-    delete(listenerThread);
-  }
-  if(listener) delete(listener);
-  //if(job_cache) delete(job_cache);
 }
 
 //______________________________________________________________________________
@@ -118,18 +112,6 @@ void ice::startPoller(const string& hostCert, const int& poller_delay)
   cout << "poller started succesfully!"<<endl;
   status_poller_started = true;
 }
-
-//______________________________________________________________________________
-// void ice::startJobStatusListener() throw(util::thread_start_ex&)
-// {
-//   listenerThread->start();
-// }
-
-// //______________________________________________________________________________
-// void ice::startJobStatusPoller() throw(util::thread_start_ex&)
-// {
-//   pollerThread->start();
-// }
 
 //______________________________________________________________________________
 void ice::stopListener() {

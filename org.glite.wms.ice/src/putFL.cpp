@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <exception>
 #include <fstream>
+#include <sys/time.h>
 
 using namespace glite::wms::common::utilities;
 using namespace std;
@@ -97,8 +98,15 @@ int main(int argc, char* argv[]) {
     cerr << "Error parsing classad"<<endl;
     exit(1);
   }
+  struct timeval T;
+  gettimeofday(&T, 0);
+
+  //long long t = T.tv_sec*1000000 + T.tv_usec
+
   string id = string("JobAlvise-") 
-    + glite::ce::cream_client_api::util::string_manipulation::make_string(time(NULL));
+    + glite::ce::cream_client_api::util::string_manipulation::make_string(T.tv_sec)
+    + "."
+    + glite::ce::cream_client_api::util::string_manipulation::make_string(T.tv_usec);
   ad->InsertAttr("id", id );
 
   classad::ClassAdUnParser unp;

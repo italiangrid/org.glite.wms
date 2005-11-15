@@ -114,7 +114,7 @@ void eventStatusPoller::checkJobs()
   vector<string> pieces, jobs_to_purge;
 
   pieces.reserve(3);
-  jobs_to_purge.reserve(50);
+  jobs_to_purge.reserve(100);
 
   for(unsigned int k=0; k<_jobinfolist.size(); k++) {
     for(unsigned int j=0; j<_jobinfolist[k]->jobInfo.size(); j++) {
@@ -153,7 +153,7 @@ void eventStatusPoller::checkJobs()
 	jobs_to_purge.push_back(cid);
 
 	// Removes jobid from cache
-	cout << "JobID ["<<cid<<"] is finished. Removing..."<<endl;
+	cout << "JobID ["<<cid<<"] is finished. Removing from memory cache..."<<endl;
 	try {
 	  jobCache::getInstance()->remove_by_cream_jobid(cid);
 	} catch(elementNotFound_ex& ex) {
@@ -165,27 +165,9 @@ void eventStatusPoller::checkJobs()
 	}
       }
 
-      if(!jobs_to_purge.size()) return;
-
-      map<string, vector<string> > endpoint_jobs;
-      CEUrl::organise_by_endpoint(jobs_to_purge, 
-				  endpoint_jobs, 
-				  "/ce-cream/services/CREAM");
-      
-      for(map<string, vector<string> >::iterator it=endpoint_jobs.begin();
-	  it!=endpoint_jobs.end();
-	  ++it) 
-	{
-	  try {
-	    cout << "Calling JobPurge for host ["<<it->first<<"]"<<endl;
-	    soap_proxy::CreamProxyFactory::getProxy()->Purge(it->first.c_str(), it->second );
-	  } catch(cream_exceptions::BaseException& s) {
-	    cerr << s.what()<<endl;
-	  } catch(cream_exceptions::InternalException& severe) {
-	    cerr << severe.what()<<endl;
-	    exit(1);
-	  }
-	}
+      cout << jobs_to_purge.size() << " jobs to purge"<<endl;
+      this->purgeJobs(jobs_to_purge);
+      jobs_to_purge.clear();
     }
   }
 }
@@ -247,4 +229,35 @@ void eventStatusPoller::run()
     sleep(delay);
   }
   cout << "eventStatusPoller::run - thread is ending..." << endl;
+}
+
+//______________________________________________________________________________
+void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
+{
+  if(!jobs_to_purge.size()) return;
+  
+  map<string, vector<string> > endpoint_jobs;
+  endpoint_jobs.reserve(jobs_to_purge.size());
+  
+  CEUrl::organise_by_endpoint(jobs_to_purge, 
+			      endpoint_jobs, 
+			      "/ce-cream/services/CREAM");
+  
+  for(map<string, vector<string> >::iterator it=endpoint_jobs.begin();
+      it!=endpoint_jobs.end();
+      ++it) 
+    {
+      try {
+	cout << "Calling JobPurge for host ["<<it->first<<"]"<<endl;
+	for(unsigned k=0; k<it->second.size(); ++k)
+	  cout << " -> Will purge [" << it->second[k] 
+	       << "]" << endl;
+	soap_proxy::CreamProxyFactory::getProxy()->Purge(it->first.c_str(), it->second );
+      } catch(cream_exceptions::BaseException& s) {
+	cerr << s.what()<<endl;
+      } catch(cream_exceptions::InternalException& severe) {
+	cerr << severe.what()<<endl;
+	exit(1);
+      }
+    }
 }
