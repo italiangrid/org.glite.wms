@@ -129,15 +129,7 @@ void eventStatusPoller::checkJobs()
 	   *
 	   */
 	  if(iceManager)
-	    {
 	      iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
-	      try {
-		jobCache::getInstance()->remove_by_cream_jobid(cid);
-	      } catch(exception& ex) {
-		cerr << ex.what() << endl;
-		exit(1);
-	      }
-	    }
 
 	  // Removes jobid from cache
 	  try {

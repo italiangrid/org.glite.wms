@@ -277,8 +277,16 @@ string jobCache::get_grid_jobid_by_cream_jobid(const std::string& id)
   throw (elementNotFound_ex&)
 {
   Mutex M(&mutexHash);
-  if(cream_grid_hash.find( id ) == cream_grid_hash.end() )
+  if(cream_grid_hash.find( id ) == cream_grid_hash.end() ) {
+
+    cerr << "Not Found key "<<id<<" in job cache. Keys are:"<<endl;
+    for(map<string, string>::iterator it = cream_grid_hash.begin();
+	it!=cream_grid_hash.end();
+	++it)
+      cout << it->first << " -> " << it->second<<endl;
+
     throw elementNotFound_ex(string("Not found the key ")+id+" in job cache");
+  }
   return cream_grid_hash[id];
 }
 
