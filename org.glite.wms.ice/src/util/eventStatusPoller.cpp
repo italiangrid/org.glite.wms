@@ -2,6 +2,7 @@
 #include "eventStatusPoller.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include <vector>
 
 using namespace glite::wms::ice::util;
@@ -18,17 +19,17 @@ eventStatusPoller::eventStatusPoller(
 				     )
   throw(eventStatusPoller_ex&)
   : endpolling(false), 
-    delay(_d),
-    creamClient( NULL )
+    delay(_d)
 {
-  try {
-    creamClient = new CreamProxy(false);
-    string VO = creamClient->Authenticate(certfile);
-  } catch(soap_ex& ex) {
-    throw eventStatusPoller_ex(ex.what());
-  } catch(auth_ex& auth) {
-    throw eventStatusPoller_ex(auth.what());
-  }
+//   try {
+//     creamClient = new CreamProxy(false);
+//     CreamProxyFactory::getInstance()
+//     string VO = creamClient->Authenticate(certfile);
+//   } catch(soap_ex& ex) {
+//     throw eventStatusPoller_ex(ex.what());
+//   } catch(auth_ex& auth) {
+//     throw eventStatusPoller_ex(auth.what());
+//   }
 
   jobs_to_query.reserve(1000);
   url_pieces.reserve(4);
@@ -49,7 +50,7 @@ bool eventStatusPoller::getStatus(void)
   }
   _jobinfolist.clear();
   
-  creamClient->clearSoap();
+  CreamProxyFactory::getProxy()->clearSoap();
 
   jobs_to_query.clear();
   try {
@@ -88,20 +89,7 @@ bool eventStatusPoller::getStatus(void)
     {
       try {
 	cout << "Sending JobInfo request to ["<<endpointIT->first<<"]"<<endl;
-	_jobinfolist.push_back( creamClient->Info(endpointIT->first.c_str(),
-						  endpointIT->second, 
-						  empty, 
-						  -1, // SINCE
-						  -1  // TO
-						  )
-				);
-// 	cout << "_jobinfolist after getStatus has size "
-// 	     << _jobinfolist.size() << endl;
-
-// 	for(unsigned u=0; u<_jobinfolist.size(); ++u) {
-// 	  for(unsigned y=0; y<_jobinfolist[u]->jobInfo.size(); ++y)
-// 	    cout << _jobinfolist[u]->jobInfo[y]->CREAMJobId<<endl;
-// 	}
+	_jobinfolist.push_back( CreamProxyFactory::getProxy()->Info(endpointIT->first.c_str(), endpointIT->second, empty, -1, -1 ));
 	  
       } catch(soap_ex& ex) { 
 	cerr << "CreamProxy::Info raised a soap_ex exception: " 
@@ -203,7 +191,7 @@ void eventStatusPoller::checkJobs()
 	{
 	  try {
 	    cout << "Calling JobPurge for host ["<<it->first<<"]"<<endl;
-	    creamClient->Purge(it->first.c_str(), it->second );
+	    CreamProxyFactory::getProxy()->Purge(it->first.c_str(), it->second );
 	  } catch(BaseException& s) {
 	    cerr << s.what()<<endl;
 	  } catch(InternalException& severe) {

@@ -16,19 +16,24 @@ using namespace std;
 //______________________________________________________________________________
 ice::ice(const string& NS_FL, 
 	 const string& WM_FL,
-	 const string& jobcache_persist_file,
-	 const int& listenPort,
-	 const bool& start_listener,
-	 const bool& start_poller,
-	 const int&  poller_delay,
-	 //	 const std::string& CreamUrl,
-	 const string& hostCert) throw(iceInit_ex&)
+	 const string& jobcache_persist_file
+	 //	 const int& _listenPort,
+	 //	 const bool& _start_listener,
+	 //	 const bool& _start_poller,
+	 //	 const int&  _poller_delay,
+	 //	 const string& _hostCert
+	 ) throw(iceInit_ex&)
   : status_listener_started(false), 
+    status_poller_started(false),
     ns_filelist(NS_FL), 
     wm_filelist(WM_FL),
     fle(WM_FL.c_str())
+    //     start_listener(_start_listener),
+    //     start_poller(_start_poller),
+    //    hostCert(_hostCert),
+    //    listenPort(_listenPort),
+    //    poller_delay(_poller_delay)
 {
-
   cout << "Initializing jobCache with journal file ["
        << jobcache_persist_file << "] and snapshot file ["
        << jobcache_persist_file+".snapshot" << "]..."<<endl;
@@ -36,51 +41,6 @@ ice::ice(const string& NS_FL,
   glite::wms::ice::util::jobCache::setJournalFile(jobcache_persist_file);
   glite::wms::ice::util::jobCache::setSnapshotFile(jobcache_persist_file+".snapshot");
   
-  if(start_listener) {
-    cout << "Creating a CEMon listener object..."<<endl;
-    listener = new util::eventStatusListener(listenPort);
-    while(!listener->bind()) {
-      cout << "error message=" << listener->getErrorMessage() << endl;
-      cout << "error code   =" << listener->getErrorCode() << endl;
-      cout << "Retrying in 5 seconds..." <<endl;
-      sleep(5);
-    }
-
-    cout << "Creating thread object for CEMon listener..."<<endl;
-    
-    listenerThread = new util::thread(*listener);
-    
-    cout << "Starting CEMon listener thread..."<<endl;
-    
-    try {this->startJobStatusListener();}
-    catch(util::thread_start_ex& ex) {
-      throw iceInit_ex(ex.what()); 
-    }  
-    cout << "listener started succesfully!"<<endl;
-  }    
-
-  if(start_poller) {
-    cout << "Creating a Cream status poller object..."<<endl;
-    try {
-      poller = new util::eventStatusPoller(hostCert, poller_delay);
-    } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
-      throw iceInit_ex(ex.what());
-    }
-
-    cout << "Creating thread object for Cream status poller..."<<endl;
-    
-    pollerThread = new util::thread(*poller);
-    
-    cout << "Starting Cream status poller thread..."<<endl;
-    
-    try {
-      this->startJobStatusPoller();
-    } catch(util::thread_start_ex& ex) {
-      throw iceInit_ex(ex.what()); 
-    }  
-    cout << "poller started succesfully!"<<endl;
-  }
-  //sleep(1000);
   cout << "Initializing File Extractor object..."<<endl;
 
   try{
@@ -106,24 +66,78 @@ ice::~ice()
 }
 
 //______________________________________________________________________________
-void ice::startJobStatusListener() throw(util::thread_start_ex&)
+void ice::startListener(const int& listenPort)
 {
-  listenerThread->start();
+  if(status_listener_started) return;
+  cout << "Creating a CEMon listener object..."<<endl;
+  listener = new util::eventStatusListener(listenPort);
+  while(!listener->bind()) {
+    cout << "error message=" << listener->getErrorMessage() << endl;
+    cout << "error code   =" << listener->getErrorCode() << endl;
+    cout << "Retrying in 5 seconds..." <<endl;
+    sleep(5);
+  }
+  
+  cout << "Creating thread object for CEMon listener..."<<endl;
+  
+  listenerThread = new util::thread(*listener);
+  
+  cout << "Starting CEMon listener thread..."<<endl;
+  
+  try {
+    listenerThread->start();
+  } catch(util::thread_start_ex& ex) {
+    throw iceInit_ex(ex.what()); 
+  }  
+  cout << "listener started succesfully!"<<endl;
+  status_listener_started = true;
+}    
+
+//______________________________________________________________________________
+void ice::startPoller(const string& hostCert, const int& poller_delay)
+{
+  if(status_poller_started) return;
+  cout << "Creating a Cream status poller object..."<<endl;
+  try {
+    poller = new util::eventStatusPoller(hostCert, poller_delay);
+  } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
+    throw iceInit_ex(ex.what());
+  }
+  
+  cout << "Creating thread object for Cream status poller..."<<endl;
+  
+  pollerThread = new util::thread(*poller);
+  
+  cout << "Starting Cream status poller thread..."<<endl;
+  
+  try {
+    pollerThread->start();
+  } catch(util::thread_start_ex& ex) {
+    throw iceInit_ex(ex.what()); 
+  }  
+  cout << "poller started succesfully!"<<endl;
+  status_poller_started = true;
 }
 
 //______________________________________________________________________________
-void ice::startJobStatusPoller() throw(util::thread_start_ex&)
-{
-  pollerThread->start();
-}
+// void ice::startJobStatusListener() throw(util::thread_start_ex&)
+// {
+//   listenerThread->start();
+// }
+
+// //______________________________________________________________________________
+// void ice::startJobStatusPoller() throw(util::thread_start_ex&)
+// {
+//   pollerThread->start();
+// }
 
 //______________________________________________________________________________
-void ice::stopJobStatusListener() {
+void ice::stopListener() {
   listenerThread->stop();
 }
 
 //______________________________________________________________________________
-void ice::stopJobStatusPoller() {
+void ice::stopPoller() {
   pollerThread->stop();
 }
 
