@@ -81,7 +81,9 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
       throw jnlFile_ex(string("Error loading snapshot file: ") + strerror(saveerr));
 
   }
-  
+
+  Mutex S(&mutexSnapFile);
+  Mutex M(&mutexHash);
   /**
    * The creation of a filestreamOpenManager object means calling
    * is.open(snapFile.c_str(), ios::in).
@@ -89,14 +91,10 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
    * by its dtor. This ensure file closing under any circumstance 
    * (unexpected exception raising, forgotting to call ::close() etc.)
    */
-
-  //  cout << "Loading SNAPSHOT..."<<endl;
-
   ifstream tmpIs(snapFile.c_str(), ios::in );
   /**
    * Loads jobs from snapshot file
    */
-  Mutex M(&mutexSnapFile);
   string Buf;
   while(tmpIs.peek() != EOF) {
     getline(tmpIs, Buf, '\n');
@@ -111,7 +109,8 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
 //     cout << "Found in SNAPSHOT job: "<<cj.getGridJobID()<<" -> ("
 // 	 << cj.getJobID() << ", " << cj.getStatus() <<")"<<endl;
 
-    map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
+    //map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
+    it = hash.find( cj.getGridJobID() );
     if( it != hash.end() )
       hash.erase( it );
     hash.insert( make_pair( cj.getGridJobID(), cj ) );
@@ -125,7 +124,7 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
 void jobCache::loadJournal(void) 
   throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&)
 {
-  jnlMgr->readonly_mode(true);
+  //jnlMgr->readonly_mode(true);
 
   /**
    * Creating a lockJournalManager means calling jnlMgr->lock().
@@ -133,10 +132,9 @@ void jobCache::loadJournal(void)
    * jnlMgr->unlock();
    */
   lockJournalManager lJ(jnlMgr);
-
+  Mutex M(&mutexHash);
+  jnlMgr->readonly_mode(true);
   string line;
-
-  //  cout << "Loading JOURNAL..."<<endl;
 
   while(jnlMgr->getNextOperation(line)) {
 
@@ -155,7 +153,8 @@ void jobCache::loadJournal(void)
 
 
     if(op == PUT) {
-      map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
+      //      map<string, CreamJob>::iterator
+      it = hash.find( cj.getGridJobID() );
       if(it != hash.end() )
 	hash.erase( it );
 
@@ -195,7 +194,8 @@ void jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
   /**
    * Updates the memory cache
    */
-  map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
+  //map<string, CreamJob>::iterator it = hash.find( cj.getGridJobID() );
+  it = hash.find( cj.getGridJobID() );
   if( it != hash.end() )
     hash.erase( it );
   hash.insert( make_pair(cj.getGridJobID(), cj) );
@@ -233,7 +233,8 @@ void jobCache::remove_by_grid_jobid(const string& gid)
   string to_string;
 
   //  CreamJob cj = hash[gid];
-  map<string, CreamJob>::iterator it;
+  //  map<string, CreamJob>::iterator it;
+  
   it = hash.find( gid );
   if( it == hash.end() ) return;
 
@@ -286,16 +287,18 @@ string jobCache::get_cream_jobid_by_grid_jobid(const std::string& id)
   throw (elementNotFound_ex&)
 {
   Mutex M(&mutexHash);
-  if( hash.find( id ) == hash.end( ) )
+  it = hash.find( id );
+  if( it == hash.end( ) )
     throw elementNotFound_ex(string("Not found the key ")+id+" in job cache");
   
-  return hash.find( id )->second.getJobID();
+  return it->second.getJobID();
 }
 
 //______________________________________________________________________________
 CreamJob jobCache::getJobByCreamJobID(const std::string& cid)
   throw (elementNotFound_ex&)
 {
+  Mutex M(&mutexHash);
   return hash.find( get_grid_jobid_by_cream_jobid(cid) )->second;
 }
 
@@ -303,9 +306,11 @@ CreamJob jobCache::getJobByCreamJobID(const std::string& cid)
 CreamJob jobCache::getJobByGridJobID(const std::string& gid)
   throw (elementNotFound_ex&)
 {
-  if( hash.find( gid ) == hash.end( ) )
+  Mutex M(&mutexHash);
+  it = hash.find( gid );
+  if( it == hash.end( ) )
     throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
-  return hash.find( gid )->second;
+  return it->second;
 }
 
 //______________________________________________________________________________
@@ -330,9 +335,10 @@ jobCache::getStatus_by_grid_jobid(const string& gid)
   throw (elementNotFound_ex&)
 {
   Mutex M(&mutexHash);
-  if( hash.find( gid ) == hash.end() )
+  it = hash.find( gid );
+  if( it == hash.end() )
     throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
-  return hash.find( gid )->second.getStatus();
+  return it->second.getStatus();
 }
 
 //______________________________________________________________________________
@@ -347,8 +353,9 @@ jobCache::getStatus_by_cream_jobid(const string& cid)
 //______________________________________________________________________________
 void jobCache::print(ostream& os) {
   Mutex M(&mutexHash);
-  map<string, CreamJob>::iterator it;
-  for(it=hash.begin(); it!=hash.end(); it++) {
+  //map<string, CreamJob>::iterator it;
+  
+  for(it=hash.begin(); it!=hash.end(); ++it) {
     os << (*it).first.c_str() << " -> ("
        << (*it).second.getJobID() <<", "<<(*it).second.getStatus()<<")"<<endl;
 //     fprintf(
@@ -362,7 +369,8 @@ void jobCache::print(ostream& os) {
 //______________________________________________________________________________
 void jobCache::dump() throw (jnlFile_ex&)
 {
-  Mutex M(&mutexSnapFile);
+  //  Mutex S(&mutexSnapFile);
+  //  Mutex M(&mutexHash);
   string tmpSnapFile = snapFile + ".tmp." +
     apiutil::string_manipulation::make_string(::getpid());
 
@@ -385,11 +393,11 @@ void jobCache::dump() throw (jnlFile_ex&)
     if ((void*)tmpOs == 0) 
       throw jnlFile_ex("Error opening temp snapshot file");
     
-    map<string, CreamJob>::iterator it;
+    //    map<string, CreamJob>::iterator it;
     
     cout << "Dumping snapshot file"<<endl;
     
-    for(it=hash.begin(); it!=hash.end(); it++) {
+    for(it=hash.begin(); it!=hash.end(); ++it) {
 
       string param;
       this->toString((*it).second, param);
@@ -426,7 +434,6 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   classad::ClassAdParser parser;
   classad::ClassAdUnParser unp;
   ad = parser.ParseClassAd(Buf);
-  //ad = classad::ClassAdParser.ParseClassAd(Buf);
   
   if(!ad)
     throw ClassadSyntax_ex(string("ClassAd parser returned a NULL pointer parsing entire classad ")+Buf);
@@ -447,11 +454,6 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   apiutil::string_manipulation::trim(gid, '"');
   apiutil::string_manipulation::trim(jdl, '"');
 
-  //  cout << "jobCache::unparse - gid="<<gid<<endl;
-
-  // cout << "jobCache::unparse - st="<<st<<endl;
-
-  //api::job_statuses::job_status stNum = api::job_statuses::getStatusNum(st);
   api::job_statuses::job_status stNum;
   try {
     stNum = 
@@ -460,8 +462,6 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     cerr << ex.what()<<endl;
     exit(1);
   }
-
-  //cout << "jobCache::unparse - stNum="<<stNum<<endl;
 
   try {
     return CreamJob(jdl, cid, gid, stNum);
@@ -491,18 +491,15 @@ void jobCache::getOperation(const string& S,
 //______________________________________________________________________________
 void jobCache::getActiveCreamJobIDs(vector<string>& target) 
 {
-  map<string, CreamJob>::const_iterator it;
-  for( it = hash.begin(); it != hash.end(); it++) {
-//     if( api::job_statuses::isFinished((*it).second.getStatus()) ) 
-//       continue;
+  Mutex M(&mutexHash);
+  //  map<string, CreamJob>::const_iterator it;
+  for( it = hash.begin(); it != hash.end(); ++it)
     target.push_back((*it).second.getJobID());
-  }
 }
 
 //______________________________________________________________________________
 void jobCache::toString(const CreamJob& cj, string& target)
 {
-
   target = string("[grid_jobid=\"" + cj.getGridJobID() + "\";cream_jobid=\"" 
 		  + cj.getJobID() + "\";status=\"" 
 		  + apiutil::string_manipulation::make_string((int)cj.getStatus()) 
@@ -526,8 +523,8 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
   lockJournalManager lJ(jnlMgr); // locks the journal manager
   Mutex M(&mutexHash); // locks the memory cache (the map<>)
 
-  map<string, CreamJob>::iterator it = hash.find( gid );
-
+  //map<string, CreamJob>::iterator it = hash.find( gid );
+  it = hash.find( gid );
   if( it == hash.end() )
     throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
 

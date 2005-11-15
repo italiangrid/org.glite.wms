@@ -41,6 +41,7 @@ namespace glite {
 	  pthread_mutex_t mutexHash;
 	  pthread_mutex_t mutexSnapFile;
 	  int operation_counter;
+	  std::map<std::string, CreamJob>::iterator it;
 
 	  void loadJournal(void) 
 	    throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&);

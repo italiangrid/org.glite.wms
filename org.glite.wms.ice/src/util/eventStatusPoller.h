@@ -1,45 +1,38 @@
 #ifndef __STATUSPOLLER_H__
 #define __STATUSPOLLER_H__
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/JobInfoList.h"
+//#include "ice-core.h"
 #include "eventStatusPoller_ex.h"
 #include "runnable.h"
-
-class glite::ce::cream_client_api::soap_proxy::CreamProxy;
-class glite::ce::cream_client_api::soap_proxy::JobInfoList;
-//class glite::ce::cream_client_api::soap_proxy::AbsIce;
 
 #define DELAY 10
 
 namespace glite {
   namespace wms {
     namespace ice {
+
+      class absice;
+
       namespace util {
 
 	class eventStatusPoller : public runnable {
 
 	  bool endpolling;
 	  int delay;
-	  //	  std::string cream_service;
-	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
-
 	  std::vector<std::string> jobs_to_query;
-
 	  std::vector<std::string> empty;
-	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*>
-	    _jobinfolist;
-	  //	  glite::ce::cream_client_api::soap_proxy::JobInfoList* _jobinfolist;
-	  
-	  //	  glite::ce::cream_client_api::soap_proxy::AbsIce* absSubmitter;
+	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*> _jobinfolist;
 	  std::vector<std::string> url_pieces;
+	  absice* iceManager;
 
 	public:
 	  eventStatusPoller(const std::string& certfile,
-			    //			    const std::string& _cream_service,
-			    const int& D=DELAY) 
+			    const int& D=DELAY,
+			    absice* _im = NULL) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
 
-	  virtual ~eventStatusPoller() { if(creamClient) delete(creamClient); }
+	  virtual ~eventStatusPoller() { }
 
 	  bool getStatus(void);
 	  void updateJobCache(void);

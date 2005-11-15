@@ -3,11 +3,19 @@
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/soap_ex.h"
+#include "glite/ce/cream-client-api-c/BaseException.h"
+#include "glite/ce/cream-client-api-c/InternalException.h"
+#include "glite/ce/cream-client-api-c/DelegationException.h"
+#include "abs-ice-core.h"
 #include <vector>
 
 using namespace glite::wms::ice::util;
-using namespace glite::ce::cream_client_api::soap_proxy;
-using namespace glite::ce::cream_client_api::cream_exceptions;
+//using namespace glite::wms::ice;
+using namespace glite::ce::cream_client_api;//::soap_proxy;
+
+//using namespace glite::ce::cream_client_api::cream_exceptions;
 using namespace glite::ce::cream_client_api::job_statuses;
 using namespace glite::ce::cream_client_api::util;
 using namespace std;
@@ -15,22 +23,14 @@ using namespace std;
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
 				     const string& certfile,
-				     const int& _d
+				     const int& _d,
+				     glite::wms::ice::absice* _iceManager
 				     )
   throw(eventStatusPoller_ex&)
   : endpolling(false), 
-    delay(_d)
+    delay(_d),
+    iceManager(_iceManager)
 {
-//   try {
-//     creamClient = new CreamProxy(false);
-//     CreamProxyFactory::getInstance()
-//     string VO = creamClient->Authenticate(certfile);
-//   } catch(soap_ex& ex) {
-//     throw eventStatusPoller_ex(ex.what());
-//   } catch(auth_ex& auth) {
-//     throw eventStatusPoller_ex(auth.what());
-//   }
-
   jobs_to_query.reserve(1000);
   url_pieces.reserve(4);
 }
@@ -50,7 +50,7 @@ bool eventStatusPoller::getStatus(void)
   }
   _jobinfolist.clear();
   
-  CreamProxyFactory::getProxy()->clearSoap();
+  soap_proxy::CreamProxyFactory::getProxy()->clearSoap();
 
   jobs_to_query.clear();
   try {
@@ -59,8 +59,6 @@ bool eventStatusPoller::getStatus(void)
     cerr << ex.what()<<endl;
     exit(1);
   }
-
-  //  cout << "Active jobs to query status of: "<<jobs_to_query.size()<<endl;
 
   map< string, vector<string> > endpoint_hash;
   try {
@@ -71,45 +69,31 @@ bool eventStatusPoller::getStatus(void)
     exit(1);
   }
 
-//   map< string, vector<string> >::iterator endpointIT;
-//   vector<string> pieces;
-//   string endpoint;
-//   for(unsigned int j=0; j<jobs_to_query.size(); j++) {
-//     string thisJob = jobs_to_query[j];
-//     pieces.clear();
-//     glite::ce::cream_client_api::util::CEUrl::parseJobID(jobs_to_query[j], pieces);
-//     endpoint = pieces[0]+"://"+pieces[1]+":"+pieces[2]+"/ce-cream/services/CREAM";
-//     endpoint_hash[endpoint].push_back(jobs_to_query[j]);
-    
-//   }
-
   for(map< string, vector<string> >::iterator endpointIT=endpoint_hash.begin(); 
       endpointIT!=endpoint_hash.end();
       ++endpointIT)
     {
       try {
 	cout << "Sending JobInfo request to ["<<endpointIT->first<<"]"<<endl;
-	_jobinfolist.push_back( CreamProxyFactory::getProxy()->Info(endpointIT->first.c_str(), endpointIT->second, empty, -1, -1 ));
+	_jobinfolist.push_back( soap_proxy::CreamProxyFactory::getProxy()->Info(endpointIT->first.c_str(), endpointIT->second, empty, -1, -1 ));
 	  
-      } catch(soap_ex& ex) { 
+      } catch(soap_proxy::soap_ex& ex) { 
 	cerr << "CreamProxy::Info raised a soap_ex exception: " 
 	     << ex.what() << endl;
 	return false; 
-      } catch(BaseException& ex) {
+      } catch(cream_exceptions::BaseException& ex) {
 	cerr << "CreamProxy::Info raised a BaseException exception: " 
 	     << ex.what() << endl;
 	return false; 
-      } catch(InternalException& ex) {
+      } catch(cream_exceptions::InternalException& ex) {
 	cerr << "CreamProxy::Info raised an InternalException exception: " 
 	     << ex.what() << endl;
 	return false; 
-      } catch(DelegationException&) {
+      } catch(cream_exceptions::DelegationException&) {
 	cerr << "CreamProxy::Info raised a DelegationException exception\n";
 	return false;
       }
     }
-
-  //cout << "_jobinfolist size="<<_jobinfolist.size()<<endl;
 
   return true;
 }
@@ -157,7 +141,10 @@ void eventStatusPoller::checkJobs()
 	   * NOW MUST RESUBMIT THIS JOB
 	   *
 	   */
+	  
 	  // resubmit
+	  if(iceManager)
+	    iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
 	}
       
       if( api::job_statuses::isFinished( stNum ) ) {
@@ -191,10 +178,10 @@ void eventStatusPoller::checkJobs()
 	{
 	  try {
 	    cout << "Calling JobPurge for host ["<<it->first<<"]"<<endl;
-	    CreamProxyFactory::getProxy()->Purge(it->first.c_str(), it->second );
-	  } catch(BaseException& s) {
+	    soap_proxy::CreamProxyFactory::getProxy()->Purge(it->first.c_str(), it->second );
+	  } catch(cream_exceptions::BaseException& s) {
 	    cerr << s.what()<<endl;
-	  } catch(InternalException& severe) {
+	  } catch(cream_exceptions::InternalException& severe) {
 	    cerr << severe.what()<<endl;
 	    exit(1);
 	  }

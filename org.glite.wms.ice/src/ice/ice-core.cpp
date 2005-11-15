@@ -99,7 +99,7 @@ void ice::startPoller(const string& hostCert, const int& poller_delay)
   if(status_poller_started) return;
   cout << "Creating a Cream status poller object..."<<endl;
   try {
-    poller = new util::eventStatusPoller(hostCert, poller_delay);
+    poller = new util::eventStatusPoller(hostCert, poller_delay, this);
   } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
     throw iceInit_ex(ex.what());
   }
@@ -185,4 +185,10 @@ void ice::ungetRequest(const unsigned int& reqNum)
     cerr << ex.what() << endl;
     exit(1);
   }
+}
+
+//______________________________________________________________________________
+void ice::doOnJobFailure(const string& gid) {
+  // find request number related to gid
+  // call ungetRequest for number found at the previous step
 }

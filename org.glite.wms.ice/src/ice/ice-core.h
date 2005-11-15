@@ -4,6 +4,7 @@
 
 #include <string>
 #include <pthread.h>
+#include "abs-ice-core.h"
 #include "ClassadSyntax_ex.h"
 #include "iceInit_ex.h"
 #include "eventStatusListener.h"
@@ -31,7 +32,7 @@ namespace glite {
 	std::string jdl;
       };
       
-      class ice {
+      class ice : public glite::wms::ice::absice {
 	//glite::wms::ice::util::jobCache* job_cache;
 	glite::wms::ice::util::eventStatusListener* listener;
 	glite::wms::ice::util::eventStatusPoller* poller;
@@ -70,6 +71,8 @@ namespace glite {
 	void startPoller(const std::string&, const int&);
 	void stopListener();
 	void stopPoller();
+
+	virtual void doOnJobFailure(const std::string& gid);
 
       }; // class ice
 
