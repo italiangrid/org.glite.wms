@@ -230,7 +230,8 @@ void setMissingBool(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms:
 * JDL is still an AD (no type switched)
 *******************/
 void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
-	glite::wms::common::configuration::WMCConfiguration* conf){
+	glite::wms::common::configuration::WMCConfiguration* conf,
+	const std::string& pathOpt){
 	if (!conf){return;}
 	// Default JDL values:
 	try{
@@ -274,6 +275,11 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 					}
 				}
 			}
+		}
+		if (pathOpt!=""){
+			Ad confPathAd;
+			confPathAd.fromFile(pathOpt);
+			jdl->merge(confPathAd);
 		}
 	}catch(RequestAdException &exc){
 		// Some classAd exception occurred
