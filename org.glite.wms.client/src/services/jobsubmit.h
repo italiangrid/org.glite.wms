@@ -65,6 +65,10 @@ class JobSubmit : public Job {
 		*/
 		void submission ( ) ;
 	private:
+		/*
+		* Returns the type of job is being submitted
+		*/
+		const wmsJobType JobSubmit::getJobType( );
 		/**
                  *	Contacts the server in order to retrieve the list of all destionationURI's of the job (with the available protocols).
 		 *  	In case of compound jobs (DAG, collections etc..), it also retrieves the URIs of the nodes.
@@ -121,9 +125,9 @@ class JobSubmit : public Job {
 		/**
 		* Retrieves the list of local files that have been referenced in the JDL calling one of the xxxxxISBFiles( ) methods
 		* (according to the type of the job) and gets back the total size (in bytes) of these files.
-		* @param jobtype the type of job described in the JDL (according to the tags defined in the wmsJobType enum type)
+		* @return the size (in bytes) of the InputSandbox files
 		*/
-		int getInputSandboxSize(const wmsJobType &jobtype);
+		int getInputSandboxSize( );
 		/**
 		* Checks if the total size of the local files, that have been referenced in the JDL,  is compatible with the limitation that
 		* can be set on the server :
@@ -135,7 +139,7 @@ class JobSubmit : public Job {
 		* (according to the type of the job) and gets back the total size (in bytes) of these files.
 		* @param jobtype the type of job described in the JDL (according to the tags defined in the wmsJobType enum type)
 		*/
-		void checkInputSandboxSize (const wmsJobType &jobtype) ;
+		void checkInputSandboxSize ( ) ;
 		/*
 		* Return the InputSandbox URIs for the parent node of a DAG.
 		* This information is retrieved by the user JDL.
@@ -255,9 +259,8 @@ class JobSubmit : public Job {
 		/**
                 * Checks the user JDL
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
-		*@param jobtype returns the code of the JobType (see wmsJobType enum )
                 */
-                void JobSubmit::checkAd(bool &filestoBtransferred, wmsJobType &jobtype);
+                void JobSubmit::checkAd(bool &filestoBtransferred);
 
 		/**
                 *	String input arguments
@@ -333,10 +336,10 @@ class JobSubmit : public Job {
 		* List of Destination URI's
 		*/
 		std::vector< std::pair<std::string ,std::vector<std::string > > > dsURIs ;
-		/*
-		* Major Version number of the server
+		/**
+		* Type of job  is being submitted
 		*/
-	//	int wmpVersion;
+		wmsJobType jobType ;
 };
 }}}} // ending namespaces
 #endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H

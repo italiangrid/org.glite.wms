@@ -145,8 +145,10 @@ void JobOutput::getOutput ( ){
 	if (environ){logName="/"+string(environ);}
 	else{logName="/jobOutput";}
 	LbApi lbApi;
-	vector<string>::iterator it;
-        for (it = jobIds.begin() ; it != jobIds.end() ; it++){
+	// Jobid's loop
+	vector<string>::iterator it = jobIds.begin() ;
+	vector<string>::iterator const end = jobIds.end();
+        for ( ; it != end ; it++){
 		// JobId
 		lbApi.setJobId(*it);
 		try{
@@ -267,7 +269,8 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	std::vector<Status> children = status.getChildrenStates();
 	if (children.size()){
 		ostringstream msgVago ;
-		for (unsigned int i = 0 ;i<children.size();i++){
+		unsigned int size = children.size();
+		for (unsigned int i = 0 ; i < size ;i++){
 			retrieveOutput (msgVago,children[i],dirAbs+logName+"_"+ children[i].getJobId().getUnique(), true);
 		}
 	}
@@ -346,7 +349,8 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 			if (!listOnlyOpt){
 				// Actually retrieving files
 				logInfo->print(WMS_DEBUG, "Retrieving Files for: ", jobid);
-				for (unsigned int i = 0; i < files.size( ); i++){
+				unsigned int size = files.size( );
+				for (unsigned int i = 0; i < size; i++){
 					if (file_proto.size()==0){
 						file_proto = Utils::getProtocol (files[i].first);
 					}
@@ -376,7 +380,6 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 *	prints file list on std output
 */
 void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, const std::string jobid, const bool &child){
-	vector <pair<string , long> >::iterator it ;
 	string ws = " ";
 	ostringstream out ;
 	// output message
@@ -385,9 +388,11 @@ void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, 
 		if (files.size( ) == 0 ){
 			out << "\tno output file to be retrieved\n";
 		} else{
-			for ( it = files.begin() ; it != files.end() ; it++ ){
-				out << "\t - file :" << it->first << "\n";
-				out << "\t   size (bytes) : " << it->second << "\n";
+			vector <pair<string , long> >::iterator it1  = files.begin();
+			vector <pair<string , long> >::iterator const end1 = files.end() ;
+			for (  ; it1 != end1 ; it1++ ){
+				out << "\t - file :" << it1->first << "\n";
+				out << "\t   size (bytes) : " << it1->second << "\n";
 			}
 		}
 	} else{
@@ -395,9 +400,11 @@ void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, 
 		if (files.size( ) == 0 ){
 			out << "no output file to be retrieved\n";
 		} else{
-			for ( it = files.begin() ; it != files.end() ; it++ ){
-				out << " - file :" << it->first << "\n";
-				out << "   size (bytes) : " << it->second << "\n";
+			vector <pair<string , long> >::iterator it2  = files.begin();
+			vector <pair<string , long> >::iterator const end2 = files.end() ;
+			for (  ; it2 != end2 ; it2++ ){
+				out << " - file :" << it2->first << "\n";
+				out << "   size (bytes) : " << it2->second << "\n";
 			}
 		}
 	}
@@ -429,9 +436,10 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 *	gsiFtpGetFiles Method  (WITH_GRID_FTP)
 */
 void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
-        vector <pair<std::string , string> >::iterator it ;
 	int code = 0;
-	 for ( it = paths.begin( ) ; it != paths.end( ) ; it++ ){
+ 	vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
+	vector <pair<std::string , string> >::iterator const end = paths.end( ) ;
+	 for (  ; it != end ; it++ ){
 		// command
 		string cmd= "globus-url-copy ";
 		if (getenv("GLOBUS_LOCATION")){
@@ -480,7 +488,6 @@ int JobOutput::storegprBody(void *buffer, size_t size, size_t nmemb, void *strea
 */
 void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
 	CURL *curl = NULL;
-	vector <pair<std::string , string> >::iterator it ;
 	string source = "" ;
 	string destination = "" ;
 	string file = "" ;
@@ -512,7 +519,9 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
                         // files to be downloaded
-                        for ( it = paths.begin( ) ; it != paths.end( ) ; it++ ){
+			vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
+			vector <pair<std::string , string> >::iterator const end = paths.end( );
+                        for ( ; it != end ; it++ ){
 				// source
                                 source = it->first ;
                                 curl_easy_setopt(curl, CURLOPT_URL, source.c_str());

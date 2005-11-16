@@ -231,8 +231,9 @@ bool splitInt(const string& source,const string&sep, unsigned int &fromPort, uns
 	boost::char_separator<char> separator(sep.c_str());
 	boost::tokenizer<boost::char_separator<char> > tok(source, separator);
 	int tk_i=0;  // number of tokens
-	for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-		token != tok.end();++tk_i,++token) {
+	boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+	boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+	for ( ; token != end ; ++tk_i, ++token) {
 		try { switch (tk_i){
 			case 0:
 				fromPort=boost::lexical_cast<unsigned int>(*token);

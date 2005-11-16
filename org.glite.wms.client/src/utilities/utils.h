@@ -135,20 +135,12 @@ public:
         * @return the pathname string
         */
         std::string* getLogFileName ( );
+
 	/**
         * Gets the conf pathname
         * @return the pathname string
         */
         glite::wms::common::configuration::WMCConfiguration* getConf(){return wmcConf;}
-        /**
-	* Check the LB value, the format is
-	[<protocol>://]<lb host>[:<lb port>]
-	*/
-	std::pair <std::string, unsigned int>checkLb(const std::string& lbFullAddress);
-	/** Check the NS value, the format is
-	[<protocol>://]<ns host>[:<ns port>]
-	*/
-	std::pair <std::string, unsigned int>checkWmp(const std::string& wmpFullAddress);
 	/**
 	* Resolves an hostname, supposed to be an alias, into its CNAME.
 	* @param hostname the hostanem to resolve.
@@ -279,20 +271,15 @@ public:
         */
         std::string* fromFile (const std::string &path) ;
 	/**
-        * Saves the input message into a file
+	* Saves a message into a file after checking whether it already exists.
+	* If it does and user interaction has not been disabled (by --noint),
+	* the user is asked which action has to be performed
+	* (either overwriting or appending ; otherwise nothing)
         * @param path the pathname of the file
 	* @param msg the message to be saved
-        * @param interactive if the flag is true, question if it can be replaced is asked in case the file already exists
-        * @return 0 in case of success (-1 otherwise)
-        */
-         int toFile (const std::string &path, const std::string &msg, const bool &append=false);
-	/**
-        * Saves the identifier of a submitted job in the specified file
-        * @param path the pathname of the file
-	* @param jobid the job identifier string
-        * @return 0 if the jobid has been successfully saved (-1 otherwise)
-        */
-         const int saveJobIdToFile (const std::string &path, const std::string jobid);
+	* @return 0 in case of success (-1 otherwise)
+	*/
+	int saveToFile(const std::string &path, const std::string &msg) ;
 	/**
         * Saves a list of items in the specified file
         * @param path the pathname of the file
@@ -301,6 +288,13 @@ public:
         * @return 0 if the list has been successfully saved (-1 otherwise)
         */
 	 const int saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header="");
+	/**
+        * Saves the identifier of a submitted job in the specified file
+        * @param path the pathname of the file
+	* @param jobid the job identifier string
+        * @return 0 if the jobid has been successfully saved (-1 otherwise)
+        */
+         const int saveJobIdToFile (const std::string &path, const std::string jobid);
         /**
         * Reads a file and gets the list of items contained in it
         * @param the pathname of the file to be read
@@ -382,6 +376,23 @@ public:
 
 private:
 	/**
+	* Performs parsing on the FQAN fields an retrurns a vector which elements
+	* are the single fields
+	* @param fqan the FQAN string to be parsed
+	* @return the list of fields in the input FQAN string
+	*/
+	static std::vector<std::string> parseFQAN(const std::string &fqan);
+	/**
+	* Returns the VO in the FQAN input string
+	* @return the string with the VO
+	*/
+	static std::string FQANtoVO(const std::string fqan);
+	/**
+	* Returns the Default VO retrieved by the user proxy
+	* @return the Default VO string
+	*/
+	static std::string getDefaultVo() ;
+	/**
 	* Check the WMS client installation path
 	*/
 	void checkPrefix();
@@ -409,6 +420,14 @@ private:
 	*/
 	static const long getTime(const std::string &st, const std::string &sep, const time_t &now, const unsigned int &nf = 0) ;
 	/**
+        * Saves the input message into a file
+        * @param path the pathname of the file
+	* @param msg the message to be saved
+        * @param append TRUE=if the file already exists, append the input message at the end of the file; FALSE=create the file if it does not exist, otherwise overwrite it
+        * @return 0 in case of success (-1 otherwise)
+        */
+         int toFile (const std::string &path, const std::string &msg, const bool &append=false);
+	 /**
         * Generates the log file.
 	* The file is created only if either --debug or --logfile has been spevified among the user input options.
         * @return a pointer to a string with the pathname, NULL if no logfile has been generated

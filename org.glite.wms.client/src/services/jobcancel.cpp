@@ -91,12 +91,10 @@ void JobCancel::readOptions (int argc,char **argv){
 */
 void JobCancel::cancel ( ){
 	postOptionchecks();
-	vector<string>::iterator it ;
         string* cancelled = NULL;
 	ostringstream out ;
 	string err = "";
 	string warns = "";
-
 	// checks that the jobids vector is not empty
         if (jobIds.empty()){
 		throw WmsClientException(__FILE__,__LINE__,
@@ -104,16 +102,24 @@ void JobCancel::cancel ( ){
 			"JobId Error",
                         "No valid JobId for which the cancellation can be requested" );
         } else{
+		// List of JobId's
         	ostringstream info;
-                for (it = jobIds.begin(); it != jobIds.end(); it++) { info << " - " << *it << "\n"; }
+		vector<string>::iterator it1 = jobIds.begin();
+		vector<string>::iterator const end1 = jobIds.end();
+                for (; it1 != end1; it1++) {
+			info << " - " << *it1 << "\n";
+		}
 		logInfo->print (WMS_DEBUG,"Request of cancellation for the following job(s):\n" + info.str() , "" );
         }
 	// ask users to be sure to want the job cancelling
          if ( wmcUtils->answerYes("\nAre you sure you want to remove specified job(s)", 1, 1) ){
 		LbApi lbApi;
-                for (it = jobIds.begin() ; it != jobIds.end() ; it++){
+		// Jobid's loop
+		vector<string>::iterator it2 = jobIds.begin();
+		vector<string>::iterator const end2 = jobIds.end();
+                for ( ; it2 != end2 ; it2++){
 			// JobId
-			string jobid = *it;
+			string jobid = *it2;
 			logInfo->print(WMS_DEBUG, "Checking the status of the job:",  jobid );
 			lbApi.setJobId(jobid);
 			try{
@@ -134,22 +140,22 @@ void JobCancel::cancel ( ){
 				if (jobIds.size( ) == 1){ throw exc ;}
 				// if the request is for multiple jobs, a failed-string is built for the final message
 
-				logInfo->print(WMS_WARNING, "Not allowed to cancel the job:\n" + (*it) , exc.what( ) , true);
+				logInfo->print(WMS_WARNING, "Not allowed to cancel the job:\n" + jobid , exc.what( ) , true);
 				// goes on with the following job
 				continue ;
 			}
 
   			try{
-                        	logInfo->print(WMS_DEBUG, "Request of cancelling for the job: ", *it );
+				logInfo->print(WMS_INFO, "Cancelling the job:", jobid );
 				logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
 	                        //  performs cancelling
-                                jobCancel(*it, getContext( ) );
+                                jobCancel(jobid, getContext( ) );
                                 logInfo->print(WMS_DEBUG, "Cancelling result:", "The request has been successfully sent");
                          	 // list of jobs successfully cancelled
                                 if (cancelled){
-                                        *cancelled += "- " + string (*it) + ("\n");
+                                        *cancelled += "- " + jobid + ("\n");
                                 } else {
-                                        cancelled = new string("- " + string(*it) + "\n");
+                                        cancelled = new string("- " + jobid + "\n");
                                 }
 
                         } catch (BaseException &exc){
@@ -162,7 +168,7 @@ void JobCancel::cancel ( ){
 				}
 				// if the request is for multiple jobs, a failed-string is built for the final message
 				err = errMsg(exc) ;
-				logInfo->print(WMS_WARNING, "Not allowed to cancel the job:\n" + (*it),  errMsg(exc), true );
+				logInfo->print(WMS_WARNING, "Not allowed to cancel the job:\n" + jobid,  errMsg(exc), true );
                         }
                 } // for
 
@@ -180,7 +186,7 @@ void JobCancel::cancel ( ){
 		if (outOpt) {
 			out << "\n" << wmcUtils->getStripe(88, "=" ) << "\n";
                 	// save the result in the output file
-			if ( ! wmcUtils->toFile(*outOpt, out.str( ), true) ){
+			if ( ! wmcUtils->saveToFile(*outOpt, out.str( )) ){
                         	// print the result of saving on the std output
                         	ostringstream os;
 				os << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";

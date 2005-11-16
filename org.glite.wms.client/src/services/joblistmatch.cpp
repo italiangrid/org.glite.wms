@@ -82,7 +82,6 @@ void JobListMatch::listMatching ( ){
         int spaces = 0 ;
         string ce = "";
         vector <pair<string , long> > list ;
-	vector <pair<string , long> > ::iterator it ;
 	ostringstream out ;
 	ostringstream os;
         // Reads and checks the JDL
@@ -106,7 +105,9 @@ void JobListMatch::listMatching ( ){
 			out << "*Rank*\n";
 		}
 		out << "\n";
-		for ( it = list.begin( ) ; it != list.end( ); it++ ){
+		vector <pair<string , long> > ::iterator it = list.begin( );
+		vector <pair<string , long> > ::iterator const end = list.end( );
+		for (  ; it != end;  it++ ){
 			ce = it->first ;
 			out << " - " << it->first ;
 			if(rankOpt) {
@@ -120,7 +121,7 @@ void JobListMatch::listMatching ( ){
         // saves the result
         if (outOpt){
         	string tofile = "\n" + out.str() + "\n" + wmcUtils->getStripe(74, "=") + "\n";
-                if ( wmcUtils->toFile(*outOpt, tofile, true) < 0 ){
+                if ( wmcUtils->saveToFile(*outOpt, tofile) < 0 ){
                         logInfo->print (WMS_WARNING, "Unable to write the list of CeId's to the output file: " , Utils::getAbsolutePath(*outOpt));
                 } else{
                         logInfo->print (WMS_DEBUG, "Computing Element(s) matching your job requirements have been stored in the file:",

@@ -293,6 +293,7 @@ const struct option Options::delegationLongOpts[] = {
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
 	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
@@ -434,7 +435,6 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_START << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
-//TBD	cerr << "\t" << USG_CHKPT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n";
@@ -622,6 +622,7 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
+	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "Please report any bug at:\n" ;
@@ -1540,25 +1541,43 @@ void Options::readOptions(const int &argc, const char **argv){
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						"Wrong Input Argument: " + string(argv[optind]) );
-				} else if ( (optind == (argc-1)) && Utils::isFile( argv[optind] ) ) {
-					jdlFile = new string(argv[optind] ) ;
+				} else if ( optind == (argc-1) ) {
+					if (Utils::isFile( last_arg ) ) {
+						jdlFile = new string(last_arg) ;
+					} else {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Option",
+							"The last argument is not a valid path to a JDL file: " + string(last_arg) );
+					}
 				} else {
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"Wrong Option",
-						"Last argument must be a JDL file");
+					if (optind >= argc) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Option",
+							"The last argument must be a JDL file");
+
+					} else {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Option",
+							"Unknown input option: " + string(argv[optind]) );
+					}
 				}
+
   			 } else {
- 				if (optind < argc && collection) {
+				if (optind < argc && collection) {
 					ostringstream err ;
-					err << "JDL file (as last argument) and the option --" << LONG_COLLECTION << " are incompatible";
+					err << "Unknown or incompatible option used with --" << LONG_COLLECTION << ":\n";
+					err << string(argv[optind]) ;
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
 				} else if (optind < argc && start) {
 					ostringstream err ;
-					err << "JDL file (as last argument) and the option --" << LONG_START << " are incompatible";
+					err << "Unknown or incompatible option used with --" << LONG_START << ":\n";
+					err << string(argv[optind]) ;
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",

@@ -327,9 +327,7 @@ void JobSubmit::submission ( ){
 		jobid = *startOpt;
 		jobStarter(jobid);
 	} else {
-		// reads and checks the JDL('s)
-		wmsJobType jobtype ;
-		this->checkAd(toBretrieved, jobtype);
+		this->checkAd(toBretrieved);
 		// Perform sSubmission when:
 		// (RegisterOnly has not been specified in CLI) && (no file to be transferred)
 		jobid = jobRegOrSub(startJob && !toBretrieved);
@@ -339,7 +337,7 @@ void JobSubmit::submission ( ){
 		if (toBretrieved){
 			try{
 				// JOBTYPE
-				switch (jobtype) {
+				switch (getJobType( )) {
 					case (WMS_JOB) : {
 						jobid = this->normalJob( );
 						break;
@@ -356,7 +354,7 @@ void JobSubmit::submission ( ){
 							throw WmsClientException(__FILE__,__LINE__,
 								"submission",  DEFAULT_ERR_CODE ,
 								"Uknown JobType",
-								"unable to process the job (check the JDL)");
+								"Unable to process the job (check the JDL)");
 					}
 				}
 			}catch (Exception &exc){
@@ -461,20 +459,30 @@ void JobSubmit::submission ( ){
 	PRIVATE METHODS
 ==================================== */
 
+/*
+* Returns the type of job is being submitted
+*/
+const wmsJobType JobSubmit::getJobType( ){
+	return jobType;
+}
+
+
 /**
 * Retrieves the list of InputSandbox URI's for a DAG
 */
 void JobSubmit::getDagNodesISBUris(vector<pair<string,string > > &uris){
 	vector<string> nodes;
-	vector<string>::iterator it1;
+
 	string uri = "";
 	nodes = dagAd->getNodes();
-	for (it1 = nodes.begin( ); it1 != nodes.end(); it1++){
+	vector<string>::iterator it = nodes.begin( );
+	vector<string>::iterator const end = nodes.end();
+	for ( ; it != end; it++){
 		// Checks if the node has ISB attribute
-		if (dagAd->hasNodeAttribute(string(*it1), JDL::ISB_BASE_URI)){
-			uri = dagAd->getNodeAttribute(string(*it1), JDL::ISB_BASE_URI );
+		if (dagAd->hasNodeAttribute(string(*it), JDL::ISB_BASE_URI)){
+			uri = dagAd->getNodeAttribute(string(*it), JDL::ISB_BASE_URI );
 			if (uri.size() > 0){
-				uris.push_back(make_pair((*it1), uri));
+				uris.push_back(make_pair((*it), uri));
 			}
 		}
 	}
@@ -546,7 +554,6 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 	vector<string> files;
 	vector<string> nodes;
 	vector<string> node_files;
-	vector<string>::iterator it;
 	vector<pair<string, string> > uris;
 	if (dagAd){
 		// parent's ISB
@@ -563,8 +570,9 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 			// List of the nodes (their names)
 			nodes = dagAd->getNodes();
 			getDagNodesISBUris (uris);
-
-			for (it = nodes.begin( ); it != nodes.end(); ++it){
+			vector<string>::iterator it = nodes.begin( );
+			vector<string>::iterator const end = nodes.end( );
+			for ( ; it != end; ++it){
 				if (dagAd->hasNodeAttribute(string(*it), JDL::INPUTSB)){
 					// files of the node ( it1= Its name )
 					node_files = dagAd->getNodeStringValue((*it), JDL::INPUTSB);
@@ -584,9 +592,8 @@ void  JobSubmit::dagISBFiles(vector<string> &paths, const bool &children){
 * Gets the total size (in bytes) of the local files in
 * the JDL InputSandbox
 */
-int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
+int JobSubmit::getInputSandboxSize(){
 	vector<string> isb_files ;
-	vector<string>::iterator it;
 	ostringstream err ;
 	string file = "";
 	int size = 0 ;
@@ -595,7 +602,7 @@ int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 		size = this->isbSize ;
 	} else {
 		// Retrieves the local ISB files from the user JDL
-		switch (jobtype) {
+		switch (getJobType()) {
 			case (WMS_JOB) : {
 				this->jobISBFiles(isb_files);
 				break;
@@ -620,7 +627,9 @@ int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 			}
 		}
 		// Gets the total size of the ISB files
-		for (it = isb_files.begin(); it != isb_files.end(); ++it){
+		vector<string>::iterator it = isb_files.begin() ;
+		vector<string>::iterator const end = isb_files.end() ;
+		for ( ; it != end; ++it){
 			// Remove file protocol string
 			file = Utils::normalizeFile(*it);
 			// size for one of the files in the ISB list
@@ -657,7 +666,7 @@ int JobSubmit::getInputSandboxSize(const wmsJobType &jobtype){
 * on the server side:
 * either the user free quota or the max ISB size (if the first one is not set)
 */
-void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
+void JobSubmit::checkInputSandboxSize ( ) {
 	// results of getFrewQuota
 	pair<long, long> free_quota ;
 	long isbsize = 0;
@@ -665,7 +674,7 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 	long limit = 0;
 	int tars;
 	// ISB size
-	isbsize = this->getInputSandboxSize(jobtype);
+	isbsize = this->getInputSandboxSize( );
 	// User free quota -----------
 	try{
 		// Gets the user-free quota from the WMProxy server
@@ -755,14 +764,13 @@ void JobSubmit::checkInputSandboxSize (const wmsJobType &jobtype) {
 /**
 *  Checks the user JDL
 */
-void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
-	vector<string>::iterator it ;
+void JobSubmit::checkAd(bool &toBretrieved){
 	string message = "";
-	jobtype = WMS_JOB;
+	jobType = WMS_JOB;
 	toBretrieved =true ;
 	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
 	if (collectOpt) {
-		jobtype = WMS_COLLECTION ;
+		jobType = WMS_COLLECTION ;
 		try {
 			//fs::path cp ( Utils::normalizePath(*collectOpt), fs::system_specific); // Boost 1.29.1
 			fs::path cp ( Utils::normalizePath(*collectOpt), fs::native);
@@ -801,7 +809,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			// InputSB URI
 			isbURI = collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
 			// Checks the size of the ISB
-			this->checkInputSandboxSize (jobtype);
+			this->checkInputSandboxSize ( );
 			// checks if file archiving and compression is allowed
 			if (getWmpVersion( ) > Options::WMPROXY_OLD_VERSION) {
 				// checks if the file archiving and compression is denied (if ALLOW_ZIPPED_ISB is not present, default value is FALSE)
@@ -810,10 +818,11 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					if (zipAllowed) { message ="allowed by user in the JDL";}
 					else { message ="disabled by user in the JDL"; }
 					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-	/// >>>>>>>>				if (zipAllowed && !registerOnly) {
 					if (zipAllowed) {
-						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
-							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
+						vector<string>::iterator it1 = gzFiles.begin() ;
+						vector<string>::iterator const end1 = gzFiles.end();
+						for ( ; it1 != end1; it1++){
+							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it1));
 						}
 					}
 				} else {
@@ -877,7 +886,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		// COLLECTION ========================================
 		if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
 			logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted", "");
-			jobtype = WMS_COLLECTION ;
+			jobType = WMS_COLLECTION ;
 			try{
 				collectAd = new CollectionAd(*(jobAd->ad()));
 				collectAd->setLocalAccess(true);
@@ -893,12 +902,13 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					// InputSB URI
 					isbURI = collectAd->hasAttribute(JDL::ISB_BASE_URI)?collectAd->getString(JDL::ISB_BASE_URI):"";
 					// Checks the size of the ISB
-					this->checkInputSandboxSize (jobtype);
+					this->checkInputSandboxSize ( );
 					// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
-// >>>>>>>>					if (zipAllowed && !registerOnly) {
 					if (zipAllowed) {
-						for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
-							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
+						vector<string>::iterator it2 = gzFiles.begin() ;
+						vector<string>::iterator const end2 = gzFiles.end();
+						for ( ; it2 != end2 ; it2++){
+							collectAd->addAttribute(JDLPrivate::ZIPPED_ISB, (*it2));
 						}
 					}
 				}
@@ -913,7 +923,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 		// DAG  ========================================
 		if ( jobAd->hasAttribute(JDL::TYPE , JDL_TYPE_DAG) ) {
 				logInfo->print (WMS_DEBUG, "A DAG job is being submitted", "");
-				jobtype = WMS_DAG ;
+				jobType = WMS_DAG ;
 				if (nodesresOpt) {
 					jobAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 				}
@@ -927,7 +937,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 					// InputSB URI of the parent node
 					isbURI = getDagISBUri ( );
 					// checks the size of the ISB
-					this->checkInputSandboxSize (jobtype);
+					this->checkInputSandboxSize ( );
 					if (zipAllowed){
 						// Adds the ZIPPED_ISB attribute to the JDL (with the list of tar.gz files)
 						dagAd->setAttribute(ExpDagAd::ZIPPED_ISB, gzFiles);
@@ -935,8 +945,8 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 				}
 				// JDL string for the DAG
 				jdlString = new string(dagAd->toString()) ;
-		}else{
-			jobtype = WMS_JOB ;
+		} else {
+			jobType = WMS_JOB ;
 			// resource <ce_id> ----> SubmitTo JDL attribute
 			if (resourceOpt) {
 				if (jobAd->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
@@ -993,7 +1003,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			toBretrieved=pass->gettoBretrieved();
 			// PARAMETRIC  ===============================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)){
-				jobtype = WMS_PARAMETRIC;
+				jobType = WMS_PARAMETRIC;
 				if (nodesresOpt) {
 					pass->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 				}
@@ -1014,33 +1024,34 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 			// ZIP ISB file(s) Management
 			if (toBretrieved){
 				// Checks the size of the ISB
-				this->checkInputSandboxSize (jobtype);
-//>>>>				if (zipAllowed && !registerOnly) {
+				this->checkInputSandboxSize ( );
 				if (zipAllowed) {
 					// Adds the ZIPPED_ISB attribute to the JDL
-					for (it = gzFiles.begin(); it !=gzFiles.end(); it++){
-						pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it));
+					vector<string>::iterator it3 = gzFiles.begin() ;
+					vector<string>::iterator const end3 = gzFiles.end();
+					for (; it3 != end3; it3++){
+						pass->addAttribute(JDLPrivate::ZIPPED_ISB, (*it3));
 					}
 				}
 			}
 			// Submission string
-			if (jobtype==WMS_PARAMETRIC){
+			if (jobType==WMS_PARAMETRIC){
 				jdlString = new string(pass->toString());
-			}else if  (jobtype==WMS_JOB){
+			}else if  (jobType==WMS_JOB){
 				jdlString = new string(pass->toSubmissionString());
 			}
 			delete(pass);
 		}
 	}
 	// --resource : incompatible argument
-	if( (resourceOpt) && (jobtype != WMS_JOB)){
+	if( (resourceOpt) && (jobType != WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 			"cannot be used for  DAG, collection, partitionable and parametric jobs");
 	} else if (resourceOpt) {
 		logInfo->print (WMS_DEBUG, "--resource option: The job will be submitted to this resource", *resourceOpt );
-	}else if( (nodesresOpt) && (jobtype == WMS_JOB)){
+	}else if( (nodesresOpt) && (jobType == WMS_JOB)){
 		throw WmsClientException(__FILE__,__LINE__,
 			"checkAd",  DEFAULT_ERR_CODE,
 			"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::NODESRES),
@@ -1128,8 +1139,6 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
         string *dest_uri = NULL;
         string look_for = "";
         vector<string> jobids;
-        vector< pair<string ,vector<string > > >::iterator it1 ;
-        vector<string>::iterator it2;
 	// if zipAllowed=FALSE end_loop=TRUE (do not execute the 2nd check with ZIP_DEFAULT_PROTO)
         bool end_loop = !zipAllowed;
 	bool found = false;
@@ -1158,12 +1167,14 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
                 // parent (if the input string "child" is empty)
                 look_for = jobid;
         }
-
+        vector< pair<string ,vector<string > > >::iterator it1 = dsURIs.begin() ;
+	vector< pair<string ,vector<string > > >::iterator const end1 = dsURIs.end();
         // Looks for the destURI's of the job
-        for (it1 = dsURIs.begin() ; it1 != dsURIs.end() ; it1++) {
+        for ( ; it1 != end1 ; it1++) {
                 if (it1->first == look_for) { // parent or child found
-
-                        for (it2 = (it1->second).begin() ; it2 !=  (it1->second).end() ; it2++) {
+			vector<string>::iterator it2 = (it1->second).begin() ;
+			vector<string>::iterator const end2 = (it1->second).end() ;
+                        for (; it2 != end2  ; it2++) {
                                 // 1st check >>>> Looks for the destURi for file transferring
                                 if ( it2->substr (0, (fileProto->size())) ==  *fileProto){
                                         dest_uri = new string( *it2 );
@@ -1200,7 +1211,6 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
 */
 std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string &child) {
 	vector<string> uris ;
-	vector<string>::iterator it1 ;
 	string *dest_uri = NULL;
 	bool parent = false;
 	try {
@@ -1221,10 +1231,12 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 			"WMProxy Server Error", errMsg(exc));
 	}
 	// Looks for the destURI's of the job
-	for (it1 =uris.begin() ; it1 != uris.end() ; it1++) {
+	vector<string>::iterator it = uris.begin();
+	vector<string>::iterator const end = uris.end();
+	for ( ; it != end  ; it++) {
 		// 1rst check >>> Looks for the destURi for file transferring
-		if ( it1->substr (0, (fileProto->size())) ==  *fileProto){
-			dest_uri = new string( *it1 );
+		if ( it->substr (0, (fileProto->size())) ==  *fileProto){
+			dest_uri = new string( *it );
 			if (parent) {
 				logInfo->print(WMS_DEBUG,  "DestinationURI:  " +*dest_uri, "");
 			} else {
@@ -1415,7 +1427,10 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 	}
 }
 
-
+/**
+* Retrieves the DestinationURI(s) and
+* establishes which ISB files are on the local machine and need to be transferred
+*/
 std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 						const std::string &child,
 						const std::string &isb_uri,
@@ -1439,7 +1454,6 @@ std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 			// ("zip_uri" is needed to create the file paths into the tar file that will be transferred to "dest_uri")
 			toBcopied(JDL::INPUTSB, paths, to_bcopied, zip_uri, isb_uri);
 		} else {
-		cout <<"##toBCopiedFileList>zipAllowed NO\n";
 			// Gets the InputSandbox files to be transferred to the server
 			// (The files will be directly transferred to "dest_uri")
 			toBcopied(JDL::INPUTSB, paths, to_bcopied, *dest_uri, isb_uri);
@@ -1448,11 +1462,10 @@ std::string* JobSubmit::toBCopiedFileList(const std::string &jobid,
 	return dest_uri ;
 }
 
-/*
+/**
 * Archives and compresses the InputSandbox files
 */
 void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> > &to_bcopied, const std::string &destURI){
-	vector <pair<string, string> >::iterator it ;
 	int r = 0;
 	TAR *t =NULL;
 	tartype_t *type = NULL ;
@@ -1479,7 +1492,9 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 			"tar_open",  DEFAULT_ERR_CODE,
 			"File i/o Error", "Unable to create tar file for InputSandbox: " + tar );
 		}
-		for (it = to_bcopied.begin( ); it != to_bcopied.end( ); ++it){
+		vector <pair<string, string> >::iterator it = to_bcopied.begin( );
+		vector <pair<string, string> >::iterator const end = to_bcopied.end( );
+		for ( ; it != end; ++it){
 			// local file to add to the archive
 			file = Utils::normalizeFile(it->first);
 			if (check_size){
@@ -1539,7 +1554,6 @@ void JobSubmit::createZipFile (std::vector <std::pair<std::string, std::string> 
 * Message for InputSB files that need to be transferred
 */
 std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::string> > &paths, const std::string &destURI,const std::string& jobid, const bool &zip){
-	std::vector<std::pair<std::string,std::string> >::iterator it ;
 	ostringstream info;
 	string header = "";
 	string label = "";
@@ -1564,7 +1578,9 @@ std::string JobSubmit::transferFilesList(std::vector<std::pair<std::string,std::
 		// Message
 		info << header << "\n";
 		info << "==========================================================================================================\n";
-		for (it = paths.begin(); it != paths.end( ); ++it) {
+		std::vector<std::pair<std::string,std::string> >::iterator it = paths.begin();
+		std::vector<std::pair<std::string,std::string> >::iterator const end = paths.end( );
+		for (; it != end; ++it) {
 			info << label << it->first << "\n";
 			info << "Destination URI : " << it->second << "\n";
 			info << "-----------------------------------------------------------------------------\n";
@@ -1668,8 +1684,6 @@ std::string  JobSubmit::dagJob(){
 	vector <pair<string, string> > isb_uris; ;
 	// children
 	vector <JobIdApi*> children;
-	// iterators
-	vector <JobIdApi*>::iterator it;
 	// gzip file
 	string gzip = "";
 	if (!dagAd){
@@ -1694,9 +1708,12 @@ std::string  JobSubmit::dagJob(){
 	}
 	// CHILDREN ====================
 	children = jobIds.children ;
-	if ( ! children.empty() ){
+	if ( ! children.empty() && getJobType( ) != WMS_PARAMETRIC ){
 		getDagNodesISBUris( isb_uris);
-		for ( it = children.begin() ; it != children.end(); it++){
+		// loop
+		vector <JobIdApi*>::iterator it = children.begin() ;
+		vector <JobIdApi*>::iterator const end =children.end() ;
+		for ( ; it != end ; it++){
 			if (*it){
 				// child: jobid
 				child = (*it)->jobid ;

@@ -7,7 +7,7 @@
 #include <stdlib.h>	// srandom
 #include <sys/stat.h> //mkdir
 // BOOST
-#include "boost/lexical_cast.hpp" // types conversion (checkLB/WMP)
+#include "boost/lexical_cast.hpp" // types conversion
 #include "boost/tokenizer.hpp"
 #include "boost/filesystem/operations.hpp"  // prefix & files procedures
 #include "boost/filesystem/path.hpp" // prefix & files procedures
@@ -286,8 +286,9 @@ std::vector<std::string> Utils::askMenu(const std::vector<std::string> &items, c
 						line +=  string( " " );
 						boost::char_separator<char> separator(",");
 						boost::tokenizer<boost::char_separator<char> > tok(line, separator);
-						for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-							token != tok.end(); ++token) {
+						boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+						boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+						for ( ; token != end; ++token) {
 							string ch = *token;
 							int cc = atoi(ch.c_str());
 							if (cc >= 1 && cc <= size) {
@@ -344,7 +345,8 @@ std::vector<std::string> Utils::getLbs(const std::vector<std::vector<std::string
 		return lbGroup[nsNum];
 	}else for (unsigned int i=0; i < lbGroupSize; i++){
 		// No WMP number provided, gathering all LB
-		for (unsigned int j=0;j < lbGroup[i].size();j++){
+		unsigned int size = lbGroup[i].size() ;
+		for (unsigned int j=0;j < size ;j++){
 			lbs.push_back(lbGroup[i][j]);
 		}
 	}
@@ -502,22 +504,7 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 	return ad;
 }
 
-std::pair <std::string, unsigned int> Utils::checkLb(const std::string& lbFullAddress){
-	try{
-		return checkAd( lbFullAddress,DEFAULT_LB_PROTOCOL+PROTOCOL, DEFAULT_LB_PORT);
-	}catch (WmsClientException &exc){
-		throw WmsClientException(__FILE__,__LINE__,"checkLb",DEFAULT_ERR_CODE,
-			"Wrong Configuration Value",string(exc.what()));
-	}
-}
-std::pair <std::string, unsigned int> Utils::checkWmp(const std::string& wmpFullAddress){
-	try{
-		return checkAd( wmpFullAddress,"", DEFAULT_WMP_PORT);
-	}catch (WmsClientException &exc){
-		throw WmsClientException(__FILE__,__LINE__,"checkNs",DEFAULT_ERR_CODE,
-			"Wrong Configuration Value",string(exc.what()));
-	}
-}
+
 /**********************************
 Virtual Organisation methods
 VO check priority:
@@ -526,31 +513,32 @@ VO check priority:
 	- env variable
 	- JDL (submit||listmatch)
 ***********************************/
-vector<string> parseFQAN(const string &fqan){
+std::vector<std::string> Utils::parseFQAN(const std::string &fqan){
 	vector<string> returnvector;
 	boost::char_separator<char> separator("/");
 	boost::tokenizer<boost::char_separator<char> >tok(fqan, separator);
-	for(boost::tokenizer<boost::char_separator<char> >::iterator
-		token = tok.begin(); token != tok.end(); token++) {
+	boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+	boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+	for( ; token != end; token++) {
 		returnvector.push_back(*token);
 	}
 	return returnvector;
 }
 
-string FQANtoVO(const std::string fqan){
+std::string Utils::FQANtoVO(const std::string fqan){
 	unsigned int pos = fqan.find("/", 0);
 	if(pos != string::npos) {
-		return  (parseFQAN(fqan.substr(pos,fqan.size())))[0];
+		return  (Utils::parseFQAN(fqan.substr(pos,fqan.size())))[0];
 	}
 	// TBD display warning message
 	return "";
 
 }
-string getDefaultVo(){
+std::string Utils::getDefaultVo(){
 	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
 	if (proxy){
 		const vector <std::string> fqans= glite::wms::wmproxyapiutils::getFQANs(proxy);
-		if (fqans.size()){return FQANtoVO(fqans[0]);}
+		if (fqans.size()){return Utils::FQANtoVO(fqans[0]);}
 		else {return "";};
 	} else {
 		throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
@@ -584,7 +572,7 @@ std::string* Utils::checkConf(){
 	// OTHER OPTIONS PARSING.........
 	if (vo && src!=NONE){
 		// VO name forcing ignored
-		logInfo->print (WMS_DEBUG, "--vo option ignored","" , true,true);
+		logInfo->print (WMS_WARNING, "--vo option ignored","" , true,true);
 	}else if (vo){
 		// vo option point to the file
 		// SCR is definitely NONE
@@ -645,7 +633,8 @@ void Utils::checkPrefix( ){
 	paths.push_back("/usr/local");
 	// Look for conf-file:
 	string defpath = "";
-	for (unsigned int i=0;i < paths.size();i++){
+	unsigned int size = paths.size();
+	for (unsigned int i=0;i < size;i++){
 		defpath =paths[i];
 		if ( isFile((defpath + "/bin/" + wmcOpts->getApplicationName()))){
 			break;
@@ -674,11 +663,12 @@ string Utils::checkJobId(std::string jobid){
 }
 
  std::vector<std::string> Utils::checkJobIds(std::vector<std::string> &jobids){
-        std::vector<std::string>::iterator it ;
         vector<std::string> wrongs;
 	vector<std::string> rights;
         if (wmcOpts) {
-                for (it = jobids.begin() ; it != jobids.end() ; it++){
+		std::vector<std::string>::iterator it = jobids.begin() ;
+		std::vector<std::string>::iterator const end = jobids.end();
+                for ( ; it != end ; it++){
                         try{
                                 Utils::checkJobId(*it);
 				rights.push_back(*it);
@@ -734,11 +724,12 @@ void Utils::checkResource(const std::string& resource){
 }
 
  std::vector<std::string> Utils::checkResources(std::vector<std::string> &resources){
-	std::vector<std::string>::iterator it;
 	vector<std::string> wrongs;
 	vector<std::string> rights;
 	if (wmcOpts) {
-		for (it = resources.begin(); it != resources.end(); it++){
+		std::vector<std::string>::iterator it = resources.begin();
+		std::vector<std::string>::iterator const end = resources.end();
+		for ( ; it != end; it++){
 			try{
 				Utils::checkResource(*it);
 				rights.push_back(*it);
@@ -780,8 +771,9 @@ const std::vector<std::string> Utils::extractFields(const std::string &instr, co
 	// extracts the fields from the input string
 	boost::char_separator<char> separator(sep.c_str());
 	boost::tokenizer<boost::char_separator<char> > tok(instr, separator);
-	for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-		token != tok.end(); token++) {
+	boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+	boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+	for ( ; token != end; token++) {
     		vt.push_back(*token);
 	}
 	return vt;
@@ -1240,58 +1232,18 @@ int Utils::toFile (const std::string &path, const std::string &msg, const bool &
         }
         return result;
 }
-/*
-* Stores a jobid in a file
+/**
+* Saves a message into a file after checking whether it already exists.
+* If it does and user interaction has not been disabled (by --noint),
+* the user is asked which action has to be performed
+* (either overwriting or appending ; otherwise nothing)
 */
-const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid){
-	string outmsg = "";
-        string *fromfile = NULL;
-	try {
-        	// reads the file if it already exists
-		fromfile =Utils::fromFile(path);
-       		if (fromfile){
-                        if ( fromfile->find(Utils::JOBID_FILE_HEADER)==string::npos){
-                        	string *outfile = wmcOpts->getStringAttribute (Options::OUTPUT);
-                                if (outfile &&
-                                	Utils::answerYes("\nThe following pathname is not a valid submission output file:\n"+
-                                        	string(Utils::getAbsolutePath(*outfile) ) +
-                                        "\nDo you want to overwrite it ?"   , false, true )  ){
-						// no list of jobid's
- 						outmsg = Utils::JOBID_FILE_HEADER + "\n";
-       					} else {
-						return (-1);
-                                        }
-                        } else {
-                        	// list of jobid's = yes
-				outmsg = cleanString((char*)fromfile->c_str());
-                                if ( outmsg.find("\n", outmsg.size())==string::npos){outmsg +="\n";}
-                        }
-    		} else {
-                	// the file doesn't exist (new file)
-			outmsg = Utils::JOBID_FILE_HEADER + "\n";
-   		}
-	} catch (WmsClientException &exc){
-		outmsg = Utils::JOBID_FILE_HEADER + "\n";
-        }
-        outmsg += jobid ;
-	return (toFile(path, outmsg));
-}
-/*
-* Stores a list in a file
-*/
-const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header){
-	string msg = "";
+int Utils::saveToFile(const std::string &path, const std::string &msg) {
 	bool ask = true;
 	string answer = "";
 	char  x[1024] = "";
 	int len = 0;
-	int size = 0;
 	int result = 0;
-	if (header.size( )>0){ msg = header + "\n";}
-	size = list.size();
-	for(int i = 0 ; i < size ; i++){
-		msg += list [i] + "\n";
-	}
 	// checks if the output file already exists
 	if ( isFile(path ) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
 		// if the file exists ......
@@ -1329,6 +1281,57 @@ const int Utils::saveListToFile (const std::string &path, const std::vector<std:
 		result = this->toFile(path, msg);
 	}
 	return result;
+}
+/*
+* Stores a list in a file
+*/
+const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header){
+	string msg = "";
+	// Number of items in the input list
+	int size = list.size();
+	if (header.size( )>0){ msg = header + "\n";}
+	// Prepares the message with the list items
+	for(int i = 0 ; i < size ; i++){
+		msg += list [i] + "\n";
+	}
+	// Saves to file
+	return saveToFile(path,msg);
+}
+/*
+* Stores a jobid in a file
+*/
+const int Utils::saveJobIdToFile (const std::string &path, const std::string jobid){
+	string outmsg = "";
+        string *fromfile = NULL;
+	try {
+        	// reads the file if it already exists
+		fromfile =Utils::fromFile(path);
+       		if (fromfile){
+                        if ( fromfile->find(Utils::JOBID_FILE_HEADER)==string::npos){
+                        	string *outfile = wmcOpts->getStringAttribute (Options::OUTPUT);
+                                if (outfile &&
+                                	Utils::answerYes("\nThe following pathname is not a valid submission output file:\n"+
+                                        	string(Utils::getAbsolutePath(*outfile) ) +
+                                        "\nDo you want to overwrite it ?"   , false, true )  ){
+						// no list of jobid's
+ 						outmsg = Utils::JOBID_FILE_HEADER + "\n";
+       					} else {
+						return (-1);
+                                        }
+                        } else {
+                        	// list of jobid's = yes
+				outmsg = cleanString((char*)fromfile->c_str());
+                                if ( outmsg.find("\n", outmsg.size()-1)==string::npos){outmsg +="\n";}
+                        }
+    		} else {
+                	// the file doesn't exist (new file)
+			outmsg = Utils::JOBID_FILE_HEADER + "\n";
+   		}
+	} catch (WmsClientException &exc){
+		outmsg = Utils::JOBID_FILE_HEADER + "\n";
+        }
+        outmsg += jobid ;
+	return (toFile(path, outmsg));
 }
 /**
  * Removes '/' characters at the end of the of the input pathname
@@ -1434,8 +1437,9 @@ std::vector<std::string> Utils::getItemsFromFile (const std::string &path){
 	if (bfr){
 		boost::char_separator<char> separator("\n");
 		boost::tokenizer<boost::char_separator<char> > tok(*bfr, separator);
-		for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-			token != tok.end(); ++token) {
+		boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+		boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+		for ( ; token != end; ++token) {
                         string it = *token;
                         it = Utils::cleanString( (char*) it.c_str()) ;
 			if (   (it.find("#")==0)||it.find("//")==0) {

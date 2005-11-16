@@ -191,7 +191,8 @@ std::vector<std::string> Status::getChildren(){
 std::vector<Status> Status::getChildrenStates(){
 	std::vector<Status> result;
 	std::vector<JobStatus> v = status.getValJobStatusList(JobStatus::CHILDREN_STATES);
-	for(unsigned int i=0; i < v.size(); i++){
+	unsigned int size = v.size();
+	for(unsigned int i=0; i < size; i++){
 		result.push_back(Status(v[i]));
 	}
 	return result;

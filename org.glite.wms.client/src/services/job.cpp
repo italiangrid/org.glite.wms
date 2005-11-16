@@ -70,7 +70,6 @@ Job::Job(){
         cfgCxt = NULL;
         endPoint = NULL ;
 	wmpVersion = 0;
-	needDelegation = false;
 }
 /*
 *	Default destructor
@@ -279,6 +278,7 @@ void Job::setEndPoint( ) {
 		logInfo->print(WMS_DEBUG, "EndPoint URL from user option:", *endpoint);
 		// Gets the server version
 		version = getWmpVersion (*endpoint);
+		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
 		wmpVersion = atoi (version.substr(0,1).c_str() );
 		// Performs CredentialDelegation if auto-delegation has been requested
 		if (autodgOpt){ delegateUserProxy(*endpoint);}
@@ -289,6 +289,7 @@ void Job::setEndPoint( ) {
 			logInfo->print(WMS_DEBUG, "EndPoint URL from GLITE_WMS_WMPROXY_ENDPOINT environment variable:", *endpoint );
 			// Gets the server version
 			version = getWmpVersion (*endpoint);
+			logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
 			// Performs CredentialDelegation if auto-delegation has been requested
 			if (autodgOpt){ delegateUserProxy(*endpoint);}
                 } else {
