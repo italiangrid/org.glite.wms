@@ -1,7 +1,7 @@
 #ifndef __ICECOMMANDCANCEL_H__
 #define __ICECOMMANDCANCEL_H__
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceAbsCommand.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
@@ -17,7 +17,7 @@ namespace glite {
 
                 virtual ~iceCommandCancel() {};
 
-                void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c );          
+                void execute( );          
             protected:
                 std::string _gridJobId;
             };

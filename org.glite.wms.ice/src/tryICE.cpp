@@ -5,6 +5,7 @@
 #include "iceCommandFactory.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
 #include <string>
@@ -92,13 +93,12 @@ int main(int argc, char*argv[]) {
 	continue;
       }
       cout << "\tUnparse successfull..."<<endl;
-      cmd->execute( soap_proxy::CreamProxyFactory::getProxy() );
+      cmd->execute( );
       cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
       iceManager->removeRequest(j);
     }
     sleep(1);
     requests.clear();
   }
-  
   return 0;
 }

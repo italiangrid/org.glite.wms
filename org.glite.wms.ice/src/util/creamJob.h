@@ -22,6 +22,7 @@ namespace glite {
 	  std::string endpoint;
 	  std::string cream_address;
 	  std::string cream_deleg_address;
+	  std::string user_proxyfile;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 
 	public:
@@ -55,6 +56,7 @@ namespace glite {
 	  inline std::string getEndpoint(void) const { return endpoint; }
 	  inline std::string getCreamURL(void) const { return cream_address; }
 	  inline std::string getCreamDelegURL(void) const { return cream_deleg_address; }
+	  inline std::string getUserProxyCertificate(void) const { return user_proxyfile; }
 	  inline glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { return status; }
 	};
       }

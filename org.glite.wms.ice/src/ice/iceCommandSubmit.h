@@ -1,7 +1,7 @@
 #ifndef __ICECOMMANDSUBMIT_H__
 #define __ICECOMMANDSUBMIT_H__
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceAbsCommand.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
@@ -17,7 +17,7 @@ namespace glite {
 
                 virtual ~iceCommandSubmit() {};
 
-                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c );          
+                virtual void execute( );          
 
                 std::string _jdl;
                 std::string _certfile;

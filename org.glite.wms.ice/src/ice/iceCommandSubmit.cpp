@@ -2,6 +2,8 @@
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "jobCache.h"
 #include "creamJob.h"
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -62,16 +64,16 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     }
     glite::ce::cream_client_api::util::string_manipulation::trim(_gridJobId, "\"");
 
-    // Look for "X509UserProxy" attribute inside "ad"
-    if ( !_adAD->EvaluateAttrString("X509UserProxy", _certfile) ) {
-        throw util::JobRequest_ex("attribute 'X509UserProxy' not found in JDL");
-    }
+//     // Look for "X509UserProxy" attribute inside "ad"
+//     if ( !_adAD->EvaluateAttrString("X509UserProxy", _certfile) ) {
+//         throw util::JobRequest_ex("attribute 'X509UserProxy' not found in JDL");
+//     }
 
-    glite::ce::cream_client_api::util::string_manipulation::trim(_certfile, "\"");
+//     glite::ce::cream_client_api::util::string_manipulation::trim(_certfile, "\"");
 
 }
 
-void iceCommandSubmit::execute( soap_proxy::CreamProxy* c )
+void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
 {
     vector<string> url_jid;
 
@@ -94,22 +96,27 @@ void iceCommandSubmit::execute( soap_proxy::CreamProxy* c )
         cout << "\tSubmiting JDL " << _jdl << " to ["
              << theJob->getCreamURL() << "][" << theJob->getCreamDelegURL()
 	     << "]" << endl; 
-	    
-        c->Register( 
-		    /*cream.c_str(),
-		      creamd.c_str(),*/
+	
+	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob->getUserProxyCertificate());
+
+        soap_proxy::CreamProxyFactory::getProxy()->Register( 
 		    theJob->getCreamURL().c_str(),
 		    theJob->getCreamDelegURL().c_str(),
 		    "", // deleg ID not needed because this client
 		    // will always do auto_delegation
-		    _jdl, // JDL
-		    _certfile, // cert file for auto deleg.
+		    _jdl, 
+		    theJob->getUserProxyCertificate(),
 		    url_jid,
 		    true /*autostart*/ 
 		    );
 	    
         cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
-    } catch(soap_proxy::soap_ex& ex) {
+    } catch(soap_proxy::auth_ex& ex) {
+      cerr << "\tauth_ex: " << ex.what() << endl;
+      delete( theJob );
+      exit(1);
+    } 
+    catch(soap_proxy::soap_ex& ex) {
         cerr << "\tsoap ex: "<<ex.what() << endl;
         // MUST LOG TO LB
         // HERE MUST RESUBMIT

@@ -3,6 +3,8 @@
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -54,7 +56,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
 
 }
 
-void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
+void iceCommandCancel::execute( /* soap_proxy::CreamProxy* c */ )
 {
     log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
 
@@ -68,14 +70,20 @@ void iceCommandCancel::execute( soap_proxy::CreamProxy* c )
                       "Removing job gridJobId [" + _gridJobId + "], "
                       "creamJobId [" + url_jid[1] +"]" );
 
-	vector<string> pieces;
-	glite::ce::cream_client_api::util::CEUrl::parseJobID(_theJob.getJobID(), pieces);
-	string endpoint = pieces[0] + "://" + pieces[1]+":"
-	  + pieces[2] + "/ce-cream/services/CREAM";
+// 	vector<string> pieces;
+// 	glite::ce::cream_client_api::util::CEUrl::parseJobID(_theJob.getJobID(), pieces);
+// 	string endpoint = pieces[0] + "://" + pieces[1]+":"
+// 	  + pieces[2] + "/ce-cream/services/CREAM";
 
-	cout <<"Sending cancellation requesto to ["<<endpoint<<"]"<<endl;
+	cout <<"Sending cancellation requesto to ["<<_theJob.getCreamURL()<<"]"<<endl;
 
-        c->Cancel( endpoint.c_str(), url_jid );
+	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(_theJob.getUserProxyCertificate());
+
+	soap_proxy::CreamProxyFactory::getProxy()->Cancel( _theJob.getCreamURL().c_str(), url_jid );
+
+    } catch(soap_proxy::auth_ex& ex) {
+      cerr << "\tauth_ex: "<<ex.what() << endl;
+      exit(1);
     } catch(soap_proxy::soap_ex& ex) {
         cerr << "\tsoap ex: "<<ex.what() << endl;
         // MUST LOG TO LB

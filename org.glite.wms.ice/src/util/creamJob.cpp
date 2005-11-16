@@ -33,10 +33,19 @@ CreamJob::CreamJob(const string& _jdl,
       cj_unp.Unparse(ceid, jdltree);
       //classad::ClassAdUnParser::Unparse(ceid, jdltree);
     } else {
-    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'ce_id' attributes; Buf="+_jdl);
+    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'ce_id' attributes");
+  }
+
+  if((jdltree=ad->Lookup("X509UserProxy"))!=NULL)
+    {
+      cj_unp.Unparse(user_proxyfile, jdltree);
+      //classad::ClassAdUnParser::Unparse(user_proxyfile, jdltree);
+    } else {
+    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'X509UserProxy' attributes");
   }
 
   glite::ce::cream_client_api::util::string_manipulation::trim(ceid, "\"");
+  glite::ce::cream_client_api::util::string_manipulation::trim(user_proxyfile, "\"");
 
   vector<string> pieces;
   try{
