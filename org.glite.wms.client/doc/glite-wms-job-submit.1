@@ -22,6 +22,8 @@
 \fB--logfile\fR
 <filepath>
 .HP
+\fB--noint\fR
+.HP
 \fB--input\fR, \fB-i\fR
 <filepath>
 .HP
@@ -56,8 +58,6 @@
 .HP
 \fB--output\fR, \fB-o\fR
 <filepath>
-.HP
-\fB--noint\fR
 .HP
 \fB--collection\fR, \fB-c\fR
 <dirpath>
@@ -100,7 +100,7 @@ While it does not matter the order of the other arguments, the JDL file has to b
 \fB--version\fR
 
 .IP
-displays WMProxy UI and servers version numbers.
+displays WMProxy client and servers version numbers.
 If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the \emph{WMProxyEndPoints} attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
 .PP
 .HP
@@ -114,7 +114,7 @@ displays command usage
 <configfile>
 
 .IP
-if the command is launched with this option, the configuration file pointed by filepath is used. This option is meaningless when used toghether with "--vo" option
+if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used toghether with "--vo" option
 .PP
 .HP
 \fB--vo\fR
@@ -144,6 +144,12 @@ located under the \emph{/var/tmp} directory or in the log file specified with --
 When this option is specified, a command log file (whose pathname is \emph{filepath}) is created.
 .PP
 .HP
+\fB--noint\fR
+
+.IP
+if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)
+.PP
+.HP
 \fB--input\fR, \fB-i\fR
 <filepath>
 
@@ -170,7 +176,8 @@ if this option is specified, the job-ad sent to the NS contains a line of the ty
 \fB--nolisten\fR
 
 .IP
-This option can be used only for interactive jobs. It makes the command forward the job standard streams coming from the WN to named pipes on the UI machine whose names are returned to the user together with the OS id of the listener process. This allows the user to interact with the job through her/his own tools. It is important to note that when this option is specified, the UI has no more control over the launched listener process that has hence to be killed by the user (through the returned process id) once the job is finished.
+This option can be used only for interactive jobs. It makes the command forward the job standard streams coming from the WN to named pipes on the client machine whose names are returned to the user together with the OS id of the listener process. This allows the user to interact with the job through her/his own tools. It is important to note that when this option is specified, the command has no more control over the launched listener process that has hence to be killed by the user (through the returned process id) once the job is finished.
+
 .PP
 .HP
 \fB--nomsg\fR
@@ -234,12 +241,6 @@ this option allowing starting a job (specified by JobId) previously registered a
 writes the generated jobId assigned to the submitted job in the file specified by filepath,which can be either a simple name or an absolute path (on the submitting machine). In the former case the file is created in the current working directory.
 .PP
 .HP
-\fB--noint\fR
-
-.IP
-if this option is specified, every interactive question to the user is skipped and the operation is continued (when possible)
-.PP
-.HP
 \fB--collection\fR, \fB-c\fR
 <dirpath>
 
@@ -250,13 +251,13 @@ this option allows specifying  the directory pointed by directory_path containin
 
 GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
 
-GLITE_WMS_LOCATION:  This variable must be set whether the Glite installation is not  located in the default paths: either /opt/glite or /usr/local
+GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
 
-GLITE_LOCATION: This variable must be set whether the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
+GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
 
 GLITE_WMS_WMPROXY_ENDPOINT:		This variable may be set to specify the endpoint URL
 
-GLOBUS_LOCATION: This variable must be set whether the Globus installation is not located in the default path /opt/globus
+GLOBUS_LOCATION: This variable must be set when the Globus installation is not located in the default path /opt/globus
 
 GLOBUS_TCP_PORT_RANGE="<val min> <val max>"		This variable must be set to define a range of ports to be used for inbound connections in the interactivity context
 
