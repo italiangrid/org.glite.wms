@@ -23,6 +23,8 @@
 #include <iostream>
 // wmproxy-API
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
+// Configuration
+#include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // Ad attributes and JDL methods
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/JDLAttributes.h"
@@ -308,8 +310,15 @@ void JobSubmit::readOptions (int argc,char **argv){
 * Performs the main operation for the submission
 */
 void JobSubmit::submission ( ){
-	// proxy validity must be at least 20 minutes
-	postOptionchecks(20);
+	// proxy validity time read from Configuration (default value alway present)
+	if (wmcUtils){
+		postOptionchecks(wmcUtils->getConf()->default_proxy_validity());
+	}else{
+		throw WmsClientException(__FILE__,__LINE__,
+			"submission",  DEFAULT_ERR_CODE ,
+			"wmcUtils fatal Error",
+			"Utilities not yet intialised");
+	}
 	ostringstream out ;
 	string jobid = "";
 	bool toBretrieved = false;
@@ -751,7 +760,7 @@ void JobSubmit::checkAd(bool &toBretrieved, wmsJobType &jobtype){
 	string message = "";
 	jobtype = WMS_JOB;
 	toBretrieved =true ;
-	glite::wms::common::configuration::WMCConfiguration* wmcConf =wmcUtils->getConf();
+	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
 	if (collectOpt) {
 		jobtype = WMS_COLLECTION ;
 		try {

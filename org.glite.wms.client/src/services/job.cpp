@@ -33,7 +33,7 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/extractfiles.h"
 #include "glite/wms/jdl/adconverter.h"
-
+#include <boost/lexical_cast.hpp>
 
 
 using namespace std ;
@@ -125,7 +125,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
   		wmcOpts->printUsage ((wmcOpts->getApplicationName( )).c_str());
 	}
 }
-/** After option parseing, some common check can be performed.
+/** After option parsing, some common check can be performed.
 So far: proxy time left*/
 void Job::postOptionchecks(unsigned int proxyMinTime){
 
@@ -137,7 +137,8 @@ void Job::postOptionchecks(unsigned int proxyMinTime){
 	} else if (proxyTimeLeft<proxyMinTime){
 		throw WmsClientException(__FILE__,__LINE__,
 			"postOptionchecks",DEFAULT_ERR_CODE,
-			"Proxy validity Error", "Certificate will expire less than 20 minutes");
+			"Proxy validity Error", "Certificate will expire in less than"
+			+ boost::lexical_cast<std::string>(proxyMinTime) + "minutes");
 	}
 
 }
