@@ -12,6 +12,7 @@ using namespace glite::wms::ice;
 using namespace glite::wms::common::utilities;
 using namespace std;
 
+typedef vector<string>::iterator vstrIt;
 
 //______________________________________________________________________________
 ice::ice(const string& NS_FL, 
@@ -88,12 +89,12 @@ void ice::startListener(const int& listenPort)
 }    
 
 //______________________________________________________________________________
-void ice::startPoller(const string& hostCert, const int& poller_delay)
+void ice::startPoller(const int& poller_delay)
 {
   if(status_poller_started) return;
   cout << "Creating a Cream status poller object..."<<endl;
   try {
-    poller = new util::eventStatusPoller(hostCert, poller_delay, this);
+    poller = new util::eventStatusPoller(this, poller_delay);
   } catch(glite::wms::ice::util::eventStatusPoller_ex& ex) {
     throw iceInit_ex(ex.what());
   }
@@ -137,7 +138,7 @@ void ice::getNextRequests(vector<string>& ops)
     cerr << ex.what()<<endl;
     exit(1);
   }
-  for(unsigned int j=0; j<requests.size(); j++)  
+  for(unsigned j=0; j < requests.size(); j++)  
     ops.push_back(*requests[j]);
 }
 

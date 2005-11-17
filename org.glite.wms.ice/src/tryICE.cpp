@@ -32,7 +32,6 @@ int main(int argc, char*argv[]) {
    *                  argv[2]: WM filelist
    *                  argv[3]: job cache persistency file
    *                  argv[4]: TCP port for event status listener
-   *                  argv[5]: host's certificate
    */
 
   if(argc<6) return 1;
@@ -57,7 +56,7 @@ int main(int argc, char*argv[]) {
   
   vector<string> requests;
   requests.reserve(1000);
-  soap_proxy::CreamProxyFactory::initProxy(true, argv[5]);
+  soap_proxy::CreamProxyFactory::initProxy(true);
   if(!soap_proxy::CreamProxyFactory::getProxy())
     {
       cerr << "CreamProxy creation went wrong. Stop"<<endl;
@@ -67,7 +66,7 @@ int main(int argc, char*argv[]) {
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   
   if(USE_STATUS_LISTENER) iceManager->startListener(atoi(argv[4]));
-  if(USE_STATUS_POLLER) iceManager->startPoller(argv[5], 10);
+  if(USE_STATUS_POLLER) iceManager->startPoller(10);
 
   vector<string> url_jid;
   url_jid.reserve(2);

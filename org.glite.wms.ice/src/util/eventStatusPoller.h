@@ -32,20 +32,23 @@ namespace glite {
 	  int delay;
 	  std::vector<std::string> jobs_to_query;
 	  std::vector<std::string> empty;
-	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*> _jobinfolist;
+	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*> 
+	    _jobinfolist;
 	  std::vector<std::string> url_pieces;
 	  absice* iceManager;
 	  void purgeJobs(const std::vector<std::string>&);
 
 	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
-
+	  std::vector<std::string> oneJobToQuery;
+	  std::vector<std::string> oneJobToPurge;
 	public:
-	  eventStatusPoller(const std::string& certfile,
-			    const int& D=DELAY,
-			    absice* _im = NULL) 
+	  eventStatusPoller(
+			    absice* _im,
+			    const int& D=DELAY
+			    ) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
 
-	  virtual ~eventStatusPoller() { }
+	  virtual ~eventStatusPoller();// { if(creamClient) delete(creamClient); }
 
 	  bool getStatus(void);
 	  void updateJobCache(void);

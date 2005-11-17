@@ -68,7 +68,7 @@ namespace glite {
 	void removeRequest(const unsigned int&);
 	void ungetRequest(const unsigned int&);
 	void startListener(const int&);
-	void startPoller(const std::string&, const int&);
+	void startPoller(const int&);
 	void stopListener();
 	void stopPoller();
 
