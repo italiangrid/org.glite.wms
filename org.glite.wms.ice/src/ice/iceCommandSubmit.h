@@ -18,7 +18,7 @@ namespace glite {
                 virtual ~iceCommandSubmit() {};
 
                 virtual void execute( );          
-
+            protected:
                 std::string _jdl;
                 std::string _certfile;
                 std::string _gridJobId;

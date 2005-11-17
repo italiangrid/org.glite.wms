@@ -21,7 +21,7 @@ namespace glite {
                  * Executes the command. 
                  *
                  */
-                virtual void execute(  ) = 0;
+                virtual void execute( void ) = 0;
           
             protected:
 

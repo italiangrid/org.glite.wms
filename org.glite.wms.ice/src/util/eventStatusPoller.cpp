@@ -10,6 +10,7 @@
 #include "glite/ce/cream-client-api-c/DelegationException.h"
 #include "abs-ice-core.h"
 #include <vector>
+#include <map>
 
 using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
