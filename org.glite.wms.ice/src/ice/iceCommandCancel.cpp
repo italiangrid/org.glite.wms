@@ -1,5 +1,5 @@
 #include "iceCommandCancel.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "boost/algorithm/string.hpp"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
@@ -27,7 +27,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     if ( !_rootAD->EvaluateAttrString( "command", _commandStr ) ) {
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
-    glite::ce::cream_client_api::util::string_manipulation::trim(_commandStr, "\"");
+    boost::trim_if(_commandStr, boost::is_any_of("\""));
 
     if ( 0 != _commandStr.compare( "jobcancel" ) ) {
         throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandCancel" );

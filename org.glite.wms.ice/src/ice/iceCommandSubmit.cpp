@@ -1,9 +1,9 @@
 #include "iceCommandSubmit.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "jobCache.h"
 #include "creamJob.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "boost/algorithm/string.hpp"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -26,7 +26,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     if ( !_rootAD->EvaluateAttrString( "command", _commandStr ) ) {
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
-    glite::ce::cream_client_api::util::string_manipulation::trim(_commandStr, "\"");
+    boost::trim_if( _commandStr, boost::is_any_of("\"") );
 
     if ( 0 != _commandStr.compare( "jobsubmit" ) ) {
         throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
@@ -62,14 +62,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     if ( !_adAD->EvaluateAttrString( "id", _gridJobId ) ) {
         throw util::JobRequest_ex( "attribute 'id' inside 'ad' not found, or is not a string" );
     }
-    glite::ce::cream_client_api::util::string_manipulation::trim(_gridJobId, "\"");
-
-//     // Look for "X509UserProxy" attribute inside "ad"
-//     if ( !_adAD->EvaluateAttrString("X509UserProxy", _certfile) ) {
-//         throw util::JobRequest_ex("attribute 'X509UserProxy' not found in JDL");
-//     }
-
-//     glite::ce::cream_client_api::util::string_manipulation::trim(_certfile, "\"");
+    boost::trim_if(_gridJobId, boost::is_any_of("\"") );
 
 }
 
