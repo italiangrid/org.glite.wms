@@ -1,7 +1,7 @@
 #ifndef __ICEABSCOMMAND_H__
 #define __ICEABSCOMMAND_H__
 
-#include "glite/ce/cream-client-api-c/CreamProxy.h"
+//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
 #include "JobRequest_ex.h"
@@ -20,10 +20,8 @@ namespace glite {
                 /**
                  * Executes the command. 
                  *
-                 * @param c the CreamProxy object used to interact
-                 * with Cream.
                  */
-                virtual void execute( glite::ce::cream_client_api::soap_proxy::CreamProxy* c ) = 0;
+                virtual void execute(  ) = 0;
           
             protected:
 

@@ -2,11 +2,21 @@
 #define __STATUSPOLLER_H__
 
 #include "glite/ce/cream-client-api-c/JobInfoList.h"
-//#include "ice-core.h"
 #include "eventStatusPoller_ex.h"
 #include "runnable.h"
 
 #define DELAY 10
+
+namespace glite {
+  namespace ce {
+    namespace cream_client_api {
+      namespace soap_proxy {
+
+	class CreamProxy;
+      }
+    }
+  }
+};
 
 namespace glite {
   namespace wms {
@@ -26,6 +36,8 @@ namespace glite {
 	  std::vector<std::string> url_pieces;
 	  absice* iceManager;
 	  void purgeJobs(const std::vector<std::string>&);
+
+	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
 
 	public:
 	  eventStatusPoller(const std::string& certfile,

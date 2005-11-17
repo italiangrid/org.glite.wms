@@ -2,7 +2,7 @@
 #include "eventStatusPoller.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/soap_ex.h"
 #include "glite/ce/cream-client-api-c/BaseException.h"
@@ -26,10 +26,19 @@ eventStatusPoller::eventStatusPoller(
   throw(eventStatusPoller_ex&)
   : endpolling(false), 
     delay(_d),
-    iceManager(_iceManager)
+    iceManager(_iceManager),
+    creamClient(NULL)
 {
   jobs_to_query.reserve(1000);
   url_pieces.reserve(4);
+  try {
+    creamClient = new soap_proxy::CreamProxy(false);
+    creamClient->Authenticate( certfile );
+  } catch(soap_proxy::soap_ex& ex) {
+    throw eventStatusPoller_ex( ex.what() );
+  } catch(soap_proxy::auth_ex& ex) {
+    throw eventStatusPoller_ex( ex.what() );
+  }
 }
 
 //______________________________________________________________________________
@@ -47,7 +56,7 @@ bool eventStatusPoller::getStatus(void)
   }
   _jobinfolist.clear();
   
-  soap_proxy::CreamProxyFactory::getProxy()->clearSoap();
+  creamClient->clearSoap();
 
   jobs_to_query.clear();
   try {
@@ -72,7 +81,7 @@ bool eventStatusPoller::getStatus(void)
     {
       try {
 	cout << "Sending JobInfo request to ["<<endpointIT->first<<"]"<<endl;
-	_jobinfolist.push_back( soap_proxy::CreamProxyFactory::getProxy()->Info(endpointIT->first.c_str(), endpointIT->second, empty, -1, -1 ));
+	_jobinfolist.push_back( creamClient->Info(endpointIT->first.c_str(), endpointIT->second, empty, -1, -1 ));
 	  
       } catch(soap_proxy::soap_ex& ex) { 
 	cerr << "CreamProxy::Info raised a soap_ex exception: " 
@@ -251,7 +260,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	for(unsigned k=0; k<it->second.size(); ++k)
 	  cout << " -> Will purge [" << it->second[k] 
 	       << "]" << endl;
-	soap_proxy::CreamProxyFactory::getProxy()->Purge(it->first.c_str(), it->second );
+	creamClient->Purge(it->first.c_str(), it->second );
       } catch(cream_exceptions::BaseException& s) {
 	cerr << s.what()<<endl;
       } catch(cream_exceptions::InternalException& severe) {
