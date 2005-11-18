@@ -1,6 +1,7 @@
 
 #include "jobRequest.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "boost/algorithm/string.hpp"
+
 
 using namespace glite::wms::ice;
 //using namespace glite::ce::cream_client_api::util;
@@ -32,7 +33,7 @@ void jobRequest::unparse(const string& request) throw(util::ClassadSyntax_ex&, u
   else {
     unp.Unparse(_command, tree);
     //cout << "jobRequest::unparse - req=["<<_command<<"]"<<endl;
-    glite::ce::cream_client_api::util::string_manipulation::trim(_command, "\"");
+    boost::trim_if(_command, boost::is_any_of("\""));
     command = unknown;
     if(_command == "jobsubmit")
       command = jobsubmit;
@@ -77,6 +78,6 @@ void jobRequest::unparse(const string& request) throw(util::ClassadSyntax_ex&, u
     throw util::JobRequest_ex("attribute 'X509UserProxy' not found in JDL");
   else {
     unp.Unparse(certfile, tree);
-    glite::ce::cream_client_api::util::string_manipulation::trim(certfile, "\"");
+    boost::trim_if(certfile, boost::is_any_of("\""));
   }
 }

@@ -1,8 +1,10 @@
 
 #include "creamJob.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+//#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "classad_distribution.h"
+#include "boost/algorithm/string.hpp"
+
 
 using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
@@ -44,8 +46,8 @@ CreamJob::CreamJob(const string& _jdl,
     throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'X509UserProxy' attributes");
   }
 
-  glite::ce::cream_client_api::util::string_manipulation::trim(ceid, "\"");
-  glite::ce::cream_client_api::util::string_manipulation::trim(user_proxyfile, "\"");
+  boost::trim_if(ceid, boost::is_any_of("\"") );
+  boost::trim_if(user_proxyfile, boost::is_any_of("\""));
 
   vector<string> pieces;
   try{

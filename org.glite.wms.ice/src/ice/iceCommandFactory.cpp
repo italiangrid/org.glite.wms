@@ -2,8 +2,8 @@
 #include "iceAbsCommand.h"
 #include "iceCommandSubmit.h"
 #include "iceCommandCancel.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "classad_distribution.h"
+#include "boost/algorithm/string.hpp"
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -22,7 +22,7 @@ iceAbsCommand* iceCommandFactory::mkCommand( const std::string& request ) throw(
     if ( !_rootAd->EvaluateAttrString( "command", _commandStr ) ) {
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
-    glite::ce::cream_client_api::util::string_manipulation::trim(_commandStr, "\"");
+    boost::trim_if(_commandStr, boost::is_any_of("\""));
 
     if ( 0 == _commandStr.compare( "jobsubmit" ) ) {
         result = new iceCommandSubmit( request );

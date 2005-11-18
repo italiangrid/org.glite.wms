@@ -4,6 +4,8 @@
 #include "jnlFileManager.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "boost/algorithm/string.hpp"
+
 #include "classad_distribution.h"
 #include "source.h" // classad's stuff
 #include "sink.h"   // classad's stuff
@@ -14,6 +16,7 @@
 #include <exception>
 #include <cstdio> // for ::rename(...)
 #include <string>
+#include <sstream>
 #include <utility> // for make_pair
 
 extern int errno;
@@ -57,7 +60,7 @@ void jobCache::jobCacheTable::putJob( const CreamJob& c )
         *pos = c;
     }
     _gidMap.insert( make_pair( c.getGridJobID(), pos ) );
-    if ( c.getJobID().compare("") ) {
+    if ( !c.getJobID().empty() ) {
         _cidMap.insert( make_pair( c.getJobID(), pos ) );
     }
 }
@@ -74,7 +77,7 @@ void jobCache::jobCacheTable::delJob( const CreamJob& c )
         // Removes the job from the _gidMap
         _gidMap.erase( it );
         // If necessary, removes the job from the _cidMap
-        if ( c.getJobID().compare("") ) {
+        if ( !c.getJobID().empty() ) {
             _cidMap.erase( c.getJobID() );
         }
     }
@@ -444,15 +447,15 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' attributes");
   }
     
-  apiutil::string_manipulation::trim(cid, '"');
-  apiutil::string_manipulation::trim(st, '"');
-  apiutil::string_manipulation::trim(gid, '"');
-  apiutil::string_manipulation::trim(jdl, '"');
+  boost::trim_if(cid, boost::is_any_of("\""));
+  boost::trim_if(st, boost::is_any_of("\""));
+  boost::trim_if(gid, boost::is_any_of("\""));
+  boost::trim_if(jdl, boost::is_any_of("\""));
 
   api::job_statuses::job_status stNum;
   try {
     stNum = 
-      (api::job_statuses::job_status)apiutil::string_manipulation::string2int(st);
+        (api::job_statuses::job_status)std::atoi( st.c_str() );
   } catch(apiutil::NumericException& ex) {
     cerr << ex.what()<<endl;
     exit(1);
@@ -518,10 +521,17 @@ void jobCache::logOperation( const operation& op, const std::string& param )
 //______________________________________________________________________________
 void jobCache::toString(const CreamJob& cj, string& target)
 {
-  target = string("[grid_jobid=\"" + cj.getGridJobID() + "\";cream_jobid=\"" 
-		  + cj.getJobID() + "\";status=\"" 
-		  + apiutil::string_manipulation::make_string((int)cj.getStatus()) 
-		  + "\"; jdl=" + cj.getJDL() + "]");
+    ostringstream result;
+    result << "[grid_jobid=\"" << cj.getGridJobID() << "\";cream_jobid=\"" 
+           << cj.getJobID() << "\";status=\"" 
+           << (int)cj.getStatus()
+           << "\"; jdl=" << cj.getJDL() << "]" << ends;
+    target = result.str();
+
+//   target = string("[grid_jobid=\"" + cj.getGridJobID() + "\";cream_jobid=\"" 
+// 		  + cj.getJobID() + "\";status=\"" 
+// 		  + apiutil::string_manipulation::make_string((int)cj.getStatus()) 
+// 		  + "\"; jdl=" + cj.getJDL() + "]");
 }
 
 //______________________________________________________________________________
