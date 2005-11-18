@@ -787,9 +787,9 @@ doExecv(const string &command, const vector<string> &params,
         				+ (endIndex - startIndex) / 2;
                     edglog(info)<<"Calling from index "<<startIndex
                     	<<" to "<<middle<<endl;
-                    edglog(info)<<"Calling from index "<<middle + 1
-                    	<<" to "<<endIndex<<endl; 
         			doExecv(command, params, dirs, startIndex, middle);
+        			edglog(info)<<"Calling from index "<<middle + 1
+                    	<<" to "<<endIndex<<endl; 
         			doExecv(command, params, dirs, middle + 1, endIndex);
 	        	} else {
 	        		edglog(critical)<<"Unable to execute command during job local "

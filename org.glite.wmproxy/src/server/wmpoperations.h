@@ -12,7 +12,7 @@
 #define GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 
 #include "wmpresponsestruct.h"
-
+#include "soapH.h"
 
 // Web service available operations.
 // All methods are void, response values are inserted in the corresponding
@@ -20,15 +20,21 @@
 // For more information about arguments see Web Service Description Language
 // file (wsdl).
 
+std::vector<ns1__JobIdStructType*> *
+convertToGSOAPJobIdStructTypeVector(std::vector<JobIdStructType*> 
+	*graph_struct_type_vector);
+	
 void getVersion(getVersionResponse &getVersion_response);
 
 void jobRegister(jobRegisterResponse &jobRegister_response,
 	const std::string &jdl, const std::string &delegation_id);
 
-void jobStart(jobStartResponse &jobStart_response, const std::string &job_id);
+void jobStart(jobStartResponse &jobStart_response, const std::string &job_id,
+	struct soap *soap);
 
-void jobSubmit(jobSubmitResponse &jobSubmit_response, const std::string &jdl,
-	const std::string &delegation_id);
+void jobSubmit(struct ns1__jobSubmitResponse &response, 
+	jobSubmitResponse &jobSubmit_response, const std::string &jdl,
+	const std::string &delegation_id, struct soap *soap);
 
 void jobCancel(jobCancelResponse &jobCancel_response, const std::string &job_id);
 

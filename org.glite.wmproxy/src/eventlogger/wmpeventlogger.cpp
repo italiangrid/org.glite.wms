@@ -362,7 +362,7 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 	// Logging children user tags
 	logUserTags(dag->getSubAttributes(JDL::USERTAGS));
 	
-	registerSubJobs(dag, subjobs);
+	//registerSubJobs(dag, subjobs);
 	
 	return jobids;
 	
@@ -914,7 +914,7 @@ WMPEventLogger::isRegisterEventOnly()
 	for (unsigned int i = 0; i < events.size(); i++) {
 		if ((events[i].type != glite::lb::Event::REGJOB)	
 				&& (events[i].type != glite::lb::Event::USERTAG)) {
-			return false;	
+			return false;
 		}
 	}
 	return true;

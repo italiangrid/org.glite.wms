@@ -13,8 +13,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <sys/wait.h>
+#include <signal.h>
+
 // Boost
 #include <boost/lexical_cast.hpp>
+
+#include "soapH.h"
 
 #include "wmpoperations.h"
 #include "wmpconfiguration.h"
@@ -175,7 +180,7 @@ pair<string, string> regist(jobRegisterResponse &jobRegister_response,
 	const string &delegatedproxy, const string &jdl, WMPExpDagAd *dag,
 	JobAd *jad = NULL);
 
-void submit(const string &jdl, JobId *jid);
+void submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth);
 
 int listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	const string &delegation_id);
@@ -665,6 +670,82 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 }
 
 void
+setSubjobFileSystem(authorizer::WMPAuthorizer *auth, 
+	const string &jobid, vector<string> &jobids)
+{
+	GLITE_STACK_TRY("setSubjobFileSystem()");
+	edglog_fn("wmpoperations::setSubjobFileSystem");
+	
+	// Getting LCMAPS mapped User ID
+	uid_t jobdiruserid = auth->getUserId();
+	edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
+	
+	// Getting WMP Server User ID
+	uid_t userid = getuid();
+
+	string document_root = getenv(DOCUMENT_ROOT);
+	
+	// Getting delegated proxy inside job directory
+	string proxy(wmputilities::getJobDelegatedProxyPath(jobid));
+	edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
+	
+	// Creating a copy of the Proxy
+	string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
+	
+	// Creating sub jobs directories
+	if (jobids.size() != 0) {
+		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
+		int outcome = wmputilities::managedir(document_root, userid, jobdiruserid, jobids);
+		if (outcome) {
+			edglog(critical)
+				<<"Unable to create sub jobs local directories for job:\n\t"
+				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
+				"setJobFileSystem()", wmputilities::WMS_FATAL,
+				"Unable to create sub jobs local directories\n(please contact "
+				"server administrator)");
+		} else {
+			string link;
+			string linkbak;
+			for (unsigned int i = 0; i < jobids.size(); i++) {
+				link = wmputilities::getJobDelegatedProxyPath(jobids[i]);
+				edglog(debug)<<"Creating proxy symbolic link for: "
+					<<jobids[i]<<endl;
+				if (symlink(proxy.c_str(), link.c_str())) {
+			      	edglog(critical)
+			      		<<"Unable to create symbolic link to proxy file:\n\t"
+			      		<<link<<"\n"<<strerror(errno)<<endl;
+			      
+			      	throw FileSystemException(__FILE__, __LINE__,
+						"setJobFileSystem()", wmputilities::WMS_FATAL,
+						"Unable to create symbolic link to proxy file\n"
+							"(please contact server administrator)");
+			    }
+			    
+			    linkbak = wmputilities::getJobDelegatedProxyPathBak(jobids[i]);
+			    edglog(debug)<<"Creating backup proxy symbolic link for: "
+					<<jobids[i]<<endl;
+			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
+			      	edglog(critical)
+			      		<<"Unable to create symbolic link to backup proxy file:\n\t"
+			      		<<linkbak<<"\n"<<strerror(errno)<<endl;
+			      
+			      	throw FileSystemException(__FILE__, __LINE__,
+						"setJobFileSystem()", wmputilities::WMS_FATAL,
+						"Unable to create symbolic link to backup proxy file\n"
+							"(please contact server administrator)");
+			    }
+			}
+		}
+		// Creating gacl file in the private job directory
+		authorizer::WMPAuthorizer::setJobGacl(jobid);
+		authorizer::WMPAuthorizer::setJobGacl(jobids);
+	}
+	
+	GLITE_STACK_CATCH();
+}
+
+void
 setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 {
 	GLITE_STACK_TRY("setAttributes()");
@@ -707,7 +788,7 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 		wmputilities::getOutputSBDirectoryPath(*jid));
 		
 	// Adding OutputSandboxDestURI attribute
-	if (jad->hasAttribute(JDL::OUTPUTSB)) {
+	/*if (jad->hasAttribute(JDL::OUTPUTSB)) {
 		edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
 		vector<string> osbdesturi;
 		if (jad->hasAttribute(JDL::OSB_DEST_URI)) {
@@ -728,7 +809,7 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 			edglog(debug)<<"OutputSBDestURI: "<<osbdesturi[i]<<endl;
 			jad->addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
 		}
-	}
+	}*/
 
 	// Adding Proxy attributes
 	edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
@@ -830,7 +911,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 
 	// Adding attribute for perusal functionalities
-	string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+	/*string peekdir = wmputilities::getPeekDirectoryPath(*jid);
 	if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
 		if (jad->getBool(JDL::PU_FILE_ENABLE)) {
 			edglog(debug)<<"Enabling perusal functionalities for job: "
@@ -853,7 +934,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 			edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
 			jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
 		}
-	}
+	}*/
 	
 	setAttributes(jad, jid, dest_uri);
 	
@@ -1104,7 +1185,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	dag->setJobIds(jobids);
 	
 	// Setting internal attributes for sub jobs
-	string jobidstring;
+	/*string jobidstring;
 	string dest_uri;
 	for (unsigned int i = 0; i < jobids.size(); i++) {
 		jobidstring = jobids[i];
@@ -1182,10 +1263,10 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		}
 			
 		dag->replaceNode(subjobid, nodead);
-	}
+	}*/
 	
 	// Getting Input Sandbox Destination URI
-	dest_uri = wmputilities::getDestURI(stringjid, defaultprotocol,
+	string dest_uri = wmputilities::getDestURI(stringjid, defaultprotocol,
 		defaultport);
 	edglog(debug)<<"Destination uri: "<<dest_uri<<endl;
 	setAttributes(dag, jid, dest_uri);
@@ -1198,7 +1279,10 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 				"Unable to set User Proxy for LB context");
 	}
 	
-	dag->getSubmissionStrings();
+	////// If present -> Mandatory attribute not present
+	//dag->getSubmissionStrings();
+	////////////////////////////////////////////////////
+	
 	//dag->toString(ExpDagAd::SUBMISSION);
 	wmplogger.registerDag(dag);
 	
@@ -1211,7 +1295,14 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 	
 	// Creating private job directory with delegated Proxy
-	setJobFileSystem(auth, delegatedproxy, stringjid, jobids, renewalproxy);
+	if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+		// Creating job directories only for the parent. -> empty vector.
+		vector<string> emptyvector;
+		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector, renewalproxy);
+	} else {
+		// Sub jobs directory MUST be created now
+		setJobFileSystem(auth, delegatedproxy, stringjid, jobids, renewalproxy);
+	}
 	
 	delete jid;
 	
@@ -1242,9 +1333,45 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	GLITE_STACK_CATCH();
 }
 
+SOAP_FMAC5 int SOAP_FMAC6 
+soap_serve_start(struct soap *soap)
+{
+	struct ns1__jobStartResponse response;
+	soap_serializeheader(soap);
+	soap_serialize_ns1__jobStartResponse(soap, &response);
+	if (soap_begin_count(soap)) {
+		return soap->error; 
+	}
+	if (soap->mode & SOAP_IO_LENGTH)
+	{	if (soap_envelope_begin_out(soap)
+		 || soap_putheader(soap)
+		 || soap_body_begin_out(soap)
+		 || soap_put_ns1__jobStartResponse(soap, &response,
+		 	"ns1:jobStartResponse", "")
+		 || soap_body_end_out(soap)
+		 || soap_envelope_end_out(soap)) {
+			 return soap->error;
+		 }
+	};
+	if (soap_end_count(soap)
+	 || soap_response(soap, SOAP_OK)
+	 || soap_envelope_begin_out(soap)
+	 || soap_putheader(soap)
+	 || soap_body_begin_out(soap)
+	 || soap_put_ns1__jobStartResponse(soap, &response,
+	 	"ns1:jobStartResponse", "")
+	 || soap_body_end_out(soap)
+	 || soap_envelope_end_out(soap)
+	 || soap_end_send(soap)) {
+		return soap->error;
+	}
+	
+	return soap_closesock(soap); 	
+}
 
 void
-jobStart(jobStartResponse &jobStart_response, const string &job_id)
+jobStart(jobStartResponse &jobStart_response, const string &job_id,
+	struct soap *soap)
 {
 	GLITE_STACK_TRY("jobStart()");
 	edglog_fn("wmpoperations::jobStart");
@@ -1269,7 +1396,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 	} catch (NotAVOMSProxyException &navp) {
 		auth->authorize("", job_id);
 	}
-	delete auth;
+	//delete auth;
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;
@@ -1338,8 +1465,14 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id)
 	
 	edglog(debug)<<"JDL to Start:\n"<<event.jdl<<endl;
 	
-	submit(event.jdl, jid);
+	// Creating SOAP answer
+	if (soap_serve_start(soap) || (soap->fserveloop && soap->fserveloop(soap))) {
+		// if ERROR throw exception??
+		soap_send_fault(soap);
+	}
 	
+	submit(event.jdl, jid, auth);
+	delete auth;
 	delete jid;
 	
 	GLITE_STACK_CATCH();
@@ -1391,12 +1524,43 @@ logCheckpointable(WMPEventLogger * wmplogger, JobAd * jad,
 	GLITE_STACK_CATCH();
 }
 
+char ** 
+copyEnvironment(char** sourceEnv) 
+{
+	// Vars count
+	char **oldEnv;
+    for (oldEnv = environ; *oldEnv; oldEnv++);
+	int nenvvars = (oldEnv - environ);
+	
+	// Memory allocation
+    char ** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **)); 
+   	char ** tmp = targetEnv;
+    //if (!newenviron) {
+		// ERROR
+    //}
+    
+    // Copying vars
+    for (oldEnv = sourceEnv; *oldEnv; oldEnv++) {
+	    *targetEnv++ = strdup(*oldEnv);
+    }
+    *targetEnv = NULL;
+    
+    return tmp;
+}
+
 void
-submit(const string &jdl, JobId *jid)
+submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth)
 {
 	GLITE_STACK_TRY("submit()");
 	edglog_fn("wmpoperations::submit");
 	
+	extern char **environ;
+	char ** backupenv = copyEnvironment(environ);
+	
+	FCGI_Finish();
+	
+	environ = backupenv;
+	 
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
@@ -1443,6 +1607,63 @@ submit(const string &jdl, JobId *jid)
 		JobAd * jad = new JobAd(jdl);
 		jad->setLocalAccess(false);
 		
+		// Getting Input Sandbox Destination URI
+		string defaultprotocol = conf.getDefaultProtocol();
+		int defaultport = conf.getDefaultPort();
+		string dest_uri = wmputilities::getDestURI(jid->toString(),
+			defaultprotocol, defaultport);
+		edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
+		
+		// Adding OutputSandboxDestURI attribute
+		if (jad->hasAttribute(JDL::OUTPUTSB)) {
+			edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
+			vector<string> osbdesturi;
+			if (jad->hasAttribute(JDL::OSB_DEST_URI)) {
+				osbdesturi = wmputilities::computeOutputSBDestURI(
+					jad->getStringValue(JDL::OSB_DEST_URI),
+					dest_uri);
+				jad->delAttribute(JDL::OSB_DEST_URI);
+			} else if (jad->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+				osbdesturi = wmputilities::computeOutputSBDestURIBase(
+					jad->getStringValue(JDL::OUTPUTSB),
+					jad->getString(JDL::OSB_BASE_DEST_URI));
+			} else {
+				osbdesturi = wmputilities::computeOutputSBDestURIBase(
+					jad->getStringValue(JDL::OUTPUTSB), dest_uri + "/output");
+			}
+			
+			for (unsigned int i = 0; i < osbdesturi.size(); i++) {
+				edglog(debug)<<"OutputSBDestURI: "<<osbdesturi[i]<<endl;
+				jad->addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
+			}
+		}
+	
+		// Adding attribute for perusal functionalities
+		string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
+			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
+				edglog(debug)<<"Enabling perusal functionalities for job: "
+					<<jid->toString()<<endl;
+				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+					<<endl;
+				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
+					 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+				if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+						<<endl;
+					jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+				}
+				
+				int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+				if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
+					time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
+				}
+				time = max(time, conf.getMinPerusalTimeInterval());
+				edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
+				jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
+			}
+		}
+		
 		// Looking for Zipped ISB
 		if (jad->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 			vector<string> files = jad->getStringValue(JDLPrivate::ZIPPED_ISB);
@@ -1474,8 +1695,125 @@ submit(const string &jdl, JobId *jid)
 		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
 		dag->setLocalAccess(false);
 		
-		// Looking for Zipped ISB
+	    JobIdStruct jobidstruct = dag->getJobIdStruct();
+	    JobId parentjobid = jobidstruct.jobid;
+	    vector<JobIdStruct*> children = jobidstruct.children;
+	    
+	    char * seqcode = wmplogger.getSequence();
+	    
+	    string defaultprotocol = conf.getDefaultProtocol();
+		int defaultport = conf.getDefaultPort();
+	    
+	    // Setting internal attributes for sub jobs
+		string jobidstring;
+		string dest_uri;
+		string peekdir;
+	    for (unsigned int i = 0; i < children.size(); i++) {
+	    	JobId subjobid = children[i]->jobid;
+	    	jobidstring = subjobid.toString();
+			
+			dest_uri = getDestURI(jobidstring, defaultprotocol, defaultport);
+			edglog(debug)<<"Setting internal attributes for sub job: "
+				<<jobidstring<<endl;
+			edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
+			
+			NodeAd nodead = dag->getNode(subjobid);
+	    	
+	    	// Adding WMPISB_BASE_URI, INPUT_SANDBOX_PATH, OUTPUT_SANDBOX_PATH
+			// & USERPROXY
+	    	edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
+			nodead.setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
+	        edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
+			nodead.setAttribute(JDLPrivate::INPUT_SANDBOX_PATH,
+				getInputSBDirectoryPath(jobidstring));
+	        edglog(debug)<<"Setting attribute JDLPrivate::OUTPUT_SANDBOX_PATH"<<endl; 
+			nodead.setAttribute(JDLPrivate::OUTPUT_SANDBOX_PATH,
+				getOutputSBDirectoryPath(jobidstring));
+	        edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
+	        nodead.setAttribute(JDLPrivate::USERPROXY,
+	            getJobDelegatedProxyPath(jobidstring));
+	
+			// Adding OutputSandboxDestURI attribute
+	        if (nodead.hasAttribute(JDL::OUTPUTSB)) {
+				vector<string> osbdesturi;
+				if (nodead.hasAttribute(JDL::OSB_DEST_URI)) {
+					osbdesturi = wmputilities::computeOutputSBDestURI(
+						nodead.getStringValue(JDL::OSB_DEST_URI),
+						dest_uri);
+					nodead.delAttribute(JDL::OSB_DEST_URI);
+				} else if (dag->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+	            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
+						nodead.getStringValue(JDL::OUTPUTSB),
+						nodead.getStringValue(JDL::OSB_BASE_DEST_URI)[0]);
+				} else {
+	            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
+						nodead.getStringValue(JDL::OUTPUTSB),
+						dest_uri + "/output");
+				}
+				if (osbdesturi.size() != 0) {
+	                edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
+	                for (unsigned int i = 0; i < osbdesturi.size(); i++) {
+						nodead.addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
+	                }
+				}
+			}
+			
+			// Adding attributes for perusal functionalities
+	    	peekdir = wmputilities::getPeekDirectoryPath(subjobid);
+			if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
+				if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
+					edglog(debug)<<"Enabling perusal functionalities for job: "
+						<<jobidstring<<endl;
+					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+						<<endl;
+					nodead.setAttribute(JDLPrivate::PU_LIST_FILE_URI,
+						peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+					if (!nodead.hasAttribute(JDL::PU_FILES_DEST_URI)) {
+						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+							<<endl;
+						nodead.setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+					}
+					
+					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+					if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
+						time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
+					}
+					time = max(time, conf.getMinPerusalTimeInterval());
+					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
+						<<endl;
+					nodead.setAttribute(JDL::PU_TIME_INTERVAL, time);
+				}
+			}
+			
+			dag->replaceNode(subjobid, nodead);
+			
+			if (nodead.hasAttribute(JDL::JOBTYPE)) {
+	    		string type = nodead.getStringValue(JDL::JOBTYPE)[0];
+	    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
+	    			edglog(debug)<<"Logging checkpointable for subjob: "
+	    				<<jobidstring<<endl;
+	    			wmplogger.setLoggingJob(jobidstring, seqcode);
+	    			logCheckpointable(&wmplogger, &nodead, jobidstring);
+	    		}
+	    	}
+		}
+		
+		//TBD Change getSubmissionStrings() with a better method when coded??
+		//Done here, Not done during register any more.
+	    dag->getSubmissionStrings();
+	    
+	    wmplogger.setLoggingJob(parentjobid.toString(), seqcode);
+	    
+	    //Registering subjobs
+	    vector<string> jobids = wmplogger.generateSubjobsIds(dag->size()); //Filling wmplogger subjobs
+	    wmplogger.registerSubJobs(dag, wmplogger.subjobs);
+	    
+	    // Looking for Zipped ISB
 		if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+			//Setting file system for subjobs
+			setSubjobFileSystem(auth, parentjobid.toString(), jobids);
+			
+			//Uncompressing zip file
 			vector<string> files = dag->getAttribute(ExpDagAd::ZIPPED_ISB);
 			string targetdir = getenv(DOCUMENT_ROOT);
 			string jobpath = wmputilities::getInputSBDirectoryPath(*jid) + FILE_SEPARATOR;
@@ -1485,33 +1823,9 @@ submit(const string &jdl, JobId *jid)
 			}
 		}
 		
-	    JobIdStruct jobidstruct = dag->getJobIdStruct();
-	    JobId parentjobid = jobidstruct.jobid;
-	    vector<JobIdStruct*> children = jobidstruct.children;
-	    //TBD Change getSubmissionStrings() with a better method when coded??
-	    vector<string> jdls = dag->getSubmissionStrings();
-	    char * seqcode = wmplogger.getSequence();
-	    for (unsigned int i = 0; i < children.size(); i++) {
-	    	JobId jobid = children[i]->jobid;
-	    	string jobidstring = jobid.toString();
-
-			NodeAd nodead = dag->getNode(jobid);
-
-			if (nodead.hasAttribute(JDL::JOBTYPE)) {
-	    		string type = nodead.getStringValue(JDL::JOBTYPE)[0];
-	    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
-	    			edglog(debug)<<"Logging checkpointable for subjob: "
-	    				<<jobidstring<<endl;
-	    			JobAd *jad = new JobAd(jdls[i]);
-	    			wmplogger.setLoggingJob(jobidstring, seqcode);
-	    			logCheckpointable(&wmplogger, jad, jobidstring);
-	    			delete jad;
-	    		}
-	    	}
-		}
-	    
-	    delete dag;
-	    wmplogger.setLoggingJob(parentjobid.toString(), seqcode);
+		jdltostart = dag->toString();
+		
+		delete dag;
 	}
 	
 	wmpmanager::WMPManager manager(&wmplogger);
@@ -1531,12 +1845,85 @@ submit(const string &jdl, JobId *jid)
 		throw JobOperationException(__FILE__, __LINE__,
 			"submit()", wmp_fault.code, wmp_fault.message);
 	}
+	
+	/*for (backupenv; *backupenv; backupenv++) {
+	    free(*backupenv);
+    }
+    free(*targetEnv);*/
+    
+	//FCGI_Finish();
+	//exit(0);
+	
 	GLITE_STACK_CATCH();
 }
 
+SOAP_FMAC5 int SOAP_FMAC6 
+soap_serve_submit(struct soap *soap, struct ns1__jobSubmitResponse response)
+{
+	//struct ns1__jobSubmitResponse response;
+	soap_serializeheader(soap);
+	soap_serialize_ns1__jobSubmitResponse(soap, &response);
+	if (soap_begin_count(soap)) {
+		return soap->error;
+	}
+	if (soap->mode & SOAP_IO_LENGTH)
+	{	if (soap_envelope_begin_out(soap)
+		 || soap_putheader(soap)
+		 || soap_body_begin_out(soap)
+		 || soap_put_ns1__jobSubmitResponse(soap, &response,
+		 	"ns1:jobSubmitResponse", "")
+		 || soap_body_end_out(soap)
+		 || soap_envelope_end_out(soap)) {
+			 return soap->error;
+		 }
+	};
+	if (soap_end_count(soap)
+	 || soap_response(soap, SOAP_OK)
+	 || soap_envelope_begin_out(soap)
+	 || soap_putheader(soap)
+	 || soap_body_begin_out(soap)
+	 || soap_put_ns1__jobSubmitResponse(soap, &response,
+	 	"ns1:jobSubmitResponse", "")
+	 || soap_body_end_out(soap)
+	 || soap_envelope_end_out(soap)
+	 || soap_end_send(soap)) {
+		return soap->error;
+	 }
+	return soap_closesock(soap);
+}
+
+/**
+ * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector 
+ * pointer
+ */
+vector<ns1__JobIdStructType*> *
+convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*> 
+	*graph_struct_type_vector)
+{
+	vector<ns1__JobIdStructType*> *returnVector =
+		new vector<ns1__JobIdStructType*>;
+	if (graph_struct_type_vector) {
+		ns1__JobIdStructType *element = NULL;
+		for (unsigned int i = 0; i < graph_struct_type_vector->size(); i++) {
+			element = new ns1__JobIdStructType;
+			element->id = (*graph_struct_type_vector)[i]->id;
+			element->name = (*graph_struct_type_vector)[i]->name;
+			if ((*graph_struct_type_vector)[i]) { // Vector not NULL
+				element->childrenJob = *convertToGSOAPJobIdStructTypeVector(
+					(*graph_struct_type_vector)[i]->childrenJob);
+			} else {
+				element->childrenJob = *(new vector<ns1__JobIdStructType*>);
+			}
+			returnVector->push_back(element);
+		}
+	}
+	return returnVector;
+}
+
 void
-jobSubmit(jobSubmitResponse &jobSubmit_response,
-	const string &jdl, const string &delegation_id)
+jobSubmit(struct ns1__jobSubmitResponse &response,
+	jobSubmitResponse &jobSubmit_response, const string &jdl,
+	const string &delegation_id, struct soap *soap)
 {
 	GLITE_STACK_TRY("jobSubmit()");
 	edglog_fn("wmpoperations::jobSubmit");
@@ -1589,9 +1976,9 @@ jobSubmit(jobSubmitResponse &jobSubmit_response,
 	pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
 		delegation_id, delegatedproxy, wmputilities::getEnvVO(), auth);
 		
-	if (auth) {
+	/*if (auth) {
 		delete auth;	
-	}
+	}*/
 	
 	// Getting job identifier from register response
 	//string jobid = jobRegister_response.jobIdStruct->id;
@@ -1620,10 +2007,32 @@ jobSubmit(jobSubmitResponse &jobSubmit_response,
 			"Unable to set User Proxy for LB context");
 	}
 	
-	submit(reginfo.second, jid);
-	delete jid;
-	
 	jobSubmit_response.jobIdStruct = jobRegister_response.jobIdStruct;
+	//-----------
+	ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
+	job_id_struct->id = jobSubmit_response.jobIdStruct->id;
+	job_id_struct->name = jobSubmit_response.jobIdStruct->name;
+	if (jobSubmit_response.jobIdStruct->childrenJob) {
+		job_id_struct->childrenJob =
+			*convertToGSOAPJobIdStructTypeVector(jobSubmit_response
+			.jobIdStruct->childrenJob);
+	} else {
+		job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
+	}
+	response._jobIdStruct = job_id_struct;
+	//------------
+	
+	// Creating SOAP answer
+	if (soap_serve_submit(soap, response) || (soap->fserveloop && soap->fserveloop(soap))) {
+		// if ERROR throw exception??
+		soap_send_fault(soap);
+	}
+	
+	submit(reginfo.second, jid, auth);
+	if (auth) {
+		delete auth;	
+	}
+	delete jid;
 
 	GLITE_STACK_CATCH();
 }
@@ -2893,14 +3302,16 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 				    	"Remote perusal peek directory set"
 				    	"\nURI: " + uri);
 				}
-			} else {
+			} /*else {
+				It will be set during start operation
+			
 				// Should be present, something went wrong
 				edglog(critical)<<"No perusal file dest URI attribute present"<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 			    	"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE, 
 			    	"No perusal file dest URI attribute present"
 			    	"\n(please contact server administrator)");
-			}
+			}*/
 		}
 		
 		delete jad;

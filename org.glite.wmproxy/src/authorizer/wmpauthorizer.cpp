@@ -778,8 +778,6 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 	string lab_in = "";
 	string val_ref = "";
 	string val_in = "";
-	int nt_ref = 0;
-	int nt_in = 0;
 
         // the vectors contain pairs like this <label,value> (label may be an empty string)
         vect_ref = parseFQAN(ref );

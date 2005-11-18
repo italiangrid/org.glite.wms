@@ -119,15 +119,17 @@ class WMPEventLogger  {
 		static const std::string QUERY_SEQUENCE_CODE;
 		static const std::string QUERY_JDL_ORIGINAL;
 
-	private:
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
+		edg_wlc_JobId * subjobs;
+	private:
+		
 		void testAndLog(int &code, bool &with_hp, int &lap);
 		
 		const char * error_message(const char *api);
 		std::string dest_uri;
 		glite::wmsutils::jobid::JobId *id;
 		edg_wll_Context ctx;
-		edg_wlc_JobId * subjobs;
+		//edg_wlc_JobId * subjobs;
 		std::string lb_host;
 		int lb_port;
 		std::string server;

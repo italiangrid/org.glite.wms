@@ -83,7 +83,7 @@ convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
  * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector 
  * pointer
  */
-vector<ns1__JobIdStructType*> *
+/*vector<ns1__JobIdStructType*> *
 convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*> 
 	*graph_struct_type_vector)
 {
@@ -105,7 +105,7 @@ convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*>
 		}
 	}
 	return returnVector;
-}
+}*/
 
 /**
  * Converts a ns1__GraphStructType vector pointer to GraphStructType vector 
@@ -247,7 +247,7 @@ ns1__jobStart(struct soap *soap, string job_id,
 
 	jobStartResponse jobStart_response;
 	try {
-		jobStart(jobStart_response, job_id);
+		jobStart(jobStart_response, job_id, soap);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobStart", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -277,8 +277,8 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
 	
 	jobSubmitResponse jobSubmit_response;
 	try {
-		jobSubmit(jobSubmit_response, jdl, delegation_id);
-		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
+		jobSubmit(response, jobSubmit_response, jdl, delegation_id, soap);
+		/*ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobSubmit_response.jobIdStruct->id;
 		job_id_struct->name = jobSubmit_response.jobIdStruct->name;
 		if (jobSubmit_response.jobIdStruct->childrenJob) {
@@ -288,7 +288,7 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
 		} else {
 			job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
 		}
-		response._jobIdStruct = job_id_struct;
+		response._jobIdStruct = job_id_struct;*/
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
