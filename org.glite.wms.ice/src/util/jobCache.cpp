@@ -145,7 +145,6 @@ jobCache::jobCache(const string& _snapFile,
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
     : jobCacheMutex( ),
       theMutex( ),
-      theLock( theMutex, false ),
       _jobs( ),
       operation_counter(0)
 { 
@@ -560,17 +559,3 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
   this->toString( *it, param );
   logOperation( PUT, param );
 }
-
-
-//-----------------------------------------------------------------------------
-void jobCache::lock( void )
-{
-    theLock.lock( );    
-}
-
-//-----------------------------------------------------------------------------
-void jobCache::unlock( void )
-{
-    theLock.unlock( );
-}
-

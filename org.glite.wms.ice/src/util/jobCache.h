@@ -41,7 +41,6 @@ namespace glite {
           boost::recursive_mutex jobCacheMutex; //< Lock used to guarantee mutual exclusion while accessing this data structure from concurrent threads. This will be removed when the locking mechanism based on the lock() and unlock() methods will be used.
 
           boost::recursive_mutex theMutex;
-          boost::recursive_mutex::scoped_lock theLock;
 
           /**
            * This class represents a sort of "double-keyed hash
@@ -235,20 +234,6 @@ namespace glite {
           //
 
 	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
-
-          /**
-           * Acquire the <em>recursive mutex</em> on this object.  A
-           * thread already holding the mutex can acquire it multiple
-           * times. After a thread acquired the lock, no other threads
-           * can acquire the same lock until the first thread released
-           * it.
-           */
-          void lock( void );
-
-          /**
-           * Release the <em>recursive mutex</em> on this object.
-           */
-          void unlock( void );
 
         protected:	  
 	  void dump(void) throw(jnlFile_ex&);
