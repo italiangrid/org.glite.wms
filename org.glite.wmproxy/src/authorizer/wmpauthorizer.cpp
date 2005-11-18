@@ -83,6 +83,10 @@ const char* WMPAuthorizer::VOMS_GACL_VAR = "GRST_CRED_2";
 
 const string LCMAPS_LOG_FILE = "lcmaps.log";
 
+// FQAN strings
+const std::string FQAN_FIELDS[ ]  = { "vo", "group", "group", "role", "capability"};
+const std::string FQAN_FIELD_SEPARATOR = "";
+const std::string FQAN_NULL = "null";
 
 
 WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
@@ -607,27 +611,122 @@ WMPAuthorizer::isNull(string field)
 	#endif
 }
 
-vector<string>
-WMPAuthorizer::parseFQAN(const string &fqan)
+/**
+ *      /VO [ /group [ /subgroup (s) ]  ]  [ /Role = Role_Value ] [ /Capability = Capability_Value]
+ */
+std::vector<std::pair<std::string,std::string> >
+WMPAuthorizer::parseFQAN(const std::string &fqan)
 {
 	#ifndef GLITE_GACL_ADMIN
-	GLITE_STACK_TRY("parseFQAN");
-	#endif
-	
-	vector<string> returnvector;
-	string field ;
-	boost::char_separator<char> separator("/");
-	boost::tokenizer<boost::char_separator<char> >
-    	tok(fqan, separator);
-   	 for (boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-		token != tok.end(); token++) {
-    		returnvector.push_back(*token);
-	}
-	return returnvector;
+        GLITE_STACK_TRY("parseFQAN");
+        #endif
 
+        vector<string> tokens;
+        std::vector<std::pair<std::string,std::string> > vect;
+        string label = "";
+        string value = "";
+        int nt = 0;
+        boost::char_separator<char> separator("/");
+        boost::tokenizer<boost::char_separator<char> >
+        tok(fqan, separator);
+        boost::tokenizer<boost::char_separator<char> >::iterator it = tok.begin();
+        boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+        for (  ; it != end; it++) {
+                tokens.push_back(string(*it));
+        }
+        // number of found tokens
+        nt = tokens.size();
+        if (nt > 0) {
+                // Checks the VO field
+                split(tokens[0], label, value);
+                if ((label.size() > 0 || value.size() >0) &&
+                         ((label.compare(FQAN_FIELDS[FQAN_ROLE])==0) ||
+                         (label.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0)) ){
+                                throw AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+                        "malformed fqan (VO field is missing): " +  fqan);
+                } else {
+                        vect.push_back(make_pair(FQAN_FIELDS[FQAN_VO], tokens[0]));
+                        tokens.erase(tokens.begin());
+                }
+                // Checks group and subgroups fields (if present)
+                while (tokens.empty()==false) {
+                        split(tokens[0], label, value);
+                        if (label.size()==0) {
+                                vect.push_back(make_pair(FQAN_FIELDS[FQAN_GROUP], tokens[0]));
+                                tokens.erase(tokens.begin());
+                        } else {
+                                break;
+                        }
+                }
+                // Checks Role & Capability
+                if (tokens.empty() == false) {
+                        // either Role or Capability is expected
+                        split(tokens[0], label, value);
+                        // Checks whether the fqan contains the  ROLE field
+                        if (label.compare(FQAN_FIELDS[FQAN_ROLE])==0) {
+                                if (value.size()==0) {
+                                        throw AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+                                         "malformed FQAN field /" + tokens[0] );
+                                }
+                                // Role is present (and the value is not "null")
+                                if (value.compare(FQAN_NULL) != 0){
+                                        vect.push_back(make_pair(label, value));
+                                }
+                                tokens.erase(tokens.begin());
+                                if (tokens.empty()==false) {
+                                        // This token has to contain only the Capability field
+                                        split(tokens[0], label, value);
+                                } else {
+                                        label = "";
+                                        value = "";
+                                }
+                        }
+                        // No other tokes must be present
+                        if (tokens.size() > 1) {
+                                nt = tokens.size();
+                                ostringstream err;
+                                err << "malformed FQAN field; one or more field are invalid :\n";                                               for (int i = 0; i < nt ; i++ ){
+                                        err << "/" << tokens[i] << "\n";
+                                }
+                                throw AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+                                        err.str() );
+                        }
+
+                        if (label.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0) {
+                                if (value.size()==0) {
+                                throw AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+                                        "malformed FQAN field (/" + tokens[0] );
+                                }
+                                // Capability is present (and the value is not "null")
+                                if (value.compare(FQAN_NULL) != 0){
+                                        vect.push_back(make_pair(label, value));
+                                }
+                                tokens.erase(tokens.begin());
+
+                        } else {
+                                if (label.size()>0 || value.size()>0) {
+                                        throw AuthorizationException(__FILE__, __LINE__,
+                                         "parseFQAN(string)",  WMS_PROXY_ERROR,
+                                        "malformed FQAN field; invalid Capability field: /" + tokens[0] );
+
+                                }
+                        }
+                }
+        } else {
+                throw AuthorizationException(__FILE__, __LINE__,
+                        "parseFQAN(string)",  WMS_PROXY_ERROR,
+                                "invalid fqan: " + fqan  );;
+        }
+        return vect;
 	#ifndef GLITE_GACL_ADMIN
-	GLITE_STACK_CATCH();
-	#endif
+        GLITE_STACK_CATCH();
+        #endif
+
+
 }
 
 bool
@@ -665,52 +764,158 @@ WMPAuthorizer::compareDN(char * dn1, char * dn2)
 	#endif
 
 }
-
 bool
-WMPAuthorizer::compareFQAN(const string &ref, const string &in )
+WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 {
 	#ifndef GLITE_GACL_ADMIN
 	GLITE_STACK_TRY("compareFQAN");
 	edglog_fn("WMPAuthorizer::compareFQAN");
 	#endif
-	bool match = true;
-	vector<string> v1, v2;
-	vector<string>::iterator it1, it2, it3 ;
+        bool match = true;
 
-	// v1=<referring-vect>
-	v1= authorizer::WMPAuthorizer::parseFQAN( in );
-	// v2=<input-vect>
-	v2= authorizer::WMPAuthorizer::parseFQAN( ref );
+        vector<pair<string,string> > vect_ref, vect_in;
+	string lab_ref = "";
+	string lab_in = "";
+	string val_ref = "";
+	string val_in = "";
+	int nt_ref = 0;
+	int nt_in = 0;
 
-	for ( it1 = v1.begin() ; it1 != v1.end( ) ; it1++ ) {
-		// checks if  the <input-vect> is empty
-		if ( v2.empty( ) ) {
-			// checks if the remaining elements of the <ref-vect> are NULL
-			for ( it3 = it1; it3 != v1.end() ; it3++ ) {
-				if ( ! isNull ( *it3 ) ) {
+        // the vectors contain pairs like this <label,value> (label may be an empty string)
+        vect_ref = parseFQAN(ref );
+	if ( vect_ref.empty()){
+                throw AuthorizationException(__FILE__, __LINE__,
+                        "compareFQAN(string, string)", wmputilities::WMS_AUTHZ_ERROR,
+                        "no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
+
+	}
+        // vin=<input-vect>
+        vect_in = parseFQAN(in);
+
+	if (vect_in.empty()) {
+                throw AuthorizationException(__FILE__, __LINE__,
+                        "compareFQAN(string, string)", wmputilities::WMS_AUTHZ_ERROR,
+                        "no valid fields in the user FQAN string: [" + in+ "]");
+	}
+	// Compare VO's==================
+	val_ref = vect_ref[0].second;
+	val_in = vect_in[0].second;
+	if (val_ref.compare(val_in) != 0){
+		match = false;
+	}
+	vect_ref.erase(vect_ref.begin());
+	vect_in.erase(vect_in.begin());
+	//Checks Group and SubGroup(s)
+	while (vect_ref.empty()==false && match) {
+		if (vect_in.empty()) {
+			// ref-FQQAN contains other fields
+			// in-FQAN does not
+			match = false;
+			break;
+		} else {
+			lab_ref = vect_ref[0].first;
+			if (lab_ref.compare(FQAN_FIELDS[FQAN_GROUP])==0 ) {
+				lab_in = vect_in[0].first;
+				//cout << "####compareFQANs> A) lab_in = " << lab_in << "\n";
+				// ref-FQAN contains a group(or subgroup) field
+				if (lab_in.compare(FQAN_FIELDS[FQAN_GROUP])==0){
+
+					val_ref = vect_ref[0].second;
+					val_in = vect_in[0].second;
+					if (val_ref.compare(val_in)==0) {
+						//cout << "####compareFQANs> match OK\n";
+						// match=OK
+						vect_ref.erase(vect_ref.begin());
+						vect_in.erase(vect_in.begin());
+					} else {
+						// different groups !
+						match = false;
+						break;
+					}
+				} else {
+					// in-FQAN does not contain a group field in the same position
 					match = false;
 					break;
 				}
-			} // for (it3)
-			break;
-		} else {
-			// compares the fqan fields
-			it2 = v2.begin( );
-			//edglog(debug)<<"ref=["<<*it1<<"]-in["<<*it2<<"]"<<endl;
-			if ( *it1 != *it2 &&  ! isNull(*it1) ) {
-				match = false;
+			//	cout << "####compareFQANs> GROUPS (0) - match = " << match << "\n";
+			} else {
+				// ref-FQAN has one or two fields (Role or/and Capability)
+				// in-FQAN : removal of the Other groups(subgroups) which must be ignored
+				lab_in = vect_in[0].first;
+				//cout << "####compareFQANs> B) lab_in = " << lab_in << "\n";
+				if (lab_in.compare(FQAN_FIELDS[FQAN_GROUP])==0) {
+					// ref-FQAN has one or two fields (Role or/and Capability)
+					// in-FQAN has other group/subgroup field
+					match = false;
+				}
 				break;
 			}
-			v2.erase( it2 );
-		} // if (v2 empty)
-	} // for(it1)
-	//edglog(debug)<<"match="<<match<<endl;
-	return match ;
-	
+		}
+	}
+	//Checks Role
+	if (vect_ref.empty()==false && match) {
+		if (vect_in.empty()) {
+			// ref-FQQAN contains other fields
+			// in-FQAN does not
+			match = false;
+		} else {
+			lab_ref = vect_ref[0].first;
+			if (lab_ref.compare(FQAN_FIELDS[FQAN_ROLE])==0 ) {
+				lab_in = vect_in[0].first;
+				// ref-FQAN contains a Role field
+				if (lab_in.compare(FQAN_FIELDS[FQAN_ROLE])==0){
+					val_ref = vect_ref[0].second;
+					val_in = vect_in[0].second;
+					if (val_ref.compare(val_in)==0) {
+						// removal of the fields just checked
+						vect_ref.erase(vect_ref.begin());
+						vect_in.erase(vect_in.begin());
+					} else {
+						// different roles !
+						match = false;
+					}
+				} else {
+					// ref-FQAN contains Role field
+					// in-FQAN does not
+					match = false;
+				}
+			}
+		}
+	}
+	//Checks Capability
+	if (vect_ref.empty()==false && match) {
+		lab_ref = vect_ref[0].first;
+		if (lab_ref.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0 ) {
+			lab_in = vect_in[0].first;
+			// ref-FQAN contains a Role field
+			if (lab_in.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0){
+				val_ref = vect_ref[0].second;
+				val_in = vect_in[0].second;
+				if (val_ref.compare(val_in)==0) {
+					// removal of the fields just checked
+					vect_ref.erase(vect_ref.begin());
+					vect_in.erase(vect_in.begin());
+				} else {
+					// different capabilities !
+					match = false;
+
+				}
+			} else {
+				// ref-FQAN contains Capablity field
+				// in-FQAN does not
+				match = false;
+			}
+
+		}
+	}
+        return match ;
 	#ifndef GLITE_GACL_ADMIN
    	GLITE_STACK_CATCH();
 	#endif
 }
+
+
+
 
 // private method: converts ASN1_UTCTIME to time_t
 time_t 

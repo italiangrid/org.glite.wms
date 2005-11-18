@@ -20,6 +20,13 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
+enum FQANFields {
+	FQAN_VO,
+	FQAN_GROUP,
+	FQAN_SUBGROUP,
+	FQAN_ROLE,
+	FQAN_CAPABILITY
+};
 //
 // File utility methods
 //
@@ -236,6 +243,9 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
 std::vector<std::pair<std::string, std::string> > 
 	parseFQANPair(const std::string &fqan);
 
+const std::string cleanString(std::string str);
+const std::string toLower ( const std::string &src);
+void split (const std::string &field, std::string &label, std::string &value);
 
 
 //

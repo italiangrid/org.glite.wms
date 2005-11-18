@@ -186,8 +186,8 @@ getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
 		item = "https://" + string(getenv("HTTP_HOST")) + httppath;
 	}
 	edglog(debug)<<"Destination URI: "<<item<<endl;
-	returnvector->push_back(item);	
-	
+	returnvector->push_back(item);
+
 	return returnvector;
 	GLITE_STACK_CATCH();
 }
@@ -197,50 +197,14 @@ parseFQAN(const string &fqan)
 {
 	GLITE_STACK_TRY("parseFQAN()");
 	vector<string> returnvector;
-	boost::char_separator<char> separator("/"); 
-	boost::tokenizer<boost::char_separator<char> > 
-    	tok(fqan, separator); 
-    for (boost::tokenizer<boost::char_separator<char> >::iterator 
+	boost::char_separator<char> separator("/");
+	boost::tokenizer<boost::char_separator<char> >
+    	tok(fqan, separator);
+    for (boost::tokenizer<boost::char_separator<char> >::iterator
     		token = tok.begin(); token != tok.end(); token++) {
-    	returnvector.push_back(*token);      
+    	returnvector.push_back(*token);
 	}
 	return returnvector;
-	GLITE_STACK_CATCH();
-}
-
-vector<pair<string, string> >
-parseFQANPair(const string &fqan)
-{
-	GLITE_STACK_TRY("parseFQANPair()");
-	vector<pair<string, string> > pairvector;
-	vector<string> vect = parseFQAN(fqan);
-	pair<string, string> vomspair;
-	vomspair.first = "vo";
-	vomspair.second = vect[0];
-	pairvector.push_back(vomspair);
-	string element;
-	unsigned int pos;
-	for (unsigned int i = 1; i < vect.size(); i++) {
-		element = vect[i];
-		pos = element.find("Role=");
-		if (pos != string::npos) {
-			vomspair.first = "role";
-			vomspair.second = element.substr(5, element.size());
-			pairvector.push_back(vomspair);
-			continue;
-		}
-		pos = element.find("Capability=");
-		if (pos != string::npos) {
-			vomspair.first = "capability";
-			vomspair.second = element.substr(11, element.size());
-			pairvector.push_back(vomspair);
-			continue;
-		}
-		vomspair.first = "group";
-		vomspair.second = element;
-		pairvector.push_back(vomspair);
-	}
-	return pairvector;
 	GLITE_STACK_CATCH();
 }
 
@@ -991,14 +955,73 @@ isNull(string field)
 	bool is_null = false ;
 	int p1 = field.size() - 5 ;
 	int p2 = field.find("=NULL");
-	
+
 	if ((p1 > 0) && (p1 == p2)) {
 		is_null = true;
 	}
 	return is_null;
 	GLITE_STACK_CATCH();
 }
+/*
+* Removes white spaces form the begininng and from the end of the input string
+*/
 
+const std::string cleanString(std::string str) {
+        int len = 0;
+        string ws = " "; //white space char
+        len = str.size( );
+        if (len > 0) {
+                // erases white space at the beginning of the string
+                while (len>1) {
+                        if ( str.compare(0,1,ws) == 0) {
+                                str = str.substr(1, len);
+                        } else {
+                                break;
+                        }
+                        len = str.size();
+                }
+                // erases white space at the end of the string
+                while (len>1) {
+                        if( str.compare(len-1,1,ws) == 0 ) {
+                                str = str.substr(0, len-1);
+                        } else {
+                                break;
+                        }
+                        len = str.size();
+                }
+                // 1 white space
+                if (len == 1 & str.compare(ws)==0) {
+                        str = "";
+                }
+        }
+        return str;
+}
+
+ /**
+ *
+ */
+const std::string toLower ( const std::string &src) {
+	std::string result(src);
+	std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+	return result;
+ }
+ /**
+ *
+ */
+void split (const std::string &field, std::string &label, std::string &value){
+	int size = field.size();
+	if (size>0) {
+		unsigned int p = field.find("=") ;
+		if ( p != string::npos & ( p < size) ){
+			label = field.substr(0, p);
+			value = field.substr(p+1, size-(p+1));
+			// removes white spaces at the beginning and a the end of the strings (if present)
+			// and converts the uppercase letters to the corresponding lowercase
+			label = toLower(cleanString(label));
+			value = toLower(cleanString(value));
+		}
+	}
+};
 } // namespace utilities
 } // namespace wmproxy
 } // namespace wms

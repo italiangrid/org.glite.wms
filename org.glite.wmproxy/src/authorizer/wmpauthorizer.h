@@ -28,6 +28,15 @@ namespace authorizer {
  * @date 2005
  * @author Giuseppe Avellino <giuseppe.avellino@datamat.it>
 */
+
+enum FQANFields {
+	FQAN_VO,
+	FQAN_GROUP,
+	FQAN_SUBGROUP,
+	FQAN_ROLE,
+	FQAN_CAPABILITY
+};
+
 class WMPAuthorizer {
 public:
 
@@ -72,8 +81,7 @@ public:
      * @param fqan input fqan
      * @return  the fqan vector
      */
-    static std::vector<std::string> parseFQAN(const std::string &fqan);
-
+static std::vector<std::pair<std::string,std::string> > parseFQAN(const std::string &fqan);
 	/**
 	 * Compares two user Distinguished Names in order to see if they are equal.
 	 * different OpenSSL library versions use a different way to represent DN;
