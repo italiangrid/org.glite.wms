@@ -300,7 +300,7 @@ CreamJob jobCache::getJobByCreamJobID(const std::string& cid)
 {
     boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     jobCacheTable::iterator it = _jobs.findJobByCID( cid );
-    if ( it == _jobs.end() )
+    if ( it == _jobs.end() ) 
         throw elementNotFound_ex(string("Job with Cream JobID=")+cid+" not found" );
     return *it;
 }

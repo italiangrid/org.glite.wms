@@ -2,7 +2,6 @@
 #include "eventStatusPoller.h"
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-//#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/soap_ex.h"
 #include "glite/ce/cream-client-api-c/BaseException.h"
@@ -191,17 +190,6 @@ void eventStatusPoller::checkJobs()
 	     */
 	    if(iceManager)
 	      iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
-	    
-	    // Removes jobid from cache
-	    try {
-	      jobCache::getInstance()->remove_by_cream_jobid(cid);
-	    } catch(elementNotFound_ex& ex) {
-	      cerr << "Cannot remove ["<<cid
-		   << "] from job cache: " << ex.what() << endl;
-	    } catch(exception& ex) {
-	      cerr << ex.what()<<endl;
-	      exit(1);
-	    }
 	    jobs_to_purge.push_back(cid);
 	    //continue;
 	  }
@@ -212,18 +200,6 @@ void eventStatusPoller::checkJobs()
 	    
 	    // schedule this job for future purge
 	    jobs_to_purge.push_back(cid);
-	    
-	    // Removes jobid from cache
-	    cout << "JobID ["<<cid<<"] is finished. Removing from memory cache..."<<endl;
-	    try {
-	      jobCache::getInstance()->remove_by_cream_jobid(cid);
-	    } catch(elementNotFound_ex& ex) {
-	      cerr << "Cannot remove ["<<cid
-		   << "] from job cache: " << ex.what() << endl;
-	    } catch(exception& ex) {
-	      cerr << ex.what()<<endl;
-	      exit(1);
-	    }
 	  }
 	
 	cout << jobs_to_purge.size() << " jobs to purge"<<endl;
@@ -300,15 +276,18 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
       )
     {
       oneJobToPurge.clear();
+      string cid;
       try {
 	cout << "Fetching Job for ID ["<<*it<<"]"<<endl;
 	CreamJob theJob = jobCache::getInstance()->getJobByCreamJobID(*it);
+        cid = theJob.getJobID();
 	cout << "Calling JobPurge for host ["
 	     << theJob.getCreamURL() << "]" <<endl;
 
 	creamClient->Authenticate(theJob.getUserProxyCertificate());
 	oneJobToPurge.push_back(theJob.getJobID());
 	creamClient->Purge(theJob.getCreamURL().c_str(), oneJobToPurge);
+        jobCache::getInstance()->remove_by_cream_jobid( cid );
       } catch (ClassadSyntax_ex& ex) {
 	// this exception should not be raised because 
 	// the CreamJob is created from another valid one
@@ -321,9 +300,9 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
       } catch(cream_exceptions::InternalException& severe) {
 	cerr << severe.what()<<endl;
 	exit(1);
-      } catch(elementNotFound_ex& ex) {
-	cerr << ex.what() << endl;
-	exit(1);
+      } catch(elementNotFound_ex& ex) {                                   
+          cerr << "Cannot remove ["<<cid                                    
+               << "] from job cache: " << ex.what() << endl;  
       }
     }
 }
