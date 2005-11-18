@@ -11,6 +11,7 @@
 #include "abs-ice-core.h"
 #include <vector>
 #include <map>
+#include <boost/thread/thread.hpp>
 
 using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
@@ -43,12 +44,38 @@ eventStatusPoller::eventStatusPoller(
   } 
   oneJobToQuery.reserve(1);
   oneJobToPurge.reserve(1);
+
+  //cout << "POLLER COSTRUITO !"<<endl;
+
 }
+
+//______________________________________________________________________________
+// eventStatusPoller::eventStatusPoller(const eventStatusPoller& P) 
+//   throw(eventStatusPoller_ex&)
+// {
+//   //cout << "COPY CTOR CALLED !!!" << endl;
+//   try {
+//     creamClient = new soap_proxy::CreamProxy(false);
+//     //creamClient->Authenticate( certfile );
+//   } catch(soap_proxy::soap_ex& ex) {
+//     throw eventStatusPoller_ex( ex.what() );
+//   }
+// //   endpolling = P.endpolling;
+// //   delay      = P.delay;
+// //   iceManager = P.iceManager;
+// //   jobs_to_query.reserve(1000);
+// //   url_pieces.reserve(4);
+// //   oneJobToQuery.reserve(1);
+// //   oneJobToPurge.reserve(1);
+// //   _jobinfolist.clear();
+// }
 
 //______________________________________________________________________________
 eventStatusPoller::~eventStatusPoller()
 {
-  if(creamClient) delete(creamClient);
+  //cout << "POLLER DISTRUTTO !"<<endl;
+
+  //  if(creamClient) delete(creamClient);
 }
 
 //______________________________________________________________________________
@@ -250,24 +277,10 @@ void eventStatusPoller::updateJobCache()
 }
 
 //______________________________________________________________________________
-void eventStatusPoller::run() 
-{
-  endpolling = false;
-  while(!endpolling) {
-    if(getStatus()) {
-      cout << "eventStatusPoller::getStatus OK"<<endl;
-      try{
-	updateJobCache();
-      }
-      catch(...) {
-	cerr << "inside ::run - catched something"<<endl;
-      }
-    }
-    checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
-    sleep(delay);
-  }
-  cout << "eventStatusPoller::run - thread is ending..." << endl;
-}
+// void eventStatusPoller::run() 
+// {
+
+// }
 
 //______________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
@@ -288,6 +301,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
     {
       oneJobToPurge.clear();
       try {
+	cout << "Fetching Job for ID ["<<*it<<"]"<<endl;
 	CreamJob theJob = jobCache::getInstance()->getJobByCreamJobID(*it);
 	cout << "Calling JobPurge for host ["
 	     << theJob.getCreamURL() << "]" <<endl;
@@ -307,6 +321,40 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
       } catch(cream_exceptions::InternalException& severe) {
 	cerr << severe.what()<<endl;
 	exit(1);
+      } catch(elementNotFound_ex& ex) {
+	cerr << ex.what() << endl;
+	exit(1);
       }
     }
+}
+
+//______________________________________________________________________________
+void eventStatusPoller::operator()()
+{
+  //do_purchase();
+  //cout << "eventStatusPoller::operator()() - calling run()"<<endl;
+  //run();
+    endpolling = false;
+    //cout << "eventStatusPoller::() - entering while..."<<endl;
+  while(!endpolling) {
+    //    cout << "Inside while"<<endl;
+    if(getStatus()) {
+      cout << "eventStatusPoller::getStatus OK"<<endl;
+      try{
+	updateJobCache();
+      }
+      catch(...) {
+	cerr << "inside ::() - catched something"<<endl;
+      }
+    }
+    checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
+    /**
+     * Let's dont use boost::thread::sleep because right not (18/11/2005)
+     * the documentation says that it will be replaced by a more robust 
+     * mechanism
+     */
+    //boost::thread::sleep(delay);
+    sleep(delay);
+  }
+  cout << "eventStatusPoller::run - thread is ending..." << endl;
 }

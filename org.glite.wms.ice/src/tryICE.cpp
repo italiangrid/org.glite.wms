@@ -34,7 +34,7 @@ int main(int argc, char*argv[]) {
    *                  argv[4]: TCP port for event status listener
    */
 
-  if(argc<6) return 1;
+  if(argc<5) return 1;
 
   glite::wms::ice::ice* iceManager;
   try {

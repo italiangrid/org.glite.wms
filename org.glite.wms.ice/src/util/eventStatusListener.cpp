@@ -15,7 +15,8 @@ logger& LOG = logger::instance();
 
 logger::PRINT_DEVICE_CONTROLLER lflags = logger::PRINT_DEVICE_CONTROLLER((int)logger::date | (int)logger::console);
 
-void glite::wms::ice::util::eventStatusListener::run(void) {
+//______________________________________________________________________________
+void glite::wms::ice::util::eventStatusListener::operator()() {
   //std::cout << "eventStatusListener::run - called run" << std::endl;
   endaccept=false;
   while(!endaccept) {

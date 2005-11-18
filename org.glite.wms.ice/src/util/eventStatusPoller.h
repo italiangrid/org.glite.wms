@@ -26,7 +26,7 @@ namespace glite {
 
       namespace util {
 
-	class eventStatusPoller : public runnable {
+	class eventStatusPoller {// : public runnable {
 
 	  bool endpolling;
 	  int delay;
@@ -41,6 +41,10 @@ namespace glite {
 	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
 	  std::vector<std::string> oneJobToQuery;
 	  std::vector<std::string> oneJobToPurge;
+
+	protected:
+	  eventStatusPoller( const eventStatusPoller&) {}
+
 	public:
 	  eventStatusPoller(
 			    absice* _im,
@@ -48,12 +52,14 @@ namespace glite {
 			    ) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
 
+	  
 	  virtual ~eventStatusPoller();// { if(creamClient) delete(creamClient); }
 
 	  bool getStatus(void);
 	  void updateJobCache(void);
 	  void checkJobs(void);
-	  virtual void run(void);
+	  //virtual void run(void);
+	  virtual void operator()();
 	  virtual void stop() { endpolling=true; }
 	};
 

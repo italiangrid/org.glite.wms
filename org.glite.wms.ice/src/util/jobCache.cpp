@@ -18,6 +18,8 @@
 #include <string>
 #include <sstream>
 #include <utility> // for make_pair
+#include <boost/algorithm/string.hpp>
+
 
 extern int errno;
 

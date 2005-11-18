@@ -3,18 +3,20 @@
 #define __ICE_CORE_H__
 
 #include <string>
-#include <pthread.h>
 #include "abs-ice-core.h"
 #include "ClassadSyntax_ex.h"
 #include "iceInit_ex.h"
 #include "eventStatusListener.h"
 #include "eventStatusPoller.h"
-#include "thread.h"
 #include "glite/wms/common/utilities/FLExtractor.h"
 
 class jobRequest;
 
 typedef glite::wms::common::utilities::FLExtractor<std::string>::iterator FLEit;
+
+namespace boost {
+  class thread;
+};
 
 namespace glite {
   namespace wms {
@@ -33,22 +35,20 @@ namespace glite {
       };
       
       class ice : public glite::wms::ice::absice {
-	//glite::wms::ice::util::jobCache* job_cache;
-	glite::wms::ice::util::eventStatusListener* listener;
-	glite::wms::ice::util::eventStatusPoller* poller;
+/* 	glite::wms::ice::util::eventStatusListener* listener; */
+/* 	glite::wms::ice::util::eventStatusPoller* poller; */
 	bool status_listener_started;
 	bool status_poller_started;
 	std::string ns_filelist;
 	std::string wm_filelist;
-	glite::wms::ice::util::thread* listenerThread, *pollerThread;
+	boost::thread* listenerThread;
+	boost::thread* pollerThread;
+	boost::shared_ptr<util::eventStatusPoller> poller;
+	boost::shared_ptr<util::eventStatusListener> listener;
 
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;
 	glite::wms::common::utilities::FileList<std::string> flns;
-
-// 	bool start_listener, start_poller;
-// 	std::string hostCert;
-// 	int listenPort, poller_delay;
 
       public:
 	ice(const std::string& NS_FL, 
