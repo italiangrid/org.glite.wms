@@ -35,6 +35,9 @@ classad::ClassAd const*
 submit_command_get_ad(classad::ClassAd const& submit_command_ad);
 
 classad::ClassAd*
+submit_command_remove_ad(classad::ClassAd& submit_command_ad);
+
+classad::ClassAd*
 cancel_command_create(std::string const& job_id);
 
 std::string
@@ -62,6 +65,9 @@ match_command_create(
 
 classad::ClassAd const*
 match_command_get_ad(classad::ClassAd const& match_command_ad);
+
+classad::ClassAd*
+match_command_remove_ad(classad::ClassAd& match_command_ad);
 
 std::string
 match_command_get_file(classad::ClassAd const& match_command_ad);

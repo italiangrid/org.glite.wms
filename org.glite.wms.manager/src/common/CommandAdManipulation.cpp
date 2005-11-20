@@ -89,12 +89,21 @@ submit_command_create(classad::ClassAd* job_ad)
   return result;
 }
 
-
-
 classad::ClassAd const*
 submit_command_get_ad(classad::ClassAd const& submit_command_ad)
 {
   return utilities::evaluate_expression(submit_command_ad, "arguments.ad");
+}
+
+classad::ClassAd*
+submit_command_remove_ad(classad::ClassAd& submit_command_ad)
+{
+  return
+    static_cast<classad::ClassAd*>(
+      static_cast<classad::ClassAd*>(
+        submit_command_ad.Lookup("arguments")
+      )->Remove("ad")
+    );
 }
 
 classad::ClassAd*
@@ -146,8 +155,6 @@ cancel_command_create(std::string const& job_id)
   return result;
 }
 
-
-
 std::string
 cancel_command_get_id(classad::ClassAd const& cancel_command_ad)
 {
@@ -186,6 +193,17 @@ classad::ClassAd const*
 match_command_get_ad(classad::ClassAd const& match_command_ad)
 {
   return utilities::evaluate_expression(match_command_ad, "arguments.ad");
+}
+
+classad::ClassAd*
+match_command_remove_ad(classad::ClassAd& match_command_ad)
+{
+  return
+    static_cast<classad::ClassAd*>(
+      static_cast<classad::ClassAd*>(
+        match_command_ad.Lookup("arguments")
+      )->Remove("ad")
+    );
 }
 
 std::string
