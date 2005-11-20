@@ -143,6 +143,14 @@ get_logger_message(
   ContextPtr last_context
 );
 
+typedef boost::shared_ptr<edg_wll_JobStat> JobStatusPtr;
+
+bool is_waiting(JobStatusPtr const& status);
+bool is_cancelled(JobStatusPtr const& status);
+
+JobStatusPtr job_status(wmsutils::jobid::JobId const& id, ContextPtr context);
+JobStatusPtr job_status(wmsutils::jobid::JobId const& id);
+
 }}}} // glite::wms::manager::common
 
 #endif

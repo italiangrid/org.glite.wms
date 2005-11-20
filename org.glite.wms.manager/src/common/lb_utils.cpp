@@ -499,5 +499,82 @@ get_logger_message(
   
 }
 
+edg_wll_JobStat* create_job_status()
+{
+  std::auto_ptr<edg_wll_JobStat> result(new edg_wll_JobStat);
+  if (edg_wll_InitStatus(result.get()) == 0) {
+     return result.release();
+  } else {
+     return 0;
+  }
+}
+
+void delete_job_status(edg_wll_JobStat* p)
+{
+  edg_wll_FreeStatus(p);
+  delete p;
+}
+
+JobStatusPtr job_status(jobid::JobId const& id, ContextPtr context)
+{
+  if (context) {
+    JobStatusPtr status(create_job_status(), delete_job_status);
+    if (status) {
+      int const flags = 0;
+      int const err(
+        edg_wll_JobStatusProxy(
+          context.get(),
+          id.getId(),
+          flags,
+          status.get()
+        )
+      );
+      if (err == 0) {
+        return status;
+      }
+    }
+  }
+
+  return JobStatusPtr();
+}
+
+JobStatusPtr job_status(jobid::JobId const& id)
+{
+  std::string const x509_proxy = get_user_x509_proxy(id);
+  std::string const sequence_code;
+  ContextPtr context(
+    create_context(id, x509_proxy, sequence_code)
+  );
+  if (context) {
+    JobStatusPtr status(create_job_status(), delete_job_status);
+    if (status) {
+      int const flags = 0;
+      int const err(
+        edg_wll_JobStatusProxy(
+          context.get(),
+          id.getId(),
+          flags,
+          status.get()
+        )
+      );
+      if (err == 0) {
+        return status;
+      }
+    }
+  }
+
+  return JobStatusPtr();
+}
+
+bool is_waiting(JobStatusPtr const& status)
+{
+  return status && status->state == EDG_WLL_JOB_WAITING;
+}
+
+bool is_cancelled(JobStatusPtr const& status)
+{
+  return status && status->state == EDG_WLL_JOB_CANCELLED;
+}
+
 }}}} // glite::wms::manager::common
 
