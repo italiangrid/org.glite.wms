@@ -503,14 +503,14 @@ void jobCache::logOperation( const operation& op, const std::string& param )
         try {
             this->dump(); // can raise a jnlFile_ex
             jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
-        } catch(std::exception& ex) {
-            cerr << "dump raised an std::exception: "<<ex.what()<<endl;
-            exit(1);
         } catch(jnlFile_ex& ex) {
             cerr << ex.what()<<endl;
             exit(1);
         } catch(jnlFileReadOnly_ex& ex) {
             cerr << ex.what()<<endl;
+            exit(1);
+        } catch(std::exception& ex) {
+            cerr << "dump raised an std::exception: "<<ex.what()<<endl;
             exit(1);
         } catch(...) {
             cerr << "Something catched!"<<endl;
