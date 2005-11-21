@@ -10,51 +10,47 @@ using namespace glite::ce::cream_client_api;
 using namespace glite::ce::cream_client_api::job_statuses;
 using namespace std;
 
-classad::ClassAdParser cj_parser;
-classad::ClassAdUnParser cj_unp;
+//classad::ClassAdParser cj_parser;
+//classad::ClassAdUnParser cj_unp;
 
 //______________________________________________________________________________
 CreamJob::CreamJob(const string& _jdl, 
-		   const string& _jobid, 
-		   const string& gid, 
+		   const string& _cream_jobid, 
 		   const job_status& _status) 
-  throw(ClassadSyntax_ex&) : jobid(_jobid), edg_jobid(gid), 
+  throw(ClassadSyntax_ex&) : cream_jobid( _cream_jobid), grid_jobid( ), 
 			     jdl(_jdl), status(_status)
 {
-  classad::ClassAd *ad;
-  classad::ExprTree *jdltree;
+    classad::ClassAdParser parser;
+    classad::ClassAd *ad = parser.ParseClassAd( _jdl );;
   
-  ad = cj_parser.ParseClassAd(_jdl);
+    if (!ad)
+        throw ClassadSyntax_ex("The JDL is not valid");
+    
+    // Look for the "ce_id" attribute
+    if ( !ad->EvaluateAttrString( "ce_id", ceid ) ) {
+        throw ClassadSyntax_ex("ce_id attribute not found, or is not a string");
+    }
+    boost::trim_if(ceid, boost::is_any_of("\"") );
+    
+    // Look for the "X509UserProxy" attribute
+    if ( !ad->EvaluateAttrString( "X509UserProxy", user_proxyfile ) ) {
+        throw ClassadSyntax_ex("X509UserProxy attribute not found, or is not a string");
+    }
+    boost::trim_if(user_proxyfile, boost::is_any_of("\""));
+    
+    // Look for the "edg_jobid" attribute
+    if ( !ad->EvaluateAttrString( "edg_jobid", grid_jobid ) ) {
+        throw ClassadSyntax_ex( "edg_jobid attribute not found, or is not a string" );
+    }
+    boost::trim_if(grid_jobid, boost::is_any_of("\"") );
   
-  if(!ad)
-    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire JDL");
-  
-  if((jdltree=ad->Lookup("ce_id"))!=NULL)
-    {
-      cj_unp.Unparse(ceid, jdltree);
-      //classad::ClassAdUnParser::Unparse(ceid, jdltree);
-    } else {
-    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'ce_id' attributes");
-  }
-
-  if((jdltree=ad->Lookup("X509UserProxy"))!=NULL)
-    {
-      cj_unp.Unparse(user_proxyfile, jdltree);
-      //classad::ClassAdUnParser::Unparse(user_proxyfile, jdltree);
-    } else {
-    throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'X509UserProxy' attributes");
-  }
-
-  boost::trim_if(ceid, boost::is_any_of("\"") );
-  boost::trim_if(user_proxyfile, boost::is_any_of("\""));
-
-  vector<string> pieces;
-  try{
-    glite::ce::cream_client_api::util::CEUrl::parseCEID(ceid, pieces);
-  } catch(glite::ce::cream_client_api::util::CEUrl::ceid_syntax_ex& ex) {
-    throw ClassadSyntax_ex(ex.what());
-  }
-  endpoint = pieces[0] + ":" + pieces[1];
-  cream_address = string("https://") + endpoint + "/ce-cream/services/CREAM";
-  cream_deleg_address = cream_address + "Delegation";
+    vector<string> pieces;
+    try{
+        glite::ce::cream_client_api::util::CEUrl::parseCEID(ceid, pieces);
+    } catch(glite::ce::cream_client_api::util::CEUrl::ceid_syntax_ex& ex) {
+        throw ClassadSyntax_ex(ex.what());
+    }
+    endpoint = pieces[0] + ":" + pieces[1];
+    cream_address = string("https://") + endpoint + "/ce-cream/services/CREAM";
+    cream_deleg_address = cream_address + "Delegation";
 }

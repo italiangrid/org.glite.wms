@@ -38,50 +38,6 @@ int main(int argc, char* argv[]) {
   is.open(argv[2]);
   string buf;
 
-  //  glite::wms::jdl::JobAd tempJob;
-//   try {
-//     tempJob.fromStream(is);
-//   }
-//   catch(glite::wms::jdl::AdSyntaxException& ex) {
-//     // ERROR
-//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
-//     cerr << ex.what()<<endl;
-//     exit(1);
-//   }
-//   catch(glite::wms::jdl::AdClassAdException& ex) {
-//     // ERROR
-//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
-//     cerr << ex.what()<<endl;
-//     exit(1);
-//   }
-//   catch(glite::wms::jdl::AdMismatchException& ex) {
-//     // ERROR
-//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
-//     cerr << ex.what()<<endl;
-//     exit(1);
-//   }
-//   catch(glite::wms::jdl::AdListException& ex) {
-//     // ERROR
-//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
-//     cerr << ex.what()<<endl;
-//     exit(1);
-//   }
-//   catch(glite::wms::jdl::AdFormatException& ex) {
-//     // ERROR
-//     //throw JDLSyntaxError(string("JDL Parsing Error: ") + ex.what());
-//     cerr << ex.what()<<endl;
-//     exit(1);
-//   }
-//   is.close();
-
-//   string id = string("JobAlvise-") 
-//     + glite::ce::cream_client_api::util::string_manipulation::make_string(time(NULL));
-
-//   tempJob.setAttribute("id", id);
-
-//   //  while(is.peek()!=EOF) {
-//   //int whichOneToAdd = getRandom(8);
-//   //std::getline(is, buf, '\n');
   string Buf = "";
   while(is.peek()!=EOF) {
     std::getline(is, buf, '\n');
@@ -107,7 +63,7 @@ int main(int argc, char* argv[]) {
     + glite::ce::cream_client_api::util::string_manipulation::make_string(T.tv_sec)
     + "."
     + glite::ce::cream_client_api::util::string_manipulation::make_string(T.tv_usec);
-  ad->InsertAttr("id", id );
+  ad->InsertAttr("edg_jobid", id );
 
   classad::ClassAdUnParser unp;
   
@@ -147,12 +103,3 @@ int getRandom(double max) {
   int j= 1 + (int)(max*rand()/(RAND_MAX+1.0));
   return j;
 }
-
-//______________________________________________________________________________
-// bool checkClassad(string cl) {
-//   classad::ClassAdParser parser;
-//   classad::ExprTree *tree;
-//   tree = parser.ParseExpression(cl.c_str());
-//   if(!tree) return false;
-//   return true;
-// }

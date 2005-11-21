@@ -429,7 +429,7 @@ void jobCache::dump() throw (jnlFile_ex&)
 CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
 {
   classad::ClassAd *ad;
-  string jobExpr, gid, cid, st, jdl;
+  string jobExpr, /*gid,*/ cid, st, jdl;
   classad::ClassAdParser parser;
   classad::ClassAdUnParser unp;
   ad = parser.ParseClassAd(Buf);
@@ -438,9 +438,9 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     throw ClassadSyntax_ex(string("ClassAd parser returned a NULL pointer parsing entire classad ")+Buf);
 
   
-  if(ad->Lookup("grid_jobid") && ad->Lookup("cream_jobid") &&
+  if(/*ad->Lookup("grid_jobid") &&*/ ad->Lookup("cream_jobid") &&
      ad->Lookup("status") && ad->Lookup("jdl")) {
-    unp.Unparse(gid, ad->Lookup("grid_jobid"));
+      // unp.Unparse(gid, ad->Lookup("grid_jobid"));
     unp.Unparse(cid, ad->Lookup("cream_jobid"));
     unp.Unparse(st,  ad->Lookup("status"));
     unp.Unparse(jdl, ad->Lookup("jdl"));
@@ -450,7 +450,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     
   boost::trim_if(cid, boost::is_any_of("\""));
   boost::trim_if(st, boost::is_any_of("\""));
-  boost::trim_if(gid, boost::is_any_of("\""));
+  /* boost::trim_if(gid, boost::is_any_of("\"")); */
   boost::trim_if(jdl, boost::is_any_of("\""));
 
   api::job_statuses::job_status stNum;
@@ -463,7 +463,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   }
 
   try {
-    return CreamJob(jdl, cid, gid, stNum);
+    return CreamJob(jdl, cid, stNum);
   } catch(ClassadSyntax_ex& ex) {
     throw ClassadSyntax_ex(string("Error creating a creamJob: ")+ex.what());
   }
@@ -522,17 +522,13 @@ void jobCache::logOperation( const operation& op, const std::string& param )
 //______________________________________________________________________________
 void jobCache::toString(const CreamJob& cj, string& target)
 {
-    ostringstream result;
-    result << "[grid_jobid=\"" << cj.getGridJobID() << "\";cream_jobid=\"" 
-           << cj.getJobID() << "\";status=\"" 
-           << (int)cj.getStatus()
-           << "\"; jdl=" << cj.getJDL() << "]" << ends;
-    target = result.str();
+    classad::ClassAd ad;
+    ad.InsertAttr( "cream_jobid", cj.getJobID() );
+    ad.InsertAttr( "status", (int)cj.getStatus() );
+    ad.InsertAttr( "jdl", cj.getJDL() );
 
-//   target = string("[grid_jobid=\"" + cj.getGridJobID() + "\";cream_jobid=\"" 
-// 		  + cj.getJobID() + "\";status=\"" 
-// 		  + apiutil::string_manipulation::make_string((int)cj.getStatus()) 
-// 		  + "\"; jdl=" + cj.getJDL() + "]");
+    classad::ClassAdUnParser unparser;
+    unparser.Unparse( target, &ad );
 }
 
 //______________________________________________________________________________

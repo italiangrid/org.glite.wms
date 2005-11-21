@@ -14,11 +14,6 @@ namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( )
 {
-    // Sample classad: 
-    // ( this was the OLD version )
-    // [arguments = [ ad = [ QueueName="grid01"; BatchSystem="lsf"; X509UserProxy="/tmp/x509up_u202"; id="Job_di_Alvise"; VirtualOrganisation="EGEE"; executable="/bin/echo" ] ]; command = "jobsubmit"; version = "1.0.0" ]
-
-
     // Sample classad:
     // ( this is the NEW version )
     //  [ requirements = ( ( ( ( other.GlueCEInfoHostName == "lxb2022.cern.ch" ) ) ) && ( other.GlueCEStateStatus == "Production" ) ) && ( other.GlueCEStateStatus == "Production" );
@@ -92,7 +87,8 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     boost::trim_if(_gridJobId, boost::is_any_of("\"") );
 }
 
-void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
+
+void iceCommandSubmit::execute( void )
 {
   try {
     vector<string> url_jid;
@@ -101,7 +97,7 @@ void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
 
     util::CreamJob theJob( _jdl,
 			   "",
-			   _gridJobId,
+			   /* _gridJobId, */
 			   job_statuses::UNKNOWN );
 
     string ceid = theJob.getCEID();
@@ -131,13 +127,13 @@ void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
     soap_proxy::CreamProxyFactory::getProxy()->Register( 
 	theJob.getCreamURL().c_str(),
 	theJob.getCreamDelegURL().c_str(),
-							"", // deleg ID not needed because this client
-							// will always do auto_delegation
-							modified_jdl, 
-							theJob.getUserProxyCertificate(),
-							url_jid,
-							true /*autostart*/ 
-							);
+        "", // deleg ID not needed because this client
+        // will always do auto_delegation
+        modified_jdl, 
+        theJob.getUserProxyCertificate(),
+        url_jid,
+        true /*autostart*/ 
+        );
     
     cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
 

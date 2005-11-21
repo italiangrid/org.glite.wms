@@ -14,8 +14,8 @@ namespace glite {
 	//______________________________________________________________________
 	class CreamJob {
 
-	  std::string jobid;
-          std::string edg_jobid;
+	  std::string cream_jobid;
+          std::string grid_jobid;
 	  std::string jdl;
 	  std::string ceid;
 	  std::string endpoint;
@@ -27,14 +27,13 @@ namespace glite {
 	public:
 
 	  CreamJob( const std::string& _jdl,
-		    const std::string& _jobid,
-		    const std::string& _edg_jobid,
+		    const std::string& _cream_jobid, //< Cream Job ID 
 		    const glite::ce::cream_client_api::job_statuses::job_status& st) 
 	    throw(ClassadSyntax_ex&);
 
 	  CreamJob(const CreamJob& C) {
-	    jobid = C.jobid;
-	    edg_jobid = C.edg_jobid;
+	    cream_jobid = C.cream_jobid;
+	    grid_jobid = C.grid_jobid;
 	    jdl = C.jdl;
 	    ceid = C.ceid;
 	    endpoint = C.endpoint;
@@ -48,9 +47,9 @@ namespace glite {
 	  { 
 	    status = st;
 	  }
-          void setJobID(const std::string& cid) { jobid = cid; }
-          std::string getGridJobID(void) const { return edg_jobid; }
-          std::string getJobID(void) const { return jobid; }
+          void setJobID(const std::string& cid) { cream_jobid = cid; }
+          std::string getGridJobID(void) const { return grid_jobid; }
+          std::string getJobID(void) const { return cream_jobid; }
           std::string getJDL(void) const { return jdl; }
           std::string getCEID(void) const { return ceid; }
           std::string getEndpoint(void) const { return endpoint; }
