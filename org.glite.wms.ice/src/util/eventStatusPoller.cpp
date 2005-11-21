@@ -37,44 +37,17 @@ eventStatusPoller::eventStatusPoller(
   url_pieces.reserve(4);
   try {
     creamClient = new soap_proxy::CreamProxy(false);
-    //creamClient->Authenticate( certfile );
   } catch(soap_proxy::soap_ex& ex) {
     throw eventStatusPoller_ex( ex.what() );
   } 
   oneJobToQuery.reserve(1);
   oneJobToPurge.reserve(1);
-
-  //cout << "POLLER COSTRUITO !"<<endl;
-
 }
-
-//______________________________________________________________________________
-// eventStatusPoller::eventStatusPoller(const eventStatusPoller& P) 
-//   throw(eventStatusPoller_ex&)
-// {
-//   //cout << "COPY CTOR CALLED !!!" << endl;
-//   try {
-//     creamClient = new soap_proxy::CreamProxy(false);
-//     //creamClient->Authenticate( certfile );
-//   } catch(soap_proxy::soap_ex& ex) {
-//     throw eventStatusPoller_ex( ex.what() );
-//   }
-// //   endpolling = P.endpolling;
-// //   delay      = P.delay;
-// //   iceManager = P.iceManager;
-// //   jobs_to_query.reserve(1000);
-// //   url_pieces.reserve(4);
-// //   oneJobToQuery.reserve(1);
-// //   oneJobToPurge.reserve(1);
-// //   _jobinfolist.clear();
-// }
 
 //______________________________________________________________________________
 eventStatusPoller::~eventStatusPoller()
 {
-  //cout << "POLLER DISTRUTTO !"<<endl;
-
-  //  if(creamClient) delete(creamClient);
+  if(creamClient) delete(creamClient);
 }
 
 //______________________________________________________________________________
@@ -102,16 +75,6 @@ bool eventStatusPoller::getStatus(void)
     cerr << ex.what()<<endl;
     exit(1);
   }
-
-//   map< string, vector<string> > endpoint_hash;
-//   try {
-//     CEUrl::organise_by_endpoint(jobs_to_query, endpoint_hash, 
-// 			     "/ce-cream/services/CREAM");
-//   } catch(CEUrl::ceid_syntax_ex& ex) {
-//     cerr << ex.what()<<endl;
-//     exit(1);
-//   }
-
 
   for(vstrIt it = jobs_to_query.begin(); it != jobs_to_query.end(); ++it)
     {
@@ -191,7 +154,6 @@ void eventStatusPoller::checkJobs()
 	    if(iceManager)
 	      iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
 	    jobs_to_purge.push_back(cid);
-	    //continue;
 	  }
 	
 	if( stNum == api::job_statuses::DONE_OK ||
@@ -206,7 +168,7 @@ void eventStatusPoller::checkJobs()
 	this->purgeJobs(jobs_to_purge);
 	
 	sleep(1); // sleep a little bit to not overload CREAM with too
-	// many purges
+	// many purges per second
 	
 	jobs_to_purge.clear();
       }
@@ -217,10 +179,9 @@ void eventStatusPoller::checkJobs()
 void eventStatusPoller::updateJobCache() 
 {
   for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it) {
-    if(!*it) {
-      //cerr << "_jobinfolist["<<k<<"] is NULL. Wont update the job cache\n";
+    if(!*it)
       continue;
-    }
+    
     for(unsigned int j=0; j<(*it)->jobInfo.size(); j++) {
       
       glite::ce::cream_client_api::job_statuses::job_status 
@@ -253,23 +214,11 @@ void eventStatusPoller::updateJobCache()
 }
 
 //______________________________________________________________________________
-// void eventStatusPoller::run() 
-// {
-
-// }
-
-//______________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
   if(!jobs_to_purge.size()) return;
   
-//   map<string, vector<string> > endpoint_jobs;
-//   CEUrl::organise_by_endpoint(jobs_to_purge, 
-// 			      endpoint_jobs, 
-// 			      "/ce-cream/services/CREAM");
-  
   for(
-      /* unsigned k=0; k < jobs_to_purge.size(); ++k) */
       cvstrIt it = jobs_to_purge.begin();
       it != jobs_to_purge.end();
       ++it
@@ -310,13 +259,8 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 //______________________________________________________________________________
 void eventStatusPoller::operator()()
 {
-  //do_purchase();
-  //cout << "eventStatusPoller::operator()() - calling run()"<<endl;
-  //run();
-    endpolling = false;
-    //cout << "eventStatusPoller::() - entering while..."<<endl;
+  endpolling = false;
   while(!endpolling) {
-    //    cout << "Inside while"<<endl;
     if(getStatus()) {
       cout << "eventStatusPoller::getStatus OK"<<endl;
       try{
