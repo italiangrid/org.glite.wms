@@ -4,17 +4,44 @@
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "boost/algorithm/string.hpp"
+#include "glite/ce/cream-client-api-c/CEUrl.h"
 
 using namespace glite::wms::ice;
 using namespace std;
 using namespace glite::ce::cream_client_api;
+namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 
 iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( )
 {
     // Sample classad: 
+    // ( this was the OLD version )
     // [arguments = [ ad = [ QueueName="grid01"; BatchSystem="lsf"; X509UserProxy="/tmp/x509up_u202"; id="Job_di_Alvise"; VirtualOrganisation="EGEE"; executable="/bin/echo" ] ]; command = "jobsubmit"; version = "1.0.0" ]
 
+
+    // Sample classad:
+    // ( this is the NEW version )
+    //  [ requirements = ( ( ( ( other.GlueCEInfoHostName == "lxb2022.cern.ch" ) ) ) && ( other.GlueCEStateStatus == "Production" ) ) && ( other.GlueCEStateStatus == "Production" );
+    //     RetryCount = 0;
+    //     ce_id = "grid005.pd.infn.it:8443/cream_lsf_grid002";
+    //     edg_jobid = "https://gundam.cnaf.infn.it:9000/ZLM4zE60OqHIcqH_PNbs-w";
+    //     Arguments = "136100001 herrala_27411 360 20";
+    //     OutputSandboxPath = "/var/glitewms/SandboxDir/ZL/https_3a_2f_2fgundam.cnaf.infn.it_3a9000_2fZLM4zE60OqHIcqH_5fPNbs-w/output";
+    //     JobType = "normal";
+    //     Executable = "glite-dev.tt_ch_160_tb20.testrun.sh.sh";
+    //     CertificateSubject = "/O=Grid/O=NorduGrid/OU=hip.fi/CN=Juha Herrala";
+    //     StdOutput = "cstdout";
+    //     X509UserProxy = "/var/glitewms/SandboxDir/ZL/https_3a_2f_2fgundam.cnaf.infn.it_3a9000_2fZLM4zE60OqHIcqH_5fPNbs-w/user.proxy";
+    //     OutputSandbox = { "cstdout","cstderr","testrun.log","testrun.root" };
+    //     LB_sequence_code = "UI=000003:NS=0000000003:WM=000000:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000";
+    //     InputSandboxPath = "/var/glitewms/SandboxDir/ZL/https_3a_2f_2fgundam.cnaf.infn.it_3a9000_2fZLM4zE60OqHIcqH_5fPNbs-w/input";
+    //     VirtualOrganisation = "EGEE";
+    //     rank =  -other.GlueCEStateEstimatedResponseTime;
+    //     Type = "job";
+    //     StdError = "cstderr";
+    //     DefaultRank =  -other.GlueCEStateEstimatedResponseTime;
+    //     InputSandbox = { "ExeTar.tt_ch_160_tb20.testrun.sh","glite-dev.tt_ch_160_tb20.testrun.sh.sh" } ] ]
+    
     classad::ClassAdParser parser;
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
@@ -59,11 +86,10 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     unparser.Unparse( _jdl, _argumentsAD->Lookup( "ad" ) );
 
     // Look for "id" attribute inside "ad"
-    if ( !_adAD->EvaluateAttrString( "id", _gridJobId ) ) {
-        throw util::JobRequest_ex( "attribute 'id' inside 'ad' not found, or is not a string" );
+    if ( !_adAD->EvaluateAttrString( "edg_jobid", _gridJobId ) ) {
+        throw util::JobRequest_ex( "attribute 'edg_jobid' inside 'ad' not found, or is not a string" );
     }
     boost::trim_if(_gridJobId, boost::is_any_of("\"") );
-
 }
 
 void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
@@ -78,9 +104,25 @@ void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
 			   _gridJobId,
 			   job_statuses::UNKNOWN );
 
+    string ceid = theJob.getCEID();
+    vector<string> ceid_pieces;
+    ceurl_util::parseCEID( ceid, ceid_pieces );
+    string bsname = ceid_pieces[2];
+    string qname = ceid_pieces[3];
 
+    // Update jdl to insert two new attributes needed by cream:
+    // QueueName and BatchSystem.
+
+    classad::ClassAdParser parser;
+    classad::ClassAd *_root = parser.ParseClassAd( _jdl );
+    _root->InsertAttr( "QueueName", qname );
+    _root->InsertAttr( "BatchSystem", bsname );
+
+    string modified_jdl;
+    classad::ClassAdUnParser unparser;
+    unparser.Unparse( modified_jdl, _root );
     
-    cout << "\tSubmiting JDL " << _jdl << " to ["
+    cout << "\tSubmiting JDL " << modified_jdl << " to ["
 	 << theJob.getCreamURL() << "][" << theJob.getCreamDelegURL()
 	 << "]" << endl; 
     
@@ -91,7 +133,7 @@ void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
 	theJob.getCreamDelegURL().c_str(),
 							"", // deleg ID not needed because this client
 							// will always do auto_delegation
-							_jdl, 
+							modified_jdl, 
 							theJob.getUserProxyCertificate(),
 							url_jid,
 							true /*autostart*/ 
