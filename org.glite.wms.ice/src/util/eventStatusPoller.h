@@ -42,6 +42,10 @@ namespace glite {
 	  std::vector<std::string> oneJobToQuery;
 	  std::vector<std::string> oneJobToPurge;
 
+	  bool getStatus(void);
+	  void updateJobCache(void);
+	  void checkJobs(void);
+
 	protected:
 	  eventStatusPoller( const eventStatusPoller&) {}
 
@@ -55,10 +59,6 @@ namespace glite {
 	  
 	  virtual ~eventStatusPoller();// { if(creamClient) delete(creamClient); }
 
-	  bool getStatus(void);
-	  void updateJobCache(void);
-	  void checkJobs(void);
-	  //virtual void run(void);
 	  virtual void operator()();
 	  virtual void stop() { endpolling=true; }
 	};
