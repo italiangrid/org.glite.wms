@@ -68,87 +68,79 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
 
 void iceCommandSubmit::execute( /* soap_proxy::CreamProxy* c */ )
 {
+  try {
     vector<string> url_jid;
 
     cout << "\tThis request is a Submission..."<<endl;
 
-    util::CreamJob *theJob;
-    try {
-      theJob = new util::CreamJob( _jdl,
-				   "",
-				   _gridJobId,
-				   job_statuses::UNKNOWN );
-    } catch(util::ClassadSyntax_ex& ex) {
-      cerr << ex.what()<<endl;
-      delete( theJob );
-      exit(1);
-    }
+    util::CreamJob theJob( _jdl,
+			   "",
+			   _gridJobId,
+			   job_statuses::UNKNOWN );
 
-    try {
 
-        cout << "\tSubmiting JDL " << _jdl << " to ["
-             << theJob->getCreamURL() << "][" << theJob->getCreamDelegURL()
-	     << "]" << endl; 
-	
-	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob->getUserProxyCertificate());
+    
+    cout << "\tSubmiting JDL " << _jdl << " to ["
+	 << theJob.getCreamURL() << "][" << theJob.getCreamDelegURL()
+	 << "]" << endl; 
+    
+    soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob.getUserProxyCertificate());
+    
+    soap_proxy::CreamProxyFactory::getProxy()->Register( 
+	theJob.getCreamURL().c_str(),
+	theJob.getCreamDelegURL().c_str(),
+							"", // deleg ID not needed because this client
+							// will always do auto_delegation
+							_jdl, 
+							theJob.getUserProxyCertificate(),
+							url_jid,
+							true /*autostart*/ 
+							);
+    
+    cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
 
-        soap_proxy::CreamProxyFactory::getProxy()->Register( 
-		    theJob->getCreamURL().c_str(),
-		    theJob->getCreamDelegURL().c_str(),
-		    "", // deleg ID not needed because this client
-		    // will always do auto_delegation
-		    _jdl, 
-		    theJob->getUserProxyCertificate(),
-		    url_jid,
-		    true /*autostart*/ 
-		    );
-	    
-        cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
-    } catch(soap_proxy::auth_ex& ex) {
-      cerr << "\tauth_ex: " << ex.what() << endl;
-      delete( theJob );
-      exit(1);
-    } 
-    catch(soap_proxy::soap_ex& ex) {
-        cerr << "\tsoap ex: "<<ex.what() << endl;
-        // MUST LOG TO LB
-        // HERE MUST RESUBMIT
-	delete( theJob );
-        exit(1);
-    } catch(cream_exceptions::BaseException& base) {
-        cout << "cream_exception::BaseException: " 
-             << base.what() << endl;
-	delete( theJob );
-        exit(1);
-        // MUST LOG TO LB
-//         cerr << "Base ex: "<<base.what()<<endl;
-//         submitter->ungetRequest(j);
-//         submitter->removeRequest(j);
-//        continue; // process next request
-    } catch(cream_exceptions::InternalException& intern) {
-        // TODO
-        // MUST LOG TO LB
-        cerr << "Internal ex: "<<intern.what()<<endl;
-	delete( theJob );
-        exit(1);
-    }
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
 
-    theJob->setJobID(url_jid[1]);
-    theJob->setStatus(job_statuses::PENDING);
+    theJob.setJobID(url_jid[1]);
+    theJob.setStatus(job_statuses::PENDING);
 
-    try {
-      //        util::CreamJob theJob( _jdl, url_jid[1], _gridJobId, job_statuses::PENDING );
-       
-      //put(...) accepts arg by reference, but
-      // the implementation puts the arg in the memory hash by copying it. So
-      // passing a *pointer should not produce problems
-      util::jobCache::getInstance()->put( *theJob );
-    } catch(exception& ex) {
-        cerr << "put in cache raised an ex: "<<ex.what()<<endl;
-	delete( theJob );
-        exit(1);
-    }
-    delete( theJob );
+    //put(...) accepts arg by reference, but
+    // the implementation puts the arg in the memory hash by copying it. So
+    // passing a *pointer should not produce problems
+    util::jobCache::getInstance()->put( theJob );
+
+  } catch(util::ClassadSyntax_ex& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
+  } catch(soap_proxy::auth_ex& ex) {
+    cerr << "\tauth_ex: " << ex.what() << endl;
+    exit(1);
+  } 
+  catch(soap_proxy::soap_ex& ex) {
+    cerr << "\tsoap ex: "<<ex.what() << endl;
+    // MUST LOG TO LB
+    // HERE MUST RESUBMIT
+    exit(1);
+  } catch(cream_exceptions::BaseException& base) {
+    cout << "cream_exception::BaseException: " 
+	 << base.what() << endl;
+    exit(1);
+    // MUST LOG TO LB
+    cerr << "Base ex: "<<base.what()<<endl;
+//     submitter->ungetRequest(j);
+//     submitter->removeRequest(j);
+//    continue; // process next request
+  } catch(cream_exceptions::InternalException& intern) {
+    // TODO
+    // MUST LOG TO LB
+    cerr << "Internal ex: "<<intern.what()<<endl;
+    exit(1);
+  } catch(util::jnlFile_ex& ex) {
+    cerr << "put in cache raised an ex: "<<ex.what()<<endl;
+    exit(1);
+  } catch(util::jnlFileReadOnly_ex& ex) {
+    cerr << "put in cache raised an ex: "<<ex.what()<<endl;
+    exit(1);
+  } 
 }

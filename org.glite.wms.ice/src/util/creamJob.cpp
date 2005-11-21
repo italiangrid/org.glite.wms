@@ -1,6 +1,5 @@
 
 #include "creamJob.h"
-//#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"

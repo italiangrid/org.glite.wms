@@ -94,7 +94,12 @@ int main(int argc, char*argv[]) {
       cout << "\tUnparse successfull..."<<endl;
       cmd->execute( );
       cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
-      iceManager->removeRequest(j);
+      try { 
+	iceManager->removeRequest(j);
+      } catch(exception& ex) {
+	cerr << "Error removing request from FL: "<<ex.what()<<endl;
+	exit(1);
+      }
     }
     sleep(1);
     requests.clear();

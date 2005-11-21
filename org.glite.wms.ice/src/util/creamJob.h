@@ -5,7 +5,6 @@
 #include "ClassadSyntax_ex.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include <string>
-//#include "classad_distribution.h"
 
 namespace glite {
   namespace wms {
