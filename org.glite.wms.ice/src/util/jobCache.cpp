@@ -525,8 +525,9 @@ void jobCache::toString(const CreamJob& cj, string& target)
     classad::ClassAd ad;
     ad.InsertAttr( "cream_jobid", cj.getJobID() );
     ad.InsertAttr( "status", (int)cj.getStatus() );
-    ad.InsertAttr( "jdl", cj.getJDL() );
-
+    classad::ClassAdParser parser;
+    classad::ClassAd* jdlAd = parser.ParseClassAd(cj.getJDL());
+    ad.Insert( "jdl", jdlAd );
     classad::ClassAdUnParser unparser;
     unparser.Unparse( target, &ad );
 }
