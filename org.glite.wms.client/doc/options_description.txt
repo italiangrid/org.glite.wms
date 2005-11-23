@@ -142,10 +142,10 @@ This command is available only for jobs.
 if this option is specified, the job-ad sent to the NS contains a line of the type "SubmitTo = <ceid>"  and the job is submitted by the WMS to the resource identified by <ceid> without going through the match-making process.
 <<<resource>>>
 
-<<<nodes-resources>>>
+<<<nodes-resource>>>
 This command is available only for dags.
 if this option is specified, the job-ad sent to the NS contains a line of the type "SubmitTo = <ceid>"  and the dag is submitted by the WMS to the resource identified by <ceid> without going through the match-making process for each of its nodes.
-<<<nodes-resources>>>
+<<<nodes-resource>>>
 
 <<<set>>>
 if this option is specified, perusal functionality is enabled for the job (indicated by JobId) for the file(s) indicated with --filename option. Multiple files can be specified by repeating the option several times ( f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). It cannot be specified with --get and --unset.
