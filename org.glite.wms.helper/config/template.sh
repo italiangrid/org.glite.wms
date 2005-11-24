@@ -409,37 +409,40 @@ if [ $__perusal_support -eq 1 ]; then
   send_partial_file ${__perusal_listfileuri} ${__perusal_filesdesturi} ${__perusal_timeinterval} & send_pid=$!
 fi
 
-value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm $__token_file`
-result=$?
-if [ $result -eq 0 ]; then
-  GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
- --jobid="$GLITE_WMS_JOBID" \
- --source=LRMS \
- --sequence="$GLITE_WMS_SEQUENCE_CODE"\
- --event="ReallyRunning"\
- --status_code=\
- --exit_code=\
- || echo $GLITE_WMS_SEQUENCE_CODE`
-export GLITE_WMS_SEQUENCE_CODE
+if [ $__token_support -eq 1 ]; then
+  value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm $__token_file`
+  result=$?
+  if [ $result -eq 0 ]; then
+    GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
+  --jobid="$GLITE_WMS_JOBID" \
+  --source=LRMS \
+  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+  --event="ReallyRunning"\
+  --status_code=\
+  --exit_code=\
+  || echo $GLITE_WMS_SEQUENCE_CODE`
+  export GLITE_WMS_SEQUENCE_CODE
 
-  echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
-else
-  echo "Cannot take token!"
-  echo "Cannot take token!" >> "${maradona}"
+    echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
+  else
+    echo "Cannot take token!"
+    echo "Cannot take token!" >> "${maradona}"
 
-  GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
- --jobid="$GLITE_WMS_JOBID" \
- --source=LRMS \
- --sequence="$GLITE_WMS_SEQUENCE_CODE"\
- --event="Done"\
- --reason="Cannot take token!"\
- --status_code=FAILED\
- --exit_code=0\
- || echo $GLITE_WMS_SEQUENCE_CODE`
-export GLITE_WMS_SEQUENCE_CODE
+    GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
+  --jobid="$GLITE_WMS_JOBID" \
+  --source=LRMS \
+  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+  --event="Done"\
+  --reason="Cannot take token!"\
+  --status_code=FAILED\
+  --exit_code=0\
+  || echo $GLITE_WMS_SEQUENCE_CODE`
+  export GLITE_WMS_SEQUENCE_CODE
 
-  doExit 1
+    doExit 1
+  fi
 fi
+
 (
   cmd_line="${__job} ${__arguments} $*"
   if [ -n "${__standard_input}" ]; then
