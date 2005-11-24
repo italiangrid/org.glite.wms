@@ -8,7 +8,7 @@
 
 lib_LTLIBRARIES = libglite_wms_ice_util.la
 
-libglite_wms_ice_util_la_SOURCES = eventStatusListener.cpp \
+libglite_wms_ice_util_la_SOURCES = \
 				jnlFileManager.cpp \
 				jobCache.cpp \
 				eventStatusPoller.cpp \

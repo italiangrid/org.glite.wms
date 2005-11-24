@@ -16,9 +16,10 @@ using namespace std;
 //______________________________________________________________________________
 CreamJob::CreamJob(const string& _jdl, 
 		   const string& _cream_jobid, 
-		   const job_status& _status) 
+		   const job_status& _status,
+		   time_t tstamp) 
   throw(ClassadSyntax_ex&) : cream_jobid( _cream_jobid), grid_jobid( ), 
-			     jdl(_jdl), status(_status)
+			     jdl(_jdl), status(_status), lastUpdate(tstamp)
 {
     classad::ClassAdParser parser;
     classad::ClassAd *ad = parser.ParseClassAd( _jdl );;

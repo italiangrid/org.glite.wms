@@ -6,6 +6,8 @@
 #include "boost/algorithm/string.hpp"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 
+#include <ctime>
+
 using namespace glite::wms::ice;
 using namespace std;
 using namespace glite::ce::cream_client_api;
@@ -98,7 +100,8 @@ void iceCommandSubmit::execute( void )
     util::CreamJob theJob( _jdl,
 			   "",
 			   /* _gridJobId, */
-			   job_statuses::UNKNOWN );
+			   job_statuses::UNKNOWN,
+			   time(NULL));
 
     string ceid = theJob.getCEID();
     vector<string> ceid_pieces;

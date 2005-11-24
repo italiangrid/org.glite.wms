@@ -25,30 +25,20 @@ tryICE_SOURCES = tryICE.cpp
 ### tryJobCache_SOURCES = tryJobCache.cpp
 
 putFL_LDADD = -L$(GLITE_LOCATION)/lib \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_consumer \
-		../src/util/libglite_wms_ice_util.la \
-		../src/ice/libglite_wms_ice.la \
 		$(LOG4CPP_LIBS) \
-		$(CLASSAD_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
-		-lglite_wms_util
+		-lglite_wms_util \
+		$(CLASSAD_LIBS)
 
 putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
-		-lglite_ce_cream_client_soap \
-		-lglite_ce_cream_client_util \
-		-lglite_ce_monitor_consumer \
-		../src/util/libglite_wms_ice_util.la \
-		../src/ice/libglite_wms_ice.la \
 		$(LOG4CPP_LIBS) \
-		$(CLASSAD_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
-		-lglite_wms_util
+		-lglite_wms_util \
+		$(CLASSAD_LIBS)
 
 
 tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
@@ -56,6 +46,8 @@ tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_util \
 		$(LOG4CPP_LIBS) $(CLASSAD_LIBS) \
 		-lglite_ce_monitor_consumer \
+		-lglite_security_gsoap_plugin_276b_gcc32pthr \
+		$(GLOBUS_LIBS) $(GLOBUS_SSL_THR_LIBS) \
 		../src/util/libglite_wms_ice_util.la \
 		../src/ice/libglite_wms_ice.la \
 		-lglite_wms_util \

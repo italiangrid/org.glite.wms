@@ -6,7 +6,7 @@
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "boost/algorithm/string.hpp"
 
-#include "classad_distribution.h"
+#include "classad_distribution.h" // classad's stuff
 #include "source.h" // classad's stuff
 #include "sink.h"   // classad's stuff
 
@@ -18,8 +18,8 @@
 #include <string>
 #include <sstream>
 #include <utility> // for make_pair
-#include <boost/algorithm/string.hpp>
-
+#include <ctime>
+#include <cstdlib>
 
 extern int errno;
 
@@ -429,7 +429,7 @@ void jobCache::dump() throw (jnlFile_ex&)
 CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
 {
   classad::ClassAd *ad;
-  string jobExpr, /*gid,*/ cid, st, jdl;
+  string jobExpr, /*gid,*/ cid, st, jdl, tstamp;
   classad::ClassAdParser parser;
   classad::ClassAdUnParser unp;
   ad = parser.ParseClassAd(Buf);
@@ -438,12 +438,15 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     throw ClassadSyntax_ex(string("ClassAd parser returned a NULL pointer parsing entire classad ")+Buf);
 
   
+  //tstamp;
+
   if(/*ad->Lookup("grid_jobid") &&*/ ad->Lookup("cream_jobid") &&
      ad->Lookup("status") && ad->Lookup("jdl")) {
       // unp.Unparse(gid, ad->Lookup("grid_jobid"));
     unp.Unparse(cid, ad->Lookup("cream_jobid"));
     unp.Unparse(st,  ad->Lookup("status"));
     unp.Unparse(jdl, ad->Lookup("jdl"));
+    unp.Unparse(tstamp, ad->Lookup("last_update"));
   } else {
     throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' attributes");
   }
@@ -452,18 +455,43 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   boost::trim_if(st, boost::is_any_of("\""));
   /* boost::trim_if(gid, boost::is_any_of("\"")); */
   boost::trim_if(jdl, boost::is_any_of("\""));
-
+boost::trim_if(tstamp, boost::is_any_of("\""));
   api::job_statuses::job_status stNum;
-  try {
-    stNum = 
-        (api::job_statuses::job_status)std::atoi( st.c_str() );
-  } catch(apiutil::NumericException& ex) {
-    cerr << ex.what()<<endl;
-    exit(1);
-  }
+
+  char *endptr_st = new char[st.length()+1];
+  char *endptr_lu = new char[tstamp.length()+1];
+  memset( (void*)endptr_st, 0, st.length()+1 );
+  memset( (void*)endptr_lu, 0, tstamp.length()+1 );
+
+  //  try {
+  errno = 0;
+  stNum = (api::job_statuses::job_status)::strtol( st.c_str(), &endptr_st, 10 );
+
+  if ( *endptr_st != '\0')
+    {
+      cerr << "Got a non-number status for job ["<<cid<<"]"<<endl;
+      exit(1);
+    }
+  if (errno == ERANGE && (stNum == LONG_MAX || stNum == LONG_MIN))
+    {
+      cerr << "Got a status number out of range for job ["<<cid<<"]"<<endl;
+      exit(1);
+    }
+  
+  time_t lastUp = (time_t)::strtol( tstamp.c_str(), &endptr_lu, 10 );
+  if ( *endptr_lu != '\0')
+    {
+      cerr << "Got a non-number lastUpdate for job ["<<cid<<"]"<<endl;
+      exit(1);
+    }
+  if (errno == ERANGE && (lastUp == LONG_MAX || lastUp == LONG_MIN))
+    {
+      cerr << "Got a time number out of range for job ["<<cid<<"]"<<endl;
+      exit(1);
+    }
 
   try {
-    return CreamJob(jdl, cid, stNum);
+    return CreamJob(jdl, cid, stNum, lastUp );
   } catch(ClassadSyntax_ex& ex) {
     throw ClassadSyntax_ex(string("Error creating a creamJob: ")+ex.what());
   }
@@ -528,6 +556,7 @@ void jobCache::toString(const CreamJob& cj, string& target)
     classad::ClassAdParser parser;
     classad::ClassAd* jdlAd = parser.ParseClassAd(cj.getJDL());
     ad.Insert( "jdl", jdlAd );
+    ad.InsertAttr( "last_update", (int)cj.getLastUpdate() );
     classad::ClassAdUnParser unparser;
     unparser.Unparse( target, &ad );
 }

@@ -28,14 +28,15 @@ namespace glite {
 	  bool endaccept;
 
 	protected:
-	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999) {}
+	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999, "", "") {}
 
 	public:
-	  eventStatusListener(int i) : CEConsumer(i), 
+	  eventStatusListener(int i, const std::string& cert, const std::string& key) 
+	    : CEConsumer(i, cert, key), 
 	    grid_JOBID(""), cream_JOBID(""),
 	    status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
 	    endaccept(false) { }
-
+	  
 	  virtual ~eventStatusListener() {}
 
 	  //	  void setJobCache(glite::wms::ice::util::jobCache* _jobs) { jobs = _jobs; }
