@@ -340,6 +340,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump_string_vector(os, "__wmp_output_file", m_wmp_output_files) &&
     dump_string_vector(os, "__wmp_output_dest_file", m_wmp_output_dest_files) &&
     dump_string(os, "__token_file", m_token_file) &&
+    dump_bool(os, "__token_support", m_token_support) &&
     dump_bool(os, "__perusal_support", m_perusal_support) &&
     dump_numeric(os, "__perusal_timeinterval", m_perusal_timeinterval) &&
     dump_string(os, "__perusal_filesdesturi", m_perusal_filesdesturi) &&

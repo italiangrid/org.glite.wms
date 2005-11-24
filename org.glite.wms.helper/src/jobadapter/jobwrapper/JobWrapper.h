@@ -252,13 +252,14 @@ protected:
   std::string              m_vo;
   std::string              m_dsupload;
 
-  bool	                  m_wmp_support;
+  bool	                   m_wmp_support;
   std::vector<std::string> m_wmp_input_files;
   std::vector<std::string> m_wmp_input_base_files;
   std::vector<std::string> m_wmp_output_files;
   std::vector<std::string> m_wmp_output_dest_files;
   
   std::string              m_token_file;
+  bool                     m_token_support;
 
   bool                     m_perusal_support;
   int                      m_perusal_timeinterval;
