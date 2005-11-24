@@ -6,7 +6,7 @@
 #include "abs-ice-core.h"
 #include "ClassadSyntax_ex.h"
 #include "iceInit_ex.h"
-#include "eventStatusListener.h"
+//#include "eventStatusListener.h"
 #include "eventStatusPoller.h"
 #include "glite/wms/common/utilities/FLExtractor.h"
 
@@ -44,7 +44,7 @@ namespace glite {
 	boost::thread* listenerThread;
 	boost::thread* pollerThread;
 	boost::shared_ptr<util::eventStatusPoller> poller;
-	boost::shared_ptr<util::eventStatusListener> listener;
+	// boost::shared_ptr<util::eventStatusListener> listener;
 
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;

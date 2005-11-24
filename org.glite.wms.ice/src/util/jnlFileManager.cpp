@@ -97,8 +97,7 @@ void jnlFileManager::logOperation(operation op, const string& param)
    */
   if(readonly) throw jnlFileReadOnly_ex("Cannot append: journal file is in readonly mode");//return;
   
-  string toWrite = string_manipulation::make_string((int)op) + OPERATION_SEPARATOR + param;
-  os << toWrite << endl;
+  os << (int)op << OPERATION_SEPARATOR << param << endl;
 
   if( (!os.good()) || (os.bad()) )
     throw jnlFile_ex("Error logging the operation to journal file");

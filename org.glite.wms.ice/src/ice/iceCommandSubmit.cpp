@@ -4,6 +4,7 @@
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "boost/algorithm/string.hpp"
+#include "boost/regex.hpp"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 
 #include <ctime>
@@ -103,23 +104,7 @@ void iceCommandSubmit::execute( void )
 			   job_statuses::UNKNOWN,
 			   time(NULL));
 
-    string ceid = theJob.getCEID();
-    vector<string> ceid_pieces;
-    ceurl_util::parseCEID( ceid, ceid_pieces );
-    string bsname = ceid_pieces[2];
-    string qname = ceid_pieces[3];
-
-    // Update jdl to insert two new attributes needed by cream:
-    // QueueName and BatchSystem.
-
-    classad::ClassAdParser parser;
-    classad::ClassAd *_root = parser.ParseClassAd( _jdl );
-    _root->InsertAttr( "QueueName", qname );
-    _root->InsertAttr( "BatchSystem", bsname );
-
-    string modified_jdl;
-    classad::ClassAdUnParser unparser;
-    unparser.Unparse( modified_jdl, _root );
+    string modified_jdl = creamJdlHelper( _jdl );
     
     cout << "\tSubmiting JDL " << modified_jdl << " to ["
 	 << theJob.getCreamURL() << "][" << theJob.getCreamDelegURL()
@@ -185,3 +170,203 @@ void iceCommandSubmit::execute( void )
     exit(1);
   } 
 }
+
+string iceCommandSubmit::creamJdlHelper( const string& oldJdl )
+{
+    classad::ClassAdParser parser;
+    classad::ClassAd *_root = parser.ParseClassAd( oldJdl );
+
+    if ( !_root ) {
+        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+    }
+
+    string ceid;
+    if ( !_root->EvaluateAttrString( "ce_id", ceid ) ) {
+        throw util::ClassadSyntax_ex( "ce_id attribute not found" );
+    }
+    boost::trim_if( ceid, boost::is_any_of("\"") );
+
+    vector<string> ceid_pieces;
+    ceurl_util::parseCEID( ceid, ceid_pieces );
+    string bsname = ceid_pieces[2];
+    string qname = ceid_pieces[3];
+
+    // Update jdl to insert two new attributes needed by cream:
+    // QueueName and BatchSystem.
+    _root->InsertAttr( "QueueName", qname );
+    _root->InsertAttr( "BatchSystem", bsname );
+
+    updateIsbList( _root );
+    updateOsbList( _root );
+
+    string newjdl;
+    classad::ClassAdUnParser unparser;
+    unparser.Unparse( newjdl, _root );
+    return newjdl;
+}
+
+void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
+{
+    const string default_isbURI = "gsiftp://hostnamedelwms.pd.infn.it/jobISBdir"; // FIXME
+
+    // If the InputSandboxBaseURI attribute is defined, remove it
+    // after saving its value; the resulting jdl will NEVER have
+    // the InputSandboxBaseURI attribute defined.
+    string isbURI;
+    if ( jdl->EvaluateAttrString( "InputSandboxBaseURI", isbURI ) ) {
+        boost::trim_if( isbURI, boost::is_any_of("\"") );
+        boost::trim_right_if( isbURI, boost::is_any_of("/") );
+        // remove the attribute
+        jdl->Delete( "InputSandboxBaseURI" );
+    } else {
+        isbURI = default_isbURI;
+    }
+
+    pathName isbURIobj( isbURI );
+
+    // OK, not check each item in the InputSandbox and modify it if
+    // necessary
+    classad::ExprList* isbList;
+    if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
+        classad::ExprList* newIsbList = new classad::ExprList();
+        cout << "Starting InputSandbox manipulation..." << endl;
+        string newPath;
+        for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
+            
+            classad::Value v;
+            string s;
+            if ( (*it)->Evaluate( v ) && v.IsStringValue( s ) ) {
+                pathName isbEntryObj( s );
+                pathName::pathType_t pType( isbEntryObj.getPathType() );
+
+                switch( pType ) {
+                case pathName::absolute:
+                    newPath = default_isbURI + '/' + isbEntryObj.getFileName();
+                    break;
+                case pathName::relative:
+                    newPath = isbURI + '/' + isbEntryObj.getFileName();
+                    break;
+                case pathName::invalid: // should abort??
+                case pathName::uri:
+                    newPath = s;
+                    break;
+                }                
+            }
+            cout << s << " became " << newPath << endl;
+            // Builds a new value
+            classad::Value newV;
+            newV.SetStringValue( newPath );
+            // Builds the new string
+            newIsbList->push_back( classad::Literal::MakeLiteral( newV ) );
+        }
+        jdl->Insert( "InputSandbox", newIsbList );
+    }
+}
+
+
+
+void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
+{
+    const string default_osbdURI = "gsiftp://hostnamedelwms.pd.infn.it/jobOSBdir"; // FIXME
+
+    // If no OutputSandbox attribute is defined, then nothing has to be done
+    if ( 0 == jdl->Lookup( "OutputSandbox" ) )
+        return;
+
+    if ( 0 != jdl->Lookup( "OutputSandboxDestURI" ) ) {
+
+        // Check if all the entries in the OutputSandboxDestURI
+        // are absolute URIs
+
+        classad::ExprList* osbDUList;
+        classad::ExprList* newOsbDUList = new classad::ExprList();
+        if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
+            cout << "Starting OutputSandboxDestURI manipulation..." << endl;
+            string newPath;
+            for ( classad::ExprList::iterator it=osbDUList->begin(); 
+                  it != osbDUList->end(); it++ ) {
+                
+                classad::Value v;
+                string s;
+                if ( (*it)->Evaluate( v ) && v.IsStringValue( s ) ) {
+                    pathName osbEntryObj( s );
+                    pathName::pathType_t pType( osbEntryObj.getPathType() );
+                    
+                    switch( pType ) {
+                    case pathName::absolute:
+                        newPath = default_osbdURI + '/' + osbEntryObj.getFileName();
+                        break;
+                    case pathName::relative:
+                        newPath = default_osbdURI + '/' + osbEntryObj.getFileName();
+                        break;
+                    case pathName::invalid: // should abort??
+                    case pathName::uri:
+                        newPath = s;
+                        break;
+                    }                
+                }
+                cout << s << " became " << newPath << endl;
+                // Builds a new value
+                classad::Value newV;
+                newV.SetStringValue( newPath );
+                // Builds the new string
+                newOsbDUList->push_back( classad::Literal::MakeLiteral( newV ) );
+            }
+            jdl->Insert( "OutputSandboxDestURI", newOsbDUList );
+        }
+        return;
+    }
+
+    if ( 0 == jdl->Lookup( "OutputSandboxBaseDestURI" ) ) {
+        // Put a default OutpuSandboxDestURI attribute
+        jdl->InsertAttr( "OutputSandboxBaseDestURI",  default_osbdURI );
+        return;
+    }
+    
+}
+
+//-----------------------------------------------------------------------------
+// URI utility class
+//-----------------------------------------------------------------------------
+iceCommandSubmit::pathName::pathName( const string& p ) :
+    _fullName( p ),
+    _pathType( invalid )
+{
+    boost::regex uri_match( "gsiftp://[^/]+(:[0-9]+)?/([^/]+/)*([^/]+)" );
+    boost::regex rel_match( "([^/]+/)*([^/]+)" );
+    boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
+    boost::smatch what;
+
+    cout << "Trying to unparse " << p << endl;
+    if ( boost::regex_match( p, what, uri_match ) ) {
+        // is a uri
+        _pathType = uri;
+
+        _fileName = '/';
+        _fileName.append(what[3].first,what[3].second);
+        if ( what[2].first != p.end() )
+            _pathName.assign(what[2].first,what[2].second);
+        _pathName.append( _fileName );
+    } else if ( boost::regex_match( p, what, rel_match ) ) {
+        // is a relative path
+        _pathType = relative;
+
+        _fileName.assign(what[2].first,what[2].second);
+        if ( what[1].first != p.end() )
+            _pathName.assign( what[1].first, what[1].second );
+        _pathName.append( _fileName );
+    } else if ( boost::regex_match( p, what, abs_match ) ) {
+        // is an absolute path
+        _pathType = absolute;
+        
+        _pathName = '/';
+        _fileName.assign( what[3].first, what[3].second );
+        if ( what[2].first != p.end() ) 
+            _pathName.append( what[2].first, what[2].second );
+        _pathName.append( _fileName );
+    }
+    cout << "Unparsed as follows: filename=["
+         << _fileName << "] pathname={"
+         << _pathName << "]" << endl;
+}
+
