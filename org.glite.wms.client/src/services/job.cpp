@@ -99,6 +99,10 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 	// init of option objects object
 	wmcOpts = new Options(command) ;
 	wmcOpts->readOptions(argc, (const char**)argv);
+	// --help (ends the execution)
+	if (wmcOpts->getBoolAttribute(Options::HELP)){
+  		wmcOpts->printUsage ((wmcOpts->getApplicationName( )).c_str());
+	}
 	logInfo = new Log (NULL,  (LogLevel)wmcOpts->getVerbosityLevel( ));
 	// utilities
 	wmcUtils    = new Utils (wmcOpts);
@@ -119,10 +123,7 @@ void Job::readOptions (int argc,char **argv, Options::WMPCommands command){
 		printServerVersion();
 		Utils::ending(0);
 	}
-	// --help (ends the execution)
-	if (wmcOpts->getBoolAttribute(Options::HELP)){
-  		wmcOpts->printUsage ((wmcOpts->getApplicationName( )).c_str());
-	}
+
 }
 /** After option parsing, some common check can be performed.
 So far: proxy time left*/
