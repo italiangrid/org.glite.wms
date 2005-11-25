@@ -21,6 +21,9 @@ libexec_PROGRAMS = \
 	glite-wms-planner \
 	glite-wms-planned2submit
 
+noinst_PROGRAMS = \
+	glite-wms-bulk-utility
+
 noinst_HEADERS = \
         DispatcherFromFileList.h \
         RequestHandler.h \
@@ -112,10 +115,26 @@ glite_wms_planned2submit_LDADD   = \
 	$(GLOBUS_GSS_THR_LIBS) \
         $(BOOST_LIBS)
 
+glite_wms_bulk_utility_SOURCES = \
+	bulk_utility.cpp
+glite_wms_bulk_utility_LDADD = \
+        $(GLITE_WMS_COMMON_CONF_LIBS) \
+        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+	$(GLITE_WMSUTILS_JOBID_LIBS) \
+        $(GLITE_WMSUTILS_CJOBID_LIBS) \
+        $(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
+        $(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+        $(ARES_LIBS) \
+	$(CLASSAD_LIBS) \
+	$(GLOBUS_GSS_THR_LIBS) \
+        $(BOOST_LIBS)
+
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
 	-I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
-	-I$(top_srcdir)/../org.glite.wms.purger/src			\
+	-I$(top_srcdir)/../org.glite.wms.purger/src \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/common \
         $(CLASSAD_CFLAGS) \
