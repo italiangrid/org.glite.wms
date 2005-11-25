@@ -22,7 +22,7 @@ libexec_PROGRAMS = \
 	glite-wms-planned2submit
 
 noinst_PROGRAMS = \
-	glite-wms-bulk-utility
+	glite-wms_input_generator
 
 noinst_HEADERS = \
         DispatcherFromFileList.h \
