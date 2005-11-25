@@ -115,9 +115,9 @@ glite_wms_planned2submit_LDADD   = \
 	$(GLOBUS_GSS_THR_LIBS) \
         $(BOOST_LIBS)
 
-glite_wms_bulk_utility_SOURCES = \
-	bulk_utility.cpp
-glite_wms_bulk_utility_LDADD = \
+glite_wms_input_generator_SOURCES = \
+	input_generator.cpp
+glite_wms_input_generator_LDADD = \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
