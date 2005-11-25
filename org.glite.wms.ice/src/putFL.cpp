@@ -29,7 +29,10 @@ int main(int argc, char* argv[]) {
    * Usage: putFL <filelist> <jdlfile>
    *
    */
-  if(argc<3) return 1;
+  if (argc!=3) {
+      cout << "Usage: " << argv[0] << " <filelist> <jdlfile>" << endl;
+      return -1;
+  } 
    
   int j, howmany;
   FileList<string> fl;

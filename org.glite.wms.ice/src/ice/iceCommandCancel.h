@@ -1,10 +1,11 @@
 #ifndef __ICECOMMANDCANCEL_H__
 #define __ICECOMMANDCANCEL_H__
 
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceAbsCommand.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
+#include "iceCommandFatal_ex.h"
+#include "iceCommandTransient_ex.h"
 
 namespace glite {
     namespace wms {
@@ -17,7 +18,7 @@ namespace glite {
 
                 virtual ~iceCommandCancel() {};
 
-                void execute( );          
+                void execute( ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
             protected:
                 std::string _gridJobId;
             };

@@ -44,7 +44,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
     if (!_rootAD)
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
 
     string _commandStr;
     // Parse the "command" attribute
@@ -91,7 +91,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
 }
 
 
-void iceCommandSubmit::execute( void )
+void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
   try {
     vector<string> url_jid;
@@ -137,37 +137,24 @@ void iceCommandSubmit::execute( void )
     util::jobCache::getInstance()->put( theJob );
 
   } catch(util::ClassadSyntax_ex& ex) {
-    cerr << ex.what()<<endl;
-    exit(1);
+      throw iceCommandFatal_ex( string("ClassadSyntax_ex: ") + ex.what() );
   } catch(soap_proxy::auth_ex& ex) {
-    cerr << "\tauth_ex: " << ex.what() << endl;
-    exit(1);
+      throw iceCommandFatal_ex( ex.what() );
   } 
   catch(soap_proxy::soap_ex& ex) {
-    cerr << "\tsoap ex: "<<ex.what() << endl;
-    // MUST LOG TO LB
-    // HERE MUST RESUBMIT
-    exit(1);
+      throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
+      // MUST LOG TO LB
+      // HERE MUST RESUBMIT
   } catch(cream_exceptions::BaseException& base) {
-    cout << "cream_exception::BaseException: " 
-	 << base.what() << endl;
-    exit(1);
-    // MUST LOG TO LB
-    cerr << "Base ex: "<<base.what()<<endl;
-//     submitter->ungetRequest(j);
-//     submitter->removeRequest(j);
-//    continue; // process next request
+      throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
+      // MUST LOG TO LB
   } catch(cream_exceptions::InternalException& intern) {
-    // TODO
-    // MUST LOG TO LB
-    cerr << "Internal ex: "<<intern.what()<<endl;
-    exit(1);
+      throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
+      // MUST LOG TO LB
   } catch(util::jnlFile_ex& ex) {
-    cerr << "put in cache raised an ex: "<<ex.what()<<endl;
-    exit(1);
+      throw iceCommandFatal_ex( string("jnlFile_ex: ") + ex.what() );
   } catch(util::jnlFileReadOnly_ex& ex) {
-    cerr << "put in cache raised an ex: "<<ex.what()<<endl;
-    exit(1);
+      throw iceCommandFatal_ex( string("jnlFileReadOnly_ex: ") + ex.what() );
   } 
 }
 

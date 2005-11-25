@@ -1,11 +1,11 @@
 #ifndef __ICEABSCOMMAND_H__
 #define __ICEABSCOMMAND_H__
 
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
 #include "JobRequest_ex.h"
-#include <string>
+#include "iceCommandFatal_ex.h"
+#include "iceCommandTransient_ex.h"
 
 namespace glite {
     namespace wms {
@@ -20,8 +20,12 @@ namespace glite {
                 /**
                  * Executes the command. 
                  *
+                 * @throw an iceCommandFatal_ex if the command is to
+                 * be considered permanently failed;
+                 * @throw an iceCommandTransient_ex if the command failed
+                 * but could be tried again and succeed.
                  */
-                virtual void execute( void ) = 0;
+                virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
           
             protected:
 

@@ -56,7 +56,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
 
 }
 
-void iceCommandCancel::execute( /* soap_proxy::CreamProxy* c */ )
+void iceCommandCancel::execute( void ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
 
@@ -70,11 +70,6 @@ void iceCommandCancel::execute( /* soap_proxy::CreamProxy* c */ )
                       "Removing job gridJobId [" + _gridJobId + "], "
                       "creamJobId [" + url_jid[1] +"]" );
 
-// 	vector<string> pieces;
-// 	glite::ce::cream_client_api::util::CEUrl::parseJobID(_theJob.getJobID(), pieces);
-// 	string endpoint = pieces[0] + "://" + pieces[1]+":"
-// 	  + pieces[2] + "/ce-cream/services/CREAM";
-
 	cout <<"Sending cancellation requesto to ["<<_theJob.getCreamURL()<<"]"<<endl;
 
 	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(_theJob.getUserProxyCertificate());
@@ -82,33 +77,26 @@ void iceCommandCancel::execute( /* soap_proxy::CreamProxy* c */ )
 	soap_proxy::CreamProxyFactory::getProxy()->Cancel( _theJob.getCreamURL().c_str(), url_jid );
 
     } catch(soap_proxy::auth_ex& ex) {
-      cerr << "\tauth_ex: "<<ex.what() << endl;
-      exit(1);
+        throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(soap_proxy::soap_ex& ex) {
-        cerr << "\tsoap ex: "<<ex.what() << endl;
+        throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
         // MUST LOG TO LB
         // HERE MUST RESUBMIT
-        exit(1);
     } catch(cream_exceptions::BaseException& base) {
+        throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
         // MUST LOG TO LB
-//         cerr << "Base ex: "<<base.what()<<endl;
-//         submitter->ungetRequest(j);
-//         submitter->removeRequest(j);
-//        continue; // process next request
     } catch(cream_exceptions::InternalException& intern) {
+        throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
         // TODO
         // MUST LOG TO LB
-        cerr << "Internal ex: "<<intern.what()<<endl;
-        exit(1);
     } catch( util::elementNotFound_ex& ex ) {
-        cerr << "Element not found ex: " << ex.what() << endl;
+        throw iceCommandFatal_ex( string("ElementNotFound_ex: ") + ex.what() );
     }
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
     try {
         util::jobCache::getInstance()->remove_by_grid_jobid( _gridJobId );
     } catch(exception& ex) {
-        cerr << "put in cache raised an ex: "<<ex.what()<<endl;
-        exit(1);
+        throw iceCommandFatal_ex( string("put in cache raised an exception: ") + ex.what() );
     }
 }

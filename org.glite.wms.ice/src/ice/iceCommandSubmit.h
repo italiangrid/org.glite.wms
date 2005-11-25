@@ -1,10 +1,11 @@
 #ifndef __ICECOMMANDSUBMIT_H__
 #define __ICECOMMANDSUBMIT_H__
 
-//#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceAbsCommand.h"
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"
+#include "iceCommandFatal_ex.h"
+#include "iceCommandTransient_ex.h"
 
 namespace glite {
     namespace wms {
@@ -17,7 +18,7 @@ namespace glite {
 
                 virtual ~iceCommandSubmit() {};
 
-                virtual void execute( );          
+                virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );          
             protected:
 
                 class pathName {
@@ -59,6 +60,13 @@ namespace glite {
                  */
                 void updateIsbList( classad::ClassAd* jdl );
 
+                /**
+                 * This function updates the "OutputSandbox"-related
+                 * attribute value on the jdl passed as parameter.
+                 *
+                 * @param jdl the original jdl, which will be modified
+                 * by this function
+                 */
                 void updateOsbList( classad::ClassAd* jdl );
 
                 std::string _jdl;
