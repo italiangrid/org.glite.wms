@@ -17,7 +17,7 @@ using namespace glite::wms::jdl;
 using namespace glite::wmsutils::exception; //Exception
 
 //
-// gSOAP independant converters
+// gSOAP dependant converters
 //
 
 /**

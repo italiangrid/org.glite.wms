@@ -100,14 +100,17 @@ const std::string WMP_VERSION = WMP_MAJOR_VERSION
 	+ WMP_POINT_VERSION + WMP_MINOR_VERSION
 	+ WMP_POINT_VERSION + WMP_RELEASE_VERSION;
 
-
+// DONE job output file
 const std::string MARADONA_FILE = "Maradona.output";
+
+// Perusal functionality
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
 const std::string TEMP_PERUSAL_FILE_NAME = "tempperusalfile";
 const std::string DISABLED_PEEK_FLAG_FILE = ".disabledpeek";
 const std::string EXTERNAL_PEEK_FLAG_FILE = ".externalpeek";
 const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
 const int DEFAULT_PERUSAL_TIME_INTERVAL = 10; // seconds
+
 // File size limit of globus URL copy
 const long FILE_TRANSFER_SIZE_LIMIT = 2147000000; 
 // 2 Giga = 2 * 1.073.741.824 = 2.147.483.648
@@ -137,10 +140,6 @@ const std::string CURRENT_STEP_DEF_VALUE = "1";
    // Linux File Separator 
    const std::string FILE_SEPARATOR = "/";
 #endif 
-
-const std::string NOT_SAME_WMPROXY = "The job has not been registered from this "
-	"Workload Manager Proxy server (or it has been purged)";
-
 
 using namespace std;
 using namespace glite::lb; // JobStatus
@@ -340,7 +339,7 @@ getType(string jdl, Ad * ad = NULL)
 // WM Web Service available operations
 //
 
-// To get more infomation see WM service wsdl file
+// To get more information see WMProxy service wsdl file
 void
 getVersion(getVersionResponse &getVersion_response)
 {
@@ -2342,11 +2341,11 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 		setenv(X509_USER_KEY, userkey.c_str(), 1);
 		
 		if (!wmputilities::doPurge(jobid->toString())) {
-			edglog(severe)<<"Unable to perform job purge"<<endl;
+			edglog(severe)<<"Unable to complete job purge"<<endl;
 			if (checkstate) {
 				throw FileSystemException(__FILE__, __LINE__,
 					"jobpurge()", wmputilities::WMS_IS_FAILURE,
-					"Unable to perform job purge");
+					"Unable to complete job purge");
 			}
 		}
 		
