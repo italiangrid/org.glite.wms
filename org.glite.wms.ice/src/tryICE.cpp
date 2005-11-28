@@ -1,5 +1,3 @@
-
-
 #include "ice-core.h"
 #include "iceAbsCommand.h"
 #include "iceCommandFactory.h"
@@ -16,8 +14,8 @@
 using namespace std;
 using namespace glite::ce::cream_client_api;
 
-#define USE_STATUS_POLLER false
-#define USE_STATUS_LISTENER true
+#define USE_STATUS_POLLER true
+#define USE_STATUS_LISTENER false
 
 int main(int argc, char*argv[]) {
   

@@ -22,6 +22,8 @@ namespace glite {
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  bool endaccept;
 
+	  void init(void);
+
 	protected:
 	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999) {}
 

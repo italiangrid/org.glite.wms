@@ -12,6 +12,7 @@ libglite_wms_ice_util_la_SOURCES = \
 				jnlFileManager.cpp \
 				jobCache.cpp \
 				eventStatusPoller.cpp \
+				eventStatusListener.cpp \
 				creamJob.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
@@ -24,6 +25,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
-		$(GLOBUS_THR_CFLAGS)
+		$(GLOBUS_NOTHR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in

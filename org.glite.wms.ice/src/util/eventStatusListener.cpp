@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace std;
 
 using namespace glite::ce::cream_client_api::util;
@@ -99,12 +101,24 @@ void glite::wms::ice::util::eventStatusListener::updateJobCache(void)
 void glite::wms::ice::util::eventStatusListener::init(void)
 {
   jobCache::iterator it;
+
+  map< string, vector<string> > tmpMap;
+
   for(it  = jobCache::getInstance()->begin();
       it != jobCache::getInstance()->end();
       it++)
     {
       cout << "listener: checking SubscriptionID of ["
-	   << (*it)->second.getSubscritionID() << "]"<<endl;
+	   << it->getSubscriptionID() << "]"<<endl;
+      string subid = it->getSubscriptionID();
+      //subscriber->pause(subid);
+      string url = it->getCreamURL();
+      boost::replace_first(url, "ce-cream", "ce-monitor");
+      boost::replace_first(url, "CREAM", "CEMonitor");
+      cout << "URL="<<url<<endl;
+      tmpMap[subid].push_back(url);
+      tmpMap[subid].push_back(it->getUserProxyCertificate());
+      
     }
   exit(1);
 }

@@ -70,7 +70,7 @@ void ice::startListener(const int& listenPort)
 {
   if(status_listener_started) return;
   cout << "Creating a CEMon listener object..."<<endl;
-  //listener = new boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort, "", ""));
+  listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort, "", ""));
   while(!listener->bind()) {
     cout << "error message=" << listener->getErrorMessage() << endl;
     cout << "error code   =" << listener->getErrorCode() << endl;

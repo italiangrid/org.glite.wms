@@ -41,13 +41,15 @@ putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(CLASSAD_LIBS)
 
 
-tryICE_LDADD = -lssl -L$(GLITE_LOCATION)/lib \
+tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
+		-lgridsite \
+		-lxml2 \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
 		$(LOG4CPP_LIBS) $(CLASSAD_LIBS) \
 		-lglite_ce_monitor_consumer \
 		-lglite_security_gsoap_plugin_276b_gcc32pthr \
-		$(GLOBUS_LIBS) $(GLOBUS_SSL_THR_LIBS) \
+		$(GLOBUS_NOTHR_LIBS) $(GLOBUS_SSL_NOTHR_LIBS) $(GLOBUS_GSS_NOTHR_LIBS) -lssl \
 		../src/util/libglite_wms_ice_util.la \
 		../src/ice/libglite_wms_ice.la \
 		-lglite_wms_util \
@@ -72,7 +74,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
-		$(GLOBUS_THR_CFLAGS)
+		$(GLOBUS_NOTHR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
 
