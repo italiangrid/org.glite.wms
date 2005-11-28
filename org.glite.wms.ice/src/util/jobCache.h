@@ -185,6 +185,9 @@ namespace glite {
 
 	public:
 
+          typedef jobCacheTable::iterator iterator;
+          typedef jobCacheTable::const_iterator const_iterator;
+
 	  static jobCache* getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&);
 	  static void setJournalFile(const std::string& jnl) { jnlFile = jnl; }
 	  static void setSnapshotFile(const std::string& snap) { snapFile = snap; }
@@ -233,6 +236,44 @@ namespace glite {
           // end list of OBSOLETE methods
           //
 
+          // Accessors used to expose jobCacheTable iterator methods
+
+          /**
+           * Returns an iterator to the first job in the jobCache
+           *
+           * @return an iterator to the first job
+           */
+          iterator begin( void ) {
+              return _jobs.begin();
+          };
+          
+          /**
+           * Returns an iterator to the end of the jobCache
+           *
+           * @return an iterator to the end of the jobCache
+           */
+          iterator end( void ) {
+              return _jobs.end();
+          };
+          
+          /**
+           * Returns a const_iterator to the first job in the jobCache
+           *
+           * @return a const_iterator to the first job 
+           */
+          const_iterator begin( void ) const {
+              return _jobs.begin();
+          };
+          
+          /**
+           * Returns a const_iterator to the end of the jobCache
+           *
+           * @return a const_iterator to the end of the jobCache
+           */
+          const_iterator end( void ) const {
+              return _jobs.end();
+          };
+          
 	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
 
         protected:	  
