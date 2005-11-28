@@ -53,6 +53,9 @@ using namespace boost::details::pool;
 
 const std::string opt_conf_file("glite_wms.conf");
 
+// Global variables for configuration attributes
+std::string sandboxdir_global;
+
 void
 sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
 {
@@ -109,6 +112,9 @@ main(int argc, char* argv[])
 		
 		// Initializing signal handler for 'graceful' stop/restart
 		//wmputilities::initsignalhandler();
+		
+		extern string sandboxdir_global;
+		sandboxdir_global = "";
 		
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;

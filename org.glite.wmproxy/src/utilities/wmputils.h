@@ -82,12 +82,6 @@ std::string getServerHost();
  */
 std::string getEndpoint();
 
-/**
- * Returns the sandbox directory name
- * @return sandbox directory name
- */
-std::string getSandboxDirName();
-
 void parseAddressPort(const std::string &addressport,
 	std::pair<std::string, int> &addresspair);
 

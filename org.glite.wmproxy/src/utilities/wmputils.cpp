@@ -52,6 +52,8 @@
 #include "zlib.h"
 #include "libtar.h"
 
+// Global variables for configuration attributes
+extern std::string sandboxdir_global;
 
 using namespace std;
 
@@ -87,18 +89,10 @@ const string INPUT_SB_DIRECTORY = "input";
 const string OUTPUT_SB_DIRECTORY = "output";
 const string PEEK_DIRECTORY = "peek";
 
-const string SANDBOX_DIRECTORY = "SandboxDir";
-
 // Default name of the delegated Proxy copied inside private job directory
 const std::string USER_PROXY_NAME = "user.proxy";
 const std::string USER_PROXY_NAME_BAK = ".user.proxy.bak";
 
-
-string
-getSandboxDirName()
-{
-	return SANDBOX_DIRECTORY;
-}
 
 vector<string>
 computeOutputSBDestURIBase(vector<string> outputsb, const string &baseuri)
@@ -714,7 +708,7 @@ std::string
 to_filename(glite::wmsutils::jobid::JobId j, int level, bool extended_path)
 {
 	GLITE_STACK_TRY("to_filename()");
-	std::string path(SANDBOX_DIRECTORY + std::string(FILE_SEP)
+	std::string path(sandboxdir_global + std::string(FILE_SEP)
 		+ glite::wmsutils::jobid::get_reduced_part(j, level));
 	if (extended_path) {
 		path.append(std::string(FILE_SEP) + glite::wmsutils::jobid::to_filename(j));
@@ -853,9 +847,10 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	bool extended_path = true ; 
 		// Vector contains at least one element
 		string path = to_filename (glite::wmsutils::jobid::JobId(jobids[0]),
-		   		level, extended_path);
+		   	level, extended_path);
 		int pos = path.find(FILE_SEP, 0);
-		string sandboxdir = document_root + FILE_SEP + path.substr(0, pos) + FILE_SEP;
+		string sandboxdir = document_root + FILE_SEP + path.substr(0, pos)
+			+ FILE_SEP;
 		// Creating SanboxDir directory if needed
 		if (!fileExists(sandboxdir)) {
 			string run = gliteDirmanExe

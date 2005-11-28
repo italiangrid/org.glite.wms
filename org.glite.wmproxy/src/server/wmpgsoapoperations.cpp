@@ -19,6 +19,7 @@
 // Server
 #include "wmpoperations.h"
 #include "wmpresponsestruct.h"
+#include "wmpstructconverter.h"
 #include "wmpgsoapfaultmanipulator.h"
 
 // Logger
@@ -41,121 +42,6 @@ using namespace std;
 using namespace wmputilities;
 using namespace glite::wms::jdl; // AdSyntaxException
 using namespace glite::wmsutils::exception; // Exception
-
-
-/**
- * Converts a ns1__JobTypeList pointer to JobTypeList pointer
- */
-JobTypeList *
-convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list)
-{
-	vector<JobType> *type_vector = new vector<JobType>;
-	for (unsigned int i = 0; i < job_type_list->jobType.size(); i++) {
-		switch ((job_type_list->jobType)[i]) {
-			case ns1__JobType__PARAMETRIC:
-				type_vector->push_back(WMS_PARAMETRIC);
-				break;
-			case ns1__JobType__NORMAL:
-				type_vector->push_back(WMS_NORMAL);
-				break;
-			case ns1__JobType__INTERACTIVE:
-				type_vector->push_back(WMS_INTERACTIVE);
-				break;
-			case ns1__JobType__MPI:
-				type_vector->push_back(WMS_MPI);
-				break;
-			case ns1__JobType__PARTITIONABLE:
-				type_vector->push_back(WMS_PARTITIONABLE);
-				break;
-			case ns1__JobType__CHECKPOINTABLE:
-				type_vector->push_back(WMS_CHECKPOINTABLE);
-				break;
-			default:
-				break;
-		}
-	}
-	JobTypeList *list = new JobTypeList();
-	list->jobType = type_vector;
-	return list;
-}
-
-/**
- * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector 
- * pointer
- */
-/*vector<ns1__JobIdStructType*> *
-convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*> 
-	*graph_struct_type_vector)
-{
-	vector<ns1__JobIdStructType*> *returnVector =
-		new vector<ns1__JobIdStructType*>;
-	if (graph_struct_type_vector) {
-		ns1__JobIdStructType *element = NULL;
-		for (unsigned int i = 0; i < graph_struct_type_vector->size(); i++) {
-			element = new ns1__JobIdStructType;
-			element->id = (*graph_struct_type_vector)[i]->id;
-			element->name = (*graph_struct_type_vector)[i]->name;
-			if ((*graph_struct_type_vector)[i]) { // Vector not NULL
-				element->childrenJob = *convertToGSOAPJobIdStructTypeVector(
-					(*graph_struct_type_vector)[i]->childrenJob);
-			} else {
-				element->childrenJob = *(new vector<ns1__JobIdStructType*>);
-			}
-			returnVector->push_back(element);
-		}
-	}
-	return returnVector;
-}*/
-
-/**
- * Converts a ns1__GraphStructType vector pointer to GraphStructType vector 
- * pointer
- */
-vector<GraphStructType*> *
-convertFromGSOAPGraphStructTypeVector(vector<ns1__GraphStructType*> 
-	*graph_struct_type_vector)
-{
-	vector<GraphStructType*> *returnVector = new vector<GraphStructType*>;
-	GraphStructType *element = NULL;
-	for (unsigned int i = 0; i < graph_struct_type_vector->size(); i++) {
-		element = new GraphStructType();
-		element->name = (*graph_struct_type_vector)[i]->name;
-		element->childrenJob = convertFromGSOAPGraphStructTypeVector(
-			&((*graph_struct_type_vector)[i]->childrenJob));
-		returnVector->push_back(element);
-	}
-	return returnVector;
-}
-
-/**
- * Converts a ns1__GraphStructType pointer to GraphStructType pointer
- */
-GraphStructType*
-convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
-{
-	GraphStructType *element = new GraphStructType();
-	element->name = graph_struct_type->name;
-	element->childrenJob = convertFromGSOAPGraphStructTypeVector(
-		&(graph_struct_type->childrenJob));
-	return element;
-}
-
-/**
- * Converts a ns1__StringList pointer to StringList pointer
- */
-StringList *
-convertToStringList(ns1__StringList *ns1_string_list) {
-	StringList *string_list = new StringList();
-	string_list->Item = new vector<string>();
-	if (ns1_string_list) {
-		for (unsigned int i = 0; i < ns1_string_list->Item.size(); i++) {
-			string_list->Item->push_back((ns1_string_list->Item)[i]);
-		}
-	}
-	return string_list;
-}
-
-
 
 
 // WM Web Service available operations
@@ -278,17 +164,6 @@ ns1__jobSubmit(struct soap *soap, string jdl, string delegation_id,
 	jobSubmitResponse jobSubmit_response;
 	try {
 		jobSubmit(response, jobSubmit_response, jdl, delegation_id, soap);
-		/*ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
-		job_id_struct->id = jobSubmit_response.jobIdStruct->id;
-		job_id_struct->name = jobSubmit_response.jobIdStruct->name;
-		if (jobSubmit_response.jobIdStruct->childrenJob) {
-			job_id_struct->childrenJob =
-				*convertToGSOAPJobIdStructTypeVector(jobSubmit_response
-				.jobIdStruct->childrenJob);
-		} else {
-			job_id_struct->childrenJob = *(new vector<ns1__JobIdStructType*>);
-		}
-		response._jobIdStruct = job_id_struct;*/
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "jobSubmit", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -385,7 +260,6 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id,
 	response._path->Item = *(new vector<string>(0));
 	try {
 		getSandboxDestURI(getSandboxDestURI_response, job_id);
-		//response._path->Item = getSandboxDestURI_response.path->Item;
 		for (unsigned int i = 0; 
 				i < getSandboxDestURI_response.path->Item->size(); i++) {
 			response._path->Item.push_back(

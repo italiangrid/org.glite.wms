@@ -19,7 +19,7 @@
 // Boost
 #include <boost/lexical_cast.hpp>
 
-#include "soapH.h"
+#include "wmpstructconverter.h"
 
 #include "wmpoperations.h"
 #include "wmpconfiguration.h"
@@ -88,10 +88,12 @@
 //namespace wmproxy {
 //namespace server {
 	
+// Global variables for configuration attributes
+extern std::string sandboxdir_global;
 
 // WMProxy software version
 const std::string WMP_MAJOR_VERSION = "2";
-const std::string WMP_MINOR_VERSION = "0";
+const std::string WMP_MINOR_VERSION = "1";
 const std::string WMP_RELEASE_VERSION = "0";
 const std::string WMP_POINT_VERSION = ".";
 const std::string WMP_VERSION = WMP_MAJOR_VERSION
@@ -189,6 +191,60 @@ void jobpurge(jobPurgeResponse &jobPurge_response, JobId *jid, bool checkstate
 	= true);
 
 
+void
+setGlobalSandboxDir()
+{
+	GLITE_STACK_TRY("setGlobalSandboxDir()");
+	
+	WMProxyConfiguration conf
+		= singleton_default<WMProxyConfiguration>::instance();
+	string sandboxstagingpath = conf.getSandboxStagingPath();
+	
+	if (!getenv(DOCUMENT_ROOT)) {
+		edglog(fatal)<<"DOCUMENT_ROOT variable not set"<<endl;
+		throw FileSystemException( __FILE__, __LINE__,
+  			"setGlobalSandboxDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+   			"DOCUMENT_ROOT variable not set");
+	}
+	string documentroot = getenv(DOCUMENT_ROOT);
+	if (documentroot == "") {
+		edglog(fatal)<<"DOCUMENT_ROOT is an empty string"<<endl;
+		throw FileSystemException( __FILE__, __LINE__,
+  			"setGlobalSandboxDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+   			"DOCUMENT_ROOT is an empty string"
+   			"\n(please contact server administrator)");
+	}
+	
+	// Checking if sandbox staging path starts with $DOCUMENT_ROOT
+	if (sandboxstagingpath.find(documentroot) != 0) {
+		edglog(severe)<<"ERROR: SandboxStagingPath inside "
+			"configuration file MUST start with $DOCUMENT_ROOT"<<endl;
+		throw FileSystemException( __FILE__, __LINE__,
+  			"setGlobalSandboxDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+   			"SandboxStagingPath inside configuration file MUST start "
+   			"with $DOCUMENT_ROOT\n(please contact server administrator)");
+	}
+	
+	if (sandboxstagingpath != documentroot) {
+		sandboxdir_global = sandboxstagingpath.substr(documentroot.length() + 1,
+			sandboxstagingpath.length() - 1);
+		if (sandboxdir_global.find(FILE_SEPARATOR) != string::npos) {
+			edglog(fatal)<<"Sandbox directory name MUST be a single directory "
+				"name (check configuration file SandboxStagingPath attribute)"
+				<<endl;
+			throw FileSystemException( __FILE__, __LINE__,
+	  			"setGlobalSandboxDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+	   			"Sandbox directory name MUST be a single directory name"
+	   			"\n(please contact server administrator)");
+			}
+	} else {
+		sandboxdir_global = documentroot;
+	}
+	edglog(debug)<<"Sandbox directory: "<<sandboxdir_global<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
 int
 logRemoteHostInfo()
 {
@@ -234,6 +290,8 @@ logRemoteHostInfo()
 				"------------------------------------------"
 		<<endl;
 
+		setGlobalSandboxDir();
+		
 		return 0;
 	} catch (exception &ex) {
 		edglog(fatal)<<"Exception caught: "<<ex.what()<<endl;
@@ -241,74 +299,6 @@ logRemoteHostInfo()
 	}
 }
 
-/**
- * Converts JobIdStruct vector into a JobIdStructType vector pointer
- */
-vector<JobIdStructType*> *
-convertJobIdStruct(vector<JobIdStruct*> &job_struct)
-{
-	GLITE_STACK_TRY("convertJobIdStruct()");
-	
-	vector<JobIdStructType*> *graph_struct_type = new vector<JobIdStructType*>;
-	JobIdStructType *graph_struct = NULL;
-	for (unsigned int i = 0; i < job_struct.size(); i++) {
-		graph_struct = new JobIdStructType();
-		graph_struct->id = job_struct[i]->jobid.toString(); // should be equal to: jid->toString()
-		graph_struct->name = job_struct[i]->nodeName;
-		graph_struct->childrenJob = convertJobIdStruct(job_struct[i]->children);
-		graph_struct_type->push_back(graph_struct);
-	}
-	return graph_struct_type;
-	
-	GLITE_STACK_CATCH();
-}
-
-/**
- * Converts GraphStructType vector pointer into a NodeStruct vector pointer
- */
-vector<NodeStruct*> 
-convertGraphStructTypeToNodeStructVector(vector<GraphStructType*> *graph_struct)
-{
-	GLITE_STACK_TRY("convertGraphStructTypeToNodeStructVector()");
-	
-	vector<NodeStruct*> return_node_struct;
-	NodeStruct *element = NULL;
-	for (unsigned int i = 0; i < graph_struct->size(); i++) {
-		element = new NodeStruct();
-		element->name = (*graph_struct)[i]->name;
-		if ((*graph_struct)[i]->childrenJob) {
-			element->childrenNodes = convertGraphStructTypeToNodeStructVector(
-				(*graph_struct)[i]->childrenJob);
-		} else {
-			element->childrenNodes = *(new vector<NodeStruct*>);
-		}
-		return_node_struct.push_back(element);
-	}
-	return return_node_struct;
-	
-	GLITE_STACK_CATCH();
-}
-
-/**
- * Converts GraphStructType into a NodeStruct
- */
-NodeStruct
-convertGraphStructTypeToNodeStruct(GraphStructType graph_struct)
-{
-	GLITE_STACK_TRY("convertGraphStructTypeToNodeStruct()")
-	
-	NodeStruct return_node_struct;
-	return_node_struct.name = graph_struct.name;
-	if (graph_struct.childrenJob) {
-		return_node_struct.childrenNodes =
-			convertGraphStructTypeToNodeStructVector(graph_struct.childrenJob);
-	}
-	return return_node_struct;
-	
-	GLITE_STACK_CATCH();
-}
-
-	
 /**
  * Returns an int value representing the type of the job described by the jdl
  * If type is not specified -> Job  // TBC change it in the future?
@@ -345,50 +335,6 @@ getType(string jdl, Ad * ad = NULL)
 
 	GLITE_STACK_CATCH();
 }
-
-/**
- * Converts a JobTypeList type to an int value representing the type of the job
- */
-int
-convertJobTypeListToInt(JobTypeList job_type_list)
-{
-	GLITE_STACK_TRY("convertJobTypeListToInt()");
-	edglog_fn("wmpoperations::convertJobTypeListToInt");
-	
-	int type = AdConverter::ADCONV_JOBTYPE_NORMAL;
-	for (unsigned int i = 0; i < job_type_list.jobType->size(); i++) {
-		switch ((*job_type_list.jobType)[i]) {
-			case WMS_PARAMETRIC:
-				type |= AdConverter::ADCONV_JOBTYPE_PARAMETRIC;
-				edglog(info)<<"Job Type: Parametric"<<endl;
-				break;
-			case WMS_INTERACTIVE:
-				type |= AdConverter::ADCONV_JOBTYPE_INTERACTIVE;
-				edglog(info)<<"Job Type: Interactive"<<endl;
-				break;
-			case WMS_MPI:
-				type |= AdConverter::ADCONV_JOBTYPE_MPICH;
-				edglog(info)<<"Job Type: MPI"<<endl;
-				break;
-			case WMS_PARTITIONABLE:
-				type |= AdConverter::ADCONV_JOBTYPE_PARTITIONABLE;
-				edglog(info)<<"Job Type: Partitionable"<<endl;
-				break;
-			case WMS_CHECKPOINTABLE:
-				type |= AdConverter::ADCONV_JOBTYPE_CHECKPOINTABLE;
-				edglog(info)<<"Job Type: Checkpointable"<<endl;
-				break;
-			default:
-				break;
-		}
-	}
-	edglog(debug)<<"Final type value: "<<type<<endl;
-	return type;
-	
-	GLITE_STACK_CATCH();
-}
-
-
 
 //
 // WM Web Service available operations
@@ -786,30 +732,6 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 	}
 	jad->setAttribute(JDLPrivate::OUTPUT_SANDBOX_PATH,
 		wmputilities::getOutputSBDirectoryPath(*jid));
-		
-	// Adding OutputSandboxDestURI attribute
-	/*if (jad->hasAttribute(JDL::OUTPUTSB)) {
-		edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
-		vector<string> osbdesturi;
-		if (jad->hasAttribute(JDL::OSB_DEST_URI)) {
-			osbdesturi = wmputilities::computeOutputSBDestURI(
-				jad->getStringValue(JDL::OSB_DEST_URI),
-				dest_uri);
-			jad->delAttribute(JDL::OSB_DEST_URI);
-		} else if (jad->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
-			osbdesturi = wmputilities::computeOutputSBDestURIBase(
-				jad->getStringValue(JDL::OUTPUTSB),
-				jad->getString(JDL::OSB_BASE_DEST_URI));
-		} else {
-			osbdesturi = wmputilities::computeOutputSBDestURIBase(
-				jad->getStringValue(JDL::OUTPUTSB), dest_uri + "/output");
-		}
-		
-		for (unsigned int i = 0; i < osbdesturi.size(); i++) {
-			edglog(debug)<<"OutputSBDestURI: "<<osbdesturi[i]<<endl;
-			jad->addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
-		}
-	}*/
 
 	// Adding Proxy attributes
 	edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
@@ -825,6 +747,31 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 	}
 	jad->setAttribute(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
+	
+	// Checking for empty string value
+	if (jad->hasAttribute(JDL::MYPROXY)) {
+		if (jad->getString(JDL::MYPROXY) == "") {
+			edglog(debug)<<JDL::MYPROXY 
+				+ " attribute value is empty string, removing..."<<endl;
+			jad->delAttribute(JDL::MYPROXY);
+		}
+	}
+	
+	if (jad->hasAttribute(JDL::HLR_LOCATION)) {
+		if (jad->getString(JDL::HLR_LOCATION) == "") {
+			edglog(debug)<<JDL::HLR_LOCATION 
+				+ " attribute value is empty string, removing..."<<endl;
+			jad->delAttribute(JDL::HLR_LOCATION);
+		}
+	}
+	
+	if (jad->hasAttribute(JDL::JOB_PROVENANCE)) {
+		if (jad->getString(JDL::JOB_PROVENANCE) == "") {
+			edglog(debug)<<JDL::JOB_PROVENANCE
+				+ " attribute value is empty string, removing..."<<endl;
+			jad->delAttribute(JDL::JOB_PROVENANCE);
+		}
+	}
 
 	GLITE_STACK_CATCH();
 }
@@ -909,32 +856,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	string dest_uri = wmputilities::getDestURI(stringjid, defaultprotocol,
 		defaultport);
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
-
-	// Adding attribute for perusal functionalities
-	/*string peekdir = wmputilities::getPeekDirectoryPath(*jid);
-	if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
-		if (jad->getBool(JDL::PU_FILE_ENABLE)) {
-			edglog(debug)<<"Enabling perusal functionalities for job: "
-				<<jid->toString()<<endl;
-			edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
-				<<endl;
-			jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
-				 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
-			if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
-				edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
-					<<endl;
-				jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
-			}
-			
-			int time = DEFAULT_PERUSAL_TIME_INTERVAL;
-			if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
-				time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
-			}
-			time = max(time, conf.getMinPerusalTimeInterval());
-			edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
-			jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
-		}
-	}*/
 	
 	setAttributes(jad, jid, dest_uri);
 	
@@ -1005,33 +926,58 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri)
 	
 	// Adding WMProxyDestURI attribute
 	edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
-	/*if (dag->hasAttribute(JDL::WMPISB_BASE_URI)) {
+	if (dag->hasAttribute(JDL::WMPISB_BASE_URI)) {
 		dag->removeAttribute(JDL::WMPISB_BASE_URI);
-	}*/
+	}
 	dag->setReserved(JDL::WMPISB_BASE_URI, dest_uri);
 	
 	// Adding INPUT_SANDBOX_PATH attribute
 	edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
-	/*if (dag->hasAttribute(JDLPrivate::INPUT_SANDBOX_PATH)) {
+	if (dag->hasAttribute(JDLPrivate::INPUT_SANDBOX_PATH)) {
 		dag->removeAttribute(JDLPrivate::INPUT_SANDBOX_PATH);
-	}*/
+	}
 	dag->setReserved(JDLPrivate::INPUT_SANDBOX_PATH,
 		wmputilities::getInputSBDirectoryPath(*jid));
 	
 	// Adding Proxy attributes
 	edglog(debug)<<"Setting attribute JDL::CERT_SUBJ"<<endl;
-	/*if (dag->hasAttribute(JDL::CERT_SUBJ)) {
+	if (dag->hasAttribute(JDL::CERT_SUBJ)) {
 		dag->removeAttribute(JDL::CERT_SUBJ);
-	}*/
+	}
 	dag->setReserved(JDL::CERT_SUBJ,
 		wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
 	
 	edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
-	/*if (dag->hasAttribute(JDLPrivate::USERPROXY)) {
+	if (dag->hasAttribute(JDLPrivate::USERPROXY)) {
 		dag->removeAttribute(JDLPrivate::USERPROXY);
-	}*/
+	}
 	dag->setReserved(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
+		
+	// Checking for empty string value
+	if (dag->hasAttribute(JDL::MYPROXY)) {
+		if (dag->getString(JDL::MYPROXY) == "") {
+			edglog(debug)<<JDL::MYPROXY 
+				+ " attribute value is empty string, removing..."<<endl;
+			dag->removeAttribute(JDL::MYPROXY);
+		}
+	}
+	
+	if (dag->hasAttribute(JDL::HLR_LOCATION)) {
+		if (dag->getString(JDL::HLR_LOCATION) == "") {
+			edglog(debug)<<JDL::HLR_LOCATION 
+				+ " attribute value is empty string, removing..."<<endl;
+			dag->removeAttribute(JDL::HLR_LOCATION);
+		}
+	}
+	
+	if (dag->hasAttribute(JDL::JOB_PROVENANCE)) {
+		if (dag->getString(JDL::JOB_PROVENANCE) == "") {
+			edglog(debug)<<JDL::JOB_PROVENANCE 
+				+ " attribute value is empty string, removing..."<<endl;
+			dag->removeAttribute(JDL::JOB_PROVENANCE);
+		}
+	}
 		
 	GLITE_STACK_CATCH();
 }
@@ -1184,87 +1130,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Setting generated sub jobs jobids
 	dag->setJobIds(jobids);
 	
-	// Setting internal attributes for sub jobs
-	/*string jobidstring;
-	string dest_uri;
-	for (unsigned int i = 0; i < jobids.size(); i++) {
-		jobidstring = jobids[i];
-		JobId subjobid(jobidstring);
-		dest_uri = getDestURI(jobids[i], defaultprotocol, defaultport);
-		edglog(debug)<<"Setting internal attributes for sub job: "<<jobids[i]<<endl;
-		edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
-		
-		// Adding WMPISB_BASE_URI, INPUT_SANDBOX_PATH, OUTPUT_SANDBOX_PATH
-		// & USERPROXY
-        NodeAd nodead = dag->getNode(subjobid);
-        
-        edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
-		nodead.setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
-        edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
-		nodead.setAttribute(JDLPrivate::INPUT_SANDBOX_PATH,
-			getInputSBDirectoryPath(jobidstring));
-        edglog(debug)<<"Setting attribute JDLPrivate::OUTPUT_SANDBOX_PATH"<<endl; 
-		nodead.setAttribute(JDLPrivate::OUTPUT_SANDBOX_PATH,
-			getOutputSBDirectoryPath(jobidstring));
-        edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
-        nodead.setAttribute(JDLPrivate::USERPROXY,
-            getJobDelegatedProxyPath(jobids[i]));
-
-		// Adding OutputSandboxDestURI attribute
-        if (nodead.hasAttribute(JDL::OUTPUTSB)) {
-			vector<string> osbdesturi;
-			if (nodead.hasAttribute(JDL::OSB_DEST_URI)) {
-				osbdesturi = wmputilities::computeOutputSBDestURI(
-					nodead.getStringValue(JDL::OSB_DEST_URI),
-					dest_uri);
-				nodead.delAttribute(JDL::OSB_DEST_URI);
-			} else if (dag->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
-            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
-					nodead.getStringValue(JDL::OUTPUTSB),
-					nodead.getStringValue(JDL::OSB_BASE_DEST_URI)[0]);
-			} else {
-            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
-					nodead.getStringValue(JDL::OUTPUTSB),
-					dest_uri + "/output");
-			}
-			if (osbdesturi.size() != 0) {
-                edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
-                for (unsigned int i = 0; i < osbdesturi.size(); i++) {
-					nodead.addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
-                }
-			}
-		}
-		
-		// Adding attributes for perusal functionalities
-    	string peekdir = wmputilities::getPeekDirectoryPath(subjobid);
-		if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
-			if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
-				edglog(debug)<<"Enabling perusal functionalities for job: "
-					<<jobidstring<<endl;
-				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
-					<<endl;
-				nodead.setAttribute(JDLPrivate::PU_LIST_FILE_URI,
-					peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
-				if (!nodead.hasAttribute(JDL::PU_FILES_DEST_URI)) {
-					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
-						<<endl;
-					nodead.setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
-				}
-				
-				int time = DEFAULT_PERUSAL_TIME_INTERVAL;
-				if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
-					time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
-				}
-				time = max(time, conf.getMinPerusalTimeInterval());
-				edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
-					<<endl;
-				nodead.setAttribute(JDL::PU_TIME_INTERVAL, time);
-			}
-		}
-			
-		dag->replaceNode(subjobid, nodead);
-	}*/
-	
 	// Getting Input Sandbox Destination URI
 	string dest_uri = wmputilities::getDestURI(stringjid, defaultprotocol,
 		defaultport);
@@ -1279,8 +1144,9 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 				"Unable to set User Proxy for LB context");
 	}
 	
-	////// If present -> Mandatory attribute not present
-	//dag->getSubmissionStrings();
+	////////////////////////////////////////////////////
+	// If present -> Mandatory attribute not present
+	// dag->getSubmissionStrings();
 	////////////////////////////////////////////////////
 	
 	//dag->toString(ExpDagAd::SUBMISSION);
@@ -1583,23 +1449,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth)
 			"Unable to set User Proxy for LB context");
 	}
 	
-	// Checking if the value is the same as $DOCUMENT_ROOT
-	string envsandboxpath = getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
-		+ wmputilities::getSandboxDirName();
-	edglog(debug)<<"Sandbox Path: "<<conf.getSandboxStagingPath()<<endl;
-	edglog(debug)<<"DOCUMENT_ROOT: "<<envsandboxpath<<endl;
-	
-	// Checking if the value is the same as $DOCUMENT_ROOT
-	if (conf.getSandboxStagingPath() != envsandboxpath) {
-		edglog(severe)<<"ERROR: SandboxStagingPath value inside "
-			"configuration file is different from $DOCUMENT_ROOT/<sandbox dir>"
-			<<endl;
-		throw FileSystemException( __FILE__, __LINE__,
-  			"submit()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-   			"SandboxStagingPath value inside configuration file is different "
-   			"from $DOCUMENT_ROOT/<sandbox dir>\n(please contact server administrator)");
-	}
-	
 	string jdltostart = jdl;
 	
 	int type = getType(jdl);
@@ -1892,34 +1741,6 @@ soap_serve_submit(struct soap *soap, struct ns1__jobSubmitResponse response)
 	return soap_closesock(soap);
 }
 
-/**
- * Converts a JobIdStructType vector pointer to ns1__JobIdStructType vector 
- * pointer
- */
-vector<ns1__JobIdStructType*> *
-convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*> 
-	*graph_struct_type_vector)
-{
-	vector<ns1__JobIdStructType*> *returnVector =
-		new vector<ns1__JobIdStructType*>;
-	if (graph_struct_type_vector) {
-		ns1__JobIdStructType *element = NULL;
-		for (unsigned int i = 0; i < graph_struct_type_vector->size(); i++) {
-			element = new ns1__JobIdStructType;
-			element->id = (*graph_struct_type_vector)[i]->id;
-			element->name = (*graph_struct_type_vector)[i]->name;
-			if ((*graph_struct_type_vector)[i]) { // Vector not NULL
-				element->childrenJob = *convertToGSOAPJobIdStructTypeVector(
-					(*graph_struct_type_vector)[i]->childrenJob);
-			} else {
-				element->childrenJob = *(new vector<ns1__JobIdStructType*>);
-			}
-			returnVector->push_back(element);
-		}
-	}
-	return returnVector;
-}
-
 void
 jobSubmit(struct ns1__jobSubmitResponse &response,
 	jobSubmitResponse &jobSubmit_response, const string &jdl,
@@ -2173,23 +1994,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		case JobStatus::RUNNING:
 			params.push_back(jid->toString());
 			params.push_back(jobpath);
-			
-			// Checking if the value is the same as $DOCUMENT_ROOT
-			envsandboxpath = getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
-				+ wmputilities::getSandboxDirName();
-			edglog(debug)<<"Sandbox Path: "<<conf.getSandboxStagingPath()<<endl;
-			edglog(debug)<<"DOCUMENT_ROOT: "<<envsandboxpath<<endl;
-			
-			// Checking if the value is the same as $DOCUMENT_ROOT
-			if (conf.getSandboxStagingPath() != envsandboxpath) {
-				edglog(severe)<<"ERROR: SandboxStagingPath value inside "
-					"configuration file is different from $DOCUMENT_ROOT/<sandbox dir>"
-					<<endl;
-				throw FileSystemException( __FILE__, __LINE__,
-		  			"jobCancel()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-		   			"SandboxStagingPath value inside configuration file is different "
-		   			"from $DOCUMENT_ROOT/<sandbox dir>\n(please contact server administrator)");
-			}
 			params.push_back(string(getenv(DOCUMENT_ROOT)));
 			params.push_back(seqcode);
 			
@@ -2206,27 +2010,11 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			break;
 		case JobStatus::DONE:
 			// If the job is DONE, then cancellation is allowed only if
-			// DONE_CODE = Failed (1)
-			if (status.getValInt(JobStatus::DONE_CODE) != 0) {
+			// DONE_CODE = DONE_CODE_FAILED (resubmission is possible)
+			if (status.getValInt(JobStatus::DONE_CODE)
+					== JobStatus::DONE_CODE_FAILED) {
 				params.push_back(jid->toString());
 				params.push_back(jobpath);
-				
-				// Checking if the value is the same as $DOCUMENT_ROOT
-				envsandboxpath = getenv(DOCUMENT_ROOT) + FILE_SEPARATOR
-					+ wmputilities::getSandboxDirName();
-				edglog(debug)<<"Sandbox Path: "<<conf.getSandboxStagingPath()<<endl;
-				edglog(debug)<<"DOCUMENT_ROOT: "<<envsandboxpath<<endl;
-				
-				// Checking if the value is the same as $DOCUMENT_ROOT
-				if (conf.getSandboxStagingPath() != envsandboxpath) {
-					edglog(warning)<<"ERROR: SandboxStagingPath value inside "
-						"configuration file is different from $DOCUMENT_ROOT/<sandbox dir>"
-						<<endl;
-					throw FileSystemException( __FILE__, __LINE__,
-			  			"jobCancel()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-			   			"SandboxStagingPath value inside configuration file is different "
-			   			"from $DOCUMENT_ROOT/<sandbox dir>\n(please contact server administrator)");
-				}
 				params.push_back(string(getenv(DOCUMENT_ROOT)));
 				params.push_back(seqcode);
 				
@@ -2241,7 +2029,8 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 					"Cancelled by user", true, true);
 			} else {
-				edglog(debug)<<"Job status (DONE - DONE_CODE = 0) doesn't allow job cancel"<<endl;
+				edglog(debug)<<"Job status (DONE - DONE_CODE != DONE_CODE_FAILED)"
+					" doesn't allow job cancel"<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 					"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 					"job status (DONE) doesn't allow job cancel");
@@ -2492,11 +2281,13 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 	}
 	
 	// Purge allowed if the job is in ABORTED state or DONE success
-	// DONE_CODE = Failed (0)
+	// DONE_COE = DONE_CODE_OK  or DONE_CODE_CANCELLED
+	int donecode = status.getValInt(JobStatus::DONE_CODE);
 	if (!checkstate
 			|| ((status.status == JobStatus::ABORTED)
 			|| ((status.status == JobStatus::DONE)
-				&& (status.getValInt(JobStatus::DONE_CODE) == 0)))) {
+				&& ((donecode == JobStatus::DONE_CODE_OK)
+					|| (donecode == JobStatus::DONE_CODE_CANCELLED))))) {
 		
 		string usercert;
 		string userkey;
@@ -2527,7 +2318,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 			if (ex.getCode() == wmputilities::WMS_PROXY_EXPIRED) {
 				if (!getenv(GLITE_HOST_CERT) || ! getenv(GLITE_HOST_KEY)) {
 					edglog(severe)<<"Unable to get values for environment variable "
-						<<string(GLITE_HOST_CERT)<<" e/o "<<string(GLITE_HOST_KEY)<<endl;
+						<<string(GLITE_HOST_CERT)<<" and/or "<<string(GLITE_HOST_KEY)<<endl;
 					throw FileSystemException(__FILE__, __LINE__,
 						"jobpurge()", wmputilities::WMS_IS_FAILURE,
 						"Unable to perform job purge. Server error\n(please "
@@ -2671,7 +2462,6 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		for (unsigned int i = 0; i < found.size(); i++) {
 			// Checking for hidden files
 			filename = wmputilities::getFileName(string(found[i]));
-			//if ((filename != MARADONA_FILE) && (filename.substr(0, 1) != ".")) {
 			if ((filename != MARADONA_FILE) && (filename
 					!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
 				item = new StringAndLongType();

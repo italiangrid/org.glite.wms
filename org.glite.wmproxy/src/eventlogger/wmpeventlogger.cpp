@@ -583,6 +583,10 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				edglog(debug) << "Logging Abort event..." << endl ;
 				return edg_wll_LogAbortProxy(ctx,reason);
 				break;
+			case LOG_ENQUEUE_START:
+				edglog(debug) << "Logging Enqueue START event..." << endl ;
+				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "START", "");
+				break;
 			case LOG_ENQUEUE_OK:
 				edglog(debug) << "Logging Enqueue OK event..." << endl ;
 				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "OK", "");
@@ -616,6 +620,10 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 			case LOG_ABORT:
 				edglog(debug) << "Logging Abort event..." << endl ;
 				return edg_wll_LogAbort(ctx, reason);
+				break;
+			case LOG_ENQUEUE_START:
+				edglog(debug) << "Logging Enqueue START event..." << endl ;
+				return edg_wll_LogEnQueued(ctx, file_queue, jdl, "START", "");
 				break;
 			case LOG_ENQUEUE_OK:
 				edglog(debug) << "Logging Enqueue OK event..." << endl ;

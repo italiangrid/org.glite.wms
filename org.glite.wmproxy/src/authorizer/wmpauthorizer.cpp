@@ -242,7 +242,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	  	}
 	  	
 	  	// Send user mapping request to LCMAPS 
-	  	char * user_dn = wmputilities::getUserDN();
+	  	//char * user_dn = wmputilities::getUserDN();
 	  	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
 	  	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
 		fqan_list[0] = const_cast<char*>(certfqan.c_str());
@@ -275,6 +275,18 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	        	wmputilities::WMS_USERMAP_ERROR,
 	        	"LCMAPS could not find the username related to uid");
 	  	}
+	  	
+	  	// Checking for mapped user group. The group of the assigned local user
+	  	// MUST be different from the group of user running server
+	  	if (user_info->pw_gid == getgid()) {
+	  		edglog(info)<<"Mapping not allowed, mapped local user group equal "
+	  			"to group of user running server"<<endl; 
+	    	throw AuthorizationException(__FILE__, __LINE__,
+	        	"mapUser()", wmputilities::WMS_USERMAP_ERROR,
+	        	"Mapping not allowed, mapped local user group equal to group"
+	        	" of user running server\n(please contact server administrator)");
+	  	}
+	  	
 	  	// Setting value for username private member
 	  	this->username = string(user_info->pw_name);
 	  
@@ -335,6 +347,17 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	    	throw AuthorizationException(__FILE__, __LINE__,
 	        	"getpwnam()", wmputilities::WMS_USERMAP_ERROR,
 	        	"LCMAPS could not find the uid related to username");
+	  	}
+	  	
+	  	// Checking for mapped user group. The group of the assigned local user
+	  	// MUST be different from the group of user running server
+	  	if (user_info->pw_gid == getgid()) {
+	  		edglog(info)<<"Mapping not allowed, mapped local user group equal "
+	  			"to group of user running server"<<endl; 
+	    	throw AuthorizationException(__FILE__, __LINE__,
+	        	"mapUser()", wmputilities::WMS_USERMAP_ERROR,
+	        	"Mapping not allowed, mapped local user group equal to group"
+	        	" of user running server\n(please contact server administrator)");
 	  	}
 	  
 	  	// Terminate the LCMAPS
