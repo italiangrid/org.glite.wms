@@ -114,7 +114,7 @@ class LOG {
 	* @param ns the Network server string representation <host >:<port>
 	*/
 	std::vector<std::string>  regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns );
-	std::vector<std::string>  regist_part ( const std::string& jobid , const std::string& jdl ,  int subjobs, const std::string& ns ) ;
+	std::vector<std::string>  generate_sub_jobs( const std::string& jobid, int subjobs);
    private:
 	// void log_error ( const std::string& err ,  edg_wll_Context *ctx=NULL ) ;
 	void log_error ( const std::string& err ) ;

@@ -63,6 +63,7 @@ class LOG {
        String retrieveState ( const String& jobid , int step = 0) ;
        int get_error ( String& err) ;
        vector<String> regist_dag (const vector<String>& jdls, const String& jobid , const String& jdl, int length , const String& ns ) ;
+       vector<String> generate_sub_jobs ( const String& jobid, int length );
 };
 %}
 

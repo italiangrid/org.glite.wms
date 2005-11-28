@@ -109,7 +109,7 @@ std::string LOG::retrieveState ( const std::string& jobid_str , int step ){
   string state( events[cnt-1-step].chkpt.classad );
   for ( i = 0; i < cnt; i++)
     edg_wll_FreeEvent( events+i );
-  // free(events);   // UMMH::: aggiàfa free TBD
+  // free(events);   //  TBD is to be done?
   return state ;
 
 } ;
@@ -288,6 +288,24 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 		std::free(zero_char);
 	}
 	return jobids ;
+}
+
+
+std::vector<std::string>  LOG::generate_sub_jobs( const std::string& jobid, int res_num){
+	vector <string> jobids ;
+	error_code= false ;
+	edg_wlc_JobId id = NULL;
+	try{
+		id = glite::wmsutils::jobid::JobId (jobid ).getId();
+	}catch (exception &exc) {
+		log_error("Unable parse JobId: "+jobid);return jobids;
+	}
+	edg_wlc_JobId *subjobs = NULL;
+	edg_wll_GenerateSubjobIds(ctx, id,res_num,"USERINTERFACE", &subjobs);
+	for (int i = 0; i < res_num; i++) {
+		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
+	}
+	return jobids;
 }
 
 
