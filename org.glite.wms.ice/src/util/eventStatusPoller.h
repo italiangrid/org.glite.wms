@@ -47,7 +47,7 @@ namespace glite {
 	  void checkJobs(void);
 
 	protected:
-	  eventStatusPoller( const eventStatusPoller&) {}
+	  eventStatusPoller( const eventStatusPoller& ) {}
 
 	public:
 	  eventStatusPoller(

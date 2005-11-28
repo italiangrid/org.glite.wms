@@ -429,7 +429,7 @@ void jobCache::dump() throw (jnlFile_ex&)
 CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
 {
   classad::ClassAd *ad;
-  string jobExpr, /*gid,*/ cid, st, jdl, tstamp;
+  string jobExpr, /*gid,*/ cid, st, jdl, tstamp, subID;
   classad::ClassAdParser parser;
   classad::ClassAdUnParser unp;
   ad = parser.ParseClassAd(Buf);
@@ -447,6 +447,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     unp.Unparse(st,  ad->Lookup("status"));
     unp.Unparse(jdl, ad->Lookup("jdl"));
     unp.Unparse(tstamp, ad->Lookup("last_update"));
+    unp.Unparse(subID, ad->Lookup("SubscriptionID"));
   } else {
     throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' attributes");
   }
@@ -455,7 +456,8 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   boost::trim_if(st, boost::is_any_of("\""));
   /* boost::trim_if(gid, boost::is_any_of("\"")); */
   boost::trim_if(jdl, boost::is_any_of("\""));
-boost::trim_if(tstamp, boost::is_any_of("\""));
+  boost::trim_if(tstamp, boost::is_any_of("\""));
+  boost::trim_if(subID, boost::is_any_of("\""));
   api::job_statuses::job_status stNum;
 
   char *endptr_st = new char[st.length()+1];
@@ -491,7 +493,7 @@ boost::trim_if(tstamp, boost::is_any_of("\""));
     }
 
   try {
-    return CreamJob(jdl, cid, stNum, lastUp );
+    return CreamJob(jdl, cid, stNum, lastUp, subID );
   } catch(ClassadSyntax_ex& ex) {
     throw ClassadSyntax_ex(string("Error creating a creamJob: ")+ex.what());
   }
@@ -557,6 +559,7 @@ void jobCache::toString(const CreamJob& cj, string& target)
     classad::ClassAd* jdlAd = parser.ParseClassAd(cj.getJDL());
     ad.Insert( "jdl", jdlAd );
     ad.InsertAttr( "last_update", (int)cj.getLastUpdate() );
+    ad.InsertAttr( "SubscriptionID", cj.getSubscriptionID() );
     classad::ClassAdUnParser unparser;
     unparser.Unparse( target, &ad );
 }

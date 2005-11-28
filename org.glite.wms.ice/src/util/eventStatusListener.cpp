@@ -19,6 +19,9 @@ logger::PRINT_DEVICE_CONTROLLER lflags = logger::PRINT_DEVICE_CONTROLLER((int)lo
 void glite::wms::ice::util::eventStatusListener::operator()() {
   //std::cout << "eventStatusListener::run - called run" << std::endl;
   endaccept=false;
+
+  init();
+
   while(!endaccept) {
     //this->acceptJobStatus();
     //this->updateJobCache();
@@ -90,4 +93,18 @@ void glite::wms::ice::util::eventStatusListener::updateJobCache(void)
     cerr << ex.what() << endl;
     exit(1);
   }
+}
+
+//______________________________________________________________________________
+void glite::wms::ice::util::eventStatusListener::init(void)
+{
+  jobCache::iterator it;
+  for(it  = jobCache::getInstance()->begin();
+      it != jobCache::getInstance()->end();
+      it++)
+    {
+      cout << "listener: checking SubscriptionID of ["
+	   << (*it)->second.getSubscritionID() << "]"<<endl;
+    }
+  exit(1);
 }

@@ -41,7 +41,7 @@ putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(CLASSAD_LIBS)
 
 
-tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
+tryICE_LDADD = -lssl -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
 		$(LOG4CPP_LIBS) $(CLASSAD_LIBS) \
@@ -70,7 +70,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(CLASSAD_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
-		$(LOG4CPP_CFLAGS)
+		$(LOG4CPP_CFLAGS) \
+		$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
 

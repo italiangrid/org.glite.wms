@@ -25,13 +25,15 @@ namespace glite {
 	  std::string user_proxyfile;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  time_t      lastUpdate;
+	  std::string subscriptionID;
 
 	public:
 
 	  CreamJob( const std::string& _jdl,
 		    const std::string& _cream_jobid, //< Cream Job ID 
 		    const glite::ce::cream_client_api::job_statuses::job_status& st,
-		    time_t ts) 
+		    time_t ts,
+		    const std::string& subID = "") 
 	    throw(ClassadSyntax_ex&);
 
 	  CreamJob(const CreamJob& C) {
@@ -45,13 +47,15 @@ namespace glite {
 	    status              = C.status;
             user_proxyfile      = C.user_proxyfile;
 	    lastUpdate          = C.lastUpdate;
+	    subscriptionID      = C.subscriptionID;
 	  }
 
 	  inline void setStatus(const glite::ce::cream_client_api::job_statuses::job_status& st) 
 	  { 
 	    status = st;
 	  }
-	  inline void setLastUpdate(const time_t& t) { lastUpdate = t; } 
+	  void setLastUpdate(const time_t& t) { lastUpdate = t; } 
+	  void setSubscriptionID(const std::string& subID) { subscriptionID = subID; }
           void setJobID(const std::string& cid) { cream_jobid = cid; }
           std::string getGridJobID(void) const { return grid_jobid; }
           std::string getJobID(void) const { return cream_jobid; }
@@ -62,6 +66,7 @@ namespace glite {
           std::string getCreamDelegURL(void) const { return cream_deleg_address; }
           std::string getUserProxyCertificate( void ) const { return user_proxyfile; }
 	  time_t      getLastUpdate( void ) const { return lastUpdate; }
+	  std::string getSubscriptionID(void) const { return subscriptionID; }
           glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { 
 	    return status; 
 	  }

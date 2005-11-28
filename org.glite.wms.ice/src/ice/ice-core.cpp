@@ -67,34 +67,40 @@ ice::~ice()
 //______________________________________________________________________________
 void ice::startListener(const int& listenPort)
 {
-//   if(status_listener_started) return;
-//   cout << "Creating a CEMon listener object..."<<endl;
-//   listener = new util::eventStatusListener(listenPort);
-//   while(!listener->bind()) {
-//     cout << "error message=" << listener->getErrorMessage() << endl;
-//     cout << "error code   =" << listener->getErrorCode() << endl;
-//     cout << "Retrying in 5 seconds..." <<endl;
-//     sleep(5);
-//   }
+  if(status_listener_started) return;
+  cout << "Creating a CEMon listener object..."<<endl;
+  //listener = new boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort, "", ""));
+  while(!listener->bind()) {
+    cout << "error message=" << listener->getErrorMessage() << endl;
+    cout << "error code   =" << listener->getErrorCode() << endl;
+    cout << "Retrying in 5 seconds..." <<endl;
+    sleep(5);
+  }
   
-//   cout << "Creating thread object for CEMon listener..."<<endl;
+  cout << "Creating thread object for CEMon listener..."<<endl;
    
-//   /**
-//    * The folliwing line requires that the copy ctor of CEConsumer
-//    * class be public(protected?)
-//    *
-//    */
-//   //listenerThread = new util::thread<util::eventStatusListener>(*listener);
+  /**
+   * The folliwing line requires that the copy ctor of CEConsumer
+   * class be public(protected?)
+   *
+   */
+  try {
+    listenerThread = 
+      new boost::thread(boost::bind(&util::eventStatusListener::operator(), 
+				    listener)
+			);
+  } catch(boost::thread_resource_error& ex) {
+    iceInit_ex( ex.what() );
+  }
+  //  cout << "Starting CEMon listener thread..."<<endl;
   
-//   //  cout << "Starting CEMon listener thread..."<<endl;
-  
-// //   try {
-// //     listenerThread->start();
-// //   } catch(util::thread_start_ex& ex) {
-// //     throw iceInit_ex(ex.what()); 
-// //   }  
-//   cout << "listener started succesfully!"<<endl;
-//   status_listener_started = true;
+//   try {
+//     listenerThread->start();
+//   } catch(util::thread_start_ex& ex) {
+//     throw iceInit_ex(ex.what()); 
+//   }  
+  cout << "listener started succesfully!"<<endl;
+  status_listener_started = true;
 }    
 
 //______________________________________________________________________________
@@ -124,7 +130,7 @@ void ice::startPoller(const int& poller_delay)
 
 //______________________________________________________________________________
 void ice::stopListener() {
-    // listener->stop();
+  listener->stop();
 }
 
 //______________________________________________________________________________

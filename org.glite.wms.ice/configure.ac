@@ -62,6 +62,7 @@ AC_CHECK_FUNCS([memset])
 have_classads=no
 have_boost=no
 have_glite_wmsutils=no
+have_globus=no
 
 AC_OPTIMIZE
 AC_GLITE
@@ -70,11 +71,11 @@ AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GSOAP([])
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
-
+AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
-
+AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])

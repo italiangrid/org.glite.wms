@@ -11,10 +11,6 @@
 
 #include "glite/ce/monitor-client-api-c/GeneralException.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
-//#include "runnable.h"
-
-
-//class glite::wms::ice::util::jobCache;
 
 namespace glite {
   namespace wms {
@@ -22,24 +18,23 @@ namespace glite {
       namespace util {
 
 	class eventStatusListener : public CEConsumer {
-	  //	  glite::wms::ice::util::jobCache* jobs;
 	  std::string grid_JOBID, cream_JOBID;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  bool endaccept;
 
 	protected:
-	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999, "", "") {}
+	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999) {}
 
 	public:
 	  eventStatusListener(int i, const std::string& cert, const std::string& key) 
-	    : CEConsumer(i, cert, key), 
-	    grid_JOBID(""), cream_JOBID(""),
+	    : CEConsumer(i), 
+	    grid_JOBID(""), 
+	    cream_JOBID(""),
 	    status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
 	    endaccept(false) { }
 	  
 	  virtual ~eventStatusListener() {}
 
-	  //	  void setJobCache(glite::wms::ice::util::jobCache* _jobs) { jobs = _jobs; }
 	  void acceptJobStatus(void);
 	  void updateJobCache(void);
 	  virtual void operator()();
