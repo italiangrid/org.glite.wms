@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace glite::wms::ice;
 using namespace glite::wms::common::utilities;
@@ -169,15 +170,18 @@ void ice::ungetRequest(const unsigned int& reqNum)
   FileListLock  lock(mx);
 
   string toResubmit = *requests[reqNum];
-  unsigned int pos = toResubmit.find("jobsubmit");
-  if(pos == string::npos) return;
-  string tmp = toResubmit.substr(0,pos);
-  tmp += "jobresubmit";
-  tmp += toResubmit.substr(pos+9, string::npos);
+
+  boost::replace_first( toResubmit, "jobsubmit", "jobresubmit");
+
+//   unsigned int pos = toResubmit.find("jobsubmit");
+//   if(pos == string::npos) return;
+//   string tmp = toResubmit.substr(0,pos);
+//   tmp += "jobresubmit";
+//   tmp += toResubmit.substr(pos+9, string::npos);
 
   try {
-    cout << "ice::ungetRequest: Putting ["<<tmp<<"] to NS filelist"<<endl;
-    flns.push_back(tmp);
+    cout << "ice::ungetRequest: Putting ["<<toResubmit<<"] to NS filelist"<<endl;
+    flns.push_back(toResubmit);
   } catch(std::exception& ex) {
     cerr << ex.what() << endl;
     exit(1);

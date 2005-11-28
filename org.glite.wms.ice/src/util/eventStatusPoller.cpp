@@ -144,8 +144,8 @@ void eventStatusPoller::checkJobs()
 	   (stNum == api::job_statuses::ABORTED))
 	  {
 	    cout << "JobID ["
-		 <<cid
-		 <<"] is failed or aborted. Removing from cache and resubmitting..."
+		 << cid
+		 << "] is failed or aborted. Removing from cache and resubmitting..."
 		 <<endl;
 	    /**
 	     * NOW MUST RESUBMIT THIS JOB

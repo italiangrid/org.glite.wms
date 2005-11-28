@@ -12,12 +12,12 @@ namespace glite {
 	
 	class jnlFile_ex : public std::exception {
 	  
-	  std::string cause;
+	  std::string _cause;
 	  
 	public:
-	  jnlFile_ex(const std::string& _cause) throw() : cause(_cause) {};
+	  jnlFile_ex(const std::string& cause) throw() : _cause(cause) {};
 	  virtual ~jnlFile_ex() throw() {}
-	  const char* what() const throw() { return cause.c_str(); }
+	  const char* what() const throw() { return _cause.c_str(); }
 	  
 	};
       }

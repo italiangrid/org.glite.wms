@@ -69,6 +69,7 @@ AC_GLITE
 
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GSOAP([])
+AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_BOOST([], have_boost=yes, have_boost=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)

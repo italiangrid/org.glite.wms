@@ -100,7 +100,9 @@ int main(int argc, char*argv[]) {
                << ex.what() << endl;
       } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
           cerr << "Command execution got TRANSIENT exception: " 
-               << ex.what() << endl;
+               << ex.what() << endl
+               << "Request will be resubmitted" << endl;
+          
       }
       cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
       try { 

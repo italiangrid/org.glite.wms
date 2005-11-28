@@ -3,7 +3,6 @@
 
 #include "glite/ce/cream-client-api-c/JobInfoList.h"
 #include "eventStatusPoller_ex.h"
-//#include "runnable.h"
 
 #define DELAY 10
 
