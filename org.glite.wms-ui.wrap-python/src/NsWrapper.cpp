@@ -22,47 +22,44 @@ using namespace glite::wmsutils::exception ;
 using namespace glite::wms::common ;
 using namespace glite::wms::manager::ns::client ;
 
-   /** Default Ctor*/
-   NS::NS(){
+/** Default Ctor*/
+NS::NS(){
    	ns = NULL ;
-   }  ;
-   /** Default Dtor*/
-   NS::~NS()  { }  ;
+}
+/** Default Dtor*/
+NS::~NS()  { }
+/** ns client initialisation */
+void NS::ns_init (const std::string& host ,int port,  int logLevel  ) {
+	try{    error_code = false ;
+		ns = new NSClient (host , port,  (logger::level_t ) logLevel ) ;
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error ("Unable to Initialise the job.\n"  + string (exc.what() )  );
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+}
+/** Submit the job */
+void NS::ns_submit (  const std::string& jdl , int DAG){
+	try{
+	error_code = false ;
+	if (DAG==0)      ns->jobSubmit( jdl  );
+	else     ns->dagSubmit( jdl  );
+	//Call the dgLog Transfer method (No Thread Safe Method)
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error ("Unable to submit the job.\n"  + string (exc.what() )  );
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+}
+/** Cancel the specified Job*/
+int NS::ns_cancel (const std::string& jobid ){
+	try{
+	error_code = false ;
+	ns->jobCancel (  list<string> (1   , jobid)   ) ;
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error ("Unable to cancel the job: " + jobid + "\n" + string (exc.what() ) ) ;
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+	return 0 ;
+}
 
-   /** ns client initialisation */
-   void NS::ns_init (const std::string& host ,int port,  int logLevel  ) {
-     try{    error_code = false ;
-         ns = new NSClient (host , port,  (logger::level_t ) logLevel ) ;
-     }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-     }catch (exception &exc){ error_code=true;  log_error ("Unable to Initialise the job.\n"  + string (exc.what() )  );
-     }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-   }  ;
-
-   /** Submit the job */
-   void NS::ns_submit (  const std::string& jdl , int DAG)    {
-     try{
-       error_code = false ;
-       if (DAG==0)      ns->jobSubmit( jdl  );
-       else     ns->dagSubmit( jdl  );
-       //Call the dgLog Transfer method (No Thread Safe Method)
-     }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-     }catch (exception &exc){ error_code=true;  log_error ("Unable to submit the job.\n"  + string (exc.what() )  );
-     }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-   } ;
-
-   /** Cancel the specified Job*/
-   int NS::ns_cancel (const std::string& jobid )    {
-   try{
-     error_code = false ;
-     ns->jobCancel (  list<string> (1   , jobid)   ) ;
-   }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-   }catch (exception &exc){ error_code=true;  log_error ("Unable to cancel the job: " + jobid + "\n" + string (exc.what() ) ) ;
-   }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-   return 0 ;
-   }  ;
-
-   /** Purging the sandbox root NS directory */
-   void NS::ns_purge(const std::string& jobid)    {
+/** Purging the sandbox root NS directory */
+void NS::ns_purge(const std::string& jobid){
      try{
      error_code = false ;
      ns   ->jobPurge ( jobid ) ;
@@ -70,60 +67,61 @@ using namespace glite::wms::manager::ns::client ;
      }catch (exception &exc){ error_code=true;  log_error ("Unable to purge the directory for job: "+ jobid + "\n" + string (exc.what() ) ) ;
      }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
 
-   }  ;
+}
 
-   /** get the sandbox root NS directory */
-   std::string NS::ns_get_root(const std::string& jobid)    {
+/** get the sandbox root NS directory */
+std::string NS::ns_get_root(const std::string& jobid){
      string path ;
      try{
      	error_code = false ;
      	string sep = "/" ;
      	path= ns->getSandboxRootPath() ;
-     	// if (ns_api)  path= nsClient->getSandboxRootPath() ; // DEPRECATED
      	path += sep + glite::wmsutils::jobid::to_filename(glite::wmsutils::jobid::JobId(jobid) )  + sep + "output" + sep  ;
         }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-     	}catch (exception &exc){ error_code=true;  log_error ("Unable to sget the sandbox path for job: " + jobid + "\n" + string (exc.what() ) )    ;
+     	}catch (exception &exc){
+		error_code=true;
+		log_error ("Unable to sget the sandbox path for job: " + jobid + "\n" + string (exc.what() ) );
      	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
      return  path ;
-   }  ;
+}
 
-   /** Convert the url into a directory*/
-   std::string NS::toDir( const  std::string& url)   {  //TBD deprecated??
-      try{
-         error_code = false ;
-         return glite::wmsutils::jobid::to_filename(glite::wmsutils::jobid::JobId(url) ) ;
-      }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-      }catch (exception &exc){ error_code=true;  log_error ("METHOD DEPRECATED???" ) ;
-      }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-      return "" ;
-    }  ;
+/** Convert the url into a directory*/
+std::string NS::toDir( const  std::string& url)   {  //TBD deprecated??
+	try{
+		error_code = false ;
+		return glite::wmsutils::jobid::to_filename(glite::wmsutils::jobid::JobId(url) ) ;
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error ("METHOD DEPRECATED???" ) ;
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+	return "" ;
+ }
 
     
-   std::vector <std::string> NS::ns_output_sandbox( const std::string& jobid ){
-      vector<string> output ;
-      try{
-         error_code = false ;
-         ns->getOutputFilesList(jobid , output) ;
-      }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-      }catch (exception &exc){ error_code=true;  log_error (exc.what() ) ;
-      }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-      return output ;
-   }  ;
+std::vector <std::string> NS::ns_output_sandbox( const std::string& jobid ){
+	vector<string> output ;
+	try{
+		error_code = false ;
+		ns->getOutputFilesList(jobid , output) ;
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error (exc.what() ) ;
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+	return output ;
+}
 
-   /** Retrieve multi attribute list*/
-   std::vector<std::string>  NS::ns_multi()    {
-      vector<string> multi ;
-      try{
-         error_code = false ;
-         ns->getMultiattributeList(multi) ;
-      }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-      }catch (exception &exc){ error_code=true;  log_error (exc.what() ) ;
-      }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-      return multi ;
-   }  ;
+/** Retrieve multi attribute list*/
+std::vector<std::string>  NS::ns_multi(){
+	vector<string> multi ;
+	try{
+		error_code = false ;
+		ns->getMultiattributeList(multi) ;
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error (exc.what() ) ;
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+	return multi ;
+}
 
-   /** Retrive matching Jobs*/
-   std::vector <std::string> NS::ns_match (const std::string& jdl )    {
+/** Retrive matching Jobs*/
+std::vector <std::string> NS::ns_match (const std::string& jdl ){
       std::vector<std::string> vect ;
       try{
          error_code = false ;
@@ -132,39 +130,41 @@ using namespace glite::wms::manager::ns::client ;
       }catch (exception &exc){ error_code=true;  log_error (exc.what() ) ;
       }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
       return  vect ;
-   }  ;
-   std::string NS::create_job_id(const std::string& lbAddress , int lbPort){
-       try{
-          error_code = false ;
-          glite::wmsutils::jobid::JobId  jobid;
-          jobid.setJobId ( lbAddress, lbPort ) ;
-          return jobid.toString();
-       }catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
-       }catch (exception &exc){ error_code=true;  log_error ("Unable to create the JobId:" + string (exc.what() ) );
-       }catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
-       return "" ;
-   } ;
+}
+
+/** Create JobId */
+std::string NS::create_job_id(const std::string& lbAddress , int lbPort){
+	try{
+		error_code = false ;
+		glite::wmsutils::jobid::JobId  jobid;
+		jobid.setJobId ( lbAddress, lbPort ) ;
+		return jobid.toString();
+	}catch (Exception &exc){ error_code=true;  log_error (exc.getExceptionName()+": " + string (exc.what() )  );
+	}catch (exception &exc){ error_code=true;  log_error ("Unable to create the JobId:" + string (exc.what() ) );
+	}catch (...){ error_code=true;  log_error ("Fatal Error: Unpredictalbe exception thrown by swig wrapper");    }
+	return "" ;
+}
    
 
 
-   /** Release allocated NS memory*/
-   void NS::ns_free () {  /* if (ns!= NULL) delete ns ;*/  };
-   /** error managing*/
-   void NS::log_error (const std::string& err ){
-       error_code= true;
-       this->error = err ;
-   } ;
-   /** Error retrieval*/
-   int NS::get_error (std::string&  err) {
-     if (error_code){
-         err = error ;
-	 error = ""  ;
-         return 1 ;
-     }
-     err = "" ;
-     return 0 ;
-   };
-   
+/** Release allocated NS memory*/
+void NS::ns_free () {  /* if (ns!= NULL) delete ns ;*/  };  //TBD
+/** error managing*/
+void NS::log_error (const std::string& err ){
+	error_code= true;
+	this->error = err ;
+}
+/** Error retrieval*/
+int NS::get_error (std::string&  err) {
+	if (error_code){
+		err = error ;
+		error = ""  ;
+		return 1 ;
+	}
+	err = "" ;
+	return 0 ;
+}
+
 /******************************************************************
  method :dgas_jobAuth DGAS Authorization method added
 *******************************************************************/
@@ -374,7 +374,6 @@ vector <string> load_groups( voms &v ){
 	if (  v.type!=TYPE_STD  ){
 		return vect ;
 	}
-	// cout << "Issuer is NOW: " << issuer ;
 	// appending group names
 	for (  vector<data>::iterator i = v.std.begin() ; i!= v.std.end() ; i++  ) vect.push_back ( string ( i->group )  );
 	return vect ;
