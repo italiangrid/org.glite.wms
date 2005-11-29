@@ -143,7 +143,7 @@ bool  brokerinfoGlueImpl::retrieveCloseSEsInfoFromISM(const BrokerInfoData::CEid
   edglog_fn(retrieveCloseSAsInfoFromISM);
   bid.m_CloseSEInfo_map.clear();
   bid.m_referredCEid.assign( CEid );
-  boost::recursive_mutex::scoped_lock l(ism::get_ism_mutex());
+  ism::ism_mutex_type::scoped_lock l(ism::get_ism_mutex());
   ism::ism_type::const_iterator ce_it = ism::get_ism().find(CEid);
   if (ce_it != ism::get_ism().end()) {
     // Retrieve the CloseStorageElements expression list
@@ -1086,11 +1086,11 @@ void brokerinfoGlueImpl::put_results_in_bi_data( const std::string& lfn,
    //
    for(BrokerInfoData::SFN_container_type::const_iterator sfn = resolved_sfn.begin();
      sfn != resolved_sfn.end(); sfn++) {
-                                                                                                                    
+
       edglog(debug) <<*sfn << endl;
-                                                                                                                    
+
       try {
-                                                                                                                    
+
          boost::smatch pieces;
          std::string   SE_name;
                                                                                                                     
@@ -1100,8 +1100,9 @@ void brokerinfoGlueImpl::put_results_in_bi_data( const std::string& lfn,
          }
          else {
             // If the SFN doesn't match the regular expression, we assume
-            // that only the SE name (SEid) has been returned. We check
-            // if the string really corresponds to a valid SE in the IS.
+            // that only the SE name (SEid) has been returned. We do
+            // NOT
+            // check if the string really corresponds to a valid SE in the IS.
             //
             string SE = *sfn;
             string str = "://";
@@ -1109,13 +1110,15 @@ void brokerinfoGlueImpl::put_results_in_bi_data( const std::string& lfn,
             if (pos != string::npos){
                SE.erase(0, pos+str.length());
             }
-            if (validSE(SE) == 0) {
+            //if (validSE(SE) == 0) {
+
                bid.m_involvedSEs.insert(SE);
-               edglog(debug) << SE << ": " << "is a valid SE"<< endl;
-            }
-            else {
-               edglog(warning) << SE << ": " << "is *not* a valid SE"<< endl;
-            }
+
+               //edglog(debug) << SE << ": " << "is a valid SE"<< endl;
+            //}
+            //else {
+               //edglog(warning) << SE << ": " << "is *not* a valid SE"<< endl;
+            //}
          }
       }
       catch( std::exception& ex ) {
@@ -1220,7 +1223,7 @@ void brokerinfoGlueImpl::get_catalog_url(const std::string& vo, const std::strin
       if ( sl->numServices > 0 )  {
 
          for(int k=0; k < sl->numServices; k++) {
-   //         edglog(debug) <<"EndPoint["<<k<<"]: "<< sl->services[k]->endpoint  << endl;
+              //edglog(debug) <<"EndPoint["<<k<<"]: "<< sl->services[k]->endpoint  << endl;
               list.push_back( strdup(sl->services[k]->endpoint) ) ;
          }
       }
