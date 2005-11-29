@@ -31,6 +31,7 @@ namespace apiutil = glite::ce::cream_client_api::util;
 jobCache* jobCache::_instance = 0;
 string jobCache::jnlFile = DEFAULT_JNLFILE;
 string jobCache::snapFile = DEFAULT_SNAPFILE;
+boost::recursive_mutex jobCache::jobCacheMutex;
 
 // 
 // Inner class definitions
@@ -135,6 +136,7 @@ jobCache::jobCacheTable::const_iterator jobCache::jobCacheTable::end( void ) con
 
 //______________________________________________________________________________
 jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
+  boost::recursive_mutex::scoped_lock M(jobCacheMutex);
   if(!_instance)
     _instance = new jobCache(snapFile, jnlFile); // can throw jnlFile_ex or 
                                                  // ClassadSyntax_ex
@@ -145,9 +147,7 @@ jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
 jobCache::jobCache(const string& _snapFile,
 		   const string& journalFile) 
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
-    : jobCacheMutex( ),
-      theMutex( ),
-      _jobs( ),
+    : _jobs( ),
       operation_counter(0)
 { 
     jnlMgr = new jnlFileManager(jnlFile);

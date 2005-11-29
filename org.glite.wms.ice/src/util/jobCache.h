@@ -38,9 +38,9 @@ namespace glite {
 	  static std::string jnlFile;
 	  static std::string snapFile;
 
-          boost::recursive_mutex jobCacheMutex; //< Lock used to guarantee mutual exclusion while accessing this data structure from concurrent threads. This will be removed when the locking mechanism based on the lock() and unlock() methods will be used.
+          static boost::recursive_mutex jobCacheMutex; //< Lock used to guarantee mutual exclusion while accessing this data structure from concurrent threads. 
 
-          boost::recursive_mutex theMutex;
+          // boost::recursive_mutex theMutex;
 
           /**
            * This class represents a sort of "double-keyed hash
