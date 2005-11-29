@@ -11,11 +11,11 @@
 // #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
 // #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 
-
-
 using namespace std ;
-const char* USERINTERFACE_SEED = "Userinterface";
-
+#define USERINTERFACE_SEED "Userinterface"
+// IMPORTANT: These values must match the glite-job-submit values
+#define UI_DAGTYPE 1
+#define UI_JOBTYPE 0
 LOG::LOG(){
 	subjobs = NULL;
 };
@@ -224,7 +224,7 @@ void LOG::log_tr_fail ( const std::string& jdl , const std::string&  host , int 
 	if (edg_wll_LogAbort ( ctx ,  exc )) cerr << "\n\n\nLB - Warning   edg_wll_LogTransferFAIL! ! ! "<<flush;
 }
 // DagAd New feature implementation:
-std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns, int type ){
+std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns, int regType ){
 	vector <string> jobids ;
 	error_code= false ;
 	//  array of subjob ID's
@@ -235,7 +235,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 		glite::wmsutils::jobid::JobId jid (jobid );
 		id = jid.getId();
 	} catch (exception &exc) {  log_error ( "Unable parse JobId: " + jobid ) ;       return jobids ;  }
-	if (edg_wll_RegisterJobSync(ctx,id, jdls.size()==0?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
+	if (edg_wll_RegisterJobSync(ctx,id,(regType==UI_DAGTYPE)?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
 		ns.c_str() ,    length,   USERINTERFACE_SEED,   &subjobs  ) ){
 		char error_message [1024];
 		char *msg, *dsc ;
