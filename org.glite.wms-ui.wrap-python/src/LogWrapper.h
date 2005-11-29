@@ -113,7 +113,7 @@ class LOG {
 	* @param length the number of sub jobs (wich MUST match the size of the jdls vector)
 	* @param ns the Network server string representation <host >:<port>
 	*/
-	std::vector<std::string>  regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns );
+	std::vector<std::string>  regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns, int type=0);
 	std::vector<std::string>  generate_sub_jobs( const std::string& jobid, int subjobs);
    private:
 	// void log_error ( const std::string& err ,  edg_wll_Context *ctx=NULL ) ;
@@ -121,6 +121,6 @@ class LOG {
 	edg_wll_Context ctx ;
 	std::string error ;
 	int error_code ;
-
+	edg_wlc_JobId* subjobs;
 };
 #endif

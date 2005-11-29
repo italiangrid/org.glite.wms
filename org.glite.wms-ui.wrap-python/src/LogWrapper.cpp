@@ -13,20 +13,12 @@
 
 
 
-
-
 using namespace std ;
-// using namespace glite::wms::lb ;
+const char* USERINTERFACE_SEED = "Userinterface";
 
-LOG::LOG() {
-  /*
-  edg_wlc_SSLInitialization();
-  if (edg_wlc_SSLLockingInit() != 0)
-      log_error ( "JobState::getStateFromLB error from edg_wlc_JobIdParse");
-  if (globus_module_activate(GLOBUS_COMMON_MODULE) != GLOBUS_SUCCESS)
-      log_error ( "JobState::getStateFromLB error from edg_wlc_JobIdParse");
-  */
-} ;
+LOG::LOG(){
+	subjobs = NULL;
+};
 LOG::~LOG() {  } ;
 
 // Compare two edg_wll_Event using the timestamp member
@@ -232,19 +224,19 @@ void LOG::log_tr_fail ( const std::string& jdl , const std::string&  host , int 
 	if (edg_wll_LogAbort ( ctx ,  exc )) cerr << "\n\n\nLB - Warning   edg_wll_LogTransferFAIL! ! ! "<<flush;
 }
 // DagAd New feature implementation:
-std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns ){
+std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls, const std::string& jobid ,const std::string& jdl , int length , const std::string& ns, int type ){
 	vector <string> jobids ;
 	error_code= false ;
 	//  array of subjob ID's
-	edg_wlc_JobId* subjobs = NULL ;
+	subjobs = NULL ;
 	// Register The Dag
 	edg_wlc_JobId id = NULL;
 	try{
 		glite::wmsutils::jobid::JobId jid (jobid );
 		id = jid.getId();
 	} catch (exception &exc) {  log_error ( "Unable parse JobId: " + jobid ) ;       return jobids ;  }
-	if (edg_wll_RegisterJobSync( ctx,  id , 	jdls.size()==0?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
-		ns.c_str() ,    length,   NULL,   &subjobs  ) ){
+	if (edg_wll_RegisterJobSync(ctx,id, jdls.size()==0?EDG_WLL_REGJOB_DAG:EDG_WLL_REGJOB_PARTITIONED, jdl.c_str(),
+		ns.c_str() ,    length,   USERINTERFACE_SEED,   &subjobs  ) ){
 		char error_message [1024];
 		char *msg, *dsc ;
 		edg_wll_Error( ctx , &msg , &dsc ) ;
@@ -269,13 +261,10 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 		int i = 0 ;
 		for (  iter = jdls.begin() ; iter!=jdls.end() ; iter++, i++){
 			*jdls_char = (char*) malloc ( iter->size() + 1 ) ;
-			sprintf ( *jdls_char  , "%s" ,  iter->c_str() ) ;
+			sprintf (*jdls_char,"%s",iter->c_str());
 			jdls_char++;
 		}
-		// cout << "Performing register Sub Jobs....." << endl ;
-		if (      edg_wll_RegisterSubjobs (  ctx,  id  , zero_char,
-		ns.c_str(),
-		subjobs )     ){
+		if ( edg_wll_RegisterSubjobs (ctx, id, zero_char,ns.c_str(),subjobs )){
 			char error_message [1024];
 			char *msg, *dsc ;
 			edg_wll_Error( ctx , &msg , &dsc ) ;
@@ -300,8 +289,8 @@ std::vector<std::string>  LOG::generate_sub_jobs( const std::string& jobid, int 
 	}catch (exception &exc) {
 		log_error("Unable parse JobId: "+jobid);return jobids;
 	}
-	edg_wlc_JobId *subjobs = NULL;
-	edg_wll_GenerateSubjobIds(ctx, id,res_num,"USERINTERFACE", &subjobs);
+	subjobs = NULL;
+	edg_wll_GenerateSubjobIds(ctx, id,res_num, USERINTERFACE_SEED, &subjobs);
 	for (int i = 0; i < res_num; i++) {
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
 	}
