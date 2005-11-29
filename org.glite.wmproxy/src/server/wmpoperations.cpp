@@ -181,7 +181,8 @@ pair<string, string> regist(jobRegisterResponse &jobRegister_response,
 	const string &delegatedproxy, const string &jdl, WMPExpDagAd *dag,
 	JobAd *jad = NULL);
 
-void submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth);
+void submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
+	eventlogger::WMPEventLogger &wmplogger);
 
 int listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	const string &delegation_id);
@@ -656,7 +657,9 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 				link = wmputilities::getJobDelegatedProxyPath(jobids[i]);
 				edglog(debug)<<"Creating proxy symbolic link for: "
 					<<jobids[i]<<endl;
-				if (symlink(proxy.c_str(), link.c_str())) {
+				if (int outcome = symlink(proxy.c_str(), link.c_str())) {
+					if (errno != EEXIST) {
+					edglog(debug)<<"OUTCOME: "<<outcome<<endl;
 			      	edglog(critical)
 			      		<<"Unable to create symbolic link to proxy file:\n\t"
 			      		<<link<<"\n"<<strerror(errno)<<endl;
@@ -665,12 +668,14 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 						"setJobFileSystem()", wmputilities::WMS_FATAL,
 						"Unable to create symbolic link to proxy file\n"
 							"(please contact server administrator)");
+					}
 			    }
 			    
 			    linkbak = wmputilities::getJobDelegatedProxyPathBak(jobids[i]);
 			    edglog(debug)<<"Creating backup proxy symbolic link for: "
 					<<jobids[i]<<endl;
 			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
+			    	if (errno != EEXIST) {
 			      	edglog(critical)
 			      		<<"Unable to create symbolic link to backup proxy file:\n\t"
 			      		<<linkbak<<"\n"<<strerror(errno)<<endl;
@@ -679,6 +684,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 						"setJobFileSystem()", wmputilities::WMS_FATAL,
 						"Unable to create symbolic link to backup proxy file\n"
 							"(please contact server administrator)");
+			    	}
 			    }
 			}
 		}
@@ -1303,12 +1309,12 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 		throw ex;
 	}
 	
-	if (!wmplogger.isRegisterEventOnly()) {
+	/*if (!wmplogger.isRegisterEventOnly()) {
 		edglog(error)<<"The job has already been started"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"The job has already been started");
-	}
+	}*/
 	
 	regJobEvent event = wmplogger.retrieveRegJobEvent(job_id);
 
@@ -1336,7 +1342,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 		soap_send_fault(soap);
 	}
 	
-	submit(event.jdl, jid, auth);
+	submit(event.jdl, jid, auth, wmplogger);
 	delete auth;
 	delete jid;
 	
@@ -1375,6 +1381,17 @@ logCheckpointable(WMPEventLogger * wmplogger, JobAd * jad,
 		statead.setAttribute(JDL::CHKPT_STATEID, stringjid);
 		edglog(debug)<<"Setting attribute JDL::CHKPT_DATA"<<endl;
 		statead.setAttribute(JDL::CHKPT_DATA, "[]");
+		
+		string steps;
+		if (jad->getType(JDL::CHKPT_STEPS) == Ad::TYPE_INTEGER) {
+			steps = boost::lexical_cast<std::string>(
+				jad->getInt(JDL::CHKPT_STEPS));
+		} else {
+			steps = jad->getString(JDL::CHKPT_STEPS);
+		}
+		edglog(debug)<<"Setting attribute JDL::CHKPT_STEPS"<<endl;
+		statead.setAttribute(JDL::CHKPT_STEPS, steps);
+		
 		edglog(debug)<<"Setting attribute JDL::CHKPT_CURRENTSTEP"<<endl;
 		statead.setAttribute(JDL::CHKPT_CURRENTSTEP, current_step);
 	}
@@ -1413,6 +1430,7 @@ copyEnvironment(char** sourceEnv)
     return tmp;
 }
 
+/*
 void
 submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth)
 {
@@ -1694,6 +1712,341 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth)
 			"submit()", wmp_fault.code, wmp_fault.message);
 	}
 	
+	//for (backupenv; *backupenv; backupenv++) {
+	//    free(*backupenv);
+    //}
+    //free(*targetEnv);
+    
+	//FCGI_Finish();
+	//exit(0);
+	
+	GLITE_STACK_CATCH();
+} 
+*/
+
+void
+submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
+	eventlogger::WMPEventLogger &wmplogger)
+{
+	GLITE_STACK_TRY("submit()");
+	edglog_fn("wmpoperations::submit");
+	
+	extern char **environ;
+	char ** backupenv = copyEnvironment(environ);
+	
+	FCGI_Finish();
+	
+	environ = backupenv;
+	
+	string seqcode =
+		wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
+	wmplogger.setSequenceCode(const_cast<char*>(seqcode.c_str()));
+	
+	wmplogger.incrementSequenceCode();
+
+	string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
+		+ "PROVAFILE";
+		
+	edglog(debug)<<"FLAG FILE: "<<flagfile<<endl;
+	if (wmputilities::fileExists(flagfile)) {
+		for (int i = 0; i < 8; i++) {
+			wmplogger.incrementSequenceCode();
+		}
+	}
+		
+	edglog(debug)<<"Registering LOG_ACCEPT"<<std::endl;
+	wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
+	"Request successfully registered",
+	true, true);
+	 
+	//WMPEventLogger wmplogger(wmputilities::getEndpoint());
+	WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
+	edglog(debug)<<"LB Port: "
+		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
+	/*wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());*/
+	
+	// Getting delegated proxy inside job directory
+	string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
+	edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
+	
+	// Setting user proxy
+	/*if (wmplogger.setUserProxy(proxy)) {
+		edglog(critical)<<"Unable to set User Proxy for LB context"<<endl;
+		throw AuthenticationException(__FILE__, __LINE__,
+			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
+			"Unable to set User Proxy for LB context");
+	}*/
+	
+	string jdltostart = jdl;
+	
+	int type = getType(jdl);
+	if (type == TYPE_JOB) {
+		JobAd * jad = new JobAd(jdl);
+		jad->setLocalAccess(false);
+		
+		// Getting Input Sandbox Destination URI
+		string defaultprotocol = conf.getDefaultProtocol();
+		int defaultport = conf.getDefaultPort();
+		string dest_uri = wmputilities::getDestURI(jid->toString(),
+			defaultprotocol, defaultport);
+		edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
+		
+		// Adding OutputSandboxDestURI attribute
+		if (jad->hasAttribute(JDL::OUTPUTSB)) {
+			edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
+			vector<string> osbdesturi;
+			if (jad->hasAttribute(JDL::OSB_DEST_URI)) {
+				osbdesturi = wmputilities::computeOutputSBDestURI(
+					jad->getStringValue(JDL::OSB_DEST_URI),
+					dest_uri);
+				jad->delAttribute(JDL::OSB_DEST_URI);
+			} else if (jad->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+				osbdesturi = wmputilities::computeOutputSBDestURIBase(
+					jad->getStringValue(JDL::OUTPUTSB),
+					jad->getString(JDL::OSB_BASE_DEST_URI));
+			} else {
+				osbdesturi = wmputilities::computeOutputSBDestURIBase(
+					jad->getStringValue(JDL::OUTPUTSB), dest_uri + "/output");
+			}
+			
+			for (unsigned int i = 0; i < osbdesturi.size(); i++) {
+				edglog(debug)<<"OutputSBDestURI: "<<osbdesturi[i]<<endl;
+				jad->addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
+			}
+		}
+	
+		// Adding attribute for perusal functionalities
+		string peekdir = wmputilities::getPeekDirectoryPath(*jid);
+		if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
+			if (jad->getBool(JDL::PU_FILE_ENABLE)) {
+				edglog(debug)<<"Enabling perusal functionalities for job: "
+					<<jid->toString()<<endl;
+				edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+					<<endl;
+				jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
+					 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+				if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+					edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+						<<endl;
+					jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+				}
+				
+				int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+				if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
+					time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
+				}
+				time = max(time, conf.getMinPerusalTimeInterval());
+				edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
+				jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
+			}
+		}
+		
+		// Looking for Zipped ISB
+		if (jad->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+			vector<string> files = jad->getStringValue(JDLPrivate::ZIPPED_ISB);
+			string targetdir = getenv(DOCUMENT_ROOT);
+			string jobpath = wmputilities::getInputSBDirectoryPath(*jid) + FILE_SEPARATOR;
+			for (unsigned int i = 0; i < files.size(); i++) {
+				edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
+				wmputilities::uncompressFile(jobpath + files[i], targetdir);
+			}
+		}
+		
+		if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
+			edglog(debug)<<"Logging listener"<<endl;
+			if (wmplogger.logListener(jad->getString(JDL::SHHOST).c_str(), 
+				jad->getInt(JDL::SHPORT))) {
+				edglog(severe)<<"LB logging listener failed"<<endl;
+          		throw JobOperationException( __FILE__, __LINE__,
+          			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+           			"LB logging listener failed");
+			}	
+		} else if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)) {
+			string jobidstring = jid->toString();
+			edglog(debug)<<"Logging checkpointable for job: "<<jobidstring<<endl;
+			logCheckpointable(&wmplogger, jad, jobidstring);
+		}
+		
+		delete jad;
+	} else {
+		WMPExpDagAd * dag = new WMPExpDagAd(jdl);
+		dag->setLocalAccess(false);
+		
+	    JobIdStruct jobidstruct = dag->getJobIdStruct();
+	    JobId parentjobid = jobidstruct.jobid;
+	    vector<JobIdStruct*> children = jobidstruct.children;
+	    
+	    char * seqcode = wmplogger.getSequence();
+	    
+	    string defaultprotocol = conf.getDefaultProtocol();
+		int defaultport = conf.getDefaultPort();
+	    
+	    // Setting internal attributes for sub jobs
+		string jobidstring;
+		string dest_uri;
+		string peekdir;
+	    for (unsigned int i = 0; i < children.size(); i++) {
+	    	JobId subjobid = children[i]->jobid;
+	    	jobidstring = subjobid.toString();
+			
+			dest_uri = getDestURI(jobidstring, defaultprotocol, defaultport);
+			edglog(debug)<<"Setting internal attributes for sub job: "
+				<<jobidstring<<endl;
+			edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
+			
+			NodeAd nodead = dag->getNode(subjobid);
+	    	
+	    	// Adding WMPISB_BASE_URI, INPUT_SANDBOX_PATH, OUTPUT_SANDBOX_PATH
+			// & USERPROXY
+	    	edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
+			nodead.setAttribute(JDL::WMPISB_BASE_URI, dest_uri);
+	        edglog(debug)<<"Setting attribute JDLPrivate::INPUT_SANDBOX_PATH"<<endl;
+			nodead.setAttribute(JDLPrivate::INPUT_SANDBOX_PATH,
+				getInputSBDirectoryPath(jobidstring));
+	        edglog(debug)<<"Setting attribute JDLPrivate::OUTPUT_SANDBOX_PATH"<<endl; 
+			nodead.setAttribute(JDLPrivate::OUTPUT_SANDBOX_PATH,
+				getOutputSBDirectoryPath(jobidstring));
+	        edglog(debug)<<"Setting attribute JDLPrivate::USERPROXY"<<endl;
+	        nodead.setAttribute(JDLPrivate::USERPROXY,
+	            getJobDelegatedProxyPath(jobidstring));
+	
+			// Adding OutputSandboxDestURI attribute
+	        if (nodead.hasAttribute(JDL::OUTPUTSB)) {
+				vector<string> osbdesturi;
+				if (nodead.hasAttribute(JDL::OSB_DEST_URI)) {
+					osbdesturi = wmputilities::computeOutputSBDestURI(
+						nodead.getStringValue(JDL::OSB_DEST_URI),
+						dest_uri);
+					nodead.delAttribute(JDL::OSB_DEST_URI);
+				} else if (dag->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+	            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
+						nodead.getStringValue(JDL::OUTPUTSB),
+						nodead.getStringValue(JDL::OSB_BASE_DEST_URI)[0]);
+				} else {
+	            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
+						nodead.getStringValue(JDL::OUTPUTSB),
+						dest_uri + "/output");
+				}
+				if (osbdesturi.size() != 0) {
+	                edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
+	                for (unsigned int i = 0; i < osbdesturi.size(); i++) {
+						nodead.addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
+	                }
+				}
+			}
+			
+			// Adding attributes for perusal functionalities
+	    	peekdir = wmputilities::getPeekDirectoryPath(subjobid);
+			if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
+				if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
+					edglog(debug)<<"Enabling perusal functionalities for job: "
+						<<jobidstring<<endl;
+					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
+						<<endl;
+					nodead.setAttribute(JDLPrivate::PU_LIST_FILE_URI,
+						peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+					if (!nodead.hasAttribute(JDL::PU_FILES_DEST_URI)) {
+						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
+							<<endl;
+						nodead.setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+					}
+					
+					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
+					if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
+						time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
+					}
+					time = max(time, conf.getMinPerusalTimeInterval());
+					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
+						<<endl;
+					nodead.setAttribute(JDL::PU_TIME_INTERVAL, time);
+				}
+			}
+			
+			dag->replaceNode(subjobid, nodead);
+			
+			if (nodead.hasAttribute(JDL::JOBTYPE)) {
+	    		string type = nodead.getStringValue(JDL::JOBTYPE)[0];
+	    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
+	    			edglog(debug)<<"Logging checkpointable for subjob: "
+	    				<<jobidstring<<endl;
+	    			wmplogger.setLoggingJob(jobidstring, seqcode);
+	    			logCheckpointable(&wmplogger, &nodead, jobidstring);
+	    		}
+	    	}
+		}
+		
+		//TBD Change getSubmissionStrings() with a better method when coded??
+		//Done here, Not done during register any more.
+	    dag->getSubmissionStrings();
+	    
+	    wmplogger.setLoggingJob(parentjobid.toString(), seqcode);
+	    
+	    //Registering subjobs
+	    vector<string> jobids = wmplogger.generateSubjobsIds(dag->size()); //Filling wmplogger subjobs
+	    wmplogger.registerSubJobs(dag, wmplogger.subjobs);
+	    
+	    flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
+		+ ".unzipok";
+	    if (!wmputilities::fileExists(flagfile)) {
+	    // Looking for Zipped ISB
+		if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
+			//Setting file system for subjobs
+			setSubjobFileSystem(auth, parentjobid.toString(), jobids);
+			
+			//Uncompressing zip file
+			vector<string> files = dag->getAttribute(ExpDagAd::ZIPPED_ISB);
+			string targetdir = getenv(DOCUMENT_ROOT);
+			string jobpath = wmputilities::getInputSBDirectoryPath(*jid) + FILE_SEPARATOR;
+			for (unsigned int i = 0; i < files.size(); i++) {
+				edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
+				wmputilities::uncompressFile(jobpath + files[i], targetdir);
+			}
+		}
+	    }
+		
+		jdltostart = dag->toString();
+		
+		delete dag;
+	}
+	
+	//string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
+		//+ "PROVAFILE";
+		
+	//edglog(debug)<<"FLAG FILE: "<<flagfile<<endl;
+	if (!wmputilities::fileExists(flagfile)) {
+		wmputilities::setFlagFile(flagfile, true);
+		
+		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_REFUSE,
+			"Request successfully registered",
+			true, true);
+			
+		throw AuthenticationException(__FILE__, __LINE__,
+			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
+			"Unable to set User Proxy for LB context");
+	}
+	
+	wmpmanager::WMPManager manager(&wmplogger);
+	// Vector of parameters to runCommand()
+	vector<string> params;
+	params.push_back(jdltostart);
+	params.push_back(proxy);
+	params.push_back(wmputilities::getJobDirectoryPath(*jid));
+	params.push_back(string(getenv(DOCUMENT_ROOT)));
+	
+	wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
+	
+	if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
+		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
+			wmp_fault.message.c_str(), true, true);
+		edglog(severe)<<"Error in runCommand: "<<wmp_fault.message<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"submit()", wmp_fault.code, wmp_fault.message);
+	}
+	
 	/*for (backupenv; *backupenv; backupenv++) {
 	    free(*backupenv);
     }
@@ -1848,7 +2201,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 		soap_send_fault(soap);
 	}
 	
-	submit(reginfo.second, jid, auth);
+	submit(reginfo.second, jid, auth, wmplogger);
 	if (auth) {
 		delete auth;	
 	}
