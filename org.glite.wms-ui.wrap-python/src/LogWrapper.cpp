@@ -6,19 +6,16 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-/* Open SSL include files */
-// #include <globus_common.h>
-// #include "glite/wmsutils/tls/ssl_helpers/ssl_pthreads.h"
-// #include "glite/wmsutils/tls/ssl_helpers/ssl_inits.h"
 
-using namespace std ;
 #define USERINTERFACE_SEED "Userinterface"
 // IMPORTANT: These values must match the glite-job-submit values
 #define UI_DAGTYPE 1
 #define UI_JOBTYPE 0
-LOG::LOG(){
-	subjobs = NULL;
-};
+
+
+using namespace std ;
+
+LOG::LOG(){};
 LOG::~LOG() {  } ;
 
 // Compare two edg_wll_Event using the timestamp member
@@ -228,7 +225,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 	vector <string> jobids ;
 	error_code= false ;
 	//  array of subjob ID's
-	subjobs = NULL ;
+	edg_wlc_JobId* subjobs = NULL ;
 	// Register The Dag
 	edg_wlc_JobId id = NULL;
 	try{
@@ -264,7 +261,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 			sprintf (*jdls_char,"%s",iter->c_str());
 			jdls_char++;
 		}
-		if ( edg_wll_RegisterSubjobs (ctx, id, zero_char,ns.c_str(),subjobs )){
+		if ( edg_wll_RegisterSubjobs (ctx, id, zero_char,ns.c_str(),subjobs)){
 			char error_message [1024];
 			char *msg, *dsc ;
 			edg_wll_Error( ctx , &msg , &dsc ) ;
@@ -276,6 +273,7 @@ std::vector<std::string>  LOG::regist_dag ( const std::vector<std::string>& jdls
 		// cout << "register Sub Jobs done properly" << endl ;
 		std::free(zero_char);
 	}
+	log_jobid(jobid);
 	return jobids ;
 }
 
@@ -284,13 +282,13 @@ std::vector<std::string>  LOG::generate_sub_jobs( const std::string& jobid, int 
 	vector <string> jobids ;
 	error_code= false ;
 	edg_wlc_JobId id = NULL;
+	edg_wlc_JobId* subjobs = NULL;
 	try{
 		id = glite::wmsutils::jobid::JobId (jobid ).getId();
 	}catch (exception &exc) {
 		log_error("Unable parse JobId: "+jobid);return jobids;
 	}
-	subjobs = NULL;
-	edg_wll_GenerateSubjobIds(ctx, id,res_num, USERINTERFACE_SEED, &subjobs);
+	edg_wll_GenerateSubjobIds(ctx, id, res_num, USERINTERFACE_SEED, &subjobs);
 	for (int i = 0; i < res_num; i++) {
 		jobids.push_back(string(edg_wlc_JobIdUnparse(subjobs[i])));
 	}
