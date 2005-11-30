@@ -69,7 +69,10 @@ Job::Job(){
 	logInfo  = NULL;
         cfgCxt = NULL;
         endPoint = NULL ;
-	wmpVersion = 0;
+	// WMProxy version
+	wmpVersion.major = 0;
+	wmpVersion.minor = 0;
+	wmpVersion.subminor = 0;
 }
 /*
 *	Default destructor
@@ -211,9 +214,6 @@ const std::string Job::getWmpVersion (std::string &endpoint) {
 	return version ;
 }
 
-const int Job::getWmpVersion ( ) {
-	return wmpVersion ;
-}
 /**
 * Endpoint version
 */
@@ -271,6 +271,8 @@ void Job::setEndPoint( ) {
 	vector<string> urls;
 	string *endpoint = NULL;
 	string version = "";
+	unsigned int p = 0;
+	ostringstream info;
 	// Reads the credential delegation options
 	setDelegationId( );
 	// endPoint URL and ConfigurationContext
@@ -280,7 +282,7 @@ void Job::setEndPoint( ) {
 		// Gets the server version
 		version = getWmpVersion (*endpoint);
 		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
-		wmpVersion = atoi (version.substr(0,1).c_str() );
+
 		// Performs CredentialDelegation if auto-delegation has been requested
 		if (autodgOpt){ delegateUserProxy(*endpoint);}
         } else {
@@ -301,8 +303,29 @@ void Job::setEndPoint( ) {
 			checkWmpList(urls, *endpoint, version);
 		}
          }
+	 // Major version number
+	p = version.find(".");
+	if (p != string::npos) {
+		wmpVersion.major = atoi (version.substr(0,p).c_str() );
+		 // Minor version number
+		if (p < version.size( )) {
+			version =version.substr((p+1),(version.size()-p));
+			p = version.find(".");
+			if (p != string::npos){
+				wmpVersion.minor = atoi (version.substr(0,p).c_str() );
+			} else {
+				wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
+			}
+		} else {
+			wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
+		}
+	} else {
+		wmpVersion.major = Options::WMPROXY_OLD_VERSION;
+		wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
+	}
+	info << "WMProxy: major version[" << wmpVersion.major << "] - minor version[" << wmpVersion.minor << "]";
+	logInfo->print(WMS_DEBUG, info.str(), "",false );
 	 // Sets the attribute of this class related to the WMP server
-	 wmpVersion = atoi (version.substr(0,1).c_str() );
 	 endPoint = new string(*endpoint);
 	 cfgCxt = new ConfigContext(getProxyPath(),*endpoint, getCertsPath());
 }
@@ -391,7 +414,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 		ConfigContext *cfg = new ConfigContext (getProxyPath(), endpoint, getCertsPath());
 		// Proxy Request
 		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  endpoint);
-		if  (getWmpVersion() > Options::WMPROXY_OLD_VERSION){
+		if  (checkWmpVersion()){
 			proxy = grstGetProxyReq(*dgOpt, cfg) ;
 			logInfo->print(WMS_DEBUG, "Delegating Credential to the service",  endpoint);
 			grstPutProxy(*dgOpt, proxy, cfg);
@@ -409,7 +432,31 @@ void Job::delegateUserProxy(const std::string &endpoint) {
        }
        logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  *dgOpt);
 }
-
+/*
+* Checks whether the major number of the WMProxy version is greater than
+* a number related to an old version that doesn't contain some particular features
+* (e.g zippedISB)
+*/
+const bool Job::checkWmpMajorVersion ( ) {
+	if(wmpVersion.major > Options::WMPROXY_OLD_VERSION) {
+		return true;
+	} else {
+		return false;
+	}
+}
+/*
+* Checks whether the major and the minor numbers of the WMProxy version are greater than
+* a number related to an old version that doesn't contain some particular features
+* (e.g zippedISB)
+*/
+const bool Job::checkWmpVersion ( ) {
+	if(wmpVersion.major > Options::WMPROXY_OLD_VERSION &&
+		wmpVersion.minor > Options::WMPROXY_OLD_MINOR_VERSION ) {
+		return true;
+	} else {
+		return false;
+	}
+}
 /**
 * Contacts the endpoint to retrieve the version
 */

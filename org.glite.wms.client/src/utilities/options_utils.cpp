@@ -41,10 +41,21 @@ const std::string WMP_CLT_RELEASE_VERSION = "0";
 const std::string WMP_CLT_POINT_VERSION = ".";
 
 /*
-* Major Version for WMProxy servers that
-* don't contain new features like SandboxBulkDestURI and ns2-Delegation
+* Major and minor version numbers of the WMProxy server related to releases that
+* don't contain new features like SandboxBulkDestURI, zippedISB and ns2-Delegation
+*
+*	- zippedISB (1.x.x && 2.0.0 NO, 2.1.0 YES)
+*		version > WMPROXY_OLD_VERSION  && > WMPROXY_OLD_MINOR_VERSION
+*
+*	- BulkDestURI (1.x.x NO , 2.x.x YES)
+*		version > WMPROXY_OLD_VERSION
+
+*	-  ns2-Delegation [GridSite] (1.x.x && 2.0.0 NO, 2.1.0 YES)
+*		version > WMPROXY_OLD_VERSION  && > WMPROXY_OLD_MINOR_VERSION
+*
 */
 const int Options::WMPROXY_OLD_VERSION = 1;
+const int Options::WMPROXY_OLD_MINOR_VERSION = 0;
 /**
  * Help Info messages
 */

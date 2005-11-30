@@ -24,6 +24,17 @@ namespace wms{
 namespace client {
 namespace services {
 
+/*
+* WMProxy version numbers
+* (major.minor.subminor)
+*/
+struct wmpVersionType {
+	int major ;
+	int minor ;
+	int subminor ;
+};
+
+
 class Job{
 	public :
 		/**
@@ -105,13 +116,21 @@ class Job{
 		* Retrieves the string with WMProxy version information
 		* @return the string with the version information having the format x.y.z
 		*/
-		virtual const std::string getWmpVersion (std::string &endpoint) ;
+		virtual const std::string getWmpVersion (std::string &endpoint) ;;
 		/*
-		* Retrieves the major number oi the WMProxy version.
-		* @return the major version number
+		* Checks whether the major number of the WMProxy version is greater than
+		* a number related to a fixed old version that doesn't contain some particular features
+		* (e.g zippedISB)
+		* @return TRUE if the version is newer than the fixed old one
 		*/
-		virtual const int Job::getWmpVersion ( );
-
+		virtual const bool checkWmpMajorVersion ( );
+		/*
+		* Checks whether the major and the minor numbers of the WMProxy version are greater than
+		* the correspondent numbers related to a fixed old version that doesn't contain some particular features
+		* (e.g zippedISB)
+		* @return TRUE if the version is newer than the fixed old one, FALSE otherwise
+		*/
+		virtual const bool checkWmpVersion ( );
 	private:
 		/**
 		* Retrieves the version of one or more WMProxy services.
@@ -176,9 +195,9 @@ class Job{
 
 		private :
 		/*
-		* Major Version number of the server
+		* Version numbers of the server
 		*/
-		int wmpVersion;
+		wmpVersionType wmpVersion;
 		/**
 		* Path to the local user proxy
 		*/
