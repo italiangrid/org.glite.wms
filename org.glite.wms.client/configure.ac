@@ -15,7 +15,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS client], [1.5.1])
+AC_INIT([GLite WMS client], [1.5.4])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/commands/wmp-job-submit.cpp])
