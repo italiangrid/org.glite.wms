@@ -54,6 +54,8 @@ class DagWrapper {
         void setJobIds ( const std::vector <std::string>&  jobids ) ;
         String getStringValue ( int attr_name ) ;
         int get_error (String& err) ;
+	int size();
+
  };
 
 
@@ -64,8 +66,8 @@ class AdWrapper {
       // Constructor
       AdWrapper(  int level=0  );
       ~AdWrapper();
-      bool toJobAd () ;      
-      bool toDagAd () ;       
+      bool toJobAd () ;
+      bool toDagAd () ;
       bool toDagAd (const vector<String>& jobids) ;
       void printChar( const String &ch ) ;
       bool fromString(const String &jdl) ;

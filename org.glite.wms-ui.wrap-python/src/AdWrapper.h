@@ -215,10 +215,8 @@ class DagWrapper {
 	* @return The string representation for the specified attribute value
 	*/
 	std::string getStringValue ( int attr_name ) ;
-	/**Set an attribute value (of string type)
-	* @param err the string description passed by reference. Python will consider it as a returning parameter
-	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
-	*/
+	/** Retrieve number of subjobs */
+	int size();
 	int get_error (std::string& err) ;
    private:
 	glite::wms::jdl::ExpDagAd* dagad ;

@@ -368,6 +368,11 @@ void DagWrapper::setJobIds ( const std::vector <std::string>&  jobids ){
 		dagad->setJobIds (jobids) ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
+int  DagWrapper::size(){
+	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+		return dagad->size();
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+}
 /**************
 * Error Managing
 **************/
