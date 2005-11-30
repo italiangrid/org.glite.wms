@@ -1,4 +1,12 @@
-====== WMProxy version 2.0.0 (gLite 1.5) ====== 
+====== WMProxy version 2.1.0 (gLite 1.5) ======
+* Tue Nov 29 2005 Fabrizio Pacini <egee@datamat.it>
+- Fix bug #9063: check if the user group of local mapped user
+  (after a client request) is equal to the user group of user 
+  that is running the server (if so an exception is raised)
+- Allow to change sandbox directory name in configuration file
+  (last directory name in attribute SandboxStagingPath)
+- Import new delegation port type WSDL from 
+  org.glite.security.delegation-interface
 - Porting to gsoap 2.7.6b
 - Apply patch for building on IA64 (authorizer/wmpauthorizer.cpp)
 - Add proxycache purger program (to be added to crontab 
@@ -10,14 +18,21 @@
   of sandboxes directories on the WMS node for compound 
   jobs: partially removes dependency of submission time  
   on number of nodes. Improves job submission peformances.  
-- Add new operation getSandboxBulkDestURI: returns
-  the destination URI for a DAG/Collection and all its 
-  nodes in one call. Improves job submission peformances.
 - Clean up file descriptors management.
-- Fix bug #11250 : Add compatibility with external components 
-  using OpenSSL version older than 0.9.7 (e.g. gridFTP server 
+- Add new operation getSandboxBulkDestURI: returns
+  the destination URI for a DAG/Collection and all its
+  nodes in one call. Improves job submission peformances.
+
+====== WMProxy version 2.0.0 (gLite 1.4.2 >) ====== 
+* Mon Nov 28 2005 Fabrizio Pacini <egee@datamat.it>
+- Fix bug #13342 : Authorization does not work with fqans not 
+  containing the 'Role' tag
+- Fix bug #11250 : Add compatibility with external components
+  using OpenSSL version older than 0.9.7 (e.g. gridFTP server
   uses OpenSSL 0.9.6). See e.g.:
   http://bugzilla.globus.org/bugzilla/show_bug.cgi?id=575
   for reference.
-* Fri Sept 30 2005 Fabrizio Pacini <egee@datamat.it>
+
 ====== WMProxy version 1.0.0 (gLite 1.4) ====== 
+* Fri Sept 30 2005 Fabrizio Pacini <egee@datamat.it>
+
