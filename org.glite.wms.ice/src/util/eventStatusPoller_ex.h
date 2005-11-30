@@ -1,6 +1,6 @@
 
-#ifndef __ESP_EX_H__
-#define __ESP_EX_H__
+#ifndef __GLITE_WMS_ICE_UTIL_ESP_EX_H__
+#define __GLITE_WMS_ICE_UTIL_ESP_EX_H__
 
 #include <exception>
 #include <string>

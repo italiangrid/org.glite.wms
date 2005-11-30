@@ -1,6 +1,6 @@
 
-#ifndef __CLASSAD_EX_H__
-#define __CLASSAD_EX_H__
+#ifndef __GLITE_WMS_ICE_UTIL_CLASSAD_EX_H__
+#define __GLITE_WMS_ICE_UTIL_CLASSAD_EX_H__
 
 #include <exception>
 #include <string>

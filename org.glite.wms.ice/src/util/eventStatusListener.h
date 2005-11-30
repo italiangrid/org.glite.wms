@@ -1,15 +1,19 @@
-#ifndef __eventlistener_h__
-#define __eventlistener_h__
+#ifndef __GLITE_WMS_ICE_UTIL_EVENTSTATUSLISTENER_H__
+#define __GLITE_WMS_ICE_UTIL_EVENTSTATUSLISTENER_H__
 
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
-#ifndef soapStub_H
-#error gSOAP version is changed and the critical label 'soapStub_H' is not define anymore. Stop.
-#endif
+/* #ifndef soapStub_H */
+/* #error gSOAP version is changed and the critical label 'soapStub_H' is not define anymore. Stop. */
+/* #endif */
 
 #undef soapStub_H
 
-#include "glite/ce/monitor-client-api-c/GeneralException.h"
+#include "glite/ce/monitor-client-api-c/CESubscription.h"
+
+#undef soapStub_H
+
+//#include "glite/ce/monitor-client-api-c/GeneralException.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
 namespace glite {
@@ -21,6 +25,8 @@ namespace glite {
 	  std::string grid_JOBID, cream_JOBID;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  bool endaccept;
+	  CESubscription subscriber;
+	  int tcpport;
 
 	  void init(void);
 
@@ -33,7 +39,8 @@ namespace glite {
 	    grid_JOBID(""), 
 	    cream_JOBID(""),
 	    status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
-	    endaccept(false) { }
+	    endaccept(false),
+	    tcpport(i) { }
 	  
 	  virtual ~eventStatusListener() {}
 

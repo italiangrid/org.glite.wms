@@ -1,11 +1,15 @@
 
 #include "eventStatusListener.h"
-#include "glite/ce/cream-client-api-c/logger.h"
+//#include "glite/ce/cream-client-api-c/logger.h"
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "jobCache.h"
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <errno.h>
+#include <sstream>
+
+extern int errno;
 
 #include <boost/algorithm/string.hpp>
 
@@ -13,9 +17,9 @@ using namespace std;
 
 using namespace glite::ce::cream_client_api::util;
 
-logger& LOG = logger::instance();
+//logger& LOG = logger::instance();
 
-logger::PRINT_DEVICE_CONTROLLER lflags = logger::PRINT_DEVICE_CONTROLLER((int)logger::date | (int)logger::console);
+// logger::PRINT_DEVICE_CONTROLLER lflags = logger::PRINT_DEVICE_CONTROLLER((int)logger::date | (int)logger::console);
 
 //______________________________________________________________________________
 void glite::wms::ice::util::eventStatusListener::operator()() {
@@ -25,12 +29,10 @@ void glite::wms::ice::util::eventStatusListener::operator()() {
   init();
 
   while(!endaccept) {
-    //this->acceptJobStatus();
-    //this->updateJobCache();
-    cout << "eventStatusListener::run - called run" << endl;
+    //cout << "eventStatusListener::run - called run" << endl;
     sleep(1);
   }
-  cout << "eventStatusListener::run - ending..." << endl;
+  cout << "eventStatusListener::()() - ending..." << endl;
 }
 
 //______________________________________________________________________________
@@ -42,52 +44,42 @@ void glite::wms::ice::util::eventStatusListener::acceptJobStatus(void)
    */
   if(!this->accept() && !endaccept) {
     if(endaccept) {
-      LOG << logger::INFO << lflags << "eventStatusListener is ending"
-	  << logger::endlog;
+      cout << "eventStatusListener is ending"
+	   << endl;
       return;
     } else
-      LOG << logger::ERROR << lflags
-	  << "CEConsumer::Accept returned false."
-	  << logger::endlog;
+      cout << "CEConsumer::Accept returned false." << endl;
   }
   
   
-  LOG << logger::ERROR << lflags
-      << "Connection accepted from ["
-      << this->getClientIP() << "]" << logger::endlog; 
+  cout << "Connection accepted from [" << this->getClientIP() 
+       << "]" << endl; 
   
   /**
    * acquires the event from the client
    * and deserializes the data structures
    */
   if(!this->serve()) {
-    LOG << logger::ERROR << lflags << "ErrorCode=["
-	<< this->getErrorCode() << "]" << logger::endlog;
+    cout << "ErrorCode=[" << this->getErrorCode() 
+	 << "]" << endl;
 
-    LOG << logger::ERROR << lflags << "ErrorMessage=["
-	<< this->getErrorMessage() << "]" << logger::endlog;
+    cout << "ErrorMessage=["
+	 << this->getErrorMessage() << "]" << endl;
 
   }
   const char *c;
   while((c = this->getNextEventMessage())!=NULL)
-    LOG << logger::NOTHING << lflags << "message=["
-	<< c << "]" << logger::endlog;
-  
+    cout << "message=["
+	 << c << "]" << endl;
   this->reset();
 }
 
 //______________________________________________________________________________
 void glite::wms::ice::util::eventStatusListener::updateJobCache(void) 
 {
-//   if(!jobs)
-//     {
-//       LOG << logger::INFO << lflags << "Cache not initialized. Skipping"
-// 	  << logger::endlog;
-//       return;
-//     }
-  LOG << logger::INFO << lflags << "Going to update jobcache with "
-      << "[grid_jobid="<<grid_JOBID<<", cream_jobid="
-      << cream_JOBID << ", status="<<status<<"]"<<logger::endlog;
+  cout << "Going to update jobcache with "
+       << "[grid_jobid=" << grid_JOBID << ", cream_jobid=" 
+       << cream_JOBID << ", status=" << status << "]" << endl;
 
   try {
     //    jobCache::getInstance()->put(grid_JOBID, cream_JOBID, status);
@@ -103,22 +95,64 @@ void glite::wms::ice::util::eventStatusListener::init(void)
   jobCache::iterator it;
 
   map< string, vector<string> > tmpMap;
+  string url;
+  bool already_subscribed = true;
 
   for(it  = jobCache::getInstance()->begin();
       it != jobCache::getInstance()->end();
       it++)
     {
-      cout << "listener: checking SubscriptionID of ["
-	   << it->getSubscriptionID() << "]"<<endl;
       string subid = it->getSubscriptionID();
-      //subscriber->pause(subid);
-      string url = it->getCreamURL();
+      url = it->getCreamURL();
       boost::replace_first(url, "ce-cream", "ce-monitor");
       boost::replace_first(url, "CREAM", "CEMonitor");
-      cout << "URL="<<url<<endl;
-      tmpMap[subid].push_back(url);
-      tmpMap[subid].push_back(it->getUserProxyCertificate());
+
+      cout << "Checking subscription status @"
+	   << url << endl;
+
+      already_subscribed = true;
       
+      try {
+	subscriber.authenticate( it->getUserProxyCertificate().c_str(), "/" );
+      } catch(AuthenticationInitException& ex) {
+	cerr << "Error authenticating: " << ex.what() << endl;
+	exit(1);
+      }
+      subscriber.setServiceURL( url );
+      try {
+	subscriber.pause( it->getSubscriptionID() );
+      } catch(SubscriptionNotFoundException& ex) {
+	already_subscribed = false;
+      }
+
+      if(already_subscribed) {
+	try{subscriber.resume( it->getSubscriptionID() );}
+	catch(exception& ex) {
+	  cerr << "Error resuming paused subscription: "
+	       << ex.what() << endl;
+	  exit(1);
+	}
+      } else {
+	cout << "MUST subscribe @"
+	     << url << endl;
+	Topic T("ICE");
+	Policy P(10*1000);
+	char hostname[1024];
+	memset((void*)hostname, 0, 1024);
+	if(-1==gethostname(hostname, 1024)) {
+	  cerr << "Unable to get actual name of localhost: " << strerror(errno) << endl;
+	  exit(1);
+	}
+	ostringstream consumer_url("");
+	consumer_url << "http://"<< hostname <<":"<<tcpport;
+	cout << "Subscribing consumer @"<<consumer_url.str()<<endl;
+	subscriber.setSubscribeParam(consumer_url.str(), T, P, 86400*30); // subscribes for 1 month
+	try{subscriber.subscribe();}
+	catch(exception& ex) {
+	  cerr << "Error subscribing: "<<ex.what()<<endl;
+	  exit(1);
+	}
+	it->setSubscriptionID( subscriber.getSubscriptionID() );
+      }
     }
-  exit(1);
 }

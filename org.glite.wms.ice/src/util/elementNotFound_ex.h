@@ -1,6 +1,6 @@
 
-#ifndef __ENF_EX_H__
-#define __ENF_EX_H__
+#ifndef __GLITE_WMS_ICE_UTIL_ENF_EX_H__
+#define __GLITE_WMS_ICE_UTIL_ENF_EX_H__
 
 #include <exception>
 #include <string>

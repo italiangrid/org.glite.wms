@@ -1,6 +1,6 @@
 
-#ifndef _CREAMJOB_H__
-#define _CREAMJOB_H__
+#ifndef _GLITE_WMS_ICE_UTIL_CREAMJOB_H__
+#define _GLITE_WMS_ICE_UTIL_CREAMJOB_H__
 
 #include "ClassadSyntax_ex.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"

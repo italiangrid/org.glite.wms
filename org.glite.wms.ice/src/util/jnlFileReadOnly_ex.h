@@ -1,6 +1,6 @@
 
-#ifndef __JNLFILERO_EX_H__
-#define __JNLFILERO_EX_H__
+#ifndef __GLITE_WMS_ICE_UTIL_JNLFILERO_EX_H__
+#define __GLITE_WMS_ICE_UTIL_JNLFILERO_EX_H__
 
 #include <exception>
 #include <string>
