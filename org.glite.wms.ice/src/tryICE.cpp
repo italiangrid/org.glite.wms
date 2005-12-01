@@ -42,6 +42,8 @@ int main(int argc, char*argv[]) {
       return -1;
   } 
 
+  glite::wms::ice::util::jobCache::getInstance();
+
   glite::wms::ice::ice* iceManager;
   try {
     iceManager = new glite::wms::ice::ice(argv[1], argv[2], argv[3]);

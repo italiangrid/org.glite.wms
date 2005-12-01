@@ -138,16 +138,16 @@ jobCache::jobCacheTable::const_iterator jobCache::jobCacheTable::end( void ) con
 jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
   boost::recursive_mutex::scoped_lock M(jobCacheMutex);
   if(!_instance)
-    _instance = new jobCache(snapFile, jnlFile); // can throw jnlFile_ex or 
-                                                 // ClassadSyntax_ex
+    _instance = new jobCache( ); // can throw jnlFile_ex or 
+                                 // ClassadSyntax_ex
   return _instance;
 }
 
 //______________________________________________________________________________
-jobCache::jobCache(const string& _snapFile,
-		   const string& journalFile) 
+jobCache::jobCache( void )
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
-    : _jobs( ),
+    : objMutex( ),
+      _jobs( ),
       operation_counter(0)
 { 
     jnlMgr = new jnlFileManager(jnlFile);

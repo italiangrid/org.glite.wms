@@ -71,7 +71,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/ice \
 		-I$(GLITE_LOCATION)/include \
 		$(GSOAP_CFLAGS) \
-		$(GLOBUS_NOTHR_CFLAGS) \
+		$(GLOBUS_THR_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
