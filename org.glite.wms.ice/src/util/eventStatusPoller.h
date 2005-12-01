@@ -24,8 +24,9 @@ namespace glite {
 
       namespace util {
 
-	//! Job Status poller
-	/*! This class is conceived to run as a boost::thread (this is the
+	//! A job status poller
+	/*! \class eventStatusPoller 
+	  This class is conceived to run as a boost::thread (this is the
 	  motivation of the implementation of the operator()() ).
 	  Its main purpose is to get all status of all jobs ICE has submitted (and that are not finished yet) and whose status notification has not been received since long by the eventStatusListener.
 	  When a job is finished the poller purges that job on the remote cream host.

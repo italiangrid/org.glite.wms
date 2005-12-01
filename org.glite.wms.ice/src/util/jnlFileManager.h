@@ -18,9 +18,9 @@ namespace glite {
     namespace ice {
       namespace util {
 
-	//!  The journal manager for job cache persistency
-	/*!
-	  jnlFileManager is used only by the jobCache singleton
+	//! The journal manager for job cache persistency
+	/*! \class jnlFileManager 
+	  An object of this class is used only by the jobCache singleton
 	  and its purpose is simply to manage the persistency of
 	  all jobs in memory. jnlFileManager manages a journal
 	  file. The journal file contains all the
