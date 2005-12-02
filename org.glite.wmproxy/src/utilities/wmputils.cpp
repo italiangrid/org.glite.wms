@@ -956,6 +956,25 @@ setFlagFile(const string &file, bool flag)
 	GLITE_STACK_CATCH();
 }
 
+void
+writeTextFile(const string &file, const string &text)
+{
+	GLITE_STACK_TRY("writeTextFile()");
+	edglog_fn("wmputils::writeTextFile");
+	
+	fstream outfile(file.c_str(), ios::out);
+	if (!outfile.good()) {
+		edglog(severe)<<file<<": !outfile.good()"<<endl;
+		throw FileSystemException(__FILE__, __LINE__,
+			"writeTextFile()", WMS_IS_FAILURE, "Unable to write file: "
+			+ file + "\n(please contact server administrator)");
+	}
+	outfile << text;
+	outfile.close();
+	
+	GLITE_STACK_CATCH();
+}
+
 bool 
 isNull(string field)
 {
@@ -1017,7 +1036,7 @@ const std::string toLower ( const std::string &src) {
  *
  */
 void split (const std::string &field, std::string &label, std::string &value){
-	int size = field.size();
+	unsigned int size = field.size();
 	if (size>0) {
 		unsigned int p = field.find("=") ;
 		if ( p != string::npos & ( p < size) ){

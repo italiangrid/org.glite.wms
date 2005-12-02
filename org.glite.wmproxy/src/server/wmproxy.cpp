@@ -43,6 +43,14 @@
 // Global variables for configuration attributes
 std::string sandboxdir_global;
 bool asyncstart_global;
+std::pair<std::string, int> lblladdress_port_global;
+std::pair<std::string, int> lbsaddress_port_global;
+std::vector<std::pair<std::string, int> > protocols_global;
+std::string defaultprotocol_global;
+int defaultport_global;
+int httpsport_global;
+bool islbproxyavailable_global;
+int minperusaltimeinterval_global;
 
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
@@ -115,11 +123,36 @@ main(int argc, char* argv[])
 		//wmputilities::initsignalhandler();
 		
 		extern std::string sandboxdir_global;
-		extern bool asyncstart_global;
 		sandboxdir_global = "";
-		WMProxyConfiguration conf =
-			singleton_default<WMProxyConfiguration>::instance();
+		
+		extern bool asyncstart_global;
+		extern std::string defaultprotocol_global;
+		extern int defaultport_global;
+		extern int httpsport_global;
+		extern bool islbproxyavailable_global;
+		extern int minperusaltimeinterval_global;
+		
+		WMProxyConfiguration conf
+			= singleton_default<WMProxyConfiguration>::instance();
 		asyncstart_global = conf.getAsyncJobStart();
+		
+		std::pair<std::string, int> lblladdress_port_global
+			= conf.getLBLocalLoggerAddressPort();
+		//lblladdress_global = lblladdress_port.first;
+		//lbllport_global = lblladdress_port.second;
+		
+		std::pair<std::string, int> lbsaddress_port_global
+			= conf.getLBServerAddressPort();
+		//lbsaddress_global = lbsaddress_port.first;
+		//lbsport_global = lbsaddress_port.second;
+		
+		protocols_global = conf.getProtocols();
+		defaultprotocol_global = conf.getDefaultProtocol();
+		defaultport_global = conf.getDefaultPort();
+		httpsport_global = conf.getHTTPSPort();
+		
+		islbproxyavailable_global = conf.isLBProxyAvailable();
+		minperusaltimeinterval_global = conf.getMinPerusalTimeInterval();
 		
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;

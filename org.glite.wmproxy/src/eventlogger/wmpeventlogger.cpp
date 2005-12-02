@@ -190,7 +190,7 @@ WMPEventLogger::unregisterProxyRenewal()
 }
 
 void
-WMPEventLogger::registerJob(JobAd *jad)
+WMPEventLogger::registerJob(JobAd *jad, const string &path)
 {
 	GLITE_STACK_TRY("registerJob()");
 	edglog_fn("WMPEventlogger::registerJob");
@@ -206,15 +206,13 @@ WMPEventLogger::registerJob(JobAd *jad)
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering normal job to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
-			jad->toSubmissionString().c_str(),
-			str_addr, 0, NULL, NULL) ;
+			path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobProxy() exit code: "<<register_result<<endl;
 	} else {
 #endif  //HAVE_LBPROXY
 		edglog(debug)<<"Registering normal job to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
-			jad->toSubmissionString().c_str(),
-			str_addr, 0, NULL, NULL) ;
+			path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobSync() exit code: "<<register_result<<endl;
 #ifdef HAVE_LBPROXY
 	}
@@ -310,7 +308,7 @@ WMPEventLogger::generateSubjobsIds(int res_num)
 
 
 vector<string>
-WMPEventLogger::registerDag(WMPExpDagAd *dag)
+WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 {
 	GLITE_STACK_TRY("registerDag()");
 	edglog_fn("WMPEventlogger::registerDag");
@@ -333,13 +331,13 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag)
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering DAG to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
-			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
+			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, size,
 			"WMPROXY", &subjobs) ;
 	} else {
 #endif  //HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
-			EDG_WLL_REGJOB_DAG, dag->toString().c_str(), str_addr, size,
+			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, size,
 			"WMPROXY", &subjobs);
 #ifdef HAVE_LBPROXY
 	}

@@ -63,6 +63,7 @@ void uncompressFile(const std::string &filename, const std::string &startingpath
 
 void setFlagFile(const std::string &file, bool flag);
 
+void writeTextFile(const std::string &path, const std::string &text);
 
 //
 // Service & service host methods

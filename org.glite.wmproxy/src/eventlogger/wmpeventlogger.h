@@ -77,8 +77,9 @@ class WMPEventLogger  {
 		void unregisterProxyRenewal();
 			
 		// Register methods
-		void registerJob(glite::wms::jdl::JobAd *ad);
-		std::vector<std::string> registerDag(WMPExpDagAd *ad);
+		void registerJob(glite::wms::jdl::JobAd *ad, const std::string &path);
+		std::vector<std::string> registerDag(WMPExpDagAd *ad,
+			const std::string &path);
 		
 		std::vector<std::string> WMPEventLogger::generateSubjobsIds(int res_num);
 
