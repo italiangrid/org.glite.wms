@@ -570,6 +570,11 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				return edg_wll_LogAcceptedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
 					server.c_str(),"","");
 				break;
+			case LOG_REFUSE:
+				edglog(debug) << "Logging Refuse event..." << endl ;
+				return edg_wll_LogRefusedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
+					server.c_str(),"","");
+				break;
 			case LOG_CANCEL:
 				edglog(debug) << "Logging Cancel event..." << endl ;
 				return edg_wll_LogCancelREQProxy(ctx, reason);
@@ -607,6 +612,11 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				edglog(debug) << "Logging Accept event..." << endl ;
 				return edg_wll_LogAccepted(ctx, EDG_WLL_SOURCE_WM_PROXY,
 					server.c_str(), "", "");
+				break;
+			case LOG_REFUSE:
+				edglog(debug) << "Logging Refuse event..." << endl ;
+				return edg_wll_LogRefused(ctx, EDG_WLL_SOURCE_WM_PROXY,
+					server.c_str(),"","");
 				break;
 			case LOG_CANCEL:
 				edglog(debug) << "Logging Cancel event..." << endl ;
@@ -909,26 +919,103 @@ setJobLoggingProxy(glite::lb::Job &lbjob, const string &proxy)
 	GLITE_STACK_CATCH();
 }
 
-bool
-WMPEventLogger::isRegisterEventOnly()
+string
+WMPEventLogger::isStartAllowed()
 {
-	GLITE_STACK_TRY("isRegisterEventOnly()");
-	edglog_fn("WMPEventLogger::isRegisterEventOnly");
+	GLITE_STACK_TRY("isStartAllowed()");
+	edglog_fn("WMPEventlogger::isStartAllowed");
 	
-	glite::lb::Job lbjob(*id);
-	setJobLoggingProxy(lbjob, this->delegatedproxy);
+	edg_wlc_JobId jobid;
+  	// parse the jobID string
+  	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
+    	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
+    	throw JobOperationException(__FILE__, __LINE__,
+			"isStartAllowed()", WMS_OPERATION_NOT_ALLOWED,
+			"Error during edg_wlc_JobIdParse");
+  	}
 	
-	std::vector<glite::lb::Event> events = lbjob.log();
-	for (unsigned int i = 0; i < events.size(); i++) {
-		if ((events[i].type != glite::lb::Event::REGJOB)	
-				&& (events[i].type != glite::lb::Event::USERTAG)) {
-			return false;
+	edg_wll_Event * events = NULL;
+  	edg_wll_QueryRec jc[2];
+  	edg_wll_QueryRec ec[2];
+  	memset(jc, 0, sizeof jc);
+  	memset(ec, 0, sizeof ec);
+  
+  	// job condition: JOBID = jobid
+  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	jc[0].value.j = jobid;
+  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+  	
+  	// event condition: Event SOURCE = NetworkServer
+  	ec[0].attr = EDG_WLL_QUERY_ATTR_SOURCE;
+  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	ec[0].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
+  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+  	
+  	/*ec[0].attr = EDG_WLL_QUERY_ATTR_INSTANCE;
+  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	ec[0].value.c = strdup((char*)this->server.c_str());
+  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;*/
+  	
+  	int error;
+
+#ifdef HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Quering LB Proxy..."<<endl;
+		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+		if (error == ENOENT) { // no events found
+	   		edglog(debug)<< "No events found quering LB Proxy. Quering LB..."<<endl;
+			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+	  	}
+	} else { // end switch LB PROXY
+#endif  //HAVE_LBPROXY
+		edglog(debug)<< "Quering LB..."<<endl;
+		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+#ifdef HAVE_LBPROXY
+	} // end switch LB normal
+#endif  //HAVE_LBPROXY
+
+  	/*if (error == ENOENT) { // no events found
+   		return event;
+  	}
+  	if (error) {
+   		///TBC throw an exception???
+   		//log_error("Query failed");
+    	return event;
+	}*/
+	bool flag = false;
+	int i = 0;
+	while (events[i].type) {
+		edglog(debug)<<"Event type: "<<events[i].type<<endl;
+		if ((events[i].type != EDG_WLL_EVENT_REGJOB)
+				&& (events[i].type != EDG_WLL_EVENT_USERTAG)) {
+			if ((events[i].type == EDG_WLL_EVENT_ACCEPTED)
+					|| (events[i].type == EDG_WLL_EVENT_ENQUEUED)) {
+				flag = true;
+			} else {
+				return "";
+			}
 		}
+		i++;
 	}
-	return true;
+	i--;
 	
-	GLITE_STACK_CATCH();
+    if (flag) {
+    	if ((events[i].type == EDG_WLL_EVENT_ENQUEUED)
+    			&& (events[i].enQueued.result == EDG_WLL_ENQUEUED_FAIL)) {
+			return string(events[i].enQueued.seqcode);
+    	}
+	}
+	
+	for (int i = 0; events[i].type; i++) {
+		edg_wll_FreeEvent(&events[i]);
+	}
+	
+  	return "";
+  	
+  	GLITE_STACK_CATCH();
 }
+
 
 string
 WMPEventLogger::getUserTag(const string &tagname)

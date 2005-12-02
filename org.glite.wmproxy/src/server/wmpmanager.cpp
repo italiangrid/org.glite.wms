@@ -131,21 +131,21 @@ WMPManager::runCommand(const std::string& cmdname,
 	        	if ( cmd -> state().forwardRequest() ) {
 		      		is_forwarded = true;
 					if (cmdname == "JobSubmit") {
-						#ifndef HAVE_LBPROXY
-						std::string seqcode = wmpeventlogger
+						//#ifndef HAVE_LBPROXY
+						/*std::string seqcode = wmpeventlogger
 							->getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
-						wmpeventlogger->setSequenceCode(const_cast<char*>(seqcode.c_str()));
+						wmpeventlogger->setSequenceCode(const_cast<char*>(seqcode.c_str()));*/
 						wmpeventlogger->incrementSequenceCode();
-						#endif //HAVE_LBPROXY
+						//#endif //HAVE_LBPROXY
 						
 			      		char * seq_str = wmpeventlogger->getSequence();
 			      		std::string seq_code(seq_str);
 			      		cmd->setParam("SeqCode", seq_code);
 						
-						edglog(debug)<<"Registering LOG_ACCEPT"<<std::endl;
+						/*edglog(debug)<<"Registering LOG_ACCEPT"<<std::endl;
 			      		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
 							"Request successfully passed to WMPDispatcher",
-							true, true);
+							true, true);*/
 					} else if (cmdname == "JobCancel") {
 						#ifndef HAVE_LBPROXY
 						if (cancelseqcode != "") {

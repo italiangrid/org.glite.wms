@@ -164,6 +164,9 @@ std::string getJobDelegatedProxyPath(glite::wmsutils::jobid::JobId jid,
 std::string getJobDelegatedProxyPathBak(glite::wmsutils::jobid::JobId jid,
 	int level = 0);
 
+std::string getJobJDLToStartPath(glite::wmsutils::jobid::JobId jid,
+	int level = 0);
+	
 /**
  * Returns the destination URI reading the protocol to use from configuration
  * (default protocol is used)

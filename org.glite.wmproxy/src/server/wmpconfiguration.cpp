@@ -148,6 +148,8 @@ WMProxyConfiguration::loadConfiguration()
 	/*pair<string, int> httpsprotocol("https", this->httpsport);
 	protocols.push_back(httpsprotocol);*/
 	
+	this->asyncjobstart = wmp_config->async_job_start();
+	
 	GLITE_STACK_CATCH();
 }
 
@@ -230,5 +232,11 @@ WMProxyConfiguration::getLBLocalLoggerAddressPort()
 	return this->lblocalloggerpair;
 	
 	GLITE_STACK_CATCH();
+}
+
+bool
+WMProxyConfiguration::getAsyncJobStart()
+{
+	return this->asyncjobstart;
 }
 

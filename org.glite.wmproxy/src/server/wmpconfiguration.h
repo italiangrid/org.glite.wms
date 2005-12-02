@@ -122,6 +122,12 @@ class WMProxyConfiguration {
 			WMProxyConfiguration::getLBLocalLoggerAddressPort();
 		
 		/**
+		 * Returns the value of the configuration attribute AsyncJobStart
+		 * @return the attribute value
+		 */
+		bool WMProxyConfiguration::getAsyncJobStart();
+		
+		/**
 		 * Workload Manager Proxy configuration instance
 		 */
 		glite::wms::common::configuration::WMPConfiguration const* wmp_config;
@@ -149,6 +155,8 @@ class WMProxyConfiguration {
 	    int httpsport;
 	    std::pair<std::string, int> defaultProtocol;
 	    std::vector<std::pair<std::string, int> > protocols;
+	    
+	    bool asyncjobstart;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPCONFIGURATION_H

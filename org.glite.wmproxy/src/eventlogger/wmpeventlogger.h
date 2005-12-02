@@ -45,6 +45,7 @@ class WMPEventLogger  {
 	public:
 		enum event_name {
 			LOG_ACCEPT,
+			LOG_REFUSE,
 			LOG_CANCEL,
 			LOG_CLEAR,
 			LOG_ABORT,
@@ -104,7 +105,8 @@ class WMPEventLogger  {
 		
 		//bool retrieveEvent(const std::string &jobid_str, event_name eventname);
 		regJobEvent retrieveRegJobEvent(const std::string &jobid_str);
-		bool isRegisterEventOnly();
+		
+		std::string isStartAllowed();
 		
 		std::string getUserTag(const std::string &tagname);
 		

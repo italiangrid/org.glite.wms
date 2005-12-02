@@ -40,6 +40,10 @@
 
 #include "wmpgsoapfaultmanipulator.h"
 
+// Global variables for configuration attributes
+std::string sandboxdir_global;
+bool asyncstart_global;
+
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
@@ -52,9 +56,6 @@ using namespace boost::details::pool;
 //namespace wmproxy {
 
 const std::string opt_conf_file("glite_wms.conf");
-
-// Global variables for configuration attributes
-std::string sandboxdir_global;
 
 void
 sendFault(WMProxy &proxy, const string &method, const string &msg, int code)
@@ -113,8 +114,12 @@ main(int argc, char* argv[])
 		// Initializing signal handler for 'graceful' stop/restart
 		//wmputilities::initsignalhandler();
 		
-		extern string sandboxdir_global;
+		extern std::string sandboxdir_global;
+		extern bool asyncstart_global;
 		sandboxdir_global = "";
+		WMProxyConfiguration conf =
+			singleton_default<WMProxyConfiguration>::instance();
+		asyncstart_global = conf.getAsyncJobStart();
 		
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;
