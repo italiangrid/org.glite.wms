@@ -1,6 +1,5 @@
 
 #include "eventStatusListener.h"
-//#include "glite/ce/cream-client-api-c/logger.h"
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "jobCache.h"
 #include <unistd.h>
@@ -17,12 +16,9 @@ using namespace std;
 
 using namespace glite::ce::cream_client_api::util;
 
-//logger& LOG = logger::instance();
-
-// logger::PRINT_DEVICE_CONTROLLER lflags = logger::PRINT_DEVICE_CONTROLLER((int)logger::date | (int)logger::console);
-
 //______________________________________________________________________________
-void glite::wms::ice::util::eventStatusListener::operator()() {
+void glite::wms::ice::util::eventStatusListener::operator()()
+{
   //std::cout << "eventStatusListener::run - called run" << std::endl;
   endaccept=false;
 
@@ -92,11 +88,16 @@ void glite::wms::ice::util::eventStatusListener::updateJobCache(void)
 //______________________________________________________________________________
 void glite::wms::ice::util::eventStatusListener::init(void)
 {
-  jobCache::iterator it;
+  /**
+     This method is executed ONLY at startup of the listener
+  */
 
+  jobCache::iterator it;
   map< string, vector<string> > tmpMap;
   string url;
   bool already_subscribed = true;
+
+  ostringstream consumer_url("");
 
   for(it  = jobCache::getInstance()->begin();
       it != jobCache::getInstance()->end();
@@ -112,17 +113,21 @@ void glite::wms::ice::util::eventStatusListener::init(void)
 
       already_subscribed = true;
       
-      try {
-	subscriber.authenticate( it->getUserProxyCertificate().c_str(), "/" );
-      } catch(AuthenticationInitException& ex) {
-	cerr << "Error authenticating: " << ex.what() << endl;
-	exit(1);
-      }
-      subscriber.setServiceURL( url );
-      try {
-	subscriber.pause( it->getSubscriptionID() );
-      } catch(SubscriptionNotFoundException& ex) {
+      if( subid == "" )
 	already_subscribed = false;
+      else {
+	try {
+	  subscriber.authenticate( it->getUserProxyCertificate().c_str(), "/" );
+	} catch(AuthenticationInitException& ex) {
+	  cerr << "Error authenticating: " << ex.what() << endl;
+	  exit(1);
+	}
+	subscriber.setServiceURL( url );
+	try {
+	  subscriber.pause( it->getSubscriptionID() );
+	} catch(SubscriptionNotFoundException& ex) {
+	  already_subscribed = false;
+	}
       }
 
       if(already_subscribed) {
@@ -140,19 +145,21 @@ void glite::wms::ice::util::eventStatusListener::init(void)
 	char hostname[1024];
 	memset((void*)hostname, 0, 1024);
 	if(-1==gethostname(hostname, 1024)) {
-	  cerr << "Unable to get actual name of localhost: " << strerror(errno) << endl;
+	  cerr << "Unable to get actual name of localhost: " 
+	       << strerror(errno) << endl;
 	  exit(1);
 	}
-	ostringstream consumer_url("");
+	consumer_url.str("");
 	consumer_url << "http://"<< hostname <<":"<<tcpport;
 	cout << "Subscribing consumer @"<<consumer_url.str()<<endl;
-	subscriber.setSubscribeParam(consumer_url.str(), T, P, 86400*30); // subscribes for 1 month
+	subscriber.setSubscribeParam(consumer_url.str(), T, P, 86400*30); // subscribes for ~1 month
 	try{subscriber.subscribe();}
 	catch(exception& ex) {
 	  cerr << "Error subscribing: "<<ex.what()<<endl;
 	  exit(1);
 	}
 	it->setSubscriptionID( subscriber.getSubscriptionID() );
+	activeSubscriptions.push_back( subscriber.getSubscriptionID() );
       }
     }
 }

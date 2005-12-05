@@ -55,6 +55,7 @@ tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		../src/util/libglite_wms_ice_util.la \
 		../src/ice/libglite_wms_ice.la \
 		-lglite_wms_util \
+		-lglite_wms_conf \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS)

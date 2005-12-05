@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
+//namespace conf = glite::wms::common::configuration;
 
 #define USE_STATUS_POLLER true
 #define USE_STATUS_LISTENER false
@@ -42,6 +43,9 @@ int main(int argc, char*argv[]) {
       return -1;
   } 
 
+  //  cout << "pippo="<<ice_config->pippo() << endl;
+
+  //  exit(1);
   glite::wms::ice::util::jobCache::getInstance();
 
   glite::wms::ice::ice* iceManager;

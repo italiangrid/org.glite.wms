@@ -56,7 +56,7 @@ namespace glite {
 	    else os.close();
 	  }
 	  
-	  //! Truncate the journal file
+	  //! Truncates the journal file
 	  /*!
 	    \throw jnlFile_ex& if the truncate operation failed
 	    \throw jnlFileReadOnly_ex& if the journal is in read only mode
@@ -104,9 +104,9 @@ namespace glite {
 	  
 	  //! Rewind the journal file
 	  /*!
-	    each getOperation() call move the file pointer to the next line. rewind()
-	    put this pointer back the the journal file origin
-	    \throw jnlFile_ex& if the istream::seekg(0) operation failed
+	    Any getOperation() call moves the file pointer to the next line. rewind()
+	    put this pointer back to the file origin; this is implemented by calling istream::seekg(0)
+	    \throw jnlFile_ex& if the istream::seekg(0) operation fails
 	  */
 	  void rewind() throw (glite::wms::ice::util::jnlFile_ex&);
 

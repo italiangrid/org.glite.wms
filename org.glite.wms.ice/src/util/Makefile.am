@@ -13,7 +13,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				jobCache.cpp \
 				eventStatusPoller.cpp \
 				eventStatusListener.cpp \
-				creamJob.cpp
+				creamJob.cpp \
+				iceConfManager.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \

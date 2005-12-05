@@ -21,12 +21,21 @@ namespace glite {
     namespace ice {
       namespace util {
 
+	//! A class that receives notification from CEMon about job status changes
+	/**!
+	   \class eventStatusListener
+	   This class is conceived to run as a boost::thread (this is the
+	   motivation of the implementation of the operator()() ).
+	   Its main purpose is to receive notifications from CEMon about all job status chages; the CEMon sending notifications runs on the same host of the CREAM service. In order to receive notifications, the listener must be subscribed to that CEMon service.
+	  
+	*/
 	class eventStatusListener : public CEConsumer {
 	  std::string grid_JOBID, cream_JOBID;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  bool endaccept;
 	  CESubscription subscriber;
 	  int tcpport;
+	  std::vector<std::string> activeSubscriptions;
 
 	  void init(void);
 

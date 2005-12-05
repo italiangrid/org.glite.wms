@@ -10,7 +10,7 @@ namespace glite {
     namespace ice {
       namespace util {
 	
-	//! \class JobRequest_ex An exception for all errors that relate to parsing the requests that ICE retrieves from the WM output file list (job submission and cancel)
+	//! An exception for all errors that relate to parsing the requests that ICE retrieves from the WM output file list (job submission and cancel)
 	class JobRequest_ex : public std::exception {
 	  
 	  std::string cause;
