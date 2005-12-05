@@ -38,10 +38,6 @@ namespace glite {
             static std::string jnlFile; ///< The name of the journal file used to log operations on the cache
             static std::string snapFile; ///< The name of the cache snapshot file, used to save snapshots of the cache content
 
-            static boost::recursive_mutex jobCacheMutex; ///< Lock used to guarantee mutual exclusion while accessing this data structure from concurrent threads. @deprecated
-
-            boost::recursive_mutex objMutex; ///< Lock exported to users of the jobCache. This is used to handle client-side mutual exclusion to the jobCache.
-
           /**
            * This class represents a sort of "double-keyed hash
            * table", that is, a hash table where each element can be
@@ -96,9 +92,9 @@ namespace glite {
               void delJob( const CreamJob& c );
               
               /**
-               * Looks up for a job with a given Grid ID (gid). Returns
-               * an iterator pointint to the requested job in the
-               * _jobs data structure.
+               * Looks up for a job with a given Grid ID
+               * (gid). Returns an iterator pointing to the requested
+               * job in the _jobs data structure.
                *
                * @param gid the Grid JobID to look for 
                *
@@ -167,8 +163,6 @@ namespace glite {
 	  void loadSnapshot(void) 
 	    throw(jnlFile_ex&, ClassadSyntax_ex&);
 
-	  // std::ifstream is;
-	  // std::ofstream os;
 	  glite::wms::ice::util::jnlFileManager* jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
 
 	  CreamJob unparse(const std::string&) throw(ClassadSyntax_ex&);
@@ -200,6 +194,9 @@ namespace glite {
 
           typedef jobCacheTable::iterator iterator; ///< Iterator to the jobCache CREAM jobs. If it is of type jobCache::iterator, then *it is of type creamJob;
           typedef jobCacheTable::const_iterator const_iterator; ///< Const iterator to the jobCache elements. If it is of type jobCache::iterator, then *it is of type creamJob;
+
+          static boost::recursive_mutex mutex; ///< Lock exported to users of the jobCache. This is used to handle client-side mutual exclusion to the jobCache.
+
 
           /**
            * Gets the singleton instance of this class. Prior to
@@ -242,7 +239,9 @@ namespace glite {
            * Inserts a job on the jobCache; it is possible to insert a
            * job which is already in the cache: in this case the old
            * job is replaced by the new one. All operations are logged
-           * on the journal file.
+           * on the journal file. Jobs are uniquely identified by their
+           * grid IDs. Two jobs are considered the same if they have
+           * the same Grid job ID.
            *
            * @param c the job to insert into the cache. Job c may
            * already be in the cache; in this case the old job is
@@ -250,30 +249,59 @@ namespace glite {
            */
 	  void put(const CreamJob& c ) throw(jnlFile_ex&, jnlFileReadOnly_ex&);
 
+          /**
+           * Looks up a job by its cream Job ID.
+           *
+           * @param id the Cream job ID of the job to look for 
+           *
+           * @return an iterator to the creamJob object with the given
+           * id. end() if no job has been found.
+           */
+	  iterator lookupByCreamJobID(const std::string& id);
+
+          /**
+           * Looks up a job by its grid Job ID
+           *
+           * @param id the grid job ID of the job to look for 
+           *
+           * @return an iterator to the creamJob object with the given
+           * id. end() if no job has been found.
+           */
+	  iterator lookupByGridJobID(const std::string& id);
+
+          /**
+           * Removes a job from the cache
+           *
+           * @param it the iterator pointing to the job to remove. If
+           * it == end(), no job is removed (this method does
+           * nothing).
+           */
+          void remove( const iterator& it );
+
           //
           // ALL the following methods should be considered OBSOLETE
           //
-	  void updateStatusByCreamJobID(const std::string& cid, const api::job_statuses::job_status&) throw(elementNotFound_ex&);
+	  void updateStatusByCreamJobID(const std::string& cid, const api::job_statuses::job_status&) throw(elementNotFound_ex&); ///< @deprecated
 
-	  void updateStatusByGridJobID(const std::string& gid, const api::job_statuses::job_status&) throw(elementNotFound_ex&);
+	  void updateStatusByGridJobID(const std::string& gid, const api::job_statuses::job_status&) throw(elementNotFound_ex&); ///< @deprecated
 
 	  void remove_by_grid_jobid(const std::string&) 
-	    throw (jnlFile_ex&, jnlFileReadOnly_ex&);
+	    throw (jnlFile_ex&, jnlFileReadOnly_ex&); ///< @deprecated
 
 	  void remove_by_cream_jobid(const std::string&) 
-	    throw (jnlFile_ex&, jnlFileReadOnly_ex&, elementNotFound_ex&);
+	    throw (jnlFile_ex&, jnlFileReadOnly_ex&, elementNotFound_ex&); ///< @deprecated
 
-	  bool isFinished_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
-	  bool isFinished_by_cream_jobid(const std::string&) throw(elementNotFound_ex&);
+	  bool isFinished_by_grid_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
+	  bool isFinished_by_cream_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
 
-	  std::string get_grid_jobid_by_cream_jobid(const std::string&) throw(elementNotFound_ex&);
-	  std::string get_cream_jobid_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
-	  CreamJob getJobByCreamJobID(const std::string&) throw(elementNotFound_ex&);
-	  CreamJob getJobByGridJobID(const std::string&) throw(elementNotFound_ex&);
+	  std::string get_grid_jobid_by_cream_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
+	  std::string get_cream_jobid_by_grid_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
+	  CreamJob getJobByCreamJobID(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
+	  CreamJob getJobByGridJobID(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
 	  api::job_statuses::job_status 
-	  getStatus_by_cream_jobid(const std::string&) throw(elementNotFound_ex&);
+	  getStatus_by_cream_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
 	  api::job_statuses::job_status
-	  getStatus_by_grid_jobid(const std::string&) throw(elementNotFound_ex&);
+	  getStatus_by_grid_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
           //
           // end list of OBSOLETE methods
           //
@@ -322,13 +350,6 @@ namespace glite {
            * @param target the vector where CREAM IDs will be stored
            */           
 	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
-
-          /**
-           * Returns the recursive mutex associated with this instance
-           *
-           * @return the recursive mutex associated with this instance
-           */
-          boost::recursive_mutex& getMutex( void ) { return objMutex; };
 
         protected:	  
 	  void dump(void) throw(jnlFile_ex&);

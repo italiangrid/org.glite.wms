@@ -131,6 +131,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     theJob.setJobID(url_jid[1]);
     theJob.setStatus(job_statuses::PENDING);
 
+    boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+
     //put(...) accepts arg by reference, but
     // the implementation puts the arg in the memory hash by copying it. So
     // passing a *pointer should not produce problems

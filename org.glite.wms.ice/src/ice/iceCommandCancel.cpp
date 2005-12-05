@@ -61,7 +61,9 @@ void iceCommandCancel::execute( void ) throw ( iceCommandFatal_ex&, iceCommandTr
     log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
 
     cout << "\tThis request is a Cancel..."<<endl;
-    
+
+    boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+
     try {
         util::CreamJob _theJob( util::jobCache::getInstance()->getJobByGridJobID(_gridJobId) );
         vector<string> url_jid(1);   

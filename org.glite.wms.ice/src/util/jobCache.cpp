@@ -31,7 +31,7 @@ namespace apiutil = glite::ce::cream_client_api::util;
 jobCache* jobCache::_instance = 0;
 string jobCache::jnlFile = DEFAULT_JNLFILE;
 string jobCache::snapFile = DEFAULT_SNAPFILE;
-boost::recursive_mutex jobCache::jobCacheMutex;
+boost::recursive_mutex jobCache::mutex;
 
 // 
 // Inner class definitions
@@ -136,18 +136,16 @@ jobCache::jobCacheTable::const_iterator jobCache::jobCacheTable::end( void ) con
 
 //______________________________________________________________________________
 jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
-  boost::recursive_mutex::scoped_lock M(jobCacheMutex);
-  if(!_instance)
-    _instance = new jobCache( ); // can throw jnlFile_ex or 
-                                 // ClassadSyntax_ex
-  return _instance;
+    if(!_instance)
+        _instance = new jobCache( ); // can throw jnlFile_ex or 
+    // ClassadSyntax_ex
+    return _instance;
 }
 
 //______________________________________________________________________________
 jobCache::jobCache( void )
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
-    : objMutex( ),
-      _jobs( ),
+    : _jobs( ),
       operation_counter(0)
 { 
     jnlMgr = new jnlFileManager(jnlFile);
@@ -235,7 +233,7 @@ void jobCache::loadJournal(void)
 //______________________________________________________________________________
 void jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); // locks the cache
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); // locks the cache
     string param;
     this->toString(cj, param);
     // string param = string(OPERATION_SEPARATOR) + tmp;
@@ -248,7 +246,7 @@ void jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 void jobCache::remove_by_grid_jobid(const string& gid)
   throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     
     jobCacheTable::iterator it = _jobs.findJobByGID( gid );
     if ( it == _jobs.end() ) {
@@ -267,7 +265,7 @@ void jobCache::remove_by_grid_jobid(const string& gid)
 void jobCache::remove_by_cream_jobid(const string& cid)
   throw (jnlFile_ex&, jnlFileReadOnly_ex&, elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex );
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex );
     remove_by_grid_jobid( get_grid_jobid_by_cream_jobid(cid) );
 }
 
@@ -275,7 +273,7 @@ void jobCache::remove_by_cream_jobid(const string& cid)
 string jobCache::get_grid_jobid_by_cream_jobid(const std::string& cid) 
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     jobCacheTable::const_iterator it = _jobs.findJobByCID( cid );
     if( it == _jobs.end() )
         throw elementNotFound_ex(string("get_grid_jobid_by_cream_jobid: Not found the CID=")+cid+" in job cache");
@@ -286,7 +284,7 @@ string jobCache::get_grid_jobid_by_cream_jobid(const std::string& cid)
 string jobCache::get_cream_jobid_by_grid_jobid(const std::string& gid) 
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     jobCacheTable::const_iterator it = _jobs.findJobByGID( gid );
     if ( it == _jobs.end() )
         throw elementNotFound_ex(string("get_cream_jobid_by_grid_jobid: Not found the GID=")+gid+" in job cache");
@@ -298,7 +296,7 @@ string jobCache::get_cream_jobid_by_grid_jobid(const std::string& gid)
 CreamJob jobCache::getJobByCreamJobID(const std::string& cid)
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     jobCacheTable::iterator it = _jobs.findJobByCID( cid );
     if ( it == _jobs.end() ) 
         throw elementNotFound_ex(string("Job with Cream JobID=")+cid+" not found" );
@@ -309,7 +307,7 @@ CreamJob jobCache::getJobByCreamJobID(const std::string& cid)
 CreamJob jobCache::getJobByGridJobID(const std::string& gid)
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     jobCacheTable::iterator it = _jobs.findJobByGID( gid );
     if ( it == _jobs.end() )
         throw elementNotFound_ex(string("Job with Cream JobID=")+gid+" not found" );
@@ -320,7 +318,7 @@ CreamJob jobCache::getJobByGridJobID(const std::string& gid)
 bool jobCache::isFinished_by_grid_jobid(const std::string& gid)
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     return api::job_statuses::isFinished(getStatus_by_grid_jobid( gid ));
 }
 
@@ -328,7 +326,7 @@ bool jobCache::isFinished_by_grid_jobid(const std::string& gid)
 bool jobCache::isFinished_by_cream_jobid(const std::string& cid) 
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex);
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
     return jobCache::isFinished_by_grid_jobid(get_grid_jobid_by_cream_jobid(cid));
 }
 
@@ -337,7 +335,7 @@ api::job_statuses::job_status
 jobCache::getStatus_by_grid_jobid(const string& gid)
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::const_iterator it = _jobs.findJobByGID( gid );
     if ( it == _jobs.end() )
         throw elementNotFound_ex(string("Not found the key ")+gid+" in job cache");
@@ -349,7 +347,7 @@ api::job_statuses::job_status
 jobCache::getStatus_by_cream_jobid(const string& cid)
   throw (elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::const_iterator it = _jobs.findJobByCID( cid );
     if ( it == _jobs.end() )
         throw elementNotFound_ex(string("Not found the key ")+cid+" in job cache");
@@ -358,7 +356,7 @@ jobCache::getStatus_by_cream_jobid(const string& cid)
 
 //______________________________________________________________________________
 void jobCache::print(ostream& os) {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::const_iterator it;
     for ( it=_jobs.begin(); it!=_jobs.end(); it++ ) {
         os << "GID=" << it->getGridJobID() 
@@ -371,7 +369,7 @@ void jobCache::print(ostream& os) {
 //______________________________________________________________________________
 void jobCache::dump() throw (jnlFile_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     string tmpSnapFile = snapFile + ".tmp." +
         apiutil::string_manipulation::make_string(::getpid());
 
@@ -502,7 +500,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
 //______________________________________________________________________________
 void jobCache::getActiveCreamJobIDs(vector<string>& target) 
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::const_iterator it;
     for ( it = _jobs.begin(); it!=_jobs.end(); it++ ) {
         target.push_back( it->getJobID());
@@ -569,7 +567,7 @@ void jobCache::updateStatusByCreamJobID(const std::string& cid,
 			      const api::job_statuses::job_status& status) 
   throw(elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     this->updateStatusByGridJobID( get_grid_jobid_by_cream_jobid( cid ),
                                    status );
 }
@@ -579,7 +577,7 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
 				       const api::job_statuses::job_status& status) 
   throw(elementNotFound_ex&)
 {
-    boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::iterator it = _jobs.findJobByGID( gid );
 
     if( it == _jobs.end() )
@@ -589,4 +587,27 @@ void jobCache::updateStatusByGridJobID(const std::string& gid,
   it->setStatus( status );
   this->toString( *it, param );
   logOperation( PUT, param );
+}
+
+jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
+{
+    return _jobs.findJobByCID( creamJID );
+}
+
+jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
+{
+    return _jobs.findJobByGID( gridJID );
+}
+
+void jobCache::remove( const jobCache::iterator& it )
+{    
+    if ( it == _jobs.end() ) {
+        return ;
+    }
+
+    string to_string;
+    // job found, log operation and remove
+    this->toString(*it, to_string);
+    logOperation( ERASE, to_string );
+    _jobs.delJob( *it );    
 }

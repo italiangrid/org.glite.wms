@@ -70,6 +70,7 @@ bool eventStatusPoller::getStatus(void)
   jobs_to_query.clear();
   
   try {
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
   } catch(exception& ex) {
     cerr << ex.what()<<endl;
@@ -187,28 +188,51 @@ void eventStatusPoller::updateJobCache()
       glite::ce::cream_client_api::job_statuses::job_status 
 	stNum = getStatusNum((*it)->jobInfo.at(j)->status);
       
-      string gid;
       try {
-	gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid((*it)->jobInfo.at(j)->CREAMJobId);
+          boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+          string cid( (*it)->jobInfo.at(j)->CREAMJobId );
+          jobCache::iterator jit( jobCache::getInstance()->lookupByCreamJobID( cid ) );
+          if ( jit != jobCache::getInstance()->end() ) {
+              string gid = jit->getGridJobID();
+
+              cerr << "Updating jobcache with\n"
+                   << "\t\tgrid_jobid  = [" << gid<<"]\n"
+                   << "\t\tcream_jobid = [" << (*it)->jobInfo[j]->CREAMJobId<<"]\n"
+                   << "\t\tstatus      = [" << (*it)->jobInfo[j]->status<<"]"
+                   <<endl;
+
+              jit->setStatus( stNum );
+              jobCache::getInstance()->put( *jit );
+
+              // jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
+
+
+          } else {
+              cerr << "cream_jobid = [" << cid << "] disappeared!" << endl
+                   << "Removing from cache..." << endl;
+              jobCache::getInstance()->remove( jit );
+          }
+          // gid = jobCache::getInstance()->get_grid_jobid_by_cream_jobid((*it)->jobInfo.at(j)->CREAMJobId);
       } catch(exception& ex) {
 	cerr << ex.what()<<endl;
 	exit(1);
       }
       
-      cerr << "Updating jobcache with\n"
-	   << "\t\tgrid_jobid  = [" << gid<<"]\n"
-	   << "\t\tcream_jobid = [" << (*it)->jobInfo[j]->CREAMJobId<<"]\n"
-	   << "\t\tstatus      = [" << (*it)->jobInfo[j]->status<<"]"
-	   <<endl;
+//       cerr << "Updating jobcache with\n"
+// 	   << "\t\tgrid_jobid  = [" << gid<<"]\n"
+// 	   << "\t\tcream_jobid = [" << (*it)->jobInfo[j]->CREAMJobId<<"]\n"
+// 	   << "\t\tstatus      = [" << (*it)->jobInfo[j]->status<<"]"
+// 	   <<endl;
       
-      try {
-	jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
-      } catch(std::exception& ex) {
-	cerr << "eventStatusPoller::updateJobCache - "
-	     << "jobCache::updateStatusByGridJobID(...) raised an ex: "
-	     << ex.what()<<endl;
-	exit(1);
-      }
+//       try {
+//           boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+//               // jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
+//       } catch(std::exception& ex) {
+// 	cerr << "eventStatusPoller::updateJobCache - "
+// 	     << "jobCache::updateStatusByGridJobID(...) raised an ex: "
+// 	     << ex.what()<<endl;
+// 	exit(1);
+//       }
     }
   }
 }
@@ -228,15 +252,26 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
       string cid;
       try {
 	cout << "Fetching Job for ID ["<<*it<<"]"<<endl;
-	CreamJob theJob = jobCache::getInstance()->getJobByCreamJobID(*it);
-        cid = theJob.getJobID();
-	cout << "Calling JobPurge for host ["
-	     << theJob.getCreamURL() << "]" <<endl;
+        jobCache::iterator jit = jobCache::getInstance()->lookupByCreamJobID( *it );
+	// CreamJob theJob = jobCache::getInstance()->getJobByCreamJobID(*it);
+//         CreamJob theJob( *jit );
+//         cid = theJob.getJobID();
+// 	cout << "Calling JobPurge for host ["
+// 	     << theJob.getCreamURL() << "]" <<endl;
 
-	creamClient->Authenticate(theJob.getUserProxyCertificate());
-	oneJobToPurge.push_back(theJob.getJobID());
-	creamClient->Purge(theJob.getCreamURL().c_str(), oneJobToPurge);
-        jobCache::getInstance()->remove_by_cream_jobid( cid );
+// 	creamClient->Authenticate(theJob.getUserProxyCertificate());
+// 	oneJobToPurge.push_back(theJob.getJobID());
+// 	creamClient->Purge(theJob.getCreamURL().c_str(), oneJobToPurge);
+//         jobCache::getInstance()->remove_by_cream_jobid( cid );
+
+        cid = jit->getJobID();
+	cout << "Calling JobPurge for host ["
+	     << jit->getCreamURL() << "]" <<endl;
+	creamClient->Authenticate( jit->getUserProxyCertificate());
+	oneJobToPurge.push_back( jit->getJobID() );
+	creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+        jobCache::getInstance()->remove( jit );
+
       } catch (ClassadSyntax_ex& ex) {
 	// this exception should not be raised because 
 	// the CreamJob is created from another valid one
@@ -281,3 +316,4 @@ void eventStatusPoller::operator()()
   }
   cout << "eventStatusPoller::run - thread is ending..." << endl;
 }
+
