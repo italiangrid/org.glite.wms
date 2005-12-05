@@ -6,9 +6,9 @@
 ## *
 ## *********************************************************************
 
-noinst_LTLIBRARIES = libglite_wms_replicaservice.la
+lib_LTLIBRARIES = libglite_wms_replicaservice.la
 
-noinst_HEADERS = \
+rls_HEADERS = \
 	ReplicaServiceException.h 
 
 libglite_wms_replicaservice_la_SOURCES = \
