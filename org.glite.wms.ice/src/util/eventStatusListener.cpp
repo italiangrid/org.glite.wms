@@ -1,6 +1,7 @@
 
 #include "eventStatusListener.h"
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "iceConfManager.h"
 #include "jobCache.h"
 #include <unistd.h>
 #include <string>
@@ -15,6 +16,7 @@ extern int errno;
 using namespace std;
 
 using namespace glite::ce::cream_client_api::util;
+namespace iceUtil = glite::wms::ice::util;
 
 //______________________________________________________________________________
 void glite::wms::ice::util::eventStatusListener::operator()()
@@ -105,8 +107,12 @@ void glite::wms::ice::util::eventStatusListener::init(void)
     {
       string subid = it->getSubscriptionID();
       url = it->getCreamURL();
-      boost::replace_first(url, "ce-cream", "ce-monitor");
-      boost::replace_first(url, "CREAM", "CEMonitor");
+      //boost::replace_first(url, "ce-cream", "ce-monitor");
+      boost::replace_first(url, 
+			   iceUtil::iceConfManager::getInstance()->getCreamUrlPostfix(),
+			   iceUtil::iceConfManager::getInstance()->getCEMonUrlPostfix());
+//       boost::replace_first(url, 
+// 			   "CREAM", "CEMonitor");
 
       cout << "Checking subscription status @"
 	   << url << endl;
@@ -140,8 +146,8 @@ void glite::wms::ice::util::eventStatusListener::init(void)
       } else {
 	cout << "MUST subscribe @"
 	     << url << endl;
-	Topic T("ICE");
-	Policy P(10*1000);
+	Topic T(iceUtil::iceConfManager::getInstance()->getICETopic());
+	Policy P(5*1000);
 	char hostname[1024];
 	memset((void*)hostname, 0, 1024);
 	if(-1==gethostname(hostname, 1024)) {

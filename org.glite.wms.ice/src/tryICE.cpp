@@ -80,8 +80,11 @@ int main(int argc, char*argv[]) {
   soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   
-  if(USE_STATUS_LISTENER) iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
-  if(USE_STATUS_POLLER) iceManager->startPoller(10);
+  if(iceUtil::iceConfManager::getInstance()->startListener()) 
+    iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
+
+  if(iceUtil::iceConfManager::getInstance()->startPoller()) 
+    iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
 
   vector<string> url_jid;
   url_jid.reserve(2);

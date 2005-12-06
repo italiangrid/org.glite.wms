@@ -1,5 +1,6 @@
 
 #include "creamJob.h"
+#include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "classad_distribution.h"
 #include "boost/algorithm/string.hpp"
@@ -9,6 +10,7 @@ using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
 using namespace glite::ce::cream_client_api::job_statuses;
 using namespace std;
+namespace iceUtil = glite::wms::ice::util;
 
 //classad::ClassAdParser cj_parser;
 //classad::ClassAdUnParser cj_unp;
@@ -56,6 +58,10 @@ CreamJob::CreamJob(const string& _jdl,
         throw ClassadSyntax_ex(ex.what());
     }
     endpoint = pieces[0] + ":" + pieces[1];
-    cream_address = string("https://") + endpoint + "/ce-cream/services/CREAM";
-    cream_deleg_address = cream_address + "Delegation";
+    //cream_address = string("https://") + endpoint + "/ce-cream/services/CREAM";
+    cream_address = iceUtil::iceConfManager::getInstance()->getCreamUrlPrefix()
+      + endpoint + iceUtil::iceConfManager::getInstance()->getCreamUrlPostfix();
+    //    cream_deleg_address = cream_address + "Delegation";
+    cream_deleg_address = iceUtil::iceConfManager::getInstance()->getCreamUrlDelegationPrefix()
+      + endpoint + iceUtil::iceConfManager::getInstance()->getCreamUrlDelegationPostfix();
 }
