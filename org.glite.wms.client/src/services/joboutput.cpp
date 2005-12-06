@@ -270,8 +270,9 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	if (children.size()){
 		ostringstream msgVago ;
 		unsigned int size = children.size();
+		std::map< std::string, std::string > map= AdUtils::getJobIdMap(status.getJdl());
 		for (unsigned int i = 0 ; i < size ;i++){
-			retrieveOutput (msgVago,children[i],dirAbs+logName+"_"+ children[i].getJobId().getUnique(), true);
+			retrieveOutput (msgVago,children[i],dirAbs+logName+"_"+ AdUtils::JobId2Node(map,children[i].getJobId()), true);
 		}
 	}
 	bool parent = status.hasParent ( ) ;
