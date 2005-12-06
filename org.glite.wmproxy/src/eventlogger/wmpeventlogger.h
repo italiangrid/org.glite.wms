@@ -25,9 +25,6 @@
 #include "glite/lb/consumer.h"
 #include "glite/lb/JobStatus.h"
 
-#ifndef HAVE_LBPROXY
-#define EDG_WLL_SOURCE_WM_PROXY EDG_WLL_SOURCE_NETWORK_SERVER
-#endif
 
 namespace glite {
 namespace wms {

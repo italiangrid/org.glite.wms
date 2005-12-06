@@ -202,21 +202,21 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
 	
 	int register_result;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering normal job to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
 			path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobProxy() exit code: "<<register_result<<endl;
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering normal job to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(), EDG_WLL_JOB_SIMPLE,
 			path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobSync() exit code: "<<register_result<<endl;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	}
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	if (register_result) {
 		string msg = error_message("edg_wll_RegisterJob");
@@ -257,19 +257,19 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	}
 	
 	int register_result;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterSubjobsProxy(ctx, id->getId(), jdls_char,
 			str_nsAddr, subjobs);
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG subjobs to LB..."<<endl;
 		register_result = edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char,
 			str_nsAddr, subjobs);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	}
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	if (register_result) {
 		string msg = error_message("edg_wll_RegisterSubjobs");
@@ -327,21 +327,21 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
     vector<string> jobids;
 
     int register_result;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering DAG to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
 			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, size,
 			"WMPROXY", &subjobs) ;
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
 			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, size,
 			"WMPROXY", &subjobs);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	}
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	if (register_result) {
 		string msg = error_message("edg_wll_RegisterJob");
@@ -419,17 +419,17 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 	
 	// Pointer to a function
 	int (*fp) (_edg_wll_Context*, const char*, const char*);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 		fp = &edg_wll_LogUserTagProxy;
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
         edglog(debug)<<"Setting job for logging to LB..."<<endl;
 		fp = &edg_wll_LogUserTag;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	}
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	for (unsigned int i = 0; i < vect.size(); i++) {
 		if (!userTags->EvaluateExpr(vect[i].second, val)) {
@@ -460,18 +460,18 @@ WMPEventLogger::setLoggingJob(const std::string &jid, const char* seq_code)
         edglog_fn("WMPEventlogger::setLoggingJob");
 	
 	glite::wmsutils::jobid::JobId jobid(jid);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
                 edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
 		edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, 
 			getUserDN(), EDG_WLL_SEQ_NORMAL);
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
                 edglog(debug)<<"Setting job for logging to LB..."<<endl;
 		edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code, EDG_WLL_SEQ_NORMAL);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	}
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	GLITE_STACK_CATCH();
 }
@@ -489,19 +489,19 @@ WMPEventLogger::logListener(const char* host, int port)
 	edglog_fn("WMPEventlogger::logListener");
 	
 	edglog(debug) << "Logging Listener event..." << endl;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b){
 		edglog(debug) << "Logging to LB Proxy..." << endl;
 		return edg_wll_LogListenerProxy(ctx, "InteractiveListener", 
 			host, (uint16_t) port);
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug) << "Logging to LB..." << endl;
 		return edg_wll_LogListener(ctx, "InteractiveListener", 
 			host, (uint16_t) port);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	GLITE_STACK_CATCH();
 }
@@ -513,19 +513,19 @@ WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
 	edglog_fn("WMPEventlogger::logCheckpointable");
 	
 	edglog(debug) << "Logging Checkpointable event..." << endl;
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b){
 		edglog(debug) << "Logging to LB Proxy..." << endl;
 		return edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_CHKPT,
 				  EDG_WLL_FORMAT_CHKPT, current_step, state);
 	} else {
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug) << "Logging to LB..." << endl;
 		return edg_wll_LogEventSync(ctx, EDG_WLL_EVENT_CHKPT,
 				  EDG_WLL_FORMAT_CHKPT, current_step, state);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 	GLITE_STACK_CATCH();
 }
@@ -536,19 +536,19 @@ WMPEventLogger::logAbortEventSync(char* reason)
         edglog_fn("WMPEventlogger::logAbortEventSync");
 	edglog(debug)<<"Logging Abort event (sync)"<<endl;
 	//TBC Checks possibility to do it with LBProxy
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Logging to LB Proxy..."<<endl;
 		return edg_wll_LogEventProxy(ctx, EDG_WLL_EVENT_ABORT, EDG_WLL_FORMAT_ABORT,
 			reason);
 	} else { // end switch LB PROXY
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug) << "Logging to LB..." << endl;
 		return edg_wll_LogEventSync(ctx, EDG_WLL_EVENT_ABORT, EDG_WLL_FORMAT_ABORT,
 			reason);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
 }
 
@@ -559,7 +559,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 	GLITE_STACK_TRY("logEvent()");
 	edglog_fn("WMPEventlogger::logEvent");
 	
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b){
 		edglog(debug) << "Logging to LB Proxy..." << endl ;
 		switch (event){
@@ -603,7 +603,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				return true;
 		}
 	} else { // end switch LB PROXY
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug) << "Logging to LB..." << endl ;
 		switch (event){
 			case LOG_ACCEPT:
@@ -645,9 +645,9 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				edglog(severe) << "Warning: no event caught, not Logging" << endl ;
 				return true;
 		}
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 	// Unpredictable line: ERROR!
 	edglog(fatal) << "logEvent Unpredictable line found!!!" << endl ;
 	return true;
@@ -832,7 +832,7 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
   	
   	int error;
 
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Quering LB Proxy..."<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
@@ -841,12 +841,12 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
 			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
 	  	}
 	} else { // end switch LB PROXY
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<< "Quering LB..."<<endl;
 		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
   	if (error == ENOENT) { // no events found
    		return event;
@@ -957,7 +957,7 @@ WMPEventLogger::isStartAllowed()
   	
   	int error;
 
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Quering LB Proxy..."<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
@@ -966,12 +966,12 @@ WMPEventLogger::isStartAllowed()
 			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
 	  	}
 	} else { // end switch LB PROXY
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<< "Quering LB..."<<endl;
 		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
   	/*if (error == ENOENT) { // no events found
    		return event;
@@ -1052,7 +1052,7 @@ WMPEventLogger::getUserTag(const string &tagname)
   	int error;
   	string returnvalue = "";
 
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Quering LB Proxy..."<<endl;
 		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
@@ -1061,12 +1061,12 @@ WMPEventLogger::getUserTag(const string &tagname)
 			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
 	  	}
 	} else { // end switch LB PROXY
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<< "Quering LB..."<<endl;
 		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
-#ifdef HAVE_LBPROXY
+#ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
-#endif  //HAVE_LBPROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
 
   	if (error == ENOENT) { // no events found
    		return returnvalue;
