@@ -441,9 +441,14 @@ filter_gpbox_authorizations(
           // according)), its content being untrustable
 
           Info(iter->GetId());
-          // IMPORTANT: NOTA means that G-Pbox cannot match the request with any found policy
-          // hence this will result in a DENY whilst PERMIT and UNDET are passed on 
-          if( PEP_request_answer == DENY || PEP_request_answer == NOTA ) {
+          // NOTE: borderline cases are filtered off without questioning
+          // because of the resubmission costs
+          if( PEP_request_answer == DENY 
+              || 
+              PEP_request_answer == NOTA 
+              ||
+              PEP_request_answer == INDET ) 
+          {
             suitable_CEs.erase(iter->GetId());
             Info("!!!erased CE");
           }
