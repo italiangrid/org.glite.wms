@@ -23,6 +23,7 @@ namespace classad{
 	class ClassAd;
 }
 namespace glite {
+namespace wmsutils { namespace jobid { class JobId; } }
 namespace wms{
 namespace jdl { class Ad; class JobAd; class ExpDagAd;class CollectionAd; }
 namespace common {namespace configuration{class WMCConfiguration ;}}
@@ -69,6 +70,20 @@ class AdUtils{
 		void parseVo(voSrc src, std::string& voPath, std::string& voName);
 		/** Return the list of all unknown values*/
 		std::vector<std::string> getUnknown(glite::wms::jdl::Ad* jdl);
+		/** Try and build a Dagad istance and retrieve its jobid-node map
+		*@param jdl the dagad string representation
+		*@return a mapping between dagad jobid sons and thier correspondent node name, empty map if any error occurred
+		 */
+		static std::map< std::string, std::string > getJobIdMap(const std::string& jdl);
+		/** Retrieve the node name corresponding to a required jobid
+		* @param map the jobids-nodes mapping as returned from #getJobIdMap
+		* @param jobid the id of the job to be looked for in the map
+		* @see #getJobIdMap
+		* @return the uinque name of the node corresponding to the required jobid,
+		* or jobid unique string representation if any error occurred
+		 */
+		static std::string JobId2Node (const std::map< std::string, std::string > &map,
+			glite::wmsutils::jobid::JobId jobid);
 	private:
 		/*
 		* method used by loadConfiguration: check whether

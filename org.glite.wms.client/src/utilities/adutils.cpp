@@ -343,6 +343,29 @@ void AdUtils::setDefaultValues(glite::wms::jdl::CollectionAd* jdl,
 		}
 	}
 }
+/***********************
+*  JobId - Node mapping
+************************/
+std::map< std::string, std::string > AdUtils::getJobIdMap(const string& jdl){
+	try{
+		return ExpDagAd(jdl).getJobIdMap();
+	}catch(RequestAdException &exc){
+		return std::map< std::string, std::string >();
+	}
+}
+
+std::string AdUtils::JobId2Node (const std::map< std::string, std::string > &map,
+	glite::wmsutils::jobid::JobId jobid){
+	if (map.size()){
+		std::map<std::string,std::string >::const_iterator it = map.find(jobid.toString());
+		if (it !=map.end()){
+			return (*it).second;
+		}
+	}
+	// If this point is reached, no mapping found. Simply return jobi unique
+	return jobid.getUnique();
+
+}
 
 } // glite
 } // wms
