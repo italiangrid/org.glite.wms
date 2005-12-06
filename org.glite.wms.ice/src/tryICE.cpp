@@ -7,6 +7,7 @@
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
+#include "iceConfManager.h"
 #include <string>
 #include <iostream>
 #include <unistd.h>
@@ -14,6 +15,7 @@
 using namespace std;
 using namespace glite::ce::cream_client_api;
 //namespace conf = glite::wms::common::configuration;
+namespace iceUtil = glite::wms::ice::util;
 
 #define USE_STATUS_POLLER true
 #define USE_STATUS_LISTENER false
@@ -23,34 +25,42 @@ int main(int argc, char*argv[]) {
   /**
    * - creates an ICE object
    * - initializes the job cache
-   * - starts the async event consumer
+   * - starts the async event consumer and status poller
    * - opens the WM's and the NS's filelist
    * 
    * - main's params:
-   *                  argv[1]: Network server filelist
-   *                  argv[2]: WM filelist
-   *                  argv[3]: job cache persistency file
-   *                  argv[4]: TCP port for event status listener
+   *                  argv[1]: configuration file
    */
 
-  if ( argc!=5 ) {
+  if ( argc!=2 ) {
       cout << "Usage: " << argv[0]
-           << " <ns> <wm> <cache> <port>" << endl
-           << "\t<ns> Network Server filelist" << endl
-           << "\t<wm> WM filelist" << endl
-           << "\t<cache> Job Cache persistency file" << endl
-           << "\t<port> TCP port for event status listener" << endl;
-      return -1;
+           << " <config_file>" << endl;
+      return 1;
   } 
 
-  //  cout << "pippo="<<ice_config->pippo() << endl;
+  iceUtil::iceConfManager::init(argv[1]);
+  try{
+    iceUtil::iceConfManager::getInstance();
+  }
+  catch(iceUtil::ConfigurationManager_ex& ex) {
+    cerr << ex.what() << endl;
+    exit(1);
+  }
 
-  //  exit(1);
-  glite::wms::ice::util::jobCache::getInstance();
+  cout << "Initializing jobCache with journal file ["
+       << iceUtil::iceConfManager::getInstance()->getCachePersistFile() 
+       << "] and snapshot file ["
+       << iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot" 
+       << "]..."<<endl;
+  
+  iceUtil::jobCache::setJournalFile(iceUtil::iceConfManager::getInstance()->getCachePersistFile());
+  iceUtil::jobCache::setSnapshotFile(iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot");
+  
+  iceUtil::jobCache::getInstance();
 
   glite::wms::ice::ice* iceManager;
   try {
-    iceManager = new glite::wms::ice::ice(argv[1], argv[2], argv[3]);
+    iceManager = new glite::wms::ice::ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
     cerr << ex.what() <<endl;
     exit(1);
@@ -70,7 +80,7 @@ int main(int argc, char*argv[]) {
   soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   
-  if(USE_STATUS_LISTENER) iceManager->startListener(atoi(argv[4]));
+  if(USE_STATUS_LISTENER) iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
   if(USE_STATUS_POLLER) iceManager->startPoller(10);
 
   vector<string> url_jid;

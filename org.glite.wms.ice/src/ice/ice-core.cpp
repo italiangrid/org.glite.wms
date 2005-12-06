@@ -17,8 +17,7 @@ typedef vector<string>::iterator vstrIt;
 
 //______________________________________________________________________________
 ice::ice(const string& NS_FL, 
-	 const string& WM_FL,
-	 const string& jobcache_persist_file
+	 const string& WM_FL
 	 ) throw(iceInit_ex&)
   : status_listener_started(false), 
     status_poller_started(false),
@@ -26,15 +25,7 @@ ice::ice(const string& NS_FL,
     wm_filelist(WM_FL),
     fle(WM_FL.c_str())
 {
-  cout << "Initializing jobCache with journal file ["
-       << jobcache_persist_file << "] and snapshot file ["
-       << jobcache_persist_file+".snapshot" << "]..."<<endl;
-
-  glite::wms::ice::util::jobCache::setJournalFile(jobcache_persist_file);
-  glite::wms::ice::util::jobCache::setSnapshotFile(jobcache_persist_file+".snapshot");
-  
   cout << "Initializing File Extractor object..."<<endl;
-
   try{
     flns.open(NS_FL.c_str());
   }

@@ -52,8 +52,8 @@ namespace glite {
 
       public:
 	ice(const std::string& NS_FL, 
-	    const std::string& WM_FL,
-	    const std::string& jobcache_persist_file
+	    const std::string& WM_FL//,
+	    //const std::string& jobcache_persist_file
 	    //	    const int& tcpport,
 	    //	    const int&  poller_delay,
 	    //const std::string& CreamUrl,
