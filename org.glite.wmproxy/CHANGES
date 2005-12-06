@@ -1,3 +1,8 @@
+====== WMProxy version 2.2.0 (gLite X.X) ======
+* ddd MMM DD YYYY Fabrizio Pacini <egee@datamat.it>
+- Make rpm install only templates of configuration files
+
+
 ====== WMProxy version 2.1.0 (gLite 1.5) ======
 * Tue Nov 29 2005 Fabrizio Pacini <egee@datamat.it>
 - Fix bug #9063: check if the user group of local mapped user

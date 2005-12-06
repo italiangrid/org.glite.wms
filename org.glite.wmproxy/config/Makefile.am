@@ -17,9 +17,9 @@ wletcwmsdir = $(sysconfdir)/lcmaps
 wletcwms_DATA = lcmaps.db 
 
 install-data-hook:
-	/bin/cp $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf.template
-	/bin/cp $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy.gacl $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy.gacl.template
-	/bin/cp $(DESTDIR)$(sysconfdir)/lcmaps/lcmaps.db $(DESTDIR)$(sysconfdir)/lcmaps/lcmaps.db.template
+	/bin/mv $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy_httpd.conf.template
+	/bin/mv $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy.gacl $(DESTDIR)$(sysconfdir)/glite_wms_wmproxy.gacl.template
+	/bin/mv $(DESTDIR)$(sysconfdir)/lcmaps/lcmaps.db $(DESTDIR)$(sysconfdir)/lcmaps/lcmaps.db.template
 
 CLEANFILES =
 
