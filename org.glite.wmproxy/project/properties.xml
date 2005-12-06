@@ -55,5 +55,6 @@
 
         <property name="build.package.summary" value="Files for gLite WMS WMProxy Service" />
         <property name="build.package.description" value="gLite WMS WMProxy Service executables and libraries" />
+        <property name="build.rpm.spec.file" value="true" />
 
 </project>
