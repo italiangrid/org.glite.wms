@@ -29,12 +29,6 @@ glite::wms::ice::util::iceConfManager::getInstance( )
 //______________________________________________________________________________
 glite::wms::ice::util::iceConfManager::iceConfManager()
   throw (glite::wms::ice::util::ConfigurationManager_ex&)
-  : HostProxyFile( "" ),
-    WM_Input_FileList( "" ),
-    ICE_Input_FileList( "" ),
-    CachePersistFile( "" ),
-    LogFile( "" ),
-    ListenerPort( 0 )
 {
   //conf::ICEConfiguration const* ice_config;
   //conf::WMConfiguration const* wm_config;
@@ -55,6 +49,16 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   CachePersistFile  = config->ice()->cache_persist_file();
   ListenerPort      = config->ice()->listener_port();
   LogFile           = config->ice()->logfile();
+  startpoller       = config->ice()->start_poller();
+  startlistener     = config->ice()->start_listener();
+  creamurlprefix    = config->ice()->cream_url_prefix();
+  creamurlpostfix   = config->ice()->cream_url_postfix();
+  pollerdelay       = config->ice()->poller_delay();
+  curldelegprefix   = config->ice()->creamdelegation_url_prefix();
+  curldelegpostfix  = config->ice()->creamdelegation_url_postfix();
+  cemonurlprefix    = config->ice()->cemon_url_prefix();
+  cemonurlpostfix   = config->ice()->cemon_url_postfix();
+  icetopic          = config->ice()->ice_topic();
 }
 
 //______________________________________________________________________________
