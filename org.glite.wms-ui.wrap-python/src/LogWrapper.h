@@ -46,7 +46,7 @@ class LOG {
 	* Log the synch event (for Checkpointable jobs)
 	* @param state the jobState checkpointable event string representation to be logged (it itself contain the jobid)
 	*/
-	void logSync (const  std::string& state ) ;
+	void logSync (const  std::string& state, const std::string& currentStep="1") ;
 	/**
 	* Once the job has been successfully registered, before starting submitting the  START async method has to be called
 	* @param host the Network Server host name

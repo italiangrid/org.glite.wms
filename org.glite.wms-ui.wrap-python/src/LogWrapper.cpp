@@ -133,10 +133,10 @@ void LOG::regist( const std::string& jobid , const std::string& jdl , const std:
    }
    };
 
-void LOG::logSync ( const std::string& state ) {
+void LOG::logSync ( const std::string& state, const std::string& currentStep ) {
        error ="" ;
        error_code= 0 ;
-       if ( edg_wll_LogEventSync( ctx , EDG_WLL_EVENT_CHKPT , EDG_WLL_FORMAT_CHKPT , "1" , state.c_str()  )  ){
+       if ( edg_wll_LogEventSync( ctx , EDG_WLL_EVENT_CHKPT , EDG_WLL_FORMAT_CHKPT , currentStep.c_str() , state.c_str()  )  ){
          if (edg_wll_LogAbort ( ctx ,  state.c_str() )) cerr << "\n\n\nLB - Warning   edg_wll_LogTransferFAIL! ! ! "<<flush;
          char error_message [1024];
          char *msg, *dsc ;

@@ -51,7 +51,7 @@ class LOG {
        ~LOG() ;
        void init ( const String& lb ) ;
        void regist( const String& jobid , const String& jdl , const String& ns ) ;
-       void logSync (const  String& state ) ;
+       void logSync (const  String& state, const  String& step ="1" ) ;
        void log_start (const String& host  , int port , const String& jdl ) ;
        void log_tag (const std::string& attrName  , const std::string& attrValue ) ;
        void log_jobid(const std::string& jobid ) ;
