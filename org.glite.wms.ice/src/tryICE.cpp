@@ -4,6 +4,7 @@
 #include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
@@ -14,7 +15,6 @@
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
-//namespace conf = glite::wms::common::configuration;
 namespace iceUtil = glite::wms::ice::util;
 
 #define USE_STATUS_POLLER true
@@ -38,6 +38,11 @@ int main(int argc, char*argv[]) {
       return 1;
   } 
 
+
+
+  /*****************************************************************************
+   * Initializes configuration manager (that in turn loads configurations)
+   ****************************************************************************/
   iceUtil::iceConfManager::init(argv[1]);
   try{
     iceUtil::iceConfManager::getInstance();
@@ -46,49 +51,113 @@ int main(int argc, char*argv[]) {
     cerr << ex.what() << endl;
     exit(1);
   }
+ 
 
+
+  /*****************************************************************************
+   * Sets the log file
+   ****************************************************************************/
+  util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
+  log4cpp::Category* log_dev = logger_instance->getLogger();
+  log_dev->setPriority( log4cpp::Priority::INFO );
+  logger_instance->setLogfileEnabled( true );
+  string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
+  logger_instance->setLogFile(logfile.c_str());
+//   logger_instance->log(log4cpp::Priority::INFO, 
+// 		       string("Logfile is ["+logfile+"]"), false, false, true);
+  cout << "Logfile is [" << logfile << "]" << endl;
+
+
+  /*****************************************************************************
+   * Gets the distinguished name from the host proxy certificate
+   ****************************************************************************/
   string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
+  string hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+  logger_instance->log(log4cpp::Priority::INFO, 
+		       string("Host proxyfile is [") + hostcert + "]",
+		       true, true, false);
+  //  cout << "Host proxyfile is [" <<hostcert<<"]"<<endl;
+  logger_instance->log(log4cpp::Priority::INFO, 
+		       string("Host DN is ["+hostdn+"]"),
+		       true, true, false);
+  //  cout << "Host DN is ["<<hostdn<<"]"<<endl;
+//   cout << "Initializing jobCache with journal file ["
+//        << iceUtil::iceConfManager::getInstance()->getCachePersistFile() 
+//        << "] and snapshot file ["
+//        << iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot" 
+//        << "]..."<<endl;
+ 
 
-  cout << "Host proxyfile is [" <<hostcert<<"]"<<endl;
 
-  cout << "Initializing jobCache with journal file ["
-       << iceUtil::iceConfManager::getInstance()->getCachePersistFile() 
-       << "] and snapshot file ["
-       << iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot" 
-       << "]..."<<endl;
-  
-  iceUtil::jobCache::setJournalFile(iceUtil::iceConfManager::getInstance()->getCachePersistFile());
-  iceUtil::jobCache::setSnapshotFile(iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot");
+  /*****************************************************************************
+   * Initializes job cache
+   ****************************************************************************/ 
+  string jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
+  string jsnapfile  = iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot";
+  logger_instance->log(log4cpp::Priority::INFO, 
+		       string("Initializing jobCache with journal file ["
+			      +jcachefile 
+			      +"] and snapshot file ["
+			      +jsnapfile+"]..."),
+		       true, true, false);
+  iceUtil::jobCache::setJournalFile(jcachefile);
+  iceUtil::jobCache::setSnapshotFile(jsnapfile);
   
   iceUtil::jobCache::getInstance();
 
+
+  /*****************************************************************************
+   * Initializes ice manager
+   ****************************************************************************/ 
   glite::wms::ice::ice* iceManager;
   try {
     iceManager = new glite::wms::ice::ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
-    cerr << ex.what() <<endl;
+    logger_instance->log(log4cpp::Priority::ERROR, ex.what(), true, true, false);
     exit(1);
   } catch(...) {
-    cerr << "something catched..."<<endl;
+    //cerr << "something catched..."<<endl;
+    logger_instance->log(log4cpp::Priority::ERROR, 
+			 "Catched unknown exception", true, true, false);
     exit(1);
   }
+
+
   
+  /*****************************************************************************
+   * Prepares a vector that will contains requests fetched from input file
+   * list. Its initial capacity is set large enough... to tune...
+   ****************************************************************************/
   vector<string> requests;
   requests.reserve(1000);
+
+
+  
+  /*****************************************************************************
+   * Initializes CREAM client
+   ****************************************************************************/
   soap_proxy::CreamProxyFactory::initProxy(true);
   if(!soap_proxy::CreamProxyFactory::getProxy())
     {
-      cerr << "CreamProxy creation went wrong. Stop"<<endl;
+      logger_instance->log(log4cpp::Priority::ERROR, 
+			   "CreamProxy creation failed! Stop", true, true, false);
       exit(1);
     }
   soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   try {
-    soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert));
+    soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(hostdn);
   } catch(soap_proxy::auth_ex& ex) {
-    cerr << ex.what()<<endl;
+    //cerr << ex.what()<<endl;
+    logger_instance->log(log4cpp::Priority::ERROR, ex.what(), true, true, true);
     exit(1);
   }
+
+
+
+  /*****************************************************************************
+   * Starts status poller and/or listener if specified in the config file
+   ****************************************************************************/
   if(iceUtil::iceConfManager::getInstance()->startListener()) 
     iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
 
@@ -98,43 +167,83 @@ int main(int argc, char*argv[]) {
   vector<string> url_jid;
   url_jid.reserve(2);
   
+  
+  
+  /*****************************************************************************
+   * Main loop that fetch requests from input filelist, submit/cancel the jobs,
+   * removes requests from input filelist.
+   ****************************************************************************/
   while(true) {
     
     iceManager->getNextRequests(requests);
     
+    ostringstream os("");
+    os << "*** Found " << requests.size() << " new request(s)";
+
     if( requests.size() )
-      cout << "************* Found " 
-	   << requests.size() << " new request(s)" << endl;
+      logger_instance->log(log4cpp::Priority::INFO, 
+			   os.str(), 
+			   true, true, false);
+//       cout << "************* Found " 
+// 	   << requests.size() << " new request(s)" << endl;
     
     for(unsigned int j=0; j < requests.size( ); j++) {
-      cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
+      logger_instance->log(log4cpp::Priority::INFO, 
+			   string("*** Unparsing request <"
+				  + requests[j] + ">"), 
+			   true, true, false);
+      //      cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
       glite::wms::ice::iceAbsCommand* cmd = 0;
       try {
 	cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
       }
       catch(std::exception& ex) {
-	cerr << "\tunparse ex: "<<ex.what()<<endl;
-	cout << "\tRemoving BAD request..."<<endl;
+	//cerr << "\tunparse ex: "<<ex.what()<<endl;
+	logger_instance->log(log4cpp::Priority::ERROR,
+			     ex.what(),
+			     true, true, false);
+	//cout << "\tRemoving BAD request..."<<endl;
+	logger_instance->log(log4cpp::Priority::INFO,
+			     "Removing BAD request...",
+			     true, true, false);
 	iceManager->removeRequest(j);
 	continue;
       }
-      cout << "\tUnparse successfull..."<<endl;
+      //cout << "\tUnparse successfull..."<<endl;
       try {
           cmd->execute( );
       } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
-          cerr << "Command execution got FATAL exception: " 
-               << ex.what() << endl;
+	logger_instance->log(log4cpp::Priority::ERROR,
+			     string("Command execution got FATAL exception: ")
+				    +ex.what(),
+			     true, true, false);
+//           cerr << "Command execution got FATAL exception: " 
+//                << ex.what() << endl;
       } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
-          cerr << "Command execution got TRANSIENT exception: " 
-               << ex.what() << endl
-               << "Request will be resubmitted" << endl;
+	logger_instance->log(log4cpp::Priority::ERROR,
+			     string("Command execution got TRANSIENT exception: ")
+				    +ex.what(),
+			     true, true, false);
+	logger_instance->log(log4cpp::Priority::INFO,
+			     "Request will be resubmitted",
+			     true, true, false);
+//           cerr << "Command execution got TRANSIENT exception: " 
+//                << ex.what() << endl
+//                << "Request will be resubmitted" << endl;
           
       }
-      cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
+      logger_instance->log(log4cpp::Priority::INFO,
+			     "Removing submitted request from WM/ICE's filelist...",
+			     true, true, false);
+      //      cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
       try { 
 	iceManager->removeRequest(j);
       } catch(exception& ex) {
-	cerr << "Error removing request from FL: "<<ex.what()<<endl;
+	logger_instance->log(log4cpp::Priority::ERROR,
+			     string("Error removing request from FL: ")
+				    +ex.what(),
+			     true, true, false);
+	//	cerr << "Error removing request from FL: "<<ex.what()<<endl;
 	exit(1);
       }
     }
