@@ -953,12 +953,12 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	
 	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
 	try  {
-		vector<string> returnvector = getDelegatedProxyInfo(
+		/*vector<string> returnvector = getDelegatedProxyInfo(
 			getDelegatedProxyInfo_response, delegation_id);
 		for (unsigned int i = 0; i < returnvector.size(); i++) {
 			list->Item.push_back(returnvector[i]);
 		}
-		response._items = list;
+		response._items = list;*/
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getDelegatedProxyInfo", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());

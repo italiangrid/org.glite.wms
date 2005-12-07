@@ -328,6 +328,46 @@ VOMSAuthZ::getDefaultVO()
 	GLITE_STACK_CATCH();
 }
 
+VOProxyInfoStructType
+VOMSAuthZ::getDefaultVOProxyInfo()
+{
+	GLITE_STACK_TRY("getDefaultVOProxyInfo()");
+	
+	VOProxyInfoStructType proxyinfo;
+	if (this->data) {
+		int error = 0;
+		struct voms * defaultvoms = VOMS_DefaultData(this->data, &error);
+		if (defaultvoms) {
+			proxyinfo.user = defaultvoms->user;
+			proxyinfo.userCA = defaultvoms->userca;
+			proxyinfo.server = defaultvoms->server;
+			proxyinfo.serverCA = defaultvoms->serverca;
+			proxyinfo.voName = defaultvoms->voname;
+			proxyinfo.uri = defaultvoms->uri;
+			proxyinfo.startTime = defaultvoms->date1;
+			proxyinfo.endTime = defaultvoms->date2;
+			
+			vector<string> fqanvector;
+			char **temp;
+    		for (temp = defaultvoms->fqan; *temp; temp++) {
+				fqanvector.push_back(*temp); // = td::vector<std::string> *;
+    		}
+    		
+    		proxyinfo.attribute = &fqanvector;
+		} else {
+			throw AuthorizationException(__FILE__, __LINE__,
+		    	"VOMSAuthZ::getDefaultVOProxyInfo", wmputilities::WMS_AUTHZ_ERROR,
+		    	errormessage(error));
+		}
+		free(defaultvoms);
+	}
+	
+	return proxyinfo;
+	
+	GLITE_STACK_CATCH();
+	
+}
+
 	
 int
 VOMSAuthZ::parseVoms(char * proxypath)

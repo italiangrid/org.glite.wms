@@ -90,6 +90,29 @@ struct DestURIsStructType {
 	std::vector<DestURIStructType*> *Item;
 };
 
+struct VOProxyInfoStructType {
+	std::string user;
+	std::string userCA;
+	std::string server;
+	std::string serverCA;
+	std::string voName;
+	std::string uri;
+	std::string startTime;
+	std::string endTime;
+	std::vector<std::string> *attribute;
+};
+
+struct ProxyInfoStructType {
+	std::string subject;
+	std::string issuer;
+	std::string identity;
+	std::string type;
+	std::string strength;
+	std::string startTime;
+	std::string endTime;
+	std::vector<VOProxyInfoStructType> *vosInfo;
+};
+
 // Response structures
 
 struct getVersionResponse {

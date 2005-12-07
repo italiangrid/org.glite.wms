@@ -31,6 +31,7 @@
 #include "glite/wms/common/configuration/ModuleType.h"
 #include "glite/wms/common/configuration/exceptions.h"
 #include "glite/wms/common/configuration/WMPConfiguration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 
 // fstream
 #include "glite/wms/common/utilities/FileList.h"
@@ -40,17 +41,13 @@
 
 #include "wmpgsoapfaultmanipulator.h"
 
-// Global variables for configuration attributes
+
+// Global variable for configuration
+WMProxyConfiguration conf;
+
+// Global variables for configuration attributes (ENV dependant)
 std::string sandboxdir_global;
-bool asyncstart_global;
-std::pair<std::string, int> lblladdress_port_global;
-std::pair<std::string, int> lbsaddress_port_global;
-std::vector<std::pair<std::string, int> > protocols_global;
-std::string defaultprotocol_global;
-int defaultport_global;
-int httpsport_global;
-bool islbproxyavailable_global;
-int minperusaltimeinterval_global;
+std::string filelist_global;
 
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
@@ -122,37 +119,15 @@ main(int argc, char* argv[])
 		// Initializing signal handler for 'graceful' stop/restart
 		//wmputilities::initsignalhandler();
 		
+		extern WMProxyConfiguration conf;
+		conf = singleton_default<WMProxyConfiguration>::instance();
+		
 		extern std::string sandboxdir_global;
 		sandboxdir_global = "";
-		
-		extern bool asyncstart_global;
-		extern std::string defaultprotocol_global;
-		extern int defaultport_global;
-		extern int httpsport_global;
-		extern bool islbproxyavailable_global;
-		extern int minperusaltimeinterval_global;
-		
-		WMProxyConfiguration conf
-			= singleton_default<WMProxyConfiguration>::instance();
-		asyncstart_global = conf.getAsyncJobStart();
-		
-		std::pair<std::string, int> lblladdress_port_global
-			= conf.getLBLocalLoggerAddressPort();
-		//lblladdress_global = lblladdress_port.first;
-		//lbllport_global = lblladdress_port.second;
-		
-		std::pair<std::string, int> lbsaddress_port_global
-			= conf.getLBServerAddressPort();
-		//lbsaddress_global = lbsaddress_port.first;
-		//lbsport_global = lbsaddress_port.second;
-		
-		protocols_global = conf.getProtocols();
-		defaultprotocol_global = conf.getDefaultProtocol();
-		defaultport_global = conf.getDefaultPort();
-		httpsport_global = conf.getHTTPSPort();
-		
-		islbproxyavailable_global = conf.isLBProxyAvailable();
-		minperusaltimeinterval_global = conf.getMinPerusalTimeInterval();
+		extern std::string filelist_global;
+		filelist_global
+			= configuration::Configuration::instance()->wm()->input();
+			
 		
 		// Running as a Fast CGI application
 		edglog(info)<<"Running as a FastCGI program"<<endl;

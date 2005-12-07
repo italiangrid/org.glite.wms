@@ -25,6 +25,8 @@ extern "C" {
 	#include "glite/security/voms/voms_apic.h"
 }
 
+#include "server/wmpresponsestruct.h"
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -41,6 +43,8 @@ class VOMSAuthZ {
 		std::string getDefaultFQAN();
 		
 		std::string getDefaultVO();
+		
+		VOProxyInfoStructType getDefaultVOProxyInfo();
 		
 	private:
 		struct vomsdata * data;

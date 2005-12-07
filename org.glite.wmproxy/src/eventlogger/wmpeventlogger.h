@@ -91,6 +91,7 @@ class WMPEventLogger  {
 		void logEvent(event_name event, const char* reason, bool retry, bool test,
 			const char* file_queue=NULL, const char* jdl=NULL);
 		bool logAbortEventSync(char *reason);
+		bool logAcceptEventSync();
 
 		void logUserTag(std::string name, const std::string &value);
 		void logUserTags(classad::ClassAd *userTags);

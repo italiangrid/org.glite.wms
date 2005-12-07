@@ -10,11 +10,11 @@
 
 #include <fstream>
 #include <errno.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
 #include <sys/wait.h>
-#include <signal.h>
+#include <sys/file.h> // flock
 
 // Boost
 #include <boost/lexical_cast.hpp>
@@ -88,17 +88,12 @@
 //namespace wmproxy {
 //namespace server {
 	
-// Global variables for configuration attributes
+// Global variables for configuration
+extern WMProxyConfiguration conf;
+extern std::string filelist_global;
+
+// Global variables for configuration attributes (ENV dependant)
 extern std::string sandboxdir_global;
-extern bool asyncstart_global;
-extern std::pair<std::string, int> lblladdress_port_global;
-extern std::pair<std::string, int> lbsaddress_port_global;
-extern std::vector<std::pair<std::string, int> > protocols_global;
-extern std::string defaultprotocol_global;
-extern int defaultport_global;
-extern int httpsport_global;
-extern bool islbproxyavailable_global;
-extern int minperusaltimeinterval_global;
 
 // WMProxy software version
 const std::string WMP_MAJOR_VERSION = "2";
@@ -235,8 +230,8 @@ setGlobalSandboxDir()
 {
 	GLITE_STACK_TRY("setGlobalSandboxDir()");
 	
-	WMProxyConfiguration conf
-		= singleton_default<WMProxyConfiguration>::instance();
+	//WMProxyConfiguration conf
+		//= singleton_default<WMProxyConfiguration>::instance();
 	string sandboxstagingpath = conf.getSandboxStagingPath();
 	
 	if (!getenv(DOCUMENT_ROOT)) {
@@ -283,6 +278,7 @@ setGlobalSandboxDir()
 	
 	GLITE_STACK_CATCH();
 }
+
 
 int
 logRemoteHostInfo()
@@ -886,7 +882,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		string lbaddressport = jad->getString(JDL::LB_ADDRESS);
 		wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 	} else {
-	 	lbaddress_port = lbsaddress_port_global;
+	 	lbaddress_port = conf.getLBServerAddressPort();
 	}
 	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
 	edglog(debug)<<"LB Port: "
@@ -902,8 +898,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Getting Input Sandbox Destination URI
 	//string defaultprotocol = conf.getDefaultProtocol();
 	//int defaultport = conf.getDefaultPort();
-	string dest_uri = wmputilities::getDestURI(stringjid, defaultprotocol_global,
-		defaultport_global);
+	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
+		conf.getDefaultPort());
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 	
 	setAttributes(jad, jid, dest_uri);
@@ -911,13 +907,13 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Initializing logger
 	edglog(debug)<<"Endpoint: "<<wmputilities::getEndpoint()<<endl;
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	lbaddress_port = lblladdress_port_global;
+	lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
 	edglog(debug)<<"LB Port: "
 		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, 
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 			
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -943,6 +939,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	vector<string> jobids;
 	setJobFileSystem(auth, delegatedproxy, stringjid, jobids, renewalproxy);
 	
+	// Writing registered JDL (to start)
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 		jad->toSubmissionString());
 	
@@ -1047,7 +1044,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	JobId *jid = new JobId();
 	
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	std::pair<std::string, int> lbaddress_port = lbsaddress_port_global;
+	std::pair<std::string, int> lbaddress_port = conf.getLBServerAddressPort();
 	
 	// Checking for attribute JDL::LB_ADDRESS
 	if (jad) {
@@ -1055,14 +1052,14 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 			string lbaddressport = jad->getString(JDL::LB_ADDRESS);
 			wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 		} else {
-		 	lbaddress_port = lbsaddress_port_global;
+		 	lbaddress_port = conf.getLBServerAddressPort();
 		}
 	} else {
 		if (dag->hasAttribute(JDL::LB_ADDRESS)) {
 			string lbaddressport = dag->getString(JDL::LB_ADDRESS);
 			wmputilities::parseAddressPort(lbaddressport, lbaddress_port);
 		} else {
-		 	lbaddress_port = lbsaddress_port_global;
+		 	lbaddress_port = conf.getLBServerAddressPort();
 		}
 	}
 	edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
@@ -1081,10 +1078,10 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	lbaddress_port = lblladdress_port_global;
+	lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, 
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 	
 	vector<string> jobids;
 	if (jad) {
@@ -1183,8 +1180,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	dag->setJobIds(jobids);
 	
 	// Getting Input Sandbox Destination URI
-	string dest_uri = wmputilities::getDestURI(stringjid, defaultprotocol_global,
-		defaultport_global);
+	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
+		conf.getDefaultPort());
 	edglog(debug)<<"Destination uri: "<<dest_uri<<endl;
 	setAttributes(dag, jid, dest_uri);
 		
@@ -1226,6 +1223,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	returnpair.first = stringjid;
 	returnpair.second = dag->toString();
 	
+	// Writing registered JDL (to start)
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 		returnpair.second);
 	
@@ -1333,10 +1331,10 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	std::pair<std::string, int> lbaddress_port = lblladdress_port_global;
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -1398,7 +1396,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 			"Unable to start job");
 	}
 	
-	if (asyncstart_global) {
+	if (conf.getAsyncJobStart()) {
 		// Creating SOAP answer
 		if (soap_serve_start(soap)
 				|| (soap->fserveloop && soap->fserveloop(soap))) {
@@ -1482,16 +1480,25 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 			wmplogger.setSequenceCode(const_cast<char*>(seqcode.c_str()));
 			wmplogger.incrementSequenceCode();
-		}
+		} /*else {
+			// Locking lock file to ensure only one start operation is running
+			// at any time for a specific job
+			FILE fd = fopen("/tmp/lockstart");
+			flock(fd, LOCK_EX);
+		}*/
 		
 		// This log is needed as the first step inside submit method
 		// WARNING: DO NOT move it in a different location
-		//TBC do it in sync way??
-		edglog(debug)<<"Registering LOG_ACCEPT"<<std::endl;
-		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
-			"Request successfully registered", true, true);
-		
-		if (asyncstart_global) {
+		edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
+		int error = wmplogger.logAcceptEventSync();
+		if (error) {
+			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
+			throw LBException(__FILE__, __LINE__,
+				"submit()", wmputilities::WMS_LOGGING_ERROR,
+				"unable to complete operation");
+		}
+			
+		if (conf.getAsyncJobStart()) {
 			// \/ Copy environment and restore it right after FCGI_Finish
 			extern char **environ;
 			char ** backupenv = copyEnvironment(environ);
@@ -1502,7 +1509,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		
 		edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
-			"LOG_ENQUEUE_START", "filelist", "JDL");
+			"LOG_ENQUEUE_START", filelist_global.c_str(), "JDL");
 	
 		/*WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 		std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
@@ -1525,7 +1532,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			/*string defaultprotocol = conf.getDefaultProtocol();
 			int defaultport = conf.getDefaultPort();*/
 			string dest_uri = wmputilities::getDestURI(jid->toString(),
-				defaultprotocol_global, defaultport_global);
+				conf.getDefaultProtocol(), conf.getDefaultPort());
 			edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 			
 			// Adding OutputSandboxDestURI attribute
@@ -1572,7 +1579,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
 						time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
 					}
-					time = max(time, minperusaltimeinterval_global);
+					time = max(time, conf.getMinPerusalTimeInterval());
 					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
 					jad->setAttribute(JDL::PU_TIME_INTERVAL, time);
 				}
@@ -1646,8 +1653,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    	JobId subjobid = children[i]->jobid;
 		    	jobidstring = subjobid.toString();
 				
-				dest_uri = getDestURI(jobidstring, defaultprotocol_global,
-					defaultport_global);
+				dest_uri = getDestURI(jobidstring, conf.getDefaultProtocol(),
+					conf.getDefaultPort());
 				edglog(debug)<<"Setting internal attributes for sub job: "
 					<<jobidstring<<endl;
 				edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
@@ -1713,7 +1720,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
 							time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
 						}
-						time = max(time, minperusaltimeinterval_global);
+						time = max(time, conf.getMinPerusalTimeInterval());
 						edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
 							<<endl;
 						nodead.setAttribute(JDL::PU_TIME_INTERVAL, time);
@@ -1783,7 +1790,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		}
 		
 		// \/ To test only, raising an exception
-		string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
+		/*string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
 			+ "PROVAFILE";
 			
 		if (!wmputilities::fileExists(flagfile)) {
@@ -1792,7 +1799,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			throw AuthenticationException(__FILE__, __LINE__,
 				"submit()", wmputilities::WMS_AUTHENTICATION_ERROR,
 				"Unable to set User Proxy for LB context");
-		}
+		}*/
 		// /\
 		
 		wmpmanager::WMPManager manager(&wmplogger);
@@ -1819,16 +1826,16 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	} catch (Exception &exc) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			"LOG_ENQUEUE_FAIL", "filelist", "JDL");
-		if (!asyncstart_global) {
+			"LOG_ENQUEUE_FAIL", filelist_global.c_str(), "JDL");
+		if (!conf.getAsyncJobStart()) {
 			exc.push_back(__FILE__, __LINE__, "submit");
 			throw exc;
 		}
 	} catch (exception &ex) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			"LOG_ENQUEUE_FAIL", "filelist", "JDL");
-		if (!asyncstart_global) {
+			"LOG_ENQUEUE_FAIL", filelist_global.c_str(), "JDL");
+		if (!conf.getAsyncJobStart()) {
 			Exception exc(__FILE__, __LINE__, "submit", 0, "Standard exception: " 
 				+ std::string(ex.what())); 
 			throw exc;
@@ -1942,10 +1949,10 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	std::pair<std::string, int> lbaddress_port = lblladdress_port_global;
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 	
 	// Getting delegated proxy inside job directory
 	string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -1974,7 +1981,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	}
 	response._jobIdStruct = job_id_struct;
 	
-	if (asyncstart_global) {
+	if (conf.getAsyncJobStart()) {
 		// Creating SOAP answer
 		if (soap_serve_submit(soap, response)
 				|| (soap->fserveloop && soap->fserveloop(soap))) {
@@ -2034,10 +2041,10 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
 		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-		std::pair<std::string, int> lbaddress_port = lblladdress_port_global;
+		std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 		wmplogger.init(lbaddress_port.first, lbaddress_port.second, parentjid,
-			defaultprotocol_global, defaultport_global);
-		wmplogger.setLBProxy(islbproxyavailable_global);
+			conf.getDefaultProtocol(), conf.getDefaultPort());
+		wmplogger.setLBProxy(conf.isLBProxyAvailable());
 		
 		// Setting user proxy
 		if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -2062,7 +2069,9 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	}
 	
 	// Getting sequence code from jdl
-	Ad *ad = new Ad(status.getValString(JobStatus::JDL));
+	//Ad *ad = new Ad(status.getValString(JobStatus::JDL));
+	Ad *ad = new Ad();
+	ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
 	string seqcode = "";
 	if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 		seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
@@ -2079,10 +2088,10 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	std::pair<std::string, int> lbaddress_port = lblladdress_port_global;
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -2252,8 +2261,8 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	//vector<pair<std::string, int> > protocols = conf.getProtocols();
 	//int httpsport = conf.getHTTPSPort();
 	
-	vector<string> *uris = wmputilities::getDestURIsVector(protocols_global,
-		httpsport_global, jid);
+	vector<string> *uris = wmputilities::getDestURIsVector(conf.getProtocols(),
+		conf.getHTTPSPort(), jid);
 	getSandboxDestURI_response.path->Item = uris;
 	
 	GLITE_STACK_CATCH();
@@ -2291,10 +2300,10 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	std::pair<std::string, int> lbaddress_port = lblladdress_port_global;
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -2323,7 +2332,7 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
  	
 	for (unsigned int j = 0; j < jids.size(); j++) {
 		vector<string> *uris =
-			wmputilities::getDestURIsVector(protocols_global, httpsport_global, jids[j]);
+			wmputilities::getDestURIsVector(conf.getProtocols(), conf.getHTTPSPort(), jids[j]);
 		
 		DestURIStructType *destURIStruct = new DestURIStructType();
 		destURIStruct->id = jids[j];
@@ -2578,8 +2587,8 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		+ MARADONA_FILE<<endl;
 	if (wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
 		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-		string output_uri = wmputilities::getDestURI(jid, defaultprotocol_global,
-			defaultport_global) + FILE_SEPARATOR + "output";
+		string output_uri = wmputilities::getDestURI(jid, conf.getDefaultProtocol(),
+			conf.getDefaultPort()) + FILE_SEPARATOR + "output";
 		string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
 		edglog(debug)<<"Output URI: " << output_uri <<endl;
 		
@@ -2660,7 +2669,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		
 		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
-		wmplogger.setLBProxy(islbproxyavailable_global);
+		wmplogger.setLBProxy(conf.isLBProxyAvailable());
 		
 		vector<string> params;
 		wmpmanager::WMPManager manager(&wmplogger);
@@ -3148,7 +3157,7 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 		edglog(debug)<<"No drain"<<endl;
 	}
 	//** END
-	
+	//----------------------------
 	long timeleft = authorizer::WMPAuthorizer::getProxyTimeLeft(delegatedproxy);
 	if (timeleft < 0) {
 		timeleft = 0;
@@ -3173,10 +3182,10 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	std::pair<std::string, int> lbaddress_port = lblladdress_port_global;
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		defaultprotocol_global, defaultport_global);
-	wmplogger.setLBProxy(islbproxyavailable_global);
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -3371,9 +3380,9 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	string protocol = defaultprotocol_global;
-	string port = (defaultport_global != 0) ? 
-		boost::lexical_cast<std::string>(defaultport_global) : "";
+	string protocol = conf.getDefaultProtocol();
+	string port = (conf.getDefaultPort() != 0) ? 
+		boost::lexical_cast<std::string>(conf.getDefaultPort()) : "";
 	string serverhost = getServerHost();
 		
 	vector<string> good;

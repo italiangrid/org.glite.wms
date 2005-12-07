@@ -181,11 +181,6 @@ void WMP2WM::submit(classad::ClassAd* cmdAd)
   		(command_ad->Lookup("Arguments"))) -> Lookup ("ad")));
   	jdl.assign(wmsutilities::unparse_classad(*ptr));
   	
-  	// Logging ENQUED START
-	/*edglog(debug)<<"Submit EnQueued START"<<std::endl;
-	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START, "",
-    		(*m_filelist).filename().c_str(), jdl.c_str());*/
-
  	try {
     	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
     	// Take the result of f_forward and do what for LogEnQueued in 

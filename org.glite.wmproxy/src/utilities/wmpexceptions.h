@@ -76,6 +76,12 @@ class GaclException : public JobException {
 		const std::string& method, int code, const std::string& reason);
 };
 
+class LBException : public JobException {
+	public:
+	LBException(const std::string& file, int line,
+		const std::string& method, int code, const std::string& reason);
+};
+
 } // utilities
 } // wmproxy
 } // wms

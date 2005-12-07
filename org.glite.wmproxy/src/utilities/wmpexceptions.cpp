@@ -82,6 +82,13 @@ GaclException::GaclException(const std::string& file,
 	error_message += reason;
 }
 
+LBException::LBException(const std::string& file,
+	int line, const std::string& method, int code, const std::string& reason)
+	: JobException(file, line, method, code, "LBException")
+{
+	error_message += reason;
+}
+
 } // utilities
 } // wmproxy
 } // wms
