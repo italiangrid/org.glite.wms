@@ -45,6 +45,7 @@ class DagWrapper {
         DagWrapper();
         ~DagWrapper();
         bool fromFile ( const String& file  ) ;
+        bool fromString ( const String& jdl  ) ;	
         bool hasKey (const String& attr_name) ;
         String toString ( int level = 0) ;
         vector<String> getSubmissionStrings () ;
@@ -55,7 +56,7 @@ class DagWrapper {
         String getStringValue ( int attr_name ) ;
         int get_error (String& err) ;
 	int size();
-
+	vector<string> getMap ();
  };
 
 
@@ -89,7 +90,7 @@ class AdWrapper {
       vector <string> attributes ( )  ;
       // Get the value of a string attribute:
       vector<string> getStringValue (const String& attr_name)  ;
-      vector<string>getStringList (const String& attr_name)  ;
+      vector<string> getStringList (const String& attr_name)  ;
       // Get the value of an int attribute:
       vector<int> getIntValue (const String& attr_name)  ;
       // Get the value of a boolean attribute:

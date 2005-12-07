@@ -181,6 +181,10 @@ class DagWrapper {
 	* @param file the file where the dag jdl is stored
 	*/
 	bool fromFile ( const std::string& file  ) ;
+	/**load a DagAd wrapper instance from stirng
+	* @param jdl the dagad string representation 
+	*/
+	bool fromString( const std::string& jdl) ;
 	/**Check whether the instance has the specified attribute set
 	*@param attr_name the name of the attribute to be set
 	*/
@@ -215,8 +219,13 @@ class DagWrapper {
 	* @return The string representation for the specified attribute value
 	*/
 	std::string getStringValue ( int attr_name ) ;
-	/** Retrieve number of subjobs */
+	/** Retrieve number of subjobs
+	@return the number of nodes belonging to the dag*/
 	int size();
+	/** Retrieve DagAd Map
+	* a vector of strings in pairs. Each two elements consist in a jobid-node couple
+	*/
+	std::vector<std::string> getMap ();
 	int get_error (std::string& err) ;
    private:
 	glite::wms::jdl::ExpDagAd* dagad ;

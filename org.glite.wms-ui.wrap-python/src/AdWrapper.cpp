@@ -265,6 +265,16 @@ bool DagWrapper::fromFile ( const string& file  ) {
 	return true ;
 }
 /*************
+*   fromString
+*************/
+bool DagWrapper::fromString( const string& jdl){
+	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+		dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+		return false ;
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+	return true ;
+}
+/*************
 *   toString
 *************/
 string DagWrapper::toString ( int level ) {
@@ -373,6 +383,21 @@ int  DagWrapper::size(){
 		return dagad->size();
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
+
+vector<string> DagWrapper::getMap (){
+	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
+	std::map<std::string,std::string> map =dagad->getJobIdMap();
+	std::map<std::string,std::string>::iterator it ;
+	std::vector<std::string>  vect;
+	std::string nodeName;
+	for (it= map.begin();it!=map.end();it++){
+		nodeName = (*it).first;
+		vect.push_back(nodeName);
+		vect.push_back(map[nodeName]);
+	}
+	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
+}
+
 /**************
 * Error Managing
 **************/
