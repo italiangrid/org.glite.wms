@@ -49,6 +49,8 @@ int main(int argc, char*argv[]) {
 
   string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
 
+  cout << "Host proxyfile is [" <<hostcert<<"]"<<endl;
+
   cout << "Initializing jobCache with journal file ["
        << iceUtil::iceConfManager::getInstance()->getCachePersistFile() 
        << "] and snapshot file ["
@@ -81,7 +83,12 @@ int main(int argc, char*argv[]) {
     }
   soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
-  soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert));
+  try {
+    soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert));
+  } catch(soap_proxy::auth_ex& ex) {
+    cerr << ex.what()<<endl;
+    exit(1);
+  }
   if(iceUtil::iceConfManager::getInstance()->startListener()) 
     iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
 
