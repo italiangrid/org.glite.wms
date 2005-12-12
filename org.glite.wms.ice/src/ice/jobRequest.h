@@ -1,6 +1,6 @@
 
-#ifndef __JOBREQ_H__
-#define __JOBREQ_H__
+#ifndef __GLITE_WMS_ICE_JOBREQ_H__
+#define __GLITE_WMS_ICE_JOBREQ_H__
 
 #include "ClassadSyntax_ex.h"
 #include "JobRequest_ex.h"

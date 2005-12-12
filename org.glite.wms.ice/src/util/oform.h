@@ -1,5 +1,5 @@
-#ifndef __OFORM_H__
-#define __OFORM_H__
+#ifndef __GLITE_WMS_ICE_UTIL_OFORM_H__
+#define __GLITE_WMS_ICE_UTIL_OFORM_H__
 
 #include <string>
 

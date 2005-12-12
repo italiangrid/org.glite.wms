@@ -1,5 +1,5 @@
-#ifndef __ICECOMMANDCANCEL_H__
-#define __ICECOMMANDCANCEL_H__
+#ifndef __GLITE_WMS_ICE_ICECOMMANDCANCEL_H__
+#define __GLITE_WMS_ICE_ICECOMMANDCANCEL_H__
 
 #include "iceAbsCommand.h"
 #include "ClassadSyntax_ex.h"

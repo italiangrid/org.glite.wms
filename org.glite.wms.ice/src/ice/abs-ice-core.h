@@ -1,5 +1,5 @@
-#ifndef __ABS_ICE_CORE_H__
-#define __ABS_ICE_CORE_H__
+#ifndef __GLITE_WMS_ICE_ABS_ICE_CORE_H__
+#define __GLITE_WMS_ICE_ABS_ICE_CORE_H__
 
 #include <string>
 #include "creamJob.h"

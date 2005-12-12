@@ -1,6 +1,6 @@
 
-#ifndef __ICEINIT_EX_H__
-#define __ICEINIT_EX_H__
+#ifndef __GLITE_WMS_ICE_ICEINIT_EX_H__
+#define __GLITE_WMS_ICE_ICEINIT_EX_H__
 
 #include <exception>
 #include <string>

@@ -1,5 +1,5 @@
-#ifndef __ICECOMMAND_EX_H__
-#define __ICECOMMAND_EX_H__
+#ifndef __GLITE_WMS_ICE_ICECOMMAND_EX_H__
+#define __GLITE_WMS_ICE_ICECOMMAND_EX_H__
 
 #include <exception>
 #include <string>

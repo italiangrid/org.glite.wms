@@ -1,6 +1,6 @@
 
-#ifndef __ICE_CORE_H__
-#define __ICE_CORE_H__
+#ifndef __GLITE_WMS_ICE_ICE_H__
+#define __GLITE_WMS_ICE_ICE_H__
 
 #include <string>
 #include "abs-ice-core.h"
@@ -16,6 +16,10 @@ typedef glite::wms::common::utilities::FLExtractor<std::string>::iterator FLEit;
 
 namespace boost {
   class thread;
+};
+
+namespace log4cpp {
+  class Category;
 };
 
 namespace glite {
@@ -49,6 +53,8 @@ namespace glite {
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;
 	glite::wms::common::utilities::FileList<std::string> flns;
+
+	log4cpp::Category* log_dev;
 
       public:
 	ice(const std::string& NS_FL, 

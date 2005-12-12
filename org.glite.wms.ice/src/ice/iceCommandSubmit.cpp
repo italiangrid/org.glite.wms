@@ -1,6 +1,7 @@
 #include "iceCommandSubmit.h"
 #include "jobCache.h"
 #include "creamJob.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "boost/algorithm/string.hpp"
@@ -14,8 +15,9 @@ using namespace std;
 using namespace glite::ce::cream_client_api;
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 
+//______________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
-    iceAbsCommand( )
+  iceAbsCommand( ), log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
 {
     // Sample classad:
     // ( this is the NEW version )
@@ -90,13 +92,15 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     boost::trim_if(_gridJobId, boost::is_any_of("\"") );
 }
 
-
+//______________________________________________________________________________
 void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
   try {
     vector<string> url_jid;
 
-    cout << "\tThis request is a Submission..."<<endl;
+    //cout << "\tThis request is a Submission..."<<endl;
+    log_dev->log(log4cpp::Priority::INFO,
+		 "\tThis request is a Submission...");
 
     util::CreamJob theJob( _jdl,
 			   "",
@@ -106,9 +110,14 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     string modified_jdl = creamJdlHelper( _jdl );
     
-    cout << "\tSubmiting JDL " << modified_jdl << " to ["
-	 << theJob.getCreamURL() << "][" << theJob.getCreamDelegURL()
-	 << "]" << endl; 
+//     cout << "\tSubmiting JDL " << modified_jdl << " to ["
+// 	 << theJob.getCreamURL() << "][" << theJob.getCreamDelegURL()
+// 	 << "]" << endl; 
+    log_dev->log(log4cpp::Priority::INFO, "\tSubmitting");
+    log_dev->log(log4cpp::Priority::DEBUG,
+		 string("\tJDL ")+modified_jdl
+		 +" to ["+theJob.getCreamURL()+"]["
+		 +theJob.getCreamDelegURL()+"]");
     
     soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob.getUserProxyCertificate());
     
@@ -123,7 +132,10 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         true /*autostart*/ 
         );
     
-    cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
+    //cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
+    log_dev->log(log4cpp::Priority::INFO,
+		 string("\tReturned CREAM-JOBID ["
+			+url_jid[1]+"]"));
 
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
@@ -160,6 +172,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
   } 
 }
 
+//______________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl )
 {
     classad::ClassAdParser parser;
@@ -194,6 +207,7 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl )
     return newjdl;
 }
 
+//______________________________________________________________________________
 void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 {
     const string default_isbURI = "gsiftp://hostnamedelwms.pd.infn.it/jobISBdir"; // FIXME
@@ -218,7 +232,10 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
     classad::ExprList* isbList;
     if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
         classad::ExprList* newIsbList = new classad::ExprList();
-        cout << "Starting InputSandbox manipulation..." << endl;
+	log_dev->log(log4cpp::Priority::INFO,"\tStarting InputSandbox manipulation...");
+        //cout << "Starting InputSandbox manipulation..." << endl;
+	//	log_dev
+	
         string newPath;
         for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
             
@@ -241,7 +258,9 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
                     break;
                 }                
             }
-            cout << s << " became " << newPath << endl;
+	    log_dev->log(log4cpp::Priority::DEBUG,
+			 string("\t")+s+" became "+newPath);
+	    //            cout << s << " became " << newPath << endl;
             // Builds a new value
             classad::Value newV;
             newV.SetStringValue( newPath );
@@ -252,8 +271,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
     }
 }
 
-
-
+//______________________________________________________________________________
 void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 {
     const string default_osbdURI = "gsiftp://hostnamedelwms.pd.infn.it/jobOSBdir"; // FIXME
@@ -270,7 +288,9 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         classad::ExprList* osbDUList;
         classad::ExprList* newOsbDUList = new classad::ExprList();
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
-            cout << "Starting OutputSandboxDestURI manipulation..." << endl;
+	  //            cout << "Starting OutputSandboxDestURI manipulation..." << endl;
+	  log_dev->log(log4cpp::Priority::INFO,
+		       "\tStarting OutputSandboxDestURI manipulation...");
             string newPath;
             for ( classad::ExprList::iterator it=osbDUList->begin(); 
                   it != osbDUList->end(); it++ ) {
@@ -294,7 +314,9 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                         break;
                     }                
                 }
-                cout << s << " became " << newPath << endl;
+                //cout << s << " became " << newPath << endl;
+		log_dev->log(log4cpp::Priority::DEBUG,
+			     string("\t")+s+" became "+newPath);
                 // Builds a new value
                 classad::Value newV;
                 newV.SetStringValue( newPath );
@@ -318,15 +340,18 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 // URI utility class
 //-----------------------------------------------------------------------------
 iceCommandSubmit::pathName::pathName( const string& p ) :
-    _fullName( p ),
-    _pathType( invalid )
+  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
+  _fullName( p ),
+  _pathType( invalid )
 {
     boost::regex uri_match( "gsiftp://[^/]+(:[0-9]+)?/([^/]+/)*([^/]+)" );
     boost::regex rel_match( "([^/]+/)*([^/]+)" );
     boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
     boost::smatch what;
 
-    cout << "Trying to unparse " << p << endl;
+    //cout << "Trying to unparse " << p << endl;
+    log_dev->log(log4cpp::Priority::INFO,
+		 string("\tTrying to unparse ")+ p );
     if ( boost::regex_match( p, what, uri_match ) ) {
         // is a uri
         _pathType = uri;
@@ -354,8 +379,12 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
             _pathName.append( what[2].first, what[2].second );
         _pathName.append( _fileName );
     }
-    cout << "Unparsed as follows: filename=["
-         << _fileName << "] pathname={"
-         << _pathName << "]" << endl;
+//     cout << "Unparsed as follows: filename=["
+//          << _fileName << "] pathname={"
+//          << _pathName << "]" << endl;
+    log_dev->log(log4cpp::Priority::DEBUG,
+		 string("Unparsed as follows: filename=[")
+		 +_fileName + "] pathname={"
+		 +_pathName+"]");
 }
 

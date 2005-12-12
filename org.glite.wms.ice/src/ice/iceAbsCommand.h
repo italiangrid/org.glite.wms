@@ -1,5 +1,5 @@
-#ifndef __ICEABSCOMMAND_H__
-#define __ICEABSCOMMAND_H__
+#ifndef __GLITE_WMS_ICE_ICEABSCOMMAND_H__
+#define __GLITE_WMS_ICE_ICEABSCOMMAND_H__
 
 #include "ClassadSyntax_ex.h"
 #include "classad_distribution.h"

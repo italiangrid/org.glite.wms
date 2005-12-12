@@ -10,6 +10,8 @@ using namespace glite::wms::ice;
 using namespace std;
 using namespace glite::ce::cream_client_api;
 
+//creamApiLogger::instance()->getLogger();
+
 iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
     iceAbsCommand( )
 {
@@ -60,7 +62,8 @@ void iceCommandCancel::execute( void ) throw ( iceCommandFatal_ex&, iceCommandTr
 {
     log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
 
-    cout << "\tThis request is a Cancel..."<<endl;
+    log_dev->log(log4cpp::Priority::INFO,
+		 "\tThis request is a Cancel...");
 
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
@@ -70,9 +73,11 @@ void iceCommandCancel::execute( void ) throw ( iceCommandFatal_ex&, iceCommandTr
         url_jid[1] = _theJob.getJobID();
         log_dev->log( log4cpp::Priority::INFO,
                       "Removing job gridJobId [" + _gridJobId + "], "
-                      "creamJobId [" + url_jid[1] +"]" );
+                      "creamJobId [" + url_jid[1] +"]");
 
-	cout <<"Sending cancellation requesto to ["<<_theJob.getCreamURL()<<"]"<<endl;
+	log_dev->log( log4cpp::Priority::INFO,
+		      string("Sending cancellation requesto to [")
+		      +_theJob.getCreamURL()+"]");
 
 	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(_theJob.getUserProxyCertificate());
 

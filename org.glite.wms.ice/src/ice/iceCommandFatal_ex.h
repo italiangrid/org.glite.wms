@@ -1,5 +1,5 @@
-#ifndef __ICECOMMANDFATAL_EX_H__
-#define __ICECOMMANDFATAL_EX_H__
+#ifndef __GLITE_WMS_ICE_ICECOMMANDFATAL_EX_H__
+#define __GLITE_WMS_ICE_ICECOMMANDFATAL_EX_H__
 
 #include "iceCommand_ex.h"
 

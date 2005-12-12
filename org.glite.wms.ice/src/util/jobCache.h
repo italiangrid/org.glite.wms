@@ -1,6 +1,6 @@
 
-#ifndef __JOBCACHE_H__
-#define __JOBCACHE_H__
+#ifndef __GLITE_WMS_ICE_UTIL_JOBCACHE_H__
+#define __GLITE_WMS_ICE_UTIL_JOBCACHE_H__
 
 #include <string>
 #include <vector>
@@ -24,6 +24,10 @@
 #define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"
 
 namespace api = glite::ce::cream_client_api;
+
+namespace log4cpp {
+  class Category;
+};
 
 namespace glite {
   namespace wms {
@@ -52,6 +56,9 @@ namespace glite {
            * the existence) of the jobCacheTable should be kept opaque
            * to the user.
            */
+
+	      log4cpp::Category* log_dev;
+
           class jobCacheTable {
           protected:
               std::list< CreamJob > _jobs; ///< Jobs in the jobCacheTable are stored in a list

@@ -1,5 +1,5 @@
-#ifndef __ICECOMMANDFACTORY_H__
-#define __ICECOMMANDFACTORY_H__
+#ifndef __GLITE_WMS_ICE_ICECOMMANDFACTORY_H__
+#define __GLITE_WMS_ICE_ICECOMMANDFACTORY_H__
 
 #include "ClassadSyntax_ex.h"
 #include "JobRequest_ex.h"

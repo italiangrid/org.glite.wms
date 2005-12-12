@@ -16,6 +16,10 @@ namespace glite {
   }
 };
 
+namespace log4cpp {
+  class Category;
+};
+
 namespace glite {
   namespace wms {
     namespace ice {
@@ -52,6 +56,8 @@ namespace glite {
 	  bool getStatus(void);
 	  void updateJobCache(void);
 	  void checkJobs(void);
+
+	  log4cpp::Category* log_dev;
 
 	  //protected:
 
