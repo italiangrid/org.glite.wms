@@ -230,57 +230,119 @@ JobWrapper::perusal_listfileuri(const string& listfileuri)
 
 namespace {
 
-bool 
-dump_bool(std::ostream& os, const std::string& var_name, bool var_value)
+struct other_tag {};
+struct string_tag {};
+struct string_vector_tag {};
+struct other_vector_tag {};
+struct url_tag {};
+
+template<typename T>
+struct item_traits
 {
-  return os << var_name << '=' << (var_value ? 1 : 0) << '\n';
+  typedef other_tag item_category;
+};
+
+template<>
+struct item_traits< std::string > {
+  typedef string_tag item_category;
+};
+
+template<>
+struct item_traits< std::vector<std::string> > {
+  typedef string_vector_tag item_category;
+};
+
+template<typename T>
+struct item_traits< std::vector<T> > {
+  typedef other_vector_tag item_category;
+};
+
+template<>
+struct item_traits< url::URL > {
+  typedef url_tag item_category;
+};
+
+template<typename T>
+bool
+dump(std::ostream& os,
+  const std::string& name,
+  const T& value,
+  const other_tag&)
+{
+  return os << name << '=' << value << '\n';
 }
 
-bool 
-dump_numeric(std::ostream& os, const std::string& var_name, int var_value)
-{
-  return os << var_name << '=' << var_value << '\n';
-}
-
-bool 
-dump_string(std::ostream& os, const std::string& var_name, const std::string& var_value)
-{
-  os << var_name << '=';
-  if (!var_value.empty()) {
-    os << '"' << var_value << '"';
-  }
-  return os << '\n';
-}
-
-bool 
-dump_url(std::ostream& os, const std::string& var_name, const url::URL& url)
-{
-  string str_url = url.as_string(); //m_protocol + "://" + m_host + ((m_port != "") ? ":" + m_port : "")+ m_path;
-  if (str_url[str_url.size() - 1] != '/') {
-    str_url += '/';
-  }
-  return os << var_name << "=\"" << str_url << "\"\n";
-}
-
-bool 
-dump_string_vector(std::ostream& os, const std::string& var_names, std::vector<std::string> const& values)
+template<typename T>
+bool
+dump(std::ostream& os,
+  const std::string& name,
+  const std::vector<T>& values,
+  const other_vector_tag&)
 {
   int i = 0;
 
-  if(values.empty()) {
-    os << "declare -a " << var_names << '\n';
+  for(typename std::vector<T>::const_iterator it = values.begin(); it != values.end() ; ++it )  {
+    os << name << '[' << i << "]=" << *it << "\n";
+    ++i;
   }
-  else {
-    for(std::vector<std::string>::const_iterator it = values.begin(); it != values.end() ; ++it )  {
-      os << var_names << '[' << i << "]=\"" << *it << "\"\n";
-      ++i;
-    }
-  }
+
   return os;
 }
 
 bool
-dump_classad_exprlist(std::ostream& os,
+dump(std::ostream& os,
+  const std::string& name,
+  const std::vector<std::string>& values,
+  const string_vector_tag&)
+{
+  int i = 0;
+
+  if(values.empty()) {
+    os << "declare -a " << name << '\n';
+  }
+  else {
+    for(std::vector<std::string>::const_iterator it = values.begin(); it != values.end() ; ++it )  {
+      os << name << '[' << i << "]=\"" << *it << "\"\n";
+      ++i;
+    }
+  }
+
+  return os;
+}
+
+bool
+dump(std::ostream& os,
+  const std::string& name,
+  const std::string& value,
+  const string_tag&)
+{
+  os << name << '=';
+  if ( !value.empty() ) {
+    os << '"' << value << '"';
+  }
+  return os << '\n';
+}
+
+bool
+dump(std::ostream& os, const std::string& name, const url::URL& url, const url_tag&)
+{
+  std::string str_url = url.as_string();
+  if (str_url[str_url.size() - 1] != '/') {
+    str_url += '/';
+  }
+  return os << name << "=\"" << str_url << "\"\n";
+}
+
+template<typename T>
+bool
+dump(std::ostream& os, const std::string& name, const T& var)
+{
+  typedef typename item_traits<T>::item_category cat;
+  return dump(os, name, var, cat());
+}
+
+bool
+dump_classad_output_data_exprlist(std::ostream& os,
                       std::string var_output_file,
                       std::string var_output_lfn,
                       std::string var_output_se,
@@ -292,7 +354,7 @@ dump_classad_exprlist(std::ostream& os,
 
   if( outputdata != 0 ) {
     for (it = outputdata->begin(); it != outputdata->end(); ++it) {
-      ClassAd* ad = dynamic_cast<ClassAd*>(*it);
+      ClassAd* ad = dynamic_cast< ClassAd* >(*it);
       if (ad != 0) {
         os << var_output_file << '[' << i << "]=\"" << jdl::get_output_file(*ad) << "\"\n";
         os << var_output_lfn << '[' << i << "]=\"" << jdl::get_logical_file_name(*ad, check) << "\"\n";
@@ -314,46 +376,66 @@ dump_classad_exprlist(std::ostream& os,
 bool 
 JobWrapper::dump_vars(std::ostream& os) const
 {
-  return dump_string(os, "__brokerinfo", m_brokerinfo) &&
-    dump_bool(os, "__create_subdir", m_create_subdir) &&
-    dump_string(os, "__gatekeeper_hostname", m_gatekeeper_hostname) &&
-    dump_string(os, "__jobid", m_jobid) &&
-    dump_string(os, "__job", m_job) &&
-    dump_string(os, "__standard_input", m_standard_input) &&
-    dump_string(os, "__standard_output", m_standard_output) &&
-    dump_string(os, "__standard_error", m_standard_error) &&
-    dump_string(os, "__arguments", m_arguments) &&
-    dump_string(os, "__maradonaprotocol", m_maradonaprotocol) &&
-    dump_url(os, "__input_base_url", m_input_base_url) &&
-    dump_string_vector(os, "__input_file", m_input_files) &&
-    dump_url(os, "__output_base_url", m_output_base_url) &&
-    dump_string_vector(os, "__output_file", m_output_files) &&
-    dump_string(os, "__jobid_to_filename", m_jobid_to_filename) &&
-    dump_string(os, "__globus_resource_contact_string", m_globus_resource_contact_string) &&
-    dump_string_vector(os, "__environment", m_environment) &&
-    dump_numeric(os, "__nodes", m_nodes) &&
-    dump_string(os, "__vo", m_vo) &&
-    dump_string(os, "__dsupload", m_dsupload) &&
-    dump_bool(os, "__wmp_support", m_wmp_support) &&
-    dump_string_vector(os, "__wmp_input_file", m_wmp_input_files) &&
-    dump_string_vector(os, "__wmp_input_base_file", m_wmp_input_base_files) &&
-    dump_string_vector(os, "__wmp_output_file", m_wmp_output_files) &&
-    dump_string_vector(os, "__wmp_output_dest_file", m_wmp_output_dest_files) &&
-    dump_string(os, "__token_file", m_token_file) &&
-    dump_bool(os, "__token_support", m_token_support) &&
-    dump_bool(os, "__perusal_support", m_perusal_support) &&
-    dump_numeric(os, "__perusal_timeinterval", m_perusal_timeinterval) &&
-    dump_string(os, "__perusal_filesdesturi", m_perusal_filesdesturi) &&
-    dump_string(os, "__perusal_listfileuri", m_perusal_listfileuri) &&
-    dump_bool(os, "__output_data", m_outputdata != 0) && 
-    dump_classad_exprlist(os, "__output_file", "__output_lfn", "__output_se", m_outputdata);
+  const configuration::WMConfiguration* const wm_config
+    = configuration::Configuration::instance()->wm();
+
+  return dump< std::string >(os, "__brokerinfo", m_brokerinfo) &&
+    dump< bool >(os, "__create_subdir", m_create_subdir) &&
+    dump< std::string >(os, "__gatekeeper_hostname", m_gatekeeper_hostname) &&
+    dump< std::string >(os, "__jobid", m_jobid) &&
+    dump< std::string >(os, "__job", m_job) &&
+    dump< std::string >(os, "__standard_input", m_standard_input) &&
+    dump< std::string >(os, "__standard_output", m_standard_output) &&
+    dump< std::string >(os, "__standard_error", m_standard_error) &&
+    dump< std::string >(os, "__arguments", m_arguments) &&
+    dump< std::string >(os, "__maradonaprotocol", m_maradonaprotocol) &&
+    dump< url::URL >(os, "__input_base_url", m_input_base_url) &&
+    dump< vector<std::string> >(os, "__input_file", m_input_files) &&
+    dump< url::URL >(os, "__output_base_url", m_output_base_url) &&
+    dump< vector<std::string> >(os, "__output_file", m_output_files) &&
+    dump< std::string >(os, "__jobid_to_filename", m_jobid_to_filename) &&
+    dump< std::string >(os, "__globus_resource_contact_string", 
+      m_globus_resource_contact_string
+    ) &&
+    dump< vector<std::string> >(os, "__environment", m_environment) &&
+    dump< int >(os, "__nodes", m_nodes) &&
+    dump< std::string >(os, "__vo", m_vo) &&
+    dump< std::string >(os, "__dsupload", m_dsupload) &&
+    dump< bool >(os, "__wmp_support", m_wmp_support) &&
+    dump< vector<std::string> >(os, "__wmp_input_file", m_wmp_input_files) &&
+    dump< vector<std::string> >(os, "__wmp_input_base_file", 
+      m_wmp_input_base_files
+    ) &&
+    dump< vector<std::string> >(os, "__wmp_output_file", m_wmp_output_files) &&
+    dump< vector<std::string> >(os, "__wmp_output_dest_file", 
+      m_wmp_output_dest_files
+    ) &&
+    dump< std::string >(os, "__token_file", m_token_file) &&
+    dump< bool >(os, "__token_support", m_token_support) &&
+    dump< bool >(os, "__perusal_support", m_perusal_support) &&
+    dump< int >(os, "__perusal_timeinterval", m_perusal_timeinterval) &&
+    dump< std::string >(os, "__perusal_filesdesturi", m_perusal_filesdesturi) &&
+    dump< std::string >(os, "__perusal_listfileuri", m_perusal_listfileuri) &&
+    dump< bool >(os, "__output_data", m_outputdata != 0) &&
+    dump< int >(os, "__max_osb_size",
+      wm_config->job_wrapper_max_output_sandbox_size()
+    ) &&
+    dump< int >(os, "__file_tx_retry_count", 
+      wm_config->job_wrapper_file_tx_retry_count()
+    ) &&
+    dump_classad_output_data_exprlist(os,
+      "__output_file",
+      "__output_lfn",
+      "__output_se",
+      m_outputdata
+    );
 }
 
 bool 
 JobWrapper::fill_out_script(const std::string& template_file, std::ostream& output_stream) const
 {
   std::ifstream fs(template_file.c_str());
-  if (!fs) {
+  if ( !fs ) {
    output_stream << "echo \"Cannot open input file " << template_file << "\"\n";
    return false;
   }
@@ -365,11 +447,11 @@ JobWrapper::fill_out_script(const std::string& template_file, std::ostream& outp
   }
   output_stream << input_line << '\n';
   getline(fs, input_line);
-  if (!input_line.empty()) {
+  if ( !input_line.empty() ) {
     return false;
   }
   output_stream << '\n';
-  if (!dump_vars(output_stream))
+  if ( !dump_vars(output_stream) )
     return false;
   output_stream << '\n';
   output_stream << fs.rdbuf();
@@ -380,13 +462,14 @@ JobWrapper::fill_out_script(const std::string& template_file, std::ostream& outp
 ostream&
 JobWrapper::print(std::ostream& os) const
 {
-  const configuration::WMConfiguration* wm_config
+  const configuration::WMConfiguration* const wm_config
     = configuration::Configuration::instance()->wm();
 
-  if (!fill_out_script( 
+  if ( !fill_out_script( 
                        wm_config->job_wrapper_template_dir() 
                        + 
-                       "/template.sh" ,os) ) {
+                       "/template.sh" ,os) )
+  {
     os << "echo \"Generic error occurred while writing template\"\n";
   }
   
