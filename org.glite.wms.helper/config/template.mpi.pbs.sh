@@ -279,7 +279,8 @@ if [ $__create_subdir -eq 1 ]; then
       || echo $GLITE_WMS_SEQUENCE_CODE`
     export GLITE_WMS_SEQUENCE_CODE
 
-  exit 1
+    exit 1
+  fi
 fi
 cd ".mpi/${newdir}"
 
@@ -296,7 +297,7 @@ if [ ! -w . ]; then
   --exit_code=0\
   || echo $GLITE_WMS_SEQUENCE_CODE`
 
-  exit 1
+ exit 1
 fi
 workdir="`pwd`"
 
