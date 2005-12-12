@@ -75,7 +75,7 @@ namespace utilities {
 	// Linux File Separator 
    	const string FILE_SEP ="/"; 
 #endif 
-  
+
 // gLite environment variables
 const char* GLITE_LOCATION = "GLITE_LOCATION";
 const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
@@ -94,6 +94,7 @@ const std::string USER_PROXY_NAME = "user.proxy";
 const std::string USER_PROXY_NAME_BAK = ".user.proxy.bak";
 
 const std::string JDL_TO_START_FILE_NAME = "JDLToStart";
+const std::string START_LOCK_FILE_NAME = ".startLockFile";
 
 
 vector<string>
@@ -365,6 +366,15 @@ getJobDirectoryPath(jobid::JobId jid, int level)
 	GLITE_STACK_TRY("getJobDirectoryPath()");
 	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
 		+ to_filename(jid, level));
+	GLITE_STACK_CATCH();
+}
+
+string
+getJobStartLockFilePath(jobid::JobId jid, int level)
+{
+	GLITE_STACK_TRY("getJobStartLockFilePath()");
+	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
+		+ to_filename(jid, level) + FILE_SEP + START_LOCK_FILE_NAME);
 	GLITE_STACK_CATCH();
 }
 

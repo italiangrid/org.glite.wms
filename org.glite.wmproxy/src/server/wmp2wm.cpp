@@ -164,8 +164,8 @@ void WMP2WM::submit(classad::ClassAd* cmdAd)
   	edglog_fn("wmp2wm::submit");
   	edglog(debug)<<"Forwarding Submit Request..."<<std::endl;
 
-  	std::string seq_code(wmsutilities::evaluate_expression(*cmdAd,
-  		"Arguments.SeqCode"));
+  	//std::string seq_code(wmsutilities::evaluate_expression(*cmdAd,
+  		//"Arguments.SeqCode"));
   	std::string jdl(wmsutilities::evaluate_expression(*cmdAd, "Arguments.jdl"));
   	boost::scoped_ptr<classad::ClassAd> jdlAd(wmsutilities::parse_classad(jdl));
   	std::string jobid(wmsutilities::evaluate_attribute(*jdlAd, "edg_jobid"));

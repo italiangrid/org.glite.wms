@@ -1472,6 +1472,9 @@ void
 submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	eventlogger::WMPEventLogger &wmplogger, bool issubmit)
 {
+	// File descriptor to control mutual exclusion in start operation
+	int fd = -1; 
+	
 	try {
 		edglog_fn("wmpoperations::submit");
 		
@@ -1480,23 +1483,38 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 			wmplogger.setSequenceCode(const_cast<char*>(seqcode.c_str()));
 			wmplogger.incrementSequenceCode();
-		} /*else {
+		} else {
 			// Locking lock file to ensure only one start operation is running
 			// at any time for a specific job
-			FILE fd = fopen("/tmp/lockstart");
-			flock(fd, LOCK_EX);
-		}*/
+			string lockfile = wmputilities::getJobStartLockFilePath(*jid);
+			edglog(debug)<<"Opening lock file: "<<lockfile<<endl;
+			fd = open(lockfile.c_str(), O_CREAT | O_RDONLY, S_IRWXU);
+			if (fd == -1) {
+				edglog(debug)<<"Unable to open lock file: "<<lockfile<<endl;
+				throw JobOperationException( __FILE__, __LINE__,
+          			"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+           			"unable to open lock file");
+			}
+			if (flock(fd, LOCK_EX | LOCK_NB)) {
+				edglog(debug)<<"Lock file is locked for job: "<<jid->toString()
+					<<endl;
+				close(fd);
+				throw JobOperationException( __FILE__, __LINE__,
+          			"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+           			"start operation already in progress");
+			}
+		}
 		
 		// This log is needed as the first step inside submit method
 		// WARNING: DO NOT move it in a different location
-		edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
+		/*edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
 		int error = wmplogger.logAcceptEventSync();
 		if (error) {
 			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
 			throw LBException(__FILE__, __LINE__,
 				"submit()", wmputilities::WMS_LOGGING_ERROR,
 				"unable to complete operation");
-		}
+		}*/
 			
 		if (conf.getAsyncJobStart()) {
 			// \/ Copy environment and restore it right after FCGI_Finish
@@ -1505,6 +1523,15 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			FCGI_Finish();
 			environ = backupenv;
 			// /\ From here on, execution is asynchronous
+		}
+		
+		edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
+		int error = wmplogger.logAcceptEventSync();
+		if (error) {
+			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
+			throw LBException(__FILE__, __LINE__,
+				"submit()", wmputilities::WMS_LOGGING_ERROR,
+				"unable to complete operation");
 		}
 		
 		edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
@@ -1641,6 +1668,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    vector<JobIdStruct*> children = jobidstruct.children;
 		    
 		    char * seqcode = wmplogger.getSequence();
+		    edglog(debug)<<"_____ SEQCODE: "<<seqcode<<endl;
 		    
 		    //string defaultprotocol = conf.getDefaultProtocol();
 			//int defaultport = conf.getDefaultPort();
@@ -1734,6 +1762,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    		if (type == JDL_JOBTYPE_CHECKPOINTABLE) {
 		    			edglog(debug)<<"Logging checkpointable for subjob: "
 		    				<<jobidstring<<endl;
+		    			// TBC seqcode to use
 		    			wmplogger.setLoggingJob(jobidstring, seqcode);
 		    			logCheckpointable(&wmplogger, &nodead, jobidstring);
 		    		}
@@ -1790,7 +1819,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		}
 		
 		// \/ To test only, raising an exception
-		/*string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
+		/*
+		string flagfile = wmputilities::getJobDirectoryPath(*jid) + FILE_SEPARATOR
 			+ "PROVAFILE";
 			
 		if (!wmputilities::fileExists(flagfile)) {
@@ -1799,7 +1829,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			throw AuthenticationException(__FILE__, __LINE__,
 				"submit()", wmputilities::WMS_AUTHENTICATION_ERROR,
 				"Unable to set User Proxy for LB context");
-		}*/
+		}
+		*/
 		// /\
 		
 		wmpmanager::WMPManager manager(&wmplogger);
@@ -1822,11 +1853,22 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    free(*backupenv);
 	    }
 	    free(*targetEnv);*/
+	    
+	    if (!issubmit) {
+	    	edglog(debug)<<"Removing lock..."<<std::endl;
+		    flock(fd, LOCK_UN);
+		    close(fd);
+	    }
 
 	} catch (Exception &exc) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 			"LOG_ENQUEUE_FAIL", filelist_global.c_str(), "JDL");
+		
+		edglog(debug)<<"Removing lock..."<<std::endl;
+		flock(fd, LOCK_UN);
+	    close(fd);
+		
 		if (!conf.getAsyncJobStart()) {
 			exc.push_back(__FILE__, __LINE__, "submit");
 			throw exc;
@@ -1835,6 +1877,11 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
 			"LOG_ENQUEUE_FAIL", filelist_global.c_str(), "JDL");
+		
+		edglog(debug)<<"Removing lock..."<<std::endl;
+		flock(fd, LOCK_UN);
+	    close(fd);
+	    
 		if (!conf.getAsyncJobStart()) {
 			Exception exc(__FILE__, __LINE__, "submit", 0, "Standard exception: " 
 				+ std::string(ex.what())); 

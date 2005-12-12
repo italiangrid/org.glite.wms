@@ -135,7 +135,7 @@ WMPManager::runCommand(const std::string& cmdname,
 						/*std::string seqcode = wmpeventlogger
 							->getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 						wmpeventlogger->setSequenceCode(const_cast<char*>(seqcode.c_str()));*/
-						wmpeventlogger->incrementSequenceCode();
+						//wmpeventlogger->incrementSequenceCode();
 						//#endif //HAVE_LBPROXY
 						
 			      		char * seq_str = wmpeventlogger->getSequence();

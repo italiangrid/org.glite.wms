@@ -120,6 +120,16 @@ std::string getJobReducedPath(glite::wmsutils::jobid::JobId jid, int level = 0);
  */
 std::string getJobDirectoryPath(glite::wmsutils::jobid::JobId jid, int level = 0);
 
+
+/**
+ * Returns the job start lock file path
+ * @param jid the job identifier of the job
+ * @param level level, default value is 0
+ * @return job directory absolute path
+ */
+std::string getJobStartLockFilePath(glite::wmsutils::jobid::JobId jid,
+	int level = 0);
+	
 /** 
  * Returns the job Input Sandbox directory path
  * @param jid the job identifier of the job
