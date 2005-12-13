@@ -1,12 +1,27 @@
 #!/bin/sh
 
+globus_url_retry_copy()
+{
+  count=0
+  succeded=0
+  while [ $count -le ${__file_tx_retry_count} -a $succeded -eq 0 ];
+  do
+    sleep_time=`expr \( $count \) \* \( $count \)`
+    sleep "$sleep_time"
+    count=`expr $count + 1`
+    globus-url-copy $1 $2
+    succeded=$?
+  done
+  return $succeded
+}
+
 doExit() {
   stat=$1
 
   echo "jw exit status = ${stat}"
   echo "jw exit status = ${stat}" >> "${maradona}"
 
-  globus-url-copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
 
   cd ..
   rm -rf ${newdir}
@@ -180,7 +195,7 @@ function send_partial_file {
     # Retrive the list of files to be monitored
     tmpdemo=`echo $TRIGGERFILE | awk -F "://" '{print $1}'`
     if [ "$tmpdemo" == "gsiftp" ]; then
-      globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
+      globus_url_retry_copy ${TRIGGERFILE} file://${LISTFILE}
     elif [ "$tmpdemo" == "https" ]; then
       htcp ${TRIGGERFILE} file://${file}
     fi
@@ -212,7 +227,7 @@ function send_partial_file {
           tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME
           tmpdemo=`echo $DESTURL | awk -F "://" '{print $1}'`
           if [ "$tmpdemo" == "gsiftp" ]; then
-            globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
+            globus_url_retry_copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
           elif [ "$tmpdemo" == "https" ]; then
             htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
           fi
@@ -336,7 +351,7 @@ umask 022
 if [ $__wmp_support -eq 0 ]; then
   for f in ${__input_file[@]}
   do
-    globus-url-copy "${__input_base_url}${f}" "file://${workdir}/${f}"
+    globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
     if [ $? != 0 ]; then
       echo "Cannot download ${f} from ${__input_base_url}"
       echo "Cannot download ${f} from ${__input_base_url}" >> "${maradona}"
@@ -358,7 +373,7 @@ else
   for f in ${__wmp_input_base_file[@]}
   do
     file=`basename $f`
-    globus-url-copy "${f}" "file://${workdir}/${file}"
+    globus_url_retry_copy "${f}" "file://${workdir}/${file}"
     if [ $? != 0 ]; then
       echo "Cannot download ${file} from ${f}"
       echo "Cannot download ${file} from ${f}" >> "${maradona}"
@@ -397,11 +412,11 @@ else
 fi
 
 for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
-   globus-url-copy "${__input_base_url}opt/glite/bin/${f} file://${workdir}/${f}"
+   globus_url_retry_copy "${__input_base_url}opt/glite/bin/${f} file://${workdir}/${f}"
    chmod +x ${workdir}/${f}
 done
 
-globus-url-copy "{__input_base_url}opt/glite/lib/libglite-wms-grid-console-agent.so.0 file://${workdir}/libglite-wms-grid-console-agent.so.0"
+globus_url_retry_copy "{__input_base_url}opt/glite/lib/libglite-wms-grid-console-agent.so.0 file://${workdir}/libglite-wms-grid-console-agent.so.0"
 
 host=`hostname -f`
 export GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
@@ -494,6 +509,7 @@ echo "job exit status = ${status}" >> "${maradona}"
 
 error=0
 if [ $__wmp_support -eq 0 ]; then
+  file_size_acc=0
   for f in ${__output_file[@]} 
   do
     if [ -r "${f}" ]; then
@@ -503,7 +519,17 @@ if [ $__wmp_support -eq 0 ]; then
       else
        ff=${f##*/}
       fi
-      globus-url-copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+      if [ ${__max_osb_size} -ge 0 ]; then
+        file_size=`stat -t $f | awk '{print $2}'`
+        file_size_acc=`expr $file_size_acc + $file_size`
+        if [ $file_size_acc -le ${__max_osb_size} ]; then
+          globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+        else
+          echo "OSB quota exceeded for file://${workdir}/${f}"
+        fi
+      else
+        globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+      fi
       if [ $? != 0 ]; then
         echo "Cannot upload ${f} into ${__output_base_url}"
         echo "Cannot upload ${f} into ${__output_base_url}" >> "${maradona}"
@@ -523,6 +549,7 @@ if [ $__wmp_support -eq 0 ]; then
   done
 else
   #WMP support
+  file_size_acc=0
   for f in ${__wmp_output_dest_file[@]} 
   do
     file=`basename $f`
@@ -533,7 +560,17 @@ else
       else
        ff=${f##*/}
       fi
-      globus-url-copy "file://${workdir}/${file}" "${f}"
+      if [ ${__max_osb_size} -ge 0 ]; then
+        file_size=`stat -t $f | awk '{print $2}'`
+        file_size_acc=`expr $file_size_acc + $file_size`
+        if [ $file_size_acc -le ${__max_osb_size} ]; then
+          globus_url_retry_copy "file://${workdir}/${file}" "${f}"
+        else
+          echo "OSB quota exceeded for file://${workdir}/${f}"
+        fi
+      else
+          globus_url_retry_copy "file://${workdir}/${file}" "${f}"
+      fi
       if [ $? != 0 ]; then
         echo "Cannot upload ${file} into ${f}"
         echo "Cannot upload ${file} into ${f}" >> "${maradona}"
