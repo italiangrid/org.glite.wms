@@ -272,8 +272,8 @@ if [ -z "${EDG_WL_LOCATION}" ]; then
   export EDG_WL_LOCATION="${EDG_LOCATION:-/opt/edg}"
 fi
 
-LB_LOGEVENT="${GLITE_WMS_LOCATION}/bin/glite-lb-logevent"
-if [ ! -f \"$LB_LOGEVENT\" ]; then
+LB_LOGEVENT=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
+if [ ! -f "$LB_LOGEVENT" ]; then
   LB_LOGEVENT="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
 
@@ -578,11 +578,11 @@ else
         export GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
          --jobid="$GLITE_WMS_JOBID" \
          --source=LRMS \
-         --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-         --event="Done"\
-         --reason="Cannot upload ${file} into ${f}"\
-         --status_code=FAILED\
-         --exit_code=0\
+         --sequence="$GLITE_WMS_SEQUENCE_CODE" \
+         --event="Done" \
+         --reason="Cannot upload ${file} into ${f}" \
+         --status_code=FAILED \
+         --exit_code=0 \
          || echo $GLITE_WMS_SEQUENCE_CODE`
         doExit 1
       fi
@@ -590,13 +590,13 @@ else
   done
 fi
 
-export GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
+export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT \
  --jobid="$GLITE_WMS_JOBID" \
  --source=LRMS \
- --sequence="$GLITE_WMS_SEQUENCE_CODE"\
- --event="Done"\
- --status_code=OK\
- --exit_code=$status\
+ --sequence="$GLITE_WMS_SEQUENCE_CODE" \
+ --event="Done" \
+ --status_code=OK \
+ --exit_code=$status \
  || echo $GLITE_WMS_SEQUENCE_CODE`
 
 if [ -n "${LSB_JOBID}" ]; then
