@@ -38,6 +38,8 @@ class VOMSAuthZ {
 		VOMSAuthZ(const std::string &proxypath);
 		~VOMSAuthZ();
 		
+		bool hasVOMSExtension();
+		
 		char * getDN();
 		
 		std::string getDefaultFQAN();
@@ -46,7 +48,12 @@ class VOMSAuthZ {
 		
 		VOProxyInfoStructType getDefaultVOProxyInfo();
 		
+		ProxyInfoStructType getProxyInfo();
+		
+		static time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
+
 	private:
+		X509 * cert;
 		struct vomsdata * data;
 		
 		int parseVoms(char * proxypath);

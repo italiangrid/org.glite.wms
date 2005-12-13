@@ -506,10 +506,10 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN());
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize();
 	}
 	
@@ -1308,11 +1308,11 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	//delete auth;
@@ -1668,7 +1668,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    vector<JobIdStruct*> children = jobidstruct.children;
 		    
 		    char * seqcode = wmplogger.getSequence();
-		    edglog(debug)<<"_____ SEQCODE: "<<seqcode<<endl;
+		    edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
 		    
 		    //string defaultprotocol = conf.getDefaultProtocol();
 			//int defaultport = conf.getDefaultPort();
@@ -1955,10 +1955,10 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN());
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize();
 	}
 	
@@ -2066,11 +2066,11 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	delete auth;
@@ -2292,11 +2292,12 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", jid);
 	}
 	delete auth;
@@ -2335,11 +2336,11 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", jid);
 	}
 	delete auth;
@@ -2579,11 +2580,11 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", jid);
 	}
 	delete auth;
@@ -2616,11 +2617,11 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, jid);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), jid);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", jid);
 	}
 	delete auth;
@@ -2775,10 +2776,10 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN());
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize();
 	}
 	delete auth;
@@ -2990,11 +2991,11 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	delete auth;
@@ -3048,11 +3049,11 @@ addACLItems(addACLItemsResponse &addACLItems_response, const string &job_id,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	delete auth;
@@ -3113,11 +3114,11 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	delete auth;
@@ -3184,10 +3185,10 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN());
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize();
 	}
 	delete auth;
@@ -3327,11 +3328,11 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	delete auth;
@@ -3392,11 +3393,11 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	try {
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
 		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-	} catch (NotAVOMSProxyException &navp) {
+	} else {
 		auth->authorize("", job_id);
 	}
 	delete auth;

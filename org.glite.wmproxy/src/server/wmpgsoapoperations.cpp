@@ -948,17 +948,11 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	
 	int return_value = SOAP_OK;
 	
-	ns1__StringList *list = new ns1__StringList();
-	list->Item = *(new vector<string>);
-	
 	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
 	try  {
-		/*vector<string> returnvector = getDelegatedProxyInfo(
-			getDelegatedProxyInfo_response, delegation_id);
-		for (unsigned int i = 0; i < returnvector.size(); i++) {
-			list->Item.push_back(returnvector[i]);
-		}
-		response._items = list;*/
+		getDelegatedProxyInfo(getDelegatedProxyInfo_response, delegation_id);
+		response._items =
+			convertToGSOAPProxyInfoStructType(getDelegatedProxyInfo_response.items);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getDelegatedProxyInfo", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());

@@ -787,6 +787,7 @@ WMPAuthorizer::compareDN(char * dn1, char * dn2)
 	#endif
 
 }
+
 bool
 WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 {
@@ -937,7 +938,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 
 
 
-
+/*
 // private method: converts ASN1_UTCTIME to time_t
 time_t 
 ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
@@ -968,7 +969,7 @@ ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 #undef g2
 
     return timegm(&tm)-offset*60;
-}
+}*/
 
 #ifndef GLITE_GACL_ADMIN
 
@@ -994,7 +995,7 @@ WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHZ_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
-			timeleft = (ASN1_UTCTIME_get(X509_get_notAfter(x)) - time(NULL))
+			timeleft = (VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notAfter(x)) - time(NULL))
 				/ 60;
 			free(x);
 		} else {
@@ -1040,7 +1041,7 @@ WMPAuthorizer::getNotBefore(const string &pxfile)
 			    	"VOMSAuthZ::getProxyTimeLeft", wmputilities::WMS_AUTHZ_ERROR,
 			    	"Proxy file doesn't exist or has bad permissions");
       		}
-			sec = ASN1_UTCTIME_get(X509_get_notBefore(x));
+			sec = VOMSAuthZ::ASN1_UTCTIME_get(X509_get_notBefore(x));
 			free(x);
 		} else {
 			BIO_free(in);

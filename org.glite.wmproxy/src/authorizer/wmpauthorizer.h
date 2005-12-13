@@ -74,14 +74,16 @@ public:
      * @param certfqan user certificate FQAN
      * @param jobid the job identifier
      */
-    void authorize(const std::string &certfqan = "", const std::string &jobid = "");
+    void authorize(const std::string &certfqan = "",
+    	const std::string &jobid = "");
     
     /**
      * Returns a vector containing the fields of the input fqan
      * @param fqan input fqan
      * @return  the fqan vector
      */
-static std::vector<std::pair<std::string,std::string> > parseFQAN(const std::string &fqan);
+	static std::vector<std::pair<std::string,std::string> >
+		parseFQAN(const std::string &fqan);
 	/**
 	 * Compares two user Distinguished Names in order to see if they are equal.
 	 * different OpenSSL library versions use a different way to represent DN;
@@ -100,7 +102,8 @@ static std::vector<std::pair<std::string,std::string> > parseFQAN(const std::str
      * @param reffqan referring fqan
      * @return true if the in_ fqan is contained in ref_fqan
      */
-    static bool compareFQAN(const std::string &infqan, const std::string &reffqan);
+    static bool compareFQAN(const std::string &infqan,
+    	const std::string &reffqan);
 
     /**
      * Creates the gacl files in the user job directories for the job identified

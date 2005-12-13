@@ -30,6 +30,15 @@ GraphStructType* convertFromGSOAPGraphStructType(
 
 StringList * convertToStringList(ns1__StringList *ns1_string_list);
 
+ns1__VOProxyInfoStructType * convertToGSOAPVOProxyInfoStructType(
+	VOProxyInfoStructType *voproxyinfo);
+	
+std::vector<ns1__VOProxyInfoStructType*> convertToGSOAPVOProxyInfoStructType(
+	std::vector<VOProxyInfoStructType*> voproxyinfovector);
+
+ns1__ProxyInfoStructType * convertToGSOAPProxyInfoStructType(ProxyInfoStructType
+	*proxyinfo);
+
 std::vector<JobIdStructType*> * convertJobIdStruct(
 	std::vector<glite::wms::jdl::JobIdStruct*> &job_struct);
 

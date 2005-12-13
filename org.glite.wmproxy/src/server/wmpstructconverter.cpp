@@ -121,7 +121,8 @@ convertFromGSOAPGraphStructType(ns1__GraphStructType *graph_struct_type)
  * Converts a ns1__StringList pointer to StringList pointer
  */
 StringList *
-convertToStringList(ns1__StringList *ns1_string_list) {
+convertToStringList(ns1__StringList *ns1_string_list) 
+{
 	StringList *string_list = new StringList();
 	string_list->Item = new vector<string>();
 	if (ns1_string_list) {
@@ -130,6 +131,65 @@ convertToStringList(ns1__StringList *ns1_string_list) {
 		}
 	}
 	return string_list;
+}
+
+/**
+ * Converts a ns1__VOProxyInfoStructType pointer to VOProxyInfoStructType pointer
+ */
+ns1__VOProxyInfoStructType *
+convertToGSOAPVOProxyInfoStructType(VOProxyInfoStructType *voproxyinfo)
+{
+	ns1__VOProxyInfoStructType * ns1_vo_proxy_info = NULL;
+	if (voproxyinfo) {
+		ns1_vo_proxy_info = new ns1__VOProxyInfoStructType();
+		ns1_vo_proxy_info->User = voproxyinfo->user;
+		ns1_vo_proxy_info->UserCA = voproxyinfo->userCA;
+		ns1_vo_proxy_info->Server = voproxyinfo->server;
+		ns1_vo_proxy_info->ServerCA = voproxyinfo->serverCA;
+		ns1_vo_proxy_info->VOName = voproxyinfo->voName;
+		ns1_vo_proxy_info->URI = voproxyinfo->uri;
+		ns1_vo_proxy_info->StartTime = voproxyinfo->startTime;
+		ns1_vo_proxy_info->EndTime = voproxyinfo->endTime;
+		ns1_vo_proxy_info->Attribute = voproxyinfo->attribute;
+	}
+	return ns1_vo_proxy_info;
+}
+
+/**
+ * Converts a ns1__VOProxyInfoStructType vector pointer to VOProxyInfoStructType
+ * vector pointer
+ */
+vector<ns1__VOProxyInfoStructType*>
+convertToGSOAPVOProxyInfoStructType(vector<VOProxyInfoStructType*> voproxyinfovector)
+{
+	vector<ns1__VOProxyInfoStructType*> ns1_vo_proxy_info_vector;
+	for (unsigned int i = 0; i < voproxyinfovector.size(); i++) {
+		ns1_vo_proxy_info_vector.push_back(
+			convertToGSOAPVOProxyInfoStructType(voproxyinfovector[i]));
+	}
+	return ns1_vo_proxy_info_vector;
+}
+
+/**
+ * Converts a ns1__ProxyInfoStructType pointer to ProxyInfoStructType
+ */
+ns1__ProxyInfoStructType *
+convertToGSOAPProxyInfoStructType(ProxyInfoStructType *proxyinfo)
+{
+	ns1__ProxyInfoStructType *ns1_proxy_info = NULL;
+	if (proxyinfo) {
+		ns1_proxy_info = new ns1__ProxyInfoStructType();
+		ns1_proxy_info->Subject = proxyinfo->subject;
+		ns1_proxy_info->Issuer = proxyinfo->issuer;
+		ns1_proxy_info->Identity = proxyinfo->identity;
+		ns1_proxy_info->Type = proxyinfo->type;
+		ns1_proxy_info->Strength = proxyinfo->strength;
+		ns1_proxy_info->StartTime = proxyinfo->startTime;
+		ns1_proxy_info->EndTime = proxyinfo->endTime;
+		ns1_proxy_info->VOsInfo =
+			convertToGSOAPVOProxyInfoStructType(proxyinfo->vosInfo);
+	}
+	return ns1_proxy_info;
 }
 
 

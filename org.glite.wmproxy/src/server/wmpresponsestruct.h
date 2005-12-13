@@ -99,7 +99,7 @@ struct VOProxyInfoStructType {
 	std::string uri;
 	std::string startTime;
 	std::string endTime;
-	std::vector<std::string> *attribute;
+	std::vector<std::string> attribute;
 };
 
 struct ProxyInfoStructType {
@@ -110,7 +110,7 @@ struct ProxyInfoStructType {
 	std::string strength;
 	std::string startTime;
 	std::string endTime;
-	std::vector<VOProxyInfoStructType> *vosInfo;
+	std::vector<VOProxyInfoStructType*> vosInfo;
 };
 
 // Response structures
@@ -204,7 +204,7 @@ struct removeACLItemResponse {
 };
 
 struct getDelegatedProxyInfoResponse {
-	StringList *items;
+	ProxyInfoStructType *items;
 };
 
 struct enableFilePerusalResponse {

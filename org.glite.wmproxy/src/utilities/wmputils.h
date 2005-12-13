@@ -12,6 +12,7 @@
 #define GLITE_WMS_WMPROXY_UTILITIES_WMPUTILS_H
 
 #include <vector>
+//#include <openssl/x509.h> // ASN1_UTCTIME
 
 #include "glite/wmsutils/jobid/JobId.h"
 
@@ -251,9 +252,11 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
 std::vector<std::pair<std::string, std::string> > 
 	parseFQANPair(const std::string &fqan);
 
+//std::time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
+
 const std::string cleanString(std::string str);
-const std::string toLower ( const std::string &src);
-void split (const std::string &field, std::string &label, std::string &value);
+const std::string toLower(const std::string &src);
+void split(const std::string &field, std::string &label, std::string &value);
 
 
 //
