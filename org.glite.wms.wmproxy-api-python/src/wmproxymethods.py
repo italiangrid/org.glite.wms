@@ -309,6 +309,7 @@ class Wmproxy:
 		IN =  jdl (string)
 		IN =  delegationId (string)
 		OUT = CEIdAndRankList (StringAndLongList)
+
 		return the list of CE Ids satisfying the job Requirements specified in the JDL,
 		ordered according to the decreasing Rank.
 		"""
@@ -332,6 +333,7 @@ class Wmproxy:
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
+
 		return a JDL template for a collection of jobs, that is a set of independent jobs that can be submitted,
 		controlled and monitored as a single entity.
 		"""
@@ -349,6 +351,7 @@ class Wmproxy:
 		"""
 		Method:  jobPurge
 		IN =  jobId (string)
+
 		Remove from the WM managed space all files related to the  job identified by the jobId provided as input.
 		This only applies to job related files that are managed by the WM.
 		E.g. Input/Output sandbox files that have been specified in the JDL through a URI will be not subjected to this management.
@@ -367,6 +370,7 @@ class Wmproxy:
 		"""
 		Method:  jobStart
 		IN =  jobId (string)
+
 		Trigger the submission a previously registered job.
 		It starts the actual processing of the registered job within the Workload Manager.
 		It is assumed that when this operation is called, all the work preparatory to the job
@@ -396,6 +400,7 @@ class Wmproxy:
 		Method:  addACLItems
 		IN =  jobId (string)
 		IN =  items (StringList)
+
 		This operations adds a list of items to the job Access Control List.
 		Items Already present will be ignored.
 		"""
@@ -415,6 +420,7 @@ class Wmproxy:
 		Method:  getACLItems
 		IN =  jobId (string)
 		OUT = a list of strings containing the ACL Items to add.
+
 		This operation returns the list of the Items contained in the job Access Control List
 		present inside the Gacl authorization file specific fo the job.
 		"""
@@ -433,6 +439,7 @@ class Wmproxy:
 		Method:  getSandboxBulkDestURI
 		IN =  jobId (string)
 		OUT = A dictonary containing, for each jobid (string), its destUris in all available protocols (list of strings)
+
 		This operation returns the list of destination URIs associated to a compound job
 		(i.e. a DAG a Collection or a parametric jobs) and all of its sub-jobs in a vector of structures each one containing:
 		- the job id
@@ -471,6 +478,7 @@ class Wmproxy:
 		TBD test better
 		IN =  jobId (string)
 		OUT = dstUri in all available protocols( list of strings)
+
 		This operation returns a destination URI associated to the job, identified by the jobId provided as input,
 		where the job input sandbox files can be uploaded by the client on the WMS node.
 		The location is created in the storage managed by the WM and the corresponding URI is returned to the operation caller if no problems has been arised during creation.
@@ -500,6 +508,7 @@ class Wmproxy:
 		"""
 		Method:  jobCancel
 		IN =  jobId (string)
+
 		This operation cancels a previously submitted job identified by its JobId.
 		If the job is still maaged by the WM then it is removed from the WM tasks queue. If the job has been already sent to the CE,
 		the WM simply forwards the request to the CE.
@@ -524,6 +533,7 @@ class Wmproxy:
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
+
 		This operation returns a JDL template for a parametric of job, which is a job having one or more parametric attributes in the JDL.
 		The parametric attributes vary their values according to the "Parameter" attribute specified in the JDL itself
 		(in this case the parametere has to be a list of strings).
@@ -549,6 +559,7 @@ class Wmproxy:
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
+
 		This operation returns a JDL template for the requested job type.
 		"""
 		raise ApiException("getJobTemplate","not yet supported")
@@ -567,6 +578,7 @@ class Wmproxy:
 		Method:  getFreeQuota
 		OUT = softLimit (long)
 		OUT = hardLimit (long)
+
 		return a dictionary with soft&hard Limits
 		This operation returns the remaining free part of available user disk quota (in bytes).
 		"""
@@ -583,15 +595,16 @@ class Wmproxy:
 	def putProxy(self, delegationID, proxy, ns =""):
 		"""
 		Method:  putProxy
+		IN =  delegationID (string)
+		IN =  ns  if namespace different from currently used,
+			only this method will be affected
+		IN =  proxy (string)
+
 		ProxyOperationException: Proxy exception: Provided delegation id not valid
 		WARNING: for backward compatibility putProxy is provided with both namespaces:
 		defaultWmproxy namespace for WMPROXY servers (version <= 1.x.x)
 		gridsite namespace for WMPROXY servers (version > 1.x.x)
 		see getDefaultProxy() and  getDefaultNs() methods
-		IN =  delegationID (string)
-		IN =  ns  if namespace different from currently used,
-			only this method will be affected
-		IN =  proxy (string)
 		This operation finishes the delegation procedure by sending the signed proxy certificate to the server.
 		"""
 		try:
@@ -611,14 +624,15 @@ class Wmproxy:
 	def getProxyReq(self, delegationID, ns =""):
 		"""
 		Method:  getProxyReq
-		WARNING: for backward compatibility getProxyReq is provided with both namespaces:
-		defaultWmproxy namespace for WMPROXY servers (version <= 1.x.x)
-		gridsite namespace for WMPROXY servers (version > 1.x.x)
-		see getDefaultProxy() and  getDefaultNs() methods
 		IN =  delegationID (string)
 		IN =  ns  if namespace different from currently used,
 			only this method will be affected
 		OUT = request (string)
+
+		WARNING: for backward compatibility getProxyReq is provided with both namespaces:
+		defaultWmproxy namespace for WMPROXY servers (version <= 1.x.x)
+		gridsite namespace for WMPROXY servers (version > 1.x.x)
+		see getDefaultProxy() and  getDefaultNs() methods
 		This operation starts the delegation procedure by asking for a certificate signing request from the server.
 		The server answers with a certificate signing request which includes the public key for the new delegated credentials.
 		"""
@@ -639,6 +653,7 @@ class Wmproxy:
 		"""
 		Method:  getVersion
 		OUT = version (string)
+
 		This operation gets the version of the service.
 		Format of the version string is "major.minor.patch"
 		"""
@@ -662,6 +677,7 @@ class Wmproxy:
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
+
 		This operation returns a JDL template for a parametric of job, which is a job having one or more parametric attributes in the JDL.
 		The parametric attributes vary their values according to the "Parameter" attribute specified in the JDL itself
 		(in this case the parametere has to be an integer).
@@ -685,6 +701,7 @@ class Wmproxy:
 		IN =  requirements (string)
 		IN =  rank (string)
 		OUT = jdl (string)
+
 		This operation returns a JDL template for a DAG.
 		"""
 		raise ApiException("getDAGTemplate","not yet supported")
@@ -704,6 +721,7 @@ class Wmproxy:
 		IN =  jdl (string)
 		IN =  delegationId (string)
 		OUT = jobIdStruct (JobIdStruct)
+
 		This operation submits a job. The JDL description of the job provided by the client is validated by the service, registered to the LB and finally passed to the Workload Manager.
 		The unique identifier assigned to the job is returned to the client.
 		This operation assumes that all the work preparatory to the job
@@ -732,6 +750,7 @@ class Wmproxy:
 		IN =  jdl (string)
 		IN =  delegationId (string)
 		OUT = jobIdStruct (JobIdStruct)
+
 		This operation registers a job for submission. The JDL description of the job provided by the client is first validated by the service and then registered to the LB.
 		The unique identifier assigned to the job is returned to the client.
 		Note that this operation only registers the job and assign it with an identifier.
@@ -758,6 +777,7 @@ class Wmproxy:
 		Method (not yet supported):  removeACLItem
 		IN =  jobId (string)
 		IN =  item (string)
+
 		This operation remove an item from the job Access Control List. Removal of the item representing the user that has registered the job are not allowed
 		(a fault will be returned to the caller).
 		"""
@@ -776,6 +796,7 @@ class Wmproxy:
 		"""
 		Method:  getMaxInputSandboxSize
 		OUT = size (long)
+
 		This operation returns the maximum Input sandbox size (in bytes) a user can count-on for a job submission if using the space managed by the WM.
 		This is a static value in the WM configuration (on a job-basis) set by the VO administrator.
 		No assumption should be made on the input sandboxes space managed by the WM. It is managed  transparently to the user; it can be either local to the WM or remote.
@@ -796,6 +817,7 @@ class Wmproxy:
 		AuthorizationException: LCMAPS failed to map user credential
 		OUT = softLimit (long)
 		OUT = hardLimit (long)
+
 		This operation returns the available user space quota on the storage managed by the WM.
 		The fault GetQuotaManagementFault is returned if the quota management is not active on the WM.
 		"""
@@ -814,6 +836,7 @@ class Wmproxy:
 		Method:  getOutputFileList
 		IN =  jobId (string)
 		OUT = OutputFileAndSizeList (StringAndLongList)
+
 		This operation returns the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
 		This only applies for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
 		"""
@@ -832,6 +855,7 @@ class Wmproxy:
 		Method:  getDelegatedProxyInfo
 		IN =  jobId (string)
 		OUT = list of strings containing Delegated Proxy information
+
 		This operation returns the Delegated Proxy information
 		"""
 		try:
@@ -851,6 +875,7 @@ class Wmproxy:
 		IN =  file (string)
 		IN =  allChunks (boolean)
 		OUT = fileList (StringList)
+
 		This operation gets the URIs of perusal files generated during job execution for the specified file file.
 		If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
 		previous getPerusalFiles operation. Default value is false.
@@ -882,6 +907,7 @@ class Wmproxy:
 		Method: enableFilePerusal
 		IN =  jobId (string)
 		IN =  fileList (StringList)
+
 		This operation enables file perusal functionalities if not disabled with the specific jdl attribute during job register operation.
 		Calling this operation, the user enables perusal for job identified by jobId, for files specified with fileList.
 		An empty fileList disables perusal.
