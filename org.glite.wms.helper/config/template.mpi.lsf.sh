@@ -466,7 +466,7 @@ done
 
 for i in `cat $HOSTFILE`; do
   ssh "${i} mkdir -p `pwd`"
-  /usr/bin/scp -rp "./* ${i}:`pwd`"
+  /usr/bin/scp -rp ./* "${i}:`pwd`"
   ssh "${i} chmod 755 `pwd`/${__job}"
 done
 
@@ -616,4 +616,3 @@ if [ -n "${PBS_JOBID}" ]; then
 fi
 
 doExit 0
-

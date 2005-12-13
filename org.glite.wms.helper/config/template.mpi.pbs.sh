@@ -462,7 +462,7 @@ fi
 HOSTFILE=${PBS_NODEFILE}
 for i in `cat $HOSTFILE`; do
   ssh "${i} mkdir -p `pwd`"
-  /usr/bin/scp -rp "./* ${i}:`pwd`"
+  /usr/bin/scp -rp ./* "${i}:`pwd`"
   ssh "${i} chmod 755 `pwd`/${__job}"
 done
 
