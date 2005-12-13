@@ -279,7 +279,7 @@ fi
 
 if [ ${__create_subdir} -eq 1 ]; then
   newdir="${__jobid_to_filename}"
-  mkdir -p ".mpi/${newdir}"
+  mkdir -p .mpi/${newdir}
   if [ $? != 0 ]; then
     echo "Cannot create .mpi/${newdir} directory"
 
@@ -297,7 +297,7 @@ if [ ${__create_subdir} -eq 1 ]; then
     exit 1
   fi
 fi
-cd ".mpi/${newdir}"
+cd .mpi/${newdir}
 
 if [ ! -w . ]; then
   echo "Working directory not writable"
@@ -501,6 +501,42 @@ if [ -n "${__standard_error}" ]; then
 else
   cmd_line="$cmd_line 2 > /dev/null"
 fi
+
+(
+  perl -e '
+    unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
+      $SIG{"TTIN"} = "IGNORE";
+      $SIG{"TTOU"} = "IGNORE";
+      setpgrp(0, 0);
+    }
+    exec(@ARGV);
+    warn "could not exec $ARGV[0]: $!\n";
+    exit(127);
+  ' "$cmd_line" &
+
+  user_job=$!
+
+  exec 2> /dev/null
+
+  perl -e '
+    while (1) {
+      $time_left = `grid-proxy-info -timeleft 2> /dev/null` || 0;
+      last if ($time_left <= 0);
+      sleep($time_left);
+    }
+    kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
+    exit(1);
+    ' &
+
+  watchdog=$!
+
+  wait $user_job
+  status=$?
+
+  kill -9 $watchdog $user_job -$user_job
+
+  exit $status
+)
 
 status=$?
 
