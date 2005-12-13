@@ -277,7 +277,7 @@ if [ ! -f "$LB_LOGEVENT" ]; then
   LB_LOGEVENT="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
 
-if [ $__create_subdir -eq 1 ]; then
+if [ ${__create_subdir} -eq 1 ]; then
   newdir="${__jobid_to_filename}"
   mkdir -p ".mpi/${newdir}"
   if [ $? != 0 ]; then
@@ -288,7 +288,7 @@ if [ $__create_subdir -eq 1 ]; then
       --source=LRMS \
       --sequence="$GLITE_WMS_SEQUENCE_CODE"\
       --event="Done"\
-      --reason="Cannot create ".mpi/"${newdir} directory"\
+      --reason="Cannot create .mpi/${newdir} directory"\
       --status_code=FAILED\
       --exit_code=0\
       || echo $GLITE_WMS_SEQUENCE_CODE`
