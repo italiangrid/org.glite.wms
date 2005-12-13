@@ -481,9 +481,9 @@ for host in ${LSB_HOSTS}
 done
 
 for i in `cat $HOSTFILE`; do
-  ssh "${i} mkdir -p `pwd`"
+  ssh ${i} mkdir -p `pwd`
   /usr/bin/scp -rp ./* "${i}:`pwd`"
-  ssh "${i} chmod 755 `pwd`/${__job}"
+  ssh ${i} chmod 755 `pwd`/${__job}
 done
 
 cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
