@@ -18,5 +18,11 @@
    </voms>
    <allow><exec/></allow>
  </entry>
+ <entry>
+   <person>
+     <dn>/C=IT/O=INFN/OU=Personal Certificate/L=DATAMAT DSAGRD/CN=Giuseppe Verdi</dn>
+   </person>
+   <allow><exec/></allow>
+ </entry>
 </gacl>
 
