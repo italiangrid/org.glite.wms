@@ -1,31 +1,54 @@
+// File: gpbox_utils.h
+// Authors: 
+//          Marco Cecchi <Marco.Cecchi@cnaf.infn.it>
+//          Salvatore Monforte <Salvatore.Monforte@cnaf.infn.it>
+
+#ifndef GLITE_WMS_BROKER_GPBOX_UTILS_H
+#define GLITE_WMS_BROKER_GPBOX_UTILS_H
+
 #include <string>
 
-#include <openssl/x509.h>
-
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/gpbox/Clientcc.h"
-#include "glite/wms/matchmaking/matchmaker.h"
-
-namespace jobid         = glite::wmsutils::jobid;
-namespace matchmaking   = glite::wms::matchmaking;
-
 namespace glite {
+
+namespace wmsutils {
+namespace jobid {
+class JobId;
+}
+}
+
 namespace wms {
+
+namespace common {
+namespace configuration {
+class Configuration;
+}
+}
+
+namespace matchmaking {
+class matchinfo;
+typedef std::map< std::string, matchmaking::match_info>
+match_table_t;
+}
+
 namespace helper {
-namespace gpbox_utils {
+namespace broker {
+namespace gpbox {
 
-extern std::string
-get_user_x509_proxy(jobid::JobId const&);
+namespace jobid = glite::wmsutils::jobid;
+namespace configuration = glite::wms::common::configuration;
+namespace matchmaking = glite::wms::matchmaking;
 
-extern std::string 
-get_proxy_distinguished_name(std::string const&);
+bool
+interact(
+  configuration::Configuration const& config,
+  jobid::JobId const& jobid,
+  matchmaking::match_table_t& suitable_CEs);
 
-extern bool 
-filter_gpbox_authorizations(matchmaking::match_table_t&,
-                                 Connection&,
-                                 std::string const&);
+bool
+interact(
+  configuration::Configuration const& config,
+  std::string const& x509_user_proxy,
+  matchmaking::match_table_t& suitable_CEs);
 
-extern X509 *
-get_real_cert(X509 *, STACK_OF(X509) *);
-
-}}}}
+}}}}}
+#endif

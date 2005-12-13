@@ -17,9 +17,6 @@
 #include <classad_distribution.h>
 
 #include "Helper_matcher.h"
-#include "globus_gss_assist.h"
-
-#include "glite/gpbox/Clientcc.h"
 
 #include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
@@ -44,10 +41,7 @@
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
-#include "glite/wms/common/configuration/WMConfiguration.h"
-#include "glite/wms/common/configuration/NSConfiguration.h"
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -60,7 +54,10 @@
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
 
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
 #include "gpbox_utils.h"
+#endif
+
 
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
@@ -69,9 +66,8 @@ namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::wms::jdl;
 namespace utilities     = glite::wms::common::utilities;
 namespace matchmaking   = glite::wms::matchmaking;
-namespace gpbox_utils   = glite::wms::helper::gpbox_utils;
 
-#define edglog(level)   logger::threadsafe::edglog << logger::setlevel(logger::level)
+#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 namespace glite {
@@ -180,8 +176,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 
   boost::scoped_ptr<matchmaking::match_table_t> suitableCEs;
   std::string mm_error;
-
-  Info("Joblistmatch: gpbox interaction");
   
   try {
     suitableCEs.reset(rb.findSuitableCEs(&input_ad));
@@ -189,65 +183,25 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     std::string vo(requestad::get_virtual_organisation(input_ad));    
     std::vector<classad::ExprTree*> hosts;
     std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
-    
-    Info(x509_user_proxy_file_name);
-
-    // Start interaction with G-Pbox
-    if ( !suitableCEs->empty() ) {
-      configuration::Configuration const* const config
-        = configuration::Configuration::instance();
-      assert(config);
-
-      boost::timer perf_timer;
-      perf_timer.restart();
-
-      const configuration::CommonConfiguration* common_conf = config->common();
-      assert(common_conf);
-
-      const std::string broker_subject(
-        gpbox_utils::get_proxy_distinguished_name(common_conf->host_proxy_file())
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
+    if (!suitableCEs->empty()) { 
+      configuration::Configuration const* const config(
+        configuration::Configuration::instance()
       );
-
-      const configuration::WMConfiguration* WM_conf = config->wm();
-      assert(WM_conf);
-
-      std::string Pbox_host_name(WM_conf->pbox_host_name());
-      if( !broker_subject.empty() && !Pbox_host_name.empty() ) {
-        try {
-          Info(Pbox_host_name);
-          Info(WM_conf->pbox_port_num());
-          Info(WM_conf->pbox_safe_mode());
-
-          Connection PEP_connection(
-                                    Pbox_host_name,
-                                    WM_conf->pbox_port_num(),
-                                    broker_subject,
-                                    WM_conf->pbox_safe_mode()
-                                   );
-
-          Info("gpbox: connection open");
-
-          if ( !gpbox_utils::filter_gpbox_authorizations(*suitableCEs, 
-                                           PEP_connection, 
-                                           x509_user_proxy_file_name) ) 
-          {
-            //TODO: throw proper exception
-          }
-        } catch (...) { // exception no_conn from API 
-                      // PEP_connection not properly propagated
-          Info("gpbox: no connection!!!");
-          // no connection to the Pbox server, the WM goes on 
-          // without screening the list of suitable CEs
-        }; //try
+      assert(config);
+ 
+      if( !glite::wms::helper::broker::gpbox::interact(
+        *config,
+        x509_user_proxy_file_name,
+        *suitableCEs)
+      ) {
+        Info("Error during gpbox interaction");
       }
-      else {
-        Info("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
-      }
-
-      Info("END gpbox");
-      Info(perf_timer.elapsed());
-    } // if ( !suitableCEs->empty() )
-    //END G-Pbox interaction
+    }
+    else {
+      Info("Empty CE list after gpbox screening");
+    }
+#endif
 
     if (!suitableCEs->empty() ) {
       matchmaking::match_vector_t suitableCEs_vector(suitableCEs->begin(), suitableCEs->end());

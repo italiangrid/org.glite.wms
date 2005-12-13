@@ -10,13 +10,14 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/timer.hpp>
 
 #include <classad_distribution.h>
 
-#include "glite/gpbox/Clientcc.h"
+#include "Helper.h"
 
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
@@ -41,10 +42,9 @@
 #include "glite/wms/helper/broker/exceptions.h"
 #include "glite/wms/helper/exceptions.h"
 
-#include "glite/wms/ism/ism.h"
-
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
 
 #include "glite/wms/matchmaking/matchmaker.h"
@@ -54,8 +54,9 @@
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
-#include "Helper.h"
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
 #include "gpbox_utils.h"
+#endif
 
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
@@ -64,9 +65,8 @@ namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::wms::jdl;
 namespace utilities     = glite::wms::common::utilities;
 namespace matchmaking   = glite::wms::matchmaking;
-namespace gpbox_utils   = glite::wms::helper::gpbox_utils;
 
-#define edglog(level)   logger::threadsafe::edglog << logger::setlevel(logger::level)
+#define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 namespace glite {
@@ -170,6 +170,7 @@ try {
   }
 
   boost::scoped_ptr<matchmaking::match_table_t> suitable_CEs(rb.findSuitableCEs(&input_ad));
+
   if (suitable_CEs->empty()) {
     throw NoCompatibleCEs();
   }
@@ -181,84 +182,55 @@ try {
     = configuration::Configuration::instance();
   assert(config);
 
-  Info("Start gpbox interaction");
-  boost::timer perf_timer;
-  perf_timer.restart();
-
-  const configuration::CommonConfiguration* common_conf = config->common();
-  assert(common_conf);
-
-  const std::string broker_subject(
-    gpbox_utils::get_proxy_distinguished_name(common_conf->host_proxy_file())
-  );
-
-  const configuration::WMConfiguration* WM_conf = config->wm();
-  assert(WM_conf);
-
-  std::string Pbox_host_name(WM_conf->pbox_host_name());
-  if( !broker_subject.empty() && !Pbox_host_name.empty() ) {
-    try {
-
-      Info(Pbox_host_name);
-      Info(WM_conf->pbox_port_num());
-      Info(WM_conf->pbox_safe_mode());
-
-      Connection PEP_connection(
-                                Pbox_host_name,
-                                WM_conf->pbox_port_num(),
-                                broker_subject,
-                                WM_conf->pbox_safe_mode()
-                               );
-
-      Info("gpbox: connection open");
-
-      if ( !gpbox_utils::filter_gpbox_authorizations(*suitable_CEs, 
-                                       PEP_connection, 
-                                       gpbox_utils::get_user_x509_proxy(dg_jobid)) )
-      {
-        //TODO: throws proper exception
-      }
-    } catch (...) { // exception no_conn from API 
-                  // PEP_connection not properly propagated
-      Info("gpbox: no connection!!!");
-      // no connection to the Pbox server, the RB goes on 
-      // without screening the list of suitable CEs
-    }; //try
-  }
-  else {
-    Info("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
+  if (!gpbox::interact(
+    *config,
+     dg_jobid,
+     *suitable_CEs)
+  ) {
+    Info("Error during gpbox interaction");
   }
 
-  Info("End gpbox:");
-  Info(perf_timer.elapsed());
   if ( suitable_CEs->empty() ) {
-    Info("Empty CE list after G-Pbox screening");
+    Info("Empty CE list after gpbox screening");
     throw NoCompatibleCEs();
   }
-  // End of G-Pbox interaction
+#endif
 
   matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
-  
+ 
   // update the brokerinfo
   BI->retrieveCloseSEsInfo(ce_it->first); // CE id
   BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
 
-  configuration::NSConfiguration const* const ns_config = config->ns();
-  assert(ns_config);
+  // Add the .Brokerinfo files to the InputSandbox
+  bool input_sandbox_exists = false;
+  bool wmpinput_sandbox_base_uri_exists = false;
+  
+  fs::path brokerinfo_path(
+    requestad::get_input_sandbox_path(input_ad) + "/.BrokerInfo",
+    fs::native
+  );
 
-  fs::path p(ns_config->sandbox_staging_path(), fs::native);
+  std::vector<std::string> ISB;
+   
+  requestad::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
+  std::string WMPInputSandboxBaseURI(requestad::get_wmpinput_sandbox_base_uri(
+                                             input_ad, 
+                                             wmpinput_sandbox_base_uri_exists)
+                                    );
 
-  p /= jobid::get_reduced_part(dg_jobid);
-  p /= jobid::to_filename(dg_jobid);
-
-  fs::path BIfile(
-                  (p / "input/.BrokerInfo").native_file_string(), 
-                   fs::portable_posix_name
-                  );
-  std::ofstream BIfilestream(BIfile.native_file_string().c_str());
+  if (wmpinput_sandbox_base_uri_exists) {
+    ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
+  }
+  else {
+    ISB.push_back(".BrokerInfo");
+  }
+   
+  std::ofstream BIfilestream(brokerinfo_path.native_file_string().c_str());
 
   if (!BIfilestream) {
-    throw CannotCreateBrokerinfo(BIfile);
+    throw CannotCreateBrokerinfo(brokerinfo_path);
   }
 
   boost::scoped_ptr<classad::ClassAd> biAd(BI->asClassAd());
@@ -269,28 +241,11 @@ try {
   BIfilestream << *biAd << std::endl;
 
   if (!BIfilestream) {
-    throw CannotCreateBrokerinfo(BIfile);
+    throw CannotCreateBrokerinfo(brokerinfo_path);
   }
 
   result.reset(new classad::ClassAd(input_ad));
 
-  // Add the .Brokerinfo files to the InputSandbox
-  bool input_sandbox_exists = false;
-  bool wmpinput_sandbox_base_uri_exists = false;
-
-  std::vector<std::string> ISB;
-
-  requestad::get_input_sandbox(input_ad, ISB, input_sandbox_exists);
-  std::string WMPInputSandboxBaseURI(requestad::get_wmpinput_sandbox_base_uri(
-                                             input_ad, 
-                                             wmpinput_sandbox_base_uri_exists)
-                                    );
-
-  if (wmpinput_sandbox_base_uri_exists) 
-    ISB.push_back(WMPInputSandboxBaseURI+"/input/.BrokerInfo");
-  else 
-    ISB.push_back(".BrokerInfo");
-  
   requestad::set_input_sandbox(*result, ISB);
 
   requestad::set_ce_id(*result, ce_it->first);
@@ -340,7 +295,7 @@ try {
 } catch (matchmaking::RankingError const& e) {
   
   throw NoAvailableCEs(e.what());
-	
+  
 } catch (requestad::CannotGetAttribute const& e) {
 
   throw helper::CannotGetAttribute(e, helper_id);
@@ -391,4 +346,5 @@ Helper::resolve(classad::ClassAd const* input_ad) const
   return result.release();
 }
 
-}}}} // edg::workload::planning::broker
+}}}} // glite::wms::helper::broker
+
