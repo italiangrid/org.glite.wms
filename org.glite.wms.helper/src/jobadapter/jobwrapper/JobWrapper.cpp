@@ -340,37 +340,6 @@ dump(std::ostream& os, const std::string& name, const T& var)
   typedef typename item_traits<T>::item_category cat;
   return dump(os, name, var, cat());
 }
-
-bool
-dump_classad_output_data_exprlist(std::ostream& os,
-                      std::string var_output_file,
-                      std::string var_output_lfn,
-                      std::string var_output_se,
-                      boost::shared_ptr<classad::ExprList> const outputdata)
-{
-  ExprList::const_iterator it;
-  bool check;
-  int i = 0;
-
-  if( outputdata != 0 ) {
-    for (it = outputdata->begin(); it != outputdata->end(); ++it) {
-      ClassAd* ad = dynamic_cast< ClassAd* >(*it);
-      if (ad != 0) {
-        os << var_output_file << '[' << i << "]=\"" << jdl::get_output_file(*ad) << "\"\n";
-        os << var_output_lfn << '[' << i << "]=\"" << jdl::get_logical_file_name(*ad, check) << "\"\n";
-        os << var_output_se << '[' << i << "]=\"" << jdl::get_storage_element(*ad, check) << "\"\n";
-        ++i;
-      }
-    }
-  }
-  else {
-    os << "declare -a " << var_output_file << '\n';
-    os << "declare -a " << var_output_lfn << '\n';
-    os << "declare -a " << var_output_se << '\n';
-  }
-  return os;
-}
-
 } // anonymous namespace
 
 bool 
@@ -378,6 +347,22 @@ JobWrapper::dump_vars(std::ostream& os) const
 {
   const configuration::WMConfiguration* const wm_config
     = configuration::Configuration::instance()->wm();
+
+  std::vector< std::string > output_files;
+  std::vector< std::string > logical_file_names;
+  std::vector< std::string > storage_elements;
+  bool check;
+  ExprList::const_iterator it;
+  if( m_outputdata != 0 ) {
+    for ( it = m_outputdata->begin(); it != m_outputdata->end(); ++it ) {
+      ClassAd* ad = dynamic_cast< ClassAd* >(*it);
+      if (ad != 0) {
+        output_files.push_back( jdl::get_output_file(*ad) );
+        logical_file_names.push_back( jdl::get_logical_file_name(*ad, check) );
+        storage_elements.push_back( jdl::get_storage_element(*ad, check) );
+      }
+    }
+  }
 
   return dump< std::string >(os, "__brokerinfo", m_brokerinfo) &&
     dump< bool >(os, "__create_subdir", m_create_subdir) &&
@@ -397,17 +382,17 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump< std::string >(os, "__globus_resource_contact_string", 
       m_globus_resource_contact_string
     ) &&
-    dump< vector<std::string> >(os, "__environment", m_environment) &&
+    dump< vector< std::string > >(os, "__environment", m_environment) &&
     dump< int >(os, "__nodes", m_nodes) &&
     dump< std::string >(os, "__vo", m_vo) &&
     dump< std::string >(os, "__dsupload", m_dsupload) &&
     dump< bool >(os, "__wmp_support", m_wmp_support) &&
-    dump< vector<std::string> >(os, "__wmp_input_file", m_wmp_input_files) &&
-    dump< vector<std::string> >(os, "__wmp_input_base_file", 
+    dump< vector< std::string > >(os, "__wmp_input_file", m_wmp_input_files) &&
+    dump< vector< std::string > >(os, "__wmp_input_base_file", 
       m_wmp_input_base_files
     ) &&
-    dump< vector<std::string> >(os, "__wmp_output_file", m_wmp_output_files) &&
-    dump< vector<std::string> >(os, "__wmp_output_dest_file", 
+    dump< vector< std::string > >(os, "__wmp_output_file", m_wmp_output_files) &&
+    dump< vector< std::string > >(os, "__wmp_output_dest_file", 
       m_wmp_output_dest_files
     ) &&
     dump< std::string >(os, "__token_file", m_token_file) &&
@@ -417,17 +402,14 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump< std::string >(os, "__perusal_filesdesturi", m_perusal_filesdesturi) &&
     dump< std::string >(os, "__perusal_listfileuri", m_perusal_listfileuri) &&
     dump< bool >(os, "__output_data", m_outputdata != 0) &&
+    dump< vector< std::string > >(os, "__output_file", output_files) &&
+    dump< vector< std::string > >(os, "__output_lfn", logical_file_names) &&
+    dump< vector< std::string > >(os, "__output_se", storage_elements) &&
     dump< int >(os, "__max_osb_size",
       wm_config->job_wrapper_max_output_sandbox_size()
     ) &&
     dump< int >(os, "__file_tx_retry_count", 
       wm_config->job_wrapper_file_tx_retry_count()
-    ) &&
-    dump_classad_output_data_exprlist(os,
-      "__output_file",
-      "__output_lfn",
-      "__output_se",
-      m_outputdata
     );
 }
 
