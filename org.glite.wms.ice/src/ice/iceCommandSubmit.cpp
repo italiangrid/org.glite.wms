@@ -134,7 +134,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     
     //cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
     log_dev->log(log4cpp::Priority::INFO,
-		 string("\tReturned CREAM-JOBID ["
+		 string("Returned CREAM-JOBID ["
 			+url_jid[1]+"]"));
 
     // no failure: put jobids and status in cache

@@ -59,7 +59,7 @@ int main(int argc, char*argv[]) {
    ****************************************************************************/
   util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
   log4cpp::Category* log_dev = logger_instance->getLogger();
-  log_dev->setPriority( log4cpp::Priority::INFO );
+  log_dev->setPriority( log4cpp::Priority::DEBUG );
   logger_instance->setLogfileEnabled( true );
   string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
   logger_instance->setLogFile(logfile.c_str());
@@ -75,11 +75,11 @@ int main(int argc, char*argv[]) {
   string hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
   logger_instance->log(log4cpp::Priority::INFO, 
 		       string("Host proxyfile is [") + hostcert + "]",
-		       true, true, false);
+		       true, true, true);
   //  cout << "Host proxyfile is [" <<hostcert<<"]"<<endl;
   logger_instance->log(log4cpp::Priority::INFO, 
 		       string("Host DN is ["+hostdn+"]"),
-		       true, true, false);
+		       true, true, true);
   //  cout << "Host DN is ["<<hostdn<<"]"<<endl;
 //   cout << "Initializing jobCache with journal file ["
 //        << iceUtil::iceConfManager::getInstance()->getCachePersistFile() 
@@ -99,7 +99,7 @@ int main(int argc, char*argv[]) {
 			      +jcachefile 
 			      +"] and snapshot file ["
 			      +jsnapfile+"]..."),
-		       true, true, false);
+		       true, true, true);
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);
   
@@ -113,12 +113,12 @@ int main(int argc, char*argv[]) {
   try {
     iceManager = new glite::wms::ice::ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
-    logger_instance->log(log4cpp::Priority::ERROR, ex.what(), true, true, false);
+    logger_instance->log(log4cpp::Priority::ERROR, ex.what(), true, true, true);
     exit(1);
   } catch(...) {
     //cerr << "something catched..."<<endl;
     logger_instance->log(log4cpp::Priority::ERROR, 
-			 "Catched unknown exception", true, true, false);
+			 "Catched unknown exception", true, true, true);
     exit(1);
   }
 
@@ -140,7 +140,7 @@ int main(int argc, char*argv[]) {
   if(!soap_proxy::CreamProxyFactory::getProxy())
     {
       logger_instance->log(log4cpp::Priority::ERROR, 
-			   "CreamProxy creation failed! Stop", true, true, false);
+			   "CreamProxy creation failed! Stop", true, true, true);
       exit(1);
     }
   soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
@@ -183,7 +183,7 @@ int main(int argc, char*argv[]) {
     if( requests.size() )
       logger_instance->log(log4cpp::Priority::INFO, 
 			   os.str(), 
-			   true, true, false);
+			   true, true, true);
 //       cout << "************* Found " 
 // 	   << requests.size() << " new request(s)" << endl;
     
@@ -191,7 +191,7 @@ int main(int argc, char*argv[]) {
       logger_instance->log(log4cpp::Priority::INFO, 
 			   string("*** Unparsing request <"
 				  + requests[j] + ">"), 
-			   true, true, false);
+			   true, true, true);
       //      cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
       glite::wms::ice::iceAbsCommand* cmd = 0;
       try {
@@ -201,11 +201,11 @@ int main(int argc, char*argv[]) {
 	//cerr << "\tunparse ex: "<<ex.what()<<endl;
 	logger_instance->log(log4cpp::Priority::ERROR,
 			     ex.what(),
-			     true, true, false);
+			     true, true, true);
 	//cout << "\tRemoving BAD request..."<<endl;
 	logger_instance->log(log4cpp::Priority::INFO,
 			     "Removing BAD request...",
-			     true, true, false);
+			     true, true, true);
 	iceManager->removeRequest(j);
 	continue;
       }
@@ -216,17 +216,17 @@ int main(int argc, char*argv[]) {
 	logger_instance->log(log4cpp::Priority::ERROR,
 			     string("Command execution got FATAL exception: ")
 				    +ex.what(),
-			     true, true, false);
+			     true, true, true);
 //           cerr << "Command execution got FATAL exception: " 
 //                << ex.what() << endl;
       } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
 	logger_instance->log(log4cpp::Priority::ERROR,
 			     string("Command execution got TRANSIENT exception: ")
 				    +ex.what(),
-			     true, true, false);
+			     true, true, true);
 	logger_instance->log(log4cpp::Priority::INFO,
 			     "Request will be resubmitted",
-			     true, true, false);
+			     true, true, true);
 //           cerr << "Command execution got TRANSIENT exception: " 
 //                << ex.what() << endl
 //                << "Request will be resubmitted" << endl;
@@ -234,7 +234,7 @@ int main(int argc, char*argv[]) {
       }
       logger_instance->log(log4cpp::Priority::INFO,
 			     "Removing submitted request from WM/ICE's filelist...",
-			     true, true, false);
+			     true, true, true);
       //      cout << "\tRemoving submitted request from WM/ICE's filelist..."<<endl;
       try { 
 	iceManager->removeRequest(j);
@@ -242,7 +242,7 @@ int main(int argc, char*argv[]) {
 	logger_instance->log(log4cpp::Priority::ERROR,
 			     string("Error removing request from FL: ")
 				    +ex.what(),
-			     true, true, false);
+			     true, true, true);
 	//	cerr << "Error removing request from FL: "<<ex.what()<<endl;
 	exit(1);
       }
