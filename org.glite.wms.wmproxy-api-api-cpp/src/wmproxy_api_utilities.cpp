@@ -114,45 +114,23 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
                         offset= -offset;
                 }
 #undef g2
-
     return timegm(&tm)-offset*60;
-}
-
-/*************************************************************************
-* gets the proxy time-left
-*************************************************************************/
-const long getProxyTimeLeft( std::string pxfile ) {
-	time_t timeleft = 0;
-	BIO *in = NULL;
-	X509 *x = NULL;
-	in = BIO_new(BIO_s_file());
-	if (in) {
-		BIO_set_close(in, BIO_CLOSE);
-		if (BIO_read_filename( in, pxfile.c_str() ) > 0) {
-			x = PEM_read_bio_X509(in, NULL, 0, NULL);
-			if (x) {
-				timeleft = ( ASN1_UTCTIME_get   ( X509_get_notAfter(x))  - time(NULL) ) / 60 ;
-			} else{
-				throw  *createWmpException(new ProxyFileException, "getProxyTimeLeft",
-					string ("unable to read X509 proxy file: "+ pxfile) ) ;
-			}
-		} else {
-
-			throw  *createWmpException(new ProxyFileException, "getProxyTimeLeft",
-				string ("unable to open X509 proxy file: "+ pxfile) ) ;
-		}
-		BIO_free(in);
-		free(x);
-	} else {
-		throw  *createWmpException(new ProxyFileException, "getProxyTimeLeft",
-				string ("unable to allocate memory for the proxy file: "+ pxfile) ) ;
-	}
-        return timeleft;
 }
 
 /*************************************************************************
 * private method: checks if the vector v contains the "elem" string
 *************************************************************************/
+bool contains(const std::vector<pair<std::string,long > > &v, const std::string elem) {
+	bool found = false;
+	for (unsigned int i=0 ; i < v.size(); i++ ){
+		if ( v[i].first == elem  ){
+			found = true;
+			break;
+		}
+	}
+	return found;
+}
+
 bool contains(const std::vector<std::string> &v, const std::string elem) {
 	bool found = false;
 	for (unsigned int i=0 ; i < v.size(); i++ ){
@@ -164,12 +142,54 @@ bool contains(const std::vector<std::string> &v, const std::string elem) {
 	return found;
 }
 
+/*****************************************************************************************
+* private method: return a long representing the Epoch seconds  for
+* the input date in the format yyyymmddhhmmssZ
+* ( Z=time zone)
+**************************************************************************************/
+long asn1TimeToTimeT(char *asn1time, size_t len) {
+   char   zone;
+   struct tm time_tm;
+
+   if (len == 0) len = strlen(asn1time);
+
+   if ((len != 13) && (len != 15)) return 0; /* dont understand */
+
+   if ((len == 13) &&
+       ((sscanf(asn1time, "%02d%02d%02d%02d%02d%02d%c",
+         &(time_tm.tm_year),
+         &(time_tm.tm_mon),
+         &(time_tm.tm_mday),
+         &(time_tm.tm_hour),
+         &(time_tm.tm_min),
+         &(time_tm.tm_sec),
+         &zone) != 7) || (zone != 'Z'))) return 0; /* dont understand */
+
+   if ((len == 15) &&
+       ((sscanf(asn1time, "20%02d%02d%02d%02d%02d%02d%c",
+         &(time_tm.tm_year),
+         &(time_tm.tm_mon),
+         &(time_tm.tm_mday),
+         &(time_tm.tm_hour),
+         &(time_tm.tm_min),
+         &(time_tm.tm_sec),
+         &zone) != 7) || (zone != 'Z'))) return 0; /* dont understand */
+
+   /* time format fixups */
+
+   if (time_tm.tm_year < 90) time_tm.tm_year += 100;
+   --(time_tm.tm_mon);
+
+   return timegm(&time_tm);
+}
+
+
 /*************************************************************************
 * private method: parses the proxy info and extracts the fqan's
 *************************************************************************/
-const string parse(BIO *bp, unsigned char **pp, long length, int offset,
-	     int depth, int indent, int dump, std::vector<std::string> &fv)
-	{
+const string proxy_parser (BIO *bp, unsigned char **pp,
+			long length, int offset, int depth, int indent, int dump,
+			std::vector<std::string> &fqans, std::vector<std::pair<std::string, long> > &exps) {
 	unsigned char *p,*ep,*tot,*op,*opp;
 	long len;
 	int tag,xclass;
@@ -178,7 +198,9 @@ const string parse(BIO *bp, unsigned char **pp, long length, int offset,
 	ASN1_OCTET_STRING *os=NULL;
 	int dump_indent;
 	string fqan = "";
-
+	time_t d1 = 0;
+	time_t d2 = 0;
+	static long left = -1;
 #if 0
 	dump_indent = indent;
 #else
@@ -201,9 +223,9 @@ const string parse(BIO *bp, unsigned char **pp, long length, int offset,
 			ep=p+len;
 			if ((j == 0x21) && (len == 0)){
 				for (;;) {
-						fqan=parse(bp,&p,(long)(tot-p),
+						fqan=proxy_parser(bp,&p,(long)(tot-p),
 							offset+(p - *pp),depth+1,
-							indent,dump, fv);
+							indent,dump, fqans, exps);
 						if (fqan.size()>0){
 							break;
 						}
@@ -213,11 +235,11 @@ const string parse(BIO *bp, unsigned char **pp, long length, int offset,
 				}
 			}else{
 				while (p < ep) {
-					fqan=parse(bp,&p,(long)len,
+					fqan=proxy_parser(bp,&p,(long)len,
 						offset+(p - *pp),depth+1,
-						indent,dump, fv);
+						indent,dump, fqans,exps);
 					if (fqan.size()>0){
-							break;
+						break;
 					}
 					if (r == 0) {
 						break;
@@ -228,7 +250,16 @@ const string parse(BIO *bp, unsigned char **pp, long length, int offset,
 			p+=len;
 		} else {
 			nl=0;
-			 if (tag == V_ASN1_OCTET_STRING){
+			// Extracts info on start/expiration date
+			if (tag == V_ASN1_GENERALIZEDTIME) {
+				if (d1==0) {
+					d1 = asn1TimeToTimeT((char*)p,len);
+				} else {
+					d2 = asn1TimeToTimeT((char*)p,len);
+				}
+			}
+			// Extracts FQAN string
+			if (tag == V_ASN1_OCTET_STRING){
 				int i,printable=1;
 				opp=op;
 				os=d2i_ASN1_OCTET_STRING(NULL,&opp,len+hl);
@@ -246,9 +277,6 @@ const string parse(BIO *bp, unsigned char **pp, long length, int offset,
 					}
 					if (printable && (os->length > 0)) {
 						fqan = fqan.assign((char*)os->data);
-						if (fqan.size()>0 && !contains(fv, fqan)){
-							fv.push_back(fqan);
-						}
 					}
 					M_ASN1_OCTET_STRING_free(os);
 					os=NULL;
@@ -269,7 +297,47 @@ const string parse(BIO *bp, unsigned char **pp, long length, int offset,
 		M_ASN1_OCTET_STRING_free(os);
 	}
 	*pp=p;
+	// Time left
+	if (d1>0 || d2>0 ) {
+		if (d2>d1) {
+			left = d2 - time(NULL);
+		} else {
+			left = d1 - time(NULL);
+		}
+	}
+	//<FQAN-timeleft> info
+	if (fqan.size()>0  &&
+		left >=0 &&
+		contains(exps, fqan)==false) {
+		exps.push_back(make_pair(fqan,left));
+		left = -1;
+	}
+	//<FQAN> info
+	if (fqan.size()>0  &&
+		contains(fqans, fqan) == false) {
+		fqans.push_back(fqan);
+	}
 	return(fqan);
+}
+
+/**************************************************************************
+* private method: returns a vector (fqans) with the list of FQAN's
+in the input voms proxy
+**************************************************************************/
+void get_fqans (BIO *bp, unsigned char **pp, long length, int offset,
+	     int depth, int indent, int dump, std::vector<std::string> &fqans) {
+	std::vector<std::pair<std::string, long> > v;
+	proxy_parser (bp, pp, length, offset, depth, indent, dump, fqans, v);
+}
+
+/*************************************************************************
+*  private method: returns a vector (exps) which elements are pairs
+like tihs: <FQAN string, VOMS proxy time left>
+*************************************************************************/
+void get_expiration_info (BIO *bp, unsigned char **pp, long length, int offset,
+	     int depth, int indent, int dump, std::vector<std::pair<std::string, long> > &exps) {
+	std::vector<std::string> v;
+	proxy_parser (bp, pp, length, offset, depth, indent, dump, v, exps);
 }
 
 /*************************************************************************
@@ -286,7 +354,8 @@ const vector<std::string> getFQANs(std::string pxfile){
 	X509_EXTENSION *ex;
 	ASN1_OBJECT *asnobject;
 	ASN1_OCTET_STRING *asndata;
-	vector<string> vect ;
+	vector<string> fqans ;
+	// opens and reads the input proxy file
 	fp = fopen(pxfile.c_str(), "r");
 	if (!fp){
 		throw *createWmpException(new ProxyFileException, "getFQANs", string ("no such proxy file:" + pxfile) );
@@ -304,28 +373,93 @@ const vector<std::string> getFQANs(std::string pxfile){
 	}
 	BIO_set_close(bp, BIO_CLOSE);
 	BIO_set_fp(bp,stdout,BIO_FP_TEXT);
+	// extracts the FQAN's
  	for (i = 0; i < X509_get_ext_count(cert); ++i) {
 		lasttag=-1;
        		ex = X509_get_ext(cert, i);
         	asnobject = X509_EXTENSION_get_object(ex);
         	asndata = X509_EXTENSION_get_data(ex);
         	p1 = ASN1_STRING_data(asndata);
-		fqan =parse(bp, // bp
+		get_fqans(bp, // bp
 				&p1,//pp
 				ASN1_STRING_length(asndata), // length
 				0, // offset
 				0, //depth
 				0, //ndent
 				0, //dump
-				 vect);
-		if (fqan.size ()>0){
-			break;
-		}
+				 fqans);
 	}
 	BIO_free(bp);
-	return vect ;
+	return fqans ;
 }
-
+/*************************************************************************
+* looks for the list of fqan's
+*************************************************************************/
+const long getProxyTimeLeft( std::string pxfile ) {
+	int i = 0;
+	int lasttag=-1;
+	unsigned char *p1 ;
+ 	string fqan = "";
+	FILE *fp = NULL ;
+	X509 *cert = NULL ;
+	BIO *bp = NULL;
+	X509_EXTENSION *ex;
+	ASN1_OBJECT *asnobject;
+	ASN1_OCTET_STRING *asndata;
+	vector<pair<string,long > > exps ;
+	long proxy_timeleft = 0;
+	long voms_timeleft = 0;
+	long timeleft = 0;
+	fp = fopen(pxfile.c_str(), "r");
+	if (!fp){
+		throw *createWmpException(new ProxyFileException, "getFQANs", string ("no such proxy file:" + pxfile) );
+	}
+	cert = PEM_read_X509(fp, NULL, NULL, NULL);
+	if (!cert){
+		throw  *createWmpException(new ProxyFileException, "getFQANs",
+			string ("unable to read X509 proxy file: "+ pxfile) ) ;
+	}
+	fclose(fp);
+	proxy_timeleft = ( ASN1_UTCTIME_get   ( X509_get_notAfter(cert))  - time(NULL) ) ;
+   	bp = BIO_new(BIO_s_file());
+	if (!bp){
+		throw  *createWmpException(new ProxyFileException, "getFQANs",
+			string ("ssl error - unable to read X509 proxy file: "+ pxfile) ) ;
+	}
+	BIO_set_close(bp, BIO_CLOSE);
+	BIO_set_fp(bp,stdout,BIO_FP_TEXT);
+ 	for (i = 0; i < X509_get_ext_count(cert); ++i) {
+		lasttag=-1;
+       		ex = X509_get_ext(cert, i);
+        	asnobject = X509_EXTENSION_get_object(ex);
+        	asndata = X509_EXTENSION_get_data(ex);
+        	p1 = ASN1_STRING_data(asndata);
+		get_expiration_info (bp, // bp
+				&p1,//pp
+				ASN1_STRING_length(asndata), // length
+				0, // offset
+				0, //depth
+				0, //ndent
+				0, //dump
+				 exps);
+	}
+	// free memory
+	BIO_free(bp);
+	// FInal result
+	if (exps.empty()==false) {
+		// Reads the time-left for the main VO
+		voms_timeleft = exps[0].second ;
+		if (voms_timeleft < proxy_timeleft) {
+			timeleft = voms_timeleft ;
+		} else{
+			timeleft = proxy_timeleft ;
+		}
+	} else {
+		// no VOMS info
+		timeleft = proxy_timeleft;
+	}
+	return timeleft ;
+}
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
