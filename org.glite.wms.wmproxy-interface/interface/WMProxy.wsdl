@@ -81,6 +81,33 @@
 					<xsd:element name="childrenJob" type="glitenstypes:GraphStructType" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
 				</xsd:sequence>
 			</xsd:complexType>
+			<!-- ==== Definition of the structure containing VO Proxy Info ==== -->
+			<xsd:complexType name="VOProxyInfoStructType">
+				<xsd:sequence>
+					<xsd:element name="User" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="UserCA" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="Server" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="ServerCA" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="VOName" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="URI" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="StartTime" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="EndTime" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="Attribute" type="xsd:string" minOccurs="1" maxOccurs="unbounded" nillable="false"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<!-- ==== Definition of the structure containing Proxy Info ==== -->
+			<xsd:complexType name="ProxyInfoStructType">
+				<xsd:sequence>
+					<xsd:element name="Subject" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="Issuer" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="Identity" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="Type" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="Strength" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="StartTime" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="EndTime" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="VOsInfo" type="glitenstypes:VOProxyInfoStructType" minOccurs="0" maxOccurs="unbounded"/>
+				</xsd:sequence>
+			</xsd:complexType>
 			<!-- ==== Common fault information to carry in all fault messages ==== -->
 			<xsd:complexType name="BaseFaultType">
 				<xsd:sequence>
@@ -323,7 +350,7 @@
 		<wsdl:part name="delegationID" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getDelegatedProxyInfoResponse">
-		<wsdl:part name="items" type="glitenstypes:StringList"/>
+		<wsdl:part name="items" type="glitenstypes:ProxyInfoStructType"/>
 	</wsdl:message>
 	<wsdl:message name="enableFilePerusalRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
