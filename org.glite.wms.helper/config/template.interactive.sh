@@ -465,9 +465,9 @@ if [ $__token_support -eq 1 ]; then
   fi
 fi
 
-./glite-wms-job-agent "${BYPASS_SHADOW_HOST} ${BYPASS_SHADOW_PORT} ${__job} ${__arguments} $*"
-
 (
+  cmd_line="./glite-wms-job-agent ${BYPASS_SHADOW_HOST} ${BYPASS_SHADOW_PORT} ${__job} ${__arguments} $*"
+
   perl -e '
     unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
       $SIG{"TTIN"} = "IGNORE";
@@ -505,8 +505,10 @@ fi
 
 status=$?
 
-kill -USR2 $send_pid
-wait $send_pid 
+if [ $__perusal_support -eq 1 ]; then
+  kill -USR2 $send_pid
+  wait $send_pid 
+fi
 
 if [ ${__output_data} -eq 1 ]; then
   return_value=0

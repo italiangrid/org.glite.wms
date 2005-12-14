@@ -481,28 +481,28 @@ for i in `cat $HOSTFILE`; do
   ssh ${i} chmod 755 `pwd`/${__job}
 done
 
-cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
-if [ -n "${__standard_input}" ]; then
-  cmd_line="$cmd_line < ${__standard_input}"
-fi
-if [ -n "${__standard_output}" ]; then
-  cmd_line="$cmd_line > ${__standard_output}"
-else
-  cmd_line="$cmd_line > /dev/null"
-fi
-if [ -n "${__standard_error}" ]; then
-  if [ -n "${__standard_output}" ]; then
-    if [ "${__standard_error}" = "${__standard_output}" ]; then
-      cmd_line="$cmd_line 2>&1"
-    else
-      cmd_line="$cmd_line 2>${__standard_error}"
-    fi
-  fi
-else
-  cmd_line="$cmd_line 2 > /dev/null"
-fi
-
 (
+  cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
+  if [ -n "${__standard_input}" ]; then
+    cmd_line="$cmd_line < ${__standard_input}"
+  fi
+  if [ -n "${__standard_output}" ]; then
+    cmd_line="$cmd_line > ${__standard_output}"
+  else
+    cmd_line="$cmd_line > /dev/null"
+  fi
+  if [ -n "${__standard_error}" ]; then
+    if [ -n "${__standard_output}" ]; then
+      if [ "${__standard_error}" = "${__standard_output}" ]; then
+        cmd_line="$cmd_line 2>&1"
+      else
+        cmd_line="$cmd_line 2>${__standard_error}"
+      fi
+    fi
+  else
+    cmd_line="$cmd_line 2 > /dev/null"
+  fi
+
   perl -e '
     unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
       $SIG{"TTIN"} = "IGNORE";
@@ -540,8 +540,10 @@ fi
 
 status=$?
 
-kill -USR2 $send_pid
-wait $send_pid 
+if [ $__perusal_support -eq 1 ]; then
+  kill -USR2 $send_pid
+  wait $send_pid 
+fi
 
 if [ ${__output_data} -eq 1 ]; then
   return_value=0

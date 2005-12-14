@@ -517,8 +517,10 @@ fi
 
 status=$?
 
-kill -USR2 $send_pid
-wait $send_pid 
+if [ $__perusal_support -eq 1 ]; then
+  kill -USR2 $send_pid
+  wait $send_pid 
+fi
 
 if [ ${__output_data} -eq 1 ]; then
   return_value=0
