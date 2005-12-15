@@ -1605,6 +1605,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
 					if (jad->hasAttribute(JDL::PU_TIME_INTERVAL)) {
 						time = max(time, jad->getInt(JDL::PU_TIME_INTERVAL));
+						jad->delAttribute(JDL::PU_TIME_INTERVAL);
 					}
 					time = max(time, conf.getMinPerusalTimeInterval());
 					edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"<<endl;
@@ -1747,6 +1748,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						int time = DEFAULT_PERUSAL_TIME_INTERVAL;
 						if (nodead.hasAttribute(JDL::PU_TIME_INTERVAL)) {
 							time = max(time, nodead.getInt(JDL::PU_TIME_INTERVAL));
+							nodead.delAttribute(JDL::PU_TIME_INTERVAL);
 						}
 						time = max(time, conf.getMinPerusalTimeInterval());
 						edglog(debug)<<"Setting attribute JDL::PU_TIME_INTERVAL"
