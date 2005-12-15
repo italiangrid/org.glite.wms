@@ -167,7 +167,7 @@ void GaclManager::addEntry (const WMPgaclCredType &type, const string &rawvalue,
 		oss <<  "unable to  add the new credential entry to the gacl" ;
 		oss << " (" << gaclFile << ")\n";
 		oss << "reason: the entry already exists\ncredential type : " << getCredentialTypeString(type)  << "\n";
-		oss <<"rawvalue : " << rawvalue << "\n";
+		oss <<"Input " << rawCred.first << " : rawvalue << "\n";
 		#if defined (GLITE_GACL_ADMIN)
 		cerr << "Error : " << oss.str()<< endl;
 		exit(-1);
@@ -256,16 +256,16 @@ void GaclManager::removeEntry (const WMPgaclCredType &type,
 							if (strcmp (rawname, nv->name ) == 0 ){
 								if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ){
 									#ifndef GLITE_GACL_ADMIN
-									edglog(debug) << "comparison between voms fqan ..." << endl;
+									//edglog(debug) << "comparison between voms fqan ..." << endl;
 									#endif
 									found = authorizer::WMPAuthorizer::compareFQAN( rawvalue, nv->value);
-									edglog(debug) << "compareFQAN = " << found << "\n";
+									//edglog(debug) << "compareFQAN = " << found << "\n";
 								} else{
 									#ifndef GLITE_GACL_ADMIN
-									edglog(debug) << "checking rawvalue ..." << endl;
+									//edglog(debug) << "checking rawvalue ..." << endl;
 									#endif
 									if ( strcmp (rawvalue.c_str(), nv->value ) == 0){
-										 edglog(debug) << "rawvalue found" << endl;
+										edglog(debug) << "rawvalue found" << endl;
 										found = true;
 									}
 									
@@ -275,7 +275,7 @@ void GaclManager::removeEntry (const WMPgaclCredType &type,
 					} // if (ANY_CRED)
 				}
 				#ifndef GLITE_GACL_ADMIN
-				edglog(debug) << "found=" << found << endl;
+				//edglog(debug) << "found=" << found << endl;
 				#endif
 				if ( !found ) {
 					//edglog(debug) << "new credential....." << endl;
@@ -318,7 +318,7 @@ void GaclManager::removeEntry (const WMPgaclCredType &type,
 		oss <<  "unable to remove the credential entry from the gacl" ;
 		oss << " (" << gaclFile << ")\n";
 		oss << "reason : the entry doesn't exist\ncredential type : " <<  getCredentialTypeString(type) << "\n";
-		oss <<"rawvalue : " << rawvalue << "\n";
+		oss <<"input " << rawCred.first << ": " << rawvalue << "\n";
 		#ifdef GLITE_GACL_ADMIN
 		cerr << "Error : " <<  oss.str()<< endl;
 		exit(-1);
@@ -351,7 +351,7 @@ bool GaclManager::checkAllowPermission (const WMPgaclCredType &type,
 		oss <<  "unable to check credential permission " ;
 		oss << " (" << gaclFile << ")\n";
 		oss << "(credential entry not found)\ncredential type: " << getCredentialTypeString(type)  << "\n";
-		oss <<"rawvalue : " << rawvalue << "\n";
+		oss <<"input " << rawCred.first << ": " << rawvalue << "\n";
 		#ifdef GLITE_GACL_ADMIN
 		cerr << "Error: " << oss.str()<< endl;
 		exit(-1);
@@ -418,7 +418,7 @@ void GaclManager::allowPermission(const WMPgaclCredType &type,
 		oss <<  "unable to set \"allow\" permission" ;
 		oss << " (" << gaclFile << ")\n";
 		oss << "reason : credential entry not found\ncredential type: " << getCredentialTypeString(type) << "\n";
-		oss <<"rawvalue : " << rawvalue << "\n";
+		oss <<"input " << rawCred.first << ": " << rawvalue << "\n";
 		#ifdef GLITE_GACL_ADMIN
 		cerr << "Error : "<< oss.str()<< endl;
 		exit(-1);
@@ -453,7 +453,7 @@ void GaclManager::denyPermission(const WMPgaclCredType &type,
 		oss <<  "unable to set \"deny\" permission" ;
 		oss << " (" << gaclFile << ")\n";
 		oss << "reason: credential entry not found\ncredential type: " << getCredentialTypeString(type) << "\n";
-		oss <<"rawvalue : " << rawvalue << "\n";
+		oss << "input " << rawCred.first << ": " <<rawvalue << "\n";
 		#ifdef GLITE_GACL_ADMIN
 		cerr << "Error: " << oss.str()<< endl;
 		exit(-1);
@@ -838,15 +838,14 @@ int GaclManager::loadCredential ( ) {
 							//edglog(debug)<< "nv->value=" << nv->value << "/rawvalue=" << rawvalue <<endl;
 							if (strcmp (rawname, nv->name ) == 0 ){
 								if ( strcmp((char*)credType.c_str(), GaclManager::WMPGACL_VOMS_CRED) == 0 ){
-									#ifndef GLITE_GACL_ADMIN
+									/*#ifndef GLITE_GACL_ADMIN
 									edglog(debug) << "comparison between voms fqan ..." << endl;
-									#endif
+									#endif*/
 									found = authorizer::WMPAuthorizer::compareFQAN( rawvalue, nv->value);
 								} else {
-									#ifndef GLITE_GACL_ADMIN
+									/*#ifndef GLITE_GACL_ADMIN
 									edglog(debug) << "checking rawvalue ..." << endl;
-									#endif
-									// found = authorizer::WMPAuthorizer::compareDN(rawvalue, nv->value);
+									#endif*/
 									if ( strcmp (rawvalue, nv->value ) == 0){
 										found = true;
 									}
@@ -855,9 +854,9 @@ int GaclManager::loadCredential ( ) {
 						} // if (nv)
 					} // if (ANY_CRED)
 				}
-				#ifndef GLITE_GACL_ADMIN
+				/*#ifndef GLITE_GACL_ADMIN
 				edglog(debug) << "found=" << found << endl;
-				#endif
+				#endif*/
 				if ( !found ) {
 					//edglog(debug) << "new credential....." << endl;
 					cred = (GRSTgaclCred*) cred->next;
