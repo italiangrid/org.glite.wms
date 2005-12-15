@@ -167,7 +167,7 @@ void GaclManager::addEntry (const WMPgaclCredType &type, const string &rawvalue,
 		oss <<  "unable to  add the new credential entry to the gacl" ;
 		oss << " (" << gaclFile << ")\n";
 		oss << "reason: the entry already exists\ncredential type : " << getCredentialTypeString(type)  << "\n";
-		oss <<"Input " << rawCred.first << " : rawvalue << "\n";
+		oss <<"Input " << rawCred.first << ": " << rawvalue << "\n";
 		#if defined (GLITE_GACL_ADMIN)
 		cerr << "Error : " << oss.str()<< endl;
 		exit(-1);
