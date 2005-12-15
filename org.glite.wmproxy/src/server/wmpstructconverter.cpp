@@ -160,12 +160,14 @@ convertToGSOAPVOProxyInfoStructType(VOProxyInfoStructType *voproxyinfo)
  * vector pointer
  */
 vector<ns1__VOProxyInfoStructType*>
-convertToGSOAPVOProxyInfoStructType(vector<VOProxyInfoStructType*> voproxyinfovector)
+convertToGSOAPVOProxyInfoStructTypeVector(vector<VOProxyInfoStructType*> voproxyinfovector)
 {
 	vector<ns1__VOProxyInfoStructType*> ns1_vo_proxy_info_vector;
 	for (unsigned int i = 0; i < voproxyinfovector.size(); i++) {
-		ns1_vo_proxy_info_vector.push_back(
-			convertToGSOAPVOProxyInfoStructType(voproxyinfovector[i]));
+		if (voproxyinfovector[i]) {
+			ns1_vo_proxy_info_vector.push_back(
+				convertToGSOAPVOProxyInfoStructType(voproxyinfovector[i]));
+		}
 	}
 	return ns1_vo_proxy_info_vector;
 }
@@ -187,7 +189,7 @@ convertToGSOAPProxyInfoStructType(ProxyInfoStructType *proxyinfo)
 		ns1_proxy_info->StartTime = proxyinfo->startTime;
 		ns1_proxy_info->EndTime = proxyinfo->endTime;
 		ns1_proxy_info->VOsInfo =
-			convertToGSOAPVOProxyInfoStructType(proxyinfo->vosInfo);
+			convertToGSOAPVOProxyInfoStructTypeVector(proxyinfo->vosInfo);
 	}
 	return ns1_proxy_info;
 }

@@ -33,7 +33,7 @@ StringList * convertToStringList(ns1__StringList *ns1_string_list);
 ns1__VOProxyInfoStructType * convertToGSOAPVOProxyInfoStructType(
 	VOProxyInfoStructType *voproxyinfo);
 	
-std::vector<ns1__VOProxyInfoStructType*> convertToGSOAPVOProxyInfoStructType(
+std::vector<ns1__VOProxyInfoStructType*> convertToGSOAPVOProxyInfoStructTypeVector(
 	std::vector<VOProxyInfoStructType*> voproxyinfovector);
 
 ns1__ProxyInfoStructType * convertToGSOAPProxyInfoStructType(ProxyInfoStructType

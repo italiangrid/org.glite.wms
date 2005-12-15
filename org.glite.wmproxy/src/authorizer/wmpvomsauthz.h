@@ -46,9 +46,9 @@ class VOMSAuthZ {
 		
 		std::string getDefaultVO();
 		
-		VOProxyInfoStructType getDefaultVOProxyInfo();
+		VOProxyInfoStructType * getDefaultVOProxyInfo();
 		
-		ProxyInfoStructType getProxyInfo();
+		ProxyInfoStructType * getProxyInfo();
 		
 		static time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 

@@ -3159,9 +3159,10 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	GLITE_STACK_CATCH();
 }
 
-vector<string>
+void
 getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
-	&getDelegatedProxyInfo_response, const string &delegation_id)
+	&getDelegatedProxyInfo_response, const string &delegation_id, bool isjobid,
+		const string &job_id)
 {
 	GLITE_STACK_TRY("getDelegatedProxyInfo()");
 	edglog_fn("wmpoperations::getDelegatedProxyInfo");
@@ -3171,8 +3172,8 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
 	if (delegation_id == "") {
 		edglog(error)<<"Provided delegation ID not valid"<<endl;
-  		throw ProxyOperationException(__FILE__, __LINE__,
-			"getDelegatedProxyInfo()", wmputilities::WMS_DELEGATION_ERROR,
+  		throw JobOperationException(__FILE__, __LINE__,
+			"getDelegatedProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"Delegation id not valid");
 	}
 	
@@ -3186,10 +3187,27 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
 	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
-	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN());
+	if (isjobid) {
+		if (job_id == "") {
+			edglog(error)<<"Provided job ID not valid"<<endl;
+	  		throw JobOperationException(__FILE__, __LINE__,
+	  			"getDelegatedProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"Job id not valid");
+		}
+		if (vomsproxy.hasVOMSExtension()) {
+			auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
+		} else {
+			auth->authorize("", job_id);
+		}
+		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+		vomsproxy = authorizer::VOMSAuthZ(
+			wmputilities::getJobDelegatedProxyPath(job_id));
 	} else {
-		auth->authorize();
+		if (vomsproxy.hasVOMSExtension()) {
+			auth->authorize(vomsproxy.getDefaultFQAN());
+		} else {
+			auth->authorize();
+		}
 	}
 	delete auth;
 
@@ -3205,19 +3223,10 @@ getDelegatedProxyInfo(getDelegatedProxyInfoResponse
 		edglog(debug)<<"No drain"<<endl;
 	}
 	//** END
-	//----------------------------
-	long timeleft = authorizer::WMPAuthorizer::getProxyTimeLeft(delegatedproxy);
-	if (timeleft < 0) {
-		timeleft = 0;
-	}
-	string time = "Timeleft = " + boost::lexical_cast<std::string>(timeleft);
-	edglog(debug)<<time<<endl;
-	vector<string> returnvector;
-	returnvector.push_back(time);
+	
+	getDelegatedProxyInfo_response.items = vomsproxy.getProxyInfo();
 	
 	edglog(info)<<"getDelegatedProxyInfo successfully"<<endl;
-	
-	return returnvector;
 	
 	GLITE_STACK_CATCH();
 }

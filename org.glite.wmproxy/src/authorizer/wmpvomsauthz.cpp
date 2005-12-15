@@ -169,27 +169,19 @@ STACK_OF(X509) * load_chain(char *certfile)
 
 VOMSAuthZ::VOMSAuthZ(const string &proxypath)
 {
-	edglog_fn("VOMSAuthZ::VOMSAuthZ");
-	edglog(debug)<<"Proxy path: "<<proxypath<<endl;
-	
 	this->data = NULL;
 	parseVoms(const_cast<char*>(proxypath.c_str()));
-	
-	/*if (parseVoms(const_cast<char*>(proxypath.c_str()))) {
-		edglog(info)<<"Not a VOMS Proxy"<<endl;
-		throw NotAVOMSProxyException(__FILE__, __LINE__,
-	    	"VOMSAuthZ::VOMSAuthZ", wmputilities::WMS_NOT_A_VOMS_PROXY,
-	    	"Not a VOMS Proxy");
-	}*/
 }
 
 VOMSAuthZ::~VOMSAuthZ()
 {
-	if (this->data) {
-		VOMS_Destroy(this->data);
-	}
+	edglog(debug)<<"___ DISTRUTTORE"<<endl;
 	if (this->cert) {
-		free(this->cert);
+		X509_free(this->cert);
+	}
+	if (this->data) {
+		edglog(debug)<<"___ INSIDE"<<endl;
+		VOMS_Destroy(this->data);
 	}
 }
 
@@ -344,38 +336,46 @@ VOMSAuthZ::getDefaultVO()
 	GLITE_STACK_CATCH();
 }
 
-VOProxyInfoStructType
+VOProxyInfoStructType *
 VOMSAuthZ::getDefaultVOProxyInfo()
 {
 	GLITE_STACK_TRY("getDefaultVOProxyInfo()");
 	
-	VOProxyInfoStructType voproxyinfo;
+	VOProxyInfoStructType * voproxyinfo = new VOProxyInfoStructType();
 	if (this->data) {
 		int error = 0;
 		struct voms * defaultvoms = VOMS_DefaultData(this->data, &error);
 		if (defaultvoms) {
-			voproxyinfo.user = defaultvoms->user;
-			voproxyinfo.userCA = defaultvoms->userca;
-			voproxyinfo.server = defaultvoms->server;
-			voproxyinfo.serverCA = defaultvoms->serverca;
-			voproxyinfo.voName = defaultvoms->voname;
-			voproxyinfo.uri = defaultvoms->uri;
-			voproxyinfo.startTime = defaultvoms->date1;
-			voproxyinfo.endTime = defaultvoms->date2;
+			voproxyinfo->user = defaultvoms->user;
+			voproxyinfo->userCA = defaultvoms->userca;
+			voproxyinfo->server = defaultvoms->server;
+			voproxyinfo->serverCA = defaultvoms->serverca;
+			voproxyinfo->voName = defaultvoms->voname;
+			voproxyinfo->uri = defaultvoms->uri;
+			voproxyinfo->startTime = defaultvoms->date1;
+			voproxyinfo->endTime = defaultvoms->date2;
+			
+			/*voproxyinfo->user = "";
+			voproxyinfo->userCA = "";
+			voproxyinfo->server = "";
+			voproxyinfo->serverCA = "";
+			voproxyinfo->voName = "";
+			voproxyinfo->uri = "";
+			voproxyinfo->startTime = "";
+			voproxyinfo->endTime = "";*/
 			
 			vector<string> fqanvector;
 			char **temp;
     		for (temp = defaultvoms->fqan; *temp; temp++) {
-				fqanvector.push_back(*temp); // = td::vector<std::string> *;
+				fqanvector.push_back(*temp);
     		}
-    		
-    		voproxyinfo.attribute = fqanvector;
+    		voproxyinfo->attribute = fqanvector;
 		} else {
 			throw AuthorizationException(__FILE__, __LINE__,
 		    	"VOMSAuthZ::getDefaultVOProxyInfo", wmputilities::WMS_AUTHZ_ERROR,
 		    	errormessage(error));
 		}
-		free(defaultvoms);
+		//free(defaultvoms);
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return voproxyinfo;
@@ -384,103 +384,73 @@ VOMSAuthZ::getDefaultVOProxyInfo()
 	
 }
 
-time_t 
-VOMSAuthZ::ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
-{
-	struct tm tm;
-    int offset;
-
-	//struct tm *lt = localtime(&t);
-    memset(&tm,'\0',sizeof tm);
-#define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
-    tm.tm_year=g2(s->data);
-    if (tm.tm_year < 50) {
-    	tm.tm_year+=100;
-    }
-    tm.tm_mon=g2(s->data+2)-1;
-    tm.tm_mday=g2(s->data+4);
-    tm.tm_hour=g2(s->data+6);
-    tm.tm_min=g2(s->data+8);
-    tm.tm_sec=g2(s->data+10);
-    if (s->data[12] == 'Z') {
-    	offset=0;
-    } else {
-	    offset=g2(s->data+13)*60+g2(s->data+15);
-    	if (s->data[12] == '-') {
-            offset= -offset;
-    	}
-    }
-#undef g2
-
-    return timegm(&tm)-offset*60;
-}
-
-ProxyInfoStructType
+ProxyInfoStructType *
 VOMSAuthZ::getProxyInfo()
 {
 	GLITE_STACK_TRY("getProxyInfo()");
 	
-	ProxyInfoStructType proxyinfo;
+	ProxyInfoStructType *proxyinfo = new ProxyInfoStructType();
 	
-	char * subject = X509_NAME_oneline(X509_get_subject_name(
-		(X509*)&this->cert), NULL, 0);
+	char * subject = X509_NAME_oneline(X509_get_subject_name(this->cert),
+		NULL, 0);
 	
 	// Getting type
 	if (subject) {
         string subjectstring = string(subject);
         if (subjectstring.find(STANDARD_PROXY) != string::npos) {
-			proxyinfo.type = "proxy";
+			proxyinfo->type = "proxy";
         } else if (subjectstring.find(LIMITED_PROXY) != string::npos) {
- 			proxyinfo.type = "limited proxy";
+ 			proxyinfo->type = "limited proxy";
         } else {
- 			proxyinfo.type = "uknown";
+ 			proxyinfo->type = "uknown";
         }
     } else {
-    	proxyinfo.type = "uknown";
-    	proxyinfo.subject = "";
-    	proxyinfo.issuer = "";
-    	proxyinfo.identity = "";
-    	proxyinfo.strength = "";
-    	proxyinfo.startTime = "";
-    	proxyinfo.endTime = "";
+    	proxyinfo->type = "uknown";
+    	proxyinfo->subject = "";
+    	proxyinfo->issuer = "";
+    	proxyinfo->identity = "";
+    	proxyinfo->strength = "";
+    	proxyinfo->startTime = "";
+    	proxyinfo->endTime = "";
     	
     	vector<VOProxyInfoStructType*> voproxyinfovector;
-    	proxyinfo.vosInfo = voproxyinfovector;
+    	proxyinfo->vosInfo = voproxyinfovector;
 	}
 	
 	// Getting subject
-    proxyinfo.subject = string(subject);
+    proxyinfo->subject = string(subject);
     OPENSSL_free(subject);
     
    	// Getting issuer
-    proxyinfo.issuer = string(X509_NAME_oneline(X509_get_issuer_name(
-    	(X509*)&this->cert), NULL, 0));
+    proxyinfo->issuer = string(X509_NAME_oneline(X509_get_issuer_name(
+    	this->cert), NULL, 0));
     	
     // Getting identity
-    proxyinfo.identity = string(X509_NAME_oneline(X509_get_issuer_name(
-    	(X509*)&this->cert), NULL, 0));
+    proxyinfo->identity = string(X509_NAME_oneline(X509_get_issuer_name(
+    	this->cert), NULL, 0));
     	
     // Getting strength
     int bits = -1;
-    EVP_PKEY *key = X509_extract_key((X509*)&this->cert);
+    EVP_PKEY * key = X509_extract_key(this->cert);
     bits = 8 * EVP_PKEY_size(key);
     EVP_PKEY_free(key);
-    proxyinfo.strength = boost::lexical_cast<string>(bits);
+    proxyinfo->strength = boost::lexical_cast<string>(bits);
     
     // Getting start time
-	proxyinfo.startTime =
-    	ASN1_UTCTIME_get(X509_get_notBefore((X509*)&this->cert));
+	proxyinfo->startTime = boost::lexical_cast<std::string>(
+    	ASN1_UTCTIME_get(X509_get_notBefore(this->cert)));
     	
     // Getting end time
-    proxyinfo.endTime =
-    	ASN1_UTCTIME_get(X509_get_notAfter((X509*)&this->cert));
-    	
+    proxyinfo->endTime = boost::lexical_cast<std::string>(
+    	ASN1_UTCTIME_get(X509_get_notAfter(this->cert)));
+    
 	// Getting voms info if any
 	vector<VOProxyInfoStructType*> voproxyinfovector;
 	if (this->data) {
-		voproxyinfovector.push_back(&getDefaultVOProxyInfo());
+		//VOProxyInfoStructType * voproxyinfo = getDefaultVOProxyInfo();
+		voproxyinfovector.push_back(getDefaultVOProxyInfo());
 	}
-	proxyinfo.vosInfo = voproxyinfovector;
+	proxyinfo->vosInfo = voproxyinfovector;
 	
 	return proxyinfo;
 	
@@ -509,7 +479,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
 	} else {
 		certdir = const_cast<char*>(CERT_DIR);
 	}
-	if (!(data = VOMS_Init(vomsdir, certdir))) {
+	if (!(this->data = VOMS_Init(vomsdir, certdir))) {
 		edglog(debug)<<"Error in VOMS_Init()"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
 	    	"VOMSAuthZ::parseVoms", wmputilities::WMS_AUTHZ_ERROR,
@@ -542,7 +512,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
       		// operation call
       		//VOMS_SetVerificationType(VERIFY_NOTARGET | VERIFY_SIGN | VERIFY_ORDER
       		//	| VERIFY_ID, data, &error);
-      		if (!VOMS_SetVerificationType(~VERIFY_DATE, data, &error)) {
+      		if (!VOMS_SetVerificationType(~VERIFY_DATE, this->data, &error)) {
       			BIO_free(in);
       			string msg = errormessage(error);
 				edglog(severe)<<"Error in VOMS_SetVerificationType: "<<msg<<endl;
@@ -551,7 +521,7 @@ VOMSAuthZ::parseVoms(char * proxypath)
 			    	msg);
       		}
   		
-      		if (!VOMS_Retrieve(this->cert, chain, RECURSE_CHAIN, data, &error)) {
+      		if (!VOMS_Retrieve(this->cert, chain, RECURSE_CHAIN, this->data, &error)) {
       			BIO_free(in);
       			if (error == VERR_NOEXT) {
 					// Proxy is not a VOMS Proxy
@@ -582,6 +552,41 @@ VOMSAuthZ::parseVoms(char * proxypath)
 	return 0;
 	
 	GLITE_STACK_CATCH();
+}
+
+
+//
+// Static methods
+//
+
+time_t 
+VOMSAuthZ::ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
+{
+	struct tm tm;
+    int offset;
+
+    memset(&tm,'\0',sizeof tm);
+#define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
+    tm.tm_year=g2(s->data);
+    if (tm.tm_year < 50) {
+    	tm.tm_year+=100;
+    }
+    tm.tm_mon=g2(s->data+2)-1;
+    tm.tm_mday=g2(s->data+4);
+    tm.tm_hour=g2(s->data+6);
+    tm.tm_min=g2(s->data+8);
+    tm.tm_sec=g2(s->data+10);
+    if (s->data[12] == 'Z') {
+    	offset=0;
+    } else {
+	    offset=g2(s->data+13)*60+g2(s->data+15);
+    	if (s->data[12] == '-') {
+            offset= -offset;
+    	}
+    }
+#undef g2
+
+    return timegm(&tm)-offset*60;
 }
 
 } // namespace authorizer

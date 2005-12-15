@@ -970,6 +970,40 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 }
 
 int
+ns1__getJobProxyInfo(struct soap *soap, string delegation_id, string job_id,
+	struct ns1__getJobProxyInfoResponse &response)
+{
+	GLITE_STACK_TRY("ns1__getJobProxyInfo(struct soap *soap, string "
+		"delegation_id, string job_id, struct ns1__getJobProxyInfoResponse"
+		" &response)");
+	edglog_fn("wmpgsoapoperations::ns1__getJobProxyInfo");
+	edglog(info)<<"getJobProxyInfo operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+	
+	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
+	try  {
+		getDelegatedProxyInfo(getDelegatedProxyInfo_response, delegation_id,
+			true, job_id);
+		response._items =
+			convertToGSOAPProxyInfoStructType(getDelegatedProxyInfo_response.items);
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, exc.getCode(), "getJobProxyInfo", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getJobProxyInfo", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"getJobProxyInfo operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
 ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelist,
 	struct ns1__enableFilePerusalResponse &response)
 {

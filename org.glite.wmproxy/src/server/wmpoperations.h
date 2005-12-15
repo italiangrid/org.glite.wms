@@ -94,8 +94,9 @@ void addACLItems(addACLItemsResponse &addACLItems_response,
 void removeACLItem(removeACLItemResponse &removeACLItem_response,
 	const std::string &job_id, const std::string &item);
 
-std::vector<std::string> getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
-	&getDelegatedProxyInfo_response, const std::string &job_id);
+void getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
+	&getDelegatedProxyInfo_response, const std::string &job_id,
+	bool isjob = false, const std::string &job_id = "");
 
 void enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	const std::string &job_id, StringList *fileList);
