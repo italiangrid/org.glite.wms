@@ -101,6 +101,7 @@ class Options
 			JOBOUTPUT,
 			JOBATTACH,
                         JOBDELEGATION,
+			JOBPROXYINFO,
 			JOBPERUSAL
 		};
 		/*
@@ -215,6 +216,12 @@ class Options
 		*	@param long displays the long usage help if it is "true"
 		*/
 		void delegation_usage(const char* &exename, const bool &long_usg=false) ;
+		/**
+		*	Displays on the standard output  the usage help message for the proxy-info command
+		*	@param exename name of the programme executable
+		*	@param long displays the long usage help if it is "true"
+		*/
+		void proxyinfo_usage(const char* &exename, const bool &long_usg=false) ;
 		/**
 		*	Displays on the standard output  the usage help message for the job-perusal command
 		*	@param exename name of the programme executable
@@ -523,6 +530,7 @@ class Options
 		static const struct option outputLongOpts[]  ;
 		static const struct option attachLongOpts[]  ;
                 static const struct option delegationLongOpts[]  ;
+		static const struct option proxyInfoLongOpts[]  ;
 		static const struct option perusalLongOpts[]  ;
 		/**
 		*	pointer to the long options of the command

@@ -36,7 +36,7 @@ libservices:
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -shared -o libglite_wms_client_services.so  \
 	lbapi.cpp job.cpp jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  \
 	jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp \
-	jobperusal.cpp
+	jobperusal.cpp proxyinfo.cpp
 	@echo "DONE"
 services:
 	@echo "compiling utils....."
@@ -44,5 +44,5 @@ services:
 	$(WMPCLIENT_LD_FLAGS) $(WMPCLIENT_C_FLAGS) -o glite-wmp-services \
 	lbapi.cpp job.cpp jobattach.cpp  jobcancel.cpp  joblistmatch.cpp  jobloginfo.cpp  joboutput.cpp  \
 	jobstatus.cpp  jobsubmit.cpp delegateproxy.cpp listener.cpp \
-	jobperusal.cpp
+	jobperusal.cpp proxyinfo.cpp
 	@echo "DONE"

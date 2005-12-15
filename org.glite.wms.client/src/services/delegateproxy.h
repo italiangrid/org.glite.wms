@@ -47,7 +47,7 @@ class DelegateProxy : public Job {
 		*/
 		void readOptions (int argc,char **argv) ;
                 /**
-		*	Performs the operations to submit the job(s)
+		*	Performs the operations of delegation
 		*/
 		void delegation ( ) ;
 	private :
@@ -59,5 +59,5 @@ class DelegateProxy : public Job {
 
 };
 }}}} // ending namespaces
-#endif //GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
+#endif //GLITE_WMS_CLIENT_SERVICES_DELEGATEPROXY_H
 

@@ -292,23 +292,38 @@ const struct option Options::attachLongOpts[] = {
 	{0, 0, 0, 0}
 };
 /*
-*	Long options for job-submit
+*	Long options for proxy-delegation
 */
 const struct option Options::delegationLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
-	{	Options::LONG_AUTODG,             	no_argument,			0,		Options::SHORT_AUTODG},
+	{	Options::LONG_AUTODG,             no_argument,			0,		Options::SHORT_AUTODG},
 	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
 	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
-	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
+	{	Options::LONG_OUTPUT,             required_argument,	0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,		no_argument,		0,	Options::NOINT	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
-
+/*
+*	Long options for proxy-info
+*/
+const struct option Options::proxyInfoLongOpts[] = {
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
+	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
+	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
+	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
+	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
+	{	Options::LONG_OUTPUT,             required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
+	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
+	{0, 0, 0, 0}
+};
 /*
 *	Long options for  job-perusal
 */
@@ -319,7 +334,7 @@ const struct option Options::perusalLongOpts[]  = {
 	{	Options::LONG_GET,			no_argument,			0,	Options::GET},
 	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
 	{ 	Options::LONG_UNSET, 	        	no_argument,			0,	Options::UNSET},
-	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::FILENAME},
+	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::SHORT_FILENAME},
 	{ 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
 	{ 	Options::LONG_DIR,        		required_argument,		0,	Options::DIR},
 	{ 	Options::LONG_OUTPUT,        	required_argument,		0,	Options::SHORT_OUTPUT},
@@ -643,6 +658,32 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 	}
 };
 /*
+*	Prints the help usage message for the job-submit
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
+void Options::proxyinfo_usage(const char* &exename, const bool &long_usg){
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
+	cerr << "Usage: " << exename <<   " [options] [ -d <deleg Id> | <job Id> ]\n\n";
+        cerr << "options:\n" ;
+	cerr << "\t" << USG_HELP << "\n";
+        cerr << "\t" << USG_ENDPOINT << "\n";
+	cerr << "\t" << USG_CONFIG << "\n";
+        cerr << "\t" << USG_VO << "\n";
+	cerr << "\t" << USG_OUTPUT << "\n";
+	cerr << "\t" << USG_NOINT << "\n";
+	cerr << "\t" << USG_DEBUG << "\n";
+	cerr << "\t" << USG_LOGFILE << "\n\n";
+	cerr << "identifier:\n" ;
+	cerr << "\t" << USG_DELEGATION << " = the identifier of a previously delegated proxy\n";
+	cerr << "\tor <job Id> = the identifier of a prevoiusly submitted job\n";
+	cerr << "Please report any bug at:\n" ;
+	cerr << "\t" << HELP_EMAIL << "\n";
+	if (long_usg){
+		cerr  << exename << " full help\n\n" ;
+	}
+};
+/*
 *	Prints the help usage message for the job-output
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
@@ -846,6 +887,20 @@ Options::Options (const WMPCommands &command){
 			// long options
 			longOpts = delegationLongOpts ;
 			numOpts = (sizeof(delegationLongOpts)/sizeof(option)) -1;
+			break ;
+		} ;
+		case (JOBPROXYINFO) :{
+			// short options
+			asprintf (&shortOpts,
+				"%c%c%c%c%c%c%c%c",
+				Options::SHORT_E,  			short_required_arg, // endpoint
+				Options::SHORT_DELEGATION, 	short_required_arg,
+				Options::SHORT_OUTPUT, 		short_required_arg,
+				Options::SHORT_CONFIG,		short_required_arg);
+
+			// long options
+			longOpts = proxyInfoLongOpts ;
+			numOpts = (sizeof(proxyInfoLongOpts)/sizeof(option)) -1;
 			break ;
 		} ;
 		case (JOBPERUSAL) :{
@@ -1429,16 +1484,20 @@ void Options::printUsage(const char* exename) {
                         output_usage(exename);
                         break;
                 } ;
-                case ( JOBMATCH) :{
+                case (JOBMATCH) :{
                         lsmatch_usage(exename);
                         break;
                 } ;
-                case ( JOBATTACH) :{
+                case (JOBATTACH) :{
                         attach_usage(exename);
                         break;
                 } ;
-                case ( JOBDELEGATION) :{
+                case (JOBDELEGATION) :{
                         delegation_usage(exename);
+                        break;
+                } ;
+                case (JOBPROXYINFO) :{
+                        proxyinfo_usage(exename);
                         break;
                 } ;
 		case ( JOBPERUSAL) :{
@@ -1594,13 +1653,56 @@ void Options::readOptions(const int &argc, const char **argv){
 						"Wrong Option",
 						err.str() );
 				}
-                        }
+			 }
 		} else
+			// =========================================================
+			// JobProxyInfo : needs Jobid or --delegatioID option
+			// ========================================================
+			if ( cmdType == JOBPROXYINFO){
+					if (optind == argc-1 ) {
+						jobid = Utils::checkJobId (argv[optind]);
+						jobIds.push_back(jobid);
+					} else
+					// all the options have been processed by getopt (JobId file is missing)
+					if (optind == argc ) {
+						if(delegation == NULL){
+							throw WmsClientException(__FILE__,__LINE__,
+								"readOptions", DEFAULT_ERR_CODE,
+								"Wrong Option: " + string(last_arg)  ,
+								"Last argument of the command must be a JobId or specify a proxy delegationId string with the option:\n"
+									+ getAttributeUsage(Options::DELEGATION) );
+						}
+					} else
+
+					// all the options have been processed by getopt and we still have more than an argument
+					 if (optind != (argc-1) ) {
+						ostringstream err ;
+						err << "Too many arguments:\n";
+						for (int i = optind; i < argc; i++){
+							err << argv[i++] ;
+						}
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Arguments Error",
+							err.str() );
+					} else {
+						ostringstream err ;
+						err << "Wrong arguments:\n";
+						for (int i = optind; i < argc; i++){
+							err << argv[i++] ;
+						}
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Arguments Error",
+							err.str() );
+					}
+			} else
 
 			// =========================================================
 			// JobPerusal /JobAttach : need only one jobid as last argument
 			// ========================================================
-			 if ( cmdType == JOBPERUSAL){
+			 if ( cmdType == JOBPERUSAL ||
+			 	cmdType == JOBATTACH ){
 				// all the options have been processed by getopt (JobId file is missing)
 				if (optind == argc ){
 					throw WmsClientException(__FILE__,__LINE__,
@@ -1715,6 +1817,10 @@ std::string Options::getDefaultApplicationName() {
 			name = "glite-wms-job-delegate-proxy";
                         break;
                 } ;
+		case ( JOBPROXYINFO) :{
+			name = "glite-wms-job-proxy-info";
+                        break;
+                } ;
 		case ( JOBPERUSAL) :{
 			name = "glite-wms-job-perusal";
                         break;
@@ -1735,7 +1841,8 @@ const int Options::checkCommonShortOpts (const int &opt ) {
 		case (SHORT_E) : {
 			if (cmdType==JOBSUBMIT ||
 				cmdType==JOBMATCH ||
-				cmdType==JOBDELEGATION) {
+				cmdType==JOBDELEGATION ||
+				cmdType==JOBPROXYINFO){
 				r = Options::ENDPOINT;
 			} else if (cmdType==JOBSTATUS) {
 				r = Options::EXCLUDE;
@@ -2146,7 +2253,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                         break ;
 		};
 		// it could be specified more than once
-		case ( Options::FILENAME ) : {
+		case ( Options::SHORT_FILENAME ) : {
 			string file = checkArg(LONG_FILENAME ,optarg, Options::FILENAME ) ;
 			if (Utils::contains(filenames, file )) {
 				warnsMsg += errMsg(WMS_WARNING,
@@ -2175,7 +2282,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
 				DEFAULT_ERR_CODE,
 				"Input Option Error",
-				"unknow option"  );
+				"unknown option"  );
 			break ;
 		};
 	};

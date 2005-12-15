@@ -196,7 +196,7 @@ std::string Job::getLogFileMsg ( ) {
 
 
 
-const std::string Job::getWmpVersion (std::string &endpoint) {
+const std::string Job::getWmpVersion (const std::string &endpoint) {
 	string version = "";
 	try {
 		// Cfg context object
@@ -267,14 +267,46 @@ void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, s
 	}
 }
 
-void Job::setEndPoint( ) {
+void Job::setVersionNumbers(const string& version) {
+	unsigned int p = 0;
+	ostringstream info;
+	string v = version;
+	 // Major version number
+	p = version.find(".");
+	if (p != string::npos) {
+		wmpVersion.major = atoi (v.substr(0,p).c_str() );
+		 // Minor version number
+		if (p < version.size( )) {
+			v =v.substr((p+1),(version.size()-p));
+			p = v.find(".");
+			if (p != string::npos){
+				wmpVersion.minor = atoi (v.substr(0,p).c_str() );
+			} else {
+				wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
+			}
+		} else {
+			wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
+		}
+	} else {
+		wmpVersion.major = Options::WMPROXY_OLD_VERSION;
+		wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
+	}
+	info << "WMProxy: major version[" << wmpVersion.major << "] - minor version[" << wmpVersion.minor << "]";
+	logInfo->print(WMS_DEBUG, info.str(), "",false );
+
+}
+
+void Job::setEndPoint(const bool &allow_autodg) {
 	vector<string> urls;
 	string *endpoint = NULL;
 	string version = "";
-	unsigned int p = 0;
-	ostringstream info;
-	// Reads the credential delegation options
-	setDelegationId( );
+	// Reads the credential delegation optionsi
+	if (allow_autodg) {
+		setDelegationId( );
+	} else {
+		dgOpt = wmcOpts->getStringAttribute (Options::DELEGATION) ;
+		autodgOpt = false;
+	}
 	// endPoint URL and ConfigurationContext
  	endpoint =  wmcOpts->getStringAttribute (Options::ENDPOINT) ;
         if (endpoint){
@@ -282,9 +314,8 @@ void Job::setEndPoint( ) {
 		// Gets the server version
 		version = getWmpVersion (*endpoint);
 		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
-
 		// Performs CredentialDelegation if auto-delegation has been requested
-		if (autodgOpt){ delegateUserProxy(*endpoint);}
+		if (autodgOpt){delegateUserProxy(*endpoint);}
         } else {
         	char* ep = getenv("GLITE_WMS_WMPROXY_ENDPOINT");
 		if (ep){
@@ -303,37 +334,29 @@ void Job::setEndPoint( ) {
 			checkWmpList(urls, *endpoint, version);
 		}
          }
-	 // Major version number
-	p = version.find(".");
-	if (p != string::npos) {
-		wmpVersion.major = atoi (version.substr(0,p).c_str() );
-		 // Minor version number
-		if (p < version.size( )) {
-			version =version.substr((p+1),(version.size()-p));
-			p = version.find(".");
-			if (p != string::npos){
-				wmpVersion.minor = atoi (version.substr(0,p).c_str() );
-			} else {
-				wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
-			}
-		} else {
-			wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
-		}
-	} else {
-		wmpVersion.major = Options::WMPROXY_OLD_VERSION;
-		wmpVersion.minor = Options::WMPROXY_OLD_MINOR_VERSION;
-	}
-	info << "WMProxy: major version[" << wmpVersion.major << "] - minor version[" << wmpVersion.minor << "]";
-	logInfo->print(WMS_DEBUG, info.str(), "",false );
+	 // sets the attributes related to the version info
+	setVersionNumbers(version);
 	 // Sets the attribute of this class related to the WMP server
 	 endPoint = new string(*endpoint);
 	 cfgCxt = new ConfigContext(getProxyPath(),*endpoint, getCertsPath());
 }
 
-void Job::setEndPoint(const std::string& endpoint) {
+void Job::setEndPoint(const std::string& endpoint, const bool check) {
+	string version = "";
 	endPoint = new string(endpoint);
 	cfgCxt = new ConfigContext(getProxyPath(),endpoint, getCertsPath());
 	logInfo->print(WMS_DEBUG, "Endpoint URL: " + cfgCxt->endpoint, "");
+	if (check){
+		// Gets the server version
+		version = getWmpVersion (endpoint);
+		logInfo->print(WMS_DEBUG, "WMProxy Version: " + version, "" );
+		 // sets the attributes related to the version info
+		setVersionNumbers(version);
+		// checks the input options related to the credential delegation
+		setDelegationId ( );
+		// autodelegation if it is needed
+		if (autodgOpt){ delegateUserProxy(endpoint);}
+	}
 }
 
 

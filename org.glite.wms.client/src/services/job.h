@@ -87,13 +87,14 @@ class Job{
 		* specified in the configuration. In this last case the choice is randomically.
 		*
 		*/
-		virtual void setEndPoint ();
+		virtual void setEndPoint (const bool &allow_autodg=true);
 		/**
 		* Sets the endpoint URL where the operation will be performed.
-		* @param the string with the endpoint URL
+		* @param endpoint the string with the endpoint URL
+		* @param check if TRUE the version numbers are retrieved and the credemtial delegation options are checked
 		*
 		*/
-		virtual void setEndPoint (const std::string &endpoint);
+		virtual void setEndPoint (const std::string &endpoint, const bool check=false);
 		/**
 		* Returns the URL of the endpoint where the operation is being performed
 		*/
@@ -116,7 +117,7 @@ class Job{
 		* Retrieves the string with WMProxy version information
 		* @return the string with the version information having the format x.y.z
 		*/
-		virtual const std::string getWmpVersion (std::string &endpoint) ;;
+		virtual const std::string getWmpVersion (const std::string &endpoint) ;
 		/*
 		* Checks whether the major number of the WMProxy version is greater than
 		* a number related to a fixed old version that doesn't contain some particular features
@@ -145,7 +146,12 @@ class Job{
 		* @param version the version number of the contacted endpoint
 		* @param all if TRUE, it contacts all endpoints specified
 		*/
-		void Job::checkWmpList (std::vector<std::string> &urls, std::string &endpoint, std::string &version, const bool &all=false) ;
+		void checkWmpList (std::vector<std::string> &urls, std::string &endpoint, std::string &version, const bool &all=false) ;
+		/**
+		* Sets the attributes of this class related to the version neumbers of the WMProxy server
+		* @param version the version string got calling the getVersion service of the WMProxy server
+		*/
+		void setVersionNumbers(const std::string& version) ;
 		/**
 		* Performs credential delegation
 		* @param id the delegation identifier string to be used for the delegation
