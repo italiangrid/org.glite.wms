@@ -9,6 +9,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
+#include "iceEventLogger.h"
 #include <string>
 #include <iostream>
 #include <unistd.h>
@@ -72,7 +73,14 @@ int main(int argc, char*argv[]) {
    * Gets the distinguished name from the host proxy certificate
    ****************************************************************************/
   string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
-  string hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+  string hostdn;
+  try {
+      hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+  } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+    logger_instance->log(log4cpp::Priority::ERROR, 
+			 "Unable to extract user DN from Proxy File " + hostcert, true, true, true);
+    exit(1);
+  }
   logger_instance->log(log4cpp::Priority::INFO, 
 		       string("Host proxyfile is [") + hostcert + "]",
 		       true, true, true);
@@ -166,8 +174,13 @@ int main(int argc, char*argv[]) {
 
   vector<string> url_jid;
   url_jid.reserve(2);
+
+
   
-  
+  /*
+   * Initializes the L&B logger
+   */
+  iceUtil::iceEventLogger* iceLogger = iceUtil::iceEventLogger::instance();
   
   /*****************************************************************************
    * Main loop that fetch requests from input filelist, submit/cancel the jobs,
@@ -195,7 +208,8 @@ int main(int argc, char*argv[]) {
       //      cout << "-----> Unparsing request <"<<requests[j]<<">"<<endl;
       glite::wms::ice::iceAbsCommand* cmd = 0;
       try {
-	cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
+          iceLogger->execute_event( "foobar" );
+          cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
       }
       catch(std::exception& ex) {
 	//cerr << "\tunparse ex: "<<ex.what()<<endl;
