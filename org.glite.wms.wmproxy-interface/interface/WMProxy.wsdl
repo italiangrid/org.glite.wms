@@ -352,6 +352,13 @@
 	<wsdl:message name="getDelegatedProxyInfoResponse">
 		<wsdl:part name="items" type="glitenstypes:ProxyInfoStructType"/>
 	</wsdl:message>
+	<wsdl:message name="getJobProxyInfoRequest">
+		<wsdl:part name="delegationID" type="xsd:string"/>
+		<wsdl:part name="jobId" type="xsd:string"/>
+	</wsdl:message>
+	<wsdl:message name="getJobProxyInfoResponse">
+		<wsdl:part name="items" type="glitenstypes:ProxyInfoStructType"/>
+	</wsdl:message>
 	<wsdl:message name="enableFilePerusalRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
 		<wsdl:part name="fileList" type="glitenstypes:StringList"/>
@@ -1026,7 +1033,31 @@
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
-		
+		<wsdl:operation name="getJobProxyInfo" parameterOrder="delegationID jobId">
+			<wsdl:documentation>
+					This operation returns the job Proxy information
+					
+					Input: string containing the delegation identifier.
+					Input: string containing the job identifier.
+					
+					Output: a vector of strings containing job Proxy information
+					
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 			client is not authorized to perform this operation.
+					InvalidArgumentFault: 	the given delegation id is not valid.
+					GenericFault: 					another problem occured. 
+					JobUnknownFault:			the given job has not been registered to the system.
+					
+            </wsdl:documentation>
+			<wsdl:input name="getJobProxyInfoRequest" message="glitens:getJobProxyInfoRequest"/>
+			<wsdl:output name="getJobProxyInfoResponse" message="glitens:getJobProxyInfoResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
+			<wsdl:fault name="JobUnknownFault" message="glitens:JobUnknownFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+		</wsdl:operation>
 		<wsdl:operation name="enableFilePerusal" parameterOrder="jobId fileList">
 			<wsdl:documentation>
 					This operation enables file perusal functionalities if not disabled with the specific jdl attribute during job 
@@ -1578,6 +1609,29 @@
 			</wsdl:fault>
 		</wsdl:operation>
 		<wsdl:operation name="getDelegatedProxyInfo">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="InvalidArgumentFault">
+				<soap:fault name="InvalidArgumentFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="JobUnknownFault">
+				<soap:fault name="JobUnknownFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
+		<wsdl:operation name="getJobProxyInfo">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
 			</wsdl:input>
