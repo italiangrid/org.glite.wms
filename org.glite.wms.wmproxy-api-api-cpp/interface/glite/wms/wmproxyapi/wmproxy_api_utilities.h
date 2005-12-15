@@ -26,7 +26,6 @@ const time_t getTime( );
 *	@return the pathname string if it exists, NULL if there is no such path
 */
 const char* checkPathExistence(const char* path);
-
 /**
 *	Returns the local pathname of the directory containing the trusted certificates.
 *	This information retrieved by the input configuration context if the input context object is not NULL,
@@ -53,11 +52,17 @@ const char* getProxyFile(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 **/
 const char* getEndPoint (glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
+*	Returns time left of the input proxy certificate (in minutes)
+*	@param pxfile The proxy file pathname
+*	@return The number of minutes remaining until the expiration time
+**/
+const long getProxyTimeLeft(std::string pxfile);
+/**
 *	Returns time left of the input proxy certificate (in seconds)
 *	@param pxfile The proxy file pathname
 *	@return The number of seconds remaining until the expiration time
 **/
-const long getProxyTimeLeft(std::string pxfile);
+const long getCertTimeLeft(std::string pxfile);
 
 /**
 *	Returns the list of the FQAN's of a voms-proxy file

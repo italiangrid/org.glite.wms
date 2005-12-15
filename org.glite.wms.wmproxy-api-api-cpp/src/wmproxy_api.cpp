@@ -407,6 +407,49 @@ ns1__GraphStructType* node2soap(NodeStruct *c_node){
 	}
 	return s_node;
 }
+
+/*****************************************************************
+proxyInfoSoap2cpp
+Tranform the soap ProxyInfoStructType into the correspondent cpp structure
+******************************************************************/
+ProxyInfoStructType* proxyInfoSoap2cpp (ns1__ProxyInfoStructType* info) {
+	ProxyInfoStructType *result = NULL;
+	if (info){
+		result = new ProxyInfoStructType;
+		// Provy Info
+		result->subject	= info->Subject ;
+		result->issuer = 	info->Issuer ;
+		result->identity	= info-> Identity ;
+		result->type = info->Type ;
+		result->strength	= info->Strength ;
+		result->startTime = info->StartTime ;
+		result->endTime	= info->EndTime ;
+		// VO's info
+		std::vector<ns1__VOProxyInfoStructType*>::iterator it1 = (info->VOsInfo).begin();
+		const std::vector<ns1__VOProxyInfoStructType*>::iterator end1 = (info->VOsInfo).end();
+		for ( ; it1 != end1; it1++){
+			VOProxyInfoStructType *vo_result = new VOProxyInfoStructType;
+			if ((*it1)){
+				ns1__VOProxyInfoStructType *vo_info = (*it1);
+				vo_result->user = vo_info->User ;
+				vo_result->userCA = vo_info->UserCA ;
+				vo_result->server =  vo_info->Server ;
+				vo_result->voName  = vo_info->VOName ;
+				vo_result->URI = vo_info->URI ;
+				vo_result->startTime =  vo_info->StartTime ;
+				vo_result->endTime  = vo_info->EndTime ;
+				// attribute
+				vector<string>::iterator it2 = (vo_info->Attribute).begin() ;
+				const vector<string>::iterator end2 = (vo_info->Attribute).end() ;
+				for ( ; it2 != end2; it2++){
+					(vo_result->attribute).push_back((*it2)) ;
+				}
+			}
+			(result->vosInfo).push_back(vo_result );
+		}
+	}
+	return result ;
+}
 /*****************************************************************
 ConfigContext Constructor/Destructor
 ******************************************************************/
@@ -668,6 +711,7 @@ std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::s
 	} else soapErrorMng(wmp) ;
 	return vect;
 }
+
 /*****************************************************************
 getJobTemplate
 ******************************************************************/
@@ -689,6 +733,7 @@ ns1__JobTypeList *createJobTypeList(int type) {
 	}
 	return result ;
 }
+
 string  getJobTemplate (int jobType, const string &executable,const string &arguments,const string &requirements,const string &rank, ConfigContext *cfs){
 	WMProxy wmp;
 	string tpl = "";
@@ -802,12 +847,13 @@ void putProxy(const string &delegationId, const string &request, ConfigContext *
 	if (!proxy){
 		throw *createWmpException (new GenericException , "getProxyFile" , "unable to get a valid proxy" ) ;
 	}
-	timeleft = getProxyTimeLeft(proxy);
+	timeleft = getCertTimeLeft(proxy);
 	// makes certificate
 	if (GRSTx509MakeProxyCert(&certtxt, stderr, (char*)request.c_str(), (char*) proxy, (char*)proxy,
 		timeleft) ){
 		throw *createWmpException (new GenericException , "GRSTx509MakeProxyCert" , "Method failed" ) ;
 	}
+
 	soapAuthentication (wmp, cfs);
 	ns1__putProxyResponse response;
 	if (wmp.ns1__putProxy(delegationId, certtxt, response) == SOAP_OK) {
@@ -827,7 +873,7 @@ void grstPutProxy(const string &delegationId, const string &request, ConfigConte
 	if (!proxy){
 		throw *createWmpException (new GenericException , "getProxyFile" , "unable to get a valid proxy" ) ;
 	}
-	timeleft = getProxyTimeLeft(proxy);
+	timeleft = getCertTimeLeft(proxy);
 	// makes certificate
 	if (GRSTx509MakeProxyCert(&certtxt, stderr, (char*)request.c_str(), (char*) proxy, (char*)proxy,
 		timeleft) ){
@@ -838,6 +884,30 @@ void grstPutProxy(const string &delegationId, const string &request, ConfigConte
 	if (deleg.ns2__putProxy(delegationId, certtxt, response) == SOAP_OK) {
 		soapDestroy(deleg.soap) ;
 	} else grstSoapErrorMng(deleg) ;
+}
+
+ProxyInfoStructType* getDelegatedProxyInfo(const string &delegationId, ConfigContext *cfs){
+	WMProxy wmp;
+	soapAuthentication (wmp, cfs);
+	ProxyInfoStructType *result = NULL;
+	ns1__getDelegatedProxyInfoResponse response;
+	if (wmp.ns1__getDelegatedProxyInfo(delegationId, response) == SOAP_OK) {
+		result = proxyInfoSoap2cpp(response._items);
+		soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+	return (result);
+}
+
+ProxyInfoStructType*getJobProxyInfo(const string &delegationId, const string &jobId, ConfigContext *cfs){
+	WMProxy wmp;
+	soapAuthentication (wmp, cfs);
+	ProxyInfoStructType *result = NULL;
+	ns1__getJobProxyInfoResponse response;
+	if (wmp.ns1__getJobProxyInfo(delegationId, jobId, response) == SOAP_OK) {
+		result = proxyInfoSoap2cpp(response._items);
+		soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+	return (result);
 }
 } // wmproxy-api namespace
 } // wms namespace

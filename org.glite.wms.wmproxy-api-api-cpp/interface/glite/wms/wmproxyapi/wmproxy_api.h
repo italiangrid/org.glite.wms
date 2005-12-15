@@ -135,6 +135,31 @@ struct JobIdApi {
 	/** A list of all the children for this node (for DAG, collection of jobs and parametric jobs, empty-vector otherwise) */
 	std::vector< JobIdApi* > children ;
 };
+
+
+struct VOProxyInfoStructType {
+    std::string user ;
+    std::string userCA;
+    std::string server;
+    std::string serverCA;
+    std::string voName;
+    std::string URI;
+    std::string startTime;
+    std::string endTime ;
+    std::vector<std::string> attribute;
+};
+
+
+struct ProxyInfoStructType {
+    std::string                          subject;
+    std::string                          issuer;
+    std::string                          identity;
+    std::string                          type;
+    std::string                          strength;
+    std::string                          startTime;
+    std::string                          endTime;
+    std::vector<VOProxyInfoStructType*> vosInfo ;
+};
 /**
 * Used to configure non-default properties such as:
 * <UL>
@@ -155,6 +180,7 @@ struct ConfigContext{
 	/** Trusted certificates location (default value is: <I>/etc/grid-security/certificates</I>) */
 	std::string trusted_cert_dir;
 };
+
 /** Retrieve the service version information
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
 * @throws AuthenticationException An authentication problem occurred
@@ -579,6 +605,41 @@ void putProxy(const std::string &delegationId, const std::string &request, glite
 * @see BaseException
 */
 void grstPutProxy(const std::string &delegationId, const std::string &request, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+/**
+* Returns the Delegated Proxy information identified by the delegationId string
+* @param delegationId The id of the delegation created previously (by a getProxyReq call)
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return a struct with the information on the input proxy
+* @throws DelegationException If the request failed
+* @throws AuthenticationFaultException : 	a generic authentication problem occured.
+* @throws AuthorizationFaultException : 	client is not authorized to perform this operation.
+* @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
+* @throws GenericFaultException : 		another problem occured.
+* @throws BaseException Any other error occurred
+* @see #getProxyReq
+* @see #putProxy
+* @see BaseException
+*/
+ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, ConfigContext *cfs=NULL);
+/**
+* Returns the information related to the proxy used to submit a job that identified by its JobId.
+* This operation needs that a valid proxy (identified by an id string -delegationId string-) has been previously delegated to the endpoint.
+* @param delegationId The id of the delegation created previously (by a getProxyReq call)
+* @param jobId the identifier of the job
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return a struct with the information on the input proxy
+* @throws DelegationException If the request failed
+* @throws AuthenticationFaultException : 	a generic authentication problem occured.
+* @throws AuthorizationFaultException : 	client is not authorized to perform this operation.
+* @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
+* @throws JobUnknownException The provided jobId has not been registered to the system
+* @throws GenericFaultException : 		another problem occured.
+* @throws BaseException Any other error occurred
+* @see #getProxyReq
+* @see #putProxy
+* @see BaseException
+*/
+ProxyInfoStructType* getJobProxyInfo(const std::string &delegationId, const std::string &jobId, ConfigContext *cfs);
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace

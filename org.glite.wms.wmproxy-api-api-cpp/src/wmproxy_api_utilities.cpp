@@ -300,7 +300,7 @@ const string proxy_parser (BIO *bp, unsigned char **pp,
 	// Time left
 	if (d1>0 || d2>0 ) {
 		if (d2>d1) {
-			left = d2 - time(NULL);
+			left = d2 - time(NULL) ;
 		} else {
 			left = d1 - time(NULL);
 		}
@@ -393,8 +393,37 @@ const vector<std::string> getFQANs(std::string pxfile){
 	return fqans ;
 }
 /*************************************************************************
-* looks for the list of fqan's
+* Proxy TimeLeft methods
 *************************************************************************/
+const long getCertTimeLeft( std::string pxfile ) {
+	time_t timeleft = 0;
+	BIO *in = NULL;
+	X509 *x = NULL;
+	in = BIO_new(BIO_s_file());
+	if (in) {
+		BIO_set_close(in, BIO_CLOSE);
+		if (BIO_read_filename( in, pxfile.c_str() ) > 0) {
+			x = PEM_read_bio_X509(in, NULL, 0, NULL);
+			if (x) {
+				timeleft = ( ASN1_UTCTIME_get   ( X509_get_notAfter(x))  - time(NULL) ) / 60 ;
+			} else{
+				throw  *createWmpException(new ProxyFileException, "getProxyTimeLeft",
+					string ("unable to read X509 proxy file: "+ pxfile) ) ;
+			}
+		} else {
+
+			throw  *createWmpException(new ProxyFileException, "getProxyTimeLeft",
+				string ("unable to open X509 proxy file: "+ pxfile) ) ;
+		}
+		BIO_free(in);
+		free(x);
+	} else {
+		throw  *createWmpException(new ProxyFileException, "getProxyTimeLeft",
+				string ("unable to allocate memory for the proxy file: "+ pxfile) ) ;
+	}
+        return timeleft;
+}
+
 const long getProxyTimeLeft( std::string pxfile ) {
 	int i = 0;
 	int lasttag=-1;
@@ -420,7 +449,7 @@ const long getProxyTimeLeft( std::string pxfile ) {
 			string ("unable to read X509 proxy file: "+ pxfile) ) ;
 	}
 	fclose(fp);
-	proxy_timeleft = ( ASN1_UTCTIME_get   ( X509_get_notAfter(cert))  - time(NULL) ) ;
+	proxy_timeleft = ( ASN1_UTCTIME_get   ( X509_get_notAfter(cert))  - time(NULL) )  ;
    	bp = BIO_new(BIO_s_file());
 	if (!bp){
 		throw  *createWmpException(new ProxyFileException, "getFQANs",
@@ -460,6 +489,7 @@ const long getProxyTimeLeft( std::string pxfile ) {
 	}
 	return timeleft ;
 }
+
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
