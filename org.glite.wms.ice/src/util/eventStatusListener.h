@@ -10,6 +10,7 @@
 #undef soapStub_H
 
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
+#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 
 #undef soapStub_H
 
@@ -34,23 +35,18 @@ namespace glite {
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  bool endaccept;
 	  CESubscription subscriber;
-	  int tcpport;
+	  CESubscriptionMgr subManager;
 	  std::vector<std::string> activeSubscriptions;
-
+	  std::string proxyfile;
+	  int tcpport;
+	  std::string myname;
 	  void init(void);
 
 	protected:
 	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999) {}
 
 	public:
-	  eventStatusListener(int i, const std::string& cert, const std::string& key) 
-	    : CEConsumer(i), 
-	    grid_JOBID(""), 
-	    cream_JOBID(""),
-	    status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
-	    endaccept(false),
-	    tcpport(i) { }
-	  
+	  eventStatusListener(int i, const std::string& hostcert) ;
 	  virtual ~eventStatusListener() {}
 
 	  void acceptJobStatus(void);

@@ -59,6 +59,7 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   cemonurlprefix    = config->ice()->cemon_url_prefix();
   cemonurlpostfix   = config->ice()->cemon_url_postfix();
   icetopic          = config->ice()->ice_topic();
+  subduration       = config->ice()->subscription_duration();
 }
 
 //______________________________________________________________________________

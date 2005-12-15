@@ -4,6 +4,7 @@
 #include "jobRequest.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "iceConfManager.h"
 #include <exception>
 #include <unistd.h>
 #include <boost/thread/thread.hpp>
@@ -77,7 +78,7 @@ void ice::startListener(const int& listenPort)
   //  cout << "Creating a CEMon listener object..."<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "Creating a CEMon listener object...");
-  listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort, "", ""));
+  listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort, util::iceConfManager::getInstance()->getHostProxyFile()));
   while(!listener->bind()) {
 //     cout << "error message=" << listener->getErrorMessage() << endl;
 //     cout << "error code   =" << listener->getErrorCode() << endl;
