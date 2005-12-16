@@ -70,6 +70,8 @@ JobSubmit::JobSubmit( ){
 	// init of the string attributes
 	chkptOpt  = NULL; // TBD
 	collectOpt = NULL;
+	dagOpt = NULL;
+	defJdlOpt = NULL;
 	fileProto= NULL;
 	lrmsOpt = NULL ;
 	toOpt = NULL ;
@@ -106,7 +108,9 @@ JobSubmit::JobSubmit( ){
 */
 JobSubmit::~JobSubmit( ){
 	if (collectOpt){ delete(collectOpt); }
-	 if (chkptOpt){ delete(chkptOpt); } //TBD
+	if (chkptOpt){ delete(chkptOpt); } //TBD
+	if (dagOpt){ delete(dagOpt); }
+	if (defJdlOpt){ delete(defJdlOpt); }
 	if (fileProto){ delete(fileProto); }
 	if (lrmsOpt){ delete(lrmsOpt); }
 	if (toOpt){ delete(toOpt); }
@@ -168,6 +172,10 @@ void JobSubmit::readOptions (int argc,char **argv){
 	chkptOpt =  wmcOpts->getStringAttribute( Options::CHKPT) ;
 	// --collect
 	collectOpt = wmcOpts->getStringAttribute(Options::COLLECTION);
+	// --dag
+	dagOpt = wmcOpts->getStringAttribute(Options::DAG);
+	// --default-jdl
+	defJdlOpt = wmcOpts->getStringAttribute(Options::DEFJDL);
 	// register-only & start
 	startOpt = wmcOpts->getStringAttribute(Options::START);
 	registerOnly = wmcOpts->getBoolAttribute(Options::REGISTERONLY);
@@ -176,9 +184,10 @@ void JobSubmit::readOptions (int argc,char **argv){
 	toOpt = wmcOpts->getStringAttribute(Options::TO);
 	// --start: incompatible options
 	if (startOpt &&
-	(registerOnly || inOpt || resourceOpt || nodesresOpt || toOpt || validOpt || chkptOpt || collectOpt ||
-		(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
-		wmcOpts->getBoolAttribute(Options::AUTODG)  )){
+		(registerOnly || inOpt || resourceOpt || nodesresOpt || toOpt || validOpt ||
+			chkptOpt || collectOpt || dagOpt || defJdlOpt ||
+			(wmcOpts->getStringAttribute(Options::DELEGATION) != NULL) ||
+			wmcOpts->getBoolAttribute(Options::AUTODG)  )){
 		info << "The following options cannot be specified together with --start:\n" ;
 		info << wmcOpts->getAttributeUsage(Options::REGISTERONLY) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
@@ -188,6 +197,8 @@ void JobSubmit::readOptions (int argc,char **argv){
 		info << wmcOpts->getAttributeUsage(Options::VALID) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::CHKPT) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::COLLECTION) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::DAG) << "\n";
+		info << wmcOpts->getAttributeUsage(Options::DEFJDL) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::AUTODG) << "\n";
 		info << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
 		throw WmsClientException(__FILE__,__LINE__,
@@ -780,7 +791,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				throw WmsClientException(__FILE__,__LINE__,
 					"submission",  DEFAULT_ERR_CODE,
 					"Invalid JDL collection Path",
-					"--colection: no valid collection directory (" + *collectOpt + ")"  );
+					"--collection: no valid collection directory (" + *collectOpt + ")"  );
 			}
 		} catch ( const fs::filesystem_error & ex ){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -843,6 +854,32 @@ void JobSubmit::checkAd(bool &toBretrieved){
 
 		}
 		jdlString = new string(collectAd->toString());
+	} else if (dagOpt) {
+		jobType = WMS_DAG ;
+		try {
+			fs::path cp ( Utils::normalizePath(*dagOpt), fs::native);
+			if ( fs::is_directory( cp ) ) {
+				*dagOpt= Utils::addStarWildCard2Path(*dagOpt);
+			} else {
+				throw WmsClientException(__FILE__,__LINE__,
+					"submission",  DEFAULT_ERR_CODE,
+					"Invalid JDL collection Path",
+					"--dag: no valid collection directory (" + *dagOpt + ")"  );
+			}
+		} catch ( const fs::filesystem_error & ex ){
+			throw WmsClientException(__FILE__,__LINE__,
+				"submission",  DEFAULT_ERR_CODE,
+				"Invalid JDL DAG Path",
+				ex.what()  );
+		}
+		logInfo->print (WMS_DEBUG, "A DAG is being submitted; JDL files in:", Utils::getAbsolutePath( *dagOpt));
+
+		/*
+			TBD !!!!
+
+		*/
+
+
 	} else {
 		// ClassAd
 		jobAd = new Ad();
