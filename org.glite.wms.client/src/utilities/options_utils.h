@@ -46,7 +46,9 @@ class Options
 			CHKPT ,
                         COLLECTION,
 			CONFIG ,
+			DAG,
 			DBG , //debug
+			DEFJDL,
                         DELEGATION,
 			DIR ,
                         ENDPOINT,
@@ -344,7 +346,9 @@ class Options
 		static const char* LONG_ALL ;
 		static const char* LONG_CHKPT	;
                 static const char* LONG_COLLECTION;
+		static const char* LONG_DAG ;
 		static const char* LONG_DEBUG ;
+		static const char* LONG_DEFJDL ;
 		static const char* LONG_DIR ;
 		static const char* LONG_FROM ;
 		static const char* LONG_GET ;
@@ -422,7 +426,9 @@ class Options
 		static const std::string USG_CHKPT	;
                 static const std::string USG_COLLECTION	;
 		static const std::string USG_CONFIG	;
+		static const std::string USG_DAG ;
 		static const std::string USG_DEBUG ;
+		static const std::string USG_DEFJDL ;
 		static const std::string USG_DIR ;
                 static const std::string USG_DELEGATION ;
                 static const std::string USG_ENDPOINT ;
@@ -469,6 +475,8 @@ class Options
 		*	std::string attributes
 		*/
 		std::string* chkpt ;
+		std::string* dag ;
+		std::string* def_jdl ;
                 std::string* collection ;
 		std::string* config ;
                 std::string* delegation ;

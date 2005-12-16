@@ -89,7 +89,9 @@ const unsigned int Options::MAX_VERBOSITY = 3;
 const char* Options::LONG_ALL 		= "all";
 const char* Options::LONG_CHKPT	= "chkpt";
 const char* Options::LONG_COLLECTION	= "collection";
+const char* Options::LONG_DAG	= 	"dag";
 const char* Options::LONG_DEBUG	= "debug";
+const char* Options::LONG_DEFJDL	= "default-jdl";
 const char* Options::LONG_DIR	= 		"dir";
 const char* Options::LONG_FROM		= "from";
 const char* Options::LONG_GET		= "get";
@@ -164,24 +166,26 @@ const struct option Options::submitLongOpts[] = {
         {	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
         {	Options::LONG_AUTODG,           	no_argument,			0,		Options::SHORT_AUTODG},
         {	Options::LONG_REGISTERONLY,	no_argument,			0,		Options::REGISTERONLY},
-	{	Options::LONG_PROTO	,		required_argument,		0,		Options::PROTO},
-	{	Options::LONG_TRANSFER,		no_argument,			0,		Options::TRANSFER},
-	{	Options::LONG_START,			required_argument,		0,		Options::START},
-         {	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
+	{	Options::LONG_PROTO	,	required_argument,		0,		Options::PROTO},
+	{	Options::LONG_TRANSFER,	no_argument,			0,		Options::TRANSFER},
+	{	Options::LONG_START,		required_argument,		0,		Options::START},
+ 	{	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
+        {	Options::LONG_DAG,    		required_argument,		0,		Options::DAG},
+        {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
         {	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
-        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
+        {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
 	{	Options::LONG_LRMS,              	required_argument,		0,		Options::LRMS},
-	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
+	{	Options::LONG_TO,              	required_argument,		0,		Options::TO},
 	{	Options::LONG_OUTPUT,            	required_argument,		0,		Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
 	{	Options::LONG_CONFIG,            	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_NODESRES,  		required_argument,		0,		Options::NODESRES},
-	{	Options::LONG_RESOURCE,  		required_argument,		0,		Options::SHORT_RESOURCE},
+	{	Options::LONG_NODESRES,  	required_argument,		0,		Options::NODESRES},
+	{	Options::LONG_RESOURCE,  	required_argument,		0,		Options::SHORT_RESOURCE},
 	{	Options::LONG_VALID,              	required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_NOMSG,		no_argument,			0,		Options::NOMSG	},
 	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
+	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
@@ -196,16 +200,16 @@ const struct option Options::statusLongOpts[] = {
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
 	{ 	Options::LONG_VERBOSE,         	required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_FROM,              	required_argument,		0,		Options::FROM},
-	{	Options::LONG_TO,              		required_argument,		0,		Options::TO},
+	{	Options::LONG_TO,              	required_argument,		0,		Options::TO},
 	{	Options::LONG_CONFIG,            	required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_USERTAG,         	required_argument,		0,		Options::USERTAG	},
 	{	Options::LONG_STATUS,         	required_argument,		0,		Options::SHORT_STATUS},
 	{	Options::LONG_EXCLUDE,         	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_OUTPUT,            	required_argument,		0,		Options::SHORT_OUTPUT},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
-        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
-	{	Options::LONG_DEBUG,			no_argument,			0,		Options::DBG	},
-	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
+        {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
+	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
+	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 
@@ -215,27 +219,27 @@ const struct option Options::statusLongOpts[] = {
 const struct option Options::loginfoLongOpts[] = {
 {	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
 {	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
-	{ 	Options::LONG_VERBOSE,            required_argument,		0,		Options::SHORT_V},
-	{	Options::LONG_CONFIG,              required_argument,		0,		Options::SHORT_CONFIG},
-        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
-	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
-	{	Options::LONG_DEBUG,			no_argument,			0,		Options::DBG	},
-	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+	{ 	Options::LONG_VERBOSE,         required_argument,		0,		Options::SHORT_V},
+	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
+        {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
+	{	Options::LONG_OUTPUT,            required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
+	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
+	{	Options::LONG_LOGFILE,           required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 /*
 *	Long options for job-cancel
 */
 const struct option Options::cancelLongOpts[] = {
-	{	Options::LONG_VERSION,	no_argument,			0,		Options::VERSION	},
-	{	Options::LONG_HELP,		no_argument,			0,		Options::HELP	},
+	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_INPUT,          	required_argument,		0,		Options::SHORT_INPUT},
-	{	Options::LONG_CONFIG,    	required_argument,		0,		Options::SHORT_CONFIG},
-	{	Options::LONG_OUTPUT,       required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_OUTPUT,       	required_argument,		0,		Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
 	{	Options::LONG_DEBUG,		no_argument,			0,		Options::DBG	},
-	{	Options::LONG_LOGFILE,      required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_LOGFILE,      	required_argument,		0,		Options::LOGFILE},
         {	Options::LONG_VO,             	 required_argument,	0,		Options::VO	},
 	{0, 0, 0, 0}
 };
@@ -245,30 +249,30 @@ const struct option Options::cancelLongOpts[] = {
 const struct option Options::lsmatchLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
-        {	Options::LONG_AUTODG,             	no_argument,			0,		Options::SHORT_AUTODG},
+        {	Options::LONG_AUTODG,           no_argument,			0,		Options::SHORT_AUTODG},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
- 	{	Options::LONG_ENDPOINT,           required_argument,		0,		Options::SHORT_E},
+ 	{	Options::LONG_ENDPOINT,        required_argument,		0,		Options::SHORT_E},
 	{ 	Options::LONG_RANK,              	no_argument,			0,		Options::RANK},
-	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
-        {	Options::LONG_VO,             		required_argument,		0,		Options::VO	},
-	{	Options::LONG_OUTPUT,             	required_argument,		0,		Options::SHORT_OUTPUT},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
-	{ 	Options::LONG_DEBUG,              	no_argument,			0,		Options::DBG},
-	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_CONFIG,             required_argument,		0,		Options::SHORT_CONFIG},
+        {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
+	{	Options::LONG_OUTPUT,             required_argument,		0,		Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
+	{ 	Options::LONG_DEBUG,              no_argument,			0,		Options::DBG},
+	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 /*
 *	Long options for job-output
 */
 const struct option Options::outputLongOpts[] = {
-	{	Options::LONG_VERSION,	no_argument,			0,	Options::VERSION	},
-	{	Options::LONG_HELP,		no_argument,			0,	Options::HELP	},
-	{ 	Options::LONG_OUTPUT,       required_argument,		0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_VERSION,		no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
+	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
-	{	Options::LONG_LISTONLY,	no_argument,			0,	Options::LISTONLY},
-	{ 	Options::LONG_DIR, 	        required_argument,		0,	Options::DIR},
-	{	Options::LONG_CONFIG,    	required_argument,		0,	Options::SHORT_CONFIG},
-        {	Options::LONG_VO,           	required_argument,		0,	Options::VO},
+	{	Options::LONG_LISTONLY,		no_argument,			0,	Options::LISTONLY},
+	{ 	Options::LONG_DIR, 	        	required_argument,		0,	Options::DIR},
+	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
 	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
 	{ 	Options::LONG_DEBUG,      	no_argument,			0,	Options::DBG},
 	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
@@ -283,12 +287,12 @@ const struct option Options::attachLongOpts[] = {
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{	Options::LONG_PORT,              	required_argument,		0,		Options::SHORT_PORT},
 	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
-	{	Options::LONG_CONFIG,              	required_argument,		0,		Options::SHORT_CONFIG},
+	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
 	{ 	Options::LONG_INPUT,              	required_argument,		0,		Options::SHORT_INPUT},
-	{	Options::LONG_NOINT,			no_argument,			0,		Options::NOINT	},
-	{ 	Options::LONG_DEBUG,              	no_argument,			0,		Options::DBG},
-	{	Options::LONG_LOGFILE,             	required_argument,		0,		Options::LOGFILE},
+	{	Options::LONG_NOINT,		no_argument,			0,		Options::NOINT	},
+	{ 	Options::LONG_DEBUG,              no_argument,			0,		Options::DBG},
+	{	Options::LONG_LOGFILE,             required_argument,		0,		Options::LOGFILE},
 	{0, 0, 0, 0}
 };
 /*
@@ -298,12 +302,12 @@ const struct option Options::delegationLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
-	{	Options::LONG_AUTODG,             no_argument,			0,		Options::SHORT_AUTODG},
+	{	Options::LONG_AUTODG,           no_argument,			0,		Options::SHORT_AUTODG},
 	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
 	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
-	{	Options::LONG_OUTPUT,             required_argument,	0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_OUTPUT,            required_argument,	0,	Options::SHORT_OUTPUT},
 	{	Options::LONG_NOINT,		no_argument,		0,	Options::NOINT	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
@@ -359,7 +363,11 @@ const string Options::USG_COLLECTION = "--" + string(LONG_COLLECTION)	 + "\t<dir
 
 const string Options::USG_CONFIG = "--" + string(LONG_CONFIG ) +  ", -" + SHORT_CONFIG  + "\t<file_path>"	;
 
+const string Options::USG_DAG = "--" + string(LONG_DAG)	 + "\t<dir_path>" ;
+
 const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
+
+const string Options::USG_DEFJDL = "--" + string(LONG_DEFJDL)	 + "\t\t<file_path>" ;
 
 const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<id_string>";
 
@@ -464,9 +472,11 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n";
+	cerr << "\t" << USG_DEFJDL << "\n";
+        cerr << "\t" << USG_DAG << " (**)\n";
         cerr << "\t" << USG_COLLECTION << " (**)\n\n";
         cerr << "\t" << "(*) To be used only with " << USG_REGISTERONLY  << "\n";
-        cerr << "\t" << "(**) Using the collection option you MUSTN'T specified any JDL file\n\n";
+        cerr << "\t" << "(**) Using this option you MUSTN'T specified any JDL file\n\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
 	if (long_usg){
@@ -728,7 +738,9 @@ Options::Options (const WMPCommands &command){
 	chkpt = NULL;
         collection = NULL;
 	config = NULL;
+	dag = NULL;
         delegation = NULL;
+	def_jdl = NULL;
 	dir = NULL;
         endpoint = NULL;
 	exclude = NULL;
@@ -931,11 +943,13 @@ Options::Options (const WMPCommands &command){
 * Default destructor
 */
 Options::~Options( ) {
-	if (chkpt  ) { delete(chkpt  );}
+	if (chkpt) { delete(chkpt);}
 	if (collection ) { delete(collection );}
-	if ( config) { delete( config);}
-	if ( delegation) { delete( delegation);}
-	if ( dir) { delete(dir );}
+	if (config) { delete( config);}
+	if (dag) { delete(dag);}
+	if (def_jdl) { delete(def_jdl);}
+	if (delegation) { delete( delegation);}
+	if (dir) { delete(dir );}
 	if (endpoint  ) { delete(endpoint  );}
 	if ( exclude) { delete( exclude);}
 	if (fileprotocol) { delete(fileprotocol);}
@@ -1024,6 +1038,18 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 		case(LOGFILE) : {
 			if (logfile){
 				value = new string (*logfile) ;
+			}
+			break ;
+		}
+		case(DAG) : {
+			if (dag){
+				value = new string (*dag) ;
+			}
+			break ;
+		}
+		case(DEFJDL) : {
+			if (dag){
+				value = new string (*def_jdl) ;
 			}
 			break ;
 		}
@@ -1296,6 +1322,14 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_COLLECTION ;
 			break ;
 		}
+		case(DAG) : {
+			msg = USG_DAG ;
+			break ;
+		}
+		case(DEFJDL) : {
+			msg = USG_DEFJDL ;
+			break ;
+		}
 		case(DIR) : {
 			msg = USG_DIR ;
 			break ;
@@ -1500,7 +1534,7 @@ void Options::printUsage(const char* exename) {
                         proxyinfo_usage(exename);
                         break;
                 } ;
-		case ( JOBPERUSAL) :{
+		case (JOBPERUSAL) :{
                         perusal_usage(exename);
                         break;
                 } ;
@@ -1605,7 +1639,7 @@ void Options::readOptions(const int &argc, const char **argv){
 		// ========================================
 		if (  cmdType == JOBSUBMIT   ||
 			cmdType == JOBMATCH  ){
-			if (!collection && !start){
+			if (!collection && !start && !dag){
 				 if (optind < (argc-1) ){
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
@@ -1644,6 +1678,14 @@ void Options::readOptions(const int &argc, const char **argv){
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
 						err.str() );
+				} else if (optind < argc && dag) {
+					ostringstream err ;
+					err << "Unknown or incompatible option used with --" << LONG_DAG<< ":\n";
+					err << string(argv[optind]) ;
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option",
+						err.str() );
 				} else if (optind < argc && start) {
 					ostringstream err ;
 					err << "Unknown or incompatible option used with --" << LONG_START << ":\n";
@@ -1651,6 +1693,17 @@ void Options::readOptions(const int &argc, const char **argv){
 					throw WmsClientException(__FILE__,__LINE__,
 						"readOptions", DEFAULT_ERR_CODE,
 						"Wrong Option",
+						err.str() );
+				}
+				// --dag & --collection are incomptaible
+				if (dag && collection) {
+					ostringstream err ;
+					err << "The following options cannot be specified together:\n" ;
+					err << getAttributeUsage(Options::DAG) << "\n";
+					err << getAttributeUsage(Options::COLLECTION) << "\n";
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Incompatible Options",
 						err.str() );
 				}
 			 }
@@ -1662,13 +1715,25 @@ void Options::readOptions(const int &argc, const char **argv){
 					if (optind == argc-1 ) {
 						jobid = Utils::checkJobId (argv[optind]);
 						jobIds.push_back(jobid);
+						if(delegation){
+							ostringstream err ;
+							err << "The following option cannot used with the jobId: ";
+							err << getAttributeUsage(Options::DELEGATION) << "\n";
+							err << "Specify\n";
+							err << "- JobId : for a delegated proxy used to submit the job identified by the JobId string ;\n";
+							err << "- delegationId : for a proxy previously delegated and identified by the delegationId string.\n";
+							throw WmsClientException(__FILE__,__LINE__,
+								"readOptions", DEFAULT_ERR_CODE,
+								"Incompatible Options"  ,
+								err.str());
+						}
 					} else
 					// all the options have been processed by getopt (JobId file is missing)
 					if (optind == argc ) {
 						if(delegation == NULL){
 							throw WmsClientException(__FILE__,__LINE__,
 								"readOptions", DEFAULT_ERR_CODE,
-								"Wrong Option: " + string(last_arg)  ,
+								"Wrong Option"  ,
 								"Last argument of the command must be a JobId or specify a proxy delegationId string with the option:\n"
 									+ getAttributeUsage(Options::DELEGATION) );
 						}
@@ -2010,11 +2075,29 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			break ;
 		};
                 case ( Options::COLLECTION ) : {
-			if (chkpt){
+			if (collection){
 				dupl = new string(LONG_COLLECTION) ;
 			} else {
 				collection = new string (checkArg(LONG_COLLECTION, optarg, Options::COLLECTION) );
                                 inCmd += px + LONG_COLLECTION + ws + *collection  + ";" + ws ;
+			}
+			break ;
+		};
+		case ( Options::DAG ) : {
+			if (dag){
+				dupl = new string(LONG_DAG) ;
+			} else {
+				dag = new string (checkArg(LONG_DAG, optarg, Options::DAG) );
+                                inCmd += px + LONG_DAG + ws + *dag  + ";" + ws ;
+			}
+			break ;
+		};
+		case ( Options::DEFJDL ) : {
+			if (def_jdl){
+				dupl = new string(LONG_DEFJDL) ;
+			} else {
+				def_jdl = new string (checkArg(LONG_DEFJDL, optarg, Options::DEFJDL) );
+                                inCmd += px + LONG_DEFJDL + ws + *def_jdl + ";" + ws ;
 			}
 			break ;
 		};
