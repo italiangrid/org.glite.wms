@@ -353,7 +353,6 @@
 		<wsdl:part name="items" type="glitenstypes:ProxyInfoStructType"/>
 	</wsdl:message>
 	<wsdl:message name="getJobProxyInfoRequest">
-		<wsdl:part name="delegationID" type="xsd:string"/>
 		<wsdl:part name="jobId" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getJobProxyInfoResponse">
@@ -1033,11 +1032,10 @@
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="getJobProxyInfo" parameterOrder="delegationID jobId">
+		<wsdl:operation name="getJobProxyInfo" parameterOrder="jobId">
 			<wsdl:documentation>
 					This operation returns the job Proxy information
 					
-					Input: string containing the delegation identifier.
 					Input: string containing the job identifier.
 					
 					Output: a vector of strings containing job Proxy information
