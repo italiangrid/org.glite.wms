@@ -611,10 +611,13 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 		} else {
 			string link;
 			string linkbak;
-			for (unsigned int i = 0; i < jobids.size(); i++) {
-				link = wmputilities::getJobDelegatedProxyPath(jobids[i]);
+			
+			vector<string>::iterator iter = jobids.begin();
+			vector<string>::iterator const end = jobids.end();
+			for (; iter != end; ++iter) {
+				link = wmputilities::getJobDelegatedProxyPath(*iter);
 				edglog(debug)<<"Creating proxy symbolic link for: "
-					<<jobids[i]<<endl;
+					<<*iter<<endl;
 				if (symlink(proxy.c_str(), link.c_str())) {
 					if (errno != EEXIST) {
 				      	edglog(critical)
@@ -628,9 +631,9 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 					}
 			    }
 			    
-			    linkbak = wmputilities::getJobDelegatedProxyPathBak(jobids[i]);
+			    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
 			    edglog(debug)<<"Creating backup proxy symbolic link for: "
-					<<jobids[i]<<endl;
+					<<*iter<<endl;
 			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
 			    	if (errno != EEXIST) {
 				      	edglog(critical)
@@ -694,10 +697,13 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 		} else {
 			string link;
 			string linkbak;
-			for (unsigned int i = 0; i < jobids.size(); i++) {
-				link = wmputilities::getJobDelegatedProxyPath(jobids[i]);
+			
+			vector<string>::iterator iter = jobids.begin();
+			vector<string>::iterator const end = jobids.end();
+			for (; iter != end; ++iter) {
+				link = wmputilities::getJobDelegatedProxyPath(*iter);
 				edglog(debug)<<"Creating proxy symbolic link for: "
-					<<jobids[i]<<endl;
+					<<*iter<<endl;
 				if (symlink(proxy.c_str(), link.c_str())) {
 					if (errno != EEXIST) {
 				      	edglog(critical)
@@ -711,9 +717,9 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 					}
 			    }
 			    
-			    linkbak = wmputilities::getJobDelegatedProxyPathBak(jobids[i]);
+			    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
 			    edglog(debug)<<"Creating backup proxy symbolic link for: "
-					<<jobids[i]<<endl;
+					<<*iter<<endl;
 			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
 			    	if (errno != EEXIST) {
 				      	edglog(critical)
@@ -1580,9 +1586,11 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						jad->getStringValue(JDL::OUTPUTSB), dest_uri + "/output");
 				}
 				
-				for (unsigned int i = 0; i < osbdesturi.size(); i++) {
-					edglog(debug)<<"OutputSBDestURI: "<<osbdesturi[i]<<endl;
-					jad->addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
+				vector<string>::iterator iter = osbdesturi.begin();
+				vector<string>::iterator const end = osbdesturi.end();
+				for (; iter != end; ++iter) {
+					edglog(debug)<<"OutputSBDestURI: "<<*iter<<endl;
+					jad->addAttribute(JDL::OSB_DEST_URI, *iter);
 				}
 			}
 		
@@ -1590,16 +1598,25 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			string peekdir = wmputilities::getPeekDirectoryPath(*jid);
 			if (jad->hasAttribute(JDL::PU_FILE_ENABLE)) {
 				if (jad->getBool(JDL::PU_FILE_ENABLE)) {
+					string protocol = conf.getDefaultProtocol();
+					string port = (conf.getDefaultPort() != 0)
+						? (":" + boost::lexical_cast<std::string>(
+							conf.getDefaultPort()))
+						: "";
+					string serverhost = getServerHost();
+					
 					edglog(debug)<<"Enabling perusal functionalities for job: "
 						<<jid->toString()<<endl;
 					edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
 						<<endl;
-					jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI, peekdir
-						 + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+					jad->setAttribute(JDLPrivate::PU_LIST_FILE_URI,
+						protocol + "://" + serverhost + port + peekdir
+						+ FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
 					if (!jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
 						edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
 							<<endl;
-						jad->setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+						jad->setAttribute(JDL::PU_FILES_DEST_URI,
+							protocol + "://" + serverhost + port + peekdir);
 					}
 					
 					int time = DEFAULT_PERUSAL_TIME_INTERVAL;
@@ -1678,6 +1695,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			string jobidstring;
 			string dest_uri;
 			string peekdir;
+			
 		    for (unsigned int i = 0; i < children.size(); i++) {
 		    	JobId subjobid = children[i]->jobid;
 		    	jobidstring = subjobid.toString();
@@ -1723,8 +1741,10 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					}
 					if (osbdesturi.size() != 0) {
 		                edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
-		                for (unsigned int i = 0; i < osbdesturi.size(); i++) {
-							nodead.addAttribute(JDL::OSB_DEST_URI, osbdesturi[i]);
+		                vector<string>::iterator iter = osbdesturi.begin();
+						vector<string>::iterator const end = osbdesturi.end();
+						for (; iter != end; ++iter) {
+							nodead.addAttribute(JDL::OSB_DEST_URI, *iter);
 		                }
 					}
 				}
@@ -1733,16 +1753,25 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    	peekdir = wmputilities::getPeekDirectoryPath(subjobid);
 				if (nodead.hasAttribute(JDL::PU_FILE_ENABLE)) {
 					if (nodead.getBool(JDL::PU_FILE_ENABLE)) {
+						string protocol = conf.getDefaultProtocol();
+						string port = (conf.getDefaultPort() != 0)
+							? (":" + boost::lexical_cast<std::string>(
+								conf.getDefaultPort()))
+							: "";
+						string serverhost = getServerHost();
+					
 						edglog(debug)<<"Enabling perusal functionalities for job: "
 							<<jobidstring<<endl;
 						edglog(debug)<<"Setting attribute JDLPrivate::PU_LIST_FILE_URI"
 							<<endl;
 						nodead.setAttribute(JDLPrivate::PU_LIST_FILE_URI,
-							peekdir + FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
+							protocol + "://" + serverhost + port + peekdir
+							+ FILE_SEPARATOR + PERUSAL_FILE_2_PEEK_NAME);
 						if (!nodead.hasAttribute(JDL::PU_FILES_DEST_URI)) {
 							edglog(debug)<<"Setting attribute JDL::PU_FILES_DEST_URI"
 								<<endl;
-							nodead.setAttribute(JDL::PU_FILES_DEST_URI, peekdir);
+							nodead.setAttribute(JDL::PU_FILES_DEST_URI,
+								protocol + "://" + serverhost + port + peekdir);
 						}
 						
 						int time = DEFAULT_PERUSAL_TIME_INTERVAL;
@@ -2379,13 +2408,16 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	edglog(debug)<<"Children count: "<<status.getValInt(JobStatus::CHILDREN_NUM)<<endl;
 	vector<string>::iterator jidsiterator = jids.begin();
  	jids.insert(jidsiterator, 1, jid);
- 	
-	for (unsigned int j = 0; j < jids.size(); j++) {
+
+	vector<string>::iterator iter = jids.begin();
+	vector<string>::iterator const end = jids.end();
+	for (; iter != end; ++iter) { 	
 		vector<string> *uris =
-			wmputilities::getDestURIsVector(conf.getProtocols(), conf.getHTTPSPort(), jids[j]);
+			wmputilities::getDestURIsVector(conf.getProtocols(),
+				conf.getHTTPSPort(), *iter);
 		
 		DestURIStructType *destURIStruct = new DestURIStructType();
-		destURIStruct->id = jids[j];
+		destURIStruct->id = *iter;
 		destURIStruct->destURIs = uris;
 		destURIsStruct->Item->push_back(destURIStruct);
 	}
@@ -2654,14 +2686,17 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
 		StringAndLongType *item = NULL;
 		string filename;
-		for (unsigned int i = 0; i < found.size(); i++) {
+		
+		vector<string>::iterator iter = found.begin();
+		vector<string>::iterator const end = found.end();
+		for (; iter != end; ++iter) {
 			// Checking for hidden files
-			filename = wmputilities::getFileName(string(found[i]));
+			filename = wmputilities::getFileName(string(*iter));
 			if ((filename != MARADONA_FILE) && (filename
 					!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
 				item = new StringAndLongType();
 				item->name = output_uri + FILE_SEPARATOR + filename;
-				item->size = wmputilities::computeFileSize(found[i]);
+				item->size = wmputilities::computeFileSize(*iter);
 				edglog(debug)<<"Inserting file name: " <<item->name<<endl;
 				edglog(debug)<<"Inserting file size: " <<item->size<<endl;
 				file->push_back(item);
@@ -3161,74 +3196,54 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	GLITE_STACK_CATCH();
 }
 
+// getDelegatedProxyInfo and getJobProxyInfo
 void
-getDelegatedProxyInfo(getDelegatedProxyInfoResponse 
-	&getDelegatedProxyInfo_response, const string &delegation_id, bool isjobid,
-		const string &job_id)
+getProxyInfo(getProxyInfoResponse &getProxyInfo_response, const string &id,
+	bool isjobid)
 {
-	GLITE_STACK_TRY("getDelegatedProxyInfo()");
-	edglog_fn("wmpoperations::getDelegatedProxyInfo");
+	GLITE_STACK_TRY("getProxyInfo()");
+	edglog_fn("wmpoperations::getProxyInfo");
 	logRemoteHostInfo();
 	
-	// Checking delegation id
-	edglog(info)<<"Delegation ID: "<<delegation_id<<endl;
-	if (delegation_id == "") {
-		edglog(error)<<"Provided delegation ID not valid"<<endl;
-  		throw JobOperationException(__FILE__, __LINE__,
-			"getDelegatedProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-			"Delegation id not valid");
-	}
-	
-	//** Authorizing user
+	// Authorizing user
 	edglog(info)<<"Authorizing user..."<<endl;
 	authorizer::WMPAuthorizer *auth = 
 		new authorizer::WMPAuthorizer();
 	
-	// Getting delegated proxy from SSL Proxy cache
-	string delegatedproxy = WMPDelegation::getDelegatedProxyPath(delegation_id);
-	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
-	
-	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	string proxy;
 	if (isjobid) {
-		if (job_id == "") {
-			edglog(error)<<"Provided job ID not valid"<<endl;
+		edglog(info)<<"Job Id: "<<id<<endl;
+		// Checking delegation id
+		if (id == "") {
+			edglog(error)<<"Provided Job Id not valid"<<endl;
 	  		throw JobOperationException(__FILE__, __LINE__,
-	  			"getDelegatedProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-				"Job id not valid");
+				"getProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"Provided Job Id not valid");
 		}
-		if (vomsproxy.hasVOMSExtension()) {
-			auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
-		} else {
-			auth->authorize("", job_id);
-		}
-		authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
-		vomsproxy = authorizer::VOMSAuthZ(
-			wmputilities::getJobDelegatedProxyPath(job_id));
+		auth->authorize("", id);
+		proxy = wmputilities::getJobDelegatedProxyPath(id);
+		authorizer::WMPAuthorizer::checkProxyExistence(proxy, id);
+		edglog(debug)<<"Job proxy: "<<proxy<<endl;
 	} else {
-		if (vomsproxy.hasVOMSExtension()) {
-			auth->authorize(vomsproxy.getDefaultFQAN());
-		} else {
-			auth->authorize();
+		edglog(info)<<"Delegation Id: "<<id<<endl;
+		auth->authorize();
+		// Checking delegation id
+		if (id == "") {
+			edglog(error)<<"Provided Delegation Id not valid"<<endl;
+	  		throw JobOperationException(__FILE__, __LINE__,
+				"getProxyInfo()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"Provided Delegation Id not valid");
 		}
+		proxy = WMPDelegation::getDelegatedProxyPath(id);
+		edglog(debug)<<"Delegated Proxy: "<<proxy<<endl;
 	}
 	delete auth;
-
-	// GACL Authorizing
-	edglog(debug)<<"Checking for drain..."<<endl;
-	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
-		edglog(error)<<"Unavailable service (the server is temporarily drained)"
-			<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::getDelegatedProxyInfo()", wmputilities::WMS_AUTHZ_ERROR, 
-	    	"Unavailable service (the server is temporarily drained)");
-	} else {
-		edglog(debug)<<"No drain"<<endl;
-	}
-	//** END
 	
-	getDelegatedProxyInfo_response.items = vomsproxy.getProxyInfo();
 	
-	edglog(info)<<"getDelegatedProxyInfo successfully"<<endl;
+	authorizer::VOMSAuthZ vomsproxy = authorizer::VOMSAuthZ(proxy);
+	getProxyInfo_response.items = vomsproxy.getProxyInfo();
+	
+	edglog(info)<<"getProxyInfo successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -3286,26 +3301,24 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 		}
 		if (checkremotepeek) {
 			if (jad->hasAttribute(JDL::PU_FILES_DEST_URI)) {
+				string protocol = conf.getDefaultProtocol();
+				string port = (conf.getDefaultPort() != 0)
+					? (":" + boost::lexical_cast<std::string>(
+						conf.getDefaultPort()))
+					: "";
+				string serverhost = getServerHost();
 				string uri = jad->getString(JDL::PU_FILES_DEST_URI);
-				string serveruri = wmputilities::getPeekDirectoryPath(*jid);
+				string serveruri = protocol + "://" + serverhost + port
+					+ wmputilities::getPeekDirectoryPath(*jid);
 				if (uri != serveruri) {
-					edglog(debug)<<"Remote perusal peek directory set"<<endl;
+					edglog(debug)<<"Remote perusal peek URI set:\n"
+						<<uri<<endl;
 					throw JobOperationException(__FILE__, __LINE__,
 				    	"checkPerusalFlag()",
 				    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
-				    	"Remote perusal peek directory set"
-				    	"\nURI: " + uri);
+				    	"Remote perusal peek URI set:\n" + uri);
 				}
-			} /*else {
-				It will be set during start operation
-			
-				// Should be present, something went wrong
-				edglog(critical)<<"No perusal file dest URI attribute present"<<endl;
-				throw JobOperationException(__FILE__, __LINE__,
-			    	"checkPerusalFlag()", wmputilities::WMS_IS_FAILURE, 
-			    	"No perusal file dest URI attribute present"
-			    	"\n(please contact server administrator)");
-			}*/
+			}
 		}
 		
 		delete jad;
@@ -3440,31 +3453,35 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	
 	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	string protocol = conf.getDefaultProtocol();
-	string port = (conf.getDefaultPort() != 0) ? 
-		boost::lexical_cast<std::string>(conf.getDefaultPort()) : "";
+	string port = (conf.getDefaultPort() != 0)
+		? (":" + boost::lexical_cast<std::string>(conf.getDefaultPort()))
+		: "";
 	string serverhost = getServerHost();
 		
 	vector<string> good;
 	vector<string> returnvector;
 	string currentfilename;
-	for (unsigned int i = 0; i < found.size(); i++) {
-		currentfilename = wmputilities::getFileName(found[i]);
+	
+	vector<string>::iterator iter = found.begin();
+	vector<string>::iterator const end = found.end();
+	for (; iter != end; ++iter) {
+		currentfilename = wmputilities::getFileName(*iter);
 		if (currentfilename.find(fileName + ".") == 0) {
-			edglog(debug)<<"Good perusal file: "<<found[i]<<endl;
-			good.push_back(found[i]);
+			edglog(debug)<<"Good perusal file: "<<*iter<<endl;
+			good.push_back(*iter);
 		}
 		if (allChunks) {
 			if (currentfilename.find(fileName + PERUSAL_DATE_INFO_SEPARATOR)
 					== 0) {
-				edglog(debug)<<"Good old global perusal file: "<<found[i]<<endl;
-				returnvector.push_back(protocol + "://" + serverhost + ":"
-					+ port + found[i]);	
+				edglog(debug)<<"Good old global perusal file: "<<*iter<<endl;
+				returnvector.push_back(protocol + "://" + serverhost
+					+ port + *iter);	
 			}
 		}
 	}
 	
-	unsigned int size = good.size();
-	if (size != 0) {
+	//unsigned int size = good.size();
+	if (good.size()) {
 		// Sorting vector
 		sort(good.begin(), good.end());
 		
@@ -3486,8 +3503,10 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		}
 		
 		string filetoreturn;
-		for (unsigned int i = 0; i < size; i++) {
-			filesize = wmputilities::computeFileSize(good[i]);
+		vector<string>::iterator iter = good.begin();
+		vector<string>::iterator const end = good.end();
+		for (; iter != end; ++iter) {
+			filesize = wmputilities::computeFileSize(*iter);
 			filetoreturn = peekdir + fileName
 				+ PERUSAL_DATE_INFO_SEPARATOR + startdate
 				+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
@@ -3504,23 +3523,23 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 						"temporary file\n(please contact server administrator)");
 				}
 				totalfilesize = 0;
-				enddate = good[i].substr(good[i].rfind(".") + 1,
-                	good[i].length() - 1);
+				enddate = (*iter).substr((*iter).rfind(".") + 1,
+                	(*iter).length() - 1);
 				startdate = enddate;
 			} else {
-				enddate = good[i].substr(good[i].rfind(".") + 1,
-                	good[i].length() - 1);
+				enddate = (*iter).substr((*iter).rfind(".") + 1,
+                	(*iter).length() - 1);
 			}
-			ifstream infile(good[i].c_str());
+			ifstream infile((*iter).c_str());
 			if (!infile.good()) {
-				edglog(severe)<<good[i]<<": !infile.good()"<<endl;
+				edglog(severe)<<*iter<<": !infile.good()"<<endl;
 				throw FileSystemException(__FILE__, __LINE__,
 					"getPerusalFiles()", WMS_IS_FAILURE, "Unable to open perusal "
 					"input file\n(please contact server administrator)");
 			}
 			outfile << infile.rdbuf();
 			infile.close();
-			remove(good[i].c_str());
+			remove((*iter).c_str());
 			totalfilesize += filesize;
 		}
 		outfile.close();

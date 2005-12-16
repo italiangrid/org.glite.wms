@@ -105,8 +105,11 @@ computeOutputSBDestURIBase(vector<string> outputsb, const string &baseuri)
 	int size;
 	string path;
 	vector<string> returnvector;
-	for (unsigned int i = 0; i < outputsb.size(); i++) {
-		path = outputsb[i];
+	
+	vector<string>::iterator iter = outputsb.begin();
+	vector<string>::iterator const end = outputsb.end();
+	for (; iter != end; ++iter) {
+		path = *iter;
 		size = path.size();
 		pos = path.rfind("/", size);
 		if (pos != string::npos) {
@@ -129,10 +132,12 @@ computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 	string path;
 	string outputdir;
 	vector<string> returnvector;
-	int osbdesturisize = osbdesturi.size();
-	for (int i = 0; i < osbdesturisize; i++) {
-		path = osbdesturi[i];
-		edglog(debug)<<"osbdesturi[i]: "<<osbdesturi[i]<<endl;
+	
+	vector<string>::iterator iter = osbdesturi.begin();
+	vector<string>::iterator const end = osbdesturi.end();
+	for (; iter != end; ++iter) {
+		path = *iter;
+		edglog(debug)<<"osbdesturi[i]: "<<*iter<<endl;
 		pos = path.find("://");
 		if (pos != string::npos) {
 			// The path is an URL
@@ -760,8 +765,8 @@ computeFileSize(const string & path)
 }
 
 void
-doExecv(const string &command, const vector<string> &params,
-	const vector<string> &dirs, unsigned int startIndex, unsigned int endIndex)
+doExecv(const string &command, vector<string> &params, const vector<string> &dirs,
+	unsigned int startIndex, unsigned int endIndex)
 {
 	GLITE_STACK_TRY("doExecv()");
 	edglog_fn("wmputils::doExecv");
@@ -776,9 +781,11 @@ doExecv(const string &command, const vector<string> &params,
 	argvs[i] = (char *) malloc(command.length() + 1);
 	strcpy(argvs[i++], (command).c_str());
 	
-	for (unsigned int j = 0; j < params.size(); j++) {
-		argvs[i] = (char *) malloc(params[j].length() + 1);
-		strcpy(argvs[i++], (params[j]).c_str());
+	vector<string>::iterator iter = params.begin();
+	vector<string>::iterator const end = params.end();
+	for (; iter != end; ++iter) {
+		argvs[i] = (char *) malloc((*iter).length() + 1);
+		strcpy(argvs[i++], (*iter).c_str());
 	}
 	for (unsigned int j = startIndex; j <= endIndex; j++) {
 		argvs[i] = (char *) malloc(dirs[j].length() + 1);
@@ -913,8 +920,11 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		vector<string> jobdirs;
 	   	string allpath;
 		string reduceddir;
-	   	for (unsigned int i = 0; i < jobids.size(); i++) {
-		   	path = to_filename(glite::wmsutils::jobid::JobId(jobids[i]),
+		
+		vector<string>::iterator iter = jobids.begin();
+		vector<string>::iterator const end = jobids.end();
+		for (; iter != end; ++iter) {
+		   	path = to_filename(glite::wmsutils::jobid::JobId(*iter),
 		   		level, extended_path);
 		   	allpath = path;
 		   	pos = path.find(FILE_SEP, 0);
@@ -1004,34 +1014,34 @@ isNull(string field)
 */
 
 const std::string cleanString(std::string str) {
-        int len = 0;
-        string ws = " "; //white space char
-        len = str.size( );
-        if (len > 0) {
-                // erases white space at the beginning of the string
-                while (len>1) {
-                        if ( str.compare(0,1,ws) == 0) {
-                                str = str.substr(1, len);
-                        } else {
-                                break;
-                        }
-                        len = str.size();
-                }
-                // erases white space at the end of the string
-                while (len>1) {
-                        if( str.compare(len-1,1,ws) == 0 ) {
-                                str = str.substr(0, len-1);
-                        } else {
-                                break;
-                        }
-                        len = str.size();
-                }
-                // 1 white space
-                if (len == 1 & str.compare(ws)==0) {
-                        str = "";
-                }
-        }
-        return str;
+	int len = 0;
+	string ws = " "; //white space char
+	len = str.size( );
+	if (len > 0) {
+		// erases white space at the beginning of the string
+		while (len>1) {
+			if ( str.compare(0,1,ws) == 0) {
+				str = str.substr(1, len);
+			} else {
+				break;
+			}
+			len = str.size();
+		}
+		// erases white space at the end of the string
+		while (len>1) {
+			if( str.compare(len-1,1,ws) == 0 ) {
+				str = str.substr(0, len-1);
+			} else {
+				break;
+			}
+			len = str.size();
+		}
+		// 1 white space
+		if (len == 1 & str.compare(ws)==0) {
+			str = "";
+		}
+	}
+	return str;
 }
 
  /**

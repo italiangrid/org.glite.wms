@@ -153,20 +153,24 @@ WMPEventLogger::registerProxyRenewal(const string &proxy_path,
 	
 	char *renewal_proxy_path = NULL;
 	int i = LOG_RETRY_COUNT;
-	for (; i > 0
-		&& edg_wlpr_RegisterProxyExt((char*)proxy_path.c_str(),
-	 			(char*)my_proxy_server.c_str(), LB_RENEWAL_PORT,
-				id->getId(), EDG_WLPR_FLAG_UNIQUE,
-      		    &renewal_proxy_path); i--);
+	for (; (i > 0) 
+				&& edg_wlpr_RegisterProxyExt((char*)proxy_path.c_str(),
+		 		(char*)my_proxy_server.c_str(), LB_RENEWAL_PORT,
+				id->getId(), EDG_WLPR_FLAG_UNIQUE, &renewal_proxy_path);
+			i--);
 	
  	if (i > 0) {
-		for (int j = 0; j < LOG_RETRY_COUNT
-	    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
-	    	renewal_proxy_path); j++);
+		for (int j = 0;
+			j < LOG_RETRY_COUNT
+		    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
+		    	renewal_proxy_path);
+	    	j++);
 	} else {
-		for (int j = 0; j < LOG_RETRY_COUNT
-	    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
-	    	proxy_path.c_str()); j++);
+		for (int j = 0;
+			j < LOG_RETRY_COUNT
+		    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
+		    	proxy_path.c_str());
+	    	j++);
 	   	throw LBException(__FILE__, __LINE__,
 			"WMPEventLogger::registerProxyRenewal(const string &proxy_path, "
 			"const string &my_proxy_server)", WMS_LOGGING_ERROR,
@@ -183,8 +187,10 @@ WMPEventLogger::unregisterProxyRenewal()
 	GLITE_STACK_TRY("unregisterProxyRenewal()");
 	
 	char *renewal_proxy_path = NULL;
-	for (int i = 0; i < LOG_RETRY_COUNT
-		&& edg_wlpr_UnregisterProxy(id->getId(), renewal_proxy_path); i++);
+	for (int i = 0;
+		i < LOG_RETRY_COUNT
+			&& edg_wlpr_UnregisterProxy(id->getId(), renewal_proxy_path);
+		i++);
 		
 	GLITE_STACK_CATCH();
 }
@@ -245,14 +251,16 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 	
 	char **jdls_char;
 	char **zero_char;
-	vector<string>::iterator iter;
-	vector<string> jdls = ad->getSubmissionStrings();
-	jdls_char = (char**) malloc(sizeof(char*) * (jdls.size() + 1));
-	zero_char = jdls_char;
-	jdls_char[jdls.size()] = NULL;
 	
-	int i = 0;
-	for (iter = jdls.begin(); iter != jdls.end(); iter++, i++) {
+	vector<string> jdls = ad->getSubmissionStrings();
+	unsigned int size = jdls.size();
+	jdls_char = (char**) malloc(sizeof(char*) * (size + 1));
+	zero_char = jdls_char;
+	jdls_char[size] = NULL;
+	
+	vector<string>::iterator iter = jdls.begin();
+	vector<string>::iterator const end = jdls.end();
+	for (; iter != end; ++iter) {
 		*zero_char = (char*) malloc(iter->size() + 1);
 		sprintf(*zero_char, "%s", iter->c_str());
 		zero_char++;
@@ -280,7 +288,8 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 			"WMPEventLogger::registerSubJobs()",
 			WMS_LOGGING_ERROR, msg);
 	}
-	for (unsigned int i = 0; i < jdls.size(); i++) {
+	
+	for (unsigned int i = 0; i < size; i++) {
 		std::free(jdls_char[i]);
 	}
     std::free(jdls_char);
@@ -382,7 +391,8 @@ WMPEventLogger::logUserTags(std::vector<std::pair<std::string, classad::ExprTree
 	GLITE_STACK_TRY("logUserTags()");
 	edglog_fn("WMPEventlogger::logUserTags");
 	
-	for (unsigned int i = 0; i < userTags.size(); i++) {
+	unsigned int size = userTags.size();
+	for (unsigned int i = 0; i < size; i++) {
 		if (userTags[i].second->GetKind() != classad::ExprTree::CLASSAD_NODE) {
 			string msg = "Wrong UserTag value for " + userTags[i].first;
 			edglog(error)<<msg<<endl;
@@ -414,17 +424,18 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 	int (*fp) (_edg_wll_Context*, const char*, const char*);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
-		edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
+		edglog(debug)<<"Setting job to log to LB Proxy..."<<endl;
 		fp = &edg_wll_LogUserTagProxy;
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
-        edglog(debug)<<"Setting job for logging to LB..."<<endl;
+        edglog(debug)<<"Setting job to log to LB..."<<endl;
 		fp = &edg_wll_LogUserTag;
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
 #endif  //GLITE_WMS_HAVE_LBPROXY
 
-	for (unsigned int i = 0; i < vect.size(); i++) {
+	unsigned int size = vect.size();
+	for (unsigned int i = 0; i < size; i++) {
 		if (!userTags->EvaluateExpr(vect[i].second, val)) {
 			edglog(error)<<"Unable to Parse Expression"<<endl;
 			throw LBException(__FILE__, __LINE__,
@@ -1070,43 +1081,7 @@ WMPEventLogger::isStartAllowed()
 	}
 	
   	return seqcode;
-  	/*
-    bool flag = false;
-	int i = 0;
-	while (events[i].type) {
-		edglog(debug)<<"Event type: "<<events[i].type<<endl;
-		if ((events[i].type != EDG_WLL_EVENT_REGJOB)
-				&& (events[i].type != EDG_WLL_EVENT_USERTAG)) {
-			if ((events[i].type == EDG_WLL_EVENT_ACCEPTED)
-					|| (events[i].type == EDG_WLL_EVENT_ENQUEUED)) {
-				flag = true;
-			} else {
-				return "";
-			}
-		}
-		i++;
-	}
-	i--;
-	
-    if (flag) {
-    	if ((events[i].type == EDG_WLL_EVENT_ENQUEUED)
-    			&& (events[i].enQueued.result == EDG_WLL_ENQUEUED_FAIL)) {
-			return string(events[i].enQueued.seqcode);
-    	}
-	} else {
-    	if (events[i].type == EDG_WLL_EVENT_REGJOB) {
-			return string(events[i].regJob.seqcode);
-		} else if (events[i].type == EDG_WLL_EVENT_USERTAG) {
-			return string(events[i].userTag.seqcode);
-		}
-    }
-    
-	for (int i = 0; events[i].type; i++) {
-		edg_wll_FreeEvent(&events[i]);
-	}
-	
-  	return "";*/
-  	
+  
   	GLITE_STACK_CATCH();
 }
 

@@ -466,8 +466,7 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 	GLITE_STACK_TRY("setJobGacl()");
 	edglog_fn("WMPAuthorizer::setJobGacl vector");
 	
-	unsigned int size = jobids.size();
-	if (size != 0) {
+	if (jobids.size()) {
 		string user_dn = wmputilities::getUserDN();
 		string errmsg = "";
 		
@@ -514,8 +513,11 @@ WMPAuthorizer::setJobGacl(vector<string> &jobids)
 		infile.close();
 		
 		fstream outfile;
-		for (unsigned int i = 1; i < size; i++) {
-			filename = wmputilities::getJobDirectoryPath(jobids[i]) + "/"
+		
+		vector<string>::iterator iter = jobids.begin();
+		vector<string>::iterator const end = jobids.end();
+		for (; iter != end; ++iter) {
+			filename = wmputilities::getJobDirectoryPath(*iter) + "/"
 				+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE;
 			outfile.open(filename.c_str(), ios::out);
 			if (!outfile.good()) {
@@ -654,8 +656,8 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
         tok(fqan, separator);
         boost::tokenizer<boost::char_separator<char> >::iterator it = tok.begin();
         boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
-        for (  ; it != end; it++) {
-                tokens.push_back(string(*it));
+        for (; it != end; it++) {
+			tokens.push_back(string(*it));
         }
         // number of found tokens
         nt = tokens.size();
@@ -710,7 +712,8 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                         if (tokens.size() > 1) {
                                 nt = tokens.size();
                                 ostringstream err;
-                                err << "malformed FQAN field; one or more field are invalid :\n";                                               for (int i = 0; i < nt ; i++ ){
+                                err << "malformed FQAN field; one or more field are invalid :\n";
+                                for (int i = 0; i < nt; i++) {
                                         err << "/" << tokens[i] << "\n";
                                 }
                                 throw AuthorizationException(__FILE__, __LINE__,
@@ -936,40 +939,6 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 	#endif
 }
 
-
-
-/*
-// private method: converts ASN1_UTCTIME to time_t
-time_t 
-ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
-{
-	struct tm tm;
-    int offset;
-
-	//struct tm *lt = localtime(&t);
-    memset(&tm,'\0',sizeof tm);
-#define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
-    tm.tm_year=g2(s->data);
-    if (tm.tm_year < 50) {
-    	tm.tm_year+=100;
-    }
-    tm.tm_mon=g2(s->data+2)-1;
-    tm.tm_mday=g2(s->data+4);
-    tm.tm_hour=g2(s->data+6);
-    tm.tm_min=g2(s->data+8);
-    tm.tm_sec=g2(s->data+10);
-    if (s->data[12] == 'Z') {
-    	offset=0;
-    } else {
-	    offset=g2(s->data+13)*60+g2(s->data+15);
-    	if (s->data[12] == '-') {
-            offset= -offset;
-    	}
-    }
-#undef g2
-
-    return timegm(&tm)-offset*60;
-}*/
 
 #ifndef GLITE_GACL_ADMIN
 

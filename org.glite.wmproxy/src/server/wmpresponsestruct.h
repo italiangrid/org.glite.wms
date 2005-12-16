@@ -203,7 +203,7 @@ struct addACLItemsResponse {
 struct removeACLItemResponse {
 };
 
-struct getDelegatedProxyInfoResponse {
+struct getProxyInfoResponse {
 	ProxyInfoStructType *items;
 };
 

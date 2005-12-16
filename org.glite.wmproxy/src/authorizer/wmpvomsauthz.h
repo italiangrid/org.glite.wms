@@ -57,6 +57,8 @@ class VOMSAuthZ {
 		struct vomsdata * data;
 		
 		int parseVoms(char * proxypath);
+		
+		std::string errormessage(int error);
 };
 
 } // namespace authorizer

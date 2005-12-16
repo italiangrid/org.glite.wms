@@ -12,7 +12,6 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-
 #include "wmpvomsauthz.h"
 
 // Logger
@@ -43,129 +42,16 @@ namespace wmputilities = glite::wms::wmproxy::utilities;
 using namespace std;
 using namespace glite::wms::wmproxy::utilities; //Exception
 
+
 //
-// Printing methods for debugging purposes
+// Prototypes
 //
-
-/*void printvoms(voms *i)
-{
-  edglog(debug) << "SIGLEN: " << i->siglen << std::endl << "USER:" << i->user << std::endl
-	    << "UCA: " << i->userca << std::endl << "SERVER: " << i->server << std::endl
-	    << "SCA: " << i->serverca << std::endl << "VO: " << i->voname << std::endl
-	    << "URI: " << i->uri << std::endl << "DATE1: " << i->date1 << std::endl
-	    << "DATE2: " << i->date2 << std::endl;
-	if (i->version >= 1) {
-		for (unsigned int j = 0; j < i->fqan.size(); j++) {
-			edglog(debug)<<"FQAN: "<<i->fqan[j]<<endl;
-		}
-	}
-
-  switch (i->type) {
-  case TYPE_NODATA:
-    edglog(debug) << "NO DATA" << std::endl;
-    break;
-  case TYPE_CUSTOM:
-    edglog(debug) << i->custom << std::endl;
-    break;
-  case TYPE_STD:
-    for (std::vector<data>::iterator j = i->std.begin(); j != i->std.end(); j++)
-      edglog(debug) << "GROUP: " << j->group << std::endl
-		<< "ROLE: " << j->role << std::endl
-		<< "CAP: " << j->cap << std::endl;
-    break;
-  }
-}
-
-void print(vomsdata &d)
-{
-  std::vector<voms> v = d.data;
-  int k = 0;
-
-  for (std::vector<voms>::iterator i=v.begin(); i != v.end(); i++) {
-    edglog(debug)<<++k<< std::endl;
-    printvoms(&(*i));
-#if 0
-    edglog(debug) << "SIGLEN: " << i->siglen << std::endl << "USER:" << i->user << std::endl
-	      << "UCA: " << i->userca << std::endl << "SERVER: " << i->server << std::endl
-	      << "SCA: " << i->serverca << std::endl << "VO: " << i->voname << std::endl
-	      << "URI: " << i->uri << std::endl << "DATE1: " << i->date1 << std::endl
-	      << "DATE2: " << i->date2 << std::endl;
-
-    switch (i->type) {
-    case TYPE_NODATA:
-      edglog(debug) << "NO DATA" << std::endl;
-      break;
-    case TYPE_CUSTOM:
-      edglog(debug) << i->custom << std::endl;
-      break;
-    case TYPE_STD:
-      for (std::vector<data>::iterator j = i->std.begin(); j != i->std.end(); j++)
-	edglog(debug) << "GROUP: " << j->group << std::endl
-		  << "ROLE: " << j->role << std::endl
-		  << "CAP: " << j->cap << std::endl;
-      break;
-    }
-#endif
-  }
-  edglog(debug) << "WORKVO: " << d.workvo << std::endl
-	    << "EXTRA: " << d.extra_data << std::endl << std::flush;
-}
-// END printing methods
-*/
-
-STACK_OF(X509) * load_chain(char *certfile)
-{
-  STACK_OF(X509_INFO) *sk=NULL;
-  STACK_OF(X509) *stack=NULL, *ret=NULL;
-  BIO *in=NULL;
-  X509_INFO *xi;
-  int first = 1;
-
-  if(!(stack = sk_X509_new_null())) {
-    edglog(severe)<<"Memory allocation failure"<<endl;
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-
-  if(!(in=BIO_new_file(certfile, "r"))) {
-    edglog(severe)<<"Error opening the file: "<<string(certfile)<<endl;
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-
-  // This loads from a file, a stack of x509/crl/pkey sets
-  if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
-    edglog(severe)<<"Error reading the file: "<<string(certfile)<<endl;
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-
-  // scan over it and pull out the certs
-  while (sk_X509_INFO_num(sk)) {
-    // skip first cert
-    if (first) {
-      first = 0;
-      continue;
-    }
-    xi=sk_X509_INFO_shift(sk);
-    if (xi->x509 != NULL) {
-      sk_X509_push(stack,xi->x509);
-      xi->x509=NULL;
-    }
-    X509_INFO_free(xi);
-  }
-  if(!sk_X509_num(stack)) {
-    edglog(severe)<<"No certificates in file: "<<string(certfile)<<endl;
-    sk_X509_free(stack);
-    BIO_free(in);
-  	sk_X509_INFO_free(sk);
-  }
-  BIO_free(in);
-  ret=stack;
-  return ret;
-}
+STACK_OF(X509) * load_chain(char *certfile);
 
 
+//
+// Class Implementation
+//
 
 VOMSAuthZ::VOMSAuthZ(const string &proxypath)
 {
@@ -175,88 +61,12 @@ VOMSAuthZ::VOMSAuthZ(const string &proxypath)
 
 VOMSAuthZ::~VOMSAuthZ()
 {
-	edglog(debug)<<"___ DISTRUTTORE"<<endl;
 	if (this->cert) {
 		X509_free(this->cert);
 	}
 	if (this->data) {
-		edglog(debug)<<"___ INSIDE"<<endl;
 		VOMS_Destroy(this->data);
 	}
-}
-
-string
-errormessage(int error)
-{
-	GLITE_STACK_TRY("errormessage()");
-	
-	string msg = "Unable to retrive VOMS Proxy information: ";
-	switch (error) {
-		case VERR_NOEXT:
-			msg += "VERR_NOEXT";
-		    break;
-		case VERR_IDCHECK:
-		    msg += "VERR_IDCHECK";
-		    break;
-		case VERR_TIME:
-			msg += "The user delegated Proxy has expired";
-		    break;
-		case VERR_ORDER:
-			msg += "VERR_ORDER";
-		    break;
-		case VERR_NOSOCKET:
-			msg += "VERR_NOSOCKET";
-		    break;
-		case VERR_NOIDENT:
-			msg += "VERR_NOIDENT";
-		    break;
-		case VERR_COMM:
-			msg += "VERR_COMM";
-		    break;
-		case VERR_PARAM:
-			msg += "VERR_PARAM";
-		    break;
-		case VERR_NOINIT:
-			msg += "VERR_NOINIT\n(please check delegated Proxy validity)";
-		    break;
-		case VERR_EXTRAINFO:
-			msg += "VERR_EXTRAINFO";
-		    break;
-		case VERR_FORMAT:
-			msg += "VERR_FORMAT";
-		    break;
-		case VERR_NODATA:
-			msg += "VERR_NODATA";
-		    break;
-		case VERR_PARSE:
-			msg += "VERR_PARSE";
-		    break;
-		case VERR_DIR:
-			msg += "VERR_DIR";
-		    break;
-		case VERR_SIGN:
-			msg += "VERR_SIGN";
-		    break;
-		case VERR_SERVER:
-			msg += "VERR_SERVER";
-		    break;
-		case VERR_MEM:
-			msg += "VERR_MEM";
-		    break;
-		case VERR_VERIFY:
-			msg += "VERR_VERIFY";
-		    break;
-		case VERR_TYPE:
-			msg += "VERR_TYPE";
-		    break;
-		default:
-			msg += "default";
-		  	break;
-	}
-	edglog(debug)<<msg<<endl;
-	return msg;
-	
-	GLITE_STACK_CATCH();
 }
 
 bool
@@ -354,16 +164,7 @@ VOMSAuthZ::getDefaultVOProxyInfo()
 			voproxyinfo->uri = defaultvoms->uri;
 			voproxyinfo->startTime = defaultvoms->date1;
 			voproxyinfo->endTime = defaultvoms->date2;
-			
-			/*voproxyinfo->user = "";
-			voproxyinfo->userCA = "";
-			voproxyinfo->server = "";
-			voproxyinfo->serverCA = "";
-			voproxyinfo->voName = "";
-			voproxyinfo->uri = "";
-			voproxyinfo->startTime = "";
-			voproxyinfo->endTime = "";*/
-			
+
 			vector<string> fqanvector;
 			char **temp;
     		for (temp = defaultvoms->fqan; *temp; temp++) {
@@ -433,7 +234,9 @@ VOMSAuthZ::getProxyInfo()
     int bits = -1;
     EVP_PKEY * key = X509_extract_key(this->cert);
     bits = 8 * EVP_PKEY_size(key);
-    EVP_PKEY_free(key);
+    if (key) {
+    	EVP_PKEY_free(key);
+    }
     proxyinfo->strength = boost::lexical_cast<string>(bits);
     
     // Getting start time
@@ -587,6 +390,137 @@ VOMSAuthZ::ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 #undef g2
 
     return timegm(&tm)-offset*60;
+}
+
+
+//
+// Private methods
+//
+
+string
+VOMSAuthZ::errormessage(int error)
+{
+	GLITE_STACK_TRY("errormessage()");
+	
+	string msg = "Unable to retrive VOMS Proxy information: ";
+	switch (error) {
+		case VERR_NOEXT:
+			msg += "VERR_NOEXT";
+		    break;
+		case VERR_IDCHECK:
+		    msg += "VERR_IDCHECK";
+		    break;
+		case VERR_TIME:
+			msg += "The user delegated Proxy has expired";
+		    break;
+		case VERR_ORDER:
+			msg += "VERR_ORDER";
+		    break;
+		case VERR_NOSOCKET:
+			msg += "VERR_NOSOCKET";
+		    break;
+		case VERR_NOIDENT:
+			msg += "VERR_NOIDENT";
+		    break;
+		case VERR_COMM:
+			msg += "VERR_COMM";
+		    break;
+		case VERR_PARAM:
+			msg += "VERR_PARAM";
+		    break;
+		case VERR_NOINIT:
+			msg += "VERR_NOINIT\n(please check delegated Proxy validity)";
+		    break;
+		case VERR_EXTRAINFO:
+			msg += "VERR_EXTRAINFO";
+		    break;
+		case VERR_FORMAT:
+			msg += "VERR_FORMAT";
+		    break;
+		case VERR_NODATA:
+			msg += "VERR_NODATA";
+		    break;
+		case VERR_PARSE:
+			msg += "VERR_PARSE";
+		    break;
+		case VERR_DIR:
+			msg += "VERR_DIR";
+		    break;
+		case VERR_SIGN:
+			msg += "VERR_SIGN";
+		    break;
+		case VERR_SERVER:
+			msg += "VERR_SERVER";
+		    break;
+		case VERR_MEM:
+			msg += "VERR_MEM";
+		    break;
+		case VERR_VERIFY:
+			msg += "VERR_VERIFY";
+		    break;
+		case VERR_TYPE:
+			msg += "VERR_TYPE";
+		    break;
+		default:
+			msg += "default";
+		  	break;
+	}
+	edglog(debug)<<msg<<endl;
+	return msg;
+	
+	GLITE_STACK_CATCH();
+}
+
+STACK_OF(X509) * load_chain(char *certfile)
+{
+  STACK_OF(X509_INFO) *sk=NULL;
+  STACK_OF(X509) *stack=NULL, *ret=NULL;
+  BIO *in=NULL;
+  X509_INFO *xi;
+  int first = 1;
+
+  if(!(stack = sk_X509_new_null())) {
+    edglog(severe)<<"Memory allocation failure"<<endl;
+    BIO_free(in);
+  	sk_X509_INFO_free(sk);
+  }
+
+  if(!(in=BIO_new_file(certfile, "r"))) {
+    edglog(severe)<<"Error opening the file: "<<string(certfile)<<endl;
+    BIO_free(in);
+  	sk_X509_INFO_free(sk);
+  }
+
+  // This loads from a file, a stack of x509/crl/pkey sets
+  if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+    edglog(severe)<<"Error reading the file: "<<string(certfile)<<endl;
+    BIO_free(in);
+  	sk_X509_INFO_free(sk);
+  }
+
+  // scan over it and pull out the certs
+  while (sk_X509_INFO_num(sk)) {
+    // skip first cert
+    if (first) {
+      first = 0;
+      continue;
+    }
+    xi=sk_X509_INFO_shift(sk);
+    if (xi->x509 != NULL) {
+      sk_X509_push(stack,xi->x509);
+      xi->x509=NULL;
+    }
+    X509_INFO_free(xi);
+  }
+  if(!sk_X509_num(stack)) {
+    edglog(severe)<<"No certificates in file: "<<string(certfile)<<endl;
+    sk_X509_free(stack);
+    BIO_free(in);
+  	sk_X509_INFO_free(sk);
+  }
+  BIO_free(in);
+  ret=stack;
+  return ret;
 }
 
 } // namespace authorizer

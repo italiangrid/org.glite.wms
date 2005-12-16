@@ -948,11 +948,11 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	
 	int return_value = SOAP_OK;
 	
-	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
+	getProxyInfoResponse getProxyInfo_response;
 	try  {
-		getDelegatedProxyInfo(getDelegatedProxyInfo_response, delegation_id);
+		getProxyInfo(getProxyInfo_response, delegation_id);
 		response._items =
-			convertToGSOAPProxyInfoStructType(getDelegatedProxyInfo_response.items);
+			convertToGSOAPProxyInfoStructType(getProxyInfo_response.items);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getDelegatedProxyInfo", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -970,7 +970,7 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 }
 
 int
-ns1__getJobProxyInfo(struct soap *soap, string delegation_id, string job_id,
+ns1__getJobProxyInfo(struct soap *soap, string job_id,
 	struct ns1__getJobProxyInfoResponse &response)
 {
 	GLITE_STACK_TRY("ns1__getJobProxyInfo(struct soap *soap, string "
@@ -981,12 +981,11 @@ ns1__getJobProxyInfo(struct soap *soap, string delegation_id, string job_id,
 	
 	int return_value = SOAP_OK;
 	
-	getDelegatedProxyInfoResponse getDelegatedProxyInfo_response;
+	getProxyInfoResponse getProxyInfo_response;
 	try  {
-		getDelegatedProxyInfo(getDelegatedProxyInfo_response, delegation_id,
-			true, job_id);
+		getProxyInfo(getProxyInfo_response, job_id, true);
 		response._items =
-			convertToGSOAPProxyInfoStructType(getDelegatedProxyInfo_response.items);
+			convertToGSOAPProxyInfoStructType(getProxyInfo_response.items);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getJobProxyInfo", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
