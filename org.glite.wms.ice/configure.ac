@@ -63,9 +63,15 @@ have_classads=no
 have_boost=no
 have_glite_wmsutils=no
 have_globus=no
+have_glite_lb=no
+have_glite_security=no
+have_glite_wms_common=no
 
 AC_OPTIMIZE
 AC_GLITE
+
+AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
+AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 
 AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GSOAP([])
@@ -77,6 +83,13 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
+
+AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
+AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
+
+AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
+AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
