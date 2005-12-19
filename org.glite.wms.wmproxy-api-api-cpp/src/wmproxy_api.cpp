@@ -898,12 +898,12 @@ ProxyInfoStructType* getDelegatedProxyInfo(const string &delegationId, ConfigCon
 	return (result);
 }
 
-ProxyInfoStructType*getJobProxyInfo(const string &delegationId, const string &jobId, ConfigContext *cfs){
+ProxyInfoStructType*getJobProxyInfo(const string &jobId, ConfigContext *cfs){
 	WMProxy wmp;
 	soapAuthentication (wmp, cfs);
 	ProxyInfoStructType *result = NULL;
 	ns1__getJobProxyInfoResponse response;
-	if (wmp.ns1__getJobProxyInfo(delegationId, jobId, response) == SOAP_OK) {
+	if (wmp.ns1__getJobProxyInfo(jobId, response) == SOAP_OK) {
 		result = proxyInfoSoap2cpp(response._items);
 		soapDestroy(wmp.soap) ;
 	} else soapErrorMng(wmp) ;
