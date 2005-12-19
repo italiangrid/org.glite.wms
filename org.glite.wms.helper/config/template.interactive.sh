@@ -179,7 +179,7 @@ function send_partial_file {
   local FILESUFFIX=partialtrf
   local GLOBUS_RETURN_CODE
   local SLICENAME
-  local LISTFILE=`pwd`/listfile.$!
+  local LISTFILE=`pwd`/listfile.$$
   local LAST_CYCLE=""
   local SLEEP_PID
   local MD5
@@ -192,12 +192,11 @@ function send_partial_file {
     sleep $POLL_INTERVAL & SLEEP_PID=$!
     trap 'LAST_CYCLE="y"; kill -ALRM $SLEEP_PID >/dev/null 2>&1' USR2
     wait $SLEEP_PID >/dev/null 2>&1
-    # Retrive the list of files to be monitored
-    tmpdemo=`echo $TRIGGERFILE | awk -F "://" '{print $1}'`
-    if [ "$tmpdemo" == "gsiftp" ]; then
-      globus_url_retry_copy ${TRIGGERFILE} file://${LISTFILE}
-    elif [ "$tmpdemo" == "https" ]; then
-      htcp ${TRIGGERFILE} file://${file}
+    # Retrieve the list of files to be monitored
+    if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
+      globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
+    elif [ "${TRIGGERFILE:0:8}" == "https://" ]; then
+      htcp ${TRIGGERFILE} file://${LISTFILE}
     fi
     # Skip iteration if unable to get the list
     # (can be used to switch off monitoring)
@@ -212,7 +211,7 @@ function send_partial_file {
       if [ -f $SRCFILE ] ; then
         # Point to the "state" variables of the current file
         # (we will use indirect reference)
-        MD5=`echo $SRCFILE | md5sum | awk '{ print $1 }'`
+        MD5=`expr "$(echo $SRCFILE | md5sum)" : '\([^ ]*\).*'`
         OLDSIZE="OLDSIZE_$MD5"
         COUNTER="COUNTER_$MD5"
         # Initialize variables if referenced for the first time
@@ -220,15 +219,14 @@ function send_partial_file {
         if [ -z "${!COUNTER}" ]; then eval local $COUNTER=1; fi
         # Make a snapshot of the current file
         cp $SRCFILE ${SRCFILE}.${FILESUFFIX}
-        let "NEWSIZE = `stat -t ${SRCFILE}.${FILESUFFIX} | awk '{ print $2 }'`"
+        NEWSIZE=`stat -c %s ${SRCFILE}.${FILESUFFIX}`
         if [ "${NEWSIZE}" -gt "${!OLDSIZE}" ] ; then
           let "DIFFSIZE = NEWSIZE - $OLDSIZE"
-          SLICENAME=$SRCFILE.`date +%Y%m%d%H%m%S`_${!COUNTER}
+          SLICENAME=$SRCFILE.`date +%Y%m%d%H%M%S`_${!COUNTER}
           tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME
-          tmpdemo=`echo $DESTURL | awk -F "://" '{print $1}'`
-          if [ "$tmpdemo" == "gsiftp" ]; then
-            globus_url_retry_copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
-          elif [ "$tmpdemo" == "https" ]; then
+          if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
+            globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
+          elif [ "${DESTURL:0:8}" == "https://" ]; then
             htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
           fi
           GLOBUS_RETURN_CODE=$?
