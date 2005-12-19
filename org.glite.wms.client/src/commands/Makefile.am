@@ -65,6 +65,9 @@ glite_wms_job_proxy_info_SOURCES = \
 	wmp-job-proxy-info.cpp
 glite_wms_job_proxy_info_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_job_proxy_info_LDADD = \
+        $(GLITE_LB_NOTHR_COMMON_LIBS) \
+        $(GLITE_LB_NOTHR_CLIENT_LIBS) \
+        $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_WMS_WMPROXY_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(GLITE_WMS_COMMON_CONF_LIBS) \
@@ -72,8 +75,9 @@ glite_wms_job_proxy_info_LDADD = \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLITE_WMS_JDL_LIBS) \
-	$(WMPROXY_DELEGATE) \
+	$(WMPROXY_STATUS) \
 	$(WMPROXY_UTILS) \
+	$(WMPROXY_PROXYINFO) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(GRIDSITE_LIBS) \

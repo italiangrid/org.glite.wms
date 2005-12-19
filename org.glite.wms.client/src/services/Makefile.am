@@ -34,6 +34,7 @@ libglite_wms_client_delegateproxy_la_SOURCES = \
 
 libglite_wms_client_proxyinfo_la_SOURCES = \
 	proxyinfo.cpp \
+	lbapi.cpp \
 	job.cpp
 
 #libglite_wms_client_jobattach_la_SOURCES = \
