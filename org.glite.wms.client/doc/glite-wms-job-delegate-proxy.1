@@ -52,7 +52,7 @@ Credential delegation with the same id used for a proxy belonging to another use
 
 .IP
 displays WMProxy client and servers version numbers.
-If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the \emph{WMProxyEndPoints} attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
+If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
 .PP
 .HP
 \fB--help\fR
@@ -65,7 +65,7 @@ displays command usage
 <configfile>
 
 .IP
-if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used toghether with "--vo" option
+if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used together with "--vo" option
 .PP
 .HP
 \fB--vo\fR
@@ -75,7 +75,7 @@ if the command is launched with this option, the configuration file pointed by c
 this option allows the user to specify the Virtual Organisation she/he is currently working for.
 If the user proxy contains VOMS extensions then the VO specified through this option is overridden by the
 default VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).
-This option is meaningless when used toghether with "--vo" option
+This option is meaningless when used together with "--vo" option
 .PP
 .HP
 \fB--debug\fR
@@ -85,14 +85,14 @@ when this option is specified, debugging information is displayed on the standar
 
 glite-wms-job-<command_name>_<uid>_<pid>_<time>.log
 
-located under the \emph{/var/tmp} directory or in the log file specified with --logfile option.
+located under the /var/tmp directory or in the log file specified with --logfile option.
 .PP
 .HP
 \fB--logfile\fR
 <filepath>
 
 .IP
-When this option is specified, a command log file (whose pathname is \emph{filepath}) is created.
+When this option is specified, a command log file (whose pathname is filepath) is created.
 .PP
 .HP
 \fB--noint\fR
@@ -118,7 +118,7 @@ this option is specified to make automatic generation of the identifier string (
 <serviceURL>
 
 .IP
-when this option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If both this option is not specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the \emph{WMProxyEndPoints} attribute in the user configuration file (randomically chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
+when this option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If both this option is not specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the WMProxyEndPoints attribute in the user configuration file (randomly chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
 .PP
 .HP
 \fB--output\fR, \fB-o\fR

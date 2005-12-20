@@ -72,7 +72,7 @@ this command.
 Submission can be performed either by using a proxy previously delegated to the WMProxy (for example with the glite-wms-job-delegate-proxy command)
 or delegating a new proxy at each new submission ("automatic delegation").
 
-In the former case the the \emph{--delegationId} (\emph{-d}) option must be used, specifying the id string associated with the delegated proxy.
+In the former case the the --delegationId (-d) option must be used, specifying the id string associated with the delegated proxy.
 
 E.g.:
 
@@ -80,7 +80,7 @@ E.g.:
 
 2) glite-wms-job-submit --delegationId mydelegID myjob.jdl
 
-For automatic delegation the \emph{----autm-delegation} (\emph{-a}) option must be used.
+For automatic delegation the ----autm-delegation (-a) option must be used.
 Only one of these two options must be specified.
 
 For job collections there is a further way to perform submission. The --collection option allows indeed to
@@ -101,7 +101,7 @@ While it does not matter the order of the other arguments, the JDL file has to b
 
 .IP
 displays WMProxy client and servers version numbers.
-If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the \emph{WMProxyEndPoints} attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
+If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
 .PP
 .HP
 \fB--help\fR
@@ -114,7 +114,7 @@ displays command usage
 <configfile>
 
 .IP
-if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used toghether with "--vo" option
+if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used together with "--vo" option
 .PP
 .HP
 \fB--vo\fR
@@ -124,7 +124,7 @@ if the command is launched with this option, the configuration file pointed by c
 this option allows the user to specify the Virtual Organisation she/he is currently working for.
 If the user proxy contains VOMS extensions then the VO specified through this option is overridden by the
 default VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).
-This option is meaningless when used toghether with "--vo" option
+This option is meaningless when used together with "--vo" option
 .PP
 .HP
 \fB--debug\fR
@@ -134,14 +134,14 @@ when this option is specified, debugging information is displayed on the standar
 
 glite-wms-job-<command_name>_<uid>_<pid>_<time>.log
 
-located under the \emph{/var/tmp} directory or in the log file specified with --logfile option.
+located under the /var/tmp directory or in the log file specified with --logfile option.
 .PP
 .HP
 \fB--logfile\fR
 <filepath>
 
 .IP
-When this option is specified, a command log file (whose pathname is \emph{filepath}) is created.
+When this option is specified, a command log file (whose pathname is filepath) is created.
 .PP
 .HP
 \fB--noint\fR
@@ -154,7 +154,7 @@ if this option is specified, every interactive question to the user is skipped a
 <filepath>
 
 .IP
-if this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the filepath. Once a CEId has been selected the command behaves as explained for the \emph{resource} option. If this option is used together with the --int one and the input file contains more than one CEId, then the first CEId in the list is taken into account for submitting the job.
+if this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the filepath. Once a CEId has been selected the command behaves as explained for the resource option. If this option is used together with the --int one and the input file contains more than one CEId, then the first CEId in the list is taken into account for submitting the job.
 .PP
 .HP
 \fB--resource\fR, \fB-r\fR
@@ -204,7 +204,7 @@ A job for which no compatible CEs have been found during the matchmaking phase i
 <hh:mm>
 
 .IP
-A job for which no compatible CEs have been found during the matchmaking phase is hold in the WMS Task Queue for a certain time so that it can be subjected again to matchmaking from time to time until a compatible CE is found. The JDL ExpiryTime attribute is an integer representing the date and time (in seconds since epoch)until the job request has to be considered valid by the WMS. This option allows to specify the validity in hoursand minutes from submission time of the submitted JDL. When this option is used the command sets the value for the ExpiryTime attribute converting appropriately the relative timestamp provided as input. It overrides, if present,the current value. If the specified value exceeds one day from job submission then it is not taken into account by the WMS.
+A job for which no compatible CEs have been found during the matchmaking phase is hold in the WMS Task Queue for a certain time so that it can be subjected again to matchmaking from time to time until a compatible CE is found. The JDL ExpiryTime attribute is an integer representing the date and time (in seconds since epoch)until the job request has to be considered valid by the WMS. This option allows to specify the validity in hours and minutes from submission time of the submitted JDL. When this option is used the command sets the value for the ExpiryTime attribute converting appropriately the relative timestamp provided as input. It overrides, if present,the current value. If the specified value exceeds one day from job submission then it is not taken into account by the WMS.
 .PP
 .HP
 \fB--register-only\fR
