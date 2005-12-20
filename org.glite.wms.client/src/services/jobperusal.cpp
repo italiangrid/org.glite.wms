@@ -119,12 +119,12 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 	} else if (getOpt && peekFiles.size() > 1){
-		err << wmcOpts->getAttributeUsage(Options::GET) << " : no multiple filename can be specified.\n";
-		err <<  "Use the following option only once to get a perusal file:\n";
+		err << wmcOpts->getAttributeUsage(Options::GET) << " : no multiple filenames can be specified.\n";
+		err <<  "Use the following option only once to get a job's file:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-		err << "or "  << wmcOpts->getAttributeUsage(Options::ALL) << " to retrieve all files.\n";
+		err << "or "  << wmcOpts->getAttributeUsage(Options::ALL) << " to retrieve all job's files.\n";
 	} else if (inOpt && unsetOpt) {
-		err << "The unset operation disables all perusal files; the following options cannot be specified together:\n" ;
+		err << "The unset operation disables job's files perusal; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 	} else if (inOpt && allOpt) {
@@ -152,8 +152,8 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			logInfo->print (WMS_DEBUG, "filename read by input file: ", peekFiles[0] );
 		} else if (nointOpt && getOpt) {
 			err <<	wmcOpts->getAttributeUsage(Options::GET)  ;
-			err << ": too many items in the input file; only one perusal file can be requested.\n";
-			err << "To specify a perusal file:\nuse " << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
+			err << ": too many items in the input file; only one job's file can be requested.\n";
+			err << "To specify a job's file:\nuse " << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 			err << "or " << wmcOpts->getAttributeUsage(Options::INPUT) ;
 			err <<  " without " << wmcOpts->getAttributeUsage(Options::NOINT) << "\n";
 			throw WmsClientException(__FILE__,__LINE__,
@@ -177,7 +177,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
     	 }
 	 // other incompatible
 	if ( peekFiles.empty ()  && ( setOpt ||  (getOpt && !allOpt)))  {
-		err << "No valid perusal file specified; use one of these options:\n";
+		err << "No valid job's file specified; use one of these options:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
 		if (getOpt) { err << wmcOpts->getAttributeUsage(Options::ALL) << "\n"; }
@@ -203,15 +203,15 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		// each --filename specified
 		int size = peekFiles.size();
 		for (int i=0; i < size; i++ ) {
-			warn << "--filename " + peekFiles[i]  + " (unset operation always disables all perusal files)\n";
+			warn << "--filename " + peekFiles[i]  + " (unset operation disables perusal of all job's files)\n";
 		}
 		// --all
 		if (allOpt) {
-			warn << wmcOpts->getAttributeUsage(Options::ALL)  << " (unset operation always disables all perusal files)\n";
+			warn << wmcOpts->getAttributeUsage(Options::ALL)  << " (unset operation disables perusal of all job's files)\n";
 		}
 		// --nodisplay
 		if (nodisplayOpt) {
-			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output with unset operation)\n";
+			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output)\n";
 		}
 		//--dir
 		if (dirOpt){
@@ -233,7 +233,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		}
 		// --nodisplay
 		if (nodisplayOpt) {
-			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output with unset operation)\n";
+			warn << wmcOpts->getAttributeUsage(Options::NODISPLAY) << " (no files to be displayed on the standard output)\n";
 		}
 		if (warn.str().size()>0) {
 			logInfo->print(WMS_WARNING,
@@ -326,7 +326,7 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet",DEFAULT_ERR_CODE,
 				"Input Arguments Error",
-				"No valid perusal files specified");
+				"No valid job's files specified");
 		} else {
 			file = peekFiles[0] ;
 		}
@@ -433,48 +433,48 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 	int size = 0;
 	out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
 	if (peekFiles.size() == 1 ) {
-		subj = "perusal file";
+		subj = "File perusal";
 		verb = "has";
-		count = "name of";
+		count = "name of the file";
 	} else {
-		subj = "perusal files";
+		subj = "Files perusal";
 		verb = "have";
-		count = "list of";
+		count = "list of files";
 	}
 	if (operation == PERUSAL_SET) {
-		out << "Your" << ws << subj << ws <<  verb << ws << "been successfully enabled for the job:\n";
+		out << subj << ws << "has been successfully enabled for the job:\n";
 		out << jobId << "\n";
 		// saves the result
 		if (outOpt){
-			header = "Perusal files enabled for the job" + jobId + " :";
+			header = "###" + subj + ws + "enabled for the job " + jobId + "###";
 			if ( wmcUtils->saveListToFile(*outOpt,  peekFiles, header) < 0 ){
 				logInfo->print (WMS_WARNING, "unable to save the result into the output file " ,
 						 Utils::getAbsolutePath(*outOpt));
 			} else {
-				out << "\nThe" + ws + count + ws + "your" + ws + subj + ws + "been saved in the following file:\n";
+				out << "\nThe" + ws + count + ws + "to peruse" + ws + "has been saved in the following file:\n";
 				out << Utils::getAbsolutePath(*outOpt) << "\n";
 			}
 		}
 	} else if (operation == PERUSAL_GET) {
 		if (paths.empty()) {
-			out << "No" << ws << subj << ws << "to be retrieved  for the job:\n";
+			out << "No" << ws << "files" << ws << "to be retrieved for the job:\n";
 			out << jobId << "\n";
 		} else {
-			out << "Filenames of the retrieved files have been successfully stored in:\n";
+			out << "The retrieved files have been successfully stored in:\n";
 			out << *dirOpt << "\n";
 			if (outOpt){
-				header = "Perusal files retrieved for the job " + jobId + " :";
+				header = "###Perusal: file(s) retrieved for the job " + jobId + "###";
 				if ( wmcUtils->saveListToFile(*outOpt, paths, header) < 0 ){
-					logInfo->print (WMS_WARNING, "unable to save"+ ws + count +  ws + "your" + ws + subj + ws + "in the output file " ,
+					logInfo->print (WMS_WARNING, "unable to save" + ws + count +  ws + "to peruse" + ws + "in the output file " ,
 						Utils::getAbsolutePath(*outOpt));
 				} else {
-					out << "\nThe"<< ws << count <<  ws << "your" << ws << subj << ws << "is stored in the file:\n";
+					out << "\nThe"<< ws << count <<  ws << "to peruse" << ws << "is stored in the file:\n";
 					out << Utils::getAbsolutePath(*outOpt) << "\n";
 				}
 			}
 		}
 	} else if (operation == PERUSAL_UNSET) {
-		out << "Perusal has been successfully disabled for the job:\n";
+		out << "File(s) perusal has been successfully disabled for the job:" << endl;
 		out << jobId << "\n";
 	}
 
