@@ -329,7 +329,7 @@ if errors:
 		print err
 else:
 	print "Documentation properly created in the following directories:"
-	print "MAN documtentation: "
+	print "MAN documtentation: (to view man pages please issue: groff -man -Tascii <input file>)"
 	if MAN_OUTPUT:
 		print MAN_OUTPUT
 	else:
