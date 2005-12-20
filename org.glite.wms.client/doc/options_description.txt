@@ -12,6 +12,13 @@ Ranges can also be selected specifying ends separated by a dash. E.g. selects jo
 It is worth mentioning that it is possible to select at the same time ranges and single jobs. E.g. selects the first job id in the list, the ids from the third to the fifth (ends included) and finally the eighth one.
 <<<cancel-input>>>
 
+<<<perusal-input>>>
+this option can be used only when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. The list of files contained in <filepath> is displayed and the user is prompted for a choice.
+ With the --set option multiple files can be specified by selecting more items from the list. Instead, multiple files cannot be specified with --get.
+
+This option is ignored if used with the --unset op
+<<<perusal-input>>>
+
 <<<cancel-output>>>
 writes the cancellation results in the file specified by filepath instead of the standard output. filepath can be either a simple name or an absolute path (on the submitting machine). In the former case the file filepath is created in the current working directory.
 <<<cancel-output>>>
@@ -50,7 +57,7 @@ when this option is specified, the operations are performed contacting the WMPro
 <<<endpoint>>>
 
 <<<filename>>>
-this option must be used when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. With the --set option multiple files can be specified by repeating the option several times. Instead, multiple files cannot be specified with --get.
+this option can be used only when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. With the --set option multiple files can be specified by repeating the option several times. Instead, multiple files cannot be specified with --get.
 
 f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc
 
@@ -113,6 +120,8 @@ this option makes the command print on the standard output only the jobId genera
 <<<perusal-dir>>>
 if this option is specified, the retrieved perusal files requested are stored in the location pointed by directory_path instead of the default location /tmp/<jobId unique string>. This option is ignored if used with either the --set or the --get options.
 <<<perusal-dir>>>
+
+
 
 
 <<<perusal-output>>>
