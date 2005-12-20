@@ -318,8 +318,9 @@ JobWrapper::dump_vars(std::ostream& os) const
   std::vector< std::string > logical_file_names;
   std::vector< std::string > storage_elements;
   bool check;
-  ExprList::const_iterator const it_end = m_outputdata->end();
+
   if(m_outputdata != 0) {
+    ExprList::const_iterator const it_end = m_outputdata->end();
     for (ExprList::const_iterator it = m_outputdata->begin(); it != it_end; ++it) {
       ClassAd* ad = dynamic_cast< ClassAd* >(*it);
       if (ad != 0) {
