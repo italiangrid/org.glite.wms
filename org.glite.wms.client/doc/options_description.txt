@@ -1,5 +1,5 @@
 <<<all>>>
-This option can only be specified toghether with --get: the specified file will be downloaded with all its chunks (even those that might have been previously retrieved)
+This option can only be specified together with --get: the specified file will be downloaded with all its chunks (even those that might have been previously retrieved)
 <<<all>>>
 
 <<<autm-delegation>>>
@@ -21,7 +21,7 @@ this option allows specifying  the directory pointed by directory_path containin
 <<<collection>>>
 
 <<<config>>>
-if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used toghether with "--vo" option
+if the command is launched with this option, the configuration file pointed by configfile is used. This option is meaningless when used together with "--vo" option
 <<<config>>>
 
 
@@ -30,7 +30,7 @@ when this option is specified, debugging information is displayed on the standar
 
 glite-wms-job-<command_name>_<uid>_<pid>_<time>.log
 
-located under the \emph{/var/tmp} directory or in the log file specified with --logfile option.
+located under the /var/tmp directory or in the log file specified with --logfile option.
 <<<debug>>>
 
 <<<deleg-del_id>>>
@@ -46,7 +46,7 @@ if this option is specified, the following information is saved in the file spec
 <<<deleg-output>>>
 
 <<<endpoint>>>
-when this option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If both this option is not specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the \emph{WMProxyEndPoints} attribute in the user configuration file (randomically chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
+when this option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If both this option is not specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the WMProxyEndPoints attribute in the user configuration file (randomly chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
 <<<endpoint>>>
 
 <<<filename>>>
@@ -58,7 +58,7 @@ This option is ignored if used with the --unset option.
 <<<filename>>>
 
 <<<get>>>
-if this option is specified, the perusal file specified with the --filename option is downloaded on the local machine. Multiple files can not be specified. This option cannot be specified toghether with --set and --unset.
+if this option is specified, the perusal file specified with the --filename option is downloaded on the local machine. Multiple files can not be specified. This option cannot be specified together with --set and --unset.
 <<<get>>>
 
 <<<help>>>
@@ -81,7 +81,7 @@ when this option is specified, the output files (previously listed by the user t
 <<<list-only>>>
 
 <<<logfile>>>
-When this option is specified, a command log file (whose pathname is \emph{filepath}) is created.
+When this option is specified, a command log file (whose pathname is filepath) is created.
 <<<logfile>>>
 
 <<<lrms>>>
@@ -146,7 +146,7 @@ if this option is specified, the job-ad sent to the NS contains a line of the ty
 <<<nodes-resource>>>
 
 <<<set>>>
-if this option is specified, perusal functionality is enabled for the job (indicated by JobId) for the file(s) specified with --filename option. Multiple files can be specified by repeating the option several times ( f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). This option cannot be specified toghether with --get and --unset.
+if this option is specified, perusal functionality is enabled for the job (indicated by JobId) for the file(s) specified with --filename option. Multiple files can be specified by repeating the option several times ( f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). This option cannot be specified together with --get and --unset.
 <<<set>>>
 
 <<<start>>>
@@ -154,7 +154,7 @@ this option allowing starting a job (specified by JobId) previously registered a
 <<<start>>>
 
 <<<submit-input>>>
-if this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the filepath. Once a CEId has been selected the command behaves as explained for the \emph{resource} option. If this option is used together with the --int one and the input file contains more than one CEId, then the first CEId in the list is taken into account for submitting the job.
+if this option is specified, the user will be asked to choose a CEId from a list of CEs contained in the filepath. Once a CEId has been selected the command behaves as explained for the resource option. If this option is used together with the --int one and the input file contains more than one CEId, then the first CEId in the list is taken into account for submitting the job.
 <<<submit-input>>>
 
 <<<submit-output>>>
@@ -171,23 +171,23 @@ this option must be only used with the --register-only option. It enables transf
 
 <<<unset>>>
 if this option is specified, any perusal functionalities for the job are disabled.
-This option cannot be specified toghether with --set and --get.
+This option cannot be specified together with --set and --get.
 <<<unset>>>
 
 
 <<<valid>>>
-A job for which no compatible CEs have been found during the matchmaking phase is hold in the WMS Task Queue for a certain time so that it can be subjected again to matchmaking from time to time until a compatible CE is found. The JDL ExpiryTime attribute is an integer representing the date and time (in seconds since epoch)until the job request has to be considered valid by the WMS. This option allows to specify the validity in hoursand minutes from submission time of the submitted JDL. When this option is used the command sets the value for the ExpiryTime attribute converting appropriately the relative timestamp provided as input. It overrides, if present,the current value. If the specified value exceeds one day from job submission then it is not taken into account by the WMS.
+A job for which no compatible CEs have been found during the matchmaking phase is hold in the WMS Task Queue for a certain time so that it can be subjected again to matchmaking from time to time until a compatible CE is found. The JDL ExpiryTime attribute is an integer representing the date and time (in seconds since epoch)until the job request has to be considered valid by the WMS. This option allows to specify the validity in hours and minutes from submission time of the submitted JDL. When this option is used the command sets the value for the ExpiryTime attribute converting appropriately the relative timestamp provided as input. It overrides, if present,the current value. If the specified value exceeds one day from job submission then it is not taken into account by the WMS.
 <<<valid>>>
 
 
 <<<version>>>
 displays WMProxy client and servers version numbers.
-If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the \emph{WMProxyEndPoints} attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
+If the --endpoint option is specified only this service is contacted to retrieve its version. If it is not used, the endpoint contacted is that one specified with GLITE_WMS_WMPROXY_ENDPOINT environment variable. If the option is not specified and the environment variable is not set, all servers listed in the WMProxyEndPoints attribute of the user configuration file are contacted. For each of these service, the returned result will be displayed on the standard output (the version numbers in case of success; otherwise the error message).
 <<<version>>>
 
 <<<vo>>>
 this option allows the user to specify the Virtual Organisation she/he is currently working for.
 If the user proxy contains VOMS extensions then the VO specified through this option is overridden by the
 default VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).
-This option is meaningless when used toghether with "--vo" option
+This option is meaningless when used together with "--vo" option
 <<<vo>>>

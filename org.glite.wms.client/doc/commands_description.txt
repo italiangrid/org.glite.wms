@@ -13,7 +13,7 @@ this command.
 Submission can be performed either by using a proxy previously delegated to the WMProxy (for example with the glite-wms-job-delegate-proxy command)
 or delegating a new proxy at each new submission ("automatic delegation").
 
-In the former case the the \emph{--delegationId} (\emph{-d}) option must be used, specifying the id string associated with the delegated proxy.
+In the former case the the --delegationId (-d) option must be used, specifying the id string associated with the delegated proxy.
 
 E.g.:
 
@@ -21,7 +21,7 @@ E.g.:
 
 2) glite-wms-job-submit --delegationId mydelegID myjob.jdl
 
-For automatic delegation the \emph{----autm-delegation} (\emph{-a}) option must be used.
+For automatic delegation the ----autm-delegation (-a) option must be used.
 Only one of these two options must be specified.
 
  For job collections there is a further way to perform submission. The --collection option allows indeed to
@@ -194,10 +194,10 @@ X509_USER_PROXY: This variable may be set to override the default location of th
 Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
 <<<AUTHORS>>>
 <<<EXAMPLES>>>
-1) request for cancelling only one job:
+1) request for canceling only one job:
 	glite-wms-job-cancel https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg
 
-2)	request for cancelling multiple jobs:
+2)	request for canceling multiple jobs:
 	glite-wms-job-cancel https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg https://wmproxy.glite.it:9000/wqikja_-de83jdqd https://wmproxy.glite.it:9000/jdh_wpwkd134ywhq6p
 
 3)	the myids.in input file contains the jobid(s)
@@ -269,7 +269,7 @@ Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
 <<<DESCRIPTION>>>
 displays the list of identifiers of the resources on which the user is authorized and
 satisfying the job requirements included in the job description file. The CE identifiers are returned either
-on the standard output or in a file according to the chosen command options, and are strings univocally
+on the standard output or in a file according to the chosen command options, and are strings universally
 identifying the CEs published in the IS.
 The returned CEIds are listed in decreasing order of rank, i.e. the one with the best (greater) rank is in
 the first place and so forth.
@@ -342,7 +342,7 @@ Three different operations can be performed for the specified job:
 
 This option requires the user to specify the file(s) to be perused: this can be done by using either the --filename (multiple files can be specified by repeating the option several times) or the --input option (the user will be prompted to select one or more files).
 
-- Job file perusal get (--get option): it allows retreiving one specified job perusal file (previously set by the --set option).
+- Job file perusal get (--get option): it allows retrieving one specified job perusal file (previously set by the --set option).
 
 This option requires the user to specify the file to be retrieved: this can be done by using either the --filename (no multiple files support available) or the --input option (the user will be prompted to select one file). The specified file is therefore downloaded on the local machine and it can be viewed on the user shell. User can specified a custom directory where to download the files will by specifying the --dir option. The perusal file retrieval is available as soon as the job is running; it will retrieve the content of the generated file up to the time of the call. By default, any further call on the same file, retrieves back only the last chunk of the file, that means only the information stored after the last call. To retrieve the whole file with all its chunks (even those that might have been previously retrieved), the --all option must be specified.
 
