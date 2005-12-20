@@ -49,6 +49,7 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   CachePersistFile  = config->ice()->cache_persist_file();
   ListenerPort      = config->ice()->listener_port();
   LogFile           = config->ice()->logfile();
+  LogLevel          = config->ice()->log_level();
   startpoller       = config->ice()->start_poller();
   startlistener     = config->ice()->start_listener();
   creamurlprefix    = config->ice()->cream_url_prefix();

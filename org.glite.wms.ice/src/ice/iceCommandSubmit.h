@@ -6,18 +6,8 @@
 #include "classad_distribution.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
-
-/* namespace glite { */
-/*   namespace ce { */
-/*     namespace cream_client_api { */
-/*       class creamApiLogger; */
-/*     } */
-/*   } */
-/* }; */
-
-namespace log4cpp {
-  class Category;
-};
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+//#include "iceEventLogger.h"
 
 namespace glite {
   namespace wms {
@@ -31,7 +21,6 @@ namespace glite {
 	virtual ~iceCommandSubmit() {};
 	
 	virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );          
-	log4cpp::Category* log_dev;
 	
       protected:
 	
@@ -87,6 +76,8 @@ namespace glite {
 	std::string _jdl;
 	std::string _certfile;
 	std::string _gridJobId;
+	log4cpp::Category* log_dev;
+        // util::iceEventLogger *_ev_logger;
       };
     }
   }

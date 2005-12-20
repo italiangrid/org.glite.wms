@@ -14,7 +14,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				eventStatusPoller.cpp \
 				eventStatusListener.cpp \
 				creamJob.cpp \
-				iceConfManager.cpp
+				iceConfManager.cpp \
+				iceEventLogger.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
@@ -26,6 +27,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
+		-DENABLE_LOGGING \
 		$(GLOBUS_NOTHR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in

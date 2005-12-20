@@ -1,12 +1,12 @@
 #include "iceCommandSubmit.h"
 #include "jobCache.h"
 #include "creamJob.h"
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
+// #include "iceEventLogger.h"
 
 #include <ctime>
 
@@ -17,7 +17,9 @@ namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 
 //______________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
-  iceAbsCommand( ), log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
+  iceAbsCommand( ), 
+  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
+    //    _ev_logger( util::iceEventLogger::instance() )
 {
     // Sample classad:
     // ( this is the NEW version )
@@ -98,26 +100,32 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
   try {
     vector<string> url_jid;
 
-    //cout << "\tThis request is a Submission..."<<endl;
-    log_dev->log(log4cpp::Priority::INFO,
-		 "\tThis request is a Submission...");
+    log_dev->log(log4cpp::Priority::INFO, "This request is a Submission...");
 
     util::CreamJob theJob( _jdl,
 			   "",
 			   /* _gridJobId, */
 			   job_statuses::UNKNOWN,
 			   time(NULL));
+#ifdef DO_NOT_COMPILE
+    log_dev->log( log4cpp::Priority::INFO, "Logging event to L&B service" );
+    try {
+        _ev_logger->execute_event( _gridJobId.c_str(), "grid005.pd.infn.it" );
+    } catch( util::iceLoggerException& ex ) {
+        log_dev->errorStream() << "L&B thrown exception: " 
+                               << ex.what() 
+                               << log4cpp::CategoryStream::ENDLINE;
+    }
+#endif
 
     string modified_jdl = creamJdlHelper( _jdl );
     
-//     cout << "\tSubmiting JDL " << modified_jdl << " to ["
-// 	 << theJob.getCreamURL() << "][" << theJob.getCreamDelegURL()
-// 	 << "]" << endl; 
-    log_dev->log(log4cpp::Priority::INFO, "\tSubmitting");
-    log_dev->log(log4cpp::Priority::DEBUG,
-		 string("\tJDL ")+modified_jdl
-		 +" to ["+theJob.getCreamURL()+"]["
-		 +theJob.getCreamDelegURL()+"]");
+    log_dev->log(log4cpp::Priority::INFO, "Submitting");
+    log_dev->debugStream() << "JDL " << modified_jdl
+                           << " to [" << theJob.getCreamURL() <<"]["
+                           << theJob.getCreamDelegURL() << "]"
+                           << log4cpp::CategoryStream::ENDLINE;
+    
     
     soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob.getUserProxyCertificate());
     
@@ -132,10 +140,8 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         true /*autostart*/ 
         );
     
-    //cout << "\tReturned CREAM-JOBID ["<<url_jid[1]<<"]"<<endl;
     log_dev->log(log4cpp::Priority::INFO,
-		 string("Returned CREAM-JOBID ["
-			+url_jid[1]+"]"));
+		 string("Returned CREAM-JOBID ["+url_jid[1]+"]"));
 
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
@@ -154,8 +160,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
       throw iceCommandFatal_ex( string("ClassadSyntax_ex: ") + ex.what() );
   } catch(soap_proxy::auth_ex& ex) {
       throw iceCommandFatal_ex( ex.what() );
-  } 
-  catch(soap_proxy::soap_ex& ex) {
+  } catch(soap_proxy::soap_ex& ex) {
       throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
       // MUST LOG TO LB
       // HERE MUST RESUBMIT
