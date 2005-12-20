@@ -1,5 +1,5 @@
 <<<all>>>
-if this option is specified with --get , the files already retrieved will be downloaded again (allChunks). This option cannot used with the --set and the --unset options.
+This option can only be specified toghether with --get: the specified file will be downloaded with all its chunks (even those that might have been previously retrieved)
 <<<all>>>
 
 <<<autm-delegation>>>
@@ -49,18 +49,16 @@ if this option is specified, the following information is saved in the file spec
 when this option is specified, the operations are performed contacting the WMProxy service represented by the given serviceURL. If it is not used, the endpoint contacted is that one specified by the GLITE_WMS_WMPROXY_ENDPOINT environment variable. If both this option is not specified and the environment variable is not set, the service request will be sent to one of the endpoints listed in the \emph{WMProxyEndPoints} attribute in the user configuration file (randomically chosen among the URLs of the attribute list). If the chosen service is not available, a succession of attempts are performed on the other specified services until the connection with one of these endpoints can be established or all services have been contacted without success. In this latter case the operation can not be obviously performed and the execution of the command is stopped with an error message.
 <<<endpoint>>>
 
-
 <<<filename>>>
-this option must be used with the --set or --get in order to indicate on which file(s) enabling or disabling perusal service. With the --set option multiple files can be specified by repeating the option several times
+this option must be used when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. With the --set option multiple files can be specified by repeating the option several times. Instead, multiple files cannot be specified with --get.
 
 f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc
 
-Instead, multiple files cannot be specified with --get.
 This option is ignored if used with the --unset option.
 <<<filename>>>
 
 <<<get>>>
-if this option is specified, the perusal files generated indicated with the --filename option is downloaded on the local machine. Multiple files can not be specified. It cannot be specified with --set and --unset.
+if this option is specified, the perusal file specified with the --filename option is downloaded on the local machine. Multiple files can not be specified. This option cannot be specified toghether with --set and --unset.
 <<<get>>>
 
 <<<help>>>
@@ -95,7 +93,7 @@ returns the CEIds list in the file specified by filepath. filepath can be either
 <<<match-output>>>
 
 <<<nodisplay>>>
-this option can only be specified with the --get operation; it ends the execution of the command without displays the content of the downloaded files. This option is ignored if used with --set or --unset.
+this option can only be specified with the --get operation; it ends the execution of the command without displaying the content of the downloaded files. This option is ignored if used with --set or --unset.
 <<<nodisplay>>>
 
 <<<noint>>>
@@ -148,7 +146,7 @@ if this option is specified, the job-ad sent to the NS contains a line of the ty
 <<<nodes-resource>>>
 
 <<<set>>>
-if this option is specified, perusal functionality is enabled for the job (indicated by JobId) for the file(s) indicated with --filename option. Multiple files can be specified by repeating the option several times ( f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). It cannot be specified with --get and --unset.
+if this option is specified, perusal functionality is enabled for the job (indicated by JobId) for the file(s) specified with --filename option. Multiple files can be specified by repeating the option several times ( f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). This option cannot be specified toghether with --get and --unset.
 <<<set>>>
 
 <<<start>>>
@@ -172,7 +170,8 @@ this option must be only used with the --register-only option. It enables transf
 <<<transfer-files>>>
 
 <<<unset>>>
-if this option is specified, the perusal functionality is disabled for all files previously enabled .It can not be specified with --set and --get.
+if this option is specified, any perusal functionalities for the job are disabled.
+This option cannot be specified toghether with --set and --get.
 <<<unset>>>
 
 
