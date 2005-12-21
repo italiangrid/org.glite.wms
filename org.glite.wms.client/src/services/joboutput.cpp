@@ -230,7 +230,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 		createWarnMsg(wmsg);
 	}
 	if (!listOnlyOpt &&  (code == 0 || ! child )){
-		// It's not a node & retrieval is allowed (code==)
+		// It's not a node & retrieval is allowed (code==0)
 		if (Utils::isDirectory(dirAbs)){
 			logInfo->print(WMS_WARNING, "Directory already exists: ", dirAbs);
 			if (!wmcUtils->answerYes ("Do you wish to overwrite it ?", false, true)){
@@ -278,9 +278,9 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	bool parent = status.hasParent ( ) ;
 	/* Purge logic: Job can be purged when
 	* enpoint has been specified (parent has specified)
-	* no parent is present */
-	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (! parent) ;
-
+	* no parent is present
+	* retrieve output successfully done */
+	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (! parent) && (code==0);
 	// checks Children
 	if (checkChildren && children.size()>0){
 		if (hasFiles){
@@ -293,7 +293,6 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 				rmdir(dirAbs.c_str());
 			}
 		}
-
 		// It's a dag, no outputfiles to be retrieved
 	}else if  (!hasFiles){ //It's a job with no output files (and no children)
 		if (createDir) {
