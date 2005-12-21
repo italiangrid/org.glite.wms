@@ -6,7 +6,6 @@ Copyright:Open Source EGEE License
 Vendor:EU EGEE project
 Group:System/Application
 Prefix:/opt/glite
-BuildArch:i386
 Requires: glite-wms-common glite-wms-jdl glite-wms-rls glite-wms-ism
 BuildRoot:%{_builddir}/%{name}-%{version}
 Source:glite-wms-brokerinfo-@MODULE.VERSION@_bin.tar.gz
