@@ -97,24 +97,29 @@ WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
 	this->certfqan = "";
 	if (lcmaps_logfile) {
 		this->lcmaps_logfile = lcmaps_logfile;
-		edglog(debug)<<"LCMAPS log file: "<<string(lcmaps_logfile)<<endl;
+		edglog(debug) << "LCMAPS log file: " << string(lcmaps_logfile) << endl;
 	} else {
 		this->lcmaps_logfile = (char*) malloc(1024);
-		char * location = getenv("GLITE_WMS_LOCATION_VAR");
-		if (!location) {
-			location = getenv("GLITE_LOCATION_VAR");
-		}
-		string slocation = "";
-		if (location && wmputilities::fileExists(string(location) + "/log/")) {
-			slocation = string(location) + "/log/" + LCMAPS_LOG_FILE;
-			sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
-		} else {
+                char * location = getenv("GLITE_LOCATION_LOG");
+                string slocation = "";
+                if (!location) {
+			char * location = getenv("GLITE_WMS_LOCATION_VAR");
+			if (!location) {
+				location = getenv("GLITE_LOCATION_VAR");
+			}
+			if (location && wmputilities::fileExists(string(location) + "/log/")) {
+				slocation = string(location) + "/log/" + LCMAPS_LOG_FILE;
+				sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
+			} else {
 			slocation = "/tmp/" + LCMAPS_LOG_FILE;
 			sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
-		}
-		edglog(debug)<<"LCMAPS log file: "<<slocation<<endl;
+			}
+                } else {
+                	slocation = string(location) + "/" + LCMAPS_LOG_FILE;
+                	sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
+                }
+		edglog(debug) << "LCMAPS log file: " << slocation << endl;
 	}
-	
 }
 
 WMPAuthorizer::~WMPAuthorizer() throw()
