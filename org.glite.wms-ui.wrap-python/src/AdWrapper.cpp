@@ -395,6 +395,7 @@ vector<string> DagWrapper::getMap (){
 		vect.push_back(nodeName);
 		vect.push_back(map[nodeName]);
 	}
+	return vect;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
 
