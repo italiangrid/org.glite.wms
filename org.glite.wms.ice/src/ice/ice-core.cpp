@@ -80,7 +80,11 @@ void ice::startListener(const int& listenPort)
 		 "Retrying in 5 seconds...");
     sleep(5);
   }
-  
+
+  log_dev->log(log4cpp::Priority::INFO,
+	       "Creating a CEMon subscription updater...");
+  subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
+
   log_dev->log(log4cpp::Priority::INFO,
 	       "Creating thread object for CEMon listener...");
   /**
@@ -91,7 +95,7 @@ void ice::startListener(const int& listenPort)
   try {
     listenerThread =
       new boost::thread(boost::bind(&util::eventStatusListener::operator(),
-				    listener)
+			listener)
 			);
   } catch(boost::thread_resource_error& ex) {
     iceInit_ex( ex.what() );
@@ -99,6 +103,19 @@ void ice::startListener(const int& listenPort)
   log_dev->log(log4cpp::Priority::INFO,
 	       "listener started succesfully !");
   status_listener_started = true;
+
+  log_dev->log(log4cpp::Priority::INFO,
+	       "Creating thread object for Subscription updater...");
+  try {
+    updaterThread =
+      new boost::thread(boost::bind(&util::subscriptionUpdater::operator(),
+			subsUpdater)
+			);
+  } catch(boost::thread_resource_error& ex) {
+    iceInit_ex( ex.what() );
+  }
+  log_dev->log(log4cpp::Priority::INFO,
+	       "Subscription updater started succesfully !");
 }
 
 //______________________________________________________________________________

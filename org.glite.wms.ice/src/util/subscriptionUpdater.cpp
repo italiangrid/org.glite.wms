@@ -20,7 +20,7 @@ void iceUtil::subscriptionUpdater::operator()()
 
   while(!end) {
     cout << "subscriptionUpdater::()() - Checking "
-         <<"subscription's time validity..." << endl;
+         << "subscription's time validity..." << endl;
     ceurls.clear();
     retrieveCEURLs(ceurls);
     for(vector<string>::iterator it=ceurls.begin();
@@ -57,12 +57,27 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
 {
   for(vector<Subscription>::const_iterator it = vec.begin();
       it != vec.end();
-      it++) 
+      it++)
     {
       time_t timeleft = time(NULL) - (*it).getExpirationTime();
-      if(timeleft < conf->getSubscriptionUpdateThresholdTime())
+      if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
+        cout << "Updating subscription ["<<(*it).getSubscriptionID() << "]"
+	     << " at [" <<(*it).getEndpoint()<<"]"<<endl;
+	try {
+	  subMgr.update((*it).getEndpoint(),
+		      (*it).getSubscriptionID(),
+		      (*it).getConsumerURL(),
+		      (*it).getTopicName(),
+		      "",
+		      time(NULL)+glite::wms::ice::util::iceConfManager::getInstance()->getSubscriptionDuration(),
+		      5000);
+        } catch(exception& ex) {
+		cerr << ex.what() << endl;
+		exit(1);
+	}
+      }
 	// MUST UPDATE current SUBSCRIPTION
-	;
+
     }
 }
 

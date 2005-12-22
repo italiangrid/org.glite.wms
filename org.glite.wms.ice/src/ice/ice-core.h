@@ -7,6 +7,7 @@
 #include "ClassadSyntax_ex.h"
 #include "iceInit_ex.h"
 #include "eventStatusListener.h"
+#include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
 #include "glite/wms/common/utilities/FLExtractor.h"
 
@@ -47,8 +48,10 @@ namespace glite {
 	std::string wm_filelist;
 	boost::thread* listenerThread;
 	boost::thread* pollerThread;
+        boost::thread* updaterThread;
 	boost::shared_ptr<util::eventStatusPoller> poller;
 	boost::shared_ptr<util::eventStatusListener> listener;
+	boost::shared_ptr<util::subscriptionUpdater> subsUpdater;
 
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;
@@ -58,19 +61,13 @@ namespace glite {
 
       public:
 	ice(const std::string& NS_FL, 
-	    const std::string& WM_FL//,
-	    //const std::string& jobcache_persist_file
-	    //	    const int& tcpport,
-	    //	    const int&  poller_delay,
-	    //const std::string& CreamUrl,
-	    //	    const std::string& hostCert
-	    )
+	    const std::string& WM_FL)
 	  throw(glite::wms::ice::iceInit_ex&);
 
 	virtual ~ice();
 	
 	void clearRequests();
-	void getNextRequests(std::vector<std::string>&); 
+	void getNextRequests(std::vector<std::string>&);
 	void removeRequest(const unsigned int&);
 	void ungetRequest(const unsigned int&);
 	void startListener(const int&);
