@@ -19,13 +19,12 @@ namespace iceUtil = glite::wms::ice::util;
 CreamJob::CreamJob(const string& _jdl, 
 		   const string& _cream_jobid, 
 		   const job_status& _status,
-		   time_t tstamp, const string& subID) 
+		   time_t tstamp)
   throw(ClassadSyntax_ex&) : cream_jobid( _cream_jobid), 
 			     grid_jobid( ), 
 			     jdl(_jdl), 
 			     status(_status), 
-			     lastUpdate(tstamp),
-			     subscriptionID(subID)
+			     lastUpdate(tstamp)
 {
     classad::ClassAdParser parser;
     classad::ClassAd *ad = parser.ParseClassAd( _jdl );;

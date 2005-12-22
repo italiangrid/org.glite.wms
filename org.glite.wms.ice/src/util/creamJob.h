@@ -38,7 +38,7 @@ namespace glite {
 	  std::string user_proxyfile;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  time_t      lastUpdate;
-	  std::string subscriptionID;
+	  //std::string subscriptionID;
 
 	public:
 
@@ -55,8 +55,7 @@ namespace glite {
 	  CreamJob( const std::string& _jdl,
 		    const std::string& _cream_jobid, //< Cream Job ID 
 		    const glite::ce::cream_client_api::job_statuses::job_status& st,
-		    time_t ts,
-		    const std::string& subID = "") 
+		    time_t ts) 
 	    throw(ClassadSyntax_ex&);
 
 	  //! Creates a CreamJob object by copying from C
@@ -71,18 +70,18 @@ namespace glite {
 	    status              = C.status;
             user_proxyfile      = C.user_proxyfile;
 	    lastUpdate          = C.lastUpdate;
-	    subscriptionID      = C.subscriptionID;
+	    //subscriptionID      = C.subscriptionID;
 	  }
 
 	  //! Sets the status of the CreamJob object
-	  inline void setStatus(const glite::ce::cream_client_api::job_statuses::job_status& st) 
-	  { 
+	  inline void setStatus(const glite::ce::cream_client_api::job_statuses::job_status& st)
+	  {
 	    status = st;
 	  }
 	  //! Sets the last time of status update
-	  void setLastUpdate(const time_t& t) { lastUpdate = t; } 
-	  //! Sets the subscription identifier of this job (is used by the eventStatusListener)
-	  void setSubscriptionID(const std::string& subID) { subscriptionID = subID; }
+	  void setLastUpdate(const time_t& t) { lastUpdate = t; }
+/*	  //! Sets the subscription identifier of this job (is used by the eventStatusListener)
+	  void setSubscriptionID(const std::string& subID) { subscriptionID = subID; }*/
 	  //! Sets the cream unique identifier for this job
           void setJobID(const std::string& cid) { cream_jobid = cid; }
 	  //! Gets the unique grid job identifier
@@ -103,15 +102,15 @@ namespace glite {
           std::string getUserProxyCertificate( void ) const { return user_proxyfile; }
 	  //! Gets the last time of status update of the job
 	  time_t      getLastUpdate( void ) const { return lastUpdate; }
-	  //! Gets the subscription identifier of this job (used by eventStatusListener)
-	  std::string getSubscriptionID(void) const { return subscriptionID; }
+/*	  //! Gets the subscription identifier of this job (used by eventStatusListener)
+	  std::string getSubscriptionID(void) const { return subscriptionID; }*/
 	  //! Gets the status of the job
-          glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { 
-	    return status; 
+          glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const {
+	    return status;
 	  }
 	  //! Return true if j1 and j2 have the same grid job identifier
-          friend bool operator==( const CreamJob& j1, const CreamJob& j2 ) { 
-	    return ( j1.getGridJobID() == j2.getGridJobID() ); 
+          friend bool operator==( const CreamJob& j1, const CreamJob& j2 ) {
+	    return ( j1.getGridJobID() == j2.getGridJobID() );
 	  }
 	};
       }

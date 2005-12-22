@@ -19,6 +19,7 @@ extern int errno;
 using namespace std;
 
 namespace iceUtil = glite::wms::ice::util;
+
 void parseEventJobStatus(string&, string&, const string&)
   throw(iceUtil::ClassadSyntax_ex&);
 
@@ -125,12 +126,23 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
     }
   const vector<Event>& evts = this->getEvents();
   for(unsigned j=0; j<evts.size(); j++) {
-    cout << "Event #"<<(j+1)<< endl;
+    //cout << "Event #"<<(j+1)<< endl;
     string Ad = evts[j].Messages[0];
     //cout << "Ad=>"<<Ad<<"<"<<endl;
     string cream_job_id(""), status("");
     parseEventJobStatus(cream_job_id, status, Ad);
-    //cout << "JobID="<<cream_job_id<<" - STATUS="<<status<<endl;
+    jobCache::iterator it;
+    try {
+      it = jobCache::getInstance()->lookupByCreamJobID(cream_job_id);
+      (*it).setLastUpdate(time(NULL));
+      (*it).setStatus(glite::ce::cream_client_api::job_statuses::getStatusNum(status));
+      jobCache::getInstance()->put( *it );
+    } catch(exception& ex) {
+	cerr << ex.what()<<endl;
+	exit(1);
+    }
+
+    cout << "Successfully updated JobID="<<cream_job_id<<" - STATUS="<<status<<endl;
   }
   this->reset();
 }

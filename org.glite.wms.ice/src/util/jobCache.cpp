@@ -143,7 +143,7 @@ jobCache::jobCacheTable::end( void ) const
 //______________________________________________________________________________
 jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
     if(!_instance)
-        _instance = new jobCache( ); // can throw jnlFile_ex or 
+        _instance = new jobCache( ); // can throw jnlFile_ex or
     // ClassadSyntax_ex
     return _instance;
 }
@@ -255,7 +255,7 @@ void jobCache::remove_by_grid_jobid(const string& gid)
   throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
     // boost::recursive_mutex::scoped_lock M(jobCacheMutex);
-    
+
     jobCacheTable::iterator it = _jobs.findJobByGID( gid );
     if ( it == _jobs.end() ) {
         return ;
@@ -445,7 +445,7 @@ void jobCache::dump() throw (jnlFile_ex&)
 CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
 {
   classad::ClassAd *ad;
-  string jobExpr, /*gid,*/ cid, st, jdl, tstamp, subID;
+  string jobExpr, /*gid,*/ cid, st, jdl, tstamp;//, subID;
   classad::ClassAdParser parser;
   classad::ClassAdUnParser unp;
   ad = parser.ParseClassAd(Buf);
@@ -463,7 +463,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     unp.Unparse(st,  ad->Lookup("status"));
     unp.Unparse(jdl, ad->Lookup("jdl"));
     unp.Unparse(tstamp, ad->Lookup("last_update"));
-    unp.Unparse(subID, ad->Lookup("SubscriptionID"));
+    //unp.Unparse(subID, ad->Lookup("SubscriptionID"));
   } else {
     throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' attributes");
   }
@@ -473,7 +473,7 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
   /* boost::trim_if(gid, boost::is_any_of("\"")); */
   boost::trim_if(jdl, boost::is_any_of("\""));
   boost::trim_if(tstamp, boost::is_any_of("\""));
-  boost::trim_if(subID, boost::is_any_of("\""));
+  //boost::trim_if(subID, boost::is_any_of("\""));
   api::job_statuses::job_status stNum;
 
   char *endptr_st = new char[st.length()+1];
@@ -520,14 +520,14 @@ CreamJob jobCache::unparse(const string& Buf) throw(ClassadSyntax_ex&)
     }
 
   try {
-    return CreamJob(jdl, cid, stNum, lastUp, subID );
+    return CreamJob(jdl, cid, stNum, lastUp );
   } catch(ClassadSyntax_ex& ex) {
     throw ClassadSyntax_ex(string("Error creating a creamJob: ")+ex.what());
   }
 }
 
 //______________________________________________________________________________
-void jobCache::getActiveCreamJobIDs(vector<string>& target) 
+void jobCache::getActiveCreamJobIDs(vector<string>& target)
 {
     // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::const_iterator it;
@@ -593,13 +593,13 @@ void jobCache::toString(const CreamJob& cj, string& target)
     classad::ClassAd* jdlAd = parser.ParseClassAd(cj.getJDL());
     ad.Insert( "jdl", jdlAd );
     ad.InsertAttr( "last_update", (int)cj.getLastUpdate() );
-    ad.InsertAttr( "SubscriptionID", cj.getSubscriptionID() );
+    //ad.InsertAttr( "SubscriptionID", cj.getSubscriptionID() );
     classad::ClassAdUnParser unparser;
     unparser.Unparse( target, &ad );
 }
 
 //______________________________________________________________________________
-void jobCache::updateStatusByCreamJobID(const std::string& cid, 
+void jobCache::updateStatusByCreamJobID(const std::string& cid,
 			      const api::job_statuses::job_status& status) 
   throw(elementNotFound_ex&)
 {
