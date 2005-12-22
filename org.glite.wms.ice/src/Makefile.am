@@ -14,11 +14,13 @@
 
 SUBDIRS = util ice
 
-bin_PROGRAMS = putFL putFL_cancel tryICE dumpICECache
+bin_PROGRAMS = putFL putFL_cancel tryICE dumpICECache test
 
 putFL_SOURCES = putFL.cpp
 
 putFL_cancel_SOURCES = putFL_cancel.cpp
+
+test_SOURCES = test.cpp
 
 tryICE_SOURCES = tryICE.cpp
 
@@ -42,15 +44,14 @@ putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_wms_util \
 		$(CLASSAD_LIBS)
 
-
-tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
+test_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lgridsite_globus \
 		-lxml2 \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
 		$(CLASSAD_LIBS) \
-		-lglite_ce_monitor_consumer \
 		-lglite_ce_monitor_client \
+		-lglite_ce_monitor_consumer \
 		-lglite_security_gsoap_plugin_276b_${GLOBUS_THR_FLAVOR} \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
@@ -61,7 +62,30 @@ tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
-	        $(GLITE_LB_THR_COMMON_LIBS) \
+		$(GLITE_LB_THR_COMMON_LIBS) \
+		$(BOOST_FS_LIBS) \
+		$(BOOST_THREAD_LIBS) \
+		$(BOOST_REGEX_LIBS)
+
+tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
+		-lgridsite_globus \
+		-lxml2 \
+		-lglite_ce_cream_client_soap \
+		-lglite_ce_cream_client_util \
+		$(CLASSAD_LIBS) \
+		-lglite_ce_monitor_client \
+		-lglite_ce_monitor_consumer \
+		-lglite_security_gsoap_plugin_276b_${GLOBUS_THR_FLAVOR} \
+		$(LOG4CPP_LIBS) \
+		$(GLOBUS_THR_LIBS) \
+		../src/util/libglite_wms_ice_util.la \
+		../src/ice/libglite_wms_ice.la \
+		$(GLITE_WMSUTILS_JOBID_LIBS) \
+		$(GLITE_WMS_COMMON_CONF_LIBS) \
+		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+		$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+		$(GLITE_LB_THR_CLIENT_LIBS) $(GLITE_LB_THR_CLIENTPP_LIBS) \
+		$(GLITE_LB_THR_COMMON_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS)
@@ -87,7 +111,8 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 	        $(GLITE_LB_THR_COMMON_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
-		$(BOOST_REGEX_LIBS)
+		$(BOOST_REGEX_LIBS) \
+		-lglite_ce_monitor_consumer
 
 
 ###		-lglite_wms_util \

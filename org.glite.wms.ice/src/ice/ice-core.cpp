@@ -21,14 +21,13 @@ typedef vector<string>::iterator vstrIt;
 ice::ice(const string& NS_FL, 
 	 const string& WM_FL
 	 ) throw(iceInit_ex&)
-  : status_listener_started(false), 
+  : status_listener_started(false),
     status_poller_started(false),
     ns_filelist(NS_FL), 
     wm_filelist(WM_FL),
     fle(WM_FL.c_str()),
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
 {
-  //cout << "Initializing File Extractor object..."<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "Initializing File Extractor object...");
   try{
@@ -37,7 +36,6 @@ ice::ice(const string& NS_FL,
   catch(std::exception& ex) {
     throw iceInit_ex(ex.what());
   } catch(...) {
-    //cerr << "ice::ice - unknown exception caugth"<<endl;
     log_dev->log(log4cpp::Priority::ERROR,
 		 "Catched unknown exception");
     exit(1);
@@ -48,23 +46,19 @@ ice::ice(const string& NS_FL,
 ice::~ice() 
 { 
   if(status_listener_started) {
-    //cout << "Waiting for listener termination..."<<endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 "Waiting for listener termination...");
     this->stopListener();
     listenerThread->join();
-    //    cout << "Listener finished"<<endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 "Listener finished");
     delete(listenerThread);
   }
   if(status_poller_started) {
-    //cout << "Waiting for poller termination..."<<endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 "Waiting for poller termination...");
     this->stopPoller();
     pollerThread->join();
-    //cout << "Poller finished"<<endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 "Poller finished");
     delete(pollerThread);
@@ -75,14 +69,10 @@ ice::~ice()
 void ice::startListener(const int& listenPort)
 {
   if(status_listener_started) return;
-  //  cout << "Creating a CEMon listener object..."<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "Creating a CEMon listener object...");
-  listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort, util::iceConfManager::getInstance()->getHostProxyFile()));
+  listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort,util::iceConfManager::getInstance()->getHostProxyFile()));
   while(!listener->bind()) {
-//     cout << "error message=" << listener->getErrorMessage() << endl;
-//     cout << "error code   =" << listener->getErrorCode() << endl;
-//     cout << "Retrying in 5 seconds..." <<endl;
     log_dev->log(log4cpp::Priority::ERROR,
 		 string("Bind error: ")+listener->getErrorMessage()
 		 +" - error code="+listener->getErrorCode());
@@ -91,49 +81,35 @@ void ice::startListener(const int& listenPort)
     sleep(5);
   }
   
-  //cout << "Creating thread object for CEMon listener..."<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "Creating thread object for CEMon listener...");
-   
   /**
    * The folliwing line requires that the copy ctor of CEConsumer
    * class be public(protected?)
    *
    */
   try {
-    listenerThread = 
-      new boost::thread(boost::bind(&util::eventStatusListener::operator(), 
+    listenerThread =
+      new boost::thread(boost::bind(&util::eventStatusListener::operator(),
 				    listener)
 			);
   } catch(boost::thread_resource_error& ex) {
     iceInit_ex( ex.what() );
   }
-  //  cout << "Starting CEMon listener thread..."<<endl;
-  
-//   try {
-//     listenerThread->start();
-//   } catch(util::thread_start_ex& ex) {
-//     throw iceInit_ex(ex.what()); 
-//   }  
-  //cout << "listener started succesfully!"<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "listener started succesfully !");
   status_listener_started = true;
-}    
+}
 
 //______________________________________________________________________________
 void ice::startPoller(const int& poller_delay)
 {
   if(status_poller_started) return;
-  //cout << "Creating a Cream status poller object..."<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "Creating a Cream status poller object...");
-  //try {
-    
-  
+
   poller = boost::shared_ptr<util::eventStatusPoller>(new util::eventStatusPoller(this, poller_delay));
 
-  //cout << "Starting Cream status poller thread..."<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "Starting Cream status poller thread...");
 
@@ -146,7 +122,6 @@ void ice::startPoller(const int& poller_delay)
     iceInit_ex( ex.what() );
   }
 
-  //cout << "poller started succesfully!"<<endl;
   log_dev->log(log4cpp::Priority::INFO,
 	       "poller started succesfully !");
   status_poller_started = true;
@@ -173,7 +148,6 @@ void ice::getNextRequests(vector<string>& ops)
 {
   try{requests = fle.get_all_available();}
   catch(exception& ex) {
-    //cerr << ex.what()<<endl;
     log_dev->log(log4cpp::Priority::ERROR,
 		 ex.what());
     exit(1);
@@ -198,20 +172,12 @@ void ice::ungetRequest(const unsigned int& reqNum)
 
   boost::replace_first( toResubmit, "jobsubmit", "jobresubmit");
 
-//   unsigned int pos = toResubmit.find("jobsubmit");
-//   if(pos == string::npos) return;
-//   string tmp = toResubmit.substr(0,pos);
-//   tmp += "jobresubmit";
-//   tmp += toResubmit.substr(pos+9, string::npos);
-
   try {
-    //cout << "ice::ungetRequest: Putting ["<<toResubmit<<"] to NS filelist"<<endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 string("Putting [")
 		 +toResubmit+"] to WM's Input file");
     flns.push_back(toResubmit);
   } catch(std::exception& ex) {
-    //cerr << ex.what() << endl;
     log_dev->log(log4cpp::Priority::ERROR,
 		 ex.what());
     exit(1);
@@ -225,13 +191,11 @@ void ice::doOnJobFailure(const string& gid) {
   FileListMutex mx(flns);
   FileListLock  lock(mx);
   try {
-    //cout << "Putting >"<<resub_request<<"< to NS filelist"<<endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 string("Putting [")
 		 +resub_request+"] to WM's Input file");
     flns.push_back(resub_request);
   } catch(std::exception& ex) {
-    //cerr << ex.what() << endl;
     log_dev->log(log4cpp::Priority::ERROR,
 		 ex.what());
     exit(1);

@@ -1,6 +1,7 @@
 #ifndef __GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H__
 #define __GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H__
 
+#undef soapStub_H
 #include "glite/ce/cream-client-api-c/JobInfoList.h"
 #include "eventStatusPoller_ex.h"
 

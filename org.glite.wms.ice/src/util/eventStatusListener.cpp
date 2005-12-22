@@ -1,12 +1,12 @@
-
+#include "classad_distribution.h"
 #include "eventStatusListener.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+#include "ClassadSyntax_ex.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include <unistd.h>
 #include <string>
 #include <iostream>
-#include <errno.h>
+#include <cerrno>
 #include <sstream>
 #include <cstring> // for memset
 #include <netdb.h>
@@ -18,50 +18,57 @@ extern int errno;
 
 using namespace std;
 
-using namespace glite::ce::cream_client_api::util;
 namespace iceUtil = glite::wms::ice::util;
+void parseEventJobStatus(string&, string&, const string&)
+  throw(iceUtil::ClassadSyntax_ex&);
 
 //______________________________________________________________________________
-glite::wms::ice::util::eventStatusListener::eventStatusListener(int i,const string& hostcert) 
-  : CEConsumer(i), 
-    grid_JOBID(""), 
+iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
+  : CEConsumer(i),
+    grid_JOBID(""),
     cream_JOBID(""),
     status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
     endaccept(false),
     subscriber(),
     subManager(),
+    T(iceUtil::iceConfManager::getInstance()->getICETopic()),
+    P(5000),
     proxyfile(hostcert),
     tcpport(i), 
-    myname("")
+    myname(""),
+    cemon_subscribed_to(),
+    conf(iceUtil::iceConfManager::getInstance())
 {
+  //conf = iceUtil::iceConfManager::getInstance();
   char name[256];
   memset((void*)name, 0, 256);
-  
+
   if(gethostname(name, 256) == -1)
     {
       cerr << "Couldn't resolve local hostname: "<<strerror(errno)<<endl;
       exit(1);
     }
+  cout << "name="<<name<<endl;
   struct hostent *H=gethostbyname(name);
   if(!H) {
     cerr << "Couldn't resolve local hostname: "<<strerror(h_errno)<<endl;
     exit(1);
   }
   myname = H->h_name;
+  cout << "Listener created!"<<endl;
+  T.addDialect(NULL);
+  //T.addDialect(NULL);
+  init();
 }
 
 //______________________________________________________________________________
 void iceUtil::eventStatusListener::operator()()
 {
-  //std::cout << "eventStatusListener::run - called run" << std::endl;
   endaccept=false;
-
-  init();
-
-  exit(1);
-
   while(!endaccept) {
-    cout << "eventStatusListener::run - called run" << endl;
+    cout << "eventStatusListener::()() - Waiting for job status notification" << endl;
+    acceptJobStatus();
+    
     sleep(1);
   }
   cout << "eventStatusListener::()() - ending..." << endl;
@@ -80,12 +87,12 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 	   << endl;
       return;
     } else
-      cout << "eventStatusListener::acceptJobStatus() - CEConsumer::Accept() returned false." << endl;
+      cout << "eventStatusListener::acceptJobStatus()"
+           << " - CEConsumer::Accept() returned false." << endl;
   }
   
-  
-  cout << "eventStatusListener::acceptJobStatus() - Connection accepted from [" << this->getClientIP() 
-       << "]" << endl; 
+  cout << "eventStatusListener::acceptJobStatus() - Connection accepted from ["
+       << this->getClientIP() << "]" << endl;
   
   /**
    * acquires the event from the client
@@ -99,20 +106,42 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 	 << this->getErrorMessage() << "]" << endl;
 
   }
-  const char *c;
-  while((c = this->getNextEventMessage())!=NULL)
-    cout << "message=["
-	 << c << "]" << endl;
+//   const char *c;
+//   while((c = this->getNextEventMessage())!=NULL)
+//     cout << "message=["
+// 	 << c << "]" << endl;
+  if(!this->getEventTopic()) {
+    cerr << "NULL Topic received. Stop!"<<endl;
+    exit(1);
+  }
+  if(this->getEventTopic()->Name != conf->getICETopic())
+    {
+      cerr << "Received a notification with TopicName="
+	   << this->getEventTopic()->Name
+	   << " that differs from the ICE's topic official name. Ignoring"
+	   << endl;
+      this->reset();
+      return;
+    }
+  const vector<Event>& evts = this->getEvents();
+  for(unsigned j=0; j<evts.size(); j++) {
+    cout << "Event #"<<(j+1)<< endl;
+    string Ad = evts[j].Messages[0];
+    //cout << "Ad=>"<<Ad<<"<"<<endl;
+    string cream_job_id(""), status("");
+    parseEventJobStatus(cream_job_id, status, Ad);
+    //cout << "JobID="<<cream_job_id<<" - STATUS="<<status<<endl;
+  }
   this->reset();
 }
 
 //______________________________________________________________________________
-void iceUtil::eventStatusListener::updateJobCache(void) 
+void iceUtil::eventStatusListener::updateJobCache(void)
 {
-  cout << "eventStatusListener::updateJobCache() - Going to update jobcache with "
-       << "[grid_jobid=" << grid_JOBID << ", cream_jobid=" 
-       << cream_JOBID << ", status=" << status << "]" << endl;
-
+//   cout << "eventStatusListener::updateJobCache() - Going to update jobcache with "
+//        << "[grid_jobid=" << grid_JOBID << ", cream_jobid="
+//        << cream_JOBID << ", status=" << status << "]" << endl;
+  
   try {
     //    jobCache::getInstance()->put(grid_JOBID, cream_JOBID, status);
   } catch(std::exception& ex) {
@@ -131,14 +160,15 @@ void iceUtil::eventStatusListener::init(void)
    */
   map< string , int > tmpMap;
   string ceurl;
+  ostringstream hostport;
   for(jobCache::iterator it=jobCache::getInstance()->begin();
       it != jobCache::getInstance()->end();
       it++) 
     {
       ceurl = it->getCreamURL();
       boost::replace_first(ceurl,
-                           iceUtil::iceConfManager::getInstance()->getCreamUrlPostfix(),
-                           iceUtil::iceConfManager::getInstance()->getCEMonUrlPostfix());
+                           conf->getCreamUrlPostfix(),
+                           conf->getCEMonUrlPostfix());
       tmpMap[ceurl] = 1;
     }
 
@@ -148,22 +178,20 @@ void iceUtil::eventStatusListener::init(void)
    */
   vector<Subscription> vec;
   vec.reserve(100);
-  //  struct hostent* H;
-  //  char hname[256];
   
   for(map<string, int>::iterator it = tmpMap.begin();
       it!=tmpMap.end();
       it++)
     {
       try {
+	cout << "Authenticating with proxy ["<<proxyfile<<"]"<<endl;
 	subManager.authenticate(proxyfile.c_str(), "/");
+	vec.clear();
+	cout << "Getting list of subscriptions from ["<<it->first<<"]"<<endl;
+	subManager.list(it->first, vec);
       } catch(AuthenticationInitException& ex) {
 	cerr << ex.what()<<endl;
 	exit(1);
-      }
-      vec.clear();
-      try {
-	subManager.list(it->first, vec);
       } catch(exception& ex) {
 	cerr << ex.what() << endl;
 	exit(1);
@@ -174,71 +202,112 @@ void iceUtil::eventStatusListener::init(void)
 	   * there're no subs in that CEMon; so for sure we've to
 	   * subscribe to it
 	   */
-	  subscriber.setServiceURL(it->first);
-	  Topic T = Topic("ICE");
-	  DialectW *D = new DialectW("");
-	  T.addDialect(D);
-	  Policy P(5000); // rate in milliseconds
-	  
-	  subscriber.setSubscribeParam(myname.c_str(), T, P, iceUtil::iceConfManager::getInstance()->getSubscriptionDuration()); 
+	  ostringstream myname_url("");
+	  myname_url << "http://" << myname << ":"
+		     << conf->getListenerPort();
 	  try {
+	    subscriber.authenticate(proxyfile.c_str(), "/");
+	    subscriber.setServiceURL(it->first);
+	    subscriber.setSubscribeParam(myname_url.str().c_str(),
+	                                 T,
+					 P,
+					 conf->getSubscriptionDuration()
+					 );
+	    cout << "Subscribing the consumer ["
+	         << myname_url.str() << "] to ["<<it->first
+		 << "] with duration="
+		 << conf->getSubscriptionDuration()
+		 << " secs" <<endl;
 	    subscriber.subscribe();
-
+	    cout << "Subscribed with ID ["<<subscriber.getSubscriptionID() << "]"<<endl;
+	  } catch(AuthenticationInitException& ex) {
+	    cerr << ex.what()<<endl;
+	    exit(1);
 	  } catch(exception& ex) {
 	    cerr << ex.what() << endl;
 	    exit(1);
 	  }
-	}
-      vector<string> _tmp; _tmp.reserve(2);
-      char name[256];
-      bool subscribed = false;
-      string consumerUrl;
-      for(vector<Subscription>::iterator sit=vec.begin();
-	  (sit != vec.end()) && (!subscribed);
-	  sit++) 
+	} else 
 	{
-	  _tmp.clear();
-	  consumerUrl = (*sit).getConsumerURL();
-	  boost::replace_first(consumerUrl, "https://", "");
-	  boost::replace_first(consumerUrl, "http://", "");
-	  boost::split(_tmp, consumerUrl, boost::is_any_of(":"));
-	  memset((void*)name, 0, 256);
-	  if(gethostname(name, 256) == -1)
+	  vector<string> _tmp; _tmp.reserve(2);
+	  char name[256];
+	  bool subscribed = false;
+	  string consumerUrl;
+	  for(vector<Subscription>::iterator sit=vec.begin();
+	      (sit != vec.end()) && (!subscribed);
+	      sit++)
 	    {
-	      cerr << "Couldn't resolve CEMon hostname: "<<strerror(errno)<<endl;
+	      _tmp.clear();
+	      consumerUrl = (*sit).getConsumerURL();
+	      boost::replace_first(consumerUrl, "https://", "");
+	      boost::replace_first(consumerUrl, "http://", "");
+	      boost::split(_tmp, consumerUrl, boost::is_any_of(":"));
+	      memset((void*)name, 0, 256);
+	      if(gethostname(name, 256) == -1)
+		{
+		  cerr << "Couldn't resolve local hostname:"
+		       << strerror(errno)<<endl;
+		  exit(1);
+		}
+	      struct hostent *H = gethostbyname(_tmp[0].c_str());
+	      if(!H) {
+		cerr << "Couldn't resolve subscribed consumer's hostname: "
+		     << strerror(h_errno)<<endl;
+		exit(1);
+	      }
+	      ostringstream consumerUrlOS("");
+	      consumerUrlOS << H->h_name << ":" << _tmp[1];
+	      consumerUrl = consumerUrlOS.str();
+	      hostport.str("");
+	      hostport << myname << ":" << conf->getListenerPort();
+	      if( (consumerUrl==hostport.str()) &&
+		  ((*sit).getTopicName()==conf->getICETopic()) )
+		{
+		  /**
+		   * this ICE is subscribed to CEMon
+		   */
+		  subscribed = true;
+		  cout << "Already subscribed to ["<<it->first<<"]"<<endl;
+		  cemon_subscribed_to[it->first] = true;
+		  continue;
+		}
+	      
+	    }
+	  if(!subscribed) {
+	    cout << "Must subscribe to ["<<it->first<<"]"<<endl;
+	    subscriber.setServiceURL(it->first);
+	    subscriber.setSubscribeParam(hostport.str().c_str(), T, P, conf->getSubscriptionDuration());
+	    cout << "Subscribing the consumer ["
+	         << hostport.str() << "] to ["<<it->first
+		 << "] with duration="
+		 << conf->getSubscriptionDuration()
+		 << " secs" <<endl;
+	    try {
+	      subscriber.subscribe();
+	      cout << "Subscription succesfull: ID="
+		   << subscriber.getSubscriptionID()<<"]"<<endl;
+	      cemon_subscribed_to[it->first] = true;
+	    } catch(exception& ex) {
+	      cerr << ex.what() << endl;
 	      exit(1);
 	    }
-	  struct hostent *H = gethostbyname(name);
-	  if(!H) {
-	    cerr << "Couldn't resolve CEMon hostname: "<<strerror(h_errno)<<endl;
-	    exit(1);
 	  }
-	  consumerUrl = H->h_name;
-	  if( (consumerUrl==myname) && ((*sit).getTopicName()==iceUtil::iceConfManager::getInstance()->getICETopic()) ) 
-	    {
-	      /**
-	       * this ICE is subscribed to CEMon
-	       */
-	      subscribed = true;
-	    }
-	  
 	}
-      if(!subscribed) {
-	cout << "Must subscribe to ["<<it->first<<"]"<<endl;
-	subscriber.setServiceURL(it->first);
-	Topic T = Topic(iceUtil::iceConfManager::getInstance()->getICETopic());
-	DialectW *D = new DialectW("");
-	T.addDialect(D);
-	Policy P(5000); // rate in milliseconds
-	
-	subscriber.setSubscribeParam(myname.c_str(), T, P, iceUtil::iceConfManager::getInstance()->getSubscriptionDuration()); 
-	try {
-	  subscriber.subscribe();
-	} catch(exception& ex) {
-	  cerr << ex.what() << endl;
-
-	  exit(1);
-	}
-      }
     }
+}
+
+void parseEventJobStatus(string& cid, string& st, const string& _classad)
+  throw(iceUtil::ClassadSyntax_ex&)
+{
+  classad::ClassAdParser parser;
+  classad::ClassAd *ad = parser.ParseClassAd( _classad );
+
+  if (!ad)
+    throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
+
+  if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cid ) )
+    throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
+
+  if ( !ad->EvaluateAttrString( "JOB_STATUS", st ) )
+    throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
 }

@@ -77,7 +77,9 @@ namespace glite {
 	void startPoller(const int&);
 	void stopListener();
 	void stopPoller();
-
+	bool isSubscribedTo(const std::string& url) {
+	  return listener->isSubscribedTo(url);
+	}
 	virtual void doOnJobFailure(const std::string&);
 
       }; // class ice
