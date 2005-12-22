@@ -2,6 +2,7 @@
 #define __GLITE_WMS_ICE_UTIL_ICECONFMANAGER_H__
 
 #include <string>
+#include <ctime>
 #include "ConfigurationManager_ex.h"
 #include "boost/thread/recursive_mutex.hpp"
 
@@ -20,7 +21,7 @@ namespace glite {
 	    creamurlprefix, creamurlpostfix, curldelegprefix,
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
 	    icetopic;
-	  int ListenerPort, pollerdelay, subduration, LogLevel;
+	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime;
 	  bool startpoller, startlistener;
 	  
 	  static boost::recursive_mutex mutex;
@@ -53,6 +54,7 @@ namespace glite {
 	  std::string getICETopic( void ) const { return icetopic; }
 	  int         getPollerDelay( void ) const { return pollerdelay; }
 	  int         getSubscriptionDuration( void ) const { return subduration; }
+	  time_t      getSubscriptionUpdateThresholdTime( void ) const { return subUpdThresholdTime; }
 	};
       }
     }

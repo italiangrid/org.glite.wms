@@ -3,11 +3,7 @@
 
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
-/* #ifndef soapStub_H */
-/* #error gSOAP version is changed and the critical label 'soapStub_H' is not define anymore. Stop. */
-/* #endif */
-
-#undef soapStub_H
+//#undef soapStub_H
 
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
