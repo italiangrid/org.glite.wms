@@ -41,7 +41,9 @@ class Status{
 			OP_OUTPUT,
 			OP_ATTACH,
 			OP_CHKPT,
-			OP_PERUSAL
+			OP_PERUSAL_SET,
+			OP_PERUSAL_UNSET,
+			OP_PERUSAL_GET
 		};
 		/** Default Constructor
 		* @param status an instance of lb status

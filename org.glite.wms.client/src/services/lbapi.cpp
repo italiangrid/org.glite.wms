@@ -69,11 +69,11 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 			bool hasChildren= (status.getValInt(JobStatus::CHILDREN_NUM) !=0);
 			switch (status.status){
 				case JobStatus::DONE:
-				 if (status.getValInt(JobStatus::EXIT_CODE) !=0){
+					if (status.getValInt(JobStatus::EXIT_CODE) !=0){
 						warn = "the status ";
 						if (child){ warn += "for this child node ";}
 						warn += "is DONE (ExitCode != 0)";
-						code = -1;
+						// code = -1;
 					} else if (status.getValInt(JobStatus::DONE_CODE) == JobStatus::DONE_CODE_FAILED){
 						warn = "the status ";
 						if (child){ warn += "for this child node ";}
@@ -83,7 +83,7 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 						warn = "the status ";
 						if (child){ warn += "for this child node ";}
 						warn += "is DONE CANCELLED";
-						code = -1;
+						// code = -1;
 					}
 					break;
 				case JobStatus::ABORTED:{
@@ -142,7 +142,7 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 			}
 		} // END OUTPUT CHECK
 		break;
-		case OP_PERUSAL:
+		case OP_PERUSAL_GET:
 		{
 			if (status.getValInt(JobStatus::CHILDREN_NUM) !=0){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -155,24 +155,84 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 				case JobStatus::SCHEDULED:
 				case JobStatus::ABORTED:
 				case JobStatus::RUNNING:
-					// No problems with Perusal
-					break;
-
 				case JobStatus::WAITING:
 				case JobStatus::SUBMITTED:
 				case JobStatus::READY:
-					throw WmsClientException(__FILE__,__LINE__,
-					"checkCodes", DEFAULT_ERR_CODE,
-					"Perusal not yet allowed,try again later...",
-					"Current Job Status is: "+status.name() );
+				case JobStatus::CANCELLED:
+					// No problems with Perusal
+					break;
+				case JobStatus::CLEARED:
 				default:
-					// CANCELLED or other unexpected status codes
+					// CLEARED or other unexpected status codes
 					throw WmsClientException(__FILE__,__LINE__,
 					"checkCodes", DEFAULT_ERR_CODE,
-					"Perusal not allowed",
+					"Retrieving Job file perusal not allowed",
 					"Current Job Status is: "+status.name() );
 			}
-		}
+		} // END PERUSAL_GET CHECK
+		break;
+		case OP_PERUSAL_UNSET:
+		case OP_PERUSAL_SET:
+		{
+			if (status.getValInt(JobStatus::CHILDREN_NUM) !=0){
+				throw WmsClientException(__FILE__,__LINE__,
+				"checkCodes", DEFAULT_ERR_CODE,
+				"Perusal not allowed",
+				"Operation supported only by jobs");
+			}
+			switch (status.status){
+				case JobStatus::DONE:{
+
+					if (status.getValInt(JobStatus::EXIT_CODE) !=0){
+						// Exit code !=0, job might be resubmitted
+						// perusal is still allowed
+						break;
+					}else if (status.getValInt(JobStatus::DONE_CODE) == JobStatus::DONE_CODE_FAILED){
+						throw WmsClientException(__FILE__,__LINE__,
+						"checkCodes", DEFAULT_ERR_CODE,
+						"(un)setting Job file perusal not allowed",
+						"Current Job Status is: Done (failed)" );
+					} else if (status.getValInt(JobStatus::DONE_CODE) == JobStatus::DONE_CODE_CANCELLED){
+						throw WmsClientException(__FILE__,__LINE__,
+						"checkCodes", DEFAULT_ERR_CODE,
+						"(un)setting Job file perusal not allowed",
+						"Current Job Status is: Done (cancelled)" );
+					}
+
+
+
+
+
+
+
+
+
+
+					else{
+						// Only exit code!=0 accepted
+						// (otherwise the job is finished)
+						break;
+					}
+
+				}
+				break;
+				case JobStatus::SCHEDULED:
+				case JobStatus::RUNNING:
+				case JobStatus::WAITING:
+				case JobStatus::SUBMITTED:
+				case JobStatus::READY:
+					// No problems with Perusal
+					break;
+				case JobStatus::CLEARED:
+				case JobStatus::ABORTED:
+				default:
+					// ABORTED CLEARED or other unexpected status codes
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkCodes", DEFAULT_ERR_CODE,
+					"(un)setting Job file perusal not allowed",
+					"Current Job Status is: "+status.name() );
+			}
+		} // END PERUSAL_SET/UNSET CHECK
 		break;
 		case OP_ATTACH:
 		case OP_CHKPT:

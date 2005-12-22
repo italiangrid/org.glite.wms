@@ -300,7 +300,13 @@ void JobPerusal::checkStatus( ){
 	LbApi lbApi;
 	lbApi.setJobId(jobId);
 	Status status=lbApi.getStatus(true,true);
-	//code = status.checkCodes(Status::OP_PERUSAL, warnings);
+	if (getOpt){
+		code = status.checkCodes(Status::OP_PERUSAL_GET, warnings);
+	}else if (setOpt){
+		code = status.checkCodes(Status::OP_PERUSAL_SET, warnings);
+	}else if (unsetOpt){
+		code = status.checkCodes(Status::OP_PERUSAL_UNSET, warnings);
+	}
 	if (warnings.size()>0){ logInfo->print(WMS_WARNING, warnings, "", true);}
 	if (code == 0){
 		// Initialize ENDPOINT (start a new (thread of) job (s)
