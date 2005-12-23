@@ -83,7 +83,8 @@ class Options
 			VALID,
 			VERBOSE ,
 			VERSION,
-                        VO
+                        VO,
+			INPUTFILE
 		} ;
                 enum TimeOpts{
                 	TIME_NO_OPT,
@@ -373,6 +374,7 @@ class Options
 		static const char* LONG_USERTAG ;
 		static const char* LONG_VERSION;
                 static const char* LONG_VO;
+		static const char* LONG_INPUTFILE ;
 
 		/**
 		*	long option std::strings and corresponding
@@ -465,6 +467,7 @@ class Options
 		static const std::string USG_VERBOSITY ;
 		static const std::string USG_VERSION;
                 static const std::string USG_VO;
+		static const std::string USG_INPUTFILE;
 		/**
 		*	require/not-require char for short option
 		*	(used by definition of the short options)
@@ -496,6 +499,7 @@ class Options
 		std::string* to ;
 		std::string* valid ;
 		std::string* vo ;
+		std::string* inputfile ;
 
 		/**
 		*	boolean attributes

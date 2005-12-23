@@ -48,7 +48,7 @@ const string DISPLAY_CMD = "more";
 */
 JobPerusal::JobPerusal () : Job() {
 	// init of the string  options
-	inOpt = NULL;
+	inFileOpt = NULL;
 	outOpt = NULL;
 	dirOpt = NULL;
 	// boolean options
@@ -65,7 +65,7 @@ JobPerusal::JobPerusal () : Job() {
 */
 JobPerusal::~JobPerusal ()  {
 	// "free memory" for the string  attributes
-	if (inOpt) { free(inOpt);}
+	if (inFileOpt) { free(inFileOpt);}
 	if (outOpt ) { free(outOpt);}
 	if (dirOpt ) { free(dirOpt);}
 }
@@ -111,25 +111,25 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"Input Option Error", err.str());
 	}
 	// --input
-        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+        inFileOpt = wmcOpts->getStringAttribute(Options::INPUTFILE);
 	// -- filename
 	peekFiles = wmcOpts->getListAttribute(Options::FILENAME);
-	if (inOpt && peekFiles.size() > 0 ) {
+	if (inFileOpt && peekFiles.size() > 0 ) {
 		err << "The following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 	} else if (getOpt && peekFiles.size() > 1){
 		err << wmcOpts->getAttributeUsage(Options::GET) << " : no multiple filenames can be specified.\n";
 		err <<  "Use the following option only once to get a job's file:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 		err << "or "  << wmcOpts->getAttributeUsage(Options::ALL) << " to retrieve all job's files.\n";
-	} else if (inOpt && unsetOpt) {
+	} else if (inFileOpt && unsetOpt) {
 		err << "The unset operation disables job's files perusal; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
-	} else if (inOpt && allOpt) {
+		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
+	} else if (inFileOpt && allOpt) { // TBD why?
 		err << "The following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
 	}
 
@@ -141,31 +141,31 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 
 	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
 	// --input
-        if (inOpt) {
-        	peekFiles = wmcUtils->getItemsFromFile(*inOpt);
+        if (inFileOpt) {
+        	peekFiles = wmcUtils->getItemsFromFile(*inFileOpt);
 		if (peekFiles.empty()) {
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error",
-				"The input file is empty: " + Utils::getAbsolutePath(*inOpt) );
+				"The input file is empty: " + Utils::getAbsolutePath(*inFileOpt) );
 		} else if (peekFiles.size() == 1) {
 			logInfo->print (WMS_DEBUG, "filename read by input file: ", peekFiles[0] );
 		} else if (nointOpt && getOpt) {
 			err <<	wmcOpts->getAttributeUsage(Options::GET)  ;
 			err << ": too many items in the input file; only one job's file can be requested.\n";
 			err << "To specify a job's file:\nuse " << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-			err << "or " << wmcOpts->getAttributeUsage(Options::INPUT) ;
+			err << "or " << wmcOpts->getAttributeUsage(Options::INPUTFILE) ;
 			err <<  " without " << wmcOpts->getAttributeUsage(Options::NOINT) << "\n";
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 
 		} else if (getOpt && nointOpt == false) {
-			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inOpt) << "\n";
+			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
 			cout << wmcUtils->getStripe(74, "-") << "\n";
 			peekFiles = wmcUtils->askMenu(peekFiles, Utils::MENU_SINGLEFILE);
 		} else if (nointOpt == false) {
-			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inOpt) << "\n";
+			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
 			peekFiles =  wmcUtils->askMenu(peekFiles, Utils::MENU_FILE);
 		}
 		// Writes in the log file the list of filenames chosen by the input file
@@ -179,7 +179,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	if ( peekFiles.empty ()  && ( setOpt ||  (getOpt && !allOpt)))  {
 		err << "No valid job's file specified; use one of these options:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::INPUT) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
 		if (getOpt) { err << wmcOpts->getAttributeUsage(Options::ALL) << "\n"; }
 		throw WmsClientException(__FILE__,__LINE__,
 			"readOptions",DEFAULT_ERR_CODE,

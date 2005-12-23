@@ -99,7 +99,8 @@ class JobPerusal  : public Job {
         	 /**
                 *	String input arguments
                 */
-		std::string* inOpt ; 		// --input <file>
+		// std::string* inOpt ; 		// --input <file>
+		std::string* inFileOpt ; 		// --input-file <file>
 		std::string* outOpt ; 	// --ouput <path>
 		std::string* dirOpt ; 		// --dir <path>
 		 /**

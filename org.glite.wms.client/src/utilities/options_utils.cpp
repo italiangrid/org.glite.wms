@@ -116,7 +116,7 @@ const char* Options::LONG_UNSET		= "unset";
 const char* Options::LONG_USERTAG	= "user-tag";
 const char* Options::LONG_VERSION	= "version";
 const char* Options::LONG_VO		= "vo";
-
+const char* Options::LONG_INPUTFILE	= "input-file";
 
 /*
 *	LONG OPTION STRINGS & SHORT CHARs
@@ -339,7 +339,7 @@ const struct option Options::perusalLongOpts[]  = {
 	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
 	{ 	Options::LONG_UNSET, 	        	no_argument,			0,	Options::UNSET},
 	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::SHORT_FILENAME},
-	{ 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
+	// { 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
 	{ 	Options::LONG_DIR,        		required_argument,		0,	Options::DIR},
 	{ 	Options::LONG_OUTPUT,        	required_argument,		0,	Options::SHORT_OUTPUT},
 	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
@@ -348,6 +348,7 @@ const struct option Options::perusalLongOpts[]  = {
 	{	Options::LONG_NOINT,			no_argument,			0,	Options::NOINT	},
 	{ 	Options::LONG_DEBUG,      		no_argument,			0,	Options::DBG},
 	{	Options::LONG_LOGFILE,    		required_argument,		0,	Options::LOGFILE},
+	{	Options::LONG_INPUTFILE,    		required_argument,		0,	Options::INPUTFILE},
 	{0, 0, 0, 0}
 };
 /*
@@ -438,6 +439,8 @@ const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHO
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 
 const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
+
+const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
 
 /*
 *	Prints the help usage message for the job-submit
@@ -700,21 +703,22 @@ void Options::proxyinfo_usage(const char* &exename, const bool &long_usg){
 */
 void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
-	cerr << "Usage: " << exename <<   "  [operation] [files] [options] [jobId]\n\n";
+	cerr << "Usage: " << exename <<   "  <operation> [files] [options]  <job Id>\n\n";
 	cerr << "operation (mandatory):\n";
 	cerr << "\t" << USG_GET << "\n";
 	cerr << "\t" << USG_SET << "\n";
 	cerr << "\t" << USG_UNSET << "\n\n";
-	cerr << "files (mandatory):\n";
+	cerr << "file(s): (mandatory for set/unset operation)\n";
 	cerr << "\t" << USG_FILENAME << " (*)\n";
-	cerr << "\t" << USG_INPUT << "\n";
-	cerr << "\t" << USG_ALL << " (**)\n";
+	cerr << "\t" << USG_INPUTFILE << "\n";
 	cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
+	// cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
+	cerr << "\t" << USG_ALL << " (**)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
         cerr << "\t" << USG_NODISPLAY << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
@@ -756,6 +760,7 @@ Options::Options (const WMPCommands &command){
 	to = NULL;
 	valid = NULL ;
         vo = NULL ;
+	inputfile = NULL;
 	// init of the boolean attributes
 	all  = false ;
         autodg = false;
@@ -919,7 +924,7 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c",
-				Options::SHORT_INPUT, 		short_required_arg,
+				// Options::SHORT_INPUT, 		short_required_arg,
 				Options::SHORT_OUTPUT, 		short_required_arg,
 				Options::SHORT_CONFIG,		short_required_arg,
 				Options::SHORT_FILENAME,		short_required_arg);
@@ -967,7 +972,7 @@ Options::~Options( ) {
 	if (valid ) { delete(valid);}
 	if (verbosity  ) { free (verbosity );}
 	if (vo) { delete(vo);}
-
+	if (inputfile) { delete(inputfile);}
 }
 
 std::string Options::getVersionMessage( ) {
@@ -1128,6 +1133,12 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 		case(NODESRES) : {
 			if (nodesres){
 				value = new string (*nodesres) ;
+			}
+			break ;
+		}
+		case(INPUTFILE) : {
+			if (inputfile){
+				value = new string (*inputfile) ;
 			}
 			break ;
 		}
@@ -1464,6 +1475,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(FILENAME) : {
 			msg = USG_FILENAME ;
+			break ;
+		}
+		case(INPUTFILE) : {
+			msg = USG_INPUTFILE ;
 			break ;
 		}
 		default : {
@@ -1812,6 +1827,7 @@ void Options::readOptions(const int &argc, const char **argv){
 			if ( cmdType == JOBSTATUS  ||
                         	cmdType == JOBLOGINFO ||
                        		 cmdType == JOBCANCEL ||
+				 cmdType == JOBPERUSAL ||
                         	cmdType == JOBOUTPUT ) {
 				// all the options have been processed by getopt (JobId file is missing)
 				if ( ! input && argc==optind){
@@ -2212,6 +2228,15 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			} else {
 				vo = new string (checkArg(LONG_VO,optarg,Options::VO ) );
 				inCmd += px + LONG_VO + ";" + ws ;
+			}
+			break ;
+		};
+                case ( Options::INPUTFILE) : {
+			if (inputfile){
+				dupl = new string(LONG_INPUTFILE) ;
+			} else {
+				inputfile = new string (checkArg(LONG_INPUTFILE,optarg,Options::INPUTFILE ) );
+				inCmd += px + LONG_INPUTFILE+ ";" + ws ;
 			}
 			break ;
 		};
