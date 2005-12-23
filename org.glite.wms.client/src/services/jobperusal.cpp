@@ -180,7 +180,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "No valid job's file specified; use one of these options:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
-		if (getOpt) { err << wmcOpts->getAttributeUsage(Options::ALL) << "\n"; }
+		// if (getOpt) { err << wmcOpts->getAttributeUsage(Options::ALL) << "\n"; }
 		throw WmsClientException(__FILE__,__LINE__,
 			"readOptions",DEFAULT_ERR_CODE,
 			"Input Arguments Error",
