@@ -1,3 +1,4 @@
+
 #include "classad_distribution.h"
 #include "eventStatusListener.h"
 #include "ClassadSyntax_ex.h"
@@ -40,25 +41,23 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     cemon_subscribed_to(),
     conf(iceUtil::iceConfManager::getInstance())
 {
-  //conf = iceUtil::iceConfManager::getInstance();
   char name[256];
   memset((void*)name, 0, 256);
 
   if(gethostname(name, 256) == -1)
     {
-      cerr << "Couldn't resolve local hostname: "<<strerror(errno)<<endl;
+      cerr << "eventStatusListener::CTOR - Couldn't resolve local hostname: "<<strerror(errno)<<endl;
       exit(1);
     }
-  cout << "name="<<name<<endl;
+  //cout << "name="<<name<<endl;
   struct hostent *H=gethostbyname(name);
   if(!H) {
-    cerr << "Couldn't resolve local hostname: "<<strerror(h_errno)<<endl;
+    cerr << "eventStatusListener::CTOR - Couldn't resolve local hostname: "<<strerror(h_errno)<<endl;
     exit(1);
   }
   myname = H->h_name;
-  cout << "Listener created!"<<endl;
+  cout << "eventStatusListener::CTOR - Listener created!"<<endl;
   T.addDialect(NULL);
-  //T.addDialect(NULL);
   init();
 }
 
@@ -69,7 +68,6 @@ void iceUtil::eventStatusListener::operator()()
   while(!endaccept) {
     cout << "eventStatusListener::()() - Waiting for job status notification" << endl;
     acceptJobStatus();
-    
     sleep(1);
   }
   cout << "eventStatusListener::()() - ending..." << endl;
@@ -84,11 +82,12 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    */
   if(!this->accept() && !endaccept) {
     if(endaccept) {
-      cout << "eventStatusListener is ending"
+      cout << "eventStatusListener::acceptJobStatus() - eventStatusListener is ending"
 	   << endl;
       return;
     } else
-      cout << "eventStatusListener::acceptJobStatus()"
+      cout << "eventStatusListener::acceptJobStatus() -"
+           << " eventStatusListener::acceptJobStatus()"
            << " - CEConsumer::Accept() returned false." << endl;
   }
   
@@ -100,10 +99,11 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * and deserializes the data structures
    */
   if(!this->serve()) {
-    cout << "ErrorCode=[" << this->getErrorCode() 
+    cout << "eventStatusListener::acceptJobStatus() - ErrorCode=["
+         << this->getErrorCode()
 	 << "]" << endl;
 
-    cout << "ErrorMessage=["
+    cout << "eventStatusListener::acceptJobStatus() - ErrorMessage=["
 	 << this->getErrorMessage() << "]" << endl;
 
   }
@@ -112,12 +112,13 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 //     cout << "message=["
 // 	 << c << "]" << endl;
   if(!this->getEventTopic()) {
-    cerr << "NULL Topic received. Stop!"<<endl;
+    cerr << "eventStatusListener::acceptJobStatus() - NULL Topic received. Stop!"<<endl;
     exit(1);
   }
   if(this->getEventTopic()->Name != conf->getICETopic())
     {
-      cerr << "Received a notification with TopicName="
+      cerr << "eventStatusListener::acceptJobStatus() - "
+           << "Received a notification with TopicName="
 	   << this->getEventTopic()->Name
 	   << " that differs from the ICE's topic official name. Ignoring"
 	   << endl;
@@ -142,24 +143,11 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 	exit(1);
     }
 
-    cout << "Successfully updated JobID="<<cream_job_id<<" - STATUS="<<status<<endl;
+    cout << "eventStatusListener::acceptJobStatus() - "
+         << "Successfully updated JobID="
+	 << cream_job_id<<" - STATUS="<<status<<endl;
   }
   this->reset();
-}
-
-//______________________________________________________________________________
-void iceUtil::eventStatusListener::updateJobCache(void)
-{
-//   cout << "eventStatusListener::updateJobCache() - Going to update jobcache with "
-//        << "[grid_jobid=" << grid_JOBID << ", cream_jobid="
-//        << cream_JOBID << ", status=" << status << "]" << endl;
-  
-  try {
-    //    jobCache::getInstance()->put(grid_JOBID, cream_JOBID, status);
-  } catch(std::exception& ex) {
-    cerr << ex.what() << endl;
-    exit(1);
-  }
 }
 
 //______________________________________________________________________________
@@ -196,16 +184,18 @@ void iceUtil::eventStatusListener::init(void)
       it++)
     {
       try {
-	cout << "Authenticating with proxy ["<<proxyfile<<"]"<<endl;
+	cout << "eventStatusListener::init() - Authenticating with proxy ["<<proxyfile<<"]"<<endl;
 	subManager.authenticate(proxyfile.c_str(), "/");
 	vec.clear();
-	cout << "Getting list of subscriptions from ["<<it->first<<"]"<<endl;
+	cout << "eventStatusListener::init() - "
+	     << "Getting list of subscriptions from ["
+	     << it->first<<"]"<<endl;
 	subManager.list(it->first, vec);
       } catch(AuthenticationInitException& ex) {
-	cerr << ex.what()<<endl;
+	cerr << "eventStatusListener::init() - "<<ex.what()<<endl;
 	exit(1);
       } catch(exception& ex) {
-	cerr << ex.what() << endl;
+	cerr << "eventStatusListener::init() - "<<ex.what() << endl;
 	exit(1);
       }
       if(!vec.size())
@@ -225,18 +215,19 @@ void iceUtil::eventStatusListener::init(void)
 					 P,
 					 conf->getSubscriptionDuration()
 					 );
-	    cout << "Subscribing the consumer ["
+	    cout << "eventStatusListener::init() - Subscribing the consumer ["
 	         << myname_url.str() << "] to ["<<it->first
 		 << "] with duration="
 		 << conf->getSubscriptionDuration()
 		 << " secs" <<endl;
 	    subscriber.subscribe();
-	    cout << "Subscribed with ID ["<<subscriber.getSubscriptionID() << "]"<<endl;
+	    cout << "eventStatusListener::init() - "
+	         << "Subscribed with ID ["<<subscriber.getSubscriptionID() << "]"<<endl;
 	  } catch(AuthenticationInitException& ex) {
-	    cerr << ex.what()<<endl;
+	    cerr << "eventStatusListener::init() - "<<ex.what()<<endl;
 	    exit(1);
 	  } catch(exception& ex) {
-	    cerr << ex.what() << endl;
+	    cerr << "eventStatusListener::init() - "<<ex.what() << endl;
 	    exit(1);
 	  }
 	} else 
@@ -257,13 +248,15 @@ void iceUtil::eventStatusListener::init(void)
 	      memset((void*)name, 0, 256);
 	      if(gethostname(name, 256) == -1)
 		{
-		  cerr << "Couldn't resolve local hostname:"
+		  cerr << "eventStatusListener::init() - "
+		       << "Couldn't resolve local hostname:"
 		       << strerror(errno)<<endl;
 		  exit(1);
 		}
 	      struct hostent *H = gethostbyname(_tmp[0].c_str());
 	      if(!H) {
-		cerr << "Couldn't resolve subscribed consumer's hostname: "
+		cerr << "eventStatusListener::init() - "
+		     << "Couldn't resolve subscribed consumer's hostname: "
 		     << strerror(h_errno)<<endl;
 		exit(1);
 	      }
@@ -279,28 +272,35 @@ void iceUtil::eventStatusListener::init(void)
 		   * this ICE is subscribed to CEMon
 		   */
 		  subscribed = true;
-		  cout << "Already subscribed to ["<<it->first<<"]"<<endl;
+		  cout << "eventStatusListener::init() - "
+		       << "Already subscribed to ["<<it->first<<"]"<<endl;
 		  cemon_subscribed_to[it->first] = true;
 		  continue;
 		}
 	      
 	    }
 	  if(!subscribed) {
-	    cout << "Must subscribe to ["<<it->first<<"]"<<endl;
+	    cout << "eventStatusListener::init() - "
+	         << "Must subscribe to ["<<it->first<<"]"<<endl;
 	    subscriber.setServiceURL(it->first);
-	    subscriber.setSubscribeParam(hostport.str().c_str(), T, P, conf->getSubscriptionDuration());
-	    cout << "Subscribing the consumer ["
+	    subscriber.setSubscribeParam(hostport.str().c_str(),
+	                                 T,
+					 P,
+					 conf->getSubscriptionDuration());
+	    cout << "eventStatusListener::init() - "
+	         << "Subscribing the consumer ["
 	         << hostport.str() << "] to ["<<it->first
 		 << "] with duration="
 		 << conf->getSubscriptionDuration()
 		 << " secs" <<endl;
 	    try {
 	      subscriber.subscribe();
-	      cout << "Subscription succesfull: ID="
+	      cout << "eventStatusListener::init() - "
+	           << "Subscription succesfull: ID="
 		   << subscriber.getSubscriptionID()<<"]"<<endl;
 	      cemon_subscribed_to[it->first] = true;
 	    } catch(exception& ex) {
-	      cerr << ex.what() << endl;
+	      cerr << "eventStatusListener::init() - "<<ex.what() << endl;
 	      exit(1);
 	    }
 	  }

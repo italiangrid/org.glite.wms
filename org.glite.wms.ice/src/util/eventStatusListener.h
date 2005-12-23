@@ -59,7 +59,7 @@ namespace glite {
 	  virtual ~eventStatusListener() {}
 
 	  void acceptJobStatus(void);
-	  void updateJobCache(void);
+	  //void updateJobCache(void);
 	  virtual void operator()();
 	  virtual void stop() { endaccept=true; }
 	  virtual bool isSubscribedTo(const std::string& cemon_url) {

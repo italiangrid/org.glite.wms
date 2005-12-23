@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 
-/*
-namespace glite {
+/*namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
@@ -17,8 +16,10 @@ namespace glite {
        }
        }
        }
-       };
-       */
+       };*/
+
+class Topic;
+class Policy;
 
 namespace glite {
   namespace wms {
@@ -30,12 +31,11 @@ namespace glite {
 		bool end;
 		std::string proxyfile;
 		iceConfManager* conf;
+		Topic* T;
+		Policy* P;
 
 		public:
-		subscriptionUpdater(const std::string& cert) : subMgr(),
-			end(false),
-			proxyfile(cert),
-			conf(glite::wms::ice::util::iceConfManager::getInstance()) {}
+		subscriptionUpdater(const std::string& cert);
 
 		virtual ~subscriptionUpdater() {}
 
