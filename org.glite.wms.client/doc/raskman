@@ -309,6 +309,9 @@ class RaskMan:
 		self.texStream.close()
 
 
+
+
+print "\n**** CREATING DOCUMENTATION ***"		
 for command in commands2options.keys():
 	try:
 		debug ("Parsing command:" ,command)
@@ -329,13 +332,14 @@ if errors:
 		print err
 else:
 	print "Documentation properly created in the following directories:"
-	print "MAN documtentation: (to view man pages please issue: groff -man -Tascii <input file>)"
+	print "MAN documtentation(to view man pages: groff -man -Tascii <input file>):"
 	if MAN_OUTPUT:
-		print MAN_OUTPUT
+		print "\t"+ MAN_OUTPUT
 	else:
-		print "(locally created)"
+		print "\t"+ "(locally created)"
 	print "TXT documtentation: "
 	if TXT_OUTPUT:
-		print TXT_OUTPUT
+		print "\t"+ TXT_OUTPUT
 	else:
-		print "(locally created)"
+		print "\t"+ "(locally created)"
+	print "\n**** DOCUMENTATION PROPERLY CREATED ***"

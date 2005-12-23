@@ -12,12 +12,12 @@ Ranges can also be selected specifying ends separated by a dash. E.g. selects jo
 It is worth mentioning that it is possible to select at the same time ranges and single jobs. E.g. selects the first job id in the list, the ids from the third to the fifth (ends included) and finally the eighth one.
 <<<cancel-input>>>
 
-<<<perusal-input>>>
+<<<perusal-inputfile>>>
 this option can be used only when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. The list of files contained in <filepath> is displayed and the user is prompted for a choice.
  With the --set option multiple files can be specified by selecting more items from the list. Instead, multiple files cannot be specified with --get.
 
 This option is ignored if used with the --unset op
-<<<perusal-input>>>
+<<<perusal-inputfile>>>
 
 <<<cancel-output>>>
 writes the cancellation results in the file specified by filepath instead of the standard output. filepath can be either a simple name or an absolute path (on the submitting machine). In the former case the file filepath is created in the current working directory.

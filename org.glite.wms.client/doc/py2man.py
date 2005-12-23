@@ -32,7 +32,7 @@ options2short = { \
 "set": ["set","",""] ,\
 "start": ["start","","jobid"] ,\
 "submit-input": ["input","i","filepath"] ,\
-"perusal-input": ["input","i","filepath"] ,\
+"perusal-inputfile": ["input-file","","filepath"] ,\
 "submit-output": ["output","o","filepath"] ,\
 "to": ["to ","","[MM:DD:]hh:mm[:[CC]YY]"] ,\
 "transfer-files": ["transfer-files","",""] ,\
@@ -51,5 +51,5 @@ commands2options={
 "glite-wms-job-cancel":["cancel-input","cancel-output"], \
 "glite-wms-job-list-match":["delegationid", "autm-delegation", "endpoint", "rank","match-output"], \
 "glite-wms-job-output":["jobout-input", "jobout-dir", "list-only"], \
-"glite-wms-job-perusal": ["perusal-input","set", "get", "unset", "filename", "all","perusal-dir",  "perusal-output", "nodisplay"] \
+"glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename", "all","perusal-dir",  "perusal-output", "nodisplay"] \
 }
