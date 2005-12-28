@@ -503,7 +503,7 @@ done
       fi
     fi
   else
-    cmd_line="$cmd_line 2 > /dev/null"
+    cmd_line="$cmd_line 2> /dev/null"
   fi
 
   perl -e '
