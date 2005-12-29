@@ -13,9 +13,10 @@
 #include <sys/types.h>          // mkfifo()
 #include <sys/stat.h>           // mkfifo()
 #include <unistd.h>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/bind.hpp>
@@ -48,6 +49,7 @@ namespace configuration = glite::wms::common::configuration;
 namespace common = glite::wms::manager::common;
 namespace jobid = glite::wmsutils::jobid;
 namespace fs = boost::filesystem;
+namespace lambda = boost::lambda;
 
 namespace {
 
@@ -184,6 +186,13 @@ void add_brokerinfo_to_isb(classad::ClassAd& jdl)
   requestad::set_input_sandbox(jdl, isb);
 }
 
+bool
+cream_regex_match(manager::match_type ce_tuple)
+{
+  boost::regex const cream_tag(".+/cream-.+");
+  return boost::regex_match(ce_tuple.get<0>(), cream_tag);
+}
+
 // alternative implementation: instead of opening a named pipe, just let the wm
 // create a file with a specified name and poll the file existence
 
@@ -264,6 +273,16 @@ Plan(classad::ClassAd const& jdl)
   if (!get_matches(match_response, matches)) {
     throw planning_error("no matching resource");
   }
+
+  //to filter out CREAM CEs
+  matches.erase(
+    std::remove_if(
+      matches.begin(),
+      matches.end(),
+      boost::bind(cream_regex_match, _1)
+      ),
+    matches.end()
+  );
 
   bool use_fuzzy_rank = false;
   requestad::get_fuzzy_rank(jdl, use_fuzzy_rank);
