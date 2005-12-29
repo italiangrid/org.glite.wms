@@ -29,7 +29,7 @@ ice::ice(const string& NS_FL,
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
 {
   log_dev->log(log4cpp::Priority::INFO,
-	       "Initializing File Extractor object...");
+	       "ice::ice() - Initializing File Extractor object...");
   try{
     flns.open(NS_FL.c_str());
   }
@@ -37,7 +37,7 @@ ice::ice(const string& NS_FL,
     throw iceInit_ex(ex.what());
   } catch(...) {
     log_dev->log(log4cpp::Priority::ERROR,
-		 "Catched unknown exception");
+		 "ice::ice() - Catched unknown exception");
     exit(1);
   }
 }
@@ -47,20 +47,20 @@ ice::~ice()
 { 
   if(status_listener_started) {
     log_dev->log(log4cpp::Priority::INFO,
-		 "Waiting for listener termination...");
+		 "ice::~ice() - Waiting for listener termination...");
     this->stopListener();
     listenerThread->join();
     log_dev->log(log4cpp::Priority::INFO,
-		 "Listener finished");
+		 "ice::~ice() - Listener finished");
     delete(listenerThread);
   }
   if(status_poller_started) {
     log_dev->log(log4cpp::Priority::INFO,
-		 "Waiting for poller termination...");
+		 "ice::~ice() - Waiting for poller termination...");
     this->stopPoller();
     pollerThread->join();
     log_dev->log(log4cpp::Priority::INFO,
-		 "Poller finished");
+		 "ice::~ice() - Poller finished");
     delete(pollerThread);
   }
 }
@@ -70,11 +70,11 @@ void ice::startListener(const int& listenPort)
 {
   if(status_listener_started) return;
   log_dev->log(log4cpp::Priority::INFO,
-	       "Creating a CEMon listener object...");
+	       "ice::startListener() - Creating a CEMon listener object...");
   listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort,util::iceConfManager::getInstance()->getHostProxyFile()));
   while(!listener->bind()) {
     log_dev->log(log4cpp::Priority::ERROR,
-		 string("Bind error: ")+listener->getErrorMessage()
+		 string("ice::startListener() - Bind error: ")+listener->getErrorMessage()
 		 +" - error code="+listener->getErrorCode());
     log_dev->log(log4cpp::Priority::ERROR,
 		 "Retrying in 5 seconds...");
@@ -82,11 +82,7 @@ void ice::startListener(const int& listenPort)
   }
 
   log_dev->log(log4cpp::Priority::INFO,
-	       "Creating a CEMon subscription updater...");
-  subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
-
-  log_dev->log(log4cpp::Priority::INFO,
-	       "Creating thread object for CEMon listener...");
+	       "ice::startListener() - Creating thread object for CEMon listener...");
   /**
    * The folliwing line requires that the copy ctor of CEConsumer
    * class be public(protected?)
@@ -101,21 +97,26 @@ void ice::startListener(const int& listenPort)
     iceInit_ex( ex.what() );
   }
   log_dev->log(log4cpp::Priority::INFO,
-	       "listener started succesfully !");
+	       "ice::startListener() - listener started succesfully !");
   status_listener_started = true;
 
-  log_dev->log(log4cpp::Priority::INFO,
-	       "Creating thread object for Subscription updater...");
-  try {
-    updaterThread =
-      new boost::thread(boost::bind(&util::subscriptionUpdater::operator(),
-			subsUpdater)
-			);
-  } catch(boost::thread_resource_error& ex) {
-    iceInit_ex( ex.what() );
+  if(util::iceConfManager::getInstance()->startSubscriptionUpdater()) {
+    log_dev->log(log4cpp::Priority::INFO,
+	        "ice::startListener() - Creating a CEMon subscription updater...");
+    subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
+    log_dev->log(log4cpp::Priority::INFO,
+	         "ice::startListener() - Creating thread object for Subscription updater...");
+    try {
+      updaterThread =
+        new boost::thread(boost::bind(&util::subscriptionUpdater::operator(),
+	  		  subsUpdater)
+	  		  );
+    } catch(boost::thread_resource_error& ex) {
+      iceInit_ex( ex.what() );
+    }
+    log_dev->log(log4cpp::Priority::INFO,
+	         "ice::startListener() - Subscription updater started succesfully !");
   }
-  log_dev->log(log4cpp::Priority::INFO,
-	       "Subscription updater started succesfully !");
 }
 
 //______________________________________________________________________________
@@ -123,12 +124,12 @@ void ice::startPoller(const int& poller_delay)
 {
   if(status_poller_started) return;
   log_dev->log(log4cpp::Priority::INFO,
-	       "Creating a Cream status poller object...");
+	       "ice::startPoller() - Creating a Cream status poller object...");
 
   poller = boost::shared_ptr<util::eventStatusPoller>(new util::eventStatusPoller(this, poller_delay));
 
   log_dev->log(log4cpp::Priority::INFO,
-	       "Starting Cream status poller thread...");
+	       "ice::startPoller() - Starting Cream status poller thread...");
 
   try {
     pollerThread = 
@@ -140,7 +141,7 @@ void ice::startPoller(const int& poller_delay)
   }
 
   log_dev->log(log4cpp::Priority::INFO,
-	       "poller started succesfully !");
+	       "ice::startPoller() - Poller started succesfully !");
   status_poller_started = true;
 }
 
@@ -191,7 +192,7 @@ void ice::ungetRequest(const unsigned int& reqNum)
 
   try {
     log_dev->log(log4cpp::Priority::INFO,
-		 string("Putting [")
+		 string("ice::ungetRequest() - Putting [")
 		 +toResubmit+"] to WM's Input file");
     flns.push_back(toResubmit);
   } catch(std::exception& ex) {
@@ -209,7 +210,7 @@ void ice::doOnJobFailure(const string& gid) {
   FileListLock  lock(mx);
   try {
     log_dev->log(log4cpp::Priority::INFO,
-		 string("Putting [")
+		 string("ice::doOnJobFailure() - Putting [")
 		 +resub_request+"] to WM's Input file");
     flns.push_back(resub_request);
   } catch(std::exception& ex) {

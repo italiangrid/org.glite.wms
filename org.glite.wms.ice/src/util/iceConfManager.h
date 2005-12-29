@@ -22,7 +22,7 @@ namespace glite {
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
 	    icetopic;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime;
-	  bool startpoller, startlistener;
+	  bool startpoller, startlistener, startsubupder;
 	  
 	  static boost::recursive_mutex mutex;
 	  
@@ -45,6 +45,7 @@ namespace glite {
           int         getLogLevel( void ) const { return LogLevel; }
 	  bool        startPoller( void ) const { return startpoller; } 
 	  bool        startListener( void ) const { return startlistener; }
+  	  bool        startSubscriptionUpdater( void ) const { return startsubupder; }
 	  std::string getCreamUrlPrefix( void ) const { return creamurlprefix; }
 	  std::string getCreamUrlPostfix( void ) const { return creamurlpostfix; }
 	  std::string getCreamUrlDelegationPrefix( void ) const { return curldelegprefix; }

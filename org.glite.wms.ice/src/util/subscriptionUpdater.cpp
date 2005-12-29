@@ -80,7 +80,7 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
       cout << "\t["<<(*it).getSubscriptionID()<<"]\n\t"
            << "["<<((*it).getExpirationTime()-time(NULL)) << "]\n\t"
 	   << "["<<(*it).getConsumerURL() << "]\n\t"
-	   << "["<<(*it).getTopicName() << "\n\t"
+	   << "["<<(*it).getTopicName() << "]\n\t"
 	   << "["<<(*it).getEndpoint() << "]" << endl;
       if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
         cout << "subscriptionUpdater::renewSubscriptions() - "

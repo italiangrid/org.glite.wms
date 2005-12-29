@@ -148,7 +148,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     theJob.setJobID(url_jid[1]);
     theJob.setStatus(job_statuses::PENDING);
-
+    theJob.setLastUpdate(time(NULL));
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
     //put(...) accepts arg by reference, but
