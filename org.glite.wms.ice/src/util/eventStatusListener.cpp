@@ -129,7 +129,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
       return;
     }
   const vector<Event>& evts = this->getEvents();
-  
+
   /**
    * Loops over all events (event <-> job)
    * For each event updates the status of the related
@@ -234,10 +234,10 @@ void iceUtil::eventStatusListener::init(void)
 	    cout << "eventStatusListener::init() - "
 	         << "Subscribed with ID ["<<subscriber.getSubscriptionID() << "]"<<endl;
 	  } catch(AuthenticationInitException& ex) {
-	    cerr << "eventStatusListener::init() - "<<ex.what()<<endl;
+	    cerr << "eventStatusListener::init() - AuthN Error: "<<ex.what()<<endl;
 	    exit(1);
 	  } catch(exception& ex) {
-	    cerr << "eventStatusListener::init() - "<<ex.what() << endl;
+	    cerr << "eventStatusListener::init() - Subscription Error: "<<ex.what() << endl;
 	    exit(1);
 	  }
 	} else 

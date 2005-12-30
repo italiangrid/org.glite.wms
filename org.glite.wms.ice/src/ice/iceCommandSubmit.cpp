@@ -151,7 +151,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     theJob.setLastUpdate(time(NULL));
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
-    //put(...) accepts arg by reference, but
+    // put(...) accepts arg by reference, but
     // the implementation puts the arg in the memory hash by copying it. So
     // passing a *pointer should not produce problems
     util::jobCache::getInstance()->put( theJob );
@@ -384,9 +384,6 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
             _pathName.append( what[2].first, what[2].second );
         _pathName.append( _fileName );
     }
-//     cout << "Unparsed as follows: filename=["
-//          << _fileName << "] pathname={"
-//          << _pathName << "]" << endl;
     log_dev->log(log4cpp::Priority::DEBUG,
 		 string("Unparsed as follows: filename=[")
 		 +_fileName + "] pathname={"

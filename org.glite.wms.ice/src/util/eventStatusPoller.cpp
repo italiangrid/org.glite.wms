@@ -214,7 +214,7 @@ void eventStatusPoller::updateJobCache()
 
               jit->setStatus( stNum );
 	      jit->setLastUpdate( time(NULL) );
-              //jobCache::getInstance()->put( *jit );
+              jobCache::getInstance()->put( *jit );
               // jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
           } else {
 	    log_dev->log(log4cpp::Priority::ERROR,
