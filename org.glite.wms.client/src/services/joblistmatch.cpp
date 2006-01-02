@@ -158,7 +158,7 @@ void JobListMatch::checkAd ( ){
 			"JDL File Missing",
                          "uknown JDL file pathame  (Last argument of the command must be a JDL file)"   );
         }
-	logInfo->print (WMS_DEBUG, "The JDL files is:", Utils::getAbsolutePath(*jdlFile));
+	logInfo->print (WMS_DEBUG, "The JDL file is:", Utils::getAbsolutePath(*jdlFile));
 	jobAd->fromFile (*jdlFile);
         // check submitTo
 	 if ( jobAd->hasAttribute(JDL::SUBMIT_TO) ){

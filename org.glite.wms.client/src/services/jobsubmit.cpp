@@ -889,7 +889,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				"JDL File Missing",
 				"uknown JDL file pathame (Last Argument of the command must be a JDL file)"   );
 		}
-		logInfo->print (WMS_DEBUG, "The JDL files is:", Utils::getAbsolutePath(*jdlFile));
+		logInfo->print (WMS_DEBUG, "The JDL file is:", Utils::getAbsolutePath(*jdlFile));
 		jobAd->fromFile (*jdlFile);
 		// Adds ExpireTime JDL attribute
 		if ((int)expireTime>0) {
