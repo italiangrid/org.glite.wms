@@ -270,7 +270,7 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 				if( 	glite_wms_client_toLower(attrName)!=JDL::RANK &&
 					glite_wms_client_toLower(attrName)!=JDL::REQUIREMENTS){
 					if (!jdl->hasAttribute(attrs[i])){
-						jdl->setAttributeExpr (attrs[i],confAd.lookUp(attrs[i]));
+						jdl->setAttributeExpr (attrs[i],confAd.lookUp(attrs[i])->Copy());
 					}
 				}
 			}
