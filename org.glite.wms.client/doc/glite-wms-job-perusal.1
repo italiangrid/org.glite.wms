@@ -48,22 +48,24 @@
 
 .SH DESCRIPTION
 
-Allows handling perusal functionalities (also called job peeking) for a submitted job identified by the jobId.
-This can be done only when perusal support has been enabled while submitting/registering the job via the 'PerusalFileEnable' attribute.
+Allows handling files perusal functionalities for a submitted job identified by the jobId.
+This can be done only when files perusal support has been enabled while submitting/registering the job.
+This is accomplished via the 'PerusalFileEnable' JDL attribute.
 
-Three different operations can be performed for the specified job:
+Three different operations can be performed for a given job:
 
-- Job file perusal set (--set option): it allows enabling the perusal functionality for one or more specified files.
+- Job's file perusal set (--set option): it allows enabling the perusal functionality for one or more specified files.
 
 This option requires the user to specify the file(s) to be perused: this can be done by using either the --filename (multiple files can be specified by repeating the option several times) or the --input option (the user will be prompted to select one or more files).
 
-- Job file perusal get (--get option): it allows retrieving one specified job perusal file (previously set by the --set option).
+- Job's file perusal get (--get option): it allows retrieving chunks of one
+specified job's file previously set for perusal by means of the --set option.
 
-This option requires the user to specify the file to be retrieved: this can be done by using either the --filename (no multiple files support available) or the --input option (the user will be prompted to select one file). The specified file is therefore downloaded on the local machine and it can be viewed on the user shell. User can specified a custom directory where to download the files will by specifying the --dir option. The perusal file retrieval is available as soon as the job is running; it will retrieve the content of the generated file up to the time of the call. By default, any further call on the same file, retrieves back only the last chunk of the file, that means only the information stored after the last call. To retrieve the whole file with all its chunks (even those that might have been previously retrieved), the --all option must be specified.
+This option requires the user to specify the file to be retrieved: this can be done by using either the --filename (no multiple files support available) or the --input option (the user will be prompted to select one file). The specified file is therefore downloaded on the local machine and it can be viewed on the user shell. User can specify a custom directory where to download the files by using the --dir option. The retrieval of files to be perused is available as soon as the job has started running: the command will retrieve the content of the generated file up to the time of the call. By default, any further call on the same file, retrieves back only the last chunks of the file, that means only the information stored after the last call. To retrieve all chunks of a given file (even those that might have been previously retrieved), the --all option must be specified.
 
-- Job file perusal unset (--unset option): it disables any perusal functionalities for the job (no further option required)
+- Job's file perusal unset (--unset option): it disables perusal for all job's files (no further option required)
 
-All Perusal functionalities are not available for compound jobs (like DAGs, collections and parametric jobs) and are only available if WMProxy server version is greater than or equal to 2.0.0 (the server version can be retrieved by using the --version option)..SH OPTIONS
+All Perusal functionalities are available for simple jobs and for nodes of compound jobs (like DAGs, collections and parametric jobs) but not for compound jobs as a whole. Moreover the WMProxy service version must be greater than or equal to 2.0.0 (the service version can be retrieved by using the --version option of the client commands)..SH OPTIONS
 .HP
 \fB--version\fR
 
@@ -122,28 +124,28 @@ if this option is specified, every interactive question to the user is skipped a
 <filepath>
 
 .IP
-this option can be used only when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. The list of files contained in <filepath> is displayed and the user is prompted for a choice.
-With the --set option multiple files can be specified by selecting more items from the list. Instead, multiple files cannot be specified with --get.
+this option can be used only when --set or --get option are specified too. It
+allows the user to specify respectively the job's file(s) to be perused or retrieved. The list of files contained in <filepath> is displayed and the user is prompted for a choice. With the --set option multiple files can be specified by selecting more items from the list. Instead, multiple files cannot be specified with --get.
 
-This option is ignored if used with the --unset op
+This option is ignored if used with the --unset option.
 .PP
 .HP
 \fB--set\fR
 
 .IP
-if this option is specified, perusal functionality is enabled for the job (indicated by JobId) for the file(s) specified with --filename option. Multiple files can be specified by repeating the option several times ( f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). This option cannot be specified together with --get and --unset.
+if this option is specified, files perusal is enabled for the job (indicated by JobId) for the file(s) specified through the --filename option. Multiple files can be specified by repeating the option several times ( e.g.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc). This option cannot be specified together with --get and --unset.
 .PP
 .HP
 \fB--get\fR
 
 .IP
-if this option is specified, the perusal file specified with the --filename option is downloaded on the local machine. Multiple files can not be specified. This option cannot be specified together with --set and --unset.
+if this option is specified, the file specified with the --filename option is downloaded on the local machine. Multiple files can not be specified. This option cannot be specified together with --set and --unset.
 .PP
 .HP
 \fB--unset\fR
 
 .IP
-if this option is specified, any perusal functionalities for the job are disabled.
+if this option is specified, files perusal is disabled for the given job.
 This option cannot be specified together with --set and --get.
 .PP
 .HP
@@ -151,9 +153,9 @@ This option cannot be specified together with --set and --get.
 <filename>
 
 .IP
-this option can be used only when --set or --get option are specified. It allows the user to specify the file(s) where to enable or disable perusal service. With the --set option multiple files can be specified by repeating the option several times. Instead, multiple files cannot be specified with --get.
+this option can be used only when --set or --get option are specified too. It allows the user to specify the job's file(s) to be perused or retrieved. With the --set option multiple files can be specified by repeating the option several times. Instead, multiple files cannot be specified with --get.
 
-f.i.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc
+e.g.: --filename <file1>  --filename <file2>  --filename <file3>  ..etc
 
 This option is ignored if used with the --unset option.
 .PP
@@ -161,28 +163,28 @@ This option is ignored if used with the --unset option.
 \fB--all\fR
 
 .IP
-This option can only be specified together with --get: the specified file will be downloaded with all its chunks (even those that might have been previously retrieved)
+This option can only be specified together with --get: all chunks of the specified file will be downloaded (even those that might have been previously retrieved)
 .PP
 .HP
 \fB--dir\fR
 <directorypath>
 
 .IP
-if this option is specified, the retrieved perusal files requested are stored in the location pointed by directory_path instead of the default location /tmp/<jobId unique string>. This option is ignored if used with either the --set or the --get options.
+if this option is specified, the retrieved files are stored in the location pointed by directory_path instead of the default location /tmp/<jobId unique string>. This option is ignored if used with either the --set or the --get options.
 .PP
 .HP
 \fB--output\fR, \fB-o\fR
 <filepath>
 
 .IP
-this option can only be used either with either --set or --get. Information on these two operations are saved in the file specified by filepath at the end of the execution: for
---set the filename(s) for which perusal has been enabled; for --get the local pathnames to the retrieved perusal files. filepath can be either a simple name or an absolute path (on the local machine). In the former case the file is created in the current working directory.
+this option can only be used together with either the --set or with the --get option.
+Information about these two operations are saved in the file specified by filepath at the end of the execution: for --set the filename(s) for which perusal has been enabled; for --get the local pathnames to the retrieved files. filepath can be either a simple name or an absolute path (on the local machine). In the former case the file is created in the current working directory.
 .PP
 .HP
 \fB--nodisplay\fR
 
 .IP
-this option can only be specified with the --get operation; it ends the execution of the command without displaying the content of the downloaded files. This option is ignored if used with --set or --unset.
+this option can only be specified together with the --get one; it ends the execution of the command without displaying the content of the downloaded files. This option is ignored if used with --set or --unset.
 .PP
 .SH ENVIRONMENT
 
@@ -205,25 +207,26 @@ JDL file		The file (containing the description of the job in the JDL language lo
 
 Alessandro Maraschini , Marco Sottilaro (egee@datamat.it).SH EXAMPLES
 
-1) enables perusal functionality with several files:
+1) enable perusal for several job's files:
 glite-wms-job-perusal --set --filename file1.pr --filename file2.txt --filename file3.a
 https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg
 
 A message with the result of the operation is displayed on the standard output
 
-2) file retrieving :
-a] download the last chunk of a file in the downloading default directory (generally /tmp/<jobId_UniqueStr>):
+2) file retrieval :
+a] download the last chunk of a file in the default directory (/tmp/<jobId_UniqueStr> unless otherwise specified in the command config file):
 
 glite-wms-job-perusal --get --filename file1.pr https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg
 
-b] download the last chunk of a file in a custom  directory:
+b] download the last chunk of a file in a custom directory:
 
 glite-wms-job-perusal --get --filename file2.txt --dir /tmp/my_dir https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg
 
-c] download the whole file (generated so far) in the downloading default directory: possible already retrieved chunks are downloaded again:
+c] download the whole file (generated so far) in the default
+directory: already retrieved chunks (if any) are downloaded again:
 glite-wms-job-perusal --get --filename file2.txt --all https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg
 
-3) disables perusal functionality :
+3) disable files perusal for the given job:
 glite-wms-job-perusal --unset https://wmproxy.glite.it:9000/7O0j4Fequpg7M6SRJ-NvLg
 
 A message with the result of the operation is always displayed on the standard output
