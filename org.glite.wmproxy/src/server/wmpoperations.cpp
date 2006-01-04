@@ -2586,10 +2586,10 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 		}
 		
 	} else {
-		edglog(error)<<"Job state doesn't allow purge operation"<<endl;
+		edglog(error)<<"Job current status doesn't allow purge operation"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobpurge()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-			"Job state doesn't allow purge operation");
+			"Job current status doesn't allow purge operation");
 	}
 	
 	GLITE_STACK_CATCH();
@@ -2667,52 +2667,66 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	// Checking for maradona file, created if and only if the job is in DONE state
 	edglog(debug)<<"Searching for file: "<<jobdirectory + FILE_SEPARATOR
 		+ MARADONA_FILE<<endl;
-	if (wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
-		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-		string output_uri = wmputilities::getDestURI(jid, conf.getDefaultProtocol(),
-			conf.getDefaultPort()) + FILE_SEPARATOR + "output";
-		string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
-		edglog(debug)<<"Output URI: " << output_uri <<endl;
-		
-		// Searching files inside directory
-		const boost::filesystem::path p(outputpath, boost::filesystem::native);
-		std::vector<std::string> found;
-		glite::wms::wmproxy::commands::list_files(p, found);
-		edglog(debug)<<"List size is (hidden files included): "
-			<<found.size()<<endl;
-		
-		// Creating the list
-		StringAndLongList *list = new StringAndLongList();
-		vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
-		StringAndLongType *item = NULL;
-		string filename;
-		
-		vector<string>::iterator iter = found.begin();
-		vector<string>::iterator const end = found.end();
-		for (; iter != end; ++iter) {
-			// Checking for hidden files
-			filename = wmputilities::getFileName(string(*iter));
-			if ((filename != MARADONA_FILE) && (filename
-					!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
-				item = new StringAndLongType();
-				item->name = output_uri + FILE_SEPARATOR + filename;
-				item->size = wmputilities::computeFileSize(*iter);
-				edglog(debug)<<"Inserting file name: " <<item->name<<endl;
-				edglog(debug)<<"Inserting file size: " <<item->size<<endl;
-				file->push_back(item);
-			}
+	if (!wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
+		// Getting job status to check if is a job and is done success
+		JobStatus status = WMPEventLogger::getStatus(jobid, delegatedproxy);
+	
+		if (status.getValInt(JobStatus::CHILDREN_NUM) != 0) {
+			string msg = "getOutputFileList operation not allowed for dag or "
+				"collection type";
+			edglog(error)<<msg<<": "<<jobid<<endl;
+			throw JobOperationException(__FILE__, __LINE__, "getOutputFileList()", 
+				wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 		}
-		list->file = file;
-		getOutputFileList_response.OutputFileAndSizeList = list;
 		
-		edglog(info)<<"Successfully retrieved files: "<<found.size()<<endl;
-	} else {
-		edglog(error)<<
-			"Job state doesn't allow getOutputFileList operation"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"getOutputFileList()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-			"Job state doesn't allow getOutputFileList operation");
+		if ((status.status == JobStatus::DONE)
+				&& (status.getValInt(JobStatus::DONE_CODE)
+					== JobStatus::DONE_CODE_OK)) {
+			edglog(error)<<
+				"Job current status doesn't allow getOutputFileList operation"<<endl;
+			throw JobOperationException(__FILE__, __LINE__,
+				"getOutputFileList()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
+				"Job current status doesn't allow getOutputFileList operation");
+		}
 	}
+		
+	string output_uri = wmputilities::getDestURI(jid, conf.getDefaultProtocol(),
+		conf.getDefaultPort()) + FILE_SEPARATOR + "output";
+	string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
+	edglog(debug)<<"Output URI: " << output_uri <<endl;
+	
+	// Searching files inside directory
+	const boost::filesystem::path p(outputpath, boost::filesystem::native);
+	std::vector<std::string> found;
+	glite::wms::wmproxy::commands::list_files(p, found);
+	edglog(debug)<<"List size is (hidden files included): "
+		<<found.size()<<endl;
+	
+	// Creating the list
+	StringAndLongList *list = new StringAndLongList();
+	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+	StringAndLongType *item = NULL;
+	string filename;
+	
+	vector<string>::iterator iter = found.begin();
+	vector<string>::iterator const end = found.end();
+	for (; iter != end; ++iter) {
+		// Checking for hidden files
+		filename = wmputilities::getFileName(string(*iter));
+		if ((filename != MARADONA_FILE) && (filename
+				!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
+			item = new StringAndLongType();
+			item->name = output_uri + FILE_SEPARATOR + filename;
+			item->size = wmputilities::computeFileSize(*iter);
+			edglog(debug)<<"Inserting file name: " <<item->name<<endl;
+			edglog(debug)<<"Inserting file size: " <<item->size<<endl;
+			file->push_back(item);
+		}
+	}
+	list->file = file;
+	getOutputFileList_response.OutputFileAndSizeList = list;
+	
+	edglog(info)<<"Successfully retrieved files: "<<found.size()<<endl;
 	
 	GLITE_STACK_CATCH();
 }
