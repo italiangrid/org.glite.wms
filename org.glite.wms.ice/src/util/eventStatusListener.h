@@ -11,16 +11,21 @@
 //#include "glite/ce/monitor-client-api-c/GeneralException.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 
-namespace glite {
-  namespace wms {
-    namespace ice {
-      namespace util {
+// Forward declaration for the logger
+namespace log4cpp {
+    class Category;
+};
 
-       class iceConfManager;
-       }
-       }
-       }
-       };
+
+namespace glite {
+    namespace wms {
+        namespace ice {
+            namespace util {                
+                class iceConfManager;
+            }
+        }
+    }
+};
 
 namespace glite {
   namespace wms {
@@ -50,6 +55,7 @@ namespace glite {
 	  void init(void);
 	  std::map<std::string, bool> cemon_subscribed_to;
 	  glite::wms::ice::util::iceConfManager* conf;
+          log4cpp::Category *log_dev;
 
 	protected:
 	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999),T(""),P(0) {}
