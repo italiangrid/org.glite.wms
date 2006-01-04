@@ -414,6 +414,7 @@ void JobSubmit::submission ( ){
 			} else {
 				// console-listener running
 				out << "\nInteractive Session Listener successfully launched"<<"\n";
+				jobShadow->setGoodbyeMessage(true);
 			}
 			out <<"With the following parameters:"<<"\n";
 			out << "- Host: " << jobShadow->getHost() <<"\n";
