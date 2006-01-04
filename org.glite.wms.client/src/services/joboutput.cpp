@@ -21,6 +21,7 @@
 // JDL
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/RequestAdExceptions.h"
 // exceptions
 #include "utilities/excman.h"
 // wmp-client utilities
@@ -249,8 +250,19 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	}
 	if (code == 0){
 		// JDL check
-		glite::wms::jdl::Ad ad(status.getJdl());
-		if (ad.hasAttribute(glite::wms::jdl::JDL::OUTPUTSB)){
+		bool tbRetrieved =true;
+		try{
+			bool tbRetrieved = (glite::wms::jdl::Ad(status.getJdl())).hasAttribute(glite::wms::jdl::JDL::OUTPUTSB);
+		}catch ( glite::wms::jdl::RequestAdException &exc ){
+			// If any classad parsing exception occurres keep trying and downloading possible files
+			// print a warning message anyway:
+			logInfo->print(WMS_WARNING, "Some problem occurred while retrieving jdl info:",exc.what());
+			if (!wmcUtils->answerYes ("Do you wish to continue?", false, true)){
+				cout << "bye" << endl ;
+				wmcUtils->ending(ECONNABORTED);
+			}
+		}
+		if (tbRetrieved){
 			// actually retrieve files
 			if (retrieveFiles (msg,jobid.toString(),dirAbs, child)){
 				// Something has gone bad, no output files stored then purge directory
@@ -264,6 +276,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			vector <pair<string , long> > empty ;
 			this->listResult(empty, jobid.toString(), child);
 		}
+
 	}
 	// Children (if present) Management
 	std::vector<Status> children = status.getChildrenStates();
