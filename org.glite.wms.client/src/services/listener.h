@@ -49,6 +49,11 @@ class Shadow{
 		*/
 		void setJobId(const std::string &jobid);
 		/**
+		* Set the ending message policy
+		* goodbyeMessage determine whether to print (true) or not (false) a goodbye message when detaching shadow console
+		*/
+		void setGoodbyeMessage(bool goodbyeMessage);
+		/**
 		* Set the port where console shadow is listening
 		*/
 		void setPort(int port);
@@ -110,7 +115,7 @@ class Shadow{
 		/** Launch the console-shadow process and retrieve host&port info*/
 		void console();
 		/**Retrieve the name of the pipe*/
-		std::string getPipe();		
+		std::string getPipe();
 	private:
 		/*** Kill the shadow listener process */
 		static void terminate (int sig);
@@ -122,7 +127,7 @@ class Shadow{
 		glite::wmsutils::jobid::JobId jobid ;
 		std::string pipeRoot,host,storage,prefix;
 		int port,pid;
-		bool writing,localConsole;
+		bool writing,localConsole,goodbyeMessage;
 		// Used for reading root pipe
 		std::ifstream *ifstreamOut;
 		char c;

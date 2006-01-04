@@ -104,15 +104,17 @@ void Listener::operator()(){
 Shadow::Shadow(){
 	this->storage="/tmp";
 	ifstreamOut=NULL;
- 	localConsole=true;
-	pid=0;
+	localConsole=true;
+	this->pid=0;
+	goodbyeMessage=false;
 }
 Shadow::Shadow(glite::wmsutils::jobid::JobId jobid){
 	this->jobid=jobid;
 	this->storage="/tmp";
 	localConsole=true;
 	ifstreamOut=NULL;
-	pid=0;
+	this->pid=0;
+	goodbyeMessage=false;
 }
 Shadow::~Shadow(){
 	detach();
@@ -132,6 +134,9 @@ bool Shadow::isLocalConsole (){
 }
 void Shadow::setPort(int port){
 	this->port=port;
+}
+void Shadow::setGoodbyeMessage(bool goodbyeMessage){
+	this->goodbyeMessage=goodbyeMessage;
 }
 void Shadow::setJobId(const std::string &jobid){
 	this->jobid=glite::wmsutils::jobid::JobId(jobid);
@@ -170,9 +175,9 @@ std::string Shadow::getPipe(){
 	if (pipeRoot!=""){
 		//Do nothing, pipeRoot already initialized
 	}else if (storage!=""){
-		this->pipeRoot = storage + "/" + (jobid.isSet()?jobid.getUnique():getUnique());
+		this->pipeRoot = storage + "/listener-" + (jobid.isSet()?jobid.getUnique():getUnique());
 	}else {
-		this->pipeRoot= "/tmp/"+jobid.isSet()?jobid.getUnique():getUnique();
+		this->pipeRoot= "/tmp/listener-" + (jobid.isSet()?jobid.getUnique():getUnique());
 	}
 	return pipeRoot;
 }
@@ -208,7 +213,7 @@ std::string Shadow::getHost(){
 	return host;
 }
 int  Shadow::getPort(){
-	return port;
+	return this->port;
 }
 int  Shadow::getPid(){
 	return pid;
@@ -221,10 +226,11 @@ void Shadow::terminate (int sig){
         cout << "***************************************" << endl;
 }
 void Shadow::detach(){
-	kill(pid,SIGINT);
+	kill(pid,SIGKILL);
 	remove (getPipeIn().c_str());
 	remove (getPipeOut().c_str());
 	cout<<endl;
+	if (goodbyeMessage){cout <<"Done - hit return to continue" << endl;}
 }
 
 bool splitInt(const string& source,const string&sep, unsigned int &fromPort, unsigned int &toPort){
@@ -270,31 +276,34 @@ void Shadow::console(){
 	unsigned int retryPort, fromPort , toPort, interval;
 	fromPort=toPort=0;
 	retryPort=setPorts(fromPort, toPort);
-	interval=fromPort?toPort-fromPort:port+1;
-	if (port){
+	interval=fromPort?toPort-fromPort:this->port+1;
+	if (this->port){
 		if (toPort){
-			if( (port<fromPort)||(port >toPort) ){
+			if( (this->port<fromPort)||(this->port >toPort) ){
 				throw WmsClientException(__FILE__,__LINE__,"Shadow::console",DEFAULT_ERR_CODE
-					, "Invalid Value","Listening port "+boost::lexical_cast<string>(port)
+					, "Invalid Value","Listening port "+boost::lexical_cast<string>(this->port)
 					+" is out of possible range (as in GLOBUS_TCP_PORT_RANGE variable)");
 			}
 			// fromPort added later
-			port = port-fromPort;
+			this->port = this->port-fromPort;
 		}
 	}
-	if (fromPort!=0 && port==0){
+	if (fromPort!=0 && this->port==0){
 		// port has to be initialized
 		port=Utils::getRandom(fromPort+toPort+retryPort);
 	}
 	string command;
+	string warnings="";
+	int tmPort= 0;  //temporary port
 	bool consoleSucceeded =false;
 	for (unsigned int i=0;i<retryPort;i++){
 		// Build executing command
 		command=shPath;
 		command+=" -log-to-file "+getPipe() ;
-		if (port!=0){
+		if (this->port!=0){
 			//       OFFSET + RANDOM % INTERVAL
-			command+=" -port " + boost::lexical_cast<string>(fromPort+port%interval);
+			tmPort = fromPort+this->port%interval ;
+			command+=" -port " + boost::lexical_cast<string>(tmPort);
 		}
 		command+= +"&";
 		// Try to execute shadow
@@ -309,17 +318,19 @@ void Shadow::console(){
 		if (resultConsole==0){
 			consoleSucceeded=true;
 			break;
-		}
-		else if (resultConsole!=ALREADY_USED_PORT){
+		}else if (resultConsole!=ALREADY_USED_PORT){
 			throw WmsClientException(__FILE__,__LINE__,"Shadow::console",DEFAULT_ERR_CODE,
 				"System error","Unable to properly execute console shadow. Error code="
 				+boost::lexical_cast<string>(resultConsole));
+		}else{
+			// Gotcha ALREADY_USED_PORT
+			warnings += "\n" + boost::lexical_cast<string>(tmPort) +": already used port";
 		}
-		// ... continuing cycling when ALREADY_USED_PORT error is got
 	}
-	if (consoleSucceeded=false){
+	if (consoleSucceeded == false){
+		warnings="Unable to properly execute console shadow" + warnings;
 		throw WmsClientException(__FILE__,__LINE__,"Shadow::console",DEFAULT_ERR_CODE,
-			"System error","Unable to properly execute console shadow");
+			"System error",warnings);
 	}
 	writing=false;
 }
@@ -339,10 +350,10 @@ int Shadow::getConsoleInfo(){
 	if (ad.hasAttribute("SHADOW_ERROR")){
 		return ad.getInt("SHADOW_ERROR");
 	}
-	pid=ad.getInt("PID");
-	port=ad.getInt("PORT");
-	// Set the signal
-	signal(SIGINT,terminate);
+	this->pid=ad.getInt("PID");
+	this->port=ad.getInt("PORT");
+	// Set the signal to be caught (^C) on exit
+	signal(SIGINT,terminate); // terminate (int) method will be called
 	active=true;
 	return 0;
 }
