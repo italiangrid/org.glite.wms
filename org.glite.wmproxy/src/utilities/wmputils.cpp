@@ -402,11 +402,18 @@ getOutputSBDirectoryPath(jobid::JobId jid, int level)
 }
 
 string
-getPeekDirectoryPath(jobid::JobId jid, int level)
+getPeekDirectoryPath(jobid::JobId jid, int level, bool docroot)
 {
 	GLITE_STACK_TRY("getPeekDirectoryPath()");
-	return string(getenv(DOCUMENT_ROOT) + FILE_SEP
-		+ to_filename(jid, level) + FILE_SEP + PEEK_DIRECTORY);
+	string path;
+	if (docroot) {
+		path = string(FILE_SEP + to_filename(jid, level)
+			+ FILE_SEP + PEEK_DIRECTORY);
+	} else {
+		path = string(getenv(DOCUMENT_ROOT) + FILE_SEP
+			+ to_filename(jid, level) + FILE_SEP + PEEK_DIRECTORY);
+	}
+	return path;
 	GLITE_STACK_CATCH();
 }
 
@@ -991,6 +998,31 @@ writeTextFile(const string &file, const string &text)
 	}
 	outfile << text;
 	outfile.close();
+	
+	GLITE_STACK_CATCH();
+}
+
+string
+readTextFile(const string &file)
+{
+	GLITE_STACK_TRY("readTextFile()");
+	edglog_fn("wmputils::readTextFile");
+	
+	ifstream in(file.c_str(), ios::in);
+	if (!in.good()) {
+		edglog(debug)<<file<<": !in.good()"<<endl;
+		throw FileSystemException(__FILE__, __LINE__,
+			"readTextFile()", WMS_IS_FAILURE, "Unable to read file: "
+			+ file + "\n(please contact server administrator)");
+		exit(1);	
+	}
+	string line;
+	string text = "";
+	while (getline(in, line, '\n')) {
+		text += line + "\n";
+	}
+	in.close();
+	return text;
 	
 	GLITE_STACK_CATCH();
 }

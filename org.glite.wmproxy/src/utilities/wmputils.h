@@ -66,6 +66,8 @@ void setFlagFile(const std::string &file, bool flag);
 
 void writeTextFile(const std::string &path, const std::string &text);
 
+std::string readTextFile(const std::string &path);
+
 //
 // Service & service host methods
 //
@@ -156,7 +158,7 @@ std::string getOutputSBDirectoryPath(glite::wmsutils::jobid::JobId jid,
  * @return output sandbox directory absolute path
  */
 std::string getPeekDirectoryPath(glite::wmsutils::jobid::JobId jid,
-	int level = 0);
+	int level = 0, bool docroot = true);
 
 /** 
  * Returns the job delegated Proxy path

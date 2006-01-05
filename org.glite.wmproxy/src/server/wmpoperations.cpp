@@ -212,7 +212,7 @@ copyEnvironment(char** sourceEnv)
 	// Memory allocation
     char ** targetEnv = (char **) malloc ((nenvvars + 1) * sizeof(char **)); 
    	char ** tmp = targetEnv;
-    //if (!newenviron) {
+    //if (!targetEnv) {
 		// ERROR
     //}
     
@@ -230,8 +230,6 @@ setGlobalSandboxDir()
 {
 	GLITE_STACK_TRY("setGlobalSandboxDir()");
 	
-	//WMProxyConfiguration conf
-		//= singleton_default<WMProxyConfiguration>::instance();
 	string sandboxstagingpath = conf.getSandboxStagingPath();
 	
 	if (!getenv(DOCUMENT_ROOT)) {
@@ -1544,12 +1542,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
 			"LOG_ENQUEUE_START", filelist_global.c_str(), "JDL");
 	
-		/*WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-		std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-		edglog(debug)<<"LB Address: "<<lbaddress_port.first<<endl;
-		edglog(debug)<<"LB Port: "
-			<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;*/
-		
 		// Getting delegated proxy inside job directory
 		string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
 		edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
@@ -1562,8 +1554,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			jad->setLocalAccess(false);
 			
 			// Getting Input Sandbox Destination URI
-			/*string defaultprotocol = conf.getDefaultProtocol();
-			int defaultport = conf.getDefaultPort();*/
 			string dest_uri = wmputilities::getDestURI(jid->toString(),
 				conf.getDefaultProtocol(), conf.getDefaultPort());
 			edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
@@ -1676,6 +1666,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			    }
 			}
 			
+			jdltostart = jad->toString();
+			
 			delete jad;
 		} else {
 			WMPExpDagAd * dag = new WMPExpDagAd(jdl);
@@ -1688,16 +1680,15 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    char * seqcode = wmplogger.getSequence();
 		    edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
 		    
-		    //string defaultprotocol = conf.getDefaultProtocol();
-			//int defaultport = conf.getDefaultPort();
-		    
 		    // Setting internal attributes for sub jobs
 			string jobidstring;
 			string dest_uri;
 			string peekdir;
 			
-		    for (unsigned int i = 0; i < children.size(); i++) {
-		    	JobId subjobid = children[i]->jobid;
+			vector<JobIdStruct*>::iterator iter = children.begin();
+			vector<JobIdStruct*>::iterator const end = children.end();
+			for (; iter != end; ++iter) {
+		    	JobId subjobid = (*iter)->jobid;
 		    	jobidstring = subjobid.toString();
 				
 				dest_uri = getDestURI(jobidstring, conf.getDefaultProtocol(),
@@ -1848,6 +1839,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			
 			delete dag;
 		}
+		
+		wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
+			jdltostart);
 		
 		// \/ To test only, raising an exception
 		/*
@@ -3269,7 +3263,6 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	edglog_fn("wmpoperations::checkPerusalFlag");
 	
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -3283,8 +3276,9 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 			"Unable to set User Proxy for LB context");
 	}
 	
-	string jdl = wmplogger.retrieveRegJobEvent(jid->toString()).jdl;
-	if (jdl == "") {
+	string jdlpath = wmplogger.retrieveRegJobEvent(jid->toString()).jdl;
+	edglog(debug)<<"jdlpath: "<<jdlpath<<endl;
+	if (jdlpath == "") {
 		edglog(critical)<<"No Register event found quering LB; unable to get "
 			"registered jdl"<<endl;
 		throw JobOperationException(__FILE__, __LINE__,
@@ -3292,6 +3286,9 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 			"Unable to check perusal availability"
 			"\n(please contact server administrator)");
 	}
+	
+	string jdl = wmputilities::readTextFile(jdlpath);
+	edglog(debug)<<"Jdl: "<<jdl<<endl;
 	
 	int type = getType(jdl);
 	if (type == TYPE_JOB) {
@@ -3322,15 +3319,51 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 					: "";
 				string serverhost = getServerHost();
 				string uri = jad->getString(JDL::PU_FILES_DEST_URI);
-				string serveruri = protocol + "://" + serverhost + port
-					+ wmputilities::getPeekDirectoryPath(*jid);
-				if (uri != serveruri) {
+				
+				string tofind = "://" + serverhost;
+				unsigned int pos = uri.find(tofind);
+				if (pos == string::npos) {
 					edglog(debug)<<"Remote perusal peek URI set:\n"
 						<<uri<<endl;
 					throw JobOperationException(__FILE__, __LINE__,
 				    	"checkPerusalFlag()",
 				    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 				    	"Remote perusal peek URI set:\n" + uri);
+				}
+				string uriprotocol = uri.substr(0, pos);
+				edglog(debug)<<"URI protocol: "<<uriprotocol<<endl;
+				string uripath = uri.substr(pos + tofind.length(),
+					uri.length() - 1);
+				edglog(debug)<<"URI path: "<<uripath<<endl;
+				pos = uripath.find("/");
+				// Looking for port
+				if (pos == string::npos) {
+					edglog(debug)<<"Remote perusal peek URI set:\n"
+						<<uri<<endl;
+					throw JobOperationException(__FILE__, __LINE__,
+				    	"checkPerusalFlag()",
+				    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+				    	"Remote perusal peek URI set:\n" + uri);
+				}
+				uripath = uripath.substr(pos, uripath.length() - 1);
+				edglog(debug)<<"URI path: "<<uripath<<endl;
+				
+				string serverpath;
+				if ((uriprotocol == "https") || (uriprotocol == "http")) {
+					// No document root added
+					serverpath = wmputilities::getPeekDirectoryPath(*jid, false);
+				} else {
+					serverpath = wmputilities::getPeekDirectoryPath(*jid);	
+				}
+				edglog(debug)<<"Server path: "<<serverpath<<endl;
+				if (uripath != serverpath) {
+					edglog(debug)<<"Remote perusal peek URI set:\n"
+						<<uri<<endl;
+					throw JobOperationException(__FILE__, __LINE__,
+				    	"checkPerusalFlag()",
+				    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
+				    	"Perusal peek URI refers to server host, but the path "
+				    		"is not manged by WMProxy:\n" + uri);
 				}
 			}
 		}
@@ -3465,7 +3498,6 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	string protocol = conf.getDefaultProtocol();
 	string port = (conf.getDefaultPort() != 0)
 		? (":" + boost::lexical_cast<std::string>(conf.getDefaultPort()))
