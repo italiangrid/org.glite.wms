@@ -218,7 +218,7 @@ void JobOutput::getOutput ( ){
 int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::string& dirAbs, const bool &child){
 	string warnings = "";
 	string wmsg = "" ;
-	// Dir Creation Management TBD
+	// Dir Creation Management 
 	bool createDir=false;
 	bool checkChildren = true;
 	// JobId
@@ -248,21 +248,12 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			}
 		}
 	}
+	std::vector<Status> children = status.getChildrenStates();
+	// Retrieve Output Files management
 	if (code == 0){
-		// JDL check
-		bool tbRetrieved =true;
-		try{
-			bool tbRetrieved = (glite::wms::jdl::Ad(status.getJdl())).hasAttribute(glite::wms::jdl::JDL::OUTPUTSB);
-		}catch ( glite::wms::jdl::RequestAdException &exc ){
-			// If any classad parsing exception occurres keep trying and downloading possible files
-			// print a warning message anyway:
-			logInfo->print(WMS_WARNING, "Some problem occurred while retrieving jdl info:",exc.what());
-			if (!wmcUtils->answerYes ("Do you wish to continue?", false, true)){
-				cout << "bye" << endl ;
-				wmcUtils->ending(ECONNABORTED);
-			}
-		}
-		if (tbRetrieved){
+		// Retrieval NOT allowed for DAGS (collection, partitionables, parametrics...)
+		// i.e. ANY job that owns children
+		if (children.size()==0){
 			// actually retrieve files
 			if (retrieveFiles (msg,jobid.toString(),dirAbs, child)){
 				// Something has gone bad, no output files stored then purge directory
@@ -273,13 +264,14 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			successRt = true;
 			checkChildren = false;
 		}else if (listOnlyOpt){
-			vector <pair<string , long> > empty ;
-			this->listResult(empty, jobid.toString(), child);
+			// IT is a DAG, no output files to be retrieved.
+			// Print a simple output
+			ostringstream out ;
+			out << "\nJobId: " << jobid.toString() << "\n";
+			parentFileList = out.str();
 		}
-
 	}
 	// Children (if present) Management
-	std::vector<Status> children = status.getChildrenStates();
 	if (children.size()){
 		ostringstream msgVago ;
 		unsigned int size = children.size();
@@ -335,8 +327,9 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 		bool result = true;
 		try {
 			// gets the list of the out-files from the EndPoint
-			logInfo->print(WMS_DEBUG, "getOutputFileList calling for: ",jobid);
+			logInfo->print(WMS_INFO, "Processing Jobid:", jobid);
 			logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
+			logInfo->print(WMS_DEBUG, "getOutputFileList calling for:",jobid);
 			files = getOutputFileList(jobid, getContext() );
 			hasFiles = hasFiles || (files.size()>0);
 		} catch (BaseException &exc) {
@@ -397,15 +390,15 @@ void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, 
 	ostringstream out ;
 	// output message
 	if (child){
-		out << "\n\t>> child :" << jobid << "\n";
+		out << "\n\t>> child: " << jobid << "\n";
 		if (files.size( ) == 0 ){
 			out << "\tno output file to be retrieved\n";
 		} else{
 			vector <pair<string , long> >::iterator it1  = files.begin();
 			vector <pair<string , long> >::iterator const end1 = files.end() ;
 			for (  ; it1 != end1 ; it1++ ){
-				out << "\t - file :" << it1->first << "\n";
-				out << "\t   size (bytes) : " << it1->second << "\n";
+				out << "\t - file: " << it1->first << "\n";
+				out << "\t   size (bytes): " << it1->second << "\n";
 			}
 		}
 	} else{
@@ -416,15 +409,15 @@ void JobOutput::listResult(std::vector <std::pair<std::string , long> > &files, 
 			vector <pair<string , long> >::iterator it2  = files.begin();
 			vector <pair<string , long> >::iterator const end2 = files.end() ;
 			for (  ; it2 != end2 ; it2++ ){
-				out << " - file :" << it2->first << "\n";
-				out << "   size (bytes) : " << it2->second << "\n";
+				out << " - file: " << it2->first << "\n";
+				out << "   size (bytes): " << it2->second << "\n";
 			}
 		}
 	}
 	if (child){
 		childrenFileList += out.str();
 	} else{
-		parentFileList = out.str();
+		
 	}
 }
 /*
