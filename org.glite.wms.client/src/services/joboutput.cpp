@@ -251,7 +251,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	std::vector<Status> children = status.getChildrenStates();
 	// Retrieve Output Files management
 	if (code == 0){
-		// Retrieval NOT allowed for DAGS (collection, partitionables, parametrics...)
+		// OutputFiles Retrieval NOT allowed for DAGS (collection, partitionables, parametrics...)
 		// i.e. ANY job that owns children
 		if (children.size()==0){
 			// actually retrieve files
@@ -327,8 +327,7 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 		bool result = true;
 		try {
 			// gets the list of the out-files from the EndPoint
-			logInfo->print(WMS_INFO, "Processing Jobid:", jobid);
-			logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
+			logInfo->print(WMS_DEBUG, "Connecting to the service", this->getEndPoint());
 			logInfo->print(WMS_DEBUG, "getOutputFileList calling for:",jobid);
 			files = getOutputFileList(jobid, getContext() );
 			hasFiles = hasFiles || (files.size()>0);
