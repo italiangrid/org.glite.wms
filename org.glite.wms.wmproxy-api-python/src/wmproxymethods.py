@@ -852,26 +852,7 @@ class Wmproxy:
 			raise HTTPException(err)
 		except socket.error, err:
 			raise SocketException(err)
-
-	def getDelegatedProxyInfo(self, jobId):
-		"""
-		Method:  getDelegatedProxyInfo
-		IN =  jobId (string)
-		OUT = list of strings containing Delegated Proxy information
-
-		This operation returns the Delegated Proxy information
-		"""
-		try:
-			self.soapInit()
-			return parseStructType(self.remote.getDelegatedProxyInfo(jobId))
-		except SOAPpy.Types.faultType, err:
-			raise WMPException(err)
-		except SOAPpy.Errors.HTTPError, err:
-			raise HTTPException(err)
-		except socket.error, err:
-			raise SocketException(err)
-
-        def getPerusalFiles(self, jobId, file, allChunks):
+	def getPerusalFiles(self, jobId, file, allChunks):
 		"""
 		Method: getPerusalFiles
 		IN =  jobId (string)
@@ -925,18 +906,18 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-
-
-	def getJobProxyInfo(self,jobId):
+	def getJobProxyInfo(self, jobId):
 		"""
-		Method: getJobProxyInfo
+		Method:  getJobProxyInfo
 		IN =  jobId (string)
-		OUT =
-		
+		OUT = list of strings containing Delegated Proxy information
+
+		This operation returns the Job Proxy information
 		"""
 		try:
 			self.soapInit()
-			self.remote.getJobProxyInfo(jobId)
+			result =self.remote.getJobProxyInfo(jobId)
+			return parseStructType(self.remote.getJobProxyInfo(jobId))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
@@ -944,4 +925,21 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
+	def getDelegatedProxyInfo(self, delegationId):
+		"""
+		Method:  getDelegatedProxyInfo
+		IN =  delegationId (string)
+		OUT = list of strings containing Delegated Proxy information
+
+		This operation returns the Delegated Proxy information
+		"""
+		try:
+			self.soapInit()
+			return parseStructType(self.remote.getDelegatedProxyInfo(delegationId))
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
