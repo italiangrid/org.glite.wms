@@ -94,7 +94,6 @@ public class WMProxyCollectionTemplateTest {
 	public static void main(String[] args) throws java.lang.Exception {
 		// test input parameters
 		String url = "" ;
-		String jobId = "" ;
 		String configFile = "" ;
 		String proxyFile = "";
 		String certsPath = "";
