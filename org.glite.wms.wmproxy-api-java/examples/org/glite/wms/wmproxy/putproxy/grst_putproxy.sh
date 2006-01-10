@@ -14,7 +14,7 @@
 top=../../../../../../../
 top_src=../../../../../
 package=org.glite.wms.wmproxy.putproxy
-class=WMProxyPutProxyTest
+class=WMProxyGrstProxyTest
 
 AXIS=`more ../axis.cfg`
 AXIS_LOC=${top}$AXIS
