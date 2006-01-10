@@ -23,12 +23,11 @@ public class WMProxyGrstGetProxyTest {
 	*	Starts the test
 	*	@param url service URL
 	*  	@param delegationID the id to identify the delegation
-	*  	@param propFile the path location of the user properties file
 	*	@param proxyFile the path location of the user proxy file
 	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String delegationId, String propFile, String proxyFile, String certsPath ) throws org.glite.wms.wmproxy.BaseException  {
+	public static void runTest ( String url, String delegationId, String proxyFile, String certsPath ) throws org.glite.wms.wmproxy.BaseException  {
 		// proxies
 		String certReq = "";
 		String proxy = "" ;
@@ -64,7 +63,6 @@ public class WMProxyGrstGetProxyTest {
 	public static void main(String[] args)  {
 		String url = "" ;
 		String delegationId = "";
-		String propFile = "";
 		String proxyFile = "";
 		String certsPath = "";		
 		try {
@@ -84,7 +82,7 @@ public class WMProxyGrstGetProxyTest {
 			   certsPath = "";
 			}
 			// Launches the test
-			runTest (url, delegationId, propFile, proxyFile, certsPath);
+			runTest (url, delegationId, proxyFile, certsPath);
 		} catch (Exception exc){
 			System.out.println (exc.toString( ));
 		}

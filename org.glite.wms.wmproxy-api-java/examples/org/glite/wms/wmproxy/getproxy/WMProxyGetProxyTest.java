@@ -75,7 +75,7 @@ public class WMProxyGetProxyTest {
 			url = args[0];
 			delegationId = args[1];
 			proxyFile = args[2];
-			
+
 			if (args.length == 4) {
 			   certsPath = args[3];
 			} else  {
@@ -86,8 +86,5 @@ public class WMProxyGetProxyTest {
 		} catch (Exception exc){
 			System.out.println (exc.toString( ));
 		}
-
-
 	 }
-
  }
