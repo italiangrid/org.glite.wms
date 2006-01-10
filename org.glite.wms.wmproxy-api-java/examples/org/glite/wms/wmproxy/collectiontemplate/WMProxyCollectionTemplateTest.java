@@ -29,18 +29,20 @@ public class WMProxyCollectionTemplateTest {
 	public WMProxyCollectionTemplateTest  ( ) { }
 
 	/*
-		starts the test
-		@param url service URL
-		@param configFile the path location of the configuration file
-		@param proxyFile the path location of the user proxy file
-		@throws.Exception if any error occurs
+	*	Starts the test
+	*	@param url service URL
+	*  	@param configFile path location of the configuration file
+	*	@param proxyFile the path location of the user proxy file
+	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
+	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest (String url, String configFile, String proxyFile ) throws java.lang.Exception {
+	public static void runTest ( String url, String configFile, String proxyFile, String certsPath  ) throws java.lang.Exception {
 
 		// input parameters for the service
 		int jobNumber = 0;
 		String rank = "";
 		String requirements = "";
+		WMProxyAPI client = null;
 
 		// output result
 		String result = "";
@@ -54,6 +56,13 @@ public class WMProxyCollectionTemplateTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("config-File	 	= [" + configFile + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		if (certsPath.length()>0){
+			System.out.println ("CAs path		= [" + certsPath+ "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		  	client = new WMProxyAPI ( url, proxyFile, certsPath ) ;
+		} else {
+		 	 client = new WMProxyAPI ( url, proxyFile ) ;
+		 }
 		// Read configuration file ----------------------------
 		System.out.println ("==================================================================================================");
 		GetParameters parameters = new GetParameters(  configFile ) ;
@@ -70,7 +79,6 @@ public class WMProxyCollectionTemplateTest {
 		System.out.println ("==================================================================================================");
 		// end reading configuration file ----------------------------
 		// testing ...
-		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
 		System.out.println ("Testing....");
 		result = client.getCollectionTemplate( jobNumber, requirements, rank);
 		// result
@@ -89,12 +97,25 @@ public class WMProxyCollectionTemplateTest {
 		String jobId = "" ;
 		String configFile = "" ;
 		String proxyFile = "";
-		// Reads the input arguments
-		if ((args == null) || (args.length < 3))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <config-File>)");
-		url = args[0];
-		proxyFile = args[1];
-		configFile = args[2];
-		runTest ( url, configFile, proxyFile);
+		String certsPath = "";
+		try {
+			// input parameters
+			if ((args == null) || (args.length < 3)){
+				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <config-File>)");
+			} else if (args.length > 4) {
+			 	 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <proxyFile> <config-File> [CAs paths (optional)] )");
+			}
+			url = args[0];
+			configFile = args[1];
+			proxyFile = args[2];
+			if (args.length == 4) {
+				certsPath = args[3];
+			} else  {
+			certsPath = "";
+			}
+			runTest ( url, configFile, proxyFile, certsPath);
+		} catch (Exception exc){
+			System.out.println (exc.toString( ));
+		}
  	 }
  }
