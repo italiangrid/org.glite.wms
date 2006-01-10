@@ -6,6 +6,7 @@
 #	input parameters:
 #		- p1 = endpoint URL
 #		- p2 = proxy file pathname
+#               - p3 = CAs files pathname
 #
 ##############################################
 
@@ -42,10 +43,11 @@ done
 #----------------
 p1=$1
 p2=$2
+p3=$3
 
 # launching the test...
 # ------------------------
-CMD="${package}.${class} ${p1} ${p2}"
+CMD="${package}.${class} ${p1} ${p2} ${p3}"
 echo "java ${CMD}"
 java -classpath ${classpath} ${CMD}
 
