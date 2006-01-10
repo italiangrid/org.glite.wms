@@ -93,6 +93,8 @@ public class WMProxyAPI{
 		}
 		// proxyFile
 		this.proxyFile = proxyFile;
+		// CAs path
+		this.certsPath = "";
 		// Sets up the connection
 		this.setUpService ( );
 	}
@@ -105,15 +107,12 @@ public class WMProxyAPI{
 	*  @throws CredentialException in case of any error with the user proxy file
 	*  @throws ServiceURLException malformed service URL specified as input
 	*/
-	public WMProxyAPI (String url, String proxyFile, String logPropFile) throws org.glite.wms.wmproxy.ServiceException,
+	public WMProxyAPI (String url, String proxyFile, String certsPath) throws org.glite.wms.wmproxy.ServiceException,
 					org.glite.wms.wmproxy.ServiceURLException,
 					org.glite.wms.wmproxy.CredentialException {
 
-		// logger
-		if ( logPropFile != null)
-			PropertyConfigurator.configure(logPropFile);
 		logger = Logger.getLogger(WMProxyAPI.class);
-		logger.debug ("INPUT: url=[" + url + "] - proxyFile = [" + proxyFile + "]");
+		logger.debug ("INPUT: url=[" + url + "] - proxyFile = [" + proxyFile + "] - certsPath=[" + certsPath + "]");
 		try {
 			// service URL
 			this.serviceURL = new URL (url);
@@ -123,6 +122,8 @@ public class WMProxyAPI{
 		}
 		// proxyFile
 		this.proxyFile = proxyFile;
+		// CAs path
+		this.certsPath = certsPath;
 		// Sets up the connection
 		this.setUpService ( );
 	}
@@ -151,7 +152,7 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
 		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
 			// GenericFault ->ServiceException
-			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
 		} catch ( java.rmi.RemoteException exc) {
 			// RemoteException->ServiceException
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
@@ -1269,6 +1270,9 @@ public class WMProxyAPI{
 			else
 				throw new org.glite.wms.wmproxy.CredentialException ("proxy file not found : " + proxyFile);
 		}
+		if (certsPath.length()>0){
+			System.setProperty(org.glite.security.trustmanager.ContextWrapper.CA_FILES, new String(certsPath + "/*.0"));
+		}
 	}
 	/*
 	* Creates an exception message from the input exception object
@@ -1304,6 +1308,8 @@ public class WMProxyAPI{
 	private URL serviceURL = null;
 	/** Proxy file location */
 	private String proxyFile= null;
+	/** Certificate Authorities files location */
+	private String certsPath = null;
 	/** Service location */
 	private WMProxyLocator serviceLocator= null;
 	/** Glite WMProxy Service Stub */

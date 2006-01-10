@@ -7,6 +7,7 @@
 #		- p1 = endpoint URL
 #		- p2 = delegation ID
 #		- p3 = proxy file pathname
+#		- p4 = CAs files pathname
 #
 ##############################################
 
@@ -47,12 +48,13 @@ done
 p1=$1
 p2=$2
 p3=$3
+p4=$4
 
 # launching the test...
 # ------------------------
-CMD="${package}.${class} ${p1} ${p2} ${p3}"
+CMD="${package}.${class} ${p1} ${p2} ${p3} ${p4}"
 echo "java ${CMD}"
-java -classpath ${classpath} ${CMD}
+java -classpath ${classpath} -DsslCAFiles="/home/msotty/cas/*.0" ${CMD}
 
 
 

@@ -25,13 +25,15 @@ public class WMProxyGrstGetProxyTest {
 	*  	@param delegationID the id to identify the delegation
 	*  	@param propFile the path location of the user properties file
 	*	@param proxyFile the path location of the user proxy file
+	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String delegationId, String propFile, String proxyFile ) throws org.glite.wms.wmproxy.BaseException  {
+	public static void runTest ( String url, String delegationId, String propFile, String proxyFile, String certsPath ) throws org.glite.wms.wmproxy.BaseException  {
 		// proxies
 		String certReq = "";
 		String proxy = "" ;
 		String result = "" ;
+		WMProxyAPI client = null;
 
 		System.out.println ("TEST : GridSite getProxy");
 		System.out.println ("************************************************************************************************************************************");
@@ -41,8 +43,13 @@ public class WMProxyGrstGetProxyTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("proxy			= [" + proxyFile+ "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		// Test
-		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
+		if (certsPath.length()>0){
+			System.out.println ("CAs path		= [" + certsPath+ "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		  	client = new WMProxyAPI ( url, proxyFile, certsPath ) ;
+		} else {
+			 client = new WMProxyAPI ( url, proxyFile ) ;
+		}
 		System.out.println ("Testing ....");
 		// Proxy Request
 		System.out.println ("Performing Proxy-Request .....");
@@ -59,63 +66,27 @@ public class WMProxyGrstGetProxyTest {
 		String delegationId = "";
 		String propFile = "";
 		String proxyFile = "";
-		try  {
+		String certsPath = "";		
+		try {
 			// input parameters
-			if ((args == null) || (args.length < 3))
-				throw new IllegalArgumentException ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <proxyFile>)");
+			if ((args == null) || (args.length < 3)){
+				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <proxyFile>)");
+			} else if (args.length > 4) {
+			  throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <Delegation-ID> <proxyFile> [CAs paths (optional)] )");
+			}
 			url = args[0];
 			delegationId = args[1];
 			proxyFile = args[2];
 
+			if (args.length == 4) {
+			   certsPath = args[3];
+			} else  {
+			   certsPath = "";
+			}
 			// Launches the test
-			runTest (url, delegationId, propFile, proxyFile);
-		} catch (BaseException exc) {
-			System.out.println("\nException caught:\n");
-			System.out.println("Message:\n----------\n"+ exc.getMessage() + "\n");
-			System.err.println("Stack Trace:\n------------");
-                        exc.printStackTrace();
+			runTest (url, delegationId, propFile, proxyFile, certsPath);
+		} catch (Exception exc){
+			System.out.println (exc.toString( ));
 		}
-	/*	} catch (Exception e) {
-			System.out.println("Exception caught!!");
-                        System.err.println("Stack Trace:");
-                        e.printStackTrace();
-                        System.err.println("\ngetMessage: " + e.getMessage());
-
-
-                        // lettura del fault
-                        AxisFault fault = AxisFault.makeFault(e);
-                        System.out.println("\nfaultString: \n" + fault.getFaultString());
-                        Element element[] = fault.getFaultDetails();
-                        System.out.println("Description: \n" + element[0]);
-                        System.out.println("Description: \n"
-                                        + element[0].getElementsByTagName("Description").item(0));
-		}*/
-/*
- 		} catch ( org.gridsite.www.namespaces.delegation_1.DelegationExceptionType exc)  {
-			System.err.println ( "DelegationException caught ");
-			System.err.println (  "Message: " + exc.getMessage1() );
-			// Print the stack trace to a byte array
-			java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-			java.io.PrintStream ps = new java.io.PrintStream(out);
-			exc.printStackTrace(ps);
-		} catch (java.rmi.RemoteException exc)  {
-System.err.println ( "----------------\n" + exc.toString() +  "----------------\n");
-			System.err.println ( "RemoteException caught ");
-			System.err.println (  "Message: " + exc.getMessage() );
-			System.err.println (   "Cause: " + exc.getCause() );
-			// Print the stack trace to a byte array
-			java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-			java.io.PrintStream ps = new java.io.PrintStream(out);
-			exc.printStackTrace(ps);
-
-			 System.err.println (  "Stack Trace:\n" + ps.toString() );
- 		} catch (Exception exc )  {
-System.err.println ( "----------------\n" + exc.toString() +  "----------------\n");
-			System.err.println ( "Generic Exception caught ");
-			System.err.println (  "Message: " + exc.getMessage() );
-
-		}*/
-
-	 }
-
+	}
  }
