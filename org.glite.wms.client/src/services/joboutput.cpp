@@ -21,7 +21,6 @@
 // JDL
 #include "glite/wms/jdl/Ad.h"
 #include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/RequestAdExceptions.h"
 // exceptions
 #include "utilities/excman.h"
 // wmp-client utilities
