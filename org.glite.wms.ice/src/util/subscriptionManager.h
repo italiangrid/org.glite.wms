@@ -1,0 +1,53 @@
+
+#ifndef _GLITE_WMS_ICE_UTIL_SUBSCRIPTIONMGR_H__
+#define _GLITE_WMS_ICE_UTIL_SUBSCRIPTIONMGR_H__
+
+#include <string>
+#include <vector>
+
+#include "glite/ce/monitor-client-api-c/CESubscription.h"
+#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
+
+/*class CESubscription;
+class CESubscriptionMgr;
+class Topic;
+class Policy;*/
+
+namespace log4cpp { class Category; }
+
+namespace glite {
+namespace wms {
+namespace ice {
+namespace util {
+
+  class iceConfManager;
+
+  class subscriptionManager {
+    CESubscription *ceS;
+    CESubscriptionMgr *ceSMgr;
+    Topic *T;
+    Policy *P;
+    iceConfManager* conf;
+    log4cpp::Category *log_dev;
+    bool valid;
+    static subscriptionManager* instance;
+    std::string myname;
+
+   protected:
+    subscriptionManager();
+    virtual ~subscriptionManager() {}
+
+   public:
+    static        subscriptionManager* getInstance();
+    void          list(const std::string& url, std::vector<Subscription>&);
+    std::string   subscribe(const std::string& url,
+    		            const long int& duration);
+
+  };
+
+}
+}
+}
+};
+
+#endif
