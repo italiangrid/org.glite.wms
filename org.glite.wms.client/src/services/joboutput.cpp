@@ -47,6 +47,7 @@ namespace services {
 
 int SUCCESS = 0;
 int FAILED = -1;
+const bool GENERATE_NODE_NAME =false;
 
 /*
 * Default constructor
@@ -275,9 +276,19 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	if (children.size()){
 		ostringstream msgVago ;
 		unsigned int size = children.size();
-		std::map< std::string, std::string > map= AdUtils::getJobIdMap(status.getJdl());
-		for (unsigned int i = 0 ; i < size ;i++){
-			retrieveOutput (msgVago,children[i],dirAbs+logName+"_"+ AdUtils::JobId2Node(map,children[i].getJobId()), true);
+		if (GENERATE_NODE_NAME){
+			std::map< std::string, std::string > map= AdUtils::getJobIdMap(status.getJdl());
+			for (unsigned int i = 0 ; i < size ;i++){
+				retrieveOutput (msgVago,children[i],
+					dirAbs+logName+"_"+
+					AdUtils::JobId2Node(map,children[i].getJobId()),true);
+			}
+		}else{
+			for (unsigned int i = 0 ; i < size ;i++){
+				retrieveOutput (msgVago,children[i],
+					dirAbs+logName+"_"+
+					children[i].getJobId().getUnique(),true);
+			}
 		}
 	}
 	bool parent = status.hasParent ( ) ;
