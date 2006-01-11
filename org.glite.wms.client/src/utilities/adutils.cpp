@@ -96,7 +96,7 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 	// Check VIRTUAL ORGANISATION attribute:
 	if (!ad.hasAttribute(JDL::VIRTUAL_ORGANISATION)){
 		if (voName==""){
-			// In these cases Vo name is impossible to track
+			// In these cases Vo name is impossible to track (neither in conf nor in certificate extension)
 			throw WmsClientException(__FILE__,__LINE__,
 				"AdUtils::parseVo",DEFAULT_ERR_CODE,"Empty Value",
 				"Unable to find Mandatory VirtualOrganisation inside the file:\n"+voPath);
@@ -184,6 +184,29 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	return attributes;
 }
 
+
+
+
+/*  OLD APPROACH: */
+// STATIC METHODS:
+void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
+	if (attrValue!=""){
+		if(!jdl->hasAttribute(attrName)){
+			jdl->setAttribute(attrName,attrValue);
+		}else if (force){
+			// Override previous value
+			jdl->delAttribute(attrName);
+			jdl->setAttribute(attrName,attrValue);
+		}
+	}
+}
+void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue, bool force=false){
+	if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
+		// Set Default Attribute ONLY when TRUE
+		jdl->setAttribute(attrName,attrValue);
+	}
+}
+/* NEW APPROACH:
 // STATIC METHODS:
 void setMissingString(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
 		if (confAd.hasAttribute(attrName)){
@@ -226,6 +249,9 @@ void setMissingBool(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms:
 		}
 	}
 }
+*/
+
+
 /******************
 * JDL is still an AD (no type switched)
 *******************/
@@ -233,60 +259,75 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf,
 	const std::string& pathOpt){
 	if (!conf){return;}
-	// Default JDL values:
-	try{
-		if (conf->jdl_default_attributes()){
-			Ad confAd(*(conf->jdl_default_attributes()));
-			// Default String Attrs: HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
-			setMissingString(jdl,JDL::MYPROXY,confAd);
-			setMissingString(jdl,JDL::HLR_LOCATION,confAd);
-			setMissingString(jdl,JDL::JOB_PROVENANCE,confAd);
-			setMissingString(jdl,JDL::VIRTUAL_ORGANISATION,confAd,true);
-			// Default Boolean Attributes:  ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
-			setMissingBool(jdl,JDL::ALLOW_ZIPPED_ISB,confAd);
-			setMissingBool(jdl,JDL::PU_FILE_ENABLE,confAd);
-			// Switching Type - dedicated values
-			if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_COLLECTION)){
-				// COLLECTION TYPE
-				setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
-			}else if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_DAG)){
-				// DAG TYPE
-				// Nothing to do so far...
-			}else if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_JOB)
-				||!jdl->hasAttribute(JDL::TYPE)){
-				// JOB TYPE
-				setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
-				setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
-			}else {
-				// UNKNOWN TYPE: ERROR
-				throw WmsClientException(__FILE__,__LINE__,
-					"AdUtils::setDefaultValuesAd",DEFAULT_ERR_CODE,
-					"wrong conf attribute","unknown type: "+jdl->getString(JDL::TYPE));
-			}
-			// Other possible user values
-			std::vector< std::string > attrs= confAd.attributes ();
-			for (unsigned int i = 0 ; i<attrs.size(); i++){
-				string attrName =attrs[i] ;
-				if( 	glite_wms_client_toLower(attrName)!=JDL::RANK &&
-					glite_wms_client_toLower(attrName)!=JDL::REQUIREMENTS){
-					if (!jdl->hasAttribute(attrs[i])){
-						jdl->setAttributeExpr (attrs[i],confAd.lookUp(attrs[i])->Copy());
+	/*  OLD APPROACH: */
+
+	// Strings attributes:
+	// HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
+	setMissing(jdl,JDL::MYPROXY,conf->my_proxy_server());
+	setMissing(jdl,JDL::HLR_LOCATION,conf->hlrlocation());
+	setMissing(jdl,JDL::VIRTUAL_ORGANISATION,conf->virtual_organisation(),true);
+	setMissing(jdl,JDL::JOB_PROVENANCE,conf->job_provenance());
+	// Boolean Attributes:
+	// ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
+	setMissing(jdl,JDL::ALLOW_ZIPPED_ISB,conf->allow_zipped_isb());
+	setMissing(jdl,JDL::PU_FILE_ENABLE,conf->perusal_file_enable());
+
+		/*  NEW APPROACH:
+		// Default JDL values:
+		try{
+			if (conf->jdl_default_attributes()){
+				Ad confAd(*(conf->jdl_default_attributes()));
+				// Default String Attrs: HLRLOCATION, MYPROXYSERVER, VIRTUAL ORGANISATION, JOB_PROVENANCE
+				setMissingString(jdl,JDL::MYPROXY,confAd);
+				setMissingString(jdl,JDL::HLR_LOCATION,confAd);
+				setMissingString(jdl,JDL::JOB_PROVENANCE,confAd);
+				setMissingString(jdl,JDL::VIRTUAL_ORGANISATION,confAd,true);
+				// Default Boolean Attributes:  ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
+				setMissingBool(jdl,JDL::ALLOW_ZIPPED_ISB,confAd);
+				setMissingBool(jdl,JDL::PU_FILE_ENABLE,confAd);
+				// Switching Type - dedicated values
+				if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_COLLECTION)){
+					// COLLECTION TYPE
+					setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
+				}else if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_DAG)){
+					// DAG TYPE
+					// Nothing to do so far...
+				}else if(jdl->hasAttribute(JDL::TYPE,JDL_TYPE_JOB)
+					||!jdl->hasAttribute(JDL::TYPE)){
+					// JOB TYPE
+					setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
+					setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
+				}else {
+					// UNKNOWN TYPE: ERROR
+					throw WmsClientException(__FILE__,__LINE__,
+						"AdUtils::setDefaultValuesAd",DEFAULT_ERR_CODE,
+						"wrong conf attribute","unknown type: "+jdl->getString(JDL::TYPE));
+				}
+				// Other possible user values
+				std::vector< std::string > attrs= confAd.attributes ();
+				for (unsigned int i = 0 ; i<attrs.size(); i++){
+					string attrName =attrs[i] ;
+					if( 	glite_wms_client_toLower(attrName)!=JDL::RANK &&
+						glite_wms_client_toLower(attrName)!=JDL::REQUIREMENTS){
+						if (!jdl->hasAttribute(attrs[i])){
+							jdl->setAttributeExpr (attrs[i],confAd.lookUp(attrs[i])->Copy());
+						}
 					}
 				}
 			}
+			if (pathOpt!=""){
+				// Further configuration file specified by command-line
+				Ad confPathAd;
+				confPathAd.fromFile(pathOpt);
+				jdl->merge(confPathAd);
+			}
+		}catch(RequestAdException &exc){
+			// Some classAd exception occurred
+			throw WmsClientException(__FILE__,__LINE__,
+				"AdUtils::setDefaultValuesAd",DEFAULT_ERR_CODE,
+				"wrong conf attribute", exc.what());
 		}
-		if (pathOpt!=""){
-			Ad confPathAd;
-			confPathAd.fromFile(pathOpt);
-			jdl->merge(confPathAd);
-		}
-	}catch(RequestAdException &exc){
-		// Some classAd exception occurred
-		throw WmsClientException(__FILE__,__LINE__,
-			"AdUtils::setDefaultValuesAd",DEFAULT_ERR_CODE,
-			"wrong conf attribute", exc.what());
-
-	}
+		*/
 }
 /******************
 * JDL is a JobAd
@@ -294,17 +335,32 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	if (conf->jdl_default_attributes()){
-		Ad confAd(*(conf->jdl_default_attributes()));
-		// RANK
-		if(confAd.hasAttribute(JDL::RANK)){
-			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
-		}
-		// REQUIREMENTS
-		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
-			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
-		}
+	/* OLD APPROACH */
+	// RANK
+	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
+	// REQUIREMENTS
+	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
+	// (SHALLOW) RETRYCOUNT
+	if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
+		jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
 	}
+	if(   (!jdl->hasAttribute(JDL::SHALLOWRETRYCOUNT)) ){
+		jdl->setAttribute(JDL::SHALLOWRETRYCOUNT,conf->shallow_retry_count());
+	}
+
+		/* NEW APPROACH
+		if (conf->jdl_default_attributes()){
+			Ad confAd(*(conf->jdl_default_attributes()));
+			// RANK
+			if(confAd.hasAttribute(JDL::RANK)){
+				jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+			}
+			// REQUIREMENTS
+			if(confAd.hasAttribute(JDL::REQUIREMENTS)){
+				jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
+			}
+		}
+		NEW APPROACH */
 }
 /******************
 * JDL is a Dag
@@ -312,17 +368,25 @@ void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
 void AdUtils::setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	if (conf->jdl_default_attributes()){
-		Ad confAd(*(conf->jdl_default_attributes()));
-		// RANK
-		if(confAd.hasAttribute(JDL::RANK)){
-			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+	/* OLD APPROACH */
+	// RANK
+	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank()); }
+	// REQUIREMENTS
+	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements()); }
+
+		/* NEW APPROACH
+		if (conf->jdl_default_attributes()){
+			Ad confAd(*(conf->jdl_default_attributes()));
+			// RANK
+			if(confAd.hasAttribute(JDL::RANK)){
+				jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+			}
+			// REQUIREMENTS
+			if(confAd.hasAttribute(JDL::REQUIREMENTS)){
+				jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
+			}
 		}
-		// REQUIREMENTS
-		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
-			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
-		}
-	}
+		NEW APPROACH */
 }
 /******************
 * JDL is a CollectionAd
@@ -330,17 +394,28 @@ void AdUtils::setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
 void AdUtils::setDefaultValues(glite::wms::jdl::CollectionAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
-	if (conf->jdl_default_attributes()){
-		Ad confAd(*(conf->jdl_default_attributes()));
-		// RANK
-		if(confAd.hasAttribute(JDL::RANK)){
-			jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
-		}
-		// REQUIREMENTS
-		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
-			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
-		}
+	/* OLD APPROACH */
+	// RANK
+	if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
+	// REQUIREMENTS
+	if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
+	// RETRYCOUNT
+	if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
+		jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
 	}
+		/* NEW APPROACH
+		if (conf->jdl_default_attributes()){
+			Ad confAd(*(conf->jdl_default_attributes()));
+			// RANK
+			if(confAd.hasAttribute(JDL::RANK)){
+				jdl->setDefaultRank(confAd.lookUp(JDL::RANK));
+			}
+			// REQUIREMENTS
+			if(confAd.hasAttribute(JDL::REQUIREMENTS)){
+				jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
+			}
+		}
+		NEW APPROACH */
 }
 /***********************
 *  JobId - Node mapping
