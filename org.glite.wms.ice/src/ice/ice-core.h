@@ -26,19 +26,19 @@ namespace log4cpp {
 namespace glite {
   namespace wms {
     namespace ice {
-      
+
       enum iceSupportedCommand {
 	jobsubmit,
 	jobcancel
       };
-      
+
       struct iceCommand {
 	std::string gid_jobid;
 	std::string cream_jobid;
 	iceSupportedCommand command;
 	std::string jdl;
       };
-      
+
       class ice : public glite::wms::ice::absice {
 /* 	glite::wms::ice::util::eventStatusListener* listener; */
 /* 	glite::wms::ice::util::eventStatusPoller* poller; */
@@ -60,12 +60,12 @@ namespace glite {
 	log4cpp::Category* log_dev;
 
       public:
-	ice(const std::string& NS_FL, 
+	ice(const std::string& NS_FL,
 	    const std::string& WM_FL)
 	  throw(glite::wms::ice::iceInit_ex&);
 
 	virtual ~ice();
-	
+
 	void clearRequests();
 	void getNextRequests(std::vector<std::string>&);
 	void removeRequest(const unsigned int&);
@@ -74,9 +74,9 @@ namespace glite {
 	void startPoller(const int&);
 	void stopListener();
 	void stopPoller();
-	bool isSubscribedTo(const std::string& url) {
+/*	bool isSubscribedTo(const std::string& url) {
 	  return listener->isSubscribedTo(url);
-	}
+	}*/
 	virtual void doOnJobFailure(const std::string&);
 
       }; // class ice

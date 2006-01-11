@@ -7,41 +7,60 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "iceEventLogger.h"
+#include "glite/ce/monitor-client-api-c/CESubscription.h"
+#include "glite/ce/monitor-client-api-c/Topic.h"
+#include "glite/ce/monitor-client-api-c/Policy.h"
+
+namespace glite {
+namespace wms {
+namespace ice {
+namespace util {
+
+  class iceConfManager;
+
+}
+}
+}
+};
+
+//class CESubscription;
 
 namespace glite {
   namespace wms {
     namespace ice {
-      
+
       class iceCommandSubmit : public iceAbsCommand {
-	
+
       public:
 	iceCommandSubmit( const std::string& request ) throw(glite::wms::ice::util::ClassadSyntax_ex&, glite::wms::ice::util::JobRequest_ex&);
-	
+
 	virtual ~iceCommandSubmit() {};
-	
-	virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );          
-	
+
+	virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+
       protected:
-	
+
 	class pathName {
 	  log4cpp::Category* log_dev;
-				 public:
+
+	public:
 	  typedef enum { invalid=-1, absolute, uri, relative } pathType_t;
-	  
+
 	  pathName( const std::string& p );
-	  virtual ~pathName( ) { };
+	  virtual ~pathName( ) { }
 	  // accessors
-	  pathType_t getPathType( void ) const { return _pathType; };
-	  const std::string& getFullName( void ) const { return _fullName; };
-	  const std::string& getPathName( void ) const { return _pathName; };
-	  const std::string& getFileName( void ) const { return _fileName; };
-				 protected:
+	  pathType_t getPathType( void ) const { return _pathType; }
+	  const std::string& getFullName( void ) const { return _fullName; }
+	  const std::string& getPathName( void ) const { return _pathName; }
+	  const std::string& getFileName( void ) const { return _fileName; }
+
+	protected:
 	  const std::string _fullName;
 	  pathType_t _pathType;
-	  std::string _pathName;                   
+	  std::string _pathName;
 	  std::string _fileName;
-	}; 
+//	  glite::wms::ice::util::iceConfManager* confMgr;
+	};
 	
 	/**
 	 * This method is used to transform a "standard" jdl
@@ -77,6 +96,11 @@ namespace glite {
 	std::string _certfile;
 	std::string _gridJobId;
 	log4cpp::Category* log_dev;
+ 	glite::wms::ice::util::iceConfManager* confMgr;
+	CESubscription ceS;
+	Topic T;//(iceUtil::iceConfManager::getInstance()->getICETopic()),
+        Policy P;//(5000),
+	std::string myname_url;
         // util::iceEventLogger *_ev_logger;
       };
     }

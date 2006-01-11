@@ -53,7 +53,7 @@ namespace glite {
 	  int tcpport;
 	  std::string myname;
 	  void init(void);
-	  std::map<std::string, bool> cemon_subscribed_to;
+	  //std::map<std::string, bool> cemon_subscribed_to;
 	  glite::wms::ice::util::iceConfManager* conf;
           log4cpp::Category *log_dev;
 
@@ -68,9 +68,9 @@ namespace glite {
 	  //void updateJobCache(void);
 	  virtual void operator()();
 	  virtual void stop() { endaccept=true; }
-	  virtual bool isSubscribedTo(const std::string& cemon_url) {
+/*	  virtual bool isSubscribedTo(const std::string& cemon_url) {
 	    return cemon_subscribed_to[cemon_url];
-	  }
+	  }*/
 	};
 
       }

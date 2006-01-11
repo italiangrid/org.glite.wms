@@ -1,4 +1,6 @@
 #include "iceCommandSubmit.h"
+#include "subscriptionCache.h"
+#include "iceConfManager.h"
 #include "jobCache.h"
 #include "creamJob.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
@@ -6,9 +8,11 @@
 #include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
-// #include "iceEventLogger.h"
-
 #include <ctime>
+#include <netdb.h>
+#include <cstring> // for memset
+
+extern int h_errno;
 
 using namespace glite::wms::ice;
 using namespace std;
@@ -16,11 +20,36 @@ using namespace glite::ce::cream_client_api;
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 
 //______________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
-  iceAbsCommand( ), 
-  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
+iceCommandSubmit::iceCommandSubmit( const std::string& request )
+  throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
+  iceAbsCommand( ),
+  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
+  confMgr(glite::wms::ice::util::iceConfManager::getInstance()),
+  ceS(),
+  T(glite::wms::ice::util::iceConfManager::getInstance()->getICETopic()),
+  P(5000)
     //    _ev_logger( util::iceEventLogger::instance() )
 {
+    char name[256];
+    memset((void*)name, 0, 256);
+    if(gethostname(name, 256) == -1)
+    {
+        log_dev->fatalStream() << "iceCommandSubmit::CTOR - Couldn't resolve local hostname: "
+                               << strerror(errno)
+                               << log4cpp::CategoryStream::ENDLINE;
+
+      exit(1);
+    }
+    struct hostent *H = gethostbyname(name);
+    if(!H) {
+      log_dev->fatalStream() << "iceCommandSubmit::CTOR() - Couldn't resolve local hostname: "
+                             << strerror(h_errno)
+                             << log4cpp::CategoryStream::ENDLINE;
+      exit(1);
+    }
+    ostringstream os("");
+    os << "http://" << H->h_name << ":" << confMgr->getListenerPort();
+    myname_url = os.str();
     // Sample classad:
     // ( this is the NEW version )
     //  [ requirements = ( ( ( ( other.GlueCEInfoHostName == "lxb2022.cern.ch" ) ) ) && ( other.GlueCEStateStatus == "Production" ) ) && ( other.GlueCEStateStatus == "Production" );
@@ -43,7 +72,7 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request ) throw(util::Cla
     //     StdError = "cstderr";
     //     DefaultRank =  -other.GlueCEStateEstimatedResponseTime;
     //     InputSandbox = { "ExeTar.tt_ch_160_tb20.testrun.sh","glite-dev.tt_ch_160_tb20.testrun.sh.sh" } ] ]
-    
+
     classad::ClassAdParser parser;
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
@@ -100,7 +129,7 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
   try {
     vector<string> url_jid;
 
-    log_dev->log(log4cpp::Priority::INFO, "This request is a Submission...");
+    log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
 
     util::CreamJob theJob( _jdl,
 			   "",
@@ -108,40 +137,40 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 			   job_statuses::UNKNOWN,
 			   time(NULL));
 #ifdef DO_NOT_COMPILE
-    log_dev->log( log4cpp::Priority::INFO, "Logging event to L&B service" );
+    log_dev->log( log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Logging event to L&B service" );
     try {
         _ev_logger->execute_event( _gridJobId.c_str(), "grid005.pd.infn.it" );
     } catch( util::iceLoggerException& ex ) {
-        log_dev->errorStream() << "L&B thrown exception: " 
-                               << ex.what() 
+        log_dev->errorStream() << "iceCommandSubmit::execute() - L&B thrown exception: "
+                               << ex.what()
                                << log4cpp::CategoryStream::ENDLINE;
     }
 #endif
 
     string modified_jdl = creamJdlHelper( _jdl );
-    
-    log_dev->log(log4cpp::Priority::INFO, "Submitting");
+
+    log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting");
     log_dev->debugStream() << "JDL " << modified_jdl
                            << " to [" << theJob.getCreamURL() <<"]["
                            << theJob.getCreamDelegURL() << "]"
                            << log4cpp::CategoryStream::ENDLINE;
-    
-    
+
+
     soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob.getUserProxyCertificate());
-    
-    soap_proxy::CreamProxyFactory::getProxy()->Register( 
+
+    soap_proxy::CreamProxyFactory::getProxy()->Register(
 	theJob.getCreamURL().c_str(),
 	theJob.getCreamDelegURL().c_str(),
         "", // deleg ID not needed because this client
         // will always do auto_delegation
-        modified_jdl, 
+        modified_jdl,
         theJob.getUserProxyCertificate(),
         url_jid,
-        true /*autostart*/ 
+        true /*autostart*/
         );
-    
+
     log_dev->log(log4cpp::Priority::INFO,
-		 string("Returned CREAM-JOBID ["+url_jid[1]+"]"));
+		 string("iceCommandSubmit::execute() - Returned CREAM-JOBID ["+url_jid[1]+"]"));
 
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
@@ -156,6 +185,40 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
     // passing a *pointer should not produce problems
     util::jobCache::getInstance()->put( theJob );
 
+    /**
+     * here must check if we're subscribed to the CEMon service
+     * in order to receive the status change notifications
+     * of job just submitted
+     */
+     /* ....... */
+     string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+                        + confMgr->getCEMonUrlPostfix();
+     if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+	/* MUST SUBSCRIBE TO THIS CEMON */
+	log_dev->infoStream() << "iceCommandSubmit::execute() - Not subscribed to ["
+	 		      << cemon_url << "]. Going to subscribe to it..."
+			      << log4cpp::CategoryStream::ENDLINE;
+
+	ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
+        ceS.setServiceURL(cemon_url);
+	ceS.setSubscribeParam(myname_url.c_str(),
+	                      T,
+		   	      P,
+			      confMgr->getSubscriptionDuration()
+			      );
+	log_dev->infoStream() << "iceCommandSubmit::execute() - Subscribing the consumer ["
+                                  << myname_url << "] to ["<<cemon_url
+                                  << "] with duration="
+                                  << confMgr->getSubscriptionDuration()
+                                  << " secs"
+                                  << log4cpp::CategoryStream::ENDLINE;
+	ceS.subscribe();
+	log_dev->infoStream() << "iceCommandSubmit::execute() - Subscribed with ID ["
+                                  << ceS.getSubscriptionID() << "]"
+                                  << log4cpp::CategoryStream::ENDLINE;
+
+	glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
+     }
   } catch(util::ClassadSyntax_ex& ex) {
       throw iceCommandFatal_ex( string("ClassadSyntax_ex: ") + ex.what() );
   } catch(soap_proxy::auth_ex& ex) {
@@ -174,7 +237,15 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
       throw iceCommandFatal_ex( string("jnlFile_ex: ") + ex.what() );
   } catch(util::jnlFileReadOnly_ex& ex) {
       throw iceCommandFatal_ex( string("jnlFileReadOnly_ex: ") + ex.what() );
-  } 
+  } catch(AuthenticationInitException& ex) {
+      log_dev->fatalStream() << "iceCommandSubmit::execute() - AuthN Error: "
+                             << ex.what() << log4cpp::CategoryStream::ENDLINE;
+      exit(1);
+  } catch(exception& ex) {
+      log_dev->fatalStream() << "iceCommandSubmit::execute() - Subscription Error: "
+                             << ex.what() << log4cpp::CategoryStream::ENDLINE;
+      exit(1);
+  }
 }
 
 //______________________________________________________________________________
@@ -356,7 +427,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
 
     //cout << "Trying to unparse " << p << endl;
     log_dev->log(log4cpp::Priority::INFO,
-		 string("\tTrying to unparse ")+ p );
+		 string("iceCommandSubmit::pathName::CTOR() - Trying to unparse ")+ p );
     if ( boost::regex_match( p, what, uri_match ) ) {
         // is a uri
         _pathType = uri;
@@ -385,7 +456,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
         _pathName.append( _fileName );
     }
     log_dev->log(log4cpp::Priority::DEBUG,
-		 string("Unparsed as follows: filename=[")
+		 string("iceCommandSubmit::pathName::CTOR() - Unparsed as follows: filename=[")
 		 +_fileName + "] pathname={"
 		 +_pathName+"]");
 }
