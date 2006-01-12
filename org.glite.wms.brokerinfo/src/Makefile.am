@@ -10,7 +10,6 @@
 lib_LTLIBRARIES = \
 	libglite_wms_brokerinfo.la \
 	libglite_wms_rls.la \
-	libglite_wms_envC.la \
 	libglite_wms_dli_sici.la
 
 brokerinfodir = $(includedir)/glite/wms/brokerinfo
@@ -23,17 +22,13 @@ libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
 	brokerinfoGlueImpl.cpp
 
-libglite_wms_envC_la_SOURCES = \
-	envC.cpp
-
-libglite_wms_envC_la_LIBADD =
-
 
 libglite_wms_dli_sici_la_SOURCES = \
 	datalocationinterfaceClientLib.cpp \
 	storageindexClientLib.cpp \
 	StorageIndexCatalogInterface.cpp \
-	DataLocationInterfaceSOAP.cpp
+	DataLocationInterfaceSOAP.cpp \
+	envC.cpp
 
 
 libglite_wms_dli_sici_la_LIBADD = \
@@ -51,9 +46,6 @@ libglite_wms_rls_la_LIBADD = \
 	$(REPLICA_MANAGER_LIBS)
 
 #	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
-
-#envC.o: envC.cpp ; \
-#	$(CC) -c envC.cpp -I$(GSOAP_LOCATION) -I$(GSOAP_LOCATION)/include -I. -o envC.o
 
 
 envC.cpp: $(srcdir)/env.h; \
