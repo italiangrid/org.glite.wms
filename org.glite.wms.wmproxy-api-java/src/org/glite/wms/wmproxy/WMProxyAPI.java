@@ -28,6 +28,8 @@ import java.security.cert.X509Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
+
+import java.util.Calendar ;
 import java.util.Date ;
 
 import org.gridsite.www.namespaces.delegation_1.*;
@@ -1254,7 +1256,7 @@ public class WMProxyAPI{
 			// pointer to GliteWMProxy Stub object
 			this.serviceStub = (WMProxyStub) serviceLocator.getWMProxy_PortType( this.serviceURL ) ;
 			// pointer to Gridsite Stub object
-			this.grstStub = (DelegationSoapBindingStub) serviceLocator.getWMProxyDelegation_PortType( this.serviceURL ) ;
+			this.grstStub = (DelegationSoapBindingStub) serviceLocator.getWMProxyDelegation_PortType(this.serviceURL) ;
 		} catch (javax.xml.rpc.ServiceException exc) {
 			throw new org.glite.wms.wmproxy.ServiceException (exc.getMessage());
 		}
@@ -1271,15 +1273,16 @@ public class WMProxyAPI{
 				throw new org.glite.wms.wmproxy.CredentialException ("proxy file not found : " + proxyFile);
 		}
 		if (certsPath.length()>0){
-			System.setProperty(org.glite.security.trustmanager.ContextWrapper.CA_FILES, new String(certsPath + "/*.0"));
+			System.setProperty(org.glite.security.trustmanager.ContextWrapper.CA_FILES, certsPath);
 		}
 	}
 	/*
 	* Creates an exception message from the input exception object
 	*/
-	private String createExceptionMessage(BaseFaultType exc){
+	private String createExceptionMessage(BaseFaultType exc) {
 		String message = "";
-
+		String date = "";
+		int hours = 0;
 		String ec = exc.getErrorCode();
 		String[] cause = (String[])exc.getFaultCause();
 		// fault description
@@ -1289,12 +1292,27 @@ public class WMProxyAPI{
 		String meth = exc.getMethodName() ;
 		if (meth.length()>0) { message += "Method: " + meth + "\n";}
 		// time stamp
-		String ts = "";
-		java.util.Calendar  calendar = exc.getTimestamp();
+		Calendar  calendar = exc.getTimestamp();
+
+		java.text.DateFormat df = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM);
+		hours = calendar.get(Calendar.HOUR_OF_DAY) - (calendar.get(Calendar.ZONE_OFFSET)/ (60*60*1000));
+		calendar.set(Calendar.HOUR_OF_DAY, hours);
+		df.setCalendar(calendar);
+		calendar = df.getCalendar( );
+
 		if (calendar != null){
-			ts = calendar.getTime().toString();
+			calendar.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
+			date = dayStr[calendar.get(Calendar.DAY_OF_WEEK)] + " " +
+				monthStr[calendar.get(Calendar.MONTH)] + " " +
+				twodigits(calendar.get(Calendar.DAY_OF_MONTH)) + " "
+				+ calendar.get(Calendar.YEAR) + " ";
+			//hours =  - (calendar.get(Calendar.ZONE_OFFSET)/ (60*60*1000));
+			date += twodigits(calendar.get(Calendar.HOUR_OF_DAY)) + ":" +
+				twodigits(calendar.get(Calendar.MINUTE)) + ":" +
+				twodigits(calendar.get(Calendar.SECOND)) ;
+			date += " " + calendar.getTimeZone().getID( );
+			if (date.length()>0) { message += "TimeStamp: " + date + "\n";}
 		}
-		if (ts.length()>0) { message += "TimeStamp: " + ts + "\n";}
 		// error code
 		if (ec.length()>0) { message += "ErrorCode: " + ec + "\n";}
 		// fault cause(s)
@@ -1303,6 +1321,16 @@ public class WMProxyAPI{
 			else { message += cause[i] + "\n" ;}
 		}
 		return message;
+	}
+
+	private String twodigits(int n) {
+		String td = "";
+		if (n>=0 && n<10) {
+			td = "0" + n ;
+		} else {
+			td = "" + n;
+		}
+		return td;
 	}
 	/** Service URL */
 	private URL serviceURL = null;
@@ -1318,4 +1346,8 @@ public class WMProxyAPI{
 	private DelegationSoapBindingStub grstStub = null;
 	/** Log manager */
 	private Logger logger= null ;
+
+	private final static String[] monthStr  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July", "Aug", "Sept", "Oct", "Nov", "Dec"};
+	private final static String[] dayStr = {"Sun", "Mon", "Tue", "Wedn", "Thu", "Fri" ,"Sat"};
+
 }
