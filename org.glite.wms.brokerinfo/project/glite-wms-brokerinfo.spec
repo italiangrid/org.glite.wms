@@ -48,10 +48,6 @@ Source:glite-wms-brokerinfo-@MODULE.VERSION@_bin.tar.gz
 %{prefix}/lib/libglite_wms_dli_sici.so.0
 %{prefix}/lib/libglite_wms_dli_sici.so
 %{prefix}/lib/libglite_wms_dli_sici.a
-%{prefix}/lib/libglite_wms_envC.so.0.0.0
-%{prefix}/lib/libglite_wms_envC.so.0
-%{prefix}/lib/libglite_wms_envC.so
-%{prefix}/lib/libglite_wms_envC.a
 %{prefix}/share/doc/glite-wms-brokerinfo-@MODULE.VERSION@/LICENSE
 
 %changelog
