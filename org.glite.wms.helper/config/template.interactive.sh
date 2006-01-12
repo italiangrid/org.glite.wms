@@ -410,11 +410,11 @@ else
 fi
 
 for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
-   globus_url_retry_copy "${__base_url}opt/glite/bin/${f} file://${workdir}/${f}"
+   globus_url_retry_copy "${__input_base_url}opt/glite/bin/${f} file://${workdir}/${f}"
    chmod +x ${workdir}/${f}
 done
 
-globus_url_retry_copy "${__base_url}opt/glite/lib/libglite-wms-grid-console-agent.so.0 file://${workdir}/libglite-wms-grid-console-agent.so.0"
+globus_url_retry_copy "${__input_base_url}opt/glite/lib/libglite-wms-grid-console-agent.so.0 file://${workdir}/libglite-wms-grid-console-agent.so.0"
 
 host=`hostname -f`
 export GLITE_WMS_SEQUENCE_CODE=`$GLITE_WMS_LOCATION/bin/glite-lb-logevent \
