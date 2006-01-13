@@ -426,7 +426,7 @@ else
 fi
 
 host=`hostname -f`
-export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGENVENT \
+export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT \
  --jobid="$GLITE_WMS_JOBID" \
  --source=LRMS \
  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
