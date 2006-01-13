@@ -48,6 +48,7 @@ const string DISPLAY_CMD = "more";
 */
 JobPerusal::JobPerusal () : Job() {
 	// init of the string  options
+	inOpt = NULL;
 	inFileOpt = NULL;
 	outOpt = NULL;
 	dirOpt = NULL;
@@ -66,6 +67,7 @@ JobPerusal::JobPerusal () : Job() {
 JobPerusal::~JobPerusal ()  {
 	// "free memory" for the string  attributes
 	if (inFileOpt) { free(inFileOpt);}
+	if (inOpt) { free(inOpt);}
 	if (outOpt ) { free(outOpt);}
 	if (dirOpt ) { free(dirOpt);}
 }
@@ -78,6 +80,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	string dircfg = "";
 	string logname = "";
 	ostringstream warn;
+	vector<string> jobids ;
 	// Reads the input options
  	Job::readOptions  (argc, argv, Options::JOBPERUSAL);
         // --get
@@ -111,6 +114,8 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"Input Option Error", err.str());
 	}
 	// --input
+        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	// --input-file
         inFileOpt = wmcOpts->getStringAttribute(Options::INPUTFILE);
 	// -- filename
 	peekFiles = wmcOpts->getListAttribute(Options::FILENAME);
@@ -127,12 +132,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The unset operation disables job's files perusal; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
-	} else if (inFileOpt && allOpt) { // TBD why?
-		err << "The following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
 	}
-
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
@@ -141,6 +141,21 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 
 	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
 	// --input
+	if (inOpt){
+		// From input file
+		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(*inOpt));
+		jobids = wmcUtils->getItemsFromFile(*inOpt);
+		if (jobids.size() > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
+			logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one id in the list ");
+			jobids = wmcUtils->askMenu(jobids,Utils::MENU_SINGLEJOBID);
+			jobId = Utils::checkJobId(jobids[0]);
+			logInfo->print (WMS_DEBUG, "Chosen JobId:", jobId );
+   		}
+        } else {
+		// from command line
+        	jobId = wmcOpts->getJobId();
+        }
+	// --input-file
         if (inFileOpt) {
         	peekFiles = wmcUtils->getItemsFromFile(*inFileOpt);
 		if (peekFiles.empty()) {
@@ -159,7 +174,6 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
-
 		} else if (getOpt && nointOpt == false) {
 			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
 			cout << wmcUtils->getStripe(74, "-") << "\n";
@@ -185,10 +199,6 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			"Input Arguments Error",
 			err.str());
 	}
-	/*
-	* The jobid
-	*/
-	jobId = wmcOpts->getJobId( );
 	// output file
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
 	// File directory for --get
@@ -325,8 +335,10 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	vector<string> uris;
 	string errors = "";
 	string file = "";
+	vector<pair<string, string> > pm;
+	int size = 0;
 	try {
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+
 		if (peekFiles.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet",DEFAULT_ERR_CODE,
@@ -335,13 +347,22 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 		} else {
 			file = peekFiles[0] ;
 		}
+		// "Calling-service" message
+		pm.push_back(make_pair("jobid",jobId));
+		pm.push_back(make_pair("file",file));
+		pm.push_back(make_pair("allOpt",boost::lexical_cast<string>(allOpt)));
+		logInfo->service(WMP_GETPERUSAL_SERVICE, pm);
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		// Calling service : getPerusal =============================
 		uris = getPerusalFiles (jobId, file , allOpt, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"perusalGet", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
-	if (uris.size()>0) {
+	size =uris.size();
+	if (size>0) {
+		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; number of files to be retrieved :" + boost::lexical_cast<string>(size));
 		this->gsiFtpGetFiles(uris, paths, errors);
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -352,34 +373,51 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 			logInfo->print(WMS_WARNING,
 				"GET - The following error(s) occured while transferring the file(s)\n" +errors, "");
 		}
+	} else {
+		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; no files to be retrieved");
 	}
 }
 /**
 * SET operation
 */
 void JobPerusal::perusalSet ( ){
+	vector<pair<string, string> > pm;
+	// "Calling-service" message
+	int size = peekFiles.size( );
+	string m = "";
+	pm.push_back(make_pair("jobid",jobId));
+	for (int i=0; i < size; i++){
+		if (i > 0  && i <= size-1){ m += ", ";}
+		m += peekFiles[i] ;
+	}
+	pm.push_back(make_pair("files",m));
+	logInfo->service(WMP_SETPERUSAL_SERVICE, pm);
+	logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 	try {
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		// Calling service : setPerusal =============================
 		enableFilePerusal (jobId, peekFiles, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"enablePerusalFiles", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
+	logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended");
 }
 /**
 * UNSET operation
 */
 void JobPerusal::perusalUnset( ){
 	vector<string> empty;
+	logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " with an empty list of peek files to unset the peeking for the job", jobId);
+	logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 	try {
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		enableFilePerusal (jobId, empty, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"enablePerusalFiles", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
+	logInfo->result(WMP_SETPERUSAL_SERVICE, "operation successfully ended");
 }
 /**
 * File downloading
