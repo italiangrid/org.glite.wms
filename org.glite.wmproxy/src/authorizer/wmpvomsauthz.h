@@ -35,8 +35,9 @@ namespace authorizer {
 class VOMSAuthZ {
 	
 	public:
+	
 		VOMSAuthZ(const std::string &proxypath);
-		~VOMSAuthZ();
+		virtual ~VOMSAuthZ();
 		
 		bool hasVOMSExtension();
 		
@@ -53,6 +54,7 @@ class VOMSAuthZ {
 		static time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 
 	private:
+	
 		X509 * cert;
 		struct vomsdata * data;
 		

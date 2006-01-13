@@ -136,6 +136,9 @@ const char * GLITE_HOST_KEY = "GLITE_HOST_KEY";
 
 const int CURRENT_STEP_DEF_VALUE = 1;
 
+const char * ABORT_SEQ_CODE = "UI=000000:NS=0000096660:WM=000000:"
+	"BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000";
+
 // Defining File Separator
 #ifdef WIN 
    // Windows File Separator 
@@ -1353,6 +1356,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 		authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
 	} catch (Exception &ex) {
 		if (ex.getCode() == wmputilities::WMS_PROXY_EXPIRED) {
+			wmplogger.setSequenceCode(ABORT_SEQ_CODE);
 			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
 				"Job Proxy has expired", true, true);
 			jobPurgeResponse jobPurge_response;
@@ -2188,8 +2192,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			//wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
 			//	"Cancelled by user", true, true);
 			edglog(debug)<<"Trying to log sync ABORT..."<<endl;
-			wmplogger.setSequenceCode("UI=000000:NS=0000096660:WM=000000:"
-				"BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000");
+			wmplogger.setSequenceCode(ABORT_SEQ_CODE);
 			if (!wmplogger.logAbortEventSync("Cancelled by user")) {
 				// If log fails no purge is done
 				// purge would find state different from ABORT and will fail
