@@ -955,8 +955,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Logging delegation id & original jdl
 	edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
 	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
-	edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
-	wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
+	//edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
+	//wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 	
 	wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 
@@ -1239,8 +1239,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Logging delegation id & original jdl
 	edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
 	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
-	edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
-	wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
+	//edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
+	//wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 	
 	wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 	
@@ -1544,7 +1544,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		
 		edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
-			"LOG_ENQUEUE_START", true, true, filelist_global.c_str(), "JDL");
+			"LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
+			wmputilities::getJobJDLToStartPath(*jid).c_str());
 	
 		// Getting delegated proxy inside job directory
 		string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -1844,8 +1845,10 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			delete dag;
 		}
 		
-		wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
-			jdltostart);
+		//TBD Use this line to save jdl written to filelist in a different path
+		// e.g. method getJobFileListJDLPath
+		//wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
+		//	jdltostart);
 		
 		// \/ To test only, raising an exception
 		/*
@@ -1892,7 +1895,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	} catch (Exception &exc) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(), "JDL");
+			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(),
+			wmputilities::getJobJDLToStartPath(*jid).c_str());
 		
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		flock(fd, LOCK_UN);
@@ -1905,7 +1909,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	} catch (exception &ex) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(), "JDL");
+			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(),
+			wmputilities::getJobJDLToStartPath(*jid).c_str());
 		
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		flock(fd, LOCK_UN);
@@ -2115,8 +2120,8 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	// Getting type from jdl
 	JobId * parentjid = new JobId(status.getValJobId(JobStatus::PARENT_JOB));
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
+		/*
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
-		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 		std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 		wmplogger.init(lbaddress_port.first, lbaddress_port.second, parentjid,
 			conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -2130,6 +2135,10 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				"Unable to set User Proxy for LB context");
 		}
 		string parentjdl = wmplogger.getUserTag(WMPEventLogger::QUERY_JDL_ORIGINAL);
+		*/
+		
+		string parentjdl = wmputilities::readTextFile(
+			wmputilities::getJobJDLToStartPath(*parentjid));
 		
 		Ad * parentad = new Ad();
 		int type = getType(parentjdl, parentad);
