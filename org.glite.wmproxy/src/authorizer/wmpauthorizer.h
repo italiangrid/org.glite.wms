@@ -57,6 +57,8 @@ public:
      */
     void checkGaclUserAuthZ();
     
+    //LCAS CHECK bool checkLCASUserAuthZ(const std::string &dn);
+    
     /**
      * Returns the user name
      * @return a string containing the local user name

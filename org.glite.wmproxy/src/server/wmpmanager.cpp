@@ -142,10 +142,6 @@ WMPManager::runCommand(const std::string& cmdname,
 			      		std::string seq_code(seq_str);
 			      		cmd->setParam("SeqCode", seq_code);
 						
-						/*edglog(debug)<<"Registering LOG_ACCEPT"<<std::endl;
-			      		wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ACCEPT,
-							"Request successfully passed to WMPDispatcher",
-							true, true);*/
 					} else if (cmdname == "JobCancel") {
 						#ifndef HAVE_LBPROXY
 						if (cancelseqcode != "") {

@@ -60,8 +60,8 @@ class WMPEventLogger  {
 			int desturiport = 0);
 
 		// LB Proxy
-		void setLBProxy(bool value) {lbProxy_b=value;}
-		bool getLBProxy() {return lbProxy_b;}
+		void setLBProxy(bool value, char * userdn = NULL);
+		bool getLBProxy();
 		
 		// Sequence code
 		char * getSequence();
@@ -84,12 +84,8 @@ class WMPEventLogger  {
 		bool logCheckpointable(const char* current_step, const char* state);
 		
 		// Event logging
-		bool logEvent(event_name event, const char* reason,
-			const char* file_queue=NULL, const char* jdl=NULL);
-		void logEvent(event_name event, const char* reason, bool retry,
-			const char* file_queue=NULL, const char* jdl=NULL);
-		void logEvent(event_name event, const char* reason, bool retry, bool test,
-			const char* file_queue=NULL, const char* jdl=NULL);
+		void logEvent(event_name event, const char *reason, bool retry, bool test,
+			const char *file_queue = NULL, const char *jdl = NULL);
 		bool logAbortEventSync(char *reason);
 		bool logAcceptEventSync();
 
@@ -98,11 +94,10 @@ class WMPEventLogger  {
 		void logUserTags(std::vector<std::pair<std::string,
 			classad::ExprTree*> > userTags);
 
-		void setLoggingJob(const std::string &jid, const char* seq_code = NULL);
+		void setLoggingJob(const std::string &jid, const char *seq_code = NULL);
 
 		int setUserProxy(const std::string &proxy);
 		
-		//bool retrieveEvent(const std::string &jobid_str, event_name eventname);
 		regJobEvent retrieveRegJobEvent(const std::string &jobid_str);
 		
 		std::string isStartAllowed();
@@ -122,16 +117,13 @@ class WMPEventLogger  {
 		static const std::string QUERY_JDL_ORIGINAL;
 
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
-		edg_wlc_JobId * subjobs;
+		edg_wlc_JobId *subjobs;
+		
 	private:
 		
-		void testAndLog(int &code, bool &with_hp, int &lap);
-		
-		const char * error_message(const char *api);
-		std::string dest_uri;
-		glite::wmsutils::jobid::JobId *id;
 		edg_wll_Context ctx;
-		//edg_wlc_JobId * subjobs;
+		glite::wmsutils::jobid::JobId *id;
+		std::string dest_uri;
 		std::string lb_host;
 		int lb_port;
 		std::string server;
@@ -139,6 +131,14 @@ class WMPEventLogger  {
 		std::string desturiprotocol;
 		std::string delegatedproxy;
 		int desturiport;
+		
+		const char * error_message(const char *api);
+		
+		void testAndLog(int &code, bool &with_hp, int &lap);
+		bool logEvent(event_name event, const char *reason,
+			const char *file_queue = NULL, const char *jdl = NULL);
+		void logEvent(event_name event, const char *reason, bool retry,
+			const char *file_queue = NULL, const char *jdl = NULL);
 		
 		static const char * GLITE_WMS_LOG_DESTINATION;
 		static const int LB_RENEWAL_PORT = 7512;

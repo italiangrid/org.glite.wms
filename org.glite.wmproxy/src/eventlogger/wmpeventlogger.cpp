@@ -10,8 +10,8 @@
 
 #include "wmpeventlogger.h"
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
+// Boost
+#include <boost/lexical_cast.hpp>
 
 // Logging & Bookkeeping
 #include "glite/lb/producer.h"
@@ -45,9 +45,9 @@ namespace wms {
 namespace wmproxy {
 namespace eventlogger {
 	
-namespace logger = glite::wms::common::logger;
-namespace jobid  = glite::wmsutils::jobid;
-namespace authorizer = glite::wms::wmproxy::authorizer;
+namespace logger       = glite::wms::common::logger;
+namespace jobid        = glite::wmsutils::jobid;
+namespace authorizer   = glite::wms::wmproxy::authorizer;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 
 using namespace std;
@@ -115,6 +115,24 @@ WMPEventLogger::init(const string &lb_host, int lb_port,
 	}
 	
 	GLITE_STACK_CATCH();
+}
+
+void
+WMPEventLogger::setLBProxy(bool value, char * userdn)
+{	GLITE_STACK_TRY("setLBProxy()");
+	this->lbProxy_b = value;
+	if (value) {
+		edg_wll_SetParam(ctx, EDG_WLL_PARAM_LBPROXY_USER, userdn);
+	} else {
+		edg_wll_SetParam(ctx, EDG_WLL_PARAM_LBPROXY_USER, NULL);
+	}
+	GLITE_STACK_CATCH();
+}
+
+bool 
+WMPEventLogger::getLBProxy()
+{
+	return this->lbProxy_b;
 }
 
 char *
@@ -698,27 +716,27 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 {
 	GLITE_STACK_TRY("logEvent()");
 	edglog_fn("WMPEventLogger::logEvent");
-	edglog(debug)<<"Logging "<<event<<" request..."<<std::endl;
+	edglog(debug)<<"Logging "<<event<<" request..."<<endl;
 	
-	int i=0;
+	int i = 0;
 	bool logged = false;
 	for (; i < 3 && !logged && retry; i++) {
 		// PERFORM the Requested operation (actual LB call)
-		logged = logEvent (event , reason);
-		if (!logged && (i<2) && retry) {
-			edglog(debug) << "Failed to log. Sleeping 15 seconds before retry..."
-				<< std::endl;
+		logged = logEvent(event, reason, file_queue, jdl);
+		if (!logged && (i < 2) && retry) {
+			edglog(debug)<<"Failed to log. Sleeping 15 seconds before retry..."
+				<<endl;
 			sleep(15);
 		}
 	}
-	if ((retry && (i>=3)) || (!retry && (i>0)) ) {
+	if ((retry && (i >= 3)) || (!retry && (i > 0)) ) {
 		string msg = error_message("edg_wll_Log<Event>REQ");
-		edglog(severe)<<msg<<std::endl;
+		edglog(severe)<<msg<<endl;
 		throw LBException(__FILE__, __LINE__,
 			"WMPEventLogger::logEvent()",
 			WMS_LOGGING_ERROR, msg);
 	}
-	edglog(debug) << "Logged" << std::endl;
+	edglog(debug)<<"Logged"<<endl;
 	
 	GLITE_STACK_CATCH();
 }
@@ -731,18 +749,18 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 	edglog_fn("WMPEventlogger::logEvent");
 	
 	if (!test) {
-		logEvent(event, reason, retry);
+		logEvent(event, reason, retry, file_queue, jdl);
 	}
 	
-	edglog(fatal) << "Logging "<< event<<" request" << std::endl;
+	edglog(fatal)<<"Logging "<<event<<" request"<<endl;
 	int res;
 	bool with_hp = false;
 	int lap = 0;
 	do {
 		// PERFORM the Requested operation (actual LB call)
-		res = logEvent(event, reason);
+		res = logEvent(event, reason, file_queue, jdl);
 		testAndLog(res, with_hp, lap);
-	} while( res != 0 );
+	} while (res != 0);
 	// return true    TBD.... this means failure??
 	
 	GLITE_STACK_CATCH();
@@ -792,37 +810,40 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 	if (code) {
 		switch (code) {
 			case EINVAL:
-				edglog(critical)<<"Critical error in LB calls: EINVAL"
-					<<std::endl;
+				edglog(critical)<<"Critical error in LB calls: EINVAL"<<endl;
 				code = 0; // Don't retry...
 				break;
 			case EDG_WLL_ERROR_GSS:
 				edglog(severe)<<"Severe error in SSL layer while communicating "
-					"with LB daemons"<<std::endl;
+					"with LB daemons"<<endl;
 				if (with_hp) {
 					edglog(severe)<<"The log with the host certificate has "
-						"just been done. Giving up"<<std::endl;
+						"just been done. Giving up"<<endl;
 					code = 0; // Don't retry...
 				} else {
 					code = 0; // Don't retry.
 				}
 				break;
 			default:
-				if(++lap > 3) {
-					edglog(error)<<"LB call retried "<<lap
-						<<" times always failed. "<<std::endl
-						<< "Ignoring"<<std::endl;
-					code = 0; // Don't retry anymore
+				if (++lap > 3) {
+					string msg = "Unable to complete operation: LB call retried " 
+						+ boost::lexical_cast<std::string>(lap - 1)
+						+ " times, always failed";
+					edglog(error)<<msg<<endl;
+					//code = 0; // Don't retry anymore
+					throw LBException(__FILE__, __LINE__,
+						"WMPEventLogger::testAndLog()", WMS_LOGGING_ERROR,
+						msg + "\n(please contact server administrator)");
 				} else {
 					edglog(debug)<<"LB call got a transient error. "
-						"Waiting 15 seconds before trying again..." << std::endl;
-					edglog(debug)<<"Try n. "<<lap<<"/3"<<std::endl;
+						"Waiting 15 seconds before trying again..."<<endl;
+					edglog(debug)<<"Try n. "<<lap<<"/3"<<endl;
 					sleep(15);
 				}
 				break;
 			}
 	} else { // The logging call worked fine, do nothing
-		edglog(debug)<<"LB call succeeded"<<std::endl;
+		edglog(debug)<<"LB call succeeded"<<endl;
 	}
 	return;
 	
@@ -1186,7 +1207,7 @@ WMPEventLogger::getStatus(JobId *jid, const string &delegatedproxy,
 }
 
 // Error Message Parsing
-const char*
+const char *
 WMPEventLogger::error_message(const char *api)
 {
 	GLITE_STACK_TRY("error_message()");

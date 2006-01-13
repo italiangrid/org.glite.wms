@@ -36,6 +36,7 @@
 
 extern "C" {
 	// LCMAPS C libraries headers
+	//LCAS CHECK #include "glite/security/lcas/lcas.h"
 	#include "glite/security/lcmaps_without_gsi/lcmaps.h"
 	#include "glite/security/lcmaps_without_gsi/lcmaps_return_poolindex_without_gsi.h"
 }
@@ -100,9 +101,9 @@ WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
 		edglog(debug) << "LCMAPS log file: " << string(lcmaps_logfile) << endl;
 	} else {
 		this->lcmaps_logfile = (char*) malloc(1024);
-                char * location = getenv("GLITE_LOCATION_LOG");
-                string slocation = "";
-                if (!location) {
+        char * location = getenv("GLITE_LOCATION_LOG");
+        string slocation = "";
+        if (!location) {
 			char * location = getenv("GLITE_WMS_LOCATION_VAR");
 			if (!location) {
 				location = getenv("GLITE_LOCATION_VAR");
@@ -111,13 +112,13 @@ WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
 				slocation = string(location) + "/log/" + LCMAPS_LOG_FILE;
 				sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
 			} else {
-			slocation = "/tmp/" + LCMAPS_LOG_FILE;
-			sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
+				slocation = "/tmp/" + LCMAPS_LOG_FILE;
+				sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
 			}
-                } else {
-                	slocation = string(location) + "/" + LCMAPS_LOG_FILE;
-                	sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
-                }
+        } else {
+        	slocation = string(location) + "/" + LCMAPS_LOG_FILE;
+        	sprintf(this->lcmaps_logfile, "%s", slocation.c_str());
+        }
 		edglog(debug) << "LCMAPS log file: " << slocation << endl;
 	}
 }
@@ -216,6 +217,60 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	
 	GLITE_STACK_CATCH();
 }
+
+//LCAS CHECK static bool flag = false;
+
+/*LCAS CHECK 
+bool 
+WMPAuthorizer::checkLCASUserAuthZ(const string &dn)
+{
+	edglog_fn("WMPAuthorizer::checkLCASUserAuthZ");
+	int retval;
+  	char * user_dn = NULL;
+  	char * request = NULL;
+	gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
+
+  	user_dn = wmputilities::getUserDN();
+  	
+  	// Initialize LCAS
+  	//FILE * logfile = fopen(this->lcmaps_logfile, "a");
+  	FILE * logfile = fopen("/var/glite/log/lcas.log", "a");
+  	
+  	if (!flag) {
+  		edglog(debug)<<"_____FLAG"<<endl;
+  	retval = lcas_init(logfile);
+  	if (retval) {
+    	edglog(info)<<"LCAS initialization failure"<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"WMPAuthorizer::lcas_init()", wmputilities::WMS_AUTHZ_ERROR,
+      		"LCAS initialization failure");
+  	}
+  	}
+  	// Send authorization request to LCAS
+ 	retval = lcas_get_fabric_authorization(user_dn, user_cred_handle, request);
+  	if (retval) {
+    	edglog(info)<<"LCAS failed authorization: User "<<dn
+    		<<" is not authorized"<<endl; 
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"WMPAuthorizer::lcas_get_fabric_authorization()",
+  			wmputilities::WMS_NOT_AUTHORIZED_USER, "LCAS failed authorization: "
+  			"User is not authorized");
+  	}
+  	// Terminate the LCAS 
+  	if (!flag) {
+  	retval = lcas_term();
+  	if (retval) {
+    	edglog(info)<<"LCAS termination failure."<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+      		"WMPAuthorizer::lcas_term()",
+  			wmputilities::WMS_AUTHZ_ERROR, "LCAS termination failure.");
+  	}
+  	}
+  	fclose(logfile);
+  	
+  	return true;
+}
+*/
 
 void
 WMPAuthorizer::mapUser(const std::string &certfqan)
@@ -445,21 +500,25 @@ WMPAuthorizer::checkGaclUserAuthZ()
 		}
 		exec = exec && execDN;
 	} catch (GaclException &exc){
+		//LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
 			errmsg = "User not authorized:\n";
 			errmsg += exc.what();
 			edglog(critical)<<errmsg<<endl;
-		throw GaclException(__FILE__, __LINE__,
-			"checkGaclUserAuthZ()",
-			wmputilities::WMS_GACL_FILE,
-			errmsg);
+			throw GaclException(__FILE__, __LINE__,
+				"checkGaclUserAuthZ()",
+				wmputilities::WMS_GACL_FILE,
+				errmsg);
+		//LCAS CHECK }
 	}
 	// checks exec permission
 	if (!exec) {
-		edglog(info)<<"Authorization error: user not authorized"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-			"checkGaclUserAuthZ()",
-			wmputilities::WMS_AUTHZ_ERROR, "Authorization error: "
-			"user not authorized");
+		//LCAS CHECK if (!checkLCASUserAuthZ(dn)) {
+			edglog(info)<<"Authorization error: user not authorized"<<endl;
+			throw AuthorizationException(__FILE__, __LINE__,
+				"checkGaclUserAuthZ()",
+				wmputilities::WMS_AUTHZ_ERROR, "Authorization error: "
+				"user not authorized");
+		//LCAS CHECK }
 	}
 	
 	GLITE_STACK_CATCH();

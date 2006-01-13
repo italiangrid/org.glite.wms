@@ -917,7 +917,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		<<boost::lexical_cast<std::string>(lbaddress_port.second)<<endl;
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, 
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 			
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -1085,7 +1085,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid, 
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	vector<string> jobids;
 	if (jad) {
@@ -1338,7 +1338,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -1356,7 +1356,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ABORT,
 				"Job Proxy has expired", true, true);
 			jobPurgeResponse jobPurge_response;
-			jobpurge(jobPurge_response, jid);	
+			jobpurge(jobPurge_response, jid, false);	
 		}
 		throw ex;
 	}
@@ -1540,7 +1540,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		
 		edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
-			"LOG_ENQUEUE_START", filelist_global.c_str(), "JDL");
+			"LOG_ENQUEUE_START", true, true, filelist_global.c_str(), "JDL");
 	
 		// Getting delegated proxy inside job directory
 		string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -1888,7 +1888,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	} catch (Exception &exc) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			"LOG_ENQUEUE_FAIL", filelist_global.c_str(), "JDL");
+			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(), "JDL");
 		
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		flock(fd, LOCK_UN);
@@ -1901,7 +1901,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	} catch (exception &ex) {
 		edglog(debug)<<"Logging LOG_ENQUEUE_FAIL"<<std::endl;
 		wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-			"LOG_ENQUEUE_FAIL", filelist_global.c_str(), "JDL");
+			"LOG_ENQUEUE_FAIL", true, true, filelist_global.c_str(), "JDL");
 		
 		edglog(debug)<<"Removing lock..."<<std::endl;
 		flock(fd, LOCK_UN);
@@ -2024,7 +2024,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Getting delegated proxy inside job directory
 	string proxy(wmputilities::getJobDelegatedProxyPath(*jid));
@@ -2116,7 +2116,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 		wmplogger.init(lbaddress_port.first, lbaddress_port.second, parentjid,
 			conf.getDefaultProtocol(), conf.getDefaultPort());
-		wmplogger.setLBProxy(conf.isLBProxyAvailable());
+		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 		
 		// Setting user proxy
 		if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -2163,7 +2163,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -2376,7 +2376,7 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -2762,7 +2762,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		
 		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
-		wmplogger.setLBProxy(conf.isLBProxyAvailable());
+		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 		
 		vector<string> params;
 		wmpmanager::WMPManager manager(&wmplogger);
@@ -3266,7 +3266,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {

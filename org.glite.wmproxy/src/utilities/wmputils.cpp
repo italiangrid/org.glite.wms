@@ -726,14 +726,14 @@ fileCopy(const std::string& source, const std::string& target)
   
   	struct stat from_stat;
   	if (stat(source.c_str(), &from_stat) ||
-    	chown(target.c_str(), from_stat.st_uid, from_stat.st_gid) ||
-        chmod(target.c_str(), from_stat.st_mode)) {
-    		edglog(severe)<<"Copy failed, chown/chmod. \n\tSource: "
-    		<<source<<"\n\tTarget: "<<target<<std::endl;
+	    	chown(target.c_str(), from_stat.st_uid, from_stat.st_gid) ||
+	        chmod(target.c_str(), from_stat.st_mode)) {
+		edglog(severe)<<"Copy failed, chown/chmod. \n\tSource: "
+		<<source<<"\n\tTarget: "<<target<<std::endl;
 
-    throw FileSystemException(__FILE__, __LINE__,
-		"fileCopy(const std::string& source, const std::string& target)",
-		WMS_IS_FAILURE, "Unable to copy file");
+	    throw FileSystemException(__FILE__, __LINE__,
+			"fileCopy(const std::string& source, const std::string& target)",
+			WMS_IS_FAILURE, "Unable to copy file");
   	}
   	edglog(debug)<<"Copy done."<<std::endl;
   	GLITE_STACK_CATCH();

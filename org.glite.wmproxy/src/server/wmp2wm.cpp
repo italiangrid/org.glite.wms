@@ -186,14 +186,14 @@ void WMP2WM::submit(classad::ClassAd* cmdAd)
     	// Take the result of f_forward and do what for LogEnQueued in 
     	//CommandFactoryServerImpl. Put host cert/key instead of user proxy
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-    		(*m_filelist).filename().c_str(), jdl.c_str());
+    		true, true, (*m_filelist).filename().c_str(), jdl.c_str());
     	edglog(debug)<<"LB Logged jdl: "<<toFormattedString(*ptr)<<std::endl;
     	edglog(debug)<<"Submit EnQueued OK"<<std::endl;
   	} catch (std::exception &e) {
     	// LogEnQueued FAIL if exception occurs
     	// Put host cert/key instead of user proxy
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-    		e.what(), (*m_filelist).filename().c_str(), jdl.c_str());
+    		e.what(), true, true, (*m_filelist).filename().c_str(), jdl.c_str());
     	edglog(critical)<<"Submit EnQueued FAIL"<<std::endl;
   	}
 
