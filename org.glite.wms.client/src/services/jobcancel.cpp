@@ -72,10 +72,10 @@ void JobCancel::readOptions (int argc,char **argv){
         }
 	njobs = jobIds.size( ) ;
 	if (njobs > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
-		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
+		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ");
         	jobIds = wmcUtils->askMenu(jobIds,Utils::MENU_JOBID);
 		if (jobIds.size() != njobs) {
-			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds), false);
+			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds));
 		}
          }
 	// checks if the output file already exists
@@ -146,18 +146,18 @@ void JobCancel::cancel ( ){
 			}
 
   			try{
-				logInfo->print(WMS_INFO, "Cancelling the job:", jobid );
+				logInfo->service(WMP_CANCEL_SERVICE, jobid);
 				logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
 	                        //  performs cancelling
+				logInfo->service(WMP_CANCEL_SERVICE);
                                 jobCancel(jobid, getContext( ) );
-                                logInfo->print(WMS_DEBUG, "Cancelling result:", "The request has been successfully sent");
+				logInfo->result(WMP_CANCEL_SERVICE, "The cancellation request has been successfully sent" );
                          	 // list of jobs successfully cancelled
                                 if (cancelled){
                                         *cancelled += "- " + jobid + ("\n");
                                 } else {
                                         cancelled = new string("- " + jobid + "\n");
                                 }
-
                         } catch (BaseException &exc){
 				// If the request contains only one jobid, an exception is thrown
 				if (jobIds.size( ) == 1){

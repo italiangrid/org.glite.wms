@@ -60,6 +60,30 @@ class Log {
                 * @param debug flag indicating whether the formatted message have to be printed on the std-output
                 */
                 void print (severity sev, const std::string &header, const std::string &msg, const bool debug=true, const bool cache=false);
+                /*
+		* Prints a formatted message about the WMProxy server is being called
+                * @param service the string with name of the service
+                */
+		void service(const std::string& service);
+                /*
+		* Prints a formatted message about the WMProxy server is being called which a list of parameters
+                * @param service the string with name of the service
+               * @param params the list of parameters
+                */
+		void service(const std::string& service, const std::vector <std::pair<std::string , std::string> > &params);
+                /*
+		* Prints a formatted message about the WMProxy server is being called for the
+		* job which its identifier is jobid
+                * @param service the string with name of the service
+               * @param jobid the identifier of teh job
+                */
+		void service(const std::string& service, const std::string& jobid);
+                /*
+		* Prints a formatted message about the result of calling of WMProxy service
+                * @param service the string with name of the service
+                * @param msg the result message to be printed
+                */
+		void result(const std::string& service, const std::string msg) ;
 		/*
                 * get the absolute pathname of the log file
                 *@return the pathname string

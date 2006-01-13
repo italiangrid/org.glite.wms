@@ -218,6 +218,7 @@ void JobOutput::getOutput ( ){
 int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::string& dirAbs, const bool &child){
 	string warnings = "";
 	string wmsg = "" ;
+	string id = "" ;
 	// Dir Creation Management 
 	bool createDir=false;
 	bool checkChildren = true;
@@ -296,13 +297,14 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	* no parent is present
 	* retrieve output successfully done */
 	bool purge = (!listOnlyOpt) && ( getEndPoint() != "" ) && (! parent) && (code==0);
+	id = jobid.toString() ;
 	// checks Children
 	if (checkChildren && children.size()>0){
 		if (hasFiles){
-			msg << "Output sandbox files for the DAG/Collection :\n" << jobid.toString() <<endl ;
+			msg << "Output sandbox files for the DAG/Collection :\n" << id << endl ;
 			msg << "have been successfully retrieved and stored in the directory:"<<endl<<dirAbs << "\n\n";
 		} else{
-			msg << "No output files to be retrieved for the DAG/Collection:\n" << jobid.toString() << "\n\n";
+			msg << "No output files to be retrieved for the DAG/Collection:\n" << id << "\n\n";
 			if (createDir) {
 				// remove created empty dir
 				rmdir(dirAbs.c_str());
@@ -314,13 +316,14 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			// remove created empty dir
 			rmdir(dirAbs.c_str());
 		}
-		msg << "No output files to be retrieved for the job:\n" << jobid.toString() <<" \n\n";
+		msg << "No output files to be retrieved for the job:\n" << id <<" \n\n";
 	}
 	if (purge){
 		try {
 			// Check Dir/purge
-			logInfo->print(WMS_DEBUG,  jobid.toString() + ": JobPurging", "");
+			logInfo->service(WMP_PURGE_SERVICE, id);
 			jobPurge(jobid.toString(),getContext());
+			logInfo->result(WMP_PURGE_SERVICE, "The purging request has been successfully sent");
 		} catch (BaseException &exc) {
 			string wmsg =  "";
 			if (exc.Description){ wmsg +=" (" + *(exc.Description)+ ")"; }
@@ -338,8 +341,9 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 		try {
 			// gets the list of the out-files from the EndPoint
 			logInfo->print(WMS_DEBUG, "Connecting to the service", this->getEndPoint());
-			logInfo->print(WMS_DEBUG, "getOutputFileList calling for:",jobid);
+			logInfo->service(WMP_OUTPUT_SERVICE, jobid);
 			files = getOutputFileList(jobid, getContext() );
+			logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
 			hasFiles = hasFiles || (files.size()>0);
 		} catch (BaseException &exc) {
 			string desc = "";

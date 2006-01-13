@@ -196,6 +196,7 @@ void JobListMatch::checkAd ( ){
 */
 std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 	vector <pair<string , long> > list ;
+	vector <pair<string , string> > pm ;
 	// checks if jdlstring is not null
         if (!jdlString){
                 throw WmsClientException(__FILE__,__LINE__,
@@ -203,10 +204,14 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
                         "Null Pointer Error",
                         "Null pointer to JDL string");
         }
+	pm.push_back(make_pair("jdlString", *jdlString));
+	pm.push_back(make_pair("delegationId", getDelegationId( )));
+	logInfo->service(WMP_LISTMATCH_SERVICE, pm);
+	logInfo->print(WMS_DEBUG, "Sending the request to the service", getEndPoint( ));
  	try{
-		logInfo->print(WMS_DEBUG, "Sending the request to the service", getEndPoint( ));
   		// ListMatch
     		list = jobListMatch(*jdlString, getDelegationId( ), getContext());
+		logInfo->result(WMP_LISTMATCH_SERVICE, "The MatchMaking operations have been successfully performed");
       } catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 		"jobListMatch", ECONNABORTED,

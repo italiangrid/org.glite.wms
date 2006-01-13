@@ -76,7 +76,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
 			break;
 		}
 		case WMS_ERROR:{
-			mglog += px.str( ) +  string("(Error) -") + ws + header + ws + err + string("\n");
+			mglog += px.str( ) +  string("(Error) -") + ws + header + ws + string(":\n") + err + string("\n");
 			if (debug){
 				mgout  =  string("Error -") + ws +header + string("\n") + err +string("\n");
 				ss = WMC_ERR;
@@ -84,7 +84,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
                         break;
 		}
 		case WMS_FATAL:{
-			mglog += px.str( ) + string( "(Fatal Error) -") + ws + header + ws + err + string("\n");
+			mglog += px.str( ) + string( "(Fatal Error) -") + ws + header + ws +  string(":\n") + err + string("\n");
 			if (debug){
 				mgout =  string("Fatal Error -") + ws+ header +  string("\n") + err + string("\n");
 				ss = WMC_ERR;

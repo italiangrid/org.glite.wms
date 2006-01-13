@@ -691,18 +691,21 @@ void JobSubmit::checkInputSandboxSize ( ) {
 	try{
 		// Gets the user-free quota from the WMProxy server
 		logInfo->print(WMS_DEBUG, "Getting the User FreeQuota from the server", getEndPoint( ));
+		logInfo->service(WMP_FREEQUOTA_SERVICE);
 		free_quota = getFreeQuota(getContext( ));
 	} catch (BaseException &exc){
 			throw WmsClientException(__FILE__,__LINE__,
 				"checkInputSandboxSize ", ECONNABORTED,
 				"WMProxy Server Error", errMsg(exc));
 	}
+
 	// soft limit
 	limit = free_quota.first;
 	// if the previous function gets back a negative number
 	// the user free quota is not set on the server and
 	// no check is performed (this functions returns not exceed=true)
 	if (limit >0) {
+		logInfo->result(WMP_FREEQUOTA_SERVICE, "the user freequota information successfully retrieved");
 		if (isbsize > limit  ) {
 			ostringstream err ;
 			err << "Not enough User FreeQuota (" << limit << " bytes) on the server for the InputSandbox files (" ;
@@ -718,10 +721,11 @@ void JobSubmit::checkInputSandboxSize ( ) {
 		}
 	} else {
 		// User quota is not set on the server: check of Max InputSB size
-		logInfo->print (WMS_DEBUG, "The User FreeQuota is not set", "");
+		logInfo->result(WMP_FREEQUOTA_SERVICE, "the user freequota is not set");
 		try{
 			// Gets the maxISb size from the WMProxy server
 			logInfo->print(WMS_DEBUG, "Getting the max ISB size from the server", getEndPoint( ) );
+			logInfo->service(WMP_MAXISBSIZE_SERVICE);
 			max_isbsize = getMaxInputSandboxSize(getContext( ));
 		} catch (BaseException &exc){
 				throw WmsClientException(__FILE__,__LINE__,
@@ -730,6 +734,7 @@ void JobSubmit::checkInputSandboxSize ( ) {
 		}
 		// MAX ISB size -----------
 		if (max_isbsize>0 ) {
+			logInfo->result(WMP_MAXISBSIZE_SERVICE, "the max ISB size information successfully retrieved");
 			if (isbsize > max_isbsize) {
 				ostringstream err ;
 				err << "The size of the InputSandbox (" << isbsize <<" bytes) ";
@@ -743,11 +748,10 @@ void JobSubmit::checkInputSandboxSize ( ) {
 				logInfo->print (WMS_DEBUG, q.str(), "File transferring is allowed" );
 			}
 		} else {
-			// User quota is not set on the server: check of Max InputSB size
-			logInfo->print (WMS_DEBUG, "The max ISB size is not set on the server", "");
+			// Max InputSB is not set
+			logInfo->result(WMP_MAXISBSIZE_SERVICE, "the max ISB size is not set");
 		}
 	}
-
 	// tar.gz files ---------
 	if (isbsize>0 ) {
 		// Number of the tar.gz files to be created
@@ -1120,17 +1124,19 @@ std::string JobSubmit::jobRegOrSub(const bool &submit) {
 			method = "submit";
 			logInfo->print(WMS_DEBUG, "Submitting JDL", *jdlString);
 			logInfo->print(WMS_DEBUG, "Submitting the job to the service", getEndPoint());
+			logInfo->service(WMP_SUBMIT_SERVICE);
 			//Suibmitting....
 			jobIds = jobSubmit(*jdlString, *dgOpt, getContext( ));
-			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "", false);
+			logInfo->print(WMS_DEBUG, "The job has been successfully submitted" , "");
 		} else {
 			// jobRegister
 			method = "register";
 			logInfo->print(WMS_DEBUG, "Registering JDL", *jdlString);
 			logInfo->print(WMS_DEBUG, "Registering the job to the service", getEndPoint());
 			// registering ...
+			logInfo->service(WMP_REGISTER_SERVICE);
 			jobIds = jobRegister(*jdlString , *dgOpt, getContext( ));
-			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "", false);
+			logInfo->print(WMS_DEBUG, "The job has been successfully registered" , "");
 		}
 	} catch (BaseException &exc) {
 		ostringstream err ;
@@ -1157,6 +1163,7 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 	try {
 		// START
 		logInfo->print(WMS_DEBUG, "Starting the job: " , jobid);
+		logInfo->service(WMP_START_SERVICE);
 		jobStart(jobid, getContext( ));
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
@@ -1164,7 +1171,7 @@ void JobSubmit::jobStarter(const std::string &jobid ) {
 		"Operation failed",
 		"Unable to start the job: " + errMsg(exc));
 	}
-	logInfo->print(WMS_DEBUG, "The job has been successfully started" , "", false);
+	logInfo->print(WMS_DEBUG, "The job has been successfully started" , "");
 }
 /**
 *       Contacts the endpoint configurated in the context
@@ -1185,6 +1192,7 @@ std::string* JobSubmit::getBulkDestURI(const std::string &jobid, const std::stri
                 try{
 
                         logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , getEndPoint( ));
+ 			logInfo->service(WMP_BULKDESTURI_SERVICE);
                         dsURIs = getSandboxBulkDestURI(jobid, (ConfigContext *)getContext( ));
                 } catch (BaseException &exc){
                         throw WmsClientException(__FILE__,__LINE__,
@@ -1255,6 +1263,7 @@ std::string* JobSubmit::getSbDestURI(const std::string &jobid, const std::string
 		if (child.size()>0){
 			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI for child node: " , child);
 			// if the input parameter child is set ....
+			logInfo->service(WMP_SBDESTURI_SERVICE);
 			uris = getSandboxDestURI(child, (ConfigContext *)getContext( ));
 		} else {
 			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));

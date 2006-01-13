@@ -88,6 +88,41 @@ void Log::print (severity sev, const std::string &header, const std::string &msg
 	if (cache) { logCache +=  stripe + "\n" + message ;}
 }
 /*
+* Write the messsage string in the file
+*/
+void Log::service(const std::string& service) {
+	print(WMS_DEBUG, "Calling the WMProxy " + service, "service" );
+}
+/*
+* Write the messsage string in the file
+*/
+void Log::service(const std::string& service, const std::string& jobid) {
+	print(WMS_DEBUG,
+		"Calling the WMProxy " + service + "for the job: " + jobid,
+		"");
+}
+/*
+* Write the messsage string in the file
+*/
+void Log::service(const std::string& service, const std::vector <std::pair<std::string , std::string> > &params) {
+	int size = params.size( );
+	string msg = "Calling the WMProxy " + service  ;
+	if (size>0) {
+		msg += " service with the following parameters:\n";
+		for(int i=0; i < size; i++) {
+			msg += "> " + params[i].first + "=[" + params[i].second + "]\n";
+		}
+	}
+	print(WMS_DEBUG, msg, "");
+}
+/*
+* Write the result messsage string in the file
+*/
+void Log::result(const std::string& service, const std::string msg) {
+	print(WMS_DEBUG, string(service + " - ") , msg );
+}
+
+/*
 * Gets the log file pathname
 */
 std::string* Log::getPathName( ){

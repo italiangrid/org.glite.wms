@@ -299,12 +299,18 @@ void ProxyInfo::proxy_info ( ){
 		setEndPoint(false);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier:", *dgOpt);
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		logInfo->service(WMP_PROXYINFO_SERVICE);
 		try {
 			info = getDelegatedProxyInfo(*dgOpt, cfgCxt);
 		} catch (BaseException &exc) {
 			throw WmsClientException(__FILE__,__LINE__,
 			"proxy_info", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
+		}
+		if (info) {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "the information has been successfully retrieved");
+		} else {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "failure in retrieving the information");
 		}
 		header << "Your proxy delegated to the endpoint\n" ;
 		header << getEndPoint( ) << "\n";
@@ -319,12 +325,18 @@ void ProxyInfo::proxy_info ( ){
 		setEndPoint(status.getEndpoint(), true);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobid);
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		logInfo->service(WMP_JOB_PROXYINFO_SERVICE, jobid);
 		try {
 			info = getJobProxyInfo(jobid, cfgCxt);
 		} catch (BaseException &exc) {
 			throw WmsClientException(__FILE__,__LINE__,
 			"proxy_info", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
+		}
+		if (info) {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "the info has been successfully retrieved");
+		} else {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "failure in retrieving the information");
 		}
 		header << "Your proxy delegated for the job\n" ;
 		header << jobid << "\n";
