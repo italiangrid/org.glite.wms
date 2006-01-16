@@ -79,6 +79,50 @@ ns1__getVersion(struct soap *soap, struct ns1__getVersionResponse &response)
 }
 
 int
+ns1__getJDL(struct soap *soap, string job_id, ns1__JdlType type,
+	struct ns1__getJDLResponse &response)
+{
+	GLITE_STACK_TRY("ns1__getJDL(struct soap *soap, struct "
+		"ns1__getJDLResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns1__getJDL");
+	edglog(info)<<"getJDL operation called"<<endl;
+
+	int return_value = SOAP_OK;
+
+	getJDLResponse getJDL_response;
+	
+	JdlType jdltype;
+	switch (type) {
+		case ns1__JdlType__ORIGINAL:
+			jdltype = WMS_JDL_ORIGINAL;
+			break;
+		case ns1__JdlType__REGISTERED:
+			jdltype = WMS_JDL_REGISTERED;
+			break;
+		default:
+			break;
+	}
+	
+	try {
+		getJDL(job_id, jdltype, getJDL_response);
+		response._jdl = getJDL_response.jdl;
+	} catch (Exception &exc) {
+		setSOAPFault(soap, exc.getCode(), "getJDL", time(NULL),
+			exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+		setSOAPFault(soap, WMS_IS_FAILURE, "getJDL", time(NULL),
+			WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"getJDL operation completed\n"<<endl;
+	
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
 ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	struct ns1__jobRegisterResponse &response)
 {

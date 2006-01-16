@@ -32,6 +32,11 @@ enum JobType {
 	WMS_CHECKPOINTABLE,
 };
 
+enum JdlType {
+	WMS_JDL_ORIGINAL,
+	WMS_JDL_REGISTERED,
+};
+
 // Base fault type to hold all kinds of faults
 struct BaseFaultType
 {
@@ -117,6 +122,10 @@ struct ProxyInfoStructType {
 
 struct getVersionResponse {
   std::string version;
+};
+
+struct getJDLResponse {
+  std::string jdl;
 };
 
 struct jobRegisterResponse {

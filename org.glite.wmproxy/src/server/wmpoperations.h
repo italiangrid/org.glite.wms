@@ -23,6 +23,9 @@
 
 void getVersion(getVersionResponse &getVersion_response);
 
+void getJDL(const std::string &job_id, JdlType jdltype,
+	getJDLResponse &getJDL_response);
+
 void jobRegister(jobRegisterResponse &jobRegister_response,
 	const std::string &jdl, const std::string &delegation_id);
 

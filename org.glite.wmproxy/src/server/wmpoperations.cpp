@@ -390,6 +390,68 @@ getVersion(getVersionResponse &getVersion_response)
 	GLITE_STACK_CATCH();
 }
 
+void
+getJDL(const std::string &job_id, JdlType jdltype,
+	getJDLResponse &getJDL_response)
+{
+	GLITE_STACK_TRY("getJDL()");
+	edglog_fn("wmpoperations::getJDL");
+	logRemoteHostInfo();
+	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	
+	JobId *jid = new JobId(job_id);
+	
+	//** Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+		
+	// Getting delegated proxy inside job directory
+	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jid);
+	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
+	
+	authorizer::WMPAuthorizer::checkProxyExistence(delegatedproxy, job_id);
+	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	if (vomsproxy.hasVOMSExtension()) {
+		auth->authorize(vomsproxy.getDefaultFQAN(), job_id);
+	} else {
+		auth->authorize("", job_id);
+	}
+	delete auth;
+
+	// GACL Authorizing
+	edglog(debug)<<"Checking for drain..."<<endl;
+	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
+		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
+		throw AuthorizationException(__FILE__, __LINE__,
+	    	"wmpoperations::getJDL()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"Unavailable service (the server is temporarily drained)");
+	} else {
+		edglog(debug)<<"No drain"<<endl;
+	}
+	//** END
+	
+	getJDL_response.jdl = "";
+	switch (jdltype) {
+		case WMS_JDL_ORIGINAL:
+			getJDL_response.jdl = wmputilities::readTextFile(
+				wmputilities::getJobJDLOriginalPath(*jid));
+			break;
+		case WMS_JDL_REGISTERED:
+			getJDL_response.jdl = wmputilities::readTextFile(
+				wmputilities::getJobJDLToStartPath(*jid));
+			break;
+		default:
+			break;
+	}
+	
+	delete jid;
+	
+	edglog(info)<<"JDL retrieved: "<<getJDL_response.jdl<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
 pair<string, string>
 jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegation_id, const string &delegatedproxy, const string &vo,
@@ -525,7 +587,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	} else {
 		edglog(debug)<<"No drain"<<endl;
 	}
-	
+		
 	// Checking proxy validity
 	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
 	
@@ -543,7 +605,8 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 
 void
 setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
-	const string &jobid, vector<string> &jobids, char * renewalproxy = NULL)
+	const string &jobid, vector<string> &jobids, const string &jdl,
+	char * renewalproxy = NULL)
 {
 	GLITE_STACK_TRY("setJobFileSystem()");
 	edglog_fn("wmpoperations::setJobFileSystem");
@@ -656,6 +719,12 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 		// Creating gacl file in the private job directory
 		authorizer::WMPAuthorizer::setJobGacl(jobid);
 	}
+	
+	// Writing original jdl to disk
+	JobId jid(jobid);
+	edglog(debug)<<"Writing original jdl file: "
+		<<wmputilities::getJobJDLOriginalPath(jid)<<endl;
+	wmputilities::writeTextFile(wmputilities::getJobJDLOriginalPath(jid), jdl);	
 
 	GLITE_STACK_CATCH();
 }
@@ -944,9 +1013,11 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	
 	// Creating private job directory with delegated Proxy
 	vector<string> jobids;
-	setJobFileSystem(auth, delegatedproxy, stringjid, jobids, renewalproxy);
+	setJobFileSystem(auth, delegatedproxy, stringjid, jobids, jdl, renewalproxy);
 	
 	// Writing registered JDL (to start)
+	edglog(debug)<<"Writing jdl to start file: "
+		<<wmputilities::getJobJDLToStartPath(*jid)<<endl;
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 		jad->toSubmissionString());
 	
@@ -1220,10 +1291,12 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 		// Creating job directories only for the parent. -> empty vector.
 		vector<string> emptyvector;
-		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector, renewalproxy);
+		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector, jdl,
+			renewalproxy);
 	} else {
 		// Sub jobs directory MUST be created now
-		setJobFileSystem(auth, delegatedproxy, stringjid, jobids, renewalproxy);
+		setJobFileSystem(auth, delegatedproxy, stringjid, jobids, jdl,
+			renewalproxy);
 	}
 	
 	pair<string, string> returnpair;
@@ -1231,6 +1304,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	returnpair.second = dag->toString();
 	
 	// Writing registered JDL (to start)
+	edglog(debug)<<"Writing jdl to start file: "
+		<<wmputilities::getJobJDLToStartPath(*jid)<<endl;
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
 		returnpair.second);
 	
@@ -1322,7 +1397,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	} else {
 		auth->authorize("", job_id);
 	}
-	//delete auth;
 
 	// GACL Authorizing
 	edglog(debug)<<"Checking for drain..."<<endl;

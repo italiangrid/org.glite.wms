@@ -93,6 +93,7 @@ const string PEEK_DIRECTORY = "peek";
 const std::string USER_PROXY_NAME = "user.proxy";
 const std::string USER_PROXY_NAME_BAK = ".user.proxy.bak";
 
+const std::string JDL_ORIGINAL_FILE_NAME = "JDLOriginal";
 const std::string JDL_TO_START_FILE_NAME = "JDLToStart";
 const std::string START_LOCK_FILE_NAME = ".startLockFile";
 
@@ -436,6 +437,17 @@ getJobDelegatedProxyPathBak(jobid::JobId jid, int level)
 	return string(getenv(DOCUMENT_ROOT) 
 		+ FILE_SEP + to_filename(jid, level)
 		+ FILE_SEP + USER_PROXY_NAME_BAK);
+	GLITE_STACK_CATCH();
+}
+
+string
+getJobJDLOriginalPath(jobid::JobId jid, int level)
+{	
+	GLITE_STACK_TRY("getJobJDLOriginalPath(JobId jid)");
+	//TBD Check path
+	return string(getenv(DOCUMENT_ROOT) 
+		+ FILE_SEP + to_filename(jid, level)
+		+ FILE_SEP + JDL_ORIGINAL_FILE_NAME);
 	GLITE_STACK_CATCH();
 }
 
