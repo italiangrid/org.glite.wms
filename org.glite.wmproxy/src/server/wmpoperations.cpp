@@ -110,8 +110,6 @@ const std::string MARADONA_FILE = "Maradona.output";
 // Perusal functionality
 const std::string PERUSAL_FILE_2_PEEK_NAME = "files2peek";
 const std::string TEMP_PERUSAL_FILE_NAME = "tempperusalfile";
-const std::string DISABLED_PEEK_FLAG_FILE = ".disabledpeek";
-const std::string EXTERNAL_PEEK_FLAG_FILE = ".externalpeek";
 const std::string PERUSAL_DATE_INFO_SEPARATOR = "-";
 const int DEFAULT_PERUSAL_TIME_INTERVAL = 10; // seconds
 
@@ -604,6 +602,88 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 }
 
 void
+setSubjobFileSystem(authorizer::WMPAuthorizer *auth, 
+	const string &jobid, vector<string> &jobids)
+{
+	GLITE_STACK_TRY("setSubjobFileSystem()");
+	edglog_fn("wmpoperations::setSubjobFileSystem");
+	
+	// Getting LCMAPS mapped User ID
+	uid_t jobdiruserid = auth->getUserId();
+	edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
+	
+	// Getting WMP Server User ID
+	uid_t userid = getuid();
+
+	string document_root = getenv(DOCUMENT_ROOT);
+	
+	// Getting delegated proxy inside job directory
+	string proxy(wmputilities::getJobDelegatedProxyPath(jobid));
+	edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
+	
+	// Creating a copy of the Proxy
+	string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
+	
+	// Creating sub jobs directories
+	if (jobids.size()) {
+		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
+		int outcome = wmputilities::managedir(document_root, userid, jobdiruserid, jobids);
+		if (outcome) {
+			edglog(critical)
+				<<"Unable to create sub jobs local directories for job:\n\t"
+				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
+				"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+				"Unable to create sub jobs local directories\n(please contact "
+				"server administrator)");
+		} else {
+			string link;
+			string linkbak;
+			
+			vector<string>::iterator iter = jobids.begin();
+			vector<string>::iterator const end = jobids.end();
+			for (; iter != end; ++iter) {
+				link = wmputilities::getJobDelegatedProxyPath(*iter);
+				edglog(debug)<<"Creating proxy symbolic link for: "
+					<<*iter<<endl;
+				if (symlink(proxy.c_str(), link.c_str())) {
+					if (errno != EEXIST) {
+				      	edglog(critical)
+				      		<<"Unable to create symbolic link to proxy file:\n\t"
+				      		<<link<<"\n"<<strerror(errno)<<endl;
+				      
+				      	throw FileSystemException(__FILE__, __LINE__,
+							"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+							"Unable to create symbolic link to proxy file\n"
+								"(please contact server administrator)");
+					}
+			    }
+			    
+			    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
+			    edglog(debug)<<"Creating backup proxy symbolic link for: "
+					<<*iter<<endl;
+			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
+			    	if (errno != EEXIST) {
+				      	edglog(critical)
+				      		<<"Unable to create symbolic link to backup proxy file:\n\t"
+				      		<<linkbak<<"\n"<<strerror(errno)<<endl;
+				      
+				      	throw FileSystemException(__FILE__, __LINE__,
+							"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+							"Unable to create symbolic link to backup proxy file\n"
+								"(please contact server administrator)");
+			    	}
+			    }
+			}
+		}
+		// Creating gacl file in the private job directory
+		authorizer::WMPAuthorizer::setJobGacl(jobids);
+	}
+	
+	GLITE_STACK_CATCH();
+}
+
+void
 setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	const string &jobid, vector<string> &jobids, const string &jdl,
 	char * renewalproxy = NULL)
@@ -660,155 +740,22 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
 	wmputilities::fileCopy(delegatedproxy, proxybak);
 	
+	// Creating gacl file in the private job directory
+	authorizer::WMPAuthorizer::setJobGacl(jobid);
+	
 	// Creating sub jobs directories
-	if (jobids.size() != 0) {
-		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-		int outcome = wmputilities::managedir(document_root, userid, jobdiruserid, jobids);
-		if (outcome) {
-			edglog(critical)
-				<<"Unable to create sub jobs local directories for job:\n\t"
-				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-				"setJobFileSystem()", wmputilities::WMS_FATAL,
-				"Unable to create sub jobs local directories\n(please contact "
-				"server administrator)");
-		} else {
-			string link;
-			string linkbak;
-			
-			vector<string>::iterator iter = jobids.begin();
-			vector<string>::iterator const end = jobids.end();
-			for (; iter != end; ++iter) {
-				link = wmputilities::getJobDelegatedProxyPath(*iter);
-				edglog(debug)<<"Creating proxy symbolic link for: "
-					<<*iter<<endl;
-				if (symlink(proxy.c_str(), link.c_str())) {
-					if (errno != EEXIST) {
-				      	edglog(critical)
-				      		<<"Unable to create symbolic link to proxy file:\n\t"
-				      		<<link<<"\n"<<strerror(errno)<<endl;
-				      
-				      	throw FileSystemException(__FILE__, __LINE__,
-							"setJobFileSystem()", wmputilities::WMS_FATAL,
-							"Unable to create symbolic link to proxy file\n"
-								"(please contact server administrator)");
-					}
-			    }
-			    
-			    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
-			    edglog(debug)<<"Creating backup proxy symbolic link for: "
-					<<*iter<<endl;
-			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
-			    	if (errno != EEXIST) {
-				      	edglog(critical)
-				      		<<"Unable to create symbolic link to backup proxy file:\n\t"
-				      		<<linkbak<<"\n"<<strerror(errno)<<endl;
-				      
-				      	throw FileSystemException(__FILE__, __LINE__,
-							"setJobFileSystem()", wmputilities::WMS_FATAL,
-							"Unable to create symbolic link to backup proxy file\n"
-								"(please contact server administrator)");
-			    	}
-			    }
-			}
-		}
-		// Creating gacl file in the private job directory
-		authorizer::WMPAuthorizer::setJobGacl(jobid);
-		authorizer::WMPAuthorizer::setJobGacl(jobids);
-	} else {
-		// Creating gacl file in the private job directory
-		authorizer::WMPAuthorizer::setJobGacl(jobid);
+	if (jobids.size()) {
+		setSubjobFileSystem(auth, jobid, jobids);
 	}
 	
 	// Writing original jdl to disk
 	JobId jid(jobid);
+	Ad ad(jdl);
 	edglog(debug)<<"Writing original jdl file: "
 		<<wmputilities::getJobJDLOriginalPath(jid)<<endl;
-	wmputilities::writeTextFile(wmputilities::getJobJDLOriginalPath(jid), jdl);	
+	wmputilities::writeTextFile(wmputilities::getJobJDLOriginalPath(jid),
+		ad.toLines());	
 
-	GLITE_STACK_CATCH();
-}
-
-void
-setSubjobFileSystem(authorizer::WMPAuthorizer *auth, 
-	const string &jobid, vector<string> &jobids)
-{
-	GLITE_STACK_TRY("setSubjobFileSystem()");
-	edglog_fn("wmpoperations::setSubjobFileSystem");
-	
-	// Getting LCMAPS mapped User ID
-	uid_t jobdiruserid = auth->getUserId();
-	edglog(debug)<<"User Id: "<<jobdiruserid<<endl;
-	
-	// Getting WMP Server User ID
-	uid_t userid = getuid();
-
-	string document_root = getenv(DOCUMENT_ROOT);
-	
-	// Getting delegated proxy inside job directory
-	string proxy(wmputilities::getJobDelegatedProxyPath(jobid));
-	edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
-	
-	// Creating a copy of the Proxy
-	string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
-	
-	// Creating sub jobs directories
-	if (jobids.size() != 0) {
-		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-		int outcome = wmputilities::managedir(document_root, userid, jobdiruserid, jobids);
-		if (outcome) {
-			edglog(critical)
-				<<"Unable to create sub jobs local directories for job:\n\t"
-				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-				"setJobFileSystem()", wmputilities::WMS_FATAL,
-				"Unable to create sub jobs local directories\n(please contact "
-				"server administrator)");
-		} else {
-			string link;
-			string linkbak;
-			
-			vector<string>::iterator iter = jobids.begin();
-			vector<string>::iterator const end = jobids.end();
-			for (; iter != end; ++iter) {
-				link = wmputilities::getJobDelegatedProxyPath(*iter);
-				edglog(debug)<<"Creating proxy symbolic link for: "
-					<<*iter<<endl;
-				if (symlink(proxy.c_str(), link.c_str())) {
-					if (errno != EEXIST) {
-				      	edglog(critical)
-				      		<<"Unable to create symbolic link to proxy file:\n\t"
-				      		<<link<<"\n"<<strerror(errno)<<endl;
-				      
-				      	throw FileSystemException(__FILE__, __LINE__,
-							"setJobFileSystem()", wmputilities::WMS_FATAL,
-							"Unable to create symbolic link to proxy file\n"
-								"(please contact server administrator)");
-					}
-			    }
-			    
-			    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
-			    edglog(debug)<<"Creating backup proxy symbolic link for: "
-					<<*iter<<endl;
-			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
-			    	if (errno != EEXIST) {
-				      	edglog(critical)
-				      		<<"Unable to create symbolic link to backup proxy file:\n\t"
-				      		<<linkbak<<"\n"<<strerror(errno)<<endl;
-				      
-				      	throw FileSystemException(__FILE__, __LINE__,
-							"setJobFileSystem()", wmputilities::WMS_FATAL,
-							"Unable to create symbolic link to backup proxy file\n"
-								"(please contact server administrator)");
-			    	}
-			    }
-			}
-		}
-		// Creating gacl file in the private job directory
-		authorizer::WMPAuthorizer::setJobGacl(jobid);
-		authorizer::WMPAuthorizer::setJobGacl(jobids);
-	}
-	
 	GLITE_STACK_CATCH();
 }
 
@@ -1013,13 +960,16 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	
 	// Creating private job directory with delegated Proxy
 	vector<string> jobids;
-	setJobFileSystem(auth, delegatedproxy, stringjid, jobids, jdl, renewalproxy);
+	setJobFileSystem(auth, delegatedproxy, stringjid, jobids,
+		jdl, renewalproxy);
 	
 	// Writing registered JDL (to start)
 	edglog(debug)<<"Writing jdl to start file: "
 		<<wmputilities::getJobJDLToStartPath(*jid)<<endl;
+	//TBC jad->toSubmissionString() = jad->check(false) + jad->toLines()
+	jad->check(false);
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
-		jad->toSubmissionString());
+		jad->toLines());
 	
 	delete jid;
 
@@ -1291,23 +1241,24 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	if (dag->hasAttribute(JDLPrivate::ZIPPED_ISB)) {
 		// Creating job directories only for the parent. -> empty vector.
 		vector<string> emptyvector;
-		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector, jdl,
-			renewalproxy);
+		setJobFileSystem(auth, delegatedproxy, stringjid, emptyvector,
+			jdl, renewalproxy);
 	} else {
 		// Sub jobs directory MUST be created now
-		setJobFileSystem(auth, delegatedproxy, stringjid, jobids, jdl,
-			renewalproxy);
+		setJobFileSystem(auth, delegatedproxy, stringjid, jobids,
+			jdl, renewalproxy);
 	}
 	
+	string dagjdl = dag->toString(ExpDagAd::MULTI_LINES);
 	pair<string, string> returnpair;
 	returnpair.first = stringjid;
-	returnpair.second = dag->toString();
+	returnpair.second = dagjdl;
 	
 	// Writing registered JDL (to start)
 	edglog(debug)<<"Writing jdl to start file: "
 		<<wmputilities::getJobJDLToStartPath(*jid)<<endl;
 	wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
-		returnpair.second);
+		dagjdl);
 	
 	delete jid;
 
