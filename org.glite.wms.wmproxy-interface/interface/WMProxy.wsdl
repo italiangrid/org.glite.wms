@@ -34,6 +34,13 @@
 					<enumeration value="CHECKPOINTABLE"/>
 				</restriction>
 			</simpleType>
+			<!-- ==== List of jdl types ==== -->
+			<simpleType name="JdlType">
+				<restriction base="xsd:string">
+					<enumeration value="ORIGINAL"/>
+					<enumeration value="REGISTERED"/>
+				</restriction>
+			</simpleType>
 			<xsd:complexType name="JobTypeList">
 				<xsd:sequence>
 					<element name="jobType" type="glitenstypes:JobType" minOccurs="0" maxOccurs="unbounded"/>
@@ -186,6 +193,13 @@
 	</wsdl:message>
 	<wsdl:message name="getVersionResponse">
 		<wsdl:part name="version" type="xsd:string"/>
+	</wsdl:message>
+	<wsdl:message name="getJDLRequest">
+		<wsdl:part name="jobId" type="xsd:string"/>
+		<wsdl:part name="type" type="glitenstypes:JdlType"/>
+	</wsdl:message>
+	<wsdl:message name="getJDLResponse">
+		<wsdl:part name="jdl" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="jobRegisterRequest">
 		<wsdl:part name="jdl" type="xsd:string"/>
@@ -450,6 +464,27 @@
 			<wsdl:output name="getVersionResponse" message="glitens:getVersionResponse"/>
 			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+		</wsdl:operation>
+		<wsdl:operation name="getJDL" parameterOrder="jobId type">
+			<wsdl:documentation>
+					This operation gets the jdl.
+					
+					Input: string containing the JobId.
+					Input: the jdl type to get.
+					
+					Output: string containing the jdl.
+					
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					GenericFault: 					another problem occured.
+					
+             </wsdl:documentation>
+			<wsdl:input name="getJDLRequest" message="glitens:getJDLRequest"/>
+			<wsdl:output name="getJDLResponse" message="glitens:getJDLResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
+			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
 		<wsdl:operation name="jobRegister" parameterOrder="jdl delegationId">
 			<wsdl:documentation>
@@ -1167,6 +1202,26 @@
 				<soap:fault name="AuthenticationFault" use="literal"/>
 			</wsdl:fault>
 		</wsdl:operation>
+		<wsdl:operation name="getJDL">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="InvalidArgumentFault">
+				<soap:fault name="InvalidArgumentFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
 		<wsdl:operation name="jobRegister">
 			<wsdl:input>
 				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
@@ -1708,21 +1763,21 @@
 	
 	<!-- ==== Service definition ==== -->
 	<wsdl:service name="WMProxy">
-		<wsdl:documentation>
-			Workload Manager Proxy service
-			This is the service that allows accessing the submission and control functionalities of the WMS
-        </wsdl:documentation>
         <wsdl:port name="WMProxy_PortType" binding="glitens:WMProxy">
+        	<wsdl:documentation>
+				Workload Manager Proxy service
+				This is the service that allows accessing the submission and control functionalities of the WMS
+	        </wsdl:documentation>
             <!-- ghemon.cnaf.infn.it -->
             <soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
         </wsdl:port>
 		
-		<wsdl:documentation>
-			<!-- ==== Delegation service (client version 1.5 or greater) ==== -->
-			Workload Manager Proxy delegation service
-			This is the service that allows delegation funcionalities
-        </wsdl:documentation>
+		<!-- ==== Delegation service (client version 1.5 or greater) ==== -->
 		<wsdl:port name="WMProxyDelegation_PortType" binding="glitedelegns:DelegationSoapBinding">
+			<wsdl:documentation>
+				Workload Manager Proxy delegation service
+				This is the service that allows delegation funcionalities
+	        </wsdl:documentation>
 			<!-- ghemon.cnaf.infn.it -->
 			<soap:address location="https://131.154.100.122:7443/glite_wms_wmproxy_server"/>
 		</wsdl:port>
