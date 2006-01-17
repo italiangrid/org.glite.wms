@@ -1,5 +1,5 @@
 #ifndef  GLITE_WMS_WMPROXYAPICPPUTILITIES_H
-#define GLITE_WMS_WMPROXYAPICPPUTILITIES__H
+#define GLITE_WMS_WMPROXYAPICPPUTILITIES_H
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
 /**
