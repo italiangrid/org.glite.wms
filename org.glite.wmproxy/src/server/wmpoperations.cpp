@@ -3536,7 +3536,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
 	string protocol = conf.getDefaultProtocol();
-	string port = (conf.getDefaultPort() != 0)
+	string port = (conf.getDefaultPort())
 		? (":" + boost::lexical_cast<std::string>(conf.getDefaultPort()))
 		: "";
 	string serverhost = getServerHost();
@@ -3596,7 +3596,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
 				outfile.close();
 				rename(tempfile.c_str(), filetoreturn.c_str());
-				returnvector.push_back(protocol + "://" + serverhost + ":"
+				returnvector.push_back(protocol + "://" + serverhost
 					+ port + filetoreturn);
 				outfile.open(tempfile.c_str(), ios::out);
 				if (!outfile.good()) {
@@ -3630,7 +3630,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			+ PERUSAL_DATE_INFO_SEPARATOR + startdate
 			+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
 		rename(tempfile.c_str(), filetoreturn.c_str());
-		returnvector.push_back(protocol + "://" + serverhost + ":" + port
+		returnvector.push_back(protocol + "://" + serverhost + port
 			+ filetoreturn);
 	}
 	
