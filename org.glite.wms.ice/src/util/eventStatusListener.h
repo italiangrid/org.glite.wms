@@ -10,6 +10,7 @@
 
 //#include "glite/ce/monitor-client-api-c/GeneralException.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "boost/thread/recursive_mutex.hpp"
 
 // Forward declaration for the logger
 namespace log4cpp {
@@ -61,6 +62,8 @@ namespace glite {
 	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999),T(""),P(0) {}
 
 	public:
+	  static boost::recursive_mutex mutexJobStatusUpdate;
+
 	  eventStatusListener(int i, const std::string& hostcert) ;
 	  virtual ~eventStatusListener() {}
 

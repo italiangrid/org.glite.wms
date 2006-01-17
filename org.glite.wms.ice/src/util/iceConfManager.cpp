@@ -63,6 +63,7 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   subduration       = config->ice()->subscription_duration();
   subUpdThresholdTime = config->ice()->subscription_update_threshold_time();
   startsubupder     = config->ice()->start_subscription_updater();
+  poller_status_threshold_time = config->ice()->poller_status_threshold_time();
 }
 
 //______________________________________________________________________________

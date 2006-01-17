@@ -3,6 +3,7 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "creamJob.h"
+#include "eventStatusListener.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "boost/algorithm/string.hpp"
@@ -158,7 +159,12 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
 
     soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob.getUserProxyCertificate());
 
-    soap_proxy::CreamProxyFactory::getProxy()->Register(
+    { // lock the listener:
+      // this prevents the eventStatusListener::acceptJobStatus()
+      // to process a notification of a just submitted job that is not
+      // yet present in the jobCache
+      boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
+      soap_proxy::CreamProxyFactory::getProxy()->Register(
 	theJob.getCreamURL().c_str(),
 	theJob.getCreamDelegURL().c_str(),
         "", // deleg ID not needed because this client
@@ -169,21 +175,22 @@ void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTra
         true /*autostart*/
         );
 
-    log_dev->log(log4cpp::Priority::INFO,
+      log_dev->log(log4cpp::Priority::INFO,
 		 string("iceCommandSubmit::execute() - Returned CREAM-JOBID ["+url_jid[1]+"]"));
 
-    // no failure: put jobids and status in cache
-    // and remove last request from WM's filelist
+      // no failure: put jobids and status in cache
+      // and remove last request from WM's filelist
 
-    theJob.setJobID(url_jid[1]);
-    theJob.setStatus(job_statuses::PENDING);
-    theJob.setLastUpdate(time(NULL));
-    boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+      theJob.setJobID(url_jid[1]);
+      theJob.setStatus(job_statuses::PENDING);
+      theJob.setLastUpdate(time(NULL));
+      boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
-    // put(...) accepts arg by reference, but
-    // the implementation puts the arg in the memory hash by copying it. So
-    // passing a *pointer should not produce problems
-    util::jobCache::getInstance()->put( theJob );
+      // put(...) accepts arg by reference, but
+      // the implementation puts the arg in the memory hash by copying it. So
+      // passing a *pointer should not produce problems
+      util::jobCache::getInstance()->put( theJob );
+    } // this end-scope unlock the listener that now can
 
     /**
      * here must check if we're subscribed to the CEMon service

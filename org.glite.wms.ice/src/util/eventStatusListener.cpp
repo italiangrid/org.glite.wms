@@ -21,6 +21,8 @@ using namespace std;
 
 namespace iceUtil = glite::wms::ice::util;
 
+boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
+
 void parseEventJobStatus(string&, string&, const string&)
   throw(iceUtil::ClassadSyntax_ex&);
 
@@ -54,9 +56,9 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   }
   struct hostent *H=gethostbyname(name);
   if(!H) {
-      log_dev->fatalStream() << "eventStatusListener::CTOR - Couldn't resolve local hostname: "
-                             << strerror(h_errno)
-                             << log4cpp::CategoryStream::ENDLINE;
+    log_dev->fatalStream() << "eventStatusListener::CTOR - Couldn't resolve local hostname: "
+                           << strerror(h_errno)
+                           << log4cpp::CategoryStream::ENDLINE;
     exit(1);
   }
   myname = H->h_name;
@@ -95,9 +97,9 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   }
   
   log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - Connection accepted from ["
-                        << this->getClientIP() << "]" 
+                        << this->getClientIP() << "]"
                         << log4cpp::CategoryStream::ENDLINE;
-  
+
   /**
    * acquires the event from the client
    * and deserializes the data structures
@@ -108,7 +110,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
                              << log4cpp::CategoryStream::ENDLINE;
 
       log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - ErrorMessage=["
-                             << this->getErrorMessage() << "]" 
+                             << this->getErrorMessage() << "]"
                              << log4cpp::CategoryStream::ENDLINE;
   }
 
@@ -142,19 +144,34 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * For each event updates the status of the related
    * job in the jobCache.
    */
-  for(unsigned j=0; j<evts.size(); j++) {
+  //for(unsigned j=0; j<evts.size(); j++) {
+  for(unsigned jj=0; jj<evts[0].Messages.size(); jj++)
+      cout << "evt #"<<0<<".Message["<<jj<<"]="<<evts[0].Messages[jj]<<endl;
+//     cout << "evt #"<<j<<".Message[0]"<<evts[j].Messages[0]<<endl;
+//     cout << "evt #"<<j<<".Message[2]"<<evts[j].Messages[2]<<endl;
 
-    cout << "evt #"<<j<<".Message[0]"<<evts[j].Messages[0]<<endl;
-    cout << "evt #"<<j<<".Message[1]"<<evts[j].Messages[1]<<endl;
-    cout << "evt #"<<j<<".Message[2]"<<evts[j].Messages[2]<<endl;
-
-    string Ad = evts[j].Messages[0];
+    string Ad = evts[0].Messages[0];
     string cream_job_id(""), status("");
     parseEventJobStatus(cream_job_id, status, Ad);
     jobCache::iterator it;
     try {
+      boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
+      //cout << "Looking for CID ["<<cream_job_id<<"]"<<endl;
       it = jobCache::getInstance()->lookupByCreamJobID(cream_job_id);
+      if( it == jobCache::getInstance()->end())
+      {
+	 log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
+	 			<< "Not found in the cache the creamjobid ["
+				<< cream_job_id<<"] that should be there. Stop!"
+				<< log4cpp::CategoryStream::ENDLINE;
+	 exit(1);
+      }
+      //assert( it != jobCache::getInstance()->end() );
       (*it).setLastUpdate(time(NULL));
+      log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
+      			     << "Updating job ["<<cream_job_id
+			     << "] with status ["<<status<<"]"
+			     << log4cpp::CategoryStream::ENDLINE;
       (*it).setStatus(glite::ce::cream_client_api::job_statuses::getStatusNum(status));
       jobCache::getInstance()->put( *it );
     } catch(exception& ex) {
@@ -166,7 +183,6 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
                           << "Successfully updated JobID="
                           << cream_job_id <<" - STATUS=" << status
                           << log4cpp::CategoryStream::ENDLINE;
-  }
   /**
    * See CEConsumer's class for the purpose of this method
    */

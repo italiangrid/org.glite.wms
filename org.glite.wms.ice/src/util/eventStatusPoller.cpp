@@ -9,6 +9,7 @@
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
 #include "abs-ice-core.h"
+#include "iceConfManager.h"
 #include <vector>
 #include <map>
 #include <boost/thread/thread.hpp>
@@ -77,7 +78,7 @@ bool eventStatusPoller::getStatus(void)
   } catch(exception& ex) {
     //    cerr << ex.what()<<endl;
     log_dev->log(log4cpp::Priority::ERROR,
-		 string("eventStatusPoller::purgeJobs() - ")+ex.what());
+		 string("eventStatusPoller::getStatus() - ")+ex.what());
     exit(1);
   }
 
@@ -86,8 +87,10 @@ bool eventStatusPoller::getStatus(void)
       oneJobToQuery.clear();
       try {
 	CreamJob theJob = jobCache::getInstance()->getJobByCreamJobID(*it);
+	if(time(NULL)-theJob.getLastUpdate()<iceConfManager::getInstance()->getPollerStatusThresholdTime())
+	  continue;
 	log_dev->log(log4cpp::Priority::DEBUG,
-		     string("eventStatusPoller::purgeJobs() - Sending JobInfo request for Job [")
+		     string("eventStatusPoller::getStatus() - Sending JobInfo request for Job [")
 		     + theJob.getJobID() + "]");
 	oneJobToQuery.push_back(*it);
 	creamClient->Authenticate( theJob.getUserProxyCertificate() );
@@ -99,30 +102,30 @@ bool eventStatusPoller::getStatus(void)
 	// this exception should not be raised because 
 	// the CreamJob is created from another valid one
 	log_dev->log(log4cpp::Priority::ERROR,
-		     "eventStatusPoller::purgeJobs() - Fatal error: CreamJob creation failed from a valid one!!!");
+		     "eventStatusPoller::getStatus() - Fatal error: CreamJob creation failed from a valid one!!!");
 	exit(1);
       } catch(soap_proxy::auth_ex& ex) {
 	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::purgeJobs() - Cannot query status job: ")
+		     string("eventStatusPoller::getStatus() - Cannot query status job: ")
 		     + ex.what());
       } catch(soap_proxy::soap_ex& ex) {
 	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::purgeJobs() - CreamProxy::Info() raised a soap_ex exception: ")
+		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a soap_ex exception: ")
 		     + ex.what());
 	return false; 
       } catch(cream_exceptions::BaseException& ex) {
 	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::purgeJobs() - CreamProxy::Info() raised a BaseException exception: ")
+		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a BaseException exception: ")
 		     + ex.what());
 	return false; 
       } catch(cream_exceptions::InternalException& ex) {
 	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::purgeJobs() - CreamProxy::Info() raised a InternalException exception: ")
+		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a InternalException exception: ")
 		     + ex.what());
 	return false; 
       } catch(cream_exceptions::DelegationException&) {
 	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::purgeJobs() - CreamProxy::Info() raised a DelegationException exception"));
+		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a DelegationException exception"));
 	return false;
       }
     }
@@ -193,7 +196,7 @@ void eventStatusPoller::updateJobCache()
   for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it) {
     if(!*it)
       continue;
-    
+
     for(unsigned int j=0; j<(*it)->jobInfo.size(); j++) {
       
       glite::ce::cream_client_api::job_statuses::job_status 
