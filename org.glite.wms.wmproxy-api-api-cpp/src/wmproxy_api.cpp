@@ -1,13 +1,14 @@
 
-#include "soapWMProxyProxy.h"
-#include "WMProxy.nsmap"
+
 #include <stdlib.h> // getenv(...)
 
 #include "soapDelegationSoapBindingProxy.h"
 
 #include <ctype.h>
-#include "glite/wms/wmproxyapi/wmproxy_api.h"
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
+#include "glite/wms/wmproxyapi/wmproxy_api.h"
+#include "WMProxy.nsmap"
+
 extern "C" {
 #include "gridsite.h" // GRSTx509MakeProxyCert method
 }
@@ -20,8 +21,6 @@ using namespace glite::wms::wmproxyapiutils;
 namespace glite {
 namespace wms {
 namespace wmproxyapi {
-
-
 
 /*****************************************************************
 Performs SSL object destruction
@@ -37,7 +36,7 @@ void soapDestroy(struct soap *soap ){
 	}
 }
 
-BaseException* createWmpException (BaseException *b_ex ,const string &method ,  const string &description ){
+BaseException* createWmpException (BaseException *b_ex ,const std::string &method ,  const std::string &description ){
 	b_ex=new BaseException;
 	b_ex->methodName = method ;
 	b_ex->Description   = new string(description);
@@ -352,7 +351,7 @@ std::vector< std::pair<std::string ,std::vector<std::string > > > destURISoap2cp
 fileSoap2cpp
 Tranform the soap string&long list structure into cpp primitive object structure
 **************************************************************/
-vector <pair<string , long> > fileSoap2cpp (ns1__StringAndLongList *s_list){
+vector <pair<std::string , long> > fileSoap2cpp (ns1__StringAndLongList *s_list){
 	vector <pair<string , long> > result ;
 	if (s_list){
 		std::vector<ns1__StringAndLongType*> s_vect = (*s_list).file;
@@ -909,6 +908,18 @@ ProxyInfoStructType*getJobProxyInfo(const string &jobId, ConfigContext *cfs){
 	} else soapErrorMng(wmp) ;
 	return (result);
 }
+std::string getJDL(const std::string &jobid, const JdlType &type, ConfigContext *cfs){
+	WMProxy wmp;
+	soapAuthentication (wmp, cfs);
+	string jdl = "";
+	ns1__getJDLResponse response;
+	if (wmp.ns1__getJDL(jobid, (ns1__JdlType)type, response) == SOAP_OK) {
+		soapDestroy(wmp.soap) ;
+	} else soapErrorMng(wmp) ;
+	return (response._jdl);
+}
+
+
 } // wmproxy-api namespace
 } // wms namespace
 } // glite namespace

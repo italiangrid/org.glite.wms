@@ -45,10 +45,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "soapWMProxyProxy.h"
+
 
 namespace glite {
 namespace wms {
 namespace wmproxyapi {
+
+typedef  ns1__JdlType JdlType;
 
 /**  Base exception wrap */
 struct BaseException {
@@ -612,7 +616,7 @@ void grstPutProxy(const std::string &delegationId, const std::string &request, g
 * @return a struct with the information on the input proxy
 * @throws DelegationException If the request failed
 * @throws AuthenticationFaultException : 	a generic authentication problem occured.
-* @throws AuthorizationFaultException : 	client is not authorized to perform this operation.
+* @throws AuthorizationFaultException : 	the client is not authorized to perform this operation.
 * @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
 * @throws GenericFaultException : 		another problem occured.
 * @throws BaseException Any other error occurred
@@ -629,7 +633,7 @@ ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, Conf
 * @return a struct with the information on the input proxy
 * @throws DelegationException If the request failed
 * @throws AuthenticationFaultException : 	a generic authentication problem occured.
-* @throws AuthorizationFaultException : 	client is not authorized to perform this operation.
+* @throws AuthorizationFaultException : 	the client is not authorized to perform this operation.
 * @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
 * @throws JobUnknownException The provided jobId has not been registered to the system
 * @throws GenericFaultException : 		another problem occured.
@@ -639,6 +643,21 @@ ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, Conf
 * @see BaseException
 */
 ProxyInfoStructType* getJobProxyInfo(const std::string &jobId, ConfigContext *cfs);
+
+/**
+* Returns the JDL string which identifier is the input JobId
+* @param jobid the identifier of the job
+* @param type the type of the JDL to be retrieved (either ORIGINAL or REGISTERED)
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @return the string with the JDL
+* @throws AuthenticationFaultException : 	a generic authentication problem occured.
+* @throws AuthorizationFaultException : 	the client is not authorized to perform this operation
+* @throws InvalidArgumentFaultException : 	the given delegation id is not valid.
+* @throws GenericFaultException : 		another problem occured.
+* @throws BaseException Any other error occurred
+*/
+std::string getJDL(const std::string &jobid, const JdlType &type, ConfigContext *cfs);
+
 } // wmproxy namespace
 } // wms namespace
 } // glite namespace
