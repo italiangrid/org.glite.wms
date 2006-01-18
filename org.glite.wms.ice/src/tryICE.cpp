@@ -75,10 +75,11 @@ int main(int argc, char*argv[]) {
   string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
   string hostdn;
   try {
-      hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+    hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
   } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
     logger_instance->log(log4cpp::Priority::ERROR, 
-			 "Unable to extract user DN from Proxy File " + hostcert, true, true, true);
+			 "Unable to extract user DN from Proxy File " 
+			 + hostcert, true, true, true);
     exit(1);
   }
   log_dev->log(log4cpp::Priority::INFO, 
@@ -103,7 +104,10 @@ int main(int argc, char*argv[]) {
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);
   
-  iceUtil::jobCache::getInstance();
+  try {iceUtil::jobCache::getInstance();}
+  catch(exception& ex) {
+    log_dev->errorStream() << ex.what() << log4cpp::CategoryStream::ENDLINE;
+  }
 
 
   /*****************************************************************************
