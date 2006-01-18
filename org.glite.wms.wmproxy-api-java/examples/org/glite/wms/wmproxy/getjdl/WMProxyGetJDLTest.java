@@ -35,7 +35,7 @@ public class WMProxyGetJDLTest {
 		String jdl = "";
 		WMProxyAPI client = null;
 		// Prints out the input parameters
-		System.out.println ("TEST : FreeQuota");
+		System.out.println ("TEST : getJDL");
 		System.out.println ("************************************************************************************************************************************");
 		System.out.println ("WS URL	 		= [" + url + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
