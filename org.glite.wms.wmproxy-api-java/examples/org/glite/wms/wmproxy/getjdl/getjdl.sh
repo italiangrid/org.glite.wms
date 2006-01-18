@@ -30,6 +30,10 @@ WMP_API_JAVA=${line##*=}
 line=`more ../wmp-api-java-test.cfg | grep SECURITY_TRUSTMANAGER`
 SECURITY_TRUSTMANAGER=${line##*=}
 
+## SECURITY_TRUSTMANAGER ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
+SECURITY_UTIL_JAVA=${line##*=}
+
 ## BOUNCYCASTLE ==============
 line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
 BOUNCYCASTLE=${line##*=}
