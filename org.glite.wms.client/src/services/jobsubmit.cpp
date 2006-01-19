@@ -266,7 +266,7 @@ void JobSubmit::readOptions (int argc,char **argv){
 		setEndPoint( );
 	}
 	// file Protocol
-	fileProto= wmcOpts->getStringAttribute( Options::PROTO) ;
+	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
 	if (startOpt && fileProto) {
 		logInfo->print (WMS_WARNING, "--proto: option ignored (start operation doesn't need any file transferring)\n", "", true );
 	}  else if (registerOnly && fileProto) {
@@ -274,6 +274,11 @@ void JobSubmit::readOptions (int argc,char **argv){
 	}
 	if (!fileProto) {
 		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
+		logInfo->print (WMS_DEBUG,
+			"--proto option not specified; using the default File Transferring Protocol:", *fileProto  );
+	} else {
+		logInfo->print (WMS_DEBUG,
+			"--proto option - File Transferring Protocol:", *fileProto  );
 	}
 	// --valid
 	if (validOpt){
@@ -1049,13 +1054,15 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				if (nodesresOpt) {
 					pass->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 				}
-				dagAd=AdConverter::bulk2dag(pass);
-				AdUtils::setDefaultValues(dagAd, wmcConf);
-				dagAd->getSubmissionStrings();
-				toBretrieved = dagAd->gettoBretrieved();
-				if (toBretrieved){
-					// isbURI is needed by checkInputSandboxSize
-					isbURI = getDagISBUri( );
+				if (jobAd->hasAttribute(JDL::INPUTSB)){
+					dagAd=AdConverter::bulk2dag(pass);
+					AdUtils::setDefaultValues(dagAd, wmcConf);
+					dagAd->getSubmissionStrings();
+					toBretrieved = dagAd->gettoBretrieved();
+					if (toBretrieved){
+						// isbURI is needed by checkInputSandboxSize
+						isbURI = getDagISBUri( );
+					}
 				}
 			} else {
 				if (toBretrieved){
@@ -1345,11 +1352,12 @@ void JobSubmit::gsiFtpTransfer(std::vector<std::pair<std::string,std::string> > 
 				"gsiFtpTransfer", ECONNABORTED,"File Transferring Error",
 				"unable to transfer the file " + info.str());
 		} else{
-			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp)", "TRANSFER DONE");
+			logInfo->print(WMS_DEBUG, "File successfully transferred", "("+string (it.first)+")");
 			// Removes the zip file just transferred
 			if (zipAllowed) {
 				try {
 					Utils::removeFile(it.first);
+					logInfo->print(WMS_DEBUG, "Temporary zip file has been succesfully cancelled:", it.first);
 				} catch (WmsClientException &exc) {
 					logInfo->print (WMS_WARNING,
 						"The following error occured during the removal of the file:",
@@ -1438,18 +1446,21 @@ void JobSubmit::curlTransfer (std::vector<std::pair<std::string,std::string> > p
 					// FILE TRANSFERRING ------------------------------
 					res = curl_easy_perform(curl);
 					// result
-					if ( res == 0 ){
+					if ( res == CURLE_OK){
 						// SUCCESS !!!
+						logInfo->print(WMS_DEBUG, "File successfully transferred:", file);
 						// Removes the zip file just transferred
 						if (zipAllowed) {
 							try {
 								Utils::removeFile(file);
+								logInfo->print(WMS_DEBUG, "Temporary zip file has been succesfully cancelled:", file);
 							} catch (WmsClientException &exc) {
 								logInfo->print (WMS_WARNING,
 								"The following error occured during the removal of the file:",
 								exc.what());
 							}
 						}
+
 						// Remove the file info from the vector
 						paths.erase(paths.begin());
 					} else {

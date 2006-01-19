@@ -239,27 +239,27 @@ const std::string ProxyInfo::printProxyInfo (ProxyInfoStructType info){
 	long date = 0; // date = Epoch seconds
 	long timeleft = 0;
 	string attr = "";
-	out << field ("Subject", info.subject) ;
-	out << field ("Issuer", info.issuer) ;
-	out << field ("Identity", info.identity) ;
-	out << field ("Type", info.type) ;
-	out << field ("Strength", info.strength) ;
+	out << field ("Subject", info.subject) ; cout << "1\n" ;
+	out << field ("Issuer", info.issuer) ;cout << "2\n" ;
+	out << field ("Identity", info.identity) ;cout << "3\n" ;
+	out << field ("Type", info.type) ;cout << "4\n" ;
+	out << field ("Strength", info.strength) ;cout << "5 --- startTime=" << info.startTime<<"  \n" ;
 	// startTime
-	date = boost::lexical_cast<long>(info.startTime);
-	out << field ("StartDate", getDateString(date));
+	date = boost::lexical_cast<long>(info.startTime);cout << "6\n" ;
+	out << field ("StartDate", getDateString(date));cout << "7\n" ;
 	// endTime
-	date = boost::lexical_cast<long>(info.endTime);
-	out << field ("Expiration", getDateString(date));
+	date = boost::lexical_cast<long>(info.endTime);cout << "8\n" ;
+	out << field ("Expiration", getDateString(date));cout << "9\n" ;
 	// time-left
 	timeleft = boost::lexical_cast<long> (info.endTime) - now ;
-	out << field ("Timeleft", timeString(timeleft)) ;
+	out << field ("Timeleft", timeString(timeleft)) ;cout << "10\n" ;
 	// VOs info
 	std::vector<VOProxyInfoStructType*>::iterator it1 = (info.vosInfo).begin();
-	const std::vector<VOProxyInfoStructType*>::iterator end1 = (info.vosInfo).end();
+	const std::vector<VOProxyInfoStructType*>::iterator end1 = (info.vosInfo).end();cout << "11\n" ;
 	for ( ; it1 != end1; it1++){
 		if ((*it1)){
 			VOProxyInfoStructType *vo = (*it1);
-			out << "=== VO " << vo->voName << " extension information ===\n";
+			out << "=== VO " << vo->voName << " extension information ===\n";cout << "12\n" ;
 			out << field ("VO", vo->voName);
 			out << field ("Subject", vo->user);
 			out << field ("Issuer", vo->server);
