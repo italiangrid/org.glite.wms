@@ -13,6 +13,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "glite/lb/producer.h"
 
@@ -40,7 +41,7 @@
 #include "glite/security/proxyrenewal/renewal.h"
 
 #include "CommandAdManipulation.h"
-#include "JobController.h"
+//#include "JobController.h"
 #include "TaskQueue.hpp"
 #include "plan.h"
 #include "WMFactory.h"
@@ -51,7 +52,6 @@ namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace requestad = glite::wms::jdl;
 namespace common = glite::wms::manager::common;
-namespace controller = glite::wms::jobsubmission::controller;
 
 namespace glite {
 namespace wms {
@@ -276,83 +276,15 @@ make_cancel_request(jobid::JobId const& job_id,
   return utilities::unparse_classad(*cmd);
 }
 
-std::string
-make_submit_request(classad::ClassAd& jdl)
-{
-  boost::scoped_ptr<classad::ClassAd> cmd(
-    common::submit_command_create(&jdl)
-  );
-  
-  return utilities::unparse_classad(*cmd);
-}
-
-void JC_submit(
-  classad::ClassAd const& ad,
-  common::ContextPtr const& context
+void
+add_cancel_request(
+  std::string const& list_name,
+  jobid::JobId const& id,
+  std::string const& sequence_code
 )
 {
-  edg_wll_Context c_context = context.get();
-  controller::JobController(&c_context).submit(&ad);
-}
-
-void CREAM_submit(
-  classad::ClassAd& ad,
-  common::ContextPtr const& context
-)
-{
-  configuration::ICEConfiguration const * const ice_conf
-    = configuration::Configuration::instance()->ice();
-
-  std::string const input_list_name(ice_conf->input());
-  std::string const ce_id = requestad::get_ce_id(ad);
-  std::string const jobid(requestad::get_edg_jobid(ad));
-
-  log_enqueued_start(context, input_list_name, jobid);
-
-  std::string const sequence_code(common::get_lb_sequence_code(context));
-  requestad::set_lb_sequence_code(ad, sequence_code);
-
   try {
-    utilities::FileList<std::string> fl(input_list_name);
-    utilities::FileListMutex mx(fl);
-    utilities::FileListLock lock(mx);
-
-    fl.push_back(make_submit_request(ad));
-
-    log_enqueued_ok(context, input_list_name, jobid);
-  } catch(utilities::FileContainerError const& error) {
-    log_enqueued_fail(
-      context, 
-      input_list_name, 
-      jobid,
-      error.string_error()
-    );
-  }
-}
-
-void JC_cancel(
-  common::ContextPtr const& context,
-  jobid::JobId const& id
-)
-{
-  edg_wll_Context c_context = context.get();
-  controller::JobController(&c_context).cancel(id);
-}
-
-void CREAM_cancel(
-  common::ContextPtr const& context,
-  jobid::JobId const& id
-)
-{
-  configuration::ICEConfiguration const * const ice_conf
-    = configuration::Configuration::instance()->ice();
-
-  std::string const input_list_name(ice_conf->input());
-
-  const std::string sequence_code(common::get_lb_sequence_code(context));
-
-  try {
-    utilities::FileList<std::string> fl(input_list_name);
+    utilities::FileList<std::string> fl(list_name);
     utilities::FileListMutex mx(fl);
     utilities::FileListLock lock(mx);
 
@@ -374,15 +306,15 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
     return;
   }
 
-  // make a copy because we change the sequence code, see below
-  classad::ClassAd request_ad(*request_ad_p);
-  glite::wmsutils::jobid::JobId jobid(requestad::get_edg_jobid(request_ad));
+  glite::wmsutils::jobid::JobId jobid(requestad::get_edg_jobid(*request_ad_p));
   common::ContextPtr context = get_context(jobid);
-
-  // update the sequence code before doing the planning
-  // some helpers may need a more recent sequence code than what appears in
-  // the classad originally received
   const std::string sequence_code(common::get_lb_sequence_code(context));
+
+  // we make a copy because we change the sequence code
+  classad::ClassAd request_ad(*request_ad_p);
+  // before doing the planning, some helpers may need a
+  // more recent sequence code than what appears in
+  // the classad originally received
   requestad::set_lb_sequence_code(request_ad, sequence_code);
 
   std::auto_ptr<classad::ClassAd> planned_ad(Plan(request_ad));
@@ -390,13 +322,55 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
   log_match(context, ce_id);
 
   const boost::regex cream_ce_id(".+/cream-.+");
+  std::string input_list_name;
   if(boost::regex_match(ce_id, cream_ce_id))
   {
-    CREAM_submit(*planned_ad, context);
-    planned_ad.release();
+    configuration::ICEConfiguration const * const ice_conf
+      = configuration::Configuration::instance()->ice();
+
+    input_list_name = ice_conf->input();
   }
   else {
-    JC_submit(*planned_ad, context);
+    configuration::JCConfiguration const * const jc_conf
+      = configuration::Configuration::instance()->jc();
+
+    input_list_name = jc_conf->input();
+  }
+  std::string const job_id_str(requestad::get_edg_jobid(*planned_ad));
+
+  log_enqueued_start(context, input_list_name, job_id_str);
+
+  //const std::string sequence_code_(common::get_lb_sequence_code(context));
+  //requestad::set_lb_sequence_code(*planned_ad, sequence_code_);
+
+  try {
+    utilities::FileList<std::string> fl(input_list_name);
+    utilities::FileListMutex mx(fl);
+    utilities::FileListLock lock(mx);
+
+    std::auto_ptr<classad::ClassAd> cmd(
+      common::submit_command_create(planned_ad.get())
+    );
+    if (cmd.get() != 0)
+    {
+      std::string ad_str = utilities::unparse_classad(*cmd);
+      if (!ad_str.empty())
+      {
+        fl.push_back(ad_str);
+        log_enqueued_ok(context, input_list_name, job_id_str);
+      }
+      // else {
+      // error: "cannot add submit request"
+      // }
+    }
+
+  } catch(utilities::FileContainerError const& error) {
+    log_enqueued_fail(
+      context, 
+      input_list_name, 
+      job_id_str,
+      error.string_error()
+    );
   }
 }
 
@@ -404,9 +378,17 @@ void
 WMReal::cancel(jobid::JobId const& id)
 {
   common::ContextPtr context = get_context(id);
+  const std::string sequence_code(common::get_lb_sequence_code(context));
 
-  JC_cancel(context, id);
-  CREAM_cancel(context, id);
+  configuration::ICEConfiguration const * const ice_conf
+    = configuration::Configuration::instance()->ice();
+
+  add_cancel_request(ice_conf->input(), id, sequence_code);
+
+  configuration::JCConfiguration const * const jc_conf
+    = configuration::Configuration::instance()->jc();
+
+  add_cancel_request(jc_conf->input(), id, sequence_code);
 }
 
 }}}}
