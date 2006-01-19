@@ -62,9 +62,6 @@ glite_wms_planner_LDADD   = \
 	$(MNGR_SERVER) \
 	$(GLITE_WMS_HELPER_LIBS) \
 	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
-	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
-	$(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
-	$(GLITE_WMS_JSS_COMMON_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \
 	$(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
@@ -133,7 +130,6 @@ glite_wms_input_generator_LDADD = \
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
-	-I$(top_srcdir)/../org.glite.wms.jobsubmission/src/controller \
 	-I$(top_srcdir)/../org.glite.wms.purger/src \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/common \
