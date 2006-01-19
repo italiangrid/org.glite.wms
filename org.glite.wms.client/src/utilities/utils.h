@@ -337,6 +337,12 @@ public:
 	*/
 	static std::string  getFileName (const std::string& path) ;
 	/**
+	*	Compresses a file with gzip
+	*	@param filename the pathname of the file to be compressed
+	*	@param the path of the gzip file
+	*/
+	static std::string compressFile(const std::string &filename) ;
+	/**
 	*	Extracts the protocol from the input URI
 	*	throws an exception if the input URI doesn't have protocol string
 	*	@param path the input URI
@@ -344,18 +350,31 @@ public:
 	*/
 	static std::string  getProtocol (const std::string& uri) ;
 	/**
-	*	Checks whether a protocol string is allowed for this client interface
+	*	Checks whether the input protocol string is allowed for this client interface:
+	*	it must be included in the list of those supported ones
+	*	(see: const char* Options::TRANSFER_FILES_PROTOCOLS[ ])
 	*	@param proto the string with the protocol to be checked
 	*	@param list return a string with the list with the available protocols
 	*	@return TRUE if the protocol is allowed, FALSE otherwise
 	*/
 	static bool checkProtocol(const std::string &proto, std::string &list) ;
 	/**
-	*	Compresses a file with gzip
-	*	@param filename the pathname of the file to be compressed
-	*	@param the path of the gzip file
+	* Extracts from the input list of URIs the items having the protocol specified as input
+	* @param uris the input list of URIs
+	* @param the protocol of the URIs to be extracted
+	* @return the list of URIs extracted form the input list
 	*/
-	static std::string compressFile(const std::string &filename) ;
+	static std::vector<std::string> extractProtocolURIs(const std::vector<std::string> &uris, const std::string &protocol) ;
+	/**
+	* Returns a vector  in which each element is a pair with:
+	* the URI of the output file on the remote machine, the local path where the file will be downloaded
+	* @param files vector containg the URIs of the remote output files
+	* @param protocol the selected protocol of the URIs to be extracted from the input list of files
+	* @param localpath the local pathname where the file will be downloaded
+	* @return a vector containg pairs with the information on the URI of the output file on the remote machine and
+	* the local path where the file will be downloaded
+	*/
+	static std::vector<std::pair<std::string,std::string > > Utils::getOutputFileList(std::vector <std::pair<std::string, long > > &files, const std::string &protocol, const std::string &localpath );
 	/**
 	*	Gets back the path of the URI removing information on the protocol, hostname and port
 	*	@param uri the input URI
@@ -373,7 +392,6 @@ public:
         *	header for JobId output files
         */
         static const std::string JOBID_FILE_HEADER ;
-
 private:
 	/**
 	* Performs parsing on the FQAN fields an retrurns a vector which elements

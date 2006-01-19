@@ -59,11 +59,11 @@ namespace fs = boost::filesystem ;
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
-const string DEFAULT_LB_PROTOCOL	=	"https";
-const string DEFAULT_OUTSTORAGE		=	"/tmp";
-const string DEFAULT_ERRSTORAGE		=	"/tmp";
-const string PROTOCOL			=	"://";
-const string TIME_SEPARATOR		=	":";
+const string DEFAULT_LB_PROTOCOL			=	"https";
+const string DEFAULT_OUTSTORAGE			=	"/tmp";
+const string DEFAULT_ERRSTORAGE			=	"/tmp";
+const string PROTOCOL					=	"://";
+const string TIME_SEPARATOR				=	":";
 
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_WMP_PORT	=	7772;
@@ -689,16 +689,13 @@ string Utils::checkJobId(std::string jobid){
 					cout << "bye\n";
 					ending(0);
 				}
-			}else{
+			} else {
 				// Not even a right jobid
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkJobIds", DEFAULT_ERR_CODE,
 					"Wrong Input Value",
 					"all parsed jobids in bad format" );
 			}
-
-
-
 		}
         }
 	return rights;
@@ -1372,6 +1369,13 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
 	}
 	return file;
 }
+
+/*
+* Returns the tail of the input URL, removing the protocol, the server
+* and the port infomation
+* e.g.   input 	https://server:port/tok1/tok2/file.txt
+*	output:	tok1/tok2/file.txt
+*/
 std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 	string tmp = "";
 	// looks for the end of the protocol string
@@ -1384,14 +1388,26 @@ std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 
 }
 
-std::string  Utils::getFileName (const std::string& path) {
-	string tmp = "";
-	int size = path.size( );
-	unsigned int p =path.rfind("/", size);
- 	if (p!=string::npos) { tmp = path.substr(p+1, size);}
-	return tmp;
+/*
+* Checks whether the input protocol is included in the list of
+* those supported ones
+*/
+bool Utils::checkProtocol(const std::string &proto, std::string &list) {
+	bool found = false;
+	vector<string> protos = Options::getProtocols();
+	int size = protos.size();
+	for (int i = 0; i < size ; i++){
+		if (list.size()>0){ list += ", ";}
+		list += string(protos[i]);
+		if (! found && proto.compare( protos[i] )==0){
+			found = true;
+		}
+	}
+	return found;
 }
-
+/*
+* Extracts the protocol from the input URI
+*/
 std::string  Utils::getProtocol (const std::string& uri) {
 	string proto = "";
 	string list = "";
@@ -1414,19 +1430,44 @@ std::string  Utils::getProtocol (const std::string& uri) {
 	}
 	return proto;
 }
-
-bool Utils::checkProtocol(const std::string &proto, std::string &list) {
-	bool found = false;
-	vector<string> protos = Options::getProtocols();
-	int size = protos.size();
+/*
+* Extracts the filename from the input path
+*/
+std::string  Utils::getFileName (const std::string& path) {
+	string tmp = "";
+	int size = path.size( );
+	unsigned int p =path.rfind("/", size);
+ 	if (p!=string::npos) { tmp = path.substr(p+1, size);}
+	return tmp;
+}
+/*
+* Extracts the items having the protocol specified as input from the input list of URIs
+*/
+std::vector<std::string> Utils::extractProtocolURIs(const std::vector<std::string> &uris, const std::string &protocol) {
+	vector<string> res ;
+	int size = uris.size();
 	for (int i = 0; i < size ; i++){
-		if (list.size()>0){ list += ", ";}
-		list += string(protos[i]);
-		if (! found && proto.compare( protos[i] )==0){
-			found = true;
+		if ( protocol.compare(getProtocol(uris[i])) == 0) {
+			res.push_back(uris[i]);
 		}
 	}
-	return found;
+	return res;
+}
+/*
+* Returns a vector  in which each element is a pair with:
+* the URI of the output file on the remote machine, the local path
+*/
+std::vector<std::pair<std::string,std::string > > Utils::getOutputFileList(std::vector <std::pair<std::string,long > > &files, const std::string &protocol, const std::string &localpath ) {
+	string loc = "";
+	std::vector<std::pair<std::string, std::string > > res;
+	int size = files.size( );
+	for (int i=0; i < size; i++){
+		if ( protocol.compare(getProtocol(files[i].first)) == 0) {
+			loc = localpath + "/" + Utils::getFileName(files[i].first);
+			res.push_back(make_pair(files[i].first, loc));
+		}
+	}
+	return res;
 }
 /*
 * Reads a file
@@ -1541,6 +1582,7 @@ bool Utils::contains (const std::vector<std::string> &vect, std::string item) {
 	}
 	return found ;
 }
+
 } // glite
 } // wms
 } // client
