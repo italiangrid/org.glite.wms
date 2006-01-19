@@ -83,26 +83,45 @@ class JobPerusal  : public Job {
 		void checkStatus( );
 		/**
 		* Performs downloading of the peeks files to the local machine from
-		* the Destination URI's provided as input; it gets back a list of pathnames
-		* of the downloaded files
+		* the Destination URI's provided as input with globus-url-copy;
+		* it gets back a list of pathnames of the downloaded files
 		* @param uris the list of Destination URi's of the files to be retrieved
 		* @param paths gets the list of local pathnames to the downloaded files
 		* @param errors string with information on errors occurred during the downloading operations
 		*/
-		void gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+		int gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+		/**
+		* Performs downloading of the peeks files to the local machine from
+		* the Destination URI's provided as input with CURL;
+		* it gets back a list of pathnames of the downloaded files
+		* @param uris the list of Destination URi's of the files to be retrieved
+		* @param paths gets the list of local pathnames to the downloaded files
+		* @param errors string with information on errors occurred during the downloading operations
+		*/
+		int curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
 		/**
 		* Prints out information on the operation results on the standard output
 		* @param operation type of operation (set, get or unset)
 		* @param paths the list of local pathnames to the downloaded files
 		*/
 		void printResult(const perusalOperations &operation, std::vector<std::string> &paths);
-        	 /**
+  		/**
+		*	struct for files (CURL)
+		*/
+		struct httpfile { char *filename; FILE* stream; } ;
+                /**
+                * 	Writing callback for curl operations
+                */
+                static int storegprBody(void *buffer, size_t size, size_t nmemb, void *stream);
+
+		/**
                 *	String input arguments
                 */
 		std::string* inOpt ; 		// --input <file>
 		std::string* inFileOpt ; 		// --input-file <file>
 		std::string* outOpt ; 		// --ouput <path>
 		std::string* dirOpt ; 		// --dir <path>
+		std::string* fileProto ;		// --proto
 		 /**
                 *	Boolean input arguments
                 */
@@ -112,11 +131,11 @@ class JobPerusal  : public Job {
 		bool allOpt ;
                 bool nodisplayOpt ;
 		bool nointOpt;
-		/***
+		/**
 		* JobId
 		*/
 		std::string jobId ;
-                /***
+                /**
                 * List of the files provided as input
                 */
                 std::vector<std::string> peekFiles ;
