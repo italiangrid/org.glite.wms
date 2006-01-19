@@ -135,10 +135,25 @@ class Eve{
 	* @return a couple of strings [ <attribute name > , <attribute value> ]
 	*/
 	std::string getVal (int field , std::string& attrValue , int event_number);
-	/**Set an attribute value (of string type)
-	* @param err the string description passed by reference. Python will consider it as a returning parameter
-	* @return a couple of [ int , string ] representing the error code (0 for success) and the error string representation
+	/**
+	* Perform a query to the Lb Server allowing the user to specify several parameters
+	*@param host the LB server host name
+	*@param port the LB server listening port
+	*@param jobids The list of jobids on which to perform the QUERY
+	*@param tagNames a vector containing all the user tag names to be searched
+	*@param tagValues a vector containing all the user tag values for the tagNames names. the size of tagNames must be the same as tagValues
+	*@param excludes an integer representing all the states that do not have to be retrieved (used togheter with includes returns empty set)
+	*@param includes an integer representing only the states that have to be retrieved (used togheter with excludes returns empty set)
+	*@param issuer retrieves only job belonging to the specified proxy certificate issuer
+	*@param from retrieves only job submitted after specified time ( in seconds after epoch)
+	*@param to retrieves only job submitted before specified time ( in seconds after epoch)
+	*@param ad if different from 0, retrieves Ad Status information as well
 	*/
+	int queryEvents (const std::string& host, int port,
+		const std::vector<std::string>& jobids,
+		const std::vector<std::string>& tagNames, const std::vector<std::string>& tagValues,
+		const std::vector<int>& excludes, const std::vector<int>& includes,
+		std::string issuer,int from, int to ,int ad);
 	int get_error (std::string& err) ;
   private:
 	std::list<glite::lb::Event> events ;

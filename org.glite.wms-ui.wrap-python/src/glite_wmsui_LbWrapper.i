@@ -74,6 +74,11 @@ class Eve{
      int size (int status_number) ;
      int getEvents ( const String& jobid) ;
      String getVal (int field , String& outString , int event_number);
+     int queryEvents (const std::string& host, int port,
+     	const std::vector<std::string>& jobids,
+     	const std::vector<std::string>& tagNames,const std::vector<std::string>& tagValues,
+     	const std::vector<int>& excludes,const std::vector<int>& includes,
+     	std::string issuer,int from , int to ,int ad );
      int get_error (String& outString) ;
    };
 %}

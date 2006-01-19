@@ -45,31 +45,38 @@ void createQuery (
 {
 	// USER TAGS QUERY
 	for (unsigned int i = 0 ; i < tagNames.size() ; i++ ){
-		// cout << "Status::createQuery> adding query for UserTags:  "<< tagNames[i] << "   ==    " <<  tagValues[i]  << endl ;
-		cond.push_back(  vector<QueryRecord> (1, QueryRecord   ( tagNames[i]  , QueryRecord::EQUAL,  tagValues[i] )   )   );
+		cond.push_back(  vector<QueryRecord> (1, QueryRecord(tagNames[i], QueryRecord::EQUAL, tagValues[i])));
 	}
 
 	// EXCLUDES
 	for (unsigned int i = 0 ; i < excludes.size() ; i++ ){
-		cond.push_back(  vector<QueryRecord> (1, QueryRecord   ( QueryRecord::STATUS  , QueryRecord::UNEQUAL,  excludes[i] )   )  );
+		if (event){
+			cond.push_back(vector<QueryRecord>(1, QueryRecord(QueryRecord::EVENT_TYPE, QueryRecord::UNEQUAL, excludes[i])));
+		}
+		else{
+			cond.push_back(vector<QueryRecord>(1, QueryRecord(QueryRecord::STATUS, QueryRecord::UNEQUAL, excludes[i])));
+		}
 	}
 
 	// INCLUDES
 	if (  includes.size()  > 0 ){
 		vector<QueryRecord>  inclVect ;
-		for (unsigned int i = 0 ; i < includes.size() ; i++ )
-			inclVect.push_back(   QueryRecord   ( QueryRecord::STATUS  , QueryRecord::EQUAL, includes[i] )   ) ;
+		for (unsigned int i = 0 ; i < includes.size() ; i++ ){
+			if (event){
+				inclVect.push_back(QueryRecord(QueryRecord::EVENT_TYPE, QueryRecord::EQUAL, includes[i]));
+			}else{
+				inclVect.push_back(QueryRecord(QueryRecord::STATUS, QueryRecord::EQUAL, includes[i]));
+			}
+		}
 		cond.push_back(  inclVect ) ;
 	}
 
 	// --ALL OPTION
 	if ( issuer !="" ) {
-		//cout << "Status::createQuery> adding query for Issuer:\n"<< issuer  << endl ;
 		cond.push_back( vector<QueryRecord> (1,  QueryRecord   ( QueryRecord::OWNER , QueryRecord::EQUAL,  issuer ) ) );
 	}
 	// FROM - TO OPTIONS
 	if ( from!=0 ) {
-		// cout << "Status::createQuery> adding query for FROM: " << from << endl ;
 		timeval   tvFrom=  { from   ,0 };
 		cond.push_back(  vector<QueryRecord> (1, QueryRecord   ( QueryRecord::TIME , QueryRecord::GREATER, JobStatus::SUBMITTED, tvFrom ) ) );
 	}
@@ -77,9 +84,6 @@ void createQuery (
 		timeval   toStruct = {  to   ,0 };
 		cond.push_back(   vector<QueryRecord> (1, QueryRecord   ( QueryRecord::TIME , QueryRecord::LESS, JobStatus::SUBMITTED, toStruct )  )  );
 	}
-
-	// cout << "Status::createQuery> returning query size: "<< cond.size() << endl ;
-	// return cond ;
 }
 
 
@@ -226,14 +230,12 @@ int Status::getStatus (const string& jobid , int level) {
 		}
 		int FLAG  = 0 ;
 		if (ad!=0) FLAG =   EDG_WLL_STAT_CLASSADS  ;
-		// cout << "Status::queryStates> Query Making " << endl ;
 		vector <vector<QueryRecord> >cond ;
 		createQuery (cond ,tagNames , tagValues , excludes , includes, issuer , from , to );
 		// the Server will fill the result vector anyway, even when exception is raised
 		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ) server.setParam (EDG_WLL_PARAM_QUERY_RESULTS , 3 ) ;
 		server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states_v ) ;
 	}catch (Exception &exc){
-			// cout << "Status::queryStates common Error: " << exc.getExceptionName() << ": " << exc.printStackTrace() << endl ;
 			if (exc.getCode()  ==E2BIG )  log_error ("Unable to retrieve all status information from: " + host + ": " +string (exc.what() ) ) ;
 			else  log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
 	}catch (exception &exc){
@@ -313,7 +315,6 @@ try{
 		case Event::NSUBJOBS:
 			sprintf (tmp , "%d" , event_retrieved.getValInt(fieldAttr) ) ;
 			result = string (tmp) ;
-			// cout << event_retrieved.getValInt(fieldAttr) << endl;
 			break;
 		case Event::SOURCE:
 		case Event::DESTINATION:
@@ -321,7 +322,6 @@ try{
 		case Event::SVC_PORT:
 		case Event::DEST_PORT:
 			result = string (  edg_wll_SourceToString ( (edg_wll_Source )event_retrieved.getValInt(fieldAttr) ) ) ;
-			// cout << event_retrieved.getValInt(fieldAttr) << endl;
 			break;
 		case Event::SRC_ROLE:
 		//case Event::PRIORITY:
@@ -375,12 +375,10 @@ try{
 		}
 		break;
 		default      : 	// something is wrong
-			//cout << "\n\n\nSomething has gone bad for: " << event_retrieved.getAttrName(fieldAttr) << endl;
 		log_error("Something is wrong for " +attrName ) ;
 		break;
 	} // end switch
 } catch ( exception &exc){
-    // cout << "Eve::getVal-> Fatal Error. Exception caught, please check field and number: " << field <<" , " << event_number<< endl << exc.what() << endl << flush;
     // log_error("Fatal Error\n" + string (exc.what() )  );
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
 	return attrName ;
@@ -420,7 +418,6 @@ try{
 		case JobStatus::EXIT_CODE:
 		case JobStatus::CHILDREN_NUM:
 			sprintf (tmp , "%d" , status_retrieved.getValInt(fieldAttr) ) ;
-			//cout <<"getting var INT_T: " <<status_retrieved.getValInt(fieldAttr)<< endl << flush;
 			result = string (tmp) ;
 			break;
 		case JobStatus::SUBJOB_FAILED:
@@ -448,13 +445,10 @@ try{
 		case JobStatus::DESTINATION:
 		case JobStatus::OWNER:
 			result = status_retrieved.getValString(fieldAttr) ;
-			//cout <<"getting var STRING_T: " <<status_retrieved.getValString(fieldAttr)<< endl << flush;
 			break;
 		case JobStatus::STATE_ENTER_TIME:
 		case JobStatus::LAST_UPDATE_TIME:{
 			timeval t = status_retrieved.getValTime(fieldAttr);
-			//cout <<"getting var TIMEVAL_T: " <<  t.tv_sec<< endl << flush;
-			// sprintf (tmp , "%d%s%d", (int)  t.tv_sec , "." , (int) t.tv_usec ) ;
 			sprintf (tmp , "%d", (int)  t.tv_sec) ;
 			result = string (tmp) ;
 			}
@@ -463,14 +457,12 @@ try{
 		case JobStatus::JOB_ID:
 			if(((glite::wmsutils::jobid::JobId)status_retrieved.getValJobId(fieldAttr)).isSet()){
 				result = status_retrieved.getValJobId(fieldAttr).toString()  ;
-				//cout <<"getting var JOBID_T: " << status_retrieved.getValJobId(fieldAttr).toString()<< endl << flush;
 			}
 			break;
 		case JobStatus::CHILDREN_HIST:
 		case JobStatus::STATE_ENTER_TIMES:{
 			std::vector<int> v = status_retrieved.getValIntList(fieldAttr);
 			for(unsigned int j=0; j < v.size(); j++){
-				//cout << "  " << v[j]  << flush ; //TBD
 				sprintf (tmp , "%s%s%s%d%s", tmp , edg_wll_StatToString((edg_wll_JobStatCode) j ), "=" , v[j] , " ") ;
 			}
 			result = string (tmp) ;
@@ -493,7 +485,6 @@ try{
 		case JobStatus::CHILDREN_STATES:{
 			std::vector<JobStatus> v = status_retrieved.getValJobStatusList(fieldAttr);
 			for(unsigned int i=0; i < v.size(); i++) ; //TBD  //TBD
-			//cout <<"getting var:  STSLIST_T Jobstates: TBD !!!"<< endl << flush;
 			}
 			break;
 		default:
@@ -502,7 +493,6 @@ try{
 			//break;
 	}
 } catch ( exception &exc){
-    // cout << "Status::getVal-> Fatal Error. Exception caught, please check: " <<exc.what() << endl << flush;
     // log_error("Fatal Error\n" + string (exc.what() ) );
 } catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
   return attrName;
@@ -598,4 +588,65 @@ std::vector< std::string  > Status::loadStatus( int status_number )  {
 	push_status (*it , result , 0 ) ;
 	return result ;
 }
+
+
+
+ int Eve::queryEvents (
+ 	// Lb Server address
+	const std::string& host , int port ,
+	// Jobids parameters:
+	const std::vector<std::string>& jobids,
+	// User Tags parameters:
+	const std::vector<std::string>& tagNames,   	// NEEDED?
+	const std::vector<std::string>& tagValues,  	// NEEDED?
+	// Include-Exclude States parameters:
+	const std::vector<int>& excludes,
+	const std::vector<int>& includes,
+	// Issuer value (if -all selected):
+	std::string issuer,				 // NEEDED?
+	// --from and --to options:
+	int from , int to ,				 // NEEDED?
+	// Verbosity Level
+	int ad )					 // NEEDED?
+{
+	vector<Event> events_v;
+	// FILL JOBIDS QUERY:
+	vector<QueryRecord> tmpCond;
+
+	try{
+		for (unsigned int i = 0; i<jobids.size(); i++){
+			QueryRecord qr(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
+			tmpCond.push_back(qr);
+		}
+		vector<vector<QueryRecord> > jobCond;
+		jobCond.push_back(tmpCond);
+
+
+		// FILL Other parameters QUERY:
+		error_code = false ;
+		// returned vector
+		ServerConnection server ;
+		server.setQueryServer(host, port);
+		vector <vector<QueryRecord> > eveCond ;
+		createQuery (eveCond, tagNames, tagValues, excludes, includes, issuer, from, to,
+			// LAST boolean parameter specify it is an Event query
+			true);
+		// the Server will fill the result vector anyway, even when exception is raised
+		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ){server.setParam(EDG_WLL_PARAM_QUERY_RESULTS, 3);}
+		// Perform the actual LB query:
+		server.queryEvents (jobCond, eveCond, events_v);
+		// server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states_v ) ;
+	}catch (Exception &exc){
+			if (exc.getCode()  ==E2BIG ){
+				log_error ("Unable to retrieve all event information from: " + host + ": " +string (exc.what() ) ) ;
+			} else{
+				log_error ("Unable to retrieve any event information from: " + host + ": " +string (exc.what() ) ) ;
+			}
+	}catch (exception &exc){
+			log_error ("Unable to retrieve any status information from: " + host + ": " +string (exc.what() ) ) ;
+	} catch (...){  error_code= true; error = "Fatal Error: Unpredictalbe exception thrown by swig wrapper"; }
+	for ( unsigned int i = 0 ; i< events_v.size() ; i++ ){ events.push_back(events_v[i]); }
+	return events.size() ;
+}
+
 
