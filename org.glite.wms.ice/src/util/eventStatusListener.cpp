@@ -85,7 +85,6 @@ void iceUtil::eventStatusListener::operator()()
 //______________________________________________________________________________
 void iceUtil::eventStatusListener::acceptJobStatus(void)
 {
-  
   /**
    * Waits for an incoming connection
    */

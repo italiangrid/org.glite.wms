@@ -61,8 +61,8 @@ int main(int argc, char*argv[]) {
   util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
   log4cpp::Category* log_dev = logger_instance->getLogger();
   log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
-  logger_instance->setLogfileEnabled( false );
-  logger_instance->setConsoleEnabled( true );
+  logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->logOnFile() );
+  logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->logOnConsole() );
   string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
   logger_instance->setLogFile(logfile.c_str());
 

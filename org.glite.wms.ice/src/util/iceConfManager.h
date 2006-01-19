@@ -22,7 +22,8 @@ namespace glite {
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
 	    icetopic;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime;
-	  bool startpoller, startlistener, startsubupder, poller_status_threshold_time;
+	  bool startpoller, startlistener, startsubupder, poller_status_threshold_time,
+	       log_on_console, log_on_file;
 	  
 	  static boost::recursive_mutex mutex;
 	  
@@ -57,6 +58,8 @@ namespace glite {
 	  int         getSubscriptionDuration( void ) const { return subduration; }
 	  time_t      getSubscriptionUpdateThresholdTime( void ) const { return subUpdThresholdTime; }
 	  time_t      getPollerStatusThresholdTime( void ) const { return poller_status_threshold_time;}
+	  bool        logOnConsole( void ) const { return log_on_console; }
+	  bool        logOnFile( void ) const { return log_on_file; }
 	};
       }
     }
