@@ -270,6 +270,7 @@ const struct option Options::outputLongOpts[] = {
 	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
 	{	Options::LONG_LISTONLY,		no_argument,			0,	Options::LISTONLY},
+	{	Options::LONG_PROTO	,		required_argument,		0,	Options::PROTO},
 	{ 	Options::LONG_DIR, 	        	required_argument,		0,	Options::DIR},
 	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
         {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
@@ -339,6 +340,7 @@ const struct option Options::perusalLongOpts[]  = {
 	{ 	Options::LONG_SET, 	        		no_argument,			0,	Options::SET},
 	{ 	Options::LONG_UNSET, 	        	no_argument,			0,	Options::UNSET},
 	{ 	Options::LONG_FILENAME, 		required_argument,		0,	Options::SHORT_FILENAME},
+	{	Options::LONG_PROTO	,		required_argument,		0,	Options::PROTO},
 	{ 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
 	{ 	Options::LONG_DIR,        			required_argument,		0,	Options::DIR},
 	{ 	Options::LONG_OUTPUT,        		required_argument,		0,	Options::SHORT_OUTPUT},
@@ -609,6 +611,7 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
         cerr << "\t" << USG_LISTONLY << "\n";
+	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -719,6 +722,7 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_DIR << "\n";
 	cerr << "\t" << USG_ALL << " (**)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
+	cerr << "\t" << USG_PROTO << "\n";
         cerr << "\t" << USG_NODISPLAY << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -1783,15 +1787,14 @@ void Options::readOptions(const int &argc, const char **argv){
 			// ========================================================
 			 if ( cmdType == JOBPERUSAL ||
 			 	cmdType == JOBATTACH ){
-				// if --input != NULL >> jobid from local file
-				if (input==NULL) {
+				if (input==NULL){
 					// all the options have been processed by getopt (JobId file is missing)
-					if (optind == argc){
+					if (input == NULL && optind == argc){
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
 							"Wrong Option: " + string(last_arg)  ,
 							"Last argument of the command must be a JobId" );
-					} else if (optind != argc-1) {
+					} else if (input == NULL && optind != argc-1) {
 						for (int i = optind ; i < argc ; i++ ){
 							unvalid += string(argv[i]) + " " ;
 							jobid = Utils::checkJobId (argv[i]);
@@ -1824,21 +1827,34 @@ void Options::readOptions(const int &argc, const char **argv){
 							"readOptions", DEFAULT_ERR_CODE,
 							"Wrong Input Arguments" ,
 							"Unvalid arguments: " + unvalid );
-
-					} else  if (jobIds.empty()) {
+					} else  if ( jobIds.empty()) {
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
 							"Wrong Input Arguments"  ,
 							"Last argument of the command must be a JobId" );
-					} else if (jobIds.empty()==false) {
-							throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Too many arguments"  ,
-							"The jobId mustn't be specified with the option:\n" + getAttributeUsage(Options::INPUT));
 					} else {
+
 						this->singleId = string(jobIds[0]);
 					}
+				} else
+				if (input && optind != argc) {
+					// Reads the wrong option !!
+					jobid = Utils::checkJobId (argv[argc-1]);
+					if ( jobid.size( ) >0 ) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Too many arguments"  ,
+							"The jobId mustn't be specified with the option:\n"
+								+ getAttributeUsage(Options::INPUT));
+					} else {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Input Arguments" ,
+							"Unvalid arguments: " + unvalid );
+					}
 				}
+
+
 		} else
 			// =========================================================
 			// JobStatus/LogInfo/Cancel/Outpout : checks the last argument (JobId(s))
