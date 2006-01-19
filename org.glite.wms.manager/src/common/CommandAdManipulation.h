@@ -28,8 +28,8 @@ command_is_valid(classad::ClassAd const& command_ad);
 std::string
 command_get_command(classad::ClassAd const& command_ad);
 
-classad::ClassAd*
-submit_command_create(classad::ClassAd* job_ad);
+std::auto_ptr<classad::ClassAd>
+submit_command_create(classad::ClassAd*);
 
 classad::ClassAd const*
 submit_command_get_ad(classad::ClassAd const& submit_command_ad);
@@ -37,7 +37,7 @@ submit_command_get_ad(classad::ClassAd const& submit_command_ad);
 classad::ClassAd*
 submit_command_remove_ad(classad::ClassAd& submit_command_ad);
 
-classad::ClassAd*
+std::auto_ptr<classad::ClassAd>
 cancel_command_create(std::string const& job_id);
 
 std::string
@@ -46,7 +46,7 @@ cancel_command_get_id(classad::ClassAd const& cancel_command_ad);
 std::string
 cancel_command_get_lb_sequence_code(classad::ClassAd const& command_ad);
 
-classad::ClassAd*
+std::auto_ptr<classad::ClassAd>
 resubmit_command_create(std::string const& job_id, std::string const& sequence_code);
 
 std::string

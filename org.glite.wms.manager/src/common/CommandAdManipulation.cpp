@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cctype>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <classad_distribution.h>
 
 namespace utilities = glite::wms::common::utilities;
@@ -71,19 +72,21 @@ command_get_command(classad::ClassAd const& command_ad)
   return result;
 }
 
-classad::ClassAd*
+std::auto_ptr<classad::ClassAd>
 submit_command_create(classad::ClassAd* job_ad)
 {
-  classad::ClassAd* result = 0;
-
+  std::auto_ptr<classad::ClassAd> result;
   std::string jobid = requestad::get_edg_jobid(*job_ad);
-  if (!jobid.empty()) {
-    result = new classad::ClassAd;
+
+  if (!jobid.empty())
+  {
+    result.reset(new classad::ClassAd);
     result->InsertAttr("version", std::string("1.0.0"));
     result->InsertAttr("command", std::string("jobsubmit"));
-    classad::ClassAd* args = new classad::ClassAd;
+    std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
     args->Insert("ad", job_ad);
-    result->Insert("arguments", args);
+    result->Insert("arguments", args.get());
+    args.release();
   }
 
   return result;
@@ -106,25 +109,24 @@ submit_command_remove_ad(classad::ClassAd& submit_command_ad)
     );
 }
 
-classad::ClassAd*
+std::auto_ptr<classad::ClassAd>
 resubmit_command_create(std::string const& job_id, std::string const& sequence_code)
 {
-  classad::ClassAd* result = 0;
+  std::auto_ptr<classad::ClassAd> result;
 
   if (!job_id.empty()) {
-    result = new classad::ClassAd;
+    result.reset(new classad::ClassAd);
     result->InsertAttr("version", std::string("1.0.0"));
     result->InsertAttr("command", std::string("jobresubmit"));
-    classad::ClassAd* args = new classad::ClassAd;
+    std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
     args->InsertAttr("id", job_id);
     args->InsertAttr("lb_sequence_code", sequence_code);
-    result->InsertAttr("arguments", args);
+    result->InsertAttr("arguments", args.get());
+    args.release();
   }
 
   return result;
 }
-
-
 
 std::string
 resubmit_command_get_id(classad::ClassAd const& command_ad)
@@ -138,18 +140,18 @@ resubmit_command_get_lb_sequence_code(classad::ClassAd const& command_ad)
   return utilities::evaluate_expression(command_ad, "arguments.lb_sequence_code");
 }
 
-classad::ClassAd*
+std::auto_ptr<classad::ClassAd>
 cancel_command_create(std::string const& job_id)
 {
-  classad::ClassAd* result = 0;
+  std::auto_ptr<classad::ClassAd> result;
 
   if (!job_id.empty()) {
-    result = new classad::ClassAd;
+    result.reset(new classad::ClassAd);
     result->InsertAttr("version", std::string("1.0.0"));
     result->InsertAttr("command", std::string("jobcancel"));
-    classad::ClassAd* args = new classad::ClassAd;
+    std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
     args->InsertAttr("id", job_id);
-    result->InsertAttr("arguments", args);
+    result->InsertAttr("arguments", args.get());
   }
 
   return result;
