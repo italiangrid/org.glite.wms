@@ -33,9 +33,6 @@
 #include "jobadapter/url/URL.h"
 #include "JobAdapter.h"
 #include "jobadapter/jobwrapper/JobWrapper.h"
-#include "jobadapter/jobwrapper/MpiLsfJobWrapper.h"
-#include "jobadapter/jobwrapper/MpiPbsJobWrapper.h"
-#include "jobadapter/jobwrapper/InteractiveJobWrapper.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
@@ -58,9 +55,6 @@
 #include "glite/wms/helper/exceptions.h"
 #include "exceptions.h"
 
-using namespace std;
-using namespace classad;
-
 namespace fs = boost::filesystem;
 namespace config = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
@@ -81,17 +75,17 @@ namespace jobadapter {
 namespace {
 class Beginning {
 public:
-  Beginning(const string& str) 
+  Beginning(const std::string& str) 
     : m_what(str)
     {
     }
 
-  bool operator()(const string& str) const
+  bool operator()(const std::string& str) const
   {
-    return str.find(m_what) != string::npos;
+    return str.find(m_what) != std::string::npos;
   }
 private:
-  string m_what;
+  std::string m_what;
 };
 }
 
@@ -101,17 +95,17 @@ private:
  *  Replace "what" value with "with" value
  *******************************************************************/
 void
-replace(string& where, const string& what, const string& with)
+replace(std::string& where, const std::string& what, const std::string& with)
 {
   size_t fpos = where.find(what);
 
-  while (fpos  != string::npos) {
+  while (fpos  != std::string::npos) {
     where.replace(fpos, what.length(), with);
     fpos = where.find(what, fpos + what.length() + 1);
   }
 }
 
-JobAdapter::JobAdapter(ClassAd const* ad)
+JobAdapter::JobAdapter(classad::ClassAd const* ad)
  : m_ad(ad)
 {
 }
@@ -120,13 +114,13 @@ JobAdapter::~JobAdapter(void)
 {
 }
 
-ClassAd*
+classad::ClassAd*
 JobAdapter::resolve(void)  
 try {
-  auto_ptr<ClassAd> result(new ClassAd);
+  std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
   
   /* Mandatory */
-  string executable(jdl::get_executable(*m_ad));
+  std::string executable(jdl::get_executable(*m_ad));
   if (executable.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::EXECUTABLE,
                                         executable,
@@ -136,7 +130,7 @@ try {
   
   /* Mandatory */
   /* It is renamed as usersubjectname and reinserted with */
-  string certificatesubject(jdl::get_certificate_subject(*m_ad));
+  std::string certificatesubject(jdl::get_certificate_subject(*m_ad));
   if (certificatesubject.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::CERT_SUBJ,
                                         certificatesubject,
@@ -147,11 +141,11 @@ try {
   jdl::set_user_subject_name(*result, certificatesubject);
   
   /* Not Mandatory */
-  vector<string>  outputsandbox;
+  vector<std::string>  outputsandbox;
   utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandbox", outputsandbox); 
  
   bool b_osb_dest_uri = false;
-  vector<string>  outputsandboxdesturi;
+  vector<std::string>  outputsandboxdesturi;
   if (!outputsandbox.empty()) {
     utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
     if (!outputsandboxdesturi.empty()) {
@@ -160,19 +154,19 @@ try {
   }
   
   /* Not Mandatory */
-  vector<string>  inputsandbox;
+  vector<std::string>  inputsandbox;
   utilities::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
   /* Not Mandatory */
   bool b_wmpisb_base_uri = false;
-  string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
+  std::string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
   if (!wmpisb_base_uri.empty()) {
     b_wmpisb_base_uri = true;
   }
 
   /* Mandatory */
   // InputSandboxPath is always included
-  string inputsandboxpath;
+  std::string inputsandboxpath;
   inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
   if (inputsandboxpath.empty()) { 
     throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
@@ -181,7 +175,7 @@ try {
                                         helper_id);
   }
 	  
-  string outputsandboxpath;
+  std::string outputsandboxpath;
   if (!b_osb_dest_uri && !b_wmpisb_base_uri) {
     /* Mandatory */
     outputsandboxpath.append(jdl::get_output_sandbox_path(*m_ad));
@@ -195,15 +189,15 @@ try {
 
   /* Not Mandatory */
   bool   b_arg;
-  string arguments(jdl::get_arguments(*m_ad, b_arg));
+  std::string arguments(jdl::get_arguments(*m_ad, b_arg));
  
   /* Not Mandatory */
-  vector<string> env;
+  vector<std::string> env;
   utilities::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
 
   /* Mandatory */
   /* It is renamed in globusscheduler. (Below) */
-  string globusresourcecontactstring(jdl::get_globus_resource_contact_string(*m_ad));
+  std::string globusresourcecontactstring(jdl::get_globus_resource_contact_string(*m_ad));
   if (globusresourcecontactstring.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
                                         globusresourcecontactstring,
@@ -212,18 +206,18 @@ try {
   }
 
   // Get the gatekeeper hostname
-  string::size_type pos = globusresourcecontactstring.find(":");
-  if (pos == 0 || pos == string::npos) {
+  std::string::size_type pos = globusresourcecontactstring.find(":");
+  if (pos == 0 || pos == std::string::npos) {
     throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
                                         globusresourcecontactstring,
                                         "contains a hostname before a :",
                                         helper_id);
   }
-  string gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
+  std::string gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
  
   /* Mandatory */
   /* x509 user proxy is mandatory for the condor submit file. */
-  string userproxy(jdl::get_x509_user_proxy(*m_ad));
+  std::string userproxy(jdl::get_x509_user_proxy(*m_ad));
   if (userproxy.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDLPrivate::USERPROXY,
                                         userproxy,
@@ -233,7 +227,7 @@ try {
  
   /* Mandatory */
   /* queuname is mandatory to build the globusrsl string. */
-  string queuename(jdl::get_queue_name(*m_ad));
+  std::string queuename(jdl::get_queue_name(*m_ad));
   if (queuename.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::QUEUENAME,
                                         queuename,
@@ -244,12 +238,12 @@ try {
   /* Mandatory */
   /* lrms type is mandatory for the mpich job */
   /* and forwarded to Condor-C in any case.   */
-  string lrmstype(jdl::get_lrms_type(*m_ad));
+  std::string lrmstype(jdl::get_lrms_type(*m_ad));
 
   // Figure out the local host name (this should really come from
   // some common entity).
   char   hostname[1024];
-  string local_host_name("");
+  std::string local_host_name;
   
   if (gethostname(hostname, sizeof(hostname)) >= 0) {
     hostent resolved_host;
@@ -296,7 +290,7 @@ try {
     }
   }
 
-  string condor_submit_environment;
+  std::string condor_submit_environment;
 
   /* Mandatory */
   jdl::set_universe(*result, "grid"); 
@@ -350,15 +344,15 @@ try {
 
     // Virtual Organization is used to compose remote Condor daemons
     // unique name, but we don't really care if it's empty
-    string vo(jdl::get_virtual_organisation(*m_ad));
+    std::string vo(jdl::get_virtual_organisation(*m_ad));
 
-    string hostandcertificatesubject(local_host_name);
+    std::string hostandcertificatesubject(local_host_name);
     hostandcertificatesubject.append("/");
     hostandcertificatesubject.append(certificatesubject);
     MD5((unsigned char *)hostandcertificatesubject.c_str(),
         hostandcertificatesubject.length(),
         md5_cert_hash);
-    md5_hex_hash.setf(ios_base::hex, ios_base::basefield);
+    md5_hex_hash.setf(std::ios_base::hex, std::ios_base::basefield);
     md5_hex_hash.width(2);
     md5_hex_hash.fill('0');
 
@@ -367,16 +361,16 @@ try {
       md5_hex_hash << (unsigned int)md5_cert_hash[i];
     }
 
-    string hashedcertificatesubject(md5_hex_hash.str());
+    std::string hashedcertificatesubject(md5_hex_hash.str());
 
     jdl::set_daemon_unique_name(*result, hashedcertificatesubject);
 
-    string remote_schedd(hashedcertificatesubject);
+    std::string remote_schedd(hashedcertificatesubject);
     remote_schedd.append("@");
     remote_schedd.append(gatekeeper_hostname);
     jdl::set_remote_schedd(*result, "$$(Name)");
 
-    string schedd_requirements("Name==\"");
+    std::string schedd_requirements("Name==\"");
     schedd_requirements.append(remote_schedd);
     schedd_requirements.append("\"");
     jdl::set_condor_requirements(*result, schedd_requirements);
@@ -389,7 +383,7 @@ try {
     jdl::set_transfer_input_files(*result, userproxy);
 
     // Compute proxy file basename: remove trailing whitespace and slashes.
-    string userproxy_basename(userproxy);
+    std::string userproxy_basename(userproxy);
     char c = userproxy_basename[userproxy_basename.length()-1];
     while (c == '/' || c == ' ' || c == '\n' || c == '\r' || c == '\t') {
       userproxy_basename.erase(userproxy_basename.length()-1);
@@ -420,14 +414,14 @@ try {
     jdl::set_periodic_hold(*result,periodic_hold_expression.str());
 
     // Build the jobmanager-fork contact string.
-    string::size_type pos = globusresourcecontactstring.find("/");
-    if (pos == 0 || pos == string::npos) {
+    std::string::size_type pos = globusresourcecontactstring.find("/");
+    if (pos == 0 || pos == std::string::npos) {
       throw helper::InvalidAttributeValue(jdl::JDL::GLOBUSRESOURCE,
                                           globusresourcecontactstring,
                                           "contains a slash",
                                           helper_id);
     }
-    string gatekeeper_fork(globusresourcecontactstring.substr(0, pos));
+    std::string gatekeeper_fork(globusresourcecontactstring.substr(0, pos));
     gatekeeper_fork.append("/jobmanager-fork");
 
     jdl::set_site_name(*result,gatekeeper_hostname);
@@ -442,19 +436,19 @@ try {
 
   /* Not Mandatory */
   bool b_std;
-  string stdinput(jdl::get_std_input(*m_ad, b_std));
-  string stderror(jdl::get_std_error(*m_ad, b_std));
-  string stdoutput(jdl::get_std_output(*m_ad, b_std));
+  std::string stdinput(jdl::get_std_input(*m_ad, b_std));
+  std::string stderror(jdl::get_std_error(*m_ad, b_std));
+  std::string stdoutput(jdl::get_std_output(*m_ad, b_std));
 
   /* TEMP patch: forward ce_id */
   bool   b_ce_id;
-  string ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
+  std::string ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
   jdl::set_ce_id(*result, ce_id, b_ce_id);
 
   /* Mandatory */
   /* job id is mandatory to build the globusrsl string and to create the */
   /* job wrapper                                                         */
-  string job_id(jdl::get_edg_jobid(*m_ad));
+  std::string job_id(jdl::get_edg_jobid(*m_ad));
   if (job_id.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::JOBID,
                                         job_id,
@@ -465,15 +459,15 @@ try {
 
   /* keep the dag id if present */
   bool b_present = false;
-  string dag_id(jdl::get_edg_dagid(*m_ad, b_present));
+  std::string dag_id(jdl::get_edg_dagid(*m_ad, b_present));
   if (b_present && !dag_id.empty()) {
     jdl::set_edg_dagid(*result, dag_id);
   }  
 
   /* Mandatory */
-  string requirements("EDG_WL_JDL_REQ");
+  std::string requirements("EDG_WL_JDL_REQ");
   requirements.append(" '");
-  string reqvalue(jdl::unparse_requirements(*m_ad));
+  std::string reqvalue(jdl::unparse_requirements(*m_ad));
   if (reqvalue.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::REQUIREMENTS,
                                         reqvalue,
@@ -486,7 +480,7 @@ try {
   requirements.append("'");
   
   /* Create globusrsl value */
-  string globusrsl("(queue=");
+  std::string globusrsl("(queue=");
   globusrsl.append(queuename);
   globusrsl.append(")(jobtype=single)");
 
@@ -496,9 +490,9 @@ try {
 
   /* Not Mandatory */
   bool b_hlr;
-  string hlrlocation("EDG_WL_HLR_LOCATION");
+  std::string hlrlocation("EDG_WL_HLR_LOCATION");
   hlrlocation.append(" '");
-  string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
+  std::string hlrvalue(jdl::get_hlrlocation(*m_ad, b_hlr));
   if (!hlrvalue.empty()) {
     if (is_blahp_resource || is_condor_resource) {
       condor_submit_environment.append(";EDG_WL_HLR_LOCATION=");
@@ -511,9 +505,9 @@ try {
     globusrsl.append("(environment=(");
     globusrsl.append(hlrlocation);
     globusrsl.append(") (");
-    string jid("EDG_WL_JOBID");
+    std::string jid("EDG_WL_JOBID");
     jid.append(" '");
-    string jidvalue(job_id);
+    std::string jidvalue(job_id);
     replace(jidvalue, "\"", "\\\"");
     jid.append(jidvalue);
     jid.append("'");
@@ -522,7 +516,7 @@ try {
   }
   
   /* Mandatory */
-  string type(jdl::get_type(*m_ad));
+  std::string type(jdl::get_type(*m_ad));
   if (type.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::TYPE,
                                         type,
@@ -533,7 +527,7 @@ try {
   
   /* Mandatory */
   /* job type is mandatory to build the correct job wrapper file */
-  string jobtype(jdl::get_job_type(*m_ad));
+  std::string jobtype(jdl::get_job_type(*m_ad));
   if (jobtype.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::JOBTYPE,
                                         jobtype,
@@ -542,12 +536,12 @@ try {
   }
   
   /* start preparing JobWrapper file */
-  jobwrapper::JobWrapper* jw = 0;
+  std::auto_ptr<jobwrapper::JobWrapper> jw;
    
   /* convert the jobid into filename */
-  string jobid_to_file(jobid::to_filename(job_id));
+  std::string jobid_to_file(jobid::to_filename(job_id));
   /* concert the dagid into filename */
-  string dagid_to_file;
+  std::string dagid_to_file;
   if (!dag_id.empty()) {
     dagid_to_file.append(jobid::to_filename(dag_id));
   }
@@ -558,12 +552,12 @@ try {
   }    
 	
   /* lowercase all jobtype characters */
-  string ljobtype(jobtype);
+  std::string ljobtype(jobtype);
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
   
   if (ljobtype == "mpich") {
     /* lowercase all lrmstype characters */
-    string llrmstype(lrmstype);
+    std::string llrmstype(lrmstype);
     std::transform(llrmstype.begin(), llrmstype.end(), llrmstype.begin(), ::tolower);    
     if (llrmstype != "lsf" && llrmstype != "pbs") {
       throw helper::InvalidAttributeValue(jdl::JDL::LRMS_TYPE,
@@ -580,7 +574,7 @@ try {
       jdl::set_remote_remote_nodenumber(*result, nodenumber);
     }
 
-    string nn(boost::lexical_cast<string>(nodenumber));
+    std::string nn(boost::lexical_cast<std::string>(nodenumber));
     
     globusrsl.append("(count=");
     globusrsl.append(nn);
@@ -588,19 +582,21 @@ try {
     globusrsl.append(nn);
     globusrsl.append(")");
    
-    string exec;
-    string::size_type pos = executable.find("./");
-    if (pos == string::npos) {
+    std::string exec;
+    std::string::size_type pos = executable.find("./");
+    if (pos == std::string::npos) {
       exec.append(executable);
     } else {
       exec.append(executable.substr(pos+2));
     }
  
     if (llrmstype == "lsf") {
-      jw = new jobwrapper::MpiLsfJobWrapper(exec);
+      jw.reset(new jobwrapper::JobWrapper(exec));
+      //jw->set_job_type(LSF);
     }
     else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
-      jw = new jobwrapper::MpiPbsJobWrapper(exec);
+      jw.reset(new jobwrapper::JobWrapper(exec));
+      //jw->set_job_type(PBS);
     } else {
       // not possible;
     }
@@ -619,7 +615,8 @@ try {
                                           helper_id);
     }
     if (find_if(env.begin(), env.end(),
-	Beginning(string("BYPASS_SHADOW_HOST="))) == env.end())
+	    Beginning(std::string("BYPASS_SHADOW_HOST="))) == env.end()
+    )
     {
       std::ostringstream env_str;
       std::copy(env.begin(), env.end(),
@@ -632,14 +629,17 @@ try {
 
     env.push_back("LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH");
 
-    string::size_type pos = executable.find("./");
-    if (pos == string::npos) {
-      jw = new jobwrapper::InteractiveJobWrapper(executable);
+    std::string::size_type pos = executable.find("./");
+    if (pos == std::string::npos) {
+      jw.reset(new jobwrapper::JobWrapper(executable));
+      //jw->set_job_type(INTERACTIVE);
     } else {
-      jw = new jobwrapper::InteractiveJobWrapper(executable.substr(pos+2));
+      jw.reset(new jobwrapper::JobWrapper(executable.substr(pos+2)));
+      //jw->set_job_type(INTERACTIVE);
     }
   } else {
-    jw = new jobwrapper::JobWrapper(executable);
+    jw.reset(new jobwrapper::JobWrapper(executable));
+      //jw->set_job_type(NORMAL);
   }
  
   // PerusalFileEnable is not mandatory
@@ -650,7 +650,7 @@ try {
     int perusaltimeinterval = jdl::get_perusal_time_interval(*m_ad);
 
     // PerusalFilesDestURI is mandatory
-    string perusalfilesdesturi = jdl::get_perusal_files_dest_uri(*m_ad);
+    std::string perusalfilesdesturi = jdl::get_perusal_files_dest_uri(*m_ad);
     if (perusalfilesdesturi.empty()) {
       throw helper::InvalidAttributeValue(jdl::JDL::PU_FILES_DEST_URI,
                                           perusalfilesdesturi,
@@ -659,7 +659,7 @@ try {
     }
 
     // PerusalListFileURI is mandatory
-    string perusallistfileuri = jdl::get_perusal_list_file_uri(*m_ad);
+    std::string perusallistfileuri = jdl::get_perusal_list_file_uri(*m_ad);
     if (perusallistfileuri.empty()) {
       throw helper::InvalidAttributeValue(jdl::JDLPrivate::PU_LIST_FILE_URI,
                                           perusallistfileuri,
@@ -675,21 +675,21 @@ try {
  
   // OutputData is not mandatory
   bool b_od;
-  ExprTree* odtree = jdl::get_output_data(*m_ad, b_od);
-  string    otptdata("Warning");
+  classad::ExprTree* odtree = jdl::get_output_data(*m_ad, b_od);
+  std::string otptdata("Warning");
   if (b_od) {
-    ExprList* odtree_list = dynamic_cast<ExprList*>(odtree);
+    classad::ExprList* odtree_list = dynamic_cast<classad::ExprList*>(odtree);
 
     if (odtree_list) {
       jw->outputdata(odtree_list);
     } else {
-      ClassAd *odtree_classad = dynamic_cast<ClassAd*>(odtree);
+      classad::ClassAd *odtree_classad = dynamic_cast<classad::ClassAd*>(odtree);
       if (odtree_classad) {
-	auto_ptr<ExprList>   list(new ExprList);
-	list->push_back(odtree->Copy());
-	jw->outputdata(list.get());
+        std::auto_ptr<classad::ExprList> list(new classad::ExprList);
+        list->push_back(odtree->Copy());
+        jw->outputdata(list.get());
       } else {
-	throw helper::InvalidAttributeValue(jdl::JDL::OUTPUTDATA,
+        throw helper::InvalidAttributeValue(jdl::JDL::OUTPUTDATA,
 			                    otptdata,
 					    "either list of classad or a classad",
 					    helper_id);
@@ -697,7 +697,7 @@ try {
     }
       
     /* Virtual Organization is mandatory if OutputData is in the JDL */
-    string vo(jdl::get_virtual_organisation(*m_ad));
+    std::string vo(jdl::get_virtual_organisation(*m_ad));
     if (vo.empty()) {
       throw helper::InvalidAttributeValue(jdl::JDL::VIRTUAL_ORGANISATION,
                                           vo,
@@ -717,7 +717,7 @@ try {
   
   /* Mandatory for shallow resubmission */
   config::WMConfiguration const* wmconfig = config::Configuration::instance()->wm();
-  string token_file(wmconfig->token_file());
+  std::string token_file(wmconfig->token_file());
 
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
@@ -734,8 +734,8 @@ try {
   //check if there is the protocol in the inputsandbox path.
   //if no the protocol gsiftp:// is added to the inputsandboxpath.
   try { 
-    if (inputsandboxpath.find("://") == string::npos) {
-      string new_inputsandboxpath("gsiftp://");
+    if (inputsandboxpath.find("://") == std::string::npos) {
+      std::string new_inputsandboxpath("gsiftp://");
       new_inputsandboxpath.append(local_host_name);
       new_inputsandboxpath.append(inputsandboxpath);
       url::URL url_(new_inputsandboxpath);
@@ -768,8 +768,8 @@ try {
     //check if there is the protocol in the outputsandbox path. 
     //if no the protocol gsiftp:// is added to the outputsandboxpath.
     try {
-      if (outputsandboxpath.find("://") == string::npos) {
-        string new_outputsandboxpath("gsiftp://");     
+      if (outputsandboxpath.find("://") == std::string::npos) {
+        std::string new_outputsandboxpath("gsiftp://");     
         new_outputsandboxpath.append(local_host_name);
         new_outputsandboxpath.append(outputsandboxpath);
         jw->output_sandbox(url::URL(new_outputsandboxpath), outputsandbox);
@@ -794,7 +794,7 @@ try {
   if (!b_wmpisb_base_uri) {
     // Mandatory
     // Maradone file path
-    string maradonapr(logconfig->maradona_transport_protocol());
+    std::string maradonapr(logconfig->maradona_transport_protocol());
 
     config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
   
@@ -811,15 +811,14 @@ try {
   }
 
   // read the submit file path
-  string jw_name("JobWrapper.");
-  jw_name.append(jobid_to_file);
-  jw_name.append(".sh");
+  std::string jw_name("JobWrapper.");
+  jw_name += jobid_to_file + ".sh";
   fs::path jw_path(
     fs::normalize_path(jcconfig->submit_file_dir()),
     fs::native);
   if (!dag_id.empty()) {
     jw_path /= jobid::get_reduced_part(dag_id);
-    string jw_dagid_name("dag.");
+    std::string jw_dagid_name("dag.");
     jw_dagid_name.append(dagid_to_file);
     jw_path /= jw_dagid_name;
   } else {  
@@ -834,14 +833,12 @@ try {
   }
 
   // write the JobWrapper in the submit file path
-  ofstream ofJW(jw_path.native_file_string().c_str());
+  std::ofstream ofJW(jw_path.native_file_string().c_str());
   if (!ofJW) {
     throw CannotCreateJobWrapper(jw_path.native_file_string());
   }	  
   ofJW << *jw;
 
-  delete jw;
-	
   // The jdl::get_output_data function returns a _copy_ of the object.
   delete odtree;
   
@@ -851,7 +848,7 @@ try {
 
   // Prepare the output file path
   
-  string output_file_path(jcconfig->output_file_dir());
+  std::string output_file_path(jcconfig->output_file_dir());
   output_file_path.append("/");
   if (!dag_id.empty()) {
     output_file_path.append(jobid::get_reduced_part(dag_id));
@@ -875,13 +872,13 @@ try {
 
   // New parameter Mandatory
   // Output file path is mandatory
-  string output(output_file_path);
+  std::string output(output_file_path);
   output.append("StandardOutput");
   jdl::set_output(*result, output);
 
   // New parameter Mandatory
   // Error file path is mandatory
-  string error(output_file_path);
+  std::string error(output_file_path);
   error.append("StandardError");
   jdl::set_error_(*result, error);
 
@@ -891,8 +888,8 @@ try {
 
   // Mandatory
   // Condor Log file path
-  string condor_file_path(logconfig->condor_log_dir());
-  string log(condor_file_path);
+  std::string condor_file_path(logconfig->condor_log_dir());
+  std::string log(condor_file_path);
   log.append("/");
   log.append("CondorG.log");
   jdl::set_log(*result, log);
