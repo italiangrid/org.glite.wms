@@ -376,6 +376,9 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		// Calling service : getPerusal =============================
 		uris = getPerusalFiles (jobId, file , allOpt, getContext());
+
+		uris.push_back("https://ghemon.cnaf.infn.it:7443/SandboxDir/6v/https_3a_2f_2fghemon.cnaf.infn.it_3a9000_2f6vFQoStDkh1VwokgC9XGNg/peek/prova.txt");
+
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"perusalGet", ECONNABORTED,
@@ -420,7 +423,7 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet", DEFAULT_ERR_CODE,
-				"Get Files Error",
+				"File Download Error",
 				"GET - The following error(s) occured while transferring the file(s):\n" + errors);
 		} else if  (errors.size( )>0){
 			logInfo->print(WMS_WARNING,
@@ -537,8 +540,9 @@ int JobPerusal::storegprBody(void *buffer, size_t size, size_t nmemb, void *stre
 			return -1;
 		}
    	}
-  	return fwrite(buffer, size, nmemb, out_stream->stream);
+	return fwrite(buffer, size, nmemb, out_stream->stream);
  }
+
 
 /**
 * File downloading with CURL
@@ -548,7 +552,11 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 	string local = "";
 	char curl_errorstr[CURL_ERROR_SIZE];
 	CURLcode code ;
+	long http_code = 0;
+	string *logpath = NULL;
+	FILE* log =  NULL;
 	int res = -1;
+	// Number of files to be transferred
 	int size = uris.size();
 	// user proxy
 	if (size==0)  {
@@ -571,13 +579,27 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-			// verbose message
-			if ( wmcOpts->getBoolAttribute(Options::DBG)){
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+			// DEBUG messages in the log file
+			logpath = wmcUtils->getLogFileName( );
+			if (logpath){
+				log = fopen(logpath->c_str(), "a");
+				if (log) {
+					curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+					curl_easy_setopt(curl, CURLOPT_STDERR, log);
+					logInfo->print(WMS_DEBUG, "CURL debug messages printed in the log file:", *logpath);
+				} else {
+					logInfo->print(WMS_WARNING,
+						"couldn't open the log file to print CURL debug messages:",
+						*logpath);
+				}
+			}
+			// If there is no log file, messages on the std-out
+			if ( log == NULL && wmcOpts->getBoolAttribute(Options::DBG)){
 				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 			}
-
 			 // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, storegprBody);
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
 
 			// files to be downloaded
 			vector <std::string>::iterator it = uris.begin( ) ;
@@ -589,7 +611,7 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 					curl_easy_setopt(curl, CURLOPT_URL, it->c_str());
 					ostringstream info ;
 					info << "Source: " << (*it) << "\n";
-					info << "Destination: " << local <<"\n";
+					info << " Destination: " << local <<"\n";
 					logInfo->print(WMS_DEBUG, "File Transferring\n", info.str());
 					struct httpfile params={
 						(char*)local.c_str() ,
@@ -599,15 +621,20 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 					// downloading
 					code = curl_easy_perform(curl);
 					if (code != CURLE_OK ){
+						errors += "- source URI: "+  (*it) + "\n  LOCAL PATH: " +  local + "\n" ;
 						// ERROR !!!
-						string err = "- "+  (*it) + " to " +  local + " (" ;
+						curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code );
+						// error message according to the HTTP status code
+						string err = Utils::httpErrorMessage(http_code);
+						if (err.size()>0){
+							errors += "  reason: " + err + "\n";
+						} else
+						// ... else CURL error message
 						if ( strlen(curl_errorstr)>0 ){
-							err += string(curl_errorstr);
+							errors += "  reason: " + string(curl_errorstr) + "\n";
 						} else {
-							err += "unknown reason";
+							err += "  (unknown reason)\n";
 						}
-						err += ")";
-						errors += err +"\n";
 					} else {
 						// SUCCESS
 						res = 0;
@@ -618,6 +645,8 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 					errors += "Warning - existing file not overwritten: " + local + "\n";
 				}
 			}
+			// closes the log file
+			if(log) {fclose(log);}
 			// cleanup
 			curl_easy_cleanup(curl);
 		}

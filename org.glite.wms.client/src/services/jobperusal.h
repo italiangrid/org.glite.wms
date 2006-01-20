@@ -22,6 +22,7 @@
 // WMProxy API's
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
+
 namespace glite {
 namespace wms{
 namespace client {
@@ -90,6 +91,7 @@ class JobPerusal  : public Job {
 		* @param errors string with information on errors occurred during the downloading operations
 		*/
 		int gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+
 		/**
 		* Performs downloading of the peeks files to the local machine from
 		* the Destination URI's provided as input with CURL;
