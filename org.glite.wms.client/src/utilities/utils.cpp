@@ -39,7 +39,8 @@
 //gzip
 #include "zlib.h"
 #define local
-
+// CURL
+#include "curl/curl.h"
 namespace glite {
 namespace wms{
 namespace client {
@@ -469,6 +470,77 @@ std::string* Utils::generateLogFile ( ){
 	}
         return log;
 };
+
+/*
+* Error messages according to HTTP /1.1 status codes
+*/
+std::string Utils::httpErrorMessage(const int &code){
+	string msg = "";
+	switch (code){
+		case (400):{
+			msg = "Bad Request (the request could not be understood by the server due to malformed syntax)";
+			break;
+		};
+		case (401):{
+			msg = "Not Authorised (user authentication error)";
+			break;
+		};
+		case (403):{
+			msg = "Forbidden (request refused)";
+			break;
+		};
+		case (404):{
+			msg = "File Not Found (no matching found for the requested URI)";
+			break;
+		};
+		case (407):{
+			msg = "Proxy Authentication Required (the request first requires authentication with the proxy)";
+			break;
+		};
+		case (408):{
+			msg = "Request Timeout";
+			break;
+		};
+		case (414):{
+			msg = "Requested URI Too Long";
+			break;
+		};
+		case (500):{
+			msg = "";
+			break;
+		};
+		case (501):{
+			msg = "Service Not Implemented";
+			break;
+		};
+		case (505):{
+			msg = "HTTP Version Not Supported";
+			break;
+		};
+		default :{
+			msg = "";
+		};
+	};
+	return msg;
+};
+/**
+*	struct for files (CURL)
+*/
+struct httpfile { char *filename; FILE* stream; } ;
+/*
+* Writing callback for curl operations
+*/
+int Utils::curlWritingCb (void *buffer, size_t size, size_t nmemb, void *stream) {
+	struct httpfile *out_stream=(struct httpfile*)stream;
+	if(out_stream && !out_stream->stream) {
+		// open stream
+		out_stream->stream=fopen(out_stream->filename, "wb");
+		if(!out_stream->stream) {
+			return -1;
+		}
+   	}
+	return fwrite(buffer, size, nmemb, out_stream->stream);
+ }
 
 /** Static private method **/
 std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,

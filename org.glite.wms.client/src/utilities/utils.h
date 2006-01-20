@@ -135,7 +135,18 @@ public:
         * @return the pathname string
         */
         std::string* getLogFileName ( );
+	/*
+	* Match the most relevant HTTP status codes with the corresponding error message strings
+	* (some of them are: 400, 401, 404, 407, 408, 414, 500, 501, 505)
+	* @param code http status code
+	* @return the string with the error message, or empty string if no matching has been found
+	*/
+	static std::string httpErrorMessage(const int &code);
 
+	/*
+	* Writing callback for curl operations
+	*/
+	static int curlWritingCb(void *buffer, size_t size, size_t nmemb, void *stream) ;
 	/**
         * Gets the conf pathname
         * @return the pathname string
@@ -495,6 +506,7 @@ private:
 	std::string prefix;
 	// Virutal Organisation value
 	std::string *virtualOrganisation;
+
 }; // end class definition
 
 } // glite
