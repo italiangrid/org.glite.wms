@@ -312,6 +312,7 @@ dump(std::ostream& os,
 {
   return dump(os, name, std::string(var));
 }
+
 } // anonymous namespace
 
 bool 
@@ -442,4 +443,4 @@ operator<<(std::ostream& os, const JobWrapper& jw)
 } // namespace jobadapter
 } // namespace helper
 } // namespace wms
-
+} // namespace glite

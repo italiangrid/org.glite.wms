@@ -8,16 +8,10 @@
 
 noinst_LTLIBRARIES = libglite_wms_ja_jobwrapper.la
 noinst_HEADERS = \
-	InteractiveJobWrapper.h \
-	JobWrapper.h \
-	MpiLsfJobWrapper.h \
-	MpiPbsJobWrapper.h
+	JobWrapper.h
 
 libglite_wms_ja_jobwrapper_la_SOURCES = \
-	InteractiveJobWrapper.cpp \
-	JobWrapper.cpp \
-	MpiLsfJobWrapper.cpp \
-	MpiPbsJobWrapper.cpp
+	JobWrapper.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
