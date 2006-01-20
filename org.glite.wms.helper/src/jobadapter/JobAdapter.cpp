@@ -592,11 +592,11 @@ try {
  
     if (llrmstype == "lsf") {
       jw.reset(new jobwrapper::JobWrapper(exec));
-      //jw->set_job_type(LSF);
+      jw->set_job_type(jobwrapper::MPI_LSF);
     }
     else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
       jw.reset(new jobwrapper::JobWrapper(exec));
-      //jw->set_job_type(PBS);
+      jw->set_job_type(jobwrapper::MPI_PBS);
     } else {
       // not possible;
     }
@@ -632,14 +632,14 @@ try {
     std::string::size_type pos = executable.find("./");
     if (pos == std::string::npos) {
       jw.reset(new jobwrapper::JobWrapper(executable));
-      //jw->set_job_type(INTERACTIVE);
+      jw->set_job_type(jobwrapper::INTERACTIVE);
     } else {
       jw.reset(new jobwrapper::JobWrapper(executable.substr(pos+2)));
-      //jw->set_job_type(INTERACTIVE);
+      jw->set_job_type(jobwrapper::INTERACTIVE);
     }
   } else {
     jw.reset(new jobwrapper::JobWrapper(executable));
-      //jw->set_job_type(NORMAL);
+      jw->set_job_type(jobwrapper::NORMAL);
   }
  
   // PerusalFileEnable is not mandatory

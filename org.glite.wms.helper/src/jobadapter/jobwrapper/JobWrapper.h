@@ -32,6 +32,8 @@ namespace helper {
 namespace jobadapter {
 namespace jobwrapper {
 	
+enum job_type {NORMAL = 0, MPI_LSF = 1, MPI_PBS = 2, INTERACTIVE = 3};
+
 class JobWrapper
 {
   friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
