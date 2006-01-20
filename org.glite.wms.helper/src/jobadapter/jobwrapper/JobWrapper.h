@@ -217,8 +217,10 @@ public:
 
   void perusal_support(void);
   void perusal_timeinterval(int perusaltimeinterval);
-  void perusal_filesdesturi(const std::string& filesdesturi);
-  void perusal_listfileuri(const std::string& listfileuri);
+  void perusal_filesdesturi(std::string const& filesdesturi);
+  void perusal_listfileuri(std::string const& listfileuri);
+
+  void set_job_type(int);
 
 protected:
 
@@ -266,6 +268,7 @@ protected:
   std::string              m_perusal_filesdesturi;
   std::string              m_perusal_listfileuri;
   
+  int                      m_job_type;
 protected:
   static const std::string s_brokerinfo_default;
 };

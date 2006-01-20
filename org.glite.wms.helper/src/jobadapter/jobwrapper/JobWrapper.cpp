@@ -100,6 +100,12 @@ JobWrapper::job_Id(const string& jobid)
 }
 
 void
+JobWrapper::set_job_type(int job_type)
+{
+  m_job_type = job_type;
+}
+
+void
 JobWrapper::job_id_to_filename(const string& jobid_to_filename)
 {
   m_jobid_to_filename = jobid_to_filename;
@@ -372,6 +378,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_file", output_files) &&
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
+    dump(os, "__job_type", m_job_type) &&
     dump(os, "__max_osb_size",
       wm_config->job_wrapper_max_output_sandbox_size()
     ) &&
@@ -435,4 +442,4 @@ operator<<(std::ostream& os, const JobWrapper& jw)
 } // namespace jobadapter
 } // namespace helper
 } // namespace wms
-} // namespace glite
+
