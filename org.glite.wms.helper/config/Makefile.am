@@ -6,9 +6,7 @@
 
 
 helperconfigdir = $(sysconfdir)/templates
-helperconfig_DATA = template.interactive.sh \
-	template.mpi.lsf.sh \
-	template.mpi.pbs.sh \
+helperconfig_DATA = \
 	template.sh 
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~
