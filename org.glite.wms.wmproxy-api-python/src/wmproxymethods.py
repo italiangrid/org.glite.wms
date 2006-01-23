@@ -943,3 +943,23 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
+	def getJDL(self, jobId, jdlType):
+		"""
+		Method:  getJDL
+		IN = jobId (string)
+		IN = jdlType (enum?)
+		OUT = JDL as a string
+
+		This operation returns the Delegated Proxy information
+		"""
+		try:
+			self.soapInit()
+			return self.remote.getJDL(jobId, jdlType)
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
+
+
