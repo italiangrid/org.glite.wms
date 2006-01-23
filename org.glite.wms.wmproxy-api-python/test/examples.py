@@ -6,7 +6,7 @@ from wmproxymethods import Wmproxy
 from wmproxymethods import Config
 import socket
 
-Config.DEBUGMODE = 0
+Config.DEBUGMODE = 1
 def title(msg, *args):
 	if Config.DEBUGMODE:
 		print "\n########### DBG Message #################"
@@ -38,10 +38,14 @@ CUSTOM VALUES:
 gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
-#trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
+trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
+url = trinity
 
 
-url = tigerman
+
+
+
+
 ns ="http://glite.org/wms/wmproxy"
 
 delegationId = "rask"
@@ -179,11 +183,27 @@ class WmpTest(unittest.TestCase):
 		assert self.wmproxy.getProxyReq(delegationId)
 	def testputProxy(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId())
-
 	def testgetProxyReqGrst(self):
 		assert self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
 	def testputProxyGrst(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId(),self.wmproxy.getGrstNs())
+
+	def testDelegatedProxyInfo(self):
+		pi= self.wmproxy.getDelegatedProxyInfo(delegationId)
+		print "DELEGATEDPROXY", pi
+		return pi
+	def testJobProxyInfo(self):
+		pi=self.wmproxy.getJobProxyInfo(jobid.getJobId())
+		print "JobProxy:", pi
+		return pi
+	def testGetJDL(self):
+		jdlType=1
+		pi=self.wmproxy.getJDL(jobid,jdlType)
+		print "getJDL:", pi
+		return pi
+
+
+
 
 	"""
 	Other
@@ -214,10 +234,13 @@ def runTextRunner(level=0):
 	getURISuite.addTest( WmpTest("testgetSandboxBulkDestURI"))
 	""" get/put Proxy"""
 	proxySuite = unittest.TestSuite()
-	proxySuite.addTest( WmpTest("testgetProxyReq"))
+	#proxySuite.addTest( WmpTest("testgetProxyReq"))
 	#		proxySuite.addTest( WmpTest("testputProxy"))	 	#"test NOT YET SUPPORTED"
-	proxySuite.addTest( WmpTest("testgetProxyReqGrst"))
+	#proxySuite.addTest( WmpTest("testgetProxyReqGrst"))
 	#		proxySuite.addTest( WmpTest("testputProxyGrst"))  	#"test  NOT YET SUPPORTED"
+	#proxySuite.addTest(WmpTest("testDelegatedProxyInfo"))
+	#proxySuite.addTest(WmpTest("testJobProxyInfo"))
+	proxySuite.addTest(WmpTest("testGetJDL"))
 
 
 	"""
@@ -261,46 +284,39 @@ def getWmproxy():
 """
 				MAIN
 """
-print "#############################################"
-print "WMPROXY Service: " , url
-print "DELEGATION used: " , delegationId
-print "#############################################"
-if len(sys.argv)<2:
-	print "Usage: "
-	print sys.argv[0] , "0-5  [<jobid>]\n"
-	print "0) perform all unit tests"
-	print "1) perform all submitSuite"
-	print "2) perform all perusalSuite"
-	print "3) perform all templateSuite"
-	print "4) perform getURISuite"
-	print "5) perform all proxySuite"
-	sys.exit(0)
-
-level = sys.argv[1]
-if len(sys.argv)>2:
-	jobid.setJobId(sys.argv[2])
-try:
-	level= int(level)
-	if level>5:
-		raise 5
-except:
-	print "Usage: "
-	print sys.argv[0] , "0-5  [<jobid>]\n"
-
-# Activate this value in order to perform ALL the avaliable tests
-# perform = "all"
-
-# Activate this value in order to perform ONLY UNcommented tests (see above)
-perform = "runner"
+def custom(jobid):
+	wmproxy = Wmproxy(url, ns)
+	return wmproxy.getJobProxyInfo(jobid)
 
 
 if __name__=="__main__":
-	if perform=="all":
-		unittest.main()
-	elif perform == "runner":
-		runTextRunner(level)
-	else:
-		main()
+	print "#############################################"
+	print "WMPROXY Service: " , url
+	print "DELEGATION used: " , delegationId
+	print "#############################################"
+	if len(sys.argv)<2:
+		print "Usage: "
+		print sys.argv[0] , "0-5  [<jobid>]\n"
+		print "0) perform all unit tests"
+		print "1) perform all submitSuite"
+		print "2) perform all perusalSuite"
+		print "3) perform all templateSuite"
+		print "4) perform getURISuite"
+		print "5) perform all proxySuite"
+		sys.exit(0)
+
+	level = sys.argv[1]
+	if len(sys.argv)>2:
+		jobid.setJobId(sys.argv[2])
+	try:
+		level= int(level)
+		if level>5:
+			raise 5
+	except:
+		print "Usage: "
+		print sys.argv[0] , "0-5  [<jobid>]\n"
+		sys.exit(0)
+	runTextRunner(level)
 	print " END TEST \n"
 
 
