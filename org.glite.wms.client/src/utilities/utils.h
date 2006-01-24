@@ -121,7 +121,7 @@ public:
 	/**
 	* Extracts from the input string the name of the archive filename according to
 	* the default archive extension
-	* @return the name of the archive file or an empty string if the input name is unvalid
+	* @return the name of the archive file or an empty string if the input name is invalid
 	*
 	*/
 	static std::string getArchiveFilename (const std::string file);

@@ -1585,7 +1585,7 @@ std::string Options::getOptionsInfo(){
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	string jobid = "";
-	string unvalid = "";
+	string invalid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
 	string arg = "";
@@ -1796,18 +1796,18 @@ void Options::readOptions(const int &argc, const char **argv){
 							"Last argument of the command must be a JobId" );
 					} else if (input == NULL && optind != argc-1) {
 						for (int i = optind ; i < argc ; i++ ){
-							unvalid += string(argv[i]) + " " ;
+							invalid += string(argv[i]) + " " ;
 							jobid = Utils::checkJobId (argv[i]);
 							if ( jobid.size( ) >0 ) {
 								jobIds.push_back(jobid);
 							} else {
-								unvalid += string(argv[i]) + " " ;
+								invalid += string(argv[i]) + " " ;
 							}
 						}
 						ostringstream err ;
 						err << "Last argument of the command must be a JobId";
-						if (unvalid.size()>0){
-							err << "\n(Unrecognised option(s): " + unvalid + " )" ;
+						if (invalid.size()>0){
+							err << "\n(Unrecognised option(s): " + invalid + " )" ;
 						}
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
@@ -1819,14 +1819,14 @@ void Options::readOptions(const int &argc, const char **argv){
 					if ( jobid.size( ) >0 ) {
 						jobIds.push_back(jobid);
 					} else {
-						unvalid = string(jobid)  ;
+						invalid = string(jobid)  ;
 					}
 					// checks the read jobid
-					if (unvalid.size() > 0) {
+					if (invalid.size() > 0) {
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
 							"Wrong Input Arguments" ,
-							"Unvalid arguments: " + unvalid );
+							"invalid arguments: " + invalid );
 					} else  if ( jobIds.empty()) {
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
@@ -1850,7 +1850,7 @@ void Options::readOptions(const int &argc, const char **argv){
 						throw WmsClientException(__FILE__,__LINE__,
 							"readOptions", DEFAULT_ERR_CODE,
 							"Wrong Input Arguments" ,
-							"Unvalid arguments: " + unvalid );
+							"invalid arguments: " + invalid );
 					}
 				}
 
