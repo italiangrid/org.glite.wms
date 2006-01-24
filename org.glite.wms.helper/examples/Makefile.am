@@ -10,7 +10,7 @@ URL = $(top_builddir)/src/jobadapter/url/libglite_wms_ja_url.la
 HELPER = $(top_builddir)/src/libglite_wms_helper.la
 HELPER_JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_helper_jobadapter.la
 JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_jobadapter.la
-JOBWRAPPER = $(top_builddir)/src/jobadapter/jobwrapper/libglite_wms_ja_jobwrapper.la
+JOBWRAPPER = $(top_builddir)/src/jobadapter/libglite_wms_ja_jobwrapper.la
 
 check_PROGRAMS = \
 	jobwrapperTest \
