@@ -4,13 +4,22 @@ globus_url_retry_copy()
 {
   count=0
   succeded=0
+  sleep_time=0
   while [ $count -le ${__file_tx_retry_count} -a $succeded -eq 0 ];
   do
-    sleep_time=`expr \( $count \) \* \( $count \)`
+    $time_left=`grid-proxy-info -timeleft 2> /dev/null` || 0;
+    if [ $time_left -lt $sleep_time ]; then
+      return 1
+    fi
     sleep "$sleep_time"
-    count=`expr $count + 1`
+    if [ $sleep_time -eq 0]; then
+      sleep_time=300
+    else
+      sleep_time=`expr $sleep_time*2`
+    fi
     globus-url-copy $1 $2
     succeded=$?
+    count=`expr $count + 1`
   done
   return $succeded
 }
@@ -22,6 +31,9 @@ doExit() {
   echo "jw exit status = ${stat}" >> "${maradona}"
 
   globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  if [ $? != 0 ]; then
+    $stat=$?
+  fi
 
   cd ..
   rm -rf ${newdir}
@@ -442,9 +454,9 @@ else
 fi
 
 #user prescript
-if [ -f "${__prescript}" ]; then
-  chmod +x "${__prescript}"
-  ${__prescript}
+if [ -f "${workdir}/pre_script.sh" ]; then
+  chmod +x "${workdir}/pre_script.sh"
+  "${workdir}/pre_script.sh"
 fi
 if [ $? -ne 0]
   echo "User prescript returned with an error"
@@ -673,29 +685,41 @@ if [ ${__wmp_support} -eq 0 ]; then
   done
 else
   #WMP support
-  file_size_acc=0
   i=0
   for f in ${__wmp_output_dest_file[@]} 
   do
-    if [ ${__max_osb_size} -ge 0 ]; then
-      file_size=`stat -t $f | awk '{print $2}'`
-      file_size_acc=`expr $file_size_acc + $file_size`
-      if [ $file_size_acc -le ${__max_osb_size} ]; then
+    if [ ${__osb_wildcards_support} -eq 0 ]; then
+      if [ ${__max_osb_size} -ge 0 ]; then
+        #TODO:limit transfer on max output sandbox size exceeded
         if [ "${f:0:9}" == "gsiftp://" ]; then
           globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${f}"
         elif [ "${f:0:8}" == "https://" ]; then
           htcp "file://${workdir}/${__wmp_output_file[i]}" "${f}"
         fi
-      else
-        echo "OSB quota exceeded for file://${workdir}/${f}"
+      else #unlimited osb
+        if [ "${f:0:9}" == "gsiftp://" ]; then
+          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+        elif [ "${f:0:8}" == "https://" ]; then
+          htcp "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+        fi
       fi
-    else
-      if [ "${f:0:9}" == "gsiftp://" ]; then
-        globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${f}"
-      elif [ "${f:0:8}" == "https://" ]; then
-        htcp "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+    else #wildcard support
+      file=`basename $f`
+      if [ ${__max_osb_size} -ge 0 ]; then
+        #TODO:limit transfer on max output sandbox size exceeded
+        if [ "${f:0:9}" == "gsiftp://" ]; then
+          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}"
+        elif [ "${f:0:8}" == "https://" ]; then
+          htcp "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}" 
+        fi
+      else #unlimited osb
+        if [ "${f:0:9}" == "gsiftp://" ]; then
+          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}"
+        elif [ "${f:0:8}" == "https://" ]; then
+          htcp "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}"
+        fi
       fi
-    fi
+    fi 
     if [ $? != 0 ]; then
       echo "Cannot upload ${file} into ${f}"
       echo "Cannot upload ${file} into ${f}" >> "${maradona}"
