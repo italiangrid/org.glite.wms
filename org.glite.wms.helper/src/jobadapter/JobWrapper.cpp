@@ -74,13 +74,19 @@ JobWrapper::input_sandbox(const url::URL& base_url,
 }
 
 void
-JobWrapper::output_sandbox(const url::URL& base_url,
-                           const vector<std::string>& files)
+JobWrapper::output_sandbox(url::URL const& base_url,
+                           vector<std::string> const& files)
 {
   m_output_base_url = base_url;
   copy(files.begin(), files.end(), back_inserter(m_output_files));
 }
  
+void
+JobWrapper::set_output_sandbox_base_dest_uri(url::URL const& osb_base_dest_uri)
+{
+  m_output_sandbox_base_dest_uri = osb_base_dest_uri;
+}
+
 void
 JobWrapper::create_subdir(void)
 {
@@ -209,11 +215,6 @@ JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_fi
 void JobWrapper::set_osb_wildcards_support(bool value)
 {
   m_osb_wildcards_support = value;
-}
-
-void JobWrapper::set_prescript(std::string full_path)
-{
-  m_prescript = full_path;
 }
 
 void
@@ -391,6 +392,8 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_file", output_files) &&
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
+    dump(os, "__osb_wildcards_support", m_osb_wildcards_support) &&
+    dump(os, "__output_sandbox_base_dest_uri", m_output_sandbox_base_dest_uri) &&
     dump(os, "__job_type", m_job_type) &&
     dump(os, "__max_osb_size",
       wm_config->job_wrapper_max_output_sandbox_size()

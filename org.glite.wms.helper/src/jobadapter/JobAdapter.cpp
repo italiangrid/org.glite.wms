@@ -128,8 +128,8 @@ try {
                                         helper_id);
   }
   
-  /* Mandatory */
-  /* It is renamed as usersubjectname and reinserted with */
+  // Mandatory
+  // It is renamed as usersubjectname and reinserted with
   std::string certificatesubject(jdl::get_certificate_subject(*m_ad));
   if (certificatesubject.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::CERT_SUBJ,
@@ -140,31 +140,32 @@ try {
 
   jdl::set_user_subject_name(*result, certificatesubject);
   
-  /* Not Mandatory */
+  // Not Mandatory
   vector<std::string>  outputsandbox;
   utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandbox", outputsandbox); 
  
+  // Not Mandatory
   bool b_osb_dest_uri = false;
-  vector<std::string>  outputsandboxdesturi;
+  vector<std::string> outputsandboxdesturi;
   if (!outputsandbox.empty()) {
     utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
-    if (!outputsandboxdesturi.empty()) {
+    if ( !outputsandboxdesturi.empty() ) {
       b_osb_dest_uri = true;
     }
   }
   
-  /* Not Mandatory */
+  // Not Mandatory
   vector<std::string>  inputsandbox;
   utilities::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
-  /* Not Mandatory */
+  // Not Mandatory
   bool b_wmpisb_base_uri = false;
   std::string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
   if (!wmpisb_base_uri.empty()) {
     b_wmpisb_base_uri = true;
   }
 
-  /* Mandatory */
+  // Mandatory
   // InputSandboxPath is always included
   std::string inputsandboxpath;
   inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
@@ -356,7 +357,7 @@ try {
     md5_hex_hash.width(2);
     md5_hex_hash.fill('0');
 
-    for (int i=0; i<MD5_DIGEST_LENGTH; i++) {
+    for (int i = 0; i < MD5_DIGEST_LENGTH; ++i) {
       md5_hex_hash.width(2);
       md5_hex_hash << (unsigned int)md5_cert_hash[i];
     }
@@ -535,28 +536,28 @@ try {
                                         helper_id);
   }
   
-  /* start preparing JobWrapper file */
+  // start preparing JobWrapper file
   boost::scoped_ptr<JobWrapper> jw;
    
-  /* convert the jobid into filename */
+  // convert the jobid into filename
   std::string jobid_to_file(jobid::to_filename(job_id));
-  /* concert the dagid into filename */
+  // concert the dagid into filename
   std::string dagid_to_file;
   if (!dag_id.empty()) {
     dagid_to_file.append(jobid::to_filename(dag_id));
   }
 
-  /* check if there is '/' in the executable */
+  // check if there is '/' in the executable
   if (executable[0] != '/') {
     executable.insert(0, "./", 2);
   }    
 	
-  /* lowercase all jobtype characters */
+  // lowercase all jobtype characters
   std::string ljobtype(jobtype);
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
   
   if (ljobtype == "mpich") {
-    /* lowercase all lrmstype characters */
+    // lowercase all lrmstype characters
     std::string llrmstype(lrmstype);
     std::transform(llrmstype.begin(), llrmstype.end(), llrmstype.begin(), ::tolower);    
     if (llrmstype != "lsf" && llrmstype != "pbs") {
@@ -566,8 +567,8 @@ try {
                                           helper_id);
     }
     
-    /* Mandatory */
-    /* node number is mandatory for the mpich job */
+    // Mandatory
+    // node number is mandatory for the mpich job
     int    nodenumber = jdl::get_node_number(*m_ad);
 
     if (is_blahp_resource || is_condor_resource) {
@@ -604,7 +605,8 @@ try {
 
   } else if (ljobtype == "interactive") {
     if (find_if(env.begin(), env.end(), 
-	Beginning("BYPASS_SHADOW_PORT=")) == env.end())
+          Beginning("BYPASS_SHADOW_PORT=")) == env.end()
+       )
     {
       std::ostringstream env_str;
       std::copy(env.begin(), env.end(),
@@ -696,7 +698,7 @@ try {
       }
     }
       
-    /* Virtual Organization is mandatory if OutputData is in the JDL */
+    // Virtual Organization is mandatory if OutputData is in the JDL
     std::string vo(jdl::get_virtual_organisation(*m_ad));
     if (vo.empty()) {
       throw helper::InvalidAttributeValue(jdl::JDL::VIRTUAL_ORGANISATION,
@@ -715,7 +717,7 @@ try {
 	
   jdl::set_globus_rsl(*result, globusrsl);
   
-  /* Mandatory for shallow resubmission */
+  // Mandatory for shallow resubmission
   config::WMConfiguration const* wmconfig = config::Configuration::instance()->wm();
   std::string token_file(wmconfig->token_file());
 
@@ -730,8 +732,13 @@ try {
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
-  //jw->set_osb_wildcards_support(bool value)
-  //jw->set_prescript(std::string full_path);
+  if(b_osb_dest_uri) {
+      jw->set_output_sandbox_base_dest_uri(url::URL(""));
+  } else {
+      // the support for wildcards is deducted by the absence of this attribute
+      jw->set_osb_wildcards_support(true);
+      jw->set_output_sandbox_base_dest_uri(url::URL(jdl::JDL::OSB_BASE_DEST_URI));
+  }
  
   //check if there is the protocol in the inputsandbox path.
   //if no the protocol gsiftp:// is added to the inputsandboxpath.
@@ -757,7 +764,7 @@ try {
       } else {
         jw->wmp_input_sandbox_support(url_, inputsandbox);
       }
-      // set token for the shallow resubmission
+      //set the token for the shallow resubmission
       std::string::size_type const pos = inputsandboxpath.rfind("/input");
       std::string const token_path(inputsandboxpath, 0, pos);
       jw->token(token_path + '/' + token_file);
@@ -789,7 +796,7 @@ try {
   if (b_osb_dest_uri || b_wmpisb_base_uri) {
     jw->wmp_support();
   }
-  // end preparation JobWrapper file
+  //end preparation of the JobWrapper dump
 
   config::LMConfiguration const* logconfig = config::Configuration::instance()->lm();
   
@@ -884,7 +891,7 @@ try {
   error.append("StandardError");
   jdl::set_error_(*result, error);
 
-  /* Mandatory */
+  // Mandatory
   jdl::set_stream_output(*result, false);
   jdl::set_stream_error(*result, false);
 

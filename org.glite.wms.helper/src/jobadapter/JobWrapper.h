@@ -222,7 +222,7 @@ public:
 
   void set_job_type(int);
   void set_osb_wildcards_support(bool);
-  void set_prescript(std::string);
+  void set_output_sandbox_base_dest_uri(url::URL const&);
 
 private:
   static const std::string s_brokerinfo_default;
@@ -238,6 +238,7 @@ private:
   std::vector<std::string> m_input_files;
 
   url::URL                 m_output_base_url;
+  url::URL                 m_output_sandbox_base_dest_uri;
   std::vector<std::string> m_output_files;
 
   std::string              m_brokerinfo;
@@ -268,7 +269,6 @@ private:
   
   int                      m_job_type;
   bool                     m_osb_wildcards_support;
-  std::string              m_prescript;
 
   virtual std::ostream& print(std::ostream& os) const;  
   bool fill_out_script(std::string const&, std::ostream&) const;
