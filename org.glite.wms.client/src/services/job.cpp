@@ -199,7 +199,7 @@ const std::string Job::getWmpVersion (const std::string &endpoint) {
 		// Cfg context object
 		ConfigContext *cfg = new ConfigContext (getProxyPath(), endpoint, getCertsPath());
 		logInfo->service(WMP_VERSION_SERVICE);
-		logInfo->print (WMS_INFO, "Connecting to the service", endpoint);
+		logInfo->print (WMS_INFO, "Connecting to the service", endpoint, false);
 		// Version string number
 		version = getVersion((ConfigContext *)cfg);
 		logInfo->result(WMP_VERSION_SERVICE, "Version numbers successfully retrieved");
