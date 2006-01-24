@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.19  2006/01/24 12:16:03  mcecchi
+#       jobwrapper unification
+#
 #       Revision 1.18  2005/10/15 11:57:04  eronchie
 #       Increased version
 #
@@ -265,7 +268,6 @@ AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/broker/Makefile])
 AC_CONFIG_FILES([src/jobadapter/Makefile])
-AC_CONFIG_FILES([src/jobadapter/jobwrapper/Makefile])
 AC_CONFIG_FILES([src/jobadapter/url/Makefile])
 
 AC_OUTPUT
