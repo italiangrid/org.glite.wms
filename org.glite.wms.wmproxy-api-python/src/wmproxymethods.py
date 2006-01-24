@@ -221,6 +221,19 @@ def b2b(b_in):
 	"""
 	return SOAPpy.Types.booleanType(b_in)
 
+def getJDLConverter(i_in):
+	"""
+	used to convert an integer into a getJDL Request value as follows:
+	i_in ==  0 retrieves ORIGINAL   jdl
+	i_in !=  0 retrieves REGISTERED jdl
+	This method is used internally by getJDL method
+	"""
+	if int (i_in):
+		return SOAPpy.Types.untypedType('REGISTERED')
+	else:
+		return SOAPpy.Types.untypedType('ORIGINAL')
+
+
 class Wmproxy:
 	"""
 	Provide all WMProxy web services
@@ -947,14 +960,17 @@ class Wmproxy:
 		"""
 		Method:  getJDL
 		IN = jobId (string)
-		IN = jdlType (enum?)
+		IN = jdlType (int)
 		OUT = JDL as a string
 
 		This operation returns the Delegated Proxy information
+		jdlType enum values are considered as follows:
+		0 = ORIGINAL, otherwise = REGISTERED
+
 		"""
 		try:
 			self.soapInit()
-			return self.remote.getJDL(jobId, jdlType)
+			return self.remote.getJDL(jobId, getJDLConverter(jdlType))
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
