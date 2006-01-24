@@ -53,14 +53,56 @@ class ProxyInfo : public Job {
 		*/
 		void proxy_info ( ) ;
 	private:
-		const long convDate(const std::string &data) ;
-		const std::string timeString(const long &time) ;
-const std::string field (const std::string &label, const std::string &value);
-const std::string getDateString(const long &data);
-//const std::string field (const std::string &label, const long &value);
+		/*
+		* Converts the input date to the string in the following format:
+		*  dd month yyyy - hh:mm:ss
+		* where dd = day of the mounth
+		* @param date a string that represents the number of seconds since 1.1.1970 00:00:00
+		* @return the string with the result of the conversion
+		*
+		*/
+		const std::string getDateString(const std::string &data);
+		/*
+		* Converts the input date to the string in the following format:
+		*  dd month yyyy - hh:mm:ss
+		* where dd = day of the mounth
+		* @param date the input date (the number of seconds since 1.1.1970 00:00:00)
+		* @return the string with the result of the conversion
+		*
+		*/
+		const std::string getDateString(const long &data);
+		/**
+		* Return the number of sceonds since 1.1.1970 00:00:00
+		* for the input date in the ASN1 format :
+		* yyyyMMddHHmmssZ (where Z=time zone)
+		* @date the date in the ASN1 format
+		*/
+		const long convASN1Date(const std::string &date) ;
+		/*
+		* Converts the input date (in ASN1 format) in the following format:
+		*  dd month yyyy - hh:mm:ss
+		* where dd = day of the mounth
+		* @date the date in the ASN1 format: yyyyMMddHHmmssZ (where Z=time zone)
+		*/
+		const std::string convDate(const std::string &date) ;
+		/*
+		* Returns a string with the information on the proxy time left
+		* @param expiration expiration time in ASN1 format
+		* @return a string which the time left information
+		*/
+		const std::string getTimeLeft(const std::string &expiration);
+		/*
+		* Returns a string with the information on the proxy attribute which
+		*  label and value are provided as input
+		* @param label name of the attribute
+		* @param value value of the attribute
+		* @return a string which format is label = value
+		*/
+		const std::string field (const std::string &label, const std::string &value);
 		/**
 		* Returns a string with the information of the delegated proxy retrieved by the server
 		* @param info the struct containing the information to be printed
+		* @return the formatted message
 		*/
 		const std::string printProxyInfo (glite::wms::wmproxyapi::ProxyInfoStructType info);
 

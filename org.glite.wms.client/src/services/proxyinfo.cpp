@@ -49,11 +49,11 @@ namespace services {
 
 const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July", "Aug", "Sept", "Oct", "Nov", "Dec"};
 
-/*
+/**
 *	Default constructor
 */
 ProxyInfo::ProxyInfo( ){ };
-/*
+/**
 *	Default destructor
 */
 ProxyInfo::~ProxyInfo( ){};
@@ -63,7 +63,94 @@ ProxyInfo::~ProxyInfo( ){};
 void ProxyInfo::readOptions (int argc,char **argv){
         Job::readOptions  (argc, argv, Options::JOBPROXYINFO);
 };
+/**
+* Performs the main operations
+*/
+void ProxyInfo::proxy_info ( ){
+	postOptionchecks();
+	ostringstream out ;
+	ProxyInfoStructType* info = NULL ;
+	ostringstream header ;
+	string jobid = "";
+	vector<string> ids = wmcOpts->getJobIds( );
 
+	if (ids.empty()) {
+		setEndPoint(false);
+		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier:", *dgOpt);
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		logInfo->service(WMP_PROXYINFO_SERVICE);
+		try {
+			info = getDelegatedProxyInfo(*dgOpt, cfgCxt);
+		} catch (BaseException &exc) {
+			throw WmsClientException(__FILE__,__LINE__,
+			"proxy_info", ECONNABORTED,
+			"WMProxy Server Error", errMsg(exc));
+		}
+		if (info) {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "the information has been successfully retrieved");
+		} else {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "failure in retrieving the information");
+		}
+		header << "Your proxy delegated to the endpoint\n" ;
+		header << getEndPoint( ) << "\n";
+		header << "contains the following information:\n";
+
+	} else {
+		jobid = ids[0];
+		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
+		LbApi lbApi;
+		lbApi.setJobId(jobid);
+		Status status = lbApi.getStatus(true,true);
+		setEndPoint(status.getEndpoint(), true);
+		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobid);
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		logInfo->service(WMP_JOB_PROXYINFO_SERVICE, jobid);
+		try {
+			info = getJobProxyInfo(jobid, cfgCxt);
+		} catch (BaseException &exc) {
+			throw WmsClientException(__FILE__,__LINE__,
+			"proxy_info", ECONNABORTED,
+			"WMProxy Server Error", errMsg(exc));
+		}
+		if (info) {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "the info has been successfully retrieved");
+		} else {
+			logInfo->result(WMP_PROXYINFO_SERVICE, "failure in retrieving the information");
+		}
+		header << "Your proxy delegated for the job\n" ;
+		header << jobid << "\n";
+		header << "contains the following information:\n\n";
+	}
+
+	if (info) {
+		// OUTPUT MESSAGE ============================================
+		out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
+		out << header.str( ) << "\n";
+		out << printProxyInfo (*info) ;
+	} else {
+		out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Failure") ) << "\n\n";
+		out << "Unable to retrieve information for your proxy delegated to the endpoint\n" ;
+		out << getEndPoint( ) << "\n\n";
+	}
+	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
+	out << getLogFileMsg ( ) << "\n";
+	if (outOpt) {
+		if( wmcUtils->saveToFile(*outOpt, out.str()) < 0 ){
+			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
+		} else {
+			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
+			out << "The DelegateProxy result  has been saved in the following file:\n";
+			out << Utils::getAbsolutePath(*outOpt) << "\n";
+		}
+	}
+        // ==============================================================
+        // prints the message on the standard output
+	cout << out.str() ;
+};
+/**
+* Returns a string with the information on the proxy attribute which
+*  label and value are provided as input
+*/
 const std::string ProxyInfo::field (const std::string &label, const std::string &value){
 	string str = "";
 	int ws = 0;
@@ -84,8 +171,42 @@ const std::string ProxyInfo::field (const std::string &label, const std::string 
 	}
 	return str;
 };
-
-const long ProxyInfo::convDate(const std::string &data) {
+/**
+* Converts the input date to the string in the following format:
+*  dd month yyyy - hh:mm:ss
+* where dd = day of the mounth
+* The input date is a string that represents the number of seconds since 1.1.1970 00:00:00
+*/
+const std::string ProxyInfo::getDateString(const long &date) {
+	ostringstream oss;
+	string ws = " ";
+	string sep = ":";
+	struct tm *ns = localtime(&date);
+	//time stamp: day-month-year
+	oss << std::setw(2) << std::setfill('0') << ns->tm_mday << ws ;
+	oss << std::setw(2) << std::setfill('0') << monthStr[ns->tm_mon] << ws << (ns->tm_year+1900) << " - " ;
+        // PREFIX MSG: time stamp: hh::mm:ss
+        oss << std::setw(2) << std::setfill('0') <<  ns->tm_hour << sep;
+	oss << std::setw(2) << std::setfill('0') << ns->tm_min << sep;
+	oss << std::setw(2) << std::setfill('0') << ns->tm_sec;
+	return (oss.str());
+}
+/**
+* Converts the input date to the string in the following format:
+*  dd month yyyy - hh:mm:ss
+* where dd = day of the mounth
+* The input date is the number of seconds since 1.1.1970 00:00:00
+*/
+const std::string ProxyInfo::getDateString(const std::string &date) {
+	long d = atol(date.c_str());
+	return (getDateString(d));
+}
+/**
+* Return the number of sceonds since 1.1.1970 00:00:00
+* for the input date in the ASN1 format
+* yyyyMMddHHmmssZ (where Z=time zone)
+*/
+const long ProxyInfo::convASN1Date(const std::string &date) {
 	char     *str;
   	time_t    offset;
   	time_t    newtime;
@@ -95,8 +216,8 @@ const long ProxyInfo::convDate(const std::string &data) {
   	struct tm tm;
   	int       size;
 	ASN1_TIME *ctm = ASN1_TIME_new();
-	ctm->data   = (unsigned char *)(data.data());
-	ctm->length = data.size();
+	ctm->data   = (unsigned char *)(date.data());
+	ctm->length = date.size();
 	switch(ctm->length) {
 		case 10: {
 			ctm->type = V_ASN1_UTCTIME;
@@ -182,84 +303,82 @@ const long ProxyInfo::convDate(const std::string &data) {
 		tm.tm_sec   = (buff1[index++]-'0')*10;
 		tm.tm_sec  += (buff1[index++]-'0');
   		newtime = (mktime(&tm) + offset*60*60 - timezone);
+
 	}
-
-  	return newtime;
+	return  newtime;
 }
+/*
+* Converts the input date (in ASN1 format) in the following format:
+*  dd month yyyy - hh:mm:ss
+* where dd = day of the mounth
+* @date the date in the ASN1 format: yyyyMMddHHmmssZ (where Z=time zone)
+*/
+const std::string ProxyInfo::convDate(const std::string &date) {
+	long d = convASN1Date(date);
+	return getDateString(d);
 
-const std::string ProxyInfo::getDateString(const long &date) {
-	ostringstream oss;
-	string ws = " ";
-	string sep = ":";
-	struct tm *ns = localtime(&date);
-	//time stamp: day-month-year
-	oss << std::setw(2) << std::setfill('0') << ns->tm_mday << ws ;
-	oss << std::setw(2) << std::setfill('0') << monthStr[ns->tm_mon] << ws << (ns->tm_year+1900) << " - " ;
-        // PREFIX MSG: time stamp: hh::mm:ss
-        oss << std::setw(2) << std::setfill('0') <<  ns->tm_hour << sep;
-	oss << std::setw(2) << std::setfill('0') << ns->tm_min << sep;
-	oss << std::setw(2) << std::setfill('0') << ns->tm_sec;
-	return (oss.str());
 }
-
-const std::string ProxyInfo::timeString(const long &time) {
+/*
+* Returns a string with the information on the proxy time left
+*/
+const std::string ProxyInfo::getTimeLeft(const std::string &expiration) {
 	ostringstream oss;
-	long t = time;
-	int h = 0;
-	int m = 0;
-	int s = 0;
-	int d = t/(3600*24);
-	// days
-	if (d>0) {
-		oss << d << " days ";
-		t -= d*(3600*24);
-	}
-	// hours
-	h = t/3600 ;
-	if (h>0) {
-		oss << std::setw(2) << std::setfill('0') << h << " hours " ;
- 	}
-	// minutes
-	m = (t%3600)/60 ;
-	if (m>0) {
+	int d = 0;   // days
+	int h = 0; 	// hours
+	int m = 0;	// minutes
+	int s = 0;	// seconds
+	// Time-Left
+	long t = convASN1Date(expiration) - time(NULL);
+ 	if (t >0) {
+		d = t/(3600*24);
+		// days
+		if (d>0) {
+			oss << d << " days ";
+			t -= d*(3600*24);
+		}
+		// hours
+		h = t/3600 ;
+		if (h>0) {
+			oss << std::setw(2) << std::setfill('0') << h << " hours " ;
+		}
+		// minutes
+		m = (t%3600)/60 ;
 		oss << std::setw(2) << std::setfill('0') << m << " min " ;
-	}
-	// seconds
-	s = (t%3600)%60;
-	if (s>0) {
+		// seconds
+		s = (t%3600)%60;
 		oss << std::setw(2) << std::setfill('0') << s << " sec " ;
+	} else {
+		oss << "00:00:00";
 	}
 	return oss.str( );
 }
+/*
+* Returns a string with the information of the delegated proxy
+* retrieved by the server
+*/
 const std::string ProxyInfo::printProxyInfo (ProxyInfoStructType info){
 	// Current time
 	time_t now;
 	time(&now);
 	ostringstream out ;
-	long date = 0; // date = Epoch seconds
-	long timeleft = 0;
 	string attr = "";
-	out << field ("Subject", info.subject) ; cout << "1\n" ;
-	out << field ("Issuer", info.issuer) ;cout << "2\n" ;
-	out << field ("Identity", info.identity) ;cout << "3\n" ;
-	out << field ("Type", info.type) ;cout << "4\n" ;
-	out << field ("Strength", info.strength) ;cout << "5 --- startTime=" << info.startTime<<"  \n" ;
+
+	out << field ("Subject", info.subject) ;
+	out << field ("Issuer", info.issuer) ;
+	out << field ("Identity", info.identity) ;
+	out << field ("Type", info.type) ;
+	out << field ("Strength", info.strength) ;
 	// startTime
-	date = boost::lexical_cast<long>(info.startTime);cout << "6\n" ;
-	out << field ("StartDate", getDateString(date));cout << "7\n" ;
+	out << field ("StartDate", getDateString(info.startTime));
 	// endTime
-	date = boost::lexical_cast<long>(info.endTime);cout << "8\n" ;
-	out << field ("Expiration", getDateString(date));cout << "9\n" ;
-	// time-left
-	timeleft = boost::lexical_cast<long> (info.endTime) - now ;
-	out << field ("Timeleft", timeString(timeleft)) ;cout << "10\n" ;
+	out << field ("Expiration", getDateString(info.endTime));
 	// VOs info
 	std::vector<VOProxyInfoStructType*>::iterator it1 = (info.vosInfo).begin();
-	const std::vector<VOProxyInfoStructType*>::iterator end1 = (info.vosInfo).end();cout << "11\n" ;
+	const std::vector<VOProxyInfoStructType*>::iterator end1 = (info.vosInfo).end();
 	for ( ; it1 != end1; it1++){
 		if ((*it1)){
 			VOProxyInfoStructType *vo = (*it1);
-			out << "=== VO " << vo->voName << " extension information ===\n";cout << "12\n" ;
+			out << "=== VO " << vo->voName << " extension information ===\n";
 			out << field ("VO", vo->voName);
 			out << field ("Subject", vo->user);
 			out << field ("Issuer", vo->server);
@@ -272,101 +391,15 @@ const std::string ProxyInfo::printProxyInfo (ProxyInfoStructType info){
 				out << field ("Attribute", string(*it2));
 			}
 			// startTime
-			date = convDate(vo->startTime);
-			out << field ("StartTime",getDateString(date) );
+			out << field ("StartTime",convDate(vo->startTime) );
 			// endTime
-			date = convDate(vo->endTime);
-			out << field ("Expiration", getDateString(date));
+			out << field ("Expiration", convDate(vo->endTime));
 			// time-left
-			timeleft = boost::lexical_cast<long>(convDate(vo->endTime)) - now;
-			out << field ("TimeLeft", timeString(timeleft));
+			out << field ("TimeLeft", getTimeLeft(vo->endTime));
 		}
 	}
 	return out.str();
 };
-/*
-* Performs the main operations
-*/
-void ProxyInfo::proxy_info ( ){
-	postOptionchecks();
-	ostringstream out ;
-	ProxyInfoStructType* info = NULL ;
-	ostringstream header ;
-	string jobid = "";
-	vector<string> ids = wmcOpts->getJobIds( );
 
-	if (ids.empty()) {
-		setEndPoint(false);
-		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier:", *dgOpt);
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-		logInfo->service(WMP_PROXYINFO_SERVICE);
-		try {
-			info = getDelegatedProxyInfo(*dgOpt, cfgCxt);
-		} catch (BaseException &exc) {
-			throw WmsClientException(__FILE__,__LINE__,
-			"proxy_info", ECONNABORTED,
-			"WMProxy Server Error", errMsg(exc));
-		}
-		if (info) {
-			logInfo->result(WMP_PROXYINFO_SERVICE, "the information has been successfully retrieved");
-		} else {
-			logInfo->result(WMP_PROXYINFO_SERVICE, "failure in retrieving the information");
-		}
-		header << "Your proxy delegated to the endpoint\n" ;
-		header << getEndPoint( ) << "\n";
-		header << "contains the following information:\n";
-
-	} else {
-		jobid = ids[0];
-		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
-		LbApi lbApi;
-		lbApi.setJobId(jobid);
-		Status status = lbApi.getStatus(true,true);
-		setEndPoint(status.getEndpoint(), true);
-		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobid);
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-		logInfo->service(WMP_JOB_PROXYINFO_SERVICE, jobid);
-		try {
-			info = getJobProxyInfo(jobid, cfgCxt);
-		} catch (BaseException &exc) {
-			throw WmsClientException(__FILE__,__LINE__,
-			"proxy_info", ECONNABORTED,
-			"WMProxy Server Error", errMsg(exc));
-		}
-		if (info) {
-			logInfo->result(WMP_PROXYINFO_SERVICE, "the info has been successfully retrieved");
-		} else {
-			logInfo->result(WMP_PROXYINFO_SERVICE, "failure in retrieving the information");
-		}
-		header << "Your proxy delegated for the job\n" ;
-		header << jobid << "\n";
-		header << "contains the following information:\n\n";
-	}
-
-	if (info) {
-		// OUTPUT MESSAGE ============================================
-		out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Success") ) << "\n\n";
-		out << header.str( ) << "\n";
-		out << printProxyInfo (*info) ;
-	} else {
-		out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Failure") ) << "\n\n";
-		out << "Unable to retrieve information for your proxy delegated to the endpoint\n" ;
-		out << getEndPoint( ) << "\n\n";
-	}
-	out << "\n" << wmcUtils->getStripe(74, "=") << "\n\n";
-	out << getLogFileMsg ( ) << "\n";
-	if (outOpt) {
-		if( wmcUtils->saveToFile(*outOpt, out.str()) < 0 ){
-			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
-		} else {
-			logInfo->print (WMS_DEBUG, "The DelegateProxy result has been saved in the output file ", Utils::getAbsolutePath(*outOpt));
-			out << "The DelegateProxy result  has been saved in the following file:\n";
-			out << Utils::getAbsolutePath(*outOpt) << "\n";
-		}
-	}
-        // ==============================================================
-        // prints the message on the standard output
-	cout << out.str() ;
-};
 
 }}}} // ending namespaces
