@@ -270,13 +270,14 @@ if [ -z "${EDG_WL_LOCATION}" ]; then
   export EDG_WL_LOCATION="${EDG_LOCATION:-/opt/edg}"
 fi
 
-LB_LOGEVENT=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
-if [ ! -f "$LB_LOGEVENT" ]; then
-  LB_LOGEVENT="${EDG_WL_LOCATION}/bin/edg-wl-logev"
+lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
+if [ ! -x "$lb_logevent" ]; then
+  lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
 fi
 
-#customization point #if [ -f "${GLITE_SUBSCRIPT__LOCATION}/cp_1.sh" ]; then
-  (. "${GLITE_SUBSCRIPT__LOCATION}/cp_1.sh")
+#customization point #1
+if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
+  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
 fi
 
 if [ ${__create_subdir} -eq 1 ]; then
@@ -292,7 +293,7 @@ if [ ${__create_subdir} -eq 1 ]; then
     if [ $? != 0 ]; then
       echo "Cannot create .mpi/${newdir} directory"
 
-      GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT \
+      GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
         --jobid="$GLITE_WMS_JOBID" \
         --source=LRMS \
         --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -311,7 +312,7 @@ fi
 if [ ! -w . ]; then
   echo "Working directory not writable"
 
- export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+ export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
   --jobid="$GLITE_WMS_JOBID"\
   --source=LRMS \
   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -336,7 +337,7 @@ if [ -z "${GLOBUS_LOCATION}" ]; then
   echo "GLOBUS_LOCATION undefined"
   echo "GLOBUS_LOCATION undefined" >> "${maradona}"
 
-  export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
    --jobid="$GLITE_WMS_JOBID"\
    --source=LRMS\
    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -353,7 +354,7 @@ else
   echo "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
   echo "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable" >> "${maradona}"
 
-  export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT \
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
    --jobid="$GLITE_WMS_JOBID" \
    --source=LRMS \
    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -381,7 +382,7 @@ if [ ${__wmp_support} -eq 0 ]; then
       echo "Cannot download ${f} from ${__input_base_url}"
       echo "Cannot download ${f} from ${__input_base_url}" >> "${maradona}"
 
-      export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT \
+      export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
        --jobid="$GLITE_WMS_JOBID" \
        --source=LRMS \
        --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -407,7 +408,7 @@ else
       echo "Cannot download ${file} from ${f}"
       echo "Cannot download ${file} from ${f}" >> "${maradona}"
 
-      export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+      export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
        --jobid="$GLITE_WMS_JOBID"\
        --source=LRMS\
        --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -427,7 +428,7 @@ else
   echo "${__job} not found or unreadable"
   echo "${__job} not found or unreadable" >> "${maradona}"
 
-  export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
    --jobid="$GLITE_WMS_JOBID"\
    --source=LRMS\
    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -440,6 +441,9 @@ else
   doExit 1
 fi
 
+#retval prescript args
+#exit on failure
+
 if [ ${__job_type} -eq 3 ]; then
   #interactive job
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
@@ -450,7 +454,7 @@ if [ ${__job_type} -eq 3 ]; then
 fi
 
 host=`hostname -f`
-export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
  --jobid="$GLITE_WMS_JOBID"\
  --source=LRMS\
  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -466,7 +470,7 @@ if [ ${__token_support} -eq 1 ]; then
   value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm ${__token_file}`
   result=$?
   if [ $result -eq 0 ]; then
-    GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+    GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
   --jobid="$GLITE_WMS_JOBID"\
   --source=LRMS\
   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -481,7 +485,7 @@ if [ ${__token_support} -eq 1 ]; then
     echo "Cannot take token!"
     echo "Cannot take token!" >> "${maradona}"
 
-    GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+    GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
   --jobid="$GLITE_WMS_JOBID"\
   --source=LRMS\
   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -647,7 +651,7 @@ if [ ${__wmp_support} -eq 0 ]; then
         echo "Cannot upload ${f} into ${__output_base_url}"
         echo "Cannot upload ${f} into ${__output_base_url}" >> "${maradona}"
 
-        export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT \
+        export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
           --jobid="$GLITE_WMS_JOBID" \
           --source=LRMS \
           --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -689,7 +693,7 @@ else
       echo "Cannot upload ${file} into ${f}"
       echo "Cannot upload ${file} into ${f}" >> "${maradona}"
 
-      export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+      export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
         --jobid="$GLITE_WMS_JOBID"\
         --source=LRMS\
         --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -704,7 +708,7 @@ else
   done
 fi
 
-export GLITE_WMS_SEQUENCE_CODE=`$LB_LOGEVENT\
+export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
  --jobid="$GLITE_WMS_JOBID"\
  --source=LRMS\
  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
