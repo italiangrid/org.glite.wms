@@ -30,7 +30,6 @@ namespace glite {
 namespace wms {
 namespace helper {
 namespace jobadapter {
-namespace jobwrapper {
 
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
 
@@ -210,6 +209,11 @@ JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_fi
 void JobWrapper::set_osb_wildcards_support(bool value)
 {
   m_osb_wildcards_support = value;
+}
+
+void JobWrapper::set_prescript(std::string full_path)
+{
+  m_prescript = full_path;
 }
 
 void
@@ -447,7 +451,6 @@ operator<<(std::ostream& os, const JobWrapper& jw)
   return jw.print(os);
 }
 
-} // namespace jobwrapper
 } // namespace jobadapter
 } // namespace helper
 } // namespace wms

@@ -30,12 +30,14 @@ namespace glite {
 namespace wms {
 namespace helper {
 namespace jobadapter {
-namespace jobwrapper {
 	
 enum job_type {NORMAL = 0, MPI_LSF = 1, MPI_PBS = 2, INTERACTIVE = 3};
 
 class JobWrapper
 {
+  friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
+  bool dump_vars(std::ostream&) const;
+
 public:
   /**
    *  Initializes the object passing the parameters to the job wrapper.
@@ -220,12 +222,10 @@ public:
 
   void set_job_type(int);
   void set_osb_wildcards_support(bool);
+  void set_prescript(std::string);
 
 private:
-
-  virtual std::ostream& print(std::ostream& os) const;  
-  bool fill_out_script(std::string const&, std::ostream&) const;
-  bool dump_vars(std::ostream&) const;
+  static const std::string s_brokerinfo_default;
 
   std::string              m_job;
   std::string              m_standard_input;
@@ -268,13 +268,12 @@ private:
   
   int                      m_job_type;
   bool                     m_osb_wildcards_support;
+  std::string              m_prescript;
 
-  static const std::string s_brokerinfo_default;
-
-  friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
+  virtual std::ostream& print(std::ostream& os) const;  
+  bool fill_out_script(std::string const&, std::ostream&) const;
 };
 
-} // namespace jobwrapper
 } // namespace jobadapter
 } // namespace helper
 } // namespace wms

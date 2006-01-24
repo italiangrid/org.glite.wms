@@ -6,9 +6,8 @@
 ## *
 ## *********************************************************************
 URL = $(top_builddir)/src/jobadapter/url/libglite_wms_ja_url.la
-JOBWRAPPER = $(top_builddir)/src/jobadapter/jobwrapper/libglite_wms_ja_jobwrapper.la
 
-SUBDIRS = url jobwrapper
+SUBDIRS = url
 
 lib_LTLIBRARIES = libglite_wms_helper_jobadapter.la
 
@@ -27,14 +26,14 @@ libglite_wms_jobadapter_la_SOURCES = \
   JobAdapter.cpp \
   exceptions.cpp
 
-libglite_wms_helper_jobadapter_la_SOURCES = \
-  Helper.cpp
-
 libglite_wms_ja_jobwrapper_la_SOURCES = \
   JobWrapper.cpp
 
+libglite_wms_helper_jobadapter_la_SOURCES = \
+  Helper.cpp
+
 libglite_wms_helper_jobadapter_la_LIBADD = \
-  $(JOBWRAPPER) \
+  ./libglite_wms_ja_jobwrapper.la \
 	$(URL) \
   ./libglite_wms_jobadapter.la
 

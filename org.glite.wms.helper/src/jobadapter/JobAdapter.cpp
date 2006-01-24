@@ -25,6 +25,7 @@
 #include <classad_distribution.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -32,7 +33,7 @@
 
 #include "jobadapter/url/URL.h"
 #include "JobAdapter.h"
-#include "jobadapter/jobwrapper/JobWrapper.h"
+#include "JobWrapper.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
@@ -59,7 +60,6 @@ namespace fs = boost::filesystem;
 namespace config = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
-namespace jobwrapper = glite::wms::helper::jobadapter::jobwrapper;
 namespace url = glite::wms::helper::jobadapter::url;
 namespace jdl = glite::wms::jdl;
 
@@ -536,7 +536,7 @@ try {
   }
   
   /* start preparing JobWrapper file */
-  std::auto_ptr<jobwrapper::JobWrapper> jw;
+  boost::scoped_ptr<JobWrapper> jw;
    
   /* convert the jobid into filename */
   std::string jobid_to_file(jobid::to_filename(job_id));
@@ -591,12 +591,12 @@ try {
     }
  
     if (llrmstype == "lsf") {
-      jw.reset(new jobwrapper::JobWrapper(exec));
-      jw->set_job_type(jobwrapper::MPI_LSF);
+      jw.reset(new JobWrapper(exec));
+      jw->set_job_type(MPI_LSF);
     }
     else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
-      jw.reset(new jobwrapper::JobWrapper(exec));
-      jw->set_job_type(jobwrapper::MPI_PBS);
+      jw.reset(new JobWrapper(exec));
+      jw->set_job_type(MPI_PBS);
     } else {
       // not possible;
     }
@@ -631,15 +631,15 @@ try {
 
     std::string::size_type pos = executable.find("./");
     if (pos == std::string::npos) {
-      jw.reset(new jobwrapper::JobWrapper(executable));
-      jw->set_job_type(jobwrapper::INTERACTIVE);
+      jw.reset(new JobWrapper(executable));
+      jw->set_job_type(INTERACTIVE);
     } else {
-      jw.reset(new jobwrapper::JobWrapper(executable.substr(pos+2)));
-      jw->set_job_type(jobwrapper::INTERACTIVE);
+      jw.reset(new JobWrapper(executable.substr(pos+2)));
+      jw->set_job_type(INTERACTIVE);
     }
   } else {
-    jw.reset(new jobwrapper::JobWrapper(executable));
-      jw->set_job_type(jobwrapper::NORMAL);
+    jw.reset(new JobWrapper(executable));
+      jw->set_job_type(NORMAL);
   }
  
   // PerusalFileEnable is not mandatory
@@ -730,6 +730,8 @@ try {
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
+  //jw->set_osb_wildcards_support(bool value)
+  //jw->set_prescript(std::string full_path);
  
   //check if there is the protocol in the inputsandbox path.
   //if no the protocol gsiftp:// is added to the inputsandboxpath.
