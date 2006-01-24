@@ -1,5 +1,5 @@
-
-
+#include "soapWMProxyProxy.h"
+#include "WMProxy.nsmap"
 #include <stdlib.h> // getenv(...)
 
 #include "soapDelegationSoapBindingProxy.h"
@@ -7,7 +7,6 @@
 #include <ctype.h>
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
-#include "WMProxy.nsmap"
 
 extern "C" {
 #include "gridsite.h" // GRSTx509MakeProxyCert method

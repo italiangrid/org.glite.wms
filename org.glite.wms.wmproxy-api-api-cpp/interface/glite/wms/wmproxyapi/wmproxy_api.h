@@ -45,14 +45,16 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "soapWMProxyProxy.h"
 
 
 namespace glite {
 namespace wms {
 namespace wmproxyapi {
 
-typedef  ns1__JdlType JdlType;
+enum JdlType {
+  ORIGINAL,
+  REGISTERED
+} ;
 
 /**  Base exception wrap */
 struct BaseException {
