@@ -33,6 +33,15 @@ namespace wms{
 	}
 namespace client {
 namespace utilities {
+
+/*
+* Struct for files to be transferred with CURL
+*/
+struct httpfile {
+	char *filename;
+	FILE* stream;
+} ;
+
 class Utils{
 public:
 	/**
@@ -58,6 +67,7 @@ public:
 		JOBID_TYPE,
 		CE_TYPE
 	};
+
 	/**
 	* Prompt the users (if --noint option is not active) a question with Y/N answer
 	* @param question the question to be prompted to the user

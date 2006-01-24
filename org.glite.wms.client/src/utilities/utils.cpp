@@ -523,10 +523,6 @@ std::string Utils::httpErrorMessage(const int &code){
 	};
 	return msg;
 };
-/**
-*	struct for files (CURL)
-*/
-struct httpfile { char *filename; FILE* stream; } ;
 /*
 * Writing callback for curl operations
 */

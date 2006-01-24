@@ -68,14 +68,6 @@ class JobOutput  : public Job {
 		*	@param msg the message to be added
 		*/
 		void createWarnMsg(const std::string &msg ) ;
-  		/**
-		*	struct for files (CURL)
-		*/
-		struct httpfile { char *filename; FILE* stream; } ;
-                /**
-                * 	Writing callback for curl operations
-                */
-                static int storegprBody(void *buffer, size_t size, size_t nmemb, void *stream);
                 /**
                 *	File downloading by globus-url-copy
                 *	@param files list of files to be downloaded and their destination

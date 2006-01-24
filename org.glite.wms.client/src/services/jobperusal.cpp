@@ -620,6 +620,8 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
 					// downloading
 					code = curl_easy_perform(curl);
+					// closes the log file
+					if(log) {fclose(log);}
 					if (code != CURLE_OK ){
 						errors += "- source URI: "+  (*it) + "\n  LOCAL PATH: " +  local + "\n" ;
 						// ERROR !!!
@@ -645,8 +647,6 @@ int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::
 					errors += "Warning - existing file not overwritten: " + local + "\n";
 				}
 			}
-			// closes the log file
-			if(log) {fclose(log);}
 			// cleanup
 			curl_easy_cleanup(curl);
 		}

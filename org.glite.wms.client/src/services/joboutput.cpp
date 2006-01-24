@@ -512,29 +512,17 @@ int JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string>
 	 return res;
 }
 /*
-* writing callback for curl operations
-*/
-int JobOutput::storegprBody(void *buffer, size_t size, size_t nmemb, void *stream) {
-	struct httpfile *out_stream=(struct httpfile*)stream;
-	if(out_stream && !out_stream->stream) {
-		// open stream
-		out_stream->stream=fopen(out_stream->filename, "wb");
-		if(!out_stream->stream) {
-			return -1;
-		}
-   	}
-  	return fwrite(buffer, size, nmemb, out_stream->stream);
- }
-/*
 *	File downloading by CURL
 */
  int JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) {
 	CURL *curl = NULL;
-
 	string source = "" ;
 	string destination = "" ;
 	string file = "" ;
 	CURLcode code;
+	long http_code = 0;
+	string *logpath = NULL;
+	FILE* log =  NULL;
 	int res = -1;
 	char curl_errorstr[CURL_ERROR_SIZE] = "";
 	// user proxy
@@ -554,14 +542,26 @@ int JobOutput::storegprBody(void *buffer, size_t size, size_t nmemb, void *strea
                         //ssl options (no verify)
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-                        // verbose message
-                        if ( wmcOpts->getBoolAttribute(Options::DBG)){
-                                curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-                        }
 			 // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, storegprBody);
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
+
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+			// DEBUG messages in the log file
+			logpath = wmcUtils->getLogFileName( );
+			if (logpath){
+				log = fopen(logpath->c_str(), "a");
+				if (log) {
+					curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+					curl_easy_setopt(curl, CURLOPT_STDERR, log);
+					logInfo->print(WMS_DEBUG, "CURL debug messages printed in the log file:", *logpath);
+				} else {
+					logInfo->print(WMS_WARNING,
+						"couldn't open the log file to print CURL debug messages:",
+						*logpath);
+				}
+			}
                         // files to be downloaded
 			vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
 			vector <pair<std::string , string> >::iterator const end = paths.end( );
@@ -571,34 +571,45 @@ int JobOutput::storegprBody(void *buffer, size_t size, size_t nmemb, void *strea
                                 curl_easy_setopt(curl, CURLOPT_URL, source.c_str());
 				// destination
                                 destination = it->second;
-                                ostringstream info ;
-                                info << "File:\t" << source << "\n";
+				// log message
+				ostringstream info ;
+                                info << "Source:\t" << source << "\n";
                                 info << "Destination:\t" << destination <<"\n";
                                 logInfo->print(WMS_DEBUG, "Ouput File Transferring", info.str());
-                                struct httpfile params={
+				// file struct
+				struct glite::wms::client::utilities::httpfile params={
                                         (char*)destination.c_str() ,
                                         NULL
                                 };
                                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
                                 // downloading
                                code = curl_easy_perform(curl);
-                                if (code != 0){
-					string err = "- "+ string(it->first) + " to " +string(it->second) + " (" ;
+			       // closes the log file
+				if(log) {fclose(log);}
+				if (code != CURLE_OK ){
+					errors += "- source URI: "+  it->first + "\n  LOCAL PATH: " +  destination + "\n" ;
+					// ERROR !!!
+					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code );
+					// error message according to the HTTP status code
+					string err = Utils::httpErrorMessage(http_code);
+					if (err.size()>0){
+						errors += "  reason: " + err + "\n";
+					} else
+					// ... else CURL error message
 					if ( strlen(curl_errorstr)>0 ){
-						err += string(curl_errorstr);
+						errors += "  reason: " + string(curl_errorstr) + "\n";
 					} else {
-						err += "unknown reason";
+						err += "  (unknown reason)\n";
 					}
-					err += ")";
-					logInfo->print(WMS_DEBUG, "File Transferring (curl) - TRANSFER FAILED", err);
-					errors += err +"\n";
-                                } else {
+				} else {
+					// SUCCESS
 					res = 0;
-					logInfo->print(WMS_DEBUG, "File Transferring SUCCESS:", it->second);
+					logInfo->print(WMS_DEBUG, "File Transferring SUCCESS", destination);
 				}
                         }
 			// cleanup
 			curl_easy_cleanup(curl);
+
                 }
  	}
 	return res;
