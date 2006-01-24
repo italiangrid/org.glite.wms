@@ -6,7 +6,7 @@ from wmproxymethods import Wmproxy
 from wmproxymethods import Config
 import socket
 
-Config.DEBUGMODE = 1
+Config.DEBUGMODE = 0
 def title(msg, *args):
 	if Config.DEBUGMODE:
 		print "\n########### DBG Message #################"
@@ -160,7 +160,7 @@ class WmpTest(unittest.TestCase):
 		jobType =[]
 		executable ="/bin/ls"
 		arguments = "/tmp/*"
-		print self.wmproxy.getJobTemplate(jobType, executable, arguments, requirements, rank)
+		title(self.wmproxy.getJobTemplate(jobType, executable, arguments, requirements, rank))
 		assert self.wmproxy.getJobTemplate(jobType, executable, arguments, requirements, rank), "Empty Template!!"
 	def testgetDAGTemplate(self):
 		dependencies={}
@@ -190,16 +190,17 @@ class WmpTest(unittest.TestCase):
 
 	def testDelegatedProxyInfo(self):
 		pi= self.wmproxy.getDelegatedProxyInfo(delegationId)
-		print "DELEGATEDPROXY", pi
+		title("DELEGATEDPROXY", pi)
 		return pi
 	def testJobProxyInfo(self):
 		pi=self.wmproxy.getJobProxyInfo(jobid.getJobId())
-		print "JobProxy:", pi
+		title("JobProxy:", pi)
 		return pi
 	def testGetJDL(self):
-		jdlType=1
-		pi=self.wmproxy.getJDL(jobid,jdlType)
-		print "getJDL:", pi
+		#jdlType= wmproxymethods
+		for  jdlType in [0,1]:
+			pi=self.wmproxy.getJDL(jobid.getJobId(),jdlType)
+			title("getJDL:", pi)
 		return pi
 
 
@@ -234,12 +235,12 @@ def runTextRunner(level=0):
 	getURISuite.addTest( WmpTest("testgetSandboxBulkDestURI"))
 	""" get/put Proxy"""
 	proxySuite = unittest.TestSuite()
-	#proxySuite.addTest( WmpTest("testgetProxyReq"))
+	proxySuite.addTest( WmpTest("testgetProxyReq"))
 	#		proxySuite.addTest( WmpTest("testputProxy"))	 	#"test NOT YET SUPPORTED"
-	#proxySuite.addTest( WmpTest("testgetProxyReqGrst"))
+	proxySuite.addTest( WmpTest("testgetProxyReqGrst"))
 	#		proxySuite.addTest( WmpTest("testputProxyGrst"))  	#"test  NOT YET SUPPORTED"
-	#proxySuite.addTest(WmpTest("testDelegatedProxyInfo"))
-	#proxySuite.addTest(WmpTest("testJobProxyInfo"))
+	proxySuite.addTest(WmpTest("testDelegatedProxyInfo"))
+	proxySuite.addTest(WmpTest("testJobProxyInfo"))
 	proxySuite.addTest(WmpTest("testGetJDL"))
 
 
