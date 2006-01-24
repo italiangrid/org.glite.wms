@@ -6,8 +6,18 @@ from py2man import *
 # General Variables
 VERSION = "1.0.0"
 DEBUG = 0
+
+# Detemrine which documentation to be generated
+GENERATE_MAN=True
+GENERATE_TXT=True
+GENERATE_WKI=False
+
+
+
 MAN_OUTPUT=""
 TXT_OUTPUT="../../org.egee.jra1.deliverables/users-guide/WMPROXY/"
+WKI_OUTPUT=""
+
 options2descriptionFile  = "options_description.txt"
 commands2descriptionFile = "commands_description.txt"
 
@@ -36,34 +46,44 @@ def comment(line, man):
 	""" Generate a comment line """
 	if man==MAN_TAG:
 		return '.\\" ' + line + endl
-	elif man=="TXT_TAG":
+	elif man==TXT_TAG:
 		return "% " + line + endl
+	elif man==WKI_TAG:
+		print "WKITBD comment"
+		return ""
 
 def title(line, man):
 	""" Generate a title """
 	#debug ("writing title: ", line)
 	if man==MAN_TAG:
 		return '.SH ' + line +endl
-	elif man=="TXT_TAG":
+	elif man==TXT_TAG:
 		return endl+'\\medskip'+endl + "\\textbf{"+line+"}" + endl +'\\smallskip' +endl +endl
+	elif man==WKI_TAG:
+		return endl + "!! "+  line + endl
 
 def parseSpecial(line, man):
 	if man==MAN_TAG:
 		return line
-	elif man=="TXT_TAG":
+	elif man==TXT_TAG:
 		# Special latex characters:
 		for sp in ["_","$","#","&"]:
 			line=line.replace(sp,'\\'+sp)
 			#line = line.replace(sp, "-")
 		return line+endl
+	elif man==WKI_TAG:
+		return line
 
 
 def shortOptBis(line,man):
+	"""
+	This line will preceed long option description
+	"""
 	result = ""
 	ln,st,vl = line
 	if man==MAN_TAG:
 		return shortOpt(line, man) + endl + ".IP"
-	elif man=="TXT_TAG":
+	elif man==TXT_TAG:
 		# long option (mandatory)
 		result = '\\textbf{' + "--" + ln +"}"
 		# shortcut (optional)
@@ -73,6 +93,16 @@ def shortOptBis(line,man):
 		if vl:
 			result+= " <" + vl +">"
 		result =parseSpecial(result,man)
+	elif man==WKI_TAG:
+		# long option (mandatory)
+		result = "--"+ "'''" + ln +"'''"
+		# shortcut (optional)
+		if st:
+			result+= ', ' + "-"+ "'''" + st +"'''"
+		# value (optional)
+		if vl:
+			result+= " < ''" + vl+"'' >"
+		result =result +endl
 	return result
 
 
@@ -90,7 +120,7 @@ def shortOpt(line,man):
 		if vl:
 			result+=endl+"<"+vl+">"
 		result +=endl
-	elif man=="TXT_TAG":
+	elif man==TXT_TAG:
 		# long option (mandatory)
 		result = "\t--"+ ln
 		# shortcut (optional)
@@ -100,6 +130,8 @@ def shortOpt(line,man):
 		if vl:
 			result+= " <" + vl+">"
 		result +=endl
+	elif man==WKI_TAG:
+		return "-> " + shortOptBis(line, man)
 	return result
 
 
@@ -182,21 +214,39 @@ class RaskMan:
 		self.commandTags = commandTags
 		self.manFile = MAN_OUTPUT + command + ".1"
 		self.texFile = TXT_OUTPUT + command + ".tex"
-		self.manStream = open(self.manFile,"w")
-		self.texStream = open(self.texFile,"w")
+		self.wkiFile = WKI_OUTPUT + command + ".wki"
+		if GENERATE_MAN:
+			self.manStream = open(self.manFile,"w")
+		if GENERATE_TXT:
+			self.texStream = open(self.texFile,"w")
+		if GENERATE_WKI:
+			self.wkiStream = open(self.wkiFile,"w")
 
 	def write(self, method,arg):
 		"""
 		Parse the argument into all languages
 		and eventually write to the proper stream
 		"""
-		self.manStream.write(method(arg,MAN_TAG))
-		self.texStream.write(method(arg,TXT_TAG))
+		if GENERATE_MAN:
+			self.manStream.write(method(arg,MAN_TAG))
+		if GENERATE_TXT:
+			self.texStream.write(method(arg,TXT_TAG))
+		if GENERATE_WKI:
+			self.wkiStream.write(method(arg,WKI_TAG))
+
 	def writeArg(self,arg):
-		self.manStream.write(arg)
-		self.manStream.write(endl)
-		self.texStream.write(arg)
-		self.texStream.write(endl)
+		# Man pages
+		if GENERATE_MAN:
+			self.manStream.write(arg)
+			self.manStream.write(endl)
+		# TXT pages
+		if GENERATE_TXT:
+			self.texStream.write(arg)
+			self.texStream.write(endl)
+		# WKI pages
+		if GENERATE_WKI:
+			self.wkiStream.write(arg)
+			self.wkiStream.write(endl)
 
 
 	def headerTag (self, line, man):
@@ -206,11 +256,13 @@ class RaskMan:
 			result += ".TH " + self.command.upper() +' "1" '
 			result += '"' + self.command.upper()+'" '
 			result +='"'+line+'"'
-		elif man=="TXT_TAG":
+		elif man==TXT_TAG:
 			#result +="\\documentclass[12pt]{article}"
 			#result +="\\begin{document}"+endl
 			result +="\\subsection{"+self.command +"}"+ endl
 			result +="\\label{"+ self.command +"}"
+		elif man==WKI_TAG:
+			result+= "!! " +self.command + endl
 		return result +endl
 
 	def synopsisTag(self, line, man):
@@ -225,19 +277,23 @@ class RaskMan:
 			line = line.replace("<", "<\\fI")
 			line = line.replace(">", "\\fR>")
 			result +=".B "+self.command + endl + line.strip()
-		elif man=="TXT_TAG":
+		elif man==TXT_TAG:
 			line = line.replace("<", "$<$")
 			line = line.replace(">", "$>$")
 			result +="\\textbf{"+self.command + " " + line.strip().replace("_",'\\'+"_") +"}" +endl
 			result +"\\medskip"+endl
 			result +='{\\begin{verbatim}'
-		result += endl			
+		elif man==WKI_TAG:
+			result +="[+"+self.command +"+]    " + line.strip()
+		result += endl
 		# Common Options
 		if man==MAN_TAG:
-			pass
-		elif man=="TXT_TAG":
-			result +=endl+"options:"
-		result += endl
+			result += endl
+		elif man==TXT_TAG:
+			result +=endl+"options:" +endl
+		elif man==WKI_TAG:
+			result +=endl+"options:" +endl
+		# Common (to all commands) options:
 		for opt in common_options:
 			result+=shortOpt(options2short[opt],man)
 		# Command specific options
@@ -245,8 +301,10 @@ class RaskMan:
 			result+=shortOpt(options2short[opt],man)
 		if man==MAN_TAG:
 			pass
-		elif man=="TXT_TAG":
+		elif man==TXT_TAG:
 			result +='\\end{verbatim}'
+		elif man==WKI_TAG:
+			pass
 		return result +endl
 
 	def optionTag(self,options, man):
@@ -265,8 +323,10 @@ class RaskMan:
 				errors.append(self.command+"->  option not found among options2description: "+opt)
 			if man==MAN_TAG:
 				result+=".PP"+endl
-			elif man=="TXT_TAG":
+			elif man==TXT_TAG:
 				pass
+			elif man==WKI_TAG:
+				result +=endl
 		return result
 
 
@@ -351,14 +411,26 @@ if errors:
 		print err
 else:
 	print "Documentation properly created in the following directories:"
-	print "MAN documtentation(to view man pages: groff -man -Tascii <input file>):"
-	if MAN_OUTPUT:
-		print "\t"+ MAN_OUTPUT
-	else:
-		print "\t"+ "(locally created)"
-	print "TXT documtentation: "
-	if TXT_OUTPUT:
-		print "\t"+ TXT_OUTPUT
-	else:
-		print "\t"+ "(locally created)"
-	print "\n**** DOCUMENTATION PROPERLY CREATED ***"
+	if GENERATE_MAN:
+		print "MAN documtentation(to view man pages: groff -man -Tascii <input file>):"
+		if MAN_OUTPUT:
+			print "\t"+ MAN_OUTPUT
+		else:
+			print "\t"+ "(locally created)"
+
+	if GENERATE_TXT:
+		print "TXT documtentation: "
+		if TXT_OUTPUT:
+			print "\t"+ TXT_OUTPUT
+		else:
+			print "\t"+ "(locally created)"
+
+
+
+	if GENERATE_WKI:
+		print "WKI documtentation: "
+		if WKI_OUTPUT:
+			print "\t"+ WKI_OUTPUT
+		else:
+			print "\t"+ "(locally created)"
+	print "\n**** DOCUMENTATION PROPERLY GENERATED ***"
