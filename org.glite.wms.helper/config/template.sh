@@ -303,7 +303,7 @@ if [ ${__create_subdir} -eq 1 ]; then
         --exit_code=0\
         || echo $GLITE_WMS_SEQUENCE_CODE`
       export GLITE_WMS_SEQUENCE_CODE
-      exit 1
+      doExit 1
     fi
     cd .mpi/${newdir}
   fi
@@ -322,7 +322,7 @@ if [ ! -w . ]; then
   --exit_code=0\
   || echo $GLITE_WMS_SEQUENCE_CODE`
 
-  exit 1
+  doExit 1
 fi
 workdir="`pwd`"
 
@@ -422,8 +422,8 @@ else
   done
 fi
 
-if [ -e "${__job}" ]; then
-  chmod +x "${__job}" 2> /dev/null
+if [ -f "${__job}" ]; then
+  chmod +x "${__job}"
 else
   echo "${__job} not found or unreadable"
   echo "${__job} not found or unreadable" >> "${maradona}"
@@ -441,8 +441,15 @@ else
   doExit 1
 fi
 
-#retval prescript args
-#exit on failure
+#user prescript
+if [ -f "${__prescript}" ]; then
+  chmod +x "${__prescript}"
+  ${__prescript}
+fi
+if [ $? -ne 0]
+  echo "User prescript returned with an error"
+  doExit $?
+fi
 
 if [ ${__job_type} -eq 3 ]; then
   #interactive job
@@ -729,6 +736,11 @@ if [ -n "${PBS_JOBID}" ]; then
   if [ $? != 0 ]; then
   echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
   fi
+fi
+
+#customization point #2
+if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
+  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
 fi
 
 doExit 0
