@@ -1,7 +1,7 @@
 #! /usr/bin/env python2.2
 
 from py2man import *
-
+import sys
 
 # General Variables
 VERSION = "1.0.0"
@@ -30,6 +30,28 @@ TAGS ={"normal":["<<<",">>>"] , "high":["###","###"]}
 MAN_TAG="MAN_TAG"
 TXT_TAG="TXT_TAG"
 WKI_TAG="WKI_TAG"
+
+
+
+def questionYN(question):
+	keep=1
+	question=question+ ' [y/n]n :'
+	while keep:
+		ans=raw_input(question)
+		if (ans=='n')or(ans=='N') or(ans==''):
+			return 0
+			keep=0
+		elif (ans=='y')or(ans=='Y'):
+			return 1
+			keep=0
+
+def errorsAppend(err):
+	debug ("!!ERROR!!",err)
+	errorsAppend(err)
+	if DEBUG:
+		if not questionYN("Do you wish to continue?"):
+			print "bye"
+			sys.exit(0)
 
 
 def debug(*args):
@@ -138,7 +160,7 @@ def shortOpt(line,man):
 
 
 """
-PARSING MEGHODS
+PARSING METHODS
 """
 def getTag(line, TAGS):
 	LEN  = len(TAGS[0])
@@ -147,7 +169,7 @@ def getTag(line, TAGS):
 	return ""
 
 def parseDescriptionFile(fi, tags):
-	debug ("Parsing FILE: ", fi, tags)
+	debug ("parseDescriptionFile FILE: ", fi, tags)
 	infile = open(fi)
 	lines=infile.readlines()
 	infile.close()
@@ -167,8 +189,6 @@ def parseDescriptionLines(lines, tags):
 	name = ""
 	soFar=""
 	for line in lines:
-			#debug ("ARRIVED LINE:" , ln)
-			#for line in ln.split("\n"):
 			if name:
 				#Begin tag already found, look for end
 				tmp = getTag(line.strip(), tags)
@@ -180,7 +200,7 @@ def parseDescriptionLines(lines, tags):
 				elif tmp:
 					error= "Warning tag " + tags[0] + tmp +tags[1]+ \
 					" init but "+tags[0] + name +tags[1] + " not yet finished"
-					errors.append(error)
+					errorsAppend(error)
 					name = tmp
 				else:
 					# Keep description
@@ -203,7 +223,7 @@ commands2description = parseDescriptionFile(commands2descriptionFile, TAGS["high
 debug("OPTIONS KEYS = " , options2description.keys())
 debug("COMMAND KEYS = " , commands2description.keys())
 
-#DEBUG =1
+
 class RaskMan:
 	def __init__(self,command, options, commandTags):
 		""" the name of the command"""
@@ -271,7 +291,7 @@ class RaskMan:
 		Create Synopsis
 		"""
 		result =""
-  		if man==MAN_TAG:
+		if man==MAN_TAG:
 			line = line.replace("[", "[\\fI")
 			line = line.replace("]", "\\fR]")
 			line = line.replace("<", "<\\fI")
@@ -293,12 +313,17 @@ class RaskMan:
 			result +=endl+"options:" +endl
 		elif man==WKI_TAG:
 			result +=endl+"options:" +endl
-		# Common (to all commands) options:
-		for opt in common_options:
-			result+=shortOpt(options2short[opt],man)
-		# Command specific options
-		for opt in self.options:
-			result+=shortOpt(options2short[opt],man)
+
+		try:
+			# Common (to all commands) options:
+			for opt in common_options:
+				result+=shortOpt(options2short[opt],man)
+			# Command specific options
+			for opt in self.options:
+				result+=shortOpt(options2short[opt],man)
+		except KeyError:
+				debug("options2short values:",options2short.keys())
+				errorsAppend(self.command+"->  option not found among options2short: "+opt)
 		if man==MAN_TAG:
 			pass
 		elif man==TXT_TAG:
@@ -308,19 +333,19 @@ class RaskMan:
 		return result +endl
 
 	def optionTag(self,options, man):
-		debug (self.command,"optionTag(..)")
+		debug (self.command,"optionTag(..)", man)
 		result =""
 		for opt in options:
 			""" Parses option 2 short """
 			try:
 				result+=shortOptBis(options2short[opt],man)
 			except KeyError:
-				errors.append(self.command+"->  FATAL ERROR, missing in options2short: "+opt)
+				errorsAppend(self.command+"->  FATAL ERROR, missing in options2short: "+opt)
 			""" Parses option 2 descripiton """
 			try:
 				result+=parseSpecial(options2description[opt]+endl,man)
 			except KeyError:
-				errors.append(self.command+"->  option not found among options2description: "+opt)
+				errorsAppend(self.command+"->  option not found among options2description: "+opt)
 			if man==MAN_TAG:
 				result+=".PP"+endl
 			elif man==TXT_TAG:
@@ -334,8 +359,8 @@ class RaskMan:
 		"""
 		MAIN method: create the desired man pages
 		"""
+		debug (self.command,"create(self)")
 		try:
-			debug (self.command,"create")
 			"""   header  """
 			self.write(comment,COMMENT)
 			self.write(self.headerTag,"GLITE WMS User Command")
@@ -357,20 +382,24 @@ class RaskMan:
 			self.write(self.optionTag,self.options)
 			"""  Environment,Files, Author"""
 			for section in ["ENVIRONMENT", "FILES","AUTHORS","EXAMPLES"]:
-				self.write(title,section)
-				self.write(parseSpecial,self.commandTags[section])
-				del self.commandTags[section]
+				if self.commandTags.has_key(section):
+					self.write(title,section)
+					self.write(parseSpecial,self.commandTags[section])
+					del self.commandTags[section]
+				else:
+					print "\tWARNING! Missing section inside commandTags: ", section
+					debug ("Available commandTags ARE:", commandTags)
 			"""  Other Unkwnown sections..."""
 			for section in commandTags.keys():
 				self.write(title,section)
 				self.write(parseSpecial,self.commandTags[section])
 				del self.commandTags[section]
-				errors.append(self.command+"-> (Warning) appending unknwon section: " + section)
+				errorsAppend(self.command+"-> (Warning) appending unknwon section: " + section)
 		except KeyError:
-			errors.append(self.command+"-> section not found: " + section)
+			errorsAppend(self.command+"-> section not found: " + section)
 		except IOError, err:
-			errors.append(self.command+"-> Unable to write file: ")
-		"""  see also """
+			errorsAppend(self.command+"-> Unable to write file: ")
+		"""  see also TBD """
 		self.end()
 
 	def end(self):
@@ -396,12 +425,12 @@ for command in commands2options.keys():
 			raskman = RaskMan(command,commands2options[command],commandTags)
 			raskman.create()
 		except KeyError:
-			errors.append(command+ "-> Fatal description ERROR for command")
+			errorsAppend(command+ "-> Fatal description ERROR for command")
 	except KeyError:
-		errors.append(command+ "-> Unable to find command inside commands2description")
+		errorsAppend(command+ "-> Unable to find command inside commands2description")
 		pass
 	except IOError, err:
-		errors.append(command+ "-> Unable write file: "+ str(err))
+		errorsAppend(command+ "-> Unable write file: "+ str(err))
 		break
 
 
@@ -409,6 +438,7 @@ if errors:
 	print "ERRORS FOUND:"
 	for err in errors:
 		print err
+	sys.exit(1)		
 else:
 	print "Documentation properly created in the following directories:"
 	if GENERATE_MAN:
