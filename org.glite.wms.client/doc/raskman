@@ -13,10 +13,13 @@ commands2descriptionFile = "commands_description.txt"
 
 
 # Iterate over commands:
-
 errors=[]
 endl= "\n"
 TAGS ={"normal":["<<<",">>>"] , "high":["###","###"]}
+
+MAN_TAG="MAN_TAG"
+TXT_TAG="TXT_TAG"
+WKI_TAG="WKI_TAG"
 
 
 def debug(*args):
@@ -31,23 +34,23 @@ def debug(*args):
 
 def comment(line, man):
 	""" Generate a comment line """
-	if man:
+	if man==MAN_TAG:
 		return '.\\" ' + line + endl
-	else:
+	elif man=="TXT_TAG":
 		return "% " + line + endl
 
 def title(line, man):
 	""" Generate a title """
 	#debug ("writing title: ", line)
-	if man:
+	if man==MAN_TAG:
 		return '.SH ' + line +endl
-	else:
+	elif man=="TXT_TAG":
 		return endl+'\\medskip'+endl + "\\textbf{"+line+"}" + endl +'\\smallskip' +endl +endl
 
 def parseSpecial(line, man):
-	if man:
+	if man==MAN_TAG:
 		return line
-	else:
+	elif man=="TXT_TAG":
 		# Special latex characters:
 		for sp in ["_","$","#","&"]:
 			line=line.replace(sp,'\\'+sp)
@@ -58,9 +61,9 @@ def parseSpecial(line, man):
 def shortOptBis(line,man):
 	result = ""
 	ln,st,vl = line
-	if man:
+	if man==MAN_TAG:
 		return shortOpt(line, man) + endl + ".IP"
-	else:
+	elif man=="TXT_TAG":
 		# long option (mandatory)
 		result = '\\textbf{' + "--" + ln +"}"
 		# shortcut (optional)
@@ -76,7 +79,7 @@ def shortOptBis(line,man):
 def shortOpt(line,man):
 	result = ""
 	ln,st,vl = line
-	if man:
+	if man==MAN_TAG:
 		result+='.HP'+ endl
 		# long option (mandatory)
 		result+='\\fB' +"--" +ln +'\\fR'
@@ -87,7 +90,7 @@ def shortOpt(line,man):
 		if vl:
 			result+=endl+"<"+vl+">"
 		result +=endl
-	else:
+	elif man=="TXT_TAG":
 		# long option (mandatory)
 		result = "\t--"+ ln
 		# shortcut (optional)
@@ -183,8 +186,12 @@ class RaskMan:
 		self.texStream = open(self.texFile,"w")
 
 	def write(self, method,arg):
-		self.manStream.write(method(arg,True))
-		self.texStream.write(method(arg,False))
+		"""
+		Parse the argument into all languages
+		and eventually write to the proper stream
+		"""
+		self.manStream.write(method(arg,MAN_TAG))
+		self.texStream.write(method(arg,TXT_TAG))
 	def writeArg(self,arg):
 		self.manStream.write(arg)
 		self.manStream.write(endl)
@@ -195,11 +202,11 @@ class RaskMan:
 	def headerTag (self, line, man):
 		debug (self.command,"headerTag(..)")
 		result=""
-		if man:
+		if man==MAN_TAG:
 			result += ".TH " + self.command.upper() +' "1" '
 			result += '"' + self.command.upper()+'" '
 			result +='"'+line+'"'
-		else:
+		elif man=="TXT_TAG":
 			#result +="\\documentclass[12pt]{article}"
 			#result +="\\begin{document}"+endl
 			result +="\\subsection{"+self.command +"}"+ endl
@@ -212,13 +219,13 @@ class RaskMan:
 		Create Synopsis
 		"""
 		result =""
-  		if man:
+  		if man==MAN_TAG:
 			line = line.replace("[", "[\\fI")
 			line = line.replace("]", "\\fR]")
 			line = line.replace("<", "<\\fI")
 			line = line.replace(">", "\\fR>")
 			result +=".B "+self.command + endl + line.strip()
-		else:
+		elif man=="TXT_TAG":
 			line = line.replace("<", "$<$")
 			line = line.replace(">", "$>$")
 			result +="\\textbf{"+self.command + " " + line.strip().replace("_",'\\'+"_") +"}" +endl
@@ -226,7 +233,9 @@ class RaskMan:
 			result +='{\\begin{verbatim}'
 		result += endl			
 		# Common Options
-		if not man:
+		if man==MAN_TAG:
+			pass
+		elif man=="TXT_TAG":
 			result +=endl+"options:"
 		result += endl
 		for opt in common_options:
@@ -234,7 +243,9 @@ class RaskMan:
 		# Command specific options
 		for opt in self.options:
 			result+=shortOpt(options2short[opt],man)
-		if not man:
+		if man==MAN_TAG:
+			pass
+		elif man=="TXT_TAG":
 			result +='\\end{verbatim}'
 		return result +endl
 
@@ -252,8 +263,10 @@ class RaskMan:
 				result+=parseSpecial(options2description[opt]+endl,man)
 			except KeyError:
 				errors.append(self.command+"->  option not found among options2description: "+opt)
-			if man:
+			if man==MAN_TAG:
 				result+=".PP"+endl
+			elif man=="TXT_TAG":
+				pass
 		return result
 
 
@@ -295,6 +308,8 @@ class RaskMan:
 				errors.append(self.command+"-> (Warning) appending unknwon section: " + section)
 		except KeyError:
 			errors.append(self.command+"-> section not found: " + section)
+		except IOError, err:
+			errors.append(self.command+"-> Unable to write file: ")
 		"""  see also """
 		self.end()
 
@@ -325,6 +340,10 @@ for command in commands2options.keys():
 	except KeyError:
 		errors.append(command+ "-> Unable to find command inside commands2description")
 		pass
+	except IOError, err:
+		errors.append(command+ "-> Unable write file: "+ str(err))
+		break
+
 
 if errors:
 	print "ERRORS FOUND:"
