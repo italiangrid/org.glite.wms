@@ -733,6 +733,7 @@ try {
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
   if(b_osb_dest_uri) {
+    jw->set_osb_wildcards_support(false);
     jw->set_output_sandbox_base_dest_uri(url::URL(""));
   } else {
     // the support for wildcards is deducted by the absence of this attribute
