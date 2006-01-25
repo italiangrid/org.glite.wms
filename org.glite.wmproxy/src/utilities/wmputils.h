@@ -108,7 +108,7 @@ std::vector<std::string> * getDestURIsVector(std::vector<std::pair<std::string,
 	int> > protocols, int httpsport, const std::string &jid, bool addhttps = true);
 
 std::vector<std::string> getJobDirectoryURIsVector(
-	std::vector<std::pair<std::string, int> > &protocols,
+	std::vector<std::pair<std::string, int> > protocols,
 	const std::string &defaultprotocol, int defaultport, int httpsport, 
 	const std::string &jid, const std::string &protocol = "",
 	const std::string &extradir = "");

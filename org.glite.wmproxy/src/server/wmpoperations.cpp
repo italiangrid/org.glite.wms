@@ -151,6 +151,9 @@ const std::string FLAG_FILE_UNZIP = ".unzipok";
 const std::string FLAG_FILE_REGISTER_SUBJOBS = ".registersubjobsok";
 const std::string FLAG_FILE_LOG_CHECKPOINTABLE = ".logcheckpointableok";
 
+const std::string ALL_PROTOCOLS = "all";
+const std::string DEFAULT_PROTOCOL = "default";
+
 using namespace std;
 using namespace glite::lb; // JobStatus
 using namespace glite::wms::wmproxy::server;  //Exception codes

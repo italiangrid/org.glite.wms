@@ -486,7 +486,7 @@ ns1__getOutputFileList(struct soap *soap, string job_id, string protocol = "",
 	ns1__StringAndLongType *item = NULL;
 
 	try {
-		getOutputFileList(getOutputFileList_response, job_id);
+		getOutputFileList(getOutputFileList_response, job_id, protocol);
 		
 		if (getOutputFileList_response.OutputFileAndSizeList->file) {
 			for (unsigned int i = 0; i < getOutputFileList_response

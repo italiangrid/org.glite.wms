@@ -157,7 +157,7 @@ computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 }
 
 vector<string>
-getJobDirectoryURIsVector(vector<pair<std::string, int> > &protocols,
+getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	const string &defaultprotocol, int defaultport, int httpsport,
 	const string &jid, const string &protocol, const string &extradir)
 {
@@ -178,16 +178,12 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > &protocols,
 	if (protocol == ALL_PROTOCOLS) {
 		returnprotocols = protocols;
 	} else if (protocol == DEFAULT_PROTOCOL) {
-		pair<string, int> itempair;
-		itempair.first = defaultprotocol;
-		itempair.second = defaultport;
+		pair<string, int> itempair(defaultprotocol, defaultport);
 		returnprotocols.push_back(itempair);
 	} else {
 		// if (check if the protocol is supported)
 		// if protocol in protocols!
-		pair<string, int> itempair;
-		itempair.first = protocol;
-		itempair.second = 0;
+		pair<string, int> itempair(protocol, 0);
 		returnprotocols.push_back(itempair);
 	}
 	
