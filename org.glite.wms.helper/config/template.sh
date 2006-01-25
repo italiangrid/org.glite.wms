@@ -467,13 +467,12 @@ else
 fi
 
 #user prescript
-if [ -f "${workdir}/pre_script.sh" ]; then
-  chmod +x "${workdir}/pre_script.sh"
-  "${workdir}/pre_script.sh"
-fi
-if [ $? -ne 0]
-  echo "User prescript returned with an error"
-  doExit $?
+if [ -x "${workdir}/pre_script.sh" ]; then
+  ${workdir}/pre_script.sh
+  if [ $? -ne 0]
+    echo "User prescript returned with an error"
+    doExit $?
+  fi
 fi
 
 if [ ${__job_type} -eq 3 ]; then
@@ -637,15 +636,15 @@ if [ ${__output_data} -eq 1 ]; then
         if [ -z "${__output_lfn}" -a -z "${__output_se}"] ; then
 	       local=`doReplicaFile $outputfile`
         elif [ -n "${__output_lfn}" -a -z "${__output_se}"] ; then
-	       local=`doReplicaFilewithLFN $outputfile ${__output_lfn[local_cnt]}`
+	       local=`doReplicaFilewithLFN $outputfile ${__output_lfn[$local_cnt]}`
         elif [ -z "${__output_lfn}" -a -n "${__output_se}"] ; then
-          local=`doReplicaFilewithSE $outputfile ${__output_se[local_cnt]}`
+          local=`doReplicaFilewithSE $outputfile ${__output_se[$local_cnt]}`
         else
-	       local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[local_cnt]} ${__output_se[local_cnt]}`
+	       local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]}`
         fi
         status=$?
       fi
-      local_cnt=`expr $local_cnt+1`
+      local_cnt=`expr $local_cnt + 1`
     done
     local=`doDSUpload`
     status=$?
@@ -670,6 +669,7 @@ do
       fi
 
       if [ ${__max_osb_size} -ge 0 ]; then
+        #todo
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
           file_size_acc=`expr $file_size_acc + $file_size`
@@ -683,7 +683,7 @@ do
           remaining_space=`expr $__max_osb_size - $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`
           trunc "file://${workdir}/${f}" $trunc_len
-          if [ $? !=0 ]; then
+          if [ $? != 0 ]; then
             echo "Could not truncate output sandbox file ${f}"
           else
             globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.trunc"
@@ -709,41 +709,49 @@ do
       fi
     fi
   else #WMP support
+    file=`basename $f`
+    s="file://${workdir}/${__wmp_output_file[$current_file]}"
     if [ ${__osb_wildcards_support} -eq 0 ]; then
-      if [ ${__max_osb_size} -ge 0 ]; then
-        #if hostname=wms
-          file_size=`stat -t $f | awk '{print $2}'`
-          file_size_acc=`expr $file_size_acc + $file_size`
-        #fi
+      d=${f}
+    else
+      d=${__output_sandbox_base_dest_uri}/${file}
+    fi
+    if [ ${__max_osb_size} -ge 0 ]; then
+      #todo
+      #if hostname=wms
+        file_size=`stat -t $f | awk '{print $2}'`
+        file_size_acc=`expr $file_size_acc + $file_size`
+      #fi
+      if [ $file_size_acc -le ${__max_osb_size} ]; then
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
+          globus-url-copy $s $d
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
+          htcp $s $d
         fi
-      else #unlimited osb
-        if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
-        elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
+      else
+        echo "OSB quota exceeded for $s, truncating needed"
+        remaining_files=`expr $total_files - $current_file + 2` #current_file is zero-based 
+                                                         # + 1 for the difference (i.e. 20-19=2 more files)
+        remaining_space=`expr $__max_osb_size - $file_size_acc`
+        trunc_len=`expr $remaining_space / $remaining_files`
+        trunc "file://${workdir}/${f}" $trunc_len
+        if [ $? != 0 ]; then
+          echo "Could not truncate output sandbox file ${f}"
+        else
+          if [ "${f:0:9}" == "gsiftp://" ]; then
+            globus-url-copy $s "$d.trunc"
+          elif [ "${f:0:8}" == "https://" ]; then
+            htcp $s "$d.trunc"
+          fi
         fi
       fi
-    else #wildcard support
-      file=`basename $f`
-      if [ ${__max_osb_size} -ge 0 ]; then
-        #TODO:limit transfer on max output sandbox size exceeded
-        if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}"
-        elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}" 
-        fi
-      else #unlimited osb
-        if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}"
-        elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}"
-        fi
+    else #unlimited osb
+      if [ "${f:0:9}" == "gsiftp://" ]; then
+        globus-url-copy $s $d
+      elif [ "${f:0:8}" == "https://" ]; then
+        htcp $s $d
       fi
-    fi 
+    fi
     if [ $? != 0 ]; then
       echo "Cannot upload ${file} into ${f}"
       echo "Cannot upload ${file} into ${f}" >> "${maradona}"
@@ -759,8 +767,8 @@ do
         || echo $GLITE_WMS_SEQUENCE_CODE`
       doExit 1
     fi
-  current_file=`expr $current_file + 1`
   fi
+  current_file=`expr $current_file + 1`
 done
 
 export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
