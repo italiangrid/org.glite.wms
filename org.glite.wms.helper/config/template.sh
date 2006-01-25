@@ -7,15 +7,15 @@ globus_url_retry_copy()
   sleep_time=0
   while [ $count -le ${__file_tx_retry_count} -a $succeded -eq 0 ];
   do
-    $time_left=`grid-proxy-info -timeleft 2> /dev/null` || 0;
+    time_left=`grid-proxy-info -timeleft 2> /dev/null` || 0;
     if [ $time_left -lt $sleep_time ]; then
       return 1
     fi
     sleep "$sleep_time"
-    if [ $sleep_time -eq 0]; then
+    if [ $sleep_time -eq 0 ]; then
       sleep_time=300
     else
-      sleep_time=`expr $sleep_time*2`
+      sleep_time=`expr $sleep_time \* 2`
     fi
     globus-url-copy $1 $2
     succeded=$?
