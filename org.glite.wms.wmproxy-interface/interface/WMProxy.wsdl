@@ -232,12 +232,14 @@
 	</wsdl:message>
 	<wsdl:message name="getSandboxDestURIRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
+		<wsdl:part name="protocol" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxDestURIResponse">
 		<wsdl:part name="path" type="glitenstypes:StringList"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxBulkDestURIRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
+		<wsdl:part name="protocol" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getSandboxBulkDestURIResponse">
 		<wsdl:part name="DestURIsStructType" type="glitenstypes:DestURIsStructType"/>
@@ -261,6 +263,7 @@
 	</wsdl:message>
 	<wsdl:message name="getOutputFileListRequest">
 		<wsdl:part name="jobId" type="xsd:string"/>
+		<wsdl:part name="protocol" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getOutputFileListResponse">
 		<wsdl:part name="OutputFileAndSizeList" type="glitenstypes:StringAndLongList"/>
@@ -382,6 +385,7 @@
 		<wsdl:part name="jobId" type="xsd:string"/>
 		<wsdl:part name="file" type="xsd:string"/>
 		<wsdl:part name="allChunks" type="xsd:boolean"/>
+		<wsdl:part name="protocol" type="xsd:string"/>
 	</wsdl:message>
 	<wsdl:message name="getPerusalFilesResponse">
 		<wsdl:part name="fileList" type="glitenstypes:StringList"/>
@@ -628,7 +632,7 @@
 			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="getSandboxDestURI" parameterOrder="jobId">
+		<wsdl:operation name="getSandboxDestURI" parameterOrder="jobId protocol">
 			<wsdl:documentation>
 					This operation returns a destination URI associated to the job, identified by the jobId provided as input, where the job input sandbox files can be uploaded by the client on the WMS node.
 					The location is created in the storage managed by the WM and the corresponding URI is returned to the operation caller if no problems has been arised during creation.
@@ -641,13 +645,18 @@
 					those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP servers without transiting on the WMS machine.
 					
 					Input: string containing the JobId.
+					Input: string containing the protocol to use in the returned URIs.
+					       Server available protocols are those returned by getAvailableProtocols operation.
+					       Possible standard values are:
+					       - "all" to get URIs with all available protocols
+					       - "default" to get URIs with the server default protocol
 					
 					Output: a vector containing the string representation of the Destination URI in all the available protocols
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
 					AuthorizationFault: 			client is not authorized to perform this operation.
-					InvalidArgumentFault: 	the provided job Id  is not valid.
+					InvalidArgumentFault: 	the provided job Id is not valid or the provided protocol is not available.
 					GenericFault: 					another problem occured. 
 					JobUnknownFault:			the provided job has not been registered to the system.
 					OperationNotAllowedFault: current job status does not allow requested operation.
@@ -662,7 +671,7 @@
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="getSandboxBulkDestURI" parameterOrder="jobId">
+		<wsdl:operation name="getSandboxBulkDestURI" parameterOrder="jobId protocol">
 			<wsdl:documentation>
 					This operation returns the list of destination URIs associated to a compound job (i.e. a DAG a Collection or a parametric jobs) and all of its sub-jobs in a vector of structures each one containing:
 					- the job id
@@ -680,13 +689,18 @@
 					those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP/HTTPS servers without transiting on the WMS machine.
 					
 					Input: string containing the JobId.
+					Input: string containing the protocol to use in the returned URIs.
+					       Server available protocols are those returned by getAvailableProtocols operation.
+					       Possible standard values are:
+					       - "all" to get URIs with all available protocols
+					       - "default" to get URIs with the server default protocol
 					
 					Output: a structure containing the JobIds provided as input and the string representation of the Destination URI in all the available protocols
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
 					AuthorizationFault: 			client is not authorized to perform this operation.
-					InvalidArgumentFault: 	the provided job Id  is not valid.
+					InvalidArgumentFault: 	the provided job Id  is not valid or the provided protocol is not available.
 					GenericFault: 					another problem occured. 
 					JobUnknownFault:			the provided job has not been registered to the system.
 					OperationNotAllowedFault: current job status does not allow requested operation.
@@ -775,12 +789,17 @@
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="getOutputFileList" parameterOrder="jobId">
+		<wsdl:operation name="getOutputFileList" parameterOrder="jobId protocol">
 			<wsdl:documentation>
 					This operation returns the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
 					This only applies for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
 					
 					Input: string containing the JobId.
+					Input: string containing the protocol to use in the returned URIs.
+					       Server available protocols are those returned by getAvailableProtocols operation.
+					       Possible standard values are:
+					       - "all" to get URIs with all available protocols
+					       - "default" to get URIs with the server default protocol
 					
 					Output: List of objects containing the file URI and the corresponding size in bytes.
 					
@@ -1120,7 +1139,7 @@
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
-		<wsdl:operation name="getPerusalFiles" parameterOrder="jobId file allChunks">
+		<wsdl:operation name="getPerusalFiles" parameterOrder="jobId file allChunks protocol">
 			<wsdl:documentation>
 					This operation gets the URIs of perusal files generated during job execution for the specified file file.
 					If allChunks is set to true all perusal URIs will be returned; also the URIs already requested with a
@@ -1129,6 +1148,11 @@
 					Input: string containing the JobId.
 					Input: the name of the file to get.
 					Input: boolean value to specify when to get all chuncks
+					Input: string containing the protocol to use in the returned URIs.
+					       Server available protocols are those returned by getAvailableProtocols operation.
+					       Possible standard values are:
+					       - "all" to get URIs with all available protocols
+					       - "default" to get URIs with the server default protocol
 					
 					Output: a list of strings representing the URIs of the files
 					
