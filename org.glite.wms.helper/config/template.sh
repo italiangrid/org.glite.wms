@@ -403,9 +403,9 @@ done
 
 umask 022
 
-if [ ${__wmp_support} -eq 0 ]; then
-  for f in ${__input_file[@]}
-  do
+for f in ${__input_file[@]}
+do
+  if [ ${__wmp_support} -eq 0 ]; then
     globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
     if [ $? != 0 ]; then
       echo "Cannot download ${f} from ${__input_base_url}"
@@ -422,11 +422,7 @@ if [ ${__wmp_support} -eq 0 ]; then
        || echo $GLITE_WMS_SEQUENCE_CODE`
       doExit 1
     fi
-  done
-else
-  #WMP support
-  for f in ${__wmp_input_base_file[@]}
-  do
+  else #WMP support
     file=`basename $f`
     if [ "${f:0:9}" == "gsiftp://" ]; then
       globus-url-copy "${f}" "file://${workdir}/${file}"
@@ -448,8 +444,8 @@ else
        || echo $GLITE_WMS_SEQUENCE_CODE`
       doExit 1
     fi
-  done
-fi
+  fi
+done
 
 if [ -f "${__job}" ]; then
   chmod +x "${__job}"
@@ -659,11 +655,12 @@ fi
 echo "job exit status = ${status}"
 echo "job exit status = ${status}" >> "${maradona}"
 
-error=0
-if [ ${__wmp_support} -eq 0 ]; then
-  file_size_acc=0
-  for f in ${__output_file[@]} 
-  do
+file_size_acc=0
+total_files=${#__output_file[@]}
+current_file=0
+for f in ${__output_file[@]} 
+do
+  if [ ${__wmp_support} -eq 0 ]; then
     if [ -r "${f}" ]; then
       output=`dirname $f`
       if [ "x${output}" = "x." ]; then
@@ -673,12 +670,24 @@ if [ ${__wmp_support} -eq 0 ]; then
       fi
 
       if [ ${__max_osb_size} -ge 0 ]; then
-        file_size=`stat -t $f | awk '{print $2}'`
-        file_size_acc=`expr $file_size_acc + $file_size`
+        #if hostname=wms
+          file_size=`stat -t $f | awk '{print $2}'`
+          file_size_acc=`expr $file_size_acc + $file_size`
+        #fi
         if [ $file_size_acc -le ${__max_osb_size} ]; then
           globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
         else
-          echo "OSB quota exceeded for file://${workdir}/${f}"
+          echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
+          remaining_files=`expr $total_files - $current_file + 2` #current_file is zero-based 
+                                                           # + 1 for the difference (i.e. 20-19=2 more files)
+          remaining_space=`expr $__max_osb_size - $file_size_acc`
+          trunc_len=`expr $remaining_space / $remaining_files`
+          trunc "file://${workdir}/${f}" $trunc_len
+          if [ $? !=0 ]; then
+            echo "Could not truncate output sandbox file ${f}"
+          else
+            globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.trunc"
+          fi
         fi
       else
         globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
@@ -699,25 +708,23 @@ if [ ${__wmp_support} -eq 0 ]; then
         doExit 1
       fi
     fi
-  done
-else
-  #WMP support
-  i=0
-  for f in ${__wmp_output_dest_file[@]} 
-  do
+  else #WMP support
     if [ ${__osb_wildcards_support} -eq 0 ]; then
       if [ ${__max_osb_size} -ge 0 ]; then
-        #TODO:limit transfer on max output sandbox size exceeded
+        #if hostname=wms
+          file_size=`stat -t $f | awk '{print $2}'`
+          file_size_acc=`expr $file_size_acc + $file_size`
+        #fi
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
         fi
       else #unlimited osb
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[i]}" "${f}"
+          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${f}"
         fi
       fi
     else #wildcard support
@@ -725,15 +732,15 @@ else
       if [ ${__max_osb_size} -ge 0 ]; then
         #TODO:limit transfer on max output sandbox size exceeded
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}"
+          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}"
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}" 
+          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}" 
         fi
       else #unlimited osb
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}"
+          globus-url-copy "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}"
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://${workdir}/${__wmp_output_file[i]}" "${__output_sandbox_base_dest_uri}/${file}"
+          htcp "file://${workdir}/${__wmp_output_file[$current_file]}" "${__output_sandbox_base_dest_uri}/${file}"
         fi
       fi
     fi 
@@ -752,9 +759,9 @@ else
         || echo $GLITE_WMS_SEQUENCE_CODE`
       doExit 1
     fi
-  i=`expr $i + 1`
-  done
-fi
+  current_file=`expr $current_file + 1`
+  fi
+done
 
 export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
  --jobid="$GLITE_WMS_JOBID"\
