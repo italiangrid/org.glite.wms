@@ -1,5 +1,22 @@
 #!/bin/sh
 
+trunc()
+{
+  perl -e '
+    my $file = "'$1'";
+    my $len = "'$2'";
+    my $trunc_ok=0;
+    if (open(F,">> ".$file)) {
+      $trunc_ok=1 if (truncate(F, $len));
+      close(F);
+    }
+    if ($trunc_ok) {
+      exit(0)
+    } else {
+      exit(1)
+    }'
+}
+
 globus_url_retry_copy()
 {
   count=0
