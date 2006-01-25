@@ -52,6 +52,8 @@ class VOMSAuthZ {
 		ProxyInfoStructType * getProxyInfo();
 		
 		static time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
+		
+		static const long convASN1Date(const std::string &date);
 
 	private:
 	

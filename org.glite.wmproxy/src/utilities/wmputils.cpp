@@ -97,6 +97,9 @@ const std::string JDL_ORIGINAL_FILE_NAME = "JDLOriginal";
 const std::string JDL_TO_START_FILE_NAME = "JDLToStart";
 const std::string START_LOCK_FILE_NAME = ".startLockFile";
 
+const std::string ALL_PROTOCOLS = "all";
+const std::string DEFAULT_PROTOCOL = "default";
+
 
 vector<string>
 computeOutputSBDestURIBase(vector<string> outputsb, const string &baseuri)
@@ -153,9 +156,74 @@ computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 	GLITE_STACK_CATCH();
 }
 
+vector<string>
+getJobDirectoryURIsVector(vector<pair<std::string, int> > &protocols,
+	const string &defaultprotocol, int defaultport, int httpsport,
+	const string &jid, const string &protocol, const string &extradir)
+{
+	GLITE_STACK_TRY("getJobDirectoryURIsVector()");
+	edglog_fn("wmpoperations::getJobDirectoryURIsVector");
+	
+	edglog(debug)<<"Computing job directory URIs for job: "<<jid<<endl;
+	
+	// Protocol + host:port + path
+	string extra = (extradir != "") ? (FILE_SEP + extradir) : "";
+	string httppath = FILE_SEP + to_filename(jobid::JobId(jid), 0) + extra;
+	string path = getenv(DOCUMENT_ROOT) + httppath;
+	string serverhost = getServerHost();
+	
+	vector<string> returnvector;
+	
+	vector<pair<std::string, int> > returnprotocols;
+	if (protocol == ALL_PROTOCOLS) {
+		returnprotocols = protocols;
+	} else if (protocol == DEFAULT_PROTOCOL) {
+		pair<string, int> itempair;
+		itempair.first = defaultprotocol;
+		itempair.second = defaultport;
+		returnprotocols.push_back(itempair);
+	} else {
+		// if (check if the protocol is supported)
+		// if protocol in protocols!
+		pair<string, int> itempair;
+		itempair.first = protocol;
+		itempair.second = 0;
+		returnprotocols.push_back(itempair);
+	}
+	
+	string item;
+	unsigned int size = returnprotocols.size();
+	for (unsigned int i = 0; i < size; i++) {
+		item = returnprotocols[i].first
+			+ "://" + serverhost
+			+ ((returnprotocols[i].second == 0) 
+				? "" 
+				: (":" + boost::lexical_cast<std::string>
+					(returnprotocols[i].second)))
+			+ path;
+		edglog(debug)<<"Job directory URI: "<<item<<endl;
+		returnvector.push_back(item);
+	}
+	
+	// Adding https protocol
+	if ((protocol == ALL_PROTOCOLS) || (protocol == "https")) {
+		if (httpsport) {
+			item = "https://" + string(getenv("SERVER_ADDR")) + ":"
+				+ boost::lexical_cast<std::string>(httpsport) + httppath;
+		} else {
+			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
+		}
+		edglog(debug)<<"Job directory URI: "<<item<<endl;
+		returnvector.push_back(item);
+	}
+	
+	return returnvector;
+	GLITE_STACK_CATCH();
+}
+
 vector<string> *
 getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
-	const string &jid)
+	const string &jid, bool addhttps)
 {
 	GLITE_STACK_TRY("getDestURIsVector()");
 	edglog_fn("wmpoperations::getDestURIsVector");
@@ -182,11 +250,13 @@ getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
 		returnvector->push_back(item);
 	}
 	// Adding https protocol
-	if (httpsport != 0) {
-		item = "https://" + string(getenv("SERVER_ADDR")) + ":"
-			+ boost::lexical_cast<std::string>(httpsport) + httppath;
-	} else {
-		item = "https://" + string(getenv("HTTP_HOST")) + httppath;
+	if (addhttps) {
+		if (httpsport != 0) {
+			item = "https://" + string(getenv("SERVER_ADDR")) + ":"
+				+ boost::lexical_cast<std::string>(httpsport) + httppath;
+		} else {
+			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
+		}
 	}
 	edglog(debug)<<"Destination URI: "<<item<<endl;
 	returnvector->push_back(item);

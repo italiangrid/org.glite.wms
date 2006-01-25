@@ -288,8 +288,9 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 }
 
 int
-ns1__getSandboxDestURI(struct soap *soap, string job_id,
-	struct ns1__getSandboxDestURIResponse &response)
+ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol = "all",
+	struct ns1__getSandboxDestURIResponse &response 
+	= *(new ns1__getSandboxDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxDestURI(struct soap *soap, string job_id, "
 		"struct ns1__getSandboxDestURIResponse &response)");
@@ -303,7 +304,7 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id,
 	response._path = new ns1__StringList();
 	response._path->Item = *(new vector<string>(0));
 	try {
-		getSandboxDestURI(getSandboxDestURI_response, job_id);
+		getSandboxDestURI(getSandboxDestURI_response, job_id, protocol);
 		for (unsigned int i = 0; 
 				i < getSandboxDestURI_response.path->Item->size(); i++) {
 			response._path->Item.push_back(
@@ -327,7 +328,8 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id,
 
 int
 ns1__getSandboxBulkDestURI(struct soap *soap, string job_id,
-	ns1__getSandboxBulkDestURIResponse &response)
+	string protocol = "all", struct ns1__getSandboxBulkDestURIResponse &response 
+	= *(new ns1__getSandboxBulkDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxBulkDestURI(struct soap *soap, "
 		"string job_ids, ns1__getSandboxBulkDestURIResponse &response)");
@@ -339,7 +341,7 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id,
 	getSandboxBulkDestURIResponse getSandboxBulkDestURI_response;
 	
 	try {
-		getSandboxBulkDestURI(getSandboxBulkDestURI_response, job_id);
+		getSandboxBulkDestURI(getSandboxBulkDestURI_response, job_id, protocol);
 			
 		vector<ns1__DestURIStructType*> *uris = 
 			new vector<ns1__DestURIStructType*>(0);
@@ -466,8 +468,9 @@ ns1__jobPurge(struct soap *soap, string job_id,
 }
 
 int 
-ns1__getOutputFileList(struct soap *soap, string job_id,
-	struct ns1__getOutputFileListResponse &response)
+ns1__getOutputFileList(struct soap *soap, string job_id, string protocol = "",
+	struct ns1__getOutputFileListResponse &response 
+	= *(new ns1__getOutputFileListResponse()))
 {
 	GLITE_STACK_TRY("ns1__getOutputFileList(struct soap *soap, string *job_id, "
 		"struct ns1__getOutputFileListResponse &response)");
@@ -1079,8 +1082,9 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 }
 
 int
-ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunks,
-	struct ns1__getPerusalFilesResponse &response)
+ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunks
+	= false, string protocol = "", struct ns1__getPerusalFilesResponse &response
+	= *(new ns1__getPerusalFilesResponse()))
 {
 	GLITE_STACK_TRY("ns1__getPerusalFiles(struct soap *soap, string jobId, "
 		"string file, bool allChunks, struct ns1__getPerusalFilesResponse "
@@ -1096,7 +1100,7 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunk
 	getPerusalFilesResponse getPerusalFiles_response;
 	try  {
 		vector<string> returnvector = getPerusalFiles(getPerusalFiles_response,
-			jobId, file, allChunks);
+			jobId, file, allChunks, protocol);
 		for (unsigned int i = 0; i < returnvector.size(); i++) {
 			list->Item.push_back(returnvector[i]);
 		}

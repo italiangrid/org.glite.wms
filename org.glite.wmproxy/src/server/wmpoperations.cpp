@@ -2336,7 +2336,7 @@ getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 
 void
 getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
-	const string &jid)
+	const string &jid, const string &protocol)
 {
 	GLITE_STACK_TRY("getSandboxDestURI()");
 	edglog_fn("wmpoperations::getSandboxDestURI");
@@ -2367,12 +2367,28 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	getSandboxDestURI_response.path = new StringList;
 	getSandboxDestURI_response.path->Item = new vector<string>(0);
 	
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	//vector<pair<std::string, int> > protocols = conf.getProtocols();
-	//int httpsport = conf.getHTTPSPort();
-	
-	vector<string> *uris = wmputilities::getDestURIsVector(conf.getProtocols(),
-		conf.getHTTPSPort(), jid);
+	vector<string> *uris = NULL;
+	if (protocol == ALL_PROTOCOLS) {
+		uris = wmputilities::getDestURIsVector(conf.getProtocols(),
+			conf.getHTTPSPort(), jid);
+	} else if (protocol == DEFAULT_PROTOCOL) {
+		vector<pair<string, int> > protocols;
+		pair<string, int> itempair;
+		itempair.first = conf.getDefaultProtocol();
+		itempair.second = conf.getDefaultPort();
+		protocols.push_back(itempair);
+		uris = wmputilities::getDestURIsVector(protocols,
+			conf.getHTTPSPort(), jid, false);
+	} else {
+		// if (check if the protocol is supported)
+		vector<pair<string, int> > protocols;
+		pair<string, int> itempair;
+		itempair.first = protocol;
+		itempair.second = 0;
+		protocols.push_back(itempair);
+		uris = wmputilities::getDestURIsVector(protocols,
+			conf.getHTTPSPort(), jid, false);
+	}
 	getSandboxDestURI_response.path->Item = uris;
 	
 	GLITE_STACK_CATCH();
@@ -2380,7 +2396,7 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 
 void
 getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_response,
-	const string &jid)
+	const string &jid, const string &protocol)
 {
 	GLITE_STACK_TRY("getSandboxBulkDestURI()");
 	edglog_fn("wmpoperations::getSandboxBulkDestURI");
@@ -2442,10 +2458,32 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 
 	vector<string>::iterator iter = jids.begin();
 	vector<string>::iterator const end = jids.end();
-	for (; iter != end; ++iter) { 	
-		vector<string> *uris =
+	for (; iter != end; ++iter) {
+		vector<string> *uris = NULL;
+		if (protocol == ALL_PROTOCOLS) {
+			uris = wmputilities::getDestURIsVector(conf.getProtocols(),
+				conf.getHTTPSPort(), jid);
+		} else if (protocol == DEFAULT_PROTOCOL) {
+			vector<pair<string, int> > protocols;
+			pair<string, int> itempair;
+			itempair.first = conf.getDefaultProtocol();
+			itempair.second = conf.getDefaultPort();
+			protocols.push_back(itempair);
+			uris = wmputilities::getDestURIsVector(protocols,
+				conf.getHTTPSPort(), jid, false);
+		} else {
+			// if (check if the protocol is supported)
+			vector<pair<string, int> > protocols;
+			pair<string, int> itempair;
+			itempair.first = protocol;
+			itempair.second = 0;
+			protocols.push_back(itempair);
+			uris = wmputilities::getDestURIsVector(protocols,
+				conf.getHTTPSPort(), jid, false);
+		}
+		/*vector<string> *uris =
 			wmputilities::getDestURIsVector(conf.getProtocols(),
-				conf.getHTTPSPort(), *iter);
+				conf.getHTTPSPort(), *iter);*/
 		
 		DestURIStructType *destURIStruct = new DestURIStructType();
 		destURIStruct->id = *iter;
@@ -2664,7 +2702,7 @@ jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 
 void
 getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
-	const string &jid)
+	const string &jid, const string &protocol)
 {
 	GLITE_STACK_TRY("getOutputFileList()");
 	edglog_fn("wmpoperations::getOutputFileList");
@@ -2721,10 +2759,14 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		}
 	}
 		
-	string output_uri = wmputilities::getDestURI(jid, conf.getDefaultProtocol(),
+	/*string output_uri = wmputilities::getDestURI(jid, conf.getDefaultProtocol(),
 		conf.getDefaultPort()) + FILE_SEPARATOR + "output";
+	edglog(debug)<<"Output URI: " << output_uri <<endl;*/
 	string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
-	edglog(debug)<<"Output URI: " << output_uri <<endl;
+	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
+		jid, protocol, "output");
+	unsigned int jobdirsize = jobdiruris.size();
 	
 	// Searching files inside directory
 	const boost::filesystem::path p(outputpath, boost::filesystem::native);
@@ -2738,6 +2780,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
 	StringAndLongType *item = NULL;
 	string filename;
+	long filesize;
 	
 	vector<string>::iterator iter = found.begin();
 	vector<string>::iterator const end = found.end();
@@ -2746,12 +2789,15 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 		filename = wmputilities::getFileName(string(*iter));
 		if ((filename != MARADONA_FILE) && (filename
 				!= authorizer::GaclManager::WMPGACL_DEFAULT_FILE)) {
-			item = new StringAndLongType();
-			item->name = output_uri + FILE_SEPARATOR + filename;
-			item->size = wmputilities::computeFileSize(*iter);
-			edglog(debug)<<"Inserting file name: " <<item->name<<endl;
-			edglog(debug)<<"Inserting file size: " <<item->size<<endl;
-			file->push_back(item);
+			filesize = wmputilities::computeFileSize(*iter);
+			edglog(debug)<<"Inserting file name: " <<filename<<endl;
+			edglog(debug)<<"Inserting file size: " <<filesize<<endl;
+			for (unsigned int i = 0; i < jobdirsize; i++) {
+				item = new StringAndLongType();
+				item->name = jobdiruris[i] + FILE_SEPARATOR + filename;
+				item->size = filesize;
+				file->push_back(item);
+			}
 		}
 	}
 	list->file = file;
@@ -3483,7 +3529,8 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 
 vector<string>
 getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
-	const string &job_id, const string &fileName, bool allChunks)
+	const string &job_id, const string &fileName, bool allChunks,
+	const string &protocol)
 {
 	GLITE_STACK_TRY("getPerusalFiles()");
 	edglog_fn("wmpoperations::getPerusalFiles");
@@ -3535,11 +3582,17 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
-	string protocol = conf.getDefaultProtocol();
+	/*string protocol = conf.getDefaultProtocol();
 	string port = (conf.getDefaultPort())
 		? (":" + boost::lexical_cast<std::string>(conf.getDefaultPort()))
 		: "";
-	string serverhost = getServerHost();
+	string serverhost = getServerHost();*/
+	
+	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
+		job_id, protocol);
+
+	unsigned int jobdirsize = jobdiruris.size();
 		
 	vector<string> good;
 	vector<string> returnvector;
@@ -3557,8 +3610,9 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			if (currentfilename.find(fileName + PERUSAL_DATE_INFO_SEPARATOR)
 					== 0) {
 				edglog(debug)<<"Good old global perusal file: "<<*iter<<endl;
-				returnvector.push_back(protocol + "://" + serverhost
-					+ port + *iter);	
+				for (unsigned int i = 0; i < jobdirsize; i++) {
+					returnvector.push_back(jobdiruris[i] + *iter);
+				}
 			}
 		}
 	}
@@ -3596,8 +3650,11 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
 				outfile.close();
 				rename(tempfile.c_str(), filetoreturn.c_str());
-				returnvector.push_back(protocol + "://" + serverhost
-					+ port + filetoreturn);
+				
+				for (unsigned int i = 0; i < jobdirsize; i++) {
+					returnvector.push_back(jobdiruris[i] + filetoreturn);
+				}
+				
 				outfile.open(tempfile.c_str(), ios::out);
 				if (!outfile.good()) {
 					edglog(severe)<<tempfile<<": !outfile.good()"<<endl;
@@ -3630,8 +3687,10 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			+ PERUSAL_DATE_INFO_SEPARATOR + startdate
 			+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
 		rename(tempfile.c_str(), filetoreturn.c_str());
-		returnvector.push_back(protocol + "://" + serverhost + port
-			+ filetoreturn);
+		
+		for (unsigned int i = 0; i < jobdirsize; i++) {
+			returnvector.push_back(jobdiruris[i] + filetoreturn);
+		}
 	}
 	
 	return returnvector;

@@ -42,10 +42,11 @@ void getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	&getMaxInputSandboxSize_response);
 
 void getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
-	const std::string &job_id);
+	const std::string &job_id, const std::string &protocol);
 
 void getSandboxBulkDestURI(getSandboxBulkDestURIResponse
-	&getSandboxBulkDestURI_response, const std::string &job_id);
+	&getSandboxBulkDestURI_response, const std::string &job_id,
+	const std::string &protocol);
 	
 void getQuota(getQuotaResponse &getQuota_response);
 
@@ -54,7 +55,7 @@ void getFreeQuota(getFreeQuotaResponse &getFreeQuota_response);
 void jobPurge(jobPurgeResponse &jobPurge_response, const std::string &job_id);
 
 void getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
-	const std::string &job_id);
+	const std::string &job_id, const std::string &protocol);
 
 void jobListMatch(jobListMatchResponse &jobListMatch_response,
 	const std::string &jdl, const std::string &delegation_id);
