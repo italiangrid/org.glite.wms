@@ -1,6 +1,35 @@
 #!/bin/sh
 
-trunc()
+log_event() # 1 - event
+{
+export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  --jobid="$GLITE_WMS_JOBID"\
+  --source=LRMS\
+  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+  --event="$1"\
+  --node=$host\
+  || echo $GLITE_WMS_SEQUENCE_CODE`
+}
+
+log_error() # 1 - reason for failure
+{
+  echo "$1"
+  echo "$1" >> "${maradona}"
+
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+   --jobid="$GLITE_WMS_JOBID"\
+   --source=LRMS\
+   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+   --event="Done"\
+   --reason="$1"\
+   --status_code=FAILED\
+   --exit_code=0\
+   || echo $GLITE_WMS_SEQUENCE_CODE`
+
+  doExit 1
+}
+
+truncate() # 1 - file, 2 - bytes num.
 {
   perl -e '
     my $file = "'$1'";
@@ -17,7 +46,7 @@ trunc()
     }'
 }
 
-globus_url_retry_copy()
+globus_url_retry_copy() # 1 - source, 2 - dest
 {
   count=0
   succeded=0
@@ -41,21 +70,21 @@ globus_url_retry_copy()
   return $succeded
 }
 
-doExit() {
-  stat=$1
+doExit() { # 1 - status
+  status=$1
 
-  echo "jw exit status = ${stat}"
-  echo "jw exit status = ${stat}" >> "${maradona}"
+  echo "jw exit status = ${status}"
+  echo "jw exit status = ${status}" >> "${maradona}"
 
   globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   if [ $? != 0 ]; then
-    $stat=$?
+    $status=$?
   fi
 
   cd ..
   rm -rf ${newdir}
 
-  exit $stat
+  exit $status
 }
 
 doDSUploadTmp()
@@ -320,38 +349,14 @@ if [ ${__create_subdir} -eq 1 ]; then
     newdir="${__jobid_to_filename}"
     mkdir -p .mpi/${newdir}
     if [ $? != 0 ]; then
-      echo "Cannot create .mpi/${newdir} directory"
-
-      GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
-        --jobid="$GLITE_WMS_JOBID" \
-        --source=LRMS \
-        --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-        --event="Done"\
-        --reason="Cannot create .mpi/${newdir} directory"\
-        --status_code=FAILED\
-        --exit_code=0\
-        || echo $GLITE_WMS_SEQUENCE_CODE`
-      export GLITE_WMS_SEQUENCE_CODE
-      doExit 1
+      log_error "Cannot create .mpi/${newdir} directory"
     fi
     cd .mpi/${newdir}
   fi
 fi
 
 if [ ! -w . ]; then
-  echo "Working directory not writable"
-
- export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-  --jobid="$GLITE_WMS_JOBID"\
-  --source=LRMS \
-  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-  --event="Done"\
-  --reason="Working directory not writable!"\
-  --status_code=FAILED\
-  --exit_code=0\
-  || echo $GLITE_WMS_SEQUENCE_CODE`
-
-  doExit 1
+  log_error "Working directory not writable"
 fi
 workdir="`pwd`"
 
@@ -363,37 +368,11 @@ maradona="${__jobid_to_filename}.output"
 touch "${maradona}"
 
 if [ -z "${GLOBUS_LOCATION}" ]; then
-  echo "GLOBUS_LOCATION undefined"
-  echo "GLOBUS_LOCATION undefined" >> "${maradona}"
-
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-   --jobid="$GLITE_WMS_JOBID"\
-   --source=LRMS\
-   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-   --event="Done"\
-   --reason="GLOBUS_LOCATION undefined"\
-   --status_code=FAILED\
-   --exit_code=0\
-   || echo $GLITE_WMS_SEQUENCE_CODE`
-
-  doExit 1
+  log_error "GLOBUS_LOCATION undefined"
 elif [ -r "${GLOBUS_LOCATION}/etc/globus-user-env.sh" ]; then
   . ${GLOBUS_LOCATION}/etc/globus-user-env.sh
 else
-  echo "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
-  echo "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable" >> "${maradona}"
-
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
-   --jobid="$GLITE_WMS_JOBID" \
-   --source=LRMS \
-   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-   --event="Done"\
-   --reason="${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"\
-   --status_code=FAILED\
-   --exit_code=0\
-   || echo $GLITE_WMS_SEQUENCE_CODE`
-
-  doExit 1
+  log_error "${GLOBUS_LOCATION}/etc/globus-user-env.sh not found or unreadable"
 fi
 
 for env in ${__environment[@]}
@@ -408,19 +387,7 @@ do
   if [ ${__wmp_support} -eq 0 ]; then
     globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
     if [ $? != 0 ]; then
-      echo "Cannot download ${f} from ${__input_base_url}"
-      echo "Cannot download ${f} from ${__input_base_url}" >> "${maradona}"
-
-      export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
-       --jobid="$GLITE_WMS_JOBID" \
-       --source=LRMS \
-       --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-       --event="Done"\
-       --reason="Cannot download ${f} from ${__input_base_url}"\
-       --status_code=FAILED\
-       --exit_code=0\
-       || echo $GLITE_WMS_SEQUENCE_CODE`
-      doExit 1
+      log_error "Cannot download ${f} from ${__input_base_url}"
     fi
   else #WMP support
     file=`basename $f`
@@ -430,19 +397,7 @@ do
       htcp "${f}" "file://${workdir}/${file}"
     fi
     if [ $? != 0 ]; then
-      echo "Cannot download ${file} from ${f}"
-      echo "Cannot download ${file} from ${f}" >> "${maradona}"
-
-      export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-       --jobid="$GLITE_WMS_JOBID"\
-       --source=LRMS\
-       --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-       --event="Done"\
-       --reason="Cannot download ${file} from ${f}"\
-       --status_code=FAILED\
-       --exit_code=0\
-       || echo $GLITE_WMS_SEQUENCE_CODE`
-      doExit 1
+      log_error "Cannot download ${f} from ${__input_base_url}"
     fi
   fi
 done
@@ -450,20 +405,7 @@ done
 if [ -f "${__job}" ]; then
   chmod +x "${__job}"
 else
-  echo "${__job} not found or unreadable"
-  echo "${__job} not found or unreadable" >> "${maradona}"
-
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-   --jobid="$GLITE_WMS_JOBID"\
-   --source=LRMS\
-   --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-   --event="Done"\
-   --reason="/bin/echo not found or unreadable!"\
-   --status_code=FAILED\
-   --exit_code=0\
-   || echo $GLITE_WMS_SEQUENCE_CODE`
-
-  doExit 1
+  log_error "${__job} not found or unreadable"
 fi
 
 #user prescript
@@ -485,13 +427,7 @@ if [ ${__job_type} -eq 3 ]; then
 fi
 
 host=`hostname -f`
-export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
- --jobid="$GLITE_WMS_JOBID"\
- --source=LRMS\
- --sequence="$GLITE_WMS_SEQUENCE_CODE"\
- --event="Running"\
- --node=$host\
- || echo $GLITE_WMS_SEQUENCE_CODE`
+log_event "Running"
 
 if [ ${__perusal_support} -eq 1 ]; then
   send_partial_file ${__perusal_listfileuri} ${__perusal_filesdesturi} ${__perusal_timeinterval} & send_pid=$!
@@ -501,33 +437,10 @@ if [ ${__token_support} -eq 1 ]; then
   value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm ${__token_file}`
   result=$?
   if [ $result -eq 0 ]; then
-    GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-  --jobid="$GLITE_WMS_JOBID"\
-  --source=LRMS\
-  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-  --event="ReallyRunning"\
-  --status_code=\
-  --exit_code=\
-  || echo $GLITE_WMS_SEQUENCE_CODE`
-  export GLITE_WMS_SEQUENCE_CODE
-
-    echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
+    log_event "ReallyRunning"
+    echo "Token ${GLITE_WMS_SEQUENCE_CODE} taken"
   else
-    echo "Cannot take token!"
-    echo "Cannot take token!" >> "${maradona}"
-
-    GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-  --jobid="$GLITE_WMS_JOBID"\
-  --source=LRMS\
-  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-  --event="Done"\
-  --reason="Cannot take token!"\
-  --status_code=FAILED\
-  --exit_code=0\
-  || echo $GLITE_WMS_SEQUENCE_CODE`
-  export GLITE_WMS_SEQUENCE_CODE
-
-    doExit 1
+    log_error "Cannot take token!"
   fi
 fi
 
@@ -601,6 +514,28 @@ fi
       sleep($time_left);
     }
     kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
+    my $err_msg = "Job killed because of user proxy expiry\n";
+    my $maradona = "'$maradona'";
+    my $logger = "'$lb_logevent'";
+    print STDERR $err_msg;
+    if (open(DAT,">> ".$maradona)) {
+      print DAT $err_msg;
+      close(DAT);
+    }
+    if (open(CMD, $logger.
+                  " --jobid=\"".$ENV{GLITE_WMS_JOBID}."\"".
+                  " --source=LRMS".
+                  " --sequence=".$ENV{GLITE_WMS_SEQUENCE_CODE}.
+                  " --event=\"Done\"".
+                  " --reason=\"".$err_msg."\"".
+                  " --status_code=FAILED"
+                  " --exit_code=0" 2>/dev/null |")) {
+      chomp(my $value = <CMD>);
+      close(CMD);
+      my $result = $?;
+      my $exit_value = $result >> 8;
+      $ENV{GLITE_WMS_SEQUENCE_CODE} = $value if ($exit_value == 0);
+    }
     exit(1);
 	  ' &
 
@@ -613,6 +548,11 @@ fi
 )
 
 status=$?
+
+#customization point #2
+if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
+  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
+fi
 
 if [ ${__perusal_support} -eq 1 ]; then
   kill -USR2 $send_pid
@@ -657,6 +597,8 @@ echo "job exit status = ${status}" >> "${maradona}"
 file_size_acc=0
 total_files=${#__output_file[@]}
 current_file=0
+#the output files are supposed to be specified by the user
+#in order of importance, so no sorting is needed
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then
@@ -678,34 +620,29 @@ do
           globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
         else
           echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
-          remaining_files=`expr $total_files - $current_file + 2` #current_file is zero-based 
-                                                           # + 1 for the difference (i.e. 20-19=2 more files)
+          # $current_file is zero-based (being used even
+          # below as an array index), + 1 again because of the 
+          # difference between $total and $current (i.e. 20-19=2 more files)
+          remaining_files=`expr $total_files - $current_file + 2`
           remaining_space=`expr $__max_osb_size - $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`
-          trunc "file://${workdir}/${f}" $trunc_len
-          if [ $? != 0 ]; then
-            echo "Could not truncate output sandbox file ${f}"
+          if [ $trunc_len -lt 50 ]; then
+            #at least the first 50 bytes
+            echo "Not enough room for a significant truncation on file ${f}"
           else
-            globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.trunc"
+            truncate "file://${workdir}/${f}" $trunc_len
+            if [ $? != 0 ]; then
+              echo "Could not truncate output sandbox file ${f}"
+            else
+              globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.trunc"
+            fi
           fi
         fi
       else
         globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
       fi
       if [ $? != 0 ]; then
-        echo "Cannot upload ${f} into ${__output_base_url}"
-        echo "Cannot upload ${f} into ${__output_base_url}" >> "${maradona}"
-
-        export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent \
-          --jobid="$GLITE_WMS_JOBID" \
-          --source=LRMS \
-          --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-          --event="Done"\
-          --reason="Cannot upload ${f} into ${__output_base_url}"\
-          --status_code=FAILED\
-          --exit_code=0\
-        || echo $GLITE_WMS_SEQUENCE_CODE`
-        doExit 1
+        log_error "Cannot upload ${f} into ${__output_base_url}" "Done"
       fi
     fi
   else #WMP support
@@ -730,18 +667,22 @@ do
         fi
       else
         echo "OSB quota exceeded for $s, truncating needed"
-        remaining_files=`expr $total_files - $current_file + 2` #current_file is zero-based 
-                                                         # + 1 for the difference (i.e. 20-19=2 more files)
+        remaining_files=`expr $total_files - $current_file + 2`
         remaining_space=`expr $__max_osb_size - $file_size_acc`
         trunc_len=`expr $remaining_space / $remaining_files`
-        trunc "file://${workdir}/${f}" $trunc_len
-        if [ $? != 0 ]; then
-          echo "Could not truncate output sandbox file ${f}"
-        else
-          if [ "${f:0:9}" == "gsiftp://" ]; then
-            globus-url-copy $s "$d.trunc"
-          elif [ "${f:0:8}" == "https://" ]; then
-            htcp $s "$d.trunc"
+          if [ $trunc_len -lt 50 ]; then
+            #at least the first 50 bytes
+            echo "Not enough room for a significant truncation on file ${f}"
+          else
+          truncate "file://${workdir}/${f}" $trunc_len
+          if [ $? != 0 ]; then
+            echo "Could not truncate output sandbox file ${f}"
+          else
+            if [ "${f:0:9}" == "gsiftp://" ]; then
+              globus-url-copy $s "$d.trunc"
+            elif [ "${f:0:8}" == "https://" ]; then
+              htcp $s "$d.trunc"
+            fi
           fi
         fi
       fi
@@ -753,32 +694,13 @@ do
       fi
     fi
     if [ $? != 0 ]; then
-      echo "Cannot upload ${file} into ${f}"
-      echo "Cannot upload ${file} into ${f}" >> "${maradona}"
-
-      export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-        --jobid="$GLITE_WMS_JOBID"\
-        --source=LRMS\
-        --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-        --event="Done"\
-        --reason="Cannot upload ${file} into ${f}"\
-        --status_code=FAILED\
-        --exit_code=0\
-        || echo $GLITE_WMS_SEQUENCE_CODE`
-      doExit 1
+      log_error "Cannot upload ${file} into ${f}" "Done"
     fi
   fi
   current_file=`expr $current_file + 1`
 done
 
-export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
- --jobid="$GLITE_WMS_JOBID"\
- --source=LRMS\
- --sequence="$GLITE_WMS_SEQUENCE_CODE"\
- --event="Done"\
- --status_code=OK\
- --exit_code=$status\
- || echo $GLITE_WMS_SEQUENCE_CODE`
+log_event "Done"
 
 if [ -n "${LSB_JOBID}" ]; then
   cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
@@ -794,9 +716,9 @@ if [ -n "${PBS_JOBID}" ]; then
   fi
 fi
 
-#customization point #2
-if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
-  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
+#customization point #3
+if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
+  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
 fi
 
 doExit 0
