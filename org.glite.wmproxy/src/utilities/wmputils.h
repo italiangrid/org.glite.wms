@@ -110,7 +110,7 @@ std::vector<std::string> * getDestURIsVector(std::vector<std::pair<std::string,
 std::vector<std::string> getJobDirectoryURIsVector(
 	std::vector<std::pair<std::string, int> > protocols,
 	const std::string &defaultprotocol, int defaultport, int httpsport, 
-	const std::string &jid, const std::string &protocol = "",
+	const std::string &jid, const std::string &protocol,
 	const std::string &extradir = "");
 	
 /**

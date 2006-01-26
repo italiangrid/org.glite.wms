@@ -43,6 +43,8 @@ using namespace wmputilities;
 using namespace glite::wms::jdl; // AdSyntaxException
 using namespace glite::wmsutils::exception; // Exception
 
+const std::string ALL_PROTOCOLS = "all";
+const std::string DEFAULT_PROTOCOL = "default";
 
 // WM Web Service available operations
 // To get more infomation see WM service wsdl file
@@ -288,8 +290,8 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 }
 
 int
-ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol = "all",
-	struct ns1__getSandboxDestURIResponse &response 
+ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol 
+	= ALL_PROTOCOLS, struct ns1__getSandboxDestURIResponse &response 
 	= *(new ns1__getSandboxDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxDestURI(struct soap *soap, string job_id, "
@@ -327,8 +329,8 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol = "all"
 }
 
 int
-ns1__getSandboxBulkDestURI(struct soap *soap, string job_id,
-	string protocol = "all", struct ns1__getSandboxBulkDestURIResponse &response 
+ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol
+	= ALL_PROTOCOLS, struct ns1__getSandboxBulkDestURIResponse &response 
 	= *(new ns1__getSandboxBulkDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxBulkDestURI(struct soap *soap, "
@@ -468,8 +470,8 @@ ns1__jobPurge(struct soap *soap, string job_id,
 }
 
 int 
-ns1__getOutputFileList(struct soap *soap, string job_id, string protocol = "",
-	struct ns1__getOutputFileListResponse &response 
+ns1__getOutputFileList(struct soap *soap, string job_id, string protocol =
+	DEFAULT_PROTOCOL, struct ns1__getOutputFileListResponse &response 
 	= *(new ns1__getOutputFileListResponse()))
 {
 	GLITE_STACK_TRY("ns1__getOutputFileList(struct soap *soap, string *job_id, "
@@ -1082,8 +1084,9 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 }
 
 int
-ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunks
-	= false, string protocol = "", struct ns1__getPerusalFilesResponse &response
+ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
+	bool allChunks = false, string protocol = DEFAULT_PROTOCOL,
+	struct ns1__getPerusalFilesResponse &response
 	= *(new ns1__getPerusalFilesResponse()))
 {
 	GLITE_STACK_TRY("ns1__getPerusalFiles(struct soap *soap, string jobId, "
@@ -1117,6 +1120,44 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file, bool allChunk
 	
 	edglog(info)<<"getPerusalFiles operation completed\n"<<endl;
 
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns1__getTransferProtocols(struct soap *soap, 
+	struct ns1__getTransferProtocolsResponse &response)
+{
+	GLITE_STACK_TRY("ns1__getTransferProtocols(struct soap soap*, "
+		"struct ns1__getTransferProtocolsResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns1__getTransferProtocols");
+	edglog(info)<<"getTransferProtocols operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+	
+	ns1__StringList *list = new ns1__StringList();
+	list->Item = *(new vector<string>);
+	
+	getTransferProtocolsResponse getTransferProtocols_response;
+	try  {
+		getTransferProtocols(getTransferProtocols_response);
+		for (unsigned int i = 0;
+				i < getTransferProtocols_response.protocols->Item->size(); i++) {
+			list->Item.push_back((*getTransferProtocols_response.protocols->Item)[i]);
+		}
+		response.items = list;
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, exc.getCode(), "getTransferProtocols", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, WMS_IS_FAILURE, "getTransferProtocols", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"getTransferProtocols operation completed\n"<<endl;
+	
 	return return_value;
 	GLITE_STACK_CATCH();
 }

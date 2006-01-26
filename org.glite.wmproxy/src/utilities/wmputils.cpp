@@ -165,6 +165,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	edglog_fn("wmpoperations::getJobDirectoryURIsVector");
 	
 	edglog(debug)<<"Computing job directory URIs for job: "<<jid<<endl;
+	edglog(debug)<<"Requested protocol: "<<protocol<<endl;
 	
 	// Protocol + host:port + path
 	string extra = (extradir != "") ? (FILE_SEP + extradir) : "";
@@ -175,7 +176,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	vector<string> returnvector;
 	
 	vector<pair<std::string, int> > returnprotocols;
-	if (protocol == ALL_PROTOCOLS) {
+	if ((protocol == "") || (protocol == ALL_PROTOCOLS)) {
 		returnprotocols = protocols;
 	} else if (protocol == DEFAULT_PROTOCOL) {
 		pair<string, int> itempair(defaultprotocol, defaultport);
@@ -183,7 +184,19 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	} else {
 		// if (check if the protocol is supported)
 		// if protocol in protocols!
-		pair<string, int> itempair(protocol, 0);
+		int port = -1;
+		for (unsigned int i = 0; i < protocols.size(); i++) {
+			if (protocols[i].first == protocol) {
+				port = protocols[i].second;
+				break;
+			}	
+		}
+		if (port == -1) {
+			throw JobOperationException(__FILE__, __LINE__,
+				"getJobDirectoryURIsVector()", WMS_INVALID_ARGUMENT,
+				"requested protocol not available");
+		}
+		pair<string, int> itempair(protocol, port);
 		returnprotocols.push_back(itempair);
 	}
 	

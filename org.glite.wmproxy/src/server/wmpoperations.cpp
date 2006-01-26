@@ -922,8 +922,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	edglog(info)<<"Register for job id: "<<stringjid<<endl;
 
 	// Getting Input Sandbox Destination URI
-	//string defaultprotocol = conf.getDefaultProtocol();
-	//int defaultport = conf.getDefaultPort();
 	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 		conf.getDefaultPort());
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
@@ -1103,9 +1101,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 	string stringjid = jid->toString();
 	edglog(info)<<"Register for job id: "<<stringjid<<endl;
-	
-	//string defaultprotocol = conf.getDefaultProtocol();
-	//int defaultport = conf.getDefaultPort();
 	
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
@@ -2148,23 +2143,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	// Getting type from jdl
 	JobId * parentjid = new JobId(status.getValJobId(JobStatus::PARENT_JOB));
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
-		/*
-		WMPEventLogger wmplogger(wmputilities::getEndpoint());
-		std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-		wmplogger.init(lbaddress_port.first, lbaddress_port.second, parentjid,
-			conf.getDefaultProtocol(), conf.getDefaultPort());
-		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-		
-		// Setting user proxy
-		if (wmplogger.setUserProxy(delegatedproxy)) {
-			edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-			throw AuthenticationException(__FILE__, __LINE__,
-				"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-				"Unable to set User Proxy for LB context");
-		}
-		string parentjdl = wmplogger.getUserTag(WMPEventLogger::QUERY_JDL_ORIGINAL);
-		*/
-		
 		string parentjdl = wmputilities::readTextFile(
 			wmputilities::getJobJDLToStartPath(*parentjid));
 		
@@ -2182,7 +2160,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	}
 	
 	// Getting sequence code from jdl
-	//Ad *ad = new Ad(status.getValString(JobStatus::JDL));
 	Ad *ad = new Ad();
 	ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
 	string seqcode = "";
@@ -2200,7 +2177,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -2370,7 +2346,11 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	getSandboxDestURI_response.path = new StringList;
 	getSandboxDestURI_response.path->Item = new vector<string>(0);
 	
-	vector<string> *uris = NULL;
+	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
+		jid, protocol, "input");
+		
+	/*vector<string> *uris = NULL;
 	if (protocol == ALL_PROTOCOLS) {
 		uris = wmputilities::getDestURIsVector(conf.getProtocols(),
 			conf.getHTTPSPort(), jid);
@@ -2392,7 +2372,9 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 		uris = wmputilities::getDestURIsVector(protocols,
 			conf.getHTTPSPort(), jid, false);
 	}
-	getSandboxDestURI_response.path->Item = uris;
+	getSandboxDestURI_response.path->Item = uris;*/
+	
+	getSandboxDestURI_response.path->Item = &jobdiruris;
 	
 	GLITE_STACK_CATCH();
 }
@@ -2442,10 +2424,6 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 			"Unable to set User Proxy for LB context");
 	}
 	
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
-	//vector<pair<std::string, int> > protocols = conf.getProtocols();
-	//int httpsport = conf.getHTTPSPort();
-	
 	DestURIsStructType *destURIsStruct = new DestURIsStructType();
 	destURIsStruct->Item = new vector<DestURIStructType*>(0);
 	
@@ -2458,11 +2436,14 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	edglog(debug)<<"Children count: "<<status.getValInt(JobStatus::CHILDREN_NUM)<<endl;
 	vector<string>::iterator jidsiterator = jids.begin();
  	jids.insert(jidsiterator, 1, jid);
-
+ 	
 	vector<string>::iterator iter = jids.begin();
 	vector<string>::iterator const end = jids.end();
 	for (; iter != end; ++iter) {
-		vector<string> *uris = NULL;
+		vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+			conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
+			*iter, protocol, "input");
+		/*vector<string> *uris = NULL;
 		if (protocol == ALL_PROTOCOLS) {
 			uris = wmputilities::getDestURIsVector(conf.getProtocols(),
 				conf.getHTTPSPort(), jid);
@@ -2483,14 +2464,15 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 			protocols.push_back(itempair);
 			uris = wmputilities::getDestURIsVector(protocols,
 				conf.getHTTPSPort(), jid, false);
-		}
+		}*/
 		/*vector<string> *uris =
 			wmputilities::getDestURIsVector(conf.getProtocols(),
 				conf.getHTTPSPort(), *iter);*/
 		
 		DestURIStructType *destURIStruct = new DestURIStructType();
 		destURIStruct->id = *iter;
-		destURIStruct->destURIs = uris;
+		//destURIStruct->destURIs = uris;
+		destURIStruct->destURIs = &jobdiruris;
 		destURIsStruct->Item->push_back(destURIStruct);
 	}
 	getSandboxBulkDestURI_response.destURIsStruct = destURIsStruct;
@@ -2761,10 +2743,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 				"Job current status doesn't allow getOutputFileList operation");
 		}
 	}
-		
-	/*string output_uri = wmputilities::getDestURI(jid, conf.getDefaultProtocol(),
-		conf.getDefaultPort()) + FILE_SEPARATOR + "output";
-	edglog(debug)<<"Output URI: " << output_uri <<endl;*/
+	
 	string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
 	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
@@ -3585,12 +3564,6 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
-	/*string protocol = conf.getDefaultProtocol();
-	string port = (conf.getDefaultPort())
-		? (":" + boost::lexical_cast<std::string>(conf.getDefaultPort()))
-		: "";
-	string serverhost = getServerHost();*/
-	
 	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
 		job_id, protocol);
@@ -3703,6 +3676,36 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	GLITE_STACK_CATCH();
 }
 
+void
+getTransferProtocols(getTransferProtocolsResponse &getTransferProtocols_response)
+{
+	GLITE_STACK_TRY("getTransferProtocols()");
+	edglog_fn("wmpoperations::getTransferProtocols");
+	logRemoteHostInfo();
+	
+	// Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+	auth->authorize();
+	delete auth;
+	
+	getTransferProtocols_response.protocols = new StringList;
+	vector<string> *protocols = new vector<string>();
+	//getTransferProtocols_response.protocols->Item = new vector<string>(0);
+	
+	WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
+	vector<pair<string, int> > serverprotocols = conf.getProtocols();
+	unsigned int size = serverprotocols.size();
+	for (unsigned int i = 0; i < size; i++) {
+		protocols->push_back(serverprotocols[i].first);
+	}
+	protocols->push_back("https");
+	getTransferProtocols_response.protocols->Item = protocols;
+		
+	edglog(info)<<"Transfer protocols retrieved successfully"<<endl;
+	GLITE_STACK_CATCH();
+}
 //} // server
 //} // wmproxy
 //} // wms

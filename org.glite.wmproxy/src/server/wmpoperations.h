@@ -108,6 +108,8 @@ std::vector<std::string> getPerusalFiles(getPerusalFilesResponse
 	&getPerusalFiles_response, const std::string &job_id, const std::string
 	&fileName, bool allChunks, const std::string &protocol);
 	
+void getTransferProtocols(getTransferProtocolsResponse
+	&getTransferProtocols_response);
 
 #endif // GLITE_WMS_WMPROXY_WMPOPERATIONS_H
 

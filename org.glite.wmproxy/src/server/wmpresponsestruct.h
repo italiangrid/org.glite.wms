@@ -223,4 +223,8 @@ struct getPerusalFilesResponse {
 	StringList *files;
 };
 
+struct getTransferProtocolsResponse {
+	StringList *protocols;
+};
+
 #endif // GLITE_WMS_WMPROXY_WMPRESPONSESTRUCT_H
