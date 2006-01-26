@@ -89,7 +89,7 @@ globus_url_retry_copy() # 1 - source, 2 - dest
   count=0
   succeded=0
   sleep_time=0
-  while [ $count -le ${__file_tx_retry_count} -a $succeded -eq 0 ];
+  while [ $count -le ${__copy_retry_count} -a $succeded -eq 0 ];
   do
     time_left=`grid-proxy-info -timeleft 2> /dev/null` || 0;
     if [ $time_left -lt $sleep_time ]; then
@@ -97,7 +97,7 @@ globus_url_retry_copy() # 1 - source, 2 - dest
     fi
     sleep "$sleep_time"
     if [ $sleep_time -eq 0 ]; then
-      sleep_time=300
+      sleep_time=${__copy_retry_first_wait}
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
@@ -369,6 +369,24 @@ fi
 lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
 if [ ! -x "$lb_logevent" ]; then
   lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
+fi
+
+if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
+  __copy_retry_count=6
+else
+  __copy_retry_count=${GLITE_LOCAL_COPY_RETRY_COUNT}
+fi
+
+if [ -z "${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}" ]; then
+  __copy_retry_first_wait=300
+else
+  __copy_retry_first_wait=${GLITE_LOCAL_COPY_RETRY_FIRST_WAIT}
+fi
+
+if [ -z "${GLITE_LOCAL_MAX_OSB_SIZE}" ]; then
+  __max_osb_size=100000000
+else
+  __max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
 fi
 
 #customization point #1
