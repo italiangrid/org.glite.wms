@@ -48,7 +48,8 @@ truncate() # 1 - file, 2 - bytes num.
 
 sort_output_by_size()
 {
-  number_of_elements=${#__output_file[@]}
+  eval tmp="$1[@]"
+  eval number_of_elements="\${#$tmp}"
   comparisons=`expr $number_of_elements \- 1`
   count=1
   while [ $comparisons -gt 0 ];
@@ -56,14 +57,18 @@ sort_output_by_size()
     index=0
     while [ $index -lt $comparisons ];
     do
-      fs_1=`stat -t ${__output_file[$index]} | awk '{print $2}'`
+      eval tmp="$1[$index]"
+      eval tmp2=\${$tmp}
+      fs_1=`stat -t $tmp2 | awk '{print $2}'`
       index2=`expr $index + 1`
-      fs_2=`stat -t ${__output_file[$index2]} | awk '{print $2}'`
+      eval tmp="$1[$index2]"
+      eval tmp2=\${$tmp}
+      fs_2=`stat -t $tmp2 | awk '{print $2}'`
       if [ $fs_1 -gt $fs_2 ]; then
         index2=`expr $index + 1`
         temp=${__output_file[$index]}
-        __output_file[$index]=${__output_file[$index2]}
-        __output_file[$index2]=$temp
+        eval "$1[$index]=${__vector[$index2]}"
+        eval "$1[$index2]=$temp"
       fi
       index=`expr $index + 1`
     done
@@ -625,7 +630,7 @@ total_files=${#__output_file[@]}
 current_file=0
 # comment this one below if the osb order list originally 
 # specified may be of some relevance to the user
-sort_output_by_size
+sort_output_by_size __output_file
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then
