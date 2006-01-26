@@ -390,6 +390,11 @@
 	<wsdl:message name="getPerusalFilesResponse">
 		<wsdl:part name="fileList" type="glitenstypes:StringList"/>
 	</wsdl:message>
+	<wsdl:message name="getTransferProtocolsRequest">
+	</wsdl:message>
+	<wsdl:message name="getTransferProtocolsResponse">
+		<wsdl:part name="items" type="glitenstypes:StringList"/>
+	</wsdl:message>
     
 	<!-- ==== Port type definition ==== -->
 	<wsdl:portType name="WMProxy_PortType">
@@ -650,8 +655,10 @@
 					       Possible standard values are:
 					       - "all" to get URIs with all available protocols
 					       - "default" to get URIs with the server default protocol
+					       not mandatory, default value is "all".
 					
-					Output: a vector containing the string representation of the Destination URI in all the available protocols
+					Output: a vector containing the string representation of the Destination 
+							URI in the requested protocol.
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
@@ -694,8 +701,10 @@
 					       Possible standard values are:
 					       - "all" to get URIs with all available protocols
 					       - "default" to get URIs with the server default protocol
+					       not mandatory, default value is "all".
 					
-					Output: a structure containing the JobIds provided as input and the string representation of the Destination URI in all the available protocols
+					Output: a structure containing the JobIds provided as input and the string representation
+							of the Destination URI in the requested protocol
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
@@ -800,8 +809,10 @@
 					       Possible standard values are:
 					       - "all" to get URIs with all available protocols
 					       - "default" to get URIs with the server default protocol
+					       not mandatory, default value is "all".
 					
-					Output: List of objects containing the file URI and the corresponding size in bytes.
+					Output: List of objects containing the file URI in the requested protocol,
+							and the corresponding size in bytes.
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
@@ -1153,8 +1164,10 @@
 					       Possible standard values are:
 					       - "all" to get URIs with all available protocols
 					       - "default" to get URIs with the server default protocol
+					       not mandatory, default value is "all".
 					
 					Output: a list of strings representing the URIs of the files
+							in the requested protocol.
 					
 					Faults:
 					AuthenticationFault: 		a generic authentication problem occured.
@@ -1170,6 +1183,25 @@
 			<wsdl:fault name="InvalidArgumentFault" message="glitens:InvalidArgumentFault"/>
 			<wsdl:fault name="JobUnknownFault" message="glitens:JobUnknownFault"/>
 			<wsdl:fault name="OperationNotAllowedFault" message="glitens:OperationNotAllowedFault"/>
+			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
+			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
+		</wsdl:operation>
+		<wsdl:operation name="getTransferProtocols">
+			<wsdl:documentation>
+					This operation returns the server available transfer protocols.
+					
+					Input: no input.
+					
+					Output: a vector of string containing the protocols.
+					
+					Faults:
+					AuthenticationFault: 		a generic authentication problem occured.
+					AuthorizationFault: 			client is not authorized to perform this operation.
+					GenericFault: 					another problem occured.
+            </wsdl:documentation>
+			<wsdl:input name="getTransferProtocolsRequest" message="glitens:getTransferProtocolsRequest"/>
+			<wsdl:output name="getTransferProtocolsResponse" message="glitens:getTransferProtocolsResponse"/>
+			<wsdl:fault name="AuthenticationFault" message="glitens:AuthenticationFault"/>
 			<wsdl:fault name="GenericFault" message="glitens:GenericFault"/>
 			<wsdl:fault name="AuthorizationFault" message="glitens:AuthorizationFault"/>
 		</wsdl:operation>
@@ -1783,7 +1815,24 @@
 				<soap:fault name="JobUnknownFault" use="literal"/>
 			</wsdl:fault>
 		</wsdl:operation>
-	</wsdl:binding>
+		<wsdl:operation name="getTransferProtocols">
+			<wsdl:input>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" namespace="http://glite.org/wms/wmproxy"/>
+			</wsdl:output>
+			<wsdl:fault name="AuthenticationFault">
+				<soap:fault name="AuthenticationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="AuthorizationFault">
+				<soap:fault name="AuthorizationFault" use="literal"/>
+			</wsdl:fault>
+			<wsdl:fault name="GenericFault">
+				<soap:fault name="GenericFault" use="literal"/>
+			</wsdl:fault>
+		</wsdl:operation>
+    </wsdl:binding>
 	
 	<!-- ==== Service definition ==== -->
 	<wsdl:service name="WMProxy">
