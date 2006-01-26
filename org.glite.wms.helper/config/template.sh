@@ -66,8 +66,15 @@ sort_output_by_size()
       fs_2=`stat -t $tmp2 | awk '{print $2}'`
       if [ $fs_1 -gt $fs_2 ]; then
         index2=`expr $index + 1`
-        temp=${__output_file[$index]}
-        eval "$1[$index]=${__vector[$index2]}"
+
+        eval tmp="$1[$index]"
+        eval tmp2=\${$tmp}
+        temp=$tmp2
+        eval tmp="$1[$index2]"
+        eval tmp2=\${$tmp}
+        temp2=$tmp2
+
+        eval "$1[$index]=$temp2"
         eval "$1[$index2]=$temp"
       fi
       index=`expr $index + 1`
