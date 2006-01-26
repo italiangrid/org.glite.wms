@@ -46,6 +46,32 @@ truncate() # 1 - file, 2 - bytes num.
     }'
 }
 
+sort_output_by_size()
+{
+  number_of_elements=${#__output_file[@]}
+  comparisons=`expr $number_of_elements \- 1`
+  count=1
+  while [ $comparisons -gt 0 ];
+  do
+    index=0
+    while [ $index -lt $comparisons ];
+    do
+      fs_1=`stat -t ${__output_file[$index]} | awk '{print $2}'`
+      index2=`expr $index + 1`
+      fs_2=`stat -t ${__output_file[$index2]} | awk '{print $2}'`
+      if [ $fs_1 -gt $fs_2 ]; then
+        index2=`expr $index + 1`
+        temp=${__output_file[$index]}
+        __output_file[$index]=${__output_file[$index2]}
+        __output_file[$index2]=$temp
+      fi
+      index=`expr $index + 1`
+    done
+    comparisons=`expr $comparisons \- 1`
+    count=`expr $count + 1`
+  done
+}
+
 globus_url_retry_copy() # 1 - source, 2 - dest
 {
   count=0
@@ -152,9 +178,9 @@ doReplicaFilewithLFN()
     localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile file://${workdir}/$sourcefile 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
-      echo "$sourcefile    $localnew" >> $filename.tmp
+      echo "$sourcefile $localnew" >> $filename.tmp
     else
-      echo "$sourcefile    Error: $local; $localnew" >> $filename.tmp
+      echo "$sourcefile Error: $local; $localnew" >> $filename.tmp
       exit_status=1
     fi
   fi
@@ -173,14 +199,14 @@ doReplicaFilewithSE()
   local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile file://${workdir}/$sourcefile -d $se 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
-    echo "$sourcefile    $local" >> $filename.tmp
+    echo "$sourcefile   $local" >> $filename.tmp
   else
     localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile file://${workdir}/$sourcefile 2>&1`
     result=$?
     if [ $result -eq 0 ]; then
-      echo "$sourcefile    $localnew" >> $filename.tmp
+      echo "$sourcefile $localnew" >> $filename.tmp
     else
-      echo "$sourcefile    Error: $local; $localnew" >> $filename.tmp
+      echo "$sourcefile Error: $local; $localnew" >> $filename.tmp
       exit_status=1
     fi
   fi
@@ -597,8 +623,9 @@ echo "job exit status = ${status}" >> "${maradona}"
 file_size_acc=0
 total_files=${#__output_file[@]}
 current_file=0
-#the output files are supposed to be specified by the user
-#in order of importance, so no sorting is needed
+# comment this one below if the osb order list originally 
+# specified may be of some relevance to the user
+sort_output_by_size
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then
@@ -623,8 +650,8 @@ do
           # $current_file is zero-based (being used even
           # below as an array index), + 1 again because of the 
           # difference between $total and $current (i.e. 20-19=2 more files)
-          remaining_files=`expr $total_files - $current_file + 2`
-          remaining_space=`expr $__max_osb_size - $file_size_acc`
+          remaining_files=`expr $total_files \- $current_file + 2`
+          remaining_space=`expr $__max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`
           if [ $trunc_len -lt 50 ]; then
             #at least the first 50 bytes
@@ -667,8 +694,8 @@ do
         fi
       else
         echo "OSB quota exceeded for $s, truncating needed"
-        remaining_files=`expr $total_files - $current_file + 2`
-        remaining_space=`expr $__max_osb_size - $file_size_acc`
+        remaining_files=`expr $total_files \- $current_file + 2`
+        remaining_space=`expr $__max_osb_size \- $file_size_acc`
         trunc_len=`expr $remaining_space / $remaining_files`
           if [ $trunc_len -lt 50 ]; then
             #at least the first 50 bytes
