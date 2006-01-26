@@ -1,4 +1,4 @@
-#!/bin/sh
+!/bin/sh
 
 log_event() # 1 - event
 {
@@ -496,7 +496,7 @@ if [ ${__token_support} -eq 1 ]; then
     log_event "ReallyRunning"
     echo "Token ${GLITE_WMS_SEQUENCE_CODE} taken"
   else
-    log_error "Cannot take token!"
+    log_error "Cannot take token for $GLITE_WMS_JOBID" 
   fi
 fi
 
@@ -525,7 +525,7 @@ elif [ ${__job_type} -eq 3 ]; then #interactive
   cmd_line="./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
 fi
 
-if [ ${__job_type} -ne 3 ]; then #all kind of but interactive
+if [ ${__job_type} -ne 3 ]; then #every kind but interactive
   if [ -n "${__standard_input}" ]; then
     cmd_line="$cmd_line < ${__standard_input}"
   fi
