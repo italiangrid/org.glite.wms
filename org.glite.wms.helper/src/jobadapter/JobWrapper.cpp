@@ -331,9 +331,6 @@ dump(std::ostream& os,
 bool 
 JobWrapper::dump_vars(std::ostream& os) const
 {
-  const configuration::WMConfiguration* const wm_config
-    = configuration::Configuration::instance()->wm();
-
   std::vector< std::string > output_files;
   std::vector< std::string > logical_file_names;
   std::vector< std::string > storage_elements;
@@ -393,14 +390,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
     dump(os, "__osb_wildcards_support", m_osb_wildcards_support) &&
-    dump(os, "__output_sandbox_base_dest_uri", m_output_sandbox_base_dest_uri) &&
-    dump(os, "__job_type", m_job_type) &&
-    dump(os, "__max_osb_size",
-      wm_config->job_wrapper_max_output_sandbox_size()
-    ) &&
-    dump(os, "__file_tx_retry_count", 
-      wm_config->job_wrapper_file_tx_retry_count()
-    );
+    dump(os, "__job_type", m_job_type);
 }
 
 bool 
