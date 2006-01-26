@@ -46,7 +46,7 @@ truncate() # 1 - file, 2 - bytes num.
     }'
 }
 
-sort_output_by_size()
+sort_by_size()
 {
   eval tmp="$1[@]"
   eval number_of_elements="\${#$tmp}"
@@ -637,7 +637,7 @@ total_files=${#__output_file[@]}
 current_file=0
 # comment this one below if the osb order list originally 
 # specified may be of some relevance to the user
-sort_output_by_size __output_file
+sort_by_size __output_file
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then
