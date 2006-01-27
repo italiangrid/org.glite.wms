@@ -1,4 +1,4 @@
-!/bin/sh
+#!/bin/sh
 
 log_event() # 1 - event
 {
@@ -11,7 +11,7 @@ export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
   || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
-log_error() # 1 - reason for failure
+log_error() # 1 - reason
 {
   echo "$1"
   echo "$1" >> "${maradona}"
@@ -46,11 +46,11 @@ truncate() # 1 - file, 2 - bytes num.
     }'
 }
 
-sort_by_size()
+sort_by_size() # 1 - file names vector, 2 - directory
 {
   eval tmp="$1[@]"
   eval number_of_elements="\${#$tmp}"
-  comparisons=`expr $number_of_elements \- 1`
+  let "comparisons=$number_of_elements-1"
   count=1
   while [ $comparisons -gt 0 ];
   do
@@ -59,28 +59,24 @@ sort_by_size()
     do
       eval tmp="$1[$index]"
       eval tmp2=\${$tmp}
-      fs_1=`stat -t $tmp2 | awk '{print $2}'`
-      index2=`expr $index + 1`
+      fs_1=`stat -t $2/$tmp2 2>/dev/null| awk '{print $2}'`||0
+      let "index2=$index + 1"
       eval tmp="$1[$index2]"
       eval tmp2=\${$tmp}
-      fs_2=`stat -t $tmp2 | awk '{print $2}'`
+      fs_2=`stat -t $2/$tmp2 2>/dev/null| awk '{print $2}'`||0
       if [ $fs_1 -gt $fs_2 ]; then
-        index2=`expr $index + 1`
+        let "index2=$index + 1"
 
-        eval tmp="$1[$index]"
-        eval tmp2=\${$tmp}
-        temp=$tmp2
-        eval tmp="$1[$index2]"
-        eval tmp2=\${$tmp}
-        temp2=$tmp2
+        eval temp=\${$1[$index]}
+        eval temp2=\${$1[$index2]}
 
         eval "$1[$index]=$temp2"
         eval "$1[$index2]=$temp"
       fi
-      index=`expr $index + 1`
+      let "++index"
     done
-    comparisons=`expr $comparisons \- 1`
-    count=`expr $count + 1`
+    let "--comparisons"
+    let "++count"
   done
 }
 
@@ -490,7 +486,11 @@ if [ ${__perusal_support} -eq 1 ]; then
 fi
 
 if [ ${__token_support} -eq 1 ]; then
-  value=`$GLITE_WMS_LOCATION/bin/glite-gridftp-rm ${__token_file}`
+
+  `$$GLITE_LOCATION/bin/glite-gridftp-rm $__token_file 2>/dev/null`
+  || ``which glite-gridftp-rm 2>/dev/null` $__token_file` 2>/dev/null`
+  || `$EDG_LOCATION/bin/edg-gridftp-rm $__token_file 2>/dev/null`
+  || ``which edg-gridftp-rm 2>/dev/null` $__token_file` 2>/dev/null`
   result=$?
   if [ $result -eq 0 ]; then
     log_event "ReallyRunning"
@@ -655,7 +655,7 @@ total_files=${#__output_file[@]}
 current_file=0
 # comment this one below if the osb order list originally 
 # specified may be of some relevance to the user
-sort_by_size __output_file
+sort_by_size __output_file ${workdir}
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then
