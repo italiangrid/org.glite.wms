@@ -103,17 +103,6 @@ Register const r;
 
 std::string const f_output_file_suffix(".rbh");
 
-std::string get_x509_user_proxy( const classad::ClassAd &job_ad )
-{
-  bool res;
-  std::string value;
-  res = job_ad.EvaluateAttrString( requestad::JDLPrivate::USERPROXY, value );
-  if( !res )
-    return "";
-  else
-    return value;
-}
-
 /* Answer format:
  * 1) if no error occurs
  * [
@@ -195,7 +184,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     std::string vo(requestad::get_virtual_organisation(input_ad));    
     std::vector<classad::ExprTree*> hosts;
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
-    std::string x509_user_proxy_file_name(get_x509_user_proxy(input_ad)); 
+    std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
     if( !x509_user_proxy_file_name.empty() )
     {
       if (!suitableCEs->empty()) { 
