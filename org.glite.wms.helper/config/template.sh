@@ -44,13 +44,14 @@ truncate() # 1 - file, 2 - bytes num.
     } else {
       exit(1)
     }'
+  #return $?
 }
 
 sort_by_size() # 1 - file names vector, 2 - directory
 {
   eval tmp="$1[@]"
   eval number_of_elements="\${#$tmp}"
-  let "comparisons=$number_of_elements-1"
+  let "comparisons = $number_of_elements - 1"
   count=1
   while [ $comparisons -gt 0 ];
   do
@@ -59,13 +60,13 @@ sort_by_size() # 1 - file names vector, 2 - directory
     do
       eval tmp="$1[$index]"
       eval tmp2=\${$tmp}
-      fs_1=`stat -t $2/$tmp2 2>/dev/null| awk '{print $2}'`||0
-      let "index2=$index + 1"
+      fs_1=`stat -t $2/$tmp2 2>/dev/null | awk '{print $2}'`||0
+      let "index2 = $index + 1"
       eval tmp="$1[$index2]"
       eval tmp2=\${$tmp}
-      fs_2=`stat -t $2/$tmp2 2>/dev/null| awk '{print $2}'`||0
+      fs_2=`stat -t $2/$tmp2 2>/dev/null | awk '{print $2}'`||0
       if [ $fs_1 -gt $fs_2 ]; then
-        let "index2=$index + 1"
+        let "index2 = $index + 1"
 
         eval temp=\${$1[$index]}
         eval temp2=\${$1[$index2]}
@@ -83,9 +84,9 @@ sort_by_size() # 1 - file names vector, 2 - directory
 globus_url_retry_copy() # 1 - source, 2 - dest
 {
   count=0
-  succeded=0
+  succeded=1
   sleep_time=0
-  while [ $count -le ${__copy_retry_count} -a $succeded -eq 0 ];
+  while [ $count -le ${__copy_retry_count} -a $succeded -ne 0 ];
   do
     time_left=`grid-proxy-info -timeleft 2> /dev/null` || 0;
     if [ $time_left -lt $sleep_time ]; then
@@ -640,7 +641,7 @@ if [ ${__output_data} -eq 1 ]; then
         fi
         status=$?
       fi
-      local_cnt=`expr $local_cnt + 1`
+      let "++local_cnt"
     done
     local=`doDSUpload`
     status=$?
@@ -671,7 +672,7 @@ do
         #todo
         #if hostname=wms
           file_size=`stat -t $f | awk '{print $2}'`
-          file_size_acc=`expr $file_size_acc + $file_size`
+          let "file_size_acc += $file_size"
         #fi
         if [ $file_size_acc -le ${__max_osb_size} ]; then
           globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
@@ -754,7 +755,7 @@ do
       log_error "Cannot upload ${file} into ${f}" "Done"
     fi
   fi
-  current_file=`expr $current_file + 1`
+  let "++current_file"
 done
 
 log_event "Done"
