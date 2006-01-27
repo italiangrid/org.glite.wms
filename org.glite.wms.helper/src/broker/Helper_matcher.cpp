@@ -182,8 +182,8 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 
     std::string vo(requestad::get_virtual_organisation(input_ad));    
     std::vector<classad::ExprTree*> hosts;
-    std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
+    std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
     if (!suitableCEs->empty()) { 
       configuration::Configuration const* const config(
         configuration::Configuration::instance()
