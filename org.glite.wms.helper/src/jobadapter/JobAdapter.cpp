@@ -241,6 +241,18 @@ try {
   /* and forwarded to Condor-C in any case.   */
   std::string lrmstype(jdl::get_lrms_type(*m_ad));
 
+  /* Mandatory */
+  /* job id is mandatory to build the globusrsl string and to create the */
+  /* job wrapper                                                         */
+  string job_id(jdl::get_edg_jobid(*m_ad));
+  if (job_id.empty()) {
+    throw helper::InvalidAttributeValue(jdl::JDL::JOBID,
+                                        job_id,
+                                        "not empty",
+                                        helper_id);
+  }
+  jdl::set_edg_jobid(*result, job_id);
+
   // Figure out the local host name (this should really come from
   // some common entity).
   char   hostname[1024];
@@ -304,6 +316,15 @@ try {
     jdl::set_transfer_executable(*result, true);
   } else {
     jdl::set_grid_type(*result, "condor");
+    // These two attributes are needed for collecting accounting logs.
+    jdl::set_remote_remote_user_subject_name(*result, certificatesubject);
+    jdl::set_remote_remote_edg_jobid(*result, job_id);
+    // Virtual Organization is used to compose remote Condor daemons
+    // unique name, but we don't really care if it's empty
+    string vo(jdl::get_virtual_organisation(*m_ad));
+    if (!vo.empty()) {
+      jdl::set_remote_remote_virtual_organisation(*result, vo);
+    }
     if (is_condor_resource || lrmstype == "condor") {
       // condor resource, as per Nate Mueller's May 4, 2005 recipe
       jdl::set_remote_job_universe(*result, 9);
@@ -329,6 +350,13 @@ try {
       // We have to make sure the *jobwrapper* gets transferred to 
       // the worker nodes.
       jdl::set_remote_remote_stagecmd(*result, true);
+      // Transfer the CE remaining ("flattened") requirements as well.
+      try {
+        string rreq(jdl::get_remote_remote_requirements(*m_ad));
+        jdl::set_remote_remote_requirements(*result, rreq);
+      } catch (jdl::CannotGetAttribute const& e) {
+        // Ignore the remote_remote_requirements if they aren't there.
+      }
     }
 
     unsigned char md5_cert_hash[MD5_DIGEST_LENGTH];
@@ -343,15 +371,13 @@ try {
                                           helper_id);
     }
 
-    // Virtual Organization is used to compose remote Condor daemons
-    // unique name, but we don't really care if it's empty
-    std::string vo(jdl::get_virtual_organisation(*m_ad));
-
-    std::string hostandcertificatesubject(local_host_name);
-    hostandcertificatesubject.append("/");
-    hostandcertificatesubject.append(certificatesubject);
-    MD5((unsigned char *)hostandcertificatesubject.c_str(),
-        hostandcertificatesubject.length(),
+    string hostcertificatesubjectvo(local_host_name);
+    hostcertificatesubjectvo.append("/");
+    hostcertificatesubjectvo.append(certificatesubject);
+    hostcertificatesubjectvo.append("/");
+    hostcertificatesubjectvo.append(vo);
+    MD5((unsigned char *)hostcertificatesubjectvo.c_str(),
+        hostcertificatesubjectvo.length(),
         md5_cert_hash);
     md5_hex_hash.setf(std::ios_base::hex, std::ios_base::basefield);
     md5_hex_hash.width(2);
@@ -445,18 +471,6 @@ try {
   bool   b_ce_id;
   std::string ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
   jdl::set_ce_id(*result, ce_id, b_ce_id);
-
-  /* Mandatory */
-  /* job id is mandatory to build the globusrsl string and to create the */
-  /* job wrapper                                                         */
-  std::string job_id(jdl::get_edg_jobid(*m_ad));
-  if (job_id.empty()) {
-    throw helper::InvalidAttributeValue(jdl::JDL::JOBID,
-                                        job_id,
-                                        "not empty",
-                                        helper_id);
-  }
-  jdl::set_edg_jobid(*result, job_id);
 
   /* keep the dag id if present */
   bool b_present = false;

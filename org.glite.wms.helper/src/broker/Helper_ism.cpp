@@ -140,6 +140,65 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
   return result;
 }
 
+std::string
+flatten_requirements (
+  configuration::Configuration const& config,
+  classad::ClassAd const *job_ad,
+  classad::ClassAd const *ce_ad
+)
+{
+  const configuration::WMConfiguration* WM_conf = config.wm();
+  assert(WM_conf);
+
+  std::string result; // Empty string causes the attribute not to be set.
+
+  std::vector<std::string> reqs_to_forward(WM_conf->ce_forward_parameters());
+
+  // In order to forward the required attributes, these
+  // have to be *removed* from the CE ad that is used
+  // for flattening.
+  classad::ClassAd* local_ce_ad(new classad::ClassAd(*ce_ad));
+  classad::ClassAd* local_job_ad(new classad::ClassAd(*job_ad));
+
+  std::vector<std::string>::const_iterator cur_req;
+  std::vector<std::string>::const_iterator req_end = reqs_to_forward.end();
+  for (cur_req = reqs_to_forward.begin();
+       cur_req != req_end; cur_req++)
+   {
+     local_ce_ad->Remove(*cur_req);
+     // Don't care if it doesn't succeed. If the attribute is
+     // already missing, so much the better.
+   }
+
+  // Now, flatten the Requirements expression of the Job Ad
+  // with whatever info is left from the CE ad.
+  // Recipe received from Nick Coleman, ncoleman@cs.wisc.edu
+  // on Tue, 8 Nov 2005
+  classad::MatchClassAd mad;
+  mad.ReplaceLeftAd( local_job_ad );
+  mad.ReplaceRightAd( local_ce_ad );
+
+  classad::ExprTree *req = mad.GetLeftAd()->Lookup( "Requirements" );
+  classad::ExprTree *flattened_req = 0;
+  classad::Value fval;
+
+  if( ! ( mad.GetLeftAd()->Flatten( req, fval, flattened_req ) ) ) {
+        // Error while flattening. Result is undefined.
+        return result;
+  }
+  
+  // No remaining requirement. Result is undefined.
+  if (!flattened_req) return result;
+
+  // The resulting requirements need to be passed via a
+  // submit file, so we turn them into a string.
+
+  classad::PrettyPrint res_unp; 
+
+  res_unp.Unparse(result, flattened_req);
+  return result;
+}
+
 std::auto_ptr<classad::ClassAd>
 f_resolve_mm(classad::ClassAd const& input_ad)
 try {
@@ -251,6 +310,25 @@ try {
   requestad::set_ce_id(*result, ce_it->first);
   matchmaking::match_info const& ce_info = ce_it->second;
   classad::ClassAd const* ce_ad = ce_info.getAd();
+
+  try {
+    std::string flatten_result = flatten_requirements(
+                                   *config, 
+                                   &input_ad, 
+                                    ce_ad
+                                 );
+    // Set attribute only if it's not empty, so as not to upset 
+    // condor_submit.
+    if (!flatten_result.empty()) {
+      requestad::set_remote_remote_requirements(
+        *result,
+         flatten_result
+      );
+    }
+  } catch (...) {
+    // Let's leave remote_remote_requirements undefined if
+    // anything went wrong.
+  }
 
   try {
 
