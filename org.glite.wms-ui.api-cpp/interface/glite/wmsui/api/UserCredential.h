@@ -50,8 +50,10 @@ namespace api {
 
 class  UserCredential{
   public:
-	/** Empty Constructor*/
-	UserCredential() {proxy_file=NULL;};
+	/** Default Constructor*/
+	UserCredential() ;
+	/** Default Destructor*/
+	UserCredential::~UserCredential();
 	/**Check if the Proxy Certificate is valid
 	* @param   cred_path   the whole path of the proxy Certificate (if different from the default one)
 	* @throws ProxyException   The proxy certificate is not valid
@@ -140,9 +142,8 @@ class  UserCredential{
 
 
    private:
-	proxy_cred_desc *            pcd ;
-	char *                                proxy_file ;
-	struct stat                         stx;
+	char *                              proxy_file ;
+	struct stat                        stx;
 	static pthread_mutex_t     mutex;
 	void load_voms ( vomsdata& d ) ;
 	static std::vector <std::string> load_groups( voms &v ) ;

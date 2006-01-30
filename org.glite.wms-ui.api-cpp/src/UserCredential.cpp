@@ -69,6 +69,18 @@ const char* getProxy ( const string &cred_path){
 
 }
 /******************************************************************
+Default Constructor*
+*******************************************************************/
+UserCredential::UserCredential(){
+	proxy_file = NULL;
+}
+/******************************************************************
+Default Destructor
+*******************************************************************/
+UserCredential::~UserCredential(){
+	if (proxy_file){free(proxy_file);}
+}
+/******************************************************************
  method: checkProxy
 *******************************************************************/
 int UserCredential::checkProxy (const string& cred_path){
