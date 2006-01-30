@@ -605,12 +605,11 @@ try {
       exec.append(executable.substr(pos+2));
     }
  
+    jw.reset(new JobWrapper(exec));
     if (llrmstype == "lsf") {
-      jw.reset(new JobWrapper(exec));
       jw->set_job_type(MPI_LSF);
     }
     else if ((llrmstype == "pbs") || (llrmstype == "torque")) {
-      jw.reset(new JobWrapper(exec));
       jw->set_job_type(MPI_PBS);
     } else {
       // not possible;
@@ -648,11 +647,10 @@ try {
     std::string::size_type pos = executable.find("./");
     if (pos == std::string::npos) {
       jw.reset(new JobWrapper(executable));
-      jw->set_job_type(INTERACTIVE);
     } else {
       jw.reset(new JobWrapper(executable.substr(pos+2)));
-      jw->set_job_type(INTERACTIVE);
     }
+    jw->set_job_type(INTERACTIVE);
   } else {
     jw.reset(new JobWrapper(executable));
       jw->set_job_type(NORMAL);
@@ -746,15 +744,18 @@ try {
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
-  if(b_osb_dest_uri) {
-    jw->set_osb_wildcards_support(false);
-    jw->set_output_sandbox_base_dest_uri(url::URL(""));
-  } else {
+  jw->set_osb_wildcards_support(false);
+  if(!b_osb_dest_uri) {
     // the support for wildcards is deducted by the absence of this attribute
-    jw->set_osb_wildcards_support(true);
-    jw->set_output_sandbox_base_dest_uri(url::URL(jdl::JDL::OSB_BASE_DEST_URI));
+    bool found_in_jdl;
+    std::string osb_base_dest_uri = 
+      jdl::get_output_sandbox_base_dest_uri(*m_ad, found_in_jdl);
+    if(found_in_jdl && !osb_base_dest_uri.empty()) {
+      jw->set_osb_wildcards_support(true);
+      jw->set_output_sandbox_base_dest_uri(url::URL(osb_base_dest_uri));
+    }
   }
- 
+
   //check if there is the protocol in the inputsandbox path.
   //if no the protocol gsiftp:// is added to the inputsandboxpath.
   try { 
