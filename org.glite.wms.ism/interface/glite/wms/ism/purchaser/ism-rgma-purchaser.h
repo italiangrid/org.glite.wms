@@ -72,65 +72,59 @@ public:
 class gluece_query
 {
 private:
-   static gluece_query* m_gluece_query;
-   glite::rgma::Consumer* m_gluece_consumer;
-   gluece_query() { m_gluece_consumer = NULL; m_gluece_query_status = false;}
-   bool m_gluece_query_status;
-   void set_gluece_query_status( bool b) { m_gluece_query_status = b; }
+   static gluece_query* m_query;
+   glite::rgma::Consumer* m_consumer;
+   gluece_query() { m_consumer = NULL; m_query_status = false;}
+   bool m_query_status;
+   void set_query_status( bool b) { m_query_status = b; }
 public:
-   static gluece_query* get_gluece_query_instance();
-   bool refresh_gluece_query(int rgma_query_timeout);
-   bool refresh_gluece_consumer(int rgma_consumer_ttl);
-   bool pop_gluece_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_gluece_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_gluece_consumer() { return m_gluece_consumer; }
-   bool get_gluece_query_status() { return m_gluece_query_status; }
-   ~gluece_query() { if (m_gluece_consumer != NULL) {m_gluece_consumer->close(); delete m_gluece_consumer;} }
-   static void destroy_gluece_query_instance() { if (m_gluece_query != NULL ) delete m_gluece_query; }
+   static gluece_query* get_query_instance();
+   bool refresh_query(int rgma_query_timeout);
+   bool refresh_consumer(int rgma_consumer_ttl);
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
+   glite::rgma::Consumer* get_consumer() { return m_consumer; }
+   bool get_query_status() { return m_query_status; }
+   ~gluece_query(); 
+   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
 };
 
 class AccessControlBaseRule_query
 {
 private:
-   static AccessControlBaseRule_query* m_AccessControlBaseRule_query;
-   glite::rgma::Consumer* m_AccessControlBaseRule_consumer;
-   AccessControlBaseRule_query() { m_AccessControlBaseRule_consumer = NULL; 
-                                   m_AccessControlBaseRule_query_status = false;}
-   bool m_AccessControlBaseRule_query_status;
-   void set_AccessControlBaseRule_query_status( bool b) { m_AccessControlBaseRule_query_status = b; }
+   static AccessControlBaseRule_query* m_query;
+   glite::rgma::Consumer* m_consumer;
+   AccessControlBaseRule_query() { m_consumer = NULL; 
+                                   m_query_status = false;}
+   bool m_query_status;
+   void set_query_status( bool b) { m_query_status = b; }
 public:
-   static AccessControlBaseRule_query* get_AccessControlBaseRule_query_instance();
-   bool refresh_AccessControlBaseRule_query(int rgma_query_timeout);
-   bool refresh_AccessControlBaseRule_consumer(int rgma_consumer_ttl);
-   bool pop_AccessControlBaseRule_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_AccessControlBaseRule_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_AccessControlBaseRule_consumer() { return m_AccessControlBaseRule_consumer; }
-   bool get_AccessControlBaseRule_query_status() { return m_AccessControlBaseRule_query_status; }
-   ~AccessControlBaseRule_query() { if (m_AccessControlBaseRule_consumer != NULL) {
-                                       m_AccessControlBaseRule_consumer->close(); delete m_AccessControlBaseRule_consumer;
-                                    } 
-                                  }
-   static void destroy_AccessControlBaseRule_query_instance() { if (m_AccessControlBaseRule_query != NULL ) delete m_AccessControlBaseRule_query; }
+   static AccessControlBaseRule_query* get_query_instance();
+   bool refresh_query(int rgma_query_timeout);
+   bool refresh_consumer(int rgma_consumer_ttl);
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
+   glite::rgma::Consumer* get_consumer() { return m_consumer; }
+   bool get_query_status() { return m_query_status; }
+   ~AccessControlBaseRule_query(); 
+   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
 };
 
 class SubCluster_query
 {
 private:
-   static SubCluster_query* m_SubCluster_query;
-   glite::rgma::Consumer* m_SubCluster_consumer;
-   SubCluster_query() { m_SubCluster_consumer = NULL; m_SubCluster_query_status = false;}
-   bool m_SubCluster_query_status;
-   void set_SubCluster_query_status( bool b) { m_SubCluster_query_status = b; }
+   static SubCluster_query* m_query;
+   glite::rgma::Consumer* m_consumer;
+   SubCluster_query() { m_consumer = NULL; m_query_status = false;}
+   bool m_query_status;
+   void set_query_status( bool b) { m_query_status = b; }
 public:
-   static SubCluster_query* get_SubCluster_query_instance();
-   bool refresh_SubCluster_query(int rgma_query_timeout);
-   bool refresh_SubCluster_consumer(int rgma_consumer_ttl);
-   bool pop_SubCluster_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_SubCluster_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_SubCluster_consumer() { return m_SubCluster_consumer; }
-   bool get_SubCluster_query_status() { return m_SubCluster_query_status; }
-   ~SubCluster_query() { if (m_SubCluster_consumer != NULL) {m_SubCluster_consumer->close(); delete m_SubCluster_consumer;} }
-   static void destroy_SubCluster_query_instance() { if (m_SubCluster_query != NULL ) delete m_SubCluster_query; }
+   static SubCluster_query* get_query_instance();
+   bool refresh_query(int rgma_query_timeout);
+   bool refresh_consumer(int rgma_consumer_ttl);
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
+   glite::rgma::Consumer* get_consumer() { return m_consumer; }
+   bool get_query_status() { return m_query_status; }
+   ~SubCluster_query(); 
+   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
 };
 
 
@@ -138,47 +132,43 @@ public:
 class SoftwareRunTimeEnvironment_query
 {
 private:
-   static SoftwareRunTimeEnvironment_query* m_SoftwareRunTimeEnvironment_query;
-   glite::rgma::Consumer* m_SoftwareRunTimeEnvironment_consumer;
-   SoftwareRunTimeEnvironment_query() { m_SoftwareRunTimeEnvironment_consumer = NULL; 
-                                        m_SoftwareRunTimeEnvironment_query_status = false;}
-   bool m_SoftwareRunTimeEnvironment_query_status;
-   void set_SoftwareRunTimeEnvironment_query_status( bool b) { m_SoftwareRunTimeEnvironment_query_status = b; }
+   static SoftwareRunTimeEnvironment_query* m_query;
+   glite::rgma::Consumer* m_consumer;
+   SoftwareRunTimeEnvironment_query() { m_consumer = NULL; 
+                                        m_query_status = false;}
+   bool m_query_status;
+   void set_query_status( bool b) { m_query_status = b; }
 public:
-   static SoftwareRunTimeEnvironment_query* get_SoftwareRunTimeEnvironment_query_instance();
-   bool refresh_SoftwareRunTimeEnvironment_query(int rgma_query_timeout);
-   bool refresh_SoftwareRunTimeEnvironment_consumer(int rgma_consumer_ttl);
-   bool pop_SoftwareRunTimeEnvironment_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_SoftwareRunTimeEnvironment_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_SoftwareRunTimeEnvironment_consumer() { return m_SoftwareRunTimeEnvironment_consumer; }
-   bool get_SoftwareRunTimeEnvironment_query_status() { return m_SoftwareRunTimeEnvironment_query_status; }
-   ~SoftwareRunTimeEnvironment_query() { if (m_SoftwareRunTimeEnvironment_consumer != NULL) {
-                                            m_SoftwareRunTimeEnvironment_consumer->close(); 
-                                            delete m_SoftwareRunTimeEnvironment_consumer;
-                                         }
-                                       }
-   static void destroy_SoftwareRunTimeEnvironment_query_instance() { if (m_SoftwareRunTimeEnvironment_query != NULL ) delete m_SoftwareRunTimeEnvironment_query; }
+   static SoftwareRunTimeEnvironment_query* get_query_instance();
+   bool refresh_query(int rgma_query_timeout);
+   bool refresh_consumer(int rgma_consumer_ttl);
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
+   bool pop_all_tuples ( glite::rgma::ResultSet & out);
+   glite::rgma::Consumer* get_consumer() { return m_consumer; }
+   bool get_query_status() { return m_query_status; }
+   ~SoftwareRunTimeEnvironment_query(); 
+   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
 };
 
 
 class CESEBind_query
 {
 private:
-   static CESEBind_query* m_CESEBind_query;
-   glite::rgma::Consumer* m_CESEBind_consumer;
-   CESEBind_query() { m_CESEBind_consumer = NULL; m_CESEBind_query_status = false;}
-   bool m_CESEBind_query_status;
-   void set_CESEBind_query_status( bool b) { m_CESEBind_query_status = b; }
+   static CESEBind_query* m_query;
+   glite::rgma::Consumer* m_consumer;
+   CESEBind_query() { m_consumer = NULL; m_query_status = false;}
+   bool m_query_status;
+   void set_query_status( bool b) { m_query_status = b; }
 public:
-   static CESEBind_query* get_CESEBind_query_instance();
-   bool refresh_CESEBind_query(int rgma_query_timeout);
-   bool refresh_CESEBind_consumer(int rgma_consumer_ttl);
-   bool pop_CESEBind_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_CESEBind_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_CESEBind_consumer() { return m_CESEBind_consumer; }
-   bool get_CESEBind_query_status() { return m_CESEBind_query_status; }
-   ~CESEBind_query() { if (m_CESEBind_consumer != NULL) {m_CESEBind_consumer->close(); delete m_CESEBind_consumer;} }
-   static void destroy_CESEBind_query_instance() { if (m_CESEBind_query != NULL ) delete m_CESEBind_query; }
+   static CESEBind_query* get_query_instance();
+   bool refresh_query(int rgma_query_timeout);
+   bool refresh_consumer(int rgma_consumer_ttl);
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
+   bool pop_all_tuples ( glite::rgma::ResultSet & out);
+   glite::rgma::Consumer* get_consumer() { return m_consumer; }
+   bool get_query_status() { return m_query_status; }
+   ~CESEBind_query(); 
+   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
 };
 
                                                                                                              
