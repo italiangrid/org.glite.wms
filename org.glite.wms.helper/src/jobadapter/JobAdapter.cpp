@@ -244,7 +244,7 @@ try {
   /* Mandatory */
   /* job id is mandatory to build the globusrsl string and to create the */
   /* job wrapper                                                         */
-  string job_id(jdl::get_edg_jobid(*m_ad));
+  std::string job_id(jdl::get_edg_jobid(*m_ad));
   if (job_id.empty()) {
     throw helper::InvalidAttributeValue(jdl::JDL::JOBID,
                                         job_id,
@@ -321,7 +321,7 @@ try {
     jdl::set_remote_remote_edg_jobid(*result, job_id);
     // Virtual Organization is used to compose remote Condor daemons
     // unique name, but we don't really care if it's empty
-    string vo(jdl::get_virtual_organisation(*m_ad));
+    std::string vo(jdl::get_virtual_organisation(*m_ad));
     if (!vo.empty()) {
       jdl::set_remote_remote_virtual_organisation(*result, vo);
     }
@@ -352,7 +352,7 @@ try {
       jdl::set_remote_remote_stagecmd(*result, true);
       // Transfer the CE remaining ("flattened") requirements as well.
       try {
-        string rreq(jdl::get_remote_remote_requirements(*m_ad));
+        std::string rreq(jdl::get_remote_remote_requirements(*m_ad));
         jdl::set_remote_remote_requirements(*result, rreq);
       } catch (jdl::CannotGetAttribute const& e) {
         // Ignore the remote_remote_requirements if they aren't there.
@@ -371,7 +371,7 @@ try {
                                           helper_id);
     }
 
-    string hostcertificatesubjectvo(local_host_name);
+    std::string hostcertificatesubjectvo(local_host_name);
     hostcertificatesubjectvo.append("/");
     hostcertificatesubjectvo.append(certificatesubject);
     hostcertificatesubjectvo.append("/");

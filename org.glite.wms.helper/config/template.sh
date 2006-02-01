@@ -654,9 +654,9 @@ echo "job exit status = ${status}" >> "${maradona}"
 file_size_acc=0
 total_files=${#__output_file[@]}
 current_file=0
-# comment this one below if the osb order list originally 
-# specified may be of some relevance to the user
-sort_by_size __output_file ${workdir}
+# uncomment this one below if the osb order list originally 
+# specified is not of some relevance to the user
+#sort_by_size __output_file ${workdir}
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then

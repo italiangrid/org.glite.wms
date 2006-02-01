@@ -267,7 +267,7 @@ dump(std::ostream& os,
   int i = 0;
 
   for(typename std::vector<T>::const_iterator it = values.begin(); it != values.end() ; ++it )  {
-    os << name << '[' << i << "]=" << *it << "\n";
+    os << name << '[' << i << "]=" << *it << '\n';
     ++i;
   }
 
@@ -390,6 +390,7 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
     dump(os, "__osb_wildcards_support", m_osb_wildcards_support) &&
+    dump(os, "__output_sandbox_base_dest_uri", m_output_sandbox_base_dest_uri) &&
     dump(os, "__job_type", m_job_type);
 }
 
@@ -427,10 +428,11 @@ JobWrapper::print(std::ostream& os) const
   const configuration::WMConfiguration* const wm_config
     = configuration::Configuration::instance()->wm();
 
-  if ( !fill_out_script( 
+  if( !fill_out_script( 
                        wm_config->job_wrapper_template_dir() 
                        + 
-                       "/template.sh" ,os) )
+                       "/template.sh" ,os)
+  )
   {
     os << "echo \"Generic error occurred while writing template\"\n";
   }
