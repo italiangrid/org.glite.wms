@@ -21,6 +21,10 @@
 class Topic;
 class Policy;
 
+namespace log4cpp {
+class Category;
+};
+
 namespace glite {
   namespace wms {
     namespace ice {
@@ -33,8 +37,9 @@ namespace glite {
 		iceConfManager* conf;
 		Topic* T;
 		Policy* P;
+		log4cpp::Category *log_dev;
 
-		public:
+	  public:
 		subscriptionUpdater(const std::string& cert);
 
 		virtual ~subscriptionUpdater() {}

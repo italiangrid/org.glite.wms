@@ -80,11 +80,11 @@ int main(int argc, char*argv[]) {
     hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
   } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
     logger_instance->log(log4cpp::Priority::ERROR, 
-			 "Unable to extract user DN from Proxy File " 
+			 "Unable to extract user DN from Proxy File "
 			 + hostcert, true, true, true);
     exit(1);
   }
-  log_dev->log(log4cpp::Priority::INFO, 
+  log_dev->log(log4cpp::Priority::INFO,
                string("Host proxyfile is [") + hostcert + "]" );
   log_dev->log(log4cpp::Priority::INFO, 
                string("Host DN is ["+hostdn+"]") );
@@ -95,13 +95,12 @@ int main(int argc, char*argv[]) {
    ****************************************************************************/ 
   string jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
   string jsnapfile  = jcachefile+".snapshot";
-  log_dev->infoStream() 
-      << "Initializing jobCache with journal file ["
-      << jcachefile 
-      << "] and snapshot file ["
-      << jsnapfile
-      << "]..." 
-      << log4cpp::CategoryStream::ENDLINE;
+  log_dev->infoStream() << "Initializing jobCache with journal file ["
+  			<< jcachefile
+			<< "] and snapshot file ["
+   			<< jsnapfile
+			<< "]..."
+			<< log4cpp::CategoryStream::ENDLINE;
 
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);

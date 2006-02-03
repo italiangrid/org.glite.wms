@@ -104,18 +104,18 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
     if(endaccept) {
         log_dev->infoStream()
             << "eventStatusListener::acceptJobStatus() - "
-            << "eventStatusListener is ending"         
+            << "eventStatusListener is ending"
             << log4cpp::CategoryStream::ENDLINE;
       return;
     } else
-        log_dev->infoStream() 
+        log_dev->infoStream()
             << "eventStatusListener::acceptJobStatus()"
             << " - CEConsumer::Accept() returned false."
             << log4cpp::CategoryStream::ENDLINE;
 	return;
   }
-  
-  log_dev->infoStream() 
+
+  log_dev->infoStream()
       << "eventStatusListener::acceptJobStatus() - "
       << "Connection accepted from ["
       << this->getClientIP() << "]"
@@ -130,12 +130,12 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 			   << "ErrorCode=["
 			   << this->getErrorCode() << "]"
 			   << log4cpp::CategoryStream::ENDLINE;
-    
+
     log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
 			   << "ErrorMessage=["
 			   << this->getErrorMessage() << "]"
 			   << log4cpp::CategoryStream::ENDLINE;
-    this->reset();
+    //this->reset();
     return;
   }
   
@@ -146,7 +146,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   if(!this->getEventTopic()) {
     log_dev->fatalStream() << "eventStatusListener::acceptJobStatus() - "
 			   << "NULL Topic received. Ignoring this notification...." ;
-    this->reset();
+    //this->reset();
     return;
   }
 
@@ -161,7 +161,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 			    << " that differs from the ICE's topic "
 			    << "official name. Ignoring this notification."
 			    << log4cpp::CategoryStream::ENDLINE;
-      this->reset();
+      //this->reset();
       return;
     }
 
@@ -183,19 +183,33 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
     // the following function extract from the classad Ad the
     // creamjobid and status and put them into the 1st and 2nd
     // arguments respectively
-    parseEventJobStatus(cream_job_id, status, tstamp, Ad);
-    
+    try {parseEventJobStatus(cream_job_id, status, tstamp, Ad);}
+    catch(iceUtil::ClassadSyntax_ex& ex) {
+	log_dev->errorStream() << "Error parsing notification Message ["
+	                       <<evts[j].Messages[evts[j].Messages.size()-1]
+			       << "]. Ignoring it...";
+	//this->reset();
+	return;
+    }
+
+    //cout << "cream_job_id=" << cream_job_id << " status="<<status << " tstamp="<<tstamp<<endl;
+
     jobCache::iterator it;
+//log_dev->infoStream() << "Entering try..."<<log4cpp::CategoryStream::ENDLINE;
     try {
+      //log_dev->infoStream() << "Acquiring mutexJobStatusUpdate..."<<log4cpp::CategoryStream::ENDLINE;
       boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
+	//log_dev->infoStream() << "Acquired!"<<log4cpp::CategoryStream::ENDLINE;
       it = jobCache::getInstance()->lookupByCreamJobID(cream_job_id);
       if( it == jobCache::getInstance()->end())
 	{
 	  log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
 				 << "Not found in the cache the creamjobid ["
-				 << cream_job_id<<"] that should be there. Stop!"
+				 << cream_job_id<<"] that should be there. Ignoring this notification..."
 				 << log4cpp::CategoryStream::ENDLINE;
-	  exit(1);
+	  //this->reset();
+	  return;
+	  //exit(1);
 	}
       log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
       			    << "Updating job ["<<cream_job_id
@@ -217,7 +231,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
      * See CEConsumer's class for the purpose of this method
      */
   } // Loop over all events
-  this->reset();
+  //this->reset();
 }
 
 //______________________________________________________________________________
@@ -440,7 +454,7 @@ void iceUtil::eventStatusListener::parseEventJobStatus(string& cream_job_id, str
     throw(iceUtil::ClassadSyntax_ex&)
 {
     classad::ClassAd *ad = parser.ParseClassAd( _classad );
-    double tstamp_d;
+    //double tstamp_d;
 
     if (!ad)
         throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
@@ -451,8 +465,8 @@ void iceUtil::eventStatusListener::parseEventJobStatus(string& cream_job_id, str
     if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status ) )
         throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
 
-    if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
-        throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
-    tstamp = lrint( tstamp_d );
-
+//     if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
+//         throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
+//     tstamp = lrint( tstamp_d );
+    tstamp = time(NULL);
 }
