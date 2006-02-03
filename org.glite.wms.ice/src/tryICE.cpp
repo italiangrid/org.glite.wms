@@ -92,7 +92,7 @@ int main(int argc, char*argv[]) {
    * Initializes job cache
    ****************************************************************************/ 
   string jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
-  string jsnapfile  = iceUtil::iceConfManager::getInstance()->getCachePersistFile()+".snapshot";
+  string jsnapfile  = jcachefile+".snapshot";
   log_dev->infoStream() 
       << "Initializing jobCache with journal file ["
       << jcachefile 
@@ -104,7 +104,9 @@ int main(int argc, char*argv[]) {
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);
   
-  try {iceUtil::jobCache::getInstance();}
+  try {
+      iceUtil::jobCache::getInstance();
+  }
   catch(exception& ex) {
     log_dev->errorStream() << ex.what() << log4cpp::CategoryStream::ENDLINE;
   }
@@ -174,14 +176,7 @@ int main(int argc, char*argv[]) {
   /*
    * Initializes the L&B logger (this code is not compiled at the moment)
    */
-#ifdef DO_NOT_COMPILE
   iceUtil::iceEventLogger* iceLogger = iceUtil::iceEventLogger::instance();
-  iceUtil::ProxySet *ps = new iceUtil::ProxySet();
-  ps->ps_x509Proxy = "/tmp/x509up_u219";
-  ps->ps_x509Key = "/home/marzolla/.globus/userkey.pem";
-  ps->ps_x509Cert = "/home/marzolla/.globus/usercert.pem";
-  iceLogger->initialize_ice_context( ps );
-#endif
 
   /*****************************************************************************
    * Main loop that fetch requests from input filelist, submit/cancel the jobs,
@@ -213,7 +208,7 @@ int main(int argc, char*argv[]) {
 	continue;
       }
       try {
-          cmd->execute( );
+          cmd->execute( iceManager );
       } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
           log_dev->errorStream()
               << "Command execution got FATAL exception: "

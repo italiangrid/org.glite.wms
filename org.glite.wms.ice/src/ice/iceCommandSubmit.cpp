@@ -1,14 +1,23 @@
+// Local includes
 #include "iceCommandSubmit.h"
 #include "subscriptionCache.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "creamJob.h"
 #include "eventStatusListener.h"
+#include "iceEventLogger.h"
+
+// Other glite includes
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "glite/ce/cream-client-api-c/CEUrl.h"
+
+// Boost stuff
 #include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
-#include "glite/ce/cream-client-api-c/CEUrl.h"
+#include "boost/format.hpp"
+
+// C++ stuff
 #include <ctime>
 #include <netdb.h>
 #include <cstring> // for memset
@@ -17,19 +26,22 @@ extern int h_errno;
 
 using namespace glite::wms::ice;
 using namespace std;
-using namespace glite::ce::cream_client_api;
+
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
+namespace cream_api = glite::ce::cream_client_api;
+namespace api_util = glite::ce::cream_client_api::util;
+namespace ice_util = glite::wms::ice::util;
 
 //______________________________________________________________________________
-iceCommandSubmit::iceCommandSubmit( const std::string& request )
+iceCommandSubmit::iceCommandSubmit( const string& request )
   throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
   iceAbsCommand( ),
-  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-  confMgr(glite::wms::ice::util::iceConfManager::getInstance()),
+  log_dev( api_util::creamApiLogger::instance()->getLogger()),
+  confMgr( ice_util::iceConfManager::getInstance()),
   ceS(),
-  T(glite::wms::ice::util::iceConfManager::getInstance()->getICETopic()),
-  P(5000)
-    //    _ev_logger( util::iceEventLogger::instance() )
+  T( confMgr->getICETopic()),
+  P(5000),
+  _ev_logger( ice_util::iceEventLogger::instance() )
 {
     char name[256];
     memset((void*)name, 0, 256);
@@ -43,14 +55,14 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request )
     }
     struct hostent *H = gethostbyname(name);
     if(!H) {
-      log_dev->fatalStream() << "iceCommandSubmit::CTOR() - Couldn't resolve local hostname: "
-                             << strerror(h_errno)
-                             << log4cpp::CategoryStream::ENDLINE;
-      exit(1);
+        log_dev->fatalStream() << "iceCommandSubmit::CTOR() - Couldn't resolve local hostname: "
+                               << strerror(h_errno)
+                               << log4cpp::CategoryStream::ENDLINE;
+        exit(1);
     }
-    ostringstream os("");
-    os << "http://" << H->h_name << ":" << confMgr->getListenerPort();
-    myname_url = os.str();
+    
+    myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
+
     // Sample classad:
     // ( this is the NEW version )
     //  [ requirements = ( ( ( ( other.GlueCEInfoHostName == "lxb2022.cern.ch" ) ) ) && ( other.GlueCEStateStatus == "Production" ) ) && ( other.GlueCEStateStatus == "Production" );
@@ -78,196 +90,217 @@ iceCommandSubmit::iceCommandSubmit( const std::string& request )
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
     if (!_rootAD)
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
+        throw ice_util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
 
     string _commandStr;
     // Parse the "command" attribute
     if ( !_rootAD->EvaluateAttrString( "command", _commandStr ) ) {
-        throw util::JobRequest_ex("attribute 'command' not found or is not a string");
+        throw ice_util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
     boost::trim_if( _commandStr, boost::is_any_of("\"") );
 
     if ( 0 != _commandStr.compare( "jobsubmit" ) ) {
-        throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
+        throw ice_util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
     }
 
     string _versionStr;
     // Parse the "version" attribute
     if ( !_rootAD->EvaluateAttrString( "version", _versionStr ) ) {
-        throw util::JobRequest_ex("attribute 'version' not found or is not a string");
+        throw ice_util::JobRequest_ex("attribute 'version' not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
     if ( _versionStr.compare("1.0.0") ) {
-        throw util::JobRequest_ex("Wrong \"version\" for jobRequest: expected 1.0.0, got " + _versionStr );
+        throw ice_util::JobRequest_ex("Wrong \"version\" for jobRequest: expected 1.0.0, got " + _versionStr );
     }
 
     classad::ClassAd *_argumentsAD = 0;
     // Parse the "arguments" attribute
     if ( !_rootAD->EvaluateAttrClassAd( "arguments", _argumentsAD ) ) {
-        throw util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
+        throw ice_util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
     }
 
     classad::ClassAd *_adAD = 0;
     // Look for "ad" attribute inside "arguments"
     if ( !_argumentsAD->EvaluateAttrClassAd( "ad", _adAD ) ) {
-        throw util::JobRequest_ex("Attribute 'ad' not found inside 'arguments', or is not a classad" );
+        throw ice_util::JobRequest_ex("Attribute 'ad' not found inside 'arguments', or is not a classad" );
     }
 
     // initializes the _jdl attribute
     classad::ClassAdUnParser unparser;
     unparser.Unparse( _jdl, _argumentsAD->Lookup( "ad" ) );
 
-    // Look for "id" attribute inside "ad"
-    if ( !_adAD->EvaluateAttrString( "edg_jobid", _gridJobId ) ) {
-        throw util::JobRequest_ex( "attribute 'edg_jobid' inside 'ad' not found, or is not a string" );
-    }
-    boost::trim_if(_gridJobId, boost::is_any_of("\"") );
 }
 
 //______________________________________________________________________________
-void iceCommandSubmit::execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-  try {
-    vector<string> url_jid;
-
     log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
 
-    util::CreamJob theJob( _jdl,
-			   "",
-			   /* _gridJobId, */
-			   job_statuses::UNKNOWN,
-			   time(NULL));
-#ifdef DO_NOT_COMPILE
-    log_dev->log( log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Logging event to L&B service" );
+    vector<string> url_jid;
+    ice_util::CreamJob theJob;
+    cream_api::soap_proxy::CreamProxy* theProxy = cream_api::soap_proxy::CreamProxyFactory::getProxy();
+
     try {
-        _ev_logger->execute_event( _gridJobId.c_str(), "grid005.pd.infn.it" );
-    } catch( util::iceLoggerException& ex ) {
-        log_dev->errorStream() << "iceCommandSubmit::execute() - L&B thrown exception: "
+        theJob.setJdl( _jdl );
+        theJob.setStatus( cream_api::job_statuses::UNKNOWN, time(NULL) );
+    } catch( ice_util::ClassadSyntax_ex ex ) {
+        log_dev->errorStream() << "Cannot instantiate a job from jdl="
+                               << _jdl
+                               << " due to classad excaption: "
                                << ex.what()
                                << log4cpp::CategoryStream::ENDLINE;
+        throw( iceCommandFatal_ex( ex.what() ) );
+        // TODO: L&B?
     }
-#endif
 
-    string modified_jdl = creamJdlHelper( _jdl );
+    log_dev->infoStream() << "iceCommandSubmit::execute() - Registering "
+                          << "gridJobID=\"" << theJob.getGridJobID()
+                          << "\" to L&B service with user proxy=\"" 
+                          << theJob.getUserProxyCertificate() 
+                          << "\""
+                          << log4cpp::CategoryStream::ENDLINE;        
 
+    _ev_logger->registerJob( theJob ); // FIXME: to be removed
+    _ev_logger->cream_transfer_start_event( theJob );
+
+    string modified_jdl;
+    try {    
+        modified_jdl = creamJdlHelper( _jdl );
+    } catch( ice_util::ClassadSyntax_ex ex ) {
+        log_dev->errorStream() << "Cannot convert jdl="
+                               << _jdl
+                               << " due to classad exception:"
+                               << ex.what()
+                               << log4cpp::CategoryStream::ENDLINE;
+        _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
+        throw( iceCommandFatal_ex( ex.what() ) );
+    }
+    
     log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting");
     log_dev->debugStream() << "JDL " << modified_jdl
                            << " to [" << theJob.getCreamURL() <<"]["
                            << theJob.getCreamDelegURL() << "]"
                            << log4cpp::CategoryStream::ENDLINE;
+    
+    try {
+        theProxy->Authenticate(theJob.getUserProxyCertificate());
+    } catch ( cream_api::soap_proxy::auth_ex ex ) {
+        _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
+        log_dev->errorStream()
+            << "Unable to submit gridJobID=" << theJob.getGridJobID()
+            << " due to authentication error:" << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        throw( iceCommandFatal_ex( ex.what() ) );
+    }
+    
+    { 
+        // lock the listener:
+        // this prevents the eventStatusListener::acceptJobStatus()
+        // to process a notification of a just submitted job that is not
+        // yet present in the jobCache
+        boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
+        try {
+            theProxy->Register(
+                               theJob.getCreamURL().c_str(),
+                               theJob.getCreamDelegURL().c_str(),
+                               "", // deleg ID not needed because this client
+                               // will always do auto_delegation
+                               modified_jdl,
+                               theJob.getUserProxyCertificate(),
+                               url_jid,
+                               true /*autostart*/
+                               );
+        } catch( exception ex ) {
+            log_dev->errorStream()
+                << "Cannot register jobID="
+                << theJob.getGridJobID()
+                << " Exception:" << ex.what()
+                << log4cpp::CategoryStream::ENDLINE;
+            _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
+        }
 
+        log_dev->infoStream()
+            << "iceCommandSubmit::execute() - Returned CREAM-JOBID ["
+            << url_jid[1] <<"]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        // no failure: put jobids and status in cache
+        // and remove last request from WM's filelist
+        
+        theJob.setJobID(url_jid[1]);
+        theJob.setStatus(cream_api::job_statuses::PENDING, time(NULL) );
 
-    soap_proxy::CreamProxyFactory::getProxy()->Authenticate(theJob.getUserProxyCertificate());
+        _ev_logger->cream_transfer_ok_event( theJob );
+        _ev_logger->cream_accepted_event( theJob );
 
-    { // lock the listener:
-      // this prevents the eventStatusListener::acceptJobStatus()
-      // to process a notification of a just submitted job that is not
-      // yet present in the jobCache
-      boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
-      soap_proxy::CreamProxyFactory::getProxy()->Register(
-	theJob.getCreamURL().c_str(),
-	theJob.getCreamDelegURL().c_str(),
-        "", // deleg ID not needed because this client
-        // will always do auto_delegation
-        modified_jdl,
-        theJob.getUserProxyCertificate(),
-        url_jid,
-        true /*autostart*/
-        );
-
-      log_dev->log(log4cpp::Priority::INFO,
-		 string("iceCommandSubmit::execute() - Returned CREAM-JOBID ["+url_jid[1]+"]"));
-
-      // no failure: put jobids and status in cache
-      // and remove last request from WM's filelist
-
-      theJob.setJobID(url_jid[1]);
-      theJob.setStatus(job_statuses::PENDING);
-      theJob.setLastUpdate(time(NULL));
-      boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-
-      // put(...) accepts arg by reference, but
-      // the implementation puts the arg in the memory hash by copying it. So
-      // passing a *pointer should not produce problems
-      util::jobCache::getInstance()->put( theJob );
+        boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+        
+        // put(...) accepts arg by reference, but
+        // the implementation puts the arg in the memory hash by copying it. So
+        // passing a *pointer should not produce problems
+        util::jobCache::getInstance()->put( theJob );
     } // this end-scope unlock the listener that now can
-
+    
     /**
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications
      * of job just submitted
      */
-     /* ....... */
-     string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
-                        + confMgr->getCEMonUrlPostfix();
-     if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
-	/* MUST SUBSCRIBE TO THIS CEMON */
-	log_dev->infoStream() << "iceCommandSubmit::execute() - Not subscribed to ["
-	 		      << cemon_url << "]. Going to subscribe to it..."
-			      << log4cpp::CategoryStream::ENDLINE;
+    /* ....... */
+    string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+        + confMgr->getCEMonUrlPostfix();
+    if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+        /* MUST SUBSCRIBE TO THIS CEMON */
+        log_dev->infoStream() 
+            << "iceCommandSubmit::execute() - Not subscribed to ["
+            << cemon_url << "]. Going to subscribe to it..."
+            << log4cpp::CategoryStream::ENDLINE;
+        try {
+            ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
+            ceS.setServiceURL(cemon_url);
+            ceS.setSubscribeParam(myname_url.c_str(),
+                                  T,
+                                  P,
+                                  confMgr->getSubscriptionDuration()
+                                  );
+            log_dev->infoStream() 
+                << "iceCommandSubmit::execute() - Subscribing the consumer ["
+                << myname_url << "] to ["<<cemon_url
+                << "] with duration="
+                << confMgr->getSubscriptionDuration()
+                << " secs"
+                << log4cpp::CategoryStream::ENDLINE;
+            ceS.subscribe();
+            log_dev->infoStream() 
+                << "iceCommandSubmit::execute() - Subscribed with ID ["
+                << ceS.getSubscriptionID() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+        
+            glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
+        } catch( exception ex ) {
+            log_dev->errorStream()
+                << "Problem while subscribing to notifications for jobID="
+                << theJob.getGridJobID()
+                << " Exception:" << ex.what() 
+                << log4cpp::CategoryStream::ENDLINE;
+        }
+    }
 
-	ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
-        ceS.setServiceURL(cemon_url);
-	ceS.setSubscribeParam(myname_url.c_str(),
-	                      T,
-		   	      P,
-			      confMgr->getSubscriptionDuration()
-			      );
-	log_dev->infoStream() << "iceCommandSubmit::execute() - Subscribing the consumer ["
-                                  << myname_url << "] to ["<<cemon_url
-                                  << "] with duration="
-                                  << confMgr->getSubscriptionDuration()
-                                  << " secs"
-                                  << log4cpp::CategoryStream::ENDLINE;
-	ceS.subscribe();
-	log_dev->infoStream() << "iceCommandSubmit::execute() - Subscribed with ID ["
-                                  << ceS.getSubscriptionID() << "]"
-                                  << log4cpp::CategoryStream::ENDLINE;
-
-	glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
-     }
-  } catch(util::ClassadSyntax_ex& ex) {
-      throw iceCommandFatal_ex( string("ClassadSyntax_ex: ") + ex.what() );
-  } catch(soap_proxy::auth_ex& ex) {
-      throw iceCommandFatal_ex( ex.what() );
-  } catch(soap_proxy::soap_ex& ex) {
-      throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
-      // MUST LOG TO LB
-      // HERE MUST RESUBMIT
-  } catch(cream_exceptions::BaseException& base) {
-      throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
-      // MUST LOG TO LB
-  } catch(cream_exceptions::InternalException& intern) {
-      throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
-      // MUST LOG TO LB
-  } catch(util::jnlFile_ex& ex) {
-      throw iceCommandFatal_ex( string("jnlFile_ex: ") + ex.what() );
-  } catch(util::jnlFileReadOnly_ex& ex) {
-      throw iceCommandFatal_ex( string("jnlFileReadOnly_ex: ") + ex.what() );
-  } catch(AuthenticationInitException& ex) {
-      log_dev->fatalStream() << "iceCommandSubmit::execute() - AuthN Error: "
-                             << ex.what() << log4cpp::CategoryStream::ENDLINE;
-      exit(1);
-  } catch(exception& ex) {
-      log_dev->fatalStream() << "iceCommandSubmit::execute() - Subscription Error: "
-                             << ex.what() << log4cpp::CategoryStream::ENDLINE;
-      exit(1);
-  }
 }
 
 //______________________________________________________________________________
-string iceCommandSubmit::creamJdlHelper( const string& oldJdl )
+string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( ice_util::ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
     classad::ClassAd *_root = parser.ParseClassAd( oldJdl );
 
     if ( !_root ) {
-        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+        throw ice_util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
     }
 
     string ceid;
     if ( !_root->EvaluateAttrString( "ce_id", ceid ) ) {
-        throw util::ClassadSyntax_ex( "ce_id attribute not found" );
+        throw ice_util::ClassadSyntax_ex( "ce_id attribute not found" );
     }
     boost::trim_if( ceid, boost::is_any_of("\"") );
 

@@ -60,17 +60,13 @@ int main(int argc, char* argv[]) {
   struct timeval T;
   gettimeofday(&T, 0);
 
-  //long long t = T.tv_sec*1000000 + T.tv_usec
+  // string id( "https://grid005.pd.infn.it:9000/dQX8dGT6u_uzVPyRD7jEiQ" );
 
-  string id = string("JobAlvise-") 
-    + glite::ce::cream_client_api::util::string_manipulation::make_string(T.tv_sec)
-    + "."
-    + glite::ce::cream_client_api::util::string_manipulation::make_string(T.tv_usec);
-  ad->InsertAttr("edg_jobid", id );
+  // ad->InsertAttr("edg_jobid", id );
 
   classad::ClassAdUnParser unp;
   
-  Buf = "";
+  Buf.clear();
   unp.Unparse(Buf, ad);
 
   string request = "[arguments = [ ad = " + Buf

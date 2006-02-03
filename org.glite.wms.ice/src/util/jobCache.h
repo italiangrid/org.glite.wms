@@ -172,7 +172,7 @@ namespace glite {
 
 	  glite::wms::ice::util::jnlFileManager* jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
 
-	  CreamJob unparse(const std::string&) throw(ClassadSyntax_ex&);
+	  // CreamJob unparse(const std::string&) throw(ClassadSyntax_ex&);
 
           /**
            * Serializes a CreamJob object to a string
@@ -180,7 +180,7 @@ namespace glite {
            * @param c the job to serialize
            * @param s the string where the serialized job will be stored
            */
-	  void toString(const CreamJob& c, std::string& s);
+	  // void toString(const CreamJob& c, std::string& s);
 
 	protected:
 	  jobCache( )
@@ -284,34 +284,6 @@ namespace glite {
            * nothing).
            */
           void remove( const iterator& it );
-
-          //
-          // ALL the following methods should be considered OBSOLETE
-          //
-	  void updateStatusByCreamJobID(const std::string& cid, const api::job_statuses::job_status&) throw(elementNotFound_ex&); ///< @deprecated
-
-	  void updateStatusByGridJobID(const std::string& gid, const api::job_statuses::job_status&) throw(elementNotFound_ex&); ///< @deprecated
-
-	  void remove_by_grid_jobid(const std::string&) 
-	    throw (jnlFile_ex&, jnlFileReadOnly_ex&); ///< @deprecated
-
-	  void remove_by_cream_jobid(const std::string&) 
-	    throw (jnlFile_ex&, jnlFileReadOnly_ex&, elementNotFound_ex&); ///< @deprecated
-
-	  bool isFinished_by_grid_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-	  bool isFinished_by_cream_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-
-	  std::string get_grid_jobid_by_cream_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-	  std::string get_cream_jobid_by_grid_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-	  CreamJob getJobByCreamJobID(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-	  CreamJob getJobByGridJobID(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-	  api::job_statuses::job_status 
-	  getStatus_by_cream_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-	  api::job_statuses::job_status
-	  getStatus_by_grid_jobid(const std::string&) throw(elementNotFound_ex&); ///< @deprecated
-          //
-          // end list of OBSOLETE methods
-          //
 
           // Accessors used to expose jobCacheTable iterator methods
 

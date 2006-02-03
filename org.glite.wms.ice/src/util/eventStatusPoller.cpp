@@ -27,14 +27,16 @@ typedef vector<string>::const_iterator cvstrIt;
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
 				     glite::wms::ice::absice* _iceManager,
-				     const int& _d
+				     const int _d
 				     )
   throw(eventStatusPoller_ex&)
   : endpolling(false), 
     delay(_d),
     iceManager(_iceManager),
     creamClient(NULL),
-    log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
+    log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
+    _ev_logger( iceEventLogger::instance() ),
+    cache( jobCache::getInstance() )
 {
   jobs_to_query.reserve(1000);
   url_pieces.reserve(4);
@@ -56,79 +58,83 @@ eventStatusPoller::~eventStatusPoller()
 //______________________________________________________________________________
 bool eventStatusPoller::getStatus(void) 
 {
-  /** 
-   * _jobinfolist is filled with return values of CreamProxy::Info(...)
-   * This call allocates ( via new() ) the object that it returns;
-   * the caller of this call must take care of memory deallocation.
-   */
-  if(_jobinfolist.size()) {
-    for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it)
-      if(*it) delete(*it);
+    /** 
+     * _jobinfolist is filled with return values of CreamProxy::Info(...)
+     * This call allocates ( via new() ) the object that it returns;
+     * the caller of this call must take care of memory deallocation.
+     */
+    if(_jobinfolist.size()) {
+        for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it)
+            if(*it) delete(*it);
     
-  }
-  _jobinfolist.clear();
-  
-  creamClient->clearSoap();
-
-  jobs_to_query.clear();
-  
-  try {
-    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
-  } catch(exception& ex) {
-    log_dev->log(log4cpp::Priority::ERROR,
-		 string("eventStatusPoller::getStatus() - ")+ex.what());
-    exit(1);
-  }
-
-  for(vstrIt it = jobs_to_query.begin(); it != jobs_to_query.end(); ++it)
-    {
-      oneJobToQuery.clear();
-      try {
-	CreamJob theJob = jobCache::getInstance()->getJobByCreamJobID(*it);
-	if(time(NULL)-theJob.getLastUpdate()<iceConfManager::getInstance()->getPollerStatusThresholdTime())
-	  continue;
-	log_dev->log(log4cpp::Priority::DEBUG,
-		     string("eventStatusPoller::getStatus() - Sending JobInfo request for Job [")
-		     + theJob.getJobID() + "]");
-	oneJobToQuery.push_back(*it);
-	creamClient->Authenticate( theJob.getUserProxyCertificate() );
-	_jobinfolist.push_back( creamClient->Info(theJob.getCreamURL().c_str(), 
-						  oneJobToQuery, 
-						  empty, -1, -1 ) );
-	
-      } catch (ClassadSyntax_ex& ex) {
-	// this exception should not be raised because 
-	// the CreamJob is created from another valid one
-	log_dev->log(log4cpp::Priority::ERROR,
-		     "eventStatusPoller::getStatus() - Fatal error: CreamJob creation failed from a valid one!!!");
-	exit(1);
-      } catch(soap_proxy::auth_ex& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::getStatus() - Cannot query status job: ")
-		     + ex.what());
-      } catch(soap_proxy::soap_ex& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a soap_ex exception: ")
-		     + ex.what());
-	return false; 
-      } catch(cream_exceptions::BaseException& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a BaseException exception: ")
-		     + ex.what());
-	return false; 
-      } catch(cream_exceptions::InternalException& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a InternalException exception: ")
-		     + ex.what());
-	return false; 
-      } catch(cream_exceptions::DelegationException&) {
-	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a DelegationException exception"));
-	return false;
-      }
     }
-  return true;
+    _jobinfolist.clear();
+  
+    creamClient->clearSoap();
+
+    jobs_to_query.clear();
+
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+  
+    try {
+        cache->getActiveCreamJobIDs(jobs_to_query); // FIXME: does not throw anytning?
+    } catch(exception& ex) {
+        log_dev->log(log4cpp::Priority::ERROR,
+                     string("eventStatusPoller::getStatus() - ")+ex.what());
+        exit(1);
+    }
+
+    for(vstrIt it = jobs_to_query.begin(); it != jobs_to_query.end(); ++it) {
+        oneJobToQuery.clear();
+        jobCache::iterator jobIt = cache->lookupByCreamJobID(*it);
+        try {
+            if ( jobIt == cache->end() )
+                throw( cream_exceptions::InternalException( "Invalid jobID" ) );
+
+            // CreamJob theJob( *jobIt );
+            if( time(NULL)-jobIt->getLastUpdate() < iceConfManager::getInstance()->getPollerStatusThresholdTime())
+                continue;
+            log_dev->log(log4cpp::Priority::DEBUG,
+                         string("eventStatusPoller::getStatus() - Sending JobInfo request for Job [")
+                         + jobIt->getJobID() + "]");
+            oneJobToQuery.push_back(*it);
+            creamClient->Authenticate( jobIt->getUserProxyCertificate() );
+            _jobinfolist.push_back( creamClient->Info(jobIt->getCreamURL().c_str(), 
+                                                      oneJobToQuery, 
+                                                      empty, -1, -1 ) );
+	
+        } catch (ClassadSyntax_ex& ex) {
+            // this exception should not be raised because 
+            // the CreamJob is created from another valid one
+            log_dev->log(log4cpp::Priority::ERROR,
+                         "eventStatusPoller::getStatus() - Fatal error: CreamJob creation failed from a valid one!!!");
+            exit(1);
+        } catch(soap_proxy::auth_ex& ex) {
+            log_dev->log(log4cpp::Priority::ERROR,
+                         string("eventStatusPoller::getStatus() - Cannot query status job: ")
+                         + ex.what());
+        } catch(soap_proxy::soap_ex& ex) {
+            log_dev->log(log4cpp::Priority::ERROR,
+                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a soap_ex exception: ")
+                         + ex.what());
+            return false; 
+        } catch(cream_exceptions::BaseException& ex) {
+            log_dev->log(log4cpp::Priority::ERROR,
+                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a BaseException exception: ")
+                         + ex.what());
+            return false; 
+        } catch(cream_exceptions::InternalException& ex) {
+            log_dev->log(log4cpp::Priority::ERROR,
+                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a InternalException exception: ")
+                         + ex.what());
+            return false; 
+        } catch(cream_exceptions::DelegationException&) {
+            log_dev->log(log4cpp::Priority::ERROR,
+                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a DelegationException exception"));
+            return false;
+        }
+    }
+    return true;
 }
 
 //______________________________________________________________________________
@@ -163,8 +169,14 @@ void eventStatusPoller::checkJobs()
 	     * NOW MUST RESUBMIT THIS JOB
 	     *
 	     */
-	    if(iceManager)
-	      iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
+	    if(iceManager) {
+                jobCache::iterator jobIt = cache->lookupByCreamJobID( cid );
+                if ( jobIt != cache->end() ) {
+                    iceManager->doOnJobFailure( jobIt->getGridJobID() );
+                }
+                // FIXME: else????
+                // iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
+            }
 	    jobs_to_purge.push_back(cid);
 	  }
 	
@@ -204,25 +216,25 @@ void eventStatusPoller::updateJobCache()
       try {
           boost::recursive_mutex::scoped_lock M( jobCache::mutex );
           string cid( (*it)->jobInfo.at(j)->CREAMJobId );
-          jobCache::iterator jit( jobCache::getInstance()->lookupByCreamJobID( cid ) );
-          if ( jit != jobCache::getInstance()->end() ) {
-              string gid = jit->getGridJobID();
-	      log_dev->log(log4cpp::Priority::DEBUG,
-			   string("eventStatusPoller::updateJobCache() - Updating jobcache with\n")
-			   +"\t\tgrid_jobid  = ["+gid+"]\n"
-			   +"\t\tcream_jobid = [" + (*it)->jobInfo[j]->CREAMJobId
-			   +"]\n"+"\t\tstatus      = ["
-			   + (*it)->jobInfo[j]->status+"]");
+          jobCache::iterator jit( cache->lookupByCreamJobID( cid ) );
+          if ( ( jit != cache->end() ) && ( jit->getStatus() != stNum ) ) { // FIXME
+              // string gid = jit->getGridJobID();
+              log_dev->debugStream()
+                  << "eventStatusPoller::updateJobCache() - Updating jobcache with "
+                  << "grid_jobid = [" << jit->getGridJobID() << "] "
+                  << "cream_jobid = [" << (*it)->jobInfo[j]->CREAMJobId << "] "
+                  << "status = [" << (*it)->jobInfo[j]->status << "]"
+                  << log4cpp::CategoryStream::ENDLINE;
 
-              jit->setStatus( stNum );
-	      jit->setLastUpdate( time(NULL) );
-              jobCache::getInstance()->put( *jit );
-              // jobCache::getInstance()->updateStatusByGridJobID(gid, stNum);
+              jit->setStatus( stNum, time( NULL ) );
+              cache->put( *jit );
+              // Log to L&B
+              _ev_logger->log_job_status( *jit ); // FIXME
           } else {
 	    log_dev->log(log4cpp::Priority::ERROR,
 			 string("cream_jobid = [") + cid + "] disappeared! "+
 			 "Removing from cache...");
-              jobCache::getInstance()->remove( jit );
+            cache->remove( jit );
           }
       } catch(exception& ex) {
 	log_dev->log(log4cpp::Priority::ERROR, ex.what());

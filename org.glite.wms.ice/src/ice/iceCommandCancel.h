@@ -6,6 +6,9 @@
 #include "classad_distribution.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "iceEventLogger.h"
+
 
 namespace glite {
     namespace wms {
@@ -18,9 +21,11 @@ namespace glite {
 
                 virtual ~iceCommandCancel() {};
 
-                void execute( ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
+                void execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
             protected:
                 std::string _gridJobId;
+                log4cpp::Category* log_dev;
+                util::iceEventLogger *_ev_logger;
             };
         }
     }

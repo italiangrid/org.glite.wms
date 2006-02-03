@@ -1,19 +1,19 @@
 #include "iceCommandCancel.h"
 #include "boost/algorithm/string.hpp"
 #include "jobCache.h"
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
+#include "ice-core.h"
 
 using namespace glite::wms::ice;
 using namespace std;
 using namespace glite::ce::cream_client_api;
 
-//creamApiLogger::instance()->getLogger();
-
 iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
-    iceAbsCommand( )
+    iceAbsCommand( ),
+  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
+  _ev_logger( util::iceEventLogger::instance() )
 {
     // Sample classad
     // [ version = "1.0.0"; command = "jobcancel"; arguments = [ id = "https://gundam.cnaf.infn.it:9000/mm6jfVKnjutb9JNFaF1HuQ"; lb_sequence_code = "UI=000004:NS=0000000006:WM=000000:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000" ] ]
@@ -58,51 +58,69 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
 
 }
 
-void iceCommandCancel::execute( void ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-    log4cpp::Category* log_dev = glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger();
-
-    log_dev->log(log4cpp::Priority::INFO,
-		 "\tThis request is a Cancel...");
+    log_dev->infoStream()
+        << "\tThis request is a Cancel..."
+        << log4cpp::CategoryStream::ENDLINE;
 
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
-    try {
-        util::CreamJob _theJob( util::jobCache::getInstance()->getJobByGridJobID(_gridJobId) );
-        vector<string> url_jid(1);   
-        url_jid[1] = _theJob.getJobID();
-        log_dev->log( log4cpp::Priority::INFO,
-                      "Removing job gridJobId [" + _gridJobId + "], "
-                      "creamJobId [" + url_jid[1] +"]");
+    // Lookup the job in the jobCache
+    util::jobCache::iterator it = util::jobCache::getInstance()->lookupByGridJobID( _gridJobId );
+    if ( it == util::jobCache::getInstance()->end() ) {
+        log_dev->errorStream()
+            << "Cancel operation cannot locate jobid=["
+            << _gridJobId 
+            << "] in the jobCache. Giving up"
+            << log4cpp::CategoryStream::ENDLINE;
+        // TODO: log?
+    }
 
-	log_dev->log( log4cpp::Priority::INFO,
-		      string("Sending cancellation requesto to [")
-		      +_theJob.getCreamURL()+"]");
+    util::CreamJob _theJob( *it );
+    vector<string> url_jid(1);   
+    url_jid[1] = _theJob.getJobID();
+    log_dev->infoStream()
+        << "Removing job gridJobId [" 
+        << _gridJobId
+        << "], creamJobId [" 
+        << url_jid[1] 
+        << "]"
+        << log4cpp::CategoryStream::ENDLINE;
+    
+    log_dev->infoStream()
+        << "Sending cancellation requesto to ["
+        << _theJob.getCreamURL() << "]"
+        << log4cpp::CategoryStream::ENDLINE;
+    
+    _ev_logger->cream_cancel_request_event( _theJob );
+
+    try {
 
 	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(_theJob.getUserProxyCertificate());
 
 	soap_proxy::CreamProxyFactory::getProxy()->Cancel( _theJob.getCreamURL().c_str(), url_jid );
 
     } catch(soap_proxy::auth_ex& ex) {
+        _ev_logger->cream_cancel_refuse_event( _theJob, string("auth_ex: ") + ex.what() );
         throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(soap_proxy::soap_ex& ex) {
+        _ev_logger->cream_cancel_refuse_event( _theJob, string("soap_ex: ") + ex.what() );
         throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
-        // MUST LOG TO LB
         // HERE MUST RESUBMIT
     } catch(cream_exceptions::BaseException& base) {
+        _ev_logger->cream_cancel_refuse_event( _theJob, string("BaseException: ") + base.what() );
         throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
-        // MUST LOG TO LB
     } catch(cream_exceptions::InternalException& intern) {
+        _ev_logger->cream_cancel_refuse_event( _theJob, string("InternalException: ") + intern.what() );
         throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
-        // TODO
-        // MUST LOG TO LB
-    } catch( util::elementNotFound_ex& ex ) {
-        throw iceCommandFatal_ex( string("ElementNotFound_ex: ") + ex.what() );
     }
+
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
     try {
-        util::jobCache::getInstance()->remove_by_grid_jobid( _gridJobId );
+        util::jobCache::getInstance()->remove( it );
+        // util::jobCache::getInstance()->remove_by_grid_jobid( _gridJobId );
     } catch(exception& ex) {
         throw iceCommandFatal_ex( string("put in cache raised an exception: ") + ex.what() );
     }

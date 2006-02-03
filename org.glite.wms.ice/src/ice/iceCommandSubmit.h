@@ -7,6 +7,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "iceEventLogger.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
@@ -36,7 +37,7 @@ namespace glite {
 
 	virtual ~iceCommandSubmit() {};
 
-	virtual void execute( void ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+	virtual void execute( ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
 
       protected:
 
@@ -72,7 +73,7 @@ namespace glite {
 	 * @param oldJdl the original jdl
 	 * @retyrn the CREAM-compliand jdl
 	 */
-	std::string creamJdlHelper( const std::string& oldJdl );
+	std::string creamJdlHelper( const std::string& oldJdl ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
 	
 	/**
 	 * This function updates the "InputSandbox" attribute
@@ -95,13 +96,14 @@ namespace glite {
 	std::string _jdl;
 	std::string _certfile;
 	std::string _gridJobId;
+
 	log4cpp::Category* log_dev;
  	glite::wms::ice::util::iceConfManager* confMgr;
 	CESubscription ceS;
 	Topic T;//(iceUtil::iceConfManager::getInstance()->getICETopic()),
         Policy P;//(5000),
 	std::string myname_url;
-        // util::iceEventLogger *_ev_logger;
+        util::iceEventLogger *_ev_logger;
       };
     }
   }

@@ -1,9 +1,7 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include <boost/algorithm/string.hpp>
-#include "classad_distribution.h"
 #include "eventStatusListener.h"
 #include "subscriptionCache.h"
-#include "ClassadSyntax_ex.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include <unistd.h>
@@ -13,6 +11,7 @@
 #include <sstream>
 #include <cstring> // for memset
 #include <netdb.h>
+#include "iceEventLogger.h"
 
 extern int h_errno;
 extern int errno;
@@ -23,26 +22,25 @@ namespace iceUtil = glite::wms::ice::util;
 
 boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
 
-void parseEventJobStatus(string&, string&, const string&)
-  throw(iceUtil::ClassadSyntax_ex&);
-
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   : CEConsumer(i),
-    grid_JOBID(""),
-    cream_JOBID(""),
+    grid_JOBID(),
+    cream_JOBID(),
     status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
     endaccept(false),
     subscriber(),
     subManager(),
+    pinger ( 0 ),
     T(iceUtil::iceConfManager::getInstance()->getICETopic()),
     P(5000),
     proxyfile(hostcert),
     tcpport(i), 
-    myname(""),
+    myname( ),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    pinger(NULL)
+    _ev_logger( iceEventLogger::instance() ),
+    parser( )
 {
   char name[256];
   memset((void*)name, 0, 256);
@@ -104,21 +102,24 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    */
   if(!this->accept() && !endaccept) {
     if(endaccept) {
-      log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
-			    << "eventStatusListener is ending"
-			    << log4cpp::CategoryStream::ENDLINE;
+        log_dev->infoStream()
+            << "eventStatusListener::acceptJobStatus() - "
+            << "eventStatusListener is ending"         
+            << log4cpp::CategoryStream::ENDLINE;
       return;
     } else
-        log_dev->infoStream() << "eventStatusListener::acceptJobStatus()"
-			      << " - CEConsumer::Accept() returned false."
-			      << log4cpp::CategoryStream::ENDLINE;
+        log_dev->infoStream() 
+            << "eventStatusListener::acceptJobStatus()"
+            << " - CEConsumer::Accept() returned false."
+            << log4cpp::CategoryStream::ENDLINE;
 	return;
   }
   
-  log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
-			<< "Connection accepted from ["
-                        << this->getClientIP() << "]"
-                        << log4cpp::CategoryStream::ENDLINE;
+  log_dev->infoStream() 
+      << "eventStatusListener::acceptJobStatus() - "
+      << "Connection accepted from ["
+      << this->getClientIP() << "]"
+      << log4cpp::CategoryStream::ENDLINE;
 
   /**
    * acquires the event from the client
@@ -175,14 +176,14 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   for(unsigned j=0; j<evts.size(); j++) {
     for(unsigned jj=0; jj<evts[j].Messages.size(); jj++)
       cout << "evt #"<<j<<".Message["<<jj<<"]="<<evts[j].Messages[jj]<<endl;
+    string Ad( evts[j].Messages[evts[j].Messages.size()-1] );
+    string cream_job_id, status;
+    long tstamp;
 
-    string Ad = evts[j].Messages[evts[j].Messages.size()-1];
-    string cream_job_id(""), status("");
-    
-    // the following function extract from the classadAd the
+    // the following function extract from the classad Ad the
     // creamjobid and status and put them into the 1st and 2nd
     // arguments respectively
-    parseEventJobStatus(cream_job_id, status, Ad);
+    parseEventJobStatus(cream_job_id, status, tstamp, Ad);
     
     jobCache::iterator it;
     try {
@@ -196,12 +197,12 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 				 << log4cpp::CategoryStream::ENDLINE;
 	  exit(1);
 	}
-      (*it).setLastUpdate(time(NULL));
       log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
       			    << "Updating job ["<<cream_job_id
 			    << "] with status ["<<status<<"]"
 			    << log4cpp::CategoryStream::ENDLINE;
-      (*it).setStatus( api::job_statuses::getStatusNum(status) );
+      it->setStatus( api::job_statuses::getStatusNum(status), time(NULL) );
+      _ev_logger->log_job_status( *it ); // FIXME
       jobCache::getInstance()->put( *it );
     } catch(exception& ex) {
       log_dev->fatal( ex.what() );
@@ -435,18 +436,23 @@ void iceUtil::eventStatusListener::init(void)
 }
 
 //______________________________________________________________________________
-void parseEventJobStatus(string& cid, string& st, const string& _classad)
-  throw(iceUtil::ClassadSyntax_ex&)
+void iceUtil::eventStatusListener::parseEventJobStatus(string& cream_job_id, string& job_status, long& tstamp, const string& _classad)
+    throw(iceUtil::ClassadSyntax_ex&)
 {
-  classad::ClassAdParser parser;
-  classad::ClassAd *ad = parser.ParseClassAd( _classad );
+    classad::ClassAd *ad = parser.ParseClassAd( _classad );
+    double tstamp_d;
 
-  if (!ad)
-    throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
+    if (!ad)
+        throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
 
-  if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cid ) )
-    throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
+    if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
+        throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
 
-  if ( !ad->EvaluateAttrString( "JOB_STATUS", st ) )
-    throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
+    if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status ) )
+        throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
+
+    if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
+        throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
+    tstamp = lrint( tstamp_d );
+
 }

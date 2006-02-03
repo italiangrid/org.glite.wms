@@ -4,8 +4,7 @@
 #undef soapStub_H
 #include "glite/ce/cream-client-api-c/JobInfoList.h"
 #include "eventStatusPoller_ex.h"
-
-#define DELAY 10
+#include "iceEventLogger.h"
 
 namespace glite {
   namespace ce {
@@ -28,6 +27,8 @@ namespace glite {
       class absice;
 
       namespace util {
+
+          class jobCache; // forward declaration
 
 	//! A job status poller
 	/*! \class eventStatusPoller 
@@ -59,6 +60,8 @@ namespace glite {
 	  void checkJobs(void);
 
 	  log4cpp::Category* log_dev;
+          iceEventLogger* _ev_logger;
+          jobCache* cache;
 
 	  //protected:
 
@@ -75,7 +78,7 @@ namespace glite {
 	  */
 	  eventStatusPoller(
 			    absice* iceManager,
-			    const int& D=DELAY
+			    const int D=10
 			    ) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
 

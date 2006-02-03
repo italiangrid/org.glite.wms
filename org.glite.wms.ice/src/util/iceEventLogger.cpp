@@ -1,6 +1,9 @@
 //
 // This file is heavily based on org.glite.wms.jobsubmission/src/common/EventLogger.cpp
 //
+// See also:
+// org.glite.lb.client-interface/build/producer.h
+// org.glite.lb.client-interface/doc/C/latex/refman.pdf
 
 #include <cstdlib>
 #include <cstdio>
@@ -20,20 +23,15 @@ namespace fs = boost::filesystem;
 #include <openssl/x509.h>
 
 #include "glite/lb/producer.h"
-#include "glite/lb/context.h"
 #include "iceEventLogger.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
-//#include "glite/wms/common/configuration/Configuration.h"
-//#include "glite/wms/common/configuration/CommonConfiguration.h"
-//#include "glite/wms/common/logger/manipulators.h"
-//#include "glite/wms/common/logger/edglog.h"
-
-//#include "SignalChecker.h"
-//#include "EventLogger.h"
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/CommonConfiguration.h"
 
 using namespace std;
 using namespace glite::wms::ice::util;
+namespace configuration = glite::wms::common::configuration;
 
 namespace {
 
@@ -99,6 +97,20 @@ iceEventLogger* iceEventLogger::instance( void )
     return _instance;
 }
 
+iceEventLogger::iceEventLogger( void ) :
+    el_count( 0 ), 
+    el_context( new edg_wll_Context ), 
+    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
+{
+    edg_wll_InitContext( el_context );
+}
+
+
+iceEventLogger::~iceEventLogger( void )
+{
+
+}
+
 string iceEventLogger::getLoggingError( const char *preamble )
 {
   string       cause( preamble ? preamble : "" );
@@ -124,344 +136,715 @@ void iceEventLogger::testCode( int &code, bool retry )
                                << log4cpp::CategoryStream::ENDLINE;
         
     }
-    code = 0; // FIXME: always don't retry
-#ifdef DONT_COMPILE
-  const configuration::CommonConfiguration     *conf = configuration::Configuration::instance()->common();
-  int          ret;
-  string       cause, host_proxy;
 
-  if( code ) {
-    cause = this->getLoggingError( NULL );
+    const configuration::CommonConfiguration     *conf = configuration::Configuration::instance()->common();
+    int          ret;
+    string       cause, host_proxy;
 
-    switch( code ) {
-    case EINVAL:
-      ts::edglog << logger::setlevel( logger::critical )
-		 << "Critical error in L&B calls: EINVAL." << endl
-		 << "Cause = \"" << cause << "\"." << endl;
+    if( code ) {
+        cause = this->getLoggingError( NULL );
 
-      code = 0; // Don't retry...
-      break;
-    case EDG_WLL_ERROR_GSS:
-      ts::edglog << logger::setlevel( logger::severe )
-		 << "Severe error in GSS layer while communicating with L&B daemons." << endl
-		 << "Cause = \"" << cause << "\"." << endl;
+        switch( code ) {
+        case EINVAL:
+            log_dev->errorStream()
+                       << "Critical error in L&B calls: EINVAL. "
+                       << "Cause = \"" << cause << "\"."
+                       << log4cpp::CategoryStream::ENDLINE;
 
-      if( this->el_hostProxy ) {
-	ts::edglog << "The log with the host certificate has just been done. Giving up." << endl;
+            code = 0; // Don't retry...
+            break;
+        case EDG_WLL_ERROR_GSS:
+            log_dev->errorStream()
+                << "Severe error in GSS layer while communicating with L&B daemons. " 
+                << "Cause = \"" << cause << "\"." 
+                << log4cpp::CategoryStream::ENDLINE;
 
-	code = 0; // Don't retry...
-      }
-      else {
-	ts::edglog << logger::setlevel( logger::info )
-		   << "Retrying using host proxy certificate..." << endl;
+            if( this->el_hostProxy ) {
+                log_dev->infoStream()
+                    << "The log with the host certificate has just been done. Giving up." 
+                    << log4cpp::CategoryStream::ENDLINE;
 
-	host_proxy = conf->host_proxy_file();
+                code = 0; // Don't retry...
+            }
+            else {
+                host_proxy = conf->host_proxy_file();
 
-	if( host_proxy.length() == 0 ) {
-	  ts::edglog << logger::setlevel( logger::warning )
-		     << "Host proxy file not set inside configuration file." << endl
-		     << "Trying with a default NULL and hoping for the best." << endl;
+                log_dev->infoStream()
+                    << "Retrying using host proxy certificate \"" 
+                    << host_proxy << "\"" 
+                    << log4cpp::CategoryStream::ENDLINE;
 
-	  ret = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, NULL );
-	}
-	else {
-	  ts::edglog << logger::setlevel( logger::info )
-		     << "Host proxy file found = \"" << host_proxy << "\"." << endl;
 
-	  ret = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
-	}
+                if( host_proxy.length() == 0 ) {
+                    log_dev->warnStream()
+                        << "Host proxy file not set inside configuration file. " 
+                        << "Trying with a default NULL and hoping for the best." 
+                        << log4cpp::CategoryStream::ENDLINE;
 
-	if( ret ) {
-	  ts::edglog << logger::setlevel( logger::severe )
-		     << "Cannot set the host proxy inside the context. Giving up." << endl;
+                    ret = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, NULL );
+                }
+                else {
+                    log_dev->infoStream()
+                        << "Host proxy file found = \"" << host_proxy << "\"."
+                        << log4cpp::CategoryStream::ENDLINE;
 
-	  code = 0; // Don't retry.
-	}
-	else this->el_hostProxy = true; // Set and retry (code is still != 0)
-      }
+                    ret = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
+                }
 
-      break;
-    default:
-      if( ++this->el_count > el_s_retries ) {
-	ts::edglog << logger::setlevel( logger::error )
-		   << "L&B call retried " << this->el_count << " times always failed." << endl
-		   << "Ignoring." << endl;
+                if( ret ) {
+                    log_dev->errorStream()
+                        << "Cannot set the host proxy inside the context. Giving up." 
+                        << log4cpp::CategoryStream::ENDLINE;
 
-	code = 0; // Don't retry anymore
-      }
-      else {
-	ts::edglog << logger::setlevel( logger::warning )
-		   << "L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again." << endl
-		   << logger::setlevel( logger::info )
-		   << "Try n. " << this->el_count << "/" << el_s_retries << endl;
+                    code = 0; // Don't retry.
+                }
+                else this->el_hostProxy = true; // Set and retry (code is still != 0)
+            }
 
-	sleep( el_s_sleep );
-      }
-      break;
+            break;
+        default:
+            if( ++this->el_count > el_s_retries ) {
+                log_dev->errorStream()
+                    << "L&B call retried " << this->el_count << " times always failed. "
+                    << "Ignoring." 
+                    << log4cpp::CategoryStream::ENDLINE;
+
+                code = 0; // Don't retry anymore
+            }
+            else {
+                log_dev->warnStream()
+                    << "L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again. " 
+                    << "Try n. " << this->el_count << "/" << el_s_retries 
+                    << log4cpp::CategoryStream::ENDLINE;
+
+                sleep( el_s_sleep );
+            }
+            break;
+        }
     }
-  }
-  else // The logging call worked fine, do nothing
-    ts::edglog << logger::setlevel( logger::debug ) << "L&B call succeeded." << endl;
+    else // The logging call worked fine, do nothing
+        log_dev->debugStream() 
+            << "L&B call succeeded." 
+            << log4cpp::CategoryStream::ENDLINE;
 
-  SignalChecker::instance()->throw_on_signal();
+    // SignalChecker::instance()->throw_on_signal();
 
-  return;
-#endif
-
-}
-
-iceEventLogger::iceEventLogger( void ) throw ( iceLoggerException& ) : 
-    el_remove( true ),
-    el_flag( EDG_WLL_SEQ_NORMAL ),
-    el_count( 0 ), 
-    el_context( NULL ), 
-    el_proxy( ),
-    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
-{
-  this->el_context = new edg_wll_Context;
-
-  if( edg_wll_InitContext(this->el_context) )
-    throw iceLoggerException( "Cannot initialize logging context" );
-}
-
-#ifdef DONT_COMPILE
-iceEventLogger::iceEventLogger( edg_wll_Context *cont, int flag ) : 
-    el_remove( false ), 
-    el_hostProxy( false ),
-    el_flag( flag ), 
-    el_count( 0 ), 
-    el_context( cont ),
-    el_proxy( ),
-    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
-{
+    return;
 
 }
-#endif
 
-iceEventLogger::~iceEventLogger( void )
-{
-  if( this->el_context && this->el_remove ) {
-    edg_wll_FreeContext( *this->el_context );
-
-    delete this->el_context;
-  }
-}
-
-
-iceEventLogger &iceEventLogger::initialize_ice_context( ProxySet *ps ) throw ( iceLoggerException& )
-{
-  int   res = 0;
-
-  if( this->el_context ) {
-      log_dev->infoStream() << "Initializing ICE L&B context"
-                            << log4cpp::CategoryStream::ENDLINE;
-
-    res = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_SOURCE, EDG_WLL_SOURCE_JOB_SUBMISSION );
-    res != edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_DESTINATION, "grid005.pd.infn.it" ); // FIXME: Remove hardcoded default
-    res |= edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_INSTANCE, "unique" );
-
-    if( ps ) {
-        log_dev->infoStream() << "Setting L&B Proxy to "
-                              << ( ps->ps_x509Proxy ? ps->ps_x509Proxy : "(null)" )
-                              << log4cpp::CategoryStream::ENDLINE;
-
-        res |= edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, ps->ps_x509Proxy ); 
-
-        log_dev->infoStream() << "Setting L&B Key to "
-                              << ( ps->ps_x509Key ? ps->ps_x509Key : "(null)" )
-                              << log4cpp::CategoryStream::ENDLINE;
-
-        res |= edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_KEY, ps->ps_x509Key );
-
-        log_dev->infoStream() << "Setting L&B Cert to "
-                              << ( ps->ps_x509Cert ? ps->ps_x509Cert : "(null)" )
-                              << log4cpp::CategoryStream::ENDLINE;
-
-        res |= edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_CERT, ps->ps_x509Cert ); 
-    }
-
-    if( res ) throw iceLoggerException( "Invalid context parameter setting." );
-  }
-
-  return *this;
-}
-
-
-iceEventLogger &iceEventLogger::reset_user_proxy( const string &proxyfile )
-{
-  bool    erase = false;
-  int     res;
-
-  if( proxyfile.size() && (proxyfile != this->el_proxy) ) {
-      // fs::path    pf(fs::normalize_path(proxyfile), fs::native);
-      fs::path    pf( proxyfile, fs::native);
-      pf.normalize();
-
-    if( fs::exists(pf) ) {
-      this->el_proxy.assign( proxyfile );
-
-      res = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, proxyfile.c_str() );
-
-      if( res ) throw iceLoggerException( this->getLoggingError("Cannot set proxyfile path inside context:") );
-    }
-    else erase = true;
-  }
-  else if( proxyfile.size() == 0 ) erase = true;
-
-  if( erase ) {
-    this->el_proxy.erase();
-
-    res = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, NULL );
-
-    if( res ) throw iceLoggerException( this->getLoggingError("Cannot reset proxyfile path inside context:") );
-  }
-
-  return *this;
-}
-
-#ifdef DONT_COMPILE
-iceEventLogger &iceEventLogger::reset_context( const string &jobid, const string &sequence ) throw( iceLoggerException& )
-{
-  int             res;
-  edg_wlc_JobId   id;
-
-  if( this->el_context ) {
-    edg_wlc_JobIdParse( jobid.c_str(), &id );
-    res = edg_wll_SetLoggingJob( *this->el_context, id, sequence.c_str(), this->el_flag );
-    edg_wlc_JobIdFree( id );
-    if( res != 0 ) throw iceLoggerException( this->getLoggingError("Cannot reset logging context:") );
-  }
-
-  return *this;
-}
-#endif
-
-
-#ifdef DONT_COMPILE
-iceEventLogger &iceEventLogger::set_ice_context( const string &jobid, const string &sequence, const string &proxyfile)
-{ 
-  bool              erase = false;
-  int               res;
-  edg_wlc_JobId     id;
-                                                                                
-  if( proxyfile.size() && (proxyfile != this->el_proxy) ) {
-      // fs::path    pf( fs::normalize_path(proxyfile), fs::native );
-      fs::path    pf( proxyfile, fs::native );
-      pf.normalize();
-
-    if( fs::exists(pf) ) {
-      this->el_proxy.assign( proxyfile );
-      
-      res = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, proxyfile.c_str() );
-
-      if( res ) throw iceLoggerException( this->getLoggingError("Cannot set proxyfile path inside context:") );
-    }
-    else erase = true;
-  }
-  else if( proxyfile.size() == 0 ) erase = true;
-                                                                                
-  if( erase ) {
-    this->el_proxy.erase();
-                                                                                
-    res = edg_wll_SetParam( *this->el_context, EDG_WLL_PARAM_X509_PROXY, NULL );  
-    if( res ) throw iceLoggerException( this->getLoggingError("Cannot reset proxyfile path inside context:") );
-  }
-                                                                                
-  if( this->el_context ) {
-    std::string const user_dn = get_proxy_subject( proxyfile );
-    edg_wlc_JobIdParse( jobid.c_str(), &id );
-    res = edg_wll_SetLoggingJobProxy( *this->el_context, id, sequence.c_str(), user_dn.c_str(), this->el_flag );
-    edg_wlc_JobIdFree( id );
-    if( res != 0 ) throw iceLoggerException( this->getLoggingError("Cannot set LBProxy context:") );
-  }                                                                                
-  return *this;
-}
-#endif
-
-
-void iceEventLogger::unhandled_event( const char *descr )
-{
-    // FIXME nothing to do
-  return;
-}
-
-void iceEventLogger::setLoggingJob( const char* jobid ) throw( iceLoggerException& )
+void iceEventLogger::registerJob( const util::CreamJob& theJob )
 {
     int res;
-    edg_wlc_JobId id;
+    edg_wlc_JobId   id;
+
+    setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+
+    log_dev->infoStream() 
+        << "Registering jobid=[" << theJob.getGridJobID() << "]"
+        << log4cpp::CategoryStream::ENDLINE;
     
-    if( this->el_context ) {
-        edg_wlc_JobIdParse( jobid, &id );
-        res = edg_wll_SetLoggingJob( *el_context, id, edg_wll_GetSequenceCode( *el_context ), EDG_WLL_SEQ_NORMAL );
-        edg_wlc_JobIdFree( id );
-        if( res != 0 ) throw iceLoggerException( this->getLoggingError("Cannot reset logging context:") );
+    edg_wlc_JobIdParse( theJob.getGridJobID().c_str(), &id );
+
+    res = edg_wll_RegisterJob( *el_context, id, EDG_WLL_JOB_SIMPLE, theJob.getJDL().c_str(), theJob.getEndpoint().c_str(), 0, 0, 0 );
+    edg_wlc_JobIdFree( id );
+    if( res != 0 ) {
+        log_dev->errorStream() 
+            << "Cannot register jobid=[" << theJob.getGridJobID()
+            << "]. LB error code=" << res
+            << log4cpp::CategoryStream::ENDLINE;
     }
 }
 
 
-void iceEventLogger::execute_event( const char* jobid, const char *host ) throw( iceLoggerException& )
+void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLoggerException& )
 {
+    edg_wlc_JobId   id;
+    int res = 0;
 
-    int           res;
-    
-    if( this->el_context ) {
-        setLMPersonality( );
-        setLoggingJob( jobid );
+    res = edg_wlc_JobIdParse( theJob.getGridJobID().c_str(), &id );    
 
-        this->startLogging();
+    char *lbserver;
+    unsigned int lbport;
+    edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
+    log_dev->infoStream() 
+        << "Setting log job to jobid=[" << theJob.getGridJobID() << "] "
+        << "LB server=[" << lbserver << ":" << lbport << "] "
+        << "(port is not used, actually...)"
+        << log4cpp::CategoryStream::ENDLINE;
+    res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_SOURCE, src );        
+    res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
+    // res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION_PORT, lbport );
+    if ( lbserver ) free( lbserver );
 
-        do {
-            log_dev->infoStream() << "Logging execute event, host = " << host
-                                  << log4cpp::CategoryStream::ENDLINE;
-            
-            res = edg_wll_LogRunning( *this->el_context, host );
-            log_dev->infoStream() << "...Got return code " << res 
-                                  << log4cpp::CategoryStream::ENDLINE;
-            this->testCode( res );
-        } while( res != 0 );
-    } else {
-        log_dev->warnStream() << "Got job execute event (not logging, as the context is null), host = " << host
-                              << log4cpp::CategoryStream::ENDLINE;
+    if ( !theJob.getSequenceCode().empty() ) {
+        res |= edg_wll_SetLoggingJob( *el_context, id, theJob.getSequenceCode().c_str(), EDG_WLL_SEQ_NORMAL );
     }
+
+    edg_wlc_JobIdFree( id );
+
+    if( res != 0 ) {
+        log_dev->errorStream()
+            << "Unable to set logging job to jobid=["
+            << theJob.getGridJobID()
+            << "]. LB error is "
+            << getLoggingError( 0 )
+            << log4cpp::CategoryStream::ENDLINE;
+        throw iceLoggerException( this->getLoggingError("Cannot set logging job:") );
+    }
+
+    // Set user proxy for L&B stuff
+    fs::path    pf( theJob.getUserProxyCertificate(), fs::native);
+    pf.normalize();
+
+    if( fs::exists(pf) ) {
+
+        res = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, 
+                                theJob.getUserProxyCertificate().c_str() );
+
+        if( res ) {
+            log_dev->errorStream()
+                << "Unable to set logging job to jobid=["
+                << theJob.getGridJobID()
+                << "]. "
+                << getLoggingError( 0 )
+                << log4cpp::CategoryStream::ENDLINE;            
+            throw iceLoggerException( this->getLoggingError("Cannot set proxyfile path inside context:") );
+        }
+    } else {
+        log_dev->errorStream()
+            << "Unable to set logging job to jobid=["
+            << theJob.getGridJobID()
+            << "]. Proxy file "
+            << theJob.getUserProxyCertificate()
+            << " does not exist."
+            << log4cpp::CategoryStream::ENDLINE;
+
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Transfer Start event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_transfer_start_event( const util::CreamJob& theJob )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_transfer_start_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging CREAM transfer start, dest_host = " 
+            << theJob.getCreamURL()
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogTransferSTART( *el_context, 
+                                        EDG_WLL_SOURCE_LRMS, 
+                                        theJob.getCreamURL().c_str(),
+                                        el_s_unavailable,
+                                        theJob.getJDL().c_str(),  
+                                        el_s_unavailable,
+                                        el_s_unavailable );
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
     
     return;
 }
 
-string iceEventLogger::sequence_code( void )
+//////////////////////////////////////////////////////////////////////////////
+//
+// transfer OK event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_transfer_ok_event( const util::CreamJob& theJob )
 {
-  char          *seqcode;
-  string         res( "undefined" );
+    int           res;
 
-  if( this->el_context ) {
-    seqcode = edg_wll_GetSequenceCode( *this->el_context );
-
-    res.assign( seqcode );
-    free( seqcode );
-  }
-
-  return res;
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_transfer_ok_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging cream transfer OK event, "
+            << " jobid=" << theJob.getGridJobID()
+            << " dest_host=" << theJob.getCreamURL()
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogTransferOK( *el_context, 
+                                     EDG_WLL_SOURCE_LRMS, 
+                                     theJob.getCreamURL().c_str(),
+                                     el_s_unavailable,
+                                     theJob.getJDL().c_str(),  
+                                     el_s_unavailable,
+                                     theJob.getJobID().c_str() );
+        
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
 }
 
-void iceEventLogger::setJCPersonality( void ) throw( iceLoggerException& )
+//////////////////////////////////////////////////////////////////////////////
+//
+// transfer FAIL event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_transfer_fail_event( const util::CreamJob& theJob, const string& reason )
 {
-    if ( !el_context ) 
-        throw iceLoggerException( "No context initialized" );
+    int           res;
 
-    int res = edg_wll_SetParam( *this->el_context, 
-                                EDG_WLL_PARAM_SOURCE, 
-                                EDG_WLL_SOURCE_JOB_SUBMISSION );
-
-    if( res ) throw iceLoggerException( "Invalid context parameter setting." );    
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_transfer_fail_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging Transfer FAIL event, "
+            << " jobid=" << theJob.getGridJobID()
+            << " dest_host=" << theJob.getCreamURL()
+            << " reason=" << reason
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogTransferFAIL( *el_context, 
+                                       EDG_WLL_SOURCE_LRMS, 
+                                       theJob.getCreamURL().c_str(),
+                                       el_s_unavailable,
+                                       theJob.getJDL().c_str(),  
+                                       reason.c_str(), 
+                                       el_s_unavailable );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
 }
 
-void iceEventLogger::setLMPersonality( void ) throw( iceLoggerException& )
+//////////////////////////////////////////////////////////////////////////////
+//
+// cream accepted event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_accepted_event( const util::CreamJob& theJob )
 {
-    if ( !el_context ) 
-        throw iceLoggerException( "No context initialized" );
+    // FIXME: which is the source? which is the destination?
+    int           res;
 
-    int res = edg_wll_SetParam( *this->el_context, 
-                                EDG_WLL_PARAM_SOURCE, 
-                                EDG_WLL_SOURCE_LOG_MONITOR );
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_accepted_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging CREAM Accepted event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogAccepted( *el_context, 
+                                   EDG_WLL_SOURCE_JOB_SUBMISSION, 
+                                   el_s_unavailable,
+                                   el_s_unavailable,
+                                   theJob.getJobID().c_str()
+                                   );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
 
-    if( res ) throw iceLoggerException( "Invalid context parameter setting." );
+//////////////////////////////////////////////////////////////////////////////
+//
+// lrms accepted event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::lrms_accepted_event( const util::CreamJob& theJob )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging lrms_accepted_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging LRMS Accepted event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogAccepted( *el_context, 
+                                   EDG_WLL_SOURCE_LRMS,
+                                   el_s_unavailable,
+                                   el_s_unavailable,
+                                   theJob.getJobID().c_str()
+                                   );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// accepted event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_refused_event( const util::CreamJob& theJob, const std::string& reason )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_LOG_MONITOR );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_refused_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging Refused event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogRefused( *el_context, 
+                                  EDG_WLL_SOURCE_JOB_SUBMISSION,
+                                  el_s_unavailable,
+                                  el_s_unavailable,
+                                  reason.c_str() );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// cancel_request event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_cancel_request_event( const util::CreamJob& theJob )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_cancel_request_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging Cancel Request event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogCancelREQ( *el_context, 
+                                    el_s_unavailable 
+                                    );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// cancel done event
+//
+//////////////////////////////////////////////////////////////////////////////
+//void iceEventLogger::cream_cancel_done_event( const util::CreamJob& theJob )
+//{
+
+//}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// cancel refuse event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::cream_cancel_refuse_event( const util::CreamJob& theJob, const string& reason )
+{
+
+}
+
+void iceEventLogger::job_running_event( const util::CreamJob& theJob, const string& host )
+{
+    int res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_LOG_MONITOR );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging job_running_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+
+    do {
+        log_dev->infoStream() 
+            << "Logging job running event, host = " << host
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogRunning( *el_context, host.c_str() );
+        
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        this->testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+void iceEventLogger::job_cancelled_event( const util::CreamJob& theJob )
+{
+    int res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_LOG_MONITOR );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging job_cancelled_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+
+    do {
+        log_dev->infoStream() 
+            << "Logging job cancelled event..."
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogDoneCANCELLED( *el_context, el_s_unavailable, 0 ); // FIXME
+        
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        this->testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+void iceEventLogger::job_suspended_event( const util::CreamJob& theJob )
+{
+    int res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_LOG_MONITOR );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging job_suspended_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+
+    do {
+        log_dev->infoStream() 
+            << "Logging job suspended event..."
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogSuspend( *el_context, el_s_unavailable );
+        
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        this->testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+void iceEventLogger::job_done_ok_event( const util::CreamJob& theJob )
+{
+    int res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_LOG_MONITOR );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging job_done_ok_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+
+    do {
+        log_dev->infoStream() 
+            << "Logging job done_ok event..."
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogDoneOK( *el_context, el_s_unavailable, 0 ); // FIXME
+        
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        this->testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+void iceEventLogger::job_done_failed_event( const util::CreamJob& theJob )
+{
+    int res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_LOG_MONITOR );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging job_done_failed_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+
+    do {
+        log_dev->infoStream() 
+            << "Logging job done_failed event..."
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogDoneFAILED( *el_context, el_s_unavailable, 0 ); // FIXME
+        
+        log_dev->infoStream() 
+            << "...Got return code " << res 
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        this->testCode( res );
+    } while( res != 0 );        
+    
+    return;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// 
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::log_job_status( const CreamJob& theJob )
+{
+    switch( theJob.getStatus() ) {
+    case glite::ce::cream_client_api::job_statuses::REGISTERED:
+        // FIXME: should never occur in ice, as we register with autostart
+        break;
+    case glite::ce::cream_client_api::job_statuses::PENDING:
+        cream_accepted_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::IDLE:
+        lrms_accepted_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::RUNNING:
+        job_running_event( theJob, string("pippo") ); // FIXME
+        break;
+    case glite::ce::cream_client_api::job_statuses::CANCELLED:
+        job_cancelled_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::HELD:
+        job_suspended_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::ABORTED:
+        job_done_failed_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::DONE_OK:
+        job_done_ok_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::DONE_FAILED:
+        job_done_failed_event( theJob );
+        break;
+    case glite::ce::cream_client_api::job_statuses::UNKNOWN:
+        // FIXME??
+        break;
+    case glite::ce::cream_client_api::job_statuses::NA:
+        // FIXME??
+        break;
+
+    }
 }
