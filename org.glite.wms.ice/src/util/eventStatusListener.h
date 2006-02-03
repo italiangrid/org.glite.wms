@@ -4,9 +4,10 @@
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
 //#undef soapStub_H
-
+#include "glite/ce/monitor-client-api-c/CEPing.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
+
 
 //#include "glite/ce/monitor-client-api-c/GeneralException.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -47,6 +48,7 @@ namespace glite {
 	  bool endaccept;
  	  CESubscription subscriber;
  	  CESubscriptionMgr subManager;
+	  CEPing pinger;
 	  Topic T;
 	  Policy P;
 	  std::vector<std::string> activeSubscriptions;

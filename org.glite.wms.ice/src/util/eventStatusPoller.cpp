@@ -76,7 +76,6 @@ bool eventStatusPoller::getStatus(void)
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     jobCache::getInstance()->getActiveCreamJobIDs(jobs_to_query);
   } catch(exception& ex) {
-    //    cerr << ex.what()<<endl;
     log_dev->log(log4cpp::Priority::ERROR,
 		 string("eventStatusPoller::getStatus() - ")+ex.what());
     exit(1);
