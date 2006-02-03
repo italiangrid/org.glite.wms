@@ -14,7 +14,7 @@ package org.glite.wms.wmproxy.jobregister;
 import org.glite.wms.wmproxy.WMProxyAPI;
 import org.glite.wms.wmproxy.BaseException;
 import org.glite.wms.wmproxy.JobIdStructType;
-import org.glite.wms.jdlj.JobAd ;
+import org.glite.jdl.JobAd ;
 
 /*
 	Test of  "jobRegister" method in org.glite.wms.wmproxy.WMProxyAPI

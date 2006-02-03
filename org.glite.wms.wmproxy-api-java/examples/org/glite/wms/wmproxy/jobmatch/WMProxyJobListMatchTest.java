@@ -10,7 +10,7 @@ package org.glite.wms.wmproxy.jobmatch;
 import org.glite.wms.wmproxy.WMProxyAPI;
 import org.glite.wms.wmproxy.StringAndLongType ;
 import org.glite.wms.wmproxy.StringAndLongList ;
-import org.glite.wms.jdlj.JobAd ;
+import org.glite.jdl.JobAd ;
 
 /*
 	Test of  "jobListMatch" method in org.glite.wms.wmproxy.WMProxyAPI

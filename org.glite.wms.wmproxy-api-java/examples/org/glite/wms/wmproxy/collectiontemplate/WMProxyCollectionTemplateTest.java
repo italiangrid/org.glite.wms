@@ -100,7 +100,7 @@ public class WMProxyCollectionTemplateTest {
 		try {
 			// input parameters
 			if ((args == null) || (args.length < 3)){
-				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <config-File>)");
+				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <config-File> [CAs paths (optional)])");
 			} else if (args.length > 4) {
 			 	 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <proxyFile> <config-File> [CAs paths (optional)] )");
 			}
