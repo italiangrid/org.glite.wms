@@ -48,7 +48,7 @@ namespace glite {
 	  bool endaccept;
  	  CESubscription subscriber;
  	  CESubscriptionMgr subManager;
-	  CEPing pinger;
+	  CEPing *pinger;
 	  Topic T;
 	  Policy P;
 	  std::vector<std::string> activeSubscriptions;
@@ -61,7 +61,7 @@ namespace glite {
           log4cpp::Category *log_dev;
 
 	protected:
-	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999),T(""),P(0) {}
+	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999),T(""),P(0),pinger(NULL) {}
 
 	public:
 	  static boost::recursive_mutex mutexJobStatusUpdate;

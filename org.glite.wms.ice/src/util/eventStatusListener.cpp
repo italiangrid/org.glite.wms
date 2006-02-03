@@ -42,6 +42,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     myname(""),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
+    pinger(NULL)
 {
   char name[256];
   memset((void*)name, 0, 256);
@@ -70,7 +71,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   log_dev->info( "eventStatusListener::CTOR - Listener created!" );
   T.addDialect(NULL);
   try {
-    pinger = CEPing(proxyfile, "/");
+    pinger = new CEPing(proxyfile, "/");
   } catch(exception& ex) {
     log_dev->fatalStream() << "eventStatusListener::CTOR - "
 			   << "Fatal Error creating a pinger object:"
@@ -277,10 +278,10 @@ void iceUtil::eventStatusListener::init(void)
 
 	  // must retry to contact this cemon until it
 	  // is up&running again
-	  pinger->setServiceUrl(it->first);
+	  pinger->setServiceURL(it->first);
           if( !pinger->Ping() ) {
 	    log_dev->warnStream() << "eventStatusListener::init() - CEMon at ["
-	  			  << it->first() << "] is not reachable. "
+	  			  << it->first <<  "] is not reachable. "
 				  << "Waiting 5 seconds..."
 				  << log4cpp::CategoryStream::ENDLINE;
 	    sleep(5);
