@@ -7,8 +7,12 @@
 
 package org.glite.wms.wmproxy.getjdl ;
 
+// WMP-API-JAVA
 import org.glite.wms.wmproxy.WMProxyAPI ;
 import org.glite.wms.wmproxy.JdlType ;
+// UI-API-JAVA
+import org.glite.wmsui.apij.JobId ;
+// INPUT OBJECTS
 import java.io.InputStreamReader ;
 import java.io.BufferedReader ;
 
@@ -121,7 +125,12 @@ public class WMProxyGetJDLTest {
 			} else  {
 				certsPath = "";
 			}
+			// checks the jobid
+			JobId id = new JobId(jobId);
+			jobId = jobId.toString( );
+			// Type of the JDL to be retrieved (either original or registered)
 			type = askType ( );
+			// Launches the test
 			runTest ( url, jobId, type, proxyFile, certsPath);
 		} catch (Exception exc){
 			System.out.println (exc.toString( ));
