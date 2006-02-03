@@ -276,6 +276,91 @@ public class WMProxyAPI{
 		}
 	}
 	/**
+	* Returns the Delegated Proxy information identified by the delegationId string
+	* @param delegationId The id of the delegation created previously (by a getProxyReq call)
+	* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+	* @return a struct with the information on the input proxy
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @see #getProxyReq
+	* @see #grstGetProxyReq
+	* @see #putProxy
+	* @see #grstPutProxy
+	* @since 1.5.3
+	*/
+	public ProxyInfoStructType getDelegatedProxyInfo(java.lang.String delegationId)
+		throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		logger.debug ("INPUT: delegationId=[" + delegationId + "]");
+		try {
+			return this.serviceStub.getDelegatedProxyInfo(delegationId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
+	* Returns the information related to the proxy used to submit a job that identified by its JobId.
+	* This operation needs that a valid proxy (identified by an id string -delegationId string-) has been previously delegated to the endpoint.
+	* @param jobId the identifier of the job
+	* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+	* @return a struct with the information on the input proxy
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @see #getProxyReq
+	* @see #putProxy
+	* @see BaseException
+	*/
+	public ProxyInfoStructType getJobProxyInfo(java.lang.String jobId)
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		logger.debug ("INPUT: jobId=[" + jobId + "]");
+		try {
+			return this.serviceStub.getJobProxyInfo(jobId);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
 	* Gets the version numbers of the WMProxy services
 	* @return the string with the version numbers
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
@@ -529,7 +614,36 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
-
+	/**
+	* Returns the server available transfer protocols to be used for file transferring operations
+	* @return a list with the protocol strings
+	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
+	* @throws AuthenticationFaultException a generic authentication problem occurred
+	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	*/
+	public org.glite.wms.wmproxy.StringList getTransferProtocols( )
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		try {
+			return this.serviceStub.getTransferProtocols();
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		 } catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		} catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
 	/**
 	* Returns a list of destination URI's associated to the job, identified by the jobId provided as input,
 	* where the job input sandbox files can be uploaded by the client.
@@ -543,6 +657,9 @@ public class WMProxyAPI{
 	* The same applies to the output sandbox files list, i.e. the user can specify in the JDL the complete URIs for the files of the output sandbox;
 	* those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP/HTTPS servers without transiting on the WMS machine.
 	* @param jobId string containing the JobId
+	* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
+* operation. Possible standard values are: "all" to get URIs with all available protocols; "default" to get URIs with the server default protocol
+*  not mandatory, default value is "all")
 	* @return the list of the Sandbox destionation URI's strings
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
@@ -551,16 +668,16 @@ public class WMProxyAPI{
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
-	public org.glite.wms.wmproxy.StringList getSandboxDestURI(java.lang.String jobId)
+	public org.glite.wms.wmproxy.StringList getSandboxDestURI(java.lang.String jobId, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
 					org.glite.wms.wmproxy.ServiceException {
-		logger.debug ("INPUT: jobid=[" + jobId + "]");
+		logger.debug ("INPUT: jobid=[" + jobId + "] - protocol [" + protocol +"]");
 		try {
-			return this.serviceStub.getSandboxDestURI(jobId);
+			return this.serviceStub.getSandboxDestURI(jobId, protocol);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
 			// AuthenticationFault
 			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
@@ -602,6 +719,7 @@ public class WMProxyAPI{
 	* The same applies to the output sandbox files list, i.e. the user can specify in the JDL the complete URIs for the files of the output sandbox;
 	* those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP/HTTPS servers without transiting on the WMS machine.
 	* @param jobId string containing the JobId
+	* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
 	* @return the list of the Sandbox destionation URI's strings
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
@@ -610,16 +728,16 @@ public class WMProxyAPI{
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
-	public DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId)
+	public DestURIsStructType getSandboxBulkDestURI(java.lang.String jobId, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
 					org.glite.wms.wmproxy.ServiceException {
-		logger.debug ("INPUT: jobid=[" + jobId + "]");
+		logger.debug ("INPUT: jobid=[" + jobId + "] - protocol [" + protocol + "]");
 		try {
-			return this.serviceStub.getSandboxBulkDestURI(jobId);
+			return this.serviceStub.getSandboxBulkDestURI(jobId, protocol);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
 			// AuthenticationFault
 			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
@@ -765,6 +883,7 @@ public class WMProxyAPI{
 	* Returns the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
 	* It can only be applied for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
 	* @param jobId the identifier of the job
+	* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
 	* @return  the list of objects containing the file URI and the corresponding size in bytes
 	* @throws AuthorizationFaultException if the client is not authorized to perform this operation
 	* @throws AuthenticationFaultException a generic authentication problem occurred
@@ -773,16 +892,16 @@ public class WMProxyAPI{
 	* @throws OperationNotAllowedFaultException the current job status does not allow requested operation.
 	* @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
 	*/
-	public org.glite.wms.wmproxy.StringAndLongList getOutputFileList (java.lang.String jobId)
+	public org.glite.wms.wmproxy.StringAndLongList getOutputFileList (java.lang.String jobId, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.OperationNotAllowedFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
 					org.glite.wms.wmproxy.ServiceException {
-		logger.debug ("INPUT: jobid=[" + jobId + "]");
+		logger.debug ("INPUT: jobid=[" + jobId + "] - protocol [" +  protocol + "]");
 		try {
-			return this.serviceStub.getOutputFileList (jobId);
+			return this.serviceStub.getOutputFileList (jobId, protocol);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
 			// AuthenticationFault
 			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
@@ -917,7 +1036,7 @@ public class WMProxyAPI{
 	* @param file the name of the perusal file be enabled
 	* @param jobid the string with the job identifier
 	* @param file the name of the perusal file be enabled
-	* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+	* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
 	* @throws AuthenticationFaultException An authentication problem occurred
 	* @throws AuthorizationFaultException The user is not authorized to perform this operation
 	* @throws InvalidArgumentFaultException If the given jobId is not valid
@@ -927,15 +1046,15 @@ public class WMProxyAPI{
 	* @see #enableFilePerusal
 	* @see #getVersion
 	*/
-	public  org.glite.wms.wmproxy.StringList getPerusalFiles (java.lang.String  jobId, java.lang.String file, boolean allchunks)
+	public  org.glite.wms.wmproxy.StringList getPerusalFiles (java.lang.String  jobId, java.lang.String file, boolean allchunks, java.lang.String protocol)
 			throws org.glite.wms.wmproxy.AuthorizationFaultException,
 					org.glite.wms.wmproxy.AuthenticationFaultException,
 					org.glite.wms.wmproxy.InvalidArgumentFaultException,
 					org.glite.wms.wmproxy.JobUnknownFaultException,
 					org.glite.wms.wmproxy.ServiceException {
-		logger.debug ("INPUT: jobId=[" + jobId + "] - file=[" +file + "] - allchunck=[" + allchunks + "]");
+		logger.debug ("INPUT: jobId=[" + jobId + "] - file=[" +file + "] - allchunck=[" + allchunks + "] - protocol [" +  protocol + "]");
 		try {
-			return this.serviceStub.getPerusalFiles(jobId, file, allchunks);
+			return this.serviceStub.getPerusalFiles(jobId, file, allchunks, protocol);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
 			// AuthenticationFault
 			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
@@ -1143,7 +1262,6 @@ public class WMProxyAPI{
 			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
 		}
 	}
-
 	/**
 	*  Returns a JDL template for a parametric of job, which is a job having one or more parametric attributes in the JDL.
 	* The parametric attributes vary their values according to the "Parameter" attribute specified in the JDL itself (in this case the parametere has to be a list of strings).
@@ -1170,6 +1288,45 @@ public class WMProxyAPI{
 					org.glite.wms.wmproxy.ServiceException {
 		try {
 			return this.serviceStub.getStringParametricJobTemplate(attributes, param, requirements, rank);
+		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
+			// AuthenticationFault
+			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.AuthorizationFaultType exc) {
+			// AuthorizationFault
+			throw new org.glite.wms.wmproxy.AuthorizationFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.InvalidArgumentFaultType exc) {
+			// InvalidArgumentFault
+			throw new org.glite.wms.wmproxy.InvalidArgumentFaultException(this.createExceptionMessage(exc));
+		} catch (org.glite.wms.wmproxy.GenericFaultType exc) {
+			// GenericFault ->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(this.createExceptionMessage(exc));
+		}  catch ( java.rmi.RemoteException exc) {
+			// RemoteException->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		} catch (Exception exc) {
+			// Exception->ServiceException
+			throw new org.glite.wms.wmproxy.ServiceException(exc.getMessage());
+		}
+	}
+	/**
+	* Returns the JDL string which identifier is the input JobId
+	* @param jobid the identifier of the job
+	* @param type the type of the JDL to be retrieved (either ORIGINAL or REGISTERED)
+	* @return the string with the JDL
+	*  @throws AuthenticationFaultException a generic authentication problem occurred.
+	*  @throws AuthorizationFaultException if the client is not authorized to perform this operation.
+	*  @throws InvalidArgumentFaultException one or more of the given input parameters is not valid.
+	*  @throws ServiceException If any other error occurs during the execution of the remote method call to the WMProxy server
+	* @since 1.5.3
+	*/
+	public java.lang.String getJDL(java.lang.String jobId, JdlType type)
+			throws org.glite.wms.wmproxy.AuthorizationFaultException,
+					org.glite.wms.wmproxy.AuthenticationFaultException,
+					org.glite.wms.wmproxy.InvalidArgumentFaultException,
+					org.glite.wms.wmproxy.ServiceException {
+		logger.debug ("INPUT: jobId=[" + jobId + "] - JdlType=[" + type + "]");
+		try {
+			return this.serviceStub.getJDL(jobId, type);
 		} catch (org.glite.wms.wmproxy.AuthenticationFaultType exc) {
 			// AuthenticationFault
 			throw new org.glite.wms.wmproxy.AuthenticationFaultException(this.createExceptionMessage(exc));
@@ -1293,14 +1450,14 @@ public class WMProxyAPI{
 		if (meth.length()>0) { message += "Method: " + meth + "\n";}
 		// time stamp
 		Calendar  calendar = exc.getTimestamp();
-
-		java.text.DateFormat df = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM);
+		//java.text.DateFormat df = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM);
 		hours = calendar.get(Calendar.HOUR_OF_DAY) - (calendar.get(Calendar.ZONE_OFFSET)/ (60*60*1000));
+		/*
 		calendar.set(Calendar.HOUR_OF_DAY, hours);
 		df.setCalendar(calendar);
 		calendar = df.getCalendar( );
-
 		if (calendar != null){
+		*/
 			calendar.setTimeZone(java.util.TimeZone.getTimeZone("GMT"));
 			date = dayStr[calendar.get(Calendar.DAY_OF_WEEK)] + " " +
 				monthStr[calendar.get(Calendar.MONTH)] + " " +
@@ -1312,7 +1469,7 @@ public class WMProxyAPI{
 				twodigits(calendar.get(Calendar.SECOND)) ;
 			date += " " + calendar.getTimeZone().getID( );
 			if (date.length()>0) { message += "TimeStamp: " + date + "\n";}
-		}
+		//}
 		// error code
 		if (ec.length()>0) { message += "ErrorCode: " + ec + "\n";}
 		// fault cause(s)
