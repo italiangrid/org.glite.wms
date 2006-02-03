@@ -618,15 +618,6 @@ void iceEventLogger::cream_cancel_request_event( const util::CreamJob& theJob )
     return;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//
-// cancel done event
-//
-//////////////////////////////////////////////////////////////////////////////
-//void iceEventLogger::cream_cancel_done_event( const util::CreamJob& theJob )
-//{
-
-//}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -635,7 +626,35 @@ void iceEventLogger::cream_cancel_request_event( const util::CreamJob& theJob )
 //////////////////////////////////////////////////////////////////////////////
 void iceEventLogger::cream_cancel_refuse_event( const util::CreamJob& theJob, const string& reason )
 {
+    int           res;
 
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging cream_cancel_refuse_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging Cancel Refuse event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogCancelREFUSE( *el_context, 
+                                       reason.c_str()
+                                       );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+    
+    return;
 }
 
 void iceEventLogger::job_running_event( const util::CreamJob& theJob, const string& host )
