@@ -74,6 +74,8 @@ int main(int argc, char*argv[]) {
    ****************************************************************************/
   string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
   string hostdn;
+  // Set the creation of CreamProxy with automatic delegetion ON
+  soap_proxy::CreamProxyFactory::initProxy( true );
   try {
     hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
   } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
