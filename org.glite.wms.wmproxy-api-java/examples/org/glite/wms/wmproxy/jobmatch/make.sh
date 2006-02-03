@@ -21,7 +21,7 @@ echo "axis in : "$AXIS_LOC
 for p in \
         ${top_src} \
         ${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-	 ${top}stage/share/java/glite-wms-jdlj.jar \
+	 ${top}stage/share/java/glite-jdl-api-java.jar \
         $AXIS_LOC/axis.jar \
         $AXIS_LOC/jaxrpc.jar
 do

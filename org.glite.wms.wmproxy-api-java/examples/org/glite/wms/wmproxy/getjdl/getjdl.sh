@@ -26,11 +26,15 @@ AXIS_LOC=${line##*=}
 line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
 WMP_API_JAVA=${line##*=}
 
+## UI_API_JAVA
+line=`more ../wmp-api-java-test.cfg | grep UI_API_JAVA`
+UI_API_JAVA=${line##*=}
+
 ## SECURITY_TRUSTMANAGER ==============
 line=`more ../wmp-api-java-test.cfg | grep SECURITY_TRUSTMANAGER`
 SECURITY_TRUSTMANAGER=${line##*=}
 
-## SECURITY_TRUSTMANAGER ==============
+## UTIL_JAVA ============ ==============
 line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
 SECURITY_UTIL_JAVA=${line##*=}
 
@@ -41,6 +45,7 @@ BOUNCYCASTLE=${line##*=}
 for p in \
 	${top_src} \
 	${WMP_API_JAVA} \
+        ${UI_API_JAVA} \
 	${SECURITY_TRUSTMANAGER} \
 	${SECURITY_UTIL_JAVA} \
 	${BOUNCYCASTLE} \

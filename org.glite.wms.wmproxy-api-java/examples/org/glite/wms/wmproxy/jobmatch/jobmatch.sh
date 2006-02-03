@@ -34,7 +34,7 @@ for p in \
 	${top_src} \
 	${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
 	${top}repository/jclassads/2.1/share/classad.jar \
-	${top}stage/share/java/glite-wms-jdlj.jar \
+	${top}stage/share/java/glite-jdl-api-java.jar \
 	${top}stage/share/java/glite-security-trustmanager.jar \
 	${top}stage/share/java/glite-security-util-java.jar \
 	${top}stage/share/java/glite-security-delegation-java.jar \

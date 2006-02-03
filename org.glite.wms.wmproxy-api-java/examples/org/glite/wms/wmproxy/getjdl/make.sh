@@ -22,10 +22,13 @@ AXIS_LOC=${line##*=}
 line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
 WMP_API_JAVA=${line##*=}
 
-
+## UI_API_JAVA
+line=`more ../wmp-api-java-test.cfg | grep UI_API_JAVA`
+UI_API_JAVA=${line##*=}
 
 for p in \
         ${top_src} \
+	$UI_API_JAVA \
         $WMP_API_JAVA \
         $AXIS_LOC/axis.jar \
         $AXIS_LOC/jaxrpc.jar
