@@ -68,7 +68,7 @@ int main(int argc, char*argv[]) {
 
   cout << "Logfile is [" << logfile << "]" << endl;
 
-
+//   cout << "Poller Threshold time="<<iceUtil::iceConfManager::getInstance()->getPollerStatusThresholdTime()<<endl;
   /*****************************************************************************
    * Gets the distinguished name from the host proxy certificate
    ****************************************************************************/
@@ -104,7 +104,7 @@ int main(int argc, char*argv[]) {
 
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);
-  
+
   try {
       iceUtil::jobCache::getInstance();
   }

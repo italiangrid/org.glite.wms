@@ -61,8 +61,9 @@ int main(int argc, char* argv[]) {
   gettimeofday(&T, 0);
 
   // string id( "https://grid005.pd.infn.it:9000/dQX8dGT6u_uzVPyRD7jEiQ" );
-
-  // ad->InsertAttr("edg_jobid", id );
+  ostringstream os;
+  os << "https://grid005.pd.infn.it:9000/000" << time(NULL)<<"."<<T.tv_usec;
+  ad->InsertAttr("edg_jobid", os.str() );
 
   classad::ClassAdUnParser unp;
   

@@ -21,8 +21,9 @@ namespace glite {
 	    creamurlprefix, creamurlpostfix, curldelegprefix,
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
 	    icetopic;
-	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime;
-	  bool startpoller, startlistener, startsubupder, poller_status_threshold_time,
+	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
+	      poller_status_threshold_time;
+	  bool startpoller, startlistener, startsubupder,
 	       log_on_console, log_on_file;
 	  
 	  static boost::recursive_mutex mutex;

@@ -91,20 +91,27 @@ bool eventStatusPoller::getStatus(void)
             if ( jobIt == cache->end() )
                 throw( cream_exceptions::InternalException( "Invalid jobID" ) );
 
-            // CreamJob theJob( *jobIt );
-            if( time(NULL)-jobIt->getLastUpdate() < iceConfManager::getInstance()->getPollerStatusThresholdTime())
-                continue;
-            log_dev->log(log4cpp::Priority::DEBUG,
+	    time_t oldness = time(NULL)-jobIt->getLastUpdate();
+	    time_t threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+//	    printf("\t*** oldness=%d threshold=%d\n", oldness, threshold);
+//	    printf("\t*** listener=%d\n",iceConfManager::getInstance()->startListener());
+            if( (oldness <  threshold) && iceConfManager::getInstance()->startListener() ) {
+//	        printf("\t*** CONTINUE!!!\n");
+		continue;
+	    }
+              //continue;
+
+            log_dev->log(log4cpp::Priority::INFO,
                          string("eventStatusPoller::getStatus() - Sending JobInfo request for Job [")
                          + jobIt->getJobID() + "]");
             oneJobToQuery.push_back(*it);
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
             _jobinfolist.push_back( creamClient->Info(jobIt->getCreamURL().c_str(), 
-                                                      oneJobToQuery, 
+                                                      oneJobToQuery,
                                                       empty, -1, -1 ) );
 	
         } catch (ClassadSyntax_ex& ex) {
-            // this exception should not be raised because 
+            // this exception should not be raised because
             // the CreamJob is created from another valid one
             log_dev->log(log4cpp::Priority::ERROR,
                          "eventStatusPoller::getStatus() - Fatal error: CreamJob creation failed from a valid one!!!");
@@ -138,7 +145,7 @@ bool eventStatusPoller::getStatus(void)
 }
 
 //______________________________________________________________________________
-void eventStatusPoller::checkJobs() 
+void eventStatusPoller::checkJobs()
 {
 
   /**
@@ -179,7 +186,7 @@ void eventStatusPoller::checkJobs()
             }
 	    jobs_to_purge.push_back(cid);
 	  }
-	
+
 	if( stNum == api::job_statuses::DONE_OK ||
 	    stNum == api::job_statuses::CANCELLED)
 	  {
@@ -219,7 +226,7 @@ void eventStatusPoller::updateJobCache()
           jobCache::iterator jit( cache->lookupByCreamJobID( cid ) );
           if ( ( jit != cache->end() ) /*&& ( jit->getStatus() != stNum )*/ ) { // FIXME
               // string gid = jit->getGridJobID();
-              log_dev->debugStream()
+              log_dev->infoStream()
                   << "eventStatusPoller::updateJobCache() - Updating jobcache with "
                   << "grid_jobid = [" << jit->getGridJobID() << "] "
                   << "cream_jobid = [" << (*it)->jobInfo[j]->CREAMJobId << "] "
@@ -231,9 +238,9 @@ void eventStatusPoller::updateJobCache()
               // Log to L&B
               _ev_logger->log_job_status( *jit ); // FIXME
           } else {
-	    log_dev->log(log4cpp::Priority::ERROR,
-			 string("cream_jobid = [") + cid + "] disappeared! "+
-			 "Removing from cache...");
+	    log_dev->errorStream() << "cream_jobid = ["<< cid << "] disappeared! "
+	    			   << "Removing from cache..."
+				   << log4cpp::CategoryStream::ENDLINE;
             cache->remove( jit );
           }
       } catch(exception& ex) {
@@ -264,10 +271,10 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 		     +*it+"]");
         jobCache::iterator jit = jobCache::getInstance()->lookupByCreamJobID( *it );
         cid = jit->getJobID();
-	log_dev->log(log4cpp::Priority::DEBUG,
-		     string("eventStatusPoller::purgeJobs() - ")
-			    +"Calling JobPurge for host ["
-			    +jit->getCreamURL() + "]");
+	log_dev->infoStream() << "eventStatusPoller::purgeJobs() - "
+			      << "Calling JobPurge for host ["
+			      << jit->getCreamURL() << "]"
+			      << log4cpp::CategoryStream::ENDLINE;
 	creamClient->Authenticate( jit->getUserProxyCertificate());
 	oneJobToPurge.push_back( jit->getJobID() );
 	creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
@@ -277,8 +284,10 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	 * this exception should not be raised because
 	 * the CreamJob is created from another valid one
 	 */
-	log_dev->log(log4cpp::Priority::ERROR,
-		     "eventStatusPoller::purgeJobs() - Fatal error: CreamJob creation failed copying from a valid one!!!");
+	log_dev->errorStream() << "eventStatusPoller::purgeJobs() - "
+			       << "Fatal error: CreamJob creation failed "
+			       << "copying from a valid one!!!"
+			       << log4cpp::CategoryStream::ENDLINE;
 	exit(1);
       } catch(soap_proxy::auth_ex& ex) {
 	log_dev->log(log4cpp::Priority::ERROR,
