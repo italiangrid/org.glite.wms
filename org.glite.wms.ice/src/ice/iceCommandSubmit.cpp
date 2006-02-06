@@ -143,7 +143,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     try {
         theJob.setJdl( _jdl );
         theJob.setStatus( cream_api::job_statuses::UNKNOWN, time(NULL) );
-    } catch( ice_util::ClassadSyntax_ex ex ) {
+    } catch( ice_util::ClassadSyntax_ex& ex ) {
         log_dev->errorStream() << "Cannot instantiate a job from jdl="
                                << _jdl
                                << " due to classad excaption: "
@@ -166,7 +166,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     string modified_jdl;
     try {    
         modified_jdl = creamJdlHelper( _jdl );
-    } catch( ice_util::ClassadSyntax_ex ex ) {
+    } catch( ice_util::ClassadSyntax_ex& ex ) {
         log_dev->errorStream() << "Cannot convert jdl="
                                << _jdl
                                << " due to classad exception:"
@@ -184,7 +184,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     
     try {
         theProxy->Authenticate(theJob.getUserProxyCertificate());
-    } catch ( cream_api::soap_proxy::auth_ex ex ) {
+    } catch ( cream_api::soap_proxy::auth_ex& ex ) {
         _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
         log_dev->errorStream()
             << "Unable to submit gridJobID=" << theJob.getGridJobID()
@@ -210,7 +210,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                                url_jid,
                                true /*autostart*/
                                );
-        } catch( exception ex ) {
+        } catch( exception& ex ) {
             log_dev->errorStream()
                 << "Cannot register jobID="
                 << theJob.getGridJobID()
@@ -277,7 +277,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << log4cpp::CategoryStream::ENDLINE;
         
             glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
-        } catch( exception ex ) {
+        } catch( exception& ex ) {
             log_dev->errorStream()
                 << "Problem while subscribing to notifications for jobID="
                 << theJob.getGridJobID()
