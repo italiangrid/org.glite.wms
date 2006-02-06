@@ -244,14 +244,15 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     /**
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications
-     * of job just submitted
+     * of job just submitted. But only if listener is ON
      */
     /* ....... */
-    string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
-        + confMgr->getCEMonUrlPostfix();
-    if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+    if(ice_util::iceConfManager::getInstance()->startListener()) {
+      string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+                         + confMgr->getCEMonUrlPostfix();
+      if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
         /* MUST SUBSCRIBE TO THIS CEMON */
-        log_dev->infoStream() 
+        log_dev->infoStream()
             << "iceCommandSubmit::execute() - Not subscribed to ["
             << cemon_url << "]. Going to subscribe to it..."
             << log4cpp::CategoryStream::ENDLINE;
@@ -263,7 +264,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                                   P,
                                   confMgr->getSubscriptionDuration()
                                   );
-            log_dev->infoStream() 
+            log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
                 << myname_url << "] to ["<<cemon_url
                 << "] with duration="
@@ -271,21 +272,21 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
             ceS.subscribe();
-            log_dev->infoStream() 
+            log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribed with ID ["
                 << ceS.getSubscriptionID() << "]"
                 << log4cpp::CategoryStream::ENDLINE;
-        
+
             glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
         } catch( exception& ex ) {
             log_dev->errorStream()
                 << "Problem while subscribing to notifications for jobID="
                 << theJob.getGridJobID()
-                << " Exception:" << ex.what() 
+                << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
         }
+      }
     }
-
 }
 
 //______________________________________________________________________________
