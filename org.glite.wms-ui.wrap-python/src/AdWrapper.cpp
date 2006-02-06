@@ -239,6 +239,7 @@ DagWrapper::DagWrapper( ){
 			error = "Fatal Error: This method must be used after the AdWrapper::toDagAd method";
 		}else{
 			dagad= new ExpDagAd (cAd) ;  
+			dagad->expand();
 		}
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
@@ -247,6 +248,7 @@ DagWrapper::DagWrapper( const string& file ){
 		ifstream jdl  ( file.c_str()  ) ;
 		error_code= false ;
 		dagad= new ExpDagAd ( jdl ) ;
+		dagad->expand();
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 }
 DagWrapper::~DagWrapper(){
@@ -260,6 +262,7 @@ bool DagWrapper::fromFile ( const string& file  ) {
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 		ifstream jdl  ( file.c_str()  ) ;
 		dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+		dagad->expand();
 		return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
@@ -270,6 +273,7 @@ bool DagWrapper::fromFile ( const string& file  ) {
 bool DagWrapper::fromString( const string& jdl){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 		dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+		dagad->expand();
 		return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
