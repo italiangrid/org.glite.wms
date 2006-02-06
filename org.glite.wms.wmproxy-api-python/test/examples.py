@@ -6,7 +6,7 @@ from wmproxymethods import Wmproxy
 from wmproxymethods import Config
 import socket
 
-Config.DEBUGMODE = 0
+Config.DEBUGMODE = 1
 def title(msg, *args):
 	if Config.DEBUGMODE:
 		print "\n########### DBG Message #################"
@@ -39,7 +39,7 @@ gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = trinity
+url = ghemon
 
 
 
@@ -69,6 +69,13 @@ dagad = JobId()
 """
 jobjdl ="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; Stdoutput = \"std.out\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; StdError = \"std.err\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; perusalFileEnable= true; ]"
 dagjdl="[ nodes = [ nodeB = [ description = [ requirements = other.GlueCEStateStatus == \"Production\"; JobType = \"normal\"; Executable = \"/bin/date\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] ]; dependencies = { { { nodeA },{ nodeB } } }; nodeA = [ description = [ requirements = other.GlueCEStateStatus == \"Production\"; JobType = \"normal\"; Executable = \"/bin/ls\"; StdOutput = \"std.out\"; OutputSandbox = { \"std.err\",\"std.out\" }; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; StdError = \"std.err\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] ] ]; VirtualOrganisation = \"EGEE\"; Type = \"dag\"; node_type = \"edg_jdl\"; enableFilePerusal= true;]"
+
+
+collectionjdl = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[1] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[2] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
+
+
+collectionjdlUNO = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
+
 
 
 jdl=jobjdl
@@ -105,19 +112,26 @@ class WmpTest(unittest.TestCase):
 	"""
 	SUBMISSION
 	"""
+	def testcollectionSubmit(self):
+		dagadInstance=self.wmproxy.jobSubmit(collectionjdlUNO, delegationId)
+		dagad.setJobId(dagadInstance.getJobId())
+		dagadInstance=self.wmproxy.jobSubmit(collectionjdl, delegationId)
+		assert dagadInstance, "Empty DAGAD!!!"
+		dagad.setJobId(dagadInstance.getJobId())
+
 	def testdagSubmit(self):
 		dagadInstance=self.wmproxy.jobSubmit(dagjdl, delegationId)
 		assert dagadInstance, "Empty DAGAD!!!"
-		dagad.setJobId(dagadInstance.toString())
+		dagad.setJobId(dagadInstance.getJobId())
 	def testjobSubmit(self):
 		jobidInstance =self.wmproxy.jobSubmit(jobjdl, delegationId)
 		assert  jobidInstance , "Empty JobId!!"
-		jobid.setJobId(jobidInstance.toString())
+		jobid.setJobId(jobidInstance.getJobId())
 	def testcycleJob(self):
 		for jdl in [jobjdl]:
 			title("Cycle Job: Registering..")
 			jobidInstance = self.wmproxy.jobRegister(jdl,delegationId)
-			jobid.setJobId(jobidInstance.toString())
+			jobid.setJobId(jobidInstance.getJobId())
 			title("Cycle Job: jobid is:" , jobid.getJobId())
 			title("Cycle Job:  getSandboxDestURI...",self.wmproxy.getSandboxDestURI(jobid.getJobId()))
 			title("Cycle Job:  getSandboxBulkDestURI...", self.wmproxy.getSandboxBulkDestURI(jobid.getJobId()))
@@ -129,7 +143,7 @@ class WmpTest(unittest.TestCase):
 		for jdl in [dagjdl]:
 			title("Cycle Job: Registering..")
 			dagid= self.wmproxy.jobRegister(jdl,delegationId)
-			dagid=dagid.toString()
+			dagid=dagid.getJobId()
 			title("Cycle Job: jobid is:" , dagid)
 			title("Cycle Job:  getSandboxDestURI...")
 			title(self.wmproxy.getSandboxDestURI(dagid))
@@ -223,6 +237,7 @@ def runTextRunner(level=0):
 	"""  SUBMISSION """
 	submitSuite = unittest.TestSuite()
 	submitSuite.addTest( WmpTest("testdagSubmit"))
+	submitSuite.addTest( WmpTest("testcollectionSubmit"))
 	submitSuite.addTest( WmpTest("testjobSubmit"))
 	submitSuite.addTest( WmpTest("testcycleJob"))
 	""" PERUSAL """
@@ -285,9 +300,25 @@ def getWmproxy():
 """
 				MAIN
 """
-def custom(jobid):
-	wmproxy = Wmproxy(url, ns)
-	return wmproxy.getJobProxyInfo(jobid)
+def custom():
+	# PERFORM wmproxyMethod directly:
+	wmproxy = getWmproxy()
+	wmproxy = getRemote()
+	# return wmproxy.getJobProxyInfo(jobid)
+	return wmproxy.jobSubmit(collectionjdlUNO, delegationId)
+
+def custom3(jdl):
+	# PERFORM wmproxyMethod directly:
+	wmproxy = getRemote()
+	return wmproxy.jobSubmit(jdl, delegationId)
+
+
+def custom2():
+	# PERFORM Custom UNIT TEST:
+	customSuite= unittest.TestSuite()
+	customSuite.addTest( WmpTest("testcollectionSubmit"))
+	runner = unittest.TextTestRunner()
+	runner.run(customSuite)
 
 
 if __name__=="__main__":
@@ -319,6 +350,4 @@ if __name__=="__main__":
 		sys.exit(0)
 	runTextRunner(level)
 	print " END TEST \n"
-
-
 
