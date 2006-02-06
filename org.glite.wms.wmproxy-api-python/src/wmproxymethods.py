@@ -58,8 +58,15 @@ class JobIdStruct:
 		self.jobid=soapStruct.__getitem__("id")
 		# children fill (if present)
 		try:
-			for child in  soapStruct.__getitem__("childrenJob"):
-				self.children.append( JobIdStruct(child) )
+			# try and parse children:
+			children =soapStruct.__getitem__("childrenJob")
+			if type(children)==list:
+				# iterate over children
+				for child in children:
+					self.children.append( JobIdStruct(child) )
+			else:
+				# Only one child: append it
+				self.children.append(JobIdStruct(children))
 		except AttributeError:
 			# no children found: it is not a dag
 			pass
@@ -67,7 +74,9 @@ class JobIdStruct:
 			self.nodeName = soapStruct.__getitem__("name")
 		except AttributeError:
 			# no node name found: it is not a node
+			self.nodeName = ""
 			pass
+
 	def __repr__(self):
 		"""
 		Return, the istance itself
@@ -82,7 +91,13 @@ class JobIdStruct:
 		"""
 		Return the JobId string representation
 		"""
-		return self.jobid
+		result = ""
+		if self.nodeName:
+			result+="Node Name: " + self.nodeName +"\n"
+		result+="JobId: " + self.jobid
+		for child in self.children():
+			result += "\n\t" + child.toString()
+		return result
 	def getJobId(self):
 		"""
 		Equal to toString
@@ -176,7 +191,7 @@ class WMPException(BaseException):
 			self.args.append(self.description)
 		else:
 			self.args.append(self.origin)
-			self.args.append(self.errType)			
+			self.args.append(self.errType)
 	def __init__(self, err):
 		self.error   = err
 		self.origin  = err[0]
@@ -905,8 +920,10 @@ class Wmproxy:
 		IN =  jobId (string)
 		IN =  fileList (StringList)
 
-		This operation enables file perusal functionalities if not disabled with the specific jdl attribute during job register operation.
-		Calling this operation, the user enables perusal for job identified by jobId, for files specified with fileList.
+		This operation enables file perusal functionalities if not disabled with the specific
+		jdl attribute during job register operation.
+		Calling this operation, the user enables perusal for job identified by jobId,
+		for files specified with fileList.
 		An empty fileList disables perusal.
 		"""
 		try:
