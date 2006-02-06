@@ -51,6 +51,11 @@ void jobCache::jobCacheTable::putJob( const CreamJob& c )
 {
     // Note: the GridJobID of a job MUST always be defined; the creamJobId
     // could be initially empty, so we need to check this.
+
+//     glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->infoStream() << "************ Putting Job in cache"
+//     			  << "************ "<<c.getJobID()
+// 			  << log4cpp::CategoryStream::ENDLINE;
+
     _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
     jobCacheTable::iterator pos;
     if ( it == _gidMap.end() ) {
@@ -73,6 +78,11 @@ void jobCache::jobCacheTable::delJob( const CreamJob& c )
 {
     _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
     if ( it != _gidMap.end() ) {
+
+//         glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->infoStream() << "************ Removing Job from cache"
+//     	   		      << "************ "<<c.getJobID()
+// 			      << log4cpp::CategoryStream::ENDLINE;
+
         // Deletes a new job
         jobCacheTable::iterator pos = it->second;
         // Removes the job from the list

@@ -181,7 +181,7 @@ void eventStatusPoller::checkJobs()
 	  }
 	
 	if( stNum == api::job_statuses::DONE_OK ||
-	    stNum == api::job_statuses::CANCELLED) 
+	    stNum == api::job_statuses::CANCELLED)
 	  {
 	    // schedule this job for future purge
 	    jobs_to_purge.push_back(cid);
@@ -217,7 +217,7 @@ void eventStatusPoller::updateJobCache()
           boost::recursive_mutex::scoped_lock M( jobCache::mutex );
           string cid( (*it)->jobInfo.at(j)->CREAMJobId );
           jobCache::iterator jit( cache->lookupByCreamJobID( cid ) );
-          if ( ( jit != cache->end() ) && ( jit->getStatus() != stNum ) ) { // FIXME
+          if ( ( jit != cache->end() ) /*&& ( jit->getStatus() != stNum )*/ ) { // FIXME
               // string gid = jit->getGridJobID();
               log_dev->debugStream()
                   << "eventStatusPoller::updateJobCache() - Updating jobcache with "
