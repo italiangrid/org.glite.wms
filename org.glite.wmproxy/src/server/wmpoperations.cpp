@@ -1749,7 +1749,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 							nodead.getStringValue(JDL::OSB_DEST_URI),
 							dest_uri);
 						nodead.delAttribute(JDL::OSB_DEST_URI);
-					} else if (dag->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+					} else if (nodead.hasAttribute(JDL::OSB_BASE_DEST_URI)) {
 		            	osbdesturi = wmputilities::computeOutputSBDestURIBase(
 							nodead.getStringValue(JDL::OUTPUTSB),
 							nodead.getStringValue(JDL::OSB_BASE_DEST_URI)[0]);
@@ -2346,35 +2346,11 @@ getSandboxDestURI(getSandboxDestURIResponse &getSandboxDestURI_response,
 	getSandboxDestURI_response.path = new StringList;
 	getSandboxDestURI_response.path->Item = new vector<string>(0);
 	
-	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
 		jid, protocol, "input");
-		
-	/*vector<string> *uris = NULL;
-	if (protocol == ALL_PROTOCOLS) {
-		uris = wmputilities::getDestURIsVector(conf.getProtocols(),
-			conf.getHTTPSPort(), jid);
-	} else if (protocol == DEFAULT_PROTOCOL) {
-		vector<pair<string, int> > protocols;
-		pair<string, int> itempair;
-		itempair.first = conf.getDefaultProtocol();
-		itempair.second = conf.getDefaultPort();
-		protocols.push_back(itempair);
-		uris = wmputilities::getDestURIsVector(protocols,
-			conf.getHTTPSPort(), jid, false);
-	} else {
-		// if (check if the protocol is supported)
-		vector<pair<string, int> > protocols;
-		pair<string, int> itempair;
-		itempair.first = protocol;
-		itempair.second = 0;
-		protocols.push_back(itempair);
-		uris = wmputilities::getDestURIsVector(protocols,
-			conf.getHTTPSPort(), jid, false);
-	}
-	getSandboxDestURI_response.path->Item = uris;*/
 	
-	getSandboxDestURI_response.path->Item = &jobdiruris;
+	getSandboxDestURI_response.path->Item = jobdiruris;
 	
 	GLITE_STACK_CATCH();
 }
@@ -2410,7 +2386,6 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	
 	// Initializing logger
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -2440,39 +2415,13 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	vector<string>::iterator iter = jids.begin();
 	vector<string>::iterator const end = jids.end();
 	for (; iter != end; ++iter) {
-		vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+		vector<string> *uris = getJobDirectoryURIsVector(conf.getProtocols(),
 			conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
 			*iter, protocol, "input");
-		/*vector<string> *uris = NULL;
-		if (protocol == ALL_PROTOCOLS) {
-			uris = wmputilities::getDestURIsVector(conf.getProtocols(),
-				conf.getHTTPSPort(), jid);
-		} else if (protocol == DEFAULT_PROTOCOL) {
-			vector<pair<string, int> > protocols;
-			pair<string, int> itempair;
-			itempair.first = conf.getDefaultProtocol();
-			itempair.second = conf.getDefaultPort();
-			protocols.push_back(itempair);
-			uris = wmputilities::getDestURIsVector(protocols,
-				conf.getHTTPSPort(), jid, false);
-		} else {
-			// if (check if the protocol is supported)
-			vector<pair<string, int> > protocols;
-			pair<string, int> itempair;
-			itempair.first = protocol;
-			itempair.second = 0;
-			protocols.push_back(itempair);
-			uris = wmputilities::getDestURIsVector(protocols,
-				conf.getHTTPSPort(), jid, false);
-		}*/
-		/*vector<string> *uris =
-			wmputilities::getDestURIsVector(conf.getProtocols(),
-				conf.getHTTPSPort(), *iter);*/
 		
 		DestURIStructType *destURIStruct = new DestURIStructType();
 		destURIStruct->id = *iter;
-		//destURIStruct->destURIs = uris;
-		destURIStruct->destURIs = &jobdiruris;
+		destURIStruct->destURIs = uris;
 		destURIsStruct->Item->push_back(destURIStruct);
 	}
 	getSandboxBulkDestURI_response.destURIsStruct = destURIsStruct;
@@ -2745,10 +2694,10 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	}
 	
 	string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
-	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
 		jid, protocol, "output");
-	unsigned int jobdirsize = jobdiruris.size();
+	unsigned int jobdirsize = jobdiruris->size();
 	
 	// Searching files inside directory
 	const boost::filesystem::path p(outputpath, boost::filesystem::native);
@@ -2776,7 +2725,7 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 			edglog(debug)<<"Inserting file size: " <<filesize<<endl;
 			for (unsigned int i = 0; i < jobdirsize; i++) {
 				item = new StringAndLongType();
-				item->name = jobdiruris[i] + FILE_SEPARATOR + filename;
+				item->name = (*jobdiruris)[i] + FILE_SEPARATOR + filename;
 				item->size = filesize;
 				file->push_back(item);
 			}
@@ -3564,11 +3513,11 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	vector<string> found;
 	glite::wms::wmproxy::commands::list_files(p, found);
 	
-	vector<string> jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
+	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
 		job_id, protocol);
 
-	unsigned int jobdirsize = jobdiruris.size();
+	unsigned int jobdirsize = jobdiruris->size();
 		
 	vector<string> good;
 	vector<string> returnvector;
@@ -3587,7 +3536,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 					== 0) {
 				edglog(debug)<<"Good old global perusal file: "<<*iter<<endl;
 				for (unsigned int i = 0; i < jobdirsize; i++) {
-					returnvector.push_back(jobdiruris[i] + *iter);
+					returnvector.push_back((*jobdiruris)[i] + *iter);
 				}
 			}
 		}
@@ -3628,7 +3577,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 				rename(tempfile.c_str(), filetoreturn.c_str());
 				
 				for (unsigned int i = 0; i < jobdirsize; i++) {
-					returnvector.push_back(jobdiruris[i] + filetoreturn);
+					returnvector.push_back((*jobdiruris)[i] + filetoreturn);
 				}
 				
 				outfile.open(tempfile.c_str(), ios::out);
@@ -3665,7 +3614,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		rename(tempfile.c_str(), filetoreturn.c_str());
 		
 		for (unsigned int i = 0; i < jobdirsize; i++) {
-			returnvector.push_back(jobdiruris[i] + filetoreturn);
+			returnvector.push_back((*jobdiruris)[i] + filetoreturn);
 		}
 	}
 	
