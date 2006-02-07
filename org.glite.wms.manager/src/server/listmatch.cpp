@@ -1,16 +1,20 @@
-// File: listmatch.cpp
-// Author: Marco Pappalardo <Marco.Pappalardo@ct.infn.it>
-// Author: Cinzia Di Giusto <Cinzia.DiGiusto@cnaf.infn.it>
-// Author: Francesco Giacomini
-// Author: Francesco Prelz
-// Copyright (c) Members of the EGEE Collaboration 2004
-// For license conditions see http://public.eu-egee.org/license/license.html
+/*
+ * File: listmatch.cpp
+ * Author: Marco Pappalardo <Marco.Pappalardo@ct.infn.it>
+ * Author: Cinzia Di Giusto <Cinzia.DiGiusto@cnaf.infn.it>
+ * Author: Francesco Giacomini
+ * Author: Francesco Prelz
+ */
 
 #include <iostream>
 #include <fstream>
+
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 #include "listmatch.h"
 #include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wms/common/utilities/scope_guard.h"
+
 #include "glite/wms/helper/Helper.h"
 #include "glite/wms/helper/exceptions.h"
 
@@ -35,9 +39,12 @@ bool match(
   std::auto_ptr<classad::ClassAd> result;
 
   try {
-    result.reset(glite::wms::helper::Helper("MatcherHelper").resolve(&jdl));
 
-    classad::ExprTree *et = result->Lookup("match_result");
+    classad::ClassAd ad(jdl);
+    ad.InsertAttr("include_brokerinfo", include_brokerinfo);
+    result.reset(glite::wms::helper::Helper("MatcherHelper").resolve(&ad));
+
+    classad::ExprTree *et = result->Lookup ("match_result");
     assert(utilities::is_expression_list(et));
     classad::ExprList& match_result = *static_cast<classad::ExprList*>(et);
 
@@ -50,9 +57,8 @@ bool match(
         number_of_results = match_result.size();
       }
 
-      for (int i = 0;
-           i < std::min(number_of_results, match_result.size());
-           ++i) {
+      int const n_results = std::min(number_of_results, match_result.size());
+      for (int i = 0; i < n_results; ++i) {
         assert(utilities::is_classad(list[i]));
         std::auto_ptr<classad::ExprTree> element(list[i]->Copy());
 
@@ -69,9 +75,7 @@ bool match(
           double rank = utilities::evaluate_attribute(*ca, "rank");
 
           classad::Value value;
-          value.SetStringValue(
-            host + ',' + boost::lexical_cast<std::string>(rank)
-          );
+          value.SetStringValue(host + ',' + boost::lexical_cast<std::string>(rank));
 
 
           element.reset(classad::Literal::MakeLiteral(value));
@@ -96,33 +100,40 @@ bool match(
   if (fd == -1) {
     return false;
   }
+  utilities::scope_guard close_fd(boost::bind(::close, fd));
 
-  int retry_count, backoff_time;
-  int write_size = result_string.size();
+  int const max_retries = 7;
+  int retry_count = 0;
+  int backoff_time = 1;
+  int const write_size = result_string.size();
   int written_size = 0;
+  char const* const c_result_string = result_string.c_str();
 
-  for (retry_count = 7; retry_count > 0; backoff_time *= 2, --retry_count) {
-      int write_retcod
-        = write(fd, result_string.c_str() + written_size, write_size);
-      if (write_retcod < 0) {
-        if (errno == EAGAIN) {
-          sleep(backoff_time);
-        } else { 
-          break;
-        }
-      } else if (write_retcod < write_size) {
-        written_size += write_retcod;
-        write_size   -= write_retcod;
-        backoff_time = 1;
+  while (written_size != write_size) {
+    int n_write(
+      write(fd, c_result_string + written_size, write_size - written_size)
+    );
+
+    if (n_write > 0 && n_write <= (write_size - written_size)) {
+      written_size += n_write;
+      backoff_time = 1;
+      retry_count = 0;
+    } else if (n_write == 0) {
+      sleep(backoff_time);
+      backoff_time *= 2;
+      ++retry_count;
+    } else {
+      if (errno == EAGAIN && retry_count < max_retries) {
         sleep(backoff_time);
+        backoff_time *= 2;
+        ++retry_count;
       } else {
         break;
       }
+    }
   }
 
-  close(fd);
-
-  return retry_count > 0;
+  return written_size == write_size;
 }
 
 }}}} // glite::wms::manager::server
