@@ -2,6 +2,7 @@
 // PROJECT INCLUDES
 #include "jobCache.h"
 #include "jnlFileManager.h"
+#include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "glite/ce/cream-client-api-c/string_manipulation.h"
@@ -360,10 +361,9 @@ void jobCache::logOperation( const operation& op, const std::string& param )
      */
     operation_counter++;
 
-    if(operation_counter >= MAX_OPERATION_COUNTER) {
-      
+    if(operation_counter >= iceConfManager::getInstance()->getMaxJobCacheOperationBeforeDump())
+    {
       operation_counter = 0;
-      
       try {
 	this->dump(); // can raise a jnlFile_ex
 	jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex

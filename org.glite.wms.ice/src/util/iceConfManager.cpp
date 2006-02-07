@@ -14,7 +14,7 @@ bool glite::wms::ice::util::iceConfManager::initialized = false;
 boost::recursive_mutex glite::wms::ice::util::iceConfManager::mutex;
 
 //______________________________________________________________________________
-glite::wms::ice::util::iceConfManager* 
+glite::wms::ice::util::iceConfManager*
 glite::wms::ice::util::iceConfManager::getInstance( )
   throw (glite::wms::ice::util::ConfigurationManager_ex&)
 {
@@ -64,6 +64,7 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   subUpdThresholdTime = config->ice()->subscription_update_threshold_time();
   startsubupder     = config->ice()->start_subscription_updater();
   poller_status_threshold_time = config->ice()->poller_status_threshold_time();
+  max_jobcache_operation_before_dump = config->ice()->max_jobcache_operation_before_dump();
 
 //   printf("\t **** poller_status_threshold_time=%d\n", config->ice()->poller_status_threshold_time());
 //   printf("\t **** poller_status_threshold_time=%d\n", poller_status_threshold_time);

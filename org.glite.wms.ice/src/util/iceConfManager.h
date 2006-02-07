@@ -22,7 +22,7 @@ namespace glite {
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
 	    icetopic;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
-	      poller_status_threshold_time;
+	      poller_status_threshold_time, max_jobcache_operation_before_dump;
 	  bool startpoller, startlistener, startsubupder,
 	       log_on_console, log_on_file;
 	  
@@ -61,6 +61,7 @@ namespace glite {
 	  time_t      getPollerStatusThresholdTime( void ) const { return poller_status_threshold_time;}
 	  bool        logOnConsole( void ) const { return log_on_console; }
 	  bool        logOnFile( void ) const { return log_on_file; }
+	  int         getMaxJobCacheOperationBeforeDump( void ) const { return max_jobcache_operation_before_dump; }
 	};
       }
     }
