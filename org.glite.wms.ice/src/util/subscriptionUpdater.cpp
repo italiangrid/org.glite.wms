@@ -56,10 +56,10 @@ void iceUtil::subscriptionUpdater::operator()()
 	  this->renewSubscriptions(vec);
 	} catch(AuthenticationInitException& ex) {
 	  log_dev->errorStream()  << "subscriptionUpdater::()() - Error: "<<ex.what()<<log4cpp::CategoryStream::ENDLINE;
-	  exit(1);
+	  exit(1); // FIXME
 	} catch(exception& ex) {
 	  log_dev->errorStream()  << "subscriptionUpdater::()() - Error: "<<ex.what() << log4cpp::CategoryStream::ENDLINE;
-	  exit(1);
+	  exit(1); // FIXME
 	}
       }
 
@@ -103,7 +103,7 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
 		       );
         } catch(exception& ex) {
 	  log_dev->errorStream()  << "subscriptionUpdater::renewSubscriptions() - Error: "<<ex.what() << log4cpp::CategoryStream::ENDLINE;
-	  exit(1);
+	  exit(1); // FIXME
 	}
       }
     }

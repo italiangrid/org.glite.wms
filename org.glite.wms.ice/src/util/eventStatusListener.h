@@ -51,7 +51,8 @@ namespace glite {
           log4cpp::Category *log_dev;
           iceEventLogger *_ev_logger;
           // classad::ClassAdParser parser;
-
+	  bool _isOK;
+	  
 	  void init(void);
           // void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
           void handleEvent( const Event& ev );
@@ -73,7 +74,7 @@ namespace glite {
 	  void acceptJobStatus(void);
 	  virtual void operator()();
 	  virtual void stop() { endaccept=true; }
-
+	  bool isOK() const { return _isOK; }
 	};
 
       }

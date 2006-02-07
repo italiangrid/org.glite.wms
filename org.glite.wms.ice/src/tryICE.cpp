@@ -83,15 +83,21 @@ int main(int argc, char*argv[]) {
     if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
         log_dev->errorStream() << "Host proxy certificate is expired. Won't start Listener"
 					<< log4cpp::CategoryStream::ENDLINE;
+
+        // this must be set because other pieces of code
+        // have a behaviour that depends on the listener is running or not
 	iceUtil::iceConfManager::getInstance()->setStartListener( false );
     } else {
 	log_dev->log(log4cpp::Priority::INFO,
-                     string("Host DN is ["+hostdn+"]") );
+                     string( "Host DN is [" + hostdn + "]") );
     }
   } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
     logger_instance->log(log4cpp::Priority::ERROR,
 			 "Unable to extract user DN from Proxy File "
 			 + hostcert + ". Won't start Listener", true, true, true);
+
+    // this must be set because other pieces of code
+    // have a behaviour that depends on the listener is running or not
     iceUtil::iceConfManager::getInstance()->setStartListener( false );
   }
 

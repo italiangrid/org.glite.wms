@@ -72,6 +72,14 @@ void ice::startListener(const int& listenPort)
   log_dev->log(log4cpp::Priority::INFO,
 	       "ice::startListener() - Creating a CEMon listener object...");
   listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort,util::iceConfManager::getInstance()->getHostProxyFile()));
+  if( !listener->isOK() )
+  {
+    log_dev->log(log4cpp::Priority::ERROR, "CEMon listener creation went wrong. Won't start it.");
+    // this must be set because other pieces of code
+    // have a behaviour that depends on the listener is running or not
+    util::iceConfManager::getInstance()->setStartListener( false );
+    return;
+  }
   while(!listener->bind()) {
     log_dev->log(log4cpp::Priority::ERROR,
 		 string("ice::startListener() - Bind error: ")+listener->getErrorMessage()
@@ -99,6 +107,8 @@ void ice::startListener(const int& listenPort)
   log_dev->log(log4cpp::Priority::INFO,
 	       "ice::startListener() - listener started succesfully !");
   status_listener_started = true;
+
+  //-----------------now is time to start subUpdater---------------------------
 
   if(util::iceConfManager::getInstance()->getStartSubscriptionUpdater()) {
     log_dev->log(log4cpp::Priority::INFO,

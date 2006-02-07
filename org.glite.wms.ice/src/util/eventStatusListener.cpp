@@ -95,8 +95,8 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     myname( ),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    _ev_logger( iceEventLogger::instance() )
-    //    parser( )
+    _ev_logger( iceEventLogger::instance() ),
+    _isOK( true )
 {
   char name[256];
   memset((void*)name, 0, 256);
@@ -108,8 +108,9 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
 			   << "Couldn't resolve local hostname: "
                            << strerror(errno)
                            << log4cpp::CategoryStream::ENDLINE;
-
-    exit(1);
+    _isOK = false;
+    //exit(1);
+    return;
   }
   struct hostent *H=gethostbyname(name);
   if(!H) {
@@ -119,7 +120,9 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
 			   << "Couldn't resolve local hostname: "
                            << strerror(h_errno)
                            << log4cpp::CategoryStream::ENDLINE;
-    exit(1);
+    //exit(1);
+    _isOK = false;
+    return;
   }
   myname = H->h_name;
   log_dev->info( "eventStatusListener::CTOR - Listener created!" );
@@ -131,7 +134,9 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
 			   << "Fatal Error creating a pinger object:"
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE;
-    exit(1);
+    _isOK = false;
+    return;
+    //exit(1);
   }
   init();
 }
