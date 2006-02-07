@@ -44,41 +44,25 @@ truncate() # 1 - file, 2 - bytes num.
     } else {
       exit(1)
     }'
-  #return $?
+  return $?
 }
 
 sort_by_size() # 1 - file names vector, 2 - directory
 {
-  eval tmp="$1[@]"
-  eval number_of_elements="\${#$tmp}"
-  let "comparisons = $number_of_elements - 1"
-  count=1
-  while [ $comparisons -gt 0 ];
-  do
-    index=0
-    while [ $index -lt $comparisons ];
-    do
-      eval tmp="$1[$index]"
-      eval tmp2=\${$tmp}
-      fs_1=`stat -t $2/$tmp2 2>/dev/null | awk '{print $2}'`||0
-      let "index2 = $index + 1"
-      eval tmp="$1[$index2]"
-      eval tmp2=\${$tmp}
-      fs_2=`stat -t $2/$tmp2 2>/dev/null | awk '{print $2}'`||0
-      if [ $fs_1 -gt $fs_2 ]; then
-        let "index2 = $index + 1"
-
-        eval temp=\${$1[$index]}
-        eval temp2=\${$1[$index2]}
-
-        eval "$1[$index]=$temp2"
-        eval "$1[$index2]=$temp"
-      fi
-      let "++index"
-    done
-    let "--comparisons"
-    let "++count"
+  tmp_sort_file=`mktemp -q tmp.XXXXXX`
+  if [ $? != 0 ]; then
+    unset $tmp_sort_file
+  fi
+  eval tmpvar="$1[@]"
+  eval elements="\${$tmpvar}"
+  for fname in $elements; do
+    fsize=`stat -t $2/$fname 2>/dev/null | awk '{print $2}'`||0
+    echo "$fsize $fname" >> $tmp_sort_file
   done
+  unset $1
+  eval "$1=(`sort -n $tmp_sort_file|awk '{print $2}'`)"
+  rm $tmp_sort_file
+  unset tmp_sort_file
 }
 
 globus_url_retry_copy() # 1 - source, 2 - dest
@@ -408,9 +392,14 @@ if [ ${__create_subdir} -eq 1 ]; then
   fi
 fi
 
-if [ ! -w . ]; then
+#savannah 14866: the test -w on work dir is unsuitable on AFS machines
+tmpfile=`mktemp -q ./tmp.XXXXXX`
+if [ $? != 0 ]; then
   log_error "Working directory not writable"
+else
+  rm $tmpfile
 fi
+unset $tmpfile
 workdir="`pwd`"
 
 if [ -n "${__brokerinfo}" ]; then
@@ -462,10 +451,10 @@ else
 fi
 
 #user prescript
-if [ -x "${workdir}/pre_script.sh" ]; then
-  ${workdir}/pre_script.sh
+if [ -x "${workdir}/user_script.sh" ]; then
+  ${workdir}/user_script.sh
   if [ $? -ne 0]
-    echo "User prescript returned with an error"
+    echo "User script returned with an error"
     doExit $?
   fi
 fi
@@ -488,10 +477,17 @@ fi
 
 if [ ${__token_support} -eq 1 ]; then
 
-  `$$GLITE_LOCATION/bin/glite-gridftp-rm $__token_file 2>/dev/null`
-  || ``which glite-gridftp-rm 2>/dev/null` $__token_file` 2>/dev/null`
-  || `$EDG_LOCATION/bin/edg-gridftp-rm $__token_file 2>/dev/null`
-  || ``which edg-gridftp-rm 2>/dev/null` $__token_file` 2>/dev/null`
+  # Look for an executable gridftp_rm command
+  for gridftp_rm_command in $GLITE_LOCATION/bin/glite-gridftp-rm \
+                            `which glite-gridftp-rm 2>/dev/null` \
+                            $EDG_LOCATION/bin/edg-gridftp-rm \
+                            `which edg-gridftp-rm 2>/dev/null` ; do
+    if [ -x $gridftp_rm_command ]; then
+      break;
+    fi
+  done
+
+ `$gridftp_rm_command $__token_file`
   result=$?
   if [ $result -eq 0 ]; then
     log_event "ReallyRunning"
@@ -526,7 +522,7 @@ elif [ ${__job_type} -eq 3 ]; then #interactive
   cmd_line="./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
 fi
 
-if [ ${__job_type} -ne 3 ]; then #every kind but interactive
+if [ ${__job_type} -ne 3 ]; then #all but interactive
   if [ -n "${__standard_input}" ]; then
     cmd_line="$cmd_line < ${__standard_input}"
   fi
