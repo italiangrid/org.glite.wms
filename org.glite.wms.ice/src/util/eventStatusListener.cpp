@@ -1,4 +1,6 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
+#include "classad_distribution.h"
+#include "ClassadSyntax_ex.h"
 #include <boost/algorithm/string.hpp>
 #include "eventStatusListener.h"
 #include "subscriptionCache.h"
@@ -12,6 +14,8 @@
 #include <cstring> // for memset
 #include <netdb.h>
 #include "iceEventLogger.h"
+#include <functional>
+#include <algorithm>
 
 extern int h_errno;
 extern int errno;
@@ -21,6 +25,58 @@ namespace api = glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
 
 boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
+
+namespace { // anonym namespace
+
+    class StatusNotification {
+    public:
+        StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& );
+        virtual ~StatusNotification( ) { };
+
+        const string& getCreamJobID( void ) const { return cream_job_id; };
+        const string& getStatus( void ) const { return job_status; };
+        long getTstamp( void ) const { return tstamp; };
+    protected:
+        string cream_job_id;
+        string job_status;
+        long tstamp;
+    };
+
+    // StatusNotification implementation
+    StatusNotification::StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& )
+    {
+        api::util::creamApiLogger::instance()->getLogger()->infoStream()
+            << "Parsing status change notification "
+            << _classad
+            << log4cpp::CategoryStream::ENDLINE;
+
+        classad::ClassAdParser parser;
+        classad::ClassAd *ad = parser.ParseClassAd( _classad );
+        double tstamp_d;
+        
+        if (!ad)
+            throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
+        
+        if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
+            throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
+        
+        if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status ) )
+            throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
+        
+        if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
+            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
+        tstamp = lrint( tstamp_d );
+    };
+
+
+    struct less_equal_tstamp : public binary_function< StatusNotification, StatusNotification, bool>
+    {
+        bool operator()(const StatusNotification& __x, const StatusNotification& __y) const 
+        { 
+            return __x.getTstamp() <= __y.getTstamp(); 
+        }
+    };
+
 
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
@@ -39,8 +95,8 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     myname( ),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    _ev_logger( iceEventLogger::instance() ),
-    parser( )
+    _ev_logger( iceEventLogger::instance() )
+    //    parser( )
 {
   char name[256];
   memset((void*)name, 0, 256);
@@ -173,63 +229,8 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * job in the jobCache getting the status from last message of the 
    * event.
    */
-  for(unsigned j=0; j<evts.size(); j++) {
-    for(unsigned jj=0; jj<evts[j].Messages.size(); jj++)
-      cout << "evt #"<<j<<".Message["<<jj<<"]="<<evts[j].Messages[jj]<<endl;
-    string Ad( evts[j].Messages[evts[j].Messages.size()-1] );
-    string cream_job_id, status;
-    long tstamp;
-
-    // the following function extract from the classad Ad the
-    // creamjobid and status and put them into the 1st and 2nd
-    // arguments respectively
-    try {parseEventJobStatus(cream_job_id, status, tstamp, Ad);}
-    catch(iceUtil::ClassadSyntax_ex& ex) {
-	log_dev->errorStream() << "Error parsing notification Message ["
-	                       <<evts[j].Messages[evts[j].Messages.size()-1]
-			       << "]. Ignoring it...";
-	//this->reset();
-	return;
-    }
-
-    //cout << "cream_job_id=" << cream_job_id << " status="<<status << " tstamp="<<tstamp<<endl;
-
-    jobCache::iterator it;
-//log_dev->infoStream() << "Entering try..."<<log4cpp::CategoryStream::ENDLINE;
-    try {
-      //log_dev->infoStream() << "Acquiring mutexJobStatusUpdate..."<<log4cpp::CategoryStream::ENDLINE;
-      boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
-	//log_dev->infoStream() << "Acquired!"<<log4cpp::CategoryStream::ENDLINE;
-      it = jobCache::getInstance()->lookupByCreamJobID(cream_job_id);
-      if( it == jobCache::getInstance()->end())
-	{
-	  log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
-				 << "Not found in the cache the creamjobid ["
-				 << cream_job_id<<"] that should be there. Ignoring this notification..."
-				 << log4cpp::CategoryStream::ENDLINE;
-	  //this->reset();
-	  return;
-	  //exit(1);
-	}
-      log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
-      			    << "Updating job ["<<cream_job_id
-			    << "] with status ["<<status<<"]"
-			    << log4cpp::CategoryStream::ENDLINE;
-      it->setStatus( api::job_statuses::getStatusNum(status), time(NULL) );
-      _ev_logger->log_job_status( *it ); // FIXME
-      jobCache::getInstance()->put( *it );
-    } catch(exception& ex) {
-      log_dev->fatal( ex.what() );
-      exit(1);
-    }
-    
-    log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
-                          << "Successfully updated JobID="
-                          << cream_job_id <<" - STATUS=" << status
-                          << log4cpp::CategoryStream::ENDLINE;
-    /**
-     * See CEConsumer's class for the purpose of this method
-     */
+  for ( vector<Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
+      handleEvent( *it );
   } // Loop over all events
   //this->reset();
 }
@@ -450,11 +451,12 @@ void iceUtil::eventStatusListener::init(void)
 }
 
 //______________________________________________________________________________
+#ifdef DONT_COMPILE
 void iceUtil::eventStatusListener::parseEventJobStatus(string& cream_job_id, string& job_status, long& tstamp, const string& _classad)
     throw(iceUtil::ClassadSyntax_ex&)
 {
     classad::ClassAd *ad = parser.ParseClassAd( _classad );
-    //double tstamp_d;
+    double tstamp_d;
 
     if (!ad)
         throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
@@ -465,8 +467,153 @@ void iceUtil::eventStatusListener::parseEventJobStatus(string& cream_job_id, str
     if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status ) )
         throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
 
-//     if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
-//         throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
-//     tstamp = lrint( tstamp_d );
-    tstamp = time(NULL);
+    if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
+        throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
+    tstamp = lrint( tstamp_d );
+    // tstamp = time(NULL);
 }
+
+void iceUtil::eventStatusListener::handleEvent( const Event& ev )
+{
+    for(unsigned jj=0; jj<ev.Messages.size(); jj++) {
+    //      cout << "evt #"<<j<<".Message["<<jj<<"]="<<ev.Messages[jj]<<endl;
+        log_dev->infoStream()
+            << "Event dump follows for message[" << jj << "]: "
+            << ev.Messages[jj]
+            << log4cpp::CategoryStream::ENDLINE;
+    }
+    string Ad( ev.Messages[ev.Messages.size()-1] );
+    string cream_job_id, status;
+    double tstamp_d;
+    long tstamp;
+
+    // the following function extract from the classad Ad the
+    // creamjobid and status and put them into the 1st and 2nd
+    // arguments respectively
+    try {
+        parseEventJobStatus(cream_job_id, status, tstamp, Ad);
+    }
+    catch(iceUtil::ClassadSyntax_ex& ex) {
+	log_dev->errorStream() << "Error parsing notification Message ["
+	                       <<ev.Messages[ev.Messages.size()-1]
+			       << "]. Ignoring it...";
+	//this->reset();
+	return;
+    }
+
+
+    jobCache::iterator it;
+
+    try {
+      boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
+
+      it = jobCache::getInstance()->lookupByCreamJobID(cream_job_id);
+      if( it == jobCache::getInstance()->end())
+	{
+	  log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
+				 << "Not found in the cache the creamjobid ["
+				 << cream_job_id<<"] that should be there. Ignoring this notification..."
+				 << log4cpp::CategoryStream::ENDLINE;
+	  //this->reset();
+	  return;
+	  //exit(1);
+	}
+      log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
+      			    << "Updating job ["<<cream_job_id
+			    << "] with status ["<<status<<"]"
+			    << log4cpp::CategoryStream::ENDLINE;
+      it->setStatus( api::job_statuses::getStatusNum(status), time(NULL) );
+      _ev_logger->log_job_status( *it ); // FIXME
+      jobCache::getInstance()->put( *it );
+    } catch(exception& ex) {
+      log_dev->fatal( ex.what() );
+      exit(1);
+    }
+    
+    log_dev->infoStream() << "eventStatusListener::acceptJobStatus() - "
+                          << "Successfully updated JobID="
+                          << cream_job_id <<" - STATUS=" << status
+                          << log4cpp::CategoryStream::ENDLINE;
+    /**
+     * See CEConsumer's class for the purpose of this method
+     */
+
+}
+#endif
+
+
+
+void iceUtil::eventStatusListener::handleEvent( const Event& ev )
+{
+    // First, convert the vector of messages into a vector of StatusNotification objects
+    vector<StatusNotification> notifications;
+
+    for ( vector<string>::const_iterator it = ev.Messages.begin();
+              it != ev.Messages.end(); it++ ) {
+        try {
+            notifications.push_back( StatusNotification( *it ) );
+        } catch( iceUtil::ClassadSyntax_ex ex ) {
+            // FIXME!! Help!!!
+        }
+    }
+
+    // Then, sort the list of StatusNotifications in nondecreasing
+    // timestamp order
+    sort( notifications.begin(), notifications.end(), less_equal_tstamp() );
+
+    // For debug only...
+    if ( log_dev->isInfoEnabled() ) {
+        for( vector<StatusNotification>::const_iterator it;
+             it != notifications.end(); it++ ) {
+            log_dev->infoStream()
+                << "Notification: jobid=["
+                << it->getCreamJobID() << "], tstamp=["
+                << it->getTstamp() << "] status=["
+                << it->getStatus() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+        }
+    }
+
+    // Now, for each status change notification, check if it has to be logged
+    for ( vector<StatusNotification>::const_iterator it;
+          it != notifications.end(); it++ ) {
+
+        jobCache::iterator jc_it;
+        
+        try {
+            boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
+            
+            jc_it = jobCache::getInstance()->lookupByCreamJobID( it->getCreamJobID() );
+            if( jc_it == jobCache::getInstance()->end()) {
+                log_dev->errorStream() 
+                    << "eventStatusListener::acceptJobStatus() - "
+                    << "Not found in the cache the creamjobid=["
+                    << it->getCreamJobID()
+                    << "] that should be there. Ignoring this notification..."
+                    << log4cpp::CategoryStream::ENDLINE;
+            } else {
+                log_dev->infoStream() 
+                    << "eventStatusListener::acceptJobStatus() - "
+                    << "Checking job [" << it->getCreamJobID()
+                    << "] with status [" << it->getStatus() << "]"
+                    << " notification tstamp=[" << it->getTstamp() << "]"
+                    << " last updated on=[" << jc_it->getLastUpdate() << "]"
+                    << log4cpp::CategoryStream::ENDLINE;
+                if ( it->getTstamp() > jc_it->getLastUpdate() ) {
+                    jc_it->setStatus( api::job_statuses::getStatusNum( it->getStatus() ), it->getTstamp() );
+                    _ev_logger->log_job_status( *jc_it ); // FIXME
+                    jobCache::getInstance()->put( *jc_it );
+                } else {
+                    log_dev->infoStream()
+                        << "...NOT DONE, as notification is old"
+                        << log4cpp::CategoryStream::ENDLINE;
+                }
+            }
+        } catch(exception& ex) {
+            log_dev->fatal( ex.what() );
+            exit(1);
+        }        
+    }
+}
+
+} // anonymous namespace

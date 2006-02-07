@@ -9,8 +9,8 @@
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/thread/recursive_mutex.hpp"
-#include "classad_distribution.h"
-#include "ClassadSyntax_ex.h"
+//#include "classad_distribution.h"
+//#include "ClassadSyntax_ex.h"
 
 // Forward declaration for the logger
 namespace log4cpp {
@@ -50,13 +50,19 @@ namespace glite {
 	  glite::wms::ice::util::iceConfManager* conf;
           log4cpp::Category *log_dev;
           iceEventLogger *_ev_logger;
-          classad::ClassAdParser parser;
+          // classad::ClassAdParser parser;
 
 	  void init(void);
-          void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
+          // void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
+          void handleEvent( const Event& ev );
 
 	protected:
-	  eventStatusListener(const eventStatusListener&) : CEConsumer(9999),T(""),P(0),pinger(NULL) {}
+	  eventStatusListener(const eventStatusListener&) : 
+              CEConsumer(9999),
+              pinger(0),
+              T(""),
+              P(0) 
+              {}
 
 	public:
 	  static boost::recursive_mutex mutexJobStatusUpdate;
