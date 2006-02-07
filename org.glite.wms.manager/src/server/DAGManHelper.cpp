@@ -25,6 +25,7 @@
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 #include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/PrivateAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/DAGAd.h"
@@ -95,100 +96,72 @@ try {
 fs::path
 jc_submit_file_dir()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  std::string const path_ = config.jc()->submit_file_dir();
 
-  configuration::JCConfiguration const* const jc_config = config->jc();
-  assert(jc_config);
-
-  std::string path_str = jc_config->submit_file_dir();
-
-  return fs::path(path_str, fs::native);
+  return fs::path(path_, fs::native);
 }
 
 fs::path
 jc_output_file_dir()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  std::string const path_ = config.jc()->output_file_dir();
 
-  configuration::JCConfiguration const* const jc_config = config->jc();
-  assert(jc_config);
-
-  std::string path_str = jc_config->output_file_dir();
-
-  return fs::path(path_str, fs::native);
+  return fs::path(path_, fs::native);
 }
 
 fs::path
 lm_condor_log_dir()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  std::string const path_ = config.lm()->condor_log_dir();
 
-  configuration::LMConfiguration const* const lm_config = config->lm();
-  assert(lm_config);
-
-  std::string path_str = lm_config->condor_log_dir();
-
-  return fs::path(path_str, fs::native);
+  return fs::path(path_, fs::native);
 }
 
 fs::path
 sandbox_dir()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  std::string path_ = config.ns()->sandbox_staging_path();
 
-  configuration::NSConfiguration const* const ns_config = config->ns();
-  assert(ns_config);
-
-  std::string path_str = ns_config->sandbox_staging_path();
-
-  return fs::path(path_str, fs::native);
+  return fs::path(path_, fs::native);
 }
 
 std::string
 get_condor_dagman()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
-
-  configuration::JCConfiguration const* const jc_config = config->jc();
-  assert(jc_config);
-
-  return jc_config->condor_dagman();
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  return config.jc()->condor_dagman();
 }
 
 int
 get_dagman_log_level()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
-
-  configuration::JCConfiguration const* const jc_config = config->jc();
-  assert(jc_config);
-
-  return jc_config->dagman_log_level();
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  return config.jc()->dagman_log_level();
 }
 
 int
 get_dagman_log_rotate()
 {
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
-
-  configuration::JCConfiguration const* const jc_config = config->jc();
-  assert(jc_config);
-
-  return jc_config->dagman_log_rotate();
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  return config.jc()->dagman_log_rotate();
 }
 
 std::string const dag_description_file("dag_description.con");
@@ -204,11 +177,23 @@ class Paths
 public:
   Paths(jobid::JobId const& dag_id)
     : m_dag_id(dag_id),
-      m_base_submit_dir(jc_submit_file_dir() / jobid::get_reduced_part(dag_id) / ("dag." + jobid::to_filename(dag_id))),
-      m_base_output_dir(jc_output_file_dir() / jobid::get_reduced_part(dag_id) / jobid::to_filename(dag_id)),
-      m_dag_log(lm_condor_log_dir() / ("dag." + jobid::to_filename(dag_id) + ".log")),
+      m_base_submit_dir(jc_submit_file_dir()),
+      m_base_output_dir(jc_output_file_dir()),
+      m_dag_log(lm_condor_log_dir()),
       m_sandbox_dir(sandbox_dir())
-  {}
+  {
+    m_base_submit_dir /= fs::path(jobid::get_reduced_part(dag_id), fs::native);
+    m_base_submit_dir /= fs::path(
+      "dag." + jobid::to_filename(dag_id),
+      fs::native
+    );
+    m_base_output_dir /= fs::path(jobid::get_reduced_part(dag_id), fs::native);
+    m_base_output_dir /= jobid::to_filename(dag_id);
+    m_dag_log /= fs::path(
+      "dag." + jobid::to_filename(dag_id) + ".log",
+      fs::native
+    );
+  }
 
   jobid::JobId dag_id() const
   {
@@ -224,19 +209,30 @@ public:
   }
   fs::path dag_description() const
   {
-    return m_base_submit_dir / dag_description_file;
+    fs::path result(m_base_submit_dir);
+    result /= fs::path(dag_description_file, fs::native);
+
+    return result;
   }
-  std::string lock_file() const
+  fs::path lock_file() const
   {
-    return dag_description_file + ".lock"; // it must be this way
+    fs::path const result(dag_description_file + ".lock", fs::native);
+
+    return result;
   }
   fs::path lib_log() const
   {
-    return m_base_output_dir / "dag.lib.out";
+    fs::path result(m_base_output_dir);
+    result /= fs::path("dag.lib.out", fs::native);
+
+    return result;
   }
   fs::path debug_log() const
   {
-    return m_base_output_dir / "dag.dagman.out";
+    fs::path result(m_base_output_dir);
+    result /= fs::path("dag.dagman.out", fs::native);
+
+    return result;
   }
   fs::path dag_log() const
   {
@@ -244,42 +240,66 @@ public:
   }
   fs::path rescue() const
   {
-    return m_base_submit_dir / (dag_description_file + ".rescue");
+    fs::path result(m_base_submit_dir);
+    result /= fs::path(dag_description_file + ".rescue", fs::native);
+
+    return result;
   }
   fs::path ad(jobid::JobId const& node_id) const
   {
-    return m_base_submit_dir / ("ad." + jobid::to_filename(node_id));
+    fs::path result(m_base_submit_dir);
+    result /= fs::path("ad." + jobid::to_filename(node_id), fs::native);
+
+    return result;
   }
   fs::path submit(jobid::JobId const& node_id) const
   {
-    return m_base_submit_dir / ("Condor." + jobid::to_filename(node_id) + ".submit");
+    fs::path result(m_base_submit_dir);
+    result /= fs::path(
+      "Condor." + jobid::to_filename(node_id) + ".submit",
+      fs::native
+    );
+
+    return result;
   }
   fs::path pre(jobid::JobId const& node_id) const
   {
     char const* getenv_GLITE_WMS_LOCATION = std::getenv("GLITE_WMS_LOCATION");
     assert(getenv_GLITE_WMS_LOCATION);
     std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
-    return
-      fs::path(glite_wms_location, fs::native)
-        / "libexec/glite-wms-planner.sh";
+
+    fs::path result(glite_wms_location, fs::native);
+    result /= fs::path("libexec/glite-wms-planner.sh", fs::native);
+
+    return result;
   }
   fs::path post(jobid::JobId const& node_id) const
   {
     char const* getenv_GLITE_WMS_LOCATION = std::getenv("GLITE_WMS_LOCATION");
     assert(getenv_GLITE_WMS_LOCATION);
     std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
-    return
-      fs::path(glite_wms_location, fs::native)
-        / "libexec/glite-wms-dag-post.sh";
+
+    fs::path result(glite_wms_location, fs::native);
+    result /= fs::path("libexec/glite-wms-dag-post.sh", fs::native);
+
+    return result;
   }
   fs::path standard_output(jobid::JobId const& node_id) const
   {
-    //    return m_base_output_dir / jobid::get_reduced_part(node_id) / jobid::to_filename(node_id) / "StandardOutput";
-    return m_base_output_dir / jobid::to_filename(node_id) / "StandardOutput";
+    fs::path result(m_base_output_dir);
+    result /= fs::path(jobid::to_filename(node_id), fs::native);
+    result /= fs::path("StandardOutput", fs::native);
+
+    return result;
   }
   fs::path maradona(jobid::JobId const& node_id) const
   {
-    return m_sandbox_dir / jobid::get_reduced_part(node_id) / jobid::to_filename(node_id) / "Maradona.output";
+    fs::path result(m_sandbox_dir);
+    result /= fs::path(jobid::get_reduced_part(node_id), fs::native);
+    result /= fs::path(jobid::to_filename(node_id), fs::native);
+    result /= fs::path("Maradona.output", fs::native);
+
+    return result;
   }
 
 };
@@ -397,9 +417,9 @@ public:
 
     std::auto_ptr<classad::ExprList> new_isb(new classad::ExprList);
 
-    for (classad::ExprList::const_iterator it = el->begin();
-         it != el->end();
-         ++it) {
+    classad::ExprList::const_iterator it = el->begin();
+    classad::ExprList::const_iterator const end = el->end();
+    for ( ; it != end; ++it) {
 
       if (utilities::is_attribute_reference(*it)) {
         std::string node;
@@ -593,7 +613,7 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
             << " -l " << paths.base_submit_dir().native_file_string()
             << " -NoEventChecks"
             << " -Debug " << dagman_log_level
-            << " -Lockfile " << paths.lock_file()
+            << " -Lockfile " << paths.lock_file().native_file_string()
             << " -Dag " << paths.dag_description().native_file_string()
             << " -Rescue " << paths.rescue().native_file_string()
             << " -Condorlog " << paths.dag_log().native_file_string();
@@ -617,20 +637,20 @@ nodes_collocation_match(jdl::DAGAd const& dag)
 {
   std::string result;
 
-  classad::ExprTree* reqs(dag.get_generic(jdl::JDL::REQUIREMENTS)->Copy());
-  classad::ExprTree* rank(dag.get_generic(jdl::JDL::RANK)->Copy());
-  classad::ExprTree* vo(
-    dag.get_generic(jdl::JDL::VIRTUAL_ORGANISATION)->Copy()
-  );
+  classad::ExprTree const* reqs(dag.get_generic(jdl::JDL::REQUIREMENTS));
+  classad::ExprTree const* rank(dag.get_generic(jdl::JDL::RANK));
+  classad::ExprTree const* vo(dag.get_generic(jdl::JDL::VIRTUAL_ORGANISATION));
+  classad::ExprTree const* x509(dag.get_generic(jdl::JDLPrivate::USERPROXY));
 
-  if (!(reqs && rank && vo)) {
+  if (!(reqs && rank && vo && x509)) {
     return result;
   }
 
   classad::ClassAd jdl;
-  jdl.Insert("Requirements", reqs);
-  jdl.Insert("Rank", rank);
-  jdl.Insert("VirtualOrganisation", vo);
+  jdl.Insert(jdl::JDL::REQUIREMENTS, reqs->Copy());
+  jdl.Insert(jdl::JDL::RANK, rank->Copy());
+  jdl.Insert(jdl::JDL::VIRTUAL_ORGANISATION, vo->Copy());
+  jdl.Insert(jdl::JDLPrivate::USERPROXY, x509->Copy());
   std::auto_ptr<classad::ClassAd> match_result(
     helper::Helper("MatcherHelper").resolve(&jdl)
   );
@@ -674,10 +694,10 @@ try {
 
   // do collocation of nodes, if so requested
   std::string ce_id;
-  if (!jdl::get_nodes_collocation(dagad)) {
+  if (jdl::get_nodes_collocation(dagad)) {
     ce_id = nodes_collocation_match(dagad);
     if (ce_id.empty()) {
-      throw;
+      throw DAGManHelperError();
     }
   }
 
@@ -715,12 +735,15 @@ try {
   create_dagman_job_ad(*result, paths);
 
   // touch the lock file to force dagman to start in recovery mode. This is
-  // needed because currently dagman (in non-recovery mode) removes the log file
-  // at start up if it exists. But this causes the dagman submission event to be
-  // lost because we use the same log file both for the dagman job and for its
-  // subjobs
+  // needed because currently dagman (in non-recovery mode) removes the log
+  // file at start up if it exists. But this causes the dagman submission
+  // event to be lost because we use the same log file both for the dagman job
+  // and for its subjobs
+
   fs::ofstream lf(paths.base_submit_dir() / paths.lock_file());
-  assert(lf);
+  if (!lf) {
+    throw DAGManHelperError();
+  }
 
   base_submit_dir_undo.dismiss();
 
