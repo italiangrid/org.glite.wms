@@ -75,7 +75,7 @@ bool eventStatusPoller::getStatus(void)
     jobs_to_query.clear();
 
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-  
+
     try {
         cache->getActiveCreamJobIDs(jobs_to_query); // FIXME: does not throw anytning?
     } catch(exception& ex) {
@@ -95,7 +95,7 @@ bool eventStatusPoller::getStatus(void)
 	    time_t threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
 //	    printf("\t*** oldness=%d threshold=%d\n", oldness, threshold);
 //	    printf("\t*** listener=%d\n",iceConfManager::getInstance()->startListener());
-            if( (oldness <  threshold) && iceConfManager::getInstance()->startListener() ) {
+            if( (oldness <  threshold) && iceConfManager::getInstance()->getStartListener() ) {
 //	        printf("\t*** CONTINUE!!!\n");
 		continue;
 	    }
@@ -106,7 +106,7 @@ bool eventStatusPoller::getStatus(void)
                          + jobIt->getJobID() + "]");
             oneJobToQuery.push_back(*it);
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-            _jobinfolist.push_back( creamClient->Info(jobIt->getCreamURL().c_str(), 
+            _jobinfolist.push_back( creamClient->Info(jobIt->getCreamURL().c_str(),
                                                       oneJobToQuery,
                                                       empty, -1, -1 ) );
 	

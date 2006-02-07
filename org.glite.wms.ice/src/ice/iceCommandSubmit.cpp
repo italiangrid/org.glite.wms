@@ -181,7 +181,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                            << " to [" << theJob.getCreamURL() <<"]["
                            << theJob.getCreamDelegURL() << "]"
                            << log4cpp::CategoryStream::ENDLINE;
-    
+
     try {
         theProxy->Authenticate(theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
@@ -240,14 +240,14 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // passing a *pointer should not produce problems
         util::jobCache::getInstance()->put( theJob );
     } // this end-scope unlock the listener that now can
-    
+
     /**
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications
      * of job just submitted. But only if listener is ON
      */
     /* ....... */
-    if(ice_util::iceConfManager::getInstance()->startListener()) {
+    if(ice_util::iceConfManager::getInstance()->getStartListener()) {
       string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
                          + confMgr->getCEMonUrlPostfix();
       if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {

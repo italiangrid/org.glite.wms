@@ -61,8 +61,8 @@ int main(int argc, char*argv[]) {
   util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
   log4cpp::Category* log_dev = logger_instance->getLogger();
   log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
-  logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->logOnFile() );
-  logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->logOnConsole() );
+  logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
+  logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
   string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
   logger_instance->setLogFile(logfile.c_str());
 
@@ -76,19 +76,24 @@ int main(int argc, char*argv[]) {
   string hostdn;
   // Set the creation of CreamProxy with automatic delegetion ON
   soap_proxy::CreamProxyFactory::initProxy( true );
-  try {
-    hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
-  } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
-    logger_instance->log(log4cpp::Priority::ERROR, 
-			 "Unable to extract user DN from Proxy File "
-			 + hostcert, true, true, true);
-    exit(1);
-  }
   log_dev->log(log4cpp::Priority::INFO,
                string("Host proxyfile is [") + hostcert + "]" );
-  log_dev->log(log4cpp::Priority::INFO, 
-               string("Host DN is ["+hostdn+"]") );
-
+  try {
+    hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+    if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
+        log_dev->errorStream() << "Host proxy certificate is expired. Won't start Listener"
+					<< log4cpp::CategoryStream::ENDLINE;
+	iceUtil::iceConfManager::getInstance()->setStartListener( false );
+    } else {
+	log_dev->log(log4cpp::Priority::INFO,
+                     string("Host DN is ["+hostdn+"]") );
+    }
+  } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
+    logger_instance->log(log4cpp::Priority::ERROR,
+			 "Unable to extract user DN from Proxy File "
+			 + hostcert + ". Won't start Listener", true, true, true);
+    iceUtil::iceConfManager::getInstance()->setStartListener( false );
+  }
 
   /*****************************************************************************
    * Initializes job cache
@@ -137,16 +142,14 @@ int main(int argc, char*argv[]) {
   vector<string> requests;
   requests.reserve(1000);
 
-
-  
   /*****************************************************************************
    * Initializes CREAM client
    ****************************************************************************/
   soap_proxy::CreamProxyFactory::initProxy(true);
   if(!soap_proxy::CreamProxyFactory::getProxy())
     {
-        log_dev->log(log4cpp::Priority::ERROR, 
-                     "CreamProxy creation failed! Stop" );
+      log_dev->log(log4cpp::Priority::ERROR,
+                   "CreamProxy creation failed! Stop" );
       exit(1);
     }
   soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
@@ -163,10 +166,10 @@ int main(int argc, char*argv[]) {
   /*****************************************************************************
    * Starts status poller and/or listener if specified in the config file
    ****************************************************************************/
-  if(iceUtil::iceConfManager::getInstance()->startListener()) 
+  if(iceUtil::iceConfManager::getInstance()->getStartListener())
     iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
 
-  if(iceUtil::iceConfManager::getInstance()->startPoller()) 
+  if(iceUtil::iceConfManager::getInstance()->getStartPoller())
     iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
 
   vector<string> url_jid;
@@ -191,7 +194,7 @@ int main(int argc, char*argv[]) {
         log_dev->infoStream()
             << "*** Found " << requests.size() << " new request(s)"
             << log4cpp::CategoryStream::ENDLINE;
-    
+
     for(unsigned int j=0; j < requests.size( ); j++) {
         log_dev->infoStream()
             << "*** Unparsing request <"

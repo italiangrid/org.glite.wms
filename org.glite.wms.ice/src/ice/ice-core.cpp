@@ -100,7 +100,7 @@ void ice::startListener(const int& listenPort)
 	       "ice::startListener() - listener started succesfully !");
   status_listener_started = true;
 
-  if(util::iceConfManager::getInstance()->startSubscriptionUpdater()) {
+  if(util::iceConfManager::getInstance()->getStartSubscriptionUpdater()) {
     log_dev->log(log4cpp::Priority::INFO,
 	        "ice::startListener() - Creating a CEMon subscription updater...");
     subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
