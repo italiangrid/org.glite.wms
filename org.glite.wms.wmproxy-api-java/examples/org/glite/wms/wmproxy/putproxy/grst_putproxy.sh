@@ -7,7 +7,7 @@
 #		- p1 = endpoint URL
 #		- p2 = delegation ID
 #		- p3 = proxy file pathname
-#               - p4 = CAs files pathname
+#              - p4 = CAs files pathname
 #
 ##############################################
 
@@ -16,19 +16,39 @@ top_src=../../../../../
 package=org.glite.wms.wmproxy.putproxy
 class=WMProxyGrstProxyTest
 
-AXIS=`more ../axis.cfg`
-AXIS_LOC=${top}$AXIS
-echo "axis in : "$AXIS_LOC
+
+## AXIS ===============
+line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
+AXIS_LOC=${line##*=}
+
+## API_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
+WMP_API_JAVA=${line##*=}
+
+## SECURITY_TRUSTMANAGER ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_TRUSTMANAGER`
+SECURITY_TRUSTMANAGER=${line##*=}
+
+## UTIL_JAVA ============ ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
+SECURITY_UTIL_JAVA=${line##*=}
+
+## DELEGATION_JAVA ============ ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_DELEGATION_JAVA`
+SECURITY_DELEGATION_JAVA=${line##*=}
+
+## BOUNCYCASTLE ==============
+line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
+BOUNCYCASTLE=${line##*=}
 
 for p in \
 	${top_src} \
-	${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-	${top}stage/share/java/glite-security-trustmanager.jar \
-	${top}stage/share/java/glite-security-util-java.jar \
-	${top}stage/share/java/glite-security-delegation-java.jar \
-	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	 ${top}repository/bcprov-jdk14/1.22/share/jars/jce-jdk13-122.jar \
-	$AXIS_LOC/*.jar 
+	${WMP_API_JAVA} \
+	${SECURITY_TRUSTMANAGER} \
+	${SECURITY_UTIL_JAVA} \
+	${SECURITY_DELEGATION_JAVA} \
+	${BOUNCYCASTLE} \
+	$AXIS_LOC/*.jar
 do
 	if ( (! test -f $p) && (! test -d $p ) ) ; then
 		echo "classpath - path not found: " + $p

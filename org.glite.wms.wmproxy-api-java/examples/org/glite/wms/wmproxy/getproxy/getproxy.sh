@@ -54,7 +54,7 @@ p4=$4
 # ------------------------
 CMD="${package}.${class} ${p1} ${p2} ${p3} ${p4}"
 echo "java ${CMD}"
-java -classpath ${classpath} -DsslCAFiles="/home/msotty/cas/*.0" ${CMD}
+java -classpath ${classpath} ${CMD}
 
 
 

@@ -16,18 +16,37 @@ top_src=../../../../../
 package=org.glite.wms.wmproxy.sbulkdesturi
 class=WMProxyBulkDestURITest
 
-AXIS=`more ../axis.cfg`
-AXIS_LOC=${top}$AXIS
-echo "axis in : "$AXIS_LOC
+## AXIS ===============
+line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
+AXIS_LOC=${line##*=}
 
+## API_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
+WMP_API_JAVA=${line##*=}
+
+## SECURITY_TRUSTMANAGER ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_TRUSTMANAGER`
+SECURITY_TRUSTMANAGER=${line##*=}
+
+## UTIL_JAVA ============ ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
+SECURITY_UTIL_JAVA=${line##*=}
+
+## DELEGATION_JAVA ============ ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_DELEGATION_JAVA`
+SECURITY_DELEGATION_JAVA=${line##*=}
+
+## BOUNCYCASTLE ==============
+line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
+BOUNCYCASTLE=${line##*=}
 
 for p in \
 	${top_src} \
-	${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-	${top}stage/share/java/glite-security-trustmanager.jar \
-	${top}stage/share/java/glite-security-util-java.jar \
-	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	$AXIS_LOC/*.jar 
+	${WMP_API_JAVA} \
+	${SECURITY_TRUSTMANAGER} \
+	${SECURITY_UTIL_JAVA} \
+	${BOUNCYCASTLE} \
+	${AXIS_LOC}/*.jar
 do
 	if ! printenv JSS_CLASSPATH | grep -q "${p}"; then
 		if [ -n "${classpath}" ]; then
@@ -42,9 +61,10 @@ done
 p1=$1
 p2=$2
 p3=$3
+p4=$4
 
 # launching the test...
 # ------------------------
-java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3}
+java -classpath ${classpath} ${package}.${class} ${p1} ${p2} ${p3} ${p4}
 
 
