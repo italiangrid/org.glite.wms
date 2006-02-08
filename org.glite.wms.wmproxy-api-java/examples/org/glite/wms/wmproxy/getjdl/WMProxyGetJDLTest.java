@@ -68,7 +68,6 @@ public class WMProxyGetJDLTest {
 	 }
 
 	 private static JdlType askType( ) {
-	 	boolean end_loop = false;
 		InputStreamReader isr = null ;
 		BufferedReader stdin = null ;
 		String input = "";
@@ -79,9 +78,9 @@ public class WMProxyGetJDLTest {
 		System.out.println ("=============================");
 		System.out.println ("1 - ORIGINAL");
 		System.out.println ("2 - REGISTERED");
-		while (end_loop==false) {
-			isr = new InputStreamReader( System.in );
-			stdin = new BufferedReader( isr );
+		isr = new InputStreamReader( System.in );
+		stdin = new BufferedReader( isr );
+		while (true) {
 			System.out.println ("---------------------------");
 			System.out.println ("Choose one type in the list [1|2]");
 			try {
@@ -89,10 +88,14 @@ public class WMProxyGetJDLTest {
 			} catch (java.io.IOException exc){
 				continue;
 			}
-			conv = new Integer(input.trim());
-			value = conv.intValue();
-			if (value == 1 || value == 2){
-				end_loop = true;
+			try {
+				conv = new Integer(input.trim());
+				value = conv.intValue();
+				if (value == 1 || value == 2){
+					break;
+				}
+			} catch ( NumberFormatException exc){
+				// invalid value: repeats this loop
 			}
 
 		}
