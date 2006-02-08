@@ -1,18 +1,28 @@
+/*
+	Copyright (c) Members of the EGEE Collaboration. 2004.
+	See http://public.eu-egee.org/partners/ for details on the copyright holders.
+	For license conditions see the license file or http://www.eu-egee.org/license.html
+*/
+//
+// File: wmpcoreoperations.cpp
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
+
 #include <fstream>
 #include <errno.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <sys/file.h> // flock
 
 // Boost
 #include <boost/lexical_cast.hpp>
 
-#include "wmpstructconverter.h"
-
-#include "wmpoperations.h"
+#include "wmpcommon.h"
+#include "wmpcoreoperations.h"
 #include "wmpconfiguration.h"
+
+#include "wmpstructconverter.h"
 
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
@@ -32,10 +42,10 @@
 // WMPManager
 #include "wmpmanager.h"
 
-//Logger
+// Logger
+#include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
-#include "utilities/logging.h"
 
 #include "commands/listfiles.h"
 

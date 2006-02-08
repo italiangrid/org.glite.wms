@@ -38,6 +38,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	soapC.cpp \
 	soapServer.cpp \
 	wmproxy.cpp \
+	wmpcommon.cpp \
 	wmpoperations.cpp \
 	wmpcoreoperations.cpp \
 	wmpgsoapoperations.cpp \
@@ -55,6 +56,7 @@ bin_PROGRAMS = glite_wms_wmproxy_server
 
 noinst_HEADERS = \
 	wmp2wm.h \
+	wmpcommon.h \
 	wmpconfiguration.h \
 	wmpdelegation.h \
 	wmpdispatcher.h \
