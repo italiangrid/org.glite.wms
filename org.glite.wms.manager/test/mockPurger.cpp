@@ -21,6 +21,10 @@
 
 #include "purger.h" 
 
+namespace glite {
+namespace wms {
+namespace purger {
+
 bool glite::wms::purger::purgeStorageEx(const boost::filesystem::path &path, int purge_threshold, bool fake_rm){
   return true;
 }
@@ -29,3 +33,4 @@ bool glite::wms::purger::purgeStorage(const glite::wmsutils::jobid::JobId &JobId
   return true;
 }
 
+}}}
