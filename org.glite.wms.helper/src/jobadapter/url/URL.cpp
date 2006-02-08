@@ -1,19 +1,57 @@
 /***************************************************************************
- *  filename  : URL.cpp
- *  authors   : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
+ *  Filename  : URL.cpp
+ *  Authors   : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
  *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
- *  copyright : (C) 2001 by INFN
+                Marco Cecchi <marco.cecchi@cnaf.infn.it>
+ *  Copyright : (C) 2006 by INFN
  ***************************************************************************/
 
-#include <iostream>
-#include <string>
+//Formalization of URI in BNF according to RFC #3986 Jan 2005
+// (restricted to our own needs)
+//
+//URI           = scheme ":" hier-part
+//hier-part     = "//" authority path-abempty
+//               / path-absolute
+//               / path-rootless
+//               / path-empty
+//scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+//authority     = host [ ":" port ]
+//host          = IP-literal / IPv4address / reg-name
+//port          = *DIGIT
+//path-abempty  = *( "/" segment )
+//path-absolute = "/" [ segment-nz *( "/" segment ) ]
+//path-noscheme = segment-nz-nc *( "/" segment )
+//path-rootless = segment-nz *( "/" segment )
+//path-empty    = 0<pchar>
+//segment       = *pchar
+//segment-nz    = 1*pchar
+//segment-nz-nc = 1*( unreserved / pct-encoded / sub-delims / "@" )
+//; non-zero-length segment without any colon ":"
+//pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+//query         = *( pchar / "/" / "?" )
+//fragment      = *( pchar / "/" / "?" )
+//pct-encoded   = "%" HEXDIG HEXDIG
+//unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+//sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+//
+//Some example:
+//"http://www.cnaf.infn.it"                   = Valid
+//"http://www.cnaf.infn.it:"                  = Valid (port = *DIGIT)
+//"h ttp://www.cnaf.infn.it"                  = Not valid
+//"http://www.c naf.infn.it"                  = Not valid
+//"http://www.ics.uci.edu:8080/pub/ietf/uri/" = Valid
+//"http://www.ics.uci.edu:8080/pub/ietf/uri"  = Valid
+//"http://www.ics.uci.edu:8080"               = Valid
+//"http://www.ics.uci.edu:8080:16"            = Not valid
+//"http://www.ics.uci.edu:8080/pub/i:etf/uri" = Not valid
+//"http://www.ics.uci.edu:8080/pub/i%20f/uri" = Valid
+//"http://www.ics.uci.edu:8080/pub/i%2tf/uri" = Not valid
+//""                                          = Not valid
 
-#include <cctype>
-#include <cstdlib>
+#include <string>
+#include <boost/regex.hpp>
 
 #include "URL.h"
-
-using namespace std;
 
 namespace glite {
 namespace wms {
@@ -21,23 +59,17 @@ namespace helper {
 namespace jobadapter {
 namespace url {
 
-ExInvalidURL::ExInvalidURL(const char *par)
+ExInvalidURL::ExInvalidURL(std::string const& par)
   : m_invalidurl_parameter(par)
 {
 }
 	
-const string& ExInvalidURL::parameter(void) const
+const std::string& ExInvalidURL::parameter(void) const
 { 
   return m_invalidurl_parameter; 
 }
     
-URL::URL(void)
-  : m_is_empty(true)
-{
-}
-
-URL::URL(string url)
-  : m_is_empty(false)
+URL::URL(std::string url)
 {
   parse(url);
 }
@@ -47,95 +79,67 @@ URL::~URL(void)
 }
 
 void
-URL::parse(string url)
+URL::parse(std::string url)
 {
-  string::size_type pos = url.find("://");
-  string ur(url);
+  static const boost::regex valid_url("^([a-z,A-Z,0-9,-,.,_,~]+)://([^:/\
+?#@ ]+):?(([0-9]*)?)((/([a-z,A-Z,0-9,-,.,_,~,!,$,&,',(,)]|%[a-e,A-E,0-9]\
+[a-e,A-E,0-9])+)*/?)$");
 
-  string msg("Could not find ");
-  if (pos == string::npos) {
-    msg.append("\'://\' in URL ");
-    msg.append(ur);
-    throw ExInvalidURL(msg.c_str());
+  bool is_matching = false;
+  try {
+    is_matching = boost::regex_match(url, valid_url);
+  } catch(std::runtime_error ex) {
+    throw ExInvalidURL("Cannot parse URL:" + url);
   }
-  string protocol = url.substr(0, pos);
-  url      = url.substr(pos+3);
+  if (is_matching)
+  {
+    try {
+      boost::sregex_iterator m(url.begin(), url.end(), valid_url);
 
-  pos      = url.find("/");
-  if (pos == string::npos) {
-    msg.append("\'/\' in URL ");
-    msg.append(ur);
-    throw ExInvalidURL(msg.c_str());
-  }
-  string hostpart = url.substr(0, pos);
-
-  string host;
-  string port;
-  string::size_type host_end = hostpart.find(":");
-  if (host_end == string::npos) {  // no port
-    host = hostpart;
-    port = "";
-  } else {                             // port
-    host = hostpart.substr(0, host_end);
-    port     = hostpart.substr(host_end + 1, pos);
-
-    // -*- Check port value -*-
-    for(string::const_iterator it = port.begin();
-	it != port.end(); it++){
-      if (!isdigit(*it)) {
-        msg.append("\'correct port number\' in URL ");
-        msg.append(ur);
-	throw ExInvalidURL(msg.c_str());
-      }
+      m_protocol = (*m)[1].str();
+      m_host = (*m)[2].str();
+      m_port = (*m)[3].str();
+      m_path = (*m)[5].str();
+    } catch(std::runtime_error ex) {
+      throw ExInvalidURL("Cannot parse URL:" + url);
     }
+  } else {
+    throw ExInvalidURL(url);
   }
-
-  string path = url.substr(pos);
-
-  m_protocol = protocol;
-  m_host     = host;
-  m_port     = port;
-  m_path     = path;
 }
 
-bool
-URL::is_empty(void) const
-{
-  return m_is_empty;
-}
-
-string
+std::string
 URL::protocol(void) const
 {
   return m_protocol;
 }
 
-string
+std::string
 URL::host(void) const
 {
   return m_host;
 }
 
-string
+std::string
 URL::port(void) const
 {
   return m_port;
 }
 
-string
+std::string
 URL::path(void) const
 {
   return m_path;
 }
 
-string
+std::string
 URL::as_string(void) const
 {
-  return m_protocol + "://" + m_host + ((m_port != "") ? ":" + m_port : "")+ m_path;
+  return m_protocol
+    + "://" 
+    + m_host 
+    + (!m_port.empty() ? ":" + m_port : "")
+    + m_path;
 }
 
-} // namespace url
-} // namespace jobadapter
-} // namespace helper
-} // namespace wms
-} // namespace glite
+}}}}} // namespace glite::wms::helper::jobadapter::url

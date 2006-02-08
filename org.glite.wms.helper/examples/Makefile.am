@@ -45,11 +45,13 @@ jobwrapperTest_LDADD   = \
 	$(GLITE_WMS_JDL_LIBS) \
 	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
 	$(GLOBUS_SSL_THR_LIBS) \
-   $(CLASSAD_LIBS) \
+  $(CLASSAD_LIBS) \
 	$(BOOST_LIBS)
 
 urlTest_SOURCES = urlTest.cpp
-urlTest_LDADD   = $(URL)
+urlTest_LDADD   = $(URL) \
+   $(BOOST_LIBS)
+
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
@@ -60,7 +62,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 EXTRA_DIST = \
 	inputclassad \
 	inputclassad.new \
-        inputclassad.normal \
+  inputclassad.normal \
 	inputclassad.od \
 	inputclassad.old \
 	inputfile1 \

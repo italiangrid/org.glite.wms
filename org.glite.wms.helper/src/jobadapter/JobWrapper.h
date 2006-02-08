@@ -18,6 +18,7 @@
 #include <iostream>
 #include <utility>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include "jobadapter/url/URL.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -234,11 +235,12 @@ private:
   std::string              m_arguments;
   std::string              m_maradonaprotocol;
 
-  url::URL                 m_input_base_url;
+  boost::scoped_ptr<url::URL> m_input_base_url;
   std::vector<std::string> m_input_files;
 
-  url::URL                 m_output_base_url;
-  url::URL                 m_output_sandbox_base_dest_uri;
+  boost::scoped_ptr<url::URL> m_output_base_url;
+  boost::scoped_ptr<url::URL> m_output_sandbox_base_dest_uri;
+
   std::vector<std::string> m_output_files;
 
   std::string              m_brokerinfo;

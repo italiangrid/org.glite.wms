@@ -751,15 +751,20 @@ try {
     std::string osb_base_dest_uri = 
       jdl::get_output_sandbox_base_dest_uri(*m_ad, found_in_jdl);
     if(found_in_jdl && !osb_base_dest_uri.empty()) {
-      jw->set_osb_wildcards_support(true);
-      jw->set_output_sandbox_base_dest_uri(url::URL(osb_base_dest_uri));
+      try {
+        url::URL url_(osb_base_dest_uri);
+        jw->set_output_sandbox_base_dest_uri(url_);
+        jw->set_osb_wildcards_support(true);
+      } catch (url::ExInvalidURL& ex) {
+        throw CannotCreateJobWrapper(ex.parameter());
+      }
     }
   }
 
   //check if there is the protocol in the inputsandbox path.
   //if no the protocol gsiftp:// is added to the inputsandboxpath.
   try { 
-    if (inputsandboxpath.find("://") == std::string::npos) {
+      if (inputsandboxpath.find("://") == std::string::npos) {
       std::string new_inputsandboxpath("gsiftp://");
       new_inputsandboxpath.append(local_host_name);
       new_inputsandboxpath.append(inputsandboxpath);

@@ -69,7 +69,7 @@ void
 JobWrapper::input_sandbox(const url::URL& base_url,
                           const vector<std::string>& files)
 {
-  m_input_base_url = base_url;
+  m_input_base_url.reset(new url::URL(base_url));
   copy(files.begin(), files.end(), back_inserter(m_input_files));
 }
 
@@ -77,14 +77,14 @@ void
 JobWrapper::output_sandbox(url::URL const& base_url,
                            vector<std::string> const& files)
 {
-  m_output_base_url = base_url;
+  m_output_base_url.reset(new url::URL(base_url));
   copy(files.begin(), files.end(), back_inserter(m_output_files));
 }
  
 void
 JobWrapper::set_output_sandbox_base_dest_uri(url::URL const& osb_base_dest_uri)
 {
-  m_output_sandbox_base_dest_uri = osb_base_dest_uri;
+  m_output_sandbox_base_dest_uri.reset(new url::URL(osb_base_dest_uri));
 }
 
 void
@@ -188,7 +188,7 @@ void
 JobWrapper::wmp_input_sandbox_support(const url::URL& base_url,
 				      const vector<std::string>& input_base_files)
 {
-  m_input_base_url = base_url;
+  m_input_base_url.reset(new url::URL(base_url));
 
   copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_wmp_input_base_files));
 
@@ -196,11 +196,10 @@ JobWrapper::wmp_input_sandbox_support(const url::URL& base_url,
       it != input_base_files.end(); it++) {
 
     std::string::size_type pos = it->find_last_of("/");
-    if (pos == std::string::npos) {
-      // throw ExInvalidURL("there is no ://");
+    if (pos != std::string::npos) {
+      std::string filename = it->substr(pos);
+      m_wmp_input_files.push_back(filename);
     }
-    std::string filename = it->substr(pos);
-    m_wmp_input_files.push_back(filename);
   }
 }
 
@@ -285,13 +284,26 @@ dump(std::ostream& os,
     os << "declare -a " << name << '\n';
   }
   else {
-    for(std::vector<std::string>::const_iterator it = values.begin(); it != values.end() ; ++it )  {
+    for(std::vector<std::string>::const_iterator it = values.begin(); it != values.end() ; ++it ) {
       os << name << '[' << i << "]=\"" << *it << "\"\n";
       ++i;
     }
   }
 
   return os;
+}
+
+bool
+dump(std::ostream& os,
+  const std::string& name,
+  const std::vector<char*> values)
+{
+  std::vector<std::string> string_values;
+
+  for(std::vector<char*>::const_iterator it = values.begin(); it != values.end() ; ++it ) {
+    string_values.push_back(std::string(*it));
+  }
+  return dump(os, name, string_values);
 }
 
 bool
@@ -304,18 +316,6 @@ dump(std::ostream& os,
     os << '"' << value << '"';
   }
   return os << '\n';
-}
-
-bool
-dump(std::ostream& os,
-  const std::string& name,
-  const url::URL& url)
-{
-  std::string str_url = url.as_string();
-  if (str_url[str_url.size() - 1] != '/') {
-    str_url += '/';
-  }
-  return os << name << "=\"" << str_url << "\"\n";
 }
 
 bool
@@ -358,9 +358,11 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__standard_error", m_standard_error) &&
     dump(os, "__arguments", m_arguments) &&
     dump(os, "__maradonaprotocol", m_maradonaprotocol) &&
-    dump(os, "__input_base_url", m_input_base_url) &&
+    dump(os, "__input_base_url", (m_input_base_url == 0 ?
+      "" : m_input_base_url->as_string())) &&
     dump(os, "__input_file", m_input_files) &&
-    dump(os, "__output_base_url", m_output_base_url) &&
+    dump(os, "__output_base_url", (m_output_base_url == 0 ?
+      "" : m_output_base_url->as_string())) &&
     dump(os, "__output_file", m_output_files) &&
     dump(os, "__jobid_to_filename", m_jobid_to_filename) &&
     dump(os, "__globus_resource_contact_string", 
@@ -390,7 +392,10 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__output_lfn", logical_file_names) &&
     dump(os, "__output_se", storage_elements) &&
     dump(os, "__osb_wildcards_support", m_osb_wildcards_support) &&
-    dump(os, "__output_sandbox_base_dest_uri", m_output_sandbox_base_dest_uri) &&
+    dump(os, "__output_sandbox_base_dest_uri", 
+      (m_output_sandbox_base_dest_uri == 0 ? "" 
+      : m_output_sandbox_base_dest_uri->as_string())
+    ) &&
     dump(os, "__job_type", m_job_type);
 }
 
