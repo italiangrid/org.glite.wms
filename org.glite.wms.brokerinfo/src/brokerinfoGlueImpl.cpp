@@ -605,7 +605,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                  try {
                                     resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dataCatalogEndpoint);
                                  }
-                                 catch (const char *faultstring){
+                                 catch (string& faultstring){
                                     edglog(warning) << faultstring << endl;
                                  }
                               }
@@ -615,7 +615,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                        resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, *it);
                                        if ( ! resolved_sfn.empty() ) break;
                                     }
-                                    catch(const char *faultstring) {
+                                    catch(string& faultstring) {
                                     //
                                     // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
                                     // or any other exception due to failures in getting the proxy from the classad
@@ -649,7 +649,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                                  }
                                  else edglog(warning) << "unknown prefix while using SI" << std::endl;
                               }
-                              catch (const char *faultstring) {
+                              catch (string& faultstring) {
                                  edglog(warning) << faultstring << endl;
                               }
                            }
@@ -669,7 +669,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    
                                     if ( ! resolved_sfn.empty() ) break;
                                  }
-                                 catch(const char *faultstring) {
+                                 catch(string& faultstring) {
                                     //
                                     // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
                                     // or any other exception due to failures in getting the proxy from the classad
@@ -694,12 +694,6 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      catch( std::exception& ex ) {
                         edglog(warning) <<  ex.what() << endl;
                      }
-//                     catch(const char *faultstring) {
-                        //
-                        // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
-                        // or any other exception due to failures in getting the proxy from the classad
-//                        edglog(warning) << faultstring << endl;
-//                     }
                                                                                                                                 
                   } // for
 
@@ -955,7 +949,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                      try{
                         resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, dliEndpoint);
                      }
-                     catch (const char *faultstring) {
+                     catch (string& faultstring) {
                         edglog(warning) << faultstring << endl;
                      } 
                   }
@@ -965,7 +959,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                            resolved_sfn = dli->listReplicas(prefix.c_str(), *lfn, requestAd, *it);
                            if ( ! resolved_sfn.empty() ) break;
                         }
-                        catch(const char *faultstring) {
+                        catch(string& faultstring) {
                            //
                            // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
                            // or any other exception due to failures in getting the proxy from the classad
@@ -994,7 +988,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
                         else 
                            sici->listSEbyGUID(noPrefix.c_str(), resolved_sfn, requestAd, siciEndpoint);
                      }
-                     catch (const char *faultstring) {
+                     catch (string& faultstring) {
                         edglog(warning) << faultstring << endl;
                      }
                   }
@@ -1009,7 +1003,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
 
                            if ( ! resolved_sfn.empty() ) break;
                         }
-                        catch(const char *faultstring) {
+                        catch(string& faultstring) {
                             //
                             // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
                             // or any other exception due to failures in getting the proxy from the classad
@@ -1039,13 +1033,6 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          catch( std::exception& ex ) {
               edglog(warning) <<  ex.what() << endl;
          }
-//         catch(const char *faultstring) {
-           //
-           // Catch soap exceptions from the DataLocationInterface or StorageIndex Interface
-           // or any other exception due to failures in getting the proxy from the classad
-//           edglog(warning) << faultstring << endl;
-//         }
-   
                                                                                                    
       } //for
 
