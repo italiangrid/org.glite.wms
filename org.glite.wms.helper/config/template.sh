@@ -29,21 +29,9 @@ log_error() # 1 - reason
   doExit 1
 }
 
-truncate() # 1 - file, 2 - bytes num.
+truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 {
-  perl -e '
-    my $file = "'$1'";
-    my $len = "'$2'";
-    my $trunc_ok=0;
-    if (open(F,">> ".$file)) {
-      $trunc_ok=1 if (truncate(F, $len));
-      close(F);
-    }
-    if ($trunc_ok) {
-      exit(0)
-    } else {
-      exit(1)
-    }'
+  tail $1 --bytes=$2>$3 2>/dev/null
   return $?
 }
 
@@ -51,7 +39,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
 {
   tmp_sort_file=`mktemp -q tmp.XXXXXX`
   if [ $? != 0 ]; then
-    unset $tmp_sort_file
+    unset tmp_sort_file
   fi
   eval tmpvar="$1[@]"
   eval elements="\${$tmpvar}"
@@ -399,7 +387,7 @@ if [ $? != 0 ]; then
 else
   rm $tmpfile
 fi
-unset $tmpfile
+unset tmpfile
 workdir="`pwd`"
 
 if [ -n "${__brokerinfo}" ]; then
@@ -684,10 +672,11 @@ do
             #at least the first 50 bytes
             echo "Not enough room for a significant truncation on file ${f}"
           else
-            truncate "file://${workdir}/${f}" $trunc_len
+            truncate "${workdir}/${f}" $trunc_len "${__output_base_url}${ff}.trunc"
             if [ $? != 0 ]; then
               echo "Could not truncate output sandbox file ${f}"
             else
+              echo "Truncated last $trunc_len bytes for file ${f}"
               globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.trunc"
             fi
           fi
@@ -728,10 +717,11 @@ do
             #at least the first 50 bytes
             echo "Not enough room for a significant truncation on file ${f}"
           else
-          truncate "file://${workdir}/${f}" $trunc_len
+          truncate "${workdir}/${f}" $trunc_len "$d.trunc"
           if [ $? != 0 ]; then
             echo "Could not truncate output sandbox file ${f}"
           else
+            echo "Truncated last $trunc_len bytes for file ${f}"
             if [ "${f:0:9}" == "gsiftp://" ]; then
               globus-url-copy $s "$d.trunc"
             elif [ "${f:0:8}" == "https://" ]; then
