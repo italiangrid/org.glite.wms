@@ -13,9 +13,23 @@
 
 
 #include "wmpresponsestruct.h"
+#include "glite/wms/jdl/ExpDagAd.h"
 
 
-// Web service available operations.
+// Possible values for jdl type attribute
+enum type {
+	TYPE_JOB,
+	TYPE_DAG,
+	TYPE_COLLECTION,
+};
+
+// Common methods used in both operations and coreoperations
+void setGlobalSandboxDir();
+int logRemoteHostInfo();
+int getType(std::string jdl, glite::wms::jdl::Ad * ad = NULL);
+
+
+// Web service available operations (see wmpcoreoperations.h for core operations).
 // All methods are void, response values are inserted in the corresponding
 // response structure.
 // For more information about arguments see Web Service Description Language
@@ -25,18 +39,6 @@ void getVersion(getVersionResponse &getVersion_response);
 
 void getJDL(const std::string &job_id, JdlType jdltype,
 	getJDLResponse &getJDL_response);
-
-void jobRegister(jobRegisterResponse &jobRegister_response,
-	const std::string &jdl, const std::string &delegation_id);
-
-void jobStart(jobStartResponse &jobStart_response, const std::string &job_id,
-	struct soap *soap);
-
-void jobSubmit(struct ns1__jobSubmitResponse &response, 
-	jobSubmitResponse &jobSubmit_response, const std::string &jdl,
-	const std::string &delegation_id, struct soap *soap);
-
-void jobCancel(jobCancelResponse &jobCancel_response, const std::string &job_id);
 
 void getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
 	&getMaxInputSandboxSize_response);
@@ -52,14 +54,9 @@ void getQuota(getQuotaResponse &getQuota_response);
 
 void getFreeQuota(getFreeQuotaResponse &getFreeQuota_response);
 
-void jobPurge(jobPurgeResponse &jobPurge_response, const std::string &job_id);
-
 void getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	const std::string &job_id, const std::string &protocol);
-
-void jobListMatch(jobListMatchResponse &jobListMatch_response,
-	const std::string &jdl, const std::string &delegation_id);
-
+	
 void getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
 	JobTypeList job_type, const std::string &executable, 
 	const std::string &arguments, const std::string &requirements,

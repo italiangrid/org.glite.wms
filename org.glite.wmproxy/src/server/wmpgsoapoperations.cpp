@@ -18,6 +18,7 @@
 
 // Server
 #include "wmpoperations.h"
+#include "wmpcoreoperations.h"
 #include "wmpresponsestruct.h"
 #include "wmpstructconverter.h"
 #include "wmpgsoapfaultmanipulator.h"

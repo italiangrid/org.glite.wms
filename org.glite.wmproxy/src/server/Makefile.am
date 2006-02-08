@@ -39,6 +39,7 @@ glite_wms_wmproxy_server_SOURCES = \
 	soapServer.cpp \
 	wmproxy.cpp \
 	wmpoperations.cpp \
+	wmpcoreoperations.cpp \
 	wmpgsoapoperations.cpp \
 	wmpgsoapfaultmanipulator.cpp \
 	wmpdispatcher.cpp \
@@ -60,6 +61,7 @@ noinst_HEADERS = \
 	wmpgsoapfaultmanipulator.h \
 	wmpmanager.h \
 	wmpoperations.h \
+	wmpcoreoperations.h \
 	wmpstructconverter.h \
 	wmpresponsestruct.h 
 	
