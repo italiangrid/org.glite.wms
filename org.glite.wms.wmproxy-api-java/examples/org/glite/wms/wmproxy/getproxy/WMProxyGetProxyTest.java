@@ -66,7 +66,7 @@ public class WMProxyGetProxyTest {
 		try {
 			// input parameters
 			if ((args == null) || (args.length < 3)){
-				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <proxyFile>)");
+				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <Delegation-ID> <proxyFile>[CAs paths (optional)] )");
 			} else if (args.length > 4) {
 			  throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <Delegation-ID> <proxyFile> [CAs paths (optional)] )");
 			}
