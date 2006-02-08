@@ -900,16 +900,11 @@ ns1__getACLItems(struct soap *soap, string jobId,
 	
 	int return_value = SOAP_OK;
 	
-	ns1__StringList *list = new ns1__StringList();
-	list->Item = *(new vector<string>);
-	
 	getACLItemsResponse getACLItems_response;
 	try  {
-		vector<string> returnvector = getACLItems(getACLItems_response, jobId);
-		for (unsigned int i = 0; i < returnvector.size(); i++) {
-			list->Item.push_back(returnvector[i]);
-		}
-		response._items = list;
+		getACLItems(getACLItems_response, jobId);
+		response._items
+			= convertVectorToGSOAPStringList(getACLItems_response);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getACLItems", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
@@ -1098,17 +1093,12 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 	
 	int return_value = SOAP_OK;
 	
-	ns1__StringList *list = new ns1__StringList();
-	list->Item = *(new vector<string>);
-	
 	getPerusalFilesResponse getPerusalFiles_response;
 	try  {
-		vector<string> returnvector = getPerusalFiles(getPerusalFiles_response,
-			jobId, file, allChunks, protocol);
-		for (unsigned int i = 0; i < returnvector.size(); i++) {
-			list->Item.push_back(returnvector[i]);
-		}
-		response._fileList = list;
+		getPerusalFiles(getPerusalFiles_response, jobId, file, allChunks,
+			protocol);
+		response._fileList
+			= convertVectorToGSOAPStringList(getPerusalFiles_response);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "getPerusalFiles", time(NULL),
 	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());

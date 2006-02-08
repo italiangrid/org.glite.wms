@@ -72,7 +72,7 @@ void getProxyReq(getProxyReqResponse &getProxyReq_response,
 void putProxy(putProxyResponse &putProxyReq_response, 
 	const std::string &delegation_id, const std::string &proxy);
 
-std::vector<std::string> getACLItems(getACLItemsResponse &getACLItems_response,
+void getACLItems(getACLItemsResponse &getACLItems_response,
 	const std::string &job_id);
 	
 void addACLItems(addACLItemsResponse &addACLItems_response,
@@ -87,7 +87,7 @@ void getProxyInfo(getProxyInfoResponse &getProxyInfo_response,
 void enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	const std::string &job_id, StringList *fileList);
 	
-std::vector<std::string> getPerusalFiles(getPerusalFilesResponse
+void getPerusalFiles(getPerusalFilesResponse
 	&getPerusalFiles_response, const std::string &job_id, const std::string
 	&fileName, bool allChunks, const std::string &protocol);
 	

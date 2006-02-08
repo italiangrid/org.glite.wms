@@ -30,6 +30,10 @@ GraphStructType* convertFromGSOAPGraphStructType(
 
 StringList * convertToStringList(ns1__StringList *ns1_string_list);
 
+ns1__StringList * convertToGSOAPStringList(StringList * items);
+
+ns1__StringList * convertVectorToGSOAPStringList(std::vector<std::string> items);
+
 ns1__VOProxyInfoStructType * convertToGSOAPVOProxyInfoStructType(
 	VOProxyInfoStructType *voproxyinfo);
 	

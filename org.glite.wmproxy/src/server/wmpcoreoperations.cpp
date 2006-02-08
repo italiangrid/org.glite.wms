@@ -197,7 +197,6 @@ copyEnvironment(char** sourceEnv)
     return tmp;
 }
 
-
 pair<string, string>
 jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegation_id, const string &delegatedproxy, const string &vo,
@@ -592,7 +591,6 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 	GLITE_STACK_CATCH();
 }
 
-
 string
 regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *auth,
 	const string &delegation_id, const string &delegatedproxy, const string &jdl,
@@ -804,7 +802,6 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri)
 		
 	GLITE_STACK_CATCH();
 }
-
 
 pair<string, string>
 regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *auth,
@@ -1191,7 +1188,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	GLITE_STACK_CATCH();
 }
 
-
 void
 logCheckpointable(WMPEventLogger * wmplogger, JobAd * jad,
 	const string &stringjid) 
@@ -1242,7 +1238,6 @@ logCheckpointable(WMPEventLogger * wmplogger, JobAd * jad,
 	
 	GLITE_STACK_CATCH();
 }
-
 
 void
 submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
@@ -1691,7 +1686,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		}
 	}
 }
-
 
 SOAP_FMAC5 int SOAP_FMAC6 
 soap_serve_submit(struct soap *soap, struct ns1__jobSubmitResponse response)

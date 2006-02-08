@@ -156,7 +156,7 @@ computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 	GLITE_STACK_CATCH();
 }
 
-vector<string>
+vector<string> *
 getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	const string &defaultprotocol, int defaultport, int httpsport,
 	const string &jid, const string &protocol, const string &extradir)
@@ -173,7 +173,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	string path = getenv(DOCUMENT_ROOT) + httppath;
 	string serverhost = getServerHost();
 	
-	vector<string> returnvector;
+	vector<string> *returnvector = new vector<string>();
 	
 	vector<pair<std::string, int> > returnprotocols;
 	if ((protocol == "") || (protocol == ALL_PROTOCOLS)) {
@@ -211,7 +211,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 					(returnprotocols[i].second)))
 			+ path;
 		edglog(debug)<<"Job directory URI: "<<item<<endl;
-		returnvector.push_back(item);
+		returnvector->push_back(item);
 	}
 	
 	// Adding https protocol
@@ -223,7 +223,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
 		}
 		edglog(debug)<<"Job directory URI: "<<item<<endl;
-		returnvector.push_back(item);
+		returnvector->push_back(item);
 	}
 	
 	return returnvector;
@@ -255,6 +255,7 @@ getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
 			+ ((protocols[i].second == 0) ? "" : (":" + port))
 			//+ ((protocols[i].first != "https") ? path : httppath);
 			+ path;
+		edglog(debug)<<"PROTOCOL: "<<protocols[i].first<<endl;
 		edglog(debug)<<"Destination URI: "<<item<<endl;
 		returnvector->push_back(item);
 	}

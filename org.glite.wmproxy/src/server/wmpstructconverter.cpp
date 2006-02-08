@@ -173,7 +173,7 @@ convertToGSOAPVOProxyInfoStructTypeVector(vector<VOProxyInfoStructType*> voproxy
 }
 
 /**
- * Converts a ns1__ProxyInfoStructType pointer to ProxyInfoStructType
+ * Converts a ns1__ProxyInfoStructType pointer to ProxyInfoStructType pointer
  */
 ns1__ProxyInfoStructType *
 convertToGSOAPProxyInfoStructType(ProxyInfoStructType *proxyinfo)
@@ -193,6 +193,45 @@ convertToGSOAPProxyInfoStructType(ProxyInfoStructType *proxyinfo)
 	}
 	return ns1_proxy_info;
 }
+
+/**
+ * Converts a vector<string> to ns1__StringList pointer
+ */
+ns1__StringList * convertVectorToGSOAPStringList(vector<string> items)
+{
+	GLITE_STACK_TRY("convertVectorToGSOAPStringList()");
+	
+	ns1__StringList *list = new ns1__StringList();
+	list->Item = *(new vector<string>);
+	
+	vector<string>::iterator iter = items.begin();
+	vector<string>::iterator const end = items.end();
+	for (; iter != end; ++iter) {
+		list->Item.push_back(*iter);
+	}
+	return list;
+	
+	GLITE_STACK_CATCH();
+}
+
+/**
+ * Converts a StringList pointer to ns1__StringList pointer
+ */
+ns1__StringList * convertToGSOAPStringList(StringList * items)
+{
+	GLITE_STACK_TRY("convertToGSOAPStringList()");
+	
+	ns1__StringList *list = new ns1__StringList();
+	list->Item = *(new vector<string>);
+	unsigned int size = items->Item->size();
+	for (unsigned i = 0; i < size; i++) {
+		list->Item.push_back((*(items->Item))[i]);
+	}
+	return list;
+	
+	GLITE_STACK_CATCH();
+}
+
 
 
 //

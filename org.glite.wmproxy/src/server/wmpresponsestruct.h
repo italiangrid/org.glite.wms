@@ -118,6 +118,7 @@ struct ProxyInfoStructType {
 	std::vector<VOProxyInfoStructType*> vosInfo;
 };
 
+
 // Response structures
 
 struct getVersionResponse {
@@ -202,9 +203,10 @@ struct getStringParametricJobTemplateResponse {
     std::string jdl;
 };
 
-struct getACLItemsResponse {
+/*struct getACLItemsResponse {
 	StringList *items;
-};
+};*/
+typedef std::vector<std::string> getACLItemsResponse;
 
 struct addACLItemsResponse {
 };
@@ -219,9 +221,10 @@ struct getProxyInfoResponse {
 struct enableFilePerusalResponse {
 };
 
-struct getPerusalFilesResponse {
+/*struct getPerusalFilesResponse {
 	StringList *files;
-};
+};*/
+typedef std::vector<std::string> getPerusalFilesResponse;
 
 struct getTransferProtocolsResponse {
 	StringList *protocols;

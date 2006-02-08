@@ -102,7 +102,6 @@ const long FILE_TRANSFER_SIZE_LIMIT = 2147000000;
 // 2 Giga = 2 * 1.073.741.824 = 2.147.483.648
 
 
-
 // Defining File Separator
 #ifdef WIN 
    // Windows File Separator 
@@ -134,7 +133,6 @@ namespace configuration  = glite::wms::common::configuration;
 namespace wmputilities	 = glite::wms::wmproxy::utilities;
 namespace authorizer 	 = glite::wms::wmproxy::authorizer;
 namespace eventlogger    = glite::wms::wmproxy::eventlogger;
-
 
 
 
@@ -217,9 +215,6 @@ getJDL(const std::string &job_id, JdlType jdltype,
 	
 	GLITE_STACK_CATCH();
 }
-
-
-
 
 void
 getMaxInputSandboxSize(getMaxInputSandboxSizeResponse
@@ -528,8 +523,6 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	
 	GLITE_STACK_CATCH();
 }
-
-
 	
 void
 getJobTemplate(getJobTemplateResponse &getJobTemplate_response,
@@ -711,7 +704,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	GLITE_STACK_CATCH();
 }
 
-vector<string>
+void
 getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 {
 	GLITE_STACK_TRY("getACLItems()");
@@ -758,12 +751,10 @@ getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE<<endl;
 	authorizer::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
-	vector<string> returnvector =
+	getACLItems_response =
 		gaclmanager.getItems(authorizer::GaclManager::WMPGACL_PERSON_TYPE);
 	
 	edglog(info)<<"getACLItems successfully"<<endl;
-	
-	return returnvector;
 	
 	GLITE_STACK_CATCH();
 }
@@ -1138,7 +1129,7 @@ enableFilePerusal(enableFilePerusalResponse &enableFilePerusal_response,
 	GLITE_STACK_CATCH();
 }
 
-vector<string>
+void
 getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	const string &job_id, const string &fileName, bool allChunks,
 	const string &protocol)
@@ -1298,7 +1289,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		}
 	}
 	
-	return returnvector;
+	getPerusalFiles_response = returnvector;
 	
 	edglog(info)<<"getPerusalFiles successfully"<<endl;
 	
