@@ -125,17 +125,17 @@ dli::DataLocationInterfaceSOAP::listReplicas(std::string inputDataType,
       if ( proxyInJdl ){
          if ( !ctx ) {
             if ( glite_gsplugin_init_context(&ctx) ) {
-               throw "gsplugin_init_context FAILED";
+               throw string("gsplugin_init_context FAILED");
             }
          }
          //glite_gsplugin_free_context will free *both* cert and key
          ctx->cert_filename = strdup(proxy.c_str());
          ctx->key_filename = strdup(proxy.c_str());
       }
-      else throw "UserProxy not specified in the ClassAd";
+      else throw string("UserProxy not specified in the ClassAd");
                                                                                                                                    
       if ( soap_register_plugin_arg(&m_soap, glite_gsplugin, ctx) ) {
-         throw "soap_register_plugin_arg FAILED";
+         throw string("soap_register_plugin_arg FAILED");
       }
                                                                                                                                    
    }
@@ -190,7 +190,7 @@ dli::DataLocationInterfaceSOAP::listReplicas(std::string inputDataType,
          ex = "Error in soap request towards StorageIndex Catalog. Unknown error.";
       }
                                                                                                                              
-      throw ex.c_str();
+      throw ex;
                                                                                                                              
    }
 
