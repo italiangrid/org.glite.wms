@@ -57,7 +57,7 @@ public class WMProxyGetProtocolsTest {
 			list = (String[] ) protoList.getItem( );
 			len = list.length;
 			if ( len == 0) {
-				System.out.print ("Sorry, but he received list is empty !!");
+				System.out.print ("Sorry, but you have received an empty list !!");
 			} else {
 				for (int i=0 ; i < len  ; i++) {
 					System.out.println  ( "" + (i+1) + " - " + list[i]);
