@@ -34,7 +34,7 @@ public class WMProxyEnablePerusalTest {
 	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String jobId , String proxyFile, StringList fileList, String certsPath   ) throws java.lang.Exception {
+	public static void runTest ( String url, String jobId , String proxyFile, StringList fileList, String certsPath ) throws java.lang.Exception {
 		WMProxyAPI client = null;
 		String protocol = "";
 		String id = "";
@@ -96,8 +96,7 @@ public class WMProxyEnablePerusalTest {
 		System.out.println (jobId + "\n");
 	}
 
-	public static void main(String[] args) {
-
+	public static void main(String[] args) throws Exception {
 		String url = "" ;
 		String jobId = "" ;
 		String proxyFile = "";
@@ -107,50 +106,46 @@ public class WMProxyEnablePerusalTest {
 		int k = 0;
 		int n = 0;
 		int argc = args.length;
-		try {
-			// input parameters
-			if ((args == null) || (argc < 4)) {
-				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <jobId> <proxyFile>  <File1> ......<FileN> [CAs paths (optional)] )");
+		// input parameters
+		if ((args == null) || (argc < 4)) {
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <jobId> <proxyFile>  <File1> ......<FileN> [CAs paths (optional)] )");
+		}
+		url = args[0];
+		// checks the jobid
+		JobId id = new JobId(args[1]);
+		jobId = id.toString( );
+		//proxyFile
+		proxyFile = args[2];
+		// List of files
+		n = argc - 3 ;
+		if (n > 0) {
+			// certsPath has to be the last argument (if present)
+			File f = new File(args[(argc-1)]);
+			if (f.isDirectory()){
+				certsPath = f.getAbsolutePath ( );
+				argc--;
+			} else {
+				certsPath = "";
 			}
-			url = args[0];
-			// checks the jobid
-			JobId id = new JobId(args[1]);
-			jobId = id.toString( );
-			//proxyFile
-			proxyFile = args[2];
-			// List of files
 			n = argc - 3 ;
 			if (n > 0) {
-				// certsPath has to be the last argument (if present)
-				File f = new File(args[(argc-1)]);
-				if (f.isDirectory()){
-					certsPath = f.getAbsolutePath ( );
-					argc--;
-				} else {
-					certsPath = "";
+				files = new String[n];
+				fileList = new StringList( );
+				for (int i = 3; i < argc; i++) {
+					files[k++] = new String(args[i]);
 				}
-				n = argc - 3 ;
-				if (n > 0) {
-					files = new String[n];
-					fileList = new StringList( );
-					for (int i = 3; i < argc; i++) {
-						files[k++] = new String(args[i]);
-					}
-					fileList.setItem(files);
-					// Test
-					runTest ( url, jobId, proxyFile, fileList, certsPath);
-				} else {
-					String err = "error: Filename(s) to be enable for peeking not found.\n";
-					err += "Some mandatory input parameters are missing (<WebServices URL> <jobId> <proxyFile>  <File1> ......<FileN> [CAs paths (optional)] )";
-					throw new Exception (err);
-				}
+				fileList.setItem(files);
+				// Test
+				runTest ( url, jobId, proxyFile, fileList, certsPath);
 			} else {
 				String err = "error: Filename(s) to be enable for peeking not found.\n";
 				err += "Some mandatory input parameters are missing (<WebServices URL> <jobId> <proxyFile>  <File1> ......<FileN> [CAs paths (optional)] )";
 				throw new Exception (err);
 			}
- 		} catch (Exception exc) {
-			System.out.println ("Exception caught:\n" + exc.getMessage() );
+		} else {
+			String err = "error: Filename(s) to be enable for peeking not found.\n";
+			err += "Some mandatory input parameters are missing (<WebServices URL> <jobId> <proxyFile>  <File1> ......<FileN> [CAs paths (optional)] )";
+			throw new Exception (err);
 		}
 	 }
 

@@ -222,7 +222,6 @@ public class WMProxyGetPerusalTest {
 	}
 
 	public static void main(String[] args) throws Exception {
-
 		String url = "" ;
 		String jobId = "" ;
 		String fileName = "";
