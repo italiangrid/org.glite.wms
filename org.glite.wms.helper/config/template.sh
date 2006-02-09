@@ -554,7 +554,6 @@ fi
       sleep($time_left);
     }
     kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
-    my $err_msg = "Job killed because of user proxy expiry\n";
     my $maradona = "'$maradona'";
     my $logger = "'$lb_logevent'";
     print STDERR $err_msg;
@@ -567,9 +566,9 @@ fi
                   " --source=LRMS".
                   " --sequence=".$ENV{GLITE_WMS_SEQUENCE_CODE}.
                   " --event=\"Done\"".
-                  " --reason=\"".$err_msg."\"".
-                  " --status_code=FAILED"
-                  " --exit_code=0" 2>/dev/null |")) {
+                  " --reason=\"Job killed because of user proxy expiration\"".
+                  " --status_code=FAILED".
+                  " --exit_code=0 2>/dev/null |")) {
       chomp(my $value = <CMD>);
       close(CMD);
       my $result = $?;
@@ -577,7 +576,7 @@ fi
       $ENV{GLITE_WMS_SEQUENCE_CODE} = $value if ($exit_value == 0);
     }
     exit(1);
-	  ' &
+	' &
   watchdog=$!
   wait $user_job
   status=$?
