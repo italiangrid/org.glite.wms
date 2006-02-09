@@ -5,8 +5,9 @@
 #
 #	input parameters:
 #		- p1 = endpoint URL
-#		- p2 = path to proxy file
+#		- p2 = proxy file pathname
 #		- p3 = jobid
+#              - p4 = CAs dir pathname
 #
 ##############################################
 
@@ -16,32 +17,40 @@ top_src=../../../../../
 package=org.glite.wms.wmproxy.jobpurge
 class=WMProxyJobPurgeTest
 
-#
-# The following jar files are only needed to build the source of the Test class:
-#       - glite-wms-jdlj.jar
-#       - classad.jar
-# The source of WMProxy API doesn't need them !!!
-#
+## AXIS ===============
+line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
+AXIS_LOC=${line##*=}
 
+## API_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
+WMP_API_JAVA=${line##*=}
 
-AXIS=`more ../axis.cfg`
-AXIS_LOC=${top}$AXIS
-echo "axis in : "$AXIS_LOC
+## SECURITY_TRUSTMANAGER ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_TRUSTMANAGER`
+SECURITY_TRUSTMANAGER=${line##*=}
 
+## UTIL_JAVA ============ ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
+SECURITY_UTIL_JAVA=${line##*=}
+
+## BOUNCYCASTLE ==============
+line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
+BOUNCYCASTLE=${line##*=}
+
+## UI_API_JAVA
+line=`more ../wmp-api-java-test.cfg | grep UI_API_JAVA`
+UI_API_JAVA=${line##*=}
 
 for p in \
-	${top_src} \
-	${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-	${top}repository/jclassads/2.1/share/classad.jar \
-	${top}stage/share/java/glite-wms-jdlj.jar \
-	${top}stage/share/java/glite-security-trustmanager.jar \
-	${top}stage/share/java/glite-security-util-java.jar \
-	${top}stage/share/java/glite-security-delegation-java.jar \
-	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	${top}repository/bcprov-jdk14/1.22/share/jars/jce-jdk13-122.jar \
-	${top}repository/jclassads/2.2/share/classad.jar \
-	$AXIS_LOC/*.jar 
+        ${top_src} \
+        ${WMP_API_JAVA} \
+        ${SECURITY_TRUSTMANAGER} \
+        ${SECURITY_UTIL_JAVA} \
+        ${BOUNCYCASTLE} \
+        ${UI_API_JAVA} \
+        ${AXIS_LOC}/*.jar
 do
+
 	if ! printenv JSS_CLASSPATH | grep -q "${p}"; then
 		if [ -n "${classpath}" ]; then
 			classpath="${classpath}":"${p}"
@@ -50,16 +59,19 @@ do
 		fi
 	fi
 done
+
 #input parameters
 #----------------
 p1=$1
 p2=$2
 p3=$3
+p4=$4
 
 # launching the test...
 # ------------------------
-CMD="${package}.${class} ${p1} ${p2} ${p3}"
+CMD="${package}.${class} ${p1} ${p2} ${p3} ${p4}"
 echo "java ${CMD}"
 java -classpath ${classpath} ${CMD}
+
 
 

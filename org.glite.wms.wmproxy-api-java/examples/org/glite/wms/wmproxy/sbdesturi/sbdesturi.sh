@@ -32,10 +32,6 @@ SECURITY_TRUSTMANAGER=${line##*=}
 line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
 SECURITY_UTIL_JAVA=${line##*=}
 
-## DELEGATION_JAVA ============ ==============
-line=`more ../wmp-api-java-test.cfg | grep SECURITY_DELEGATION_JAVA`
-SECURITY_DELEGATION_JAVA=${line##*=}
-
 ## BOUNCYCASTLE ==============
 line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
 BOUNCYCASTLE=${line##*=}

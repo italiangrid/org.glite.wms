@@ -13,17 +13,28 @@ if test -f ${class_file} ; then
         rm -fr ${class_file}
 fi
 
-AXIS=`more ../axis.cfg`
-AXIS_LOC=${top}$AXIS
-echo "axis in : "$AXIS_LOC
+## AXIS ===============
+line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
+AXIS_LOC=${line##*=}
 
+## API_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
+WMP_API_JAVA=${line##*=}
+
+## JDL_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep JDL_API_JAVA`
+JDL_API_JAVA=${line##*=}
+
+## CLASSAD  ==============
+line=`more ../wmp-api-java-test.cfg | grep CLASSAD_LOC`
+CLASSAD=${line##*=}
 
 for p in \
         ${top_src} \
-        ${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-	 ${top}stage/share/java/glite-wms-jdlj.jar \
-        $AXIS_LOC/axis.jar \
-        $AXIS_LOC/jaxrpc.jar
+        ${AXIS_LOC}/jaxrpc.jar \
+	${WMP_API_JAVA} \
+        ${JDL_API_JAVA} \
+	${CLASSAD}
 do
         if ! printenv "${classpath}" | grep -q "${p}"; then
                 if [ -n "${classpath}" ]; then

@@ -14,20 +14,24 @@ class_file_2=${class_2}.class
 #rm class file
 # ------------------
 if test -f ${class_file} ; then
-        echo "Removing "${class_file} 
+        echo "Removing "${class_file}
         rm -fr ${class_file}
 fi
 
-AXIS=`more ../axis.cfg`
-AXIS_LOC=${top}$AXIS
-echo "axis in : "$AXIS_LOC
 
+## AXIS ===============
+line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
+AXIS_LOC=${line##*=}
+
+## API_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
+WMP_API_JAVA=${line##*=}
 
 for p in \
         ${top_src} \
-        ${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-        $AXIS_LOC/axis.jar \
-        $AXIS_LOC/jaxrpc.jar
+        ${WMP_API_JAVA} \
+        ${AXIS_LOC}/axis.jar \
+        ${AXIS_LOC}/jaxrpc.jar
 do
         if ! printenv "${classpath}" | grep -q "${p}"; then
                 if [ -n "${classpath}" ]; then
