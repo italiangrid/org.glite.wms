@@ -327,28 +327,33 @@ const std::string ProxyInfo::getTimeLeft(const std::string &expiration) {
 	int h = 0; 	// hours
 	int m = 0;	// minutes
 	int s = 0;	// seconds
-	// Time-Left
-	long t = convASN1Date(expiration) - time(NULL);
- 	if (t >0) {
-		d = t/(3600*24);
-		// days
-		if (d>0) {
-			oss << d << " days ";
-			t -= d*(3600*24);
+	long exp = atol((char*)expiration.c_str()) ;
+	if (exp > 0) {
+		// Time-Left
+		long t = exp - time(NULL);
+		if (t >0) {
+			d = t/(3600*24);
+			// days
+			if (d>0) {
+				oss << d << " days ";
+				t -= d*(3600*24);
+			}
+			// hours
+			h = t/3600 ;
+			if (h>0) {
+				oss << std::setw(2) << std::setfill('0') << h << " hours " ;
+			}
+			// minutes
+			m = (t%3600)/60 ;
+			oss << std::setw(2) << std::setfill('0') << m << " min " ;
+			// seconds
+			s = (t%3600)%60;
+			oss << std::setw(2) << std::setfill('0') << s << " sec " ;
+		} else {
+			oss << "00:00:00";
 		}
-		// hours
-		h = t/3600 ;
-		if (h>0) {
-			oss << std::setw(2) << std::setfill('0') << h << " hours " ;
-		}
-		// minutes
-		m = (t%3600)/60 ;
-		oss << std::setw(2) << std::setfill('0') << m << " min " ;
-		// seconds
-		s = (t%3600)%60;
-		oss << std::setw(2) << std::setfill('0') << s << " sec " ;
 	} else {
-		oss << "00:00:00";
+			oss << "";
 	}
 	return oss.str( );
 }
@@ -391,9 +396,9 @@ const std::string ProxyInfo::printProxyInfo (ProxyInfoStructType info){
 				out << field ("Attribute", string(*it2));
 			}
 			// startTime
-			out << field ("StartTime",convDate(vo->startTime) );
+			out << field ("StartTime",getDateString(vo->startTime) );
 			// endTime
-			out << field ("Expiration", convDate(vo->endTime));
+			out << field ("Expiration", getDateString(vo->endTime));
 			// time-left
 			out << field ("TimeLeft", getTimeLeft(vo->endTime));
 		}
