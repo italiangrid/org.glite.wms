@@ -78,6 +78,14 @@ main(int argc, char* argv[])
   // run job.sh in a subdirectory
   jw->create_subdir();
   
+  try {
+    url::URL url_("http://results_collector.cnaf.infn.it/gravitational_waves/mcecchi");
+    jw->set_output_sandbox_base_dest_uri(url_);
+    jw->set_osb_wildcards_support(true);
+  } catch (url::ExInvalidURL& ex) {
+    cerr << "Cannot Create JobWrapper\n";
+  }
+
   // output the job wrapper script to standard output
   cout << *jw;
 
