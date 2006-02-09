@@ -6,7 +6,7 @@
 #	input parameters:
 #		- p1 = endpoint URL
 #		- p2 = proxy file pathname
-#               - p3 = CAs files pathname
+#               -p3 = CAs files pathname
 #
 ##############################################
 
@@ -15,17 +15,36 @@ top=../../../../../../../
 top_src=../../../../../
 package=org.glite.wms.wmproxy.dagtemplate
 class=WMProxyDAGTemplateTest
-AXIS=`more ../axis.cfg`
-AXIS_LOC=${top}$AXIS
-echo "axis in : "$AXIS_LOC
+
+## AXIS ===============
+line=`more ../wmp-api-java-test.cfg | grep AXIS_LOC`
+AXIS_LOC=${line##*=}
+
+## API_JAVA  ==============
+line=`more ../wmp-api-java-test.cfg | grep WMP_API_JAVA`
+WMP_API_JAVA=${line##*=}
+
+## SECURITY_TRUSTMANAGER ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_TRUSTMANAGER`
+SECURITY_TRUSTMANAGER=${line##*=}
+
+## UTIL_JAVA ============ ==============
+line=`more ../wmp-api-java-test.cfg | grep SECURITY_UTIL_JAVA`
+SECURITY_UTIL_JAVA=${line##*=}
+
+
+
+## BOUNCYCASTLE ==============
+line=`more ../wmp-api-java-test.cfg | grep BOUNCYCASTLE`
+BOUNCYCASTLE=${line##*=}
 
 for p in \
 	${top_src} \
-	${top}stage/share/java/glite-wms-wmproxy-api-java.jar \
-	${top}stage/share/java/glite-security-trustmanager.jar \
-	${top}stage/share/java/glite-security-util-java.jar \
-	${top}repository/bcprov-jdk14/1.22/share/jars/bcprov-jdk14-122.jar \
-	$AXIS_LOC/*.jar
+	${WMP_API_JAVA} \
+	${SECURITY_TRUSTMANAGER} \
+	${SECURITY_UTIL_JAVA} \
+	${BOUNCYCASTLE} \
+	${AXIS_LOC}/*.jar
 do
 	if ( (! test -f $p) && (! test -d $p ) ) ; then
 		echo "classpath - path not found: " + $p
