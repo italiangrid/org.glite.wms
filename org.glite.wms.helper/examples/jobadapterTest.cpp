@@ -17,7 +17,7 @@
 #include "jobadapter/JobAdapter.h"
 #include "jobadapter/exceptions.h"
 
-#include "jobadapter/url/URL.h"
+#include "jobadapter/URL.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"

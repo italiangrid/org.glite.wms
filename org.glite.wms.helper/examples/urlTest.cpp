@@ -7,7 +7,7 @@
  ***************************************************************************/
 
 #include <iostream>
-#include "jobadapter/url/URL.h"
+#include "jobadapter/URL.h"
 
 using std::cout;
 using std::cerr;

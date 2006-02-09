@@ -31,7 +31,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
 
-#include "jobadapter/url/URL.h"
+#include "URL.h"
 #include "JobAdapter.h"
 #include "JobWrapper.h"
 

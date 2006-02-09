@@ -5,37 +5,27 @@
 ## * http://www.edg.org/license.html
 ## *
 ## *********************************************************************
-URL = $(top_builddir)/src/jobadapter/url/libglite_wms_ja_url.la
-
-SUBDIRS = url
 
 lib_LTLIBRARIES = libglite_wms_helper_jobadapter.la
 
-noinst_LTLIBRARIES = libglite_wms_jobadapter.la \
-  libglite_wms_ja_jobwrapper.la
-
 noinst_HEADERS = \
 	exceptions.h \
+  URL.h \
   JobWrapper.h \
 	Helper.h
 
 indir = $(includedir)/glite/wms/helper/jobadapter
 in_HEADERS = JobAdapter.h
 
-libglite_wms_jobadapter_la_SOURCES = \
-  JobAdapter.cpp \
-  exceptions.cpp
-
-libglite_wms_ja_jobwrapper_la_SOURCES = \
-  JobWrapper.cpp
-
 libglite_wms_helper_jobadapter_la_SOURCES = \
+  exceptions.cpp \
+  JobWrapper.cpp \
+  URL.cpp \
+  JobAdapter.cpp \
   Helper.cpp
 
 libglite_wms_helper_jobadapter_la_LIBADD = \
-  ./libglite_wms_ja_jobwrapper.la \
-	$(URL) \
-  ./libglite_wms_jobadapter.la
+	$(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
