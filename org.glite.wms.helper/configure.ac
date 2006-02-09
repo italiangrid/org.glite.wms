@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20  2006/02/09 14:15:49  mcecchi
+#       URL moved
+#
 #       Revision 1.19  2006/01/24 12:16:03  mcecchi
 #       jobwrapper unification
 #
@@ -268,7 +271,6 @@ AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/broker/Makefile])
 AC_CONFIG_FILES([src/jobadapter/Makefile])
-AC_CONFIG_FILES([src/jobadapter/url/Makefile])
 
 AC_OUTPUT
 
