@@ -97,7 +97,6 @@ public class WMProxyGetJDLTest {
 			} catch ( NumberFormatException exc){
 				// invalid value: repeats this loop
 			}
-
 		}
 		if (value==1) {
 			type = JdlType.ORIGINAL;
@@ -121,16 +120,15 @@ public class WMProxyGetJDLTest {
 			 	 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <jobId> <proxyFile> [CAs paths (optional)] )");
 			}
 			url = args[0];
-			jobId = args[1];
+			// checks the jobid
+			JobId id = new JobId(args[2]);
+			jobId = jobId.toString( );
 			proxyFile = args[2];
 			if (args.length == 4) {
 				certsPath = args[3];
 			} else  {
 				certsPath = "";
 			}
-			// checks the jobid
-			JobId id = new JobId(jobId);
-			jobId = jobId.toString( );
 			// Type of the JDL to be retrieved (either original or registered)
 			type = askType ( );
 			// Launches the test
