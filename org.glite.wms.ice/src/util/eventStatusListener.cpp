@@ -26,19 +26,29 @@ namespace iceUtil = glite::wms::ice::util;
 
 boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
 
-namespace { // anonym namespace
+namespace { // anonymous namespace
 
+    /**
+     * This class represents status change notifications as sent by
+     * CEMON to ICE. A Job status change notification is a classad
+     * with several fields indicating che cream job id of the job
+     * whose status changed, the new status, and the timestamp when
+     * the change occurred.
+     */
     class StatusNotification {
     public:
+        /**
+         * Builds a StatusNotification object from a classad.
+         */
         StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& );
         virtual ~StatusNotification( ) { };
 
         const string& getCreamJobID( void ) const { return cream_job_id; };
-        const string& getStatus( void ) const { return job_status; };
+        api::job_statuses::job_status  getStatus( void ) const { return job_status; };
         long getTstamp( void ) const { return tstamp; };
     protected:
         string cream_job_id;
-        string job_status;
+        api::job_statuses::job_status job_status;
         long tstamp;
     };
 
@@ -53,6 +63,7 @@ namespace { // anonym namespace
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( _classad );
         double tstamp_d;
+        string job_status_str;
         
         if (!ad)
             throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
@@ -60,8 +71,9 @@ namespace { // anonym namespace
         if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
             throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
         
-        if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status ) )
+        if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
+        job_status = api::job_statuses::getStatusNum( job_status_str );
         
         if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
@@ -499,9 +511,10 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
         parseEventJobStatus(cream_job_id, status, tstamp, Ad);
     }
     catch(iceUtil::ClassadSyntax_ex& ex) {
-	log_dev->errorStream() << "Error parsing notification Message ["
-	                       <<ev.Messages[ev.Messages.size()-1]
-			       << "]. Ignoring it...";
+	log_dev->errorStream() 
+            << "Error parsing notification Message ["
+            <<ev.Messages[ev.Messages.size()-1]
+            << "]. Ignoring it...";
 	//this->reset();
 	return;
     }
@@ -605,9 +618,13 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                     << " last updated on=[" << jc_it->getLastUpdate() << "]"
                     << log4cpp::CategoryStream::ENDLINE;
                 if ( it->getTstamp() > jc_it->getLastUpdate() ) {
-                    jc_it->setStatus( api::job_statuses::getStatusNum( it->getStatus() ), it->getTstamp() );
-                    _ev_logger->log_job_status( *jc_it ); // FIXME
-                    jobCache::getInstance()->put( *jc_it );
+                    jc_it->setStatus( it->getStatus(), it->getTstamp() );
+                    _ev_logger->log_job_status_change( *jc_it ); // FIXME
+                    if ( (it+1) == notifications.end() ) {
+                        // The cache is only modified for the last
+                        // notification, for efficiency reasons.
+                        jobCache::getInstance()->put( *jc_it ); 
+                    }
                 } else {
                     log_dev->infoStream()
                         << "...NOT DONE, as notification is old"

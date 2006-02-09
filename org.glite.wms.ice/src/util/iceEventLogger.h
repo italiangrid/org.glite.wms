@@ -108,13 +108,15 @@ namespace glite {
                     void cream_scheduled_event( const CreamJob& theJob );
 
                     /**
-                     * Logs an event depending on the job status. All
+                     * Logs a job status change event. This means that
+                     * the job passed as parameter changed status; the
+                     * new status is logged to L&B service.  All
                      * information needed for logging are retrieved
                      * from the creamJob object passed as parameter.
                      *
                      * @param theJob the job being logged
                      */
-                    void log_job_status( const CreamJob& theJob );
+                    void log_job_status_change( const CreamJob& theJob );
 
                     static void set_lb_retries( unsigned int r ) { el_s_retries = r; return; }
                     static void set_lb_interval( unsigned int sec ) { el_s_sleep = sec; return; }

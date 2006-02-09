@@ -33,6 +33,8 @@ using namespace std;
 using namespace glite::wms::ice::util;
 namespace configuration = glite::wms::common::configuration;
 
+#ifdef DONT_COMPILE
+
 namespace {
 
   // retrieve the subject_name from a given x509_proxy (thx to giaco)
@@ -56,6 +58,8 @@ namespace {
   }
 
 }
+
+#endif
 
 // static member definitions
 unsigned int iceEventLogger::el_s_retries = 3;
@@ -137,7 +141,7 @@ void iceEventLogger::testCode( int &code, bool retry )
         
     }
 
-    const configuration::CommonConfiguration     *conf = configuration::Configuration::instance()->common();
+    const configuration::CommonConfiguration *conf = configuration::Configuration::instance()->common();
     int          ret;
     string       cause, host_proxy;
 
@@ -147,10 +151,10 @@ void iceEventLogger::testCode( int &code, bool retry )
         switch( code ) {
         case EINVAL:
             log_dev->errorStream()
-                       << "Critical error in L&B calls: EINVAL. "
-                       << "Cause = \"" << cause << "\"."
-                       << log4cpp::CategoryStream::ENDLINE;
-
+                << "Critical error in L&B calls: EINVAL. "
+                << "Cause = \"" << cause << "\"."
+                << log4cpp::CategoryStream::ENDLINE;
+            
             code = 0; // Don't retry...
             break;
         case EDG_WLL_ERROR_GSS:
@@ -163,7 +167,7 @@ void iceEventLogger::testCode( int &code, bool retry )
                 log_dev->infoStream()
                     << "The log with the host certificate has just been done. Giving up." 
                     << log4cpp::CategoryStream::ENDLINE;
-
+                
                 code = 0; // Don't retry...
             }
             else {
@@ -828,7 +832,7 @@ void iceEventLogger::job_done_failed_event( const util::CreamJob& theJob )
 // 
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::log_job_status( const CreamJob& theJob )
+void iceEventLogger::log_job_status_change( const CreamJob& theJob )
 {
     switch( theJob.getStatus() ) {
     case glite::ce::cream_client_api::job_statuses::REGISTERED:

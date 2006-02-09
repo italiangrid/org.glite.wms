@@ -238,7 +238,7 @@ void eventStatusPoller::updateJobCache()
               jit->setStatus( stNum, time( NULL ) );
               cache->put( *jit );
               // Log to L&B
-              _ev_logger->log_job_status( *jit ); // FIXME
+              _ev_logger->log_job_status_change( *jit ); // FIXME
           } else {
 	    log_dev->errorStream() << "cream_jobid = ["<< cid << "] disappeared! "
 	    			   << "Removing from cache..."
