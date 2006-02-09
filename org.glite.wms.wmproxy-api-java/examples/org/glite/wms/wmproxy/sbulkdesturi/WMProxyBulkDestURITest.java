@@ -213,7 +213,7 @@ public class WMProxyBulkDestURITest {
 		if ((args == null) || (args.length < 3)){
 			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <jobId> <proxyFile> [CAs paths (optional)] )");
 		} else if (args.length > 4) {
-			throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL>  <jobId> <proxyFile> [CAs paths (optional)] )");
+			 	 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <jobId> <proxyFile> [CAs paths (optional)] )");
 		}
 		url = args[0];
 		proxyFile = args[1];
