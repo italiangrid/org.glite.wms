@@ -121,8 +121,8 @@ public class WMProxyGetJDLTest {
 			}
 			url = args[0];
 			// checks the jobid
-			JobId id = new JobId(args[2]);
-			jobId = jobId.toString( );
+			JobId id = new JobId(args[1]);
+			jobId = id.toString( );
 			proxyFile = args[2];
 			if (args.length == 4) {
 				certsPath = args[3];
