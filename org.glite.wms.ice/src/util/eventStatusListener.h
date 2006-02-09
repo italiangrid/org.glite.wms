@@ -52,10 +52,10 @@ namespace glite {
           iceEventLogger *_ev_logger;
           // classad::ClassAdParser parser;
 	  bool _isOK;
-	  
+
 	  void init(void);
           // void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
-          void handleEvent( const Event& ev );
+          void handleEvent( const monitortypes__Event& ev );
 
 	protected:
 	  eventStatusListener(const eventStatusListener&) : 

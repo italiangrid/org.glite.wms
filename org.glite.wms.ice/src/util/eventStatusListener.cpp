@@ -226,15 +226,15 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
       return;
     }
 
-  const vector<Event>& evts = this->getEvents();
+  const vector<monitortypes__Event>& evts = this->getEvents();
 
   /**
    * Loops over all events (event <-> job)
    * For each event updates the status of the related
-   * job in the jobCache getting the status from last message of the 
+   * job in the jobCache getting the status from last message of the
    * event.
    */
-  for ( vector<Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
+  for ( vector<monitortypes__Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
       handleEvent( *it );
   } // Loop over all events
   //this->reset();
@@ -548,13 +548,13 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
 
 
 
-void iceUtil::eventStatusListener::handleEvent( const Event& ev )
+void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 {
     // First, convert the vector of messages into a vector of StatusNotification objects
     vector<StatusNotification> notifications;
 
-    for ( vector<string>::const_iterator it = ev.Messages.begin();
-              it != ev.Messages.end(); it++ ) {
+    for ( vector<string>::const_iterator it = ev.Message.begin();
+              it != ev.Message.end(); it++ ) {
         try {
             notifications.push_back( StatusNotification( *it ) );
         } catch( iceUtil::ClassadSyntax_ex ex ) {
@@ -584,13 +584,13 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
           it != notifications.end(); it++ ) {
 
         jobCache::iterator jc_it;
-        
+
         try {
             boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
-            
+
             jc_it = jobCache::getInstance()->lookupByCreamJobID( it->getCreamJobID() );
             if( jc_it == jobCache::getInstance()->end()) {
-                log_dev->errorStream() 
+                log_dev->errorStream()
                     << "eventStatusListener::acceptJobStatus() - "
                     << "Not found in the cache the creamjobid=["
                     << it->getCreamJobID()
