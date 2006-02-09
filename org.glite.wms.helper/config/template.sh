@@ -543,7 +543,6 @@ fi
     warn "could not exec $ARGV[0]: $!\n";
     exit(127);
   ' "$cmd_line" &
-
   user_job=$!
 
   exec 2> /dev/null
@@ -579,12 +578,12 @@ fi
     }
     exit(1);
 	  ' &
-
   watchdog=$!
-
   wait $user_job
   status=$?
-  kill -9 $watchdog $user_job -$user_job
+  #according to what reported (David McBride), the bash kill command 
+  #doesn't appear to work properly on process groups
+  /bin/kill -9 $watchdog $user_job -$user_job
   exit $status
 )
 
