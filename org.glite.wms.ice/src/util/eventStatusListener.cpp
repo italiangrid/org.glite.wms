@@ -39,20 +39,36 @@ namespace { // anonymous namespace
     public:
         /**
          * Builds a StatusNotification object from a classad.
+         *
+         * @param _classad the string representing a classad to build
+         * this object from.
          */
         StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& );
         virtual ~StatusNotification( ) { };
 
+        /** 
+         * Returns the CREAM job ID for this notification
+         */
         const string& getCreamJobID( void ) const { return cream_job_id; };
+
+        /**
+         * Returns the status for this notification
+         */
         api::job_statuses::job_status  getStatus( void ) const { return job_status; };
-        long getTstamp( void ) const { return tstamp; };
+
+        /**
+         * Returns the time of the status for this notification 
+         */
+        time_t getTstamp( void ) const { return tstamp; };
     protected:
         string cream_job_id;
         api::job_statuses::job_status job_status;
-        long tstamp;
+        time_t tstamp;
     };
 
+    //
     // StatusNotification implementation
+    //
     StatusNotification::StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& )
     {
         api::util::creamApiLogger::instance()->getLogger()->infoStream()
@@ -62,25 +78,29 @@ namespace { // anonymous namespace
 
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( _classad );
-        double tstamp_d;
-        string job_status_str;
         
         if (!ad)
             throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
         
         if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
             throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
-        
+
+        string job_status_str;       
         if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
         job_status = api::job_statuses::getStatusNum( job_status_str );
-        
+
+        double tstamp_d;        
         if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
         tstamp = lrint( tstamp_d );
     };
 
-
+    /**
+     * This class is used to compare two StatusNotification objects
+     * according with their timestamp. It is used to sort a vector of
+     * notifications in nondecreasing timestamp order.
+     */
     struct less_equal_tstamp : public binary_function< StatusNotification, StatusNotification, bool>
     {
         bool operator()(const StatusNotification& __x, const StatusNotification& __y) const 
@@ -571,7 +591,11 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         try {
             notifications.push_back( StatusNotification( *it ) );
         } catch( iceUtil::ClassadSyntax_ex ex ) {
-            // FIXME!! Help!!!
+            log_dev->errorStream()
+                << "eventStatusListenre::handleEvent() received a notification "
+                << "[" << *it << "] which could not be understood. "
+                << "Skipping this notification and hoping for the best..."
+                << log4cpp::CategoryStream::ENDLINE;
         }
     }
 
