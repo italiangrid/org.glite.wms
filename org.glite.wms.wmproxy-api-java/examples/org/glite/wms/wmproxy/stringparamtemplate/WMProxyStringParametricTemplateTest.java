@@ -27,15 +27,16 @@ import org.glite.wms.wmproxy.common.GetParameters ;
 public class WMProxyStringParametricTemplateTest {
 
 	public WMProxyStringParametricTemplateTest  ( ) { }
-
-	/*
-	*	starts the test
-	*	@param url service URL
-	*	@param proxyFile the path location of the user proxy file
-	*  	@param configFile the path location of the configuration file
-	*	@throws.Exception if any error occurs
+	/**
+		Starts the test
+		@param url service URL
+		@param configFile the path location of the configuration file
+		@param proxyFile the path location of the user proxy file
+	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
+		@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String proxyFile, String configFile ) throws java.lang.Exception {
+	public static void runTest ( String url, String configFile, String proxyFile, String certsPath ) throws java.lang.Exception {
+		WMProxyAPI client = null;
 		// service input parameters
 		StringList attributeList, paramList = null ;
 		String rank = "";
@@ -47,10 +48,17 @@ public class WMProxyStringParametricTemplateTest {
 		System.out.println ("************************************************************************************************************************************");
 		System.out.println ("WS URL	 		= [" + url + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		System.out.println ("proxy	 		= [" + proxyFile + "]" );
-		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("config-File	 	= [" + configFile + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		System.out.println ("proxy	 		= [" + proxyFile + "]" );
+		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		if (certsPath.length()>0){
+			System.out.println ("CAs path		= [" + certsPath+ "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		  	client = new WMProxyAPI ( url, proxyFile, certsPath ) ;
+		} else {
+		 	 client = new WMProxyAPI ( url, proxyFile ) ;
+		 }
 		// Reads the configuration file ----------------------------
 		System.out.println ("==================================================================================================");
 		GetParameters parameters = new GetParameters(  configFile ) ;
@@ -76,9 +84,8 @@ public class WMProxyStringParametricTemplateTest {
 		System.out.println ("==================================================================================================");
 		// end reading configuration file ----------------------------
 		// testing ...
-		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("Testing....");
-
+		client = new WMProxyAPI ( url, proxyFile ) ;
+		System.out.println ("Calling the getStringParametricJobTemplate service");
 		result = client.getStringParametricJobTemplate( attributeList, paramList, requirements, rank);
 	System.out.println ("Result:");
 		// result
@@ -88,19 +95,27 @@ public class WMProxyStringParametricTemplateTest {
 		System.out.println ("End of the test" );
 	 }
 	public static void main(String[] args) throws Exception {
-		// input parameters
+
+		// test input parameters
 		String url = "" ;
-		String jobId = "" ;
 		String configFile = "" ;
 		String proxyFile = "";
-		// Read the input arguments
-		if ((args == null) || (args.length < 3))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <config-File>)");
+		String certsPath = "";
+		// input parameters
+		if ((args == null) || (args.length < 3)){
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <configFile> <proxyFile> [CAs paths (optional)] )");
+		} else if (args.length > 4) {
+			throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <configFile> <proxyFile> [CAs paths (optional)] )");
+		}
 		url = args[0];
-		proxyFile = args[1];
-		configFile = args[2];
-		runTest ( url,proxyFile, configFile);
-
+		configFile = args[1];
+		proxyFile = args[2];
+		if (args.length == 4) {
+			certsPath = args[3];
+		} else  {
+			certsPath = "";
+		}
+		runTest ( url, configFile, proxyFile, certsPath);
 	 }
 
  }

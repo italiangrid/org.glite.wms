@@ -38,10 +38,12 @@ public class WMProxyJobListMatchTest {
 	*	@param url service URL
 	*  	@param jdlFile the path location of the JDL file
 	*	@param proxyFile the path location of the user proxy file
+	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String jdlFile, String delegationID, String proxyFile ) throws java.lang.Exception {
+	public static void runTest ( String url, String jdlFile, String delegationID, String proxyFile, String certsPath  ) throws java.lang.Exception {
 		// jdl
+		WMProxyAPI client = null;
 		String jdlString = "";
 		// output results
 		StringAndLongList result = null;
@@ -63,8 +65,14 @@ public class WMProxyJobListMatchTest {
 		jdlString = jad.toString ( );
 		System.out.println ("jdlString		= [" + jdlString + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		// Test
-		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
+		if (certsPath.length()>0){
+			System.out.println ("CAs path		= [" + certsPath+ "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		  	client = new WMProxyAPI ( url, proxyFile, certsPath ) ;
+		} else {
+		 	 client = new WMProxyAPI ( url, proxyFile ) ;
+		 }
+		 // Test
 		System.out.println ("Testing ....");
 		result= client.jobListMatch( jdlString, delegationID );
 		System.out.println ("End of the test.\n");
@@ -86,7 +94,7 @@ public class WMProxyJobListMatchTest {
 			System.out.println ("=======================================================================");
 		}
 	}
-	/*
+	/**
 	* main
 	*/
 	public static void main(String[] args) throws Exception {
@@ -94,14 +102,23 @@ public class WMProxyJobListMatchTest {
 		String jdlFile = "" ;
 		String proxyFile = "";
 		String delegationID = "";
+		String certsPath = "";
 		// Reads the  input arguments
-		if ((args == null) || (args.length < 4))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <delegationID> <proxyFile> <JDL-FIlePath> )");
+		if ((args == null) || (args.length < 4)) {
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <delegationID> <proxyFile> <JDL-FIlePath>  [CAs paths (optional)])");
+		} else if (args.length > 5) {
+			 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <delegationID> <proxyFile> <JDL-FIlePath>  [CAs paths (optional)]");
+		}
 		url = args[0];
                 delegationID = args[1];
 		proxyFile = args[2];
 		jdlFile = args[3];
+		if (args.length == 5) {
+			certsPath = args[4];
+		} else  {
+			certsPath = "";
+		}
 		// Launches the test
-		runTest ( url, jdlFile, delegationID, proxyFile);
+		runTest ( url, jdlFile, delegationID, proxyFile, certsPath);
 	}
 }

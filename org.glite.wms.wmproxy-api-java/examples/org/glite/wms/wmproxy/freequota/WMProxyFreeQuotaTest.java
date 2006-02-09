@@ -24,10 +24,11 @@ public class WMProxyFreeQuotaTest {
 	*	starts the test
 	*	@param url service URL
 	*	@param proxyFile the path location of the user proxy file
+	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String proxyFile ) throws  java.lang.Exception {
-
+	public static void runTest ( String url, String proxyFile, String certsPath ) throws  java.lang.Exception {
+		WMProxyAPI client = null;
 		// output results
 		LongHolder softLimit = new LongHolder( ) ;
 		LongHolder hardLimit = new LongHolder( ) ;
@@ -40,18 +41,31 @@ public class WMProxyFreeQuotaTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("proxy	 		= [" + proxyFile + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		// testing ...
-		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
-		System.out.println ("Testing....");
-		client.getFreeQuota(softLimit, hardLimit) ;
+		if (certsPath.length()>0){
+			System.out.println ("CAs path		= [" + certsPath+ "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		  	client = new WMProxyAPI ( url, proxyFile, certsPath ) ;
+		} else {
+		 	 client = new WMProxyAPI ( url, proxyFile ) ;
+		 }
 
+		System.out.println ("Calling the getFreeQuota service");
+		client.getFreeQuota(softLimit, hardLimit) ;
 		// result
 		System.out.println ("RESULT:");
 		System.out.println ("===================================================");
-		System.out.println ("softLimit	= [" + softLimit.value+ "]");
-		System.out.println ("hardLimit	= [" + hardLimit.value + "]");
+		if (softLimit.value < 0) {
+			System.out.println ("The Soft-Limit is not set");
+		} else {
+			System.out.println ("Soft-Limit	= [" + softLimit.value+ "]");
+		}
+		if (hardLimit.value < 0) {
+			System.out.println ("The Hard-Limit is not set");
+		} else {
+			System.out.println ("Soft-Limit	= [" + hardLimit.value+ "]");
+		}
 		System.out.println ("===================================================");
-		System.out.println ("end of the test" );
+		System.out.println ("End of the test" );
 	 }
 
 	public static void main(String[] args) throws java.lang.Exception {
@@ -59,16 +73,25 @@ public class WMProxyFreeQuotaTest {
 		// input parameters
 		String url = "" ;
 		String proxyFile = "";
-
-
-		// Read the input arguments
-		if ((args == null) || (args.length < 2))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile>)");
-		url = args[0];
-		proxyFile = args[1];
-
-		runTest ( url, proxyFile );
-
+		String certsPath = "";
+		try {
+			// input parameters
+			if ((args == null) || (args.length < 2)){
+				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> [CAs paths (optional)] )");
+			} else if (args.length > 3) {
+			 	 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <proxyFile> [CAs paths (optional)] )");
+			}
+			url = args[0];
+			proxyFile = args[1];
+			if (args.length == 3) {
+				certsPath = args[2];
+			} else  {
+				certsPath = "";
+			}
+			runTest ( url, proxyFile, certsPath);
+		} catch (Exception exc){
+			System.out.println (exc.toString( ));
+		}
 	 }
 
  }

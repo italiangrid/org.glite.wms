@@ -11,8 +11,7 @@
 
 import org.glite.wms.wmproxy.WMProxyAPI;
 import org.glite.wms.wmproxy.JobIdStructType;
-import org.glite.wms.jdlj.JobAd ;
-
+import org.glite.jdl.JobAd ;
 
 /*
 	Test of  "jobSubmit" method in org.glite.wms.wmproxy.WMProxyAPI
@@ -57,13 +56,15 @@ public class WMProxyJobSubmitTest {
 	*  	@param delegationID the id to identify the delegation
 	*	@param propFile the path location of the configuration file
 	*	@param proxyFile the path location of the user proxy file
+	*	@param certsPath the path location of the directory containing all the Certificate Authorities files
 	*	@throws.Exception if any error occurs
 	*/
-	public static void runTest ( String url, String proxyFile, String delegationId, String jdlFile ) throws java.lang.Exception {
+	public static void runTest ( String url, String proxyFile, String delegationId, String jdlFile, String certsPath   ) throws   java.lang.Exception {
 		//jdl
 		String jdlString = "";
 		// output results
 		JobIdStructType result = null;
+		WMProxyAPI client = null;
 		// reads jdl
 		JobAd jad = new JobAd ( );
 		jad.fromFile ( jdlFile );
@@ -80,14 +81,21 @@ public class WMProxyJobSubmitTest {
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
 		System.out.println ("JDL			= [" + jdlString + "]" );
 		System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
-		// test
-		WMProxyAPI client = new WMProxyAPI ( url, proxyFile ) ;
+		if (certsPath.length()>0){
+			System.out.println ("CAs path		= [" + certsPath+ "]" );
+			System.out.println ("--------------------------------------------------------------------------------------------------------------------------------");
+		  	client = new WMProxyAPI ( url, proxyFile, certsPath ) ;
+		} else {
+		 	 client = new WMProxyAPI ( url, proxyFile ) ;
+		 }
+		 // test
 		System.out.println ("Testing ....");
 		result= client.jobSubmit( jdlString, delegationId );
 		// test results
 		if ( result != null ) {
 			System.out.println ("RESULT:");
 			System.out.println ("=======================================================================");
+			System.out.println ("Your job has been successfully submitted:");
 			printResult ( result );
 			System.out.println("=======================================================================");
 		}
@@ -96,21 +104,27 @@ public class WMProxyJobSubmitTest {
 	}
 
 	public static void main(String[] args) throws Exception {
-		// input parameters
 		String url = "" ;
 		String jdlFile = "" ;
-		String delegationId = "";
 		String proxyFile = "";
+		String delegationID = "";
+		String certsPath = "";
 		// Reads the  input arguments
-		if ((args == null) || (args.length < 4))
-			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> <delegationID> <JDL-FIlePath>)");
+		if ((args == null) || (args.length < 4)) {
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <delegationID> <proxyFile> <JDL-FIlePath>  [CAs paths (optional)])");
+		} else if (args.length > 5) {
+			 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <delegationID> <proxyFile> <JDL-FIlePath>  [CAs paths (optional)]");
+		}
 		url = args[0];
-		proxyFile = args[1];
-		delegationId = args[2];
-		jdlFile = args[3];
-		runTest ( url, proxyFile, delegationId, jdlFile);
-
+                delegationID = args[1];
+		jdlFile = args[2];
+		proxyFile = args[3];
+		if (args.length == 5) {
+			certsPath = args[4];
+		} else  {
+			certsPath = "";
+		}
+		// Launches the test
+		runTest ( url, jdlFile, delegationID, proxyFile, certsPath);
 	}
-
-
  }

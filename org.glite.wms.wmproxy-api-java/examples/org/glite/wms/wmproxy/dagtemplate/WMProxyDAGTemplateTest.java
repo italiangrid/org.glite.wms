@@ -82,28 +82,24 @@ public class WMProxyDAGTemplateTest {
 		System.out.println ("=========================================================================================================================================================");
 	}
 
-	public static void main(String[] args) throws java.lang.Exception {
+	public static void main(String[] args)  throws Exception  {
 		// test input parameters
 		String url = "" ;
 		String proxyFile = "";
 		String certsPath = "";
-		try {
-			// input parameters
-			if ((args == null) || (args.length < 2)){
-				throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile>)");
-			} else if (args.length > 3) {
-			 	 throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <proxyFile>[CAs paths (optional)] )");
-			}
-			url = args[0];
-			proxyFile = args[1];
-			if (args.length == 3) {
-				certsPath = args[2];
-			} else  {
-				certsPath = "";
-			}
-			runTest ( url, proxyFile, certsPath);
-		} catch (Exception exc){
-			System.out.println (exc.toString( ));
+		// input parameters
+		if ((args == null) || (args.length < 2)){
+			throw new Exception ("error: some mandatory input parameters are missing (<WebServices URL> <proxyFile> [CAs paths (optional)] )");
+		} else if (args.length > 3) {
+			throw new Exception ("error: too many parameters\nUsage: java <package>.<class> <WebServices URL> <proxyFile> [CAs paths (optional)] )");
 		}
+		url = args[0];
+		proxyFile = args[1];
+		if (args.length == 3) {
+			certsPath = args[2];
+		} else  {
+			certsPath = "";
+		}
+		runTest ( url, proxyFile, certsPath);
  	 }
  }
