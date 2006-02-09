@@ -6,11 +6,8 @@
 ## *
 ## *********************************************************************
 
-URL = $(top_builddir)/src/jobadapter/url/libglite_wms_ja_url.la
 HELPER = $(top_builddir)/src/libglite_wms_helper.la
 HELPER_JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_helper_jobadapter.la
-JOBADAPTER = $(top_builddir)/src/jobadapter/libglite_wms_jobadapter.la
-JOBWRAPPER = $(top_builddir)/src/jobadapter/libglite_wms_ja_jobwrapper.la
 
 check_PROGRAMS = \
 	jobwrapperTest \
@@ -18,40 +15,42 @@ check_PROGRAMS = \
 	jobadapterTest
 
 jobadapterTest_SOURCES = jobadapterTest.cpp
+
 jobadapterTest_LDADD   = \
-	$(JOBADAPTER) \
-	$(URL) \
-	$(JOBWRAPPER) \
-	$(HELPER) \
-	$(GLITE_WMS_COMMON_CONF_LIBS) \
-	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-   $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_WMSUTILS_JOBID_LIBS) \
-	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLITE_WMS_JDL_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
-   $(CLASSAD_LIBS) \
-   $(BOOST_LIBS)
+  $(HELPER_JOBADAPTER) \
+  $(HELPER) \
+  $(GLITE_WMS_COMMON_CONF_LIBS) \
+  $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+  $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+  $(GLITE_WMSUTILS_JOBID_LIBS) \
+  $(GLITE_WMSUTILS_CJOBID_LIBS) \
+  $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+  $(GLITE_WMS_JDL_LIBS) \
+  $(GLOBUS_SSL_THR_LIBS) \
+  $(CLASSAD_LIBS) \
+  $(BOOST_LIBS)
 
 jobwrapperTest_SOURCES = jobwrapperTest.cpp
+
 jobwrapperTest_LDADD   = \
-	$(JOBWRAPPER) \
-	$(URL) \
-	$(GLITE_WMS_COMMON_CONF_LIBS) \
-	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-	$(GLITE_WMSUTILS_JOBID_LIBS) \
-	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-	$(GLITE_WMS_JDL_LIBS) \
-	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-	$(GLOBUS_SSL_THR_LIBS) \
+  $(HELPER_JOBADAPTER) \
+  $(HELPER) \
+  $(GLITE_WMS_COMMON_CONF_LIBS) \
+  $(GLITE_WMS_COMMON_LOGGER_LIBS) \
+  $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
+  $(GLITE_WMSUTILS_JOBID_LIBS) \
+  $(GLITE_WMSUTILS_CJOBID_LIBS) \
+  $(GLITE_WMS_JDL_LIBS) \
+  $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
+  $(GLOBUS_SSL_THR_LIBS) \
   $(CLASSAD_LIBS) \
-	$(BOOST_LIBS)
+  $(BOOST_LIBS)
 
 urlTest_SOURCES = urlTest.cpp
-urlTest_LDADD   = $(URL) \
-   $(BOOST_LIBS)
 
+urlTest_LDADD   =  \
+  ../../src/jobadapter/URL.o \
+  $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/interface \
@@ -70,6 +69,6 @@ EXTRA_DIST = \
 	jobadapter.conf
 
 CLEANFILES = outputclassad \
-        localjobadapter.conf 
+  localjobadapter.conf 
 
 MAINTAINERCLEANFILES = Makefile.in *.*~
