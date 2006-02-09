@@ -242,18 +242,6 @@ get_user_x509_proxy(jobid::JobId const& jobid)
    }
 }
 
-std::string
-make_cancel_request(jobid::JobId const& job_id,
-  std::string const& sequence_code,
-  std::string user_x509_proxy)
-{
-  boost::scoped_ptr<classad::ClassAd> cmd(
-    common::cancel_command_create(job_id.toString(), sequence_code, user_x509_proxy)
-  );
-  
-  return utilities::unparse_classad(*cmd);
-}
-
 void
 add_cancel_request(
   std::string const& list_name,
@@ -266,10 +254,22 @@ add_cancel_request(
     utilities::FileListMutex mx(fl);
     utilities::FileListLock lock(mx);
 
-    fl.push_back(make_cancel_request(id,
+    std::auto_ptr<classad::ClassAd> cmd(
+      common::cancel_command_create(id.toString(),
       sequence_code,
       get_user_x509_proxy(id))
     );
+    if (cmd.get() != 0)
+    {
+      std::string ad_str = utilities::unparse_classad(*cmd);
+      if (!ad_str.empty())
+      {
+        fl.push_back(ad_str);
+      }
+      // else {
+        // error: "cannot add submit request"
+      // }
+    }
   } catch(utilities::FileContainerError &error) {
   }
 }
