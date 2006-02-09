@@ -89,7 +89,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     subManager(),
     pinger ( 0 ),
     T(iceUtil::iceConfManager::getInstance()->getICETopic()),
-    P(5000),
+    P(iceUtil::iceConfManager::getInstance()->getNotificationFrequency()),
     proxyfile(hostcert),
     tcpport(i), 
     myname( ),

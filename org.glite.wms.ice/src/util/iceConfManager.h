@@ -27,7 +27,8 @@ namespace glite {
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
 	    icetopic;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
-	      poller_status_threshold_time, max_jobcache_operation_before_dump;
+	      poller_status_threshold_time, max_jobcache_operation_before_dump,
+	      notification_frequency;
 	  bool startpoller, startlistener, startsubupder,
 	       log_on_console, log_on_file;
 	  
@@ -67,6 +68,7 @@ namespace glite {
 	  bool        getLogOnConsole( void ) const { return log_on_console; }
 	  bool        getLogOnFile( void ) const { return log_on_file; }
 	  int         getMaxJobCacheOperationBeforeDump( void ) const { return max_jobcache_operation_before_dump; }
+	  int         getNotificationFrequency( void ) const { return notification_frequency; }
 
 	  void setHostProxyFile( const std::string& p ) {  HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { WM_Input_FileList = p; }
@@ -92,6 +94,9 @@ namespace glite {
 	  void setLogOnConsole( const bool& p )  { log_on_console = p; }
 	  void setLogOnFile( const bool& p )  { log_on_file = p; }
 	  void setMaxJobCacheOperationBeforeDump( const int& p )  { max_jobcache_operation_before_dump = p; }
+	  void setNotificationFrequency( const int& p ) {
+		notification_frequency = p;
+	  }
 	};
       }
     }

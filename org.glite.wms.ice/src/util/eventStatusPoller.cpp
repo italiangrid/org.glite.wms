@@ -20,7 +20,7 @@ using namespace glite::ce::cream_client_api::job_statuses;
 using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
-typedef vector<soap_proxy::JobInfoList*>::iterator JobInfoIt;
+typedef vector<soap_proxy::JobStatusList*>::iterator JobStatusIt;
 typedef vector<string>::iterator vstrIt;
 typedef vector<string>::const_iterator cvstrIt;
 
@@ -59,16 +59,16 @@ eventStatusPoller::~eventStatusPoller()
 bool eventStatusPoller::getStatus(void) 
 {
     /** 
-     * _jobinfolist is filled with return values of CreamProxy::Info(...)
+     * _jobstatuslist is filled with return values of CreamProxy::Status(...)
      * This call allocates ( via new() ) the object that it returns;
      * the caller of this call must take care of memory deallocation.
      */
-    if(_jobinfolist.size()) {
-        for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it)
+    if(_jobstatuslist.size()) {
+        for(JobStatusIt it = _jobstatuslist.begin(); it != _jobstatuslist.end(); ++it)
             if(*it) delete(*it);
     
     }
-    _jobinfolist.clear();
+    _jobstatuslist.clear();
   
     creamClient->clearSoap();
 
@@ -102,13 +102,13 @@ bool eventStatusPoller::getStatus(void)
               //continue;
 
             log_dev->log(log4cpp::Priority::INFO,
-                         string("eventStatusPoller::getStatus() - Sending JobInfo request for Job [")
+                         string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
                          + jobIt->getJobID() + "]");
             oneJobToQuery.push_back(*it);
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-            _jobinfolist.push_back( creamClient->Info(jobIt->getCreamURL().c_str(),
-                                                      oneJobToQuery,
-                                                      empty, -1, -1 ) );
+            _jobstatuslist.push_back( creamClient->Status(jobIt->getCreamURL().c_str(),
+                                                          oneJobToQuery,
+                                                          empty, -1, -1 ) );
 	
         } catch (ClassadSyntax_ex& ex) {
             // this exception should not be raised because
@@ -122,22 +122,22 @@ bool eventStatusPoller::getStatus(void)
                          + ex.what());
         } catch(soap_proxy::soap_ex& ex) {
             log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a soap_ex exception: ")
+                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a soap_ex exception: ")
                          + ex.what());
             return false; 
         } catch(cream_exceptions::BaseException& ex) {
             log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a BaseException exception: ")
+                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a BaseException exception: ")
                          + ex.what());
             return false; 
         } catch(cream_exceptions::InternalException& ex) {
             log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a InternalException exception: ")
+                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a InternalException exception: ")
                          + ex.what());
             return false; 
         } catch(cream_exceptions::DelegationException&) {
             log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Info() raised a DelegationException exception"));
+                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a DelegationException exception"));
             return false;
         }
     }
@@ -149,7 +149,7 @@ void eventStatusPoller::checkJobs()
 {
 
   /**
-   * THIS PROCEDURE CAN BE OPTIMIZED: NOW FOR EACH JOB THERE'S A 
+   * THIS PROCEDURE CAN BE OPTIMIZED: NOW FOR EACH JOB THERE'S A
    * JobPurge REQUEST SENT TO CREAM; IN FUTURE MULTIPLE JOBIDS
    * TO PURGE ON THE SAME CREAM MUST BE PUT IN A VECTOR AND THE A
    * SINGLE REQUEST WITH THIS VECTOR MUST BE SENT TO THAT CREAM
@@ -161,11 +161,12 @@ void eventStatusPoller::checkJobs()
   pieces.reserve(3);
   jobs_to_purge.reserve(100);
 
-  for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it)
+  for(JobStatusIt it = _jobstatuslist.begin(); it != _jobstatuslist.end(); ++it)
     {
-      for(unsigned int j=0; j<(*it)->jobInfo.size(); j++) {
-	stNum = getStatusNum((*it)->jobInfo[j]->status);
-	cid = (*it)->jobInfo[j]->CREAMJobId;
+      for(unsigned int j=0; j<(*it)->jobStatus.size(); j++) {
+	stNum = getStatusNum((*it)->jobStatus[j]->name);
+	if(!((*it)->jobStatus[j]->jobId)) return;
+	cid = *((*it)->jobStatus[j]->jobId);
 	if((stNum == api::job_statuses::DONE_FAILED) ||
 	   (stNum == api::job_statuses::ABORTED))
 	  {
@@ -202,35 +203,36 @@ void eventStatusPoller::checkJobs()
 	
 	sleep(1); // sleep a little bit to not overload CREAM with too
 	// many purges per second
-	
+
 	jobs_to_purge.clear();
       }
     }
 }
 
 //______________________________________________________________________________
-void eventStatusPoller::updateJobCache() 
+void eventStatusPoller::updateJobCache()
 {
-  for(JobInfoIt it = _jobinfolist.begin(); it != _jobinfolist.end(); ++it) {
+  for(JobStatusIt it = _jobstatuslist.begin(); it != _jobstatuslist.end(); ++it) {
     if(!*it)
       continue;
 
-    for(unsigned int j=0; j<(*it)->jobInfo.size(); j++) {
-      
-      glite::ce::cream_client_api::job_statuses::job_status 
-	stNum = getStatusNum((*it)->jobInfo.at(j)->status);
+    for(unsigned int j=0; j<(*it)->jobStatus.size(); j++) {
+
+      glite::ce::cream_client_api::job_statuses::job_status
+	stNum = getStatusNum((*it)->jobStatus.at(j)->name);
       
       try {
           boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-          string cid( (*it)->jobInfo.at(j)->CREAMJobId );
+	  if(!(*it)->jobStatus.at(j)->jobId) continue;
+          string cid( *((*it)->jobStatus.at(j)->jobId) );
           jobCache::iterator jit( cache->lookupByCreamJobID( cid ) );
           if ( ( jit != cache->end() ) /*&& ( jit->getStatus() != stNum )*/ ) { // FIXME
               // string gid = jit->getGridJobID();
               log_dev->infoStream()
                   << "eventStatusPoller::updateJobCache() - Updating jobcache with "
                   << "grid_jobid = [" << jit->getGridJobID() << "] "
-                  << "cream_jobid = [" << (*it)->jobInfo[j]->CREAMJobId << "] "
-                  << "status = [" << (*it)->jobInfo[j]->status << "]"
+                  << "cream_jobid = [" << *((*it)->jobStatus[j]->jobId) << "] "
+                  << "status = [" << (*it)->jobStatus[j]->name << "]"
                   << log4cpp::CategoryStream::ENDLINE;
 
               jit->setStatus( stNum, time( NULL ) );

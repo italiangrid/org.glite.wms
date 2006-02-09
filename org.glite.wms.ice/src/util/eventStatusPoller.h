@@ -2,7 +2,7 @@
 #define __GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H__
 
 #undef soapStub_H
-#include "glite/ce/cream-client-api-c/JobInfoList.h"
+#include "glite/ce/cream-client-api-c/JobStatusList.h"
 #include "eventStatusPoller_ex.h"
 #include "iceEventLogger.h"
 
@@ -45,8 +45,8 @@ namespace glite {
 	  int delay;
 	  std::vector<std::string> jobs_to_query;
 	  std::vector<std::string> empty;
-	  std::vector<glite::ce::cream_client_api::soap_proxy::JobInfoList*> 
-	    _jobinfolist;
+	  std::vector<glite::ce::cream_client_api::soap_proxy::JobStatusList*>
+	    _jobstatuslist;
 	  std::vector<std::string> url_pieces;
 	  absice* iceManager;
 	  void purgeJobs(const std::vector<std::string>&);
