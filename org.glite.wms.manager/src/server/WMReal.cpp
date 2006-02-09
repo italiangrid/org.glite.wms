@@ -41,7 +41,6 @@
 #include "glite/security/proxyrenewal/renewal.h"
 
 #include "CommandAdManipulation.h"
-//#include "JobController.h"
 #include "TaskQueue.hpp"
 #include "plan.h"
 #include "WMFactory.h"
@@ -243,34 +242,13 @@ get_user_x509_proxy(jobid::JobId const& jobid)
    }
 }
 
-classad::ClassAd*
-cancel_command_create(std::string const& job_id,
-  std::string const& sequence_code,
-  std::string const& user_x509_proxy)
-{
-  classad::ClassAd* result = 0;
-
-  if (!job_id.empty()) {
-    result = new classad::ClassAd;
-    result->InsertAttr("version", std::string("1.0.0"));
-    result->InsertAttr("command", std::string("jobcancel"));
-    classad::ClassAd* args = new classad::ClassAd;
-    args->InsertAttr(requestad::JDL::JOBID, job_id);
-    args->InsertAttr(requestad::JDL::LB_SEQUENCE_CODE, job_id);
-    args->InsertAttr("X509UserProxy", user_x509_proxy); //JDLPrivate::USERPROXY
-    result->InsertAttr("arguments", args);
-  }
-
-  return result;
-}
-
 std::string
 make_cancel_request(jobid::JobId const& job_id,
   std::string const& sequence_code,
   std::string user_x509_proxy)
 {
   boost::scoped_ptr<classad::ClassAd> cmd(
-    cancel_command_create(job_id.toString(), sequence_code, user_x509_proxy)
+    common::cancel_command_create(job_id.toString(), sequence_code, user_x509_proxy)
   );
   
   return utilities::unparse_classad(*cmd);
@@ -340,8 +318,8 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
 
   log_enqueued_start(context, input_list_name, job_id_str);
 
-  //const std::string sequence_code_(common::get_lb_sequence_code(context));
-  //requestad::set_lb_sequence_code(*planned_ad, sequence_code_);
+  const std::string sequence_code_(common::get_lb_sequence_code(context));
+  requestad::set_lb_sequence_code(*planned_ad, sequence_code_);
 
   try {
     utilities::FileList<std::string> fl(input_list_name);

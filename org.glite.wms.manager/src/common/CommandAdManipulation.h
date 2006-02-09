@@ -38,7 +38,9 @@ classad::ClassAd*
 submit_command_remove_ad(classad::ClassAd& submit_command_ad);
 
 std::auto_ptr<classad::ClassAd>
-cancel_command_create(std::string const& job_id);
+cancel_command_create(std::string const& job_id,
+  std::string const& sequence_code,
+  std::string const& user_x509_proxy);
 
 std::string
 cancel_command_get_id(classad::ClassAd const& cancel_command_ad);

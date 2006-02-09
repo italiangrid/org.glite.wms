@@ -6,10 +6,11 @@
 // $Id$
 
 #include "CommandAdManipulation.h"
-#include  "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wms/jdl/PrivateAttributes.h"
+#include "glite/wms/jdl/JobAdManipulation.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include <algorithm>
-#include <cctype>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <classad_distribution.h>
@@ -141,7 +142,9 @@ resubmit_command_get_lb_sequence_code(classad::ClassAd const& command_ad)
 }
 
 std::auto_ptr<classad::ClassAd>
-cancel_command_create(std::string const& job_id)
+cancel_command_create(std::string const& job_id,
+  std::string const& sequence_code,
+  std::string const& user_x509_proxy)
 {
   std::auto_ptr<classad::ClassAd> result;
 
@@ -150,7 +153,10 @@ cancel_command_create(std::string const& job_id)
     result->InsertAttr("version", std::string("1.0.0"));
     result->InsertAttr("command", std::string("jobcancel"));
     std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
-    args->InsertAttr("id", job_id);
+    args->InsertAttr(requestad::JDL::JOBID, job_id);
+    args->InsertAttr(requestad::JDL::LB_SEQUENCE_CODE, sequence_code);
+    args->InsertAttr(JDLPrivate::USERPROXY, user_x509_proxy);
+    
     result->InsertAttr("arguments", args.get());
   }
 
