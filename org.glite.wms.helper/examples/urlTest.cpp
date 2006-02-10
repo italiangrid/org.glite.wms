@@ -43,7 +43,7 @@ main(void)
     try {
       URL url("");
     } catch (ExInvalidURL& ex) {
-      cerr << "Empty URL cause an exception, uhm ...right\n\n";
+      cerr << "Empty URL caused an exception, uhm ...right\n\n";
     }
   }
 
