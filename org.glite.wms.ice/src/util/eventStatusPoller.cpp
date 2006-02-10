@@ -279,10 +279,8 @@ void eventStatusPoller::updateJobCache()
                     }
                 } else {
                     log_dev->errorStream() 
-                        << "cream_jobid = ["<< cid << "] disappeared! "
-                        << "Removing from cache..."
+                        << "cream_jobid = ["<< cid << "] disappeared!"
                         << log4cpp::CategoryStream::ENDLINE;
-                    cache->remove( jit );
                 }
             } catch(exception& ex) {
                 log_dev->log(log4cpp::Priority::ERROR, ex.what());
