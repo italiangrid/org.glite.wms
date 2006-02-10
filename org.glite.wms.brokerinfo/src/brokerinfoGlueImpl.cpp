@@ -1192,7 +1192,7 @@ void brokerinfoGlueImpl::get_catalog_url(const std::string& vo, const std::strin
   edglog_fn(get_catalog_url);
   
   edglog(debug) << "Contacting IS for " << service_name<< " service. " << endl;       
-  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
+//  const configuration::WMConfiguration* WMconf = configuration::Configuration::instance() -> wm();
 
    SDServiceList *sl=NULL;
    SDException ex;
@@ -1217,10 +1217,9 @@ void brokerinfoGlueImpl::get_catalog_url(const std::string& vo, const std::strin
       else {
          edglog(warning) << "No endpoints found" << endl;
       }
-                                                                                                                             
+
       SD_freeServiceList(sl);
-      delete []names[0];
-      delete []names;
+
    }
    else {
       if (ex.status == SDStatus_SUCCESS) {
@@ -1231,6 +1230,10 @@ void brokerinfoGlueImpl::get_catalog_url(const std::string& vo, const std::strin
          SD_freeException(&ex);
       }
    }
+
+   delete []names[0];
+   delete []names;
+
 }
 
 
