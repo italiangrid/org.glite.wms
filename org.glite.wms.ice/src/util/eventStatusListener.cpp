@@ -90,10 +90,6 @@ namespace { // anonymous namespace
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
         job_status = api::job_statuses::getStatusNum( job_status_str );
 
-//         double tstamp_d;
-//         if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
-//             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
-//         tstamp = lrint( tstamp_d );
 	 int tstamp_i;
          if ( !ad->EvaluateAttrNumber( "TIMESTAMP", tstamp_i ) )
 	   throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
@@ -287,17 +283,21 @@ void iceUtil::eventStatusListener::init(void)
   map< string , int > tmpMap;
   string ceurl;
   ostringstream hostport;
-  for(jobCache::iterator it=jobCache::getInstance()->begin();
-      it != jobCache::getInstance()->end();
-      it++)
-    {
-      ceurl = it->getCreamURL();
-      boost::replace_first(ceurl,
-                           conf->getCreamUrlPostfix(),
-                           conf->getCEMonUrlPostfix()
-			   );
-      tmpMap[ceurl] = 1;
-    }
+  {
+      // Scoped lock to protect concurrent access to the job cache
+      boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+
+      for(jobCache::iterator it=jobCache::getInstance()->begin();
+          it != jobCache::getInstance()->end(); it++) {
+
+          ceurl = it->getCreamURL();
+          boost::replace_first(ceurl,
+                               conf->getCreamUrlPostfix(),
+                               conf->getCEMonUrlPostfix()
+                               );
+          tmpMap[ceurl] = 1;
+      }
+  }
 
   /**
    * Now we've got a collection of CEMon urls (without duplicates,
@@ -628,8 +628,9 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         jobCache::iterator jc_it;
 
         try {
-            boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
-
+            // boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate ); // FIXME: don't needed anymore???
+            boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
+            
             jc_it = jobCache::getInstance()->lookupByCreamJobID( it->getCreamJobID() );
             if( jc_it == jobCache::getInstance()->end()) {
                 log_dev->errorStream()

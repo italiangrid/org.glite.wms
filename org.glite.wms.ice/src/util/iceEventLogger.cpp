@@ -174,8 +174,8 @@ void iceEventLogger::testCode( int &code, bool retry )
                 host_proxy = conf->host_proxy_file();
 
                 log_dev->infoStream()
-                    << "Retrying using host proxy certificate \"" 
-                    << host_proxy << "\"" 
+                    << "Retrying using host proxy certificate [" 
+                    << host_proxy << "]" 
                     << log4cpp::CategoryStream::ENDLINE;
 
 
@@ -189,7 +189,7 @@ void iceEventLogger::testCode( int &code, bool retry )
                 }
                 else {
                     log_dev->infoStream()
-                        << "Host proxy file found = \"" << host_proxy << "\"."
+                        << "Host proxy file found = [" << host_proxy << "]."
                         << log4cpp::CategoryStream::ENDLINE;
 
                     ret = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
@@ -272,13 +272,13 @@ void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source
     unsigned int lbport;
     edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
     log_dev->infoStream() 
+        << "iceEventLogger::setLoggingJob: "
         << "Setting log job to jobid=[" << theJob.getGridJobID() << "] "
         << "LB server=[" << lbserver << ":" << lbport << "] "
         << "(port is not used, actually...)"
         << log4cpp::CategoryStream::ENDLINE;
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_SOURCE, src );        
     res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION, lbserver );
-    // res |= edg_wll_SetParam( *el_context, EDG_WLL_PARAM_DESTINATION_PORT, lbport );
     if ( lbserver ) free( lbserver );
 
     if ( !theJob.getSequenceCode().empty() ) {
@@ -289,6 +289,7 @@ void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source
 
     if( res != 0 ) {
         log_dev->errorStream()
+            << "iceEventLogger::setLoggingJob: "
             << "Unable to set logging job to jobid=["
             << theJob.getGridJobID()
             << "]. LB error is "
@@ -308,6 +309,7 @@ void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source
 
         if( res ) {
             log_dev->errorStream()
+                << "iceEventLogger::setLoggingJob: "
                 << "Unable to set logging job to jobid=["
                 << theJob.getGridJobID()
                 << "]. "
@@ -317,6 +319,7 @@ void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source
         }
     } else {
         log_dev->errorStream()
+            << "iceEventLogger::setLoggingJob: "
             << "Unable to set logging job to jobid=["
             << theJob.getGridJobID()
             << "]. Proxy file "

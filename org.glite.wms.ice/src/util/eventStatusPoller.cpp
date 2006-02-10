@@ -306,20 +306,23 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
       oneJobToPurge.clear();
       string cid;
       try {
-	log_dev->log(log4cpp::Priority::DEBUG,
-		     string("eventStatusPoller::purgeJobs() - ")
-		     +"Fetching Job for ID ["
-		     +*it+"]");
-        jobCache::iterator jit = jobCache::getInstance()->lookupByCreamJobID( *it );
-        cid = jit->getJobID();
-	log_dev->infoStream() << "eventStatusPoller::purgeJobs() - "
-			      << "Calling JobPurge for host ["
-			      << jit->getCreamURL() << "]"
-			      << log4cpp::CategoryStream::ENDLINE;
-	creamClient->Authenticate( jit->getUserProxyCertificate());
-	oneJobToPurge.push_back( jit->getJobID() );
-	creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
-        jobCache::getInstance()->remove( jit );
+          boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+          log_dev->debugStream()
+              << "eventStatusPoller::purgeJobs() - "
+              << "Fetching Job for ID [" << *it << "]"
+              << log4cpp::CategoryStream::ENDLINE;
+
+          jobCache::iterator jit = jobCache::getInstance()->lookupByCreamJobID( *it );
+          cid = jit->getJobID();
+          log_dev->infoStream() 
+              << "eventStatusPoller::purgeJobs() - "
+              << "Calling JobPurge for host ["
+              << jit->getCreamURL() << "]"
+              << log4cpp::CategoryStream::ENDLINE;
+          creamClient->Authenticate( jit->getUserProxyCertificate());
+          oneJobToPurge.push_back( jit->getJobID() );
+          creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+          jobCache::getInstance()->remove( jit );
       } catch (ClassadSyntax_ex& ex) {
 	/**
 	 * this exception should not be raised because
