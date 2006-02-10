@@ -593,7 +593,8 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         } catch( iceUtil::ClassadSyntax_ex ex ) {
             log_dev->errorStream()
                 << "eventStatusListenre::handleEvent() received a notification "
-                << "[" << *it << "] which could not be understood. "
+                << *it << " which could not be understood; error is: "
+                << ex.what() << ". "
                 << "Skipping this notification and hoping for the best..."
                 << log4cpp::CategoryStream::ENDLINE;
         }
