@@ -57,7 +57,7 @@ namespace { // anonymous namespace
         api::job_statuses::job_status  getStatus( void ) const { return job_status; };
 
         /**
-         * Returns the time of the status for this notification 
+         * Returns the time of the status for this notification
          */
         time_t getTstamp( void ) const { return tstamp; };
     protected:
@@ -90,10 +90,14 @@ namespace { // anonymous namespace
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
         job_status = api::job_statuses::getStatusNum( job_status_str );
 
-        double tstamp_d;        
-        if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
-            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
-        tstamp = lrint( tstamp_d );
+//         double tstamp_d;
+//         if ( !ad->EvaluateAttrReal( "TIMESTAMP", tstamp_d ) )
+//             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
+//         tstamp = lrint( tstamp_d );
+	 int tstamp_i;
+         if ( !ad->EvaluateAttrNumber( "TIMESTAMP", tstamp_i ) )
+	   throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
+	 tstamp = (time_t)tstamp_i;
     };
 
     /**
@@ -606,7 +610,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 
     // For debug only...
     if ( log_dev->isInfoEnabled() ) {
-        for( vector<StatusNotification>::const_iterator it;
+        for( vector<StatusNotification>::const_iterator it = notifications.begin();
              it != notifications.end(); it++ ) {
             log_dev->infoStream()
                 << "Notification: jobid=["
@@ -618,7 +622,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     }
 
     // Now, for each status change notification, check if it has to be logged
-    for ( vector<StatusNotification>::const_iterator it;
+    for ( vector<StatusNotification>::const_iterator it = notifications.begin();
           it != notifications.end(); it++ ) {
 
         jobCache::iterator jc_it;
