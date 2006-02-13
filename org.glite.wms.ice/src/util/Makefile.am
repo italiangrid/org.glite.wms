@@ -18,7 +18,9 @@ libglite_wms_ice_util_la_SOURCES = \
 				iceEventLogger.cpp \
 				subscriptionUpdater.cpp \
 				subscriptionCache.cpp \
-				subscriptionManager.cpp
+				subscriptionManager.cpp \
+				leaseUpdater.cpp \
+				iceThread.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \

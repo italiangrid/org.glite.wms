@@ -143,6 +143,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     try {
         theJob.setJdl( _jdl );
         theJob.setStatus( cream_api::job_statuses::UNKNOWN, time(NULL) );
+        theJob.setEndLease( time( 0 ) + 60*60*24 ); // FIXME: lease ends by default after 24 hours; this quantity should not be hardcoded...
     } catch( ice_util::ClassadSyntax_ex& ex ) {
         log_dev->errorStream() << "Cannot instantiate a job from jdl="
                                << _jdl

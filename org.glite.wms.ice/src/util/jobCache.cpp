@@ -213,7 +213,7 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
     }
 
     // CreamJob cj = this->unparse(Buf); // can raise a ClassadSyntax_ex
-    CreamJob cj( Buf );
+    CreamJob cj( Buf ); // can raise ClassadSyntax_ex
     _jobs.putJob( cj ); // update in-memory data structure
     operation_counter++;
   }

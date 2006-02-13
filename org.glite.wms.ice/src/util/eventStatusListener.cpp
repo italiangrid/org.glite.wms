@@ -14,8 +14,9 @@
 #include <cstring> // for memset
 #include <netdb.h>
 #include "iceEventLogger.h"
-#include <functional>
 #include <algorithm>
+#include <boost/functional.hpp>
+#include <boost/mem_fn.hpp>
 
 extern int h_errno;
 extern int errno;
@@ -94,6 +95,9 @@ namespace { // anonymous namespace
          if ( !ad->EvaluateAttrNumber( "TIMESTAMP", tstamp_i ) )
 	   throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
 	 tstamp = (time_t)tstamp_i;
+         // FIXME: In the future, this timestamp will be relative to
+         // UTC time, and probably should be converted to the local
+         // (ICE-centric) timezone.
     };
 
     /**
@@ -128,7 +132,8 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     _ev_logger( iceEventLogger::instance() ),
-    _isOK( true )
+    _isOK( true ),
+    cache( jobCache::getInstance() )
 {
   char name[256];
   memset((void*)name, 0, 256);
@@ -193,20 +198,21 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   /**
    * Waits for an incoming connection
    */
-  if(!this->accept() && !endaccept) {
-    if(endaccept) {
-        log_dev->infoStream()
-            << "eventStatusListener::acceptJobStatus() - "
-            << "eventStatusListener is ending"
-            << log4cpp::CategoryStream::ENDLINE;
-      return;
-    } else
-        log_dev->infoStream()
-            << "eventStatusListener::acceptJobStatus()"
-            << " - CEConsumer::Accept() returned false."
-            << log4cpp::CategoryStream::ENDLINE;
-	return;
-  }
+    if(!this->accept() && !endaccept) {
+        if(endaccept) {
+            log_dev->infoStream()
+                << "eventStatusListener::acceptJobStatus() - "
+                << "eventStatusListener is ending"
+                << log4cpp::CategoryStream::ENDLINE;
+            return;
+        } else {
+            log_dev->infoStream()
+                << "eventStatusListener::acceptJobStatus()"
+                << " - CEConsumer::Accept() returned false."
+                << log4cpp::CategoryStream::ENDLINE;
+            return;
+        }
+    }
 
   log_dev->infoStream()
       << "eventStatusListener::acceptJobStatus() - "
@@ -261,14 +267,20 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   const vector<monitortypes__Event>& evts = this->getEvents();
 
   /**
-   * Loops over all events (event <-> job)
-   * For each event updates the status of the related
-   * job in the jobCache getting the status from last message of the
-   * event.
+   * Loops over all events (event <-> job) For each event updates the
+   * status of the related job in the jobCache getting the status from
+   * last message of the event.
    */
-  for ( vector<monitortypes__Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
-      handleEvent( *it );
-  } // Loop over all events
+  std::for_each( evts.begin(), evts.end(), boost::bind1st( boost::mem_fn( &eventStatusListener::handleEvent ), this ) );
+
+
+  // The line above should be equivalent to the following:
+  //  
+  //   for ( vector<monitortypes__Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
+  //       handleEvent( *it );
+  //   } 
+
+
   //this->reset();
 }
 
@@ -287,8 +299,7 @@ void iceUtil::eventStatusListener::init(void)
       // Scoped lock to protect concurrent access to the job cache
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-      for(jobCache::iterator it=jobCache::getInstance()->begin();
-          it != jobCache::getInstance()->end(); it++) {
+      for(jobCache::iterator it=cache->begin(); it != cache->end(); it++) {
 
           ceurl = it->getCreamURL();
           boost::replace_first(ceurl,
@@ -549,8 +560,8 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
     try {
       boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate );
 
-      it = jobCache::getInstance()->lookupByCreamJobID(cream_job_id);
-      if( it == jobCache::getInstance()->end())
+      it = cache->lookupByCreamJobID(cream_job_id);
+      if( it == cache->end())
 	{
 	  log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
 				 << "Not found in the cache the creamjobid ["
@@ -566,7 +577,7 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
 			    << log4cpp::CategoryStream::ENDLINE;
       it->setStatus( api::job_statuses::getStatusNum(status), time(NULL) );
       _ev_logger->log_job_status( *it ); // FIXME
-      jobCache::getInstance()->put( *it );
+      cache->put( *it );
     } catch(exception& ex) {
       log_dev->fatal( ex.what() );
       exit(1);
@@ -631,8 +642,8 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             // boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate ); // FIXME: don't needed anymore???
             boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
             
-            jc_it = jobCache::getInstance()->lookupByCreamJobID( it->getCreamJobID() );
-            if( jc_it == jobCache::getInstance()->end()) {
+            jc_it = cache->lookupByCreamJobID( it->getCreamJobID() );
+            if( jc_it == cache->end()) {
                 log_dev->errorStream()
                     << "eventStatusListener::acceptJobStatus() - "
                     << "Not found in the cache the creamjobid=["
@@ -653,7 +664,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                     if ( (it+1) == notifications.end() ) {
                         // The cache is only modified for the last
                         // notification, for efficiency reasons.
-                        jobCache::getInstance()->put( *jc_it ); 
+                        cache->put( *jc_it ); 
                     }
                 } else {
                     log_dev->infoStream()

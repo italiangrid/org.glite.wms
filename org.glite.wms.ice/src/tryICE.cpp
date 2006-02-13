@@ -9,7 +9,6 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
-#include "iceEventLogger.h"
 #include <string>
 #include <iostream>
 #include <unistd.h>
@@ -178,13 +177,15 @@ int main(int argc, char*argv[]) {
   if(iceUtil::iceConfManager::getInstance()->getStartPoller())
     iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
 
+  // iceManager->startLeaseUpdater( ); // FIXME: starting this should be user-configurable
+
   vector<string> url_jid;
   url_jid.reserve(2);
 
 
   
   /*
-   * Initializes the L&B logger (this code is not compiled at the moment)
+   * Initializes the L&B logger
    */
   iceUtil::iceEventLogger* iceLogger = iceUtil::iceEventLogger::instance();
 

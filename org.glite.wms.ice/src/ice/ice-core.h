@@ -9,6 +9,7 @@
 #include "eventStatusListener.h"
 #include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
+#include "leaseUpdater.h"
 #include "glite/wms/common/utilities/FLExtractor.h"
 
 class jobRequest;
@@ -49,9 +50,11 @@ namespace glite {
 	boost::thread* listenerThread;
 	boost::thread* pollerThread;
         boost::thread* updaterThread;
+        boost::thread* lease_updaterThread;
 	boost::shared_ptr<util::eventStatusPoller> poller;
 	boost::shared_ptr<util::eventStatusListener> listener;
 	boost::shared_ptr<util::subscriptionUpdater> subsUpdater;
+        boost::shared_ptr<util::leaseUpdater> lease_updater;
 
 	std::vector<FLEit> requests;
 	glite::wms::common::utilities::FLExtractor<std::string> fle;
@@ -72,6 +75,7 @@ namespace glite {
 	void ungetRequest(const unsigned int&);
 	void startListener(const int&);
 	void startPoller(const int&);
+	void startLeaseUpdater( void );
 	void stopListener();
 	void stopPoller();
 /*	bool isSubscribedTo(const std::string& url) {

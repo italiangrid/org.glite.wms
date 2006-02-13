@@ -21,7 +21,8 @@ namespace glite {
   namespace wms {
     namespace ice {
       namespace util {
-
+          
+          class jobCache;
           class iceConfManager;
           class iceEventLogger;
 
@@ -52,6 +53,7 @@ namespace glite {
           iceEventLogger *_ev_logger;
           // classad::ClassAdParser parser;
 	  bool _isOK;
+          jobCache* cache;
 
 	  void init(void);
           // void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );

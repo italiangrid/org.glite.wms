@@ -63,6 +63,16 @@ ice::~ice()
 		 "ice::~ice() - Poller finished");
     delete(pollerThread);
   }
+  if (lease_updater->isRunning() ) {
+    log_dev->log(log4cpp::Priority::INFO,
+		 "ice::~ice() - Waiting for lease updater termination...");
+    lease_updater->stop( );
+    lease_updaterThread->join();
+    log_dev->log(log4cpp::Priority::INFO,
+		 "ice::~ice() - Lease updater finished");
+    delete(lease_updaterThread);
+  }
+
 }
 
 //______________________________________________________________________________
@@ -154,6 +164,33 @@ void ice::startPoller(const int& poller_delay)
 	       "ice::startPoller() - Poller started succesfully !");
   status_poller_started = true;
 }
+
+//------------------------------------------------------------------------------
+void ice::startLeaseUpdater( void ) {
+    if ( lease_updater && lease_updater->isRunning() )
+        return ;
+
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::startLeaseUpdater() - Creating a Cream lease updater object...");
+    
+    lease_updater = boost::shared_ptr<util::leaseUpdater>(new util::leaseUpdater( ) );
+    
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::startLeaseUpdater() - Starting Cream lease updater thread...");
+    
+    try {
+        lease_updaterThread = 
+            new boost::thread(boost::bind(&util::leaseUpdater::operator(), 
+                                          lease_updater)
+                              );
+    } catch(boost::thread_resource_error& ex) {
+        iceInit_ex( ex.what() );
+    }
+    
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::startLeaseUpdater() - Lease updater succesfully !");
+}
+
 
 //______________________________________________________________________________
 void ice::stopListener() {
