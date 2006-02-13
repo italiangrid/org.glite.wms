@@ -40,6 +40,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
   tmp_sort_file=`mktemp -q tmp.XXXXXX`
   if [ $? != 0 ]; then
     unset tmp_sort_file
+    return $?
   fi
   eval tmpvar="$1[@]"
   eval elements="\${$tmpvar}"
@@ -49,7 +50,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
   done
   unset $1
   eval "$1=(`sort -n $tmp_sort_file|awk '{print $2}'`)"
-  rm $tmp_sort_file
+  rm $tmp_sort_file 2>/dev/null
   unset tmp_sort_file
 }
 
@@ -77,7 +78,8 @@ globus_url_retry_copy() # 1 - source, 2 - dest
   return $succeded
 }
 
-doExit() { # 1 - status
+doExit()
+{ # 1 - status
   status=$1
 
   echo "jw exit status = ${status}"
@@ -236,7 +238,8 @@ doReplicaFilewithLFNAndSE()
   return $exit_status
 }
 
-function send_partial_file {
+function send_partial_file
+{
   # Use local variables to avoid conflicts with main program
   local TRIGGERFILE=$1
   local DESTURL=$2
@@ -353,23 +356,25 @@ else
 fi
 
 if [ -z "${GLITE_LOCAL_MAX_OSB_SIZE}" ]; then
-  __max_osb_size=100000000
+  __max_osb_size=-1 # unlimited
 else
   __max_osb_size=${GLITE_LOCAL_MAX_OSB_SIZE}
 fi
 
 #customization point #1
-if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
-  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
+if [ ! -z "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
+  fi
 fi
 
 if [ ${__create_subdir} -eq 1 ]; then
-  if [ ${__job_type} -eq 0 -a ${__job_type} -eq 3 ]; then
+  if [ ${__job_type} -eq 0 -o ${__job_type} -eq 3 ]; then
     #normal or interactive
     newdir="${__jobid_to_filename}"
     mkdir ${newdir}
     cd ${newdir}
-  if [ ${__job_type} -eq 1 -a ${__job_type} -eq 2 ]; then
+  elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then
     #MPI (LSF or PBS)
     newdir="${__jobid_to_filename}"
     mkdir -p .mpi/${newdir}
@@ -388,6 +393,7 @@ else
   rm $tmpfile
 fi
 unset tmpfile
+
 workdir="`pwd`"
 
 if [ -n "${__brokerinfo}" ]; then
@@ -433,17 +439,17 @@ do
 done
 
 if [ -f "${__job}" ]; then
-  chmod +x "${__job}"
+  chmod +x "${__job}" 2>/dev/null
 else
   log_error "${__job} not found or unreadable"
 fi
 
 #user prescript
-if [ -x "${workdir}/user_script.sh" ]; then
-  ${workdir}/user_script.sh
-  if [ $? -ne 0]
-    echo "User script returned with an error"
-    doExit $?
+if [ -f "${__pre_job}" ]; then
+  chmod +x "{__pre_job}" 2>/dev/null
+  ./{__pre_job}
+  if [ $? -ne 0]; then
+    log_error "User script returned with an error"
   fi
 fi
 
@@ -494,7 +500,7 @@ if [ ${__job_type} -eq 1 ]; then
 elif [ ${__job_type} -eq 2 ]; then
   HOSTFILE=${PBS_NODEFILE}
 fi
-if [ ${__job_type} -eq 1 -a ${__job_type} -eq 2 ]; then #MPI LSF, PBS
+if [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
   for i in `cat $HOSTFILE`; do
     ssh ${i} mkdir -p `pwd`
     /usr/bin/scp -rp ./* "${i}:`pwd`"
@@ -504,7 +510,7 @@ fi
 
 if [ ${__job_type} -eq 0 ]; then #normal
   cmd_line="${__job} ${__arguments} $*"
-elif [ ${__job_type} -eq 1 -a ${__job_type} -eq 2 ]; then #MPI LSF, PBS
+elif [ ${__job_type} -eq 1 -o ${__job_type} -eq 2 ]; then #MPI LSF, PBS
   cmd_line="mpirun -np ${__nodes} -machinefile ${HOSTFILE} ${__job} ${__arguments} $*"
 elif [ ${__job_type} -eq 3 ]; then #interactive
   cmd_line="./glite-wms-job-agent $BYPASS_SHADOW_HOST $BYPASS_SHADOW_PORT '${__job} ${__arguments} $*'"
@@ -589,8 +595,10 @@ fi
 status=$?
 
 #customization point #2
-if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
-  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
+if [ ! -z "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
+  fi
 fi
 
 if [ ${__perusal_support} -eq 1 ]; then
@@ -633,12 +641,13 @@ fi
 echo "job exit status = ${status}"
 echo "job exit status = ${status}" >> "${maradona}"
 
-file_size_acc=0
-total_files=${#__output_file[@]}
-current_file=0
 # uncomment this one below if the osb order list originally 
 # specified is not of some relevance to the user
 #sort_by_size __output_file ${workdir}
+
+file_size_acc=0
+total_files=${#__output_file[@]}
+current_file=0
 for f in ${__output_file[@]} 
 do
   if [ ${__wmp_support} -eq 0 ]; then
@@ -647,9 +656,8 @@ do
       if [ "x${output}" = "x." ]; then
         ff=$f
       else
-       ff=${f##*/}
+        ff=${f##*/}
       fi
-
       if [ ${__max_osb_size} -ge 0 ]; then
         #todo
         #if hostname=wms
@@ -665,17 +673,16 @@ do
           # difference between $total and $current (i.e. 20-19=2 more files)
           remaining_files=`expr $total_files \- $current_file + 2`
           remaining_space=`expr $__max_osb_size \- $file_size_acc`
-          trunc_len=`expr $remaining_space / $remaining_files`
-          if [ $trunc_len -lt 50 ]; then
-            #at least the first 50 bytes
+          trunc_len=`expr $remaining_space / $remaining_files`||0
+          if [ $trunc_len -lt 10 ]; then #non trivial truncation
             echo "Not enough room for a significant truncation on file ${f}"
           else
-            truncate "${workdir}/${f}" $trunc_len "${__output_base_url}${ff}.trunc"
+            truncate "${workdir}/${f}" $trunc_len "${__output_base_url}${ff}.tail"
             if [ $? != 0 ]; then
               echo "Could not truncate output sandbox file ${f}"
             else
               echo "Truncated last $trunc_len bytes for file ${f}"
-              globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.trunc"
+              globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.tail"
             fi
           fi
         fi
@@ -685,7 +692,7 @@ do
       if [ $? != 0 ]; then
         log_error "Cannot upload ${f} into ${__output_base_url}" "Done"
       fi
-    fi
+    fi #if [ -r "${f}" ]; then
   else #WMP support
     file=`basename $f`
     s="file://${workdir}/${__wmp_output_file[$current_file]}"
@@ -710,20 +717,19 @@ do
         echo "OSB quota exceeded for $s, truncating needed"
         remaining_files=`expr $total_files \- $current_file + 2`
         remaining_space=`expr $__max_osb_size \- $file_size_acc`
-        trunc_len=`expr $remaining_space / $remaining_files`
-          if [ $trunc_len -lt 50 ]; then
-            #at least the first 50 bytes
-            echo "Not enough room for a significant truncation on file ${f}"
-          else
-          truncate "${workdir}/${f}" $trunc_len "$d.trunc"
+        trunc_len=`expr $remaining_space / $remaining_files`||0
+        if [ $trunc_len -lt 10 ]; then #non trivial truncation
+          echo "Not enough room for a significant truncation on file ${f}"
+        else
+          truncate "${workdir}/${f}" $trunc_len "$d.tail"
           if [ $? != 0 ]; then
             echo "Could not truncate output sandbox file ${f}"
           else
             echo "Truncated last $trunc_len bytes for file ${f}"
             if [ "${f:0:9}" == "gsiftp://" ]; then
-              globus-url-copy $s "$d.trunc"
+              globus-url-copy $s "$d.tail"
             elif [ "${f:0:8}" == "https://" ]; then
-              htcp $s "$d.trunc"
+              htcp $s "$d.tail"
             fi
           fi
         fi
@@ -747,20 +753,22 @@ log_event "Done"
 if [ -n "${LSB_JOBID}" ]; then
   cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
   if [ $? != 0 ]; then
-  echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
   fi
 fi
 
 if [ -n "${PBS_JOBID}" ]; then
   cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
   if [ $? != 0 ]; then
-  echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
   fi
 fi
 
 #customization point #3
-if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
-  . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
+if [ ! -z "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+  if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
+    . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
+  fi
 fi
 
 doExit 0
