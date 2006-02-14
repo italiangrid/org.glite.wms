@@ -10,7 +10,8 @@
 //#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 //#include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/thread/recursive_mutex.hpp"
-
+#include <vector>
+#include <string>
 
 // Forward declaratino for the CreamProxy
 namespace glite {
@@ -50,7 +51,7 @@ namespace glite {
               jobCache *cache;
               glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
 
-              void getJobsToUpdate( void );
+              std::vector< std::string > getJobsToUpdate( void );
 
               //! This function actually performs the job
               virtual void body( void );

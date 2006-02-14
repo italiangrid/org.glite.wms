@@ -9,8 +9,7 @@
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/thread/recursive_mutex.hpp"
-//#include "classad_distribution.h"
-//#include "ClassadSyntax_ex.h"
+#include "iceThread.h"
 
 // Forward declaration for the logger
 namespace log4cpp {
@@ -34,10 +33,9 @@ namespace glite {
 	   Its main purpose is to receive notifications from CEMon about all job status chages; the CEMon sending notifications runs on the same host of the CREAM service. In order to receive notifications, the listener must be subscribed to that CEMon service.
 
 	*/
-	class eventStatusListener : public CEConsumer  {
+	class eventStatusListener : public CEConsumer, public iceThread {
 	  std::string grid_JOBID, cream_JOBID;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
-	  bool endaccept;
  	  CESubscription subscriber;
  	  CESubscriptionMgr subManager;
 	  CEPing *pinger;
@@ -74,8 +72,7 @@ namespace glite {
 	  virtual ~eventStatusListener() {}
 
 	  void acceptJobStatus(void);
-	  virtual void operator()();
-	  virtual void stop() { endaccept=true; }
+	  virtual void body( void );
 	  bool isOK() const { return _isOK; }
 	};
 

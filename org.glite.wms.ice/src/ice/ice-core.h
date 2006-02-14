@@ -43,8 +43,8 @@ namespace glite {
       class ice : public glite::wms::ice::absice {
 /* 	glite::wms::ice::util::eventStatusListener* listener; */
 /* 	glite::wms::ice::util::eventStatusPoller* poller; */
-	bool status_listener_started;
-	bool status_poller_started;
+          // bool status_listener_started;
+          // bool status_poller_started;
 	std::string ns_filelist;
 	std::string wm_filelist;
 	boost::thread* listenerThread;
@@ -76,8 +76,8 @@ namespace glite {
 	void startListener(const int&);
 	void startPoller(const int&);
 	void startLeaseUpdater( void );
-	void stopListener();
-	void stopPoller();
+	//void stopListener();
+	// void stopPoller();
 /*	bool isSubscribedTo(const std::string& url) {
 	  return listener->isSubscribedTo(url);
 	}*/

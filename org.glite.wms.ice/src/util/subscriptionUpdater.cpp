@@ -11,8 +11,8 @@ void retrieveCEURLs(vector<string>&);
 
 //______________________________________________________________________________
 iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
-  : subMgr(),
-    end(false),
+  : iceThread( "subscription Updater" ),
+    subMgr(),
     proxyfile(cert),
     conf(glite::wms::ice::util::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() )
@@ -22,15 +22,14 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
 }
 
 //______________________________________________________________________________
-void iceUtil::subscriptionUpdater::operator()()
+void iceUtil::subscriptionUpdater::body( void )
 {
-  end=false;
   vector<Subscription> vec;
   vec.reserve(100);
   vector<string> ceurls;
   ceurls.reserve(100);
 
-  while(!end) {
+  while( !isStopped() ) {
     log_dev->infoStream() << "subscriptionUpdater::()() - Checking "
                           << "subscription's time validity..." << log4cpp::CategoryStream::ENDLINE;
     ceurls.clear();
@@ -65,7 +64,6 @@ void iceUtil::subscriptionUpdater::operator()()
 
     sleep(60);
   }
-  log_dev->infoStream()  << "subscriptionUpdater::()() - ending..." << log4cpp::CategoryStream::ENDLINE;
 }
 
 //______________________________________________________________________________

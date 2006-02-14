@@ -30,7 +30,7 @@ eventStatusPoller::eventStatusPoller(
 				     const int _d
 				     )
   throw(eventStatusPoller_ex&)
-  : endpolling(false), 
+  : iceThread( "event status poller" ),
     delay(_d),
     iceManager(_iceManager),
     creamClient(NULL),
@@ -349,28 +349,25 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 }
 
 //______________________________________________________________________________
-void eventStatusPoller::operator()()
+void eventStatusPoller::body( void )
 {
-  endpolling = false;
-  while(!endpolling) {
-    if(getStatus()) {
-      try{
-	updateJobCache();
-      }
-      catch(...) {
-	log_dev->log(log4cpp::Priority::ERROR, 
-		     "eventStatusPoller::operator() - catched unknown ex");
-      }
+    while( !isStopped() ) {
+        if(getStatus()) {
+            try{
+                updateJobCache();
+            }
+            catch(...) {
+                log_dev->log(log4cpp::Priority::ERROR, 
+                             "eventStatusPoller::operator() - catched unknown ex");
+            }
+        }
+        checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
+        /**
+         * Let's dont use boost::thread::sleep because right not (18/11/2005)
+         * the documentation says that it will be replaced by a more robust 
+         * mechanism
+         */
+        sleep(delay);
     }
-    checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
-    /**
-     * Let's dont use boost::thread::sleep because right not (18/11/2005)
-     * the documentation says that it will be replaced by a more robust 
-     * mechanism
-     */
-    sleep(delay);
-  }
-  log_dev->log(log4cpp::Priority::INFO,
-	       "eventStatusPoller::run() - thread is ending...");
 }
 

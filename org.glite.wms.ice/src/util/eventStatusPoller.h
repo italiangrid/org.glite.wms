@@ -5,6 +5,7 @@
 #include "glite/ce/cream-client-api-c/JobStatusList.h"
 #include "eventStatusPoller_ex.h"
 #include "iceEventLogger.h"
+#include "iceThread.h"
 
 namespace glite {
   namespace ce {
@@ -39,9 +40,8 @@ namespace glite {
 	  The poller also resubmit failed or aborted job by calling the call back ice::doOnJobFailure
 	  \sa ice
 	*/
-	class eventStatusPoller {
+	class eventStatusPoller : public iceThread {
 
-	  bool endpolling;
 	  int delay;
 	  std::vector<std::string> jobs_to_query;
 	  std::vector<std::string> empty;
@@ -85,11 +85,9 @@ namespace glite {
 	  
 	  virtual ~eventStatusPoller();
 
-	  //! Main poller loop (needed by boost:thread)
-	  virtual void operator()();
+	  //! Main poller loop (inherited from iceThread)
+          virtual void body( void );
 
-	  //! Stop the main poller loop and end the poller thread
-	  virtual void stop() { endpolling=true; }
 	};
 
       }

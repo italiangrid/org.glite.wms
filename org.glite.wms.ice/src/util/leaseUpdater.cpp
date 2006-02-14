@@ -40,28 +40,25 @@ leaseUpdater::~leaseUpdater( )
         delete creamClient;
 }
 
-void leaseUpdater::getJobsToUpdate( void )
+vector<string> leaseUpdater::getJobsToUpdate( void )
 {
     creamClient->clearSoap();
-    vector<string> jobs_to_query;
+    vector<string> jobs_to_update;
 
-    try {
-        boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-        cache->getActiveCreamJobIDs(jobs_to_query); // FIXME: does not throw anything?
-    } catch(exception& ex) {
-        log_dev->log(log4cpp::Priority::ERROR,
-                     string("eventStatusPoller::getStatus() - ")+ex.what());
-        exit(1); // FIXME: should we really exit here?
-    }
-    // go on...
+    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+    cache->getActiveCreamJobIDs(jobs_to_update); // FIXME: does not throw anything?
+    
+    return jobs_to_update;
 }
 
 void leaseUpdater::body( void )
 {
-    log_dev->infoStream()
-        << "leastUpdater::body(): new iteration"
-        << log4cpp::CategoryStream::ENDLINE;
-    
-    // updateLease( );
-    sleep( delay );
+    while ( !isStopped() ) {
+        log_dev->infoStream()
+            << "leastUpdater::body(): new iteration"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        // updateLease( );
+        sleep( delay );
+    }
 }

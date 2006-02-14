@@ -117,10 +117,10 @@ namespace { // anonymous namespace
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   : CEConsumer(i),
+    iceThread( "event status poller" ),   
     grid_JOBID(),
     cream_JOBID(),
     status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
-    endaccept(false),
     subscriber(),
     subManager(),
     pinger ( 0 ),
@@ -179,17 +179,15 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
 }
 
 //______________________________________________________________________________
-void iceUtil::eventStatusListener::operator()()
+void iceUtil::eventStatusListener::body( void )
 {
-  endaccept=false;
-  while(!endaccept) {
-    log_dev->infoStream() << "eventStatusListener::()() - "
-			  << "Waiting for job status notification"
-			  << log4cpp::CategoryStream::ENDLINE;
-    acceptJobStatus();
-    sleep(1);
-  }
-  log_dev->info( "eventStatusListener::()() - ending..." );
+    while( !isStopped() ) {
+        log_dev->infoStream() << "eventStatusListener::()() - "
+                              << "Waiting for job status notification"
+                              << log4cpp::CategoryStream::ENDLINE;
+        acceptJobStatus();
+        sleep(1);
+    }
 }
 
 //______________________________________________________________________________
@@ -198,8 +196,8 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   /**
    * Waits for an incoming connection
    */
-    if(!this->accept() && !endaccept) {
-        if(endaccept) {
+    if(!this->accept() && !isStopped()) {
+        if(isStopped()) {
             log_dev->infoStream()
                 << "eventStatusListener::acceptJobStatus() - "
                 << "eventStatusListener is ending"

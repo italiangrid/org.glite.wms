@@ -3,26 +3,15 @@
 
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "iceConfManager.h"
+#include "iceThread.h"
 #include <string>
 #include <vector>
-
-/*namespace glite {
-  namespace wms {
-    namespace ice {
-      namespace util {
-
-       class iceConfManager;
-
-       }
-       }
-       }
-       };*/
 
 class Topic;
 class Policy;
 
 namespace log4cpp {
-class Category;
+    class Category;
 };
 
 namespace glite {
@@ -30,9 +19,8 @@ namespace glite {
     namespace ice {
       namespace util {
 
-	class subscriptionUpdater {
+	class subscriptionUpdater : public iceThread {
 		CESubscriptionMgr subMgr;
-		bool end;
 		std::string proxyfile;
 		iceConfManager* conf;
 		Topic* T;
@@ -44,15 +32,14 @@ namespace glite {
 
 		virtual ~subscriptionUpdater() {}
 
-		virtual void operator()();
-	  	virtual void stop() { end=true; }
+		virtual void body( void );
 		void renewSubscriptions(const std::vector<Subscription>&);
 		void retrieveCEURLs(std::vector<std::string>&);
 	};
-
+        
       }
-      }
-      }
-      }
+    }
+  }
+}
 
 #endif

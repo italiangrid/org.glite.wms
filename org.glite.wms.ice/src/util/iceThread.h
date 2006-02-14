@@ -20,11 +20,8 @@ namespace glite {
               /**
                * This operator is used by boost threads to start the
                * computation. This method is defined in this class,
-               * and must not be redefined. It simply performs a loop
-               * as long as isStopped() is false. Inside the loop the
-               * body() protected method is called. Derived classes
-               * should define the body() methods to actually do the
-               * computation required by the thread.
+               * and must not be redefined. It simply calls body(),
+               * setting the _running variable accordingly.
                */
               void operator()();
 
@@ -65,7 +62,7 @@ namespace glite {
               virtual void body( void ) = 0;
 
               iceThread( const std::string& name );
-
+              iceThread( ); // needed by copy costructors...
           private:              
               std::string _name;
               bool _running;
