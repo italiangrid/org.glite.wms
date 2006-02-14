@@ -17,7 +17,7 @@
 #include "jobadapter/JobAdapter.h"
 #include "jobadapter/exceptions.h"
 
-#include "jobadapter/URL.h"
+#include "jobadapter/url.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
@@ -32,7 +32,6 @@
 using namespace std;
 using namespace classad;
 
-using namespace glite::wms::helper::jobadapter::url;
 using namespace glite::wms::helper::jobadapter;
 
 using namespace glite::wmsutils::jobid;
@@ -144,8 +143,8 @@ main(int argc, char* argv[])
     cerr << "Invalid Attribute Value " <<  ex.what() << endl;
     return 5;
   }
-  catch (ExInvalidURL& ex) {
-    cerr << "Invalid URL" << ex.parameter() << endl;
+  catch (InvalidURL& ex) {
+    cerr << ex.message() << endl;
     return 6;
   }
   catch (std::exception& ex) {

@@ -31,7 +31,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
 
-#include "URL.h"
+#include "url.h"
 #include "JobAdapter.h"
 #include "JobWrapper.h"
 
@@ -60,7 +60,6 @@ namespace fs = boost::filesystem;
 namespace config = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
-namespace url = glite::wms::helper::jobadapter::url;
 namespace jdl = glite::wms::jdl;
 
 namespace {
@@ -721,9 +720,9 @@ try {
        jw->vo(vo);	    
     }
     try {
-      jw->dsupload(url::URL(job_id));
-    } catch (url::ExInvalidURL& ex) {
-      throw CannotCreateJobWrapper(ex.parameter());
+      jw->dsupload(URL(job_id));
+    } catch (InvalidURL& ex) {
+      throw CannotCreateJobWrapper(ex.message());
     }
   }
 	
@@ -752,11 +751,11 @@ try {
       jdl::get_output_sandbox_base_dest_uri(*m_ad, found_in_jdl);
     if(found_in_jdl && !osb_base_dest_uri.empty()) {
       try {
-        url::URL url_(osb_base_dest_uri);
+        URL url_(osb_base_dest_uri);
         jw->set_output_sandbox_base_dest_uri(url_);
         jw->set_osb_wildcards_support(true);
-      } catch (url::ExInvalidURL& ex) {
-        throw CannotCreateJobWrapper(ex.parameter());
+      } catch (InvalidURL& ex) {
+        throw CannotCreateJobWrapper(ex.message());
       }
     }
   }
@@ -768,7 +767,7 @@ try {
       std::string new_inputsandboxpath("gsiftp://");
       new_inputsandboxpath.append(local_host_name);
       new_inputsandboxpath.append(inputsandboxpath);
-      url::URL url_(new_inputsandboxpath);
+      URL url_(new_inputsandboxpath);
       if (!b_wmpisb_base_uri) {
         jw->input_sandbox(url_, inputsandbox);
       } else {
@@ -779,7 +778,7 @@ try {
       std::string const token_path(new_inputsandboxpath, 0, pos);
       jw->token(token_path + '/' + token_file);
     } else {
-      url::URL url_(inputsandboxpath);
+      URL url_(inputsandboxpath);
       if (!b_wmpisb_base_uri) {
         jw->input_sandbox(url_, inputsandbox);
       } else {
@@ -790,8 +789,8 @@ try {
       std::string const token_path(inputsandboxpath, 0, pos);
       jw->token(token_path + '/' + token_file);
     }
-  } catch (url::ExInvalidURL& ex) {
-    throw CannotCreateJobWrapper(ex.parameter());
+  } catch (InvalidURL& ex) {
+    throw CannotCreateJobWrapper(ex.message());
   }
 
   if (!b_wmpisb_base_uri) {
@@ -802,12 +801,12 @@ try {
         std::string new_outputsandboxpath("gsiftp://");     
         new_outputsandboxpath.append(local_host_name);
         new_outputsandboxpath.append(outputsandboxpath);
-        jw->output_sandbox(url::URL(new_outputsandboxpath), outputsandbox);
+        jw->output_sandbox(URL(new_outputsandboxpath), outputsandbox);
       } else {  
-        jw->output_sandbox(url::URL(outputsandboxpath), outputsandbox);
+        jw->output_sandbox(URL(outputsandboxpath), outputsandbox);
       }
-    } catch (url::ExInvalidURL& ex) {
-      throw CannotCreateJobWrapper(ex.parameter());
+    } catch (InvalidURL& ex) {
+      throw CannotCreateJobWrapper(ex.message());
     }
   } else if (b_osb_dest_uri) {
     jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);

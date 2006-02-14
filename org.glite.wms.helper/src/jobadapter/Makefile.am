@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libglite_wms_helper_jobadapter.la
 
 noinst_HEADERS = \
 	exceptions.h \
-  URL.h \
+  url.h \
   JobWrapper.h \
 	Helper.h
 
@@ -20,7 +20,7 @@ in_HEADERS = JobAdapter.h
 libglite_wms_helper_jobadapter_la_SOURCES = \
   exceptions.cpp \
   JobWrapper.cpp \
-  URL.cpp \
+  url.cpp \
   JobAdapter.cpp \
   Helper.cpp
 

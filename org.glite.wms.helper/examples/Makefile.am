@@ -49,7 +49,7 @@ jobwrapperTest_LDADD   = \
 urlTest_SOURCES = urlTest.cpp
 
 urlTest_LDADD   =  \
-  ../../src/jobadapter/URL.o \
+  ../../src/jobadapter/url.o \
   $(BOOST_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \

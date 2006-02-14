@@ -1,14 +1,15 @@
-/***************************************************************************
- *  Filename  : URL.cpp
- *  Authors   : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
- *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
-                Marco Cecchi <marco.cecchi@cnaf.infn.it>
- *  Copyright : (C) 2006 by INFN
- ***************************************************************************/
+//**************************************************************************
+//  Filename  : url.cpp
+//  Authors   : Elisabetta Ronchieri
+//              Francesco Giacomini
+//              Marco Cecchi
+// Copyright (c) 2001 EU DataGrid.
+// For license conditions see http://www.eu-datagrid.org/license.html
+//**************************************************************************
 
 //Formalization of URI in BNF according to RFC #3986 Jan 2005
 // (restricted to our own needs)
-//
+
 //URI           = scheme ":" hier-part
 //hier-part     = "//" authority path-abempty
 //               / path-absolute
@@ -34,7 +35,7 @@
 //unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
 //sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
 //
-//Some example:
+//Some examples:
 //"http://www.cnaf.infn.it"                   = Valid
 //"http://www.cnaf.infn.it:"                  = Valid (port = *DIGIT)
 //"h ttp://www.cnaf.infn.it"                  = Not valid
@@ -51,35 +52,24 @@
 #include <string>
 #include <boost/regex.hpp>
 
-#include "URL.h"
+#include "url.h"
 
 namespace glite {
 namespace wms {
 namespace helper {
 namespace jobadapter {
-namespace url {
 
-ExInvalidURL::ExInvalidURL(std::string const& par)
-  : m_invalidurl_parameter(par)
+InvalidURL::InvalidURL(std::string const& msg)
+  : m_message(msg)
 {
 }
 	
-const std::string& ExInvalidURL::parameter(void) const
+std::string const& InvalidURL::message() const
 { 
-  return m_invalidurl_parameter; 
+  return m_message; 
 }
     
-URL::URL(std::string url)
-{
-  parse(url);
-}
-
-URL::~URL(void)
-{
-}
-
-void
-URL::parse(std::string url)
+URL::URL(std::string const& url)
 {
   static const boost::regex valid_url("^([a-z,A-Z,0-9,-,.,_,~]+)://([^:/\
 ?#@ ]+):?(([0-9]*)?)((/([a-z,A-Z,0-9,-,.,_,~,!,$,&,',(,)]|%[a-e,A-E,0-9]\
@@ -88,8 +78,8 @@ URL::parse(std::string url)
   bool is_matching = false;
   try {
     is_matching = boost::regex_match(url, valid_url);
-  } catch(std::runtime_error ex) {
-    throw ExInvalidURL("Cannot parse URL:" + url);
+  } catch(std::runtime_error& ex) {
+    throw InvalidURL("Cannot parse URL:" + url);
   }
   if (is_matching)
   {
@@ -100,40 +90,40 @@ URL::parse(std::string url)
       m_host = (*m)[2].str();
       m_port = (*m)[3].str();
       m_path = (*m)[5].str();
-    } catch(std::runtime_error ex) {
-      throw ExInvalidURL("Cannot parse URL:" + url);
+    } catch(std::runtime_error& ex) {
+      throw InvalidURL("Cannot parse URL:" + url);
     }
   } else {
-    throw ExInvalidURL(url);
+    throw InvalidURL("Cannot parse URL:" + url);
   }
 }
 
 std::string
-URL::protocol(void) const
+URL::protocol() const
 {
   return m_protocol;
 }
 
 std::string
-URL::host(void) const
+URL::host() const
 {
   return m_host;
 }
 
 std::string
-URL::port(void) const
+URL::port() const
 {
   return m_port;
 }
 
 std::string
-URL::path(void) const
+URL::path() const
 {
   return m_path;
 }
 
 std::string
-URL::as_string(void) const
+URL::as_string() const
 {
   return m_protocol
     + "://" 
@@ -142,4 +132,4 @@ URL::as_string(void) const
     + m_path;
 }
 
-}}}}} // namespace glite::wms::helper::jobadapter::url
+}}}} // namespace glite::wms::helper::jobadapter

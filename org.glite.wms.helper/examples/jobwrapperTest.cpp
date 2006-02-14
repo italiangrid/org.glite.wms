@@ -21,7 +21,6 @@ using std::endl;
 using std::vector;
 using std::string;
 
-using namespace glite::wms::helper::jobadapter::url;
 using namespace glite::wms::common::configuration;
 using namespace glite::wms::helper::jobadapter;
 
@@ -50,8 +49,8 @@ main(int argc, char* argv[])
 
     // set the output sandbox
     jw->output_sandbox(URL("gsiftp://joda.cnaf.infn.it:8000/tmp/gridtest"), output_files);
-  } catch (ExInvalidURL& ex) {
-    cerr << "Invalid URL" << ex.parameter() << endl;
+  } catch (InvalidURL& ex) {
+    cerr << ex.message();
     return -1;
   } catch (...) {
     cerr << "Caught uknown exception" << endl;
@@ -79,11 +78,11 @@ main(int argc, char* argv[])
   jw->create_subdir();
   
   try {
-    url::URL url_("http://results_collector.cnaf.infn.it/gravitational_waves/mcecchi");
+    URL url_("http://results_collector.cnaf.infn.it/gravitational_waves/mcecchi");
     jw->set_output_sandbox_base_dest_uri(url_);
     jw->set_osb_wildcards_support(true);
-  } catch (url::ExInvalidURL& ex) {
-    cerr << "Cannot Create JobWrapper\n";
+  } catch (InvalidURL& ex) {
+    cerr << ex.message();
   }
 
   // output the job wrapper script to standard output

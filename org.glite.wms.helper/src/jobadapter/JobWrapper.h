@@ -22,7 +22,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 
-#include "URL.h"
+#include "url.h"
 
 namespace classad {
 class ExprList;
@@ -77,7 +77,7 @@ public:
    * @param files    list of files in the input sandbox
    * \ingroup jobadapter
    */
-  void input_sandbox(const url::URL& base_url, 
+  void input_sandbox(const URL& base_url, 
                      const std::vector<std::string>& files);
   
   /**
@@ -86,7 +86,7 @@ public:
    * @param files    list of files in the output sandbox
    * \ingroup jobadapter
    */
-  void output_sandbox(const url::URL& base_url,
+  void output_sandbox(const URL& base_url,
                       const std::vector<std::string>& files);
 
   /**
@@ -177,7 +177,7 @@ public:
     * @param jobid
     * \ingroup jobadapter
     */
-   void dsupload(const url::URL& id);
+   void dsupload(const URL& id);
 
    /**
     * Set the support of Input/Output Sandboxes in WMProxy.
@@ -192,7 +192,7 @@ public:
    * @param files    list of files in the input sandbox
    * \ingroup jobadapter
    */
-  void wmp_input_sandbox_support(const url::URL& base_url,
+  void wmp_input_sandbox_support(const URL& base_url,
                                   const std::vector<std::string>& input_base_files);
 
   /**
@@ -224,7 +224,7 @@ public:
 
   void set_job_type(int);
   void set_osb_wildcards_support(bool);
-  void set_output_sandbox_base_dest_uri(url::URL const&);
+  void set_output_sandbox_base_dest_uri(URL const&);
 
 private:
   static const std::string s_brokerinfo_default;
@@ -236,11 +236,11 @@ private:
   std::string              m_arguments;
   std::string              m_maradonaprotocol;
 
-  boost::shared_ptr<url::URL> m_input_base_url;
+  boost::shared_ptr<URL> m_input_base_url;
   std::vector<std::string> m_input_files;
 
-  boost::shared_ptr<url::URL> m_output_base_url;
-  boost::shared_ptr<url::URL> m_output_sandbox_base_dest_uri;
+  boost::shared_ptr<URL> m_output_base_url;
+  boost::shared_ptr<URL> m_output_sandbox_base_dest_uri;
 
   std::vector<std::string> m_output_files;
 

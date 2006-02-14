@@ -1,14 +1,14 @@
-/***************************************************************************
- *  filename  : JobWrapper.cpp
- *  authors   : Alessio Gianelle <alessio.gianelle@pd.infn.it>
- *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
- *              Rosario Peluso <rosario.peluso@pd.infn.it>
- *              Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
- *              Marco Cecchi <marco.cecchi@cnaf.infn.it>
- *  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
- *  For license conditions see LICENSE file or
- *  http://www.edg.org/license.html
- ***************************************************************************/
+//**************************************************************************
+//  Filename  : JobWrapper.cpp
+//  Authors   : Alessio Gianelle <alessio.gianelle@pd.infn.it>
+//              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
+//              Rosario Peluso <rosario.peluso@pd.infn.it>
+//              Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
+//              Marco Cecchi <marco.cecchi@cnaf.infn.it>
+//  Copyright (c) 2002 CERN and INFN on behalf of the EU DataGrid.
+//  For license conditions see LICENSE file or
+//  http://www.edg.org/license.html
+//**************************************************************************
 
 #include <algorithm>
 #include <cassert>
@@ -20,7 +20,6 @@
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "JobWrapper.h"
 
-namespace url = glite::wms::helper::jobadapter::url;
 namespace configuration = glite::wms::common::configuration;
 namespace jdl = glite::wms::jdl;
 
@@ -66,25 +65,25 @@ JobWrapper::standard_error(const std::string& file)
 }
 
 void
-JobWrapper::input_sandbox(const url::URL& base_url,
+JobWrapper::input_sandbox(const URL& base_url,
                           const vector<std::string>& files)
 {
-  m_input_base_url.reset(new url::URL(base_url));
+  m_input_base_url.reset(new URL(base_url));
   copy(files.begin(), files.end(), back_inserter(m_input_files));
 }
 
 void
-JobWrapper::output_sandbox(url::URL const& base_url,
+JobWrapper::output_sandbox(URL const& base_url,
                            vector<std::string> const& files)
 {
-  m_output_base_url.reset(new url::URL(base_url));
+  m_output_base_url.reset(new URL(base_url));
   copy(files.begin(), files.end(), back_inserter(m_output_files));
 }
  
 void
-JobWrapper::set_output_sandbox_base_dest_uri(url::URL const& osb_base_dest_uri)
+JobWrapper::set_output_sandbox_base_dest_uri(URL const& osb_base_dest_uri)
 {
-  m_output_sandbox_base_dest_uri.reset(new url::URL(osb_base_dest_uri));
+  m_output_sandbox_base_dest_uri.reset(new URL(osb_base_dest_uri));
 }
 
 void
@@ -171,7 +170,7 @@ JobWrapper::vo(const std::string& vo)
 }
 
 void
-JobWrapper::dsupload(const url::URL& id)
+JobWrapper::dsupload(const URL& id)
 {
   m_dsupload.assign("DSUpload_");
   m_dsupload.append(id.path().substr(1));
@@ -185,10 +184,10 @@ JobWrapper::wmp_support(void)
 }
 
 void
-JobWrapper::wmp_input_sandbox_support(const url::URL& base_url,
+JobWrapper::wmp_input_sandbox_support(const URL& base_url,
 				      const vector<std::string>& input_base_files)
 {
-  m_input_base_url.reset(new url::URL(base_url));
+  m_input_base_url.reset(new URL(base_url));
 
   copy(input_base_files.begin(), input_base_files.end(), back_inserter(m_wmp_input_base_files));
 

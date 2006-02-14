@@ -1,24 +1,23 @@
-/***************************************************************************
- *  Filename  : urlTest.cpp
- *  Authors   : Elisabetta Ronchieri <elisabetta.ronchieri@cnaf.infn.it>
- *              Francesco Giacomini <francesco.giacomini@cnaf.infn.it>
-                Marco Cecchi <marco.cecchi@cnaf.infn.it>
- *  Copyright : (C) 2001 by INFN
- ***************************************************************************/
+//***************************************************************************
+//  Filename  : urlTest.cpp
+//  Authors   : Elisabetta Ronchieri
+//              Francesco Giacomini
+//              Marco Cecchi
+// Copyright (c) 2001 EU DataGrid.
+// For license conditions see http://www.eu-datagrid.org/license.html
+//**************************************************************************
 
 #include <iostream>
-#include "jobadapter/URL.h"
+#include "jobadapter/url.h"
 
 using std::cout;
 using std::cerr;
 using std::endl;
-
-using namespace glite::wms::helper::jobadapter::url;
+using namespace glite::wms::helper::jobadapter;
 
 int
 main(void)
 {
-
   {
     URL* url;
     
@@ -31,8 +30,8 @@ main(void)
 	      << "port =     " << url->port()     << '\n'
 	      << "path =     " << url->path()     << '\n';
       cout << url->as_string() << '\n';
-    } catch (ExInvalidURL& ex) {
-      cerr << ex.parameter() << '\n';
+    } catch (InvalidURL& ex) {
+      cerr << ex.message();
     } catch (...) {
       cerr << "Caught uknown exception" << endl;
     }
@@ -42,13 +41,13 @@ main(void)
     cout << "Testing an empty URL..." << endl;
     try {
       URL url("");
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cerr << "Empty URL caused an exception, uhm ...right\n\n";
     }
   }
 
   {
-    cout << "Some example..." << endl;
+    cout << "Some examples..." << endl;
 
     const std::string url("http://www.ics.uci.edu:34535/a/b/eefef/qff%20df");
     const std::string wrong_prot_url("h ttp://www.ics.uci.edu");
@@ -62,49 +61,53 @@ main(void)
     try {
       URL url_(url);
       cout << url << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+      cout << "protocol = " << url_.protocol() << '\n'
+	      << "host =     " << url_.host()     << '\n'
+	      << "port =     " << url_.port()     << '\n'
+	      << "path =     " << url_.path()     << '\n';
+    } catch (InvalidURL& ex) {
       cout << url << " = not valid URL\n";
     }
     try {
       URL wrong_prot_url_(wrong_prot_url);
       cout << wrong_prot_url << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << wrong_prot_url << " = not valid URL\n";
     }
     try {
       URL wrong_host_url_(wrong_host_url);
       cout << wrong_host_url << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << wrong_host_url << " = not valid URL\n";
     }
     try {
       URL url_path_(url_path);
       cout << url_path << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << url_path << " = not valid URL\n";
     }
     try {
       URL url_path_pct_(url_path_pct);
       cout << url_path_pct << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << url_path_pct << " = not valid URL\n";
     }
     try {
       URL url_path_wrong_pct_(url_path_wrong_pct);
       cout << url_path_wrong_pct << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << url_path_wrong_pct << " = not valid URL\n";
     }
     try {
       URL url_path2_(url_path2);
       cout << url_path2 << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << url_path2 << " = not valid URL\n";
     }
     try {
       URL wrong_url_path_(wrong_url_path);
       cout << wrong_url_path << " = valid URL\n";
-    } catch (ExInvalidURL& ex) {
+    } catch (InvalidURL& ex) {
       cout << wrong_url_path << " = not valid URL\n";
     }
   }
@@ -115,8 +118,8 @@ main(void)
     
     try {
       url1 = new URL("http://www.cnaf.infn.it/giaco");
-    } catch (ExInvalidURL& ex) {
-      cerr << "Invalid URL" << ex.parameter() << endl;
+    } catch (InvalidURL& ex) {
+      cerr << "Invalid URL" << ex.message() << endl;
     } catch (...) {
       cerr << "Caught uknown exception" << endl;
     }
@@ -146,8 +149,8 @@ main(void)
 
     try {
       url1 = new URL("http://www.cnaf.infn.it/giaco");
-    } catch (ExInvalidURL& ex) {
-      cerr << "Invalid URL" << ex.parameter() << endl;
+    } catch (InvalidURL& ex) {
+      cerr << "Invalid URL" << ex.message() << endl;
     } catch (...) {
       cerr << "Caught uknown exception" << endl;
     }
