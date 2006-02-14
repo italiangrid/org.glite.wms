@@ -9,6 +9,8 @@
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/thread/recursive_mutex.hpp"
+#include "boost/scoped_ptr.hpp"
+
 #include "iceThread.h"
 
 // Forward declaration for the logger
@@ -38,7 +40,7 @@ namespace glite {
 	  glite::ce::cream_client_api::job_statuses::job_status status;
  	  CESubscription subscriber;
  	  CESubscriptionMgr subManager;
-	  CEPing *pinger;
+	  boost::scoped_ptr<CEPing> pinger;
 	  Topic T;
 	  Policy P;
 	  std::vector<std::string> activeSubscriptions;

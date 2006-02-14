@@ -165,7 +165,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   log_dev->info( "eventStatusListener::CTOR - Listener created!" );
   T.addDialect(NULL);
   try {
-    pinger = new CEPing(proxyfile, "/");
+    pinger.reset( new CEPing(proxyfile, "/") );
   } catch(exception& ex) {
     log_dev->fatalStream() << "eventStatusListener::CTOR - "
 			   << "Fatal Error creating a pinger object:"

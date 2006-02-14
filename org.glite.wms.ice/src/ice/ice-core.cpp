@@ -43,7 +43,7 @@ ice::ice(const string& NS_FL,
 //______________________________________________________________________________
 ice::~ice() 
 { 
-  if( listener->isRunning() ) {
+  if( listener && listener->isRunning() ) {
     log_dev->log(log4cpp::Priority::INFO,
 		 "ice::~ice() - Waiting for listener termination...");
     listener->stop();
@@ -52,7 +52,7 @@ ice::~ice()
 		 "ice::~ice() - Listener finished");
     delete(listenerThread);
   }
-  if ( subsUpdater->isRunning() ) {
+  if ( subsUpdater && subsUpdater->isRunning() ) {
     log_dev->log(log4cpp::Priority::INFO,
 		 "ice::~ice() - Waiting for poller termination...");
     subsUpdater->stop();
@@ -61,7 +61,7 @@ ice::~ice()
 		 "ice::~ice() - Poller finished");
     delete(pollerThread);
   }
-  if (lease_updater->isRunning() ) {
+  if ( lease_updater && lease_updater->isRunning() ) {
     log_dev->log(log4cpp::Priority::INFO,
 		 "ice::~ice() - Waiting for lease updater termination...");
     lease_updater->stop( );
