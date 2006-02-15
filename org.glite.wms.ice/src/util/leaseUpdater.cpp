@@ -7,7 +7,6 @@
 #include "glite/ce/cream-client-api-c/BaseException.h"
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
-//#include "abs-ice-core.h"
 #include "iceConfManager.h"
 #include <boost/thread/thread.hpp>
 

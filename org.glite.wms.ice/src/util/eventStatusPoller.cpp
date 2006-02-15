@@ -38,21 +38,22 @@ eventStatusPoller::eventStatusPoller(
     _ev_logger( iceEventLogger::instance() ),
     cache( jobCache::getInstance() )
 {
-  jobs_to_query.reserve(1000);
-  url_pieces.reserve(4);
-  try {
-    creamClient = new soap_proxy::CreamProxy(false);
-  } catch(soap_proxy::soap_ex& ex) {
-    throw eventStatusPoller_ex( ex.what() );
-  } 
-  oneJobToQuery.reserve(1);
-  oneJobToPurge.reserve(1);
+    // jobs_to_query.reserve(1000);
+    url_pieces.reserve(4);
+    try {
+        soap_proxy::CreamProxy *p = new soap_proxy::CreamProxy(false);
+        creamClient.reset( p );
+    } catch(soap_proxy::soap_ex& ex) {
+        throw eventStatusPoller_ex( ex.what() );
+    } 
+    oneJobToQuery.reserve(1);
+    oneJobToPurge.reserve(1);
 }
 
 //______________________________________________________________________________
 eventStatusPoller::~eventStatusPoller()
 {
-  if(creamClient) delete(creamClient);
+
 }
 
 //______________________________________________________________________________
@@ -72,24 +73,24 @@ bool eventStatusPoller::getStatus(void)
   
     creamClient->clearSoap();
 
-    jobs_to_query.clear();
+    // jobs_to_query.clear();
 
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-    try {
-        cache->getActiveCreamJobIDs(jobs_to_query); // FIXME: does not throw anytning?
-    } catch(exception& ex) {
-        log_dev->log(log4cpp::Priority::ERROR,
-                     string("eventStatusPoller::getStatus() - ")+ex.what());
-        exit(1);
-    }
+//     try {
+//         cache->getActiveCreamJobIDs(jobs_to_query); // FIXME: does not throw anytning?
+//     } catch(exception& ex) {
+//         log_dev->log(log4cpp::Priority::ERROR,
+//                      string("eventStatusPoller::getStatus() - ")+ex.what());
+//         exit(1);
+//     }
 
-    for(vstrIt it = jobs_to_query.begin(); it != jobs_to_query.end(); ++it) {
+    for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
         oneJobToQuery.clear();
-        jobCache::iterator jobIt = cache->lookupByCreamJobID(*it);
+        // jobCache::iterator jobIt = cache->lookupByCreamJobID(*it);
         try {
-            if ( jobIt == cache->end() )
-                throw( cream_exceptions::InternalException( "Invalid jobID" ) );
+//             if ( jobIt == cache->end() )
+//                 throw( cream_exceptions::InternalException( "Invalid jobID" ) );
 
 	    time_t oldness = time(NULL)-jobIt->getLastUpdate();
 	    time_t threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
@@ -104,7 +105,7 @@ bool eventStatusPoller::getStatus(void)
             log_dev->log(log4cpp::Priority::INFO,
                          string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
                          + jobIt->getJobID() + "]");
-            oneJobToQuery.push_back(*it);
+            oneJobToQuery.push_back(jobIt->getJobID());
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
             _jobstatuslist.push_back( creamClient->Status(jobIt->getCreamURL().c_str(),
                                                           oneJobToQuery,

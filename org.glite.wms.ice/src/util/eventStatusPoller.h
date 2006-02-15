@@ -3,22 +3,14 @@
 
 #undef soapStub_H
 #include "glite/ce/cream-client-api-c/JobStatusList.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "eventStatusPoller_ex.h"
 #include "iceEventLogger.h"
 #include "iceThread.h"
-
-namespace glite {
-  namespace ce {
-    namespace cream_client_api {
-      namespace soap_proxy {
-	class CreamProxy;
-      }
-    }
-  }
-};
+#include "boost/scoped_ptr.hpp"
 
 namespace log4cpp {
-  class Category;
+    class Category;
 };
 
 namespace glite {
@@ -43,15 +35,15 @@ namespace glite {
 	class eventStatusPoller : public iceThread {
 
 	  int delay;
-	  std::vector<std::string> jobs_to_query;
+	  // std::vector<std::string> jobs_to_query;
 	  std::vector<std::string> empty;
-	  std::vector<glite::ce::cream_client_api::soap_proxy::JobStatusList*>
+	  std::vector< glite::ce::cream_client_api::soap_proxy::JobStatusList* >
 	    _jobstatuslist;
 	  std::vector<std::string> url_pieces;
 	  absice* iceManager;
 	  void purgeJobs(const std::vector<std::string>&);
 
-	  glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
+	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
 	  std::vector<std::string> oneJobToQuery;
 	  std::vector<std::string> oneJobToPurge;
 
