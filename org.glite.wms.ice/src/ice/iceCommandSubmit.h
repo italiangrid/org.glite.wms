@@ -12,16 +12,17 @@
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
 
+// Forward declaration of iceConfManager
 namespace glite {
-namespace wms {
-namespace ice {
-namespace util {
-
-  class iceConfManager;
-
-}
-}
-}
+    namespace wms {
+        namespace ice {
+            namespace util {
+                
+                class iceConfManager;
+                
+            }
+        }
+    }
 };
 
 //class CESubscription;

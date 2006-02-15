@@ -2,14 +2,9 @@
 #define __GLITE_WMS_ICE_UTIL_LEASEUPDATER_H__
 
 #include "iceThread.h"
-//#include "glite/ce/monitor-client-api-c/CEConsumer.h"
-
-//#undef soapStub_H
-//#include "glite/ce/monitor-client-api-c/CEPing.h"
-//#include "glite/ce/monitor-client-api-c/CESubscription.h"
-//#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
-//#include "glite/ce/cream-client-api-c/job_statuses.h"
+#include "creamJob.h"
 #include "boost/thread/recursive_mutex.hpp"
+#include "boost/scoped_ptr.hpp"
 #include <vector>
 #include <string>
 
@@ -46,12 +41,26 @@ namespace glite {
 
           protected:
 
-              int delay; //! Delay between two updates, in seconds. Hardcoded for now, should be fixed in the future
+              static const time_t threshold; //! Residual lease durations less than this threshold are prolonged;
+              static const time_t delay; //! Delay between two updates, in seconds. Hardcoded for now, should be fixed in the future;
               log4cpp::Category *log_dev;
               jobCache *cache;
-              glite::ce::cream_client_api::soap_proxy::CreamProxy* creamClient;
+              boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
 
-              std::vector< std::string > getJobsToUpdate( void );
+              /**
+               * Gets the list of CREAM jobids to update.
+               *
+               * @return the list of CREAM job IDs to update.
+               */
+              std::vector< CreamJob > getJobsToUpdate( void );
+
+              /**
+               * Actually updates the lease for the given jobIDs
+               *
+               * @param jobids the list of CREAM job IDs for which 
+               * the lease should be renewed
+               */
+              void updateJobs( const std::vector< CreamJob > jobids );
 
               //! This function actually performs the job
               virtual void body( void );

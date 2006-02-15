@@ -54,10 +54,16 @@ void iceUtil::subscriptionUpdater::body( void )
 // 	      cout << (*it)->getSubscriptionID() << endl;
 	  this->renewSubscriptions(vec);
 	} catch(AuthenticationInitException& ex) {
-	  log_dev->errorStream()  << "subscriptionUpdater::()() - Error: "<<ex.what()<<log4cpp::CategoryStream::ENDLINE;
+	  log_dev->errorStream()  
+              << "subscriptionUpdater::()() - Authentication Exception: "
+              << ex.what()
+              << log4cpp::CategoryStream::ENDLINE;
 	  exit(1); // FIXME
 	} catch(exception& ex) {
-	  log_dev->errorStream()  << "subscriptionUpdater::()() - Error: "<<ex.what() << log4cpp::CategoryStream::ENDLINE;
+	  log_dev->errorStream()  
+              << "subscriptionUpdater::()() - Generic Exception: "
+              << ex.what() 
+              << log4cpp::CategoryStream::ENDLINE;
 	  exit(1); // FIXME
 	}
       }

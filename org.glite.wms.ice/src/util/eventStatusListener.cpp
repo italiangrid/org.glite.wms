@@ -91,10 +91,10 @@ namespace { // anonymous namespace
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
         job_status = api::job_statuses::getStatusNum( job_status_str );
 
-	 int tstamp_i;
-         if ( !ad->EvaluateAttrNumber( "TIMESTAMP", tstamp_i ) )
+	 double tstamp_d;
+         if ( !ad->EvaluateAttrNumber( "TIMESTAMP", tstamp_d ) )
 	   throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
-	 tstamp = (time_t)tstamp_i;
+	 tstamp = (time_t)tstamp_d;
          // FIXME: In the future, this timestamp will be relative to
          // UTC time, and probably should be converted to the local
          // (ICE-centric) timezone.
@@ -360,7 +360,7 @@ void iceUtil::eventStatusListener::init(void)
 	  }
         } catch(exception& ex) {
  	  // something wrong happened. Exit
-          log_dev->fatalStream() << "eventStatusListener::init() - "
+          log_dev->fatalStream() << "eventStatusListener::init() - generic exception "
 	                         << ex.what()
 				 << log4cpp::CategoryStream::ENDLINE;
 	  exit(1);

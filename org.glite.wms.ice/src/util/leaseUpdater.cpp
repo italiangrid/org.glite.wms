@@ -20,15 +20,18 @@ using namespace glite::ce::cream_client_api::job_statuses;
 using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
+const time_t leaseUpdater::threshold = 60*30; // FIXME: hardcoded default 30 min
+const time_t leaseUpdater::delay = 60*2; // FIXME: hardcoded default 2 min
+
 leaseUpdater::leaseUpdater( ) :
     iceThread( "ICE Lease Updater" ),
-    delay( 60 ), // FIXME: hardcoded, should be made user-configurable
     log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     cache( jobCache::getInstance() ),
     creamClient( 0 )
 {
-    try {
-        creamClient = new soap_proxy::CreamProxy( false );
+    try {        
+        soap_proxy::CreamProxy* p( new soap_proxy::CreamProxy( false ) );
+        creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
     } 
@@ -36,29 +39,53 @@ leaseUpdater::leaseUpdater( ) :
 
 leaseUpdater::~leaseUpdater( )
 {
-    if ( creamClient ) 
-        delete creamClient;
+
 }
 
-vector<string> leaseUpdater::getJobsToUpdate( void )
+vector<CreamJob> leaseUpdater::getJobsToUpdate( void )
 {
-    creamClient->clearSoap();
-    vector<string> jobs_to_update;
-
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    cache->getActiveCreamJobIDs(jobs_to_update); // FIXME: does not throw anything?
-    
+    vector< CreamJob > jobs_to_update;
+
+    for ( jobCache::const_iterator it = cache->begin(); it != cache->end(); it++ ) {
+        if ( it->getEndLease() - time(0) > threshold ) {
+            jobs_to_update.push_back( *it );
+        }
+    }
+
     return jobs_to_update;
+}
+
+void leaseUpdater::updateJobs( vector< CreamJob > jobs )
+{
+    const time_t delta = 60*60; // FIXME: hardcoded default of lease renewal: 1 hour
+    for( vector< CreamJob >::iterator it = jobs.begin(); it != jobs.end(); it++ ) {
+        time_t newEndLease( it->getEndLease() + delta );
+
+        log_dev->infoStream()
+            << "leaseUpdater:: updating lease for cream jobid=["
+            << it->getJobID()
+            << "]; old lease ends " << it->getEndLease()
+            << " new lease ends " << newEndLease 
+            << log4cpp::CategoryStream::ENDLINE;
+
+        it->setEndLease( newEndLease );
+        // FIXME: Here we actually should update the lease using the appropriate interface method
+        cache->put( *it );
+    }    
 }
 
 void leaseUpdater::body( void )
 {
+    vector< CreamJob > _jobs;
     while ( !isStopped() ) {
         log_dev->infoStream()
             << "leastUpdater::body(): new iteration"
             << log4cpp::CategoryStream::ENDLINE;
-        
-        // updateLease( );
+
+        _jobs = getJobsToUpdate( );
+        updateJobs( _jobs );
+
         sleep( delay );
     }
 }
