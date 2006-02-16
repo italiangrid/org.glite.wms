@@ -35,11 +35,9 @@ namespace glite {
 	class eventStatusPoller : public iceThread {
 
 	  int delay;
-	  // std::vector<std::string> jobs_to_query;
-	  std::vector<std::string> empty;
+	  std::vector< std::string > empty;
 	  std::vector< glite::ce::cream_client_api::soap_proxy::JobStatusList* >
 	    _jobstatuslist;
-	  std::vector<std::string> url_pieces;
 	  absice* iceManager;
 	  void purgeJobs(const std::vector<std::string>&);
 
@@ -69,7 +67,7 @@ namespace glite {
 	    \sa ice
 	  */
 	  eventStatusPoller(
-			    absice* iceManager,
+			    absice* iceManager, //! ownership of this pointer is not transferred
 			    const int D=10
 			    ) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);

@@ -7,6 +7,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
@@ -18,7 +19,7 @@ namespace fs = boost::filesystem;
 CreamJob::CreamJob( ) :
     status( UNKNOWN ),
     lastUpdate( time(NULL) ),
-    endLease( lastUpdate + 60*60*24 ) // FIXME: remove hardcoded default
+    endLease( lastUpdate + 60*30 ) // FIXME: remove hardcoded default
 {
 
 }
@@ -40,8 +41,14 @@ string CreamJob::serialize( void ) const
     // Updates sequence code
     jdlAd->InsertAttr( "LB_sequence_code", sequence_code );
     ad.Insert( "jdl", jdlAd );
-    ad.InsertAttr( "last_update", (int)lastUpdate );
-    ad.InsertAttr( "end_lease" , (int)endLease );
+
+    try {    
+        ad.InsertAttr( "last_update", boost::lexical_cast< string >(lastUpdate) ); 
+        ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(endLease) );
+    } catch( boost::bad_lexical_cast& ) {
+        // Should never happen...
+    }
+
     classad::ClassAdUnParser unparser;
     unparser.Unparse( res, &ad );
     return res;
@@ -55,8 +62,8 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     classad::ClassAd *ad;
     classad::ClassAd *jdlAd;
     int st_number;
-    int tstamp;
-    int elease;
+    string tstamp;
+    string elease;
 
     ad = parser.ParseClassAd( buf );
   
@@ -66,14 +73,20 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     if ( ! ad->EvaluateAttrString( "cream_jobid", cream_jobid ) ||
          ! ad->EvaluateAttrNumber( "status", st_number ) ||
          ! ad->EvaluateAttrClassAd( "jdl", jdlAd ) ||
-         ! ad->EvaluateAttrNumber( "last_update", tstamp ) ||
-         ! ad->EvaluateAttrNumber( "end_lease", elease ) ) {
+         ! ad->EvaluateAttrString( "last_update", tstamp ) ||
+         ! ad->EvaluateAttrString( "end_lease", elease ) ) {
         throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' or 'last_update' or 'end_lease' attributes");
     }
     status = (glite::ce::cream_client_api::job_statuses::job_status)st_number;
-    lastUpdate = (time_t) tstamp;
-    endLease = (time_t) elease;
-
+    boost::trim_if( tstamp, boost::is_any_of("\"" ) );
+    boost::trim_if( elease, boost::is_any_of("\"" ) );
+    
+    try {
+        lastUpdate = boost::lexical_cast< time_t >( tstamp );
+        endLease = boost::lexical_cast< time_t >( elease );
+    } catch( boost::bad_lexical_cast& ) {
+        throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] to time_t" );
+    }
     boost::trim_if(cream_jobid, boost::is_any_of("\""));
 
     classad::ClassAdUnParser unparser;
@@ -87,7 +100,7 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
     classad::ClassAd *jdlAd = parser.ParseClassAd( j );
-    int res = 0;
+    // int res = 0;
 
     if ( 0 == jdlAd ) {
         throw ClassadSyntax_ex( string("CreamJob::setJdl unable to parse jdl=[") + j + string("]") );

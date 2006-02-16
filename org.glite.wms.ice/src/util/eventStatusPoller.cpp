@@ -33,13 +33,11 @@ eventStatusPoller::eventStatusPoller(
   : iceThread( "event status poller" ),
     delay(_d),
     iceManager(_iceManager),
-    creamClient(NULL),
+    creamClient( 0 ),
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
     _ev_logger( iceEventLogger::instance() ),
     cache( jobCache::getInstance() )
 {
-    // jobs_to_query.reserve(1000);
-    url_pieces.reserve(4);
     try {
         soap_proxy::CreamProxy *p = new soap_proxy::CreamProxy(false);
         creamClient.reset( p );
@@ -73,45 +71,33 @@ bool eventStatusPoller::getStatus(void)
   
     creamClient->clearSoap();
 
-    // jobs_to_query.clear();
-
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-
-//     try {
-//         cache->getActiveCreamJobIDs(jobs_to_query); // FIXME: does not throw anytning?
-//     } catch(exception& ex) {
-//         log_dev->log(log4cpp::Priority::ERROR,
-//                      string("eventStatusPoller::getStatus() - ")+ex.what());
-//         exit(1);
-//     }
 
     for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
         oneJobToQuery.clear();
-        // jobCache::iterator jobIt = cache->lookupByCreamJobID(*it);
+
+        //        try {
+        time_t oldness = time(NULL)-jobIt->getLastUpdate();
+        time_t threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+        //	    printf("\t*** oldness=%d threshold=%d\n", oldness, threshold);
+        //	    printf("\t*** listener=%d\n",iceConfManager::getInstance()->startListener());
+        if( (oldness <  threshold) && iceConfManager::getInstance()->getStartListener() ) {
+            //	        printf("\t*** CONTINUE!!!\n");
+            continue;
+        }
+        //continue;
+        
+        log_dev->log(log4cpp::Priority::INFO,
+                     string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
+                     + jobIt->getJobID() + "]");
+        oneJobToQuery.push_back(jobIt->getJobID());
         try {
-//             if ( jobIt == cache->end() )
-//                 throw( cream_exceptions::InternalException( "Invalid jobID" ) );
-
-	    time_t oldness = time(NULL)-jobIt->getLastUpdate();
-	    time_t threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
-//	    printf("\t*** oldness=%d threshold=%d\n", oldness, threshold);
-//	    printf("\t*** listener=%d\n",iceConfManager::getInstance()->startListener());
-            if( (oldness <  threshold) && iceConfManager::getInstance()->getStartListener() ) {
-//	        printf("\t*** CONTINUE!!!\n");
-		continue;
-	    }
-              //continue;
-
-            log_dev->log(log4cpp::Priority::INFO,
-                         string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
-                         + jobIt->getJobID() + "]");
-            oneJobToQuery.push_back(jobIt->getJobID());
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
             _jobstatuslist.push_back( creamClient->Status(jobIt->getCreamURL().c_str(),
                                                           oneJobToQuery,
                                                           empty, -1, -1 ) );
 	
-        } catch (ClassadSyntax_ex& ex) {
+        } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
             // the CreamJob is created from another valid one
             log_dev->log(log4cpp::Priority::ERROR,
