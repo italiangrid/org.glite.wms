@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include "iceEventLogger.h"
 #include <algorithm>
+#include <set>
 #include <boost/functional.hpp>
 #include <boost/mem_fn.hpp>
 
@@ -290,7 +291,9 @@ void iceUtil::eventStatusListener::init(void)
    * it collects all jobids, extracts the CEUrl they belong to,
    * checks for each CEUrl if the current ICE is subscribed to it.
    */
-  map< string , int > tmpMap;
+    // map< string , int > tmpMap;
+    set< string > ceurls;
+
   string ceurl;
   ostringstream hostport;
   {
@@ -304,7 +307,7 @@ void iceUtil::eventStatusListener::init(void)
                                conf->getCreamUrlPostfix(),
                                conf->getCEMonUrlPostfix()
                                );
-          tmpMap[ceurl] = 1;
+          ceurls.insert( ceurl );
       }
   }
 
@@ -316,10 +319,7 @@ void iceUtil::eventStatusListener::init(void)
   vec.reserve(100);
 
   bool contacted;
-  for(map<string, int>::iterator it = tmpMap.begin();
-      it!=tmpMap.end();
-      it++)
-    {
+  for( set<string>::const_iterator it = ceurls.begin(); it!=ceurls.end(); it++) {
       contacted = false;
       while(!contacted) {
         try {
@@ -332,10 +332,10 @@ void iceUtil::eventStatusListener::init(void)
 	  vec.clear();
 	  log_dev->infoStream() << "eventStatusListener::init() - "
                                 << "Getting list of subscriptions from ["
-                                << it->first << "]"
+                                << *it << "]"
                                 << log4cpp::CategoryStream::ENDLINE;
 
-	  subManager.list(it->first, vec);
+	  subManager.list(*it, vec);
         } catch(ServiceNotFoundException& ex) {
 	  // Service is not there. Let's try to ping it...
           log_dev->fatalStream() << "eventStatusListener::init() - "
@@ -344,10 +344,10 @@ void iceUtil::eventStatusListener::init(void)
 
 	  // must retry to contact this cemon until it
 	  // is up&running again
-	  pinger->setServiceURL(it->first);
+	  pinger->setServiceURL(*it);
           if( !pinger->Ping() ) {
 	    log_dev->warnStream() << "eventStatusListener::init() - CEMon at ["
-	  			  << it->first <<  "] is not reachable. "
+	  			  << *it <<  "] is not reachable. "
 				  << "Waiting 5 seconds..."
 				  << log4cpp::CategoryStream::ENDLINE;
 	    sleep(5);
@@ -378,7 +378,7 @@ void iceUtil::eventStatusListener::init(void)
 		     << conf->getListenerPort();
 	  try {
 	    subscriber.authenticate(proxyfile.c_str(), "/");
-	    subscriber.setServiceURL(it->first);
+	    subscriber.setServiceURL(*it);
 	    subscriber.setSubscribeParam(myname_url.str().c_str(),
 	                                 T,
 					 P,
@@ -386,7 +386,7 @@ void iceUtil::eventStatusListener::init(void)
 					 );
             log_dev->infoStream() << "eventStatusListener::init() - "
 				  << "Subscribing the consumer ["
-                                  << myname_url.str() << "] to ["<<it->first
+                                  << myname_url.str() << "] to ["<<*it
                                   << "] with duration="
                                   << conf->getSubscriptionDuration()
                                   << " secs"
@@ -397,7 +397,7 @@ void iceUtil::eventStatusListener::init(void)
                                   << subscriber.getSubscriptionID() << "]"
                                   << log4cpp::CategoryStream::ENDLINE;
 	    
-	    subscriptionCache::getInstance()->insert(it->first);
+	    subscriptionCache::getInstance()->insert(*it);
 	  } catch(AuthenticationInitException& ex) {
 	    log_dev->fatalStream() << "eventStatusListener::init() - "
 				   << "AuthN Error: "
@@ -458,7 +458,7 @@ void iceUtil::eventStatusListener::init(void)
 		  subscribed = true;
 		  log_dev->infoStream() << "eventStatusListener::init() - "
                                         << "Already subscribed to ["
-					<< it->first << "]"
+					<< *it << "]"
 					<< log4cpp::CategoryStream::ENDLINE;
 		  //cemon_subscribed_to[it->first] = true;
 		  continue;
@@ -467,16 +467,16 @@ void iceUtil::eventStatusListener::init(void)
 	    }
 	  if(!subscribed) {
               log_dev->infoStream() << "eventStatusListener::init() - "
-                                    << "Must subscribe to [" << it->first
+                                    << "Must subscribe to [" << *it
                                     << "]" << log4cpp::CategoryStream::ENDLINE;
-	    subscriber.setServiceURL(it->first);
+	    subscriber.setServiceURL( *it );
 	    subscriber.setSubscribeParam(hostport.str().c_str(),
 	                                 T,
 					 P,
 					 conf->getSubscriptionDuration());
 	    log_dev->infoStream() << "eventStatusListener::init() - "
                                   << "Subscribing the consumer ["
-                                  << hostport.str() << "] to ["<<it->first
+                                  << hostport.str() << "] to ["<<*it
                                   << "] with duration="
                                   << conf->getSubscriptionDuration()
                                   << " secs" 
@@ -488,7 +488,7 @@ void iceUtil::eventStatusListener::init(void)
                                     << subscriber.getSubscriptionID()<<"]"
                                     << log4cpp::CategoryStream::ENDLINE;
 	      //cemon_subscribed_to[it->first] = true;
-	      subscriptionCache::getInstance()->insert(it->first);
+	      subscriptionCache::getInstance()->insert( *it );
 	    } catch(exception& ex) {
               log_dev->fatalStream() << "eventStatusListener::init() - "
 		                       << ex.what()
@@ -600,7 +600,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     vector<StatusNotification> notifications;
 
     for ( vector<string>::const_iterator it = ev.Message.begin();
-              it != ev.Message.end(); it++ ) {
+          it != ev.Message.end(); it++ ) {
         try {
             notifications.push_back( StatusNotification( *it ) );
         } catch( iceUtil::ClassadSyntax_ex ex ) {
