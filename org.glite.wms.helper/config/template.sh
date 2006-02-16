@@ -448,8 +448,8 @@ fi
 if [ -f "${__pre_job}" ]; then
   chmod +x "{__pre_job}" 2>/dev/null
   ./{__pre_job}
-  if [ $? -ne 0]; then
-    log_error "User script returned with an error"
+  if [ $? -ne 0 ]; then
+    log_error "User script failed with error $?"
   fi
 fi
 
