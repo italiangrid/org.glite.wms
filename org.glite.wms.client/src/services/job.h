@@ -19,31 +19,29 @@
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 
-#define WMP_NS1_GETPROXY_SERVICE 	"ns1__getProxyReq"
-#define WMP_NS1_PUTPROXY_SERVICE 	"ns1__putProxyReq"
-#define WMP_NS2_GETPROXY_SERVICE 	"ns2__getProxyReq"
-#define WMP_NS2_PUTPROXY_SERVICE 	"ns2__putProxyReq"
-#define WMP_VERSION_SERVICE		"getVersion"
-#define WMP_REGISTER_SERVICE		"jobRegister"
-#define WMP_START_SERVICE			"jobStart"
-#define WMP_SUBMIT_SERVICE			"jobSubmit"
-#define WMP_CANCEL_SERVICE		"jobCancel"
-#define WMP_OUTPUT_SERVICE			"getOutputFileList"
-#define WMP_PURGE_SERVICE			"jobPurgeQuota"
-#define WMP_LISTMATCH_SERVICE		"jobListMatch"
-#define WMP_SETPERUSAL_SERVICE		"enableFilePerusal"
-#define WMP_GETPERUSAL_SERVICE		"getPerusalFiles"
-#define WMP_PROXYINFO_SERVICE		"getDelegatedProxyInfo"
-#define WMP_JOB_PROXYINFO_SERVICE	"getJobProxyInfo"
-#define WMP_MAXISBSIZE_SERVICE		"getMaxInputSandboxSize"
-#define WMP_FREEQUOTA_SERVICE		"getFreeQuota"
-#define WMP_SBDESTURI_SERVICE		"getSandboxDestURI"
-#define WMP_BULKDESTURI_SERVICE	"getSandboxBulkDestURI"
-
 namespace glite {
 namespace wms{
 namespace client {
 namespace services {
+
+#define WMP_NS1_GETPROXY_SERVICE        "ns1__getProxyReq"
+#define WMP_NS1_PUTPROXY_SERVICE        "ns1__putProxyReq"
+#define WMP_NS2_GETPROXY_SERVICE        "ns2__getProxyReq"
+#define WMP_NS2_PUTPROXY_SERVICE        "ns2__putProxyReq"
+#define WMP_VERSION_SERVICE             "getVersion"
+#define WMP_REGISTER_SERVICE            "jobRegister"
+#define WMP_START_SERVICE               "jobStart"
+#define WMP_SUBMIT_SERVICE              "jobSubmit"
+#define WMP_CANCEL_SERVICE              "jobCancel"
+#define WMP_OUTPUT_SERVICE              "getOutputFileList"
+#define WMP_PURGE_SERVICE               "jobPurgeQuota"
+#define WMP_LISTMATCH_SERVICE           "jobListMatch"
+#define WMP_SETPERUSAL_SERVICE          "enableFilePerusal"
+#define WMP_GETPERUSAL_SERVICE          "getPerusalFiles"
+#define WMP_MAXISBSIZE_SERVICE          "getMaxInputSandboxSize"
+#define WMP_FREEQUOTA_SERVICE           "getFreeQuota"
+#define WMP_SBDESTURI_SERVICE           "getSandboxDestURI"
+#define WMP_BULKDESTURI_SERVICE         "getSandboxBulkDestURI"
 
 /*
 * WMProxy version numbers

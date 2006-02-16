@@ -58,7 +58,6 @@ class Options
 			FROM ,
 			HELP ,
 			INPUT ,
-			INPUTFILE ,
    			LISTONLY,
 			LRMS ,
 			LOGFILE ,
@@ -84,7 +83,8 @@ class Options
 			VALID,
 			VERBOSE ,
 			VERSION,
-                        VO
+                        VO,
+			INPUTFILE
 		} ;
                 enum TimeOpts{
                 	TIME_NO_OPT,
@@ -490,7 +490,6 @@ class Options
 		std::string* fileprotocol ;
 		std::string* from ;
 		std::string* input ;
-		std::string* inputfile ;
 		std::string* lrms ;
 		std::string* logfile ;
 		std::string* output ;
@@ -500,6 +499,8 @@ class Options
 		std::string* to ;
 		std::string* valid ;
 		std::string* vo ;
+		std::string* inputfile ;
+
 		/**
 		*	boolean attributes
 		*/

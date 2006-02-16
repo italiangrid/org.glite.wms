@@ -88,9 +88,9 @@ std::string DelegateProxy::infoToFile( ){
 		ostringstream date;
 		date << Utils::twoDigits(ns->tm_mday) << ws << monthStr[ns->tm_mon]  << ws <<  (ns->tm_year+1900) << "," << ws;
 		date << Utils::twoDigits(ns->tm_hour) << ":" << Utils::twoDigits(ns->tm_min) << ":" << Utils::twoDigits(ns->tm_sec) << ws;
-		string msg = wmcOpts->getApplicationName( ) + " (" + date.str() + ")\n";
+		string msg = wmcOpts->getApplicationName( ) +" (" + date.str() + ")\n";
 		msg += "=========================================================================\n";
-		msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID: " + getDelegationId( ) + "\n";
+		msg += "WMProxy: " + getEndPoint( )+ "\ndelegation ID: " +  getDelegationId( ) + "\n";
 		if( wmcUtils->saveToFile(*outOpt, msg) < 0 ){
 			logInfo->print (WMS_WARNING, "unable to write the delegation operation result " , Utils::getAbsolutePath(*outOpt));
 		} else {

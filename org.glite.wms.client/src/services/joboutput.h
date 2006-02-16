@@ -68,28 +68,25 @@ class JobOutput  : public Job {
 		*	@param msg the message to be added
 		*/
 		void createWarnMsg(const std::string &msg ) ;
-                /**
-                *	File downloading by globus-url-copy
-                *	@param files list of files to be downloaded and their destination
-		*	@param errors string with the descrotion of any errors occurred during the operations
-    		*	@return 0=if the operations successfully end (check the "errors" parameter to see whether any error occured during the operations);
-		*		-1=if no file has been retrieved (check the "errors" parameter to know the reason of the failure)
+  		/**
+		*	struct for files
 		*/
-		int gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;
+		struct httpfile { char *filename; FILE* stream; } ;
+                /**
+                * 	Writing callback for curl operations
+                */
+                static int storegprBody(void *buffer, size_t size, size_t nmemb, void *stream);
                 /**
                 *	File downloading by curl
                 *	@param files list of files to be downloaded and their destination
-		*	@param errors string with the description of any errors occurred during the operations
-		*	@return 0=if the operations successfully end (check the "errors" parameter to see whether any error occured during the operations);
-		*		-1=if no file has been retrieved (check the "errors" parameter to know the reason of the failure)
                 */
-		int curlGetFiles (std::vector <std::pair<std::string , std::string > > &paths, std::string &errors) ;
+		void gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
+		void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
         	 /**
                 *	String input arguments
                 */
 		std::string* inOpt ; 	// --input <file>
 		std::string* dirOpt ; 	// --dir <dir_path>
-		std::string* fileProto; 	//--proto
 		std::string logName;  // string to append to directory
 		std::string dirCfg ; 	// OutputStorage configuration value
                 /**

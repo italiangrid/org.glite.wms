@@ -37,7 +37,7 @@ std::string glite_wms_client_toLower ( const std::string &src){
 // constants for WMProxy  client software version
 const std::string WMP_CLT_MAJOR_VERSION = "1";
 const std::string WMP_CLT_MINOR_VERSION = "2";
-const std::string WMP_CLT_RELEASE_VERSION = "0";
+const std::string WMP_CLT_RELEASE_VERSION = "1";
 const std::string WMP_CLT_POINT_VERSION = ".";
 
 /*
@@ -170,8 +170,8 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_TRANSFER,	no_argument,			0,		Options::TRANSFER},
 	{	Options::LONG_START,		required_argument,		0,		Options::START},
  	{	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
-        {	Options::LONG_DAG,    		required_argument,		0,		Options::DAG},
-        {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
+        // {	Options::LONG_DAG,    		required_argument,		0,		Options::DAG},
+        // {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
         {	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
         {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
@@ -270,7 +270,6 @@ const struct option Options::outputLongOpts[] = {
 	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
 	{	Options::LONG_LISTONLY,		no_argument,			0,	Options::LISTONLY},
-	{	Options::LONG_PROTO	,		required_argument,		0,	Options::PROTO},
 	{ 	Options::LONG_DIR, 	        	required_argument,		0,	Options::DIR},
 	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
         {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
@@ -333,19 +332,18 @@ const struct option Options::proxyInfoLongOpts[] = {
 *	Long options for  job-perusal
 */
 const struct option Options::perusalLongOpts[]  = {
-	{	Options::LONG_ALL				,no_argument,			0,	Options::ALL	},
-	{	Options::LONG_VERSION,			no_argument,			0,	Options::VERSION	},
-	{	Options::LONG_HELP,				no_argument,			0,	Options::HELP	},
-	{	Options::LONG_GET,				no_argument,			0,	Options::GET},
-	{ 	Options::LONG_SET, 	        		no_argument,			0,	Options::SET},
+	{	Options::LONG_ALL			,no_argument,			0,	Options::ALL	},
+	{	Options::LONG_VERSION,		no_argument,			0,	Options::VERSION	},
+	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
+	{	Options::LONG_GET,			no_argument,			0,	Options::GET},
+	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
 	{ 	Options::LONG_UNSET, 	        	no_argument,			0,	Options::UNSET},
-	{ 	Options::LONG_FILENAME, 		required_argument,		0,	Options::SHORT_FILENAME},
-	{	Options::LONG_PROTO	,		required_argument,		0,	Options::PROTO},
-	{ 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
-	{ 	Options::LONG_DIR,        			required_argument,		0,	Options::DIR},
-	{ 	Options::LONG_OUTPUT,        		required_argument,		0,	Options::SHORT_OUTPUT},
-	{	Options::LONG_CONFIG,    			required_argument,		0,	Options::SHORT_CONFIG},
-        {	Options::LONG_VO,           			required_argument,		0,	Options::VO},
+	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::SHORT_FILENAME},
+	// { 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
+	{ 	Options::LONG_DIR,        		required_argument,		0,	Options::DIR},
+	{ 	Options::LONG_OUTPUT,        	required_argument,		0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
+        {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
 	{	Options::LONG_NODISPLAY,		no_argument,			0,	Options::NODISPLAY	},
 	{	Options::LONG_NOINT,			no_argument,			0,	Options::NOINT	},
 	{ 	Options::LONG_DEBUG,      		no_argument,			0,	Options::DBG},
@@ -388,9 +386,7 @@ const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
-const string Options::USG_INPUT = "--" + string(LONG_INPUT)  + ", -" + SHORT_INPUT  + "\t<file_path>";
-
-const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE)  + "\t<file_path>";
+const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
 const string Options::USG_LISTONLY = "--" + string(LONG_LISTONLY) ;
 
@@ -443,6 +439,9 @@ const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHO
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 
 const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
+
+const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
+
 /*
 *	Prints the help usage message for the job-submit
 *	@param exename the name of the executable
@@ -476,8 +475,8 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n";
-	cerr << "\t" << USG_DEFJDL << "\n";
-        cerr << "\t" << USG_DAG << " (**)\n";
+	//cerr << "\t" << USG_DEFJDL << "\n";
+        // cerr << "\t" << USG_DAG << " (**)\n";
         cerr << "\t" << USG_COLLECTION << " (**)\n\n";
         cerr << "\t" << "(*) To be used only with " << USG_REGISTERONLY  << "\n";
         cerr << "\t" << "(**) Using this option you MUSTN'T specified any JDL file\n\n";
@@ -611,7 +610,6 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
         cerr << "\t" << USG_LISTONLY << "\n";
-	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -718,11 +716,10 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_VERSION << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
-	cerr << "\t" << USG_INPUT << "\n";
+	// cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
 	cerr << "\t" << USG_ALL << " (**)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
-	cerr << "\t" << USG_PROTO << "\n";
         cerr << "\t" << USG_NODISPLAY << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
@@ -753,7 +750,6 @@ Options::Options (const WMPCommands &command){
 	exclude = NULL;
 	from = NULL;
 	input = NULL;
-	inputfile = NULL;
 	lrms = NULL;
 	logfile = NULL;
 	nodesres = NULL;
@@ -928,10 +924,10 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c",
-				Options::SHORT_INPUT, 		short_required_arg,
+				// Options::SHORT_INPUT, 		short_required_arg,
 				Options::SHORT_OUTPUT, 		short_required_arg,
 				Options::SHORT_CONFIG,		short_required_arg,
-				Options::SHORT_FILENAME,	short_required_arg);
+				Options::SHORT_FILENAME,		short_required_arg);
 
 			// long options
 			longOpts = perusalLongOpts ;
@@ -963,8 +959,7 @@ Options::~Options( ) {
 	if ( exclude) { delete( exclude);}
 	if (fileprotocol) { delete(fileprotocol);}
 	if (from ) { delete( from);}
-	if (input ) { delete(input);}
-	if (inputfile) {delete(inputfile);}
+	if ( input ) { delete(input  );}
 	if ( lrms) { delete( lrms);}
 	if (logfile ) { delete(logfile );}
 	if (nodesres) { delete(nodesres);}
@@ -977,6 +972,7 @@ Options::~Options( ) {
 	if (valid ) { delete(valid);}
 	if (verbosity  ) { free (verbosity );}
 	if (vo) { delete(vo);}
+	if (inputfile) { delete(inputfile);}
 }
 
 std::string Options::getVersionMessage( ) {
@@ -1585,7 +1581,7 @@ std::string Options::getOptionsInfo(){
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	string jobid = "";
-	string invalid = "";
+	string unvalid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
 	string arg = "";
@@ -1787,73 +1783,41 @@ void Options::readOptions(const int &argc, const char **argv){
 			// ========================================================
 			 if ( cmdType == JOBPERUSAL ||
 			 	cmdType == JOBATTACH ){
-				if (input==NULL){
-					// all the options have been processed by getopt (JobId file is missing)
-					if (input == NULL && optind == argc){
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Wrong Option: " + string(last_arg)  ,
-							"Last argument of the command must be a JobId" );
-					} else if (input == NULL && optind != argc-1) {
-						for (int i = optind ; i < argc ; i++ ){
-							invalid += string(argv[i]) + " " ;
-							jobid = Utils::checkJobId (argv[i]);
-							if ( jobid.size( ) >0 ) {
-								jobIds.push_back(jobid);
-							} else {
-								invalid += string(argv[i]) + " " ;
-							}
-						}
-						ostringstream err ;
-						err << "Last argument of the command must be a JobId";
-						if (invalid.size()>0){
-							err << "\n(Unrecognised option(s): " + invalid + " )" ;
-						}
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Too Many Arguments",
-							err.str());
-					}
-					// Reads the jobid
-					jobid = Utils::checkJobId (argv[argc-1]);
-					if ( jobid.size( ) >0 ) {
-						jobIds.push_back(jobid);
-					} else {
-						invalid = string(jobid)  ;
-					}
-					// checks the read jobid
-					if (invalid.size() > 0) {
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Wrong Input Arguments" ,
-							"invalid arguments: " + invalid );
-					} else  if ( jobIds.empty()) {
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Wrong Input Arguments"  ,
-							"Last argument of the command must be a JobId" );
-					} else {
-
-						this->singleId = string(jobIds[0]);
-					}
-				} else
-				if (input && optind != argc) {
-					// Reads the wrong option !!
-					jobid = Utils::checkJobId (argv[argc-1]);
-					if ( jobid.size( ) >0 ) {
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Too many arguments"  ,
-							"The jobId mustn't be specified with the option:\n"
-								+ getAttributeUsage(Options::INPUT));
-					} else {
-						throw WmsClientException(__FILE__,__LINE__,
-							"readOptions", DEFAULT_ERR_CODE,
-							"Wrong Input Arguments" ,
-							"invalid arguments: " + invalid );
-					}
+				// all the options have been processed by getopt (JobId file is missing)
+				if (optind == argc ){
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Option: " + string(last_arg)  ,
+						"Last argument of the command must be a JobId" );
 				}
+                                for (int i = optind ; i < argc ; i++ ){
+					 jobid = Utils::checkJobId (argv[i]);
+					if ( jobid.size( ) >0 ) {
+     						jobIds.push_back(jobid);
+					} else {
+						unvalid += string(argv[i]) + " " ;
+					}
+                                }
+				 if (jobIds.empty()) {
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Input Arguments"  ,
+						"Last argument of the command must be a JobId" );
+				} else if (jobIds.size() > 1){
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Too many arguments" ,
+						"Too many JobId's: the command only accept one JobId" );
 
+				} else if (unvalid.size() > 0) {
+					throw WmsClientException(__FILE__,__LINE__,
+						"readOptions", DEFAULT_ERR_CODE,
+						"Wrong Input Arguments" ,
+						"Unvalid arguments: " + unvalid );
+
+				} else {
+					this->singleId = string(jobIds[0]);
+				}
 
 		} else
 			// =========================================================

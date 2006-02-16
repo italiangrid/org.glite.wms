@@ -29,7 +29,6 @@
 // BOOST
 #include "boost/filesystem/path.hpp" // path
 #include "boost/filesystem/exception.hpp" //managing boost errors
-#include <boost/lexical_cast.hpp>
 // CURL
 #include "curl/curl.h"
 
@@ -47,7 +46,7 @@ namespace services {
 
 int SUCCESS = 0;
 int FAILED = -1;
-const bool GENERATE_NODE_NAME =false;
+const bool GENERATE_NODE_NAME =true;
 
 /*
 * Default constructor
@@ -56,7 +55,6 @@ JobOutput::JobOutput () : Job() {
 	// init of the string  attributes
 	inOpt = NULL;
 	dirOpt = NULL;
-	fileProto = NULL;
 	// init of the output storage location
 	dirCfg = "/tmp";
 	// init of the boolean attributes
@@ -80,16 +78,6 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 	unsigned int njobs = 0;
 	ostringstream err ;
  	Job::readOptions  (argc, argv, Options::JOBOUTPUT);
-	// --proto
-	fileProto = wmcOpts->getStringAttribute(Options::PROTO);
-	if (fileProto==NULL) {
-		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-		logInfo->print (WMS_DEBUG,
-			"--proto option not specified; using the default File Transferring Protocol:", *fileProto  );
-	} else {
-		logInfo->print (WMS_DEBUG,
-			"--proto option - File Transferring Protocol:", *fileProto  );
-	}
         // --input
         // input file
         inOpt = wmcOpts->getStringAttribute(Options::INPUT);
@@ -230,7 +218,7 @@ void JobOutput::getOutput ( ){
 int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::string& dirAbs, const bool &child){
 	string warnings = "";
 	string wmsg = "" ;
-	string id = "" ;
+	string id = "";
 	// Dir Creation Management 
 	bool createDir=false;
 	bool checkChildren = true;
@@ -313,10 +301,10 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	// checks Children
 	if (checkChildren && children.size()>0){
 		if (hasFiles){
-			msg << "Output sandbox files for the DAG/Collection :\n" << id << endl ;
+			msg << "Output sandbox files for the DAG/Collection :\n" << id <<endl ;
 			msg << "have been successfully retrieved and stored in the directory:"<<endl<<dirAbs << "\n\n";
 		} else{
-			msg << "No output files to be retrieved for the DAG/Collection:\n" << id << "\n\n";
+			msg << "No output files to be retrieved for the DAG/Collection:\n" << jobid.toString() << "\n\n";
 			if (createDir) {
 				// remove created empty dir
 				rmdir(dirAbs.c_str());
@@ -328,14 +316,14 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			// remove created empty dir
 			rmdir(dirAbs.c_str());
 		}
-		msg << "No output files to be retrieved for the job:\n" << id <<" \n\n";
+		msg << "No output files to be retrieved for the job:\n" << jobid.toString() <<" \n\n";
 	}
 	if (purge){
 		try {
 			// Check Dir/purge
 			logInfo->service(WMP_PURGE_SERVICE, id);
 			jobPurge(jobid.toString(),getContext());
-			logInfo->result(WMP_PURGE_SERVICE, "Purging the job: "+ jobid.toString());
+                        logInfo->result(WMP_PURGE_SERVICE, "The purging request has been successfully sent");
 		} catch (BaseException &exc) {
 			string wmsg =  "";
 			if (exc.Description){ wmsg +=" (" + *(exc.Description)+ ")"; }
@@ -349,15 +337,13 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 		vector <pair<string,string> > paths ;
 		string file_proto = "";
 		string filename = "";
-		string errors = "";
 		bool result = true;
-		int res = 0;
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		try {
 			// gets the list of the out-files from the EndPoint
-			logInfo->print(WMS_DEBUG, "Connecting to the service", this->getEndPoint());
-			logInfo->service(WMP_OUTPUT_SERVICE, jobid);
-			files = getOutputFileList(jobid, getContext() );
-			logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
+                        logInfo->service(WMP_OUTPUT_SERVICE, jobid);
+                        files = getOutputFileList(jobid, getContext() );
+                        logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
 			hasFiles = hasFiles || (files.size()>0);
 		} catch (BaseException &exc) {
 			string desc = "";
@@ -377,31 +363,28 @@ bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, con
 			if (listOnlyOpt){
 				this->listResult(files, jobid, child);
 			}
-		} else {
+		}else{
 			// match the file to be downloaded to a local directory pathname
 			if (!listOnlyOpt){
 				// Actually retrieving files
 				logInfo->print(WMS_DEBUG, "Retrieving Files for: ", jobid);
-				paths = Utils::getOutputFileList(files, *fileProto, dirAbs);
-				if (*fileProto == Options::TRANSFER_FILES_GUC_PROTO){
-					// Downloads the files
-					res = this->gsiFtpGetFiles (paths, errors);
-				} else if (*fileProto == Options::TRANSFER_FILES_CURL_PROTO){
-					res =this->curlGetFiles (paths, errors);
-				} else {
-					throw WmsClientException(__FILE__,__LINE__,
-						"jobOutput", ECONNABORTED,
-						"File Protocol Error", "protocol not supported: " + *fileProto);
+				unsigned int size = files.size( );
+				for (unsigned int i = 0; i < size; i++){
+					if (file_proto.size()==0){
+						file_proto = Utils::getProtocol (files[i].first);
+					}
+					filename = Utils::getFileName(files[i].first);
+					paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );
 				}
-				if (res>0 && errors.size()==0){
-					logInfo->print(WMS_DEBUG, "All output files have been successfully stored in", dirAbs);
-				} else if (res>0 && errors.size()>0){
-					logInfo->print(WMS_DEBUG, "The output files successfully retrieved are stored in", dirAbs);
-					logInfo->print(WMS_DEBUG, "Couldn't retrieved the following file(s):\n", errors);
+				if (file_proto == Options::TRANSFER_FILES_GUC_PROTO){
+					// Downloads the files
+					this->gsiFtpGetFiles (paths);
+				} else if (file_proto == Options::TRANSFER_FILES_CURL_PROTO){
+					this->curlGetFiles (paths);
 				} else {
 					throw WmsClientException(__FILE__,__LINE__,
 						"jobOutput", ECONNABORTED,
-						"File Download Error", "error in retrieving the output file(s)\n" +errors);
+						"File Protocol Error", "protocol not supported: " + file_proto);
 				}
 				msg << "Output sandbox files for the job:" << endl << jobid<<endl ;
 				msg << "have been successfully retrieved and stored in the directory:"<<endl<<dirAbs << "\n\n";
@@ -471,10 +454,8 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 /*
 *	gsiFtpGetFiles Method  (WITH_GRID_FTP)
 */
-int JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) {
+void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
 	int code = 0;
-	int res = -1;
-	string err = "";
  	vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
 	vector <pair<std::string , string> >::iterator const end = paths.end( ) ;
 	 for (  ; it != end ; it++ ){
@@ -490,47 +471,55 @@ int JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string>
 				"Unable to find",
 				"globus-url-copy executable");
 		}
-		cmd+=string( it->first) + " file://"  +string(it->second);
+		cmd+=string( it->first) + " file://"  +string( it->second );
 		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
 		// launches the command
 		code = system( cmd.c_str() ) ;
-		if ( code != 0 ) {
-			err =	"Error(globus-url-copy) unable to download: " + string(it->first)
-				+ "(error code: " + boost::lexical_cast<string>(code) + ")";
-			logInfo->print(WMS_WARNING, "Transfer FAILED", err);
-			errors += err + "\n";
-		} else if (! Utils::isFile(it->second)) {
-			err += "Error(globus-url-copy)  unable to copy: " + string(it->first) + " to "
-				+ string( it->second) + "\n";
-			logInfo->print(WMS_WARNING, "Transfer FAILED", err);
-			errors += err + "\n";
-		} else {
-			res = 0;
-			logInfo->print(WMS_DEBUG, "File Transferring SUCCESS:",  it->second);
-		}
+		if ( code != 0 ){
+			ostringstream info ;
+			info << code ;
+			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp) - TRANSFER FAILED", "return code=" + info.str());
+			throw WmsClientException(__FILE__,__LINE__,
+				"utilities::globus::put", ECONNABORTED,
+				"File Transferring Error",
+				"unable to download the file: " +  it->first +"\nto: "+ it->second  );
+                   }
          }
-	 return res;
 }
+
+/*
+* writing callback for curl operations
+*/
+int JobOutput::storegprBody(void *buffer, size_t size, size_t nmemb, void *stream)
+ {
+	struct httpfile *out_stream=(struct httpfile*)stream;
+	if(out_stream && !out_stream->stream) {
+		// open stream
+		out_stream->stream=fopen(out_stream->filename, "wb");
+		if(!out_stream->stream) {
+			return -1;
+		}
+   	}
+  	return fwrite(buffer, size, nmemb, out_stream->stream);
+ }
 /*
 *	File downloading by CURL
 */
- int JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) {
+void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
 	CURL *curl = NULL;
 	string source = "" ;
 	string destination = "" ;
 	string file = "" ;
-	CURLcode code;
-	long http_code = 0;
-	string *logpath = NULL;
-	FILE* log =  NULL;
-	int res = -1;
-	char curl_errorstr[CURL_ERROR_SIZE] = "";
+	CURLcode res;
+	char curl_errorstr[CURL_ERROR_SIZE];
 	// user proxy
 	if ( !paths.empty()){
                 // curl init
                 curl_global_init(CURL_GLOBAL_ALL);
                 curl = curl_easy_init();
                 if ( curl ) {
+                        // writing function
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, storegprBody);
                         // user proxy
                         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
                         curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
@@ -542,26 +531,12 @@ int JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string>
                         //ssl options (no verify)
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-			 // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
-
+                        // verbose message
+                        if ( wmcOpts->getBoolAttribute(Options::DBG)){
+                                curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+                        }
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-			// DEBUG messages in the log file
-			logpath = wmcUtils->getLogFileName( );
-			if (logpath){
-				log = fopen(logpath->c_str(), "a");
-				if (log) {
-					curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-					curl_easy_setopt(curl, CURLOPT_STDERR, log);
-					logInfo->print(WMS_DEBUG, "CURL debug messages printed in the log file:", *logpath);
-				} else {
-					logInfo->print(WMS_WARNING,
-						"couldn't open the log file to print CURL debug messages:",
-						*logpath);
-				}
-			}
                         // files to be downloaded
 			vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
 			vector <pair<std::string , string> >::iterator const end = paths.end( );
@@ -571,48 +546,31 @@ int JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string>
                                 curl_easy_setopt(curl, CURLOPT_URL, source.c_str());
 				// destination
                                 destination = it->second;
-				// log message
-				ostringstream info ;
-                                info << "Source:\t" << source << "\n";
+                                ostringstream info ;
+                                info << "File:\t" << source << "\n";
                                 info << "Destination:\t" << destination <<"\n";
                                 logInfo->print(WMS_DEBUG, "Ouput File Transferring", info.str());
-				// file struct
-				struct glite::wms::client::utilities::httpfile params={
+                                struct httpfile params={
                                         (char*)destination.c_str() ,
                                         NULL
                                 };
                                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
                                 // downloading
-                               code = curl_easy_perform(curl);
-			       // closes the log file
-				if(log) {fclose(log);}
-				if (code != CURLE_OK ){
-					errors += "- source URI: "+  it->first + "\n  LOCAL PATH: " +  destination + "\n" ;
-					// ERROR !!!
-					curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code );
-					// error message according to the HTTP status code
-					string err = Utils::httpErrorMessage(http_code);
-					if (err.size()>0){
-						errors += "  reason: " + err + "\n";
-					} else
-					// ... else CURL error message
-					if ( strlen(curl_errorstr)>0 ){
-						errors += "  reason: " + string(curl_errorstr) + "\n";
-					} else {
-						err += "  (unknown reason)\n";
-					}
-				} else {
-					// SUCCESS
-					res = 0;
-					logInfo->print(WMS_DEBUG, "File Transferring SUCCESS", destination);
-				}
+                                res = curl_easy_perform(curl);
+                                if (res != 0){
+                                	ostringstream err ;
+                                        err << "Failed to perform the downloading of the file:\n";
+                                        err << "from " << source << "\n";
+                                        err << "to " << destination<< "\n";
+					err << curl_errorstr << "\n";
+                                        throw WmsClientException(__FILE__,__LINE__,
+                                        	"transferFiles", DEFAULT_ERR_CODE,
+                                        	"File Transfer Error",
+                                        	err.str() );
+                                }
                         }
-			// cleanup
-			curl_easy_cleanup(curl);
-
                 }
  	}
-	return res;
 }
 }}}} // ending namespaces
 

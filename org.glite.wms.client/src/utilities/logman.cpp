@@ -22,7 +22,7 @@ namespace glite{
 namespace wms{
 namespace client{
 namespace utilities{
-/*
+/**
 * Default constructor
 */
 Log::Log (std::string* path, LogLevel level){
@@ -35,7 +35,7 @@ Log::Log (std::string* path, LogLevel level){
 	}
 }
 
-/*
+/**
 * Default destructor
 */
 Log::~Log( ) {
@@ -63,8 +63,8 @@ void Log::createLogFile(const std::string &path){
 		}
 	}
 }
-/*
-*Write the exception messsage in the file
+/**
+*Writes the exception messsage in the file
 */
 void Log::print (severity sev, const std::string &header,glite::wmsutils::exception::Exception &exc, const bool debug, const bool cache) {
 	bool dbg = false;
@@ -75,8 +75,8 @@ void Log::print (severity sev, const std::string &header,glite::wmsutils::except
 	// adds the message to the internal cache
 	if (cache) { logCache += stripe + "\n" + message ;}
 }
-/*
-* Write the messsage string in the file
+/**
+* Writes the messsage string in the file
 */
 void Log::print (severity sev, const std::string &header, const std::string &msg, const bool debug, const bool cache) {
 	bool dbg = false;
@@ -87,22 +87,22 @@ void Log::print (severity sev, const std::string &header, const std::string &msg
 	// adds the message to the internal cache
 	if (cache) { logCache +=  stripe + "\n" + message ;}
 }
-/*
-* Write the messsage string in the file
+/**
+* Writes the messsage string in the file
 */
 void Log::service(const std::string& service) {
 	print(WMS_DEBUG, "Calling the WMProxy " + service, "service" );
 }
-/*
-* Write the messsage string in the file
+/**
+* Writes the messsage string in the file
 */
 void Log::service(const std::string& service, const std::string& jobid) {
 	print(WMS_DEBUG,
-		"Calling the WMProxy " + service + "for the job: " + jobid,
+		"Calling the WMProxy " + service + " for the job: " + jobid,
 		"");
 }
-/*
-* Write the messsage string in the file
+/**
+* Writes the messsage string in the file
 */
 void Log::service(const std::string& service, const std::vector <std::pair<std::string , std::string> > &params) {
 	int size = params.size( );
@@ -115,14 +115,13 @@ void Log::service(const std::string& service, const std::vector <std::pair<std::
 	}
 	print(WMS_DEBUG, msg, "");
 }
-/*
-* Write the result messsage string in the file
+/**
+* Writes the result messsage string in the file
 */
 void Log::result(const std::string& service, const std::string msg) {
 	print(WMS_DEBUG, string(service + " - ") , msg );
 }
-
-/*
+/**
 * Gets the log file pathname
 */
 std::string* Log::getPathName( ){

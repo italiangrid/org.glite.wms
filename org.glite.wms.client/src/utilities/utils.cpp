@@ -5,7 +5,7 @@
 #include "time.h" // time (getTime)
 #include "sstream" //to convert number in to string
 #include <stdlib.h>	// srandom
-#include <sys/stat.h> //mkdir
+
 // BOOST
 #include "boost/lexical_cast.hpp" // types conversion
 #include "boost/tokenizer.hpp"
@@ -28,19 +28,28 @@
 #include "utils.h"
 // encoding
 #include "openssl/md5.h"
+
+#include <sys/types.h>
+#include <sys/mman.h>
+// fstat
+#include <sys/stat.h>
 //gettimeofday
 #include "sys/time.h"
-#include "unistd.h"
-// fstat
-#include "sys/types.h"
-#include "sys/stat.h"
 #include "unistd.h"
 #include "fcntl.h"
 //gzip
 #include "zlib.h"
 #define local
-// CURL
-#include "curl/curl.h"
+
+#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#  define SET_BINARY_MODE(file) setmode(fileno(file), O_BINARY)
+#else
+#  define SET_BINARY_MODE(file)
+#endif
+#define CHUNK 16384
+
 namespace glite {
 namespace wms{
 namespace client {
@@ -60,11 +69,11 @@ namespace fs = boost::filesystem ;
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
 const char*  GLITE_WMS_WMPROXY_ENDPOINT	= 	"GLITE_WMS_WMPROXY_ENDPOINT";
 const char*  GLITE_CONF_FILENAME 			= "glite_wms.conf";
-const string DEFAULT_LB_PROTOCOL			=	"https";
-const string DEFAULT_OUTSTORAGE			=	"/tmp";
-const string DEFAULT_ERRSTORAGE			=	"/tmp";
-const string PROTOCOL					=	"://";
-const string TIME_SEPARATOR				=	":";
+const string DEFAULT_LB_PROTOCOL	=	"https";
+const string DEFAULT_OUTSTORAGE		=	"/tmp";
+const string DEFAULT_ERRSTORAGE		=	"/tmp";
+const string PROTOCOL			=	"://";
+const string TIME_SEPARATOR		=	":";
 
 const unsigned int DEFAULT_LB_PORT	=	9000;
 const unsigned int DEFAULT_WMP_PORT	=	7772;
@@ -74,13 +83,16 @@ const string Utils::JOBID_FILE_HEADER = "###Submitted Job Ids###";
 
 const string PROTOCOL_SEPARATOR= "://";
 
-const char* COMPRESS_MODE ="wb6 " ;
+
+
+//const char* COMPRESS_MODE ="wb6 " ;
 const int OFFSET = 16;
 // File protocol string
 const string FILE_PROTOCOL = "file://" ;
 // Archives & Compressed files
 const char* GZ_SUFFIX = ".gz";
 const char* TAR_SUFFIX = ".tar";
+const string GZ_MODE = "wb6f";
 
 /*************************************
 *** Constructor **********************
@@ -471,73 +483,6 @@ std::string* Utils::generateLogFile ( ){
         return log;
 };
 
-/*
-* Error messages according to HTTP /1.1 status codes
-*/
-std::string Utils::httpErrorMessage(const int &code){
-	string msg = "";
-	switch (code){
-		case (400):{
-			msg = "Bad Request (the request could not be understood by the server due to malformed syntax)";
-			break;
-		};
-		case (401):{
-			msg = "Not Authorised (user authentication error)";
-			break;
-		};
-		case (403):{
-			msg = "Forbidden (request refused)";
-			break;
-		};
-		case (404):{
-			msg = "File Not Found (no matching found for the requested URI)";
-			break;
-		};
-		case (407):{
-			msg = "Proxy Authentication Required (the request first requires authentication with the proxy)";
-			break;
-		};
-		case (408):{
-			msg = "Request Timeout";
-			break;
-		};
-		case (414):{
-			msg = "Requested URI Too Long";
-			break;
-		};
-		case (500):{
-			msg = "";
-			break;
-		};
-		case (501):{
-			msg = "Service Not Implemented";
-			break;
-		};
-		case (505):{
-			msg = "HTTP Version Not Supported";
-			break;
-		};
-		default :{
-			msg = "";
-		};
-	};
-	return msg;
-};
-/*
-* Writing callback for curl operations
-*/
-int Utils::curlWritingCb (void *buffer, size_t size, size_t nmemb, void *stream) {
-	struct httpfile *out_stream=(struct httpfile*)stream;
-	if(out_stream && !out_stream->stream) {
-		// open stream
-		out_stream->stream=fopen(out_stream->filename, "wb");
-		if(!out_stream->stream) {
-			return -1;
-		}
-   	}
-	return fwrite(buffer, size, nmemb, out_stream->stream);
- }
-
 /** Static private method **/
 std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 						const std::string& DEFAULT_PROTOCOL,
@@ -572,7 +517,6 @@ std::pair <std::string, unsigned int> checkAd(	const std::string& adFullAddress,
 	return ad;
 }
 
-
 /**********************************
 Virtual Organisation methods
 VO check priority:
@@ -582,38 +526,39 @@ VO check priority:
 	- JDL (submit||listmatch)
 ***********************************/
 std::vector<std::string> Utils::parseFQAN(const std::string &fqan){
-	vector<string> returnvector;
-	boost::char_separator<char> separator("/");
-	boost::tokenizer<boost::char_separator<char> >tok(fqan, separator);
-	boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
-	boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
-	for( ; token != end; token++) {
-		returnvector.push_back(*token);
-	}
-	return returnvector;
+        vector<string> returnvector;
+        boost::char_separator<char> separator("/");
+        boost::tokenizer<boost::char_separator<char> >tok(fqan, separator);
+        boost::tokenizer<boost::char_separator<char> >::iterator token = tok.begin();
+        boost::tokenizer<boost::char_separator<char> >::iterator const end = tok.end();
+        for( ; token != end; token++) {
+                returnvector.push_back(*token);
+        }
+        return returnvector;
 }
 
 std::string Utils::FQANtoVO(const std::string fqan){
-	unsigned int pos = fqan.find("/", 0);
-	if(pos != string::npos) {
-		return  (Utils::parseFQAN(fqan.substr(pos,fqan.size())))[0];
-	}
-	// TBD display warning message
-	return "";
+        unsigned int pos = fqan.find("/", 0);
+        if(pos != string::npos) {
+                return  (Utils::parseFQAN(fqan.substr(pos,fqan.size())))[0];
+        }
+        // TBD display warning message
+        return "";
 
 }
 std::string Utils::getDefaultVo(){
-	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
-	if (proxy){
-		const vector <std::string> fqans= glite::wms::wmproxyapiutils::getFQANs(proxy);
-		if (fqans.size()){return Utils::FQANtoVO(fqans[0]);}
-		else {return "";};
-	} else {
-		throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
-			DEFAULT_ERR_CODE,
-			"Proxy File Not Found", "Unable to find a valid proxy file");
-	}
+        const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
+        if (proxy){
+                const vector <std::string> fqans= glite::wms::wmproxyapiutils::getFQANs(proxy);
+                if (fqans.size()){return Utils::FQANtoVO(fqans[0]);}
+                else {return "";};
+        } else {
+                throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
+                        DEFAULT_ERR_CODE,
+                        "Proxy File Not Found", "Unable to find a valid proxy file");
+        }
 }
+
 std::string* Utils::checkConf(){
 	string voPath, voName;
 	// config-file pathname
@@ -757,13 +702,16 @@ string Utils::checkJobId(std::string jobid){
 					cout << "bye\n";
 					ending(0);
 				}
-			} else {
+			}else{
 				// Not even a right jobid
 				throw WmsClientException(__FILE__,__LINE__,
 					"checkJobIds", DEFAULT_ERR_CODE,
 					"Wrong Input Value",
 					"all parsed jobids in bad format" );
 			}
+
+
+
 		}
         }
 	return rights;
@@ -1277,19 +1225,18 @@ std::string* Utils::fromFile (const std::string &path) {
  	}
         return txt;
 }
-
 /*
 * Saves message into a  file
 */
 int Utils::toFile (const std::string &path, const std::string &msg, const bool &append) {
-	int result = -1;
-	ios::openmode mode ;
-	if (append ) {
-		mode = ios::app ;
-	} else {
-		mode = ios::trunc ;
-	}
-	ofstream outputstream(path.c_str(), mode);
+        int result = -1;
+        ios::openmode mode ;
+        if (append ) {
+                mode = ios::app ;
+        } else {
+                mode = ios::trunc ;
+        }
+        ofstream outputstream(path.c_str(), mode);
         if (outputstream.is_open()) {
                 outputstream << msg  << "\n";
                 outputstream.close();
@@ -1304,64 +1251,65 @@ int Utils::toFile (const std::string &path, const std::string &msg, const bool &
 * (either overwriting or appending ; otherwise nothing)
 */
 int Utils::saveToFile(const std::string &path, const std::string &msg) {
-	bool ask = true;
-	string answer = "";
-	char  x[1024] = "";
-	int len = 0;
-	int result = 0;
-	// checks if the output file already exists
-	if ( isFile(path ) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
-		// if the file exists ......
-		string info = Utils::getAbsolutePath(path) + " file already exists";
-		// writes a warning msg in the log file
-		if (logInfo){ logInfo->print(WMS_WARNING, "Ouput file:", info, false);}
-		ostringstream q;
-		q << "\n\n" + info + "\n";
-		q  << "Do you want to append (a) or to overwrite (o) ?\n";
-		q << "Press the 'q' key for not saving.\n";
-		while (ask){
-			// Question --------
-			ask = false;
-			cout << q.str() <<  " " ;
-			cin.getline(x,128);
-			// Processing the reply -----------
-			answer = answer.assign(Utils::cleanString(x));
-			len = answer.size( );
-			if (len > 0) {
-				if (answer.compare("a")==0) {
-					result = this->toFile(path, msg, true);
-				} else if (answer.compare("o")==0) {
-					result = this->toFile(path, msg, false);
-				} else if (answer.compare("q")==0) {
-					/* do nothing*/
-					result = -1;
-				} else {
-					ask = true;
-				}
-			} else {
-				ask = true;
-			}
-		}
-	} else {
-		result = this->toFile(path, msg);
-	}
-	return result;
+        bool ask = true;
+        string answer = "";
+        char  x[1024] = "";
+        int len = 0;
+        int result = 0;
+        // checks if the output file already exists
+        if ( isFile(path ) && ! this->wmcOpts->getBoolAttribute(Options::NOINT) ){
+                // if the file exists ......
+                string info = Utils::getAbsolutePath(path) + " file already exists";
+                // writes a warning msg in the log file
+                if (logInfo){ logInfo->print(WMS_WARNING, "Ouput file:", info, false);}
+                ostringstream q;
+                q << "\n\n" + info + "\n";
+                q  << "Do you want to append (a) or to overwrite (o) ?\n";
+                q << "Press the 'q' key for not saving.\n";
+                while (ask){
+                        // Question --------
+                        ask = false;
+                        cout << q.str() <<  " " ;
+                        cin.getline(x,128);
+                        // Processing the reply -----------
+                        answer = answer.assign(Utils::cleanString(x));
+                        len = answer.size( );
+                        if (len > 0) {
+                                if (answer.compare("a")==0) {
+                                        result = this->toFile(path, msg, true);
+                                } else if (answer.compare("o")==0) {
+                                        result = this->toFile(path, msg, false);
+                                } else if (answer.compare("q")==0) {
+                                        /* do nothing*/
+                                        result = -1;
+                                } else {
+                                        ask = true;
+                                }
+                        } else {
+                                ask = true;
+                        }
+                }
+        } else {
+                result = this->toFile(path, msg);
+        }
+        return result;
 }
 /*
 * Stores a list in a file
 */
 const int Utils::saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header){
-	string msg = "";
-	// Number of items in the input list
-	int size = list.size();
-	if (header.size( )>0){ msg = header + "\n";}
-	// Prepares the message with the list items
-	for(int i = 0 ; i < size ; i++){
-		msg += list [i] + "\n";
-	}
-	// Saves to file
-	return saveToFile(path,msg);
+        string msg = "";
+        // Number of items in the input list
+        int size = list.size();
+        if (header.size( )>0){ msg = header + "\n";}
+        // Prepares the message with the list items
+        for(int i = 0 ; i < size ; i++){
+                msg += list [i] + "\n";
+        }
+        // Saves to file
+        return saveToFile(path,msg);
 }
+
 /*
 * Stores a jobid in a file
 */
@@ -1398,6 +1346,7 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
         outmsg += jobid ;
 	return (toFile(path, outmsg));
 }
+
 /**
  * Removes '/' characters at the end of the of the input pathname
  */
@@ -1437,13 +1386,6 @@ const int Utils::saveJobIdToFile (const std::string &path, const std::string job
 	}
 	return file;
 }
-
-/*
-* Returns the tail of the input URL, removing the protocol, the server
-* and the port infomation
-* e.g.   input 	https://server:port/tok1/tok2/file.txt
-*	output:	tok1/tok2/file.txt
-*/
 std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 	string tmp = "";
 	// looks for the end of the protocol string
@@ -1456,26 +1398,14 @@ std::string  Utils::getAbsolutePathFromURI (const std::string& uri) {
 
 }
 
-/*
-* Checks whether the input protocol is included in the list of
-* those supported ones
-*/
-bool Utils::checkProtocol(const std::string &proto, std::string &list) {
-	bool found = false;
-	vector<string> protos = Options::getProtocols();
-	int size = protos.size();
-	for (int i = 0; i < size ; i++){
-		if (list.size()>0){ list += ", ";}
-		list += string(protos[i]);
-		if (! found && proto.compare( protos[i] )==0){
-			found = true;
-		}
-	}
-	return found;
+std::string  Utils::getFileName (const std::string& path) {
+	string tmp = "";
+	int size = path.size( );
+	unsigned int p =path.rfind("/", size);
+ 	if (p!=string::npos) { tmp = path.substr(p+1, size);}
+	return tmp;
 }
-/*
-* Extracts the protocol from the input URI
-*/
+
 std::string  Utils::getProtocol (const std::string& uri) {
 	string proto = "";
 	string list = "";
@@ -1498,44 +1428,19 @@ std::string  Utils::getProtocol (const std::string& uri) {
 	}
 	return proto;
 }
-/*
-* Extracts the filename from the input path
-*/
-std::string  Utils::getFileName (const std::string& path) {
-	string tmp = "";
-	int size = path.size( );
-	unsigned int p =path.rfind("/", size);
- 	if (p!=string::npos) { tmp = path.substr(p+1, size);}
-	return tmp;
-}
-/*
-* Extracts the items having the protocol specified as input from the input list of URIs
-*/
-std::vector<std::string> Utils::extractProtocolURIs(const std::vector<std::string> &uris, const std::string &protocol) {
-	vector<string> res ;
-	int size = uris.size();
+
+bool Utils::checkProtocol(const std::string &proto, std::string &list) {
+	bool found = false;
+	vector<string> protos = Options::getProtocols();
+	int size = protos.size();
 	for (int i = 0; i < size ; i++){
-		if ( protocol.compare(getProtocol(uris[i])) == 0) {
-			res.push_back(uris[i]);
+		if (list.size()>0){ list += ", ";}
+		list += string(protos[i]);
+		if (! found && proto.compare( protos[i] )==0){
+			found = true;
 		}
 	}
-	return res;
-}
-/*
-* Returns a vector  in which each element is a pair with:
-* the URI of the output file on the remote machine, the local path
-*/
-std::vector<std::pair<std::string,std::string > > Utils::getOutputFileList(std::vector <std::pair<std::string,long > > &files, const std::string &protocol, const std::string &localpath ) {
-	string loc = "";
-	std::vector<std::pair<std::string, std::string > > res;
-	int size = files.size( );
-	for (int i=0; i < size; i++){
-		if ( protocol.compare(getProtocol(files[i].first)) == 0) {
-			loc = localpath + "/" + Utils::getFileName(files[i].first);
-			res.push_back(make_pair(files[i].first, loc));
-		}
-	}
-	return res;
+	return found;
 }
 /*
 * Reads a file
@@ -1583,59 +1488,239 @@ std::string Utils::getArchiveFilename (const std::string file){
 	}
 	return tar ;
 }
+/**
+* Reports a zlib  error
+*/
+std::string Utils::gzError(int code) {
+        string err ="";
+        switch (code) {
+        case Z_ERRNO:
+                err = "i/o error";
+                break;
+        case Z_STREAM_ERROR:
+                err = "invalid compression level";
+                break;
+        case Z_DATA_ERROR:
+                err = "invalid or incomplete deflate data";
+                break;
+        case Z_MEM_ERROR:
+                err = "out of memory\n";
+                break;
+        case Z_VERSION_ERROR:
+                err = "zlib version mismatch";
+                break;
+        }
+        return err;
+}
 
- std::string  Utils::compressFile(const std::string &file) {
-         FILE  *in = NULL;
-         gzFile out;
-         int size = 0;
-         int len = 0;
-         int err= 0;
-         string m = "";
-         string gz = file  + GZ_SUFFIX ;
-         in = fopen(file.c_str(), "rb");
-          if (in == NULL) {
-                 char* em = strerror(errno);
-                 if (em) { m = string(em) + ": " + file;}
-                 else { m = "error in opening file for gzip compression: " + file;}
-                 throw WmsClientException(__FILE__,__LINE__,
-                         "compressFile",  DEFAULT_ERR_CODE,
-                         "File i/o Error",  m);
-         }
-         out = gzopen(gz.c_str(), COMPRESS_MODE);
-          if (out == NULL) {
-                 throw WmsClientException(__FILE__,__LINE__,
-                         "compressFile",  DEFAULT_ERR_CODE,
-                         "File i/o Error",
-                         "Unable to create gzip file: " + gz);
-         }
-         size = Utils::getFileSize(file) ;
-         if (size > 0) {
-                 local char* buf = (char*) malloc(size+OFFSET);
-                 for (;;) {
-                         len = (int)fread(buf, 1, sizeof(buf), in);
-                         if (ferror(in)) {
-                                 throw WmsClientException(__FILE__,__LINE__,
-                                         "compressFile",  DEFAULT_ERR_CODE,
-                                         "File i/o Error", "Unable to create gzip file: " + gz);
-                         }
-                         if (len == 0) break;
-                         if (gzwrite(out, buf, (unsigned)len) != len)  {
-                                 throw WmsClientException(__FILE__,__LINE__,
-                                  "compressFile",  DEFAULT_ERR_CODE,
-                                 "File i/o Error", gzerror(out, &err) );
-                         }
-                 }
-                 fclose(in);
-               gzclose(out) ;
-                 unlink(file.c_str());
+/**
+* Performs compression
+*/
+int Utils::compression(FILE *source, FILE *dest, int level) {
+	int ret, flush;
+	unsigned have;
+	z_stream strm;
+	unsigned char in[CHUNK];
+	unsigned char out[CHUNK];
+	/* allocate deflate state */
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	ret = deflateInit(&strm, level);
+	if (ret != Z_OK) {
+		return ret;
+	}
+	/* compress until end of file */
+	do {
+		strm.avail_in = fread(in, 1, CHUNK, source);
+		if (ferror(source)) {
+			(void)deflateEnd(&strm);
+			return Z_ERRNO;
+		}
+		flush = feof(source) ? Z_FINISH : Z_NO_FLUSH;
+		strm.next_in = in;
+		/* run deflate() on input until output buffer not full, finish
+		compression if all of source has been read in */
+		do {
+			strm.avail_out = CHUNK;
+			strm.next_out = out;
+			// no bad return value *
+			ret = deflate(&strm, flush);
+			// state not clobbered
+			assert(ret != Z_STREAM_ERROR);
+			have = CHUNK - strm.avail_out;
+			if (fwrite(out, 1, have, dest) != have || ferror(dest)) {
+				(void)deflateEnd(&strm);
+				return Z_ERRNO;
+			}
+		} while (strm.avail_out == 0);
+		// all input will be used
+		assert(strm.avail_in == 0);
+	// done when last data in file processed
+	} while (flush != Z_FINISH);
+	assert(ret == Z_STREAM_END);
+	// stream will be complete
+	// clean up and return
+	(void)deflateEnd(&strm);
+	return Z_OK;
+}
+/**
+* New method for file compression
+* since WMProxy vers 2.1.1 (see getVersion service)
+*/
+ std::string  Utils::fileCompression(const std::string &file) {
+ 	int result = 0;
+	string gz = file  + GZ_SUFFIX ;
+	FILE *s = fopen (file.c_str(), "r");
+	FILE *d = fopen (gz.c_str(), "w+");
+	if (s==NULL) {
+		throw WmsClientException(__FILE__,__LINE__,
+		"Utils::compressFile",  DEFAULT_ERR_CODE,
+		"File i/o Error",
+		"unable to open the file to be compressed:\n" + file );
+	}
+	if (d==NULL) {
+		fclose (s);
+		throw WmsClientException(__FILE__,__LINE__,
+		"Utils::compressFile",  DEFAULT_ERR_CODE,
+		"File i/o Error",
+		"unable to create the gzip file:\n" + gz
+		+"\n(please, check write permission)" );
+	}
+	fclose (s);
+	fclose(d);
+	if (result != Z_OK) {
+		throw WmsClientException(__FILE__,__LINE__,
+		"Utils::compressFile",  DEFAULT_ERR_CODE,
+		"File i/o Error",
+		"unable to create the gzip file:\n" + gz +
+		"\n(" +  gzError(result) + ")");
+	}
+	return gz;
+}
+/**
+* Method for file compression
+* >>>> It will be deprecated soon
+*/
+std::string  Utils::compressFile(const std::string &file) {
+	string compr = "";
+	string errmsg = "";
+	string zmsg = "";
+	int len = 0;
+	int err = 0;
+	int ifd =0;
+	struct stat sb;
+	caddr_t buf;    /// mmap'ed buffer for the entire input file
+	off_t buf_len;  // length of the input file
+	FILE *in = NULL;
+	gzFile out;
+	compr = file + GZ_SUFFIX;
+	in = fopen(file.c_str(), "rb");
+	if (in == NULL) {
+		perror(file.c_str());
+		exit(1);
+	}
+	out = gzopen(compr.c_str(), GZ_MODE.c_str());
+	if (out == NULL) {
+		fprintf(stderr, "error: can't gzopen %s\n",  compr.c_str());
+		exit(1);
+	}
+	ifd = fileno(in);
+	/* Determine the size of the file, needed for mmap: */
+	fstat(ifd, &sb);
+	buf_len = sb.st_size;
+	if (buf_len <= 0)  {
+		errmsg = "unable to compress the file: " + file + "\n";
+		errmsg += "(invalid file size)\n";
+		throw WmsClientException(__FILE__,__LINE__,
+			"Utils::compressFile",  DEFAULT_ERR_CODE,
+			"File i/o Error",
+			errmsg);
+	}
+	// Now do the actual mmap
+	buf = (char*)mmap((caddr_t) 0, buf_len, PROT_READ, MAP_SHARED, ifd, (off_t)0);
+	if (buf == (caddr_t)(-1))  {
+		errmsg = "error while compressing the file: " + file + "\n";
+		throw WmsClientException(__FILE__,__LINE__,
+			"Utils::compressFile",  DEFAULT_ERR_CODE,
+			"File i/o Error",
+			errmsg);
+		}
+	/* Compress the whole file at once: */
+	len = gzwrite(out, (char *)buf, (unsigned)buf_len);
 
-         } else{
-                 throw WmsClientException(__FILE__,__LINE__,
-                         "compressFile",  DEFAULT_ERR_CODE,
-                         "File i/o Error", "Invalid file size: " + file);
-         }
-         return gz;
- }
+	if (len != (int)buf_len)  {
+		errmsg = "unable to compress the file: " + file + "\n";
+		zmsg = gzerror(out, &err);
+		if (zmsg.size()>0)  { errmsg += zmsg ;}
+		throw WmsClientException(__FILE__,__LINE__,
+			"Utils::compressFile",  DEFAULT_ERR_CODE,
+			"File i/o Error",
+			errmsg);
+	}
+	munmap(buf, buf_len);
+	fclose(in);
+	if (gzclose(out) != Z_OK)  {
+		logInfo->print(WMS_WARNING, "Unable to remove the gz file (error while closing the file):", file);
+	} else  {
+		Utils::removeFile(file);
+	}
+	return compr;
+}
+/*
+std::string  Utils::compressFile(const std::string &file) {
+	FILE  *in = NULL;
+	gzFile out;
+	int size = 0;
+	int len = 0;
+	int err= 0;
+	string m = "";
+	string gz = file  + GZ_SUFFIX ;
+	in = fopen(file.c_str(), "rb");
+	if (in == NULL) {
+		char* em = strerror(errno);
+		if (em) { m = string(em) + ": " + file;}
+		else { m = "error in opening file for gzip compression: " + file;}
+		throw WmsClientException(__FILE__,__LINE__,
+			"compressFile",  DEFAULT_ERR_CODE,
+			"File i/o Error",  m);
+	}
+	out = gzopen(gz.c_str(), COMPRESS_MODE);
+	if (out == NULL) {
+		throw WmsClientException(__FILE__,__LINE__,
+			"compressFile",  DEFAULT_ERR_CODE,
+			"File i/o Error",
+			"Unable to create gzip file: " + gz);
+	}
+	size = Utils::getFileSize(file) ;
+	if (size > 0) {
+		local char* buf = (char*) malloc(size+OFFSET);
+		for (;;) {
+			len = (int)fread(buf, 1, sizeof(buf), in);
+			if (ferror(in)) {
+				throw WmsClientException(__FILE__,__LINE__,
+					"compressFile",  DEFAULT_ERR_CODE,
+					"File i/o Error", "Unable to create gzip file: " + gz);
+			}
+			if (len == 0) break;
+			if (gzwrite(out, buf, (unsigned)len) != len)  {
+				throw WmsClientException(__FILE__,__LINE__,
+				"compressFile",  DEFAULT_ERR_CODE,
+				"File i/o Error", gzerror(out, &err) );
+			}
+		}
+		fclose(in);
+		gzclose(out) ;
+		unlink(file.c_str());
+
+	} else{
+		throw WmsClientException(__FILE__,__LINE__,
+			"compressFile",  DEFAULT_ERR_CODE,
+			"File i/o Error", "Invalid file size: " + file);
+	}
+	return gz;
+}
+*/
  /**
 * Checks if a vector of strings contains a string item
 */
@@ -1650,7 +1735,6 @@ bool Utils::contains (const std::vector<std::string> &vect, std::string item) {
 	}
 	return found ;
 }
-
 } // glite
 } // wms
 } // client

@@ -13,6 +13,7 @@
 
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBSUBMIT_H
+
 #include "listener.h"
 // inheritance
 #include "job.h"
@@ -20,8 +21,6 @@
 #include "utilities/options_utils.h"
 #include "utilities/utils.h"
 #include "utilities/logman.h"
-//listener for interactive jobs
-//#include "listener.h"
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 // Ad's
@@ -30,7 +29,7 @@
 #include "glite/wms/jdl/collectionad.h"
 
 namespace glite {
-namespace wms{
+namespace wms {
 namespace client {
 namespace services {
 
@@ -141,19 +140,39 @@ class JobSubmit : public Job {
 		*/
 		void checkInputSandboxSize ( ) ;
 		/*
-		* Return the InputSandbox URIs for the parent node of a DAG.
+		* Returns the InputSandbox URIs for the parent node of the Collection is being processed
+		* This information is retrieved by the user JDL.
+		*/
+		std::string getCollectionISBUri( );
+		/*
+		* Fills the input vector with the list of the InputSandbox URIs for all nodes of the Collection is being processed
+		* This information is retrieved by the user JDL.
+		* @param uris the vector to be filled
+		*/
+		void getCollectionNodesISBUris(std::vector<std::pair<std::string,std::vector<std::string> > > &uris);
+		/*
+		* Returns the InputSandbox URIs for the child node of the collection which name is provided as input.
+		* This information is retrieved by the vector provided as input (@see #getCollectionNodesISBUris)
+		* @param uris the list of pairs <node,URI>
+		* @param node the string with the node name
+		* @return th string representing the URI; empty string if the vector doesn't contain the uri for the specified node
+		*/
+		std::string getNodeISBUri(const std::vector<std::pair<std::string,std::vector<std::string> > > &uris, const std::string node);
+
+		/*
+		* Returns the InputSandbox URIs for the parent node of the DAG is being processed
 		* This information is retrieved by the user JDL.
 		*/
 		std::string getDagISBUri( );
 		/*
-		* Fills the input vector with the list of the InputSandbox URIs for all nodes of a DAG.
+		* Fills the input vector with the list of the InputSandbox URIs for all nodes of a DAG. is being processed
 		* This information is retrieved by the user JDL.
 		* @param uris the vector to be filled
 		*/
 		void getDagNodesISBUris (std::vector<std::pair<std::string,std::string > > &uris);
 
 		/*
-		* Return the InputSandbox URIs for the child node of a DAG which name is provided as input.
+		* Returns the InputSandbox URIs for the child node of a DAG which name is provided as input.
 		* This information is retrieved by the vector provided as input (@see #getDagNodesISBUris)
 		* @param uris the list of pairs <node,URI>
 		* @param node the string with the node name
@@ -256,12 +275,22 @@ class JobSubmit : public Job {
 		* an info message with the list these file is provided.
 		*/
                 std::string collectionJob();
+
 		/**
                 * Checks the user JDL
 		*@param filestoBtransferred whether the ad has any file to be transferred (true) or not(false)
                 */
                 void JobSubmit::checkAd(bool &filestoBtransferred);
-
+		/**
+		* This method returns the jobid of the node which name is specified as input and removes
+		* the item of the node from the vector.
+		* The children input vector contains a list of pairs which elements are node name
+		* and the correspondoing jobid.
+		* @param node the node name string
+		* @param children the list of nodes with their jobids (the node item is removed)
+		* @return the jobid string of the node
+		*/
+		std::string getJobId(const std::string &node, std::vector <glite::wms::wmproxyapi::JobIdApi*> &children);
 		/**
                 *	String input arguments
                 */

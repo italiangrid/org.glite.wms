@@ -175,6 +175,9 @@ void Job::excMsg(const std::string& header, glite::wmsutils::exception::Exceptio
         } else{
         	errMsg(WMS_ERROR, header, exc, true);
         }
+        if (exc.getCode() == EINVAL && exename.size()>0){
+        	wmcOpts->printUsage (exename.c_str());
+         }
 }
 
 /**
@@ -198,9 +201,9 @@ const std::string Job::getWmpVersion (const std::string &endpoint) {
 	try {
 		// Cfg context object
 		ConfigContext *cfg = new ConfigContext (getProxyPath(), endpoint, getCertsPath());
-		logInfo->service(WMP_VERSION_SERVICE);
-		logInfo->print (WMS_INFO, "Connecting to the service", endpoint, false);
+		logInfo->print (WMS_INFO, "Connecting to the service", endpoint);
 		// Version string number
+		logInfo->service(WMP_VERSION_SERVICE);
 		version = getVersion((ConfigContext *)cfg);
 		logInfo->result(WMP_VERSION_SERVICE, "Version numbers successfully retrieved");
 	} catch (BaseException &exc){
@@ -400,6 +403,8 @@ void Job::setDelegationId ( ){
 	}
 }
 
+
+
 /*
 * Returns the delegationId string
 */
@@ -413,6 +418,8 @@ const std::string Job::getDelegationId  ( ) {
 	}
         return (*id);
 }
+
+
 
 const std::string Job::delegateProxy( ) {
 	string endpoint = "";
@@ -430,33 +437,34 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 	try{
 		ConfigContext *cfg = new ConfigContext (getProxyPath(), endpoint, getCertsPath());
 		// Proxy Request
-		logInfo->print(WMS_DEBUG, "Delegating Credential to the service",  endpoint);
+		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  endpoint);
 		if  (checkWmpVersion()){
-			// GetProxy
-			logInfo->service(WMP_NS2_GETPROXY_SERVICE);
-			proxy = grstGetProxyReq(*dgOpt, cfg) ;
-			logInfo->result(WMP_NS2_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
-			// PutProxy
-			logInfo->service(WMP_NS2_PUTPROXY_SERVICE);
-			grstPutProxy(*dgOpt, proxy, cfg);
-			logInfo->result(WMP_NS2_PUTPROXY_SERVICE, string("The proxy has been successfully delegated with the identifier:" + *dgOpt) );
+                        // GetProxy
+                        logInfo->service(WMP_NS2_GETPROXY_SERVICE);
+                        proxy = grstGetProxyReq(*dgOpt, cfg) ;
+                        logInfo->result(WMP_NS2_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
+                        // PutProxy
+                        logInfo->service(WMP_NS2_PUTPROXY_SERVICE);
+                        grstPutProxy(*dgOpt, proxy, cfg);
+                        logInfo->result(WMP_NS2_PUTPROXY_SERVICE, string("The proxy has been successfully delegated with the identifier: " + *dgOpt) );
 
-		} else {
-			// GetProxy
-			logInfo->service(WMP_NS1_GETPROXY_SERVICE);
-			proxy = getProxyReq(*dgOpt, cfg) ;
-			logInfo->result(WMP_NS2_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
-			// PutProxy
-			logInfo->service(WMP_NS1_PUTPROXY_SERVICE);
-			putProxy(*dgOpt, proxy, cfg);
-			logInfo->result(WMP_NS1_PUTPROXY_SERVICE, string("The proxy has been successfully delegated with the identifier:" + *dgOpt) );
-		}
+                } else {
+                        // GetProxy
+                        logInfo->service(WMP_NS1_GETPROXY_SERVICE);
+                        proxy = getProxyReq(*dgOpt, cfg) ;
+                        logInfo->result(WMP_NS2_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
+                        // PutProxy
+                        logInfo->service(WMP_NS1_PUTPROXY_SERVICE);
+                        putProxy(*dgOpt, proxy, cfg);
+                        logInfo->result(WMP_NS1_PUTPROXY_SERVICE, string("The proxy has been successfully delegated with the identifier:" + *dgOpt) );
+                }
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"delegateProxy", ECONNABORTED,
 			"Operation failed",
 			"Unable to delegate the credential to the endpoint: " + endpoint + "\n" + errMsg(exc) );
        }
+       logInfo->print  (WMS_DEBUG, "The proxy has been successfully delegated with the identifier:",  *dgOpt);
 }
 /*
 * Checks whether the major number of the WMProxy version is greater than

@@ -30,8 +30,6 @@
 #include"lbapi.h"
 //BOOST
 #include "boost/lexical_cast.hpp" // types conversion
-// CURL
-#include "curl/curl.h"
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -50,7 +48,6 @@ const string DISPLAY_CMD = "more";
 */
 JobPerusal::JobPerusal () : Job() {
 	// init of the string  options
-	inOpt = NULL;
 	inFileOpt = NULL;
 	outOpt = NULL;
 	dirOpt = NULL;
@@ -62,7 +59,6 @@ JobPerusal::JobPerusal () : Job() {
 	nointOpt = false;
 	allOpt = false;
 	jobId = "";
-	fileProto = NULL;
 }
 /**
 * Default Destructor
@@ -70,10 +66,8 @@ JobPerusal::JobPerusal () : Job() {
 JobPerusal::~JobPerusal ()  {
 	// "free memory" for the string  attributes
 	if (inFileOpt) { free(inFileOpt);}
-	if (inOpt) { free(inOpt);}
 	if (outOpt ) { free(outOpt);}
 	if (dirOpt ) { free(dirOpt);}
-	if (fileProto){ delete(fileProto); }
 }
 /**
 * Reads the input arguments
@@ -84,7 +78,6 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	string dircfg = "";
 	string logname = "";
 	ostringstream warn;
-	vector<string> jobids ;
 	// Reads the input options
  	Job::readOptions  (argc, argv, Options::JOBPERUSAL);
         // --get
@@ -117,23 +110,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
-	// --proto
-	fileProto = wmcOpts->getStringAttribute(Options::PROTO);
-	if (setOpt && fileProto) {
-		logInfo->print (WMS_WARNING, "--proto: option ignored (SET operation doesn't need any file transferring)\n", "", true );
-	}  else if (unsetOpt && fileProto) {
-		logInfo->print (WMS_WARNING, "--proto: option ignored (UNSET operation doesn't need any file transferring)\n", "", true );
-	} else if (fileProto==NULL) {
-		fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-		logInfo->print (WMS_DEBUG,
-			"--proto option not specified; using the default File Transferring Protocol:", *fileProto  );
-	} else {
-		logInfo->print (WMS_DEBUG,
-			"--proto option - File Transferring Protocol:", *fileProto  );
-	}
 	// --input
-        inOpt = wmcOpts->getStringAttribute(Options::INPUT);
-	// --input-file
         inFileOpt = wmcOpts->getStringAttribute(Options::INPUTFILE);
 	// -- filename
 	peekFiles = wmcOpts->getListAttribute(Options::FILENAME);
@@ -150,7 +127,12 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err << "The unset operation disables job's files perusal; the following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
+	} else if (inFileOpt && allOpt) { // TBD why?
+		err << "The following options cannot be specified together:\n" ;
+		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
+		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
 	}
+
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
@@ -158,7 +140,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	}
 
 	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
-	// --input-file
+	// --input
         if (inFileOpt) {
         	peekFiles = wmcUtils->getItemsFromFile(*inFileOpt);
 		if (peekFiles.empty()) {
@@ -177,6 +159,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
+
 		} else if (getOpt && nointOpt == false) {
 			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
 			cout << wmcUtils->getStripe(74, "-") << "\n";
@@ -188,7 +171,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		// Writes in the log file the list of filenames chosen by the input file
 		int size =  peekFiles.size();
 		if (size > 0) {
-			for (unsigned int i = 0; i < size; i++) { files += peekFiles[i] + "; ";}
+			for (int i = 0; i < size; i++) { files += peekFiles[i] + "; ";}
 			logInfo->print (WMS_INFO, "filenames from the input file:", files, false);
 		}
     	 }
@@ -202,6 +185,10 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			"Input Arguments Error",
 			err.str());
 	}
+	/*
+	* The jobid
+	*/
+	jobId = wmcOpts->getJobId( );
 	// output file
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
 	// File directory for --get
@@ -253,24 +240,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				warn.str());
 		}
 
-	}
-	// Reading jobid from input file
-	if (inOpt){
-		// From input file
-		logInfo->print (WMS_DEBUG, "Reading JobId(s) from the input file:", Utils::getAbsolutePath(*inOpt));
-		jobids = wmcUtils->getItemsFromFile(*inOpt);
-		if (jobids.size() > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
-			logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one id in the list ");
-			jobids = wmcUtils->askMenu(jobids,Utils::MENU_SINGLEJOBID);
-			jobId = Utils::checkJobId(jobids[0]);
-			logInfo->print (WMS_DEBUG, "Chosen JobId:", jobId );
-   		}
-        } else {
-		// from command line
-        	jobId = wmcOpts->getJobId();
-        }
-
-	if (getOpt) {
+	} else if (getOpt) {
 		// Directory path for file downloading (only for --get)
 		if (!dirOpt){
 			char* environ=getenv("LOGNAME");
@@ -294,7 +264,6 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			}
 		}
 	}
-
 }
 /**
 * Performs the main operations
@@ -354,12 +323,11 @@ void JobPerusal::checkStatus( ){
 
 void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	vector<string> uris;
-	vector<string> extracted;
 	string errors = "";
 	string file = "";
-	vector<pair<string, string> > pm;
 	int size = 0;
 	try {
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		if (peekFiles.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet",DEFAULT_ERR_CODE,
@@ -368,90 +336,39 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 		} else {
 			file = peekFiles[0] ;
 		}
-		// "Calling-service" message
-		pm.push_back(make_pair("jobid",jobId));
-		pm.push_back(make_pair("file",file));
-		pm.push_back(make_pair("allOpt",boost::lexical_cast<string>(allOpt)));
-		logInfo->service(WMP_GETPERUSAL_SERVICE, pm);
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-		// Calling service : getPerusal =============================
+		logInfo->service(WMP_GETPERUSAL_SERVICE, jobId);
 		uris = getPerusalFiles (jobId, file , allOpt, getContext());
-
-		uris.push_back("https://ghemon.cnaf.infn.it:7443/SandboxDir/6v/https_3a_2f_2fghemon.cnaf.infn.it_3a9000_2f6vFQoStDkh1VwokgC9XGNg/peek/prova.txt");
-
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"perusalGet", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
-	size =uris.size();
+	size = uris.size();
 	if (size>0) {
 		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; number of files to be retrieved :" + boost::lexical_cast<string>(size));
-		/// globus-url-copy ===============
-		if (*fileProto == Options::TRANSFER_FILES_GUC_PROTO){
-			extracted = Utils::extractProtocolURIs(uris,  Options::TRANSFER_FILES_GUC_PROTO);
-			size = extracted.size();
-			if (size == 0) {
-				throw WmsClientException(__FILE__,__LINE__,
-					"jobPerusal", ECONNABORTED,
-					"File Protocol Error",
-					"Protocol not available in the list of URIs retrieved by the WMProxy server: "
-					+ *fileProto +
-					"\n(try with another protocol file, for example " + Options::TRANSFER_FILES_CURL_PROTO + " )");
-			}
-			// Downloads the files
-			this->gsiFtpGetFiles(extracted, paths, errors);
-		} else
-			// CURL ==========
-			if (*fileProto == Options::TRANSFER_FILES_CURL_PROTO){
-				extracted = Utils::extractProtocolURIs(uris,  Options::TRANSFER_FILES_CURL_PROTO);
-				size = extracted.size();
-				if (size == 0) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"jobPerusal", ECONNABORTED,
-						"File Protocol Error",
-						"Protocol not available in the list of URIs retrieved by the WMProxy server: "
-						+ *fileProto +
-						"\n(try with another protocol file, for example " + Options::TRANSFER_FILES_GUC_PROTO + " )");
-				}
-				this->curlGetFiles(extracted, paths, errors);
-		} else {
-			throw WmsClientException(__FILE__,__LINE__,
-			"jobPerusal", ECONNABORTED,
-			"File Protocol Error", "protocol not supported: " + *fileProto);
-		}
+		this->gsiFtpGetFiles(uris, paths, errors);
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet", DEFAULT_ERR_CODE,
-				"File Download Error",
+				"Get Files Error",
 				"GET - The following error(s) occured while transferring the file(s):\n" + errors);
 		} else if  (errors.size( )>0){
 			logInfo->print(WMS_WARNING,
-				"GET - The following error(s) occured while transferring the file(s)\n" + errors, "");
+				"GET - The following error(s) occured while transferring the file(s)\n" +errors, "");
 		}
-	} else {
-		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; no files to be retrieved");
-	}
+        } else {
+                logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; no files to be retrieved");
+        }
 }
 /**
 * SET operation
 */
 void JobPerusal::perusalSet ( ){
-	vector<pair<string, string> > pm;
-	// "Calling-service" message
-	int size = peekFiles.size( );
-	string m = "";
-	pm.push_back(make_pair("jobid",jobId));
-	for (int i=0; i < size; i++){
-		if (i > 0  && i <= size-1){ m += ", ";}
-		m += peekFiles[i] ;
-	}
-	pm.push_back(make_pair("files",m));
-	logInfo->service(WMP_SETPERUSAL_SERVICE, pm);
-	logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 	try {
-		// Calling service : setPerusal =============================
+		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		logInfo->service(WMP_SETPERUSAL_SERVICE, jobId);
 		enableFilePerusal (jobId, peekFiles, getContext());
+		
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"enablePerusalFiles", ECONNABORTED,
@@ -464,196 +381,59 @@ void JobPerusal::perusalSet ( ){
 */
 void JobPerusal::perusalUnset( ){
 	vector<string> empty;
-	logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " with an empty list of files to unset the peeking for the job", jobId);
-	logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-	try {
+        logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+        logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " with an empty list of files to unset the peeking for the job", jobId);
+        try {
 		enableFilePerusal (jobId, empty, getContext());
 	} catch (BaseException &exc) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"enablePerusalFiles", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 	}
-	logInfo->result(WMP_SETPERUSAL_SERVICE, "operation successfully ended");
 }
 /**
-* File downloading with globus URL copy
+* File downloading
 */
-int JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
+void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
 	string local = "";
 	int code = 0;
 	int size = uris.size();
-	string err = "";
-	int res = -1;
-	if (size==0)  {
-		errors = "Warning - no valid URIs of files to be downloaded\n";
-	} else {
-		for ( int i = 0; i < size ; i++ ){
-			// command
-			string cmd= "globus-url-copy ";
-			if (getenv("GLOBUS_LOCATION")){
-				cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
-			}else if (Utils::isDirectory ("/opt/globus/bin")){
-				cmd="/opt/globus/bin/"+cmd;
-			}else {
-				throw WmsClientException(__FILE__,__LINE__,
-					"gsiFtpGetFiles", ECONNABORTED,
-					"Unable to find",
-					"globus-url-copy executable");
-			}
-			// local path
-			local = *dirOpt + "/" + Utils::getFileName (uris[i]) ;
-			if (wmcUtils->askForFileOverwriting(local)){
-				// COMMAND
-				cmd+=string(uris[i]) + " file://"  + local;
-				logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
-				// launches the command
-				code = system( cmd.c_str() ) ;
-				if ( code != 0 ) {
-					err =	"Error(globus-url-copy) unable to download: " + uris[i] + "(error code: " + boost::lexical_cast<string>(code) + ")";
-					logInfo->print(WMS_WARNING, "Transfer FAILED", err);
-					errors += err + "\n";
-				} else if (! Utils::isFile(local)) {
-					err += "Error(globus-url-copy)  unable to copy: " + uris[i]  + " to " + local + "\n";
-					logInfo->print(WMS_WARNING, "Transfer FAILED", err);
-					errors += err + "\n";
-				} else {
-					res = 0;
-					logInfo->print(WMS_DEBUG, "File Transferring SUCCESS:", local);
-					paths.push_back(local);
-				}
+        //globus_module_activate(GLOBUS_FTP_CLIENT_MODULE);
+	 for ( int i = 0; i < size ; i++ ){
+		// command
+		string cmd= "globus-url-copy ";
+		if (getenv("GLOBUS_LOCATION")){
+			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
+		}else if (Utils::isDirectory ("/opt/globus/bin")){
+			cmd="/opt/globus/bin/"+cmd;
+		}else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"gsiFtpGetFiles", ECONNABORTED,
+				"Unable to find",
+				"globus-url-copy executable");
+		}
+		// local path
+		local = *dirOpt + "/" + Utils::getFileName (uris[i]) ;
+
+		if (wmcUtils->askForFileOverwriting(local)){
+			// COMMAND
+			cmd+=string(uris[i]) + " file://"  + local;
+			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
+			// launches the command
+			code = system( cmd.c_str() ) ;
+			if ( code != 0 ) {
+				errors +=	"Error(globus-url-copy) unable to download: " + uris[i] + "(error code: " + boost::lexical_cast<string>(code) + ")\n";
+			} else if (! Utils::isFile(local)) {
+				errors +=	"Error(globus-url-copy)  unable to download: " + uris[i]  + " to " + local + "\n";
 			} else {
-				errors += "Warning - existing file not overwritten: " + local + "\n";
+				// Saves the local path
+				paths.push_back(local);
 			}
+		} else {
+			errors += "Warning - existing file not overwritten: " + local + "\n";
 		}
-	}
-	return res;
+         }
 }
-/*
-* writing callback for curl operations
-*/
-int JobPerusal::storegprBody(void *buffer, size_t size, size_t nmemb, void *stream) {
-	struct httpfile *out_stream=(struct httpfile*)stream;
-	if(out_stream && !out_stream->stream) {
-		// open stream
-		out_stream->stream=fopen(out_stream->filename, "wb");
-		if(!out_stream->stream) {
-			return -1;
-		}
-   	}
-	return fwrite(buffer, size, nmemb, out_stream->stream);
- }
-
-
-/**
-* File downloading with CURL
-*/
-int JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
-	CURL *curl = NULL;
-	string local = "";
-	char curl_errorstr[CURL_ERROR_SIZE];
-	CURLcode code ;
-	long http_code = 0;
-	string *logpath = NULL;
-	FILE* log =  NULL;
-	int res = -1;
-	// Number of files to be transferred
-	int size = uris.size();
-	// user proxy
-	if (size==0)  {
-		errors = "Warning - no valid URIs of files to be downloaded\n";
-	} else {
-		// curl init
-		curl_global_init(CURL_GLOBAL_ALL);
-		curl = curl_easy_init();
-		if ( curl ) {
-			// user proxy
-			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath() );
-			curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
-			//trusted certificate directory
-			curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
-			//ssl options (no verify)
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-			// enables error message buffer
-			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
-			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-			// DEBUG messages in the log file
-			logpath = wmcUtils->getLogFileName( );
-			if (logpath){
-				log = fopen(logpath->c_str(), "a");
-				if (log) {
-					curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-					curl_easy_setopt(curl, CURLOPT_STDERR, log);
-					logInfo->print(WMS_DEBUG, "CURL debug messages printed in the log file:", *logpath);
-				} else {
-					logInfo->print(WMS_WARNING,
-						"couldn't open the log file to print CURL debug messages:",
-						*logpath);
-				}
-			}
-			// If there is no log file, messages on the std-out
-			if ( log == NULL && wmcOpts->getBoolAttribute(Options::DBG)){
-				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-			}
-			 // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
-
-			// files to be downloaded
-			vector <std::string>::iterator it = uris.begin( ) ;
-			vector <std::string>::iterator const end = uris.end( );
-			for ( ; it != end ; it++) {
-				// local path
-				local = *dirOpt + "/" + Utils::getFileName (string(*it)) ;
-				if (wmcUtils->askForFileOverwriting(local)){
-					curl_easy_setopt(curl, CURLOPT_URL, it->c_str());
-					ostringstream info ;
-					info << "Source: " << (*it) << "\n";
-					info << " Destination: " << local <<"\n";
-					logInfo->print(WMS_DEBUG, "File Transferring\n", info.str());
-					struct httpfile params={
-						(char*)local.c_str() ,
-						NULL
-					};
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
-					// downloading
-					code = curl_easy_perform(curl);
-					// closes the log file
-					if(log) {fclose(log);}
-					if (code != CURLE_OK ){
-						errors += "- source URI: "+  (*it) + "\n  LOCAL PATH: " +  local + "\n" ;
-						// ERROR !!!
-						curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code );
-						// error message according to the HTTP status code
-						string err = Utils::httpErrorMessage(http_code);
-						if (err.size()>0){
-							errors += "  reason: " + err + "\n";
-						} else
-						// ... else CURL error message
-						if ( strlen(curl_errorstr)>0 ){
-							errors += "  reason: " + string(curl_errorstr) + "\n";
-						} else {
-							err += "  (unknown reason)\n";
-						}
-					} else {
-						// SUCCESS
-						res = 0;
-						logInfo->print(WMS_DEBUG, "File Transferring SUCCESS", local);
-						paths.push_back(local);
-					}
-				} else {
-					errors += "Warning - existing file not overwritten: " + local + "\n";
-				}
-			}
-			// cleanup
-			curl_easy_cleanup(curl);
-		}
-	}
-	return res;
-}
-
 /**
 * Prints out the final results on the std-out
 */

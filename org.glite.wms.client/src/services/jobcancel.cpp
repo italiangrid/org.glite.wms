@@ -72,10 +72,10 @@ void JobCancel::readOptions (int argc,char **argv){
         }
 	njobs = jobIds.size( ) ;
 	if (njobs > 1 && ! wmcOpts->getBoolAttribute(Options::NOINT) ){
-		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ");
+		logInfo->print (WMS_DEBUG, "Multiple JobIds found:", "asking for choosing one or more id(s) in the list ", false);
         	jobIds = wmcUtils->askMenu(jobIds,Utils::MENU_JOBID);
 		if (jobIds.size() != njobs) {
-			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds));
+			logInfo->print (WMS_DEBUG, "Chosen JobId(s):", Utils::getList (jobIds), false);
 		}
          }
 	// checks if the output file already exists
@@ -117,6 +117,7 @@ void JobCancel::cancel ( ){
 		// Jobid's loop
 		vector<string>::iterator it2 = jobIds.begin();
 		vector<string>::iterator const end2 = jobIds.end();
+
                 for ( ; it2 != end2 ; it2++){
 			// JobId
 			string jobid = *it2;
@@ -139,17 +140,15 @@ void JobCancel::cancel ( ){
 				// If the request contains only one jobid, an exception is thrown
 				if (jobIds.size( ) == 1){ throw exc ;}
 				// if the request is for multiple jobs, a failed-string is built for the final message
-
 				logInfo->print(WMS_WARNING, "Not allowed to cancel the job:\n" + jobid , exc.what( ) , true);
 				// goes on with the following job
 				continue ;
 			}
 
   			try{
-				logInfo->service(WMP_CANCEL_SERVICE, jobid);
 				logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
 	                        //  performs cancelling
-				logInfo->service(WMP_CANCEL_SERVICE);
+				logInfo->service(WMP_CANCEL_SERVICE, jobid);
                                 jobCancel(jobid, getContext( ) );
 				logInfo->result(WMP_CANCEL_SERVICE, "The cancellation request has been successfully sent" );
                          	 // list of jobs successfully cancelled
@@ -158,6 +157,7 @@ void JobCancel::cancel ( ){
                                 } else {
                                         cancelled = new string("- " + jobid + "\n");
                                 }
+
                         } catch (BaseException &exc){
 				// If the request contains only one jobid, an exception is thrown
 				if (jobIds.size( ) == 1){

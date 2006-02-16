@@ -33,15 +33,6 @@ namespace wms{
 	}
 namespace client {
 namespace utilities {
-
-/*
-* Struct for files to be transferred with CURL
-*/
-struct httpfile {
-	char *filename;
-	FILE* stream;
-} ;
-
 class Utils{
 public:
 	/**
@@ -67,7 +58,6 @@ public:
 		JOBID_TYPE,
 		CE_TYPE
 	};
-
 	/**
 	* Prompt the users (if --noint option is not active) a question with Y/N answer
 	* @param question the question to be prompted to the user
@@ -121,7 +111,7 @@ public:
 	/**
 	* Extracts from the input string the name of the archive filename according to
 	* the default archive extension
-	* @return the name of the archive file or an empty string if the input name is invalid
+	* @return the name of the archive file or an empty string if the input name is unvalid
 	*
 	*/
 	static std::string getArchiveFilename (const std::string file);
@@ -145,18 +135,6 @@ public:
         * @return the pathname string
         */
         std::string* getLogFileName ( );
-	/*
-	* Match the most relevant HTTP status codes with the corresponding error message strings
-	* (some of them are: 400, 401, 404, 407, 408, 414, 500, 501, 505)
-	* @param code http status code
-	* @return the string with the error message, or empty string if no matching has been found
-	*/
-	static std::string httpErrorMessage(const int &code);
-
-	/*
-	* Writing callback for curl operations
-	*/
-	static int curlWritingCb(void *buffer, size_t size, size_t nmemb, void *stream) ;
 	/**
         * Gets the conf pathname
         * @return the pathname string
@@ -292,15 +270,23 @@ public:
         */
         std::string* fromFile (const std::string &path) ;
 	/**
-	* Saves a message into a file after checking whether it already exists.
-	* If it does and user interaction has not been disabled (by --noint),
-	* the user is asked which action has to be performed
-	* (either overwriting or appending ; otherwise nothing)
+        * Saves a message into a file after checking whether it already exists.
+        * If it does and user interaction has not been disabled (by --noint),
+        * the user is asked which action has to be performed
+        * (either overwriting or appending ; otherwise nothing)
         * @param path the pathname of the file
-	* @param msg the message to be saved
-	* @return 0 in case of success (-1 otherwise)
-	*/
-	int saveToFile(const std::string &path, const std::string &msg) ;
+        * @param msg the message to be saved
+        * @return 0 in case of success (-1 otherwise)
+        */
+        int saveToFile(const std::string &path, const std::string &msg) ;
+
+	/**
+        * Saves the identifier of a submitted job in the specified file
+        * @param path the pathname of the file
+	* @param jobid the job identifier string
+        * @return 0 if the jobid has been successfully saved (-1 otherwise)
+        */
+         const int saveJobIdToFile (const std::string &path, const std::string jobid);
 	/**
         * Saves a list of items in the specified file
         * @param path the pathname of the file
@@ -309,13 +295,6 @@ public:
         * @return 0 if the list has been successfully saved (-1 otherwise)
         */
 	 const int saveListToFile (const std::string &path, const std::vector<std::string> &list, const std::string header="");
-	/**
-        * Saves the identifier of a submitted job in the specified file
-        * @param path the pathname of the file
-	* @param jobid the job identifier string
-        * @return 0 if the jobid has been successfully saved (-1 otherwise)
-        */
-         const int saveJobIdToFile (const std::string &path, const std::string jobid);
         /**
         * Reads a file and gets the list of items contained in it
         * @param the pathname of the file to be read
@@ -358,12 +337,6 @@ public:
 	*/
 	static std::string  getFileName (const std::string& path) ;
 	/**
-	*	Compresses a file with gzip
-	*	@param filename the pathname of the file to be compressed
-	*	@param the path of the gzip file
-	*/
-	static std::string compressFile(const std::string &filename) ;
-	/**
 	*	Extracts the protocol from the input URI
 	*	throws an exception if the input URI doesn't have protocol string
 	*	@param path the input URI
@@ -371,31 +344,40 @@ public:
 	*/
 	static std::string  getProtocol (const std::string& uri) ;
 	/**
-	*	Checks whether the input protocol string is allowed for this client interface:
-	*	it must be included in the list of those supported ones
-	*	(see: const char* Options::TRANSFER_FILES_PROTOCOLS[ ])
+	*	Checks whether a protocol string is allowed for this client interface
 	*	@param proto the string with the protocol to be checked
 	*	@param list return a string with the list with the available protocols
 	*	@return TRUE if the protocol is allowed, FALSE otherwise
 	*/
 	static bool checkProtocol(const std::string &proto, std::string &list) ;
 	/**
-	* Extracts from the input list of URIs the items having the protocol specified as input
-	* @param uris the input list of URIs
-	* @param the protocol of the URIs to be extracted
-	* @return the list of URIs extracted form the input list
+	*	Compresses a file with gzip
+	*       It will be deprecated soon
+	*	@param filename the pathname of the file to be compressed
+	*	@param the path of the gzip file
 	*/
-	static std::vector<std::string> extractProtocolURIs(const std::vector<std::string> &uris, const std::string &protocol) ;
+	std::string compressFile(const std::string &filename) ;
 	/**
-	* Returns a vector  in which each element is a pair with:
-	* the URI of the output file on the remote machine, the local path where the file will be downloaded
-	* @param files vector containg the URIs of the remote output files
-	* @param protocol the selected protocol of the URIs to be extracted from the input list of files
-	* @param localpath the local pathname where the file will be downloaded
-	* @return a vector containg pairs with the information on the URI of the output file on the remote machine and
-	* the local path where the file will be downloaded
+	* Returns a string message with the zlib error description
+	* according to the input error code
+	*
 	*/
-	static std::vector<std::pair<std::string,std::string > > Utils::getOutputFileList(std::vector <std::pair<std::string, long > > &files, const std::string &protocol, const std::string &localpath );
+	static std::string gzError(int code) ;
+	/**
+	*	Performs gz compression on the file which path location
+	* 	is specified as input
+	*	@param source the path of the file to be compressed
+	*	@param level level of compression
+	*	@return Z_OK if the operation successfully ends, otherwise the zlib error code
+	*/
+	static int Utils::compression(FILE *source, FILE *dest, int level) ;
+	/**
+	*	Compresses a file with gzip. Method to be used only with WMProxy having version
+	*	greater than 2.1.1 (the version numbers that the getVersion service returns).
+	*	@param filename the pathname of the file to be compressed
+	*	@param the path of the gzip file
+	*/
+	static std::string fileCompression(const std::string &filename) ;
 	/**
 	*	Gets back the path of the URI removing information on the protocol, hostname and port
 	*	@param uri the input URI
@@ -413,24 +395,25 @@ public:
         *	header for JobId output files
         */
         static const std::string JOBID_FILE_HEADER ;
+
 private:
 	/**
-	* Performs parsing on the FQAN fields an retrurns a vector which elements
-	* are the single fields
-	* @param fqan the FQAN string to be parsed
-	* @return the list of fields in the input FQAN string
-	*/
-	static std::vector<std::string> parseFQAN(const std::string &fqan);
-	/**
-	* Returns the VO in the FQAN input string
-	* @return the string with the VO
-	*/
-	static std::string FQANtoVO(const std::string fqan);
-	/**
-	* Returns the Default VO retrieved by the user proxy
-	* @return the Default VO string
-	*/
-	static std::string getDefaultVo() ;
+        * Performs parsing on the FQAN fields an retrurns a vector which elements
+        * are the single fields
+        * @param fqan the FQAN string to be parsed
+        * @return the list of fields in the input FQAN string
+        */
+        static std::vector<std::string> parseFQAN(const std::string &fqan);
+        /**
+        * Returns the VO in the FQAN input string
+        * @return the string with the VO
+        */
+        static std::string FQANtoVO(const std::string fqan);
+        /**
+        * Returns the Default VO retrieved by the user proxy
+        * @return the Default VO string
+        */
+        static std::string getDefaultVo() ;
 	/**
 	* Check the WMS client installation path
 	*/
@@ -459,19 +442,20 @@ private:
 	*/
 	static const long getTime(const std::string &st, const std::string &sep, const time_t &now, const unsigned int &nf = 0) ;
 	/**
-        * Saves the input message into a file
-        * @param path the pathname of the file
-	* @param msg the message to be saved
-        * @param append TRUE=if the file already exists, append the input message at the end of the file; FALSE=create the file if it does not exist, otherwise overwrite it
-        * @return 0 in case of success (-1 otherwise)
-        */
-         int toFile (const std::string &path, const std::string &msg, const bool &append=false);
-	 /**
         * Generates the log file.
 	* The file is created only if either --debug or --logfile has been spevified among the user input options.
         * @return a pointer to a string with the pathname, NULL if no logfile has been generated
         */
         std::string* generateLogFile ( );
+	/**
+        * Saves the input message into a file
+        * @param path the pathname of the file
+        * @param msg the message to be saved
+        * @param append TRUE=if the file already exists, append the input message at the end of the file; FALSE=create the file if it does not exist, otherwise overwrite it
+        * @return 0 in case of success (-1 otherwise)
+        */
+         int toFile (const std::string &path, const std::string &msg, const bool &append=false);
+
         /**
         * Gets the default Log File pathname
         * /<OutStorage-path>/<commandname>_<UID>_<PID>_<timestamp>.log
@@ -516,7 +500,6 @@ private:
 	std::string prefix;
 	// Virutal Organisation value
 	std::string *virtualOrganisation;
-
 }; // end class definition
 
 } // glite
