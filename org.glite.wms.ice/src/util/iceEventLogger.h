@@ -150,6 +150,7 @@ namespace glite {
                     unsigned int el_count;
                     edg_wll_Context* el_context;
                     log4cpp::Category *log_dev;
+                    std::string el_s_localhost_name;
 
                     static unsigned int el_s_retries, el_s_sleep;
                     static const char *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed;

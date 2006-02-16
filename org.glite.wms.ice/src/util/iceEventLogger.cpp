@@ -29,6 +29,8 @@ namespace fs = boost::filesystem;
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
+#include <netdb.h>
+
 using namespace std;
 using namespace glite::wms::ice::util;
 namespace configuration = glite::wms::common::configuration;
@@ -104,9 +106,22 @@ iceEventLogger* iceEventLogger::instance( void )
 iceEventLogger::iceEventLogger( void ) :
     el_count( 0 ), 
     el_context( new edg_wll_Context ), 
-    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
+    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
+    el_s_localhost_name( )
 {
     edg_wll_InitContext( el_context );
+    char name[256];
+
+    if ( gethostname(name, 256) < 0 ) {
+        el_s_localhost_name = "(unknown host name )";
+    } else {
+        struct hostent *H = gethostbyname(name);
+        if ( !H ) {
+            el_s_localhost_name = "(unknown host name )";            
+        } else {
+            el_s_localhost_name = H->h_name;
+        }
+    }
 }
 
 
@@ -493,7 +508,7 @@ void iceEventLogger::cream_accepted_event( const util::CreamJob& theJob )
         
         res = edg_wll_LogAccepted( *el_context, 
                                    EDG_WLL_SOURCE_JOB_SUBMISSION, 
-                                   el_s_unavailable,
+                                   el_s_localhost_name.c_str(),
                                    el_s_unavailable,
                                    theJob.getJobID().c_str()
                                    );
@@ -534,7 +549,7 @@ void iceEventLogger::lrms_accepted_event( const util::CreamJob& theJob )
         
         res = edg_wll_LogAccepted( *el_context, 
                                    EDG_WLL_SOURCE_LRMS,
-                                   el_s_unavailable,
+                                   theJob.getCEID().c_str(),
                                    el_s_unavailable,
                                    theJob.getJobID().c_str()
                                    );
@@ -848,7 +863,7 @@ void iceEventLogger::log_job_status_change( const CreamJob& theJob )
         lrms_accepted_event( theJob );
         break;
     case glite::ce::cream_client_api::job_statuses::RUNNING:
-        job_running_event( theJob, string("pippo") ); // FIXME
+        job_running_event( theJob, string( el_s_unavailable ) ); // FIXME
         break;
     case glite::ce::cream_client_api::job_statuses::CANCELLED:
         job_cancelled_event( theJob );

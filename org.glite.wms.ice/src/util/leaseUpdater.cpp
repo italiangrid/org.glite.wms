@@ -69,7 +69,7 @@ void leaseUpdater::updateJobs( vector< CreamJob > jobs )
             << log4cpp::CategoryStream::ENDLINE;
 
         it->setEndLease( newEndLease );
-        // FIXME: Here we actually should update the lease using the appropriate interface method
+        // FIXME: Here we actually should update the lease using the appropriate interface method. If lease renewal fails, check if the lease expired. If so, the job is lost and should be removed from the cache
         cache->put( *it );
     }    
 }
