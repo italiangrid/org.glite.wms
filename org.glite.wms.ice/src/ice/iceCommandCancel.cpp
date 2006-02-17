@@ -55,11 +55,6 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     if ( !_argumentsAD->EvaluateAttrString( "id", _gridJobId ) ) {
         throw util::JobRequest_ex( "attribute 'id' inside 'arguments' not found, or is not a string" );
     }
-
-    // Log a "Cancel Request" to L&B
-    util::CreamJob fakeJob;
-    fakeJob.setGridJobID( _gridJobId );
-    _ev_logger->cream_cancel_request_event( fakeJob );    
 }
 
 void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
@@ -79,11 +74,16 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
             << "] in the jobCache. Giving up"
             << log4cpp::CategoryStream::ENDLINE;
 
-        util::CreamJob fakeJob;
-        fakeJob.setGridJobID( _gridJobId );
+        util::CreamJob fakeJob( util::CreamJob::mkFakeCreamJob( _gridJobId ) );
+        // Log cancel request event
+        _ev_logger->cream_cancel_request_event( fakeJob );
+        // Log cancel refuse event
         _ev_logger->cream_cancel_refuse_event( fakeJob, "Invalid Grid JobID" );    
         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") + _gridJobId + string("], as the job does not appear to exist") );
     }
+
+    // Log cancel request event
+    _ev_logger->cream_cancel_request_event( *it );    
 
     util::CreamJob _theJob( *it );
     vector<string> url_jid(1);   

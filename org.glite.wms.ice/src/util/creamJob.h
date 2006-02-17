@@ -76,7 +76,7 @@ namespace glite {
           void setSequenceCode( const std::string& seq ) { sequence_code = seq; }
           //! Sets the new lease end time
           void setEndLease( time_t l ) { endLease = l; }
-          //! Sets the Grid JobID. FIXME: This is dangerous!!!
+          //! Sets the Grid JobID. FIXME: This is dangerous, as the Grid jobID is in the jdl, but here we may set the Grid JobID without giving a valid JDL!!!
           void setGridJobID( const std::string& id ) { grid_jobid = id; }
 
 	  //! Gets the unique grid job identifier

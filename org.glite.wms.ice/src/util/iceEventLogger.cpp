@@ -339,9 +339,9 @@ void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source
             << theJob.getGridJobID()
             << "]. Proxy file "
             << theJob.getUserProxyCertificate()
-            << " does not exist."
+            << " does not exist. "
+            << "Trying to use the host proxy cert, and hoping for the best..."
             << log4cpp::CategoryStream::ENDLINE;
-
     }
 }
 
