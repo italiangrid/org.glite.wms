@@ -1,20 +1,27 @@
 #!/bin/sh
 
+jw_echo() # 1 - msg
+{
+  echo "$1"
+  echo "$1" >> "${maradona}"
+}
+
 log_event() # 1 - event
 {
-export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
-  --jobid="$GLITE_WMS_JOBID"\
-  --source=LRMS\
-  --sequence="$GLITE_WMS_SEQUENCE_CODE"\
-  --event="$1"\
-  --node=$host\
-  || echo $GLITE_WMS_SEQUENCE_CODE`
+  jw_echo $1
+
+  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+    --jobid="$GLITE_WMS_JOBID"\
+    --source=LRMS\
+    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
+    --event="$1"\
+    --node=$host\
+    || echo $GLITE_WMS_SEQUENCE_CODE`
 }
 
 log_error() # 1 - reason
 {
-  echo "$1"
-  echo "$1" >> "${maradona}"
+  jw_echo $1
 
   export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
    --jobid="$GLITE_WMS_JOBID"\
@@ -445,9 +452,9 @@ else
 fi
 
 #user prescript
-if [ -f "${__pre_job}" ]; then
-  chmod +x "{__pre_job}" 2>/dev/null
-  ./{__pre_job}
+if [ -f "${__ante_job}" ]; then
+  chmod +x "${__ante_job}" 2>/dev/null
+  ./${__ante_job}
   if [ $? -ne 0 ]; then
     log_error "User script failed with error $?"
   fi
@@ -485,7 +492,7 @@ if [ ${__token_support} -eq 1 ]; then
   result=$?
   if [ $result -eq 0 ]; then
     log_event "ReallyRunning"
-    echo "Token ${GLITE_WMS_SEQUENCE_CODE} taken"
+    jw_echo "Token ${GLITE_WMS_SEQUENCE_CODE} taken"
   else
     log_error "Cannot take token for $GLITE_WMS_JOBID" 
   fi
@@ -638,8 +645,7 @@ if [ ${__output_data} -eq 1 ]; then
   fi
 fi
 
-echo "job exit status = ${status}"
-echo "job exit status = ${status}" >> "${maradona}"
+jw_echo "job exit status = ${status}"
 
 # uncomment this one below if the osb order list originally 
 # specified is not of some relevance to the user
@@ -667,7 +673,7 @@ do
         if [ $file_size_acc -le ${__max_osb_size} ]; then
           globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
         else
-          echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
+          jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
           # $current_file is zero-based (being used even
           # below as an array index), + 1 again because of the 
           # difference between $total and $current (i.e. 20-19=2 more files)
@@ -675,14 +681,14 @@ do
           remaining_space=`expr $__max_osb_size \- $file_size_acc`
           trunc_len=`expr $remaining_space / $remaining_files`||0
           if [ $trunc_len -lt 10 ]; then #non trivial truncation
-            echo "Not enough room for a significant truncation on file ${f}"
+            jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
           else
-            truncate "${workdir}/${f}" $trunc_len "${__output_base_url}${ff}.tail"
+            truncate "${workdir}/${f}" $trunc_len "${workdir}/${f}.tail"
             if [ $? != 0 ]; then
-              echo "Could not truncate output sandbox file ${f}"
+              jw_echo "Could not truncate output sandbox file ${f}, not sending"
             else
-              echo "Truncated last $trunc_len bytes for file ${f}"
-              globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}.tail"
+              jw_echo "Truncated last $trunc_len bytes for file ${f}"
+              globus_url_retry_copy "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
             fi
           fi
         fi
@@ -695,7 +701,7 @@ do
     fi #if [ -r "${f}" ]; then
   else #WMP support
     file=`basename $f`
-    s="file://${workdir}/${__wmp_output_file[$current_file]}"
+    s="${workdir}/${__wmp_output_file[$current_file]}"
     if [ ${__osb_wildcards_support} -eq 0 ]; then
       d=${f}
     else
@@ -709,36 +715,36 @@ do
       #fi
       if [ $file_size_acc -le ${__max_osb_size} ]; then
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy $s $d
+          globus-url-copy "file://$s" "$d"
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp $s $d
+          htcp "file://$s" "$d"
         fi
       else
-        echo "OSB quota exceeded for $s, truncating needed"
+        jw_echo "OSB quota exceeded for $s, truncating needed"
         remaining_files=`expr $total_files \- $current_file + 2`
         remaining_space=`expr $__max_osb_size \- $file_size_acc`
         trunc_len=`expr $remaining_space / $remaining_files`||0
         if [ $trunc_len -lt 10 ]; then #non trivial truncation
-          echo "Not enough room for a significant truncation on file ${f}"
+          jw_echo "Not enough room for a significant truncation on file ${f}, not sending"
         else
-          truncate "${workdir}/${f}" $trunc_len "$d.tail"
+          truncate "$s" $trunc_len "$s.tail"
           if [ $? != 0 ]; then
-            echo "Could not truncate output sandbox file ${f}"
+            jw_echo "Could not truncate output sandbox file ${f}, not sending"
           else
-            echo "Truncated last $trunc_len bytes for file ${f}"
+            jw_echo "Truncated last $trunc_len bytes for file ${f}"
             if [ "${f:0:9}" == "gsiftp://" ]; then
-              globus-url-copy $s "$d.tail"
+              globus-url-copy "file://$s.tail" "$d.tail"
             elif [ "${f:0:8}" == "https://" ]; then
-              htcp $s "$d.tail"
+              htcp "file://$s.tail" "$d.tail"
             fi
           fi
         fi
       fi
     else #unlimited osb
       if [ "${f:0:9}" == "gsiftp://" ]; then
-        globus-url-copy $s $d
+        globus-url-copy "file://$s" "$d"
       elif [ "${f:0:8}" == "https://" ]; then
-        htcp $s $d
+        htcp "file://$s" "$d"
       fi
     fi
     if [ $? != 0 ]; then
@@ -753,14 +759,14 @@ log_event "Done"
 if [ -n "${LSB_JOBID}" ]; then
   cat "${X509_USER_PROXY}" | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
   if [ $? != 0 ]; then
-    echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L lsf_${LSB_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
   fi
 fi
 
 if [ -n "${PBS_JOBID}" ]; then
   cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H "$HLR_LOCATION"
   if [ $? != 0 ]; then
-    echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
+    jw_echo "Error transferring gianduia with command: cat ${X509_USER_PROXY} | ${GLITE_WMS_LOCATION}/libexec/glite_dgas_ceServiceClient -s ${__gatekeeper_hostname}:56569: -L pbs_${PBS_JOBID} -G ${GLITE_WMS_JOBID} -C ${__globus_resource_contact_string} -H $HLR_LOCATION"
   fi
 fi
 
