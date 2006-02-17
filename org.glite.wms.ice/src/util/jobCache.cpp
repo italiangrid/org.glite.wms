@@ -53,10 +53,6 @@ void jobCache::jobCacheTable::putJob( const CreamJob& c )
     // Note: the GridJobID of a job MUST always be defined; the creamJobId
     // could be initially empty, so we need to check this.
 
-//     glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->infoStream() << "************ Putting Job in cache"
-//     			  << "************ "<<c.getJobID()
-// 			  << log4cpp::CategoryStream::ENDLINE;
-
     _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
     jobCacheTable::iterator pos;
     if ( it == _gidMap.end() ) {
@@ -79,11 +75,6 @@ void jobCache::jobCacheTable::delJob( const CreamJob& c )
 {
     _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
     if ( it != _gidMap.end() ) {
-
-//         glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->infoStream() << "************ Removing Job from cache"
-//     	   		      << "************ "<<c.getJobID()
-// 			      << log4cpp::CategoryStream::ENDLINE;
-
         // Deletes a new job
         jobCacheTable::iterator pos = it->second;
         // Removes the job from the list
@@ -224,14 +215,12 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
 void jobCache::loadJournal(void) 
   throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&)
 {
-  //jnlMgr->readonly_mode(true);
 
   operation op;
   string param;
 
   while ( jnlMgr->getOperation(op, param) ) {
 
-      // CreamJob cj = this->unparse(param); // can raise ClassadSyntax_ex
       CreamJob cj( param );
         
     switch ( op ) {
@@ -254,18 +243,13 @@ void jobCache::loadJournal(void)
 //______________________________________________________________________________
 void jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
-    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); // locks the cache
     string param= cj.serialize();
-    // this->toString(cj, param);
-    // string param = string(OPERATION_SEPARATOR) + tmp;
-
     logOperation( PUT, param );
     _jobs.putJob( cj );
 }
 
 //______________________________________________________________________________
 void jobCache::print(ostream& os) {
-    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     jobCacheTable::const_iterator it;
     for ( it=_jobs.begin(); it!=_jobs.end(); it++ ) {
         os << "GID=" << it->getGridJobID() 
@@ -278,7 +262,6 @@ void jobCache::print(ostream& os) {
 //______________________________________________________________________________
 void jobCache::dump() throw (jnlFile_ex&)
 {
-    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
     string tmpSnapFile = snapFile + ".tmp." +
         apiutil::string_manipulation::make_string(::getpid());
 
@@ -301,14 +284,12 @@ void jobCache::dump() throw (jnlFile_ex&)
         
         jobCacheTable::iterator it;
         
-	//	cout << "Dumping snapshot file"<<endl;
 	log_dev->log(log4cpp::Priority::INFO,
 		     "jobCache::dump() - Dumping snapshot file");
         
         for (it=_jobs.begin(); it != _jobs.end(); it++ ) {
             
             string param = it->serialize();
-            // this->toString(*it, param);
             
             try{tmpOs << param << endl;}
             catch(std::exception& ex) {
@@ -328,7 +309,6 @@ void jobCache::dump() throw (jnlFile_ex&)
             string err = string("Error renaming temp snapshot file into snapshot file")+
                 strerror(errno);
             
-	    //            cerr << "error renaming: "<<err<<endl;
 	    log_dev->log(log4cpp::Priority::ERROR,
 			 string("jobCache::dump() - Could't rename snapshot file: ")+err);
             
@@ -337,14 +317,14 @@ void jobCache::dump() throw (jnlFile_ex&)
 }
 
 //______________________________________________________________________________
-void jobCache::getActiveCreamJobIDs(vector<string>& target)
-{
-    // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
-    jobCacheTable::const_iterator it;
-    for ( it = _jobs.begin(); it!=_jobs.end(); it++ ) {
-        target.push_back( it->getJobID());
-    }
-}
+// void jobCache::getActiveCreamJobIDs(vector<string>& target)
+// {
+//     // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
+//     jobCacheTable::const_iterator it;
+//     for ( it = _jobs.begin(); it!=_jobs.end(); it++ ) {
+//         target.push_back( it->getJobID());
+//     }
+// }
 
 //-----------------------------------------------------------------------------
 void jobCache::logOperation( const operation& op, const std::string& param )
@@ -373,18 +353,15 @@ void jobCache::logOperation( const operation& op, const std::string& param )
 		     + ex.what());
 	exit(1);
       } catch(jnlFileReadOnly_ex& ex) {
-	//	cerr << ex.what()<<endl;
 	log_dev->log(log4cpp::Priority::ERROR,
 		     ex.what());
 	exit(1);
       } catch(std::exception& ex) {
-	//cerr << "dump raised an std::exception: "<<ex.what()<<endl;
 	log_dev->log(log4cpp::Priority::ERROR,
 		     string("jobCache::logOperation() - ")
 		     + ex.what());
 	exit(1);
       } catch(...) {
-	//cerr << "Something catched!"<<endl;
 	log_dev->log(log4cpp::Priority::ERROR,
 		     string("jobCache::logOperation() - Catched unknown exception"));
 	exit(1);

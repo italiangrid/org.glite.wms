@@ -55,6 +55,17 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     if ( !_argumentsAD->EvaluateAttrString( "id", _gridJobId ) ) {
         throw util::JobRequest_ex( "attribute 'id' inside 'arguments' not found, or is not a string" );
     }
+
+    // Look for "lb_sequence_code" attribute inside "Arguments"
+    if ( !_argumentsAD->EvaluateAttrString( "lb_sequence_code", _sequence_code ) ) {
+        // FIXME: This should be an error to throw. For now, we try anyway...
+        log_dev->warnStream()
+            << "Cancel request does not have a \"lb_sequence_code\" attribute. "
+            << "Fine for now, should not happen in the future"
+            << log4cpp::CategoryStream::ENDLINE;
+    } else {
+        boost::trim_if(_sequence_code, boost::is_any_of("\""));        
+    }
 }
 
 void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
@@ -81,6 +92,11 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
         _ev_logger->cream_cancel_refuse_event( fakeJob, "Invalid Grid JobID" );    
         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") + _gridJobId + string("], as the job does not appear to exist") );
     }
+
+    // Set Sequence code, if any...
+    // FIXME: Remove the if() statement. Sequence code MUST be present
+    if ( ! _sequence_code.empty() )  
+        it->setSequenceCode( _sequence_code );
 
     // Log cancel request event
     _ev_logger->cream_cancel_request_event( *it );    
@@ -126,8 +142,7 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
     // and remove last request from WM's filelist
     try {
         util::jobCache::getInstance()->remove( it );
-        // util::jobCache::getInstance()->remove_by_grid_jobid( _gridJobId );
     } catch(exception& ex) {
-        throw iceCommandFatal_ex( string("put in cache raised an exception: ") + ex.what() );
+        throw iceCommandFatal_ex( string("remove from cache raised an exception: ") + ex.what() );
     }
 }

@@ -24,6 +24,7 @@ namespace glite {
                 void execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
             protected:
                 std::string _gridJobId;
+                std::string _sequence_code;
                 log4cpp::Category* log_dev;
                 util::iceEventLogger *_ev_logger;
             };

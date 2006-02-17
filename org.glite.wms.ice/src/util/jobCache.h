@@ -17,7 +17,6 @@
 #include "creamJob.h" 
 #include "boost/thread/recursive_mutex.hpp"
 
-// #define OPERATION_SEPARATOR ":"
 #define MAX_OPERATION_COUNTER 10
 
 #define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
@@ -172,16 +171,6 @@ namespace glite {
 
 	  glite::wms::ice::util::jnlFileManager* jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
 
-	  // CreamJob unparse(const std::string&) throw(ClassadSyntax_ex&);
-
-          /**
-           * Serializes a CreamJob object to a string
-           *
-           * @param c the job to serialize
-           * @param s the string where the serialized job will be stored
-           */
-	  // void toString(const CreamJob& c, std::string& s);
-
 	protected:
 	  jobCache( )
 	    throw(jnlFile_ex&, ClassadSyntax_ex&);
@@ -328,7 +317,7 @@ namespace glite {
            *
            * @param target the vector where CREAM IDs will be stored
            */           
-	  void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
+	  // void getActiveCreamJobIDs(std::vector<std::string>& target) ;  
 
         protected:	  
 	  void dump(void) throw(jnlFile_ex&);
