@@ -670,7 +670,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                         << log4cpp::CategoryStream::ENDLINE;
                 }
             }
-        } catch(exception& ex) {
+        } catch(exception& ex) { // FIXME: never thrown?
             log_dev->fatal( ex.what() );
             exit(1);
         }        

@@ -50,52 +50,53 @@ namespace glite {
           CreamJob( const std::string& ad ) throw (ClassadSyntax_ex& );
 
 	  //! Creates a CreamJob object by copying from C
-	  CreamJob( const CreamJob& C )
-              {
-                  cream_jobid         = C.cream_jobid;
-                  grid_jobid          = C.grid_jobid;
-                  jdl                 = C.jdl;
-                  ceid                = C.ceid;
-                  endpoint            = C.endpoint;
-                  cream_address       = C.cream_address;
-                  cream_deleg_address = C.cream_deleg_address;
-                  status              = C.status;
-                  user_proxyfile      = C.user_proxyfile;
-                  sequence_code       = C.sequence_code;
-                  lastUpdate          = C.lastUpdate;
-                  endLease            = C.endLease;
-              }
+	  CreamJob( const CreamJob& C ) {
+              cream_jobid         = C.cream_jobid;
+              grid_jobid          = C.grid_jobid;
+              jdl                 = C.jdl;
+              ceid                = C.ceid;
+              endpoint            = C.endpoint;
+              cream_address       = C.cream_address;
+              cream_deleg_address = C.cream_deleg_address;
+              status              = C.status;
+              user_proxyfile      = C.user_proxyfile;
+              sequence_code       = C.sequence_code;
+              lastUpdate          = C.lastUpdate;
+              endLease            = C.endLease;
+          }
 
 	  //! Sets the status of the CreamJob object
 	  //void setStatus(const glite::ce::cream_client_api::job_statuses::job_status& st) { status = st; }
           void setStatus( glite::ce::cream_client_api::job_statuses::job_status st, const time_t& tstamp ) { status = st; lastUpdate = tstamp; }
 	  //! Sets the cream unique identifier for this job
-          void setJobID(const std::string& cid) { cream_jobid = cid; }
+          void setJobID( const std::string& cid ) { cream_jobid = cid; }
           //! Sets the jdl for this job
           void setJdl( const std::string& j ) throw( ClassadSyntax_ex& );
           //! Sets the sequence code
           void setSequenceCode( const std::string& seq ) { sequence_code = seq; }
           //! Sets the new lease end time
           void setEndLease( time_t l ) { endLease = l; }
+          //! Sets the Grid JobID. FIXME: This is dangerous!!!
+          void setGridJobID( const std::string& id ) { grid_jobid = id; }
 
 	  //! Gets the unique grid job identifier
-          std::string getGridJobID(void) const { return grid_jobid; }
+          std::string getGridJobID( void ) const { return grid_jobid; }
 	  //! Gets the unique cream job identifier
-          std::string getJobID(void) const { return cream_jobid; }
+          std::string getJobID( void ) const { return cream_jobid; }
 	  //! Gets the entire JDL of the job
-          std::string getJDL(void) const { return jdl; }
+          std::string getJDL( void ) const { return jdl; }
 	  //! Gets the CE identifier for the job (containing the endpoint)
-          std::string getCEID(void) const { return ceid; }
+          std::string getCEID( void ) const { return ceid; }
 	  //! Gets the endpoint of the cream service the job is submitted to
-          std::string getEndpoint(void) const { return endpoint; }
+          std::string getEndpoint( void ) const { return endpoint; }
 	  //! Gets the cream service URL this job is submitted to
-          std::string getCreamURL(void) const { return cream_address; }
+          std::string getCreamURL( void ) const { return cream_address; }
 	  //! Gets the cream delegation service URL used to delegate the user proxy certificate of this job
-          std::string getCreamDelegURL(void) const { return cream_deleg_address; }
+          std::string getCreamDelegURL( void ) const { return cream_deleg_address; }
 	  //! Gets the path and file name of the user proxy certificate
           std::string getUserProxyCertificate( void ) const { return user_proxyfile; }
 	  //! Gets the last time of status update of the job
-	  time_t      getLastUpdate( void ) const { return lastUpdate; }
+	  time_t getLastUpdate( void ) const { return lastUpdate; }
           //! Gets the time when the lease ends
           time_t getEndLease( void ) const { return endLease; }
 
@@ -124,6 +125,18 @@ namespace glite {
            */
           void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
 
+          /**
+           * This method is used to create a "fake" CreamJob with a
+           * given cream job ID. The content of the other fields are
+           * completely dummy. This "fake" CreamJob is to be used to
+           * log Cancel events to L&B; if ICE receives a request to
+           * cancel a nonexisting job, this event has to be logged but
+           * no "real" CreamJob object could be found in the jobCache.
+           *
+           * @param grid_job_id the Grid Job id for this job
+           * @return a CreamJob with given Grid job ID
+           */
+          static CreamJob mkFakeCreamJob( const std::string& grid_job_id );
 	};
       }
     }

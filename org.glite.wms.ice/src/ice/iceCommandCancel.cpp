@@ -56,6 +56,10 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
         throw util::JobRequest_ex( "attribute 'id' inside 'arguments' not found, or is not a string" );
     }
 
+    // Log a "Cancel Request" to L&B
+    util::CreamJob fakeJob;
+    fakeJob.setGridJobID( _gridJobId );
+    _ev_logger->cream_cancel_request_event( fakeJob );    
 }
 
 void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
@@ -74,17 +78,21 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
             << _gridJobId 
             << "] in the jobCache. Giving up"
             << log4cpp::CategoryStream::ENDLINE;
-        // TODO: log?
+
+        util::CreamJob fakeJob;
+        fakeJob.setGridJobID( _gridJobId );
+        _ev_logger->cream_cancel_refuse_event( fakeJob, "Invalid Grid JobID" );    
+        throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") + _gridJobId + string("], as the job does not appear to exist") );
     }
 
     util::CreamJob _theJob( *it );
     vector<string> url_jid(1);   
-    url_jid[1] = _theJob.getJobID();
+    url_jid[0] = _theJob.getJobID();
     log_dev->infoStream()
         << "Removing job gridJobId [" 
         << _gridJobId
         << "], creamJobId [" 
-        << url_jid[1] 
+        << url_jid[0] 
         << "]"
         << log4cpp::CategoryStream::ENDLINE;
     
@@ -93,8 +101,6 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
         << _theJob.getCreamURL() << "]"
         << log4cpp::CategoryStream::ENDLINE;
     
-    _ev_logger->cream_cancel_request_event( _theJob );
-
     try {
 
 	soap_proxy::CreamProxyFactory::getProxy()->Authenticate(_theJob.getUserProxyCertificate());

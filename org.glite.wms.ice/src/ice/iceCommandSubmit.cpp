@@ -218,6 +218,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
+            throw( iceCommandFatal_ex( ex.what() ) );
         }
 
         log_dev->infoStream()

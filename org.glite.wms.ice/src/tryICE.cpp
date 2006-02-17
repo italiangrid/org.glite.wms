@@ -187,7 +187,7 @@ int main(int argc, char*argv[]) {
   /*
    * Initializes the L&B logger
    */
-  iceUtil::iceEventLogger* iceLogger = iceUtil::iceEventLogger::instance();
+  // iceUtil::iceEventLogger* iceLogger = iceUtil::iceEventLogger::instance();
 
   /*****************************************************************************
    * Main loop that fetch requests from input filelist, submit/cancel the jobs,

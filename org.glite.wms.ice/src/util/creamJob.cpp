@@ -56,7 +56,6 @@ string CreamJob::serialize( void ) const
 
 void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
 {
-    //    classad::ClassAdUnParser unparser;
     classad::ClassAdParser parser;
 
     classad::ClassAd *ad;
@@ -145,4 +144,11 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 
     cream_deleg_address = conf->getCreamUrlDelegationPrefix() + endpoint + conf->getCreamUrlDelegationPostfix();
 
- }
+}
+
+CreamJob CreamJob::mkFakeCreamJob( const string& grid_job_id )
+{
+    CreamJob result;
+    result.grid_jobid = grid_job_id;
+    return result;
+}
