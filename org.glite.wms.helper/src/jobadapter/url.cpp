@@ -71,9 +71,15 @@ std::string const& InvalidURL::message() const
     
 URL::URL(std::string const& url)
 {
-  static const boost::regex valid_url("^([a-z,A-Z,0-9,-,.,_,~]+)://([^:/\
-?#@ ]+):?(([0-9]*)?)((/([a-z,A-Z,0-9,-,.,_,~,!,$,&,',(,)]|%[a-e,A-E,0-9]\
-[a-e,A-E,0-9])+)*/?)$");
+
+  static const boost::regex valid_url("\
+([[:alpha:]][[:alpha:],[:digit:],+,.,-]*)\
+://\
+(([[:alpha:],[:digit:],_,.,~,!,$,&,',(,),-]|%[[:xdigit:]][[:xdigit:]])+)\
+(:([0-9]*))?\
+((/([[:alpha:],[:digit:],_,.,~,!,$,&,',(,),-]|%[[:xdigit:]][[:xdigit:]])+)*)/?\
+");
+
 
   bool is_matching = false;
   try {
@@ -88,8 +94,8 @@ URL::URL(std::string const& url)
 
       m_protocol = (*m)[1].str();
       m_host = (*m)[2].str();
-      m_port = (*m)[3].str();
-      m_path = (*m)[5].str();
+      m_port = (*m)[5].str();
+      m_path = (*m)[6].str();
     } catch(std::runtime_error& ex) {
       throw InvalidURL("Cannot parse URL:" + url);
     }
