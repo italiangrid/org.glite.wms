@@ -20,6 +20,7 @@
 #include "boost/functional.hpp"
 #include "boost/mem_fn.hpp"
 #include "boost/format.hpp"
+#include "boost/lexical_cast.hpp"
 #include <stdexcept>
 
 extern int h_errno;
@@ -116,7 +117,7 @@ namespace { // anonymous namespace
             << "Parsing status change notification "
             << _classad
             << log4cpp::CategoryStream::ENDLINE;
-
+        
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( _classad );
         
@@ -125,19 +126,26 @@ namespace { // anonymous namespace
         
         if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
             throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
-
+        boost::trim_if( cream_job_id, boost::is_any_of("\"" ) );
+        
         string job_status_str;       
         if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
+        boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
         job_status = api::job_statuses::getStatusNum( job_status_str );
-
-	 double tstamp_d;
-         if ( !ad->EvaluateAttrNumber( "TIMESTAMP", tstamp_d ) )
-	   throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a number");
-	 tstamp = (time_t)tstamp_d;
-         // FIXME: In the future, this timestamp will be relative to
-         // UTC time, and probably should be converted to the local
-         // (ICE-centric) timezone.
+        
+        string tstamp_s;
+        if ( !ad->EvaluateAttrString( "TIMESTAMP", tstamp_s ) )
+            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a string");
+        boost::trim_if( tstamp_s, boost::is_any_of("\"" ) );
+        try {
+            tstamp = (time_t)( lrint( boost::lexical_cast<double>( tstamp_s )/1000 ) );
+        } catch( boost::bad_lexical_cast& c ) {
+            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute canno be converted to time_t" );
+        }
+        // FIXME: In the future, this timestamp will be relative to
+        // UTC time, and probably should be converted to the local
+        // (ICE-centric) timezone.
     };
 
     /**
