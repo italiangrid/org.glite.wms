@@ -15,10 +15,11 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
     subMgr(),
     proxyfile(cert),
     conf(glite::wms::ice::util::iceConfManager::getInstance()),
+    T( new Topic(conf->getICETopic()) ),
+    P( new Policy(5000) ),
     log_dev( api::util::creamApiLogger::instance()->getLogger() )
 {
-  T = new Topic(conf->getICETopic());
-  P = new Policy(5000);
+
 }
 
 //______________________________________________________________________________
@@ -26,8 +27,7 @@ void iceUtil::subscriptionUpdater::body( void )
 {
   vector<Subscription> vec;
   vec.reserve(100);
-  vector<string> ceurls;
-  ceurls.reserve(100);
+  set<string> ceurls;
 
   while( !isStopped() ) {
     log_dev->infoStream() << "subscriptionUpdater::()() - Checking "
@@ -35,39 +35,32 @@ void iceUtil::subscriptionUpdater::body( void )
     ceurls.clear();
     retrieveCEURLs(ceurls);
 
-    for(vector<string>::iterator it=ceurls.begin();
-        it != ceurls.end();
-	it++)
-      {
+    for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); it++) {
 	try {
-	  log_dev->infoStream() << "subscriptionUpdater::operator()() - "
-	                        << "Authenticating with proxy ["<<proxyfile<<"]"<<log4cpp::CategoryStream::ENDLINE;
-	  subMgr.authenticate(proxyfile.c_str(), "/");
-	  vec.clear();
-	  log_dev->infoStream()  << "subscriptionUpdater::operator()() - "
-	       << "Getting list of subscriptions from ["
-	       << *it << "]" << log4cpp::CategoryStream::ENDLINE;
-	  subMgr.list(*it, vec);
-// 	  for(vector<Subscription>::iterator it = vec.begin();
-//               it != vec.end();
-// 	      it++)
-// 	      cout << (*it)->getSubscriptionID() << endl;
-	  this->renewSubscriptions(vec);
+            log_dev->infoStream() << "subscriptionUpdater::operator()() - "
+                                  << "Authenticating with proxy ["<<proxyfile<<"]"<<log4cpp::CategoryStream::ENDLINE;
+            subMgr.authenticate(proxyfile.c_str(), "/");
+            vec.clear();
+            log_dev->infoStream()  << "subscriptionUpdater::operator()() - "
+                                   << "Getting list of subscriptions from ["
+                                   << *it << "]" << log4cpp::CategoryStream::ENDLINE;
+            subMgr.list(*it, vec);
+            this->renewSubscriptions(vec);
 	} catch(AuthenticationInitException& ex) {
-	  log_dev->errorStream()  
-              << "subscriptionUpdater::()() - Authentication Exception: "
-              << ex.what()
-              << log4cpp::CategoryStream::ENDLINE;
-	  exit(1); // FIXME
+            log_dev->errorStream()  
+                << "subscriptionUpdater::()() - Authentication Exception: "
+                << ex.what()
+                << log4cpp::CategoryStream::ENDLINE;
+            exit(1); // FIXME
 	} catch(exception& ex) {
-	  log_dev->errorStream()  
-              << "subscriptionUpdater::()() - Generic Exception: "
-              << ex.what() 
-              << log4cpp::CategoryStream::ENDLINE;
-	  exit(1); // FIXME
+            log_dev->errorStream()  
+                << "subscriptionUpdater::()() - Generic Exception: "
+                << ex.what() 
+                << log4cpp::CategoryStream::ENDLINE;
+            exit(1); // FIXME
 	}
-      }
-
+    }
+    
     sleep(60);
   }
 }
@@ -114,20 +107,16 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
 }
 
 //______________________________________________________________________________
-void iceUtil::subscriptionUpdater::retrieveCEURLs(vector<string>& urls)
+void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 {
-  map< string, int > tmpMap;
-  string ceurl;
-  for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
-      it != iceUtil::jobCache::getInstance()->end();
-      it++)
-    {
-      ceurl = it->getCreamURL();
-      boost::replace_first(ceurl, conf->getCreamUrlPostfix(),
-      			   conf->getCEMonUrlPostfix());
-      tmpMap[ceurl] = 1;
+    urls.clear();
+    string ceurl;
+    for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
+        it != iceUtil::jobCache::getInstance()->end(); it++) {
+
+        ceurl = it->getCreamURL();
+        boost::replace_first(ceurl, conf->getCreamUrlPostfix(),
+                             conf->getCEMonUrlPostfix());
+        urls.insert( ceurl );
     }
-    for(map<string, int>::iterator it = tmpMap.begin();
-        it != tmpMap.end();
-	it++) urls.push_back(it->first);
 }

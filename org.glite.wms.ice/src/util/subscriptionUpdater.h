@@ -5,7 +5,9 @@
 #include "iceConfManager.h"
 #include "iceThread.h"
 #include <string>
+#include <set>
 #include <vector>
+#include "boost/scoped_ptr.hpp"
 
 class Topic;
 class Policy;
@@ -23,18 +25,19 @@ namespace glite {
 		CESubscriptionMgr subMgr;
 		std::string proxyfile;
 		iceConfManager* conf;
-		Topic* T;
-		Policy* P;
+		boost::scoped_ptr< Topic > T;
+		boost::scoped_ptr< Policy > P;
 		log4cpp::Category *log_dev;
 
-	  public:
+        public:
 		subscriptionUpdater(const std::string& cert);
 
 		virtual ~subscriptionUpdater() {}
 
 		virtual void body( void );
+        protected:
 		void renewSubscriptions(const std::vector<Subscription>&);
-		void retrieveCEURLs(std::vector<std::string>&);
+		void retrieveCEURLs(std::set<std::string>&);
 	};
         
       }
