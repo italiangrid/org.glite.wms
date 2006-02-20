@@ -123,7 +123,8 @@ int main(int argc, char*argv[]) {
       iceUtil::jobCache::getInstance();
   }
   catch(exception& ex) {
-    log_dev->errorStream() << ex.what() << log4cpp::CategoryStream::ENDLINE;
+      log_dev->log( log4cpp::Priority::FATAL, ex.what() );
+      exit( 1 );
   }
 
 
