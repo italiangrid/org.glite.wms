@@ -23,6 +23,7 @@ iceAbsCommand* iceCommandFactory::mkCommand( const std::string& request ) throw(
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
     boost::trim_if(_commandStr, boost::is_any_of("\""));
+    boost::to_lower( _commandStr ); // Convert command to lowercase; FIXME: better to use boost::is_iequal ?
 
     if ( 0 == _commandStr.compare( "jobsubmit" ) ) {
         result = new iceCommandSubmit( request );

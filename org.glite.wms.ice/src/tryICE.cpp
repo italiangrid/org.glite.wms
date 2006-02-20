@@ -1,14 +1,18 @@
-#include "ice-core.h"
-#include "iceAbsCommand.h"
-#include "iceCommandFactory.h"
-#include "jobCache.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
+
+#include "ice-core.h"
+#include "iceAbsCommand.h"
+#include "iceCommandFactory.h"
+#include "jobCache.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
+
+#include "boost/scoped_ptr.hpp"
+
 #include <string>
 #include <iostream>
 #include <unistd.h>
@@ -208,16 +212,17 @@ int main(int argc, char*argv[]) {
             << requests[j] 
             << ">"
             << log4cpp::CategoryStream::ENDLINE;
-      glite::wms::ice::iceAbsCommand* cmd = 0;
-      try {
-          cmd = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
-      }
-      catch(std::exception& ex) {
-          log_dev->log(log4cpp::Priority::ERROR, ex.what() );
-          log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." );
-	iceManager->removeRequest(j);
-	continue;
-      }
+        boost::scoped_ptr< glite::wms::ice::iceAbsCommand > cmd;
+        try {
+            glite::wms::ice::iceAbsCommand* tmp = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
+            cmd.reset( tmp ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything
+        }
+        catch(std::exception& ex) {
+            log_dev->log(log4cpp::Priority::ERROR, ex.what() );
+            log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." );
+            iceManager->removeRequest(j);
+            continue;
+        }
       try {
           cmd->execute( iceManager );
       } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {

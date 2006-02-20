@@ -17,7 +17,7 @@
 #include "creamJob.h" 
 #include "boost/thread/recursive_mutex.hpp"
 
-#define MAX_OPERATION_COUNTER 10
+// #define MAX_OPERATION_COUNTER 10
 
 #define DEFAULT_JNLFILE "/tmp/jobCachePersistFile"
 #define DEFAULT_SNAPFILE "/tmp/jobCachePersistFile.snapshot"

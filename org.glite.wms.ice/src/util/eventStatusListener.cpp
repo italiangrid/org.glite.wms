@@ -2,6 +2,7 @@
 #include "classad_distribution.h"
 #include "ClassadSyntax_ex.h"
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 #include "eventStatusListener.h"
 #include "subscriptionCache.h"
 #include "iceConfManager.h"
@@ -16,8 +17,10 @@
 #include "iceEventLogger.h"
 #include <algorithm>
 #include <set>
-#include <boost/functional.hpp>
-#include <boost/mem_fn.hpp>
+#include "boost/functional.hpp"
+#include "boost/mem_fn.hpp"
+#include "boost/format.hpp"
+#include <stdexcept>
 
 extern int h_errno;
 extern int errno;
@@ -29,6 +32,42 @@ namespace iceUtil = glite::wms::ice::util;
 boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
 
 namespace { // anonymous namespace
+
+    /**
+     * Utility function to return the hostname
+     */ 
+    std::string getHostName( void ) throw ( std::runtime_error& )
+    {
+        char name[256];
+        
+        if ( gethostname(name, 256) == -1 ) {
+            throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
+//             // This error prevent the possibility to subscribe to a CEMon
+//             // and receive notifications about job status
+//             log_dev->fatalStream() << "eventStatusListener::CTOR - "
+//                                    << "Couldn't resolve local hostname: "
+//                                    << strerror(errno)
+//                                    << log4cpp::CategoryStream::ENDLINE;
+//             _isOK = false;
+//             //exit(1);
+//             return;
+        }
+        struct hostent *H=gethostbyname(name);
+        if ( !H ) {
+            throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
+//             // This error prevent the possibility to subscribe to a CEMon
+//             // and receive notifications about job status
+//             log_dev->fatalStream() << "eventStatusListener::CTOR - "
+//                                    << "Couldn't resolve local hostname: "
+//                                    << strerror(h_errno)
+//                                    << log4cpp::CategoryStream::ENDLINE;
+//             //exit(1);
+//             _isOK = false;
+//             return;
+        }
+        return string(H->h_name);
+    }
+
 
     /**
      * This class represents status change notifications as sent by
