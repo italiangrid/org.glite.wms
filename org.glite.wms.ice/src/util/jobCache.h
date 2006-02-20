@@ -16,6 +16,7 @@
 #include "elementNotFound_ex.h"
 #include "creamJob.h" 
 #include "boost/thread/recursive_mutex.hpp"
+#include "boost/scoped_ptr.hpp"
 
 // #define MAX_OPERATION_COUNTER 10
 
@@ -169,7 +170,7 @@ namespace glite {
 	  void loadSnapshot(void) 
 	    throw(jnlFile_ex&, ClassadSyntax_ex&);
 
-	  glite::wms::ice::util::jnlFileManager* jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
+	  boost::scoped_ptr< glite::wms::ice::util::jnlFileManager > jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
 
 	protected:
 	  jobCache( )

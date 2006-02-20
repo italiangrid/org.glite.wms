@@ -157,14 +157,16 @@ jobCache::jobCache( void )
       _jobs( ),
       operation_counter(0)
 { 
-    jnlMgr = new jnlFileManager(jnlFile);
+    jnlFileManager *man = new jnlFileManager( jnlFile );
+    jnlMgr.reset( man );
     loadSnapshot();
     loadJournal();
 }
 
 //______________________________________________________________________________
-jobCache::~jobCache() {
-    delete(jnlMgr);
+jobCache::~jobCache( ) 
+{
+
 }
 
 //______________________________________________________________________________
