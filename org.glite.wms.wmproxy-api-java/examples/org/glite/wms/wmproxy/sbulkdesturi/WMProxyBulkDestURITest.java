@@ -111,7 +111,7 @@ public class WMProxyBulkDestURITest {
 						// removes white spaces (if there is any)
 						input = input.trim();
 						if (input.equals("a") ) {
-							protocol = "";
+							protocol = ALL_PROTOCOLS;
 							break;
 						} else {
 							try {
@@ -131,7 +131,7 @@ public class WMProxyBulkDestURITest {
 
 		} else {
 			// empty string = all protcols
-			protocol = "";
+			protocol = DEFAULT_PROTOCOL_VALUE;
 		}
 		return protocol;
     	}
@@ -168,11 +168,8 @@ public class WMProxyBulkDestURITest {
 		 }
 		 // protocol
 		 protocol = askForProtocol(client);
-		 if (protocol.length()==0) {
-			System.out.println ("\nPROTOCOL			= [ALL PROTOCOLS]\n" );
-		 } else {
-			System.out.println ("\nPROTOCOL			= [" + protocol + "]\n" );
-		 }
+		System.out.println ("\nPROTOCOL			= [" + protocol + "]\n" );
+
 		System.out.println ("Testing....\n");
 		result = (DestURIsStructType) client.getSandboxBulkDestURI(jobId,protocol ) ;
 		// string list
@@ -226,5 +223,9 @@ public class WMProxyBulkDestURITest {
 		// Test
 		runTest ( url, jobId, proxyFile, certsPath);
 	 }
-
+	 /**
+	 * 	Protocol constants
+	 */
+	private static final String ALL_PROTOCOLS	= "all";
+	private static final String DEFAULT_PROTOCOL_VALUE = ALL_PROTOCOLS;
  }

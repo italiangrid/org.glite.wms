@@ -110,7 +110,7 @@ public class WMProxySandboxDestURITest {
 						// removes white spaces (if there is any)
 						input = input.trim();
 						if (input.equals("a") ) {
-							protocol = "all";
+							protocol = ALL_PROTOCOLS;
 							break;
 						} else {
 							try {
@@ -130,7 +130,7 @@ public class WMProxySandboxDestURITest {
 
 		} else {
 			// empty string = all protcols
-			protocol = "all";
+			protocol = DEFAULT_PROTOCOL_VALUE ;
 		}
 		return protocol;
     	}
@@ -207,5 +207,10 @@ public class WMProxySandboxDestURITest {
 		// Test
 		runTest ( url, jobId, proxyFile, certsPath);
 	 }
+	 /**
+	 * 	Protocol constants
+	 */
+	private static final String ALL_PROTOCOLS	= "all";
+	private static final String DEFAULT_PROTOCOL_VALUE = ALL_PROTOCOLS;
 
  }
