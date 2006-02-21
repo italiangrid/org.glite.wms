@@ -110,7 +110,7 @@ public class WMProxySandboxDestURITest {
 						// removes white spaces (if there is any)
 						input = input.trim();
 						if (input.equals("a") ) {
-							protocol = "";
+							protocol = "all";
 							break;
 						} else {
 							try {
@@ -130,7 +130,7 @@ public class WMProxySandboxDestURITest {
 
 		} else {
 			// empty string = all protcols
-			protocol = "";
+			protocol = "all";
 		}
 		return protocol;
     	}
@@ -165,11 +165,8 @@ public class WMProxySandboxDestURITest {
 		 }
 		 // protocol
 		 protocol = askForProtocol(client);
-		 if (protocol.length()==0) {
-			System.out.println ("\nPROTOCOL			= [ALL PROTOCOLS]\n" );
-		 } else {
-			System.out.println ("\nPROTOCOL			= [" + protocol + "]\n" );
-		 }
+		System.out.println ("\nPROTOCOL			= [" + protocol + "]\n" );
+
 		 // testing ...
 		System.out.println ("Testing....");
 		result = (StringList) client.getSandboxDestURI( jobId, protocol ) ;
