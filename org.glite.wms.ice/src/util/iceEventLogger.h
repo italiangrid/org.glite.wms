@@ -23,6 +23,9 @@ namespace glite {
         namespace ice {
             namespace util {
 
+                // Forward declaration
+                class jobCache;
+
                 class iceLoggerException : public std::exception {
                 public:
                     iceLoggerException( const char *reason );
@@ -49,9 +52,9 @@ namespace glite {
                      *
                      * @param theJob the job being transferred
                      */
-                    void cream_transfer_start_event( const CreamJob& theJob );
-                    void cream_transfer_ok_event( const CreamJob& theJob  );
-                    void cream_transfer_fail_event( const CreamJob& theJob, const std::string& reason );
+                    void cream_transfer_start_event( CreamJob& theJob );
+                    void cream_transfer_ok_event( CreamJob& theJob  );
+                    void cream_transfer_fail_event( CreamJob& theJob, const std::string& reason );
 
                     /**
                      * job accepted event. The job has been accepted
@@ -59,7 +62,7 @@ namespace glite {
                      *
                      * @param theJob the job being accepted
                      */
-                    void cream_accepted_event( const CreamJob& theJob );
+                    void cream_accepted_event( CreamJob& theJob );
 
                     /**
                      * Job accepted event. The job has been accepted
@@ -67,7 +70,7 @@ namespace glite {
                      *
                      * @param theJob the job being accepted by the LRMS
                      */
-                     void lrms_accepted_event( const CreamJob& theJob );
+                     void lrms_accepted_event( CreamJob& theJob );
 
                     /**
                      * Job running event. The job is being executed by
@@ -76,7 +79,7 @@ namespace glite {
                      * @param theJob the job which is running
                      * @param host the host where the job is being executed
                      */
-                    void job_running_event( const CreamJob& theJob, const std::string& host );
+                    void job_running_event( CreamJob& theJob, const std::string& host );
 
                     /**
                      * Logs a job refused event. The job is being refused
@@ -85,12 +88,12 @@ namespace glite {
                      * @param theJob the job being refused
                      * @param reason the reason why the job is refused
                      */
-                    void cream_refused_event( const CreamJob& theJob, const std::string& reason );
+                    void cream_refused_event( CreamJob& theJob, const std::string& reason );
 
 
                     // job cancel events.
-                    void cream_cancel_request_event( const CreamJob& theJob );
-                    void cream_cancel_refuse_event( const CreamJob& theJob, const std::string& reason );
+                    void cream_cancel_request_event( CreamJob& theJob );
+                    void cream_cancel_refuse_event( CreamJob& theJob, const std::string& reason );
 
                     /**
                      * Logs a job_done (cancelled) event. This notifies
@@ -98,14 +101,14 @@ namespace glite {
                      *
                      * @param theJob the job which has been cancelled
                      */
-                    void job_cancelled_event( const CreamJob& theJob );
+                    void job_cancelled_event( CreamJob& theJob );
 
-                    void job_suspended_event( const CreamJob& theJob );
-                    void job_done_failed_event( const CreamJob& theJob );
-                    void job_done_ok_event( const CreamJob& theJob );
+                    void job_suspended_event( CreamJob& theJob );
+                    void job_done_failed_event( CreamJob& theJob );
+                    void job_done_ok_event( CreamJob& theJob );
 
                     // job scheduled event
-                    void cream_scheduled_event( const CreamJob& theJob );
+                    void cream_scheduled_event( CreamJob& theJob );
 
                     /**
                      * Logs a job status change event. This means that
@@ -116,20 +119,11 @@ namespace glite {
                      *
                      * @param theJob the job being logged
                      */
-                    void log_job_status_change( const CreamJob& theJob );
+                    void log_job_status_change( CreamJob& theJob );
 
                     static void set_lb_retries( unsigned int r ) { el_s_retries = r; return; }
                     static void set_lb_interval( unsigned int sec ) { el_s_sleep = sec; return; }
                     static void set_lb_destination( const char* dest ) { el_s_destination = dest; return; }
-
-                    /**
-                     * Returns the sequence code associated with the
-                     * current context.
-                     *
-                     * @return the current sequence code, or the empty
-                     * string if no context is currently active.
-                     */
-                    std::string get_sequence_code( void ) const;
 
                     /**
                      * @obsolete{Registers a new job (this would
@@ -146,6 +140,16 @@ namespace glite {
                     std::string getLoggingError( const char *preamble );
 
                     /**
+                     * Modifies the job passed as parameter by changing
+                     * its sequence code. The new sequence code is the on
+                     * in the currently el_context data structure. Furthermore,
+                     * the modified job is stored in the job cache.
+                     *
+                     * @param theJob the job to be modified and stored
+                     */
+                    void update_and_store_job( CreamJob& theJob );
+
+                    /**
                      * Default costructor
                      * 
                      * This method builds a new iceEventLogger object;
@@ -160,6 +164,7 @@ namespace glite {
                     edg_wll_Context* el_context;
                     log4cpp::Category *log_dev;
                     std::string el_s_localhost_name;
+                    jobCache* _cache;
 
                     static unsigned int el_s_retries, el_s_sleep;
                     static const char *el_s_notLogged, *el_s_unavailable, *el_s_OK, *el_s_failed;

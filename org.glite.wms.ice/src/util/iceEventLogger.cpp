@@ -28,6 +28,7 @@ namespace fs = boost::filesystem;
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
+#include "jobCache.h"
 
 #include <netdb.h>
 
@@ -107,7 +108,8 @@ iceEventLogger::iceEventLogger( void ) :
     el_count( 0 ), 
     el_context( new edg_wll_Context ), 
     log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    el_s_localhost_name( )
+    el_s_localhost_name( ),
+    _cache( jobCache::getInstance() )
 {
     edg_wll_InitContext( el_context );
     char name[256];
@@ -350,7 +352,7 @@ void iceEventLogger::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source
 // Transfer Start event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_transfer_start_event( const util::CreamJob& theJob )
+void iceEventLogger::cream_transfer_start_event( util::CreamJob& theJob )
 {
     int           res;
 
@@ -384,6 +386,8 @@ void iceEventLogger::cream_transfer_start_event( const util::CreamJob& theJob )
             << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
+
+    update_and_store_job( theJob );
     
     return;
 }
@@ -393,7 +397,7 @@ void iceEventLogger::cream_transfer_start_event( const util::CreamJob& theJob )
 // transfer OK event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_transfer_ok_event( const util::CreamJob& theJob )
+void iceEventLogger::cream_transfer_ok_event( util::CreamJob& theJob )
 {
     int           res;
 
@@ -430,6 +434,8 @@ void iceEventLogger::cream_transfer_ok_event( const util::CreamJob& theJob )
         
         testCode( res );
     } while( res != 0 );        
+
+    update_and_store_job( theJob );
     
     return;
 }
@@ -439,7 +445,7 @@ void iceEventLogger::cream_transfer_ok_event( const util::CreamJob& theJob )
 // transfer FAIL event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_transfer_fail_event( const util::CreamJob& theJob, const string& reason )
+void iceEventLogger::cream_transfer_fail_event( util::CreamJob& theJob, const string& reason )
 {
     int           res;
 
@@ -474,7 +480,9 @@ void iceEventLogger::cream_transfer_fail_event( const util::CreamJob& theJob, co
                               << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
@@ -483,7 +491,7 @@ void iceEventLogger::cream_transfer_fail_event( const util::CreamJob& theJob, co
 // cream accepted event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_accepted_event( const util::CreamJob& theJob )
+void iceEventLogger::cream_accepted_event( util::CreamJob& theJob )
 {
     // FIXME: which is the source? which is the destination?
     int           res;
@@ -516,7 +524,9 @@ void iceEventLogger::cream_accepted_event( const util::CreamJob& theJob )
                               << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
@@ -525,7 +535,7 @@ void iceEventLogger::cream_accepted_event( const util::CreamJob& theJob )
 // lrms accepted event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::lrms_accepted_event( const util::CreamJob& theJob )
+void iceEventLogger::lrms_accepted_event( util::CreamJob& theJob )
 {
     int           res;
 
@@ -557,7 +567,9 @@ void iceEventLogger::lrms_accepted_event( const util::CreamJob& theJob )
                               << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
@@ -567,7 +579,7 @@ void iceEventLogger::lrms_accepted_event( const util::CreamJob& theJob )
 // accepted event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_refused_event( const util::CreamJob& theJob, const std::string& reason )
+void iceEventLogger::cream_refused_event( util::CreamJob& theJob, const std::string& reason )
 {
     int           res;
 
@@ -598,7 +610,9 @@ void iceEventLogger::cream_refused_event( const util::CreamJob& theJob, const st
                               << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
@@ -607,7 +621,7 @@ void iceEventLogger::cream_refused_event( const util::CreamJob& theJob, const st
 // cancel_request event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_cancel_request_event( const util::CreamJob& theJob )
+void iceEventLogger::cream_cancel_request_event( util::CreamJob& theJob )
 {
     int           res;
 
@@ -636,7 +650,9 @@ void iceEventLogger::cream_cancel_request_event( const util::CreamJob& theJob )
                               << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
@@ -646,7 +662,7 @@ void iceEventLogger::cream_cancel_request_event( const util::CreamJob& theJob )
 // cancel refuse event
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::cream_cancel_refuse_event( const util::CreamJob& theJob, const string& reason )
+void iceEventLogger::cream_cancel_refuse_event( util::CreamJob& theJob, const string& reason )
 {
     int           res;
 
@@ -675,11 +691,13 @@ void iceEventLogger::cream_cancel_refuse_event( const util::CreamJob& theJob, co
                               << log4cpp::CategoryStream::ENDLINE;
         testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
-void iceEventLogger::job_running_event( const util::CreamJob& theJob, const string& host )
+void iceEventLogger::job_running_event( util::CreamJob& theJob, const string& host )
 {
     int res;
 
@@ -708,11 +726,13 @@ void iceEventLogger::job_running_event( const util::CreamJob& theJob, const stri
         
         this->testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
-void iceEventLogger::job_cancelled_event( const util::CreamJob& theJob )
+void iceEventLogger::job_cancelled_event( util::CreamJob& theJob )
 {
     int res;
 
@@ -741,11 +761,13 @@ void iceEventLogger::job_cancelled_event( const util::CreamJob& theJob )
         
         this->testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
-void iceEventLogger::job_suspended_event( const util::CreamJob& theJob )
+void iceEventLogger::job_suspended_event( util::CreamJob& theJob )
 {
     int res;
 
@@ -774,11 +796,13 @@ void iceEventLogger::job_suspended_event( const util::CreamJob& theJob )
         
         this->testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
-void iceEventLogger::job_done_ok_event( const util::CreamJob& theJob )
+void iceEventLogger::job_done_ok_event( util::CreamJob& theJob )
 {
     int res;
 
@@ -807,11 +831,13 @@ void iceEventLogger::job_done_ok_event( const util::CreamJob& theJob )
         
         this->testCode( res );
     } while( res != 0 );        
-    
+
+    update_and_store_job( theJob );
+        
     return;
 }
 
-void iceEventLogger::job_done_failed_event( const util::CreamJob& theJob )
+void iceEventLogger::job_done_failed_event( util::CreamJob& theJob )
 {
     int res;
 
@@ -840,6 +866,8 @@ void iceEventLogger::job_done_failed_event( const util::CreamJob& theJob )
         
         this->testCode( res );
     } while( res != 0 );        
+
+    update_and_store_job( theJob );    
     
     return;
 }
@@ -849,9 +877,12 @@ void iceEventLogger::job_done_failed_event( const util::CreamJob& theJob )
 //
 //
 //////////////////////////////////////////////////////////////////////////////
-string iceEventLogger::get_sequence_code( void ) const
+void iceEventLogger::update_and_store_job( CreamJob& theJob )
 {
-    return string( edg_wll_GetSequenceCode( *el_context ) );
+    boost::recursive_mutex::scoped_lock( _cache->mutex );
+    string new_seq_code( edg_wll_GetSequenceCode( *el_context ) );
+    theJob.setSequenceCode( new_seq_code );    
+    _cache->put( theJob );
 }
 
 
@@ -860,7 +891,7 @@ string iceEventLogger::get_sequence_code( void ) const
 // 
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceEventLogger::log_job_status_change( const CreamJob& theJob )
+void iceEventLogger::log_job_status_change( CreamJob& theJob )
 {
     switch( theJob.getStatus() ) {
     case glite::ce::cream_client_api::job_statuses::REGISTERED:
