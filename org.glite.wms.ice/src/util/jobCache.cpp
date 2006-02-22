@@ -48,7 +48,7 @@ jobCache::jobCacheTable::jobCacheTable( ) :
 }
 
 //______________________________________________________________________________
-void jobCache::jobCacheTable::putJob( const CreamJob& c )
+jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJob& c )
 {
     // Note: the GridJobID of a job MUST always be defined; the creamJobId
     // could be initially empty, so we need to check this.
@@ -68,6 +68,7 @@ void jobCache::jobCacheTable::putJob( const CreamJob& c )
     if ( !c.getJobID().empty() ) {
         _cidMap.insert( make_pair( c.getJobID(), pos ) );
     }
+    return pos;
 }
 
 //______________________________________________________________________________
@@ -243,11 +244,11 @@ void jobCache::loadJournal(void)
 }
 
 //______________________________________________________________________________
-void jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
+jobCache::iterator jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
     string param= cj.serialize();
     logOperation( PUT, param );
-    _jobs.putJob( cj );
+    return _jobs.putJob( cj );
 }
 
 //______________________________________________________________________________

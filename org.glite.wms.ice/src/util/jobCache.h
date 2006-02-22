@@ -85,16 +85,17 @@ namespace glite {
                * one. This method <em>does not</em> log anything on the journal
                *
                * @param c The job to insert
+               * @return an iterator of the inserted job
                */
-              void putJob( const CreamJob& c );
+              jobCacheTable::iterator putJob( const CreamJob& c );
               
               /**
                * Removes a job from the in-memory hash table. If the job
                * is not in the table, this method does nothing. This method
                * <em>does not</em> log anything on the journal.
                *
-               * @param c The job to remove. If the job does not exist,
-               * nothing is done.
+               * @param c the job to remove from the table. If
+               * the job does not exist, nothing is done
                */
               void delJob( const CreamJob& c );
               
@@ -243,8 +244,9 @@ namespace glite {
            * @param c the job to insert into the cache. Job c may
            * already be in the cache; in this case the old job is
            * overwritten
+           * @return an iterator to the inserted job
            */
-	  void put(const CreamJob& c ) throw(jnlFile_ex&, jnlFileReadOnly_ex&);
+	  iterator put(const CreamJob& c ) throw(jnlFile_ex&, jnlFileReadOnly_ex&);
 
           /**
            * Looks up a job by its cream Job ID.

@@ -123,6 +123,15 @@ namespace glite {
                     static void set_lb_destination( const char* dest ) { el_s_destination = dest; return; }
 
                     /**
+                     * Returns the sequence code associated with the
+                     * current context.
+                     *
+                     * @return the current sequence code, or the empty
+                     * string if no context is currently active.
+                     */
+                    std::string get_sequence_code( void ) const;
+
+                    /**
                      * @obsolete{Registers a new job (this would
                      * normally be done by the UI).}
                      */
