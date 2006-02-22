@@ -263,38 +263,52 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 {
 	GLITE_STACK_TRY("registerSubJobs()");
 	edglog_fn("WMPEventlogger::registerSubJobs");
-	
+
 	char str_nsAddr[1024];
 	sprintf(str_nsAddr, "%s", server.c_str());
-	
+
+	// Prepare both jdls and subjobs for registering:
+	vector<string> jobids;
+	vector<string> jdls = ad->getSubmissionStrings(&jobids);
+	unsigned int jdlssize = jdls.size();
+	if (jdlssize!= jobids.size()){
+		// This is a fatal Exception and sholud never be raised
+		string msg = "Number of nodes do not correspond to number of inserted jobids";
+		edglog(critical)<<msg<<endl;
+		throw JobOperationException(__FILE__, __LINE__,
+			"WMPEventLogger::registerSubJobs()",
+			WMS_OPERATION_NOT_ALLOWED, msg);
+	}
+
+	// Define useful structures:
 	char **jdls_char;
 	char **zero_char;
-	
-	vector<string> jdls = ad->getSubmissionStrings();
-	unsigned int size = jdls.size();
-	jdls_char = (char**) malloc(sizeof(char*) * (size + 1));
+	jdls_char = (char**) malloc(sizeof(char*) * (jdlssize + 1)); // same size for both arrays
 	zero_char = jdls_char;
-	jdls_char[size] = NULL;
-	
+	jdls_char[jdlssize] = NULL;
+
+	edg_wlc_JobId jids_id [jdlssize];
+	// Create needed structures
 	vector<string>::iterator iter = jdls.begin();
 	vector<string>::iterator const end = jdls.end();
-	for (; iter != end; ++iter) {
+	vector<string>::iterator iterId    = jobids.begin();
+	for (unsigned int jid_i = 0; iter != end; ++iter, ++iterId, jid_i++) {
 		*zero_char = (char*) malloc(iter->size() + 1);
 		sprintf(*zero_char, "%s", iter->c_str());
 		zero_char++;
+		jids_id[jid_i]=glite::wmsutils::jobid::JobId (*iterId).getId();
 	}
-	
 	int register_result;
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering DAG subjobs to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterSubjobsProxy(ctx, id->getId(), jdls_char,
-			str_nsAddr, subjobs);
+			str_nsAddr, jids_id);
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG subjobs to LB..."<<endl;
 		register_result = edg_wll_RegisterSubjobs(ctx, id->getId(), jdls_char,
-			str_nsAddr, subjobs);
+			str_nsAddr, jids_id);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
 #endif  //GLITE_WMS_HAVE_LBPROXY
