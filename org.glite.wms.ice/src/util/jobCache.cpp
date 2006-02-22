@@ -5,8 +5,9 @@
 #include "iceConfManager.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+//#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
 
 #include "classad_distribution.h" // classad's stuff
 #include "source.h" // classad's stuff
@@ -265,8 +266,10 @@ void jobCache::print(ostream& os) {
 //______________________________________________________________________________
 void jobCache::dump() throw (jnlFile_ex&)
 {
-    string tmpSnapFile = snapFile + ".tmp." +
-        apiutil::string_manipulation::make_string(::getpid());
+//    string tmpSnapFile = snapFile + ".tmp." +
+//        apiutil::string_manipulation::make_string(::getpid());
+
+    string tmpSnapFile = boost::str( boost::format("%1%.tmp.%2%") % snapFile % ::getpid() );
 
     int saveerr = 0;
         

@@ -2,7 +2,7 @@
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileLocker.h"
 #include "glite/wms/common/utilities/FileListLock.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+//#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include "classad_distribution.h"
 
 #include <string>

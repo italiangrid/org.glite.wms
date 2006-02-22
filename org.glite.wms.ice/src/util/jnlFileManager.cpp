@@ -1,6 +1,6 @@
 
 #include "jnlFileManager.h"
-#include "glite/ce/cream-client-api-c/string_manipulation.h"
+//#include "glite/ce/cream-client-api-c/string_manipulation.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -10,11 +10,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "boost/format.hpp"
 
 extern int errno;
 
 using namespace glite::wms::ice::util;
-using namespace glite::ce::cream_client_api::util;
+//using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
 #define OPERATION_SEPARATOR ":"
@@ -69,7 +70,11 @@ void jnlFileManager::truncate(void) throw(jnlFile_ex&, jnlFileReadOnly_ex&)
     throw jnlFileReadOnly_ex("Cannot truncate: the file is in readonly mode");
 
   is.close();
-  string tmpName = filename+"."+string_manipulation::make_string(::getpid());
+
+//  string tmpName = filename+"."+string_manipulation::make_string(::getpid());
+
+  string tmpName = boost::str( boost::format("%1%.%2%") % filename % ::getpid() );
+
   ::unlink(tmpName.c_str());
   _os.open(tmpName.c_str(), ios::out);
   if(!_os)
