@@ -51,7 +51,6 @@ eventStatusPoller::eventStatusPoller(
 //______________________________________________________________________________
 eventStatusPoller::~eventStatusPoller()
 {
-
 }
 
 //______________________________________________________________________________
@@ -256,7 +255,7 @@ void eventStatusPoller::updateJobCache()
                             << "Updating jobcache with "
                             << "grid_jobid = [" << jit->getGridJobID() << "] "
                             << "cream_jobid = [" << cid << "]"
-                            << "status = [" << (*sit)->name << "]"
+                            << " status = [" << (*sit)->name << "]"
                             << log4cpp::CategoryStream::ENDLINE;
                         
                         jit->setStatus( stNum, (*sit)->timestamp );
@@ -281,7 +280,7 @@ void eventStatusPoller::updateJobCache()
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
   if(!jobs_to_purge.size()) return;
-  
+  string cid;
   for(
       cvstrIt it = jobs_to_purge.begin();
       it != jobs_to_purge.end();
@@ -289,7 +288,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
       )
     {
       oneJobToPurge.clear();
-      string cid;
+
       try {
           boost::recursive_mutex::scoped_lock M( jobCache::mutex );
           log_dev->debugStream()
@@ -304,7 +303,10 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
               << "Calling JobPurge for host ["
               << jit->getCreamURL() << "]"
               << log4cpp::CategoryStream::ENDLINE;
-          creamClient->Authenticate( jit->getUserProxyCertificate());
+	  // We cannot accumulate more jobs to purge in a vector
+	  // because we must authenticate different jobs with different
+	  // user certificates.
+	  creamClient->Authenticate( jit->getUserProxyCertificate());
           oneJobToPurge.push_back( jit->getJobID() );
           creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
           jobCache::getInstance()->remove( jit );

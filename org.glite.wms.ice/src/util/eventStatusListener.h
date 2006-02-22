@@ -3,10 +3,7 @@
 
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 
-//#undef soapStub_H
 #include "glite/ce/monitor-client-api-c/CEPing.h"
-#include "glite/ce/monitor-client-api-c/CESubscription.h"
-#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
 #include "boost/thread/recursive_mutex.hpp"
 #include "boost/scoped_ptr.hpp"
@@ -26,6 +23,7 @@ namespace glite {
           class jobCache;
           class iceConfManager;
           class iceEventLogger;
+	  class subscriptionManager;
 
 	//! A class that receives notification from CEMon about job status changes
 	/**!
@@ -38,11 +36,11 @@ namespace glite {
 	class eventStatusListener : public CEConsumer, public iceThread {
 	  std::string grid_JOBID, cream_JOBID;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
- 	  CESubscription subscriber;
- 	  CESubscriptionMgr subManager;
+ 	  //CESubscription subscriber;
+ 	  //CESubscriptionMgr subManager;
 	  boost::scoped_ptr<CEPing> pinger;
-	  Topic T;
-	  Policy P;
+	  //Topic T;
+	  //Policy P;
 	  std::vector<std::string> activeSubscriptions;
 	  std::string proxyfile;
 	  int tcpport;
@@ -54,6 +52,7 @@ namespace glite {
           // classad::ClassAdParser parser;
 	  bool _isOK;
           jobCache* cache;
+	  subscriptionManager* subManager;
 
 	  void init(void);
           // void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
@@ -62,9 +61,7 @@ namespace glite {
 	protected:
 	  eventStatusListener(const eventStatusListener&) : 
               CEConsumer(9999),
-              pinger(0),
-              T(""),
-              P(0) 
+              pinger(0)
               {}
 
 	public:

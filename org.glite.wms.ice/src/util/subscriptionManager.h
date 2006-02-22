@@ -7,6 +7,7 @@
 
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
+#include "boost/thread/recursive_mutex.hpp"
 
 /*class CESubscription;
 class CESubscriptionMgr;
@@ -23,10 +24,11 @@ namespace util {
   class iceConfManager;
 
   class subscriptionManager {
-    CESubscription *ceS;
-    CESubscriptionMgr *ceSMgr;
-    Topic *T;
-    Policy *P;
+
+    CESubscription ceS;
+    CESubscriptionMgr ceSMgr;
+    Topic T;
+    Policy P;
     iceConfManager* conf;
     log4cpp::Category *log_dev;
     bool valid;
@@ -36,13 +38,19 @@ namespace util {
    protected:
     subscriptionManager();
     virtual ~subscriptionManager() {}
+    void    list(const std::string& url, std::vector<Subscription>&) throw(std::exception&);
 
    public:
-    static        subscriptionManager* getInstance();
-    void          list(const std::string& url, std::vector<Subscription>&);
-    std::string   subscribe(const std::string& url,
-    		            const long int& duration);
 
+    static      subscriptionManager* getInstance();
+
+    bool        subscribe(const std::string& url);
+
+    bool        subscribedTo(const std::string& url);
+
+    bool        isValid( void ) const { return valid; }
+
+    static boost::recursive_mutex mutex;
   };
 
 }
