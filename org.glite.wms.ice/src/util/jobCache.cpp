@@ -346,8 +346,13 @@ void jobCache::logOperation( const operation& op, const std::string& param )
      * checks if cache-dump and journal-truncation are needed
      */
     operation_counter++;
+    int max_op_cntr;
+    {
+      boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+      max_op_cntr = iceConfManager::getInstance()->getMaxJobCacheOperationBeforeDump();
+    }
 
-    if(operation_counter >= iceConfManager::getInstance()->getMaxJobCacheOperationBeforeDump())
+    if( operation_counter >= max_op_cntr )
     {
       operation_counter = 0;
       try {

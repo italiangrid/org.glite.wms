@@ -41,7 +41,13 @@ ice::ice(const string& NS_FL,
     exit(1);
   }
 
-  if( util::iceConfManager::getInstance()->getStartListener() ) {
+  bool _tmp_start_listener;
+  {
+    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+    _tmp_start_listener = util::iceConfManager::getInstance()->getStartListener();
+  }
+
+  if( _tmp_start_listener ) {
   /**
    * The listener and the iceCommandSubmit need to subscribe to CEMon in order
    * to make ICE able to receive job status notifications.
@@ -59,6 +65,7 @@ ice::ice(const string& NS_FL,
       //_isOK = false;
       //exit(1); // FATAL, I think is right to exit
       //return;
+      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
       util::iceConfManager::getInstance()->setStartListener( false );
     }
 
@@ -72,6 +79,7 @@ ice::ice(const string& NS_FL,
 	log_dev->errorStream() << "ice::CTOR() - "
                              << "Fatal error creating the subscriptionCache instance. Will not start listener."
 	  		     << log4cpp::CategoryStream::ENDLINE;
+	boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
         util::iceConfManager::getInstance()->setStartListener( false );
     }
   }
@@ -120,11 +128,15 @@ void ice::startListener(const int& listenPort)
 
   log_dev->log(log4cpp::Priority::INFO,
 	       "ice::startListener() - Creating a CEMon listener object...");
-  listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort,util::iceConfManager::getInstance()->getHostProxyFile()));
+  {
+    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+    listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort,util::iceConfManager::getInstance()->getHostProxyFile()));
+  }
   if( !listener->isOK() ) {
       log_dev->log(log4cpp::Priority::ERROR, "CEMon listener creation went wrong. Won't start it.");
       // this must be set because other pieces of code
       // have a behaviour that depends on the listener is running or not
+      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
       util::iceConfManager::getInstance()->setStartListener( false );
       return;
   }
@@ -156,11 +168,18 @@ void ice::startListener(const int& listenPort)
 	       "ice::startListener() - listener started succesfully !");
   
   //-----------------now is time to start subUpdater---------------------------
-  
-  if(util::iceConfManager::getInstance()->getStartSubscriptionUpdater()) {
+  bool _tmp_start_sub_updater;
+  {
+    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+    _tmp_start_sub_updater = util::iceConfManager::getInstance()->getStartSubscriptionUpdater();
+  }
+  if( _tmp_start_sub_updater ) {
       log_dev->log(log4cpp::Priority::INFO,
                    "ice::startListener() - Creating a CEMon subscription updater...");
-      subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
+      {
+        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
+      }
       log_dev->log(log4cpp::Priority::INFO,
                    "ice::startListener() - Creating thread object for Subscription updater...");
       try {

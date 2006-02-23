@@ -72,20 +72,30 @@ bool eventStatusPoller::getStatus(void)
 
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
+    time_t oldness;// = time(NULL)-jobIt->getLastUpdate();
+    time_t threshold;// = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+    bool _tmp_start_listener;
+
     for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
         oneJobToQuery.clear();
 
         //        try {
-        time_t oldness = time(NULL)-jobIt->getLastUpdate();
-        time_t threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+
+	{
+          boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+	  oldness = time(NULL)-jobIt->getLastUpdate();
+	  threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+	  _tmp_start_listener = iceConfManager::getInstance()->getStartListener();
+	}
+
         //	    printf("\t*** oldness=%d threshold=%d\n", oldness, threshold);
         //	    printf("\t*** listener=%d\n",iceConfManager::getInstance()->startListener());
-        if( (oldness <  threshold) && iceConfManager::getInstance()->getStartListener() ) {
+        if( (oldness <  threshold) && _tmp_start_listener ) {
             //	        printf("\t*** CONTINUE!!!\n");
             continue;
         }
         //continue;
-        
+
         log_dev->log(log4cpp::Priority::INFO,
                      string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
                      + jobIt->getJobID() + "]");
@@ -95,7 +105,7 @@ bool eventStatusPoller::getStatus(void)
             _jobstatuslist.push_back( creamClient->Status(jobIt->getCreamURL().c_str(),
                                                           oneJobToQuery,
                                                           empty, -1, -1 ) );
-	
+
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
             // the CreamJob is created from another valid one

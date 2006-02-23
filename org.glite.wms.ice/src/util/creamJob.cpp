@@ -138,11 +138,16 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     }
     endpoint = pieces[0] + ":" + pieces[1];
 
+    /**
+     * No need to lock the mutex because getInstance already does that
+     */
     iceUtil::iceConfManager* conf = iceUtil::iceConfManager::getInstance();
 
-    cream_address = conf->getCreamUrlPrefix() + endpoint + conf->getCreamUrlPostfix();
-
-    cream_deleg_address = conf->getCreamUrlDelegationPrefix() + endpoint + conf->getCreamUrlDelegationPostfix();
+    {
+      boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+      cream_address = conf->getCreamUrlPrefix() + endpoint + conf->getCreamUrlPostfix();
+      cream_deleg_address = conf->getCreamUrlDelegationPrefix() + endpoint + conf->getCreamUrlDelegationPostfix();
+    }
 
 }
 

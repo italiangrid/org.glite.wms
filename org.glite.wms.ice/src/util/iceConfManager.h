@@ -32,8 +32,8 @@ namespace glite {
 	  bool startpoller, startlistener, startsubupder,
 	       log_on_console, log_on_file;
 	  
-	  static boost::recursive_mutex mutex;
-	  
+
+
 	protected:
 	  iceConfManager()
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
@@ -97,6 +97,8 @@ namespace glite {
 	  void setNotificationFrequency( const int& p ) {
 		notification_frequency = p;
 	  }
+
+	  static boost::recursive_mutex mutex;
 	};
       }
     }

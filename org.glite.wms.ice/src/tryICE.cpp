@@ -63,10 +63,15 @@ int main(int argc, char*argv[]) {
    ****************************************************************************/
   util::creamApiLogger* logger_instance = util::creamApiLogger::instance();
   log4cpp::Category* log_dev = logger_instance->getLogger();
-  log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
-  logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
-  logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
-  string logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
+  string hostcert, logfile, hostdn;
+  {
+    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    log_dev->setPriority( iceUtil::iceConfManager::getInstance()->getLogLevel() );
+    logger_instance->setLogfileEnabled( iceUtil::iceConfManager::getInstance()->getLogOnFile() );
+    logger_instance->setConsoleEnabled( iceUtil::iceConfManager::getInstance()->getLogOnConsole() );
+    logfile = iceUtil::iceConfManager::getInstance()->getLogFile();
+    hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
+  }
   logger_instance->setLogFile(logfile.c_str());
 
   cout << "Logfile is [" << logfile << "]" << endl;
@@ -75,20 +80,22 @@ int main(int argc, char*argv[]) {
   /*****************************************************************************
    * Gets the distinguished name from the host proxy certificate
    ****************************************************************************/
-  string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
-  string hostdn;
+
+  //string hostcert = iceUtil::iceConfManager::getInstance()->getHostProxyFile();
+  //string hostdn;
   // Set the creation of CreamProxy with automatic delegetion ON
   soap_proxy::CreamProxyFactory::initProxy( true );
   log_dev->log(log4cpp::Priority::INFO,
                string("Host proxyfile is [") + hostcert + "]" );
   try {
-    hostdn   = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+    hostdn = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
     if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
         log_dev->errorStream() << "Host proxy certificate is expired. Won't start Listener"
 					<< log4cpp::CategoryStream::ENDLINE;
 
         // this must be set because other pieces of code
         // have a behaviour that depends on the listener is running or not
+	boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
 	iceUtil::iceConfManager::getInstance()->setStartListener( false );
     } else {
 	log_dev->log(log4cpp::Priority::INFO,
@@ -101,13 +108,18 @@ int main(int argc, char*argv[]) {
 
     // this must be set because other pieces of code
     // have a behaviour that depends on the listener is running or not
+    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceUtil::iceConfManager::getInstance()->setStartListener( false );
   }
 
   /*****************************************************************************
    * Initializes job cache
-   ****************************************************************************/ 
-  string jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
+   ****************************************************************************/
+  string jcachefile;
+  {
+    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
+  }
   string jsnapfile  = jcachefile+".snapshot";
   log_dev->infoStream() << "Initializing jobCache with journal file ["
   			<< jcachefile
@@ -133,6 +145,7 @@ int main(int argc, char*argv[]) {
    ****************************************************************************/ 
   glite::wms::ice::ice* iceManager;
   try {
+    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceManager = new glite::wms::ice::ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
       log_dev->log(log4cpp::Priority::ERROR, ex.what() );
@@ -176,12 +189,14 @@ int main(int argc, char*argv[]) {
   /*****************************************************************************
    * Starts status poller and/or listener if specified in the config file
    ****************************************************************************/
-  if(iceUtil::iceConfManager::getInstance()->getStartListener())
-    iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
+  {
+    boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+    if(iceUtil::iceConfManager::getInstance()->getStartListener())
+      iceManager->startListener(iceUtil::iceConfManager::getInstance()->getListenerPort());
 
-  if(iceUtil::iceConfManager::getInstance()->getStartPoller())
-    iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
-
+    if(iceUtil::iceConfManager::getInstance()->getStartPoller())
+      iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
+  }
   // iceManager->startLeaseUpdater( ); // FIXME: starting this should be user-configurable
 
   vector<string> url_jid;

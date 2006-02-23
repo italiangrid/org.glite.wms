@@ -66,9 +66,6 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   poller_status_threshold_time = config->ice()->poller_status_threshold_time();
   max_jobcache_operation_before_dump = config->ice()->max_jobcache_operation_before_dump();
   notification_frequency = config->ice()->notification_frequency();
-
-//   printf("\t **** poller_status_threshold_time=%d\n", config->ice()->poller_status_threshold_time());
-//   printf("\t **** poller_status_threshold_time=%d\n", poller_status_threshold_time);
   log_on_console    = config->ice()->log_on_console();
   log_on_file       = config->ice()->log_on_file();
 }

@@ -38,7 +38,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
   throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
   iceAbsCommand( ),
   log_dev( api_util::creamApiLogger::instance()->getLogger()),
-  confMgr( ice_util::iceConfManager::getInstance()),
+  confMgr( ice_util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
   //ceS(),
   //T( confMgr->getICETopic()),
   //P(5000),
@@ -229,7 +229,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         
         // no failure: put jobids and status in cache
         // and remove last request from WM's filelist
-        
+
         theJob.setJobID(url_jid[1]);
         theJob.setStatus(cream_api::job_statuses::PENDING, time(NULL) );
 
@@ -237,7 +237,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         _ev_logger->cream_accepted_event( theJob );
 
         boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-        
+
         // put(...) accepts arg by reference, but
         // the implementation puts the arg in the memory hash by copying it. So
         // passing a *pointer should not produce problems
@@ -250,7 +250,14 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
      * of job just submitted. But only if listener is ON
      */
     /* ....... */
-    if(ice_util::iceConfManager::getInstance()->getStartListener()) {
+
+    bool _tmp_start_listener;
+    {
+      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+      _tmp_start_listener = confMgr->getStartListener();
+    }
+
+    if( _tmp_start_listener ) {
       string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
                          + confMgr->getCEMonUrlPostfix();
       if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {

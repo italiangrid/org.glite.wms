@@ -15,7 +15,7 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
     subMgr(),
     proxyfile(cert),
     conf(glite::wms::ice::util::iceConfManager::getInstance()),
-    T( new Topic(conf->getICETopic()) ),
+    T( new Topic(iceUtil::iceConfManager::getInstance()->getICETopic()) ),
     P( new Policy(iceUtil::iceConfManager::getInstance()->getNotificationFrequency()) ),
     log_dev( api::util::creamApiLogger::instance()->getLogger() )
 {
@@ -84,18 +84,21 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
 	   << "timeleft=[" << timeleft << "]\n\t"
 	   << "expiration=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
 	   << log4cpp::CategoryStream::ENDLINE;*/
-      if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
-        log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
+      {
+        boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
+        if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
+          log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
 	     << "Updating subscription ["<<(*it).getSubscriptionID() << "]"
 	     << " at [" <<(*it).getEndpoint()<<"]"<<log4cpp::CategoryStream::ENDLINE;
-	log_dev->infoStream()  << "subscriptionUpdater::renewSubscriptions() - Update params: "
+	  log_dev->infoStream()  << "subscriptionUpdater::renewSubscriptions() - Update params: "
 	     << "ConsumerURL=["<<(*it).getConsumerURL()
 	     << "] - TopicName=[" << (*it).getTopicName() << "] - "
 	     << "Duration=[" << conf->getSubscriptionDuration()
 	     << "] since now - rate=["
-	     << iceUtil::iceConfManager::getInstance()->getNotificationFrequency()
+	     << conf->getNotificationFrequency()
 	     << "]"
 	     << log4cpp::CategoryStream::ENDLINE;
+	}
 	try {
 	  subMgr.update(
 	                (const string&)(*it).getEndpoint(),
