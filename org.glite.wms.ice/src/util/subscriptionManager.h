@@ -34,6 +34,7 @@ namespace util {
     bool valid;
     static subscriptionManager* instance;
     std::string myname;
+    std::string lastSubscriptionID;
 
    protected:
     subscriptionManager();
@@ -49,6 +50,8 @@ namespace util {
     bool        subscribedTo(const std::string& url);
 
     bool        isValid( void ) const { return valid; }
+
+    std::string getLastSubscriptionID() const { return lastSubscriptionID; }
 
     static boost::recursive_mutex mutex;
   };

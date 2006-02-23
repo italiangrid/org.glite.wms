@@ -2,6 +2,8 @@
 #include "ice-core.h"
 #include "jobCache.h"
 #include "jobRequest.h"
+#include "subscriptionManager.h"
+#include "subscriptionCache.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
@@ -21,7 +23,7 @@ typedef vector<string>::iterator vstrIt;
 ice::ice(const string& NS_FL, 
 	 const string& WM_FL
 	 ) throw(iceInit_ex&)
-  : ns_filelist(NS_FL), 
+  : ns_filelist(NS_FL),
     wm_filelist(WM_FL),
     fle(WM_FL.c_str()),
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
@@ -38,11 +40,46 @@ ice::ice(const string& NS_FL,
 		 "ice::ice() - Catched unknown exception");
     exit(1);
   }
+
+  if( util::iceConfManager::getInstance()->getStartListener() ) {
+  /**
+   * The listener and the iceCommandSubmit need to subscribe to CEMon in order
+   * to make ICE able to receive job status notifications.
+   * So now as preliminary operation it's the case to check that the
+   * subscriptionManager singleton can be created without problems.
+   *
+   * The subscriptionManager initialization also setup authentication.
+   */
+    boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+    util::subscriptionManager::getInstance();
+    if( !util::subscriptionManager::getInstance()->isValid() ) {
+      log_dev->errorStream() << "ice::CTOR() - "
+                             << "Fatal error creating the subscriptionManager instance. Will not start listener."
+	  		   << log4cpp::CategoryStream::ENDLINE;
+      //_isOK = false;
+      //exit(1); // FATAL, I think is right to exit
+      //return;
+      util::iceConfManager::getInstance()->setStartListener( false );
+    }
+
+    /**
+     * subscriptionCache is used to retrieve the list of cemon we're
+     * subscribed. If it's creation failed, it is not the case (at 0-order)
+     * to use the listener...
+     *
+     */
+    if( util::subscriptionCache::getInstance() == NULL ) {
+	log_dev->errorStream() << "ice::CTOR() - "
+                             << "Fatal error creating the subscriptionCache instance. Will not start listener."
+	  		     << log4cpp::CategoryStream::ENDLINE;
+        util::iceConfManager::getInstance()->setStartListener( false );
+    }
+  }
 }
 
 //______________________________________________________________________________
-ice::~ice() 
-{ 
+ice::~ice()
+{
   if( listener && listener->isRunning() ) {
     log_dev->log(log4cpp::Priority::INFO,
 		 "ice::~ice() - Waiting for listener termination...");
@@ -78,6 +115,8 @@ void ice::startListener(const int& listenPort)
 {
   if ( listener && listener->isRunning() ) 
       return;
+
+
 
   log_dev->log(log4cpp::Priority::INFO,
 	       "ice::startListener() - Creating a CEMon listener object...");

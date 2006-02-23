@@ -30,33 +30,33 @@ void iceUtil::subscriptionUpdater::body( void )
   set<string> ceurls;
 
   while( !isStopped() ) {
-    log_dev->infoStream() << "subscriptionUpdater::()() - Checking "
+    log_dev->infoStream() << "subscriptionUpdater::body() - Checking "
                           << "subscription's time validity..." << log4cpp::CategoryStream::ENDLINE;
     ceurls.clear();
     retrieveCEURLs(ceurls);
 
     for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); it++) {
 	try {
-            log_dev->infoStream() << "subscriptionUpdater::operator()() - "
+            log_dev->infoStream() << "subscriptionUpdater::body() - "
                                   << "Authenticating with proxy ["
 				  << proxyfile<<"]"
 				  << log4cpp::CategoryStream::ENDLINE;
             subMgr.authenticate(proxyfile.c_str(), "/");
             vec.clear();
-            log_dev->infoStream() << "subscriptionUpdater::operator()() - "
+            log_dev->infoStream() << "subscriptionUpdater::body() - "
                                   << "Getting list of subscriptions from ["
                                   << *it << "]" << log4cpp::CategoryStream::ENDLINE;
             subMgr.list(*it, vec);
             this->renewSubscriptions(vec);
 	} catch(AuthenticationInitException& ex) {
             log_dev->errorStream()  
-                << "subscriptionUpdater::()() - Authentication Exception: "
+                << "subscriptionUpdater::body() - Authentication Exception: "
                 << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             exit(1); // FIXME
 	} catch(exception& ex) {
             log_dev->errorStream()  
-                << "subscriptionUpdater::()() - Generic Exception: "
+                << "subscriptionUpdater::body() - Generic Exception: "
                 << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             exit(1); // FIXME
@@ -77,13 +77,13 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
     {
       //cout <<
       time_t timeleft = (*it).getExpirationTime() - time(NULL);
-      cout  << "\t["<<(*it).getSubscriptionID()<<"]\n\t"
+/*      cout  << "\t["<<(*it).getSubscriptionID()<<"]\n\t"
            << "["<<(*it).getConsumerURL() << "]\n\t"
 	   << "["<<(*it).getTopicName() << "]\n\t"
 	   << "["<<(*it).getEndpoint() << "]\n\t"
 	   << "timeleft=[" << timeleft << "]\n\t"
 	   << "expiration=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
-	   << log4cpp::CategoryStream::ENDLINE;
+	   << log4cpp::CategoryStream::ENDLINE;*/
       if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
         log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
 	     << "Updating subscription ["<<(*it).getSubscriptionID() << "]"

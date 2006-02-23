@@ -100,9 +100,9 @@ namespace glite {
 
 	log4cpp::Category* log_dev;
  	glite::wms::ice::util::iceConfManager* confMgr;
-	CESubscription ceS;
-	Topic T;//(iceUtil::iceConfManager::getInstance()->getICETopic()),
-        Policy P;//(5000),
+	//CESubscription ceS;
+	//Topic T;//(iceUtil::iceConfManager::getInstance()->getICETopic()),
+        //Policy P;//(5000),
 	std::string myname_url;
         util::iceEventLogger *_ev_logger;
       };

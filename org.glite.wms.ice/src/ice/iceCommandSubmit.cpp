@@ -1,6 +1,7 @@
 // Local includes
 #include "iceCommandSubmit.h"
 #include "subscriptionCache.h"
+#include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "creamJob.h"
@@ -38,9 +39,9 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
   iceAbsCommand( ),
   log_dev( api_util::creamApiLogger::instance()->getLogger()),
   confMgr( ice_util::iceConfManager::getInstance()),
-  ceS(),
-  T( confMgr->getICETopic()),
-  P(5000),
+  //ceS(),
+  //T( confMgr->getICETopic()),
+  //P(5000),
   _ev_logger( ice_util::iceEventLogger::instance() )
 {
     char name[256];
@@ -159,7 +160,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                           << "\" to L&B service with user proxy=\"" 
                           << theJob.getUserProxyCertificate() 
                           << "\""
-                          << log4cpp::CategoryStream::ENDLINE;        
+                          << log4cpp::CategoryStream::ENDLINE;
 
     _ev_logger->registerJob( theJob ); // FIXME: to be removed
     _ev_logger->cream_transfer_start_event( theJob );
@@ -258,14 +259,17 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << "iceCommandSubmit::execute() - Not subscribed to ["
             << cemon_url << "]. Going to subscribe to it..."
             << log4cpp::CategoryStream::ENDLINE;
-        try {
-            ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
+        //try {
+
+            /* ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
             ceS.setServiceURL(cemon_url);
             ceS.setSubscribeParam(myname_url.c_str(),
                                   T,
                                   P,
                                   confMgr->getSubscriptionDuration()
                                   );
+	    */
+
             log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
                 << myname_url << "] to ["<<cemon_url
@@ -273,20 +277,32 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << confMgr->getSubscriptionDuration()
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
-            ceS.subscribe();
-            log_dev->infoStream()
-                << "iceCommandSubmit::execute() - Subscribed with ID ["
-                << ceS.getSubscriptionID() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
+            //ceS.subscribe();
+            {
+	      boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+	      if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) )
+	      {
+                log_dev->errorStream()
+                  << "iceCommandSubmit::execute() - Subscribe to ["
+                  << cemon_url << "] failed! Will not receive status notifications from it..."
+                  << log4cpp::CategoryStream::ENDLINE;
+	      } else {
+                log_dev->infoStream()
+                  << "iceCommandSubmit::execute() - Subscribed with ID ["
+                  << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
+                  << log4cpp::CategoryStream::ENDLINE;
 
-            glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
-        } catch( exception& ex ) {
-            log_dev->errorStream()
-                << "Problem while subscribing to notifications for jobID="
-                << theJob.getGridJobID()
-                << " Exception:" << ex.what()
-                << log4cpp::CategoryStream::ENDLINE;
-        }
+	        util::subscriptionCache::getInstance()->insert(cemon_url);
+              }
+	    }
+            //glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
+//         } catch( exception& ex ) {
+//             log_dev->errorStream()
+//                 << "Problem while subscribing to notifications for jobID="
+//                 << theJob.getGridJobID()
+//                 << " Exception:" << ex.what()
+//                 << log4cpp::CategoryStream::ENDLINE;
+//         }
       }
     }
 }

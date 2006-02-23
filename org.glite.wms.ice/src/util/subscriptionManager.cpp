@@ -35,6 +35,9 @@ subscriptionManager::subscriptionManager()
     ceS.authenticate(conf->getHostProxyFile().c_str(), "/");
     ceSMgr.authenticate(conf->getHostProxyFile().c_str(), "/");
   } catch(exception& ex) {
+    log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR authenticating: "
+                           << ex.what()
+                           << log4cpp::CategoryStream::ENDLINE;
     valid = false;
     return;
   }
@@ -115,6 +118,7 @@ bool subscriptionManager::subscribe(const std::string& url)
 
   try {
     ceS.subscribe();
+    lastSubscriptionID = ceS.getSubscriptionID();
     return true;
   } catch(exception& ex) {
     log_dev->errorStream() << "subscriptionManager::subscribe() - Subscription Error: "

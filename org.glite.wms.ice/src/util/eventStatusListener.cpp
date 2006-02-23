@@ -217,13 +217,14 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     return;
   }
 
-  subManager = subscriptionManager::getInstance();
-  if( !subManager->isValid() ) {
-    log_dev->errorStream() << "eventStatusListener::CTOR - "
-                           << "Fatal error creating the subscriptionManager instance"
-			   << log4cpp::CategoryStream::ENDLINE;
-    _isOK = false;
-    return;
+  {
+    /**
+     * Here we do not need to check if the creation of subscriptionManager
+     * produced errors, because the main ice-core module did that as
+     * preliminary init operation
+     */
+    boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
+    subManager = subscriptionManager::getInstance();
   }
 
   init();
@@ -374,6 +375,9 @@ void iceUtil::eventStatusListener::init(void)
           log_dev->errorStream() << "eventStatusListener::init() - Subscription to ["
 				 << *it << "] failed. Will not receives status notifications from it."
 				 << log4cpp::CategoryStream::ENDLINE;
+      } else {
+        log_dev->infoStream() << "eventStatusListener::init() - Already subscribed to ["
+			      << *it << log4cpp::CategoryStream::ENDLINE;
       }
     }
   }
