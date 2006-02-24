@@ -39,7 +39,7 @@ namespace util {
    protected:
     subscriptionManager();
     virtual ~subscriptionManager() {}
-    void    list(const std::string& url, std::vector<Subscription>&) throw(std::exception&);
+
 
    public:
 
@@ -54,7 +54,8 @@ namespace util {
     bool        subscribedTo(const std::string& url);
 
     bool        isValid( void ) const { return valid; }
-
+    void        list(const std::string& url, std::vector<Subscription>&)
+                  throw(std::exception&);
     std::string getLastSubscriptionID() const { return lastSubscriptionID; }
 
     static boost::recursive_mutex mutex;

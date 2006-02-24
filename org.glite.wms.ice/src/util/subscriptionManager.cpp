@@ -78,7 +78,7 @@ subscriptionManager* subscriptionManager::getInstance()
 void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   throw (exception&)
 {
-  log_dev->infoStream() << "subscriptionManager::list() - retrieving list of"
+  log_dev->infoStream() << "subscriptionManager::list() - retrieving list of "
                         << "subscriptions from [" << url << "]"
                         << log4cpp::CategoryStream::ENDLINE;
   try {

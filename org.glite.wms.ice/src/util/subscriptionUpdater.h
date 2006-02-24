@@ -1,7 +1,7 @@
 #ifndef __GLITE_WMS_ICE_UTIL_CESUBUPDATER_H__
 #define __GLITE_WMS_ICE_UTIL_CESUBUPDATER_H__
 
-#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
+#include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h" // needed to have the Subscription class definition
 #include "iceConfManager.h"
 #include "iceThread.h"
 #include <string>
@@ -21,13 +21,14 @@ namespace glite {
     namespace ice {
       namespace util {
 
+	class subscriptionManager;
+
 	class subscriptionUpdater : public iceThread {
-		CESubscriptionMgr subMgr;
+
 		std::string proxyfile;
 		iceConfManager* conf;
-		boost::scoped_ptr< Topic > T;
-		boost::scoped_ptr< Policy > P;
 		log4cpp::Category *log_dev;
+		subscriptionManager *subMgr;
 
         public:
 		subscriptionUpdater(const std::string& cert);

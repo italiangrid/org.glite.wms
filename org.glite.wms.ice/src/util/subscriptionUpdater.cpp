@@ -1,5 +1,6 @@
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "subscriptionUpdater.h"
+#include "subscriptionManager.h"
 #include "jobCache.h"
 #include <iostream>
 #include <boost/algorithm/string.hpp>
@@ -12,12 +13,9 @@ void retrieveCEURLs(vector<string>&);
 //______________________________________________________________________________
 iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   : iceThread( "subscription Updater" ),
-    subMgr(),
-    proxyfile(cert),
     conf(glite::wms::ice::util::iceConfManager::getInstance()),
-    T( new Topic(iceUtil::iceConfManager::getInstance()->getICETopic()) ),
-    P( new Policy(iceUtil::iceConfManager::getInstance()->getNotificationFrequency()) ),
-    log_dev( api::util::creamApiLogger::instance()->getLogger() )
+    log_dev( api::util::creamApiLogger::instance()->getLogger() ),
+    subMgr( subscriptionManager::getInstance() )
 {
 
 }
@@ -31,51 +29,33 @@ void iceUtil::subscriptionUpdater::body( void )
 
   while( !isStopped() ) {
     log_dev->infoStream() << "subscriptionUpdater::body() - Checking "
-                          << "subscription's time validity..." << log4cpp::CategoryStream::ENDLINE;
+                          << "subscription's time validity..."
+			  << log4cpp::CategoryStream::ENDLINE;
     ceurls.clear();
     retrieveCEURLs(ceurls);
 
     for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); it++) {
-	try {
-            log_dev->infoStream() << "subscriptionUpdater::body() - "
-                                  << "Authenticating with proxy ["
-				  << proxyfile<<"]"
-				  << log4cpp::CategoryStream::ENDLINE;
-            subMgr.authenticate(proxyfile.c_str(), "/");
-            vec.clear();
-            log_dev->infoStream() << "subscriptionUpdater::body() - "
-                                  << "Getting list of subscriptions from ["
-                                  << *it << "]" << log4cpp::CategoryStream::ENDLINE;
-            subMgr.list(*it, vec);
-            this->renewSubscriptions(vec);
-	} catch(AuthenticationInitException& ex) {
-            log_dev->errorStream()  
-                << "subscriptionUpdater::body() - Authentication Exception: "
-                << ex.what()
-                << log4cpp::CategoryStream::ENDLINE;
-            exit(1); // FIXME
-	} catch(exception& ex) {
-            log_dev->errorStream()  
-                << "subscriptionUpdater::body() - Generic Exception: "
-                << ex.what()
-                << log4cpp::CategoryStream::ENDLINE;
-            exit(1); // FIXME
-	}
-    }
 
+	  try{ subMgr->list(*it, vec); }
+	  catch(exception& ex) {
+	    log_dev->errorStream() << "subscriptionUpdater::body() - "
+	    			   << "Error retrieving list of subscriptions: "
+				   << ex.what() << log4cpp::CategoryStream::ENDLINE;
+	    return;
+	  }
+	  this->renewSubscriptions(vec);
+    }
     sleep(60);
   }
 }
 
 //______________________________________________________________________________
-void
-iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec)
+void iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec)
 {
   for(vector<Subscription>::const_iterator it = vec.begin();
       it != vec.end();
       it++)
     {
-      //cout <<
       time_t timeleft = (*it).getExpirationTime() - time(NULL);
 /*      cout  << "\t["<<(*it).getSubscriptionID()<<"]\n\t"
            << "["<<(*it).getConsumerURL() << "]\n\t"
@@ -93,25 +73,16 @@ iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec
 	  log_dev->infoStream()  << "subscriptionUpdater::renewSubscriptions() - Update params: "
 	     << "ConsumerURL=["<<(*it).getConsumerURL()
 	     << "] - TopicName=[" << (*it).getTopicName() << "] - "
-	     << "Duration=[" << conf->getSubscriptionDuration()
-	     << "] since now - rate=["
+	     << "Duration=" << conf->getSubscriptionDuration()
+	     << " secs since now - rate="
 	     << conf->getNotificationFrequency()
-	     << "]"
+	     << " secs"
 	     << log4cpp::CategoryStream::ENDLINE;
 	}
-	try {
-	  subMgr.update(
-	                (const string&)(*it).getEndpoint(),
-		        (const string&)(*it).getSubscriptionID(),
-		        (const string&)(*it).getConsumerURL(),
-		        *T,
-		        *P,
-		        (const time_t&)(time(NULL)+conf->getSubscriptionDuration())
-		       );
-        } catch(exception& ex) {
-	  log_dev->errorStream()  << "subscriptionUpdater::renewSubscriptions() - Error: "<<ex.what() << log4cpp::CategoryStream::ENDLINE;
-	  exit(1); // FIXME
-	}
+
+	subMgr->updateSubscription( (const string&)(*it).getEndpoint(),
+				    (const string&)(*it).getSubscriptionID());
+
       }
     }
 }
