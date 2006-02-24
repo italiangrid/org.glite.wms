@@ -56,6 +56,7 @@ ice::ice(const string& NS_FL,
    *
    * The subscriptionManager initialization also setup authentication.
    */
+   {
     boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
     util::subscriptionManager::getInstance();
     if( !util::subscriptionManager::getInstance()->isValid() ) {
@@ -68,7 +69,7 @@ ice::ice(const string& NS_FL,
       boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
       util::iceConfManager::getInstance()->setStartListener( false );
     }
-
+   }
     /**
      * subscriptionCache is used to retrieve the list of cemon we're
      * subscribed. If it's creation failed, it is not the case (at 0-order)

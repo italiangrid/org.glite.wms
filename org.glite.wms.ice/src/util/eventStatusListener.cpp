@@ -221,9 +221,10 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     /**
      * Here we do not need to check if the creation of subscriptionManager
      * produced errors, because the main ice-core module did that as
-     * preliminary init operation
+     * preliminary init operation. We also do not need to lock the
+     * ::getInstance() call, because the instance of singleton has been
+     * already created.
      */
-    boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
     subManager = subscriptionManager::getInstance();
   }
 

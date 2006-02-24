@@ -15,7 +15,7 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   : iceThread( "subscription Updater" ),
     conf(glite::wms::ice::util::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    subMgr( subscriptionManager::getInstance() )
+    subMgr( subscriptionManager::getInstance() ) // the subManager's instance has already been created by ice-core module; so no need to lock the mutex
 {
 
 }
@@ -35,8 +35,10 @@ void iceUtil::subscriptionUpdater::body( void )
     retrieveCEURLs(ceurls);
 
     for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); it++) {
-
-	  try{ subMgr->list(*it, vec); }
+	  try{
+	    boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
+	    subMgr->list(*it, vec);
+	  }
 	  catch(exception& ex) {
 	    log_dev->errorStream() << "subscriptionUpdater::body() - "
 	    			   << "Error retrieving list of subscriptions: "
@@ -79,9 +81,12 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>
 	     << " secs"
 	     << log4cpp::CategoryStream::ENDLINE;
 	}
-
-	subMgr->updateSubscription( (const string&)(*it).getEndpoint(),
-				    (const string&)(*it).getSubscriptionID());
+	
+        {
+	  boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
+	  subMgr->updateSubscription( (const string&)(*it).getEndpoint(),
+	  			      (const string&)(*it).getSubscriptionID());
+	}
 
       }
     }

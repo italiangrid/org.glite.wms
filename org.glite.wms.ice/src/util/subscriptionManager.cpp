@@ -67,7 +67,7 @@ subscriptionManager::subscriptionManager()
 //______________________________________________________________________________
 subscriptionManager* subscriptionManager::getInstance()
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  //boost::recursive_mutex::scoped_lock M( mutex );
   if(!instance)
     instance = new subscriptionManager();
 

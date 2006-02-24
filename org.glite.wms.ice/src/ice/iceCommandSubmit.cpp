@@ -284,8 +284,12 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << confMgr->getSubscriptionDuration()
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
-            //ceS.subscribe();
             {
+              /**
+  	       * This is the 1st call of subscriptionManager::getInstance()
+  	       * and it's safe because the singleton has already been created by
+	       * ice-core module.
+	       */
 	      boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
 	      if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) )
 	      {
