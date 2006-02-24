@@ -106,6 +106,7 @@ Shadow::Shadow(){
 	ifstreamOut=NULL;
 	localConsole=true;
 	this->pid=0;
+	this->port=0;
 	goodbyeMessage=false;
 }
 Shadow::Shadow(glite::wmsutils::jobid::JobId jobid){
@@ -114,6 +115,7 @@ Shadow::Shadow(glite::wmsutils::jobid::JobId jobid){
 	localConsole=true;
 	ifstreamOut=NULL;
 	this->pid=0;
+	this->port=0;		
 	goodbyeMessage=false;
 }
 Shadow::~Shadow(){
