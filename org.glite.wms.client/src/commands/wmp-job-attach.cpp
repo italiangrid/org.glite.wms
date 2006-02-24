@@ -23,7 +23,6 @@ int main (int argc,char **argv){
 			throw exception();
 		}
 
-
 	} catch (exception &ex) {
 		cout << flush << ex.what() << "\n" ;
 	}

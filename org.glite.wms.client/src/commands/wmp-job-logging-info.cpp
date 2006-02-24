@@ -28,6 +28,7 @@ int main (int argc,char **argv){
 		jobids = opts.getJobIds( );
 	} catch (exception &ex) {
 		cout << flush << ex.what() << "\n" ;
+		return 1;		
 	}
-
+	return 0;
 };

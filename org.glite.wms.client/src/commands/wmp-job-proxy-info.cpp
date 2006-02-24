@@ -21,6 +21,7 @@ int main (int argc,char **argv){
                 job.proxy_info( );
 	} catch (Exception &exc) {
 		job.excMsg("", exc, argv[0]);
+		return 1;
 	}
 	return 0;
 };

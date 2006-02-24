@@ -21,6 +21,7 @@ int main (int argc,char **argv){
                 job.submission( );
 	} catch (Exception &exc) {
 		job.excMsg("", exc, argv[0]);
+		return 1;
 	}
 	return 0;
 };

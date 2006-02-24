@@ -22,7 +22,8 @@ int main (int argc,char **argv){
                 job.getStatus( );
 
 	} catch ( WmsClientException &ex) {
-		cerr << flush << ex.what() << "\n" ;
+		job.excMsg("", exc, argv[0]);
+		return 1;		
 	}
 
 	return 0;

@@ -25,7 +25,7 @@ int main (int argc,char **argv){
                 job.listMatching( );
 	} catch (Exception &exc) {
 		job.excMsg("", exc, argv[0]);
+		return 1;
 	}
-
 	return 0;
 };
