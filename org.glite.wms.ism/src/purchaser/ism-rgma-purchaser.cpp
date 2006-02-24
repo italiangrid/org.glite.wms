@@ -5,6 +5,7 @@
 
 #include <boost/mem_fn.hpp>
 #include<boost/progress.hpp>
+#include <boost/bind.hpp>
 //#include <time.h>
 #include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
 
@@ -69,9 +70,15 @@ namespace utilities     = common::utilities;
 namespace ism {
 namespace purchaser {
 
+
 namespace {
 boost::condition f_rgma_purchasing_cycle_run_condition;
 boost::mutex     f_rgma_purchasing_cycle_run_mutex;
+
+boost::recursive_mutex  collect_info_mutex;
+
+unsigned int consLifeCycles = 0;
+boost::recursive_mutex  consLifeCycles_mutex;
 }
 
 
@@ -175,7 +182,7 @@ bool gluece_query::refresh_query ( int rgma_query_timeout )
    try {
       if ( (m_consumer == NULL) || (m_query_status == false) ) {
          Warning("Consumer not created or corrupted");
-         m_consumer = false;
+         m_query_status = false;
          return false;
       }
       if ( m_consumer->isExecuting() ) m_consumer->abort();
@@ -343,7 +350,7 @@ bool AccessControlBaseRule_query::refresh_query ( int rgma_query_timeout )
    try {
       if ( (m_consumer == NULL) || (m_query_status == false) ) {
          Warning("Consumer not created or corrupted");
-         m_consumer = false;
+         m_query_status = false;
          return false;
       }
 
@@ -513,7 +520,7 @@ bool SubCluster_query::refresh_query ( int rgma_query_timeout )
    try {
       if ( (m_consumer == NULL) || (m_query_status == false) ) {
          Warning("Consumer not created or corrupted");
-         m_consumer = false;
+         m_query_status = false;
          return false;
       }
       if ( m_consumer->isExecuting() )
@@ -683,7 +690,7 @@ bool SoftwareRunTimeEnvironment_query::refresh_query ( int rgma_query_timeout )
    try {
       if ( (m_consumer == NULL) || (m_query_status == false) ) {
          Warning("Consumer not created or corrupted");
-         m_consumer = false;
+         m_query_status = false;
          return false;
       }
 
@@ -855,7 +862,7 @@ bool CESEBind_query::refresh_query ( int rgma_query_timeout )
    try {
       if ( (m_consumer == NULL) || (m_query_status == false) ) {
          Warning("Consumer not created or corrupted");
-         m_consumer = false;
+         m_query_status = false;
          return false;
       }
 
@@ -1344,7 +1351,7 @@ bool checkMainValue( ClassAd* ad ) {
    else return true;
 }
 
-
+/*
 bool checkListAttr( ClassAd* ad, const string& valueName, const string& listElem ) {
 //   Debug("adding element to \""<<valueName<<"\" list-value");
                                                                                                
@@ -1390,39 +1397,454 @@ bool checkClassAdListAttr( ClassAd* ad, const string& valueName, ClassAd* listEl
    return true;
    
 }
+*/
 
+void collect_acbr_info( gluece_info_container_type * gluece_info_container,
+                        int rgma_cons_life_cycles,
+                        int rgma_consumer_ttl,
+                        int rgma_query_timeout) {
+      bool AccessControlBaseRuleIsEmpty = false;
 
-} //  anonymous namespace
+//      bool consumers_is_alive =
+//         AccessControlBaseRule_query::get_query_instance()->get_query_status();
+
+      if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
+         if ( ! AccessControlBaseRule_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+            Warning("AccessControlBaseRule consumer creation failed");
+            {
+               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               consLifeCycles = 0;
+            }
+            return;
+         }
+         Debug("AccessControlBaseRule CONSUMER REFRESHED");
+      }
+
+      if ( ! AccessControlBaseRule_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+         Warning("AccessControlBaseRule query FAILED.");
+         {
+            boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+            consLifeCycles = 0;
+         }
+         return;
+      }
+
+      while ( ! AccessControlBaseRuleIsEmpty ) {
+
+            ResultSet accSet;
+
+            if(AccessControlBaseRule_query::get_query_instance()->pop_tuples( accSet, 1000)){
+
+               if ( accSet.begin() != accSet.end() ) {
+
+                  std::map<std::string, std::vector<std::string> > ACBR_map;
+                  ResultSet::iterator it = accSet.begin();
+                  ResultSet::iterator const e = accSet.end();
+                  for( ; it != e; ++it) {
+
+                     try {
+                        string GlueCEUniqueIDFromRgma = it->getString("GlueCEUniqueID");
+                        string val = it->getString("Value");
+                        ACBR_map[GlueCEUniqueIDFromRgma].push_back(val);
+                     }
+                     catch(RGMAException rgmae) {
+                        Error("Cannot evaluate tuple returned by AccessControlBaseRule table");
+                        Error(rgmae.getMessage());
+                     }
+                  }
+
+                  std::map<std::string, std::vector<std::string> >::iterator acbr_it =
+                                                    ACBR_map.begin();
+                  std::map<std::string, std::vector<std::string> >::const_iterator acbr_end =
+                                                    ACBR_map.end();
+
+                  boost::recursive_mutex::scoped_lock  lock(collect_info_mutex); 
+
+                  gluece_info_iterator ce_end = gluece_info_container->end();
+                  for ( ; acbr_it != acbr_end; acbr_it++) {
+                     gluece_info_iterator ce_it = gluece_info_container->find( acbr_it->first );
+                     if ( ce_it != ce_end ) {
+                        std::vector<string> v;
+                        utilities::EvaluateAttrList(
+                           *(ce_it->second),
+                           "GlueCEAccessControlBaseRule",
+                           v
+                        );
+                        std::copy(
+                           acbr_it->second.begin(),
+                           acbr_it->second.end(),
+                           std::back_inserter(v)
+                        );
+                        ce_it->second->Insert("GlueCEAccessControlBaseRule",
+                                           utilities::asExprList(v));
+                     }
+
+                  } // for
+
+               }
+
+               if ( accSet.endOfResults() ) AccessControlBaseRuleIsEmpty = true;
+            }
+            else {
+               Warning("Failure in poping tuples from the query to AccessControlBaseRule");
+               AccessControlBaseRuleIsEmpty = true;
+            }
+
+      } // while ( ! AccessControlBaseRuleIsEmpty )
+
+}
+
+void collect_sc_info( gluece_info_container_type * gluece_info_container,
+                      int rgma_cons_life_cycles,
+                      int rgma_consumer_ttl,
+                      int rgma_query_timeout) {
+         bool SubClusterIsEmpty = false;
+
+//         bool consumers_is_alive =
+//            SubCluster_query::get_query_instance()->get_query_status();
+
+         if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
+            if ( ! SubCluster_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+               Warning("SubCluster consumer creation failed");
+               {
+                  boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  consLifeCycles = 0;
+               }
+               return;
+            }
+            Debug("SubCluster CONSUMER REFRESHED");
+         }
+
+         if ( ! SubCluster_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+            Warning("SubCluster query FAILED.");
+            {
+               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               consLifeCycles = 0;
+            }
+            return;
+         }
+
+         while ( ! SubClusterIsEmpty ) {
+            ResultSet subSet;
+
+            if(SubCluster_query::get_query_instance()->pop_tuples( subSet, 1000)){
+
+               if ( subSet.begin() != subSet.end() ) {
+
+                  ResultSet::iterator const tuples_end = subSet.end();
+                  for ( ResultSet::iterator tuple = subSet.begin(); tuple < tuples_end;
+                                                                    tuple++) {
+
+                     boost::recursive_mutex::scoped_lock  lock(collect_info_mutex);
+                     try {
+                        string GlueSubClusterUniqueIDFromRgma = tuple->getString("UniqueID");
+
+                        gluece_info_iterator gluece_end = gluece_info_container->end();
+                        for (gluece_info_iterator it = gluece_info_container->begin(); it != gluece_end; ++it) {
+                           string GlueClusterUniqueID;
+                           if ( ((it->second).get())->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
+                              if ( GlueClusterUniqueID == GlueSubClusterUniqueIDFromRgma ) {
+                                 boost::scoped_ptr<ClassAd> subClusterAd ( new ClassAd() );
+                                 if ( ExportClassAd( subClusterAd.get(), *tuple ) ){
+                                    checkSubCluster( subClusterAd.get() );
+                                    ((it->second).get())->Update( *subClusterAd.get() );
+                                 }
+                                 else Warning("Failure in updating SubCluster values for "
+                                              <<GlueClusterUniqueID<<".");
+                              }
+                           }
+                           else Warning("Cannot find GlueClusterUniqueID field in the ClassAd");                        }
+
+                     }
+                     catch(RGMAException rgmae) {
+                        Error("Cannot evaluate tuple returned by GlueCESubCluster table");
+                        Error(rgmae.getMessage());
+                     }
+
+                  } //for
+
+               }
+               if ( subSet.endOfResults() ) SubClusterIsEmpty = true;
+
+            }
+            else {
+               Warning("Failure in popping tuples from query to GlueSubCluster");
+               SubClusterIsEmpty = true;
+            }
+
+         } // while ( ! SubClusterIsEmpty )
+
+}
+
+void collect_srte_info( gluece_info_container_type * gluece_info_container,
+                        int rgma_cons_life_cycles,
+                        int rgma_consumer_ttl,
+                        int rgma_query_timeout) {
+         bool SoftwareRunTimeEnvironmentIsEmpty = false;
+
+//         bool consumers_is_alive =
+//            SoftwareRunTimeEnvironment_query::get_query_instance()->get_query_status();
+
+         if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
+            if ( ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+               Warning("SoftwareRunTimeEnvironment consumer creation failed");
+               {
+                  boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  consLifeCycles = 0;
+               }
+               return;
+            }
+            Debug("SoftwareRunTimeEnvironment CONSUMER REFRESHED");
+         }
+
+         if ( ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+            Warning("SoftwareRunTimeEnvironment query FAILED.");
+            {
+               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               consLifeCycles = 0;
+            }
+            return;
+         }
+
+         while ( !SoftwareRunTimeEnvironmentIsEmpty ){
+            ResultSet softSet;
+
+            if(SoftwareRunTimeEnvironment_query::get_query_instance()->pop_tuples( softSet, 1000)){
+
+               if ( softSet.begin() != softSet.end() ) {
+
+                  std::map<std::string, std::vector<std::string> > SRTE_map;
+                  ResultSet::iterator soft_it = softSet.begin();
+                  ResultSet::iterator const soft_end = softSet.end();
+                  for( ; soft_it != soft_end; ++soft_it) {
+
+                     try {
+                        string GlueSubClusterUniqueIDFromRgma = soft_it->getString("GlueSubClusterUniqueID");
+                        string val = soft_it->getString("Value");
+                        SRTE_map[GlueSubClusterUniqueIDFromRgma].push_back(val);
+                     }
+                     catch(RGMAException rgmae) {
+                        Error("Cannot evaluate tuple returned by GlueCESubClusterSoftwareRunTimeEnvironment table");
+                        Error(rgmae.getMessage());
+                     }
+                  }
+
+                  std::map<std::string, std::vector<std::string> >::const_iterator srte_end(
+                    SRTE_map.end()
+                  );
+
+                  boost::recursive_mutex::scoped_lock  lock(collect_info_mutex);
+
+                  gluece_info_iterator gluece_info_end = gluece_info_container->end();
+                  for (gluece_info_iterator gluece_info_it = gluece_info_container->begin();
+                       gluece_info_it != gluece_info_end; ++gluece_info_it) {
+
+                     string GlueClusterUniqueID;
+                     if ( gluece_info_it->second->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
+
+                        std::map<std::string, std::vector<std::string> >::const_iterator srte_it(
+                                                           SRTE_map.find(GlueClusterUniqueID)
+                                                           );
+                        if( srte_it != srte_end )  {
+                           std::vector<string> v;
+                           utilities::EvaluateAttrList(
+                             *(gluece_info_it->second),
+                             "GlueHostApplicationSoftwareRunTimeEnvironment",
+                             v
+                           );
+                           std::copy(
+                             srte_it->second.begin(),
+                             srte_it->second.end(),
+                             std::back_inserter(v)
+                           );
+                           gluece_info_it->second->Insert("GlueHostApplicationSoftwareRunTimeEnvironment",
+                                              utilities::asExprList(v));
+                        }
+                     }
+                  } //for
+
+               }
+
+               if ( softSet.endOfResults() ) SoftwareRunTimeEnvironmentIsEmpty = true;
+            }
+            else {
+               Warning("Failure in popping tuples from query to GlueSubClusterSoftwareRunTimeEnvironment");
+               SoftwareRunTimeEnvironmentIsEmpty = true;
+            }
+         } // while ( ! SoftwareRunTimeEnvironmentIsEmpty )
+
+}
+
+void collect_bind_info( gluece_info_container_type * gluece_info_container,
+                        int rgma_cons_life_cycles,
+                        int rgma_consumer_ttl,
+                        int rgma_query_timeout) {
+         bool CESEBindIsEmpty = false;
+
+//         bool consumers_is_alive =
+//            CESEBind_query::get_query_instance()->get_query_status();
+
+         if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
+            if ( ! CESEBind_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+               Warning("CESEBind consumer creation failed");
+               {
+                  boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  consLifeCycles = 0;
+               }
+               return;
+            }
+            Debug("CESEBind CONSUMER REFRESHED");
+         }
+
+         if ( ! CESEBind_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+            Warning("CESEBind query FAILED.");
+            {
+               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               consLifeCycles = 0;
+            }
+            return;
+         }
+
+         while ( ! CESEBindIsEmpty ) {
+            ResultSet bindSet;
+
+            if(CESEBind_query::get_query_instance()->pop_tuples( bindSet, 1000)){
+
+               if ( bindSet.begin() != bindSet.end() ) {
+
+                  std::map< std::string,
+                            std::pair< std::vector< classad::ExprTree* >,
+                                       std::vector< std::string > > >BIND_map;
+
+                  ResultSet::iterator bind_rgma_it = bindSet.begin();
+                  ResultSet::iterator const bind_rgma_end = bindSet.end();
+                  for( ; bind_rgma_it != bind_rgma_end; ++bind_rgma_it) {
+                     try {
+                        string GlueCEUniqueIDFromRgma =
+                              bind_rgma_it->getString("GlueCEUniqueID");
+                        string GlueSEUniqueIDFromRgma =
+                                        bind_rgma_it->getString("GlueSEUniqueID");
+                        string AccesspointFromRgma = bind_rgma_it->getString("Accesspoint");
+                        classad::ClassAd* ad_elem = new classad::ClassAd();
+                        ad_elem->InsertAttr("name", GlueSEUniqueIDFromRgma);
+                        ad_elem->InsertAttr("mount", AccesspointFromRgma);
+                        BIND_map[GlueCEUniqueIDFromRgma].first.push_back(ad_elem);
+                        BIND_map[GlueCEUniqueIDFromRgma].second.push_back(
+                                                          GlueSEUniqueIDFromRgma);
+                     }
+                     catch(RGMAException rgmae) {
+                        Error("Cannot evaluate tuple returned by GlueCESEBind table");
+                        Error(rgmae.getMessage());
+                     }
+                  } //for
+
+                  std::map<std::string,
+                           std::pair< std::vector< classad::ExprTree* >,
+                                      std::vector< std::string > > >::iterator bind_it =
+                                                    BIND_map.begin();
+                  std::map<std::string,
+                           std::pair< std::vector< classad::ExprTree* >,
+                                      std::vector< std::string > > >::const_iterator bind_end =
+                                                    BIND_map.end();
+
+                  gluece_info_iterator ce_end = gluece_info_container->end();
+                  for ( ; bind_it != bind_end; bind_it++) {
+
+                     gluece_info_iterator ce_it = gluece_info_container->find( bind_it->first );
+
+                     if ( ce_it != ce_end ) {
+                        //1
+                        classad::ExprList* expr_list;
+                        vector<classad::ExprTree*>        val;
+                        if ( ce_it->second->EvaluateAttrList(
+                                       "CloseStorageElements",
+                                       expr_list) ) {
+                           //expr_list->GetComponents(val);
+                           ExprList::iterator list_it = expr_list->begin();
+                           ExprList::const_iterator list_end = expr_list->end();
+                           for ( ; list_it < list_end; list_it++ )
+                                     val.push_back((*list_it)->Copy());
+                        }
+
+                        std::copy(
+                           (bind_it->second).first.begin(),
+                           (bind_it->second).first.end(),
+                           std::back_inserter(val)
+                        );
+                        ce_it->second->Insert("CloseStorageElements",
+                                              classad::ExprList::MakeExprList(val) );
+
+                        //2
+                        std::vector< std::string > v ;
+                        utilities::EvaluateAttrList(
+                           *(ce_it->second),
+                           "GlueCESEBindGroupSEUniqueID",
+                           v
+                        );
+                        std::copy(
+                           (bind_it->second).second.begin(),
+                           (bind_it->second).second.end(),
+                           std::back_inserter(v)
+                        );
+                        ce_it->second->Insert("GlueCESEBindGroupSEUniqueID",
+                                              utilities::asExprList(v));
+                        //3
+                        if ( ! (ce_it->second)->Lookup("GlueCESEBindGroupCEUniqueID") )  {
+                           (ce_it->second)->InsertAttr("GlueCESEBindGroupCEUniqueID",
+                                                       bind_it->first );
+                        }
+
+                     } //if ( ce_it != ce_end )
+
+                  } // for
+
+               }
+               if ( bindSet.endOfResults() ) CESEBindIsEmpty = true;
+
+            }
+            else{
+               Warning("Failure in popping tuples from the query to CESEBind");
+               CESEBindIsEmpty = true;
+            }
+
+         }  // while ( ! CESEBindIsEmpty )
+
+}
+
+} // anonymous namespace
 
 void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_info_container)
 {
-//   edglog_fn("ism_rgma_purchaser::prefetchGlueCEinfo");
-   Debug("starting queries...");
+//   bool consumers_is_alive =
+//      gluece_query::get_query_instance()->get_query_status();
 
-   if ( ! gluece_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ||
-        ! AccessControlBaseRule_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ||
-        ! SubCluster_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ||
-        ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ||
-        ! CESEBind_query::get_query_instance()->refresh_query( m_rgma_query_timeout)
-      ) {
-      Warning("RGMA queries FAILED.");
+   if ( (consLifeCycles == 0) || (consLifeCycles == m_rgma_cons_life_cycles) ) {
+      if ( ! gluece_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl ) ) {
+         Warning("guece consumer creation failed");
+         consLifeCycles = 0;
+         return;
+      }
+      consLifeCycles = 0;
+      Debug("GLUECE CONSUMER REFRESHED");
+   }
+   // consLifeCycles is incremented here only
+   consLifeCycles++;
+
+   if ( ! gluece_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ) {
+      Warning("gluece query FAILED.");
+      consLifeCycles = 0;
       return;
    }
 
-   boost::timer t0;                                                                                                                          
    Debug("Creating a ClassAd for each entry in GlueCE table");
    ResultSet resultSet;
    do {
-      t0.restart();
       if ( !gluece_query::get_query_instance()->pop_tuples( resultSet, 1000) ) {
          Warning("failed popping tuples from GlueCe");
          return;
       }
 
-      Info("Popping 1000 tuples from GlueCE completed in " << t0.elapsed() << " seconds");
-
       if ( resultSet.begin() != resultSet.end() )  {
-         t0.restart();
          for ( ResultSet::iterator it=resultSet.begin(); it < resultSet.end(); it++ ) {
 
             boost::shared_ptr<classad::ClassAd> ceAd(new ClassAd());
@@ -1444,7 +1866,6 @@ void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_
             }
 
          } // for
-         Info("Parsing tuples from GlueCE completed in " << t0.elapsed() << " seconds");
       }
    }  while( ! resultSet.endOfResults() );
 }
@@ -1480,449 +1901,39 @@ void ism_rgma_purchaser::operator()()
 
 void ism_rgma_purchaser::do_purchase()
 {
-   boost::timer tot;
-   tot.restart();
-
-//  edglog_fn("ism_rgma_purchaser::do_purchase");
-   unsigned int consLifeCycles = 0;
    do {
-      bool consumers_are_alive = 
-         gluece_query::get_query_instance()->get_query_status() && 
-         AccessControlBaseRule_query::get_query_instance()->get_query_status() &&
-         SubCluster_query::get_query_instance()->get_query_status() &&
-         SoftwareRunTimeEnvironment_query::get_query_instance()->get_query_status() &&
-         CESEBind_query::get_query_instance()->get_query_status();
 
-                               
-      if ( (consLifeCycles == 0) || (consLifeCycles == m_rgma_cons_life_cycles) || (! consumers_are_alive) ) {
-         if ( ! gluece_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl ) ||
-              ! AccessControlBaseRule_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl )  ||
-              ! SubCluster_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl) ||
-              ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl ) ||
-              ! CESEBind_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl) ) {
-            Warning("RGMA consumer creation failed");
-            continue;
-         }
-         consLifeCycles = 0;
-         Debug("CONSUMER REFRESHED");
-      }
-      consLifeCycles++;  
-                                                                                   
       gluece_info_container_type gluece_info_container;
       vector<gluece_info_iterator> gluece_info_container_updated_entries;
 
       ism_rgma_purchaser::prefetchGlueCEinfo(gluece_info_container);
 
-      bool AccContrBaseRuleIsEmpty = true;
-      bool SubClusterIsEmpty = true;
-      bool SoftwareRunTimeEnvironmentIsEmpty = true;
-      bool CESEBindIsEmpty = true;
-      if (AccessControlBaseRule_query::get_query_instance()->get_query_status() )
-         AccContrBaseRuleIsEmpty = false;   
-      if ( SubCluster_query::get_query_instance()->get_query_status() ) 
-         SubClusterIsEmpty = false;
-      if ( SoftwareRunTimeEnvironment_query::get_query_instance()->get_query_status() )
-         SoftwareRunTimeEnvironmentIsEmpty = false;
-      if ( CESEBind_query::get_query_instance()->get_query_status() )
-         CESEBindIsEmpty = false;
+      boost::thread t_acbr( boost::bind( &collect_acbr_info, 
+                                         &gluece_info_container,
+                                         m_rgma_cons_life_cycles,
+                                         m_rgma_consumer_ttl,
+                                         m_rgma_query_timeout));
+      boost::thread t_sc( boost::bind( &collect_sc_info,
+                                       &gluece_info_container,
+                                       m_rgma_cons_life_cycles,
+                                       m_rgma_consumer_ttl,
+                                       m_rgma_query_timeout));
+      boost::thread t_srte( boost::bind( &collect_srte_info,
+                                         &gluece_info_container,
+                                         m_rgma_cons_life_cycles,
+                                         m_rgma_consumer_ttl,
+                                         m_rgma_query_timeout));
+      boost::thread t_bind( boost::bind( &collect_bind_info,
+                                         &gluece_info_container,
+                                         m_rgma_cons_life_cycles,
+                                         m_rgma_consumer_ttl,
+                                         m_rgma_query_timeout));
+
+      t_acbr.join();
+      t_sc.join();
+      t_srte.join();
+      t_bind.join();
 
-      boost::timer t0;
-
-      while ( ( !AccContrBaseRuleIsEmpty ) || ( !SubClusterIsEmpty ) || 
-              ( !SoftwareRunTimeEnvironmentIsEmpty) || ( !CESEBindIsEmpty ) ) {
-
-         if ( ! AccContrBaseRuleIsEmpty ) {
-         ResultSet accSet;
-
-            Info("starting popping tuples from AccessControlBaseRule"); t0.restart();
-
-            if(AccessControlBaseRule_query::get_query_instance()->pop_tuples( accSet, 1000)){
-
-            Info("popped tuples in "<< t0.elapsed());
-
-               if ( accSet.begin() != accSet.end() ) {
-
-                  Info("starting manipulating tuples from AccessControlBaseRule"); t0.restart();
-                  std::map<std::string, std::vector<std::string> > ACBR_map;
-                  ResultSet::iterator it = accSet.begin();
-                  ResultSet::iterator const e = accSet.end();
-                  for( ; it != e; ++it) {
-
-                     try {
-                        string GlueCEUniqueIDFromRgma = it->getString("GlueCEUniqueID");
-                        string val = it->getString("Value");
-                        ACBR_map[GlueCEUniqueIDFromRgma].push_back(val);
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by AccessControlBaseRule table");
-                        Error(rgmae.getMessage());
-                     }
-                  }
-
-                  std::map<std::string, std::vector<std::string> >::iterator acbr_it = 
-                                                    ACBR_map.begin();
-                  std::map<std::string, std::vector<std::string> >::const_iterator acbr_end =
-                                                    ACBR_map.end();
-
-                  gluece_info_iterator ce_end = gluece_info_container.end();
-                  for ( ; acbr_it != acbr_end; acbr_it++) {
-                     gluece_info_iterator ce_it = gluece_info_container.find( acbr_it->first );
-                     if ( ce_it != ce_end ) {
-                        std::vector<string> v;
-                        utilities::EvaluateAttrList(
-                           *(ce_it->second),
-                           "GlueCEAccessControlBaseRule",
-                           v
-                        );
-                        std::copy(
-                           acbr_it->second.begin(),
-                           acbr_it->second.end(),
-                           std::back_inserter(v)
-                        );
-                        ce_it->second->Insert("GlueCEAccessControlBaseRule",
-                                           utilities::asExprList(v));
-                     }
-
-                  } // for
-/*
-                  for ( ResultSet::iterator it=accSet.begin(); it < accSet.end() ; it++ ) {
-                     try {
-                        string val = it->getString("Value");
-                        string GlueCEUniqueID = it->getString("GlueCEUniqueID");
-                        gluece_info_iterator elem = gluece_info_container.find(GlueCEUniqueID);
-                        if ( elem != gluece_info_container.end() ) {
-                           checkListAttr( (elem->second).get(), "GlueCEAccessControlBaseRule", val);
-                        }
-                        else Warning(GlueCEUniqueID << " not found in GlueCE table, "<<
-                                     "but it is present in GlueCEAccessControlBaseRule table");
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCEAccessControlBaseRule table");
-                        Error(rgmae.getMessage());
-                     }
-
-                  } //for
-*/
-
-                  Info("manipulated tuples from AccessControlBaseRule in "<< t0.elapsed());
-
-               }
-
-               if ( accSet.endOfResults() ) AccContrBaseRuleIsEmpty = true;
-            }
-            else {
-               Warning("Failure in poping tuples from the query to AccessControlBaseRule");
-               AccContrBaseRuleIsEmpty = true;
-            }
-         } // if ( ! AccContrBaseRuleIsEmpty )       
-
-         if ( ! SubClusterIsEmpty ) {
-         ResultSet subSet;
-
-            Info("starting popping tuples from SubCluster"); t0.restart();
-
-            if(SubCluster_query::get_query_instance()->pop_tuples( subSet, 1000)){
-
-            Info("popped tuples from SubCluster in "<< t0.elapsed());
-
-               if ( subSet.begin() != subSet.end() ) {
-
-                  Info("starting manipulating tuples from SubCluster"); t0.restart();
-
-                  ResultSet::iterator const tuples_end = subSet.end();
-                  for ( ResultSet::iterator tuple = subSet.begin(); tuple < tuples_end; 
-                                                                    tuple++) {
-
-                     try {
-                        string GlueSubClusterUniqueIDFromRgma = tuple->getString("UniqueID");
-
-                        gluece_info_iterator gluece_end = gluece_info_container.end();
-                        for (gluece_info_iterator it = gluece_info_container.begin(); it != gluece_end; ++it) {
-                           string GlueClusterUniqueID;
-                           if ( ((it->second).get())->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
-                              if ( GlueClusterUniqueID == GlueSubClusterUniqueIDFromRgma ) {
-                                 boost::scoped_ptr<ClassAd> subClusterAd ( new ClassAd() );
-                                 if ( ExportClassAd( subClusterAd.get(), *tuple ) ){
-                                    checkSubCluster( subClusterAd.get() );
-                                    ((it->second).get())->Update( *subClusterAd.get() );
-                                 }
-                                 else Warning("Failure in updating SubCluster values for "
-                                              <<GlueClusterUniqueID<<".");
-                              }
-                           }
-                           else Warning("Cannot find GlueClusterUniqueID field in the ClassAd");
-                        }
-
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCESubCluster table");
-                        Error(rgmae.getMessage());
-                     }
-
-                  } //for
-
-                  Info("manipulated tuples from SubCluster in " << t0.elapsed());
-
-               }
-               if ( subSet.endOfResults() ) SubClusterIsEmpty = true;
-
-            }
-            else {
-               Warning("Failure in popping tuples from query to GlueSubCluster");
-               SubClusterIsEmpty = true;
-            }
- 
-         } // if ( ! SubClusterIsEmpty )
-
-         if ( !SoftwareRunTimeEnvironmentIsEmpty ){
-         ResultSet softSet;
-
-            Info("starting popping tuples from SoftwareRunTimeEnvironment"); t0.restart();
-
-            if(SoftwareRunTimeEnvironment_query::get_query_instance()->pop_tuples( softSet, 1000)){
-
-            Info("popped tuples from SoftwareRunTimeEnvironment in "<< t0.elapsed());
-
-               if ( softSet.begin() != softSet.end() ) {
-
-                  Info("starting manipulating tuples from SoftwareRunTimeEnvironment"); t0.restart();
-                  std::map<std::string, std::vector<std::string> > SRTE_map;
-                  ResultSet::iterator soft_it = softSet.begin(); 
-                  ResultSet::iterator const soft_end = softSet.end(); 
-                  for( ; soft_it != soft_end; ++soft_it) {
-
-                     try {
-                        string GlueSubClusterUniqueIDFromRgma = soft_it->getString("GlueSubClusterUniqueID");
-                        string val = soft_it->getString("Value");
-                        SRTE_map[GlueSubClusterUniqueIDFromRgma].push_back(val);
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCESubClusterSoftwareRunTimeEnvironment table");
-                        Error(rgmae.getMessage());
-                     }
-                  }
-                  
-                  std::map<std::string, std::vector<std::string> >::const_iterator srte_end(
-                    SRTE_map.end()
-                  );
-                  gluece_info_iterator gluece_info_end = gluece_info_container.end();
-                  for (gluece_info_iterator gluece_info_it = gluece_info_container.begin(); 
-                       gluece_info_it != gluece_info_end; ++gluece_info_it) {
-
-                     string GlueClusterUniqueID;
-                     if ( gluece_info_it->second->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
-   
-                        std::map<std::string, std::vector<std::string> >::const_iterator srte_it(
-                                                           SRTE_map.find(GlueClusterUniqueID)
-                                                           );
-                        if( srte_it != srte_end )  {
-                           std::vector<string> v;
-                           utilities::EvaluateAttrList(
-                             *(gluece_info_it->second),
-                             "GlueHostApplicationSoftwareRunTimeEnvironment",
-                             v
-                           );
-                           std::copy(
-                             srte_it->second.begin(),
-                             srte_it->second.end(),
-                             std::back_inserter(v)
-                           );
-                           gluece_info_it->second->Insert("GlueHostApplicationSoftwareRunTimeEnvironment",
-                                              utilities::asExprList(v));                   
-                        }
-                     }
-                  } //for
-/*
-                  for( ResultSet::iterator it=softSet.begin(); it < softSet.end(); it++) {
-
-                     try {
-                        string GlueSubClusterUniqueIDFromRgma = it->getString("GlueSubClusterUniqueID");
-                        string val = it->getString("Value");
-
-                        for (gluece_info_iterator it = gluece_info_container.begin(); it != gluece_info_container.end(); ++it) {
-                           string GlueSubClusterUniqueID;
-                           if ( ((it->second).get())->EvaluateAttrString("GlueSubClusterUniqueID", GlueSubClusterUniqueID) ){
-                                 if ( GlueSubClusterUniqueID == GlueSubClusterUniqueIDFromRgma )
-                                     checkListAttr( (it->second).get(), "GlueHostApplicationSoftwareRunTimeEnvironment", val );
-                           }
-                           // Warning log misses since it could happen that GlueSubClusterUniqueID is not
-                           // present in the ClassAd. An entry in GlueSubCluster table may not have the
-                           // the corresponding one in GlueCEUniqueID table
-                        }
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCESubClusterSoftwareRunTimeEnvironment table");
-                        Error(rgmae.getMessage());
-                     }
-
-                  } //for
-*/
-
-                  Info("manipulated tuples from SoftwareRunTimeEnvironment in "<< t0.elapsed());
-
-               }
-
-               if ( softSet.endOfResults() ) SoftwareRunTimeEnvironmentIsEmpty = true;
-            }
-            else {
-               Warning("Failure in popping tuples from query to GlueSubClusterSoftwareRunTimeEnvironment");
-               SoftwareRunTimeEnvironmentIsEmpty = true;
-            }
-         } // if ( ! SoftwareRunTimeEnvironmentIsEmpty )
-
-         if ( ! CESEBindIsEmpty ) {
-         ResultSet bindSet;
-
-            Info("starting popping tuples from CESEBind"); t0.elapsed();
-
-            if(CESEBind_query::get_query_instance()->pop_tuples( bindSet, 1000)){
-
-            Info("popped tuples from CESEBind in "<<t0.elapsed());
-
-               if ( bindSet.begin() != bindSet.end() ) {
-
-                  Info("starting manipulating tuples from CESEBind"); t0.restart();
-                  std::map< std::string, 
-                            std::pair< std::vector< classad::ExprTree* >,
-                                       std::vector< std::string > > >BIND_map;
-
-                  ResultSet::iterator bind_rgma_it = bindSet.begin();
-                  ResultSet::iterator const bind_rgma_end = bindSet.end();
-                  for( ; bind_rgma_it != bind_rgma_end; ++bind_rgma_it) {
-                     try {
-                        string GlueCEUniqueIDFromRgma = 
-                              bind_rgma_it->getString("GlueCEUniqueID");
-                        string GlueSEUniqueIDFromRgma = 
-                                        bind_rgma_it->getString("GlueSEUniqueID");
-                        string AccesspointFromRgma = bind_rgma_it->getString("Accesspoint");
-                        classad::ClassAd* ad_elem = new classad::ClassAd();
-                        ad_elem->InsertAttr("name", GlueSEUniqueIDFromRgma);
-                        ad_elem->InsertAttr("mount", AccesspointFromRgma);  
-                        BIND_map[GlueCEUniqueIDFromRgma].first.push_back(ad_elem);
-                        BIND_map[GlueCEUniqueIDFromRgma].second.push_back(
-                                                          GlueSEUniqueIDFromRgma);
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCESEBind table");
-                        Error(rgmae.getMessage());
-                     }
-                  } //for
- 
-                  std::map<std::string, 
-                           std::pair< std::vector< classad::ExprTree* >,
-                                      std::vector< std::string > > >::iterator bind_it =
-                                                    BIND_map.begin();
-                  std::map<std::string, 
-                           std::pair< std::vector< classad::ExprTree* >,
-                                      std::vector< std::string > > >::const_iterator bind_end =
-                                                    BIND_map.end();
-
-                  gluece_info_iterator ce_end = gluece_info_container.end();
-                  for ( ; bind_it != bind_end; bind_it++) {
-
-                     gluece_info_iterator ce_it = gluece_info_container.find( bind_it->first );
-
-                     if ( ce_it != ce_end ) {
-                        //1
-                        classad::ExprList* expr_list;
-                        vector<classad::ExprTree*>        val;
-                        if ( ce_it->second->EvaluateAttrList( 
-                                       "CloseStorageElements", 
-                                       expr_list) ) {
-                           //expr_list->GetComponents(val);
-                           ExprList::iterator list_it = expr_list->begin();
-                           ExprList::const_iterator list_end = expr_list->end();
-                           for ( ; list_it < list_end; list_it++ )
-                                     val.push_back((*list_it)->Copy());
-                        }
-                         
-                        std::copy(
-                           (bind_it->second).first.begin(),
-                           (bind_it->second).first.end(),
-                           std::back_inserter(val)
-                        );
-                        ce_it->second->Insert("CloseStorageElements",
-                                              classad::ExprList::MakeExprList(val) );
-
-                        //2
-                        std::vector< std::string > v ;
-                        utilities::EvaluateAttrList(
-                           *(ce_it->second),
-                           "GlueCESEBindGroupSEUniqueID",
-                           v
-                        );
-                        std::copy(
-                           (bind_it->second).second.begin(),
-                           (bind_it->second).second.end(),
-                           std::back_inserter(v)
-                        );
-                        ce_it->second->Insert("GlueCESEBindGroupSEUniqueID",
-                                              utilities::asExprList(v));
-                        //3
-                        if ( ! (ce_it->second)->Lookup("GlueCESEBindGroupCEUniqueID") )  {
-                           (ce_it->second)->InsertAttr("GlueCESEBindGroupCEUniqueID", 
-                                                       bind_it->first );
-                        }
-
-
-                     } //if ( ce_it != ce_end )
-
-                  } // for
-                  
-/*
-                  for( ResultSet::iterator it=bindSet.begin(); it < bindSet.end(); it++) {
-
-                     boost::scoped_ptr<ClassAd> el(new ClassAd());
-                     try {
-                        string GlueCEUniqueID = it->getString("GlueCEUniqueID");
-                        string GlueSEUniqueID = it->getString("GlueSEUniqueID") ;
-                        gluece_info_iterator elem = gluece_info_container.find( GlueCEUniqueID );
-                        if ( elem != gluece_info_container.end() ) {
-                           //1 
-                           if ( ! (elem->second)->Lookup("GlueCESEBindGroupCEUniqueID") )  {
-                              (elem->second)->InsertAttr("GlueCESEBindGroupCEUniqueID", GlueCEUniqueID );
-                           }
-                           //2
-                           checkListAttr( (elem->second).get(), "GlueCESEBindGroupSEUniqueID",
-                                          GlueSEUniqueID );
-                           //3 
-                           if ( ( el->InsertAttr("name", GlueSEUniqueID ) )   &&
-                                ( el->InsertAttr("mount", it->getString("Accesspoint")) ) ) {
-                    
-                              if (  !checkClassAdListAttr( (elem->second).get(), "CloseStorageElements",
-                                                           static_cast<ClassAd*>(el->Copy()) )  ){
-                                 Warning("Failure in adding element to CloseStorageElements list-value for \""
-                                         <<GlueCEUniqueID<<"\".");
-                              }
-                           }
-                        }
-                        else 
-                           Warning( GlueCEUniqueID << " not found in GlueCE table, "
-                                    <<"but is present in GlueCESEBind table"); 
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCEAccessControlBaseRule table");
-                        Error(rgmae.getMessage());
-                     }
-
-                  }//for
-*/
-                  Info("manipulated tuples from CESEBind in "<<t0.elapsed());
-
-
-               }
-               if ( bindSet.endOfResults() ) CESEBindIsEmpty = true;
-               
-            }
-            else{
-               Warning("Failure in popping tuples from the query to CESEBind");
-               CESEBindIsEmpty = true;
-            }
-
-         }  // if ( ! CESEBindIsEmpty )
-
-
-      } // while  (  (! AccContrBaseRuleIsEmpty ) || ( !SubClusterIsEmpty ) || ( !SoftwareRunTimeEnvironmentIsEmpty) || ( !CESEBindIsEmpty )  )  
 
       try{
    
@@ -1950,10 +1961,11 @@ void ism_rgma_purchaser::do_purchase()
                      if( it->second->Lookup("CloseStorageElements") ) CloseStorageElements="";
                   }
                   Debug("Purchased \""<<GlueCEUniqueID<<"\" CE with all SubCluster values"<<std::endl<<
-                        "           with "<<GlueCEAccessControlBaseRule<<" GlueCEAccessControlBaseRule attribute"<<std::endl<<
-                        "           with "<<GlueHostApplicationSoftwareRunTimeEnvironment
-                                      <<" GlueHostApplicationSoftwareRunTimeEnvironment attribute"<< std::endl<<
-                        "           with "<<CloseStorageElements<<" CloseStorageElements attribute");
+                     "           with "<<GlueCEAccessControlBaseRule<<" GlueCEAccessControlBaseRule attribute"<<std::endl<<
+                     "           with "<<GlueHostApplicationSoftwareRunTimeEnvironment
+                                   <<" GlueHostApplicationSoftwareRunTimeEnvironment attribute"<< std::endl<<
+                     "           with "<<CloseStorageElements<<" CloseStorageElements attribute");
+
                }
             }
          }
@@ -1988,7 +2000,6 @@ void ism_rgma_purchaser::do_purchase()
    } 
    while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 
-   Info("TOTAL: "<<tot.elapsed());
 
 }
 
