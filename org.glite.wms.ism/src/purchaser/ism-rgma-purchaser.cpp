@@ -1530,7 +1530,42 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
             if(SubCluster_query::get_query_instance()->pop_tuples( subSet, 1000)){
 
                if ( subSet.begin() != subSet.end() ) {
+                  std::map< std::string, boost::shared_ptr<classad::ClassAd> > SC_map;
+                  ResultSet::iterator const tuples_end = subSet.end();
+                  for ( ResultSet::iterator tuple = subSet.begin(); tuple != tuples_end; tuple++) {
+                     std::string UniqueID;
+                     try {
+                        UniqueID = tuple->getString("UniqueID");
+                     }
+                     catch(RGMAException rgmae) {
+                        Error("Cannot evaluate tuple returned by GlueCESubCluster table");
+                        Error(rgmae.getMessage());
+                        continue;
+                     }
+ 
+                     boost::shared_ptr<ClassAd> subClusterAd ( new ClassAd() ); 
+                     if ( ExportClassAd( subClusterAd.get(), *tuple ) ) {
+                        checkSubCluster(  subClusterAd.get() );
+                        SC_map[UniqueID] = subClusterAd;
+                     }
+                     
+                  }
+                  std::map< std::string, boost::shared_ptr<classad::ClassAd> >::const_iterator sc_map_end =
+                           SC_map.end();
 
+                  boost::recursive_mutex::scoped_lock  lock(collect_info_mutex);
+                  gluece_info_iterator gluece_end = gluece_info_container->end();
+                  for (gluece_info_iterator it = gluece_info_container->begin(); it != gluece_end; ++it) {
+                     std::string GlueClusterUniqueID;
+                     classad::ClassAd* tmpCeAd = (it->second).get();
+                     if ( tmpCeAd->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
+                        std::map< std::string, boost::shared_ptr<classad::ClassAd> >::iterator sc_map_item =
+                              SC_map.find(GlueClusterUniqueID);
+                        if ( sc_map_item != sc_map_end ) 
+                           tmpCeAd->Update( *(sc_map_item->second).get() );
+                     }
+                  }
+/*
                   ResultSet::iterator const tuples_end = subSet.end();
                   for ( ResultSet::iterator tuple = subSet.begin(); tuple < tuples_end;
                                                                     tuple++) {
@@ -1562,6 +1597,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
                      }
 
                   } //for
+*/
 
                }
                if ( subSet.endOfResults() ) SubClusterIsEmpty = true;
@@ -1949,7 +1985,7 @@ void ism_rgma_purchaser::do_purchase()
                if (purchasing_ok) {
                   it->second->InsertAttr("PurchasedBy","ism_rgma_purchaser");
                   gluece_info_container_updated_entries.push_back(it);
-   
+
                   string GlueCEUniqueID="NO";
                   string GlueCEAccessControlBaseRule = "NO";
                   string GlueHostApplicationSoftwareRunTimeEnvironment = "NO";
@@ -1965,7 +2001,6 @@ void ism_rgma_purchaser::do_purchase()
                      "           with "<<GlueHostApplicationSoftwareRunTimeEnvironment
                                    <<" GlueHostApplicationSoftwareRunTimeEnvironment attribute"<< std::endl<<
                      "           with "<<CloseStorageElements<<" CloseStorageElements attribute");
-
                }
             }
          }
