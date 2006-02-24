@@ -31,6 +31,8 @@
 
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/PrivateAttributes.h"
+#include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
 
 #include "glite/wms/helper/Request.h"
@@ -40,17 +42,15 @@
 
 #include "glite/security/proxyrenewal/renewal.h"
 
-#include "CommandAdManipulation.h"
 #include "TaskQueue.hpp"
 #include "plan.h"
-#include "WMFactory.h"
 #include "WMReal.h"
+#include "lb_utils.h"
 
 namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
-namespace requestad = glite::wms::jdl;
-namespace common = glite::wms::manager::common;
+namespace jdl = glite::wms::jdl;
 
 namespace glite {
 namespace wms {
@@ -59,222 +59,66 @@ namespace server {
 
 namespace {
 
-std::string normalize(std::string id)
+std::string get_ice_input()
 {
-  std::transform(id.begin(), id.end(), id.begin(), ::tolower);
-  return id;
-}
-
-common::WMImpl* create_wm()
-{
-  return new WMReal;
-}
-
-std::string wm_id("real");
-
-struct Register
-{
-  Register()
-  {
-    common::WMFactory::instance()->register_wm(normalize(wm_id), create_wm);
-  }
-  ~Register()
-  {
-    common::WMFactory *factory = common::WMFactory::instance();
-    factory->unregister_wm(wm_id);
-  }
-};
-
-Register r;
-
-void log_match(
-  common::ContextPtr const& context,
-  std::string const& ce_id
-)
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-  boost::function<
-    int(edg_wll_Context, char const*)
-  > log_function(edg_wll_LogMatchProxy);
-  const std::string log_function_name("edg_wll_LogMatchProxy");
-#else
-  boost::function<
-    int(edg_wll_Context, char const*)
-  > log_function(edg_wll_LogMatch);
-  const std::string log_function_name("edg_wll_LogMatch");
-#endif
-
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(log_function, _1, ce_id.c_str()
-    ),
-    context
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
   );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(log_function_name, lb_error, context, ctx)
-    );
-  }
+  return config.ice()->input();
 }
 
-void log_enqueued_start(
-  common::ContextPtr const& context,
-  std::string const& input_list,
-  std::string const& job_id
-)
+std::string get_jc_input()
 {
-#ifdef GLITE_WMS_HAVE_LBPROXY
-  boost::function<
-    int(edg_wll_Context, char const*, char const*, char const*)
-  > log_function(edg_wll_LogEnQueuedSTARTProxy);
-  const std::string log_fun_name("edg_wll_LogEnQueuedSTARTProxy");
-#else
-  boost::function<
-    int(edg_wll_Context, char const*, char const*, char const*)
-  > log_function(edg_wll_LogEnQueuedSTART);
-  const std::string log_fun_name("edg_wll_LogEnQueuedSTART");
-#endif
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(log_function, _1, input_list.c_str(), job_id.c_str(), ""),
-    context
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
   );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(log_fun_name, lb_error, context, ctx));
-  }
-}
-
-void log_enqueued_ok(
-  common::ContextPtr const& context,
-  std::string const& input_list,
-  std::string const& job_id
-)
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-  boost::function<
-    int(edg_wll_Context, char const*, char const*, char const*)
-  > log_function(edg_wll_LogEnQueuedOKProxy);
-  const std::string log_fun_name("edg_wll_LogEnQueuedOKProxy");
-#else
-  boost::function<
-    int(edg_wll_Context, char const*, char const*, char const*)
-  > log_function(edg_wll_LogEnQueuedOK);
-  const std::string log_fun_name("edg_wll_LogEnQueuedOK");
-#endif
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(log_function, _1, input_list.c_str(), job_id.c_str(), ""),
-    context
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(log_fun_name, lb_error, context, ctx)
-    );
-  }
-}
-
-void log_enqueued_fail(
-  common::ContextPtr const& context,
-  std::string const& input_list,
-  std::string const& job_id,
-  std::string const& error_descr
-)
-{
-#ifdef GLITE_WMS_HAVE_LBPROXY
-  boost::function<
-    int(edg_wll_Context, char const*, char const*, char const*)
-  > log_function(edg_wll_LogEnQueuedFAILProxy);
-  const std::string log_fun_name("edg_wll_LogEnQueuedFAILProxy");
-#else
-  boost::function<
-    int(edg_wll_Context, char const*, char const*, char const*)
-  > log_function(edg_wll_LogEnQueuedFAIL);
-  const std::string log_fun_name("edg_wll_LogEnQueuedFAIL");
-#endif
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(log_function,
-      _1,
-      input_list.c_str(),
-      job_id.c_str(),
-      error_descr.c_str()
-    ),
-    context
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(log_fun_name, lb_error, context, ctx)
-    );
-  }
-}
-
-std::string
-get_user_x509_proxy(jobid::JobId const& jobid)
-{
-  static std::string const null_string;
-  char* c_x509_proxy = NULL;
-
-  int err_code = edg_wlpr_GetProxy(jobid.getId(), &c_x509_proxy);
-
-  if (err_code == 0) {
-    return null_string;
-  }
-  else {
-    // currently no proxy is registered if renewal is not requested
-    // try to get the original user proxy from the input sandbox
-    boost::shared_ptr<char> _c_x509_proxy(c_x509_proxy, ::free);
-    configuration::NSConfiguration const * const ns_config
-      = configuration::Configuration::instance()->ns();
-    assert(ns_config);
-    std::string x509_proxy(ns_config->sandbox_staging_path());
-    x509_proxy += "/"
-      + jobid::get_reduced_part(jobid)
-      + "/"
-      + jobid::to_filename(jobid)
-      + "/user.proxy";
-
-    return x509_proxy;
-   }
-}
-
-void
-add_cancel_request(
-  std::string const& list_name,
-  jobid::JobId const& id,
-  std::string const& sequence_code
-)
-{
-  try {
-    utilities::FileList<std::string> fl(list_name);
-    utilities::FileListMutex mx(fl);
-    utilities::FileListLock lock(mx);
-
-    std::auto_ptr<classad::ClassAd> cmd(
-      common::cancel_command_create(id.toString(),
-      sequence_code,
-      get_user_x509_proxy(id))
-    );
-    if (cmd.get() != 0)
-    {
-      std::string ad_str = utilities::unparse_classad(*cmd);
-      if (!ad_str.empty())
-      {
-        fl.push_back(ad_str);
-      }
-      // else {
-        // error: "cannot add submit request"
-      // }
-    }
-  } catch(utilities::FileContainerError &error) {
-  }
+  return config.jc()->input();
 }
 
 } // {anonymous}
+
+struct WMReal::Impl {
+
+  Impl()
+    : ice_output(get_ice_input()), to_ice(ice_output), to_ice_mx(to_ice),
+      jc_output(get_jc_input()), to_jc(jc_output), to_jc_mx(to_jc)
+  {
+  }
+
+  std::string ice_output;
+  utilities::FileList<std::string> to_ice;
+  utilities::FileListMutex to_ice_mx;
+
+  std::string jc_output;
+  utilities::FileList<std::string> to_jc;
+  utilities::FileListMutex to_jc_mx;
+
+};
+
+WMReal::WMReal()
+  : m_impl(new Impl)
+{
+}
+
+namespace {
+
+classad::ClassAd
+submit_command_create(std::auto_ptr<classad::ClassAd> job_ad)
+{
+  classad::ClassAd result;
+
+  result.InsertAttr("version", std::string("1.0.0"));
+  result.InsertAttr("command", std::string("jobsubmit"));
+  std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
+  args->Insert("ad", job_ad.get());
+  job_ad.release();
+  result.Insert("arguments", args.get());
+  args.release();
+
+  return result;
+}
+
+}
 
 void
 WMReal::submit(classad::ClassAd const* request_ad_p)
@@ -284,89 +128,108 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
     return;
   }
 
-  glite::wmsutils::jobid::JobId jobid(requestad::get_edg_jobid(*request_ad_p));
-  common::ContextPtr context = get_context(jobid);
-  const std::string sequence_code(common::get_lb_sequence_code(context));
-
   // we make a copy because we change the sequence code
   classad::ClassAd request_ad(*request_ad_p);
+
+  glite::wmsutils::jobid::JobId jobid(jdl::get_edg_jobid(request_ad));
+  ContextPtr context = get_context(jobid);
+  std::string const sequence_code(get_lb_sequence_code(context));
+
   // before doing the planning, some helpers may need a
   // more recent sequence code than what appears in
   // the classad originally received
-  requestad::set_lb_sequence_code(request_ad, sequence_code);
+  jdl::set_lb_sequence_code(request_ad, sequence_code);
 
   std::auto_ptr<classad::ClassAd> planned_ad(Plan(request_ad));
-  const std::string ce_id = requestad::get_ce_id(*planned_ad);
+  std::string const ce_id = jdl::get_ce_id(*planned_ad);
   log_match(context, ce_id);
 
-  const boost::regex cream_ce_id(".+/cream-.+");
-  std::string input_list_name;
-  if(boost::regex_match(ce_id, cream_ce_id))
-  {
-    configuration::ICEConfiguration const * const ice_conf
-      = configuration::Configuration::instance()->ice();
+  boost::regex const cream_ce_id(".+/cream-.+");
+  bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
 
-    input_list_name = ice_conf->input();
-  }
-  else {
-    configuration::JCConfiguration const * const jc_conf
-      = configuration::Configuration::instance()->jc();
+  std::string const output(
+    is_cream_ce ? m_impl->ice_output : m_impl->jc_output
+  );
 
-    input_list_name = jc_conf->input();
-  }
-  std::string const job_id_str(requestad::get_edg_jobid(*planned_ad));
+  log_enqueued_start(context, output);
 
-  log_enqueued_start(context, input_list_name, job_id_str);
+  std::string const sequence_code_(get_lb_sequence_code(context));
+  jdl::set_lb_sequence_code(*planned_ad, sequence_code_);
 
-  const std::string sequence_code_(common::get_lb_sequence_code(context));
-  requestad::set_lb_sequence_code(*planned_ad, sequence_code_);
+  classad::ClassAd const cmd(submit_command_create(planned_ad));
+  std::string const ad_str = utilities::unparse_classad(cmd);
 
   try {
-    utilities::FileList<std::string> fl(input_list_name);
-    utilities::FileListMutex mx(fl);
-    utilities::FileListLock lock(mx);
 
-    std::auto_ptr<classad::ClassAd> cmd(
-      common::submit_command_create(planned_ad.get())
-    );
-    if (cmd.get() != 0)
-    {
-      std::string ad_str = utilities::unparse_classad(*cmd);
-      if (!ad_str.empty())
-      {
-        fl.push_back(ad_str);
-        log_enqueued_ok(context, input_list_name, job_id_str);
-      }
-      // else {
-      // error: "cannot add submit request"
-      // }
+    if (is_cream_ce) {
+      utilities::FileListLock lock(m_impl->to_ice_mx);
+      m_impl->to_ice.push_back(ad_str);
+    } else {
+      utilities::FileListLock lock(m_impl->to_jc_mx);
+      m_impl->to_jc.push_back(ad_str);
     }
 
-  } catch(utilities::FileContainerError const& error) {
-    log_enqueued_fail(
-      context, 
-      input_list_name, 
-      job_id_str,
-      error.string_error()
-    );
+  } catch (utilities::FileContainerError const& e) {
+
+    log_enqueued_fail(context, output, ad_str, e.string_error());
+
   }
+
+  log_enqueued_ok(context, output, ad_str);
+}
+
+namespace {
+
+classad::ClassAd
+cancel_command_create(
+  std::string const& job_id,
+  std::string const& sequence_code,
+  std::string const& user_x509_proxy
+)
+{
+  classad::ClassAd result;
+
+  result.InsertAttr("version", std::string("1.0.0"));
+  result.InsertAttr("command", std::string("jobcancel"));
+  std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
+  args->InsertAttr(jdl::JDL::JOBID, job_id);
+  args->InsertAttr(jdl::JDL::LB_SEQUENCE_CODE, sequence_code);
+  args->InsertAttr(jdl::JDLPrivate::USERPROXY, user_x509_proxy);
+  result.InsertAttr("arguments", args.get());
+  args.release();
+
+  return result;
+}
+
 }
 
 void
 WMReal::cancel(jobid::JobId const& id)
 {
-  common::ContextPtr context = get_context(id);
-  const std::string sequence_code(common::get_lb_sequence_code(context));
+  ContextPtr context = get_context(id);
+  std::string const sequence_code(get_lb_sequence_code(context));
 
-  configuration::ICEConfiguration const * const ice_conf
-    = configuration::Configuration::instance()->ice();
+  classad::ClassAd cmd(
+    cancel_command_create(
+      id.toString(),
+      sequence_code,
+      get_user_x509_proxy(id)
+    )
+  );
 
-  add_cancel_request(ice_conf->input(), id, sequence_code);
+  std::string const ad_str(utilities::unparse_classad(cmd));
 
-  configuration::JCConfiguration const * const jc_conf
-    = configuration::Configuration::instance()->jc();
+  try {
+    utilities::FileListLock lock(m_impl->to_ice_mx);
+    m_impl->to_ice.push_back(ad_str);
+  } catch (utilities::FileContainerError&) {
+  }
 
-  add_cancel_request(jc_conf->input(), id, sequence_code);
+  try {
+    utilities::FileListLock lock(m_impl->to_jc_mx);
+    m_impl->to_jc.push_back(ad_str);
+  } catch (utilities::FileContainerError&) {
+  }
 }
 
 }}}}

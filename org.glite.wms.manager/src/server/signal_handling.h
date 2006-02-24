@@ -8,15 +8,12 @@
 #ifndef GLITE_WMS_MANAGER_SERVER_SIGNAL_HANDLING_H
 #define GLITE_WMS_MANAGER_SERVER_SIGNAL_HANDLING_H
 
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/thread.hpp>
-
 namespace glite {
 namespace wms {
 namespace manager {
 namespace server {
 
-boost::shared_ptr<boost::thread> signal_handling_init();
+bool signal_handling();
 bool received_quit_signal();
 
 }}}} // glite::wms::manager::server

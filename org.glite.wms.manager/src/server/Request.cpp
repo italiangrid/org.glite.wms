@@ -9,7 +9,7 @@
 #include <map>
 #include <boost/bind.hpp>
 #include "lb_utils.h"
-#include "CommandAdManipulation.h"
+#include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -20,9 +20,9 @@
 #include "glite/lb/producer.h"
 
 namespace jobid = glite::wmsutils::jobid;
-namespace requestad = glite::wms::jdl;
-namespace common = glite::wms::manager::common;
+namespace jdl = glite::wms::jdl;
 namespace utilities = glite::wms::common::utilities;
+using namespace glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 
 namespace glite {
@@ -32,7 +32,7 @@ namespace server {
 
 namespace {
 
-common::ContextPtr
+ContextPtr
 aux_create_context(
   classad::ClassAd const& command_ad,
   std::string const& command,
@@ -43,19 +43,18 @@ aux_create_context(
   std::string sequence_code;
 
   if (command == "jobsubmit") {
-    classad::ClassAd const* job_ad = common::submit_command_get_ad(command_ad);
-    x509_proxy = requestad::get_x509_user_proxy(*job_ad);
-    sequence_code = requestad::get_lb_sequence_code(*job_ad);
+    classad::ClassAd const* job_ad = submit_command_get_ad(command_ad);
+    x509_proxy = jdl::get_x509_user_proxy(*job_ad);
+    sequence_code = jdl::get_lb_sequence_code(*job_ad);
   } else if (command == "jobcancel") {
-    x509_proxy = common::get_user_x509_proxy(id);
-    sequence_code = common::cancel_command_get_lb_sequence_code(command_ad);
+    x509_proxy = get_user_x509_proxy(id);
+    sequence_code = cancel_command_get_lb_sequence_code(command_ad);
   } else if (command == "jobresubmit") {
-    x509_proxy = common::get_user_x509_proxy(id);
-    sequence_code = common::resubmit_command_get_lb_sequence_code(command_ad);
+    x509_proxy = get_user_x509_proxy(id);
+    sequence_code = resubmit_command_get_lb_sequence_code(command_ad);
   }
 
-  //  return common::create_context(id, x509_proxy, sequence_code);
-  return common::create_context_proxy(id, x509_proxy, sequence_code);
+  return create_context(id, x509_proxy, sequence_code);
 }
 
 time_t const SECONDS_PER_DAY = 86400;
@@ -63,26 +62,23 @@ time_t const SECONDS_PER_DAY = 86400;
 glite::wmsutils::jobid::JobId
 aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
 {
-  namespace jobid = glite::wmsutils::jobid;
-  namespace requestad = glite::wms::jdl;
-
   if (command == "jobsubmit") {
     return jobid::JobId(
-      requestad::get_edg_jobid(
-        *common::submit_command_get_ad(command_ad)
+      jdl::get_edg_jobid(
+        *submit_command_get_ad(command_ad)
       )
     );
   } else if (command == "jobresubmit") {
-    return jobid::JobId(common::resubmit_command_get_id(command_ad));
+    return jobid::JobId(resubmit_command_get_id(command_ad));
   } else if (command == "jobcancel") {
-    return jobid::JobId(common::cancel_command_get_id(command_ad));
+    return jobid::JobId(cancel_command_get_id(command_ad));
   } else if (command == "match") {
     bool id_exists;
     jobid::JobId match_jobid;
 
     std::string jobidstr(
-      requestad::get_edg_jobid(
-        *common::match_command_get_ad(command_ad),
+      jdl::get_edg_jobid(
+        *match_command_get_ad(command_ad),
         id_exists
       )
     );
@@ -112,8 +108,8 @@ check_request(classad::ClassAd const& command_ad)
   std::string command;
   jobid::JobId id;
 
-  if (common::command_is_valid(command_ad)) {
-    command = common::command_get_command(command_ad);
+  if (command_is_valid(command_ad)) {
+    command = command_get_command(command_ad);
     id = aux_get_id(command_ad, command);
   }
 
@@ -128,7 +124,7 @@ Request::Request(
 )
   : m_id(id),
     m_state(WAITING),
-    m_last_processed(0),
+    m_last_processed(0),        // make it very old
     m_cancelled(false),
     m_resubmitted(false),
     m_expiry_time(std::time(0) + SECONDS_PER_DAY)
@@ -138,95 +134,49 @@ Request::Request(
 
   if (command == "jobsubmit") {
 
-    m_jdl.reset(common::submit_command_remove_ad(command_ad));
+    std::auto_ptr<classad::ClassAd> ad(submit_command_remove_ad(command_ad));
+    m_jdl = ad;
 
     bool exists = false;
-    int expiry_time = requestad::get_expiry_time(*m_jdl, exists);
+    int expiry_time = jdl::get_expiry_time(*m_jdl, exists);
     if (exists) {
       m_expiry_time = expiry_time;
     }
 
-    x509_proxy = requestad::get_x509_user_proxy(*m_jdl);
-    sequence_code = requestad::get_lb_sequence_code(*m_jdl);
-    m_lb_context = common::create_context_proxy(m_id, x509_proxy, sequence_code);
+    x509_proxy = jdl::get_x509_user_proxy(*m_jdl);
+    sequence_code = jdl::get_lb_sequence_code(*m_jdl);
+    m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
   } else if (command == "jobresubmit") {
 
     mark_resubmitted();
 
-    x509_proxy = common::get_user_x509_proxy(m_id);
-    sequence_code = common::resubmit_command_get_lb_sequence_code(command_ad);
-    m_lb_context = common::create_context_proxy(m_id, x509_proxy, sequence_code);
+    x509_proxy = get_user_x509_proxy(m_id);
+    sequence_code = resubmit_command_get_lb_sequence_code(command_ad);
+    m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
   } else if (command == "jobcancel") {
 
     state(DELIVERED);
     mark_cancelled();
 
-    x509_proxy = common::get_user_x509_proxy(m_id);
-    sequence_code = common::cancel_command_get_lb_sequence_code(command_ad);
-    m_lb_context = common::create_context_proxy(m_id, x509_proxy, sequence_code);
+    x509_proxy = get_user_x509_proxy(m_id);
+    sequence_code = cancel_command_get_lb_sequence_code(command_ad);
+    m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
   } else if (command == "match") {
 
-    m_jdl.reset(common::match_command_remove_ad(command_ad));
+    std::auto_ptr<classad::ClassAd> ad(match_command_remove_ad(command_ad));
+    m_jdl = ad;
 
-    std::string filename = common::match_command_get_file(command_ad);
-    int number = common::match_command_get_number_of_results(command_ad);
-    bool brokerinfo = common::match_command_get_include_brokerinfo(command_ad);
+    std::string filename = match_command_get_file(command_ad);
+    int number = match_command_get_number_of_results(command_ad);
+    bool brokerinfo = match_command_get_include_brokerinfo(command_ad);
 
     m_match_parameters = boost::make_tuple(filename, number, brokerinfo);
   }
 
   m_input_cleaners.push_back(cleanup);
-
-}  
-
-namespace {
-
-void log_abort(
-  jobid::JobId const& id,
-  common::ContextPtr const& context,
-  std::string const& msg
-)
-{
-  Error(msg << " for " << id.toString());
-  int err; common::ContextPtr ctx;
-  boost::tie(err, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogAbortProxy, _1, msg.c_str()),
-    context
-  );
-  if (err) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogAbortProxy",
-        err,
-        context,
-        ctx
-      )
-    );
-  }
-}
-
-void log_cancelled(common::ContextPtr const& context)
-{
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogCancelDONEProxy, _1, "SUCCESSFULLY CANCELLED"),
-    context
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogCancelDONEProxy",
-        lb_error,
-        context,
-        ctx
-      )
-    );
-  }
-}
 
 }
 
@@ -249,7 +199,7 @@ Request::~Request()
   try {
     switch (m_state) {
     case Request::UNRECOVERABLE:
-      log_abort(m_id, m_lb_context, m_message);
+      log_abort(m_lb_context, m_message);
       apply(m_input_cleaners);
       break;
 
@@ -272,13 +222,13 @@ Request::~Request()
   }
 }
 
-void Request::jdl(classad::ClassAd* jdl)
+void Request::jdl(std::auto_ptr<classad::ClassAd> jdl)
 {
-  m_jdl.reset(jdl);
+  m_jdl = jdl;
 
   // reset the expiry time if the corresponding jdl attribute exists
   bool exists;
-  int expiry_time = requestad::get_expiry_time(*m_jdl, exists);
+  int expiry_time = jdl::get_expiry_time(*m_jdl, exists);
   if (exists) {
     m_expiry_time = expiry_time;
   }

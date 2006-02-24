@@ -25,8 +25,7 @@ typedef std::map<std::string, RequestPtr> TaskQueue;
 
 TaskQueue& the_task_queue();
 
-glite::wms::manager::common::ContextPtr
-get_context(glite::wmsutils::jobid::JobId const& id);
+ContextPtr get_context(glite::wmsutils::jobid::JobId const& id);
 
 }}}} // glite::wms::manager::server
 

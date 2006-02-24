@@ -13,7 +13,6 @@
 #include <ctime>
 #include <classad_distribution.h>
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include "lb_utils.h"
@@ -71,10 +70,12 @@ public:
   std::string message() const { return m_message; }
   void last_processed(time_t t) { m_last_processed = t; }
   std::time_t last_processed() const { return m_last_processed; }
-  glite::wms::manager::common::ContextPtr lb_context() const { return m_lb_context; }
+  ContextPtr lb_context() const { return m_lb_context; }
 
+  // what about?
+  // classad::ClassAd const& jdl() const { return *m_jdl; }
   classad::ClassAd const* jdl() const { return m_jdl.get(); }
-  void jdl(classad::ClassAd* jdl);
+  void jdl(std::auto_ptr<classad::ClassAd> jdl);
   void clear_jdl() { m_jdl.reset(); }
 
   void mark_cancelled() { m_cancelled = true; }
@@ -100,14 +101,14 @@ public:
   }
 
 private:
-  boost::scoped_ptr<classad::ClassAd> m_jdl;
+  boost::shared_ptr<classad::ClassAd> m_jdl;
   glite::wmsutils::jobid::JobId m_id;
   typedef std::vector<boost::function<void()> > input_cleaners_type;
   input_cleaners_type m_input_cleaners;
   State m_state;
   std::string m_message;
   std::time_t m_last_processed;
-  glite::wms::manager::common::ContextPtr m_lb_context;
+  ContextPtr m_lb_context;
   bool m_cancelled;
   bool m_resubmitted;
 

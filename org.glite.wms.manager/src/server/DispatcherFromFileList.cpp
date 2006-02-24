@@ -25,10 +25,9 @@
 #include "TaskQueue.hpp"
 #include "Request.hpp"
 #include "glite/security/proxyrenewal/renewal.h"
-#include "purger.h"
+#include "glite/wms/purger/purger.h"
 #include "glite/lb/producer.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
-#include "CommandAdManipulation.h"
 #include "lb_utils.h"
 #include "filelist_utils.h"
 #include "filelist_recovery.h"
@@ -38,7 +37,6 @@ namespace configuration = glite::wms::common::configuration;
 namespace utilities = glite::wms::common::utilities;
 namespace jobid = glite::wmsutils::jobid;
 namespace requestad = glite::wms::jdl;
-namespace common = glite::wms::manager::common;
 
 namespace glite {
 namespace wms {
@@ -50,76 +48,15 @@ namespace {
 bool
 is_recovery_enabled()
 {
+#ifdef GLITE_WMS_HAVE_LBPROXY
   configuration::Configuration const& config(
     *configuration::Configuration::instance()
   );
 
   return config.wm()->enable_recovery();
-}
-
-void log_dequeued(common::ContextPtr const& context, std::string const& input)
-{
-  char const* const local_jobid = ""; // not needed because no real local id
-
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogDeQueuedProxy, _1, input.c_str(), local_jobid),
-    context
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogDeQueuedProxy",
-        lb_error,
-        context,
-        ctx
-      )
-    );
-  }
-}
-
-void
-log_cancel_req(common::ContextPtr const& context)
-{
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogCancelREQProxy, _1, "CANCELLATION REQUEST"),
-    context
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogCancelREQProxy",
-        lb_error,
-        context,
-        ctx
-      )
-    );
-  }
-}
-
-void log_pending(RequestPtr const& req)
-{
-  common::ContextPtr context = req->lb_context();
-
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(edg_wll_LogPendingProxy, _1, req->message().c_str()),
-    context
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogPendingProxy",
-        lb_error,
-        context,
-        ctx
-      )
-    );
-  }
+#else
+  return false;
+#endif
 }
 
 bool older_than(RequestPtr const& req, std::time_t threshold)
@@ -136,7 +73,7 @@ void do_transitions_for_cancel(
   std::time_t threshold = current_time - 300; // 5 minutes
   Request::State state = req->state();
 
-  if (req->jdl() || older_than(req, threshold)) {
+  if (req->jdl() || req->marked_resubmitted() || older_than(req, threshold)) {
     // new cancel or old one
     // manage immediately, if applicable
 
@@ -155,9 +92,9 @@ void do_transitions_for_cancel(
       );
       break;
     case Request::DELIVERED:
-      req->clear_jdl();       // this, together with marked_cancelled(),
-      // tells the RequestHandler that it should
-      // call wm.cancel()
+      req->clear_jdl();         // this, together with marked_cancelled(),
+                                // tells the RequestHandler that it should
+                                // process the cancel request
       write_end.write(req);
       break;
     case Request::READY:
@@ -186,7 +123,7 @@ void do_transitions_for_cancel(
 
 bool is_proxy_expired(jobid::JobId const& id)
 {
-  std::string proxy_file = common::get_user_x509_proxy(id);
+  std::string proxy_file = get_user_x509_proxy(id);
 
   std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
   if (!rfd) return true;
@@ -227,7 +164,7 @@ void do_transitions_for_submit(
 
   case Request::RECOVERABLE:
 
-    log_pending(req);
+    log_pending(req->lb_context(), req->message());
     Info("postponing " << req->id() << " (" << req->message() << ')');
     req->state(Request::WAITING);
     break;
@@ -257,53 +194,22 @@ void do_transitions_for_submit(
   }
 }
 
-void do_transitions_for_match(
-  RequestPtr const& req,
-  pipe_type::write_end_type& write_end
-)
-{
-  switch (req->state()) {
-
-  case Request::WAITING:
-    Info("considering match of " << req->id());
-    req->state(Request::READY);
-    write_end.write(req);
-    break;
-
-  case Request::DELIVERED:
-    Info(req->id() << " delivered");
-    break;
-
-  case Request::READY:
-  case Request::PROCESSING:
-    // do nothing; the job is in the hands of the request handler, wait for
-    // the job to enter a stable state
-    break;
-
-  case Request::RECOVERABLE:
-  case Request::UNRECOVERABLE:
-  case Request::CANCELLED:
-    // not applicable
-    assert(!"a match request cannot be in a"
-           "RECOVERABLE, UNRECOVERABLE or CANCELLED state");
-    break;
-  }
-}
-
 void do_transitions(
-  TaskQueue& tq,
+  TaskQueue const& tq,
   pipe_type::write_end_type& write_end
 )
 {
   std::time_t current_time = std::time(0);
 
-  for (TaskQueue::iterator it = tq.begin(); it != tq.end(); ++it) {
+  TaskQueue::const_iterator const tq_end = tq.end();
+  for (TaskQueue::const_iterator it = tq.begin(); it != tq_end; ++it) {
     RequestPtr req(it->second);
 
+    assert(
+      !req->marked_match() && "match requests shouldn't appear in the TQ"
+    );
     if (req->marked_cancelled()) {
       do_transitions_for_cancel(req, current_time, write_end);
-    } else if (req->marked_match()) {
-      do_transitions_for_match(req, write_end);
     } else {
       do_transitions_for_submit(req, current_time, write_end);
     }
@@ -347,8 +253,9 @@ public:
 void
 get_new_requests(
   ExtractorPtr extractor,
+  std::string const& input,
   TaskQueue& tq,
-  std::string const& input
+  pipe_type::write_end_type& write_end
 )
 {
   requests_type new_requests(extractor->get_all_available());
@@ -377,37 +284,105 @@ get_new_requests(
       jobid::JobId id;
       boost::tie(command, id) = check_request(command_ad);
 
+#ifdef GLITE_WMS_HAVE_LBPROXY
+      JobStatusPtr status(job_status(id));
+#else
+      JobStatusPtr status;
+#endif
+
+      // for a match, since it doesn'to go anymore to the TQ, probably it does
+      // not make sense to get its status and look for it in the TQ
+
       TaskQueue::iterator it = tq.find(id.toString());
 
       if (it == tq.end()) {
 
-        RequestPtr new_request(new Request(command_ad, command, id, cleanup));
-        cleanup_guard.dismiss();
-        common::ContextPtr context = new_request->lb_context();
-        common::JobStatusPtr status(common::job_status(id, context));
+        if (command == "jobsubmit" || command == "jobresubmit") {
 
-        if (((command == "jobsubmit" || command == "jobresubmit")
-             && common::is_waiting(status))
-            || (command == "jobcancel" && !common::is_cancelled(status))
-           ) {
+#ifdef GLITE_WMS_HAVE_LBPROXY
+          bool const is_acceptable = is_waiting(status) || !status;
 
-          Info("new " << command << " for " << id);
+          // it would be better, if !status, to keep the request in an
+          // undeterminate state and check periodically
+#else
+          bool const is_acceptable = true;
+#endif
 
-          tq.insert(std::make_pair(id.toString(), new_request));
+          if (is_acceptable) {
 
-          if (command == "jobsubmit" || command == "jobresubmit") {
-            log_dequeued(context, input);
-          } else if (command == "jobcancel") {
-            log_cancel_req(context);
+            Info("new " << command << " for " << id);
+
+            cleanup_guard.dismiss();
+            RequestPtr request(new Request(command_ad, command, id, cleanup));
+
+            log_dequeued(request->lb_context(), input);
+
+            if (command == "jobsubmit") {
+              if (is_proxy_expired(id)) {
+                request->state(Request::UNRECOVERABLE, "proxy expired");
+                Info(request->id() << " failed (" << request->message() << ')');
+              } else {
+                request->state(Request::READY);
+                write_end.write(request);
+                tq.insert(std::make_pair(id.toString(), request));
+              }
+            } else { // jobresubmit
+              // can it be forwarded immediately to the RH?
+              tq.insert(std::make_pair(id.toString(), request));
+            }
+          } else {
+
+            Info(
+              "ignoring " << command << " for " << id
+              << " because not compatible with state "
+              << status_to_string(status)
+            );
+
           }
 
-        } else if (command == "match" && !status) {
 
-          tq.insert(std::make_pair(id.toString(), new_request));
-          
+        } else if (command == "jobcancel") {
+
+#ifdef GLITE_WMS_HAVE_LBPROXY
+          bool const is_acceptable = !is_cancelled(status);
+#else
+          bool const is_acceptable = true;
+#endif
+
+          if (is_acceptable) {
+
+            Info("new jobcancel for " << id);
+
+            cleanup_guard.dismiss();
+            RequestPtr request(new Request(command_ad, command, id, cleanup));
+            tq.insert(std::make_pair(id.toString(), request));
+
+            log_cancel_req(request->lb_context());
+
+          } else {
+
+            Info(
+              "ignoring jobcancel for " << id
+              << " because not compatible with state "
+              << status_to_string(status)
+            );
+
+          }
+
+        } else if (command == "match") {
+
+          cleanup_guard.dismiss();
+          RequestPtr request(new Request(command_ad, command, id, cleanup));
+          // the request is processed immediately
+          // the request is not inserted in the TQ because in case of
+          // failure it won't be retried
+          Info("considering match of " << request->id());
+          request->state(Request::READY);
+          write_end.write(request);
+
         } else {
 
-          Info("ignoring " << command << " for " << id);
+          Info("don't know what to do with " << command << " for " << id);
 
         }
 
@@ -419,7 +394,7 @@ get_new_requests(
 
           if (existing_request.marked_match()) {
             // abort the new submit
-            std::string message("already existing match request");
+            std::string const message("already existing match request");
             Info(message << ' ' << id);
             // create a fake request to perform the proper actions
             Request r(command_ad, command, id, cleanup);
@@ -484,7 +459,7 @@ get_new_requests(
 
     } catch (utilities::ClassAdError& e) {
       Info(e.what() << " for " << command_ad_str);
-    } catch (common::CannotCreateLBContext& e) {
+    } catch (CannotCreateLBContext& e) {
       Info("Cannot create LB context (error code = " << e.error_code() << ')');
     } catch (InvalidRequest& e) {
       Info("Invalid request: " << command_ad_str);
@@ -496,15 +471,19 @@ get_new_requests(
 
 struct DispatcherFromFileList::Impl
 {
+  Impl(std::string const& input, TaskQueue& tq)
+    : m_input(input), m_tq(tq)
+  {}
   std::string m_input;
+  TaskQueue& m_tq;
 };
 
 DispatcherFromFileList::DispatcherFromFileList(
-  std::string const& input
+  std::string const& input,
+  TaskQueue& tq
 )
-  : m_impl(new Impl)
+  : m_impl(new Impl(input, tq))
 {
-  m_impl->m_input = input;
 }
 
 void DispatcherFromFileList::operator()()
@@ -512,7 +491,9 @@ try {
 
   Info("Dispatcher: starting");
 
-  std::string const input_file(m_impl->m_input);
+  std::string const& input_file(m_impl->m_input);
+  TaskQueue& tq(m_impl->m_tq);
+
   ExtractorPtr extractor(new extractor_type(input_file));
 
   if (extractor) {
@@ -521,8 +502,6 @@ try {
     Error("Dispatcher: cannot read from " << input_file << ". Exiting...");
     return;
   }
-
-  TaskQueue& tq(the_task_queue());
 
   if (is_recovery_enabled()) {
     Info("Dispatcher: doing recovery");
@@ -535,13 +514,10 @@ try {
 
     do_transitions(tq, write_end());
     remove_done(tq);
-    get_new_requests(extractor, tq, input_file);
+    get_new_requests(extractor, input_file, tq, write_end());
 
-    // wait one second
-    boost::xtime xt;
-    boost::xtime_get(&xt, boost::TIME_UTC);
-    xt.sec += 1;
-    boost::thread::sleep(xt);
+    unsigned int const one_second = 1;
+    ::sleep(one_second);
 
   }
 

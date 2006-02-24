@@ -24,7 +24,7 @@ class DispatcherFromFileList:
   boost::shared_ptr<Impl> m_impl;
 
 public:
-  DispatcherFromFileList(std::string const& input_file);
+  DispatcherFromFileList(std::string const& input_file, TaskQueue& tq);
   void operator()();
 };
 

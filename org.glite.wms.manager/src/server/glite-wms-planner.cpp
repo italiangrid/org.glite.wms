@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
@@ -26,8 +25,8 @@
 #include <classad_distribution.h>
 
 #include "signal_handling.h"
-#include "CommandAdManipulation.h"
 #include "match_utils.h"
+#include "lb_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
@@ -37,19 +36,20 @@
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/wms/jdl/PrivateAdManipulation.h"
 #include "glite/wms/jdl/ManipulationExceptions.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wms/helper/jobadapter/JobAdapter.h"
+#include "glite/wms/jdl/convert.h"
+#include "SubmitAdapter.h"
 
-namespace manager = glite::wms::manager::server;
+using namespace glite::wms::manager::server;
 namespace utilities = glite::wms::common::utilities;
-namespace requestad = glite::wms::jdl;
+namespace jdl = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
-namespace common = glite::wms::manager::common;
 namespace jobid = glite::wmsutils::jobid;
 namespace fs = boost::filesystem;
-namespace lambda = boost::lambda;
 
 namespace {
 
@@ -81,10 +81,12 @@ fs::path get_input_sandbox_path(jobid::JobId const& id)
   configuration::NSConfiguration const& ns_config
     = *configuration::Configuration::instance()->ns();
 
-  return fs::path(ns_config.sandbox_staging_path(), fs::native)
-    / jobid::get_reduced_part(id)
-    / jobid::to_filename(id)
-    / "input";  
+  fs::path result(ns_config.sandbox_staging_path(), fs::native);
+  result /= fs::path(jobid::get_reduced_part(id), fs::native);
+  result /= fs::path(jobid::to_filename(id), fs::native);
+  result /= fs::path("input", fs::native);
+
+  return result;
 }
 
 class planning_error: public std::exception
@@ -104,13 +106,13 @@ public:
   }
 };
 
-std::auto_ptr<classad::ClassAd>
+ClassAdPtr
 make_planned_jdl(
   classad::ClassAd const& jdl,
-  manager::match_type const& the_match
+  match_type const& the_match
 )
 {
-  std::auto_ptr<classad::ClassAd> result(new classad::ClassAd(jdl));
+  ClassAdPtr result(new classad::ClassAd(jdl));
 
   static boost::regex expression("(.+/[^\\-]+-(.+))-(.+)");
   boost::smatch pieces;
@@ -118,22 +120,22 @@ make_planned_jdl(
 
   if (boost::regex_match(ce_id, pieces, expression)) {
 
-    requestad::set_globus_resource_contact_string(
+    jdl::set_globus_resource_contact_string(
       *result,
       std::string(pieces[1].first, pieces[1].second)
     );
 
-    requestad::set_lrms_type(
+    jdl::set_lrms_type(
       *result,
       std::string(pieces[2].first, pieces[2].second)
     );
 
-    requestad::set_queue_name(
+    jdl::set_queue_name(
       *result,
       std::string(pieces[3].first, pieces[3].second)
     );
 
-    requestad::set_ce_id(*result, ce_id);
+    jdl::set_ce_id(*result, ce_id);
 
   } else {
     throw planning_error("invalid ce_id: " + ce_id);
@@ -160,13 +162,13 @@ make_match_request(classad::ClassAd const& jdl, std::string const& output_file)
   return utilities::unparse_classad(cmd);
 }
 
-bool get_matches(std::string const& s, manager::matches_type& matches)
+bool get_matches(std::string const& s, matches_type& matches)
 try {
-  boost::scoped_ptr<classad::ClassAd> response(utilities::parse_classad(s));
+  ClassAdPtr response(utilities::parse_classad(s));
   bool const include_brokerinfo = true;
   return response
-    && manager::fill_matches(*response, matches, include_brokerinfo);
-} catch (manager::MatchError& e) {
+    && fill_matches(*response, matches, include_brokerinfo);
+} catch (MatchError& e) {
   throw planning_error(e.what());
 }
 
@@ -174,32 +176,28 @@ void add_brokerinfo_to_isb(classad::ClassAd& jdl)
 {
   bool isb_exists = false;
   std::vector<std::string> isb;
-  requestad::get_input_sandbox(jdl, isb, isb_exists);
+  jdl::get_input_sandbox(jdl, isb, isb_exists);
   bool isb_base_uri_exists = false;
   std::string isb_base_uri =
-    requestad::get_wmpinput_sandbox_base_uri(jdl, isb_base_uri_exists);
+    jdl::get_wmpinput_sandbox_base_uri(jdl, isb_base_uri_exists);
   if (isb_base_uri_exists) {
     isb.push_back(isb_base_uri + "/input/.BrokerInfo");
   } else {
     isb.push_back(".BrokerInfo");
   }
-  requestad::set_input_sandbox(jdl, isb);
+  jdl::set_input_sandbox(jdl, isb);
 }
 
 bool
-cream_regex_match(manager::match_type ce_tuple)
+is_cream_ce(match_type const& ce)
 {
-  boost::regex const cream_tag(".+/cream-.+");
-  return boost::regex_match(ce_tuple.get<0>(), cream_tag);
+  boost::regex const cream_re(".+/cream-.+");
+  return boost::regex_match(ce.get<0>(), cream_re);
 }
 
-// alternative implementation: instead of opening a named pipe, just let the wm
-// create a file with a specified name and poll the file existence
-
-std::auto_ptr<classad::ClassAd>
-Plan(classad::ClassAd const& jdl)
+ClassAdPtr Plan(classad::ClassAd const& jdl)
 {
-  jobid::JobId job_id(requestad::get_edg_jobid(jdl));
+  jobid::JobId job_id(jdl::get_edg_jobid(jdl));
 
   // generate named pipe name
   std::string output_file(get_matchpipe_dir());
@@ -269,35 +267,34 @@ Plan(classad::ClassAd const& jdl)
 
   }
 
-  manager::matches_type matches;
+  matches_type matches;
   if (!get_matches(match_response, matches)) {
     throw planning_error("no matching resource");
   }
 
-  //to filter out CREAM CEs
+  // CREAM CEs are not supported for DAG nodes
+
   matches.erase(
     std::remove_if(
       matches.begin(),
       matches.end(),
-      boost::bind(cream_regex_match, _1)
-      ),
+      is_cream_ce
+    ),
     matches.end()
   );
 
   bool use_fuzzy_rank = false;
-  requestad::get_fuzzy_rank(jdl, use_fuzzy_rank);
-  manager::matches_type::const_iterator the_match(
-    manager::select_best_ce(matches, use_fuzzy_rank)
+  jdl::get_fuzzy_rank(jdl, use_fuzzy_rank);
+  matches_type::const_iterator the_match(
+    select_best_ce(matches, use_fuzzy_rank)
   );
   assert(the_match != matches.end());
 
   // create a new jdl based on the chosen match
-  std::auto_ptr<classad::ClassAd> planned_jdl(
-    make_planned_jdl(jdl, *the_match)
-  );
+  ClassAdPtr planned_jdl(make_planned_jdl(jdl, *the_match));
 
   // dump the brokerinfo to file
-  manager::ClassAdPtr brokerinfo = the_match->get<2>();
+  ClassAdPtr brokerinfo = the_match->get<2>();
   classad::ExprTree const* DAC = jdl.Lookup("DataAccessProtocol");
   if (DAC) {
     brokerinfo->Insert("DataAccessProtocol", DAC->Copy());
@@ -312,12 +309,14 @@ Plan(classad::ClassAd const& jdl)
   add_brokerinfo_to_isb(*planned_jdl);
 
   // job adapting
-  std::auto_ptr<classad::ClassAd> result(
+  ClassAdPtr result(
     glite::wms::helper::jobadapter::JobAdapter(planned_jdl.get()).resolve()
   );
 
   return result;
 }
+
+int const EXIT_ABORT_NODE = 99;
 
 } // {anonymous}
 
@@ -338,12 +337,8 @@ try {
 
   }
 
-  manager::signal_handling_init();
-
-  configuration::Configuration config(
-    "glite_wms.conf",
-    configuration::ModuleType::workload_manager
-  );
+#warning is signal handling needed?
+  // signal_handling();
 
   std::string input_file(argv[1]);
   std::ifstream is(input_file.c_str());
@@ -358,26 +353,101 @@ try {
     return EXIT_FAILURE;
   }
 
-  boost::scoped_ptr<classad::ClassAd> input_ad(utilities::parse_classad(is));
-  boost::scoped_ptr<classad::ClassAd> output_ad(Plan(*input_ad));
+  configuration::Configuration config(
+    "glite_wms.conf",
+    configuration::ModuleType::workload_manager
+  );
 
-  if (!output_ad) {
-    std::cerr << "Planning failed for unknown reason\n";
-    return EXIT_FAILURE;
+  std::string const name("dag_node_planner");
+
+  ClassAdPtr input_ad(utilities::parse_classad(is));
+
+  std::string const sequence_code(
+    "UI=2:NS=0:WM=0:BH=1:JSS=0:LM=0:LRMS=0:APP=0"
+  );
+  jobid::JobId const jobid(jdl::get_edg_jobid(*input_ad));
+  std::string const x509_user_proxy(jdl::get_x509_user_proxy(*input_ad));
+  ContextPtr context(
+    create_context(
+      jobid,
+      x509_user_proxy,
+      sequence_code,
+      EDG_WLL_SOURCE_BIG_HELPER
+    )
+  );
+  log_helper_called(context, name);
+
+  LB_Events const lb_events(get_interesting_events(context, jobid));
+  //check_retry_counts(*input_ad, lb_events);
+
+  typedef std::vector<std::pair<std::string, int> > previous_matches_type;
+  previous_matches_type const previous_matches(
+    get_previous_matches(lb_events)
+  );
+
+  // keep retrying to match periodically for a while
+
+  unsigned int const five_minutes = 300;
+  unsigned int const one_day = 86400;
+
+  std::time_t const timeout = std::time(0) + one_day;
+  ClassAdPtr planned_ad;
+  while (!planned_ad && std::time(0) < timeout) {
+    std::string pending_message("no resources available");
+    try {
+      planned_ad = Plan(*input_ad);
+    } catch (planning_error const& e) {
+      pending_message = e.what();
+    }
+    if (!planned_ad) {
+      log_pending(context, pending_message);
+      ::sleep(five_minutes);
+    }
   }
 
-  os << utilities::unparse_classad(*output_ad) << '\n';
+  if (!planned_ad) {
+    std::cerr << "request expired\n";
+    log_helper_return(context, name, EXIT_ABORT_NODE);
+    log_abort(context, "request expired");
+    return EXIT_ABORT_NODE;
+  }
 
-  std::cout << requestad::get_ce_id(*output_ad) << '\n';
+  std::string const ce_id(jdl::get_ce_id(*planned_ad));
+
+  log_match(context, ce_id);
+
+  glite::wms::jobsubmission::controller::SubmitAdapter submit_adapter(*planned_ad);
+  ClassAdPtr submit_ad(
+    submit_adapter.adapt_for_submission(get_lb_sequence_code(context))
+  );
+  if (!submit_ad) {
+    std::string const error("failed to generate the submission jdl");
+    std::cerr << error << '\n';
+    log_helper_return(context, name, EXIT_ABORT_NODE);
+    log_abort(context, error);
+    return EXIT_ABORT_NODE;
+  }
+
+  jdl::to_submit_stream(os, *submit_ad);
+
+  if (!os) {
+    std::string const error("failed to generate the submission file");
+    std::cerr << error << '\n';
+    log_helper_return(context, name, EXIT_ABORT_NODE);
+    log_abort(context, error);
+    return EXIT_ABORT_NODE;
+  }
+
+  log_helper_return(context, name, EXIT_SUCCESS);
 
 } catch (std::exception const& e) {
 
-  std::cerr << e.what() << "\n";
-  return EXIT_FAILURE;
+  std::cerr << e.what() << '\n';
+  return EXIT_ABORT_NODE;
 
 } catch (...) {
 
   std::cerr << "unknown exception\n";
-  return EXIT_FAILURE;
+  return EXIT_ABORT_NODE;
 
 }

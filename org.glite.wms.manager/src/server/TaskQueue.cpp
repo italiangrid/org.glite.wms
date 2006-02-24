@@ -7,8 +7,6 @@
 
 #include "TaskQueue.hpp"
 
-namespace common = glite::wms::manager::common;
-
 namespace glite {
 namespace wms {
 namespace manager {
@@ -21,7 +19,7 @@ TaskQueue& the_task_queue()
   return tq;
 }
 
-common::ContextPtr
+ContextPtr
 get_context(glite::wmsutils::jobid::JobId const& id)
 {
   TaskQueue& tq = the_task_queue();
@@ -29,7 +27,7 @@ get_context(glite::wmsutils::jobid::JobId const& id)
   if (it != tq.end()) {
     return it->second->lb_context();
   } else {
-    return common::ContextPtr();
+    return ContextPtr();
   }
 }
 

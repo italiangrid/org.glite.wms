@@ -145,16 +145,16 @@ void single_request_recovery(
   requests_for_id_type::value_type const& req = requests_for_id.front();
   std::string const& command = req.get<0>();
  
-  common::JobStatusPtr status(common::job_status(jobid::JobId(id)));
+  JobStatusPtr status(job_status(jobid::JobId(id)));
 
   bool valid = true;
   if (command == "match" && !status) {
     Info("matching");
-  } else if (command == "jobsubmit" && common::is_waiting(status)) {
+  } else if (command == "jobsubmit" && is_waiting(status)) {
     Info("submitting");
-  } else if (command == "jobcancel" && !common::is_cancelled(status)) {
+  } else if (command == "jobcancel" && !is_cancelled(status)) {
     Info("cancelling");
-  } else if (command == "jobresubmit" && common::is_waiting(status)) {
+  } else if (command == "jobresubmit" && is_waiting(status)) {
     Info("resubmitting");
   } else {
     assert(false && "invalid command");
@@ -196,7 +196,7 @@ void multiple_request_recovery(
   requests_for_id_type const& requests_for_id = id_requests.get<1>();
   assert(requests_for_id.size() > 1);
 
-  common::JobStatusPtr status(common::job_status(jobid::JobId(id)));
+  JobStatusPtr status(job_status(jobid::JobId(id)));
 
   std::string summary(summary(requests_for_id));
   std::string status_summary(" (status ");
@@ -248,7 +248,7 @@ void multiple_request_recovery(
     );
 
   } else if (boost::regex_match(summary, a_cancel_re)
-             && !common::is_cancelled(status)) {
+             && !is_cancelled(status)) {
 
     Info("cancelling");
 
@@ -275,7 +275,7 @@ void multiple_request_recovery(
     );
 
   } else if (boost::regex_match(summary, no_cancel_re)
-             && common::is_waiting(status)) {
+             && is_waiting(status)) {
 
     // take the last request, which must be a resubmit
     Info("resubmitting");

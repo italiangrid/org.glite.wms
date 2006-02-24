@@ -1,5 +1,5 @@
 // File: RequestHandler.cpp
-// Author: Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
+// Author: Francesco Giacomini
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
@@ -13,8 +13,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
 #include <classad_distribution.h>
-#include "WorkloadManager.h"
-#include "CommandAdManipulation.h"
+#include "WMReal.h"
 #include "signal_handling.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -37,7 +36,6 @@
 namespace fs = boost::filesystem;
 namespace jobid = glite::wmsutils::jobid;
 namespace task = glite::wms::common::task;
-namespace common = glite::wms::manager::common;
 namespace exception = glite::wmsutils::exception;
 namespace requestad = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
@@ -50,7 +48,7 @@ namespace server {
 
 struct RequestHandler::Impl
 {
-  common::WorkloadManager m_wm;
+  WMReal m_wm;
 };
 
 RequestHandler::RequestHandler()
@@ -96,14 +94,14 @@ class CannotRetrieveJDL
 {
 };
 
-void flush_lb_events(common::ContextPtr const& context, jobid::JobId const& id)
+void flush_lb_events(ContextPtr const& context, jobid::JobId const& id)
 {
   struct timeval* timeout = 0;
   int lb_error = edg_wll_LogFlush(context.get(), timeout);
   if (lb_error) {
     Warning(
       "edg_wll_LogFlush failed for " << id
-      << " (" << common::get_lb_message(context) << ")"
+      << " (" << get_lb_message(context) << ")"
     );
   }
 }
@@ -152,33 +150,17 @@ bool is_shallow_resubmission(edg_wll_Event const& event)
     && event.resubmission.result == EDG_WLL_RESUBMISSION_SHALLOW;
 }
 
-common::LB_Events::const_iterator
-find_last_deep_resubmission(common::LB_Events const& events)
+LB_Events::const_iterator
+find_last_deep_resubmission(LB_Events const& events)
 {
-  common::LB_Events::const_reverse_iterator it(
+  LB_Events::const_reverse_iterator it(
     std::find_if(events.rbegin(), events.rend(), is_deep_resubmission)
   );
-  common::LB_Events::const_iterator result = it.base();
-  return --result;
-}
-
-std::vector<std::pair<std::string, int> >
-get_previous_matches(common::LB_Events const& events)
-{
-  std::vector<std::pair<std::string, int> > result;
-
-  common::LB_Events::const_iterator it = events.begin();
-  common::LB_Events::const_iterator const last = events.end();
-  for (; it != last; ++it) {
-    edg_wll_Event const& event = *it;
-    if (event.type == EDG_WLL_EVENT_MATCH) {
-      std::string ce_id = event.match.dest_id;
-      int timestamp = event.match.timestamp.tv_sec;
-      result.push_back(std::make_pair(ce_id, timestamp));
-    }
+  if (it != events.rend()) {
+    return (++it).base();
+  } else {
+    return events.end();
   }
-
-  return result;
 }
 
 // returns (retry_count, shallow_count)
@@ -194,16 +176,15 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
     return boost::make_tuple(0, 0);
   }
 
-  common::ContextPtr const& context = req->lb_context();
+  ContextPtr const& context = req->lb_context();
   jobid::JobId const& jobid = req->id();
 
-  // flush the lb events since we'll query the server
-  // not needed any more because we use the LB Proxy
-  // flush_lb_events(context, jobid);
+#ifndef GLITE_WMS_HAVE_LBPROXY
+  // flush the lb events since we'll query the lb server
+  flush_lb_events(context, jobid);
+#endif
 
-  common::LB_Events events(
-    common::get_interesting_events(context.get(), jobid)
-  );
+  LB_Events events(get_interesting_events(context, jobid));
   if (events.empty()) {
     Warning("Cannot retrieve interesting events for " << jobid);
   }
@@ -213,7 +194,7 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
   );
   assert(current_deep_count >= 0);
 
-  common::LB_Events::const_iterator last_deep_resubmission(
+  LB_Events::const_iterator last_deep_resubmission(
     find_last_deep_resubmission(events)
   );
 
@@ -241,7 +222,7 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
   }
 
   // retrieve original jdl
-  std::string const job_ad_str(common::get_original_jdl(context.get(), jobid));
+  std::string const job_ad_str(get_original_jdl(context, jobid));
   if (job_ad_str.empty()) {
     throw CannotRetrieveJDL();
   }
@@ -250,12 +231,12 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
   requestad::set_edg_previous_matches(*job_ad, previous_matches_simple);
   requestad::set_edg_previous_matches_ex(*job_ad, previous_matches);
 
-  req->jdl(job_ad.release());
+  req->jdl(job_ad);
 
   return boost::make_tuple(current_deep_count, current_shallow_count);
 }
 
-bool is_request_expired(RequestPtr const& req)
+bool is_request_expired(RequestPtr req)
 {
   return req->expiry_time() < std::time(0);
 }
@@ -290,74 +271,17 @@ std::string get_token_file()
   return wm_config->token_file();
 }
 
-fs::path reallyrunning_token(RequestConstPtr const& req)
+fs::path reallyrunning_token(RequestConstPtr req)
 {
   jobid::JobId const& id = req->id();
   fs::path result(sandbox_dir());
-  result /= jobid::get_reduced_part(id);
-  result /= jobid::to_filename(id);
-  result /= get_token_file();
+  result /= fs::path(jobid::get_reduced_part(id), fs::native);
+  result /= fs::path(jobid::to_filename(id), fs::native);
+  result /= fs::path(get_token_file(), fs::native);
 
   return result;
 }
-
-void log_resubmission_shallow(
-  RequestConstPtr const& req,
-  fs::path const& token_file
-)
-{
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(
-      edg_wll_LogResubmissionSHALLOWProxy,
-      _1,
-      "token still exists",
-      token_file.native_file_string().c_str()
-    ),
-    req->lb_context()
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogResubmissionSHALLOWProxy",
-        lb_error,
-        req->lb_context(),
-        ctx
-      )
-    );
-  }
-}
-
-void log_resubmission_deep(
-  RequestConstPtr const& req,
-  fs::path const& token_file
-)
-{
-  int lb_error;
-  common::ContextPtr ctx;
-  boost::tie(lb_error, ctx) = common::lb_log(
-    boost::bind(
-      edg_wll_LogResubmissionWILLRESUBProxy,
-      _1,
-      "token was grabbed",
-      token_file.native_file_string().c_str()
-    ),
-    req->lb_context()
-  );
-  if (lb_error) {
-    Warning(
-      common::get_logger_message(
-        "edg_wll_LogResubmissionWILLRESUBProxy",
-        lb_error,
-        req->lb_context(),
-        ctx
-      )
-    );
-  }
-}
-
-void process_match(RequestPtr const& req)
+void process_match(RequestPtr req)
 {
   std::string filename;
   int number_of_results;
@@ -384,7 +308,7 @@ void process_match(RequestPtr const& req)
 // and similarly for the shallow count
 // max(0, min(job_shallow_count, max_shallow_count))
 
-void check_shallow_count(RequestConstPtr const& req, int count)
+void check_shallow_count(RequestConstPtr req, int count)
 {
   // check against the job max shallow count
   bool valid = false;
@@ -408,7 +332,7 @@ void check_shallow_count(RequestConstPtr const& req, int count)
   }
 }
 
-void check_retry_count(RequestConstPtr const&req, int count)
+void check_retry_count(RequestConstPtr req, int count)
 {
   // check against the job max retry count
   bool valid = false;
@@ -427,12 +351,27 @@ void check_retry_count(RequestConstPtr const&req, int count)
   }
 }
 
+int get_job_shallow_count(RequestConstPtr req)
+{
+  bool valid = false;
+  int result = requestad::get_shallow_retry_count(*req->jdl(), valid);
+  if (!valid) {
+    result = 0;
+  }
+  return result;
+}
+
+bool shallow_resubmission_is_disabled(RequestConstPtr req)
+{
+  return get_job_shallow_count(req) == -1;
+}
+
 void create_token(fs::path const& p)
 {
   fs::ofstream _(p);
 }
 
-void process_submit(RequestPtr req, common::WorkloadManager& wm)
+void process_submit(RequestPtr req, WMReal& wm)
 {
   Debug("considering (re)submit of " << req->id());
 
@@ -444,31 +383,52 @@ void process_submit(RequestPtr req, common::WorkloadManager& wm)
   // retrieve from the LB possibly missing information needed to
   // process the request, e.g. the jdl, the previous matches, etc.
 
-  int retry_count;
-  int shallow_count;
-  boost::tie(retry_count, shallow_count) = retrieve_lb_info(req);
+  try {
 
-  if (is_request_expired(req)) {
+    int retry_count;
+    int shallow_count;
+    boost::tie(retry_count, shallow_count) = retrieve_lb_info(req);
 
-    req->state(Request::UNRECOVERABLE, "request expired");
+    if (is_request_expired(req)) {
 
-  } else try {
+      req->state(Request::UNRECOVERABLE, "request expired");
 
-    fs::path const token_file(reallyrunning_token(req));
+    } else {
 
-    if (req->marked_resubmitted()) {
-      if (fs::exists(token_file)) {
-        check_shallow_count(req, shallow_count);
-        log_resubmission_shallow(req, token_file);
+      if (shallow_resubmission_is_disabled(req)) {
+
+        if (req->marked_resubmitted()) {
+          check_retry_count(req, retry_count);
+          log_resubmission_deep(req->lb_context());
+        }
+
       } else {
-        check_retry_count(req, retry_count);
-        log_resubmission_deep(req, token_file);
-      }
-    }
 
-    create_token(token_file);
-    wm.submit(req->jdl());
-    req->state(Request::DELIVERED);
+        fs::path const token_file(reallyrunning_token(req));
+
+        if (req->marked_resubmitted()) {
+          if (fs::exists(token_file)) {
+            check_shallow_count(req, shallow_count);
+            log_resubmission_shallow(
+              req->lb_context(),
+              token_file.native_file_string()
+            );
+          } else {
+            check_retry_count(req, retry_count);
+            log_resubmission_deep(
+              req->lb_context(),
+              token_file.native_file_string()
+            );
+          }
+        }
+
+        create_token(token_file);
+
+      }
+
+      wm.submit(req->jdl());
+      req->state(Request::DELIVERED);
+    }
 
   } catch (HitMaxRetryCount& e) {
     std::ostringstream os;
@@ -493,7 +453,7 @@ void process_submit(RequestPtr req, common::WorkloadManager& wm)
   }
 }
 
-void process_cancel(RequestPtr req, common::WorkloadManager& wm)
+void process_cancel(RequestPtr req, WMReal& wm)
 {
   Debug("considering cancel of " << req->id());
 
@@ -509,7 +469,7 @@ try {
 
   Info("RequestHandler: starting");
 
-  common::WorkloadManager& wm = m_impl->m_wm;
+  WMReal& wm = m_impl->m_wm;
 
   while (!received_quit_signal()) {
 
@@ -518,18 +478,44 @@ try {
 
     try {
 
-      if (req->jdl() && !req->marked_cancelled()) {
+      if (req->jdl()) {
 
-        req->state(Request::PROCESSING);
-
-        if (req->marked_match()) {
-          process_match(req);
+        // submit or match
+        if (req->marked_cancelled()) {
+          // shortcut submission and cancellation
+          // see transition management in the dispatcher
+          req->state(Request::RECOVERABLE);
         } else {
+          req->state(Request::PROCESSING);
+          if (req->marked_match()) {
+            process_match(req);
+          } else {
+            process_submit(req, wm);
+          }
+        }
+
+      } else if (req->marked_resubmitted()) {
+
+        // resubmit
+        if (req->marked_cancelled()) {
+          // shortcut resubmission and cancellation
+          // see the transition management in the dispatcher
+          req->state(Request::RECOVERABLE);
+        } else {
+          req->state(Request::PROCESSING);
           process_submit(req, wm);
         }
 
-      } else {
+      } else if (req->marked_cancelled()) {
+
+        // normal cancel
         process_cancel(req, wm);
+
+      } else {
+
+        // what's this?
+        req->state(Request::UNRECOVERABLE, "invalid request");
+
       }
 
     } catch (std::invalid_argument const& e) {

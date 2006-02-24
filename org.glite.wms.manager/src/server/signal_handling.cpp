@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include "glite/wms/common/logger/logger_utils.h"
 
 namespace {
 
@@ -22,31 +23,19 @@ void signal_handler()
 {
   while (!f_received_quit_signal) {
     int signal_number;
-    int err = sigwait(&f_mask, &signal_number);
+    sigwait(&f_mask, &signal_number);
+    Info("caught signal " << signal_number);
     boost::mutex::scoped_lock l(f_mx);
-    if (err) {
-      f_received_quit_signal = true;
-    } else {
-      switch (signal_number) {
+    switch (signal_number) {
       case SIGINT:
-        std::cerr << "SIGINT\n";
-        f_received_quit_signal = true;
-        break;
       case SIGTERM:
-        std::cerr << "SIGTERM\n";
-        f_received_quit_signal = true;
-        break;
       case SIGQUIT:
-        std::cerr << "SIGQUIT\n";
         f_received_quit_signal = true;
         break;
       case SIGPIPE:
-        std::cerr << "SIGPIPE\n";
         break;
       default:
-        std::cerr << "caught signal " << signal_number << '\n';
         break;
-      }
     }
   }
 }
@@ -58,19 +47,7 @@ namespace wms {
 namespace manager {
 namespace server {
 
-namespace {
-
-void join_and_delete(boost::thread* t)
-{
-  if (t) {
-    t->join();
-  }
-  delete t;
-}
-
-}
-
-boost::shared_ptr<boost::thread> signal_handling_init()
+bool signal_handling()
 {
   sigemptyset(&f_mask);
   sigaddset(&f_mask, SIGPIPE);
@@ -79,14 +56,15 @@ boost::shared_ptr<boost::thread> signal_handling_init()
   sigaddset(&f_mask, SIGQUIT);
 
   sigset_t* const oldmask = 0;        // don't care about the oldmask
-  if (pthread_sigmask(SIG_BLOCK, &f_mask, oldmask)) {
-    return boost::shared_ptr<boost::thread>();
+  int sigmask_error = pthread_sigmask(SIG_BLOCK, &f_mask, oldmask);
+  if (sigmask_error) {
+    Error("pthread_sigmask failure (" << sigmask_error << ")\n");
+    return false;
   }
 
-  return boost::shared_ptr<boost::thread::thread>(
-    new boost::thread::thread(signal_handler),
-    join_and_delete
-  );
+  boost::thread::thread t(signal_handler); // run detached
+
+  return true;
 }
 
 bool received_quit_signal()

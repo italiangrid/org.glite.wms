@@ -8,16 +8,30 @@
 #ifndef GLITE_WMS_MANAGER_SERVER_WMREAL_H
 #define GLITE_WMS_MANAGER_SERVER_WMREAL_H
 
-#include "WMImpl.h"
+#include <boost/shared_ptr.hpp>
+
+namespace classad {
+class ClassAd;
+}
 
 namespace glite {
+
+namespace wmsutils {
+namespace jobid {
+class JobId;
+}}
+
 namespace wms {
 namespace manager {
 namespace server {
 	
-class WMReal: public glite::wms::manager::common::WMImpl
+class WMReal
 {
+  class Impl;
+  boost::shared_ptr<Impl> m_impl;
+
 public:
+  WMReal();
   void submit(classad::ClassAd const* request_ad);
   void cancel(glite::wmsutils::jobid::JobId const& request_id);
 };

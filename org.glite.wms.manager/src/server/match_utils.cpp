@@ -10,6 +10,7 @@
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread/xtime.hpp>
 #include <classad_distribution.h>
 #include "glite/wms/common/utilities/classad_utils.h"
 
@@ -61,12 +62,14 @@ select_best_ce_max_rank(matches_type const& matches)
     find_if(begin, matches.end(), rank_less_than(max_rank))
   );
 
-  boost::minstd_rand f_rnd;
+  boost::xtime current;
+  boost::xtime_get(&current, boost::TIME_UTC);
+  boost::minstd_rand generator(static_cast<unsigned int>(current.nsec));
   boost::uniform_smallint<size_t> distrib(0, distance(begin, it) - 1);
   boost::variate_generator<
     boost::minstd_rand,
     boost::uniform_smallint<size_t>
-    > rand(f_rnd, distrib);
+    > rand(generator, distrib);
 
   return begin + rand();
 }
@@ -109,16 +112,22 @@ select_best_ce_stochastic(matches_type const& matches)
     rank_sum += ranks[r];
   }
 
-  double const p(get_p(rank_sum));
+  boost::xtime current;
+  boost::xtime_get(&current, boost::TIME_UTC);
+  boost::minstd_rand generator(static_cast<unsigned int>(current.nsec));
+  boost::uniform_01<boost::minstd_rand> rand(generator);
+  double const p = rand() * rank_sum;
+
   double prob_sum = 0.;
   size_t i = 0;
   matches_type::const_iterator best = matches.begin();
+  matches_type::const_iterator const matches_end = matches.end();
   do {
     prob_sum += ranks[i++];
     if (p < prob_sum) {
       break;
     }
-  } while (++best != matches.end());
+  } while (++best != matches_end);
 
   return best;
 }
@@ -148,12 +157,13 @@ try {
     throw MatchError(reason);
   }
 
-  classad::ExprList const* match_result(
+  classad::ExprList const* const match_result(
     utilities::evaluate_attribute(match_response, "match_result")
   );
 
-  for (classad::ExprList::const_iterator it = match_result->begin();
-       it != match_result->end(); ++it) {
+  classad::ExprList::const_iterator it = match_result->begin();
+  classad::ExprList::const_iterator const end = match_result->end();
+  for ( ; it != end; ++it) {
     assert(utilities::is_classad(*it));
     classad::ClassAd const& match(*static_cast<classad::ClassAd const*>(*it));
 
