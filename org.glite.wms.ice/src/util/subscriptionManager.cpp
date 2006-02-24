@@ -27,8 +27,6 @@ subscriptionManager::subscriptionManager()
     ceS(),
     ceSMgr()
 {
-  //ceS = new CESubscription();
-  //ceSMgr = new CESubscriptionMgr();
   log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
                         << log4cpp::CategoryStream::ENDLINE;
   try {
@@ -62,8 +60,7 @@ subscriptionManager::subscriptionManager()
   ostringstream os("");
   os << "http://" << H->h_name << ":" << conf->getListenerPort();
   myname = os.str();
-//   T = new Topic(conf->getICETopic());
-//   P = new Policy(conf->getNotificationFrequency());
+
   T.addDialect(NULL);
 }
 
@@ -71,11 +68,9 @@ subscriptionManager::subscriptionManager()
 subscriptionManager* subscriptionManager::getInstance()
 {
   boost::recursive_mutex::scoped_lock M( mutex );
-  if(!instance) // {
+  if(!instance)
     instance = new subscriptionManager();
-//     if( !instance->valid )
-//       instance = NULL;
-//   }
+
   return instance;
 }
 
@@ -125,6 +120,22 @@ bool subscriptionManager::subscribe(const std::string& url)
 	                   << ex.what() << log4cpp::CategoryStream::ENDLINE;
     return false;
   }
+}
+
+//______________________________________________________________________________
+bool subscriptionManager::updateSubscription(const string& url,
+ 					     const string& ID)
+{
+  try {
+    ceSMgr.update(url, ID, myname, T, P,
+    		   conf->getSubscriptionDuration());
+  } catch(exception& ex) {
+    log_dev->errorStream() << "subscriptionManager::updateSubscription()"
+     			   << " - SubscriptionUpdate Error: "
+	                   << ex.what() << log4cpp::CategoryStream::ENDLINE;
+    return false;
+  }
+  return true;
 }
 
 //______________________________________________________________________________
