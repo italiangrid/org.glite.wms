@@ -61,14 +61,15 @@ namespace glite {
 
           class jobCacheTable {
           protected:
-              std::list< CreamJob > _jobs; ///< Jobs in the jobCacheTable are stored in a list
-              std::map< std::string, std::list< CreamJob >::iterator > _cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
-              std::map< std::string, std::list< CreamJob >::iterator > _gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
-
               // Some useful typedefs, for internal use only...
               typedef std::list< CreamJob > _jobsType;
               typedef std::map< std::string, _jobsType::iterator > _cidMapType;
               typedef std::map< std::string, _jobsType::iterator > _gidMapType;
+
+              _jobsType _jobs; ///< Jobs in the jobCacheTable are stored in a list
+              std::map< std::string, _jobsType::iterator > _cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
+              std::map< std::string, _jobsType::iterator > _gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
+
 
           public:
 
@@ -274,8 +275,10 @@ namespace glite {
            * @param it the iterator pointing to the job to remove. If
            * it == end(), no job is removed (this method does
            * nothing).
+           * @return an iterator to the element immediately following
+           * the one being removed; end() if it==end().
            */
-          void remove( const iterator& it );
+          iterator remove( const iterator& it );
 
           // Accessors used to expose jobCacheTable iterator methods
 

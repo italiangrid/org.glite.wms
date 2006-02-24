@@ -102,10 +102,25 @@ bool eventStatusPoller::getStatus(void)
         oneJobToQuery.push_back(jobIt->getJobID());
         try {
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-            _jobstatuslist.push_back( creamClient->Status(jobIt->getCreamURL().c_str(),
-                                                          oneJobToQuery,
-                                                          empty, -1, -1 ) );
+            soap_proxy::JobStatusList* job_stat = creamClient->Status(jobIt->getCreamURL().c_str(),
+                                                                      oneJobToQuery,
+                                                                      empty, -1, -1 );
 
+                if ( job_stat==0 || job_stat->jobStatus.empty() ) {
+                    // The job is unknown by ICE; remove from the jobCache
+                    log_dev->warnStream()
+                        << "Cream Job [" 
+                        << jobIt->getJobID()
+                        << "] with grid job id ["
+                        << jobIt->getGridJobID()
+                        << "] was not found on CREAM; "
+                        << "Removing from the job cache"
+                        << log4cpp::CategoryStream::ENDLINE;
+                    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+                    jobIt = cache->remove( jobIt );
+                } else {
+                    _jobstatuslist.push_back( job_stat );
+                }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
             // the CreamJob is created from another valid one

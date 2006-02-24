@@ -390,14 +390,17 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
     return _jobs.findJobByGID( gridJID );
 }
 
-void jobCache::remove( const jobCache::iterator& it )
+jobCache::iterator jobCache::remove( const jobCache::iterator& it )
 {    
     if ( it == _jobs.end() ) {
-        return ;
+        return it;
     }
 
+    jobCache::iterator result = it;
+    result++; // advance iterator
     string to_string = it->serialize();
     // job found, log operation and remove
     logOperation( ERASE, to_string );
     _jobs.delJob( *it );    
+    return result;
 }
