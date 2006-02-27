@@ -78,23 +78,29 @@ bool eventStatusPoller::getStatus(void)
 
     for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
         oneJobToQuery.clear();
-
-        //        try {
-
+        
 	{
-          boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-	  oldness = time(NULL)-jobIt->getLastUpdate();
-	  threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
-	  _tmp_start_listener = iceConfManager::getInstance()->getStartListener();
+            boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+            oldness = time(NULL)-jobIt->getLastUpdate();
+            threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
+            _tmp_start_listener = iceConfManager::getInstance()->getStartListener();
 	}
-
-        //	    printf("\t*** oldness=%d threshold=%d\n", oldness, threshold);
-        //	    printf("\t*** listener=%d\n",iceConfManager::getInstance()->startListener());
+        
+        log_dev->warnStream()
+            << "Checking job cream/grid ID=[" 
+            << jobIt->getJobID()
+            << "]/["
+            << jobIt->getGridJobID()
+            << "]; oldness="
+            << oldness
+            << " thrshold=" 
+            << threshold
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        
         if( (oldness <  threshold) && _tmp_start_listener ) {
-            //	        printf("\t*** CONTINUE!!!\n");
             continue;
         }
-        //continue;
 
         log_dev->log(log4cpp::Priority::INFO,
                      string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
@@ -106,21 +112,21 @@ bool eventStatusPoller::getStatus(void)
                                                                       oneJobToQuery,
                                                                       empty, -1, -1 );
 
-                if ( job_stat==0 || job_stat->jobStatus.empty() ) {
-                    // The job is unknown by ICE; remove from the jobCache
-                    log_dev->warnStream()
-                        << "Cream Job [" 
-                        << jobIt->getJobID()
-                        << "] with grid job id ["
-                        << jobIt->getGridJobID()
-                        << "] was not found on CREAM; "
-                        << "Removing from the job cache"
-                        << log4cpp::CategoryStream::ENDLINE;
-                    boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-                    jobIt = cache->remove( jobIt );
-                } else {
-                    _jobstatuslist.push_back( job_stat );
-                }
+            if ( job_stat==0 || job_stat->jobStatus.empty() ) {
+                // The job is unknown by ICE; remove from the jobCache
+                log_dev->warnStream()
+                    << "Job cream/grid ID=[" 
+                    << jobIt->getJobID()
+                    << "]/["
+                    << jobIt->getGridJobID()
+                    << "] was not found on CREAM; "
+                    << "Removing from the job cache"
+                    << log4cpp::CategoryStream::ENDLINE;
+                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+                jobIt = cache->remove( jobIt );
+            } else {
+                _jobstatuslist.push_back( job_stat );
+            }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
             // the CreamJob is created from another valid one

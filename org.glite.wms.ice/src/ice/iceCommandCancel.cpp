@@ -85,17 +85,6 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
             << "] in the jobCache. Giving up"
             << log4cpp::CategoryStream::ENDLINE;
 
-        // The following block is commented out, as it won't work when
-        // the logger class will update and store in the job cache the
-        // sequence code
-#ifdef DONT_COMPILE
-        util::CreamJob fakeJob( util::CreamJob::mkFakeCreamJob( _gridJobId ) );
-        // Log cancel request event
-        _ev_logger->cream_cancel_request_event( fakeJob );
-        // Log cancel refuse event
-        _ev_logger->cream_cancel_refuse_event( fakeJob, "Invalid Grid JobID" );
-#endif
-
         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") + _gridJobId + string("], as the job does not appear to exist") );
     }
 

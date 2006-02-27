@@ -76,8 +76,6 @@ namespace glite {
           void setSequenceCode( const std::string& seq ) { sequence_code = seq; }
           //! Sets the new lease end time
           void setEndLease( time_t l ) { endLease = l; }
-          //! Sets the Grid JobID. FIXME: This is dangerous, as the Grid jobID is in the jdl, but here we may set the Grid JobID without giving a valid JDL!!!
-          void setGridJobID( const std::string& id ) { grid_jobid = id; }
 
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return grid_jobid; }
@@ -125,18 +123,6 @@ namespace glite {
            */
           void unserialize( const std::string& buf ) throw ( ClassadSyntax_ex& );
 
-          /**
-           * This method is used to create a "fake" CreamJob with a
-           * given cream job ID. The content of the other fields are
-           * completely dummy. This "fake" CreamJob is to be used to
-           * log Cancel events to L&B; if ICE receives a request to
-           * cancel a nonexisting job, this event has to be logged but
-           * no "real" CreamJob object could be found in the jobCache.
-           *
-           * @param grid_job_id the Grid Job id for this job
-           * @return a CreamJob with given Grid job ID
-           */
-          static CreamJob mkFakeCreamJob( const std::string& grid_job_id );
 	};
       }
     }

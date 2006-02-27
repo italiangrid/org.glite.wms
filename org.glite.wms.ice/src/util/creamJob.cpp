@@ -150,10 +150,3 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     }
 
 }
-
-CreamJob CreamJob::mkFakeCreamJob( const string& grid_job_id )
-{
-    CreamJob result;
-    result.grid_jobid = grid_job_id;
-    return result;
-}
