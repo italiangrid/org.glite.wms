@@ -1458,25 +1458,31 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
                   std::map<std::string, std::vector<std::string> >::const_iterator acbr_end =
                                                     ACBR_map.end();
 
-                  boost::mutex::scoped_lock  lock(collect_info_mutex); 
+                  //boost::mutex::scoped_lock  lock(collect_info_mutex); 
 
                   gluece_info_iterator ce_end = gluece_info_container->end();
                   for ( ; acbr_it != acbr_end; acbr_it++) {
                      gluece_info_iterator ce_it = gluece_info_container->find( acbr_it->first );
                      if ( ce_it != ce_end ) {
                         std::vector<string> v;
-                        utilities::EvaluateAttrList(
-                           *(ce_it->second),
-                           "GlueCEAccessControlBaseRule",
-                           v
-                        );
+                        {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
+                           utilities::EvaluateAttrList(
+                              *(ce_it->second),
+                              "GlueCEAccessControlBaseRule",
+                              v
+                           );
+                        } 
                         std::copy(
                            acbr_it->second.begin(),
                            acbr_it->second.end(),
                            std::back_inserter(v)
                         );
-                        ce_it->second->Insert("GlueCEAccessControlBaseRule",
-                                           utilities::asExprList(v));
+                        {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
+                           ce_it->second->Insert("GlueCEAccessControlBaseRule",
+                                              utilities::asExprList(v));
+                        }
                      }
 
                   } // for
@@ -1553,16 +1559,24 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
                   std::map< std::string, boost::shared_ptr<classad::ClassAd> >::const_iterator sc_map_end =
                            SC_map.end();
 
-                  boost::mutex::scoped_lock  lock(collect_info_mutex);
+                  //boost::mutex::scoped_lock  lock(collect_info_mutex);
                   gluece_info_iterator gluece_end = gluece_info_container->end();
                   for (gluece_info_iterator it = gluece_info_container->begin(); it != gluece_end; ++it) {
                      std::string GlueClusterUniqueID;
                      classad::ClassAd* tmpCeAd = (it->second).get();
-                     if ( tmpCeAd->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
+                     bool checkValue;
+                     {
+                        boost::mutex::scoped_lock  lock(collect_info_mutex); 
+                        checkValue = 
+                           tmpCeAd->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID);
+                     }
+                     if ( checkValue ){
                         std::map< std::string, boost::shared_ptr<classad::ClassAd> >::iterator sc_map_item =
                               SC_map.find(GlueClusterUniqueID);
-                        if ( sc_map_item != sc_map_end ) 
+                        if ( sc_map_item != sc_map_end ) {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
                            tmpCeAd->Update( *((sc_map_item->second).get()) );
+                        }
                      }
                   }
 /*
@@ -1669,32 +1683,44 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
                     SRTE_map.end()
                   );
 
-                  boost::mutex::scoped_lock  lock(collect_info_mutex);
+                  //boost::mutex::scoped_lock  lock(collect_info_mutex);
 
                   gluece_info_iterator gluece_info_end = gluece_info_container->end();
                   for (gluece_info_iterator gluece_info_it = gluece_info_container->begin();
                        gluece_info_it != gluece_info_end; ++gluece_info_it) {
 
                      string GlueClusterUniqueID;
-                     if ( gluece_info_it->second->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
+                     bool checkValue;
+                     {
+                        boost::mutex::scoped_lock  lock(collect_info_mutex);
+                        checkValue = 
+                            gluece_info_it->second->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID);
+                     }
+                     if ( checkValue ){
 
                         std::map<std::string, std::vector<std::string> >::const_iterator srte_it(
                                                            SRTE_map.find(GlueClusterUniqueID)
                                                            );
                         if( srte_it != srte_end )  {
                            std::vector<string> v;
-                           utilities::EvaluateAttrList(
-                             *(gluece_info_it->second),
-                             "GlueHostApplicationSoftwareRunTimeEnvironment",
-                             v
-                           );
+                           {
+                              boost::mutex::scoped_lock  lock(collect_info_mutex);
+                              utilities::EvaluateAttrList(
+                                *(gluece_info_it->second),
+                                "GlueHostApplicationSoftwareRunTimeEnvironment",
+                                v
+                              );
+                           }
                            std::copy(
                              srte_it->second.begin(),
                              srte_it->second.end(),
                              std::back_inserter(v)
                            );
-                           gluece_info_it->second->Insert("GlueHostApplicationSoftwareRunTimeEnvironment",
+                           {
+                              boost::mutex::scoped_lock  lock(collect_info_mutex);
+                              gluece_info_it->second->Insert("GlueHostApplicationSoftwareRunTimeEnvironment",
                                               utilities::asExprList(v));
+                           }
                         }
                      }
                   } //for
@@ -1791,10 +1817,15 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
                      if ( ce_it != ce_end ) {
                         //1
                         classad::ExprList* expr_list;
-                        vector<classad::ExprTree*>        val;
-                        if ( ce_it->second->EvaluateAttrList(
-                                       "CloseStorageElements",
-                                       expr_list) ) {
+                        vector<classad::ExprTree*> val;
+                        bool checkValue;
+                        {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
+                           checkValue = ce_it->second->EvaluateAttrList(
+                                                "CloseStorageElements",
+                                                expr_list);
+                        }
+                        if ( checkValue ) {
                            //expr_list->GetComponents(val);
                            ExprList::iterator list_it = expr_list->begin();
                            ExprList::const_iterator list_end = expr_list->end();
@@ -1807,27 +1838,36 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
                            (bind_it->second).first.end(),
                            std::back_inserter(val)
                         );
-                        ce_it->second->Insert("CloseStorageElements",
+                        {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
+                           ce_it->second->Insert("CloseStorageElements",
                                               classad::ExprList::MakeExprList(val) );
+                        }
 
                         //2
                         std::vector< std::string > v ;
-                        utilities::EvaluateAttrList(
-                           *(ce_it->second),
-                           "GlueCESEBindGroupSEUniqueID",
-                           v
-                        );
+                        {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
+                           utilities::EvaluateAttrList(
+                              *(ce_it->second),
+                              "GlueCESEBindGroupSEUniqueID",
+                              v
+                           );
+                        }
                         std::copy(
                            (bind_it->second).second.begin(),
                            (bind_it->second).second.end(),
                            std::back_inserter(v)
                         );
-                        ce_it->second->Insert("GlueCESEBindGroupSEUniqueID",
+                        {
+                           boost::mutex::scoped_lock  lock(collect_info_mutex);
+                           ce_it->second->Insert("GlueCESEBindGroupSEUniqueID",
                                               utilities::asExprList(v));
-                        //3
-                        if ( ! (ce_it->second)->Lookup("GlueCESEBindGroupCEUniqueID") )  {
-                           (ce_it->second)->InsertAttr("GlueCESEBindGroupCEUniqueID",
+                           //3
+                           if ( ! (ce_it->second)->Lookup("GlueCESEBindGroupCEUniqueID") )  {
+                              (ce_it->second)->InsertAttr("GlueCESEBindGroupCEUniqueID",
                                                        bind_it->first );
+                           }
                         }
 
                      } //if ( ce_it != ce_end )
