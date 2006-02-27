@@ -75,10 +75,10 @@ namespace {
 boost::condition f_rgma_purchasing_cycle_run_condition;
 boost::mutex     f_rgma_purchasing_cycle_run_mutex;
 
-boost::recursive_mutex  collect_info_mutex;
+boost::mutex  collect_info_mutex;
 
 unsigned int consLifeCycles = 0;
-boost::recursive_mutex  consLifeCycles_mutex;
+boost::mutex  consLifeCycles_mutex;
 }
 
 
@@ -1412,7 +1412,7 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
          if ( ! AccessControlBaseRule_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
             Warning("AccessControlBaseRule consumer creation failed");
             {
-               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                consLifeCycles = 0;
             }
             return;
@@ -1423,7 +1423,7 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
       if ( ! AccessControlBaseRule_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
          Warning("AccessControlBaseRule query FAILED.");
          {
-            boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+            boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
             consLifeCycles = 0;
          }
          return;
@@ -1458,7 +1458,7 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
                   std::map<std::string, std::vector<std::string> >::const_iterator acbr_end =
                                                     ACBR_map.end();
 
-                  boost::recursive_mutex::scoped_lock  lock(collect_info_mutex); 
+                  boost::mutex::scoped_lock  lock(collect_info_mutex); 
 
                   gluece_info_iterator ce_end = gluece_info_container->end();
                   for ( ; acbr_it != acbr_end; acbr_it++) {
@@ -1507,7 +1507,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
             if ( ! SubCluster_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
                Warning("SubCluster consumer creation failed");
                {
-                  boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                   consLifeCycles = 0;
                }
                return;
@@ -1518,7 +1518,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
          if ( ! SubCluster_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
             Warning("SubCluster query FAILED.");
             {
-               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                consLifeCycles = 0;
             }
             return;
@@ -1553,7 +1553,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
                   std::map< std::string, boost::shared_ptr<classad::ClassAd> >::const_iterator sc_map_end =
                            SC_map.end();
 
-                  boost::recursive_mutex::scoped_lock  lock(collect_info_mutex);
+                  boost::mutex::scoped_lock  lock(collect_info_mutex);
                   gluece_info_iterator gluece_end = gluece_info_container->end();
                   for (gluece_info_iterator it = gluece_info_container->begin(); it != gluece_end; ++it) {
                      std::string GlueClusterUniqueID;
@@ -1562,7 +1562,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
                         std::map< std::string, boost::shared_ptr<classad::ClassAd> >::iterator sc_map_item =
                               SC_map.find(GlueClusterUniqueID);
                         if ( sc_map_item != sc_map_end ) 
-                           tmpCeAd->Update( *(sc_map_item->second).get() );
+                           tmpCeAd->Update( *((sc_map_item->second).get()) );
                      }
                   }
 /*
@@ -1570,7 +1570,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
                   for ( ResultSet::iterator tuple = subSet.begin(); tuple < tuples_end;
                                                                     tuple++) {
 
-                     boost::recursive_mutex::scoped_lock  lock(collect_info_mutex);
+                     boost::mutex::scoped_lock  lock(collect_info_mutex);
                      try {
                         string GlueSubClusterUniqueIDFromRgma = tuple->getString("UniqueID");
 
@@ -1625,7 +1625,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
             if ( ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
                Warning("SoftwareRunTimeEnvironment consumer creation failed");
                {
-                  boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                   consLifeCycles = 0;
                }
                return;
@@ -1636,7 +1636,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
          if ( ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
             Warning("SoftwareRunTimeEnvironment query FAILED.");
             {
-               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                consLifeCycles = 0;
             }
             return;
@@ -1669,7 +1669,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
                     SRTE_map.end()
                   );
 
-                  boost::recursive_mutex::scoped_lock  lock(collect_info_mutex);
+                  boost::mutex::scoped_lock  lock(collect_info_mutex);
 
                   gluece_info_iterator gluece_info_end = gluece_info_container->end();
                   for (gluece_info_iterator gluece_info_it = gluece_info_container->begin();
@@ -1724,7 +1724,7 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
             if ( ! CESEBind_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
                Warning("CESEBind consumer creation failed");
                {
-                  boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                   consLifeCycles = 0;
                }
                return;
@@ -1735,7 +1735,7 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
          if ( ! CESEBind_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
             Warning("CESEBind query FAILED.");
             {
-               boost::recursive_mutex::scoped_lock  lock(consLifeCycles_mutex);
+               boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
                consLifeCycles = 0;
             }
             return;
@@ -1944,31 +1944,36 @@ void ism_rgma_purchaser::do_purchase()
 
       ism_rgma_purchaser::prefetchGlueCEinfo(gluece_info_container);
 
-      boost::thread t_acbr( boost::bind( &collect_acbr_info, 
-                                         &gluece_info_container,
-                                         m_rgma_cons_life_cycles,
-                                         m_rgma_consumer_ttl,
-                                         m_rgma_query_timeout));
-      boost::thread t_sc( boost::bind( &collect_sc_info,
-                                       &gluece_info_container,
-                                       m_rgma_cons_life_cycles,
-                                       m_rgma_consumer_ttl,
-                                       m_rgma_query_timeout));
-      boost::thread t_srte( boost::bind( &collect_srte_info,
-                                         &gluece_info_container,
-                                         m_rgma_cons_life_cycles,
-                                         m_rgma_consumer_ttl,
-                                         m_rgma_query_timeout));
-      boost::thread t_bind( boost::bind( &collect_bind_info,
-                                         &gluece_info_container,
-                                         m_rgma_cons_life_cycles,
-                                         m_rgma_consumer_ttl,
-                                         m_rgma_query_timeout));
+      if ( ! gluece_info_container.empty() ) {
 
-      t_acbr.join();
-      t_sc.join();
-      t_srte.join();
-      t_bind.join();
+         boost::thread t_acbr( boost::bind( &collect_acbr_info, 
+                                            &gluece_info_container,
+                                            m_rgma_cons_life_cycles,
+                                            m_rgma_consumer_ttl,
+                                            m_rgma_query_timeout));
+         boost::thread t_sc( boost::bind( &collect_sc_info,
+                                          &gluece_info_container,
+                                          m_rgma_cons_life_cycles,
+                                          m_rgma_consumer_ttl,
+                                          m_rgma_query_timeout));
+         boost::thread t_srte( boost::bind( &collect_srte_info,
+                                            &gluece_info_container,
+                                            m_rgma_cons_life_cycles,
+                                            m_rgma_consumer_ttl,
+                                            m_rgma_query_timeout));
+         boost::thread t_bind( boost::bind( &collect_bind_info,
+                                            &gluece_info_container,
+                                            m_rgma_cons_life_cycles,
+                                            m_rgma_consumer_ttl,
+                                            m_rgma_query_timeout));
+   
+         t_acbr.join();
+         t_sc.join();
+         t_srte.join();
+         t_bind.join();
+
+      }
+      else Debug("No CEs found\n"<<"No attempt to collect information related to th CEs");
 
 
       try{
@@ -2003,7 +2008,7 @@ void ism_rgma_purchaser::do_purchase()
                      "           with "<<CloseStorageElements<<" CloseStorageElements attribute");
                }
             }
-         }
+         } // for
    
          {
             ism_mutex_type::scoped_lock l(get_ism_mutex());	
