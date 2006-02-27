@@ -47,8 +47,9 @@ namespace util {
 
     bool        subscribe(const std::string& url);
 
-    bool        updateSubscription(const std::string& url,
-    				   const std::string& ID
+    bool 	updateSubscription(const std::string& url,
+    				   const std::string& ID,
+				   std::string& newID
 				   );
 
     bool        subscribedTo(const std::string& url);

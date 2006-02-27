@@ -186,7 +186,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   if(gethostname(name, 256) == -1) {
     // This error prevent the possibility to subscribe to a CEMon
     // and receive notifications about job status
-    log_dev->fatalStream() << "eventStatusListener::CTOR - "
+    log_dev->fatalStream() << "eventStatusListener::CTOR() - "
 			   << "Couldn't resolve local hostname: "
                            << strerror(errno)
                            << log4cpp::CategoryStream::ENDLINE;
@@ -197,7 +197,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   if(!H) {
     // This error prevent the possibility to subscribe to a CEMon
     // and receive notifications about job status
-    log_dev->fatalStream() << "eventStatusListener::CTOR - "
+    log_dev->fatalStream() << "eventStatusListener::CTOR() - "
 			   << "Couldn't resolve local hostname: "
                            << strerror(h_errno)
                            << log4cpp::CategoryStream::ENDLINE;
@@ -205,11 +205,11 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     return;
   }
   myname = H->h_name;
-  log_dev->info( "eventStatusListener::CTOR - Listener created!" );
+  log_dev->info( "eventStatusListener::CTOR() - Listener created!" );
   try {
     pinger.reset( new CEPing(proxyfile, "/") );
   } catch(exception& ex) {
-    log_dev->fatalStream() << "eventStatusListener::CTOR - "
+    log_dev->fatalStream() << "eventStatusListener::CTOR() - "
 			   << "Fatal Error creating a pinger object:"
                            << ex.what()
                            << log4cpp::CategoryStream::ENDLINE;
@@ -235,7 +235,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
 void iceUtil::eventStatusListener::body( void )
 {
     while( !isStopped() ) {
-        log_dev->infoStream() << "eventStatusListener::()() - "
+        log_dev->infoStream() << "eventStatusListener::body() - "
                               << "Waiting for job status notification"
                               << log4cpp::CategoryStream::ENDLINE;
         acceptJobStatus();

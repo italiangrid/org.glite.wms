@@ -94,6 +94,9 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
 	 		     << log4cpp::CategoryStream::ENDLINE;
       throw ex;
   }
+  for(vector<Subscription>::const_iterator it = vec.begin();
+      it != vec.end();
+      it++) cout << "   *** Found subscription: ["<< (*it).getSubscriptionID() << "] [" <<(*it).getConsumerURL()<<"]"<<endl;
 }
 
 //______________________________________________________________________________
@@ -124,18 +127,20 @@ bool subscriptionManager::subscribe(const std::string& url)
 
 //______________________________________________________________________________
 bool subscriptionManager::updateSubscription(const string& url,
- 					     const string& ID)
+ 					     const string& ID,
+					     string& newID)
 {
   try {
-    ceSMgr.update(url, ID, myname, T, P,
-    		   conf->getSubscriptionDuration());
+    newID = ceSMgr.update(url, ID, myname, T, P,
+    		                 conf->getSubscriptionDuration());
+    return true;
   } catch(exception& ex) {
     log_dev->errorStream() << "subscriptionManager::updateSubscription()"
      			   << " - SubscriptionUpdate Error: "
 	                   << ex.what() << log4cpp::CategoryStream::ENDLINE;
     return false;
   }
-  return true;
+  //return ""; // unreachable code; just to silent a compilation warning
 }
 
 //______________________________________________________________________________

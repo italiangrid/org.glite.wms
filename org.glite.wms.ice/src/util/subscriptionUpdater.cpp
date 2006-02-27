@@ -52,13 +52,13 @@ void iceUtil::subscriptionUpdater::body( void )
 }
 
 //______________________________________________________________________________
-void iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>& vec)
+void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
 {
-  for(vector<Subscription>::const_iterator it = vec.begin();
-      it != vec.end();
-      it++)
+  for(vector<Subscription>::iterator sit = vec.begin();
+      sit != vec.end();
+      sit++)
     {
-      time_t timeleft = (*it).getExpirationTime() - time(NULL);
+      time_t timeleft = sit->getExpirationTime() - time(NULL);
 /*      cout  << "\t["<<(*it).getSubscriptionID()<<"]\n\t"
            << "["<<(*it).getConsumerURL() << "]\n\t"
 	   << "["<<(*it).getTopicName() << "]\n\t"
@@ -70,22 +70,27 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(const vector<Subscription>
         boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
         if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
           log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
-	     << "Updating subscription ["<<(*it).getSubscriptionID() << "]"
-	     << " at [" <<(*it).getEndpoint()<<"]"<<log4cpp::CategoryStream::ENDLINE;
+	     << "Updating subscription ["<<sit->getSubscriptionID() << "]"
+	     << " at [" <<sit->getEndpoint()<<"]"<<log4cpp::CategoryStream::ENDLINE;
 	  log_dev->infoStream()  << "subscriptionUpdater::renewSubscriptions() - Update params: "
-	     << "ConsumerURL=["<<(*it).getConsumerURL()
-	     << "] - TopicName=[" << (*it).getTopicName() << "] - "
+	     << "ConsumerURL=["<<sit->getConsumerURL()
+	     << "] - TopicName=[" << sit->getTopicName() << "] - "
 	     << "Duration=" << conf->getSubscriptionDuration()
 	     << " secs since now - rate="
 	     << conf->getNotificationFrequency()
 	     << " secs"
 	     << log4cpp::CategoryStream::ENDLINE;
 	}
-	
+
         {
 	  boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
-	  subMgr->updateSubscription( (const string&)(*it).getEndpoint(),
-	  			      (const string&)(*it).getSubscriptionID());
+	  string newID;
+ 	  if(subMgr->updateSubscription( sit->getEndpoint(), sit->getSubscriptionID(), newID )) {
+	    log_dev->infoStream() << "New subscription ID after renewal is ["
+	  			<< newID << "]" << log4cpp::CategoryStream::ENDLINE;
+	    sit->setSubscriptionID(newID);
+	    sit->setExpirationTime( time(NULL) + conf->getSubscriptionDuration() );
+	  }
 	}
 
       }

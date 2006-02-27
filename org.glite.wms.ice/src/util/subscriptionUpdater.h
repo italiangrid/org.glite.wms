@@ -37,7 +37,7 @@ namespace glite {
 
 		virtual void body( void );
         protected:
-		void renewSubscriptions(const std::vector<Subscription>&);
+		void renewSubscriptions(std::vector<Subscription>&);
 		void retrieveCEURLs(std::set<std::string>&);
 	};
         
