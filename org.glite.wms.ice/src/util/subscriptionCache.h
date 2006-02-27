@@ -25,7 +25,7 @@ namespace util {
     hash_set<const char*, hash<const char*>, eqstr>::const_iterator it;*/
     std::set<std::string> cemons;
     std::set<std::string>::const_iterator it;
-    static boost::recursive_mutex mutex;
+    //static boost::recursive_mutex mutex;
     static subscriptionCache* instance;
     
 
@@ -33,6 +33,7 @@ namespace util {
     subscriptionCache() : cemons() {}
 
    public:
+    static boost::recursive_mutex mutex;
     static subscriptionCache* getInstance();
     void insert(const std::string& s) { if(cemons.find(s) == cemons.end()) cemons.insert(s); }
     void remove(const std::string& s);

@@ -117,6 +117,9 @@ bool subscriptionManager::subscribe(const std::string& url)
   try {
     ceS.subscribe();
     lastSubscriptionID = ceS.getSubscriptionID();
+    log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribed with ID ["
+                        << lastSubscriptionID << "]"
+                        << log4cpp::CategoryStream::ENDLINE;
     return true;
   } catch(exception& ex) {
     log_dev->errorStream() << "subscriptionManager::subscribe() - Subscription Error: "

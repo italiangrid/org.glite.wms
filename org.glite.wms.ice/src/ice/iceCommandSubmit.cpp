@@ -210,6 +210,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                                modified_jdl,
                                theJob.getUserProxyCertificate(),
                                url_jid,
+			       -1,
                                true /*autostart*/
                                );
         } catch( exception& ex ) {

@@ -59,13 +59,13 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
       sit++)
     {
       time_t timeleft = sit->getExpirationTime() - time(NULL);
-/*      cout  << "\t["<<(*it).getSubscriptionID()<<"]\n\t"
-           << "["<<(*it).getConsumerURL() << "]\n\t"
-	   << "["<<(*it).getTopicName() << "]\n\t"
-	   << "["<<(*it).getEndpoint() << "]\n\t"
+      cout  << "\t["<<sit->getSubscriptionID()<<"]\n\t"
+           << "["<<sit->getConsumerURL() << "]\n\t"
+	   << "["<<sit->getTopicName() << "]\n\t"
+	   << "["<<sit->getEndpoint() << "]\n\t"
 	   << "timeleft=[" << timeleft << "]\n\t"
-	   << "expiration=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
-	   << log4cpp::CategoryStream::ENDLINE;*/
+	   << "threshold=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
+	   << log4cpp::CategoryStream::ENDLINE;
       {
         boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
         if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
@@ -80,18 +80,20 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
 	     << conf->getNotificationFrequency()
 	     << " secs"
 	     << log4cpp::CategoryStream::ENDLINE;
-	}
-
-        {
-	  boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
-	  string newID;
- 	  if(subMgr->updateSubscription( sit->getEndpoint(), sit->getSubscriptionID(), newID )) {
-	    log_dev->infoStream() << "New subscription ID after renewal is ["
-	  			<< newID << "]" << log4cpp::CategoryStream::ENDLINE;
-	    sit->setSubscriptionID(newID);
-	    sit->setExpirationTime( time(NULL) + conf->getSubscriptionDuration() );
+          {
+	    boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
+	    string newID;
+ 	    if(subMgr->updateSubscription( sit->getEndpoint(), sit->getSubscriptionID(), newID )) {
+	      log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
+	    	  		    << "New subscription ID after renewal is ["
+	  			    << newID << "]" << log4cpp::CategoryStream::ENDLINE;
+	      sit->setSubscriptionID(newID);
+	      sit->setExpirationTime( time(NULL) + conf->getSubscriptionDuration() );
+	    }
 	  }
 	}
+
+
 
       }
     }

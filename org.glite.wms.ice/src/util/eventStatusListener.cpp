@@ -379,6 +379,10 @@ void iceUtil::eventStatusListener::init(void)
           log_dev->errorStream() << "eventStatusListener::init() - Subscription to ["
 				 << *it << "] failed. Will not receives status notifications from it."
 				 << log4cpp::CategoryStream::ENDLINE;
+	else {
+	  boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
+	  subscriptionCache::getInstance()->insert(*it);
+	}
       } else {
         log_dev->infoStream() << "eventStatusListener::init() - Already subscribed to ["
 			      << *it << log4cpp::CategoryStream::ENDLINE;
