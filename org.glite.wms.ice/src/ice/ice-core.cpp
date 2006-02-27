@@ -76,12 +76,15 @@ ice::ice(const string& NS_FL,
      * to use the listener...
      *
      */
-    if( util::subscriptionCache::getInstance() == NULL ) {
-	log_dev->errorStream() << "ice::CTOR() - "
-                             << "Fatal error creating the subscriptionCache instance. Will not start listener."
-	  		     << log4cpp::CategoryStream::ENDLINE;
-	boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-        util::iceConfManager::getInstance()->setStartListener( false );
+    {
+      boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
+      if( util::subscriptionCache::getInstance() == NULL ) {
+	  log_dev->errorStream() << "ice::CTOR() - "
+                               << "Fatal error creating the subscriptionCache instance. Will not start listener."
+	    		       << log4cpp::CategoryStream::ENDLINE;
+	  boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+          util::iceConfManager::getInstance()->setStartListener( false );
+      }
     }
   }
 }

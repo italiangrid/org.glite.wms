@@ -304,7 +304,10 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                   << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
                   << log4cpp::CategoryStream::ENDLINE;
 
-	        util::subscriptionCache::getInstance()->insert(cemon_url);
+		{
+		  boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
+	          util::subscriptionCache::getInstance()->insert(cemon_url);
+		}
               }
 	    }
             //glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);

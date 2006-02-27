@@ -28,7 +28,7 @@ bool subscriptionCache::has(const string& s)
 //______________________________________________________________________________
 subscriptionCache* subscriptionCache::getInstance()
 {
-  boost::recursive_mutex::scoped_lock M( mutex );
+  //boost::recursive_mutex::scoped_lock M( mutex );
   if(!instance)
     instance = new subscriptionCache();
   return instance;
