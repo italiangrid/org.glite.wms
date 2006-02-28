@@ -7,6 +7,7 @@
 #include <cstring> // for memset
 #include <netdb.h>
 #include <sstream>
+#include <ctime>
 
 extern int h_errno;
 
@@ -18,14 +19,16 @@ boost::recursive_mutex subscriptionManager::mutex;
 
 //______________________________________________________________________________
 subscriptionManager::subscriptionManager()
-  : log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    conf( iceConfManager::getInstance() ),
-    valid(true),
-    myname(""),
+  : ceS(),
+    ceSMgr(),
     T( iceConfManager::getInstance()->getICETopic() ),
     P( iceConfManager::getInstance()->getNotificationFrequency() ),
-    ceS(),
-    ceSMgr()
+    conf( iceConfManager::getInstance() ),
+    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
+    valid(true),
+    myname(""),
+    lastSubscriptionID(""),
+    vec()
 {
   log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
                         << log4cpp::CategoryStream::ENDLINE;
@@ -62,6 +65,7 @@ subscriptionManager::subscriptionManager()
   myname = os.str();
 
   T.addDialect(NULL);
+  vec.reserve(100);
 }
 
 //______________________________________________________________________________
@@ -96,11 +100,25 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   }
   for(vector<Subscription>::const_iterator it = vec.begin();
       it != vec.end();
-      it++) cout << "   *** Found subscription: ["<< (*it).getSubscriptionID() << "] [" <<(*it).getConsumerURL()<<"]"<<endl;
+      it++) {
+            //struct tm T;
+	    tp = it->getExpirationTime();
+	    localtime_r( &tp, &Time );
+	    //char aT[256];
+	    memset( (void*) aT, 0, 256 );
+	    strftime(aT, 256, "%a %d %b %Y %T", &Time);
+            log_dev->infoStream() << "subscriptionManager::list() - "
+      				  << "*** Found subscription: ["
+                                  << it->getSubscriptionID()
+				  << "] [" << it->getConsumerURL() << "]"
+				  << " [" << it->getTopicName()<<"]"
+				  << " [" << aT << "]"
+				  << log4cpp::CategoryStream::ENDLINE;
+	}
 }
 
 //______________________________________________________________________________
-bool subscriptionManager::subscribe(const std::string& url)
+bool subscriptionManager::subscribe(const string& url)
 {
   ceS.setServiceURL(url);
 
@@ -149,7 +167,7 @@ bool subscriptionManager::updateSubscription(const string& url,
 //______________________________________________________________________________
 bool subscriptionManager::subscribedTo(const string& url)
 {
-  vector<Subscription> vec;
+  vec.clear();
   try {this->list(url, vec);}
   catch(exception& ex) {
     log_dev->errorStream() << "subscriptionManager::subscribedTo() - "

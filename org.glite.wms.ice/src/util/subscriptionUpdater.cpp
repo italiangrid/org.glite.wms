@@ -59,13 +59,13 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
       sit++)
     {
       time_t timeleft = sit->getExpirationTime() - time(NULL);
-      cout  << "\t["<<sit->getSubscriptionID()<<"]\n\t"
-           << "["<<sit->getConsumerURL() << "]\n\t"
-	   << "["<<sit->getTopicName() << "]\n\t"
-	   << "["<<sit->getEndpoint() << "]\n\t"
-	   << "timeleft=[" << timeleft << "]\n\t"
-	   << "threshold=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
-	   << log4cpp::CategoryStream::ENDLINE;
+//       cout  << "\t["<<sit->getSubscriptionID()<<"]\n\t"
+//            << "["<<sit->getConsumerURL() << "]\n\t"
+// 	   << "["<<sit->getTopicName() << "]\n\t"
+// 	   << "["<<sit->getEndpoint() << "]\n\t"
+// 	   << "timeleft=[" << timeleft << "]\n\t"
+// 	   << "threshold=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
+// 	   << log4cpp::CategoryStream::ENDLINE;
       {
         boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
         if(timeleft < conf->getSubscriptionUpdateThresholdTime()) {
@@ -91,10 +91,7 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
 	      sit->setExpirationTime( time(NULL) + conf->getSubscriptionDuration() );
 	    }
 	  }
-	}
-
-
-
+	} // if(timeleft < ....)
       }
     }
 }

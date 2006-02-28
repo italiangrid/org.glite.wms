@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/CESubscriptionMgr.h"
@@ -35,6 +36,10 @@ namespace util {
     static subscriptionManager* instance;
     std::string myname;
     std::string lastSubscriptionID;
+    struct tm Time;
+    char aT[256];
+    time_t tp;
+    std::vector<Subscription> vec;
 
    protected:
     subscriptionManager();
