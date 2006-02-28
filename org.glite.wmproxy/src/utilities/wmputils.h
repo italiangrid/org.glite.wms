@@ -107,6 +107,7 @@ std::string getDestURI(const std::string &jobid, const std::string &protocol,
 std::vector<std::string> * getDestURIsVector(std::vector<std::pair<std::string,
 	int> > protocols, int httpsport, const std::string &jid, bool addhttps = true);
 
+
 std::vector<std::string> * getJobDirectoryURIsVector(
 	std::vector<std::pair<std::string, int> > protocols,
 	const std::string &defaultprotocol, int defaultport, int httpsport, 
@@ -129,7 +130,13 @@ std::string getJobReducedPath(glite::wmsutils::jobid::JobId jid, int level = 0);
  */
 std::string getJobDirectoryPath(glite::wmsutils::jobid::JobId jid, int level = 0);
 
-
+/**
+ * Returns the  job input directory relative path
+ * @param jid the job identifier of the job
+ * @param level level, default value is 0
+ * @return  job input directory relative path
+ */
+std::string getJobInputSBRelativePath(glite::wmsutils::jobid::JobId jid, int level = 0);
 /**
  * Returns the job start lock file path
  * @param jid the job identifier of the job
@@ -262,11 +269,27 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
  */
 std::vector<std::pair<std::string, std::string> > 
 	parseFQANPair(const std::string &fqan);
-
-//std::time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
+/**
+   * Removes white spaces at the beginning and 
+   * at the end of the input string if there is any 
+   * @param the inputs string to be cleaned 
+   * @return the string, with white space removed from the front and end. 
+   */ 
 
 const std::string cleanString(std::string str);
+/**
+   * Converts all of the characters in this String to lower case 
+   * @param src the input string 
+   * @return the string, converted to lowercase. 
+ */
 const std::string toLower(const std::string &src);
+/**
+   * Cuts the input string in two pieces (label and value) according to 
+   * the separator character "=" 
+   * @param field the input string which format has to be label=value 
+   * @param label returns the "label" part of the string 
+   * @param value returns the "value" part of the string 
+ */
 void split(const std::string &field, std::string &label, std::string &value);
 
 
@@ -296,9 +319,6 @@ bool getUserQuota(std::pair<long, long>& result, std::string uname);
  * @return true if the operation was successfully, false otherwise
  */
 bool getUserFreeQuota(std::pair<long, long>& result, std::string uname);
-
-
-
 /**
  * Generate / Manage directory properties
  * @param dir name of the dir to be generated

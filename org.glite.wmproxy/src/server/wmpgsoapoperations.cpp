@@ -137,12 +137,20 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 	int return_value = SOAP_OK;
 
 	jobRegisterResponse jobRegister_response;
-	
+
 	try {
 		jobRegister(jobRegister_response, jdl, delegation_id);
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobRegister_response.jobIdStruct->id;
 		job_id_struct->name = jobRegister_response.jobIdStruct->name;
+		if (job_id_struct->path){
+			job_id_struct->path = jobRegister_response.jobIdStruct->path;
+			edglog(debug)<<">>>Setting path field in the JobIDStruct=" <<*(job_id_struct->path) << "\n";
+		} else{
+			edglog(debug)<<">>>job_id_struct->path NULL\n";
+			job_id_struct->path = NULL;
+		}
+
 		if (jobRegister_response.jobIdStruct->childrenJob) {
 			job_id_struct->childrenJob =
 				*convertToGSOAPJobIdStructTypeVector(jobRegister_response
@@ -331,7 +339,7 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol
 
 int
 ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol
-	= ALL_PROTOCOLS, struct ns1__getSandboxBulkDestURIResponse &response 
+	= ALL_PROTOCOLS, struct ns1__getSandboxBulkDestURIResponse &response
 	= *(new ns1__getSandboxBulkDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxBulkDestURI(struct soap *soap, "
@@ -340,7 +348,7 @@ ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol
 	edglog(info)<<"getSandboxBulkDestURI operation called"<<endl;
 	
 	int return_value = SOAP_OK;
-	
+
 	getSandboxBulkDestURIResponse getSandboxBulkDestURI_response;
 	
 	try {

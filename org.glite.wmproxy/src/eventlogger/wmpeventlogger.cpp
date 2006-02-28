@@ -321,7 +321,7 @@ WMPEventLogger::registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs)
 			WMS_LOGGING_ERROR, msg);
 	}
 	
-	for (unsigned int i = 0; i < size; i++) {
+	for (unsigned int i = 0; i < jdlssize; i++) {
 		std::free(jdls_char[i]);
 	}
     std::free(jdls_char);

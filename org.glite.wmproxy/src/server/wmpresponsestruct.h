@@ -78,6 +78,7 @@ struct StringAndLongList {
 struct JobIdStructType {
     std::string id;
     std::string *name;
+    std::string *path;
     std::vector<JobIdStructType*> *childrenJob;
 };
 
@@ -203,9 +204,6 @@ struct getStringParametricJobTemplateResponse {
     std::string jdl;
 };
 
-/*struct getACLItemsResponse {
-	StringList *items;
-};*/
 typedef std::vector<std::string> getACLItemsResponse;
 
 struct addACLItemsResponse {
@@ -221,9 +219,6 @@ struct getProxyInfoResponse {
 struct enableFilePerusalResponse {
 };
 
-/*struct getPerusalFilesResponse {
-	StringList *files;
-};*/
 typedef std::vector<std::string> getPerusalFilesResponse;
 
 struct getTransferProtocolsResponse {

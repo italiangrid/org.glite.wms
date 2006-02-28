@@ -182,10 +182,15 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 		pair<string, int> itempair(defaultprotocol, defaultport);
 		returnprotocols.push_back(itempair);
 	} else {
+// ########
+protocols.push_back(make_pair("https", 7443));
+edglog(debug) << "####Number of protocols="<<protocols.size()<<"\n";
+// ########
 		// if (check if the protocol is supported)
 		// if protocol in protocols!
 		int port = -1;
 		for (unsigned int i = 0; i < protocols.size(); i++) {
+edglog(debug) << "####Supported protocol("<<i<<")="<<protocols[i].first <<"\n";
 			if (protocols[i].first == protocol) {
 				port = protocols[i].second;
 				break;
@@ -387,20 +392,8 @@ convertDNEMailAddress(const string & dn)
 	GLITE_STACK_CATCH();
 }
 
-/*bool
+int
 fileExists(const string &path)
-{
-	ifstream file(path.c_str());
-	if (!file.good()) {
-		return false;
-	}
-	return true;
-}*/
-	
-	//#include <sys/stat.h>
-
-int 
-fileExists(const string &path) 
 {
 	GLITE_STACK_TRY("fileExists()");
 	struct stat buffer;
@@ -455,6 +448,13 @@ getJobDirectoryPath(jobid::JobId jid, int level)
 	GLITE_STACK_CATCH();
 }
 
+string
+getJobInputSBRelativePath(glite::wmsutils::jobid::JobId jid, int level){
+	GLITE_STACK_TRY("getJobInputRelativePath()");
+	return (  to_filename(jid, level) + FILE_SEP
+		+ INPUT_SB_DIRECTORY);
+	GLITE_STACK_CATCH();
+}
 string
 getJobStartLockFilePath(jobid::JobId jid, int level)
 {
