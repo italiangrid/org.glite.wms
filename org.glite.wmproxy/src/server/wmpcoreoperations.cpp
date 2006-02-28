@@ -729,6 +729,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	JobIdStructType *job_id_struct = new JobIdStructType();
 	job_id_struct->id = stringjid;
 	job_id_struct->name = new string("");
+	job_id_struct->path = new string(getJobInputSBRelativePath(stringjid));
+edglog(debug)<<">>>####Setting path field in the JobIDStruct=" <<job_id_struct->path << "\n";
 	job_id_struct->childrenJob = new vector<JobIdStructType*>;
 	jobRegister_response.jobIdStruct = job_id_struct;
 	
@@ -1009,12 +1011,13 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	//wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 	
 	wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
-	
+
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
 	JobIdStruct job_struct = dag->getJobIdStruct();
 	job_id_struct->id = job_struct.jobid.toString(); // should be equal to: jid->toString()
 	job_id_struct->name = job_struct.nodeName;
+	job_id_struct->path = new string(getJobInputSBRelativePath(job_id_struct->id));
 	job_id_struct->childrenJob = convertJobIdStruct(job_struct.children);
 	jobRegister_response.jobIdStruct = job_id_struct;
 	
@@ -1452,7 +1455,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			string jobidstring;
 			string dest_uri;
 			string peekdir;
-			
 			vector<JobIdStruct*>::iterator iter = children.begin();
 			vector<JobIdStruct*>::iterator const end = children.end();
 			for (; iter != end; ++iter) {
@@ -1815,6 +1817,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 	job_id_struct->id = jobSubmit_response.jobIdStruct->id;
 	job_id_struct->name = jobSubmit_response.jobIdStruct->name;
+	job_id_struct->path = new string(getJobInputSBRelativePath(job_id_struct->id));
 	if (jobSubmit_response.jobIdStruct->childrenJob) {
 		job_id_struct->childrenJob =
 			*convertToGSOAPJobIdStructTypeVector(jobSubmit_response
