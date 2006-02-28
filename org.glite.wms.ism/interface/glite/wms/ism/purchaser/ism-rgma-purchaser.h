@@ -28,7 +28,7 @@ namespace ism {
 namespace purchaser {
 
 
-typedef std::vector<std::string> RGMAMultiValue;
+//typedef std::vector<std::string> RGMAMultiValue;
 
 class ism_rgma_purchaser : public ism_purchaser
 {
@@ -49,7 +49,7 @@ public:
    void operator()();
  
    void prefetchGlueCEinfo(gluece_info_container_type& gluece_info_container);
- 
+
    ~ism_rgma_purchaser();
 
 private:                
@@ -85,7 +85,11 @@ public:
    glite::rgma::Consumer* get_consumer() { return m_consumer; }
    bool get_query_status() { return m_query_status; }
    ~gluece_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
+   static void destroy_query_instance() {  if (m_query != NULL ) {
+                                              delete m_query; 
+                                              m_query = NULL;
+                                           }
+                                        }
 };
 
 class AccessControlBaseRule_query
@@ -105,7 +109,11 @@ public:
    glite::rgma::Consumer* get_consumer() { return m_consumer; }
    bool get_query_status() { return m_query_status; }
    ~AccessControlBaseRule_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
+   static void destroy_query_instance() { if (m_query != NULL ) {
+                                             delete m_query;
+                                             m_query = NULL;
+                                          }
+                                        }
 };
 
 class SubCluster_query
@@ -124,7 +132,12 @@ public:
    glite::rgma::Consumer* get_consumer() { return m_consumer; }
    bool get_query_status() { return m_query_status; }
    ~SubCluster_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
+   static void destroy_query_instance() { if (m_query != NULL ) {
+                                             delete m_query;
+                                             m_query = NULL;
+                                          }
+                                        }
+
 };
 
 
@@ -147,7 +160,12 @@ public:
    glite::rgma::Consumer* get_consumer() { return m_consumer; }
    bool get_query_status() { return m_query_status; }
    ~SoftwareRunTimeEnvironment_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
+   static void destroy_query_instance() { if (m_query != NULL ) {
+                                             delete m_query;
+                                             m_query = NULL;
+                                          }
+                                        }
+
 };
 
 
@@ -168,7 +186,12 @@ public:
    glite::rgma::Consumer* get_consumer() { return m_consumer; }
    bool get_query_status() { return m_query_status; }
    ~CESEBind_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) delete m_query; }
+   static void destroy_query_instance() { if (m_query != NULL ) {
+                                             delete m_query;
+                                             m_query = NULL;
+                                          }
+                                        }
+
 };
 
                                                                                                              
