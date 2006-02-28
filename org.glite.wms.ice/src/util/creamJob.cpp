@@ -150,3 +150,12 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     }
 
 }
+
+bool CreamJob::is_active( void ) const
+{
+    return ( ( status == REGISTERED ) ||
+             ( status == PENDING ) ||
+             ( status == IDLE ) ||
+             ( status == RUNNING ) ||
+             ( status == HELD ) );
+}

@@ -101,6 +101,9 @@ namespace glite {
           //! Gets the sequence code
           std::string getSequenceCode( void ) const { return sequence_code; }
 
+          //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, idle, running or held
+          bool is_active( void ) const;
+
 	  //! Gets the status of the job
           glite::ce::cream_client_api::job_statuses::job_status getStatus(void) const { return status; }
 
