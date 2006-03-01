@@ -40,6 +40,169 @@
 #define edglog_fn(name) logger::StatePusher    pusher(logger::threadsafe::edglog, #name);
 
 //#define MAXDELAY 100000000;                                                                                                     
+
+#define QUERY_CPP(table) \
+table##_query * table##_query::m_query = NULL; \
+\
+table##_query * table##_query::get_query_instance() \
+{  \
+   if (m_query == NULL) {  \
+      m_query = new table##_query(); \
+   } \
+   return m_query; \
+}  \
+\
+table##_query::~ table##_query() \
+{ \
+   if (m_consumer != NULL) { \
+      try { \
+         if ( m_query_status ) m_consumer->close(); \
+      } \
+      catch  (RemoteException e) { \
+         Error("Failed to contact Consumer service..."); \
+         Error(e.getMessage()); \
+      } \
+      catch (UnknownResourceException ure) { \
+         Error("Failed to contact Consumer service..."); \
+         Error(ure.getMessage()); \
+      } \
+      catch (RGMAException rgmae) { \
+         Error("R-GMA application error in Consumer..."); \
+         Error(rgmae.getMessage()); \
+      } \
+      delete m_consumer; \
+   }  \
+}\
+bool table##_query::refresh_consumer ( int rgma_consumer_ttl ) \
+{ \
+   if ( m_consumer != NULL ) { \
+      try { \
+         if ( m_query_status ) m_consumer->close(); \
+      } \
+      catch  (RemoteException e) { \
+         Error("Failed to contact Consumer service..."); \
+         Error(e.getMessage()); \
+         m_query_status = false; \
+      } \
+      catch (UnknownResourceException ure) { \
+         Error("Failed to contact Consumer service..."); \
+         Error(ure.getMessage()); \
+         m_query_status = false; \
+      } \
+      catch (RGMAException rgmae) { \
+         Error("R-GMA application error in Consumer..."); \
+         Error(rgmae.getMessage()); \
+         m_query_status = false; \
+      } \
+      delete m_consumer; \
+\
+      m_consumer = NULL; \
+      m_query_status = false; \
+   }  \
+   boost::scoped_ptr<ConsumerFactory> factory(new ConsumerFactoryImpl()); \
+   TimeInterval terminationInterval( rgma_consumer_ttl, Units::SECONDS); \
+\
+   try { \
+      string query("SELECT * FROM "); \
+      string name( #table ); \
+      string the_query = query + name; \
+      m_consumer = factory->createConsumer( terminationInterval, \
+                                            the_query.c_str(), \
+                                            QueryProperties::LATEST ); \
+      m_query_status = true; \
+      return true; \
+   } \
+   catch (RemoteException e) { \
+      Error("Failed to contact Consumer service..."); \
+      Error(e.getMessage()); \
+      m_consumer = NULL; \
+      m_query_status = false; \
+      return false; \
+   }  \
+   catch (UnknownResourceException ure) { \
+      Error("Failed to contact Consumer service..."); \
+      Error(ure.getMessage()); \
+      m_consumer = NULL; \
+      m_query_status = false; \
+      return false; \
+   } \
+   catch (RGMAException rgmae) { \
+      Error("R-GMA application error in Consumer..."); \
+      Error(rgmae.getMessage()); \
+      m_consumer = NULL; \
+      m_query_status = false; \
+      return false; \
+   } \
+}  \
+\
+bool table##_query::refresh_query ( int rgma_query_timeout ) \
+{ \
+   try { \
+      if ( (m_consumer == NULL) || (m_query_status == false) ) { \
+         Warning("Consumer not created or corrupted"); \
+         m_query_status = false; \
+         return false; \
+      } \
+      if ( m_consumer->isExecuting() ) m_consumer->abort(); \
+\
+      m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) ); \
+      m_query_status = true; \
+      return true; \
+   } \
+   catch (RemoteException e) { \
+      Error("Failed to contact Consumer service..."); \
+      Error(e.getMessage()); \
+      m_query_status = false; \
+      return false; \
+   } \
+   catch (UnknownResourceException ure) { \
+      Error("Failed to contact Consumer service..."); \
+      Error(ure.getMessage()); \
+      m_query_status = false; \
+      return false; \
+   } \
+   catch (RGMAException rgmae) { \
+      Error("R-GMA application error in Consumer..."); \
+      Error(rgmae.getMessage()); \
+      m_query_status = false; \
+      return false; \
+   } \
+} \
+\
+bool table##_query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber) \
+{ \
+   try { \
+      if ( m_query_status ) { \
+         m_consumer->pop(out, maxTupleNumber); \
+         return true; \
+      } \
+      else { \
+         Error("Cannot pop tuples: Query failed or not started"); \
+         return false; \
+      } \
+   } \
+   catch (RemoteException e) { \
+      Error("Failed to contact Consumer service..."); \
+      Error(e.getMessage()); \
+      m_query_status = false; \
+      return false; \
+   } \
+   catch (UnknownResourceException ure) { \
+      Error("Failed to contact Consumer service..."); \
+      Error(ure.getMessage()); \
+      m_query_status = false; \
+      return false; \
+   } \
+   catch (RGMAException rgmae) { \
+      Error("R-GMA application error in Consumer..."); \
+      Error(rgmae.getMessage()); \
+      m_query_status = false; \
+      return false; \
+   } \
+}
+
+
+
 using glite::rgma::ConsumerFactory;
 using rgma::impl::ConsumerFactoryImpl;
 using glite::rgma::Consumer;
@@ -81,853 +244,16 @@ unsigned int consLifeCycles = 0;
 boost::mutex  consLifeCycles_mutex;
 }
 
+QUERY_CPP(GlueCE)
 
-gluece_query* gluece_query::m_query = NULL;
+QUERY_CPP(GlueCEAccessControlBaseRule)
 
-gluece_query* gluece_query::get_query_instance()
-{
-   if (m_query == NULL) {
-      m_query = new gluece_query();
-   }
-   return m_query;
-}
+QUERY_CPP(GlueSubCluster)
 
-gluece_query::~gluece_query()
-{ 
-   if (m_consumer != NULL) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-// workaround that avoid "delete" call when an exception is catched
-// it would cause an abort. 
-//         delete m_consumer;
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-      }
-      delete m_consumer;
-   }
-}
+QUERY_CPP(GlueSubClusterSoftwareRunTimeEnvironment)
 
+QUERY_CPP(GlueCESEBind)
 
-bool gluece_query::refresh_consumer ( int rgma_consumer_ttl )
-{
-   if ( m_consumer != NULL ) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-         m_query_status = false; 
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-         m_query_status = false;
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-         m_query_status = false;
-      }
-      delete m_consumer;
-
-      m_consumer = NULL;
-      m_query_status = false;
-   }
-   boost::scoped_ptr<ConsumerFactory> factory(new ConsumerFactoryImpl());
-   TimeInterval terminationInterval( rgma_consumer_ttl, Units::SECONDS);
-   try {
-      m_consumer = factory->createConsumer( terminationInterval,
-                                                   "SELECT * FROM GlueCE",
-                                                   QueryProperties::LATEST );
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-}
-
-bool gluece_query::refresh_query ( int rgma_query_timeout )
-{
-//   struct timespec delay; delay.tv_sec = 0; delay.tv_nsec = MAXDELAY;   
-   try {
-      if ( (m_consumer == NULL) || (m_query_status == false) ) {
-         Warning("Consumer not created or corrupted");
-         m_query_status = false;
-         return false;
-      }
-      if ( m_consumer->isExecuting() ) m_consumer->abort();
-         
-      m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) );
-      //while(m_consumer->isExecuting()){
-      //   nanosleep(&delay,NULL);
-      //}
-      m_query_status = true; 
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-bool gluece_query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber)
-{
-   try {
-      if ( m_query_status ) {
-         m_consumer->pop(out, maxTupleNumber);
-         return true;
-      }
-      else {
-         Error("Cannot pop tuples: Query failed or not started");
-         return false;
-      }
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-
-AccessControlBaseRule_query* AccessControlBaseRule_query::m_query = NULL;
-
-AccessControlBaseRule_query* AccessControlBaseRule_query::get_query_instance()
-{
-   if (m_query == NULL) {
-      m_query = new AccessControlBaseRule_query();
-   }
-   return m_query;
-}
-
-AccessControlBaseRule_query::~AccessControlBaseRule_query()
-{
-   if (m_consumer != NULL) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-// workaround that avoid "delete" call when an exception is catched
-// it would cause an abort. 
-//         delete m_consumer;
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-      }
-      delete m_consumer;
-   }
-}
-
-
-bool AccessControlBaseRule_query::refresh_consumer ( int rgma_consumer_ttl )
-{
-   if ( m_consumer != NULL ) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-         m_query_status = false;
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-         m_query_status = false;
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-         m_query_status = false;
-      }
-      delete m_consumer;
-
-      m_consumer = NULL;
-      m_query_status = false;
-   }
-
-   boost::scoped_ptr<ConsumerFactory> factory(new ConsumerFactoryImpl());
-   TimeInterval terminationInterval( rgma_consumer_ttl, Units::SECONDS);
-   try {
-      m_consumer = factory->createConsumer( terminationInterval,
-                                                   "SELECT * FROM GlueCEAccessControlBaseRule",
-                                                   QueryProperties::LATEST );
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-bool AccessControlBaseRule_query::refresh_query ( int rgma_query_timeout )
-{
-//   struct timespec delay; delay.tv_sec = 0; delay.tv_nsec = MAXDELAY;   
-   try {
-      if ( (m_consumer == NULL) || (m_query_status == false) ) {
-         Warning("Consumer not created or corrupted");
-         m_query_status = false;
-         return false;
-      }
-
-      if ( m_consumer->isExecuting() )
-         m_consumer->abort();
-
-      m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) );
-      //while(m_consumer->isExecuting()){
-      //   nanosleep(&delay,NULL);
-      //}
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-bool AccessControlBaseRule_query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber)
-{
-   try {
-      if ( m_query_status ) {
-         m_consumer->pop(out, maxTupleNumber);
-         return true;
-      }
-      else {
-         Error("Cannot pop tuples: Query failed or not started");
-         return false;
-      }
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-
-SubCluster_query* SubCluster_query::m_query = NULL;
-
-SubCluster_query* SubCluster_query::get_query_instance()
-{
-   if (m_query == NULL) {
-      m_query = new SubCluster_query();
-   }
-   return m_query;
-}
-
-SubCluster_query::~SubCluster_query()
-{
-   if (m_consumer != NULL) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-// workaround that avoid "delete" call when an exception is catched
-// it would cause an abort. 
-//         delete m_consumer;
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-      }
-      delete m_consumer;
-   }
-}
-
-
-bool SubCluster_query::refresh_consumer ( int rgma_consumer_ttl )
-{
-   if ( m_consumer != NULL ) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-         m_query_status = false;
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-         m_query_status = false;
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-         m_query_status = false;
-      }
-      delete m_consumer;
-
-      m_consumer = NULL;
-      m_query_status = false;
-   }
-
-   boost::scoped_ptr<ConsumerFactory> factory(new ConsumerFactoryImpl());
-   TimeInterval terminationInterval( rgma_consumer_ttl, Units::SECONDS);
-   try {
-      m_consumer = factory->createConsumer( terminationInterval,
-                                                   "SELECT * FROM GlueSubCluster",
-                                                   QueryProperties::LATEST );
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-bool SubCluster_query::refresh_query ( int rgma_query_timeout )
-{
-//   struct timespec delay; delay.tv_sec = 0; delay.tv_nsec = MAXDELAY;   
-   try {
-      if ( (m_consumer == NULL) || (m_query_status == false) ) {
-         Warning("Consumer not created or corrupted");
-         m_query_status = false;
-         return false;
-      }
-      if ( m_consumer->isExecuting() )
-         m_consumer->abort();
-
-      m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) );
-      //while(m_consumer->isExecuting()){
-      //   nanosleep(&delay,NULL);
-      //}
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-bool SubCluster_query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber)
-{
-   try {
-      if ( m_query_status ) {
-         m_consumer->pop(out, maxTupleNumber);
-         return true;
-      }
-      else {
-         Error("Cannot pop tuples: Query failed or not started");
-         return false;
-      }
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-
-
-SoftwareRunTimeEnvironment_query* SoftwareRunTimeEnvironment_query::m_query = NULL;
-
-SoftwareRunTimeEnvironment_query* SoftwareRunTimeEnvironment_query::get_query_instance()
-{
-   if (m_query == NULL) {
-      m_query = new SoftwareRunTimeEnvironment_query();
-   }
-   return m_query;
-}
-
-SoftwareRunTimeEnvironment_query::~SoftwareRunTimeEnvironment_query()
-{
-   if (m_consumer != NULL) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-// workaround that avoid "delete" call when an exception is catched
-// it would cause an abort. 
-//         delete m_consumer;
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-      }
-      delete m_consumer;
-   }
-}
-
-
-bool SoftwareRunTimeEnvironment_query::refresh_consumer ( int rgma_consumer_ttl )
-{
-   if ( m_consumer != NULL ) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-         m_query_status = false;
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-         m_query_status = false;
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-         m_query_status = false;
-      }
-      delete m_consumer;
-
-      m_consumer = NULL;
-      m_query_status = false;
-   }
-
-   boost::scoped_ptr<ConsumerFactory> factory(new ConsumerFactoryImpl());
-   TimeInterval terminationInterval( rgma_consumer_ttl, Units::SECONDS);
-   try {
-      m_consumer = factory->createConsumer( terminationInterval,
-                                                   "SELECT * FROM GlueSubClusterSoftwareRunTimeEnvironment",
-                                                   QueryProperties::LATEST );
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-bool SoftwareRunTimeEnvironment_query::refresh_query ( int rgma_query_timeout )
-{
-//   struct timespec delay; delay.tv_sec = 0; delay.tv_nsec = MAXDELAY;   
-   try {
-      if ( (m_consumer == NULL) || (m_query_status == false) ) {
-         Warning("Consumer not created or corrupted");
-         m_query_status = false;
-         return false;
-      }
-
-      if ( m_consumer->isExecuting() )
-         m_consumer->abort();
-
-      m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) );
-      //while(m_consumer->isExecuting()){
-      //   nanosleep(&delay,NULL);
-      //}
-      m_query_status = true;
-      return true;
-
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-bool SoftwareRunTimeEnvironment_query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber)
-{
-   try {
-      if ( m_query_status ) {
-         m_consumer->pop(out, maxTupleNumber);
-         return true;
-      }
-      else {
-         Error("Cannot pop tuples: Query failed or not started");
-         return false;
-      }
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-
-
-CESEBind_query* CESEBind_query::m_query = NULL;
-
-CESEBind_query* CESEBind_query::get_query_instance()
-{
-   if (m_query == NULL) {
-      m_query = new CESEBind_query();
-   }
-   return m_query;
-}
-
-CESEBind_query::~CESEBind_query()
-{
-   if (m_consumer != NULL) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-// workaround that avoid "delete" call when an exception is catched
-// it would cause an abort. 
-//         delete m_consumer;
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-      }
-      delete m_consumer;
-   }
-}
-
-
-bool CESEBind_query::refresh_consumer ( int rgma_consumer_ttl )
-{
-   if ( m_consumer != NULL ) {
-      try {
-         if ( m_query_status ) m_consumer->close();
-      }
-      catch  (RemoteException e) {
-         Error("Failed to contact Consumer service...");
-         Error(e.getMessage());
-         m_query_status = false;
-      }
-      catch (UnknownResourceException ure) {
-         Error("Failed to contact Consumer service...");
-         Error(ure.getMessage());
-         m_query_status = false;
-      }
-      catch (RGMAException rgmae) {
-         Error("R-GMA application error in Consumer...");
-         Error(rgmae.getMessage());
-         m_query_status = false;
-      }
-      delete m_consumer;
-
-      m_consumer = NULL;
-      m_query_status = false;
-   }
-
-   boost::scoped_ptr<ConsumerFactory> factory(new ConsumerFactoryImpl());
-   TimeInterval terminationInterval( rgma_consumer_ttl, Units::SECONDS);
-   try {
-      m_consumer = factory->createConsumer( terminationInterval,
-                                                   "SELECT * FROM GlueCESEBind",
-                                                   QueryProperties::LATEST );
-      m_query_status = true;
-      return true;
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_consumer = NULL;
-      m_query_status = false;
-      return false;
-   }
-}
-
-
-bool CESEBind_query::refresh_query ( int rgma_query_timeout )
-{
-//   struct timespec delay; delay.tv_sec = 0; delay.tv_nsec = MAXDELAY;   
-   try {
-      if ( (m_consumer == NULL) || (m_query_status == false) ) {
-         Warning("Consumer not created or corrupted");
-         m_query_status = false;
-         return false;
-      }
-
-      if ( m_consumer->isExecuting() )
-         m_consumer->abort();
-
-      m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) );
-      //while(m_consumer->isExecuting()){
-      //   nanosleep(&delay,NULL);
-      //}
-      m_query_status = true;
-      return true;
-
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
-
-bool CESEBind_query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber)
-{
-   try {
-      if ( m_query_status ) {
-         m_consumer->pop(out, maxTupleNumber);
-         return true;
-      }
-      else {
-         Error("Cannot pop tuples: Query failed or not started");
-         return false;
-      }
-   }
-   catch (RemoteException e) {
-      Error("Failed to contact Consumer service...");
-      Error(e.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (UnknownResourceException ure) {
-      Error("Failed to contact Consumer service...");
-      Error(ure.getMessage());
-      m_query_status = false;
-      return false;
-   }
-   catch (RGMAException rgmae) {
-      Error("R-GMA application error in Consumer...");
-      Error(rgmae.getMessage());
-      m_query_status = false;
-      return false;
-   }
-}
 
 namespace{
 
@@ -987,7 +313,7 @@ bool ParseValue(const string& v, utilities::edgstrstream& s)
    return true;
 
 }
-
+/*
 bool ParseMultiValue(const RGMAMultiValue& v, utilities::edgstrstream& s)
 {
    if ( !v.size() ) {
@@ -1001,7 +327,8 @@ bool ParseMultiValue(const RGMAMultiValue& v, utilities::edgstrstream& s)
    }
    return true;
 }
-                                                                                                                             
+
+*/
 
 bool ExportClassAd( ClassAd* ad, Tuple& tuple )
 {
@@ -1075,7 +402,7 @@ bool ExportClassAd( ClassAd* ad, Tuple& tuple )
    return true;
 }
 
-//unused
+/*
 bool extractMultiValueFromResultSet( ResultSet & set,
                                      RGMAMultiValue& v,
                                      const string & nameID,
@@ -1137,6 +464,7 @@ bool addMultivalueAttributeToClassAd( ClassAd* ad, const RGMAMultiValue & v, con
 
    return true;
 }
+*/
 
 bool changeAttributeName( ClassAd* ad, const string & oldName, const string & newName)
 {
@@ -1351,54 +679,6 @@ bool checkMainValue( ClassAd* ad ) {
    else return true;
 }
 
-/*
-bool checkListAttr( ClassAd* ad, const string& valueName, const string& listElem ) {
-//   Debug("adding element to \""<<valueName<<"\" list-value");
-                                                                                               
-   vector<string> val;
-   if ( ad->Lookup(valueName) ) {
-      if ( ! utilities::EvaluateAttrList( *ad, valueName, val) ) {
-         Debug("Cannot evaluate "<<valueName<<" list while trying to add "<<listElem<<".");
-         return false;
-      }
-   }
-   val.push_back( listElem );
-   if ( ! addMultivalueAttributeToClassAd( ad, val, valueName) ) {
-      Warning("Failure in inserting \""<<valueName<<"\" list-value after having added "
-              <<listElem);
-      return false;
-   }
-   return true;
-}
-
-
-bool checkClassAdListAttr( ClassAd* ad, const string& valueName, ClassAd* listElem )
-{
-   //a deep copy of listElem has to be passed  
-
-//   Debug("adding element to \""<<valueName<<"\" list-value");
-
-   vector<ExprTree*>               val;
-   classad::ExprList*        expr_list;
-    
-   if ( ad->EvaluateAttrList( valueName, expr_list) ) {
-      //expr_list->GetComponents(val);
-      for ( ExprList::iterator it = expr_list->begin(); it < expr_list->end(); it++ )
-         val.push_back((*it)->Copy());
-   }
-   val.push_back(listElem);
-   if ( !ad->Insert(valueName, classad::ExprList::MakeExprList(val)) ){
-      for ( vector<ExprTree*>::iterator it = val.begin(); it < val.end(); it++ )
-         delete *it;      
-      Warning("Failure in inserting classad::ExprList after having added another value to "
-              <<valueName<<" list-value.");
-      return false;
-   }
-   return true;
-   
-}
-*/
-
 void collect_acbr_info( gluece_info_container_type * gluece_info_container,
                         int rgma_cons_life_cycles,
                         int rgma_consumer_ttl,
@@ -1409,7 +689,7 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
 //         AccessControlBaseRule_query::get_query_instance()->get_query_status();
 
       if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
-         if ( ! AccessControlBaseRule_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+         if ( ! GlueCEAccessControlBaseRule_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
             Warning("AccessControlBaseRule consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1420,7 +700,7 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
          Debug("AccessControlBaseRule CONSUMER REFRESHED");
       }
 
-      if ( ! AccessControlBaseRule_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+      if ( ! GlueCEAccessControlBaseRule_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
          Warning("AccessControlBaseRule query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1433,7 +713,7 @@ void collect_acbr_info( gluece_info_container_type * gluece_info_container,
 
             ResultSet accSet;
 
-            if(AccessControlBaseRule_query::get_query_instance()->pop_tuples( accSet, 1000)){
+            if(GlueCEAccessControlBaseRule_query::get_query_instance()->pop_tuples( accSet, 1000)){
 
                if ( accSet.begin() != accSet.end() ) {
 
@@ -1510,7 +790,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
 //            SubCluster_query::get_query_instance()->get_query_status();
 
          if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
-            if ( ! SubCluster_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+            if ( ! GlueSubCluster_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
                Warning("SubCluster consumer creation failed");
                {
                   boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1521,7 +801,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
             Debug("SubCluster CONSUMER REFRESHED");
          }
 
-         if ( ! SubCluster_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+         if ( ! GlueSubCluster_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
             Warning("SubCluster query FAILED.");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1533,7 +813,7 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
          while ( ! SubClusterIsEmpty ) {
             ResultSet subSet;
 
-            if(SubCluster_query::get_query_instance()->pop_tuples( subSet, 1000)){
+            if(GlueSubCluster_query::get_query_instance()->pop_tuples( subSet, 1000)){
 
                if ( subSet.begin() != subSet.end() ) {
                   std::map< std::string, boost::shared_ptr<classad::ClassAd> > SC_map;
@@ -1579,39 +859,6 @@ void collect_sc_info( gluece_info_container_type * gluece_info_container,
                         }
                      }
                   }
-/*
-                  ResultSet::iterator const tuples_end = subSet.end();
-                  for ( ResultSet::iterator tuple = subSet.begin(); tuple < tuples_end;
-                                                                    tuple++) {
-
-                     boost::mutex::scoped_lock  lock(collect_info_mutex);
-                     try {
-                        string GlueSubClusterUniqueIDFromRgma = tuple->getString("UniqueID");
-
-                        gluece_info_iterator gluece_end = gluece_info_container->end();
-                        for (gluece_info_iterator it = gluece_info_container->begin(); it != gluece_end; ++it) {
-                           string GlueClusterUniqueID;
-                           if ( ((it->second).get())->EvaluateAttrString("GlueClusterUniqueID", GlueClusterUniqueID) ){
-                              if ( GlueClusterUniqueID == GlueSubClusterUniqueIDFromRgma ) {
-                                 boost::scoped_ptr<ClassAd> subClusterAd ( new ClassAd() );
-                                 if ( ExportClassAd( subClusterAd.get(), *tuple ) ){
-                                    checkSubCluster( subClusterAd.get() );
-                                    ((it->second).get())->Update( *subClusterAd.get() );
-                                 }
-                                 else Warning("Failure in updating SubCluster values for "
-                                              <<GlueClusterUniqueID<<".");
-                              }
-                           }
-                           else Warning("Cannot find GlueClusterUniqueID field in the ClassAd");                        }
-
-                     }
-                     catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCESubCluster table");
-                        Error(rgmae.getMessage());
-                     }
-
-                  } //for
-*/
 
                }
                if ( subSet.endOfResults() ) SubClusterIsEmpty = true;
@@ -1636,7 +883,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
 //            SoftwareRunTimeEnvironment_query::get_query_instance()->get_query_status();
 
          if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
-            if ( ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+            if ( ! GlueSubClusterSoftwareRunTimeEnvironment_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
                Warning("SoftwareRunTimeEnvironment consumer creation failed");
                {
                   boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1647,7 +894,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
             Debug("SoftwareRunTimeEnvironment CONSUMER REFRESHED");
          }
 
-         if ( ! SoftwareRunTimeEnvironment_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+         if ( ! GlueSubClusterSoftwareRunTimeEnvironment_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
             Warning("SoftwareRunTimeEnvironment query FAILED.");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1659,7 +906,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
          while ( !SoftwareRunTimeEnvironmentIsEmpty ){
             ResultSet softSet;
 
-            if(SoftwareRunTimeEnvironment_query::get_query_instance()->pop_tuples( softSet, 1000)){
+            if(GlueSubClusterSoftwareRunTimeEnvironment_query::get_query_instance()->pop_tuples( softSet, 1000)){
 
                if ( softSet.begin() != softSet.end() ) {
 
@@ -1674,7 +921,7 @@ void collect_srte_info( gluece_info_container_type * gluece_info_container,
                         SRTE_map[GlueSubClusterUniqueIDFromRgma].push_back(val);
                      }
                      catch(RGMAException rgmae) {
-                        Error("Cannot evaluate tuple returned by GlueCESubClusterSoftwareRunTimeEnvironment table");
+                        Error("Cannot evaluate tuple returned by GlueSubClusterSoftwareRunTimeEnvironment table");
                         Error(rgmae.getMessage());
                      }
                   }
@@ -1747,7 +994,7 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
 //            CESEBind_query::get_query_instance()->get_query_status();
 
          if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
-            if ( ! CESEBind_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
+            if ( ! GlueCESEBind_query::get_query_instance()->refresh_consumer( rgma_consumer_ttl ) ) {
                Warning("CESEBind consumer creation failed");
                {
                   boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1758,7 +1005,7 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
             Debug("CESEBind CONSUMER REFRESHED");
          }
 
-         if ( ! CESEBind_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
+         if ( ! GlueCESEBind_query::get_query_instance()->refresh_query( rgma_query_timeout) ) {
             Warning("CESEBind query FAILED.");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1770,7 +1017,7 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
          while ( ! CESEBindIsEmpty ) {
             ResultSet bindSet;
 
-            if(CESEBind_query::get_query_instance()->pop_tuples( bindSet, 1000)){
+            if(GlueCESEBind_query::get_query_instance()->pop_tuples( bindSet, 1000)){
 
                if ( bindSet.begin() != bindSet.end() ) {
 
@@ -1892,10 +1139,10 @@ void collect_bind_info( gluece_info_container_type * gluece_info_container,
 void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_info_container)
 {
 //   bool consumers_is_alive =
-//      gluece_query::get_query_instance()->get_query_status();
+//      GlueCE_query::get_query_instance()->get_query_status();
 
    if ( (consLifeCycles == 0) || (consLifeCycles == m_rgma_cons_life_cycles) ) {
-      if ( ! gluece_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl ) ) {
+      if ( ! GlueCE_query::get_query_instance()->refresh_consumer( m_rgma_consumer_ttl ) ) {
          Warning("guece consumer creation failed");
          consLifeCycles = 0;
          return;
@@ -1906,7 +1153,7 @@ void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_
    // consLifeCycles is incremented here only
    consLifeCycles++;
 
-   if ( ! gluece_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ) {
+   if ( ! GlueCE_query::get_query_instance()->refresh_query( m_rgma_query_timeout) ) {
       Warning("gluece query FAILED.");
       consLifeCycles = 0;
       return;
@@ -1915,7 +1162,7 @@ void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_
    Debug("Creating a ClassAd for each entry in GlueCE table");
    ResultSet resultSet;
    do {
-      if ( !gluece_query::get_query_instance()->pop_tuples( resultSet, 1000) ) {
+      if ( !GlueCE_query::get_query_instance()->pop_tuples( resultSet, 1000) ) {
          Warning("failed popping tuples from GlueCe");
          return;
       }
@@ -2084,11 +1331,11 @@ void ism_rgma_purchaser::do_purchase()
 }
 
 ism_rgma_purchaser::~ism_rgma_purchaser() {
-   gluece_query::destroy_query_instance();
-   AccessControlBaseRule_query::destroy_query_instance();
-   SubCluster_query::destroy_query_instance();
-   SoftwareRunTimeEnvironment_query::destroy_query_instance();
-   CESEBind_query::destroy_query_instance();
+   GlueCE_query::destroy_query_instance();
+   GlueCEAccessControlBaseRule_query::destroy_query_instance();
+   GlueSubCluster_query::destroy_query_instance();
+   GlueSubClusterSoftwareRunTimeEnvironment_query::destroy_query_instance();
+   GlueCESEBind_query::destroy_query_instance();
 }
 
 
@@ -2118,7 +1365,6 @@ extern "C" boost::function<bool(int&, ad_ptr)> create_rgma_entry_update_fn()
 {
   return ism_rgma_purchaser_entry_update();
 }
-
 
 
 } // namespace purchaser

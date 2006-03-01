@@ -27,6 +27,29 @@ namespace wms {
 namespace ism {
 namespace purchaser {
 
+#define QUERY_H(table)  class table##_query  { \
+\
+private:  \
+   static table##_query * m_query;  \
+   glite::rgma::Consumer* m_consumer;  \
+   table##_query() { m_consumer = NULL; m_query_status = false;} \
+   bool m_query_status; \
+public: \
+   static table##_query * get_query_instance(); \
+   bool refresh_query(int rgma_query_timeout); \
+   bool refresh_consumer(int rgma_consumer_ttl); \
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber); \
+   glite::rgma::Consumer* get_consumer() { return m_consumer; } \
+   bool get_query_status() { return m_query_status; } \
+   ~ table##_query(); \
+   static void destroy_query_instance() {  if (m_query != NULL ) { \
+                                              delete m_query;  \
+                                              m_query = NULL;  \
+                                           }  \
+                                        }  \
+};
+
+
 
 //typedef std::vector<std::string> RGMAMultiValue;
 
@@ -69,131 +92,15 @@ public:
 };
 
 
-class gluece_query
-{
-private:
-   static gluece_query* m_query;
-   glite::rgma::Consumer* m_consumer;
-   gluece_query() { m_consumer = NULL; m_query_status = false;}
-   bool m_query_status;
-   void set_query_status( bool b) { m_query_status = b; }
-public:
-   static gluece_query* get_query_instance();
-   bool refresh_query(int rgma_query_timeout);
-   bool refresh_consumer(int rgma_consumer_ttl);
-   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   glite::rgma::Consumer* get_consumer() { return m_consumer; }
-   bool get_query_status() { return m_query_status; }
-   ~gluece_query(); 
-   static void destroy_query_instance() {  if (m_query != NULL ) {
-                                              delete m_query; 
-                                              m_query = NULL;
-                                           }
-                                        }
-};
+QUERY_H(GlueCE)
 
-class AccessControlBaseRule_query
-{
-private:
-   static AccessControlBaseRule_query* m_query;
-   glite::rgma::Consumer* m_consumer;
-   AccessControlBaseRule_query() { m_consumer = NULL; 
-                                   m_query_status = false;}
-   bool m_query_status;
-   void set_query_status( bool b) { m_query_status = b; }
-public:
-   static AccessControlBaseRule_query* get_query_instance();
-   bool refresh_query(int rgma_query_timeout);
-   bool refresh_consumer(int rgma_consumer_ttl);
-   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   glite::rgma::Consumer* get_consumer() { return m_consumer; }
-   bool get_query_status() { return m_query_status; }
-   ~AccessControlBaseRule_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) {
-                                             delete m_query;
-                                             m_query = NULL;
-                                          }
-                                        }
-};
+QUERY_H(GlueCEAccessControlBaseRule)
 
-class SubCluster_query
-{
-private:
-   static SubCluster_query* m_query;
-   glite::rgma::Consumer* m_consumer;
-   SubCluster_query() { m_consumer = NULL; m_query_status = false;}
-   bool m_query_status;
-   void set_query_status( bool b) { m_query_status = b; }
-public:
-   static SubCluster_query* get_query_instance();
-   bool refresh_query(int rgma_query_timeout);
-   bool refresh_consumer(int rgma_consumer_ttl);
-   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   glite::rgma::Consumer* get_consumer() { return m_consumer; }
-   bool get_query_status() { return m_query_status; }
-   ~SubCluster_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) {
-                                             delete m_query;
-                                             m_query = NULL;
-                                          }
-                                        }
+QUERY_H(GlueSubCluster)
 
-};
+QUERY_H(GlueSubClusterSoftwareRunTimeEnvironment)
 
-
-
-class SoftwareRunTimeEnvironment_query
-{
-private:
-   static SoftwareRunTimeEnvironment_query* m_query;
-   glite::rgma::Consumer* m_consumer;
-   SoftwareRunTimeEnvironment_query() { m_consumer = NULL; 
-                                        m_query_status = false;}
-   bool m_query_status;
-   void set_query_status( bool b) { m_query_status = b; }
-public:
-   static SoftwareRunTimeEnvironment_query* get_query_instance();
-   bool refresh_query(int rgma_query_timeout);
-   bool refresh_consumer(int rgma_consumer_ttl);
-   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_consumer() { return m_consumer; }
-   bool get_query_status() { return m_query_status; }
-   ~SoftwareRunTimeEnvironment_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) {
-                                             delete m_query;
-                                             m_query = NULL;
-                                          }
-                                        }
-
-};
-
-
-class CESEBind_query
-{
-private:
-   static CESEBind_query* m_query;
-   glite::rgma::Consumer* m_consumer;
-   CESEBind_query() { m_consumer = NULL; m_query_status = false;}
-   bool m_query_status;
-   void set_query_status( bool b) { m_query_status = b; }
-public:
-   static CESEBind_query* get_query_instance();
-   bool refresh_query(int rgma_query_timeout);
-   bool refresh_consumer(int rgma_consumer_ttl);
-   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber);
-   bool pop_all_tuples ( glite::rgma::ResultSet & out);
-   glite::rgma::Consumer* get_consumer() { return m_consumer; }
-   bool get_query_status() { return m_query_status; }
-   ~CESEBind_query(); 
-   static void destroy_query_instance() { if (m_query != NULL ) {
-                                             delete m_query;
-                                             m_query = NULL;
-                                          }
-                                        }
-
-};
-
+QUERY_H(GlueCESEBind)
                                                                                                              
 namespace rgma {
 // the types of the class factories
