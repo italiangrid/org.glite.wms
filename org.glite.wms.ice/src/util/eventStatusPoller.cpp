@@ -127,6 +127,7 @@ bool eventStatusPoller::getStatus(void)
                     << log4cpp::CategoryStream::ENDLINE;
                 boost::recursive_mutex::scoped_lock M( jobCache::mutex );
                 jobIt = cache->remove( jobIt );
+                jobIt--; // this is necessary to avoid skipping the next item
             } else {
                 _jobstatuslist.push_back( job_stat );
             }

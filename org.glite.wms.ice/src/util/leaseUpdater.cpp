@@ -45,8 +45,8 @@ vector<CreamJob> leaseUpdater::getJobsToUpdate( void )
 {
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
     vector< CreamJob > jobs_to_update;
-
-    for ( jobCache::iterator it = cache->begin(); it != cache->end(); it++ ) {
+    jobCache::iterator it = cache->begin();
+    while ( it != cache->end() ) {
         if ( it->getEndLease() < time(0) ) {
             // Purge expired job
             it = cache->remove( it );
@@ -54,6 +54,7 @@ vector<CreamJob> leaseUpdater::getJobsToUpdate( void )
             if ( it->is_active() && 
                  ( it->getEndLease() - time(0) < threshold ) ) 
                 jobs_to_update.push_back( *it );
+            it++;
         }
     }
 
