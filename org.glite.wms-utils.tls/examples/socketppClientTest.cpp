@@ -16,8 +16,8 @@ int main(int argc, char* argv[])
 	int port=atoi(argv[2]);
 	int res = 0;
 try {
-	socket_pp::GSISocketClient c(host,port);
-	c.ServerContact(contact);
+	socket_pp::SocketClient c(host,port);
+	//c.ServerContact(contact);
 	c.Open();
 	try {
 		std::string message = "Hello World!";

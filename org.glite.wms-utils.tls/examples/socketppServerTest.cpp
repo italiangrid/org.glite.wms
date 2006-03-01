@@ -16,12 +16,13 @@ if ( argc < 1 )
 	exit(4);
 }
 try {
-	socket_pp::GSISocketServer srv(atoi(argv[1]));
+	socket_pp::SocketServer srv(atoi(argv[1]));
 	srv.Open();
 	try {
-		socket_pp::GSISocketAgent* a = srv.Listen();
+		socket_pp::SocketAgent* a = srv.Listen();
 		std::string message;
-		a -> SetTimeout(5);
+                std::cout << "Setting 30 seconds timeout" << std::endl;
+		a -> SetTimeout(30);
 		a -> Receive(message);
 		std::cout << message << std::endl;
 		std::string answer;
