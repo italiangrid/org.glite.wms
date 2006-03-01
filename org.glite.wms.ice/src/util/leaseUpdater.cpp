@@ -49,7 +49,7 @@ vector<CreamJob> leaseUpdater::getJobsToUpdate( void )
     for ( jobCache::iterator it = cache->begin(); it != cache->end(); it++ ) {
         if ( it->getEndLease() < time(0) ) {
             // Purge expired job
-            cache->remove( it++ ); // FIXME: Double check: is this correct??
+            it = cache->remove( it );
         } else {
             if ( it->is_active() && 
                  ( it->getEndLease() - time(0) < threshold ) ) 
