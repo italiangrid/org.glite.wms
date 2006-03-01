@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /** The globus secure shell API definitions. */
 #include <gssapi.h>
@@ -45,7 +45,11 @@ namespace socket_pp {
 	    credential = GSS_C_NO_CREDENTIAL;
 	  }
 	};
-
+        
+        void GSISocketServer::set_auth_timeout(int to)
+        {
+          m_auth_timeout = to;
+        }
 	/**
 	 * Constructor.
 	 * @param p the secure server port.
@@ -55,6 +59,7 @@ namespace socket_pp {
 	{
 	  gsi_logfile = stdout;
 	  limited_proxy_mode = normal;
+          m_auth_timeout = -1 ;
 	}
 
 	/**
@@ -96,6 +101,7 @@ namespace socket_pp {
 #endif
 
 	  ret_flags =  limited_proxy_mode == normal ? GSS_C_GLOBUS_LIMITED_PROXY_FLAG:GSS_C_GLOBUS_LIMITED_PROXY_MANY_FLAG;
+          std::pair<int,int> arg(sock, m_auth_timeout);
 	  major_status =
 	    globus_gss_assist_accept_sec_context(&minor_status,
 						 &context,
@@ -106,9 +112,9 @@ namespace socket_pp {
 						 &token_status,
 						 &delegated_cred,
 						 &get_token,
-						 (void *) &sock,
+						 (void *) &arg,
 						 &send_token,
-						 (void *) &sock);
+						 (void *) &arg);
 	  if( GSS_ERROR(major_status) ) {
 
 #ifndef WITH_SOCKET_EXCEPTIONS      
@@ -377,9 +383,9 @@ namespace socket_pp {
 	        sa -> _delegated_credentials_file = ctx.delegated_credentials_file;
 	        sa -> _certificate_subject        = ctx.certificate_subject;
 	        sa -> _gridmap_name               = ctx.gridmap_name;
-	        sa -> SetSndTimeout(25);
+	        sa -> SetSndTimeout(m_auth_timeout);
 		sa -> Send(1);
-		sa -> SetSndTimeout(0);
+		sa -> SetSndTimeout(-1);
 	      }
 	      
 #ifdef WITH_SOCKET_EXCEPTIONS

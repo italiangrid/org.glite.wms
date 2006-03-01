@@ -34,6 +34,7 @@ socketppinclude_HEADERS = \
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
+	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
 	-DWITH_SOCKET_EXCEPTIONS \
 	-DWITH_GLOBUS_TOOLKIT_2_2

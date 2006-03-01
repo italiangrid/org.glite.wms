@@ -17,17 +17,16 @@
 #ifndef _TOKENS_H
 #define _TOKENS_H
 
-/*
-#include <unistd.h>
-*/
+
+#include <utility>
+
 
 #ifdef __cplusplus
 extern "C++" {
 #endif
 
 int send_token(void *arg, void * token, size_t  token_length);
-int get_token(void *arg, void ** token, size_t * token_length);
-
+int get_token(void *arg, void ** token, size_t *token_length);
 #ifdef __cplusplus
 }
 #endif

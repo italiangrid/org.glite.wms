@@ -81,6 +81,7 @@ class GSISocketClient : public SocketClient
    * @return true for successful close, false otehrwise.
    */
   virtual bool Close();
+  void set_auth_timeout(int to);
 
  protected:
   /**
@@ -99,6 +100,7 @@ class GSISocketClient : public SocketClient
    /** Whether to delegate credentials or not. */ 
    bool _delegate_credentials;
    //bool _do_mutual_authentication;
+   int m_auth_timeout;
 };
 
 } // namespace socket_pp

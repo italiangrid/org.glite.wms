@@ -73,24 +73,26 @@ class SocketAgent
    * @param the string to fill with host name.
    */
   std::string PeerName();
+  bool is_recv_pending();
+  bool is_send_pending();
   /**
    * Set the connection timeout.
    * @param secs a size_t representing the timeout in seconds.
    * @return tru on success, false otherwise.
    */
-  bool SetTimeout(size_t);
+  bool SetTimeout(int);
   /**
    * Set the connection timeout.
    * @param secs a size_t representing the timeout in seconds while receiving data.
    * @return tru on success, false otherwise.
    */
-  bool SetRcvTimeout(size_t);
+  bool SetRcvTimeout(int);
    /**
    * Set the connection timeout.
    * @param secs a size_t representing the timeout in seconds while sending data.
    * @return tru on success, false otherwise.
    */
-  bool SetSndTimeout(size_t);
+  bool SetSndTimeout(int);
   /**
    * Returns the host name.
    * @param the string to fill with host name.
@@ -144,6 +146,8 @@ protected:
 protected:
   /** The socket descriptor. */
   int sck;
+  int m_recv_timeout;
+  int m_send_timeout;
 };
 
 } // namespace socket_pp

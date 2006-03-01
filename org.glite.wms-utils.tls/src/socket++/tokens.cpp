@@ -1,5 +1,3 @@
-// $Id:
-
 /**
  * @file tokens.cpp
  * @brief The implementation for token transmission and reception.
@@ -8,6 +6,8 @@
  * @author Salvatore Monforte salvatore.monforte@ct.infn.it
  * @author comments by Marco Pappalardo marco.pappalardo@ct.infn.it and Salvatore Monforte
  */
+
+// $Id$
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -23,6 +23,37 @@ const int _TIMEOUT_ = 300;
 
 namespace socket_pp = glite::wmsutils::tls::socket_pp;
 
+namespace {
+
+bool is_recv_pending(int sck, int to)
+{
+  fd_set readfs;
+  struct timeval timeout;
+  timeout.tv_sec=to;
+  timeout.tv_usec=0;
+  FD_ZERO(&readfs);
+  FD_SET(sck,&readfs); 
+  int result(
+    select(sck+1,&readfs,0,0,to<0?0:&timeout)
+  );
+  return result==1;
+}
+
+bool is_send_pending(int sck, int to)
+{
+  fd_set sendfs;
+  struct timeval timeout;
+  timeout.tv_sec=to;
+  timeout.tv_usec=0;
+  FD_ZERO(&sendfs);
+  FD_SET(sck,&sendfs);
+   int result(
+    select(sck+1,0,&sendfs,0,to<0?0:&timeout)
+  );
+  return result==1;
+}
+
+}
 /**
  * Send a gss token.
  * This method send gss tokens using GSI socket objects.
@@ -35,13 +66,9 @@ int send_token(void *arg, void *token, size_t token_length)
 {
     size_t			num_written = 0;
     ssize_t			n_written;
-    int 			fd = *( (int *) arg );
+    int 			fd = ((std::pair<int,int>*)arg)->first;
+    int				to = ((std::pair<int,int>*)arg)->second;
     unsigned char		token_length_buffer[4];
-    // struct timeval timeout;
-    // timeout.tv_sec = _TIMEOUT_; 
-    // timeout.tv_usec = 0;
- 
-    // setsockopt( fd, SOL_SOCKET, SO_SNDTIMEO, (void *) &timeout, sizeof(struct timeval) ); 
 
     if( !token ) { 
         char msg[16];
@@ -58,7 +85,8 @@ int send_token(void *arg, void *token, size_t token_length)
     token_length_buffer[3] = (unsigned char) ((token_length      ) & 0xff);
 
     /* send the token length */
-    while(num_written < 4)
+    while (num_written < 4 && 
+      is_send_pending(fd, to))
     {
       n_written = send(fd, token_length_buffer + num_written, 4 - num_written,0);
       
@@ -72,12 +100,16 @@ int send_token(void *arg, void *token, size_t token_length)
       else
 	num_written += n_written;
     }
-    
+
+    if(num_written < 4) return -1;
+
     /* send the token */
 
     num_written = 0;
-    while(num_written < token_length)
+    while (num_written < token_length &&
+      is_send_pending(fd,to))
     {
+       
        n_written = send(fd, ((u_char *)token) + num_written, token_length - num_written,0);
        
        if(n_written < 0)
@@ -90,7 +122,8 @@ int send_token(void *arg, void *token, size_t token_length)
        else
 	 num_written += n_written;
     }
-    
+ 
+    if(num_written < token_length) return -1;  
     return 0;
 }
 
@@ -106,17 +139,12 @@ int get_token(void *arg, void **token, size_t *token_length)
 {
     size_t			num_read = 0;
     ssize_t			n_read;
-    int 			fd = *( (int *) arg );
+    int 			fd = ((std::pair<int,int>*)arg)->first;
+    int 			to = ((std::pair<int,int>*)arg)->second;
     unsigned char		token_length_buffer[4];
-    // struct timeval timeout;
-    // timeout.tv_sec = _TIMEOUT_;
-    // timeout.tv_usec = 0;
- 
-    // setsockopt( fd, SOL_SOCKET, SO_RCVTIMEO, (void *) &timeout, sizeof(struct timeval) );
-
-    /* read the token length */
-
-    while(num_read < 4)
+    
+    while (num_read < 4 &&
+      is_recv_pending(fd, to))
     {
       
       n_read = recv(fd,token_length_buffer + num_read, 4 - num_read,0);
@@ -133,6 +161,8 @@ int get_token(void *arg, void **token, size_t *token_length)
 	else
 	    num_read += n_read;
     }
+
+    if(num_read < 4) return -1;
     num_read = 0;
     /* decode the token length from network byte order: 4 byte, big endian */
 
@@ -159,7 +189,8 @@ int get_token(void *arg, void **token, size_t *token_length)
     /* receive the token */
 
     num_read = 0;
-    while(num_read < *token_length)
+    while (num_read < *token_length &&
+      is_recv_pending(fd,to))  
     {
       n_read = recv(fd, ((u_char *) (*token)) + num_read,(*token_length) - num_read,0);
 	
@@ -175,5 +206,7 @@ int get_token(void *arg, void **token, size_t *token_length)
 	    num_read += n_read;
     }
 
+    if(num_read<*token_length) return -1;
     return 0;
 }
+

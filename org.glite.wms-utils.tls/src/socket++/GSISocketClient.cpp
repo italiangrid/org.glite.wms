@@ -8,7 +8,6 @@
 // $Id$
 
 #include <errno.h>
-
 /** This class header file. */
 #include "glite/wmsutils/tls/socket++/GSISocketClient.h"
 /** The communication agent definition file. */
@@ -28,6 +27,11 @@ namespace wmsutils {
 namespace tls {
 namespace socket_pp {
 
+
+void GSISocketClient::set_auth_timeout(int to)
+{
+ this -> m_auth_timeout = to;
+}
 /**
  * Constructor.
  * @param p the secure server port.
@@ -39,6 +43,7 @@ GSISocketClient::GSISocketClient(const std::string& h, int p) : SocketClient(h,p
   gss_context = GSS_C_NO_CONTEXT;
   _server_contact = "";
   _delegate_credentials = true;
+  m_auth_timeout = -1;
   //_do_mutual_authentication = true;
 }
 
@@ -109,11 +114,11 @@ bool GSISocketClient::InitGSIAuthentication(int sock)
     req_flags = GSS_C_MUTUAL_FLAG;   
     
     if(_delegate_credentials) req_flags |= GSS_C_DELEG_FLAG;  
-    
-    snprintf(service, sizeof(service), "host@%s", host.c_str()); /* XXX */
 
+    snprintf(service, sizeof(service), "host@%s", host.c_str()); /* XXX */
     /* initialize the security context */
     /* credential has to be fill in beforehand */
+    std::pair<int,int> arg(sock, m_auth_timeout);
     major_status =
         globus_gss_assist_init_sec_context(&minor_status,
                                            credential,
@@ -123,9 +128,9 @@ bool GSISocketClient::InitGSIAuthentication(int sock)
                                            &ret_flags,
                                            &token_status,
                                            get_token,
-                                           (void *) &sock,
+                                           (void *) &arg,
                                            send_token,
-                                           (void *) &sock);
+                                           (void *) &arg);
     
     gss_release_cred(&minor_status, &credential);
 
@@ -217,9 +222,9 @@ bool GSISocketClient::Open()
    try {
 #endif
    int ack = 0;  
-   static_cast<GSISocketAgent*>(agent) ->  SetRcvTimeout(25);
+   static_cast<GSISocketAgent*>(agent) ->  SetRcvTimeout(m_auth_timeout);
    result = static_cast<GSISocketAgent*>(agent) -> Receive( ack );
-   static_cast<GSISocketAgent*>(agent) ->  SetRcvTimeout(0);
+   static_cast<GSISocketAgent*>(agent) ->  SetRcvTimeout(-1);
 #ifdef WITH_SOCKET_EXCEPTIONS
    }  
    catch(...)
@@ -256,16 +261,3 @@ bool GSISocketClient::Close()
 } // namespace tls
 } // namespace wmsutils
 } // namespace glite
-
-
-
-
-
-
-
-
-
-
-
-
-

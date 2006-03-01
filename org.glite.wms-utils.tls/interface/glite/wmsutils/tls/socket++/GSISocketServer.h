@@ -4,7 +4,7 @@
  *  copyright : (C) 2001 by INFN
  ***************************************************************************/
 
-// $Id:
+// $Id$
 
 /**
  * @file GSISocketServer.h
@@ -80,6 +80,7 @@ class GSISocketServer : public SocketServer
   void RedirectGSIOutput(FILE *fp) { if(fp!=NULL) gsi_logfile = fp; }
  
   void LimitedProxyMode(limited_proxy_mode_t mode) { limited_proxy_mode = mode; }
+  void set_auth_timeout(int to);
 		  
  private:
   /**
@@ -92,6 +93,7 @@ class GSISocketServer : public SocketServer
   /** The reference to the log file. */
   FILE *gsi_logfile;
   limited_proxy_mode_t limited_proxy_mode;
+  int m_auth_timeout;
 };
 
 } // namespace socket_pp

@@ -39,6 +39,7 @@ namespace socket_pp {
 SocketAgent::SocketAgent()
 {
   memset ((char *)&peeraddr_in, 0, sizeof(struct sockaddr_in));
+  m_recv_timeout = m_send_timeout = -1;
 }
 
 /**
@@ -49,37 +50,56 @@ SocketAgent::~SocketAgent()
   close(sck);
 }
 
+bool SocketAgent::is_recv_pending()
+{
+  fd_set readfs;
+  struct timeval timeout;
+  timeout.tv_sec=m_recv_timeout;
+  timeout.tv_usec=0;
+  FD_ZERO(&readfs);
+  FD_SET(sck,&readfs);
+  int result(
+    select(sck+1,&readfs,0,0,m_recv_timeout<0?0:&timeout)
+  );
+  return result==1;
+}
+
+bool SocketAgent::is_send_pending()
+{
+  fd_set sendfs;
+  struct timeval timeout;
+  timeout.tv_sec=m_send_timeout;
+  timeout.tv_usec=0;
+  FD_ZERO(&sendfs);
+  FD_SET(sck,&sendfs);
+   int result(
+    select(sck+1,0,&sendfs,0,m_send_timeout<0?0:&timeout)
+  );
+  return result==1;
+}
+
 /**
  * Set the connection timeout.
  * @param secs a size_t representing the timeout in seconds.
  * @return tru on success, false otherwise.
  */
-bool SocketAgent::SetTimeout( size_t secs )
+bool SocketAgent::SetTimeout( int secs )
 {
-   struct timeval timeout;
-   timeout.tv_sec = secs;
-   timeout.tv_usec = 0;
+   m_send_timeout = m_recv_timeout = secs;
  
-   return ( !setsockopt( sck, SOL_SOCKET, SO_SNDTIMEO, (void *) &timeout, sizeof(struct timeval)) &&
-            !setsockopt( sck, SOL_SOCKET, SO_RCVTIMEO, (void *) &timeout, sizeof(struct timeval)) );
+   return true;
 }
 
-bool SocketAgent::SetSndTimeout( size_t secs )
+bool SocketAgent::SetSndTimeout( int secs )
 {  
-   struct timeval timeout;
-   timeout.tv_sec = secs;
-   timeout.tv_usec = 0;
- 
-   return !setsockopt( sck, SOL_SOCKET, SO_SNDTIMEO, (void *) &timeout, sizeof(struct timeval) );
+   m_send_timeout = secs;
+   return true;
 }
 
-bool SocketAgent::SetRcvTimeout( size_t secs )
-{  
-   struct timeval timeout;
-   timeout.tv_sec = secs;
-   timeout.tv_usec = 0;
- 
-   return !setsockopt( sck, SOL_SOCKET, SO_RCVTIMEO, (void *) &timeout, sizeof(struct timeval) );
+bool SocketAgent::SetRcvTimeout( int secs )
+{
+  m_recv_timeout = secs;
+  return true;  
 }
 
 /**
@@ -108,7 +128,7 @@ bool SocketAgent::Send(long l)
   unsigned char long_buffer[8];
  
   for( int i=0 ; i<8; i++) 
-  	long_buffer[i] = (unsigned char) ((l >> (56-(i*8))) & 0xff);
+  	long_buffer[i] = (unsigned char) ((l >> ((sizeof(l)-1 -i)*8)) & 0xff);
  
   return sendbuffer((char*)long_buffer,8);
 }
@@ -153,7 +173,7 @@ bool SocketAgent::Receive( long& l )
   
   if( result = readbuffer((char*)long_buffer,8))  {
     for (int i=0; i<8; i++) {
-      l  |= (((unsigned long) long_buffer[i]) << (56-i*8)) & ((1L << 64) - 1);
+      l  |= (((unsigned long) long_buffer[i]) << ((sizeof(l)-1-i)*8)) & ((1L << (sizeof(l)*8) ) - 1);
     }     
   }
   return result;
@@ -197,7 +217,8 @@ bool SocketAgent::sendbuffer(char* buf, unsigned int size)
   unsigned int tot_written = 0;
   int num_written = 0;
   
-  while(tot_written < size) {
+  while(tot_written < size &&
+        is_send_pending() ) {
     
     num_written = send(sck, buf + tot_written, size - tot_written,0);
     
@@ -213,7 +234,10 @@ bool SocketAgent::sendbuffer(char* buf, unsigned int size)
     }
     else
       tot_written += num_written;
-  }
+  } 
+
+  if (tot_written < size) result=false;
+
 #ifdef WITH_SOCKET_EXCEPTIONS
   if( !result ) {
     
@@ -240,7 +264,9 @@ bool SocketAgent::readbuffer(char* buf, unsigned int size)
   int num_read = 0;
   unsigned int tot_read = 0;
 
-  while(tot_read < size) {
+  while(tot_read < size &&
+        is_recv_pending())
+  {
     
     num_read = recv(sck,buf + tot_read, size - tot_read,0);
     
@@ -257,6 +283,9 @@ bool SocketAgent::readbuffer(char* buf, unsigned int size)
       tot_read += num_read;
     }
   }
+
+  if (tot_read < size) result = false;
+
   #ifdef WITH_SOCKET_EXCEPTIONS
   if( !result ) {
      char msg[32];
@@ -281,8 +310,8 @@ std::string SocketAgent::PeerName()
     hp = gethostbyaddr ((char *) &peeraddr_in.sin_addr,
 			sizeof (struct in_addr),
 			peeraddr_in.sin_family);
-  return std::string(hp->h_name);
-  
+  if(hp) return std::string(hp->h_name);
+  else return PeerAddr();
 }
 
 /**                                                                                               

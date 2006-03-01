@@ -15,8 +15,6 @@
 #include <string>
 #include <unistd.h>
 
-//#include "glite/wmsutils/thirdparty/globus_ssl_utils/sslutils.h"
-
 /** This class header file. */
 #include "glite/wmsutils/tls/socket++/GSISocketAgent.h"
 /** The tokens transmission and reception functionality definitions file. */
@@ -85,7 +83,7 @@ bool GSISocketAgent::Send(int i)
     OM_uint32        maj_stat, min_stat;
     input_token.value = (void*)int_buffer;
     input_token.length = 4; /* ??? */
-
+    std::pair<int,int> arg(sck, m_send_timeout);
     /* set this flag to 0 if you want to encrypt messages. set it to nonzero
        if only integrity protection is requested */
 
@@ -100,7 +98,7 @@ bool GSISocketAgent::Send(int i)
 			 &output_token);
 
     return_status = !GSS_ERROR(maj_stat) &&
-      !send_token((void*)&sck, output_token.value, output_token.length);
+      !send_token((void*)&arg, output_token.value, output_token.length);
 
     gss_release_buffer(&min_stat, &output_token);
   }    
@@ -131,7 +129,7 @@ bool GSISocketAgent::Send(const std::string& s)
     OM_uint32        maj_stat, min_stat;
     input_token.value = (void*)s.c_str();
     input_token.length = s.length() + 1; /* ??? */
-     
+    std::pair<int,int> arg(sck, m_send_timeout); 
     /* set this flag to 0 if you want to encrypt messages. set it to nonzero
        if only integrity protection is requested */
      
@@ -146,7 +144,7 @@ bool GSISocketAgent::Send(const std::string& s)
 			 &output_token);
      
     return_status = !GSS_ERROR(maj_stat) &&
-      !send_token((void*)&sck, output_token.value, output_token.length);
+      !send_token((void*)&arg, output_token.value, output_token.length);
      
     gss_release_buffer(&min_stat, &output_token);
   }	
@@ -176,9 +174,9 @@ bool GSISocketAgent::Receive(int& i)
   gss_buffer_desc output_token;
 
   input_token.value = NULL;
-
+  std::pair<int,int> arg(sck, m_recv_timeout);
   if(return_status = !(gss_context == GSS_C_NO_CREDENTIAL ||
-		       get_token(&sck, &input_token.value, &input_token.length) != 0)) {
+		       get_token(&arg, &input_token.value, &input_token.length) != 0)) {
 
     maj_stat = gss_unwrap (&min_stat,
 			   gss_context,
@@ -224,9 +222,9 @@ bool GSISocketAgent::Receive(std::string& s)
   OM_uint32 maj_stat, min_stat;
   gss_buffer_desc input_token;
   gss_buffer_desc output_token;
-
+  std::pair<int,int> arg(sck, m_recv_timeout);
   if(return_status = !(gss_context == GSS_C_NO_CREDENTIAL ||
-		       get_token(&sck, &input_token.value, &input_token.length) != 0)) {
+		       get_token(&arg, &input_token.value, &input_token.length) != 0)) {
 	  
     maj_stat = gss_unwrap (&min_stat,
 			   gss_context,
