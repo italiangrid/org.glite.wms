@@ -47,7 +47,8 @@ vector<CreamJob> leaseUpdater::getJobsToUpdate( void )
     vector< CreamJob > jobs_to_update;
 
     for ( jobCache::const_iterator it = cache->begin(); it != cache->end(); it++ ) {
-        if ( it->getEndLease() - time(0) > threshold ) {
+        if ( it->is_active() && 
+             ( it->getEndLease() - time(0) > threshold ) ) {
             jobs_to_update.push_back( *it );
         }
     }
@@ -58,20 +59,53 @@ vector<CreamJob> leaseUpdater::getJobsToUpdate( void )
 void leaseUpdater::updateJobs( vector< CreamJob > jobs )
 {
     const time_t delta = 60*60; // FIXME: hardcoded default of lease renewal: 1 hour
+
+    creamClient->clearSoap();
+
+    // Prepare the list of jobIDs for which the lease should be increased
     for( vector< CreamJob >::iterator it = jobs.begin(); it != jobs.end(); it++ ) {
-        time_t newEndLease( it->getEndLease() + delta );
+        if ( it->is_active() ) {
 
-        log_dev->infoStream()
-            << "leaseUpdater:: updating lease for cream jobid=["
-            << it->getJobID()
-            << "]; old lease ends " << it->getEndLease()
-            << " new lease ends " << newEndLease 
-            << log4cpp::CategoryStream::ENDLINE;
+            map< string, time_t > newLease;
+            vector< string > jobids;
 
-        it->setEndLease( newEndLease );
-        // FIXME: Here we actually should update the lease using the appropriate interface method. If lease renewal fails, check if the lease expired. If so, the job is lost and should be removed from the cache
-        cache->put( *it );
-    }    
+            jobids.push_back( it->getJobID() );
+
+            // Renew the lease
+            try {
+                creamClient->Authenticate( it->getUserProxyCertificate() );
+                creamClient->Lease( it->getCreamURL().c_str(), jobids, delta, newLease );
+            } catch ( soap_proxy::soap_ex& ex ) {
+                // FIXME: what to do?
+            }
+
+            if ( newLease.find( it->getJobID() ) != newLease.end() ) {
+
+                // The lease for this job has been updated
+                // So update the job cache as well...
+
+                log_dev->infoStream()
+                    << "leaseUpdater:: updating lease for cream jobid=["
+                    << it->getJobID()
+                    << "]; old lease ends " << it->getEndLease()
+                    << " new lease ends " << newLease[ it->getJobID() ]
+                    << log4cpp::CategoryStream::ENDLINE;
+            
+                it->setEndLease( newLease[ it->getJobID() ] );
+                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+                cache->put( *it );            
+            } else {
+                // there was an error updating the lease
+                log_dev->errorStream()
+                    << "leaseUpdater:: unable to update lease for cream jobid=["
+                    << it->getJobID()
+                    << "]; old lease ends " << it->getEndLease()
+                    << log4cpp::CategoryStream::ENDLINE;
+
+                // FIXME: purge expired jobs
+            }
+        }
+    }
 }
 
 void leaseUpdater::body( void )
