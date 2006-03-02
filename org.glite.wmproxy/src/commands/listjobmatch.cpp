@@ -42,12 +42,12 @@ namespace wmputilities  = glite::wms::wmproxy::utilities;
 
 using namespace std;
 
-bool
-listjobmatchex(Command* cmd)
+string
+listjobmatchex(const string &credentials_file,  string &pipepath)
 {
 	int iserror;
     std::string reason;
-    std::string pipepath;
+    //std::string pipepath;
     std::string result;
     
     const std::string error_attribute("ERROR_ATTRIBUTE");
@@ -57,10 +57,10 @@ listjobmatchex(Command* cmd)
     std::vector<std::string> match_strings;
     std::vector<std::string> match_list;
 
-	std::string credentials_file;
-	cmd->getParam("X509UserProxy", credentials_file);
+	//std::string credentials_file;
+	//cmd->getParam("X509UserProxy", credentials_file);
 	
-    cmd -> getParam("file", pipepath);
+    //cmd -> getParam("file", pipepath);
     MatchingPipe_nb p(pipepath);
     try {
     	if (p.open()) {
@@ -82,7 +82,7 @@ listjobmatchex(Command* cmd)
       	edglog(severe) << "* Exceptions caught while waiting for ListMatch result from WM."   << result << std::endl;
       	edglog(severe) << "* " << ex << std::endl;
       	edglog(severe) << "*****************************************************************" << result << std::endl;
-      	return false;
+      	//return false;
     } catch (...) {
     	// Removing User Proxy and Pipe
     	remove(pipepath.c_str());
@@ -91,49 +91,50 @@ listjobmatchex(Command* cmd)
       	edglog(severe) << "*****************************************************************" << result << std::endl;
       	edglog(severe) << "* Exceptions caught while waiting for ListMatch result from WM."   << result << std::endl;
       	edglog(severe) << "*****************************************************************" << result << std::endl;
-      	return false;
+      	//return false;
     }
 
     try { 
       	ad.reset(utilities::parse_classad(result) );
     } catch( utilities::CannotParseClassAd& e ) { 
       	edglog(severe) << "Cannot Parse classAd: " << result << std::endl;
-      	return false; 
+      	//return false; 
     }
 
     if (ad.get()->EvaluateAttrInt(error_attribute, iserror) ) {
       edglog( severe ) << "Error in listjobmatchex: Cannot evaluate int (error) "
       	"attribute in" << std::endl;
-      cmd->setParam("MatchMakingDone", false);
-      cmd->setParam("MatchMakingError", std::string( "Error in ListJobMatchEx. "
-      	"Reason: cannot evaluate int attribute in matchmaking result.")); 
-      return false;
+      //cmd->setParam("MatchMakingDone", false);
+      //cmd->setParam("MatchMakingError", std::string( "Error in ListJobMatchEx. "
+      //	"Reason: cannot evaluate int attribute in matchmaking result.")); 
+      //return false;
     }
 
 	if (iserror) {
-    	cmd->setParam("MatchMakingDone", false);
+    	//cmd->setParam("MatchMakingDone", false);
       	match_list.push_back(GLITE_WMS_WMPMATCHMAKINGERROR);
       	if (ad.get()->EvaluateAttrString(reason_attribute, reason)) {
-			cmd->setParam("MatchMakingError", reason);
+			//cmd->setParam("MatchMakingError", reason);
 			match_list.push_back(reason);
       	} else {
-			cmd->setParam("MatchMakingError", std::string("Unknown reason"));
+			//cmd->setParam("MatchMakingError", std::string("Unknown reason"));
 			match_list.push_back("Unknown reason");
       	}
-      	cmd->setParam( "MatchResult", match_list );
-      	return false;
+      	//cmd->setParam( "MatchResult", match_list );
+      	//return false;
 	}
 
     if (!utilities::EvaluateAttrListOrSingle(*(ad.get()),"match_result", match_strings)) { 
-      cmd -> setParam("MatchMakingDone", true); 
-      cmd -> setParam("MatchMakingError", std::string("No Matching Resources found."));
+      //cmd -> setParam("MatchMakingDone", true); 
+      //cmd -> setParam("MatchMakingError", std::string("No Matching Resources found."));
       edglog(critical) << "No Matching Resources found." << std::endl; 
-      return true; 
+      //return true; 
     }
 
-    cmd -> setParam("MatchMakingDone", true);       
-    cmd -> setParam("MatchResult", result);
-    return true;
+    //cmd -> setParam("MatchMakingDone", true);       
+    //cmd -> setParam("MatchResult", result);
+    //return true;
+    return result;
   }
 
 }

@@ -8,6 +8,11 @@
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 //
 
+// Boost
+#include <boost/pool/detail/singleton.hpp>
+
+#include "wmp2wm.h"
+
 #include <fstream>
 #include <errno.h>
 #include <signal.h>
@@ -40,7 +45,8 @@
 #include "authorizer/wmpvomsauthz.h"
 
 // WMPManager
-#include "wmpmanager.h"
+//#include "wmpmanager.h"
+//#include "wmp2wm.h"
 
 // Logger
 #include "utilities/logging.h"
@@ -73,6 +79,7 @@
 
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
 #include "glite/wms/common/utilities/edgstrstream.h"
@@ -730,7 +737,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	job_id_struct->id = stringjid;
 	job_id_struct->name = new string("");
 	job_id_struct->path = new string(getJobInputSBRelativePath(stringjid));
-edglog(debug)<<">>>####Setting path field in the JobIDStruct=" <<job_id_struct->path << "\n";
 	job_id_struct->childrenJob = new vector<JobIdStructType*>;
 	jobRegister_response.jobIdStruct = job_id_struct;
 	
@@ -1007,8 +1013,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Logging delegation id & original jdl
 	edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
 	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
-	//edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
-	//wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 	
 	wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 
@@ -1105,7 +1109,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	//** END
 	
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -1133,7 +1136,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 		throw ex;
 	}
 	
-	//if (!wmplogger.isRegisterEventOnly()) {
 	string seqcode = wmplogger.isStartAllowed();
 	if (seqcode == "") {
 		edglog(error)<<"The job has already been started"<<endl;
@@ -1154,16 +1156,6 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobStart()", wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 	}
-	/*if (event.jdl == "") {
-		edglog(critical)<<"No Register event found quering LB; unable to get "
-			"registered jdl"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"jobStart()", wmputilities::WMS_IS_FAILURE,
-			"Unable to get registered jdl"
-			"\n(please contact server administrator)");
-	}
-	
-	edglog(debug)<<"JDL to Start:\n"<<event.jdl<<endl;*/
 	
 	string jdlpath = wmputilities::getJobJDLToStartPath(*jid);
 	if (!wmputilities::fileExists(jdlpath)) {
@@ -1253,6 +1245,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		edglog_fn("wmpoperations::submit");
 		
 		if (issubmit) {
+			// Starting the job
 			string seqcode =
 				wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 			wmplogger.setSequenceCode(const_cast<char*>(seqcode.c_str()));
@@ -1278,17 +1271,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
            			"start operation already in progress");
 			}
 		}
-		
-		// This log is needed as the first step inside submit method
-		// WARNING: DO NOT move it in a different location
-		/*edglog(debug)<<"Logging LOG_ACCEPT..."<<endl;
-		int error = wmplogger.logAcceptEventSync();
-		if (error) {
-			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
-			throw LBException(__FILE__, __LINE__,
-				"submit()", wmputilities::WMS_LOGGING_ERROR,
-				"unable to complete operation");
-		}*/
 			
 		if (conf.getAsyncJobStart()) {
 			// \/ Copy environment and restore it right after FCGI_Finish
@@ -1437,6 +1419,13 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			    }
 			}
 			
+			// Inserting sequence code
+			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
+			if (jad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
+				jad->delAttribute(JDL::LB_SEQUENCE_CODE);
+			}
+			jad->addAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+		
 			jdltostart = jad->toString();
 			
 			delete jad;
@@ -1605,6 +1594,13 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				}
 		    }
 			
+			// Inserting sequence code
+			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
+			if (dag->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
+				dag->removeAttribute(JDL::LB_SEQUENCE_CODE);
+			}
+			dag->setReserved(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+			
 			jdltostart = dag->toString();
 			
 			delete dag;
@@ -1630,21 +1626,18 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		*/
 		// /\
 		
-		wmpmanager::WMPManager manager(&wmplogger);
-		// Vector of parameters to runCommand()
-		vector<string> params;
-		params.push_back(jdltostart);
-		params.push_back(proxy);
-		params.push_back(wmputilities::getJobDirectoryPath(*jid));
-		params.push_back(string(getenv(DOCUMENT_ROOT)));
+		string filequeue = configuration::Configuration::instance()->wm()->input();
+		boost::details::pool::singleton_default<WMP2WM>::instance()
+			.init(filequeue, &wmplogger);
 		
-		wmp_fault_t wmp_fault = manager.runCommand("JobSubmit", params);
+		boost::details::pool::singleton_default<WMP2WM>::instance()
+			.submit(jdltostart);
 		
-		if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
+		/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 			edglog(severe)<<"Error in runCommand: "<<wmp_fault.message<<endl;
 			throw JobOperationException(__FILE__, __LINE__,
 				"submit()", wmp_fault.code, wmp_fault.message);
-		}
+		}*/
 		
 		/*for (backupenv; *backupenv; backupenv++) {
 		    free(*backupenv);
@@ -1785,7 +1778,6 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	}*/
 	
 	// Getting job identifier from register response
-	//string jobid = jobRegister_response.jobIdStruct->id;
 	string jobid = reginfo.first;
 	edglog(debug)<<"Starting registered job: "<<jobid<<endl;
 
@@ -1793,7 +1785,6 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	JobId *jid = new JobId(jobid);
 	
 	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
@@ -1902,8 +1893,9 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	}
 	
 	// Getting sequence code from jdl
-	Ad *ad = new Ad();
-	ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
+	//Ad *ad = new Ad();
+	//ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
+	Ad *ad = new Ad(status.getValString(JobStatus::JDL));
 	string seqcode = "";
 	if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 		seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
@@ -1932,11 +1924,16 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			"Unable to set User Proxy for LB context");
 	}
 	
-	// Vector of parameters to pass to runCommand()
-	vector<string> params;
+	edglog(debug)<<"Seqcode: "<<seqcode<<endl;
+	if (seqcode != "") {
+		wmplogger.setSequenceCode(seqcode);
+		wmplogger.incrementSequenceCode();
+	}
 	
-	// TBC
-	wmpmanager::WMPManager manager(&wmplogger);
+	string filequeue = configuration::Configuration::instance()->wm()->input();
+	boost::details::pool::singleton_default<WMP2WM>::instance()
+		.init(filequeue, &wmplogger);
+					
 	wmp_fault_t wmp_fault;
 	string envsandboxpath;
 	
@@ -1966,19 +1963,15 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		case JobStatus::READY:
 		case JobStatus::SCHEDULED:
 		case JobStatus::RUNNING:
-			params.push_back(jid->toString());
-			params.push_back(jobpath);
-			params.push_back(string(getenv(DOCUMENT_ROOT)));
-			params.push_back(seqcode);
 			
-			wmp_fault = manager.runCommand("JobCancel", params,
-				&jobCancel_response);
+			boost::details::pool::singleton_default<WMP2WM>::instance()
+				.cancel(jid->toString(), string(wmplogger.getSequence()));
 			
-			if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
+			/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 				edglog(severe)<<"Error in runCommand: " + wmp_fault.message<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
 					"jobCancel()", wmp_fault.code, wmp_fault.message);
-			}
+			}*/
 			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 				"Cancelled by user", true, true);
 			break;
@@ -1987,19 +1980,15 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			// DONE_CODE = DONE_CODE_FAILED (resubmission is possible)
 			if (status.getValInt(JobStatus::DONE_CODE)
 					== JobStatus::DONE_CODE_FAILED) {
-				params.push_back(jid->toString());
-				params.push_back(jobpath);
-				params.push_back(string(getenv(DOCUMENT_ROOT)));
-				params.push_back(seqcode);
 				
-				wmp_fault = manager.runCommand("JobCancel", params,
-					&jobCancel_response);
+				boost::details::pool::singleton_default<WMP2WM>::instance()
+					.cancel(jid->toString(), string(wmplogger.getSequence()));
 				
-				if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
+				/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 					edglog(severe)<<"Error in runCommand: " + wmp_fault.message<<endl;
 					throw JobOperationException(__FILE__, __LINE__,
 						"jobCancel()", wmp_fault.code, wmp_fault.message);
-				}
+				}*/
 				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 					"Cancelled by user", true, true);
 			} else {
@@ -2062,22 +2051,20 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
 		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 		
-		vector<string> params;
-		wmpmanager::WMPManager manager(&wmplogger);
-		params.push_back(ad->toString());
-		params.push_back(singleton_default<WMProxyConfiguration>::instance()
-				.getListMatchRootPath());
-		params.push_back(delegatedproxy);
+		string filequeue = configuration::Configuration::instance()->wm()->input();
+		boost::details::pool::singleton_default<WMP2WM>::instance()
+			.init(filequeue, &wmplogger);
+		
+		boost::details::pool::singleton_default<WMP2WM>::instance()
+			.match(ad->toString(), conf.getListMatchRootPath(), delegatedproxy);
 		
 		delete ad;
 		
-		wmp_fault_t wmp_fault = manager.runCommand("ListJobMatch", params,
-			&jobListMatch_response);
-		if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
+		/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
 			edglog(severe)<<"Error in runCommand: "<<wmp_fault.message<<endl;
 			throw JobOperationException(__FILE__, __LINE__, "listmatch()",
 				wmp_fault.code, wmp_fault.message);
-		}
+		}*/
 		result = jobListMatch_response.CEIdAndRankList->file->size(); 
 	} else {
 		edglog(error)<<"Operation permitted only for normal job"<<endl;

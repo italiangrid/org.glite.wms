@@ -10,11 +10,14 @@
 
 #include "wmpstructconverter.h"
 
+#include "utilities/wmputils.h"
+
 #include "glite/wms/jdl/RequestAdExceptions.h"
 
 using namespace std;
 using namespace glite::wms::jdl;
 using namespace glite::wmsutils::exception; //Exception
+using namespace glite::wms::wmproxy::utilities;
 
 //
 // gSOAP dependant converters
@@ -72,6 +75,7 @@ convertToGSOAPJobIdStructTypeVector(vector<JobIdStructType*>
 			element = new ns1__JobIdStructType;
 			element->id = (*graph_struct_type_vector)[i]->id;
 			element->name = (*graph_struct_type_vector)[i]->name;
+			element->path = (*graph_struct_type_vector)[i]->path;
 			if ((*graph_struct_type_vector)[i]) { // Vector not NULL
 				element->childrenJob = *convertToGSOAPJobIdStructTypeVector(
 					(*graph_struct_type_vector)[i]->childrenJob);
@@ -252,6 +256,7 @@ convertJobIdStruct(vector<JobIdStruct*> &job_struct)
 		graph_struct = new JobIdStructType();
 		graph_struct->id = job_struct[i]->jobid.toString(); // should be equal to: jid->toString()
 		graph_struct->name = job_struct[i]->nodeName;
+		graph_struct->path = new string(getJobInputSBRelativePath(graph_struct->id));
 		graph_struct->childrenJob = convertJobIdStruct(job_struct[i]->children);
 		graph_struct_type->push_back(graph_struct);
 	}

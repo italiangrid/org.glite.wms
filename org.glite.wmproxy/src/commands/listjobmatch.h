@@ -19,6 +19,8 @@ extern "C++"
 {
   bool listjobmatch(Command*);
   bool listjobmatchex(Command* cmd);
+  std::string
+listjobmatchex(const std::string &credentials_file, std::string &pipepath);
 }
 
 }

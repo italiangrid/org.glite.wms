@@ -5,6 +5,38 @@
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
 
+
+
+// Boost
+#include <boost/pool/detail/singleton.hpp>
+
+#include "wmp2wm.h"
+
+// Configuration
+#include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
+#include "glite/wms/common/configuration/ModuleType.h"
+#include "glite/wms/common/configuration/exceptions.h"
+
+
+namespace configuration = glite::wms::common::configuration;
+namespace wmsutilities  = glite::wms::common::utilities;
+
+// FileList
+#include "glite/wms/common/utilities/FileList.h"
+#include "glite/wms/common/utilities/FileListLock.h"
+
+
+typedef boost::scoped_ptr<glite::wms::common::utilities::FileList<std::string> >
+	FileListPtr;
+typedef boost::scoped_ptr<glite::wms::common::utilities::FileListMutex>
+	FileListMutexPtr;
+
+//------------------
+
+
+
+
 #include <string>
 
 #include "wmpmanager.h"
@@ -157,9 +189,44 @@ WMPManager::runCommand(const std::string& cmdname,
 					}
 		      		
 		      		// Dispatch the Command
-			      	WMPDispatcher *dispatcher = new WMPDispatcher(wmpeventlogger);
-			      	dispatcher->write(&cmd->asClassAd());//.Copy());
-			      	delete dispatcher;
+			      	//WMPDispatcher *dispatcher = new WMPDispatcher(wmpeventlogger);
+			      	//dispatcher->write(&cmd->asClassAd());//.Copy());
+			      	//delete dispatcher;
+			      	
+			      	string filequeue = configuration::Configuration::instance()->wm()->input();
+			      	
+			      	FileListPtr m_filelist;
+					FileListMutexPtr m_mutex;
+			      	m_filelist.reset(new wmsutilities::FileList<std::string>(filequeue));
+				  	m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
+			      	//boost::details::pool::singleton_default<server::WMP2WM>::instance()
+					//.init(filequeue, wmpeventlogger);
+					
+					edglog(debug)<<"File queue:"<<filequeue<<endl;
+			      	std::string cmdName;
+				  	try {
+				    	cmdName.assign(wmsutilities::evaluate_attribute(cmd->asClassAd(), "Command"));
+				    	edglog(debug)<<"Command to dispatch: "<<cmdName<<std::endl;
+				  	} catch(wmsutilities::InvalidValue &e) {
+				    	edglog(error)<<"Missing Command name while Dispatching"<<std::endl;
+					}
+				  
+					if (cmdName == "JobSubmit") { 
+				    	boost::details::pool::singleton_default<server::WMP2WM>::instance()
+				    		.submit(&cmd->asClassAd());
+				  	} else if (cmdName == "ListJobMatch") {
+				        boost::details::pool::singleton_default<server::WMP2WM>::instance()
+				        	.match(&cmd->asClassAd());
+				  	} else if (cmdName == "JobCancel") {
+				    	boost::details::pool::singleton_default<server::WMP2WM>::instance()
+				    		.cancel(&cmd->asClassAd());
+				  	} else {
+				    	edglog(error)<<"No forwarding procedure defined for this command" 
+				    		<<std::endl;
+				  	}
+				  	
+				  	
+			      	
 		      		edglog(debug)<<"Command Forwarded"<<std::endl;
 	        	}
 	  		} while ( cmd -> execute() && !cmd -> isDone() );

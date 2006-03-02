@@ -81,21 +81,22 @@ public:
      * @param cmdAd the Command object related to the edg_job_submit as
      * provided by WMP.
      */
-	virtual void submit(classad::ClassAd* cmdAd);
+	virtual void submit(const std::string &jdl);
   
 	/**
      * Forwards a cancel command to the WM through the FileList.
      * @param cmdAd the Command object related to the edg_job_cancel as
      * provided by WMP.
      */  
-	virtual void cancel(classad::ClassAd* cmdAd);
+	virtual void cancel(const std::string &jobid, const std::string &seq_code);
   
 	/**
      * Forwards a match command to the WM through the FileList.
      * @param cmdAd the Command object related to the edg_job_list_match
      * as provided by WMP.
      */  
-	virtual void match(classad::ClassAd* cmdAd);
+	virtual void match(const std::string &jdl, const std::string &file,
+		const std::string &proxy);
 
 private:
 

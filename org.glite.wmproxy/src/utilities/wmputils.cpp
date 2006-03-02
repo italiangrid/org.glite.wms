@@ -798,6 +798,51 @@ std::string gzError(int ret)
 }
 
 void
+chmod_tar_extract_all(TAR *t, char *prefix)
+{
+    GLITE_STACK_TRY("chmod_tar_extract_all()");
+    edglog_fn("wmputils::chmod_tar_extract_all");
+
+    char *filename;
+    char buf[4096];
+    int i;
+
+    while ((i = th_read(t)) == 0) {
+        filename = th_get_pathname(t);
+        if (t->options & TAR_VERBOSE) {
+            th_print_long_ls(t);
+        }
+        if (prefix != NULL) {
+            snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
+        } else {
+            strncpy(buf, filename, sizeof(buf));
+        }
+        edglog(debug)<<"Extracting file: "<<string(buf)<<endl;
+        if (tar_extract_file(t, buf)) {
+            edglog(error)<<"Unable to uncompress ISB file: "<<string(buf)<<endl;
+            throw FileSystemException(__FILE__, __LINE__,
+                "chmod_tar_extract_all()", WMS_IS_FAILURE,
+                "Unable to uncompress ISB file: " + string(buf));
+        }
+        int outcome = chmod(string(buf).c_str(), 0644);
+        edglog(debug)<<"chmod result: "<<outcome<<endl;
+        if (outcome) {
+            throw FileSystemException(__FILE__, __LINE__,
+                "chmod_tar_extract_all()", WMS_IS_FAILURE,
+                "Unable to change mode for ISB file: " + string(buf));
+        }
+    }
+
+    if (i != 1) {
+        throw FileSystemException(__FILE__, __LINE__,
+            "chmod_tar_extract_all()", WMS_IS_FAILURE,
+            "Unable to uncompress ISB archive");
+    }
+
+    GLITE_STACK_CATCH();
+}
+
+void
 uncompressFile(const string &filename, const string &startingpath)
 {
 	GLITE_STACK_TRY("uncompressFile()");
@@ -806,6 +851,7 @@ uncompressFile(const string &filename, const string &startingpath)
 	edglog(debug)<<"Uncompressing file: "<<filename<<endl;
 	edglog(debug)<<"Starting path: "<<startingpath<<endl;
 	char * file = const_cast<char*>(filename.c_str());
+	char * prefix = const_cast<char*>(startingpath.c_str());
 	
 	char buf[2048];
 	char * infile = NULL;
@@ -836,17 +882,7 @@ uncompressFile(const string &filename, const string &startingpath)
 
 	TAR * tarfile = NULL;
 	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
-	
-	// Extracting file from archive
-	char *filename = NULL;
-	while (th_read(tarfile) == 0) {
-		filename = const_cast<char *>(string(startingpath + "/"
-			+ string(th_get_pathname(tarfile))).c_str());
-		edglog(debug)<<"Extracting file: "<<filename<<endl;
-		tar_extract_file(tarfile, filename);
-		int outcome = chmod(filename, 0644);
-		edglog(debug)<<"chmod result: "<<outcome<<endl;
-	}
+	chmod_tar_extract_all(tarfile, prefix);
 	tar_close(tarfile);
 
 	remove(outfile);

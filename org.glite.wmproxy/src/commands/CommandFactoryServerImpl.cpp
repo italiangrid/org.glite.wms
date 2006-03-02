@@ -266,7 +266,7 @@ Command* CommandFactoryServerImpl::create(const std::string& cmdstr,
     cmd -> fsm -> push(state);
     state.reset(new ForwardRequest());
     cmd -> fsm -> push(state);
-    state.reset(new ExecuteFunction(listjobmatchex));
+    //state.reset(new ExecuteFunction(listjobmatchex));
     cmd -> fsm -> push(state);
   } else {
     delete cmd;
