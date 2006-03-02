@@ -27,30 +27,48 @@ namespace wms {
 namespace ism {
 namespace purchaser {
 
-#define QUERY_H(table)  class table##_query  { \
-\
-private:  \
-   static table##_query * m_query;  \
-   glite::rgma::Consumer* m_consumer;  \
-   table##_query() { m_consumer = NULL; m_query_status = false;} \
-   bool m_query_status; \
-public: \
-   static table##_query * get_query_instance(); \
-   bool refresh_query(int rgma_query_timeout); \
-   bool refresh_consumer(int rgma_consumer_ttl); \
-   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber); \
-   glite::rgma::Consumer* get_consumer() { return m_consumer; } \
-   bool get_query_status() { return m_query_status; } \
-   ~ table##_query(); \
-   static void destroy_query_instance() {  if (m_query != NULL ) { \
-                                              delete m_query;  \
-                                              m_query = NULL;  \
-                                           }  \
-                                        }  \
+class query  { 
+
+private:  
+   glite::rgma::Consumer* m_consumer;  
+   std::string m_table;
+   bool m_query_status; 
+public: 
+   bool refresh_query(int rgma_query_timeout); 
+   bool refresh_consumer(int rgma_consumer_ttl); 
+   bool pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber); 
+//   glite::rgma::Consumer* get_consumer() { return m_consumer; }
+//   bool get_query_status() { return m_query_status; } 
+   query(const std::string & table) { m_table = table;
+                                      m_consumer = NULL;
+                                      m_query_status = false;}
+   query& operator=( const query& q) {
+      m_consumer = q.m_consumer;
+      m_table = q.m_table;
+      m_query_status = q.m_query_status;
+      return *this;
+   }
+   query(const query& q) {
+      m_consumer = q.m_consumer;
+      m_table = q.m_table;
+      m_query_status = q.m_query_status;
+   }      
+   query(){
+     m_query_status = false;
+     m_consumer = NULL;
+   }
+   ~query(); 
 };
 
-
-
+class ism_rgma_purchaser;
+void collect_acbr_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
+void collect_sc_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
+void collect_srte_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
+void collect_bind_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
 //typedef std::vector<std::string> RGMAMultiValue;
 
 class ism_rgma_purchaser : public ism_purchaser
@@ -72,13 +90,24 @@ public:
    void operator()();
  
    void prefetchGlueCEinfo(gluece_info_container_type& gluece_info_container);
-
-   ~ism_rgma_purchaser();
+   friend void collect_acbr_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
+   friend void collect_sc_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
+   friend void collect_srte_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
+   friend void collect_bind_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
 
 private:                
    int m_rgma_query_timeout;
    int m_rgma_consumer_ttl;
    int m_rgma_cons_life_cycles;
+   query m_GlueCE;
+   query m_GlueCEAccessControlBaseRule;
+   query m_GlueSubCluster;
+   query m_GlueSubClusterSoftwareRunTimeEnvironment;
+   query m_GlueCESEBind;
 };
 
 
@@ -91,17 +120,6 @@ public:
 
 };
 
-
-QUERY_H(GlueCE)
-
-QUERY_H(GlueCEAccessControlBaseRule)
-
-QUERY_H(GlueSubCluster)
-
-QUERY_H(GlueSubClusterSoftwareRunTimeEnvironment)
-
-QUERY_H(GlueCESEBind)
-                                                                                                             
 namespace rgma {
 // the types of the class factories
 typedef ism_rgma_purchaser* create_t(
