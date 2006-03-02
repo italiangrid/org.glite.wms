@@ -48,21 +48,21 @@ namespace glite {
               boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
 
               /**
-               * Gets the list of CREAM jobids to update.
-               *
-               * @return the list of CREAM job IDs to update.
+               * Actually updates the lease for all active jobs in the cache.
+               * This uses the is_active() method of CreamJob to check
+               * whether a job is not terminated; for all active jobs,
+               * the lease which is about to expire is increased.
                */
-              std::vector< CreamJob > getJobsToUpdate( void );
+              void update_lease( void );
 
               /**
-               * Actually updates the lease for the given jobIDs
+               * Updates the lease for a single job. No check is done
+               * to see whether the job lease is about to expire.
                *
-               * @param jobids the list of CREAM job IDs for which 
-               * the lease should be renewed
+               * @param j the job whose lease is to be updated
                */
-              void updateJobs( const std::vector< CreamJob > jobids );
+              void update_lease_for_job( CreamJob& j );
 
-              //! This function actually performs the job
               virtual void body( void );
 
           public:
