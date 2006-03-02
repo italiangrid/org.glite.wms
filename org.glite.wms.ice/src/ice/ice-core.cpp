@@ -4,6 +4,7 @@
 #include "jobRequest.h"
 #include "subscriptionManager.h"
 #include "subscriptionCache.h"
+#include "iceEventLogger.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "iceConfManager.h"
@@ -311,19 +312,24 @@ void ice::ungetRequest(const unsigned int& reqNum)
 }
 
 //______________________________________________________________________________
-void ice::doOnJobFailure(const string& gid) {
-  string resub_request = string("[ version = \"1.0.0\";")
-    +" command = \"jobresubmit\"; arguments = [ id = \"" + gid + "\" ] ]";
-  FileListMutex mx(flns);
-  FileListLock  lock(mx);
-  try {
-    log_dev->log(log4cpp::Priority::INFO,
-		 string("ice::doOnJobFailure() - Putting [")
-		 +resub_request+"] to WM's Input file");
-    flns.push_back(resub_request);
-  } catch(std::exception& ex) {
-    log_dev->log(log4cpp::Priority::ERROR,
-		 ex.what());
-    exit(1);
-  }
+void ice::resubmit_job( util::CreamJob& j ) 
+{
+    util::iceEventLogger* _ev_logger= util::iceEventLogger::instance();
+
+    string resub_request = string("[ version = \"1.0.0\";")
+        +" command = \"jobresubmit\"; arguments = [ id = \"" + j.getGridJobID() + "\" ] ]";
+    FileListMutex mx(flns);
+    FileListLock  lock(mx);
+    try {
+        log_dev->log(log4cpp::Priority::INFO,
+                     string("ice::doOnJobFailure() - Putting [")
+                     +resub_request+"] to WM's Input file");
+        _ev_logger->ns_enqueued_start_event( j, ns_filelist );
+        flns.push_back(resub_request);
+        _ev_logger->ns_enqueued_ok_event( j, ns_filelist );
+    } catch(std::exception& ex) {
+        log_dev->log(log4cpp::Priority::ERROR, ex.what());
+        _ev_logger->ns_enqueued_fail_event( j, ns_filelist );
+        exit(1); // FIXME: Should we keep going?
+    }
 }

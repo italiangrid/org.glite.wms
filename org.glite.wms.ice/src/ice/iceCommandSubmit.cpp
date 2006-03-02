@@ -5,6 +5,7 @@
 #include "iceConfManager.h"
 #include "jobCache.h"
 #include "creamJob.h"
+#include "ice-core.h"
 #include "eventStatusListener.h"
 #include "iceEventLogger.h"
 
@@ -155,12 +156,13 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // TODO: L&B?
     }
 
-    log_dev->infoStream() << "iceCommandSubmit::execute() - Registering "
-                          << "gridJobID=\"" << theJob.getGridJobID()
-                          << "\" to L&B service with user proxy=\"" 
-                          << theJob.getUserProxyCertificate() 
-                          << "\""
-                          << log4cpp::CategoryStream::ENDLINE;
+    log_dev->infoStream() 
+        << "iceCommandSubmit::execute() - Registering "
+        << "gridJobID=\"" << theJob.getGridJobID()
+        << "\" to L&B service with user proxy=\"" 
+        << theJob.getUserProxyCertificate() 
+        << "\""
+        << log4cpp::CategoryStream::ENDLINE;
 
     _ev_logger->registerJob( theJob ); // FIXME: to be removed
     _ev_logger->cream_transfer_start_event( theJob );
@@ -169,20 +171,22 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     try {    
         modified_jdl = creamJdlHelper( _jdl );
     } catch( ice_util::ClassadSyntax_ex& ex ) {
-        log_dev->errorStream() << "Cannot convert jdl="
-                               << _jdl
-                               << " due to classad exception:"
-                               << ex.what()
-                               << log4cpp::CategoryStream::ENDLINE;
+        log_dev->errorStream() 
+            << "Cannot convert jdl="
+            << _jdl
+            << " due to classad exception:"
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
         _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
     log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting");
-    log_dev->debugStream() << "JDL " << modified_jdl
-                           << " to [" << theJob.getCreamURL() <<"]["
-                           << theJob.getCreamDelegURL() << "]"
-                           << log4cpp::CategoryStream::ENDLINE;
+    log_dev->debugStream() 
+        << "JDL " << modified_jdl
+        << " to [" << theJob.getCreamURL() <<"]["
+        << theJob.getCreamDelegURL() << "]"
+        << log4cpp::CategoryStream::ENDLINE;
 
     try {
         theProxy->Authenticate(theJob.getUserProxyCertificate());
@@ -192,6 +196,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << "Unable to submit gridJobID=" << theJob.getGridJobID()
             << " due to authentication error:" << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
+        _ice->resubmit_job( theJob );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
@@ -220,6 +225,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
+            _ice->resubmit_job( theJob ); // Try to resubmit
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
@@ -254,28 +260,28 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 
     bool _tmp_start_listener;
     {
-      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-      _tmp_start_listener = confMgr->getStartListener();
+        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        _tmp_start_listener = confMgr->getStartListener();
     }
 
     if( _tmp_start_listener ) {
-      string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
-                         + confMgr->getCEMonUrlPostfix();
-      if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
-        /* MUST SUBSCRIBE TO THIS CEMON */
-        log_dev->infoStream()
-            << "iceCommandSubmit::execute() - Not subscribed to ["
-            << cemon_url << "]. Going to subscribe to it..."
-            << log4cpp::CategoryStream::ENDLINE;
-        //try {
+        string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+            + confMgr->getCEMonUrlPostfix();
+        if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+            /* MUST SUBSCRIBE TO THIS CEMON */
+            log_dev->infoStream()
+                << "iceCommandSubmit::execute() - Not subscribed to ["
+                << cemon_url << "]. Going to subscribe to it..."
+                << log4cpp::CategoryStream::ENDLINE;
+            //try {
 
             /* ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
-            ceS.setServiceURL(cemon_url);
-            ceS.setSubscribeParam(myname_url.c_str(),
-                                  T,
-                                  P,
-                                  confMgr->getSubscriptionDuration()
-                                  );
+               ceS.setServiceURL(cemon_url);
+               ceS.setSubscribeParam(myname_url.c_str(),
+               T,
+               P,
+               confMgr->getSubscriptionDuration()
+               );
 	    */
 
             log_dev->infoStream()
@@ -286,39 +292,30 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
             {
-              /**
-  	       * This is the 1st call of subscriptionManager::getInstance()
-  	       * and it's safe because the singleton has already been created by
-	       * ice-core module.
-	       */
-	      boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-	      if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) )
-	      {
-                log_dev->errorStream()
-                  << "iceCommandSubmit::execute() - Subscribe to ["
-                  << cemon_url << "] failed! Will not receive status notifications from it..."
-                  << log4cpp::CategoryStream::ENDLINE;
-	      } else {
-                log_dev->infoStream()
-                  << "iceCommandSubmit::execute() - Subscribed with ID ["
-                  << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
-                  << log4cpp::CategoryStream::ENDLINE;
-
-		{
-		  boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-	          util::subscriptionCache::getInstance()->insert(cemon_url);
-		}
-              }
+                /**
+                 * This is the 1st call of subscriptionManager::getInstance()
+                 * and it's safe because the singleton has already been created by
+                 * ice-core module.
+                 */
+                boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+                if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
+                    log_dev->errorStream()
+                        << "iceCommandSubmit::execute() - Subscribe to ["
+                        << cemon_url << "] failed! Will not receive status notifications from it..."
+                        << log4cpp::CategoryStream::ENDLINE;
+                } else {
+                    log_dev->infoStream()
+                        << "iceCommandSubmit::execute() - Subscribed with ID ["
+                        << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
+                        << log4cpp::CategoryStream::ENDLINE;
+                    
+                    {
+                        boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
+                        util::subscriptionCache::getInstance()->insert(cemon_url);
+                    }
+                }
 	    }
-            //glite::wms::ice::util::subscriptionCache::getInstance()->insert(cemon_url);
-//         } catch( exception& ex ) {
-//             log_dev->errorStream()
-//                 << "Problem while subscribing to notifications for jobID="
-//                 << theJob.getGridJobID()
-//                 << " Exception:" << ex.what()
-//                 << log4cpp::CategoryStream::ENDLINE;
-//         }
-      }
+        }
     }
 }
 

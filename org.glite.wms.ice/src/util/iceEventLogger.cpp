@@ -872,6 +872,137 @@ void iceEventLogger::job_done_failed_event( util::CreamJob& theJob )
     return;
 }
 
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// ns enqueued start event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::ns_enqueued_start_event( util::CreamJob& theJob, const string& qname )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging ns_enqueued_start_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging NS enqueued start event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << " queue=[" << qname << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogEnQueuedSTART( *el_context, 
+                                        qname.c_str(),
+                                        theJob.getJobID().c_str(),
+                                        el_s_unavailable
+                                        );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+
+    update_and_store_job( theJob );
+        
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// ns enqueued fail event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::ns_enqueued_fail_event( util::CreamJob& theJob, const string& qname )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging ns_enqueued_fail_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging NS enqueued fail event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << " queue=[" << qname << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogEnQueuedFAIL( *el_context, 
+                                       qname.c_str(),
+                                       theJob.getJobID().c_str(),
+                                       el_s_unavailable
+                                       );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+
+    update_and_store_job( theJob );
+        
+    return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// wms enqueued ok event
+//
+//////////////////////////////////////////////////////////////////////////////
+void iceEventLogger::ns_enqueued_ok_event( util::CreamJob& theJob, const string& qname )
+{
+    int           res;
+
+    try {
+        setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
+    } catch( iceLoggerException& ex ) {
+        log_dev->errorStream()
+            << "Error logging ns_enqueued_ok_event: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
+    }
+    
+    startLogging();
+    
+    do {
+        log_dev->infoStream() 
+            << "Logging NS enqueued ok event, "
+            << " jobid=[" << theJob.getGridJobID() << "]"
+            << " queue=[" << qname << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        res = edg_wll_LogEnQueuedOK( *el_context, 
+                                     qname.c_str(),
+                                     theJob.getJobID().c_str(),
+                                     el_s_unavailable
+                                     );
+        log_dev->infoStream() << "...Got return code " << res 
+                              << log4cpp::CategoryStream::ENDLINE;
+        testCode( res );
+    } while( res != 0 );        
+
+    update_and_store_job( theJob );
+        
+    return;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 //
 //

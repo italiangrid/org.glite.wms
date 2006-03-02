@@ -57,6 +57,18 @@ namespace glite {
                     void cream_transfer_fail_event( CreamJob& theJob, const std::string& reason );
 
                     /**
+                     * Job transfer events. The job is transferred
+                     * from ICE to the NS (this means that the job is
+                     * being resubmitted).
+                     *
+                     * @param theJob the job being transferred
+                     * @param qname the name of the queue where the job is transferred
+                     */
+                    void ns_enqueued_start_event( CreamJob& theJob, const std::string& qname );
+                    void ns_enqueued_fail_event( CreamJob& theJob, const std::string& qname );
+                    void ns_enqueued_ok_event( CreamJob& theJob, const std::string& qname );
+
+                    /**
                      * job accepted event. The job has been accepted
                      * by CREAM.
                      *

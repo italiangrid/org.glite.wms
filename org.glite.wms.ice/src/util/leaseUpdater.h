@@ -41,8 +41,10 @@ namespace glite {
 
           protected:
 
-              static const time_t threshold; //! Residual lease durations less than this threshold are prolonged;
-              static const time_t delay; //! Delay between two updates, in seconds. Hardcoded for now, should be fixed in the future;
+              static const time_t threshold; //! Residual lease durations less than this threshold are prolonged. Hardcoded for now, should be configurable in the future;
+              static const time_t delay; //! Delay between two updates, in seconds. Hardcoded for now, should be configurable in the future;
+              static const time_t delta; //! The amount of the lease update, in seconds. Hardcoded for now, should be configurable in the future;
+
               log4cpp::Category *log_dev;
               jobCache *cache;
               boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;

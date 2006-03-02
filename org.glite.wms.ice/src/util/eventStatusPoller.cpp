@@ -8,7 +8,7 @@
 #include "glite/ce/cream-client-api-c/BaseException.h"
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
-#include "abs-ice-core.h"
+#include "ice-core.h"
 #include "iceConfManager.h"
 #include <vector>
 #include <map>
@@ -26,7 +26,7 @@ typedef vector<string>::const_iterator cvstrIt;
 
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
-				     glite::wms::ice::absice* _iceManager,
+				     glite::wms::ice::ice* _iceManager,
 				     const int _d
 				     )
   throw(eventStatusPoller_ex&)
@@ -216,7 +216,7 @@ void eventStatusPoller::checkJobs()
                     jobCache::iterator jobIt = cache->lookupByCreamJobID( cid );
 
                     if ( jobIt != cache->end() ) {
-                        iceManager->doOnJobFailure( jobIt->getGridJobID() );
+                        iceManager->resubmit_job( *jobIt );
                     }
                     // FIXME: else????
                     // iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));

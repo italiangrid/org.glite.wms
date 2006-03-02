@@ -17,7 +17,7 @@ namespace glite {
   namespace wms {
     namespace ice {
 
-      class absice;
+      class ice;
 
       namespace util {
 
@@ -36,9 +36,8 @@ namespace glite {
 
 	  int delay;
 	  std::vector< std::string > empty;
-	  std::vector< glite::ce::cream_client_api::soap_proxy::JobStatusList* >
-	    _jobstatuslist;
-	  absice* iceManager;
+	  std::vector< glite::ce::cream_client_api::soap_proxy::JobStatusList* > _jobstatuslist;
+	  ice* iceManager;
 	  void purgeJobs(const std::vector<std::string>&);
 
 	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
@@ -67,7 +66,7 @@ namespace glite {
 	    \sa ice
 	  */
 	  eventStatusPoller(
-			    absice* iceManager, //! ownership of this pointer is not transferred
+			    ice* iceManager, //! ownership of this pointer is not transferred
 			    const int D=10
 			    ) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);

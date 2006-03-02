@@ -22,6 +22,8 @@ using namespace std;
 const time_t leaseUpdater::threshold = 60*30; // FIXME: hardcoded default 30 min
 const time_t leaseUpdater::delay = 60*2; // FIXME: hardcoded default 2 min
 
+const time_t leaseUpdater::delta = 60*60; // FIXME: hardcoded default of lease renewal: 1 hour
+
 namespace {
     /**
      * Utility function to convert a time_t value into a string.
@@ -76,10 +78,6 @@ void leaseUpdater::update_lease( void )
 
 void leaseUpdater::update_lease_for_job( CreamJob& j )
 {
-    const time_t delta = 60*60; // FIXME: hardcoded default of lease renewal: 1 hour
-
-    // Lock the cache; the jobCache remains locked until this method finishes
-
     creamClient->clearSoap();
 
     map< string, time_t > newLease;
