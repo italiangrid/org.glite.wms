@@ -19,6 +19,41 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.16  2006/03/03 15:46:58  monforte
+#
+#       merge against RC15
+#
+#       Revision 1.15.2.11  2006/02/21 16:11:01  monforte
+#       Fix to bug 15098
+#
+#       Revision 1.15.2.10  2006/02/14 12:36:17  monforte
+#       fix to bug #14930
+#
+#       Revision 1.15.2.9  2006/02/02 18:40:24  fprelz
+#       Adding matchmaking performance patches (as tested by ECGI at end 2005 on v1.4)
+#
+#       Revision 1.15.2.8  2006/01/20 00:19:34  eronchie
+#       Increased version
+#
+#       Revision 1.15.2.7  2005/11/30 17:27:58  emartel
+#       removed changes made after release tag
+#
+#       Revision 1.15.2.5  2005/11/04 16:15:46  monforte
+#       QF for bug #11631 and #11194
+#
+#       Revision 1.15.2.4  2005/11/03 18:01:23  emartel
+#       increased version
+#
+#       Revision 1.15.2.3  2005/10/28 10:33:55  monforte
+#       Added recursive_mutex as type of ism mutex
+#       Fixed ism entry removal
+#
+#       Revision 1.15.2.2  2005/10/19 11:04:44  eronchie
+#       Increased version
+#
+#       Revision 1.15.2.1  2005/10/18 07:32:05  eronchie
+#       Increased version
+#
 #       Revision 1.15  2005/10/15 11:59:38  eronchie
 #       Increased version
 #
@@ -134,7 +169,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [1.5.0])
+AC_INIT([GLite WMS ISM], [1.5.8])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
@@ -148,6 +183,8 @@ AC_REVISION([$Revision$])
 #Environment.
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
+
+AC_OPTIMIZE
 
 # Checks for programs.
 AC_PROG_CC

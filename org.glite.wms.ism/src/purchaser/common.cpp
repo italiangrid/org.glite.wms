@@ -15,7 +15,31 @@ namespace ism {
 namespace purchaser {
 
 namespace {
-  boost::shared_ptr<classad::ClassAd> requirements_ad;
+
+  std::string const requirements_str(
+    "["
+    "  CloseOutputSECheck = IsUndefined(other.OutputSE)"
+    "    ||   member(other.OutputSE,GlueCESEBindGroupSEUniqueID);"
+    "  AuthorizationCheck = member(other.CertificateSubject, GlueCEAccessControlBaseRule)"
+    "    ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule);"
+    "  requirements = AuthorizationCheck && CloseOutputSECheck;"
+    "]"
+    );
+
+   std::string const gangmatch_storage_ad_str(
+    "["
+    "  storage =  ["
+    "     CEid = parent.GlueCEUniqueID;"
+    "     VO = parent.other.VirtualOrganisation;"
+    "     additionalSESAInfo = listAttrRegEx(\"^GlueS[EA].*\","
+    "       parent.other.requirements);"
+    "     CloseSEs = retrieveCloseSEsInfo( CEid, VO, additionalSESAInfo );"
+    "  ];"
+    "]"
+  );
+
+  boost::scoped_ptr<classad::ClassAd> requirements_ad;
+  boost::scoped_ptr<classad::ClassAd> gangmatch_storage_ad;
 }
 
 bool expand_information_service_info(gluece_info_type& gluece_info)
@@ -47,28 +71,39 @@ bool expand_information_service_info(gluece_info_type& gluece_info)
   return result;
 }
 
+bool insert_gangmatch_storage_ad(gluece_info_type& gluece_info)
+{
+ try {
+    if(!gangmatch_storage_ad) {
+      gangmatch_storage_ad.reset( 
+        utilities::parse_classad(gangmatch_storage_ad_str)
+      ); 
+    }
+    gluece_info->Update(
+      *gangmatch_storage_ad
+    );
+  }
+  catch(...) {
+    assert(false);
+  }
+  return true;
+}
+
 bool insert_aux_requirements(gluece_info_type& gluece_info)
 {
-  if (!requirements_ad) {
-    
-    std::string requirements_str(
-      "[ \
-        CloseOutputSECheck = IsUndefined(other.OutputSE) \
-          ||   member(other.OutputSE,GlueCESEBindGroupSEUniqueID); \
-        AuthorizationCheck = member(other.CertificateSubject, GlueCEAccessControlBaseRule) \
-          ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule); \
-      ]"
-    );
-
     try {
-      requirements_ad.reset(utilities::parse_classad(requirements_str));
+    if(!requirements_ad) {
+      requirements_ad.reset(
+        utilities::parse_classad(requirements_str)
+      );
     }
-    catch(...) {
-      std::cout << "Ops!" << std::endl;
-      return false;
-    }
-  } 
-  gluece_info->Update(*requirements_ad);
+    gluece_info->Update(
+      *requirements_ad
+    );
+  }
+  catch(...) {
+    assert(false);
+  }
   return true;
 }
 

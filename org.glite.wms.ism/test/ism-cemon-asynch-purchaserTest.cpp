@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 
     ism_cemon_asynch_purchaser icap("CE_MONITOR", port, mode, 30, exit_predicate);
     icap();
-    boost::recursive_mutex::scoped_lock l(get_ism_mutex());
+    ism_mutex_type::scoped_lock l(get_ism_mutex());
 
     for (ism_type::iterator pos=get_ism().begin();
       pos!= get_ism().end(); ++pos) {

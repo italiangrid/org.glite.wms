@@ -370,7 +370,7 @@ void ism_ii_gris_purchaser::do_purchase()
       );
 	
       {
-	boost::recursive_mutex::scoped_lock l(get_ism_mutex());	
+	ism_mutex_type::scoped_lock l(get_ism_mutex());	
 	for(list<ism_type::value_type>::const_iterator 
           it = ism_entry_container.begin();
 	  it != ism_entry_container.end(); ++it) {

@@ -4,9 +4,9 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 #include <boost/mem_fn.hpp>
-#include<boost/progress.hpp>
+#include <boost/progress.hpp>
 #include <boost/bind.hpp>
-//#include <time.h>
+
 #include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
 
 #include "glite/wms/common/ldif2classad/exceptions.h"
@@ -74,7 +74,6 @@ namespace purchaser {
 namespace {
 boost::condition f_rgma_purchasing_cycle_run_condition;
 boost::mutex     f_rgma_purchasing_cycle_run_mutex;
-
 boost::mutex  collect_info_mutex;
 
 unsigned int consLifeCycles = 0;
@@ -83,7 +82,7 @@ boost::mutex  consLifeCycles_mutex;
 
 query::~query() 
 { 
-   if (m_consumer != NULL) { 
+  if (m_consumer != NULL) { 
       try { 
          if ( m_query_status ) m_consumer->close(); 
       } 
@@ -287,22 +286,6 @@ bool ParseValue(const string& v, utilities::edgstrstream& s)
    return true;
 
 }
-/*
-bool ParseMultiValue(const RGMAMultiValue& v, utilities::edgstrstream& s)
-{
-   if ( !v.size() ) {
-      Warning("trying to parse an empty multi-value field to be put in the classAd");
-      return false;
-   }
-   s << "{";
-   for(RGMAMultiValue::const_iterator it = v.begin(); it != v.end(); ) {
-      if ( ParseValue(*it, s) )
-         s << ((++it != v.end()) ? "," : "}" );
-   }
-   return true;
-}
-
-*/
 
 bool ExportClassAd( ClassAd* ad, Tuple& tuple )
 {
@@ -327,7 +310,9 @@ bool ExportClassAd( ClassAd* ad, Tuple& tuple )
             if ( tuple.isNull(name) ) { 
                classad::Value undefined_value;
                undefined_value.SetUndefinedValue();
-               ad->Insert(name, dynamic_cast<ExprTree*>(classad::Literal::MakeLiteral(undefined_value)));
+               ad->Insert(name, dynamic_cast<ExprTree*>(
+                 classad::Literal::MakeLiteral(undefined_value))
+               );
                continue;
             }
             else if ( ! ParseValue( tuple.getString(name),  exprstream) ){
@@ -375,70 +360,6 @@ bool ExportClassAd( ClassAd* ad, Tuple& tuple )
 
    return true;
 }
-
-/*
-bool extractMultiValueFromResultSet( ResultSet & set,
-                                     RGMAMultiValue& v,
-                                     const string & nameID,
-                                     const string & id,
-                                     const string & name)
-{
-   bool match = false;
-   if ( set.begin() == set.end() ){
-      Error("parsing a ResultSet for finding every \""<<name
-            <<"\" that correspond to \""<<nameID<<":  "<<id<<"\"... FAILED"<<endl);
-      Error("EMPTY RESULTSET");
-      return false;
-   }
-
-   for (ResultSet::iterator tableIt = set.begin() ; tableIt <  set.end() ; tableIt ++ ) {
-      try {
-         if ( tableIt->getString(nameID) == id ) {
-            v.push_back( tableIt->getString(name) );
-            match = true;
-         }
-      }
-      catch (RGMAException rgmae) {
-//      edglog(error) <<"parsing a ResultSet for finding every "<<name
-//                    <<" that correspond to "<<id<<": FAILED"<<endl;
-//      edglog(error) <<rgmae.getMessage() << endl;
-         Error("parsing a ResultSet for finding every "<<name
-                  <<" that correspond to "<<nameID<<":  "<<id<<"... FAILED"<<endl);
-         Error(rgmae.getMessage());
-         return false;
-      }
-
-   }
-   return match;
-
-}
-
-bool addMultivalueAttributeToClassAd( ClassAd* ad, const RGMAMultiValue & v, const string & valueName )
-{
-   ClassAdParser parser;
-   utilities::edgstrstream exprstream;
-
-   if ( ! ParseMultiValue( v, exprstream ) ) return false;
-
-   exprstream << ends;
-
-   ExprTree* exptree = 0;
-
-   parser.ParseExpression(exprstream.str(), exptree);
-   if(!exptree) {
-      Error("trying to processing "<<valueName
-            <<" multi-value attribute to be added to a classAd...FAILED");
-      return false;
-   }
-   if ( !ad->Insert(valueName, exptree) ) {
-      Error("trying to insert "<<valueName
-            <<" multi-value attribute in a classAd...FAILED");
-      return false;
-   }
-
-   return true;
-}
-*/
 
 bool changeAttributeName( ClassAd* ad, const string & oldName, const string & newName)
 {
@@ -549,9 +470,6 @@ void checkSubCluster( ClassAd* subClusterAd ){
    //change WNTmpDir with GlueSubClusterWNTmpDir
    if ( !changeAttributeName( subClusterAd, "WNTmpDir", "GlueSubClusterWNTmpDir") )
       Warning("changing ClassAd's attributeName: WNTmpDir -> GlueSubClusterWNTmpDir... FAILED");
-
-
-
 }
 
 void checkGlueCE( ClassAd* gluece_info ) {
@@ -639,7 +557,6 @@ void checkGlueCE( ClassAd* gluece_info ) {
    //changing AssignedJobSlots with GlueCEPolicyAssignedJobSlots
    if ( !changeAttributeName( gluece_info, "AssignedJobSlots", "GlueCEPolicyAssignedJobSlots") )
       Warning("changing ClassAd's attributeName: AssignedJobSlots -> GlueCEPolicyAssignedJobSlots... FAILED");
-
 
 }
 
@@ -1172,7 +1089,7 @@ bool ism_rgma_purchaser_entry_update::operator()(int a,boost::shared_ptr<classad
 {
    boost::mutex::scoped_lock l(f_rgma_purchasing_cycle_run_mutex);
    f_rgma_purchasing_cycle_run_condition.notify_one();
-   return true;
+   return false;
 }
 
   
@@ -1234,7 +1151,6 @@ void ism_rgma_purchaser::do_purchase()
       }
       else Debug("No CEs found\n"<<"No attempt to collect information related to th CEs");
 
-
       try{
    
          for (gluece_info_iterator it = gluece_info_container.begin();
@@ -1291,11 +1207,33 @@ void ism_rgma_purchaser::do_purchase()
             boost::mutex::scoped_lock l(f_rgma_purchasing_cycle_run_mutex);
             f_rgma_purchasing_cycle_run_condition.timed_wait(l, xt);
          }
+   
+         {
+            ism_mutex_type::scoped_lock l(get_ism_mutex());	
+            while(!gluece_info_container_updated_entries.empty()) {
+   	  
+               ism_type::value_type ism_entry = make_ism_entry(
+                  gluece_info_container_updated_entries.back()->first, 
+                  static_cast<int>(get_current_time().sec), 
+                  gluece_info_container_updated_entries.back()->second, 
+                  ism_rgma_purchaser_entry_update() );
+   
+   	       get_ism().insert(ism_entry);
+   
+                  gluece_info_container_updated_entries.pop_back();            
+            } // while
+         } // unlock the mutex
+         if (m_mode) {
+            boost::xtime xt;
+            boost::xtime_get(&xt, boost::TIME_UTC);
+            xt.sec += m_interval;
+            boost::mutex::scoped_lock l(f_rgma_purchasing_cycle_run_mutex);
+            f_rgma_purchasing_cycle_run_condition.timed_wait(l, xt);
+         }
       }
       catch (...) { // TODO: Check which exception may arrive here... and remove catch all
          Warning("FAILED TO PURCHASE INFO FROM RGMA.");
       }
-
    } 
    while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 
@@ -1335,5 +1273,3 @@ extern "C" boost::function<bool(int&, ad_ptr)> create_rgma_entry_update_fn()
 } // namespace ism
 } // namespace wms
 } // namespace glite
-
-

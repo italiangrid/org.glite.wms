@@ -16,14 +16,17 @@ namespace wms {
 namespace ism {
 
 ism_type::value_type make_ism_entry(
-  std::string const& id,    // resource identifier
-  int update_time,            // update time
-  ad_ptr const& ad,         // resource descritpion
+  std::string const& id, // resource identifier
+  int update_time, // update time
+  ad_ptr const& ad, // resource descritpion
   update_function_type const& uf, // update function
-  int expiry_time             // expiry time with defualt 5*60
+  int expiry_time // expiry time with defualt 5*60
 )
 {
-  return std::make_pair(id, boost::make_tuple(update_time, expiry_time, ad, uf));
+  return std::make_pair(
+    id,
+    boost::make_tuple(update_time, expiry_time, ad, uf)
+  );
 }
 
 ism_mutex_type& get_ism_mutex(void)
@@ -52,40 +55,37 @@ operator<<(std::ostream& os, ism_type::value_type const& value)
 
 void call_update_ism_entries::operator()()
 {
-  bool value = true;
   ism_mutex_type::scoped_lock l(get_ism_mutex());
-  boost::xtime ct;
-  boost::xtime_get(&ct, boost::TIME_UTC);
+  time_t current_time = std::time(0);
 
   ism_type::iterator pos=get_ism().begin();
   ism_type::iterator const e=get_ism().end();
 
   for ( ; pos!=e; ) {
-    
+
     bool inc_done = false;
     // Check the state of the ClassAd information
     if (boost::tuples::get<ad_ptr_entry>(pos->second) != NULL) {
-
       // If the ClassAd information is not NULL, go on with the updating
-      int diff = ct.sec - boost::tuples::get<update_time_entry>(pos->second);
-
+      int diff = current_time - boost::tuples::get<update_time_entry>(pos->second);
       // Check if .. is greater than expiry time
       if (diff > boost::tuples::get<expiry_time_entry>(pos->second)) {
         // Check if function object wrapper is not empty
         if (!boost::tuples::get<update_function_entry>(pos->second).empty()) {
-          value = update_ism_entry()(pos->second);
-          if (value == false) {
-            // Reset ClassAd
-            // (boost::tuples::get<2>(pos->second)).reset();
-            get_ism().erase(pos++);
-            inc_done = true;
-          } else {
-            // Update ism entry
-            boost::xtime_get(&ct, boost::TIME_UTC);
-	    pos->second = make_tuple(ct.sec,
-                                     boost::tuples::get<expiry_time_entry>(pos->second),
-                                     boost::tuples::get<ad_ptr_entry>(pos->second),
-                                     boost::tuples::get<update_function_entry>(pos->second));
+          bool is_updated = update_ism_entry()(pos->second);
+          if (!is_updated) {
+            // if the update function returns false we remove the entry
+            // only if it has been previously marked as invalid i.e. the entry's 
+            // update time is less than 0
+  	    if (boost::tuples::get<update_time_entry>(pos->second)<0) {
+              get_ism().erase(pos++);
+              inc_done = true;
+            } else {
+              boost::tuples::get<update_time_entry>(pos->second) = -1;
+            }
+	  }
+          else {
+            boost::tuples::get<update_time_entry>(pos->second) = current_time;
           }
         }
         else {
@@ -124,7 +124,7 @@ bool is_void_ism_entry(const ism_entry_type& entry)
   return (boost::tuples::get<expiry_time_entry>(entry)<=0);
 }
 
-// get IsmDump file
+//get IsmDump file
 std::string get_ism_dump(void)
 {
   configuration::Configuration const* const config = configuration::Configuration::instance();
@@ -153,7 +153,6 @@ void call_dump_ism_entries::operator()()
         boost::tuples::get<expiry_time_entry>(pos->second));
       ad_ism_dump.Insert("info",
         boost::tuples::get<ad_ptr_entry>(pos->second).get()->Copy());
-
       outf << ad_ism_dump;
     }
   }

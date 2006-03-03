@@ -59,7 +59,7 @@ ism_type::value_type make_ism_entry(
   std::string const& id, // resource identifier
   int update_time,	 // update time
   ad_ptr const& ad,	 // resource descritpion
-  update_function_type  const& uf = update_function_type(), // update function
+  update_function_type const& uf = update_function_type(), // update function
   int expiry_time = 300    // expiry time with defualt 5*60 
 );
 
@@ -67,7 +67,6 @@ std::ostream& operator<<(std::ostream& os, ism_type::value_type const& value);
 
 struct call_update_ism_entries
 {
-  call_update_ism_entries() {};
   void operator()();
 };
 

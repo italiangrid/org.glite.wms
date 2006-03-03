@@ -45,6 +45,7 @@ namespace purchaser {
 
  bool expand_information_service_info(gluece_info_type& gluece_info);
  bool insert_aux_requirements(gluece_info_type& gluece_info);
+ bool insert_gangmatch_storage_ad(gluece_info_type& gluece_info);
  bool expand_glueceid_info(gluece_info_type& gluece_info);
  bool split_information_service_url(classad::ClassAd const&, boost::tuple<std::string, int, std::string>&);
  boost::xtime get_current_time(void);

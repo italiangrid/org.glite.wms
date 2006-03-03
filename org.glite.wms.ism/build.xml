@@ -21,9 +21,16 @@
 
 	Revision history:
 	$Log$
+	Revision 1.5  2006/03/03 15:46:58  monforte
+
+	merge against RC15
+
+	Revision 1.4.2.1  2006/02/02 18:40:24  fprelz
+	Adding matchmaking performance patches (as tested by ECGI at end 2005 on v1.4)
+	
 	Revision 1.4  2005/09/22 11:25:23  monforte
 	Merge against glite-wms-ism_branch_1_1_0
-
+	
 	
 	
 -->

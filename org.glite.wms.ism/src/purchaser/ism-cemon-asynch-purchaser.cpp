@@ -1,5 +1,5 @@
 // File: ism-cemon-asynch-purchaser.cpp
-// Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
+// Author: Salvatore Monforte
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 

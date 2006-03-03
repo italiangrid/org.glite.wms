@@ -1,3 +1,4 @@
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-file-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
 #include "glite/wms/common/logger/edglog.h"
@@ -34,7 +35,7 @@ int main(int argc, char* argv[]) {
     ism_file_purchaser icp(dump_file, once);
 
     icp();
-    boost::recursive_mutex::scoped_lock l(get_ism_mutex());
+    ism_mutex_type::scoped_lock l(get_ism_mutex());
 
     for (ism_type::iterator pos=get_ism().begin();
       pos!= get_ism().end(); ++pos) {

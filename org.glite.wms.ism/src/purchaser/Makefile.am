@@ -10,12 +10,12 @@ lib_LTLIBRARIES    = \
 	libglite_wms_ism_ii_purchaser.la \
         libglite_wms_ism_ii_gris_purchaser.la \
 	libglite_wms_ism_rgma_purchaser.la \
-	libglite_wms_ism_iise_purchaser.la \
 	libglite_wms_ism_cemon_purchaser.la \
 	libglite_wms_ism_cemon_asynch_purchaser.la \
 	libglite_wms_ism_file_purchaser.la 
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
+        ldap-utils.cpp \
         ism-ii-purchaser.cpp
 
 libglite_wms_ism_ii_gris_purchaser_la_SOURCES = \
@@ -23,9 +23,6 @@ libglite_wms_ism_ii_gris_purchaser_la_SOURCES = \
 
 libglite_wms_ism_rgma_purchaser_la_SOURCES = \
         ism-rgma-purchaser.cpp
-
-libglite_wms_ism_iise_purchaser_la_SOURCES = \
-        ism-iise-purchaser.cpp
 
 libglite_wms_ism_cemon_purchaser_la_SOURCES = \
 	ism-cemon-purchaser.cpp
@@ -48,7 +45,6 @@ libglite_wms_ism_cemon_asynch_purchaser_la_LIBADD = \
 libglite_wms_ism_file_purchaser_la_SOURCES = \
         ism-file-purchaser.cpp 
 
-CXXFLAGS = -g
 AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	-I$(top_srcdir)/src \
 	$(GLITE_CFLAGS) \
@@ -57,7 +53,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	$(GLOBUS_THR_CFLAGS) \
 	$(GSOAP_CFLAGS) \
 	$(LOG4CXX_CFLAGS) \
-	$(GLOBUS_THR_CFLAGS) \
         -DGSOAP_VER_27
 
 MAINTAINERCLEANFILES = Makefile.in *.*~
