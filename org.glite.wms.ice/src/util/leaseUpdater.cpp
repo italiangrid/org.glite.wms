@@ -20,9 +20,9 @@ using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
 const time_t leaseUpdater::threshold = 60*30; // FIXME: hardcoded default 30 min
-const time_t leaseUpdater::delay = 60*2; // FIXME: hardcoded default 2 min
+const time_t leaseUpdater::delay = 60; // FIXME: hardcoded default 1 min
 
-const time_t leaseUpdater::delta = 60*60; // FIXME: hardcoded default of lease renewal: 1 hour
+const time_t leaseUpdater::delta = 60*2; // FIXME: hardcoded default of lease renewal: 2 min
 
 namespace {
     /**
@@ -90,6 +90,10 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
         creamClient->Authenticate( j.getUserProxyCertificate() );
         creamClient->Lease( j.getCreamURL().c_str(), jobids, delta, newLease );
     } catch ( soap_proxy::soap_ex& ex ) {
+        log_dev->errorStream()
+            << "leaseUpdater::update_lease_for_job() returned an exception: "
+            << ex.what()
+            << log4cpp::CategoryStream::ENDLINE;
         // FIXME: what to do?
     }
 
@@ -106,7 +110,7 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
             << log4cpp::CategoryStream::ENDLINE;
         
         j.setEndLease( newLease[ j.getJobID() ] );
-        cache->put( j );            
+        cache->put( j ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
     } else {
         // there was an error updating the lease
         log_dev->errorStream()

@@ -51,7 +51,7 @@ namespace glite {
           boost::shared_ptr<util::eventStatusListener> listener;
           boost::shared_ptr<util::subscriptionUpdater> subsUpdater;
           boost::shared_ptr<util::leaseUpdater> lease_updater;
-          
+
           std::vector<FLEit> requests;
           glite::wms::common::utilities::FLExtractor<std::string> fle;
           glite::wms::common::utilities::FileList<std::string> flns;

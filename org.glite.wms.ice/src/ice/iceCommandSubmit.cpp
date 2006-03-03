@@ -40,9 +40,6 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
   iceAbsCommand( ),
   log_dev( api_util::creamApiLogger::instance()->getLogger()),
   confMgr( ice_util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
-  //ceS(),
-  //T( confMgr->getICETopic()),
-  //P(5000),
   _ev_logger( ice_util::iceEventLogger::instance() )
 {
     char name[256];
@@ -215,7 +212,8 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                                modified_jdl,
                                theJob.getUserProxyCertificate(),
                                url_jid,
-			       -1,
+			       // -1,
+                               2, // 2 minute lease
                                true /*autostart*/
                                );
         } catch( exception& ex ) {
@@ -251,12 +249,11 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         util::jobCache::getInstance()->put( theJob );
     } // this end-scope unlock the listener that now can
 
-    /**
+    /*
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications
      * of job just submitted. But only if listener is ON
      */
-    /* ....... */
 
     bool _tmp_start_listener;
     {
@@ -273,16 +270,6 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << "iceCommandSubmit::execute() - Not subscribed to ["
                 << cemon_url << "]. Going to subscribe to it..."
                 << log4cpp::CategoryStream::ENDLINE;
-            //try {
-
-            /* ceS.authenticate(confMgr->getHostProxyFile().c_str(), "/");
-               ceS.setServiceURL(cemon_url);
-               ceS.setSubscribeParam(myname_url.c_str(),
-               T,
-               P,
-               confMgr->getSubscriptionDuration()
-               );
-	    */
 
             log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
@@ -292,9 +279,10 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
             {
-                /**
-                 * This is the 1st call of subscriptionManager::getInstance()
-                 * and it's safe because the singleton has already been created by
+                /*
+                 * This is the 1st call of
+                 * subscriptionManager::getInstance() and it's safe
+                 * because the singleton has already been created by
                  * ice-core module.
                  */
                 boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
@@ -435,7 +423,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         classad::ExprList* osbDUList;
         classad::ExprList* newOsbDUList = new classad::ExprList();
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
-	  //            cout << "Starting OutputSandboxDestURI manipulation..." << endl;
+
 	  log_dev->log(log4cpp::Priority::INFO,
 		       "\tStarting OutputSandboxDestURI manipulation...");
             string newPath;
@@ -461,7 +449,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                         break;
                     }                
                 }
-                //cout << s << " became " << newPath << endl;
+
 		log_dev->log(log4cpp::Priority::DEBUG,
 			     string("\t")+s+" became "+newPath);
                 // Builds a new value
@@ -496,7 +484,6 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
     boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
     boost::smatch what;
 
-    //cout << "Trying to unparse " << p << endl;
     log_dev->log(log4cpp::Priority::INFO,
 		 string("iceCommandSubmit::pathName::CTOR() - Trying to unparse ")+ p );
     if ( boost::regex_match( p, what, uri_match ) ) {

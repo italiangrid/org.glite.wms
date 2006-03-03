@@ -197,7 +197,7 @@ int main(int argc, char*argv[]) {
     if(iceUtil::iceConfManager::getInstance()->getStartPoller())
       iceManager->startPoller(iceUtil::iceConfManager::getInstance()->getPollerDelay());
   }
-  // iceManager->startLeaseUpdater( ); // FIXME: starting this should be user-configurable
+  iceManager->startLeaseUpdater( ); // FIXME: starting this should be user-configurable
 
   vector<string> url_jid;
   url_jid.reserve(2);

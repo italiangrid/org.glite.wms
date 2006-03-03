@@ -344,7 +344,8 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	  creamClient->Authenticate( jit->getUserProxyCertificate());
           oneJobToPurge.push_back( jit->getJobID() );
           creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
-          jobCache::getInstance()->remove( jit );
+          jit = jobCache::getInstance()->remove( jit );
+          jit--;
       } catch (ClassadSyntax_ex& ex) {
 	/**
 	 * this exception should not be raised because

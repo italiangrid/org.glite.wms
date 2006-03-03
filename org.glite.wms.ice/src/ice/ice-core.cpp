@@ -29,65 +29,65 @@ ice::ice(const string& NS_FL,
     fle(WM_FL.c_str()),
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
 {
-  log_dev->log(log4cpp::Priority::INFO,
-	       "ice::ice() - Initializing File Extractor object...");
-  try{
-    flns.open(NS_FL.c_str());
-  }
-  catch(std::exception& ex) {
-    throw iceInit_ex(ex.what());
-  } catch(...) {
-    log_dev->log(log4cpp::Priority::ERROR,
-		 "ice::ice() - Catched unknown exception");
-    exit(1);
-  }
-
-  bool _tmp_start_listener;
-  {
-    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-    _tmp_start_listener = util::iceConfManager::getInstance()->getStartListener();
-  }
-
-  if( _tmp_start_listener ) {
-  /**
-   * The listener and the iceCommandSubmit need to subscribe to CEMon in order
-   * to make ICE able to receive job status notifications.
-   * So now as preliminary operation it's the case to check that the
-   * subscriptionManager singleton can be created without problems.
-   *
-   * The subscriptionManager initialization also setup authentication.
-   */
-   {
-    boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-    util::subscriptionManager::getInstance();
-    if( !util::subscriptionManager::getInstance()->isValid() ) {
-      log_dev->errorStream() << "ice::CTOR() - "
-                             << "Fatal error creating the subscriptionManager instance. Will not start listener."
-	  		   << log4cpp::CategoryStream::ENDLINE;
-      //_isOK = false;
-      //exit(1); // FATAL, I think is right to exit
-      //return;
-      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-      util::iceConfManager::getInstance()->setStartListener( false );
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::ice() - Initializing File Extractor object...");
+    try{
+        flns.open(NS_FL.c_str());
     }
-   }
-    /**
-     * subscriptionCache is used to retrieve the list of cemon we're
-     * subscribed. If it's creation failed, it is not the case (at 0-order)
-     * to use the listener...
-     *
-     */
+    catch(std::exception& ex) {
+        throw iceInit_ex(ex.what());
+    } catch(...) {
+        log_dev->log(log4cpp::Priority::ERROR,
+                     "ice::ice() - Catched unknown exception");
+        exit(1);
+    }
+
+    bool _tmp_start_listener;
     {
-      boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-      if( util::subscriptionCache::getInstance() == NULL ) {
-	  log_dev->errorStream() << "ice::CTOR() - "
-                               << "Fatal error creating the subscriptionCache instance. Will not start listener."
-	    		       << log4cpp::CategoryStream::ENDLINE;
-	  boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-          util::iceConfManager::getInstance()->setStartListener( false );
-      }
+        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        _tmp_start_listener = util::iceConfManager::getInstance()->getStartListener();
     }
-  }
+
+    if( _tmp_start_listener ) {
+        /**
+         * The listener and the iceCommandSubmit need to subscribe to CEMon in order
+         * to make ICE able to receive job status notifications.
+         * So now as preliminary operation it's the case to check that the
+         * subscriptionManager singleton can be created without problems.
+         *
+         * The subscriptionManager initialization also setup authentication.
+         */
+        {
+            boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+            util::subscriptionManager::getInstance();
+            if( !util::subscriptionManager::getInstance()->isValid() ) {
+                log_dev->errorStream() << "ice::CTOR() - "
+                                       << "Fatal error creating the subscriptionManager instance. Will not start listener."
+                                       << log4cpp::CategoryStream::ENDLINE;
+                //_isOK = false;
+                //exit(1); // FATAL, I think is right to exit
+                //return;
+                boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+                util::iceConfManager::getInstance()->setStartListener( false );
+            }
+        }
+        /**
+         * subscriptionCache is used to retrieve the list of cemon we're
+         * subscribed. If it's creation failed, it is not the case (at 0-order)
+         * to use the listener...
+         *
+         */
+        {
+            boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
+            if( util::subscriptionCache::getInstance() == NULL ) {
+                log_dev->errorStream() << "ice::CTOR() - "
+                                       << "Fatal error creating the subscriptionCache instance. Will not start listener."
+                                       << log4cpp::CategoryStream::ENDLINE;
+                boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+                util::iceConfManager::getInstance()->setStartListener( false );
+            }
+        }
+    }
 }
 
 //______________________________________________________________________________
