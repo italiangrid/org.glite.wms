@@ -119,9 +119,6 @@ namespace glite {
                     void job_done_failed_event( CreamJob& theJob );
                     void job_done_ok_event( CreamJob& theJob );
 
-                    // job scheduled event
-                    void cream_scheduled_event( CreamJob& theJob );
-
                     /**
                      * Logs a job status change event. This means that
                      * the job passed as parameter changed status; the
