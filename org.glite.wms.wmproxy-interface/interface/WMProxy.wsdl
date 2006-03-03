@@ -79,6 +79,7 @@
 				<xsd:sequence>
 					<xsd:element name="id" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
 					<xsd:element name="name" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="true"/>
+					<xsd:element name="path" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="true"/>
 					<xsd:element name="childrenJob" type="glitenstypes:JobIdStructType" minOccurs="0" maxOccurs="unbounded" nillable="true"/>
 				</xsd:sequence>
 			</xsd:complexType>
