@@ -8,7 +8,6 @@
 
 lib_LTLIBRARIES    = \
 	libglite_wms_ism_ii_purchaser.la \
-        libglite_wms_ism_ii_gris_purchaser.la \
 	libglite_wms_ism_rgma_purchaser.la \
 	libglite_wms_ism_cemon_purchaser.la \
 	libglite_wms_ism_cemon_asynch_purchaser.la \
@@ -16,16 +15,14 @@ lib_LTLIBRARIES    = \
 
 libglite_wms_ism_ii_purchaser_la_SOURCES = \
         ldap-utils.cpp \
+        ldap-dn-utils.cpp \
         ism-ii-purchaser.cpp
-
-libglite_wms_ism_ii_gris_purchaser_la_SOURCES = \
-        ism-ii-gris-purchaser.cpp
 
 libglite_wms_ism_rgma_purchaser_la_SOURCES = \
         ism-rgma-purchaser.cpp
 
 libglite_wms_ism_cemon_purchaser_la_SOURCES = \
-	ism-cemon-purchaser.cpp
+	ism-cemon-purchaser.cpp 
 
 libglite_wms_ism_cemon_asynch_purchaser_la_SOURCES = \
         ism-cemon-asynch-purchaser.cpp

@@ -24,7 +24,7 @@ namespace {
 boost::condition f_purchasing_cycle_run_condition;
 boost::mutex     f_purchasing_cycle_run_mutex;
 
-bool
+bool 
 ism_ii_purchaser_entry_update::operator()(
   int a,
   boost::shared_ptr<classad::ClassAd>& ad
@@ -41,7 +41,7 @@ ism_ii_purchaser_entry_update::operator()(
   // of the actual update.
   return false;
 }
-  
+
 } // {anonymous}
 
 ism_ii_purchaser::ism_ii_purchaser(

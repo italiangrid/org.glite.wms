@@ -1,5 +1,5 @@
 // File: ism-cemon-asynch-purchaser.cpp
-// Author: Salvatore Monforte
+// Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
@@ -72,106 +72,6 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
   return result;
 }
 
-int ism_cemon_asynch_purchaser::parse_ldif_event_messages(boost::shared_ptr<CEConsumer> consumer, gluece_info_container_type& gluece_info_container)
-{
-  int result = 0;
-  const char* msg;
-  if (msg = consumer->getNextEventMessage()) {
-	
-    string attrs_str;
-    attrs_str.assign(msg);
- 
-    // Before converting the gluece schema into classads the list of multi-value-attribute
-    // should be available.Thus, we first extract the multi value attributes from CEMon 
-    // messages, if so required, then extract gluece schema entries.
-    // The gluece schema could pratically be considered constant in time.
-    // Therefore it should be worth to extract multi attribute list only once.
-    if (m_multi_attributes.empty()) {
-	
-      // Extract Multi Value Attributes from CEMON Message
-      boost::escaped_list_separator<char> attrs_sep("","\n","");
-      boost::tokenizer< boost::escaped_list_separator<char> > attrs_tok(attrs_str,attrs_sep);
-      for(boost::tokenizer< boost::escaped_list_separator<char> >::iterator attrs_tok_it = attrs_tok.begin(); 
-        attrs_tok_it != attrs_tok.end(); ++attrs_tok_it) {
-    
-        m_multi_attributes.push_back(*attrs_tok_it);
-      }
-    }
-    // According to the CEMON dialect for ISM there is a message for every
-    // CE whose schema is to be retrieved.
-    while(msg=consumer->getNextEventMessage()) {
-      string gluece_str;
-      gluece_str.assign(msg);
-      ldif2classad::LDIFObject ldif_ce;
-      std::vector<classad::ExprTree*>  CloseSE_exprs;
-
-      bool parsingCESEBind = false;
-      boost::escaped_list_separator<char> gluece_sep("","\n","");
-      boost::tokenizer<boost::escaped_list_separator<char> > gluece_tok(gluece_str,gluece_sep);
-      for(boost::tokenizer< boost::escaped_list_separator<char> >::iterator gluece_tok_it = gluece_tok.begin(); 
-	            gluece_tok_it != gluece_tok.end(); ++gluece_tok_it) {
-        string ldif_entry;
-	ldif_entry.assign(*gluece_tok_it);
-        if (ldif_entry.empty()) continue;
-        string ldif_entry_orig(ldif_entry);
-        static boost::regex  ldif_regex("([[:alnum:]]+):[\\s]+(.+)");
-	boost::smatch ldif_pieces;
-	  
-	if (boost::regex_match(ldif_entry, ldif_pieces, ldif_regex)) {
-	    
-	  string attribute(ldif_pieces[1].first, ldif_pieces[1].second);
-	  string value(ldif_pieces[2].first, ldif_pieces[2].second);
-          
-	  if (!strcasecmp(attribute.c_str(),"dn")) {  // begin parsing a new dn
-            
-            // reset all flags and continue 
-            parsingCESEBind = false;
-            continue;
-          }     
-          if (!strcasecmp(attribute.c_str(),"ObjectClass")) {
-            if (!strcasecmp(value.c_str(), "GlueCESEBind")) { // start parsing a new bind
-              parsingCESEBind = true;
-              CloseSE_exprs.push_back(new classad::ClassAd());
-            }
-            continue;
-          }
-          if (parsingCESEBind) {
-            if (!strcasecmp(attribute.c_str(), "GlueCESEBindSEUniqueID")) {
-              static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("name", value);
-            }
-            else if (!strcasecmp(attribute.c_str(), "GlueCESEBindCEAccesspoint")) {
-              static_cast<classad::ClassAd*>(CloseSE_exprs.back())->InsertAttr("mount", value);
-            }
-          }
-          else { 	
-	    ldif_ce.add(attribute,value);
-	  }
-        }
-	else {
-	  Warning("Unable to parse ldif string: " << ldif_entry_orig << endl);
-	}
-      }
-      string GlueCEUniqueID;
-      ldif_ce.EvaluateAttribute("GlueCEUniqueID", GlueCEUniqueID);
- 
-      if (!GlueCEUniqueID.empty()) {
-        Debug("CEMonitor info for " << GlueCEUniqueID << "... Ok" << endl);
-
-        gluece_info_type ceAd(
-          ldif_ce.asClassAd(m_multi_attributes.begin(), m_multi_attributes.end())
-        );
-        ceAd->Insert("CloseStorageElements", classad::ExprList::MakeExprList(CloseSE_exprs));
-        gluece_info_container[GlueCEUniqueID] = ceAd;
-        result++;
-      }
-      else {
-        Warning("Unable to evaluate GlueCEUniqueID" << endl);
-      }
-   }
-  }
-  return result; 
-}
-
 void ism_cemon_asynch_purchaser::do_purchase()
 {
   do {
@@ -197,22 +97,41 @@ void ism_cemon_asynch_purchaser::do_purchase()
             string dialect(topic->getDialectAt(0)->getDialectName());
 
 	    gluece_info_container_type gluece_info_container;
-            if ( ((!strcasecmp(dialect.c_str(), "ISM_LDIF") || dialect.empty()) && 
-                  parse_ldif_event_messages(consumer, gluece_info_container)) ||
-                 ((!strcasecmp(dialect.c_str(), "ISM_CLASSAD")) && 
+            if ( (((!strcasecmp(dialect.c_str(), "ISM_CLASSAD")) ||
+                   !strcasecmp(dialect.c_str(), "ISM_CLASSAD_GLUE_1.2")) && 
                   parse_classad_event_messages(consumer, gluece_info_container)) ) {
                  
               ism_mutex_type::scoped_lock l(get_ism_mutex());
+              time_t const current_time( std::time(0) );
 	      for (gluece_info_iterator it = gluece_info_container.begin();
                 it != gluece_info_container.end(); ++it) {
 
                 if ((m_skip_predicate.empty() || !m_skip_predicate(it->first))) {                 
                 
                   insert_aux_requirements(it->second);
+                  insert_gangmatch_storage_ad(it->second);
+
                   if (expand_glueceid_info(it->second)) {
 		    int TTLCEinfo = 0;
-                    if (!it->second->EvaluateAttrNumber("TTLCEinfo", TTLCEinfo)) TTLCEinfo = 300; 
-                    get_ism()[it->first] =  boost::make_tuple(static_cast<int>(get_current_time().sec), TTLCEinfo, it->second, update_function_type());
+                    if (!it->second->EvaluateAttrNumber("TTLCEinfo", TTLCEinfo)) 
+                      TTLCEinfo = 300;
+                    it->second->InsertAttr("PurchasedBy","ism_cemon_asynch_purchaser");
+                    ism_type::iterator ism_it = get_ism().find(it->first);
+                    if (ism_it != get_ism().end()) {
+                      ism_type::data_type& data = ism_it->second;
+                      boost::tuples::get<0>(data) = current_time;
+                      boost::tuples::get<2>(data) = it->second;
+                    } 
+                    else {
+                      get_ism().insert(
+                        make_ism_entry(
+                          it->first,
+                          current_time,
+                          it->second,
+                          update_function_type()
+                        )
+                      );
+                    }
                   }
                 }
               }

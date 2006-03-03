@@ -39,7 +39,6 @@ public:
 
 private:
   int parse_classad_event_messages(boost::shared_ptr<CEConsumer>, gluece_info_container_type&);
-  int parse_ldif_event_messages(boost::shared_ptr<CEConsumer>, gluece_info_container_type&);
 
 private:                
   std::string m_topic;

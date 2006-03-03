@@ -13,6 +13,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind.hpp>
 
+#include "ldap-dn-utils.h"
 #include "glite/wms/ism/purchaser/common.h"
 
 #include "glite/wms/common/ldif2classad/LDAPQuery.h"
@@ -50,11 +51,32 @@ typedef std::map<
 
 typedef std::map<
   std::string, // cluster id
-  pair<
+  boost::tuple<
+    string, // site name
     vector<gluece_info_map_type::iterator>,         // list of ce in cluster
     vector<gluesubcluster_info_map_type::iterator> // list of subcluster in cluster
   >
 > gluecluster_info_map_type;
+
+typedef std::map<
+  std::string, // ce id
+  std::vector<pair_string_classad_shared_ptr> // list of ce views per vo
+> gluece_voview_info_map_type;
+
+typedef std::map<
+  std::string, // se id
+  boost::tuple<
+    classad_shared_ptr, // sead
+    std::vector<pair_string_classad_shared_ptr>, // list of sa info
+    std::vector<pair_string_classad_shared_ptr>, // list of control protocol info
+    std::vector<pair_string_classad_shared_ptr>  // list of access  protocol info
+  >
+> gluese_info_map_type;
+
+bool is_access_control_vo_rule(const string& r)
+{
+ return boost::algorithm::istarts_with(r, "VO:");
+}
 
 string get_cluster_name(ldif2classad::LDIFObject& ldif_CE)
 {
@@ -97,74 +119,53 @@ string get_cluster_name(ldif2classad::LDIFObject& ldif_CE)
   return cluster;
 }
 
-void tokenize_ldap_dn(std::string const& s, std::vector<std::string> &v)
+string get_site_name(ldif2classad::LDIFObject& ldif_CE)
 {
-  boost::escaped_list_separator<char> ldap_dn_sep("",",","");
-  boost::tokenizer<boost::escaped_list_separator<char> > 
-    ldap_dn_tok(s,ldap_dn_sep);
+  std::string site;
+  std::string reg_string("GlueSiteUniqueID\\s*=\\s*([^\\s]+)");
+  try {
+    std::vector<std::string> foreignKeys;
+    ldif_CE.EvaluateAttribute("GlueForeignKey", foreignKeys);
+    static boost::regex get_gsuid(reg_string);
+    boost::smatch result_gsuid;
+    bool found = false;
+    std::vector<std::string>::const_iterator key_it = foreignKeys.begin();
+    std::vector<std::string>::const_iterator const key_e = foreignKeys.end();
 
-  boost::tokenizer< boost::escaped_list_separator<char> >::iterator
-    ldap_dn_tok_it(
-      ldap_dn_tok.begin()
-    );
-  boost::tokenizer< boost::escaped_list_separator<char> >::iterator const 
-    ldap_dn_tok_end(
-       ldap_dn_tok.end()
-    );
+    // Looking for one GlueForeignKey (it is possibly multi-valued)
+    // With the specified attribute.
+    for( ;
+         key_it != key_e; ++key_it) {
 
-  for( ; ldap_dn_tok_it != ldap_dn_tok_end; ++ldap_dn_tok_it) 
-    v.push_back(
-      boost::algorithm::trim_copy(*ldap_dn_tok_it)
-    );
-  
-}
+      if( boost::regex_match(*key_it, result_gsuid, get_gsuid) ) {
 
-bool is_gluecluster_info_dn(std::vector<std::string> const& dn)
-{
- return dn.size() > 1 && 
-        dn[0].substr(0,string("GlueClusterUniqueID").length()) == 
-          string("GlueClusterUniqueID") &&
-        dn[1].substr(0,string("mds-vo-name").length()) == 
-          string("mds-vo-name");
-}
+        site.assign(result_gsuid[1].first,result_gsuid[1].second);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
 
-bool is_gluece_info_dn(std::vector<std::string> const& dn)
-{
- return dn.size() > 1 && 
-        dn[0].substr(0,string("GlueCEUniqueID").length()) == 
-          string("GlueCEUniqueID") &&
-        dn[1].substr(0,string("mds-vo-name").length()) == 
-          string("mds-vo-name");
-}
+      Warning("Cannot find GlueSiteUniqueID assignment.");
+    }
+  } catch( ldif2classad::LDAPNoEntryEx& ) {
 
-bool is_gluesubcluster_info_dn(std::vector<std::string> const& dn)
-{
- return dn.size() > 2 && 
-        dn[0].substr(0,string("GlueSubClusterUniqueID").length()) == 
-          string("GlueSubClusterUniqueID") &&
-        dn[1].substr(0,string("GlueClusterUniqueID").length()) == 
-          string("GlueClusterUniqueID") &&
-        dn[2].substr(0,string("mds-vo-name").length()) == 
-          string("mds-vo-name");
-}
+    // The GlueForeignKey was not found.
+    // We keep the gatekeeper name.
+  } catch( boost::bad_expression& e ){
 
-bool is_gluecesebind_info_dn(std::vector<std::string> const& dn)
-{
- return dn.size() > 2 && 
-   dn[0].substr(0,string("GlueCESEBindSEUniqueID").length()) == 
-     string("GlueCESEBindSEUniqueID") &&
-   dn[1].substr(0,string("GlueCESEBindGroupCEUniqueID").length()) == 
-     string("GlueCESEBindGroupCEUniqueID") &&
-   dn[2].substr(0,string("mds-vo-name").length()) == 
-     string("mds-vo-name");
+    Error("Bad regular expression " << reg_string
+          << ". Cannot parse GlueForeignKey.");
+  }
+  return site;
 }
 
 void 
-fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
+fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
   gluece_info_container_type& gluece_info_container) 
 {
-  string filter("(|(objectclass=gluecesebind)(|(objectclass=gluece)"
-    "(|(objectclass=gluecluster)(objectclass=gluesubcluster))))");
+  string filter("(|(objectclass=gluevoview)(|(objectclass=gluecesebind)(|(objectclass=gluece)"
+    "(|(objectclass=gluecluster)(objectclass=gluesubcluster)))))");
   ldif2classad::LDAPQuery query(IIconnection.get(), filter, vector<string>());
 
   try {
@@ -184,11 +185,37 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
       gluece_info_map_type         gluece_info_map;
       gluesubcluster_info_map_type gluesubcluster_info_map;
       gluecluster_info_map_type    gluecluster_info_map;
+      gluece_voview_info_map_type  gluece_voview_info_map;
 
       while (ldap_it.current()) {
 
 	vector<string> ldap_dn_tokens;
 	tokenize_ldap_dn(ldap_it.ldap_dn(), ldap_dn_tokens);
+	
+	if (is_gluecluster_info_dn(ldap_dn_tokens)) {
+	  string glue_cluster_unique_id(
+	    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+          );
+          ldif2classad::LDIFObject ldif_CL(*ldap_it);
+          string glue_site_unique_id(get_site_name(ldif_CL));
+          
+          gluecluster_info_map_type::iterator it;
+          bool gluecluster_info_map_insert;
+          boost::tie(it, gluecluster_info_map_insert) =
+            gluecluster_info_map.insert(
+              std::make_pair(glue_cluster_unique_id,
+                boost::make_tuple(
+                  glue_site_unique_id,
+                  vector<gluece_info_map_type::iterator>(),
+                  vector<gluesubcluster_info_map_type::iterator>()
+                )
+              )
+            );
+          if (!gluecluster_info_map_insert) {
+            boost::tuples::get<0>(it->second) = glue_site_unique_id;
+          }
+	}
+	else 
         if (is_gluece_info_dn(ldap_dn_tokens)) {
 	  ldif2classad::LDIFObject ldif_CE(*ldap_it);
           boost::shared_ptr<classad::ClassAd> ceAd(
@@ -198,7 +225,8 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 	    ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
 	  );
 	  string glue_cluster_unique_id(get_cluster_name(ldif_CE));
-	  gluece_info_map_type::iterator it;
+	  
+          gluece_info_map_type::iterator it;
 	  bool gluece_info_map_insert;
 	  boost::tie(it, gluece_info_map_insert) =
 	    gluece_info_map.insert(
@@ -207,7 +235,9 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
               )
             );
 	  if(gluece_info_map_insert) 
-            gluecluster_info_map[glue_cluster_unique_id].first.push_back(it);
+            boost::tuples::get<1>(
+              gluecluster_info_map[glue_cluster_unique_id]
+            ).push_back(it);
 	}
 	else if (is_gluesubcluster_info_dn(ldap_dn_tokens)) {
           ldif2classad::LDIFObject ldif_SC(*ldap_it);
@@ -227,7 +257,9 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
               std::make_pair(gluesubcluster_unique_id, scAd)
             );
           if (gluesubcluster_info_map_insert) 
-            gluecluster_info_map[glue_cluster_unique_id].second.push_back(it);
+            boost::tuples::get<2>(
+              gluecluster_info_map[glue_cluster_unique_id]
+            ).push_back(it);
         }
 	else if (is_gluecesebind_info_dn(ldap_dn_tokens)) {
 	  ldif2classad::LDIFObject ldif_BN(*ldap_it);
@@ -239,6 +271,21 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
           );
           gluece_info_map[glueceuniqueid].second.push_back(bnAd);
 	}
+        else if (is_gluevoview_info_dn(ldap_dn_tokens)) {
+          ldif2classad::LDIFObject ldif_VO(*ldap_it);
+          boost::shared_ptr<classad::ClassAd> voAd(
+            ldif_VO.asClassAd(multi_attrs_begin, multi_attrs_end)
+          );
+          string gluevoviewlocalid(
+            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+          );
+          string glueceuniqueid(
+            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].rfind("=")+1)
+          );
+          gluece_voview_info_map[glueceuniqueid].push_back(
+            std::make_pair(gluevoviewlocalid,voAd)
+          );
+        }
 	ldap_it.next();
       } // while( ldap_it.current() )
       
@@ -249,42 +296,30 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
       gluecluster_info_map_type::const_iterator const cl_e(
         gluecluster_info_map.end()
       );
-/*
-      gluesubcluster_info_map_type::const_iterator sc_it(
-        gluesubcluster_info_map.begin()
-      );
 
-      gluesubcluster_info_map_type::const_iterator const sc_e(
-        gluesubcluster_info_map.end()
-      );
-*/
       for( ; cl_it != cl_e; ++cl_it) { // for each cluster
         
         vector<gluesubcluster_info_map_type::iterator>::const_iterator sc_it(
-          cl_it->second.second.begin()
+          boost::tuples::get<2>(cl_it->second).begin()
         );
-/*
-        vector<gluesubcluster_info_map_type::iterator>::const_iterator sc_e(
-          cl_it->second.second.end()
-        );
-*/
 
-        if (cl_it->second.second.empty()) {
-          continue;
-        }
 	boost::shared_ptr<classad::ClassAd> sc_ad = (*sc_it)->second;
 
         string cluster_id(cl_it->first);
         vector<gluece_info_map_type::iterator>::const_iterator ce_it(
-          cl_it->second.first.begin()
+          boost::tuples::get<1>(cl_it->second).begin()
         );
         vector<gluece_info_map_type::iterator>::const_iterator const ce_e(
-          cl_it->second.first.end()
+          boost::tuples::get<1>(cl_it->second).end()
         );
         
         for( ; ce_it != ce_e; ++ce_it) {
 
           (*ce_it)->second.first->Update(*sc_ad.get());
+          (*ce_it)->second.first->InsertAttr(
+            "GlueSiteUniqueID",
+            boost::tuples::get<0>(cl_it->second)
+          );
           std::vector<classad::ExprTree*>  exprs;
           vector<classad_shared_ptr>::const_iterator se_it(
             (*ce_it)->second.second.begin()
@@ -316,9 +351,92 @@ fetch_bdii_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             classad::ExprList::MakeExprList(exprs)
           );
 
-          gluece_info_container.insert( 
-            std::make_pair((*ce_it)->first, (*ce_it)->second.first)
+          gluece_voview_info_map_type::const_iterator const vo_views(
+            gluece_voview_info_map.find((*ce_it)->first)
           );
+          if (vo_views!=gluece_voview_info_map.end() &&
+              !vo_views->second.empty()
+             ) {
+            
+            vector<string> access_control_base_rules;
+
+            utilities::EvaluateAttrList(
+              *((*ce_it)->second.first),
+              "GlueCEAccessControlBaseRule",
+              access_control_base_rules
+            );
+            bool access_control_vo_rule_exists = false;
+            vector<string>::iterator last_access_control_vo_rule(
+              access_control_base_rules.begin()
+            );
+            // for each access control vo rule...
+            do {
+
+              last_access_control_vo_rule = std::find_if(
+                last_access_control_vo_rule,
+                access_control_base_rules.end(),
+                is_access_control_vo_rule
+              );
+              access_control_vo_rule_exists = 
+                last_access_control_vo_rule != access_control_base_rules.end();
+              
+	      if (access_control_vo_rule_exists) {
+                 size_t colon_pos = last_access_control_vo_rule->rfind(":");
+                 string vo(
+                   last_access_control_vo_rule->substr(colon_pos+1)
+                 );
+
+                 vector<pair_string_classad_shared_ptr>::const_iterator 
+                   vo_view_it(
+                     vo_views->second.begin()
+                   );
+                 vector<pair_string_classad_shared_ptr>::const_iterator const 
+                   vo_view_e(
+                     vo_views->second.end()
+                   );
+                 for ( ; vo_view_it!=vo_view_e; ++vo_view_it) 
+                   if(vo_view_it->first==vo) break;
+                 
+                 
+                 //...if exists a voview create the relevant ceAd
+                 if(vo_view_it!=vo_view_e) {
+                   classad_shared_ptr ceAd(
+                     dynamic_cast<classad::ClassAd*>(
+                       (*ce_it)->second.first->Copy()
+                     )
+                   );
+                   ceAd->Update(*vo_view_it->second);
+                   gluece_info_container.insert(
+                     std::make_pair(
+                       (*ce_it)->first + string(",vo=") + vo_view_it->first,
+                       ceAd
+                     )
+                   );
+                   
+                   last_access_control_vo_rule =
+                     access_control_base_rules.erase(last_access_control_vo_rule);
+                 }
+                 else {
+                   ++last_access_control_vo_rule;
+                 }
+              }
+            } while(access_control_vo_rule_exists);
+            
+            if (!access_control_base_rules.empty()) {
+              (*ce_it)->second.first->Insert(
+                "GlueCEAccessControlBaseRule",
+                utilities::asExprList(access_control_base_rules)
+              );
+              gluece_info_container.insert(
+                std::make_pair((*ce_it)->first, (*ce_it)->second.first)
+              );  
+            }
+          }
+          else {
+            gluece_info_container.insert( 
+              std::make_pair((*ce_it)->first, (*ce_it)->second.first)
+            );
+          }
 	}
       }
     }
@@ -346,7 +464,7 @@ void fetch_bdii_info(const std::string& hostname,
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection(
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
   );
-  fetch_bdii_info(IIconnection, gluece_info_container);
+  fetch_bdii_ce_info(IIconnection, gluece_info_container);
 }
 
 } // namespace purchaser
