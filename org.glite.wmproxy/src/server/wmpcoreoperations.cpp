@@ -9,9 +9,8 @@
 //
 
 // Boost
+#include <boost/lexical_cast.hpp>
 #include <boost/pool/detail/singleton.hpp>
-
-#include "wmp2wm.h"
 
 #include <fstream>
 #include <errno.h>
@@ -20,13 +19,10 @@
 #include <sys/types.h>
 #include <sys/file.h> // flock
 
-// Boost
-#include <boost/lexical_cast.hpp>
-
+#include "wmp2wm.h"
 #include "wmpcommon.h"
 #include "wmpcoreoperations.h"
 #include "wmpconfiguration.h"
-
 #include "wmpstructconverter.h"
 
 #include "glite/wmsutils/jobid/manipulation.h"
@@ -43,10 +39,6 @@
 #include "authorizer/wmpauthorizer.h"
 #include "authorizer/wmpgaclmanager.h"
 #include "authorizer/wmpvomsauthz.h"
-
-// WMPManager
-//#include "wmpmanager.h"
-//#include "wmp2wm.h"
 
 // Logger
 #include "utilities/logging.h"
@@ -1874,6 +1866,7 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	JobStatus status = WMPEventLogger::getStatus(jid, delegatedproxy);
 	
 	// Getting type from jdl
+	string seqcode = "";
 	JobId * parentjid = new JobId(status.getValJobId(JobStatus::PARENT_JOB));
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
 		string parentjdl = wmputilities::readTextFile(
@@ -1890,17 +1883,16 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 		}
 		delete parentad;
+	} else {
+		// Getting sequence code from jdl
+		//Ad *ad = new Ad();
+		//ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
+		Ad *ad = new Ad(status.getValString(JobStatus::JDL));
+		if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
+			seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
+		}
+		delete ad;
 	}
-	
-	// Getting sequence code from jdl
-	//Ad *ad = new Ad();
-	//ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
-	Ad *ad = new Ad(status.getValString(JobStatus::JDL));
-	string seqcode = "";
-	if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
-		seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
-	}
-	delete ad;
 	
 	if (status.getValBool(JobStatus::CANCELLING)) {
 		edglog(error)<<"Cancel has already been requested"<<endl;
@@ -1915,6 +1907,10 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+	
+	if (seqcode == "") {
+		seqcode = wmplogger.getLastEventSeqCode();
+	}
 	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {

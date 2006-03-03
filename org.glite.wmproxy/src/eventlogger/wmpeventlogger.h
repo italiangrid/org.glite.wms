@@ -102,6 +102,8 @@ class WMPEventLogger  {
 		
 		std::string isStartAllowed();
 		
+		std::string getLastEventSeqCode();
+		
 		std::string getUserTag(const std::string &tagname);
 		
 		

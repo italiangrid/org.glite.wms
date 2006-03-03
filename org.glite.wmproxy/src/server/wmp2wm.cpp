@@ -3,12 +3,14 @@
 	See http://public.eu-egee.org/partners/ for details on the copyright holders.
 	For license conditions see the license file or http://www.eu-egee.org/license.html
 */
-/*
- * File: wmp2wm.cpp
- * Author: Marco Pappalardo
- */
+//
+// File: wmp2wm.cpp
+// Author: Marco Pappalardo
+// Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
+//
 
 #include "wmp2wm.h"
+#include "wmpresponsestruct.h"
 
 // Event logger
 #include "eventlogger/wmpeventlogger.h"
@@ -16,12 +18,15 @@
 // Utilities
 #include "utilities/wmputils.h"
 
-#include "wmpresponsestruct.h"
+// Commands
+#include "commands/listjobmatch.h"
 
 // Logging
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
+
+#include "glite/wms/common/utilities/edgstrstream.h"
 
 // WMProxy exceptions
 #include "utilities/wmpexceptions.h"
@@ -31,53 +36,60 @@
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 
+#include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/PrivateAttributes.h"
 
-#include "glite/wms/common/utilities/edgstrstream.h"
-
-#include "commands/listjobmatch.h"
 
 // Listmatch classad attributes
 const char * LISTMATCH_REASON = "reason";
 const char * LISTMATCH_MATCH_RESULT = "match_result";
+
 const std::string LISTMATCH_REASON_OK = "ok";
 const std::string LISTMATCH_REASON_NO_MATCH = "no matching resources found";
 
-namespace requestad    = glite::wms::jdl;
 namespace logger       = glite::wms::common::logger;
 namespace eventlogger  = glite::wms::wmproxy::eventlogger;
 namespace wmsutilities = glite::wms::common::utilities;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 namespace commands = glite::wms::wmproxy::commands;
 
-
 using namespace std;
+using namespace glite::wms::jdl;
 
 namespace {
 
-void f_forward(wmsutilities::FileList<std::string>& filelist,
-	wmsutilities::FileListMutex& mutex, std::string const& ad)
+void f_forward(wmsutilities::FileList<string>& filelist,
+	wmsutilities::FileListMutex& mutex, string const& ad)
 {
-	edglog(debug)<<"Writing to filelist: "<<filelist.filename()<<std::endl;
+	GLITE_STACK_TRY("f_forward()");
+	edglog_fn("wmp2wm::f_forward");
+	
+	edglog(debug)<<"Request Queue: "<<filelist.filename()<<endl;
 	wmsutilities::FileListLock lock(mutex);
 	try {
 		filelist.push_back(ad);
-	} catch (std::exception &ex) {
+	} catch (exception &ex) {
 		throw wmputilities::FileSystemException(__FILE__, __LINE__,
 			"wmp2wm::f_forward()", wmputilities::WMS_FILE_SYSTEM_ERROR,
 			ex.what());
 	}
+	
+	GLITE_STACK_CATCH();
 }
 
-std::string
+string
 toFormattedString(classad::ClassAd &classad)
 {
-	std::string buffer = "";
+	GLITE_STACK_TRY("toFormattedString()");
+	
+	string buffer = "";
 	classad::PrettyPrint unp;
 	unp.SetClassAdIndentation(1);
 	unp.SetListIndentation(0);
 	unp.Unparse(buffer, classad.Copy());
 	return buffer;
+	
+	GLITE_STACK_CATCH();
 }
 
 }
@@ -98,23 +110,28 @@ WMP2WM::~WMP2WM()
 void
 WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger)
 {
-	
+	GLITE_STACK_TRY("init()");
 	edglog_fn("wmp2wm::init");
-  	edglog(debug)<<"Initializing wmp2wm..."<<std::endl;
-  	edglog(debug)<<"FileQueue is: "<<filename<<std::endl;
+	
+  	edglog(debug)<<"Initializing wmp2wm..."<<endl;
+  	edglog(debug)<<"Request Queue: "<<filename<<endl;
   	
   	this->wmpeventlogger = wmpeventlogger;
   	
-  	m_filelist.reset(new wmsutilities::FileList<std::string>(filename));
+  	m_filelist.reset(new wmsutilities::FileList<string>(filename));
   	m_mutex.reset(new wmsutilities::FileListMutex(*(m_filelist.get())));
 
-  	edglog(debug)<<"wmp2wm initialization done"<<std::endl;
+  	edglog(debug)<<"wmp2wm initialization done"<<endl;
+  	
+  	GLITE_STACK_CATCH();
 }
 
 void
 WMP2WM::submit(const string &jdl)
 {
+	GLITE_STACK_TRY("submit()");
   	edglog_fn("wmp2wm::submit");
+  	
   	edglog(debug)<<"Forwarding Submit Request..."<<endl;
   	
   	classad::ClassAd * jdlAd(wmsutilities::parse_classad(jdl)); 
@@ -132,20 +149,24 @@ WMP2WM::submit(const string &jdl)
     		true, true, (*m_filelist).filename().c_str(), jdl.c_str());
     	edglog(debug)<<"LB Logged jdl: "<<jdl<<endl;
     	edglog(debug)<<"Submit EnQueued OK"<<endl;
-  	} catch (std::exception &e) {
+  	} catch (exception &e) {
     	// LogEnQueued FAIL if exception occurs
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
     		e.what(), true, true, (*m_filelist).filename().c_str(), jdl.c_str());
     	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
   	}
   	
-  	edglog(debug)<<"Submit Forwarded"<<endl; 
+  	edglog(debug)<<"Submit Forwarded"<<endl;
+  	
+  	GLITE_STACK_CATCH();
 }
 
 void
 WMP2WM::cancel(const string &jobid, const string &seq_code)
 {
+	GLITE_STACK_TRY("cancel()");
  	edglog_fn("wmp2wm::cancel");
+ 	
 	edglog(debug)<<"Forwarding Cancel Request..."<<endl;
 	
 	classad::ClassAd jdlAd = wmsutilities::cancel_command_create(jobid); 
@@ -160,13 +181,17 @@ WMP2WM::cancel(const string &jobid, const string &seq_code)
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
 	
 	edglog(debug)<<"Cancel Forwarded"<<endl;
+	
+	GLITE_STACK_CATCH();
 }
 
 string
 computePipePath(const string &listmatch_path)
 {
-	edglog_fn("CommandFactoryServerImpl::insertPipePath");
-	edglog(info)<<"Inserting ListMatch Pipe Name"<<endl;
+	GLITE_STACK_TRY("computePipePath()");
+	edglog_fn("wmp2wm::computePipePath");
+	
+	edglog(info)<<"Inserting ListMatch Pipe Name..."<<endl;
   
 	char time_string[20];
 	wmsutilities::oedgstrstream s;
@@ -183,14 +208,18 @@ computePipePath(const string &listmatch_path)
 	milliseconds = tv.tv_usec / 1000;
 	s<<listmatch_path<<"/"<<getpid()<<"."<<string(time_string)
 		<<milliseconds;
-  return s.str();
+	return s.str();
+	
+	GLITE_STACK_CATCH();
 }
 
 void
 insertUserProxy(classad::ClassAd &convertedAd,  string &pipe_path,
 	const string &listmatchpath, const string &credentials_file)
 {
-	edglog_fn("CommandFactoryServerImpl::insertUserProxy");
+	GLITE_STACK_TRY("insertUserProxy()");
+	edglog_fn("wmp2wm::insertUserProxy");
+	
 	string local_path;
 	string cmd_name;
 
@@ -200,16 +229,21 @@ insertUserProxy(classad::ClassAd &convertedAd,  string &pipe_path,
 	}
 	local_path.assign(listmatchpath + "/user.proxy." + pipe_path);
 	wmputilities::fileCopy(credentials_file, local_path);
-  
+	
+	edglog(debug)<<"Inserting user proxy path: "<<local_path<<endl;
   	convertedAd.DeepInsertAttr(static_cast<classad::ClassAd*>(
-  		convertedAd.Lookup("arguments"))->Lookup("ad"), "X509UserProxy",
+  		convertedAd.Lookup("arguments"))->Lookup("ad"), JDLPrivate::USERPROXY,
 		local_path);
+	
+	GLITE_STACK_CATCH();
 }
 
 void
 WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
 {
+	GLITE_STACK_TRY("match()");
 	edglog_fn("wmp2wm::match");
+	
 	edglog(debug)<<"Forwarding Match Request..."<<endl;
 
 	classad::ClassAd* reqAd(wmsutilities::parse_classad(jdl));
@@ -222,18 +256,16 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
 	convertedAd.DeepInsertAttr(convertedAd.Lookup("arguments"), "file",
 		pipepath);
 	insertUserProxy(convertedAd, pipepath, filel, proxy);
-	string convertedString = wmsutilities::unparse_classad(convertedAd);
 	
+	string convertedString = wmsutilities::unparse_classad(convertedAd);
 	edglog(debug)<<"Converted string (written in filelist): "
 		<<toFormattedString(convertedAd)<<endl;
- 			
-	std::string command_ad(convertedString);
+	string command_ad(convertedString);
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
-
-	string resultlist = commands::listjobmatchex(proxy, pipepath);
-	
 	edglog(debug)<<"Match Forwarded"<<endl;
 	
+	string resultlist = commands::listjobmatchex(proxy, pipepath);
+	edglog(debug)<<"Match result: "<<resultlist<<endl;
 	/* Listmatch returned classad, eg:
 	[
         match_result = 
@@ -246,36 +278,48 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
            }; 
         reason = "ok"
     ]*/
-
-	edglog(debug)<<"Result: "<<resultlist<<std::endl;
-    StringAndLongList *list = new StringAndLongList();
-    vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
-    StringAndLongType *item = NULL;
-	jdl::Ad *ad = new jdl::Ad(resultlist);
-	if (!ad->hasAttribute(LISTMATCH_REASON)
-			|| ((ad->getString(LISTMATCH_REASON) != LISTMATCH_REASON_OK)
-				&& (ad->getString(LISTMATCH_REASON) != LISTMATCH_REASON_NO_MATCH))
-			|| !ad->hasAttribute(LISTMATCH_MATCH_RESULT)) {
-		//fault.code = 2; //MATCHMAKING_NORESULT_CODE
-		//fault.message = "Error during MatchMaking";
-		//return fault;
+    
+	string errormsg = "";
+	string reason = "";
+	jdl::Ad *ad = NULL;
+	if ((resultlist != "")) {
+		ad = new jdl::Ad(resultlist);
+		if (!ad->hasAttribute(LISTMATCH_REASON)) {
+			errormsg = "Error during matchmaking: no error reason";
+		} else if (((reason = ad->getString(LISTMATCH_REASON)) != LISTMATCH_REASON_OK)
+				&& (reason != LISTMATCH_REASON_NO_MATCH)) {
+			errormsg = "Error during matchmaking: " + reason;
+		} else if (!ad->hasAttribute(LISTMATCH_MATCH_RESULT)) {
+			errormsg = "Error during matchmaking: no match result attribute";
+		}
+		delete ad;
+	} else {
+		errormsg = "Error during matchmaking: empty result list";
 	}
+	if (errormsg != "") {
+		edglog(error)<<errormsg<<endl;
+		throw wmputilities::FileSystemException(__FILE__, __LINE__,
+			"wmp2wm::match()", wmputilities::WMS_FILE_SYSTEM_ERROR,
+			errormsg + "\n(please contact server administrator)");
+	}
+	
 	// TBC If reason ok can I assume attribute LISTMATCH_MATCH_RESULT
 	// is present?? (even if empty)
-	std::vector<std::string> items =
-		ad->getStringValue(LISTMATCH_MATCH_RESULT);	
-	delete ad;	
-	std::string couple;
-	std::string ce_id;
+    vector<StringAndLongType*> *file = new vector<StringAndLongType*>;
+    StringAndLongType *item = NULL;
+	vector<std::string> items = ad->getStringValue(LISTMATCH_MATCH_RESULT);	
+	delete ad;
+	
+	string couple;
+	string ce_id;
 	long int rank;
 	unsigned int pos = 0;
 	for (unsigned int i = 0; i < items.size(); i++) {
 		couple = items[i];
 		pos = couple.rfind(",");
-		if (pos != std::string::npos) {
+		if (pos != string::npos) {
 			ce_id = couple.substr(0, pos);
-			rank = atol(couple.substr(pos + 1, 
-				std::string::npos).c_str());
+			rank = atol(couple.substr(pos + 1, string::npos).c_str());
 	        item = new StringAndLongType();
 	        item->name = ce_id;
 	        item->size = rank;
@@ -284,16 +328,11 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
 	}
 	
 	void * result;
+	StringAndLongList *list = new StringAndLongList();
 	list->file = file;
     ((jobListMatchResponse*)result)->CEIdAndRankList = list;
-	/*} else {
-		edglog(critical) << "Error during MatchMaking:\n\tUnknown Error. "
-			"No MatchResult: please check." << std::endl;
-		fault.code = 2; //MATCHMAKING_NORESULT_CODE
-  		fault.message = std::string(GLITE_WMS_WMPMATCHMAKINGERROR);
-  		edglog(critical) << "Error during MatchMaking:\n\tUnknown Error. "
-  			"No MatchResult: please check." << std::endl;
-	}*/
+	
+	GLITE_STACK_CATCH();
 }
 
 

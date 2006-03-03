@@ -990,6 +990,89 @@ setJobLoggingProxy(glite::lb::Job &lbjob, const string &proxy)
 }
 
 string
+WMPEventLogger::getLastEventSeqCode()
+{
+	GLITE_STACK_TRY("getLastEventSeqCode()");
+	edglog_fn("WMPEventlogger::getLastEventSeqCode");
+	
+	edg_wlc_JobId jobid;
+  	// parse the jobID string
+  	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
+    	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
+    	throw LBException(__FILE__, __LINE__,
+			"isStartAllowed()", WMS_OPERATION_NOT_ALLOWED,
+			"Error during edg_wlc_JobIdParse");
+  	}
+	
+	edg_wll_Event * events = NULL;
+  	edg_wll_QueryRec jc[2];
+  	edg_wll_QueryRec ec[2];
+  	memset(jc, 0, sizeof jc);
+  	memset(ec, 0, sizeof ec);
+  
+  	// job condition: JOBID = jobid
+  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	jc[0].value.j = jobid;
+  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+  	
+  	// event condition: Event SOURCE = NetworkServer
+  	ec[0].attr = EDG_WLL_QUERY_ATTR_SOURCE;
+  	ec[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	ec[0].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
+  	ec[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+  	
+  	int error;
+
+#ifdef GLITE_WMS_HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Quering LB Proxy..."<<endl;
+		error = edg_wll_QueryEventsProxy(ctx, jc, ec, &events);
+		if (error == ENOENT) { // no events found
+	   		edglog(debug)<< "No events found quering LB Proxy. Quering LB..."<<endl;
+			error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+	  	}
+	} else { // end switch LB PROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
+		edglog(debug)<< "Quering LB..."<<endl;
+		error = edg_wll_QueryEvents(ctx, jc, ec, &events);
+#ifdef GLITE_WMS_HAVE_LBPROXY
+	} // end switch LB normal
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+  	if (error) {
+  		if (error == ENOENT) { // no events found
+	   		edglog(critical)<<"No events found for job: "<<this->id->toString()
+	   			<<endl;
+	    	throw LBException(__FILE__, __LINE__, "isStartAllowed()",
+	    		WMS_LOGGING_ERROR, "Unable to complete operation: no events "
+	    		"found for requested job");
+	  	}
+   		edglog(critical)<<"Unable to get events for job: "<<this->id->toString()
+   			<<endl;
+    	throw LBException(__FILE__, __LINE__, "isStartAllowed()",
+    		WMS_LOGGING_ERROR, "Unable to complete operation: unable to get "
+    		"events for requested job");
+	}
+	
+	int i = 0;
+	while (events[i].type) {
+		i++;
+	}
+	i--;
+	
+	string seqcode = events[i].any.seqcode;
+    
+    for (int i = 0; events[i].type; i++) {
+		edg_wll_FreeEvent(&events[i]);
+	}
+	
+  	return seqcode;
+  
+  	GLITE_STACK_CATCH();
+}
+
+string
 WMPEventLogger::isStartAllowed()
 {
 	GLITE_STACK_TRY("isStartAllowed()");
