@@ -138,6 +138,8 @@ struct JobIdApi {
 	std::string jobid ;
 	/** The name of the node (for DAG, collection of jobs and parametric jobs, NULL otherwise) */
 	std::string* nodeName ;
+	/** The server ISB relative path */
+        std::string* jobPath ;
 	/** A list of all the children for this node (for DAG, collection of jobs and parametric jobs, empty-vector otherwise) */
 	std::vector< JobIdApi* > children ;
 };
@@ -300,6 +302,15 @@ void jobCancel(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *
 */
 long getMaxInputSandboxSize(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 /**
+* Returns a list with the available transfer protocols on the WMProxy server
+* @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ; if NULL default parameters are used
+* @returns a vector if strings with the list of available protocols
+* @throws AuthenticationException An authentication problem occurred
+* @throws AuthorizationExceptionBaseException The user is not authorized to perform this operation
+* @throws GenericException A generic problem occurred
+*/
+std::vector<std::string> getTransferProtocols(glite::wms::wmproxyapi::ConfigContext *cfs);
+/**
 * Returns a list of destination URI's associated to the job (identified by the jobId provided as input)
 * where the job input sandbox files can be uploaded by the client.
 * The location is created in the storage managed by the WM (if needed) and
@@ -308,6 +319,9 @@ long getMaxInputSandboxSize(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 * are expected to be found in the returned location when the job lands on the CE.
 * @param jobid The string identification of the job
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
+* operation. Possible standard values are: "all" to get URIs with all available protocols; "default" to get URIs with the server default protocol
+*  not mandatory, default value is "all")
 * @return A vector containing a list of string representations of the Destination URI in all the available protocols
 * @throws AuthenticationException An authentication problem occurred
 * @throws AuthorizationExceptionBaseException The user is not authorized to perform this operation
@@ -317,7 +331,7 @@ long getMaxInputSandboxSize(glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
 * @throws BaseException Any other error occurred
 * @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, GenericException, BaseException
 */
-std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="" );
 
 /**
 * Returns a list of destination URI's associated to the job and its children in case of DAG's and collections, where the job input sandbox files can be uploaded
@@ -334,6 +348,9 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * those files will be directly uploaded (by the JobWrapper) from the WN to the specified GridFTP servers without transiting on the WMS machine.
 * @param jobid The string identification of the job
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
+* operation. Possible standard values are: "all" to get URIs with all available protocols; "default" to get URIs with the server default protocol
+*  not mandatory, default value is "all")
 * @return a vector of pair in which the first element is the jobid and the second one is a vector containing the list of URI's associated to the job in all the available protocols
 :* @throws AuthenticationException An authentication problem occurred
 * @throws AuthorizationExceptionBaseException The user is not authorized to perform this operation
@@ -342,7 +359,7 @@ std::vector<std::string>  getSandboxDestURI(const std::string &jobid, glite::wms
 * @throws GenericException A generic problem occurred
 * @throws BaseException Any other error occurred
 */
- std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+ std::vector< std::pair<std::string ,std::vector<std::string > > > getSandboxBulkDestURI(std::string jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
  
 /*
 * Returns the available user space quota on the storage managed by the WM.
@@ -392,6 +409,9 @@ void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *c
 * It can only be applied for files of the Output Sandbox that are managed by the WM (i.e. not specified as URI in the JDL).
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
 * @param jobid The string identification of the job
+* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
+* operation. Possible standard values are: "all" to get URIs with all available protocols; "default" to get URIs with the server default protocol
+*  not mandatory, default value is "all")
 * @return A vector containing, for each element, the URI of the output file and corresponding size in bytes
 * @throws AuthenticationException An authentication problem occurred
 * @throws AuthorizationException The user is not authorized to perform this operation
@@ -402,7 +422,7 @@ void jobPurge(const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *c
 * @throws BaseException Any other error occurred
 * @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, GenericException, BaseException
 */
-std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::vector <std::pair<std::string , long> > getOutputFileList (const std::string &jobid, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
 /**
 * Returns the list of CE Ids satisfying the job Requirements specified in the JDL, ordered according to the decreasing Rank.
 * The fault NoSuitableResourcesFault is returned if there are no resources matching job constraints.
@@ -454,6 +474,9 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * @param jobid the string with the job identifier
 * @param file the name of the perusal file be enabled
 * @param cfs Non-default configuration context (proxy file, endpoint URL and trusted cert location) ;  if NULL, the object is created with the default parameters
+* @param protocol string containing the protocol to use in the returned URI (Server available protocols are those returned by getTransferProtocols
+* operation. Possible standard values are: "all" to get URIs with all available protocols; "default" to get URIs with the server default protocol
+*  not mandatory, default value is "all")
 * @throws AuthenticationException An authentication problem occurred
 * @throws AuthorizationException The user is not authorized to perform this operation
 * @throws InvalidArgumentException If the given JDL is not valid
@@ -464,7 +487,7 @@ void enableFilePerusal (const std::string &jobid, const std::vector<std::string>
 * @see #getVersion
 * @see AuthenticationException, AuthorizationException, InvalidArgumentException, JobUnknownException, OperationNotAllowedException, BaseException
 */
-std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL);
+std::vector<std::string> getPerusalFiles (const std::string &jobid, const std::string &file, const bool &allchunks, glite::wms::wmproxyapi::ConfigContext *cfs=NULL, const std::string &protocol="");
 
 /**
 * Creates a valid template ready for submission for a job
