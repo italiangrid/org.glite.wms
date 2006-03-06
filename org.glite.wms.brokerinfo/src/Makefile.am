@@ -32,8 +32,7 @@ libglite_wms_dli_sici_la_SOURCES = \
 
 
 libglite_wms_dli_sici_la_LIBADD = \
-	-L$(GLITE_LOCATION)/lib -lglite_security_gsoap_plugin_262_gcc32 \
-	-L$(GLITE_LOCATION)/lib -lglite_wms_envC
+	-L$(GLITE_LOCATION)/lib -lglite_security_gsoap_plugin_262_gcc32 
 
 #$(SEC_GSOAP_PLUGIN_STATIC_262_NOTHR_LIBS) \
 #$(ARES_LIBS) \
