@@ -9,7 +9,6 @@
 
 //      $Id$
 
-
 #include "proxyinfo.h"
 // LBAPI (status)
 #include "lbapi.h"
@@ -278,8 +277,8 @@ const std::string ProxyInfo::printProxyInfo (ProxyInfoStructType info){
 			date = convDate(vo->endTime);
 			out << field ("Expiration", getDateString(date));
 			// time-left
-			timeleft = boost::lexical_cast<long>(convDate(vo->endTime)) - now;
-			out << field ("TimeLeft", timeString(timeleft));
+			timeleft = boost::lexical_cast<long> (info.endTime) - now ;
+			out << field ("Timeleft", timeString(timeleft)) ;
 		}
 	}
 	return out.str();
@@ -296,7 +295,8 @@ void ProxyInfo::proxy_info ( ){
 	vector<string> ids = wmcOpts->getJobIds( );
 
 	if (ids.empty()) {
-		setEndPoint(false);
+		// Retrieves the EndPoint URL (false=credential delegation is not performed)
+		retrieveEndPointURL(false);
 		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier:", *dgOpt);
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
 		try {
