@@ -30,6 +30,8 @@
 #include"lbapi.h"
 //BOOST
 #include "boost/lexical_cast.hpp" // types conversion
+// CURL
+#include "curl/curl.h"
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -78,6 +80,8 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	string dircfg = "";
 	string logname = "";
 	ostringstream warn;
+	vector<string> jobids;
+	int njobs = 0;
 	// Reads the input options
  	Job::readOptions  (argc, argv, Options::JOBPERUSAL);
         // --get
@@ -110,11 +114,57 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
+	// --noint
+	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
+	/*
+	* The jobid
+	*/
+	jobId = wmcOpts->getJobId( );
 	// --input
+	inOpt = wmcOpts->getStringAttribute(Options::INPUT);
+	// JobId's
+        if (inOpt){
+		// no Jobid with --input
+		if (jobId.size() > 0) {
+			throw WmsClientException(__FILE__,__LINE__,
+				"JobPerusal::readOptions", DEFAULT_ERR_CODE,
+				"Too many arguments"  ,
+				"The jobId mustn't be specified with the option:\n"
+				+ wmcOpts->getAttributeUsage(Options::INPUT));
+		}
+		// From input file
+		*inOpt = Utils::getAbsolutePath(*inOpt);
+		logInfo->print (WMS_INFO, "Reading the jobId from the input file:", *inOpt);
+		jobids = wmcUtils->getItemsFromFile(*inOpt);
+		jobids = wmcUtils->checkJobIds (jobids);
+		njobs = jobids.size( ) ;
+		if (njobs > 1){
+			if (nointOpt) {
+				err << "Unable to get the jobId from the input file:" << *inOpt << "\n";
+				err << "interactive questions disabled (" << wmcOpts->getAttributeUsage(Options::NOINT) << ")\n";
+				err << "and multiple jobIds found in the file (this command accepts only one JobId).\n";
+				err << "Adjust the file or remove the " << wmcOpts->getAttributeUsage(Options::NOINT) << " option\n";
+				throw WmsClientException(__FILE__,__LINE__,
+					"readOptions",DEFAULT_ERR_CODE,
+					"Input Option Error", err.str());
+			}
+			logInfo->print (WMS_DEBUG, "JobId(s) in the input file:", Utils::getList (jobids), false);
+			logInfo->print (WMS_INFO, "Multiple JobIds found:", "asking for choosing one id in the list ", true);
+        		jobids = wmcUtils->askMenu(jobids, Utils::MENU_SINGLEJOBID);
+			jobId = Utils::checkJobId(jobids[0]);
+		}
+		jobId = Utils::checkJobId(jobids[0]);
+		logInfo->print (WMS_DEBUG, "JobId by input file :", jobId );
+        } else {
+		// from command line
+        	jobId = wmcOpts->getJobId();
+		logInfo->print (WMS_DEBUG, "JobId:", jobId );
+        }
+	// --input-file
         inFileOpt = wmcOpts->getStringAttribute(Options::INPUTFILE);
 	// -- filename
 	peekFiles = wmcOpts->getListAttribute(Options::FILENAME);
-	if (inFileOpt && peekFiles.size() > 0 ) {
+	if (inFileOpt && peekFiles.size() > 0 && (getOpt||setOpt) ) {
 		err << "The following options cannot be specified together:\n" ;
 		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
@@ -123,25 +173,14 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		err <<  "Use the following option only once to get a job's file:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
 		err << "or "  << wmcOpts->getAttributeUsage(Options::ALL) << " to retrieve all job's files.\n";
-	} else if (inFileOpt && unsetOpt) {
-		err << "The unset operation disables job's files perusal; the following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::UNSET) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
-	} else if (inFileOpt && allOpt) { // TBD why?
-		err << "The following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::INPUTFILE) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::ALL) << "\n";
 	}
-
 	if (err.str().size() > 0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
 				"Input Option Error", err.str());
 	}
-
-	nointOpt = wmcOpts->getBoolAttribute(Options::NOINT);
 	// --input
-        if (inFileOpt) {
+        if (inFileOpt && (setOpt||getOpt)) {
         	peekFiles = wmcUtils->getItemsFromFile(*inFileOpt);
 		if (peekFiles.empty()) {
 			throw WmsClientException(__FILE__,__LINE__,
@@ -164,7 +203,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
 			cout << wmcUtils->getStripe(74, "-") << "\n";
 			peekFiles = wmcUtils->askMenu(peekFiles, Utils::MENU_SINGLEFILE);
-		} else if (nointOpt == false) {
+		} else if (setOpt && nointOpt == false) {
 			cout << "Filenames in the input file: " << Utils::getAbsolutePath(*inFileOpt) << "\n";
 			peekFiles =  wmcUtils->askMenu(peekFiles, Utils::MENU_FILE);
 		}
@@ -175,7 +214,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			logInfo->print (WMS_INFO, "filenames from the input file:", files, false);
 		}
     	 }
-	 // other incompatible
+	 // other incompatible options
 	if ( peekFiles.empty ()  && ( setOpt||getOpt ) )  {
 		err << "No valid job's file specified; use one of these options:\n";
 		err << wmcOpts->getAttributeUsage(Options::FILENAME) << "\n";
@@ -185,10 +224,16 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 			"Input Arguments Error",
 			err.str());
 	}
-	/*
-	* The jobid
-	*/
-	jobId = wmcOpts->getJobId( );
+	// file Protocol
+	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
+	if (setOpt && fileProto) {
+		logInfo->print (WMS_WARNING, "--proto: option ignored (set operation doesn't need any file transfer)\n", "", true );
+	}  else if (unsetOpt && fileProto) {
+		logInfo->print (WMS_WARNING, "--proto: option ignored (unset operation doesn't need any file transfer)\n", "", true );
+	} else {
+		// --proto
+		checkFileTransferProtocol( );
+	}
 	// output file
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
 	// File directory for --get
@@ -203,6 +248,20 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 		int size = peekFiles.size();
 		for (int i=0; i < size; i++ ) {
 			warn << "--filename " + peekFiles[i]  + " (unset operation disables perusal of all job's files)\n";
+		}
+		// --input-file
+		if (inFileOpt) {
+			warn << wmcOpts->getAttributeUsage(Options::INPUTFILE)  << " (unset operation disables perusal of all job's files)\n";
+		}
+		if (warn.str().size()>0 ){
+			logInfo->print(WMS_WARNING,
+				"Incompatible option(s) with " + wmcOpts->getAttributeUsage(Options::UNSET),
+				warn.str( ) );
+			 if (wmcUtils->answerYes ( "Do you wish to continue ?", false, true)==false){
+                                // exits from the programme execution
+                                cout << "bye\n";
+                                Utils::ending(1);
+                        }
 		}
 		// --all
 		if (allOpt) {
@@ -346,7 +405,19 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	size = uris.size();
 	if (size>0) {
 		logInfo->result(WMP_GETPERUSAL_SERVICE, "operation successfully ended; number of files to be retrieved :" + boost::lexical_cast<string>(size));
-		this->gsiFtpGetFiles(uris, paths, errors);
+		if (fileProto->compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
+			this->gsiFtpGetFiles(uris, paths, errors);
+		} else if (fileProto->compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
+			this->curlGetFiles(uris, paths, errors);
+		} else {
+			errors = "File Protocol not supported: " + *fileProto;
+			errors += "List of available protocols for this client:" + Options::getProtocolsString( ) ;
+			throw WmsClientException(__FILE__,__LINE__,
+				"perusalGet", DEFAULT_ERR_CODE,
+				"Protocol Error",
+				errors);
+		}
+
 		if (paths.empty() && errors.size( )>0){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet", DEFAULT_ERR_CODE,
@@ -392,7 +463,7 @@ void JobPerusal::perusalUnset( ){
 	}
 }
 /**
-* File downloading
+* File downloading with globus-url-copy
 */
 void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
 	string local = "";
@@ -418,7 +489,7 @@ void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vec
 		if (wmcUtils->askForFileOverwriting(local)){
 			// COMMAND
 			cmd+=string(uris[i]) + " file://"  + local;
-			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
+			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp command)\n", cmd);
 			// launches the command
 			code = system( cmd.c_str() ) ;
 			if ( code != 0 ) {
@@ -434,6 +505,106 @@ void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vec
 		}
          }
 }
+/**
+* File downloading with CURL
+*/
+void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
+	CURL *curl = NULL;
+	string local = "";
+	char curl_errorstr[CURL_ERROR_SIZE];
+	CURLcode code ;
+	long http_code = 0;
+	string *logpath = NULL;
+	FILE* log =  NULL;
+	int res = -1;
+	// Number of files to be transferred
+	int size = uris.size();
+	// user proxy
+	if (size==0)  {
+		errors = "Warning - no valid URIs of files to be downloaded\n";
+	} else {
+		// curl init
+		curl_global_init(CURL_GLOBAL_ALL);
+		curl = curl_easy_init();
+		if ( curl ) {
+			// user proxy
+			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
+			curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath() );
+			curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
+			//trusted certificate directory
+			curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
+			//ssl options (no verify)
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+			// enables error message buffer
+			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+			// DEBUG messages in the log file
+			logpath = wmcUtils->getLogFileName( );
+			if (logpath){
+				log = fopen(logpath->c_str(), "a");
+				if (log) {
+					curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+					curl_easy_setopt(curl, CURLOPT_STDERR, log);
+					logInfo->print(WMS_DEBUG, "CURL debug messages printed in the log file:", *logpath);
+				} else {
+					logInfo->print(WMS_WARNING,
+						"couldn't open the log file to print CURL debug messages:",
+						*logpath);
+				}
+			}
+			// If there is no log file, messages on the std-out
+			if ( log == NULL && wmcOpts->getBoolAttribute(Options::DBG)){
+				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+			}
+			 // writing function
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
+			// files to be downloaded
+			vector <std::string>::iterator it = uris.begin( ) ;
+			vector <std::string>::iterator const end = uris.end( );
+			for ( ; it != end ; it++) {
+				// local path
+				local = *dirOpt + "/" + Utils::getFileName (string(*it)) ;
+				if (wmcUtils->askForFileOverwriting(local)){
+					curl_easy_setopt(curl, CURLOPT_URL, it->c_str());
+					ostringstream info ;
+					info << "Source: " << (*it) << "\n";
+					info << " Destination: " << local <<"\n";
+					logInfo->print(WMS_DEBUG, "File Transfer\n", info.str());
+					struct httpfile params={
+						(char*)local.c_str() ,
+						NULL
+					};
+					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
+					// downloading
+					code = curl_easy_perform(curl);
+					// closes the log file
+					if(log) {fclose(log);}
+					if (code != CURLE_OK ){
+						errors += "- source URI: "+  (*it) + "\n  LOCAL PATH: " +  local + "\n" ;
+						if ( strlen(curl_errorstr)>0 ){
+							errors += "  reason: " + string(curl_errorstr) + "\n";
+						} else {
+							errors += "  (unknown reason)\n";
+						}
+					} else {
+						// SUCCESS
+						res = 0;
+						logInfo->print(WMS_DEBUG, "File Transfer SUCCESS", local);
+						paths.push_back(local);
+					}
+				} else {
+					errors += "Warning - existing file not overwritten: " + local + "\n";
+				}
+			}
+			// cleanup
+			curl_easy_cleanup(curl);
+		}
+	}
+}
+
 /**
 * Prints out the final results on the std-out
 */
@@ -499,15 +670,13 @@ void JobPerusal::printResult(const perusalOperations &operation, std::vector<std
 	cout << out.str();
 	// GET: shows the files
 	if ( operation == PERUSAL_GET && ! nodisplayOpt && paths.size( ) > 0 ) {
-		if (wmcUtils->answerYes ("Do you want to display the files ?", false, true)){
-			size = paths.size( );
-			for (int i = 0; i < size ; i++) {
-				cout << wmcUtils->getStripe(74, "-") << "\n";
-				cout << "file " << (i+1) << "/" << size << ": " << Utils::getFileName(paths[i]) << "\n";
-				cout << wmcUtils->getStripe(74, "-") << "\n\n";
-				cmd = DISPLAY_CMD + " " + string(paths[i]);
-				system(cmd.c_str());
-			}
+		size = paths.size( );
+		for (int i = 0; i < size ; i++) {
+			cout << wmcUtils->getStripe(74, "-") << "\n";
+			cout << "file " << (i+1) << "/" << size << ": " << Utils::getFileName(paths[i]) << "\n";
+			cout << wmcUtils->getStripe(74, "-") << "\n\n";
+			cmd = DISPLAY_CMD + " " + string(paths[i]);
+			system(cmd.c_str());
 		}
 	}
 }

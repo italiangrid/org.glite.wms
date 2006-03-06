@@ -10,7 +10,6 @@
 
 // 	$Id$
 
-
 #ifndef GLITE_WMS_CLIENT_SERVICES_JOBPERUSAL_H
 #define GLITE_WMS_CLIENT_SERVICES_JOBPERUSAL_H
 
@@ -90,6 +89,15 @@ class JobPerusal  : public Job {
 		* @param errors string with information on errors occurred during the downloading operations
 		*/
 		void gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+				/**
+		* Performs downloading of the peeks files to the local machine from
+		* the Destination URI's provided as input with CURL;
+		* it gets back a list of pathnames of the downloaded files
+		* @param uris the list of Destination URi's of the files to be retrieved
+		* @param paths gets the list of local pathnames to the downloaded files
+		* @param errors string with information on errors occurred during the downloading operations
+		*/
+		void curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
 		/**
 		* Prints out information on the operation results on the standard output
 		* @param operation type of operation (set, get or unset)
@@ -99,7 +107,7 @@ class JobPerusal  : public Job {
         	 /**
                 *	String input arguments
                 */
-		// std::string* inOpt ; 		// --input <file>
+		std::string* inOpt ; 		// --input <file>
 		std::string* inFileOpt ; 		// --input-file <file>
 		std::string* outOpt ; 	// --ouput <path>
 		std::string* dirOpt ; 		// --dir <path>

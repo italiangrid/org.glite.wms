@@ -121,16 +121,25 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 			logInfo->print(WMS_DEBUG, "Output Storage (by --dir option):", *dirOpt);
 		}
 	}
+	// file Protocol
+	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
+	try{
+		checkFileTransferProtocol( );
+	} catch (WmsClientException &exc) {
+		fileProto = new string (Options::TRANSFER_FILES_DEF_PROTO);
+		logInfo->print (WMS_WARNING, exc.what( ) ,
+		"Setting File Protocol to default : " + *fileProto);
 
+	}
 }
 /******************************
 *	getOutput method
 ******************************/
 void JobOutput::getOutput ( ){
 	postOptionchecks();
-	int result = FAILED;
+	int code = FAILED;
 	ostringstream out ;
-	ostringstream msg;
+	string result="";
 	int size = 0;
 	// checks that the jobids vector is not empty
 	if (jobIds.empty()){
@@ -159,15 +168,15 @@ void JobOutput::getOutput ( ){
 			// Properly set destination Directory
 			if (dirOpt){
 				if ( size == 1 ){
-					retrieveOutput (msg,status,Utils::getAbsolutePath(*dirOpt));
+					retrieveOutput (result,status,Utils::getAbsolutePath(*dirOpt));
 				} else {
-					retrieveOutput (msg,status,Utils::getAbsolutePath(*dirOpt)+logName+"_"+Utils::getUnique(*it));
+					retrieveOutput (result,status,Utils::getAbsolutePath(*dirOpt)+logName+"_"+Utils::getUnique(*it));
 				}
 			}else{
-				retrieveOutput (msg,status,dirCfg+logName+"_"+Utils::getUnique(*it));
+				retrieveOutput (result,status,dirCfg+logName+"_"+Utils::getUnique(*it));
 			}
 			// if the output has been successfully retrieved for at least one job
-			result = SUCCESS;
+			code = SUCCESS;
 
 		} catch (WmsClientException &exc){
 			// cancellation not allowed due to its current status
@@ -176,11 +185,11 @@ void JobOutput::getOutput ( ){
 			string wmsg = (*it) + ": not allowed to retrieve the output" + exc.what( );
 			// if the request is for multiple jobs, a failed-string is built for the final message
 			createWarnMsg(wmsg);
-			// goes on with the following job
+			// goes on with the next jobId
 			continue ;
 		}
 	}
-	if (result == SUCCESS && successRt){
+	if (code == SUCCESS && successRt){
 		out << "\n" << wmcUtils->getStripe(80, "=" , "") << "\n\n";
 		out << "\t\t\tJOB GET OUTPUT OUTCOME\n\n";
 		if (listOnlyOpt && hasFiles){
@@ -188,9 +197,9 @@ void JobOutput::getOutput ( ){
 			// Prints the results into the log file
 			logInfo->print(WMS_INFO,  string(parentFileList+childrenFileList), "", false );
 		} else {
-			out << msg.str() ;
+			out << result ;
 			// Prints the results into the log file
-			logInfo->print (WMS_INFO,  msg.str() , "", false );
+			logInfo->print (WMS_INFO,  result, "", false );
 		}
 		out << wmcUtils->getStripe(80, "=" , "" ) << "\n\n";
 		// Warnings/errors messages
@@ -215,8 +224,8 @@ void JobOutput::getOutput ( ){
 /*********************************************
 *	PRIVATE METHODS:
 **********************************************/
-int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::string& dirAbs, const bool &child){
-	string warnings = "";
+int JobOutput::retrieveOutput (std::string &result, Status& status, const std::string& dirAbs, const bool &child){
+	string errors = "";
 	string wmsg = "" ;
 	string id = "";
 	// Dir Creation Management 
@@ -224,11 +233,12 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	bool checkChildren = true;
 	// JobId
 	glite::wmsutils::jobid::JobId jobid = status.getJobId();
-	logInfo->print(WMS_DEBUG,"Checking the status of the job:" , jobid.toString());
+	id = jobid.toString() ;
+	logInfo->print(WMS_DEBUG,"Checking the status of the job:" , id);
 	// Check Status (if needed)
-	int code = status.checkCodes(Status::OP_OUTPUT, warnings, child);
-	if (warnings.size()>0){
-		wmsg = jobid.toString() + ": " + warnings ;
+	int code = status.checkCodes(Status::OP_OUTPUT, errors, child);
+	if (errors.size()>0){
+		wmsg = id + ": " + errors ;
 		createWarnMsg(wmsg);
 	}
 	if (!listOnlyOpt &&  (code == 0 || ! child )){
@@ -255,12 +265,18 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 		// OutputFiles Retrieval NOT allowed for DAGS (collection, partitionables, parametrics...)
 		// i.e. ANY job that owns children
 		if (children.size()==0){
+			// reset of the errors string
+			errors = string("");
 			// actually retrieve files
-			if (retrieveFiles (msg,jobid.toString(),dirAbs, child)){
+			if (retrieveFiles (result, errors, id,dirAbs, child)){
 				// Something has gone bad, no output files stored then purge directory
 				if (createDir) {
 					rmdir(dirAbs.c_str());
 				}
+			}
+			if (errors.size()>0){
+				wmsg = id + ": " + errors ;
+				createWarnMsg(wmsg);
 			}
 			successRt = true;
 			checkChildren = false;
@@ -268,24 +284,24 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			// IT is a DAG, no output files to be retrieved.
 			// Print a simple output
 			ostringstream out ;
-			out << "\nJobId: " << jobid.toString() << "\n";
+			out << "\nJobId: " << id << "\n";
 			parentFileList = out.str();
 		}
 	}
 	// Children (if present) Management
 	if (children.size()){
-		ostringstream msgVago ;
+		string result = "" ;
 		unsigned int size = children.size();
 		if (GENERATE_NODE_NAME){
 			std::map< std::string, std::string > map= AdUtils::getJobIdMap(status.getJdl());
 			for (unsigned int i = 0 ; i < size ;i++){
-				retrieveOutput (msgVago,children[i],
+				retrieveOutput (result, children[i],
 					dirAbs+logName+"_"+
 					AdUtils::JobId2Node(map,children[i].getJobId()),true);
 			}
 		}else{
 			for (unsigned int i = 0 ; i < size ;i++){
-				retrieveOutput (msgVago,children[i],
+				retrieveOutput (result,children[i],
 					dirAbs+logName+"_"+
 					children[i].getJobId().getUnique(),true);
 			}
@@ -301,10 +317,10 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	// checks Children
 	if (checkChildren && children.size()>0){
 		if (hasFiles){
-			msg << "Output sandbox files for the DAG/Collection :\n" << id <<endl ;
-			msg << "have been successfully retrieved and stored in the directory:"<<endl<<dirAbs << "\n\n";
+			result += "Output sandbox files for the DAG/Collection :\n" +  id ;
+			result += "\nhave been successfully retrieved and stored in the directory:\n" + dirAbs + "\n\n";
 		} else{
-			msg << "No output files to be retrieved for the DAG/Collection:\n" << jobid.toString() << "\n\n";
+			result += "No output files to be retrieved for the DAG/Collection:\n" + id + "\n\n";
 			if (createDir) {
 				// remove created empty dir
 				rmdir(dirAbs.c_str());
@@ -316,7 +332,7 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 			// remove created empty dir
 			rmdir(dirAbs.c_str());
 		}
-		msg << "No output files to be retrieved for the job:\n" << jobid.toString() <<" \n\n";
+		result += "No output files to be retrieved for the job:\n" + id + "\n\n";
 	}
 	if (purge){
 		try {
@@ -332,68 +348,67 @@ int JobOutput::retrieveOutput (ostringstream &msg,Status& status, const std::str
 	}
 	return 0;
 }
-bool JobOutput::retrieveFiles (ostringstream &msg, const std::string& jobid, const std::string& dirAbs, const bool &child){
-		vector <pair<string , long> > files ;
-		vector <pair<string,string> > paths ;
-		string file_proto = "";
-		string filename = "";
-		bool result = true;
-		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-		try {
-			// gets the list of the out-files from the EndPoint
-                        logInfo->service(WMP_OUTPUT_SERVICE, jobid);
-                        files = getOutputFileList(jobid, getContext() );
-                        logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
-			hasFiles = hasFiles || (files.size()>0);
-		} catch (BaseException &exc) {
-			string desc = "";
-			if (exc.Description){ desc =" (" + *(exc.Description)+ ")"; }
-			if (child) {
-				string wmsg = jobid + ": not allowed to retrieve the output" + desc ;
-				createWarnMsg (wmsg);
-				result = false ;
+bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const std::string& jobid, const std::string& dirAbs, const bool &child){
+	vector <pair<string , long> > files ;
+	vector <pair<string,string> > paths ;
+	string filename = "";
+	string err = "";
+	bool ret = true;
+	logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+	try {
+		// gets the list of the out-files from the EndPoint
+		logInfo->service(WMP_OUTPUT_SERVICE, jobid);
+		files = getOutputFileList(jobid, getContext(), *fileProto);
+		logInfo->result(WMP_OUTPUT_SERVICE, "The list of output files has been successfully retrieved");
+		hasFiles = hasFiles || (files.size()>0);
+	} catch (BaseException &exc) {
+		string desc = "";
+		if (exc.Description){ desc =" (" + *(exc.Description)+ ")"; }
+		if (child) {
+			string wmsg = jobid + ": not allowed to retrieve the output" + desc ;
+			createWarnMsg (wmsg);
+			ret = false ;
+		} else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"retrieveFiles", ECONNABORTED,
+				"getOutputFileList Error", desc);
+		}
+	}
+	// files successfully retrieved
+	if (files.size() == 0){
+		if (listOnlyOpt){
+			this->listResult(files, jobid, child);
+		}
+	}else{
+		// match the file to be downloaded to a local directory pathname
+		if (!listOnlyOpt){
+			// Actually retrieving files
+			logInfo->print(WMS_DEBUG, "Retrieving Files for: ", jobid);
+			unsigned int size = files.size( );
+			for (unsigned int i = 0; i < size; i++){
+				filename = Utils::getFileName(files[i].first);
+				paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );
+			}
+			if (fileProto->compare(Options::TRANSFER_FILES_GUC_PROTO)==0) {
+				this->gsiFtpGetFiles(paths, errors);
+			} else if (fileProto->compare(Options::TRANSFER_FILES_CURL_PROTO)==0) {
+				this->curlGetFiles(paths, errors);
 			} else {
+				err = "File Protocol not supported: " + *fileProto;
+				err += "List of available protocols for this client:" + Options::getProtocolsString( ) ;
 				throw WmsClientException(__FILE__,__LINE__,
-					"jobOutput", ECONNABORTED,
-					"getOutputFileList Error", desc);
+					"retrieveFiles", DEFAULT_ERR_CODE,
+					"Protocol Error", err);
 			}
+			// Result message
+			result += "Output sandbox files for the job:\n" + jobid  ;
+			result += "\nhave been successfully retrieved and stored in the directory:\n" + dirAbs + "\n\n";
+		} else {
+			// Prints file list (only verbose result)
+			this->listResult(files, jobid, child);
 		}
-		// files successfully retrieved
-		if (files.size() == 0){
-			if (listOnlyOpt){
-				this->listResult(files, jobid, child);
-			}
-		}else{
-			// match the file to be downloaded to a local directory pathname
-			if (!listOnlyOpt){
-				// Actually retrieving files
-				logInfo->print(WMS_DEBUG, "Retrieving Files for: ", jobid);
-				unsigned int size = files.size( );
-				for (unsigned int i = 0; i < size; i++){
-					if (file_proto.size()==0){
-						file_proto = Utils::getProtocol (files[i].first);
-					}
-					filename = Utils::getFileName(files[i].first);
-					paths.push_back( make_pair (files[i].first, string(dirAbs +"/" + filename) ) );
-				}
-				if (file_proto == Options::TRANSFER_FILES_GUC_PROTO){
-					// Downloads the files
-					this->gsiFtpGetFiles (paths);
-				} else if (file_proto == Options::TRANSFER_FILES_CURL_PROTO){
-					this->curlGetFiles (paths);
-				} else {
-					throw WmsClientException(__FILE__,__LINE__,
-						"jobOutput", ECONNABORTED,
-						"File Protocol Error", "protocol not supported: " + file_proto);
-				}
-				msg << "Output sandbox files for the job:" << endl << jobid<<endl ;
-				msg << "have been successfully retrieved and stored in the directory:"<<endl<<dirAbs << "\n\n";
-			} else {
-				// Prints file list (only verbose result)
-				this->listResult(files, jobid, child);
-			}
-		}
-		return result;
+	}
+	return ret;
 }
 /*
 *	prints file list on std output
@@ -444,7 +459,7 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 			*warnsList += "- " + msg + "\n";
 		} else if (size>0 ){
 			warnsList = new string( );
-			*warnsList = "The following warnings/errors have been found during the operation:\n";
+			*warnsList = "The following warnings/errors have been found during the operation(s):\n";
 			*warnsList += "========================================================================\n";
 			*warnsList += "- " + msg + "\n";
 		}
@@ -454,8 +469,9 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 /*
 *	gsiFtpGetFiles Method  (WITH_GRID_FTP)
 */
-void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
+void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) {
 	int code = 0;
+	ostringstream err ;
  	vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
 	vector <pair<std::string , string> >::iterator const end = paths.end( ) ;
 	 for (  ; it != end ; it++ ){
@@ -479,33 +495,18 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 			ostringstream info ;
 			info << code ;
 			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp) - TRANSFER FAILED", "return code=" + info.str());
-			throw WmsClientException(__FILE__,__LINE__,
-				"utilities::globus::put", ECONNABORTED,
-				"File Transferring Error",
-				"unable to download the file: " +  it->first +"\nto: "+ it->second  );
-                   }
+			err << " - " <<  it->first << "\nto: " << it->second << " (error code: " << code << ")\n";
+                }
          }
+	 if ((err.str()).size() >0){
+		errors = "Error while downloading the following file(s):\n" + err.str( );
+	 }
 }
 
 /*
-* writing callback for curl operations
-*/
-int JobOutput::storegprBody(void *buffer, size_t size, size_t nmemb, void *stream)
- {
-	struct httpfile *out_stream=(struct httpfile*)stream;
-	if(out_stream && !out_stream->stream) {
-		// open stream
-		out_stream->stream=fopen(out_stream->filename, "wb");
-		if(!out_stream->stream) {
-			return -1;
-		}
-   	}
-  	return fwrite(buffer, size, nmemb, out_stream->stream);
- }
-/*
 *	File downloading by CURL
 */
-void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) {
+void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) {
 	CURL *curl = NULL;
 	string source = "" ;
 	string destination = "" ;
@@ -519,7 +520,7 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                 curl = curl_easy_init();
                 if ( curl ) {
                         // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, storegprBody);
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
                         // user proxy
                         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
                         curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
@@ -547,9 +548,9 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 				// destination
                                 destination = it->second;
                                 ostringstream info ;
-                                info << "File:\t" << source << "\n";
+                                info << "\nFile:\t" << source << "\n";
                                 info << "Destination:\t" << destination <<"\n";
-                                logInfo->print(WMS_DEBUG, "Ouput File Transferring", info.str());
+                                logInfo->print(WMS_DEBUG, "File Transferring (curl)", info.str());
                                 struct httpfile params={
                                         (char*)destination.c_str() ,
                                         NULL

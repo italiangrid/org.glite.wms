@@ -30,7 +30,7 @@ class JobOutput  : public Job {
 
 	public :
         	/**
-                *	Default constructor
+                * Default constructor
                 */
 		JobOutput ( );
                  /**
@@ -49,11 +49,11 @@ class JobOutput  : public Job {
 		void getOutput ( ) ;
 
         private :
-		int  retrieveOutput(std::ostringstream &msg, Status& status, const std::string& dirAbs, const bool &child=false);
+		int  retrieveOutput(std::string &result, Status& status, const std::string& dirAbs, const bool &child=false);
 		/**
 		* Retrieves the output files
 		*/
-		bool retrieveFiles (std::ostringstream &msg, const std::string& jobid, const std::string& dirAbs, const bool &child = false);
+		bool retrieveFiles (std::string &result, std::string &errors, const std::string& jobid, const std::string& dirAbs, const bool &child = false);
         	/**
  		* Checks the status of the jobs
 		* @param jobids the list of identifiers of the jobs of which the status has to be retrieved
@@ -64,8 +64,8 @@ class JobOutput  : public Job {
  		*/
 		void  listResult(std::vector <std::pair<std::string , long> > &files, const std::string jobid, const bool &child = false );
 		/**
-		*	Creates a list of warnings/errors to be used at the end of the execution
-		*	@param msg the message to be added
+		* Creates a list of warnings/errors to be used at the end of the execution
+		* @param msg the message to be added
 		*/
 		void createWarnMsg(const std::string &msg ) ;
   		/**
@@ -73,15 +73,17 @@ class JobOutput  : public Job {
 		*/
 		struct httpfile { char *filename; FILE* stream; } ;
                 /**
-                * 	Writing callback for curl operations
+                * File downloading with globus-url-copy
+                * @param files list of files to be downloaded and their destination
+		* @param errors string with messages of errors occurred during the operations
                 */
-                static int storegprBody(void *buffer, size_t size, size_t nmemb, void *stream);
+		void gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;
                 /**
-                *	File downloading by curl
-                *	@param files list of files to be downloaded and their destination
+                * File downloading with CURL
+                * @param files list of files to be downloaded and their destination
+		* @param errors string with messages of errors occurred during the operations
                 */
-		void gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
-		void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths) ;
+		void curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;
         	 /**
                 *	String input arguments
                 */
