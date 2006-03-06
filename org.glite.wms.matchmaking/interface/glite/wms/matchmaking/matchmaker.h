@@ -1,12 +1,12 @@
-/*
- * File: MatchMaker.h
- * Author: Monforte Salvatore <Salvatore.Monforte@ct.infn.it>
- * Copyright (c) 2001 EU DataGrid.
- * For license conditions see http://www.eu-datagrid.org/license.html
- */
- 
-#ifndef _GLITE_WMS_MATCHMAKING_MATCHMAKER_H_
-#define _GLITE_WMS_MATCHMAKING_MATCHMAKER_H_
+// File: MatchMaker.h
+// Author: Monforte Salvatore
+// Copyright (c) 2001 EU DataGrid.
+// For license conditions see http://www.eu-datagrid.org/license.html
+
+// $Id$
+
+#ifndef GLITE_WMS_MATCHMAKING_MATCHMAKER_H
+#define GLITE_WMS_MATCHMAKING_MATCHMAKER_H
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -28,8 +28,14 @@ namespace matchmaking {
 class match_info
 {
 public:
-  match_info() : m_rank(0), m_undefined( true ) {}
-  match_info(boost::shared_ptr<classad::ClassAd>& a) : m_rank(0), m_CEAd(a), m_undefined(true) {}
+  match_info()
+    : m_rank(0), m_undefined(true)
+  {
+  }
+  match_info(boost::shared_ptr<classad::ClassAd>& a)
+    : m_rank(0), m_CEAd(a), m_undefined(true)
+  {
+  }
   ~match_info() {}
   // Default copy ctor and operator= are ok
   bool isRankUndefined() const { return m_undefined; }
@@ -60,9 +66,20 @@ class MatchMakerImpl : boost::noncopyable
  public:
   MatchMakerImpl() {}
   // TODO: no op if requestAd=0
-  virtual void prefetchCEInfo       (const classad::ClassAd* requestAd, match_table_t& suitableCEs) = 0;
-  virtual void checkRequirement     (const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ce_info) = 0;
-  virtual void checkRank            (const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ce_info) = 0;
+  virtual void prefetchCEInfo(
+    const classad::ClassAd* requestAd,
+    match_table_t& suitableCEs
+  ) = 0;
+  virtual void checkRequirement(
+    classad::ClassAd& requestAd,
+    match_table_t& suitableCEs,
+    bool use_prefetched_ce_info
+  ) = 0;
+  virtual void checkRank(
+    classad::ClassAd& requestAd,
+    match_table_t& suitableCEs,
+    bool use_prefetched_ce_info
+  ) = 0;
   virtual ~MatchMakerImpl() {}
 }; 
 
@@ -75,16 +92,34 @@ class MatchMaker : boost::noncopyable
   } 
   ~MatchMaker() {}
   
-  void prefetchCEInfo       (const classad::ClassAd* requestAd, match_table_t& suitableCEs) { m_impl -> prefetchCEInfo( requestAd, suitableCEs); }
-  void checkRequirement     (const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ce_info=false) { m_impl -> checkRequirement( requestAd, suitableCEs, use_prefetched_ce_info); }
-  void checkRank            (const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ce_info=false) { m_impl -> checkRank( requestAd, suitableCEs, use_prefetched_ce_info); }
+  void prefetchCEInfo(
+    const classad::ClassAd* requestAd,
+    match_table_t& suitableCEs
+  )
+  {
+    m_impl->prefetchCEInfo( requestAd, suitableCEs);
+  }
+  void checkRequirement(
+    classad::ClassAd& requestAd,
+    match_table_t& suitableCEs,
+    bool use_prefetched_ce_info = false
+  )
+  {
+    m_impl->checkRequirement(requestAd, suitableCEs, use_prefetched_ce_info);
+  }
+  void checkRank(
+    classad::ClassAd& requestAd,
+    match_table_t& suitableCEs,
+    bool use_prefetched_ce_info = false
+  )
+  {
+    m_impl->checkRank(requestAd, suitableCEs, use_prefetched_ce_info);
+  }
   
- private:
+private:
   boost::scoped_ptr<MatchMakerImpl>      m_impl;
 };
 
-}; // namespace matchmaking
-}; // wms
-}; // glite
+}}}
 
 #endif

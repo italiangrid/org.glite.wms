@@ -98,7 +98,7 @@ namespace
 
       static boost::regex get_cluid( reg_string );
       boost::smatch result_cluid;
-      bool found;
+      bool found = false;
 
       // Looking for one GlueForeignKey (it is possibly multi-valued)
       // With the specified attribute.
@@ -330,9 +330,11 @@ void matchmakerGlueImpl::prefetchCEInfo(const classad::ClassAd* requestAd, match
  * @param requestAd
  * @param suitableCEs
  */
-void matchmakerGlueImpl::checkRequirement(const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces)
+void matchmakerGlueImpl::checkRequirement(classad::ClassAd& requestAd_, match_table_t& suitableCEs, bool use_prefetched_ces)
 {
   edglog_fn(checkRequirement);     	
+
+  classad::ClassAd const* requestAd = &requestAd_;
 
   if (use_prefetched_ces && (!m_CE_info_prefetched)) {
     edglog( warning ) << "checkRequirement was flagged to use prefetched values, but prefetchCEInfo was not called. Ignoring flag." << endl;
@@ -731,9 +733,11 @@ void matchmakerGlueImpl::checkRequirement(const classad::ClassAd* requestAd, mat
  * Checks the rank of CE in suitableCEs vector.
  * @param context a pointer to the matchmaking context.
  */
-void matchmakerGlueImpl::checkRank(const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces)
+void matchmakerGlueImpl::checkRank(classad::ClassAd& requestAd_, match_table_t& suitableCEs, bool use_prefetched_ces)
 {
   edglog_fn(checkRank);	
+
+  classad::ClassAd const* requestAd = &requestAd_;
 
   if (use_prefetched_ces && (!m_CE_info_prefetched)) {
     edglog( warning ) << "checkRank was flagged to use prefetched values, but prefetchCEInfo was not called. Ignoring flag." << endl;

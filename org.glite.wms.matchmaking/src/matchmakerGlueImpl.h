@@ -23,8 +23,8 @@ class matchmakerGlueImpl : public MatchMakerImpl
   matchmakerGlueImpl();
   ~matchmakerGlueImpl();
   void prefetchCEInfo  (const classad::ClassAd* requestAd, match_table_t& suitableCEs);
-  void checkRequirement(const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces=false);
-  void checkRank       (const classad::ClassAd* requestAd, match_table_t& suitableCEs, bool use_prefetched_ces=false);
+  void checkRequirement(classad::ClassAd& requestAd, match_table_t& suitableCEs, bool use_prefetched_ces=false);
+  void checkRank       (classad::ClassAd& requestAd, match_table_t& suitableCEs, bool use_prefetched_ces=false);
  private:
     // The following members have been added by Francesco Prelz...
     // TODO: check if it is really necessary having this as static member
