@@ -70,7 +70,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
 			mglog += px.str( ) +  string("(Warning) -") + ws + header + ws + err +string("\n");
 			if (debug){
 				mgout = string("Warning -") +  ws + header  ;
-				if (err.size()>0){ mgout += string("\n") + err ;}
+				if (err.size()>0){ mgout += string("\n") + err + string("\n");}
 				ss = WMC_ERR;
     			}
 			break;
