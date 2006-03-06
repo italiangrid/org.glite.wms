@@ -62,7 +62,7 @@ void JobListMatch::readOptions (int argc,char **argv) {
  	// path to the JDL file
   	jdlFile = wmcOpts->getPath2Jdl( );
 	//EndPoint
-	setEndPoint( );
+	retrieveEndPointURL( );
 	// rank
         rankOpt =  wmcOpts->getBoolAttribute (Options::RANK);
 	// checks if the output file already exists
