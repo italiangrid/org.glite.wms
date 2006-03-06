@@ -42,6 +42,7 @@ namespace services {
 #define WMP_FREEQUOTA_SERVICE           "getFreeQuota"
 #define WMP_SBDESTURI_SERVICE           "getSandboxDestURI"
 #define WMP_BULKDESTURI_SERVICE         "getSandboxBulkDestURI"
+#define WMP_GETPROTOCOLS_SERVICE           "getTransferProtocol"
 
 /*
 * WMProxy version numbers
@@ -83,11 +84,12 @@ class Job{
 		*  Returns a string with the information on the log filename
 		* @return the string containg the information
 		*/
-		virtual std::string Job::getLogFileMsg ( ) ;
+		virtual std::string getLogFileMsg ( ) ;
 		/**
 		* Checks the user input options related to the credential delegation
-		* (autodelegation and delegationId string).
+		* (--autodelegation and --delegation-Id ).
 		* The delegationId string is automatically generated If autodelegation has been requested
+		* An exception is thrown if both optionshas not been specified.
 		*/
 		virtual void setDelegationId ( );
 		/**
@@ -97,16 +99,25 @@ class Job{
 		*/
 		virtual const std::string getDelegationId ( );
 		/**
-		* Performs credential delegation
+		* Performs credential delegation to endpointURL established checking
+		* the following objects in this order:
+		*	> the --enpoint user option;
+		*	> the GLITE_WMS_WMPROXY_ENDPOINT environment variable
+		*	> the list of URLs specified in the configuration file (In this last case the choice is randomically performed)
 		*/
 		virtual const std::string delegateProxy( );
 		/**
 		* Sets the endpoint URL where the operation will be performed. The URL is established checking
-		* the following objects in this order: the user option, the environment variable , the list of URL
-		* specified in the configuration. In this last case the choice is randomically.
-		*
+		* the following objects in this order:
+		*	> the --enpoint user option;
+		*	> the GLITE_WMS_WMPROXY_ENDPOINT environment variable
+		*	> the list of URLs specified in the configuration file (In this last case the choice is randomically performed)
+		* If the input parameter is TRUE the delegationId string is set (reading the string specified with the
+		* --delegationId option if specified, otherwise autogeneration is perfomed in case of --autodelegation;
+		* an exception is thrown if both optionshas not been specified).
+		* @param delegation if TRUE delegationId string is set
 		*/
-		virtual void setEndPoint (const bool &allow_autodg=true);
+		virtual void retrieveEndPointURL (const bool &delegation=true);
 		/**
 		* Sets the endpoint URL where the operation will be performed.
 		* @param endpoint the string with the endpoint URL
@@ -121,7 +132,7 @@ class Job{
 		/**
 		* Returns the object with the configuration context (proxy file, endpoint URL and trusted certifcates location)
 		*/
-		virtual glite::wms::wmproxyapi::ConfigContext* Job::getContext( );
+		virtual glite::wms::wmproxyapi::ConfigContext* getContext( );
 		/**
 		* Returns the path location to the user proxy file
 		* @returns the string with the filepath
@@ -132,25 +143,23 @@ class Job{
 		* @returns the string with the filepath
 		*/
 		virtual const char* getCertsPath ( );
-		/*
-		* Retrieves the string with WMProxy version information
-		* @return the string with the version information having the format x.y.z
+		/**
+		* Checks if the getTransferProtocols service is
+		* available on the WMProxy server
+		* (according to the WMProxy version)
 		*/
-		virtual const std::string getWmpVersion (const std::string &endpoint) ;
-		/*
-		* Checks whether the major number of the WMProxy version is greater than
-		* a number related to a fixed old version that doesn't contain some particular features
-		* (e.g zippedISB)
-		* @return TRUE if the version is newer than the fixed old one
+		virtual bool checkVersionForTransferProtocols ( );
+		/**
+		* Checks if the WMProxy server supports the File Transfer Protocol
+		* specified with the --proto option.
+		* If this option has not been specified, this method checks which protocols
+		* that are available for this client are supported by the server.
+		* In case this check is not possible, the client default protocol will be used
+		* (see the utilities::Option class).
+ 		* The WMProxy getTransferProtocols service returns the list of available protocols
+		* on the server (since the WMProxy version 2.1.1)
 		*/
-		virtual const bool checkWmpMajorVersion ( );
-		/*
-		* Checks whether the major and the minor numbers of the WMProxy version are greater than
-		* the correspondent numbers related to a fixed old version that doesn't contain some particular features
-		* (e.g zippedISB)
-		* @return TRUE if the version is newer than the fixed old one, FALSE otherwise
-		*/
-		virtual const bool checkWmpVersion ( );
+		void checkFileTransferProtocol( ) ;
 	private:
 		/**
 		* Retrieves the version of one or more WMProxy services.
@@ -166,15 +175,19 @@ class Job{
 		* @param all if TRUE, it contacts all endpoints specified
 		*/
 		void checkWmpList (std::vector<std::string> &urls, std::string &endpoint, std::string &version, const bool &all=false) ;
+		/*
+		* Retrieves the string with WMProxy version information
+		* @return the string with the version information having the format x.y.z
+		*/
+		virtual const std::string getWmpVersion (const std::string &endpoint) ;
 		/**
 		* Sets the attributes of this class related to the version neumbers of the WMProxy server
 		* @param version the version string got calling the getVersion service of the WMProxy server
 		*/
 		void setVersionNumbers(const std::string& version) ;
 		/**
-		* Performs credential delegation
-		* @param id the delegation identifier string to be used for the delegation
-		* @return the pointer to the string containing the EndPoint URL
+		* Performs user credential delegation to the input enpoint
+		* @param endpoint the enpoint URL
 		*/
        		 void delegateUserProxy(const std::string &endpoint);
 		/**
@@ -189,21 +202,22 @@ class Job{
 		 /**
         	* Gets the version message
         	*/
-    		void printClientVersion( );
+    		virtual void printClientVersion( );
 		/**
 		* Contacts the endpoint to retrieve the version
 		*/
-		void printServerVersion( );
+		virtual void printServerVersion( );
 	protected:
 		/** Common post-options Checks (proxy time left..)*/
 		void postOptionchecks(unsigned int proxyMinTime=0);
 		/** Input arguments */
 		std::string* logOpt ;	// --logfile <file>
 		std::string* outOpt ;	// --output <file>
-		std::string* cfgOpt ; // --config <file>
+		std::string* cfgOpt ; 	// --config <file>
 		std::string* voOpt ;	// --vo <VO_Name>
 		std::string* dgOpt ;	// --delegationid
-		bool autodgOpt ;	// --autm-delegation,
+		std::string* fileProto; 	// --proto
+		bool autodgOpt ;		// --autm-delegation,
 		bool nointOpt ;		// --noint
 		bool dbgOpt ;		// --debug
 		/** handles the input options*/
