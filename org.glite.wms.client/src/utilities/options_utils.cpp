@@ -40,22 +40,14 @@ const std::string WMP_CLT_MINOR_VERSION = "2";
 const std::string WMP_CLT_RELEASE_VERSION = "1";
 const std::string WMP_CLT_POINT_VERSION = ".";
 
-/*
-* Major and minor version numbers of the WMProxy server related to releases that
-* don't contain new features like SandboxBulkDestURI, zippedISB and ns2-Delegation
-*
-*	- zippedISB (1.x.x && 2.0.0 NO, 2.1.0 YES)
-*		version > WMPROXY_OLD_VERSION  && > WMPROXY_OLD_MINOR_VERSION
-*
-*	- BulkDestURI (1.x.x NO , 2.x.x YES)
-*		version > WMPROXY_OLD_VERSION
-
-*	-  ns2-Delegation [GridSite] (1.x.x && 2.0.0 NO, 2.1.0 YES)
-*		version > WMPROXY_OLD_VERSION  && > WMPROXY_OLD_MINOR_VERSION
-*
+/**
+* WMProxy version since the getTransferProtocols is available
+* (see the getVersion service)
+*	version >= 2.1.1
 */
-const int Options::WMPROXY_OLD_VERSION = 1;
-const int Options::WMPROXY_OLD_MINOR_VERSION = 0;
+const int Options::WMPROXY_GETPROTOCOLS_VERSION  = 2;
+const int Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION  = 2;
+const int Options::WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION = 0;
 /**
  * Help Info messages
 */
@@ -66,17 +58,38 @@ const std::string Options::HELP_VERSION = "version  " + WMP_CLT_MAJOR_VERSION
         + WMP_CLT_POINT_VERSION + WMP_CLT_MINOR_VERSION
         + WMP_CLT_POINT_VERSION + WMP_CLT_RELEASE_VERSION; ;
 
+const std::string Options::BUG_MSG = "(please report to " + HELP_EMAIL +")";
 /*
 * Protocols for file transferring operations
 */
 const string Options::TRANSFER_FILES_CURL_PROTO = "https" ;
 const string Options::TRANSFER_FILES_GUC_PROTO = "gsiftp" ;
 const string Options::TRANSFER_FILES_DEF_PROTO = Options::TRANSFER_FILES_GUC_PROTO ;
-const string Options::DESTURI_ZIP_PROTO = "https" ;
+const string Options::JOBPATH_URI_PROTO ="https" ;
 const char* Options::TRANSFER_FILES_PROTOCOLS[ ] = {
-	Options::TRANSFER_FILES_CURL_PROTO.c_str(),
-	Options::TRANSFER_FILES_GUC_PROTO.c_str()
+	Options::TRANSFER_FILES_GUC_PROTO.c_str(),
+	Options::TRANSFER_FILES_CURL_PROTO.c_str()
 };
+/**
+* Constant string to allow specifing "Retrieve all protocols"
+* when calling WMP services with "protocol" input parameter
+*/
+const string Options::WMP_ALL_PROTOCOLS = "all";
+/**
+* Limitations on File sizes
+*/
+// Byte offset for tar files
+const long Options::TAR_OFFSET = 500;
+// Deafult Max file size
+//const long Options::MAX_DEFAULT_FILE_SIZE = 2147483647;
+
+const long Options::MAX_DEFAULT_FILE_SIZE = 173000;
+// Max size (bytes) allowed for tar files
+const long Options::MAX_TAR_SIZE = Options::MAX_DEFAULT_FILE_SIZE - Options::TAR_OFFSET;
+// Max file size for globus-url-copy
+const long Options::MAX_GUC_SIZE = Options::MAX_DEFAULT_FILE_SIZE;
+// Max file size for CURL
+const long Options::MAX_CURL_SIZE = Options::MAX_DEFAULT_FILE_SIZE;
 
 /*
 * Verbosity level
@@ -86,37 +99,38 @@ const unsigned int Options::MAX_VERBOSITY = 3;
 /*
 *	LONG OPTION STRINGS
 */
-const char* Options::LONG_ALL 		= "all";
-const char* Options::LONG_CHKPT	= "chkpt";
+const char* Options::LONG_ALL 			= "all";
+const char* Options::LONG_CHKPT		= "chkpt";
 const char* Options::LONG_COLLECTION	= "collection";
-const char* Options::LONG_DAG	= 	"dag";
-const char* Options::LONG_DEBUG	= "debug";
-const char* Options::LONG_DEFJDL	= "default-jdl";
-const char* Options::LONG_DIR	= 		"dir";
+const char* Options::LONG_DAG			= "dag";
+const char* Options::LONG_DEBUG		= "debug";
+const char* Options::LONG_DEFJDL		= "default-jdl";
+const char* Options::LONG_DIR			= "dir";
 const char* Options::LONG_FROM		= "from";
-const char* Options::LONG_GET		= "get";
+const char* Options::LONG_GET			= "get";
 const char* Options::LONG_HELP 		= "help";
+const char* Options::LONG_INPUTFILE		= "input-file";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
-const char* Options::LONG_LOGFILE	= "logfile";
-const char* Options::LONG_NODESRES = "nodes-resource";
-const char* Options::LONG_NODISPLAY = "nodisplay";
+const char* Options::LONG_LOGFILE		= "logfile";
+const char* Options::LONG_NODESRES 	= "nodes-resource";
+const char* Options::LONG_NODISPLAY 	= "nodisplay";
 const char* Options::LONG_NOGUI		= "nogui";
-const char* Options::LONG_NOINT	= "noint";
-const char* Options::LONG_NOLISTEN	= "nolisten";
-const char* Options::LONG_NOMSG	= "nomsg";
-const char* Options::LONG_PROTO	= "proto";
-const char* Options::LONG_RANK 	= "rank";
+const char* Options::LONG_NOINT		= "noint";
+const char* Options::LONG_NOLISTEN		= "nolisten";
+const char* Options::LONG_NOMSG		= "nomsg";
+const char* Options::LONG_PROTO		= "proto";
+const char* Options::LONG_RANK 		= "rank";
 const char* Options::LONG_REGISTERONLY = "register-only";
-const char* Options::LONG_SET		= "set";
-const char* Options::LONG_START = "start";
-const char* Options::LONG_TO		= "to";
-const char* Options::LONG_TRANSFER = "transfer-files";
+const char* Options::LONG_SET			= "set";
+const char* Options::LONG_START 		= "start";
+const char* Options::LONG_TO			= "to";
+const char* Options::LONG_TRANSFER 	= "transfer-files";
 const char* Options::LONG_UNSET		= "unset";
-const char* Options::LONG_USERTAG	= "user-tag";
-const char* Options::LONG_VERSION	= "version";
-const char* Options::LONG_VO		= "vo";
-const char* Options::LONG_INPUTFILE	= "input-file";
+const char* Options::LONG_USERTAG		= "user-tag";
+const char* Options::LONG_VERSION		= "version";
+const char* Options::LONG_VO			= "vo";
+
 
 /*
 *	LONG OPTION STRINGS & SHORT CHARs
@@ -270,6 +284,7 @@ const struct option Options::outputLongOpts[] = {
 	{ 	Options::LONG_OUTPUT,       	required_argument,		0,	Options::SHORT_OUTPUT},
 	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
 	{	Options::LONG_LISTONLY,		no_argument,			0,	Options::LISTONLY},
+	{	Options::LONG_PROTO	,	required_argument,		0,	Options::PROTO},
 	{ 	Options::LONG_DIR, 	        	required_argument,		0,	Options::DIR},
 	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
         {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
@@ -337,18 +352,19 @@ const struct option Options::perusalLongOpts[]  = {
 	{	Options::LONG_HELP,			no_argument,			0,	Options::HELP	},
 	{	Options::LONG_GET,			no_argument,			0,	Options::GET},
 	{ 	Options::LONG_SET, 	        	no_argument,			0,	Options::SET},
-	{ 	Options::LONG_UNSET, 	        	no_argument,			0,	Options::UNSET},
-	{ 	Options::LONG_FILENAME, 	        required_argument,		0,	Options::SHORT_FILENAME},
-	// { 	Options::LONG_INPUT,        		required_argument,		0,	Options::SHORT_INPUT},
+	{ 	Options::LONG_UNSET, 	        no_argument,			0,	Options::UNSET},
+	{ 	Options::LONG_FILENAME, 	required_argument,		0,	Options::SHORT_FILENAME},
+	{ 	Options::LONG_INPUT,        	required_argument,		0,	Options::SHORT_INPUT},
+	{	Options::LONG_PROTO	,	required_argument,		0,	Options::PROTO},
 	{ 	Options::LONG_DIR,        		required_argument,		0,	Options::DIR},
 	{ 	Options::LONG_OUTPUT,        	required_argument,		0,	Options::SHORT_OUTPUT},
 	{	Options::LONG_CONFIG,    		required_argument,		0,	Options::SHORT_CONFIG},
         {	Options::LONG_VO,           		required_argument,		0,	Options::VO},
-	{	Options::LONG_NODISPLAY,		no_argument,			0,	Options::NODISPLAY	},
-	{	Options::LONG_NOINT,			no_argument,			0,	Options::NOINT	},
-	{ 	Options::LONG_DEBUG,      		no_argument,			0,	Options::DBG},
-	{	Options::LONG_LOGFILE,    		required_argument,		0,	Options::LOGFILE},
-	{	Options::LONG_INPUTFILE,    		required_argument,		0,	Options::INPUTFILE},
+	{	Options::LONG_NODISPLAY,	no_argument,			0,	Options::NODISPLAY	},
+	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
+	{ 	Options::LONG_DEBUG,      	no_argument,			0,	Options::DBG},
+	{	Options::LONG_LOGFILE,    	required_argument,		0,	Options::LOGFILE},
+	{	Options::LONG_INPUTFILE,    	required_argument,		0,	Options::INPUTFILE},
 	{0, 0, 0, 0}
 };
 /*
@@ -387,6 +403,8 @@ const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
+
+const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
 
 const string Options::USG_LISTONLY = "--" + string(LONG_LISTONLY) ;
 
@@ -439,8 +457,6 @@ const string Options::USG_VERBOSE  = "--" + string(LONG_VERBOSE ) +  ", -" + SHO
 const string Options::USG_VERSION = "--" + string(LONG_VERSION );
 
 const string Options::USG_VO	 = "--" + string(LONG_VO ) + "\t\t<vo_name>";
-
-const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
 
 /*
 *	Prints the help usage message for the job-submit
@@ -607,34 +623,10 @@ void Options::output_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_VERSION << "\n\n";
 	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
+	cerr << "\t" << USG_PROTO << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
         cerr << "\t" << USG_LISTONLY << "\n";
-	cerr << "\t" << USG_NOINT << "\n";
-	cerr << "\t" << USG_DEBUG << "\n";
-	cerr << "\t" << USG_LOGFILE << "\n\n";
-	cerr << "Please report any bug at:\n" ;
-	cerr << "\t" << HELP_EMAIL << "\n";
-	if (long_usg){
-		cerr  << exename << " full help\n\n" ;
-	}
-};
-/*
-*	Prints the help usage message for the job-attach
-*	@param exename the name of the executable
-*	@param long_usage if the value is true it prints the long help msg
-*/
-void Options::attach_usage(const char* &exename, const bool &long_usg){
-	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
-	cerr << "Usage: " << exename <<   " [options]   <job Id>\n\n";
-	cerr << "options:\n" ;
-	cerr << "\t" << USG_HELP << "\n";
-	cerr << "\t" << USG_VERSION << "\n";
-	cerr << "\t" << USG_PORT << "\n";
-	cerr << "\t" << USG_NOLISTEN << "\n";
-	cerr << "\t" << USG_CONFIG << "\n";
- 	cerr << "\t" << USG_VO << "\n";
-	cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
@@ -695,28 +687,26 @@ void Options::proxyinfo_usage(const char* &exename, const bool &long_usg){
 	if (long_usg){
 		cerr  << exename << " full help\n\n" ;
 	}
-};
-/*
+};/*
 *	Prints the help usage message for the job-output
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
 void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
-	cerr << "Usage: " << exename <<   "  <operation> [files] [options]  <job Id>\n\n";
-	cerr << "operation (mandatory):\n";
+	cerr << "Usage: " << exename <<   "  <operation options> <file options> [other options]  <job Id>\n\n";
+	cerr << "operation options (mandatory):\n";
 	cerr << "\t" << USG_GET << "\n";
 	cerr << "\t" << USG_SET << "\n";
-	cerr << "\t" << USG_UNSET << "\n\n";
-	cerr << "file(s): (mandatory for set/unset operation)\n";
+	cerr << "\t" << USG_UNSET << "\n";
+	cerr << "\nfile options: (mandatory for set and get operations)\n";
 	cerr << "\t" << USG_FILENAME << " (*)\n";
 	cerr << "\t" << USG_INPUTFILE << "\n";
-	cerr << "options:\n" ;
+	cerr << "\nother options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
 	cerr << "\t" << USG_VERSION << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
-	// cerr << "\t" << USG_INPUT << "\n";
 	cerr << "\t" << USG_DIR << "\n";
 	cerr << "\t" << USG_ALL << " (**)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
@@ -725,7 +715,32 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "\t" << "(*) With " <<  USG_SET << " multiple files can be specified by repeating the option several times\n";
-	cerr << "\t" << "(**) only with " <<  USG_GET << "\n\n";
+	cerr << "\t" << "(**) only with " <<  USG_GET << " to returns all chunks of the given file\n\n";
+	cerr << "Please report any bug at:\n" ;
+	cerr << "\t" << HELP_EMAIL << "\n";
+	if (long_usg){
+		cerr  << exename << " full help\n\n" ;
+	}
+};
+/*
+*	Prints the help usage message for the job-attach
+*	@param exename the name of the executable
+*	@param long_usage if the value is true it prints the long help msg
+*/
+void Options::attach_usage(const char* &exename, const bool &long_usg){
+	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
+	cerr << "Usage: " << exename <<   " [options]   <job Id>\n\n";
+	cerr << "options:\n" ;
+	cerr << "\t" << USG_HELP << "\n";
+	cerr << "\t" << USG_VERSION << "\n";
+	cerr << "\t" << USG_PORT << "\n";
+	cerr << "\t" << USG_NOLISTEN << "\n";
+	cerr << "\t" << USG_CONFIG << "\n";
+ 	cerr << "\t" << USG_VO << "\n";
+	cerr << "\t" << USG_INPUT << "\n";
+	cerr << "\t" << USG_NOINT << "\n";
+	cerr << "\t" << USG_DEBUG << "\n";
+	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
 	if (long_usg){
@@ -786,7 +801,7 @@ Options::Options (const WMPCommands &command){
 	// init of the numerical attributes
 	port = NULL ;
 	verbosity = NULL ;
-	// Default protocol for File Transferring
+	// Default protocol for File Transfer
 	fileprotocol = NULL;
 	// definitions of short and long options
 	switch (command){
@@ -924,10 +939,10 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c",
-				// Options::SHORT_INPUT, 		short_required_arg,
+				Options::SHORT_INPUT, 		short_required_arg,
 				Options::SHORT_OUTPUT, 		short_required_arg,
 				Options::SHORT_CONFIG,		short_required_arg,
-				Options::SHORT_FILENAME,		short_required_arg);
+				Options::SHORT_FILENAME,	short_required_arg);
 
 			// long options
 			longOpts = perusalLongOpts ;
@@ -974,7 +989,9 @@ Options::~Options( ) {
 	if (vo) { delete(vo);}
 	if (inputfile) { delete(inputfile);}
 }
-
+/**
+* Returns a string with the version numbers of this client
+*/
 std::string Options::getVersionMessage( ) {
 	ostringstream msg;
 	char ws = (char)32;
@@ -982,6 +999,9 @@ std::string Options::getVersionMessage( ) {
         msg << Options::HELP_COPYRIGHT << "\n";
 	return msg.str();
 }
+/**
+* Returns a vector with the list of available File Protocols
+*/
 const std::vector<std::string> Options::getProtocols() {
 	vector<string> protos;
 	unsigned int size = sizeof(Options::TRANSFER_FILES_PROTOCOLS) / sizeof(char*);
@@ -989,6 +1009,48 @@ const std::vector<std::string> Options::getProtocols() {
 		protos.push_back(string(Options::TRANSFER_FILES_PROTOCOLS[i]));
 	}
 	return protos;
+}
+/**
+* Returns a string with the list of available File Protocols
+*/
+const std::string Options::getProtocolsString() {
+	string protos;
+	unsigned int size = sizeof(Options::TRANSFER_FILES_PROTOCOLS) / sizeof(char*);
+	for (unsigned int i = 0; i < size ; i++){
+		if (i>0) { protos += ", ";}
+		protos += string(Options::TRANSFER_FILES_PROTOCOLS[i]);
+	}
+	return protos;
+}
+/**
+* Returns the minimum size allowed for each file in transfer operations.
+* The computration is based on the limtation fixed by the required File Transfer Protocol and the limitation
+* of the archiving tool (libtar; if zipped feature is allowed).
+* If the protocol is not specified and the zipped feature is not allowed, the default value is
+* returned
+* @param protocol the File Transfer Protocol string (either https or gsiftp ... )
+* @param zipped TRUE if Zipped feature is allowed, FALSE otherwise (the default value)
+*/
+const long Options::getMinimumAllowedFileSize (const std::string &protocol, const bool &zipped) {
+	long proto = 0;
+	long min = 0;
+	if (protocol.size ( ) > 0) {
+		if (protocol.compare(TRANSFER_FILES_CURL_PROTO)==0) {
+			proto = MAX_CURL_SIZE ;
+		} else if (protocol.compare(TRANSFER_FILES_GUC_PROTO)==0) {
+			proto = MAX_GUC_SIZE ;
+		} else {
+			proto = MAX_DEFAULT_FILE_SIZE;
+		}
+	} else {
+		proto = MAX_DEFAULT_FILE_SIZE;
+	}
+	if (zipped) {
+		min = (proto<MAX_TAR_SIZE)?proto:MAX_TAR_SIZE;
+	} else {
+		min = proto;
+	}
+	return min ;
 }
 /**
 * Checks whether  a string option is defined for a specific operation
@@ -1429,6 +1491,10 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 			msg = USG_NOMSG ;
 			break ;
 		}
+		case(NOINT) : {
+			msg = USG_NOINT ;
+			break ;
+		}
 		case(NOGUI) : {
 			msg = USG_NOGUI ;
 			break ;
@@ -1581,7 +1647,7 @@ std::string Options::getOptionsInfo(){
 void Options::readOptions(const int &argc, const char **argv){
         int next_opt = 0;
 	string jobid = "";
-	string unvalid = "";
+	string invalid = "";
         ostringstream oss;
 	char* last_arg = (char*)argv[(argc-1)];
 	string arg = "";
@@ -1783,42 +1849,72 @@ void Options::readOptions(const int &argc, const char **argv){
 			// ========================================================
 			 if ( cmdType == JOBPERUSAL ||
 			 	cmdType == JOBATTACH ){
-				// all the options have been processed by getopt (JobId file is missing)
-				if (optind == argc ){
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"Wrong Option: " + string(last_arg)  ,
-						"Last argument of the command must be a JobId" );
-				}
-                                for (int i = optind ; i < argc ; i++ ){
-					 jobid = Utils::checkJobId (argv[i]);
-					if ( jobid.size( ) >0 ) {
-     						jobIds.push_back(jobid);
-					} else {
-						unvalid += string(argv[i]) + " " ;
+				if (input==NULL){
+					// all the options have been processed by getopt (JobId file is missing)
+					if (input == NULL && optind == argc){
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Option: " + string(last_arg)  ,
+							"Last argument of the command must be a JobId" );
+					} else if (input == NULL && optind != argc-1) {
+						for (int i = optind ; i < argc ; i++ ){
+							invalid += string(argv[i]) + " " ;
+							jobid = Utils::checkJobId (argv[i]);
+							if ( jobid.size( ) >0 ) {
+								jobIds.push_back(jobid);
+							} else {
+								invalid += string(argv[i]) + " " ;
+							}
+						}
+						ostringstream err ;
+						err << "Last argument of the command must be a JobId";
+						if (invalid.size()>0){
+							err << "\n(Unrecognised option(s): " + invalid + " )" ;
+						}
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Too Many Arguments",
+							err.str());
 					}
-                                }
-				 if (jobIds.empty()) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"Wrong Input Arguments"  ,
-						"Last argument of the command must be a JobId" );
-				} else if (jobIds.size() > 1){
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"Too many arguments" ,
-						"Too many JobId's: the command only accept one JobId" );
+					// Reads the jobid
+					jobid = Utils::checkJobId (argv[argc-1]);
+					if ( jobid.size( ) >0 ) {
+						jobIds.push_back(jobid);
+					} else {
+						invalid = string(jobid)  ;
+					}
+					// checks the read jobid
+					if (invalid.size() > 0) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Input Arguments" ,
+							"invalid arguments: " + invalid );
+					} else  if ( jobIds.empty()) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Input Arguments"  ,
+							"Last argument of the command must be a JobId" );
+					} else {
 
-				} else if (unvalid.size() > 0) {
-					throw WmsClientException(__FILE__,__LINE__,
-						"readOptions", DEFAULT_ERR_CODE,
-						"Wrong Input Arguments" ,
-						"Unvalid arguments: " + unvalid );
-
-				} else {
-					this->singleId = string(jobIds[0]);
+						this->singleId = string(jobIds[0]);
+					}
+				} else
+				if (input && optind != argc) {
+					// Reads the wrong option !!
+					jobid = Utils::checkJobId (argv[argc-1]);
+					if ( jobid.size( ) >0 ) {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Too many arguments"  ,
+							"The jobId mustn't be specified with the option:\n"
+								+ getAttributeUsage(Options::INPUT));
+					} else {
+						throw WmsClientException(__FILE__,__LINE__,
+							"readOptions", DEFAULT_ERR_CODE,
+							"Wrong Input Arguments" ,
+							"invalid arguments: " + invalid );
+					}
 				}
-
 		} else
 			// =========================================================
 			// JobStatus/LogInfo/Cancel/Outpout : checks the last argument (JobId(s))
@@ -1967,7 +2063,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
         string px = "--";
         string ws = " ";
 	string list = "";
-	bool found = false;
 	switch (in_opt){
 		case ( Options::SHORT_AUTODG ) : {
 			if (autodg){
@@ -2141,15 +2236,6 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 				dupl = new string(LONG_PROTO) ;
 			} else {
 				fileprotocol = new string (checkArg(LONG_PROTO ,optarg, Options::PROTO) );
-				// checks if the chosen protocol is supported
-				found = Utils::checkProtocol(*fileprotocol, list);
-				if ( ! found){
-					throw WmsClientException(__FILE__,__LINE__,
-					"setAttribute",DEFAULT_ERR_CODE,
-					"Wrong Value",
-					 "--" + string(LONG_PROTO) + " - Unrecognised File Transferring Protocol: " + *fileprotocol + " \n" + "List of available protocols: " + list );
-				}
-
 				inCmd += px + LONG_PROTO + ";" + ws ;
 			}
 			break ;
@@ -2363,7 +2449,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		// it could be specified more than once
 		case ( Options::SHORT_FILENAME ) : {
 			string file = checkArg(LONG_FILENAME ,optarg, Options::FILENAME ) ;
-			if (Utils::contains(filenames, file )) {
+			if (Utils::hasElement(filenames, file )) {
 				warnsMsg += errMsg(WMS_WARNING,
 					string(px + LONG_FILENAME + ws + file) + ": ignored",
 					" file specified more than once", true);
@@ -2376,7 +2462,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 		// it could be specified more than once
 		case ( Options::USERTAG ) : {
 			string tag = checkArg(LONG_USERTAG  ,optarg, Options::USERTAG)  ;
-			if (Utils::contains(usertags, tag )) {
+			if (Utils::hasElement(usertags, tag )) {
 				warnsMsg += errMsg(WMS_WARNING,
 					string(px + LONG_USERTAG + ws + tag) + ": ignored",
 					"tag specified more than once", true);

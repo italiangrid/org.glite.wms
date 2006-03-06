@@ -152,12 +152,17 @@ class Options
 		*/
 		const std::string getAttributeUsage (const Options::OptsAttributes &attribute);
                 /**
-		*	Returns the list of available protocols
-		*	@return a vector with the list of available protocols
+		*	Returns a vector containing the list of available protocols
+		*	@return the vector with the list of available protocols
 		*/
 		static const std::vector<std::string> getProtocols() ;
+		 /**
+		*	Returns a string the list of available protocols
+		*	@return the string with the list of available protocols
+		*/
+		static const std::string getProtocolsString() ;
 		/**
-		*	Returns the list of job identifiers
+		*	Returns a vector containing the list of job identifiers
 		*	@return a vector with the list of jobid's
 		*/
 		const std::vector<std::string> getJobIds( );
@@ -255,6 +260,17 @@ class Options
                 *	@return the level
                 */
                 const int getVerbosityLevel ( );
+		/**
+		* Returns the minimum size allowed for each file in transfer operations.
+		* The computration is based on the limtation fixed by the required File Transfer Protocol and the limitation
+		* of the archiving tool (libtar; if zipped feature is allowed).
+		* If the protocol is not specified and the zipped feature is not allowed, the default value is
+		* returned
+		* @param protocol the File Transfer Protocol string (either https or gsiftp ... )
+		* @param zipped TRUE if Zipped feature is allowed, FALSE otherwise (the default value)
+		* @return the allowed minimum size
+		*/
+		static const long getMinimumAllowedFileSize (const std::string &protocol, const bool &zipped=false);
                 /**
 		*	Constants for the help and version messages
 		*/
@@ -262,48 +278,72 @@ class Options
 		static const std::string HELP_VERSION  ;
 		static const std::string HELP_COPYRIGHT ;
 		static const std::string HELP_EMAIL ;
-		/*
-		* Major and minor version numbers of the WMProxy server related to releases that
-		* don't contain new features like SandboxBulkDestURI, zippedISB and ns2-Delegation
-		*
-		*	- zippedISB (1.x.x && 2.0.0 NO, 2.1.0 YES)
-		*		version > WMPROXY_OLD_VERSION  && > WMPROXY_OLD_MINOR_VERSION
-		*
-		*	- BulkDestURI (1.x.x NO , 2.x.x YES)
-		*		version > WMPROXY_OLD_VERSION
-
-		*	-  ns2-Delegation [GridSite] (1.x.x && 2.0.0 NO, 2.1.0 YES)
-		*		version > WMPROXY_OLD_VERSION  && > WMPROXY_OLD_MINOR_VERSION
-		*
+		/**
+		*	"Report-bug" message
 		*/
-		static const int WMPROXY_OLD_VERSION;
-		static const int WMPROXY_OLD_MINOR_VERSION;
+		static const std::string BUG_MSG ;
+		/**
+		* WMProxy version since the getTransferProtocols is available
+		* (see the getVersion service)
+		*	version >= 2.2.0
+		*/
+		static const int WMPROXY_GETPROTOCOLS_VERSION ;
+		static const int WMPROXY_GETPROTOCOLS_MINOR_VERSION ;
+		static const int WMPROXY_GETPROTOCOLS_SUBMINOR_VERSION ;
                 /**
 		*	Constants for the verbosity level
 		*/
 		static const unsigned int DEFAULT_VERBOSITY;
 		static const unsigned int MAX_VERBOSITY;
 		/**
-		* Default protocol for file transferring operations
+		* Default protocol for file transfer operations
 		*/
 		static const std::string TRANSFER_FILES_DEF_PROTO;
 		/**
 		* Default protocol for file archives and file compression
 		*/
-		static const std::string DESTURI_ZIP_PROTO;
+		static const std::string JOBPATH_URI_PROTO;
 		/**
-		* Default protocol for file transferring operations by CURL
+		* Default protocol for file transfer operations by CURL
 		*/
 		static const std::string TRANSFER_FILES_CURL_PROTO;
 		/**
-		* Default protocol for file transferring operations by globus-url-copy
+		* Default protocol for file transfer operations by globus-url-copy
 		*/
 		static const std::string TRANSFER_FILES_GUC_PROTO;
 		/**
-		* LIst of protocol allowed for file transferring operations
+		* LIst of protocol allowed for file transfer operations
 		*/
 		static const char* TRANSFER_FILES_PROTOCOLS[ ];
-
+		/**
+		* Constant string to allow specifing "Retrieve all protocols"
+		* when calling WMP services with "protocol" input parameter 
+		*/
+		static const std::string WMP_ALL_PROTOCOLS;
+		/**
+		* Limitations on File sizes:
+		* default max size (bytes) allowed for file transfer
+		*/
+		static const long MAX_DEFAULT_FILE_SIZE;
+		/**
+		* Limitations on File sizes:
+		* max size (bytes) allowed for tar files
+		*/
+		static const long MAX_TAR_SIZE ;
+		/**
+		* Limitations on File sizes:
+		* max size (bytes) allowed for globus-url-copy
+		*/
+		static const long MAX_GUC_SIZE ;
+		/**
+		* Limitations on File sizes:
+		* max size (bytes) allowed for CURL
+		*/
+		static const long MAX_CURL_SIZE;
+		/**
+		* Byte offset for tar files
+		*/
+		static const long Options::TAR_OFFSET;
 	private:
         	/**
                 * Gets the default name of the application that is being executed
