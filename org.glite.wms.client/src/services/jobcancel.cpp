@@ -7,6 +7,7 @@
 *                       Marco Sottilaro <marco.sottilaro@datamat.it>
 */
 
+
 //      $Id$
 
 #include "jobcancel.h"
@@ -146,7 +147,9 @@ void JobCancel::cancel ( ){
 			}
 
   			try{
-				logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
+				if (it2 == jobIds.begin()){
+					logInfo->print(WMS_INFO, "Connecting to the service", this->getEndPoint());
+				}
 	                        //  performs cancelling
 				logInfo->service(WMP_CANCEL_SERVICE, jobid);
                                 jobCancel(jobid, getContext( ) );
