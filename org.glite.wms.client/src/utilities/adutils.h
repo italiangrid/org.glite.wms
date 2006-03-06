@@ -9,8 +9,8 @@
 
 //      $Id$
 
-#ifndef GLITE_WMS_CLIENT_ADUTILS
-#define GLITE_WMS_CLIENT_ADUTILS
+#ifndef GLITE_WMS_CLIENT_UTILS_ADUTILS_H
+#define GLITE_WMS_CLIENT_UTILS_ADUTILS_H
 
 #include <string>
 #include "options_utils.h"
