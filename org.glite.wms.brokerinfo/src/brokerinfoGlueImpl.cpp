@@ -424,17 +424,16 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    if ( dataReq ) {
 
       vector<string> dli_url_list; bool getDliFromIS = false;
-      if ( voInJdl ) {
-         get_catalog_url( vo, dli_service_name, dli_url_list );
-         if ( ! dli_url_list.empty() ) getDliFromIS = true;
-      }
+//      if ( voInJdl ) {
+//         get_catalog_url( vo, dli_service_name, dli_url_list );
+//         if ( ! dli_url_list.empty() ) getDliFromIS = true;
+//      }
 
       vector<string> si_url_list; bool getSiFromIS = false;
-      if ( voInJdl ) {
-         get_catalog_url( vo, si_service_name, si_url_list );
-         if ( ! si_url_list.empty() ) getSiFromIS = true;
-      }
-
+//      if ( voInJdl ) {
+//         get_catalog_url( vo, si_service_name, si_url_list );
+//         if ( ! si_url_list.empty() ) getSiFromIS = true;
+//      }
 
       classad::ExprList* expr_list = static_cast<classad::ExprList*>(classAdList) ;
       for ( classad::ExprList::iterator it = expr_list->begin(); it < expr_list->end(); it++ ){
@@ -457,6 +456,18 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
             getDataCatalogEndpoint = true;
          }
          catch (...){
+            if ( dataCatalogType == "DLI" && (!getDliFromIS)) {
+               if ( voInJdl ) {
+                  get_catalog_url( vo, dli_service_name, dli_url_list );
+                  if ( ! dli_url_list.empty() ) getDliFromIS = true;
+               }
+            }
+            if ( dataCatalogType == "SI" && (!getSiFromIS) ) {
+               if ( voInJdl ) {
+                  get_catalog_url( vo, si_service_name, si_url_list );
+                  if ( ! si_url_list.empty() ) getSiFromIS = true;
+               }
+            }
          }
 
          if ( getDataCatalog ) {
