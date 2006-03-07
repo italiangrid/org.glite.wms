@@ -175,7 +175,7 @@ int main(int argc, char*argv[]) {
                    "CreamProxy creation failed! Stop" );
       exit(1);
     }
-  soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
+  // soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   try {
     soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(hostdn);
