@@ -10,21 +10,19 @@
 #ifndef GLITE_WMS_HELPER_JOBADAPTER_URL_H
 #define GLITE_WMS_HELPER_JOBADAPTER_URL_H
 
-#ifndef GLITE_WMS_X_STRING
-#define GLITE_WMS_X_STRING
 #include <string>
-#endif
 
 namespace glite {
 namespace wms {
 namespace helper {
 namespace jobadapter {
 
-class InvalidURL
+class InvalidURL: public std::exception
 {
 public:
-  InvalidURL(std::string const&);
-  std::string const& message() const;
+  InvalidURL(std::string const& url);
+  ~InvalidURL() throw();
+  char const* what() const throw();
 
 private:
   std::string m_message;
@@ -48,9 +46,6 @@ private:
   std::string m_port;
 };
 
-} // namespace jobadapter
-} // namespace helper
-} // namespace wms
-} // namespace glite
+}}}} // glite::wms::helper::jobadapter
 
 #endif // GLITE_WMS_HELPER_JOBADAPTER_URL_H

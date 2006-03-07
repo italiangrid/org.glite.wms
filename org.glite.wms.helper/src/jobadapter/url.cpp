@@ -59,48 +59,42 @@ namespace wms {
 namespace helper {
 namespace jobadapter {
 
-InvalidURL::InvalidURL(std::string const& msg)
-  : m_message(msg)
+InvalidURL::InvalidURL(std::string const& url)
+  : m_message("Invalid URL: " + url)
 {
 }
-	
-std::string const& InvalidURL::message() const
-{ 
-  return m_message; 
+
+InvalidURL::~InvalidURL() throw()
+{
 }
-    
+
+char const* InvalidURL::what() const throw()
+{
+  return m_message.c_str();
+}
+
 URL::URL(std::string const& url)
 {
+  static const boost::regex valid_url(
+    "([:alpha:][[:alnum:]+.-]*)" // scheme
+    "://"
+    "(([[:alnum:]_.~!$&'()-]|%[:xdigit:]{2})+)" // host
+    "(:([:digit:]*))?"          // port
+    "((/([[:alnum:]_.~!$&'()-]|%[:xdigit:]{2})+)*)/?" // path
+  );
 
-  static const boost::regex valid_url("\
-([[:alpha:]][[:alpha:],[:digit:],+,.,-]*)\
-://\
-(([[:alpha:],[:digit:],_,.,~,!,$,&,',(,),-]|%[[:xdigit:]][[:xdigit:]])+)\
-(:([0-9]*))?\
-((/([[:alpha:],[:digit:],_,.,~,!,$,&,',(,),-]|%[[:xdigit:]][[:xdigit:]])+)*)/?\
-");
-
-
-  bool is_matching = false;
   try {
-    is_matching = boost::regex_match(url, valid_url);
-  } catch(std::runtime_error& ex) {
-    throw InvalidURL("Cannot parse URL:" + url);
-  }
-  if (is_matching)
-  {
-    try {
-      boost::sregex_iterator m(url.begin(), url.end(), valid_url);
-
-      m_protocol = (*m)[1].str();
-      m_host = (*m)[2].str();
-      m_port = (*m)[5].str();
-      m_path = (*m)[6].str();
-    } catch(std::runtime_error& ex) {
-      throw InvalidURL("Cannot parse URL:" + url);
+    boost::smatch pieces;
+    if (boost::regex_match(url, pieces, valid_url)) {
+      m_protocol.assign(pieces[1].first, pieces[1].second);
+      m_host.assign(pieces[2].first, pieces[2].second);
+      m_port.assign(pieces[5].first, pieces[5].second);
+      m_path.assign(pieces[6].first, pieces[6].second);
+    } else {
+      throw InvalidURL(url);
     }
-  } else {
-    throw InvalidURL("Cannot parse URL:" + url);
+  } catch (std::runtime_error& e) {
+    throw InvalidURL(url);
   }
 }
 
@@ -132,8 +126,8 @@ std::string
 URL::as_string() const
 {
   return m_protocol
-    + "://" 
-    + m_host 
+    + "://"
+    + m_host
     + (!m_port.empty() ? ":" + m_port : "")
     + m_path;
 }

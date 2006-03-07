@@ -722,7 +722,7 @@ try {
     try {
       jw->dsupload(URL(job_id));
     } catch (InvalidURL& ex) {
-      throw CannotCreateJobWrapper(ex.message());
+      throw CannotCreateJobWrapper(ex.what());
     }
   }
 	
@@ -755,7 +755,7 @@ try {
         jw->set_output_sandbox_base_dest_uri(url_);
         jw->set_osb_wildcards_support(true);
       } catch (InvalidURL& ex) {
-        throw CannotCreateJobWrapper(ex.message());
+        throw CannotCreateJobWrapper(ex.what());
       }
     }
   }
@@ -790,7 +790,7 @@ try {
       jw->token(token_path + '/' + token_file);
     }
   } catch (InvalidURL& ex) {
-    throw CannotCreateJobWrapper(ex.message());
+    throw CannotCreateJobWrapper(ex.what());
   }
 
   if (!b_wmpisb_base_uri) {
@@ -806,7 +806,7 @@ try {
         jw->output_sandbox(URL(outputsandboxpath), outputsandbox);
       }
     } catch (InvalidURL& ex) {
-      throw CannotCreateJobWrapper(ex.message());
+      throw CannotCreateJobWrapper(ex.what());
     }
   } else if (b_osb_dest_uri) {
     jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
