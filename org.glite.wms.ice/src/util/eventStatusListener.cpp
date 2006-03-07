@@ -38,34 +38,16 @@ namespace { // anonymous namespace
     /**
      * Utility function to return the hostname
      */ 
-    std::string getHostName( void ) throw ( std::runtime_error& )
+    string getHostName( void ) throw ( runtime_error& )
     {
         char name[256];
         
         if ( gethostname(name, 256) == -1 ) {
             throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
-//             // This error prevent the possibility to subscribe to a CEMon
-//             // and receive notifications about job status
-//             log_dev->fatalStream() << "eventStatusListener::CTOR - "
-//                                    << "Couldn't resolve local hostname: "
-//                                    << strerror(errno)
-//                                    << log4cpp::CategoryStream::ENDLINE;
-//             _isOK = false;
-//             //exit(1);
-//             return;
         }
         struct hostent *H=gethostbyname(name);
         if ( !H ) {
             throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
-//             // This error prevent the possibility to subscribe to a CEMon
-//             // and receive notifications about job status
-//             log_dev->fatalStream() << "eventStatusListener::CTOR - "
-//                                    << "Couldn't resolve local hostname: "
-//                                    << strerror(h_errno)
-//                                    << log4cpp::CategoryStream::ENDLINE;
-//             //exit(1);
-//             _isOK = false;
-//             return;
         }
         return string(H->h_name);
     }
@@ -180,6 +162,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     _isOK( true ),
     cache( jobCache::getInstance() )
 {
+#ifdef DONT_COMPILE
   char name[256];
   memset((void*)name, 0, 256);
 
@@ -205,6 +188,15 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     return;
   }
   myname = H->h_name;
+#endif
+
+  try {
+      myname = getHostName( );
+  } catch( runtime_error& ex ) {
+      _isOK = false;
+  }
+
+
   log_dev->info( "eventStatusListener::CTOR() - Listener created!" );
   try {
     pinger.reset( new CEPing(proxyfile, "/") );

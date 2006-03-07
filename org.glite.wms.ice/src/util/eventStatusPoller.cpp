@@ -126,7 +126,7 @@ bool eventStatusPoller::getStatus(void)
                     << "Removing from the job cache"
                     << log4cpp::CategoryStream::ENDLINE;
                 boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-                jobIt = cache->remove( jobIt );
+                jobIt = cache->erase( jobIt );
                 jobIt--; // this is necessary to avoid skipping the next item
             } else {
                 _jobstatuslist.push_back( job_stat );
@@ -344,7 +344,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	  creamClient->Authenticate( jit->getUserProxyCertificate());
           oneJobToPurge.push_back( jit->getJobID() );
           creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
-          jit = jobCache::getInstance()->remove( jit );
+          jit = jobCache::getInstance()->erase( jit );
           jit--;
       } catch (ClassadSyntax_ex& ex) {
 	/**

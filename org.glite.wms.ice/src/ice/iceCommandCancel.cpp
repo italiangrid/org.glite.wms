@@ -135,9 +135,5 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
 
     // no failure: put jobids and status in cache
     // and remove last request from WM's filelist
-    try {
-        util::jobCache::getInstance()->remove( it );
-    } catch(exception& ex) {
-        throw iceCommandFatal_ex( string("remove from cache raised an exception: ") + ex.what() );
-    }
+    util::jobCache::getInstance()->erase( it );
 }

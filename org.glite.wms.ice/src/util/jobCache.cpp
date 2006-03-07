@@ -73,21 +73,38 @@ jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJo
 }
 
 //______________________________________________________________________________
-void jobCache::jobCacheTable::delJob( const CreamJob& c )
+// void jobCache::jobCacheTable::delJob( const CreamJob& c )
+// {
+//     _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
+//     if ( it != _gidMap.end() ) {
+//         // Deletes a new job
+//         jobCacheTable::iterator pos = it->second;
+//         // Removes the job from the list
+//         _jobs.erase( pos );
+//         // Removes the job from the _gidMap
+//         _gidMap.erase( it );
+//         // If necessary, removes the job from the _cidMap
+//         if ( !c.getJobID().empty() ) {
+//             _cidMap.erase( c.getJobID() );
+//         }
+//     }
+// }
+
+void jobCache::jobCacheTable::delJob( const jobCacheTable::iterator& pos )
 {
-    _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
-    if ( it != _gidMap.end() ) {
-        // Deletes a new job
-        jobCacheTable::iterator pos = it->second;
-        // Removes the job from the list
-        _jobs.erase( pos );
-        // Removes the job from the _gidMap
-        _gidMap.erase( it );
-        // If necessary, removes the job from the _cidMap
-        if ( !c.getJobID().empty() ) {
-            _cidMap.erase( c.getJobID() );
-        }
+    if ( pos == end() )
+        return;
+
+    // Removes from the gidMap
+    _gidMap.erase( pos->getGridJobID() );
+
+    // Removes from the cidMap
+    if ( !pos->getJobID().empty() ) {
+        _cidMap.erase( pos->getJobID() );
     }
+
+    // Finally, removes from the joblist
+    _jobs.erase( pos );
 }
 
 //______________________________________________________________________________
@@ -220,28 +237,27 @@ void jobCache::loadJournal(void)
   throw(jnlFile_ex&, ClassadSyntax_ex&, jnlFileReadOnly_ex&)
 {
 
-  operation op;
-  string param;
-
-  while ( jnlMgr->getOperation(op, param) ) {
-
-      CreamJob cj( param );
+    operation op;
+    string param;
+    
+    while ( jnlMgr->getOperation(op, param) ) {
         
-    switch ( op ) {
-    case PUT:
-        _jobs.putJob( cj );
-        operation_counter++;
-        break;
-    case ERASE:
-        _jobs.delJob( cj );
-        operation_counter++;
-        break;
-    default:
-      log_dev->log(log4cpp::Priority::ERROR,
-		   "Unknown operation parsing the journal");
+        CreamJob cj( param );
+        
+        switch ( op ) {
+        case PUT:
+            _jobs.putJob( cj );
+            operation_counter++;
+            break;
+        case ERASE:
+            _jobs.delJob( lookupByGridJobID( cj.getGridJobID() ) );
+            operation_counter++;
+            break;
+        default:
+            log_dev->log(log4cpp::Priority::ERROR,
+                         "Unknown operation parsing the journal");
+        }
     }
-  }
-
 }
 
 //______________________________________________________________________________
@@ -390,7 +406,7 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
     return _jobs.findJobByGID( gridJID );
 }
 
-jobCache::iterator jobCache::remove( const jobCache::iterator& it )
+jobCache::iterator jobCache::erase( jobCache::iterator& it )
 {    
     if ( it == _jobs.end() ) {
         return it;
@@ -401,6 +417,14 @@ jobCache::iterator jobCache::remove( const jobCache::iterator& it )
     string to_string = it->serialize();
     // job found, log operation and remove
     logOperation( ERASE, to_string );
-    _jobs.delJob( *it );    
+    _jobs.delJob( it );    
     return result;
 }
+
+// void jobCache::erase( const CreamJob& j )
+// {
+//     string to_string = j.serialize();
+//     // job found, log operation and remove
+//     logOperation( ERASE, to_string );
+//     _jobs.delJob( lookupByGridJobID( j.getGridJobID() ) );    
+// }

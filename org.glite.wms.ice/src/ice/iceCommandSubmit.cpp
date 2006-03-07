@@ -135,6 +135,8 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 {
     log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
 
+    util::jobCache* _cache = util::jobCache::getInstance();
+
     vector<string> url_jid;
     ice_util::CreamJob theJob;
     cream_api::soap_proxy::CreamProxy* theProxy = cream_api::soap_proxy::CreamProxyFactory::getProxy();
@@ -153,6 +155,9 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // TODO: L&B?
     }
 
+    // Put job in the cache; remember position in job_pos
+    util::jobCache::iterator job_pos = _cache->put( theJob );
+
     log_dev->infoStream() 
         << "iceCommandSubmit::execute() - Registering "
         << "gridJobID=\"" << theJob.getGridJobID()
@@ -162,7 +167,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         << log4cpp::CategoryStream::ENDLINE;
 
     _ev_logger->registerJob( theJob ); // FIXME: to be removed
-    _ev_logger->cream_transfer_start_event( theJob );
+    _ev_logger->cream_transfer_start_event( theJob ); // NOTE: this method call has the side effect of putting the job in the jobCache!
 
     string modified_jdl;
     try {    
@@ -175,6 +180,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
+        _cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
@@ -194,6 +200,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << " due to authentication error:" << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         _ice->resubmit_job( theJob );
+        _cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
@@ -224,6 +231,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << log4cpp::CategoryStream::ENDLINE;
             _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
             _ice->resubmit_job( theJob ); // Try to resubmit
+            _cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 

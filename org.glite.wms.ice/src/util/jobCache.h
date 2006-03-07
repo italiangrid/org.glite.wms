@@ -95,10 +95,10 @@ namespace glite {
                * is not in the table, this method does nothing. This method
                * <em>does not</em> log anything on the journal.
                *
-               * @param c the job to remove from the table. If
-               * the job does not exist, nothing is done
+               * @param pos the iterator pointint to the job to be
+               * removed. If pos == end(), this method does nothing
                */
-              void delJob( const CreamJob& c );
+              void delJob( const jobCacheTable::iterator& pos );
               
               /**
                * Looks up for a job with a given Grid ID
@@ -275,10 +275,12 @@ namespace glite {
            * @param it the iterator pointing to the job to remove. If
            * it == end(), no job is removed (this method does
            * nothing).
+           *
            * @return an iterator to the element immediately following
            * the one being removed; end() if it==end().
            */
-          iterator remove( const iterator& it );
+          iterator erase( iterator& it );
+
 
           // Accessors used to expose jobCacheTable iterator methods
 

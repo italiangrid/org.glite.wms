@@ -34,7 +34,7 @@ namespace {
      */
     string time_t_to_string( time_t tval ) 
     {
-        char buf[26];
+        char buf[26]; // ctime_r wants a buffer of at least 26 bytes
         ctime_r( &tval, buf );
         return string( buf );
     }
@@ -66,7 +66,7 @@ void leaseUpdater::update_lease( void )
     while ( it != cache->end() ) {
         if ( it->getEndLease() < time(0) ) {
             // Purge expired job
-            it = cache->remove( it );
+            it = cache->erase( it );
         } else {
             if ( it->is_active() && 
                  ( it->getEndLease() - time(0) < threshold ) ) 
