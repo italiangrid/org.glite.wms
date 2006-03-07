@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/vfs.h>
+#include <sys/param.h>
 #include <fcntl.h> // O_RDONLY
 #include <netdb.h> // gethostbyname
 #include <unistd.h>
@@ -804,9 +805,10 @@ chmod_tar_extract_all(TAR *t, char *prefix)
     edglog_fn("wmputils::chmod_tar_extract_all");
 
     char *filename;
-    char buf[4096];
+    char buf[MAXPATHLEN];
     int i;
 
+	mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
     while ((i = th_read(t)) == 0) {
         filename = th_get_pathname(t);
         if (t->options & TAR_VERBOSE) {
@@ -824,7 +826,8 @@ chmod_tar_extract_all(TAR *t, char *prefix)
                 "chmod_tar_extract_all()", WMS_IS_FAILURE,
                 "Unable to uncompress ISB file: " + string(buf));
         }
-        int outcome = chmod(string(buf).c_str(), 0644);
+        
+        int outcome = chmod(string(buf).c_str(), mode);
         edglog(debug)<<"chmod result: "<<outcome<<endl;
         if (outcome) {
             throw FileSystemException(__FILE__, __LINE__,

@@ -875,7 +875,7 @@ WMPEventLogger::retrieveRegJobEvent(const std::string &jobid_str)
   	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
     	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
     	throw LBException(__FILE__, __LINE__,
-			"retrieveEvent()", WMS_OPERATION_NOT_ALLOWED,
+			"retrieveRegJobEvent()", WMS_OPERATION_NOT_ALLOWED,
 			"Error during edg_wlc_JobIdParse");
   	}
 	
@@ -1000,7 +1000,7 @@ WMPEventLogger::getLastEventSeqCode()
   	if (edg_wlc_JobIdParse((this->id->toString()).c_str(), &jobid)) {
     	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
     	throw LBException(__FILE__, __LINE__,
-			"isStartAllowed()", WMS_OPERATION_NOT_ALLOWED,
+			"getLastEventSeqCode()", WMS_OPERATION_NOT_ALLOWED,
 			"Error during edg_wlc_JobIdParse");
   	}
 	
@@ -1044,13 +1044,13 @@ WMPEventLogger::getLastEventSeqCode()
   		if (error == ENOENT) { // no events found
 	   		edglog(critical)<<"No events found for job: "<<this->id->toString()
 	   			<<endl;
-	    	throw LBException(__FILE__, __LINE__, "isStartAllowed()",
+	    	throw LBException(__FILE__, __LINE__, "getLastEventSeqCode()",
 	    		WMS_LOGGING_ERROR, "Unable to complete operation: no events "
 	    		"found for requested job");
 	  	}
    		edglog(critical)<<"Unable to get events for job: "<<this->id->toString()
    			<<endl;
-    	throw LBException(__FILE__, __LINE__, "isStartAllowed()",
+    	throw LBException(__FILE__, __LINE__, "getLastEventSeqCode()",
     		WMS_LOGGING_ERROR, "Unable to complete operation: unable to get "
     		"events for requested job");
 	}
@@ -1207,8 +1207,8 @@ WMPEventLogger::isStartAllowed()
 string
 WMPEventLogger::getUserTag(const string &tagname)
 {
-	GLITE_STACK_TRY("retrieveRegJobEvent()");
-	edglog_fn("WMPEventlogger::retrieveRegJobEvent");
+	GLITE_STACK_TRY("getUserTag()");
+	edglog_fn("WMPEventlogger::getUserTag");
 	
 	edg_wlc_JobId jobid;
 	string jobid_str = id->toString();
@@ -1216,8 +1216,8 @@ WMPEventLogger::getUserTag(const string &tagname)
   	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
     	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
     	throw LBException(__FILE__, __LINE__,
-			"std::string WMPEventLogger::retrieveEvent()",
-			WMS_LOGGING_ERROR, "Error during edg_wlc_JobIdParse");
+			"getUserTag()", WMS_LOGGING_ERROR,
+			"Error during edg_wlc_JobIdParse");
   	}
 
   	edg_wll_Event * events = NULL;
@@ -1281,6 +1281,75 @@ WMPEventLogger::getUserTag(const string &tagname)
 	}
   	
   	return returnvalue;
+  	
+  	GLITE_STACK_CATCH();
+}
+
+glite::lb::JobStatus
+WMPEventLogger::getStatus(JobId *jid)
+{
+	GLITE_STACK_TRY("getStatus()");
+	edglog_fn("WMPEventlogger::getStatus");
+	
+	edg_wlc_JobId jobid;
+	string jobid_str = id->toString();
+  	// parse the jobID string
+  	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
+    	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
+    	throw LBException(__FILE__, __LINE__,
+			"getStatus()", WMS_LOGGING_ERROR,
+			"Error during edg_wlc_JobIdParse");
+  	}
+
+  	edg_wll_JobStat * states = NULL;
+  	edg_wll_QueryRec jc[2];
+  	memset(jc, 0, sizeof jc);
+  
+  	// job condition: JOBID = jobid
+  	jc[0].attr = EDG_WLL_QUERY_ATTR_JOBID;
+  	jc[0].op = EDG_WLL_QUERY_OP_EQUAL;
+  	jc[0].value.j = jobid;
+  	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
+  
+  	int error;
+
+#ifdef GLITE_WMS_HAVE_LBPROXY
+	if (lbProxy_b) {
+		edglog(debug)<<"Quering LB Proxy..."<<endl;
+		error = edg_wll_QueryJobsProxy(ctx, jc, 0, NULL, &states);
+		if (error == ENOENT) { // no events found
+	   		edglog(debug)<< "No status found quering LB Proxy. Quering LB..."<<endl;
+			error = edg_wll_QueryJobs(ctx, jc, 0, NULL, &states);
+	  	}
+	} else { // end switch LB PROXY
+#endif  //GLITE_WMS_HAVE_LBPROXY
+		edglog(debug)<< "Quering LB..."<<endl;
+		error = edg_wll_QueryJobs(ctx, jc, 0, NULL, &states);
+#ifdef GLITE_WMS_HAVE_LBPROXY
+	} // end switch LB normal
+#endif  //GLITE_WMS_HAVE_LBPROXY
+
+  	if (error == ENOENT) { // no events found
+   		return glite::lb::JobStatus();
+  	}
+  	if (error) {
+   		///TBC throw an exception???
+   		//log_error("Query failed");
+    	return glite::lb::JobStatus();
+	}
+
+	// Searching last state
+	int i = 0;
+	while (states[i].state) {
+		i++;
+	}
+	i--;
+	
+	/*for (int i = 0; events[i].type; i++) {
+		edg_wll_FreeStatus(&states[i]);
+	}*/
+  	
+  	return glite::lb::JobStatus(states[i]);
   	
   	GLITE_STACK_CATCH();
 }

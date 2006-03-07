@@ -61,6 +61,7 @@
 #include "glite/wms/jdl/JDLAttributes.h"
 #include "glite/wms/jdl/jdl_attributes.h"
 #include "glite/wms/jdl/DAGAdManipulation.h"
+#include "glite/wms/jdl/extractfiles.h" // hasWildCards()
 
 // Logging and Bookkeeping
 #include "glite/lb/Job.h"
@@ -1305,27 +1306,46 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			
 			// Adding OutputSandboxDestURI attribute
 			if (jad->hasAttribute(JDL::OUTPUTSB)) {
-				edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
-				vector<string> osbdesturi;
-				if (jad->hasAttribute(JDL::OSB_DEST_URI)) {
-					osbdesturi = wmputilities::computeOutputSBDestURI(
-						jad->getStringValue(JDL::OSB_DEST_URI),
-						dest_uri);
-					jad->delAttribute(JDL::OSB_DEST_URI);
-				} else if (jad->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
-					osbdesturi = wmputilities::computeOutputSBDestURIBase(
-						jad->getStringValue(JDL::OUTPUTSB),
-						jad->getString(JDL::OSB_BASE_DEST_URI));
-				} else {
-					osbdesturi = wmputilities::computeOutputSBDestURIBase(
-						jad->getStringValue(JDL::OUTPUTSB), dest_uri + "/output");
+				vector<string> outputsb = jad->getStringValue(JDL::OUTPUTSB);
+				bool flag = false;
+				unsigned int size = outputsb.size();
+				for (unsigned int i = 0; (i < size) && !flag; i++) {
+					if (hasWildCards(outputsb[i])) {
+						flag = true;
+					}
 				}
-				
-				vector<string>::iterator iter = osbdesturi.begin();
-				vector<string>::iterator const end = osbdesturi.end();
-				for (; iter != end; ++iter) {
-					edglog(debug)<<"OutputSBDestURI: "<<*iter<<endl;
-					jad->addAttribute(JDL::OSB_DEST_URI, *iter);
+				if (!flag) {
+					edglog(debug)<<"Setting attribute JDL::OSB_DEST_URI"<<endl;
+					vector<string> osbdesturi;
+					if (jad->hasAttribute(JDL::OSB_DEST_URI)) {
+						osbdesturi = wmputilities::computeOutputSBDestURI(
+							jad->getStringValue(JDL::OSB_DEST_URI),
+							dest_uri);
+						jad->delAttribute(JDL::OSB_DEST_URI);
+					} else if (jad->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+						osbdesturi = wmputilities::computeOutputSBDestURIBase(
+							jad->getStringValue(JDL::OUTPUTSB),
+							jad->getString(JDL::OSB_BASE_DEST_URI));
+					} else {
+						osbdesturi = wmputilities::computeOutputSBDestURIBase(
+							jad->getStringValue(JDL::OUTPUTSB),
+							dest_uri + "/output");
+					}
+					
+					vector<string>::iterator iter = osbdesturi.begin();
+					vector<string>::iterator const end = osbdesturi.end();
+					for (; iter != end; ++iter) {
+						edglog(debug)<<"OutputSBDestURI: "<<*iter<<endl;
+						jad->addAttribute(JDL::OSB_DEST_URI, *iter);
+					}
+				} else {
+					edglog(debug)<<"Output SB has wildcards: skipping setting "
+						"attribute JDL::OSB_DEST_URI"<<endl;
+					if (!jad->hasAttribute(JDL::OSB_BASE_DEST_URI)) {
+						edglog(debug)<<"Setting attribute JDL::OSB_BASE_DEST_URI"<<endl;
+						jad->setAttribute(JDL::OSB_BASE_DEST_URI,
+							dest_uri + "/output");
+					}
 				}
 			}
 		
