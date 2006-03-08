@@ -143,9 +143,8 @@ bool eventStatusPoller::getStatus(void)
                          + ex.what());
         } catch(soap_proxy::soap_ex& ex) {
             log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a soap_ex exception: ")
-                         + ex.what());
-            return false; 
+                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a soap_ex exception: ") + ex.what());
+            return false;
         } catch(cream_exceptions::BaseException& ex) {
             log_dev->log(log4cpp::Priority::ERROR,
                          string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a BaseException exception: ")
@@ -176,27 +175,51 @@ void eventStatusPoller::checkJobs()
      * SINGLE REQUEST WITH THIS VECTOR MUST BE SENT TO THAT CREAM
      */
     glite::ce::cream_client_api::job_statuses::job_status stNum;
+    string exitCode;
     string addrURL;
     vector<string> pieces, jobs_to_purge;
 
     pieces.reserve(3);
     jobs_to_purge.reserve(100);
 
-    for( JobStatusIt it = _jobstatuslist.begin(); 
+    for( JobStatusIt it = _jobstatuslist.begin();
          it != _jobstatuslist.end(); ++it) {
 
         vector<creamtypes__Status*> _statuslist = (*it)->jobStatus;
-        
+
         // sit = Status ITerator
         for ( vector<creamtypes__Status*>::iterator sit = _statuslist.begin();
               sit != _statuslist.end(); sit++ ) {
 
-            stNum = getStatusNum( (*sit)->name);
-          
-            if ( !(*sit)->jobId ) 
-                continue;
 
+	    /**
+	     * The following 2 conditions should never take place
+	     * but... just in case, let's prevent a segfault
+	     */
+            if ( !(*sit)->jobId )
+              continue;
+
+	    if( !(*sit)->exitCode )
+	      continue;
+
+            stNum = getStatusNum( (*sit)->name );
+	    exitCode = *((*sit)->exitCode);
             string cid( *((*sit)->jobId) );
+
+	    bool DONE = (stNum == api::job_statuses::DONE_FAILED)
+			|| (stNum == api::job_statuses::DONE_OK);
+
+	    /**
+	     * Let's wait if the job has done but CREAM didn't
+	     * retrieve yet the exit code
+	     */
+	    if( DONE && (exitCode=="W") ) {
+	      log_dev->infoStream()
+                    << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
+                    << cid <<"] because exitCode isn't available yet. "
+                    << log4cpp::CategoryStream::ENDLINE;
+	      return;
+	    }
 
             if ( stNum == api::job_statuses::DONE_FAILED ||
                  stNum == api::job_statuses::ABORTED ) {
@@ -236,7 +259,6 @@ void eventStatusPoller::checkJobs()
                 << jobs_to_purge.size() << " jobs to purge"
                 << log4cpp::CategoryStream::ENDLINE;
 
-          
             this->purgeJobs(jobs_to_purge);
           
             sleep(1); // sleep a little bit to not overload CREAM with too

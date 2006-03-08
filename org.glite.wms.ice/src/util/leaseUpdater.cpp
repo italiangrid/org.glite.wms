@@ -126,7 +126,7 @@ void leaseUpdater::body( void )
     vector< CreamJob > _jobs;
     while ( !isStopped() ) {
         log_dev->infoStream()
-            << "leastUpdater::body(): new iteration"
+            << "leastUpdater::body() - new iteration"
             << log4cpp::CategoryStream::ENDLINE;
 
         update_lease( );
