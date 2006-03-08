@@ -36,7 +36,7 @@ std::string glite_wms_client_toLower ( const std::string &src){
 
 // constants for WMProxy  client software version
 const std::string WMP_CLT_MAJOR_VERSION = "1";
-const std::string WMP_CLT_MINOR_VERSION = "2";
+const std::string WMP_CLT_MINOR_VERSION = "3";
 const std::string WMP_CLT_RELEASE_VERSION = "1";
 const std::string WMP_CLT_POINT_VERSION = ".";
 
@@ -81,9 +81,8 @@ const string Options::WMP_ALL_PROTOCOLS = "all";
 // Byte offset for tar files
 const long Options::TAR_OFFSET = 500;
 // Deafult Max file size
-//const long Options::MAX_DEFAULT_FILE_SIZE = 2147483647;
+const long Options::MAX_DEFAULT_FILE_SIZE = 2147483647;
 
-const long Options::MAX_DEFAULT_FILE_SIZE = 173000;
 // Max size (bytes) allowed for tar files
 const long Options::MAX_TAR_SIZE = Options::MAX_DEFAULT_FILE_SIZE - Options::TAR_OFFSET;
 // Max file size for globus-url-copy
