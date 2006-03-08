@@ -37,11 +37,11 @@ namespace { // anonymous namespace
 
     /**
      * Utility function to return the hostname
-     */ 
+     */
     string getHostName( void ) throw ( runtime_error& )
     {
         char name[256];
-        
+
         if ( gethostname(name, 256) == -1 ) {
             throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
         }
@@ -100,23 +100,23 @@ namespace { // anonymous namespace
             << "Parsing status change notification "
             << _classad
             << log4cpp::CategoryStream::ENDLINE;
-        
+
         classad::ClassAdParser parser;
         classad::ClassAd *ad = parser.ParseClassAd( _classad );
-        
+
         if (!ad)
             throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
-        
+
         if ( !ad->EvaluateAttrString( "CREAM_JOB_ID", cream_job_id ) )
             throw iceUtil::ClassadSyntax_ex("CREAM_JOB_ID attribute not found, or is not a string");
         boost::trim_if( cream_job_id, boost::is_any_of("\"" ) );
-        
-        string job_status_str;       
+
+        string job_status_str;
         if ( !ad->EvaluateAttrString( "JOB_STATUS", job_status_str ) )
             throw iceUtil::ClassadSyntax_ex("JOB_STATUS attribute not found, or is not a string");
         boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
         job_status = api::job_statuses::getStatusNum( job_status_str );
-        
+
         string tstamp_s;
         if ( !ad->EvaluateAttrString( "TIMESTAMP", tstamp_s ) )
             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a string");
@@ -138,9 +138,9 @@ namespace { // anonymous namespace
      */
     struct less_equal_tstamp : public binary_function< StatusNotification, StatusNotification, bool>
     {
-        bool operator()(const StatusNotification& __x, const StatusNotification& __y) const 
-        { 
-            return __x.getTstamp() <= __y.getTstamp(); 
+        bool operator()(const StatusNotification& __x, const StatusNotification& __y) const
+        {
+            return __x.getTstamp() <= __y.getTstamp();
         }
     };
 
@@ -148,10 +148,10 @@ namespace { // anonymous namespace
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
   : CEConsumer(i),
-    iceThread( "event status poller" ),   
+    iceThread( "event status poller" ),
     grid_JOBID(),
     cream_JOBID(),
-    status(glite::ce::cream_client_api::job_statuses::UNKNOWN),
+    status(api::job_statuses::UNKNOWN),
     pinger ( 0 ),
     proxyfile(hostcert),
     tcpport(i),
@@ -279,7 +279,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 			   << log4cpp::CategoryStream::ENDLINE;
     return;
   }
-  
+
   /**
    * Checks if the SOAP message was correct (i.e.
    * containing a non-null topic)
@@ -318,10 +318,10 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
 
 
   // The line above should be equivalent to the following:
-  //  
+  //
   //   for ( vector<monitortypes__Event>::const_iterator it=evts.begin(); it != evts.end(); it++ ) {
   //       handleEvent( *it );
-  //   } 
+  //   }
 
 }
 
@@ -342,8 +342,8 @@ void iceUtil::eventStatusListener::init(void)
       // Scoped lock to protect concurrent access to the job cache
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-      for(jobCache::iterator it=cache->begin(); it != cache->end(); it++) {
-
+      for(jobCache::iterator it=cache->begin(); it != cache->end(); it++)
+      {
           ceurl = it->getCreamURL();
           boost::replace_first(ceurl,
                                conf->getCreamUrlPostfix(),
@@ -418,7 +418,7 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
     double tstamp_d;
     long tstamp;
 
-    // the following function extract from the classad Ad the
+    // the following function extracts from the classad Ad the
     // creamjobid and status and put them into the 1st and 2nd
     // arguments respectively
     try {
@@ -432,6 +432,13 @@ void iceUtil::eventStatusListener::handleEvent( const Event& ev )
 	return;
     }
 
+    /**
+     * Not updating cache for PURGED jobs
+     * because they have been (or will be) removed from the cache itself
+     * by the statusPoller.
+     */
+    printf("************ ALVISE status=[%s]\n",status.c_str());
+    if( status == "PURGED" ) return;
 
     jobCache::iterator it;
 
@@ -508,9 +515,15 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         }
     }
 
+
+
     // Now, for each status change notification, check if it has to be logged
     for ( vector<StatusNotification>::const_iterator it = notifications.begin();
           it != notifications.end(); it++ ) {
+
+        // If the status is "PURGED" the StatusPoller will remove it asap form
+        // the cache. So the listener can ignore this job
+        if( it->getStatus() == api::job_statuses::PURGED ) continue;
 
         jobCache::iterator jc_it;
 
