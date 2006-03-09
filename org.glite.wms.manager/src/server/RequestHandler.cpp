@@ -16,9 +16,6 @@
 #include "WMReal.h"
 #include "signal_handling.h"
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/WMConfiguration.h"
-#include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
@@ -31,14 +28,14 @@
 #include "Request.hpp"
 #include "TaskQueue.hpp"
 #include "listmatch.h"
+#include "submission_utils.h"
 #include "glite/lb/producer.h"
 
 namespace fs = boost::filesystem;
 namespace jobid = glite::wmsutils::jobid;
 namespace task = glite::wms::common::task;
 namespace exception = glite::wmsutils::exception;
-namespace requestad = glite::wms::jdl;
-namespace configuration = glite::wms::common::configuration;
+namespace jdl = glite::wms::jdl;
 namespace utilities = glite::wms::common::utilities;
 
 namespace glite {
@@ -58,111 +55,6 @@ RequestHandler::RequestHandler()
 
 namespace {
 
-class HitMaxRetryCount
-{
-  int m_n;
-public:
-  HitMaxRetryCount(int n): m_n(n) {}
-  int count() const { return m_n; }
-};
-
-class HitJobRetryCount
-{
-  int m_n;
-public:
-  HitJobRetryCount(int n): m_n(n) {}
-  int count() const { return m_n; }
-};
-
-class HitMaxShallowCount
-{
-  int m_n;
-public:
-  HitMaxShallowCount(int n): m_n(n) {}
-  int count() const { return m_n; }
-};
-
-class HitJobShallowCount
-{
-  int m_n;
-public:
-  HitJobShallowCount(int n): m_n(n) {}
-  int count() const { return m_n; }
-};
-
-class CannotRetrieveJDL
-{
-};
-
-void flush_lb_events(ContextPtr const& context, jobid::JobId const& id)
-{
-  struct timeval* timeout = 0;
-  int lb_error = edg_wll_LogFlush(context.get(), timeout);
-  if (lb_error) {
-    Warning(
-      "edg_wll_LogFlush failed for " << id
-      << " (" << get_lb_message(context) << ")"
-    );
-  }
-}
-
-int get_max_shallow_count()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-
-  if (!config) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-
-  return wm_config->max_shallow_retry_count();
-}
-
-int get_max_retry_count()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-
-  if (!config) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-
-  return wm_config->max_retry_count();
-}
-
-bool is_deep_resubmission(edg_wll_Event const& event)
-{
-  return event.type == EDG_WLL_EVENT_RESUBMISSION
-    && event.resubmission.result == EDG_WLL_RESUBMISSION_WILLRESUB;
-}
-
-bool is_shallow_resubmission(edg_wll_Event const& event)
-{
-  return event.type == EDG_WLL_EVENT_RESUBMISSION
-    && event.resubmission.result == EDG_WLL_RESUBMISSION_SHALLOW;
-}
-
-LB_Events::const_iterator
-find_last_deep_resubmission(LB_Events const& events)
-{
-  LB_Events::const_reverse_iterator it(
-    std::find_if(events.rbegin(), events.rend(), is_deep_resubmission)
-  );
-  if (it != events.rend()) {
-    return (++it).base();
-  } else {
-    return events.end();
-  }
-}
-
 // returns (retry_count, shallow_count)
 boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
 {
@@ -176,36 +68,23 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
     return boost::make_tuple(0, 0);
   }
 
-  ContextPtr const& context = req->lb_context();
+  ContextPtr context = req->lb_context();
   jobid::JobId const& jobid = req->id();
 
 #ifndef GLITE_WMS_HAVE_LBPROXY
   // flush the lb events since we'll query the lb server
-  flush_lb_events(context, jobid);
+  if (!flush_lb_events(context)) {
+    Warning(
+      "edg_wll_LogFlush failed for " << jobid
+      << " (" << get_lb_message(context) << ")"
+    );
+  }
 #endif
 
   LB_Events events(get_interesting_events(context, jobid));
   if (events.empty()) {
     Warning("Cannot retrieve interesting events for " << jobid);
   }
-
-  int current_deep_count(
-    std::count_if(events.begin(), events.end(), is_deep_resubmission)
-  );
-  assert(current_deep_count >= 0);
-
-  LB_Events::const_iterator last_deep_resubmission(
-    find_last_deep_resubmission(events)
-  );
-
-  int current_shallow_count(
-    std::count_if(
-      last_deep_resubmission,
-      events.end(),
-      is_shallow_resubmission
-    )
-  );
-  assert(current_shallow_count >= 0);
 
   typedef std::vector<std::pair<std::string,int> > matches_type;
   matches_type const previous_matches = get_previous_matches(events);
@@ -228,12 +107,12 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
   }
   std::auto_ptr<classad::ClassAd> job_ad(utilities::parse_classad(job_ad_str));
 
-  requestad::set_edg_previous_matches(*job_ad, previous_matches_simple);
-  requestad::set_edg_previous_matches_ex(*job_ad, previous_matches);
+  jdl::set_edg_previous_matches(*job_ad, previous_matches_simple);
+  jdl::set_edg_previous_matches_ex(*job_ad, previous_matches);
 
   req->jdl(job_ad);
 
-  return boost::make_tuple(current_deep_count, current_shallow_count);
+  return get_retry_counts(events);
 }
 
 bool is_request_expired(RequestPtr req)
@@ -241,46 +120,6 @@ bool is_request_expired(RequestPtr req)
   return req->expiry_time() < std::time(0);
 }
 
-fs::path sandbox_dir()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-  assert(config);
-
-  configuration::NSConfiguration const* const ns_config = config->ns();
-  assert(ns_config);
-
-  std::string path_str = ns_config->sandbox_staging_path();
-
-  return fs::path(path_str, fs::native);
-}
-
-std::string get_token_file()
-{
-  configuration::Configuration const* const config
-    = configuration::Configuration::instance();
-
-  if (!config) {
-    Fatal("empty or invalid configuration");
-  }
-  configuration::WMConfiguration const* const wm_config = config->wm();
-  if (!wm_config) {
-    Fatal("empty WM configuration");
-  }
-
-  return wm_config->token_file();
-}
-
-fs::path reallyrunning_token(RequestConstPtr req)
-{
-  jobid::JobId const& id = req->id();
-  fs::path result(sandbox_dir());
-  result /= fs::path(jobid::get_reduced_part(id), fs::native);
-  result /= fs::path(jobid::to_filename(id), fs::native);
-  result /= fs::path(get_token_file(), fs::native);
-
-  return result;
-}
 void process_match(RequestPtr req)
 {
   std::string filename;
@@ -303,72 +142,24 @@ void process_match(RequestPtr req)
   req->state(Request::DELIVERED);
 }
 
-// in practice the actual retry limit for the deep count is
-// max(0, min(job_retry_count, max_retry_count))
-// and similarly for the shallow count
-// max(0, min(job_shallow_count, max_shallow_count))
-
-void check_shallow_count(RequestConstPtr req, int count)
+bool shallow_resubmission_is_disabled(RequestPtr req)
 {
-  // check against the job max shallow count
-  bool valid = false;
-  int job_shallow_count(
-    requestad::get_shallow_retry_count(*req->jdl(), valid)
-  );
-  if (!valid || job_shallow_count < 0) {
-    job_shallow_count = 0;
-  }
-  if (count >= job_shallow_count) {
-    throw HitJobShallowCount(job_shallow_count);
-  }
-
-  // check against the system max shallow count
-  int max_shallow_count = get_max_shallow_count();
-  if (max_shallow_count < 0) {
-    max_shallow_count = 0;
-  }
-  if (count >= max_shallow_count) {
-    throw HitMaxShallowCount(max_shallow_count);
-  }
+  return server::shallow_resubmission_is_disabled(*req->jdl());
 }
 
-void check_retry_count(RequestConstPtr req, int count)
+void check_deep_count(RequestPtr req, int current_count)
 {
-  // check against the job max retry count
-  bool valid = false;
-  int job_retry_count(requestad::get_retry_count(*req->jdl(), valid));
-  if (!valid || job_retry_count < 0) {
-    job_retry_count = 0;
-  }
-  if (count >= job_retry_count) {
-    throw HitJobRetryCount(job_retry_count);
-  }
-
-  // check against the system max retry count
-  int max_retry_count = get_max_retry_count();
-  if (count >= max_retry_count) {
-    throw HitMaxRetryCount(max_retry_count);
-  }
+  server::check_deep_count(*req->jdl(), current_count);
 }
 
-int get_job_shallow_count(RequestConstPtr req)
+void check_shallow_count(RequestPtr req, int current_count)
 {
-  bool valid = false;
-  int result = requestad::get_shallow_retry_count(*req->jdl(), valid);
-  if (!valid) {
-    result = 0;
-  }
-  return result;
+  server::check_shallow_count(*req->jdl(), current_count);
 }
 
-bool shallow_resubmission_is_disabled(RequestConstPtr req)
+fs::path get_reallyrunning_token(RequestPtr req)
 {
-  return get_job_shallow_count(req) == -1;
-}
-
-void create_token(fs::path const& p)
-{
-  fs::ofstream _(p);
+  return server::get_reallyrunning_token(req->id());
 }
 
 void process_submit(RequestPtr req, WMReal& wm)
@@ -385,9 +176,9 @@ void process_submit(RequestPtr req, WMReal& wm)
 
   try {
 
-    int retry_count;
+    int deep_count;
     int shallow_count;
-    boost::tie(retry_count, shallow_count) = retrieve_lb_info(req);
+    boost::tie(deep_count, shallow_count) = retrieve_lb_info(req);
 
     if (is_request_expired(req)) {
 
@@ -398,13 +189,13 @@ void process_submit(RequestPtr req, WMReal& wm)
       if (shallow_resubmission_is_disabled(req)) {
 
         if (req->marked_resubmitted()) {
-          check_retry_count(req, retry_count);
+          check_deep_count(req, deep_count);
           log_resubmission_deep(req->lb_context());
         }
 
       } else {
 
-        fs::path const token_file(reallyrunning_token(req));
+        fs::path const token_file(get_reallyrunning_token(req));
 
         if (req->marked_resubmitted()) {
           if (fs::exists(token_file)) {
@@ -414,7 +205,7 @@ void process_submit(RequestPtr req, WMReal& wm)
               token_file.native_file_string()
             );
           } else {
-            check_retry_count(req, retry_count);
+            check_deep_count(req, deep_count);
             log_resubmission_deep(
               req->lb_context(),
               token_file.native_file_string()
@@ -520,7 +311,7 @@ try {
 
     } catch (std::invalid_argument const& e) {
       req->state(Request::UNRECOVERABLE, e.what());
-    } catch (requestad::ManipulationException const& e) {
+    } catch (jdl::ManipulationException const& e) {
       req->state(Request::UNRECOVERABLE, e.what());
     } catch (exception::Exception const& e) {
       req->state(Request::UNRECOVERABLE, e.what());

@@ -6,21 +6,15 @@
 ## *
 ## *********************************************************************
 
-MNGR_COMMON = $(top_builddir)/src/common/libglite_wms_manager_common.la
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
 GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
 lib_LTLIBRARIES = libglite_wms_manager_server.la 
 
-libexec_SCRIPTS = \
-	glite-wms-dag-post.sh \
-	glite-wms-planner.sh 
+libexec_SCRIPTS = glite-wms-dag-post.sh
 
-libexec_PROGRAMS = \
-	glite-wms-planner
-
-# 	glite-wms-planned2submit
+libexec_PROGRAMS = glite-wms-planner
 
 noinst_PROGRAMS = \
 	glite-wms_input_generator
@@ -58,7 +52,9 @@ libglite_wms_manager_server_la_SOURCES = \
         lb_utils.h \
         lb_utils.cpp \
 	dynamic_library.h \
-	dynamic_library.cpp
+	dynamic_library.cpp \
+	submission_utils.h \
+	submission_utils.cpp
 
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
@@ -82,11 +78,6 @@ glite_wms_planner_LDADD   = \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-        -lglite_jp_common \
-        -lglite_jp_importer_gcc32 \
-        -lglite_jp_trio \
-        -L$(top_srcdir)/../repository/libtar/1.2.11/rhel30_gcc32/lib \
-        -ltar \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_DL_LIBS) \
@@ -96,32 +87,6 @@ glite_wms_planner_LDADD   = \
 	$(GLOBUS_SSL_THR_LIBS) \
 	$(GLOBUS_GSS_THR_LIBS) \
 	$(BOOST_LIBS)
-
-# glite_wms_planned2submit_SOURCES = glite-wms-planned2submit.cpp
-# glite_wms_planned2submit_LDFLAGS = -Xlinker --export-dynamic
-# glite_wms_planned2submit_LDADD   = \
-# 	$(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
-# 	$(GLITE_WMS_JSS_COMMON_LIBS) \
-# 	$(GLITE_WMS_PURGER_LIBS) \
-# 	$(GLITE_WMSUTILS_JOBID_LIBS) \
-#         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-#         $(GLITE_WMS_JDL_LIBS)\
-# 	$(GLITE_WMS_COMMON_LOGGER_LIBS) \
-#         $(GLITE_WMS_COMMON_CONF_LIBS) \
-# 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#         $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-# 	$(GLITE_LB_NOTHR_CLIENT_LIBS) \
-#         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
-#         $(GLITE_LB_NOTHR_COMMON_LIBS) \
-# 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
-#         $(EXPAT_LIBS) \
-#         $(ARES_LIBS) \
-#         $(CLASSAD_DL_LIBS) \
-#         $(GLOBUS_LDAP_THR_LIBS) \
-#         $(GLOBUS_COMMON_THR_LIBS) \
-#         $(GLOBUS_SSL_THR_LIBS) \
-# 	$(GLOBUS_GSS_THR_LIBS) \
-#         $(BOOST_LIBS)
 
 glite_wms_input_generator_SOURCES = \
 	input_generator.cpp
@@ -147,10 +112,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
         $(CLASSAD_CFLAGS) \
         $(BOOST_CFLAGS)
 
-EXTRA_DIST = glite-wms-planner.sh.in \
-	glite-wms-dag-post.sh.in
+EXTRA_DIST = glite-wms-dag-post.sh.in
 
-CLEANFILES = glite-wms-planner.sh \
-	glite-wms-dag-post.sh
+CLEANFILES = glite-wms-dag-post.sh
 
 MAINTAINERCLEANFILES = Makefile.in

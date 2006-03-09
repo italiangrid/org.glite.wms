@@ -27,6 +27,7 @@
 #include "signal_handling.h"
 #include "match_utils.h"
 #include "lb_utils.h"
+#include "submission_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
@@ -46,6 +47,7 @@
 
 using namespace glite::wms::manager::server;
 namespace utilities = glite::wms::common::utilities;
+namespace jobcontroller = glite::wms::jobsubmission::controller;
 namespace jdl = glite::wms::jdl;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
@@ -318,6 +320,80 @@ ClassAdPtr Plan(classad::ClassAd const& jdl)
 
 int const EXIT_ABORT_NODE = 99;
 
+void check_retry_counts(classad::ClassAd const& jdl, LB_Events const& events)
+{
+  int deep_count;
+  int shallow_count;
+  boost::tie(deep_count, shallow_count) = get_retry_counts(events);
+
+  check_shallow_count(jdl, shallow_count);
+  check_deep_count(jdl, deep_count);
+}
+
+class RequestExpired {};
+class CannotGenerateSubmitJDL {};
+class CannotGenerateSubmitFile {};
+
+void do_it(
+  classad::ClassAd& jdl,
+  std::ostream& os,
+  ContextPtr context,
+  jobid::JobId const& jobid
+)
+{
+  LB_Events const lb_events(get_interesting_events(context, jobid));
+  check_retry_counts(jdl, lb_events);
+
+  typedef std::vector<std::pair<std::string, int> > previous_matches_type;
+  previous_matches_type const previous_matches(
+    get_previous_matches(lb_events)
+  );
+
+  jdl::set_edg_previous_matches_ex(jdl, previous_matches);
+
+  // keep retrying to match periodically for a while
+
+  unsigned int const five_minutes = 300;
+  unsigned int const one_day = 86400;
+
+  std::time_t const timeout = std::time(0) + one_day;
+  ClassAdPtr planned_ad;
+  while (!planned_ad && std::time(0) < timeout) {
+    std::string pending_message("no resources available");
+    try {
+      planned_ad = Plan(jdl);
+    } catch (planning_error const& e) {
+      pending_message = e.what();
+    }
+    if (!planned_ad) {
+      log_pending(context, pending_message);
+      ::sleep(five_minutes);
+    }
+  }
+
+  if (!planned_ad) {
+    throw RequestExpired();
+  }
+
+  std::string const ce_id(jdl::get_ce_id(*planned_ad));
+
+  log_match(context, ce_id);
+
+  jobcontroller::SubmitAdapter submit_adapter(*planned_ad);
+  ClassAdPtr submit_ad(
+    submit_adapter.adapt_for_submission(get_lb_sequence_code(context))
+  );
+  if (!submit_ad) {
+    throw CannotGenerateSubmitJDL();
+  }
+
+  jdl::to_submit_stream(os, *submit_ad);
+
+  if (!os) {
+    throw CannotGenerateSubmitFile();
+  }
+}
+
 } // {anonymous}
 
 int
@@ -340,13 +416,13 @@ try {
 #warning is signal handling needed?
   // signal_handling();
 
-  std::string input_file(argv[1]);
+  std::string const input_file(argv[1]);
   std::ifstream is(input_file.c_str());
   if (!is) {
     std::cerr << "Cannot open input file " << input_file << '\n';
     return EXIT_FAILURE;
   }
-  std::string output_file(argv[2]);
+  std::string const output_file(argv[2]);
   std::ofstream os(output_file.c_str());
   if (!os) {
     std::cerr << "Cannot open output file " << output_file << '\n';
@@ -360,13 +436,19 @@ try {
 
   std::string const name("dag_node_planner");
 
-  ClassAdPtr input_ad(utilities::parse_classad(is));
+  classad::ClassAd input_ad;
+  classad::ClassAdParser parser;
+  if (!parser.ParseClassAd(is, input_ad)) {
+    std::cerr << "Cannot parse JDL from input file (" << input_file << ")\n";
+    return EXIT_FAILURE;
+  }
+  is.close();
 
   std::string const sequence_code(
     "UI=2:NS=0:WM=0:BH=1:JSS=0:LM=0:LRMS=0:APP=0"
   );
-  jobid::JobId const jobid(jdl::get_edg_jobid(*input_ad));
-  std::string const x509_user_proxy(jdl::get_x509_user_proxy(*input_ad));
+  jobid::JobId const jobid(jdl::get_edg_jobid(input_ad));
+  std::string const x509_user_proxy(jdl::get_x509_user_proxy(input_ad));
   ContextPtr context(
     create_context(
       jobid,
@@ -375,70 +457,37 @@ try {
       EDG_WLL_SOURCE_BIG_HELPER
     )
   );
+
   log_helper_called(context, name);
 
-  LB_Events const lb_events(get_interesting_events(context, jobid));
-  //check_retry_counts(*input_ad, lb_events);
+  std::string error;
 
-  typedef std::vector<std::pair<std::string, int> > previous_matches_type;
-  previous_matches_type const previous_matches(
-    get_previous_matches(lb_events)
-  );
+  try {
 
-  // keep retrying to match periodically for a while
+    do_it(input_ad, os, context, jobid);
 
-  unsigned int const five_minutes = 300;
-  unsigned int const one_day = 86400;
-
-  std::time_t const timeout = std::time(0) + one_day;
-  ClassAdPtr planned_ad;
-  while (!planned_ad && std::time(0) < timeout) {
-    std::string pending_message("no resources available");
-    try {
-      planned_ad = Plan(*input_ad);
-    } catch (planning_error const& e) {
-      pending_message = e.what();
-    }
-    if (!planned_ad) {
-      log_pending(context, pending_message);
-      ::sleep(five_minutes);
-    }
+  } catch (HitMaxRetryCount& e) {
+    error = "hit max retry count (" + e.count() + ')';
+  } catch (HitJobRetryCount& e) {
+    error = "hit job retry count (" + e.count() + ')';
+  } catch (HitMaxShallowCount& e) {
+    error = "hit max shallow retry count (" + e.count() + ')';
+  } catch (HitJobShallowCount& e) {
+    error = "hit job shallow retry count (" + e.count() + ')';
+  } catch (RequestExpired&) {
+    error = "request expired";
+  } catch (CannotGenerateSubmitJDL&) {
+    error = "cannot generate the submission JDL";
+  } catch (CannotGenerateSubmitFile&) {
+    error = "cannot generate the submission file";
   }
 
-  if (!planned_ad) {
-    std::cerr << "request expired\n";
-    log_helper_return(context, name, EXIT_ABORT_NODE);
-    log_abort(context, "request expired");
-    return EXIT_ABORT_NODE;
-  }
-
-  std::string const ce_id(jdl::get_ce_id(*planned_ad));
-
-  log_match(context, ce_id);
-
-  glite::wms::jobsubmission::controller::SubmitAdapter submit_adapter(*planned_ad);
-  ClassAdPtr submit_ad(
-    submit_adapter.adapt_for_submission(get_lb_sequence_code(context))
-  );
-  if (!submit_ad) {
-    std::string const error("failed to generate the submission jdl");
-    std::cerr << error << '\n';
+  if (error.empty()) {
+    log_helper_return(context, name, EXIT_SUCCESS);
+  } else {
     log_helper_return(context, name, EXIT_ABORT_NODE);
     log_abort(context, error);
-    return EXIT_ABORT_NODE;
   }
-
-  jdl::to_submit_stream(os, *submit_ad);
-
-  if (!os) {
-    std::string const error("failed to generate the submission file");
-    std::cerr << error << '\n';
-    log_helper_return(context, name, EXIT_ABORT_NODE);
-    log_abort(context, error);
-    return EXIT_ABORT_NODE;
-  }
-
-  log_helper_return(context, name, EXIT_SUCCESS);
 
 } catch (std::exception const& e) {
 

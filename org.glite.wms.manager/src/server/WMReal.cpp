@@ -107,10 +107,11 @@ submit_command_create(std::auto_ptr<classad::ClassAd> job_ad)
 {
   classad::ClassAd result;
 
-  result.InsertAttr("version", std::string("1.0.0"));
-  result.InsertAttr("command", std::string("jobsubmit"));
+  result.InsertAttr("protocol", std::string("1.0.0"));
+  result.InsertAttr("command", std::string("Submit"));
+  result.InsertAttr("Source", 2);
   std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
-  args->Insert("ad", job_ad.get());
+  args->Insert("jobad", job_ad.get());
   job_ad.release();
   result.Insert("arguments", args.get());
   args.release();

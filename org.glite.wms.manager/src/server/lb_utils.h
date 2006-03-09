@@ -56,6 +56,53 @@ create_context(
   edg_wll_Source = EDG_WLL_SOURCE_WORKLOAD_MANAGER
 );
 
+std::string get_user_x509_proxy(wmsutils::jobid::JobId const& jobid);
+std::string get_host_x509_proxy();
+
+std::string get_lb_message(ContextPtr context_ptr);
+std::string get_lb_sequence_code(ContextPtr context_ptr);
+
+void log_dequeued(ContextPtr context, std::string const& from);
+void log_cancel_req(ContextPtr context);
+void log_cancelled(ContextPtr context);
+void log_pending(ContextPtr context, std::string const& reason);
+void log_abort(ContextPtr context, std::string const& reason);
+void log_resubmission_shallow(
+  ContextPtr context,
+  std::string const& token_file
+);
+void log_resubmission_deep(ContextPtr context);
+void log_resubmission_deep(ContextPtr context, std::string const& token_file);
+void log_match(ContextPtr context, std::string const& ce_id);
+void log_enqueued_start(
+  ContextPtr context,
+  std::string const& to
+);
+void log_enqueued_ok(
+  ContextPtr context,
+  std::string const& to,
+  std::string const& ad
+);
+void log_enqueued_fail(
+  ContextPtr context,
+  std::string const& to,
+  std::string const& ad,
+  std::string const& reason
+);
+
+void log_helper_called(
+  ContextPtr context,
+  std::string const& name
+);
+
+void log_helper_return(
+  ContextPtr context,
+  std::string const& name,
+  int status
+);
+
+bool flush_lb_events(ContextPtr context);
+
 class LB_Events
 {
   boost::shared_array<edg_wll_Event> m_events;
@@ -126,48 +173,12 @@ get_interesting_events(
 std::vector<std::pair<std::string, int> >
 get_previous_matches(LB_Events const& events);
 
+// return (deep_retry_count, shallow_retry_count)
+boost::tuple<int, int>
+get_retry_counts(LB_Events const& events);
+
 std::string
 get_original_jdl(ContextPtr context, wmsutils::jobid::JobId const& id);
-
-std::string get_user_x509_proxy(wmsutils::jobid::JobId const& jobid);
-std::string get_host_x509_proxy();
-
-std::string get_lb_message(ContextPtr context_ptr);
-std::string get_lb_sequence_code(ContextPtr context_ptr);
-
-void log_dequeued(ContextPtr context, std::string const& from);
-void log_cancel_req(ContextPtr context);
-void log_cancelled(ContextPtr context);
-void log_pending(ContextPtr context, std::string const& reason);
-void log_abort(ContextPtr context, std::string const& reason);
-void log_resubmission_shallow(
-  ContextPtr context,
-  std::string const& token_file
-);
-void log_resubmission_deep(ContextPtr context);
-void log_resubmission_deep(ContextPtr context, std::string const& token_file);
-void log_match(ContextPtr context, std::string const& ce_id);
-void log_enqueued_start(
-  ContextPtr context,
-  std::string const& to
-);
-void log_enqueued_ok(
-  ContextPtr context,
-  std::string const& to,
-  std::string const& ad
-);
-void log_enqueued_fail(
-  ContextPtr context,
-  std::string const& to,
-  std::string const& ad,
-  std::string const& reason
-);
-
-void log_helper_called(
-  ContextPtr context,
-  std::string const& name
-);
-void log_helper_return(ContextPtr context, std::string const& name, int status);
 
 typedef boost::shared_ptr<edg_wll_JobStat> JobStatusPtr;
 JobStatusPtr job_status(wmsutils::jobid::JobId const& id, ContextPtr context);

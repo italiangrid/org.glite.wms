@@ -198,6 +198,59 @@ get_previous_matches(LB_Events const& events)
   return result;
 }
 
+namespace {
+
+bool is_deep_resubmission(edg_wll_Event const& event)
+{
+  return event.type == EDG_WLL_EVENT_RESUBMISSION
+    && event.resubmission.result == EDG_WLL_RESUBMISSION_WILLRESUB;
+}
+
+bool is_shallow_resubmission(edg_wll_Event const& event)
+{
+  return event.type == EDG_WLL_EVENT_RESUBMISSION
+    && event.resubmission.result == EDG_WLL_RESUBMISSION_SHALLOW;
+}
+
+LB_Events::const_iterator
+find_last_deep_resubmission(LB_Events const& events)
+{
+  LB_Events::const_reverse_iterator it(
+    std::find_if(events.rbegin(), events.rend(), is_deep_resubmission)
+  );
+  if (it != events.rend()) {
+    return (++it).base();
+  } else {
+    return events.end();
+  }
+}
+
+}
+
+boost::tuple<int, int>
+get_retry_counts(LB_Events const& events)
+{
+  int const deep_count(
+    std::count_if(events.begin(), events.end(), is_deep_resubmission)
+  );
+  assert(deep_count >= 0);
+
+  LB_Events::const_iterator last_deep_resubmission(
+    find_last_deep_resubmission(events)
+  );
+
+  int const shallow_count(
+    std::count_if(
+      last_deep_resubmission,
+      events.end(),
+      is_shallow_resubmission
+    )
+  );
+  assert(shallow_count >= 0);
+
+  return boost::make_tuple(deep_count, shallow_count);
+}
+
 std::string
 get_original_jdl(ContextPtr context, jobid::JobId const& id)
 {
@@ -883,6 +936,12 @@ void log_helper_return(ContextPtr context, std::string const& name, int status)
       )
     );
   }
+}
+
+bool flush_lb_events(ContextPtr context)
+{
+  struct timeval* timeout = 0;
+  return edg_wll_LogFlush(context.get(), timeout);
 }
 
 namespace {
