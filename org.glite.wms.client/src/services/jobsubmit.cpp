@@ -880,13 +880,10 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		}
 		logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted; JDL files in:",
 			Utils::getAbsolutePath( *collectOpt));
-		collectAd = AdConverter::createCollectionFromPath (*collectOpt);
+		collectAd = AdConverter::createCollectionFromPath (*collectOpt,*(wmcUtils->getVirtualOrganisation()));
 		collectAd->setLocalAccess(true);
 		// Simple Ad manipulation
-		if (!collectAd->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
-			collectAd->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
-		}
-		AdUtils::setDefaultValuesAd(collectAd,wmcConf);
+		AdUtils::setDefaultValuesAd(collectAd,wmcConf,defJdlOpt);
 		// Collect Ad manipulation
 		AdUtils::setDefaultValues(collectAd,wmcConf);
 		if (nodesresOpt) {
@@ -912,6 +909,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		// JDL submission string
 		jdlString = new string(collectAd->toString());
 	} else if (dagOpt) {
+		/*** NEW APPROACH SUPPORTED ***/
 		jobType = WMS_DAG ;
 		try {
 			fs::path cp ( Utils::normalizePath(*dagOpt), fs::native);
@@ -931,20 +929,46 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		}
 		logInfo->print (WMS_DEBUG, "A DAG is being submitted; JDL files in:", Utils::getAbsolutePath( *dagOpt));
 
+		adObj =  AdConverter::createDagAdFromPath(*dagOpt, *(wmcUtils->getVirtualOrganisation()));
+		// Simple Ad manipulation
+		AdUtils::setDefaultValuesAd(adObj,wmcConf,defJdlOpt);
 
-		/*
-			TBD !!!!
-			toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
+		// Checking the ALLOW_ZIPPED_ISB attribute
+		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
+				zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
+				if (zipAllowed) { message ="allowed by user in the JDL";}
+				else { message = "disabled by user in the JDL"; }
+				logInfo->print (WMS_DEBUG, "File archiving and file compression",
+					message);
+		} else {
+				// Default value if the JDL attribute is not present
+				zipAllowed = false;
+				logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
+				"adding the attribute to the JDL with the default value (FALSE)");
+				adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
+		}
 
-		*/
-
+		// Last refinements
+		logInfo->print (WMS_DEBUG, "A DAG job is being submitted");
+		if (nodesresOpt) {
+			adObj->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
+		}
+		dagAd = new ExpDagAd (adObj->toString());
+		dagAd->setLocalAccess(true);
+		AdUtils::setDefaultValues(dagAd,wmcConf);
+		// expands the DAG loading all JDL files
+		dagAd->getSubmissionStrings();
+		// Checks if there are local ISB file(s) to be transferred to
+		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
+		// JDL submission string
+		jdlString = new string(dagAd->toString()) ;
 
 	} else {
 		// ClassAd
 		adObj = new Ad();
 		if (jdlFile==NULL){
 			throw WmsClientException(__FILE__,__LINE__,
-				"checkAd",  DEFAULT_ERR_CODE,
+				"",  DEFAULT_ERR_CODE,
 				"JDL File Missing",
 				"uknown JDL file pathame (Last Argument of the command must be a JDL file)"   );
 		}
@@ -958,7 +982,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		if (!adObj->hasAttribute (JDL::VIRTUAL_ORGANISATION)){
 			adObj->setAttribute(JDL::VIRTUAL_ORGANISATION, *(wmcUtils->getVirtualOrganisation()));
 		}
-		AdUtils::setDefaultValuesAd(adObj,wmcConf);
+		AdUtils::setDefaultValuesAd(adObj,wmcConf,defJdlOpt);
 		// Checking the ALLOW_ZIPPED_ISB attribute
 		if (adObj->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 				zipAllowed = adObj->getBool(JDL::ALLOW_ZIPPED_ISB) ;
@@ -966,13 +990,13 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				else { message = "disabled by user in the JDL"; }
 				logInfo->print (WMS_DEBUG, "File archiving and file compression",
 					message);
-			} else {
+		} else {
 				// Default value if the JDL attribute is not present
 				zipAllowed = false;
 				logInfo->print (WMS_DEBUG, "The user JDL does not contain the " + JDL::ALLOW_ZIPPED_ISB + " attribute: ",
 				"adding the attribute to the JDL with the default value (FALSE)");
 				adObj->addAttribute(JDL::ALLOW_ZIPPED_ISB, false);
-			}
+		}
 		// COLLECTION ========================================
 		if ( adObj->hasAttribute(JDL::TYPE , JDL_TYPE_COLLECTION) ) {
 			logInfo->print (WMS_DEBUG, "A collection of jobs is being submitted");
@@ -1075,7 +1099,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			// InputSandbox Files
 			//###toBretrieved=pass->gettoBretrieved();
 			// PARAMETRIC  ===============================================
-			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) { cout << "###checkAd> 4\n";
+			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
 				jobType = WMS_PARAMETRIC;
 				logInfo->print (WMS_DEBUG, "A parametric job is being submitted");
 				if (nodesresOpt) {
@@ -1095,7 +1119,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			}
 			// Checks if there are local ISB file(s) to be transferred to
 			toBretrieved = (this->checkInputSandbox ( )>0)?true:false;
-//	cout <<"###checkAd> toBretrieved=" << toBretrieved << "\n";
 			// Submission string
 			if (jobType==WMS_PARAMETRIC){
 				//??jdlString = new string(pass->toString());
@@ -1104,7 +1127,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				//???jdlString = new string(pass->toSubmissionString());
 				jdlString = new string(jobAd->toSubmissionString());
 			}
-			//???delete(pass);
 		}
 	}
 	// --resource : incompatible argument

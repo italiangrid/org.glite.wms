@@ -249,7 +249,7 @@ void setMissingBool(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms:
 *******************/
 void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf,
-	const std::string& pathOpt){
+	std::string* pathOpt){
 	if (!conf){return;}
 	try{
 		if (conf->jdl_default_attributes()){
@@ -297,10 +297,10 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 	}
 	// FURTHER CONF FILE specified by COMMAND-LINE
 	try{
-		if (pathOpt!=""){
+		if (pathOpt){
 			// JDL default attributes:
 			Ad confPathAd;
-			confPathAd.fromFile(pathOpt);
+			confPathAd.fromFile(*pathOpt);
 			jdl->merge(confPathAd);
 		}
 	}catch(RequestAdException &exc){

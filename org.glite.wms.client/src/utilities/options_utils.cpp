@@ -183,8 +183,8 @@ const struct option Options::submitLongOpts[] = {
 	{	Options::LONG_TRANSFER,	no_argument,			0,		Options::TRANSFER},
 	{	Options::LONG_START,		required_argument,		0,		Options::START},
  	{	Options::LONG_COLLECTION,    	required_argument,		0,		Options::COLLECTION},
-        // {	Options::LONG_DAG,    		required_argument,		0,		Options::DAG},
-        // {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
+        {	Options::LONG_DAG,    		required_argument,		0,		Options::DAG},
+        {	Options::LONG_DEFJDL,    		required_argument,		0,		Options::DEFJDL},
         {	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
         {	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
         {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
@@ -490,8 +490,8 @@ void Options::submit_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n";
-	//cerr << "\t" << USG_DEFJDL << "\n";
-        // cerr << "\t" << USG_DAG << " (**)\n";
+	cerr << "\t" << USG_DEFJDL << "\n";
+        cerr << "\t" << USG_DAG << " (**)\n";
         cerr << "\t" << USG_COLLECTION << " (**)\n\n";
         cerr << "\t" << "(*) To be used only with " << USG_REGISTERONLY  << "\n";
         cerr << "\t" << "(**) Using this option you MUSTN'T specified any JDL file\n\n";
@@ -1114,7 +1114,7 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			break ;
 		}
 		case(DEFJDL) : {
-			if (dag){
+			if (def_jdl){
 				value = new string (*def_jdl) ;
 			}
 			break ;

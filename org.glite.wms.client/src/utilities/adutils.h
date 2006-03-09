@@ -59,7 +59,7 @@ class AdUtils{
 			const std::string& pathDefault,const std::string& pathGeneral="");
 		static void setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf,
-			const std::string& pathOpt="");
+			std::string* pathOpt=NULL);
 		static void setDefaultValues(glite::wms::jdl::JobAd* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf);
 		static void setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
