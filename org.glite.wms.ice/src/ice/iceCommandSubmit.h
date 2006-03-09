@@ -7,7 +7,7 @@
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "iceEventLogger.h"
+//#include "iceEventLogger.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
@@ -19,7 +19,8 @@ namespace glite {
             namespace util {
                 
                 class iceConfManager;
-                
+                class iceLBLogger;
+
             }
         }
     }
@@ -104,7 +105,7 @@ namespace glite {
 	//Topic T;//(iceUtil::iceConfManager::getInstance()->getICETopic()),
         //Policy P;//(5000),
 	std::string myname_url;
-        util::iceEventLogger *_ev_logger;
+        util::iceLBLogger *_lb_logger;
       };
     }
   }

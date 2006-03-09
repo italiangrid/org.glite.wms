@@ -22,7 +22,8 @@ namespace glite {
           
           class jobCache;
           class iceConfManager;
-          class iceEventLogger;
+          // class iceEventLogger;
+          class iceLBLogger;
 	  class subscriptionManager;
 
 	//! A class that receives notification from CEMon about job status changes
@@ -48,7 +49,8 @@ namespace glite {
 	  //std::map<std::string, bool> cemon_subscribed_to;
 	  glite::wms::ice::util::iceConfManager* conf;
           log4cpp::Category *log_dev;
-          iceEventLogger *_ev_logger;
+          // iceEventLogger *_ev_logger;
+          iceLBLogger *_lb_logger;
           // classad::ClassAdParser parser;
 	  bool _isOK;
           jobCache* cache;

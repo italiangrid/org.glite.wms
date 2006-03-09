@@ -2,17 +2,22 @@
 #define __GLITE_WMS_ICE_ICECOMMANDCANCEL_H__
 
 #include "iceAbsCommand.h"
-#include "ClassadSyntax_ex.h"
-#include "classad_distribution.h"
+//#include "ClassadSyntax_ex.h"
+//#include "classad_distribution.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "iceEventLogger.h"
+//#include "iceEventLogger.h"
 
 
 namespace glite {
     namespace wms {
         namespace ice {
+
+            namespace util {
+                // Forward declaration
+                class iceLBLogger;
+            };
 
             class iceCommandCancel : public iceAbsCommand {
 	
@@ -26,7 +31,7 @@ namespace glite {
                 std::string _gridJobId;
                 std::string _sequence_code;
                 log4cpp::Category* log_dev;
-                util::iceEventLogger *_ev_logger;
+                util::iceLBLogger *_lb_logger;
             };
         }
     }

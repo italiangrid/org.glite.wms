@@ -1,6 +1,12 @@
-
+// ICE includes
+#include "ice-core.h"
+#include "iceConfManager.h"
 #include "eventStatusPoller.h"
 #include "jobCache.h"
+#include "iceLBLogger.h"
+#include "iceLBEventFactory.h"
+
+// other glite includes
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 #include "glite/ce/cream-client-api-c/CEUrl.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
@@ -8,11 +14,13 @@
 #include "glite/ce/cream-client-api-c/BaseException.h"
 #include "glite/ce/cream-client-api-c/InternalException.h"
 #include "glite/ce/cream-client-api-c/DelegationException.h"
-#include "ice-core.h"
-#include "iceConfManager.h"
+
+// boost includes
+#include <boost/thread/thread.hpp>
+
+// system includes
 #include <vector>
 #include <map>
-#include <boost/thread/thread.hpp>
 
 using namespace glite::wms::ice::util;
 using namespace glite::ce::cream_client_api;
@@ -35,7 +43,7 @@ eventStatusPoller::eventStatusPoller(
     iceManager(_iceManager),
     creamClient( 0 ),
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-    _ev_logger( iceEventLogger::instance() ),
+    _lb_logger( iceLBLogger::instance() ),
     cache( jobCache::getInstance() )
 {
     try {
@@ -318,7 +326,8 @@ void eventStatusPoller::updateJobCache()
                         jit->setStatus( stNum, (*sit)->timestamp );
                         cache->put( *jit );
                         // Log to L&B
-                        _ev_logger->log_job_status_change( *jit ); // FIXME
+                        // _ev_logger->log_job_status_change( *jit ); // FIXME
+                        _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
                     }
                 } else {
                     log_dev->errorStream() 

@@ -16,6 +16,10 @@ libglite_wms_ice_util_la_SOURCES = \
 				creamJob.cpp \
 				iceConfManager.cpp \
 				iceEventLogger.cpp \
+				iceLBLogger.cpp \
+				iceLBContext.cpp \
+				iceLBEvent.cpp \
+				iceLBEventFactory.cpp \
 				subscriptionUpdater.cpp \
 				subscriptionCache.cpp \
 				subscriptionManager.cpp \

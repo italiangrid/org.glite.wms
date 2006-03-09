@@ -5,7 +5,7 @@
 #include "glite/ce/cream-client-api-c/JobStatusList.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "eventStatusPoller_ex.h"
-#include "iceEventLogger.h"
+//#include "iceEventLogger.h"
 #include "iceThread.h"
 #include "boost/scoped_ptr.hpp"
 
@@ -16,11 +16,12 @@ namespace log4cpp {
 namespace glite {
   namespace wms {
     namespace ice {
-
+        
       class ice;
 
       namespace util {
 
+          class iceLBLogger; // forward declaration
           class jobCache; // forward declaration
 
 	//! A job status poller
@@ -49,7 +50,7 @@ namespace glite {
 	  void checkJobs(void);
 
 	  log4cpp::Category* log_dev;
-          iceEventLogger* _ev_logger;
+          iceLBLogger* _lb_logger;
           jobCache* cache;
 
 	  //protected:

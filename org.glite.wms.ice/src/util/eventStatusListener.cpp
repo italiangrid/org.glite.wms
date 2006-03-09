@@ -1,27 +1,36 @@
-#include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "classad_distribution.h"
-#include "ClassadSyntax_ex.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
+// ICE stuff
 #include "eventStatusListener.h"
 #include "subscriptionCache.h"
 #include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
+#include "iceLBLogger.h"
+#include "iceLBEventFactory.h"
+
+// CREAM stuff
+#include "glite/ce/cream-client-api-c/creamApiLogger.h"
+
+// other GLITE stuff
+#include "classad_distribution.h"
+#include "ClassadSyntax_ex.h"
+
+// boost includes
+#include "boost/functional.hpp"
+#include "boost/mem_fn.hpp"
+#include "boost/format.hpp"
+#include "boost/lexical_cast.hpp"
+#include "boost/algorithm/string.hpp"
+#include "boost/format.hpp"
+
+// System includes
 #include <unistd.h>
 #include <string>
 #include <iostream>
 #include <cerrno>
 #include <sstream>
-#include <cstring> // for memset
 #include <netdb.h>
-#include "iceEventLogger.h"
 #include <algorithm>
 #include <set>
-#include "boost/functional.hpp"
-#include "boost/mem_fn.hpp"
-#include "boost/format.hpp"
-#include "boost/lexical_cast.hpp"
 #include <stdexcept>
 
 extern int h_errno;
@@ -158,7 +167,7 @@ iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
     myname( ),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    _ev_logger( iceEventLogger::instance() ),
+    _lb_logger( iceLBLogger::instance() ),
     _isOK( true ),
     cache( jobCache::getInstance() )
 {
@@ -549,7 +558,9 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                     << log4cpp::CategoryStream::ENDLINE;
                 if ( it->getTstamp() > jc_it->getLastUpdate() ) {
                     jc_it->setStatus( it->getStatus(), it->getTstamp() );
-                    _ev_logger->log_job_status_change( *jc_it ); // FIXME
+                    // _ev_logger->log_job_status_change( *jc_it ); // FIXME
+                    _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
+
                     if ( (it+1) == notifications.end() ) {
                         // The cache is only modified for the last
                         // notification, for efficiency reasons.
