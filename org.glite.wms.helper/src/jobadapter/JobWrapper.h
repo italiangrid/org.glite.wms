@@ -21,11 +21,10 @@
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
-
 #include "url.h"
 
 namespace classad {
-class ExprList;
+  class ExprList;
 }
 
 namespace glite {
@@ -33,13 +32,22 @@ namespace wms {
 namespace helper {
 namespace jobadapter {
 	
+struct pimpl;
+
 enum job_type {NORMAL = 0, MPI_LSF = 1, MPI_PBS = 2, INTERACTIVE = 3};
+
+class JobWrapperException
+{
+public:
+  JobWrapperException(std::string const& url);
+  std::string message() const;
+
+private:
+  std::string m_message;
+};
 
 class JobWrapper
 {
-  friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
-  bool dump_vars(std::ostream&) const;
-
 public:
   /**
    *  Initializes the object passing the parameters to the job wrapper.
@@ -216,65 +224,34 @@ public:
     * Set the support of Perusal.
     * \ingroup jobadapter
     */
-
   void perusal_support(void);
   void perusal_timeinterval(int perusaltimeinterval);
   void perusal_filesdesturi(std::string const& filesdesturi);
   void perusal_listfileuri(std::string const& listfileuri);
 
-  void set_job_type(int);
+  /**
+    * Set the job type (NORMAL, MPI..., INTERACTIVE)
+    *  for use by the template script
+    */
+  void set_job_type(job_type);
+
+  /**
+    * Set the support for the wildcard
+    * support in the output sandbox
+    */
   void set_osb_wildcards_support(bool);
+
   void set_output_sandbox_base_dest_uri(URL const&);
 
 private:
+  boost::shared_ptr<pimpl> m_pimpl;
+
   static const std::string s_brokerinfo_default;
 
-  std::string              m_job;
-  std::string              m_standard_input;
-  std::string              m_standard_output;
-  std::string              m_standard_error;
-  std::string              m_arguments;
-  std::string              m_maradonaprotocol;
-
-  boost::shared_ptr<URL> m_input_base_url;
-  std::vector<std::string> m_input_files;
-
-  boost::shared_ptr<URL> m_output_base_url;
-  boost::shared_ptr<URL> m_output_sandbox_base_dest_uri;
-
-  std::vector<std::string> m_output_files;
-
-  std::string              m_brokerinfo;
-  bool                     m_create_subdir;
-  std::string              m_jobid;
-  std::string              m_jobid_to_filename;
-  std::string              m_gatekeeper_hostname;
-  std::string              m_globus_resource_contact_string;
-  std::vector<std::string> m_environment;
-  int                      m_nodes; // nodes for parallel jobs
-  boost::shared_ptr<classad::ExprList> m_outputdata;
-  std::string              m_vo;
-  std::string              m_dsupload;
-
-  bool	                   m_wmp_support;
-  std::vector<std::string> m_wmp_input_files;
-  std::vector<std::string> m_wmp_input_base_files;
-  std::vector<std::string> m_wmp_output_files;
-  std::vector<std::string> m_wmp_output_dest_files;
-  
-  std::string              m_token_file;
-  bool                     m_token_support;
-
-  bool                     m_perusal_support;
-  int                      m_perusal_timeinterval;
-  std::string              m_perusal_filesdesturi;
-  std::string              m_perusal_listfileuri;
-  
-  int                      m_job_type;
-  bool                     m_osb_wildcards_support;
-
-  virtual std::ostream& print(std::ostream& os) const;  
+  std::ostream& print(std::ostream& os) const;  
+  friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
   bool fill_out_script(std::string const&, std::ostream&) const;
+  bool dump_vars(std::ostream&) const;
 };
 
 } // namespace jobadapter

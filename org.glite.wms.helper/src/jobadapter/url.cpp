@@ -50,6 +50,7 @@
 //""                                          = Not valid
 
 #include <string>
+#include <iostream>
 #include <boost/regex.hpp>
 
 #include "url.h"
@@ -75,12 +76,13 @@ char const* InvalidURL::what() const throw()
 
 URL::URL(std::string const& url)
 {
+
   static const boost::regex valid_url(
-    "([:alpha:][[:alnum:]+.-]*)" // scheme
+    "([[:alpha:]][[:alnum:]+.-]*)" // scheme
     "://"
-    "(([[:alnum:]_.~!$&'()-]|%[:xdigit:]{2})+)" // host
-    "(:([:digit:]*))?"          // port
-    "((/([[:alnum:]_.~!$&'()-]|%[:xdigit:]{2})+)*)/?" // path
+    "(([[:alnum:]_.~!$&'()-]|%[[:xdigit:]]{2})+)" // host
+    "(:([[:digit:]]*))?" // port
+    "((/([[:alpha:][:digit:]_.~!$&'()-]|%[[:xdigit:]]{2})+)*)/?" // path
   );
 
   try {

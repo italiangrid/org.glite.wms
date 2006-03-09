@@ -144,7 +144,7 @@ main(int argc, char* argv[])
     return 5;
   }
   catch (InvalidURL& ex) {
-    cerr << ex.message() << endl;
+    cerr << ex.what() << endl;
     return 6;
   }
   catch (std::exception& ex) {

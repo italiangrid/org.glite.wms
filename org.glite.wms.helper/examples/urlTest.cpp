@@ -31,7 +31,7 @@ main(void)
 	      << "path =     " << url->path()     << '\n';
       cout << url->as_string() << '\n';
     } catch (InvalidURL& ex) {
-      cerr << ex.message();
+      cerr << ex.what();
     } catch (...) {
       cerr << "Caught uknown exception" << endl;
     }
@@ -49,7 +49,10 @@ main(void)
   {
     cout << "Some examples..." << endl;
 
-    const std::string url("http://www.ics.uci.edu:34535/a/b/eefef/qff%20df");
+//const std::string url("gsiftp://cert-rb-03.cnaf.infn.it/var/glite/SandboxDir/Lv/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fLvIxvHJWEdSHtraI5b1nkQ/input");
+//    const std::string url("http://www.ics.uci.edu:34535/a/b/eefef/qff%20df");
+//const std::string url("gsiftp://cert-rb-03.cnaf.infn.it/var/glite/SandboxDir/xF/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fxFyHs_5fvSqxqzDQw0BnZe-Q/input");
+const std::string url("gsiftp://cert-rb-03.cnaf.infn.it/var/glite/SandboxDir/xF/https3a2f2fcert-rb-03.cnaf.infn.it3a90002fxFyHs5fvSqxqzDQw0BnZe-Q/input");
     const std::string wrong_prot_url("h ttp://www.ics.uci.edu");
     const std::string wrong_host_url("http://www.ic s.uci.edu");
     const std::string url_path("http://www.ics.uci.edu:8080/pub/ietf/uri/");
@@ -119,7 +122,7 @@ main(void)
     try {
       url1 = new URL("http://www.cnaf.infn.it/giaco");
     } catch (InvalidURL& ex) {
-      cerr << "Invalid URL" << ex.message() << endl;
+      cerr << ex.what() << endl;
     } catch (...) {
       cerr << "Caught uknown exception" << endl;
     }
@@ -150,7 +153,7 @@ main(void)
     try {
       url1 = new URL("http://www.cnaf.infn.it/giaco");
     } catch (InvalidURL& ex) {
-      cerr << "Invalid URL" << ex.message() << endl;
+      cerr << ex.what() << endl;
     } catch (...) {
       cerr << "Caught uknown exception" << endl;
     }

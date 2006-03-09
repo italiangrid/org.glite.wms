@@ -46,6 +46,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
 {
   tmp_sort_file=`mktemp -q tmp.XXXXXX`
   if [ $? != 0 ]; then
+    jw_echo "Cannot generate temporary file"
     unset tmp_sort_file
     return $?
   fi
@@ -57,7 +58,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
   done
   unset $1
   eval "$1=(`sort -n $tmp_sort_file|awk '{print $2}'`)"
-  rm $tmp_sort_file 2>/dev/null
+  rm -f $tmp_sort_file
   unset tmp_sort_file
 }
 
@@ -85,12 +86,11 @@ globus_url_retry_copy() # 1 - source, 2 - dest
   return $succeded
 }
 
-doExit()
-{ # 1 - status
+doExit() # 1 - status
+{
   status=$1
 
-  echo "jw exit status = ${status}"
-  echo "jw exit status = ${status}" >> "${maradona}"
+  jw_echo "jw exit status = ${status}"
 
   globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   if [ $? != 0 ]; then
@@ -369,7 +369,7 @@ else
 fi
 
 #customization point #1
-if [ ! -z "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_1.sh"
   fi
@@ -451,7 +451,7 @@ else
   log_error "${__job} not found or unreadable"
 fi
 
-#user prescript
+#user script
 if [ -f "${__ante_job}" ]; then
   chmod +x "${__ante_job}" 2>/dev/null
   ./${__ante_job}
@@ -602,7 +602,7 @@ fi
 status=$?
 
 #customization point #2
-if [ ! -z "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_2.sh"
   fi
@@ -771,7 +771,7 @@ if [ -n "${PBS_JOBID}" ]; then
 fi
 
 #customization point #3
-if [ ! -z "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
+if [ -n "${GLITE_LOCAL_CUSTOMIZATION_DIR}" ]; then
   if [ -f "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh" ]; then
     . "${GLITE_LOCAL_CUSTOMIZATION_DIR}/cp_3.sh"
   fi

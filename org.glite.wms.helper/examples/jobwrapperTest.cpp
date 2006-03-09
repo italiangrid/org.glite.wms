@@ -50,7 +50,7 @@ main(int argc, char* argv[])
     // set the output sandbox
     jw->output_sandbox(URL("gsiftp://joda.cnaf.infn.it:8000/tmp/gridtest"), output_files);
   } catch (InvalidURL& ex) {
-    cerr << ex.message();
+    cerr << ex.what();
     return -1;
   } catch (...) {
     cerr << "Caught uknown exception" << endl;
@@ -82,7 +82,7 @@ main(int argc, char* argv[])
     jw->set_output_sandbox_base_dest_uri(url_);
     jw->set_osb_wildcards_support(true);
   } catch (InvalidURL& ex) {
-    cerr << ex.message();
+    cerr << ex.what();
   }
 
   // output the job wrapper script to standard output
@@ -96,5 +96,3 @@ main(int argc, char* argv[])
 
   return 0;
 }
-
-

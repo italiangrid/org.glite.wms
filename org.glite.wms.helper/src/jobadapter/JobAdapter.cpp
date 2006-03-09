@@ -31,7 +31,6 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/exception.hpp>
 
-#include "url.h"
 #include "JobAdapter.h"
 #include "JobWrapper.h"
 
@@ -70,6 +69,8 @@ namespace glite {
 namespace wms {
 namespace helper {
 namespace jobadapter {
+
+class URL;
 
 namespace {
 class Beginning {
@@ -166,8 +167,7 @@ try {
 
   // Mandatory
   // InputSandboxPath is always included
-  std::string inputsandboxpath;
-  inputsandboxpath.append(jdl::get_input_sandbox_path(*m_ad));
+  std::string inputsandboxpath(jdl::get_input_sandbox_path(*m_ad));
   if (inputsandboxpath.empty()) { 
     throw helper::InvalidAttributeValue(jdl::JDLPrivate::INPUT_SANDBOX_PATH,
                                         inputsandboxpath,
@@ -582,7 +582,7 @@ try {
     
     // Mandatory
     // node number is mandatory for the mpich job
-    int    nodenumber = jdl::get_node_number(*m_ad);
+    int nodenumber = jdl::get_node_number(*m_ad);
 
     if (is_blahp_resource || is_condor_resource) {
       jdl::set_remote_remote_nodenumber(*result, nodenumber);
@@ -652,7 +652,7 @@ try {
     jw->set_job_type(INTERACTIVE);
   } else {
     jw.reset(new JobWrapper(executable));
-      jw->set_job_type(NORMAL);
+    jw->set_job_type(NORMAL);
   }
  
   // PerusalFileEnable is not mandatory
@@ -744,7 +744,7 @@ try {
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
   jw->globus_resource_contact_string(globusresourcecontactstring);
   jw->set_osb_wildcards_support(false);
-  if(!b_osb_dest_uri) {
+  if (!b_osb_dest_uri) {
     // the support for wildcards is deducted by the absence of this attribute
     bool found_in_jdl;
     std::string osb_base_dest_uri = 
@@ -760,53 +760,50 @@ try {
     }
   }
 
-  //check if there is the protocol in the inputsandbox path.
-  //if no the protocol gsiftp:// is added to the inputsandboxpath.
-  try { 
-      if (inputsandboxpath.find("://") == std::string::npos) {
-      std::string new_inputsandboxpath("gsiftp://");
-      new_inputsandboxpath.append(local_host_name);
-      new_inputsandboxpath.append(inputsandboxpath);
-      URL url_(new_inputsandboxpath);
-      if (!b_wmpisb_base_uri) {
-        jw->input_sandbox(url_, inputsandbox);
-      } else {
-        jw->wmp_input_sandbox_support(url_, inputsandbox);
-      }
-      // set token for the shallow resubmission
-      std::string::size_type const pos = new_inputsandboxpath.rfind("/input");
-      std::string const token_path(new_inputsandboxpath, 0, pos);
-      jw->token(token_path + '/' + token_file);
+  try {
+    URL inputsandboxpath_url(inputsandboxpath);
+    if (!b_wmpisb_base_uri) {
+      jw->input_sandbox(inputsandboxpath_url, inputsandbox);
     } else {
-      URL url_(inputsandboxpath);
-      if (!b_wmpisb_base_uri) {
-        jw->input_sandbox(url_, inputsandbox);
-      } else {
-        jw->wmp_input_sandbox_support(url_, inputsandbox);
-      }
-      //set the token for the shallow resubmission
-      std::string::size_type const pos = inputsandboxpath.rfind("/input");
-      std::string const token_path(inputsandboxpath, 0, pos);
-      jw->token(token_path + '/' + token_file);
+      jw->wmp_input_sandbox_support(inputsandboxpath_url, inputsandbox);
     }
   } catch (InvalidURL& ex) {
-    throw CannotCreateJobWrapper(ex.what());
-  }
-
-  if (!b_wmpisb_base_uri) {
-    //check if there is the protocol in the outputsandbox path. 
-    //if no the protocol gsiftp:// is added to the outputsandboxpath.
+    std::string new_inputsandboxpath("gsiftp://"
+      + local_host_name
+      + inputsandboxpath
+    );
     try {
-      if (outputsandboxpath.find("://") == std::string::npos) {
-        std::string new_outputsandboxpath("gsiftp://");     
-        new_outputsandboxpath.append(local_host_name);
-        new_outputsandboxpath.append(outputsandboxpath);
-        jw->output_sandbox(URL(new_outputsandboxpath), outputsandbox);
-      } else {  
-        jw->output_sandbox(URL(outputsandboxpath), outputsandbox);
+      URL inputsandboxpath_url(new_inputsandboxpath);
+      if (!b_wmpisb_base_uri) {
+        jw->input_sandbox(inputsandboxpath_url, inputsandbox);
+      } else {
+        jw->wmp_input_sandbox_support(inputsandboxpath_url, inputsandbox);
       }
     } catch (InvalidURL& ex) {
-      throw CannotCreateJobWrapper(ex.what());
+        throw CannotCreateJobWrapper(ex.what());
+    }
+  }
+
+  //set the token for the shallow resubmission
+  std::string::size_type const p = inputsandboxpath.rfind("/input");
+  std::string const token_path(inputsandboxpath, 0, p);
+  jw->token(token_path + '/' + token_file);
+
+  if (!b_wmpisb_base_uri) {
+    try {
+      URL outputsandboxpath_url(outputsandboxpath);
+      jw->output_sandbox(outputsandboxpath_url, outputsandbox);
+    } catch (InvalidURL& ex) {
+      std::string new_outputsandboxpath("gsiftp://"
+        + local_host_name
+        + outputsandboxpath
+      );
+      try {
+        URL outputsandboxpath_url(new_outputsandboxpath);
+        jw->output_sandbox(outputsandboxpath_url, outputsandbox);
+      } catch (InvalidURL& ex) {
+        throw CannotCreateJobWrapper(ex.what());
+      }
     }
   } else if (b_osb_dest_uri) {
     jw->wmp_output_sandbox_support(outputsandbox, outputsandboxdesturi);
@@ -865,8 +862,13 @@ try {
   std::ofstream ofJW(jw_path.native_file_string().c_str());
   if (!ofJW) {
     throw CannotCreateJobWrapper(jw_path.native_file_string());
-  }	  
-  ofJW << *jw;
+  }
+
+  try {
+    ofJW << *jw;
+  } catch (JobWrapperException e) {
+    throw CannotCreateJobWrapper(e.message());
+  }
 
   // The jdl::get_output_data function returns a _copy_ of the object.
   delete odtree;
