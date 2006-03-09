@@ -40,6 +40,8 @@
      subscription_duration = 1200;
      subscription_update_threshold_time = 60;
      max_jobcache_operation_before_dump = 5;
+     lease_threshold_time = 20;
+     lease_delta_time = 60;
    ];
 ]
 

@@ -68,6 +68,8 @@ glite::wms::ice::util::iceConfManager::iceConfManager()
   notification_frequency = config->ice()->notification_frequency();
   log_on_console    = config->ice()->log_on_console();
   log_on_file       = config->ice()->log_on_file();
+  lease_delta_time  = config->ice()->lease_delta_time();
+  lease_threshold_time = config->ice()->lease_threshold_time();
 }
 
 //______________________________________________________________________________

@@ -28,7 +28,7 @@ namespace glite {
 	    icetopic;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
 	      poller_status_threshold_time, max_jobcache_operation_before_dump,
-	      notification_frequency;
+	      notification_frequency, lease_delta_time, lease_threshold_time;
 	  bool startpoller, startlistener, startsubupder,
 	       log_on_console, log_on_file;
 	  
@@ -39,6 +39,8 @@ namespace glite {
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
 	  
 	public:
+	  static boost::recursive_mutex mutex;
+	  
 	  virtual ~iceConfManager() { delete(instance); }
 	  static iceConfManager* getInstance() 
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
@@ -69,6 +71,8 @@ namespace glite {
 	  bool        getLogOnFile( void ) const { return log_on_file; }
 	  int         getMaxJobCacheOperationBeforeDump( void ) const { return max_jobcache_operation_before_dump; }
 	  int         getNotificationFrequency( void ) const { return notification_frequency; }
+	  int         getLeaseDeltaTime( void ) const { return lease_delta_time; }
+	  int         getLeaseThresholdTime( void ) const { return lease_threshold_time; }
 
 	  void setHostProxyFile( const std::string& p ) {  HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { WM_Input_FileList = p; }
@@ -97,8 +101,9 @@ namespace glite {
 	  void setNotificationFrequency( const int& p ) {
 		notification_frequency = p;
 	  }
+	  void setLeaseThresholdTime( const int& t) { lease_threshold_time = t; }
+	  void setLeaseDeltaTime( const int& t ) { lease_delta_time = t; }
 
-	  static boost::recursive_mutex mutex;
 	};
       }
     }

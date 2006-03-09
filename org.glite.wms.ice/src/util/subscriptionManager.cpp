@@ -33,6 +33,7 @@ subscriptionManager::subscriptionManager()
   log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
                         << log4cpp::CategoryStream::ENDLINE;
   try {
+    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     ceS.authenticate(conf->getHostProxyFile().c_str(), "/");
     ceSMgr.authenticate(conf->getHostProxyFile().c_str(), "/");
   } catch(exception& ex) {
@@ -61,7 +62,10 @@ subscriptionManager::subscriptionManager()
     return;
   }
   ostringstream os("");
-  os << "http://" << H->h_name << ":" << conf->getListenerPort();
+  {
+    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    os << "http://" << H->h_name << ":" << conf->getListenerPort();
+  }
   myname = os.str();
 
   T.addDialect(NULL);
@@ -126,12 +130,14 @@ bool subscriptionManager::subscribe(const string& url)
                         << url << "]"
                         << log4cpp::CategoryStream::ENDLINE;
 
-  ceS.setSubscribeParam(myname.c_str(),
+  {
+    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    ceS.setSubscribeParam(myname.c_str(),
 	                T,
 			P,
 			conf->getSubscriptionDuration()
 			);
-
+  }
   try {
     ceS.subscribe();
     lastSubscriptionID = ceS.getSubscriptionID();
@@ -152,6 +158,7 @@ bool subscriptionManager::updateSubscription(const string& url,
 					     string& newID)
 {
   try {
+    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     newID = ceSMgr.update(url, ID, myname, T, P,
     		                 conf->getSubscriptionDuration());
     return true;

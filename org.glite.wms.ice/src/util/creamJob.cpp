@@ -16,6 +16,7 @@ using namespace std;
 namespace iceUtil = glite::wms::ice::util;
 namespace fs = boost::filesystem;
 
+//______________________________________________________________________________
 CreamJob::CreamJob( ) :
     status( UNKNOWN ),
     lastUpdate( time(NULL) ),
@@ -24,11 +25,13 @@ CreamJob::CreamJob( ) :
 
 }
 
+//______________________________________________________________________________
 CreamJob::CreamJob( const std::string& ad ) throw ( ClassadSyntax_ex& ) 
 {
     unserialize( ad );
 }
 
+//______________________________________________________________________________
 string CreamJob::serialize( void ) const
 {
     string res;
@@ -54,6 +57,7 @@ string CreamJob::serialize( void ) const
     return res;
 }
 
+//______________________________________________________________________________
 void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
@@ -95,6 +99,7 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     setJdl( jdl_string );
 }
 
+//______________________________________________________________________________
 void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
@@ -151,6 +156,7 @@ void CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 
 }
 
+//______________________________________________________________________________
 bool CreamJob::is_active( void ) const
 {
     return ( ( status == REGISTERED ) ||

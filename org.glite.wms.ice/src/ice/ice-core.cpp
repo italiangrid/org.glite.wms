@@ -58,7 +58,7 @@ ice::ice(const string& NS_FL,
          * So now as preliminary operation it's the case to check that the
          * subscriptionManager singleton can be created without problems.
          *
-         * The subscriptionManager initialization also setup authentication.
+         * The subscriptionManager initialization also setups authentication.
          */
         {
             boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );

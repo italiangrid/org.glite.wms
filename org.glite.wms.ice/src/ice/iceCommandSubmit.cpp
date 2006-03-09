@@ -61,9 +61,11 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                << log4cpp::CategoryStream::ENDLINE;
         exit(1);
     }
-    
-    myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
-
+   
+    {
+      boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
+      myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
+    }
     // Sample classad:
     // ( this is the NEW version )
     //  [ requirements = ( ( ( ( other.GlueCEInfoHostName == "lxb2022.cern.ch" ) ) ) && ( other.GlueCEStateStatus == "Production" ) ) && ( other.GlueCEStateStatus == "Production" );
@@ -267,13 +269,17 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 
     bool _tmp_start_listener;
     {
-        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
         _tmp_start_listener = confMgr->getStartListener();
     }
 
     if( _tmp_start_listener ) {
-        string cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+      string cemon_url;
+      {
+        boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
+        cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
             + confMgr->getCEMonUrlPostfix();
+      }
         if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
             /* MUST SUBSCRIBE TO THIS CEMON */
             log_dev->infoStream()
@@ -281,6 +287,8 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << cemon_url << "]. Going to subscribe to it..."
                 << log4cpp::CategoryStream::ENDLINE;
 
+	{
+	    boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
             log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
                 << myname_url << "] to ["<<cemon_url
@@ -288,6 +296,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << confMgr->getSubscriptionDuration()
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
+	}
             {
                 /*
                  * This is the 1st call of
