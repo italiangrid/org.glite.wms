@@ -7,6 +7,6 @@
 ## *********************************************************************
 
 ## Subdirectories list
-SUBDIRS = common server daemons
+SUBDIRS = server daemons
 
 MAINTAINERCLEANFILES = Makefile.in 
