@@ -1,18 +1,21 @@
 
 #include "ice-core.h"
+#include "iceConfManager.h"
 #include "jobCache.h"
 #include "jobRequest.h"
 #include "subscriptionManager.h"
 #include "subscriptionCache.h"
-#include "iceEventLogger.h"
+#include "iceLBLogger.h"
+#include "iceLBEvent.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-#include "iceConfManager.h"
-#include <exception>
-#include <unistd.h>
+
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+
+#include <exception>
+#include <unistd.h>
 
 using namespace glite::wms::ice;
 using namespace glite::wms::common::utilities;
@@ -314,7 +317,7 @@ void ice::ungetRequest(const unsigned int& reqNum)
 //______________________________________________________________________________
 void ice::resubmit_job( util::CreamJob& j ) 
 {
-    util::iceEventLogger* _ev_logger= util::iceEventLogger::instance();
+    util::iceLBLogger* _lb_logger= util::iceLBLogger::instance();
 
     string resub_request = string("[ version = \"1.0.0\";")
         +" command = \"jobresubmit\"; arguments = [ id = \"" + j.getGridJobID() + "\" ] ]";
@@ -324,12 +327,12 @@ void ice::resubmit_job( util::CreamJob& j )
         log_dev->log(log4cpp::Priority::INFO,
                      string("ice::doOnJobFailure() - Putting [")
                      +resub_request+"] to WM's Input file");
-        _ev_logger->ns_enqueued_start_event( j, ns_filelist );
+        _lb_logger->logEvent( new util::ns_enqueued_start_event( j, ns_filelist ) );
         flns.push_back(resub_request);
-        _ev_logger->ns_enqueued_ok_event( j, ns_filelist );
+        _lb_logger->logEvent( new util::ns_enqueued_ok_event( j, ns_filelist ) );
     } catch(std::exception& ex) {
         log_dev->log(log4cpp::Priority::ERROR, ex.what());
-        _ev_logger->ns_enqueued_fail_event( j, ns_filelist );
+        _lb_logger->logEvent( new util::ns_enqueued_fail_event( j, ns_filelist ) );
         exit(1); // FIXME: Should we keep going?
     }
 }

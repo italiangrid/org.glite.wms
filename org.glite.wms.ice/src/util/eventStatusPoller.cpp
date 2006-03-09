@@ -326,7 +326,6 @@ void eventStatusPoller::updateJobCache()
                         jit->setStatus( stNum, (*sit)->timestamp );
                         cache->put( *jit );
                         // Log to L&B
-                        // _ev_logger->log_job_status_change( *jit ); // FIXME
                         _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
                     }
                 } else {

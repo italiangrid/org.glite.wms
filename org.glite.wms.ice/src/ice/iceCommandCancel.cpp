@@ -98,7 +98,6 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
         it->setSequenceCode( _sequence_code );
 
     // Log cancel request event
-    // _ev_logger->cream_cancel_request_event( *it );    
     _lb_logger->logEvent( new util::cream_cancel_request_event( *it ) );    
 
     util::CreamJob _theJob( *it );
@@ -124,20 +123,16 @@ void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceComm
 	soap_proxy::CreamProxyFactory::getProxy()->Cancel( _theJob.getCreamURL().c_str(), url_jid );
 
     } catch(soap_proxy::auth_ex& ex) {
-        // _ev_logger->cream_cancel_refuse_event( _theJob, string("auth_ex: ") + ex.what() );
         _lb_logger->logEvent( new util::cream_cancel_refuse_event( _theJob, string("auth_ex: ") + ex.what() ) );
         throw iceCommandFatal_ex( string("auth_ex: ") + ex.what() );
     } catch(soap_proxy::soap_ex& ex) {
-        // _ev_logger->cream_cancel_refuse_event( _theJob, string("soap_ex: ") + ex.what() );
         _lb_logger->logEvent( new util::cream_cancel_refuse_event( _theJob, string("soap_ex: ") + ex.what() ) );
         throw iceCommandTransient_ex( string("soap_ex: ") + ex.what() );
         // HERE MUST RESUBMIT
     } catch(cream_exceptions::BaseException& base) {
-        // _ev_logger->cream_cancel_refuse_event( _theJob, string("BaseException: ") + base.what() );
         _lb_logger->logEvent( new util::cream_cancel_refuse_event( _theJob, string("BaseException: ") + base.what() ) );
         throw iceCommandFatal_ex( string("BaseException: ") + base.what() );
     } catch(cream_exceptions::InternalException& intern) {
-        // _ev_logger->cream_cancel_refuse_event( _theJob, string("InternalException: ") + intern.what() );
         _lb_logger->logEvent( new util::cream_cancel_refuse_event( _theJob, string("InternalException: ") + intern.what() ) );
         throw iceCommandFatal_ex( string("InternalException: ") + intern.what() );
     }

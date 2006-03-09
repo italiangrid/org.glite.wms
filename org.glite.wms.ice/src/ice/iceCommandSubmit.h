@@ -2,15 +2,16 @@
 #define __GLITE_WMS_ICE_ICECOMMANDSUBMIT_H__
 
 #include "iceAbsCommand.h"
-#include "ClassadSyntax_ex.h"
-#include "classad_distribution.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
+
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "iceEventLogger.h"
 #include "glite/ce/monitor-client-api-c/CESubscription.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 #include "glite/ce/monitor-client-api-c/Policy.h"
+
+#include "ClassadSyntax_ex.h"
+#include "classad_distribution.h"
 
 // Forward declaration of iceConfManager
 namespace glite {
@@ -62,7 +63,6 @@ namespace glite {
 	  pathType_t _pathType;
 	  std::string _pathName;
 	  std::string _fileName;
-//	  glite::wms::ice::util::iceConfManager* confMgr;
 	};
 	
 	/**
@@ -101,9 +101,6 @@ namespace glite {
 
 	log4cpp::Category* log_dev;
  	glite::wms::ice::util::iceConfManager* confMgr;
-	//CESubscription ceS;
-	//Topic T;//(iceUtil::iceConfManager::getInstance()->getICETopic()),
-        //Policy P;//(5000),
 	std::string myname_url;
         util::iceLBLogger *_lb_logger;
       };

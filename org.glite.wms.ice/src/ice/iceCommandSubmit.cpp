@@ -7,7 +7,6 @@
 #include "creamJob.h"
 #include "ice-core.h"
 #include "eventStatusListener.h"
-//#include "iceEventLogger.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
 #include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
@@ -169,10 +168,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         << "\""
         << log4cpp::CategoryStream::ENDLINE;
 
-    // _ev_logger->registerJob( theJob ); // FIXME: to be removed
     _lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be removed
-
-    // _ev_logger->cream_transfer_start_event( theJob ); // NOTE: this method call has the side effect of putting the job in the jobCache!
     _lb_logger->logEvent( new ice_util::cream_transfer_start_event( theJob ) );
 
     string modified_jdl;
@@ -185,7 +181,6 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << " due to classad exception:"
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
-        // _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
         _lb_logger->logEvent( new ice_util::cream_transfer_fail_event( theJob, ex.what() ) );
         _cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
@@ -201,7 +196,6 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     try {
         theProxy->Authenticate(theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
-        // _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
         _lb_logger->logEvent( new ice_util::cream_transfer_fail_event( theJob, ex.what() ) );
         log_dev->errorStream()
             << "Unable to submit gridJobID=" << theJob.getGridJobID()
@@ -237,7 +231,6 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << theJob.getGridJobID()
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
-            // _ev_logger->cream_transfer_fail_event( theJob, ex.what() );
             _lb_logger->logEvent( new ice_util::cream_transfer_fail_event( theJob, ex.what()  ) );
             _ice->resubmit_job( theJob ); // Try to resubmit
             _cache->erase( job_pos );
@@ -255,9 +248,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         theJob.setJobID(url_jid[1]);
         theJob.setStatus(cream_api::job_statuses::PENDING, time(NULL) );
 
-        // _ev_logger->cream_transfer_ok_event( theJob );
         _lb_logger->logEvent( new ice_util::cream_transfer_ok_event( theJob ) );
-        // _ev_logger->cream_accepted_event( theJob );
         _lb_logger->logEvent( new ice_util::cream_accepted_event( theJob ) );
 
         boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );

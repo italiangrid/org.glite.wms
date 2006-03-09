@@ -2,21 +2,16 @@
 #define __GLITE_WMS_ICE_ICECOMMANDCANCEL_H__
 
 #include "iceAbsCommand.h"
-//#include "ClassadSyntax_ex.h"
-//#include "classad_distribution.h"
 #include "iceCommandFatal_ex.h"
 #include "iceCommandTransient_ex.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-//#include "iceEventLogger.h"
-
 
 namespace glite {
     namespace wms {
         namespace ice {
 
             namespace util {
-                // Forward declaration
-                class iceLBLogger;
+                class iceLBLogger;                 // Forward declaration
             };
 
             class iceCommandCancel : public iceAbsCommand {

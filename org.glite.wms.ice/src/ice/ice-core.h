@@ -2,15 +2,18 @@
 #ifndef __GLITE_WMS_ICE_ICE_H__
 #define __GLITE_WMS_ICE_ICE_H__
 
-#include <string>
-#include "ClassadSyntax_ex.h"
 #include "iceInit_ex.h"
 #include "eventStatusListener.h"
 #include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
 #include "leaseUpdater.h"
 #include "creamJob.h"
+
 #include "glite/wms/common/utilities/FLExtractor.h"
+
+#include "ClassadSyntax_ex.h"
+
+#include <string>
 
 class jobRequest;
 

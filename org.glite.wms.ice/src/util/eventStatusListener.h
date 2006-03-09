@@ -22,7 +22,6 @@ namespace glite {
           
           class jobCache;
           class iceConfManager;
-          // class iceEventLogger;
           class iceLBLogger;
 	  class subscriptionManager;
 
@@ -37,27 +36,20 @@ namespace glite {
 	class eventStatusListener : public CEConsumer, public iceThread {
 	  std::string grid_JOBID, cream_JOBID;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
- 	  //CESubscription subscriber;
- 	  //CESubscriptionMgr subManager;
 	  boost::scoped_ptr<CEPing> pinger;
-	  //Topic T;
-	  //Policy P;
 	  std::vector<std::string> activeSubscriptions;
 	  std::string proxyfile;
 	  int tcpport;
 	  std::string myname;
-	  //std::map<std::string, bool> cemon_subscribed_to;
 	  glite::wms::ice::util::iceConfManager* conf;
           log4cpp::Category *log_dev;
-          // iceEventLogger *_ev_logger;
           iceLBLogger *_lb_logger;
-          // classad::ClassAdParser parser;
 	  bool _isOK;
           jobCache* cache;
 	  subscriptionManager* subManager;
 
 	  void init(void);
-          // void parseEventJobStatus( std::string& cream_job_id, std::string& job_status, long& tstamp, const std::string& _classad ) throw( glite::wms::ice::util::ClassadSyntax_ex& );
+
           void handleEvent( const monitortypes__Event& ev );
 
 	protected:
