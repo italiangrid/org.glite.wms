@@ -46,7 +46,9 @@ namespace services {
 
 int SUCCESS = 0;
 int FAILED = -1;
-const bool GENERATE_NODE_NAME =true;
+
+const bool   GENERATE_NODE_NAME =true;  // Determine whether to use or not node approach
+const string GENERATED_JN_FILE  ="ids_nodes.map" ; // Determine the id/nodes filename
 
 /*
 * Default constructor
@@ -291,14 +293,30 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	// Children (if present) Management
 	if (children.size()){
 		string result = "" ;
+		string msgNodes ="";
 		unsigned int size = children.size();
 		if (GENERATE_NODE_NAME){
+			msgNodes = "Dag JobId: " + jobid.toString() ;
 			std::map< std::string, std::string > map= AdUtils::getJobIdMap(status.getJdl());
+
 			for (unsigned int i = 0 ; i < size ;i++){
+				// update message with node
+				msgNodes+= "\n\t - - -";
+				msgNodes+= "\n\tNode Name:\t"
+					+ AdUtils::JobId2Node(map,children[i].getJobId()) ;
+				msgNodes+= "\n\tJobId:    \t"
+					+ children[i].getJobId().toString();
+				msgNodes+= "\n\tDir:      \t"
+					+ dirAbs+logName+"_"
+					+ AdUtils::JobId2Node(map,children[i].getJobId()) ;
 				retrieveOutput (result, children[i],
 					dirAbs+logName+"_"+
 					AdUtils::JobId2Node(map,children[i].getJobId()),true);
 			}
+			// Evantually print info inside file
+			wmcUtils->saveToFile(dirAbs+"/"+GENERATED_JN_FILE, msgNodes);
+			logInfo->print (WMS_DEBUG, jobid.toString()
+				+": Nodes and JobIds info stored inside file:",dirAbs+"/"+GENERATED_JN_FILE);
 		}else{
 			for (unsigned int i = 0 ; i < size ;i++){
 				retrieveOutput (result,children[i],
