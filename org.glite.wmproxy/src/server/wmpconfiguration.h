@@ -19,6 +19,8 @@
 // Exceptions
 #include "glite/wms/common/configuration/exceptions.h"
 
+#include "classad_distribution.h"
+
 // Boost singleton
 #include <boost/pool/detail/singleton.hpp>
 
@@ -128,9 +130,16 @@ class WMProxyConfiguration {
 		bool WMProxyConfiguration::getAsyncJobStart();
 		
 		/**
+		 * Returns the value of the configuration attribute SDJRequirements
+		 * @return the attribute value
+		 */
+		classad::ExprTree * getSDJRequirements();
+		
+		/**
 		 * Workload Manager Proxy configuration instance
 		 */
 		glite::wms::common::configuration::WMPConfiguration const* wmp_config;
+		
 		
 	private:
 		void loadConfiguration();
@@ -157,6 +166,8 @@ class WMProxyConfiguration {
 	    std::vector<std::pair<std::string, int> > protocols;
 	    
 	    bool asyncjobstart;
+	    
+	    classad::ExprTree * sdjrequirements;
 };
 
 #endif // GLITE_WMS_WMPROXY_WMPCONFIGURATION_H

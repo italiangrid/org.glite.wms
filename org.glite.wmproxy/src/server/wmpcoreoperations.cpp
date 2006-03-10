@@ -197,6 +197,19 @@ copyEnvironment(char** sourceEnv)
     return tmp;
 }
 
+classad::ExprTree *
+notExprTree(classad::ExprTree * expr)
+{
+	classad::PrettyPrint unp;
+	unp.SetClassAdIndentation(0);
+	unp.SetListIndentation(0);
+	string buffer;
+	unp.Unparse(buffer, expr);
+	buffer = "!(" + buffer + ")";
+	classad::ClassAdParser parser;
+	return parser.ParseExpression(buffer, true);
+}
+
 pair<string, string>
 jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegation_id, const string &delegatedproxy, const string &vo,
@@ -1437,6 +1450,17 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				jad->delAttribute(JDL::LB_SEQUENCE_CODE);
 			}
 			jad->addAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+			
+			if (jad->hasAttribute(JDL::SHORT_DEADLINE_JOB)) {
+				classad::ExprTree * sdjrequirements = conf.getSDJRequirements();
+				if (sdjrequirements) {
+					if (jad->getBool(JDL::SHORT_DEADLINE_JOB)) {
+						jad->setDefaultReq(sdjrequirements);
+					} else {
+						jad->setDefaultReq(notExprTree(sdjrequirements));
+					}
+				}
+			}
 		
 			jdltostart = jad->toString();
 			
@@ -1453,6 +1477,12 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		    edglog(debug)<<"Storing seqcode: "<<seqcode<<endl;
 		    
 		    // Setting internal attributes for sub jobs
+		    classad::ExprTree * sdjrequirements = conf.getSDJRequirements();
+		    classad::ExprTree * notsdjrequirements = NULL;
+		    if (sdjrequirements) {
+		    	notsdjrequirements = notExprTree(sdjrequirements);
+		    }
+		    
 			string jobidstring;
 			string dest_uri;
 			string peekdir;
@@ -1508,6 +1538,16 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						for (; iter != end; ++iter) {
 							nodead.addAttribute(JDL::OSB_DEST_URI, *iter);
 		                }
+					}
+				}
+				
+				if (nodead.hasAttribute(JDL::SHORT_DEADLINE_JOB)) {
+					if (sdjrequirements) {
+						if (nodead.getBool(JDL::SHORT_DEADLINE_JOB)) {
+							nodead.setDefaultReq(sdjrequirements);
+						} else {
+							nodead.setDefaultReq(notsdjrequirements);
+						}
 					}
 				}
 				
@@ -2036,11 +2076,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	edglog_fn("wmpoperations::listmatch");
 	
 	int result = 0;
-	
-	//Ad * ad = new Ad();
-	//int type = getType(jdl, ad);
 	int type = getType(jdl);
-	
 	if (type == TYPE_JOB) {
 		JobAd *ad = new JobAd(jdl);
 		ad->setLocalAccess(false);
@@ -2058,12 +2094,11 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 			ad->delAttribute(JDL::CERT_SUBJ);
 		}
 		ad->setAttribute(JDL::CERT_SUBJ, 
-				wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
+			wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
 		
 		//TBD do a check() before toString() for instance to add DefaultRank
 		//attribute????
 		
-		//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
 		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 		
@@ -2071,16 +2106,12 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		boost::details::pool::singleton_default<WMP2WM>::instance()
 			.init(filequeue, &wmplogger);
 		
+		wmputilities::createSuidDirectory(conf.getListMatchRootPath());
 		boost::details::pool::singleton_default<WMP2WM>::instance()
 			.match(ad->toString(), conf.getListMatchRootPath(), delegatedproxy);
 		
 		delete ad;
 		
-		/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
-			edglog(severe)<<"Error in runCommand: "<<wmp_fault.message<<endl;
-			throw JobOperationException(__FILE__, __LINE__, "listmatch()",
-				wmp_fault.code, wmp_fault.message);
-		}*/
 		result = jobListMatch_response.CEIdAndRankList->file->size(); 
 	} else {
 		edglog(error)<<"Operation permitted only for normal job"<<endl;

@@ -1286,13 +1286,13 @@ WMPEventLogger::getUserTag(const string &tagname)
 }
 
 glite::lb::JobStatus
-WMPEventLogger::getStatus(JobId *jid)
+WMPEventLogger::getStatus(bool childreninfo)
 {
 	GLITE_STACK_TRY("getStatus()");
 	edglog_fn("WMPEventlogger::getStatus");
 	
 	edg_wlc_JobId jobid;
-	string jobid_str = id->toString();
+	string jobid_str = this->id->toString();
   	// parse the jobID string
   	if (edg_wlc_JobIdParse(jobid_str.c_str(), &jobid)) {
     	edglog(critical)<<"Error during edg_wlc_JobIdParse"<<endl;
@@ -1312,19 +1312,23 @@ WMPEventLogger::getStatus(JobId *jid)
   	jc[1].attr = EDG_WLL_QUERY_ATTR_UNDEF;
   
   	int error;
+  	int flag = EDG_WLL_STAT_CLASSADS;
+	if (childreninfo) {
+		flag = flag | EDG_WLL_STAT_CHILDREN;
+	}
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Quering LB Proxy..."<<endl;
-		error = edg_wll_QueryJobsProxy(ctx, jc, 0, NULL, &states);
+		error = edg_wll_QueryJobsProxy(ctx, jc, flag, NULL, &states);
 		if (error == ENOENT) { // no events found
 	   		edglog(debug)<< "No status found quering LB Proxy. Quering LB..."<<endl;
-			error = edg_wll_QueryJobs(ctx, jc, 0, NULL, &states);
+			error = edg_wll_QueryJobs(ctx, jc, flag, NULL, &states);
 	  	}
 	} else { // end switch LB PROXY
 #endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<< "Quering LB..."<<endl;
-		error = edg_wll_QueryJobs(ctx, jc, 0, NULL, &states);
+		error = edg_wll_QueryJobs(ctx, jc, flag, NULL, &states);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	} // end switch LB normal
 #endif  //GLITE_WMS_HAVE_LBPROXY

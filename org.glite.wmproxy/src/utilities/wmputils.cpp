@@ -1179,6 +1179,36 @@ setFlagFile(const string &file, bool flag)
 }
 
 void
+createSuidDirectory(const string &directory)
+{
+	if (!fileExists(directory)) {
+		// Try to find managedirexecutable 
+	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
+	   	if (!glite_path) {
+	   		glite_path = getenv(GLITE_LOCATION);
+	   	}
+	   	string gliteDirmanExe = (glite_path == NULL)
+	   		? ("/opt/glite")
+	   		:(string(glite_path)); 
+	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+	   	
+		string dirpermissions = " -m 0773 ";
+		string user = " -c " + boost::lexical_cast<std::string>(getuid()); // UID
+		string group = " -g " + boost::lexical_cast<std::string>(getgid()); // GROUP
+		
+		string command = gliteDirmanExe + user + group + dirpermissions + directory;
+		edglog(debug)<<"Excecuting command: "<<command<<endl;
+		if (system(command.c_str())) {
+			edglog(critical)<<"Unable to create directory: "<<directory<<endl;
+		   	throw FileSystemException(__FILE__, __LINE__,
+				"createDirectory()", WMS_FILE_SYSTEM_ERROR,
+				"Unable to create directory\n(please contact server "
+					"administrator)");
+		}
+	}
+}
+
+void
 writeTextFile(const string &file, const string &text)
 {
 	GLITE_STACK_TRY("writeTextFile()");

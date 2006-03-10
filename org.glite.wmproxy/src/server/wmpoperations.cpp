@@ -341,7 +341,8 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	//authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
 	
 	// Getting job status to check if cancellation is possible
-	JobStatus status = WMPEventLogger::getStatus(jobid, delegatedproxy, true);
+	//JobStatus status = WMPEventLogger::getStatus(jobid, delegatedproxy, true);
+	JobStatus status = wmplogger.getStatus(true);
 	vector<string> jids = status.getValStringList(JobStatus::CHILDREN);
 	edglog(debug)<<"Children count: "<<status.getValInt(JobStatus::CHILDREN_NUM)<<endl;
 	vector<string>::iterator jidsiterator = jids.begin();

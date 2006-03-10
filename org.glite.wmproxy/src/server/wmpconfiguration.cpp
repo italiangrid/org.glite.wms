@@ -150,6 +150,8 @@ WMProxyConfiguration::loadConfiguration()
 	
 	this->asyncjobstart = wmp_config->async_job_start();
 	
+	this->sdjrequirements = wmp_config->sdjrequirements();
+	
 	GLITE_STACK_CATCH();
 }
 
@@ -238,5 +240,11 @@ bool
 WMProxyConfiguration::getAsyncJobStart()
 {
 	return this->asyncjobstart;
+}
+
+classad::ExprTree *
+WMProxyConfiguration::getSDJRequirements()
+{
+	return this->sdjrequirements;
 }
 

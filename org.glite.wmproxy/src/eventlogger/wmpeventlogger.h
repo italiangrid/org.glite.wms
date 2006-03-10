@@ -115,7 +115,7 @@ class WMPEventLogger  {
 		static glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid,
 			const std::string &delegatedproxy, bool childreninfo = false);
 			
-		glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid);
+		glite::lb::JobStatus getStatus(bool childreninfo);
 			
 		static const std::string QUERY_SEQUENCE_CODE;
 		static const std::string QUERY_JDL_ORIGINAL;

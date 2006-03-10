@@ -70,31 +70,7 @@ WMPDelegation::getProxyDir()
 	asprintf(&proxydir, "%s/%s", docroot, GRST_PROXYCACHE);
 	
 	// Creating proxydir if it doesn't exist
-	if (!wmputilities::fileExists(proxydir)) {
-		// Try to find managedirexecutable 
-	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
-	   	if (!glite_path) {
-	   		glite_path = getenv(GLITE_LOCATION);
-	   	}
-	   	string gliteDirmanExe = (glite_path == NULL)
-	   		? ("/opt/glite")
-	   		:(string(glite_path)); 
-	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
-	   	
-		string dirpermissions = " -m 0773 ";
-		string user = " -c " + boost::lexical_cast<std::string>(getuid()); // UID
-		string group = " -g " + boost::lexical_cast<std::string>(getgid()); // GROUP
-		
-		string command = gliteDirmanExe + user + group + dirpermissions + proxydir;
-		edglog(debug)<<"Excecuting command: "<<command<<endl;
-		if (system(command.c_str())) {
-			edglog(critical)<<"Unable to create Proxy directory"<<endl;
-		   	throw wmputilities::FileSystemException(__FILE__, __LINE__,
-				"getProxyDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-				"Unable to create Proxy directory\n(please contact server "
-					"administrator)");
-		}
-	}
+	wmputilities::createSuidDirectory(string(proxydir));
 	
 	return proxydir;
 	

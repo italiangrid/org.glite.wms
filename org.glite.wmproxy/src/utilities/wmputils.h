@@ -64,6 +64,8 @@ void uncompressFile(const std::string &filename, const std::string &startingpath
 
 void setFlagFile(const std::string &file, bool flag);
 
+void createSuidDirectory(const std::string &directory);
+
 void writeTextFile(const std::string &path, const std::string &text);
 
 std::string readTextFile(const std::string &path);
