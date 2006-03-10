@@ -213,6 +213,8 @@ AC_SEC_LCAS
 AC_SEC_LCMAPS
 AC_SEC_LCMAPS_WITHOUT_GSI
 
+AC_GLITE_WMS_OPTIONAL
+
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
