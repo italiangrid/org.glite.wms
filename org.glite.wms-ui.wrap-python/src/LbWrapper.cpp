@@ -292,7 +292,7 @@ std::string Eve::getVal (int field , string& result , int event_number) {
 	for ( int j = 0 ; j< event_number ; j++, it++)  if (  it==events.end()  ) break ;
 	glite::lb::Event event_retrieved = *it ;
 	string attrName = "" ;
-	int EVENT = 53 ;
+	int EVENT = 56 ;
 	if ( field == EVENT) {
 		result = event_retrieved.name() ;
 		return "event" ;
@@ -323,15 +323,12 @@ try{
 		case Event::DEST_PORT:
 			result = string (  edg_wll_SourceToString ( (edg_wll_Source )event_retrieved.getValInt(fieldAttr) ) ) ;
 			break;
+		case Event::VALUE:
 		case Event::SRC_ROLE:
-		//case Event::PRIORITY:
-		//case Event::EXIT_CODE:
-		//case Event::FROM:
 		case Event::HOST:
 		case Event::SEQCODE:
 		case Event::USER:
 		case Event::SRC_INSTANCE:
-		case Event::VALUE:
 		case Event::RESULT:
 		case Event::NAME:
 		case Event::REASON:
@@ -488,7 +485,8 @@ try{
 			}
 			break;
 		default:
-			cout << "\n\n\nWarning!!!!! Something has gone bad!\nField Attribute=" << fieldAttr<<  "contact the developer!! LbWrapper line "<<__LINE__ << endl ;
+			cout << "\n\n\nWarning!!!!! Something has gone bad!\nField Attribute="
+			<< fieldAttr<<  "contact the developer!! LbWrapper line "<<__LINE__ << endl ;
 			log_error("Something is wrong" ) ;
 			//break;
 	}
