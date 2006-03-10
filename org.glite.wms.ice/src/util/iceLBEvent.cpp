@@ -7,7 +7,6 @@
 
 #include "iceLBEvent.h"
 #include "iceLBContext.h"
-#include "glite/lb/producer.h"
 
 using namespace glite::wms::ice::util;
 
@@ -16,8 +15,9 @@ using namespace glite::wms::ice::util;
 // iceLBEvent
 //
 //////////////////////////////////////////////////////////////////////////////
-iceLBEvent::iceLBEvent( const CreamJob& j, const std::string& dsc ) :
+iceLBEvent::iceLBEvent( const CreamJob& j, edg_wll_Source src, const std::string& dsc ) :
     _job( j ),
+    _src( src ),
     _description( dsc )
 {
 
@@ -29,7 +29,7 @@ iceLBEvent::iceLBEvent( const CreamJob& j, const std::string& dsc ) :
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_start_event::cream_transfer_start_event( const CreamJob& j ) :
-    iceLBEvent( j, "Cream Transfer Start Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer Start Event" )
 {
 
 }
@@ -51,7 +51,7 @@ int cream_transfer_start_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_ok_event::cream_transfer_ok_event( const CreamJob& j ) :
-    iceLBEvent( j, "Cream Transfer OK Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer OK Event" )
 {
 
 }
@@ -73,7 +73,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_fail_event::cream_transfer_fail_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, "Cream Transfer Fail Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer Fail Event" ),
     _reason( reason )
 {
 
@@ -96,7 +96,7 @@ int cream_transfer_fail_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_accepted_event::cream_accepted_event( const CreamJob& j ) :
-    iceLBEvent( j, "Cream Accepted Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Accepted Event" )
 {
 
 }
@@ -117,7 +117,7 @@ int cream_accepted_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 lrms_accepted_event::lrms_accepted_event( const CreamJob& j ) :
-    iceLBEvent( j, "LRMS Accepted Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "LRMS Accepted Event" )
 {
 
 }
@@ -138,7 +138,7 @@ int lrms_accepted_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_refused_event::cream_refused_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, "Cream Refused Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Cream Refused Event" ),
     _reason( reason )
 {
 
@@ -159,7 +159,7 @@ int cream_refused_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_cancel_request_event::cream_cancel_request_event( const CreamJob& j ) :
-    iceLBEvent( j, "Cream Cancel Request Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Cancel Request Event" )
 {
 
 }
@@ -179,7 +179,7 @@ int cream_cancel_request_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 cream_cancel_refuse_event::cream_cancel_refuse_event( const CreamJob& j, const std::string& reason ) :
-    iceLBEvent( j, "Cream Cancel Refuse Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Cancel Refuse Event" ),
     _reason( reason )
 {
 
@@ -199,7 +199,7 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_running_event::job_running_event( const CreamJob& j, const std::string& host ) :
-    iceLBEvent( j, "Job Runnign Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Runnign Event" ),
     _host( host )
 {
 
@@ -217,7 +217,7 @@ int job_running_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_cancelled_event::job_cancelled_event( const CreamJob& j ) :
-    iceLBEvent( j, "Job Cancelled Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Cancelled Event" )
 {
 
 }
@@ -236,7 +236,7 @@ int job_cancelled_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_suspended_event::job_suspended_event( const CreamJob& j ) :
-    iceLBEvent( j, "Job Suspended Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Suspended Event" )
 {
 
 }
@@ -252,7 +252,7 @@ int job_suspended_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_done_ok_event::job_done_ok_event( const CreamJob& j ) :
-    iceLBEvent( j, "Job Done Ok Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Ok Event" )
 {
 
 }
@@ -269,7 +269,7 @@ int job_done_ok_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 job_done_failed_event::job_done_failed_event( const CreamJob& j ) :
-    iceLBEvent( j, "Job Done Failed Event" )
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Failed Event" )
 {
 
 }
@@ -287,7 +287,7 @@ int job_done_failed_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_start_event::ns_enqueued_start_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, "NS Enqueued Start Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued Start Event" ),
     _qname( qname )
 {
 
@@ -309,7 +309,7 @@ int ns_enqueued_start_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, "NS Enqueued Fail Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued Fail Event" ),
     _qname( qname )
 {
 
@@ -330,7 +330,7 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 //
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string& qname ) :
-    iceLBEvent( j, "NS Enqueued OK Event" ),
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued OK Event" ),
     _qname( qname )
 {
 

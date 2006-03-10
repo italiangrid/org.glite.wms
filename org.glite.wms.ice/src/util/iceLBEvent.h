@@ -2,6 +2,7 @@
 #define __ICELBEVENT_H__
 
 #include "creamJob.h"
+#include "glite/lb/producer.h"
 #include <string>
 
 namespace glite {
@@ -50,13 +51,22 @@ namespace glite {
                      *
                      * @return the current job
                      */
-                    CreamJob& getJob( )
-                        { return _job; };
+                    CreamJob& getJob( ) {
+                        return _job; 
+                    };
+
+                    /**
+                     *
+                     */
+                    edg_wll_Source getSrc( void ) const {
+                        return _src;
+                    }
 
                 protected:
-                    iceLBEvent( const CreamJob& j, const std::string& dsc );
+                    iceLBEvent( const CreamJob& j, edg_wll_Source src, const std::string& dsc );
 
                     CreamJob _job;
+                    edg_wll_Source _src;
                     std::string _description;
                 };
 

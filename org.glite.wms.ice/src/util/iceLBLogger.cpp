@@ -42,7 +42,7 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         boost::scoped_ptr< iceLBEvent > _scoped_ev( ev );
         
         try {
-            _ctx->setLoggingJob( ev->getJob(), EDG_WLL_SOURCE_JOB_SUBMISSION );
+            _ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
         } catch( iceLBException& ex ) {
             log_dev->errorStream()
                 << "Error logging " << ev->describe()
