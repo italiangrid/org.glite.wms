@@ -4,11 +4,6 @@
 #include "creamJob.h"
 #include <string>
 
-// Forward declaration
-namespace log4cpp {
-    class Category;
-};
-
 namespace glite {
     namespace wms {
         namespace ice {
@@ -34,12 +29,35 @@ namespace glite {
                      * context.  the caller is not transfering
                      * ownership of the ctx pointer; this method MUST
                      * NOT try to free the context.
+                     *
+                     * @return the LB exit code (0 means success)
                      */
-                    virtual void execute( iceLBContext* ctx ) = 0;
-                protected:
-                    iceLBEvent( );
+                    virtual int execute( iceLBContext* ctx ) = 0;
 
-                    log4cpp::Category* log_dev;
+                    /**
+                     * Provides a description for the event being
+                     * logged.  useful for debug purposes.
+                     *
+                     * @return the description of the event being
+                     * logged
+                     */
+                    const std::string& describe( ) const {
+                        return _description;
+                    };
+
+                    /**
+                     * Gets the job being logged
+                     *
+                     * @return the current job
+                     */
+                    CreamJob& getJob( )
+                        { return _job; };
+
+                protected:
+                    iceLBEvent( const CreamJob& j, const std::string& dsc );
+
+                    CreamJob _job;
+                    std::string _description;
                 };
 
                 /**
@@ -51,9 +69,7 @@ namespace glite {
                      * @param j the job being transferred.
                      */
                     cream_transfer_start_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
                 /**
@@ -65,9 +81,7 @@ namespace glite {
                      * @param j the job succesfully transferred
                      */
                     cream_transfer_ok_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
@@ -81,9 +95,8 @@ namespace glite {
                      * @param reason a string describing the failure reason 
                      */
                     cream_transfer_fail_event( const CreamJob& j, const std::string& reason );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _reason;
                 };
 
@@ -91,27 +104,22 @@ namespace glite {
                 class cream_accepted_event : public iceLBEvent {
                 public:
                     cream_accepted_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class lrms_accepted_event : public iceLBEvent {
                 public:
                     lrms_accepted_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class cream_refused_event : public iceLBEvent {
                 public:
                     cream_refused_event( const CreamJob& j, const std::string& reason  );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _reason;
                 };
 
@@ -119,18 +127,15 @@ namespace glite {
                 class cream_cancel_request_event : public iceLBEvent {
                 public:
                     cream_cancel_request_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class cream_cancel_refuse_event : public iceLBEvent {
                 public:
                     cream_cancel_refuse_event( const CreamJob& j, const std::string& reason );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _reason;
                 };
 
@@ -138,9 +143,8 @@ namespace glite {
                 class job_running_event : public iceLBEvent {
                 public:
                     job_running_event( const CreamJob& j, const std::string& host );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _host;
                 };
 
@@ -148,45 +152,36 @@ namespace glite {
                 class job_cancelled_event : public iceLBEvent {
                 public:
                     job_cancelled_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class job_suspended_event : public iceLBEvent {
                 public:
                     job_suspended_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class job_done_ok_event : public iceLBEvent {
                 public:
                     job_done_ok_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class job_done_failed_event : public iceLBEvent {
                 public:
                     job_done_failed_event( const CreamJob& j );
-                    void execute( iceLBContext* ctx );
-                protected:
-                    CreamJob _job;
+                    int execute( iceLBContext* ctx );
                 };
 
 
                 class ns_enqueued_start_event : public iceLBEvent {
                 public:
                     ns_enqueued_start_event( const CreamJob& j, const std::string& qname );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _qname;
                 };
 
@@ -194,9 +189,8 @@ namespace glite {
                 class ns_enqueued_fail_event : public iceLBEvent {
                 public:
                     ns_enqueued_fail_event( const CreamJob& j, const std::string& qname );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _qname;
                 };
 
@@ -204,9 +198,8 @@ namespace glite {
                 class ns_enqueued_ok_event : public iceLBEvent {
                 public:
                     ns_enqueued_ok_event( const CreamJob& j, const std::string& qname );
-                    void execute( iceLBContext* ctx );
+                    int execute( iceLBContext* ctx );
                 protected:
-                    CreamJob _job;
                     std::string _qname;
                 };
 

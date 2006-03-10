@@ -256,17 +256,6 @@ void ice::startLeaseUpdater( void ) {
                  "ice::startLeaseUpdater() - Lease updater succesfully !");
 }
 
-
-//______________________________________________________________________________
-//void ice::stopListener() {
-//  listener->stop();
-//}
-
-//______________________________________________________________________________
-//void ice::stopPoller() {
-//  poller->stop();
-//}
-
 //______________________________________________________________________________
 void ice::clearRequests() 
 {

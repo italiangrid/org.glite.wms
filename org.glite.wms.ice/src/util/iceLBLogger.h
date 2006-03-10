@@ -4,6 +4,12 @@
 #ifndef __ICELBLOGGER_H__
 #define __ICELBLOGGER_H__
 
+
+// Forward declaration
+namespace log4cpp {
+    class Category;
+};
+
 namespace glite {
     namespace wms {
         namespace ice {
@@ -41,6 +47,7 @@ namespace glite {
 
                     static iceLBLogger* _instance;
                     iceLBContext* _ctx;
+                    log4cpp::Category* log_dev;
                 };
 
             } // namespace util
