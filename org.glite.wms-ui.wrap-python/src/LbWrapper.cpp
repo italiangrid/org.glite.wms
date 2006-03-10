@@ -612,7 +612,6 @@ std::vector< std::string  > Status::loadStatus( int status_number )  {
 	vector<Event> events_v;
 	// FILL JOBIDS QUERY:
 	vector<QueryRecord> tmpCond;
-
 	try{
 		for (unsigned int i = 0; i<jobids.size(); i++){
 			QueryRecord qr(QueryRecord::JOBID, QueryRecord::EQUAL, glite::wmsutils::jobid::JobId(jobids[i]));
@@ -620,8 +619,6 @@ std::vector< std::string  > Status::loadStatus( int status_number )  {
 		}
 		vector<vector<QueryRecord> > jobCond;
 		jobCond.push_back(tmpCond);
-
-
 		// FILL Other parameters QUERY:
 		error_code = false ;
 		// returned vector
@@ -633,6 +630,8 @@ std::vector< std::string  > Status::loadStatus( int status_number )  {
 			true);
 		// the Server will fill the result vector anyway, even when exception is raised
 		if ( ! getenv ( "GLITE_WMS_QUERY_RESULTS") ){server.setParam(EDG_WLL_PARAM_QUERY_RESULTS, 3);}
+		// reset queries:
+		events.resize(0);
 		// Perform the actual LB query:
 		server.queryEvents (jobCond, eveCond, events_v);
 		// server.queryJobStates (cond, FLAG | EDG_WLL_STAT_CHILDSTAT , states_v ) ;
