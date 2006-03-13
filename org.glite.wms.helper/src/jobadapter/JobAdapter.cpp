@@ -568,7 +568,7 @@ try {
   // lowercase all jobtype characters
   std::string ljobtype(jobtype);
   transform(ljobtype.begin(), ljobtype.end(), ljobtype.begin(), ::tolower); 
-  
+
   if (ljobtype == "mpich") {
     // lowercase all lrmstype characters
     std::string llrmstype(lrmstype);
@@ -582,7 +582,12 @@ try {
     
     // Mandatory
     // node number is mandatory for the mpich job
-    int nodenumber = jdl::get_node_number(*m_ad);
+    int nodenumber;
+    try {
+      nodenumber = jdl::get_cpu_number(*m_ad);
+    } catch (jdl::CannotGetAttribute& a) {
+      nodenumber = jdl::get_node_number(*m_ad);
+    }
 
     if (is_blahp_resource || is_condor_resource) {
       jdl::set_remote_remote_nodenumber(*result, nodenumber);
