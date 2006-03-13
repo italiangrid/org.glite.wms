@@ -19,6 +19,21 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.11  2006/03/13 14:38:05  monforte
+#       Merge against glite-wms-matchmaking_branch_1_5_0_RC15
+#
+#       Revision 1.10.2.4  2006/02/02 18:41:32  fprelz
+#       Adding matchmaking performance patches (as tested by ECGI at end 2005 on v1.4)
+#
+#       Revision 1.10.2.3  2006/01/20 00:25:57  eronchie
+#       Increased version
+#
+#       Revision 1.10.2.2  2005/11/03 14:04:35  eronchie
+#       Increased version
+#
+#       Revision 1.10.2.1  2005/10/28 11:03:56  monforte
+#       removed search in ism while ranking
+#
 #       Revision 1.10  2005/10/15 12:16:26  eronchie
 #       Increased version
 #
@@ -70,7 +85,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Matchmaking], [1.5.0])
+AC_INIT([GLite WMS Matchmaking], [1.5.4])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])

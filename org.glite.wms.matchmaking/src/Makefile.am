@@ -11,7 +11,6 @@ lib_LTLIBRARIES = libglite_wms_matchmaking.la
 matchmakingdir = $(includedir)/glite/wms/matchmaking
 matchmaking_HEADERS = \
 	utility.h \
-        matchmakerGlueImpl.h \
 	matchmakerISMImpl.h \
         exceptions.h \
         jdl_attributes.h \
@@ -20,7 +19,6 @@ matchmaking_HEADERS = \
 libglite_wms_matchmaking_la_LDFLAGS = -all-static
 
 libglite_wms_matchmaking_la_SOURCES = \
-	matchmakerGlueImpl.cpp \
 	matchmakerISMImpl.cpp \
 	exceptions.cpp 
 
@@ -32,5 +30,5 @@ AM_CPPFLAGS = \
 	$(GLOBUS_THR_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(CLASSAD_CFLAGS)
- 
+
 MAINTAINERCLEANFILES = Makefile.in

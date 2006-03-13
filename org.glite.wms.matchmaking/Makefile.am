@@ -17,6 +17,12 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2006/03/13 14:38:05  monforte
+#       Merge against glite-wms-matchmaking_branch_1_5_0_RC15
+#
+#       Revision 1.3.18.1  2006/02/02 18:41:32  fprelz
+#       Adding matchmaking performance patches (as tested by ECGI at end 2005 on v1.4)
+#
 #       Revision 1.3  2004/10/08 15:08:47  monforte
 #       fixed LICENCE problem
 #
