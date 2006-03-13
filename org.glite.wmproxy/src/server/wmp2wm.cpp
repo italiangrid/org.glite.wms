@@ -213,8 +213,8 @@ computePipePath(const string &listmatch_path)
 	GLITE_STACK_CATCH();
 }
 
-void
-insertUserProxy(classad::ClassAd &convertedAd, string pipe_path,
+string
+insertUserProxy(classad::ClassAd &convertedAd, const string &pipe_path,
 	const string &listmatchpath, const string &credentials_file)
 {
 	GLITE_STACK_TRY("insertUserProxy()");
@@ -225,15 +225,17 @@ insertUserProxy(classad::ClassAd &convertedAd, string pipe_path,
 
 	string::size_type idx = pipe_path.rfind("/");
 	if (idx != string::npos) {
-		pipe_path = pipe_path.substr(idx + 1);
+		local_path = pipe_path.substr(idx + 1);
 	}
-	local_path.assign(listmatchpath + "/user.proxy." + pipe_path);
+	local_path.assign(listmatchpath + "/user.proxy." + local_path);
 	wmputilities::fileCopy(credentials_file, local_path);
 	
 	edglog(debug)<<"Inserting user proxy path: "<<local_path<<endl;
   	convertedAd.DeepInsertAttr(static_cast<classad::ClassAd*>(
   		convertedAd.Lookup("arguments"))->Lookup("ad"), JDLPrivate::USERPROXY,
 		local_path);
+		
+	return local_path;
 	
 	GLITE_STACK_CATCH();
 }
@@ -256,7 +258,7 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 	string pipepath = computePipePath(filel);
 	convertedAd.DeepInsertAttr(convertedAd.Lookup("arguments"), "file",
 		pipepath);
-	insertUserProxy(convertedAd, pipepath, filel, proxy);
+	string local_path = insertUserProxy(convertedAd, pipepath, filel, proxy);
 	
 	string convertedString = wmsutilities::unparse_classad(convertedAd);
 	edglog(debug)<<"Converted string (written in filelist): "
@@ -265,7 +267,7 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_ad);
 	edglog(debug)<<"Match Forwarded"<<endl;
 	
-	string resultlist = commands::listjobmatchex(proxy, pipepath);
+	string resultlist = commands::listjobmatchex(local_path, pipepath);
 	edglog(debug)<<"Match result: "<<resultlist<<endl;
 	/* Listmatch returned classad, eg:
 	[
