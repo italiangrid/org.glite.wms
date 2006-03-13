@@ -32,6 +32,23 @@ typedef vector<soap_proxy::JobStatusList*>::iterator JobStatusIt;
 typedef vector<string>::iterator vstrIt;
 typedef vector<string>::const_iterator cvstrIt;
 
+/**
+ * The following should organize the creamJobIDs in order to
+ * group the maximum number of job related to the same CREAM URL and proxy
+ * certificate, in order to send the status request for more jobs
+ * to a single endpoint and with only one authentication call.
+ */
+//______________________________________________________________________________
+void organizeJobs(const vector<CreamJob>& vec,
+		  map<string, map<string, vector<string>  > >& target)
+{
+  for(vector<CreamJob>::const_iterator cit = vec.begin();
+      cit != vec.end();
+      cit++) {
+	(target[cit->getEndpoint()])[cit->getUserProxyCertificate()].push_back( cit->getJobID() );
+  }
+}
+
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
 				     glite::wms::ice::ice* _iceManager,
@@ -62,7 +79,7 @@ eventStatusPoller::~eventStatusPoller()
 }
 
 //______________________________________________________________________________
-bool eventStatusPoller::getStatus(void) 
+bool eventStatusPoller::getStatus(void)
 {
     /** 
      * _jobstatuslist is filled with return values of CreamProxy::Status(...)
@@ -72,7 +89,7 @@ bool eventStatusPoller::getStatus(void)
     if(_jobstatuslist.size()) {
         for(JobStatusIt it = _jobstatuslist.begin(); it != _jobstatuslist.end(); ++it)
             if(*it) delete(*it);
-    
+
     }
     _jobstatuslist.clear();
   
@@ -162,7 +179,7 @@ bool eventStatusPoller::getStatus(void)
             log_dev->log(log4cpp::Priority::ERROR,
                          string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a InternalException exception: ")
                          + ex.what());
-            return false; 
+            return false;
         } catch(cream_exceptions::DelegationException&) {
             log_dev->log(log4cpp::Priority::ERROR,
                          string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a DelegationException exception"));
