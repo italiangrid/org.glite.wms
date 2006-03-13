@@ -22,6 +22,11 @@ namespace broker {
 namespace {
 
 boost::minstd_rand f_rnd;
+boost::uniform_smallint<size_t> distrib(0, 666);
+boost::variate_generator<
+  boost::minstd_rand,
+  boost::uniform_smallint<size_t>
+> unirand(f_rnd, distrib);
 
 struct clustered_rank_less_than_comparator:
     public unary_function<maxRankSelector::rank_to_match_container_map_type::value_type&, bool>
@@ -51,7 +56,7 @@ struct clustered_rank_greater_than_comparator :
 
 maxRankSelector::maxRankSelector()
 {
-  f_rnd.seed(time(0));
+  f_rnd.seed(std::time(0));
 }
 
 maxRankSelector::~maxRankSelector()
@@ -74,7 +79,7 @@ maxRankSelector::selectBestCE(matchmaking::match_table_t const& match_table)
       clustered_rank_match_table.end(),
       clustered_rank_less_than_comparator()
     );
-
+  // The range is invalid
   if (max_cluster == clustered_rank_match_table.end()) {
     return match_table.end();
   }
@@ -84,14 +89,7 @@ maxRankSelector::selectBestCE(matchmaking::match_table_t const& match_table)
   if (n == 1) {
     return max_cluster->second.front();
   }
-
-  boost::uniform_smallint<size_t> distrib(0, n - 1);
-  boost::variate_generator<
-    boost::minstd_rand,
-    boost::uniform_smallint<size_t>
-    > unirand(f_rnd, distrib);
-
-  return max_cluster->second[unirand()];
+  return max_cluster->second[unirand()%n];
 }
 
 }}} // glite::wms::broker

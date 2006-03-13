@@ -1,9 +1,9 @@
 // File: RBSimpleISMImpl.h
-// Author: Salvatore Monforte <Salvatore.Monforte@ct.infn.it>
+// Author: Salvatore Monforte
 // Copyright (c) 2002 EU DataGrid.
 // For license conditions see http://www.eu-datagrid.org/license.html
 
-// $Id: 
+// $Id$
 
 #ifndef GLITE_WMS_BROKER_RBSIMPLEISMIMPL_H
 #define GLITE_WMS_BROKER_RBSIMPLEISMIMPL_H
@@ -14,18 +14,13 @@ namespace glite {
 namespace wms {
 namespace broker {
 
-class RBSimpleISMImpl : public ResourceBrokerImpl
+struct RBSimpleISMImpl: ResourceBrokerImpl
 {
-public:
-  RBSimpleISMImpl(bool do_prefetch=false);
+   RBSimpleISMImpl(bool = false);
   ~RBSimpleISMImpl();
-  matchmaking::match_table_t* findSuitableCEs(const classad::ClassAd* requestAd);
-private:
-  bool m_prefetch;
+  matchmaking::match_table_t* findSuitableCEs(classad::ClassAd const* requestAd);
 };
 
-} // namespace broker
-} // namespace wms
-} // namespace glite
+}}}
 
 #endif

@@ -72,11 +72,13 @@ RBMinimizeAccessCostImpl::~RBMinimizeAccessCostImpl()
 match_table_t* RBMinimizeAccessCostImpl::findSuitableCEs(const classad::ClassAd* requestAd)
 {
   if (!requestAd) return 0;
- 	  
+
+  classad::ClassAd jdl(*requestAd);
+
   match_table_t* suitableCEs = 0;
   MatchMaker<matchmakerGlueImpl> MM;
   suitableCEs = new match_table_t;
-  MM.checkRequirement(requestAd, *suitableCEs);
+  MM.checkRequirement(jdl, *suitableCEs);
   // prepare the vector of computing element which will be used to call
   // getAccessCost function
   vector<string> CEs;
@@ -84,19 +86,19 @@ match_table_t* RBMinimizeAccessCostImpl::findSuitableCEs(const classad::ClassAd*
 
   BrokerInfoData::LFN_container_type input_data;
   vector<string> data_access_protocol;
-  requestad::get_input_data(*requestAd, input_data);
-  requestad::get_data_access_protocol(*requestAd, data_access_protocol);
+  requestad::get_input_data(jdl, input_data);
+  requestad::get_data_access_protocol(jdl, data_access_protocol);
 
   // Collects all the information about SFNs and involved SEs.
   // NOTE: this information is not CE dependent.
-  BI->retrieveSFNsInfo(*requestAd);
-  BI->retrieveSEsInfo (*requestAd);
+  BI->retrieveSFNsInfo(jdl);
+  BI->retrieveSEsInfo (jdl);
 					
   // call getAccessCost function
   // there is no need to rank the CE using the checkRank function
   // since the access cost will be used as rank value
   bool exits_virtual_organisation;
-  string vo(requestad::get_virtual_organisation(*requestAd, exits_virtual_organisation));
+  string vo(requestad::get_virtual_organisation(jdl, exits_virtual_organisation));
   if (!exits_virtual_organisation) {
   
 	edglog(error) << "VirtualOrganisation field does not exist..." << endl;

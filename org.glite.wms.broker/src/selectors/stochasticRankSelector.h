@@ -12,7 +12,6 @@
 
 #include "glite/wms/broker/selectors/RBSelectionSchema.h"
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/random/linear_congruential.hpp>
 #include <boost/random/uniform_01.hpp>
 
@@ -26,8 +25,6 @@ class stochasticRankSelector : public RBSelectionSchema
   stochasticRankSelector::stochasticRankSelector();
   stochasticRankSelector::~stochasticRankSelector();	
   matchmaking::match_const_iterator selectBestCE(const matchmaking::match_table_t& match_table);
- private:
-  boost::scoped_ptr< boost::uniform_01<boost::minstd_rand> > m_unirand01;
 };	
 
 }; // namespace broker

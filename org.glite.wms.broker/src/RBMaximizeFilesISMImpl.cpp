@@ -28,7 +28,6 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/logger/manipulators.h"
-#include "glite/wms/ism/ism.h"
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
 
@@ -59,11 +58,10 @@ matchmaking::match_table_t* RBMaximizeFilesISMImpl::findSuitableCEs(const classa
 {
   matchmaking::match_table_t* suitableCEs = 0;
   if (requestAd) {
-    boost::recursive_mutex::scoped_lock l(ism::get_ism_mutex());
-    Debug("RBMaximizeFilesISMImpl::findSuitableCEs acquired lock on ism\n"); 
     matchmaking::MatchMaker<matchmaking::matchmakerISMImpl> MM;
     suitableCEs = new matchmaking::match_table_t;
-    MM.checkRequirement(requestAd, *suitableCEs, m_prefetch);
+    classad::ClassAd jdl(*requestAd);
+    MM.checkRequirement(jdl, *suitableCEs, m_prefetch);
 
     // Now we have to filter this CEs to check whether they 
     // satisfy data requirements, or not.
@@ -71,12 +69,12 @@ matchmaking::match_table_t* RBMaximizeFilesISMImpl::findSuitableCEs(const classa
     // Instantiates a BI object and collects all the information
     // about SFNs and involved SEs.
     // NOTE: this information is not CE dependent.
-    BI->retrieveSFNsInfo(*requestAd);
-    BI->retrieveSEsInfo (*requestAd);
+    BI->retrieveSFNsInfo(jdl);
+    BI->retrieveSEsInfo (jdl);
 	
     std::vector<std::string> deletingCEs;
     std::vector<std::string> data_access_protocols;
-    requestad::get_data_access_protocol(*requestAd, data_access_protocols);
+    requestad::get_data_access_protocol(jdl, data_access_protocols);
     map<size_t, set<string> > nFiles2CEs;
     size_t max_files = 0;
 	
@@ -104,14 +102,14 @@ matchmaking::match_table_t* RBMaximizeFilesISMImpl::findSuitableCEs(const classa
 	
     // Remove the CEs which have no CloseSEs speaking the requested protocols
     std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs) );
-    MM.checkRank       (requestAd, *suitableCEs, m_prefetch);
+    MM.checkRank       (jdl, *suitableCEs, m_prefetch);
 	
     //Remove CEs with undefined rank 
     std::accumulate( suitableCEs -> begin(), suitableCEs -> end(), &deletingCEs, insertUnRankedCEsInVector() );
     std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs) ); 
     
     bool FullListMatchResult = false;
-    if (!requestAd->EvaluateAttrBool("FullListMatchResult", FullListMatchResult) || !FullListMatchResult) {
+    if (!jdl.EvaluateAttrBool("FullListMatchResult", FullListMatchResult) || !FullListMatchResult) {
 
       const set<string>& CEs_class( nFiles2CEs[max_files] );
 
@@ -120,7 +118,6 @@ matchmaking::match_table_t* RBMaximizeFilesISMImpl::findSuitableCEs(const classa
       std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
     }
   }
-  Debug("RBMaximizeFilesISMImpl::findSuitableCEs released lock on ism\n");
   return suitableCEs;
 }
 

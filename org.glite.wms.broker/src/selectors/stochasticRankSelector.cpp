@@ -20,12 +20,12 @@ namespace broker {
 
 namespace 
 {
-  static boost::minstd_rand f_rnd(time(0));
+  boost::minstd_rand f_rnd(time(0));
+  boost::uniform_01<boost::minstd_rand> f_unirand01(f_rnd);
 }
 	
 stochasticRankSelector::stochasticRankSelector()
 {
-  m_unirand01.reset( new boost::uniform_01<boost::minstd_rand>(f_rnd) );
 }
  
 stochasticRankSelector::~stochasticRankSelector()
@@ -74,15 +74,17 @@ matchmaking::match_const_iterator stochasticRankSelector::selectBestCE(const mat
   }
 
   double prob_sum   = 0.0;
-  double p = (*m_unirand01)() * rank_sum;
+  double p = f_unirand01() * rank_sum;
   size_t i = 0;
+  matchmaking::match_table_t::const_iterator retval;
   matchmaking::match_table_t::const_iterator best = match_table.begin();
   do {
+    retval = best;
     prob_sum += rank[i++];
-    if ( p < prob_sum ) break;
+    if ( p <= prob_sum ) break;
   } while( ++best != match_table.end() );
 
-  return best;
+  return retval;
 }	
 
 }; // namespace broker

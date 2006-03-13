@@ -65,7 +65,8 @@ match_table_t* RBMaximizeFilesImpl::findSuitableCEs(const classad::ClassAd* requ
           MM.prefetchCEInfo(requestAd, *suitableCEs);
         }
 
-  	MM.checkRequirement(requestAd, *suitableCEs, m_prefetch);
+        classad::ClassAd jdl(*requestAd);
+  	MM.checkRequirement(jdl, *suitableCEs, m_prefetch);
 	
 	// Now we have to filter this CEs to check whether they 
 	// satisfy data requirements, or not.
@@ -73,12 +74,12 @@ match_table_t* RBMaximizeFilesImpl::findSuitableCEs(const classad::ClassAd* requ
 	// Instantiates a BI object and collects all the information
 	// about SFNs and involved SEs.
 	// NOTE: this information is not CE dependent.
-	BI->retrieveSFNsInfo(*requestAd);
-	BI->retrieveSEsInfo (*requestAd);
+	BI->retrieveSFNsInfo(jdl);
+	BI->retrieveSEsInfo (jdl);
 	
 	vector<string> deletingCEs;
 	vector<string> data_access_protocols;
-	requestad::get_data_access_protocol(*requestAd, data_access_protocols);
+	requestad::get_data_access_protocol(jdl, data_access_protocols);
 	map<size_t, set<string> > nFiles2CEs;
 	size_t max_files = 0;
 	
@@ -106,7 +107,7 @@ match_table_t* RBMaximizeFilesImpl::findSuitableCEs(const classad::ClassAd* requ
 	
 	// Remove the CEs which have no CloseSEs speaking the requested protocols
 	std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs) );
-  	MM.checkRank       (requestAd, *suitableCEs, m_prefetch);
+  	MM.checkRank       (jdl, *suitableCEs, m_prefetch);
 	
 	// Remove CEs with undefined rank
 	deletingCEs.clear();
@@ -114,7 +115,7 @@ match_table_t* RBMaximizeFilesImpl::findSuitableCEs(const classad::ClassAd* requ
 	std::for_each(deletingCEs.begin(), deletingCEs.end(), removeCEFromMatchTable(suitableCEs));
 	
         bool FullListMatchResult = false;
-	if (!requestAd->EvaluateAttrBool("FullListMatchResult", FullListMatchResult) || !FullListMatchResult) {
+	if (!jdl.EvaluateAttrBool("FullListMatchResult", FullListMatchResult) || !FullListMatchResult) {
  	
 	  // Remove all CEs which does not belong to the class of CEs with maximum available files
 	  const set<string>& CEs_class( nFiles2CEs[max_files] );

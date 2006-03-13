@@ -44,8 +44,9 @@ matchmaking::match_table_t* RBSimpleImpl::findSuitableCEs(const classad::ClassAd
 	if (m_prefetch) {
   	  MM.prefetchCEInfo(requestAd, *suitableCEs);
 	}
-  	MM.checkRequirement(requestAd, *suitableCEs, m_prefetch);
-  	MM.checkRank       (requestAd, *suitableCEs, m_prefetch);
+        classad::ClassAd jdl(*requestAd);
+  	MM.checkRequirement(jdl, *suitableCEs, m_prefetch);
+  	MM.checkRank       (jdl, *suitableCEs, m_prefetch);
   	//Remove CEs with undefined rank 
   	std::vector<std::string> deletingCEs;
   	std::accumulate( suitableCEs -> begin(), suitableCEs -> end(), &deletingCEs, insertUnRankedCEsInVector() );

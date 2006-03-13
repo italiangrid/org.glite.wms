@@ -19,6 +19,24 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2006/03/13 14:35:59  monforte
+#       Merge against glite-wms-broker_branch_1_5_0_RC15x
+#
+#       Revision 1.8.2.5  2006/02/02 18:38:21  fprelz
+#       Adding matchmaking performance patches (as tested by ECGI at end 2005 on v1.4)
+#
+#       Revision 1.8.2.4  2006/01/13 16:38:20  monforte
+#       fix for bug #14497
+#
+#       Revision 1.8.2.3  2005/12/23 09:03:58  monforte
+#       Fix to bug #14370, Fuzzy rank doesn't work
+#
+#       Revision 1.8.2.2  2005/11/18 14:28:46  monforte
+#       Fix for bug #13782: "WMS seg-fault if fuzzy-rank is activated"
+#
+#       Revision 1.8.2.1  2005/10/28 10:57:24  monforte
+#       Fixed a problem with fuzzy ranking
+#
 #       Revision 1.8  2005/10/15 11:44:01  eronchie
 #       Decreased version to 1 5 0
 #
@@ -55,7 +73,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Broker], [1.5.0])
+AC_INIT([GLite WMS Broker], [1.5.5])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/utility.h])
@@ -69,6 +87,8 @@ AC_REVISION([$Revision$])
 #Environment.
 WORKDIR=`pwd`
 AC_SUBST(WORKDIR)
+
+AC_OPTIMIZE
 
 # Checks for programs.
 AC_PROG_CC
