@@ -24,6 +24,7 @@
 
 #include "glite/wms/common/logger/logger_utils.h"
 
+#include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
@@ -51,6 +52,7 @@ namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace jdl = glite::wms::jdl;
+namespace fs = boost::filesystem;
 
 namespace glite {
 namespace wms {
@@ -73,6 +75,35 @@ std::string get_jc_input()
     *configuration::Configuration::instance()
   );
   return config.jc()->input();
+}
+
+fs::path
+get_classad_file(std::string const& job_id)
+{
+  configuration::JCConfiguration const
+  *jcconfig = configuration::Configuration::instance()->jc();
+
+  fs::path f_classad(
+    fs::normalize_path(jcconfig->submit_file_dir())
+    ,
+    fs::native
+  );
+
+  fs::path reduced(
+    jobid::get_reduced_part(job_id)
+    ,
+    fs::native
+  );
+  f_classad /= reduced;
+
+  fs::path cname(
+    "ClassAd." + jobid::to_filename(job_id)
+    ,
+    fs::native
+  );
+  f_classad /= cname;
+
+  return f_classad;
 }
 
 } // {anonymous}
@@ -107,13 +138,13 @@ submit_command_create(std::auto_ptr<classad::ClassAd> job_ad)
 {
   classad::ClassAd result;
 
-  result.InsertAttr("protocol", std::string("1.0.0"));
-  result.InsertAttr("command", std::string("Submit"));
+  result.InsertAttr("Protocol", std::string("1.0.0"));
+  result.InsertAttr("Command", std::string("Submit"));
   result.InsertAttr("Source", 2);
   std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
-  args->Insert("jobad", job_ad.get());
+  args->Insert("JobAd", job_ad.get());
   job_ad.release();
-  result.Insert("arguments", args.get());
+  result.Insert("Arguments", args.get());
   args.release();
 
   return result;
@@ -190,13 +221,31 @@ cancel_command_create(
 {
   classad::ClassAd result;
 
-  result.InsertAttr("version", std::string("1.0.0"));
-  result.InsertAttr("command", std::string("jobcancel"));
+  result.InsertAttr("Protocol", std::string("1.0.0"));
+  result.InsertAttr("Command", std::string("Cancel"));
+  result.InsertAttr("Source", 2);
+
   std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
-  args->InsertAttr(jdl::JDL::JOBID, job_id);
-  args->InsertAttr(jdl::JDL::LB_SEQUENCE_CODE, sequence_code);
-  args->InsertAttr(jdl::JDLPrivate::USERPROXY, user_x509_proxy);
-  result.InsertAttr("arguments", args.get());
+  args->InsertAttr("Force", false); // -f condor switch command
+
+  classad::ClassAd *ad;
+  std::string const ad_file = get_classad_file(job_id).native_file_string();
+  std::ifstream ifs(ad_file.c_str());
+  classad::ClassAdParser parser;
+  ad = parser.ParseClassAd(ifs);
+  if( ad != NULL ) {
+    bool good = false;
+    std::string log_file(glite::wms::jdl::get_log(*ad, good));
+    if (!log_file.empty() and good) {
+      args->InsertAttr("LogFile", log_file); //condor log
+    }
+  }
+  args->InsertAttr("ProxyFile", user_x509_proxy); //ps: they're not the attribute names in
+  args->InsertAttr("SequenceCode", sequence_code); // requestad::JDLPrivate
+  args->InsertAttr("JobId", job_id);
+  args->InsertAttr("edg_jobid", job_id); // for CREAM
+
+  result.Insert("Arguments", args.get());
   args.release();
 
   return result;
