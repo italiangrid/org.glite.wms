@@ -96,7 +96,7 @@ public:
      * as provided by WMP.
      */  
 	virtual void match(const std::string &jdl, const std::string &file,
-		const std::string &proxy);
+		const std::string &proxy, void * result);
 
 private:
 

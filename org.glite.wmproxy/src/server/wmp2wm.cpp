@@ -214,7 +214,7 @@ computePipePath(const string &listmatch_path)
 }
 
 void
-insertUserProxy(classad::ClassAd &convertedAd,  string &pipe_path,
+insertUserProxy(classad::ClassAd &convertedAd, string pipe_path,
 	const string &listmatchpath, const string &credentials_file)
 {
 	GLITE_STACK_TRY("insertUserProxy()");
@@ -239,7 +239,8 @@ insertUserProxy(classad::ClassAd &convertedAd,  string &pipe_path,
 }
 
 void
-WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
+WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
+	void * result)
 {
 	GLITE_STACK_TRY("match()");
 	edglog_fn("wmp2wm::match");
@@ -292,7 +293,6 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
 		} else if (!ad->hasAttribute(LISTMATCH_MATCH_RESULT)) {
 			errormsg = "Error during matchmaking: no match result attribute";
 		}
-		delete ad;
 	} else {
 		errormsg = "Error during matchmaking: empty result list";
 	}
@@ -327,7 +327,6 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy)
 		}
 	}
 	
-	void * result;
 	StringAndLongList *list = new StringAndLongList();
 	list->file = file;
     ((jobListMatchResponse*)result)->CEIdAndRankList = list;

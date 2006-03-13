@@ -2108,7 +2108,8 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		
 		wmputilities::createSuidDirectory(conf.getListMatchRootPath());
 		boost::details::pool::singleton_default<WMP2WM>::instance()
-			.match(ad->toString(), conf.getListMatchRootPath(), delegatedproxy);
+			.match(ad->toString(), conf.getListMatchRootPath(), delegatedproxy,
+				&jobListMatch_response);
 		
 		delete ad;
 		

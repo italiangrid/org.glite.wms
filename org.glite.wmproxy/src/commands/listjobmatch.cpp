@@ -43,7 +43,7 @@ namespace wmputilities  = glite::wms::wmproxy::utilities;
 using namespace std;
 
 string
-listjobmatchex(const string &credentials_file,  string &pipepath)
+listjobmatchex(const string &credentials_file, string &pipepath)
 {
 	int iserror;
     std::string reason;
