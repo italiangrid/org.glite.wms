@@ -18,6 +18,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/bind.hpp>
 #include <boost/random/linear_congruential.hpp>
 #include <boost/random/uniform_smallint.hpp>
@@ -28,6 +29,7 @@
 #include "match_utils.h"
 #include "lb_utils.h"
 #include "submission_utils.h"
+#include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
@@ -320,19 +322,41 @@ ClassAdPtr Plan(classad::ClassAd const& jdl)
 
 int const EXIT_ABORT_NODE = 99;
 
-void check_retry_counts(classad::ClassAd const& jdl, LB_Events const& events)
-{
-  int deep_count;
-  int shallow_count;
-  boost::tie(deep_count, shallow_count) = get_retry_counts(events);
-
-  check_shallow_count(jdl, shallow_count);
-  check_deep_count(jdl, deep_count);
-}
-
 class RequestExpired {};
 class CannotGenerateSubmitJDL {};
 class CannotGenerateSubmitFile {};
+
+ClassAdPtr do_match(classad::ClassAd const& jdl, ContextPtr context)
+{
+  // keep retrying to match periodically for a while
+
+  unsigned int const five_minutes = 300;
+  unsigned int const one_day = 86400;
+  std::time_t timeout = std::time(0) + one_day;
+
+  bool exists = false;
+  int expiry_time = jdl::get_expiry_time(jdl, exists);
+  if (exists) {
+    timeout = expiry_time;
+  }
+
+  ClassAdPtr result;
+
+  while (!result && std::time(0) < timeout) {
+    std::string pending_message("no resources available");
+    try {
+      result = Plan(jdl);
+    } catch (planning_error const& e) {
+      pending_message = e.what();
+    }
+    if (!result) {
+      log_pending(context, pending_message);
+      ::sleep(five_minutes);
+    }
+  }
+
+  return result;
+}
 
 void do_it(
   classad::ClassAd& jdl,
@@ -341,35 +365,59 @@ void do_it(
   jobid::JobId const& jobid
 )
 {
+  // TODO check if the request proxy has expired
+  // TODO provide return error for get_interesting_events
+
   LB_Events const lb_events(get_interesting_events(context, jobid));
-  check_retry_counts(jdl, lb_events);
+
+  int deep_count;
+  int shallow_count;
+  boost::tie(deep_count, shallow_count) = get_retry_counts(lb_events);
 
   typedef std::vector<std::pair<std::string, int> > previous_matches_type;
   previous_matches_type const previous_matches(
     get_previous_matches(lb_events)
   );
 
+  bool const shallow_resubmission_is_enabled(
+    shallow_resubmission_is_enabled(jdl)
+  );
+  bool const is_resubmission = !previous_matches.empty();
+
+  fs::path const token_file(get_reallyrunning_token(jobid));
+
+  if (shallow_resubmission_is_enabled) {
+
+    if (is_resubmission) {
+
+      if (fs::exists(token_file)) { // shallow resubmission
+        check_shallow_count(jdl, shallow_count);
+        log_resubmission_shallow(context, token_file.native_file_string());
+      } else {                  // deep resubmission
+        check_deep_count(jdl, deep_count);
+        log_resubmission_deep(context, token_file.native_file_string());
+      } 
+
+    }
+
+    create_token(token_file);
+
+  } else {
+
+    if (is_resubmission) {
+      check_deep_count(jdl, deep_count);
+      log_resubmission_deep(context);
+    }
+
+  }
+
+  utilities::scope_guard create_token_undo(
+    boost::bind(fs::remove, token_file)
+  );
+
   jdl::set_edg_previous_matches_ex(jdl, previous_matches);
 
-  // keep retrying to match periodically for a while
-
-  unsigned int const five_minutes = 300;
-  unsigned int const one_day = 86400;
-
-  std::time_t const timeout = std::time(0) + one_day;
-  ClassAdPtr planned_ad;
-  while (!planned_ad && std::time(0) < timeout) {
-    std::string pending_message("no resources available");
-    try {
-      planned_ad = Plan(jdl);
-    } catch (planning_error const& e) {
-      pending_message = e.what();
-    }
-    if (!planned_ad) {
-      log_pending(context, pending_message);
-      ::sleep(five_minutes);
-    }
-  }
+  ClassAdPtr planned_ad = do_match(jdl, context);
 
   if (!planned_ad) {
     throw RequestExpired();
@@ -392,6 +440,8 @@ void do_it(
   if (!os) {
     throw CannotGenerateSubmitFile();
   }
+
+  create_token_undo.dismiss();
 }
 
 } // {anonymous}
