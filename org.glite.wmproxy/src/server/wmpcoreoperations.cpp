@@ -1449,7 +1449,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			if (jad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 				jad->delAttribute(JDL::LB_SEQUENCE_CODE);
 			}
-			jad->addAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+			jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 			
 			if (jad->hasAttribute(JDL::SHORT_DEADLINE_JOB)) {
 				classad::ExprTree * sdjrequirements = conf.getSDJRequirements();
