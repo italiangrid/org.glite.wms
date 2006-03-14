@@ -101,6 +101,7 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 {
     urls.clear();
     string ceurl;
+    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
     for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
         it != iceUtil::jobCache::getInstance()->end(); it++) {
 

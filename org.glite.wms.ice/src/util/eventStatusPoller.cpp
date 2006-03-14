@@ -92,7 +92,7 @@ bool eventStatusPoller::getStatus(void)
 
     }
     _jobstatuslist.clear();
-  
+
     creamClient->clearSoap();
 
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
@@ -150,7 +150,10 @@ bool eventStatusPoller::getStatus(void)
                     << "] was not found on CREAM; "
                     << "Removing from the job cache"
                     << log4cpp::CategoryStream::ENDLINE;
-                boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+
+		// This lock is not needed because of that one at the beginning
+		// of this method
+                //boost::recursive_mutex::scoped_lock M( jobCache::mutex );
                 jobIt = cache->erase( jobIt );
                 jobIt--; // this is necessary to avoid skipping the next item
             } else {
@@ -378,7 +381,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
               << "Fetching Job for ID [" << *it << "]"
               << log4cpp::CategoryStream::ENDLINE;
 
-          jobCache::iterator jit = jobCache::getInstance()->lookupByCreamJobID( *it );
+          jobCache::iterator jit = cache->lookupByCreamJobID( *it );
           cid = jit->getJobID();
           log_dev->infoStream() 
               << "eventStatusPoller::purgeJobs() - "
@@ -391,7 +394,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	  creamClient->Authenticate( jit->getUserProxyCertificate());
           oneJobToPurge.push_back( jit->getJobID() );
           creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
-          jit = jobCache::getInstance()->erase( jit );
+          jit = cache->erase( jit );
           jit--;
       } catch (ClassadSyntax_ex& ex) {
 	/**

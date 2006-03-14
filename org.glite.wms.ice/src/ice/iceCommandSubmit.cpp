@@ -160,6 +160,10 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     }
 
     // Put job in the cache; remember position in job_pos
+    /**
+     * This mutex protects all cache accesses in the execute method
+     */
+    boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
     util::jobCache::iterator job_pos = _cache->put( theJob );
 
     log_dev->infoStream() 
@@ -253,20 +257,21 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         _lb_logger->logEvent( new ice_util::cream_transfer_ok_event( theJob ) );
         _lb_logger->logEvent( new ice_util::cream_accepted_event( theJob ) );
 
-        boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
+	// this lock is not needed because of that one at the beginning of the
+	// method
+        //boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
         // put(...) accepts arg by reference, but
         // the implementation puts the arg in the memory hash by copying it. So
         // passing a *pointer should not produce problems
-        util::jobCache::getInstance()->put( theJob );
-    } // this end-scope unlock the listener that now can
+        _cache->put( theJob );
+    } // this end-scope unlock the listener that now can accept new notifications
 
     /*
      * here must check if we're subscribed to the CEMon service
      * in order to receive the status change notifications
      * of job just submitted. But only if listener is ON
      */
-
     bool _tmp_start_listener;
     {
         boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
@@ -280,14 +285,14 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
             + confMgr->getCEMonUrlPostfix();
       }
-        if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
+      if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
             /* MUST SUBSCRIBE TO THIS CEMON */
             log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Not subscribed to ["
                 << cemon_url << "]. Going to subscribe to it..."
                 << log4cpp::CategoryStream::ENDLINE;
 
-	{
+      {
 	    boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
             log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
@@ -296,17 +301,17 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << confMgr->getSubscriptionDuration()
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
-	}
-            {
-                /*
-                 * This is the 1st call of
-                 * subscriptionManager::getInstance() and it's safe
-                 * because the singleton has already been created by
-                 * ice-core module.
-                 */
-                boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-                if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
-                    log_dev->errorStream()
+      }
+      {
+        /**
+        * This is the 1st call of
+        * subscriptionManager::getInstance() and it's safe
+        * because the singleton has already been created by
+	 * ice-core module.
+        */
+         boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+         if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
+           log_dev->errorStream()
                         << "iceCommandSubmit::execute() - Subscribe to ["
                         << cemon_url << "] failed! Will not receive status notifications from it..."
                         << log4cpp::CategoryStream::ENDLINE;
@@ -324,7 +329,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 	    }
         }
     }
-}
+} // execute
 
 //______________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( ice_util::ClassadSyntax_ex& )
