@@ -451,10 +451,10 @@ else
   log_error "${__job} not found or unreadable"
 fi
 
-#user script
-if [ -f "${__ante_job}" ]; then
-  chmod +x "${__ante_job}" 2>/dev/null
-  ./${__ante_job}
+#user script (before taking the token, shallow-sensitive)
+if [ -f "${__prologue}" ]; then
+  chmod +x "${__prologue}" 2>/dev/null
+  ./${__prologue} "${__prologue_arguments}"
   if [ $? -ne 0 ]; then
     log_error "User script failed with error $?"
   fi

@@ -188,9 +188,18 @@ try {
   }
 
   /* Not Mandatory */
-  bool   b_arg;
+  bool b_arg;
   std::string arguments(jdl::get_arguments(*m_ad, b_arg));
  
+  /* Not Mandatory */
+  std::string prologue;
+  std::string prologue_arguments;
+  try {
+    prologue = jdl::get_prologue(*m_ad);
+    prologue_arguments = jdl::get_prologue_arguments(*m_ad);
+  } catch (jdl::CannotGetAttribute const& e) {
+  }
+
   /* Not Mandatory */
   vector<std::string> env;
   utilities::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
@@ -743,6 +752,8 @@ try {
   jw->brokerinfo();
   jw->create_subdir();
   jw->arguments(arguments);
+  jw->prologue(prologue);
+  jw->prologue_arguments(prologue_arguments);
   jw->job_Id(job_id);
   jw->job_id_to_filename(jobid_to_file);
   jw->environment(env);

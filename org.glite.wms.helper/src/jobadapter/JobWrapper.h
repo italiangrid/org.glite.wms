@@ -243,6 +243,13 @@ public:
 
   void set_output_sandbox_base_dest_uri(URL const&);
 
+  /**
+    * Prologue is a custom script provided by the user
+    * for environment checking or to handle MPI calls
+    */
+  void prologue(std::string const&);
+  void prologue_arguments(std::string const&);
+
 private:
   boost::shared_ptr<pimpl> m_pimpl;
 

@@ -83,6 +83,9 @@ struct pimpl {
   std::string               m_perusal_filesdesturi;
   std::string               m_perusal_listfileuri;
   
+  std::string               m_prologue;
+  std::string               m_prologue_arguments;
+
   int                       m_job_type;
   bool                      m_osb_wildcards_support;
 };
@@ -103,6 +106,18 @@ JobWrapper::JobWrapper(const std::string& job)
 
 JobWrapper::~JobWrapper()
 {
+}
+
+void
+JobWrapper::prologue(const std::string& p)
+{
+  m_pimpl->m_prologue = p;
+}
+
+void
+JobWrapper::prologue_arguments(const std::string& p_a)
+{
+  m_pimpl->m_prologue_arguments = p_a;
 }
 
 void
@@ -441,6 +456,8 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__perusal_timeinterval", m_pimpl->m_perusal_timeinterval) &&
     dump(os, "__perusal_filesdesturi", m_pimpl->m_perusal_filesdesturi) &&
     dump(os, "__perusal_listfileuri", m_pimpl->m_perusal_listfileuri) &&
+    dump(os, "__prologue", m_pimpl->m_prologue) &&
+    dump(os, "__prologue_arguments", m_pimpl->m_prologue_arguments) &&
     dump(os, "__output_data", m_pimpl->m_outputdata != 0) &&
     dump(os, "__output_file", output_files) &&
     dump(os, "__output_lfn", logical_file_names) &&
