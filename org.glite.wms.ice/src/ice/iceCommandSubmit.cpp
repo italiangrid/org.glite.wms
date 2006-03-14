@@ -285,6 +285,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
             + confMgr->getCEMonUrlPostfix();
       }
+      boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
       if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
             /* MUST SUBSCRIBE TO THIS CEMON */
             log_dev->infoStream()
@@ -302,33 +303,29 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
       }
-      {
-        /**
-        * This is the 1st call of
-        * subscriptionManager::getInstance() and it's safe
-        * because the singleton has already been created by
-	 * ice-core module.
-        */
-         boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-         if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
-           log_dev->errorStream()
-                        << "iceCommandSubmit::execute() - Subscribe to ["
-                        << cemon_url << "] failed! Will not receive status notifications from it..."
-                        << log4cpp::CategoryStream::ENDLINE;
-                } else {
-                    log_dev->infoStream()
-                        << "iceCommandSubmit::execute() - Subscribed with ID ["
-                        << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
-                        << log4cpp::CategoryStream::ENDLINE;
-                    
-                    {
-                        boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
-                        util::subscriptionCache::getInstance()->insert(cemon_url);
-                    }
-                }
-	    }
-        }
-    }
+
+      /**
+      * This is the 1st call of
+      * subscriptionManager::getInstance() and it's safe
+      * because the singleton has already been created by
+      * ice-core module.
+      */
+       boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+       if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
+         log_dev->errorStream()
+                      << "iceCommandSubmit::execute() - Subscribe to ["
+                      << cemon_url << "] failed! Will not receive status notifications from it..."
+                      << log4cpp::CategoryStream::ENDLINE;
+       } else {
+         log_dev->infoStream()
+                      << "iceCommandSubmit::execute() - Subscribed with ID ["
+                      << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
+                      << log4cpp::CategoryStream::ENDLINE;
+
+         util::subscriptionCache::getInstance()->insert(cemon_url);
+       }
+     }
+   }
 } // execute
 
 //______________________________________________________________________________
