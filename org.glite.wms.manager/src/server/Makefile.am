@@ -59,7 +59,7 @@ libglite_wms_manager_server_la_SOURCES = \
 glite_wms_planner_SOURCES = glite-wms-planner.cpp
 glite_wms_planner_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_planner_LDADD   = \
-	$(MNGR_SERVER) \
+	libglite_wms_manager_server.la \
 	$(GLITE_WMS_HELPER_LIBS) \
 	$(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(GLITE_WMS_PURGER_LIBS) \

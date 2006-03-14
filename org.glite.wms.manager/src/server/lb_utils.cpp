@@ -487,6 +487,20 @@ lb_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr user_context)
   return boost::make_tuple(result_error, result_context);
 }
 
+// return error of the last tried logging call
+int
+lb_proxy_log(boost::function<int(edg_wll_Context)> log_f, ContextPtr context)
+{
+  int lb_error = log_f(context.get());
+  unsigned int const ten_seconds = 10;
+  for (int i = 1; i < 20 && lb_error && lb_error != EINVAL; ++i) {
+      ::sleep(ten_seconds);
+      lb_error = log_f(context.get());
+  }
+
+  return lb_error;
+}
+
 std::string
 get_logger_message(
   std::string const& function_name,

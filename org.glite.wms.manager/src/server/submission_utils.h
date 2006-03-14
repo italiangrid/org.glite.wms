@@ -66,8 +66,9 @@ boost::filesystem::path
 get_reallyrunning_token(glite::wmsutils::jobid::JobId const& id);
 void check_shallow_count(classad::ClassAd const& jdl, int count);
 void check_deep_count(classad::ClassAd const& jdl, int count);
-bool shallow_resubmission_is_disabled(classad::ClassAd const& jdl);
+bool shallow_resubmission_is_enabled(classad::ClassAd const& jdl);
 void create_token(boost::filesystem::path const& p);
+bool is_proxy_expired(glite::wmsutils::jobid::JobId const& id);
 
 }}}} // glite::wms::manager::server
 

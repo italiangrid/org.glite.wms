@@ -7,6 +7,7 @@
 
 #include "DAGManHelper.h"
 #include "match_utils.h"
+#include "dagman_utils.h"
 #include <memory>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -33,6 +34,7 @@
 #include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/JCConfiguration.h"
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -269,7 +271,7 @@ public:
     std::string const glite_wms_location(getenv_GLITE_WMS_LOCATION);
 
     fs::path result(glite_wms_location, fs::native);
-    result /= fs::path("libexec/glite-wms-planner.sh", fs::native);
+    result /= fs::path("libexec/glite-wms-planner", fs::native);
 
     return result;
   }
@@ -304,6 +306,65 @@ public:
 
 };
 
+int get_deep_retry_count(classad::ClassAd const& jdl)
+{
+  bool valid = false;
+  int result = jdl::get_retry_count(jdl, valid);
+  if (!valid || result < 0) {
+    result = 0;
+  }
+  return result;
+}
+
+int get_sys_max_deep_retry_count()
+{
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  int const result = config.wm()->max_retry_count();
+
+  return result >= 0 ? result : 0;
+}
+
+int get_shallow_retry_count(classad::ClassAd const& jdl)
+{
+  bool valid = false;
+  int result = jdl::get_shallow_retry_count(jdl, valid);
+  if (!valid || result < 0) {
+    result = 0;
+  }
+  return result;
+}
+
+int get_sys_max_shallow_retry_count()
+{
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  int const result = config.wm()->max_shallow_retry_count();
+
+  return result >= 0 ? result : 0;
+}
+
+void fix_retry_count(jdl::DAGNodeInfo& node_info, classad::ClassAd const& jdl)
+{
+  int const job_deep_retry_count(get_deep_retry_count(jdl));
+  int const sys_deep_retry_count(get_sys_max_deep_retry_count());
+  int const job_shallow_retry_count(get_shallow_retry_count(jdl));
+  int const sys_shallow_retry_count(get_sys_max_shallow_retry_count());
+
+  int const deep_retry_count(
+    std::min(job_deep_retry_count, sys_deep_retry_count)
+  );
+  int const shallow_retry_count(
+    std::min(job_shallow_retry_count, sys_shallow_retry_count)
+  );
+
+  // upper limit on the number of retries; the planner will check the actual
+  // limits
+  node_info.retry_count((deep_retry_count + 1) * (shallow_retry_count + 1));
+}
+
 class DescriptionAdToSubmitFile
 {
   jdl::DAGAd* m_dagad;
@@ -331,6 +392,9 @@ public:
 
     jdl::DAGNodeInfo new_node_info = node_info;
     new_node_info.description_file_for_ad(submit_file.native_file_string());
+
+    fix_retry_count(new_node_info, *ad);
+
     // TODO should change node type too
     m_dagad->replace_node(name, new_node_info);
   }
@@ -552,7 +616,10 @@ struct InsertJobInSubmitFile
 
     int retry_count = node_info.retry_count();
     if (retry_count > 0) {
-      os << "RETRY " << node_name << ' ' << node_info.retry_count() << '\n';
+      os << "RETRY " << node_name << ' '
+         << node_info.retry_count()
+         << " UNLESS-EXIT " << EXIT_ABORT_NODE
+         << '\n';
     }
 
     return osp;
@@ -590,7 +657,12 @@ to_dag_description(std::ostream& os, const jdl::DAGAd& ad)
   return os;
 }
 
-void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
+void
+create_dagman_job_ad(
+  classad::ClassAd& result,
+  Paths const& paths,
+  int max_running_nodes
+)
 {
   jdl::set_type(result, "dag");
   jdl::set_universe(result, "scheduler");
@@ -616,7 +688,9 @@ void create_dagman_job_ad(classad::ClassAd& result, Paths const& paths)
             << " -Lockfile " << paths.lock_file().native_file_string()
             << " -Dag " << paths.dag_description().native_file_string()
             << " -Rescue " << paths.rescue().native_file_string()
-            << " -Condorlog " << paths.dag_log().native_file_string();
+            << " -Condorlog " << paths.dag_log().native_file_string()
+            << " -maxjobs " << max_running_nodes;
+
   jdl::set_arguments(result, arguments.str());
   jdl::set_ce_id(result, "dagman");
 
@@ -669,6 +743,14 @@ nodes_collocation_match(jdl::DAGAd const& dag)
   }
 
   return result;
+}
+
+int get_max_dag_running_nodes()
+{
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  return config.wm()->max_dagrunning_nodes();
 }
 
 classad::ClassAd* f_resolve(classad::ClassAd const& input_ad)
@@ -732,7 +814,15 @@ try {
   to_dag_description(dag_description, dagad) << '\n';
 
   // create the job ad, to be then converted by the JC to a submit file
-  create_dagman_job_ad(*result, paths);
+  int max_running_nodes = dagad.max_running_nodes();
+  if (max_running_nodes == 0) {
+    max_running_nodes = 1;
+  }
+  int const sys_max_running_nodes = get_max_dag_running_nodes();
+  if (0 < sys_max_running_nodes && sys_max_running_nodes < max_running_nodes) {
+    max_running_nodes = sys_max_running_nodes;
+  }
+  create_dagman_job_ad(*result, paths, max_running_nodes);
 
   // touch the lock file to force dagman to start in recovery mode. This is
   // needed because currently dagman (in non-recovery mode) removes the log

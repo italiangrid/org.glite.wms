@@ -13,8 +13,6 @@
 #include <boost/thread/xtime.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/bind.hpp>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
 #include "signal_handling.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
@@ -29,6 +27,7 @@
 #include "glite/lb/producer.h"
 #include "glite/wms/jdl/JobAdManipulation.h"
 #include "lb_utils.h"
+#include "submission_utils.h"
 #include "filelist_utils.h"
 #include "filelist_recovery.h"
 
@@ -119,21 +118,6 @@ void do_transitions_for_cancel(
       break;
     }
   }
-}
-
-bool is_proxy_expired(jobid::JobId const& id)
-{
-  std::string proxy_file = get_user_x509_proxy(id);
-
-  std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
-  if (!rfd) return true;
-  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
-
-  ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
-  if (!rcert) return true;
-  boost::shared_ptr<X509> cert(rcert, ::X509_free);
-
-  return X509_cmp_current_time(X509_get_notAfter(rcert)) <= 0;
 }
 
 void do_transitions_for_submit(

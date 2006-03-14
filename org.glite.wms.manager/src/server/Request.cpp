@@ -209,7 +209,6 @@ Request::~Request()
       break;
 
     case Request::CANCELLED:
-      log_cancelled(m_lb_context);
       apply(m_input_cleaners);
       break;
 

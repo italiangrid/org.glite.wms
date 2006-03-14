@@ -142,9 +142,9 @@ void process_match(RequestPtr req)
   req->state(Request::DELIVERED);
 }
 
-bool shallow_resubmission_is_disabled(RequestPtr req)
+bool shallow_resubmission_is_enabled(RequestPtr req)
 {
-  return server::shallow_resubmission_is_disabled(*req->jdl());
+  return server::shallow_resubmission_is_enabled(*req->jdl());
 }
 
 void check_deep_count(RequestPtr req, int current_count)
@@ -186,14 +186,7 @@ void process_submit(RequestPtr req, WMReal& wm)
 
     } else {
 
-      if (shallow_resubmission_is_disabled(req)) {
-
-        if (req->marked_resubmitted()) {
-          check_deep_count(req, deep_count);
-          log_resubmission_deep(req->lb_context());
-        }
-
-      } else {
+      if (shallow_resubmission_is_enabled(req)) {
 
         fs::path const token_file(get_reallyrunning_token(req));
 
@@ -214,6 +207,13 @@ void process_submit(RequestPtr req, WMReal& wm)
         }
 
         create_token(token_file);
+
+      } else {
+
+        if (req->marked_resubmitted()) {
+          check_deep_count(req, deep_count);
+          log_resubmission_deep(req->lb_context());
+        }
 
       }
 
@@ -274,6 +274,8 @@ try {
         // submit or match
         if (req->marked_cancelled()) {
           // shortcut submission and cancellation
+          log_cancelled(req->lb_context());
+
           // see transition management in the dispatcher
           req->state(Request::RECOVERABLE);
         } else {
@@ -290,6 +292,8 @@ try {
         // resubmit
         if (req->marked_cancelled()) {
           // shortcut resubmission and cancellation
+          log_cancelled(req->lb_context());
+
           // see the transition management in the dispatcher
           req->state(Request::RECOVERABLE);
         } else {
@@ -305,7 +309,7 @@ try {
       } else {
 
         // what's this?
-        req->state(Request::UNRECOVERABLE, "invalid request");
+        req->state(Request::UNRECOVERABLE, "internal management error");
 
       }
 

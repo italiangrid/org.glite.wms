@@ -29,6 +29,7 @@
 #include "match_utils.h"
 #include "lb_utils.h"
 #include "submission_utils.h"
+#include "dagman_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/utilities/classad_utils.h"
@@ -65,6 +66,9 @@ void usage(std::ostream& os)
     << "Usage: " << program_name << " --help\n"
     << "   or: " << program_name << " SOURCE DEST\n";
 }
+
+unsigned int const five_minutes = 300;
+unsigned int const one_day = 86400;
 
 std::string get_filelist_name()
 {
@@ -199,13 +203,11 @@ is_cream_ce(match_type const& ce)
   return boost::regex_match(ce.get<0>(), cream_re);
 }
 
-ClassAdPtr Plan(classad::ClassAd const& jdl)
+ClassAdPtr Plan(classad::ClassAd const& jdl, jobid::JobId const& jobid)
 {
-  jobid::JobId job_id(jdl::get_edg_jobid(jdl));
-
   // generate named pipe name
   std::string output_file(get_matchpipe_dir());
-  output_file += '/' + job_id.getUnique();
+  output_file += '/' + jobid.getUnique();
 
   // create fifo
   if (::mkfifo(output_file.c_str(), S_IRUSR | S_IWUSR) == -1) {
@@ -304,7 +306,7 @@ ClassAdPtr Plan(classad::ClassAd const& jdl)
     brokerinfo->Insert("DataAccessProtocol", DAC->Copy());
   }
 
-  fs::path brokerinfo_file(get_input_sandbox_path(job_id) / ".BrokerInfo");
+  fs::path brokerinfo_file(get_input_sandbox_path(jobid) / ".BrokerInfo");
   std::ofstream brokerinfo_os(brokerinfo_file.native_file_string().c_str());
   assert(brokerinfo_os);
 
@@ -320,18 +322,19 @@ ClassAdPtr Plan(classad::ClassAd const& jdl)
   return result;
 }
 
-int const EXIT_ABORT_NODE = 99;
-
 class RequestExpired {};
+class ProxyExpired {};
 class CannotGenerateSubmitJDL {};
 class CannotGenerateSubmitFile {};
 
-ClassAdPtr do_match(classad::ClassAd const& jdl, ContextPtr context)
+ClassAdPtr do_match(
+  classad::ClassAd const& jdl,
+  jobid::JobId const& jobid,
+  ContextPtr context
+)
 {
   // keep retrying to match periodically for a while
 
-  unsigned int const five_minutes = 300;
-  unsigned int const one_day = 86400;
   std::time_t timeout = std::time(0) + one_day;
 
   bool exists = false;
@@ -343,9 +346,12 @@ ClassAdPtr do_match(classad::ClassAd const& jdl, ContextPtr context)
   ClassAdPtr result;
 
   while (!result && std::time(0) < timeout) {
+    if (is_proxy_expired(jobid)) {
+      throw ProxyExpired();
+    }
     std::string pending_message("no resources available");
     try {
-      result = Plan(jdl);
+      result = Plan(jdl, jobid);
     } catch (planning_error const& e) {
       pending_message = e.what();
     }
@@ -365,8 +371,7 @@ void do_it(
   jobid::JobId const& jobid
 )
 {
-  // TODO check if the request proxy has expired
-  // TODO provide return error for get_interesting_events
+#warning TODO provide return error for get_interesting_events
 
   LB_Events const lb_events(get_interesting_events(context, jobid));
 
@@ -378,6 +383,12 @@ void do_it(
   previous_matches_type const previous_matches(
     get_previous_matches(lb_events)
   );
+
+  std::vector<std::string> previous_matches_simple;
+  for (previous_matches_type::const_iterator it = previous_matches.begin();
+       it != previous_matches.end(); ++it) {
+    previous_matches_simple.push_back(it->first);
+  }
 
   bool const shallow_resubmission_is_enabled(
     shallow_resubmission_is_enabled(jdl)
@@ -416,8 +427,19 @@ void do_it(
   );
 
   jdl::set_edg_previous_matches_ex(jdl, previous_matches);
+  jdl::set_edg_previous_matches(jdl, previous_matches_simple);
 
-  ClassAdPtr planned_ad = do_match(jdl, context);
+  // don't match less than five minutes apart
+  {
+    unsigned int t = previous_matches.back().second;
+    unsigned int now = std::time(0);
+    unsigned int p = now - t;
+    if (p < five_minutes) {
+      ::sleep(five_minutes - p);
+    }
+  }
+
+  ClassAdPtr planned_ad = do_match(jdl, jobid, context);
 
   if (!planned_ad) {
     throw RequestExpired();
@@ -526,6 +548,8 @@ try {
     error = "hit job shallow retry count (" + e.count() + ')';
   } catch (RequestExpired&) {
     error = "request expired";
+  } catch (ProxyExpired&) {
+    error = "X509 proxy expired";
   } catch (CannotGenerateSubmitJDL&) {
     error = "cannot generate the submission JDL";
   } catch (CannotGenerateSubmitFile&) {

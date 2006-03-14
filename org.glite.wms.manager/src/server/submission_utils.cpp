@@ -7,6 +7,9 @@
 
 #include "submission_utils.h"
 #include <classad_distribution.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include "lb_utils.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
@@ -136,14 +139,29 @@ int get_job_shallow_count(classad::ClassAd const& jdl)
   return result;
 }
 
-bool shallow_resubmission_is_disabled(classad::ClassAd const& jdl)
+bool shallow_resubmission_is_enabled(classad::ClassAd const& jdl)
 {
-  return get_job_shallow_count(jdl) == -1;
+  return get_job_shallow_count(jdl) != -1;
 }
 
 void create_token(fs::path const& p)
 {
   fs::ofstream _(p);
+}
+
+bool is_proxy_expired(jobid::JobId const& id)
+{
+  std::string proxy_file = get_user_x509_proxy(id);
+
+  std::FILE* rfd = std::fopen(proxy_file.c_str(), "r");
+  if (!rfd) return true;
+  boost::shared_ptr<std::FILE> fd(rfd, std::fclose);
+
+  ::X509* rcert = ::PEM_read_X509(rfd, 0, 0, 0);
+  if (!rcert) return true;
+  boost::shared_ptr<X509> cert(rcert, ::X509_free);
+
+  return X509_cmp_current_time(X509_get_notAfter(rcert)) <= 0;
 }
 
 }}}} // glite::wms::manager::server

@@ -80,25 +80,23 @@ std::string get_jc_input()
 fs::path
 get_classad_file(std::string const& job_id)
 {
-  configuration::JCConfiguration const
-  *jcconfig = configuration::Configuration::instance()->jc();
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
 
   fs::path f_classad(
-    fs::normalize_path(jcconfig->submit_file_dir())
-    ,
+    fs::normalize_path(config.jc()->submit_file_dir()),
     fs::native
   );
 
   fs::path reduced(
-    jobid::get_reduced_part(job_id)
-    ,
+    jobid::get_reduced_part(job_id),
     fs::native
   );
   f_classad /= reduced;
 
   fs::path cname(
-    "ClassAd." + jobid::to_filename(job_id)
-    ,
+    "ClassAd." + jobid::to_filename(job_id),
     fs::native
   );
   f_classad /= cname;
@@ -226,24 +224,22 @@ cancel_command_create(
   result.InsertAttr("Source", 2);
 
   std::auto_ptr<classad::ClassAd> args(new classad::ClassAd);
-  args->InsertAttr("Force", false); // -f condor switch command
+  args->InsertAttr("Force", false);
 
-  classad::ClassAd *ad;
   std::string const ad_file = get_classad_file(job_id).native_file_string();
   std::ifstream ifs(ad_file.c_str());
   classad::ClassAdParser parser;
-  ad = parser.ParseClassAd(ifs);
-  if( ad != NULL ) {
+  classad::ClassAd ad;
+  if (parser.ParseClassAd(ifs, ad)) {
     bool good = false;
-    std::string log_file(glite::wms::jdl::get_log(*ad, good));
-    if (!log_file.empty() and good) {
-      args->InsertAttr("LogFile", log_file); //condor log
+    std::string const log_file(glite::wms::jdl::get_log(ad, good));
+    if (!log_file.empty() && good) {
+      args->InsertAttr("LogFile", log_file);
     }
   }
-  args->InsertAttr("ProxyFile", user_x509_proxy); //ps: they're not the attribute names in
-  args->InsertAttr("SequenceCode", sequence_code); // requestad::JDLPrivate
+  args->InsertAttr("ProxyFile", user_x509_proxy);
+  args->InsertAttr("SequenceCode", sequence_code);
   args->InsertAttr("JobId", job_id);
-  args->InsertAttr("edg_jobid", job_id); // for CREAM
 
   result.Insert("Arguments", args.get());
   args.release();
