@@ -12,26 +12,14 @@ lib_LTLIBRARIES = \
 
 
 noinst_HEADERS = \
-	CommandFactoryImpl.h \
-	CommandFactoryServerImpl.h \
-	CommandFactory.h \
-	Command.h \
-	CommandState.h \
-	ExecuteFunction.h \
-	ForwardRequest.h \
-	const.h \
 	listfiles.h \
 	listjobmatch.h \
         MatchingPipe_nb.h \
 	MatchingPipe.h
 
 libglite_wms_wmproxy_commands_la_SOURCES = \
-	Command.cpp \
-	ExecuteFunction.cpp \
-	ForwardRequest.cpp \
 	listfiles.cpp \
-	listjobmatch.cpp \
-	CommandFactoryServerImpl.cpp
+	listjobmatch.cpp
 
 libglite_wms_wmproxy_pipe_la_SOURCES = \
         MatchingPipe_nb.cpp \

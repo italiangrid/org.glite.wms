@@ -12,8 +12,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/filesystem/exception.hpp>
 
-#include "Command.h"
-#include "const.h"
 #include "MatchingPipe_nb.h"
 
 #include "glite/wms/common/utilities/edgstrstream.h"
@@ -112,7 +110,6 @@ listjobmatchex(const string &credentials_file, string &pipepath)
 
 	if (iserror) {
     	//cmd->setParam("MatchMakingDone", false);
-      	match_list.push_back(GLITE_WMS_WMPMATCHMAKINGERROR);
       	if (ad.get()->EvaluateAttrString(reason_attribute, reason)) {
 			//cmd->setParam("MatchMakingError", reason);
 			match_list.push_back(reason);
