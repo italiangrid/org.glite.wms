@@ -740,7 +740,11 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 		if (!logged && (i < 2) && retry) {
 			edglog(debug)<<"Failed to log. Sleeping 15 seconds before retry..."
 				<<endl;
-			sleep(15);
+			if (this->lbProxy_b) {
+				sleep(5);
+			} else {
+				sleep(30);
+			}
 		}
 	}
 	if ((retry && (i >= 3)) || (!retry && (i > 0)) ) {

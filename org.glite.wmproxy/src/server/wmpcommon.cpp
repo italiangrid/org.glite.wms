@@ -107,58 +107,56 @@ setGlobalSandboxDir()
 	GLITE_STACK_CATCH();
 }
 
-int
+void
 logRemoteHostInfo()
 {
-	try {
-		string msg = "Remote Host IP: ";
-		string msg2 = "Remote CLIENT S DN: ";
-		string msg3 = "Remote GRST CRED: ";
-		edglog(info)
-			<<"-------------------------------- Incoming Request "
-				"--------------------------------"
-			<<endl;
-		
-		if (getenv("REMOTE_ADDR")) {
-			msg += string(getenv("REMOTE_ADDR"));
-			if (getenv("REMOTE_PORT")) {
-				msg += ":" + string(getenv("REMOTE_PORT"));
-			}
-		} else {
-			msg += "Not Available";
-		}
-		msg += " - Remote Host Name: ";
-		if (getenv("REMOTE_HOST")) {
-			msg += string(getenv("REMOTE_HOST"));
-		} else {
-			msg += "Not Available";
-		}
-		if (getenv("SSL_CLIENT_S_DN")) {
-			msg2 += string(getenv("SSL_CLIENT_S_DN"));
-		} else {
-			msg2 += "Not Available";
-		}
-		if (getenv("GRST_CRED_2")) {
-			msg3 += string(getenv("GRST_CRED_2"));
-		} else {
-			msg3 += "Not Available";
-		}
-		
-		edglog(info)<<msg<<endl;
-	    edglog(info)<<msg2<<endl;
-		edglog(info)<<msg3<<endl;
-		edglog(info)
-			<<"----------------------------------------"
-				"------------------------------------------"
+	GLITE_STACK_TRY("logRemoteHostInfo()");
+	edglog_fn("wmpcommon::logRemoteHostInfo");
+	
+	string msg = "Remote Host IP: ";
+	string msg2 = "Remote CLIENT S DN: ";
+	string msg3 = "Remote GRST CRED: ";
+	edglog(info)
+		<<"-------------------------------- Incoming Request "
+			"--------------------------------"
 		<<endl;
-
-		setGlobalSandboxDir();
-		
-		return 0;
-	} catch (exception &ex) {
-		edglog(fatal)<<"Exception caught: "<<ex.what()<<endl;
-		return -1;
+	
+	if (getenv("REMOTE_ADDR")) {
+		msg += string(getenv("REMOTE_ADDR"));
+		if (getenv("REMOTE_PORT")) {
+			msg += ":" + string(getenv("REMOTE_PORT"));
+		}
+	} else {
+		msg += "Not Available";
 	}
+	msg += " - Remote Host Name: ";
+	if (getenv("REMOTE_HOST")) {
+		msg += string(getenv("REMOTE_HOST"));
+	} else {
+		msg += "Not Available";
+	}
+	if (getenv("SSL_CLIENT_S_DN")) {
+		msg2 += string(getenv("SSL_CLIENT_S_DN"));
+	} else {
+		msg2 += "Not Available";
+	}
+	if (getenv("GRST_CRED_2")) {
+		msg3 += string(getenv("GRST_CRED_2"));
+	} else {
+		msg3 += "Not Available";
+	}
+	
+	edglog(info)<<msg<<endl;
+    edglog(info)<<msg2<<endl;
+	edglog(info)<<msg3<<endl;
+	edglog(info)
+		<<"----------------------------------------"
+			"------------------------------------------"
+	<<endl;
+
+	setGlobalSandboxDir();
+		
+	GLITE_STACK_CATCH();
 }
 
 /**
