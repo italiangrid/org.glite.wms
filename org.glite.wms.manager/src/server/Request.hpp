@@ -36,7 +36,12 @@ public:
   std::string str() const { return m_str; }
 };
 
-std::pair<std::string, glite::wmsutils::jobid::JobId>
+boost::tuple<
+  std::string,
+  glite::wmsutils::jobid::JobId,
+  std::string,
+  std::string
+>
 check_request(classad::ClassAd const& command_ad);
 
 class Request: boost::noncopyable
@@ -78,8 +83,12 @@ public:
   void jdl(std::auto_ptr<classad::ClassAd> jdl);
   void clear_jdl() { m_jdl.reset(); }
 
-  void mark_cancelled() { m_cancelled = true; }
-  bool marked_cancelled() const { return m_cancelled; }
+  void mark_cancelled(ContextPtr cancel_context)
+  {
+    m_cancel_context = cancel_context;
+  }
+  bool marked_cancelled() const { return m_cancel_context; }
+  ContextPtr cancel_context() const { return m_cancel_context; }
 
   void mark_resubmitted() { m_resubmitted = true; }
   bool marked_resubmitted() const { return m_resubmitted; }
@@ -109,7 +118,7 @@ private:
   std::string m_message;
   std::time_t m_last_processed;
   ContextPtr m_lb_context;
-  bool m_cancelled;
+  ContextPtr m_cancel_context;
   bool m_resubmitted;
 
   //match options: file name, number of results and include or not brokerinfo

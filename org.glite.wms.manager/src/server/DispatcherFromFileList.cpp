@@ -266,7 +266,10 @@ get_new_requests(
 
       std::string command;
       jobid::JobId id;
-      boost::tie(command, id) = check_request(command_ad);
+      std::string sequence_code;
+      std::string x509_proxy;
+      boost::tie(command, id, sequence_code, x509_proxy)
+        = check_request(command_ad);
 
 #ifdef GLITE_WMS_HAVE_LBPROXY
       JobStatusPtr status(job_status(id));
@@ -339,6 +342,7 @@ get_new_requests(
 
             cleanup_guard.dismiss();
             RequestPtr request(new Request(command_ad, command, id, cleanup));
+            // TODO can the request be written immediately into the pipe?
             tq.insert(std::make_pair(id.toString(), request));
 
             log_cancel_req(request->lb_context());
@@ -425,8 +429,11 @@ get_new_requests(
             // ignore the cancel
             Info("ignoring cancel, already existing match request " << id);
           } else {
-            log_cancel_req(existing_request.lb_context());
-            existing_request.mark_cancelled();
+            ContextPtr cancel_context(
+              create_context(id, x509_proxy, sequence_code)
+            );
+            log_cancel_req(cancel_context);
+            existing_request.mark_cancelled(cancel_context);
             existing_request.add_cleanup(cleanup);
             cleanup_guard.dismiss();
           }

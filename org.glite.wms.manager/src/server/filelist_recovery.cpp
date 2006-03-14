@@ -81,7 +81,10 @@ void catalog_requests_by_id(
 
       std::string command;
       jobid::JobId id;
-      boost::tie(command, id) = check_request(*command_ad);
+      std::string sequence_code;
+      std::string x509_proxy;
+      boost::tie(command, id, sequence_code, x509_proxy)
+        = check_request(*command_ad);
 
       id_to_requests_type::iterator ite(
         std::find_if(

@@ -274,7 +274,7 @@ try {
         // submit or match
         if (req->marked_cancelled()) {
           // shortcut submission and cancellation
-          log_cancelled(req->lb_context());
+          log_cancelled(req->cancel_context());
 
           // see transition management in the dispatcher
           req->state(Request::RECOVERABLE);
@@ -292,7 +292,7 @@ try {
         // resubmit
         if (req->marked_cancelled()) {
           // shortcut resubmission and cancellation
-          log_cancelled(req->lb_context());
+          log_cancelled(req->cancel_context());
 
           // see the transition management in the dispatcher
           req->state(Request::RECOVERABLE);
