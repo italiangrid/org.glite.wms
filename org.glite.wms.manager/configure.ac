@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.17  2006/03/14 15:51:36  eronchie
+#       Applied Purer macro
+#
 #       Revision 1.16  2005/10/15 12:04:48  eronchie
 #       Increased version
 #
@@ -159,6 +162,7 @@ have_glite_wms_jss=no
 have_glite_lb=no
 have_glite_security=no
 have_glite_wms_ism=no
+have_glite_wms_purger=no
 
 AC_GLITE
 AC_GLITE_SERVICE_DISCOVERY
@@ -177,6 +181,9 @@ AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
 
 AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
 AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+
+AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
+AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 
 AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])

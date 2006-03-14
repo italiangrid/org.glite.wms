@@ -9,7 +9,7 @@
 MNGR_COMMON = $(top_builddir)/src/common/libglite_wms_manager_common.la
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
-GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
+#GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
 bin_PROGRAMS = \
         glite-wms-workload_manager
