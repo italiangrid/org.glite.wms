@@ -41,10 +41,8 @@ libglite_wms_dli_sici_la_LIBADD = \
 libglite_wms_rls_la_SOURCES = 
 
 libglite_wms_rls_la_LIBADD = \
-	-L$(GLITE_LOCATION)/lib -lglite_wms_replicaservice \
+	$(GLITE_WMS_RLS_LIBS) \
 	$(REPLICA_MANAGER_LIBS)
-
-#	$(top_srcdir)/../org.glite.wms.rls/build/src/libglite_wms_replicaservice.la \
 
 
 envC.cpp: $(srcdir)/env.h; \

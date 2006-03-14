@@ -19,6 +19,21 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.19  2006/03/14 08:55:57  monforte
+#       merge against :glite-wms-brokerinfo_branch_1_5_0_RC15
+#
+#       Revision 1.18.2.5  2006/01/11 18:23:13  emartel
+#       added AC_GLITE_WMS_RLS and increased version number due changes in libs linked by the plugins from static to shared
+#
+#       Revision 1.18.2.4  2005/11/30 17:19:02  emartel
+#       removed changes made after release tag
+#
+#       Revision 1.18.2.2  2005/11/03 14:03:55  eronchie
+#       Increased version
+#
+#       Revision 1.18.2.1  2005/10/31 10:59:22  eronchie
+#       Increased version
+#
 #       Revision 1.18  2005/10/15 11:49:51  eronchie
 #       Increased version
 #
@@ -135,7 +150,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Brokerinfo], [1.5.0])
+AC_INIT([GLite WMS Brokerinfo], [1.5.3])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glue_attributes.h])
@@ -255,6 +270,7 @@ AC_GLITE_WMSUTILS
 AC_GLITE_WMS_JDL
 AC_GLITE_WMS_COMMON
 AC_GLITE_WMS_ISM
+AC_GLITE_WMS_RLS
 
 AC_SEC_GSOAP_PLUGIN
 AC_GLITE_SERVICE_DISCOVERY
