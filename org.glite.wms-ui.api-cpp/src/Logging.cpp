@@ -10,7 +10,8 @@
 using namespace std ;
 using namespace glite::wmsutils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
-using namespace glite::wms::jdl ; // DagAd
+using namespace glite::jdl ; // DagAd
+using namespace glite::wmsutils::classads;
 
 namespace glite {
 namespace wmsui {

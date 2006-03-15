@@ -4,8 +4,8 @@
 /************************  Network Server ******************/
 #include "NSClient.h"
 /************************ Request Ad *******************/
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/jdl_attributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/jdl_attributes.h"
 /************************Logging and Bookkeeping  *******************/
 #include "glite/lb/producer.h"
 #include "glite/lb/Event.h"
@@ -16,7 +16,8 @@
 using namespace std ;
 using namespace glite::wmsutils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
-using namespace glite::wms::jdl ; // DagAd
+using namespace glite::jdl ; // DagAd
+using namespace glite::wmsutils::classads;
 
 namespace glite {
 namespace wmsui {

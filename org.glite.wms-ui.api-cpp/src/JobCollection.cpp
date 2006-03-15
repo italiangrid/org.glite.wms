@@ -8,8 +8,8 @@
 #include "glite/lb/JobStatus.h"
 #include "glite/lb/producer.h"
 // requestad
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/JobAd.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/JobAd.h"
 #include "glite/wmsutils/jobid/JobId.h"
 // NetworkServer
 #include "NSClient.h"

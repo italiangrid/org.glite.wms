@@ -13,9 +13,9 @@
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
 
 /**  JDL  */
-#include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/jdl_attributes.h"  // Constant attribute values
-#include "glite/wms/jdl/JDLAttributes.h" // JobAd attribute names
+#include "glite/jdl/JobAd.h"
+#include "glite/jdl/jdl_attributes.h"  // Constant attribute values
+#include "glite/jdl/JDLAttributes.h" // JobAd attribute names
 
 /**  CHKPT */
 #include "glite/wms/checkpointing/jobstate.h"//Checkpointing
@@ -44,11 +44,12 @@ namespace api {
 using namespace std ;
 using namespace glite::wmsutils::exception ; //Exception
 using namespace glite::wmsutils::jobid ; //JobId
-using namespace glite::wms::jdl ; // JobAd
+using namespace glite::jdl ; // JobAd
 using namespace glite::wms::manager::ns::client ; //NSClient
 using namespace glite::wms::checkpointing ;
 using namespace glite::lb ;
 using namespace glite::wms::common::utilities;
+using namespace glite::wmsutils::classads;
 
 pthread_mutex_t  Job::dgtransfer_mutex  = PTHREAD_MUTEX_INITIALIZER;
 // Compare two edg_wll_Event using the timestamp member

@@ -5,7 +5,7 @@
 *********************************************************************/
 #include "glite/wmsui/api/Shadow.h"
 #include "glite/wmsui/api/JobExceptions.h"
-#include "glite/wms/jdl/Ad.h"
+#include "glite/jdl/Ad.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -142,7 +142,7 @@ namespace api {
 		if (timeout==10)
 			throw JobOperationException  ( __FILE__ , __LINE__ ,METHOD , WMS_JOBOP_ALLOWED , "Unable to read listener named pipe streams" );
 	
-		glite::wms::jdl::Ad ad ( adStr );
+		glite::jdl::Ad ad ( adStr );
 		this->port = ad.getIntValue("PORT")[0];
 		pid  = ad.getIntValue("PID")[0];
 		if  (   fromP>0 &&   (   (this->port < fromP  ) || (this->port > toP)    )   ){
