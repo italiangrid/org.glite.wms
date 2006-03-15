@@ -667,7 +667,7 @@ ProxyInfoStructType* getDelegatedProxyInfo(const std::string &delegationId, Conf
 * @see #putProxy
 * @see BaseException
 */
-ProxyInfoStructType* getJobProxyInfo(const std::string &jobId, ConfigContext *cfs);
+ProxyInfoStructType* getJobProxyInfo(const std::string &jobId, ConfigContext *cfs=NULL);
 
 /**
 * Returns the JDL string which identifier is the input JobId
@@ -681,7 +681,7 @@ ProxyInfoStructType* getJobProxyInfo(const std::string &jobId, ConfigContext *cf
 * @throws GenericFaultException : 		another problem occured.
 * @throws BaseException Any other error occurred
 */
-std::string getJDL(const std::string &jobid, const JdlType &type, ConfigContext *cfs);
+std::string getJDL(const std::string &jobid, const JdlType &type, ConfigContext *cfs=NULL);
 
 } // wmproxy namespace
 } // wms namespace
