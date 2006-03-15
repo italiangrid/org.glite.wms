@@ -42,7 +42,7 @@ namespace services {
 #define WMP_FREEQUOTA_SERVICE           "getFreeQuota"
 #define WMP_SBDESTURI_SERVICE           "getSandboxDestURI"
 #define WMP_BULKDESTURI_SERVICE         "getSandboxBulkDestURI"
-#define WMP_GETPROTOCOLS_SERVICE           "getTransferProtocol"
+#define WMP_GETPROTOCOLS_SERVICE           "getTransferProtocols"
 
 /*
 * WMProxy version numbers
