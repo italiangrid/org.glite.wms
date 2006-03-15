@@ -150,17 +150,18 @@ namespace configuration  = glite::wms::common::configuration;
 // "private" methods prototypes
 pair<string, string> jobregister(jobRegisterResponse &jobRegister_response,
 	const string &jdl, const string &delegation_id,
-	const string &delegatedproxy, const string &vo, 
+	const string &delegatedproxy, const string &delegatedproxyfqan,
 	authorizer::WMPAuthorizer *auth);
 	
 string regist(jobRegisterResponse &jobRegister_response, 
 	authorizer::WMPAuthorizer *auth, const string &delegation_id,
-	const string &delegatedproxy, const string &jdl, JobAd *jad);
+	const string &delegatedproxy, const string &delegatedproxyfqan,
+	const string &jdl, JobAd *jad);
 
 pair<string, string> regist(jobRegisterResponse &jobRegister_response, 
 	authorizer::WMPAuthorizer *auth, const string &delegation_id,
-	const string &delegatedproxy, const string &jdl, WMPExpDagAd *dag,
-	JobAd *jad = NULL);
+	const string &delegatedproxy, const string &delegatedproxyfqan,
+	const string &jdl, WMPExpDagAd *dag, JobAd *jad = NULL);
 
 void submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	eventlogger::WMPEventLogger &wmplogger, bool issubmit = false);
@@ -212,13 +213,14 @@ notExprTree(classad::ExprTree * expr)
 
 pair<string, string>
 jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
-	const string &delegation_id, const string &delegatedproxy, const string &vo,
-	authorizer::WMPAuthorizer *auth)
+	const string &delegation_id, const string &delegatedproxy,
+	const string &delegatedproxyfqan, authorizer::WMPAuthorizer *auth)
 {
 	GLITE_STACK_TRY("jobregister()");
 	edglog_fn("wmpoperations::jobregister");
 	
 	// Checking for VO in jdl file
+	string vo = wmputilities::getEnvVO();
 	Ad *ad = new Ad();
 	int type = getType(jdl, ad);
 	if (ad->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
@@ -236,7 +238,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 			}
 		}
 	}
-	delete ad;
+	//delete ad;
 	
 	pair<string, string> returnpair;
 	// Checking TYPE/JOBTYPE attributes and convert JDL when needed
@@ -245,12 +247,12 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 		WMPExpDagAd *dag = new WMPExpDagAd(jdl);
 		dag->setLocalAccess(false);
 		//TBD check()??
-		returnpair = regist(jobRegister_response, auth, delegation_id, delegatedproxy,
-			jdl, dag);
+		returnpair = regist(jobRegister_response, auth, delegation_id,
+			delegatedproxy, delegatedproxyfqan, jdl, dag);
 		delete dag;
 	} else if (type == TYPE_JOB) {
 		edglog(debug)<<"Type Job"<<endl;
-		JobAd *jad = new JobAd(jdl);
+		JobAd *jad = new JobAd(*(ad->ad()));
 		jad->setLocalAccess(false);
 		//TBD jad->check();
         // Checking for multiple job type (not yet supported)
@@ -265,35 +267,37 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
         }
         if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARAMETRIC)) {
 			edglog(info)<<"Converting Parametric job to DAG..."<<endl;
-			WMPExpDagAd *dag = new WMPExpDagAd(*(AdConverter::bulk2dag(jdl)));
+			WMPExpDagAd *dag = new WMPExpDagAd(*(AdConverter::bulk2dag(ad)));
 			delete jad;
 			dag->setLocalAccess(false);
-			returnpair = regist(jobRegister_response, auth, delegation_id, delegatedproxy,
-				jdl, dag);
+			returnpair = regist(jobRegister_response, auth, delegation_id,
+				delegatedproxy, delegatedproxyfqan, jdl, dag);
 			delete dag;
 		} else if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)) {
 			WMPExpDagAd *dag = NULL;
-			returnpair = regist(jobRegister_response, auth, delegation_id, delegatedproxy,
-				jdl, dag, jad);
+			returnpair = regist(jobRegister_response, auth, delegation_id,
+				delegatedproxy, delegatedproxyfqan, jdl, dag, jad);
 			delete dag;
 			delete jad;
 		} else {
-			returnpair.first = regist(jobRegister_response, auth, delegation_id, delegatedproxy,
-				jdl, jad);
+			returnpair.first = regist(jobRegister_response, auth, delegation_id,
+				delegatedproxy, delegatedproxyfqan, jdl, jad);
 			returnpair.second = jad->toSubmissionString();
 			delete jad;
 		}
 	} else if (type == TYPE_COLLECTION) {
 		edglog(debug)<<"Type Collection"<<endl;
-		WMPExpDagAd *dag = new WMPExpDagAd(*(AdConverter::collection2dag(jdl)));
+		WMPExpDagAd *dag = new WMPExpDagAd(*(AdConverter::collection2dag(ad)));
 		//TBD check()??
 		dag->setLocalAccess(false);
-		returnpair = regist(jobRegister_response, auth, delegation_id, delegatedproxy,
-			jdl, dag);
+		returnpair = regist(jobRegister_response, auth, delegation_id,
+			delegatedproxy, delegatedproxyfqan, jdl, dag);
 		delete dag;
 	} else {
 		edglog(warning)<<"Type should have been Job!!"<<endl;
 	}
+	delete ad;
+	
 	return returnpair;
 	
 	GLITE_STACK_CATCH();
@@ -328,8 +332,9 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
 	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
 	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN());
+		auth->authorize(delegatedproxyfqan);
 	} else {
 		auth->authorize();
 	}
@@ -350,7 +355,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
 	
 	jobregister(jobRegister_response, jdl, delegation_id, delegatedproxy,
-		wmputilities::getEnvVO(), auth);
+		delegatedproxyfqan, auth);
 	
 	// Release Memory
 	if (auth) {
@@ -606,8 +611,8 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 
 string
 regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *auth,
-	const string &delegation_id, const string &delegatedproxy, const string &jdl,
-	JobAd *jad)
+	const string &delegation_id, const string &delegatedproxy,
+	const string &delegatedproxyfqan, const string &jdl, JobAd *jad)
 {
 	GLITE_STACK_TRY("regist()");
 	edglog_fn("wmpoperations::regist JOB");
@@ -656,7 +661,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Creating unique identifier
 	JobId *jid = new JobId();
 	
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port;
 	
 	// Checking for attribute JDL::LB_ADDRESS
@@ -704,6 +708,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 	
 	// Registering the job
+	//TBC check needed ??
 	jad->check();
 	wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid));
 	
@@ -819,8 +824,9 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri)
 
 pair<string, string>
 regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *auth,
-	const string &delegation_id, const string &delegatedproxy, const string &jdl,
-	WMPExpDagAd *dag, JobAd *jad)
+	const string &delegation_id, const string &delegatedproxy,
+	const string &delegatedproxyfqan, const string &jdl, WMPExpDagAd *dag,
+	JobAd *jad)
 {
 	GLITE_STACK_TRY("regist()");
 	edglog_fn("wmpoperations::regist DAG");
@@ -828,7 +834,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// Creating unique identifier
 	JobId *jid = new JobId();
 	
-	//WMProxyConfiguration conf = singleton_default<WMProxyConfiguration>::instance();
 	std::pair<std::string, int> lbaddress_port = conf.getLBServerAddressPort();
 	
 	// Checking for attribute JDL::LB_ADDRESS
@@ -1799,8 +1804,9 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	edglog(debug)<<"Delegated proxy: "<<delegatedproxy<<endl;
 	
 	authorizer::VOMSAuthZ vomsproxy(delegatedproxy);
+	string delegatedproxyfqan = vomsproxy.getDefaultFQAN();
 	if (vomsproxy.hasVOMSExtension()) {
-		auth->authorize(vomsproxy.getDefaultFQAN());
+		auth->authorize(delegatedproxyfqan);
 	} else {
 		auth->authorize();
 	}
@@ -1823,7 +1829,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	// Registering the job for submission
 	jobRegisterResponse jobRegister_response;
 	pair<string, string> reginfo = jobregister(jobRegister_response, jdl,
-		delegation_id, delegatedproxy, wmputilities::getEnvVO(), auth);
+		delegation_id, delegatedproxy, delegatedproxyfqan, auth);
 		
 	/*if (auth) {
 		delete auth;	

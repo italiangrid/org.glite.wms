@@ -21,6 +21,8 @@ class WMPExpDagAd:public glite::wms::jdl::ExpDagAd
 		WMPExpDagAd(const std::string &jdl):ExpDagAd(jdl) {};
 		WMPExpDagAd(std::ifstream &jdl_in):ExpDagAd(jdl_in) {};
 		WMPExpDagAd(const ExpDagAd &dag):ExpDagAd(dag) {};
+		WMPExpDagAd(glite::wms::jdl::Ad *ad):ExpDagAd(ad) {};
+		WMPExpDagAd(const classad::ClassAd &classAd):ExpDagAd(classAd) {};
 		
 		void setReserved(const std::string attr_name, const std::string attr_value);
 };
