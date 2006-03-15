@@ -8,7 +8,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/regex.hpp>
 #include "glite/wms/ism/purchaser/ism-cemon-asynch-purchaser.h"
-#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
+//#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 
@@ -52,7 +52,7 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
   while(msg=consumer->getNextEventMessage()) {
     gluece_info_type ceAd;
     try {
-      ceAd.reset(utilities::parse_classad(string(msg)));
+      ceAd.reset(utils::parse_classad(string(msg)));
       string gluece_unique_id;
       string gluevoview_local_id;
 
@@ -71,7 +71,7 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
         Warning("Unable to evaluate GlueCEUniqueID");
       }
     }
-    catch(utilities::CannotParseClassAd& e) {
+    catch(utils::CannotParseClassAd& e) {
       Warning("Error parsing CEMON classad..."  << e.what());
     }
   }

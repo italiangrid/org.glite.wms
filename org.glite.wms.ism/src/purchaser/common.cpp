@@ -48,7 +48,7 @@ bool expand_information_service_info(gluece_info_type& gluece_info)
   bool result = false;
   try {
 
-    isURL = utilities::evaluate_attribute(*gluece_info, "GlueInformationServiceURL");
+    isURL = utils::evaluate_attribute(*gluece_info, "GlueInformationServiceURL");
     static boost::regex  expression_gisu("\\S.*://(.*):([0-9]+)/(.*)");
     boost::smatch        pieces_gisu;
 
@@ -64,7 +64,7 @@ bool expand_information_service_info(gluece_info_type& gluece_info)
                               boost::lexical_cast<int>(isport));
       result = true;
     }
-  } catch (utilities::InvalidValue& e) {
+  } catch (utils::InvalidValue& e) {
     Error("Cannot evaluate GlueInformationServiceURL...");
     result = false;
   }
@@ -76,7 +76,7 @@ bool insert_gangmatch_storage_ad(gluece_info_type& gluece_info)
  try {
     if(!gangmatch_storage_ad) {
       gangmatch_storage_ad.reset( 
-        utilities::parse_classad(gangmatch_storage_ad_str)
+        utils::parse_classad(gangmatch_storage_ad_str)
       ); 
     }
     gluece_info->Update(
@@ -94,7 +94,7 @@ bool insert_aux_requirements(gluece_info_type& gluece_info)
     try {
     if(!requirements_ad) {
       requirements_ad.reset(
-        utilities::parse_classad(requirements_str)
+        utils::parse_classad(requirements_str)
       );
     }
     gluece_info->Update(
@@ -110,7 +110,7 @@ bool insert_aux_requirements(gluece_info_type& gluece_info)
 bool expand_glueceid_info(gluece_info_type& gluece_info)
 {
   string ce_str;
-  ce_str.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEUniqueID"));
+  ce_str.assign(utils::evaluate_attribute(*gluece_info, "GlueCEUniqueID"));
   static boost::regex  expression_ceid("(.+/[^\\-]+-([^\\-]+))-(.+)");
   boost::smatch  pieces_ceid;
   string gcrs, type, name;
@@ -119,9 +119,9 @@ bool expand_glueceid_info(gluece_info_type& gluece_info)
     
     gcrs.assign(pieces_ceid[1].first, pieces_ceid[1].second);
     try {
-      type.assign(utilities::evaluate_attribute(*gluece_info, "GlueCEInfoLRMSType"));
+      type.assign(utils::evaluate_attribute(*gluece_info, "GlueCEInfoLRMSType"));
     } 
-    catch(utilities::InvalidValue& e) {
+    catch(utils::InvalidValue& e) {
       // Try to fall softly in case the attribute is missing...
       type.assign(pieces_ceid[2].first, pieces_ceid[2].second);
       Warning("Cannot evaluate GlueCEInfoLRMSType using value from contact string: " << type);
@@ -148,7 +148,7 @@ bool split_information_service_url(classad::ClassAd const& ad, boost::tuple<std:
   std::string ldap_host;
   std::string ldap_url;
 
-  ldap_url.assign( utilities::evaluate_attribute(ad, "GlueInformationServiceURL") );
+  ldap_url.assign( utils::evaluate_attribute(ad, "GlueInformationServiceURL") );
   static boost::regex expression_gisu( "\\S.*://(.*):([0-9]+)/(.*)" );
   boost::smatch pieces_gisu;
   std::string port;
@@ -165,7 +165,7 @@ bool split_information_service_url(classad::ClassAd const& ad, boost::tuple<std:
   return false;
   }
  }
- catch (utilities::InvalidValue& e) {
+ catch (utils::InvalidValue& e) {
    return false;
  }
  return true;

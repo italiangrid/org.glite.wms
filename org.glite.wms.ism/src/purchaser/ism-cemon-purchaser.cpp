@@ -11,7 +11,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
-#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
+//#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 #include "glite/ce/monitor-client-api-c/CEEvent.h"
 #include "glite/ce/monitor-client-api-c/Dialect.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
@@ -45,7 +45,7 @@ parse_classad_event_messages(
   while((msg=ceE->getNextEventMessage())) {
     gluece_info_type ceAd;
     try {
-      ceAd.reset(utilities::parse_classad(string(msg)));
+      ceAd.reset(utils::parse_classad(string(msg)));
       string gluece_unique_id;
       string gluevoview_local_id;
 
@@ -64,7 +64,7 @@ parse_classad_event_messages(
         Warning("Unable to evaluate GlueCEUniqueID");
       }
     }
-    catch(utilities::CannotParseClassAd& e) {
+    catch(utils::CannotParseClassAd& e) {
       Warning("Error parsing CEMON classad..."  << e.what());
     }
   }

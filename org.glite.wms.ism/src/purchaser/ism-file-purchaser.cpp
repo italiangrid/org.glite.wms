@@ -57,13 +57,13 @@ void ism_file_purchaser::do_purchase()
     ism_mutex_type::scoped_lock l(get_ism_mutex());
     while(!src.eof()) {
       try {
-	boost::scoped_ptr<classad::ClassAd> ad(utilities::parse_classad(src));
-	string id(utilities::evaluate_attribute(*ad,"id"));
+	boost::scoped_ptr<classad::ClassAd> ad(utils::parse_classad(src));
+	string id(utils::evaluate_attribute(*ad,"id"));
         if (m_skip_predicate.empty() || !m_skip_predicate(id)) {
 
-	  int    ut(utilities::evaluate_attribute(*ad,"update_time"));
-	  int    et(utilities::evaluate_attribute(*ad,"expiry_time"));
-	  const classad::ClassAd *i=utilities::evaluate_attribute(*ad,"info");
+	  int    ut(utils::evaluate_attribute(*ad,"update_time"));
+	  int    et(utils::evaluate_attribute(*ad,"expiry_time"));
+	  const classad::ClassAd *i=utils::evaluate_attribute(*ad,"info");
 
           Debug("Loading ISM entry info: " << id << "\n");
 
@@ -108,10 +108,10 @@ void ism_file_purchaser::do_purchase()
 	  }
        }
       } 
-      catch (utilities::CannotParseClassAd&) {
+      catch (utils::CannotParseClassAd&) {
 	Warning("Error parsing info from ISM dump file\n");
       }
-      catch (utilities::InvalidValue& e) {
+      catch (utils::InvalidValue& e) {
       }	
     }
     if (m_mode == loop) {
