@@ -53,18 +53,24 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
     gluece_info_type ceAd;
     try {
       ceAd.reset(utilities::parse_classad(string(msg)));
-      string GlueCEUniqueID;
-      ceAd->EvaluateAttrString("GlueCEUniqueID", GlueCEUniqueID);
-      if (!GlueCEUniqueID.empty()) {
-        Debug("CEMonitor info for " << GlueCEUniqueID << "... Ok" << endl);
+      string gluece_unique_id;
+      string gluevoview_local_id;
 
-        gluece_info_container[GlueCEUniqueID] = ceAd;
-        result++;
+      ceAd->EvaluateAttrString("GlueCEUniqueID", gluece_unique_id);
+      ceAd->EvaluateAttrString("GlueVOViewLocalID", gluevoview_local_id);
+
+      if (!gluece_unique_id.empty()) {
+
+        if (!gluevoview_local_id.empty()) {
+          gluece_unique_id.append("//"+gluevoview_local_id);
+        }
+        Debug("CEMonitor info for " << gluece_unique_id << "... Ok");
+        gluece_info_container[gluece_unique_id] = ceAd;
       }
       else {
-        Warning("Unable to evaluate GlueCEUniqueID" << endl);
+        Warning("Unable to evaluate GlueCEUniqueID");
       }
-    } 
+    }
     catch(utilities::CannotParseClassAd& e) {
       Warning("Error parsing CEMON classad..."  << e.what());
     }

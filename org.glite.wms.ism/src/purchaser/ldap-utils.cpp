@@ -67,9 +67,9 @@ typedef std::map<
   std::string, // se id
   boost::tuple<
     classad_shared_ptr, // sead
-    std::vector<pair_string_classad_shared_ptr>, // list of sa info
-    std::vector<pair_string_classad_shared_ptr>, // list of control protocol info
-    std::vector<pair_string_classad_shared_ptr>  // list of access  protocol info
+    std::vector<classad::ExprTree*>, // list of sa info
+    std::vector<classad::ExprTree*>, // list of control protocol info
+    std::vector<classad::ExprTree*>  // list of access  protocol info
   >
 > gluese_info_map_type;
 
@@ -160,6 +160,146 @@ string get_site_name(ldif2classad::LDIFObject& ldif_CE)
   return site;
 }
 
+void 
+fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
+  gluece_info_container_type& gluese_info_container) 
+{
+  string filter("(|(objectclass=gluecesebind)(|(objectclass=gluese)(|(objectclass=gluesa)"
+    "(|(objectclass=glueseaccessprotocol)(objectclass=gluesecontrolprotocol)))))");
+  
+  ldif2classad::LDAPQuery query(IIconnection.get(), filter, vector<string>());
+
+  try {
+
+    IIconnection->open();
+    query.execute();
+    if (!query.tuples()->empty()) {
+
+      utilities::ii_attributes::const_iterator multi_attrs_begin;
+      utilities::ii_attributes::const_iterator multi_attrs_end;
+      boost::tie(multi_attrs_begin,multi_attrs_end)
+	= utilities::ii_attributes::multiValued();
+
+      ldif2classad::LDAPForwardIterator ldap_it( query.tuples() );
+      ldap_it.first();
+      
+      gluese_info_map_type         gluese_info_map;
+
+      while (ldap_it.current()) {
+
+	vector<string> ldap_dn_tokens;
+	tokenize_ldap_dn(ldap_it.ldap_dn(), ldap_dn_tokens);
+        if (is_gluese_info_dn(ldap_dn_tokens)) {
+          ldif2classad::LDIFObject ldif_SE(*ldap_it);
+          boost::shared_ptr<classad::ClassAd> seAd(
+            ldif_SE.asClassAd(multi_attrs_begin, multi_attrs_end)
+          );
+          string const gluese_unique_id(
+            ldap_dn_tokens[0].substr(ldap_dn_tokens[0].rfind("=")+1)
+          );
+          gluese_info_map_type::iterator it;
+          bool gluese_info_map_insert;
+          boost::tie(it, gluese_info_map_insert) = gluese_info_map.insert(
+            std::make_pair(
+              gluese_unique_id, 
+              boost::make_tuple(
+                seAd,
+                std::vector<classad::ExprTree*>(),
+                std::vector<classad::ExprTree*>(),
+                std::vector<classad::ExprTree*>()
+              )
+            )
+          );
+          if (!gluese_info_map_insert) { 
+            // The entry has been previously added (*)
+            // only the ad should be updated now                              
+            boost::tuples::get<0>(it->second) = seAd;                          
+          }                                                                   
+        }                                                                     
+        else if (
+          is_gluesa_info_dn(ldap_dn_tokens) ||
+          is_gluese_control_protocol_info_dn(ldap_dn_tokens) ||
+          is_gluese_access_protocol_info_dn(ldap_dn_tokens)) {
+
+          ldif2classad::LDIFObject ldif(*ldap_it);
+          classad::ExprTree* ad(
+            ldif.asClassAd(multi_attrs_begin, multi_attrs_end)
+          );
+          string const gluese_unique_id(
+            ldap_dn_tokens[1].substr(ldap_dn_tokens[1].rfind("=")+1)
+          );
+          gluese_info_map_type::iterator it(
+            gluese_info_map.find(gluese_unique_id)
+          );
+          if (it == gluese_info_map.end()) {
+            gluese_info_map.insert(           // (*)
+              std::make_pair(
+                gluese_unique_id,
+                  boost::make_tuple(
+                    classad_shared_ptr(),
+                    std::vector<classad::ExprTree*>(),
+                    std::vector<classad::ExprTree*>(),
+                    std::vector<classad::ExprTree*>()
+                  )
+              )
+            );
+          }
+          if(is_gluesa_info_dn(ldap_dn_tokens)) {
+            boost::tuples::get<1>(it->second).push_back(ad);
+          }
+          else if(is_gluese_control_protocol_info_dn(ldap_dn_tokens)) {
+            boost::tuples::get<2>(it->second).push_back(ad);
+          }
+          else if(is_gluese_access_protocol_info_dn(ldap_dn_tokens)) {
+            boost::tuples::get<3>(it->second).push_back(ad);
+          }
+        }
+	ldap_it.next();
+      } // while( ldap_it.current() )
+
+      gluese_info_map_type::const_iterator se_it(
+        gluese_info_map.begin()
+      );
+      gluese_info_map_type::const_iterator const se_e(
+        gluese_info_map.end()
+      );
+
+      for( ; se_it != se_e; ++se_it) {
+      
+        boost::tuples::get<0>(se_it->second)->
+          Insert("GlueSA", classad::ExprList::MakeExprList(
+            boost::tuples::get<1>(se_it->second)
+          ));
+
+        boost::tuples::get<0>(se_it->second)->
+          Insert("GlueSEControlProtocol", classad::ExprList::MakeExprList(
+            boost::tuples::get<2>(se_it->second)
+          ));
+
+        boost::tuples::get<0>(se_it->second)->
+          Insert("GlueSEAccessProtocol", classad::ExprList::MakeExprList(
+            boost::tuples::get<3>(se_it->second)
+          ));
+
+        gluese_info_container[se_it->first] =
+          boost::tuples::get<0>(se_it->second);
+      }
+    }
+  }
+  catch (ldif2classad::LDAPNoEntryEx&) {
+
+    Error("Unexpected result while searching the IS...");
+  }
+  catch( ldif2classad::QueryException& e) {
+
+    Warning(e.what());
+  }
+  catch( ldif2classad::ConnectionException& e) {
+
+    Warning(e.what());
+  }
+}
+     
 void 
 fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
   gluece_info_container_type& gluece_info_container) 
@@ -299,6 +439,10 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 
       for( ; cl_it != cl_e; ++cl_it) { // for each cluster
         
+        if (boost::tuples::get<2>(cl_it->second).empty()) {
+          continue; // Addresses bug #15098
+        }
+
         vector<gluesubcluster_info_map_type::iterator>::const_iterator sc_it(
           boost::tuples::get<2>(cl_it->second).begin()
         );
@@ -408,7 +552,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                    ceAd->Update(*vo_view_it->second);
                    gluece_info_container.insert(
                      std::make_pair(
-                       (*ce_it)->first + string(",vo=") + vo_view_it->first,
+                       (*ce_it)->first + "//" + vo_view_it->first,
                        ceAd
                      )
                    );
@@ -465,6 +609,7 @@ void fetch_bdii_info(const std::string& hostname,
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
   );
   fetch_bdii_ce_info(IIconnection, gluece_info_container);
+  // fetch_bdii_se_info(IIconnection, gluece_info_container);
 }
 
 } // namespace purchaser
