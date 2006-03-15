@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     return -1;
   }
   
-  string request = "[ version = \"1.0.0\"; command = \"jobcancel\"; arguments = [ id = \"" + string(argv[2]) + "\" ] ]";
+  string request = "[ protocol = \"1.0.0\"; command = \"cancel\"; arguments = [ jobid = \"" + string(argv[2]) + "\" ] ]";
   
   FileList<string> fl;
   

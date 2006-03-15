@@ -70,8 +70,8 @@ int main(int argc, char* argv[]) {
   Buf.clear();
   unp.Unparse(Buf, ad);
 
-  string request = "[arguments = [ ad = " + Buf
-    + " ]; command = \"jobsubmit\"; version = \"1.0.0\" ]";
+  string request = "[arguments = [ jobad = " + Buf
+    + " ]; command = \"Submit\"; protocol = \"1.0.0\" ]";
 
   cout << "Adding JDL <" 
        << request << "> to filelist..." << endl;

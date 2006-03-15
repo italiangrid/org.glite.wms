@@ -66,28 +66,34 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
       boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
       myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
     }
-    // Sample classad:
-    // ( this is the NEW version )
-    //  [ requirements = ( ( ( ( other.GlueCEInfoHostName == "lxb2022.cern.ch" ) ) ) && ( other.GlueCEStateStatus == "Production" ) ) && ( other.GlueCEStateStatus == "Production" );
-    //     RetryCount = 0;
-    //     ce_id = "grid005.pd.infn.it:8443/cream_lsf_grid002";
-    //     edg_jobid = "https://gundam.cnaf.infn.it:9000/ZLM4zE60OqHIcqH_PNbs-w";
-    //     Arguments = "136100001 herrala_27411 360 20";
-    //     OutputSandboxPath = "/var/glitewms/SandboxDir/ZL/https_3a_2f_2fgundam.cnaf.infn.it_3a9000_2fZLM4zE60OqHIcqH_5fPNbs-w/output";
-    //     JobType = "normal";
-    //     Executable = "glite-dev.tt_ch_160_tb20.testrun.sh.sh";
-    //     CertificateSubject = "/O=Grid/O=NorduGrid/OU=hip.fi/CN=Juha Herrala";
-    //     StdOutput = "cstdout";
-    //     X509UserProxy = "/var/glitewms/SandboxDir/ZL/https_3a_2f_2fgundam.cnaf.infn.it_3a9000_2fZLM4zE60OqHIcqH_5fPNbs-w/user.proxy";
-    //     OutputSandbox = { "cstdout","cstderr","testrun.log","testrun.root" };
-    //     LB_sequence_code = "UI=000003:NS=0000000003:WM=000000:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000";
-    //     InputSandboxPath = "/var/glitewms/SandboxDir/ZL/https_3a_2f_2fgundam.cnaf.infn.it_3a9000_2fZLM4zE60OqHIcqH_5fPNbs-w/input";
-    //     VirtualOrganisation = "EGEE";
-    //     rank =  -other.GlueCEStateEstimatedResponseTime;
-    //     Type = "job";
-    //     StdError = "cstderr";
-    //     DefaultRank =  -other.GlueCEStateEstimatedResponseTime;
-    //     InputSandbox = { "ExeTar.tt_ch_160_tb20.testrun.sh","glite-dev.tt_ch_160_tb20.testrun.sh.sh" } ] ]
+
+
+    /*
+
+[ 
+  stream_error = false; 
+  edg_jobid = "https://cert-rb-03.cnaf.infn.it:9000/YeyOVNkR84l6QMHl_PY6mQ";
+  GlobusScheduler = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs"; 
+  ce_id = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs-cert"; 
+  Transfer_Executable = true; 
+  Output = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardOutput";
+  Copy_to_Spool = false; 
+  Executable = "/var/glite/jobcontrol/submit/Ye/JobWrapper.https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ.sh"; 
+  X509UserProxy = "/var/glite/SandboxDir/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/user.proxy"; 
+  Error_ = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardError";
+  LB_sequence_code = "UI=000002:NS=0000000003:WM=000004:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000"; 
+  Notification = "never"; 
+  stream_output = false; 
+  GlobusRSL = "(queue=cert)(jobtype=single)"; 
+  Type = "job"; 
+  Universe = "grid"; 
+  UserSubjectName = "/C=IT/O=INFN/OU=Personal Certificate/L=CNAF/CN=Marco Cecchi"; 
+  Log = "/var/glite/logmonitor/CondorG.log/CondorG.log"; 
+  grid_type = "globus" 
+]
+
+*/
+
 
     classad::ClassAdParser parser;
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
@@ -102,18 +108,18 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     }
     boost::trim_if( _commandStr, boost::is_any_of("\"") );
 
-    if ( 0 != _commandStr.compare( "jobsubmit" ) ) {
+    if ( !boost::algorithm::iequals( _commandStr, "submit" ) ) {
         throw ice_util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
     }
 
-    string _versionStr;
+    string _protocolStr;
     // Parse the "version" attribute
-    if ( !_rootAD->EvaluateAttrString( "version", _versionStr ) ) {
-        throw ice_util::JobRequest_ex("attribute 'version' not found or is not a string");
+    if ( !_rootAD->EvaluateAttrString( "Protocol", _protocolStr ) ) {
+        throw ice_util::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
-    if ( _versionStr.compare("1.0.0") ) {
-        throw ice_util::JobRequest_ex("Wrong \"version\" for jobRequest: expected 1.0.0, got " + _versionStr );
+    if ( _protocolStr.compare("1.0.0") ) {
+        throw ice_util::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + _protocolStr );
     }
 
     classad::ClassAd *_argumentsAD = 0;
@@ -124,13 +130,13 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
     classad::ClassAd *_adAD = 0;
     // Look for "ad" attribute inside "arguments"
-    if ( !_argumentsAD->EvaluateAttrClassAd( "ad", _adAD ) ) {
-        throw ice_util::JobRequest_ex("Attribute 'ad' not found inside 'arguments', or is not a classad" );
+    if ( !_argumentsAD->EvaluateAttrClassAd( "jobad", _adAD ) ) {
+        throw ice_util::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
     }
 
     // initializes the _jdl attribute
     classad::ClassAdUnParser unparser;
-    unparser.Unparse( _jdl, _argumentsAD->Lookup( "ad" ) );
+    unparser.Unparse( _jdl, _argumentsAD->Lookup( "jobad" ) );
 
 }
 

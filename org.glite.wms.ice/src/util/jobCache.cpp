@@ -73,23 +73,6 @@ jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJo
 }
 
 //______________________________________________________________________________
-// void jobCache::jobCacheTable::delJob( const CreamJob& c )
-// {
-//     _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
-//     if ( it != _gidMap.end() ) {
-//         // Deletes a new job
-//         jobCacheTable::iterator pos = it->second;
-//         // Removes the job from the list
-//         _jobs.erase( pos );
-//         // Removes the job from the _gidMap
-//         _gidMap.erase( it );
-//         // If necessary, removes the job from the _cidMap
-//         if ( !c.getJobID().empty() ) {
-//             _cidMap.erase( c.getJobID() );
-//         }
-//     }
-// }
-
 void jobCache::jobCacheTable::delJob( const jobCacheTable::iterator& pos )
 {
     if ( pos == end() )
@@ -338,16 +321,6 @@ void jobCache::dump() throw (jnlFile_ex&)
         }
 }
 
-//______________________________________________________________________________
-// void jobCache::getActiveCreamJobIDs(vector<string>& target)
-// {
-//     // boost::recursive_mutex::scoped_lock M(jobCacheMutex); 
-//     jobCacheTable::const_iterator it;
-//     for ( it = _jobs.begin(); it!=_jobs.end(); it++ ) {
-//         target.push_back( it->getJobID());
-//     }
-// }
-
 //-----------------------------------------------------------------------------
 void jobCache::logOperation( const operation& op, const std::string& param )
 {
@@ -420,11 +393,3 @@ jobCache::iterator jobCache::erase( jobCache::iterator& it )
     _jobs.delJob( it );    
     return result;
 }
-
-// void jobCache::erase( const CreamJob& j )
-// {
-//     string to_string = j.serialize();
-//     // job found, log operation and remove
-//     logOperation( ERASE, to_string );
-//     _jobs.delJob( lookupByGridJobID( j.getGridJobID() ) );    
-// }

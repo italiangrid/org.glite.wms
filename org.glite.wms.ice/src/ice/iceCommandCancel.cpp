@@ -19,9 +19,22 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
     _lb_logger( util::iceLBLogger::instance() )
 {
-    // Sample classad
-    // [ version = "1.0.0"; command = "jobcancel"; arguments = [ id = "https://gundam.cnaf.infn.it:9000/mm6jfVKnjutb9JNFaF1HuQ"; lb_sequence_code = "UI=000004:NS=0000000006:WM=000000:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000" ] ]
 
+    /*
+
+[ Arguments = 
+  [ Force = false; 
+    LogFile = "/var/glite/logmonitor/CondorG.log/CondorG.1140166320.log"; 
+    ProxyFile = "/var/glite/SandboxDir/tC/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2ftCDrNTu0b0uPbeUEDlpTjg/user.proxy";
+    SequenceCode = "UI=000002:NS=0000000007:WM=000002:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000"; 
+    JobId = "https://cert-rb-03.cnaf.infn.it:9000/tCDrNTu0b0uPbeUEDlpTjg" 
+  ]; 
+  Command = "Cancel"; 
+  Source = 2; 
+  Protocol = "1.0.0" 
+]
+
+*/
     classad::ClassAdParser parser;
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
@@ -31,40 +44,40 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     string _commandStr;
     // Parse the "command" attribute
     if ( !_rootAD->EvaluateAttrString( "command", _commandStr ) ) {
-        throw util::JobRequest_ex("attribute 'command' not found or is not a string");
+        throw util::JobRequest_ex("attribute \"command\" not found or is not a string");
     }
     boost::trim_if(_commandStr, boost::is_any_of("\""));
 
-    if ( 0 != _commandStr.compare( "jobcancel" ) ) {
+    if ( !boost::algorithm::iequals( _commandStr, "cancel" ) ) {
         throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandCancel" );
     }
 
-    string _versionStr;
+    string _protocolStr;
     // Parse the "version" attribute
-    if ( !_rootAD->EvaluateAttrString( "version", _versionStr ) ) {
-        throw util::JobRequest_ex("attribute 'version' not found or is not a string");
+    if ( !_rootAD->EvaluateAttrString( "protocol", _protocolStr ) ) {
+        throw util::JobRequest_ex("attribute \"protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
-    if ( _versionStr.compare("1.0.0") ) {
-        throw util::JobRequest_ex("Wrong 'Protocol' for jobCancel: expected 1.0.0, got " + _versionStr );
+    if ( _protocolStr.compare("1.0.0") ) {
+        throw util::JobRequest_ex("Wrong \"Protocol\" for jobCancel: expected 1.0.0, got " + _protocolStr );
     }
 
     classad::ClassAd *_argumentsAD = 0;
     // Parse the "arguments" attribute
     if ( !_rootAD->EvaluateAttrClassAd( "arguments", _argumentsAD ) ) {
-        throw util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
+        throw util::JobRequest_ex("attribute \"arguments\" not found or is not a classad");
     }
 
     // Look for "id" attribute inside "Arguments"
-    if ( !_argumentsAD->EvaluateAttrString( "id", _gridJobId ) ) {
-        throw util::JobRequest_ex( "attribute 'id' inside 'arguments' not found, or is not a string" );
+    if ( !_argumentsAD->EvaluateAttrString( "jobid", _gridJobId ) ) {
+        throw util::JobRequest_ex( "attribute \"jobid\" inside \"arguments\" not found, or is not a string" );
     }
 
     // Look for "lb_sequence_code" attribute inside "Arguments"
-    if ( !_argumentsAD->EvaluateAttrString( "lb_sequence_code", _sequence_code ) ) {
+    if ( !_argumentsAD->EvaluateAttrString( "sequencecode", _sequence_code ) ) {
         // FIXME: This should be an error to throw. For now, we try anyway...
         log_dev->warnStream()
-            << "Cancel request does not have a \"lb_sequence_code\" attribute. "
+            << "Cancel request does not have a \"sequencecode\" attribute. "
             << "Fine for now, should not happen in the future"
             << log4cpp::CategoryStream::ENDLINE;
     } else {
@@ -75,7 +88,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
 void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     log_dev->infoStream()
-        << "\tThis request is a Cancel..."
+        << "This request is a Cancel..."
         << log4cpp::CategoryStream::ENDLINE;
 
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
