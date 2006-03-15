@@ -119,7 +119,7 @@ AC_MSG_RESULT(["JAVA found $have_java"])
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
-have_glite_wms_jdl=no
+have_glite_jdl=no
 have_glite_wms_part=no
 have_lb=no
 have_dgas=no
@@ -134,8 +134,8 @@ AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 
-AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
-AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
+AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])

@@ -21,8 +21,8 @@
 #include "glite/wms/partitioner/Partitioner.h"  //Partitioner
 
 // Ad
-#include "glite/wms/jdl/ExpDagAd.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/jdl/ExpDagAd.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 // Dgas Authorisation include files
 #include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
 #define EDG_WLU_SOURCE_NS "NetworkServer"
@@ -39,7 +39,7 @@ using namespace std ;
 pthread_mutex_t  mutex;
 vector <edg_wll_Context* > lbVect ;
 // DagAd Wrapper
-vector <glite::wms::jdl::ExpDagAd* > dagVect ;
+vector <glite::jdl::ExpDagAd* > dagVect ;
 glite::lb::Job lbJob ;
 string nsHost ;
 int nsPort ;
@@ -812,7 +812,7 @@ BOOKKEEPING methods: JOBID info
 		if ( utString.length() != 0 ){
 			// USER TAGS QUERY
 			// Parse
-			glite::wms::jdl::Ad userTags ;
+			glite::jdl::Ad userTags ;
 			std::vector<std::string> tagValues ;
 			userTags.fromString( utString ) ;
 			env->ReleaseStringUTFChars(utags , qw ) ;
@@ -996,7 +996,7 @@ BOOKKEEPING methods: JOBSTATUS info
 		using namespace glite::wmsutils::jobid ;
 
 		try{
-			glite::wms::jdl::Ad notifAd ;
+			glite::jdl::Ad notifAd ;
 			const char *ad = env->GetStringUTFChars(jobad, 0);
 			notifAd.fromString( ad ) ;
 			env->ReleaseStringUTFChars(jobad, ad);
@@ -1182,7 +1182,7 @@ DAGAD implementation methods:
 		try{
 			ifstream jdl  ( file  ) ;
 			// Create Dag
-			glite::wms::jdl::ExpDagAd* dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+			glite::jdl::ExpDagAd* dagad= new glite::jdl::ExpDagAd ( jdl ) ;
 		lock() ;
 			env->CallVoidMethod(obj, appInt, DAG_CTX , (jint) dagVect.size() );
 			dagVect.push_back(  dagad  ) ;
@@ -1199,9 +1199,9 @@ DAGAD implementation methods:
 	JNIEXPORT jstring JNICALL Java_org_glite_wmsui_apij_Api_dagToString
 	(JNIEnv *env, jobject obj, jint level  ){
 	lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
+		glite::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
-		return  env->NewStringUTF(  dagad->toString(  (glite::wms::jdl::ExpDagAd::level) level ).c_str()   ) ;
+		return  env->NewStringUTF(  dagad->toString(  (glite::jdl::ExpDagAd::level) level ).c_str()   ) ;
 	};
 
 
@@ -1212,7 +1212,7 @@ DAGAD implementation methods:
 	*/
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dag_1getSubmissionStrings
 	(JNIEnv *, jobject){
-		// glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
+		// glite::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 		// return  env->NewStringUTF(  dagad->toString(  level )   ) ;
 	};
 
@@ -1224,7 +1224,7 @@ DAGAD implementation methods:
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dag_1logUserTags
 	(JNIEnv *env, jobject obj, jstring   jobid  ){
 	lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
+		glite::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		std::vector<  std::pair<  std::string  ,     classad::ExprTree* > > userTags = dagad->getSubAttributes ( "UserTags"  ) ;
 		for (unsigned int i = 0 ; i < userTags.size() ; i++ ){
@@ -1252,10 +1252,10 @@ DAGAD implementation methods:
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_dagSetAttribute
 	(JNIEnv *env, jobject obj, jint  name  , jstring  value ){
 	lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
+		glite::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		const char *val = env->GetStringUTFChars(value, 0);
-		dagad->setAttribute (   (glite::wms::jdl::ExpDagAd::attribute) name , string(val) ) ;
+		dagad->setAttribute (   (glite::jdl::ExpDagAd::attribute) name , string(val) ) ;
 		env->ReleaseStringUTFChars( value, val );
 	};
 
@@ -1272,7 +1272,7 @@ DAGAD implementation methods:
 		const char *str_addr = env->GetStringUTFChars( nsAddress , 0);
 		// Retrieving the dagad
 	lock();
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
+		glite::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 	unlock() ;
 		// Retrieving the LB context
 		edg_wll_Context ctx = *lbVect[getCtx(env, obj,LB_CTX)]  ;
@@ -1280,7 +1280,7 @@ DAGAD implementation methods:
 		edg_wlc_JobId* subjobs = NULL ;
 		// Register the job
 	lock();
-		if (      edg_wll_RegisterJobSync( ctx,   id.getId()  , EDG_WLL_REGJOB_DAG,  dagad->toString ( glite::wms::jdl::ExpDagAd::NO_NODES ).c_str() ,
+		if (      edg_wll_RegisterJobSync( ctx,   id.getId()  , EDG_WLL_REGJOB_DAG,  dagad->toString ( glite::jdl::ExpDagAd::NO_NODES ).c_str() ,
 			str_addr,    dagad->size()  ,   NULL,   &subjobs  ) ){
 			char error_message [1024];
 			char *msg, *dsc ;
@@ -1335,7 +1335,7 @@ DAGAD implementation methods:
 	JNIEXPORT void JNICALL Java_org_glite_wmsui_apij_Api_logDefaultValues
 	(JNIEnv *env, jobject  obj, jboolean boom  ){
 		lock() ;
-		glite::wms::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
+		glite::jdl::ExpDagAd* dagad = dagVect[  getCtx( env, obj , DAG_CTX)]  ;
 		unlock() ;
 		dagad->setDefaultValues ( boom ) ;
 	};
@@ -1375,9 +1375,9 @@ DAGAD implementation methods:
 		for ( unsigned int i= 0 ; i< res_number ; i++ ){
 			jobids.push_back(  string (    edg_wlc_JobIdUnparse( subjobs[i]  )  )  ) ;
 		}
-		glite::wms::jdl::ExpDagAd* dagad =NULL;
-		 glite::wms::partitioner::Partitioner part (  glite::wms::common::utilities::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
-		dagad= new glite::wms::jdl::ExpDagAd ( part.createDag() ) ;
+		glite::jdl::ExpDagAd* dagad =NULL;
+		 glite::wms::partitioner::Partitioner part (  glite::wmsutils::classads::parse_classad( env->GetStringUTFChars( submission , 0) )  , jobids );
+		dagad= new glite::jdl::ExpDagAd ( part.createDag() ) ;
 
 
 		// REGISTER SUB JOBS
