@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.14  2006/03/15 10:31:12  amarasch
+#       Ares migration to c-ares
+#
 #       Revision 1.13  2005/09/22 08:58:17  amarasch
 #       Merged from RC1 branch
 #
@@ -110,7 +113,6 @@ have_boost=no
 have_classads=no
 have_globus=no
 have_expat=no
-have_ares=no
 have_cppunit=no
 have_swig=no
 have_python=no
@@ -120,7 +122,6 @@ AC_CLASSADS([], have_classads=yes, have_classads=no)
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_CPPUNIT([], have_cppunit=yes, have_cppunit=no)
 AC_EXPAT([], have_expat=yes, have_expat=no)
-AC_ARES([], have_ares=yes, have_ares=no)
 AC_SWIG([1.3.21], have_swig=yes, have_swig=no)
 AC_PYTHON([2.2.3], have_python=yes, have_python=no)
 
@@ -129,7 +130,6 @@ AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 AC_MSG_RESULT(["EXPAT found $have_expat"])
-AC_MSG_RESULT(["ARES found $have_ares"])
 AC_MSG_RESULT(["SWIG found $have_swig"])
 AC_MSG_RESULT(["PYTHON found $have_python"])
 

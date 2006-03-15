@@ -70,7 +70,6 @@ libglite_wmsui_LbWrapper_la_LIBADD = \
 	$(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
-	$(ARES_LIBS) \
 	$(BOOST_LIBS) \
         $(GLOBUS_COMMON_NOTHR_LIBS) \
         $(GLOBUS_SSL_NOTHR_LIBS) \
@@ -95,7 +94,6 @@ libglite_wmsui_LogWrapper_la_LIBADD = \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(CLASSAD_LIBS) \
-        $(ARES_LIBS) \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_NOTHR_LIBS) \
         $(GLOBUS_SSL_NOTHR_LIBS) \
@@ -127,7 +125,6 @@ libglite_wmsui_NsWrapper_la_LIBADD = \
 	$(GLITE_DGAS_JOBAUTHCLIENT_LIBS) \
 	$(GLITE_DGAS_COMMON_XMLUTIL_LIBS) \
 	$(CLASSAD_LIBS) \
-        $(ARES_LIBS) \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_NOTHR_LIBS) \
         $(GLOBUS_SSL_NOTHR_LIBS) \
@@ -154,7 +151,6 @@ libglite_wmsui_AdWrapper_la_LIBADD = \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
 	$(CLASSAD_LIBS) \
-        $(ARES_LIBS) \
         $(BOOST_LIBS) \
         $(GLOBUS_COMMON_NOTHR_LIBS) \
         $(GLOBUS_SSL_NOTHR_LIBS) \

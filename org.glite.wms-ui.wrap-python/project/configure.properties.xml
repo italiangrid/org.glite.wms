@@ -20,6 +20,9 @@
 
         Revision history:
         $Log$
+        Revision 1.4  2006/03/15 10:31:12  amarasch
+        Ares migration to c-ares
+
         Revision 1.3  2004/09/14 22:31:16  dimeglio
         Added build.make.arguments with SWIG_LIB param
 
@@ -31,7 +34,7 @@
         
 <project name="configure options">                                                                        
 	<property name="configure.args"
-               value="--prefix=${workspace.abs.dir}/stage --with-globus-prefix=${with.globus.prefix} --with-globus-thr-flavor=${with.globus.thr.flavor} --with-globus-nothr-flavor=${with.globus.nothr.flavor} --with-classads-prefix=${with.classads.prefix} --with-boost-prefix=${with.boost.prefix} --with-expat-prefx=${with.expat.prefix} --with-ares-prefix=${with.ares.prefix} --enable-boost_debug=${enable.boost.debug} --with-swig-prefix=${with.swig.prefix} --with-glite-location=${with.glite.location} --with-dist-location=${with.dist.location}"/>
+               value="--prefix=${workspace.abs.dir}/stage --with-globus-prefix=${with.globus.prefix} --with-globus-thr-flavor=${with.globus.thr.flavor} --with-globus-nothr-flavor=${with.globus.nothr.flavor} --with-classads-prefix=${with.classads.prefix} --with-boost-prefix=${with.boost.prefix} --with-expat-prefx=${with.expat.prefix} --enable-boost_debug=${enable.boost.debug} --with-swig-prefix=${with.swig.prefix} --with-glite-location=${with.glite.location} --with-dist-location=${with.dist.location}"/>
 
 	 <property name="build.make.arguments" value="SWIG_LIB=${with.swig.prefix}/lib/swig1.3"/>
 </project>
