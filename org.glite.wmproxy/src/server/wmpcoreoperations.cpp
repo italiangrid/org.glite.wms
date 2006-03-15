@@ -525,7 +525,8 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 }
 
 void
-setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
+setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
+	const string &delegatedproxyfqan)
 {
 	GLITE_STACK_TRY("setAttributes()");
 	edglog_fn("wmpoperations::setAttributes JOB");
@@ -580,6 +581,12 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri)
 	}
 	jad->setAttribute(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
+		
+	edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
+	if (jad->hasAttribute(JDLPrivate::VOMS_FQAN)) {
+		jad->delAttribute(JDLPrivate::VOMS_FQAN);
+	}
+	jad->setAttribute(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 	
 	// Checking for empty string value
 	if (jad->hasAttribute(JDL::MYPROXY)) {
@@ -686,7 +693,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		conf.getDefaultPort());
 	edglog(debug)<<"Destination URI: "<<dest_uri<<endl;
 	
-	setAttributes(jad, jid, dest_uri);
+	setAttributes(jad, jid, dest_uri, delegatedproxyfqan);
 	
 	// Initializing logger
 	edglog(debug)<<"Endpoint: "<<wmputilities::getEndpoint()<<endl;
@@ -708,7 +715,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	}
 	
 	// Registering the job
-	//TBC check needed ??
 	jad->check();
 	wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid));
 	
@@ -759,7 +765,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 }
 
 void
-setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri)
+setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
+	const string &delegatedproxyfqan)
 {
 	GLITE_STACK_TRY("setAttributes()");
 	edglog_fn("wmpoperations::setAttributes DAG");
@@ -793,6 +800,12 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri)
 	}
 	dag->setReserved(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
+		
+	edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
+	if (dag->hasAttribute(JDLPrivate::VOMS_FQAN)) {
+		dag->removeAttribute(JDLPrivate::VOMS_FQAN);
+	}
+	dag->setReserved(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 		
 	// Checking for empty string value
 	if (dag->hasAttribute(JDL::MYPROXY)) {
@@ -970,7 +983,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	string dest_uri = wmputilities::getDestURI(stringjid, conf.getDefaultProtocol(),
 		conf.getDefaultPort());
 	edglog(debug)<<"Destination uri: "<<dest_uri<<endl;
-	setAttributes(dag, jid, dest_uri);
+	setAttributes(dag, jid, dest_uri, delegatedproxyfqan);
 		
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
@@ -985,7 +998,8 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	// dag->getSubmissionStrings();
 	////////////////////////////////////////////////////
 	
-	//dag->toString(ExpDagAd::SUBMISSION);
+	// It is used also for attribute inheritance
+	//dag->toString(ExpDagAd::SUBMISSION); 
 	wmplogger.registerDag(dag, wmputilities::getJobJDLToStartPath(*jid));
 	
 	// Registering for Proxy renewal
