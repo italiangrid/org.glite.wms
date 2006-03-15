@@ -26,7 +26,6 @@ GLOBUS_LOCATION=$(REPOSITORY)/repository/globus/2.4.3-VDT-1.2.2/rhel30_gcc32
 BOOST_LOCATION=$(REPOSITORY)/repository/boost/1.32.0/rhel30_gcc32
 EXPAT_LOCATION=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32/
 
-ARES=$(REPOSITORY)/repository/ares/1.1.1/rhel30_gcc32
 EXPAT=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32
 CLASSAD=$(REPOSITORY)/repository/classads/0.9.6/rhel30_gcc32
 BOOST=$(REPOSITORY)/repository/boost/1.32.0/rhel30_gcc32
@@ -36,7 +35,6 @@ BOOST=$(REPOSITORY)/repository/boost/1.32.0/rhel30_gcc32
 BOOST_LIBS=-L$(BOOST_LOCATION)/lib \
 -lboost_filesystem-gcc-mt -lboost_regex-gcc-mt -lboost_thread-gcc-mt -lpthread 
 CLASSAD_LIBS=-L$(CLASSAD)/lib  -lclassad -lclassad_dl
-ARES_LIBS=-L$(ARES)/lib -lares
 GSI_PLUGIN=/home/msotty/webservices/gsoap/gsoap-gsi-plugin-2.0
 
 CIFLAGS=-I../ \
@@ -94,7 +92,6 @@ STAGELIBS=-L$(REPOSITORY)/stage/lib \
 -lglite_wms_globus_ftp_util \
 -lglite_wms_logger \
 -lglite_security_gss_gcc32 \
-$(ARES_LIBS) \
 $(LB_LIBRARIES) \
 $(GRIDSITE_GLOBUS_STAGE_LIBS) \
 $(GRIDSITE_GLOBUS_LIBS) \
