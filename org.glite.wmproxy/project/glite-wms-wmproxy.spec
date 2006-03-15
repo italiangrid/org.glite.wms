@@ -7,7 +7,7 @@ Vendor:EU EGEE project
 Group:System/Application
 Prefix:/opt/glite
 BuildArch:i386
-Requires: mod_ssl glite-wms-partitioner glite-wms-jdl glite-wms-common glite-wms-checkpointing glite-wms-configuration
+Requires: mod_ssl glite-wms-partitioner glite-wms-jdl glite-wms-common glite-wms-checkpointing glite-wms-purger glite-wms-configuration
 BuildRoot:%{_builddir}/%{name}-%{version}
 Source:%{name}-%{version}_bin.tar.gz
 

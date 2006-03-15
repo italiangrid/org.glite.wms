@@ -180,6 +180,7 @@ have_glite_jp=no
 have_glite_security=no                                                                                
 have_glite_wms_chkpt=no
 have_glite_wms_part=no
+have_glite_wms_purger=no
 
 AC_GLITE
 
@@ -208,6 +209,9 @@ AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
 
 AC_GLITE_WMS_PARTITIONER([], have_glite_wms_part=yes, have_glite_wms_part=no)
 AC_MSG_RESULT(["GLITE_WMS_PARTITIONER found $have_glite_wms_part"])
+
+AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
+AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 
 AC_SEC_LCAS
 AC_SEC_LCMAPS

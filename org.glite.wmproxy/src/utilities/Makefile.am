@@ -14,7 +14,6 @@
 #       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 #
 
-WMS_PURGER = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 WMS_COMMON_QUOTA = $(top_srcdir)/../org.glite.wms.common/build/src/utilities/libglite_wms_quota.la
 
 
@@ -46,11 +45,9 @@ libglite_wms_wmproxy_utilities_la_SOURCES = \
 	wmputils.cpp
 
 libglite_wms_wmproxy_utilities_la_LIBADD = \
-	$(WMS_PURGER) \
 	$(WMS_COMMON_QUOTA)
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/../org.glite.wms.purger/src \
 	-I$(top_srcdir)/../org.glite.wms.common/src/utilities \
 	$(GLITE_CFLAGS) \
 	$(BOOST_CFLAGS) \

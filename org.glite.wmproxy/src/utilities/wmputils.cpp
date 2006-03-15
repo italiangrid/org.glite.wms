@@ -42,7 +42,7 @@
 #include "glite/wms/common/logger/manipulators.h"
 
 #include "quota.h"
-#include "purger.h" 
+#include "glite/wms/purger/purger.h" 
 #include "glite/wms/common/utilities/quota.h"
 
 // Exceptions
