@@ -30,10 +30,11 @@ extern "C" {
 
 
 #include <classad_distribution.h>
-#include "glite/wms/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
 
 
 namespace dli = glite::wms::brokerinfo::dli;
+namespace jdl = glite::jdl;
 
 /*****************************************************************************/
 /*                          c o n s t r u c t o r                            */

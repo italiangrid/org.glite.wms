@@ -37,9 +37,9 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "glite/wms/jdl/ManipulationExceptions.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
 
 #include "glite/wmsutils/exception/Exception.h"
 
@@ -57,13 +57,16 @@
 using namespace std;
 
 namespace glite {
+
+namespace requestad = jdl;
+
 namespace wms {
 
 namespace configuration = common::configuration;
 namespace ldif2classad  = common::ldif2classad;
 namespace utilities     = common::utilities;
 namespace logger        = common::logger;
-namespace requestad     = jdl;
+//namespace requestad     = jdl;
 namespace brokerinfo {
 
 brokerinfoGlueImpl::brokerinfoGlueImpl()
@@ -415,7 +418,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
    bool dataReq = false;
    classad::ExprTree* classAdList;
    try {
-      classAdList = glite::wms::jdl::get_data_requirements(requestAd);
+      classAdList = glite::jdl::get_data_requirements(requestAd);
       dataReq = true; 
    }
    catch(...) {
@@ -441,7 +444,7 @@ void brokerinfoGlueImpl::retrieveSFNsInfo(const classad::ClassAd& requestAd, Bro
          string dataCatalogType;
          bool getDataCatalog = false;
          try {
-            dataCatalogType = glite::wms::jdl::get_data_catalog_type( *( static_cast<classad::ClassAd*>(*it) ) );
+            dataCatalogType = glite::jdl::get_data_catalog_type( *( static_cast<classad::ClassAd*>(*it) ) );
             getDataCatalog = true;
          } 
          catch (...){

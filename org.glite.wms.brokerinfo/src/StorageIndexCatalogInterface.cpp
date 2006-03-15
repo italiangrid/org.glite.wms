@@ -32,11 +32,11 @@ extern "C" {
 
 #include "StorageIndexCatalogInterface.h"
 #include <classad_distribution.h>
-#include "glite/wms/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
 #include <string>
 
 using namespace glite::wms;
-
+namespace jdl = glite::jdl;
 
 glite::wms::brokerinfo::sici::StorageIndexCatalogInterface::StorageIndexCatalogInterface()
 {

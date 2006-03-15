@@ -16,7 +16,7 @@
 
 
 
-#include <glite/wms/common/utilities/classad_utils.h>
+#include <glite/wmsutils/classads/classad_utils.h>
 
 #include <classad_distribution.h>
 
@@ -28,6 +28,7 @@ namespace logger = glite::wms::common::logger;
 
 using namespace std;
 using namespace glite::wms::common::utilities;
+using namespace glite::wmsutils::classads;
 using namespace glite::wms::common::configuration;
 
 using namespace glite::wms::brokerinfo;
