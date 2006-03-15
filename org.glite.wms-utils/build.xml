@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.28  2006/03/15 17:29:31  eronchie
+	Added classads
+
 	Revision 1.27  2005/05/26 15:21:48  zurek
 	inserted module.build.file
-
+	
 	Revision 1.26  2004/10/29 22:54:37  dimeglio
 	Use envset target
 	
@@ -219,11 +222,11 @@
 		</antcall>
 	</target>
 
-    <target name="stage" depends="localinit">
-            <antcall target="buildmodules">
-                    <param name="target" value="stage"/>
-            </antcall>
-    </target>
+        <target name="stage" depends="localinit">
+                <antcall target="buildmodules">
+                        <param name="target" value="stage"/>
+                </antcall>
+        </target>
 
 	<target name="dist" depends="localinit">
 		<antcall target="buildmodules">
@@ -318,9 +321,26 @@
 		</if>
     	</target>
 
+	<target name="classads" unless="setenvonly" depends="envset">
+                <if>
+                        <isset property="small.memory" />
+                        <then>
+                                <exec dir="${wms-utils.subsystem.dir}.classads" executable="${antExec}" failonerror="${failonerror}">
+                                        <arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
+                                </exec>
+                        </then>
+                        <else>
+                                <ant dir="${wms-utils.subsystem.dir}.classads"
+                                     target="${target}"
+                                     inheritall="false" />
+                        </else>
+                </if>
+        </target>
+
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="envset,
-						 exception,
+					     exception,
+				             classads,
 					     tls,
 					     jobid">
 		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
