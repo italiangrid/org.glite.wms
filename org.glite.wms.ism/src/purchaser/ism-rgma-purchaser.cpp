@@ -11,7 +11,7 @@
 
 #include "glite/wms/common/ldif2classad/exceptions.h"
 #include "glite/wms/common/utilities/ii_attr_utils.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -61,6 +61,9 @@ using namespace std;
 
 
 namespace glite {
+
+namespace utils = wmsutils::classads;
+
 namespace wms {
 
 namespace ldif2classad	= common::ldif2classad;
@@ -641,7 +644,7 @@ void collect_acbr_info( ism_rgma_purchaser * purchaser,
                         std::vector<string> v;
                         {
                            boost::mutex::scoped_lock  lock(collect_info_mutex);
-                           utilities::EvaluateAttrList(
+                           utils::EvaluateAttrList(
                               *(ce_it->second),
                               "GlueCEAccessControlBaseRule",
                               v
@@ -655,7 +658,7 @@ void collect_acbr_info( ism_rgma_purchaser * purchaser,
                         {
                            boost::mutex::scoped_lock  lock(collect_info_mutex);
                            ce_it->second->Insert("GlueCEAccessControlBaseRule",
-                                              utilities::asExprList(v));
+                                              utils::asExprList(v));
                         }
                      }
 
@@ -846,7 +849,7 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
                            std::vector<string> v;
                            {
                               boost::mutex::scoped_lock  lock(collect_info_mutex);
-                              utilities::EvaluateAttrList(
+                              utils::EvaluateAttrList(
                                 *(gluece_info_it->second),
                                 "GlueHostApplicationSoftwareRunTimeEnvironment",
                                 v
@@ -860,7 +863,7 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
                            {
                               boost::mutex::scoped_lock  lock(collect_info_mutex);
                               gluece_info_it->second->Insert("GlueHostApplicationSoftwareRunTimeEnvironment",
-                                              utilities::asExprList(v));
+                                              utils::asExprList(v));
                            }
                         }
                      }
@@ -988,7 +991,7 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
                         std::vector< std::string > v ;
                         {
                            boost::mutex::scoped_lock  lock(collect_info_mutex);
-                           utilities::EvaluateAttrList(
+                           utils::EvaluateAttrList(
                               *(ce_it->second),
                               "GlueCESEBindGroupSEUniqueID",
                               v
@@ -1002,7 +1005,7 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
                         {
                            boost::mutex::scoped_lock  lock(collect_info_mutex);
                            ce_it->second->Insert("GlueCESEBindGroupSEUniqueID",
-                                              utilities::asExprList(v));
+                                              utils::asExprList(v));
                            //3
                            if ( ! (ce_it->second)->Lookup("GlueCESEBindGroupCEUniqueID") )  {
                               (ce_it->second)->InsertAttr("GlueCESEBindGroupCEUniqueID",

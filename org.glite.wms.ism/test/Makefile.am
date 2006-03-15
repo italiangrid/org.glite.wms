@@ -31,7 +31,8 @@ glite_wms_ism_file_purchaserTest_LDADD = \
         $(top_srcdir)/build/src/libglite_wms_ism.la \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_JDL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
@@ -49,7 +50,8 @@ glite_wms_ism_ii_purchaserTest_LDADD = \
         $(top_srcdir)/build/src/libglite_wms_ism.la \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_JDL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
@@ -68,7 +70,8 @@ glite_wms_ism_rgma_purchaserTest_LDADD = \
 	$(XERCES_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_JDL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
@@ -87,7 +90,8 @@ glite_wms_ism_cemon_purchaserTest_LDADD = \
 	$(GLITE_CE_MONITOR_CLIENT_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
 	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_JDL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
@@ -106,7 +110,8 @@ glite_wms_ism_cemon_asynch_purchaserTest_LDADD = \
 	$(GLITE_CE_MONITOR_CLIENT_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMS_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+        $(GLITE_JDL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \

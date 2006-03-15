@@ -18,16 +18,17 @@
 #include <boost/regex.hpp>
 
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wms/ism/ism.h"
 
 namespace exception = glite::wmsutils::exception;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
 
-namespace utilities     = common::utilities;
+//namespace utilities     = common::utilities;
 namespace logger        = common::logger;
 
 namespace ism {

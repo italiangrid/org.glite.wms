@@ -31,6 +31,7 @@ namespace glite {
 namespace wms {
 
 namespace ldif2classad	= common::ldif2classad;
+namespace utilities = common::utilities;
 
 namespace ism {
 namespace purchaser {
@@ -504,7 +505,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             
             vector<string> access_control_base_rules;
 
-            utilities::EvaluateAttrList(
+            utils::EvaluateAttrList(
               *((*ce_it)->second.first),
               "GlueCEAccessControlBaseRule",
               access_control_base_rules
@@ -569,7 +570,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             if (!access_control_base_rules.empty()) {
               (*ce_it)->second.first->Insert(
                 "GlueCEAccessControlBaseRule",
-                utilities::asExprList(access_control_base_rules)
+                utils::asExprList(access_control_base_rules)
               );
               gluece_info_container.insert(
                 std::make_pair((*ce_it)->first, (*ce_it)->second.first)
