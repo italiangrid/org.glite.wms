@@ -71,6 +71,8 @@ ZipFileAd::ZipFileAd( ) {
 const string FILE_PROTOCOL = "file://" ;
 const string ISBFILE_DEFAULT = "ISBfiles";
 const string TMP_DEFAULT_LOCATION = "/tmp";
+const int HTTP_OK = 200;
+const int TRANSFER_OK = 0;
 
 /**
 *	Default constructor
@@ -288,10 +290,12 @@ void JobSubmit::readOptions (int argc,char **argv){
 		} catch (WmsClientException &exc) {
 			if (fileProto==NULL) {
 				fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-				logInfo->print(WMS_DEBUG, "Setting file protocol to default:", *fileProto);
+				logInfo->print (WMS_DEBUG, "Error while checking the specified FileTransferProtocol;\n" + string(exc.what( )),
+					"\nSetting File Transfer Protocol to default: " + string(*fileProto));
+			} else {
+				logInfo->print (WMS_DEBUG, "Unable to retrieve the list of available FileTransferProtocols on the server;\n" + string(exc.what( )),
+					"\nThe specified protocol will be used: " + string(*fileProto));
 			}
-			logInfo->print (WMS_WARNING, "error while checking the file protocol: " + string(exc.what( )),
-			"The protocol that will be used is: " + string(*fileProto));
 
 		}
 	}
@@ -847,7 +851,7 @@ int JobSubmit::checkInputSandbox ( ) {
 
 	} else {
 		logInfo->print(WMS_DEBUG, "The user JDL does not contain any local ISB file:" ,
-			"no ISB file transfer to be performed");
+			"no ISB-FileTransfer to be performed");
 	}
 	return isbsize ;
 }
@@ -1239,46 +1243,87 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
       	string *destURI= NULL;
 	string msg = "";
 	string look_for = "";
+	vector<string> uris ;
 	vector<string> jobids;
 	string proto = "";
+	string service = "";
+	bool protoInfo = false;
 //cout << "###getDestinationURI> jobid=["<<jobid<<"]\n";
 //cout << "###getDestinationURI> child=["<<child<<"]\n";
 	bool ch = false; // TRUE=child node
-        // The destinationURI's vector is empty: the WMProxy service is called
+        // The destinationURI's vector is empty: the WMProxy service will be called
         if (dsURIs.empty( )){
-                try{
-                        logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , getEndPoint( ));
-			if (checkVersionForTransferProtocols( )){
-				// jobPath is needed for the creation of the Zip files (The path used to archive the files)
-				// If this information is not available in the struct returned by the jobReg/jobSubm service,
-				// it has to be retrieved with the getBulkDestionationURI service
-				if (protocol.size( )> 0){
-					proto = protocol;
-				} else if (jobIds.jobPath == NULL && zipAllowed) {
-					 if (fileProto == NULL) {
-						proto = string(Options::WMP_ALL_PROTOCOLS) ;
-					} else if  (*fileProto == Options::JOBPATH_URI_PROTO) {
-						proto = *fileProto ;
-					} else {
-						proto = string(Options::WMP_ALL_PROTOCOLS) ;
-					}
-				} else if (fileProto == NULL) {
+		// check the WMP version in order to establish the avaiability of the getTransferProtocols service
+		protoInfo = checkVersionForTransferProtocols( );
+		if (protoInfo){
+			// jobPath is needed for the creation of the Zip files (The path used to archive the files)
+			// If this information is not available in the struct returned by the jobReg/jobSubm service,
+			// it has to be retrieved with the getBulkDestionationURI service
+			if (protocol.size( )> 0){
+				proto = protocol;
+			} else if (jobIds.jobPath == NULL && zipAllowed) {
+				// JobId struct does not contain info on the jobPath
+				if (fileProto == NULL) {
+					// no specified protocol ==> ALL_PROTOCOLS will be requested
 					proto = string(Options::WMP_ALL_PROTOCOLS) ;
+				} else if  (*fileProto == Options::JOBPATH_URI_PROTO) {
+					// specified protocol: the same protocol as the  jobPath-URI
+					proto = *fileProto ;
 				} else {
-					proto = *fileProto;
+					// ALL PROTOCOLS
+					proto = string(Options::WMP_ALL_PROTOCOLS) ;
 				}
-				logInfo->print (WMS_DEBUG,
-						"Calling the WMProxy " + string (WMP_BULKDESTURI_SERVICE) + " service with " + proto + " protocol", "" );
-				dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ), proto);
+			} else
+			// JobId struct contains info on the jobPath
+			if (fileProto == NULL) {
+				proto = string(Options::WMP_ALL_PROTOCOLS) ;
 			} else {
-				logInfo->print (WMS_DEBUG,
-						"Calling the WMProxy " + string (WMP_BULKDESTURI_SERVICE) +
+				proto = *fileProto;
+			}
+		} else{
+			// getTransferProtocols service is not available
+			if (protocol.size (  ) > 0) {
+				proto = protocol ;
+			} else if (fileProto) {
+				proto = *fileProto;
+			}
+		}
+                try{
+			if (protoInfo) {
+				if (this->getJobType() == WMS_JOB){
+					// Normal Job ==> using the getSandboxDestURI service
+					service = string(WMP_SBDESTURI_SERVICE);
+                       			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
+					logInfo->print (WMS_DEBUG,
+							"Calling the WMProxy " + service + " service with " + proto + " protocol", "" );
+					uris = api::getSandboxDestURI(jobid, getContext( ), proto);
+					dsURIs.push_back(make_pair(jobid,uris));
+				} else {
+					// Compound job ==> using the getSandboxBulkDestURI service
+					service = string(WMP_BULKDESTURI_SERVICE) ;
+					logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , getEndPoint( ));
+
+					logInfo->print (WMS_DEBUG,
+							"Calling the WMProxy " + service  + " service with " + proto + " protocol", "" );
+					dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ), proto);
+				}
+			} else {
+				if (this->getJobType() == WMS_JOB){
+					// Normal Job ==> using the getSandboxDestURI service
+					service = string(WMP_SBDESTURI_SERVICE);
+                       			logInfo->print(WMS_DEBUG, "Getting the SandboxDestinationURI from the service" , getEndPoint( ));
+					logInfo->print (WMS_DEBUG,
+							"Calling the WMProxy " + service + " service with no request of specific protocol (all available protocols requested)" );
+					uris = api::getSandboxDestURI(jobid, getContext( ), proto);
+					dsURIs.push_back(make_pair(jobid,uris));
+				} else {
+					// Compound job ==> using the getSandboxBulkDestURI service
+					service = string(WMP_BULKDESTURI_SERVICE) ;
+					logInfo->print (WMS_DEBUG,
+						"Calling the WMProxy " + service +
 							" service with no request of specific protocol (all available protocols requested)");
-				dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ));
-				if (protocol.size (  ) > 0) {
-					proto = protocol ;
-				} else if (fileProto) {
-					proto = *fileProto;
+					dsURIs = api::getSandboxBulkDestURI(jobid, getContext( ));
+
 				}
 			}
                 } catch (api::BaseException &exc){
@@ -1291,18 +1336,18 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
                                 "getDestinationURI", ECONNABORTED,
                                 "WMProxy Server Error",
                                 "The server doesn't have any information on InputSBDestURI for :" + jobid + "\n(please contact the server administrator");
-                } else{
-			logInfo->result(WMP_BULKDESTURI_SERVICE, "Destination URIs sucessfully retrieved");
+                } else {
+			logInfo->result(service, "Destination URIs sucessfully retrieved");
 		}
         } else {
+		// The destinationURI's vector is not empty: needed protocol
 		if (protocol.size (  ) > 0) {
 			proto = protocol ;
 		} else if (fileProto) {
 			proto = *fileProto;
 		}
 	}
-
-        if (child.size()>0){
+	  if (child.size()>0){
                 // if the input parameter child is set ....
                 look_for = child ;
 		ch = true;
@@ -1320,22 +1365,24 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 		logInfo->print (WMS_DEBUG,
 			"Looking for the URI with this protocol in the received list:", proto, false );
 	}
-        vector< pair<string ,vector<string > > >::iterator it1 = dsURIs.begin() ;
+	// DestinationURI has not been retrieved yet (because compound may being processed):
+	// looking for it in the BulkDestURIs vector
+	vector< pair<string ,vector<string > > >::iterator it1 = dsURIs.begin() ;
 	vector< pair<string ,vector<string > > >::iterator const end1 = dsURIs.end();
-        // Looks for the destURI's of the job
-        for ( ; it1 != end1 ; it1++) {
-                if (it1->first == look_for) { // parent or child found
+	// Looks for the destURI's of the job
+	for ( ; it1 != end1 ; it1++) {
+		if (it1->first == look_for) { // parent or child found
 			vector<string>::iterator it2 = (it1->second).begin() ;
 			vector<string>::iterator const end2 = (it1->second).end() ;
-                        for (; it2 != end2  ; it2++) {
-                                // 1st check >>>> Looks for the destURi for file transfer
-                                if ( it2->substr (0, (proto.size())) ==  proto){
+			for (; it2 != end2  ; it2++) {
+				// 1st check >>>> Looks for the destURi for file transfer
+				if ( it2->substr (0, (proto.size())) ==  proto){
 					destURI= new string(*it2);
-					 if (ch) {
-					 	logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *destURI, false);
-                                        } else {
-						 logInfo->print(WMS_DEBUG,  "DestinationURI:", *destURI);
-                                        }
+					if (ch) {
+						logInfo->print(WMS_DEBUG,  "Child node : " + child, " - DestinationURI : " + *destURI, false);
+					} else {
+						logInfo->print(WMS_DEBUG,  "DestinationURI:", *destURI);
+					}
 					break ;
 				}
 			}
@@ -1353,49 +1400,15 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
         return *destURI;
 }
 /**
-* Fills the destionationURI vector of this class (dsURIs) with the destionation URI related to
-* the job is being submitted. All available protocols are requested.
-* In case of compound jobs, the list contains the URI related to all child nodes.
-*/
-void JobSubmit::getDestinationURIList ( ){
-	try{
-		logInfo->print(WMS_DEBUG, "Getting the SandboxBulkDestinationURI from the service" , getEndPoint( ));
-		logInfo->service(WMP_BULKDESTURI_SERVICE);
-		if (checkVersionForTransferProtocols( )){
-			logInfo->print (WMS_DEBUG,
-				"Calling the WMProxy " + string (WMP_SBDESTURI_SERVICE) + " service requesting all available protocols" );
-			dsURIs = api::getSandboxBulkDestURI(this->getJobId( ), getContext( ), Options::WMP_ALL_PROTOCOLS);
-		} else {
-			logInfo->print (WMS_DEBUG,
-					"Calling the WMProxy " + string (WMP_SBDESTURI_SERVICE) +
-						" service with no request of specific protocol (all available protocols requested)");
-			dsURIs = api::getSandboxBulkDestURI(this->getJobId( ), getContext( ));
-		}
-	} catch (api::BaseException &exc){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getDestinationURI", ECONNABORTED,
-			"WMProxy Server Error", errMsg(exc));
-	}
-	if (dsURIs.empty( )){
-		throw WmsClientException(__FILE__,__LINE__,
-			"getDestinationURI", ECONNABORTED,
-			"WMProxy Server Error",
-			"The server doesn't have any information on InputSBDestURI for :" + this->getJobId( ) + "\n(please contact the server administrator");
-	} else {
-		logInfo->result(WMP_BULKDESTURI_SERVICE, "Destination URIs sucessfully retrieved");
-	}
-}
-/**
 * Returns a relative path that is used to archive the ISB local file in the tar files.
 * This path is based on the job DestionationURI with the input protocol
 */
 std::string JobSubmit::getJobPathFromDestURI(const std::string& jobid, const std::string& protocol) {
 	string* jobPath = NULL;
 	string msg = "";
-	int p = 0;
 	// If DestinationURIs have not been retrieved yet
 	if (dsURIs.empty( )){
-		this->getDestinationURIList ( );
+		this->getDestinationURI (jobid);
 	}
 	vector<pair<string , vector<string > > >::iterator it1= dsURIs.begin ( );
 	vector<pair<string , vector<string > > >::iterator const end1 = dsURIs.end( );
@@ -1589,18 +1602,20 @@ void JobSubmit::createZipFile (
 * File transfer by globus-url-copy (gsiftp protocol)
 */
 
-void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths) {
+void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::string &errors) {
 	string protocol = "";
 	string file = "";
 	string destination = "";
+	int index=0;
+	int size = paths.size( );
 	//TBDMS: globus-url-copy searched several times
-	while (paths.empty()==false) {
+	while (size>0 && index<size) {
 		// source
-		file = (paths[0].first).file ;
+		file = (paths[index].first).file ;
 		// destination
-		destination = paths[0].second ;
+		destination = paths[index].second ;
 //cout << "###JobSubmit::gsiFtpTransfer> file = " << file << "\n";
-// Protocol has to be added only if not yet present
+		// Protocol has to be added only if not yet present
 		protocol = (file.find("://")==string::npos)?FILE_PROTOCOL:"";
 		// command
 		string cmd= "globus-url-copy " + string (protocol+file) + " " + destination;
@@ -1615,13 +1630,12 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, s
 				"Unable to find globus-url-copy executable");
 		}
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n" , cmd);
-		if ( system( cmd.c_str() ) ){
-			ostringstream info;
-			info << file << "\n";
-			info << "to " << destination;
-			throw WmsClientException(__FILE__,__LINE__,
-				"gsiFtpTransfer", ECONNABORTED,"File Transfer Error",
-				"unable to transfer the file " + info.str());
+
+		if ( system( cmd.c_str() ) < 0  ){
+			errors += "- unable to transfer the file " + file + "\n";
+			errors += "  to " + destination + "\n";
+			// Next file in the vector
+			index++;
 		} else{
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "TRANSFER DONE");
 			// Removes the zip file just transferred
@@ -1635,6 +1649,8 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, s
 				}
 			}
 			paths.erase(paths.begin());
+			// New size of the vector (the index is not increased)
+			size = paths.size( );
 		}
 	}
 }
@@ -1642,14 +1658,13 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, s
 * File transfer by CURL (https protocol)
 */
 
-void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths) {
+void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::string &errors) {
 	// curl struct
 	CURL *curl = NULL;
 	// curl result code
 	CURLcode res;
 	// file struct
 	FILE * hd_src  = NULL;
-	int hd = 0;
 	// local filepath
 	string file = "" ;
 	// destination
@@ -1657,6 +1672,10 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 	ostringstream err;
 	// result message
 	long	httpcode = 0;
+	char curl_errorstr[CURL_ERROR_SIZE];
+	string httperr = "";
+	int index = 0;
+	int size = 0;
 	if ( paths.empty()==false ){
 		// curl init
 		curl_global_init(CURL_GLOBAL_ALL);
@@ -1678,8 +1697,12 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 			// enable uploading
 			curl_easy_setopt(curl, CURLOPT_PUT, 1);
+			// enables error message buffer
+			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
+			size = paths.size( );
 			// name of the file to be transferred
-			while(paths.empty()==false){
+			while(size >0 && index < size){
 				// path to local file (to be transferred)
 				file = (paths[0].first).file;
 				// destinationURI where to transfer the file
@@ -1699,18 +1722,20 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 				// log-debug message
 				ostringstream info ;
 				info << "\nInputSandbox file : " << file << "\n";
-				info << "destination URI : " << destination ;
+				info << "Destination URI : " << destination ;
 				info << "\nsize : " << (paths[0].first).size << " byte(s)"<< "\n";
 				logInfo->print(WMS_DEBUG, "InputSandbox File Transfer", info.str());
-				// FILE TRANSFERRING ------------------------------
+				// FILE TRANSFER ------------------------------------
 				res = curl_easy_perform(curl);
+				// An error occurred during the file transfer
+				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
 				// result
-				if ( res == 0 ){
+				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
 					// SUCCESS !!!
 					// Removes the zip file just transferred
 					if (zipAllowed) {
 						try {
-							//###Utils::removeFile(file);
+							Utils::removeFile(file);
 						} catch (WmsClientException &exc) {
 							logInfo->print (WMS_WARNING,
 							"The following error occured during the removal of the file:",
@@ -1719,15 +1744,22 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 					}
 					// Remove the file info from the vector
 					paths.erase(paths.begin());
+					// New size of the vector (the index is not increased)
+					size = paths.size( );
 				} else {
 					// ERROR !!!
-					// An error occurred during the file transfer
-					curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
-					err << "couldn't transfer the InputSandbox file : " <<file ;
-					err << "to " << destination << "\nhttp error code: " << httpcode ;
-					throw WmsClientException(__FILE__,__LINE__,
-							"curlTransfer",  DEFAULT_ERR_CODE,
-							"File Transfer Error", err.str()  );
+					errors += "- couldn't transfer the InputSandbox file : " + file ;
+					errors += "to " + destination + "\n";
+					if ( strlen(curl_errorstr)>0 ){
+						errors += string(curl_errorstr) + "\n";
+					}
+					if (httpcode!=HTTP_OK){
+						httperr = Utils::httpErrorMessage(httpcode) ;
+						if (httperr.size()>0) { errors += httperr + "\n"; }
+						errors += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
+					}
+					// Next element of the vector
+					index++;
 				}
 				fclose(hd_src);
 			}
@@ -1781,16 +1813,18 @@ std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::wms
 * Transfers the ISB file to the endpoint
 */
 void JobSubmit::transferFiles(std::vector<std::pair<glite::wms::jdl::FileAd,std::string > > &to_bcopied, const std::string &jobid){
-	try {
+	string errors = "";
+//	try {
 		// File Transfer according to the chosen protocol
 		if (fileProto && *fileProto == Options::TRANSFER_FILES_CURL_PROTO ) {
-			this->curlTransfer (to_bcopied);
+			this->curlTransfer (to_bcopied, errors);
 		} else {
-			this->gsiFtpTransfer (to_bcopied);
+			this->gsiFtpTransfer (to_bcopied, errors);
 		}
-	} catch (WmsClientException &exc) {
+	if (errors.size()>0) {
 		ostringstream err ;
-		err << exc.what() << "\n\n";
+		err << "The following error(s) occured while transferring the ISB file(s):\n";
+		err << errors << "\n\n";
 		err << transferFilesList (to_bcopied,jobid, false) << "\n";
 		throw WmsClientException( __FILE__,__LINE__,
 				"transferFiles",  DEFAULT_ERR_CODE,

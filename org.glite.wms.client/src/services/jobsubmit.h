@@ -106,12 +106,6 @@ class JobSubmit : public Job {
                 */
 	    	std::string getDestinationURI(const std::string &jobid, const std::string &child="", const std::string &protocol="") ;
 		/**
-		* Fills the destionationURI vector of this class (dsURIs) with the destionation URI related to
-		* the job is being submitted. All available protocols are requested.
-		* In case of compound jobs(DAG, collections etc..), , the list contains the URI related to all child nodes.
-		*/
-		void getDestinationURIList ( );
-		/**
 		* Checks whether the user JDL contains InputSandbox files located on the local machine to be transferred to
 		* the server.
 		* If there are local files referenced in the InputSandbox, the total size of these files is compared to the limitations that
@@ -208,17 +202,19 @@ class JobSubmit : public Job {
 		/*
 		* 	Performs the transfer a set of local files to one(more) remote machine(s) by globus-url-copy (gsiftp protocol)
  		*	@param paths list of files to be transferred (each pair is <source,destination>)
+		*	@param errros this parameter is filled with the description of the errors occuring during the file transfer opertions (if any)
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
 		*/
-		void gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths);
+		void gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::string &errors);
                 /*
                 * 	Performs the transfer a set of local files to one(more) remote machine(s) by curl (https protocol)
                 *	@param paths list of files to be transferred (each pair is <source,destination>)
+		*	@param errros this parameter is filled with the description of the errors occuring during the file transfer opertions (if any)
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
                 */
-                void curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths);
+                void curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::string &errors);
 		/*
 		*	Gets the list of the InputSandbox files to be transferred to the DestinationURI's
 		*	@param paths the list of files that still need to be transferred
