@@ -14,6 +14,7 @@ stage=$(REPOSITORY)/stage
 BOOST=$(repository)/boost/1.32.0/rhel30_gcc32
 CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
 GLOBUS=$(repository)/globus/2.4.3-VDT-1.2.0/rhel30_gcc32
+LIBTAR=$(repository)/libtar/1.2.11/rhel30_gcc32
 
 
 GEN_LD_FLAGS=-L$(GLITE_REP)/lib 
@@ -24,6 +25,7 @@ WMPCLIENT_C_FLAGS= -I../  \
         -I$(CLASSAD)/include \
         -I$(GLOBUS)/include/gcc32 \
 	-I$(GLOBUS)/include/gcc32/openssl \
+       -I$(LIBTAR)/include \
 	-I/usr/local/lib \
 	-I$(stage)/include \
 	-I$(BOOST)/include

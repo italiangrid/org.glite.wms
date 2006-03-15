@@ -97,7 +97,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
    		}
 	}
 	// prints the message into a file
- 	if (path) {
+ 	if (path && mglog.size()>0) {
         	ofstream outstream(path->c_str(), ios::app);
         	if (outstream.is_open() ) {
                         // to file
@@ -108,7 +108,7 @@ const std::string errMsg(severity sev, const std::string &header, const std::str
          	}
    	}
         // prints the message on the std-output/error
-        if (debug){
+        if (mgout.size()>0){
                 if (ss==WMC_OUT){
                 	cout << mgout << flush ;
  		} else if (ss==WMC_ERR){
