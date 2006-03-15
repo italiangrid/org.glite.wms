@@ -7,8 +7,8 @@
  *
  */
 
-#include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/JobAd.h"
+#include "glite/jdl/ExpDagAd.h"
 #include <list>
 #include <string>
 
@@ -150,7 +150,7 @@ class AdWrapper {
 	*/
 	std::string getAd( const std::string& name  ) ;
     private:
-	glite::wms::jdl::Ad* jad ;
+	glite::jdl::Ad* jad ;
 	std::string error ;
 	bool error_code ;
  };
@@ -228,7 +228,7 @@ class DagWrapper {
 	std::vector<std::string> getMap ();
 	int get_error (std::string& err) ;
    private:
-	glite::wms::jdl::ExpDagAd* dagad ;
+	glite::jdl::ExpDagAd* dagad ;
 	std::string error;
 	bool error_code ;
 	void log_error ( const std::string& err) ;

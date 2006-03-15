@@ -7,7 +7,7 @@
 #include "AdWrapper.h"
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wms/partitioner/Partitioner.h"
-#include "glite/wms/jdl/DAGAd.h"
+#include "glite/jdl/DAGAd.h"
 #define ORG_GLITE_WMSUI_WRAPY_TRY_ERROR try{ error_code = false ;
 #define ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR \
 } catch (Exception &exc){  error_code= true; error = exc.what(); \
@@ -17,17 +17,17 @@
 using namespace classad;
 #endif
 using namespace glite::wmsutils::exception ;
-using namespace glite::wms::jdl ;
+using namespace glite::jdl ;
 using namespace std ;
-glite::wms::jdl::DAGAd  *cAd = NULL ;
+glite::jdl::DAGAd  *cAd = NULL ;
 // Constructor
 AdWrapper::AdWrapper( int level ){
 	if (level==0)  {
 		// type = JOBAD ;
-		jad = new glite::wms::jdl::JobAd();
+		jad = new glite::jdl::JobAd();
 	}else  {
 		// type =  AD ;
-		jad = new glite::wms::jdl::Ad();
+		jad = new glite::jdl::Ad();
 	}
 }
 // Destructor
@@ -72,7 +72,7 @@ bool  AdWrapper::toDagAd( const std::vector <std::string>&  jobids){
 		error = "Fatal Error: JobAd instance empty. Unable to create Dag";
 		return true;
 	}
-	(    (glite::wms::jdl::JobAd*)  jad)->check(false);
+	(    (glite::jdl::JobAd*)  jad)->check(false);
 	 glite::wms::partitioner::Partitioner part ( jad->ad(),jobids);
 	cAd=new DAGAd( part.createDag()->ad() );
 	return false ;
@@ -83,7 +83,7 @@ bool AdWrapper::toJobAd (){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	classad::ClassAd *ad= jad->ad()  ;
 	if ( jad!= NULL ) delete jad ;
-	jad =  new glite::wms::jdl::JobAd(  *ad );
+	jad =  new glite::jdl::JobAd(  *ad );
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
@@ -91,7 +91,7 @@ bool AdWrapper::toJobAd (){
 bool  AdWrapper::checkMulti( const std::vector <std::string>&  multi ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	// if ( type ==AD )  { error_code= true; error = "checkMulti Method is only available for JobAd" ; return true ; }
-	(    (glite::wms::jdl::JobAd*)  jad)->checkMultiAttribute( multi );
+	(    (glite::jdl::JobAd*)  jad)->checkMultiAttribute( multi );
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
@@ -99,7 +99,7 @@ bool  AdWrapper::checkMulti( const std::vector <std::string>&  multi ){
 bool  AdWrapper::check(){   //DEPRECATED
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	// if ( type ==AD )  { error_code= true; error = "checkMulti Method is only available for JobAd" ; return true ; }
-	(    (glite::wms::jdl::JobAd*)  jad)->check();
+	(    (glite::jdl::JobAd*)  jad)->check();
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
@@ -112,7 +112,7 @@ string AdWrapper::toLines(){
 }
 string AdWrapper::toString(){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-	return ((glite::wms::jdl::JobAd*)jad)->toSubmissionString() ;
+	return ((glite::jdl::JobAd*)jad)->toSubmissionString() ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return "" ;
 }
@@ -161,9 +161,9 @@ bool  AdWrapper::setAttributeBool (const string& attr_name, bool attr_value){
 bool AdWrapper::setAttributeExpr (const std::string& attr_name , const std::string& attr_value ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 	if (attr_name == "defaultRank" )
-		(    (glite::wms::jdl::JobAd*)  jad)->setDefaultRank ( attr_value ) ;
+		(    (glite::jdl::JobAd*)  jad)->setDefaultRank ( attr_value ) ;
 	else if (attr_name == "defaultReq" )
-		(    (glite::wms::jdl::JobAd*)  jad)->setDefaultReq (attr_value ) ;
+		(    (glite::jdl::JobAd*)  jad)->setDefaultReq (attr_value ) ;
 	else jad->setAttributeExpr (attr_name , attr_value ) ;
 	return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
@@ -225,7 +225,7 @@ vector<double> AdWrapper::getDoubleValue (const string& attr_name){
 }
 string AdWrapper::getAd( const string& name  ) {
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-	return ((    (glite::wms::jdl::JobAd*)  jad)->getAd(  name  )).toString() ;
+	return ((    (glite::jdl::JobAd*)  jad)->getAd(  name  )).toString() ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return "" ;
 }
@@ -261,7 +261,7 @@ DagWrapper::~DagWrapper(){
 bool DagWrapper::fromFile ( const string& file  ) {
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 		ifstream jdl  ( file.c_str()  ) ;
-		dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+		dagad= new glite::jdl::ExpDagAd ( jdl ) ;
 		dagad->expand();
 		return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
@@ -272,7 +272,7 @@ bool DagWrapper::fromFile ( const string& file  ) {
 *************/
 bool DagWrapper::fromString( const string& jdl){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-		dagad= new glite::wms::jdl::ExpDagAd ( jdl ) ;
+		dagad= new glite::jdl::ExpDagAd ( jdl ) ;
 		dagad->expand();
 		return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
@@ -283,7 +283,7 @@ bool DagWrapper::fromString( const string& jdl){
 *************/
 string DagWrapper::toString ( int level ) {
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-		return dagad->toString (  (glite::wms::jdl::ExpDagAd::level)level  ) ;
+		return dagad->toString (  (glite::jdl::ExpDagAd::level)level  ) ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return "" ;
 }
@@ -338,7 +338,7 @@ ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
 		case 200:
 			return dagad->getDefaultReq ( ) ;
 		default:
-			return dagad->getAttribute (   (glite::wms::jdl::ExpDagAd::attribute) attr_name ) ;
+			return dagad->getAttribute (   (glite::jdl::ExpDagAd::attribute) attr_name ) ;
 	}		
 ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 return "" ;
@@ -362,7 +362,7 @@ bool DagWrapper::setAttributeStr ( int attr_name , const string& attr_value ) {
 				dagad->setDefaultValues ( false) ;
 				break ;
 			default:
-				dagad->setAttribute (   (glite::wms::jdl::ExpDagAd::attribute) attr_name , attr_value ) ;
+				dagad->setAttribute (   (glite::jdl::ExpDagAd::attribute) attr_name , attr_value ) ;
 		}
 		return false ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
@@ -373,7 +373,7 @@ bool DagWrapper::setAttributeStr ( int attr_name , const string& attr_value ) {
 **************/
 bool DagWrapper::removeAttribute ( int attr_name ){
 	ORG_GLITE_WMSUI_WRAPY_TRY_ERROR
-		return dagad->removeAttribute (      (glite::wms::jdl::ExpDagAd::attribute)      attr_name) ;
+		return dagad->removeAttribute (      (glite::jdl::ExpDagAd::attribute)      attr_name) ;
 	ORG_GLITE_WMSUI_WRAPY_CATCH_ERROR
 	return true ;
 }

@@ -11,7 +11,7 @@
 #include <pem.h>
 #include "openssl/ssl.h"
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wms/jdl/JobAd.h"
+#include "glite/jdl/JobAd.h"
 #include "glite/wmsutils/jobid/manipulation.h"  // to_filename method
 // DGAS implementation
 #include "glite/dgas/hlr-clients/job_auth/jobAuthClient.h"
