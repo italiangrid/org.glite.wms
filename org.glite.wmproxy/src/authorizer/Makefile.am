@@ -64,8 +64,7 @@ libglite_wms_wmproxy_authorizer_la_SOURCES = \
 #	$(LCAS_LIBS) \
 #	$(LCMAPS_LIBS)
 #	$(BOOST_LIBS) \
-#	$(CLASSAD_LIBS) \
-#	 $(ARES_LIBS)
+#	$(CLASSAD_LIBS)
 
 
 AM_CPPFLAGS = \

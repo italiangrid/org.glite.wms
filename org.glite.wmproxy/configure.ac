@@ -62,8 +62,8 @@ AC_CHECK_FUNCS([ftruncate localtime_r pow strdup strerror strstr])
 AC_OPTIMIZE
 
 have_boost=no
-have_classads=no                                                       have_globus=no
-have_ares=no
+have_classads=no
+have_globus=no
 have_expat=no
 have_fcgi=no
 have_gridsite=no
@@ -78,9 +78,6 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-AC_ARES([], have_ares=yes, have_ares=no)
-AC_MSG_RESULT(["ARES found $have_ares"])
 
 AC_EXPAT([], have_expat=yes, have_expat=no)
 AC_MSG_RESULT(["EXPAT found $have_expat"])
@@ -108,10 +105,6 @@ fi
 
 if test "$have_classads" = "no"; then
   AC_MSG_RESULT(["Please verify CLASSADS package"])
-fi
-
-if test "$have_ares" = "no"; then
-  AC_MSG_RESULT(["Please verify ARES package"])
 fi
 
 if test "$have_expat" = "no"; then
@@ -144,10 +137,6 @@ if test "$have_boost" = "no"; then
 fi
 
 if test "$have_classads" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_ares" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 

@@ -1,4 +1,4 @@
-CC=gcc
+fgaCC=gcc
 CPP=g++
 LIBS=
 COFLAGS=-O2
@@ -23,7 +23,6 @@ GLOBUS_LOCATION=$(REPOSITORY)/repository/globus/2.4.3-VDT-1.2.2/rhel30_gcc32
 #GLOBUS_LOCATION=/opt/globus
 CLASSAD=$(REPOSITORY)/repository/classads/0.9.6/rhel30_gcc32
 BOOST=$(REPOSITORY)/repository/boost/1.29.1/rhel30_gcc32
-ARES=$(REPOSITORY)/repository/ares/1.1.1/rhel30_gcc32
 EXPAT=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32
 
 GLOBUS_FLAVOR=gcc32dbg
@@ -40,7 +39,6 @@ CFLAGS= $(CWFLAGS) $(COFLAGS) $(CIFLAGS) \
 	-DWANT_NAMESPACES \
 	-I/usr/include/httpd -I/usr/include/apr-0 \
 	-I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR) -g \
-	-I$(ARES)/include \
 	-I$(REPOSITORY)/org.glite.wms.wmproxy/src \
 	-I$(GSOAPPATH) \
 	-I$(REPOSITORY)/stage/include \
@@ -53,7 +51,6 @@ LDFLAGS= \
 	-L$(REPLIBS) \
 	-L$(CLASSAD)/lib \
 	-L$(BOOST)/lib/release \
-	-L$(ARES)/lib \
 	-L$(EXPAT)/lib \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
@@ -76,7 +73,6 @@ LDFLAGS= \
 	-lglite_wms_wmproxy_utilities \
 	-lglite_wms_wmproxy_eventlogger \
 	-lglite_wms_wmproxy_authorizer \
-	-lares \
 	-lclassad \
 	-lclassad_dl \
 	-lboost_fs \
