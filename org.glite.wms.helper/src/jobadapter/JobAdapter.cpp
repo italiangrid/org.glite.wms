@@ -324,9 +324,16 @@ try {
     jdl::set_transfer_executable(*result, true);
   } else {
     jdl::set_grid_type(*result, "condor");
-    // These two attributes are needed for collecting accounting logs.
+    // These three attributes are needed for collecting accounting logs.
     jdl::set_remote_remote_user_subject_name(*result, certificatesubject);
     jdl::set_remote_remote_edg_jobid(*result, job_id);
+    jdl::set_remote_remote_ceid(*result, globusresourcecontactstring);
+    // The VOMS FQAN is used for logging on the CE side.
+    // Will be retrieved from teh cert in case it's not set here.
+    std::string voms_fqan(jdl::get_voms_fqan(*m_ad));
+    if (!voms_fqan.empty()) {
+      jdl::set_remote_remote_voms_fqan(*result, voms_fqan);
+    }
     // Virtual Organization is used to compose remote Condor daemons
     // unique name, but we don't really care if it's empty
     std::string vo(jdl::get_virtual_organisation(*m_ad));
