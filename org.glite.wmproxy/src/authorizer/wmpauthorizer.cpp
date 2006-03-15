@@ -196,11 +196,11 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	if (certfqan != "") {
 		this->certfqan = certfqan;
 		if (!compareFQAN(certfqan, wmputilities::getEnvFQAN())) {
-			edglog(info)<<"VOMS FQAN Authorization: user not authorized"
+			edglog(info)<<"Client proxy FQAN does not match delegated proxy FQAN"
 				<<endl;
 			throw AuthorizationException(__FILE__, __LINE__,
 		    	"authorize()", wmputilities::WMS_AUTHZ_ERROR, 
-		    	"VOMS FQAN Authorization: user not authorized");
+		    	"Client proxy FQAN does not match delegated proxy FQAN");
 		}
 		// Gacl Authorizing
  		checkGaclUserAuthZ();
