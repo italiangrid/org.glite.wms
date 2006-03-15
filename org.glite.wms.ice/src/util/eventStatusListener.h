@@ -61,7 +61,7 @@ namespace glite {
 	public:
 	  static boost::recursive_mutex mutexJobStatusUpdate;
 
-	  eventStatusListener(int i, const std::string& hostcert) ;
+	  eventStatusListener(const int& i, const std::string& hostcert) ;
 	  virtual ~eventStatusListener() {}
 
 	  void acceptJobStatus(void);

@@ -102,8 +102,8 @@ bool eventStatusPoller::getStatus(void)
     bool _tmp_start_listener;
 
     for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
-        if ( ! jobIt->is_active() ) 
-            continue; // Skip jobs which are terminated or in unknown status
+        //if ( ! jobIt->is_active() ) 
+        //    continue; // Skip jobs which are terminated or in unknown status
 
         oneJobToQuery.clear();
         

@@ -155,7 +155,7 @@ namespace { // anonymous namespace
 
 
 //______________________________________________________________________________
-iceUtil::eventStatusListener::eventStatusListener(int i,const string& hostcert)
+iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
   : CEConsumer(i),
     iceThread( "event status poller" ),
     grid_JOBID(),
