@@ -45,6 +45,9 @@ namespace services {
 
 const string DEFAULT_STORAGE_LOCATION = "/tmp";
 const string DISPLAY_CMD = "more";
+const int HTTP_OK = 200;
+const int TRANSFER_OK = 0;
+
 /*
 * 	Default constructor
 */
@@ -465,144 +468,152 @@ void JobPerusal::perusalUnset( ){
 /**
 * File downloading with globus-url-copy
 */
-void JobPerusal::gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
-	string local = "";
+void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
 	int code = 0;
-	int size = uris.size();
-        //globus_module_activate(GLOBUS_FTP_CLIENT_MODULE);
-	 for ( int i = 0; i < size ; i++ ){
+	ostringstream err ;
+	char *reason = NULL;
+	string source = "";
+	string destination = "";
+	string cmd= "globus-url-copy ";
+	if (getenv("GLOBUS_LOCATION")){
+		cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
+	}else if (Utils::isDirectory ("/opt/globus/bin")){
+		cmd="/opt/globus/bin/"+cmd;
+	}else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"gsiFtpGetFiles", ECONNABORTED,
+			"Unable to find",
+			"globus-url-copy executable");
+	}
+	 while ( uris.empty() == false ){
 		// command
-		string cmd= "globus-url-copy ";
-		if (getenv("GLOBUS_LOCATION")){
-			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
-		}else if (Utils::isDirectory ("/opt/globus/bin")){
-			cmd="/opt/globus/bin/"+cmd;
-		}else {
-			throw WmsClientException(__FILE__,__LINE__,
-				"gsiFtpGetFiles", ECONNABORTED,
-				"Unable to find",
-				"globus-url-copy executable");
-		}
-		// local path
-		local = *dirOpt + "/" + Utils::getFileName (uris[i]) ;
-
-		if (wmcUtils->askForFileOverwriting(local)){
-			// COMMAND
-			cmd+=string(uris[i]) + " file://"  + local;
-			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp command)\n", cmd);
+		source = uris[0];
+		destination = *dirOpt + "/" + Utils::getFileName (source) ;
+		if (wmcUtils->askForFileOverwriting(destination)){
+			cmd+= source + " file://"  + destination ;
+			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n", cmd);
 			// launches the command
-			code = system( cmd.c_str() ) ;
-			if ( code != 0 ) {
-				errors +=	"Error(globus-url-copy) unable to download: " + uris[i] + "(error code: " + boost::lexical_cast<string>(code) + ")\n";
-			} else if (! Utils::isFile(local)) {
-				errors +=	"Error(globus-url-copy)  unable to download: " + uris[i]  + " to " + local + "\n";
+			code = system( cmd.c_str() );
+			if (code <  0) {
+				err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+				reason = strerror(code);
+				if (reason!=NULL) {
+					err << "   " << reason << "\n";
+					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+				} else {
+					logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+				}
 			} else {
-				// Saves the local path
-				paths.push_back(local);
+				paths.push_back(destination);
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) -", "File successfully retrieved");
 			}
+
 		} else {
-			errors += "Warning - existing file not overwritten: " + local + "\n";
+			logInfo->print(WMS_DEBUG, "WARNING - existing file not overwritten:", destination);
+			errors += "Warning - existing file not overwritten: " + destination + "\n";
 		}
-         }
+		uris.erase(uris.begin());
+	}
+	if ((err.str()).size() >0){
+		errors = "Error while downloading the following file(s):\n" + err.str( );
+	}
 }
+
 /**
 * File downloading with CURL
 */
 void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) {
 	CURL *curl = NULL;
-	string local = "";
+	string source = "" ;
+	string destination = "" ;
+	string file = "" ;
+	CURLcode res;
+	long	httpcode = 0;
 	char curl_errorstr[CURL_ERROR_SIZE];
-	CURLcode code ;
-	long http_code = 0;
-	string *logpath = NULL;
-	FILE* log =  NULL;
-	int res = -1;
-	// Number of files to be transferred
-	int size = uris.size();
+	string httperr = "";
+	string curlMsg = "";
+	string err = "";
 	// user proxy
-	if (size==0)  {
-		errors = "Warning - no valid URIs of files to be downloaded\n";
-	} else {
-		// curl init
-		curl_global_init(CURL_GLOBAL_ALL);
-		curl = curl_easy_init();
-		if ( curl ) {
-			// user proxy
-			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
-			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
-			curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath() );
-			curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
-			//trusted certificate directory
-			curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
-			//ssl options (no verify)
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+	if (uris.empty()==false){
+                // curl init
+                curl_global_init(CURL_GLOBAL_ALL);
+                curl = curl_easy_init();
+                if ( curl ) {
+			// curl options: Debug function
+			curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &curlMsg);
+			curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, Utils::curlDebugCb);
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+                        // writing function
+                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
+                        // user proxy
+                        curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,  "PEM");
+                        curl_easy_setopt(curl, CURLOPT_SSLCERT, getProxyPath());
+                        curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
+                        curl_easy_setopt(curl, CURLOPT_SSLKEY, getProxyPath() );
+                        curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, NULL);
+                        //trusted certificate directory
+                        curl_easy_setopt(curl, CURLOPT_CAPATH, getCertsPath());
+                        //ssl options (no verify)
+                        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+                        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-			// DEBUG messages in the log file
-			logpath = wmcUtils->getLogFileName( );
-			if (logpath){
-				log = fopen(logpath->c_str(), "a");
-				if (log) {
-					curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-					curl_easy_setopt(curl, CURLOPT_STDERR, log);
-					logInfo->print(WMS_DEBUG, "CURL debug messages printed in the log file:", *logpath);
-				} else {
-					logInfo->print(WMS_WARNING,
-						"couldn't open the log file to print CURL debug messages:",
-						*logpath);
+                        // files to be downloaded
+			while(paths.empty()==false){
+				source = uris[0];
+				destination = *dirOpt + "/" + Utils::getFileName (source) ;
+                                curl_easy_setopt(curl, CURLOPT_URL, source.c_str());
+                                ostringstream info ;
+                                info << "\nFile:\t" << source << "\n";
+                                info << "Destination:\t" << destination <<"\n";
+                                logInfo->print(WMS_DEBUG, "File Transferring (curl)", info.str());
+                                struct httpfile params={
+                                        (char*)destination.c_str() ,
+                                        NULL
+                                };
+                                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
+                                // downloading
+                                res = curl_easy_perform(curl);
+				// Writing DEBUG info into the log file (if created)
+				if (curlMsg.size()>0){
+					logInfo->print(WMS_DEBUG, curlMsg, "", false);
+					curlMsg = "";
 				}
-			}
-			// If there is no log file, messages on the std-out
-			if ( log == NULL && wmcOpts->getBoolAttribute(Options::DBG)){
-				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-			}
-			 // writing function
-                        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
-			// files to be downloaded
-			vector <std::string>::iterator it = uris.begin( ) ;
-			vector <std::string>::iterator const end = uris.end( );
-			for ( ; it != end ; it++) {
-				// local path
-				local = *dirOpt + "/" + Utils::getFileName (string(*it)) ;
-				if (wmcUtils->askForFileOverwriting(local)){
-					curl_easy_setopt(curl, CURLOPT_URL, it->c_str());
-					ostringstream info ;
-					info << "Source: " << (*it) << "\n";
-					info << " Destination: " << local <<"\n";
-					logInfo->print(WMS_DEBUG, "File Transfer\n", info.str());
-					struct httpfile params={
-						(char*)local.c_str() ,
-						NULL
-					};
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
-					// downloading
-					code = curl_easy_perform(curl);
-					// closes the log file
-					if(log) {fclose(log);}
-					if (code != CURLE_OK ){
-						errors += "- source URI: "+  (*it) + "\n  LOCAL PATH: " +  local + "\n" ;
-						if ( strlen(curl_errorstr)>0 ){
-							errors += "  reason: " + string(curl_errorstr) + "\n";
-						} else {
-							errors += "  (unknown reason)\n";
-						}
-					} else {
-						// SUCCESS
-						res = 0;
-						logInfo->print(WMS_DEBUG, "File Transfer SUCCESS", local);
-						paths.push_back(local);
+				// If an error occurred during the file transfer
+				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
+				// result
+				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
+					// SUCCESS !!!
+					logInfo->print(WMS_DEBUG, "Transfer successfully done", "");
+					paths.push_back(destination);
+				} else {
+					// ERROR !!!
+					err += "-  Failure while downloading the file: " + file ;
+					err += " to " + destination + "\n";
+					if ( strlen(curl_errorstr)>0 ){
+						err += string(curl_errorstr) + "\n";
 					}
-				} else {
-					errors += "Warning - existing file not overwritten: " + local + "\n";
+					if (httpcode!=HTTP_OK){
+						httperr = Utils::httpErrorMessage(httpcode) ;
+						if (httperr.size()>0) { errors += httperr + "\n"; }
+						err += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
+					}
+					logInfo->print(WMS_DEBUG, "Transfer Failed:\n", err);
+					// Adding this error description to the final message that will be returned
+					errors += string(err) ;
 				}
+				// Removes the file info from the vector
+				uris.erase(uris.begin());
 			}
 			// cleanup
 			curl_easy_cleanup(curl);
 		}
+ 	 } else {
+		logInfo->print (WMS_DEBUG,  "No remote OutputSB files to be retrieved", "");
 	}
+
 }
 
 /**

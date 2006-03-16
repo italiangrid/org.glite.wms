@@ -81,6 +81,7 @@ class JobOutput  : public Job {
                 /**
                 * File downloading with CURL
                 * @param files list of files to be downloaded and their destination
+		*@param failed this vector is filled with the information on the files for which was a failure occurred during the transfer operations
 		* @param errors string with messages of errors occurred during the operations
                 */
 		void curlGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) ;

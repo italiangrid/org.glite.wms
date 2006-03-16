@@ -29,9 +29,7 @@
 // BOOST
 #include "boost/filesystem/path.hpp" // path
 #include "boost/filesystem/exception.hpp" //managing boost errors
-// CURL
-#include "curl/curl.h"
-
+#include <boost/lexical_cast.hpp>
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
@@ -46,7 +44,8 @@ namespace services {
 
 int SUCCESS = 0;
 int FAILED = -1;
-
+const int HTTP_OK = 200;
+const int TRANSFER_OK = 0;
 const bool   GENERATE_NODE_NAME =true;  // Determine whether to use or not node approach
 const string GENERATED_JN_FILE  ="ids_nodes.map" ; // Determine the id/nodes filename
 
@@ -230,7 +229,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 	string errors = "";
 	string wmsg = "" ;
 	string id = "";
-	// Dir Creation Management 
+	// Dir Creation Management
 	bool createDir=false;
 	bool checkChildren = true;
 	// JobId
@@ -490,31 +489,41 @@ void JobOutput::createWarnMsg(const std::string &msg ){
 void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string> > &paths, std::string &errors) {
 	int code = 0;
 	ostringstream err ;
- 	vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
-	vector <pair<std::string , string> >::iterator const end = paths.end( ) ;
-	 for (  ; it != end ; it++ ){
+	char *reason = NULL;
+	string source = "";
+	string destination = "";
+	string cmd= "globus-url-copy ";
+	if (getenv("GLOBUS_LOCATION")){
+		cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
+	}else if (Utils::isDirectory ("/opt/globus/bin")){
+		cmd="/opt/globus/bin/"+cmd;
+	}else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"gsiFtpGetFiles", ECONNABORTED,
+			"Unable to find",
+			"globus-url-copy executable");
+	}
+	 while ( paths.empty() == false ){
 		// command
-		string cmd= "globus-url-copy ";
-		if (getenv("GLOBUS_LOCATION")){
-			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
-		}else if (Utils::isDirectory ("/opt/globus/bin")){
-			cmd="/opt/globus/bin/"+cmd;
-		}else {
-			throw WmsClientException(__FILE__,__LINE__,
-				"gsiFtpGetFiles", ECONNABORTED,
-				"Unable to find",
-				"globus-url-copy executable");
-		}
-		cmd+=string( it->first) + " file://"  +string( it->second );
-		logInfo->print(WMS_DEBUG, "File Transferring (gsiftp command)\n", cmd);
+		source = paths[0].first ;
+		destination = paths[0].second ;
+		cmd+= source + " file://"  + destination ;
+		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n", cmd);
 		// launches the command
-		code = system( cmd.c_str() ) ;
-		if ( code != 0 ){
-			ostringstream info ;
-			info << code ;
-			logInfo->print(WMS_DEBUG, "File Transferring (gsiftp) - TRANSFER FAILED", "return code=" + info.str());
-			err << " - " <<  it->first << "\nto: " << it->second << " (error code: " << code << ")\n";
-                }
+		code = system( cmd.c_str() );
+		if (code <  0) {
+			err << " - " <<  source << " to " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
+                } else {
+			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) -", "File successfully retrieved");
+		}
+		paths.erase(paths.begin());
          }
 	 if ((err.str()).size() >0){
 		errors = "Error while downloading the following file(s):\n" + err.str( );
@@ -530,13 +539,21 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
 	string destination = "" ;
 	string file = "" ;
 	CURLcode res;
+	long	httpcode = 0;
 	char curl_errorstr[CURL_ERROR_SIZE];
+	string httperr = "";
+	string curlMsg = "";
+	string err = "";
 	// user proxy
-	if ( !paths.empty()){
+	if (paths.empty()==false){
                 // curl init
                 curl_global_init(CURL_GLOBAL_ALL);
                 curl = curl_easy_init();
                 if ( curl ) {
+			// curl options: Debug function
+			curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &curlMsg);
+			curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, Utils::curlDebugCb);
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
                         // writing function
                         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Utils::curlWritingCb);
                         // user proxy
@@ -550,21 +567,15 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                         //ssl options (no verify)
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
                         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-                        // verbose message
-                        if ( wmcOpts->getBoolAttribute(Options::DBG)){
-                                curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-                        }
+
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
+			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
                         // files to be downloaded
-			vector <pair<std::string , string> >::iterator it = paths.begin( ) ;
-			vector <pair<std::string , string> >::iterator const end = paths.end( );
-                        for ( ; it != end ; it++ ){
-				// source
-                                source = it->first ;
+			while(paths.empty()==false){
+				source = paths[0].first;
                                 curl_easy_setopt(curl, CURLOPT_URL, source.c_str());
-				// destination
-                                destination = it->second;
+				destination = paths[0].second;
                                 ostringstream info ;
                                 info << "\nFile:\t" << source << "\n";
                                 info << "Destination:\t" << destination <<"\n";
@@ -576,20 +587,43 @@ void JobOutput::curlGetFiles (std::vector <std::pair<std::string , std::string> 
                                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &params);
                                 // downloading
                                 res = curl_easy_perform(curl);
-                                if (res != 0){
-                                	ostringstream err ;
-                                        err << "Failed to perform the downloading of the file:\n";
-                                        err << "from " << source << "\n";
-                                        err << "to " << destination<< "\n";
-					err << curl_errorstr << "\n";
-                                        throw WmsClientException(__FILE__,__LINE__,
-                                        	"transferFiles", DEFAULT_ERR_CODE,
-                                        	"File Transfer Error",
-                                        	err.str() );
-                                }
-                        }
-                }
- 	}
+				// Writing DEBUG info into the log file (if created)
+				if (curlMsg.size()>0){
+					logInfo->print(WMS_DEBUG, curlMsg, "", false);
+					curlMsg = "";
+				}
+				// If an error occurred during the file transfer
+				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
+				// result
+				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
+					// SUCCESS !!!
+					logInfo->print(WMS_DEBUG, "Transfer successfully done", "");
+				} else {
+					// ERROR !!!
+					err += "-  Failure while downloading the file: " + file ;
+					err += " to " + destination + "\n";
+					if ( strlen(curl_errorstr)>0 ){
+						err += string(curl_errorstr) + "\n";
+					}
+					if (httpcode!=HTTP_OK){
+						httperr = Utils::httpErrorMessage(httpcode) ;
+						if (httperr.size()>0) { errors += httperr + "\n"; }
+						err += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
+					}
+					logInfo->print(WMS_DEBUG, "Transfer Failed:\n", err);
+					// Adding this error description to the final message that will be returned
+					errors += string(err) ;
+				}
+				// Removes the file info from the vector
+				paths.erase(paths.begin());
+			}
+			// cleanup
+			curl_easy_cleanup(curl);
+		}
+ 	 } else {
+		logInfo->print (WMS_DEBUG,  "No remote OutputSB files to be retrieved", "");
+	}
+
 }
 }}}} // ending namespaces
 

@@ -88,7 +88,7 @@ class JobPerusal  : public Job {
 		* @param paths gets the list of local pathnames to the downloaded files
 		* @param errors string with information on errors occurred during the downloading operations
 		*/
-		void gsiFtpGetFiles (const std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
+		void gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<std::string> &paths, std::string &errors) ;
 				/**
 		* Performs downloading of the peeks files to the local machine from
 		* the Destination URI's provided as input with CURL;
