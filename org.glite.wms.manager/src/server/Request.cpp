@@ -11,19 +11,14 @@
 #include "lb_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/common/configuration/Configuration.h"
-#include "glite/wms/common/configuration/WMConfiguration.h"
-#include "glite/wms/common/utilities/classad_utils.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/lb/producer.h"
 
 namespace jobid = glite::wmsutils::jobid;
-namespace jdl = glite::wms::jdl;
+namespace jdl = glite::jdl;
 namespace utilities = glite::wms::common::utilities;
-using namespace glite::wms::common::utilities;
-namespace configuration = glite::wms::common::configuration;
 
 namespace glite {
 namespace wms {
@@ -43,12 +38,12 @@ aux_get_sequence_code(
   std::string sequence_code;
 
   if (command == "jobsubmit") {
-    classad::ClassAd const* job_ad = submit_command_get_ad(command_ad);
+    classad::ClassAd const* job_ad = utilities::submit_command_get_ad(command_ad);
     sequence_code = jdl::get_lb_sequence_code(*job_ad);
   } else if (command == "jobcancel") {
-    sequence_code = cancel_command_get_lb_sequence_code(command_ad);
+    sequence_code = utilities::cancel_command_get_lb_sequence_code(command_ad);
   } else if (command == "jobresubmit") {
-    sequence_code = resubmit_command_get_lb_sequence_code(command_ad);
+    sequence_code = utilities::resubmit_command_get_lb_sequence_code(command_ad);
   }
 
   return sequence_code;
@@ -64,7 +59,7 @@ aux_get_x509_proxy(
   std::string x509_proxy;
 
   if (command == "jobsubmit") {
-    classad::ClassAd const* job_ad = submit_command_get_ad(command_ad);
+    classad::ClassAd const* job_ad = utilities::submit_command_get_ad(command_ad);
     x509_proxy = jdl::get_x509_user_proxy(*job_ad);
   } else if (command == "jobcancel") {
     x509_proxy = get_user_x509_proxy(id);
@@ -81,20 +76,20 @@ aux_get_id(classad::ClassAd const& command_ad, std::string const& command)
   if (command == "jobsubmit") {
     return jobid::JobId(
       jdl::get_edg_jobid(
-        *submit_command_get_ad(command_ad)
+        *utilities::submit_command_get_ad(command_ad)
       )
     );
   } else if (command == "jobresubmit") {
-    return jobid::JobId(resubmit_command_get_id(command_ad));
+    return jobid::JobId(utilities::resubmit_command_get_id(command_ad));
   } else if (command == "jobcancel") {
-    return jobid::JobId(cancel_command_get_id(command_ad));
+    return jobid::JobId(utilities::cancel_command_get_id(command_ad));
   } else if (command == "match") {
     bool id_exists;
     jobid::JobId match_jobid;
 
     std::string jobidstr(
       jdl::get_edg_jobid(
-        *match_command_get_ad(command_ad),
+        *utilities::match_command_get_ad(command_ad),
         id_exists
       )
     );
@@ -128,8 +123,8 @@ check_request(classad::ClassAd const& command_ad)
   std::string sequence_code;
   std::string x509_proxy;
 
-  if (command_is_valid(command_ad)) {
-    command = command_get_command(command_ad);
+  if (utilities::command_is_valid(command_ad)) {
+    command = utilities::command_get_command(command_ad);
     id = aux_get_id(command_ad, command);
     sequence_code = aux_get_sequence_code(command_ad, command);
     x509_proxy = aux_get_x509_proxy(command_ad, command, id);
@@ -155,7 +150,7 @@ Request::Request(
 
   if (command == "jobsubmit") {
 
-    std::auto_ptr<classad::ClassAd> ad(submit_command_remove_ad(command_ad));
+    std::auto_ptr<classad::ClassAd> ad(utilities::submit_command_remove_ad(command_ad));
     m_jdl = ad;
 
     bool exists = false;
@@ -173,7 +168,7 @@ Request::Request(
     mark_resubmitted();
 
     x509_proxy = get_user_x509_proxy(m_id);
-    sequence_code = resubmit_command_get_lb_sequence_code(command_ad);
+    sequence_code = utilities::resubmit_command_get_lb_sequence_code(command_ad);
     m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
   } else if (command == "jobcancel") {
@@ -181,19 +176,19 @@ Request::Request(
     state(DELIVERED);
 
     x509_proxy = get_user_x509_proxy(m_id);
-    sequence_code = cancel_command_get_lb_sequence_code(command_ad);
+    sequence_code = utilities::cancel_command_get_lb_sequence_code(command_ad);
     m_lb_context = create_context(m_id, x509_proxy, sequence_code);
 
     mark_cancelled(m_lb_context);
 
   } else if (command == "match") {
 
-    std::auto_ptr<classad::ClassAd> ad(match_command_remove_ad(command_ad));
+    std::auto_ptr<classad::ClassAd> ad(utilities::match_command_remove_ad(command_ad));
     m_jdl = ad;
 
-    std::string filename = match_command_get_file(command_ad);
-    int number = match_command_get_number_of_results(command_ad);
-    bool brokerinfo = match_command_get_include_brokerinfo(command_ad);
+    std::string filename = utilities::match_command_get_file(command_ad);
+    int number = utilities::match_command_get_number_of_results(command_ad);
+    bool brokerinfo = utilities::match_command_get_include_brokerinfo(command_ad);
 
     m_match_parameters = boost::make_tuple(filename, number, brokerinfo);
   }

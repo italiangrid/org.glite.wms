@@ -12,13 +12,14 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 #include "listmatch.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 
 #include "glite/wms/helper/Helper.h"
 #include "glite/wms/helper/exceptions.h"
 
 namespace utilities = glite::wms::common::utilities;
+namespace ca = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -45,7 +46,7 @@ bool match(
     result.reset(glite::wms::helper::Helper("MatcherHelper").resolve(&ad));
 
     classad::ExprTree *et = result->Lookup ("match_result");
-    assert(utilities::is_expression_list(et));
+    assert(ca::is_expression_list(et));
     classad::ExprList& match_result = *static_cast<classad::ExprList*>(et);
 
     if (match_result.size() != 0) {
@@ -59,7 +60,7 @@ bool match(
 
       int const n_results = std::min(number_of_results, match_result.size());
       for (int i = 0; i < n_results; ++i) {
-        assert(utilities::is_classad(list[i]));
+        assert(ca::is_classad(list[i]));
         std::auto_ptr<classad::ExprTree> element(list[i]->Copy());
 
         if (!include_brokerinfo) {
@@ -71,8 +72,8 @@ bool match(
            * ]
            */
           classad::ClassAd* ca = static_cast<classad::ClassAd*>(element.get());
-          std::string host = utilities::evaluate_attribute(*ca, "ce_id");
-          double rank = utilities::evaluate_attribute(*ca, "rank");
+          std::string host = ca::evaluate_attribute(*ca, "ce_id");
+          double rank = ca::evaluate_attribute(*ca, "rank");
 
           classad::Value value;
           value.SetStringValue(host + ',' + boost::lexical_cast<std::string>(rank));

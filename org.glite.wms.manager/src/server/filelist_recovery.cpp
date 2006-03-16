@@ -8,12 +8,13 @@
 #include <boost/regex.hpp>
 #include "lb_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
 namespace utilities = glite::wms::common::utilities;
 namespace jobid = glite::wmsutils::jobid;
+namespace ca = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -77,7 +78,7 @@ void catalog_requests_by_id(
 
     try {
 
-      ClassAdPtr command_ad(utilities::parse_classad(command_ad_str));
+      ClassAdPtr command_ad(ca::parse_classad(command_ad_str));
 
       std::string command;
       jobid::JobId id;
@@ -112,7 +113,7 @@ void catalog_requests_by_id(
 
       cleanup_guard.dismiss();
 
-    } catch (utilities::ClassAdError& e) {
+    } catch (ca::ClassAdError& e) {
       Info(e.what());
     } catch (InvalidRequest& e) {
       Info(e.str());

@@ -24,18 +24,18 @@
 #include "glite/wms/common/configuration/WMPConfiguration.h"
 
 #include "glite/wms/common/utilities/wm_commands.h"
-#include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/JDLAttributes.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/security/proxyrenewal/renewal.h"
 
@@ -43,7 +43,7 @@
 namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
-namespace jdl = glite::wms::jdl;
+namespace jdl = glite::jdl;
 namespace fs = boost::filesystem;
 
 // HARDCODED:
@@ -131,7 +131,7 @@ make_resubmit_request(std::string const& job_id) {
   const classad::ClassAd cmd(
     utilities::resubmit_command_create(job_id, hc_sequence_code)
   );
-  return utilities::unparse_classad(cmd);
+  return ca::unparse_classad(cmd);
 }
 
 std::string
@@ -139,7 +139,7 @@ make_submit_request(classad::ClassAd const& jdl) {
   const classad::ClassAd cmd(
     utilities::submit_command_create(jdl)
   );
-  return utilities::unparse_classad(cmd);
+  return ca::unparse_classad(cmd);
 }
 
 std::string
@@ -160,7 +160,7 @@ make_match_request(
     )
   );
 
-  return utilities::unparse_classad(cmd);
+  return ca::unparse_classad(cmd);
 }
 
 } // empty namespace
@@ -365,7 +365,7 @@ main(int argc, char *argv[])
             ctx,
             jid.getId(),
             EDG_WLL_JOB_SIMPLE,
-            utilities::unparse_classad(jdl).c_str(),
+            ca::unparse_classad(jdl).c_str(),
             lb_address.c_str(),
             0, 
             NULL, 

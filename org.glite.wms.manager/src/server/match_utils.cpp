@@ -12,9 +12,9 @@
 #include <boost/regex.hpp>
 #include <boost/thread/xtime.hpp>
 #include <classad_distribution.h>
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
-namespace utilities = glite::wms::common::utilities;
+namespace ca = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -152,22 +152,22 @@ fill_matches(
 )
 try {
 
-  std::string reason(utilities::evaluate_attribute(match_response, "reason"));
+  std::string reason(ca::evaluate_attribute(match_response, "reason"));
   if (reason != "ok") {
     throw MatchError(reason);
   }
 
   classad::ExprList const* const match_result(
-    utilities::evaluate_attribute(match_response, "match_result")
+    ca::evaluate_attribute(match_response, "match_result")
   );
 
   classad::ExprList::const_iterator it = match_result->begin();
   classad::ExprList::const_iterator const end = match_result->end();
   for ( ; it != end; ++it) {
-    assert(utilities::is_classad(*it));
+    assert(ca::is_classad(*it));
     classad::ClassAd const& match(*static_cast<classad::ClassAd const*>(*it));
 
-    std::string const ce_id(utilities::evaluate_attribute(match, "ce_id"));
+    std::string const ce_id(ca::evaluate_attribute(match, "ce_id"));
     {
       // if the ce is cream-based ignore it, because dagman is not able to
       // manage it
@@ -181,11 +181,11 @@ try {
         continue;
       }
     }
-    double rank(utilities::evaluate_attribute(match, "rank"));
+    double rank(ca::evaluate_attribute(match, "rank"));
     ClassAdPtr ad_ptr;
     if (include_brokerinfo) {
       classad::ClassAd const* brokerinfo(
-        utilities::evaluate_attribute(match, "brokerinfo")
+        ca::evaluate_attribute(match, "brokerinfo")
       );
       ad_ptr.reset(static_cast<classad::ClassAd*>(brokerinfo->Copy()));
     }
@@ -196,9 +196,9 @@ try {
 
   return !matches.empty();
 
-} catch (utilities::InvalidValue&) {
+} catch (ca::InvalidValue&) {
   throw MatchError(
-    "invalid format: " + utilities::unparse_classad(match_response)
+    "invalid format: " + ca::unparse_classad(match_response)
   );
 }
 

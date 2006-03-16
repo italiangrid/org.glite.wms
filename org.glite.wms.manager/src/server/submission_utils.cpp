@@ -15,14 +15,14 @@
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
 
 namespace fs = boost::filesystem;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
-namespace jdl = glite::wms::jdl;
+namespace jdl = glite::jdl;
 
 namespace glite {
 namespace wms {

@@ -25,21 +25,21 @@
 #include "glite/wms/common/logger/logger_utils.h"
 
 #include "glite/wms/common/utilities/boost_fs_add.h"
-#include "glite/wms/common/utilities/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAttributes.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
 
 #include "glite/wms/helper/Request.h"
 
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/security/proxyrenewal/renewal.h"
 
@@ -51,7 +51,8 @@
 namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
-namespace jdl = glite::wms::jdl;
+namespace ca = glite::wmsutils::classads;
+namespace jdl = glite::jdl;
 namespace fs = boost::filesystem;
 
 namespace glite {
@@ -187,7 +188,7 @@ WMReal::submit(classad::ClassAd const* request_ad_p)
   jdl::set_lb_sequence_code(*planned_ad, sequence_code_);
 
   classad::ClassAd const cmd(submit_command_create(planned_ad));
-  std::string const ad_str = utilities::unparse_classad(cmd);
+  std::string const ad_str = ca::unparse_classad(cmd);
 
   try {
 
@@ -232,7 +233,7 @@ cancel_command_create(
   classad::ClassAd ad;
   if (parser.ParseClassAd(ifs, ad)) {
     bool good = false;
-    std::string const log_file(glite::wms::jdl::get_log(ad, good));
+    std::string const log_file(jdl::get_log(ad, good));
     if (!log_file.empty() && good) {
       args->InsertAttr("LogFile", log_file);
     }
@@ -263,7 +264,7 @@ WMReal::cancel(jobid::JobId const& id)
     )
   );
 
-  std::string const ad_str(utilities::unparse_classad(cmd));
+  std::string const ad_str(ca::unparse_classad(cmd));
 
   try {
     utilities::FileListLock lock(m_impl->to_ice_mx);

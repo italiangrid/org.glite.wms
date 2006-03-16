@@ -18,11 +18,11 @@
 #include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/helper/exceptions.h"
 #include "glite/lb/producer.h"
 #include "Request.hpp"
@@ -35,8 +35,7 @@ namespace fs = boost::filesystem;
 namespace jobid = glite::wmsutils::jobid;
 namespace task = glite::wms::common::task;
 namespace exception = glite::wmsutils::exception;
-namespace jdl = glite::wms::jdl;
-namespace utilities = glite::wms::common::utilities;
+namespace jdl = glite::jdl;
 
 namespace glite {
 namespace wms {
@@ -105,7 +104,7 @@ boost::tuple<int, int> retrieve_lb_info(RequestPtr req)
   if (job_ad_str.empty()) {
     throw CannotRetrieveJDL();
   }
-  std::auto_ptr<classad::ClassAd> job_ad(utilities::parse_classad(job_ad_str));
+  std::auto_ptr<classad::ClassAd> job_ad(glite::wmsutils::classads::parse_classad(job_ad_str));
 
   jdl::set_edg_previous_matches(*job_ad, previous_matches_simple);
   jdl::set_edg_previous_matches_ex(*job_ad, previous_matches);

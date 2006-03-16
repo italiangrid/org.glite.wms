@@ -25,13 +25,13 @@
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/DAGAd.h"
-#include "glite/wms/jdl/DAGAdManipulation.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/PrivateAttributes.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/DAGAd.h"
+#include "glite/jdl/DAGAdManipulation.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -44,7 +44,8 @@ namespace fs = boost::filesystem;
 namespace utilities = glite::wms::common::utilities;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
-namespace jdl = glite::wms::jdl;
+namespace ca = glite::wmsutils::classads;
+namespace jdl = glite::jdl;
 namespace helper = glite::wms::helper;
 
 namespace glite {
@@ -82,8 +83,8 @@ get_description(classad::ExprTree const* node)
 try {
   classad::ClassAd const* result = 0;
 
-  if (utilities::is_classad(node)) {
-    result = utilities::evaluate_attribute(
+  if (ca::is_classad(node)) {
+    result = ca::evaluate_attribute(
       *dynamic_cast<classad::ClassAd const*>(node),
       "description"
     );
@@ -91,7 +92,7 @@ try {
 
   return result;
 
-} catch (utilities::InvalidValue&) {
+} catch (ca::InvalidValue&) {
   return 0;
 }
 
@@ -406,7 +407,7 @@ boost::regex node_file_regex("([a-zA-Z0-9_]+)\\.(.*)");
 std::pair<std::string,std::string>
 get_node_file(classad::ExprTree const* et)
 {
-  std::string s(utilities::unparse(et));
+  std::string s(ca::unparse(et));
   boost::smatch m;
   std::string node;
   std::string file;
@@ -485,7 +486,7 @@ public:
     classad::ExprList::const_iterator const end = el->end();
     for ( ; it != end; ++it) {
 
-      if (utilities::is_attribute_reference(*it)) {
+      if (ca::is_attribute_reference(*it)) {
         std::string node;
         std::string file;
         boost::tie(node, file) = get_node_file(*it);
@@ -543,7 +544,7 @@ public:
 
     boost::scoped_ptr<classad::ClassAd> transformed_ad(m_transform(*ad));
     assert(transformed_ad);
-    os << utilities::unparse_classad(*transformed_ad) << '\n';
+    os << ca::unparse_classad(*transformed_ad) << '\n';
   }
 };
 
@@ -843,7 +844,7 @@ try {
   throw DAGManHelperError();
 } catch (fs::filesystem_error const& ex) {
   throw helper::FileSystemError("DAGManHelper", ex);
-} catch (utilities::ClassAdError& ex) {
+} catch (ca::ClassAdError& ex) {
   Error(ex.what());
   return 0;
 }

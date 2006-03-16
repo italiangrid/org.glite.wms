@@ -18,7 +18,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wmsutils/exception/Exception.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classad_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "TaskQueue.hpp"
 #include "Request.hpp"
@@ -35,7 +35,7 @@ namespace task = glite::wms::common::task;
 namespace configuration = glite::wms::common::configuration;
 namespace utilities = glite::wms::common::utilities;
 namespace jobid = glite::wmsutils::jobid;
-namespace requestad = glite::wms::jdl;
+namespace ca = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -448,7 +448,7 @@ get_new_requests(
 
       }
 
-    } catch (utilities::ClassAdError& e) {
+    } catch (ca::ClassAdError& e) {
       Info(e.what() << " for " << command_ad_str);
     } catch (CannotCreateLBContext& e) {
       Info("Cannot create LB context (error code = " << e.error_code() << ')');

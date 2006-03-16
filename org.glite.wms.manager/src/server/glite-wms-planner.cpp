@@ -32,28 +32,29 @@
 #include "dagman_utils.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/utilities/wm_commands.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/FileList.h"
 #include "glite/wms/common/utilities/FileListLock.h"
 #include "glite/wms/common/utilities/scope_guard.h"
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/convert.h"
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 #include "glite/wms/helper/jobadapter/JobAdapter.h"
-#include "glite/wms/jdl/convert.h"
 #include "SubmitAdapter.h"
 
 using namespace glite::wms::manager::server;
 namespace utilities = glite::wms::common::utilities;
 namespace jobcontroller = glite::wms::jobsubmission::controller;
-namespace jdl = glite::wms::jdl;
+namespace jdl = glite::jdl;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
+namespace ca = glite::wmsutils::classads;
 namespace fs = boost::filesystem;
 
 namespace {
@@ -167,12 +168,12 @@ make_match_request(classad::ClassAd const& jdl, std::string const& output_file)
     )
   );
 
-  return utilities::unparse_classad(cmd);
+  return ca::unparse_classad(cmd);
 }
 
 bool get_matches(std::string const& s, matches_type& matches)
 try {
-  ClassAdPtr response(utilities::parse_classad(s));
+  ClassAdPtr response(ca::parse_classad(s));
   bool const include_brokerinfo = true;
   return response
     && fill_matches(*response, matches, include_brokerinfo);
@@ -310,7 +311,7 @@ ClassAdPtr Plan(classad::ClassAd const& jdl, jobid::JobId const& jobid)
   std::ofstream brokerinfo_os(brokerinfo_file.native_file_string().c_str());
   assert(brokerinfo_os);
 
-  brokerinfo_os << utilities::unparse_classad(*brokerinfo) << std::endl;
+  brokerinfo_os << ca::unparse_classad(*brokerinfo) << std::endl;
 
   add_brokerinfo_to_isb(*planned_jdl);
 
