@@ -49,7 +49,6 @@ using namespace glite::wms::manager::ns::client ; //NSClient
 using namespace glite::wms::checkpointing ;
 using namespace glite::lb ;
 using namespace glite::wms::common::utilities;
-using namespace glite::wmsutils::classads;
 
 pthread_mutex_t  Job::dgtransfer_mutex  = PTHREAD_MUTEX_INITIALIZER;
 // Compare two edg_wll_Event using the timestamp member

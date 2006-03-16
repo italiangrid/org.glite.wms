@@ -6,7 +6,7 @@
  * Contributors are mentioned in the code where appropriate.
  */
  // DagAd
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/ExpDagAd.h"
 #include <map>
 #include <vector>
 // JobId
@@ -63,11 +63,11 @@ class Request{
 	/** Instantiates an  Job object with a ExpDagAd
 	*@param ad the ExprDagAd instance
 	* @exception JobOperationException If the DagAd is empty  */
-	Request(const glite::wms::jdl::ExpDagAd& ad);
+	Request(const glite::jdl::ExpDagAd& ad);
 	/** Instantiates an  Job object with a JobAd
 	*@param ad the JobAd instance	
 	* @exception JobOperationException If the JobAd is empty  */
-	Request(const glite::wms::jdl::JobAd& ad);
+	Request(const glite::jdl::JobAd& ad);
 	/** Copy constructor*/
 	Request(const Request& Request) ;
 	/** destructor*/
@@ -88,10 +88,10 @@ class Request{
 	void setLoggerLevel ( unsigned int level )  { loggerLevel = level ; }
 	/** set  the JobAd instance
 	* @param ad the JobAd Instance to set  */
-	void setJobAd(const glite::wms::jdl::JobAd& ad);
+	void setJobAd(const glite::jdl::JobAd& ad);
 	/** set  the JobAd instance
 	* @param ad the JobAd Instance to set  */
-	void setDagAd(const glite::wms::jdl::ExpDagAd& ad);
+	void setDagAd(const glite::jdl::ExpDagAd& ad);
 	/** set  the JobId instance
 	* @param id the JobId Instance to set*/
 	void setDagId(const glite::wmsutils::jobid::JobId& id);
@@ -154,9 +154,9 @@ private:
 	// Private Members:
 	glite::wmsutils::jobid::JobId* jid;
 	/*Internal DAGAd instance pointer  */
-	glite::wms::jdl::ExpDagAd* dag;
+	glite::jdl::ExpDagAd* dag;
 	/*Internal JobAd instance pointer  */
-	glite::wms::jdl::JobAd* jad;
+	glite::jdl::JobAd* jad;
 	/*Stores the path of the proxy (if different from the default)*/
 	// std::string cred_path  ;
 	/* To Check if the credential are OK */

@@ -71,7 +71,7 @@ ExpDagAd* Logging::registerJob(JobAd* jad , int res_number  ){
 	registerSubJobs ( dagad , subjobs)  ;
 	return dagad ;
 } ;
-void Logging::registerSubJobs( glite::wms::jdl::ExpDagAd* ad , edg_wlc_JobId* subjobs ){
+void Logging::registerSubJobs( glite::jdl::ExpDagAd* ad , edg_wlc_JobId* subjobs ){
 	char str_nsAddr [1024];
 	sprintf (str_nsAddr , "%s%s%d" , nsHost.c_str(),":",nsPort );
 	vector<string> jdls = ad->getSubmissionStrings() ;
@@ -99,7 +99,7 @@ void Logging::registerSubJobs( glite::wms::jdl::ExpDagAd* ad , edg_wlc_JobId* su
 
 	// cout << "edg_wll_RegisterSubjobs Done" << endl ;
 } ;
-void Logging::registerDag( glite::wms::jdl::ExpDagAd* ad ){
+void Logging::registerDag( glite::jdl::ExpDagAd* ad ){
 	//  array of subjob ID's
 	edg_wlc_JobId* subjobs = NULL ;
 	// Writing the ns address

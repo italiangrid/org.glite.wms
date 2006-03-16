@@ -7,8 +7,8 @@
  */
 
  // DagAd
-#include "glite/wms/jdl/ExpDagAd.h"
-#include "glite/wms/jdl/JobAd.h"
+#include "glite/jdl/ExpDagAd.h"
+#include "glite/jdl/JobAd.h"
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
 // Lb logger API
@@ -28,16 +28,16 @@ class Logging  {
 	Logging( ) ;
 	virtual ~Logging( )  throw() { edg_wll_FreeContext(ctx); };
 	void init (  const std::string& nsHost , int nsPort , glite::wmsutils::jobid::JobId* id ) ;
-	glite::wms::jdl::ExpDagAd* registerJob( glite::wms::jdl::JobAd* ad , int resource ) ;
-	void registerJob( glite::wms::jdl::JobAd* ad ) ;
-	void registerDag( glite::wms::jdl::ExpDagAd* ad   ) ;
+	glite::jdl::ExpDagAd* registerJob( glite::jdl::JobAd* ad , int resource ) ;
+	void registerJob( glite::jdl::JobAd* ad ) ;
+	void registerDag( glite::jdl::ExpDagAd* ad   ) ;
 	void transfer(  txType tx, const std::string& jdl ,  const char* error ="" ) ;
 	std::string getSequence (){   return   std::string ( edg_wll_GetSequenceCode(ctx)  ) ;  };
 	void logUserTags( classad::ClassAd* userTags ) ;
 	void logUserTags( std::vector<  std::pair<  std::string  ,     classad::ExprTree* > > userTags  );	
 	
    private:
-	void registerSubJobs( glite::wms::jdl::ExpDagAd* ad ,  edg_wlc_JobId* subjobs ) ;   
+	void registerSubJobs( glite::jdl::ExpDagAd* ad ,  edg_wlc_JobId* subjobs ) ;   
 	const char* error_message (const char* api );
 	edg_wll_Context ctx ;
 	glite::wmsutils::jobid::JobId* id ;

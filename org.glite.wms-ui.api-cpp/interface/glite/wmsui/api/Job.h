@@ -27,14 +27,12 @@ namespace jobid {
 class JobId ;      
 }
 }
-
-namespace wms {
-
-namespace jdl { 		
-class JobAd ;   
-class Ad ;    
+// JDL
+namespace jdl {
+	class JobAd ;
+	class Ad ;
 }
-
+namespace wms {
 // NS
 namespace manager {    
 namespace ns { 
@@ -115,7 +113,7 @@ class Job{
 		/** Instantiates an  Job object with a JobAd
 		* @param ad a JobAd instance		
 		* @exception JobOperationException If the JobAd is empty  */
-		Job(const glite::wms::jdl::JobAd& ad);
+		Job(const glite::jdl::JobAd& ad);
 		/** Copy constructor*/
 		Job(const Job& job) ;
 		/** destructor*/
@@ -136,7 +134,7 @@ class Job{
 		glite::wmsutils::jobid::JobId* getJobId() ;
 		/** Get the JobAd instance
 		* @return a pointer to the JobAd intance*/
-		glite::wms::jdl::JobAd* getJobAd() ;
+		glite::jdl::JobAd* getJobAd() ;
 		/**Set a different  Proxy certificate from the default one
 		* @param cp The full path of the proxy certificate file to be set*/
 		void setCredPath(const std::string cp) ;
@@ -147,7 +145,7 @@ class Job{
 		void setLoggerLevel ( int level ) ;
 		/** set  the JobAd instance
 		* @param ad the JobAd Instance to be set  */
-		void setJobAd(const glite::wms::jdl::JobAd& ad);
+		void setJobAd(const glite::jdl::JobAd& ad);
 		/** set  the JobId instance
 		* @param id the JobId Instance to be set */
 		void setJobId(const glite::wmsutils::jobid::JobId& id);
@@ -270,7 +268,7 @@ class Job{
 		/* Internal JobId instance pointer*/
 		glite::wmsutils::jobid::JobId* jid;
 		/*Internal JobAd instance pointer  */
-		glite::wms::jdl::JobAd* jad;
+		glite::jdl::JobAd* jad;
 		/*Stores the path of the proxy (if different from the default)*/
 		std::string cred_path  ;
 		/* Allow perform interactive Jobs */
