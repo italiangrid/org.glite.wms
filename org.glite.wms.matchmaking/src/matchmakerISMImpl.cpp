@@ -7,14 +7,18 @@
 
 #include <boost/shared_ptr.hpp>
 #include <algorithm>
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/wms/ism/ism.h"
 #include "matchmakerISMImpl.h"
 #include "exceptions.h"
 
 namespace glite {
+
+namespace utils = wmsutils::classads;
+namespace jdl = jdl;
+
 namespace wms {
 
 namespace utilities = common::utilities;
@@ -52,10 +56,10 @@ matchmakerISMImpl::checkRequirement(
     classad::ClassAd ce_ad(*ce_ad_ptr);
 
     std::string const ce_id(
-      utilities::evaluate_attribute(ce_ad, "GlueCEUniqueID")
+      utils::evaluate_attribute(ce_ad, "GlueCEUniqueID")
     );
 
-    if (utilities::symmetric_match(ce_ad, jdl)) {
+    if (utils::symmetric_match(ce_ad, jdl)) {
       Info(ce_id << ": ok!");
       suitableCEs[ce_id] = ce_ad_ptr;
     }
@@ -101,9 +105,9 @@ matchmakerISMImpl::checkRank(
     classad::ClassAd ce_ad(*ces_it->second.getAd());
 
     try {
-      ces_it->second.setRank(utilities::right_rank(ce_ad, jdl));
+      ces_it->second.setRank(utils::right_rank(ce_ad, jdl));
       unable_to_rank_all = false;
-    } catch (utilities::UndefinedRank&) {
+    } catch (utils::UndefinedRank&) {
       Error("Unexpected result while ranking " << ce_id);
     }
   }
