@@ -29,16 +29,16 @@
 // wmproxy-api
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 // Ad attributes and JDL methods
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/extractfiles.h"
-#include "glite/wms/jdl/adconverter.h"
+#include "glite/jdl/jdl_attributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/extractfiles.h"
+#include "glite/jdl/adconverter.h"
 #include <boost/lexical_cast.hpp>
 
 
 using namespace std ;
 using namespace glite::wms::client::utilities ;
-using namespace glite::wms::jdl;
+using namespace glite::jdl;
 
 namespace api = glite::wms::wmproxyapi;
 namespace apiutils = glite::wms::wmproxyapiutils;

@@ -23,10 +23,10 @@
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 // Ad's
-#include "glite/wms/jdl/Ad.h"
-#include "glite/wms/jdl/ExpDagAd.h"
-#include "glite/wms/jdl/collectionad.h"
-#include "glite/wms/jdl/extractfiles.h"
+#include "glite/jdl/Ad.h"
+#include "glite/jdl/ExpDagAd.h"
+#include "glite/jdl/collectionad.h"
+#include "glite/jdl/extractfiles.h"
 
 namespace glite {
 namespace wms {
@@ -53,7 +53,7 @@ struct JobFileAd {
 	/** NodeName Attribute */
 	std::string node;
 	/** FIleList Attribute */
-	std::vector<glite::wms::jdl::FileAd> files;
+	std::vector<glite::jdl::FileAd> files;
 };
 
 struct ZipFileAd {
@@ -135,7 +135,7 @@ class JobSubmit : public Job {
 		* the second one is a string representing the URI where the file will be transferred to.
 		* @param tob_transferred the vector to be filled with
 		*/
-		void toBCopiedFileList( std::vector<std::pair<glite::wms::jdl::FileAd, std::string > > &tob_transferred) ;
+		void toBCopiedFileList( std::vector<std::pair<glite::jdl::FileAd, std::string > > &tob_transferred) ;
 		/**
 		* Checks whether the total size of local files in the user InputSandbox is compatible with
 		* the limitation that could be set on the server
@@ -198,7 +198,7 @@ class JobSubmit : public Job {
 		* @param to_bcopied the list of files to be archived that will be copied to the WMProxy server
 		* @param destURI the destinationURI of the job where the gzip file has to be transferred
 		 */
-		void createZipFile (std::string filename, std::vector<JobFileAd> fileads, std::vector<pair<glite::wms::jdl::FileAd, std::string > > &to_btransferred);
+		void createZipFile (std::string filename, std::vector<JobFileAd> fileads, std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred);
 		/*
 		* 	Performs the transfer a set of local files to one(more) remote machine(s) by globus-url-copy (gsiftp protocol)
  		*	@param paths list of files to be transferred (each pair is <source,destination>)
@@ -207,7 +207,7 @@ class JobSubmit : public Job {
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
 		*/
-		void gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths,std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &failed, std::string &errors);
+		void gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths,std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
                 /*
                 * 	Performs the transfer a set of local files to one(more) remote machine(s) by curl (https protocol)
                 *	@param paths list of files to be transferred (each pair is <source,destination>)			*	@param failed this vector is filled with the information on the files for there was a failure during the transfer operations 
@@ -215,7 +215,7 @@ class JobSubmit : public Job {
                 *	@throw WmsClientException if any error occurs during the operations
                 *	(the local file doesn't exists, defective credential, errors on remote machine)
                 */
-                void curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &failed, std::string &errors);
+                void curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors);
 		/*
 		*	Gets the list of the InputSandbox files to be transferred to the DestinationURI's
 		*	@param paths the list of files that still need to be transferred
@@ -223,7 +223,7 @@ class JobSubmit : public Job {
 		*	@param zip if TRUE, creates tar.gz file if file compression is allowed
 		*	@return  the message with the list of the files in the input vector 'paths'
 		*/
-		std::string transferFilesList(const std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, const std::string& jobid, const bool &zip=true) ;
+		std::string transferFilesList(const std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, const std::string& jobid, const bool &zip=true) ;
 		/**
 		* Uploads the local files in the InputSandbox to the WMProxy server. If file compression is allowed, all files are collected
 		* in one or more tar file archives which are gzip compressed. The number of archives depends on the size limit of
@@ -235,7 +235,7 @@ class JobSubmit : public Job {
 		* (to be used in case of single file transfer or as relative path in the creation of the tar archive)
 		* @destURI a string with the destinationURI where to transfer the tar archives
 		*/
-		 void transferFiles(std::vector<std::pair<glite::wms::jdl::FileAd,std::string > > &to_bcopied, const std::string &jobid);
+		 void transferFiles(std::vector<std::pair<glite::jdl::FileAd,std::string > > &to_bcopied, const std::string &jobid);
 		/**
 		*  Reads the results of the registration operation for a job represented as a DAG  from the JobIdApi structure.
 		* This method is only executed if the JDL InputSandbox contains local files that need
@@ -305,11 +305,11 @@ class JobSubmit : public Job {
 		/**
                 *	Ad-objects
 		*/
-                glite::wms::jdl::Ad *adObj ;
-                glite::wms::jdl::JobAd *jobAd ;
-		glite::wms::jdl::ExpDagAd *dagAd  ;
-        	glite::wms::jdl::CollectionAd *collectAd ;
-		glite::wms::jdl::ExtractedAd *extractAd ;
+                glite::jdl::Ad *adObj ;
+                glite::jdl::JobAd *jobAd ;
+		glite::jdl::ExpDagAd *dagAd  ;
+        	glite::jdl::CollectionAd *collectAd ;
+		glite::jdl::ExtractedAd *extractAd ;
 		/**
                 * JobShadow for interactive jobs
                 */

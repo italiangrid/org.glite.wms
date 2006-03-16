@@ -19,8 +19,8 @@
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 #include "glite/wms/wmproxyapi/wmproxy_api_utilities.h"
 // JDL
-#include "glite/wms/jdl/Ad.h"
-#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/jdl/Ad.h"
+#include "glite/jdl/JDLAttributes.h"
 // exceptions
 #include "utilities/excman.h"
 // wmp-client utilities

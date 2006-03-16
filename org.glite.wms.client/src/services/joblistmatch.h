@@ -23,8 +23,8 @@
 // wmproxy API
 #include "glite/wms/wmproxyapi/wmproxy_api.h"
 // Ad's
-#include "glite/wms/jdl/Ad.h"
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/Ad.h"
+#include "glite/jdl/ExpDagAd.h"
 
 namespace glite {
 namespace wms{
@@ -69,7 +69,7 @@ class JobListMatch : public Job {
 		/*
                 *	Ad
                 */
-                glite::wms::jdl::Ad *jobAd ;
+                glite::jdl::Ad *jobAd ;
                 /*
 		*	Path to the JDL file
 		*/

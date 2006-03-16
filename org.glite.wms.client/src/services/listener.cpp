@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <netdb.h> //hostent struct definition
 #include "boost/lexical_cast.hpp" // types conversion
-#include "glite/wms/jdl/Ad.h"
+#include "glite/jdl/Ad.h"
 #include "boost/tokenizer.hpp" // TCP ports checks
 using namespace std ;
 using namespace glite::wms::client::utilities;
@@ -347,7 +347,7 @@ int Shadow::getConsoleInfo(){
 		buffer << c ;
 	}
 	remove (pipeRoot.c_str());
-	glite::wms::jdl::Ad ad (buffer.str());
+	glite::jdl::Ad ad (buffer.str());
 	// cout << "Created AD: " << ad.toString() << endl ;
 	if (ad.hasAttribute("SHADOW_ERROR")){
 		return ad.getInt("SHADOW_ERROR");

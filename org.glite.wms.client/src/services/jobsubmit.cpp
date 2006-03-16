@@ -27,10 +27,10 @@
 // Configuration
 #include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // Ad attributes and JDL methods
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
-#include "glite/wms/jdl/adconverter.h"
+#include "glite/jdl/jdl_attributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/PrivateAttributes.h"
+#include "glite/jdl/adconverter.h"
 // BOOST
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/exception.hpp"
@@ -42,7 +42,7 @@ using namespace std ;
 using namespace glite::wms::client::utilities ;
 
 using namespace glite::wms::wmproxyapiutils;
-using namespace glite::wms::jdl;
+using namespace glite::jdl;
 using namespace glite::wmsutils::exception;
 namespace fs = boost::filesystem;
 namespace api = glite::wms::wmproxyapi;
@@ -56,7 +56,7 @@ namespace services {
 JobFileAd::JobFileAd ( ){
 	this->jobid = "";
 	this->node  = "";
-//	this->files = new std::vector<glite::wms::jdl::FileAd>;
+//	this->files = new std::vector<glite::jdl::FileAd>;
 };
 
 ZipFileAd::ZipFileAd( ) {
@@ -1520,7 +1520,7 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 void JobSubmit::createZipFile (
 	const std::string filename,
 	std::vector<JobFileAd> fileads,
-	std::vector<pair<glite::wms::jdl::FileAd, std::string > > &to_btransferred){
+	std::vector<pair<glite::jdl::FileAd, std::string > > &to_btransferred){
 	int r = 0;
 	TAR *t =NULL;
 	tartype_t *type = NULL ;
@@ -1545,7 +1545,7 @@ void JobSubmit::createZipFile (
 		"File i/o Error",
 		"Unable to create tar file for InputSandbox: " + tar );
 	}
-	// files : FILEAD { std::string jobid; std::string node; std::vector<glite::wms::jdl::FileAd> files;};
+	// files : FILEAD { std::string jobid; std::string node; std::vector<glite::jdl::FileAd> files;};
 	// RootFiles
 //cout << "###createZipFile>  fileads.size( ) = " << fileads.size( )<<"\n";
 	vector <JobFileAd>::iterator it1 = fileads.begin( );
@@ -1599,7 +1599,7 @@ void JobSubmit::createZipFile (
 * File transfer by globus-url-copy (gsiftp protocol)
 */
 
-void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &failed, std::string &errors) {
+void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
 	string protocol = "";
 	string file = "";
 	string destination = "";
@@ -1652,7 +1652,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, s
 * File transfer by CURL (https protocol)
 */
 
-void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &failed,
+void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed,
  std::string &errors) {
 	// curl struct
 	CURL *curl = NULL;
@@ -1770,7 +1770,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 /**
 * Message for InputSB files that need to be transferred
 */
-std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, const std::string& jobid, const bool &zip) {
+std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, const std::string& jobid, const bool &zip) {
 	ostringstream info;
 	string header = "";
 	string label = "";
@@ -1808,7 +1808,7 @@ std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::wms
 /*
 * Transfers the ISB file to the endpoint
 */
-void JobSubmit::transferFiles(std::vector<std::pair<glite::wms::jdl::FileAd,std::string > > &to_bcopied, const std::string &jobid){
+void JobSubmit::transferFiles(std::vector<std::pair<glite::jdl::FileAd,std::string > > &to_bcopied, const std::string &jobid){
 	vector<pair<FileAd, string > > failed;
 	string errors = "";
 		// File Transfer according to the chosen protocol
@@ -1835,7 +1835,7 @@ void JobSubmit::transferFiles(std::vector<std::pair<glite::wms::jdl::FileAd,std:
 * an info message with the list these file is provided
 */
 void JobSubmit::jobPostProcessing( ){
-	std::vector<glite::wms::jdl::FileAd> files;
+	std::vector<glite::jdl::FileAd> files;
 	// jobid and nodename
 	string jobid = "";
 	// InputSB files

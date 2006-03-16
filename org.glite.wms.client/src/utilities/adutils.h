@@ -23,9 +23,9 @@ namespace classad{
 	class ClassAd;
 }
 namespace glite {
+namespace jdl { class Ad; class JobAd; class ExpDagAd;class CollectionAd; }
 namespace wmsutils { namespace jobid { class JobId; } }
 namespace wms{
-namespace jdl { class Ad; class JobAd; class ExpDagAd;class CollectionAd; }
 namespace common {namespace configuration{class WMCConfiguration ;}}
 namespace client {
 namespace utilities {
@@ -57,19 +57,19 @@ class AdUtils{
 		*/
 		classad::ClassAd* loadConfiguration(const std::string& pathUser,
 			const std::string& pathDefault,const std::string& pathGeneral="");
-		static void setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
+		static void setDefaultValuesAd(glite::jdl::Ad* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf,
 			std::string* pathOpt=NULL);
-		static void setDefaultValues(glite::wms::jdl::JobAd* jdl,
+		static void setDefaultValues(glite::jdl::JobAd* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf);
-		static void setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
+		static void setDefaultValues(glite::jdl::ExpDagAd* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf);
-		static void setDefaultValues(glite::wms::jdl::CollectionAd* jdl,
+		static void setDefaultValues(glite::jdl::CollectionAd* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf);
 		/** look for, check, parse and retrieve VO name and value */
 		void parseVo(voSrc src, std::string& voPath, std::string& voName);
 		/** Return the list of all unknown values*/
-		std::vector<std::string> getUnknown(glite::wms::jdl::Ad* jdl);
+		std::vector<std::string> getUnknown(glite::jdl::Ad* jdl);
 		/** Try and build a Dagad istance and retrieve its jobid-node map
 		*@param jdl the dagad string representation
 		*@return a mapping between dagad jobid sons and thier correspondent node name, empty map if any error occurred
@@ -90,7 +90,7 @@ class AdUtils{
 		* configuration file is plain classad or WmsClient=[...]
 		* @param return SUCCESS (false) or ERROR (true)
 		*/
-		bool checkConfigurationAd(glite::wms::jdl::Ad& ad, const std::string& path);
+		bool checkConfigurationAd(glite::jdl::Ad& ad, const std::string& path);
 		std::string generateVoPath(std::string& voName);
 		/*
 		*Handles the input options

@@ -1,18 +1,18 @@
 // JDL
-#include "glite/wms/jdl/Ad.h"
-#include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/ExpDagAd.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/JdlAttributeList.h"
-#include "glite/wms/jdl/RequestAdExceptions.h"
-#include "glite/wms/jdl/collectionad.h"
+#include "glite/jdl/Ad.h"
+#include "glite/jdl/JobAd.h"
+#include "glite/jdl/ExpDagAd.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/jdl_attributes.h"
+#include "glite/jdl/JdlAttributeList.h"
+#include "glite/jdl/RequestAdExceptions.h"
+#include "glite/jdl/collectionad.h"
 #include "glite/wms/common/configuration/WMCConfiguration.h" // Configuration
 // HEADER
 #include "adutils.h"
 #include "excman.h"
 using namespace std ;
-using namespace glite::wms::jdl ;
+using namespace glite::jdl ;
 
 namespace glite {
 namespace wms{
@@ -60,7 +60,7 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 			break;
 	}
 	// Parse File Name and extrapolate VoName (cross-check)
-	glite::wms::jdl::Ad ad;
+	glite::jdl::Ad ad;
 	try{
 		ad.fromFile(voPath);
 	}catch (AdSemanticPathException &exc){
@@ -110,7 +110,7 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 				+voName+"!="+ad.getString(JDL::VIRTUAL_ORGANISATION));
 	}
 }
-bool AdUtils::checkConfigurationAd(glite::wms::jdl::Ad& ad, const string& path){
+bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 	try{
 		ad.fromFile(path);
 	}catch (RequestAdException &exc){
@@ -143,7 +143,7 @@ bool AdUtils::checkConfigurationAd(glite::wms::jdl::Ad& ad, const string& path){
 *******************************/
 classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
 	const std::string& pathDefault, const std::string& pathGeneral){
-	glite::wms::jdl::Ad adUser, adDefault, adGeneral;
+	glite::jdl::Ad adUser, adDefault, adGeneral;
 	// Load ad from file (if necessary)
 	if (pathGeneral!=""){
 		if (!checkConfigurationAd(adGeneral,pathGeneral)){
@@ -176,7 +176,7 @@ classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
 std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	std::vector< std::string > attributes = jdl->attributes();
 	std::vector< std::string >::iterator iter;
-	glite::wms::jdl::JdlAttributeList jdlAttribute;
+	glite::jdl::JdlAttributeList jdlAttribute;
 	for (iter=attributes.begin();iter!=attributes.end() ; ++iter){
 		if (jdlAttribute.findAttribute(*iter)){
 			attributes.erase(iter);
@@ -185,7 +185,7 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	return attributes;
 }
 // STATIC METHODS:
-void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
+void setMissing(glite::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
 	if (attrValue!=""){
 		if(!jdl->hasAttribute(attrName)){
 			jdl->setAttribute(attrName,attrValue);
@@ -196,14 +196,14 @@ void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, const string& a
 		}
 	}
 }
-void setMissing(glite::wms::jdl::Ad* jdl,const string& attrName, bool attrValue, bool force=false){
+void setMissing(glite::jdl::Ad* jdl,const string& attrName, bool attrValue, bool force=false){
 	if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
 		// Set Default Attribute ONLY when TRUE
 		jdl->setAttribute(attrName,attrValue);
 	}
 }
 // STATIC METHODS:
-void setMissingString(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
+void setMissingString(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& confAd, bool force=false){
 		if (confAd.hasAttribute(attrName)){
 			string attrValue=confAd.getString(attrName);
 			confAd.delAttribute(attrName);
@@ -217,7 +217,7 @@ void setMissingString(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wm
 		}
 
 }
-void setMissingInt(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
+void setMissingInt(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& confAd, bool force=false){
 	if (confAd.hasAttribute(attrName)){
 		int attrValue=confAd.getInt(attrName);
 		confAd.delAttribute(attrName);
@@ -230,7 +230,7 @@ void setMissingInt(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::
 		}
 	}
 }
-void setMissingBool(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms::jdl::Ad& confAd, bool force=false){
+void setMissingBool(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& confAd, bool force=false){
 	if (confAd.hasAttribute(attrName)){
 		bool attrValue=confAd.getBool(attrName);
 		confAd.delAttribute(attrName);
@@ -247,7 +247,7 @@ void setMissingBool(glite::wms::jdl::Ad* jdl,const string& attrName, glite::wms:
 /******************
 * JDL is still an AD (no type switched)
 *******************/
-void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
+void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf,
 	std::string* pathOpt){
 	if (!conf){return;}
@@ -313,7 +313,7 @@ void AdUtils::setDefaultValuesAd(glite::wms::jdl::Ad* jdl,
 /******************
 * JDL is a JobAd
 *******************/
-void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
+void AdUtils::setDefaultValues(glite::jdl::JobAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
 	if (conf->jdl_default_attributes()){
@@ -348,7 +348,7 @@ void AdUtils::setDefaultValues(glite::wms::jdl::JobAd* jdl,
 /******************
 * JDL is a Dag
 *******************/
-void AdUtils::setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
+void AdUtils::setDefaultValues(glite::jdl::ExpDagAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
 	if (conf->jdl_default_attributes()){
@@ -373,7 +373,7 @@ void AdUtils::setDefaultValues(glite::wms::jdl::ExpDagAd* jdl,
 /******************
 * JDL is a CollectionAd
 *******************/
-void AdUtils::setDefaultValues(glite::wms::jdl::CollectionAd* jdl,
+void AdUtils::setDefaultValues(glite::jdl::CollectionAd* jdl,
 	glite::wms::common::configuration::WMCConfiguration* conf){
 	if (!conf){return;}
 	if (conf->jdl_default_attributes()){
