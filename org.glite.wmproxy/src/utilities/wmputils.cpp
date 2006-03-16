@@ -185,15 +185,10 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 		pair<string, int> itempair(defaultprotocol, defaultport);
 		returnprotocols.push_back(itempair);
 	} else {
-// ########
-protocols.push_back(make_pair("https", 7443));
-edglog(debug) << "####Number of protocols="<<protocols.size()<<"\n";
-// ########
 		// if (check if the protocol is supported)
 		// if protocol in protocols!
 		int port = -1;
 		for (unsigned int i = 0; i < protocols.size(); i++) {
-edglog(debug) << "####Supported protocol("<<i<<")="<<protocols[i].first <<"\n";
 			if (protocols[i].first == protocol) {
 				port = protocols[i].second;
 				break;
