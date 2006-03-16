@@ -83,6 +83,7 @@ LB_LIBRARIES=\
 -lglobus_common_$(GLOBUS_FLAVOR_THREADS)
 
 STAGELIBS=-L$(REPOSITORY)/stage/lib \
+-lglite_wmsutils_classads \
 -lglite_wms_util \
 -lglite_wms_wmproxy_api_cpp \
 -lglite_wms_util \
@@ -126,7 +127,7 @@ job_loginfo_DEPS=$(COMMON_LD_FLAGS)
 job_cancel_SOURCE=wmp-job-cancel.cpp
 job_cancel_OBJ=glite-wms-job-cancel
 job_cancel_CFLAGS=$(CFLAGS)
-job_cancel_DEPS=$(COMMON_LD_FLAGS)
+job_cancel_DEPS=$(COMMON_LD_FLAGS) 
 
 job_match_SOURCE=wmp-job-list-match.cpp
 job_match_OBJ=glite-wms-job-list-match
@@ -137,7 +138,7 @@ $(JDL_LIB)
 job_output_SOURCE=wmp-job-output.cpp
 job_output_OBJ=glite-wms-job-output
 job_output_CFLAGS=$(CFLAGS)
-job_output_DEPS=$(COMMON_LD_FLAGS)
+job_output_DEPS=$(COMMON_LD_FLAGS) 
 
 job_attach_SOURCE=wmp-job-attach.cpp
 job_attach_OBJ=glite-wms-job-attach
@@ -147,7 +148,7 @@ job_attach_DEPS=$(COMMON_LD_FLAGS)
 delegate_proxy_SOURCE=wmp-job-delegate-proxy.cpp
 delegate_proxy_OBJ=glite-wms-job-delegate-proxy
 delegate_proxy_CFLAGS=$(CFLAGS)
-delegate_proxy_DEPS=$(COMMON_LD_FLAGS)
+delegate_proxy_DEPS=$(COMMON_LD_FLAGS) 
 
 proxyinfo_SOURCE=wmp-job-proxy-info.cpp
 proxyinfo_OBJ=glite-wms-job-proxy-info
