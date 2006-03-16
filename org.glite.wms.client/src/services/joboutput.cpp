@@ -296,8 +296,15 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		unsigned int size = children.size();
 		if (GENERATE_NODE_NAME){
 			msgNodes = "Dag JobId: " + jobid.toString() ;
-			std::map< std::string, std::string > map= AdUtils::getJobIdMap(status.getJdl());
-
+			std::map< std::string, std::string > map;
+			if (checkVersionForTransferProtocols()){
+				// Calling wmproxy Server method
+				logInfo->service(WMP_JDL_SERVICE, jobid.toString());
+				map = AdUtils::getJobIdMap(getJDL(jobid.toString(), glite::wms::wmproxyapi::REGISTERED));
+                        	logInfo->result(WMP_JDL_SERVICE, "JDL successfully retrieved for jobid: "+jobid.toString());
+			}else {
+				map= AdUtils::getJobIdMap(status.getJdl());
+			}
 			for (unsigned int i = 0 ; i < size ;i++){
 				// update message with node
 				msgNodes+= "\n\t - - -";

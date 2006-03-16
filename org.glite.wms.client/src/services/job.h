@@ -43,6 +43,7 @@ namespace services {
 #define WMP_SBDESTURI_SERVICE           "getSandboxDestURI"
 #define WMP_BULKDESTURI_SERVICE         "getSandboxBulkDestURI"
 #define WMP_GETPROTOCOLS_SERVICE           "getTransferProtocols"
+#define WMP_JDL_SERVICE                 "getJDL"
 
 /*
 * WMProxy version numbers
@@ -144,7 +145,7 @@ class Job{
 		*/
 		virtual const char* getCertsPath ( );
 		/**
-		* Checks if the getTransferProtocols service is
+		* Checks if the getTransferProtocols (and getJDL) service (s) are
 		* available on the WMProxy server
 		* (according to the WMProxy version)
 		*/

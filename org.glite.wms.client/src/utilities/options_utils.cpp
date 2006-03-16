@@ -43,7 +43,7 @@ const std::string WMP_CLT_POINT_VERSION = ".";
 /**
 * WMProxy version since the getTransferProtocols is available
 * (see the getVersion service)
-*	version >= 2.1.1
+*	version >= 2.2.0
 */
 const int Options::WMPROXY_GETPROTOCOLS_VERSION  = 2;
 const int Options::WMPROXY_GETPROTOCOLS_MINOR_VERSION  = 2;
