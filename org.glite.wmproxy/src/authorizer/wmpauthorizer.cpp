@@ -23,7 +23,7 @@
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
 
-#include "glite/wms/jdl/RequestAdExceptions.h"
+#include "glite/jdl/RequestAdExceptions.h"
 
 // Utilities
 #include "utilities/wmputils.h"

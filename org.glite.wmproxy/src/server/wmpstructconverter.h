@@ -14,8 +14,8 @@
 #include "soapH.h"
 
 #include "wmpresponsestruct.h"
-#include "glite/wms/jdl/ExpDagAd.h" // JobIdStruct
-#include "glite/wms/jdl/adconverter.h" // NodeStruct
+#include "glite/jdl/ExpDagAd.h" // JobIdStruct
+#include "glite/jdl/adconverter.h" // NodeStruct
 
 JobTypeList * convertFromGSOAPJobTypeList(ns1__JobTypeList *job_type_list);
 
@@ -44,12 +44,12 @@ ns1__ProxyInfoStructType * convertToGSOAPProxyInfoStructType(ProxyInfoStructType
 	*proxyinfo);
 
 std::vector<JobIdStructType*> * convertJobIdStruct(
-	std::vector<glite::wms::jdl::JobIdStruct*> &job_struct);
+	std::vector<glite::jdl::JobIdStruct*> &job_struct);
 
-std::vector<glite::wms::jdl::NodeStruct*> convertGraphStructTypeToNodeStructVector(
+std::vector<glite::jdl::NodeStruct*> convertGraphStructTypeToNodeStructVector(
 	std::vector<GraphStructType*> *graph_struct);
 
-glite::wms::jdl::NodeStruct convertGraphStructTypeToNodeStruct(
+glite::jdl::NodeStruct convertGraphStructTypeToNodeStruct(
 	GraphStructType graph_struct);
 	
 int convertJobTypeListToInt(JobTypeList job_type_list);

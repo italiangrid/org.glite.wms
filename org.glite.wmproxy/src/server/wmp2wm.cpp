@@ -33,11 +33,11 @@
 #include "utilities/wmpexception_codes.h"
 
 // Common Utilities
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/wm_commands.h"
 
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/PrivateAttributes.h"
 
 
 // Listmatch classad attributes
@@ -50,11 +50,12 @@ const std::string LISTMATCH_REASON_NO_MATCH = "no matching resources found";
 namespace logger       = glite::wms::common::logger;
 namespace eventlogger  = glite::wms::wmproxy::eventlogger;
 namespace wmsutilities = glite::wms::common::utilities;
+namespace wmsutils     = glite::wmsutils::classads;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 namespace commands = glite::wms::wmproxy::commands;
 
 using namespace std;
-using namespace glite::wms::jdl;
+using namespace glite::jdl;
 
 namespace {
 
@@ -134,10 +135,10 @@ WMP2WM::submit(const string &jdl)
   	
   	edglog(debug)<<"Forwarding Submit Request..."<<endl;
   	
-  	classad::ClassAd * jdlAd(wmsutilities::parse_classad(jdl)); 
+  	classad::ClassAd * jdlAd(utils::parse_classad(jdl)); 
   	classad::ClassAd convertedAd =
 		wmsutilities::submit_command_create(*jdlAd);
-	string convertedString = wmsutilities::unparse_classad(convertedAd);
+	string convertedString = utils::unparse_classad(convertedAd);
     string command_str(convertedString);
     
 	edglog(debug)<<"Converted string (written in filelist): "
@@ -172,7 +173,7 @@ WMP2WM::cancel(const string &jobid, const string &seq_code)
 	classad::ClassAd jdlAd = wmsutilities::cancel_command_create(jobid); 
 	jdlAd.DeepInsertAttr(jdlAd.Lookup("arguments"), JDL::LB_SEQUENCE_CODE,
 		seq_code);
-	string convertedString = wmsutilities::unparse_classad(jdlAd);
+	string convertedString = utils::unparse_classad(jdlAd);
 	
 	edglog(debug)<<"Converted string (written in filelist): "
 		<<toFormattedString(jdlAd)<<endl;
@@ -249,7 +250,7 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 	
 	edglog(debug)<<"Forwarding Match Request..."<<endl;
 
-	classad::ClassAd* reqAd(wmsutilities::parse_classad(jdl));
+	classad::ClassAd* reqAd(utils::parse_classad(jdl));
 	
 	// Third argument -1 means unlimited result
 	// If you want to include Broker Info, set latest argument to true
@@ -260,7 +261,7 @@ WMP2WM::match(const string &jdl, const string &filel, const string &proxy,
 		pipepath);
 	string local_path = insertUserProxy(convertedAd, pipepath, filel, proxy);
 	
-	string convertedString = wmsutilities::unparse_classad(convertedAd);
+	string convertedString = utils::unparse_classad(convertedAd);
 	edglog(debug)<<"Converted string (written in filelist): "
 		<<toFormattedString(convertedAd)<<endl;
 	string command_ad(convertedString);

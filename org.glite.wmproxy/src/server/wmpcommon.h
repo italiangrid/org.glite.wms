@@ -8,7 +8,7 @@
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 //
 
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/ExpDagAd.h"
 
 
 // Possible values for jdl type attribute

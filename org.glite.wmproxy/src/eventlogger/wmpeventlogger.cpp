@@ -28,9 +28,9 @@
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmputils.h"
 
-#include "glite/wms/jdl/PrivateAttributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/jdl_attributes.h"
+#include "glite/jdl/PrivateAttributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/jdl_attributes.h"
 #include "glite/security/proxyrenewal/renewal.h"
 
 #include "authorizer/wmpauthorizer.h"
@@ -52,7 +52,7 @@ namespace wmputilities = glite::wms::wmproxy::utilities;
 
 using namespace std;
 using namespace glite::wms::wmproxy::utilities;  //Exception codes
-using namespace glite::wms::jdl; // DagAd
+using namespace glite::jdl; // DagAd
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
 

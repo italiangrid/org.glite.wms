@@ -15,10 +15,10 @@
 #include "MatchingPipe_nb.h"
 
 #include "glite/wms/common/utilities/edgstrstream.h"
-#include "glite/wms/common/utilities/classad_utils.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/JDLAttributes.h"
+#include "glite/wmsutils/classads/classad_utils.h"
+#include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/JDLAttributes.h"
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "utilities/logging.h"
@@ -34,7 +34,8 @@ namespace commands {
 
 namespace logger        = glite::wms::common::logger;
 namespace utilities     = glite::wms::common::utilities;
-namespace requestad     = glite::wms::jdl;
+namespace utils		= glite::wmsutils::classads;
+namespace requestad     = glite::jdl;
 namespace jobid         = glite::wmsutils::jobid;
 namespace wmputilities  = glite::wms::wmproxy::utilities;
 
@@ -93,8 +94,8 @@ listjobmatchex(const string &credentials_file, string &pipepath)
     }
 
     try { 
-      	ad.reset(utilities::parse_classad(result) );
-    } catch( utilities::CannotParseClassAd& e ) { 
+      	ad.reset(utils::parse_classad(result) );
+    } catch( utils::CannotParseClassAd& e ) { 
       	edglog(severe) << "Cannot Parse classAd: " << result << std::endl;
       	//return false; 
     }
@@ -121,7 +122,7 @@ listjobmatchex(const string &credentials_file, string &pipepath)
       	//return false;
 	}
 
-    if (!utilities::EvaluateAttrListOrSingle(*(ad.get()),"match_result", match_strings)) { 
+    if (!utils::EvaluateAttrListOrSingle(*(ad.get()),"match_result", match_strings)) { 
       //cmd -> setParam("MatchMakingDone", true); 
       //cmd -> setParam("MatchMakingError", std::string("No Matching Resources found."));
       edglog(critical) << "No Matching Resources found." << std::endl; 
