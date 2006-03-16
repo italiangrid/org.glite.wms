@@ -53,16 +53,17 @@ namespace client {
 namespace services {
 
 
+/**
+* File structs
+*/
+
 JobFileAd::JobFileAd ( ){
 	this->jobid = "";
 	this->node  = "";
-//	this->files = new std::vector<glite::jdl::FileAd>;
 };
 
 ZipFileAd::ZipFileAd( ) {
 	this->filename  = "";
-
-//	this->fileads = new std::vector<JobFileAd>;
 };
 
 
@@ -1598,22 +1599,25 @@ void JobSubmit::createZipFile (
 /**
 * File transfer by globus-url-copy (gsiftp protocol)
 */
-
 void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
+	int code = 0;
+	ostringstream err ;
 	string protocol = "";
-	string file = "";
+	string source = "";
 	string destination = "";
+	string cmd = "";
+	char* reason = NULL;
 	//TBDMS: globus-url-copy searched several times
 	while (paths.empty()==false) {
 		// source
-		file = (paths[0].first).file ;
+		source = (paths[0].first).file ;
 		// destination
 		destination = paths[0].second ;
 //cout << "###JobSubmit::gsiFtpTransfer> file = " << file << "\n";
 		// Protocol has to be added only if not yet present
-		protocol = (file.find("://")==string::npos)?FILE_PROTOCOL:"";
+		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
 		// command
-		string cmd= "globus-url-copy " + string (protocol+file) + " " + destination;
+		cmd= "globus-url-copy " + string (protocol+source) + " " + destination;
 		if (getenv("GLOBUS_LOCATION")){
 			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
 		}else if (Utils::isDirectory ("/opt/globus/bin")){
@@ -1625,17 +1629,24 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 				"Unable to find globus-url-copy executable");
 		}
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n" , cmd);
-
-		if ( system( cmd.c_str() ) < 0  ){
-			errors += "- unable to transfer the file " + file + "\n";
-			errors += "  to " + destination + "\n";
+		// launches the command
+		code = system( cmd.c_str() );
+		if ( code < 0  ){
+			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
+			reason = strerror(code);
+			if (reason!=NULL) {
+				err << "   " << reason << "\n";
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+			} else {
+				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+			}
 			failed.push_back(paths[0]);
 		} else{
-			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "TRANSFER DONE");
+			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "Transfer successfully done");
 			// Removes the zip file just transferred
 			if (zipAllowed) {
 				try {
-					Utils::removeFile(file);
+					Utils::removeFile(source);
 				} catch (WmsClientException &exc) {
 					logInfo->print (WMS_WARNING,
 						"The following error occured during the removal of the file:",
@@ -1646,7 +1657,6 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		paths.erase(paths.begin());
 	}
 }
-
 
 /**
 * File transfer by CURL (https protocol)
@@ -1664,7 +1674,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 	string file = "" ;
 	// destination
 	string destination = "";
-	ostringstream err;
+	string err;
 	// result message
 	long	httpcode = 0;
 	char curl_errorstr[CURL_ERROR_SIZE];
@@ -1730,6 +1740,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 				// result
 				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
 					// SUCCESS !!!
+					logInfo->print(WMS_DEBUG, "Transfer successfully done", "");
 					// Removes the zip file just transferred
 					if (zipAllowed) {
 						try {
@@ -1742,16 +1753,19 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 					}
 				} else {
 					// ERROR !!!
-					errors += "- could not transfer the InputSandbox file : " + file ;
-					errors += " to " + destination + "\n";
+					err += "- could not transfer the InputSandbox file : " + file ;
+					err += " to " + destination + "\n";
 					if ( strlen(curl_errorstr)>0 ){
-						errors += string(curl_errorstr) + "\n";
+						err += string(curl_errorstr) + "\n";
 					}
 					if (httpcode!=HTTP_OK){
 						httperr = Utils::httpErrorMessage(httpcode) ;
 						if (httperr.size()>0) { errors += httperr + "\n"; }
-						errors += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
+						err += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
 					}
+					logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:\n", err);
+					// Adding this error description to the final message that will be returned
+					errors += string(err) ;
 					failed.push_back(paths[0]);
 				}
 				// Removes the file info from the vector
