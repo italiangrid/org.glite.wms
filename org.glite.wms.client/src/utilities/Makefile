@@ -25,7 +25,7 @@ WMPCLIENT_LD_FLAGS= \
 	-lglite_wms_conf \
 	-lglite_wmsutils_jobid  \
 	-lglite_wmsutils_cjobid \
-	-lglite_wms_jdl \
+	-lglite_jdl_api_cpp \
 	-lclassad
 
 

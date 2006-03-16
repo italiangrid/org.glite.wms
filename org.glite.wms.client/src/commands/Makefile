@@ -45,7 +45,7 @@ CIFLAGS=-I../ \
 CFLAGS= -DDEBUG -DWANT_NAMESPACES -DWITH_OPENSSL\
 $(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(CMFLAGS) -pthread
 
-JDL_LIB=-lglite_wms_jdl
+JDL_LIB=-lglite_jdl_api_cpp
 
 JOBID_LIB=-lglite_wmsutils_jobid \
 -lglite_wmsutils_cjobid
