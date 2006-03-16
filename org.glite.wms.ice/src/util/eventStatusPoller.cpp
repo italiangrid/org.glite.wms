@@ -109,7 +109,7 @@ bool eventStatusPoller::getStatus(void)
         
 	{
             boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-            oldness = time(NULL)-jobIt->getLastUpdate();
+            oldness = time(NULL)-jobIt->getLastSeen();
             threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
             _tmp_start_listener = iceConfManager::getInstance()->getStartListener();
 	}
@@ -333,7 +333,7 @@ void eventStatusPoller::updateJobCache()
                     // Check if the status changed after the last 
                     // status change as recorded by the jobCache
                     
-                    if ( jit->getLastUpdate() < (*sit)->timestamp ) {
+                    if ( jit->getLastStatusChange() < (*sit)->timestamp ) {
                         
                         log_dev->infoStream()
                             << "eventStatusPoller::updateJobCache() - "
@@ -344,13 +344,14 @@ void eventStatusPoller::updateJobCache()
                             << log4cpp::CategoryStream::ENDLINE;
                         
                         jit->setStatus( stNum, (*sit)->timestamp );
-                        cache->put( *jit );
                         // Log to L&B
                         _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
                     }
+                    jit->setLastSeen( time(0) );
+                    cache->put( *jit );
                 } else {
                     log_dev->errorStream() 
-                        << "cream_jobid = ["<< cid << "] disappeared!"
+                        << "cream_jobid ["<< cid << "] disappeared!"
                         << log4cpp::CategoryStream::ENDLINE;
                 }
             } catch(exception& ex) {

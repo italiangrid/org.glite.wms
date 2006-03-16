@@ -171,33 +171,6 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
     _isOK( true ),
     cache( jobCache::getInstance() )
 {
-#ifdef DONT_COMPILE
-  char name[256];
-  memset((void*)name, 0, 256);
-
-  if(gethostname(name, 256) == -1) {
-    // This error prevent the possibility to subscribe to a CEMon
-    // and receive notifications about job status
-    log_dev->fatalStream() << "eventStatusListener::CTOR() - "
-			   << "Couldn't resolve local hostname: "
-                           << strerror(errno)
-                           << log4cpp::CategoryStream::ENDLINE;
-    _isOK = false;
-    return;
-  }
-  struct hostent *H=gethostbyname(name);
-  if(!H) {
-    // This error prevent the possibility to subscribe to a CEMon
-    // and receive notifications about job status
-    log_dev->fatalStream() << "eventStatusListener::CTOR() - "
-			   << "Couldn't resolve local hostname: "
-                           << strerror(h_errno)
-                           << log4cpp::CategoryStream::ENDLINE;
-    _isOK = false;
-    return;
-  }
-  myname = H->h_name;
-#endif
 
   try {
       myname = getHostName( );
@@ -413,77 +386,59 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         }
     }
 
-    // Then, sort the list of StatusNotifications in nondecreasing
-    // timestamp order
-    /**
-     * it is not needed at the moment because CEMon sends the events already sorted
-     * by timestamp
-     */
-    //sort( notifications.begin(), notifications.end(), less_equal_tstamp() );
+    if ( notifications.empty() )
+        return;
 
-    // For debug only...
-    if ( log_dev->isInfoEnabled() ) {
-        for( vector<StatusNotification>::const_iterator it = notifications.begin();
-             it != notifications.end(); it++ ) {
-            log_dev->infoStream()
-                << "eventStatusListener::handleEvent() - Notification: jobid=["
-                << it->getCreamJobID() << "], tstamp=["
-                << it->getTstamp() << "] status=["
-                << it->getStatus() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
-        }
+    boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
+
+    // NOTE: we assume that the all the notifications are for the SAME job.
+    // This is important! The following code relies on this assumption
+
+    jobCache::iterator jc_it( cache->lookupByCreamJobID( notifications.begin()->getCreamJobID() ) );
+
+    // No job found in cache
+    if ( jc_it == cache->end() ) {
+        log_dev->errorStream()
+            << "eventStatusListener::handleEvent() - "
+            << "creamjobid ["
+            << notifications.begin()->getCreamJobID()
+            << "] was not found in the cache. Ignoring the whole notification..."
+            << log4cpp::CategoryStream::ENDLINE;
+        return;
     }
 
-
+    jc_it->setLastSeen( time(0) );
+    cache->put( *jc_it );
 
     // Now, for each status change notification, check if it has to be logged
-    for ( vector<StatusNotification>::const_iterator it = notifications.begin();
-          it != notifications.end(); it++ ) {
+    for ( vector<StatusNotification>::const_iterator it = notifications.begin(); it != notifications.end(); it++ ) {
 
         // If the status is "PURGED" the StatusPoller will remove it asap form
         // the cache. So the listener can ignore this job
-        if( it->getStatus() == api::job_statuses::PURGED ) continue;
+        if( it->getStatus() == api::job_statuses::PURGED ) 
+            return;
 
-        jobCache::iterator jc_it;
-
-        try {
-            // boost::recursive_mutex::scoped_lock M( mutexJobStatusUpdate ); // FIXME: don't needed anymore???
-            boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
+        log_dev->infoStream() 
+            << "eventStatusListener::handleEvent() - "
+            << "Checking job [" << it->getCreamJobID()
+            << "] with status [" << it->getStatus() << "]"
+            << " notification tstamp=[" << it->getTstamp() << "]"
+            << " last status change on=[" << jc_it->getLastStatusChange() << "]"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        if ( it->getTstamp() > jc_it->getLastStatusChange() ) {
+            jc_it->setStatus( it->getStatus(), it->getTstamp() );
+            _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
             
-            jc_it = cache->lookupByCreamJobID( it->getCreamJobID() );
-            if( jc_it == cache->end()) {
-                log_dev->errorStream()
-                    << "eventStatusListener::handleEvent() - "
-                    << "Not found in the cache the creamjobid=["
-                    << it->getCreamJobID()
-                    << "] that should be there. Ignoring this notification..."
-                    << log4cpp::CategoryStream::ENDLINE;
-            } else {
-                log_dev->infoStream() 
-                    << "eventStatusListener::handleEvent() - "
-                    << "Checking job [" << it->getCreamJobID()
-                    << "] with status [" << it->getStatus() << "]"
-                    << " notification tstamp=[" << it->getTstamp() << "]"
-                    << " last updated on=[" << jc_it->getLastUpdate() << "]"
-                    << log4cpp::CategoryStream::ENDLINE;
-                if ( it->getTstamp() > jc_it->getLastUpdate() ) {
-                    jc_it->setStatus( it->getStatus(), it->getTstamp() );
-                    _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
-
-                    if ( (it+1) == notifications.end() ) {
-                        // The cache is only modified for the last
-                        // notification, for efficiency reasons.
-                        cache->put( *jc_it );
-                    }
-                } else {
-                    log_dev->infoStream()
-                        << "eventStatusListener::handleEvent() - ...NOT DONE, as notification is old"
-                        << log4cpp::CategoryStream::ENDLINE;
-                }
+            if ( (it+1) == notifications.end() ) {
+                // The cache is only modified for the last
+                // notification, for efficiency reasons.
+                cache->put( *jc_it );
             }
-        } catch(exception& ex) { // FIXME: never thrown?
-            log_dev->fatal( ex.what() );
-            exit(1);
+        } else {
+            log_dev->infoStream()
+                << "eventStatusListener::handleEvent() - ...NOT DONE, as notification is old"
+                << log4cpp::CategoryStream::ENDLINE;
         }
     }
 }

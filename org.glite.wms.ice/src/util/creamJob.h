@@ -38,8 +38,9 @@ namespace glite {
 	  std::string user_proxyfile;
           std::string sequence_code;
 	  glite::ce::cream_client_api::job_statuses::job_status status;
-	  time_t      lastUpdate;
-          time_t      endLease; //! The time the lease for this job ends
+	  time_t last_status_change; //! The time of the last job status change
+          time_t last_seen; //! The time of the last received notification for the job
+          time_t end_lease; //! The time the lease for this job ends
 
 	public:
 
@@ -51,23 +52,24 @@ namespace glite {
 
 	  //! Creates a CreamJob object by copying from C
 	  CreamJob( const CreamJob& C ) {
-              cream_jobid         = C.cream_jobid;
-              grid_jobid          = C.grid_jobid;
-              jdl                 = C.jdl;
-              ceid                = C.ceid;
-              endpoint            = C.endpoint;
-              cream_address       = C.cream_address;
+              cream_jobid = C.cream_jobid;
+              grid_jobid = C.grid_jobid;
+              jdl = C.jdl;
+              ceid = C.ceid;
+              endpoint = C.endpoint;
+              cream_address = C.cream_address;
               cream_deleg_address = C.cream_deleg_address;
-              status              = C.status;
-              user_proxyfile      = C.user_proxyfile;
-              sequence_code       = C.sequence_code;
-              lastUpdate          = C.lastUpdate;
-              endLease            = C.endLease;
+              status = C.status;
+              user_proxyfile = C.user_proxyfile;
+              sequence_code = C.sequence_code;
+              last_status_change = C.last_status_change;
+              last_seen = C.last_seen;
+              end_lease = C.end_lease;
           }
 
 	  //! Sets the status of the CreamJob object
 	  //void setStatus(const glite::ce::cream_client_api::job_statuses::job_status& st) { status = st; }
-          void setStatus( glite::ce::cream_client_api::job_statuses::job_status st, const time_t& tstamp ) { status = st; lastUpdate = tstamp; }
+          void setStatus( glite::ce::cream_client_api::job_statuses::job_status st, const time_t& tstamp ) { status = st; last_status_change = tstamp; }
 	  //! Sets the cream unique identifier for this job
           void setJobID( const std::string& cid ) { cream_jobid = cid; }
           //! Sets the jdl for this job
@@ -75,8 +77,9 @@ namespace glite {
           //! Sets the sequence code
           void setSequenceCode( const std::string& seq ) { sequence_code = seq; }
           //! Sets the new lease end time
-          void setEndLease( time_t l ) { endLease = l; }
-
+          void setEndLease( time_t l ) { end_lease = l; }
+          //! Sets the time we got info about this job from CREAM
+          void setLastSeen( time_t l ) { last_seen = l; }
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return grid_jobid; }
 	  //! Gets the unique cream job identifier
@@ -94,10 +97,11 @@ namespace glite {
 	  //! Gets the path and file name of the user proxy certificate
           std::string getUserProxyCertificate( void ) const { return user_proxyfile; }
 	  //! Gets the last time of status update of the job
-	  time_t getLastUpdate( void ) const { return lastUpdate; }
+	  time_t getLastStatusChange( void ) const { return last_status_change; }
           //! Gets the time when the lease ends
-          time_t getEndLease( void ) const { return endLease; }
-
+          time_t getEndLease( void ) const { return end_lease; }
+          //! Gets the time we last got information about this job
+          time_t getLastSeen( void ) const { return last_seen; }
           //! Gets the sequence code
           std::string getSequenceCode( void ) const { return sequence_code; }
 

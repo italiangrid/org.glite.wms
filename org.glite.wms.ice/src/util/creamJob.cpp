@@ -19,8 +19,9 @@ namespace fs = boost::filesystem;
 //______________________________________________________________________________
 CreamJob::CreamJob( ) :
     status( UNKNOWN ),
-    lastUpdate( time(NULL) ),
-    endLease( lastUpdate + 60*30 ) // FIXME: remove hardcoded default
+    last_status_change( time(NULL) ),
+    last_seen( last_status_change ),
+    end_lease( last_status_change + 60*30 ) // FIXME: remove hardcoded default
 {
 
 }
@@ -46,8 +47,9 @@ string CreamJob::serialize( void ) const
     ad.Insert( "jdl", jdlAd );
 
     try {    
-        ad.InsertAttr( "last_update", boost::lexical_cast< string >(lastUpdate) ); 
-        ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(endLease) );
+        ad.InsertAttr( "last_status_change", boost::lexical_cast< string >(last_status_change) ); 
+        ad.InsertAttr( "last_seen", boost::lexical_cast< string >(last_seen) );
+        ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(end_lease) );
     } catch( boost::bad_lexical_cast& ) {
         // Should never happen...
     }
@@ -65,8 +67,9 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     classad::ClassAd *ad;
     classad::ClassAd *jdlAd;
     int st_number;
-    string tstamp;
-    string elease;
+    string tstamp; // last status change
+    string elease; // end lease
+    string lseen; // last seen
 
     ad = parser.ParseClassAd( buf );
   
@@ -76,19 +79,22 @@ void CreamJob::unserialize( const std::string& buf ) throw( ClassadSyntax_ex& )
     if ( ! ad->EvaluateAttrString( "cream_jobid", cream_jobid ) ||
          ! ad->EvaluateAttrNumber( "status", st_number ) ||
          ! ad->EvaluateAttrClassAd( "jdl", jdlAd ) ||
-         ! ad->EvaluateAttrString( "last_update", tstamp ) ||
+         ! ad->EvaluateAttrString( "last_status_change", tstamp ) ||
+         ! ad->EvaluateAttrString( "last_seen", lseen ) ||
          ! ad->EvaluateAttrString( "end_lease", elease ) ) {
         throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' or 'last_update' or 'end_lease' attributes");
     }
     status = (glite::ce::cream_client_api::job_statuses::job_status)st_number;
     boost::trim_if( tstamp, boost::is_any_of("\"" ) );
     boost::trim_if( elease, boost::is_any_of("\"" ) );
+    boost::trim_if( lseen, boost::is_any_of("\"" ) );
     
     try {
-        lastUpdate = boost::lexical_cast< time_t >( tstamp );
-        endLease = boost::lexical_cast< time_t >( elease );
+        last_status_change = boost::lexical_cast< time_t >( tstamp );
+        end_lease = boost::lexical_cast< time_t >( elease );
+        last_seen = boost::lexical_cast< time_t >( lseen );
     } catch( boost::bad_lexical_cast& ) {
-        throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] to time_t" );
+        throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] or [" +lseen + "] to time_t" );
     }
     boost::trim_if(cream_jobid, boost::is_any_of("\""));
 
