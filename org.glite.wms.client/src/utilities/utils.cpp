@@ -527,7 +527,7 @@ std::string Utils::httpErrorMessage(const int &code){
 	};
 	return msg;
 };
-/*
+/**
 * Writing callback for curl operations
 */
 int Utils::curlWritingCb (void *buffer, size_t size, size_t nmemb, void *stream) {
@@ -540,6 +540,42 @@ int Utils::curlWritingCb (void *buffer, size_t size, size_t nmemb, void *stream)
 		}
    	}
 	return fwrite(buffer, size, nmemb, out_stream->stream);
+ }
+
+/**
+* Debug callback for curl operations
+*/
+int Utils::curlDebugCb (CURL *handle, curl_infotype type, unsigned char *data, size_t size, void *stream) {
+	string hd = "";
+	string *msg= (string*)stream;
+	switch (type) {
+		case CURLINFO_TEXT: {
+			hd = "Info";
+			break;
+		}
+		case CURLINFO_HEADER_OUT: {
+			hd = "=> Send header";
+			break;
+		}
+		case CURLINFO_DATA_OUT: {
+			hd = "=> Send data";
+			break;}
+		case CURLINFO_HEADER_IN: {
+			hd = "<= Recv header";
+			break;
+		}
+		case CURLINFO_DATA_IN: {
+			hd = "<= Recv data";
+			break;
+		}
+		default:{
+			break;
+		}
+	}
+	if(data) {
+		*msg += hd + ": " + string((char*)data) ;
+	}
+	return 0;
  }
 
 /** Static private method **/

@@ -15,13 +15,19 @@
  * utils.h
  */
 
+ // std header files
 #include <string>
 #include <vector>
 #include <map>
+
+// wms.client utilities
 #include "excman.h"
 #include "logman.h"
 #include "options_utils.h"
 #include "adutils.h"
+
+// CURL
+#include "curl/curl.h"
 
 namespace glite {
 namespace wms{
@@ -145,7 +151,7 @@ public:
         * @return the pathname string
         */
         std::string* getLogFileName ( );
-	/*
+	/**
 	* Match the most relevant HTTP status codes with the corresponding error message strings
 	* (some of them are: 400, 401, 404, 407, 408, 414, 500, 501, 505)
 	* @param code http status code
@@ -153,10 +159,14 @@ public:
 	*/
 	static std::string httpErrorMessage(const int &code);
 
-	/*
+	/**
 	* Writing callback for curl operations
 	*/
 	static int curlWritingCb(void *buffer, size_t size, size_t nmemb, void *stream) ;
+	/**
+	* Debug callback for curl operations
+	*/
+	static int curlDebugCb (CURL *handle, curl_infotype type, unsigned char *data, size_t size, void *stream);
 	/**
         * Gets the conf pathname
         * @return the pathname string
