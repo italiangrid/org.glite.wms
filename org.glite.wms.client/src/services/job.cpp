@@ -634,7 +634,7 @@ void Job::checkFileTransferProtocol(  ) {
 				// that the user has specified (--proto)
 				if (Utils::hasElement(protocols, *fileProto) == false){
 					info << "--proto " << *fileProto;
-					info << ": the specified File Transfer Protocol is not supported by the server.\n";
+					info << ": the specified FileTransferProtocol is not supported by the server.\n";
 					info << msg.str();
 					throw WmsClientException(__FILE__,__LINE__,
 						"Job::checkFileTransferProtocol",DEFAULT_ERR_CODE,
@@ -657,7 +657,7 @@ void Job::checkFileTransferProtocol(  ) {
 				} else if (Utils::hasElement(protocols, Options::TRANSFER_FILES_CURL_PROTO)) {
 					fileProto= new string (Options::TRANSFER_FILES_CURL_PROTO );
 					logInfo->print(WMS_DEBUG,
-					"FileTransferProtocol not specified and the server does not support the default protocol ("+Options::TRANSFER_FILES_DEF_PROTO+")",
+					"FileTransferProtocol has not been specified and the server does not support the default protocol ("+Options::TRANSFER_FILES_DEF_PROTO+")",
 						"using: " + *fileProto);
 				} else {
 					info << "The server does not support File Transfer Protocol available for this client.\n";
@@ -679,8 +679,7 @@ void Job::checkFileTransferProtocol(  ) {
 		throw WmsClientException(__FILE__,__LINE__,
 			"Job::checkFileTransferProtocol",DEFAULT_ERR_CODE,
 				"Input Option Error",
-				"could not check available protocols: the "
-				+  string(WMP_GETPROTOCOLS_SERVICE) + " service is not implemented on the server" );
+				"No information on the available WMProxy-FileTransferProtocol(s)" );
 
 	}
 }
