@@ -33,6 +33,7 @@ putFL_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
+		-lglite_wmsutils_classads \
 		-lglite_wms_util \
 		$(CLASSAD_LIBS)
 
@@ -41,6 +42,7 @@ putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
 		$(BOOST_REGEX_LIBS) \
+		-lglite_wmsutils_classads \
 		-lglite_wms_util \
 		$(CLASSAD_LIBS)
 
@@ -80,6 +82,7 @@ tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLOBUS_THR_LIBS) \
 		../src/util/libglite_wms_ice_util.la \
 		../src/ice/libglite_wms_ice.la \
+		-lglite_wmsutils_classads \
 		$(GLITE_WMSUTILS_JOBID_LIBS) \
 		$(GLITE_WMS_COMMON_CONF_LIBS) \
 		$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
@@ -98,6 +101,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(CLASSAD_LIBS) \
 		-lglite_ce_monitor_consumer \
 		-lglite_ce_monitor_client \
+		-lglite_wmsutils_classads \
 		-lglite_security_gsoap_plugin_276b_${GLOBUS_THR_FLAVOR} \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
