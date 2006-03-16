@@ -50,7 +50,7 @@ const std::string LISTMATCH_REASON_NO_MATCH = "no matching resources found";
 namespace logger       = glite::wms::common::logger;
 namespace eventlogger  = glite::wms::wmproxy::eventlogger;
 namespace wmsutilities = glite::wms::common::utilities;
-namespace wmsutils     = glite::wmsutils::classads;
+namespace utils     = glite::wmsutils::classads;
 namespace wmputilities = glite::wms::wmproxy::utilities;
 namespace commands = glite::wms::wmproxy::commands;
 

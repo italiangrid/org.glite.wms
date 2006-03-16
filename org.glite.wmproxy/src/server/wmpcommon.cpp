@@ -18,8 +18,8 @@
 #include "utilities/wmpexception_codes.h"
 
 // JDL Attributes
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/jdl_attributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/jdl_attributes.h"
 
 // Logger
 #include "utilities/logging.h"
@@ -47,7 +47,7 @@ const char * DOC_ROOT = "DOCUMENT_ROOT";
 
 
 using namespace std;
-using namespace glite::wms::jdl; // Ad
+using namespace glite::jdl; // Ad
 using namespace glite::wms::wmproxy::utilities; //Exception
 
 namespace logger         = glite::wms::common::logger;

@@ -31,7 +31,7 @@
 // Exceptions
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-#include "glite/wms/jdl/RequestAdExceptions.h"
+#include "glite/jdl/RequestAdExceptions.h"
 
 #include "glite/lb/JobStatus.h"
 
@@ -41,7 +41,7 @@ namespace wmputilities = glite::wms::wmproxy::utilities; //Exception codes
 
 using namespace std;
 using namespace wmputilities;
-using namespace glite::wms::jdl; // AdSyntaxException
+using namespace glite::jdl; // AdSyntaxException
 using namespace glite::wmsutils::exception; // Exception
 
 const std::string ALL_PROTOCOLS = "all";

@@ -7,7 +7,7 @@
 #ifndef GLITE_WMS_WMPROXY_WMPEXPDAGAD_H
 #define GLITE_WMS_WMPROXY_WMPEXPDAGAD_H
 
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/ExpDagAd.h"
 
 namespace glite {
 namespace wms {
@@ -15,13 +15,13 @@ namespace wmproxy {
 namespace eventlogger {
 
 
-class WMPExpDagAd:public glite::wms::jdl::ExpDagAd
+class WMPExpDagAd:public glite::jdl::ExpDagAd
 {
 	public:
 		WMPExpDagAd(const std::string &jdl):ExpDagAd(jdl) {};
 		WMPExpDagAd(std::ifstream &jdl_in):ExpDagAd(jdl_in) {};
 		WMPExpDagAd(const ExpDagAd &dag):ExpDagAd(dag) {};
-		WMPExpDagAd(glite::wms::jdl::Ad *ad):ExpDagAd(ad) {};
+		WMPExpDagAd(glite::jdl::Ad *ad):ExpDagAd(ad) {};
 		WMPExpDagAd(const classad::ClassAd &classAd):ExpDagAd(classAd) {};
 		
 		void setReserved(const std::string attr_name, const std::string attr_value);

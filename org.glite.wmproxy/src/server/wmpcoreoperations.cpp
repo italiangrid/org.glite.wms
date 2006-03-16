@@ -53,22 +53,22 @@
 // Exceptions
 #include "utilities/wmpexceptions.h"
 #include "utilities/wmpexception_codes.h"
-#include "glite/wms/jdl/RequestAdExceptions.h"
+#include "glite/jdl/RequestAdExceptions.h"
 
 // RequestAd
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/jdl_attributes.h"
-#include "glite/wms/jdl/DAGAdManipulation.h"
-#include "glite/wms/jdl/extractfiles.h" // hasWildCards()
+#include "glite/jdl/PrivateAttributes.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/jdl_attributes.h"
+#include "glite/jdl/DAGAdManipulation.h"
+#include "glite/jdl/extractfiles.h" // hasWildCards()
 
 // Logging and Bookkeeping
 #include "glite/lb/Job.h"
 #include "glite/lb/JobStatus.h"
 
 // AdConverter class for jdl convertion and templates
-#include "glite/wms/jdl/adconverter.h"
+#include "glite/jdl/adconverter.h"
 
 // Configuration
 #include "glite/wms/common/configuration/Configuration.h"
@@ -129,7 +129,7 @@ const std::string FLAG_FILE_LOG_CHECKPOINTABLE = ".logcheckpointableok";
 
 using namespace std;
 using namespace glite::lb; // JobStatus
-using namespace glite::wms::jdl; // DagAd, AdConverter
+using namespace glite::jdl; // DagAd, AdConverter
 using namespace boost::details::pool; //singleton
 using namespace glite::wmsutils::jobid; //JobId
 using namespace glite::wmsutils::exception; //Exception
@@ -145,6 +145,7 @@ namespace wmputilities	 = glite::wms::wmproxy::utilities;
 namespace authorizer 	 = glite::wms::wmproxy::authorizer;
 namespace eventlogger    = glite::wms::wmproxy::eventlogger;
 namespace configuration  = glite::wms::common::configuration;
+namespace wmsutilities   = glite::wms::common::utilities;
 
 
 // "private" methods prototypes
@@ -2233,7 +2234,7 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 			
 			// Creating temporary Proxy file
 			char time_string[20];
-			utilities::oedgstrstream s;
+			wmsutilities::oedgstrstream s;
 			struct timeval tv;
 			struct tm* ptm;
 			long milliseconds;

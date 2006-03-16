@@ -12,10 +12,10 @@
 
 #include "utilities/wmputils.h"
 
-#include "glite/wms/jdl/RequestAdExceptions.h"
+#include "glite/jdl/RequestAdExceptions.h"
 
 using namespace std;
-using namespace glite::wms::jdl;
+using namespace glite::jdl;
 using namespace glite::wmsutils::exception; //Exception
 using namespace glite::wms::wmproxy::utilities;
 

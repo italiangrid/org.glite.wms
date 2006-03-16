@@ -21,4 +21,4 @@ enum type {
 // Common methods used in both operations and coreoperations
 void setGlobalSandboxDir();
 void logRemoteHostInfo();
-int getType(std::string jdl, glite::wms::jdl::Ad * ad = NULL);
+int getType(std::string jdl, glite::jdl::Ad * ad = NULL);

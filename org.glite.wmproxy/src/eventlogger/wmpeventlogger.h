@@ -16,7 +16,7 @@
 
 // DagAd
 #include "wmpexpdagad.h"
-#include "glite/wms/jdl/JobAd.h"
+#include "glite/jdl/JobAd.h"
 
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
@@ -74,7 +74,7 @@ class WMPEventLogger  {
 		void unregisterProxyRenewal();
 			
 		// Register methods
-		void registerJob(glite::wms::jdl::JobAd *ad, const std::string &path);
+		void registerJob(glite::jdl::JobAd *ad, const std::string &path);
 		std::vector<std::string> registerDag(WMPExpDagAd *ad,
 			const std::string &path);
 		
