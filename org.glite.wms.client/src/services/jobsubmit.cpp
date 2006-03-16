@@ -35,8 +35,6 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/exception.hpp"
 #include <boost/lexical_cast.hpp>
-// CURL
-#include "curl/curl.h"
 // TAR
 #include "libtar.h"
 
@@ -290,11 +288,10 @@ void JobSubmit::readOptions (int argc,char **argv){
 		} catch (WmsClientException &exc) {
 			if (fileProto==NULL) {
 				fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-				logInfo->print (WMS_DEBUG, "Error while checking the specified FileTransferProtocol;\n" + string(exc.what( )),
-					"\nSetting File Transfer Protocol to default: " + string(*fileProto));
+				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";", "setting FileTransferProtocol to default: " + string(*fileProto) );
 			} else {
-				logInfo->print (WMS_DEBUG, "Unable to retrieve the list of available FileTransferProtocols on the server;\n" + string(exc.what( )),
-					"\nThe specified protocol will be used: " + string(*fileProto));
+				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";",
+					"using the specified protocol: " + string(*fileProto));
 			}
 
 		}
@@ -1465,7 +1462,7 @@ std::string JobSubmit::getJobPath(const std::string& node) {
 
 			} else {
 				logInfo->print(WMS_DEBUG,
-					"JobPath: missing information in the struct returned by jobRegister/jobSubmit service",
+					"JobPath: missing information in the struct returned by the jobRegister/jobSubmit service;",
 					"Research based on the DestionationURI with protocol: "+ Options::JOBPATH_URI_PROTO, false);
 				// jobPath info from BulkDestURI
 				jobPath = new string(this->getJobPathFromDestURI(this->getJobId( ), string(Options::JOBPATH_URI_PROTO)));
@@ -1602,18 +1599,16 @@ void JobSubmit::createZipFile (
 * File transfer by globus-url-copy (gsiftp protocol)
 */
 
-void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::string &errors) {
+void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &failed, std::string &errors) {
 	string protocol = "";
 	string file = "";
 	string destination = "";
-	int index=0;
-	int size = paths.size( );
 	//TBDMS: globus-url-copy searched several times
-	while (size>0 && index<size) {
+	while (paths.empty()==false) {
 		// source
-		file = (paths[index].first).file ;
+		file = (paths[0].first).file ;
 		// destination
-		destination = paths[index].second ;
+		destination = paths[0].second ;
 //cout << "###JobSubmit::gsiFtpTransfer> file = " << file << "\n";
 		// Protocol has to be added only if not yet present
 		protocol = (file.find("://")==string::npos)?FILE_PROTOCOL:"";
@@ -1634,8 +1629,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, s
 		if ( system( cmd.c_str() ) < 0  ){
 			errors += "- unable to transfer the file " + file + "\n";
 			errors += "  to " + destination + "\n";
-			// Next file in the vector
-			index++;
+			failed.push_back(paths[0]);
 		} else{
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "TRANSFER DONE");
 			// Removes the zip file just transferred
@@ -1648,17 +1642,18 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::wms::jdl::FileAd, s
 						exc.what());
 				}
 			}
-			paths.erase(paths.begin());
-			// New size of the vector (the index is not increased)
-			size = paths.size( );
 		}
+		paths.erase(paths.begin());
 	}
 }
+
+
 /**
 * File transfer by CURL (https protocol)
 */
 
-void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::string &errors) {
+void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::wms::jdl::FileAd, std::string> > &failed,
+ std::string &errors) {
 	// curl struct
 	CURL *curl = NULL;
 	// curl result code
@@ -1674,16 +1669,16 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 	long	httpcode = 0;
 	char curl_errorstr[CURL_ERROR_SIZE];
 	string httperr = "";
-	int index = 0;
-	int size = 0;
+	string curlMsg = "";
 	if ( paths.empty()==false ){
 		// curl init
 		curl_global_init(CURL_GLOBAL_ALL);
 		curl = curl_easy_init();
 		if(curl) {
-			if ( wmcOpts->getBoolAttribute(Options::DBG) ) {
-				curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-			}
+			// curl options: Debug function
+			curl_easy_setopt(curl, CURLOPT_DEBUGDATA, &curlMsg);
+			curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, Utils::curlDebugCb);
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 			// curl options: proxy
 			curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
 			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE,   "PEM");
@@ -1700,9 +1695,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 			// enables error message buffer
 			curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 			curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
-			size = paths.size( );
-			// name of the file to be transferred
-			while(size >0 && index < size){
+			while(paths.empty()==false){
 				// path to local file (to be transferred)
 				file = (paths[0].first).file;
 				// destinationURI where to transfer the file
@@ -1727,7 +1720,12 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 				logInfo->print(WMS_DEBUG, "InputSandbox File Transfer", info.str());
 				// FILE TRANSFER ------------------------------------
 				res = curl_easy_perform(curl);
-				// An error occurred during the file transfer
+				// Writing DEBUG info into the log file (if created)
+				if (curlMsg.size()>0){
+					logInfo->print(WMS_DEBUG, curlMsg, "", false);
+					curlMsg = "";
+				}
+				// If an error occurred during the file transfer
 				curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpcode);
 				// result
 				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
@@ -1739,17 +1737,13 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 						} catch (WmsClientException &exc) {
 							logInfo->print (WMS_WARNING,
 							"The following error occured during the removal of the file:",
-							exc.what());
+							exc.what(),false);
 						}
 					}
-					// Remove the file info from the vector
-					paths.erase(paths.begin());
-					// New size of the vector (the index is not increased)
-					size = paths.size( );
 				} else {
 					// ERROR !!!
-					errors += "- couldn't transfer the InputSandbox file : " + file ;
-					errors += "to " + destination + "\n";
+					errors += "- could not transfer the InputSandbox file : " + file ;
+					errors += " to " + destination + "\n";
 					if ( strlen(curl_errorstr)>0 ){
 						errors += string(curl_errorstr) + "\n";
 					}
@@ -1758,9 +1752,11 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::wms::jdl::FileAd, st
 						if (httperr.size()>0) { errors += httperr + "\n"; }
 						errors += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
 					}
-					// Next element of the vector
-					index++;
+					failed.push_back(paths[0]);
 				}
+				// Removes the file info from the vector
+				paths.erase(paths.begin());
+				// closes the source file
 				fclose(hd_src);
 			}
 			// cleanup
@@ -1813,19 +1809,19 @@ std::string JobSubmit::transferFilesList(const std::vector <std::pair<glite::wms
 * Transfers the ISB file to the endpoint
 */
 void JobSubmit::transferFiles(std::vector<std::pair<glite::wms::jdl::FileAd,std::string > > &to_bcopied, const std::string &jobid){
+	vector<pair<FileAd, string > > failed;
 	string errors = "";
-//	try {
 		// File Transfer according to the chosen protocol
 		if (fileProto && *fileProto == Options::TRANSFER_FILES_CURL_PROTO ) {
-			this->curlTransfer (to_bcopied, errors);
+			this->curlTransfer (to_bcopied, failed, errors);
 		} else {
-			this->gsiFtpTransfer (to_bcopied, errors);
+			this->gsiFtpTransfer (to_bcopied, failed, errors);
 		}
 	if (errors.size()>0) {
 		ostringstream err ;
 		err << "The following error(s) occured while transferring the ISB file(s):\n";
 		err << errors << "\n\n";
-		err << transferFilesList (to_bcopied,jobid, false) << "\n";
+		err << transferFilesList (failed, jobid, false) << "\n";
 		throw WmsClientException( __FILE__,__LINE__,
 				"transferFiles",  DEFAULT_ERR_CODE,
 				"File Transfer Error" ,
