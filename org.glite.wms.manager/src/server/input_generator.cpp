@@ -45,6 +45,7 @@ namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace jdl = glite::jdl;
 namespace fs = boost::filesystem;
+namespace ca = glite::wmsutils::classads;
 
 // HARDCODED:
 static const char* hc_sequence_code = "UI=000001:NS=0000000006:WM=000001:\
