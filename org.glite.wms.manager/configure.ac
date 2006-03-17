@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.19  2006/03/17 17:02:11  eronchie
+#       Updated
+#
 #       Revision 1.18  2006/03/17 10:48:20  eronchie
 #       Added sensors for wms
 #
@@ -159,7 +162,7 @@ AM_PATH_LOG4CXX
 
 have_glite_wms_common=no
 have_glite_wmsutils=no
-have_glite_wms_jdl=no
+have_glite_jdl=no
 have_glite_wms_helper=no
 have_glite_wms_jss=no
 have_glite_lb=no
@@ -182,8 +185,8 @@ AC_MSG_RESULT(["GLITE_WMS_HELPER found $have_glite_wms_helper"])
 AC_GLITE_WMS_JSS([], have_glite_wms_jss=yes, have_glite_wms_jss=no)
 AC_MSG_RESULT(["GLITE_WMS_JSS found $have_glite_wms_jss"])
 
-AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
-AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
+AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 
 AC_GLITE_WMS_PURGER([], have_glite_wms_purger=yes, have_glite_wms_purger=no)
 AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
