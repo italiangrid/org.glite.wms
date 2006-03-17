@@ -362,7 +362,7 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 		try {
 			// Check Dir/purge
 			logInfo->service(WMP_PURGE_SERVICE, id);
-			//jobPurge(jobid.toString(),getContext());
+			jobPurge(jobid.toString(),getContext());
                         logInfo->result(WMP_PURGE_SERVICE, "The purging request has been successfully sent");
 		} catch (BaseException &exc) {
 			string wmsg =  "";
