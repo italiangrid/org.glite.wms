@@ -6,8 +6,11 @@
 // $Id$
 
 #include "glite/wms/ism/purchaser/common.h"
+#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -171,16 +174,4 @@ bool split_information_service_url(classad::ClassAd const& ad, boost::tuple<std:
  return true;
 }
 
-boost::xtime get_current_time(void)
-{
-  boost::xtime current_time;
-
-  boost::xtime_get(&current_time, boost::TIME_UTC);
-  
-  return current_time;
-}
-
-} // namespace purchaser
-} // namespace ism
-} // namespace wms
-} // namespace glite
+}}}}

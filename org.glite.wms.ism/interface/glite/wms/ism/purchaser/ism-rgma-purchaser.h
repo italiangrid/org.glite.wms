@@ -135,7 +135,7 @@ typedef ism_rgma_purchaser* create_t(
 typedef void destroy_t(ism_rgma_purchaser*);
 
 // type of the entry update function factory
-typedef boost::function<bool(int&, ad_ptr)> create_entry_update_fn_t();
+typedef boost::function<bool(int&, boost::shared_ptr<classad::ClassAd>)> create_entry_update_fn_t();
 }
 
 } // namespace purchaser

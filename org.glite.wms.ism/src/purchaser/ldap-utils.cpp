@@ -24,8 +24,10 @@
 #include "glite/wms/common/utilities/ii_attr_utils.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
+#include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {

@@ -297,7 +297,7 @@ bool fetch_gluece_info(ldif2classad::LDAPConnection* IIconnection,
 	        *v.second, 
                 isinfo)) {
 
-	    ism_type::value_type ism_entry = make_ism_entry(v.first, static_cast<int>(get_current_time().sec), v.second,
+	    ism_type::value_type ism_entry = make_ism_entry(v.first, ::time(0)), v.second,
                 ism_ii_gris_purchaser_entry_update(v.first,
                   boost::tuples::get<0>(isinfo),
                   boost::tuples::get<1>(isinfo),

@@ -6,11 +6,16 @@
 #include <boost/mem_fn.hpp>
 #include <boost/progress.hpp>
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
 
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
 
 #include "glite/wms/common/ldif2classad/exceptions.h"
 #include "glite/wms/common/utilities/ii_attr_utils.h"
+#include "glite/wms/common/logger/logger_utils.h"
 #include "glite/wmsutils/classads/classad_utils.h"
 
 #include "glite/wms/common/logger/edglog.h"
@@ -1194,7 +1199,7 @@ void ism_rgma_purchaser::do_purchase()
    	  
                ism_type::value_type ism_entry = make_ism_entry(
                   gluece_info_container_updated_entries.back()->first, 
-                  static_cast<int>(get_current_time().sec), 
+                  ::time(0), 
                   gluece_info_container_updated_entries.back()->second, 
                   ism_rgma_purchaser_entry_update() );
    
@@ -1217,7 +1222,7 @@ void ism_rgma_purchaser::do_purchase()
    	  
                ism_type::value_type ism_entry = make_ism_entry(
                   gluece_info_container_updated_entries.back()->first, 
-                  static_cast<int>(get_current_time().sec), 
+                  ::time(0), 
                   gluece_info_container_updated_entries.back()->second, 
                   ism_rgma_purchaser_entry_update() );
    

@@ -7,14 +7,18 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/regex.hpp>
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-cemon-asynch-purchaser.h"
 //#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 #include "glite/ce/monitor-client-api-c/CEConsumer.h"
 #include "glite/ce/monitor-client-api-c/Topic.h"
 
 #include "glite/wms/common/ldif2classad/LDIFObject.h"
+#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {

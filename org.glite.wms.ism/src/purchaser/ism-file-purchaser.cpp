@@ -7,9 +7,13 @@
 
 #include <boost/regex.hpp>
 #include <fstream>
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-file-purchaser.h"
+#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {

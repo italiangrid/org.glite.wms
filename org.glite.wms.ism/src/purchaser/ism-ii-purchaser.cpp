@@ -6,8 +6,13 @@
 // $Id$
 
 #include <boost/progress.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
+#include <classad_distribution.h>
 #include "ldap-utils.h"
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
+#include "glite/wms/common/logger/logger_utils.h"
 
 using namespace std;
 

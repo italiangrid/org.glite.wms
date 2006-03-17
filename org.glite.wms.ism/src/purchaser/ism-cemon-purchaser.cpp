@@ -7,9 +7,9 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/regex.hpp>
-#include <boost/thread/xtime.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include "glite/wms/ism/ism.h"
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 //#include "glite/ce/monitor-client-api-c/CEMonitorBinding.nsmap"
 #include "glite/ce/monitor-client-api-c/CEEvent.h"
@@ -20,8 +20,11 @@
 #include "glite/ce/monitor-client-api-c/DialectNotSupportedException.h"
 #include "glite/ce/monitor-client-api-c/ServiceNotFoundException.h"
 #include "glite/ce/monitor-client-api-c/AuthenticationException.h"
+#include "glite/wms/common/logger/logger_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -94,11 +97,11 @@ ism_cemon_purchaser::ism_cemon_purchaser(
   skip_predicate_type skip_predicate
 )
   : ism_purchaser(mode, interval, exit_predicate, skip_predicate),
-  m_certfile(certfile),
-  m_certpath(certpath),
-  m_services(services),
-  m_topic(topic),
-  m_rate(rate)
+    m_certfile(certfile),
+    m_certpath(certpath),
+    m_topic(topic),
+    m_rate(rate),
+    m_services(services)
 {
 }
 

@@ -46,7 +46,7 @@ class ism_ii_gris_purchaser_entry_update
 {
 public:
   ism_ii_gris_purchaser_entry_update(std::string const& id, std::string const& hn, int p, std::string const& dn, int timeout) :
-    m_id(id), m_ldap_server(hn), m_ldap_port(p), m_ldap_dn(dn), m_ldap_timeout(timeout)  {}
+    m_id(id), m_ldap_server(hn), m_ldap_dn(dn), m_ldap_port(p), m_ldap_timeout(timeout)  {}
   bool operator()(int a,boost::shared_ptr<classad::ClassAd>& ad);
 private:
   std::string m_id;
