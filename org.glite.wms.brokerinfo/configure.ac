@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20  2006/03/17 15:33:54  monforte
+#       Removed ARES dependency
+#
 #       Revision 1.19  2006/03/14 08:55:57  monforte
 #       merge against :glite-wms-brokerinfo_branch_1_5_0_RC15
 #
@@ -201,7 +204,6 @@ AC_CHECK_FUNCS([bzero endpwent ftruncate getmntent memset mkdir pow strerror str
 have_boost=no
 have_classads=no
 have_globus=no
-have_ares=no
 have_cgsi_gsoap=no
 have_replica=no
 
@@ -215,9 +217,6 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
-
-AC_ARES([], have_ares=yes, have_ares=no)
-AC_MSG_RESULT(["ARES found $have_ares"])
 
 AC_GSOAP
 
@@ -236,10 +235,6 @@ if test "$have_globus" = "no"; then
   AC_MSG_RESULT(["Please verify GLOBUS package"])
 fi
 
-if test "$have_ares" = "no"; then
-  AC_MSG_RESULT(["Please verify ARES package"])
-fi
-
 if test "$have_replica" = "no"; then
   AC_MSG_RESULT(["Please verify REPLICA package"])
 fi
@@ -253,10 +248,6 @@ if test "$have_boost" = "no"; then
 fi
 
 if test "$have_classads" = "no"; then
-  AC_MSG_ERROR([Cannot continue building])
-fi
-
-if test "$have_ares" = "no"; then
   AC_MSG_ERROR([Cannot continue building])
 fi
 
@@ -280,7 +271,7 @@ AC_MSG_RESULT(["GLITE_DATA found $have_data"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
-AM_CONFIG_HEADER([src/autogen/config.h])
+#AM_CONFIG_HEADER([src/autogen/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([interface/Makefile])
 AC_CONFIG_FILES([src/Makefile])
