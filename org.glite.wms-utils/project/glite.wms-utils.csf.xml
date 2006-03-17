@@ -21,9 +21,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.9  2006/03/17 15:39:50  eronchie
+	Renamed classads component in classad
+
 	Revision 1.8  2006/03/15 17:29:32  eronchie
 	Added classads
-
+	
 	Revision 1.7  2004/10/18 23:01:18  dimeglio
 	Added oscheck to various targets
 	
@@ -143,8 +146,8 @@
                         <equals arg1="${org.glite.wms-utils.exception.version}" arg2="HEAD" />
                 </condition>
 
-		<condition property="classads.head">
-                        <equals arg1="${org.glite.wms-utils.classads.version}" arg2="HEAD" />
+		<condition property="classad.head">
+                        <equals arg1="${org.glite.wms-utils.classad.version}" arg2="HEAD" />
                 </condition>
     	</target>
 
@@ -227,13 +230,13 @@
     	</target>
 
 	<!-- Classads -->
-        <target name="classads" depends="get.classads.head, get.classads.tag"/>
-        <target name="get.classads.head" if="classads.head">
-            <cvs-co package="org.glite.wms-utils.classads" />
+        <target name="classad" depends="classads, get.classad.head, get.classad.tag"/>
+        <target name="get.classad.head" if="classad.head">
+            <cvs-co package="org.glite.wms-utils.classad" />
         </target>
-        <target name="get.classads.tag" unless="classads.head">
-            <cvs-co package="org.glite.wms-utils.classads"
-                    tag="${org.glite.wms-utils.classads.version}" />
+        <target name="get.classad.tag" unless="classad.head">
+            <cvs-co package="org.glite.wms-utils.classad"
+                    tag="${org.glite.wms-utils.classad.version}" />
         </target>
 
 
@@ -249,7 +252,7 @@
 		
 	<!-- All project modules -->
  	<target name="project" depends="exception,
-					classads,
+					classad,
 				        tls,
 					jobid"/>
 

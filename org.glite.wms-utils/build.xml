@@ -20,9 +20,12 @@
 
 	Revision history:
 	$Log$
+	Revision 1.29  2006/03/17 15:39:50  eronchie
+	Renamed classads component in classad
+
 	Revision 1.28  2006/03/15 17:29:31  eronchie
 	Added classads
-
+	
 	Revision 1.27  2005/05/26 15:21:48  zurek
 	inserted module.build.file
 	
@@ -321,16 +324,16 @@
 		</if>
     	</target>
 
-	<target name="classads" unless="setenvonly" depends="envset">
+	<target name="classad" unless="setenvonly" depends="envset,classads">
                 <if>
                         <isset property="small.memory" />
                         <then>
-                                <exec dir="${wms-utils.subsystem.dir}.classads" executable="${antExec}" failonerror="${failonerror}">
+                                <exec dir="${wms-utils.subsystem.dir}.classad" executable="${antExec}" failonerror="${failonerror}">
                                         <arg line="${target} &quot;-Dsmall.memory=true&quot; &quot;-Dbootstrap=${bootstrap}&quot; &quot;-Dfailonerror=${failonerror}&quot; &quot;-Ddo.cvs.tag=${do.cvs.tag}&quot;"/>
                                 </exec>
                         </then>
                         <else>
-                                <ant dir="${wms-utils.subsystem.dir}.classads"
+                                <ant dir="${wms-utils.subsystem.dir}.classad"
                                      target="${target}"
                                      inheritall="false" />
                         </else>
@@ -340,7 +343,7 @@
 	<!-- Main proxy -->
 	<target name="buildmodules" depends="envset,
 					     exception,
-				             classads,
+				             classad,
 					     tls,
 					     jobid">
 		<echo append="true" file="${global.project.dir}/cruisecontrol-stub.xml">
