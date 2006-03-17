@@ -7,6 +7,6 @@
 ## *********************************************************************
 
 ## Subdirectories list
-SUBDIRS = server daemons
+SUBDIRS = sensors server daemons
 
 MAINTAINERCLEANFILES = Makefile.in 

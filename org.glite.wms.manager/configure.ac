@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.18  2006/03/17 10:48:20  eronchie
+#       Added sensors for wms
+#
 #       Revision 1.17  2006/03/14 15:51:36  eronchie
 #       Applied Purer macro
 #
@@ -203,6 +206,7 @@ AC_CONFIG_FILES([config/glite-wms-wm])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/common/Makefile])
 AC_CONFIG_FILES([src/daemons/Makefile])
+AC_CONFIG_FILES([src/sensors/Makefile])
 AC_CONFIG_FILES([src/server/Makefile])
 AC_CONFIG_FILES([src/server/glite-wms-dag-post.sh])
 AC_CONFIG_FILES([src/server/glite-wms-planner.sh])
