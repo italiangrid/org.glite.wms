@@ -29,7 +29,7 @@ glite_wms_workload_manager_LDADD   = \
 	$(GLITE_WMS_PURGER_LIBS) \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-        $(GLITE_WMS_JDL_LIBS)\
+        $(GLITE_JDL_LIBS)\
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
 	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
