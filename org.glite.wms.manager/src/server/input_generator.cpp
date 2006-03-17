@@ -39,8 +39,8 @@
 
 #include "glite/security/proxyrenewal/renewal.h"
 
-
 namespace utilities = glite::wms::common::utilities;
+namespace ca = glite::wmsutils::classads;
 namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace jdl = glite::jdl;
