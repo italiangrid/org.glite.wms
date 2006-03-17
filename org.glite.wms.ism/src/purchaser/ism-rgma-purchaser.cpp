@@ -5,6 +5,8 @@
 
 #include <boost/mem_fn.hpp>
 #include <boost/progress.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -86,6 +88,7 @@ boost::mutex  collect_info_mutex;
 
 unsigned int consLifeCycles = 0;
 boost::mutex  consLifeCycles_mutex;
+
 }
 
 query::~query() 
@@ -237,6 +240,21 @@ bool query::pop_tuples ( glite::rgma::ResultSet & out, int maxTupleNumber)
 }
 
 namespace{
+
+typedef std::pair< std::string, boost::shared_ptr<classad::ClassAd> >
+                                        pair_string_classad_shared_ptr;
+
+typedef std::map<
+  std::string, // ce id
+  std::vector<pair_string_classad_shared_ptr> // list of ce views per vo
+> gluece_voview_info_map_type;
+
+
+bool is_access_control_vo_rule(const string& r)
+{
+ return boost::algorithm::istarts_with(r, "VO:");
+}
+
 
 bool ParseValue(const string& v, utilities::edgstrstream& s)
 {
@@ -479,6 +497,32 @@ void checkSubCluster( ClassAd* subClusterAd ){
    if ( !changeAttributeName( subClusterAd, "WNTmpDir", "GlueSubClusterWNTmpDir") )
       Warning("changing ClassAd's attributeName: WNTmpDir -> GlueSubClusterWNTmpDir... FAILED");
 }
+
+void checkGlueCEVOView( ClassAd* gluece_info ) {
+
+//   Debug("mapping RGMA attribute names of VOView table to BDII names");
+   if ( !changeAttributeName( gluece_info, "LocalID", "GlueVOViewLocalID") )
+      Warning("changing ClassAd's attributeName: LocalID -> GlueVOViewLocalID... FAILED");
+   if ( !changeAttributeName( gluece_info, "RunningJobs", "GlueCEStateRunningJobs") )
+      Warning("changing ClassAd's attributeName: RunningJobs -> GlueCEStateRunningJobs... FAILED");
+   if ( !changeAttributeName( gluece_info, "WaitingJobs", "GlueCEStateWaitingJobs") )
+      Warning("changing ClassAd's attributeName: WaitingJobs -> GlueCEStateWaitingJobs... FAILED");
+   if ( !changeAttributeName( gluece_info, "TotalJobs", "GlueCEStateTotalJobs") )
+       Warning("changing ClassAd's attributeName: TotalJobs -> GlueCEStateTotalJobs... FAILED");
+   if ( !changeAttributeName( gluece_info, "FreeJobSlots", "GlueCEStateFreeJobSlots") )
+      Warning("changing ClassAd's attributeName: FreeJobSlots -> GlueCEStateFreeJobSlots... FAILED");
+   if ( !changeAttributeName( gluece_info, "EstimatedResponseTime", "GlueCEStateEstimatedResponseTime") )
+      Warning("changing ClassAd's attributeName: EstimatedResponseTime -> GlueCEStateEstimatedResponseTime... FAILED");
+   if ( !changeAttributeName( gluece_info, "DefaultSE", "GlueCEInfoDefaultSE") )
+      Warning("changing ClassAd's attributeName: DefaultSE -> GlueCEInfoDefaultSE... FAILED");
+   if ( !changeAttributeName( gluece_info, "ApplicationDir", "GlueCEInfoApplicationDir") )
+      Warning("changing ClassAd's attributeName: ApplicationDir -> GlueCEInfoApplicationDir... FAILED");
+   if ( !changeAttributeName( gluece_info, "DataDir", "GlueCEInfoDataDir") )       Warning("changing ClassAd's attributeName: DataDir -> GlueCEInfoDataDir... FAILED");
+   if ( !changeAttributeName( gluece_info, "FreeCpus", "GlueCEStateFreeCPUs") )
+      Warning("changing ClassAd's attributeName: FreeCpus -> GlueCEStateFreeCPUs... FAILED");
+
+}
+
 
 void checkGlueCE( ClassAd* gluece_info ) {
 
@@ -1035,6 +1079,176 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
 
 }
 
+void collect_voview_info( ism_rgma_purchaser * purchaser,
+                        gluece_info_container_type * gluece_info_container) {
+         bool VOViewIsEmpty = false;
+
+         if ( (consLifeCycles == 0) || (consLifeCycles == 1) ) {
+            if ( ! purchaser->m_GlueCEVOView.refresh_consumer(
+                                         purchaser->m_rgma_consumer_ttl ) ) {
+               Warning("VOView consumer creation failed");
+               {
+                  boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
+                  consLifeCycles = 0;
+               }
+               return;
+            }
+            Debug("VOView CONSUMER REFRESHED");
+         }
+
+         if ( ! purchaser->m_GlueCEVOView.refresh_query( purchaser->m_rgma_query_timeout) ) {
+            Warning("VOView query FAILED.");
+            {
+               boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
+               consLifeCycles = 0;
+            }
+            return;
+         }
+
+         gluece_voview_info_map_type  gluece_voview_info_map;
+
+         while ( ! VOViewIsEmpty ) {
+
+            ResultSet voviewSet;
+
+            if( purchaser->m_GlueCEVOView.pop_tuples( voviewSet, 1000)){
+
+               if ( voviewSet.begin() != voviewSet.end() ) {
+
+                  ResultSet::iterator voview_it = voviewSet.begin();
+                  ResultSet::iterator const voview_end = voviewSet.end();
+                  for( ; voview_it != voview_end; ++voview_it) {
+
+                     try {
+                        string GlueCEUniqueIDFromRgma = voview_it->getString("GlueCEUniqueID");
+                        string UniqueID = voview_it->getString("UniqueID");
+                        boost::shared_ptr<classad::ClassAd> voAd( new ClassAd );
+                        if ( ExportClassAd( voAd.get(), *voview_it ) ) {
+                           checkGlueCEVOView( voAd.get() );
+                           gluece_voview_info_map[GlueCEUniqueIDFromRgma].push_back(
+                                                   std::make_pair(UniqueID, voAd));
+                        }
+                        else Warning("Converting "<< GlueCEUniqueIDFromRgma
+                           <<" tuple to the ClassAd...FAILED");
+                     }
+                     catch(RGMAException rgmae) {
+                        Error("Cannot evaluate tuple returned by GlueCEVoView table");
+                        Error(rgmae.getMessage());
+                     }
+                  } //for
+         
+               }
+               if ( voviewSet.endOfResults() ) VOViewIsEmpty = true;
+
+            }
+            else{
+               Warning("Failure in popping tuples from the query to GlueCEVOView");
+               VOViewIsEmpty = true;
+            }
+
+         }  // while ( ! VOViewIsEmpty )
+
+         if ( ! gluece_voview_info_map.empty() ) {
+//////////////////////////////
+            for (gluece_info_iterator ce_it = gluece_info_container->begin();
+                 ce_it != gluece_info_container->end(); ++ce_it) {
+               gluece_voview_info_map_type::const_iterator const vo_views(
+                  gluece_voview_info_map.find(ce_it->first)
+               );
+               if (vo_views!=gluece_voview_info_map.end() 
+                   //&&      !vo_views->second.empty()
+                  ) {
+     
+                  vector<string> access_control_base_rules;
+     
+                  utils::EvaluateAttrList(
+                    *(ce_it->second), 
+                    "GlueCEAccessControlBaseRule",
+                    access_control_base_rules
+                  );
+                  bool access_control_vo_rule_exists = false;
+                  vector<string>::iterator last_access_control_vo_rule(
+                    access_control_base_rules.begin()
+                  );
+                  vector<string>::iterator access_control_base_rules_end(
+                    access_control_base_rules.end()
+                  );
+                  // for each access control vo rule...
+                  do {
+      
+                     last_access_control_vo_rule = std::find_if(
+                       last_access_control_vo_rule,
+                       access_control_base_rules_end,
+                       is_access_control_vo_rule
+                     );
+                     access_control_vo_rule_exists =
+                        last_access_control_vo_rule != access_control_base_rules.end();
+    
+                     string vo; 
+                     if (access_control_vo_rule_exists) {
+                        size_t colon_pos = last_access_control_vo_rule->rfind(":");
+                        vo = last_access_control_vo_rule->substr(colon_pos+1);
+
+                        string voview_id(
+                            ce_it->first + "/" + vo
+                        );
+     
+                        vector<pair_string_classad_shared_ptr>::const_iterator
+                           vo_view_it( vo_views->second.begin() );
+                        vector<pair_string_classad_shared_ptr>::const_iterator const
+                           vo_view_e(  vo_views->second.end());
+                        for ( ; vo_view_it!=vo_view_e; ++vo_view_it)
+                          if(vo_view_it->first==voview_id) break;
+     
+                        //...if exists a voview create the relevant ceAd
+                        if(vo_view_it!=vo_view_e) {
+                           boost::shared_ptr<classad::ClassAd> ceAd(
+                                dynamic_cast<classad::ClassAd*>(ce_it->second->Copy())
+                           );
+                        
+                           ceAd->Update(*vo_view_it->second);
+                           gluece_info_container->insert(
+                              std::make_pair(
+                                 ce_it->first + string(",vo=") + vo,
+                                 ceAd
+                              )
+                           );
+     
+                           last_access_control_vo_rule =
+                              access_control_base_rules.erase(last_access_control_vo_rule);
+                        }
+                        else {
+                            ++last_access_control_vo_rule;
+                        }
+                     }
+                  } while(access_control_vo_rule_exists);
+     
+                  if (!access_control_base_rules.empty()) {
+                     ce_it->second->Insert(
+                       "GlueCEAccessControlBaseRule",
+                        utils::asExprList(access_control_base_rules)
+                     );
+                    //gluece_info_container.insert(
+                     // std::make_pair( ce_it->first, ce_it->second)
+                    //);
+                  }
+                  else {
+                    //gluece_info_container.insert(
+                    //std::make_pair((*ce_it)->first, (*ce_it)->second.first)
+                    //);
+                     gluece_info_container->erase(ce_it);
+                  }
+               } // if (vo_views!=gluece_voview_info_map.end())
+            }//for
+     /////////////////////////////////////////////////
+         }
+         else 
+            Warning("No VOview information have been collected");
+
+
+}
+ 
+
 void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_info_container)
 {
 //   bool consumers_is_alive =
@@ -1042,7 +1256,7 @@ void ism_rgma_purchaser::prefetchGlueCEinfo( gluece_info_container_type& gluece_
 
    if ( (consLifeCycles == 0) || (consLifeCycles == m_rgma_cons_life_cycles) ) {
       if ( ! m_GlueCE.refresh_consumer( m_rgma_consumer_ttl ) ) {
-         Warning("guece consumer creation failed");
+         Warning("gluece consumer creation failed");
          consLifeCycles = 0;
          return;
       }
@@ -1120,6 +1334,7 @@ ism_rgma_purchaser::ism_rgma_purchaser(
    m_GlueSubClusterSoftwareRunTimeEnvironment = 
                  query("GlueSubClusterSoftwareRunTimeEnvironment");
    m_GlueCESEBind = query("GlueCESEBind");
+   m_GlueCEVOView = query("GlueCEVOView");
 }
 
 void ism_rgma_purchaser::operator()()
@@ -1155,6 +1370,8 @@ void ism_rgma_purchaser::do_purchase()
          t_sc.join();
          t_srte.join();
          t_bind.join();
+
+         collect_voview_info( this, &gluece_info_container );
 
       }
       else Debug("No CEs found\n"<<"No attempt to collect information related to th CEs");
