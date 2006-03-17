@@ -42,15 +42,15 @@
 #include "glite/wms/common/configuration/LMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/common/utilities/boost_fs_add.h"
 #include "glite/wms/common/utilities/edgstrstream.h"
 
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/PrivateAttributes.h"
 
 #include "glite/wms/helper/exceptions.h"
 #include "exceptions.h"
@@ -59,7 +59,8 @@ namespace fs = boost::filesystem;
 namespace config = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace utilities = glite::wms::common::utilities;
-namespace jdl = glite::wms::jdl;
+namespace utils = glite::wmsutils::classads;
+namespace jdl = glite::jdl;
 
 namespace {
 std::string const helper_id("JobAdapterHelper");
@@ -142,13 +143,13 @@ try {
   
   // Not Mandatory
   vector<std::string>  outputsandbox;
-  utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandbox", outputsandbox); 
+  utils::EvaluateAttrListOrSingle(*m_ad, "outputsandbox", outputsandbox); 
  
   // Not Mandatory
   bool b_osb_dest_uri = false;
   vector<std::string> outputsandboxdesturi;
   if (!outputsandbox.empty()) {
-    utilities::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
+    utils::EvaluateAttrListOrSingle(*m_ad, "outputsandboxdesturi", outputsandboxdesturi);
     if ( !outputsandboxdesturi.empty() ) {
       b_osb_dest_uri = true;
     }
@@ -156,7 +157,7 @@ try {
   
   // Not Mandatory
   vector<std::string>  inputsandbox;
-  utilities::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
+  utils::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
   // Not Mandatory
   bool b_wmpisb_base_uri = false;
@@ -202,7 +203,7 @@ try {
 
   /* Not Mandatory */
   vector<std::string> env;
-  utilities::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
+  utils::EvaluateAttrListOrSingle(*m_ad, jdl::JDL::ENVIRONMENT, env);
 
   /* Mandatory */
   /* It is renamed in globusscheduler. (Below) */

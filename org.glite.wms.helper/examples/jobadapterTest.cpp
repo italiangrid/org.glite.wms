@@ -22,7 +22,7 @@
 #include "glite/wmsutils/jobid/JobId.h"
 #include "glite/wmsutils/jobid/manipulation.h"
 
-#include "glite/wms/jdl/convert.h"
+#include "glite/jdl/convert.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/exceptions.h"
@@ -40,7 +40,7 @@ using namespace glite::wms::common::configuration;
 using namespace glite::wms::common::logger;
 using namespace glite::wms::common::logger::threadsafe;
 
-namespace jdl = glite::wms::jdl;
+namespace jdl = glite::jdl;
 namespace helper = glite::wms::helper;
 
 int

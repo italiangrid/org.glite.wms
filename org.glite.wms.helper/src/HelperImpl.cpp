@@ -9,7 +9,9 @@
 #include <fstream>
 #include <stdexcept>
 #include <boost/scoped_ptr.hpp>
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
+
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -36,14 +38,14 @@ HelperImpl::resolve(std::string const& input_file) const
   std::ofstream fout(result.c_str());
   assert(fout);
 
-  boost::scoped_ptr<classad::ClassAd> ad(common::utilities::parse_classad(fin));
+  boost::scoped_ptr<classad::ClassAd> ad(utils::parse_classad(fin));
   boost::scoped_ptr<classad::ClassAd> resolved_ad(resolve(&*ad));
 
   if (resolved_ad.get() == 0) {
     throw std::logic_error(id() + " - cannot resolve");
   }
 
-  fout << common::utilities::unparse_classad(*resolved_ad) << '\n';
+  fout << utils::unparse_classad(*resolved_ad) << '\n';
 
   return result;
 }

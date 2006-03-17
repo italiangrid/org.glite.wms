@@ -17,11 +17,11 @@
 
 #include <classad_distribution.h>
 
-#include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/jdl/JobAdManipulation.h"
 #include "JobWrapper.h"
 
 namespace configuration = glite::wms::common::configuration;
-namespace jdl = glite::wms::jdl;
+namespace jdl = glite::jdl;
 
 namespace glite {
 namespace wms {

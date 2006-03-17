@@ -13,9 +13,9 @@
 #include "RequestStateMachine.h"
 #include "Helper.h"
 #include "glite/wms/common/logger/logger_utils.h"
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
-namespace utilities = glite::wms::common::utilities;
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -157,9 +157,9 @@ public:
   result_type operator()(argument_type const& v) const
   {
     expression_type expr = "[requirements=" + v.second + "]";
-    boost::scoped_ptr<classad::ClassAd> rhs(utilities::parse_classad(expr));
+    boost::scoped_ptr<classad::ClassAd> rhs(utils::parse_classad(expr));
     
-    return utilities::left_matches_right(*m_ad, *rhs);
+    return utils::left_matches_right(*m_ad, *rhs);
   }
 };
 

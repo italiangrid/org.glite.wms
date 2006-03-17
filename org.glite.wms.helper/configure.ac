@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.21  2006/03/17 07:51:00  eronchie
+#       Updated
+#       Applied changed due to the new locations of jdl and classad_utils
+#
 #       Revision 1.20  2006/02/09 14:15:49  mcecchi
 #       URL moved
 #
@@ -236,7 +240,7 @@ AC_GLITE
 AC_OPTIMIZE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
-AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
+AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
 AC_GLITE_WMS_BROKER([], have_glite_wms_broker=yes, have_glite_wms_broker=no)
 AC_GLITE_WMS_BROKERINFO([], have_glite_wms_brokerinfo=yes, have_glite_wms_brokerinfo=no)
 AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
@@ -245,7 +249,7 @@ AC_GLITE_WMS_MATCHMAKING([], have_glite_wms_matchmaking=yes, have_glite_wms_matc
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
-AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 AC_MSG_RESULT(["GLITE_WMSUTILS found $have_glite_wmsutils"])
 AC_MSG_RESULT(["GLITE_WMS_BROKERINFO found $have_glite_wms_brokerinfo"])
 AC_MSG_RESULT(["GLITE_WMS_BROKER found $have_glite_wms_broker"])

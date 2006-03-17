@@ -14,12 +14,12 @@
 #include <boost/filesystem/exception.hpp>
 
 namespace glite {
-namespace wms {
-
 namespace jdl {
 class CannotGetAttribute;
 class CannotSetAttribute;
 }
+
+namespace wms {
 
 namespace helper {
 
@@ -57,7 +57,7 @@ public:
   CannotGetAttribute(std::string const& attribute,
                      std::string const& attribute_type,
                      std::string const& helper);
-  CannotGetAttribute(glite::wms::jdl::CannotGetAttribute const& e,
+  CannotGetAttribute(glite::jdl::CannotGetAttribute const& e,
                      std::string const& helper);
   ~CannotGetAttribute() throw();
   char const* what() const throw();
@@ -88,7 +88,7 @@ class CannotSetAttribute: public HelperError
 
 public:
   CannotSetAttribute(std::string const& attribute, std::string const& helper);
-  CannotSetAttribute(glite::wms::jdl::CannotSetAttribute const& e,
+  CannotSetAttribute(glite::jdl::CannotSetAttribute const& e,
                      std::string const& helper);
   ~CannotSetAttribute() throw();
   char const* what() const throw();

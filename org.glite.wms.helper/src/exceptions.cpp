@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/ManipulationExceptions.h"
 
 namespace glite {
 namespace wms {
@@ -90,7 +90,7 @@ CannotGetAttribute::CannotGetAttribute(
 }
 
 CannotGetAttribute::CannotGetAttribute(
-  glite::wms::jdl::CannotGetAttribute const& e,
+  glite::jdl::CannotGetAttribute const& e,
   std::string const& helper
 )
   : HelperError(helper)
@@ -216,7 +216,7 @@ CannotSetAttribute::CannotSetAttribute(
 }
 
 CannotSetAttribute::CannotSetAttribute(
-  glite::wms::jdl::CannotSetAttribute const& e,
+  glite::jdl::CannotSetAttribute const& e,
   std::string const& helper
 )
   : HelperError(helper)
