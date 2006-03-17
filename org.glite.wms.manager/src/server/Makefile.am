@@ -32,7 +32,6 @@ libglite_wms_manager_server_la_SOURCES = \
 	Request.hpp \
 	Request.cpp \
 	TaskQueue.hpp \
-	TaskQueue.cpp \
 	plan.h \
 	plan.cpp \
 	DAGManHelper.h \
@@ -112,7 +111,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/common \
         $(CLASSAD_CFLAGS) \
-        $(BOOST_CFLAGS)
+        $(BOOST_CFLAGS) \
+	-DGLITE_WMS_HAVE_LBPROXY
 
 EXTRA_DIST = glite-wms-dag-post.sh.in
 

@@ -216,7 +216,7 @@ void process_submit(RequestPtr req, WMReal& wm)
 
       }
 
-      wm.submit(req->jdl());
+      wm.submit(*req->jdl(), req->lb_context());
       req->state(Request::DELIVERED);
     }
 
@@ -247,7 +247,7 @@ void process_cancel(RequestPtr req, WMReal& wm)
 {
   Debug("considering cancel of " << req->id());
 
-  wm.cancel(req->id());
+  wm.cancel(req->id(), req->lb_context());
   req->state(Request::CANCELLED);
 }
 

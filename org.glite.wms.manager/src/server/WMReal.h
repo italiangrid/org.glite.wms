@@ -9,6 +9,7 @@
 #define GLITE_WMS_MANAGER_SERVER_WMREAL_H
 
 #include <boost/shared_ptr.hpp>
+#include "lb_utils.h"
 
 namespace classad {
 class ClassAd;
@@ -32,8 +33,11 @@ class WMReal
 
 public:
   WMReal();
-  void submit(classad::ClassAd const* request_ad);
-  void cancel(glite::wmsutils::jobid::JobId const& request_id);
+  void submit(classad::ClassAd const& jdl, ContextPtr context);
+  void cancel(
+    glite::wmsutils::jobid::JobId const& request_id,
+    ContextPtr context
+  );
 };
 
 }}}} // glite::wms::manager::server

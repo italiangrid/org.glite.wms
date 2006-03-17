@@ -23,10 +23,6 @@ typedef boost::shared_ptr<Request const> RequestConstPtr;
 // should be JobId, but JobId is not safe
 typedef std::map<std::string, RequestPtr> TaskQueue;
 
-TaskQueue& the_task_queue();
-
-ContextPtr get_context(glite::wmsutils::jobid::JobId const& id);
-
 }}}} // glite::wms::manager::server
 
 #endif

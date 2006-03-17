@@ -152,18 +152,11 @@ submit_command_create(std::auto_ptr<classad::ClassAd> job_ad)
 }
 
 void
-WMReal::submit(classad::ClassAd const* request_ad_p)
+WMReal::submit(classad::ClassAd const& jdl, ContextPtr context)
 {
-  if (!request_ad_p) {
-    Error("request ad is null");
-    return;
-  }
-
   // we make a copy because we change the sequence code
-  classad::ClassAd request_ad(*request_ad_p);
+  classad::ClassAd request_ad(jdl);
 
-  glite::wmsutils::jobid::JobId jobid(jdl::get_edg_jobid(request_ad));
-  ContextPtr context = get_context(jobid);
   std::string const sequence_code(get_lb_sequence_code(context));
 
   // before doing the planning, some helpers may need a
@@ -251,9 +244,8 @@ cancel_command_create(
 }
 
 void
-WMReal::cancel(jobid::JobId const& id)
+WMReal::cancel(jobid::JobId const& id, ContextPtr context)
 {
-  ContextPtr context = get_context(id);
   std::string const sequence_code(get_lb_sequence_code(context));
 
   classad::ClassAd cmd(
