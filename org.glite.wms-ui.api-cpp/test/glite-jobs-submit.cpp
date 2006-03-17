@@ -7,7 +7,7 @@
 
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wms/jdl/JobAd.h"
+#include "glite/jdl/JobAd.h"
 #include "glite/wmsui/api/JobCollection.h"
 using namespace std ;
 using namespace glite::wmsutils::exception ;
@@ -36,7 +36,7 @@ int main(int argc,char *argv[]){
 		<< "[\n nsHost = \"<host>\";\n nsPort = <port> ;\n LbHosts = { \"<lb host 1>\" , \"<lb host 2>\" ,... } ;\n LbPorts = { \"<lb port 1>\" , \"<lb port2>\" ,... };\nce_id = \"<ceId>\";\n]\n" << flush;
 		return 1 ;
 	}
-	glite::wms::jdl::Ad conf;
+	glite::jdl::Ad conf;
 	string nsHost  ;
 	int nsPort ;
 	string ce_id ="";
@@ -59,7 +59,7 @@ int main(int argc,char *argv[]){
 	glite::wmsui::api::JobCollection collect ;
 	for ( int i = 2 ; i < argc ; i++ )try{
 		cout << collect.size()  <<"\nedg-wl-jobs-submit test: Reading file: "<<  argv[i] << endl << flush ;
-		glite::wms::jdl::JobAd jobad;
+		glite::jdl::JobAd jobad;
 		jobad.fromFile ( argv[i] ) ;
 		cout << jobad.toLines() << endl << flush;
 		collect.insert ( glite::wmsui::api::Job ( jobad) ) ;

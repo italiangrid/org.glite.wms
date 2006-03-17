@@ -35,7 +35,8 @@ GLITE_LIBS= -L$(GLITE_LOCATION)/lib \
 	-lglite_wmsutils_cjobid \
 	-lglite_wmsutils_jobid \
 	-lglite_wmsutils_exception \
-	-lglite_wms_jdl \
+	-lglite_jdl_api_cpp \
+	-lglite_wmsutils_classads \
 	-lglite_wms_logger \
 	-lglite_wms_globus_ftp_util \
 	-lglite_wms_util \

@@ -9,12 +9,12 @@
 
 #include "glite/wmsutils/exception/Exception.h"
 #include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wms/jdl/JobAd.h"
-#include "glite/wms/jdl/ExpDagAd.h"
+#include "glite/jdl/JobAd.h"
+#include "glite/jdl/ExpDagAd.h"
 #include "glite/wmsui/api/Request.h"
 #include "glite/wmsui/api/Job.h"
 using namespace std ;
-using namespace glite::wms::jdl ;
+using namespace glite::jdl ;
 
 int main(int argc,char *argv[]){
 
@@ -23,7 +23,7 @@ try{
 			cout << "Usage : " << argv[0] << "  <JDL file>  <ns host> <ns port>" << endl;
 			return 1;
 	}
-	glite::wms::jdl::JobAd jab;
+	glite::jdl::JobAd jab;
 	jab.fromFile ( argv[1] ) ;
 	jab.setDefaultReq ("other.GlueCEStateStatus == \"Production\"") ;
 	jab.setDefaultRank ("-other.GlueCEStateEstimatedResponseTime");
