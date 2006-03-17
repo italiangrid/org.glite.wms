@@ -499,7 +499,7 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 	char *reason = NULL;
 	string source = "";
 	string destination = "";
-	string cmd= "globus-url-copy ";
+	string cmd= "";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
 		"using " + cmd +" to retrieve the file(s)");
 	if (getenv("GLOBUS_LOCATION")){
@@ -514,6 +514,19 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 	}
 	 while ( paths.empty() == false ){
 		// command
+		cmd= "globus-url-copy ";
+		logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
+			"using " + cmd +" to retrieve the file(s)");
+		if (getenv("GLOBUS_LOCATION")){
+			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
+		}else if (Utils::isDirectory ("/opt/globus/bin")){
+			cmd="/opt/globus/bin/"+cmd;
+		}else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"gsiFtpGetFiles", ECONNABORTED,
+				"Unable to find",
+				"globus-url-copy executable");
+		}
 		source = paths[0].first ;
 		destination = paths[0].second ;
 		cmd+= source + " file://"  + destination ;
