@@ -25,7 +25,6 @@
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/wms/purger/purger.h"
 #include "glite/lb/producer.h"
-#include "glite/jdl/JobAdManipulation.h"
 #include "lb_utils.h"
 #include "submission_utils.h"
 #include "filelist_utils.h"
@@ -234,6 +233,18 @@ public:
   }
 };
 
+bool get_check_status()
+{
+#ifdef GLITE_WMS_HAVE_LBPROXY
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  return config.wm()->enable_status_check();
+#else
+  return false;
+#endif
+}
+
 void
 get_new_requests(
   ExtractorPtr extractor,
@@ -271,11 +282,13 @@ get_new_requests(
       boost::tie(command, id, sequence_code, x509_proxy)
         = check_request(command_ad);
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      JobStatusPtr status(job_status(id));
-#else
+      bool const status_check_is_enabled = get_check_status();
+
       JobStatusPtr status;
-#endif
+
+      if (status_check_is_enabled) {
+        status = job_status(id);
+      }
 
       // for a match, since it doesn'to go anymore to the TQ, probably it does
       // not make sense to get its status and look for it in the TQ
@@ -286,14 +299,10 @@ get_new_requests(
 
         if (command == "jobsubmit" || command == "jobresubmit") {
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-          bool const is_acceptable = is_waiting(status) || !status;
-
-          // it would be better, if !status, to keep the request in an
-          // undeterminate state and check periodically
-#else
-          bool const is_acceptable = true;
-#endif
+          bool is_acceptable = true;
+          if (status_check_is_enabled) {
+            is_acceptable = is_waiting(status) || !status;
+          }
 
           if (is_acceptable) {
 
@@ -330,11 +339,10 @@ get_new_requests(
 
         } else if (command == "jobcancel") {
 
-#ifdef GLITE_WMS_HAVE_LBPROXY
-          bool const is_acceptable = !is_cancelled(status);
-#else
-          bool const is_acceptable = true;
-#endif
+          bool is_acceptable = true;
+          if (status_check_is_enabled) {
+            is_acceptable = !is_cancelled(status);
+          }
 
           if (is_acceptable) {
 
