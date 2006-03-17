@@ -16,8 +16,8 @@
 
 #include <classad_distribution.h>
 
-#include "glite/wms/jdl/ManipulationExceptions.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JobAdManipulation.h"
 
 #include "glite/wms/matchmaking/matchmakerISMImpl.h"
 #include "glite/wms/matchmaking/glue_attributes.h"
@@ -33,10 +33,11 @@
 
 using namespace std;
 
+namespace requestad = glite::jdl;
+
 namespace glite {
 namespace wms {
 
-namespace requestad     = jdl;
 namespace logger        = common::logger;
 
 using namespace brokerinfo;

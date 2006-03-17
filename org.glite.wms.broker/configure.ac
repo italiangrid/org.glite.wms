@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.10  2006/03/17 07:24:07  eronchie
+#       Updated
+#
 #       Revision 1.9  2006/03/13 14:35:59  monforte
 #       Merge against glite-wms-broker_branch_1_5_0_RC15x
 #
@@ -135,12 +138,13 @@ AC_MSG_RESULT(["CLASSADS found $have_classads"])
 AC_MSG_RESULT(["BOOST found $have_boost"])
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
-have_glite_wms_jdl=no
+have_glite_jdl=no
 have_glite_wms_common=no
 have_glite_wms_matchmaking=no
 
 AC_GLITE
-AC_GLITE_WMS_JDL([],have_glite_wms_jdl=yes,have_glite_wms_jdl=no)
+AC_GLITE_WMSUTILS
+AC_GLITE_JDL([],have_glite_jdl=yes,have_glite_jdl=no)
 AC_GLITE_WMS_COMMON([],have_glite_wms_common=yes,have_glite_wms_common=no)
 AC_GLITE_WMS_MATCHMAKING(],have_glite_wms_matchmaking=yes,have_glite_wms_matchmaking=no)
 
