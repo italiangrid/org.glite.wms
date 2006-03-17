@@ -14,14 +14,13 @@
 #include "matchmakerISMImpl.h"
 #include "exceptions.h"
 
+namespace jdlc = glite::jdl;
+
 namespace glite {
 
 namespace utils = wmsutils::classads;
-namespace jdl = jdl;
 
 namespace wms {
-
-namespace utilities = common::utilities;
 
 namespace matchmaking {
 
@@ -67,7 +66,7 @@ matchmakerISMImpl::checkRequirement(
 
   typedef std::vector<std::string> previous_matches_type;
   previous_matches_type previous_matches;
-  jdl::get_edg_previous_matches(jdl, previous_matches);
+  jdlc::get_edg_previous_matches(jdl, previous_matches);
   previous_matches_type::iterator const previous_matches_begin(
     previous_matches.begin()
   );
