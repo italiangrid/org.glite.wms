@@ -1607,6 +1607,8 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 	string destination = "";
 	string cmd = "";
 	char* reason = NULL;
+	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
+		"using globus-url-copy to transfer the local InputSandBox file(s) to the submission endpoint");
 	//TBDMS: globus-url-copy searched several times
 	while (paths.empty()==false) {
 		// source
@@ -1636,9 +1638,11 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 			reason = strerror(code);
 			if (reason!=NULL) {
 				err << "   " << reason << "\n";
-				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", reason );
+				logInfo->print(WMS_DEBUG,
+					"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="+ boost::lexical_cast<string>(code)+"):",
+						reason );
 			} else {
-				logInfo->print(WMS_DEBUG, "File Transfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+				logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
 			}
 			failed.push_back(paths[0]);
 		} else{
@@ -1680,6 +1684,8 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 	char curl_errorstr[CURL_ERROR_SIZE];
 	string httperr = "";
 	string curlMsg = "";
+	logInfo->print(WMS_DEBUG, "FileTransfer (https):",
+		"using curl to transfer the local InputSandBox file(s) to the submission endpoint");
 	if ( paths.empty()==false ){
 		// curl init
 		curl_global_init(CURL_GLOBAL_ALL);
@@ -1726,8 +1732,8 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 				ostringstream info ;
 				info << "\nInputSandbox file : " << file << "\n";
 				info << "Destination URI : " << destination ;
-				info << "\nsize : " << (paths[0].first).size << " byte(s)"<< "\n";
-				logInfo->print(WMS_DEBUG, "InputSandbox File Transfer", info.str());
+				info << "\nsize : " << (paths[0].first).size << " byte(s)";
+				logInfo->print(WMS_DEBUG, "Performing File", info.str());
 				// FILE TRANSFER ------------------------------------
 				res = curl_easy_perform(curl);
 				// Writing DEBUG info into the log file (if created)
@@ -1740,7 +1746,7 @@ void JobSubmit::curlTransfer (std::vector <std::pair<glite::jdl::FileAd, std::st
 				// result
 				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
 					// SUCCESS !!!
-					logInfo->print(WMS_DEBUG, "Transfer successfully done", "");
+					logInfo->print(WMS_DEBUG, "FileTransfer (https):","Transfer successfully done");
 					// Removes the zip file just transferred
 					if (zipAllowed) {
 						try {

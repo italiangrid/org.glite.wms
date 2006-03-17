@@ -475,6 +475,8 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 	string source = "";
 	string destination = "";
 	string cmd= "globus-url-copy ";
+	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
+		"using " + cmd +" to retrieve the file(s)");
 	if (getenv("GLOBUS_LOCATION")){
 		cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
 	}else if (Utils::isDirectory ("/opt/globus/bin")){
@@ -535,6 +537,8 @@ void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std:
 	string err = "";
 	// user proxy
 	if (uris.empty()==false){
+		logInfo->print(WMS_DEBUG, "FileTransfer (https):",
+			"using curl to retrieve the file(s)");
                 // curl init
                 curl_global_init(CURL_GLOBAL_ALL);
                 curl = curl_easy_init();
@@ -568,7 +572,7 @@ void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std:
                                 ostringstream info ;
                                 info << "\nFile:\t" << source << "\n";
                                 info << "Destination:\t" << destination <<"\n";
-                                logInfo->print(WMS_DEBUG, "File Transferring (curl)", info.str());
+                                logInfo->print(WMS_DEBUG, "File Transfer (https)", info.str());
                                 struct httpfile params={
                                         (char*)destination.c_str() ,
                                         NULL
@@ -586,7 +590,7 @@ void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std:
 				// result
 				if ( httpcode == HTTP_OK && res == TRANSFER_OK){
 					// SUCCESS !!!
-					logInfo->print(WMS_DEBUG, "Transfer successfully done", "");
+					logInfo->print(WMS_DEBUG,  "File Transfer (https)", "Transfer successfully done");
 					paths.push_back(destination);
 				} else {
 					// ERROR !!!
@@ -600,7 +604,7 @@ void JobPerusal::curlGetFiles (std::vector <std::string> &uris, std::vector<std:
 						if (httperr.size()>0) { errors += httperr + "\n"; }
 						err += "HTTP-ErrorCode: " + boost::lexical_cast<string>(httpcode) + "\n";
 					}
-					logInfo->print(WMS_DEBUG, "Transfer Failed:\n", err);
+					logInfo->print(WMS_DEBUG, "File Transfer (https) - Transfer Failed:\n", err);
 					// Adding this error description to the final message that will be returned
 					errors += string(err) ;
 				}
