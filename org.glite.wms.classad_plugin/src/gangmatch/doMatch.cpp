@@ -11,12 +11,14 @@
 #include <fnCall.h>
 #include <string>
 #include <vector>
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
 #ifdef WANT_NAMESPACES
 using namespace classad;
 #endif
+
+namespace utils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -62,7 +64,7 @@ doMatch(const char *name, const ArgumentList &arguments, EvalState &state, Value
 	    it != ads.end(); it++) {
 	  
 	  // Each expression in the list should be a classad...
-	  if (!common::utilities::is_classad(*it)) {
+	  if (!utils::is_classad(*it)) {
 	    
 	    result.SetErrorValue();
 	    eval_successful = false;
