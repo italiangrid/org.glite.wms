@@ -178,9 +178,10 @@ WMPEventLogger::registerProxyRenewal(const string &proxy_path,
 	char *renewal_proxy_path = NULL;
 	int i = LOG_RETRY_COUNT;
 	for (; (i > 0) 
-				&& edg_wlpr_RegisterProxyExt((char*)proxy_path.c_str(),
+				&& glite_renewal_RegisterProxy((char*)proxy_path.c_str(),
 		 		(char*)my_proxy_server.c_str(), LB_RENEWAL_PORT,
-				id->getId(), EDG_WLPR_FLAG_UNIQUE, &renewal_proxy_path);
+				id->toString().c_str(), EDG_WLPR_FLAG_UNIQUE,
+				&renewal_proxy_path);
 			i--);
 	
  	if (i > 0) {
@@ -213,7 +214,8 @@ WMPEventLogger::unregisterProxyRenewal()
 	char *renewal_proxy_path = NULL;
 	for (int i = 0;
 		i < LOG_RETRY_COUNT
-			&& edg_wlpr_UnregisterProxy(id->getId(), renewal_proxy_path);
+			&& glite_renewal_UnregisterProxy(id->toString().c_str(),
+			renewal_proxy_path);
 		i++);
 		
 	GLITE_STACK_CATCH();
@@ -736,7 +738,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 {
 	GLITE_STACK_TRY("logEvent()");
 	edglog_fn("WMPEventLogger::logEvent");
-	edglog(debug)<<"Logging "<<event<<" request..."<<endl;
+	edglog(debug)<<"Logging event "<<event<<" request..."<<endl;
 	
 	int i = 0;
 	bool logged = false;

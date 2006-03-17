@@ -745,12 +745,12 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	delete jid;
 
 	// Logging delegation id & original jdl
-	edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
-	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
+	//edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
+	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
 	//edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
 	//wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
 	
-	wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+	//wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
@@ -1041,10 +1041,10 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	delete jid;
 
 	// Logging delegation id & original jdl
-	edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
-	wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
+	//edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
+	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
 	
-	wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+	//wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
@@ -1276,8 +1276,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		
 		if (issubmit) {
 			// Starting the job
-			string seqcode =
-				wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
+			string seqcode = wmplogger.getLastEventSeqCode();
+				//wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 			wmplogger.setSequenceCode(const_cast<char*>(seqcode.c_str()));
 			wmplogger.incrementSequenceCode();
 		} else {
@@ -1315,6 +1315,13 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		int error = wmplogger.logAcceptEventSync();
 		if (error) {
 			edglog(debug)<<"LOG_ACCEPT failed, error code: "<<error<<endl;
+			
+			// Logging event start to begin iter before fail log in above catch
+			edglog(debug)<<"Registering LOG_ENQUEUE_START"<<std::endl;
+			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_START,
+				"LOG_ENQUEUE_START", true, true, filelist_global.c_str(),
+				wmputilities::getJobJDLToStartPath(*jid).c_str());
+				
 			throw LBException(__FILE__, __LINE__,
 				"submit()", wmputilities::WMS_LOGGING_ERROR,
 				"unable to complete operation");
