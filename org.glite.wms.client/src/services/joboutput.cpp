@@ -501,7 +501,7 @@ void JobOutput::gsiFtpGetFiles (std::vector <std::pair<std::string , std::string
 	string destination = "";
 	string cmd= "";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
-		"using " + cmd +" to retrieve the file(s)");
+		"using globus-url-copy to retrieve the file(s)");
 	if (getenv("GLOBUS_LOCATION")){
 		cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
 	}else if (Utils::isDirectory ("/opt/globus/bin")){

@@ -474,20 +474,21 @@ void JobPerusal::gsiFtpGetFiles (std::vector <std::string> &uris, std::vector<st
 	char *reason = NULL;
 	string source = "";
 	string destination = "";
-	string cmd= "globus-url-copy ";
+	string cmd = "";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
-		"using " + cmd +" to retrieve the file(s)");
-	if (getenv("GLOBUS_LOCATION")){
-		cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
-	}else if (Utils::isDirectory ("/opt/globus/bin")){
-		cmd="/opt/globus/bin/"+cmd;
-	}else {
-		throw WmsClientException(__FILE__,__LINE__,
-			"gsiFtpGetFiles", ECONNABORTED,
-			"Unable to find",
-			"globus-url-copy executable");
-	}
+		"using globus-url-copy to retrieve the file(s)");
 	 while ( uris.empty() == false ){
+		cmd= "globus-url-copy ";
+		if (getenv("GLOBUS_LOCATION")){
+			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
+		} else if (Utils::isDirectory ("/opt/globus/bin")){
+			cmd="/opt/globus/bin/"+cmd;
+		} else {
+			throw WmsClientException(__FILE__,__LINE__,
+				"gsiFtpGetFiles", ECONNABORTED,
+				"Unable to find",
+				"globus-url-copy executable");
+		}
 		// command
 		source = uris[0];
 		destination = *dirOpt + "/" + Utils::getFileName (source) ;
