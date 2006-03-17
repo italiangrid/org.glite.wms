@@ -6,27 +6,24 @@
 ## *
 ## *********************************************************************
 
-MNGR_COMMON = $(top_builddir)/src/common/libglite_wms_manager_common.la
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
-#GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
+GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
 bin_PROGRAMS = \
         glite-wms-workload_manager
 
-glite_wms_workload_manager_SOURCES = workload_manager.cpp
+glite_wms_workload_manager_SOURCES = workload_manager.cpp ism_utils.cpp
 glite_wms_workload_manager_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_workload_manager_LDADD   = \
-	$(MNGR_COMMON) \
         $(MNGR_SERVER) \
         $(GLITE_WMS_HELPER_LIBS) \
-	$(GLITE_SERVICE_DISCOVERY_API_C_LIBS) \
         $(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
 	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
         $(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
         $(GLITE_WMS_JSS_COMMON_LIBS) \
-	$(GLITE_WMS_PURGER_LIBS) \
+	-lglite_wms_purger \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
 	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
@@ -57,6 +54,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
-        $(LOG4CXX_CFLAGS)
+        $(LOG4CXX_CFLAGS) \
+	-DGLITE_WMS_HAVE_LBPROXY
 
 MAINTAINERCLEANFILES = Makefile.in
