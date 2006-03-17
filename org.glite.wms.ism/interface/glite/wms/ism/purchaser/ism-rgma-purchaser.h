@@ -69,6 +69,8 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
                       gluece_info_container_type * gluece_info_container);
 void collect_bind_info( ism_rgma_purchaser * purchaser,
                       gluece_info_container_type * gluece_info_container);
+void collect_voview_info( ism_rgma_purchaser * purchaser,
+                        gluece_info_container_type * gluece_info_container);
 //typedef std::vector<std::string> RGMAMultiValue;
 
 class ism_rgma_purchaser : public ism_purchaser
@@ -98,6 +100,8 @@ public:
                       gluece_info_container_type * gluece_info_container);
    friend void collect_bind_info( ism_rgma_purchaser * purchaser,
                       gluece_info_container_type * gluece_info_container);
+   friend void collect_voview_info( ism_rgma_purchaser * purchaser,
+                      gluece_info_container_type * gluece_info_container);
 
 private:                
    int m_rgma_query_timeout;
@@ -108,6 +112,7 @@ private:
    query m_GlueSubCluster;
    query m_GlueSubClusterSoftwareRunTimeEnvironment;
    query m_GlueCESEBind;
+   query m_GlueCEVOView;
 };
 
 
