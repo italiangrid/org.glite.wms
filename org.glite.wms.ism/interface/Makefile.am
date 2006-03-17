@@ -15,7 +15,6 @@ nobase_ism_HEADERS = \
 	glite/wms/ism/purchaser/ism-cemon-purchaser.h \
 	glite/wms/ism/purchaser/ism-cemon-asynch-purchaser.h \
 	glite/wms/ism/purchaser/ism-ii-purchaser.h \
-	glite/wms/ism/purchaser/ism-ii-gris-purchaser.h \
         glite/wms/ism/purchaser/ism-rgma-purchaser.h
 
 MAINTAINERCLEANFILES = Makefile.in

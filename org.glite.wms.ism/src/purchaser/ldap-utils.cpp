@@ -555,7 +555,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
                    ceAd->Update(*vo_view_it->second);
                    gluece_info_container.insert(
                      std::make_pair(
-                       (*ce_it)->first + "//" + vo_view_it->first,
+                       (*ce_it)->first + "/" + vo_view_it->first,
                        ceAd
                      )
                    );

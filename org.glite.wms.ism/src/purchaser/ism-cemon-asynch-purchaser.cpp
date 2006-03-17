@@ -66,7 +66,7 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
       if (!gluece_unique_id.empty()) {
 
         if (!gluevoview_local_id.empty()) {
-          gluece_unique_id.append("//"+gluevoview_local_id);
+          gluece_unique_id.append("/"+gluevoview_local_id);
         }
         Debug("CEMonitor info for " << gluece_unique_id << "... Ok");
         gluece_info_container[gluece_unique_id] = ceAd;
