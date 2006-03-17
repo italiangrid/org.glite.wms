@@ -147,15 +147,13 @@ get_interesting_events(ContextPtr context, jobid::JobId const& id)
   event_conditions[1] = from_wm;
   event_conditions[2] = 0;
 
-  edg_wll_Event* events = 0;
-
 #ifdef GLITE_WMS_HAVE_LBPROXY
   boost::function<
     int(
       edg_wll_Context,
       edg_wll_QueryRec const**,
       edg_wll_QueryRec const**,
-      edg_wll_Event **
+      edg_wll_Event**
     )
   > query_function(edg_wll_QueryEventsExtProxy);
 #else
@@ -164,19 +162,33 @@ get_interesting_events(ContextPtr context, jobid::JobId const& id)
       edg_wll_Context,
       edg_wll_QueryRec const**,
       edg_wll_QueryRec const**,
-      edg_wll_Event **
+      edg_wll_Event**
     )
   > query_function(edg_wll_QueryEventsExt);
 #endif
 
-  query_function(
-    context.get(),
-    job_conditions,
-    event_conditions,
-    &events
-  );
+  bool query_succeeded = false;
+  for (int i = 0; i < 20 && !query_succeeded; ++i) {
 
-  return LB_Events(events);
+    edg_wll_Event* events = 0;
+    edg_wll_Context ctx = context.get();
+
+    query_succeeded
+      = query_function(ctx, job_conditions, event_conditions, &events);
+
+    LB_Events result(events);   // guarantees cleanup even in case of failure
+
+#warning should we manage different kinds of errors?
+
+    if (query_succeeded) {
+      return result;
+    }
+
+    unsigned int const five_seconds = 5;
+    ::sleep(five_seconds);
+  }
+
+  throw LBQueryFailed();
 }
 
 std::vector<std::pair<std::string, int> >
@@ -254,8 +266,6 @@ get_retry_counts(LB_Events const& events)
 std::string
 get_original_jdl(ContextPtr context, jobid::JobId const& id)
 {
-  std::string result;
-
   edg_wll_QueryRec job_conditions[2];
   job_conditions[0].attr    = EDG_WLL_QUERY_ATTR_JOBID;
   job_conditions[0].op      = EDG_WLL_QUERY_OP_EQUAL;
@@ -271,29 +281,62 @@ get_original_jdl(ContextPtr context, jobid::JobId const& id)
   event_conditions[1].value.i = EDG_WLL_SOURCE_NETWORK_SERVER;
   event_conditions[2].attr    = EDG_WLL_QUERY_ATTR_UNDEF;
 
-  edg_wll_Event* events = 0;
-  edg_wll_Context ctx = context.get();
 #ifdef GLITE_WMS_HAVE_LBPROXY
-  edg_wll_QueryEventsProxy(ctx, job_conditions, event_conditions, &events);
+  boost::function<
+    int(
+      edg_wll_Context,
+      edg_wll_QueryRec const*,
+      edg_wll_QueryRec const*,
+      edg_wll_Event**
+    )
+  > query_function(edg_wll_QueryEventsProxy);
 #else
-  edg_wll_QueryEvents(ctx, job_conditions, event_conditions, &events);
+  boost::function<
+    int(
+      edg_wll_Context,
+      edg_wll_QueryRec const*,
+      edg_wll_QueryRec const*,
+      edg_wll_Event**
+    )
+  > query_function(edg_wll_QueryEvents);
 #endif
 
-  if (events) {
-    for (int i = 0; events[i].type; ++i) {
-      // in principle there is only one, so save the first one and ignore the
-      // others
-      if (result.empty()
-          && events[i].type == EDG_WLL_EVENT_ENQUEUED
-          && events[i].enQueued.result == EDG_WLL_ENQUEUED_OK) {
-        result = events[i].enQueued.job;
+  bool query_succeeded = false;
+  for (int i = 0; i < 20 && !query_succeeded; ++i) {
+
+    edg_wll_Event* events = 0;
+    edg_wll_Context ctx = context.get();
+
+    query_succeeded
+      = query_function(ctx, job_conditions, event_conditions, &events);
+
+    if (query_succeeded) {
+
+      std::string result;
+
+      if (events) {
+        for (int i = 0; events[i].type; ++i) {
+          // in principle there is only one, so save the first one and ignore
+          // the others
+          if (result.empty()
+              && events[i].type == EDG_WLL_EVENT_ENQUEUED
+              && events[i].enQueued.result == EDG_WLL_ENQUEUED_OK) {
+            result = events[i].enQueued.job;
+          }
+          edg_wll_FreeEvent(&events[i]);
+        }
+        free(events);
       }
-      edg_wll_FreeEvent(&events[i]);
+
+      return result;
+
     }
-    free(events);
+
+    unsigned int const five_seconds = 5;
+    ::sleep(five_seconds);
   }
 
-  return result;
+  throw LBQueryFailed();
 }
 
 std::string

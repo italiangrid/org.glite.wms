@@ -164,6 +164,8 @@ public:
   }
 };
 
+class LBQueryFailed {};
+
 LB_Events
 get_interesting_events(
   ContextPtr context,
