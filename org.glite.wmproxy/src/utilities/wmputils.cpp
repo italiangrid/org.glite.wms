@@ -689,6 +689,22 @@ waitForSeconds(int seconds)
 	GLITE_STACK_CATCH();
 }
 
+int
+generateRandomNumber(int lowerlimit, int upperlimit)
+{
+	GLITE_STACK_TRY("generateRandomNumber()");
+    edglog_fn("wmputils::generateRandomNumber");
+    
+    // Setting seeed
+	srand((unsigned) time(NULL));
+	
+	int random_integer; 
+	int range = (upperlimit - lowerlimit) + 1; 
+	return lowerlimit + static_cast<int>(range * rand() / (RAND_MAX + 1.0));
+	
+	GLITE_STACK_CATCH();
+}
+
 /* Decompress from file source to file dest until stream ends or EOF.
    inf() returns Z_OK on success, Z_MEM_ERROR if memory could not be
    allocated for processing, Z_DATA_ERROR if the deflate data is

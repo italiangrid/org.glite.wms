@@ -582,12 +582,14 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
 	}
 	jad->setAttribute(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
-		
-	edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
-	if (jad->hasAttribute(JDLPrivate::VOMS_FQAN)) {
-		jad->delAttribute(JDLPrivate::VOMS_FQAN);
+	
+	if (delegatedproxyfqan != "") {
+		edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
+		if (jad->hasAttribute(JDLPrivate::VOMS_FQAN)) {
+			jad->delAttribute(JDLPrivate::VOMS_FQAN);
+		}
+		jad->setAttribute(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 	}
-	jad->setAttribute(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 	
 	// Checking for empty string value
 	if (jad->hasAttribute(JDL::MYPROXY)) {
@@ -801,12 +803,14 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
 	}
 	dag->setReserved(JDLPrivate::USERPROXY,
 		wmputilities::getJobDelegatedProxyPath(*jid));
-		
-	edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
-	if (dag->hasAttribute(JDLPrivate::VOMS_FQAN)) {
-		dag->removeAttribute(JDLPrivate::VOMS_FQAN);
+	
+	if (delegatedproxyfqan != "") {
+		edglog(debug)<<"Setting attribute JDLPrivate::VOMS_FQAN"<<endl;
+		if (dag->hasAttribute(JDLPrivate::VOMS_FQAN)) {
+			dag->removeAttribute(JDLPrivate::VOMS_FQAN);
+		}
+		dag->setReserved(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 	}
-	dag->setReserved(JDLPrivate::VOMS_FQAN, delegatedproxyfqan);
 		
 	// Checking for empty string value
 	if (dag->hasAttribute(JDL::MYPROXY)) {
@@ -1673,15 +1677,14 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			}
 			dag->setReserved(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 			
-			jdltostart = dag->toString();
-			
+			// \/
+			// N.B. Setting jdltostart equal to file path in the case of DAG type
+			//jdltostart = dag->toString();
+			dag->toString();
+			jdltostart = wmputilities::getJobJDLToStartPath(*jid);
+			// /\
 			delete dag;
 		}
-		
-		//TBD Use this line to save jdl written to filelist in a different path
-		// e.g. method getJobFileListJDLPath
-		//wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
-		//	jdltostart);
 		
 		// \/ To test only, raising an exception
 		/*
@@ -1704,12 +1707,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		
 		boost::details::pool::singleton_default<WMP2WM>::instance()
 			.submit(jdltostart);
-		
-		/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
-			edglog(severe)<<"Error in runCommand: "<<wmp_fault.message<<endl;
-			throw JobOperationException(__FILE__, __LINE__,
-				"submit()", wmp_fault.code, wmp_fault.message);
-		}*/
 		
 		/*for (backupenv; *backupenv; backupenv++) {
 		    free(*backupenv);

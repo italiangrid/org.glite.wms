@@ -62,6 +62,12 @@ const char *WMPEventLogger::GLITE_WMS_LOG_DESTINATION
 const string WMPEventLogger::QUERY_SEQUENCE_CODE = "lb_sequence_code";
 const string WMPEventLogger::QUERY_JDL_ORIGINAL = "jdl_original";
 
+// Randomic value lower and upper limits for LB[Proxy] log retry on failure
+const int LB_LOG_RETRY_LOWER_LIMIT = 30;
+const int LB_LOG_RETRY_UPPER_LIMIT = 60;
+const int LB_PROXY_LOG_RETRY_LOWER_LIMIT = 5;
+const int LB_PROXY_LOG_RETRY_UPPER_LIMIT = 15;
+
 WMPEventLogger::WMPEventLogger(const string &endpoint)
 {
 	edglog_fn("WMPEventLogger::WMPEventLogger");
@@ -738,12 +744,16 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 		// PERFORM the Requested operation (actual LB call)
 		logged = logEvent(event, reason, file_queue, jdl);
 		if (!logged && (i < 2) && retry) {
-			edglog(debug)<<"Failed to log. Sleeping 15 seconds before retry..."
-				<<endl;
 			if (this->lbProxy_b) {
-				sleep(5);
+				int randomvalue = generateRandomNumber(5, 10);
+				edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
+					<<" seconds before retry..."<<endl;
+				sleep(randomvalue);
 			} else {
-				sleep(30);
+				int randomvalue = generateRandomNumber(30, 60);
+				edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
+					<<" seconds before retry..."<<endl;
+				sleep(randomvalue);
 			}
 		}
 	}

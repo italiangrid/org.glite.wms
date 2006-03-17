@@ -271,20 +271,22 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
  */
 std::vector<std::pair<std::string, std::string> > 
 	parseFQANPair(const std::string &fqan);
+	
 /**
    * Removes white spaces at the beginning and 
    * at the end of the input string if there is any 
    * @param the inputs string to be cleaned 
    * @return the string, with white space removed from the front and end. 
    */ 
-
 const std::string cleanString(std::string str);
+
 /**
    * Converts all of the characters in this String to lower case 
    * @param src the input string 
    * @return the string, converted to lowercase. 
  */
 const std::string toLower(const std::string &src);
+
 /**
    * Cuts the input string in two pieces (label and value) according to 
    * the separator character "=" 
@@ -294,6 +296,13 @@ const std::string toLower(const std::string &src);
  */
 void split(const std::string &field, std::string &label, std::string &value);
 
+/**
+   * Generates randomic integer value in the range [lowerlimit, upperlimit]
+   * @param lowerlimit the integer value lower limit
+   * @param upperlimit the integer value upper limit
+   * @param the randomic generated value
+ */
+int generateRandomNumber(int lowerlimit, int upperlimit);
 
 //
 // "External" methods
