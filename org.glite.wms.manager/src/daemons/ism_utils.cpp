@@ -49,8 +49,6 @@ void load_dlls_and_create_purchasers(
   std::vector<PurchaserPtr>& purchasers
 )
 {
-  using namespace glite::wms::ism;
-
   configuration::Configuration const& config(
     *configuration::Configuration::instance()
   );
