@@ -287,6 +287,45 @@ start_purchasing_threads(
   }
 }
 
+class run_in_loop
+{
+  boost::function<void()> m_function;
+  int m_period;
+
+public:
+  run_in_loop(boost::function<void()> const& f, int s)
+    : m_function(f), m_period(s)
+  {
+  }
+  void operator()()
+  {
+    while (!server::received_quit_signal()) {
+      m_function();
+      ::sleep(m_period);
+    }
+  }
+};
+
+void start_periodic_update()
+{
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+
+  ism::call_update_ism_entries update_ism; 	
+  boost::thread _(run_in_loop(update_ism, config.wm()->ism_update_rate()));  
+}
+
+void start_periodic_dump()
+{
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+
+  ism::call_dump_ism_entries dump_ism;
+  boost::thread _(run_in_loop(dump_ism, config.wm()->ism_dump_rate()));  
+}
+
 }
 
 struct ISM_Manager::Impl
@@ -307,11 +346,9 @@ ISM_Manager::ISM_Manager()
   ism::set_ism(m_impl->m_ism, m_impl->m_ism_mutex);
 
   load_dlls_and_create_purchasers(m_impl->m_dlls, m_impl->m_purchasers);
-  //  load_dump_file(m_impl->m_purchasers, m_impl->m_ism);
   start_purchasing_threads(m_impl->m_purchasers, m_impl->m_purchasing_threads);
-
-  // start update thread
-  // start periodic-dump thread
+  start_periodic_update();
+  start_periodic_dump();
 }
 
 ISM_Manager::~ISM_Manager()
