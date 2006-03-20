@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22  2006/03/20 22:08:54  eronchie
+#       Increased version
+#
 #       Revision 1.21  2006/03/17 07:51:00  eronchie
 #       Updated
 #       Applied changed due to the new locations of jdl and classad_utils
@@ -131,7 +134,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Helper], [1.5.0])
+AC_INIT([GLite WMS Helper], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/Helper.h])

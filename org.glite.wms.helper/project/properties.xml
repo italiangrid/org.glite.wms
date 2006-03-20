@@ -21,10 +21,13 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.9  2006/03/20 22:08:54  eronchie
+	Increased version
+
 	Revision 1.8  2006/03/17 07:51:01  eronchie
 	Updated
 	Applied changed due to the new locations of jdl and classad_utils
-
+	
 	Revision 1.7  2005/10/14 08:26:27  mcecchi
 	RB/Gpbox interaction
 	
@@ -90,6 +93,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 replica.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_jdl.m4 glite_wms_matchmaking.m4 glite_wms_broker.m4 glite_wms_brokerinfo.m4 glite_wms_ism.m4 optimize.m4 cppunit.m4 glite_gpbox.m4 glite_security.m4 glite_jdl.m4"/>
+	<property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 replica.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_wms_matchmaking.m4 glite_wms_broker.m4 glite_wms_brokerinfo.m4 glite_wms_ism.m4 optimize.m4 cppunit.m4 glite_gpbox.m4 glite_security.m4 glite_jdl.m4"/>
 
 </project>
