@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.9  2006/03/20 21:49:39  eronchie
+#       Increased version
+#
 #       Revision 1.8  2005/10/15 11:50:49  eronchie
 #       Increased version
 #
@@ -46,7 +49,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS checkpointing], [1.5.0])
+AC_INIT([GLite WMS checkpointing], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/jobstate.cpp])
