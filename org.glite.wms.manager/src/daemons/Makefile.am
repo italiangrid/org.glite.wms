@@ -8,7 +8,7 @@
 
 MNGR_SERVER = $(top_builddir)/src/server/libglite_wms_manager_server.la
 
-GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
+#GLITE_WMS_PURGER_LIBS = $(top_srcdir)/../org.glite.wms.purger/build/src/libglite_wms_purger.la
 
 bin_PROGRAMS = \
         glite-wms-workload_manager
@@ -23,11 +23,12 @@ glite_wms_workload_manager_LDADD   = \
 	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
         $(GLITE_WMS_JSS_CONTROLLER_ADAPTER_LIBS) \
         $(GLITE_WMS_JSS_COMMON_LIBS) \
-	-lglite_wms_purger \
+	${GLITE_WMS_PURGER_LIBS} \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
-	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
         $(GLITE_JDL_LIBS) \
+	$(GLITE_WMSUTILS_CLASSADS_LIBS) \
+	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
         $(GLITE_WMS_COMMON_LOGGER_LIBS) \
         $(GLITE_WMS_COMMON_CONF_LIBS) \
         $(GLITE_WMS_COMMON_UT_II_LIBS) \
