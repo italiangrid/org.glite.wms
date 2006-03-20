@@ -26,6 +26,11 @@ using namespace glite::lb ;
 using namespace glite::wmsutils::exception ;
 
 glite::lb::Job lbJob;
+const int VECT_DIM = 43 ;
+const int STATUS = VECT_DIM  - 3 ;
+const int STATUS_CODE = VECT_DIM - 2  ;
+const int HIERARCHY  =VECT_DIM - 1  ;
+
 // Create a query. This method is used both for queryStatus and for queryEvents
 
 void createQuery (
@@ -485,7 +490,7 @@ try{
 			}
 			break;
 		default:
-			cout << "\n\n\nWarning!!!!! Something has gone bad!\nField Attribute="
+			cerr << "\n\n\nWarning!!!!! Something has gone bad!\nField Attribute="
 			<< fieldAttr<<  "contact the developer!! LbWrapper line "<<__LINE__ << endl ;
 			log_error("Something is wrong" ) ;
 			//break;
@@ -499,18 +504,14 @@ try{
   
 void push_status( JobStatus status_retrieved , std::vector<std::string>& result , int hierarchy ){
 	int VECT_OFFSET = result.size() ;
-	int VECT_DIM = 41 ;
 	result.resize( VECT_DIM + VECT_OFFSET ) ;
 	char  tmp [1024];
 	// push back additional Status information: STATUS
-	int STATUS = VECT_DIM  - 3 ;
 	result[VECT_OFFSET + STATUS  ] = status_retrieved.name()  ;
 	// push back additional Status information:STATUS_CODE
-	int STATUS_CODE = VECT_DIM - 2  ;
 	sprintf (tmp , "%d" ,  status_retrieved.status ) ;
 	result[VECT_OFFSET +STATUS_CODE ] =  string( tmp ) ;
 	// push back additional Status information:HIERARCHY
-	int HIERARCHY  =VECT_DIM - 1  ;
 	sprintf (tmp , "%d" , hierarchy  ) ;
 	result[VECT_OFFSET + HIERARCHY ] =  string( tmp ) ;
 	// Iterate over the attributes
@@ -528,12 +529,14 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 			}
 			break;
 			case JobStatus::STRING_T  :{
-				result[VECT_OFFSET +  attrList[i].first ] = status_retrieved.getValString(attrList[i].first)  ;
+				result[VECT_OFFSET +  attrList[i].first ] =
+					status_retrieved.getValString(attrList[i].first)  ;
 			}
 			break;
 			case JobStatus::JOBID_T    :{
 				if(((glite::wmsutils::jobid::JobId)status_retrieved.getValJobId(attrList[i].first)).isSet())
-					result[VECT_OFFSET +  attrList[i].first ] = status_retrieved.getValJobId(attrList[i].first).toString()  ;
+					result[VECT_OFFSET +  attrList[i].first ] =
+						status_retrieved.getValJobId(attrList[i].first).toString()  ;
 			}
 			break;
 			case JobStatus::STSLIST_T    :{
@@ -547,7 +550,8 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 			}
 			break;
 			case JobStatus::TAGLIST_T    :{
-				std::vector<std::pair<std::string,std::string> >  v = status_retrieved.getValTagList(   attrList[i].first   ) ;
+				std::vector<std::pair<std::string,std::string> >  v =
+					status_retrieved.getValTagList(   attrList[i].first   ) ;
 				string res ;
 				for (unsigned int j = 0 ; j < v.size() ; j++ )
 					res +=v[j].first + "=" + v[j].second +";" ;
@@ -568,13 +572,16 @@ void push_status( JobStatus status_retrieved , std::vector<std::string>& result 
 			}
 			break;
 			default : /* something is wrong */
-				cout << "\n\nFATAL ERROR!!! Something has gone bad for " << status_retrieved.getAttrName(attrList[i].first) << flush;
+				cerr << "\n\nFATAL ERROR!!! Something has gone bad for "
+					<< status_retrieved.getAttrName(attrList[i].first) << flush;
 			break;
 		}// end switch
 	}// end for	
 	// Upload info from Sub Jobs ( if present )
 	std::vector<JobStatus> v = status_retrieved.getValJobStatusList(  JobStatus::CHILDREN_STATES );
-	for(unsigned int i=0; i < v.size(); i++)  push_status( v[i] , result , hierarchy+1 );
+	for(unsigned int i=0; i < v.size(); i++){
+		push_status( v[i] , result , hierarchy+1 );
+	}	
 }
 std::vector< std::string  > Status::loadStatus( int status_number )  {
 	// Retrieve the selected status
