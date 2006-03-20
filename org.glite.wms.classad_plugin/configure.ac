@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.12  2006/03/20 21:53:33  eronchie
+#       Increased version
+#
 #       Revision 1.11  2005/10/15 11:52:57  eronchie
 #       Decreased version
 #
@@ -64,7 +67,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ClassAd_Plugin], [1.5.0])
+AC_INIT([GLite WMS ClassAd_Plugin], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/classad_plugin_loader.h])
