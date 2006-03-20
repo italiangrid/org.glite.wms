@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.16  2006/03/20 15:52:38  eronchie
+#       *** empty log message ***
+#
 #       Revision 1.15  2006/03/15 20:48:05  eronchie
 #       Updated according to the new location of jdl library and classad_utils library
 #
@@ -64,7 +67,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Wrap python], [1.1.0])
+AC_INIT([GLite WMS UI Wrap python], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/NsWrapper.h])
