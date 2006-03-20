@@ -29,18 +29,27 @@ ism_type::value_type make_ism_entry(
   );
 }
 
+namespace {
+
+ism_type* the_ism;
+ism_mutex_type* the_ism_mutex;
+
+}
+
+void set_ism(ism_type& ism, ism_mutex_type& ism_mutex)
+{
+  the_ism = &ism;
+  the_ism_mutex = &ism_mutex;
+}
+
 ism_mutex_type& get_ism_mutex(void)
 {
-  static ism_mutex_type ism_mutex;
-
-  return ism_mutex;
+  return *the_ism_mutex;
 }
 
 ism_type& get_ism(void)
 {
-  static ism_type ism;
-
-  return ism;
+  return *the_ism;
 }
 
 std::ostream&

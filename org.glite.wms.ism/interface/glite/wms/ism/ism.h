@@ -52,6 +52,7 @@ typedef std::map<id_type, ism_entry_type> ism_type;
 // type specification for the mutex in ism
 typedef boost::recursive_mutex ism_mutex_type;
 
+void set_ism(ism_type& the_ism, ism_mutex_type& the_ism_mutex);
 ism_type& get_ism();
 ism_mutex_type& get_ism_mutex();
 
