@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.5  2006/03/20 21:04:59  eronchie
+#       Updated
+#
 #       Revision 1.4  2006/03/20 21:02:32  eronchie
 #       Updated JDL check
 #
@@ -45,7 +48,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 # Subdirectories list
-SUBDIRS = interface src
+SUBDIRS = interface src test
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
