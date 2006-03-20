@@ -15,7 +15,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS wmproxy-api-cpp], [1.5.5])
+AC_INIT([GLite WMS wmproxy-api-cpp], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/wmproxy_api.cpp])
