@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2006/03/20 15:45:23  eronchie
+#       Increased version
+#
 #       Revision 1.7  2004/12/17 13:53:13  amarasch
 #       Version updated
 #
@@ -46,7 +49,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS UI Configuration], [1.1.0])
+AC_INIT([GLite WMS UI Configuration], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([config/glite_wmsui.conf])
