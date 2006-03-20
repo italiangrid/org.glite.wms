@@ -45,6 +45,7 @@ class JobIdStruct:
 	each JobIdStructure must have:
 	- an identifier, th jobid itself (string)
 	moreover it can have:
+	- a path corresponding to the WMPROXY jobid InputSandbox location (string)
 	- a name, if it is a node of a dag (string)
 	- one or more children if it is a dag (list of JobIdStructure(s))
 	"""
@@ -54,9 +55,10 @@ class JobIdStruct:
 		"""
 		self.children = []
 		self.nodeName = ""
-		# Mandatory field
+		self.path     = ""
+		# Mandatory field jobid:
 		self.jobid=soapStruct.__getitem__("id")
-		# children fill (if present)
+		# Optional fields (children, name,path)
 		try:
 			# try and parse children:
 			children =soapStruct.__getitem__("childrenJob")
@@ -76,6 +78,14 @@ class JobIdStruct:
 			# no node name found: it is not a node
 			self.nodeName = ""
 			pass
+		try:
+			self.path = soapStruct.__getitem__("path")
+		except AttributeError:
+			# no path found: attribute not present
+			# (an old server might have been contacted)
+			self.path= ""
+			pass
+
 
 	def __repr__(self):
 		"""
@@ -94,6 +104,8 @@ class JobIdStruct:
 		result = ""
 		if self.nodeName:
 			result+="Node Name: " + self.nodeName +"\n"
+		if self.path:
+			result+="ISB remote path: " + self.path +"\n"
 		result+="JobId: " + self.jobid
 		for child in self.children():
 			result += "\n\t" + child.toString()
@@ -995,4 +1007,22 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
+	def getTransferProtocols(self):
+		"""
+		Method:  getJDL
+		OUT = A vector of string containing the protocols.
+
+		This operation returns the server available transfer protocols.
+		Input: no input.
+
+		"""
+		try:
+			self.soapInit()
+			return self.remote.getTransferProtocols()
+		except SOAPpy.Types.faultType, err:
+			raise WMPException(err)
+		except SOAPpy.Errors.HTTPError, err:
+			raise HTTPException(err)
+		except socket.error, err:
+			raise SocketException(err)
 
