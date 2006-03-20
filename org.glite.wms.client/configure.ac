@@ -15,7 +15,7 @@
 #
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS client], [1.5.10])
+AC_INIT([GLite WMS client], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/commands/wmp-job-submit.cpp])
@@ -155,6 +155,7 @@ have_glite_wms_chkpt=no
 have_glite_wms_wmproxy=no
 
 AC_GLITE
+AC_OPTIMIZE
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_MSG_RESULT(["GLITE_WMS_COMMON found $have_glite_wms_common"])
