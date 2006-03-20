@@ -127,6 +127,10 @@ class  UserCredential {
 		* @return the default VO
 		*/
 		std::string  getDefaultVoName ();
+		/** Retrieve the default FQAN for the current certificate
+		* @return the default FQAN
+		*/
+		std::string  getDefaultFQAN ();
 		/** Retrieve the Certificate Issuer*/
 		std::string  getIssuer() ;
 		/** Retrieve the last allowed date*/

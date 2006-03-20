@@ -60,6 +60,7 @@ class  UserCredential {
 		~UserCredential();
 		UserCredential ( const string& proxy_file) ;
 		string  getDefaultVoName ();
+		string  getDefaultFQAN ();		
 		vector <string> getVoNames ();
 		vector <string> getGroups (const  string& voName ) ;
 		vector <string > getDefaultGroups () ;

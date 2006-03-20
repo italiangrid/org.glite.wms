@@ -365,7 +365,7 @@ int  UserCredential::load_voms ( vomsdata& d  ){
 	return (vo_data_error==VERR_NONE);
 }
 /******************************************************************
- method: getDefaultVoName
+ method:load_groups
  this private method is used by getDefaultGroups and getGroups methods
 *******************************************************************/
 vector <string> load_groups( voms &v ){
@@ -395,6 +395,26 @@ std::string  UserCredential::getDefaultVoName (){
 	return string (  v.voname );
 };
 
+
+
+/******************************************************************
+ method: getDefaultVoName
+*******************************************************************/
+std::string  UserCredential::getDefaultFQAN (){
+	vomsdata vo_data ;
+	if (load_voms(  vo_data )  ) return "";
+	voms v;
+	// get Default voms
+	if (   !vo_data.DefaultData(  v  )   ){
+		vo_data_error = vo_data.error ;
+		return "" ;
+	}
+	std::vector<string> fqans = v.fqan;
+	if (fqans.size()){
+		return fqans[0];
+	}
+	else return "";
+}
 
 
 /******************************************************************
