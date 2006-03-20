@@ -65,7 +65,6 @@ namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
 namespace requestad     = glite::jdl;
-namespace utilities     = glite::wms::common::utilities;
 namespace utils		= glite::wmsutils::classads;
 namespace matchmaking   = glite::wms::matchmaking;
 
