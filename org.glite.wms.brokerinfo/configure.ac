@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.21  2006/03/20 21:02:32  eronchie
+#       Updated JDL check
+#
 #       Revision 1.20  2006/03/17 15:33:54  monforte
 #       Removed ARES dependency
 #
@@ -258,7 +261,7 @@ fi
 AC_OPTIMIZE
 AC_GLITE
 AC_GLITE_WMSUTILS
-AC_GLITE_WMS_JDL
+AC_GLITE_JDL
 AC_GLITE_WMS_COMMON
 AC_GLITE_WMS_ISM
 AC_GLITE_WMS_RLS

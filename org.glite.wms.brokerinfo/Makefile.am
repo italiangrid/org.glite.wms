@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.4  2006/03/20 21:02:32  eronchie
+#       Updated JDL check
+#
 #       Revision 1.3  2005/09/21 13:22:05  monforte
 #       Merge against glite-wms-brokerinfo_branch_1_2_4
 #
@@ -42,7 +45,7 @@ docdir = $(datadir)/doc/@PACKAGE@-@VERSION@
 doc_DATA = LICENSE
 
 # Subdirectories list
-SUBDIRS = interface src test
+SUBDIRS = interface src
 
 ## Default flags to run aclocal
 ACLOCAL_AMFLAGS = -I project
@@ -94,4 +97,3 @@ distbin:
 	$(AMTAR) -zcf $(DISTTAR)/$(distdir)_bin.tar.gz .; \
 	popd; \
 	rm -rf $$tmpdistbin
-	
