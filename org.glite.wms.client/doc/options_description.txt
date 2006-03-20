@@ -200,3 +200,14 @@ If the user proxy contains VOMS extensions then the VO specified through this op
 default VO contained in the proxy (i.e. this option is only useful when working with non-VOMS proxies).
 This option is meaningless when used together with "--vo" option
 <<<vo>>>
+
+
+<<<dag>>>
+this option allows specifying  the directory pointed by directory_path containing all the single JDL files of the jobs that the dag will be made of. The corresponding dag JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified.
+<<<dag>>>
+
+
+<<<default-jdl>>>
+Allow specifying a further jdl file whose attributes will be merged into the submitting jdl (if not yet present).
+<<<default-jdl>>>
+

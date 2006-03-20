@@ -61,6 +61,12 @@
 .HP
 \fB--collection\fR, \fB-c\fR
 <dirpath>
+.HP
+\fB--dag\fR
+<dirpath>
+.HP
+\fB--default-jdl\fR
+<filepath>
 
 .SH DESCRIPTION
 
@@ -246,6 +252,20 @@ writes the generated jobId assigned to the submitted job in the file specified b
 
 .IP
 this option allows specifying  the directory pointed by directory_path containing all the single JDL files of the jobs that the collection will be made of. The corresponding collection JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified.
+.PP
+.HP
+\fB--dag\fR
+<dirpath>
+
+.IP
+this option allows specifying  the directory pointed by directory_path containing all the single JDL files of the jobs that the dag will be made of. The corresponding dag JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified.
+.PP
+.HP
+\fB--default-jdl\fR
+<filepath>
+
+.IP
+Allow specifying a further jdl file whose attributes will be merged into the submitting jdl (if not yet present).
 .PP
 .SH ENVIRONMENT
 

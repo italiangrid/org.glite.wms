@@ -5,7 +5,9 @@ options2short = { \
 "cancel-output": ["output","o","filepath"] ,\
 "collection": ["collection","c","dirpath"] ,\
 "config":["config","c","configfile"] ,\
+"dag": ["dag","","dirpath"] ,\
 "debug": ["debug","",""] ,\
+"default-jdl": ["default-jdl","","filepath"] ,\
 "delegationid": ["delegationid","d","idstring"] ,\
 "deleg-output": ["output","o","filepath"] ,\
 "endpoint": ["endpoint","e","serviceURL"] ,\
@@ -47,7 +49,7 @@ common_options=[ "version", "help", "config", "vo", "debug", "logfile", "noint"]
 commands2options={
 "glite-wms-job-delegate-proxy":["delegationid", "autm-delegation", "endpoint", "deleg-output"], \
 "glite-wms-job-submit":["submit-input", "resource","nodes-resource",  "nolisten", "nomsg","lrms", "to", "valid", "register-only", \
-"transfer-files", "proto", "start", "submit-output", "collection"], \
+"transfer-files", "proto", "start", "submit-output", "collection","dag","default-jdl"], \
 "glite-wms-job-cancel":["cancel-input","cancel-output"], \
 "glite-wms-job-list-match":["delegationid", "autm-delegation", "endpoint", "rank","match-output"], \
 "glite-wms-job-output":["jobout-input", "jobout-dir", "list-only"], \
