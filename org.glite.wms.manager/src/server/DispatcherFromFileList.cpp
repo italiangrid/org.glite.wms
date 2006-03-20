@@ -62,6 +62,20 @@ bool older_than(RequestPtr const& req, std::time_t threshold)
   return req->last_processed() < threshold;
 }
 
+class UnregisterProxy
+{
+  std::string m_id;
+public:
+  UnregisterProxy(jobid::JobId const& id)
+    : m_id(id.toString())
+  {
+  }
+  void operator()() const
+  {
+    glite_renewal_UnregisterProxy(m_id.c_str(), "");
+  }
+};
+
 void do_transitions_for_cancel(
   RequestPtr const& req,
   std::time_t current_time,
@@ -82,9 +96,7 @@ void do_transitions_for_cancel(
     case Request::RECOVERABLE:
       req->clear_jdl();
       req->state(Request::CANCELLED, "cancelled by user");
-      req->add_cleanup(
-        boost::bind(edg_wlpr_UnregisterProxy, req->id(), "")
-      );
+      req->add_cleanup(UnregisterProxy(req->id()));
       req->add_cleanup(
         boost::bind(purger::purgeStorage, req->id(), std::string())
       );
@@ -105,9 +117,7 @@ void do_transitions_for_cancel(
       // don't change state; this will cause the job to be aborted rather than
       // cancelled, so the user knows that there is something wrong with this
       // job
-      req->add_cleanup(
-        boost::bind(edg_wlpr_UnregisterProxy, req->id(), "")
-      );
+      req->add_cleanup(UnregisterProxy(req->id()));
       req->add_cleanup(
         boost::bind(purger::purgeStorage, req->id(), std::string())
       );

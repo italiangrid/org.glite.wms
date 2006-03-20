@@ -345,7 +345,9 @@ get_user_x509_proxy(jobid::JobId const& jobid)
   std::string result;
 
   char* c_x509_proxy = 0;
-  int err_code = edg_wlpr_GetProxy(jobid.getId(), &c_x509_proxy);
+  int const err_code(
+    glite_renewal_GetProxy(jobid.toString().c_str(), &c_x509_proxy)
+  );
 
   if (err_code == 0) {
 
