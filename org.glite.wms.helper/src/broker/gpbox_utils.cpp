@@ -55,9 +55,8 @@ get_user_x509_proxy(jobid::JobId const& jobid)
   static std::string const null_string;
   char* c_x509_proxy = NULL;
 
-  int err_code = glite_renewal_GetProxy(jobid.getId(), &c_x509_proxy);
-
-  if (err_code == 0) {
+  int err_code = glite_renewal_GetProxy(jobid.toString().c_str(), &c_x509_proxy);
+  if (!err_code) {
 
     return null_string;
   }
