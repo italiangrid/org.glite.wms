@@ -8,7 +8,7 @@
 
 #lib_LTLIBRARIES = \
 #	libglite_wms_helper_broker_ii.la \
-#	libglite_wms_helper_broker_ii_prefetch.la \
+#	libglite_wms_helper_broker_ii_prefetch.la 
 lib_LTLIBRARIES = \
 	libglite_wms_helper_broker_ism.la
 

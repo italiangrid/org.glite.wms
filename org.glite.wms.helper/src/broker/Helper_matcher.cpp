@@ -47,13 +47,13 @@
 #include "glite/wms/common/logger/manipulators.h"
 #include "glite/wms/common/logger/logger_utils.h"
 
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/PrivateAdManipulation.h"
-#include "glite/wms/jdl/PrivateAttributes.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/PrivateAdManipulation.h"
+#include "glite/jdl/PrivateAttributes.h"
+#include "glite/jdl/ManipulationExceptions.h"
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
 #include "gpbox_utils.h"
@@ -64,8 +64,9 @@ namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-namespace requestad     = glite::wms::jdl;
+namespace requestad     = glite::jdl;
 namespace utilities     = glite::wms::common::utilities;
+namespace utils		= glite::wmsutils::classads;
 namespace matchmaking   = glite::wms::matchmaking;
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
@@ -154,7 +155,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     classad::ExprTree* rank_expr = input_ad.Lookup("rank");
     if (rank_expr) {
       std::vector<std::string> rankAttributes;
-      utilities::insertAttributeInVector(&rankAttributes, rank_expr, utilities::is_reference_to("other"));
+      utils::insertAttributeInVector(&rankAttributes, rank_expr, utils::is_reference_to("other"));
       if (rankAttributes.size() == 1 
           && rankAttributes.front() == "DataAccessCost") {
       // RBMinimizeAccessCostImpl doesn't rank based on the

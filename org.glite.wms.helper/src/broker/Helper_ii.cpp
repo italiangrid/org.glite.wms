@@ -34,19 +34,20 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
-#include "glite/wms/jdl/JDLAttributes.h"
-#include "glite/wms/jdl/JobAdManipulation.h"
-#include "glite/wms/jdl/ManipulationExceptions.h"
+#include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/JobAdManipulation.h"
+#include "glite/jdl/ManipulationExceptions.h"
 
-#include "glite/wms/common/utilities/classad_utils.h"
+#include "glite/wmsutils/classads/classad_utils.h"
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
 namespace configuration = glite::wms::common::configuration;
-namespace requestad     = glite::wms::jdl;
+namespace requestad     = glite::jdl;
 namespace utilities     = glite::wms::common::utilities;
+namespace utils         = glite::wmsutils::classads;
 namespace matchmaking   = glite::wms::matchmaking;
 
 #define edglog(level) logger::threadsafe::edglog << logger::setlevel(logger::level)
@@ -106,7 +107,7 @@ f_resolve_simple(classad::ClassAd const& input_ad, std::string const& ce_id)
     requestad::set_queue_name(*result, name);
     try {
       std::string junk = requestad::get_lrms_type(*result);
-    } catch ( glite::wms::jdl::CannotGetAttribute const& e) {
+    } catch ( glite::jdl::CannotGetAttribute const& e) {
       requestad::set_lrms_type(*result, type);
     }
    
@@ -145,10 +146,10 @@ try {
     if (rank_expr) {
 
       std::vector<std::string> rankAttributes;
-      utilities::insertAttributeInVector(
+      utils::insertAttributeInVector(
         &rankAttributes,
         rank_expr,
-        utilities::is_reference_to("other")
+        utils::is_reference_to("other")
       );
 #ifdef ENABLE_RB_ENHANCED_IMPLEMENTATIONS
       if (rankAttributes.size() == 1
@@ -247,22 +248,22 @@ try {
 
     requestad::set_globus_resource_contact_string(
       *result,
-      utilities::evaluate_attribute(*ce_ad, "GlobusResourceContactString")
+      utils::evaluate_attribute(*ce_ad, "GlobusResourceContactString")
     );
     requestad::set_queue_name(
       *result,
-      utilities::evaluate_attribute(*ce_ad, "QueueName")
+      utils::evaluate_attribute(*ce_ad, "QueueName")
     );
     requestad::set_lrms_type(
       *result,
-      utilities::evaluate_attribute(*ce_ad, "LRMSType")
+      utils::evaluate_attribute(*ce_ad, "LRMSType")
     );
     requestad::set_ce_id(
       *result,
-      utilities::evaluate_attribute(*ce_ad, "CEid")
+      utils::evaluate_attribute(*ce_ad, "CEid")
     );
   
-  } catch (utilities::InvalidValue const& e) {
+  } catch (utils::InvalidValue const& e) {
 
     edglog(error) << e.what() << " for CE id " << ce_it->first << std::endl;
 
