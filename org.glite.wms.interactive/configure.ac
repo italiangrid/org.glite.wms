@@ -19,6 +19,10 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.8  2006/03/20 22:19:30  eronchie
+#       Increased version
+#       Added optimize
+#
 #       Revision 1.7  2005/10/15 11:58:00  eronchie
 #       Increased version
 #
@@ -47,7 +51,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS Interactive], [1.5.0])
+AC_INIT([GLite WMS Interactive], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/glite_wms_pipe_input.c])
@@ -115,6 +119,7 @@ have_glite_wmsutils=no
 have_glite_lb=no
 
 AC_GLITE
+AC_OPTIMIZE
 
 AC_GLITE_WMS_TP_BYPASS([], have_tp_bypass=yes, have_tp_bypass=no)
 AC_MSG_RESULT(["TP_BYPASS found $have_tp_bypass"])
