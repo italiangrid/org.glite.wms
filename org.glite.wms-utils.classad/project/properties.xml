@@ -21,7 +21,7 @@
 	
 -->
 
-<project name="WMS Utils Classads component common properties">
+<project name="WMS Utils Classad component common properties">
 
 	<!-- Include build properties to allow overwriting 
 	     of properties for subsystem                    -->
@@ -42,7 +42,7 @@
 		 ====================================================== -->
 		 		
 	<!-- Component name prefix -->
-	<property name="component.prefix" value="classads" />
+	<property name="component.prefix" value="classad" />
 			
 	<!-- ======================================================
           Define general component properties

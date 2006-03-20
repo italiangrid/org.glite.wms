@@ -21,7 +21,7 @@
 
 -->
 
-<project name="classads" default="dist">
+<project name="classad" default="dist">
 	
 	<!-- =========================================
 		 Builds the GLite WMS Utils Exception Module
