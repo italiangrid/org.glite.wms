@@ -62,6 +62,13 @@ void load_dlls_and_create_purchasers(
     purchaser::is_in_black_list(config.wm()->ism_black_list())
   );
 
+  bool const ism_dump_is_enabled(config.wm()->enable_ism_dump());
+
+  purchaser::ii::create_entry_update_fn_t* ii_update_function = 0;
+  purchaser::ii_gris::create_entry_update_fn_t* gris_update_function = 0;
+  purchaser::cemon::create_entry_update_fn_t* cemon_update_function = 0;
+  purchaser::rgma::create_entry_update_fn_t* rgma_update_function = 0;
+
   if (config.wm()->enable_purchasing_from_rgma()) {
 
     Info("loading rgma purchaser");
@@ -92,6 +99,11 @@ void load_dlls_and_create_purchasers(
 
     dlls.push_back(dll);
     purchasers.push_back(purchaser);
+
+    if (ism_dump_is_enabled) {
+      std::string const update_function_name("create_rgma_entry_update_fn");
+      dll->lookup(update_function_name, rgma_update_function);
+    }
 
   } else {
 
@@ -124,39 +136,11 @@ void load_dlls_and_create_purchasers(
 
     dlls.push_back(dll);
     purchasers.push_back(purchaser);
-  }
 
-  int const cemon_asynch_port(config.wm()->ce_monitor_asynch_port());
-
-  if (cemon_asynch_port > 0) {
-
-    Info("loading asynch cemon purchaser");
-
-    std::string const dll_name("libglite_wms_ism_cemon_asynch_purchaser.so");
-    DynamicLibraryPtr dll(make_dll(dll_name));
-
-    std::string const create_function_name("create_cemon_asynch_purchaser");
-    purchaser::cemon_asynch::create_t* create_function;
-    dll->lookup(create_function_name, create_function);
-
-    std::string const destroy_function_name("destroy_cemon_asynch_purchaser");
-    purchaser::cemon_asynch::destroy_t* destroy_function;
-    dll->lookup(destroy_function_name, destroy_function);
-
-    PurchaserPtr purchaser(
-      create_function(
-        "CE_MONITOR",
-        cemon_asynch_port,
-        purchaser::loop,
-        config.wm()->ism_cemon_asynch_purchasing_rate(),
-        exit_predicate,
-        skip_predicate
-      ),
-      destroy_function
-    );
-
-    dlls.push_back(dll);
-    purchasers.push_back(purchaser);
+    if (ism_dump_is_enabled) {
+      std::string const update_function_name("create_ii_entry_update_fn");
+      dll->lookup(update_function_name, ii_update_function);
+    }
 
   }
 
@@ -193,6 +177,81 @@ void load_dlls_and_create_purchasers(
         120,
         purchaser::loop,
         config.wm()->ism_cemon_purchasing_rate(),
+        exit_predicate,
+        skip_predicate
+      ),
+      destroy_function
+    );
+
+    dlls.push_back(dll);
+    purchasers.push_back(purchaser);
+
+    if (ism_dump_is_enabled) {
+      std::string const update_function_name("create_cemon_entry_update_fn");
+      dll->lookup(update_function_name, cemon_update_function);
+    }
+
+  }
+
+  if (config.wm()->enable_ism_dump()) {
+
+    Info("loading ism dump");
+
+    std::string const dll_name("libglite_wms_ism_file_purchaser.so");
+    DynamicLibraryPtr dll(make_dll(dll_name));
+
+    std::string const create_function_name("create_file_purchaser");
+    purchaser::file::create_t* create_function;
+    dll->lookup(create_function_name, create_function);
+
+    std::string const destroy_function_name("destroy_file_purchaser");
+    purchaser::file::destroy_t* destroy_function;
+    dll->lookup(destroy_function_name, destroy_function);
+
+    std::string const set_updaters_function_name(
+      "set_purchaser_entry_update_fns"
+    );
+    purchaser::file::set_purchaser_entry_update_fns_t* set_updaters_function;
+    dll->lookup(set_updaters_function_name, set_updaters_function);
+
+    set_updaters_function(
+      ii_update_function,
+      gris_update_function,
+      cemon_update_function,
+      rgma_update_function
+    );
+
+    PurchaserPtr purchaser(
+      create_function(config.wm()->ism_dump()),
+      destroy_function
+    );
+    purchaser->skip_predicate(skip_predicate);
+    purchaser->do_purchase();
+  }
+
+  int const cemon_asynch_port(config.wm()->ce_monitor_asynch_port());
+
+  if (cemon_asynch_port > 0) {
+
+    Info("loading asynch cemon purchaser");
+
+    std::string const dll_name("libglite_wms_ism_cemon_asynch_purchaser.so");
+    DynamicLibraryPtr dll(make_dll(dll_name));
+
+    std::string const create_function_name("create_cemon_asynch_purchaser");
+    purchaser::cemon_asynch::create_t* create_function;
+    dll->lookup(create_function_name, create_function);
+
+    std::string const destroy_function_name("destroy_cemon_asynch_purchaser");
+    purchaser::cemon_asynch::destroy_t* destroy_function;
+    dll->lookup(destroy_function_name, destroy_function);
+
+    PurchaserPtr purchaser(
+      create_function(
+        "CE_MONITOR",
+        cemon_asynch_port,
+        purchaser::loop,
+        config.wm()->ism_cemon_asynch_purchasing_rate(),
         exit_predicate,
         skip_predicate
       ),
