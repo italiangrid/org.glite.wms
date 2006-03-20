@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17  2006/03/20 22:25:02  eronchie
+#       Increased version
+#
 #       Revision 1.16  2006/03/03 15:46:58  monforte
 #
 #       merge against RC15
@@ -169,7 +172,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [1.5.8])
+AC_INIT([GLite WMS ISM], [3.1.0])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])
@@ -271,7 +274,7 @@ if test "$have_cppunit" = "no"; then
 fi
 
 have_glite_wms_common=no
-have_glite_wms_jdl=no
+have_glite_jdl=no
 have_glite_wms_ism=no
 have_glite_wmsutils=no
 have_glite_ce=no
@@ -286,8 +289,8 @@ AC_OPTIMIZE
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
 
-AC_GLITE_WMS_JDL([], have_glite_wms_jdl=yes, have_glite_wms_jdl=no)
-AC_MSG_RESULT(["GLITE_WMS_JDL found $have_glite_wms_jdl"])
+AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
+AC_MSG_RESULT(["GLITE_JDL found $have_glite_jdl"])
 
 AC_GLITE_WMS_ISM([], have_glite_wms_ism=yes, have_glite_wms_ism=no)
 AC_MSG_RESULT(["GLITE_WMS_ISM found $have_glite_wms_ism"])
