@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.23  2006/03/21 16:10:05  eronchie
+#       Added macro
+#
 #       Revision 1.22  2006/03/20 22:08:54  eronchie
 #       Increased version
 #
@@ -241,6 +244,7 @@ have_glite_wms_ism=no
 
 AC_GLITE
 AC_OPTIMIZE
+AC_GLITE_WMS_OPTIONAL
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_JDL([], have_glite_jdl=yes, have_glite_jdl=no)
