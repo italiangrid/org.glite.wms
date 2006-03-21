@@ -183,7 +183,7 @@ void JobOutput::getOutput ( ){
 			// cancellation not allowed due to its current status
 			// If the request contains only one jobid, an exception is thrown
 			if (size == 1){ throw exc ;}
-			string wmsg = (*it) + ": not allowed to retrieve the output" + exc.what( );
+			string wmsg = (*it) + ": not allowed to retrieve the output (" + exc.what( ) +")";
 			// if the request is for multiple jobs, a failed-string is built for the final message
 			createWarnMsg(wmsg);
 			// goes on with the next jobId
