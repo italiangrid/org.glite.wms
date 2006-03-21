@@ -158,7 +158,7 @@ load_chain(const char *certfile)
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  return 0;
+  return stack;
 }
 
 bool
