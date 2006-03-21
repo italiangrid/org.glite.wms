@@ -19,6 +19,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.1  2006/03/21 14:06:51  mcecchi
+#       return stack in load_chain restored (unknowingly changed before)
+#
 #       Revision 1.22  2006/03/20 22:08:54  eronchie
 #       Increased version
 #
