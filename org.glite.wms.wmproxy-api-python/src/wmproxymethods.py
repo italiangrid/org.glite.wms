@@ -477,7 +477,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getSandboxBulkDestURI(self, jobId,protocol):
+	def getSandboxBulkDestURI(self, jobId,protocol=""):
 		"""
 		Method:  getSandboxBulkDestURI
 		IN =  jobId (string)
@@ -516,7 +516,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getSandboxDestURI(self, jobId,protocol):
+	def getSandboxDestURI(self, jobId,protocol=""):
 		"""
 		Method:  getSandboxDestURI
 		TBD test better
@@ -876,7 +876,7 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getOutputFileList(self, jobId,protocol):
+	def getOutputFileList(self, jobId,protocol=""):
 		"""
 		Method:  getOutputFileList
 		IN =  jobId (string)
@@ -888,14 +888,19 @@ class Wmproxy:
 		"""
 		try:
 			self.soapInit()
-			return self.remote.getOutputFileList(jobId,protocol)
+			outputFileList=[]
+			outputStruct=parseStructType(self.remote.getOutputFileList(jobId,protocol))[0]
+			for ofl in outputStruct:
+				outputFileList.append(parseStructType(ofl,"name","size"))
+			return outputFileList
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
 		except socket.error, err:
 			raise SocketException(err)
-	def getPerusalFiles(self, jobId, file, allChunks,protocol):
+
+	def getPerusalFiles(self, jobId, file, allChunks,protocol=""):
 		"""
 		Method: getPerusalFiles
 		IN =  jobId (string)
