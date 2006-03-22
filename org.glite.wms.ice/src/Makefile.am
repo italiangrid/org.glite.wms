@@ -77,7 +77,7 @@ tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(CLASSAD_LIBS) \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		-lglite_security_gsoap_plugin_276b_${GLOBUS_THR_FLAVOR} \
+		-lglite_security_gsoap_plugin_276b_gcc32pthr \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/util/libglite_wms_ice_util.la \
@@ -102,7 +102,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_monitor_consumer \
 		-lglite_ce_monitor_client \
 		-lglite_wmsutils_classads \
-		-lglite_security_gsoap_plugin_276b_${GLOBUS_THR_FLAVOR} \
+		-lglite_security_gsoap_plugin_276b_gcc32pthr \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/util/libglite_wms_ice_util.la \
@@ -141,6 +141,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
-		$(GLOBUS_NOTHR_CFLAGS)
+		$(GLOBUS_THR_CFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
