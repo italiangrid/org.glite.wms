@@ -29,26 +29,19 @@ public:
 		// Insert jdl attributes port/pipe/host inside shadow(if present)
 
 		// Launch console
-		if (jobShadow->isLocalConsole()){
-			title("Running console shadow");
-			jobShadow->console();
-		}
+		title("Running console shadow");
+		jobShadow->setGoodbyeMessage(true);
+		jobShadow->console();
 		// Display some messages
-		if (jobShadow->isLocalConsole()){
-			// console-shadow running
-			// console-listener running
-			cout << "Interactive Session Listener successfully launched"<<"\n";
-			jobShadow->setGoodbyeMessage(true);
-			cout <<"With the following parameters:"<<"\n";
-			cout << "- Host: " << jobShadow->getHost() <<"\n";
-			cout << "- Port: " << jobShadow->getPort() <<"\n";
-			cout << "- Shadow process Id: " << jobShadow->getPid() << "\n";
-			cout << "- Input Stream  location: " << jobShadow->getPipeIn() <<"\n";
-			cout << "- Output Stream  location: " << jobShadow->getPipeOut() <<"\n";
-		}else {
-			// console-shadow NOT running
-			cout << "Remote Shadow console set: " << jobShadow->getHost() <<"\n";
-		}
+		// console-shadow running
+		// console-listener running
+		cout << "Interactive Session Listener successfully launched"<<"\n";
+		cout <<"With the following parameters:"<<"\n";
+		cout << "- Host: " << jobShadow->getHost() <<"\n";
+		cout << "- Port: " << jobShadow->getPort() <<"\n";
+		cout << "- Shadow process Id: " << jobShadow->getPid() << "\n";
+		cout << "- Input Stream  location: " << jobShadow->getPipeIn() <<"\n";
+		cout << "- Output Stream  location: " << jobShadow->getPipeOut() <<"\n";
 		// Run Listener
 		Listener listener(jobShadow);
 		listener.run();
@@ -57,7 +50,7 @@ public:
 		cout << "testUtilities TEST NOT YET IMPLEMENTED" << endl ;
 	}
 	void testShadow() {
-
+		cout << "testShadow TEST NOT YET IMPLEMENTED" << endl ;
 	}
 };
 int unitTest(){
@@ -80,7 +73,7 @@ int unitTest(){
 int main(int argc,char *argv[]){
 	try{
 		if( (argc<2) || (strcmp(argv[1],"--help")==0)|| (strcmp(argv[1],"help")==0)){
-			cout << "Usage : " << argv[0] << " <test number> [<JDL file>]" << endl ;
+			cout << "Usage : " << argv[0] << " <test number> " << endl ;
 			cout <<"0) Unit Test!!!"<<endl; cout <<" - - - " << endl ;
 			cout <<"1) testListener"<<endl;
 			cout <<"2) testUtilities"<<endl;
@@ -105,7 +98,7 @@ int main(int argc,char *argv[]){
 	}catch  (std::exception &exc){
 		cout << "\nOperation not performed. std::exception found:\n" ;
 		cout <<  exc.what() << endl ;
-		cout << "\nUsage : " << argv[0] << " <test number> [<JDL file>]" << endl ;
+		cout << "\nUsage : " << argv[0] << " <test number> " << endl ;
 	}
 };
 
