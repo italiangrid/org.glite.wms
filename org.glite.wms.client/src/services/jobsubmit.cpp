@@ -955,7 +955,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		if (nodesresOpt) {
 			adObj->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 		}
-		dagAd = new ExpDagAd (adObj->toString());
+		dagAd = new ExpDagAd (adObj);
 		dagAd->setLocalAccess(true);
 		AdUtils::setDefaultValues(dagAd,wmcConf);
 		// expands the DAG loading all JDL files
@@ -1031,7 +1031,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				if (nodesresOpt) {
 					adObj->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 				}
-				dagAd = new ExpDagAd (adObj->toString());
+				dagAd = new ExpDagAd (adObj);
 				dagAd->setLocalAccess(true);
 				AdUtils::setDefaultValues(dagAd,wmcConf);
 				// expands the DAG loading all JDL files
