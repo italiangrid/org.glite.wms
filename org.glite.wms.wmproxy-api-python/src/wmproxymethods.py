@@ -477,10 +477,11 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getSandboxBulkDestURI(self, jobId):
+	def getSandboxBulkDestURI(self, jobId,protocol):
 		"""
 		Method:  getSandboxBulkDestURI
 		IN =  jobId (string)
+		IN =  protocol to use in the returned URIs. (boolean)
 		OUT = A dictonary containing, for each jobid (string), its destUris in all available protocols (list of strings)
 
 		This operation returns the list of destination URIs associated to a compound job
@@ -502,7 +503,7 @@ class Wmproxy:
 		destUris={}
 		try:
 			self.soapInit()
-			dests= self.remote.getSandboxBulkDestURI(jobId)
+			dests= self.remote.getSandboxBulkDestURI(jobId,protocol)
 			if type(dests[0]) == type([]):
 				dests=dests[0]
 			for dest in dests:
@@ -515,11 +516,12 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getSandboxDestURI(self, jobId):
+	def getSandboxDestURI(self, jobId,protocol):
 		"""
 		Method:  getSandboxDestURI
 		TBD test better
 		IN =  jobId (string)
+		IN =  protocol to use in the returned URIs. (boolean)
 		OUT = dstUri in all available protocols( list of strings)
 
 		This operation returns a destination URI associated to the job, identified by the jobId provided as input,
@@ -539,7 +541,7 @@ class Wmproxy:
 		"""
 		try:
 			self.soapInit()
-			return self.remote.getSandboxDestURI(jobId)[0]
+			return self.remote.getSandboxDestURI(jobId,protocol)[0]
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
@@ -874,10 +876,11 @@ class Wmproxy:
 		except socket.error, err:
 			raise SocketException(err)
 
-	def getOutputFileList(self, jobId):
+	def getOutputFileList(self, jobId,protocol):
 		"""
 		Method:  getOutputFileList
 		IN =  jobId (string)
+		IN =  protocol to use in the returned URIs (string)
 		OUT = OutputFileAndSizeList (StringAndLongList)
 
 		This operation returns the list of URIs where the output files created during job execution have been stored in the WM managed space and the corresponding sizes in bytes.
@@ -885,19 +888,20 @@ class Wmproxy:
 		"""
 		try:
 			self.soapInit()
-			return self.remote.getOutputFileList(jobId)
+			return self.remote.getOutputFileList(jobId,protocol)
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:
 			raise HTTPException(err)
 		except socket.error, err:
 			raise SocketException(err)
-	def getPerusalFiles(self, jobId, file, allChunks):
+	def getPerusalFiles(self, jobId, file, allChunks,protocol):
 		"""
 		Method: getPerusalFiles
 		IN =  jobId (string)
 		IN =  file (string)
 		IN =  allChunks (boolean)
+		IN =  protocol to use in the returned URIs. (boolean)
 		OUT = fileList (StringList)
 
 		This operation gets the URIs of perusal files generated during job execution for the specified file file.
@@ -910,7 +914,7 @@ class Wmproxy:
 				allChunks=True
 			else:
 				allChunks=False
-			files = parseStructType(self.remote.getPerusalFiles(jobId, file, b2b(allChunks)))
+			files = parseStructType(self.remote.getPerusalFiles( jobId, file, b2b(allChunks), protocol) )
 			if not files:
 				return []
 			else:
@@ -1018,7 +1022,11 @@ class Wmproxy:
 		"""
 		try:
 			self.soapInit()
-			return self.remote.getTransferProtocols()
+			protocols = parseStructType(self.remote.getTransferProtocols())
+			if protocols:
+				return protocols[0]
+			else:
+				return []
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
 		except SOAPpy.Errors.HTTPError, err:

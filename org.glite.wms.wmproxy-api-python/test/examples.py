@@ -49,6 +49,7 @@ url = ghemon
 ns ="http://glite.org/wms/wmproxy"
 
 delegationId = "rask"
+protocol="gsiftp"
 requirements ="ther.GlueCEStateStatus == \"Production\""
 rank ="-other.GlueCEStateEstimatedResponseTime"
 """
@@ -98,16 +99,30 @@ class WmpTest(unittest.TestCase):
 		self.wmproxy = ""
 
 	"""
-	getSandboxURIs
+	SANDBOX / OUTPUT
 	"""
 	def testgetSandboxDestURI(self):
-		assert self.wmproxy.getSandboxDestURI(jobid.getJobId()), "Empty DEST URI!!"
-		assert self.wmproxy.getSandboxDestURI(dagad.getJobId()), "Empty DEST URI!!"
+		jobURI = self.wmproxy.getSandboxDestURI(jobid.getJobId(),protocol)
+		dagURI = self.wmproxy.getSandboxDestURI(dagad.getJobId(),protocol)
+		title("testgetSandboxDestURI: ", jobURI,dagURI)
+		assert jobURI, "Wrong DEST URI!! (jobid)"
+		assert dagURI, "Wrong DEST URI!! (dagad)"
 
 	def testgetSandboxBulkDestURI(self):
-		assert self.wmproxy.getSandboxBulkDestURI(jobid.getJobId()), "Empty DEST URI!!"
-		assert self.wmproxy.getSandboxBulkDestURI(dagad.getJobId()), "Empty DEST URI!!"
+		jobURI=self.wmproxy.getSandboxBulkDestURI(jobid.getJobId(),protocol)
+		dagURI=self.wmproxy.getSandboxBulkDestURI(dagad.getJobId(),protocol)
+		title("testgetSandboxBulkDestURI: ", jobURI,dagURI)
+		assert jobURI, "Wrong DEST URI!! (jobid)"
+		assert dagURI, "Wrong DEST URI!! (dagad)"
 
+	def testgetTransferProtocols(self):
+		protocols = self.wmproxy.getTransferProtocols()
+		title ("transferProtocols are:", protocols)
+
+	def testgetOutputFileList(self):
+		jobFL = self.wmproxy.getOutputFileList(jobid.getJobId(),protocol)
+		dagFL = self.wmproxy.getOutputFileList(dagad.getJobId(),protocol)
+		title("getOutputFiles are (both of them might be empty):", jobFL, dagFL)
 
 	"""
 	SUBMISSION
@@ -127,6 +142,12 @@ class WmpTest(unittest.TestCase):
 		jobidInstance =self.wmproxy.jobSubmit(jobjdl, delegationId)
 		assert  jobidInstance , "Empty JobId!!"
 		jobid.setJobId(jobidInstance.getJobId())
+
+	def testjobListMatch(self):
+		jobidInstance =self.wmproxy.jobListMatch(jobjdl, delegationId)
+		assert  jobidInstance , "Empty JobId!!"
+		jobid.setJobId(jobidInstance.getJobId())
+
 	def testcycleJob(self):
 		for jdl in [jobjdl]:
 			title("Cycle Job: Registering..")
@@ -201,17 +222,15 @@ class WmpTest(unittest.TestCase):
 		assert self.wmproxy.getProxyReq(delegationId,self.wmproxy.getGrstNs())
 	def testputProxyGrst(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId(),self.wmproxy.getGrstNs())
-
 	def testDelegatedProxyInfo(self):
 		pi= self.wmproxy.getDelegatedProxyInfo(delegationId)
-		title("DELEGATEDPROXY", pi)
+		title("testDelegatedProxyInfo:", pi)
 		return pi
 	def testJobProxyInfo(self):
 		pi=self.wmproxy.getJobProxyInfo(jobid.getJobId())
-		title("JobProxy:", pi)
+		title("testJobProxyInfo:", pi)
 		return pi
 	def testGetJDL(self):
-		#jdlType= wmproxymethods
 		for  jdlType in [0,1]:
 			pi=self.wmproxy.getJDL(jobid.getJobId(),jdlType)
 			title("getJDL:", pi)
@@ -239,6 +258,7 @@ def runTextRunner(level=0):
 	submitSuite.addTest( WmpTest("testdagSubmit"))
 	submitSuite.addTest( WmpTest("testcollectionSubmit"))
 	submitSuite.addTest( WmpTest("testjobSubmit"))
+	submitSuite.addTest( WmpTest("testjobListMatch"))
 	submitSuite.addTest( WmpTest("testcycleJob"))
 	""" PERUSAL """
 	perusalSuite = unittest.TestSuite()
@@ -248,6 +268,9 @@ def runTextRunner(level=0):
 	getURISuite = unittest.TestSuite()
 	getURISuite.addTest( WmpTest("testgetSandboxDestURI"))
 	getURISuite.addTest( WmpTest("testgetSandboxBulkDestURI"))
+	getURISuite.addTest( WmpTest("testgetTransferProtocols"))
+	getURISuite.addTest( WmpTest("testgetOutputFileList"))
+
 	""" get/put Proxy"""
 	proxySuite = unittest.TestSuite()
 	proxySuite.addTest( WmpTest("testgetProxyReq"))
@@ -333,20 +356,21 @@ if __name__=="__main__":
 		print "1) perform all submitSuite"
 		print "2) perform all perusalSuite"
 		print "3) perform all templateSuite"
-		print "4) perform getURISuite"
+		print "4) perform OUTPUT Suite"
 		print "5) perform all proxySuite"
 		sys.exit(0)
 
 	level = sys.argv[1]
 	if len(sys.argv)>2:
 		jobid.setJobId(sys.argv[2])
+		dagad.setJobId(sys.argv[2])
 	try:
 		level= int(level)
 		if level>5:
 			raise 5
 	except:
 		print "Usage: "
-		print sys.argv[0] , "0-5  [<jobid>]\n"
+		print sys.argv[0] , "<example number>  [<jobid>]\n"
 		sys.exit(0)
 	runTextRunner(level)
 	print " END TEST \n"
