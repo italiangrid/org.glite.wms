@@ -6,6 +6,11 @@ from wmproxymethods import Wmproxy
 from wmproxymethods import Config
 import socket
 
+
+
+
+
+
 Config.DEBUGMODE = 1
 def title(msg, *args):
 	if Config.DEBUGMODE:
@@ -39,7 +44,7 @@ gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = ghemon
+url = tigerman
 
 
 
@@ -70,6 +75,9 @@ dagad = JobId()
 """
 jobjdl ="[ requirements = other.GlueCEStateStatus == \"Production\"; RetryCount = 0; JobType = \"normal\"; Executable = \"/bin/ls\"; Stdoutput = \"std.out\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; StdError = \"std.err\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; perusalFileEnable= true; ]"
 dagjdl="[ nodes = [ nodeB = [ description = [ requirements = other.GlueCEStateStatus == \"Production\"; JobType = \"normal\"; Executable = \"/bin/date\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] ]; dependencies = { { { nodeA },{ nodeB } } }; nodeA = [ description = [ requirements = other.GlueCEStateStatus == \"Production\"; JobType = \"normal\"; Executable = \"/bin/ls\"; StdOutput = \"std.out\"; OutputSandbox = { \"std.err\",\"std.out\" }; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; StdError = \"std.err\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] ] ]; VirtualOrganisation = \"EGEE\"; Type = \"dag\"; node_type = \"edg_jdl\"; enableFilePerusal= true;]"
+
+dagjdl2="[ nodes = [ nodeB = [ description = [ requirements = RegExp(\"lxde01*\",other.GlueCEUniqueID); JobType = \"normal\"; Executable = \"/bin/date\"; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] ]; dependencies = { { { nodeA },{ nodeB } } }; nodeA = [ description = [ requirements = RegExp(\"lxde01*\",other.GlueCEUniqueID); JobType = \"normal\"; Executable = \"/bin/ls\"; StdOutput = \"std.out\"; OutputSandbox = { \"std.err\",\"std.out\" }; VirtualOrganisation = \"EGEE\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; StdError = \"std.err\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] ] ]; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"dag\"; node_type = \"edg_jdl\" ]"
+
 
 
 collectionjdl = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[1] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[2] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
@@ -122,7 +130,10 @@ class WmpTest(unittest.TestCase):
 	def testgetOutputFileList(self):
 		jobFL = self.wmproxy.getOutputFileList(jobid.getJobId(),protocol)
 		dagFL = self.wmproxy.getOutputFileList(dagad.getJobId(),protocol)
-		title("getOutputFiles are (both of them might be empty):", jobFL, dagFL)
+		title("getOutputFiles WITH protocol are (both of them might be empty):","JOB", jobFL, "DAG",dagFL)
+		jobFL = self.wmproxy.getOutputFileList(jobid.getJobId())
+		dagFL = self.wmproxy.getOutputFileList(dagad.getJobId())
+		title("getOutputFiles WITHOUT protocol are (both of them might be empty):","JOB", jobFL, "DAG",dagFL)
 
 	"""
 	SUBMISSION
@@ -135,7 +146,7 @@ class WmpTest(unittest.TestCase):
 		dagad.setJobId(dagadInstance.getJobId())
 
 	def testdagSubmit(self):
-		dagadInstance=self.wmproxy.jobSubmit(dagjdl, delegationId)
+		dagadInstance=self.wmproxy.jobSubmit(dagjdl2, delegationId)
 		assert dagadInstance, "Empty DAGAD!!!"
 		dagad.setJobId(dagadInstance.getJobId())
 	def testjobSubmit(self):
@@ -245,6 +256,9 @@ class WmpTest(unittest.TestCase):
 	def testaddACLItems(self):
 		items=["un", "due", "tre", "prova"]
 		return self.wmproxy.addACLItems(jobid.getJobId(), items)
+
+
+
 def runTextRunner(level=0):
 	"""    TEMPLATES   """
 	templateSuite = unittest.TestSuite()
