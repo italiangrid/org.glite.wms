@@ -344,6 +344,7 @@ void eventStatusPoller::updateJobCache()
                             << log4cpp::CategoryStream::ENDLINE;
                         
                         jit->setStatus( stNum, (*sit)->timestamp );
+
                         // Log to L&B
                         _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
                     }

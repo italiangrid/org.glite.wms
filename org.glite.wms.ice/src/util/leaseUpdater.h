@@ -31,7 +31,6 @@ namespace glite {
       namespace util {
           
           class jobCache;
-          class iceConfManager;
           class iceEventLogger;
 
           /**
@@ -41,9 +40,9 @@ namespace glite {
 
           protected:
 
-              static const time_t threshold; //! Residual lease durations less than this threshold are prolonged. Hardcoded for now, should be configurable in the future;
-              static const time_t delay; //! Delay between two updates, in seconds. Hardcoded for now, should be configurable in the future;
-              static const time_t delta; //! The amount of the lease update, in seconds. Hardcoded for now, should be configurable in the future;
+              time_t threshold; //! Residual lease durations less than this threshold are prolonged.
+              time_t delay; //! Delay between two updates, in seconds.
+              time_t delta; //! The amount of the lease update, in seconds.
 
               log4cpp::Category *log_dev;
               jobCache *cache;

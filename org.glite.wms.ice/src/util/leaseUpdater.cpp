@@ -19,11 +19,6 @@ using namespace glite::ce::cream_client_api::job_statuses;
 using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
-const time_t leaseUpdater::threshold = 60*30; // FIXME: hardcoded default 30 min
-const time_t leaseUpdater::delay = 60; // FIXME: hardcoded default 1 min
-
-const time_t leaseUpdater::delta = 60*2; // FIXME: hardcoded default of lease renewal: 2 min
-
 namespace {
     /**
      * Utility function to convert a time_t value into a string.
@@ -44,7 +39,10 @@ leaseUpdater::leaseUpdater( ) :
     iceThread( "ICE Lease Updater" ),
     log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
     cache( jobCache::getInstance() ),
-    creamClient( 0 )
+    creamClient( 0 ),
+    threshold( iceConfManager::getInstance()->getLeaseThresholdTime() * 60 ),
+    delay( 1*60 ), // lease updater wakes up every minute
+    delta( iceConfManager::getInstance()->getLeaseDeltaTime() * 60 )
 {
     try {        
         soap_proxy::CreamProxy* p( new soap_proxy::CreamProxy( false ) );

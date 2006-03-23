@@ -33,6 +33,8 @@ namespace glite {
                      * most recent status of job j; if the current job
                      * status for j does not correspond to any valid
                      * LB event, then the null pointer is returned.
+                     * The caller owns the returned pointer, and is
+                     * thus responsible for relinquishing it.
                      */
                     static iceLBEvent* mkEvent( const CreamJob& j );
                 protected:

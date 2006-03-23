@@ -46,6 +46,8 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         } catch( iceLBException& ex ) {
             log_dev->errorStream()
                 << "Error logging " << ev->describe()
+                << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
+                << " CreamJobID=[" << ev->getJob().getJobID() << "]"
                 << ". Caught exception " << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             return;
@@ -57,6 +59,8 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         do {
             log_dev->infoStream() 
                 << "Logging " << ev->describe( )
+                << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
+                << " CreamJobID=[" << ev->getJob().getJobID() << "]"
                 << log4cpp::CategoryStream::ENDLINE;
             
             res = ev->execute( _ctx );
