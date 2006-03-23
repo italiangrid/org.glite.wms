@@ -81,7 +81,7 @@ public:
      * @param cmdAd the Command object related to the edg_job_submit as
      * provided by WMP.
      */
-	virtual void submit(const std::string &jdl);
+	virtual void submit(const std::string &jdl, const std::string &jdlpath = "");
   
 	/**
      * Forwards a cancel command to the WM through the FileList.

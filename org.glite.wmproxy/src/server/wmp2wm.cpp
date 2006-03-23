@@ -128,7 +128,7 @@ WMP2WM::init(const string &filename, eventlogger::WMPEventLogger *wmpeventlogger
 }
 
 void
-WMP2WM::submit(const string &jdl)
+WMP2WM::submit(const string &jdl, const string &jdlpath)
 {
 	GLITE_STACK_TRY("submit()");
   	edglog_fn("wmp2wm::submit");
@@ -144,16 +144,17 @@ WMP2WM::submit(const string &jdl)
 	edglog(debug)<<"Converted string (written in filelist): "
 		<<toFormattedString(convertedAd)<<endl;
   	
+	string regjdl = (jdlpath != "") ? jdlpath : jdl;
  	try {
     	f_forward(*(m_filelist.get()), *(m_mutex.get()), command_str);
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_OK, "",
-    		true, true, (*m_filelist).filename().c_str(), jdl.c_str());
-    	edglog(debug)<<"LB Logged jdl: "<<jdl<<endl;
+    		true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
+    	edglog(debug)<<"LB Logged jdl/path: "<<jdl<<endl;
     	edglog(debug)<<"Submit EnQueued OK"<<endl;
   	} catch (exception &e) {
     	// LogEnQueued FAIL if exception occurs
     	wmpeventlogger->logEvent(eventlogger::WMPEventLogger::LOG_ENQUEUE_FAIL,
-    		e.what(), true, true, (*m_filelist).filename().c_str(), jdl.c_str());
+    		e.what(), true, true, (*m_filelist).filename().c_str(), regjdl.c_str());
     	edglog(critical)<<"Submit EnQueued FAIL"<<endl;
   	}
   	

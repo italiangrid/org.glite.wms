@@ -1337,7 +1337,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
 		
 		string jdltostart = jdl;
-		
+		string jdlpath = "";
+
 		int type = getType(jdl);
 		if (type == TYPE_JOB) {
 			JobAd * jad = new JobAd(jdl);
@@ -1684,12 +1685,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			}
 			dag->setReserved(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 			
-			// \/
-			// N.B. Setting jdltostart equal to file path in the case of DAG type
-			//jdltostart = dag->toString();
-			dag->toString();
-			jdltostart = wmputilities::getJobJDLToStartPath(*jid);
-			// /\
+			jdltostart = dag->toString();
+			jdlpath = wmputilities::getJobJDLToStartPath(*jid);
+			
 			delete dag;
 		}
 		
@@ -1713,7 +1711,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			.init(filequeue, &wmplogger);
 		
 		boost::details::pool::singleton_default<WMP2WM>::instance()
-			.submit(jdltostart);
+			.submit(jdltostart, jdlpath);
 		
 		/*for (backupenv; *backupenv; backupenv++) {
 		    free(*backupenv);
