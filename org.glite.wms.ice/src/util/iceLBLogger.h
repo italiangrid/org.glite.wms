@@ -4,6 +4,7 @@
 #ifndef __ICELBLOGGER_H__
 #define __ICELBLOGGER_H__
 
+#include "boost/thread/recursive_mutex.hpp"
 
 // Forward declaration
 namespace log4cpp {
@@ -46,6 +47,7 @@ namespace glite {
                     iceLBLogger( );
 
                     static iceLBLogger* _instance;
+                    static boost::recursive_mutex _mutex;
                     iceLBContext* _ctx;
                     log4cpp::Category* log_dev;
                 };

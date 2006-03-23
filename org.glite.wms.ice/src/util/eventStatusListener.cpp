@@ -97,16 +97,31 @@ namespace { // anonymous namespace
          * Returns the time of the status for this notification
          */
         time_t getTstamp( void ) const { return tstamp; };
+
+        /**
+         * Returns true iff the notification has an exit_code attribute
+         */
+        bool hasExitCode( void ) const { return has_exit_code; };
+
+        /**
+         * Returns the exit code
+         */ 
+        int getExitCode( void ) const { return exit_code; };
+
     protected:
         string cream_job_id;
         api::job_statuses::job_status job_status;
         time_t tstamp;
+        bool has_exit_code;
+        int exit_code;
     };
 
     //
     // StatusNotification implementation
     //
-    StatusNotification::StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& )
+    StatusNotification::StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& ) :
+        has_exit_code( false ),
+        exit_code( 0 ) // default
     {
         api::util::creamApiLogger::instance()->getLogger()->infoStream()
             << "Parsing status change notification "
@@ -136,11 +151,22 @@ namespace { // anonymous namespace
         try {
             tstamp = (time_t)( lrint( boost::lexical_cast<double>( tstamp_s )/1000 ) );
         } catch( boost::bad_lexical_cast& c ) {
-            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute canno be converted to time_t" );
+            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute cannot be converted to time_t" );
         }
         // FIXME: In the future, this timestamp will be relative to
         // UTC time, and probably should be converted to the local
         // (ICE-centric) timezone.
+
+        string exitcode_s; // FIXME: EXIT_CODE should be an int, not a string!
+        if ( ad->EvaluateAttrString( "EXIT_CODE", exitcode_s ) ) {
+            boost::trim_if( exitcode_s, boost::is_any_of("\"" ) );
+            try {
+                exit_code = boost::lexical_cast<int>( exitcode_s );
+                has_exit_code = true;
+            } catch( boost::bad_lexical_cast& c ) {
+                throw iceUtil::ClassadSyntax_ex( "EXIT_CODE attribute cannot be converted to int" );
+            }
+        }
     };
 
     /**

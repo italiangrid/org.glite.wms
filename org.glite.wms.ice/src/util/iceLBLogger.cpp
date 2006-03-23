@@ -2,13 +2,12 @@
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
-
 #include "boost/scoped_ptr.hpp"
 
 using namespace glite::wms::ice::util;
 
 iceLBLogger* iceLBLogger::_instance = 0;
-
+boost::recursive_mutex iceLBLogger::_mutex;
 
 //////////////////////////////////////////////////////////////////////////////
 // 
@@ -17,6 +16,7 @@ iceLBLogger* iceLBLogger::_instance = 0;
 //////////////////////////////////////////////////////////////////////////////
 iceLBLogger* iceLBLogger::instance( void )
 {
+    boost::recursive_mutex::scoped_lock L( _mutex );
     if ( 0 == _instance ) {
         _instance = new iceLBLogger( );
     }
@@ -38,6 +38,7 @@ iceLBLogger::~iceLBLogger( void )
 
 void iceLBLogger::logEvent( iceLBEvent* ev )
 {
+    boost::recursive_mutex::scoped_lock L( _mutex );
     if ( ev ) {
         boost::scoped_ptr< iceLBEvent > _scoped_ev( ev );
         
