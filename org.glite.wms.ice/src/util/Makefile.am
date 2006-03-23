@@ -24,7 +24,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				subscriptionCache.cpp \
 				subscriptionManager.cpp \
 				leaseUpdater.cpp \
-				iceThread.cpp
+				iceThread.cpp \
+				cemonUrlCache.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
@@ -37,6 +38,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-DWITH_SOAPDEFS_H \
 		-UHAVE_CONFIG_H \
 		-DENABLE_LOGGING \
-		$(GLOBUS_THR_CFLAGS)
+		$(GLOBUS_THR_CFLAGS) \
+		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

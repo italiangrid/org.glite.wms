@@ -4,6 +4,9 @@
 #include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
+#include "cemonUrlCache.h"
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
 
@@ -317,22 +320,51 @@ void iceUtil::eventStatusListener::init(void)
    */
   set< string > ceurls;
 
-  string ceurl;
+  string ceurl, cemonURL;
   ostringstream hostport;
 
   {
       // Scoped lock to protect concurrent access to the job cache
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-
+      { boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
       for(jobCache::iterator it=cache->begin(); it != cache->end(); it++)
       {
           ceurl = it->getCreamURL();
-          boost::replace_first(ceurl,
-                               conf->getCreamUrlPostfix(),
-                               conf->getCEMonUrlPostfix()
-                               );
-          ceurls.insert( ceurl );
+	  cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
+	  log_dev->infoStream() << "eventStatusListener::init() - "
+			        << "For current CREAM, cemonUrlCache returned CEMon URL ["
+			        << cemonURL<<"]"
+			        << log4cpp::CategoryStream::ENDLINE;
+	  if( cemonURL == "" ) {
+	    try {
+	      api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
+	      api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
+		log_dev->infoStream() << "eventStatusListener::init() - "
+			        << "For current CREAM, query to CREAM service  returned CEMon URL ["
+			        << cemonURL<<"]"
+			        << log4cpp::CategoryStream::ENDLINE;
+	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+	    } catch(exception& ex) {
+	      log_dev->errorStream() << "eventStatusListener::init() - Error retrieving"
+	      			     <<" CEMon's URL from CREAM's URL: "
+			 	     << ex.what()
+				     << ". Composing URL from configuration file..."
+			 	     << log4cpp::CategoryStream::ENDLINE;
+	      cemonURL = ceurl;
+	      boost::replace_first(cemonURL,
+                                   conf->getCreamUrlPostfix(),
+                                   conf->getCEMonUrlPostfix()
+                                  );
+	      log_dev->infoStream() << "Using CEMon URL ["
+	      			    << cemonURL << "]" << log4cpp::CategoryStream::ENDLINE;
+              ceurls.insert( cemonURL );
+	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+	    }
+
+	  }
+
       }
+      } // lock on the cemonUrlCache
   }
   /**
    * Now we've got a collection of CEMon urls (without duplicates,
@@ -378,7 +410,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             notifications.push_back( StatusNotification( *it ) );
         } catch( iceUtil::ClassadSyntax_ex ex ) {
             log_dev->errorStream()
-                << "eventStatusListenre::handleEvent() received a notification "
+                << "eventStatusListenre::handleEvent() - received a notification "
                 << *it << " which could not be understood; error is: "
                 << ex.what() << ". "
                 << "Skipping this notification and hoping for the best..."
@@ -388,6 +420,10 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 
     if ( notifications.empty() )
         return;
+
+    if( notifications.begin()->getStatus() == api::job_statuses::PURGED ) {
+	return;
+    }
 
     boost::recursive_mutex::scoped_lock jc_M( jobCache::mutex );
 

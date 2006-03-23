@@ -141,6 +141,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 		$(BOOST_CFLAGS) \
 		-UHAVE_CONFIG_H \
 		$(LOG4CPP_CFLAGS) \
-		$(GLOBUS_THR_CFLAGS)
+		$(GLOBUS_THR_CFLAGS) \
+		-pipe
 
 MAINTAINERCLEANFILES = Makefile.in

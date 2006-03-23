@@ -2,6 +2,9 @@
 #include "subscriptionUpdater.h"
 #include "subscriptionManager.h"
 #include "jobCache.h"
+#include "cemonUrlCache.h"
+#include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
+#include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 
@@ -100,14 +103,41 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
 void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 {
     urls.clear();
-    string ceurl;
+    string ceurl, cemonURL;
     boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
     for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
         it != iceUtil::jobCache::getInstance()->end(); it++) {
 
         ceurl = it->getCreamURL();
-        boost::replace_first(ceurl, conf->getCreamUrlPostfix(),
-                             conf->getCEMonUrlPostfix());
-        urls.insert( ceurl );
+	boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
+ 	cemonURL = cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
+	
+	if( cemonURL == "" ) {
+	  try {
+	      api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
+	      api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
+	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+	      urls.insert( cemonURL );
+	  } catch(exception& ex) {
+	      log_dev->errorStream() << "subscriptionUpdater::retrieveCEURLs() - Error retrieving"
+	      			     <<" CEMon's URL from CREAM's URL: "
+			 	     << ex.what()
+				     << ". Composing URL from configuration file..."
+			 	     << log4cpp::CategoryStream::ENDLINE;
+	      cemonURL = ceurl;
+	      boost::replace_first(cemonURL,
+                                   conf->getCreamUrlPostfix(),
+                                   conf->getCEMonUrlPostfix()
+                                  );
+	      log_dev->infoStream() << "subscriptionUpdater::retrieveCEURLs() - Using CEMon URL ["
+	      			    << cemonURL << "]" << log4cpp::CategoryStream::ENDLINE;
+              urls.insert( cemonURL );
+	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+	  }
+	} else {
+          //boost::replace_first(ceurl, conf->getCreamUrlPostfix(),
+          //                     conf->getCEMonUrlPostfix());
+          urls.insert( cemonURL );
+	}
     }
 }

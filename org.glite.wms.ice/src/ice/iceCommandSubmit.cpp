@@ -4,6 +4,7 @@
 #include "subscriptionManager.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
+#include "cemonUrlCache.h"
 #include "creamJob.h"
 #include "ice-core.h"
 #include "eventStatusListener.h"
@@ -61,7 +62,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
                                << log4cpp::CategoryStream::ENDLINE;
         exit(1);
     }
-   
+
     {
       boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
       myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
@@ -70,15 +71,15 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
     /*
 
-[ 
-  stream_error = false; 
+[
+  stream_error = false;
   edg_jobid = "https://cert-rb-03.cnaf.infn.it:9000/YeyOVNkR84l6QMHl_PY6mQ";
-  GlobusScheduler = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs"; 
-  ce_id = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs-cert"; 
-  Transfer_Executable = true; 
+  GlobusScheduler = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs";
+  ce_id = "gridit-ce-001.cnaf.infn.it:2119/jobmanager-lcgpbs-cert";
+  Transfer_Executable = true;
   Output = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardOutput";
-  Copy_to_Spool = false; 
-  Executable = "/var/glite/jobcontrol/submit/Ye/JobWrapper.https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ.sh"; 
+  Copy_to_Spool = false;
+  Executable = "/var/glite/jobcontrol/submit/Ye/JobWrapper.https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ.sh";
   X509UserProxy = "/var/glite/SandboxDir/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/user.proxy"; 
   Error_ = "/var/glite/jobcontrol/condorio/Ye/https_3a_2f_2fcert-rb-03.cnaf.infn.it_3a9000_2fYeyOVNkR84l6QMHl_5fPY6mQ/StandardError";
   LB_sequence_code = "UI=000002:NS=0000000003:WM=000004:BH=0000000000:JSS=000000:LM=000000:LRMS=000000:APP=000000"; 
@@ -217,7 +218,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         _cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
-    
+
     { 
         // lock the listener:
         // this prevents the eventStatusListener::acceptJobStatus()
@@ -288,8 +289,43 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
       string cemon_url;
       {
         boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
-        cemon_url = confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
-            + confMgr->getCEMonUrlPostfix();
+	boost::recursive_mutex::scoped_lock cemonM( ice_util::cemonUrlCache::mutex );
+        //cemon_url  confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+        //    + confMgr->getCEMonUrlPostfix();
+	cemon_url = ice_util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
+	log_dev->infoStream() << "iceCommandSubmit::execute() - "
+			      << "For current CREAM, cemonUrlCache returned CEMon URL ["
+			      << cemon_url<<"]"
+			      << log4cpp::CategoryStream::ENDLINE;
+
+	if( cemon_url == "" )
+	{
+	  try {
+	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( confMgr->getHostProxyFile() );
+	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
+	      log_dev->infoStream() << "iceCommandSubmit::execute() - "
+			        << "For current CREAM, query to CREAM service  returned CEMon URL ["
+			        << cemon_url<<"]"
+			        << log4cpp::CategoryStream::ENDLINE;
+	      ice_util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+	    } catch(exception& ex) {
+
+	      log_dev->errorStream() << "iceCommandSubmit::execute() - Error retrieving"
+	      			     <<" CEMon's URL from CREAM's URL: "
+			 	     << ex.what()
+				     << ". Composing URL from configuration file..."
+			 	     << log4cpp::CategoryStream::ENDLINE;
+	      cemon_url = theJob.getCreamURL();
+	      boost::replace_first(cemon_url,
+                                   confMgr->getCreamUrlPostfix(),
+                                   confMgr->getCEMonUrlPostfix()
+                                  );
+	      log_dev->infoStream() << "Using CEMon URL ["
+	      			    << cemon_url << "]" << log4cpp::CategoryStream::ENDLINE;
+              //ceurls.insert( cemonURL );
+	      ice_util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+	    }
+	}
       }
       boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
       if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {

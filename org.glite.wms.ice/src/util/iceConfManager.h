@@ -61,7 +61,7 @@ namespace glite {
 	  std::string getCreamUrlDelegationPrefix( void ) const { return curldelegprefix; }
 	  std::string getCreamUrlDelegationPostfix( void ) const { return curldelegpostfix; }
 	  std::string getCEMonUrlPrefix( void ) const { return cemonurlprefix; }
-	  std::string getCEMonUrlPostfix( void ) const { return cemonurlpostfix; }
+	  std::string getCEMonUrlPostfix( void ) const { return cemonurlpostfix; } 
 	  std::string getICETopic( void ) const { return icetopic; }
 	  int         getPollerDelay( void ) const { return pollerdelay; }
 	  int         getSubscriptionDuration( void ) const { return subduration; }
