@@ -491,12 +491,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         if ( it->getTstamp() > jc_it->getLastStatusChange() ) {
             jc_it->setStatus( it->getStatus(), it->getTstamp() );
             _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
-            
-            if ( (it+1) == notifications.end() ) {
-                // The cache is only modified for the last
-                // notification, for efficiency reasons.
-                cache->put( *jc_it );
-            }
+            // The job gets stored in the jobcache anyway by the logEvent method...
         } else {
             log_dev->infoStream()
                 << "eventStatusListener::handleEvent() - ...NOT DONE, as notification is old"
