@@ -14,7 +14,7 @@
 
 SUBDIRS = util ice
 
-bin_PROGRAMS = putFL putFL_cancel tryICE dumpICECache
+bin_PROGRAMS = putFL putFL_cancel glite-wms-ice dumpICECache
 
 putFL_SOURCES = putFL.cpp
 
@@ -22,7 +22,7 @@ putFL_cancel_SOURCES = putFL_cancel.cpp
 
 ###test_SOURCES = test.cpp
 
-tryICE_SOURCES = tryICE.cpp
+glite_wms_ice_SOURCES = glite-wms-ice.cpp
 
 dumpICECache_SOURCES = dumpICECache.cpp
 
@@ -69,7 +69,7 @@ putFL_cancel_LDADD = -L$(GLITE_LOCATION)/lib \
 ###		$(BOOST_THREAD_LIBS) \
 ###		$(BOOST_REGEX_LIBS)
 
-tryICE_LDADD = -L$(GLITE_LOCATION)/lib \
+glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lgridsite_globus \
 		-lxml2 \
 		-lglite_ce_cream_client_soap \
