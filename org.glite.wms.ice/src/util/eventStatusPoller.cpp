@@ -115,7 +115,7 @@ bool eventStatusPoller::getStatus(void)
 	}
         
         log_dev->warnStream()
-            << "Checking job cream/grid ID=[" 
+            << "eventStatusPoller::getStatus() - Checking job cream/grid ID=[" 
             << jobIt->getJobID()
             << "]/["
             << jobIt->getGridJobID()
@@ -313,7 +313,7 @@ void eventStatusPoller::updateJobCache()
         // sit = Status ITerator
         for ( vector<creamtypes__Status*>::iterator sit = _statuslist.begin();
               sit != _statuslist.end(); sit++ ) {
-            
+
             glite::ce::cream_client_api::job_statuses::job_status
                 stNum = getStatusNum( (*sit)->name );
             
@@ -384,8 +384,16 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
               << log4cpp::CategoryStream::ENDLINE;
 
           jobCache::iterator jit = cache->lookupByCreamJobID( *it );
-          cid = jit->getJobID();
-          log_dev->infoStream() 
+	  if( jit == cache->end() )
+	  {
+	    log_dev->errorStream() << "eventStatusPoller::purgeJobs() - "
+	    			   << "NOT Found in chace job ["
+				   << *it << "]"
+				   << log4cpp::CategoryStream::ENDLINE;
+	    return;
+	  }
+	  cid = jit->getJobID();
+          log_dev->infoStream()
               << "eventStatusPoller::purgeJobs() - "
               << "Calling JobPurge for host ["
               << jit->getCreamURL() << "]"

@@ -50,7 +50,7 @@ void iceUtil::subscriptionUpdater::body( void )
 	  }
 	  this->renewSubscriptions(vec);
     }
-    sleep(60);
+    sleep( (int)(conf->getSubscriptionUpdateThresholdTime()/2) );
   }
 }
 
