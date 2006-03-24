@@ -1,0 +1,164 @@
+#!/bin/sh
+
+# File: glite-wms-ice
+# Author: Moreno Marzolla <moreno.marzolla@pd.infn.it>
+# Based on glite-wms-wm by Francesco Giacomini <Francesco.Giacomini@cnaf.infn.it>
+# Copyright (c) 2002 EU DataGrid.
+# Copyright (c) 2005 EGEE
+# For license conditions see http://www.eu-datagrid.org/license.html
+#
+# Description: start, stop, status of the GLITE ICE daemon
+#
+# $Id$
+
+# chkconfig: 345 94 06 
+
+GLITE_LOCATION=${GLITE_LOCATION:-@prefix@}
+
+#########################################################
+#
+#				Integration changes
+#. ${GLITE_LOCATION}/etc/glite-wms-vars.sh
+#. ${GLITE_LOCATION}/libexec/glite-wms-services-certs.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms.sh
+#. ${GLITE_LOCATION}/etc/profile.d/glite-wms-config.sh
+
+. /etc/glite/profile.d/glite_setenv.sh 
+########################################
+
+ 
+GLITE_WMS_CONFIG_DIR=${GLITE_LOCATION}/etc/
+export GLITE_WMS_CONFIG_DIR
+
+this_script_name=$0
+
+program_name=glite-wms-ice
+binpath=${GLITE_LOCATION}/bin/${program_name}
+pid_file=${GLITE_WMS_TMP}/${program_name}.pid
+
+#set -x
+
+running()
+{
+    # no pidfile
+    if [ ! -r ${pid_file} ]; then
+        return 3
+    fi
+
+    pid=`cat ${pid_file} 2> /dev/null`
+
+    # no pid
+    if [ -z "${pid}" ]; then
+        return 1
+    fi
+    
+    local cmdline=`ps hwwwp ${pid} o command` # BSD style
+    local cmd=`echo ${cmdline} | awk '{print $1}'` # beware of white spaces in the command
+
+    # no ice?
+    if [ "${cmd}" != "${binpath}" ]; then
+        # maybe the process has been swapped out
+        # the command name (the first 15 chars) appears between []
+        local expected_cmd="[`echo ${program_name} | cut -c1-15`]"
+        if [ "${cmd}" != "${expected_cmd}" ]; then
+            return 1;
+        fi
+    fi
+
+    return 0
+}
+
+ret_code=0
+
+start()
+{
+    conf_file=glite_wms.conf
+    parse_attribute=ICE
+    . ${GLITE_LOCATION}/libexec/glite-wms-parse-configuration.sh ${conf_file} ${parse_attribute}
+
+    echo -n "starting ICE... "
+    if running; then
+        echo "ok (already running)"
+    else
+        rm -f ${pid_file}
+        ${binpath} --conf ${conf_file} --daemon ${pid_file} > /dev/null 2>&1
+        # there is a race condition due to some delay between becoming
+        # a daemon (hence returning control to this script) and
+        # writing the pid file; the following sleep should be enough
+        # to get around it
+        sleep 1
+        if running; then
+            echo "ok"
+        else
+            echo "failure"
+            ret_code=1
+        fi
+    fi
+}
+
+stop()
+{
+    echo -n "stopping ICE... "
+    if running; then
+        pid=`cat ${pid_file} 2> /dev/null`
+        kill ${pid}
+        sleep 2
+        if running; then
+            kill -9 ${pid}
+            sleep 2
+            if running; then
+                echo "failure (stop it manually)"
+                ret_code=1
+            else
+                echo "ok"
+            fi
+        else
+            echo "ok"
+            rm -f ${pid_file}
+        fi
+    else
+        echo "ok (was not running)"
+    fi
+}
+
+status()
+{
+    running
+    RETVAL=$?
+    if [ ${RETVAL} -eq 0 ]; then
+        pid=`cat ${pid_file} 2> /dev/null`
+        echo "${binpath} (pid ${pid}) is running..."
+    else
+        echo "${binpath} is not running"
+    fi
+    return ${RETVAL}
+}
+
+usage()
+{
+    echo "Usage: ${this_script_name} {start|stop|restart|status}"
+}
+
+case $1 in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        if [ ${ret_code} -eq 0 ]; then
+            start
+        fi     
+        ;;
+    status)
+        status
+        ret_code=$?
+        ;;
+    *)
+        usage
+        ret_code=1
+esac
+
+exit ${ret_code}

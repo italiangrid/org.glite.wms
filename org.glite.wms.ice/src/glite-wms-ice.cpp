@@ -12,6 +12,7 @@
 #include "iceConfManager.h"
 
 #include "boost/scoped_ptr.hpp"
+#include "boost/program_options.hpp"
 
 #include <string>
 #include <iostream>
@@ -20,34 +21,63 @@
 using namespace std;
 using namespace glite::ce::cream_client_api;
 namespace iceUtil = glite::wms::ice::util;
+namespace po = boost::program_options;
 
 #define USE_STATUS_POLLER true
 #define USE_STATUS_LISTENER false
 
-int main(int argc, char*argv[]) {
-  
+int main(int argc, char*argv[]) 
+{
+    string opt_pid_file;
+    string opt_conf_file;
+    
+    po::options_description desc("Usage");
+    desc.add_options()
+        ("help", "display this help and exit")
+        (
+         "daemon",
+         po::value<string>(&opt_pid_file),
+         "run in daemon mode and save the pid in this file"
+         )
+        (
+         "conf",
+         po::value<string>(&opt_conf_file)->default_value("glite_wms.conf"),
+         "configuration file"
+         )
+        ;
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if ( vm.count("help") ) {
+        cout << desc << endl;
+        return 0;
+    }
+
+    if ( vm.count("daemon") ) {
+        ofstream pid_file(opt_pid_file.c_str());
+        if (!pid_file) {
+            cerr << "the pid file " << opt_pid_file << " is not writable\n";
+            return -1;
+        }
+        if (daemon(0, 0)) {
+            cerr << "cannot become daemon (errno = "<< errno << ")\n";
+            return -1;
+        }
+        pid_file << ::getpid();
+    }
+
   /**
    * - creates an ICE object
    * - initializes the job cache
    * - starts the async event consumer and status poller
    * - opens the WM's and the NS's filelist
-   * 
-   * - main's params:
-   *                  argv[1]: configuration file
-   */
-
-  if ( argc!=2 ) {
-      cout << "Usage: " << argv[0]
-           << " <config_file>" << endl;
-      return 1;
-  } 
-
-
+   */    
 
   /*****************************************************************************
    * Initializes configuration manager (that in turn loads configurations)
    ****************************************************************************/
-  iceUtil::iceConfManager::init(argv[1]);
+  iceUtil::iceConfManager::init( opt_conf_file );
   try{
     iceUtil::iceConfManager::getInstance();
   }

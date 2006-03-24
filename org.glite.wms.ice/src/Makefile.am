@@ -91,7 +91,8 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GLITE_LB_THR_COMMON_LIBS) \
 		$(BOOST_FS_LIBS) \
 		$(BOOST_THREAD_LIBS) \
-		$(BOOST_REGEX_LIBS)
+		$(BOOST_REGEX_LIBS) \
+		$(BOOST_PO_LIBS)
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lgridsite_globus \

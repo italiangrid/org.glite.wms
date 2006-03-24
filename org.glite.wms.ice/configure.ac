@@ -92,6 +92,8 @@ AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 AC_PREFIX_DEFAULT([/opt/glite])
 AM_CONFIG_HEADER([src/autogen/config.h])
+AC_CONFIG_FILES([config/Makefile])
+AC_CONFIG_FILES([config/glite-wms-ice])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/util/Makefile])
