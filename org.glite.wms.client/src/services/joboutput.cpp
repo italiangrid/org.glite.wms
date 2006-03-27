@@ -378,7 +378,7 @@ bool JobOutput::retrieveFiles (std::string &result, std::string &errors, const s
 	string filename = "";
 	string err = "";
 	bool ret = true;
-	logInfo->print(WMS_DEBUG, "Connecting to the service", getEndPoint());
+	logInfo->print(WMS_DEBUG, "Connecting to the service", getEndPoint(),false);
 	try {
 		// gets the list of the out-files from the EndPoint
 		logInfo->service(WMP_OUTPUT_SERVICE, jobid);
