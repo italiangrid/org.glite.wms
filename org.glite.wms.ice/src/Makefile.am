@@ -77,7 +77,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(CLASSAD_LIBS) \
 		-lglite_ce_monitor_client \
 		-lglite_ce_monitor_consumer \
-		-lglite_security_gsoap_plugin_276b_gcc32pthr \
+		$(SEC_GSOAP_PLUGIN_276b_NOTHR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/util/libglite_wms_ice_util.la \
@@ -103,7 +103,7 @@ dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		-lglite_ce_monitor_consumer \
 		-lglite_ce_monitor_client \
 		-lglite_wmsutils_classads \
-		-lglite_security_gsoap_plugin_276b_gcc32pthr \
+		$(SEC_GSOAP_PLUGIN_276b_NOTHR_LIBS) \
 		$(LOG4CPP_LIBS) \
 		$(GLOBUS_THR_LIBS) \
 		../src/util/libglite_wms_ice_util.la \

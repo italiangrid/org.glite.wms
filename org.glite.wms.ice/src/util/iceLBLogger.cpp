@@ -38,8 +38,9 @@ iceLBLogger::~iceLBLogger( void )
 
 void iceLBLogger::logEvent( iceLBEvent* ev )
 {
-    boost::recursive_mutex::scoped_lock L( _mutex );
     if ( ev ) {
+
+        boost::recursive_mutex::scoped_lock L( _mutex );
         boost::scoped_ptr< iceLBEvent > _scoped_ev( ev );
         
         try {
