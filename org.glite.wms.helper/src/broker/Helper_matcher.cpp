@@ -22,13 +22,14 @@
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 #include "glite/wms/brokerinfo/brokerinfo.h"
 
 #ifdef MATCHER_HELPER_USE_ISM
+#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
 #else
+#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 #include "glite/wms/broker/RBSimpleImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesImpl.h"
 #include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
@@ -77,8 +78,11 @@ namespace matcher {
 
 namespace {
 
+#ifdef MATCHER_HELPER_USE_ISM
+typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoISMImpl> BrokerInfo;
+#else
 typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
-
+#endif
 std::string const helper_id("MatcherHelper");
 
 helper::HelperImpl* create_helper()
