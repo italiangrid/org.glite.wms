@@ -41,6 +41,7 @@ namespace glite {
 	  time_t last_status_change; //! The time of the last job status change
           time_t last_seen; //! The time of the last received notification for the job
           time_t end_lease; //! The time the lease for this job ends
+	  time_t proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
 
 	public:
 
@@ -65,11 +66,12 @@ namespace glite {
               last_status_change = C.last_status_change;
               last_seen = C.last_seen;
               end_lease = C.end_lease;
+	      proxyCertTimestamp = C.proxyCertTimestamp;
           }
 
 	  //! Sets the status of the CreamJob object
-	  //void setStatus(const glite::ce::cream_client_api::job_statuses::job_status& st) { status = st; }
-          void setStatus( glite::ce::cream_client_api::job_statuses::job_status st, const time_t& tstamp ) { status = st; last_status_change = tstamp; }
+	  //void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { status = st; }
+          void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st, const time_t& tstamp ) { status = st; last_status_change = tstamp; }
 	  //! Sets the cream unique identifier for this job
           void setJobID( const std::string& cid ) { cream_jobid = cid; }
           //! Sets the jdl for this job
@@ -77,9 +79,11 @@ namespace glite {
           //! Sets the sequence code
           void setSequenceCode( const std::string& seq ) { sequence_code = seq; }
           //! Sets the new lease end time
-          void setEndLease( time_t l ) { end_lease = l; }
+          void setEndLease( const time_t& l ) { end_lease = l; }
           //! Sets the time we got info about this job from CREAM
-          void setLastSeen( time_t l ) { last_seen = l; }
+          void setLastSeen( const time_t& l ) { last_seen = l; }
+	  //! Sets the user proxy cert file last modification time
+	  void setProxyCertMTime( const time_t& l ) { proxyCertTimestamp = l; }
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return grid_jobid; }
 	  //! Gets the unique cream job identifier
@@ -104,6 +108,8 @@ namespace glite {
           time_t getLastSeen( void ) const { return last_seen; }
           //! Gets the sequence code
           std::string getSequenceCode( void ) const { return sequence_code; }
+	  //! Gets the last modification time of the user proxy cert file
+	  time_t getProxyCertLastMTime( void ) const { return proxyCertTimestamp; }
 
           //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, idle, running or held
           bool is_active( void ) const;
