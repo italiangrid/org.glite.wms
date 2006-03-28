@@ -445,7 +445,7 @@ try {
     // (GRAM cannot do this).
     if (!condor_submit_environment.empty()) condor_submit_environment.append(";");
 
-    condor_submit_environment.append("$$(GLITE_ENV:UNDEFINED)");
+    condor_submit_environment.append("$$(GLITE_ENV:)");
 
     jdl::set_remote_env(*result,condor_submit_environment);
 
