@@ -10,7 +10,7 @@
 
 #include "glite/wms/broker/ResourceBroker.h"
 #include "glite/wms/brokerinfo/brokerinfo.h"
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
+#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 
 namespace glite {
 namespace wms {
@@ -22,11 +22,11 @@ namespace matchmaking = wms::matchmaking;
 class RBMaximizeFilesImpl : public ResourceBrokerImpl
 {
 public:
-   RBMaximizeFilesImpl(brokerinfo::BrokerInfo<brokerinfo::brokerinfoGlueImpl> *, bool do_prefetch=false);
+   RBMaximizeFilesImpl(brokerinfo::BrokerInfo<brokerinfo::brokerinfoISMImpl> *, bool do_prefetch=false);
   ~RBMaximizeFilesImpl();
   matchmaking::match_table_t* findSuitableCEs(const classad::ClassAd* requestAd);
 private:
-  brokerinfo::BrokerInfo<brokerinfo::brokerinfoGlueImpl>* BI;
+  brokerinfo::BrokerInfo<brokerinfo::brokerinfoISMImpl>* BI;
   bool m_prefetch;
 };
 
