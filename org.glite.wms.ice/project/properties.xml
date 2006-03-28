@@ -56,6 +56,6 @@
                                                        
         <property name="build.package.description" value="Interface for CREAM environment" />
 
-        <property name="m4files.list" value="globus.m4 glite.m4 glite_lb.m4 optimize.m4 boost.m4 gsoap.m4 classad.m4 glite_wmsutils.m4 log4cpp.m4 glite_security.m4 glite_wms_common.m4"/>	
+        <property name="m4files.list" value="globus.m4 glite.m4 glite_lb.m4 optimize.m4 boost.m4 gsoap.m4 classad.m4 glite_wmsutils.m4 log4cpp.m4 glite_security.m4 glite_wms_common.m4 glite_wms.m4 gridsite.m4"/>	
 		
 </project>

@@ -19,8 +19,11 @@
 namespace iceUtil = glite::wms::ice::util;
 
 //______________________________________________________________________________
-iceUtil::proxyRenewal::proxyRenewal()
-  : log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
+iceUtil::proxyRenewal::proxyRenewal() :
+    iceThread( "ICE Lease Updater" ),
+    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
+    creamClient( 0 ),
+    delay( 1*60 ) // proxy renewer wakes up every minute
 {
 }
 
@@ -30,7 +33,7 @@ void iceUtil::proxyRenewal::body( void )
 {
     while( !isStopped() ) {
 	checkProxies();
-        sleep( 60 ); // FIXME: non hardcoded params like this
+        sleep( delay );
     }
 }
 
@@ -38,8 +41,9 @@ void iceUtil::proxyRenewal::body( void )
 void iceUtil::proxyRenewal::checkProxies()
 {
   boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-  for(jobCache::iterator jobIt = jobCache::getInstance()->begin(); 
-      jobIt != jobCache::getInstance()->end(); ++jobIt) {
+  jobCache* cache = jobCache::getInstance();
+
+  for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
     struct stat buf;
     if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 )
     {

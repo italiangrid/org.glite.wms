@@ -5,8 +5,8 @@
 #include "creamJob.h"
 #include "boost/thread/recursive_mutex.hpp"
 #include "boost/scoped_ptr.hpp"
-#include <vector>
-#include <string>
+//#include <vector>
+//#include <string>
 
 // Forward declaratino for the CreamProxy
 namespace glite {
@@ -31,7 +31,6 @@ namespace glite {
       namespace util {
           
           class jobCache;
-          class iceEventLogger;
 
           /**
            *

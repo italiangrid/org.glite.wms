@@ -31,7 +31,7 @@ libglite_wms_ice_util_la_SOURCES = \
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
 		-I$(top_srcdir)/src/ice \
-		-I$(GLITE_LOCATION)/include \
+		$(GLITE_CFLAGS) \
 		$(CLASSAD_CFLAGS) \
 		$(GSOAP_CFLAGS) \
 		$(LOG4CPP_CFLAGS) \
