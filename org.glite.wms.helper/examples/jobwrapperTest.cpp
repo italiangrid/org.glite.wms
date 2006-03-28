@@ -7,7 +7,6 @@
  *  For license conditions see LICENSE file or
  *  http://www.edg.org/license.html
  ***************************************************************************/
-
 #include <iostream>
 #include <fstream>
 
@@ -38,17 +37,19 @@ main(int argc, char* argv[])
   output_files.push_back("outputfile1");
 
   Configuration config("glite_wms.conf", "WorkloadManager");
-  JobWrapper *jw;
+  std::auto_ptr<JobWrapper> jw;
   
   try {
+
     // initialize a job wrapper with job.sh as executable	  
-    jw = new JobWrapper("job.sh");
+    jw.reset(new JobWrapper("job.sh"));
 
     // set the input sandbox
     jw->input_sandbox(URL("gsiftp://joda.cnaf.infn.it:9000/home/joda/wp1/JobWrapper"), in_files);
 
     // set the output sandbox
     jw->output_sandbox(URL("gsiftp://joda.cnaf.infn.it:8000/tmp/gridtest"), output_files);
+
   } catch (InvalidURL& ex) {
     cerr << ex.what();
     return -1;
@@ -69,7 +70,7 @@ main(int argc, char* argv[])
   jw->brokerinfo(".BrokerInfo");
 
   // set EDG_WL_JOBID to the default value
-  jw->job_Id("https://edt003.cnaf.infn.it:9000/131.154.99.82/092250216745692?edt003.cnaf.infn.it:7771");
+  jw->job_id("https://edt003.cnaf.infn.it:9000/131.154.99.82/092250216745692?edt003.cnaf.infn.it:7771");
 
   // set EDG_WL_SEQUENCE_CODE to the default value
   //jw->sequence_code("UI=1:NS=1:WM=3:BH=3:JSS=2:LM=1:LRMS=1:APP=0");
@@ -78,21 +79,16 @@ main(int argc, char* argv[])
   jw->create_subdir();
   
   try {
+
     URL url_("http://results_collector.cnaf.infn.it/gravitational_waves/mcecchi");
     jw->set_output_sandbox_base_dest_uri(url_);
     jw->set_osb_wildcards_support(true);
+
   } catch (InvalidURL& ex) {
     cerr << ex.what();
   }
 
-  // output the job wrapper script to standard output
-  cout << *jw;
-
-  // output the job wrapper script to file
-  ofstream of("./job_wrapper.sh");
-  of << *jw;
-
-  delete jw;
+  jw->print(cout);
 
   return 0;
 }

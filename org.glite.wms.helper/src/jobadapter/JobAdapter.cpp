@@ -762,7 +762,7 @@ try {
   jw->arguments(arguments);
   jw->prologue(prologue);
   jw->prologue_arguments(prologue_arguments);
-  jw->job_Id(job_id);
+  jw->job_id(job_id);
   jw->job_id_to_filename(jobid_to_file);
   jw->environment(env);
   jw->gatekeeper_hostname(globusresourcecontactstring.substr(0, pos));
@@ -889,7 +889,7 @@ try {
   }
 
   try {
-    ofJW << *jw;
+    jw->print(ofJW);
   } catch (JobWrapperException e) {
     throw CannotCreateJobWrapper(e.message());
   }

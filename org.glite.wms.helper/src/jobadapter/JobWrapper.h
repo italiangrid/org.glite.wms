@@ -32,8 +32,6 @@ namespace wms {
 namespace helper {
 namespace jobadapter {
 	
-struct pimpl;
-
 enum job_type {NORMAL = 0, MPI_LSF = 1, MPI_PBS = 2, INTERACTIVE = 3};
 
 class JobWrapperException
@@ -49,14 +47,17 @@ private:
 class JobWrapper
 {
 public:
+
   /**
    *  Initializes the object passing the parameters to the job wrapper.
    *  \param job
    *  \ingroup jobadapter
    */
   JobWrapper(const std::string& job);
+  ~JobWrapper();
 
-  virtual ~JobWrapper();
+  struct pimpl;
+  boost::shared_ptr<pimpl> m_pimpl;
 
   /**
    * Declare the standard input file.
@@ -118,7 +119,7 @@ public:
   * @param jobid
   * \ingroup jobadapter
   */
-  void job_Id(const std::string& jobid);
+  void job_id(const std::string& jobid);
   
   /**
    * Set the value of the workdir.
@@ -166,35 +167,35 @@ public:
 
   void nodes(int node);
 
-   /**
-    * Field the outputdata attribute.
-    * @param output_data    list of classads
-    * \ingroup jobadapter
-    */
-   void outputdata(const classad::ExprList* output_data);
+  /**
+   * Field the outputdata attribute.
+   * @param output_data    list of classads
+   * \ingroup jobadapter
+   */
+  void outputdata(const classad::ExprList* output_data);
 
-   /**
-    * Declare virtual organization
-    * @param vo 
-    * \ingroup jobadapter
-    */ 
-   void vo(const std::string& vo);
+  /**
+   * Declare virtual organization
+   * @param vo 
+   * \ingroup jobadapter
+   */ 
+  void vo(const std::string& vo);
 
-   /**
-    * Set the name of the DSUpload output file.
-    * @param jobid
-    * \ingroup jobadapter
-    */
-   void dsupload(const URL& id);
+  /**
+   * Set the name of the DSUpload output file.
+   * @param jobid
+   * \ingroup jobadapter
+   */
+  void dsupload(const URL& id);
 
-   /**
-    * Set the support of Input/Output Sandboxes in WMProxy.
-    * @param wm
-    * \ingroup jobadapter
-    */
-   void wmp_support(void);
+  /**
+   * Set the support of Input/Output Sandboxes in WMProxy.
+   * @param wm
+   * \ingroup jobadapter
+   */
+  void wmp_support(void);
 
-   /**
+  /**
    * Declare which files are in the input sandbox and where they are located.
    * @param base_url location of all the files in the input sandbox
    * @param files    list of files in the input sandbox
@@ -250,12 +251,11 @@ public:
   void prologue(std::string const&);
   void prologue_arguments(std::string const&);
 
+  std::ostream& print(std::ostream& os) const;  
 private:
-  boost::shared_ptr<pimpl> m_pimpl;
 
   static const std::string s_brokerinfo_default;
 
-  std::ostream& print(std::ostream& os) const;  
   friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
   bool fill_out_script(std::string const&, std::ostream&) const;
   bool dump_vars(std::ostream&) const;

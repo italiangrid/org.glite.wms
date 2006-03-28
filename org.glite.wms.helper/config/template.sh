@@ -62,7 +62,7 @@ sort_by_size() # 1 - file names vector, 2 - directory
   unset tmp_sort_file
 }
 
-globus_url_retry_copy() # 1 - source, 2 - dest
+url_retry_copy() # 1 - source, 2 - dest, 3 - type (!=0  htcp)
 {
   count=0
   succeded=1
@@ -79,7 +79,11 @@ globus_url_retry_copy() # 1 - source, 2 - dest
     else
       sleep_time=`expr $sleep_time \* 2`
     fi
-    globus-url-copy $1 $2
+    if [ $3 -eq 0 ]; then
+      globus-url-copy $1 $2
+    else
+      htcp $1 $2
+    fi
     succeded=$?
     count=`expr $count + 1`
   done
@@ -92,7 +96,7 @@ doExit() # 1 - status
 
   jw_echo "jw exit status = ${status}"
 
-  globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}" 0
   if [ $? != 0 ]; then
     $status=$?
   fi
@@ -261,6 +265,9 @@ function send_partial_file
   local OLDSIZE
   local NEWSIZE
   local COUNTER
+
+  # No copy retry allowed here!!!
+
   # Loop forever (need to be killed by main program)
   while [ -z "$LAST_CYCLE" ] ; do
     # Go to sleep, but be ready to wake up when the user job finishes
@@ -269,9 +276,9 @@ function send_partial_file
     wait $SLEEP_PID >/dev/null 2>&1
     # Retrieve the list of files to be monitored
     if [ "${TRIGGERFILE:0:9}" == "gsiftp://" ]; then
-      globus-url-copy ${TRIGGERFILE} file://${LISTFILE}
+      globus-url-copy ${TRIGGERFILE} file://${LISTFILE} 2>/dev/null
     elif [ "${TRIGGERFILE:0:8}" == "https://" ]; then
-      htcp ${TRIGGERFILE} file://${LISTFILE}
+      htcp ${TRIGGERFILE} file://${LISTFILE} 2>/dev/null
     fi
     # Skip iteration if unable to get the list
     # (can be used to switch off monitoring)
@@ -300,9 +307,9 @@ function send_partial_file
           SLICENAME=$SRCFILE.`date +%Y%m%d%H%M%S`_${!COUNTER}
           tail -c $DIFFSIZE ${SRCFILE}.${FILESUFFIX} > $SLICENAME
           if [ "${DESTURL:0:9}" == "gsiftp://" ]; then
-            globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
+            globus-url-copy file://$SLICENAME ${DESTURL}/`basename $SLICENAME` 2>/dev/null
           elif [ "${DESTURL:0:8}" == "https://" ]; then
-            htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME`
+            htcp file://$SLICENAME ${DESTURL}/`basename $SLICENAME` 2>/dev/null
           fi
           GLOBUS_RETURN_CODE=$?
           rm ${SRCFILE}.${FILESUFFIX} $SLICENAME
@@ -317,14 +324,6 @@ function send_partial_file
   # Do some cleanup
   if [ -f "$LISTFILE" ] ; then rm $LISTFILE ; fi
 }
-
-if [ "${__input_base_url}:-1" != "/" ]; then
-  __input_base_url="${__input_base_url}/"
-fi
-
-if [ "${__output_base_url}:-1" != "/" ]; then
-  __output_base_url="${__output_base_url}/"
-fi
 
 if [ -n "${__gatekeeper_hostname}" ]; then
   export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
@@ -428,16 +427,16 @@ umask 022
 for f in ${__input_file[@]}
 do
   if [ ${__wmp_support} -eq 0 ]; then
-    globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
+    url_retry_copy "${__input_base_url}/${f}" "file://${workdir}/${f}" 0
     if [ $? != 0 ]; then
       log_error "Cannot download ${f} from ${__input_base_url}"
     fi
   else #WMP support
     file=`basename $f`
     if [ "${f:0:9}" == "gsiftp://" ]; then
-      globus-url-copy "${f}" "file://${workdir}/${file}"
+      url_retry_copy "${f}" "file://${workdir}/${file}" 0
     elif [ "${f:0:8}" == "https://" ]; then
-      htcp "${f}" "file://${workdir}/${file}"
+      url_retry_copy "${f}" "file://${workdir}/${file}" 1
     fi
     if [ $? != 0 ]; then
       log_error "Cannot download ${f} from ${__input_base_url}"
@@ -463,10 +462,10 @@ fi
 if [ ${__job_type} -eq 3 ]; then
   #interactive job
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
-    globus_url_retry_copy "${__input_base_url}opt/glite/bin/${f} file://${workdir}/${f}"
+    url_retry_copy "${__input_base_url}/opt/glite/bin/${f}" "file://${workdir}/${f}" 0
     chmod +x ${workdir}/${f}
   done
-  globus_url_retry_copy "${__input_base_url}opt/glite/lib/libglite-wms-grid-console-agent.so.0 file://${workdir}/libglite-wms-grid-console-agent.so.0"
+  url_retry_copy "${__input_base_url}/opt/glite/lib/libglite-wms-grid-console-agent.so.0" "file://${workdir}/libglite-wms-grid-console-agent.so.0" 0
 fi
 
 host=`hostname -f`
@@ -671,7 +670,7 @@ do
           let "file_size_acc += $file_size"
         #fi
         if [ $file_size_acc -le ${__max_osb_size} ]; then
-          globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+          url_retry_copy "file://${workdir}/${f}" "${__output_base_url}/${ff}" 0
         else
           jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
           # $current_file is zero-based (being used even
@@ -687,13 +686,13 @@ do
             if [ $? != 0 ]; then
               jw_echo "Could not truncate output sandbox file ${f}, not sending"
             else
+              url_retry_copy "file://${workdir}/${f}.tail" "${__output_base_url}/${ff}.tail" 0
               jw_echo "Truncated last $trunc_len bytes for file ${f}"
-              globus_url_retry_copy "file://${workdir}/${f}.tail" "${__output_base_url}${ff}.tail"
             fi
           fi
         fi
       else
-        globus_url_retry_copy "file://${workdir}/${f}" "${__output_base_url}${ff}"
+        url_retry_copy "file://${workdir}/${f}" "${__output_base_url}/${ff}" 0
       fi
       if [ $? != 0 ]; then
         log_error "Cannot upload ${f} into ${__output_base_url}" "Done"
@@ -715,9 +714,9 @@ do
       #fi
       if [ $file_size_acc -le ${__max_osb_size} ]; then
         if [ "${f:0:9}" == "gsiftp://" ]; then
-          globus-url-copy "file://$s" "$d"
+          url_retry_copy "file://$s" "$d" 0
         elif [ "${f:0:8}" == "https://" ]; then
-          htcp "file://$s" "$d"
+          url_retry_copy "file://$s" "$d" 1
         fi
       else
         jw_echo "OSB quota exceeded for $s, truncating needed"
@@ -733,18 +732,18 @@ do
           else
             jw_echo "Truncated last $trunc_len bytes for file ${f}"
             if [ "${f:0:9}" == "gsiftp://" ]; then
-              globus-url-copy "file://$s.tail" "$d.tail"
+              url_retry_copy "file://$s.tail" "$d.tail" 0
             elif [ "${f:0:8}" == "https://" ]; then
-              htcp "file://$s.tail" "$d.tail"
+              url_retry_copy "file://$s.tail" "$d.tail" 1
             fi
           fi
         fi
       fi
     else #unlimited osb
       if [ "${f:0:9}" == "gsiftp://" ]; then
-        globus-url-copy "file://$s" "$d"
+        url_retry_copy "file://$s" "$d" 0
       elif [ "${f:0:8}" == "https://" ]; then
-        htcp "file://$s" "$d"
+        url_retry_copy "file://$s" "$d"
       fi
     fi
     if [ $? != 0 ]; then
