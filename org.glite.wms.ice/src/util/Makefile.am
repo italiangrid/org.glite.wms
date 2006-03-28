@@ -25,7 +25,8 @@ libglite_wms_ice_util_la_SOURCES = \
 				subscriptionManager.cpp \
 				leaseUpdater.cpp \
 				iceThread.cpp \
-				cemonUrlCache.cpp
+				cemonUrlCache.cpp \
+				proxyRenewal.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/util \
