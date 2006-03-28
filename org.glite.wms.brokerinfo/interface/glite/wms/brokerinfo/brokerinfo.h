@@ -1,6 +1,6 @@
 /*
  * File: BrokerInfo.h
- * Author: Monforte Salvatore <Salvatore.Monforte@ct.infn.it>
+ * Author: Monforte Salvatore
  * Copyright (c) 2001 EU DataGrid.
  * For license conditions see http://www.eu-datagrid.org/license.html
  */
@@ -28,8 +28,8 @@ template <class implementation> class BrokerInfo;
 class BrokerInfoImpl : boost::noncopyable
 {
 public:
-  virtual void retrieveCloseSAsInfo (const BrokerInfoData::VO_name_type&, BrokerInfoData&, std::vector<std::string>* = 0) = 0;
-  virtual void retrieveCloseSEsInfo (const BrokerInfoData::CEid_type&, BrokerInfoData&, std::vector<std::string>* = 0)   = 0;
+  virtual void retrieveCloseSAsInfo (const BrokerInfoData::VO_name_type&, BrokerInfoData&) = 0;
+  virtual void retrieveCloseSEsInfo (const BrokerInfoData::CEid_type&, BrokerInfoData&)   = 0;
   virtual void retrieveSEsInfo      (const classad::ClassAd& requestAd, BrokerInfoData&)  = 0;
   virtual void retrieveSFNsInfo     (const classad::ClassAd& requestAd, BrokerInfoData&)  = 0;
   virtual ~BrokerInfoImpl() {}
@@ -43,13 +43,13 @@ public:
   BrokerInfo() : m_data( new BrokerInfoData ), m_impl( new implementation ) {} 
   ~BrokerInfo() {}
   
-  void retrieveCloseSAsInfo (const BrokerInfoData::VO_name_type& vo, std::vector<std::string>* attrs = 0)
+  void retrieveCloseSAsInfo (const BrokerInfoData::VO_name_type& vo)
   {
-    m_impl -> retrieveCloseSAsInfo(vo, *this -> m_data, attrs);	  
+    m_impl -> retrieveCloseSAsInfo(vo, *this -> m_data);	  
   }
-  void retrieveCloseSEsInfo (const BrokerInfoData::CEid_type& CEid, std::vector<std::string>* attrs = 0) 
+  void retrieveCloseSEsInfo (const BrokerInfoData::CEid_type& CEid) 
   { 
-    m_impl -> retrieveCloseSEsInfo(CEid, *this -> m_data, attrs); 
+    m_impl -> retrieveCloseSEsInfo(CEid, *this -> m_data); 
   }
   
   void retrieveSEsInfo (const classad::ClassAd& requestAd) 

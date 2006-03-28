@@ -20,7 +20,7 @@ libglite_wms_brokerinfo_la_LDFLAGS = -all-static
 
 libglite_wms_brokerinfo_la_SOURCES = \
 	BrokerInfoData.cpp \
-	brokerinfoGlueImpl.cpp
+	brokerinfoISMImpl.cpp
 
 
 libglite_wms_dli_sici_la_SOURCES = \

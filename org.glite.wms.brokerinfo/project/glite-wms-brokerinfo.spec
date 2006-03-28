@@ -36,7 +36,7 @@ Source:glite-wms-brokerinfo-@MODULE.VERSION@_bin.tar.gz
 %files
 %defattr(-,root,root)
 %{prefix}/include/glite/wms/brokerinfo/BrokerInfoData.h
-%{prefix}/include/glite/wms/brokerinfo/brokerinfoGlueImpl.h
+%{prefix}/include/glite/wms/brokerinfo/brokerinfoISMImpl.h
 %{prefix}/include/glite/wms/brokerinfo/brokerinfo.h
 %{prefix}/include/glite/wms/brokerinfo/glue_attributes.h
 %{prefix}/lib/libglite_wms_brokerinfo.a

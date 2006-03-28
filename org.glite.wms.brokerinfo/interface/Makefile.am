@@ -9,7 +9,7 @@
 brokerinfodir = $(includedir)
 nobase_brokerinfo_HEADERS = \
 	glite/wms/brokerinfo/BrokerInfoData.h \
-	glite/wms/brokerinfo/brokerinfoGlueImpl.h \
+	glite/wms/brokerinfo/brokerinfoISMImpl.h \
 	glite/wms/brokerinfo/brokerinfo.h
 
 MAINTAINERCLEANFILES = Makefile.in

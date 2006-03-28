@@ -1,7 +1,7 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
 
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
+#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 
 #include "glite/wms/common/configuration/exceptions.h"
 
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
      edglog(debug) << "BEGIN" << endl;
      edglog(debug) << "---------------------------------------------------" << std::endl;
 
-     BrokerInfo<brokerinfoGlueImpl> bi;
+     BrokerInfo<brokerinfoISMImpl> bi;
     
      ifstream fin(req_file.c_str());    
      if( fin ) 

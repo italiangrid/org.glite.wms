@@ -85,7 +85,7 @@ public:
   LFN_container_type getProvidedLFNs(const SE_container_type& compatilbleCloseSEs) const;
 
 private:
-  friend class brokerinfoGlueImpl; 
+  friend class brokerinfoISMImpl; 
   /* InputData dependent */
   SE_container_type      m_involvedSEs;     /**< storage elements referenced by SFN. */
   LFN2SFN_map_type       m_LFN2SFN_map;     /**< logical-file-names to physical-file-names mapping. */
