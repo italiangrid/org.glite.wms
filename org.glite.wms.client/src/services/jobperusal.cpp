@@ -229,14 +229,12 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 	}
 	// file Protocol
 	fileProto= wmcOpts->getStringAttribute(Options::PROTO) ;
-	if (setOpt && fileProto) {
-		logInfo->print (WMS_WARNING, "--proto: option ignored (set operation doesn't need any file transfer)\n", "", true );
-	}  else if (unsetOpt && fileProto) {
-		logInfo->print (WMS_WARNING, "--proto: option ignored (unset operation doesn't need any file transfer)\n", "", true );
-	} else {
-		// --proto
-		checkFileTransferProtocol( );
+	if ( (setOpt || unsetOpt)  && fileProto){
+		logInfo->print (WMS_WARNING, "--proto: option ignored (set/unset operation doesn't need any file transfer)\n", "", true );
+		fileProto=NULL;
 	}
+
+
 	// output file
 	outOpt = wmcOpts->getStringAttribute(Options::OUTPUT);
 	// File directory for --get
@@ -333,6 +331,7 @@ void JobPerusal::readOptions ( int argc,char **argv)  {
 void JobPerusal::jobPerusal ( ){
 	vector<string> paths;
 	postOptionchecks();
+	// Retrieve Version
 	// checks the status of the job
 	checkStatus( );
 	// Operation
@@ -390,6 +389,14 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 	int size = 0;
 	try {
 		logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
+		try{
+			checkFileTransferProtocol();
+		} catch (WmsClientException &exc) {
+			fileProto = new string (Options::TRANSFER_FILES_DEF_PROTO);
+			logInfo->print (WMS_WARNING, exc.what( ) ,
+			"Setting File Protocol to default : " + *fileProto);
+		}
+
 		if (peekFiles.empty()){
 			throw WmsClientException(__FILE__,__LINE__,
 				"perusalGet",DEFAULT_ERR_CODE,
@@ -456,7 +463,7 @@ void JobPerusal::perusalSet ( ){
 void JobPerusal::perusalUnset( ){
 	vector<string> empty;
         logInfo->print(WMS_INFO, "Connecting to the service", getEndPoint());
-        logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " with an empty list of files to unset the peeking for the job", jobId);
+        logInfo->print(WMS_DEBUG, "Calling the " + string(WMP_SETPERUSAL_SERVICE) + " to unset the peeking for the job", jobId);
         try {
 		enableFilePerusal (jobId, empty, getContext());
 	} catch (BaseException &exc) {
