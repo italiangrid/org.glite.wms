@@ -225,11 +225,13 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // to process a notification of a just submitted job that is not
         // yet present in the jobCache
         boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
+	string delegID = "";
         try {
+	    
             theProxy->Register(
                                theJob.getCreamURL().c_str(),
                                theJob.getCreamDelegURL().c_str(),
-                               "", // deleg ID not needed because this client
+                               delegID, // deleg ID not needed because this client
                                // will always do auto_delegation
                                modified_jdl,
                                theJob.getUserProxyCertificate(),
