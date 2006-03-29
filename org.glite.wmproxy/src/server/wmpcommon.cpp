@@ -91,13 +91,15 @@ setGlobalSandboxDir()
 		sandboxdir_global = sandboxstagingpath.substr(documentroot.length() + 1,
 			sandboxstagingpath.length() - 1);
 		if (sandboxdir_global.find(FILE_SEPARATOR) != string::npos) {
-			edglog(fatal)<<"Sandbox directory name MUST be a single directory "
-				"name (check configuration file SandboxStagingPath attribute)"
-				<<endl;
+			string msg = "SandboxStagingPath configuration attribute MUST be "
+				"in the form:"
+	   			"\n$DOCUMENT_ROOT/<single directory name>"
+	   			"\nwhere DOCUMENT_ROOT MUST be as defined in httpd configuration file"
+	   			"\n(please contact server administrator)"
+			edglog(fatal)<<msg<<endl;
 			throw FileSystemException( __FILE__, __LINE__,
 	  			"setGlobalSandboxDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,
-	   			"Sandbox directory name MUST be a single directory name"
-	   			"\n(please contact server administrator)");
+	   			msg);
 			}
 	} else {
 		sandboxdir_global = documentroot;
