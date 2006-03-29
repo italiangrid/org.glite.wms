@@ -130,7 +130,6 @@ void JobOutput::readOptions ( int argc,char **argv)  {
 		fileProto = new string (Options::TRANSFER_FILES_DEF_PROTO);
 		logInfo->print (WMS_WARNING, exc.what( ) ,
 		"Setting File Protocol to default : " + *fileProto);
-
 	}
 }
 /******************************
@@ -299,9 +298,19 @@ int JobOutput::retrieveOutput (std::string &result, Status& status, const std::s
 			std::map< std::string, std::string > map;
 			if (checkVersionForTransferProtocols()){
 				// Calling wmproxy Server method
-				logInfo->service(WMP_JDL_SERVICE, jobid.toString());
-				map = AdUtils::getJobIdMap(getJDL(jobid.toString(), glite::wms::wmproxyapi::REGISTERED));
-                        	logInfo->result(WMP_JDL_SERVICE, "JDL successfully retrieved for jobid: "+jobid.toString());
+				try {
+					logInfo->service(WMP_JDL_SERVICE, jobid.toString());
+					// Retrieve JDL
+					string JDLretrieved=getJDL(jobid.toString(), glite::wms::wmproxyapi::REGISTERED);
+					map = AdUtils::getJobIdMap(JDLretrieved);
+					logInfo->result(WMP_JDL_SERVICE, "JDL successfully retrieved for jobid: "+jobid.toString());
+				} catch (BaseException &exc) {
+					string wmsg =  "";
+					if (exc.Description){ wmsg +=" (" + *(exc.Description)+ ")"; }
+					throw WmsClientException(__FILE__,__LINE__,
+						"retrieveOutput", DEFAULT_ERR_CODE,
+						"Unable to retrieve JDL",wmsg);
+				}
 			}else {
 				map= AdUtils::getJobIdMap(status.getJdl());
 			}
