@@ -88,6 +88,7 @@ void proxyRenewal::checkProxies()
             theJob.push_back( jobIt->getJobID() );
 
             creamClient->renewProxy( jobIt->getDelegationId(),
+                                     jobIt->getCreamURL(),
                                      jobIt->getCreamDelegURL(),
                                      jobIt->getUserProxyCertificate(),
                                      theJob );
