@@ -1094,12 +1094,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 					jobAd->setAttribute(JDL::LRMS_TYPE,*lrmsOpt);
 				}
 			}
-			// ????? JobAd *pass= new JobAd(*(jobAd->ad()));
-			// ???? AdUtils::setDefaultValues(pass,wmcConf);
-			// check JobAd without restoring attributes
-			// ???? pass->check(false);
-			// InputSandbox Files
-			//###toBretrieved=pass->gettoBretrieved();
 			// PARAMETRIC  ===============================================
 			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
 				jobType = WMS_PARAMETRIC;
@@ -1110,14 +1104,17 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				}
 				// InputSandbox for the parametric job
 				if (jobAd->hasAttribute(JDL::INPUTSB)) {
-					// ????? dagAd=AdConverter::bulk2dag(pass);
+					// InputSandbox Files Check
 					dagAd = AdConverter::bulk2dag(jobAd);
 					AdUtils::setDefaultValues(dagAd, wmcConf);
 					dagAd->getSubmissionStrings();
-
 				} else {
 					logInfo->print (WMS_DEBUG, "No InputSandbox in the user JDL", "");
+					// NO ISB found, convert ONLY first STEP
+					// (it is only slight check, the conversion is done on server side)
+					dagAd = AdConverter::bulk2dag(jobAd,1);
 				}
+
 			}
 			// Checks if there are local ISB file(s) to be transferred to
 			toBretrieved = (this->checkInputSandbox ( )>0)?true:false;
