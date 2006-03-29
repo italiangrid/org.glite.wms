@@ -707,6 +707,7 @@ void Options::perusal_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_CONFIG << "\n";
         cerr << "\t" << USG_VO << "\n";
 	cerr << "\t" << USG_DIR << "\n";
+	cerr << "\t" << USG_PROTO << "\n";	
 	cerr << "\t" << USG_ALL << " (**)\n";
 	cerr << "\t" << USG_OUTPUT << "\n";
         cerr << "\t" << USG_NODISPLAY << "\n";
