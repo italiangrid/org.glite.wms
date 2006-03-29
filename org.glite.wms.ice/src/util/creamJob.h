@@ -37,6 +37,7 @@ namespace glite {
 	  std::string cream_deleg_address;
 	  std::string user_proxyfile;
           std::string sequence_code;
+          std::string delegation_id;           
 	  glite::ce::cream_client_api::job_statuses::job_status status;
 	  time_t last_status_change; //! The time of the last job status change
           time_t last_seen; //! The time of the last received notification for the job
@@ -63,6 +64,7 @@ namespace glite {
               status = C.status;
               user_proxyfile = C.user_proxyfile;
               sequence_code = C.sequence_code;
+              delegation_id = C.delegation_id;
               last_status_change = C.last_status_change;
               last_seen = C.last_seen;
               end_lease = C.end_lease;
@@ -78,6 +80,8 @@ namespace glite {
           void setJdl( const std::string& j ) throw( ClassadSyntax_ex& );
           //! Sets the sequence code
           void setSequenceCode( const std::string& seq ) { sequence_code = seq; }
+          //! Sets the delegation id
+          void setDelegationId( const std::string& delid ) { delegation_id = delid; }
           //! Sets the new lease end time
           void setEndLease( const time_t& l ) { end_lease = l; }
           //! Sets the time we got info about this job from CREAM
@@ -108,6 +112,8 @@ namespace glite {
           time_t getLastSeen( void ) const { return last_seen; }
           //! Gets the sequence code
           std::string getSequenceCode( void ) const { return sequence_code; }
+          //! Gets the delegation id
+          std::string getDelegationId( void ) const { return delegation_id; }
 	  //! Gets the last modification time of the user proxy cert file
 	  time_t getProxyCertLastMTime( void ) const { return proxyCertTimestamp; }
 

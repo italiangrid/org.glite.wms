@@ -49,6 +49,7 @@ string iceUtil::CreamJob::serialize( void ) const
     classad::ClassAd ad;
     ad.InsertAttr( "cream_jobid", cream_jobid );
     ad.InsertAttr( "status", status );
+    ad.InsertAttr( "delegation_id", delegation_id );
     classad::ClassAdParser parser;
     classad::ClassAd* jdlAd = parser.ParseClassAd( jdl );
     // Updates sequence code
@@ -93,15 +94,18 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
          ! ad->EvaluateAttrString( "last_status_change", tstamp ) ||
          ! ad->EvaluateAttrString( "last_seen", lseen ) ||
          ! ad->EvaluateAttrString( "end_lease", elease ) ||
-	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ) {
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for 'grid_jobid' or 'status' or 'jdl' or 'last_update' or 'end_lease'  or 'lastmodiftime_proxycert' attributes");
+	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
+         ! ad->EvaluateAttrString( "delegation_id", delegation_id ) ) {
+
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, jdl, last_status_change, last_seen, end_lease, lastmodiftime_proxycert, delegation_id" );
+
     }
     status = (api::job_statuses::job_status)st_number;
     boost::trim_if( tstamp, boost::is_any_of("\"" ) );
     boost::trim_if( elease, boost::is_any_of("\"" ) );
     boost::trim_if( lseen, boost::is_any_of("\"" ) );
     boost::trim_if( lastmtime_proxy, boost::is_any_of("\"" ) );
-
+    boost::trim_if( delegation_id, boost::is_any_of("\"") );
     
     try {
         last_status_change = boost::lexical_cast< time_t >( tstamp );

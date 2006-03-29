@@ -19,7 +19,6 @@ namespace glite {
   }
 };
 
-
 // Forward declaration for the logger
 namespace log4cpp {
     class Category;

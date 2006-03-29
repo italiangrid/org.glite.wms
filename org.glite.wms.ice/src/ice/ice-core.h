@@ -7,6 +7,7 @@
 #include "subscriptionUpdater.h"
 #include "eventStatusPoller.h"
 #include "leaseUpdater.h"
+#include "proxyRenewal.h"
 #include "creamJob.h"
 
 #include "glite/wms/common/utilities/FLExtractor.h"
@@ -50,10 +51,12 @@ namespace glite {
           boost::thread* pollerThread;
           boost::thread* updaterThread;
           boost::thread* lease_updaterThread;
+          boost::thread* proxy_renewerThread;
           boost::shared_ptr<util::eventStatusPoller> poller;
           boost::shared_ptr<util::eventStatusListener> listener;
           boost::shared_ptr<util::subscriptionUpdater> subsUpdater;
           boost::shared_ptr<util::leaseUpdater> lease_updater;
+          boost::shared_ptr<util::proxyRenewal> proxy_renewer;
 
           std::vector<FLEit> requests;
           glite::wms::common::utilities::FLExtractor<std::string> fle;
@@ -75,6 +78,7 @@ namespace glite {
           void startListener(const int&);
           void startPoller(const int&);
           void startLeaseUpdater( void );
+          void startProxyRenewer( void );
           virtual void resubmit_job( util::CreamJob& j );
 
       }; // class ice

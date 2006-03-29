@@ -157,16 +157,10 @@ namespace { // anonymous namespace
         // UTC time, and probably should be converted to the local
         // (ICE-centric) timezone.
 
-        string exitcode_s; // FIXME: EXIT_CODE should be an int, not a string!
-        if ( ad->EvaluateAttrString( "EXIT_CODE", exitcode_s ) ) {
-            boost::trim_if( exitcode_s, boost::is_any_of("\"" ) );
-            try {
-                exit_code = boost::lexical_cast<int>( exitcode_s );
-                has_exit_code = true;
-            } catch( boost::bad_lexical_cast& c ) {
-                throw iceUtil::ClassadSyntax_ex( "EXIT_CODE attribute cannot be converted to int" );
-            }
+        if ( ad->EvaluateAttrInt( "EXIT_CODE", exit_code ) ) {
+            has_exit_code = true;
         }
+
     };
 
     /**

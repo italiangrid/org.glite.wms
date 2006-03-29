@@ -6,7 +6,6 @@
 #include "boost/thread/recursive_mutex.hpp"
 #include "boost/scoped_ptr.hpp"
 
-// Forward declaratino for the CreamProxy
 namespace glite {
   namespace ce {
     namespace cream_client_api {
@@ -26,10 +25,13 @@ namespace glite {
     namespace ice {
       namespace util {
 
+          class jobCache;
+
           class proxyRenewal : public iceThread {
           protected:
 
               log4cpp::Category* log_dev;
+              jobCache *cache;
               boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
               time_t delay;
 

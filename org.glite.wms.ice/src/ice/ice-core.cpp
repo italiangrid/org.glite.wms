@@ -256,6 +256,32 @@ void ice::startLeaseUpdater( void ) {
                  "ice::startLeaseUpdater() - Lease updater succesfully !");
 }
 
+//-----------------------------------------------------------------------------
+void ice::startProxyRenewer( void ) {
+    if ( proxy_renewer && proxy_renewer->isRunning() )
+        return ;
+
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::startProxyRenewer() - Creating a Cream proxy renewer object...");
+    
+    proxy_renewer = boost::shared_ptr<util::proxyRenewal>(new util::proxyRenewal( ) );
+    
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::starProxyRenewer() - Starting Cream proxy renewal thread...");
+    
+    try {
+        proxy_renewerThread = 
+            new boost::thread(boost::bind(&util::proxyRenewal::operator(), 
+                                          proxy_renewer)
+                              );
+    } catch(boost::thread_resource_error& ex) {
+        iceInit_ex( ex.what() );
+    }
+    
+    log_dev->log(log4cpp::Priority::INFO,
+                 "ice::startProxyRenewer() - Proxy renewer succesfully !");
+}
+
 //______________________________________________________________________________
 void ice::clearRequests() 
 {

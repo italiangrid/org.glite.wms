@@ -261,18 +261,19 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // and remove last request from WM's filelist
 
         theJob.setJobID(url_jid[1]);
-        theJob.setStatus(cream_api::job_statuses::PENDING, time(NULL) );
+        theJob.setStatus(cream_api::job_statuses::PENDING, time(0) );
+        theJob.setDelegationId( delegID );
+        theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
 
         _lb_logger->logEvent( new ice_util::cream_transfer_ok_event( theJob ) );
         _lb_logger->logEvent( new ice_util::cream_accepted_event( theJob ) );
 
-	// this lock is not needed because of that one at the beginning of the
-	// method
-        //boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-
         // put(...) accepts arg by reference, but
         // the implementation puts the arg in the memory hash by copying it. So
         // passing a *pointer should not produce problems
+
+        // The following is redundant, as logEvent as a (wanted) side
+        // effect stores the job
         _cache->put( theJob );
     } // this end-scope unlock the listener that now can accept new notifications
 

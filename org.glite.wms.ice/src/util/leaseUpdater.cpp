@@ -121,7 +121,6 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 
 void leaseUpdater::body( void )
 {
-    vector< CreamJob > _jobs;
     while ( !isStopped() ) {
         log_dev->infoStream()
             << "leastUpdater::body() - new iteration"
