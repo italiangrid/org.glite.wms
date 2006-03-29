@@ -230,7 +230,7 @@ this option must be only used with the --register-only option. It enables transf
 <protocol>
 
 .IP
-this option specified the protocol to be used for file transferring (either gsiftp or https). It is ignored if used with --register-only not specifying --transfer-files as well.
+this option specifies the protocol to be used for file tranferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
 .PP
 .HP
 \fB--start\fR

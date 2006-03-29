@@ -30,6 +30,9 @@
 \fB--dir\fR
 <directorypath>
 .HP
+\fB--proto\fR
+<protocol>
+.HP
 \fB--list-only\fR
 
 .SH DESCRIPTION
@@ -104,6 +107,13 @@ E.g. selects the first job id in the list, the ids from the third to the fifth (
 
 .IP
 if this option is specified, the retrieved files (previously listed by the user through the OutputSandbox attribute of the job description file) are stored in the location indicated by directory_path.
+.PP
+.HP
+\fB--proto\fR
+<protocol>
+
+.IP
+this option specifies the protocol to be used for file tranferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
 .PP
 .HP
 \fB--list-only\fR

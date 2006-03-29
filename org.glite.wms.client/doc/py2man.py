@@ -52,6 +52,6 @@ commands2options={
 "transfer-files", "proto", "start", "submit-output", "collection","dag","default-jdl"], \
 "glite-wms-job-cancel":["cancel-input","cancel-output"], \
 "glite-wms-job-list-match":["delegationid", "autm-delegation", "endpoint", "rank","match-output"], \
-"glite-wms-job-output":["jobout-input", "jobout-dir", "list-only"], \
-"glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename", "all","perusal-dir",  "perusal-output", "nodisplay"] \
+"glite-wms-job-output":["jobout-input", "jobout-dir", "proto", "list-only"], \
+"glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename", "all", "perusal-dir", "proto", "perusal-output", "nodisplay"] \
 }

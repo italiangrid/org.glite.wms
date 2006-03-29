@@ -41,6 +41,9 @@
 \fB--dir\fR
 <directorypath>
 .HP
+\fB--proto\fR
+<protocol>
+.HP
 \fB--output\fR, \fB-o\fR
 <filepath>
 .HP
@@ -171,6 +174,13 @@ This option can only be specified together with --get: all chunks of the specifi
 
 .IP
 if this option is specified, the retrieved files are stored in the location pointed by directory_path instead of the default location /tmp/<jobId unique string>. This option is ignored if used with either the --set or the --get options.
+.PP
+.HP
+\fB--proto\fR
+<protocol>
+
+.IP
+this option specifies the protocol to be used for file tranferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
 .PP
 .HP
 \fB--output\fR, \fB-o\fR
