@@ -37,7 +37,8 @@ libglite_wms_ism_cemon_purchaser_la_LIBADD = \
 	$(GLITE_LOCATION)/lib/libglite_ce_monitor_client.a 
 
 libglite_wms_ism_cemon_asynch_purchaser_la_LIBADD = \
-        $(GLITE_LOCATION)/lib/libglite_ce_monitor_consumer.a
+        $(GLITE_LOCATION)/lib/libglite_ce_monitor_consumer.a \
+        $(SEC_GSOAP_PLUGIN_276b_THR_LIBS)
 
 libglite_wms_ism_file_purchaser_la_SOURCES = \
         ism-file-purchaser.cpp 

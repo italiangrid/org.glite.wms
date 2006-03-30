@@ -21,9 +21,12 @@
 	
 	Revision history:
 	$Log$
+	Revision 1.10.2.1  2006/03/30 15:24:52  monforte
+	Fix problem with dynamic library
+
 	Revision 1.10  2006/03/20 22:25:02  eronchie
 	Increased version
-
+	
 	Revision 1.9  2006/03/03 15:46:59  monforte
 	
 	merge against RC15
@@ -126,6 +129,6 @@
 		 Define extra properties here ...
 		 ====================================================== -->
 		 
-        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 cppunit.m4 globus.m4 gsoap.m4 xerces.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_jdl.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 glite_ce.m4 optimize.m4 log4cxx.m4"/>
+        <property name="m4files.list" value="boost.m4 classads.m4 globus.m4 glite.m4 cppunit.m4 globus.m4 gsoap.m4 xerces.m4 glite_wmsutils.m4 glite_wms_common.m4 glite_jdl.m4 glite_wms_ism.m4 glite_wms_classad_plugin.m4 glite_ce.m4 optimize.m4 log4cxx.m4 glite_security.m4"/>
         <property name="build.rpm.spec.requires" value="glite-essentials-cpp" />
 </project>

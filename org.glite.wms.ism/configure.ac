@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17.2.1  2006/03/30 15:24:52  monforte
+#       Fix problem with dynamic library
+#
 #       Revision 1.17  2006/03/20 22:25:02  eronchie
 #       Increased version
 #
@@ -239,6 +242,9 @@ AC_MSG_RESULT(["CPPUNIT found $have_cppunit"])
 AC_GLOBUS([], have_globus=yes, have_globus=no)
 AC_MSG_RESULT(["GLOBUS found $have_globus"])
 
+AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
+AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
+
 AM_PATH_LOG4CXX
 
 if test "$have_globus" = "no"; then
@@ -285,6 +291,7 @@ AC_GSOAP
 AC_XERCES
 
 AC_OPTIMIZE
+AC_SEC_GSOAP_PLUGIN
 
 AC_GLITE_WMS_COMMON([], have_glite_wms_common=yes, have_glite_wms_common=no)
 AC_GLITE_WMSUTILS([], have_glite_wmsutils=yes, have_glite_wmsutils=no)
