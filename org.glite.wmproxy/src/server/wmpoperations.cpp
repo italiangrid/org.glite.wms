@@ -468,9 +468,11 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 				wmputilities::WMS_OPERATION_NOT_ALLOWED, msg);
 		}
 		
-		if ((status.status == JobStatus::DONE)
+		if (((status.status == JobStatus::DONE)
 				&& (status.getValInt(JobStatus::DONE_CODE)
-					== JobStatus::DONE_CODE_OK)) {
+					== JobStatus::DONE_CODE_FAILED))
+				|| ((status.status != JobStatus::DONE)
+					&& (status.status != JobStatus::ABORTED))) {
 			edglog(error)<<
 				"Job current status doesn't allow getOutputFileList operation"<<endl;
 			throw JobOperationException(__FILE__, __LINE__,
