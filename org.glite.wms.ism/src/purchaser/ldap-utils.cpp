@@ -612,7 +612,7 @@ void fetch_bdii_info(const std::string& hostname,
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
   );
   fetch_bdii_ce_info(IIconnection, gluece_info_container);
-  // fetch_bdii_se_info(IIconnection, gluece_info_container);
+  fetch_bdii_se_info(IIconnection, gluece_info_container);
 }
 
 } // namespace purchaser
