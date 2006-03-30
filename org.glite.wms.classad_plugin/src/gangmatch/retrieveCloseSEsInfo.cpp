@@ -16,7 +16,7 @@
 #include <regex.h>
 
 #include "glite/wms/brokerinfo/brokerinfo.h"
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
+#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 
 using namespace std;
 #ifdef WANT_NAMESPACES
@@ -30,7 +30,7 @@ namespace gangmatch {
 
 namespace brokerinfo  = glite::wms::brokerinfo;
 
-typedef brokerinfo::BrokerInfo<brokerinfo::brokerinfoGlueImpl> BrokerInfo;	
+typedef brokerinfo::BrokerInfo<brokerinfo::brokerinfoISMImpl> BrokerInfo;	
 
 namespace {
 
@@ -75,12 +75,10 @@ bool retrieveCloseSEsInfo(const char         *name,
 				
 				eval_successful = true;
 				
-				vector<string> attrs;
-				accumulate(attrList->begin(), attrList->end(), &attrs, EvaluateExprInVector());
 				BrokerInfo BI;
 				
-				BI.retrieveCloseSEsInfo(ceid, &attrs);
-				BI.retrieveCloseSAsInfo(vo, &attrs);
+				BI.retrieveCloseSEsInfo(ceid);
+				BI.retrieveCloseSAsInfo(vo);
 		  	        
 				classad::ExprList* CloseSEsExprList (BI->CloseStorageElements());
 				result.SetListValue(CloseSEsExprList);
