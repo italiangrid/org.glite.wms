@@ -22,7 +22,7 @@
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
 
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
+#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 
 #include "glite/wms/classad_plugin/classad_plugin_loader.h"
 
@@ -76,7 +76,7 @@ namespace broker {
 
 namespace {
 
-typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
+typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoISMImpl> BrokerInfo;
 
 std::string const helper_id("BrokerHelper");
 

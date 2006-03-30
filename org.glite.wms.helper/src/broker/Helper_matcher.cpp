@@ -22,13 +22,14 @@
 #include "glite/wms/helper/exceptions.h"
 #include "glite/wms/helper/HelperFactory.h"
 
-#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 #include "glite/wms/brokerinfo/brokerinfo.h"
 
 #ifdef MATCHER_HELPER_USE_ISM
+#include "glite/wms/brokerinfo/brokerinfoISMImpl.h"
 #include "glite/wms/broker/RBSimpleISMImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesISMImpl.h"
 #else
+#include "glite/wms/brokerinfo/brokerinfoGlueImpl.h"
 #include "glite/wms/broker/RBSimpleImpl.h"
 #include "glite/wms/broker/RBMaximizeFilesImpl.h"
 #include "glite/wms/broker/RBMinimizeAccessCostImpl.h"
@@ -59,7 +60,6 @@
 #include "gpbox_utils.h"
 #endif
 
-
 namespace fs            = boost::filesystem;
 namespace jobid         = glite::wmsutils::jobid;
 namespace logger        = glite::wms::common::logger;
@@ -78,8 +78,11 @@ namespace matcher {
 
 namespace {
 
+#ifdef MATCHER_HELPER_USE_ISM
+typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoISMImpl> BrokerInfo;
+#else
 typedef glite::wms::brokerinfo::BrokerInfo<glite::wms::brokerinfo::brokerinfoGlueImpl> BrokerInfo;
-
+#endif
 std::string const helper_id("MatcherHelper");
 
 helper::HelperImpl* create_helper()
@@ -183,27 +186,25 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 
     std::string vo(requestad::get_virtual_organisation(input_ad));    
     std::vector<classad::ExprTree*> hosts;
+    bool include_brokerinfo = false;
+    input_ad.EvaluateAttrBool("include_brokerinfo", include_brokerinfo);
+
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
     std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
-    if( !x509_user_proxy_file_name.empty() )
-    {
-      if (!suitableCEs->empty()) { 
-        configuration::Configuration const* const config(
-          configuration::Configuration::instance()
-        );
-        assert(config);
+    if (!suitableCEs->empty()) { 
+      configuration::Configuration const* const config(
+        configuration::Configuration::instance()
+      );
+      assert(config);
  
-        if( !glite::wms::helper::broker::gpbox::interact(
-          *config,
-          x509_user_proxy_file_name,
-          *suitableCEs)
-        ) {
-          Info("Error during gpbox interaction");
-        }
-      }
-      else {
-        Info("Empty CE list after gpbox screening");
-      }
+      glite::wms::helper::broker::interact_with_gpbox(
+        *config,
+        x509_user_proxy_file_name,
+        *suitableCEs
+      );
+    }
+    else {
+      Info("Empty CE list after G-Pbox screening");
     }
 #endif
 
@@ -215,15 +216,17 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       for (matchmaking::match_vector_t::const_iterator it = suitableCEs_vector.begin(); 
            it != suitableCEs_vector.end(); 
            ++it) {
- 
-        BI->retrieveCloseSEsInfo(it->first);
-        BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
-   
+       
         std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
         ceinfo->InsertAttr("ce_id", it->first);
         ceinfo->InsertAttr("rank", it->second.getRank());
-        ceinfo->Insert("brokerinfo", BI->asClassAd());
-      
+        
+        if (include_brokerinfo) {
+           
+           BI->retrieveCloseSEsInfo(it->first);
+           BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
+           ceinfo->Insert("brokerinfo", BI->asClassAd());
+        }
         hosts.push_back(ceinfo.release());
       }
       
