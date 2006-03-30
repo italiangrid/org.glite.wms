@@ -6,11 +6,12 @@
 ## *
 ## *********************************************************************
 
-EXTRA_DIST = \
-	glite-wms-ice.in
+EXTRA_DIST = glite-wms-ice.in
 
-wmdir = $(sysconfdir)/init.d
-wm_SCRIPTS = glite-wms-ice
+icedir = $(sysconfdir)/init.d
+ice_SCRIPTS = glite-wms-ice
+
+CLEANFILES =
 
 MAINTAINERCLEANFILES = Makefile.in *~ *.*~
 

@@ -14,10 +14,6 @@
 
         Configuration build properties file for the GLite wms ice component
 
-	Authors: Paolo Andreetto <paolo.andreetto@pd.infn.it>	
-	Version info: $Id$
-	Release: $Name$
-
 -->
 <project name="wms ice component configuration properties">
 <property name="configure.args"

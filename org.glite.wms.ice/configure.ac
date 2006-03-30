@@ -11,10 +11,6 @@
 #       University of Bergen (UiB), Norway
 #       Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
 #
-#       Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
-#       Version info: $Id$
-#       Release: $Name$
-#
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
