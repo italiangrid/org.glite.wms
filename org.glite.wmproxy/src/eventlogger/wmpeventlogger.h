@@ -48,7 +48,8 @@ class WMPEventLogger  {
 			LOG_ABORT,
 			LOG_ENQUEUE_START,
 			LOG_ENQUEUE_OK, LOG_ENQUEUE = LOG_ENQUEUE_OK,
-			LOG_ENQUEUE_FAIL
+			LOG_ENQUEUE_FAIL,
+			LOG_USER_TAG
 		};
 		
 		WMPEventLogger(const std::string &endpoint);
@@ -143,6 +144,8 @@ class WMPEventLogger  {
 			const char *file_queue = NULL, const char *jdl = NULL);
 		void logEvent(event_name event, const char *reason, bool retry,
 			const char *file_queue = NULL, const char *jdl = NULL);
+			
+		void randomsleep();
 		
 		static const char * GLITE_WMS_LOG_DESTINATION;
 		static const int LB_RENEWAL_PORT = 7512;

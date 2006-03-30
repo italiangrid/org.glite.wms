@@ -95,7 +95,7 @@ setGlobalSandboxDir()
 				"in the form:"
 	   			"\n$DOCUMENT_ROOT/<single directory name>"
 	   			"\nwhere DOCUMENT_ROOT MUST be as defined in httpd configuration file"
-	   			"\n(please contact server administrator)"
+	   			"\n(please contact server administrator)";
 			edglog(fatal)<<msg<<endl;
 			throw FileSystemException( __FILE__, __LINE__,
 	  			"setGlobalSandboxDir()", wmputilities::WMS_FILE_SYSTEM_ERROR,

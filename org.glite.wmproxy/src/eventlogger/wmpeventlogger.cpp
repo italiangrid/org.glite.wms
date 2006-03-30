@@ -124,6 +124,24 @@ WMPEventLogger::init(const string &lb_host, int lb_port,
 }
 
 void
+WMPEventLogger::randomsleep()
+{
+	if (this->lbProxy_b) {
+		int randomvalue = generateRandomNumber(LB_PROXY_LOG_RETRY_LOWER_LIMIT,
+			LB_PROXY_LOG_RETRY_UPPER_LIMIT);
+		edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
+			<<" seconds before retry..."<<endl;
+		sleep(randomvalue);
+	} else {
+		int randomvalue = generateRandomNumber(LB_LOG_RETRY_LOWER_LIMIT,
+			LB_LOG_RETRY_UPPER_LIMIT);
+		edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
+			<<" seconds before retry..."<<endl;
+		sleep(randomvalue);
+	}
+}
+
+void
 WMPEventLogger::setLBProxy(bool value, char * userdn)
 {	GLITE_STACK_TRY("setLBProxy()");
 	this->lbProxy_b = value;
@@ -233,19 +251,28 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 	char * seqcode = getSequence();
 	jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(seqcode));
 	
-	int register_result;
+	int register_result = 1;
+	int i = LOG_RETRY_COUNT;
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering normal job to LB Proxy..."<<endl;
-		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
-			EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+		for (; (i > 0) && register_result; i--) {
+			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+		}
+		//register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+		//	EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobProxy() exit code: "
 			<<register_result<<endl;
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering normal job to LB..."<<endl;
-		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
-			EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+		for (; (i > 0) && register_result; i--) {
+			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+		}
+		//register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
+		//	EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobSync() exit code: "
 			<<register_result<<endl;
 #ifdef GLITE_WMS_HAVE_LBPROXY
@@ -484,7 +511,15 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 		}
  		if (val.IsStringValue(attrValue)) {
             edglog(debug)<<"Logging user tag to LB: "<<vect[i].first<<endl;
-			if (fp(ctx, (vect[i].first).c_str(), attrValue.c_str())) {
+            int i = LOG_RETRY_COUNT;
+            int outcome = 1;
+			for (; (i > 0) && outcome; i--) {
+				outcome = fp(ctx, (vect[i].first).c_str(), attrValue.c_str());
+				if (outcome) {
+					randomsleep();
+				}
+			}
+			if (outcome) {
 				string msg = error_message("edg_wll_LogUserTag");
 				edglog(critical)<<msg<<endl;
 				throw LBException(__FILE__, __LINE__,
@@ -643,6 +678,23 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				return edg_wll_LogAcceptedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
 					server.c_str(),"","");
 				break;
+			case LOG_ENQUEUE_START:
+				edglog(debug) << "Logging Enqueue START event..." << endl ;
+				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "START", "");
+				break;
+			case LOG_ENQUEUE_OK:
+				edglog(debug) << "Logging Enqueue OK event..." << endl ;
+				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "OK", "");
+				break;
+			case LOG_ENQUEUE_FAIL:
+				edglog(debug) << "Logging Enqueue FAIL event..." << endl ;
+				return edg_wll_LogEnQueuedProxy (ctx, file_queue, jdl, "FAIL",
+					reason);
+				break;
+			case LOG_ABORT:
+				edglog(debug) << "Logging Abort event..." << endl ;
+				return edg_wll_LogAbortProxy(ctx,reason);
+				break;
 			case LOG_REFUSE:
 				edglog(debug) << "Logging Refuse event..." << endl ;
 				return edg_wll_LogRefusedProxy(ctx, EDG_WLL_SOURCE_WM_PROXY,
@@ -657,23 +709,11 @@ WMPEventLogger::logEvent(event_name event, const char* reason,
 				//return edg_wll_LogClearUSERProxy(ctx);
 				return edg_wll_LogClearProxy(ctx, reason);
 				break;
-			case LOG_ABORT:
-				edglog(debug) << "Logging Abort event..." << endl ;
-				return edg_wll_LogAbortProxy(ctx,reason);
+			case LOG_USER_TAG:
+				edglog(debug) << "Logging User Tag event..." << endl ;
+				return edg_wll_LogCancelREQProxy(ctx, reason);
 				break;
-			case LOG_ENQUEUE_START:
-				edglog(debug) << "Logging Enqueue START event..." << endl ;
-				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "START", "");
-				break;
-			case LOG_ENQUEUE_OK:
-				edglog(debug) << "Logging Enqueue OK event..." << endl ;
-				return edg_wll_LogEnQueuedProxy(ctx, file_queue, jdl, "OK", "");
-				break;
-			case LOG_ENQUEUE_FAIL:
-				edglog(debug) << "Logging Enqueue FAIL event..." << endl ;
-				return edg_wll_LogEnQueuedProxy (ctx, file_queue, jdl, "FAIL",
-					reason);
-				break;
+			
 			default:
 				edglog(severe) << "Warning: no event caught, not Logging" << endl ;
 				return true;
@@ -746,17 +786,7 @@ WMPEventLogger::logEvent(event_name event, const char* reason, bool retry,
 		// PERFORM the Requested operation (actual LB call)
 		logged = logEvent(event, reason, file_queue, jdl);
 		if (!logged && (i < 2) && retry) {
-			if (this->lbProxy_b) {
-				int randomvalue = generateRandomNumber(5, 10);
-				edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
-					<<" seconds before retry..."<<endl;
-				sleep(randomvalue);
-			} else {
-				int randomvalue = generateRandomNumber(30, 60);
-				edglog(debug)<<"Failed to log. Sleeping for "<<randomvalue
-					<<" seconds before retry..."<<endl;
-				sleep(randomvalue);
-			}
+			randomsleep();
 		}
 	}
 	if ((retry && (i >= 3)) || (!retry && (i > 0)) ) {
@@ -865,10 +895,7 @@ WMPEventLogger::testAndLog(int &code, bool &with_hp, int &lap)
 						"WMPEventLogger::testAndLog()", WMS_LOGGING_ERROR,
 						msg + "\n(please contact server administrator)");
 				} else {
-					edglog(debug)<<"LB call got a transient error. "
-						"Waiting 15 seconds before trying again..."<<endl;
-					edglog(debug)<<"Try n. "<<lap<<"/3"<<endl;
-					sleep(15);
+					randomsleep();
 				}
 				break;
 			}
