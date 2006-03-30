@@ -1433,28 +1433,6 @@ void ism_rgma_purchaser::do_purchase()
             f_rgma_purchasing_cycle_run_condition.timed_wait(l, xt);
          }
    
-         {
-            ism_mutex_type::scoped_lock l(get_ism_mutex());	
-            while(!gluece_info_container_updated_entries.empty()) {
-   	  
-               ism_type::value_type ism_entry = make_ism_entry(
-                  gluece_info_container_updated_entries.back()->first, 
-                  ::time(0), 
-                  gluece_info_container_updated_entries.back()->second, 
-                  ism_rgma_purchaser_entry_update() );
-   
-   	       get_ism().insert(ism_entry);
-   
-                  gluece_info_container_updated_entries.pop_back();            
-            } // while
-         } // unlock the mutex
-         if (m_mode) {
-            boost::xtime xt;
-            boost::xtime_get(&xt, boost::TIME_UTC);
-            xt.sec += m_interval;
-            boost::mutex::scoped_lock l(f_rgma_purchasing_cycle_run_mutex);
-            f_rgma_purchasing_cycle_run_condition.timed_wait(l, xt);
-         }
       }
       catch (...) { // TODO: Check which exception may arrive here... and remove catch all
          Warning("FAILED TO PURCHASE INFO FROM RGMA.");
