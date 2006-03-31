@@ -1,7 +1,18 @@
-====== WMProxy version 2.2.0 (gLite X.X) ======
-* ddd MMM DD YYYY Fabrizio Pacini <egee@datamat.it>
+====== WMProxy version 2.2.0 (gLite 3.1) ======
+* Fri Mar 31 2006 Fabrizio Pacini <egee@datamat.it>
+- Short deadline job support. New configuration attribute
+  SDJRequirements
+- Server JDL file path registered to LB instead of JDL file
+  content (it avoids registration of long JDL in the case of
+  DAG or Collection)
+- jobStart operation asynchronous behavior. New configuration 
+  boolean attribute AsynchJobStart
+- get[Bulk]DestURI[s], getOutputFileList, getPerusalFiles return
+  the URIs in all available supported transfer protocols
+- New service operation getJDL
+- New service operation getTransferProtocols
+- New service operations getJobProxyInfo and getDelegatedProxyInfo
 - Make rpm install only templates of configuration files
-
 
 ====== WMProxy version 2.1.0 (gLite 1.5) ======
 * Tue Nov 29 2005 Fabrizio Pacini <egee@datamat.it>

@@ -1954,9 +1954,9 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		delete parentad;
 	} else {
 		// Getting sequence code from jdl
-		//Ad *ad = new Ad();
-		//ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
-		Ad *ad = new Ad(status.getValString(JobStatus::JDL));
+		Ad *ad = new Ad();
+		ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
+		//Ad *ad = new Ad(status.getValString(JobStatus::JDL));
 		if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 			seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
 		}
