@@ -71,8 +71,8 @@ def comment(line, man):
 	elif man==TXT_TAG:
 		return "% " + line + endl
 	elif man==WKI_TAG:
-		print "WKITBD comment"
 		return ""
+		print "WKITBD comment"
 
 def title(line, man):
 	""" Generate a title """

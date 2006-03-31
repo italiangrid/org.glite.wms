@@ -88,7 +88,7 @@ Upon successful submissions, this command returns to the identifier (JobId) assi
 6 ) forces the submission to the resource specified with the -r option:
 	glite-wms-job-submit -d exID -r lxb1111.glite.it:2119/blah-lsf-jra1_low ./job.jdl
 
-6 ) forces the submission of the DAG (the parent and all child nodes) to the resource specified with the --nodes-resources option:
+7 ) forces the submission of the DAG (the parent and all child nodes) to the resource specified with the --nodes-resources option:
 	glite-wms-job-submit -d exID --nodes-resources lxb1111.glite.it:2119/blah-lsf-jra1_low ./dag.jdl
 
 When --endpoint (-e) is not specified, the search of an available WMProxy service is performed according to the modality reported in the description of the --endpoint option.
