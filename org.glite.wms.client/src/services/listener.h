@@ -29,9 +29,11 @@ class Shadow{
 	public:
 		/** Default Constructor*/
 		Shadow();
-		/*
-		* Default destructror
-		*/
+		/** Copy Contructor */
+		Shadow(const Shadow& shadow);
+		/** = operation*/
+		void Shadow::operator=(const Shadow& shadow);
+		/**  Default destructror */
 		virtual ~Shadow();
 		/**Constructor with JobId
 		@param the jobid of the attached/submitted job*/
@@ -117,6 +119,7 @@ class Shadow{
 		/**Retrieve the name of the pipe*/
 		std::string getPipe();
 	private:
+		void forkProcess(const std::string& command);
 		/*** Kill the shadow listener process */
 		static void terminate (int sig);
 		/**
@@ -139,17 +142,21 @@ class Shadow{
 ********************************/
 class Listener{
 	public:
-		/*
-		* Default destructror
-		*/
+		/** Default destructror */
 		Listener(Shadow *shadow);
-		/*
-		* Default destructror
-		*/
+		/** Default destructror */
 		virtual ~Listener();
+		/** Copy Contructor */
+		Listener(const Listener& listener);
+		/** = operation*/
+		void Listener::operator=(const Listener& listener);
+		/** Empty the output stram*/
 		void emptyOut();
+		/** Empty the input stream*/
 		void emptyIn ();
+		/** Run the listener*/
 		void run();
+		/** */
 		void operator()();
 	private:
 		Shadow* shadow;

@@ -18,13 +18,13 @@
 #include "boost/lexical_cast.hpp" // types conversion
 #include "glite/jdl/Ad.h"
 #include "boost/tokenizer.hpp" // TCP ports checks
+#include <sys/stat.h>  // Create pipes
 using namespace std ;
 using namespace glite::wms::client::utilities;
 namespace glite {
 namespace wms{
 namespace client {
 namespace services {
-
 
 
 // This is the grid_console_shadow error code for an used port
@@ -52,6 +52,7 @@ struct PipeWriter{
 	void operator () (){
 		string result;
 		while(1){
+			sleep(1);
 			cin >> result;
 			shadow->write(result+"\n");
 		}
@@ -62,10 +63,20 @@ struct PipeWriter{
 /********************************
 * Console Class Implementation
 ********************************/
-Listener::Listener(Shadow *shadow){
-	this->shadow = shadow;
+/** Copy Contructor */
+Listener::Listener(const Listener& listener){
+	this->shadow=new Shadow(*(listener.shadow));
 }
-Listener::~Listener(){}
+/** = operation*/
+void Listener::operator=(const Listener& listener){
+	this->shadow= new Shadow(*(listener.shadow));
+}
+Listener::Listener(Shadow *shadow){
+	this->shadow =shadow;
+}
+Listener::~Listener(){
+	if (shadow){ delete shadow; }
+}
 void Listener::emptyOut(){}
 
 void Listener::emptyIn(){
@@ -88,7 +99,7 @@ void Listener::run(){
 	boost::thread r_shadow(reader);
 	boost::thread w_shadow(writer);
 	while(shadow->isActive()){
-		sleep(1);
+		sleep(10);
 	}
 }
 
@@ -115,8 +126,47 @@ Shadow::Shadow(glite::wmsutils::jobid::JobId jobid){
 	localConsole=true;
 	ifstreamOut=NULL;
 	this->pid=0;
-	this->port=0;		
+	this->port=0;
 	goodbyeMessage=false;
+}
+Shadow::Shadow(const Shadow& shadow){
+	this->jobid=shadow.jobid;
+	// STRING
+	this->pipeRoot=shadow.pipeRoot;
+	this->host=shadow.host;
+	this->storage=shadow.storage;
+	this->prefix=shadow.prefix;
+	// BOOL
+	this->localConsole=shadow.localConsole;
+	this->goodbyeMessage=shadow.goodbyeMessage;
+	this->writing=shadow.writing;
+	// INT
+	this->pid=shadow.pid;
+	this->port=shadow.port;
+	// CHAR
+	this->c=shadow.c;
+	// POINTER (generate new ifStream)
+	this->ifstreamOut=ifstreamOut=new ifstream(getPipeOut().c_str());
+}
+
+void Shadow::operator=(const Shadow& shadow){
+	this->jobid=shadow.jobid;
+	// STRING
+	this->pipeRoot=shadow.pipeRoot;
+	this->host=shadow.host;
+	this->storage=shadow.storage;
+	this->prefix=shadow.prefix;
+	// BOOL
+	this->localConsole=shadow.localConsole;
+	this->goodbyeMessage=shadow.goodbyeMessage;
+	this->writing=shadow.writing;
+	// INT
+	this->pid=shadow.pid;
+	this->port=shadow.port;
+	// CHAR
+	this->c=shadow.c;
+	// POINTER (generate new ifStream)
+	this->ifstreamOut=ifstreamOut=new ifstream(getPipeOut().c_str());
 }
 Shadow::~Shadow(){
 	detach();
@@ -231,8 +281,8 @@ void Shadow::detach(){
 	kill(pid,SIGKILL);
 	remove (getPipeIn().c_str());
 	remove (getPipeOut().c_str());
+	// if (localConsole&&goodbyeMessage){cout <<"DONE - please hit Return to continue"<<endl;}
 	cout<<endl;
-	if (goodbyeMessage){cout <<"Done - hit return to continue" << endl;}
 }
 
 bool splitInt(const string& source,const string&sep, unsigned int &fromPort, unsigned int &toPort){
@@ -268,6 +318,27 @@ unsigned int setPorts(unsigned int &fromPort ,unsigned int &toPort){
 	if (!splitInt(tcp_range,"-",fromPort,toPort)){return toPort-fromPort;}
 	if (!splitInt(tcp_range,",",fromPort,toPort)){return toPort-fromPort;}
 	return 1 ;
+}
+// STATIC METHOD
+void createPipe(const std::string& pipeName){
+	switch (mkfifo (pipeName.c_str(), S_IREAD | S_IWRITE) ){
+		case 0:
+			// SUCCESS: do nothing
+			break;
+		case EACCES:
+			// Write permission is denied for the parent directory in which the new directory is to be added.
+		case EEXIST:
+			// A file named filename already exists.
+		case EMLINK:
+			// The parent directory has too many links.
+		case ENOSPC:
+			// The file system doesn't have enough room to create the new directory.
+		case EROFS:
+			// The parent directory of the directory being created is on a read-only file system, and cannot be modified.
+		default:
+			throw WmsClientException(__FILE__, __LINE__,"createPipe(const std::string& pipeName()",
+			DEFAULT_ERR_CODE, "Unable create pipe",pipeName);
+	}
 }
 void Shadow::console(){
 	string shPath = prefix+"/glite-wms-grid-console-shadow";
@@ -307,15 +378,7 @@ void Shadow::console(){
 			tmPort = fromPort+this->port%interval ;
 			command+=" -port " + boost::lexical_cast<string>(tmPort);
 		}
-		command+= +"&";
-		// Try to execute shadow
-		switch(system(command.c_str())){
-			case 0: // NO error
-				break;
-			default:
-				throw WmsClientException(__FILE__,__LINE__,"Shadow::console",DEFAULT_ERR_CODE,
-					"System error","Unable to execute console shadow");
-		}
+		forkProcess (command);
 		int resultConsole=getConsoleInfo();
 		if (resultConsole==0){
 			consoleSucceeded=true;
@@ -334,6 +397,10 @@ void Shadow::console(){
 		throw WmsClientException(__FILE__,__LINE__,"Shadow::console",DEFAULT_ERR_CODE,
 			"System error",warnings);
 	}
+	// ELSE SUCCESS
+	// CREATE PIPES:
+	createPipe(getPipeIn());
+	createPipe(getPipeOut());
 	writing=false;
 }
 int Shadow::getConsoleInfo(){
@@ -348,7 +415,6 @@ int Shadow::getConsoleInfo(){
 	}
 	remove (pipeRoot.c_str());
 	glite::jdl::Ad ad (buffer.str());
-	// cout << "Created AD: " << ad.toString() << endl ;
 	if (ad.hasAttribute("SHADOW_ERROR")){
 		return ad.getInt("SHADOW_ERROR");
 	}
@@ -359,5 +425,47 @@ int Shadow::getConsoleInfo(){
 	active=true;
 	return 0;
 }
+
+void Shadow::forkProcess(const string &command){
+	switch(fork()) {
+		case -1:
+			// Unable to fork
+			throw WmsClientException(__FILE__, __LINE__,"forkProcess()",
+				DEFAULT_ERR_CODE,"Unable to fork process","");
+
+		case 0:{
+			// child launch command
+			switch(system(command.c_str())){
+				case 2: //^C interrupted by USER
+					break;
+				case 9: // Killed by User
+					if (!goodbyeMessage){
+					cout << "******************************************" << endl;
+					cout << "Console Shadow killed"            << endl;
+					cout << "Please check input/output streams deletion" << endl;
+					cout << "******************************************" << endl;
+					}
+					break;
+				default:
+					break;
+			}
+			exit(0);
+			// TBD break;
+		}
+		default:
+			// parent: continue working
+			/*
+			// parent: wait for children to finish
+			int status;
+			wait(&status);
+			if (status) {
+				throw WmsClientException(__FILE__, __LINE__,"forkProcess()",
+					DEFAULT_ERR_CODE, "","");
+			}
+			*/
+			break;
+	}
+}
+
 
 }}}} // ending namespaces

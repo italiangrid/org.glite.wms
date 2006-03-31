@@ -128,9 +128,11 @@ JobSubmit::~JobSubmit( ){
 	if (adObj){ delete(adObj); }
 	if (jobAd){ delete(jobAd); }
 	if (dagAd){ delete(dagAd); }
-	if (collectAd){ delete(collectAd); };
-	if (jobShadow){ delete( jobShadow); }
-};
+	if (collectAd){ delete(collectAd);  }
+	// Shadow must not be killed
+	// (keep being alive,at least Listener will kill it)
+	// if (jobShadow){ delete( jobShadow); }
+}
 
 
 /*
@@ -1078,6 +1080,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				// Launch console
 				if (jobShadow->isLocalConsole()){
 					logInfo->print(WMS_DEBUG,"Running console shadow");
+					jobShadow->setGoodbyeMessage(true);
 					jobShadow->console();
 					logInfo->print(WMS_DEBUG,"Console properly started");
 					// Insert listenin port number (if necessary replace old value)
