@@ -188,6 +188,8 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     std::vector<classad::ExprTree*> hosts;
     bool include_brokerinfo = false;
     input_ad.EvaluateAttrBool("include_brokerinfo", include_brokerinfo);
+    int number_of_results = -1;
+    input_ad.EvaluateAttrInt("number_of_results", number_of_results);
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
     std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
@@ -209,14 +211,27 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
 #endif
 
     if (!suitableCEs->empty() ) {
-      matchmaking::match_vector_t suitableCEs_vector(suitableCEs->begin(), suitableCEs->end());
-      
-      std::stable_sort(suitableCEs_vector.begin(), suitableCEs_vector.end(), matchmaking::rank_greater_than_comparator());
-      
-      for (matchmaking::match_vector_t::const_iterator it = suitableCEs_vector.begin(); 
-           it != suitableCEs_vector.end(); 
-           ++it) {
-       
+      matchmaking::match_vector_t suitableCEs_vector(
+        suitableCEs->begin(),
+        suitableCEs->end()
+      );
+
+      std::stable_sort(
+        suitableCEs_vector.begin(),
+        suitableCEs_vector.end(),
+        matchmaking::rank_greater_than_comparator()
+      );
+
+      matchmaking::match_vector_t::const_iterator it(
+        suitableCEs_vector.begin()
+      );
+      matchmaking::match_vector_t::const_iterator const end(
+        suitableCEs_vector.end()
+      );
+      for (int i = 0;
+           it != end && (number_of_results == -1 || i < number_of_results);
+           ++it, ++i) {
+
         std::auto_ptr<classad::ClassAd> ceinfo(new classad::ClassAd);
         ceinfo->InsertAttr("ce_id", it->first);
         ceinfo->InsertAttr("rank", it->second.getRank());
@@ -227,7 +242,8 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
            BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
            ceinfo->Insert("brokerinfo", BI->asClassAd());
         }
-        hosts.push_back(ceinfo.release());
+        hosts.push_back(ceinfo.get());
+        ceinfo.release();
       }
       
       result->InsertAttr("reason", std::string("ok"));    
