@@ -197,6 +197,9 @@ try {
   std::string prologue_arguments;
   try {
     prologue = jdl::get_prologue(*m_ad);
+    if (prologue[0] != '/') {
+      prologue.insert(0, "./", 2);
+    }    
     prologue_arguments = jdl::get_prologue_arguments(*m_ad);
   } catch (jdl::CannotGetAttribute const& e) {
   }

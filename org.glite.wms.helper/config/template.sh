@@ -454,7 +454,7 @@ fi
 #user script (before taking the token, shallow-sensitive)
 if [ -f "${__prologue}" ]; then
   chmod +x "${__prologue}" 2>/dev/null
-  ./${__prologue} "${__prologue_arguments}"
+  ${__prologue} "${__prologue_arguments}"
   if [ $? -ne 0 ]; then
     log_error "User script failed with error $?"
   fi
