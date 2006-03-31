@@ -143,11 +143,9 @@ ns1__jobRegister(struct soap *soap, string jdl, string delegation_id,
 		ns1__JobIdStructType *job_id_struct = new ns1__JobIdStructType();
 		job_id_struct->id = jobRegister_response.jobIdStruct->id;
 		job_id_struct->name = jobRegister_response.jobIdStruct->name;
-		if (job_id_struct->path){
+		if (job_id_struct->path) {
 			job_id_struct->path = jobRegister_response.jobIdStruct->path;
-			edglog(debug)<<">>>Setting path field in the JobIDStruct=" <<*(job_id_struct->path) << "\n";
-		} else{
-			edglog(debug)<<">>>job_id_struct->path NULL\n";
+		} else {
 			job_id_struct->path = NULL;
 		}
 

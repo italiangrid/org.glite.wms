@@ -256,23 +256,29 @@ WMPEventLogger::registerJob(JobAd *jad, const string &path)
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering normal job to LB Proxy..."<<endl;
-		for (; (i > 0) && register_result; i--) {
+		/*for (; (i > 0) && register_result; i--) {
 			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
 				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
-		}
-		//register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
-		//	EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+			if (register_result) {
+				randomsleep();				
+			}
+		}*/
+		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+			EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobProxy() exit code: "
 			<<register_result<<endl;
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering normal job to LB..."<<endl;
-		for (; (i > 0) && register_result; i--) {
-			register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
+		/*for (; (i > 0) && register_result; i--) {
+			register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
 				EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
-		}
-		//register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
-		//	EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
+			if (register_result) {
+				randomsleep();				
+			}
+		}*/
+		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
+			EDG_WLL_JOB_SIMPLE, path.c_str(), str_addr, 0, NULL, NULL);
 		edglog(debug)<<"edg_wll_RegisterJobSync() exit code: "
 			<<register_result<<endl;
 #ifdef GLITE_WMS_HAVE_LBPROXY

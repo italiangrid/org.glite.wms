@@ -744,14 +744,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	
 	delete jid;
 
-	// Logging delegation id & original jdl
-	//edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
-	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
-	//edglog(debug)<<"Logging user tag JDL::JDL_ORIGINAL..."<<endl;
-	//wmplogger.logUserTag(JDL::JDL_ORIGINAL, jdl);
-	
-	//wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
-
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();
 	job_id_struct->id = stringjid;
@@ -1039,12 +1031,6 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 		dagjdl);
 	
 	delete jid;
-
-	// Logging delegation id & original jdl
-	//edglog(debug)<<"Logging user tag JDL::DELEGATION_ID..."<<endl;
-	//wmplogger.logUserTag(JDL::DELEGATION_ID, delegation_id);
-	
-	//wmplogger.logUserTag(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 
 	// Creating job identifier structure to return to the caller
 	JobIdStructType *job_id_struct = new JobIdStructType();

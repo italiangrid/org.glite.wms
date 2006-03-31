@@ -695,12 +695,12 @@ generateRandomNumber(int lowerlimit, int upperlimit)
 	GLITE_STACK_TRY("generateRandomNumber()");
     edglog_fn("wmputils::generateRandomNumber");
     
+    edglog(debug)<<"Generating random between "<<lowerlimit<<" - "
+    	<<upperlimit<<endl;
+    	
     // Setting seeed
-	srand((unsigned) time(NULL));
-	
-	int random_integer; 
-	int range = (upperlimit - lowerlimit) + 1; 
-	return lowerlimit + static_cast<int>(range * rand() / (RAND_MAX + 1.0));
+	srand((unsigned) time(0));
+	return lowerlimit + static_cast<int>(rand()%(upperlimit - lowerlimit + 1));
 	
 	GLITE_STACK_CATCH();
 }
