@@ -67,13 +67,23 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 		case OP_OUTPUT: // OUTPUT CHECK
 		{
 			bool hasChildren= (status.getValInt(JobStatus::CHILDREN_NUM) !=0);
+			if (hasChildren){
+				// In principle, a dag can always continue (unless it has been cleared)
+				if (status.status==JobStatus::CLEARED){
+					throw WmsClientException(__FILE__,__LINE__,
+					"checkCodes", DEFAULT_ERR_CODE,
+					"Output not Allowed",
+					"Output files already retrieved");
+				}else{
+					break;
+				}
+			}
 			switch (status.status){
 				case JobStatus::DONE:
 					if (status.getValInt(JobStatus::EXIT_CODE) !=0){
 						warn = "the status ";
 						if (child){ warn += "for this child node ";}
 						warn += "is DONE (ExitCode != 0)";
-						// code = -1;
 					} else if (status.getValInt(JobStatus::DONE_CODE) == JobStatus::DONE_CODE_FAILED){
 						warn = "the status ";
 						if (child){ warn += "for this child node ";}
@@ -83,8 +93,7 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 						warn = "the status ";
 						if (child){ warn += "for this child node ";}
 						warn += "is DONE CANCELLED";
-						// code = -1;
-					}
+					}  // ELSE is DONE SUCCESS: OK
 					break;
 				case JobStatus::ABORTED:{
 						if(hasChildren){
@@ -198,16 +207,6 @@ int Status::checkCodes(OpCheck op, std::string& warn, bool child){
 						"(un)setting Job file perusal not allowed",
 						"Current Job Status is: Done (cancelled)" );
 					}
-
-
-
-
-
-
-
-
-
-
 					else{
 						// Only exit code!=0 accepted
 						// (otherwise the job is finished)
