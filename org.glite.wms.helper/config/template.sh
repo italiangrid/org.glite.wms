@@ -318,11 +318,11 @@ function send_partial_file
   if [ -f "$LISTFILE" ] ; then rm $LISTFILE ; fi
 }
 
-if [ "${__input_base_url}:-1" != "/" ]; then
+if [ "${__input_base_url:-1}" != "/" ]; then
   __input_base_url="${__input_base_url}/"
 fi
 
-if [ "${__output_base_url}:-1" != "/" ]; then
+if [ "${__output_base_url:-1}" != "/" ]; then
   __output_base_url="${__output_base_url}/"
 fi
 
