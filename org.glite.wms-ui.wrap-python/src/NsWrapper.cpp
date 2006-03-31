@@ -493,7 +493,6 @@ string UserCredential::get_error() {
 		case VERR_DIR:
 			return "Unable to find VOMS directory" ;
 		default:
-			cerr << "UserCredential::get_error()> Generic Unexpected VOMS Error enumerative found ( vomsdata.error ): " << vo_data_error << endl ;
 			return "Generic VOMS error found" ;
 	}
 }
