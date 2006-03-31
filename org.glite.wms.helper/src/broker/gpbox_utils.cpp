@@ -221,7 +221,7 @@ get_tag(matchmaking::match_info const& info)
   classad::ClassAd const* ad = info.getAd();
   classad::Value value;
 
-  ad->EvaluateExpr("GlueCEPolicyPriority", value);
+  ad->EvaluateExpr("GlueCEPolicyPriority", value); //GlueCEVoViewAccessControlBaseRule
   std::string result;
   value.IsStringValue(result);
   if (result.empty()) {
