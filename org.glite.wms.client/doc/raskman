@@ -4,13 +4,13 @@ from py2man import *
 import sys
 
 # General Variables
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 DEBUG = 0
 
 # Detemrine which documentation to be generated
 GENERATE_MAN=True
 GENERATE_TXT=True
-GENERATE_WKI=False
+GENERATE_WKI=True
 
 
 
@@ -47,7 +47,7 @@ def questionYN(question):
 
 def errorsAppend(err):
 	debug ("!!ERROR!!",err)
-	errorsAppend(err)
+	errors.append(err)
 	if DEBUG:
 		if not questionYN("Do you wish to continue?"):
 			print "bye"
@@ -82,7 +82,9 @@ def title(line, man):
 	elif man==TXT_TAG:
 		return endl+'\\medskip'+endl + "\\textbf{"+line+"}" + endl +'\\smallskip' +endl +endl
 	elif man==WKI_TAG:
-		return endl + "!! "+  line + endl
+		return ""
+		# WIki title will be set by Hand-user
+		#return endl + "!! "+  line + endl
 
 def parseSpecial(line, man):
 	if man==MAN_TAG:
