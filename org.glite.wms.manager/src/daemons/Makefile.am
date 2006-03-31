@@ -18,6 +18,7 @@ glite_wms_workload_manager_LDFLAGS = -Xlinker --export-dynamic
 glite_wms_workload_manager_LDADD   = \
         $(MNGR_SERVER) \
         $(GLITE_WMS_HELPER_LIBS) \
+        -lglite-sd-c \
         $(GLITE_WMS_HELPER_JOBADAPTER_LIBS) \
 	$(GLITE_WMS_ISM_LIBS) \
 	$(GLITE_WMS_JSS_CONTROLLER_LIBS) \
@@ -37,7 +38,7 @@ glite_wms_workload_manager_LDADD   = \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
-	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) \
+	$(GLITE_SECURITY_RENEWAL_THR_LIBS) \
 	$(EXPAT_LIBS) \
 	$(ARES_LIBS) \
 	$(CLASSAD_DL_LIBS) \

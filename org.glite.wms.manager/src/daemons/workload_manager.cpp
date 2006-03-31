@@ -218,6 +218,10 @@ try {
 
   Info("running...");
 
+} catch (server::CannotLoadDynamicLibrary& e) {
+  get_err_stream() << "cannot load dynamic library " << e.filename()
+                   << ": " << e.error() << '\n';
+  return EXIT_FAILURE;
 } catch (std::exception& e) {
   get_err_stream() << "std::exception " << e.what() << "\n";
   return EXIT_FAILURE;

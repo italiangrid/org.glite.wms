@@ -43,6 +43,7 @@ bool match(
 
     classad::ClassAd ad(jdl);
     ad.InsertAttr("include_brokerinfo", include_brokerinfo);
+    ad.InsertAttr("number_of_results", number_of_results);
     result.reset(glite::wms::helper::Helper("MatcherHelper").resolve(&ad));
 
     classad::ExprTree *et = result->Lookup ("match_result");
