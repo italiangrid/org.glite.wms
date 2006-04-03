@@ -22,7 +22,6 @@ namespace purchaser {
 
 namespace {
 ii::create_entry_update_fn_t      *f_ii_purchaser_entry_update_fn;
-ii_gris::create_entry_update_fn_t *f_ii_gris_purchaser_entry_update_fn;
 cemon::create_entry_update_fn_t   *f_cemon_purchaser_entry_update_fn;
 rgma::create_entry_update_fn_t   *f_rgma_purchaser_entry_update_fn;
 }
@@ -80,24 +79,9 @@ void ism_file_purchaser::do_purchase()
           // Check the type of puchaser which has generated the info
 	  string purchased_by;
           info->EvaluateAttrString("PurchasedBy",purchased_by);
-          // For compatibility reason with previous version info related to ii purchaser
-	  // will be identified by evaluating the information_service_url...
-	  boost::tuple<std::string, int, std::string> isinfo;
-	  if (split_information_service_url(*info, isinfo)) {
-            // At this point we are sure that the info has been purchased either from
-            // the ism-ii-purchaser or ism-ii-gris-purchaser. For the former we should use
-            // the just extract info from GlueInformationServiceURL, whereas for the latter
-            if (purchased_by==string("ism_ii_gris_purchaser")) {    
-	        get_ism().insert(make_ism_entry(id, ut, info,
-                f_ii_gris_purchaser_entry_update_fn(id,
-                  boost::tuples::get<0>(isinfo),
-	          boost::tuples::get<1>(isinfo),
-                  boost::tuples::get<2>(isinfo), 30)));
-            } 
-            else {
-              get_ism().insert(make_ism_entry(id, ut, info,
-                f_ii_purchaser_entry_update_fn()));
-            }
+          if (purchased_by==string("ism_ii_purchaser")) {
+            get_ism().insert(make_ism_entry(id, ut, info,
+              f_ii_purchaser_entry_update_fn()));
 	  }
 	  else if (purchased_by==string("ism_cemon_purchaser")) {
             get_ism().insert(make_ism_entry(id, ut, info,
@@ -142,13 +126,11 @@ extern "C" void destroy_file_purchaser(ism_file_purchaser* p) {
 
 extern "C" void set_purchaser_entry_update_fns(
   ii::create_entry_update_fn_t* ii, 
-  ii_gris::create_entry_update_fn_t* ii_gris, 
   cemon::create_entry_update_fn_t* cemon,
   rgma::create_entry_update_fn_t* rgma
 )
 {
   f_ii_purchaser_entry_update_fn = ii;
-  f_ii_gris_purchaser_entry_update_fn = ii_gris;
   f_cemon_purchaser_entry_update_fn = cemon;
   f_rgma_purchaser_entry_update_fn = rgma;
 }

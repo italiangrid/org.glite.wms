@@ -13,7 +13,6 @@
 #include "glite/wms/ism/purchaser/common.h"
 #include "glite/wms/ism/purchaser/ism-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-ii-purchaser.h"
-#include "glite/wms/ism/purchaser/ism-ii-gris-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-cemon-purchaser.h"
 #include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
 
@@ -57,7 +56,6 @@ typedef void destroy_t(ism_file_purchaser*);
 // the type of the set entry update factory function
 typedef void set_purchaser_entry_update_fns_t(
   ii::create_entry_update_fn_t*,
-  ii_gris::create_entry_update_fn_t*, 
   cemon::create_entry_update_fn_t*,
   rgma::create_entry_update_fn_t*
 );
