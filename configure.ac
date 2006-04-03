@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.2  2006/04/03 16:34:11  gianelle
+#       removed unused m4 files
+#
 #       Revision 1.22.2.1  2006/04/03 16:17:03  gianelle
 #       emoved JP dependencies (GLITE_WMS_OPTIONAL_JP_LIBS)
 #
@@ -186,14 +189,8 @@ AC_MSG_RESULT(["GLITE_WMS_PURGER found $have_glite_wms_purger"])
 AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
-AC_GLITE_JP([], have_glite_jp=yes, have_glite_jp=no)
-AC_MSG_RESULT(["GLITE_JP found $have_glite_jp"])
-
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
-
-AC_GLITE_GPBOX
-AC_GLITE_WMS_OPTIONAL
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
