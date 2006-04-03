@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.22.2.1  2006/04/03 16:17:03  gianelle
+#       emoved JP dependencies (GLITE_WMS_OPTIONAL_JP_LIBS)
+#
 #       Revision 1.22  2006/03/20 22:27:55  eronchie
 #       Increased version
 #
@@ -95,7 +98,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS jobsubmission], [3.1.0])
+AC_INIT([GLite WMS jobsubmission], [3.1.1])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/common/constants.h])

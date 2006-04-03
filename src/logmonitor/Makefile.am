@@ -17,6 +17,9 @@
 #
 #       Revision history:
 #       $Log$
+#       Revision 1.20.2.1  2006/04/03 16:17:04  gianelle
+#       emoved JP dependencies (GLITE_WMS_OPTIONAL_JP_LIBS)
+#
 #       Revision 1.20  2006/03/16 17:28:40  gianelle
 #       Migration to "new" jdl library
 #
@@ -142,7 +145,6 @@ glite_wms_lm_job_status_LDADD = libglite_wms_jss_logmonitor.la \
 	$(GLITE_LB_NOTHR_COMMON_LIBS) \
 	$(EXPAT_LIBS) \
 	$(GLITE_SECURITY_RENEWAL_NOTHR_LIBS) $(GLITE_WMS_PURGER_LIBS) \
-	$(GLITE_WMS_OPTIONAL_JP_LIBS) \
         $(RENEWAL_NOTHR_LIBS)	
 
 libglite_wms_jss_logmonitor_la_SOURCES = CondorMonitor.cpp \
