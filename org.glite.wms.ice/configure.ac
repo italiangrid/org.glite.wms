@@ -84,11 +84,12 @@ AC_GLITE_LB([], have_glite_lb=yes, have_glite_lb=no)
 AC_MSG_RESULT(["GLITE_LB found $have_glite_lb"])
 
 AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
+#AC_GLITE_SECURITY()
 AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 AC_SEC_GSOAP_PLUGIN
 
-AC_GRIDSITE([], have_gridsite+yes, have_gridsite=no)
+AC_GRIDSITE([], have_gridsite=yes, have_gridsite=no)
 AC_MSG_RESULT(["GRIDSITE found $have_gridsite"])
 
 AC_PREFIX_DEFAULT([/opt/glite])

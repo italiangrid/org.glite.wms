@@ -28,7 +28,7 @@ using namespace glite::ce::cream_client_api::job_statuses;
 using namespace glite::ce::cream_client_api::util;
 using namespace std;
 
-typedef vector<soap_proxy::JobStatusList*>::iterator JobStatusIt;
+typedef vector<soap_proxy::Status>::iterator JobStatusIt;
 typedef vector<string>::iterator vstrIt;
 typedef vector<string>::const_iterator cvstrIt;
 
@@ -86,12 +86,12 @@ bool eventStatusPoller::getStatus(void)
      * This call allocates ( via new() ) the object that it returns;
      * the caller of this call must take care of memory deallocation.
      */
-    if(_jobstatuslist.size()) {
-        for(JobStatusIt it = _jobstatuslist.begin(); it != _jobstatuslist.end(); ++it)
-            if(*it) delete(*it);
-
-    }
-    _jobstatuslist.clear();
+//     if(_jobstatuslist.size()) {
+//         for(JobStatusIt it = _jobstatuslist.begin(); it != _jobstatuslist.end(); ++it)
+//             if(*it) delete(*it);
+// 
+//     }
+//     _jobstatuslist.clear();
 
     creamClient->clearSoap();
 
@@ -134,16 +134,21 @@ bool eventStatusPoller::getStatus(void)
                      string("eventStatusPoller::getStatus() - Sending JobStatus request for Job [")
                      + jobIt->getJobID() + "]");
         oneJobToQuery.push_back(jobIt->getJobID());
+	statusTarget.clear();
         try {
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-            soap_proxy::JobStatusList* job_stat = creamClient->Status(jobIt->getCreamURL().c_str(),
-                                                                      oneJobToQuery,
-                                                                      empty, -1, -1 );
+            creamClient->Status(jobIt->getCreamURL().c_str(),
+                                oneJobToQuery,
+                                empty,
+				statusTarget,
+				-1,
+				-1 );
 
-            if ( job_stat==0 || job_stat->jobStatus.empty() ) {
+           // if ( job_stat==0 || job_stat->jobStatus.empty() ) {
+	      if ( statusTarget.empty() ) {
                 // The job is unknown by ICE; remove from the jobCache
                 log_dev->warnStream()
-                    << "Job cream/grid ID=[" 
+                    << "Job cream/grid ID=["
                     << jobIt->getJobID()
                     << "]/["
                     << jobIt->getGridJobID()
@@ -157,7 +162,7 @@ bool eventStatusPoller::getStatus(void)
                 jobIt = cache->erase( jobIt );
                 jobIt--; // this is necessary to avoid skipping the next item
             } else {
-                _jobstatuslist.push_back( job_stat );
+                //_jobstatuslist.push_back( job_stat );
             }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
@@ -210,29 +215,31 @@ void eventStatusPoller::checkJobs()
     pieces.reserve(3);
     jobs_to_purge.reserve(100);
 
-    for( JobStatusIt it = _jobstatuslist.begin();
-         it != _jobstatuslist.end(); ++it) {
+    //for( JobStatusIt it = _jobstatuslist.begin();
+    for( JobStatusIt it = statusTarget.begin();
+         //it != _jobstatuslist.end(); ++it) {
+	 it != statusTarget.end(); ++it) {
 
-        vector<creamtypes__Status*> _statuslist = (*it)->jobStatus;
+//        vector<creamtypes__Status*> _statuslist = (*it)->jobStatus;
 
         // sit = Status ITerator
-        for ( vector<creamtypes__Status*>::iterator sit = _statuslist.begin();
-              sit != _statuslist.end(); sit++ ) {
+//        for ( vector<creamtypes__Status*>::iterator sit = _statuslist.begin();
+//              sit != _statuslist.end(); sit++ ) {
 
 
 	    /**
 	     * The following 2 conditions should never take place
 	     * but... just in case, let's prevent a segfault
 	     */
-            if ( !(*sit)->jobId )
-              continue;
+//            if ( !(*sit)->jobId )
+//              continue;
 
-	    if( !(*sit)->exitCode )
-	      continue;
+//	    if( !(*sit)->exitCode )
+//	      continue;
 
-            stNum = getStatusNum( (*sit)->name );
-	    exitCode = *((*sit)->exitCode);
-            string cid( *((*sit)->jobId) );
+            stNum = getStatusNum( it->getStatusName() );
+	    exitCode = it->getExitCode();
+            string cid( it->getJobID() );
 
 	    bool DONE = (stNum == api::job_statuses::DONE_FAILED)
 			|| (stNum == api::job_statuses::DONE_OK);
@@ -294,37 +301,36 @@ void eventStatusPoller::checkJobs()
           
             jobs_to_purge.clear();
         }
-    }
 }
 
 //______________________________________________________________________________
 void eventStatusPoller::updateJobCache()
 {
-    for ( JobStatusIt it = _jobstatuslist.begin(); 
-          it != _jobstatuslist.end(); ++it) {
+    for ( JobStatusIt it = statusTarget.begin();
+          it != statusTarget.end(); ++it) {
 
-        soap_proxy::JobStatusList* theList = *it;
-        
-        if ( !theList )
-            continue;
+        //soap_proxy::JobStatusList* theList = *it;
 
-        vector<creamtypes__Status*> _statuslist = theList->jobStatus;
-        
+        //if ( !theList )
+        //    continue;
+
+        //vector<creamtypes__Status*> _statuslist = theList->jobStatus;
+
         // sit = Status ITerator
-        for ( vector<creamtypes__Status*>::iterator sit = _statuslist.begin();
-              sit != _statuslist.end(); sit++ ) {
+        //for ( vector<creamtypes__Status*>::iterator sit = _statuslist.begin();
+          //    sit != _statuslist.end(); sit++ ) {
 
             glite::ce::cream_client_api::job_statuses::job_status
-                stNum = getStatusNum( (*sit)->name );
+                stNum = getStatusNum( it->getStatusName() );
             
             try {
                 // Locks the cache
                 boost::recursive_mutex::scoped_lock M( jobCache::mutex );
                 
-                if ( ! (*sit)->jobId ) 
-                    continue;
-                
-                string cid( *( (*sit)->jobId ) );
+                //if ( ! (*sit)->jobId )
+                //    continue;
+
+                string cid( it->getJobID() );
                 
                 // jit = Jobcache ITerator
                 jobCache::iterator jit( cache->lookupByCreamJobID( cid ) );
@@ -333,17 +339,17 @@ void eventStatusPoller::updateJobCache()
                     // Check if the status changed after the last 
                     // status change as recorded by the jobCache
                     
-                    if ( jit->getLastStatusChange() < (*sit)->timestamp ) {
+                    if ( jit->getLastStatusChange() < it->getTimestamp() ) {
                         
                         log_dev->infoStream()
                             << "eventStatusPoller::updateJobCache() - "
                             << "Updating jobcache with "
                             << "grid_jobid = [" << jit->getGridJobID() << "] "
                             << "cream_jobid = [" << cid << "]"
-                            << " status = [" << (*sit)->name << "]"
+                            << " status = [" << it->getStatusName() << "]"
                             << log4cpp::CategoryStream::ENDLINE;
                         
-                        jit->setStatus( stNum, (*sit)->timestamp );
+                        jit->setStatus( stNum, it->getTimestamp() );
 
                         // Log to L&B
                         _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
@@ -360,8 +366,8 @@ void eventStatusPoller::updateJobCache()
                 exit(1);
             }
         }
-    }
 }
+
 
 //______________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
