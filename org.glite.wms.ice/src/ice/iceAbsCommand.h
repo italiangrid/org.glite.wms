@@ -11,7 +11,7 @@ namespace glite {
     namespace wms {
         namespace ice {
 
-            class ice;
+            class Ice;
 
             class iceAbsCommand {
 	
@@ -27,7 +27,7 @@ namespace glite {
                  * @throw an iceCommandTransient_ex if the command failed
                  * but could be tried again and succeed.
                  */
-                virtual void execute( ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
+                virtual void execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& ) = 0;
           
             protected:
 

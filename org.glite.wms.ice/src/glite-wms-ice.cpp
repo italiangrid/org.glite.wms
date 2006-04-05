@@ -173,10 +173,10 @@ int main(int argc, char*argv[])
   /*****************************************************************************
    * Initializes ice manager
    ****************************************************************************/ 
-  glite::wms::ice::ice* iceManager;
+  glite::wms::ice::Ice* iceManager;
   try {
     boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    iceManager = new glite::wms::ice::ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
+    iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
       log_dev->log(log4cpp::Priority::ERROR, ex.what() );
     exit(1);

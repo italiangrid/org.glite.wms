@@ -1,6 +1,24 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE core class
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
-#ifndef __GLITE_WMS_ICE_ICE_H__
-#define __GLITE_WMS_ICE_ICE_H__
+#ifndef GLITE_WMS_ICE_ICE_CORE_H
+#define GLITE_WMS_ICE_ICE_CORE_H
 
 #include "iceInit_ex.h"
 #include "eventStatusListener.h"
@@ -9,14 +27,13 @@
 #include "leaseUpdater.h"
 #include "proxyRenewal.h"
 #include "creamJob.h"
+#include "iceThread.h"
 
 #include "glite/wms/common/utilities/FLExtractor.h"
 
 #include "ClassadSyntax_ex.h"
 
 #include <string>
-
-class jobRequest;
 
 typedef glite::wms::common::utilities::FLExtractor<std::string>::iterator FLEit;
 
@@ -32,51 +49,63 @@ namespace glite {
   namespace wms {
     namespace ice {
 
-      enum iceSupportedCommand {
-	jobsubmit,
-	jobcancel
-      };
+      class Ice {
 
-      struct iceCommand {
-	std::string gid_jobid;
-	std::string cream_jobid;
-	iceSupportedCommand command;
-	std::string jdl;
-      };
+          class IceThreadHelper { 
+          public:
+              IceThreadHelper( const std::string& name );
+              virtual ~IceThreadHelper( );
 
-      class ice {
-          std::string ns_filelist;
-          std::string wm_filelist;
-          boost::thread* listenerThread;
-          boost::thread* pollerThread;
-          boost::thread* updaterThread;
-          boost::thread* lease_updaterThread;
-          boost::thread* proxy_renewerThread;
-          boost::shared_ptr<util::eventStatusPoller> poller;
-          boost::shared_ptr<util::eventStatusListener> listener;
-          boost::shared_ptr<util::subscriptionUpdater> subsUpdater;
-          boost::shared_ptr<util::leaseUpdater> lease_updater;
-          boost::shared_ptr<util::proxyRenewal> proxy_renewer;
+              /**
+               * Associates a newly created iceThread object
+               * to this thread, and starts it. 
+               *
+               * @param obj a pointer to the iceThread object from
+               * which a thread should be created. The caller
+               * transfers ownership of parameter obj.
+               */
+              void start( util::iceThread* obj ) throw( iceInit_ex& );
 
-          std::vector<FLEit> requests;
-          glite::wms::common::utilities::FLExtractor<std::string> fle;
-          glite::wms::common::utilities::FileList<std::string> flns;
+          protected:
+
+              /**
+               * Stops this thread. This method has no effect if the
+               * start() method was not called first, or if the
+               * start() method raised an exception.
+               */
+              void stop( void );
+
+              const std::string m_name; //! The name of this thread (can be any string)
+              boost::thread* m_thread; //! The dynamically created thread object. 
+              boost::shared_ptr< util::iceThread > m_ptr_thread; //! Used to instantiate the thread.
+              log4cpp::Category* m_log_dev; //! Logging device
+          };
+
+          IceThreadHelper m_listener_thread;
+          IceThreadHelper m_poller_thread;
+          IceThreadHelper m_updater_thread;
+          IceThreadHelper m_lease_updater_thread;
+          IceThreadHelper m_proxy_renewer_thread;
+
+          std::string m_ns_filelist;
+          std::vector<FLEit> m_requests;
+          glite::wms::common::utilities::FLExtractor<std::string> m_fle;
+          glite::wms::common::utilities::FileList<std::string> m_flns;
           
-          log4cpp::Category* log_dev;
+          log4cpp::Category* m_log_dev;
           
       public:
-          ice(const std::string& NS_FL,
-              const std::string& WM_FL)
+          Ice( const std::string& NS_FL, const std::string& WM_FL )
               throw(glite::wms::ice::iceInit_ex&);
           
-          virtual ~ice();
+          virtual ~Ice();
           
           void clearRequests();
           void getNextRequests(std::vector<std::string>&);
-          void removeRequest(const unsigned int&);
-          void ungetRequest(const unsigned int&);
-          void startListener(const int&);
-          void startPoller(const int&);
+          void removeRequest( unsigned int );
+          void ungetRequest( unsigned int );
+          void startListener( int );
+          void startPoller( int );
           void startLeaseUpdater( void );
           void startProxyRenewer( void );
           virtual void resubmit_job( util::CreamJob& j );

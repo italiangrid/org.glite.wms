@@ -51,7 +51,7 @@ void organizeJobs(const vector<CreamJob>& vec,
 
 //______________________________________________________________________________
 eventStatusPoller::eventStatusPoller(
-				     glite::wms::ice::ice* _iceManager,
+				     glite::wms::ice::Ice* _iceManager,
 				     const int _d
 				     )
   throw(eventStatusPoller_ex&)

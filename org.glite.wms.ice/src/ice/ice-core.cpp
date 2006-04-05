@@ -1,12 +1,30 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE core class
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
 #include "ice-core.h"
 #include "iceConfManager.h"
 #include "jobCache.h"
-#include "jobRequest.h"
 #include "subscriptionManager.h"
 #include "subscriptionCache.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
+#include "iceThread.h"
 
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
 
@@ -16,63 +34,110 @@
 
 #include <exception>
 #include <unistd.h>
+#include <cstdlib>
 
-using namespace glite::wms::ice;
-using namespace glite::wms::common::utilities;
+namespace wmsutils_ns = glite::wms::common::utilities;
 using namespace std;
 
 typedef vector<string>::iterator vstrIt;
 
-//______________________________________________________________________________
-ice::ice(const string& NS_FL, 
-	 const string& WM_FL
-	 ) throw(iceInit_ex&)
-  : ns_filelist(NS_FL),
-    wm_filelist(WM_FL),
-    fle(WM_FL.c_str()),
-    log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger())
-{
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::ice() - Initializing File Extractor object...");
-    try{
-        flns.open(NS_FL.c_str());
-    }
-    catch(std::exception& ex) {
-        throw iceInit_ex(ex.what());
-    } catch(...) {
-        log_dev->log(log4cpp::Priority::ERROR,
-                     "ice::ice() - Catched unknown exception");
-        exit(1);
-    }
+namespace glite {
+namespace wms {
+namespace ice {
 
-    bool _tmp_start_listener;
+//
+// Begin Inner class definitions
+//
+    Ice::IceThreadHelper::IceThreadHelper( const std::string& name ) :
+        m_name( name ),
+        m_thread( 0 ),
+        m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
     {
-        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-        _tmp_start_listener = util::iceConfManager::getInstance()->getStartListener();
+
     }
 
-    if( _tmp_start_listener ) {
+    Ice::IceThreadHelper::~IceThreadHelper( ) 
+    {
+        stop( );
+        delete m_thread;
+    }
+
+    void Ice::IceThreadHelper::start( util::iceThread* obj ) throw( iceInit_ex& )
+    {
+        m_ptr_thread = boost::shared_ptr< util::iceThread >( obj );
+        try {
+            m_thread = new boost::thread(boost::bind(&util::iceThread::operator(), m_ptr_thread) );
+        } catch( boost::thread_resource_error& ex ) {
+            throw iceInit_ex( ex.what() );
+        }
+    }
+
+    void Ice::IceThreadHelper::stop( void )
+    {
+        if( m_thread && m_ptr_thread->isRunning() ) {
+            m_log_dev->infoStream()
+                << "Waiting for thread " << m_name << " termination..."
+                << log4cpp::CategoryStream::ENDLINE;
+            m_ptr_thread->stop();
+            m_thread->join();
+            m_log_dev->infoStream()
+                << "Thread " << m_name << " finished"
+                << log4cpp::CategoryStream::ENDLINE;
+        }
+    }
+
+//
+// End inner class definitions
+//
+
+//____________________________________________________________________________
+Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) : 
+    m_listener_thread( "Event Status Listener" ),
+    m_poller_thread( "Event Status Poller" ),
+    m_updater_thread( "Subscription Updater" ),
+    m_lease_updater_thread( "Lease Updater" ),
+    m_proxy_renewer_thread( "Proxy Renewer" ),
+    m_ns_filelist( NS_FL ),
+    m_fle( WM_FL.c_str() ),
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
+{
+    m_log_dev->log(log4cpp::Priority::INFO,
+                   "Ice::ice() - Initializing File Extractor object...");
+    try {
+        m_flns.open( NS_FL.c_str() );
+    }
+    catch( std::exception& ex ) {
+        throw iceInit_ex( ex.what() );
+    } catch( ... ) {
+        m_log_dev->log(log4cpp::Priority::FATAL,
+                       "Ice::ice() - Catched unknown exception");
+        exit( 1 );
+    }
+
+    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+
+    util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
+    bool tmp_start_listener = confMgr->getStartListener();
+
+    if( tmp_start_listener ) {
         /**
-         * The listener and the iceCommandSubmit need to subscribe to CEMon in order
-         * to make ICE able to receive job status notifications.
-         * So now as preliminary operation it's the case to check that the
-         * subscriptionManager singleton can be created without problems.
+         * The listener and the iceCommandSubmit need to subscribe to
+         * CEMon in order to make ICE able to receive job status
+         * notifications.  So now as preliminary operation it's the
+         * case to check that the subscriptionManager singleton can be
+         * created without problems.
          *
-         * The subscriptionManager initialization also setups authentication.
+         * The subscriptionManager initialization also setups
+         * authentication.
          */
-        {
-            boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-            util::subscriptionManager::getInstance();
-            if( !util::subscriptionManager::getInstance()->isValid() ) {
-                log_dev->errorStream() << "ice::CTOR() - "
-                                       << "Fatal error creating the subscriptionManager instance. Will not start listener."
-                                       << log4cpp::CategoryStream::ENDLINE;
-                //_isOK = false;
-                //exit(1); // FATAL, I think is right to exit
-                //return;
-                boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-                util::iceConfManager::getInstance()->setStartListener( false );
-            }
+        boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+        util::subscriptionManager::getInstance();
+        if( !util::subscriptionManager::getInstance()->isValid() ) {
+            m_log_dev->errorStream() 
+                << "Ice::CTOR() - "
+                << "Fatal error creating the subscriptionManager instance. Will not start listener."
+                << log4cpp::CategoryStream::ENDLINE;
+            confMgr->setStartListener( false );
         }
         /**
          * subscriptionCache is used to retrieve the list of cemon we're
@@ -83,271 +148,165 @@ ice::ice(const string& NS_FL,
         {
             boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
             if( util::subscriptionCache::getInstance() == NULL ) {
-                log_dev->errorStream() << "ice::CTOR() - "
-                                       << "Fatal error creating the subscriptionCache instance. Will not start listener."
-                                       << log4cpp::CategoryStream::ENDLINE;
-                boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-                util::iceConfManager::getInstance()->setStartListener( false );
+                m_log_dev->errorStream() 
+                    << "Ice::CTOR() - "
+                    << "Fatal error creating the subscriptionCache instance. "
+                    << "Will not start listener."
+                    << log4cpp::CategoryStream::ENDLINE;
+                confMgr->setStartListener( false );
             }
         }
     }
 }
 
-//______________________________________________________________________________
-ice::~ice()
+//____________________________________________________________________________
+Ice::~Ice( )
 {
-  if( listener && listener->isRunning() ) {
-    log_dev->log(log4cpp::Priority::INFO,
-		 "ice::~ice() - Waiting for listener termination...");
-    listener->stop();
-    listenerThread->join();
-    log_dev->log(log4cpp::Priority::INFO,
-		 "ice::~ice() - Listener finished");
-    delete(listenerThread);
-  }
-  if ( subsUpdater && subsUpdater->isRunning() ) {
-    log_dev->log(log4cpp::Priority::INFO,
-		 "ice::~ice() - Waiting for poller termination...");
-    subsUpdater->stop();
-    pollerThread->join();
-    log_dev->log(log4cpp::Priority::INFO,
-		 "ice::~ice() - Poller finished");
-    delete(pollerThread);
-  }
-  if ( lease_updater && lease_updater->isRunning() ) {
-    log_dev->log(log4cpp::Priority::INFO,
-		 "ice::~ice() - Waiting for lease updater termination...");
-    lease_updater->stop( );
-    lease_updaterThread->join();
-    log_dev->log(log4cpp::Priority::INFO,
-		 "ice::~ice() - Lease updater finished");
-    delete(lease_updaterThread);
-  }
 
 }
 
-//______________________________________________________________________________
-void ice::startListener(const int& listenPort)
+//____________________________________________________________________________
+void Ice::startListener( int listenPort )
 {
-  if ( listener && listener->isRunning() ) 
-      return;
-
-
-
-  log_dev->log(log4cpp::Priority::INFO,
-	       "ice::startListener() - Creating a CEMon listener object...");
-  {
     boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-    listener = boost::shared_ptr<util::eventStatusListener>(new util::eventStatusListener(listenPort,util::iceConfManager::getInstance()->getHostProxyFile()));
-  }
-  if( !listener->isOK() ) {
-      log_dev->log(log4cpp::Priority::ERROR, "CEMon listener creation went wrong. Won't start it.");
-      // this must be set because other pieces of code
-      // have a behaviour that depends on the listener is running or not
-      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-      util::iceConfManager::getInstance()->setStartListener( false );
-      return;
-  }
-  while(!listener->bind()) {
-      log_dev->log(log4cpp::Priority::ERROR,
-                   string("ice::startListener() - Bind error: ")+listener->getErrorMessage()
-                   +" - error code="+listener->getErrorCode());
-      log_dev->log(log4cpp::Priority::ERROR,
-                   "Retrying in 5 seconds...");
-      sleep(5);
-  }
+    util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
 
-  log_dev->log(log4cpp::Priority::INFO,
-	       "ice::startListener() - Creating thread object for CEMon listener...");
-  /**
-   * The folliwing line requires that the copy ctor of CEConsumer
-   * class be public(protected?)
-   *
-   */
-  try {
-      listenerThread =
-          new boost::thread(boost::bind(&util::eventStatusListener::operator(),
-                                        listener)
-                            );
-  } catch(boost::thread_resource_error& ex) {
-      iceInit_ex( ex.what() );
-  }
-  log_dev->log(log4cpp::Priority::INFO,
-	       "ice::startListener() - listener started succesfully !");
-  
-  //-----------------now is time to start subUpdater---------------------------
-  bool _tmp_start_sub_updater;
-  {
-    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-    _tmp_start_sub_updater = util::iceConfManager::getInstance()->getStartSubscriptionUpdater();
-  }
-  if( _tmp_start_sub_updater ) {
-      log_dev->log(log4cpp::Priority::INFO,
-                   "ice::startListener() - Creating a CEMon subscription updater...");
-      {
-        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-        subsUpdater = boost::shared_ptr<util::subscriptionUpdater>(new util::subscriptionUpdater(util::iceConfManager::getInstance()->getHostProxyFile()));
-      }
-      log_dev->log(log4cpp::Priority::INFO,
-                   "ice::startListener() - Creating thread object for Subscription updater...");
-      try {
-          updaterThread =
-              new boost::thread(boost::bind(&util::subscriptionUpdater::operator(),
-                                            subsUpdater)
-                                );
-      } catch(boost::thread_resource_error& ex) {
-          iceInit_ex( ex.what() );
-      }
-      log_dev->log(log4cpp::Priority::INFO,
-                   "ice::startListener() - Subscription updater started succesfully !");
-  }
-}
+    m_log_dev->infoStream()
+        << "Ice::startListener() - Creating a CEMon listener object..."
+        << log4cpp::CategoryStream::ENDLINE;
 
-//______________________________________________________________________________
-void ice::startPoller(const int& poller_delay)
-{
-    if ( poller && poller->isRunning() ) 
+    util::eventStatusListener* listener = new util::eventStatusListener(listenPort, confMgr->getHostProxyFile());
+    
+    if( !listener->isOK() ) {
+        
+        m_log_dev->errorStream()
+            << "CEMon listener creation went wrong. Won't start it."
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        // this must be set because other pieces of code
+        // have a behaviour that depends on the listener is running or not
+        confMgr->setStartListener( false );
         return;
-
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startPoller() - Creating a Cream status poller object...");
-    
-    poller = boost::shared_ptr<util::eventStatusPoller>(new util::eventStatusPoller(this, poller_delay));
-    
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startPoller() - Starting Cream status poller thread...");
-    
-    try {
-        pollerThread = 
-            new boost::thread(boost::bind(&util::eventStatusPoller::operator(), 
-                                          poller)
-                              );
-    } catch(boost::thread_resource_error& ex) {
-        iceInit_ex( ex.what() );
+    }
+    while( !listener->bind() ) {
+        m_log_dev->errorStream()
+            << "Ice::startListener() - Bind error: "
+            << listener->getErrorMessage()
+            << " - error code="
+            << listener->getErrorCode()
+            << "Retrying in 5 seconds..."
+            << log4cpp::CategoryStream::ENDLINE;
+        sleep(5);
     }
     
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startPoller() - Poller started succesfully !");
+    m_listener_thread.start( listener );
+    
+    //-----------------now is time to start subUpdater-------------------------
+    bool tmp_start_sub_updater = confMgr->getStartSubscriptionUpdater();
+    
+    if( tmp_start_sub_updater ) {
+        util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( confMgr->getHostProxyFile());      
+        m_updater_thread.start( subs_updater );
+    }
 }
 
-//------------------------------------------------------------------------------
-void ice::startLeaseUpdater( void ) {
-    if ( lease_updater && lease_updater->isRunning() )
-        return ;
+//____________________________________________________________________________
+void Ice::startPoller( int poller_delay )
+{
+    util::eventStatusPoller* poller = new util::eventStatusPoller( this, poller_delay );
+    m_poller_thread.start( poller );
+}
 
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startLeaseUpdater() - Creating a Cream lease updater object...");
-    
-    lease_updater = boost::shared_ptr<util::leaseUpdater>(new util::leaseUpdater( ) );
-    
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startLeaseUpdater() - Starting Cream lease updater thread...");
-    
-    try {
-        lease_updaterThread = 
-            new boost::thread(boost::bind(&util::leaseUpdater::operator(), 
-                                          lease_updater)
-                              );
-    } catch(boost::thread_resource_error& ex) {
-        iceInit_ex( ex.what() );
-    }
-    
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startLeaseUpdater() - Lease updater succesfully !");
+//----------------------------------------------------------------------------
+void Ice::startLeaseUpdater( void ) 
+{
+    util::leaseUpdater* lease_updater = new util::leaseUpdater( );
+    m_lease_updater_thread.start( lease_updater );
 }
 
 //-----------------------------------------------------------------------------
-void ice::startProxyRenewer( void ) {
-    if ( proxy_renewer && proxy_renewer->isRunning() )
-        return ;
+void Ice::startProxyRenewer( void ) 
+{
+    util::proxyRenewal* proxy_renewer = new util::proxyRenewal( );
+    m_proxy_renewer_thread.start( proxy_renewer );
+}
 
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startProxyRenewer() - Creating a Cream proxy renewer object...");
+//____________________________________________________________________________
+void Ice::clearRequests() 
+{
+    m_requests.clear();
+}
+
+//____________________________________________________________________________
+void Ice::getNextRequests(vector<string>& ops) 
+{
+  try { 
+      m_requests = m_fle.get_all_available();
+  }
+  catch( exception& ex ) {
+      m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
+      exit(1);
+  }
+  for ( unsigned j=0; j < m_requests.size(); j++ ) {
+      ops.push_back(*m_requests[j]);
+  }
+}
+
+//____________________________________________________________________________
+void Ice::removeRequest( unsigned int reqNum) 
+{
+    m_fle.erase(m_requests[reqNum]);
+}
+
+//____________________________________________________________________________
+void Ice::ungetRequest( unsigned int reqNum)
+{
+    wmsutils_ns::FileListMutex mx(m_flns);
+    wmsutils_ns::FileListLock  lock(mx);
+
+    string toResubmit = *m_requests[reqNum];
     
-    proxy_renewer = boost::shared_ptr<util::proxyRenewal>(new util::proxyRenewal( ) );
-    
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::starProxyRenewer() - Starting Cream proxy renewal thread...");
+    boost::replace_first( toResubmit, "jobsubmit", "jobresubmit");
     
     try {
-        proxy_renewerThread = 
-            new boost::thread(boost::bind(&util::proxyRenewal::operator(), 
-                                          proxy_renewer)
-                              );
-    } catch(boost::thread_resource_error& ex) {
-        iceInit_ex( ex.what() );
+        m_log_dev->infoStream()
+            << "Ice::ungetRequest() - Putting ["
+            << toResubmit << "] to WM's Input file"
+            << log4cpp::CategoryStream::ENDLINE;
+        
+        m_flns.push_back(toResubmit);
+    } catch(std::exception& ex) {
+        m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
+        exit(1);
     }
-    
-    log_dev->log(log4cpp::Priority::INFO,
-                 "ice::startProxyRenewer() - Proxy renewer succesfully !");
 }
 
-//______________________________________________________________________________
-void ice::clearRequests() 
+//____________________________________________________________________________
+void Ice::resubmit_job( util::CreamJob& j ) 
 {
-  requests.clear();
-}
-
-//______________________________________________________________________________
-void ice::getNextRequests(vector<string>& ops) 
-{
-  try{requests = fle.get_all_available();}
-  catch(exception& ex) {
-    log_dev->log(log4cpp::Priority::ERROR,
-		 ex.what());
-    exit(1);
-  }
-  for(unsigned j=0; j < requests.size(); j++)  
-    ops.push_back(*requests[j]);
-}
-
-//______________________________________________________________________________
-void ice::removeRequest(const unsigned int& reqNum) 
-{
-  fle.erase(requests[reqNum]);
-}
-
-//______________________________________________________________________________
-void ice::ungetRequest(const unsigned int& reqNum)
-{
-  FileListMutex mx(flns);
-  FileListLock  lock(mx);
-
-  string toResubmit = *requests[reqNum];
-
-  boost::replace_first( toResubmit, "jobsubmit", "jobresubmit");
-
-  try {
-    log_dev->log(log4cpp::Priority::INFO,
-		 string("ice::ungetRequest() - Putting [")
-		 +toResubmit+"] to WM's Input file");
-    flns.push_back(toResubmit);
-  } catch(std::exception& ex) {
-    log_dev->log(log4cpp::Priority::ERROR,
-		 ex.what());
-    exit(1);
-  }
-}
-
-//______________________________________________________________________________
-void ice::resubmit_job( util::CreamJob& j ) 
-{
-    util::iceLBLogger* _lb_logger= util::iceLBLogger::instance();
+    util::iceLBLogger* lb_logger = util::iceLBLogger::instance();
 
     string resub_request = string("[ version = \"1.0.0\";")
-        +" command = \"jobresubmit\"; arguments = [ id = \"" + j.getGridJobID() + "\" ] ]";
-    FileListMutex mx(flns);
-    FileListLock  lock(mx);
+        +" command = \"jobresubmit\"; arguments = [ id = \"" 
+        + j.getGridJobID() + "\" ] ]";
+    wmsutils_ns::FileListMutex mx(m_flns);
+    wmsutils_ns::FileListLock  lock(mx);
     try {
-        log_dev->log(log4cpp::Priority::INFO,
-                     string("ice::doOnJobFailure() - Putting [")
-                     +resub_request+"] to WM's Input file");
-        _lb_logger->logEvent( new util::ns_enqueued_start_event( j, ns_filelist ) );
-        flns.push_back(resub_request);
-        _lb_logger->logEvent( new util::ns_enqueued_ok_event( j, ns_filelist ) );
+        m_log_dev->infoStream()
+            << "Ice::doOnJobFailure() - Putting ["
+            << resub_request << "] to WM's Input file"
+            << log4cpp::CategoryStream::ENDLINE;
+
+        lb_logger->logEvent( new util::ns_enqueued_start_event( j, m_ns_filelist ) );
+        m_flns.push_back(resub_request);
+        lb_logger->logEvent( new util::ns_enqueued_ok_event( j, m_ns_filelist ) );
     } catch(std::exception& ex) {
-        log_dev->log(log4cpp::Priority::ERROR, ex.what());
-        _lb_logger->logEvent( new util::ns_enqueued_fail_event( j, ns_filelist ) );
+        m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
+        lb_logger->logEvent( new util::ns_enqueued_fail_event( j, m_ns_filelist ) );
         exit(1); // FIXME: Should we keep going?
     }
 }
+
+} // namespace ice
+} // namespace wms
+} // namespace glite

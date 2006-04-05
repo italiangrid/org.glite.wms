@@ -29,21 +29,25 @@
 
 extern int h_errno;
 
-using namespace glite::wms::ice;
+//using namespace glite::wms::ice;
 using namespace std;
 
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
-namespace ice_util = glite::wms::ice::util;
+//namespace ice_util = glite::wms::ice::util;
+
+namespace glite {
+namespace wms {
+namespace ice {
 
 //______________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( const string& request )
   throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
   iceAbsCommand( ),
   log_dev( api_util::creamApiLogger::instance()->getLogger()),
-  confMgr( ice_util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
-  _lb_logger( ice_util::iceLBLogger::instance() )
+  confMgr( util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
+  _lb_logger( util::iceLBLogger::instance() )
 {
     char name[256];
     memset((void*)name, 0, 256);
@@ -64,7 +68,7 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     }
 
     {
-      boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
+      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
       myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
     }
 
@@ -100,39 +104,39 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
     if (!_rootAD)
-        throw ice_util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
+        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
 
     string _commandStr;
     // Parse the "command" attribute
     if ( !_rootAD->EvaluateAttrString( "command", _commandStr ) ) {
-        throw ice_util::JobRequest_ex("attribute 'command' not found or is not a string");
+        throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
     boost::trim_if( _commandStr, boost::is_any_of("\"") );
 
     if ( !boost::algorithm::iequals( _commandStr, "submit" ) ) {
-        throw ice_util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
+        throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
     }
 
     string _protocolStr;
     // Parse the "version" attribute
     if ( !_rootAD->EvaluateAttrString( "Protocol", _protocolStr ) ) {
-        throw ice_util::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
+        throw util::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
     if ( _protocolStr.compare("1.0.0") ) {
-        throw ice_util::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + _protocolStr );
+        throw util::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + _protocolStr );
     }
 
     classad::ClassAd *_argumentsAD = 0;
     // Parse the "arguments" attribute
     if ( !_rootAD->EvaluateAttrClassAd( "arguments", _argumentsAD ) ) {
-        throw ice_util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
+        throw util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
     }
 
     classad::ClassAd *_adAD = 0;
     // Look for "ad" attribute inside "arguments"
     if ( !_argumentsAD->EvaluateAttrClassAd( "jobad", _adAD ) ) {
-        throw ice_util::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
+        throw util::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
     }
 
     // initializes the _jdl attribute
@@ -142,20 +146,20 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 }
 
 //______________________________________________________________________________
-void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
 
     util::jobCache* _cache = util::jobCache::getInstance();
 
     vector<string> url_jid;
-    ice_util::CreamJob theJob;
+    util::CreamJob theJob;
     cream_api::soap_proxy::CreamProxy* theProxy = cream_api::soap_proxy::CreamProxyFactory::getProxy();
 
     try {
         theJob.setJdl( _jdl );
         theJob.setStatus( cream_api::job_statuses::UNKNOWN, time(NULL) );
-    } catch( ice_util::ClassadSyntax_ex& ex ) {
+    } catch( util::ClassadSyntax_ex& ex ) {
         log_dev->errorStream() 
             << "Cannot instantiate a job from jdl="
             << _jdl
@@ -182,19 +186,19 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         << log4cpp::CategoryStream::ENDLINE;
 
     _lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be removed
-    _lb_logger->logEvent( new ice_util::cream_transfer_start_event( theJob ) );
+    _lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
 
     string modified_jdl;
     try {    
         modified_jdl = creamJdlHelper( _jdl );
-    } catch( ice_util::ClassadSyntax_ex& ex ) {
+    } catch( util::ClassadSyntax_ex& ex ) {
         log_dev->errorStream() 
             << "Cannot convert jdl="
             << _jdl
             << " due to classad exception:"
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
-        _lb_logger->logEvent( new ice_util::cream_transfer_fail_event( theJob, ex.what() ) );
+        _lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
         _cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
@@ -209,7 +213,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     try {
         theProxy->Authenticate(theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
-        _lb_logger->logEvent( new ice_util::cream_transfer_fail_event( theJob, ex.what() ) );
+        _lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
         log_dev->errorStream()
             << "Unable to submit gridJobID=" << theJob.getGridJobID()
             << " due to authentication error:" << ex.what()
@@ -246,7 +250,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << theJob.getGridJobID()
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
-            _lb_logger->logEvent( new ice_util::cream_transfer_fail_event( theJob, ex.what()  ) );
+            _lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
             _ice->resubmit_job( theJob ); // Try to resubmit
             _cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
@@ -265,8 +269,8 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         theJob.setDelegationId( delegID );
         theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
 
-        _lb_logger->logEvent( new ice_util::cream_transfer_ok_event( theJob ) );
-        _lb_logger->logEvent( new ice_util::cream_accepted_event( theJob ) );
+        _lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
+        _lb_logger->logEvent( new util::cream_accepted_event( theJob ) );
 
         // put(...) accepts arg by reference, but
         // the implementation puts the arg in the memory hash by copying it. So
@@ -284,18 +288,18 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
      */
     bool _tmp_start_listener;
     {
-        boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
+        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
         _tmp_start_listener = confMgr->getStartListener();
     }
 
     if( _tmp_start_listener ) {
       string cemon_url;
       {
-        boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
-	boost::recursive_mutex::scoped_lock cemonM( ice_util::cemonUrlCache::mutex );
+        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+	boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
         //cemon_url  confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
         //    + confMgr->getCEMonUrlPostfix();
-	cemon_url = ice_util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
+	cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
 	log_dev->infoStream() << "iceCommandSubmit::execute() - "
 			      << "For current CREAM, cemonUrlCache returned CEMon URL ["
 			      << cemon_url<<"]"
@@ -310,7 +314,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 			        << "For current CREAM, query to CREAM service  returned CEMon URL ["
 			        << cemon_url<<"]"
 			        << log4cpp::CategoryStream::ENDLINE;
-	      ice_util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+	      util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
 	    } catch(exception& ex) {
 
 	      log_dev->errorStream() << "iceCommandSubmit::execute() - Error retrieving"
@@ -326,7 +330,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 	      log_dev->infoStream() << "Using CEMon URL ["
 	      			    << cemon_url << "]" << log4cpp::CategoryStream::ENDLINE;
               //ceurls.insert( cemonURL );
-	      ice_util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
+	      util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
 	    }
 	}
       }
@@ -339,7 +343,7 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << log4cpp::CategoryStream::ENDLINE;
 
       {
-	    boost::recursive_mutex::scoped_lock M( ice_util::iceConfManager::mutex );
+	    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
             log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
                 << myname_url << "] to ["<<cemon_url
@@ -374,18 +378,18 @@ void iceCommandSubmit::execute( ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 } // execute
 
 //______________________________________________________________________________
-string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( ice_util::ClassadSyntax_ex& )
+string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
     classad::ClassAd *_root = parser.ParseClassAd( oldJdl );
 
     if ( !_root ) {
-        throw ice_util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
+        throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
     }
 
     string ceid;
     if ( !_root->EvaluateAttrString( "ce_id", ceid ) ) {
-        throw ice_util::ClassadSyntax_ex( "ce_id attribute not found" );
+        throw util::ClassadSyntax_ex( "ce_id attribute not found" );
     }
     boost::trim_if( ceid, boost::is_any_of("\"") );
 
@@ -585,3 +589,7 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
 		 +_pathName+"]");
 }
 
+
+} // namespace ice
+} // namespace wms
+} // namespace glite

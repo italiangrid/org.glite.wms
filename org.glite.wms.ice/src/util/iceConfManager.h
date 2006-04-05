@@ -18,9 +18,10 @@ namespace glite {
 
 	class iceConfManager {
 	  
-	  static iceConfManager* instance;
-	  static std::string conf_file;
-	  static bool initialized;
+	  static iceConfManager* s_instance;
+	  static std::string s_conf_file;
+	  static bool s_initialized;
+
 	  std::string HostProxyFile, 
 	    WM_Input_FileList, ICE_Input_FileList, CachePersistFile, LogFile,
 	    creamurlprefix, creamurlpostfix, curldelegprefix,
@@ -41,7 +42,7 @@ namespace glite {
 	public:
 	  static boost::recursive_mutex mutex;
 	  
-	  virtual ~iceConfManager() { delete(instance); }
+	  virtual ~iceConfManager();
 	  static iceConfManager* getInstance() 
 	    throw (glite::wms::ice::util::ConfigurationManager_ex&);
 	  static void init(const std::string&);

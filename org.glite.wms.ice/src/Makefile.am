@@ -42,7 +42,7 @@ putFL_cancel_LDADD = $(LOG4CPP_LIBS) \
 
 glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
-		-lxml2 \
+		$(XML2_LIBS) \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
 		$(CLASSAD_LIBS) \
@@ -67,7 +67,7 @@ glite_wms_ice_LDADD = -L$(GLITE_LOCATION)/lib \
 
 dumpICECache_LDADD = -L$(GLITE_LOCATION)/lib \
 		$(GRIDSITE_GLOBUS_LIBS) \
-		-lxml2 \
+		$(XML2_LIBS) \
 		-lglite_ce_cream_client_soap \
 		-lglite_ce_cream_client_util \
 		$(CLASSAD_LIBS) \

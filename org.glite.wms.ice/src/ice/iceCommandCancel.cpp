@@ -85,7 +85,7 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     }
 }
 
-void iceCommandCancel::execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandCancel::execute( Ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     log_dev->infoStream()
         << "This request is a Cancel..."

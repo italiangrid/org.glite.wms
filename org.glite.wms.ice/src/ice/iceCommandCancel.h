@@ -21,7 +21,7 @@ namespace glite {
 
                 virtual ~iceCommandCancel() {};
 
-                void execute( ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
+                void execute( Ice* _ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& );          
             protected:
                 std::string _gridJobId;
                 std::string _sequence_code;

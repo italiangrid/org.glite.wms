@@ -1,5 +1,5 @@
-#ifndef __GLITE_WMS_ICE_ICECOMMANDSUBMIT_H__
-#define __GLITE_WMS_ICE_ICECOMMANDSUBMIT_H__
+#ifndef GLITE_WMS_ICE_ICECOMMANDSUBMIT_H
+#define GLITE_WMS_ICE_ICECOMMANDSUBMIT_H
 
 #include "iceAbsCommand.h"
 #include "iceCommandFatal_ex.h"
@@ -40,7 +40,7 @@ namespace glite {
 
 	virtual ~iceCommandSubmit() {};
 
-	virtual void execute( ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
+	virtual void execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& );
 
       protected:
 

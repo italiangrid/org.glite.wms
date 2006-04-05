@@ -1,8 +1,24 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE subscription cache
+ *
+ * Author: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ */
 
-#ifndef _GLITE_WMS_ICE_UTIL_SUBSCRIPTIONCACHE_H__
-#define _GLITE_WMS_ICE_UTIL_SUBSCRIPTIONCACHE_H__
+#ifndef GLITE_WMS_ICE_UTIL_SUBSCRIPTIONCACHE_H
+#define GLITE_WMS_ICE_UTIL_SUBSCRIPTIONCACHE_H
 
-//#include <ext/hash_set>
 #include <string>
 #include <set>
 #include "boost/thread/recursive_mutex.hpp"
@@ -12,37 +28,25 @@ namespace wms {
 namespace ice {
 namespace util {
 
-/*  struct eqstr
-  {
-    bool operator()(const char* s1, const char* s2) const
-    {
-      return strcmp(s1, s2) == 0;
-    }
-  };*/
-
   class subscriptionCache {
-/*    hash_set<const char*, hash<const char*>, eqstr> cemons;
-    hash_set<const char*, hash<const char*>, eqstr>::const_iterator it;*/
-    std::set<std::string> cemons;
-    std::set<std::string>::const_iterator it;
-    //static boost::recursive_mutex mutex;
-    static subscriptionCache* instance;
-    
-
-   protected:
-    subscriptionCache() : cemons() {}
-
-   public:
-    static boost::recursive_mutex mutex;
-    static subscriptionCache* getInstance();
-    void insert(const std::string& s) { if(cemons.find(s) == cemons.end()) cemons.insert(s); }
-    void remove(const std::string& s);
-    bool has(const std::string&);
+      std::set<std::string> cemons;
+      std::set<std::string>::const_iterator it;
+      static subscriptionCache* instance;    
+      
+  protected:
+      subscriptionCache();
+      
+  public:
+      static boost::recursive_mutex mutex;
+      static subscriptionCache* getInstance( );
+      void insert( const std::string& s );
+      void remove( const std::string& s );
+      bool has( const std::string& );
   };
 
-}
-}
-}
-}
+} // namespace util
+} // namespace ice
+} // namespace wms
+} // namespace glite
 
 #endif
