@@ -74,17 +74,22 @@ def comment(line, man):
 		return ""
 		print "WKITBD comment"
 
+def mainTitle(line, man):
+	""" Generate a title """
+	if man==MAN_TAG:
+		return endl + '.SH ' + "NAME:\n"+line +endl
+	elif man==TXT_TAG:
+		return endl + '\\medskip'+endl + '\\textbf{'+line+'}' + endl +'\\smallskip' +endl +endl
+	elif man==WKI_TAG:
+		return endl + "(:title " +line+":)"+endl
 def title(line, man):
 	""" Generate a title """
-	#debug ("writing title: ", line)
 	if man==MAN_TAG:
-		return '.SH ' + line +endl
+		return endl + '.SH ' + line +endl
 	elif man==TXT_TAG:
-		return endl+'\\medskip'+endl + "\\textbf{"+line+"}" + endl +'\\smallskip' +endl +endl
+		return endl + '\\medskip'+endl + '\\textbf{'+line+'}' + endl +'\\smallskip' +endl +endl
 	elif man==WKI_TAG:
-		return ""
-		# WIki title will be set by Hand-user
-		#return endl + "!! "+  line + endl
+		return endl + '!!' + line+ endl
 
 def parseSpecial(line, man):
 	if man==MAN_TAG:
@@ -365,8 +370,9 @@ class RaskMan:
 		try:
 			"""   header  """
 			self.write(comment,COMMENT)
-			self.write(self.headerTag,"GLITE WMS User Command")
-			self.write(title, "NAME: \n "+ self.command)
+			self.write(self.headerTag,"GLITE User Guide")
+			#self.write(title, "NAME: \n "+ self.command)
+			self.write(mainTitle, self.command)
 			"""  synopsis """
 			section="SYNOPSIS"
 			self.write(title,section)
