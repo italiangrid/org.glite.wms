@@ -396,8 +396,6 @@ string Status::getVal (int field , string& result, int status_number ) {
 	glite::lb::JobStatus status_retrieved = *it;  //TBD use pointers!!!
 	// Special FIELD Retrieval:
 	char tmp [1024] ;//TBD could be not enough for JobStatus list
-	int STATUS = 38 ; // Could change each time JobStatus Changes
-	int STATUS_CODE = STATUS+1 ;
  	if (field == STATUS ){
 		result = status_retrieved.name() ;
 		return "Status" ;
@@ -405,7 +403,7 @@ string Status::getVal (int field , string& result, int status_number ) {
 	else  if (field == STATUS_CODE ){
 		sprintf (tmp , "%d" , status_retrieved.status ) ;
 		result = string(tmp) ;
-		return "status_code" ;
+		return "Status Code" ;
 	}
 	std::vector<pair<JobStatus::Attr, JobStatus::AttrType> > attrList = status_retrieved.getAttrs(); //TBD NEEDED???
 	JobStatus::Attr fieldAttr = (JobStatus::Attr) field ;
@@ -501,7 +499,7 @@ try{
   return attrName;
   } ;
 
-  
+
 void push_status( JobStatus status_retrieved , std::vector<std::string>& result , int hierarchy ){
 	int VECT_OFFSET = result.size() ;
 	result.resize( VECT_DIM + VECT_OFFSET ) ;
