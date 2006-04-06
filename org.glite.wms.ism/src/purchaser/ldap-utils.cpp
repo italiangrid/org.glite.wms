@@ -27,7 +27,7 @@
 #include "glite/wmsutils/classads/classad_utils.h"
 
 using namespace std;
-namespace utils = glite::wmsutils::classads;
+namespace classadutils = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -498,16 +498,27 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             classad::ExprList::MakeExprList(exprs)
           );
 
+          try {  
+            expand_glueceid_info((*ce_it)->second.first);
+            insert_aux_requirements((*ce_it)->second.first);
+            insert_gangmatch_storage_ad((*ce_it)->second.first);
+          }
+          catch(classadutils::InvalidValue) {
+            Error("Cannot extract GlueCEUniqueID from Ad");
+            continue;
+          }
+
           gluece_voview_info_map_type::const_iterator const vo_views(
             gluece_voview_info_map.find((*ce_it)->first)
           );
+
           if (vo_views!=gluece_voview_info_map.end() &&
               !vo_views->second.empty()
              ) {
             
             vector<string> access_control_base_rules;
 
-            utils::EvaluateAttrList(
+            classadutils::EvaluateAttrList(
               *((*ce_it)->second.first),
               "GlueCEAccessControlBaseRule",
               access_control_base_rules
@@ -572,7 +583,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             if (!access_control_base_rules.empty()) {
               (*ce_it)->second.first->Insert(
                 "GlueCEAccessControlBaseRule",
-                utils::asExprList(access_control_base_rules)
+                classadutils::asExprList(access_control_base_rules)
               );
               gluece_info_container.insert(
                 std::make_pair((*ce_it)->first, (*ce_it)->second.first)

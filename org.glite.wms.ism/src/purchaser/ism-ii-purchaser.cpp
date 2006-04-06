@@ -93,19 +93,13 @@ void ism_ii_purchaser::do_purchase()
         gluece_info_container.end()
       );
 
-     for ( ;
-           it != gluece_info_container_end; ++it) {
-
+     for (; it != gluece_info_container_end; ++it) {
+       
        // Skips CE info according to the specified predicate...
        if (m_skip_predicate.empty() || !m_skip_predicate(it->first)) {
-           
-         if (expand_glueceid_info(it->second) &&
-             insert_aux_requirements(it->second) && 
-             insert_gangmatch_storage_ad(it->second)) {
-
-           it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
-           gluece_info_container_updated_entries.push_back(it);
-         }
+         
+         it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
+         gluece_info_container_updated_entries.push_back(it);
        }
      }
      {

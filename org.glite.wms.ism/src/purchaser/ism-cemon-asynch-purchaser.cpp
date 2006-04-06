@@ -70,6 +70,7 @@ int ism_cemon_asynch_purchaser::parse_classad_event_messages(boost::shared_ptr<C
         }
         Debug("CEMonitor info for " << gluece_unique_id << "... Ok");
         gluece_info_container[gluece_unique_id] = ceAd;
+        ++result;
       }
       else {
         Warning("Unable to evaluate GlueCEUniqueID");
