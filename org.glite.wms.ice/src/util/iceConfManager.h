@@ -26,7 +26,7 @@ namespace glite {
 	    WM_Input_FileList, ICE_Input_FileList, CachePersistFile, LogFile,
 	    creamurlprefix, creamurlpostfix, curldelegprefix,
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
-	    icetopic;
+	    icetopic, dguser;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
 	      poller_status_threshold_time, max_jobcache_operation_before_dump,
 	      notification_frequency, lease_delta_time, lease_threshold_time;
@@ -64,6 +64,7 @@ namespace glite {
 	  std::string getCEMonUrlPrefix( void ) const { return cemonurlprefix; }
 	  std::string getCEMonUrlPostfix( void ) const { return cemonurlpostfix; } 
 	  std::string getICETopic( void ) const { return icetopic; }
+          std::string getDGuser( void ) const { return dguser; }
 	  int         getPollerDelay( void ) const { return pollerdelay; }
 	  int         getSubscriptionDuration( void ) const { return subduration; }
 	  time_t      getSubscriptionUpdateThresholdTime( void ) const { return subUpdThresholdTime; }

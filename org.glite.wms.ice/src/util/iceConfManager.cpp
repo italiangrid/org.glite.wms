@@ -44,6 +44,7 @@ iceConfManager::iceConfManager( )
     }
   
     HostProxyFile     = config->common()->host_proxy_file();
+    dguser            = config->common()->dguser();
     WM_Input_FileList = config->wm()->input();
     ICE_Input_FileList= config->ice()->input();
     CachePersistFile  = config->ice()->cache_persist_file();

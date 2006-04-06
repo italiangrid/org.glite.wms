@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE command submit class
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 // Local includes
 #include "iceCommandSubmit.h"
 #include "subscriptionCache.h"
@@ -29,47 +48,47 @@
 
 extern int h_errno;
 
-//using namespace glite::wms::ice;
 using namespace std;
 
 namespace ceurl_util = glite::ce::cream_client_api::util::CEUrl;
 namespace cream_api = glite::ce::cream_client_api;
 namespace api_util = glite::ce::cream_client_api::util;
-//namespace ice_util = glite::wms::ice::util;
 
 namespace glite {
 namespace wms {
 namespace ice {
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 iceCommandSubmit::iceCommandSubmit( const string& request )
-  throw(util::ClassadSyntax_ex&, util::JobRequest_ex&) :
-  iceAbsCommand( ),
-  log_dev( api_util::creamApiLogger::instance()->getLogger()),
-  confMgr( util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
-  _lb_logger( util::iceLBLogger::instance() )
+  throw( util::ClassadSyntax_ex&, util::JobRequest_ex& ) :
+    iceAbsCommand( ),
+    m_log_dev( api_util::creamApiLogger::instance()->getLogger()),
+    m_confMgr( util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
+    m_lb_logger( util::iceLBLogger::instance() )
 {
     char name[256];
     memset((void*)name, 0, 256);
     if(gethostname(name, 256) == -1)
     {
-        log_dev->fatalStream() << "iceCommandSubmit::CTOR - Couldn't resolve local hostname: "
-                               << strerror(errno)
-                               << log4cpp::CategoryStream::ENDLINE;
+        m_log_dev->fatalStream() 
+            << "iceCommandSubmit::CTOR - Couldn't resolve local hostname: "
+            << strerror(errno)
+            << log4cpp::CategoryStream::ENDLINE;
 
       exit(1);
     }
     struct hostent *H = gethostbyname(name);
     if(!H) {
-        log_dev->fatalStream() << "iceCommandSubmit::CTOR() - Couldn't resolve local hostname: "
-                               << strerror(h_errno)
-                               << log4cpp::CategoryStream::ENDLINE;
+        m_log_dev->fatalStream() 
+            << "iceCommandSubmit::CTOR() - Couldn't resolve local hostname: "
+            << strerror(h_errno)
+            << log4cpp::CategoryStream::ENDLINE;
         exit(1);
     }
 
     {
       boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-      myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % confMgr->getListenerPort() );
+      m_myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % m_confMgr->getListenerPort() );
     }
 
 
@@ -99,12 +118,12 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
 */
 
-
     classad::ClassAdParser parser;
     classad::ClassAd *_rootAD = parser.ParseClassAd( request );
 
-    if (!_rootAD)
+    if (!_rootAD) {
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
+    }
 
     string _commandStr;
     // Parse the "command" attribute
@@ -139,16 +158,16 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
         throw util::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
     }
 
-    // initializes the _jdl attribute
+    // initializes the m_jdl attribute
     classad::ClassAdUnParser unparser;
-    unparser.Unparse( _jdl, _argumentsAD->Lookup( "jobad" ) );
+    unparser.Unparse( m_jdl, _argumentsAD->Lookup( "jobad" ) );
 
 }
 
 //______________________________________________________________________________
 void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-    log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
+    m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
 
     util::jobCache* _cache = util::jobCache::getInstance();
 
@@ -157,12 +176,12 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     cream_api::soap_proxy::CreamProxy* theProxy = cream_api::soap_proxy::CreamProxyFactory::getProxy();
 
     try {
-        theJob.setJdl( _jdl );
+        theJob.setJdl( m_jdl );
         theJob.setStatus( cream_api::job_statuses::UNKNOWN, time(NULL) );
     } catch( util::ClassadSyntax_ex& ex ) {
-        log_dev->errorStream() 
+        m_log_dev->errorStream() 
             << "Cannot instantiate a job from jdl="
-            << _jdl
+            << m_jdl
             << " due to classad excaption: "
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
@@ -177,7 +196,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
     util::jobCache::iterator job_pos = _cache->put( theJob );
 
-    log_dev->infoStream() 
+    m_log_dev->infoStream() 
         << "iceCommandSubmit::execute() - Registering "
         << "gridJobID=\"" << theJob.getGridJobID()
         << "\" to L&B service with user proxy=\"" 
@@ -185,26 +204,26 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         << "\""
         << log4cpp::CategoryStream::ENDLINE;
 
-    _lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be removed
-    _lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
+    m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be removed
+    m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
 
     string modified_jdl;
     try {    
-        modified_jdl = creamJdlHelper( _jdl );
+        modified_jdl = creamJdlHelper( m_jdl );
     } catch( util::ClassadSyntax_ex& ex ) {
-        log_dev->errorStream() 
+        m_log_dev->errorStream() 
             << "Cannot convert jdl="
-            << _jdl
+            << m_jdl
             << " due to classad exception:"
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
-        _lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+        m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
         _cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
-    log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting");
-    log_dev->debugStream() 
+    m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting");
+    m_log_dev->debugStream() 
         << "JDL " << modified_jdl
         << " to [" << theJob.getCreamURL() <<"]["
         << theJob.getCreamDelegURL() << "]"
@@ -213,8 +232,8 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     try {
         theProxy->Authenticate(theJob.getUserProxyCertificate());
     } catch ( cream_api::soap_proxy::auth_ex& ex ) {
-        _lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
-        log_dev->errorStream()
+        m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
+        m_log_dev->errorStream()
             << "Unable to submit gridJobID=" << theJob.getGridJobID()
             << " due to authentication error:" << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
@@ -245,18 +264,18 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                                true /*autostart*/
                                );
         } catch( exception& ex ) {
-            log_dev->errorStream()
+            m_log_dev->errorStream()
                 << "Cannot register jobID="
                 << theJob.getGridJobID()
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
-            _lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
+            m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
             _ice->resubmit_job( theJob ); // Try to resubmit
             _cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
-        log_dev->infoStream()
+        m_log_dev->infoStream()
             << "iceCommandSubmit::execute() - Returned CREAM-JOBID ["
             << url_jid[1] <<"]"
             << log4cpp::CategoryStream::ENDLINE;
@@ -269,8 +288,8 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         theJob.setDelegationId( delegID );
         theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
 
-        _lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
-        _lb_logger->logEvent( new util::cream_accepted_event( theJob ) );
+        m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
+        m_lb_logger->logEvent( new util::cream_accepted_event( theJob ) );
 
         // put(...) accepts arg by reference, but
         // the implementation puts the arg in the memory hash by copying it. So
@@ -289,7 +308,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     bool _tmp_start_listener;
     {
         boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-        _tmp_start_listener = confMgr->getStartListener();
+        _tmp_start_listener = m_confMgr->getStartListener();
     }
 
     if( _tmp_start_listener ) {
@@ -297,39 +316,41 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
       {
         boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
 	boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-        //cemon_url  confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
-        //    + confMgr->getCEMonUrlPostfix();
+        //cemon_url  m_confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
+        //    + m_confMgr->getCEMonUrlPostfix();
 	cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
-	log_dev->infoStream() << "iceCommandSubmit::execute() - "
+	m_log_dev->infoStream() << "iceCommandSubmit::execute() - "
 			      << "For current CREAM, cemonUrlCache returned CEMon URL ["
 			      << cemon_url<<"]"
 			      << log4cpp::CategoryStream::ENDLINE;
 
-	if( cemon_url == "" )
-	{
+	if( cemon_url.empty() ) {
 	  try {
-	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( confMgr->getHostProxyFile() );
+	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_confMgr->getHostProxyFile() );
 	      cream_api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( theJob.getCreamURL().c_str(), cemon_url );
-	      log_dev->infoStream() << "iceCommandSubmit::execute() - "
-			        << "For current CREAM, query to CREAM service  returned CEMon URL ["
-			        << cemon_url<<"]"
-			        << log4cpp::CategoryStream::ENDLINE;
+	      m_log_dev->infoStream() 
+                  << "iceCommandSubmit::execute() - "
+                  << "For current CREAM, query to CREAM service returned "
+                  << "CEMon URL [" << cemon_url<<"]"
+                  << log4cpp::CategoryStream::ENDLINE;
 	      util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
 	    } catch(exception& ex) {
 
-	      log_dev->errorStream() << "iceCommandSubmit::execute() - Error retrieving"
-	      			     <<" CEMon's URL from CREAM's URL: "
-			 	     << ex.what()
-				     << ". Composing URL from configuration file..."
-			 	     << log4cpp::CategoryStream::ENDLINE;
+	      m_log_dev->errorStream() 
+                  << "iceCommandSubmit::execute() - Error retrieving"
+                  <<" CEMon's URL from CREAM's URL: "
+                  << ex.what()
+                  << ". Composing URL from configuration file..."
+                  << log4cpp::CategoryStream::ENDLINE;
 	      cemon_url = theJob.getCreamURL();
 	      boost::replace_first(cemon_url,
-                                   confMgr->getCreamUrlPostfix(),
-                                   confMgr->getCEMonUrlPostfix()
+                                   m_confMgr->getCreamUrlPostfix(),
+                                   m_confMgr->getCEMonUrlPostfix()
                                   );
-	      log_dev->infoStream() << "Using CEMon URL ["
-	      			    << cemon_url << "]" << log4cpp::CategoryStream::ENDLINE;
-              //ceurls.insert( cemonURL );
+	      m_log_dev->infoStream() 
+                  << "Using CEMon URL ["
+                  << cemon_url << "]" 
+                  << log4cpp::CategoryStream::ENDLINE;
 	      util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
 	    }
 	}
@@ -337,18 +358,18 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
       boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
       if( !util::subscriptionCache::getInstance()->has(cemon_url) ) {
             /* MUST SUBSCRIBE TO THIS CEMON */
-            log_dev->infoStream()
+            m_log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Not subscribed to ["
                 << cemon_url << "]. Going to subscribe to it..."
                 << log4cpp::CategoryStream::ENDLINE;
 
       {
 	    boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-            log_dev->infoStream()
+            m_log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
-                << myname_url << "] to ["<<cemon_url
+                << m_myname_url << "] to ["<<cemon_url
                 << "] with duration="
-                << confMgr->getSubscriptionDuration()
+                << m_confMgr->getSubscriptionDuration()
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
       }
@@ -361,15 +382,16 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
       */
        boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
        if( !util::subscriptionManager::getInstance()->subscribe(cemon_url) ) {
-         log_dev->errorStream()
-                      << "iceCommandSubmit::execute() - Subscribe to ["
-                      << cemon_url << "] failed! Will not receive status notifications from it..."
-                      << log4cpp::CategoryStream::ENDLINE;
+         m_log_dev->errorStream()
+             << "iceCommandSubmit::execute() - Subscribe to ["
+             << cemon_url << "] failed! "
+             << "Will not receive status notifications from it..."
+             << log4cpp::CategoryStream::ENDLINE;
        } else {
-         log_dev->infoStream()
-                      << "iceCommandSubmit::execute() - Subscribed with ID ["
-                      << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
-                      << log4cpp::CategoryStream::ENDLINE;
+         m_log_dev->infoStream()
+             << "iceCommandSubmit::execute() - Subscribed with ID ["
+             << util::subscriptionManager::getInstance()->getLastSubscriptionID() << "]"
+             << log4cpp::CategoryStream::ENDLINE;
 
          util::subscriptionCache::getInstance()->insert(cemon_url);
        }
@@ -377,7 +399,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
    }
 } // execute
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
@@ -437,9 +459,9 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
     classad::ExprList* isbList;
     if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
         classad::ExprList* newIsbList = new classad::ExprList();
-	log_dev->log(log4cpp::Priority::INFO,"\tStarting InputSandbox manipulation...");
+	m_log_dev->log(log4cpp::Priority::INFO,"\tStarting InputSandbox manipulation...");
         //cout << "Starting InputSandbox manipulation..." << endl;
-	//	log_dev
+	//	m_log_dev
 	
         string newPath;
         for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
@@ -463,7 +485,7 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
                     break;
                 }                
             }
-	    log_dev->log(log4cpp::Priority::DEBUG,
+	    m_log_dev->log(log4cpp::Priority::DEBUG,
 			 string("\t")+s+" became "+newPath);
 	    //            cout << s << " became " << newPath << endl;
             // Builds a new value
@@ -494,7 +516,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         classad::ExprList* newOsbDUList = new classad::ExprList();
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
 
-	  log_dev->log(log4cpp::Priority::INFO,
+	  m_log_dev->log(log4cpp::Priority::INFO,
 		       "\tStarting OutputSandboxDestURI manipulation...");
             string newPath;
             for ( classad::ExprList::iterator it=osbDUList->begin(); 
@@ -520,7 +542,7 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                     }                
                 }
 
-		log_dev->log(log4cpp::Priority::DEBUG,
+		m_log_dev->log(log4cpp::Priority::DEBUG,
 			     string("\t")+s+" became "+newPath);
                 // Builds a new value
                 classad::Value newV;
@@ -545,48 +567,48 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 // URI utility class
 //-----------------------------------------------------------------------------
 iceCommandSubmit::pathName::pathName( const string& p ) :
-  log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-  _fullName( p ),
-  _pathType( invalid )
+  m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
+  m_fullName( p ),
+  m_pathType( invalid )
 {
     boost::regex uri_match( "gsiftp://[^/]+(:[0-9]+)?/([^/]+/)*([^/]+)" );
     boost::regex rel_match( "([^/]+/)*([^/]+)" );
     boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
     boost::smatch what;
 
-    log_dev->log(log4cpp::Priority::INFO,
+    m_log_dev->log(log4cpp::Priority::INFO,
 		 string("iceCommandSubmit::pathName::CTOR() - Trying to unparse ")+ p );
     if ( boost::regex_match( p, what, uri_match ) ) {
         // is a uri
-        _pathType = uri;
+        m_pathType = uri;
 
-        _fileName = '/';
-        _fileName.append(what[3].first,what[3].second);
+        m_fileName = '/';
+        m_fileName.append(what[3].first,what[3].second);
         if ( what[2].first != p.end() )
-            _pathName.assign(what[2].first,what[2].second);
-        _pathName.append( _fileName );
+            m_pathName.assign(what[2].first,what[2].second);
+        m_pathName.append( m_fileName );
     } else if ( boost::regex_match( p, what, rel_match ) ) {
         // is a relative path
-        _pathType = relative;
+        m_pathType = relative;
 
-        _fileName.assign(what[2].first,what[2].second);
+        m_fileName.assign(what[2].first,what[2].second);
         if ( what[1].first != p.end() )
-            _pathName.assign( what[1].first, what[1].second );
-        _pathName.append( _fileName );
+            m_pathName.assign( what[1].first, what[1].second );
+        m_pathName.append( m_fileName );
     } else if ( boost::regex_match( p, what, abs_match ) ) {
         // is an absolute path
-        _pathType = absolute;
+        m_pathType = absolute;
         
-        _pathName = '/';
-        _fileName.assign( what[3].first, what[3].second );
+        m_pathName = '/';
+        m_fileName.assign( what[3].first, what[3].second );
         if ( what[2].first != p.end() ) 
-            _pathName.append( what[2].first, what[2].second );
-        _pathName.append( _fileName );
+            m_pathName.append( what[2].first, what[2].second );
+        m_pathName.append( m_fileName );
     }
-    log_dev->log(log4cpp::Priority::DEBUG,
+    m_log_dev->log(log4cpp::Priority::DEBUG,
 		 string("iceCommandSubmit::pathName::CTOR() - Unparsed as follows: filename=[")
-		 +_fileName + "] pathname={"
-		 +_pathName+"]");
+		 +m_fileName + "] pathname={"
+		 +m_pathName+"]");
 }
 
 

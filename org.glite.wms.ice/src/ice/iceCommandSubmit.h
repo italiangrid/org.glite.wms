@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE command submit class
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 #ifndef GLITE_WMS_ICE_ICECOMMANDSUBMIT_H
 #define GLITE_WMS_ICE_ICECOMMANDSUBMIT_H
 
@@ -45,24 +64,23 @@ namespace glite {
       protected:
 
 	class pathName {
-	  log4cpp::Category* log_dev;
-
 	public:
 	  typedef enum { invalid=-1, absolute, uri, relative } pathType_t;
 
 	  pathName( const std::string& p );
 	  virtual ~pathName( ) { }
 	  // accessors
-	  pathType_t getPathType( void ) const { return _pathType; }
-	  const std::string& getFullName( void ) const { return _fullName; }
-	  const std::string& getPathName( void ) const { return _pathName; }
-	  const std::string& getFileName( void ) const { return _fileName; }
+	  pathType_t getPathType( void ) const { return m_pathType; }
+	  const std::string& getFullName( void ) const { return m_fullName; }
+	  const std::string& getPathName( void ) const { return m_pathName; }
+	  const std::string& getFileName( void ) const { return m_fileName; }
 
 	protected:
-	  const std::string _fullName;
-	  pathType_t _pathType;
-	  std::string _pathName;
-	  std::string _fileName;
+	  log4cpp::Category* m_log_dev;
+	  const std::string m_fullName;
+	  pathType_t m_pathType;
+	  std::string m_pathName;
+	  std::string m_fileName;
 	};
 	
 	/**
@@ -95,14 +113,14 @@ namespace glite {
 	 */
 	void updateOsbList( classad::ClassAd* jdl );
 	
-	std::string _jdl;
-	std::string _certfile;
-	std::string _gridJobId;
+	std::string m_jdl;
+	// std::string m_certfile;
+	// std::string m_gridJobId;
 
-	log4cpp::Category* log_dev;
- 	glite::wms::ice::util::iceConfManager* confMgr;
-	std::string myname_url;
-        util::iceLBLogger *_lb_logger;
+	log4cpp::Category* m_log_dev;
+ 	glite::wms::ice::util::iceConfManager* m_confMgr;
+	std::string m_myname_url;
+        util::iceLBLogger *m_lb_logger;
       };
     }
   }

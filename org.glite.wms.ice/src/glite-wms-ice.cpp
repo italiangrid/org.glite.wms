@@ -1,3 +1,28 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE main daemon
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
+#include <string>
+#include <iostream>
+#include <sys/types.h>          // getpid(), getpwnam()
+#include <unistd.h>             // getpid()
+#include <pwd.h>                // getpwnam()
+
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -14,9 +39,6 @@
 #include "boost/scoped_ptr.hpp"
 #include "boost/program_options.hpp"
 
-#include <string>
-#include <iostream>
-#include <unistd.h>
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
@@ -26,6 +48,30 @@ namespace po = boost::program_options;
 #define USE_STATUS_POLLER true
 #define USE_STATUS_LISTENER false
 
+
+// change the uid and gid to those of user no-op if user corresponds
+// to the current effective uid only root can set the uid
+// (this function was originally taken from org.glite.wms.manager/src/daemons/workload_manager.cpp
+bool set_user(std::string const& user)
+{
+  uid_t euid = ::geteuid();
+ 
+  if (euid == 0 && user.empty()) {
+    return false;
+  }
+ 
+  ::passwd* pwd(::getpwnam(user.c_str()));
+  if (pwd == 0) {
+    return false;
+  }
+  ::uid_t uid = pwd->pw_uid;
+  ::gid_t gid = pwd->pw_gid;
+ 
+  return
+    euid == uid
+    || (euid == 0 && ::setgid(gid) == 0 && ::setuid(uid) == 0);
+}
+ 
 int main(int argc, char*argv[]) 
 {
     string opt_pid_file;
@@ -46,7 +92,16 @@ int main(int argc, char*argv[])
          )
         ;
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+    } catch( std::exception& ex ) {
+        cerr << "There was an error parsing the command line. "
+             << "Error was: " << ex.what() << endl
+             << "Type " << argv[0] 
+             << " --help for the list of available options"
+             << endl;
+        exit( 1 );
+    }
     po::notify(vm);
 
     if ( vm.count("help") ) {
@@ -85,7 +140,16 @@ int main(int argc, char*argv[])
     cerr << ex.what() << endl;
     exit(1);
   }
- 
+
+  //
+  // Change user id to become the "dguser" specified in the configuratoin file
+  //
+  string dguser( iceUtil::iceConfManager::getInstance()->getDGuser() );
+  if (!set_user(dguser)) {
+      cerr << "cannot set the user id to " << dguser << endl;
+      exit( 1 );
+  }
+
 
 
   /*****************************************************************************
