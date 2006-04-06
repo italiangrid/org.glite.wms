@@ -26,6 +26,18 @@ namespace wms {
 namespace manager {
 namespace server {
 	
+class CannotCreateWM : std::exception
+{
+public:
+  CannotCreateWM(std::string const& url);
+  ~CannotCreateWM() throw();
+
+  char const* what() const throw();
+
+private:
+  std::string m_message;
+};
+
 class WMReal
 {
   class Impl;

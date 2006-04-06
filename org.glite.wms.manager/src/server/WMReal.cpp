@@ -107,12 +107,28 @@ get_classad_file(std::string const& job_id)
 
 } // {anonymous}
 
+CannotCreateWM::CannotCreateWM(std::string const& err)
+  : m_message(err)
+{
+}
+
+CannotCreateWM::~CannotCreateWM()
+{
+}
+
+char const* CannotCreateWM::what() const throw()
+{
+  return m_message.c_str();
+}
+
 struct WMReal::Impl {
 
-  Impl()
+  Impl() try
     : ice_output(get_ice_input()), to_ice(ice_output), to_ice_mx(to_ice),
       jc_output(get_jc_input()), to_jc(jc_output), to_jc_mx(to_jc)
   {
+  } catch (utilities::FileContainerError const& e) {
+    throw CannotCreateWM(e.string_error());
   }
 
   std::string ice_output;
