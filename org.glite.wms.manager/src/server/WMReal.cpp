@@ -112,7 +112,7 @@ CannotCreateWM::CannotCreateWM(std::string const& err)
 {
 }
 
-CannotCreateWM::~CannotCreateWM()
+CannotCreateWM::~CannotCreateWM() throw()
 {
 }
 
