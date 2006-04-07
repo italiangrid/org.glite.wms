@@ -57,7 +57,9 @@ void ism_file_purchaser::do_purchase()
     
     Debug("Loading ISM status from dump file: " << m_filename << "\n");
    
-    ism_mutex_type::scoped_lock l(get_ism_mutex());
+    ism_mutex_type::scoped_lock _(get_ism_mutex(ism::ce));
+    ism_mutex_type::scoped_lock __(get_ism_mutex(ism::se));
+
     while(!src.eof()) {
       try {
 	boost::scoped_ptr<classad::ClassAd> ad(utils::parse_classad(src));
@@ -65,7 +67,6 @@ void ism_file_purchaser::do_purchase()
         if (m_skip_predicate.empty() || !m_skip_predicate(id)) {
 
 	  int    ut(utils::evaluate_attribute(*ad,"update_time"));
-	  int    et(utils::evaluate_attribute(*ad,"expiry_time"));
 	  const classad::ClassAd *i=utils::evaluate_attribute(*ad,"info");
 
           Debug("Loading ISM entry info: " << id << "\n");
@@ -80,19 +81,23 @@ void ism_file_purchaser::do_purchase()
 	  string purchased_by;
           info->EvaluateAttrString("PurchasedBy",purchased_by);
           if (purchased_by==string("ism_ii_purchaser")) {
-            get_ism().insert(make_ism_entry(id, ut, info,
+            
+            size_t the_ism_index = 
+              i->Lookup("GlueCEUniqueID") ? ism::ce : ism::se;
+            
+            get_ism(the_ism_index).insert(make_ism_entry(id, ut, info,
               f_ii_purchaser_entry_update_fn()));
 	  }
 	  else if (purchased_by==string("ism_cemon_purchaser")) {
-            get_ism().insert(make_ism_entry(id, ut, info,
+            get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_cemon_purchaser_entry_update_fn()));
           }
           else if (purchased_by==string("ism_rgma_purchaser")) {
-            get_ism().insert(make_ism_entry(id, ut, info,
+            get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_rgma_purchaser_entry_update_fn()));
           }
-          else {
-	    get_ism().insert(make_ism_entry(id, ut, info));
+          else if (purchased_by==string("ism_cemon_async_purchaser")) {
+	    get_ism(ism::ce).insert(make_ism_entry(id, ut, info));
 	  }
        }
       } 

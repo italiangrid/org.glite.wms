@@ -10,6 +10,7 @@
 
 #include <string>
 #include <boost/function.hpp>
+
 #include "glite/wms/ism/purchaser/common.h"
  
 namespace glite {

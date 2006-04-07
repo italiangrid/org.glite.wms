@@ -165,7 +165,7 @@ string get_site_name(ldif2classad::LDIFObject& ldif_CE)
 
 void 
 fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection, 
-  gluece_info_container_type& gluese_info_container) 
+  gluese_info_container_type& gluese_info_container) 
 {
   string filter("(|(objectclass=gluecesebind)(|(objectclass=gluese)(|(objectclass=gluesa)"
     "(|(objectclass=glueseaccessprotocol)(objectclass=gluesecontrolprotocol)))))");
@@ -617,13 +617,14 @@ void fetch_bdii_info(const std::string& hostname,
 			int port,
 			const std::string& dn,
 			int timeout,
-			gluece_info_container_type& gluece_info_container)
+			gluece_info_container_type& gluece_info_container,
+                        gluese_info_container_type& gluese_info_container)
 {
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection(
     new ldif2classad::LDAPSynchConnection(dn, hostname, port, timeout)
   );
   fetch_bdii_ce_info(IIconnection, gluece_info_container);
-  fetch_bdii_se_info(IIconnection, gluece_info_container);
+  fetch_bdii_se_info(IIconnection, gluese_info_container);
 }
 
 } // namespace purchaser

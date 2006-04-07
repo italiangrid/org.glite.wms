@@ -42,7 +42,7 @@ fetch_bdii_ce_info(
 void
 fetch_bdii_se_info(
   boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
-  gluece_info_container_type& gluece_info_container
+  gluese_info_container_type& gluese_info_container
 );
 
 void 
@@ -51,7 +51,8 @@ fetch_bdii_info(
   int port,
   std::string const& dn,
   int timeout,
-  gluece_info_container_type& gluece_info_container
+  gluece_info_container_type& gluece_info_container,
+  gluese_info_container_type& gluese_info_container
 );
 
 

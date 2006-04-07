@@ -34,6 +34,19 @@ public:
   
   void do_purchase();
   void operator()();
+
+private:
+
+  void apply_skip_predicate(
+    gluece_info_container_type&,
+    std::vector<gluece_info_iterator>&
+  );
+
+  void popolate(
+    std::vector<gluece_info_iterator>&,
+    size_t
+  );
+
 private:                
   std::string m_hostname;
   int m_port;

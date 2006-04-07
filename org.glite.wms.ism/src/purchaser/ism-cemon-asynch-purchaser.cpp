@@ -112,7 +112,7 @@ void ism_cemon_asynch_purchaser::do_purchase()
                    !strcasecmp(dialect.c_str(), "ISM_CLASSAD_GLUE_1.2")) && 
                   parse_classad_event_messages(consumer, gluece_info_container)) ) {
                  
-              ism_mutex_type::scoped_lock l(get_ism_mutex());
+              ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));
               time_t const current_time( std::time(0) );
 	      for (gluece_info_iterator it = gluece_info_container.begin();
                 it != gluece_info_container.end(); ++it) {
@@ -127,14 +127,14 @@ void ism_cemon_asynch_purchaser::do_purchase()
                     if (!it->second->EvaluateAttrNumber("TTLCEinfo", TTLCEinfo)) 
                       TTLCEinfo = 300;
                     it->second->InsertAttr("PurchasedBy","ism_cemon_asynch_purchaser");
-                    ism_type::iterator ism_it = get_ism().find(it->first);
-                    if (ism_it != get_ism().end()) {
+                    ism_type::iterator ism_it = get_ism(ism::ce).find(it->first);
+                    if (ism_it != get_ism(ism::ce).end()) {
                       ism_type::data_type& data = ism_it->second;
                       boost::tuples::get<0>(data) = current_time;
                       boost::tuples::get<2>(data) = it->second;
                     } 
                     else {
-                      get_ism().insert(
+                      get_ism(ism::ce).insert(
                         make_ism_entry(
                           it->first,
                           current_time,

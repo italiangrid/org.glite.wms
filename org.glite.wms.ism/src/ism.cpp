@@ -31,25 +31,25 @@ ism_type::value_type make_ism_entry(
 
 namespace {
 
-ism_type* the_ism;
-ism_mutex_type* the_ism_mutex;
+ism_type* the_ism[2];
+ism_mutex_type* the_ism_mutex[2];
 
 }
 
-void set_ism(ism_type& ism, ism_mutex_type& ism_mutex)
+void set_ism(ism_type* ism, ism_mutex_type* ism_mutex, size_t the_ism_index)
 {
-  the_ism = &ism;
-  the_ism_mutex = &ism_mutex;
+  the_ism[the_ism_index] = ism + the_ism_index;
+  the_ism_mutex[the_ism_index] = ism_mutex + the_ism_index;
 }
 
-ism_mutex_type& get_ism_mutex(void)
+ism_mutex_type& get_ism_mutex(size_t the_ism_index)
 {
-  return *the_ism_mutex;
+  return *the_ism_mutex[the_ism_index];
 }
 
-ism_type& get_ism(void)
+ism_type& get_ism(size_t the_ism_index)
 {
-  return *the_ism;
+  return *the_ism[the_ism_index];
 }
 
 std::ostream&
@@ -64,11 +64,17 @@ operator<<(std::ostream& os, ism_type::value_type const& value)
 
 void call_update_ism_entries::operator()()
 {
-  ism_mutex_type::scoped_lock l(get_ism_mutex());
+  _(ce);
+  _(se);
+}
+
+void call_update_ism_entries::_(size_t the_ism_index)
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
   time_t current_time = std::time(0);
 
-  ism_type::iterator pos=get_ism().begin();
-  ism_type::iterator const e=get_ism().end();
+  ism_type::iterator pos=get_ism(the_ism_index).begin();
+  ism_type::iterator const e=get_ism(the_ism_index).end();
 
   for ( ; pos!=e; ) {
 
@@ -87,7 +93,7 @@ void call_update_ism_entries::operator()()
             // only if it has been previously marked as invalid i.e. the entry's 
             // update time is less than 0
   	    if (boost::tuples::get<update_time_entry>(pos->second)<0) {
-              get_ism().erase(pos++);
+              get_ism(the_ism_index).erase(pos++);
               inc_done = true;
             } else {
               boost::tuples::get<update_time_entry>(pos->second) = -1;
@@ -99,13 +105,13 @@ void call_update_ism_entries::operator()()
         }
         else {
           // If the function object wrapper is empty, remove the entry
-          get_ism().erase(pos++);
+          get_ism(the_ism_index).erase(pos++);
           inc_done = true;
         }
       }
     } else {
       // If the ClassAd information is NULL, remove the entry by ism
-      get_ism().erase(pos++);
+      get_ism(the_ism_index).erase(pos++);
       inc_done = true;
     }
     if (!inc_done) ++pos;
@@ -147,11 +153,16 @@ std::string get_ism_dump(void)
 
 void call_dump_ism_entries::operator()()
 {
-  ism_mutex_type::scoped_lock l(get_ism_mutex());
-  std::ofstream             outf(get_ism_dump().c_str());
+  _(ce, std::iostream::ios_base::trunc);
+  _(se, std::iostream::ios_base::app);
+}
+void call_dump_ism_entries::_(size_t the_ism_index, std::iostream::ios_base::openmode open_mode)
+{
+  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));
+  std::ofstream             outf(get_ism_dump().c_str(), open_mode);
 
-  for (ism_type::iterator pos=get_ism().begin();
-       pos!= get_ism().end(); ++pos) {
+  for (ism_type::iterator pos=get_ism(the_ism_index).begin();
+       pos!= get_ism(the_ism_index).end(); ++pos) {
     if (boost::tuples::get<2>(pos->second)) {
       classad::ClassAd          ad_ism_dump;
 

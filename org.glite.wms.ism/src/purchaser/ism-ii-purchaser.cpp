@@ -71,66 +71,94 @@ void ism_ii_purchaser::operator()()
   do_purchase();
 }
 
+void ism_ii_purchaser::apply_skip_predicate(
+  gluece_info_container_type& gluece_info_container,
+  vector<gluece_info_iterator>& gluece_info_container_updated_entries)
+{
+  gluece_info_iterator it = gluece_info_container.begin();
+  gluece_info_iterator const gluece_info_container_end(
+    gluece_info_container.end()
+  );
+
+  for (; it != gluece_info_container_end; ++it) {
+       
+    // Skips info according to the specified predicate...
+    if (m_skip_predicate.empty() || !m_skip_predicate(it->first)) {
+         
+      it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
+      gluece_info_container_updated_entries.push_back(it);
+    }
+  }
+}
+
+void ism_ii_purchaser::popolate(
+  vector<gluece_info_iterator>& gluece_info_container_updated_entries,
+  size_t the_ism_index)
+{      
+  ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));	
+     
+  vector<gluece_info_iterator>::iterator it(
+    gluece_info_container_updated_entries.begin()
+  );
+  vector<gluece_info_iterator>::iterator const e(
+    gluece_info_container_updated_entries.end()
+  );
+  time_t const current_time = std::time(0);
+  for ( ; it != e; ++it ) {
+    ism_type::iterator ism_it = get_ism(the_ism_index).find((*it)->first);
+    if (ism_it != get_ism(the_ism_index).end()) {
+      ism_type::data_type& data = ism_it->second;
+      boost::tuples::get<0>(data) = current_time;
+      boost::tuples::get<2>(data) = (*it)->second;
+    } else {
+      get_ism(the_ism_index).insert( 
+        make_ism_entry(
+          (*it)->first,
+          current_time,
+          (*it)->second,
+          ism_ii_purchaser_entry_update()
+        )
+      );
+    }
+  } 
+}
+
 void ism_ii_purchaser::do_purchase()
 {
   do {
     try {
-      gluece_info_container_type gluece_info_container;
-      vector<gluece_info_iterator> gluece_info_container_updated_entries;
 
-      boost::timer t0;
-      fetch_bdii_info(
-        m_hostname,
-        m_port,
-        m_dn,
-        m_timeout,
-        gluece_info_container
-      );
-      Info("BDII fetching completed in " << t0.elapsed() << " seconds");
+     gluece_info_container_type gluece_info_container;
+     vector<gluece_info_iterator> gluece_info_container_updated_entries;
+
+     gluese_info_container_type gluese_info_container;
+     vector<gluese_info_iterator> gluese_info_container_updated_entries;
+
+     boost::timer t0;
+     fetch_bdii_info(
+       m_hostname,
+       m_port,
+       m_dn,
+       m_timeout,
+       gluece_info_container,
+       gluese_info_container
+     );
+     Info("BDII fetching completed in " << t0.elapsed() << " seconds");
       
-      gluece_info_iterator it = gluece_info_container.begin();
-      gluece_info_iterator const gluece_info_container_end(
-        gluece_info_container.end()
-      );
+     apply_skip_predicate(
+       gluece_info_container,
+       gluece_info_container_updated_entries
+     );
 
-     for (; it != gluece_info_container_end; ++it) {
-       
-       // Skips CE info according to the specified predicate...
-       if (m_skip_predicate.empty() || !m_skip_predicate(it->first)) {
-         
-         it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
-         gluece_info_container_updated_entries.push_back(it);
-       }
-     }
-     {
-       ism_mutex_type::scoped_lock l(get_ism_mutex());	
+     apply_skip_predicate(
+       gluese_info_container,
+       gluese_info_container_updated_entries
+     );
 
-       vector<gluece_info_iterator>::iterator it(
-         gluece_info_container_updated_entries.begin()
-       );
-       vector<gluece_info_iterator>::iterator const e(
-         gluece_info_container_updated_entries.end()
-       );
-       time_t const current_time = std::time(0);
-       for ( ; it != e; ++it ) {
-	  ism_type::iterator ism_it = get_ism().find((*it)->first);
-          if (ism_it != get_ism().end()) {
-            ism_type::data_type& data = ism_it->second;
-            boost::tuples::get<0>(data) = current_time;
-            boost::tuples::get<2>(data) = (*it)->second;
-          } else {
-            get_ism().insert( 
-              make_ism_entry(
-                (*it)->first,
-                current_time,
-                (*it)->second,
-                ism_ii_purchaser_entry_update()
-              )
-            );
-          }
-        } 
-      } // unlock the mutex
-      if (m_mode) {
+     popolate(gluece_info_container_updated_entries, ism::ce);
+     popolate(gluese_info_container_updated_entries, ism::se);
+
+     if (m_mode) {
         boost::xtime xt;
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.sec += m_interval;

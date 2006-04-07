@@ -32,6 +32,11 @@ enum {
   update_function_entry
 };
 
+enum {
+  ce = 0,
+  se
+};
+
 // resource identifier
 typedef std::string id_type;
 // resource descritpion
@@ -52,9 +57,9 @@ typedef std::map<id_type, ism_entry_type> ism_type;
 // type specification for the mutex in ism
 typedef boost::recursive_mutex ism_mutex_type;
 
-void set_ism(ism_type& the_ism, ism_mutex_type& the_ism_mutex);
-ism_type& get_ism();
-ism_mutex_type& get_ism_mutex();
+void set_ism(ism_type* the_ism, ism_mutex_type* the_ism_mutex, size_t the_ism_index);
+ism_type& get_ism(size_t the_ism_index);
+ism_mutex_type& get_ism_mutex(size_t the_ism_index);
 
 ism_type::value_type make_ism_entry(
   std::string const& id, // resource identifier
@@ -66,8 +71,10 @@ ism_type::value_type make_ism_entry(
 
 std::ostream& operator<<(std::ostream& os, ism_type::value_type const& value);
 
-struct call_update_ism_entries
+class call_update_ism_entries
 {
+  void _(size_t);
+public:
   void operator()();
 };
 
@@ -83,8 +90,10 @@ bool is_void_ism_entry(const ism_entry_type& entry);
 
 std::string get_ism_dump(void);
 
-struct call_dump_ism_entries
+class call_dump_ism_entries
 {
+  void _(size_t, std::ios_base::openmode);
+public:
   void operator()();
 };
 

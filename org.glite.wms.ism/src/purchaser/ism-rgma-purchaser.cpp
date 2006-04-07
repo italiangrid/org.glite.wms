@@ -1411,7 +1411,7 @@ void ism_rgma_purchaser::do_purchase()
          } // for
    
          {
-            ism_mutex_type::scoped_lock l(get_ism_mutex());	
+            ism_mutex_type::scoped_lock l(get_ism_mutex(ism::ce));	
             while(!gluece_info_container_updated_entries.empty()) {
    	  
                ism_type::value_type ism_entry = make_ism_entry(
@@ -1420,7 +1420,7 @@ void ism_rgma_purchaser::do_purchase()
                   gluece_info_container_updated_entries.back()->second, 
                   ism_rgma_purchaser_entry_update() );
    
-   	       get_ism().insert(ism_entry);
+   	       get_ism(ism::ce).insert(ism_entry);
    
                   gluece_info_container_updated_entries.pop_back();            
             } // while
