@@ -442,7 +442,7 @@ void Job::delegateUserProxy(const std::string &endpoint) {
 		logInfo->print(WMS_DEBUG, "Sending Proxy Request to",  endpoint);
 		// GetProxy
 		logInfo->service(WMP_NS2_GETPROXY_SERVICE);
-		proxy = api::grstGetProxyReq(*dgOpt, cfg) ;
+		proxy = api::grstGetProxyReq(id, cfg) ;
 		logInfo->result(WMP_NS2_GETPROXY_SERVICE, "The proxy has been successfully retrieved");
 		// PutProxy
 		logInfo->service(WMP_NS2_PUTPROXY_SERVICE);
