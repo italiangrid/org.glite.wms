@@ -181,7 +181,9 @@ bool query::refresh_query ( int rgma_query_timeout )
          m_query_status = false; 
          return false; 
       } 
-      if ( m_consumer->isExecuting() ) m_consumer->abort(); 
+      //ATTENTION
+      //THIS METHOS IS NOT PRESENT IN HEAD ANYMORE AS IT BECOME DEPRECATED
+      //if ( m_consumer->isExecuting() ) m_consumer->abort(); 
 
       m_consumer->start( TimeInterval(rgma_query_timeout, Units::SECONDS) ); 
       m_query_status = true; 
@@ -318,15 +320,14 @@ bool ExportClassAd( ClassAd* ad, Tuple& tuple )
    ClassAdParser parser;
    if ( ! ad ) { Error("Empty ClassAd pointer passed"); return false; }
 
-   ResultSetMetaData* row = NULL;
-   if ( !( row = tuple.getMetaData() ) ) { Error("Wrong tuple passed"); return false; }
+   ResultSetMetaData row = tuple.getTupleMetaData();
 
-   if ( row->begin() == row->end() ) {
+   if ( row.begin() == row.end() ) {
       Warning("trying to create a classAd from an empty tuple");
       return false;
    }
 
-   for (ResultSetMetaData::iterator rowIt = row->begin(); rowIt < row->end(); rowIt++ )
+   for (ResultSetMetaData::iterator rowIt = row.begin(); rowIt < row.end(); rowIt++ )
    {
       utilities::edgstrstream exprstream;
       string name = rowIt->getColumnName();
@@ -1209,7 +1210,7 @@ void collect_voview_info( ism_rgma_purchaser * purchaser,
                            ceAd->Update(*vo_view_it->second);
                            gluece_info_container->insert(
                               std::make_pair(
-                                 ce_it->first + string(",vo=") + vo,
+                                 ce_it->first + string("/") + vo,
                                  ceAd
                               )
                            );
@@ -1385,7 +1386,8 @@ void ism_rgma_purchaser::do_purchase()
    
                bool purchasing_ok = checkMainValue((it->second).get())     && 
                                     expand_glueceid_info(it->second)       &&
-                                    insert_aux_requirements(it->second);
+                                    insert_aux_requirements(it->second)    &&
+                                    insert_gangmatch_storage_ad(it->second); 
    
                if (purchasing_ok) {
                   it->second->InsertAttr("PurchasedBy","ism_rgma_purchaser");
