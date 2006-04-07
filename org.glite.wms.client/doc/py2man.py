@@ -1,3 +1,26 @@
+# CONFIGURATION VALUES:
+"""
+DEBUG values:
+0 - no debug
+1 - stream debug (all toghether)
+2 - step debug
+"""
+RASKMAN_DEBUG = 0
+# Detemrine which documentation to be generated:
+GENERATE_MAN=True #MAN PAGES
+GENERATE_TXT=True #LATEC
+GENERATE_WKI=True #WIKI PAGES
+GENERATE_PLT=False #WIKI PAGES
+#Output for generated pages PATH:
+MAN_OUTPUT=""
+TXT_OUTPUT="../../org.egee.jra1.deliverables/users-guide/WMPROXY/"
+WKI_OUTPUT=""
+PLT_OUTPUT=""
+# OPTIONS and COMMANDS description files:
+options2descriptionFile  = "options_description.txt"
+commands2descriptionFile = "commands_description.txt"
+
+
 options2short = { \
 "all": ["all","",""] ,\
 "autm-delegation": ["autm-delegation","a",""] ,\

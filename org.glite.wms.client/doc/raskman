@@ -5,33 +5,27 @@ import sys
 
 # General Variables
 VERSION = "1.1.0"
-DEBUG = 0
-
-# Detemrine which documentation to be generated
-GENERATE_MAN=True
-GENERATE_TXT=True
-GENERATE_WKI=True
-
-
-
-MAN_OUTPUT=""
-TXT_OUTPUT="../../org.egee.jra1.deliverables/users-guide/WMPROXY/"
-WKI_OUTPUT=""
-
-options2descriptionFile  = "options_description.txt"
-commands2descriptionFile = "commands_description.txt"
-
 
 # Iterate over commands:
 errors=[]
 endl= "\n"
 TAGS ={"normal":["<<<",">>>"] , "high":["###","###"]}
 
+# man pages
 MAN_TAG="MAN_TAG"
+# latec
 TXT_TAG="TXT_TAG"
+# wiki pages
 WKI_TAG="WKI_TAG"
+# plain text
+PLT_TAG="PLT_TAG"
 
-
+try:
+	int(RASKMAN_DEBUG)
+except ValueError:
+	print "Warning: wrong RASKMAN_DEBUG"
+	print "(check value inside py2man.py file)"
+	RASKMAN_DEBUG=0
 
 def questionYN(question):
 	keep=1
@@ -48,20 +42,27 @@ def questionYN(question):
 def errorsAppend(err):
 	debug ("!!ERROR!!",err)
 	errors.append(err)
-	if DEBUG:
+	if RASKMAN_DEBUG:
 		if not questionYN("Do you wish to continue?"):
 			print "bye"
 			sys.exit(0)
 
 
 def debug(*args):
-	if DEBUG:
+	if RASKMAN_DEBUG:
 		if len(args)>1:
 			print ">>>DEBUG"
 			for arg in args:
 				print "\t",arg
 		else:
 			print ">>>DEBUG" , args
+		if RASKMAN_DEBUG>1:
+			if questionYN("exit?"):
+				print "bye"
+				sys.exit(0)
+
+
+
 
 
 def comment(line, man):
@@ -72,7 +73,9 @@ def comment(line, man):
 		return "% " + line + endl
 	elif man==WKI_TAG:
 		return ""
-		print "WKITBD comment"
+	elif man==PLT_TAG:
+		return ""
+
 
 def mainTitle(line, man):
 	""" Generate a title """
@@ -82,6 +85,9 @@ def mainTitle(line, man):
 		return endl + '\\medskip'+endl + '\\textbf{'+line+'}' + endl +'\\smallskip' +endl +endl
 	elif man==WKI_TAG:
 		return endl + "(:title " +line+":)"+endl
+	elif man==PLT_TAG:
+		return endl + "%"+"%"+"beginJob-"+line[len("glite-job-"):]+"%"+"%"+endl
+
 def title(line, man):
 	""" Generate a title """
 	if man==MAN_TAG:
@@ -90,6 +96,8 @@ def title(line, man):
 		return endl + '\\medskip'+endl + '\\textbf{'+line+'}' + endl +'\\smallskip' +endl +endl
 	elif man==WKI_TAG:
 		return endl + '!!' + line+ endl
+	elif man==PLT_TAG:
+		return endl +endl + "\t"+line +endl
 
 def parseSpecial(line, man):
 	if man==MAN_TAG:
@@ -102,7 +110,8 @@ def parseSpecial(line, man):
 		return line+endl
 	elif man==WKI_TAG:
 		return line
-
+	elif man==PLT_TAG:
+		return line
 
 def shortOptBis(line,man):
 	"""
@@ -132,6 +141,16 @@ def shortOptBis(line,man):
 		if vl:
 			result+= " < ''" + vl+"'' >"
 		result =result +endl
+	elif man==PLT_TAG:
+		# long option (mandatory)
+		result = "\t--"+ ln
+		# shortcut (optional)
+		if st:
+			result+= ', ' + "-"+ st
+		# value (optional)
+		if vl:
+			result+= " <"+ vl+">"
+		result =endl+result
 	return result
 
 
@@ -161,6 +180,8 @@ def shortOpt(line,man):
 		result +=endl
 	elif man==WKI_TAG:
 		return "-> " + shortOptBis(line, man)
+	elif man==PLT_TAG:
+		result+=shortOptBis(line, man)
 	return result
 
 
@@ -201,11 +222,15 @@ def parseDescriptionLines(lines, tags):
 				tmp = getTag(line.strip(), tags)
 				if tmp==name:
 					# END TAG, update dict
+					if dict.has_key(name):
+						error= "Warning: tag " + tags[0] + name +tags[1]+ \
+						"Repeated more than once!"
+						errorsAppend(error)
 					dict[name]=soFar
 					name = ""
 					soFar=""
 				elif tmp:
-					error= "Warning tag " + tags[0] + tmp +tags[1]+ \
+					error= "Warning: tag " + tags[0] + tmp +tags[1]+ \
 					" init but "+tags[0] + name +tags[1] + " not yet finished"
 					errorsAppend(error)
 					name = tmp
@@ -216,7 +241,7 @@ def parseDescriptionLines(lines, tags):
 				# Name not yet found:
 				name = getTag(line.strip(), tags)
 				if name:
-					if DEBUG:
+					if RASKMAN_DEBUG:
 						names.append(name)
 	debug ("Gotcha Names: ", names)
 	return dict
@@ -230,8 +255,18 @@ commands2description = parseDescriptionFile(commands2descriptionFile, TAGS["high
 debug("OPTIONS KEYS = " , options2description.keys())
 debug("COMMAND KEYS = " , commands2description.keys())
 
+if GENERATE_PLT:
+	#PLT are appended to the same file: remove it
+	import os
+	try:
+		os.remove(PLT_OUTPUT)
+	except OSError:
+		#Unable to remove
+		pass
 
 class RaskMan:
+ 	""" STATIC Dictonary of TAGS available by command"""
+	commonTags  = {}
 	def __init__(self,command, options, commandTags):
 		""" the name of the command"""
 		self.command = command
@@ -242,12 +277,20 @@ class RaskMan:
 		self.manFile = MAN_OUTPUT + command + ".1"
 		self.texFile = TXT_OUTPUT + command + ".tex"
 		self.wkiFile = WKI_OUTPUT + command + ".wki"
+		self.pltFile = PLT_OUTPUT # All output appended
 		if GENERATE_MAN:
 			self.manStream = open(self.manFile,"w")
 		if GENERATE_TXT:
 			self.texStream = open(self.texFile,"w")
 		if GENERATE_WKI:
 			self.wkiStream = open(self.wkiFile,"w")
+		if GENERATE_PLT:
+			self.pltStream = open(self.pltFile,"a+")
+
+	def setCommon(self, common):
+		self.common  = common
+
+	#def writeCommon(self, common):
 
 	def write(self, method,arg):
 		"""
@@ -260,6 +303,8 @@ class RaskMan:
 			self.texStream.write(method(arg,TXT_TAG))
 		if GENERATE_WKI:
 			self.wkiStream.write(method(arg,WKI_TAG))
+		if GENERATE_PLT:
+			self.pltStream.write(method(arg,PLT_TAG))
 
 	def writeArg(self,arg):
 		# Man pages
@@ -274,6 +319,10 @@ class RaskMan:
 		if GENERATE_WKI:
 			self.wkiStream.write(arg)
 			self.wkiStream.write(endl)
+		# PLT pages
+		if GENERATE_PLT:
+			self.pltStream.write(arg)
+			self.pltStream.write(endl)
 
 
 	def headerTag (self, line, man):
@@ -290,6 +339,8 @@ class RaskMan:
 			result +="\\label{"+ self.command +"}"
 		elif man==WKI_TAG:
 			result+= "!! " +self.command + endl
+		elif man==PLT_TAG:
+			result+= ""
 		return result +endl
 
 	def synopsisTag(self, line, man):
@@ -312,6 +363,8 @@ class RaskMan:
 			result +='{\\begin{verbatim}'
 		elif man==WKI_TAG:
 			result +="[+"+self.command +"+]    " + line.strip()
+		elif man==PLT_TAG:
+			result += self.command +" " + line.strip()
 		result += endl
 		# Common Options
 		if man==MAN_TAG:
@@ -320,7 +373,8 @@ class RaskMan:
 			result +=endl+"options:" +endl
 		elif man==WKI_TAG:
 			result +=endl+"options:" +endl
-
+		elif man==PLT_TAG:
+			result +=endl+"options:" +endl
 		try:
 			# Common (to all commands) options:
 			for opt in common_options:
@@ -336,6 +390,8 @@ class RaskMan:
 		elif man==TXT_TAG:
 			result +='\\end{verbatim}'
 		elif man==WKI_TAG:
+			pass
+		elif man==PLT_TAG:
 			pass
 		return result +endl
 
@@ -357,6 +413,8 @@ class RaskMan:
 				result+=".PP"+endl
 			elif man==TXT_TAG:
 				pass
+			elif man==WKI_TAG:
+				result +=endl
 			elif man==WKI_TAG:
 				result +=endl
 		return result
@@ -395,7 +453,6 @@ class RaskMan:
 					self.write(parseSpecial,self.commandTags[section])
 					del self.commandTags[section]
 				else:
-					print "\tWARNING! Missing section inside commandTags: ", section
 					debug ("Available commandTags ARE:", commandTags)
 			"""  Other Unkwnown sections..."""
 			for section in commandTags.keys():
@@ -403,27 +460,39 @@ class RaskMan:
 				self.write(parseSpecial,self.commandTags[section])
 				del self.commandTags[section]
 				errorsAppend(self.command+"-> (Warning) appending unknwon section: " + section)
+			"""  Common sections..."""
+			for section in self.commonTags.keys():
+				self.write(title,section)
+				self.write(parseSpecial,self.commonTags[section])
 		except KeyError:
 			errorsAppend(self.command+"-> section not found: " + section)
 		except IOError, err:
 			errorsAppend(self.command+"-> Unable to write file: ")
-		"""  see also TBD """
 		self.end()
 
 	def end(self):
-		""" Terminate documents and close """
-		# MAN PAGES:
-		self.manStream.write(endl)
-		self.manStream.close()
-		# TEX PAGES:
-		#self.texStream.write("\n\\end{document}")
-		self.texStream.write(endl)
-		self.texStream.close()
+		if GENERATE_MAN:
+			self.manStream.write(endl)
+			self.manStream.close()
+		if GENERATE_TXT:
+			self.texStream.write(endl)
+			self.texStream.close()
+		if GENERATE_WKI:
+			self.wkiStream.write(endl)
+			self.wkiStream.close()
+		if GENERATE_PLT:
+			endStr= endl + "%"+"%"+"endJob-"+self.command[len("glite-job-"):]+"%"+"%"+endl
+			self.pltStream.write(endStr)
+			self.pltStream.close()
 
 
 
 
-print "\n**** CREATING DOCUMENTATION ***"		
+print "\n**** CREATING DOCUMENTATION ***"
+
+if commands2description.has_key("COMMON"):
+	RaskMan.commonTags =parseDescriptionLines(commands2description["COMMON"].split("\n"), TAGS["normal"])
+
 for command in commands2options.keys():
 	try:
 		debug ("Parsing command:" ,command)
@@ -471,4 +540,12 @@ else:
 			print "\t"+ WKI_OUTPUT
 		else:
 			print "\t"+ "(locally created)"
+
+	if GENERATE_PLT:
+		print "PLT documtentation: "
+		if PLT_OUTPUT:
+			print "\t"+ PLT_OUTPUT
+		else:
+			print "\t"+ "(locally created)"
+
 	print "\n**** DOCUMENTATION PROPERLY GENERATED ***"
