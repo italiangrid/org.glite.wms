@@ -279,12 +279,12 @@ class Wmproxy:
 	"""
 	def getDefaultNs(self):
 		"""
-		retrieve Wmproxy default namespace string representation
+		retrieve Wmproxy default namespace string representation (static method)
 		"""
 		return "http://glite.org/wms/wmproxy"
 	def getGrstNs(self):
 		"""
-		GridSite Delegation namespace string representation
+		GridSite Delegation namespace string representation  (static method)
 		PutProxy and getProxyReq services requires gridsite specific namespace
 		WARNING: for backward compatibility with WMPROXY server (version <= 1.x.x)
 		deprecated PutProxy and getProxyReq sevices are still provided with
@@ -507,7 +507,13 @@ class Wmproxy:
 			if type(dests[0]) == type([]):
 				dests=dests[0]
 			for dest in dests:
-				destUris[ dest.__getitem__("id")] = dest.__getitem__("Item")
+				uri = dest.__getitem__("Item")
+				uris=[]
+				if type(dests[0]) == type([]):
+					uri = uris
+				else:
+					uris.append(uri)
+				destUris[ dest.__getitem__("id")] = uris
 			return destUris
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
@@ -889,9 +895,11 @@ class Wmproxy:
 		try:
 			self.soapInit()
 			outputFileList=[]
-			outputStruct=parseStructType(self.remote.getOutputFileList(jobId,protocol))[0]
-			for ofl in outputStruct:
-				outputFileList.append(parseStructType(ofl,"name","size"))
+			outputStruct=parseStructType(self.remote.getOutputFileList(jobId,protocol))
+			if outputStruct:
+				outputStruct=outputStruct[0]
+				for ofl in outputStruct:
+					outputFileList.append(parseStructType(ofl,"name","size"))
 			return outputFileList
 		except SOAPpy.Types.faultType, err:
 			raise WMPException(err)
