@@ -9,6 +9,7 @@
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "iceLBLogger.h"
 #include "iceLBEventFactory.h"
+#include "iceUtils.h"
 
 // CREAM stuff
 #include "glite/ce/cream-client-api-c/creamApiLogger.h"
@@ -26,18 +27,11 @@
 #include "boost/format.hpp"
 
 // System includes
-#include <unistd.h>
 #include <string>
 #include <iostream>
-#include <cerrno>
 #include <sstream>
-#include <netdb.h>
 #include <algorithm>
 #include <set>
-#include <stdexcept>
-
-extern int h_errno;
-extern int errno;
 
 using namespace std;
 namespace api = glite::ce::cream_client_api;
@@ -46,24 +40,6 @@ namespace iceUtil = glite::wms::ice::util;
 boost::recursive_mutex iceUtil::eventStatusListener::mutexJobStatusUpdate;
 
 namespace { // anonymous namespace
-
-    /**
-     * Utility function to return the hostname
-     */
-    string getHostName( void ) throw ( runtime_error& )
-    {
-        char name[256];
-
-        if ( gethostname(name, 256) == -1 ) {
-            throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
-        }
-        struct hostent *H=gethostbyname(name);
-        if ( !H ) {
-            throw runtime_error( string( "Could not resolve local hostname: ") + string(strerror(errno) ) );
-        }
-        return string(H->h_name);
-    }
-
 
     /**
      * This class represents status change notifications as sent by
@@ -196,7 +172,7 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
 {
 
   try {
-      myname = getHostName( );
+      myname = iceUtil::getHostName( );
   } catch( runtime_error& ex ) {
       _isOK = false;
   }

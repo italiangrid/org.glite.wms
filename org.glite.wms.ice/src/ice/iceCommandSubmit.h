@@ -112,11 +112,9 @@ namespace glite {
 	 * by this function
 	 */
 	void updateOsbList( classad::ClassAd* jdl );
-	
-	std::string m_jdl;
-	// std::string m_certfile;
-	// std::string m_gridJobId;
 
+        std::string m_myname;	
+	std::string m_jdl;
 	log4cpp::Category* m_log_dev;
  	glite::wms::ice::util::iceConfManager* m_confMgr;
 	std::string m_myname_url;

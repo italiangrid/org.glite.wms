@@ -29,7 +29,8 @@
 #include "eventStatusListener.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
-#include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
+//#include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
+#include "iceUtils.h"
 
 // Other glite includes
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
@@ -43,10 +44,7 @@
 
 // C++ stuff
 #include <ctime>
-#include <netdb.h>
 #include <cstring> // for memset
-
-extern int h_errno;
 
 using namespace std;
 
@@ -66,31 +64,17 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     m_confMgr( util::iceConfManager::getInstance()), // no need of mutex here because the getInstance does that
     m_lb_logger( util::iceLBLogger::instance() )
 {
-    char name[256];
-    memset((void*)name, 0, 256);
-    if(gethostname(name, 256) == -1)
-    {
+    try {
+        boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+        m_myname = util::getHostName();
+        m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );        
+    } catch( runtime_error& ex ) {
         m_log_dev->fatalStream() 
-            << "iceCommandSubmit::CTOR - Couldn't resolve local hostname: "
-            << strerror(errno)
+            << "iceCommandSubmit::CTOR() - "
+            << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
-
-      exit(1);
+        exit( 1 );
     }
-    struct hostent *H = gethostbyname(name);
-    if(!H) {
-        m_log_dev->fatalStream() 
-            << "iceCommandSubmit::CTOR() - Couldn't resolve local hostname: "
-            << strerror(h_errno)
-            << log4cpp::CategoryStream::ENDLINE;
-        exit(1);
-    }
-
-    {
-      boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-      m_myname_url = boost::str( boost::format("http://%1%:%2%") % H->h_name % m_confMgr->getListenerPort() );
-    }
-
 
     /*
 
@@ -196,6 +180,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
     util::jobCache::iterator job_pos = _cache->put( theJob );
 
+#ifdef DONT_COMPILE
     m_log_dev->infoStream() 
         << "iceCommandSubmit::execute() - Registering "
         << "gridJobID=\"" << theJob.getGridJobID()
@@ -204,7 +189,8 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         << "\""
         << log4cpp::CategoryStream::ENDLINE;
 
-    m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be removed
+    m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
+#endif
     m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
 
     string modified_jdl;
@@ -437,7 +423,19 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::Cla
 //______________________________________________________________________________
 void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 {
-    const string default_isbURI = "gsiftp://hostnamedelwms.pd.infn.it/jobISBdir"; // FIXME
+    string default_isbURI = "gsiftp://";
+    default_isbURI.append( m_myname );
+    default_isbURI.push_back( '/' );
+    string isbPath;
+    if ( jdl->EvaluateAttrString( "InputSandboxPath", isbPath ) ) {
+        default_isbURI.append( isbPath );
+    } else {
+        m_log_dev->warnStream()
+            << "iceCommandSubmit::updateIsbList() found no "
+            << "\"InputSandboxPath\" attribute in the JDL. "
+            << "Hope this is correct..."
+            << log4cpp::CategoryStream::ENDLINE;        
+    }
 
     // If the InputSandboxBaseURI attribute is defined, remove it
     // after saving its value; the resulting jdl will NEVER have
@@ -501,11 +499,23 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
 //______________________________________________________________________________
 void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
 {
-    const string default_osbdURI = "gsiftp://hostnamedelwms.pd.infn.it/jobOSBdir"; // FIXME
-
     // If no OutputSandbox attribute is defined, then nothing has to be done
     if ( 0 == jdl->Lookup( "OutputSandbox" ) )
         return;
+
+    string default_osbdURI = "gsiftp://";
+    default_osbdURI.append( m_myname );
+    default_osbdURI.push_back( '/' );
+    string osbPath;
+    if ( jdl->EvaluateAttrString( "OutputSandboxPath", osbPath ) ) {
+        default_osbdURI.append( osbPath );
+    } else {
+        m_log_dev->warnStream()
+            << "iceCommandSubmit::updateOsbList() found no "
+            << "\"OutputSandboxPath\" attribute in the JDL. "
+            << "Hope this is correct..."
+            << log4cpp::CategoryStream::ENDLINE;        
+    }
 
     if ( 0 != jdl->Lookup( "OutputSandboxDestURI" ) ) {
 
@@ -605,10 +615,13 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
             m_pathName.append( what[2].first, what[2].second );
         m_pathName.append( m_fileName );
     }
-    m_log_dev->log(log4cpp::Priority::DEBUG,
-		 string("iceCommandSubmit::pathName::CTOR() - Unparsed as follows: filename=[")
-		 +m_fileName + "] pathname={"
-		 +m_pathName+"]");
+
+    m_log_dev->debugStream()
+        << "iceCommandSubmit::pathName::CTOR() - "
+        << "Unparsed as follows: filename=[" << m_fileName << "] pathname={"
+        << m_pathName << "]"
+        << log4cpp::CategoryStream::ENDLINE;        
+
 }
 
 
