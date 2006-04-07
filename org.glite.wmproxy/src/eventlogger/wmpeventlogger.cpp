@@ -517,9 +517,9 @@ WMPEventLogger::logUserTags(classad::ClassAd* userTags)
 		}
  		if (val.IsStringValue(attrValue)) {
             edglog(debug)<<"Logging user tag to LB: "<<vect[i].first<<endl;
-            int i = LOG_RETRY_COUNT;
+            int j = LOG_RETRY_COUNT;
             int outcome = 1;
-			for (; (i > 0) && outcome; i--) {
+			for (; (j > 0) && outcome; j--) {
 				outcome = fp(ctx, (vect[i].first).c_str(), attrValue.c_str());
 				if (outcome) {
 					randomsleep();
