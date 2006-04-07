@@ -213,7 +213,7 @@ std::vector <std::pair<std::string , long> > JobListMatch::jobMatching( ) {
 		throw WmsClientException(__FILE__,__LINE__,
 		"jobListMatch", ECONNABORTED,
 		"Operation failed",
-		"unable to perform the operation:"  + errMsg(exc));
+		"Unable to perform the operation: "  + errMsg(exc));
   	}
        return list ;
 }
