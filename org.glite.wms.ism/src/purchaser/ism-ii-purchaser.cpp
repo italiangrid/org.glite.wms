@@ -71,27 +71,28 @@ void ism_ii_purchaser::operator()()
   do_purchase();
 }
 
-void ism_ii_purchaser::apply_skip_predicate(
+namespace {
+
+void apply_skip_predicate(
   gluece_info_container_type& gluece_info_container,
-  vector<gluece_info_iterator>& gluece_info_container_updated_entries)
+  vector<gluece_info_iterator>& gluece_info_container_updated_entries,
+  skip_predicate_type skip
+)
 {
   gluece_info_iterator it = gluece_info_container.begin();
   gluece_info_iterator const gluece_info_container_end(
     gluece_info_container.end()
   );
 
-  for (; it != gluece_info_container_end; ++it) {
-       
-    // Skips info according to the specified predicate...
-    if (m_skip_predicate.empty() || !m_skip_predicate(it->first)) {
-         
+  for ( ; it != gluece_info_container_end; ++it) {
+    if (!skip(it->first)) {
       it->second->InsertAttr("PurchasedBy","ism_ii_purchaser");
       gluece_info_container_updated_entries.push_back(it);
     }
   }
 }
 
-void ism_ii_purchaser::popolate(
+void populate_ism(
   vector<gluece_info_iterator>& gluece_info_container_updated_entries,
   size_t the_ism_index)
 {      
@@ -123,9 +124,12 @@ void ism_ii_purchaser::popolate(
   } 
 }
 
+}
+
 void ism_ii_purchaser::do_purchase()
 {
   do {
+
     try {
 
      gluece_info_container_type gluece_info_container;
@@ -144,31 +148,39 @@ void ism_ii_purchaser::do_purchase()
        gluese_info_container
      );
      Info("BDII fetching completed in " << t0.elapsed() << " seconds");
-      
-     apply_skip_predicate(
-       gluece_info_container,
-       gluece_info_container_updated_entries
-     );
 
-     apply_skip_predicate(
-       gluese_info_container,
-       gluese_info_container_updated_entries
-     );
+     if (!m_skip_predicate.empty()) {
 
-     popolate(gluece_info_container_updated_entries, ism::ce);
-     popolate(gluese_info_container_updated_entries, ism::se);
+       apply_skip_predicate(
+         gluece_info_container,
+         gluece_info_container_updated_entries,
+         m_skip_predicate
+       );
 
-     if (m_mode) {
-        boost::xtime xt;
-        boost::xtime_get(&xt, boost::TIME_UTC);
-        xt.sec += m_interval;
-        boost::mutex::scoped_lock l(f_purchasing_cycle_run_mutex);
-        f_purchasing_cycle_run_condition.timed_wait(l, xt);
-      }
-    }
-    catch (...) { // TODO: Check which exception may arrive here... and remove catch all
+       apply_skip_predicate(
+         gluese_info_container,
+         gluese_info_container_updated_entries,
+         m_skip_predicate
+       );
+
+     }
+
+     populate_ism(gluece_info_container_updated_entries, ism::ce);
+     populate_ism(gluese_info_container_updated_entries, ism::se);
+
+    } catch (...) {
+      // TODO: Check which exception may arrive here... and remove catch all
       Warning("Failed to purchase info from " << m_hostname << ":" << m_port);
     }
+
+    if (m_mode) {
+      boost::xtime xt;
+      boost::xtime_get(&xt, boost::TIME_UTC);
+      xt.sec += m_interval;
+      boost::mutex::scoped_lock l(f_purchasing_cycle_run_mutex);
+      f_purchasing_cycle_run_condition.timed_wait(l, xt);
+    }
+
   } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 }
 
