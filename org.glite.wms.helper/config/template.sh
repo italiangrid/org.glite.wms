@@ -240,7 +240,7 @@ doReplicaFilewithLFNAndSE()
       fi
     fi
   fi
-	  
+    
   echo "" >> $filename.tmp
   return $exit_status
 }
@@ -545,57 +545,59 @@ if [ ${__job_type} -ne 3 ]; then #all but interactive
   fi
 fi
 
-perl -e '
-  unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
-    $SIG{"TTIN"} = "IGNORE";
-    $SIG{"TTOU"} = "IGNORE";
-    setpgrp(0, 0);
-  }
-  exec(@ARGV);
-  warn "could not exec $ARGV[0]: $!\n";
-  exit(127);
-' "$cmd_line" &
-user_job=$!
+(
+  perl -e '
+    unless (defined($ENV{"EDG_WL_NOSETPGRP"})) {
+      $SIG{"TTIN"} = "IGNORE";
+      $SIG{"TTOU"} = "IGNORE";
+      setpgrp(0, 0);
+    }
+    exec(@ARGV);
+    warn "could not exec $ARGV[0]: $!\n";
+    exit(127);
+  ' "$cmd_line" &
+  user_job=$!
 
-exec 2> /dev/null
+  exec 2> /dev/null
 
-perl -e '
-  while (1) {
-    $time_left = `grid-proxy-info -timeleft 2> /dev/null` || 0;
-    last if ($time_left <= 0);
-    sleep($time_left);
-  }
-  kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
-  my $maradona = "'$maradona'";
-  my $logger = "'$lb_logevent'";
-  print STDERR $err_msg;
-  if (open(DAT,">> ".$maradona)) {
-    print DAT $err_msg;
-    close(DAT);
-  }
-  if (open(CMD, $logger.
-                " --jobid=\"".$ENV{GLITE_WMS_JOBID}."\"".
-                " --source=LRMS".
-                " --sequence=".$ENV{GLITE_WMS_SEQUENCE_CODE}.
-                " --event=\"Done\"".
-                " --reason=\"Job killed because of user proxy expiration\"".
-                " --status_code=FAILED".
-                " --exit_code=0 2>/dev/null |")) {
-    chomp(my $value = <CMD>);
-    close(CMD);
-    my $result = $?;
-    my $exit_value = $result >> 8;
-    $ENV{GLITE_WMS_SEQUENCE_CODE} = $value if ($exit_value == 0);
-  }
-  exit(1);
- ' & 2>/dev/null
-watchdog=$!
-wait $user_job
-status=$?
-#according to what reported (David McBride), the bash kill command 
-#doesn't appear to work properly on process groups
-/bin/kill -9 $watchdog $user_job -$user_job
-exit $status
+  perl -e '
+    while (1) {
+      $time_left = `grid-proxy-info -timeleft 2> /dev/null` || 0;
+      last if ($time_left <= 0);
+      sleep($time_left);
+    }
+    kill(defined($ENV{"EDG_WL_NOSETPGRP"}) ? 9 : -9, '"$user_job"');
+    my $maradona = "'$maradona'";
+    my $logger = "'$lb_logevent'";
+    print STDERR $err_msg;
+    if (open(DAT,">> ".$maradona)) {
+      print DAT $err_msg;
+      close(DAT);
+    }
+    if (open(CMD, $logger.
+                  " --jobid=\"".$ENV{GLITE_WMS_JOBID}."\"".
+                  " --source=LRMS".
+                  " --sequence=".$ENV{GLITE_WMS_SEQUENCE_CODE}.
+                  " --event=\"Done\"".
+                  " --reason=\"Job killed because of user proxy expiration\"".
+                  " --status_code=FAILED".
+                  " --exit_code=0 2>/dev/null |")) {
+      chomp(my $value = <CMD>);
+      close(CMD);
+      my $result = $?;
+      my $exit_value = $result >> 8;
+      $ENV{GLITE_WMS_SEQUENCE_CODE} = $value if ($exit_value == 0);
+    }
+    exit(1);
+  ' &
+  watchdog=$!
+  wait $user_job
+  status=$?
+  #according to what reported (David McBride), the bash kill command 
+  #doesn't appear to work properly on process groups
+  /bin/kill -9 $watchdog $user_job -$user_job
+  exit $status
+)
 
 status=$?
 
@@ -626,13 +628,13 @@ if [ ${__output_data} -eq 1 ]; then
         return_value=1
       else
         if [ -z "${__output_lfn}" -a -z "${__output_se}"] ; then
-	       local=`doReplicaFile $outputfile`
+         local=`doReplicaFile $outputfile`
         elif [ -n "${__output_lfn}" -a -z "${__output_se}"] ; then
-	       local=`doReplicaFilewithLFN $outputfile ${__output_lfn[$local_cnt]}`
+         local=`doReplicaFilewithLFN $outputfile ${__output_lfn[$local_cnt]}`
         elif [ -z "${__output_lfn}" -a -n "${__output_se}"] ; then
           local=`doReplicaFilewithSE $outputfile ${__output_se[$local_cnt]}`
         else
-	       local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]}`
+         local=`doReplicaFilewithLFNAndSE $outputfile ${__output_lfn[$local_cnt]} ${__output_se[$local_cnt]}`
         fi
         status=$?
       fi
