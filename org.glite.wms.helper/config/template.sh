@@ -425,25 +425,29 @@ done
 
 umask 022
 
-for f in ${__input_file[@]}
-do
-  if [ ${__wmp_support} -eq 0 ]; then
+if [ $__wmp_support -eq 0 ]; then
+  for f in ${__input_file[@]}
+  do
     globus_url_retry_copy "${__input_base_url}${f}" "file://${workdir}/${f}"
     if [ $? != 0 ]; then
       log_error "Cannot download ${f} from ${__input_base_url}"
     fi
-  else #WMP support
+  done
+else
+  #WMP support
+  for f in ${__wmp_input_base_file[@]}
+  do
     file=`basename $f`
     if [ "${f:0:9}" == "gsiftp://" ]; then
-      globus-url-copy "${f}" "file://${workdir}/${file}"
+      globus_url_retry_copy "${f}" "file://${workdir}/${file}"
     elif [ "${f:0:8}" == "https://" ]; then
       htcp "${f}" "file://${workdir}/${file}"
-    fi
+    fi 
     if [ $? != 0 ]; then
-      log_error "Cannot download ${f} from ${__input_base_url}"
+      log_error "Cannot download ${file} from ${f}"
     fi
-  fi
-done
+  done
+fi
 
 if [ -f "${__job}" ]; then
   chmod +x "${__job}" 2>/dev/null
@@ -652,11 +656,11 @@ jw_echo "job exit status = ${status}"
 #sort_by_size __output_file ${workdir}
 
 file_size_acc=0
-total_files=${#__output_file[@]}
 current_file=0
-for f in ${__output_file[@]} 
-do
-  if [ ${__wmp_support} -eq 0 ]; then
+if [ ${__wmp_support} -eq 0 ]; then
+  total_files=${#__output_file[@]}
+  for f in ${__output_file[@]} 
+  do
     if [ -r "${f}" ]; then
       output=`dirname $f`
       if [ "x${output}" = "x." ]; then
@@ -699,7 +703,12 @@ do
         log_error "Cannot upload ${f} into ${__output_base_url}" "Done"
       fi
     fi #if [ -r "${f}" ]; then
-  else #WMP support
+    let "++current_file"
+  done
+else #WMP support
+  total_files=${#__wmp_output_dest_file[@]}
+  for f in ${__wmp_output_dest_file[@]}
+  do
     file=`basename $f`
     s="${workdir}/${__wmp_output_file[$current_file]}"
     if [ ${__osb_wildcards_support} -eq 0 ]; then
@@ -750,9 +759,9 @@ do
     if [ $? != 0 ]; then
       log_error "Cannot upload ${file} into ${f}" "Done"
     fi
-  fi
-  let "++current_file"
-done
+    let "++current_file"
+  done
+fi #WMP support
 
 log_event "Done"
 
