@@ -195,13 +195,14 @@ try {
   /* Not Mandatory */
   std::string prologue;
   std::string prologue_arguments;
-  try {
-    prologue = jdl::get_prologue(*m_ad);
+  bool is_in_jdl;
+  prologue = jdl::get_prologue(*m_ad, is_in_jdl);
+  if (is_in_jdl) 
+  {
     if (prologue[0] != '/') {
       prologue.insert(0, "./", 2);
-    }    
-    prologue_arguments = jdl::get_prologue_arguments(*m_ad);
-  } catch (jdl::CannotGetAttribute const& e) {
+    }
+    prologue_arguments = jdl::get_prologue_arguments(*m_ad, is_in_jdl);
   }
 
   /* Not Mandatory */

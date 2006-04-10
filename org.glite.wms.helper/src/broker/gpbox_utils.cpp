@@ -145,7 +145,7 @@ load_chain(const char *certfile)
       first = 0;
       continue;
     }
-    xi=sk_X509_INFO_shift(sk);
+    xi = sk_X509_INFO_shift(sk);
     boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
     if (xi->x509 != NULL) {
       sk_X509_push(stack,xi->x509);
@@ -172,7 +172,7 @@ VOMS_proxy_init(
   STACK_OF(X509) *chain = NULL;
 
   in = BIO_new(BIO_s_file());
-  boost::shared_ptr<BIO> _in(in, ::BIO_free);
+  boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   if (in) {
     if (BIO_read_filename(in, user_cert_file_name.c_str()) > 0) {
@@ -183,13 +183,16 @@ VOMS_proxy_init(
           voms vomsdefault;
           v.DefaultData(vomsdefault);
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
-          for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
-                 for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
-                   std::string name = (*j).group;
-                   if ((*j).role != std::string("NULL"))
+          for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++)
+          {
+            for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); ++j)
+            {
+              std::string name = (*j).group;
+              if ((*j).role != std::string("NULL")) {
                      name += "/Role=" + (*j).role;
-                   USER_attribs.push_back(Attribute("group", name, STRING));
-                 }
+              }
+              USER_attribs.push_back(Attribute("group", name, STRING));
+            }
           }
         }
         else {
@@ -230,12 +233,7 @@ get_tag(matchmaking::match_info const& info)
 
     int int_result;
     value.IsIntegerValue(int_result);
-    try {
-      result = boost::lexical_cast<std::string>(int_result);
-    }
-    catch (boost::bad_lexical_cast const&) {
-      return(null_string);
-    }
+    result = boost::lexical_cast<std::string>(int_result);
   }
   return result;
 }
@@ -272,8 +270,8 @@ filter_gpbox_authorizations(
   if (!ce_tags.empty())
     ce_tags.erase(ce_tags.size() - 1);
 
-    Info(ce_names);
-    Info(ce_tags);
+  Info(ce_names);
+  Info(ce_tags);
 
   CE_attributes.push_back(Attribute("aggregation-tag", ce_tags, STRING));
 
