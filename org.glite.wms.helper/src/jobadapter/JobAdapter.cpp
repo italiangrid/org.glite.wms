@@ -74,6 +74,7 @@ namespace jobadapter {
 class URL;
 
 namespace {
+
 class Beginning {
 public:
   Beginning(const std::string& str) 
@@ -321,7 +322,9 @@ try {
   /* Mandatory */
   jdl::set_universe(*result, "grid"); 
 
-  config::JCConfiguration const* jcconfig = config::Configuration::instance()->jc();
+  config::Configuration const& config(
+    *config::Configuration::instance()
+  );
 
   if (!is_blahp_resource && !is_condor_resource) {
     jdl::set_grid_type(*result, "globus");
@@ -457,7 +460,7 @@ try {
     // match with 'B' daemons could occur in 15 (default) minutes.
     utilities::oedgstrstream periodic_hold_expression;
     periodic_hold_expression << "Matched =!= TRUE && CurrentTime > QDate + ";
-    periodic_hold_expression << jcconfig->maximum_time_allowed_for_condor_match();
+    periodic_hold_expression << config.jc()->maximum_time_allowed_for_condor_match();
     jdl::set_periodic_hold(*result,periodic_hold_expression.str());
 
     // Build the jobmanager-fork contact string.
@@ -755,8 +758,7 @@ try {
   jdl::set_globus_rsl(*result, globusrsl);
   
   // Mandatory for shallow resubmission
-  config::WMConfiguration const* wmconfig = config::Configuration::instance()->wm();
-  std::string token_file(wmconfig->token_file());
+  std::string token_file(config.wm()->token_file());
 
   jw->standard_input(stdinput);
   jw->standard_output(stdoutput);
@@ -843,55 +845,59 @@ try {
   }
   //end preparation of the JobWrapper dump
 
-  config::LMConfiguration const* logconfig = config::Configuration::instance()->lm();
-  
   if (!b_wmpisb_base_uri) {
     // Mandatory
     // Maradone file path
-    std::string maradonapr(logconfig->maradona_transport_protocol());
+    std::string maradonapr(config.lm()->maradona_transport_protocol());
 
-    config::NSConfiguration const* nsconfig = config::Configuration::instance()->ns();
-  
-    fs::path maradona_path(
-      fs::normalize_path(nsconfig->sandbox_staging_path()),
-      fs::native);
+    try {
+      fs::path maradona_path(config.ns()->sandbox_staging_path(), fs::native);
+      maradona_path /= fs::path(jobid::get_reduced_part(job_id), fs::native);
+      maradona_path /= fs::path(jobid_to_file, fs::native);
+      maradona_path /= fs::path("Maradona.output", fs::native);
+      
+      jw->maradonaprotocol(maradonapr, maradona_path.native_file_string());
+    } catch(fs::filesystem_error const&) {
+      throw CannotCreateJobWrapper("FS error creating maradona path\n");
+    }
 
-    maradona_path /= jobid::get_reduced_part(job_id);
-    maradona_path /= jobid_to_file;
-    maradona_path /= "Maradona.output";
-    jw->maradonaprotocol(maradonapr, maradona_path.native_file_string());
   } else {
     jw->maradonaprotocol(wmpisb_base_uri, "/Maradona.output");
   }
 
   // read the submit file path
-  std::string jw_name("JobWrapper.");
-  jw_name += jobid_to_file + ".sh";
-  fs::path jw_path(
-    fs::normalize_path(jcconfig->submit_file_dir()),
-    fs::native);
-  if (!dag_id.empty()) {
-    jw_path /= jobid::get_reduced_part(dag_id);
-    std::string jw_dagid_name("dag.");
-    jw_dagid_name.append(dagid_to_file);
-    jw_path /= jw_dagid_name;
-  } else {  
-    jw_path /= jobid::get_reduced_part(job_id);
-  }
-  jw_path /= jw_name;
-
-  try { 
-    fs::create_parents(jw_path.branch_path());
-  } catch(fs::filesystem_error &err) {
-    throw CannotCreateJobWrapper(jw_path.native_file_string());
+  std::string jw_name("JobWrapper." + jobid_to_file + ".sh");
+  std::string jw_path_string;
+  try {
+    fs::path jw_path(
+      fs::normalize_path(config.jc()->submit_file_dir()),
+      fs::native
+    );
+    if (!dag_id.empty()) {
+      jw_path /= fs::path(jobid::get_reduced_part(dag_id), fs::native);
+      std::string jw_dagid_name("dag.");
+      jw_dagid_name.append(dagid_to_file);
+      jw_path /= fs::path(jw_dagid_name, fs::native);
+    } else {  
+      jw_path /= fs::path(jobid::get_reduced_part(job_id), fs::native);
+    }
+    jw_path /= fs::path(jw_name, fs::native);
+    jw_path_string = jw_path.native_file_string();
+    
+    try { 
+      fs::create_parents(jw_path.branch_path());
+    } catch(fs::filesystem_error &err) {
+      throw CannotCreateJobWrapper(jw_path_string);
+    }
+  } catch(fs::filesystem_error const&) {
+    throw CannotCreateJobWrapper("FS error creating jobwrapper path\n");
   }
 
   // write the JobWrapper in the submit file path
-  std::ofstream ofJW(jw_path.native_file_string().c_str());
+  std::ofstream ofJW(jw_path_string.c_str());
   if (!ofJW) {
-    throw CannotCreateJobWrapper(jw_path.native_file_string());
+    throw CannotCreateJobWrapper(jw_path_string);
   }
-
   try {
     ofJW << *jw;
   } catch (JobWrapperException e) {
@@ -903,11 +909,11 @@ try {
   
   // Mandatory
   // the new executable value is the jobwrapper file path
-  jdl::set_executable(*result, jw_path.native_file_string());
+  jdl::set_executable(*result, jw_path_string);
 
   // Prepare the output file path
   
-  std::string output_file_path(jcconfig->output_file_dir());
+  std::string output_file_path(config.jc()->output_file_dir());
   output_file_path.append("/");
   if (!dag_id.empty()) {
     output_file_path.append(jobid::get_reduced_part(dag_id));
@@ -947,7 +953,7 @@ try {
 
   // Mandatory
   // Condor Log file path
-  std::string condor_file_path(logconfig->condor_log_dir());
+  std::string condor_file_path(config.lm()->condor_log_dir());
   std::string log(condor_file_path);
   log.append("/");
   log.append("CondorG.log");
