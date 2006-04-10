@@ -131,7 +131,7 @@ load_chain(const char *certfile)
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  boost::shared_ptr<BIO> _in(in, ::BIO_free);
+  boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
   if(!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
@@ -172,7 +172,7 @@ VOMS_proxy_init(
   STACK_OF(X509) *chain = NULL;
 
   in = BIO_new(BIO_s_file());
-  boost::shared_ptr<BIO> _in(in, ::BIO_free);
+  boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   if (in) {
     if (BIO_read_filename(in, user_cert_file_name.c_str()) > 0) {
@@ -184,12 +184,13 @@ VOMS_proxy_init(
           v.DefaultData(vomsdefault);
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
           for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
-                 for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
-                   std::string name = (*j).group;
-                   if ((*j).role != std::string("NULL"))
-                     name += "/Role=" + (*j).role;
-                   USER_attribs.push_back(Attribute("group", name, STRING));
-                 }
+            for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
+              std::string name = (*j).group;
+              if ((*j).role != std::string("NULL")) {
+                name += "/Role=" + (*j).role;
+              }
+              USER_attribs.push_back(Attribute("group", name, STRING));
+            }
           }
         }
         else {
@@ -230,12 +231,7 @@ get_tag(matchmaking::match_info const& info)
 
     int int_result;
     value.IsIntegerValue(int_result);
-    try {
-      result = boost::lexical_cast<std::string>(int_result);
-    }
-    catch (boost::bad_lexical_cast const&) {
-      return(null_string);
-    }
+    result = boost::lexical_cast<std::string>(int_result);
   }
   return result;
 }
@@ -267,13 +263,11 @@ filter_gpbox_authorizations(
     std::string tag(get_tag(it->second));
     ce_tags += tag.empty() ? "-1" : tag + '#';
   }
-  if (!ce_names.empty())
-    ce_names.erase(ce_names.size() - 1);
-  if (!ce_tags.empty())
-    ce_tags.erase(ce_tags.size() - 1);
+  ce_names.erase(ce_names.size() - 1);
+  ce_tags.erase(ce_tags.size() - 1);
 
-    Info(ce_names);
-    Info(ce_tags);
+  Info(ce_names);
+  Info(ce_tags);
 
   CE_attributes.push_back(Attribute("aggregation-tag", ce_tags, STRING));
 
@@ -295,8 +289,8 @@ filter_gpbox_authorizations(
         Info("filter_gbox_authorizations: PEP Send returned true");
         for (EvalResults::iterator iter = evaluation_of_results.begin();
           iter != evaluation_of_results.end();
-          ++iter) {
-
+          ++iter)
+      {
           answer PEP_request_answer = iter->GetResult();
           // INDET may even be returned from an exception coming to the API
           // Send, so we don't even check it (since the policy (permit) is
