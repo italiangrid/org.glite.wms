@@ -320,7 +320,7 @@ try {
     // Set attribute only if it's not empty, so as not to upset 
     // condor_submit.
     if (!flatten_result.empty()) {
-      requestad::set_remote_remote_requirements(
+      requestad::set_remote_remote_ce_requirements(
         *result,
          flatten_result
       );
