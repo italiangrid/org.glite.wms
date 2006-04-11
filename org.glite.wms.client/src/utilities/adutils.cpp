@@ -103,11 +103,15 @@ void AdUtils::parseVo(voSrc src, std::string& voPath, std::string& voName){
 		}else {return;}
 	}
 	// Check VoName definitely present (refer to previous check)
-	if (voName==""){voName=ad.getString(JDL::VIRTUAL_ORGANISATION);}
-	else if ((glite_wms_client_toLower(voName))!=glite_wms_client_toLower(ad.getString(JDL::VIRTUAL_ORGANISATION))){
-		throw WmsClientException(__FILE__,__LINE__,"AdUtils::parseVo",DEFAULT_ERR_CODE,
-				"Mismatch Value","Non-matching Virtualorganisation names: "
-				+voName+"!="+ad.getString(JDL::VIRTUAL_ORGANISATION));
+	if (voName==""){
+		voName=ad.getString(JDL::VIRTUAL_ORGANISATION);
+	}else if ( (glite_wms_client_toLower(voName))
+		!=glite_wms_client_toLower(ad.getString(JDL::VIRTUAL_ORGANISATION)) ){
+		// VO Mismatch problem
+		if (vbLevel==WMSLOG_DEBUG){
+			errMsg(WMS_WARNING,"VirtualOrganisation value will be overriden by ",voName,true);
+		}
+
 	}
 }
 bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
@@ -142,7 +146,8 @@ bool AdUtils::checkConfigurationAd(glite::jdl::Ad& ad, const string& path){
 *  General Static Methods
 *******************************/
 classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
-	const std::string& pathDefault, const std::string& pathGeneral){
+	const std::string& pathDefault, const std::string& pathGeneral,
+	const std::string& voName){
 	glite::jdl::Ad adUser, adDefault, adGeneral;
 	// Load ad from file (if necessary)
 	if (pathGeneral!=""){
@@ -164,13 +169,18 @@ classad::ClassAd* AdUtils::loadConfiguration(const std::string& pathUser ,
 	// Merge all configuration file found
 	adGeneral.merge(adDefault);
 	adGeneral.merge(adUser);
+	// VO overriding
+	if(voName!=""){
+		if (adGeneral.hasAttribute(JDL::VIRTUAL_ORGANISATION)){
+			adGeneral.delAttribute(JDL::VIRTUAL_ORGANISATION);
+		}
+		adGeneral.setAttribute(JDL::VIRTUAL_ORGANISATION,voName);
+	}
 	if (!adGeneral.isSet()){
 		if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_WARNING, "Unable to load any configuration file properly","",true);}
-/*
-		throw WmsClientException(__FILE__,__LINE__,"AdUtils::loadConfiguration",DEFAULT_ERR_CODE,
-				"wrong Configuration","Unable to load any configuration file properly");
-*/
-	}else if (vbLevel==WMSLOG_DEBUG){errMsg(WMS_DEBUG, "Loaded Configuration values:",adGeneral.toLines(),true);}
+	}else if (vbLevel==WMSLOG_DEBUG){
+		errMsg(WMS_DEBUG, "Loaded Configuration values:",adGeneral.toLines(),true);
+	}
 	return adGeneral.ad();
 }
 std::vector<std::string> AdUtils::getUnknown(Ad* jdl){

@@ -709,7 +709,7 @@ std::string* Utils::checkConf(){
 		if (src==NONE){
 			src=JDL_FILE;
 			voPath=*(wmcOpts->getPath2Jdl());
-			// Read jdl
+			// Read jdl (voName is still an empty string)
 			wmcAd->parseVo(src,voPath,voName);
 			logInfo->print (WMS_DEBUG, "Vo read from", "JDL option",true,true);
 		}
@@ -729,7 +729,7 @@ std::string* Utils::checkConf(){
 	checkPrefix( );
 	string cfDefault = this->getPrefix( ) +  "/etc/" + glite_wms_client_toLower(voName) + "/" + GLITE_CONF_FILENAME ;
 	string cfGeneral = this->getPrefix( ) +  "/etc/" + GLITE_CONF_FILENAME ;
-	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral));
+	wmcConf=new glite::wms::common::configuration::WMCConfiguration(wmcAd->loadConfiguration(voPath, cfDefault,cfGeneral, voName));
 	return new string(voName);
 }
 void Utils::checkPrefix( ){

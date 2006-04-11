@@ -56,7 +56,8 @@ class AdUtils{
 		*@return the merged Ad
 		*/
 		classad::ClassAd* loadConfiguration(const std::string& pathUser,
-			const std::string& pathDefault,const std::string& pathGeneral="");
+			const std::string& pathDefault,const std::string& pathGeneral,
+			const std::string& voName);
 		static void setDefaultValuesAd(glite::jdl::Ad* jdl,
 			glite::wms::common::configuration::WMCConfiguration* conf,
 			std::string* pathOpt=NULL);
