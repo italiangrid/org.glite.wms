@@ -1606,10 +1606,28 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 	string source = "";
 	string destination = "";
 	string cmd = "";
-	char* reason = NULL;
+	// Globus Url Copy Path finder
+	string globusUrlCopy="globus-url-copy";
 	logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp):",
 		"using globus-url-copy to transfer the local InputSandBox file(s) to the submission endpoint");
-	//TBDMS: globus-url-copy searched several times
+	if (getenv("GLOBUS_LOCATION")){
+		globusUrlCopy=string(getenv("GLOBUS_LOCATION"))+"/bin/"+globusUrlCopy;
+	}else if (Utils::isDirectory ("/opt/globus/bin")){
+		globusUrlCopy="/opt/globus/bin/"+globusUrlCopy;
+	}else {
+		throw WmsClientException(__FILE__,__LINE__,
+			"gsiFtpGetFiles", ECONNABORTED,
+			"File  Error",
+			"Unable to find globus-url-copy path");
+	}
+	// look for file
+	if (!Utils::isFile (globusUrlCopy)){
+		throw WmsClientException(__FILE__,__LINE__,
+			"gsiFtpGetFiles", ECONNABORTED,
+			"File Error",
+			"Unable to find:\n" +globusUrlCopy);
+	}
+	char* reason = NULL;
 	while (paths.empty()==false) {
 		// source
 		source = (paths[0].first).file ;
@@ -1619,30 +1637,23 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		// Protocol has to be added only if not yet present
 		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
 		// command
-		cmd= "globus-url-copy " + string (protocol+source) + " " + destination;
-		if (getenv("GLOBUS_LOCATION")){
-			cmd=string(getenv("GLOBUS_LOCATION"))+"/bin/"+cmd;
-		}else if (Utils::isDirectory ("/opt/globus/bin")){
-			cmd="/opt/globus/bin/"+cmd;
-		}else {
-			throw WmsClientException(__FILE__,__LINE__,
-				"gsiFtpGetFiles", ECONNABORTED,
-				"File  Error",
-				"Unable to find globus-url-copy executable");
-		}
+		cmd= globusUrlCopy +" "+ string (protocol+source) + " " + destination;
+
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n" , cmd);
 		// launches the command
 		code = system( cmd.c_str() );
-		if ( code < 0  ){
+		if (code != 0){
 			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
 			reason = strerror(code);
 			if (reason!=NULL) {
 				err << "   " << reason << "\n";
 				logInfo->print(WMS_DEBUG,
-					"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="+ boost::lexical_cast<string>(code)+"):",
+					"FileTransfer (gsiftp) - Transfer Failed (ErrorCode="
+						+ boost::lexical_cast<string>(code)+"):",
 						reason );
 			} else {
-				logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp) - Transfer Failed:", "ErrorCode=" + boost::lexical_cast<string>(code) );
+				logInfo->print(WMS_DEBUG, "FileTransfer (gsiftp) - Transfer Failed:",
+					"ErrorCode=" + boost::lexical_cast<string>(code) );
 			}
 			failed.push_back(paths[0]);
 		} else{
