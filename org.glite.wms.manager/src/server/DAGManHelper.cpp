@@ -159,6 +159,15 @@ get_dagman_log_level()
 }
 
 int
+get_dagman_max_pre()
+{
+  configuration::Configuration const& config(
+    *configuration::Configuration::instance()
+  );
+  return config.jc()->dagman_max_pre();
+}
+
+int
 get_dagman_log_rotate()
 {
   configuration::Configuration const& config(
@@ -681,6 +690,11 @@ create_dagman_job_ad(
   } else if (dagman_log_level > 5) {
     dagman_log_level = 5;
   }
+
+  int dagman_max_pre = get_dagman_max_pre();
+  if (dagman_max_pre < 1) {
+    dagman_max_pre = 1;
+  }
   std::ostringstream arguments;
   arguments << "-f"
             << " -l " << paths.base_submit_dir().native_file_string()
@@ -689,8 +703,8 @@ create_dagman_job_ad(
             << " -Lockfile " << paths.lock_file().native_file_string()
             << " -Dag " << paths.dag_description().native_file_string()
             << " -Rescue " << paths.rescue().native_file_string()
-            << " -Condorlog " << paths.dag_log().native_file_string()
-            << " -maxjobs " << max_running_nodes;
+            << " -maxpre " << dagman_max_pre
+            << " -Condorlog " << paths.dag_log().native_file_string();
 
   jdl::set_arguments(result, arguments.str());
   jdl::set_ce_id(result, "dagman");
