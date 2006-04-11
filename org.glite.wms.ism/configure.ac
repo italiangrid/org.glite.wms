@@ -19,6 +19,9 @@
 #
 #       Revision history: 
 #       $Log$
+#       Revision 1.17.2.5  2006/04/11 14:46:50  monforte
+#       Fix for bug #16169
+#
 #       Revision 1.17.2.4  2006/04/07 13:48:07  monforte
 #       Fix for bug #16102
 #
@@ -184,7 +187,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([GLite WMS ISM], [3.1.3])
+AC_INIT([GLite WMS ISM], [3.1.4])
 AC_CONFIG_AUX_DIR([./project])
 AM_INIT_AUTOMAKE([1.6.3 subdir-objects])
 AC_CONFIG_SRCDIR([src/ism.cpp])

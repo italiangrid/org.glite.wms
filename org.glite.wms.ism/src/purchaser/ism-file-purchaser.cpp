@@ -61,19 +61,38 @@ void ism_file_purchaser::do_purchase()
     ism_mutex_type::scoped_lock __(get_ism_mutex(ism::se));
 
     while(!src.eof()) {
+      boost::scoped_ptr<classad::ClassAd> ad;
+      string id;
       try {
-	boost::scoped_ptr<classad::ClassAd> ad(utils::parse_classad(src));
-	string id(utils::evaluate_attribute(*ad,"id"));
-        if (m_skip_predicate.empty() || !m_skip_predicate(id)) {
+	ad.reset(utils::parse_classad(src));
+        id.assign(utils::evaluate_attribute(*ad,"id"));
+      } 
+      catch (utils::CannotParseClassAd&) {
+	Warning("Error parsing info from ISM dump file\n");
+        continue;
+      }
+      catch (utils::InvalidValue& e) {
+        Warning("Error evaluating id for ISM dump info\n");
+        continue; 
+      }	
+      if (m_skip_predicate.empty() || !m_skip_predicate(id)) {
 
-	  int    ut(utils::evaluate_attribute(*ad,"update_time"));
-	  const classad::ClassAd *i=utils::evaluate_attribute(*ad,"info");
+        int    ut(utils::evaluate_attribute(*ad,"update_time"));
+	const classad::ClassAd *i=utils::evaluate_attribute(*ad,"info");
 
-          Debug("Loading ISM entry info: " << id << "\n");
+        Debug("Loading ISM entry info: " << id << "\n");
 
-	  boost::shared_ptr<classad::ClassAd> info(static_cast<classad::ClassAd*>(i->Copy()));
-          info->SetParentScope(0);
-
+	boost::shared_ptr<classad::ClassAd> info(static_cast<classad::ClassAd*>(i->Copy()));
+        info->SetParentScope(0);
+        
+        if(info->Lookup("GlueSEUniqueID")) {
+          get_ism(ism::se).insert(
+            make_ism_entry(id, ut, info, f_ii_purchaser_entry_update_fn())
+          );
+        }
+        else 
+        if(info->Lookup("GlueCEUniqueID")) {
+        
           insert_aux_requirements(info);
           expand_glueceid_info(info);
 
@@ -82,12 +101,9 @@ void ism_file_purchaser::do_purchase()
           info->EvaluateAttrString("PurchasedBy",purchased_by);
           if (purchased_by==string("ism_ii_purchaser")) {
             
-            size_t the_ism_index = 
-              i->Lookup("GlueCEUniqueID") ? ism::ce : ism::se;
-            
-            get_ism(the_ism_index).insert(make_ism_entry(id, ut, info,
+            get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_ii_purchaser_entry_update_fn()));
-	  }
+          }
 	  else if (purchased_by==string("ism_cemon_purchaser")) {
             get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_cemon_purchaser_entry_update_fn()));
@@ -99,16 +115,11 @@ void ism_file_purchaser::do_purchase()
           else if (purchased_by==string("ism_cemon_async_purchaser")) {
 	    get_ism(ism::ce).insert(make_ism_entry(id, ut, info));
 	  }
-       }
-      } 
-      catch (utils::CannotParseClassAd&) {
-	Warning("Error parsing info from ISM dump file\n");
+        }
       }
-      catch (utils::InvalidValue& e) {
-      }	
-    }
-    if (m_mode == loop) {
-      sleep(m_interval);
+      if (m_mode == loop) {
+        sleep(m_interval);
+      }
     }
   } while (m_mode && (m_exit_predicate.empty() || !m_exit_predicate()));
 }

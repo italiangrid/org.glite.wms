@@ -25,9 +25,7 @@ glite_wms_ism_cemon_asynch_purchaserTest_SOURCES = \
 
 glite_wms_ism_file_purchaserTest_LDADD = \
         $(top_srcdir)/build/src/purchaser/libglite_wms_ism_file_purchaser.la \
-        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_cemon_purchaser.la \
         $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_purchaser.la \
-        $(top_srcdir)/build/src/purchaser/libglite_wms_ism_ii_gris_purchaser.la \
         $(top_srcdir)/build/src/libglite_wms_ism.la \
         $(GLITE_WMSUTILS_JOBID_LIBS) \
         $(GLITE_WMSUTILS_CJOBID_LIBS) \
@@ -136,6 +134,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/interface \
 	$(CLASSAD_CFLAGS) \
 	$(BOOST_CFLAGS) \
 	$(GLOBUS_THR_CFLAGS) \
+        $(LOG4CXX_CFLAGS) \
         $(GLITE_WMS_ISM_CFLAGS) 
 
 MAINTAINERCLEANFILES = Makefile.in *~
