@@ -622,6 +622,11 @@ VO check priority:
 	- JDL (submit||listmatch)
 ***********************************/
 std::vector<std::string> Utils::parseFQAN(const std::string &fqan){
+	if (fqan==""){
+		throw WmsClientException(__FILE__,__LINE__,"parseFQAN",
+			DEFAULT_ERR_CODE,
+			"Wrong Value", "Unable to parse empty FQAN value");
+	}
 	vector<string> returnvector;
 	boost::char_separator<char> separator("/");
 	boost::tokenizer<boost::char_separator<char> >tok(fqan, separator);
@@ -634,13 +639,7 @@ std::vector<std::string> Utils::parseFQAN(const std::string &fqan){
 }
 
 std::string Utils::FQANtoVO(const std::string fqan){
-	unsigned int pos = fqan.find("/", 0);
-	if(pos != string::npos) {
-		return  (Utils::parseFQAN(fqan.substr(pos,fqan.size())))[0];
-	}
-	// TBD display warning message
-	return "";
-
+	return  Utils::parseFQAN(fqan)[0];
 }
 std::string Utils::getDefaultVo(){
 	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
