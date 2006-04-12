@@ -288,6 +288,19 @@ const string proxy_parser (BIO *bp, unsigned char **pp,
 			}
 		}
 		length-=len;
+
+		//<FQAN-timeleft> info
+		if (fqan.size()>0  &&
+			left >=0 &&
+			contains(exps, fqan)==false) {
+			exps.push_back(make_pair(fqan,left));
+			left = -1;
+		}
+		//<FQAN> info
+		if (fqan.size()>0  &&
+			contains(fqans, fqan) == false) {
+			fqans.push_back(fqan);
+		}
 	} // while
 
 	if (o != NULL) {
@@ -304,18 +317,6 @@ const string proxy_parser (BIO *bp, unsigned char **pp,
 		} else {
 			left = d1 - time(NULL);
 		}
-	}
-	//<FQAN-timeleft> info
-	if (fqan.size()>0  &&
-		left >=0 &&
-		contains(exps, fqan)==false) {
-		exps.push_back(make_pair(fqan,left));
-		left = -1;
-	}
-	//<FQAN> info
-	if (fqan.size()>0  &&
-		contains(fqans, fqan) == false) {
-		fqans.push_back(fqan);
 	}
 	return(fqan);
 }
