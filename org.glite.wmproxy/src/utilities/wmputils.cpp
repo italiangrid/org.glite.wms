@@ -179,7 +179,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	vector<string> *returnvector = new vector<string>();
 	
 	vector<pair<std::string, int> > returnprotocols;
-	if ((protocol == "") || (protocol == ALL_PROTOCOLS)) {
+	if (protocol == ALL_PROTOCOLS) {
 		returnprotocols = protocols;
 	} else if (protocol == DEFAULT_PROTOCOL) {
 		pair<string, int> itempair(defaultprotocol, defaultport);

@@ -297,14 +297,19 @@ ns1__getMaxInputSandboxSize(struct soap *soap,
 }
 
 int
-ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol 
-	= ALL_PROTOCOLS, struct ns1__getSandboxDestURIResponse &response 
+ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol,
+	struct ns1__getSandboxDestURIResponse &response 
 	= *(new ns1__getSandboxDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxDestURI(struct soap *soap, string job_id, "
 		"struct ns1__getSandboxDestURIResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getSandboxDestURI");
 	edglog(info)<<"getSandboxDestURI operation called"<<endl;
+	
+	// Setting default value for protocol. gSOAP set it as "" if not provided
+	if (protocol == "") {
+		protocol = ALL_PROTOCOLS;	
+	}
 	
 	int return_value = SOAP_OK;
 	
@@ -336,14 +341,19 @@ ns1__getSandboxDestURI(struct soap *soap, string job_id, string protocol
 }
 
 int
-ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol
-	= ALL_PROTOCOLS, struct ns1__getSandboxBulkDestURIResponse &response
+ns1__getSandboxBulkDestURI(struct soap *soap, string job_id, string protocol,
+	struct ns1__getSandboxBulkDestURIResponse &response
 	= *(new ns1__getSandboxBulkDestURIResponse()))
 {
 	GLITE_STACK_TRY("ns1__getSandboxBulkDestURI(struct soap *soap, "
 		"string job_ids, ns1__getSandboxBulkDestURIResponse &response)");
 	edglog_fn("wmpgsoapoperations::ns1__getSandboxBulkDestURI");
 	edglog(info)<<"getSandboxBulkDestURI operation called"<<endl;
+	
+	// Setting default value for protocol. gSOAP set it as "" if not provided
+	if (protocol == "") {
+		protocol = ALL_PROTOCOLS;	
+	}
 	
 	int return_value = SOAP_OK;
 
@@ -477,8 +487,8 @@ ns1__jobPurge(struct soap *soap, string job_id,
 }
 
 int 
-ns1__getOutputFileList(struct soap *soap, string job_id, string protocol =
-	DEFAULT_PROTOCOL, struct ns1__getOutputFileListResponse &response 
+ns1__getOutputFileList(struct soap *soap, string job_id, string protocol,
+	struct ns1__getOutputFileListResponse &response 
 	= *(new ns1__getOutputFileListResponse()))
 {
 	GLITE_STACK_TRY("ns1__getOutputFileList(struct soap *soap, string *job_id, "
@@ -486,6 +496,11 @@ ns1__getOutputFileList(struct soap *soap, string job_id, string protocol =
 	edglog_fn("wmpgsoapoperations::ns1__getOutputFileList");
 	edglog(info)<<"getOutputFileList operation called"<<endl;
 
+	// Setting default value for protocol. gSOAP set it as "" if not provided
+	if (protocol == "") {
+		protocol = DEFAULT_PROTOCOL;
+	}
+	
 	int return_value = SOAP_OK;
 
 	getOutputFileListResponse getOutputFileList_response;
@@ -1087,7 +1102,7 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 
 int
 ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
-	bool allChunks = false, string protocol = DEFAULT_PROTOCOL,
+	bool allChunks = false, string protocol = "",
 	struct ns1__getPerusalFilesResponse &response
 	= *(new ns1__getPerusalFilesResponse()))
 {
@@ -1096,6 +1111,11 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 		"&response)");
 	edglog_fn("wmpgsoapoperations::ns1__getPerusalFiles");
 	edglog(info)<<"getPerusalFiles operation called"<<endl;
+	
+	// Setting default value for protocol. gSOAP set it as "" if not provided
+	if (protocol == "") {
+		protocol = DEFAULT_PROTOCOL;	
+	}
 	
 	int return_value = SOAP_OK;
 	
