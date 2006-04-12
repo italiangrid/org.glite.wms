@@ -1261,9 +1261,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		edglog_fn("wmpoperations::submit");
 		
 		if (issubmit) {
-			// Starting the job
+			// Starting the job. Need to continue from last logged seqcode
 			string seqcode = wmplogger.getLastEventSeqCode();
-				//wmplogger.getUserTag(eventlogger::WMPEventLogger::QUERY_SEQUENCE_CODE);
 			wmplogger.setSequenceCode(const_cast<char*>(seqcode.c_str()));
 			wmplogger.incrementSequenceCode();
 		} else {
@@ -1462,13 +1461,6 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			    }
 			}
 			
-			// Inserting sequence code
-			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
-			if (jad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
-				jad->delAttribute(JDL::LB_SEQUENCE_CODE);
-			}
-			jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
-			
 			if (jad->hasAttribute(JDL::SHORT_DEADLINE_JOB)) {
 				classad::ExprTree * sdjrequirements = conf.getSDJRequirements();
 				if (sdjrequirements) {
@@ -1479,8 +1471,18 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					}
 				}
 			}
-		
+			
+			// \/ Do not separate
+			// Inserting sequence code
+			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
+			if (jad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
+				jad->delAttribute(JDL::LB_SEQUENCE_CODE);
+			}
+			jad->setAttribute(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
+			
+			// jdltostart MUST contain last seqcode
 			jdltostart = jad->toString();
+			// /\
 			
 			delete jad;
 		} else {
@@ -1664,6 +1666,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 				}
 		    }
 			
+			// \/ Do not separate
 			// Inserting sequence code
 			edglog(debug)<<"Setting attribute JDL::LB_SEQUENCE_CODE"<<endl;
 			if (dag->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
@@ -1671,8 +1674,10 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			}
 			dag->setReserved(JDL::LB_SEQUENCE_CODE, string(wmplogger.getSequence()));
 			
+			// jdltostart MUST contain last seqcode
 			jdltostart = dag->toString();
 			jdlpath = wmputilities::getJobJDLToStartPath(*jid);
+			// /\
 			
 			delete dag;
 		}
@@ -1699,6 +1704,10 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 		boost::details::pool::singleton_default<WMP2WM>::instance()
 			.submit(jdltostart, jdlpath);
 		
+		// Writing started jdl
+		wmputilities::writeTextFile(wmputilities::getJobJDLToStartPath(*jid),
+			jdltostart);
+			
 		/*for (backupenv; *backupenv; backupenv++) {
 		    free(*backupenv);
 	    }
@@ -1977,16 +1986,16 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		conf.getDefaultProtocol(), conf.getDefaultPort());
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
-	if (seqcode == "") {
-		seqcode = wmplogger.getLastEventSeqCode();
-	}
-	
 	// Setting user proxy
 	if (wmplogger.setUserProxy(delegatedproxy)) {
 		edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
 		throw AuthenticationException(__FILE__, __LINE__,
 			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
 			"Unable to set User Proxy for LB context");
+	}
+	
+	if (seqcode == "") {
+		seqcode = wmplogger.getLastEventSeqCode();
 	}
 	
 	edglog(debug)<<"Seqcode: "<<seqcode<<endl;
@@ -2032,11 +2041,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 			boost::details::pool::singleton_default<WMP2WM>::instance()
 				.cancel(jid->toString(), string(wmplogger.getSequence()));
 			
-			/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
-				edglog(severe)<<"Error in runCommand: " + wmp_fault.message<<endl;
-				throw JobOperationException(__FILE__, __LINE__,
-					"jobCancel()", wmp_fault.code, wmp_fault.message);
-			}*/
 			wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 				"Cancelled by user", true, true);
 			break;
@@ -2049,11 +2053,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 				boost::details::pool::singleton_default<WMP2WM>::instance()
 					.cancel(jid->toString(), string(wmplogger.getSequence()));
 				
-				/*if (wmp_fault.code != wmputilities::WMS_NO_ERROR) {
-					edglog(severe)<<"Error in runCommand: " + wmp_fault.message<<endl;
-					throw JobOperationException(__FILE__, __LINE__,
-						"jobCancel()", wmp_fault.code, wmp_fault.message);
-				}*/
 				wmplogger.logEvent(eventlogger::WMPEventLogger::LOG_CANCEL,
 					"Cancelled by user", true, true);
 			} else {
@@ -2098,12 +2097,25 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		if (!ad->hasAttribute(JDL::VIRTUAL_ORGANISATION)) {
 			ad->setAttribute(JDL::VIRTUAL_ORGANISATION, wmputilities::getEnvVO());
 		}
-		//ad->check();
+		
 		if (ad->hasAttribute(JDL::CERT_SUBJ)) {
 			ad->delAttribute(JDL::CERT_SUBJ);
 		}
 		ad->setAttribute(JDL::CERT_SUBJ, 
 			wmputilities::convertDNEMailAddress(wmputilities::getUserDN()));
+			
+		// \/
+		// Adding fake JDL::WMPISB_BASE_URI attribute to pass check (toSubmissionString)
+		if (ad->hasAttribute(JDL::WMPISB_BASE_URI)) {
+			ad->delAttribute(JDL::WMPISB_BASE_URI);	
+		}
+		ad->setAttribute(JDL::WMPISB_BASE_URI, "protocol://address");
+		
+		ad->check();
+		
+		// Removing fake
+		ad->delAttribute(JDL::WMPISB_BASE_URI);
+		// /\
 		
 		//TBD do a check() before toString() for instance to add DefaultRank
 		//attribute????
