@@ -115,7 +115,7 @@ WMPEventLogger::init(const string &lb_host, int lb_port,
 			throw LBException(__FILE__, __LINE__,
 				"WMPEventLogger::init(const string& lb_host, int lb_port, "
 					"jobid::JobId *id)",
-				WMS_OPERATION_NOT_ALLOWED, "LB initialisation failed "
+				WMS_IS_FAILURE, "LB initialisation failed "
 					"(set destination)");
 		}
 	}
@@ -400,19 +400,27 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
 	
 	dag->setAttribute(WMPExpDagAd::SEQUENCE_CODE, string(getSequence())); //TBC needed???
     vector<string> jobids;
+    
+    int dagsize = dag->size();   
+    
+	// Setting LB log sync timeout   
+    int timeout = 120 + dagsize;   
+    if (edg_wll_SetParamInt(ctx, EDG_WLL_PARAM_LOG_SYNC_TIMEOUT, timeout)) {   
+    	edglog(error)<<"Unable to set LB log sync timeout"<<endl;   
+   	}
 
     int register_result;
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
 		edglog(debug)<<"Registering DAG to LB Proxy..."<<endl;
 		register_result = edg_wll_RegisterJobProxy(ctx, id->getId(),
-			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, dag->size(),
+			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, dagsize,
 			"WMPROXY", &subjobs) ;
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
 		edglog(debug)<<"Registering DAG to LB..."<<endl;
 		register_result = edg_wll_RegisterJobSync(ctx, id->getId(),
-			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, dag->size(),
+			EDG_WLL_REGJOB_DAG, path.c_str(), str_addr, dagsize,
 			"WMPROXY", &subjobs);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
