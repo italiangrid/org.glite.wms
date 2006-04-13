@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE cream job
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 #include "creamJob.h"
 #include "iceConfManager.h"
 
@@ -18,7 +36,6 @@
 
 extern int errno;
 
-//using namespace glite::ce::cream_client_api::job_statuses;
 using namespace std;
 
 namespace iceUtil = glite::wms::ice::util;
@@ -28,9 +45,9 @@ namespace fs = boost::filesystem;
 //______________________________________________________________________________
 iceUtil::CreamJob::CreamJob( ) :
     status( api::job_statuses::UNKNOWN ),
-    last_status_change( time(NULL) ),
-    last_seen( last_status_change ),
-    end_lease( last_status_change + 60*30 ) // FIXME: remove hardcoded default
+    m_num_logged_status_changes( 0 ),
+    last_seen( time(0) ),
+    end_lease( last_seen + 60*30 ) // FIXME: remove hardcoded default
 {
 
 }
@@ -50,6 +67,8 @@ string iceUtil::CreamJob::serialize( void ) const
     ad.InsertAttr( "cream_jobid", cream_jobid );
     ad.InsertAttr( "status", status );
     ad.InsertAttr( "delegation_id", delegation_id );
+    ad.InsertAttr( "wn_sequence_code", wn_sequence_code );
+    ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
     classad::ClassAdParser parser;
     classad::ClassAd* jdlAd = parser.ParseClassAd( jdl );
     // Updates sequence code
@@ -57,7 +76,6 @@ string iceUtil::CreamJob::serialize( void ) const
     ad.Insert( "jdl", jdlAd );
 
     try {    
-        ad.InsertAttr( "last_status_change", boost::lexical_cast< string >(last_status_change) ); 
         ad.InsertAttr( "last_seen", boost::lexical_cast< string >(last_seen) );
         ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(end_lease) );
 	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( proxyCertTimestamp ) );
@@ -91,13 +109,14 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     if ( ! ad->EvaluateAttrString( "cream_jobid", cream_jobid ) ||
          ! ad->EvaluateAttrNumber( "status", st_number ) ||
          ! ad->EvaluateAttrClassAd( "jdl", jdlAd ) ||
-         ! ad->EvaluateAttrString( "last_status_change", tstamp ) ||
+         ! ad->EvaluateAttrNumber( "num_logged_status_changes", m_num_logged_status_changes ) ||
          ! ad->EvaluateAttrString( "last_seen", lseen ) ||
          ! ad->EvaluateAttrString( "end_lease", elease ) ||
 	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
-         ! ad->EvaluateAttrString( "delegation_id", delegation_id ) ) {
+         ! ad->EvaluateAttrString( "delegation_id", delegation_id ) ||
+         ! ad->EvaluateAttrString( "wn_sequence_code", wn_sequence_code ) ) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, jdl, last_status_change, last_seen, end_lease, lastmodiftime_proxycert, delegation_id" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code" );
 
     }
     status = (api::job_statuses::job_status)st_number;
@@ -106,9 +125,9 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     boost::trim_if( lseen, boost::is_any_of("\"" ) );
     boost::trim_if( lastmtime_proxy, boost::is_any_of("\"" ) );
     boost::trim_if( delegation_id, boost::is_any_of("\"") );
+    boost::trim_if( wn_sequence_code, boost::is_any_of("\"") );
     
     try {
-        last_status_change = boost::lexical_cast< time_t >( tstamp );
         end_lease = boost::lexical_cast< time_t >( elease );
         last_seen = boost::lexical_cast< time_t >( lseen );
 	proxyCertTimestamp = boost::lexical_cast< time_t >( lastmtime_proxy );

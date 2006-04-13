@@ -1,3 +1,24 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE Logging&Bookeeping events
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
+
+
 //
 // This file is heavily based on org.glite.wms.jobsubmission/src/common/EventLogger.cpp
 //
@@ -208,6 +229,23 @@ job_running_event::job_running_event( const CreamJob& j, const std::string& host
 int job_running_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogRunning( *(ctx->el_context), _host.c_str() );
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// job really running event
+//
+//////////////////////////////////////////////////////////////////////////////
+job_really_running_event::job_really_running_event( const CreamJob& j, const std::string& wn_seq ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Really Running Event" ),
+    _wn_seq( wn_seq )
+{
+
+}
+
+int job_really_running_event::execute( iceLBContext* ctx )
+{
+    return edg_wll_LogReallyRunning( *(ctx->el_context), _wn_seq.c_str() );
 }
 
 

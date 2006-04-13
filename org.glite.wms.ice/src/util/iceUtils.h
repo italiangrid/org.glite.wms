@@ -21,6 +21,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <ctime>
 
 namespace glite {
 namespace wms {
@@ -29,8 +30,19 @@ namespace util {
 
     /**
      * Utility function to return the hostname
+     *
+     * @return the host name
      */
     std::string getHostName( void ) throw ( std::runtime_error& );
+
+    /**
+     * Converts a time_t value to a string. This function
+     * uses the thread-safe function ctime_r.
+     *
+     * @param tval the time_t value to convert
+     * @result the textual representation of timestamp tval
+     */ 
+    std::string time_t_to_string( time_t tval );
 
 } // namespace util
 } // namespace ice

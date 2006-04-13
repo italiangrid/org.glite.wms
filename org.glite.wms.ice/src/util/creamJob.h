@@ -1,6 +1,24 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE cream job
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
-#ifndef _GLITE_WMS_ICE_UTIL_CREAMJOB_H__
-#define _GLITE_WMS_ICE_UTIL_CREAMJOB_H__
+#ifndef GLITE_WMS_ICE_UTIL_CREAMJOB_H
+#define GLITE_WMS_ICE_UTIL_CREAMJOB_H
 
 #include "ClassadSyntax_ex.h"
 #include "glite/ce/cream-client-api-c/job_statuses.h"
@@ -37,9 +55,10 @@ namespace glite {
 	  std::string cream_deleg_address;
 	  std::string user_proxyfile;
           std::string sequence_code;
-          std::string delegation_id;           
+          std::string delegation_id;     
+          std::string wn_sequence_code; //! The sequence code for the job sent to the worker node      
 	  glite::ce::cream_client_api::job_statuses::job_status status;
-	  time_t last_status_change; //! The time of the last job status change
+          int m_num_logged_status_changes; //! Number of status changes which have been logged to L&B
           time_t last_seen; //! The time of the last received notification for the job
           time_t end_lease; //! The time the lease for this job ends
 	  time_t proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
@@ -65,7 +84,8 @@ namespace glite {
               user_proxyfile = C.user_proxyfile;
               sequence_code = C.sequence_code;
               delegation_id = C.delegation_id;
-              last_status_change = C.last_status_change;
+              wn_sequence_code = C.wn_sequence_code;
+              m_num_logged_status_changes = C.m_num_logged_status_changes;
               last_seen = C.last_seen;
               end_lease = C.end_lease;
 	      proxyCertTimestamp = C.proxyCertTimestamp;
@@ -73,7 +93,7 @@ namespace glite {
 
 	  //! Sets the status of the CreamJob object
 	  //void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { status = st; }
-          void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st, const time_t& tstamp ) { status = st; last_status_change = tstamp; }
+          void setStatus( const glite::ce::cream_client_api::job_statuses::job_status& st ) { status = st; }
 	  //! Sets the cream unique identifier for this job
           void setJobID( const std::string& cid ) { cream_jobid = cid; }
           //! Sets the jdl for this job
@@ -88,6 +108,8 @@ namespace glite {
           void setLastSeen( const time_t& l ) { last_seen = l; }
 	  //! Sets the user proxy cert file last modification time
 	  void setProxyCertMTime( const time_t& l ) { proxyCertTimestamp = l; }
+          //! Sets the sequence code for the job sent to the WN
+          void set_wn_sequence_code( const std::string& wn_seq ) { wn_sequence_code = wn_seq; };
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return grid_jobid; }
 	  //! Gets the unique cream job identifier
@@ -104,12 +126,16 @@ namespace glite {
           std::string getCreamDelegURL( void ) const { return cream_deleg_address; }
 	  //! Gets the path and file name of the user proxy certificate
           std::string getUserProxyCertificate( void ) const { return user_proxyfile; }
-	  //! Gets the last time of status update of the job
-	  time_t getLastStatusChange( void ) const { return last_status_change; }
+	  //! Gets the number of job status changes which have been already logged to L&B
+	  int get_num_logged_status_changes( void ) const { return m_num_logged_status_changes; }
+          //! Sets the number of job status changes whcih have been already logged to L&B
+          void set_num_logged_status_changes( int l ) { m_num_logged_status_changes = l; }
           //! Gets the time when the lease ends
           time_t getEndLease( void ) const { return end_lease; }
           //! Gets the time we last got information about this job
           time_t getLastSeen( void ) const { return last_seen; }
+          //! Gets the WN sequence code
+          std::string get_wn_sequence_code( void ) const { return wn_sequence_code; }
           //! Gets the sequence code
           std::string getSequenceCode( void ) const { return sequence_code; }
           //! Gets the delegation id

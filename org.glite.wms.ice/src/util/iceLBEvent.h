@@ -159,6 +159,16 @@ namespace glite {
                 };
 
 
+
+                class job_really_running_event : public iceLBEvent {
+                public:
+                    job_really_running_event( const CreamJob& j, const std::string& wn_seq );
+                    int execute( iceLBContext* ctx );
+                protected:
+                    std::string _wn_seq;
+                };
+
+
                 class job_cancelled_event : public iceLBEvent {
                 public:
                     job_cancelled_event( const CreamJob& j );

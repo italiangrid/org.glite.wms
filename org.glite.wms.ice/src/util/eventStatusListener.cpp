@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE Event Status change listener
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 // ICE stuff
 #include "eventStatusListener.h"
 #include "subscriptionCache.h"
@@ -72,7 +91,7 @@ namespace { // anonymous namespace
         /**
          * Returns the time of the status for this notification
          */
-        time_t getTstamp( void ) const { return tstamp; };
+        // time_t getTstamp( void ) const { return tstamp; };
 
         /**
          * Returns true iff the notification has an exit_code attribute
@@ -87,7 +106,7 @@ namespace { // anonymous namespace
     protected:
         string cream_job_id;
         api::job_statuses::job_status job_status;
-        time_t tstamp;
+        // time_t tstamp;
         bool has_exit_code;
         int exit_code;
     };
@@ -120,15 +139,15 @@ namespace { // anonymous namespace
         boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
         job_status = api::job_statuses::getStatusNum( job_status_str );
 
-        string tstamp_s;
-        if ( !ad->EvaluateAttrString( "TIMESTAMP", tstamp_s ) )
-            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a string");
-        boost::trim_if( tstamp_s, boost::is_any_of("\"" ) );
-        try {
-            tstamp = (time_t)( lrint( boost::lexical_cast<double>( tstamp_s )/1000 ) );
-        } catch( boost::bad_lexical_cast& c ) {
-            throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute cannot be converted to time_t" );
-        }
+//         string tstamp_s;
+//         if ( !ad->EvaluateAttrString( "TIMESTAMP", tstamp_s ) )
+//             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a string");
+//         boost::trim_if( tstamp_s, boost::is_any_of("\"" ) );
+//         try {
+//             tstamp = (time_t)( lrint( boost::lexical_cast<double>( tstamp_s )/1000 ) );
+//         } catch( boost::bad_lexical_cast& c ) {
+//             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute cannot be converted to time_t" );
+//         }
         // FIXME: In the future, this timestamp will be relative to
         // UTC time, and probably should be converted to the local
         // (ICE-centric) timezone.
@@ -144,26 +163,26 @@ namespace { // anonymous namespace
      * according with their timestamp. It is used to sort a vector of
      * notifications in nondecreasing timestamp order.
      */
-    struct less_equal_tstamp : public binary_function< StatusNotification, StatusNotification, bool>
-    {
-        bool operator()(const StatusNotification& __x, const StatusNotification& __y) const
-        {
-            return __x.getTstamp() <= __y.getTstamp();
-        }
-    };
+//     struct less_equal_tstamp : public binary_function< StatusNotification, StatusNotification, bool>
+//     {
+//         bool operator()(const StatusNotification& __x, const StatusNotification& __y) const
+//         {
+//             return __x.getTstamp() <= __y.getTstamp();
+//         }
+//     };
 
 
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
   : CEConsumer(i),
     iceThread( "event status poller" ),
-    grid_JOBID(),
-    cream_JOBID(),
+    // grid_JOBID(),
+    // cream_JOBID(),
     status(api::job_statuses::UNKNOWN),
-    pinger ( 0 ),
+    // pinger ( 0 ),
     proxyfile(hostcert),
     tcpport(i),
-    myname( ),
+    // myname( ),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     _lb_logger( iceLBLogger::instance() ),
@@ -175,6 +194,7 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
       myname = iceUtil::getHostName( );
   } catch( runtime_error& ex ) {
       _isOK = false;
+      return;
   }
 
 
@@ -190,16 +210,14 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
     return;
   }
 
-  {
-    /**
-     * Here we do not need to check if the creation of subscriptionManager
-     * produced errors, because the main ice-core module did that as
-     * preliminary init operation. We also do not need to lock the
-     * ::getInstance() call, because the instance of singleton has been
-     * already created.
-     */
-    subManager = subscriptionManager::getInstance();
-  }
+  /**
+   * Here we do not need to check if the creation of subscriptionManager
+   * produced errors, because the main ice-core module did that as
+   * preliminary init operation. We also do not need to lock the
+   * ::getInstance() call, because the instance of singleton has been
+   * already created.
+   */
+  subManager = subscriptionManager::getInstance();
 
   init();
 }
@@ -249,15 +267,13 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * and deserializes the data structures
    */
   if( !this->serve() ) {
-    log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
-			   << "ErrorCode=["
-			   << this->getErrorCode() << "]"
-			   << log4cpp::CategoryStream::ENDLINE;
-
-    log_dev->errorStream() << "eventStatusListener::acceptJobStatus() - "
-			   << "ErrorMessage=["
-			   << this->getErrorMessage() << "]"
-			   << log4cpp::CategoryStream::ENDLINE;
+    log_dev->errorStream() 
+        << "eventStatusListener::acceptJobStatus() - "
+        << "ErrorCode=["
+        << this->getErrorCode() << "]"
+        << " ErrorMessage=["
+        << this->getErrorMessage() << "]"
+        << log4cpp::CategoryStream::ENDLINE;
     return;
   }
 
@@ -266,8 +282,10 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * containing a non-null topic)
    */
   if(!this->getEventTopic()) {
-    log_dev->fatalStream() << "eventStatusListener::acceptJobStatus() - "
-			   << "NULL Topic received. Ignoring this notification...." ;
+    log_dev->fatalStream() 
+        << "eventStatusListener::acceptJobStatus() - "
+        << "NULL Topic received. Ignoring this notification...." 
+        << log4cpp::CategoryStream::ENDLINE;
     return;
   }
 
@@ -276,14 +294,14 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    */
   {
     boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    if(this->getEventTopic()->Name != conf->getICETopic())
-    {
-      log_dev->warnStream() << "eventStatusListener::acceptJobStatus() - "
-			    << "Received a notification with TopicName="
-			    << this->getEventTopic()->Name
-			    << " that differs from the ICE's topic "
-			    << "official name. Ignoring this notification."
-			    << log4cpp::CategoryStream::ENDLINE;
+    if(this->getEventTopic()->Name != conf->getICETopic()) {
+      log_dev->warnStream() 
+          << "eventStatusListener::acceptJobStatus() - "
+          << "Received a notification with TopicName="
+          << this->getEventTopic()->Name
+          << " that differs from the ICE's topic "
+          << "official name. Ignoring this notification."
+          << log4cpp::CategoryStream::ENDLINE;
       return;
     }
   }
@@ -322,74 +340,86 @@ void iceUtil::eventStatusListener::init(void)
   {
       // Scoped lock to protect concurrent access to the job cache
       boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-      { boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
-      for(jobCache::iterator it=cache->begin(); it != cache->end(); it++)
-      {
-          ceurl = it->getCreamURL();
-	  cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
-	  log_dev->infoStream() << "eventStatusListener::init() - "
-			        << "For current CREAM, cemonUrlCache returned CEMon URL ["
-			        << cemonURL<<"]"
-			        << log4cpp::CategoryStream::ENDLINE;
-	  if( cemonURL == "" ) {
-	    try {
-	      api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
-	      api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
-		log_dev->infoStream() << "eventStatusListener::init() - "
-			        << "For current CREAM, query to CREAM service  returned CEMon URL ["
-			        << cemonURL<<"]"
-			        << log4cpp::CategoryStream::ENDLINE;
-	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
-	    } catch(exception& ex) {
-	      log_dev->errorStream() << "eventStatusListener::init() - Error retrieving"
-	      			     <<" CEMon's URL from CREAM's URL: "
-			 	     << ex.what()
-				     << ". Composing URL from configuration file..."
-			 	     << log4cpp::CategoryStream::ENDLINE;
-	      cemonURL = ceurl;
-	      boost::replace_first(cemonURL,
-                                   conf->getCreamUrlPostfix(),
-                                   conf->getCEMonUrlPostfix()
-                                  );
-	      log_dev->infoStream() << "Using CEMon URL ["
-	      			    << cemonURL << "]" << log4cpp::CategoryStream::ENDLINE;
-              ceurls.insert( cemonURL );
-	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
-	    }
-
+      
+      { 
+          boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
+          for(jobCache::iterator it=cache->begin(); it != cache->end(); it++) {
+              ceurl = it->getCreamURL();
+              cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
+              log_dev->infoStream() 
+                  << "eventStatusListener::init() - "
+                  << "For current CREAM, cemonUrlCache returned CEMon URL ["
+                  << cemonURL<<"]"
+                  << log4cpp::CategoryStream::ENDLINE;
+	  if( cemonURL.empty() ) {
+              try {
+                  api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
+                  api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
+                  log_dev->infoStream() 
+                      << "eventStatusListener::init() - "
+                      << "For current CREAM, query to CREAM service "
+                      << "returned CEMon URL ["
+                      << cemonURL << "]"
+                      << log4cpp::CategoryStream::ENDLINE;
+                  cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+              } catch(exception& ex) {
+                  log_dev->errorStream() 
+                      << "eventStatusListener::init() - Error retrieving"
+                      << " CEMon's URL from CREAM's URL: "
+                      << ex.what()
+                      << ". Composing URL from configuration file..."
+                      << log4cpp::CategoryStream::ENDLINE;
+                  cemonURL = ceurl;
+                  boost::replace_first(cemonURL,
+                                       conf->getCreamUrlPostfix(),
+                                       conf->getCEMonUrlPostfix()
+                                       );
+                  log_dev->infoStream() 
+                      << "Using CEMon URL ["
+                      << cemonURL << "]" 
+                      << log4cpp::CategoryStream::ENDLINE;
+                  ceurls.insert( cemonURL );
+                  cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+              }              
 	  }
-
-      }
+          
+          }
       } // lock on the cemonUrlCache
   }
+
   /**
    * Now we've got a collection of CEMon urls (without duplicates,
    * thanks to the set's property) we've to check for subscription
    */
-  for( set<string>::const_iterator it = ceurls.begin(); it!=ceurls.end(); it++)
-  {
-    log_dev->infoStream() << "eventStatusListener::init() - Checking subscriptions to ["
-                          << *it << "]" << log4cpp::CategoryStream::ENDLINE;
-    {
+  for( set<string>::const_iterator it = ceurls.begin(); it!=ceurls.end(); it++) {
+      log_dev->infoStream() 
+          << "eventStatusListener::init() - Checking subscriptions to ["
+          << *it << "]" 
+          << log4cpp::CategoryStream::ENDLINE;
+      
       // Must lock the subscription manager due to its singleton nature
       boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
       if( !subManager->subscribedTo(*it) ) {
-        log_dev->infoStream() << "eventStatusListener::init() - Not subscribed to ["
-			      << *it << "]. Subscribing to it..."
-			      << log4cpp::CategoryStream::ENDLINE;
-        if( !subManager->subscribe(*it) )
-          log_dev->errorStream() << "eventStatusListener::init() - Subscription to ["
-				 << *it << "] failed. Will not receives status notifications from it."
-				 << log4cpp::CategoryStream::ENDLINE;
-	else {
-	  boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
-	  subscriptionCache::getInstance()->insert(*it);
-	}
+          log_dev->infoStream() 
+              << "eventStatusListener::init() - Not subscribed to ["
+              << *it << "]. Subscribing to it..."
+              << log4cpp::CategoryStream::ENDLINE;
+
+          if( !subManager->subscribe(*it) ) {
+              log_dev->errorStream() 
+                  << "eventStatusListener::init() - Subscription to ["<< *it 
+                  << "] failed. Will not receives status notifications from it."
+                  << log4cpp::CategoryStream::ENDLINE;
+          } else {
+              boost::recursive_mutex::scoped_lock M( subscriptionCache::mutex );
+              subscriptionCache::getInstance()->insert(*it);
+          }
       } else {
-        log_dev->infoStream() << "eventStatusListener::init() - Already subscribed to ["
-			      << *it << log4cpp::CategoryStream::ENDLINE;
+          log_dev->infoStream() 
+              << "eventStatusListener::init() - Already subscribed to ["
+              << *it << "]"
+              << log4cpp::CategoryStream::ENDLINE;
       }
-    }
   }
 }
 
@@ -400,20 +430,20 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     // First, convert the vector of messages into a vector of StatusNotification objects
     vector<StatusNotification> notifications;
 
-    for ( vector<string>::const_iterator it = ev.Message.begin();
-          it != ev.Message.end(); it++ ) {
+    for ( vector<string>::const_iterator it = ev.Message.begin(); it != ev.Message.end(); ++it ) {
         try {
             notifications.push_back( StatusNotification( *it ) );
         } catch( iceUtil::ClassadSyntax_ex ex ) {
             log_dev->errorStream()
-                << "eventStatusListenre::handleEvent() - received a notification "
+                << "eventStatusListenre::handleEvent() - "
+                << "received a notification "
                 << *it << " which could not be understood; error is: "
                 << ex.what() << ". "
                 << "Skipping this notification and hoping for the best..."
                 << log4cpp::CategoryStream::ENDLINE;
         }
     }
-
+    
     if ( notifications.empty() )
         return;
 
@@ -434,7 +464,8 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             << "eventStatusListener::handleEvent() - "
             << "creamjobid ["
             << notifications.begin()->getCreamJobID()
-            << "] was not found in the cache. Ignoring the whole notification..."
+            << "] was not found in the cache. "
+            << "Ignoring the whole notification..."
             << log4cpp::CategoryStream::ENDLINE;
         return;
     }
@@ -443,23 +474,27 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     cache->put( *jc_it );
 
     // Now, for each status change notification, check if it has to be logged
-    for ( vector<StatusNotification>::const_iterator it = notifications.begin(); it != notifications.end(); it++ ) {
+    vector<StatusNotification>::const_iterator it;
+    int count;
+    for ( it = notifications.begin(), count=1; it != notifications.end(); ++it, ++count ) {
 
         // If the status is "PURGED" the StatusPoller will remove it asap form
         // the cache. So the listener can ignore this job
+
         if( it->getStatus() == api::job_statuses::PURGED ) 
             return;
 
         log_dev->infoStream() 
             << "eventStatusListener::handleEvent() - "
             << "Checking job [" << it->getCreamJobID()
-            << "] with status [" << it->getStatus() << "]"
-            << " notification tstamp=[" << it->getTstamp() << "]"
-            << " last status change on=[" << jc_it->getLastStatusChange() << "]"
+            << "] with status [" << api::job_statuses::job_status_str[ it->getStatus() ] << "]"
+            << " notification count=" << count
+            << " num already logged=" << jc_it->get_num_logged_status_changes()
             << log4cpp::CategoryStream::ENDLINE;
         
-        if ( it->getTstamp() > jc_it->getLastStatusChange() ) {
-            jc_it->setStatus( it->getStatus(), it->getTstamp() );
+        if ( jc_it->get_num_logged_status_changes() < count ) {
+            jc_it->setStatus( it->getStatus() );
+            jc_it->set_num_logged_status_changes( count );
             _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
             // The job gets stored in the jobcache anyway by the logEvent method...
         } else {

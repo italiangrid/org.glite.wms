@@ -1,11 +1,10 @@
-#ifndef __GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H__
-#define __GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H__
+
+#ifndef GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H
+#define GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H
 
 #undef soapStub_H
-//#include "glite/ce/cream-client-api-c/JobStatusList.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include "eventStatusPoller_ex.h"
-//#include "iceEventLogger.h"
 #include "iceThread.h"
 #include "boost/scoped_ptr.hpp"
 
@@ -53,8 +52,6 @@ namespace glite {
 	  log4cpp::Category* log_dev;
           iceLBLogger* _lb_logger;
           jobCache* cache;
-
-	  //protected:
 
 	  eventStatusPoller( const eventStatusPoller& ) {}
 

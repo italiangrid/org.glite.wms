@@ -161,7 +161,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 
     try {
         theJob.setJdl( m_jdl );
-        theJob.setStatus( cream_api::job_statuses::UNKNOWN, time(NULL) );
+        theJob.setStatus( cream_api::job_statuses::UNKNOWN );
     } catch( util::ClassadSyntax_ex& ex ) {
         m_log_dev->errorStream() 
             << "Cannot instantiate a job from jdl="
@@ -195,7 +195,13 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 
     string modified_jdl;
     try {    
-        modified_jdl = creamJdlHelper( m_jdl );
+        // It is important to get the jdl from the job itself, rather
+        // than using the m_jdl attribute. This is because the
+        // sequence_code attribute inside the jdl classad has been
+        // modified by the L&B calls, and we have to pass to CREAM the
+        // "last" sequence code as the job wrapper will need to log
+        // the "really running" event.
+        modified_jdl = creamJdlHelper( theJob.getJDL() );
     } catch( util::ClassadSyntax_ex& ex ) {
         m_log_dev->errorStream() 
             << "Cannot convert jdl="
@@ -270,9 +276,11 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // and remove last request from WM's filelist
 
         theJob.setJobID(url_jid[1]);
-        theJob.setStatus(cream_api::job_statuses::PENDING, time(0) );
+        theJob.setStatus(cream_api::job_statuses::PENDING);
+        theJob.setEndLease( time(0) + 2*60 );
         theJob.setDelegationId( delegID );
         theJob.setProxyCertMTime( time(0) ); // FIXME: should be the modification time of the proxy file?
+        theJob.set_wn_sequence_code( theJob.getSequenceCode() );
 
         m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
         m_lb_logger->logEvent( new util::cream_accepted_event( theJob ) );
