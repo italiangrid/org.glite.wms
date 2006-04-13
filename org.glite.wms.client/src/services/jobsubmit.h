@@ -176,6 +176,10 @@ class JobSubmit : public Job {
 		* Returns the jobid string
 		*/
 		std::string getJobId( );
+		/**
+		* Retrieve JobId from a specified node name
+		*/
+		std::string getJobIdFromNode(const std::string& node);
 		/*
                 * Performs either registration or submission.
 		* The WMProxy submission service, that performs both registration and start of the job, is invoked

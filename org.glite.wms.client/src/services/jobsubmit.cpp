@@ -743,7 +743,7 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 				fileads = children[i]->getFiles( );
 				// DestinationURI (child node)
 //cout << "###JobSubmit::toBCopiedFileList> - 2 -jobid="<<jobid<<"\n";
-				destURI = getDestinationURI (jobid, children[i]->getJobId( ));
+				destURI = getDestinationURI (jobid, getJobIdFromNode(children[i]->getNodeName()));
 				vector<FileAd>::iterator it3 = fileads.begin( );
 				vector<FileAd>::iterator const end3 = fileads.end( );
 				for ( ; it3 != end3; it3++){
@@ -1441,6 +1441,39 @@ std::string JobSubmit::getJobPathFromDestURI(const std::string& jobid, const std
 	return *jobPath ;
 
 }
+
+
+
+/**
+* Retrieve JobId from a specified node name
+*/
+std::string JobSubmit::getJobIdFromNode(const std::string& node){
+	string jobid ="";
+	string err = "";
+	bool ch = false;
+	int len = node.size( );
+	// Root Node
+	if (len == 0 ) {
+		// it's the root node, return root id
+  		jobid = jobIds.jobid;
+	} else {
+		// Looking for the jobid among the children
+		ch = true;
+		std::vector<api::JobIdApi*>::iterator it = (jobIds.children).begin( );
+		std::vector<api::JobIdApi*>::iterator const end = (jobIds.children).end( );
+		for ( ; it != end; it++) {
+			if ( (*it) ) {
+				if ((*it)->nodeName && node.compare(*(*it)->nodeName) ==0 ) {
+					jobid= (*it)->jobid ;
+				}
+			}
+		}
+	}
+	return jobid;
+}
+
+
+
 /**
 * Returns a relative path that is used to archive the ISB local file in the tar files.
 * Since WMProxy version 2.2.0, the information on this relative path is contained
