@@ -2117,9 +2117,6 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 		ad->delAttribute(JDL::WMPISB_BASE_URI);
 		// /\
 		
-		//TBD do a check() before toString() for instance to add DefaultRank
-		//attribute????
-		
 		WMPEventLogger wmplogger(wmputilities::getEndpoint());
 		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 		

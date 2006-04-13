@@ -451,8 +451,6 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	
 	string jobdirectory = wmputilities::getJobDirectoryPath(*jobid);
 
-	delete jobid;
-
 	// Checking for maradona file, created if and only if the job is in DONE state
 	edglog(debug)<<"Searching for file: "<<jobdirectory + FILE_SEPARATOR
 		+ MARADONA_FILE<<endl;
@@ -480,6 +478,8 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 				"Job current status doesn't allow getOutputFileList operation");
 		}
 	}
+	
+	delete jobid;
 	
 	string outputpath = wmputilities::getOutputSBDirectoryPath(jid);
 	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
