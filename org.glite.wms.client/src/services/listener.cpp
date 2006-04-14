@@ -87,6 +87,7 @@ void Listener::emptyIn(){
 	}
 }
 
+
 void Listener::run(){
 	cout <<"***************************************" << endl ;
 	cout <<"Interactive Job console started for: "    << shadow->getJobId().toString()<<endl;
@@ -98,6 +99,7 @@ void Listener::run(){
 	PipeWriter writer(shadow);
 	boost::thread r_shadow(reader);
 	boost::thread w_shadow(writer);
+
 	while(shadow->isActive()){
 		sleep(10);
 	}
@@ -342,6 +344,9 @@ void createPipe(const std::string& pipeName){
 		case EROFS:
 			errMsg="The parent directory of the directory being created is on a read-only file system, and cannot be modified";
 			break;
+		case ULONG_MAX:
+			// Pipe already existing - no error message needed
+			fifoCode=0;
 		default:
 			errMsg="mkfifo exit code!=0: ("+ string(strerror(fifoCode)) +")";
 			break;
