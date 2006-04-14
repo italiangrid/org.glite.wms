@@ -52,9 +52,9 @@ struct PipeWriter{
 	void operator () (){
 		string result;
 		while(1){
-			sleep(1);
 			cin >> result;
 			shadow->write(result+"\n");
+			sleep(1);
 		}
 	}
 	Shadow* shadow;
@@ -321,23 +321,34 @@ unsigned int setPorts(unsigned int &fromPort ,unsigned int &toPort){
 }
 // STATIC METHOD
 void createPipe(const std::string& pipeName){
-	switch (mkfifo (pipeName.c_str(), S_IREAD | S_IWRITE) ){
+	int fifoCode=mkfifo (pipeName.c_str(), S_IREAD | S_IWRITE);
+	string errMsg="";
+	switch (fifoCode){
 		case 0:
 			// SUCCESS: do nothing
 			break;
 		case EACCES:
-			// Write permission is denied for the parent directory in which the new directory is to be added.
+			errMsg="Write permission is denied for the parent directory in which the new directory is to be added";
+			break;
 		case EEXIST:
-			// A file named filename already exists.
+			errMsg="A file named filename already exists";
+			break;
 		case EMLINK:
-			// The parent directory has too many links.
+			errMsg="The parent directory has too many links";
+			break;
 		case ENOSPC:
-			// The file system doesn't have enough room to create the new directory.
+			errMsg="The file system doesn't have enough room to create the new directory";
+			break;
 		case EROFS:
-			// The parent directory of the directory being created is on a read-only file system, and cannot be modified.
+			errMsg="The parent directory of the directory being created is on a read-only file system, and cannot be modified";
+			break;
 		default:
-			throw WmsClientException(__FILE__, __LINE__,"createPipe(const std::string& pipeName()",
-			DEFAULT_ERR_CODE, "Unable create pipe",pipeName);
+			errMsg="mkfifo exit code!=0: ("+ string(strerror(fifoCode)) +")";
+			break;
+	}
+	if (fifoCode){
+		throw WmsClientException(__FILE__, __LINE__,"createPipe(const std::string& pipeName()",
+			DEFAULT_ERR_CODE, "Unable create pipe: "+pipeName, errMsg);
 	}
 }
 void Shadow::console(){
