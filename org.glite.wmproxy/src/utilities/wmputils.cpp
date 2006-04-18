@@ -486,11 +486,11 @@ getPeekDirectoryPath(jobid::JobId jid, int level, bool docroot)
 	GLITE_STACK_TRY("getPeekDirectoryPath()");
 	string path;
 	if (docroot) {
-		path = string(FILE_SEP + to_filename(jid, level)
+		path = string(getenv(DOCUMENT_ROOT) + FILE_SEP + to_filename(jid, level)
 			+ FILE_SEP + PEEK_DIRECTORY);
 	} else {
-		path = string(getenv(DOCUMENT_ROOT) + FILE_SEP
-			+ to_filename(jid, level) + FILE_SEP + PEEK_DIRECTORY);
+		path = string(FILE_SEP + to_filename(jid, level) + FILE_SEP
+			+ PEEK_DIRECTORY);
 	}
 	return path;
 	GLITE_STACK_CATCH();
