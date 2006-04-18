@@ -31,38 +31,42 @@ namespace services {
 const int ALREADY_USED_PORT = 98;
 bool Shadow::active=true;
 
+
+				/********************************
+				* PipeReader/Writer Classes Implementation
+				*****************************/
 struct PipeReader{
-	PipeReader(Shadow* shadow){
+	PipeReader(const Shadow &shadow){
 		this->shadow=shadow;
 	}
 	void operator () (){
 		while(1){
 			// PRINT TO STD OUTPUT
-			cout << shadow->emptyOut() << flush;
+			cout << shadow.emptyOut() << flush;
 		}
 	}
-	Shadow* shadow;
+	Shadow shadow;
 };
 
 
 struct PipeWriter{
-	PipeWriter(Shadow* shadow){
+	PipeWriter(const Shadow &shadow){
 		this->shadow=shadow;
 	}
 	void operator () (){
 		string result;
 		while(1){
 			cin >> result;
-			shadow->write(result+"\n");
+			shadow.write(result+"\n");
 			sleep(1);
 		}
 	}
-	Shadow* shadow;
+	Shadow shadow;
 };
 
-/********************************
-* Console Class Implementation
-********************************/
+				/********************************
+				* Listener Class Implementation
+				********************************/
 /** Copy Contructor */
 Listener::Listener(const Listener& listener){
 	this->shadow=new Shadow(*(listener.shadow));
@@ -72,10 +76,13 @@ void Listener::operator=(const Listener& listener){
 	this->shadow= new Shadow(*(listener.shadow));
 }
 Listener::Listener(Shadow *shadow){
-	this->shadow =shadow;
+	this->shadow = new Shadow(*shadow);
 }
 Listener::~Listener(){
-	if (shadow){ delete shadow; }
+	if (shadow){
+		shadow->detach();
+		delete shadow;
+	}
 }
 void Listener::emptyOut(){}
 
@@ -95,8 +102,8 @@ void Listener::run(){
 	cout <<"Pipe Name = "<< shadow->getPipeOut()<< endl;
 	cout <<"***************************************" << endl;
 
-	PipeReader reader(shadow);
-	PipeWriter writer(shadow);
+	PipeReader reader(*shadow);
+	PipeWriter writer(*shadow);
 	boost::thread r_shadow(reader);
 	boost::thread w_shadow(writer);
 
@@ -148,7 +155,7 @@ Shadow::Shadow(const Shadow& shadow){
 	// CHAR
 	this->c=shadow.c;
 	// POINTER (generate new ifStream)
-	this->ifstreamOut=ifstreamOut=new ifstream(getPipeOut().c_str());
+	this->ifstreamOut=NULL;
 }
 
 void Shadow::operator=(const Shadow& shadow){
@@ -168,11 +175,10 @@ void Shadow::operator=(const Shadow& shadow){
 	// CHAR
 	this->c=shadow.c;
 	// POINTER (generate new ifStream)
-	this->ifstreamOut=ifstreamOut=new ifstream(getPipeOut().c_str());
+	this->ifstreamOut=NULL;
 }
-Shadow::~Shadow(){
-	detach();
-}
+Shadow::~Shadow(){}
+
 void Shadow::write(const std::string &txt){
 	if (!writing){
 		const char* logFile=getPipeIn().c_str();
@@ -413,11 +419,11 @@ void Shadow::console(){
 		throw WmsClientException(__FILE__,__LINE__,"Shadow::console",DEFAULT_ERR_CODE,
 			"System error",warnings);
 	}
-	// ELSE SUCCESS
 	// CREATE PIPES:
 	createPipe(getPipeIn());
 	createPipe(getPipeOut());
 	writing=false;
+	active=true;
 }
 int Shadow::getConsoleInfo(){
 	// Wait for pipe to be created
@@ -438,7 +444,6 @@ int Shadow::getConsoleInfo(){
 	this->port=ad.getInt("PORT");
 	// Set the signal to be caught (^C) on exit
 	signal(SIGINT,terminate); // terminate (int) method will be called
-	active=true;
 	return 0;
 }
 
@@ -470,18 +475,8 @@ void Shadow::forkProcess(const string &command){
 		}
 		default:
 			// parent: continue working
-			/*
-			// parent: wait for children to finish
-			int status;
-			wait(&status);
-			if (status) {
-				throw WmsClientException(__FILE__, __LINE__,"forkProcess()",
-					DEFAULT_ERR_CODE, "","");
-			}
-			*/
 			break;
 	}
 }
-
 
 }}}} // ending namespaces
