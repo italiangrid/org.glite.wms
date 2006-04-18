@@ -199,7 +199,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       );
       assert(config);
  
-      glite::wms::helper::broker::interact_with_gpbox(
+      glite::wms::helper::broker::gpbox::interact(
         *config,
         x509_user_proxy_file_name,
         *suitableCEs

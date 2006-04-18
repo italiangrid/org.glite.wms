@@ -464,13 +464,13 @@ if [ -f "${__prologue}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 3 ]; then
-  #interactive job
+if [ ${__job_type} -eq 3 ]; then #interactive job
+  base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`}
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
-    globus_url_retry_copy "${__input_base_url}opt/glite/bin/${f} file://${workdir}/${f}"
+    globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
     chmod +x ${workdir}/${f}
   done
-  globus_url_retry_copy "${__input_base_url}opt/glite/lib/libglite-wms-grid-console-agent.so.0 file://${workdir}/libglite-wms-grid-console-agent.so.0"
+  globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/lib/libglite-wms-grid-console-agent.so.0" "file://${workdir}/libglite-wms-grid-console-agent.so.0"
 fi
 
 host=`hostname -f`
