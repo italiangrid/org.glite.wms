@@ -307,7 +307,8 @@ ClassAdPtr Plan(classad::ClassAd const& jdl, jobid::JobId const& jobid)
     brokerinfo->Insert("DataAccessProtocol", DAC->Copy());
   }
 
-  fs::path brokerinfo_file(get_input_sandbox_path(jobid) / ".BrokerInfo");
+  fs::path brokerinfo_file(get_input_sandbox_path(jobid));
+  brokerinfo_file /= fs::path(".BrokerInfo", fs::native);
   std::ofstream brokerinfo_os(brokerinfo_file.native_file_string().c_str());
   assert(brokerinfo_os);
 
@@ -431,7 +432,7 @@ void do_it(
   jdl::set_edg_previous_matches(jdl, previous_matches_simple);
 
   // don't match less than five minutes apart
-  {
+  if (!previous_matches.empty()) {
     unsigned int t = previous_matches.back().second;
     unsigned int now = std::time(0);
     unsigned int p = now - t;
