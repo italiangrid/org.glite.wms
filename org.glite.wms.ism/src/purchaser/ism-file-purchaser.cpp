@@ -99,16 +99,18 @@ void ism_file_purchaser::do_purchase()
           // Check the type of puchaser which has generated the info
 	  string purchased_by;
           info->EvaluateAttrString("PurchasedBy",purchased_by);
-          if (purchased_by==string("ism_ii_purchaser")) {
-            
+          if (purchased_by==string("ism_ii_purchaser") && 
+              f_ii_purchaser_entry_update_fn) {            
             get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_ii_purchaser_entry_update_fn()));
           }
-	  else if (purchased_by==string("ism_cemon_purchaser")) {
+	  else if (purchased_by==string("ism_cemon_purchaser") && 
+                   f_cemon_purchaser_entry_update_fn) {
             get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_cemon_purchaser_entry_update_fn()));
           }
-          else if (purchased_by==string("ism_rgma_purchaser")) {
+          else if (purchased_by==string("ism_rgma_purchaser") &&
+                   f_rgma_purchaser_entry_update_fn) {
             get_ism(ism::ce).insert(make_ism_entry(id, ut, info,
               f_rgma_purchaser_entry_update_fn()));
           }
