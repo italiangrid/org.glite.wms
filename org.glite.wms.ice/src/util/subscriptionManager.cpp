@@ -160,7 +160,7 @@ bool subscriptionManager::updateSubscription(const string& url,
   try {
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     newID = ceSMgr.update(url, ID, myname, T, P,
-    		                 conf->getSubscriptionDuration());
+    		          time(NULL)+conf->getSubscriptionDuration());
     return true;
   } catch(exception& ex) {
     log_dev->errorStream() << "subscriptionManager::updateSubscription()"

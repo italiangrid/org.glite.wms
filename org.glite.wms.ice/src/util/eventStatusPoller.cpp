@@ -150,6 +150,8 @@ bool eventStatusPoller::getStatus(void)
                 jobIt = cache->erase( jobIt );
             } else {
                 jobIt++;
+		// statusTarget[0] contains the current job's info
+		// checkJobs will take care of it
             }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because

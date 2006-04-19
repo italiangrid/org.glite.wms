@@ -38,6 +38,7 @@ void iceUtil::subscriptionUpdater::body( void )
     retrieveCEURLs(ceurls);
 
     for(set<string>::iterator it=ceurls.begin(); it != ceurls.end(); it++) {
+	  vec.clear();
 	  try{
 	    boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
 	    subMgr->list(*it, vec);

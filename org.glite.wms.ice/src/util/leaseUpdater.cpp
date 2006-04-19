@@ -128,7 +128,7 @@ void leaseUpdater::body( void )
 {
     while ( !isStopped() ) {
         log_dev->infoStream()
-            << "leastUpdater::body() - new iteration"
+            << "leaseUpdater::body() - new iteration"
             << log4cpp::CategoryStream::ENDLINE;
 
         update_lease( );
