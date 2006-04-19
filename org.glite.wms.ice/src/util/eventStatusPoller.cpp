@@ -89,9 +89,9 @@ bool eventStatusPoller::getStatus(void)
     time_t threshold;// = iceConfManager::getInstance()->getPollerStatusThresholdTime();
     bool _tmp_start_listener;
 
-    statusTarget.clear();
+    jobCache::iterator jobIt( cache->begin() );
 
-    for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
+    while( jobIt != cache->end() ) {
 
         oneJobToQuery.clear();
         
@@ -115,6 +115,7 @@ bool eventStatusPoller::getStatus(void)
         
         
         if( (oldness <  threshold) && _tmp_start_listener ) {
+            jobIt++;
             continue;
         }
 
@@ -125,7 +126,7 @@ bool eventStatusPoller::getStatus(void)
             << log4cpp::CategoryStream::ENDLINE;
 
         oneJobToQuery.push_back(jobIt->getJobID());
-	// statusTarget.clear();
+        statusTarget.clear();
         try {
             creamClient->Authenticate( jobIt->getUserProxyCertificate() );
             creamClient->Status(jobIt->getCreamURL().c_str(),
@@ -147,9 +148,8 @@ bool eventStatusPoller::getStatus(void)
                     << log4cpp::CategoryStream::ENDLINE;
 
                 jobIt = cache->erase( jobIt );
-                jobIt--; // this is necessary to avoid skipping the next item
             } else {
-                //_jobstatuslist.push_back( job_stat );
+                jobIt++;
             }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
@@ -326,14 +326,10 @@ void eventStatusPoller::updateJobCache()
 //______________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
-  if(!jobs_to_purge.size()) return;
+    // if(!jobs_to_purge.size()) return;
   string cid;
-  for(
-      cvstrIt it = jobs_to_purge.begin();
-      it != jobs_to_purge.end();
-      ++it
-      )
-    {
+  cvstrIt it( jobs_to_purge.begin() );
+  while( it != jobs_to_purge.end() ) {
       oneJobToPurge.clear();
 
       try {
@@ -344,48 +340,47 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
               << log4cpp::CategoryStream::ENDLINE;
 
           jobCache::iterator jit = cache->lookupByCreamJobID( *it );
-	  if( jit == cache->end() )
-	  {
+	  if( jit == cache->end() ) {
 	    log_dev->errorStream() 
                 << "eventStatusPoller::purgeJobs() - "
                 << "NOT Found in chace job ["
                 << *it << "]"
                 << log4cpp::CategoryStream::ENDLINE;
-	    return;
-	  }
-	  cid = jit->getJobID();
-          log_dev->infoStream()
-              << "eventStatusPoller::purgeJobs() - "
-              << "Calling JobPurge for host ["
-              << jit->getCreamURL() << "]"
-              << log4cpp::CategoryStream::ENDLINE;
-	  // We cannot accumulate more jobs to purge in a vector
-	  // because we must authenticate different jobs with different
-	  // user certificates.
-	  creamClient->Authenticate( jit->getUserProxyCertificate());
-          oneJobToPurge.push_back( jit->getJobID() );
-          creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
-          jit = cache->erase( jit );
-          jit--;
+            it++; // advance to next job
+	  } else {
+              cid = jit->getJobID();
+              log_dev->infoStream()
+                  << "eventStatusPoller::purgeJobs() - "
+                  << "Calling JobPurge for host ["
+                  << jit->getCreamURL() << "]"
+                  << log4cpp::CategoryStream::ENDLINE;
+              // We cannot accumulate more jobs to purge in a vector
+              // because we must authenticate different jobs with different
+              // user certificates.
+              creamClient->Authenticate( jit->getUserProxyCertificate());
+              oneJobToPurge.push_back( jit->getJobID() );
+              creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+              jit = cache->erase( jit );
+          }
       } catch (ClassadSyntax_ex& ex) {
-	/**
-	 * this exception should not be raised because
-	 * the CreamJob is created from another valid one
-	 */
-	log_dev->errorStream() 
-            << "eventStatusPoller::purgeJobs() - "
-            << "Fatal error: CreamJob creation failed "
-            << "copying from a valid one!!!"
-            << log4cpp::CategoryStream::ENDLINE;
-	exit(1);
+          /**
+           * this exception should not be raised because
+           * the CreamJob is created from another valid one
+           */
+          log_dev->errorStream() 
+              << "eventStatusPoller::purgeJobs() - "
+              << "Fatal error: CreamJob creation failed "
+              << "copying from a valid one!!!"
+              << log4cpp::CategoryStream::ENDLINE;
+          exit(1);
       } catch(soap_proxy::auth_ex& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
-		     string("eventStatusPoller::purgeJobs() - Cannot purge job: ") + ex.what());
+          log_dev->log(log4cpp::Priority::ERROR,
+                       string("eventStatusPoller::purgeJobs() - Cannot purge job: ") + ex.what());
       } catch(cream_exceptions::BaseException& s) {
-	log_dev->log(log4cpp::Priority::ERROR, s.what());
+          log_dev->log(log4cpp::Priority::ERROR, s.what());
       } catch(cream_exceptions::InternalException& severe) {
-	log_dev->log(log4cpp::Priority::ERROR, severe.what());
-	exit(1);
+          log_dev->log(log4cpp::Priority::ERROR, severe.what());
+          exit(1);
       } catch(elementNotFound_ex& ex) {
           log_dev->errorStream()
               << "eventStatusPoller::purgeJobs() - Cannot remove [" << cid
