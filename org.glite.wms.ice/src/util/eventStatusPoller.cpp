@@ -372,10 +372,11 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	 * this exception should not be raised because
 	 * the CreamJob is created from another valid one
 	 */
-	log_dev->errorStream() << "eventStatusPoller::purgeJobs() - "
-			       << "Fatal error: CreamJob creation failed "
-			       << "copying from a valid one!!!"
-			       << log4cpp::CategoryStream::ENDLINE;
+	log_dev->errorStream() 
+            << "eventStatusPoller::purgeJobs() - "
+            << "Fatal error: CreamJob creation failed "
+            << "copying from a valid one!!!"
+            << log4cpp::CategoryStream::ENDLINE;
 	exit(1);
       } catch(soap_proxy::auth_ex& ex) {
 	log_dev->log(log4cpp::Priority::ERROR,
@@ -386,10 +387,10 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 	log_dev->log(log4cpp::Priority::ERROR, severe.what());
 	exit(1);
       } catch(elementNotFound_ex& ex) {
-	log_dev->log(log4cpp::Priority::ERROR, 
-		     string("eventStatusPoller::purgeJobs() - Cannot remove [") + cid
-		     + "] from job cache: "
-		     + ex.what());
+          log_dev->errorStream()
+              << "eventStatusPoller::purgeJobs() - Cannot remove [" << cid
+              << "] from job cache: " << ex.what()
+              << log4cpp::CategoryStream::ENDLINE;
       }
     }
 }

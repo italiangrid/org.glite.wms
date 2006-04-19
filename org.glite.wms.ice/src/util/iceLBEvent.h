@@ -1,5 +1,24 @@
-#ifndef __ICELBEVENT_H__
-#define __ICELBEVENT_H__
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE Event 
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
+#ifndef ICELBEVENT_H
+#define ICELBEVENT_H
 
 #include "creamJob.h"
 #include "glite/lb/producer.h"
@@ -43,7 +62,7 @@ namespace glite {
                      * logged
                      */
                     const std::string& describe( ) const {
-                        return _description;
+                        return m_description;
                     };
 
                     /**
@@ -52,22 +71,31 @@ namespace glite {
                      * @return the current job
                      */
                     CreamJob& getJob( ) {
-                        return _job; 
+                        return m_job; 
                     };
 
                     /**
+                     * Gets the source logging the event
                      *
+                     * @return the source logging the event
                      */
                     edg_wll_Source getSrc( void ) const {
-                        return _src;
+                        return m_src;
                     }
 
                 protected:
+                    /**
+                     * Constructor for an iceLBEvent. 
+                     *
+                     * @param j the job to be logged
+                     * @param src the source logging the event
+                     * @param dsc a textual description of the event being logged
+                     */
                     iceLBEvent( const CreamJob& j, edg_wll_Source src, const std::string& dsc );
 
-                    CreamJob _job;
-                    edg_wll_Source _src;
-                    std::string _description;
+                    CreamJob m_job;
+                    edg_wll_Source m_src;
+                    std::string m_description;
                 };
 
                 /**
@@ -107,17 +135,23 @@ namespace glite {
                     cream_transfer_fail_event( const CreamJob& j, const std::string& reason );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _reason;
+                    std::string m_reason;
                 };
 
-
+                /**
+                 * A job has been accepted by CREAM. This event is
+                 * logged when ICE receives a PENDING status from CREAM.
+                 */
                 class cream_accepted_event : public iceLBEvent {
                 public:
                     cream_accepted_event( const CreamJob& j );
                     int execute( iceLBContext* ctx );
                 };
 
-
+                /**
+                 * A job has been accepted by the LRMS. This event
+                 * is logged when ICe receives an IDLE status from CREAM.
+                 */
                 class lrms_accepted_event : public iceLBEvent {
                 public:
                     lrms_accepted_event( const CreamJob& j );
@@ -130,7 +164,7 @@ namespace glite {
                     cream_refused_event( const CreamJob& j, const std::string& reason  );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _reason;
+                    std::string m_reason;
                 };
 
 
@@ -146,7 +180,7 @@ namespace glite {
                     cream_cancel_refuse_event( const CreamJob& j, const std::string& reason );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _reason;
+                    std::string m_reason;
                 };
 
 
@@ -155,7 +189,7 @@ namespace glite {
                     job_running_event( const CreamJob& j, const std::string& host );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _host;
+                    std::string m_host;
                 };
 
 
@@ -165,7 +199,7 @@ namespace glite {
                     job_really_running_event( const CreamJob& j, const std::string& wn_seq );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _wn_seq;
+                    std::string m_wn_seq;
                 };
 
 
@@ -202,7 +236,7 @@ namespace glite {
                     ns_enqueued_start_event( const CreamJob& j, const std::string& qname );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _qname;
+                    std::string m_qname;
                 };
 
 
@@ -211,7 +245,7 @@ namespace glite {
                     ns_enqueued_fail_event( const CreamJob& j, const std::string& qname );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _qname;
+                    std::string m_qname;
                 };
 
 
@@ -220,7 +254,7 @@ namespace glite {
                     ns_enqueued_ok_event( const CreamJob& j, const std::string& qname );
                     int execute( iceLBContext* ctx );
                 protected:
-                    std::string _qname;
+                    std::string m_qname;
                 };
 
 

@@ -139,50 +139,20 @@ namespace { // anonymous namespace
         boost::trim_if( job_status_str, boost::is_any_of("\"" ) );
         job_status = api::job_statuses::getStatusNum( job_status_str );
 
-//         string tstamp_s;
-//         if ( !ad->EvaluateAttrString( "TIMESTAMP", tstamp_s ) )
-//             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute not found, or is not a string");
-//         boost::trim_if( tstamp_s, boost::is_any_of("\"" ) );
-//         try {
-//             tstamp = (time_t)( lrint( boost::lexical_cast<double>( tstamp_s )/1000 ) );
-//         } catch( boost::bad_lexical_cast& c ) {
-//             throw iceUtil::ClassadSyntax_ex("TIMESTAMP attribute cannot be converted to time_t" );
-//         }
-        // FIXME: In the future, this timestamp will be relative to
-        // UTC time, and probably should be converted to the local
-        // (ICE-centric) timezone.
-
         if ( ad->EvaluateAttrInt( "EXIT_CODE", exit_code ) ) {
             has_exit_code = true;
         }
 
     };
 
-    /**
-     * This class is used to compare two StatusNotification objects
-     * according with their timestamp. It is used to sort a vector of
-     * notifications in nondecreasing timestamp order.
-     */
-//     struct less_equal_tstamp : public binary_function< StatusNotification, StatusNotification, bool>
-//     {
-//         bool operator()(const StatusNotification& __x, const StatusNotification& __y) const
-//         {
-//             return __x.getTstamp() <= __y.getTstamp();
-//         }
-//     };
-
 
 //______________________________________________________________________________
 iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
   : CEConsumer(i),
     iceThread( "event status poller" ),
-    // grid_JOBID(),
-    // cream_JOBID(),
     status(api::job_statuses::UNKNOWN),
-    // pinger ( 0 ),
     proxyfile(hostcert),
     tcpport(i),
-    // myname( ),
     conf(iceUtil::iceConfManager::getInstance()),
     log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     _lb_logger( iceLBLogger::instance() ),

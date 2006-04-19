@@ -18,7 +18,6 @@
  */
 
 
-
 //
 // This file is heavily based on org.glite.wms.jobsubmission/src/common/EventLogger.cpp
 //
@@ -37,9 +36,9 @@ using namespace glite::wms::ice::util;
 //
 //////////////////////////////////////////////////////////////////////////////
 iceLBEvent::iceLBEvent( const CreamJob& j, edg_wll_Source src, const std::string& dsc ) :
-    _job( j ),
-    _src( src ),
-    _description( dsc )
+    m_job( j ),
+    m_src( src ),
+    m_description( dsc )
 {
 
 }
@@ -59,9 +58,9 @@ int cream_transfer_start_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogTransferSTART( *(ctx->el_context), 
                                      EDG_WLL_SOURCE_LRMS, 
-                                     _job.getCreamURL().c_str(),
+                                     m_job.getCreamURL().c_str(),
                                      ctx->el_s_unavailable,
-                                     _job.getJDL().c_str(),  
+                                     m_job.getJDL().c_str(),  
                                      ctx->el_s_unavailable,
                                      ctx->el_s_unavailable );
 }
@@ -81,11 +80,11 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogTransferOK( *(ctx->el_context), 
                                   EDG_WLL_SOURCE_LRMS, 
-                                  _job.getCreamURL().c_str(),
+                                  m_job.getCreamURL().c_str(),
                                   ctx->el_s_unavailable,
-                                  _job.getJDL().c_str(),  
+                                  m_job.getJDL().c_str(),  
                                   ctx->el_s_unavailable,
-                                  _job.getJobID().c_str() );    
+                                  m_job.getJobID().c_str() );    
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -95,7 +94,7 @@ int cream_transfer_ok_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 cream_transfer_fail_event::cream_transfer_fail_event( const CreamJob& j, const std::string& reason ) :
     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Transfer Fail Event" ),
-    _reason( reason )
+    m_reason( reason )
 {
 
 }
@@ -104,10 +103,10 @@ int cream_transfer_fail_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogTransferFAIL( *(ctx->el_context), 
                                     EDG_WLL_SOURCE_LRMS, 
-                                    _job.getCreamURL().c_str(),
+                                    m_job.getCreamURL().c_str(),
                                     ctx->el_s_unavailable,
-                                    _job.getJDL().c_str(),  
-                                    _reason.c_str(), 
+                                    m_job.getJDL().c_str(),  
+                                    m_reason.c_str(), 
                                     ctx->el_s_unavailable );
 }
 
@@ -128,7 +127,7 @@ int cream_accepted_event::execute( iceLBContext* ctx )
                                 EDG_WLL_SOURCE_JOB_SUBMISSION, 
                                 ctx->el_s_localhost_name.c_str(),
                                 ctx->el_s_unavailable,
-                                _job.getJobID().c_str()
+                                m_job.getJobID().c_str()
                                 );
 }
 
@@ -147,9 +146,9 @@ int lrms_accepted_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogAccepted( *(ctx->el_context), 
                                 EDG_WLL_SOURCE_LRMS,
-                                _job.getCEID().c_str(),
+                                m_job.getCEID().c_str(),
                                 ctx->el_s_unavailable,
-                                _job.getJobID().c_str()
+                                m_job.getJobID().c_str()
                                 );
 }
 
@@ -160,7 +159,7 @@ int lrms_accepted_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 cream_refused_event::cream_refused_event( const CreamJob& j, const std::string& reason ) :
     iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Cream Refused Event" ),
-    _reason( reason )
+    m_reason( reason )
 {
 
 }
@@ -171,7 +170,7 @@ int cream_refused_event::execute( iceLBContext* ctx )
                                EDG_WLL_SOURCE_JOB_SUBMISSION,
                                ctx->el_s_unavailable,
                                ctx->el_s_unavailable,
-                               _reason.c_str() );
+                               m_reason.c_str() );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -201,7 +200,7 @@ int cream_cancel_request_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 cream_cancel_refuse_event::cream_cancel_refuse_event( const CreamJob& j, const std::string& reason ) :
     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "Cream Cancel Refuse Event" ),
-    _reason( reason )
+    m_reason( reason )
 {
 
 }
@@ -209,7 +208,7 @@ cream_cancel_refuse_event::cream_cancel_refuse_event( const CreamJob& j, const s
 int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogCancelREFUSE( *(ctx->el_context), 
-                                    _reason.c_str()
+                                    m_reason.c_str()
                                     );
 }
 
@@ -221,14 +220,14 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 job_running_event::job_running_event( const CreamJob& j, const std::string& host ) :
     iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Runnign Event" ),
-    _host( host )
+    m_host( host )
 {
 
 }
 
 int job_running_event::execute( iceLBContext* ctx )
 {
-    return edg_wll_LogRunning( *(ctx->el_context), _host.c_str() );
+    return edg_wll_LogRunning( *(ctx->el_context), m_host.c_str() );
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -238,14 +237,14 @@ int job_running_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 job_really_running_event::job_really_running_event( const CreamJob& j, const std::string& wn_seq ) :
     iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Really Running Event" ),
-    _wn_seq( wn_seq )
+    m_wn_seq( wn_seq )
 {
 
 }
 
 int job_really_running_event::execute( iceLBContext* ctx )
 {
-    return edg_wll_LogReallyRunning( *(ctx->el_context), _wn_seq.c_str() );
+    return edg_wll_LogReallyRunning( *(ctx->el_context), m_wn_seq.c_str() );
 }
 
 
@@ -326,7 +325,7 @@ int job_done_failed_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_start_event::ns_enqueued_start_event( const CreamJob& j, const std::string& qname ) :
     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued Start Event" ),
-    _qname( qname )
+    m_qname( qname )
 {
 
 }
@@ -334,8 +333,8 @@ ns_enqueued_start_event::ns_enqueued_start_event( const CreamJob& j, const std::
 int ns_enqueued_start_event::execute( iceLBContext* ctx ) 
 {
     return edg_wll_LogEnQueuedSTART( *(ctx->el_context), 
-                                     _qname.c_str(),
-                                     _job.getJobID().c_str(),
+                                     m_qname.c_str(),
+                                     m_job.getJobID().c_str(),
                                      ctx->el_s_unavailable
                                      );
 }
@@ -348,7 +347,7 @@ int ns_enqueued_start_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::string& qname ) :
     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued Fail Event" ),
-    _qname( qname )
+    m_qname( qname )
 {
 
 }
@@ -356,8 +355,8 @@ ns_enqueued_fail_event::ns_enqueued_fail_event( const CreamJob& j, const std::st
 int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogEnQueuedFAIL( *(ctx->el_context), 
-                                    _qname.c_str(),
-                                    _job.getJobID().c_str(),
+                                    m_qname.c_str(),
+                                    m_job.getJobID().c_str(),
                                     ctx->el_s_unavailable
                                     );
 }
@@ -369,7 +368,7 @@ int ns_enqueued_fail_event::execute( iceLBContext* ctx )
 //////////////////////////////////////////////////////////////////////////////
 ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string& qname ) :
     iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "NS Enqueued OK Event" ),
-    _qname( qname )
+    m_qname( qname )
 {
 
 }
@@ -377,8 +376,8 @@ ns_enqueued_ok_event::ns_enqueued_ok_event( const CreamJob& j, const std::string
 int ns_enqueued_ok_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogEnQueuedOK( *(ctx->el_context), 
-                                  _qname.c_str(),
-                                  _job.getJobID().c_str(),
+                                  m_qname.c_str(),
+                                  m_job.getJobID().c_str(),
                                   ctx->el_s_unavailable
                                   );
 }

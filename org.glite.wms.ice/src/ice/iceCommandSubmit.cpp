@@ -241,8 +241,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // yet present in the jobCache
         boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
 	string delegID = "";
-        try {
-	    
+        try {	    
             theProxy->Register(
                                theJob.getCreamURL().c_str(),
                                theJob.getCreamDelegURL().c_str(),
@@ -310,13 +309,12 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
       {
         boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
 	boost::recursive_mutex::scoped_lock cemonM( util::cemonUrlCache::mutex );
-        //cemon_url  m_confMgr->getCEMonUrlPrefix() + theJob.getEndpoint()
-        //    + m_confMgr->getCEMonUrlPostfix();
 	cemon_url = util::cemonUrlCache::getInstance()->getCEMonUrl( theJob.getCreamURL() );
-	m_log_dev->infoStream() << "iceCommandSubmit::execute() - "
-			      << "For current CREAM, cemonUrlCache returned CEMon URL ["
-			      << cemon_url<<"]"
-			      << log4cpp::CategoryStream::ENDLINE;
+	m_log_dev->infoStream() 
+            << "iceCommandSubmit::execute() - "
+            << "For current CREAM, cemonUrlCache returned CEMon URL ["
+            << cemon_url<<"]"
+            << log4cpp::CategoryStream::ENDLINE;
 
 	if( cemon_url.empty() ) {
 	  try {

@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * ICE LB Logger
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 #include "iceLBLogger.h"
 #include "iceLBContext.h"
 #include "iceLBEvent.h"
@@ -6,8 +25,8 @@
 
 using namespace glite::wms::ice::util;
 
-iceLBLogger* iceLBLogger::_instance = 0;
-boost::recursive_mutex iceLBLogger::_mutex;
+iceLBLogger* iceLBLogger::s_instance = 0;
+boost::recursive_mutex iceLBLogger::s_mutex;
 
 //////////////////////////////////////////////////////////////////////////////
 // 
@@ -16,16 +35,16 @@ boost::recursive_mutex iceLBLogger::_mutex;
 //////////////////////////////////////////////////////////////////////////////
 iceLBLogger* iceLBLogger::instance( void )
 {
-    boost::recursive_mutex::scoped_lock L( _mutex );
-    if ( 0 == _instance ) {
-        _instance = new iceLBLogger( );
+    boost::recursive_mutex::scoped_lock L( s_mutex );
+    if ( 0 == s_instance ) {
+        s_instance = new iceLBLogger( );
     }
-    return _instance;
+    return s_instance;
 }
 
 iceLBLogger::iceLBLogger( void ) :
-    _ctx( new iceLBContext() ),
-    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
+    m_ctx( new iceLBContext() ),
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
 
 }
@@ -40,13 +59,13 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
 {
     if ( ev ) {
 
-        boost::recursive_mutex::scoped_lock L( _mutex );
-        boost::scoped_ptr< iceLBEvent > _scoped_ev( ev );
+        boost::recursive_mutex::scoped_lock L( s_mutex );
+        boost::scoped_ptr< iceLBEvent > scoped_ev( ev );
         
         try {
-            _ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
+            m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
         } catch( iceLBException& ex ) {
-            log_dev->errorStream()
+            m_log_dev->errorStream()
                 << "Error logging " << ev->describe()
                 << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
                 << " CreamJobID=[" << ev->getJob().getJobID() << "]"
@@ -55,25 +74,25 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
             return;
         }
     
-        _ctx->startLogging();
+        m_ctx->startLogging();
 
         int res = 0;
         do {
-            log_dev->infoStream() 
+            m_log_dev->infoStream() 
                 << "Logging " << ev->describe( )
                 << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
                 << " CreamJobID=[" << ev->getJob().getJobID() << "]"
                 << log4cpp::CategoryStream::ENDLINE;
             
-            res = ev->execute( _ctx );
-            log_dev->infoStream() 
+            res = ev->execute( m_ctx );
+            m_log_dev->infoStream() 
                 << "...Got return code " << res 
                 << log4cpp::CategoryStream::ENDLINE;
             
-            _ctx->testCode( res );
+            m_ctx->testCode( res );
             
         } while( res != 0 );        
         
-        _ctx->update_and_store_job( ev->getJob() );    
+        m_ctx->update_and_store_job( ev->getJob() );    
     }
 }
