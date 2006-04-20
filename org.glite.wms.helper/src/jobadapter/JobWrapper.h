@@ -251,11 +251,11 @@ public:
   void prologue(std::string const&);
   void prologue_arguments(std::string const&);
 
-  std::ostream& print(std::ostream& os) const;  
 private:
 
   static const std::string s_brokerinfo_default;
 
+  std::ostream& print(std::ostream& os) const;  
   friend std::ostream& operator<<(std::ostream& os, const JobWrapper& jw);
   bool fill_out_script(std::string const&, std::ostream&) const;
   bool dump_vars(std::ostream&) const;
