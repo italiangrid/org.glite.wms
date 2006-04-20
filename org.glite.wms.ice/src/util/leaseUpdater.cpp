@@ -94,7 +94,7 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
         creamClient->Lease( j.getCreamURL().c_str(), jobids, delta, newLease );
     } catch ( soap_proxy::soap_ex& ex ) {
         log_dev->errorStream()
-            << "leaseUpdater::update_lease_for_job() returned an exception: "
+            << "leaseUpdater::update_lease_for_job() - returned an exception: "
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         // FIXME: what to do?
@@ -106,7 +106,7 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
         // So update the job cache as well...
 
         log_dev->infoStream()
-            << "leaseUpdater:: updating lease for cream jobid=["
+            << "leaseUpdater::update_lease_for_job() - updating lease for cream jobid=["
             << j.getJobID()
             << "]; old lease ends " << time_t_to_string( j.getEndLease() )
             << " new lease ends " << time_t_to_string( newLease[ j.getJobID() ] )
@@ -117,7 +117,7 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
     } else {
         // there was an error updating the lease
         log_dev->errorStream()
-            << "leaseUpdater:: unable to update lease for cream jobid=["
+            << "leaseUpdater::update_lease_for_job() - unable to update lease for cream jobid=["
             << j.getJobID()
             << "]; old lease ends " << time_t_to_string( j.getEndLease() )
             << log4cpp::CategoryStream::ENDLINE;

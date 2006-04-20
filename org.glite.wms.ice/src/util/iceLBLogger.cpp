@@ -66,7 +66,7 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
             m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
         } catch( iceLBException& ex ) {
             m_log_dev->errorStream()
-                << "Error logging " << ev->describe()
+                << "iceLBLogger::logEvent() - Error logging " << ev->describe()
                 << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
                 << " CreamJobID=[" << ev->getJob().getJobID() << "]"
                 << ". Caught exception " << ex.what()
@@ -79,14 +79,14 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         int res = 0;
         do {
             m_log_dev->infoStream() 
-                << "Logging " << ev->describe( )
+                << "iceLBLogger::logEvent() - Logging " << ev->describe( )
                 << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
                 << " CreamJobID=[" << ev->getJob().getJobID() << "]"
                 << log4cpp::CategoryStream::ENDLINE;
             
             res = ev->execute( m_ctx );
             m_log_dev->infoStream() 
-                << "...Got return code " << res 
+                << "iceLBLogger::logEvent() - ...Got return code " << res 
                 << log4cpp::CategoryStream::ENDLINE;
             
             m_ctx->testCode( res );

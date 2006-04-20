@@ -153,7 +153,7 @@ void iceEventLogger::testCode( int &code, bool retry )
 {
     if ( code != 0 ) {
         string err( getLoggingError( 0 ) );
-        log_dev->errorStream() << "Got error " << err
+        log_dev->errorStream() << "iceEventLogger::testCode() - Got error " << err
                                << log4cpp::CategoryStream::ENDLINE;
         
     }
@@ -168,7 +168,7 @@ void iceEventLogger::testCode( int &code, bool retry )
         switch( code ) {
         case EINVAL:
             log_dev->errorStream()
-                << "Critical error in L&B calls: EINVAL. "
+                << "iceEventLogger::testCode() - Critical error in L&B calls: EINVAL. "
                 << "Cause = \"" << cause << "\"."
                 << log4cpp::CategoryStream::ENDLINE;
             
@@ -176,13 +176,13 @@ void iceEventLogger::testCode( int &code, bool retry )
             break;
         case EDG_WLL_ERROR_GSS:
             log_dev->errorStream()
-                << "Severe error in GSS layer while communicating with L&B daemons. " 
+                << "iceEventLogger::testCode() - Severe error in GSS layer while communicating with L&B daemons. " 
                 << "Cause = \"" << cause << "\"." 
                 << log4cpp::CategoryStream::ENDLINE;
 
             if( this->el_hostProxy ) {
                 log_dev->infoStream()
-                    << "The log with the host certificate has just been done. Giving up." 
+                    << "iceEventLogger::testCode() - The log with the host certificate has just been done. Giving up." 
                     << log4cpp::CategoryStream::ENDLINE;
                 
                 code = 0; // Don't retry...
@@ -191,14 +191,14 @@ void iceEventLogger::testCode( int &code, bool retry )
                 host_proxy = conf->host_proxy_file();
 
                 log_dev->infoStream()
-                    << "Retrying using host proxy certificate [" 
+                    << "iceEventLogger::testCode() - Retrying using host proxy certificate [" 
                     << host_proxy << "]" 
                     << log4cpp::CategoryStream::ENDLINE;
 
 
                 if( host_proxy.length() == 0 ) {
                     log_dev->warnStream()
-                        << "Host proxy file not set inside configuration file. " 
+                        << "iceEventLogger::testCode() - Host proxy file not set inside configuration file. " 
                         << "Trying with a default NULL and hoping for the best." 
                         << log4cpp::CategoryStream::ENDLINE;
 
@@ -206,7 +206,7 @@ void iceEventLogger::testCode( int &code, bool retry )
                 }
                 else {
                     log_dev->infoStream()
-                        << "Host proxy file found = [" << host_proxy << "]."
+                        << "iceEventLogger::testCode() - Host proxy file found = [" << host_proxy << "]."
                         << log4cpp::CategoryStream::ENDLINE;
 
                     ret = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
@@ -214,7 +214,7 @@ void iceEventLogger::testCode( int &code, bool retry )
 
                 if( ret ) {
                     log_dev->errorStream()
-                        << "Cannot set the host proxy inside the context. Giving up." 
+                        << "iceEventLogger::testCode() - Cannot set the host proxy inside the context. Giving up." 
                         << log4cpp::CategoryStream::ENDLINE;
 
                     code = 0; // Don't retry.
@@ -226,7 +226,7 @@ void iceEventLogger::testCode( int &code, bool retry )
         default:
             if( ++this->el_count > el_s_retries ) {
                 log_dev->errorStream()
-                    << "L&B call retried " << this->el_count << " times always failed. "
+                    << "iceEventLogger::testCode() - L&B call retried " << this->el_count << " times always failed. "
                     << "Ignoring." 
                     << log4cpp::CategoryStream::ENDLINE;
 
@@ -234,7 +234,7 @@ void iceEventLogger::testCode( int &code, bool retry )
             }
             else {
                 log_dev->warnStream()
-                    << "L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again. " 
+                    << "iceEventLogger::testCode() - L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again. " 
                     << "Try n. " << this->el_count << "/" << el_s_retries 
                     << log4cpp::CategoryStream::ENDLINE;
 
@@ -245,7 +245,7 @@ void iceEventLogger::testCode( int &code, bool retry )
     }
     else // The logging call worked fine, do nothing
         log_dev->debugStream() 
-            << "L&B call succeeded." 
+            << "iceEventLogger::testCode() - L&B call succeeded." 
             << log4cpp::CategoryStream::ENDLINE;
 
     // SignalChecker::instance()->throw_on_signal();

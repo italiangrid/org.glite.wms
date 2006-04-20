@@ -115,7 +115,7 @@ void iceLBContext::testCode( int &code, bool retry )
 {
     if ( code != 0 ) {
         string err( getLoggingError( 0 ) );
-        log_dev->errorStream() << "Got error " << err
+        log_dev->errorStream() << "iceLBContext::testCode() - Got error " << err
                                << log4cpp::CategoryStream::ENDLINE;
         
     }
@@ -130,7 +130,7 @@ void iceLBContext::testCode( int &code, bool retry )
         switch( code ) {
         case EINVAL:
             log_dev->errorStream()
-                << "Critical error in L&B calls: EINVAL. "
+                << "iceLBContext::testCode() - Critical error in L&B calls: EINVAL. "
                 << "Cause = \"" << cause << "\"."
                 << log4cpp::CategoryStream::ENDLINE;
             
@@ -138,13 +138,13 @@ void iceLBContext::testCode( int &code, bool retry )
             break;
         case EDG_WLL_ERROR_GSS:
             log_dev->errorStream()
-                << "Severe error in GSS layer while communicating with L&B daemons. " 
+                << "iceLBContext::testCode() - Severe error in GSS layer while communicating with L&B daemons. " 
                 << "Cause = \"" << cause << "\"." 
                 << log4cpp::CategoryStream::ENDLINE;
 
             if( this->el_hostProxy ) {
                 log_dev->infoStream()
-                    << "The log with the host certificate has just been done. Giving up." 
+                    << "iceLBContext::testCode() - The log with the host certificate has just been done. Giving up." 
                     << log4cpp::CategoryStream::ENDLINE;
                 
                 code = 0; // Don't retry...
@@ -160,7 +160,7 @@ void iceLBContext::testCode( int &code, bool retry )
 
                 if( host_proxy.length() == 0 ) {
                     log_dev->warnStream()
-                        << "Host proxy file not set inside configuration file. " 
+                        << "iceLBContext::testCode() - Host proxy file not set inside configuration file. " 
                         << "Trying with a default NULL and hoping for the best." 
                         << log4cpp::CategoryStream::ENDLINE;
 
@@ -168,7 +168,7 @@ void iceLBContext::testCode( int &code, bool retry )
                 }
                 else {
                     log_dev->infoStream()
-                        << "Host proxy file found = [" << host_proxy << "]."
+                        << "iceLBContext::testCode() - Host proxy file found = [" << host_proxy << "]."
                         << log4cpp::CategoryStream::ENDLINE;
 
                     ret = edg_wll_SetParam( *el_context, EDG_WLL_PARAM_X509_PROXY, host_proxy.c_str() );
@@ -176,7 +176,7 @@ void iceLBContext::testCode( int &code, bool retry )
 
                 if( ret ) {
                     log_dev->errorStream()
-                        << "Cannot set the host proxy inside the context. Giving up." 
+                        << "iceLBContext::testCode() - Cannot set the host proxy inside the context. Giving up." 
                         << log4cpp::CategoryStream::ENDLINE;
 
                     code = 0; // Don't retry.
@@ -188,7 +188,7 @@ void iceLBContext::testCode( int &code, bool retry )
         default:
             if( ++this->el_count > el_s_retries ) {
                 log_dev->errorStream()
-                    << "L&B call retried " << this->el_count << " times always failed. "
+                    << "iceLBContext::testCode() - L&B call retried " << this->el_count << " times always failed. "
                     << "Ignoring." 
                     << log4cpp::CategoryStream::ENDLINE;
 
@@ -196,7 +196,7 @@ void iceLBContext::testCode( int &code, bool retry )
             }
             else {
                 log_dev->warnStream()
-                    << "L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again. " 
+                    << "iceLBContext::testCode() - L&B call got a transient error. Waiting " << el_s_sleep << " seconds and trying again. " 
                     << "Try n. " << this->el_count << "/" << el_s_retries 
                     << log4cpp::CategoryStream::ENDLINE;
 
@@ -207,7 +207,7 @@ void iceLBContext::testCode( int &code, bool retry )
     }
     else // The logging call worked fine, do nothing
         log_dev->debugStream() 
-            << "L&B call succeeded." 
+            << "iceLBContext::testCode() - L&B call succeeded." 
             << log4cpp::CategoryStream::ENDLINE;
 
     // SignalChecker::instance()->throw_on_signal();
@@ -224,7 +224,7 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
     setLoggingJob( theJob, EDG_WLL_SOURCE_JOB_SUBMISSION );
 
     log_dev->infoStream() 
-        << "Registering jobid=[" << theJob.getGridJobID() << "]"
+        << "iceLBContext::registerJob() - Registering jobid=[" << theJob.getGridJobID() << "]"
         << log4cpp::CategoryStream::ENDLINE;
     
     edg_wlc_JobIdParse( theJob.getGridJobID().c_str(), &id );
@@ -233,7 +233,7 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
     edg_wlc_JobIdFree( id );
     if( res != 0 ) {
         log_dev->errorStream() 
-            << "Cannot register jobid=[" << theJob.getGridJobID()
+            << "iceLBContext::registerJob() - Cannot register jobid=[" << theJob.getGridJobID()
             << "]. LB error code=" << res
             << log4cpp::CategoryStream::ENDLINE;
     }
@@ -251,7 +251,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
     unsigned int lbport;
     edg_wlc_JobIdGetServerParts( id, &lbserver, &lbport );
     log_dev->infoStream() 
-        << "iceLBContext::setLoggingJob: "
+        << "iceLBContext::setLoggingJob() - "
         << "Setting log job to jobid=[" << theJob.getGridJobID() << "] "
         << "LB server=[" << lbserver << ":" << lbport << "] "
         << "(port is not used, actually...)"
@@ -268,7 +268,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
 
     if( res != 0 ) {
         log_dev->errorStream()
-            << "iceLBContext::setLoggingJob: "
+            << "iceLBContext::setLoggingJob() - "
             << "Unable to set logging job to jobid=["
             << theJob.getGridJobID()
             << "]. LB error is "
@@ -288,7 +288,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
 
         if( res ) {
             log_dev->errorStream()
-                << "iceLBContext::setLoggingJob: "
+                << "iceLBContext::setLoggingJob() - "
                 << "Unable to set logging job to jobid=["
                 << theJob.getGridJobID()
                 << "]. "
@@ -298,7 +298,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
         }
     } else {
         log_dev->errorStream()
-            << "iceLBContext::setLoggingJob: "
+            << "iceLBContext::setLoggingJob() - "
             << "Unable to set logging job to jobid=["
             << theJob.getGridJobID()
             << "]. Proxy file "
