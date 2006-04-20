@@ -185,22 +185,24 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 		pair<string, int> itempair(defaultprotocol, defaultport);
 		returnprotocols.push_back(itempair);
 	} else {
-		// if (check if the protocol is supported)
-		// if protocol in protocols!
-		int port = -1;
-		for (unsigned int i = 0; i < protocols.size(); i++) {
-			if (protocols[i].first == protocol) {
-				port = protocols[i].second;
-				break;
-			}	
+		if (protocol == "https") {
+			// if (check if the protocol is supported)
+			// if protocol in protocols!
+			int port = -1;
+			for (unsigned int i = 0; i < protocols.size(); i++) {
+				if (protocols[i].first == protocol) {
+					port = protocols[i].second;
+					break;
+				}	
+			}
+			if (port == -1) {
+				throw JobOperationException(__FILE__, __LINE__,
+					"getJobDirectoryURIsVector()", WMS_INVALID_ARGUMENT,
+					"requested protocol not available");
+			}
+			pair<string, int> itempair(protocol, port);
+			returnprotocols.push_back(itempair);
 		}
-		if (port == -1) {
-			throw JobOperationException(__FILE__, __LINE__,
-				"getJobDirectoryURIsVector()", WMS_INVALID_ARGUMENT,
-				"requested protocol not available");
-		}
-		pair<string, int> itempair(protocol, port);
-		returnprotocols.push_back(itempair);
 	}
 	
 	string item;

@@ -485,6 +485,8 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	
 	if (renewalproxy) {
 		// Creating a symbolic link to renewal Proxy temporary file
+		edglog(debug)<<"Creating a symbolic link to renewal Proxy temporary file..."
+			<<endl;
 		if (symlink(renewalproxy, proxy.c_str())) {
 			if (errno != EEXIST) {
 		      	edglog(critical)
@@ -503,6 +505,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	}
 	
 	// Creating a copy of the Proxy
+	edglog(debug)<<"Creating a copy of the Proxy..."<<endl;
 	string proxybak = wmputilities::getJobDelegatedProxyPathBak(jobid);
 	wmputilities::fileCopy(delegatedproxy, proxybak);
 	

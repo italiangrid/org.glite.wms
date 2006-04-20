@@ -1189,7 +1189,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 	
 	vector<string> *jobdiruris = getJobDirectoryURIsVector(conf.getProtocols(),
 		conf.getDefaultProtocol(), conf.getDefaultPort(), conf.getHTTPSPort(),
-		job_id, protocol);
+		job_id, protocol, "peek/");
 
 	unsigned int jobdirsize = jobdiruris->size();
 		
@@ -1210,7 +1210,7 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 					== 0) {
 				edglog(debug)<<"Good old global perusal file: "<<*iter<<endl;
 				for (unsigned int i = 0; i < jobdirsize; i++) {
-					returnvector.push_back((*jobdiruris)[i] + *iter);
+					returnvector.push_back((*jobdiruris)[i] + currentfilename);
 				}
 			}
 		}
@@ -1243,12 +1243,12 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 		vector<string>::iterator const end = good.end();
 		for (; iter != end; ++iter) {
 			filesize = wmputilities::computeFileSize(*iter);
-			filetoreturn = peekdir + fileName
+			filetoreturn = fileName
 				+ PERUSAL_DATE_INFO_SEPARATOR + startdate
 				+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
 			if ((totalfilesize + filesize) > FILE_TRANSFER_SIZE_LIMIT) {
 				outfile.close();
-				rename(tempfile.c_str(), filetoreturn.c_str());
+				rename(tempfile.c_str(), (peekdir + filetoreturn).c_str());
 				
 				for (unsigned int i = 0; i < jobdirsize; i++) {
 					returnvector.push_back((*jobdiruris)[i] + filetoreturn);
@@ -1282,10 +1282,10 @@ getPerusalFiles(getPerusalFilesResponse &getPerusalFiles_response,
 			totalfilesize += filesize;
 		}
 		outfile.close();
-		filetoreturn = peekdir + fileName
+		filetoreturn = fileName
 			+ PERUSAL_DATE_INFO_SEPARATOR + startdate
 			+ PERUSAL_DATE_INFO_SEPARATOR + enddate;
-		rename(tempfile.c_str(), filetoreturn.c_str());
+		rename(tempfile.c_str(), (peekdir + filetoreturn).c_str());
 		
 		for (unsigned int i = 0; i < jobdirsize; i++) {
 			returnvector.push_back((*jobdiruris)[i] + filetoreturn);

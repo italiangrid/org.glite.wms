@@ -555,12 +555,12 @@ WMPEventLogger::setLoggingJob(const std::string &jid, const char* seq_code)
 	glite::wmsutils::jobid::JobId jobid(jid);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	if (lbProxy_b) {
-                edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
-		edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code, 
+        edglog(debug)<<"Setting job for logging to LB Proxy..."<<endl;
+		edg_wll_SetLoggingJobProxy(ctx, jobid.getId(), seq_code,
 			getUserDN(), EDG_WLL_SEQ_NORMAL);
 	} else {
 #endif  //GLITE_WMS_HAVE_LBPROXY
-                edglog(debug)<<"Setting job for logging to LB..."<<endl;
+        edglog(debug)<<"Setting job for logging to LB..."<<endl;
 		edg_wll_SetLoggingJob(ctx, jobid.getId(), seq_code, EDG_WLL_SEQ_NORMAL);
 #ifdef GLITE_WMS_HAVE_LBPROXY
 	}
