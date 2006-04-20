@@ -517,6 +517,12 @@ JobWrapper::print(std::ostream& os) const
   return os;
 }
 
+std::ostream&
+operator<<(std::ostream& os, const JobWrapper& jw)
+{
+  return jw.print(os);
+}
+
 } // namespace jobadapter
 } // namespace helper
 } // namespace wms

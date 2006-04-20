@@ -331,16 +331,22 @@ bool
 interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
+  std::string const& PBOX_host_name,
   matchmaking::match_table_t& suitable_CEs   
   )
 {
-  return interact(config, get_user_x509_proxy(jobid), suitable_CEs);
+  return interact(config,
+    get_user_x509_proxy(jobid),
+    PBOX_host_name,
+    suitable_CEs
+  );
 }
 
 bool
 interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
+  std::string const& PBOX_host_name,
   matchmaking::match_table_t& suitable_CEs)
 {
   boost::timer perf_timer;
@@ -355,12 +361,11 @@ interact(
   const configuration::WMConfiguration* WM_conf = config.wm();
   assert(WM_conf);
 
-  std::string Pbox_host_name(WM_conf->pbox_host_name());
-  if( !broker_subject.empty() and !Pbox_host_name.empty() ) {
+  if (!broker_subject.empty()) {
     try {
 
       Connection PEP_connection(
-                                Pbox_host_name,
+                                PBOX_host_name,
                                 WM_conf->pbox_port_num(),
                                 broker_subject,
                                 WM_conf->pbox_safe_mode()
@@ -374,16 +379,23 @@ interact(
     }
     catch (...) { // exception no_conn from API
                   // PEP_connection not properly propagated
+      Info("gpbox: exception caught during interaction");
       return false;
     };
+ 
+    std::string report(
+      "gpbox interaction ended. Elapsed: "
+      +
+      boost::lexical_cast<std::string>(perf_timer.elapsed())
+    );
+    Info(report);
+
+    return true;
   }
   else {
-    Info("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
+    Info("gpbox: unable to find the broker proxy certificate");
+    return false;
   }
-
-  Info("END G-Pbox. Elapsed:");
-  Info(perf_timer.elapsed());
-  return true;
 }
 
 }}}}} //glite::wms::helper::broker::gpbox

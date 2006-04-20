@@ -88,7 +88,7 @@ main(int argc, char* argv[])
     cerr << ex.what();
   }
 
-  jw->print(cout);
+  cout << *jw;
 
   return 0;
 }

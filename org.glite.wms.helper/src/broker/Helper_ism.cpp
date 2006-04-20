@@ -241,13 +241,17 @@ try {
     = configuration::Configuration::instance();
   assert(config);
 
+
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
-  if (!gpbox::interact(
-    *config,
-     dg_jobid,
-     *suitable_CEs)
-  ) {
-    Info("Error during gpbox interaction");
+  std::string PBOX_host_name(config->wm()->pbox_host_name());
+  if (!PBOX_host_name.empty()) {
+    if (!gpbox::interact(
+      *config,
+      dg_jobid,
+      PBOX_host_name,
+      *suitable_CEs
+    ))
+      Info("Error during gpbox interaction");
   }
 
   if ( suitable_CEs->empty() ) {
