@@ -147,7 +147,7 @@ void ism_ii_purchaser::do_purchase()
        gluece_info_container,
        gluese_info_container
      );
-     Info("BDII fetching completed in " << t0.elapsed() << " seconds");
+     Debug("BDII fetching completed in " << t0.elapsed() << " seconds");
 
      apply_skip_predicate(
        gluece_info_container,

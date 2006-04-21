@@ -96,7 +96,7 @@ void ism_cemon_asynch_purchaser::do_purchase()
        
          if (consumer->accept()) {
 
-          Info("CEConsumer accepted connection from " << consumer->getClientIP() 
+          Debug("CEConsumer accepted connection from " << consumer->getClientIP() 
                 << " ("<< consumer->getClientName()<<")"<<endl);
 
           if (consumer->serve()) {
