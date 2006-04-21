@@ -14,18 +14,38 @@ using namespace std ;
 using namespace glite::wms::client::services ;
 
 const string jobid ="https://glite-wms-client:1234/AoughkatbhaA";
+
+Shadow jobShadowCreate(){
+	Shadow jobShadow;
+	jobShadow.setJobId(jobid);
+	jobShadow.setPrefix("../../stage/bin");  // TBD
+	// Launch console
+	title("Running console shadow");
+	jobShadow.setGoodbyeMessage(true);
+	jobShadow.console();
+	return jobShadow;
+}
+
+void runListener(){
+	// Run Listener
+	Shadow jobShadow = jobShadowCreate();
+	Listener listener(&jobShadow);
+	listener.run();
+}
+
+
 // UNIT TEST
 class ClientTest : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE( ClientTest );
 	CPPUNIT_TEST( testListener );
 	CPPUNIT_TEST( testShadow);
-	CPPUNIT_TEST( testUtilities );
+	CPPUNIT_TEST( testListenCopy );
 	CPPUNIT_TEST_SUITE_END();
 public:
 	void testListener() {
 		Shadow *jobShadow = new Shadow();
 		jobShadow->setJobId(jobid);
-		jobShadow->setPrefix("../../stage/bin");
+		jobShadow->setPrefix("../../stage/bin");  // TBD
 		// Insert jdl attributes port/pipe/host inside shadow(if present)
 
 		// Launch console
@@ -45,9 +65,10 @@ public:
 		// Run Listener
 		Listener listener(jobShadow);
 		listener.run();
+		cout << "Listener running.... bye!"<< endl;
 	}
-	void testUtilities() {
-		cout << "testUtilities TEST NOT YET IMPLEMENTED" << endl ;
+	void testListenCopy() {
+		runListener();
 	}
 	void testShadow() {
 		cout << "testShadow TEST NOT YET IMPLEMENTED" << endl ;
@@ -76,7 +97,7 @@ int main(int argc,char *argv[]){
 			cout << "Usage : " << argv[0] << " <test number> " << endl ;
 			cout <<"0) Unit Test!!!"<<endl; cout <<" - - - " << endl ;
 			cout <<"1) testListener"<<endl;
-			cout <<"2) testUtilities"<<endl;
+			cout <<"2) testListenCopy"<<endl;
 			cout <<"3) testShadow"<<endl;
 			return 0;
 		}
@@ -85,7 +106,7 @@ int main(int argc,char *argv[]){
 		switch (boost::lexical_cast<int>(argv[1])){
 			case 0 : unitTest(); break;
 			case 1: test.testListener(); break;
-			case 2: test.testUtilities(); break;
+			case 2: test.testListenCopy(); break;
 			case 3: test.testShadow(); break;
 			default: break;
 		}
