@@ -98,10 +98,10 @@ void populate_ism(
 {      
   ism_mutex_type::scoped_lock l(get_ism_mutex(the_ism_index));	
      
-  vector<gluece_info_iterator>::iterator it(
+  vector<gluece_info_iterator>::const_iterator it(
     gluece_info_container_updated_entries.begin()
   );
-  vector<gluece_info_iterator>::iterator const e(
+  vector<gluece_info_iterator>::const_iterator const e(
     gluece_info_container_updated_entries.end()
   );
   time_t const current_time = std::time(0);
@@ -149,21 +149,17 @@ void ism_ii_purchaser::do_purchase()
      );
      Info("BDII fetching completed in " << t0.elapsed() << " seconds");
 
-     if (!m_skip_predicate.empty()) {
+     apply_skip_predicate(
+       gluece_info_container,
+       gluece_info_container_updated_entries,
+       m_skip_predicate
+     );
 
-       apply_skip_predicate(
-         gluece_info_container,
-         gluece_info_container_updated_entries,
-         m_skip_predicate
-       );
-
-       apply_skip_predicate(
-         gluese_info_container,
-         gluese_info_container_updated_entries,
-         m_skip_predicate
-       );
-
-     }
+     apply_skip_predicate(
+       gluese_info_container,
+       gluese_info_container_updated_entries,
+       m_skip_predicate
+     );
 
      populate_ism(gluece_info_container_updated_entries, ism::ce);
      populate_ism(gluese_info_container_updated_entries, ism::se);

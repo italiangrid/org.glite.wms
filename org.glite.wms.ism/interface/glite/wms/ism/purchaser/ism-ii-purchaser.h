@@ -29,7 +29,7 @@ public:
     exec_mode_t mode = loop,
     size_t interval = 30,
     exit_predicate_type exit_predicate = exit_predicate_type(),
-    skip_predicate_type skip_predicate = skip_predicate_type()	
+    skip_predicate_type skip_predicate = false_	
   );
   
   void do_purchase();
@@ -58,7 +58,7 @@ typedef ism_ii_purchaser* create_t(std::string const& hostname,
     exec_mode_t mode = loop,
     size_t interval = 30,
     exit_predicate_type exit_predicate = exit_predicate_type(),
-    skip_predicate_type skip_predicate = skip_predicate_type()
+    skip_predicate_type skip_predicate = false_
   );
 
 typedef void destroy_t(ism_ii_purchaser*);

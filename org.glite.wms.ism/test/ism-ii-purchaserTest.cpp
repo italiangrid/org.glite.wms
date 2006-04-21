@@ -28,8 +28,14 @@ LineOption  options[] = {
     { 's', no_argument, "show-ad",     "\t display the complete classad description of any entry." },
     { 'v', no_argument, "verbose",     "\t be verbose." }
 };
-
+namespace {
+ism_type the_ism[2];
+ism_mutex_type the_ism_mutex[2];
+}
 int main(int argc, char* argv[]) {
+
+  set_ism(the_ism,the_ism_mutex,ce);
+  set_ism(the_ism,the_ism_mutex,se);
 
   std::vector<LineOption> optvec( options, options + sizeof(options)/sizeof(LineOption) );
   LineParser options( optvec, 0 );
@@ -51,10 +57,10 @@ int main(int argc, char* argv[]) {
     if( options.is_present('b') ) icp.skip_predicate(is_in_black_list(wm_config->ism_black_list()));
 
     icp();
-    ism_mutex_type::scoped_lock l(get_ism_mutex());
+    ism_mutex_type::scoped_lock l(get_ism_mutex(ce));
 
-    for (ism_type::iterator pos=get_ism().begin();
-      pos!= get_ism().end(); ++pos) {
+    for (ism_type::iterator pos=get_ism(ce).begin();
+      pos!= get_ism(ce).end(); ++pos) {
 
       if (options.is_present('s')) {
       

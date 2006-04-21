@@ -18,6 +18,8 @@ namespace wms {
 namespace ism {
 namespace purchaser {
 
+inline bool false_(std::string const&) { return false; }
+
 typedef boost::function<bool(void)> exit_predicate_type;
 typedef boost::function<bool(std::string const&)> skip_predicate_type;
 
