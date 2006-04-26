@@ -103,57 +103,57 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 */
 
     classad::ClassAdParser parser;
-    classad::ClassAd *_rootAD = parser.ParseClassAd( request );
+    classad::ClassAd *rootAD = parser.ParseClassAd( request );
 
-    if (!_rootAD) {
+    if (!rootAD) {
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request by iceCommandSubmit");
     }
 
-    string _commandStr;
+    string commandStr;
     // Parse the "command" attribute
-    if ( !_rootAD->EvaluateAttrString( "command", _commandStr ) ) {
+    if ( !rootAD->EvaluateAttrString( "command", commandStr ) ) {
         throw util::JobRequest_ex("attribute 'command' not found or is not a string");
     }
-    boost::trim_if( _commandStr, boost::is_any_of("\"") );
+    boost::trim_if( commandStr, boost::is_any_of("\"") );
 
-    if ( !boost::algorithm::iequals( _commandStr, "submit" ) ) {
-        throw util::JobRequest_ex("wrong command ["+_commandStr+"] parsed by iceCommandSubmit" );
+    if ( !boost::algorithm::iequals( commandStr, "submit" ) ) {
+        throw util::JobRequest_ex("wrong command ["+commandStr+"] parsed by iceCommandSubmit" );
     }
 
-    string _protocolStr;
+    string protocolStr;
     // Parse the "version" attribute
-    if ( !_rootAD->EvaluateAttrString( "Protocol", _protocolStr ) ) {
+    if ( !rootAD->EvaluateAttrString( "Protocol", protocolStr ) ) {
         throw util::JobRequest_ex("attribute \"Protocol\" not found or is not a string");
     }
     // Check if the version is exactly 1.0.0
-    if ( _protocolStr.compare("1.0.0") ) {
-        throw util::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + _protocolStr );
+    if ( protocolStr.compare("1.0.0") ) {
+        throw util::JobRequest_ex("Wrong \"Protocol\" for jobRequest: expected 1.0.0, got " + protocolStr );
     }
 
-    classad::ClassAd *_argumentsAD = 0;
+    classad::ClassAd *argumentsAD = 0;
     // Parse the "arguments" attribute
-    if ( !_rootAD->EvaluateAttrClassAd( "arguments", _argumentsAD ) ) {
+    if ( !rootAD->EvaluateAttrClassAd( "arguments", argumentsAD ) ) {
         throw util::JobRequest_ex("attribute 'arguments' not found or is not a classad");
     }
 
-    classad::ClassAd *_adAD = 0;
+    classad::ClassAd *adAD = 0;
     // Look for "ad" attribute inside "arguments"
-    if ( !_argumentsAD->EvaluateAttrClassAd( "jobad", _adAD ) ) {
+    if ( !argumentsAD->EvaluateAttrClassAd( "jobad", adAD ) ) {
         throw util::JobRequest_ex("Attribute \"JobAd\" not found inside 'arguments', or is not a classad" );
     }
 
     // initializes the m_jdl attribute
     classad::ClassAdUnParser unparser;
-    unparser.Unparse( m_jdl, _argumentsAD->Lookup( "jobad" ) );
+    unparser.Unparse( m_jdl, argumentsAD->Lookup( "jobad" ) );
 
 }
 
 //______________________________________________________________________________
-void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
+void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
     m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
 
-    util::jobCache* _cache = util::jobCache::getInstance();
+    util::jobCache* cache = util::jobCache::getInstance();
 
     vector<string> url_jid;
     util::CreamJob theJob;
@@ -178,7 +178,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
      * This mutex protects all cache accesses in the execute method
      */
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
-    util::jobCache::iterator job_pos = _cache->put( theJob );
+    util::jobCache::iterator job_pos = cache->put( theJob );
 
 #ifdef DONT_COMPILE
     m_log_dev->infoStream() 
@@ -210,7 +210,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
-        _cache->erase( job_pos );
+        cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
     
@@ -229,8 +229,8 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
             << "Unable to submit gridJobID=" << theJob.getGridJobID()
             << " due to authentication error:" << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
-        _ice->resubmit_job( theJob );
-        _cache->erase( job_pos );
+        ice->resubmit_job( theJob );
+        cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
 
@@ -240,8 +240,11 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
         // to process a notification of a just submitted job that is not
         // yet present in the jobCache
         boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
-	string delegID = "";
+	string delegID;
         try {	    
+            // Locks the configuration manager
+            boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
+
             theProxy->Register(
                                theJob.getCreamURL().c_str(),
                                theJob.getCreamDelegURL().c_str(),
@@ -251,7 +254,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                                theJob.getUserProxyCertificate(),
                                url_jid,
 			       // -1,
-                               2, // 2 minute lease
+                               m_confMgr->getLeaseDeltaTime(), 
                                true /*autostart*/
                                );
         } catch( exception& ex ) {
@@ -261,8 +264,8 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
-            _ice->resubmit_job( theJob ); // Try to resubmit
-            _cache->erase( job_pos );
+            ice->resubmit_job( theJob ); // Try to resubmit
+            cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
 
@@ -290,7 +293,7 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 
         // The following is redundant, as logEvent as a (wanted) side
         // effect stores the job
-        _cache->put( theJob );
+        cache->put( theJob );
     } // this end-scope unlock the listener that now can accept new notifications
 
     /*
@@ -298,13 +301,13 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
      * in order to receive the status change notifications
      * of job just submitted. But only if listener is ON
      */
-    bool _tmp_start_listener;
+    bool tmp_start_listener;
     {
         boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-        _tmp_start_listener = m_confMgr->getStartListener();
+        tmp_start_listener = m_confMgr->getStartListener();
     }
 
-    if( _tmp_start_listener ) {
+    if( tmp_start_listener ) {
       string cemon_url;
       {
         boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
@@ -395,14 +398,14 @@ void iceCommandSubmit::execute( Ice* _ice ) throw( iceCommandFatal_ex&, iceComma
 string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::ClassadSyntax_ex& )
 {
     classad::ClassAdParser parser;
-    classad::ClassAd *_root = parser.ParseClassAd( oldJdl );
+    classad::ClassAd *root = parser.ParseClassAd( oldJdl );
 
-    if ( !_root ) {
+    if ( !root ) {
         throw util::ClassadSyntax_ex("ClassAd parser returned a NULL pointer parsing entire request");
     }
 
     string ceid;
-    if ( !_root->EvaluateAttrString( "ce_id", ceid ) ) {
+    if ( !root->EvaluateAttrString( "ce_id", ceid ) ) {
         throw util::ClassadSyntax_ex( "ce_id attribute not found" );
     }
     boost::trim_if( ceid, boost::is_any_of("\"") );
@@ -414,15 +417,15 @@ string iceCommandSubmit::creamJdlHelper( const string& oldJdl ) throw( util::Cla
 
     // Update jdl to insert two new attributes needed by cream:
     // QueueName and BatchSystem.
-    _root->InsertAttr( "QueueName", qname );
-    _root->InsertAttr( "BatchSystem", bsname );
+    root->InsertAttr( "QueueName", qname );
+    root->InsertAttr( "BatchSystem", bsname );
 
-    updateIsbList( _root );
-    updateOsbList( _root );
+    updateIsbList( root );
+    updateOsbList( root );
 
     string newjdl;
     classad::ClassAdUnParser unparser;
-    unparser.Unparse( newjdl, _root );
+    unparser.Unparse( newjdl, root );
     return newjdl;
 }
 

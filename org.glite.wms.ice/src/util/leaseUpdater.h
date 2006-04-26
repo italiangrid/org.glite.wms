@@ -57,14 +57,14 @@ namespace glite {
           class leaseUpdater : public iceThread {
 
           protected:
+              
+              time_t m_threshold; //! Residual lease durations less than this threshold are prolonged.
+              time_t m_delay; //! Delay between two updates, in seconds.
+              time_t m_delta; //! The amount of the lease update, in seconds.
 
-              time_t threshold; //! Residual lease durations less than this threshold are prolonged.
-              time_t delay; //! Delay between two updates, in seconds.
-              time_t delta; //! The amount of the lease update, in seconds.
-
-              log4cpp::Category *log_dev;
-              jobCache *cache;
-              boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
+              log4cpp::Category *m_log_dev;
+              jobCache *m_cache;
+              boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_creamClient;
 
               /**
                * Actually updates the lease for all active jobs in the cache.

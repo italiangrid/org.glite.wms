@@ -42,16 +42,16 @@ using namespace std;
 
 leaseUpdater::leaseUpdater( ) :
     iceThread( "ICE Lease Updater" ),
-    threshold( iceConfManager::getInstance()->getLeaseThresholdTime() * 60 ),
-    delay( 1*60 ), // lease updater wakes up every minute
-    delta( iceConfManager::getInstance()->getLeaseDeltaTime() * 60 ),
-    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    cache( jobCache::getInstance() ),
-    creamClient( 0 )
+    m_threshold( iceConfManager::getInstance()->getLeaseThresholdTime() * 60 ),
+    m_delay( 1*60 ), // lease updater wakes up every minute
+    m_delta( iceConfManager::getInstance()->getLeaseDeltaTime() * 60 ),
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
+    m_cache( jobCache::getInstance() ),
+    m_creamClient( 0 )
 {
     try {        
         soap_proxy::CreamProxy* p( new soap_proxy::CreamProxy( false ) );
-        creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
+        m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
     } 
@@ -65,23 +65,23 @@ leaseUpdater::~leaseUpdater( )
 void leaseUpdater::update_lease( void )
 {
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-    jobCache::iterator it = cache->begin();
-    while ( it != cache->end() ) {
+    jobCache::iterator it = m_cache->begin();
+    while ( it != m_cache->end() ) {
         if ( it->getEndLease() < time(0) ) {
-            // Purge expired job
-            it = cache->erase( it );
+            // Remove expired job from cache
+            it = m_cache->erase( it );
         } else {
-            if ( it->is_active() && 
-                 ( it->getEndLease() - time(0) < threshold ) ) 
+            if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
                 update_lease_for_job( *it );
-            it++;
+            }
+            ++it;
         }
     }
 }
 
 void leaseUpdater::update_lease_for_job( CreamJob& j )
 {
-    creamClient->clearSoap();
+    m_creamClient->clearSoap();
 
     map< string, time_t > newLease;
     vector< string > jobids;
@@ -90,11 +90,12 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 
     // Renew the lease
     try {
-        creamClient->Authenticate( j.getUserProxyCertificate() );
-        creamClient->Lease( j.getCreamURL().c_str(), jobids, delta, newLease );
+        m_creamClient->Authenticate( j.getUserProxyCertificate() );
+        m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
     } catch ( soap_proxy::soap_ex& ex ) {
-        log_dev->errorStream()
-            << "leaseUpdater::update_lease_for_job() - returned an exception: "
+        m_log_dev->errorStream()
+            << "leaseUpdater::update_lease_for_job() - "
+            << "returned an exception: "
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         // FIXME: what to do?
@@ -105,19 +106,21 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
         // The lease for this job has been updated
         // So update the job cache as well...
 
-        log_dev->infoStream()
-            << "leaseUpdater::update_lease_for_job() - updating lease for cream jobid=["
+        m_log_dev->infoStream()
+            << "leaseUpdater::update_lease_for_job() - "
+            << "updating lease for cream jobid=["
             << j.getJobID()
             << "]; old lease ends " << time_t_to_string( j.getEndLease() )
             << " new lease ends " << time_t_to_string( newLease[ j.getJobID() ] )
             << log4cpp::CategoryStream::ENDLINE;
         
         j.setEndLease( newLease[ j.getJobID() ] );
-        cache->put( j ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
+        m_cache->put( j ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
     } else {
         // there was an error updating the lease
-        log_dev->errorStream()
-            << "leaseUpdater::update_lease_for_job() - unable to update lease for cream jobid=["
+        m_log_dev->errorStream()
+            << "leaseUpdater::update_lease_for_job() - "
+            << "unable to update lease for cream jobid=["
             << j.getJobID()
             << "]; old lease ends " << time_t_to_string( j.getEndLease() )
             << log4cpp::CategoryStream::ENDLINE;
@@ -127,12 +130,12 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 void leaseUpdater::body( void )
 {
     while ( !isStopped() ) {
-        log_dev->infoStream()
+        m_log_dev->infoStream()
             << "leaseUpdater::body() - new iteration"
             << log4cpp::CategoryStream::ENDLINE;
 
         update_lease( );
 
-        sleep( delay );
+        sleep( m_delay );
     }
 }

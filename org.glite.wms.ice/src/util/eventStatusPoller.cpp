@@ -154,7 +154,7 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::Status > &job_status_list
 
                 jobIt = m_cache->erase( jobIt );
             } else {
-                job_status_list.push_back( the_job_status[0] );                
+                job_status_list.push_back( the_job_status[0] );
                 jobIt++;
             }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
