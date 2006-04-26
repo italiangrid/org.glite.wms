@@ -33,7 +33,7 @@ namespace glite {
 namespace wms {
 
 namespace ldif2classad	= common::ldif2classad;
-namespace utilities = common::utilities;
+namespace utilities     = common::utilities;
 
 namespace ism {
 namespace purchaser {
@@ -467,6 +467,7 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             "GlueSiteUniqueID",
             boost::tuples::get<0>(cl_it->second)
           );
+          std::vector<std::string> sebind;
           std::vector<classad::ExprTree*>  exprs;
           vector<classad_shared_ptr>::const_iterator se_it(
             (*ce_it)->second.second.begin()
@@ -480,6 +481,14 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
 	    static_cast<classad::ClassAd*>(
               exprs.back())->Update(*se_it->get()
             );
+ 
+            std::string gluecesebindseuniqueid;
+            static_cast<classad::ClassAd*>(exprs.back())->
+              EvaluateAttrString(
+                "GlueCESEBindSEUniqueID", gluecesebindseuniqueid
+            );
+            sebind.push_back(gluecesebindseuniqueid);
+
             static_cast<classad::ClassAd*>(exprs.back())->Insert(
               "name",
               classad::AttributeReference::MakeAttributeReference(
@@ -497,7 +506,10 @@ fetch_bdii_ce_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             "CloseStorageElements", 
             classad::ExprList::MakeExprList(exprs)
           );
-
+          (*ce_it)->second.first->Insert(
+            "GlueCESEBindGroupSEUniqueID",
+            classadutils::asExprList(sebind)
+          );
           try {  
             expand_glueceid_info((*ce_it)->second.first);
             insert_aux_requirements((*ce_it)->second.first);
