@@ -19,6 +19,7 @@ libglite_wms_ism_ii_purchaser_la_SOURCES = \
         ism-ii-purchaser.cpp
 
 libglite_wms_ism_rgma_purchaser_la_SOURCES = \
+	rgma-utils.cpp \
         ism-rgma-purchaser.cpp
 
 libglite_wms_ism_cemon_purchaser_la_SOURCES = \
