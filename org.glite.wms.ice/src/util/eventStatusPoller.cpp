@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * Event status poller
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
+
 // ICE includes
 #include "ice-core.h"
 #include "iceConfManager.h"
@@ -23,122 +42,108 @@
 #include <map>
 
 using namespace glite::wms::ice::util;
-using namespace glite::ce::cream_client_api;
+namespace cream_api=glite::ce::cream_client_api;
+namespace soap_proxy=glite::ce::cream_client_api::soap_proxy;
 namespace jobstat=glite::ce::cream_client_api::job_statuses;
-using namespace glite::ce::cream_client_api::util;
+namespace cream_util=glite::ce::cream_client_api::util;
 using namespace std;
 
 typedef vector<soap_proxy::Status>::iterator JobStatusIt;
 typedef vector<string>::iterator vstrIt;
 typedef vector<string>::const_iterator cvstrIt;
 
-/**
- * The following should organize the creamJobIDs in order to
- * group the maximum number of job related to the same CREAM URL and proxy
- * certificate, in order to send the status request for more jobs
- * to a single endpoint and with only one authentication call.
- */
-//______________________________________________________________________________
-void organizeJobs(const vector<CreamJob>& vec,
-		  map<string, map<string, vector<string>  > >& target)
-{
-  for(vector<CreamJob>::const_iterator cit = vec.begin();
-      cit != vec.end();
-      cit++) {
-	(target[cit->getEndpoint()])[cit->getUserProxyCertificate()].push_back( cit->getJobID() );
-  }
-}
 
-//______________________________________________________________________________
-eventStatusPoller::eventStatusPoller(
-				     glite::wms::ice::Ice* _iceManager,
-				     const int _d
-				     )
+//____________________________________________________________________________
+eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
   throw(eventStatusPoller_ex&)
   : iceThread( "event status poller" ),
-    delay(_d),
-    iceManager(_iceManager),
-    creamClient( 0 ),
-    log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-    _lb_logger( iceLBLogger::instance() ),
-    cache( jobCache::getInstance() )
+    m_delay( d ),
+    m_iceManager( manager ),
+    m_creamClient( 0 ),
+    m_log_dev( cream_api::util::creamApiLogger::instance()->getLogger()),
+    m_lb_logger( iceLBLogger::instance() ),
+    m_cache( jobCache::getInstance() )
 {
     try {
         soap_proxy::CreamProxy *p = new soap_proxy::CreamProxy(false);
-        creamClient.reset( p );
+        m_creamClient.reset( p );
     } catch(soap_proxy::soap_ex& ex) {
         throw eventStatusPoller_ex( ex.what() );
     } 
-    oneJobToQuery.reserve(1);
-    oneJobToPurge.reserve(1);
 }
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 eventStatusPoller::~eventStatusPoller()
 {
+
 }
 
-//______________________________________________________________________________
-bool eventStatusPoller::getStatus(void)
+//____________________________________________________________________________
+bool eventStatusPoller::getStatus( vector< soap_proxy::Status > &job_status_list)
 {
-    creamClient->clearSoap();
+    bool retval = true;
+
+    job_status_list.clear();
+
+    m_creamClient->clearSoap();
 
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
     time_t oldness;// = time(NULL)-jobIt->getLastUpdate();
     time_t threshold;// = iceConfManager::getInstance()->getPollerStatusThresholdTime();
-    bool _tmp_start_listener;
+    bool listener_started;
 
-    jobCache::iterator jobIt( cache->begin() );
+    jobCache::iterator jobIt( m_cache->begin() );
 
-    while( jobIt != cache->end() ) {
+    while( jobIt != m_cache->end() ) {
 
-        oneJobToQuery.clear();
+        oldness = time(NULL)-jobIt->getLastSeen();
         
 	{
             boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-            oldness = time(NULL)-jobIt->getLastSeen();
             threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
-            _tmp_start_listener = iceConfManager::getInstance()->getStartListener();
+            listener_started = iceConfManager::getInstance()->getStartListener();
 	}
         
-        log_dev->warnStream()
-            << "eventStatusPoller::getStatus() - Checking job cream/grid ID=[" 
-            << jobIt->getJobID()
-            << "]/["
-            << jobIt->getGridJobID()
-            << "]; oldness="
-            << oldness
-            << " thrshold=" 
-            << threshold
-            << log4cpp::CategoryStream::ENDLINE;
-        
-        
-        if( (oldness <  threshold) && _tmp_start_listener ) {
-            jobIt++;
+//         m_log_dev->infoStream()
+//             << "eventStatusPoller::getStatus() - Checking job cream/grid ID=[" 
+//             << jobIt->getJobID()
+//             << "]/["
+//             << jobIt->getGridJobID()
+//             << "]; oldness="
+//             << oldness
+//             << " thrshold=" 
+//             << threshold
+//             << log4cpp::CategoryStream::ENDLINE;
+                
+        if( (oldness <  threshold) && listener_started ) {
+            // This job is not old enough. Skip to next job
+            ++jobIt;
             continue;
         }
 
-        log_dev->infoStream()
+        m_log_dev->infoStream()
             << "eventStatusPoller::getStatus() - "
             << "Sending JobStatus request for Job ["
             << jobIt->getJobID() << "]"
             << log4cpp::CategoryStream::ENDLINE;
 
-        oneJobToQuery.push_back(jobIt->getJobID());
-        statusTarget.clear();
-        try {
-            creamClient->Authenticate( jobIt->getUserProxyCertificate() );
-            creamClient->Status(jobIt->getCreamURL().c_str(),
-                                oneJobToQuery,
-                                empty,
-				statusTarget,
-				-1,
-				-1 );
+        vector< string > job_to_query;
+        vector< soap_proxy::Status > the_job_status;
 
-            if ( statusTarget.empty() ) {
+        job_to_query.push_back( jobIt->getJobID() );
+        try {
+            m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
+            m_creamClient->Status(jobIt->getCreamURL().c_str(),
+                                  job_to_query,
+                                  vector<string>(),
+                                  the_job_status,
+                                  -1,
+                                  -1 );
+
+            if ( the_job_status.empty() ) {
                 // The job is unknown by ICE; remove from the jobCache
-                log_dev->warnStream()
+                m_log_dev->warnStream()
                     << "Job cream/grid ID=["
                     << jobIt->getJobID()
                     << "]/["
@@ -147,47 +152,73 @@ bool eventStatusPoller::getStatus(void)
                     << "Removing from the job cache"
                     << log4cpp::CategoryStream::ENDLINE;
 
-                jobIt = cache->erase( jobIt );
+                jobIt = m_cache->erase( jobIt );
             } else {
+                job_status_list.push_back( the_job_status[0] );                
                 jobIt++;
-		// statusTarget[0] contains the current job's info
-		// checkJobs will take care of it
             }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
             // this exception should not be raised because
             // the CreamJob is created from another valid one
-            log_dev->log(log4cpp::Priority::ERROR,
-                         "eventStatusPoller::getStatus() - Fatal error: CreamJob creation failed from a valid one!!!");
+            m_log_dev->fatalStream()
+                << "eventStatusPoller::getStatus() - "
+                << "Fatal error: CreamJob creation failed from a valid one!"
+                << " Exception is [" << ex.what() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+
             exit(1);
         } catch(soap_proxy::auth_ex& ex) {
-            log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - Cannot query status job: ")
-                         + ex.what());
+            m_log_dev->errorStream()
+                << "eventStatusPoller::getStatus() - "
+                << "Cannot query status job for JobId=["
+                << jobIt->getJobID()
+                << "]. Exception is [" << ex.what() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+            retval = false;
         } catch(soap_proxy::soap_ex& ex) {
-            log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a soap_ex exception: ") + ex.what());
-            return false;
-        } catch(cream_exceptions::BaseException& ex) {
-            log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a BaseException exception: ")
-                         + ex.what());
-            return false; 
-        } catch(cream_exceptions::InternalException& ex) {
-            log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a InternalException exception: ")
-                         + ex.what());
-            return false;
-        } catch(cream_exceptions::DelegationException&) {
-            log_dev->log(log4cpp::Priority::ERROR,
-                         string("eventStatusPoller::getStatus() - CreamProxy::Status() raised a DelegationException exception"));
-            return false;
+            m_log_dev->errorStream()
+                << "eventStatusPoller::getStatus() - "
+                << "CreamProxy::Status() raised a soap_ex exception ["
+                << ex.what() << "] for JobId=["
+                << jobIt->getJobID() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+
+            retval = false;
+        } catch(cream_api::cream_exceptions::BaseException& ex) {
+            m_log_dev->errorStream()
+                << "eventStatusPoller::getStatus() - "
+                << "CreamProxy::Status() raised a BaseException ["
+                << ex.what() << "] for JobId=["
+                << jobIt->getJobID() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+
+            retval = false; 
+        } catch(cream_api::cream_exceptions::InternalException& ex) {
+            m_log_dev->errorStream()
+                << "eventStatusPoller::getStatus() - "
+                << "CreamProxy::Status() raised an InternalException ["
+                << ex.what() << "] for JobId=["
+                << jobIt->getJobID() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+
+            retval = false;
+        } catch(cream_api::cream_exceptions::DelegationException& ex) {
+            m_log_dev->errorStream()
+                << "eventStatusPoller::getStatus() - "
+                << "CreamProxy::Status() raised an DelegationException ["
+                << ex.what() << "] for JobId=["
+                << jobIt->getJobID() << "]"
+                << log4cpp::CategoryStream::ENDLINE;
+
+            retval = false;
         }
     }
-    return true;
+    return retval;
 }
 
-//______________________________________________________________________________
-void eventStatusPoller::checkJobs()
+
+//____________________________________________________________________________
+void eventStatusPoller::checkJobs( const vector< soap_proxy::Status >& status_list )
 {
 
     /**
@@ -196,88 +227,83 @@ void eventStatusPoller::checkJobs()
      * TO PURGE ON THE SAME CREAM MUST BE PUT IN A VECTOR AND THE A
      * SINGLE REQUEST WITH THIS VECTOR MUST BE SENT TO THAT CREAM
      */
-    api::job_statuses::job_status stNum;
-    string exitCode;
-    string addrURL;
-    vector<string> pieces, jobs_to_purge;
 
-    pieces.reserve(3);
-    jobs_to_purge.reserve(100);
+    vector< string > jobs_to_purge;
 
-    for( JobStatusIt it = statusTarget.begin(); it != statusTarget.end(); ++it) {
+    for( vector< soap_proxy::Status >::const_iterator it = status_list.begin(); it != status_list.end(); ++it) {
 
-        stNum = jobstat::getStatusNum( it->getStatusName() );
-        exitCode = it->getExitCode();
-        string cid( it->getJobID() );
-        
-        bool DONE = (stNum == api::job_statuses::DONE_FAILED) ||
-            (stNum == api::job_statuses::DONE_OK);
+        api::job_statuses::job_status stNum = jobstat::getStatusNum( it->getStatusName() );
+        string exitCode( it->getExitCode() );
+        string cid( it->getJobID() );        
+        bool job_is_done = (stNum == cream_api::job_statuses::DONE_FAILED) ||
+            (stNum == cream_api::job_statuses::DONE_OK);
         
         /**
-         * Let's wait if the job has done but CREAM didn't
-         * retrieve yet the exit code
+         * We skip those jobs for which CREAM did not returned the
+         * exit code yet.
          */
-        if( DONE && (exitCode=="W") ) {
-            log_dev->infoStream()
+        if( job_is_done && (exitCode=="W") ) {
+            m_log_dev->infoStream()
                 << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
-                << cid <<"] because exitCode isn't available yet. "
+                << cid <<"] because exitCode isn not available yet."
                 << log4cpp::CategoryStream::ENDLINE;
-            return;
+            continue;
         }
         
-        if ( stNum == api::job_statuses::DONE_FAILED ||
-             stNum == api::job_statuses::ABORTED ) {
+        switch( stNum ) {
             
-            log_dev->infoStream()
+        case api::job_statuses::DONE_FAILED:
+        case api::job_statuses::ABORTED:
+            
+            m_log_dev->infoStream()
                 << "eventStatusPoller::checkJobs() - JobID ["
                 << cid <<"] is failed or aborted. "
                 << "Removing from cache and resubmitting..."
                 << log4cpp::CategoryStream::ENDLINE;
             
-            /**
-             * NOW MUST RESUBMIT THIS JOB
-             *
-             */
-            if(iceManager) {
+            if( m_iceManager ) {
                 
-                jobCache::iterator jobIt = cache->lookupByCreamJobID( cid );
+                jobCache::iterator jobIt = m_cache->lookupByCreamJobID( cid );
                 
-                if ( jobIt != cache->end() ) {
-                    iceManager->resubmit_job( *jobIt );
+                if ( jobIt != m_cache->end() ) {
+                    m_iceManager->resubmit_job( *jobIt );
+                } else {
+                    m_log_dev->errorStream()
+                        << "eventStatusPoller::checkJobs() - JobID["
+                        << cid << "] disappeared from the cache. "
+                        << "Hope this is fine..."
+                        << log4cpp::CategoryStream::ENDLINE;
                 }
-                // FIXME: else????
-                // iceManager->doOnJobFailure(jobCache::getInstance()->get_grid_jobid_by_cream_jobid(cid));
-            }
+                
+            }                
+            // do NOT break: fall to next case
+
+        case api::job_statuses::DONE_OK:
+        case api::job_statuses::CANCELLED:
+            m_log_dev->infoStream()
+                << "eventStatusPoller::checkJobs() - Scheduling JobID{"
+                << cid << "] to be purged"
+                << log4cpp::CategoryStream::ENDLINE;
             jobs_to_purge.push_back(cid);
+            break;
+        default:
+            // nothing        
+            ;
         }
         
-        if ( stNum == api::job_statuses::DONE_OK ||
-             stNum == api::job_statuses::CANCELLED )
-            {
-                // schedule this job for future purge
-                jobs_to_purge.push_back(cid);
-            }
-        
-        log_dev->infoStream()
-            << "eventStatusPoller::checkJobs() - "
-            << jobs_to_purge.size() << " jobs to purge"
-            << log4cpp::CategoryStream::ENDLINE;
-        
-        this->purgeJobs(jobs_to_purge);
-        
-        sleep(1); // sleep a little bit to not overload CREAM with too
-        // many purges per second
-        
-        jobs_to_purge.clear();
     }
+
+    purgeJobs(jobs_to_purge);
+    
 }
 
-//______________________________________________________________________________
-void eventStatusPoller::updateJobCache()
+
+//____________________________________________________________________________
+void eventStatusPoller::updateJobCache( const vector< soap_proxy::Status >& status_list )
 {
     int count;
-    JobStatusIt it;
-    for ( it = statusTarget.begin(), count = 1; it != statusTarget.end(); ++it, ++count ) {
+    vector< soap_proxy::Status >::const_iterator it;
+    for ( it = status_list.begin(), count = 1; it != status_list.end(); ++it, ++count ) {
 
         glite::ce::cream_client_api::job_statuses::job_status
             stNum = jobstat::getStatusNum( it->getStatusName() );
@@ -288,15 +314,15 @@ void eventStatusPoller::updateJobCache()
             
             string cid( it->getJobID() );
             
-            jobCache::iterator jit( cache->lookupByCreamJobID( cid ) );
+            jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );
             
-            if ( jit != cache->end() ) {
+            if ( jit != m_cache->end() ) {
                 // Check if the status changed after the last 
                 // status change as recorded by the jobCache
                 
                 if ( jit->get_num_logged_status_changes() < count ) {
                     
-                    log_dev->infoStream()
+                    m_log_dev->infoStream()
                         << "eventStatusPoller::updateJobCache() - "
                         << "Updating jobcache with "
                         << "grid_jobid = [" << jit->getGridJobID() << "] "
@@ -308,110 +334,114 @@ void eventStatusPoller::updateJobCache()
                     jit->set_num_logged_status_changes( count );
                     
                     // Log to L&B
-                    _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
+                    m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
                 }
                 jit->setLastSeen( time(0) );
-                cache->put( *jit );
+                m_cache->put( *jit );
             } else {
-                log_dev->errorStream() 
+                m_log_dev->errorStream() 
                     << "cream_jobid ["<< cid << "] disappeared!"
                     << log4cpp::CategoryStream::ENDLINE;
             }
         } catch(exception& ex) {
-            log_dev->log(log4cpp::Priority::ERROR, ex.what());
+            m_log_dev->log(log4cpp::Priority::ERROR, ex.what());
             exit(1);
         }
     }
 }
 
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
-    // if(!jobs_to_purge.size()) return;
-  string cid;
-  cvstrIt it( jobs_to_purge.begin() );
-  while( it != jobs_to_purge.end() ) {
-      oneJobToPurge.clear();
+    string cid;
+    for ( vector<string>::const_iterator it = jobs_to_purge.begin();
+          it != jobs_to_purge.end(); ++it ) {
 
-      try {
-          boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-          log_dev->debugStream()
-              << "eventStatusPoller::purgeJobs() - "
-              << "Fetching Job for ID [" << *it << "]"
-              << log4cpp::CategoryStream::ENDLINE;
 
-          jobCache::iterator jit = cache->lookupByCreamJobID( *it );
-	  if( jit == cache->end() ) {
-	    log_dev->errorStream() 
+        try {
+            boost::recursive_mutex::scoped_lock M( jobCache::mutex );
+            //           m_log_dev->infoStream()
+            //               << "eventStatusPoller::purgeJobs() - "
+            //               << "Fetching Job for ID [" << *it << "]"
+            //               << log4cpp::CategoryStream::ENDLINE;
+
+            jobCache::iterator jit = m_cache->lookupByCreamJobID( *it );
+            if( jit == m_cache->end() ) {
+                m_log_dev->errorStream() 
+                    << "eventStatusPoller::purgeJobs() - "
+                    << "NOT Found in chace job ["
+                    << *it << "]"
+                    << log4cpp::CategoryStream::ENDLINE;
+            } else {
+                cid = jit->getJobID();
+                m_log_dev->infoStream()
+                    << "eventStatusPoller::purgeJobs() - "
+                    << "Calling JobPurge for JobId ["
+                    << cid << "]"
+                    << log4cpp::CategoryStream::ENDLINE;
+                // We cannot accumulate more jobs to purge in a vector
+                // because we must authenticate different jobs with different
+                // user certificates.
+                m_creamClient->Authenticate( jit->getUserProxyCertificate());
+                vector< string > oneJobToPurge;
+                oneJobToPurge.push_back( jit->getJobID() );
+                m_creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+                m_cache->erase( jit );
+            }
+        } catch (ClassadSyntax_ex& ex) {
+            /**
+             * this exception should not be raised because
+             * the CreamJob is created from another valid one
+             */
+            m_log_dev->fatalStream() 
                 << "eventStatusPoller::purgeJobs() - "
-                << "NOT Found in chace job ["
-                << *it << "]"
+                << "Fatal error: CreamJob creation failed "
+                << "copying from a valid one!!!"
                 << log4cpp::CategoryStream::ENDLINE;
-            it++; // advance to next job
-	  } else {
-              cid = jit->getJobID();
-              log_dev->infoStream()
-                  << "eventStatusPoller::purgeJobs() - "
-                  << "Calling JobPurge for host ["
-                  << jit->getCreamURL() << "]"
-                  << log4cpp::CategoryStream::ENDLINE;
-              // We cannot accumulate more jobs to purge in a vector
-              // because we must authenticate different jobs with different
-              // user certificates.
-              creamClient->Authenticate( jit->getUserProxyCertificate());
-              oneJobToPurge.push_back( jit->getJobID() );
-              creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
-              jit = cache->erase( jit );
-          }
-      } catch (ClassadSyntax_ex& ex) {
-          /**
-           * this exception should not be raised because
-           * the CreamJob is created from another valid one
-           */
-          log_dev->errorStream() 
-              << "eventStatusPoller::purgeJobs() - "
-              << "Fatal error: CreamJob creation failed "
-              << "copying from a valid one!!!"
-              << log4cpp::CategoryStream::ENDLINE;
-          exit(1);
-      } catch(soap_proxy::auth_ex& ex) {
-          log_dev->log(log4cpp::Priority::ERROR,
-                       string("eventStatusPoller::purgeJobs() - Cannot purge job: ") + ex.what());
-      } catch(cream_exceptions::BaseException& s) {
-          log_dev->log(log4cpp::Priority::ERROR, s.what());
-      } catch(cream_exceptions::InternalException& severe) {
-          log_dev->log(log4cpp::Priority::ERROR, severe.what());
-          exit(1);
-      } catch(elementNotFound_ex& ex) {
-          log_dev->errorStream()
-              << "eventStatusPoller::purgeJobs() - Cannot remove [" << cid
-              << "] from job cache: " << ex.what()
-              << log4cpp::CategoryStream::ENDLINE;
-      }
+            exit(1);
+        } catch(soap_proxy::auth_ex& ex) {
+            m_log_dev->errorStream()
+                << "eventStatusPoller::purgeJobs() - "
+                << "Cannot purge job: " << ex.what()
+                << log4cpp::CategoryStream::ENDLINE;
+        } catch(cream_api::cream_exceptions::BaseException& s) {
+            m_log_dev->log(log4cpp::Priority::ERROR, s.what());
+        } catch(cream_api::cream_exceptions::InternalException& severe) {
+            m_log_dev->log(log4cpp::Priority::FATAL, severe.what());
+            exit(1);
+        } catch(elementNotFound_ex& ex) {
+            m_log_dev->errorStream()
+                << "eventStatusPoller::purgeJobs() - Cannot remove [" << cid
+                << "] from job cache: " << ex.what()
+                << log4cpp::CategoryStream::ENDLINE;
+        }
     }
 }
 
-//______________________________________________________________________________
+
+//____________________________________________________________________________
 void eventStatusPoller::body( void )
 {
     while( !isStopped() ) {
-        if(getStatus()) {
-            try{
-                updateJobCache();
-            }
-            catch(...) {
-                log_dev->log(log4cpp::Priority::ERROR, 
-                             "eventStatusPoller::operator() - catched unknown ex");
-            }
+        vector< soap_proxy::Status > j_status;
+        getStatus( j_status );
+        try {
+            updateJobCache( j_status );
         }
-        checkJobs(); // resubmits aborted/done-failed and/or purges terminated jobs
+        catch(...) {
+            m_log_dev->errorStream()
+                << "eventStatusPoller::operator() - "
+                << "catched unknown ex"
+                << log4cpp::CategoryStream::ENDLINE;
+        }
+        checkJobs( j_status ); // resubmits aborted/done-failed and/or purges terminated jobs
         /**
-         * Let's dont use boost::thread::sleep because right not (18/11/2005)
-         * the documentation says that it will be replaced by a more robust 
-         * mechanism
+         * We don't use boost::thread::sleep because right now
+         * (18/11/2005) the documentation says it will be replaced by
+         * a more robust mechanism in the future.
          */
-        sleep(delay);
+        sleep( m_delay );
     }
 }
 

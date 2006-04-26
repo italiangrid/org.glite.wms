@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004 on behalf of the EU EGEE Project:
+ * The European Organization for Nuclear Research (CERN),
+ * Istituto Nazionale di Fisica Nucleare (INFN), Italy
+ * Datamat Spa, Italy
+ * Centre National de la Recherche Scientifique (CNRS), France
+ * CS Systeme d'Information (CSSI), France
+ * Royal Institute of Technology, Center for Parallel Computers (KTH-PDC), Sweden
+ * Universiteit van Amsterdam (UvA), Netherlands
+ * University of Helsinki (UH.HIP), Finland
+ * University of Bergen (UiB), Norway
+ * Council for the Central Laboratory of the Research Councils (CCLRC), United Kingdom
+ *
+ * Event status poller
+ *
+ * Authors: Alvise Dorigo <alvise.dorigo@pd.infn.it>
+ *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
+ */
 
 #ifndef GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H
 #define GLITE_WMS_ICE_UTIL_EVENTSTATUSPOLLER_H
@@ -34,42 +52,58 @@ namespace glite {
 	*/
 	class eventStatusPoller : public iceThread {
 
-	  int delay;
-	  std::vector< std::string > empty;
-	  std::vector< glite::ce::cream_client_api::soap_proxy::Status > statusTarget;
-	  Ice* iceManager;
+	  int m_delay;
+	  Ice* m_iceManager;
+	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_creamClient;
+	  log4cpp::Category* m_log_dev;
+          iceLBLogger* m_lb_logger;
+          jobCache* m_cache;
 
-	  void purgeJobs(const std::vector<std::string>&);
+	  void purgeJobs(const std::vector< std::string >& );
 
-	  boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
-	  std::vector<std::string> oneJobToQuery;
-	  std::vector<std::string> oneJobToPurge;
+          /**
+           * Fills vector l with job status informations for all
+           * currently running jobs which did not send status change
+           * notifications for a given threshold.
+           *
+           * @param l the resulting list of job states
+           *
+           * @return true iff all jobs in cache have been checked succesfully;
+           * false if at least on job gave problems (i.e., raised excaptions).
+           * Note that in any case we try to check ALL jobs in cache, so we
+           * do not stop after the first failure.
+           */
+	  bool getStatus( std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
 
-	  bool getStatus(void);
-	  void updateJobCache(void);
-	  void checkJobs(void);
+          /**
+           * Updates the status informations for all jobs in the list
+           * l.
+           */
+	  void updateJobCache( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
 
-	  log4cpp::Category* log_dev;
-          iceLBLogger* _lb_logger;
-          jobCache* cache;
+          /**
+           * Checks whether jobs in the list l need to be purged or
+           * resubmitted. This method calls purgeJobs for those who
+           * need to be purged.
+           */
+	  void checkJobs( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& );
 
-	  eventStatusPoller( const eventStatusPoller& ) {}
+          /**
+           * Prevents copying
+           */
+	  eventStatusPoller( const eventStatusPoller& ) { };
 
 	public:
 	  //! eventStatusPoller constructor
 	  /*!
 	    Creates a eventStatusPoller object
-	    \param iceManager is the ICE main object (see the ice class) that creates the poller thread
+	    \param iceManager is the ICE main object (see the ice class) that creates the poller thread. Ownership of this pointer is not transferred
 	    \param D is the delay (default 10 seconds) between two polls
 	    \throw eventStatusPoller_ex& if the creation of the internal cream communication client failed
 	    \sa ice
 	  */
-	  eventStatusPoller(
-			    Ice* iceManager, //! ownership of this pointer is not transferred
-			    const int D=10
-			    ) 
+	  eventStatusPoller( Ice* iceManager, int d=10 ) 
 	    throw(glite::wms::ice::util::eventStatusPoller_ex&);
-
 	  
 	  virtual ~eventStatusPoller();
 
