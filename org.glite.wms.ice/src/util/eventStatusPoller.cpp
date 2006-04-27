@@ -309,8 +309,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
             jobs_to_purge.push_back(cid);
             break;
         default:
-            // nothing        
-            ;
+            ; // nothing done
         }
         
     }
@@ -377,9 +376,9 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
             // Log to L&B
             m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
         }
-        jit->setLastSeen( time(0) );
-        m_cache->put( *jit );
     }
+    jit->setLastSeen( time(0) );
+    m_cache->put( *jit );
 }
 
 
