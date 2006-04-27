@@ -73,20 +73,26 @@ namespace glite {
            * Note that in any case we try to check ALL jobs in cache, so we
            * do not stop after the first failure.
            */
-	  bool getStatus( std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
+	  bool getStatus( std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
 
           /**
            * Updates the status informations for all jobs in the list
            * l.
            */
-	  void updateJobCache( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
+	  void updateJobCache( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
+
+          /**
+           * Updates the cache with the job status changes (for a single job)
+           * contained in l.
+           */
+          void update_single_job( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& l );
 
           /**
            * Checks whether jobs in the list l need to be purged or
            * resubmitted. This method calls purgeJobs for those who
            * need to be purged.
            */
-	  void checkJobs( const std::vector< glite::ce::cream_client_api::soap_proxy::Status >& );
+	  void checkJobs( const std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& );
 
           /**
            * Prevents copying
