@@ -52,6 +52,23 @@ typedef vector<soap_proxy::Status>::iterator JobStatusIt;
 typedef vector<string>::iterator vstrIt;
 typedef vector<string>::const_iterator cvstrIt;
 
+/**
+ * The following method will be used when the scenario with many jobs
+ * and several CREAM urls will happen. Many jobs can be reorganized 
+ * in order to group the maximum number of job related to the same
+ * CREAM Url AND the same proxy certificate, in order to reduce the
+ * number of authentications on the same CREAM host
+ */
+//_____________________________________________________________________________
+void organizeJobs( const vector<CreamJob> & vec, 
+                   map< string, map<string, vector<string> > >& target)
+{
+  for(vector<CreamJob>::const_iterator cit = vec.begin();
+      cit != vec.end();
+      ++cit) {
+	( target[cit->getEndpoint()] )[ cit->getUserProxyCertificate() ].push_back( cit->getJobID() );
+  }
+}
 
 //____________________________________________________________________________
 eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
@@ -83,7 +100,9 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::Status > &job_status_list
 {
     bool retval = true;
 
-    job_status_list.clear();
+    // This clear is not needed beacuse the arg is created just before to call
+    // this method.
+    //job_status_list.clear();
 
     m_creamClient->clearSoap();
 

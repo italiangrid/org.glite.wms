@@ -316,12 +316,12 @@ void iceUtil::eventStatusListener::init(void)
           for(jobCache::iterator it=cache->begin(); it != cache->end(); it++) {
               ceurl = it->getCreamURL();
               cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
-              log_dev->infoStream() 
+              log_dev->infoStream()
                   << "eventStatusListener::init() - "
                   << "For current CREAM, cemonUrlCache returned CEMon URL ["
                   << cemonURL<<"]"
                   << log4cpp::CategoryStream::ENDLINE;
-	  if( cemonURL.empty() ) {
+	    if( cemonURL.empty() ) {
               try {
                   api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
                   api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
@@ -351,8 +351,7 @@ void iceUtil::eventStatusListener::init(void)
                   ceurls.insert( cemonURL );
                   cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
               }              
-	  }
-          
+	    }
           }
       } // lock on the cemonUrlCache
   }
