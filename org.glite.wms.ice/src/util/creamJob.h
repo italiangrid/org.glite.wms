@@ -62,6 +62,7 @@ namespace glite {
           time_t last_seen; //! The time of the last received notification for the job
           time_t end_lease; //! The time the lease for this job ends
 	  time_t proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
+	  int    statusPollRetryCount; //! number of time we tried to get the status of the job
 
 	public:
 
@@ -89,6 +90,8 @@ namespace glite {
               last_seen = C.last_seen;
               end_lease = C.end_lease;
 	      proxyCertTimestamp = C.proxyCertTimestamp;
+	      // is the following actually needed ? // FIXME
+	      //statusPollRetryCount = C.statusPollRetryCount;
           }
 
 	  //! Sets the status of the CreamJob object
@@ -142,7 +145,9 @@ namespace glite {
           std::string getDelegationId( void ) const { return delegation_id; }
 	  //! Gets the last modification time of the user proxy cert file
 	  time_t getProxyCertLastMTime( void ) const { return proxyCertTimestamp; }
-
+	  int    getStatusPollRetryCount( void ) const { return statusPollRetryCount; }
+	  void   incStatusPollRetryCount( void ) { statusPollRetryCount++; }
+	  void   resetStatusPollRetryCount( void ) { statusPollRetryCount=0; }
           //! Returns true iff the job is active (i.e., the job is either registered, idle, pending, idle, running or held
           bool is_active( void ) const;
 

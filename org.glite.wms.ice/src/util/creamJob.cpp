@@ -47,7 +47,8 @@ iceUtil::CreamJob::CreamJob( ) :
     status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
     last_seen( time(0) ),
-    end_lease( last_seen + 60*30 ) // FIXME: remove hardcoded default
+    end_lease( last_seen + 60*30 ), // FIXME: remove hardcoded default
+    statusPollRetryCount( 0 )
 {
 
 }

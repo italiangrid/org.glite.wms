@@ -41,6 +41,8 @@
 #include <vector>
 #include <map>
 
+#define STATUS_POLL_RETRY_COUNT 4
+
 using namespace glite::wms::ice::util;
 namespace cream_api=glite::ce::cream_client_api;
 namespace soap_proxy=glite::ce::cream_client_api::soap_proxy;
@@ -88,7 +90,7 @@ eventStatusPoller::eventStatusPoller( glite::wms::ice::Ice* manager, int d )
         m_creamClient.reset( p );
     } catch(soap_proxy::soap_ex& ex) {
         throw eventStatusPoller_ex( ex.what() );
-    } 
+    }
 }
 
 //____________________________________________________________________________
@@ -155,18 +157,34 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
 
             if ( the_job_status.empty() ) {
                 // The job is unknown by ICE; remove from the jobCache
-                m_log_dev->warnStream()
+
+		jobIt->incStatusPollRetryCount();
+		if( jobIt->getStatusPollRetryCount() < STATUS_POLL_RETRY_COUNT ) {
+		  m_log_dev->warnStream()
                     << "Job cream/grid ID=["
                     << jobIt->getJobID()
                     << "]/["
                     << jobIt->getGridJobID()
                     << "] was not found on CREAM; "
+                    << "retry-ing later..."
+                    << log4cpp::CategoryStream::ENDLINE;
+		  jobIt++;
+		} else {
+                  m_log_dev->warnStream()
+                    << "Job cream/grid ID=["
+                    << jobIt->getJobID()
+                    << "]/["
+                    << jobIt->getGridJobID()
+                    << "] was not found on CREAM after " << STATUS_POLL_RETRY_COUNT
+		    << "retries; "
                     << "Removing from the job cache"
                     << log4cpp::CategoryStream::ENDLINE;
 
-                jobIt = m_cache->erase( jobIt );
+                  jobIt = m_cache->erase( jobIt );
+		}
             } else {
                 job_status_list.push_back( the_job_status[0] );
+		jobIt->resetStatusPollRetryCount();
                 jobIt++;
             }
         } catch (ClassadSyntax_ex& ex) { // FIXME: never thrown?
@@ -212,7 +230,10 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
                 << ex.what() << "] for JobId=["
                 << jobIt->getJobID() << "]"
                 << log4cpp::CategoryStream::ENDLINE;
-
+	    sleep(2); // this ex can be raised if the remote service is not reachable
+		      // and getStatus is called again immediately. Untill the service is down
+		      // this could overload the cpu and the logfile. So let's wait for a while before
+		      // returning...
             retval = false;
         } catch(cream_api::cream_exceptions::DelegationException& ex) {
             m_log_dev->errorStream()
@@ -250,7 +271,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         the_info.getStatusList( status_changes );
 
         if ( status_changes.empty() ) {
-            // If there are no job status changes, 
+            // If there are no job status changes,
             continue;
         }
         soap_proxy::Status last_status( status_changes.back() );
@@ -271,7 +292,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         if( job_is_done && (exitCode=="W") ) {
             m_log_dev->infoStream()
                 << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
-                << cid <<"] because exitCode isn not available yet."
+                << cid <<"] because exitCode is not available yet."
                 << log4cpp::CategoryStream::ENDLINE;
             continue;
         }
@@ -280,7 +301,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
 
         case api::job_statuses::DONE_FAILED:
         case api::job_statuses::ABORTED:
-            
+
             m_log_dev->infoStream()
                 << "eventStatusPoller::checkJobs() - JobID ["
                 << cid <<"] is failed or aborted. "
@@ -300,7 +321,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
                         << "Hope this is fine..."
                         << log4cpp::CategoryStream::ENDLINE;
                 }
-                
+
             }
             // do NOT break: fall to next case
 
@@ -329,7 +350,7 @@ void eventStatusPoller::updateJobCache( const vector< soap_proxy::JobInfo >& inf
 
         vector< soap_proxy::Status > status_changes;
         it->getStatusList( status_changes );
-        
+
         update_single_job( status_changes );
     }
 }
@@ -349,11 +370,11 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 
     // Locks the cache
     boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-            
+
     jobCache::iterator jit( m_cache->lookupByCreamJobID( cid ) );
 
     if ( m_cache->end() == jit ) {
-        m_log_dev->errorStream() 
+        m_log_dev->errorStream()
             << "cream_jobid ["<< cid << "] disappeared!"
             << log4cpp::CategoryStream::ENDLINE;
         return;
@@ -363,9 +384,9 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 
         glite::ce::cream_client_api::job_statuses::job_status
             stNum = jobstat::getStatusNum( it->getStatusName() );
-        
+
         if ( jit->get_num_logged_status_changes() < count ) {
-            
+
             m_log_dev->infoStream()
                 << "eventStatusPoller::updateJobCache() - "
                 << "Updating jobcache with "
@@ -373,7 +394,7 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
                 << "cream_jobid = [" << cid << "]"
                 << " status = [" << it->getStatusName() << "]"
                 << log4cpp::CategoryStream::ENDLINE;
-            
+
             jit->setStatus( stNum );
             jit->set_num_logged_status_changes( count );
 
