@@ -43,6 +43,20 @@
 #include <sys/mman.h>
 
 
+
+// Voms implementation
+// #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
+// #include "glite/security/voms/voms_api.h"  // voms parsing
+
+/*
+extern "C" {
+        #include "glite/security/voms/voms_apic.h"
+}
+*/
+
+
+
+
 namespace glite {
 namespace wms{
 namespace client {
@@ -57,6 +71,15 @@ using namespace glite::wms::wmproxyapiutils;
 using namespace glite::wmsutils::exception;
 namespace configuration = glite::wms::common::configuration;
 namespace fs = boost::filesystem ;
+
+
+
+
+const char * X509_VOMS_DIR = "X509_VOMS_DIR";
+const char * X509_CERT_DIR = "X509_CERT_DIR";
+const char * VOMS_DIR = "/etc/grid-security/vomsdir";
+const char * CERT_DIR = "/etc/grid-security/certificates";
+
 
 
 const char*  WMS_CLIENT_CONFIG			=	"GLITE_WMS_CLIENT_CONFIG";
@@ -84,6 +107,184 @@ const string FILE_PROTOCOL = "file://" ;
 const char* GZ_SUFFIX = ".gz";
 const char* TAR_SUFFIX = ".tar";
 const string GZ_MODE = "wb6f";
+
+
+
+//                 VOMS METHODS (BEGIN)
+#ifdef  vomsapi
+/******************************************************************
+ method :load_chain
+******************************************************************/
+STACK_OF(X509) *load_chain(char *certfile){
+	STACK_OF(X509_INFO) *sk=NULL;
+	STACK_OF(X509) *stack=NULL;
+	BIO *in=NULL;
+	X509_INFO *xi;
+	int first = 1;
+	if(!(stack = sk_X509_new_null())) {
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		throw  *createWmpException(new ProxyFileException, "load_chain",
+			string ("memory allocation failure") ) ;
+	}
+	if(!(in=BIO_new_file(certfile, "r"))) {
+		// goto end;
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		throw  *createWmpException(new ProxyFileException, "load_chain",
+			string ("error opening proxy file") ) ;
+	}
+	// This loads from a file, a stack of x509/crl/pkey sets
+	if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+		// goto end;
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		throw  *createWmpException(new ProxyFileException, "load_chain",
+			string (" error reading proxy file") ) ;
+	}
+	// Scan over it and pull out the certs
+	while (sk_X509_INFO_num(sk)){
+		//  skip first cert
+		if (first) {
+			first = 0;
+			continue;
+		}
+		xi=sk_X509_INFO_shift(sk);
+		if (xi->x509 != NULL) {
+			sk_X509_push(stack,xi->x509);
+			xi->x509=NULL;
+		}
+		X509_INFO_free(xi);
+	}
+	if(!sk_X509_num(stack)) {
+		sk_X509_free(stack);
+		BIO_free(in);
+		sk_X509_INFO_free(sk);
+		// goto end;
+		throw  *createWmpException(new ProxyFileException, "load_chain",
+			string ("no certificates certfile") ) ;
+	}
+	BIO_free(in);
+	sk_X509_INFO_free(sk);
+	return stack;
+}
+
+/******************************************************************
+private method: load_voms
+*******************************************************************/
+int  load_voms (vomsdata& d, const char *pxfile ){
+	BIO  *in = NULL;
+	X509 *x  = NULL;
+	d.data.clear() ;
+	STACK_OF(X509) *chain = NULL;
+	SSLeay_add_ssl_algorithms();
+	char *of   = const_cast<char *>(pxfile);
+	in = BIO_new(BIO_s_file());
+	if (in) {
+		if (BIO_read_filename(in, of) > 0) {
+			x = PEM_read_bio_X509(in, NULL, 0, NULL);
+			if(!x){
+				// Couldn't find a valid proxy.
+				throw  *createWmpException(new ProxyFileException, "load_voms",
+					"Couldn't find a valid proxy") ;
+			}
+			chain = load_chain(of);
+			d.SetVerificationType((verify_type)(VERIFY_SIGN | VERIFY_KEY));
+			if (!d.Retrieve(x, chain, RECURSE_CHAIN)){
+				d.SetVerificationType((verify_type)(VERIFY_NONE));
+				if (d.Retrieve(x, chain, RECURSE_CHAIN)){
+					// WARNING: Unable to verify signature!"
+				}
+			}
+			sk_X509_free(chain);
+		}else {
+			// Couldn't find a valid proxy.
+			throw  *createWmpException(new ProxyFileException, "load_voms",
+				"Couldn't find a valid proxy") ;
+		}
+	}
+	// Release memory
+	BIO_free(in);
+	return 0;
+}
+
+#endif
+
+
+/**
+*     Returns the Default VirtualOrganisation for the specified certificate
+*     @param pxfile the proxy file pathname
+*     @return the string representation of the default VO find inside the specified certificate
+*     @throws BaseException If any error occurred during the reading of the proxy information
+*     @see glite::wms::wmproxyapi::BaseException
+**/
+
+
+const std::string getDefaultVoVoms(const char *pxfile){
+	int error = 0;
+	string defaultVo;
+/*
+
+	vomsdata *vo_data ;
+ 	char * envval = NULL;
+	char * vomsdir = NULL;
+	char * certdir = NULL;
+	if ((envval = getenv(X509_VOMS_DIR))) { vomsdir = envval;}
+	else {vomsdir = const_cast<char*>(VOMS_DIR);}
+
+
+	if ((envval = getenv(X509_CERT_DIR))) {certdir = envval;}
+	else { certdir = const_cast<char*>(CERT_DIR);}
+
+
+
+	if (!(vo_data = VOMS_Init(vomsdir, certdir))) {
+		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
+			"Unable to load VOMS01") ;
+	}
+
+	cout << "getDefaultVoVoms01: " <<  vo_data << endl ;
+	cout << "getDefaultVoVoms02 " << endl ;
+	cout << "getDefaultVoVoms03 " << endl ;
+	struct voms * defaultvoms = VOMS_DefaultData(vo_data, &error);
+	cout << "getDefaultVoVoms04 " << endl ;
+	if (defaultvoms) {
+		cout << "getDefaultVoVoms05" << defaultvoms<< endl ;
+		return string(defaultvoms->voname);
+	} else {
+		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
+			"Unable to load VOMS") ;
+	}
+*/
+	return defaultVo;
+
+
+
+
+
+/*
+	cout << "getDefaultVoVomsdbg Parsing file: " << pxfile << endl ;
+	if (load_voms(vo_data, pxfile)) {
+		// Unable to load VOMS
+		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
+			"Unable to load VOMS") ;
+	}
+	voms v;
+	// get Default voms
+	if (!vo_data.DefaultData(v)){
+		// Unable to load default VO value
+		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
+			"Couldn't load default voms Data") ;
+	}
+	return string (v.voname);
+*/
+
+
+}
+
+
+//                 VOMS METHODS (END)
+
 
 
 /*************************************
@@ -641,12 +842,20 @@ std::vector<std::string> Utils::parseFQAN(const std::string &fqan){
 std::string Utils::FQANtoVO(const std::string fqan){
 	return  Utils::parseFQAN(fqan)[0];
 }
+
+
+
 std::string Utils::getDefaultVo(){
 	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
 	if (proxy){
+/*
+		cout << "\nUtils::getDefaultVo dbg Retrieving VOMS from certificate:"<< proxy << endl ;
+		return getDefaultVoVoms(proxy);
+*/
 		const vector <std::string> fqans= glite::wms::wmproxyapiutils::getFQANs(proxy);
 		if (fqans.size()){return Utils::FQANtoVO(fqans[0]);}
 		else {return "";};
+
 	} else {
 		throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
 			DEFAULT_ERR_CODE,
