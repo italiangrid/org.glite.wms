@@ -814,40 +814,57 @@ std::string gzError(int ret)
 void
 chmod_tar_extract_all(TAR *t, char *prefix)
 {
-    GLITE_STACK_TRY("chmod_tar_extract_all()");
-    edglog_fn("wmputils::chmod_tar_extract_all");
+	GLITE_STACK_TRY("chmod_tar_extract_all()");
+	edglog_fn("wmputils::chmod_tar_extract_all");
 
-    char *filename;
-    char buf[MAXPATHLEN];
-    int i;
+	char *filename;
+	char buf[MAXPATHLEN];
+	int i;
 
 	mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
-    while ((i = th_read(t)) == 0) {
-        filename = th_get_pathname(t);
-        if (t->options & TAR_VERBOSE) {
-            th_print_long_ls(t);
-        }
-        if (prefix != NULL) {
-            snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
-        } else {
-            strncpy(buf, filename, sizeof(buf));
-        }
-        edglog(debug)<<"Extracting file: "<<string(buf)<<endl;
-        if (tar_extract_file(t, buf)) {
-            edglog(error)<<"Unable to uncompress ISB file: "<<string(buf)<<endl;
-            throw FileSystemException(__FILE__, __LINE__,
-                "chmod_tar_extract_all()", WMS_IS_FAILURE,
-                "Unable to uncompress ISB file: " + string(buf));
-        }
-        
-        int outcome = chmod(string(buf).c_str(), mode);
-        edglog(debug)<<"chmod result: "<<outcome<<endl;
-        if (outcome) {
-            throw FileSystemException(__FILE__, __LINE__,
-                "chmod_tar_extract_all()", WMS_IS_FAILURE,
-                "Unable to change mode for ISB file: " + string(buf));
-        }
-    }
+	while ((i = th_read(t)) == 0) {
+		filename = th_get_pathname(t);
+		if (TH_ISREG(t)) {
+			if (t->options & TAR_VERBOSE) {
+				th_print_long_ls(t);
+			}
+			if (prefix != NULL) {
+				snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
+			} else {
+				strncpy(buf, filename, sizeof(buf));
+			}
+			if (fileExists(string(buf))) {
+				edglog(critical)<<"Already existing file in ISB file: "
+					<<string(buf)<<endl;
+				throw FileSystemException(__FILE__, __LINE__,
+					"chmod_tar_extract_all()", WMS_IS_FAILURE,
+					"Already existing file in ISB file");
+				///
+				//TBD Log ABORT after this error
+				///
+			}
+			edglog(debug)<<"Extracting file: "<<string(buf)<<endl;
+			if (tar_extract_file(t, buf)) {
+				edglog(error)<<"Unable to uncompress ISB file: "
+					<<string(buf)<<endl;
+				throw FileSystemException(__FILE__, __LINE__,
+					"chmod_tar_extract_all()", WMS_IS_FAILURE,
+					"Unable to uncompress ISB file: " + string(buf));
+			}
+	
+			int outcome = chmod(string(buf).c_str(), mode);
+			edglog(debug)<<"chmod result: "<<outcome<<endl;
+			if (outcome) {
+				throw FileSystemException(__FILE__, __LINE__,
+					"chmod_tar_extract_all()", WMS_IS_FAILURE,
+					"Unable to change mode for ISB file: " + string(buf));
+			}
+		} else {
+			edglog(debug)<<"Item in ISB file is not a regular file: "
+				<<filename<<endl;
+			edglog(debug)<<"Skipping..."<<endl;
+		}
+	}
 
     if (i != 1) {
         throw FileSystemException(__FILE__, __LINE__,
