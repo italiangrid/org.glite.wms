@@ -69,6 +69,10 @@ void leaseUpdater::update_lease( void )
     while ( it != m_cache->end() ) {
         if ( it->getEndLease() < time(0) ) {
             // Remove expired job from cache
+	    m_log_dev->errorStream()
+            << "leaseUpdater::update_lease() - "
+            << "Removing lease-expired job [" << it->getJobID() <<"]"
+            << log4cpp::CategoryStream::ENDLINE;
             it = m_cache->erase( it );
         } else {
             if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {

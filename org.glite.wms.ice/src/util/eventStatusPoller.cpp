@@ -102,7 +102,7 @@ eventStatusPoller::~eventStatusPoller()
 //____________________________________________________________________________
 bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_list)
 {
-    boost::recursive_mutex::scoped_lock lockPoll( mutexJobStatusPoll );
+//    boost::recursive_mutex::scoped_lock lockPoll( mutexJobStatusPoll );
 
     bool retval = true;
 

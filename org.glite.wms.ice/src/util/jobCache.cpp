@@ -247,6 +247,7 @@ void jobCache::loadJournal(void)
 jobCache::iterator jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFileReadOnly_ex&)
 {
     string param= cj.serialize();
+//    std::cout << std::endl << "*** ALVISE DEBUG: PUTTING job [" << cj.getJobID() << "] - status ["<<cj.getStatus()<<"]"<<std::endl;
     logOperation( PUT, param );
     return _jobs.putJob( cj );
 }
@@ -284,7 +285,7 @@ void jobCache::dump() throw (jnlFile_ex&)
     ofstream ofs;
     {
         ofstream tmpOs(tmpSnapFile.c_str(), ios::out);
-        if ((void*)tmpOs == 0) 
+        if ((void*)tmpOs == 0)
             throw jnlFile_ex("Error opening temp snapshot file");
         
         jobCacheTable::iterator it;
@@ -380,10 +381,12 @@ jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 }
 
 jobCache::iterator jobCache::erase( jobCache::iterator& it )
-{    
+{
     if ( it == _jobs.end() ) {
         return it;
     }
+
+//    std::cout << "*** ALVISE DEBUG: ERASING job ["<<it->getJobID() << "] status ["<<it->getStatus()<<"]"<<std::endl;
 
     jobCache::iterator result = it;
     result++; // advance iterator
