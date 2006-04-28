@@ -14,6 +14,7 @@
 #include <boost/thread/condition.hpp>
 
 #include "glite/wms/ism/ism.h"
+#include "rgma-utils.h"
 #include "glite/wms/ism/purchaser/ism-rgma-purchaser.h"
 
 #include "glite/wms/common/ldif2classad/exceptions.h"
@@ -96,7 +97,7 @@ bool checkMainValue( ClassAd* ad ) {
    else return true;
 }
 
-}
+} //namespace
 
 bool ism_rgma_purchaser_entry_update::operator()(int a,boost::shared_ptr<classad::ClassAd>& ad)
 {
@@ -119,6 +120,7 @@ ism_rgma_purchaser::ism_rgma_purchaser(
     m_rgma_consumer_ttl(rgma_consumer_ttl),
     m_rgma_cons_life_cycles(rgma_cons_life_cycles)
 {
+/*
    m_GlueCE = query("GlueCE");
    m_GlueCEAccessControlBaseRule = query("GlueCEAccessControlBaseRule");
    m_GlueSubCluster = query("GlueSubCluster");
@@ -141,6 +143,7 @@ ism_rgma_purchaser::ism_rgma_purchaser(
       query("GlueSEControlProtocol");
    m_GlueSEControlProtocolCapability =
       query("GlueSEControlProtocolCapability");
+*/
 
 }
 
@@ -159,42 +162,59 @@ void ism_rgma_purchaser::do_purchase()
       gluese_info_container_type gluese_info_container;
       vector<gluese_info_iterator> gluese_info_container_updated_entries;
 
-      prefetchGlueCEinfo( this, &gluece_info_container);
-      prefetchGlueSEinfo( this, &gluese_info_container);
+      prefetchGlueCEinfo(  m_rgma_query_timeout,
+                           m_rgma_consumer_ttl,
+                           m_rgma_cons_life_cycles,
+                           &gluece_info_container);
+
+      prefetchGlueSEinfo(  m_rgma_query_timeout,
+                           m_rgma_consumer_ttl,
+                           &gluese_info_container);
 
       boost::thread_group ce_group;
       boost::thread_group se_group;
 
+
       if ( ! gluece_info_container.empty() ) {
 
          ce_group.create_thread( boost::bind( &collect_acbr_info, 
-                                            this,
-                                            &gluece_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluece_info_container));
+
          ce_group.create_thread( boost::bind( &collect_sc_info,
-                                          this,
-                                          &gluece_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluece_info_container));
+
          ce_group.create_thread( boost::bind( &collect_srte_info,
-                                            this,
-                                            &gluece_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluece_info_container));
+
          ce_group.create_thread( boost::bind( &collect_bind_info,
-                                            this,
-                                            &gluece_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluece_info_container));
       }
       else Debug("No CEs found\n"<<"No attempt to collect information related to th CEs");
 
       if ( ! gluese_info_container.empty() ) {
 
          se_group.create_thread( boost::bind( &collect_se_sa_info,
-                                            this,
-                                            &gluese_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluese_info_container));
 
          se_group.create_thread( boost::bind( &collect_se_ap_info,
-                                            this,
-                                            &gluese_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluese_info_container));
 
          se_group.create_thread( boost::bind( &collect_se_cp_info,
-                                            this,
-                                            &gluese_info_container));
+                                              m_rgma_query_timeout,
+                                              m_rgma_consumer_ttl,
+                                              &gluese_info_container));
 
 
          se_group.join_all();
@@ -204,7 +224,9 @@ void ism_rgma_purchaser::do_purchase()
       if ( ! gluece_info_container.empty() ) {
 
          ce_group.join_all();
-         collect_voview_info( this, &gluece_info_container );
+         collect_voview_info( m_rgma_query_timeout,
+                              m_rgma_consumer_ttl,
+                              &gluece_info_container );
       }
 
       try{

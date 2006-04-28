@@ -11,15 +11,16 @@
 #include <boost/mem_fn.hpp>
 #include "glite/wms/common/utilities/edgstrstream.h"
 #include "glite/wms/ism/purchaser/common.h"
+#include "glite/wms/ism/purchaser/ism-purchaser.h"
 
 
 #include <classad_distribution.h>
 
-#include "rgma/Tuple.h"
-#include "rgma/Consumer.h"
-#include "rgma/ResultSet.h"
+//#include "rgma/Tuple.h"
+//#include "rgma/Consumer.h"
+//#include "rgma/ResultSet.h"
 
-#include "rgma-utils.h"
+//#include "rgma-utils.h"
 
 
 
@@ -47,7 +48,7 @@ public:
    void do_purchase();
  
    void operator()();
- 
+/* 
    friend void prefetchGlueCEinfo(ism_rgma_purchaser * purchaser,
                       gluece_info_container_type * gluece_info_container);
    friend void collect_acbr_info( ism_rgma_purchaser * purchaser,
@@ -70,12 +71,13 @@ public:
    friend void collect_se_cp_info(ism_rgma_purchaser * purchaser,
                       gluese_info_container_type * gluese_info_container);
 
-
+*/
 
 private:                
    int m_rgma_query_timeout;
    int m_rgma_consumer_ttl;
    int m_rgma_cons_life_cycles;
+/*
    query m_GlueCE;
    query m_GlueCEAccessControlBaseRule;
    query m_GlueSubCluster;
@@ -91,6 +93,7 @@ private:
    query m_GlueSAAccessControlBaseRule;
    query m_GlueSEControlProtocol;
    query m_GlueSEControlProtocolCapability;
+*/
 
 };
 

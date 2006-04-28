@@ -61,28 +61,55 @@ public:
 };
 
 
-class ism_rgma_purchaser;
-void prefetchGlueCEinfo( ism_rgma_purchaser * purchaser,
-                      gluece_info_container_type * gluece_info_container);
-void collect_acbr_info( ism_rgma_purchaser * purchaser,
-                      gluece_info_container_type * gluece_info_container);
-void collect_sc_info( ism_rgma_purchaser * purchaser,
-                      gluece_info_container_type * gluece_info_container);
-void collect_srte_info( ism_rgma_purchaser * purchaser,
-                      gluece_info_container_type * gluece_info_container);
-void collect_bind_info( ism_rgma_purchaser * purchaser,
-                      gluece_info_container_type * gluece_info_container);
-void collect_voview_info( ism_rgma_purchaser * purchaser,
-                        gluece_info_container_type * gluece_info_container);
+void 
+prefetchGlueCEinfo( int rgma_query_timeout,
+                    int rgma_consumer_ttl,
+                    int rgma_cons_life_cycles,
+                    gluece_info_container_type * gluece_info_container
+);
 
-void prefetchGlueSEinfo(ism_rgma_purchaser * purchaser,
-                      gluese_info_container_type * gluese_info_container);
-void collect_se_sa_info(ism_rgma_purchaser * purchaser,
-                      gluese_info_container_type * gluese_info_container);
-void collect_se_ap_info(ism_rgma_purchaser * purchaser,
-                      gluese_info_container_type * gluese_info_container);
-void collect_se_cp_info(ism_rgma_purchaser * purchaser,
-                      gluese_info_container_type * gluese_info_container);
+void 
+collect_acbr_info( int rgma_query_timeout,
+                   int rgma_consumer_ttl, 
+                   gluece_info_container_type * gluece_info_container);
+
+void 
+collect_sc_info(int rgma_query_timeout,
+                int rgma_consumer_ttl, 
+                gluece_info_container_type * gluece_info_container);
+void 
+collect_srte_info(int rgma_query_timeout,
+                  int rgma_consumer_ttl, 
+                  gluece_info_container_type * gluece_info_container);
+
+void 
+collect_bind_info(int rgma_query_timeout,
+                  int rgma_consumer_ttl,
+                  gluece_info_container_type * gluece_info_container);
+
+void 
+collect_voview_info(int rgma_query_timeout,
+                    int rgma_consumer_ttl,
+                    gluece_info_container_type * gluece_info_container);
+
+void 
+prefetchGlueSEinfo(int rgma_query_timeout,
+                   int rgma_consumer_ttl,
+                   gluese_info_container_type * gluese_info_container);
+
+void 
+collect_se_sa_info(int rgma_query_timeout,
+                   int rgma_consumer_ttl,
+                   gluese_info_container_type * gluese_info_container);
+
+void 
+collect_se_ap_info(int rgma_query_timeout,
+                   int rgma_consumer_ttl,
+                   gluese_info_container_type * gluese_info_container);
+
+void collect_se_cp_info(int rgma_query_timeout,
+                        int rgma_consumer_ttl,
+                        gluese_info_container_type * gluese_info_container);
 
 
 

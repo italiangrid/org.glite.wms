@@ -91,6 +91,29 @@ boost::mutex  collect_se_info_mutex;
 unsigned int consLifeCycles = 0;
 boost::mutex  consLifeCycles_mutex;
 
+query s_GlueCE = query("GlueCE");
+query s_GlueCEAccessControlBaseRule = query("GlueCEAccessControlBaseRule");
+query s_GlueSubCluster = query("GlueSubCluster");
+query s_GlueSubClusterSoftwareRunTimeEnvironment =
+              query("GlueSubClusterSoftwareRunTimeEnvironment");
+query s_GlueCESEBind = query("GlueCESEBind");
+query s_GlueCEVOView = query("GlueCEVOView");
+
+query s_GlueSE = query("GlueSE");
+query s_GlueSA = query("GlueSA");
+query s_GlueSEAccessProtocol =
+   query("GlueSEAccessProtocol");
+query s_GlueSEAccessProtocolCapability =
+   query("GlueSEAccessProtocolCapability");
+query s_GlueSEAccessProtocolSupportedSecurity =
+   query("GlueSEAccessProtocolSupportedSecurity");
+query s_GlueSAAccessControlBaseRule =
+   query("GlueSAAccessControlBaseRule");
+query s_GlueSEControlProtocol =
+   query("GlueSEControlProtocol");
+query s_GlueSEControlProtocolCapability =
+   query("GlueSEControlProtocolCapability");
+
 }
 
 query::~query() 
@@ -755,8 +778,9 @@ void checkBind( ClassAd* bindAd ) {
 
 } // anonymous namespace
 
-void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
-                        gluese_info_container_type * gluese_info_container){
+void collect_se_cp_info ( int rgma_query_timeout,
+                          int rgma_consumer_ttl,
+                          gluese_info_container_type * gluese_info_container){
       bool GlueCPIsEmpty = false;
       bool GlueCPCIsEmpty = false;
 
@@ -766,8 +790,8 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSEControlProtocol.refresh_consumer(
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSEControlProtocol.refresh_consumer(
+                         rgma_consumer_ttl ) ) {
             Warning("GlueSEControlProtocol consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -778,8 +802,8 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
          Debug("GlueSEControlProtocol CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSEControlProtocol.refresh_query(
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSEControlProtocol.refresh_query(
+                                    rgma_query_timeout) ) {
          Warning("GlueSEControlProtocol query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -793,8 +817,8 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSEControlProtocolCapability.refresh_consumer(
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSEControlProtocolCapability.refresh_consumer(
+                                 rgma_consumer_ttl ) ) {
             Warning("GlueSEControlProtocolCapability consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -805,8 +829,8 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
          Debug("GlueSEControlProtocolCapability CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSEControlProtocolCapability.refresh_query(
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSEControlProtocolCapability.refresh_query(
+                                    rgma_query_timeout) ) {
          Warning("GlueSEControlProtocolCapability query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -820,7 +844,7 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
 
             ResultSet cpSet;
 
-            if( purchaser->m_GlueSEControlProtocol.pop_tuples( cpSet, 1000)){
+            if( s_GlueSEControlProtocol.pop_tuples( cpSet, 1000)){
 
                if ( cpSet.begin() != cpSet.end() ) {
 
@@ -860,7 +884,7 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
 
             ResultSet cpcSet;
 
-            if( purchaser->m_GlueSEControlProtocolCapability.pop_tuples( cpcSet, 1000)){
+            if( s_GlueSEControlProtocolCapability.pop_tuples( cpcSet, 1000)){
 
                if ( cpcSet.begin() != cpcSet.end() ) {
 
@@ -933,8 +957,10 @@ void collect_se_cp_info ( ism_rgma_purchaser * purchaser,
 
 
 
-void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
-                        gluese_info_container_type * gluese_info_container){
+void collect_se_ap_info ( int rgma_query_timeout,
+                          int rgma_consumer_ttl,
+                          gluese_info_container_type * gluese_info_container){
+
       bool GlueAPIsEmpty = false;
       bool GlueAPCIsEmpty = false;
       bool GlueAPSIsEmpty = false;
@@ -945,8 +971,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSEAccessProtocol.refresh_consumer(
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSEAccessProtocol.refresh_consumer(
+                         rgma_consumer_ttl ) ) {
             Warning("GlueSEAccessProtocol consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -957,8 +983,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
          Debug("GlueSEAccessProtocol CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSEAccessProtocol.refresh_query(
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSEAccessProtocol.refresh_query(
+                                    rgma_query_timeout) ) {
          Warning("GlueSEAccessProtocol query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -972,8 +998,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSEAccessProtocolCapability.refresh_consumer(
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSEAccessProtocolCapability.refresh_consumer(
+                         rgma_consumer_ttl ) ) {
             Warning("GlueSEAccessProtocolCapability consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -984,8 +1010,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
          Debug("GlueSEAccessProtocolCapability CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSEAccessProtocolCapability.refresh_query(
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSEAccessProtocolCapability.refresh_query(
+                                    rgma_query_timeout) ) {
          Warning("GlueSEAccessProtocolCapability query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -999,8 +1025,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSEAccessProtocolSupportedSecurity.refresh_consumer(
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSEAccessProtocolSupportedSecurity.refresh_consumer(
+                         rgma_consumer_ttl ) ) {
             Warning("GlueSEAccessProtocolSupportedSecurity consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1011,8 +1037,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
          Debug("GlueSEAccessProtocolSupportedSecurity CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSEAccessProtocolSupportedSecurity.refresh_query(
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSEAccessProtocolSupportedSecurity.refresh_query(
+                                    rgma_query_timeout) ) {
          Warning("GlueSEAccessProtocolSupportedSecurity query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1026,7 +1052,7 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
 
             ResultSet apSet;
 
-            if( purchaser->m_GlueSEAccessProtocol.pop_tuples( apSet, 1000)){
+            if( s_GlueSEAccessProtocol.pop_tuples( apSet, 1000)){
 
                if ( apSet.begin() != apSet.end() ) {
 
@@ -1066,7 +1092,7 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
 
             ResultSet apcSet;
 
-            if( purchaser->m_GlueSEAccessProtocolCapability.pop_tuples( apcSet, 1000)){
+            if( s_GlueSEAccessProtocolCapability.pop_tuples( apcSet, 1000)){
 
                if ( apcSet.begin() != apcSet.end() ) {
 
@@ -1104,7 +1130,7 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
 
             ResultSet apsSet;
 
-            if( purchaser->m_GlueSEAccessProtocolSupportedSecurity.pop_tuples( apsSet, 1000)){
+            if( s_GlueSEAccessProtocolSupportedSecurity.pop_tuples( apsSet, 1000)){
 
                if ( apsSet.begin() != apsSet.end() ) {
 
@@ -1180,7 +1206,8 @@ void collect_se_ap_info ( ism_rgma_purchaser * purchaser,
 
 }
 
-void collect_se_sa_info( ism_rgma_purchaser * purchaser,
+void collect_se_sa_info(int rgma_query_timeout,
+                        int rgma_consumer_ttl,
                         gluese_info_container_type * gluese_info_container){
       bool GlueSAIsEmpty = false;
       bool GlueSAAccessControlBaseRuleIsEmpty = false;
@@ -1193,8 +1220,8 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSA.refresh_consumer( 
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSA.refresh_consumer( 
+                         rgma_consumer_ttl ) ) {
             Warning("GlueSA consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1205,8 +1232,7 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
          Debug("GlueSA CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSA.refresh_query( 
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSA.refresh_query( rgma_query_timeout) ) {
          Warning("GlueSA query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1220,8 +1246,8 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueSAAccessControlBaseRule.refresh_consumer(
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueSAAccessControlBaseRule.refresh_consumer(
+                         rgma_consumer_ttl ) ) {
             Warning("GlueSAAccessControlBaseRule consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1232,8 +1258,8 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
          Debug("GlueSAAccessControlBaseRule CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueSAAccessControlBaseRule.refresh_query(
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueSAAccessControlBaseRule.refresh_query(
+                                    rgma_query_timeout) ) {
          Warning("GlueSAAccessControlBaseRule query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1247,7 +1273,7 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
 
             ResultSet saSet;
 
-            if( purchaser->m_GlueSA.pop_tuples( saSet, 1000)){
+            if( s_GlueSA.pop_tuples( saSet, 1000)){
 
                if ( saSet.begin() != saSet.end() ) {
 
@@ -1287,7 +1313,7 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
 
             ResultSet acbrSet;
 
-            if( purchaser->m_GlueSAAccessControlBaseRule.pop_tuples( acbrSet, 1000)){
+            if( s_GlueSAAccessControlBaseRule.pop_tuples( acbrSet, 1000)){
 
                if ( acbrSet.begin() != acbrSet.end() ) {
 
@@ -1379,7 +1405,8 @@ void collect_se_sa_info( ism_rgma_purchaser * purchaser,
 
 }
 
-void collect_acbr_info( ism_rgma_purchaser * purchaser,
+void collect_acbr_info( int rgma_query_timeout,
+                        int rgma_consumer_ttl,
                         gluece_info_container_type * gluece_info_container){
       bool AccessControlBaseRuleIsEmpty = false;
 
@@ -1391,8 +1418,8 @@ void collect_acbr_info( ism_rgma_purchaser * purchaser,
           to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
       }
       if ( to_be_refreshed ) {
-         if ( ! purchaser->m_GlueCEAccessControlBaseRule.refresh_consumer( 
-                         purchaser->m_rgma_consumer_ttl ) ) {
+         if ( ! s_GlueCEAccessControlBaseRule.refresh_consumer( 
+                         rgma_consumer_ttl ) ) {
             Warning("AccessControlBaseRule consumer creation failed");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1403,8 +1430,8 @@ void collect_acbr_info( ism_rgma_purchaser * purchaser,
          Debug("AccessControlBaseRule CONSUMER REFRESHED");
       }
 
-      if ( ! purchaser->m_GlueCEAccessControlBaseRule.refresh_query( 
-                                    purchaser->m_rgma_query_timeout) ) {
+      if ( ! s_GlueCEAccessControlBaseRule.refresh_query( 
+                                    rgma_query_timeout) ) {
          Warning("AccessControlBaseRule query FAILED.");
          {
             boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1417,7 +1444,7 @@ void collect_acbr_info( ism_rgma_purchaser * purchaser,
 
             ResultSet accSet;
 
-            if( purchaser->m_GlueCEAccessControlBaseRule.pop_tuples( accSet, 1000)){
+            if( s_GlueCEAccessControlBaseRule.pop_tuples( accSet, 1000)){
 
                if ( accSet.begin() != accSet.end() ) {
 
@@ -1489,7 +1516,8 @@ void collect_acbr_info( ism_rgma_purchaser * purchaser,
 }
 
 
-void collect_sc_info( ism_rgma_purchaser * purchaser,
+void collect_sc_info( int rgma_query_timeout,
+                      int rgma_consumer_ttl,
                       gluece_info_container_type * gluece_info_container) {
          bool SubClusterIsEmpty = false;
 
@@ -1501,8 +1529,8 @@ void collect_sc_info( ism_rgma_purchaser * purchaser,
             to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
          }
          if ( to_be_refreshed ) {
-            if ( ! purchaser->m_GlueSubCluster.refresh_consumer(
-                                  purchaser->m_rgma_consumer_ttl ) ) {
+            if ( ! s_GlueSubCluster.refresh_consumer(
+                                  rgma_consumer_ttl ) ) {
                Warning("SubCluster consumer creation failed");
                {
                   boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1513,7 +1541,7 @@ void collect_sc_info( ism_rgma_purchaser * purchaser,
             Debug("SubCluster CONSUMER REFRESHED");
          }
 
-         if ( ! purchaser->m_GlueSubCluster.refresh_query( purchaser->m_rgma_query_timeout) ) {
+         if ( ! s_GlueSubCluster.refresh_query( rgma_query_timeout) ) {
             Warning("SubCluster query FAILED.");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1525,7 +1553,7 @@ void collect_sc_info( ism_rgma_purchaser * purchaser,
          while ( ! SubClusterIsEmpty ) {
             ResultSet subSet;
 
-            if( purchaser->m_GlueSubCluster.pop_tuples( subSet, 1000)){
+            if( s_GlueSubCluster.pop_tuples( subSet, 1000)){
 
                if ( subSet.begin() != subSet.end() ) {
                   std::map< std::string, boost::shared_ptr<classad::ClassAd> > SC_map;
@@ -1585,7 +1613,8 @@ void collect_sc_info( ism_rgma_purchaser * purchaser,
 
 }
 
-void collect_srte_info( ism_rgma_purchaser * purchaser, 
+void collect_srte_info( int rgma_query_timeout,
+                        int rgma_consumer_ttl,
                         gluece_info_container_type * gluece_info_container) {
          bool SoftwareRunTimeEnvironmentIsEmpty = false;
 
@@ -1597,8 +1626,8 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
             to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
          }
          if ( to_be_refreshed ) {
-            if ( ! purchaser->m_GlueSubClusterSoftwareRunTimeEnvironment.refresh_consumer( 
-                                                          purchaser->m_rgma_consumer_ttl ) ) {
+            if ( ! s_GlueSubClusterSoftwareRunTimeEnvironment.refresh_consumer( 
+                                                          rgma_consumer_ttl ) ) {
                Warning("SoftwareRunTimeEnvironment consumer creation failed");
                {
                   boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1609,8 +1638,8 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
             Debug("SoftwareRunTimeEnvironment CONSUMER REFRESHED");
          }
 
-         if ( ! purchaser->m_GlueSubClusterSoftwareRunTimeEnvironment.refresh_query( 
-                                                    purchaser->m_rgma_query_timeout) ) {
+         if ( ! s_GlueSubClusterSoftwareRunTimeEnvironment.refresh_query( 
+                                                    rgma_query_timeout) ) {
             Warning("SoftwareRunTimeEnvironment query FAILED.");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1622,7 +1651,7 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
          while ( !SoftwareRunTimeEnvironmentIsEmpty ){
             ResultSet softSet;
 
-            if( purchaser->m_GlueSubClusterSoftwareRunTimeEnvironment.pop_tuples( softSet, 1000)){
+            if( s_GlueSubClusterSoftwareRunTimeEnvironment.pop_tuples( softSet, 1000)){
 
                if ( softSet.begin() != softSet.end() ) {
 
@@ -1700,7 +1729,8 @@ void collect_srte_info( ism_rgma_purchaser * purchaser,
 
 }
 
-void collect_bind_info( ism_rgma_purchaser * purchaser, 
+void collect_bind_info( int rgma_query_timeout,
+                        int rgma_consumer_ttl,
                         gluece_info_container_type * gluece_info_container) {
          bool CESEBindIsEmpty = false;
 
@@ -1712,8 +1742,8 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
             to_be_refreshed =  (consLifeCycles == 0) || (consLifeCycles == 1); 
          }
          if ( to_be_refreshed ) {
-            if ( ! purchaser->m_GlueCESEBind.refresh_consumer( 
-                                         purchaser->m_rgma_consumer_ttl ) ) {
+            if ( ! s_GlueCESEBind.refresh_consumer( 
+                                         rgma_consumer_ttl ) ) {
                Warning("CESEBind consumer creation failed");
                {
                   boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1724,7 +1754,7 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
             Debug("CESEBind CONSUMER REFRESHED");
          }
 
-         if ( ! purchaser->m_GlueCESEBind.refresh_query( purchaser->m_rgma_query_timeout) ) {
+         if ( ! s_GlueCESEBind.refresh_query( rgma_query_timeout) ) {
             Warning("CESEBind query FAILED.");
             {
                boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1736,7 +1766,7 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
          while ( ! CESEBindIsEmpty ) {
             ResultSet bindSet;
 
-            if( purchaser->m_GlueCESEBind.pop_tuples( bindSet, 1000)){
+            if( s_GlueCESEBind.pop_tuples( bindSet, 1000)){
 
                if ( bindSet.begin() != bindSet.end() ) {
 
@@ -1865,8 +1895,9 @@ void collect_bind_info( ism_rgma_purchaser * purchaser,
 
 }
 
-void collect_voview_info( ism_rgma_purchaser * purchaser,
-                        gluece_info_container_type * gluece_info_container) {
+void collect_voview_info( int rgma_query_timeout,
+                          int rgma_consumer_ttl,
+                          gluece_info_container_type * gluece_info_container) {
          bool VOViewIsEmpty = false;
 
          bool to_be_refreshed ;
@@ -1875,8 +1906,8 @@ void collect_voview_info( ism_rgma_purchaser * purchaser,
             to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == 1);
 //         }
          if ( to_be_refreshed ) {
-            if ( ! purchaser->m_GlueCEVOView.refresh_consumer(
-                                         purchaser->m_rgma_consumer_ttl ) ) {
+            if ( ! s_GlueCEVOView.refresh_consumer(
+                                         rgma_consumer_ttl ) ) {
                Warning("VOView consumer creation failed");
 //               {
 //                  boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1887,7 +1918,7 @@ void collect_voview_info( ism_rgma_purchaser * purchaser,
             Debug("VOView CONSUMER REFRESHED");
          }
 
-         if ( ! purchaser->m_GlueCEVOView.refresh_query( purchaser->m_rgma_query_timeout) ) {
+         if ( ! s_GlueCEVOView.refresh_query( rgma_query_timeout) ) {
             Warning("VOView query FAILED.");
 //            {
 //               boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -1902,7 +1933,7 @@ void collect_voview_info( ism_rgma_purchaser * purchaser,
 
             ResultSet voviewSet;
 
-            if( purchaser->m_GlueCEVOView.pop_tuples( voviewSet, 1000)){
+            if( s_GlueCEVOView.pop_tuples( voviewSet, 1000)){
 
                if ( voviewSet.begin() != voviewSet.end() ) {
 
@@ -2039,7 +2070,8 @@ void collect_voview_info( ism_rgma_purchaser * purchaser,
 
 }
  
-void prefetchGlueSEinfo( ism_rgma_purchaser * purchaser,
+void prefetchGlueSEinfo( int rgma_query_timeout,
+                         int rgma_consumer_ttl,
                          gluese_info_container_type* gluese_info_container)
 {
 
@@ -2054,7 +2086,7 @@ void prefetchGlueSEinfo( ism_rgma_purchaser * purchaser,
 //   }
 
    if( to_be_refreshed ){
-      if ( ! purchaser->m_GlueSE.refresh_consumer( purchaser->m_rgma_consumer_ttl ) ) {
+      if ( ! s_GlueSE.refresh_consumer( rgma_consumer_ttl ) ) {
          Warning("gluese consumer creation failed");
 //         {
 //            boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -2065,7 +2097,7 @@ void prefetchGlueSEinfo( ism_rgma_purchaser * purchaser,
       Debug("GLUESE CONSUMERS REFRESHED");
    }
 
-   if ( ! purchaser->m_GlueSE.refresh_query( purchaser->m_rgma_query_timeout) ) {
+   if ( ! s_GlueSE.refresh_query( rgma_query_timeout) ) {
       Warning("gluese query FAILED.");
 //      {
 //         boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -2074,11 +2106,10 @@ void prefetchGlueSEinfo( ism_rgma_purchaser * purchaser,
       return;
    }
 
-
    Debug("Creating a ClassAd for each entry in GlueSE table");
    ResultSet resultSet;
    do {
-      if ( ! purchaser->m_GlueSE.pop_tuples( resultSet, 1000) ) {
+      if ( ! s_GlueSE.pop_tuples( resultSet, 1000) ) {
          Warning("failed popping tuples from GlueSE");
          return;
       }
@@ -2110,7 +2141,9 @@ void prefetchGlueSEinfo( ism_rgma_purchaser * purchaser,
 
 }
 
-void prefetchGlueCEinfo( ism_rgma_purchaser * purchaser,
+void prefetchGlueCEinfo( int rgma_query_timeout,
+                         int rgma_consumer_ttl,
+                         int rgma_cons_life_cycles,
                          gluece_info_container_type* gluece_info_container)
 {
 //   bool consumers_is_alive =
@@ -2118,10 +2151,10 @@ void prefetchGlueCEinfo( ism_rgma_purchaser * purchaser,
    bool to_be_refreshed;
 //   {
 //      boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
-      to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == purchaser->m_rgma_cons_life_cycles);
+      to_be_refreshed = (consLifeCycles == 0) || (consLifeCycles == rgma_cons_life_cycles);
 //   }
    if ( to_be_refreshed ) {
-      if ( ! purchaser->m_GlueCE.refresh_consumer( purchaser->m_rgma_consumer_ttl ) ) {
+      if ( ! s_GlueCE.refresh_consumer( rgma_consumer_ttl ) ) {
 //         Warning("gluece consumer creation failed");
 //         {
 //            boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -2142,7 +2175,7 @@ void prefetchGlueCEinfo( ism_rgma_purchaser * purchaser,
       consLifeCycles++;
 //   }
 
-   if ( ! purchaser->m_GlueCE.refresh_query( purchaser->m_rgma_query_timeout) ) {
+   if ( ! s_GlueCE.refresh_query( rgma_query_timeout) ) {
       Warning("gluece query FAILED.");
 //      {
 //         boost::mutex::scoped_lock  lock(consLifeCycles_mutex);
@@ -2154,7 +2187,7 @@ void prefetchGlueCEinfo( ism_rgma_purchaser * purchaser,
    Debug("Creating a ClassAd for each entry in GlueCE table");
    ResultSet resultSet;
    do {
-      if ( ! purchaser->m_GlueCE.pop_tuples( resultSet, 1000) ) {
+      if ( ! s_GlueCE.pop_tuples( resultSet, 1000) ) {
          Warning("failed popping tuples from GlueCe");
          return;
       }
