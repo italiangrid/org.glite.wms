@@ -240,6 +240,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
         // to process a notification of a just submitted job that is not
         // yet present in the jobCache
         boost::recursive_mutex::scoped_lock lockAccept( util::eventStatusListener::mutexJobStatusUpdate );
+	boost::recursive_mutex::scoped_lock lockPoll( util::eventStatusPoller::mutexJobStatusPoll );
 	string delegID;
         try {	    
             // Locks the configuration manager

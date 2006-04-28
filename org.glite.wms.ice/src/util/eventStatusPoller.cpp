@@ -52,15 +52,17 @@ typedef vector<soap_proxy::Status>::iterator JobStatusIt;
 typedef vector<string>::iterator vstrIt;
 typedef vector<string>::const_iterator cvstrIt;
 
+boost::recursive_mutex eventStatusPoller::mutexJobStatusPoll;
+
 /**
  * The following method will be used when the scenario with many jobs
- * and several CREAM urls will happen. Many jobs can be reorganized 
+ * and several CREAM urls will happen. Many jobs can be reorganized
  * in order to group the maximum number of job related to the same
  * CREAM Url AND the same proxy certificate, in order to reduce the
  * number of authentications on the same CREAM host
  */
 //_____________________________________________________________________________
-void organizeJobs( const vector<CreamJob> & vec, 
+void organizeJobs( const vector<CreamJob> & vec,
                    map< string, map<string, vector<string> > >& target)
 {
   for(vector<CreamJob>::const_iterator cit = vec.begin();
@@ -98,6 +100,8 @@ eventStatusPoller::~eventStatusPoller()
 //____________________________________________________________________________
 bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_list)
 {
+    boost::recursive_mutex::scoped_lock lockPoll( mutexJobStatusPoll );
+
     bool retval = true;
 
     // This clear is not needed beacuse the arg is created just before to call
@@ -117,7 +121,7 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
     while( jobIt != m_cache->end() ) {
 
         oldness = time(NULL)-jobIt->getLastSeen();
-        
+
 	{
             boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
             threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
@@ -256,10 +260,10 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         api::job_statuses::job_status stNum( jobstat::getStatusNum( last_status.getStatusName() ) );
         string exitCode( last_status.getExitCode() );
 
-        bool job_is_done = 
+        bool job_is_done =
             (stNum == cream_api::job_statuses::DONE_FAILED) ||
             (stNum == cream_api::job_statuses::DONE_OK);
-        
+
         /**
          * We skip those jobs for which CREAM did not returned the
          * exit code yet.
@@ -271,9 +275,9 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
                 << log4cpp::CategoryStream::ENDLINE;
             continue;
         }
-        
+
         switch( stNum ) {
-            
+
         case api::job_statuses::DONE_FAILED:
         case api::job_statuses::ABORTED:
             
@@ -282,7 +286,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
                 << cid <<"] is failed or aborted. "
                 << "Removing from cache and resubmitting..."
                 << log4cpp::CategoryStream::ENDLINE;
-            
+
             if( m_iceManager ) {
                 
                 jobCache::iterator jobIt = m_cache->lookupByCreamJobID( cid );
@@ -297,7 +301,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
                         << log4cpp::CategoryStream::ENDLINE;
                 }
                 
-            }                
+            }
             // do NOT break: fall to next case
 
         case api::job_statuses::DONE_OK:
@@ -311,11 +315,11 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         default:
             ; // nothing done
         }
-        
+
     }
 
     purgeJobs(jobs_to_purge);
-    
+
 }
 
 //----------------------------------------------------------------------------
@@ -372,7 +376,7 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
             
             jit->setStatus( stNum );
             jit->set_num_logged_status_changes( count );
-            
+
             // Log to L&B
             m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jit ) );
         }
@@ -398,7 +402,7 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 
             jobCache::iterator jit = m_cache->lookupByCreamJobID( *it );
             if( jit == m_cache->end() ) {
-                m_log_dev->errorStream() 
+                m_log_dev->errorStream()
                     << "eventStatusPoller::purgeJobs() - "
                     << "NOT Found in chace job ["
                     << *it << "]"

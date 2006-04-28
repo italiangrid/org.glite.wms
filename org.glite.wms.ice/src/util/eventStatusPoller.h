@@ -25,6 +25,7 @@
 #include "eventStatusPoller_ex.h"
 #include "iceThread.h"
 #include "boost/scoped_ptr.hpp"
+#include "boost/thread/recursive_mutex.hpp"
 
 namespace log4cpp {
     class Category;
@@ -100,6 +101,9 @@ namespace glite {
 	  eventStatusPoller( const eventStatusPoller& ) { };
 
 	public:
+
+	  static boost::recursive_mutex mutexJobStatusPoll;
+
 	  //! eventStatusPoller constructor
 	  /*!
 	    Creates a eventStatusPoller object
