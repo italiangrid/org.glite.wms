@@ -120,8 +120,7 @@ classad::ClassAd*
 JobAdapter::resolve(void)  
 try {
 
-  bool   b_ce_id;
-  std::string const ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
+  std::string const ce_id(jdl::get_ce_id(*m_ad));
 
   boost::regex const cream_ce_id(".+/cream-.+");
   bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
@@ -501,6 +500,7 @@ try {
   std::string stderror(jdl::get_std_error(*m_ad, b_std));
   std::string stdoutput(jdl::get_std_output(*m_ad, b_std));
 
+  bool   b_ce_id;
   /* TEMP patch: forward ce_id */
   jdl::set_ce_id(*result, ce_id, b_ce_id);
 
