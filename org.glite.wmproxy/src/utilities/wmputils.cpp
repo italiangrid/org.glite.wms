@@ -1015,7 +1015,7 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 				"directory creation"<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
 				"doExecv()", WMS_IS_FAILURE, "Unable to fork process"
-				"\n(please contact server administartor");
+				"\n(please contact server administrator)");
 			break;
 		case 0:
 			// child

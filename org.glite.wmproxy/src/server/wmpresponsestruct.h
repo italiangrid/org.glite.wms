@@ -221,6 +221,8 @@ struct enableFilePerusalResponse {
 
 typedef std::vector<std::string> getPerusalFilesResponse;
 
+typedef time_t getProxyTerminationTimeResponse;
+
 struct getTransferProtocolsResponse {
 	StringList *protocols;
 };

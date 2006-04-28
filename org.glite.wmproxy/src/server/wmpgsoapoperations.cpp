@@ -680,7 +680,7 @@ ns1__getCollectionTemplate(struct soap *soap, int job_number,
 	int return_value = SOAP_OK;
 
 	getCollectionTemplateResponse getCollectionTemplate_response;
-	try  {
+	try {
 		getCollectionTemplate(getCollectionTemplate_response, job_number,
 			requirements, rank);
 		response._jdl = getCollectionTemplate_response.jdl;
@@ -721,7 +721,7 @@ ns1__getIntParametricJobTemplate(struct soap *soap, ns1__StringList *attributes,
 	} else {
 		getIntParametricJobTemplateResponse 
 			getIntParametricJobTemplate_response;
-		try  {
+		try {
 			getIntParametricJobTemplate(getIntParametricJobTemplate_response,
 				convertToStringList(attributes), param, parameter_start, parameter_step,
 				requirements, rank);
@@ -765,7 +765,7 @@ ns1__getStringParametricJobTemplate(struct soap *soap,
 	} else {
 		getStringParametricJobTemplateResponse 
 			getStringParametricJobTemplate_response;
-		try  {
+		try {
 			getStringParametricJobTemplate(getStringParametricJobTemplate_response,
 				convertToStringList(attributes), convertToStringList(param),
 				requirements, rank);
@@ -799,7 +799,7 @@ ns1__getProxyReq(struct soap *soap, string delegation_id,
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
-	try  {
+	try {
 		getProxyReq(getProxyReq_response, delegation_id);
 		response._request = getProxyReq_response.request;
 	} catch (Exception &exc) {
@@ -830,7 +830,7 @@ ns1__putProxy(struct soap *soap, string delegation_id, string proxy,
 	int return_value = SOAP_OK;
 
 	putProxyResponse putProxy_response;
-	try  {
+	try {
 		putProxy(putProxy_response, delegation_id, proxy);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "putProxy", time(NULL),
@@ -848,7 +848,6 @@ ns1__putProxy(struct soap *soap, string delegation_id, string proxy,
 	GLITE_STACK_CATCH();
 }
 
-
 int
 ns2__getProxyReq(struct soap *soap, string delegation_id,
 	struct ns2__getProxyReqResponse &response)
@@ -861,7 +860,7 @@ ns2__getProxyReq(struct soap *soap, string delegation_id,
 	int return_value = SOAP_OK;
 
 	getProxyReqResponse getProxyReq_response;
-	try  {
+	try {
 		getProxyReq(getProxyReq_response, delegation_id);
 		response._getProxyReqReturn = getProxyReq_response.request;
 	} catch (Exception &exc) {
@@ -892,7 +891,7 @@ ns2__putProxy(struct soap *soap, string delegation_id, string proxy,
 	int return_value = SOAP_OK;
 
 	putProxyResponse putProxy_response;
-	try  {
+	try {
 		putProxy(putProxy_response, delegation_id, proxy);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "putProxy", time(NULL),
@@ -911,6 +910,131 @@ ns2__putProxy(struct soap *soap, string delegation_id, string proxy,
 }
 
 int
+ns2__getNewProxyReq(struct soap *soap, struct ns2__getNewProxyReqResponse &response)
+{
+	GLITE_STACK_TRY("ns2__getNewProxyReq(struct soap *soap, struct "
+		"ns2__getNewProxyReqResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__getNewProxyReq");
+	edglog(info)<<"getNewProxyReq operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+
+	try {
+		pair<string, string> retpair;
+		getNewProxyReq(retpair);
+		response.getNewProxyReqReturn = (ns2__NewProxyReq*)
+			malloc(sizeof(struct ns2__NewProxyReq));
+      	response.getNewProxyReqReturn->proxyRequest = new string(retpair.second);
+      	response.getNewProxyReqReturn->delegationID = new string(retpair.first);
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getNewProxyReq", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getNewProxyReq", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"getNewProxyReq operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns2__renewProxyReq(struct soap *soap, string delegation_id,
+	struct ns2__renewProxyReqResponse &response)
+{
+	GLITE_STACK_TRY("ns2__renewProxyReq(struct soap *soap, string delegation_id,"
+		"struct ns2__renewProxyReqResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__renewProxyReq");
+	edglog(info)<<"renewProxyReq operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+
+	// N.B. same as getProxyReq
+	getProxyReqResponse getProxyReq_response;
+	try {
+		getProxyReq(getProxyReq_response, delegation_id);
+		response._renewProxyReqReturn = getProxyReq_response.request;
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "renewProxyReq", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "renewProxyReq", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"renewProxyReq operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns2__getTerminationTime(struct soap *soap, string delegation_id,
+	struct ns2__getTerminationTimeResponse &response)
+{
+	GLITE_STACK_TRY("ns2__getTerminationTime(struct soap *soap, string delegation_id,"
+		"struct ns2__getTerminationTimeResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__getTerminationTime");
+	edglog(info)<<"getTerminationTime operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+
+	getProxyTerminationTimeResponse getProxyTerminationTime_response;
+	try {
+		getProxyTerminationTime(getProxyTerminationTime_response, delegation_id);
+		response._getTerminationTimeReturn = getProxyTerminationTime_response;
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getTerminationTime", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "getTerminationTime", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"getTerminationTime operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
+ns2__destroy(struct soap *soap, string delegation_id,
+	struct ns2__destroyResponse &response)
+{
+	GLITE_STACK_TRY("ns2__destroy(struct soap *soap, string delegation_id,"
+		"struct ns2__destroyResponse &response)");
+	edglog_fn("wmpgsoapoperations::ns2__destroy");
+	edglog(info)<<"destroy operation called"<<endl;
+	
+	int return_value = SOAP_OK;
+
+	try {
+		destroyProxy(delegation_id);
+	} catch (Exception &exc) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "destroy", time(NULL),
+	 		exc.getCode(), (string) exc.what(), exc.getStackTrace());
+		return_value = SOAP_FAULT;
+	} catch (exception &ex) {
+	 	setSOAPFault(soap, SOAP_TYPE_ns2__DelegationExceptionType, "destroy", time(NULL),
+	 		WMS_IS_FAILURE, (string) ex.what());
+		return_value = SOAP_FAULT;
+	}
+	
+	edglog(info)<<"destroy operation completed\n"<<endl;
+
+	return return_value;
+	GLITE_STACK_CATCH();
+}
+
+int
 ns1__getACLItems(struct soap *soap, string jobId,
 	struct ns1__getACLItemsResponse &response)
 {
@@ -922,7 +1046,7 @@ ns1__getACLItems(struct soap *soap, string jobId,
 	int return_value = SOAP_OK;
 	
 	getACLItemsResponse getACLItems_response;
-	try  {
+	try {
 		getACLItems(getACLItems_response, jobId);
 		response._items
 			= convertVectorToGSOAPStringList(getACLItems_response);
@@ -955,7 +1079,7 @@ ns1__addACLItems(struct soap *soap, string jobId, ns1__StringList* items,
 	int return_value = SOAP_OK;
 
 	addACLItemsResponse addACLItems_response;
-	try  {
+	try {
 		addACLItems(addACLItems_response, jobId, convertToStringList(items));
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "addACLItems", time(NULL),
@@ -985,7 +1109,7 @@ ns1__removeACLItem(struct soap *soap, string jobId, string item,
 	int return_value = SOAP_OK;
 
 	removeACLItemResponse removeACLItem_response;
-	try  {
+	try {
 		removeACLItem(removeACLItem_response, jobId, item);
 	} catch (Exception &exc) {
 	 	setSOAPFault(soap, exc.getCode(), "removeACLItem", time(NULL),
@@ -1015,7 +1139,7 @@ ns1__getDelegatedProxyInfo(struct soap *soap, string delegation_id,
 	int return_value = SOAP_OK;
 	
 	getProxyInfoResponse getProxyInfo_response;
-	try  {
+	try {
 		getProxyInfo(getProxyInfo_response, delegation_id);
 		response._items =
 			convertToGSOAPProxyInfoStructType(getProxyInfo_response.items);
@@ -1048,7 +1172,7 @@ ns1__getJobProxyInfo(struct soap *soap, string job_id,
 	int return_value = SOAP_OK;
 	
 	getProxyInfoResponse getProxyInfo_response;
-	try  {
+	try {
 		getProxyInfo(getProxyInfo_response, job_id, true);
 		response._items =
 			convertToGSOAPProxyInfoStructType(getProxyInfo_response.items);
@@ -1081,7 +1205,7 @@ ns1__enableFilePerusal(struct soap *soap, string jobId, ns1__StringList *filelis
 	int return_value = SOAP_OK;
 	
 	enableFilePerusalResponse enableFilePerusal_response;
-	try  {
+	try {
 		enableFilePerusal(enableFilePerusal_response, jobId,
 			convertToStringList(filelist));
 	} catch (Exception &exc) {
@@ -1120,7 +1244,7 @@ ns1__getPerusalFiles(struct soap *soap, string jobId, string file,
 	int return_value = SOAP_OK;
 	
 	getPerusalFilesResponse getPerusalFiles_response;
-	try  {
+	try {
 		getPerusalFiles(getPerusalFiles_response, jobId, file, allChunks,
 			protocol);
 		response._fileList
@@ -1156,7 +1280,7 @@ ns1__getTransferProtocols(struct soap *soap,
 	list->Item = *(new vector<string>);
 	
 	getTransferProtocolsResponse getTransferProtocols_response;
-	try  {
+	try {
 		getTransferProtocols(getTransferProtocols_response);
 		for (unsigned int i = 0;
 				i < getTransferProtocols_response.protocols->Item->size(); i++) {

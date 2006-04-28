@@ -38,6 +38,15 @@ public:
 	static std::string getProxyRequest(const std::string &delegation_id);
 	
 	/**
+	 * Gets a delegated Proxy request. A Proxy request must be done in order
+	 * to obtain a request to create a delegated Proxy. The delegation identifier 
+	 * is automatically generated.
+	 * @return a pair containing the generated delegation id and the Proxy request
+	 * @see putProxy
+	 */
+	static std::pair<std::string, std::string> getNewProxyRequest();
+	
+	/**
 	 * Creates the delegated Proxy. The Proxy is created inside the delegated
 	 * Proxy path
 	 * @param delegation_id the delegation id identifing the delegation session
@@ -46,7 +55,20 @@ public:
 	 */
 	static void putProxy(const std::string &delegation_id,
 		const std::string &proxy_req);
-		
+	
+	/**
+	 * Destroys the delegated Proxy.
+	 * @param delegation_id the delegation id identifing the delegation session
+	 */
+	static void destroyProxy(const std::string &delegation_id);
+	
+	/**
+	 * Gets the delegated proxy termination time.
+	 * @param delegation_id the delegation id identifing the delegated session
+	 * @return the termination time
+	 */
+	static time_t getTerminationTime(const std::string &delegation_id);
+	
 	/**
 	 * Gets the delegated proxy path. This is the Proxy corresponding to the 
 	 * delegation identifier passed as argument and to the specific user. The

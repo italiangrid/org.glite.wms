@@ -680,6 +680,27 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 }
 
 void
+getNewProxyReq(pair<string, string> &retpair)
+{
+	GLITE_STACK_TRY("getNewProxyReq()");
+	edglog_fn("wmpoperations::getNewProxyReq");
+	logRemoteHostInfo();
+	
+	// Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+	auth->authorize();
+	delete auth;
+	
+	retpair =
+		WMPDelegation::getNewProxyRequest();
+	edglog(info)<<"Proxy requested successfully"<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
+void
 putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	const string &proxy)
 {
@@ -703,6 +724,61 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	
 	WMPDelegation::putProxy(delegation_id, proxy);
 	edglog(info)<<"Proxy put successfully"<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
+void
+destroyProxy(const string &delegation_id)
+{
+	GLITE_STACK_TRY("destroyProxy()");
+	edglog_fn("wmpoperations::destroyProxy");
+	logRemoteHostInfo();
+	
+	// Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+	auth->authorize();
+	delete auth;
+	
+	if (delegation_id == "") {
+		edglog(error)<<"Provided delegation id not valid"<<endl;
+  		throw ProxyOperationException(__FILE__, __LINE__,
+			"destroyProxy()", wmputilities::WMS_DELEGATION_ERROR,
+			"Provided delegation id not valid");
+	}
+	
+	WMPDelegation::destroyProxy(delegation_id);
+	edglog(info)<<"destroyProxy successfully"<<endl;
+	
+	GLITE_STACK_CATCH();
+}
+
+void
+getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime_response,
+	const string &delegation_id)
+{
+	GLITE_STACK_TRY("getProxyTerminationTime()");
+	edglog_fn("wmpoperations::getProxyTerminationTime");
+	logRemoteHostInfo();
+	
+	// Authorizing user
+	edglog(info)<<"Authorizing user..."<<endl;
+	authorizer::WMPAuthorizer *auth = 
+		new authorizer::WMPAuthorizer();
+	auth->authorize();
+	delete auth;
+	
+	if (delegation_id == "") {
+		edglog(error)<<"Provided delegation id not valid"<<endl;
+  		throw ProxyOperationException(__FILE__, __LINE__,
+			"getProxyTerminationTime()", wmputilities::WMS_DELEGATION_ERROR,
+			"Provided delegation id not valid");
+	}
+	
+	getProxyTerminationTime_response = WMPDelegation::getTerminationTime(delegation_id);
+	edglog(info)<<"getProxyTerminationTime successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
 }

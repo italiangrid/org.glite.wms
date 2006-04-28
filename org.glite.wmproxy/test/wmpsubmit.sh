@@ -19,16 +19,16 @@ JDLDIR=jdltosubmit
 CONFFILE=wmpendpoint.conf
 
 # File names chosen in a randomic way
-FILE0=$JDLDIR/job.jdl
-FILE1=$JDLDIR/dag.jdl
-FILE2=$JDLDIR/collection.jdl
-FILE3=$JDLDIR/partitionable.jdl
-FILE4=$JDLDIR/partitionable.jdl
-FILE5=$JDLDIR/partitionableNoListM.jdl
-FILE6=$JDLDIR/collectionISB.jdl
-FILE7=$JDLDIR/jobISB.jdl
-FILE8=$JDLDIR/jobRemoteISB.jdl
-FILE9=$JDLDIR/collectionISB.jdl
+FILE0=$JDLDIR/collection.jdl
+FILE1=$JDLDIR/collection_isb.jdl
+FILE2=$JDLDIR/collection_usertag.jdl
+FILE3=$JDLDIR/normal.jdl
+FILE4=$JDLDIR/normal_isb.jdl
+FILE5=$JDLDIR/normal_usertag.jdl
+FILE6=$JDLDIR/parametric.jdl
+FILE7=$JDLDIR/parametric_isb.jdl
+FILE8=$JDLDIR/parametric_usertag.jdl
+FILE9=$JDLDIR/normal_perusal.jdl
 
 echo "Command line arguments: $#"
 

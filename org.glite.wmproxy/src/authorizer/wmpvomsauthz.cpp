@@ -8,11 +8,11 @@
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 //
 
+#include "wmpvomsauthz.h"
+
 #include <string>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
-
-#include "wmpvomsauthz.h"
 
 // Logger
 #include "glite/wms/common/logger/edglog.h"
@@ -91,7 +91,7 @@ VOMSAuthZ::getDN()
 		    	"VOMSAuthZ::getDN", wmputilities::WMS_AUTHZ_ERROR,
 		    	errormessage(error));
 		}
-		free(defaultvoms);
+		//free(defaultvoms);
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return NULL;
@@ -115,7 +115,7 @@ VOMSAuthZ::getDefaultFQAN()
 		    	"VOMSAuthZ::getDefaultFQAN", wmputilities::WMS_AUTHZ_ERROR,
 		    	errormessage(error));
 		}
-		free(defaultvoms);
+		//free(defaultvoms);
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return "";
@@ -138,7 +138,7 @@ VOMSAuthZ::getDefaultVO()
 		    	"VOMSAuthZ::getDefaultVO", wmputilities::WMS_AUTHZ_ERROR,
 		    	errormessage(error));
 		}
-		free(defaultvoms);
+		//free(defaultvoms);
 	}
 	// Proxy certificate is not a VOMS Proxy certificate
 	return "";
