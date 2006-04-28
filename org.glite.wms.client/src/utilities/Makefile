@@ -12,12 +12,16 @@ REPOSITORY=../../../
 repository=$(REPOSITORY)/repository
 stage=$(REPOSITORY)/stage
 BOOST=$(repository)/boost/1.32.0/rhel30_gcc32
+BOOST_SUFFIX=-gcc-mt-d
 CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
 CURL=-L/usr/lib -lcurl
+GLOBUS=$(repository)/globus/2.4.3-VDT-1.2.2/rhel30_gcc32/
+
+
 
 
 WMPCLIENT_LD_FLAGS= \
-	-L$(BOOST)/lib/release \
+	-L$(BOOST)/lib \
 	-L$(CLASSAD)/lib \
 	-L$(stage)/lib \
 	-lglite_wmsutils_exception \
@@ -36,16 +40,20 @@ WMPCLIENT_LD_EXE_FLAGS= \
 	-lglite_wms_wmproxy_api_cpp \
 	-lgridsite \
 	-lcrypto \
-	-lboost_fs \
-	-lboost_thread \
-	-lboost_signals \
-	-lboost_regex \
+	-lvomsapi \
+	-lglite_wmsutils_classads \
+	-lboost_filesystem$(BOOST_SUFFIX) \
+	-lboost_thread$(BOOST_SUFFIX) \
+	-lboost_signals$(BOOST_SUFFIX) \
+	-lboost_regex$(BOOST_SUFFIX) \
 	-lxml2
 
 WMPCLIENT_C_FLAGS= \
+	-I$(GLOBUS)/include/gcc32/ \
 	-I$(BOOST)/include \
 	-I$(CLASSAD)/include \
-	-I$(stage)/include 
+	-I$(stage)/include
+
 
 WMPCLIENT_FILES= utils.cpp \
 	adutils.cpp \
