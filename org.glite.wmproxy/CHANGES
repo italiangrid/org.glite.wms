@@ -1,5 +1,20 @@
 ====== WMProxy version 2.2.0 (gLite 3.1) ======
-* Fri Mar 31 2006 Fabrizio Pacini <egee@datamat.it>
+* Fri Apr 28 2006 Giuseppe Avellino <egee@datamat.it>
+- Fix bug #16524: wrong management of Input Sandbox gzip file
+  containing directories
+- Fix bug #16321: WMProxy getPerusalFiles returns erroneous URIs
+
+* Fri Apr 18 2006 Giuseppe Avellino <egee@datamat.it>
+- Fix bug #16274: perusal does not work: file file2peek is not
+  created (no files for perusal can be added)
+- Fix bug #16228: get-output seems freezing
+- Fix bug #16204: wrong seqcode in the cancel event: cancel is done
+  with an erroneous seqcode
+- Fix bug #16085: WMProxy unable to register JDL with UserTag
+  attribute specified
+- Fix bug #15292: WMProxy fails in cancelling a collection node
+
+* Fri Mar 31 2006 Giuseppe Avellino <egee@datamat.it>
 - Short deadline job support. New configuration attribute
   SDJRequirements
 - Server JDL file path registered to LB instead of JDL file
