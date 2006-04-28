@@ -412,6 +412,11 @@ public:
         *	header for JobId output files
         */
         static const std::string JOBID_FILE_HEADER ;
+	/**
+	* Returns the Default VO retrieved by the user proxy
+	* @return the Default VO string
+	*/
+	static std::string getDefaultVo() ;	
 private:
 	/**
 	* Performs parsing on the FQAN fields an retrurns a vector which elements
@@ -425,11 +430,7 @@ private:
 	* @return the string with the VO
 	*/
 	static std::string FQANtoVO(const std::string fqan);
-	/**
-	* Returns the Default VO retrieved by the user proxy
-	* @return the Default VO string
-	*/
-	static std::string getDefaultVo() ;
+
 	/**
 	* Check the WMS client installation path
 	*/

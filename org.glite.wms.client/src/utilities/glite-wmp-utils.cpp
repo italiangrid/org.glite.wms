@@ -1,5 +1,5 @@
 /*
- * edg-wl-job-submit.cpp
+ * glite-wmp-utils.cpp 
  * Copyright (c) 2001 The European Datagrid Project - IST programme, all rights reserved.
  * Contributors are mentioned in the code where appropriate.
  */
@@ -43,6 +43,7 @@ void getLbs(){
 	for (unsigned int i=0;i<lbResult.size();i++) cout << "LB: "<<lbResult[i]<< endl ;
 }
 
+/* DEPRECATED 
 void checkLBNS(const string tc){
 	cout << endl<<"=======>" << tc << endl ;
 	std::pair <std::string, unsigned int> ad = utils->checkLb(tc);
@@ -50,6 +51,8 @@ void checkLBNS(const string tc){
 	ad = utils->checkWmp(tc);
 	cout << "found NS: "<< ad.first << "     :      " << ad.second << endl ;
 }
+*/
+
 
 int main(int argc,char *argv[]){
 try{
@@ -61,6 +64,10 @@ try{
 		opts->readOptions(argc, (const char**)argv);
 		cout << "MAIN::Checking options.."<< endl ;
 		utils=new Utils(opts);
+
+		cout << "Main DBG " << endl ;
+		cout << "getDefaultVo->" << utils->getDefaultVo() << endl ;
+		cout << "SUCCESS" << endl ;
 	}catch (glite::wmsutils::exception::Exception &exc){
 		cerr << exc.what();
 	}
