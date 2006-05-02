@@ -119,6 +119,16 @@ JobAdapter::~JobAdapter(void)
 classad::ClassAd*
 JobAdapter::resolve(void)  
 try {
+
+  std::string const ce_id(jdl::get_ce_id(*m_ad));
+
+  boost::regex const cream_ce_id(".+/cream-.+");
+  bool const is_cream_ce = boost::regex_match(ce_id, cream_ce_id);
+
+  if (is_cream_ce) {
+    return new classad::ClassAd(*m_ad);
+  }
+
   std::auto_ptr<classad::ClassAd> result(new classad::ClassAd);
   
   /* Mandatory */
