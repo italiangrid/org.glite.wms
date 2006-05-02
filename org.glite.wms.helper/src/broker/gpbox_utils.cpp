@@ -131,7 +131,7 @@ load_chain(const char *certfile)
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  boost::shared_ptr<BIO> _in(in, ::BIO_free);
+  boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
   if(!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
@@ -145,7 +145,7 @@ load_chain(const char *certfile)
       first = 0;
       continue;
     }
-    xi = sk_X509_INFO_shift(sk);
+    xi=sk_X509_INFO_shift(sk);
     boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
     if (xi->x509 != NULL) {
       sk_X509_push(stack,xi->x509);
@@ -183,13 +183,11 @@ VOMS_proxy_init(
           voms vomsdefault;
           v.DefaultData(vomsdefault);
           USER_attribs.push_back(Attribute("voname", vomsdefault.voname, STRING));
-          for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++)
-          {
-            for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); ++j)
-            {
+          for (std::vector<voms>::iterator i = v.data.begin(); i != v.data.end(); i++) {
+            for(std::vector<data>::iterator j = (*i).std.begin(); j != (*i).std.end(); j++) {
               std::string name = (*j).group;
               if ((*j).role != std::string("NULL")) {
-                     name += "/Role=" + (*j).role;
+                name += "/Role=" + (*j).role;
               }
               USER_attribs.push_back(Attribute("group", name, STRING));
             }
@@ -224,7 +222,7 @@ get_tag(matchmaking::match_info const& info)
   classad::ClassAd const* ad = info.getAd();
   classad::Value value;
 
-  ad->EvaluateExpr("GlueCEPolicyPriority", value);
+  ad->EvaluateExpr("GlueCEPolicyPriority", value); //GlueCEVoViewAccessControlBaseRule
   std::string result;
   value.IsStringValue(result);
   if (result.empty()) {
@@ -265,10 +263,8 @@ filter_gpbox_authorizations(
     std::string tag(get_tag(it->second));
     ce_tags += tag.empty() ? "-1" : tag + '#';
   }
-  if (!ce_names.empty())
-    ce_names.erase(ce_names.size() - 1);
-  if (!ce_tags.empty())
-    ce_tags.erase(ce_tags.size() - 1);
+  ce_names.erase(ce_names.size() - 1);
+  ce_tags.erase(ce_tags.size() - 1);
 
   Info(ce_names);
   Info(ce_tags);
@@ -293,8 +289,8 @@ filter_gpbox_authorizations(
         Info("filter_gbox_authorizations: PEP Send returned true");
         for (EvalResults::iterator iter = evaluation_of_results.begin();
           iter != evaluation_of_results.end();
-          ++iter) {
-
+          ++iter)
+      {
           answer PEP_request_answer = iter->GetResult();
           // INDET may even be returned from an exception coming to the API
           // Send, so we don't even check it (since the policy (permit) is
@@ -335,16 +331,22 @@ bool
 interact(
   configuration::Configuration const& config,
   jobid::JobId const& jobid,
+  std::string const& PBOX_host_name,
   matchmaking::match_table_t& suitable_CEs   
   )
 {
-  return interact(config, get_user_x509_proxy(jobid), suitable_CEs);
+  return interact(config,
+    get_user_x509_proxy(jobid),
+    PBOX_host_name,
+    suitable_CEs
+  );
 }
 
 bool
 interact(
   configuration::Configuration const& config,
   std::string const& x509_user_proxy,
+  std::string const& PBOX_host_name,
   matchmaking::match_table_t& suitable_CEs)
 {
   boost::timer perf_timer;
@@ -359,12 +361,11 @@ interact(
   const configuration::WMConfiguration* WM_conf = config.wm();
   assert(WM_conf);
 
-  std::string Pbox_host_name(WM_conf->pbox_host_name());
-  if( !broker_subject.empty() and !Pbox_host_name.empty() ) {
+  if (!broker_subject.empty()) {
     try {
 
       Connection PEP_connection(
-                                Pbox_host_name,
+                                PBOX_host_name,
                                 WM_conf->pbox_port_num(),
                                 broker_subject,
                                 WM_conf->pbox_safe_mode()
@@ -378,16 +379,23 @@ interact(
     }
     catch (...) { // exception no_conn from API
                   // PEP_connection not properly propagated
+      Info("gpbox: exception caught during interaction");
       return false;
     };
+ 
+    std::string report(
+      "gpbox interaction ended. Elapsed: "
+      +
+      boost::lexical_cast<std::string>(perf_timer.elapsed())
+    );
+    Info(report);
+
+    return true;
   }
   else {
-    Info("gpbox: unable to find the broker proxy certificate or gpbox host name not specified");
+    Info("gpbox: unable to find the broker proxy certificate");
+    return false;
   }
-
-  Info("END G-Pbox. Elapsed:");
-  Info(perf_timer.elapsed());
-  return true;
 }
 
 }}}}} //glite::wms::helper::broker::gpbox

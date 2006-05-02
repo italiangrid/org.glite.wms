@@ -42,6 +42,7 @@
 #include "glite/wmsutils/jobid/JobIdExceptions.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
+#include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/exceptions.h"
 
 #include "glite/wms/common/logger/edglog.h"
@@ -199,14 +200,17 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
       );
       assert(config);
  
-      glite::wms::helper::broker::gpbox::interact(
-        *config,
-        x509_user_proxy_file_name,
-        *suitableCEs
-      );
-    }
-    else {
-      Info("Empty CE list after G-Pbox screening");
+      std::string PBOX_host_name(config->wm()->pbox_host_name());
+      if (!PBOX_host_name.empty())
+      {
+        if (!glite::wms::helper::broker::gpbox::interact(
+          *config,
+          x509_user_proxy_file_name,
+          PBOX_host_name,
+          *suitableCEs
+        ))
+          Info("Error during gpbox interaction");
+      }
     }
 #endif
 
