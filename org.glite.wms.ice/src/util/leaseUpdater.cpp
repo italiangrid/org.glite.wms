@@ -75,6 +75,14 @@ void leaseUpdater::update_lease( void )
             << log4cpp::CategoryStream::ENDLINE;
             it = m_cache->erase( it );
         } else {
+// 	    m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
+// 	    			    << "Checking LEASE for Job ["
+// 				    << it->getJobID() << "] - " 
+// 				    << " isActive="<<it->is_active()
+// 				    << " - remaining="<<(it->getEndLease()-time(0))
+// 				    << " - threshold="<<m_threshold
+// 				    << log4cpp::CategoryStream::ENDLINE;
+	                       
             if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
                 update_lease_for_job( *it );
             }
@@ -99,7 +107,7 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
     } catch ( soap_proxy::soap_ex& ex ) {
         m_log_dev->errorStream()
             << "leaseUpdater::update_lease_for_job() - "
-            << "returned an exception: "
+            << "CreamProxy returned an exception: "
             << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         // FIXME: what to do?

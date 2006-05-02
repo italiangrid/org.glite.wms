@@ -220,5 +220,6 @@ bool iceUtil::CreamJob::is_active( void ) const
              ( status == api::job_statuses::PENDING ) ||
              ( status == api::job_statuses::IDLE ) ||
              ( status == api::job_statuses::RUNNING ) ||
-             ( status == api::job_statuses::HELD ) );
+             ( status == api::job_statuses::HELD ) ||
+	     ( status == api::job_statuses::REALLY_RUNNING) );
 }

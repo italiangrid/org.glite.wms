@@ -245,7 +245,9 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
         try {	    
             // Locks the configuration manager
             boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
-
+/* 	    m_log_dev->infoStream() << "iceCommandSubmit::execute() - Registering with lease ["
+	    			    << m_confMgr->getLeaseDeltaTime() 
+				    << log4cpp::CategoryStream::ENDLINE; */
             theProxy->Register(
                                theJob.getCreamURL().c_str(),
                                theJob.getCreamDelegURL().c_str(),
@@ -260,7 +262,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
                                );
         } catch( exception& ex ) {
             m_log_dev->errorStream()
-                << "Cannot register jobID="
+                << "iceCommandSubmit::execute() - Cannot register jobID="
                 << theJob.getGridJobID()
                 << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
