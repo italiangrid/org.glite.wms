@@ -502,7 +502,6 @@ try {
 
   /* TEMP patch: forward ce_id */
   bool   b_ce_id;
-  std::string ce_id(jdl::get_ce_id(*m_ad, b_ce_id));
   jdl::set_ce_id(*result, ce_id, b_ce_id);
 
   /* keep the dag id if present */

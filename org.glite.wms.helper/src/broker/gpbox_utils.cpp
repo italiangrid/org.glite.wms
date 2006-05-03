@@ -4,23 +4,22 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
-#include <sys/types.h>
-#include <unistd.h>
 #include <map>
+#include <unistd.h>
+#include <sys/types.h>
 
-#include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/regex.hpp>
 #include <boost/progress.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/lb/producer.h"
-#include "glite/security/proxyrenewal/renewal.h"
 
-#include "glite/wms/matchmaking/matchmaker.h"
+#include "glite/gpbox/Clientcc.h"
+
+#include "glite/lb/producer.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -28,11 +27,19 @@
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "glite/wms/common/logger/logger_utils.h"
-#include "gpbox_utils.h"
-#include "globus_gss_assist.h"
-#include "glite/gpbox/Clientcc.h"
+
+#include "glite/wms/matchmaking/matchmaker.h"
+
+#include "glite/wmsutils/classads/classad_utils.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/security/voms/voms_api.h"
+
+#include "gpbox_utils.h"
+#include "globus_gss_assist.h"
 
 #include "glite/lb/context.h"
 #include "glite/lb/consumer.h"
@@ -40,6 +47,7 @@
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
+namespace classadutils      = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -214,25 +222,50 @@ VOMS_proxy_init(
   }
 }
 
+bool
+is_service_class(std::string attribute_value)
+{
+  boost::regex const service_class_tag("SC:.+");
+  return boost::regex_match(attribute_value, service_class_tag);
+}
+
 std::string
 get_tag(matchmaking::match_info const& info)
 {
   static std::string const null_string;
 
   classad::ClassAd const* ad = info.getAd();
+  std::vector<std::string> acbr_vector;
+  classadutils::EvaluateAttrList(*ad, "GlueCEAccessControlBaseRule", acbr_vector);
+
+  //TODO: by now we simply look for the 'SC:' tag indicating  by convention a
+  //service class. Afterwards, the value has to be passed 'as is' each time
+  //it's not a grouping tag (by now VO: always by convention)
+  std::vector<std::string>::iterator const it_end = acbr_vector.end();
+  std::vector<std::string>::iterator const it = std::find_if(
+      acbr_vector.begin(),
+      it_end,
+      is_service_class
+  );
+
+  if (it != it_end)
+  { 
+    return it->substr(3);
+  } else {
+    return null_string;
+  }
+}
+
+std::string
+get_CE_unique_id(matchmaking::match_info const& info)
+{
+  classad::ClassAd const* ad = info.getAd();
   classad::Value value;
 
-  ad->EvaluateExpr("GlueCEPolicyPriority", value); //GlueCEVoViewAccessControlBaseRule
+  ad->EvaluateExpr("GlueCEUniqueID", value);
   std::string result;
   value.IsStringValue(result);
-  if (result.empty()) {
-    // sometimes this attribute is published as string (as it should),
-    // sometimes as int, so we need to handle this.
 
-    int int_result;
-    value.IsIntegerValue(int_result);
-    result = boost::lexical_cast<std::string>(int_result);
-  }
   return result;
 }
 
@@ -296,7 +329,9 @@ filter_gpbox_authorizations(
           // Send, so we don't even check it (since the policy (permit) is
           // according)), its content being untrustable
 
-          Info(iter->GetId());
+          std::string answer_id = iter->GetId();
+          Info(answer_id);
+
           // NOTE: borderline cases are filtered off without questioning
           // because of the resubmission costs
           if( PEP_request_answer == DENY
@@ -304,8 +339,29 @@ filter_gpbox_authorizations(
               PEP_request_answer == NOTA
               or 
               PEP_request_answer == INDET ) {
-            suitable_CEs.erase(iter->GetId());
+
+            suitable_CEs.erase(answer_id);
             Info("!!!erased CE");
+          }
+          else {
+
+            //at this point we've got the certainty that suitableCEs
+            //will be a list of unique CE identifiers (if the related info 
+            //is correctly published, if not the first added applies) so we can replace
+            //the former unique key (CEID/VoViewID) with the real name for the CE
+            matchmaking::match_table_t::iterator it = suitable_CEs.find(answer_id);
+            if (it != suitable_CEs.end()) {
+              std::string CE_id = get_CE_unique_id(it->second);
+              matchmaking::match_info CE_ad(it->second);
+              suitable_CEs.erase(answer_id);
+              suitable_CEs[CE_id] = CE_ad;
+              //or else (without defining CE_ad
+              //  suitable_CEs[CE_id] = suitable_CEs[answer_id];
+            } else {
+              Info("Mismatching CE id got from gpbox answer\n");
+            }
+            //or else (one for the two branches)
+            //suitable_CEs.erase(answer_id);
           }
         }
       }
