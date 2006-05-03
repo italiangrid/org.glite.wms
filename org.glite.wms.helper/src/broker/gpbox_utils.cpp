@@ -57,27 +57,24 @@ namespace gpbox {
 
 namespace {
 
+static std::string const service_class_tag = "SC:";
+
 std::string
-get_user_x509_proxy(jobid::JobId const& jobid)
+get_user_x509_proxy(jobid::JobId const& jobid,
+  configuration::Configuration const& config)
 {
   static std::string const null_string;
   char* c_x509_proxy = NULL;
 
   int err_code = glite_renewal_GetProxy(jobid.toString().c_str(), &c_x509_proxy);
   if (!err_code) {
-
     return null_string;
-  }
-  else {
+  } else {
     // currently no proxy is registered if renewal is not requested
     // try to get the original user proxy from the input sandbox
     boost::shared_ptr<char> _c_x509_proxy(c_x509_proxy, ::free);
 
-    configuration::Configuration const* const config
-      = configuration::Configuration::instance();
-    assert(config);
-
-    configuration::NSConfiguration const* const ns_config = config->ns();
+    const configuration::NSConfiguration* ns_config = config.ns();
     assert(ns_config);
 
     std::string x509_proxy(ns_config->sandbox_staging_path());
@@ -131,39 +128,40 @@ load_chain(const char *certfile)
   X509_INFO *xi;
   int first = 1;
 
-  if(!(stack = sk_X509_new_null())) {
+  if (!(stack = sk_X509_new_null())) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  if(!(in=BIO_new_file(certfile, "r"))) {
+  if (!(in = BIO_new_file(certfile, "r"))) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
   boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
-  if(!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+  if (!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
   // scan over it and pull out the certs
   while (sk_X509_INFO_num(sk)) {
-    /* skip first cert */
+    // skip first cert
     if (first) {
       first = 0;
       continue;
     }
-    xi=sk_X509_INFO_shift(sk);
+    xi = sk_X509_INFO_shift(sk);
     boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
     if (xi->x509 != NULL) {
       sk_X509_push(stack,xi->x509);
       xi->x509 = NULL;
     }
   }
-  if(!sk_X509_num(stack)) {
+  if (!sk_X509_num(stack)) {
     Info("no certificates in file");
     sk_X509_free(stack);
     sk_X509_INFO_free(sk);
+
     return NULL;
   }
   return stack;
@@ -210,10 +208,12 @@ VOMS_proxy_init(
       }
     }
 
-    if (x)
+    if (x) {
       X509_free(x);
-    if (chain)
+    }
+    if (chain) {
       sk_X509_free(chain);
+    }
 
     return true;
   }
@@ -225,8 +225,8 @@ VOMS_proxy_init(
 bool
 is_service_class(std::string attribute_value)
 {
-  boost::regex const service_class_tag("SC:.+");
-  return boost::regex_match(attribute_value, service_class_tag);
+  boost::regex const service_class(service_class_tag + ".+");
+  return boost::regex_match(attribute_value, service_class);
 }
 
 std::string
@@ -243,14 +243,14 @@ get_tag(matchmaking::match_info const& info)
   //it's not a grouping tag (by now VO: always by convention)
   std::vector<std::string>::iterator const it_end = acbr_vector.end();
   std::vector<std::string>::iterator const it = std::find_if(
-      acbr_vector.begin(),
-      it_end,
-      is_service_class
+    acbr_vector.begin(),
+    it_end,
+    is_service_class
   );
 
   if (it != it_end)
   { 
-    return it->substr(3);
+    return it->substr(service_class_tag.size());
   } else {
     return null_string;
   }
@@ -276,14 +276,17 @@ filter_gpbox_authorizations(
   std::string const& user_cert_file_name
 )
 {
-  if(user_cert_file_name.empty())
+  if (user_cert_file_name.empty()) {
     return false;
+  }
 
   const std::string user_subject(
     get_proxy_distinguished_name(user_cert_file_name)
   );
-  if(user_subject.empty())
+
+  if(user_subject.empty()) {
     return false;
+  }
 
   Attributes CE_attributes;
   std::string ce_names;
@@ -392,7 +395,7 @@ interact(
   )
 {
   return interact(config,
-    get_user_x509_proxy(jobid),
+    get_user_x509_proxy(jobid, config),
     PBOX_host_name,
     suitable_CEs
   );
@@ -414,17 +417,17 @@ interact(
     get_proxy_distinguished_name(common_conf->host_proxy_file())
   );
 
-  const configuration::WMConfiguration* WM_conf = config.wm();
-  assert(WM_conf);
+  const configuration::WMConfiguration* wm_conf = config.wm();
+  assert(wm_conf);
 
   if (!broker_subject.empty()) {
     try {
 
       Connection PEP_connection(
                                 PBOX_host_name,
-                                WM_conf->pbox_port_num(),
+                                wm_conf->pbox_port_num(),
                                 broker_subject,
-                                WM_conf->pbox_safe_mode()
+                                wm_conf->pbox_safe_mode()
                                );
 
       if (!filter_gpbox_authorizations(suitable_CEs,
