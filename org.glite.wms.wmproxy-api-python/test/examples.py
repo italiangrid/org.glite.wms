@@ -7,11 +7,10 @@ from wmproxymethods import Config
 import socket
 
 
-
-
-
-
+""" DEBUG MODE """
+SOAPpy.Config.debug = 0
 Config.DEBUGMODE = 1
+
 def title(msg, *args):
 	if Config.DEBUGMODE:
 		print "\n########### DBG Message #################"
@@ -26,6 +25,7 @@ class JobId:
 	def setJobId(self, jobid):
 		title("Successfully set JobId: " , jobid)
 		self.jobid=jobid
+		return jobid
 	def getJobId(self):
 		if self.jobid:
 			return self.jobid
@@ -35,8 +35,6 @@ class JobId:
 		sys.exit(1)
 
 
-
-
 """
 CUSTOM VALUES:
 """
@@ -44,7 +42,7 @@ gundam   =  "https://gundam.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 ghemon   =  "https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 tigerman =  "https://tigerman.cnaf.infn.it:7443/glite_wms_wmproxy_server"
 trinity  =  "https://10.100.4.52:7443/glite_wms_wmproxy_server"
-url = tigerman
+url = ghemon
 
 
 
@@ -55,6 +53,7 @@ ns ="http://glite.org/wms/wmproxy"
 
 delegationId = "rask"
 protocol="gsiftp"
+protocol="all"
 requirements ="ther.GlueCEStateStatus == \"Production\""
 rank ="-other.GlueCEStateEstimatedResponseTime"
 """
@@ -83,6 +82,8 @@ dagjdl2="[ nodes = [ nodeB = [ description = [ requirements = RegExp(\"lxde01*\"
 collectionjdl = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[1] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; InputSandbox = { root.inputsandbox[2] } ],[ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
 
 
+collectionjdl = "[ requirements = other.GlueCEInfoTotalCPUs>0; RetryCount = 3; nodes = { [ NodeName = \"nodeMarask\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; ],[NodeName = \"nodeMaraskino\"; JobType = \"normal\"; executable = \"/bin/ls\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime; ],[arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"]"
+
 collectionjdlUNO = "[ requirements = true; RetryCount = 3; nodes = { [ requirements = ( true ) && ( other.GlueCEStateStatus == \"Production\" ); arguments = \"12\"; NodeName = \"nodeMaraska\"; JobType = \"normal\"; executable = \"/bin/sleep\"; rank =  -other.GlueCEStateEstimatedResponseTime; Type = \"job\"; DefaultRank =  -other.GlueCEStateEstimatedResponseTime ] }; AllowZippedISB = false; VirtualOrganisation = \"EGEE\"; Type = \"Collection\"; InputSandbox = { \"file:///home/grid_dev/wmproxy/ls.jdl\",\"file:///home/grid_dev/wmproxy/parametric.jdl\",\"file:///home/grid_dev/wmproxy/ENV\" } ]"
 
 
@@ -90,8 +91,6 @@ collectionjdlUNO = "[ requirements = true; RetryCount = 3; nodes = { [ requireme
 jdl=jobjdl
 
 
-""" DEBUG MODE """
-SOAPpy.Config.debug = 0
 
 """
 Setup Test Class for Maraska
@@ -117,11 +116,24 @@ class WmpTest(unittest.TestCase):
 		assert dagURI, "Wrong DEST URI!! (dagad)"
 
 	def testgetSandboxBulkDestURI(self):
+		protocol=""
 		jobURI=self.wmproxy.getSandboxBulkDestURI(jobid.getJobId(),protocol)
-		dagURI=self.wmproxy.getSandboxBulkDestURI(dagad.getJobId(),protocol)
+		#dagURI=self.wmproxy.getSandboxBulkDestURI(dagad.getJobId(),protocol)
+		dagURI=""
 		title("testgetSandboxBulkDestURI: ", jobURI,dagURI)
+		if jobURI:
+			for jid in jobURI.keys():
+				uris = jobURI[jid]
+				for uri in uris:
+					print "URI RECEIVED: " , uri
+
 		assert jobURI, "Wrong DEST URI!! (jobid)"
-		assert dagURI, "Wrong DEST URI!! (dagad)"
+		# assert dagURI, "Wrong DEST URI!! (dagad)"
+		if jobURI:
+			for jid in jobURI.keys():
+				uris = jobURI[jid]
+				"URIS DAG", uris
+
 
 	def testgetTransferProtocols(self):
 		protocols = self.wmproxy.getTransferProtocols()
@@ -139,9 +151,12 @@ class WmpTest(unittest.TestCase):
 	SUBMISSION
 	"""
 	def testcollectionSubmit(self):
-		dagadInstance=self.wmproxy.jobSubmit(collectionjdlUNO, delegationId)
-		dagad.setJobId(dagadInstance.getJobId())
 		dagadInstance=self.wmproxy.jobSubmit(collectionjdl, delegationId)
+		assert dagadInstance, "Empty DAGAD!!!"
+		dagad.setJobId(dagadInstance.getJobId())
+
+	def testcollectionSubmitOne(self):
+		dagadInstance=self.wmproxy.jobSubmit(collectionjdlUNO, delegationId)
 		assert dagadInstance, "Empty DAGAD!!!"
 		dagad.setJobId(dagadInstance.getJobId())
 
@@ -155,9 +170,9 @@ class WmpTest(unittest.TestCase):
 		jobid.setJobId(jobidInstance.getJobId())
 
 	def testjobListMatch(self):
-		jobidInstance =self.wmproxy.jobListMatch(jobjdl, delegationId)
-		assert  jobidInstance , "Empty JobId!!"
-		jobid.setJobId(jobidInstance.getJobId())
+		matchingCEs=self.wmproxy.jobListMatch(jobjdl, delegationId)
+		assert  matchingCEs , "Empty JobId!!"
+
 
 	def testcycleJob(self):
 		for jdl in [jobjdl]:
@@ -226,7 +241,12 @@ class WmpTest(unittest.TestCase):
 	Proxy
 	"""
 	def testgetProxyReq(self):
-		assert self.wmproxy.getProxyReq(delegationId)
+		gpr = self.wmproxy.getProxyReq(delegationId)
+		title("getProxyReq (wmp namespace)", gpr)
+		assert gpr
+		gpr = self.wmproxy.getProxyReq(delegationId, self.wmproxy.getGrstNs())
+		title("getProxyReq (grst namespace)", gpr)
+		assert gpr
 	def testputProxy(self):
 		assert self.wmproxy.putProxy(delegationId,jobid.getJobId())
 	def testgetProxyReqGrst(self):
@@ -259,48 +279,47 @@ class WmpTest(unittest.TestCase):
 
 
 
-def runTextRunner(level=0):
-	"""    TEMPLATES   """
-	templateSuite = unittest.TestSuite()
-	templateSuite.addTest( WmpTest("testgetStringParametricJobTemplate"))
-	templateSuite.addTest( WmpTest("testgetIntParametricJobTemplate"))
-	templateSuite.addTest( WmpTest("testgetCollectionTemplate"))
-	#		templateSuite.addTest( WmpTest("testgetDAGTemplate"))    #"test   NOT YET SUPPORTED"
-	#		templateSuite.addTest( WmpTest("testgetJobTemplate"))    # "test  NOT YET SUPPORTED"
+
+def addSuites(suiteTitle,suites, sublevel):
+	mainSuite = unittest.TestSuite()
+	help=""
+	for i in range (len(suites)):
+		if sublevel==-2:
+			mainSuite.addTest(WmpTest(suites[i]))
+		elif sublevel==i:
+			mainSuite.addTest(WmpTest(suites[i]))
+		elif sublevel==-1:
+			# generate help
+			help+= "." +str(i) +"  "+ suites[i] +"\n"
+	if help:
+		print "**** "+ suiteTitle +" subtests: ***\n" +help
+	return mainSuite
+
+
+
+def runTextRunner(level, sublevel):
 	"""  SUBMISSION """
-	submitSuite = unittest.TestSuite()
-	submitSuite.addTest( WmpTest("testdagSubmit"))
-	submitSuite.addTest( WmpTest("testcollectionSubmit"))
-	submitSuite.addTest( WmpTest("testjobSubmit"))
-	submitSuite.addTest( WmpTest("testjobListMatch"))
-	submitSuite.addTest( WmpTest("testcycleJob"))
+	suites=["testdagSubmit","testcollectionSubmit","testcollectionSubmitOne",\
+	"testjobSubmit","testjobListMatch","testcycleJob"]
+	submitSuite = addSuites("submitSuite",suites, sublevel)
 	""" PERUSAL """
-	perusalSuite = unittest.TestSuite()
-	perusalSuite.addTest( WmpTest("testgetPerusalFiles"))
-	perusalSuite.addTest( WmpTest("testenableFilePerusal"))
+	suites=["testgetPerusalFiles","testenableFilePerusal"]
+	perusalSuite = addSuites("perusalSuite",suites, sublevel)
+	"""    TEMPLATES   """
+	suites=["testgetStringParametricJobTemplate","testgetIntParametricJobTemplate",\
+	"testgetCollectionTemplate","testgetDAGTemplate","testgetJobTemplate"]
+	templateSuite = addSuites("templateSuite",suites, sublevel)
 	""" get URI"""
-	getURISuite = unittest.TestSuite()
-	getURISuite.addTest( WmpTest("testgetSandboxDestURI"))
-	getURISuite.addTest( WmpTest("testgetSandboxBulkDestURI"))
-	getURISuite.addTest( WmpTest("testgetTransferProtocols"))
-	getURISuite.addTest( WmpTest("testgetOutputFileList"))
-
+	suites=["testgetSandboxDestURI","testgetSandboxBulkDestURI","testgetTransferProtocols",\
+	"testgetOutputFileList"]
+	getURISuite = addSuites("getURISuite",suites, sublevel)
 	""" get/put Proxy"""
-	proxySuite = unittest.TestSuite()
-	proxySuite.addTest( WmpTest("testgetProxyReq"))
-	#		proxySuite.addTest( WmpTest("testputProxy"))	 	#"test NOT YET SUPPORTED"
-	proxySuite.addTest( WmpTest("testgetProxyReqGrst"))
-	#		proxySuite.addTest( WmpTest("testputProxyGrst"))  	#"test  NOT YET SUPPORTED"
-	proxySuite.addTest(WmpTest("testDelegatedProxyInfo"))
-	proxySuite.addTest(WmpTest("testJobProxyInfo"))
-	proxySuite.addTest(WmpTest("testGetJDL"))
-
-
+	suites=["testgetProxyReq","testputProxy","testgetProxyReqGrst","testputProxyGrst",\
+	"testDelegatedProxyInfo","testGetJDL"]
+	proxySuite = addSuites("proxySuite",suites, sublevel)
 	"""
 		RUNNER
-	UNCOMMENTED Tests will be executed when "runner" perform is active (see below)
 	"""
-
 	runner = unittest.TextTestRunner()
 	if level==0 or level ==1:
 		runner.run (submitSuite)
@@ -365,16 +384,17 @@ if __name__=="__main__":
 	print "#############################################"
 	if len(sys.argv)<2:
 		print "Usage: "
-		print sys.argv[0] , "0-5  [<jobid>]\n"
+		print sys.argv[0] , "<suite number>[.<subsuite number>]  [<jobid>]\n"
 		print "0) perform all unit tests"
 		print "1) perform all submitSuite"
 		print "2) perform all perusalSuite"
 		print "3) perform all templateSuite"
 		print "4) perform OUTPUT Suite"
-		print "5) perform all proxySuite"
+		print "5) perform all proxySuite\n"
+		runTextRunner(-1,-1)
 		sys.exit(0)
-
 	level = sys.argv[1]
+	sublevel= -2
 	if len(sys.argv)>2:
 		jobid.setJobId(sys.argv[2])
 		dagad.setJobId(sys.argv[2])
@@ -383,9 +403,14 @@ if __name__=="__main__":
 		if level>5:
 			raise 5
 	except:
-		print "Usage: "
-		print sys.argv[0] , "<example number>  [<jobid>]\n"
-		sys.exit(0)
-	runTextRunner(level)
+		try:
+			level, sublevel = level.split(".")
+			level = int(level)
+			sublevel= int (sublevel)
+		except:
+			print "Usage: "
+			print sys.argv[0] , "<example number>  [<jobid>]\n"
+			sys.exit(0)
+	runTextRunner(level, sublevel)
 	print " END TEST \n"
 
