@@ -358,7 +358,7 @@ filter_gpbox_authorizations(
               matchmaking::match_info CE_ad(it->second);
               suitable_CEs.erase(answer_id);
               suitable_CEs[CE_id] = CE_ad;
-              //or else (without defining CE_ad
+              //or else (without defining CE_ad)
               //  suitable_CEs[CE_id] = suitable_CEs[answer_id];
             } else {
               Info("Mismatching CE id got from gpbox answer\n");
@@ -376,14 +376,14 @@ filter_gpbox_authorizations(
       Info("VOMS_proxy_init returned false");
       return false;
     }
-  }
-  catch(...) {
+  } catch(...) {
     Info("filter_gbox_authorizations: PEP Send returned false");
     return false;
   }
 
   return true;
 }
+
 } //empty  namespace
 
 bool
