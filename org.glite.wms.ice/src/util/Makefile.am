@@ -15,7 +15,6 @@ libglite_wms_ice_util_la_SOURCES = \
 				eventStatusListener.cpp \
 				creamJob.cpp \
 				iceConfManager.cpp \
-				iceEventLogger.cpp \
 				iceLBLogger.cpp \
 				iceLBContext.cpp \
 				iceLBEvent.cpp \
