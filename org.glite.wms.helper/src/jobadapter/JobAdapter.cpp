@@ -500,8 +500,8 @@ try {
   std::string stderror(jdl::get_std_error(*m_ad, b_std));
   std::string stdoutput(jdl::get_std_output(*m_ad, b_std));
 
-  bool   b_ce_id;
   /* TEMP patch: forward ce_id */
+  bool   b_ce_id;
   jdl::set_ce_id(*result, ce_id, b_ce_id);
 
   /* keep the dag id if present */
@@ -827,6 +827,7 @@ try {
   std::string::size_type const p = inputsandboxpath.rfind("/input");
   std::string const token_path(inputsandboxpath, 0, p);
   jw->token(token_path + '/' + token_file);
+  jw->set_token_support();
 
   if (!b_wmpisb_base_uri) {
     try {

@@ -39,7 +39,7 @@ JobWrapperException::message() const
   return m_message;
 }
 
-struct pimpl {
+struct JobWrapper::pimpl {
 
   std::string               m_job;
   std::string               m_standard_input;
@@ -93,15 +93,15 @@ struct pimpl {
 const std::string JobWrapper::s_brokerinfo_default = ".BrokerInfo";
 
 JobWrapper::JobWrapper(const std::string& job)
+ : m_pimpl(new pimpl)
 {  
-  m_pimpl.reset(new pimpl);
-
   m_pimpl->m_nodes = 0;
   m_pimpl->m_wmp_support = false;
   m_pimpl->m_perusal_support = false;
   m_pimpl->m_osb_wildcards_support = false;
   m_pimpl->m_job = job;
   m_pimpl->m_create_subdir = false;
+  m_pimpl->m_token_support = false;
 }
 
 JobWrapper::~JobWrapper()
@@ -283,6 +283,12 @@ JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_fi
 void JobWrapper::set_osb_wildcards_support(bool value)
 {
   m_pimpl->m_osb_wildcards_support = value;
+}
+
+void
+JobWrapper::set_token_support()
+{
+  m_pimpl->m_token_support = true;
 }
 
 void
@@ -490,8 +496,10 @@ JobWrapper::fill_out_script(const std::string& template_file, std::ostream& outp
     return false;
   }
   output_stream << '\n';
+
   if ( !dump_vars(output_stream) )
     return false;
+
   output_stream << '\n';
   output_stream << fs.rdbuf();
 
@@ -507,7 +515,9 @@ JobWrapper::print(std::ostream& os) const
   if( !fill_out_script( 
                        wm_config->job_wrapper_template_dir() 
                        + 
-                       "/template.sh" ,os)) {
+                       "/template.sh", os
+                      )
+  ) {
     throw JobWrapperException("Cannot create jobwrapper script");
   }
 
