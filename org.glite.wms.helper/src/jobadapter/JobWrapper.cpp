@@ -101,6 +101,7 @@ JobWrapper::JobWrapper(const std::string& job)
   m_pimpl->m_osb_wildcards_support = false;
   m_pimpl->m_job = job;
   m_pimpl->m_create_subdir = false;
+  m_pimpl->m_token_support = false;
 }
 
 JobWrapper::~JobWrapper()
@@ -282,6 +283,12 @@ JobWrapper::wmp_output_sandbox_support(const std::vector<std::string>& output_fi
 void JobWrapper::set_osb_wildcards_support(bool value)
 {
   m_pimpl->m_osb_wildcards_support = value;
+}
+
+void
+JobWrapper::set_token_support()
+{
+  m_pimpl->m_token_support = true;
 }
 
 void

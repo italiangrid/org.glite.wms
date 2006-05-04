@@ -827,6 +827,7 @@ try {
   std::string::size_type const p = inputsandboxpath.rfind("/input");
   std::string const token_path(inputsandboxpath, 0, p);
   jw->token(token_path + '/' + token_file);
+  jw->set_token_support();
 
   if (!b_wmpisb_base_uri) {
     try {

@@ -242,6 +242,12 @@ public:
     */
   void set_osb_wildcards_support(bool);
 
+  /**
+    * Set the support for
+    * shallow resubmission
+    */
+  void set_token_support();
+
   void set_output_sandbox_base_dest_uri(URL const&);
 
   /**
