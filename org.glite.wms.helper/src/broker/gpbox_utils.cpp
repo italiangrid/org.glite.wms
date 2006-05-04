@@ -58,6 +58,7 @@ namespace gpbox {
 namespace {
 
 static std::string const service_class_tag = "SC:";
+static std::string const not_a_service_class_tag = "NOT_A_SC";
 
 std::string
 get_user_x509_proxy(jobid::JobId const& jobid,
@@ -252,7 +253,7 @@ get_tag(matchmaking::match_info const& info)
   { 
     return it->substr(service_class_tag.size());
   } else {
-    return null_string;
+    return not_a_service_class_tag;
   }
 }
 
@@ -297,7 +298,7 @@ filter_gpbox_authorizations(
        ++it) {
     ce_names += it->first + '#';
     std::string tag(get_tag(it->second));
-    ce_tags += tag.empty() ? "-1" : tag + '#';
+    ce_tags += tag.empty() ? "error" : tag + '#';
   }
   ce_names.erase(ce_names.size() - 1);
   ce_tags.erase(ce_tags.size() - 1);
