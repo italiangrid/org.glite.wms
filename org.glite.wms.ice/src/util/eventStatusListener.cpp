@@ -396,6 +396,8 @@ void iceUtil::eventStatusListener::init(void)
 //______________________________________________________________________________
 void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 {
+    if( ev.Message.empty() ) return;
+
     // First, convert the vector of messages into a vector of StatusNotification objects
     vector<StatusNotification> notifications;
 
@@ -413,8 +415,8 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         }
     }
     
-    if ( notifications.empty() )
-        return;
+//    if ( notifications.empty() )
+//        return;
 
     if( notifications.begin()->getStatus() == api::job_statuses::PURGED ) {
 	return;
@@ -439,8 +441,13 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         return;
     }
 
-    jc_it->setLastSeen( time(0) );
-    cache->put( *jc_it );
+    // setLastSeen must be called ONLY if the job IS NOT in a TERMINAL state
+    // (that means that more states are coming...),
+    // like DONE-OK; otherwise the eventStatusPoller wont never purge it...
+    if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
+      jc_it->setLastSeen( time(0) );
+      cache->put( *jc_it );
+    }
 
     // Now, for each status change notification, check if it has to be logged
     vector<StatusNotification>::const_iterator it;
@@ -464,6 +471,9 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         if ( jc_it->get_num_logged_status_changes() < count ) {
             jc_it->setStatus( it->getStatus() );
             jc_it->set_num_logged_status_changes( count );
+	    
+	    
+	    
             _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
             // The job gets stored in the jobcache anyway by the logEvent method...
         } else {

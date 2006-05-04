@@ -56,7 +56,7 @@ leaseUpdater::leaseUpdater( ) :
         // FIXME: what to do??
     } 
     double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/2.0;
-    m_delay = _delta_time_for_lease * 60;
+    m_delay = (time_t)(_delta_time_for_lease * 60);
     //cout << "********* m_delta = "<<m_delay<<endl;
     //exit(0);
 }
@@ -79,13 +79,13 @@ void leaseUpdater::update_lease( void )
             << log4cpp::CategoryStream::ENDLINE;
             it = m_cache->erase( it );
         } else {
-// 	    m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
-// 	    			    << "Checking LEASE for Job ["
-// 				    << it->getJobID() << "] - " 
-// 				    << " isActive="<<it->is_active()
-// 				    << " - remaining="<<(it->getEndLease()-time(0))
-// 				    << " - threshold="<<m_threshold
-// 				    << log4cpp::CategoryStream::ENDLINE;
+	    m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
+	    			    << "Checking LEASE for Job ["
+				    << it->getJobID() << "] - " 
+				    << " isActive="<<it->is_active()
+				    << " - remaining="<<(it->getEndLease()-time(0))
+				    << " - threshold="<<m_threshold
+				    << log4cpp::CategoryStream::ENDLINE;
 	                       
             if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
                 update_lease_for_job( *it );
@@ -104,7 +104,15 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
     
     jobids.push_back( j.getJobID() );
 
-    // Renew the lease
+    // Renew the lease\
+    
+    m_log_dev->infoStream()
+            << "leaseUpdater::update_lease_for_job() - "
+            << "updating lease for cream jobid=["
+            << j.getJobID()
+            << "] m_delta=" << m_delta
+            << log4cpp::CategoryStream::ENDLINE; 
+    
     try {
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
         m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
@@ -149,9 +157,7 @@ void leaseUpdater::body( void )
         m_log_dev->infoStream()
             << "leaseUpdater::body() - new iteration"
             << log4cpp::CategoryStream::ENDLINE;
-
         update_lease( );
-
         sleep( m_delay );
     }
 }

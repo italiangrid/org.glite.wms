@@ -129,7 +129,12 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             threshold = iceConfManager::getInstance()->getPollerStatusThresholdTime();
             listener_started = iceConfManager::getInstance()->getStartListener();
 	}
-                
+        
+	m_log_dev->infoStream() << "eventStatusPoller::getStatus() - "
+				<< "Job [" << jobIt->getJobID() << "]"
+				<< " oldness="<<oldness << " threshold="<<threshold
+				<< " listener="<<listener_started<<log4cpp::CategoryStream::ENDLINE;
+	
         if( (oldness <  threshold) && listener_started ) {
             // This job is not old enough. Skip to next job
             ++jobIt;
@@ -328,7 +333,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         case api::job_statuses::DONE_OK:
         case api::job_statuses::CANCELLED:
             m_log_dev->infoStream()
-                << "eventStatusPoller::checkJobs() - Scheduling JobID{"
+                << "eventStatusPoller::checkJobs() - Scheduling JobID ["
                 << cid << "] to be purged"
                 << log4cpp::CategoryStream::ENDLINE;
             jobs_to_purge.push_back(cid);
