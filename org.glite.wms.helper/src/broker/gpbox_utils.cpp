@@ -4,23 +4,22 @@
 // For license conditions see http://www.eu-datagrid.org/license.html
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
-#include <sys/types.h>
-#include <unistd.h>
 #include <map>
+#include <unistd.h>
+#include <sys/types.h>
 
-#include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/regex.hpp>
 #include <boost/progress.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#include "glite/wmsutils/jobid/JobId.h"
-#include "glite/wmsutils/jobid/manipulation.h"
-#include "glite/lb/producer.h"
-#include "glite/security/proxyrenewal/renewal.h"
 
-#include "glite/wms/matchmaking/matchmaker.h"
+#include "glite/gpbox/Clientcc.h"
+
+#include "glite/lb/producer.h"
 
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
@@ -28,11 +27,19 @@
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 
 #include "glite/wms/common/logger/logger_utils.h"
-#include "gpbox_utils.h"
-#include "globus_gss_assist.h"
-#include "glite/gpbox/Clientcc.h"
+
+#include "glite/wms/matchmaking/matchmaker.h"
+
+#include "glite/wmsutils/classads/classad_utils.h"
+
+#include "glite/wmsutils/jobid/JobId.h"
+#include "glite/wmsutils/jobid/manipulation.h"
+
 #include "glite/security/proxyrenewal/renewal.h"
 #include "glite/security/voms/voms_api.h"
+
+#include "gpbox_utils.h"
+#include "globus_gss_assist.h"
 
 #include "glite/lb/context.h"
 #include "glite/lb/consumer.h"
@@ -40,6 +47,7 @@
 
 namespace jobid = glite::wmsutils::jobid;
 namespace configuration = glite::wms::common::configuration;
+namespace classadutils      = glite::wmsutils::classads;
 
 namespace glite {
 namespace wms {
@@ -49,27 +57,25 @@ namespace gpbox {
 
 namespace {
 
+static std::string const service_class_tag = "SC:";
+static std::string const not_a_service_class_tag = "NOT_A_SC";
+
 std::string
-get_user_x509_proxy(jobid::JobId const& jobid)
+get_user_x509_proxy(jobid::JobId const& jobid,
+  configuration::Configuration const& config)
 {
   static std::string const null_string;
   char* c_x509_proxy = NULL;
 
   int err_code = glite_renewal_GetProxy(jobid.toString().c_str(), &c_x509_proxy);
   if (!err_code) {
-
     return null_string;
-  }
-  else {
+  } else {
     // currently no proxy is registered if renewal is not requested
     // try to get the original user proxy from the input sandbox
     boost::shared_ptr<char> _c_x509_proxy(c_x509_proxy, ::free);
 
-    configuration::Configuration const* const config
-      = configuration::Configuration::instance();
-    assert(config);
-
-    configuration::NSConfiguration const* const ns_config = config->ns();
+    const configuration::NSConfiguration* ns_config = config.ns();
     assert(ns_config);
 
     std::string x509_proxy(ns_config->sandbox_staging_path());
@@ -123,39 +129,40 @@ load_chain(const char *certfile)
   X509_INFO *xi;
   int first = 1;
 
-  if(!(stack = sk_X509_new_null())) {
+  if (!(stack = sk_X509_new_null())) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
-  if(!(in=BIO_new_file(certfile, "r"))) {
+  if (!(in = BIO_new_file(certfile, "r"))) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
   boost::shared_ptr<BIO> in_(in, ::BIO_free);
 
   // This loads from a file, a stack of x509/crl/pkey sets
-  if(!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
+  if (!(sk = ::PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
     sk_X509_INFO_free(sk);
     return NULL;
   }
   // scan over it and pull out the certs
   while (sk_X509_INFO_num(sk)) {
-    /* skip first cert */
+    // skip first cert
     if (first) {
       first = 0;
       continue;
     }
-    xi=sk_X509_INFO_shift(sk);
+    xi = sk_X509_INFO_shift(sk);
     boost::shared_ptr<X509_INFO> _xi(xi, ::X509_INFO_free);
     if (xi->x509 != NULL) {
       sk_X509_push(stack,xi->x509);
       xi->x509 = NULL;
     }
   }
-  if(!sk_X509_num(stack)) {
+  if (!sk_X509_num(stack)) {
     Info("no certificates in file");
     sk_X509_free(stack);
     sk_X509_INFO_free(sk);
+
     return NULL;
   }
   return stack;
@@ -202,10 +209,12 @@ VOMS_proxy_init(
       }
     }
 
-    if (x)
+    if (x) {
       X509_free(x);
-    if (chain)
+    }
+    if (chain) {
       sk_X509_free(chain);
+    }
 
     return true;
   }
@@ -214,25 +223,50 @@ VOMS_proxy_init(
   }
 }
 
+bool
+is_service_class(std::string attribute_value)
+{
+  boost::regex const service_class(service_class_tag + ".+");
+  return boost::regex_match(attribute_value, service_class);
+}
+
 std::string
 get_tag(matchmaking::match_info const& info)
 {
   static std::string const null_string;
 
   classad::ClassAd const* ad = info.getAd();
+  std::vector<std::string> acbr_vector;
+  classadutils::EvaluateAttrList(*ad, "GlueCEAccessControlBaseRule", acbr_vector);
+
+  //TODO: by now we simply look for the 'SC:' tag indicating  by convention a
+  //service class. Afterwards, the value has to be passed 'as is' each time
+  //it's not a grouping tag (by now VO: always by convention)
+  std::vector<std::string>::iterator const it_end = acbr_vector.end();
+  std::vector<std::string>::iterator const it = std::find_if(
+    acbr_vector.begin(),
+    it_end,
+    is_service_class
+  );
+
+  if (it != it_end)
+  { 
+    return it->substr(service_class_tag.size());
+  } else {
+    return not_a_service_class_tag;
+  }
+}
+
+std::string
+get_CE_unique_id(matchmaking::match_info const& info)
+{
+  classad::ClassAd const* ad = info.getAd();
   classad::Value value;
 
-  ad->EvaluateExpr("GlueCEPolicyPriority", value); //GlueCEVoViewAccessControlBaseRule
+  ad->EvaluateExpr("GlueCEUniqueID", value);
   std::string result;
   value.IsStringValue(result);
-  if (result.empty()) {
-    // sometimes this attribute is published as string (as it should),
-    // sometimes as int, so we need to handle this.
 
-    int int_result;
-    value.IsIntegerValue(int_result);
-    result = boost::lexical_cast<std::string>(int_result);
-  }
   return result;
 }
 
@@ -243,14 +277,17 @@ filter_gpbox_authorizations(
   std::string const& user_cert_file_name
 )
 {
-  if(user_cert_file_name.empty())
+  if (user_cert_file_name.empty()) {
     return false;
+  }
 
   const std::string user_subject(
     get_proxy_distinguished_name(user_cert_file_name)
   );
-  if(user_subject.empty())
+
+  if(user_subject.empty()) {
     return false;
+  }
 
   Attributes CE_attributes;
   std::string ce_names;
@@ -261,7 +298,7 @@ filter_gpbox_authorizations(
        ++it) {
     ce_names += it->first + '#';
     std::string tag(get_tag(it->second));
-    ce_tags += tag.empty() ? "-1" : tag + '#';
+    ce_tags += tag.empty() ? "error" : tag + '#';
   }
   ce_names.erase(ce_names.size() - 1);
   ce_tags.erase(ce_tags.size() - 1);
@@ -296,7 +333,9 @@ filter_gpbox_authorizations(
           // Send, so we don't even check it (since the policy (permit) is
           // according)), its content being untrustable
 
-          Info(iter->GetId());
+          std::string answer_id = iter->GetId();
+          Info(answer_id);
+
           // NOTE: borderline cases are filtered off without questioning
           // because of the resubmission costs
           if( PEP_request_answer == DENY
@@ -304,8 +343,29 @@ filter_gpbox_authorizations(
               PEP_request_answer == NOTA
               or 
               PEP_request_answer == INDET ) {
-            suitable_CEs.erase(iter->GetId());
+
+            suitable_CEs.erase(answer_id);
             Info("!!!erased CE");
+          }
+          else {
+
+            //at this point we've got the certainty that suitableCEs
+            //will be a list of unique CE identifiers (if the related info 
+            //is correctly published, if not the first added applies) so we can replace
+            //the former unique key (CEID/VoViewID) with the real name for the CE
+            matchmaking::match_table_t::iterator it = suitable_CEs.find(answer_id);
+            if (it != suitable_CEs.end()) {
+              std::string CE_id = get_CE_unique_id(it->second);
+              matchmaking::match_info CE_ad(it->second);
+              suitable_CEs.erase(answer_id);
+              suitable_CEs[CE_id] = CE_ad;
+              //or else (without defining CE_ad)
+              //  suitable_CEs[CE_id] = suitable_CEs[answer_id];
+            } else {
+              Info("Mismatching CE id got from gpbox answer\n");
+            }
+            //or else (one for the two branches)
+            //suitable_CEs.erase(answer_id);
           }
         }
       }
@@ -317,14 +377,14 @@ filter_gpbox_authorizations(
       Info("VOMS_proxy_init returned false");
       return false;
     }
-  }
-  catch(...) {
+  } catch(...) {
     Info("filter_gbox_authorizations: PEP Send returned false");
     return false;
   }
 
   return true;
 }
+
 } //empty  namespace
 
 bool
@@ -336,7 +396,7 @@ interact(
   )
 {
   return interact(config,
-    get_user_x509_proxy(jobid),
+    get_user_x509_proxy(jobid, config),
     PBOX_host_name,
     suitable_CEs
   );
@@ -358,17 +418,17 @@ interact(
     get_proxy_distinguished_name(common_conf->host_proxy_file())
   );
 
-  const configuration::WMConfiguration* WM_conf = config.wm();
-  assert(WM_conf);
+  const configuration::WMConfiguration* wm_conf = config.wm();
+  assert(wm_conf);
 
   if (!broker_subject.empty()) {
     try {
 
       Connection PEP_connection(
                                 PBOX_host_name,
-                                WM_conf->pbox_port_num(),
+                                wm_conf->pbox_port_num(),
                                 broker_subject,
-                                WM_conf->pbox_safe_mode()
+                                wm_conf->pbox_safe_mode()
                                );
 
       if (!filter_gpbox_authorizations(suitable_CEs,
