@@ -25,10 +25,11 @@ namespace glite {
 
 	class subscriptionUpdater : public iceThread {
 
-		std::string proxyfile;
-		iceConfManager* conf;
-		log4cpp::Category *log_dev;
-		subscriptionManager *subMgr;
+		std::string m_proxyfile;
+		iceConfManager* m_conf;
+		log4cpp::Category *m_log_dev;
+		subscriptionManager *m_subMgr;
+		int m_iteration_delay;
 
         public:
 		subscriptionUpdater(const std::string& cert);

@@ -26,20 +26,20 @@ namespace util {
 
   class subscriptionManager {
 
-    CESubscription ceS;
-    CESubscriptionMgr ceSMgr;
-    Topic T;
-    Policy P;
-    iceConfManager* conf;
-    log4cpp::Category *log_dev;
-    bool valid;
-    static subscriptionManager* instance;
-    std::string myname;
-    std::string lastSubscriptionID;
-    struct tm Time;
-    char aT[256];
+    CESubscription m_ceS;
+    CESubscriptionMgr m_ceSMgr;
+    Topic m_T;
+    Policy m_P;
+    iceConfManager* m_conf;
+    log4cpp::Category *m_log_dev;
+    bool m_valid;
+    static subscriptionManager* s_instance;
+    std::string m_myname;
+    std::string m_lastSubscriptionID;
+    struct tm m_Time;
+    char m_aT[256];
     time_t tp;
-    std::vector<Subscription> vec;
+    std::vector<Subscription> m_vec;
 
    protected:
     subscriptionManager();
@@ -59,10 +59,10 @@ namespace util {
 
     bool        subscribedTo(const std::string& url);
 
-    bool        isValid( void ) const { return valid; }
+    bool        isValid( void ) const { return m_valid; }
     void        list(const std::string& url, std::vector<Subscription>&)
                   throw(std::exception&);
-    std::string getLastSubscriptionID() const { return lastSubscriptionID; }
+    std::string getLastSubscriptionID() const { return m_lastSubscriptionID; }
 
     static boost::recursive_mutex mutex;
   };

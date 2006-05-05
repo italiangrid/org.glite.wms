@@ -3,25 +3,25 @@
 using namespace std;
 using namespace glite::wms::ice::util;
 
-cemonUrlCache* cemonUrlCache::instance = NULL;
+cemonUrlCache* cemonUrlCache::s_instance = NULL;
 boost::recursive_mutex cemonUrlCache::mutex;
 
 //______________________________________________________________________________
 cemonUrlCache* cemonUrlCache::getInstance() {
   boost::recursive_mutex::scoped_lock M( mutex );
-  if( !instance ) instance = new cemonUrlCache();
-  return instance;
+  if( !s_instance ) s_instance = new cemonUrlCache();
+  return s_instance;
 }
 
 //______________________________________________________________________________
 void cemonUrlCache::putCEMonUrl(const string& cream, const string& cemon) {
 
-  cemon_cream_urlMap[cream] = cemon;
+  m_cemon_cream_urlMap[cream] = cemon;
 }
 
 //______________________________________________________________________________
 string cemonUrlCache::getCEMonUrl(const string& cream) {
-  if( cemon_cream_urlMap.find( cream ) == cemon_cream_urlMap.end() )
+  if( m_cemon_cream_urlMap.find( cream ) == m_cemon_cream_urlMap.end() )
     return "";
-  return cemon_cream_urlMap[cream];
+  return m_cemon_cream_urlMap[cream];
 }

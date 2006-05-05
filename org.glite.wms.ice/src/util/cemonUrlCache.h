@@ -11,8 +11,8 @@ namespace glite {
       namespace util {
 	
 	class cemonUrlCache {
-	  std::map<std::string, std::string> cemon_cream_urlMap;
-	  static cemonUrlCache* instance;
+	  std::map<std::string, std::string> m_cemon_cream_urlMap;
+	  static cemonUrlCache* s_instance;
 	  
 	public:
 	  static boost::recursive_mutex mutex;
