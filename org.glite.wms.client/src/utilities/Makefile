@@ -11,13 +11,15 @@ CMFLAGS=
 REPOSITORY=../../../
 repository=$(REPOSITORY)/repository
 stage=$(REPOSITORY)/stage
-BOOST=$(repository)/boost/1.32.0/rhel30_gcc32
+
+
+BOOST=$(repository)/boost/1.32.0-slc3/rhel30_gcc32
 BOOST_SUFFIX=-gcc-mt-d
-CLASSAD=$(repository)/classads/0.9.6/rhel30_gcc32
+BOOST_SUFFIX=
+CLASSAD=$(repository)/classads/0.9.7-opt/rhel30_gcc32
 CURL=-L/usr/lib -lcurl
 GLOBUS=$(repository)/globus/2.4.3-VDT-1.2.2/rhel30_gcc32/
-
-
+GLOBUS_FLAVOR=gcc32dbg
 
 
 WMPCLIENT_LD_FLAGS= \
@@ -37,15 +39,16 @@ WMPCLIENT_LD_FLAGS= \
 WMPCLIENT_LD_EXE_FLAGS= \
 	$(WMPCLIENT_LD_FLAGS) \
 	$(CURL) \
-	-lglite_wms_wmproxy_api_cpp \
-	-lgridsite \
-	-lcrypto \
-	-lvomsapi \
+	-L$(GLOBUS)/lib \
 	-lglite_wmsutils_classads \
 	-lboost_filesystem$(BOOST_SUFFIX) \
 	-lboost_thread$(BOOST_SUFFIX) \
 	-lboost_signals$(BOOST_SUFFIX) \
 	-lboost_regex$(BOOST_SUFFIX) \
+	-lz -lpthread -lm \
+	-lvomsapi_gcc32dbg \
+	-lgridsite_globus \
+	-lglite_wms_wmproxy_api_cpp \
 	-lxml2
 
 WMPCLIENT_C_FLAGS= \
