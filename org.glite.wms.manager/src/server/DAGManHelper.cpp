@@ -765,7 +765,7 @@ int get_max_dag_running_nodes()
   configuration::Configuration const& config(
     *configuration::Configuration::instance()
   );
-  return config.wm()->max_dagrunning_nodes();
+  return config.jc()->max_dagrunning_nodes();
 }
 
 classad::ClassAd* f_resolve(classad::ClassAd const& input_ad)
