@@ -79,7 +79,7 @@ authorizer:
 
 
 gacladmin:
-	$(CPP) -g -Wall -DGLITE_GACL_ADMIN \
+	$(CPP) -g -Wall -DWMPROXY_TOOLS \
 		$(CMFLAGS) $(ADMIN_CFLAGS)  $(ADMIN_LDFLAGS) \
 		-o wmp-gacl-admin \
 		wmpgacladmin.cpp wmpgaclmanager.cpp wmpauthorizer.cpp
