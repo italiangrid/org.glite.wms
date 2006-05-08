@@ -11,8 +11,6 @@
 #ifndef GLITE_GACL_TOOLS
 #define GLITE_GACL_TOOLS
 #endif
-// Boost
-#include <boost/lexical_cast.hpp>
 
 #include "converter.h"
 
@@ -26,8 +24,6 @@
 
 #include "utilities/wmputils.h"
 #include "authorizer/wmpauthorizer.h"
-
-
 
 // Command line options
 extern "C" {
@@ -493,6 +489,8 @@ int Converter::getEntry(std::string &entry) {
 *
 */
 int Converter::readMapFile(const string &path, std::vector<std::string> &entries, std::string &errors) {
+	ostringstream os1;
+	ostringstream os2;
   	string s = "";
 	string e = "";
 	int n = 0;
@@ -527,21 +525,15 @@ int Converter::readMapFile(const string &path, std::vector<std::string> &entries
 		result = ERROR;
 	}
 	this->readEntries = entries.size() ;
-	try {
-		LOG (WMS_DEBUG,
-			"Number of entries loaded from the grid-mapfile:",
-			boost::lexical_cast<string>(n) );
-		if (usrOpts.dn == true) {
-			LOG (WMS_DEBUG,
-				"the --only-dn option has been specified; number of dn-entries into the grid-mapfile:",
-				boost::lexical_cast<string>(this->readEntries) );
-		} else if (usrOpts.fqan == true) {
-			LOG (WMS_DEBUG,
-				"the --only-fqan option has been specified; number of fqan-entries into the grid-mapfile:",
-				boost::lexical_cast<string>(this->readEntries) );
-		}
-	} catch(boost::bad_lexical_cast &exc) { }
-
+	os1 << "Number of entries loaded from the grid-mapfile: " << n ;
+	LOG (WMS_DEBUG, os1.str(), "");
+	if (usrOpts.dn == true) {
+		os2 << "the --only-dn option has been specified; number of dn-entries into the grid-mapfile:" << this->readEntries;
+		LOG (WMS_DEBUG, os2.str(), "" );
+	} else if (usrOpts.fqan == true) {
+		os2 << "the --only-fqan option has been specified; number of fqan-entries into the grid-mapfile:" << this->readEntries;
+		LOG (WMS_DEBUG, os2.str(), "" );
+	}
 	return result;
 }
 /**
