@@ -909,6 +909,8 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 {
 	GLITE_STACK_TRY("removeACLItem()");
 	edglog_fn("wmpoperations::removeACLItem");
+	string errors = "";
+
 	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
@@ -937,7 +939,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR,
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -960,9 +962,14 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	authorizer::GaclManager gaclmanager(jobpath + FILE_SEPARATOR
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
 	gaclmanager.removeEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
-		item);
+		item, errors);
+	if (errors.size( )>0) {
+		edglog(error)<<"Removal of the gacl item failed: " << errors << "\n";
+		throw JobOperationException(__FILE__, __LINE__,
+			"removeACLItem()", wmputilities::WMS_AUTHZ_ERROR,
+			"Removal of the gacl item failed:\n" + errors);
+	}
 	gaclmanager.saveGacl();
-	
 	edglog(info)<<"removeACLItem successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
