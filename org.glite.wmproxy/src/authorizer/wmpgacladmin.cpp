@@ -753,7 +753,11 @@ int main (int argc,char **argv)
 				break;
 			}
 			case DELETE :{
-				gacl.removeEntry(cred_type, user);
+				string errors = "";
+				if (gacl.removeEntry(cred_type, user, errors) < 0){
+					fprintf (stderr, "\nError: gacl entry removal failed;%s\n", errors.c_str());
+					ending(-1 );
+				}
 				fmsg += "- cancellation of the entry\n";
 				break;
 			}
