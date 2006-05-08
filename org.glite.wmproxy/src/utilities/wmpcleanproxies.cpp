@@ -1,6 +1,7 @@
 
 #include <vector>
 #include<iostream>
+#include "utilities/wmputils.h"
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/exception.hpp" //managing boost errors
@@ -64,57 +65,6 @@ private :
 		/** the name of the ancestor exception */
 		std::string          ancestor ;
 };
-
-/*
- * removes '/' characters at the end of the of the input pathname
- */
- std::string normalizePath( const std::string &fpath ) {
-  string                   modified;
-  string::const_iterator   last, next;
-  string::reverse_iterator check;
-
-  last = fpath.begin();
-  do {
-    next = find( last, fpath.end(), '/' );
-
-    if( next != fpath.end() ) {
-      modified.append( last, next + 1 );
-
-      for( last = next; *last == '/'; ++last );
-    }
-    else modified.append( last, fpath.end() );
-  } while( next != fpath.end() );
-
-  check = modified.rbegin();
-  if( *check == '/' ) modified.assign( modified.begin(), modified.end() - 1 );
-
-  return modified;
-}
-std::string getAbsolutePath(std::string &file ){
-        string path = file ;
-        char* pwd = getenv ("PWD");
-        if (path.find("./")==0 || path.compare(".") == 0 ){
-                // PWD path  (./)
-                if (pwd) {
-                        string leaf = path.substr(1,string::npos);
-                        if ( leaf.find("/",0) !=0 ) {
-                                path = normalizePath(pwd) + "/"  + leaf;
-                        } else {
-                                path = normalizePath(pwd) + leaf;
-                        }
-                }
-        } else if (path.find("/") ==0 ){
-                // ABsolute Path
-                path = normalizePath(path);
-        } else {
-                // Relative path: append PWD
-                if (pwd){
-                        path = normalizePath(pwd) + "/" + path;
-                }
-        }
-        return path;
-}
-
 
 int listFiles ( const fs::path& p, vector<string>& v, string& err ) {
 	int ne = 0;
