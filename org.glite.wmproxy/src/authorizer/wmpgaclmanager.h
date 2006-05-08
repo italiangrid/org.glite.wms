@@ -82,10 +82,12 @@ class GaclManager {
 	* 	@param file path location of the gacl file
 	*	@param type credential type
 	*	@param rawvalue credential raw (user-dn, fqan, etc...)
-	*	@throw GaclException if the credential deosn't exist in the gacl
+	*	@param errors description of errors occurred during the removal operations
+	*	@return 0 if the removal operation is successfully performed, -1 in case of any errors occured
 	*/
-	void removeEntry ( const WMPgaclCredType &type,
-					const std::string rawvalue="") ;
+	int removeEntry (const WMPgaclCredType &type,
+					const std::string &rawvalue,
+					std::string &errors) ;
 	/**
 	*	Removes from the gacl file a set of entry
 	*	@param vect vector of credential (credential type , rawvalue )
@@ -193,12 +195,17 @@ class GaclManager {
 	* @return the string containing the pathname
 	*/
 	std::string getFilepath ( );
-
 	/**
 	* 	Checks if the gacl file exists
 	*	@return true if the file exists
 	*/
 	bool gaclExists ();
+	/**
+	* 	Static method that checks if the gacl file exists
+	*	@param the gacl filepath
+	*	@return true if the file exists
+	*/
+	static bool gaclExists (const std::string &file);
 	/**
 	* Free the memory used by an existing ACL, and the memory used by any entries and credentials it may contain.
 	*/
