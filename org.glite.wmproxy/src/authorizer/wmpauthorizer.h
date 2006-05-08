@@ -39,7 +39,7 @@ enum FQANFields {
 
 class WMPAuthorizer {
 public:
-#ifndef WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 	/**
 	 * Constructor
 	 */
@@ -78,7 +78,7 @@ public:
      */
     void authorize(const std::string &certfqan = "",
     	const std::string &jobid = "");
- #endif // #ifndef WMPROXY_TOOLS
+ #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
     /**
      * Returns a vector containing the fields of the input fqan
      * @param fqan input fqan
@@ -106,7 +106,7 @@ public:
      */
     static bool compareFQAN(const std::string &infqan,
     	const std::string &reffqan);
-#ifndef WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
     /**
      * Creates the gacl files in the user job directories for the job identified
      * by jobid
@@ -176,7 +176,7 @@ private:
      * Mapping is done on the basis of user's credential.
      */
     void mapUser(const std::string &certfqan = "");
-  #endif // #ifndef WMPROXY_TOOLS  
+  #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
     /*
 	 * Checks if the value of the attribute field is null
 	 * (field="attribute=value"; checks if field="attribute=NULL")

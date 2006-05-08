@@ -19,7 +19,7 @@
 #include "wmpauthorizer.h"
 #include "wmpvomsauthz.h"
 
-#ifndef WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 
 // Exceptions
 #include "utilities/wmpexceptions.h"
@@ -43,7 +43,7 @@ extern "C" {
 #include <dlfcn.h>
 #include "wmpgaclmanager.h"
 
-#endif  // WMPROXY_TOOLS
+#endif  // GLITE_WMS_WMPROXY_TOOLS
 
 // Utilities
 #include "utilities/wmputils.h"
@@ -65,7 +65,7 @@ namespace authorizer {
 using namespace std;
 using namespace glite::wms::wmproxy::utilities;
 
-#ifndef WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 using namespace glite::wmsutils::exception;
 namespace logger       = glite::wms::common::logger;
 
@@ -86,7 +86,7 @@ const std::string FQAN_FIELDS[ ]  = { "vo", "group", "group", "role", "capabilit
 const std::string FQAN_FIELD_SEPARATOR = "";
 const std::string FQAN_NULL = "null";
 
-#ifndef WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 WMPAuthorizer::WMPAuthorizer(char * lcmaps_logfile)
 {
 	edglog_fn("WMPAuthorizer::WMPAuthorizer");
@@ -673,12 +673,12 @@ WMPAuthorizer::checkJobDrain()
 	
 	GLITE_STACK_CATCH();
 }
-#endif //WMPROXY_TOOLS
+#endif //GLITE_WMS_WMPROXY_TOOLS
 
 bool
 WMPAuthorizer::isNull(string field)
 {
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("isNull");
 	#endif
 
@@ -692,7 +692,7 @@ WMPAuthorizer::isNull(string field)
 	//edglog(debug)<<"is_null="<<is_null<<endl;
 	return is_null;
 
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
 	#endif
 }
@@ -703,7 +703,7 @@ WMPAuthorizer::isNull(string field)
 std::vector<std::pair<std::string,std::string> >
 WMPAuthorizer::parseFQAN(const std::string &fqan)
 {
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
         GLITE_STACK_TRY("parseFQAN");
         #endif
 
@@ -728,7 +728,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                 if ((label.size() > 0 || value.size() >0) &&
                          ((label.compare(FQAN_FIELDS[FQAN_ROLE])==0) ||
                          (label.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0)) ){
-				#ifndef WMPROXY_TOOLS
+				#ifndef GLITE_WMS_WMPROXY_TOOLS
                                 throw AuthorizationException(__FILE__, __LINE__,
                                          "parseFQAN(string)",  WMS_PROXY_ERROR,
                        		 "malformed fqan (VO field is missing): " +  fqan);
@@ -758,7 +758,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                         // Checks whether the fqan contains the  ROLE field
                         if (label.compare(FQAN_FIELDS[FQAN_ROLE])==0) {
                                 if (value.size()==0) {
-					#ifndef WMPROXY_TOOLS
+					#ifndef GLITE_WMS_WMPROXY_TOOLS
 					throw AuthorizationException(__FILE__, __LINE__,
                                         	 "parseFQAN(string)",  WMS_PROXY_ERROR,
                                         	 "malformed FQAN field /" + tokens[0] );
@@ -788,7 +788,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                                 for (int i = 0; i < nt; i++) {
                                         err << "/" << tokens[i] << "\n";
                                 }
-				#ifndef WMPROXY_TOOLS
+				#ifndef GLITE_WMS_WMPROXY_TOOLS
                                 throw AuthorizationException(__FILE__, __LINE__,
                                          "parseFQAN(string)",  WMS_PROXY_ERROR,
                                         err.str() );
@@ -800,7 +800,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 
                         if (label.compare(FQAN_FIELDS[FQAN_CAPABILITY])==0) {
                                 if (value.size()==0) {
-					#ifndef WMPROXY_TOOLS
+					#ifndef GLITE_WMS_WMPROXY_TOOLS
                                		 throw AuthorizationException(__FILE__, __LINE__,
                                          	"parseFQAN(string)",  WMS_PROXY_ERROR,
                                         	"malformed FQAN field (/" + tokens[0] );
@@ -817,7 +817,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 
                         } else {
                                 if (label.size()>0 || value.size()>0) {
-					#ifndef WMPROXY_TOOLS
+					#ifndef GLITE_WMS_WMPROXY_TOOLS
                                         throw AuthorizationException(__FILE__, __LINE__,
                                          "parseFQAN(string)",  WMS_PROXY_ERROR,
                                         "malformed FQAN field; invalid Capability field: /" + tokens[0] );
@@ -829,7 +829,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                         }
                 }
         } else {
-		#ifndef WMPROXY_TOOLS
+		#ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw AuthorizationException(__FILE__, __LINE__,
                         "parseFQAN(string)",  WMS_PROXY_ERROR,
                                 "invalid fqan: " + fqan  );
@@ -840,7 +840,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 
         }
         return vect;
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
         GLITE_STACK_CATCH();
         #endif
 
@@ -850,7 +850,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
 bool
 WMPAuthorizer::compareDN(char * dn1, char * dn2)
 {
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("compareDN");
 	#endif
 
@@ -877,7 +877,7 @@ WMPAuthorizer::compareDN(char * dn1, char * dn2)
    	free(bb);
 
    	return ret;
-   	#ifndef WMPROXY_TOOLS
+   	#ifndef GLITE_WMS_WMPROXY_TOOLS
    	GLITE_STACK_CATCH();
 	#endif
 
@@ -886,7 +886,7 @@ WMPAuthorizer::compareDN(char * dn1, char * dn2)
 bool
 WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 {
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("compareFQAN");
 	edglog_fn("WMPAuthorizer::compareFQAN");
 	#endif
@@ -901,7 +901,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
         // the vectors contain pairs like this <label,value> (label may be an empty string)
         vect_ref = parseFQAN(ref );
 	if ( vect_ref.empty()){
-		#ifndef WMPROXY_TOOLS
+		#ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw AuthorizationException(__FILE__, __LINE__,
                         "compareFQAN(string, string)", WMS_AUTHZ_ERROR,
                         "no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
@@ -915,7 +915,7 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
         vect_in = parseFQAN(in);
 
 	if (vect_in.empty()) {
-		#ifndef WMPROXY_TOOLS
+		#ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw AuthorizationException(__FILE__, __LINE__,
                         "compareFQAN(string, string)", WMS_AUTHZ_ERROR,
                         "no valid fields in the user FQAN string: [" + in+ "]");
@@ -1036,13 +1036,13 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 		}
 	}
         return match ;
-	#ifndef WMPROXY_TOOLS
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
    	GLITE_STACK_CATCH();
 	#endif
 }
 
 
-#ifndef WMPROXY_TOOLS
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 const long
 WMPAuthorizer::getProxyTimeLeft(const string &pxfile)
 {
