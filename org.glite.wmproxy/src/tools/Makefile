@@ -51,7 +51,6 @@ $(BOOST_LIBS)
 
 all: map2gacl gacladmin cleanproxies
 
-
 map2gacl:
 	$(CPP) $(CMFLAGS) $(CFLAGS_MAP2GACL)  $(LDFLAGS_MAP2GACL) \
 		-o glite-wmp-mapfile2gacl \
