@@ -518,9 +518,8 @@ try {
   }
   is.close();
 
-  std::string const sequence_code(
-    "UI=2:NS=0:WM=0:BH=1:JSS=0:LM=0:LRMS=0:APP=0"
-  );
+  std::string const sequence_code;
+
   jobid::JobId const jobid(jdl::get_edg_jobid(input_ad));
   std::string const x509_user_proxy(jdl::get_x509_user_proxy(input_ad));
   ContextPtr context(
@@ -541,13 +540,17 @@ try {
     do_it(input_ad, os, context, jobid);
 
   } catch (HitMaxRetryCount& e) {
-    error = "hit max retry count (" + e.count() + ')';
+    error = "hit max retry count ("
+      + boost::lexical_cast<std::string>(e.count()) + ')';
   } catch (HitJobRetryCount& e) {
-    error = "hit job retry count (" + e.count() + ')';
+    error = "hit job retry count ("
+      + boost::lexical_cast<std::string>(e.count()) + ')';
   } catch (HitMaxShallowCount& e) {
-    error = "hit max shallow retry count (" + e.count() + ')';
+    error = "hit max shallow retry count ("
+      + boost::lexical_cast<std::string>(e.count()) + ')';
   } catch (HitJobShallowCount& e) {
-    error = "hit job shallow retry count (" + e.count() + ')';
+    error = "hit job shallow retry count ("
+      + boost::lexical_cast<std::string>(e.count()) + ')';
   } catch (RequestExpired&) {
     error = "request expired";
   } catch (ProxyExpired&) {
