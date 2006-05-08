@@ -21,6 +21,7 @@ namespace wms {
 namespace wmproxy {
 namespace utilities {
 
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 enum FQANFields {
 	FQAN_VO,
 	FQAN_GROUP,
@@ -90,8 +91,6 @@ std::string getEndpoint();
 
 void parseAddressPort(const std::string &addressport,
 	std::pair<std::string, int> &addresspair);
-
-
 
 //
 // Job specific methods
@@ -225,7 +224,7 @@ std::string to_filename(glite::wmsutils::jobid::JobId j, int level = 0,
 std::vector<std::string> computeOutputSBDestURIBase(std::vector<std::string>
 	outputsb, const std::string &baseuri);
 	
-std::vector<std::string> computeOutputSBDestURI(std::vector<std::string> 
+std::vector<std::string> computeOutputSBDestURI(std::vector<std::string>
 	osbdesturi, const std::string &dest_uri);
 
 
@@ -269,41 +268,9 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
  * @param fqan the fqan to parse
  * @return a string vector containing the elements
  */
-std::vector<std::pair<std::string, std::string> > 
+std::vector<std::pair<std::string, std::string> >
 	parseFQANPair(const std::string &fqan);
 	
-/**
-   * Removes white spaces at the beginning and 
-   * at the end of the input string if there is any 
-   * @param the inputs string to be cleaned 
-   * @return the string, with white space removed from the front and end. 
-   */ 
-const std::string cleanString(std::string str);
-
-/**
-   * Converts all of the characters in this String to lower case 
-   * @param src the input string 
-   * @return the string, converted to lowercase. 
- */
-const std::string toLower(const std::string &src);
-
-/**
-   * Cuts the input string in two pieces (label and value) according to 
-   * the separator character "=" 
-   * @param field the input string which format has to be label=value 
-   * @param label returns the "label" part of the string 
-   * @param value returns the "value" part of the string 
- */
-void split(const std::string &field, std::string &label, std::string &value);
-
-/**
-   * Generates randomic integer value in the range [lowerlimit, upperlimit]
-   * @param lowerlimit the integer value lower limit
-   * @param upperlimit the integer value upper limit
-   * @param the randomic generated value
- */
-int generateRandomNumber(int lowerlimit, int upperlimit);
-
 //
 // "External" methods
 //
@@ -345,8 +312,15 @@ int managedir(const std::string &dir, uid_t userid, uid_t jobuserid,
  * @return true if the attribute is NULL
  */
 bool isNull(std::string field);
+/**
+   * Generates randomic integer value in the range [lowerlimit, upperlimit]
+   * @param lowerlimit the integer value lower limit
+   * @param upperlimit the integer value upper limit
+   * @param the randomic generated value
+ */
+int generateRandomNumber(int lowerlimit, int upperlimit);
 
-
+#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 /**
  * Server debugging method to wait for a while
@@ -354,6 +328,50 @@ bool isNull(std::string field);
  */
 void waitForSeconds(int seconds);
 
+/**
+   * Removes white spaces at the beginning and 
+   * at the end of the input string if there is any 
+   * @param the inputs string to be cleaned 
+   * @return the string, with white space removed from the front and end. 
+   */
+const std::string cleanString(std::string str);
+
+/**
+   * Converts all of the characters in this String to lower case
+   * @param src the input string 
+   * @return the string, converted to lowercase.
+ */
+const std::string toLower(const std::string &src);
+
+/**
+   * Cuts the input string in two pieces (label and value) according to
+   * the separator character "="
+   * @param field the input string which format has to be label=value 
+   * @param label returns the "label" part of the string 
+   * @param value returns the "value" part of the string 
+ */
+void split(const std::string &field, std::string &label, std::string &value);
+
+/**
+* Checks whether a string is contained into a vector
+* @param vect the vector of string
+* @param elem the string to be looked for
+* @returns true whether the vector contained the specified string
+*/
+bool hasElement(const std::vector<std::string> &vect, const std::string &elem);
+/*
+* Gets the absolute path of the file
+* @param file the input file
+* @return the absolute file path
+*/
+const std::string getAbsolutePath(const std::string &file);
+
+/**
+ * Removes '/' characters at the end of the of the input pathname
+ * @param fpath the path to be normalized
+ * @return the normalized path
+ */
+const std::string normalizePath( const std::string &fpath ) ;
 
 } // namespace utilities
 } // namespace wmproxy

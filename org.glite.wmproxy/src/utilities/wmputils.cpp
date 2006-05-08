@@ -23,7 +23,6 @@
 
 #include <sys/wait.h>
 
-
 // boost
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -41,6 +40,7 @@
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
 
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 #include "quota.h"
 #include "glite/wms/purger/purger.h" 
 #include "glite/wms/common/utilities/quota.h"
@@ -58,13 +58,13 @@
 // Global variables for configuration attributes
 extern std::string sandboxdir_global;
 
-using namespace std;
-
 namespace logger		  = glite::wms::common::logger;
 namespace commonutilities = glite::wms::common::utilities;
 namespace jobid			  = glite::wmsutils::jobid;
 namespace purger          = glite::wms::purger;
+#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
+using namespace std;
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -77,8 +77,9 @@ namespace utilities {
 #else 
 	// Linux File Separator 
    	const string FILE_SEP ="/"; 
-#endif 
+#endif
 
+#ifndef GLITE_WMS_WMPROXY_TOOLS
 // gLite environment variables
 const char* GLITE_LOCATION = "GLITE_LOCATION";
 const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
@@ -1296,11 +1297,13 @@ isNull(string field)
 	return is_null;
 	GLITE_STACK_CATCH();
 }
+#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
+
 /*
 * Removes white spaces form the begininng and from the end of the input string
 */
-
-const std::string cleanString(std::string str) {
+const std::string
+cleanString(std::string str) {
 	int len = 0;
 	string ws = " "; //white space char
 	len = str.size( );
@@ -1332,17 +1335,20 @@ const std::string cleanString(std::string str) {
 }
 
  /**
- *
+* Converts all of the characters in this String to lower case
  */
-const std::string toLower ( const std::string &src) {
+const std::string
+toLower ( const std::string &src) {
 	std::string result(src);
 	std::transform(result.begin(), result.end(), result.begin(), ::tolower);
 	return result;
  }
  /**
- *
+* Cuts the input string in two pieces (label and value) according to
+ * the separator character "="
  */
-void split (const std::string &field, std::string &label, std::string &value){
+void
+split (const std::string &field, std::string &label, std::string &value){
 	unsigned int size = field.size();
 	if (size>0) {
 		unsigned int p = field.find("=") ;
@@ -1356,6 +1362,77 @@ void split (const std::string &field, std::string &label, std::string &value){
 		}
 	}
 };
+
+bool hasElement(const std::vector<std::string> &vect, const std::string &elem){
+	bool result = false;
+	int size = vect.size();
+	for (int i=0; i < size; i++){
+		if (elem.compare(vect[i]) == 0){
+			result = true;
+			break;
+		}
+	}
+	return result;
+};
+/**
+ * Removes '/' characters at the end of the of the input pathname
+ */
+ const std::string
+ normalizePath( const std::string &fpath ) {
+	string                   modified;
+	string::const_iterator   last, next;
+	string::reverse_iterator check;
+
+	last = fpath.begin();
+	do {
+	next = find( last, fpath.end(), '/' );
+
+	if( next != fpath.end() ) {
+	modified.append( last, next + 1 );
+
+	for( last = next; *last == '/'; ++last );
+	}
+	else modified.append( last, fpath.end() );
+	} while( next != fpath.end() );
+
+	check = modified.rbegin();
+	if( *check == '/' ) modified.assign( modified.begin(), modified.end() - 1 );
+
+	return modified;
+}
+
+/*
+* Gets the absolute path of the file
+*/
+const std::string
+getAbsolutePath(const std::string &file ){
+string path = file ;
+char* pwd = getenv ("PWD");
+if (path.find("./")==0 || path.compare(".")==0){
+	// PWD path  (./)
+	if (pwd) {
+		string leaf = path.substr(1,string::npos);
+		if (leaf.size()>0) {
+			if ( leaf.find("/",0) !=0 ) {
+				path = normalizePath(pwd) + "/"  + leaf;
+			} else {
+				path = normalizePath(pwd) + leaf;
+			}
+		} else{
+			path = normalizePath(pwd) + leaf;
+		}
+	}
+} else if (path.find("/") ==0 ){
+	// ABsolute Path
+	path = normalizePath(path);
+} else {
+	// Relative path: append PWD
+	if (pwd){
+		path = normalizePath(pwd) + "/" + path;
+	}
+}
+return path;
+}
 } // namespace utilities
 } // namespace wmproxy
 } // namespace wms
