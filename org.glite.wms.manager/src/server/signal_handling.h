@@ -14,6 +14,7 @@ namespace manager {
 namespace server {
 
 bool signal_handling();
+void set_received_quit_signal();
 bool received_quit_signal();
 
 }}}} // glite::wms::manager::server

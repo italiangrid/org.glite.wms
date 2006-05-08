@@ -24,17 +24,19 @@ void signal_handler()
   while (!f_received_quit_signal) {
     int signal_number;
     sigwait(&f_mask, &signal_number);
-    Info("caught signal " << signal_number);
     boost::mutex::scoped_lock l(f_mx);
     switch (signal_number) {
       case SIGINT:
       case SIGTERM:
       case SIGQUIT:
+        Info("caught signal " << signal_number);
         f_received_quit_signal = true;
         break;
       case SIGPIPE:
+        Info("caught signal " << signal_number);
         break;
       default:
+        Debug("caught signal " << signal_number);
         break;
     }
   }
@@ -65,6 +67,12 @@ bool signal_handling()
   boost::thread::thread t(signal_handler); // run detached
 
   return true;
+}
+
+void set_received_quit_signal()
+{
+  boost::mutex::scoped_lock l(f_mx);
+  f_received_quit_signal = true;
 }
 
 bool received_quit_signal()
