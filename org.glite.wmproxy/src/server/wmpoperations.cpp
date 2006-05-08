@@ -695,6 +695,9 @@ getNewProxyReq(pair<string, string> &retpair)
 	
 	retpair =
 		WMPDelegation::getNewProxyRequest();
+	edglog(debug)<<"____ retpair.1: "<<retpair.first<<endl;
+	edglog(debug)<<"____ retpair.2: "<<retpair.second<<endl;
+	
 	edglog(info)<<"Proxy requested successfully"<<endl;
 	
 	GLITE_STACK_CATCH();
@@ -909,10 +912,10 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 {
 	GLITE_STACK_TRY("removeACLItem()");
 	edglog_fn("wmpoperations::removeACLItem");
-	string errors = "";
-
 	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
+	
+	string errors = "";
 	
 	JobId *jid = new JobId(job_id);
 	
@@ -939,7 +942,7 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR,
+	    	"wmpoperations::removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -963,13 +966,17 @@ removeACLItem(removeACLItemResponse &removeACLItem_response,
 		+ authorizer::GaclManager::WMPGACL_DEFAULT_FILE);
 	gaclmanager.removeEntry(authorizer::GaclManager::WMPGACL_PERSON_TYPE,
 		item, errors);
-	if (errors.size( )>0) {
-		edglog(error)<<"Removal of the gacl item failed: " << errors << "\n";
-		throw JobOperationException(__FILE__, __LINE__,
-			"removeACLItem()", wmputilities::WMS_AUTHZ_ERROR,
-			"Removal of the gacl item failed:\n" + errors);
-	}
+		
+	if (errors.size( )>0) { 
+       edglog(error)<<"Removal of the gacl item failed: " << errors << "\n"; 
+       throw JobOperationException(__FILE__, __LINE__, 
+               "removeACLItem()", wmputilities::WMS_AUTHZ_ERROR, 
+               "Removal of the gacl item failed:\n" + errors); 
+	} 
+	
+		
 	gaclmanager.saveGacl();
+	
 	edglog(info)<<"removeACLItem successfully"<<endl;
 	
 	GLITE_STACK_CATCH();

@@ -65,9 +65,12 @@ namespace authorizer {
 using namespace std;
 using namespace glite::wms::wmproxy::utilities;
 
+namespace wmputilities = glite::wms::wmproxy::utilities;
+
 #ifndef GLITE_WMS_WMPROXY_TOOLS
 using namespace glite::wmsutils::exception;
 namespace logger       = glite::wms::common::logger;
+
 
 // Job Directories
 const char* WMPAuthorizer::INPUT_SB_DIRECTORY = "input";
@@ -804,7 +807,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                                		 throw AuthorizationException(__FILE__, __LINE__,
                                          	"parseFQAN(string)",  WMS_PROXY_ERROR,
                                         	"malformed FQAN field (/" + tokens[0] );
-					#elseif
+					#else
 					cerr << "Error - malformed FQAN field: /" + tokens[0];
 					exit(-1);
 					#endif
@@ -821,7 +824,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                                         throw AuthorizationException(__FILE__, __LINE__,
                                          "parseFQAN(string)",  WMS_PROXY_ERROR,
                                         "malformed FQAN field; invalid Capability field: /" + tokens[0] );
-					#elseif
+					#else
 					cerr << "Error - malformed FQAN field; invalid Capability field: /" + tokens[0];
 					exit(-1);
 					#endif
@@ -833,7 +836,7 @@ WMPAuthorizer::parseFQAN(const std::string &fqan)
                 throw AuthorizationException(__FILE__, __LINE__,
                         "parseFQAN(string)",  WMS_PROXY_ERROR,
                                 "invalid fqan: " + fqan  );
-		#elseif
+		#else
 		cerr << "Error - invalid fqan: " << fqan <<"\n";
 		exit(-1);
 		#endif
@@ -905,8 +908,8 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
                 throw AuthorizationException(__FILE__, __LINE__,
                         "compareFQAN(string, string)", WMS_AUTHZ_ERROR,
                         "no valid fields in the FQAN string: [" + ref + "] (please contact the server administrator");
-		#elseif
-		cerr << "Error - no valid fields in the FQAN string: [" << ref << "]");
+		#else
+		cerr << "Error - no valid fields in the FQAN string: [" << ref << "]";
 		exit(-1);
 		#endif
 
@@ -919,8 +922,8 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
                 throw AuthorizationException(__FILE__, __LINE__,
                         "compareFQAN(string, string)", WMS_AUTHZ_ERROR,
                         "no valid fields in the user FQAN string: [" + in+ "]");
-		#elseif
-		cerr << "Error - no valid fields in the user FQAN string: [" << in<< "]");
+		#else
+		cerr << "Error - no valid fields in the user FQAN string: [" << in<< "]";
 		exit(-1);
 		#endif
 	}
