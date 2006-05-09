@@ -235,17 +235,21 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
             gluese_info_map.find(gluese_unique_id)
           );
           if (it == gluese_info_map.end()) {
-            gluese_info_map.insert(           // (*)
+            bool gluese_info_map_insert; 
+            boost::tie(it, gluese_info_map_insert) = gluese_info_map.insert(           // (*)
               std::make_pair(
                 gluese_unique_id,
-                  boost::make_tuple(
-                    classad_shared_ptr(),
-                    std::vector<classad::ExprTree*>(),
-                    std::vector<classad::ExprTree*>(),
-                    std::vector<classad::ExprTree*>()
-                  )
+                boost::make_tuple(
+                  classad_shared_ptr(),
+                  std::vector<classad::ExprTree*>(),
+                  std::vector<classad::ExprTree*>(),
+                  std::vector<classad::ExprTree*>()
+                )
               )
             );
+            if(gluese_info_map_insert) {
+              Debug("info for " << gluese_unique_id << " inserted");
+            }
           }
           if(is_gluesa_info_dn(ldap_dn_tokens)) {
             boost::tuples::get<1>(it->second).push_back(ad);
@@ -268,22 +272,27 @@ fetch_bdii_se_info(boost::shared_ptr<ldif2classad::LDAPConnection> IIconnection,
       );
 
       for( ; se_it != se_e; ++se_it) {
-      
-        boost::tuples::get<0>(se_it->second)->
-          Insert("GlueSA", classad::ExprList::MakeExprList(
-            boost::tuples::get<1>(se_it->second)
-          ));
 
-        boost::tuples::get<0>(se_it->second)->
-          Insert("GlueSEControlProtocol", classad::ExprList::MakeExprList(
-            boost::tuples::get<2>(se_it->second)
-          ));
-
-        boost::tuples::get<0>(se_it->second)->
-          Insert("GlueSEAccessProtocol", classad::ExprList::MakeExprList(
-            boost::tuples::get<3>(se_it->second)
-          ));
-
+        if (!boost::tuples::get<0>(se_it->second)) continue;
+       
+        if (!boost::tuples::get<1>(se_it->second).empty()) {
+          boost::tuples::get<0>(se_it->second)->
+            Insert("GlueSA", classad::ExprList::MakeExprList(
+              boost::tuples::get<1>(se_it->second)
+            ));
+        }
+        if (!boost::tuples::get<2>(se_it->second).empty()) {
+          boost::tuples::get<0>(se_it->second)->
+            Insert("GlueSEControlProtocol", classad::ExprList::MakeExprList(
+              boost::tuples::get<2>(se_it->second)
+            ));
+        }
+        if (!boost::tuples::get<3>(se_it->second).empty()) {
+          boost::tuples::get<0>(se_it->second)->
+            Insert("GlueSEAccessProtocol", classad::ExprList::MakeExprList(
+              boost::tuples::get<3>(se_it->second)
+            ));
+        }
         gluese_info_container[se_it->first] =
           boost::tuples::get<0>(se_it->second);
       }
