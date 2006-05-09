@@ -211,6 +211,8 @@ class Job{
 	protected:
 		/** Common post-options Checks (proxy time left..)*/
 		void postOptionchecks(unsigned int proxyMinTime=0);
+		/** Print a particular set (expressed with title) of warning messages (expressed with warnings)*/
+		void printWarnings   (const std::string& title, const std::vector<std::string> &warnings);
 		/** Input arguments */
 		std::string* logOpt ;	// --logfile <file>
 		std::string* outOpt ;	// --output <file>

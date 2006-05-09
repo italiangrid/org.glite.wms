@@ -684,5 +684,17 @@ void Job::checkFileTransferProtocol(  ) {
 	}
 }
 
+void Job::printWarnings(const std::string& title, const std::vector<std::string> &warnings){
+	assert (logInfo!=NULL);
+	string msg = title;
+	vector<string>::const_iterator it1 = warnings.begin() ;
+	vector<string>::const_iterator const end1 = warnings.end();
+	for ( ; it1 != end1; it1++){
+		msg+= "\n   "+*it1;
+	}
+	logInfo->print(WMS_WARNING,msg);
+}
+
+
 }}}} // ending namespaces
 

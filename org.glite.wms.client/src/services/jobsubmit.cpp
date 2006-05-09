@@ -843,12 +843,14 @@ int JobSubmit::checkInputSandbox ( ) {
 	}
 	return isbsize ;
 }
+
 /**
 *  Checks the user JDL
 */
 void JobSubmit::checkAd(bool &toBretrieved){
 	string message = "";
 	jobType = WMS_JOB;
+	const string JDL_WARNING_TITLE= "Following Warning(s) found while parsing JDL:";
 	glite::wms::common::configuration::WMCConfiguration* wmcConf = wmcUtils->getConf();
 	// COLLECTION (--collection)
 	if (collectOpt) {
@@ -883,6 +885,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		}
 		// JDL string
 		collectAd = collectAd->check();
+		if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, collectAd->getWarnings() );}
 		if (collectAd->hasAttribute(JDL::ALLOW_ZIPPED_ISB)){
 			zipAllowed = collectAd->getBool(JDL::ALLOW_ZIPPED_ISB) ;
 			if (zipAllowed) { message ="allowed by user in the JDL";}
@@ -950,6 +953,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		AdUtils::setDefaultValues(dagAd,wmcConf);
 		// expands the DAG loading all JDL files
 		dagAd->getSubmissionStrings();
+		if (dagAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 		// Checks if there are local ISB file(s) to be transferred to
 		toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 		// JDL submission string
@@ -1007,6 +1011,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 				// JDL submission string
 				jdlString = new string(collectAd->toString());
+				if (collectAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE,collectAd->getWarnings() );}
 			}catch (Exception &ex){
 				throw WmsClientException(__FILE__,__LINE__,
 					"submission",  DEFAULT_ERR_CODE,
@@ -1030,6 +1035,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				toBretrieved = (this->checkInputSandbox( ) > 0)?true:false;
 				// JDL submission string
 				jdlString = new string(dagAd->toString()) ;
+				if (dagAd->hasWarnings()){ printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 		} else {
 			jobType = WMS_JOB ;
 			jobAd = new JobAd(*(adObj->ad()));
@@ -1049,6 +1055,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			}else{
 				jobAd->check();
 			}
+			if (jobAd->hasWarnings()){ printWarnings(JDL_WARNING_TITLE, jobAd->getWarnings() ); }
 			// INTERACTIVE =================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
 				// Interactive Job management
