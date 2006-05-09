@@ -291,7 +291,8 @@ void JobSubmit::readOptions (int argc,char **argv){
 		} catch (WmsClientException &exc) {
 			if (fileProto==NULL) {
 				fileProto= new string (Options::TRANSFER_FILES_DEF_PROTO );
-				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";", "setting FileTransferProtocol to default: " + string(*fileProto) );
+				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";",
+				"setting FileTransferProtocol to default: " + string(*fileProto) );
 			} else {
 				logInfo->print (WMS_DEBUG, string(exc.what( ))+ ";",
 					"using the specified protocol: " + string(*fileProto));
@@ -596,28 +597,21 @@ void JobSubmit::toBCopiedZippedFileList() {
 	jobFiles = new JobFileAd ( );
 	zipStruct->filename = ISBFILE_DEFAULT + "_" + *us + "_" + boost::lexical_cast<string>(ntar)
 		+ Utils::getArchiveExtension( ) + Utils::getZipExtension( ) ;
-//cout << "###JobSubmit::toBCopiedZippedFileList> filename=" << zipStruct->filename << "\n";
-
 	fileads = extractAd->getFiles ( );
 	n = fileads.size( );
-//cout << "###JobSubmit::toBCopiedZippedFileList>	(zipStruct->fileads).size( )="<<(zipStruct->fileads).size( )<<"\n";
 	if (n > 0) {
-//cout << "###JobSubmit::toBCopiedZippedFileList> N="<<n<<"\n";
 		// int i = index of the FileAd vector is being filled
 		i++;
 		jobFiles->node = "";
 		while (n != 0){
 			filead_size = fileads[0].size ;
-//cout << "###obSubmit::toBCopiedZippedFileList>filead_size="<<filead_size<<"\n";
 			// adding up the size of the first file in the list to the total tar size
 			tar_size += filead_size;
-//cout << "###obSubmit::toBCopiedZippedFileList>tar_size="<<tar_size<<"\n";
 			if (tar_size < Options::MAX_TAR_SIZE) {
 				// moving the last elment of the FileAd list to the list of the rootFiles
 				(jobFiles->files).push_back(fileads.at(0));
 				fileads.erase(fileads.begin());
 			} else {
-//cout << "###obSubmit::toBCopiedZippedFileList> closing tar ....\n";
 				(zipStruct->fileads).push_back(*jobFiles);
 				// Saving the list of files in the main vector of zip structs of this class
 				(this->zippedFiles).push_back (*zipStruct);
@@ -710,7 +704,6 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 	if (zipAllowed) {
 		vector<ZipFileAd>::iterator it1 = zippedFiles.begin() ;
 		vector<ZipFileAd>::iterator const end1 = zippedFiles.end();
-//cout << "##zippedFiles.size="<< zippedFiles.size() << "\n";
 		for ( ; it1 != end1; it1++){
 			createZipFile(it1->filename, it1->fileads, tob_transferred);
 		}
@@ -726,7 +719,6 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 		// JobId (root)
 		//jobid = extractAd->getJobId( );
 		jobid = this->getJobId( ) ;
-//cout << "###JobSubmit::toBCopiedFileList> - 1 -jobid="<<jobid<<"\n";
 		// DestinationURI (root)
 		destURI = getDestinationURI (jobid);
 		// List of root ISB files
@@ -742,7 +734,6 @@ void JobSubmit::toBCopiedFileList( std::vector<std::pair<FileAd, std::string > >
 			if ( children[i] != NULL ){
 				fileads = children[i]->getFiles( );
 				// DestinationURI (child node)
-//cout << "###JobSubmit::toBCopiedFileList> - 2 -jobid="<<jobid<<"\n";
 				destURI = getDestinationURI (jobid, getJobIdFromNode(children[i]->getNodeName()));
 				vector<FileAd>::iterator it3 = fileads.begin( );
 				vector<FileAd>::iterator const end3 = fileads.end( );
@@ -809,18 +800,15 @@ int JobSubmit::checkInputSandbox ( ) {
 			boost::lexical_cast<string>(isbsize) );
 		// Checking whether ISB-total_size is supported by either UserFreeQUota or MAX-ISB =============
 		checkUserServerQuota (isbsize);
-//cout << "####ADDING ZIPPED_ISB> zipAllowed=" << zipAllowed << "\n";
 		if (zipAllowed){
 			// Prepares the zipped files
 			toBCopiedZippedFileList( );
 			// Adding the references to the zipped files to the user JDL =============================
 			std::vector<ZipFileAd>::iterator it1 = zippedFiles.begin() ;
 			std::vector<ZipFileAd>::iterator const end1 = zippedFiles.end();
-//cout << "####ADDING ZIPPED_ISB ..... size=" << zippedFiles.size( ) << "\n";
 			switch (getJobType()) {
 				case (WMS_JOB) : {
 					for ( ; it1 != end1; it1++){
-//cout << "####ADDING ZIPPED_ISB: file=" << it1->filename << "\n";
 						jobAd->addAttribute(JDLPrivate::ZIPPED_ISB, it1->filename);
 					}
 					break;
@@ -1046,8 +1034,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			jobType = WMS_JOB ;
 			jobAd = new JobAd(*(adObj->ad()));
 			AdUtils::setDefaultValues(jobAd,wmcConf);
-			// check JobAd without restoring attributes
-			jobAd->check(false);
 			// resource <ce_id> ----> SubmitTo JDL attribute
 			if (resourceOpt) {
 				if (jobAd->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
@@ -1056,6 +1042,12 @@ void JobSubmit::checkAd(bool &toBretrieved){
 						"Incompatible Argument: " + wmcOpts->getAttributeUsage(Options::RESOURCE),
 						"cannot be used for  DAG, collection, partitionable and parametric jobs");
 				}else{jobAd->setAttribute(JDL::SUBMIT_TO, *resourceOpt);}
+			}
+			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
+				// check JobAd without restoring attributes  (WHY?)
+				jobAd->check(false);
+			}else{
+				jobAd->check();
 			}
 			// INTERACTIVE =================================
 			if (  jobAd->hasAttribute(JDL::JOBTYPE , JDL_JOBTYPE_INTERACTIVE )  ){
@@ -1083,7 +1075,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 					jobShadow->setGoodbyeMessage(true);
 					jobShadow->console();
 					logInfo->print(WMS_DEBUG,"Console properly started");
-					// Insert listenin port number (if necessary replace old value)
+					// Insert listening port number (if necessary replace old value)
 					if (jobAd->hasAttribute(JDL::SHPORT)){jobAd->delAttribute(JDL::SHPORT);}
 					jobAd->setAttribute(JDL::SHPORT,jobShadow->getPort()) ;
 				}
@@ -1102,7 +1094,6 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				jobType = WMS_PARAMETRIC;
 				logInfo->print (WMS_DEBUG, "A parametric job is being submitted");
 				if (nodesresOpt) {
-					// ????pass->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 					jobAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
 				}
 				// InputSandbox for the parametric job
@@ -1117,16 +1108,15 @@ void JobSubmit::checkAd(bool &toBretrieved){
 					// (it is only slight check, the conversion is done on server side)
 					dagAd = AdConverter::bulk2dag(jobAd,1);
 				}
-
 			}
 			// Checks if there are local ISB file(s) to be transferred to
 			toBretrieved = (this->checkInputSandbox ( )>0)?true:false;
 			// Submission string
 			if (jobType==WMS_PARAMETRIC){
-				//??jdlString = new string(pass->toString());
+				// JobAd already Checked
 				jdlString = new string(jobAd->toString());
 			}else if  (jobType==WMS_JOB){
-				//???jdlString = new string(pass->toSubmissionString());
+				// JobAd not yet Checked
 				jdlString = new string(jobAd->toSubmissionString());
 			}
 		}
@@ -1246,8 +1236,6 @@ std::string JobSubmit::getDestinationURI(const std::string &jobid, const std::st
 	string proto = "";
 	string service = "";
 	bool protoInfo = false;
-//cout << "###getDestinationURI> jobid=["<<jobid<<"]\n";
-//cout << "###getDestinationURI> child=["<<child<<"]\n";
 	bool ch = false; // TRUE=child node
         // The destinationURI's vector is empty: the WMProxy service will be called
         if (dsURIs.empty( )){
@@ -1436,7 +1424,6 @@ std::string JobSubmit::getJobPathFromDestURI(const std::string& jobid, const std
 				"Missing  Information", msg);
 	} else {
 		*jobPath = Utils::getAbsolutePathFromURI( *jobPath);
-//cout << "#####jobPath=" << *jobPath << "\n";
 	}
 	return *jobPath ;
 
@@ -1581,19 +1568,15 @@ void JobSubmit::createZipFile (
 	}
 	// files : FILEAD { std::string jobid; std::string node; std::vector<glite::jdl::FileAd> files;};
 	// RootFiles
-//cout << "###createZipFile>  fileads.size( ) = " << fileads.size( )<<"\n";
 	vector <JobFileAd>::iterator it1 = fileads.begin( );
 	vector <JobFileAd>::iterator const end1 = fileads.end( );
 	for ( ; it1 != end1; it1++ ) {
 		jobpath = this->getJobPath(it1->node);
-//cout << "###createZipFile>  (it1->files).size( ) = " << (it1->files).size( )  <<"\n";
 		vector <FileAd>::iterator it2 = (it1->files).begin( );
 		vector <FileAd>::iterator const end2 = (it1->files).end( );
 		for ( ; it2 != end2; it2++ ) {
 			file = it2->file;
 			path = jobpath + "/" + Utils::getFileName(it2->file);
-//cout << "###createZipFile> file="<< file << "\n";
-//cout << "###createZipFile> path="<< path << "\n";
 			logInfo->print(WMS_DEBUG, "tar - Archiving the local file: " + file,
 				"with the following path: " + path, false);
 			r = tar_append_file (t, (char*) file.c_str(), (char*)path.c_str());
@@ -1616,7 +1599,6 @@ void JobSubmit::createZipFile (
 				"This archive file has been successfully created:", tar);
 		logInfo->print(WMS_DEBUG,
 			"Compressing the file (" +Utils::getZipExtension() +"):", tar);
-//cout << "###createZipFile> tarFile="<< tar << "\n";
 		gz = wmcUtils->fileCompression(tar);
 		logInfo->print(WMS_DEBUG,
 			"ISB ZIPPED file successfully created:", gz);
@@ -1666,7 +1648,6 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		source = (paths[0].first).file ;
 		// destination
 		destination = paths[0].second ;
-//cout << "###JobSubmit::gsiFtpTransfer> file = " << file << "\n";
 		// Protocol has to be added only if not yet present
 		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
 		// command
