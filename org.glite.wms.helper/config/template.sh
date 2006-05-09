@@ -8,8 +8,6 @@ jw_echo() # 1 - msg
 
 log_event() # 1 - event
 {
-  jw_echo "$1"
-
   GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
