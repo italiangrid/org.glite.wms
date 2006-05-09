@@ -51,6 +51,7 @@ options2short = { \
 "perusal-dir": ["dir","","directorypath"] ,\
 "perusal-output": ["output","o","filepath"] ,\
 "proto": ["proto","","protocol"] ,\
+"proto-submit": ["proto","","protocol"] ,\
 "rank": ["rank","",""] ,\
 "register-only": ["register-only","",""] ,\
 "resource": ["resource","r", "ceid"] ,\
@@ -72,7 +73,7 @@ common_options=[ "version", "help", "config", "vo", "debug", "logfile", "noint"]
 commands2options={
 "glite-wms-job-delegate-proxy":["delegationid", "autm-delegation", "endpoint", "deleg-output"], \
 "glite-wms-job-submit":["submit-input", "resource","nodes-resource",  "nolisten", "nomsg","lrms", "to", "valid", "register-only", \
-"transfer-files", "proto", "start", "submit-output", "collection","dag","default-jdl"], \
+"transfer-files", "proto-submit", "start", "submit-output", "collection","dag","default-jdl"], \
 "glite-wms-job-cancel":["cancel-input","cancel-output"], \
 "glite-wms-job-list-match":["delegationid", "autm-delegation", "endpoint", "rank","match-output"], \
 "glite-wms-job-output":["jobout-input", "jobout-dir", "proto", "list-only"], \

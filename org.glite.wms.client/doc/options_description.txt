@@ -121,9 +121,6 @@ this option makes the command print on the standard output only the jobId genera
 if this option is specified, the retrieved files are stored in the location pointed by directory_path instead of the default location /tmp/<jobId unique string>. This option is ignored if used with either the --set or the --get options.
 <<<perusal-dir>>>
 
-
-
-
 <<<perusal-output>>>
 this option can only be used together with either the --set or with the --get option.
 Information about these two operations are saved in the file specified by filepath at the end of the execution: for --set the filename(s) for which perusal has been enabled; for --get the local pathnames to the retrieved files. filepath can be either a simple name or an absolute path (on the local machine). In the former case the file is created in the current working directory.
@@ -132,7 +129,14 @@ Information about these two operations are saved in the file specified by filepa
 
 <<<proto>>>
 this option specifies the protocol to be used for file tranferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
+This option is only available from glite version >= 3.1.
 <<<proto>>>
+
+
+<<<proto-submit>>>
+this option specifies the protocol to be used for file tranferring. It will be ignored when the specified protocol is not found among WMProxy service available protocols: in this case the default one (generally gsiftp ) will be used instead.
+<<<proto-submit>>>
+
 
 <<<rank>>>
 displays the "matching" CEIds and the associated ranking values.
@@ -204,10 +208,12 @@ This option is meaningless when used together with "--vo" option
 
 <<<dag>>>
 this option allows specifying  the directory pointed by directory_path containing all the single JDL files of the jobs that the dag will be made of. The corresponding dag JDL will be generated and submitted. Using this option the jdl_file (the last argument) must not be specified.
+This option is only available from glite version >= 3.1.
 <<<dag>>>
 
 
 <<<default-jdl>>>
 Allow specifying a further jdl file whose attributes will be merged into the submitting jdl (if not yet present).
+This option is only available from glite version >= 3.1.
 <<<default-jdl>>>
 
