@@ -75,8 +75,7 @@ struct JobWrapper::pimpl {
   std::vector<std::string>  m_wmp_output_files;
   std::vector<std::string>  m_wmp_output_dest_files;
   
-  std::string               m_token_file;
-  bool                      m_token_support;
+  std::string               m_shallow_resubmission_token;
 
   bool                      m_perusal_support;
   int                       m_perusal_timeinterval;
@@ -101,7 +100,6 @@ JobWrapper::JobWrapper(const std::string& job)
   m_pimpl->m_osb_wildcards_support = false;
   m_pimpl->m_job = job;
   m_pimpl->m_create_subdir = false;
-  m_pimpl->m_token_support = false;
 }
 
 JobWrapper::~JobWrapper()
@@ -286,15 +284,9 @@ void JobWrapper::set_osb_wildcards_support(bool value)
 }
 
 void
-JobWrapper::set_token_support()
+JobWrapper::enable_shallow_resubmission(std::string const& token)
 {
-  m_pimpl->m_token_support = true;
-}
-
-void
-JobWrapper::token(std::string const& token_file)
-{
-  m_pimpl->m_token_file = token_file;
+  m_pimpl->m_shallow_resubmission_token = token;
 }
 
 void
@@ -456,8 +448,11 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__wmp_output_dest_file", 
       m_pimpl->m_wmp_output_dest_files
     ) &&
-    dump(os, "__token_file", m_pimpl->m_token_file) &&
-    dump(os, "__token_support", m_pimpl->m_token_support) &&
+    dump(
+      os,
+      "__shallow_resubmission_token",
+      m_pimpl->m_shallow_resubmission_token
+    ) &&
     dump(os, "__perusal_support", m_pimpl->m_perusal_support) &&
     dump(os, "__perusal_timeinterval", m_pimpl->m_perusal_timeinterval) &&
     dump(os, "__perusal_filesdesturi", m_pimpl->m_perusal_filesdesturi) &&

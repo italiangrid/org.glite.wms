@@ -214,12 +214,11 @@ public:
 				 const std::vector<std::string>& output_dest_files);   
    
   /**
-   * Declare the token file.
-   * @param base_url
-   * @param file
+   * Enable the shallow resubmission for this job.
+   * @param token_file the shallow resubmission token
    * \ingroup token
    */
-  void token(std::string const& token_file);
+  void enable_shallow_resubmission(std::string const& token_file);
 
   /**
     * Set the support of Perusal.
@@ -241,12 +240,6 @@ public:
     * support in the output sandbox
     */
   void set_osb_wildcards_support(bool);
-
-  /**
-    * Set the support for
-    * shallow resubmission
-    */
-  void set_token_support();
 
   void set_output_sandbox_base_dest_uri(URL const&);
 

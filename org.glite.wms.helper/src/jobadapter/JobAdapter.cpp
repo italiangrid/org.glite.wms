@@ -171,10 +171,12 @@ try {
   utils::EvaluateAttrListOrSingle(*m_ad, "inputsandbox", inputsandbox);
 
   // Not Mandatory
-  bool b_wmpisb_base_uri = false;
-  std::string wmpisb_base_uri(jdl::get_wmpinput_sandbox_base_uri(*m_ad, b_wmpisb_base_uri));
-  if (!wmpisb_base_uri.empty()) {
-    b_wmpisb_base_uri = true;
+  boost::scoped_ptr<URL> wmpisb_base_uri;
+  try {
+    bool no_throw;
+    std::string const s(jdl::get_wmpinput_sandbox_base_uri(*m_ad, no_throw));
+    wmpisb_base_uri.reset(new URL(s));
+  } catch (InvalidURL&) {
   }
 
   // Mandatory
@@ -188,7 +190,7 @@ try {
   }
 	  
   std::string outputsandboxpath;
-  if (!b_osb_dest_uri && !b_wmpisb_base_uri) {
+  if (!b_osb_dest_uri && !wmpisb_base_uri) {
     /* Mandatory */
     outputsandboxpath.append(jdl::get_output_sandbox_path(*m_ad));
     if (outputsandboxpath.empty()) {
@@ -799,44 +801,46 @@ try {
     }
   }
 
+  boost::scoped_ptr<URL> isb_url;
   try {
-    URL inputsandboxpath_url(inputsandboxpath);
-    if (!b_wmpisb_base_uri) {
-      jw->input_sandbox(inputsandboxpath_url, inputsandbox);
-    } else {
-      jw->wmp_input_sandbox_support(inputsandboxpath_url, inputsandbox);
-    }
-  } catch (InvalidURL& ex) {
-    std::string new_inputsandboxpath("gsiftp://"
-      + local_host_name
-      + inputsandboxpath
-    );
+    isb_url.reset(new URL(inputsandboxpath));
+  } catch (InvalidURL&) {
     try {
-      URL inputsandboxpath_url(new_inputsandboxpath);
-      if (!b_wmpisb_base_uri) {
-        jw->input_sandbox(inputsandboxpath_url, inputsandbox);
-      } else {
-        jw->wmp_input_sandbox_support(inputsandboxpath_url, inputsandbox);
-      }
-    } catch (InvalidURL& ex) {
-        throw CannotCreateJobWrapper(ex.what());
+      isb_url.reset(new URL("gsiftp://" + local_host_name + inputsandboxpath));
+    } catch (InvalidURL& e) {
+      throw CannotCreateJobWrapper(e.what());
     }
   }
 
-  //set the token for the shallow resubmission
-  std::string::size_type const p = inputsandboxpath.rfind("/input");
-  std::string const token_path(inputsandboxpath, 0, p);
-  jw->token(token_path + '/' + token_file);
-  jw->set_token_support();
+  if (wmpisb_base_uri) {
+    jw->wmp_input_sandbox_support(*isb_url, inputsandbox);
+  } else {
+    jw->input_sandbox(*isb_url, inputsandbox);
+  }
 
-  if (!b_wmpisb_base_uri) {
+  {
+    bool exists = false;
+    int shallow_retry_count(
+      jdl::get_shallow_retry_count(*m_ad, exists)
+    );
+    if (!exists || (shallow_retry_count < 0 && shallow_retry_count != -1)) {
+      shallow_retry_count = 0;
+    }
+    if (shallow_retry_count != -1) {
+      std::string const isb_url_str = isb_url->as_string();
+      std::string::size_type const p = isb_url_str.rfind("/input");
+      std::string const token_url_str(isb_url_str, 0, p);
+      jw->enable_shallow_resubmission(token_url_str + '/' + token_file);
+    }
+  }
+
+  if (!wmpisb_base_uri) {
     try {
       URL outputsandboxpath_url(outputsandboxpath);
       jw->output_sandbox(outputsandboxpath_url, outputsandbox);
-    } catch (InvalidURL& ex) {
-      std::string new_outputsandboxpath("gsiftp://"
-        + local_host_name
-        + outputsandboxpath
+    } catch (InvalidURL&) {
+      std::string new_outputsandboxpath(
+        "gsiftp://" + local_host_name + outputsandboxpath
       );
       try {
         URL outputsandboxpath_url(new_outputsandboxpath);
@@ -850,12 +854,12 @@ try {
   }
 
   //check if we need to support new Input/Output Sandboxes in WMProxy
-  if (b_osb_dest_uri || b_wmpisb_base_uri) {
+  if (b_osb_dest_uri || wmpisb_base_uri) {
     jw->wmp_support();
   }
   //end preparation of the JobWrapper dump
 
-  if (!b_wmpisb_base_uri) {
+  if (!wmpisb_base_uri) {
     // Mandatory
     // Maradone file path
     std::string maradonapr(config.lm()->maradona_transport_protocol());
@@ -872,7 +876,7 @@ try {
     }
 
   } else {
-    jw->maradonaprotocol(wmpisb_base_uri, "/Maradona.output");
+    jw->maradonaprotocol(wmpisb_base_uri->as_string(), "/Maradona.output");
   }
 
   // read the submit file path
