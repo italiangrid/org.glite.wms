@@ -8,9 +8,9 @@ jw_echo() # 1 - msg
 
 log_event() # 1 - event
 {
-  jw_echo $1
+  jw_echo "$1"
 
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
     --jobid="$GLITE_WMS_JOBID"\
     --source=LRMS\
     --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -21,9 +21,9 @@ log_event() # 1 - event
 
 log_error() # 1 - reason
 {
-  jw_echo $1
+  jw_echo "$1"
 
-  export GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
+  GLITE_WMS_SEQUENCE_CODE=`$lb_logevent\
    --jobid="$GLITE_WMS_JOBID"\
    --source=LRMS\
    --sequence="$GLITE_WMS_SEQUENCE_CODE"\
@@ -38,7 +38,7 @@ log_error() # 1 - reason
 
 truncate() # 1 - file name, 2 - bytes num., 3 - name of the truncated file
 {
-  tail $1 --bytes=$2>$3 2>/dev/null
+  tail "$1" --bytes=$2>$3 2>/dev/null
   return $?
 }
 
@@ -148,7 +148,7 @@ doReplicaFile()
     echo "$sourcefile    Error: $local" >> $filename.tmp
     exit_status=1
   fi
-  
+
   echo "" >> $filename.tmp
   return $exit_status
 }
@@ -159,7 +159,7 @@ doReplicaFilewithLFN()
   lfn=$2
   filename="${__dsupload}"
   exit_status=0
-  
+
   local=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile file://${workdir}/$sourcefile -l $lfn 2>&1`
   result=$?
   if [ $result -eq 0 ]; then
@@ -174,7 +174,7 @@ doReplicaFilewithLFN()
       exit_status=1
     fi
   fi
-  
+
   echo "" >> $filename.tmp
   return $exit_status
 }
@@ -226,7 +226,7 @@ doReplicaFilewithLFNAndSE()
     else
       locallfn=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile file://${workdir}/$sourcefile -l $lfn 2>&1`
       result=$?
-      if [ $result -eq 0 ]; then 
+      if [ $result -eq 0 ]; then
         echo "$sourcefile    $locallfn" >> $filename.tmp
       else
         localnew=`$GLITE_WMS_LOCATION/bin/edg-rm --vo=${__vo} copyAndRegisterFile file://${workdir}/$sourcefile 2>&1`
@@ -236,11 +236,11 @@ doReplicaFilewithLFNAndSE()
         else
           echo "$sourcefile    Error: $local; $localse; $locallfn; $localnew" >> $filename.tmp
           exit_status=1
-        fi    
+        fi
       fi
     fi
   fi
-    
+
   echo "" >> $filename.tmp
   return $exit_status
 }
@@ -318,14 +318,6 @@ function send_partial_file
   if [ -f "$LISTFILE" ] ; then rm $LISTFILE ; fi
 }
 
-if [ "${__input_base_url:-1}" != "/" ]; then
-  __input_base_url="${__input_base_url}/"
-fi
-
-if [ "${__output_base_url:-1}" != "/" ]; then
-  __output_base_url="${__output_base_url}/"
-fi
-
 if [ -n "${__gatekeeper_hostname}" ]; then
   export GLITE_WMS_LOG_DESTINATION="${__gatekeeper_hostname}"
 fi
@@ -334,7 +326,7 @@ if [ -n "${__jobid}" ]; then
   export GLITE_WMS_JOBID="${__jobid}"
 fi
 
-GLITE_WMS_SEQUENCE_CODE="$1"
+export GLITE_WMS_SEQUENCE_CODE="$1"
 shift
 
 if [ -z "${GLITE_WMS_LOCATION}" ]; then
@@ -348,6 +340,18 @@ fi
 lb_logevent=${GLITE_WMS_LOCATION}/bin/glite-lb-logevent
 if [ ! -x "$lb_logevent" ]; then
   lb_logevent="${EDG_WL_LOCATION}/bin/edg-wl-logev"
+fi
+
+host=`hostname -f`
+
+log_event "Running"
+
+if [ "${__input_base_url:-1}" != "/" ]; then
+  __input_base_url="${__input_base_url}/"
+fi
+
+if [ "${__output_base_url:-1}" != "/" ]; then
+  __output_base_url="${__output_base_url}/"
 fi
 
 if [ -z "${GLITE_LOCAL_COPY_RETRY_COUNT}" ]; then
@@ -442,7 +446,7 @@ else
       globus_url_retry_copy "${f}" "file://${workdir}/${file}"
     elif [ "${f:0:8}" == "https://" ]; then
       htcp "${f}" "file://${workdir}/${file}"
-    fi 
+    fi
     if [ $? != 0 ]; then
       log_error "Cannot download ${file} from ${f}"
     fi
@@ -464,7 +468,7 @@ if [ -f "${__prologue}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 3 ]; then #interactive job
+if [ ${__job_type} -eq 3 ]; then #interactive jobs
   base_url=${__input_base_url:0:`expr match "$__input_base_url" '[[:alpha:]][[:alnum:]+.-]*://[[:alnum:]_.~!$&-]*'`}
   for f in  "glite-wms-pipe-input" "glite-wms-pipe-output" "glite-wms-job-agent" ; do
     globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/bin/${f}" "file://${workdir}/${f}"
@@ -473,14 +477,11 @@ if [ ${__job_type} -eq 3 ]; then #interactive job
   globus_url_retry_copy "${base_url}/${GLITE_LOCATION}/lib/libglite-wms-grid-console-agent.so.0" "file://${workdir}/libglite-wms-grid-console-agent.so.0"
 fi
 
-host=`hostname -f`
-log_event "Running"
-
 if [ ${__perusal_support} -eq 1 ]; then
   send_partial_file ${__perusal_listfileuri} ${__perusal_filesdesturi} ${__perusal_timeinterval} & send_pid=$!
 fi
 
-if [ ${__token_support} -eq 1 ]; then
+if [ -n ${__shallow_resubmission_token} ]; then
 
   # Look for an executable gridftp_rm command
   for gridftp_rm_command in $GLITE_LOCATION/bin/glite-gridftp-rm \
@@ -492,13 +493,13 @@ if [ ${__token_support} -eq 1 ]; then
     fi
   done
 
- `$gridftp_rm_command $__token_file`
+  $gridftp_rm_command ${__shallow_resubmission_token}
   result=$?
   if [ $result -eq 0 ]; then
     log_event "ReallyRunning"
-    jw_echo "Token ${GLITE_WMS_SEQUENCE_CODE} taken"
+    jw_echo "Take token: ${GLITE_WMS_SEQUENCE_CODE}"
   else
-    log_error "Cannot take token for $GLITE_WMS_JOBID" 
+    log_error "Cannot take token for $GLITE_WMS_JOBID"
   fi
 fi
 
@@ -597,7 +598,7 @@ fi
   watchdog=$!
   wait $user_job
   status=$?
-  #according to what reported (David McBride), the bash kill command 
+  #according to what reported (David McBride), the bash kill command
   #doesn't appear to work properly on process groups
   /bin/kill -9 $watchdog $user_job -$user_job
   exit $status
@@ -614,7 +615,7 @@ fi
 
 if [ ${__perusal_support} -eq 1 ]; then
   kill -USR2 $send_pid
-  wait $send_pid 
+  wait $send_pid
 fi
 
 if [ ${__output_data} -eq 1 ]; then
@@ -651,7 +652,7 @@ fi
 
 jw_echo "job exit status = ${status}"
 
-# uncomment this one below if the osb order list originally 
+# uncomment this one below if the osb order list originally
 # specified is not of some relevance to the user
 #sort_by_size __output_file ${workdir}
 
@@ -659,7 +660,7 @@ file_size_acc=0
 current_file=0
 if [ ${__wmp_support} -eq 0 ]; then
   total_files=${#__output_file[@]}
-  for f in ${__output_file[@]} 
+  for f in ${__output_file[@]}
   do
     if [ -r "${f}" ]; then
       output=`dirname $f`
@@ -679,7 +680,7 @@ if [ ${__wmp_support} -eq 0 ]; then
         else
           jw_echo "OSB quota exceeded for file://${workdir}/${f}, truncating needed"
           # $current_file is zero-based (being used even
-          # below as an array index), + 1 again because of the 
+          # below as an array index), + 1 again because of the
           # difference between $total and $current (i.e. 20-19=2 more files)
           remaining_files=`expr $total_files \- $current_file + 2`
           remaining_space=`expr $__max_osb_size \- $file_size_acc`
