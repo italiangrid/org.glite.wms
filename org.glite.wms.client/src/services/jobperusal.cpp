@@ -393,7 +393,7 @@ void JobPerusal::perusalGet (std::vector<std::string> &paths){
 			checkFileTransferProtocol();
 		} catch (WmsClientException &exc) {
 			fileProto = new string (Options::TRANSFER_FILES_DEF_PROTO);
-			logInfo->print (WMS_WARNING, exc.what( ) ,
+			logInfo->print (WMS_DEBUG, exc.what( ) ,
 			"Setting File Protocol to default : " + *fileProto);
 		}
 
