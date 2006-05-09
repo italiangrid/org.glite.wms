@@ -79,6 +79,8 @@ CDFLAGS= -L$(GLOBUS_LOCATION)/lib \
 	-lpthread \
 	-lglite_wms_client_services \
 	-lglite_wms_client_utils \
+	-lvomsapi_gcc32dbg \
+	-lgridsite_globus \
 	-lglite_wms_wmproxy_api_cpp \
 	-lcppunit
 
@@ -95,15 +97,16 @@ EXTENDED=-lglite_wmsui_client \
 	-lglite_wmsutils_tls_socket_pp \
 	-lglite_wmsutils_tls_gsisocket_pp \
 	-lglite_wms_globus_ftp_util \
-	-lvomsapi \
+	-lvomsapi_gcc32dbg \
+	-lgridsite_globus \
 	-lglite_lb_common_gcc32 \
 	-lglite_lb_client_gcc32 \
 	-lglite_lb_clientpp_gcc32 \
 	-lglite_wms_checkpointing \
 	-lglite_wms_logger \
-	-lglite_wmsui_partitioner \
+	-lglite_wmsui_partitioner
 
-all: listen output
+all: listen output delegation
 
 listen:
 	@echo "compiling listener....."
@@ -113,3 +116,12 @@ output:
 	@echo "compiling output....."
 	@$(CPP)  -Wall  -DHAVE_CONFIG_H   $(CFLAGS) -o glite-wms-client-outputtest glite-wms-client-output.cpp $(LDFLAGS)
 	@echo "DONE glite-wms-client-outputtest"
+
+delegation:
+	@echo "compiling delegation....."
+	$(CPP)  -Wall  -DHAVE_CONFIG_H   $(CFLAGS) -o glite-wms-client-delegationtest glite-wms-client-delegation.cpp $(LDFLAGS)
+	@echo "DONE glite-wms-client-delegationtest"
+
+
+
+
