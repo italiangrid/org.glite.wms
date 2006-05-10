@@ -7,6 +7,7 @@
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 namespace iceUtil = glite::wms::ice::util;
 using namespace std;
@@ -18,13 +19,45 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   : iceThread( "subscription Updater" ),
     m_conf(glite::wms::ice::util::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    m_subMgr( subscriptionManager::getInstance() ) // the subManager's instance 
+    m_subMgr( subscriptionManager::getInstance() ), // the subManager's instance 
     						 // has already been created by 
 						 // ice-core module; so no need
-						 // to lock the mutex
+						 // to lock the mutex and no need
+						 // to check if the singleton is
+						 // valid or not (valid means
+						 // correctly created)
+    m_valid(true)
 {
   m_iteration_delay = (int)(m_conf->getSubscriptionUpdateThresholdTime()/2);
   if(!m_iteration_delay) m_iteration_delay=5;
+  
+  /**
+   * let's Determine our hostname to use as consumerURL
+   */
+  char name[256];
+  memset((void*)name, 0, 256);
+
+  if(gethostname(name, 256) == -1) {
+    m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
+                           << strerror(errno)
+                           << log4cpp::CategoryStream::ENDLINE;
+    m_valid = false;
+    return;
+  }
+  struct hostent *H=gethostbyname(name);
+  if(!H) {
+      m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
+                               << strerror(h_errno)
+                               << log4cpp::CategoryStream::ENDLINE;
+    m_valid = false;
+    return;
+  }
+  {
+    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+    m_myname = boost::str( boost::format("http://%1%:%2%") % H->h_name % m_conf->getListenerPort() );
+  }
+  
+  m_subMgr->setConsumerURLName( m_myname );
 }
 
 //______________________________________________________________________________
@@ -35,9 +68,9 @@ void iceUtil::subscriptionUpdater::body( void )
   set<string> ceurls;
 
   while( !isStopped() ) {
-    m_log_dev->infoStream() << "subscriptionUpdater::body() - Checking "
-                          << "subscription's time validity..."
-			  << log4cpp::CategoryStream::ENDLINE;
+    m_log_dev->debugStream() << "subscriptionUpdater::body() - Checking "
+                             << "subscription's time validity..."
+			     << log4cpp::CategoryStream::ENDLINE;
     ceurls.clear();
     retrieveCEURLs(ceurls);
 
@@ -54,8 +87,19 @@ void iceUtil::subscriptionUpdater::body( void )
 			         << ex.what() << log4cpp::CategoryStream::ENDLINE;
 	return;
       }
+      
+      bool lost_subscription = true;
+      for( vector<Subscription>::const_iterator sit=vec.begin();
+           sit != vec.end();
+	   ++sit)
+      {
+	 if( sit->getConsumerURL() == m_myname ) {
+	   lost_subscription = false;
+	   break;
+	 }
+      }
 	
-      if( vec.empty() ) 
+      if( lost_subscription/*vec.empty()*/ ) 
       {
         // this means that ICE is not subscribed to current CEMon
 	// it should be! something happened... must re-subscribe
@@ -78,13 +122,6 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
       sit++)
     {
       time_t timeleft = sit->getExpirationTime() - time(NULL);
-//       cout  << "\t["<<sit->getSubscriptionID()<<"]\n\t"
-//            << "["<<sit->getConsumerURL() << "]\n\t"
-// 	   << "["<<sit->getTopicName() << "]\n\t"
-// 	   << "["<<sit->getEndpoint() << "]\n\t"
-// 	   << "timeleft=[" << timeleft << "]\n\t"
-// 	   << "threshold=["<<conf->getSubscriptionUpdateThresholdTime()<<"]\n"
-// 	   << log4cpp::CategoryStream::ENDLINE;
       {
         boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
         if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
@@ -121,11 +158,33 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 {
     urls.clear();
     string ceurl, cemonURL;
-    boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
-    for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
-        it != iceUtil::jobCache::getInstance()->end(); ++it) 
+    vector<CreamJob> jobList;
+    
+    /**
+     * The following code is higly HUGLY!!!
+     * but we cannot keep the jobCache locked for long time
+     * (sometime the CreamProxy::GetCEMonURL() could take a 
+     * long time)
+     * otherwise other threads could fail their operations
+     * (like leaseUpdater that could wait to long before updater a
+     * job lease that is expiring).
+     */
     {
-
+      boost::recursive_mutex::scoped_lock M( iceUtil::jobCache::mutex );
+      for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
+        it != iceUtil::jobCache::getInstance()->end(); 
+	++it) 
+      {
+	jobList.push_back( *it );
+      }
+    } // unlock the jobCache (other thread can continue their job)
+    
+//    for(iceUtil::jobCache::iterator it=iceUtil::jobCache::getInstance()->begin();
+//       it != iceUtil::jobCache::getInstance()->end(); ++it) 
+    for(vector<CreamJob>::iterator it = jobList.begin();
+        it != jobList.end();
+	++it)
+    {
         ceurl = it->getCreamURL();
 	boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
  	cemonURL = cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
@@ -153,8 +212,6 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
 	  }
 	} else {
-          //boost::replace_first(ceurl, conf->getCreamUrlPostfix(),
-          //                     conf->getCEMonUrlPostfix());
           urls.insert( cemonURL );
 	}
     }

@@ -65,6 +65,8 @@ namespace util {
     std::string getLastSubscriptionID() const { return m_lastSubscriptionID; }
 
     static boost::recursive_mutex mutex;
+    
+    void setConsumerURLName( const std::string& name ) { m_myname = name; }
   };
 
 }

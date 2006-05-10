@@ -143,6 +143,7 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
                 << "Fatal error creating the subscriptionManager instance. Will not start listener."
                 << log4cpp::CategoryStream::ENDLINE;
             confMgr->setStartListener( false );
+	    return; // no reason to continue with subscriptionCache initialization
         }
         /**
          * subscriptionCache is used to retrieve the list of cemon we're
@@ -209,6 +210,12 @@ void Ice::startListener( int listenPort )
     //-----------------now is time to start subUpdater-------------------------
     bool tmp_start_sub_updater = confMgr->getStartSubscriptionUpdater();
     
+    // The following subscriptionUpdater creation also triggers creation of subscriptionManager
+    // (by invoking subscriptionManager::getInstance(). But in this case the creation of the 
+    // subscriptionManager singleton already occurred in the Ice::CTOR (see above).
+    // Furthermore the CTOR of subscriptionUpdater
+    // also sets of the subpscriptionManager's internal variable (m_myname) 
+    // that keeps the listener URL (of this ICE) by calling subscriptionManager::getInstance()->setConsumerURLName(...)
     if( tmp_start_sub_updater ) {
         util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( confMgr->getHostProxyFile());      
         m_updater_thread.start( subs_updater );

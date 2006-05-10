@@ -43,7 +43,7 @@ subscriptionManager::subscriptionManager()
     m_valid = false;
     return;
   }
-  char name[256];
+/*   char name[256];
   memset((void*)name, 0, 256);
 
   if(gethostname(name, 256) == -1) {
@@ -66,7 +66,7 @@ subscriptionManager::subscriptionManager()
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     os << "http://" << H->h_name << ":" << m_conf->getListenerPort();
   }
-  m_myname = os.str();
+  m_myname = os.str(); */
 
   m_T.addDialect(NULL);
   m_vec.reserve(100);

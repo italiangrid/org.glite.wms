@@ -30,6 +30,8 @@ namespace glite {
 		log4cpp::Category *m_log_dev;
 		subscriptionManager *m_subMgr;
 		int m_iteration_delay;
+		std::string m_myname;
+		bool m_valid;
 
         public:
 		subscriptionUpdater(const std::string& cert);
