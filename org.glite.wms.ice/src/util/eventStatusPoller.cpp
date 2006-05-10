@@ -130,7 +130,7 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
             listener_started = iceConfManager::getInstance()->getStartListener();
 	}
         
-	m_log_dev->infoStream() << "eventStatusPoller::getStatus() - "
+	m_log_dev->debugStream() << "eventStatusPoller::getStatus() - "
 				<< "Job [" << jobIt->getJobID() << "]"
 				<< " oldness="<<oldness << " threshold="<<threshold
 				<< " listener="<<listener_started<<log4cpp::CategoryStream::ENDLINE;
@@ -175,7 +175,7 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
                     << log4cpp::CategoryStream::ENDLINE;
 		  jobIt++;
 		} else {
-                  m_log_dev->warnStream()
+                  m_log_dev->errorStream()
                     << "Job cream/grid ID=["
                     << jobIt->getJobID()
                     << "]/["
@@ -203,50 +203,56 @@ bool eventStatusPoller::getStatus( vector< soap_proxy::JobInfo > &job_status_lis
 
             exit(1);
         } catch(soap_proxy::auth_ex& ex) {
-            m_log_dev->errorStream()
-                << "eventStatusPoller::getStatus() - "
-                << "Cannot query status job for JobId=["
-                << jobIt->getJobID()
-                << "]. Exception is [" << ex.what() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
-            retval = false;
+	  m_log_dev->errorStream()
+	    << "eventStatusPoller::getStatus() - "
+	    << "Cannot query status job for JobId=["
+	    << jobIt->getJobID()
+	    << "]. Exception is [" << ex.what() << "]"
+	    << log4cpp::CategoryStream::ENDLINE;
+	  retval = false;
         } catch(soap_proxy::soap_ex& ex) {
-            m_log_dev->errorStream()
-                << "eventStatusPoller::getStatus() - "
-                << "CreamProxy::Status() raised a soap_ex exception ["
-                << ex.what() << "] for JobId=["
-                << jobIt->getJobID() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
-
-            retval = false;
+	  m_log_dev->errorStream()
+	    << "eventStatusPoller::getStatus() - "
+	    << "Cannot query status job for JobId=["
+	    << jobIt->getJobID()
+	    << "]. Exception is [" 
+	    << ex.what() << "]"
+	    << log4cpp::CategoryStream::ENDLINE;
+	  
+	  retval = false;
         } catch(cream_api::cream_exceptions::BaseException& ex) {
-            m_log_dev->errorStream()
-                << "eventStatusPoller::getStatus() - "
-                << "CreamProxy::Status() raised a BaseException ["
-                << ex.what() << "] for JobId=["
-                << jobIt->getJobID() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
+	  m_log_dev->errorStream()
+	    << "eventStatusPoller::getStatus() - "
+	    << "Cannot query status job for JobId=["
+	    << jobIt->getJobID()
+	    << "]. Exception is [" 
+	    << ex.what() << "]"
+	    << log4cpp::CategoryStream::ENDLINE;
 
             retval = false; 
         } catch(cream_api::cream_exceptions::InternalException& ex) {
-            m_log_dev->errorStream()
-                << "eventStatusPoller::getStatus() - "
-                << "CreamProxy::Status() raised an InternalException ["
-                << ex.what() << "] for JobId=["
-                << jobIt->getJobID() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
-	    sleep(2); // this ex can be raised if the remote service is not reachable
-		      // and getStatus is called again immediately. Untill the service is down
-		      // this could overload the cpu and the logfile. So let's wait for a while before
-		      // returning...
-            retval = false;
+	  m_log_dev->errorStream()
+	    << "eventStatusPoller::getStatus() - "
+	    << "Cannot query status job for JobId=["
+	    << jobIt->getJobID()
+	    << "]. Exception is [" 
+	    << ex.what() << "]"
+	    << log4cpp::CategoryStream::ENDLINE;
+	  
+	  sleep(2); // this ex can be raised if the remote service is not reachable
+	  // and getStatus is called again immediately. Untill the service is down
+	  // this could overload the cpu and the logfile. So let's wait for a while before
+	  // returning...
+	  
+	  retval = false;
         } catch(cream_api::cream_exceptions::DelegationException& ex) {
-            m_log_dev->errorStream()
-                << "eventStatusPoller::getStatus() - "
-                << "CreamProxy::Status() raised an DelegationException ["
-                << ex.what() << "] for JobId=["
-                << jobIt->getJobID() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
+	  m_log_dev->errorStream()
+	    << "eventStatusPoller::getStatus() - "
+	    << "Cannot query status job for JobId=["
+	    << jobIt->getJobID()
+	    << "]. Exception is [" 
+	    << ex.what() << "]"
+	    << log4cpp::CategoryStream::ENDLINE;
 
             retval = false;
         }
@@ -295,7 +301,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
          * exit code yet.
          */
         if( job_is_done && (exitCode=="W") ) {
-            m_log_dev->infoStream()
+            m_log_dev->debugStream()
                 << "eventStatusPoller::checkJobs() - WILL NOT Purge Job ["
                 << cid <<"] because exitCode is not available yet."
                 << log4cpp::CategoryStream::ENDLINE;
@@ -307,7 +313,7 @@ void eventStatusPoller::checkJobs( const vector< soap_proxy::JobInfo >& status_l
         case api::job_statuses::DONE_FAILED:
         case api::job_statuses::ABORTED:
 
-            m_log_dev->infoStream()
+            m_log_dev->warnStream()
                 << "eventStatusPoller::checkJobs() - JobID ["
                 << cid <<"] is failed or aborted. "
                 << "Removing from cache and resubmitting..."
@@ -380,7 +386,8 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 
     if ( m_cache->end() == jit ) {
         m_log_dev->errorStream()
-            << "cream_jobid ["<< cid << "] disappeared!"
+            << "eventStatusPoller::update_single_job() - cream_jobid ["
+	    << cid << "] disappeared!"
             << log4cpp::CategoryStream::ENDLINE;
         return;
     }
@@ -393,7 +400,7 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
         if ( jit->get_num_logged_status_changes() < count ) {
 
             m_log_dev->infoStream()
-                << "eventStatusPoller::updateJobCache() - "
+                << "eventStatusPoller::update_single_job() - "
                 << "Updating jobcache with "
                 << "grid_jobid = [" << jit->getGridJobID() << "] "
                 << "cream_jobid = [" << cid << "]"
@@ -415,17 +422,28 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 //____________________________________________________________________________
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
+
+    if( jobs_to_purge.empty() ) return;
+
+    {
+      boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
+      if( !iceConfManager::getInstance()->getPollerPurgesJobs() )
+      {
+        m_log_dev->warnStream()
+                    << "eventStatusPoller::purgeJobs() - "
+                    << "There'are jobs to purge, but PURGE IS DISABLED. Will not purge any job..."
+                    << log4cpp::CategoryStream::ENDLINE;
+	return;
+      }
+    }
+
     string cid;
     for ( vector<string>::const_iterator it = jobs_to_purge.begin();
           it != jobs_to_purge.end(); ++it ) {
 
         try {
             boost::recursive_mutex::scoped_lock M( jobCache::mutex );
-            //           m_log_dev->infoStream()
-            //               << "eventStatusPoller::purgeJobs() - "
-            //               << "Fetching Job for ID [" << *it << "]"
-            //               << log4cpp::CategoryStream::ENDLINE;
-
+          
             jobCache::iterator jit = m_cache->lookupByCreamJobID( *it );
             if( jit == m_cache->end() ) {
                 m_log_dev->errorStream()
@@ -491,8 +509,8 @@ void eventStatusPoller::body( void )
         }
         catch(...) {
             m_log_dev->errorStream()
-                << "eventStatusPoller::operator() - "
-                << "catched unknown ex"
+                << "eventStatusPoller::body() - "
+                << "catched unknown exception"
                 << log4cpp::CategoryStream::ENDLINE;
         }
         checkJobs( j_status ); // resubmits aborted/done-failed and/or purges terminated jobs

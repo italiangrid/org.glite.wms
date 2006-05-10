@@ -218,7 +218,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
                 << log4cpp::CategoryStream::ENDLINE;
             return;
         } else {
-            log_dev->infoStream()
+            log_dev->errorStream()
                 << "eventStatusListener::acceptJobStatus()"
                 << " - CEConsumer::Accept() returned false."
                 << log4cpp::CategoryStream::ENDLINE;
@@ -252,7 +252,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * containing a non-null topic)
    */
   if(!this->getEventTopic()) {
-    log_dev->fatalStream() 
+    log_dev->warnStream() 
         << "eventStatusListener::acceptJobStatus() - "
         << "NULL Topic received. Ignoring this notification...." 
         << log4cpp::CategoryStream::ENDLINE;
@@ -333,23 +333,23 @@ void iceUtil::eventStatusListener::init(void)
                       << log4cpp::CategoryStream::ENDLINE;
                   cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
               } catch(exception& ex) {
-                  log_dev->errorStream() 
-                      << "eventStatusListener::init() - Error retrieving"
-                      << " CEMon's URL from CREAM's URL: "
-                      << ex.what()
-                      << ". Composing URL from configuration file..."
-                      << log4cpp::CategoryStream::ENDLINE;
-                  cemonURL = ceurl;
-                  boost::replace_first(cemonURL,
-                                       conf->getCreamUrlPostfix(),
-                                       conf->getCEMonUrlPostfix()
-                                       );
-                  log_dev->infoStream() 
-                      << "Using CEMon URL ["
-                      << cemonURL << "]" 
-                      << log4cpp::CategoryStream::ENDLINE;
-                  ceurls.insert( cemonURL );
-                  cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
+
+		cemonURL = ceurl;
+		boost::replace_first(cemonURL,
+				     conf->getCreamUrlPostfix(),
+				     conf->getCEMonUrlPostfix()
+				     );
+
+		log_dev->errorStream() 
+		  << "eventStatusListener::init() - Error retrieving"
+		  << " CEMon's URL from CREAM's URL: "
+		  << ex.what()
+		  << ". Composing URL from configuration file: ["
+		  << cemonURL << "]" 
+		  << log4cpp::CategoryStream::ENDLINE;
+		
+		ceurls.insert( cemonURL );
+		cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
               }              
 	    }
           }
@@ -431,7 +431,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 
     // No job found in cache
     if ( jc_it == cache->end() ) {
-        log_dev->errorStream()
+        log_dev->warnStream()
             << "eventStatusListener::handleEvent() - "
             << "creamjobid ["
             << notifications.begin()->getCreamJobID()
@@ -460,7 +460,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         if( it->getStatus() == api::job_statuses::PURGED ) 
             return;
 
-        log_dev->infoStream() 
+        log_dev->debugStream() 
             << "eventStatusListener::handleEvent() - "
             << "Checking job [" << it->getCreamJobID()
             << "] with status [" << api::job_statuses::job_status_str[ it->getStatus() ] << "]"
@@ -477,8 +477,8 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
             // The job gets stored in the jobcache anyway by the logEvent method...
         } else {
-            log_dev->infoStream()
-                << "eventStatusListener::handleEvent() - ...NOT DONE, as notification is old"
+            log_dev->debugStream()
+                << "eventStatusListener::handleEvent() - Skipping current notification because contains old states"
                 << log4cpp::CategoryStream::ENDLINE;
         }
     }

@@ -81,7 +81,7 @@ string iceUtil::CreamJob::serialize( void ) const
         ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(end_lease) );
 	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( proxyCertTimestamp ) );
     } catch( boost::bad_lexical_cast& ) {
-        // Should never happen...
+        // Should never happen... FIXME
     }
 
     classad::ClassAdUnParser unparser;
@@ -175,7 +175,8 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 	int saverr = errno;
 	glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->warnStream()
 	<< "creamJob::setJdl() - The user proxy file ["
-	<< user_proxyfile << "] is not stat-able:" << strerror(saverr) <<". This could compromise the correct working of proxy renewal thread"
+	<< user_proxyfile << "] is not stat-able:" << strerror(saverr) 
+	<<". This could compromise the correct working of proxy renewal thread"
 	<< log4cpp::CategoryStream::ENDLINE;
     } else {
 	proxyCertTimestamp = stat_buf.st_mtime;
@@ -207,8 +208,10 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 
     {
       boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-      cream_address = conf->getCreamUrlPrefix() + endpoint + conf->getCreamUrlPostfix();
-      cream_deleg_address = conf->getCreamUrlDelegationPrefix() + endpoint + conf->getCreamUrlDelegationPostfix();
+      cream_address = conf->getCreamUrlPrefix() 
+	+ endpoint + conf->getCreamUrlPostfix();
+      cream_deleg_address = conf->getCreamUrlDelegationPrefix() 
+	+ endpoint + conf->getCreamUrlDelegationPostfix();
     }
 
 }

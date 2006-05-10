@@ -102,7 +102,7 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
     m_log_dev->log(log4cpp::Priority::INFO,
-                   "Ice::ice() - Initializing File Extractor object...");
+                   "Ice::CTOR() - Initializing File Extractor object...");
     try {
         m_flns.open( NS_FL.c_str() );
     }
@@ -110,7 +110,7 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
         throw iceInit_ex( ex.what() );
     } catch( ... ) {
         m_log_dev->log(log4cpp::Priority::FATAL,
-                       "Ice::ice() - Catched unknown exception");
+                       "Ice::CTOR() - Catched unknown exception");
         exit( 1 );
     }
 
@@ -118,6 +118,11 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
 
     util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
     bool tmp_start_listener = confMgr->getStartListener();
+    
+    // this could be useful if some other module need to quickly know if the 
+    // subscription updater is running or not
+    if( !tmp_start_listener )
+      confMgr->setStartSubscriptionUpdater( false );
 
     if( tmp_start_listener ) {
         /**

@@ -30,7 +30,7 @@ namespace glite {
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
 	      poller_status_threshold_time, max_jobcache_operation_before_dump,
 	      notification_frequency, lease_delta_time, lease_threshold_time;
-	  bool startpoller, startlistener, startsubupder,
+	  bool startpoller, poller_purges_jobs, startlistener, startsubupder,
 	       log_on_console, log_on_file;
 	  
 
@@ -75,6 +75,7 @@ namespace glite {
 	  int         getNotificationFrequency( void ) const { return notification_frequency; }
 	  int         getLeaseDeltaTime( void ) const { return lease_delta_time; }
 	  int         getLeaseThresholdTime( void ) const { return lease_threshold_time; }
+	  bool        getPollerPurgesJobs( void ) const { return poller_purges_jobs; }
 
 	  void setHostProxyFile( const std::string& p ) {  HostProxyFile = p; }
 	  void setWMInputFile( const std::string& p )  { WM_Input_FileList = p; }
@@ -105,6 +106,7 @@ namespace glite {
 	  }
 	  void setLeaseThresholdTime( const int& t) { lease_threshold_time = t; }
 	  void setLeaseDeltaTime( const int& t ) { lease_delta_time = t; }
+  	  void setPollerPurgesJobs( const bool p ) { poller_purges_jobs = p; }
 
 	};
       }

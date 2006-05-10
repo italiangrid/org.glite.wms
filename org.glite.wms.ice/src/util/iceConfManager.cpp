@@ -71,6 +71,7 @@ iceConfManager::iceConfManager( )
     log_on_file       = config->ice()->log_on_file();
     lease_delta_time  = config->ice()->lease_delta_time();
     lease_threshold_time = config->ice()->lease_threshold_time();
+    poller_purges_jobs= config->ice()->poller_purges_jobs();
 }
 
 iceConfManager::~iceConfManager( )
