@@ -423,18 +423,13 @@ void eventStatusPoller::update_single_job( const vector< soap_proxy::Status >& s
 void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
 {
 
-    if( jobs_to_purge.empty() ) return;
+    if( jobs_to_purge.empty() ) 
+        return;
 
+    bool is_purge_enabled;
     {
-      boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-      if( !iceConfManager::getInstance()->getPollerPurgesJobs() )
-      {
-        m_log_dev->warnStream()
-                    << "eventStatusPoller::purgeJobs() - "
-                    << "There'are jobs to purge, but PURGE IS DISABLED. Will not purge any job..."
-                    << log4cpp::CategoryStream::ENDLINE;
-	return;
-      }
+        boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );        
+        is_purge_enabled = iceConfManager::getInstance()->getPollerPurgesJobs();
     }
 
     string cid;
@@ -452,19 +447,31 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
                     << *it << "]"
                     << log4cpp::CategoryStream::ENDLINE;
             } else {
+
                 cid = jit->getJobID();
-                m_log_dev->infoStream()
-                    << "eventStatusPoller::purgeJobs() - "
-                    << "Calling JobPurge for JobId ["
-                    << cid << "]"
-                    << log4cpp::CategoryStream::ENDLINE;
-                // We cannot accumulate more jobs to purge in a vector
-                // because we must authenticate different jobs with different
-                // user certificates.
-                m_creamClient->Authenticate( jit->getUserProxyCertificate());
-                vector< string > oneJobToPurge;
-                oneJobToPurge.push_back( jit->getJobID() );
-                m_creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+
+                if ( is_purge_enabled ) {
+                    m_log_dev->infoStream()
+                        << "eventStatusPoller::purgeJobs() - "
+                        << "Calling JobPurge for JobId ["
+                        << cid << "]"
+                        << log4cpp::CategoryStream::ENDLINE;
+                    // We cannot accumulate more jobs to purge in a
+                    // vector because we must authenticate different
+                    // jobs with different user certificates.
+                    m_creamClient->Authenticate( jit->getUserProxyCertificate());
+                    vector< string > oneJobToPurge;
+                    oneJobToPurge.push_back( jit->getJobID() );
+                    m_creamClient->Purge( jit->getCreamURL().c_str(), oneJobToPurge);
+                } else {
+                    m_log_dev->warnStream()
+                        << "eventStatusPoller::purgeJobs() - "
+                        << "There'are jobs to purge, but PURGE IS DISABLED. "
+                        << "Will not purge JobId ["
+                        << cid << "] (but will be removed from ICE cache)"
+                        << log4cpp::CategoryStream::ENDLINE;
+                }
+
                 m_cache->erase( jit );
             }
         } catch (ClassadSyntax_ex& ex) {
