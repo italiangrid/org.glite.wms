@@ -17,6 +17,11 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+// Define the following macro if you are testing ICE without the WMS
+// If the macro is defined, then an additional L&B call is performed
+// to register the job to the L&B server. This call is NOT done if ICE
+// is used inside the WMS, as the UI takes care of L&B job
+// registration.
 #undef ICE_STANDALONE
 
 // Local includes

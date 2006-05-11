@@ -196,6 +196,15 @@ namespace glite {
                 };
 
 
+                class cream_cancel_done_event : public iceLBEvent {
+                public:
+                    cream_cancel_done_event( const std::string& reason );
+                    int execute( iceLBContext* ctx );
+                protected:
+                    std::string m_reason;
+                };
+
+
                 class job_running_event : public iceLBEvent {
                 public:
                     job_running_event( const CreamJob& j, const std::string& host );
@@ -203,7 +212,6 @@ namespace glite {
                 protected:
                     std::string m_host;
                 };
-
 
 
                 class job_really_running_event : public iceLBEvent {

@@ -215,6 +215,26 @@ int cream_cancel_refuse_event::execute( iceLBContext* ctx )
 
 //////////////////////////////////////////////////////////////////////////////
 //
+// cancel done event
+//
+//////////////////////////////////////////////////////////////////////////////
+cream_cancel_done_event::cream_cancel_done_event( const std::string& reason ) :
+    iceLBEvent( CreamJob(), EDG_WLL_SOURCE_JOB_SUBMISSION, "Job Cancel OK Event" ),
+    m_reason( reason )
+{
+
+}
+
+int cream_cancel_done_event::execute( iceLBContext* ctx )
+{
+    return edg_wll_LogCancelDONE( *(ctx->el_context), 
+                                  m_reason.c_str()
+                                  );
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
 // job running event
 //
 //////////////////////////////////////////////////////////////////////////////
