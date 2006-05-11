@@ -139,6 +139,18 @@ namespace glite {
                 };
 
                 /**
+                 * A request has been dequeued from the WMS queue
+                 */ 
+                class wms_dequeued_event : public iceLBEvent {
+                public:
+                    wms_dequeued_event( const CreamJob& j, const std::string& qname );
+                    int execute( iceLBContext* ctx );
+                protected:
+                    std::string m_qname;
+                };
+
+
+                /**
                  * A job has been accepted by CREAM. This event is
                  * logged when ICE receives a PENDING status from CREAM.
                  */
@@ -256,6 +268,16 @@ namespace glite {
                 protected:
                     std::string m_qname;
                 };
+
+
+                class ice_resubmission_event : public iceLBEvent {
+                public:
+                    ice_resubmission_event( const CreamJob& j, const std::string& reason );
+                    int execute( iceLBContext* ctx );
+                protected:
+                    std::string m_reason;
+                };
+
 
 
             } // namespace util

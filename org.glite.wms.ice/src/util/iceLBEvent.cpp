@@ -381,3 +381,44 @@ int ns_enqueued_ok_event::execute( iceLBContext* ctx )
                                   ctx->el_s_unavailable
                                   );
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// ice resubmission event
+//
+//////////////////////////////////////////////////////////////////////////////
+ice_resubmission_event::ice_resubmission_event( const CreamJob& j, const std::string& reason ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "ICE Resubmission Event" ),
+    m_reason( reason )
+{
+
+}
+
+int ice_resubmission_event::execute( iceLBContext* ctx )
+{
+    return edg_wll_LogResubmissionWILLRESUB( *(ctx->el_context), 
+                                             m_reason.c_str(),
+                                             ctx->el_s_unavailable
+                                             );
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// wms dequeued event
+//
+//////////////////////////////////////////////////////////////////////////////
+wms_dequeued_event::wms_dequeued_event( const CreamJob& j, const std::string& qname ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_JOB_SUBMISSION, "WMS Dequeue Event" ),
+    m_qname( qname )
+{
+
+}
+
+int wms_dequeued_event::execute( iceLBContext* ctx )
+{
+    return edg_wll_LogDeQueued( *(ctx->el_context), 
+                                m_job.getGridJobID().c_str(),
+                                m_qname.c_str()
+                                );
+}

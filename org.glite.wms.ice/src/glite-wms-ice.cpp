@@ -179,13 +179,15 @@ int main(int argc, char*argv[])
   //string hostdn;
   // Set the creation of CreamProxy with automatic delegetion ON
   soap_proxy::CreamProxyFactory::initProxy( true );
-  log_dev->log(log4cpp::Priority::INFO,
-               string("Host proxyfile is [") + hostcert + "]" );
+  log_dev->infoStream()
+      << "Host proxyfile is [" << hostcert << "]" 
+      << log4cpp::CategoryStream::ENDLINE;
   try {
     hostdn = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
     if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
-        log_dev->errorStream() << "Host proxy certificate is expired. Won't start Listener"
-					<< log4cpp::CategoryStream::ENDLINE;
+        log_dev->errorStream() 
+            << "Host proxy certificate is expired. Won't start Listener"
+            << log4cpp::CategoryStream::ENDLINE;
 
         // this must be set because other pieces of code
         // have a behaviour that depends on the listener is running or not

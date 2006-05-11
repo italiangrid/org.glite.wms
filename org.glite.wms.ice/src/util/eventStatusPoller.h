@@ -67,14 +67,9 @@ namespace glite {
            * currently running jobs which did not send status change
            * notifications for a given threshold.
            *
-           * @param l the resulting list of job states
-           *
-           * @return true iff all jobs in cache have been checked succesfully;
-           * false if at least on job gave problems (i.e., raised excaptions).
-           * Note that in any case we try to check ALL jobs in cache, so we
-           * do not stop after the first failure.
+           * @param l the resulting list of job states          
            */
-	  bool getStatus( std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
+	  void getStatus( std::vector< glite::ce::cream_client_api::soap_proxy::JobInfo >& l );
 
           /**
            * Updates the status informations for all jobs in the list

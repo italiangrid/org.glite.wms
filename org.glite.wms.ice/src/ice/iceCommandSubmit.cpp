@@ -17,6 +17,8 @@
  *          Moreno Marzolla <moreno.marzolla@pd.infn.it>
  */
 
+#undef ICE_STANDALONE
+
 // Local includes
 #include "iceCommandSubmit.h"
 #include "subscriptionCache.h"
@@ -29,7 +31,11 @@
 #include "eventStatusListener.h"
 #include "iceLBLogger.h"
 #include "iceLBEvent.h"
-//#include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
+
+#ifdef ICE_STANDALONE
+#include "iceLBContext.h" // FIXME: To be removed when job registration to the LB service will be thrown away from ICE
+#endif
+
 #include "iceUtils.h"
 
 // Other glite includes
@@ -148,49 +154,46 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
 
 }
 
-//______________________________________________________________________________
+//____________________________________________________________________________
 void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-    m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - This request is a Submission...");
+    m_log_dev->infoStream()
+        << "iceCommandSubmit::execute() - This request is a Submission..."
+        << log4cpp::CategoryStream::ENDLINE;    
 
-    util::jobCache* cache = util::jobCache::getInstance();
+    util::jobCache* cache( util::jobCache::getInstance() );
 
     vector<string> url_jid;
     util::CreamJob theJob;
-    cream_api::soap_proxy::CreamProxy* theProxy = cream_api::soap_proxy::CreamProxyFactory::getProxy();
+    cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
 
     try {
         theJob.setJdl( m_jdl );
         theJob.setStatus( cream_api::job_statuses::UNKNOWN );
     } catch( util::ClassadSyntax_ex& ex ) {
         m_log_dev->errorStream() 
-            << "Cannot instantiate a job from jdl="
-            << m_jdl
-            << " due to classad excaption: "
-            << ex.what()
+            << "Cannot instantiate a job from jdl=" << m_jdl
+            << " due to classad excaption: " << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         throw( iceCommandFatal_ex( ex.what() ) );
         // TODO: L&B?
     }
 
     // Put job in the cache; remember position in job_pos
-    /**
-     * This mutex protects all cache accesses in the execute method
-     */
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
     util::jobCache::iterator job_pos = cache->put( theJob );
 
-#ifdef DONT_COMPILE
+#ifdef ICE_STANDALONE
     m_log_dev->infoStream() 
         << "iceCommandSubmit::execute() - Registering "
         << "gridJobID=\"" << theJob.getGridJobID()
         << "\" to L&B service with user proxy=\"" 
-        << theJob.getUserProxyCertificate() 
-        << "\""
+        << theJob.getUserProxyCertificate() << "\""
         << log4cpp::CategoryStream::ENDLINE;
 
     m_lb_logger->getLBContext()->registerJob( theJob ); // FIXME: to be used ONLY if ICE is being tested alone (i.e., not coupled with the WMS)
 #endif
+    m_lb_logger->logEvent( new util::wms_dequeued_event( theJob, util::iceConfManager::getInstance()->getICEInputFile() ) );
     m_lb_logger->logEvent( new util::cream_transfer_start_event( theJob ) );
 
     string modified_jdl;
@@ -204,10 +207,8 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
         modified_jdl = creamJdlHelper( theJob.getJDL() );
     } catch( util::ClassadSyntax_ex& ex ) {
         m_log_dev->errorStream() 
-            << "Cannot convert jdl="
-            << m_jdl
-            << " due to classad exception:"
-            << ex.what()
+            << "Cannot convert jdl=" << m_jdl
+            << " due to classad exception:" << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what() ) );
         cache->erase( job_pos );
@@ -216,8 +217,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
     
     m_log_dev->log(log4cpp::Priority::INFO, "iceCommandSubmit::execute() - Submitting");
     m_log_dev->debugStream() 
-        << "JDL " << modified_jdl
-        << " to [" << theJob.getCreamURL() <<"]["
+        << "JDL " << modified_jdl << " to [" << theJob.getCreamURL() <<"]["
         << theJob.getCreamDelegURL() << "]"
         << log4cpp::CategoryStream::ENDLINE;
 
@@ -230,6 +230,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
             << " due to authentication error:" << ex.what()
             << log4cpp::CategoryStream::ENDLINE;
         ice->resubmit_job( theJob );
+        m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of SOAP exception: ").append( ex.what() ) ) );
         cache->erase( job_pos );
         throw( iceCommandFatal_ex( ex.what() ) );
     }
@@ -263,11 +264,11 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
         } catch( exception& ex ) {
             m_log_dev->errorStream()
                 << "iceCommandSubmit::execute() - Cannot register jobID="
-                << theJob.getGridJobID()
-                << " Exception:" << ex.what()
+                << theJob.getGridJobID() << " Exception:" << ex.what()
                 << log4cpp::CategoryStream::ENDLINE;
             m_lb_logger->logEvent( new util::cream_transfer_fail_event( theJob, ex.what()  ) );
             ice->resubmit_job( theJob ); // Try to resubmit
+            m_lb_logger->logEvent( new util::ice_resubmission_event( theJob, string("Resubmitting because of exception: ").append( ex.what() ) ) );
             cache->erase( job_pos );
             throw( iceCommandFatal_ex( ex.what() ) );
         }
@@ -288,7 +289,6 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
         theJob.set_wn_sequence_code( theJob.getSequenceCode() );
 
         m_lb_logger->logEvent( new util::cream_transfer_ok_event( theJob ) );
-        m_lb_logger->logEvent( new util::cream_accepted_event( theJob ) );
 
         // put(...) accepts arg by reference, but
         // the implementation puts the arg in the memory hash by copying it. So
@@ -336,8 +336,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
 
 	      m_log_dev->errorStream() 
                   << "iceCommandSubmit::execute() - Error retrieving"
-                  <<" CEMon's URL from CREAM's URL: "
-                  << ex.what()
+                  <<" CEMon's URL from CREAM's URL: " << ex.what()
                   << ". Composing URL from configuration file..."
                   << log4cpp::CategoryStream::ENDLINE;
 	      cemon_url = theJob.getCreamURL();
@@ -346,8 +345,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
                                    m_confMgr->getCEMonUrlPostfix()
                                   );
 	      m_log_dev->infoStream() 
-                  << "Using CEMon URL ["
-                  << cemon_url << "]" 
+                  << "Using CEMon URL [" << cemon_url << "]" 
                   << log4cpp::CategoryStream::ENDLINE;
 	      util::cemonUrlCache::getInstance()->putCEMonUrl( theJob.getCreamURL(), cemon_url );
 	    }
@@ -366,8 +364,7 @@ void iceCommandSubmit::execute( Ice* ice ) throw( iceCommandFatal_ex&, iceComman
             m_log_dev->infoStream()
                 << "iceCommandSubmit::execute() - Subscribing the consumer ["
                 << m_myname_url << "] to ["<<cemon_url
-                << "] with duration="
-                << m_confMgr->getSubscriptionDuration()
+                << "] with duration=" << m_confMgr->getSubscriptionDuration()
                 << " secs"
                 << log4cpp::CategoryStream::ENDLINE;
       }
@@ -469,9 +466,11 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
     classad::ExprList* isbList;
     if ( jdl->EvaluateAttrList( "InputSandbox", isbList ) ) {
         classad::ExprList* newIsbList = new classad::ExprList();
-	m_log_dev->log(log4cpp::Priority::INFO,"\tStarting InputSandbox manipulation...");
-        //cout << "Starting InputSandbox manipulation..." << endl;
-	//	m_log_dev
+
+	m_log_dev->infoStream()
+            << "iceCommandSubmit::updateIsbList() "
+            << "Starting InputSandbox manipulation..."
+            << log4cpp::CategoryStream::ENDLINE;        
 	
         string newPath;
         for ( classad::ExprList::iterator it=isbList->begin(); it != isbList->end(); it++ ) {
@@ -495,9 +494,11 @@ void iceCommandSubmit::updateIsbList( classad::ClassAd* jdl )
                     break;
                 }                
             }
-	    m_log_dev->log(log4cpp::Priority::DEBUG,
-			 string("\t")+s+" became "+newPath);
-	    //            cout << s << " became " << newPath << endl;
+	    m_log_dev->debugStream()
+                << "iceCommandSubmit::updateIsbList() "
+                << s << " became " << newPath
+                << log4cpp::CategoryStream::ENDLINE;        
+
             // Builds a new value
             classad::Value newV;
             newV.SetStringValue( newPath );
@@ -538,8 +539,11 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
         classad::ExprList* newOsbDUList = new classad::ExprList();
         if ( jdl->EvaluateAttrList( "OutputSandboxDestURI", osbDUList ) ) {
 
-	  m_log_dev->log(log4cpp::Priority::INFO,
-		       "\tStarting OutputSandboxDestURI manipulation...");
+            m_log_dev->infoStream()
+                << "iceCommandSubmit::updateOsbList() "
+                << "Starting OutputSandboxDestURI manipulation..."
+                << log4cpp::CategoryStream::ENDLINE;        
+          
             string newPath;
             for ( classad::ExprList::iterator it=osbDUList->begin(); 
                   it != osbDUList->end(); it++ ) {
@@ -564,8 +568,11 @@ void iceCommandSubmit::updateOsbList( classad::ClassAd* jdl )
                     }                
                 }
 
-		m_log_dev->log(log4cpp::Priority::DEBUG,
-			     string("\t")+s+" became "+newPath);
+		m_log_dev->debugStream()
+                    << "After input sandbox manipulation, "
+                    << s << " became " << newPath
+                    << log4cpp::CategoryStream::ENDLINE;        
+
                 // Builds a new value
                 classad::Value newV;
                 newV.SetStringValue( newPath );
@@ -598,8 +605,10 @@ iceCommandSubmit::pathName::pathName( const string& p ) :
     boost::regex abs_match( "(file://)?/([^/]+/)*([^/]+)" );
     boost::smatch what;
 
-    m_log_dev->log(log4cpp::Priority::INFO,
-		 string("iceCommandSubmit::pathName::CTOR() - Trying to unparse ")+ p );
+    m_log_dev->infoStream()
+        << "iceCommandSubmit::pathName::CTOR() - Trying to unparse " << p
+        << log4cpp::CategoryStream::ENDLINE;        
+
     if ( boost::regex_match( p, what, uri_match ) ) {
         // is a uri
         m_pathType = uri;
