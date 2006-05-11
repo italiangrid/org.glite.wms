@@ -807,14 +807,15 @@ int JobSubmit::checkInputSandbox ( ) {
 			std::vector<ZipFileAd>::iterator it1 = zippedFiles.begin() ;
 			std::vector<ZipFileAd>::iterator const end1 = zippedFiles.end();
 			switch (getJobType()) {
-				case (WMS_JOB) : {
+				case WMS_JOB:
+				case WMS_PARAMETRIC:
+				{
 					for ( ; it1 != end1; it1++){
 						jobAd->addAttribute(JDLPrivate::ZIPPED_ISB, it1->filename);
 					}
 					break;
 				}
-				case WMS_DAG:
-				case WMS_PARAMETRIC:  {
+				case WMS_DAG:{
 					vector<string> gz_files;
 					for ( ; it1 != end1; it1++){
 						gz_files.push_back(it1->filename);
@@ -960,7 +961,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 		jdlString = new string(dagAd->toString()) ;
 
 	} else {
-		// ClassAd
+		// ClassAd: can be anything (reading Type)
 		adObj = new Ad();
 		if (jdlFile==NULL){
 			throw WmsClientException(__FILE__,__LINE__,
@@ -1037,6 +1038,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				jdlString = new string(dagAd->toString()) ;
 				if (dagAd->hasWarnings()){ printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 		} else {
+		// JOB  =========================================
 			jobType = WMS_JOB ;
 			jobAd = new JobAd(*(adObj->ad()));
 			AdUtils::setDefaultValues(jobAd,wmcConf);
@@ -1051,6 +1053,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 			}
 			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
 				// check JobAd without restoring attributes  (WHY?)
+				jobType = WMS_PARAMETRIC;
 				jobAd->check(false);
 			}else{
 				jobAd->check();
@@ -1097,8 +1100,7 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				}
 			}
 			// PARAMETRIC  ===============================================
-			if (jobAd->hasAttribute(JDL::JOBTYPE,JDL_JOBTYPE_PARAMETRIC)) {
-				jobType = WMS_PARAMETRIC;
+			if (jobType == WMS_PARAMETRIC) {
 				logInfo->print (WMS_DEBUG, "A parametric job is being submitted");
 				if (nodesresOpt) {
 					jobAd->setAttribute(JDL::SUBMIT_TO, *nodesresOpt);
@@ -1107,8 +1109,12 @@ void JobSubmit::checkAd(bool &toBretrieved){
 				if (jobAd->hasAttribute(JDL::INPUTSB)) {
 					// InputSandbox Files Check
 					dagAd = AdConverter::bulk2dag(jobAd);
+					// Print Pre-check Errors
+					if (dagAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 					AdUtils::setDefaultValues(dagAd, wmcConf);
 					dagAd->getSubmissionStrings();
+					// Print Post-check Errors
+					if (dagAd->hasWarnings()){printWarnings(JDL_WARNING_TITLE, dagAd->getWarnings() );}
 				} else {
 					logInfo->print (WMS_DEBUG, "No InputSandbox in the user JDL", "");
 					// NO ISB found, convert ONLY first STEP
