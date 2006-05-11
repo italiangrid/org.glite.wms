@@ -201,10 +201,12 @@ VOMS_proxy_init(
           }
         }
         else {
+          Info("VOMS error: " + v.ErrorMessage());
           return false;
         }
       }
       else {
+        Info("VOMS error: " + v.ErrorMessage());
         return false;
       }
     }
