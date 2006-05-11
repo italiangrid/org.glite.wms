@@ -36,9 +36,9 @@
 #include "iceCommandTransient_ex.h"
 #include "iceConfManager.h"
 
-#include "boost/scoped_ptr.hpp"
-#include "boost/program_options.hpp"
-
+#include <boost/scoped_ptr.hpp>
+#include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace glite::ce::cream_client_api;
@@ -184,6 +184,15 @@ int main(int argc, char*argv[])
       << log4cpp::CategoryStream::ENDLINE;
   try {
     hostdn = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
+    boost::trim_if(hostdn, boost::is_any_of("/"));
+    while( hostdn.find("/", 0) != string::npos ) {
+      boost::replace_first(hostdn, "/", "_");
+    }
+
+    while( hostdn.find("=", 0) != string::npos ) {
+      boost::replace_first(hostdn, "=", "_");
+    }
+
     if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
         log_dev->errorStream() 
             << "Host proxy certificate is expired. Won't start Listener"
