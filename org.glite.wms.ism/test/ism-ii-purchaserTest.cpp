@@ -75,6 +75,24 @@ int main(int argc, char* argv[]) {
         cout << pos->first << endl;
      }
     }
+    ism_mutex_type::scoped_lock ll(get_ism_mutex(se));
+
+    for (ism_type::iterator pos=get_ism(se).begin();
+      pos!= get_ism(se).end(); ++pos) {
+
+      if (options.is_present('s')) {
+      
+        classad::ClassAd  ad_ism_dump;
+        ad_ism_dump.InsertAttr("id", pos->first);
+        ad_ism_dump.InsertAttr("update_time", boost::tuples::get<0>(pos->second));
+        ad_ism_dump.InsertAttr("expiry_time", boost::tuples::get<1>(pos->second));
+        ad_ism_dump.Insert("info", boost::tuples::get<2>(pos->second).get()->Copy());
+        cout << ad_ism_dump;
+     }
+     else {
+        cout << pos->first << endl;
+     }
+    }
   } 
   catch ( LineParsingError &error ) {
     cerr << error << endl;

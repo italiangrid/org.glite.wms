@@ -24,7 +24,8 @@ namespace {
     "  CloseOutputSECheck = IsUndefined(other.OutputSE)"
     "    ||   member(other.OutputSE,GlueCESEBindGroupSEUniqueID);"
     "  AuthorizationCheck = member(other.CertificateSubject, GlueCEAccessControlBaseRule)"
-    "    ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule);"
+    "    ||   member(strcat(\"VO:\",other.VirtualOrganisation), GlueCEAccessControlBaseRule)"
+    "    ||   FQANmember(strcat(\"VOMS:\", other.VOMS_FQAN), GlueCEAccessControlBaseRule);"
     "  requirements = AuthorizationCheck && CloseOutputSECheck;"
     "]"
     );
@@ -36,7 +37,7 @@ namespace {
     "     VO = parent.other.VirtualOrganisation;"
     "     additionalSESAInfo = listAttrRegEx(\"^GlueS[EA].*\","
     "       parent.other.requirements);"
-    "     CloseSEs = retrieveCloseSEsInfo( CEid, VO, additionalSESAInfo );"
+    "     CloseSEs = retrieveCloseSEsInfo( CEid, VO );"
     "  ];"
     "]"
   );
