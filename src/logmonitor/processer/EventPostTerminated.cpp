@@ -116,7 +116,8 @@ void EventPostTerminated::process_event( void )
 			<< "I should resubmit such job... But this is a DAG node..." << endl
 			<< logger::setlevel( logger::warning ) << "Ignoring..." << endl;
 
-	this->ei_data->md_logger->abort_on_error_event( ei_s_jobwrapfail );
+        // Don't log Abort, this condition is now manage by the planner
+	// this->ei_data->md_logger->abort_on_error_event( ei_s_jobwrapfail );
 
 	if( this->ept_event->returnValue == 0 ) {
 	  /*
