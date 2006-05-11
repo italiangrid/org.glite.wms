@@ -461,8 +461,9 @@ fi
 if [ -f "${__prologue}" ]; then
   chmod +x "${__prologue}" 2>/dev/null
   ${__prologue} "${__prologue_arguments}"
-  if [ $? -ne 0 ]; then
-    log_error "User script failed with error $?"
+  prologue_status=$?
+  if [ ${prologue_status} -ne 0 ]; then
+    log_error "prologue failed with error ${prologue_status}"
   fi
 fi
 
