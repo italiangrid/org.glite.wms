@@ -37,8 +37,9 @@ namespace glite {
 		subscriptionUpdater(const std::string& cert);
 
 		virtual ~subscriptionUpdater() {}
-
+		bool isValid( void ) const { return m_valid; }
 		virtual void body( void );
+		
         protected:
 		void renewSubscriptions(std::vector<Subscription>&);
 		void retrieveCEURLs(std::set<std::string>&);

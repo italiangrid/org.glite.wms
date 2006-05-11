@@ -24,8 +24,7 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
 						 // ice-core module; so no need
 						 // to lock the mutex and no need
 						 // to check if the singleton is
-						 // valid or not (valid means
-						 // correctly created)
+						 // NULL or not 
     m_valid(true)
 {
   m_iteration_delay = (int)(m_conf->getSubscriptionUpdateThresholdTime()/2);

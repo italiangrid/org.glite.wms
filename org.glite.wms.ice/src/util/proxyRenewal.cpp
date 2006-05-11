@@ -35,6 +35,11 @@ proxyRenewal::proxyRenewal() :
         creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
+	log_dev->fatalStream()
+	      << "proxyRenewal::CTOR() - Error creating a CreamProxy instance: "
+	      << ex.what() <<". Stop!"
+	      << log4cpp::CategoryStream::ENDLINE;
+	exit(1);      
     } 
 }
 

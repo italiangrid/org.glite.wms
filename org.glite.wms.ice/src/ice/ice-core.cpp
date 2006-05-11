@@ -135,15 +135,18 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
          * The subscriptionManager initialization also setups
          * authentication.
          */
-        boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
-        util::subscriptionManager::getInstance();
+	{ 
+          boost::recursive_mutex::scoped_lock M( util::subscriptionManager::mutex );
+          util::subscriptionManager::getInstance();
+	}
         if( !util::subscriptionManager::getInstance()->isValid() ) {
             m_log_dev->errorStream() 
                 << "Ice::CTOR() - "
-                << "Fatal error creating the subscriptionManager instance. Will not start listener."
+                << "Fatal error creating the subscriptionManager instance. Stop!"//Will not start listener."
                 << log4cpp::CategoryStream::ENDLINE;
-            confMgr->setStartListener( false );
-	    return; // no reason to continue with subscriptionCache initialization
+            //confMgr->setStartListener( false );
+	    //return; // no reason to continue with subscriptionCache initialization
+	    exit(1);
         }
         /**
          * subscriptionCache is used to retrieve the list of cemon we're
@@ -157,9 +160,10 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
                 m_log_dev->errorStream() 
                     << "Ice::CTOR() - "
                     << "Fatal error creating the subscriptionCache instance. "
-                    << "Will not start listener."
+                    << "Stop!."//Will not start listener."
                     << log4cpp::CategoryStream::ENDLINE;
-                confMgr->setStartListener( false );
+                //confMgr->setStartListener( false );
+		exit(1);
             }
         }
     }
@@ -194,6 +198,7 @@ void Ice::startListener( int listenPort )
         confMgr->setStartListener( false );
         return;
     }
+    int bind_retry=0;
     while( !listener->bind() ) {
         m_log_dev->errorStream()
             << "Ice::startListener() - Bind error: "
@@ -202,6 +207,13 @@ void Ice::startListener( int listenPort )
             << listener->getErrorCode()
             << "Retrying in 5 seconds..."
             << log4cpp::CategoryStream::ENDLINE;
+	bind_retry++;
+	if( bind_retry > 1000 ) {
+	  m_log_dev->fatalStream()
+	       << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
+	       << log4cpp::CategoryStream::ENDLINE;
+	  exit(1);
+	}  
         sleep(5);
     }
     
@@ -218,6 +230,14 @@ void Ice::startListener( int listenPort )
     // that keeps the listener URL (of this ICE) by calling subscriptionManager::getInstance()->setConsumerURLName(...)
     if( tmp_start_sub_updater ) {
         util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( confMgr->getHostProxyFile());      
+	if( !subs_updater->isValid() )
+	{
+	  m_log_dev->fatalStream()
+	       << "Ice::startListener() - subscriptionUpdater object creation failed. Stop!"
+	       << log4cpp::CategoryStream::ENDLINE;
+	  exit(1);
+	             
+	}
         m_updater_thread.start( subs_updater );
     }
 }
@@ -225,8 +245,16 @@ void Ice::startListener( int listenPort )
 //____________________________________________________________________________
 void Ice::startPoller( int poller_delay )
 {
-    util::eventStatusPoller* poller = new util::eventStatusPoller( this, poller_delay );
+  util::eventStatusPoller* poller;
+  try {
+    poller = new util::eventStatusPoller( this, poller_delay );
     m_poller_thread.start( poller );
+  } catch(util::eventStatusPoller_ex& ex) {
+    m_log_dev->fatalStream()
+	       << "Ice::startPoller() - eventStatusPoller object creation failed. Stop!"
+	       << log4cpp::CategoryStream::ENDLINE;
+    exit(1);
+  }
 }
 
 //----------------------------------------------------------------------------

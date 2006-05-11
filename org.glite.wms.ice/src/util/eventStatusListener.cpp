@@ -460,7 +460,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         if( it->getStatus() == api::job_statuses::PURGED ) 
             return;
 
-        log_dev->debugStream() 
+        log_dev->infoStream() 
             << "eventStatusListener::handleEvent() - "
             << "Checking job [" << it->getCreamJobID()
             << "] with status [" << api::job_statuses::job_status_str[ it->getStatus() ] << "]"

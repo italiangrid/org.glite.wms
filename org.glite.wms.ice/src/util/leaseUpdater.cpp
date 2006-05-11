@@ -54,11 +54,14 @@ leaseUpdater::leaseUpdater( ) :
         m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
+	m_log_dev->fatalStream()
+	      << "leaseUpdater::CTOR() - Error creating a CreamProxy instance: "
+	      << ex.what() <<". Stop!"
+	      << log4cpp::CategoryStream::ENDLINE;
+	exit(1);      
     } 
     double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/2.0;
     m_delay = (time_t)(_delta_time_for_lease * 60);
-    //cout << "********* m_delta = "<<m_delay<<endl;
-    //exit(0);
 }
 
 leaseUpdater::~leaseUpdater( )
