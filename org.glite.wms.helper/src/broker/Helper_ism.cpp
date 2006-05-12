@@ -241,7 +241,7 @@ try {
     = configuration::Configuration::instance();
   assert(config);
 
-
+#ifndef GLITE_WMS_DONT_HAVE_GPBOX
   std::string PBOX_host_name(config->wm()->pbox_host_name());
   if (!PBOX_host_name.empty()) {
     if (!gpbox::interact(
@@ -257,6 +257,7 @@ try {
     Info("Empty CE list after gpbox screening");
     throw NoCompatibleCEs();
   }
+#endif
 
   matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  
