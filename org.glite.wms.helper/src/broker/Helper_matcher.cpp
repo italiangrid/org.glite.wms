@@ -209,7 +209,7 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
           PBOX_host_name,
           *suitableCEs
         ))
-          Info("Error during gpbox interaction");
+          Debug("Error during gpbox interaction");
       }
     }
 #endif

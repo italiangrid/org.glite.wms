@@ -251,7 +251,7 @@ try {
       PBOX_host_name,
       *suitable_CEs
     ))
-      Info("Error during gpbox interaction");
+      Debug("Error during gpbox interaction");
   }
 
   if ( suitable_CEs->empty() ) {
