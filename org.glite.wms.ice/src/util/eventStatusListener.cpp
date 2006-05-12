@@ -145,21 +145,8 @@ namespace { // anonymous namespace
 
     };
 
-
-//______________________________________________________________________________
-iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
-  : CEConsumer(i),
-    iceThread( "event status poller" ),
-    status(api::job_statuses::UNKNOWN),
-    proxyfile(hostcert),
-    tcpport(i),
-    conf(iceUtil::iceConfManager::getInstance()),
-    log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    _lb_logger( iceLBLogger::instance() ),
-    _isOK( true ),
-    cache( jobCache::getInstance() )
+void iceUtil::eventStatusListener::createObject( void )
 {
-
   try {
       myname = iceUtil::getHostName( );
   } catch( runtime_error& ex ) {
@@ -182,7 +169,7 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
 
   /**
    * Here we do not need to check if the creation of subscriptionManager
-   * produced errors, because the main ice-core module did that as
+   * produces an error, because the main ice-core module did that as
    * preliminary init operation. We also do not need to lock the
    * ::getInstance() call, because the instance of singleton has been
    * already created.
@@ -190,6 +177,41 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
   subManager = subscriptionManager::getInstance();
 
   init();
+}
+
+//______________________________________________________________________________
+iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
+  : CEConsumer(i),
+    iceThread( "event status poller" ),
+    status(api::job_statuses::UNKNOWN),
+    proxyfile(hostcert),
+    tcpport(i),
+    conf(iceUtil::iceConfManager::getInstance()),
+    log_dev( api::util::creamApiLogger::instance()->getLogger() ),
+    _lb_logger( iceLBLogger::instance() ),
+    _isOK( true ),
+    cache( jobCache::getInstance() )
+{
+  createObject();
+}
+
+//______________________________________________________________________________
+iceUtil::eventStatusListener::eventStatusListener(const int& i,
+						  const string& hostcert,
+						  const string& cert,
+						  const string& key)
+  : CEConsumer(i, cert.c_str(), key.c_str()),
+    iceThread( "event status poller" ),
+    status(api::job_statuses::UNKNOWN),
+    proxyfile(hostcert),
+    tcpport(i),
+    conf(iceUtil::iceConfManager::getInstance()),
+    log_dev( api::util::creamApiLogger::instance()->getLogger() ),
+    _lb_logger( iceLBLogger::instance() ),
+    _isOK( true ),
+    cache( jobCache::getInstance() )
+{
+  createObject();
 }
 
 //______________________________________________________________________________

@@ -72,6 +72,7 @@ iceConfManager::iceConfManager( )
     lease_delta_time  = config->ice()->lease_delta_time();
     lease_threshold_time = config->ice()->lease_threshold_time();
     poller_purges_jobs= config->ice()->poller_purges_jobs();
+    listener_enable_authn = config->ice()->listener_enable_authn();
 }
 
 iceConfManager::~iceConfManager( )

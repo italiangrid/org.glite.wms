@@ -76,11 +76,18 @@ namespace glite {
               CEConsumer(9999),
               pinger(0)
               {}
+	  void createObject();
 
 	public:
 	  static boost::recursive_mutex mutexJobStatusUpdate;
 
-	  eventStatusListener(const int& i, const std::string& hostcert) ;
+	  eventStatusListener(const int& i, const std::string& hostcert);
+	  
+	  eventStatusListener(const int& i, 
+	     		      const std::string& hostcert,
+			      const std::string& cert,
+			      const std::string& key);
+			      
 	  virtual ~eventStatusListener() {}
 
 	  void acceptJobStatus(void);

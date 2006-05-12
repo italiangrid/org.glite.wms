@@ -45,15 +45,18 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   }
   struct hostent *H=gethostbyname(name);
   if(!H) {
-      m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
-                               << strerror(h_errno)
-                               << log4cpp::CategoryStream::ENDLINE;
+    m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
+			     << strerror(h_errno)
+			     << log4cpp::CategoryStream::ENDLINE;
     m_valid = false;
     return;
   }
   {
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    m_myname = boost::str( boost::format("http://%1%:%2%") % H->h_name % m_conf->getListenerPort() );
+    if( m_conf->getListenerEnableAuthN() )
+      m_myname = boost::str( boost::format("https://%1%:%2%") % H->h_name % m_conf->getListenerPort() );
+    else
+      m_myname = boost::str( boost::format("http://%1%:%2%") % H->h_name % m_conf->getListenerPort() );
   }
   
   m_subMgr->setConsumerURLName( m_myname );

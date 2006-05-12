@@ -26,12 +26,12 @@ namespace glite {
 	    WM_Input_FileList, ICE_Input_FileList, CachePersistFile, LogFile,
 	    creamurlprefix, creamurlpostfix, curldelegprefix,
 	    curldelegpostfix, cemonurlprefix, cemonurlpostfix,
-	    icetopic, dguser;
+	    icetopic, dguser ;
 	  int ListenerPort, pollerdelay, subduration, LogLevel, subUpdThresholdTime,
 	      poller_status_threshold_time, max_jobcache_operation_before_dump,
 	      notification_frequency, lease_delta_time, lease_threshold_time;
 	  bool startpoller, poller_purges_jobs, startlistener, startsubupder,
-	       log_on_console, log_on_file;
+	    log_on_console, log_on_file, listener_enable_authn;
 	  
 
 
@@ -72,6 +72,7 @@ namespace glite {
 	  bool        getLogOnConsole( void ) const { return log_on_console; }
 	  bool        getLogOnFile( void ) const { return log_on_file; }
 	  int         getMaxJobCacheOperationBeforeDump( void ) const { return max_jobcache_operation_before_dump; }
+	  bool        getListenerEnableAuthN( void ) const { return listener_enable_authn; }
 	  int         getNotificationFrequency( void ) const { return notification_frequency; }
 	  int         getLeaseDeltaTime( void ) const { return lease_delta_time; }
 	  int         getLeaseThresholdTime( void ) const { return lease_threshold_time; }
