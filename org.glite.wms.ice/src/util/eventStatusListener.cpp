@@ -89,11 +89,6 @@ namespace { // anonymous namespace
         api::job_statuses::job_status  getStatus( void ) const { return job_status; };
 
         /**
-         * Returns the time of the status for this notification
-         */
-        // time_t getTstamp( void ) const { return tstamp; };
-
-        /**
          * Returns true iff the notification has an exit_code attribute
          */
         bool hasExitCode( void ) const { return has_exit_code; };
@@ -103,10 +98,19 @@ namespace { // anonymous namespace
          */ 
         int getExitCode( void ) const { return exit_code; };
 
+        /**
+         * Apply this status change notification to job j. This means
+         * that the status of j (and possibly its exit code) is changed
+         * according to this notification.
+         *
+         * @param j the job on which this status change notification
+         * should be applied.
+         */
+        void apply_to_job( iceUtil::CreamJob& j ) const;
+
     protected:
         string cream_job_id;
         api::job_statuses::job_status job_status;
-        // time_t tstamp;
         bool has_exit_code;
         int exit_code;
     };
@@ -114,17 +118,17 @@ namespace { // anonymous namespace
     //
     // StatusNotification implementation
     //
-    StatusNotification::StatusNotification( const string& _classad ) throw( iceUtil::ClassadSyntax_ex& ) :
+    StatusNotification::StatusNotification( const string& ad_string ) throw( iceUtil::ClassadSyntax_ex& ) :
         has_exit_code( false ),
         exit_code( 0 ) // default
     {
         api::util::creamApiLogger::instance()->getLogger()->infoStream()
             << "Parsing status change notification "
-            << _classad
+            << ad_string
             << log4cpp::CategoryStream::ENDLINE;
 
         classad::ClassAdParser parser;
-        classad::ClassAd *ad = parser.ParseClassAd( _classad );
+        classad::ClassAd *ad = parser.ParseClassAd( ad_string );
 
         if (!ad)
             throw iceUtil::ClassadSyntax_ex("The classad describing the job status has syntax error");
@@ -145,26 +149,35 @@ namespace { // anonymous namespace
 
     };
 
+    void StatusNotification::apply_to_job( iceUtil::CreamJob& j ) const
+    {
+        j.setStatus( getStatus() );
+        if ( hasExitCode() ) {
+            j.set_exit_code( getExitCode() );
+        }
+    }
+
+
 void iceUtil::eventStatusListener::createObject( void )
 {
   try {
       myname = iceUtil::getHostName( );
   } catch( runtime_error& ex ) {
-      _isOK = false;
+      m_isOK = false;
       return;
   }
 
 
-  log_dev->info( "eventStatusListener::CTOR() - Listener created!" );
+  m_log_dev->info( "eventStatusListener::CTOR() - Listener created!" );
   try {
-    pinger.reset( new CEPing(proxyfile, "/") );
+      pinger.reset( new CEPing(proxyfile, "/") );
   } catch(exception& ex) {
-    log_dev->fatalStream() << "eventStatusListener::CTOR() - "
-			   << "Fatal Error creating a pinger object:"
-                           << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE;
-    _isOK = false;
-    return;
+      m_log_dev->fatalStream() 
+          << "eventStatusListener::CTOR() - "
+          << "Fatal Error creating a pinger object:" << ex.what()
+          << log4cpp::CategoryStream::ENDLINE;
+      m_isOK = false;
+      return;
   }
 
   /**
@@ -187,9 +200,9 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hos
     proxyfile(hostcert),
     tcpport(i),
     conf(iceUtil::iceConfManager::getInstance()),
-    log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    _lb_logger( iceLBLogger::instance() ),
-    _isOK( true ),
+    m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
+    m_lb_logger( iceLBLogger::instance() ),
+    m_isOK( true ),
     cache( jobCache::getInstance() )
 {
   createObject();
@@ -206,9 +219,9 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,
     proxyfile(hostcert),
     tcpport(i),
     conf(iceUtil::iceConfManager::getInstance()),
-    log_dev( api::util::creamApiLogger::instance()->getLogger() ),
-    _lb_logger( iceLBLogger::instance() ),
-    _isOK( true ),
+    m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
+    m_lb_logger( iceLBLogger::instance() ),
+    m_isOK( true ),
     cache( jobCache::getInstance() )
 {
   createObject();
@@ -218,9 +231,10 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,
 void iceUtil::eventStatusListener::body( void )
 {
     while( !isStopped() ) {
-        log_dev->infoStream() << "eventStatusListener::body() - "
-                              << "Waiting for job status notification"
-                              << log4cpp::CategoryStream::ENDLINE;
+        m_log_dev->infoStream() 
+            << "eventStatusListener::body() - "
+            << "Waiting for job status notification"
+            << log4cpp::CategoryStream::ENDLINE;
         acceptJobStatus();
         sleep(1);
     }
@@ -234,13 +248,13 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    */
     if(!this->accept() && !isStopped()) {
         if(isStopped()) {
-            log_dev->infoStream()
+            m_log_dev->infoStream()
                 << "eventStatusListener::acceptJobStatus() - "
                 << "eventStatusListener is ending"
                 << log4cpp::CategoryStream::ENDLINE;
             return;
         } else {
-            log_dev->errorStream()
+            m_log_dev->errorStream()
                 << "eventStatusListener::acceptJobStatus()"
                 << " - CEConsumer::Accept() returned false."
                 << log4cpp::CategoryStream::ENDLINE;
@@ -248,7 +262,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
         }
     }
 
-  log_dev->infoStream()
+    m_log_dev->infoStream()
       << "eventStatusListener::acceptJobStatus() - "
       << "Connection accepted from ["
       << this->getClientIP() << "]"
@@ -259,7 +273,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * and deserializes the data structures
    */
   if( !this->serve() ) {
-    log_dev->errorStream() 
+      m_log_dev->errorStream() 
         << "eventStatusListener::acceptJobStatus() - "
         << "ErrorCode=["
         << this->getErrorCode() << "]"
@@ -274,7 +288,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    * containing a non-null topic)
    */
   if(!this->getEventTopic()) {
-    log_dev->warnStream() 
+      m_log_dev->warnStream() 
         << "eventStatusListener::acceptJobStatus() - "
         << "NULL Topic received. Ignoring this notification...." 
         << log4cpp::CategoryStream::ENDLINE;
@@ -287,13 +301,13 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
   {
     boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     if(this->getEventTopic()->Name != conf->getICETopic()) {
-      log_dev->warnStream() 
-          << "eventStatusListener::acceptJobStatus() - "
-          << "Received a notification with TopicName="
-          << this->getEventTopic()->Name
-          << " that differs from the ICE's topic "
-          << "official name. Ignoring this notification."
-          << log4cpp::CategoryStream::ENDLINE;
+        m_log_dev->warnStream() 
+            << "eventStatusListener::acceptJobStatus() - "
+            << "Received a notification with TopicName="
+            << this->getEventTopic()->Name
+            << " that differs from the ICE's topic "
+            << "official name. Ignoring this notification."
+            << log4cpp::CategoryStream::ENDLINE;
       return;
     }
   }
@@ -338,7 +352,7 @@ void iceUtil::eventStatusListener::init(void)
           for(jobCache::iterator it=cache->begin(); it != cache->end(); it++) {
               ceurl = it->getCreamURL();
               cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
-              log_dev->infoStream()
+              m_log_dev->infoStream()
                   << "eventStatusListener::init() - "
                   << "For current CREAM, cemonUrlCache returned CEMon URL ["
                   << cemonURL<<"]"
@@ -347,7 +361,7 @@ void iceUtil::eventStatusListener::init(void)
               try {
                   api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
                   api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
-                  log_dev->infoStream() 
+                  m_log_dev->infoStream() 
                       << "eventStatusListener::init() - "
                       << "For current CREAM, query to CREAM service "
                       << "returned CEMon URL ["
@@ -362,7 +376,7 @@ void iceUtil::eventStatusListener::init(void)
 				     conf->getCEMonUrlPostfix()
 				     );
 
-		log_dev->errorStream() 
+		m_log_dev->errorStream() 
 		  << "eventStatusListener::init() - Error retrieving"
 		  << " CEMon's URL from CREAM's URL: "
 		  << ex.what()
@@ -383,7 +397,7 @@ void iceUtil::eventStatusListener::init(void)
    * thanks to the set's property) we've to check for subscription
    */
   for( set<string>::const_iterator it = ceurls.begin(); it!=ceurls.end(); it++) {
-      log_dev->infoStream() 
+      m_log_dev->infoStream() 
           << "eventStatusListener::init() - Checking subscriptions to ["
           << *it << "]" 
           << log4cpp::CategoryStream::ENDLINE;
@@ -391,13 +405,13 @@ void iceUtil::eventStatusListener::init(void)
       // Must lock the subscription manager due to its singleton nature
       boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
       if( !subManager->subscribedTo(*it) ) {
-          log_dev->infoStream() 
+          m_log_dev->infoStream() 
               << "eventStatusListener::init() - Not subscribed to ["
               << *it << "]. Subscribing to it..."
               << log4cpp::CategoryStream::ENDLINE;
 
           if( !subManager->subscribe(*it) ) {
-              log_dev->errorStream() 
+              m_log_dev->errorStream() 
                   << "eventStatusListener::init() - Subscription to ["<< *it 
                   << "] failed. Will not receives status notifications from it."
                   << log4cpp::CategoryStream::ENDLINE;
@@ -406,7 +420,7 @@ void iceUtil::eventStatusListener::init(void)
               subscriptionCache::getInstance()->insert(*it);
           }
       } else {
-          log_dev->infoStream() 
+          m_log_dev->infoStream() 
               << "eventStatusListener::init() - Already subscribed to ["
               << *it << "]"
               << log4cpp::CategoryStream::ENDLINE;
@@ -427,7 +441,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         try {
             notifications.push_back( StatusNotification( *it ) );
         } catch( iceUtil::ClassadSyntax_ex ex ) {
-            log_dev->errorStream()
+            m_log_dev->errorStream()
                 << "eventStatusListenre::handleEvent() - "
                 << "received a notification "
                 << *it << " which could not be understood; error is: "
@@ -436,9 +450,6 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
                 << log4cpp::CategoryStream::ENDLINE;
         }
     }
-    
-//    if ( notifications.empty() )
-//        return;
 
     if( notifications.begin()->getStatus() == api::job_statuses::PURGED ) {
 	return;
@@ -453,7 +464,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
 
     // No job found in cache
     if ( jc_it == cache->end() ) {
-        log_dev->warnStream()
+        m_log_dev->warnStream()
             << "eventStatusListener::handleEvent() - "
             << "creamjobid ["
             << notifications.begin()->getCreamJobID()
@@ -482,7 +493,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
         if( it->getStatus() == api::job_statuses::PURGED ) 
             return;
 
-        log_dev->debugStream()  
+        m_log_dev->debugStream() 
             << "eventStatusListener::handleEvent() - "
             << "Checking job [" << it->getCreamJobID()
             << "] with status [" << api::job_statuses::job_status_str[ it->getStatus() ] << "]"
@@ -491,16 +502,17 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
             << log4cpp::CategoryStream::ENDLINE;
         
         if ( jc_it->get_num_logged_status_changes() < count ) {
-            jc_it->setStatus( it->getStatus() );
+            it->apply_to_job( *jc_it );
+
+            //jc_it->setStatus( it->getStatus() );
             jc_it->set_num_logged_status_changes( count );
-	    
-	    
-	    
-            _lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
+	    	    	    
+            m_lb_logger->logEvent( iceLBEventFactory::mkEvent( *jc_it ) );
             // The job gets stored in the jobcache anyway by the logEvent method...
         } else {
-            log_dev->debugStream() 
-                << "eventStatusListener::handleEvent() - Skipping current notification because contains old states"
+            m_log_dev->debugStream()
+                << "eventStatusListener::handleEvent() - "
+                << "Skipping current notification because contains old states"
                 << log4cpp::CategoryStream::ENDLINE;
         }
     }

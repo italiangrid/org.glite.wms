@@ -63,6 +63,7 @@ namespace glite {
           time_t end_lease; //! The time the lease for this job ends
 	  time_t proxyCertTimestamp; //! The time of last modification of the user proxy certificate (needed by proxy renewal)
 	  int    statusPollRetryCount; //! number of time we tried to get the status of the job
+          int m_exit_code; // the job exit code
 
 	public:
 
@@ -90,6 +91,7 @@ namespace glite {
               last_seen = C.last_seen;
               end_lease = C.end_lease;
 	      proxyCertTimestamp = C.proxyCertTimestamp;
+              m_exit_code = C.m_exit_code;
 	      // is the following actually needed ? // FIXME
 	      //statusPollRetryCount = C.statusPollRetryCount;
           }
@@ -111,10 +113,14 @@ namespace glite {
           void setLastSeen( const time_t& l ) { last_seen = l; }
 	  //! Sets the user proxy cert file last modification time
 	  void setProxyCertMTime( const time_t& l ) { proxyCertTimestamp = l; }
+          //! Sets the job exit code
+          void set_exit_code( int c ) { m_exit_code = c; }
           //! Sets the sequence code for the job sent to the WN
           void set_wn_sequence_code( const std::string& wn_seq ) { wn_sequence_code = wn_seq; };
 	  //! Gets the unique grid job identifier
           std::string getGridJobID( void ) const { return grid_jobid; }
+          //! Gets the job exit code
+          int get_exit_code( void ) const { return m_exit_code; }
 	  //! Gets the unique cream job identifier
           std::string getJobID( void ) const { return cream_jobid; }
 	  //! Gets the entire JDL of the job

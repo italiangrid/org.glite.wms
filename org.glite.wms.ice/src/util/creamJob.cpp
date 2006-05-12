@@ -67,6 +67,7 @@ string iceUtil::CreamJob::serialize( void ) const
     classad::ClassAd ad;
     ad.InsertAttr( "cream_jobid", cream_jobid );
     ad.InsertAttr( "status", status );
+    ad.InsertAttr( "exit_code", m_exit_code );
     ad.InsertAttr( "delegation_id", delegation_id );
     ad.InsertAttr( "wn_sequence_code", wn_sequence_code );
     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
@@ -109,6 +110,7 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
   
     if ( ! ad->EvaluateAttrString( "cream_jobid", cream_jobid ) ||
          ! ad->EvaluateAttrNumber( "status", st_number ) ||
+         ! ad->EvaluateAttrNumber( "exit_code", m_exit_code ) || 
          ! ad->EvaluateAttrClassAd( "jdl", jdlAd ) ||
          ! ad->EvaluateAttrNumber( "num_logged_status_changes", m_num_logged_status_changes ) ||
          ! ad->EvaluateAttrString( "last_seen", lseen ) ||
@@ -117,7 +119,7 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
          ! ad->EvaluateAttrString( "delegation_id", delegation_id ) ||
          ! ad->EvaluateAttrString( "wn_sequence_code", wn_sequence_code ) ) {
 
-        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code" );
+        throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code" );
 
     }
     status = (api::job_statuses::job_status)st_number;

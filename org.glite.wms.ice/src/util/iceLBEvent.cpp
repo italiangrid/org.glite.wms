@@ -325,8 +325,10 @@ int job_done_ok_event::execute( iceLBContext* ctx )
 // job done failed event
 //
 //////////////////////////////////////////////////////////////////////////////
-job_done_failed_event::job_done_failed_event( const CreamJob& j ) :
-    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Failed Event" )
+job_done_failed_event::job_done_failed_event( const CreamJob& j, const std::string& reason, int exit_code ) :
+    iceLBEvent( j, EDG_WLL_SOURCE_LOG_MONITOR, "Job Done Failed Event" ),
+    m_reason( reason ),
+    m_exit_code( exit_code )
 {
 
 }
@@ -334,7 +336,7 @@ job_done_failed_event::job_done_failed_event( const CreamJob& j ) :
 int job_done_failed_event::execute( iceLBContext* ctx )
 {
     return edg_wll_LogDoneFAILED( *(ctx->el_context), 
-                                  ctx->el_s_unavailable, 0 ); // FIXME
+                                  m_reason.c_str(), m_exit_code );
 }
 
 

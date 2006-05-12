@@ -246,8 +246,11 @@ namespace glite {
 
                 class job_done_failed_event : public iceLBEvent {
                 public:
-                    job_done_failed_event( const CreamJob& j );
+                    job_done_failed_event( const CreamJob& j, const std::string& reason, int exit_code );
                     int execute( iceLBContext* ctx );
+                protected:
+                    std::string m_reason;
+                    int m_exit_code;
                 };
 
 

@@ -61,9 +61,9 @@ namespace glite {
 	  int tcpport;
 	  std::string myname;
 	  glite::wms::ice::util::iceConfManager* conf;
-          log4cpp::Category *log_dev;
-          iceLBLogger *_lb_logger;
-	  bool _isOK;
+          log4cpp::Category *m_log_dev;
+          iceLBLogger *m_lb_logger;
+	  bool m_isOK;
           jobCache* cache;
 	  subscriptionManager* subManager;
 
@@ -92,7 +92,7 @@ namespace glite {
 
 	  void acceptJobStatus(void);
 	  virtual void body( void );
-	  bool isOK() const { return _isOK; }
+	  bool isOK() const { return m_isOK; }
 	};
 
       }
