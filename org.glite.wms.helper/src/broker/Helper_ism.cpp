@@ -234,16 +234,16 @@ try {
     throw NoCompatibleCEs();
   }
 
-  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
-  jobid::JobId dg_jobid(dg_jobid_str);
-
   configuration::Configuration const* const config
     = configuration::Configuration::instance();
   assert(config);
 
-
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
+  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
+  jobid::JobId dg_jobid(dg_jobid_str);
+
   std::string PBOX_host_name(config->wm()->pbox_host_name());
+
   if (!PBOX_host_name.empty()) {
     if (!gpbox::interact(
       *config,
@@ -262,8 +262,12 @@ try {
 
   matchmaking::match_const_iterator ce_it = rb.selectBestCE(*suitable_CEs);
  
+  std::string const ce_id(
+    utils::evaluate_attribute(*ce_it->second.getAd(),"GlueCEUniqueID")
+  );
+
   // update the brokerinfo
-  BI->retrieveCloseSEsInfo(ce_it->first); // CE id
+  BI->retrieveCloseSEsInfo(ce_id); // CE id
   BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
 
   // Add the .Brokerinfo files to the InputSandbox
@@ -311,7 +315,7 @@ try {
 
   requestad::set_input_sandbox(*result, ISB);
 
-  requestad::set_ce_id(*result, ce_it->first);
+  requestad::set_ce_id(*result, ce_id);
   matchmaking::match_info const& ce_info = ce_it->second;
   classad::ClassAd const* ce_ad = ce_info.getAd();
 
@@ -355,7 +359,7 @@ try {
 
   } catch (utils::InvalidValue const& e) {
 
-    edglog(error) << e.what() << " for CE id " << ce_it->first << std::endl;
+    edglog(error) << e.what() << " for CE id " << ce_id << std::endl;
 
     throw helper::HelperError("BrokerHelper");
 

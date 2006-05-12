@@ -241,8 +241,10 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
         ceinfo->InsertAttr("rank", it->second.getRank());
         
         if (include_brokerinfo) {
-           
-           BI->retrieveCloseSEsInfo(it->first);
+           std::string const ce_id(
+             utils::evaluate_attribute(*it->second.getAd(),"GlueCEUniqueID")
+           );
+           BI->retrieveCloseSEsInfo(ce_id);
            BI->retrieveCloseSAsInfo(vo); // Retrieve only GlueSAAvailableVOSpace
            ceinfo->Insert("brokerinfo", BI->asClassAd());
         }
