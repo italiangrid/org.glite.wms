@@ -185,7 +185,26 @@ void Ice::startListener( int listenPort )
         << "Ice::startListener() - Creating a CEMon listener object..."
         << log4cpp::CategoryStream::ENDLINE;
 
-    util::eventStatusListener* listener = new util::eventStatusListener(listenPort, confMgr->getHostProxyFile());
+    util::eventStatusListener* listener;
+    if( confMgr->getListenerEnableAuthN() ) {
+      const char *host = ::getenv("GLITE_HOST_CERT");
+      const char *key  = ::getenv("GLITE_HOST_KEY");
+      if( (!host) || (!key) ) {
+	m_log_dev->fatalStream()
+	  << "Ice::startListener() - cannot access to GLITE_HOST_CERT and/or "
+	  << "GLITE_HOST_KEY environmental variables. Cannot sstart Listener "
+	  << "with authentication as requested. Stop."
+	  << log4cpp::CategoryStream::ENDLINE;
+	exit(1);
+      }
+      listener = new util::eventStatusListener(listenPort, 
+					       confMgr->getHostProxyFile(), 
+					       host, 
+					       key);
+    }
+    else {
+      listener = new util::eventStatusListener(listenPort, confMgr->getHostProxyFile());
+    }
     
     if( !listener->isOK() ) {
         

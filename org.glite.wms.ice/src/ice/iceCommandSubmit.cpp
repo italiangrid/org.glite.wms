@@ -78,7 +78,11 @@ iceCommandSubmit::iceCommandSubmit( const string& request )
     try {
         boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
         m_myname = util::getHostName();
-        m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );        
+	if( m_confMgr->getListenerEnableAuthN() ) {
+	  m_myname_url = boost::str( boost::format("https://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );        
+	} else {
+	  m_myname_url = boost::str( boost::format("http://%1%:%2%") % m_myname % m_confMgr->getListenerPort() );   
+	}
     } catch( runtime_error& ex ) {
         m_log_dev->fatalStream() 
             << "iceCommandSubmit::CTOR() - "
