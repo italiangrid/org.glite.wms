@@ -192,7 +192,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
     int number_of_results = -1;
     input_ad.EvaluateAttrInt("number_of_results", number_of_results);
 
-#ifndef GLITE_WMS_DONT_HAVE_GPBOX
     std::string x509_user_proxy_file_name(requestad::get_x509_user_proxy(input_ad)); 
     if (!suitableCEs->empty()) { 
       configuration::Configuration const* const config(
@@ -212,7 +211,6 @@ f_resolve_do_match(classad::ClassAd const& input_ad)
           Info("Error during gpbox interaction");
       }
     }
-#endif
 
     if (!suitableCEs->empty() ) {
       matchmaking::match_vector_t suitableCEs_vector(

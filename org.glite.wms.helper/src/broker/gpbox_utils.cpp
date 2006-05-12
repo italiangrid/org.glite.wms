@@ -159,7 +159,7 @@ load_chain(const char *certfile)
     }
   }
   if (!sk_X509_num(stack)) {
-    Info("no certificates in file");
+    Debug("no certificates in file");
     sk_X509_free(stack);
     sk_X509_INFO_free(sk);
 
@@ -201,12 +201,12 @@ VOMS_proxy_init(
           }
         }
         else {
-          Info("VOMS error: " + v.ErrorMessage());
+          Debug("VOMS error: " + v.ErrorMessage());
           return false;
         }
       }
       else {
-        Info("VOMS error: " + v.ErrorMessage());
+        Debug("VOMS error: " + v.ErrorMessage());
         return false;
       }
     }
@@ -259,18 +259,18 @@ get_tag(matchmaking::match_info const& info)
   }
 }
 
-std::string
-get_CE_unique_id(matchmaking::match_info const& info)
-{
-  classad::ClassAd const* ad = info.getAd();
-  classad::Value value;
-
-  ad->EvaluateExpr("GlueCEUniqueID", value);
-  std::string result;
-  value.IsStringValue(result);
-
-  return result;
-}
+//std::string
+//get_CE_unique_id(matchmaking::match_info const& info)
+//{
+//  classad::ClassAd const* ad = info.getAd();
+//  classad::Value value;
+//
+//  ad->EvaluateExpr("GlueCEUniqueID", value);
+//  std::string result;
+//  value.IsStringValue(result);
+//
+//  return result;
+//}
 
 bool
 filter_gpbox_authorizations(
@@ -325,7 +325,6 @@ filter_gpbox_authorizations(
       static std::string const null_string;
 
       if( PEP_request.Send(null_string, 0, 0, 0, evaluation_of_results) ) {
-        Info("filter_gbox_authorizations: PEP Send returned true");
         for (EvalResults::iterator iter = evaluation_of_results.begin();
           iter != evaluation_of_results.end();
           ++iter)
@@ -339,7 +338,7 @@ filter_gpbox_authorizations(
           Info(answer_id);
 
           // NOTE: borderline cases are filtered off without questioning
-          // because of the resubmission costs
+          // because of the resubmission costs even if the RB should promote'em
           if( PEP_request_answer == DENY
               or
               PEP_request_answer == NOTA
@@ -349,26 +348,21 @@ filter_gpbox_authorizations(
             suitable_CEs.erase(answer_id);
             Info("!!!erased CE");
           }
-          else {
-
-            //at this point we've got the certainty that suitableCEs
-            //will be a list of unique CE identifiers (if the related info 
-            //is correctly published, if not the first added applies) so we can replace
-            //the former unique key (CEID/VoViewID) with the real name for the CE
-            matchmaking::match_table_t::iterator it = suitable_CEs.find(answer_id);
-            if (it != suitable_CEs.end()) {
-              std::string CE_id = get_CE_unique_id(it->second);
-              matchmaking::match_info CE_ad(it->second);
-              suitable_CEs.erase(answer_id);
-              suitable_CEs[CE_id] = CE_ad;
-              //or else (without defining CE_ad)
-              //  suitable_CEs[CE_id] = suitable_CEs[answer_id];
-            } else {
-              Info("Mismatching CE id got from gpbox answer\n");
-            }
-            //or else (one for the two branches)
-            //suitable_CEs.erase(answer_id);
-          }
+          //else {
+          //  //at this point we've got the certainty that suitableCEs
+          //  //will be a list of unique CE identifiers (if the related info 
+          //  //is correctly published, if not the first added applies) so we can replace
+          //  //the former unique key (CEID/VoViewID) with the real name for the CE
+          //  matchmaking::match_table_t::iterator it = suitable_CEs.find(answer_id);
+          //  if (it != suitable_CEs.end()) {
+          //    std::string CE_id = get_CE_unique_id(it->second);
+          //    matchmaking::match_info CE_ad(it->second);
+          //    suitable_CEs.erase(answer_id);
+          //    suitable_CEs[CE_id] = CE_ad;
+          //  } else {
+          //    Debug("Mismatching CE id got from gpbox answer\n");
+          //  }
+          //}
         }
       }
       else {
@@ -376,11 +370,11 @@ filter_gpbox_authorizations(
       }
     }
     else {
-      Info("VOMS_proxy_init returned false");
+      Debug("VOMS_proxy_init returned false");
       return false;
     }
   } catch(...) {
-    Info("filter_gbox_authorizations: PEP Send returned false");
+    Debug("filter_gbox_authorizations: PEP Send returned false");
     return false;
   }
 
@@ -441,21 +435,21 @@ interact(
     }
     catch (...) { // exception no_conn from API
                   // PEP_connection not properly propagated
-      Info("gpbox: exception caught during interaction");
+      Debug("gpbox: exception caught during interaction");
       return false;
     };
  
-    std::string report(
+    std::string end_msg(
       "gpbox interaction ended. Elapsed: "
       +
       boost::lexical_cast<std::string>(perf_timer.elapsed())
     );
-    Info(report);
+    Info(end_msg);
 
     return true;
   }
   else {
-    Info("gpbox: unable to find the broker proxy certificate");
+    Debug("gpbox: unable to find the broker proxy certificate");
     return false;
   }
 }
