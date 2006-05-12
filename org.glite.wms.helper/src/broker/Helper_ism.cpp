@@ -234,15 +234,16 @@ try {
     throw NoCompatibleCEs();
   }
 
-  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
-  jobid::JobId dg_jobid(dg_jobid_str);
-
   configuration::Configuration const* const config
     = configuration::Configuration::instance();
   assert(config);
 
 #ifndef GLITE_WMS_DONT_HAVE_GPBOX
+  std::string dg_jobid_str(requestad::get_edg_jobid(input_ad));
+  jobid::JobId dg_jobid(dg_jobid_str);
+
   std::string PBOX_host_name(config->wm()->pbox_host_name());
+
   if (!PBOX_host_name.empty()) {
     if (!gpbox::interact(
       *config,
