@@ -17,20 +17,6 @@
 WMS_COMMON_QUOTA = $(top_srcdir)/../org.glite.wms.common/build/src/utilities/libglite_wms_quota.la
 
 
-bin_PROGRAMS = glite_wms_wmproxy_purge_proxycache
-
-glite_wms_wmproxy_purge_proxycache_SOURCES = \
-	wmpcleanproxies.cpp
-
-glite_wms_wmproxy_purge_proxycache_LDFLAGS = -Xlinker --export-dynamic
-glite_wms_wmproxy_purge_proxycache_CFLAGS = \
-	$(GRIDSITE_OPENSSL_CFLAGS) \
-	$(BOOST_CFLAGS)
-glite_wms_wmproxy_purge_proxycache_LDADD = \
-	$(GRIDSITE_OPENSSL_LIBS) \
-	$(BOOST_FS_LIBS)	
-
-	
 lib_LTLIBRARIES = \
 	libglite_wms_wmproxy_utilities.la
 
