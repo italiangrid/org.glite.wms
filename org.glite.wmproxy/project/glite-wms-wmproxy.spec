@@ -55,7 +55,7 @@ gLite WMS WMProxy Service executables and libraries
 %attr(-, root, root) %{prefix}/lib/libglite_wms_wmproxy_pipe.so.0
 %attr(-, root, root) %{prefix}/lib/libglite_wms_wmproxy_pipe.so
 %attr(-, root, root) %{prefix}/lib/libglite_wms_wmproxy_pipe.a
-%attr(-, root, root) %{prefix}/bin/glite_wms_wmproxy_purge_proxycache
+#%attr(-, root, root) %{prefix}/bin/glite_wms_wmproxy_purge_proxycache
 %attr(4555, root, root) %{prefix}/bin/glite_wms_wmproxy_dirmanager
 %attr(-, root, root) %{prefix}/bin/glite_wms_wmproxy_server
 %attr(-, root, root) %{prefix}/etc/lcmaps/lcmaps.db.template
