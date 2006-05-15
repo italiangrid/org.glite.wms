@@ -893,16 +893,25 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 	GLITE_STACK_TRY("compareFQAN");
 	edglog_fn("WMPAuthorizer::compareFQAN");
 	#endif
-        bool match = true;
+    
+    // Checking for empty FQAN
+	if ((ref == "") && (in == "")) {
+		return true;
+	}
+	if ((ref == "") || (in == "")) {
+		return false;
+	}
+    
+    bool match = true;
 
-        vector<pair<string,string> > vect_ref, vect_in;
+    vector<pair<string,string> > vect_ref, vect_in;
 	string lab_ref = "";
 	string lab_in = "";
 	string val_ref = "";
 	string val_in = "";
 
-        // the vectors contain pairs like this <label,value> (label may be an empty string)
-        vect_ref = parseFQAN(ref );
+    // the vectors contain pairs like this <label,value> (label may be an empty string)
+    vect_ref = parseFQAN(ref );
 	if ( vect_ref.empty()){
 		#ifndef GLITE_WMS_WMPROXY_TOOLS
                 throw AuthorizationException(__FILE__, __LINE__,
@@ -914,8 +923,8 @@ WMPAuthorizer::compareFQAN (const string &ref, const string &in )
 		#endif
 
 	}
-        // vin=<input-vect>
-        vect_in = parseFQAN(in);
+    // vin=<input-vect>
+    vect_in = parseFQAN(in);
 
 	if (vect_in.empty()) {
 		#ifndef GLITE_WMS_WMPROXY_TOOLS
