@@ -67,6 +67,9 @@ void setFlagFile(const std::string &file, bool flag);
 
 void createSuidDirectory(const std::string &directory);
 
+void untarFile(const std::string &file, const std::string &untar_starting_path,
+	uid_t userid, uid_t groupid);
+
 void writeTextFile(const std::string &path, const std::string &text);
 
 std::string readTextFile(const std::string &path);
@@ -193,10 +196,10 @@ std::string getJobDelegatedProxyPathBak(glite::wmsutils::jobid::JobId jid,
 	int level = 0);
 
 std::string getJobJDLOriginalPath(glite::wmsutils::jobid::JobId jid,
-	int level = 0);
+	bool isrelative = false, int level = 0);
 	
 std::string getJobJDLToStartPath(glite::wmsutils::jobid::JobId jid,
-	int level = 0);
+	bool isrelative = false, int level = 0);
 	
 /**
  * Returns the destination URI reading the protocol to use from configuration

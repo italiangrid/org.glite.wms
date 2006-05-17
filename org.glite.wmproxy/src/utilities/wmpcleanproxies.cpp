@@ -1,7 +1,7 @@
 
 #include <vector>
-#include<iostream>
-#include "utilities/wmputils.h"
+#include <iostream>
+#include "wmputils.h"
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/exception.hpp" //managing boost errors

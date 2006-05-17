@@ -8,13 +8,15 @@
 // Author: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 //
 
+#include "wmputils.h"
+
 #include <iostream>
 #include <fstream>
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/vfs.h>
-#include <sys/param.h>
+#include <sys/param.h> // MAXLENPATH
 #include <fcntl.h> // O_RDONLY
 #include <netdb.h> // gethostbyname
 #include <unistd.h>
@@ -27,8 +29,6 @@
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/operations.hpp>
-
-#include "wmputils.h"
 
 // JobId
 #include "glite/wmsutils/jobid/JobId.h"
@@ -94,15 +94,15 @@ const string OUTPUT_SB_DIRECTORY = "output";
 const string PEEK_DIRECTORY = "peek";
 
 // Default name of the delegated Proxy copied inside private job directory
-const std::string USER_PROXY_NAME = "user.proxy";
-const std::string USER_PROXY_NAME_BAK = ".user.proxy.bak";
+const string USER_PROXY_NAME = "user.proxy";
+const string USER_PROXY_NAME_BAK = ".user.proxy.bak";
 
-const std::string JDL_ORIGINAL_FILE_NAME = "JDLOriginal";
-const std::string JDL_TO_START_FILE_NAME = "JDLToStart";
-const std::string START_LOCK_FILE_NAME = ".startLockFile";
+const string JDL_ORIGINAL_FILE_NAME = "JDLOriginal";
+const string JDL_TO_START_FILE_NAME = "JDLToStart";
+const string START_LOCK_FILE_NAME = ".startLockFile";
 
-const std::string ALL_PROTOCOLS = "all";
-const std::string DEFAULT_PROTOCOL = "default";
+const string ALL_PROTOCOLS = "all";
+const string DEFAULT_PROTOCOL = "default";
 
 
 vector<string>
@@ -161,7 +161,7 @@ computeOutputSBDestURI(vector<string> osbdesturi, const string &dest_uri)
 }
 
 vector<string> *
-getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
+getJobDirectoryURIsVector(vector<pair<string, int> > protocols,
 	const string &defaultprotocol, int defaultport, int httpsport,
 	const string &jid, const string &protocol, const string &extradir)
 {
@@ -179,7 +179,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	
 	vector<string> *returnvector = new vector<string>();
 	
-	vector<pair<std::string, int> > returnprotocols;
+	vector<pair<string, int> > returnprotocols;
 	if (protocol == ALL_PROTOCOLS) {
 		returnprotocols = protocols;
 	} else if (protocol == DEFAULT_PROTOCOL) {
@@ -213,7 +213,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 			+ "://" + serverhost
 			+ ((returnprotocols[i].second == 0) 
 				? "" 
-				: (":" + boost::lexical_cast<std::string>
+				: (":" + boost::lexical_cast<string>
 					(returnprotocols[i].second)))
 			+ path;
 		edglog(debug)<<"Job directory URI: "<<item<<endl;
@@ -224,7 +224,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 	if ((protocol == ALL_PROTOCOLS) || (protocol == "https")) {
 		if (httpsport) {
 			item = "https://" + string(getenv("SERVER_ADDR")) + ":"
-				+ boost::lexical_cast<std::string>(httpsport) + httppath;
+				+ boost::lexical_cast<string>(httpsport) + httppath;
 		} else {
 			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
 		}
@@ -237,7 +237,7 @@ getJobDirectoryURIsVector(vector<pair<std::string, int> > protocols,
 }
 
 vector<string> *
-getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
+getDestURIsVector(vector<pair<string, int> > protocols, int httpsport,
 	const string &jid, bool addhttps)
 {
 	GLITE_STACK_TRY("getDestURIsVector()");
@@ -255,7 +255,7 @@ getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
 	string item;
 	
 	for (unsigned int i = 0; i < protocols.size(); i++) {
-		port = boost::lexical_cast<std::string>(protocols[i].second);
+		port = boost::lexical_cast<string>(protocols[i].second);
 		item = protocols[i].first
 			+ "://" + serverhost
 			+ ((protocols[i].second == 0) ? "" : (":" + port))
@@ -269,7 +269,7 @@ getDestURIsVector(vector<pair<std::string, int> > protocols, int httpsport,
 	if (addhttps) {
 		if (httpsport != 0) {
 			item = "https://" + string(getenv("SERVER_ADDR")) + ":"
-				+ boost::lexical_cast<std::string>(httpsport) + httppath;
+				+ boost::lexical_cast<string>(httpsport) + httppath;
 		} else {
 			item = "https://" + string(getenv("HTTP_HOST")) + httppath;
 		}
@@ -419,12 +419,12 @@ getFileName(const string &path)
 }
 
 string
-getDestURI(const string &jobid, const std::string &protocol,
+getDestURI(const string &jobid, const string &protocol,
 	int port)
 {
 	GLITE_STACK_TRY("getDestURI()");
 	string dest_uri(protocol + "://" + getServerHost()
-		+ ((port == 0) ? "" : (":" + boost::lexical_cast<std::string>(port)))
+		+ ((port == 0) ? "" : (":" + boost::lexical_cast<string>(port)))
 		+ getenv(DOCUMENT_ROOT) + FILE_SEP
 		+ to_filename(jobid));
 	return dest_uri;
@@ -522,24 +522,34 @@ getJobDelegatedProxyPathBak(jobid::JobId jid, int level)
 }
 
 string
-getJobJDLOriginalPath(jobid::JobId jid, int level)
+getJobJDLOriginalPath(jobid::JobId jid, bool isrelative, int level)
 {	
 	GLITE_STACK_TRY("getJobJDLOriginalPath(JobId jid)");
 	//TBD Check path
-	return string(getenv(DOCUMENT_ROOT) 
-		+ FILE_SEP + to_filename(jid, level)
-		+ FILE_SEP + JDL_ORIGINAL_FILE_NAME);
+	if (!isrelative) {
+		return string(getenv(DOCUMENT_ROOT) 
+			+ FILE_SEP + to_filename(jid, level)
+			+ FILE_SEP + JDL_ORIGINAL_FILE_NAME);
+	} else {
+		return string(to_filename(jid, level)
+			+ FILE_SEP + JDL_ORIGINAL_FILE_NAME);
+	}
 	GLITE_STACK_CATCH();
 }
 
 string
-getJobJDLToStartPath(jobid::JobId jid, int level)
+getJobJDLToStartPath(jobid::JobId jid, bool isrelative, int level)
 {	
 	GLITE_STACK_TRY("getJobJDLToStartPath(JobId jid)");
 	//TBD Check path
-	return string(getenv(DOCUMENT_ROOT) 
-		+ FILE_SEP + to_filename(jid, level)
-		+ FILE_SEP + JDL_TO_START_FILE_NAME);
+	if (!isrelative) {
+		return string(getenv(DOCUMENT_ROOT) 
+			+ FILE_SEP + to_filename(jid, level)
+			+ FILE_SEP + JDL_TO_START_FILE_NAME);
+	} else {
+		return string(to_filename(jid, level)
+			+ FILE_SEP + JDL_TO_START_FILE_NAME);
+	}
 	GLITE_STACK_CATCH();
 }
 
@@ -582,20 +592,20 @@ getServerHost() {
 }
 
 bool
-doPurge(std::string dg_jobid)
+doPurge(string dg_jobid)
 {
 	GLITE_STACK_TRY("doPurge()");
 	edglog_fn("wmputils::doPurge");
 	
 	if (dg_jobid.length()) {
   		edglog(debug)<<"JobId object for purging created: "
-  			<<dg_jobid<<std::endl;
+  			<<dg_jobid<<endl;
   		boost::filesystem::path path(getJobDirectoryPath(jobid::JobId(dg_jobid)),
   			boost::filesystem::native);
   		return purger::purgeStorageEx(path, edg_wll_LogClearUSER);
     } else {
    		edglog(critical)
-			<<"Error in Purging: Invalid Job Id. Purge not done."<<std::endl;
+			<<"Error in Purging: Invalid Job Id. Purge not done."<<endl;
       return false; 
     }
     
@@ -603,7 +613,7 @@ doPurge(std::string dg_jobid)
 }
 
 bool
-getUserQuota(std::pair<long, long>& result, std::string uname)
+getUserQuota(pair<long, long>& result, string uname)
 {
 	GLITE_STACK_TRY("getUserQuota()");
 	result = commonutilities::quota::getQuota(uname);
@@ -612,7 +622,7 @@ getUserQuota(std::pair<long, long>& result, std::string uname)
 }
 
 bool
-getUserFreeQuota(std::pair<long, long>& result, std::string uname)
+getUserFreeQuota(pair<long, long>& result, string uname)
 {
 	GLITE_STACK_TRY("getUserFreeQuota()");
 	result = commonutilities::quota::getFreeQuota(uname);
@@ -715,7 +725,7 @@ generateRandomNumber(int lowerlimit, int upperlimit)
    the version of the library linked do not match, or Z_ERRNO if there
    is an error reading or writing the files.
   */
-int gzUncompress (const std::string &source, const std::string &dest)
+int gzUncompress (const string &source, const string &dest)
 {
 	GLITE_STACK_TRY("gzUncompress()");
     edglog_fn("wmputils::gzUncompress");
@@ -726,14 +736,14 @@ int gzUncompress (const std::string &source, const std::string &dest)
     gzFile in;
 	int len = 0;
 	int err = 0;
-	int size = computeFileSize(source);
+	long size = computeFileSize(source);
 	local char buf[size];
 	in = gzopen(source.c_str(), "rb");
         if (in == NULL) {
 		errmsg = "Unable to uncompress the ISB file: " + source + "\n";
 		errmsg += "(error while opening the file)\n";
 		errmsg += "please, contact the server administrator";
-                edglog(severe)<< errmsg << std::endl;
+                edglog(severe)<<errmsg<<endl;
                 throw FileSystemException(__FILE__, __LINE__,
                                 "uncompressFile()", WMS_IS_FAILURE,
 				errmsg);
@@ -743,7 +753,7 @@ int gzUncompress (const std::string &source, const std::string &dest)
 		errmsg = "error while uncompressing the ISB file: " + source + "\n";
                 errmsg += "(unable to create the uncompressed file: " + dest + ")\n";
                 errmsg += "please, contact the server administrator";
-                edglog(severe) << errmsg << std::endl;
+                edglog(severe)<<errmsg<<endl;
                 throw FileSystemException(__FILE__, __LINE__,
                                 "gzUncompress()", WMS_IS_FAILURE,
 				errmsg);
@@ -755,7 +765,7 @@ int gzUncompress (const std::string &source, const std::string &dest)
 			zmsg = gzerror(in, &err);
 			if (zmsg.size()>0){ errmsg += "(" + zmsg + ")\n";}
 			errmsg += "please, contact the server administrator";
-			edglog(severe) << errmsg << std::endl;
+			edglog(severe)<<errmsg<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
                                 "uncompressFile()", WMS_IS_FAILURE,
                                 errmsg );
@@ -764,7 +774,7 @@ int gzUncompress (const std::string &source, const std::string &dest)
 			errmsg = "unable to uncompress the zipped file: " + source + "\n";
 			errmsg += "(error while writing the file: "  + dest + ")\n"; 
 			errmsg += "please, contact the server administrator";
-			edglog(severe) << errmsg << std::endl;
+			edglog(severe)<<errmsg<<endl;
 			throw FileSystemException(__FILE__, __LINE__,
                                 "gzUncompress()", WMS_IS_FAILURE,
                                 errmsg );
@@ -774,13 +784,14 @@ int gzUncompress (const std::string &source, const std::string &dest)
 		errmsg = "unable to uncompress the zipped file: " + source + "\n";
                 errmsg += "(error while closing the file: "  + dest + ")\n";
                 errmsg += "please, contact the server administrator";
-		edglog(severe) << errmsg << std::endl;
+		edglog(severe)<<errmsg<<endl;
                 throw FileSystemException(__FILE__, __LINE__,
                                 "gzUncompress()", WMS_IS_FAILURE,
                                 errmsg );
         }
 	if (gzclose(in) != Z_OK) {
-		edglog(warning)<<"Unable to remove the gz file (reason: error in closing the file): "<<string(source)<<std::endl;
+		edglog(warning)<<"Unable to remove the gz file "
+		"(reason: error in closing the file): "<<string(source)<<endl;
 	} else {
 		remove(source.c_str());
 	} 
@@ -789,7 +800,7 @@ int gzUncompress (const std::string &source, const std::string &dest)
 }
 
 /* Report a zlib or i/o error */
-std::string gzError(int ret)
+string gzError(int ret)
 {
 	string err ="";
 	switch (ret) {
@@ -925,27 +936,27 @@ uncompressFile(const string &filename, const string &startingpath)
 }
 
 void 
-fileCopy(const std::string& source, const std::string& target)
+fileCopy(const string& source, const string& target)
 {
 	GLITE_STACK_TRY("fileCopy()");
  	edglog_fn("wmputils::fileCopy");
   	edglog(debug)<<"Copying file...\n\tSource: "
-  		<<source<<"\n\tTarget: "<<target<<std::endl;
+  		<<source<<"\n\tTarget: "<<target<<endl;
   
-  	std::ifstream in(source.c_str());
+  	ifstream in(source.c_str());
   	if (!in.good()) {
   		edglog(severe)<<"Copy failed, !in.good(). \n\tSource: "
-  			<<source<<" Target: "<<target<<std::endl;
+  			<<source<<" Target: "<<target<<endl;
     	throw FileSystemException(__FILE__, __LINE__,
-			"fileCopy(const std::string& source, const std::string& target)",
+			"fileCopy(const string& source, const string& target)",
 			WMS_IS_FAILURE, "Unable to copy file");
 	 }
-	 std::ofstream out(target.c_str());
+	 ofstream out(target.c_str());
 	 if (!out.good()) {
   		edglog(severe)<<"Copy failed, !out.good(). \n\tSource: "
-  			<<source<<"\n\tTarget: "<<target<<std::endl;
+  			<<source<<"\n\tTarget: "<<target<<endl;
     	throw FileSystemException(__FILE__, __LINE__,
-			"fileCopy(const std::string& source, const std::string& target)",
+			"fileCopy(const string& source, const string& target)",
 			WMS_IS_FAILURE, "Unable to copy file");
   	}
   	out<<in.rdbuf(); // read original file into target
@@ -955,24 +966,24 @@ fileCopy(const std::string& source, const std::string& target)
 	    	chown(target.c_str(), from_stat.st_uid, from_stat.st_gid) ||
 	        chmod(target.c_str(), from_stat.st_mode)) {
 		edglog(severe)<<"Copy failed, chown/chmod. \n\tSource: "
-		<<source<<"\n\tTarget: "<<target<<std::endl;
+			<<source<<"\n\tTarget: "<<target<<endl;
 
 	    throw FileSystemException(__FILE__, __LINE__,
-			"fileCopy(const std::string& source, const std::string& target)",
+			"fileCopy(const string& source, const string& target)",
 			WMS_IS_FAILURE, "Unable to copy file");
   	}
-  	edglog(debug)<<"Copy done."<<std::endl;
+  	edglog(debug)<<"Copy done."<<endl;
   	GLITE_STACK_CATCH();
 }
 
-std::string
+string
 to_filename(glite::wmsutils::jobid::JobId j, int level, bool extended_path)
 {
 	GLITE_STACK_TRY("to_filename()");
-	std::string path(sandboxdir_global + std::string(FILE_SEP)
+	string path(sandboxdir_global + string(FILE_SEP)
 		+ glite::wmsutils::jobid::get_reduced_part(j, level));
 	if (extended_path) {
-		path.append(std::string(FILE_SEP) + glite::wmsutils::jobid::to_filename(j));
+		path.append(string(FILE_SEP) + glite::wmsutils::jobid::to_filename(j));
 	}
 	return path;
 	GLITE_STACK_CATCH();
@@ -1053,7 +1064,7 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 						"directory creation"<<endl;
 	        		throw FileSystemException(__FILE__, __LINE__,
 						"doExecv()", WMS_IS_FAILURE, "Unable to execute command"
-						"\n(please contact server administartor");
+						"\n(please contact server administrator");
 				}
 	        }
 	        break;
@@ -1061,12 +1072,25 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
         	// parent
 	    	int status;
 	    	wait(&status);
+	    	if (WIFEXITED(status)) {
+                edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
+                edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
+            }
+            if (WIFSIGNALED(status)) {
+                edglog(critical)<<"WIFSIGNALED(status)"<<endl;
+                edglog(critical)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
+            }
+#ifdef WCOREDUMP
+			if (WCOREDUMP(status)) {
+				edglog(critical)<<"Child dumped core!!!"<<endl;
+			}
+#endif // WCOREDUMP
 	    	if (status) {
 	    		edglog(critical)<<"Unable to create job local directory, "
 					"exit code: "<<status<<endl;
 	    		throw FileSystemException(__FILE__, __LINE__,
 					"doExecv()", WMS_IS_FAILURE, "Unable to create job local "
-					"directory\n(please contact server administartor)");
+					"directory\n(please contact server administrator)");
 	    	}
 	    	break;
 	}
@@ -1079,8 +1103,8 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 }
 
 int 
-managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
-	std::vector<std::string> jobids)
+managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
+	vector<string> jobids)
 {
 	GLITE_STACK_TRY("managedir()");
 	edglog_fn("wmputils::managedir");
@@ -1103,8 +1127,8 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	gliteDirmanExe += FILE_SEP + "bin" + FILE_SEP
 	   		+ "glite_wms_wmproxy_dirmanager";
 	   	
-	   	string useridtxt = boost::lexical_cast<std::string>(userid);
-	   	string grouptxt = boost::lexical_cast<std::string>(getgid());
+	   	string useridtxt = boost::lexical_cast<string>(userid);
+	   	string grouptxt = boost::lexical_cast<string>(getgid());
 	   	
 		int level = 0; 
 	   	bool extended_path = true ; 
@@ -1141,7 +1165,7 @@ managedir(const std::string &document_root, uid_t userid, uid_t jobdiruserid,
 		// Creating parameters vector for job directories creation
 		vector<string> jobparams;
 		jobparams.push_back("-c");
-		juser = boost::lexical_cast<std::string>(jobdiruserid);
+		juser = boost::lexical_cast<string>(jobdiruserid);
 		jobparams.push_back(juser);
 		jobparams.push_back("-g");
 		group = grouptxt;
@@ -1201,7 +1225,7 @@ setFlagFile(const string &file, bool flag)
 				"setFlagFile()", WMS_IS_FAILURE, "Unable to set flag file"
 				"\n(please contact server administrator)");
 		}
-		outfile << "flag";
+		outfile<<"flag";
 		outfile.close();
 	} else {
 		remove(file.c_str());	
@@ -1212,6 +1236,9 @@ setFlagFile(const string &file, bool flag)
 void
 createSuidDirectory(const string &directory)
 {
+	GLITE_STACK_TRY("createSuidDirectory()");
+	edglog_fn("wmputils::createSuidDirectory");
+	
 	if (!fileExists(directory)) {
 		// Try to find managedirexecutable 
 	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
@@ -1224,8 +1251,8 @@ createSuidDirectory(const string &directory)
 	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
 	   	
 		string dirpermissions = " -m 0773 ";
-		string user = " -c " + boost::lexical_cast<std::string>(getuid()); // UID
-		string group = " -g " + boost::lexical_cast<std::string>(getgid()); // GROUP
+		string user = " -c " + boost::lexical_cast<string>(getuid()); // UID
+		string group = " -g " + boost::lexical_cast<string>(getgid()); // GROUP
 		
 		string command = gliteDirmanExe + user + group + dirpermissions + directory;
 		edglog(debug)<<"Excecuting command: "<<command<<endl;
@@ -1237,6 +1264,52 @@ createSuidDirectory(const string &directory)
 					"administrator)");
 		}
 	}
+	
+	GLITE_STACK_CATCH();
+}
+
+void
+untarFile(const string &file, const string &untar_starting_path,
+	uid_t userid, uid_t groupid)
+{
+	GLITE_STACK_TRY("untarFile()");
+	edglog_fn("wmputils::untarFile");
+	
+	if (fileExists(file)) {
+		// Try to find managedirexecutable 
+	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
+	   	if (!glite_path) {
+	   		glite_path = getenv(GLITE_LOCATION);
+	   	}
+	   	string gliteDirmanExe = (glite_path == NULL)
+	   		? ("/opt/glite")
+	   		:(string(glite_path)); 
+	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+	   	
+		string dirpermissions = " -m 0773 ";
+		string user = " -c " + boost::lexical_cast<string>(userid); // UID
+		string group = " -g " + boost::lexical_cast<string>(groupid); // GROUP
+		string untar = " -x " + untar_starting_path + " ";
+		
+		string command = gliteDirmanExe + user + group + dirpermissions
+			+ untar + file;
+		edglog(debug)<<"Excecuting command: "<<command<<endl;
+		if (system(command.c_str())) {
+			edglog(critical)<<"Unable to untar ISB file: "<<file<<endl;
+		   	throw FileSystemException(__FILE__, __LINE__,
+				"untarFile()", WMS_FILE_SYSTEM_ERROR,
+				"Unable to untar ISB file\n(please contact server "
+					"administrator)");
+		}
+	} else {
+		edglog(critical)<<"Unable to untar ISB file, file does not exist: "
+			<<file<<endl;
+		throw FileSystemException(__FILE__, __LINE__,
+			"untarFile()", WMS_FILE_SYSTEM_ERROR,
+			"Unable to untar ISB file\n(please contact server administrator)");
+	}
+	
+	GLITE_STACK_CATCH();
 }
 
 void
@@ -1252,7 +1325,7 @@ writeTextFile(const string &file, const string &text)
 			"writeTextFile()", WMS_IS_FAILURE, "Unable to write file: "
 			+ file + "\n(please contact server administrator)");
 	}
-	outfile << text;
+	outfile<<text;
 	outfile.close();
 	
 	GLITE_STACK_CATCH();
@@ -1302,8 +1375,10 @@ isNull(string field)
 /*
 * Removes white spaces form the begininng and from the end of the input string
 */
-const std::string
-cleanString(std::string str) {
+const string 
+cleanString(string str)
+{
+	GLITE_STACK_TRY("cleanString()");
 	int len = 0;
 	string ws = " "; //white space char
 	len = str.size( );
@@ -1332,53 +1407,70 @@ cleanString(std::string str) {
 		}
 	}
 	return str;
+	GLITE_STACK_CATCH();
 }
 
  /**
 * Converts all of the characters in this String to lower case
  */
-const std::string
-toLower ( const std::string &src) {
-	std::string result(src);
-	std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+const string 
+toLower(const string &src)
+{
+	GLITE_STACK_TRY("toLower()");
+	string result(src);
+	transform(result.begin(), result.end(), result.begin(), ::tolower);
 	return result;
+	GLITE_STACK_CATCH();
  }
+ 
  /**
 * Cuts the input string in two pieces (label and value) according to
  * the separator character "="
  */
-void
-split (const std::string &field, std::string &label, std::string &value){
+void 
+split(const string &field, string &label, string &value)
+{
+	GLITE_STACK_TRY("split()");
 	unsigned int size = field.size();
-	if (size>0) {
+	if (size > 0) {
 		unsigned int p = field.find("=") ;
-		if ( p != string::npos & ( p < size) ){
+		if (p != string::npos & (p < size)) {
 			label = field.substr(0, p);
 			value = field.substr(p+1, size-(p+1));
-			// removes white spaces at the beginning and a the end of the strings (if present)
-			// and converts the uppercase letters to the corresponding lowercase
+			// removes white spaces at the beginning and a the end of the 
+			// strings (if present) and converts the uppercase letters to the 
+			// corresponding lowercase
 			label = toLower(cleanString(label));
 			value = toLower(cleanString(value));
 		}
 	}
+	GLITE_STACK_CATCH();
 };
 
-bool hasElement(const std::vector<std::string> &vect, const std::string &elem){
+
+bool 
+hasElement(const std::vector<std::string> &vect, const std::string &elem)
+{
+	GLITE_STACK_TRY("hasElement()");
 	bool result = false;
 	int size = vect.size();
 	for (int i=0; i < size; i++){
-		if (elem.compare(vect[i]) == 0){
+		if (elem.compare(vect[i]) == 0) {
 			result = true;
 			break;
 		}
 	}
 	return result;
+	GLITE_STACK_CATCH();
 };
+
 /**
  * Removes '/' characters at the end of the of the input pathname
  */
  const std::string
- normalizePath( const std::string &fpath ) {
+ normalizePath( const std::string &fpath )
+ {
+ 	GLITE_STACK_TRY("normalizePath()");
 	string                   modified;
 	string::const_iterator   last, next;
 	string::reverse_iterator check;
@@ -1399,40 +1491,45 @@ bool hasElement(const std::vector<std::string> &vect, const std::string &elem){
 	if( *check == '/' ) modified.assign( modified.begin(), modified.end() - 1 );
 
 	return modified;
+	GLITE_STACK_CATCH();
 }
 
 /*
 * Gets the absolute path of the file
 */
 const std::string
-getAbsolutePath(const std::string &file ){
-string path = file ;
-char* pwd = getenv ("PWD");
-if (path.find("./")==0 || path.compare(".")==0){
-	// PWD path  (./)
-	if (pwd) {
-		string leaf = path.substr(1,string::npos);
-		if (leaf.size()>0) {
-			if ( leaf.find("/",0) !=0 ) {
-				path = normalizePath(pwd) + "/"  + leaf;
-			} else {
+getAbsolutePath(const string &file)
+{
+	GLITE_STACK_TRY("getAbsolutePath()");
+	string path = file;
+	char* pwd = getenv ("PWD");
+	if (path.find("./")==0 || path.compare(".")==0){
+		// PWD path  (./)
+		if (pwd) {
+			string leaf = path.substr(1,string::npos);
+			if (leaf.size()>0) {
+				if ( leaf.find("/",0) !=0 ) {
+					path = normalizePath(pwd) + "/"  + leaf;
+				} else {
+					path = normalizePath(pwd) + leaf;
+				}
+			} else{
 				path = normalizePath(pwd) + leaf;
 			}
-		} else{
-			path = normalizePath(pwd) + leaf;
+		}
+	} else if (path.find("/") ==0 ){
+		// ABsolute Path
+		path = normalizePath(path);
+	} else {
+		// Relative path: append PWD
+		if (pwd){
+			path = normalizePath(pwd) + "/" + path;
 		}
 	}
-} else if (path.find("/") ==0 ){
-	// ABsolute Path
-	path = normalizePath(path);
-} else {
-	// Relative path: append PWD
-	if (pwd){
-		path = normalizePath(pwd) + "/" + path;
-	}
+	return path;
+	GLITE_STACK_CATCH();
 }
-return path;
-}
+
 } // namespace utilities
 } // namespace wmproxy
 } // namespace wms
