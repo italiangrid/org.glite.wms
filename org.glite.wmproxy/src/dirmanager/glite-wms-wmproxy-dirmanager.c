@@ -12,7 +12,7 @@
 
 #ifdef ALLOW_COMMAND_LINE_OVERRIDE
 #define ADJUST_DIRECTORY_USAGE "Usage:%s \n[-v] verbosity\n[-h] help\n[-c uid] [-g group] [-m mode] directory name, ...\n"
-#define ADJUST_DIRECTORY_GETOPT_STRING "vhc:g:m:"
+#define ADJUST_DIRECTORY_GETOPT_STRING "vhc:x:g:m:"
 #else
 #define ADJUST_DIRECTORY_USAGE "Usage:%s  \n[-v] verbosity\n[-h] help\n[-c uid] directory name, ...\n"
 #define ADJUST_DIRECTORY_GETOPT_STRING "vhc:"
@@ -26,22 +26,36 @@
 #include <grp.h> // getgrnam
 #include <unistd.h> // getopt
 
-
-#define ADJUST_DIRECTORY_ERR_NO_ERROR      0
-#define ADJUST_DIRECTORY_ERR_OPTIONS       1
-#define ADJUST_DIRECTORY_ERR_OUT_OF_MEMORY 2
-#define ADJUST_DIRECTORY_ERR_NO_SUCH_GROUP 3
-#define ADJUST_DIRECTORY_ERR_STAT          4
-#define ADJUST_DIRECTORY_ERR_CHOWN         8
-#define ADJUST_DIRECTORY_ERR_CHMOD         16
-#define ADJUST_DIRECTORY_ERR_NOT_A_DIR     32
-#define ADJUST_DIRECTORY_ERR_MKDIR         64
-
-
 #include <sys/types.h>  // mode_t
 #include <errno.h> // errno
 #include <unistd.h> // rmdir, chown
 #include <sys/stat.h> // stat
+
+#include <fcntl.h> // O_RDONLY
+#include <sys/param.h> // MAXPATHLEN
+
+
+#define ADJUST_DIRECTORY_ERR_NO_ERROR       0
+#define ADJUST_DIRECTORY_ERR_OPTIONS        1
+#define ADJUST_DIRECTORY_ERR_OUT_OF_MEMORY  2
+#define ADJUST_DIRECTORY_ERR_NO_SUCH_GROUP  3
+#define ADJUST_DIRECTORY_ERR_STAT           4
+#define ADJUST_DIRECTORY_ERR_CHOWN          8
+#define ADJUST_DIRECTORY_ERR_CHMOD         16
+#define ADJUST_DIRECTORY_ERR_NOT_A_DIR     32
+#define ADJUST_DIRECTORY_ERR_MKDIR         64
+
+// Untar option
+#define UNTAR_ERR_NO_ERROR                  0
+#define UNTAR_ERR_SETUID_SETGID           128
+#define UNTAR_ERR_OPEN_FILE               256
+#define UNTAR_ERR_EXTRACTING_FILE         512
+#define UNTAR_ERR_ARCHIVE_FILE_EXISTS    1024
+
+
+// Untar functionalities
+#include "zlib.h"
+#include "libtar.h"
 
 
 extern char *optarg;
@@ -55,15 +69,213 @@ extern int optind, opterr, optopt;
 #endif
 
 
+long
+computeFileSize(char *path)
+{
+	int fd = -1;
+	long size = 0;
+   	fd = open(path, O_RDONLY);
+    if (fd != -1) {
+    	struct stat buf;
+       	if (!fstat(fd, &buf)) {
+        	size = buf.st_size;
+       	}
+       	close(fd);
+	}
+	// If file not found it returns 0
+    return size;
+}
 
+int
+fileExists(char *path)
+{
+	struct stat buffer;
+	if (stat(path, &buffer)) {
+		return FALSE;
+	}
+	return TRUE;
+}
 
+int
+gzUncompress(char *source, char *dest)
+{
+	FILE *out = NULL;
+	char *zmsg = NULL;
+	char *errmsg = NULL;
+    gzFile in;
+	int len = 0;
+	int err = 0;
+	long size = computeFileSize(source);
+	if (size == 0) {
+		fprintf(stderr, "Unable to uncompress the ISB file: %s\n"
+    		"(error opening file or null size)\n", source);
+        return UNTAR_ERR_OPEN_FILE;
+	}
+	char buf[size];
+	in = gzopen(source, "rb");
+    if (in == NULL) {
+    	fprintf(stderr, "Unable to uncompress the ISB file: %s\n"
+    		"(error opening file)\n", source);
+        return UNTAR_ERR_OPEN_FILE;
+    }
+    out = fopen(dest, "wb");
+    if (out == NULL) {
+    	fprintf(stderr, "Unable to uncompress zip file: %s\n"
+			"(unable to create the uncompressed file: %s)\n", source, dest);
+        return UNTAR_ERR_OPEN_FILE;
+    }
+	for (;;) {
+		len = gzread(in, buf, sizeof(buf));
+		if (len < 0)  {
+			zmsg = gzerror(in, &err);
+			if (*zmsg != '\0') {
+				fprintf(stderr, "Error while uncompressing zip file: %s\n(%s)\n",
+					source, zmsg);
+			} else {
+				fprintf(stderr, "Error while uncompressing zip file: %s\n",
+					source);
+			}
+			return UNTAR_ERR_EXTRACTING_FILE;
+		} else if (len == 0) { 
+			break;
+		}
+		if ((int) fwrite(buf, 1, (unsigned) len, out) != len) {
+			fprintf(stderr, "Unable to uncompress zip file: %s\n"
+				"(error while writing the file: %s)\n", source, dest);
+			return UNTAR_ERR_EXTRACTING_FILE;
+		}
+	}
+	if (fclose(out)!=0) {
+		fprintf(stderr, "Unable to uncompress zip file: %s\n"
+			"(error while writing the file: %s)\n", source, dest);
+		return UNTAR_ERR_EXTRACTING_FILE;
+	}
+	if (gzclose(in) != Z_OK) {
+		fprintf(stderr, "Unable to remove the .gz file: %s\n"
+			"(error in closing the file)\n", source);
+	} else {
+		remove(source);
+	} 
+    return Z_OK;
+}
 
+char * 
+gzError(int ret)
+{
+	char *err = NULL;
+	switch (ret) {
+		case Z_ERRNO:
+			err = "i/o error";
+			break;
+		case Z_STREAM_ERROR:
+			err = "invalid compression level";
+			break;
+		case Z_DATA_ERROR:
+			err = "invalid or incomplete deflate data";
+			break;
+		case Z_MEM_ERROR:
+			err = "out of memory";
+			break;
+		case Z_VERSION_ERROR:
+			err = "zlib version mismatch";
+			break;
+	}
+	return err;
+}
 
+int
+chmod_tar_extract_all(TAR *t, char *prefix)
+{
+	char *filename = NULL;
+	char buf[MAXPATHLEN];
+	int i;
 
-/************************************
-*  check_dir
-************************************/
-int check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group , uid_t create_uid ){
+	mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;
+	while ((i = th_read(t)) == 0) {
+		filename = th_get_pathname(t);
+		
+		// Checking if the item is a regular file
+		if (TH_ISREG(t)) {
+			if (t->options & TAR_VERBOSE) {
+				th_print_long_ls(t);
+			}
+			if (prefix != NULL) {
+				snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
+			} else {
+				strncpy(buf, filename, sizeof(buf));
+			}
+			if (fileExists(buf)) {
+				fprintf(stderr, "Already existing file in ISB file: %s\n", buf);
+				return UNTAR_ERR_ARCHIVE_FILE_EXISTS;
+			}
+			fprintf(stderr, "Extracting file: %s\n", buf);
+			if (tar_extract_file(t, buf)) {
+				fprintf(stderr, "Unable to uncompress ISB file: %s\n", buf);
+				return UNTAR_ERR_EXTRACTING_FILE;
+			}
+	
+			int outcome = chmod(buf, mode);
+			fprintf(stderr, "chmod result: %d\n", outcome);
+			if (outcome) {
+				return UNTAR_ERR_EXTRACTING_FILE;
+			}
+		} else {
+			fprintf(stderr, "Item in ISB file is not a regular file: %s\n",
+				filename);
+		}
+	}
+
+    if (i != 1) {
+        return UNTAR_ERR_EXTRACTING_FILE;
+    }
+    return UNTAR_ERR_NO_ERROR;
+}
+
+int
+uncompressFile(char *file, char *prefix)
+{
+	fprintf(stderr, "Uncompressing file: %s\n", file);
+	fprintf(stderr, "Starting path: %s\n", prefix);
+	
+	char buf[MAXPATHLEN];
+	char * infile = NULL;
+	char * outfile = NULL;
+
+	uInt len = (uInt)strlen(file);
+	strcpy(buf, file);
+
+	if (len > 3 && (strcmp(file + len - 3, ".gz") == 0)) {
+		infile = file;
+		outfile = buf;
+		outfile[len - 3] = '\0';
+	} else {
+		outfile = file;
+		infile = buf;
+		strcat(infile, ".gz");
+	}
+	fprintf(stderr, "Input file: %s\n", infile);
+	fprintf(stderr, "Output file: %s\n", outfile);
+
+	int result = gzUncompress(infile, outfile);
+	fprintf(stderr, "unzip result: %d\n", result);
+	if (result != Z_OK)  {
+		return UNTAR_ERR_EXTRACTING_FILE;
+	}
+
+	TAR * tarfile = NULL;
+	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
+	chmod_tar_extract_all(tarfile, prefix);
+	tar_close(tarfile);
+
+	remove(outfile);
+	
+	return UNTAR_ERR_NO_ERROR;
+}
+
+int 
+check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
+	uid_t create_uid)
+{
 	/* Eventually, change the permissions of the named directories
 	Continue on errors, and switch on the appropriate status bits. */
 	// used to manage return values:
@@ -76,51 +288,55 @@ int check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group , uid_
 	if ((ret < 0) && (errno == ENOENT) && opt_create){
 		// Optionally create the directory in case it doesn't exist
 		// Trying to create the directory
-  		// printf("trying to create directory %s (uid: %d gid: %d)\n",dir, create_uid, new_group);
+  		fprintf(stderr, "trying to create directory %s (uid: %d gid: %d)\n",
+  			dir, create_uid, new_group);
 		if (mkdir(dir, new_mode) < 0){
-			// fprintf(stderr,"Cannot create dir %s:%s\n",dir,strerror(errno));
+			fprintf(stderr, "Cannot create dir %s:%s\n", dir, strerror(errno));
 			return ADJUST_DIRECTORY_ERR_MKDIR;
-		}else{
-				if (chown(dir,create_uid,new_group) < 0){
-					// fprintf(stderr,"Cannot change owner of %s to %d:%s\n",dir,create_uid,strerror(errno));
-					// fprintf(stderr,"Trying to remove %d\n",dir);
-				if (rmdir(dir) < 0){
-					// fprintf(stderr,"Cannot remove %s:%s\n",dir,strerror(errno));
-				}
-				return ADJUST_DIRECTORY_ERR_CHOWN;
-				}
+		} else {
+			if (chown(dir,create_uid,new_group) < 0) {
+				fprintf(stderr,"Cannot change owner of %s to %d: %s\n", dir,
+					create_uid, strerror(errno));
+				fprintf(stderr,"Trying to remove %d\n", dir);
+			if (rmdir(dir) < 0) {
+				fprintf(stderr, "Cannot remove %s: %s\n", dir, strerror(errno));
+			}
+			return ADJUST_DIRECTORY_ERR_CHOWN;
+			}
 		}
 		ret = stat(dir, &stat_result);
 	}
 	if (ret < 0){
 		/* Stat of dir failed */
-		// fprintf(stderr,"Cannot access %s:%s\n",dir,strerror(errno));
+		fprintf(stderr, "Cannot access %s: %s\n", dir, strerror(errno));
 		return ADJUST_DIRECTORY_ERR_STAT;
 	}
 	if (S_ISDIR(stat_result.st_mode)) {
 		ret = chown(dir, -1, new_group);
 		if (ret < 0){
-			// fprintf(stderr,"Cannot change group of %s to 0%o:%s\n",dir,new_group,strerror(errno));
+			fprintf(stderr, "Cannot change group of %s to 0%o: %s\n", dir,
+				new_group, strerror(errno));
 			return ADJUST_DIRECTORY_ERR_CHOWN;
 		}
 		ret = chmod(dir, new_mode);
 		if (ret < 0){
-			// fprintf(stderr,"Cannot change mode of %s to 0%o:%s\n",dir,new_mode,strerror(errno));
+			fprintf(stderr, "Cannot change mode of %s to 0%o: %s\n", dir,
+				new_mode, strerror(errno));
 			return ADJUST_DIRECTORY_ERR_CHMOD;
 		}
 	} else {
 		/* Not a directory */
-		// fprintf(stderr,"%s is not a directory. Skipping\n",dir);
+		fprintf(stderr, "%s is not a directory. Skipping\n", dir);
 		return ADJUST_DIRECTORY_ERR_NOT_A_DIR;
 	}
 	return summary_status;
 }
 
-
-
-int main (int argc, char *argv[]){
+int main(int argc, char *argv[]) {
+	char *starting_path;
 	int opt_verbose = FALSE;
 	int opt_create  = FALSE;
+	int untar = FALSE;
 	uid_t create_uid;
 	char *new_group_s = DEFAULT_ADJUST_DIRECTORY_GROUP;
 	gid_t new_group;
@@ -130,92 +346,108 @@ int main (int argc, char *argv[]){
 	char *end_ptr;
 	char c;
 	int i;
-	if (argc<2){
-		fprintf(stderr,ADJUST_DIRECTORY_USAGE,argv[0]);
+	if (argc < 2) {
+		fprintf(stderr, ADJUST_DIRECTORY_USAGE, argv[0]);
 		exit(ADJUST_DIRECTORY_ERR_OPTIONS);
 	}
-	while ((c=getopt(argc,argv,ADJUST_DIRECTORY_GETOPT_STRING))!=EOF){
-	switch (c){
-		case 'h':
-		printf(ADJUST_DIRECTORY_USAGE,argv[0]);
-		exit(ADJUST_DIRECTORY_ERR_NO_ERROR);
+	while ((c = getopt(argc,argv,ADJUST_DIRECTORY_GETOPT_STRING)) != EOF) {
+		switch (c) {
+			case 'h':
+			printf(ADJUST_DIRECTORY_USAGE, argv[0]);
+			exit(ADJUST_DIRECTORY_ERR_NO_ERROR);
+	
+			case 'v':
+			opt_verbose = TRUE;
+			break;
+	
+			case 'c':
+			st_result = strtol(optarg, &end_ptr, 0);
+			if (*end_ptr == '\0') {
+				create_uid = st_result;
+				opt_create = TRUE;
+			} else {
+				fprintf(stderr, ADJUST_DIRECTORY_USAGE, argv[0]);
+				exit(ADJUST_DIRECTORY_ERR_OPTIONS);
+			}
+			break;
+		
+#ifdef ALLOW_COMMAND_LINE_OVERRIDE
 
-		case 'v':
-		opt_verbose = TRUE;
-		break;
+			case 'x': // If specified, provided files are extracted
+				starting_path = strdup(optarg);
+				untar = TRUE;
+				break;
+			case 'g':
+				new_group_s = strdup(optarg);
+				break;
+			case 'm':
+				st_result = strtol(optarg, &end_ptr, 0);
+				if (*end_ptr == '\0') {
+					new_mode = st_result;
+				} else {
+					fprintf(stderr,ADJUST_DIRECTORY_USAGE,argv[0]);
+					exit(ADJUST_DIRECTORY_ERR_OPTIONS);
+				}
+				break;
+		
+#endif /* defined ALLOW_COMMAND_LINE_OVERRIDE */
 
-		case 'c':
-		st_result = strtol(optarg, &end_ptr, 0);
-		if (*end_ptr == '\0')
-			{
-			create_uid = st_result;
-			opt_create = TRUE;
-			}
-		else
-			{
-			fprintf(stderr,ADJUST_DIRECTORY_USAGE,argv[0]);
-			exit(ADJUST_DIRECTORY_ERR_OPTIONS);
-			}
-		break;
-	#ifdef ALLOW_COMMAND_LINE_OVERRIDE
-		case 'g':
-		new_group_s = strdup(optarg);
-		break;
-		case 'm':
-		st_result = strtol(optarg, &end_ptr, 0);
-		if (*end_ptr == '\0')
-			{
-			new_mode = st_result;
-			}
-		else
-			{
-			fprintf(stderr,ADJUST_DIRECTORY_USAGE,argv[0]);
-			exit(ADJUST_DIRECTORY_ERR_OPTIONS);
-			}
-		break;
-	#endif /* defined ALLOW_COMMAND_LINE_OVERRIDE */
-		default:
-		fprintf(stderr,ADJUST_DIRECTORY_USAGE,argv[0]);
-		exit(1);
+			default:
+				fprintf(stderr,ADJUST_DIRECTORY_USAGE,argv[0]);
+				exit(1);
 		} // End of switch
 	} // End of getopt() loop */
 
 	st_result = strtol(new_group_s, &end_ptr, 0);
-	if (*end_ptr == '\0'){
+	if (*end_ptr == '\0') {
 		new_group = st_result;
-	}else{
+	} else {
 		struct group *gr_result;
 		gr_result = getgrnam(new_group_s);
-		if (gr_result != NULL)
-		{
-		new_group = gr_result->gr_gid;
-		}
-		else
-		{
-		/* Error in gr_result */
-		if (errno == ENOMEM)
-		{
-		fprintf(stderr,"%s: Out of Memory.\n",argv[0]);
-		exit(ADJUST_DIRECTORY_ERR_OUT_OF_MEMORY);
-		}
-		else
-		{
-		fprintf(stderr,"%s: Cannot find any group named %s.\n",
-			argv[0],new_group_s);
-		exit(ADJUST_DIRECTORY_ERR_NO_SUCH_GROUP);
-		}
+		if (gr_result != NULL) {
+			new_group = gr_result->gr_gid;
+		} else {
+			/* Error in gr_result */
+			if (errno == ENOMEM) {
+				fprintf(stderr, "%s: Out of Memory.\n", argv[0]);
+				exit(ADJUST_DIRECTORY_ERR_OUT_OF_MEMORY);
+			} else {
+				fprintf(stderr, "%s: Cannot find any group named %s.\n",
+					argv[0], new_group_s);
+				exit(ADJUST_DIRECTORY_ERR_NO_SUCH_GROUP);
+			}
 		}
 	}
 	if (opt_verbose) {
-		printf("%s: Changing directories to group %d and mode 0%o\n",argv[0],new_group, new_mode);
+		printf("%s: Changing directories to group %d and mode 0%o\n", argv[0],
+			new_group, new_mode);
 	}
 	summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR;
 
-	for (i=optind; i<argc; i++){
-		summary_status |= check_dir(argv[i], opt_create, new_mode, new_group , create_uid );
+	for (i = optind; i < argc; i++) {
+		if (untar) {
+			// -x option is specified -> extracting ISB files...
+			fprintf(stderr,"Group before set: %d\n", getgid());
+			fprintf(stderr,"User before set: %d\n", getuid());
+			fprintf(stderr,"Group to set: %d\n", new_group);
+			fprintf(stderr,"User to set: %d\n", create_uid);
+			if (setgid(new_group) || setuid(create_uid)) {
+				fprintf("Unable to set user/group: %s\n", strerror(errno));
+				summary_status = UNTAR_ERR_SETUID_SETGID;
+			} else {
+				fprintf(stderr,"Group after set: %d\n", getgid());
+				fprintf(stderr,"User after set: %d\n", getuid());
+				summary_status |= uncompressFile(argv[i], starting_path);
+			}
+		} else {
+			// Creating directory...
+			summary_status |= check_dir(argv[i], opt_create, new_mode,
+				new_group, create_uid);
+		}
 	}
-	if (summary_status!=ADJUST_DIRECTORY_ERR_NO_ERROR) {
-		printf("Warning!! some error occurred");
+	if (summary_status != ADJUST_DIRECTORY_ERR_NO_ERROR) {
+		printf("Warning!! some error occurred\n");
 	}
 	exit(summary_status);
 }
+
