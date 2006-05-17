@@ -393,7 +393,8 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	// Creating sub jobs directories
 	if (jobids.size()) {
 		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-		int outcome = wmputilities::managedir(document_root, userid, jobdiruserid, jobids);
+		int outcome = wmputilities::managedir(document_root, userid,
+			jobdiruserid, jobids);
 		if (outcome) {
 			edglog(critical)
 				<<"Unable to create sub jobs local directories for job:\n\t"
@@ -722,7 +723,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	
 	// Registering the job
 	jad->check();
-	wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid));
+	wmplogger.registerJob(jad, wmputilities::getJobJDLToStartPath(*jid, true));
 	
 	// Registering for Proxy renewal
 	char * renewalproxy = NULL;
@@ -1000,7 +1001,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	
 	// It is used also for attribute inheritance
 	//dag->toString(ExpDagAd::SUBMISSION); 
-	wmplogger.registerDag(dag, wmputilities::getJobJDLToStartPath(*jid));
+	wmplogger.registerDag(dag, wmputilities::getJobJDLToStartPath(*jid, true));
 	
 	// Registering for Proxy renewal
 	char * renewalproxy = NULL;
@@ -1429,7 +1430,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						+ FILE_SEPARATOR;
 					for (unsigned int i = 0; i < files.size(); i++) {
 						edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
-						wmputilities::uncompressFile(jobpath + files[i], targetdir);
+						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
+						wmputilities::untarFile(jobpath + files[i], targetdir,
+							auth->getUserId(), auth->getUserGroup());
 					}
 			    	wmputilities::setFlagFile(flagfile, true);
 			    } else {
@@ -1660,7 +1663,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						+ FILE_SEPARATOR;
 					for (unsigned int i = 0; i < files.size(); i++) {
 						edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
-						wmputilities::uncompressFile(jobpath + files[i], targetdir);
+						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
+						wmputilities::untarFile(jobpath + files[i], targetdir,
+							auth->getUserId(), auth->getUserGroup());
 					}
 					wmputilities::setFlagFile(flagfile, true);
 				} else {

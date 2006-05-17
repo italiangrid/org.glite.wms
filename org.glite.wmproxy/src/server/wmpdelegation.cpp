@@ -104,7 +104,7 @@ WMPDelegation::getProxyRequest(const string &delegation_id)
 	
 	GLITE_STACK_CATCH();
 }
-
+/*
 pair<string, string>
 WMPDelegation::getNewProxyRequest()
 {
@@ -118,6 +118,7 @@ WMPDelegation::getNewProxyRequest()
 	char * user_dn = NULL;
     user_dn = wmputilities::getUserDN();
 	char * request = NULL;
+	edglog(debug)<<"____ HERE 0"<<endl;
 	if (GRSTx509MakeProxyRequest(&request, getProxyDir(), 
 			delegation_id, user_dn) != 0) {
 		edglog(critical)<<"Unable to complete New Proxy request"<<endl;
@@ -125,22 +126,24 @@ WMPDelegation::getNewProxyRequest()
 			"getNewProxyRequest()", wmputilities::WMS_PROXY_ERROR,
 			"Unable to complete New Proxy request");
 	}
-	
+	edglog(debug)<<"____ HERE 1"<<endl;
 	string proxy_req = "";
 	int i = 0;
 	while (request[i] != '\0') {
 		proxy_req += request[i];
 		i++;
 	}
+	edglog(debug)<<"____ HERE 2"<<endl;
 	
 	pair<string, string> retpair;
 	retpair.first = string(delegation_id);
 	retpair.second = proxy_req;
+	edglog(debug)<<"____ HERE 4"<<endl;
 	return retpair;
 	
 	GLITE_STACK_CATCH();
 }
-
+*/
 void
 WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
 {
@@ -163,7 +166,7 @@ WMPDelegation::putProxy(const string &delegation_id, const string &proxy_req)
     
     GLITE_STACK_CATCH();
 }
-
+/*
 void
 WMPDelegation::destroyProxy(const string &delegation_id)
 {
@@ -213,7 +216,7 @@ WMPDelegation::getTerminationTime(const string &delegation_id) {
     
     GLITE_STACK_CATCH();
 }
-
+*/
 string
 WMPDelegation::getDelegatedProxyPath(const string &delegation_id)
 {

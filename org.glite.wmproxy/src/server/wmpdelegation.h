@@ -43,8 +43,8 @@ public:
 	 * is automatically generated.
 	 * @return a pair containing the generated delegation id and the Proxy request
 	 * @see putProxy
-	 */
-	static std::pair<std::string, std::string> getNewProxyRequest();
+	 *//*
+	static std::pair<std::string, std::string> getNewProxyRequest();*/
 	
 	/**
 	 * Creates the delegated Proxy. The Proxy is created inside the delegated
@@ -59,14 +59,14 @@ public:
 	/**
 	 * Destroys the delegated Proxy.
 	 * @param delegation_id the delegation id identifing the delegation session
-	 */
-	static void destroyProxy(const std::string &delegation_id);
+	 *//*
+	static void destroyProxy(const std::string &delegation_id);*/
 	
 	/**
 	 * Gets the delegated proxy termination time.
 	 * @param delegation_id the delegation id identifing the delegated session
 	 * @return the termination time
-	 */
+	 *//*
 	static time_t getTerminationTime(const std::string &delegation_id);
 	
 	/**

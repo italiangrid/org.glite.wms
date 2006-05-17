@@ -908,7 +908,7 @@ ns2__putProxy(struct soap *soap, string delegation_id, string proxy,
 	return return_value;
 	GLITE_STACK_CATCH();
 }
-
+/*
 int
 ns2__getNewProxyReq(struct soap *soap, struct ns2__getNewProxyReqResponse &response)
 {
@@ -922,6 +922,8 @@ ns2__getNewProxyReq(struct soap *soap, struct ns2__getNewProxyReqResponse &respo
 	try {
 		pair<string, string> retpair;
 		getNewProxyReq(retpair);
+		edglog(debug)<<"____ retpair.1: "<<retpair.first<<endl;
+		edglog(debug)<<"____ retpair.2: "<<retpair.second<<endl;
 		response.getNewProxyReqReturn = (ns2__NewProxyReq*)
 			malloc(sizeof(struct ns2__NewProxyReq));
       	response.getNewProxyReqReturn->proxyRequest = new string(retpair.second);
@@ -1033,7 +1035,7 @@ ns2__destroy(struct soap *soap, string delegation_id,
 	return return_value;
 	GLITE_STACK_CATCH();
 }
-
+*/
 int
 ns1__getACLItems(struct soap *soap, string jobId,
 	struct ns1__getACLItemsResponse &response)

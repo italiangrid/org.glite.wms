@@ -678,7 +678,7 @@ getProxyReq(getProxyReqResponse &getProxyReq_response,
 	
 	GLITE_STACK_CATCH();
 }
-
+/*
 void
 getNewProxyReq(pair<string, string> &retpair)
 {
@@ -702,7 +702,7 @@ getNewProxyReq(pair<string, string> &retpair)
 	
 	GLITE_STACK_CATCH();
 }
-
+*/
 void
 putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	const string &proxy)
@@ -730,7 +730,7 @@ putProxy(putProxyResponse &putProxyReq_response, const string &delegation_id,
 	
 	GLITE_STACK_CATCH();
 }
-
+/*
 void
 destroyProxy(const string &delegation_id)
 {
@@ -785,7 +785,7 @@ getProxyTerminationTime(getProxyTerminationTimeResponse &getProxyTerminationTime
 	
 	GLITE_STACK_CATCH();
 }
-
+*/
 void
 getACLItems(getACLItemsResponse &getACLItems_response, const string &job_id)
 {

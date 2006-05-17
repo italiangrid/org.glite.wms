@@ -69,16 +69,16 @@ void getStringParametricJobTemplate(getStringParametricJobTemplateResponse
 void getProxyReq(getProxyReqResponse &getProxyReq_response,
 	const std::string &delegation_id);
 	
-void getNewProxyReq(std::pair<std::string, std::string> &retpair);
+//void getNewProxyReq(std::pair<std::string, std::string> &retpair);
 
 void putProxy(putProxyResponse &putProxyReq_response, 
 	const std::string &delegation_id, const std::string &proxy);
-	
+/*	
 void destroyProxy(const std::string &delegation_id);
 
 void getProxyTerminationTime(getProxyTerminationTimeResponse 
 	&getProxyTerminationTime_response, const std::string &delegation_id);
-
+*/
 void getACLItems(getACLItemsResponse &getACLItems_response,
 	const std::string &job_id);
 	
