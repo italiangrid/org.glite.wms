@@ -16,16 +16,18 @@
 # WARNING: work in progress
 
 
-
-
-bin_PROGRAMS = glite_wms_wmproxy_dirmanager
-
-
 glite_wms_wmproxy_dirmanager_SOURCES = \
 	glite-wms-wmproxy-dirmanager.c
 
+bin_PROGRAMS = glite_wms_wmproxy_dirmanager
+
+glite_wms_wmproxy_dirmanager_LDADD = \
+	$(LIBTAR_LIBS) \
+	$(ZLIB_LIBS)
 
 AM_CPPFLAGS = \
+	$(LIBTAR_CFLAGS) \
+        $(ZLIB_CFLAGS) \
 	-DALLOW_COMMAND_LINE_OVERRIDE
 
 MAINTAINERCLEANFILES = Makefile.in
