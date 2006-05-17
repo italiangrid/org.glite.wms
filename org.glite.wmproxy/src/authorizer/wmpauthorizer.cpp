@@ -152,6 +152,17 @@ WMPAuthorizer::getUserId()
 	GLITE_STACK_CATCH();
 }
 
+uid_t
+WMPAuthorizer::getUserGroup()
+{
+	GLITE_STACK_TRY("getUserGroup()");
+	if (!mapdone) {
+		mapUser(this->certfqan);
+	}
+	return this->usergroup;
+	GLITE_STACK_CATCH();
+}
+
 void 
 WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 {
@@ -218,60 +229,6 @@ WMPAuthorizer::authorize(const string &certfqan, const string & jobid)
 	GLITE_STACK_CATCH();
 }
 
-//LCAS CHECK static bool flag = false;
-
-/*LCAS CHECK 
-bool 
-WMPAuthorizer::checkLCASUserAuthZ(const string &dn)
-{
-	edglog_fn("WMPAuthorizer::checkLCASUserAuthZ");
-	int retval;
-  	char * user_dn = NULL;
-  	char * request = NULL;
-	gss_cred_id_t user_cred_handle = GSS_C_NO_CREDENTIAL;
-
-  	user_dn = wmputilities::getUserDN();
-  	
-  	// Initialize LCAS
-  	//FILE * logfile = fopen(this->lcmaps_logfile, "a");
-  	FILE * logfile = fopen("/var/glite/log/lcas.log", "a");
-  	
-  	if (!flag) {
-  		edglog(debug)<<"_____FLAG"<<endl;
-  	retval = lcas_init(logfile);
-  	if (retval) {
-    	edglog(info)<<"LCAS initialization failure"<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-      		"WMPAuthorizer::lcas_init()", wmputilities::WMS_AUTHZ_ERROR,
-      		"LCAS initialization failure");
-  	}
-  	}
-  	// Send authorization request to LCAS
- 	retval = lcas_get_fabric_authorization(user_dn, user_cred_handle, request);
-  	if (retval) {
-    	edglog(info)<<"LCAS failed authorization: User "<<dn
-    		<<" is not authorized"<<endl; 
-		throw AuthorizationException(__FILE__, __LINE__,
-      		"WMPAuthorizer::lcas_get_fabric_authorization()",
-  			wmputilities::WMS_NOT_AUTHORIZED_USER, "LCAS failed authorization: "
-  			"User is not authorized");
-  	}
-  	// Terminate the LCAS 
-  	if (!flag) {
-  	retval = lcas_term();
-  	if (retval) {
-    	edglog(info)<<"LCAS termination failure."<<endl;
-		throw AuthorizationException(__FILE__, __LINE__,
-      		"WMPAuthorizer::lcas_term()",
-  			wmputilities::WMS_AUTHZ_ERROR, "LCAS termination failure.");
-  	}
-  	}
-  	fclose(logfile);
-  	
-  	return true;
-}
-*/
-
 void
 WMPAuthorizer::mapUser(const std::string &certfqan)
 {
@@ -287,7 +244,81 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 	edglog(debug)<<"certfqan: "<<certfqan<<endl;
 	setenv("LCMAPS_POLICY_NAME", "standard:voms", 1);
 
-  	if (certfqan != "") {
+	// Initialising structure
+	if (this->lcmaps_logfile != "") {
+		setenv("LCMAPS_LOG_FILE", this->lcmaps_logfile, 0);
+	}
+	lcmaps_account_info_t plcmaps_account;
+  	retval = lcmaps_account_info_init(&plcmaps_account);
+  	if (retval) {
+    	edglog(error)<<"LCMAPS info initialization failure"<<endl;
+    	throw AuthorizationException(__FILE__, __LINE__,
+    		"lcmaps_account_info_init()", wmputilities::WMS_USERMAP_ERROR,
+    		"LCMAPS info initialization failure");
+  	}
+  	
+  	// Send user mapping request to LCMAPS 
+  	int mapcounter = 0; // single mapping result
+  	int fqan_num = 1; // N.B. Considering only one FQAN inside the list
+  	char * fqan_list[1]; // N.B. Considering only one FQAN inside the list
+	fqan_list[0] = const_cast<char*>(certfqan.c_str());
+  	edglog(debug)<<"Inserted fqan: "<<string(fqan_list[0])<<endl;
+  	
+  	retval = lcmaps_return_account_without_gsi((char *)
+  		wmputilities::convertDNEMailAddress(user_dn).c_str(),
+  		fqan_list, fqan_num, mapcounter, &plcmaps_account);
+  	if (retval) {
+    	retval = lcmaps_return_account_without_gsi(user_dn, 
+    		fqan_list, fqan_num, mapcounter, &plcmaps_account);
+        if (retval) {
+    		edglog(info)<<"LCMAPS failed authorization: User "<<user_dn 
+    			<<" is not authorized"<<endl;
+    		throw AuthorizationException(__FILE__, __LINE__,
+        		"lcmaps_return_poolindex_without_gsi()",
+        		wmputilities::WMS_NOT_AUTHORIZED_USER,
+        		("LCMAPS failed to map user credential"));
+  		}
+    }
+
+  	// Getting username from uid
+  	this->userid = plcmaps_account.uid;
+	user_info = getpwuid(this->userid);
+  	if (user_info == NULL) {
+    	edglog(info)<<"LCMAPS could not find the username related to uid: "
+    		<<this->userid<<endl; 
+    	throw AuthorizationException(__FILE__, __LINE__,
+        	"getpwuidn()",
+        	wmputilities::WMS_USERMAP_ERROR,
+        	"LCMAPS could not find the username related to uid");
+  	}
+  	
+  	// Checking for mapped user group. The group of the assigned local user
+  	// MUST be different from the group of user running server
+  	if (user_info->pw_gid == getgid()) {
+  		edglog(info)<<"Mapping not allowed, mapped local user group equal "
+  			"to group of user running server"<<endl; 
+    	throw AuthorizationException(__FILE__, __LINE__,
+        	"mapUser()", wmputilities::WMS_USERMAP_ERROR,
+        	"Mapping not allowed, mapped local user group equal to group"
+        	" of user running server\n(please contact server administrator)");
+  	}
+  	
+  	// Setting value for username private member
+  	this->username = string(user_info->pw_name);
+  
+  	// Setting value for usergroup private member
+  	this->usergroup = user_info->pw_gid;
+  	
+  	// Cleaning structure
+  	retval = lcmaps_account_info_clean(&plcmaps_account);
+  	if (retval) {
+    	edglog(error)<<"LCMAPS info clean failure"<<endl;
+    	throw AuthorizationException(__FILE__, __LINE__,
+        	"lcmaps_account_info_clean()", wmputilities::WMS_USERMAP_ERROR,
+        	"LCMAPS info clean failure");
+  	}
+  	
+  	/*if (certfqan != "") {
 		// Initialising structure
 		if (this->lcmaps_logfile != "") {
 			setenv("LCMAPS_LOG_FILE", this->lcmaps_logfile, 0);
@@ -433,7 +464,7 @@ WMPAuthorizer::mapUser(const std::string &certfqan)
 
 	  	// Setting value for userid private member
 	  	this->userid = user_info->pw_uid;
-	}
+	}*/
 
   	this->mapdone = true;
   	GLITE_STACK_CATCH();

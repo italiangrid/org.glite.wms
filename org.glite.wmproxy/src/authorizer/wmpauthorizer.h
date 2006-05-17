@@ -73,6 +73,12 @@ public:
     uid_t getUserId();
     
     /**
+     * Returns the user group
+     * @return a uid_t type representing the local user group
+     */
+    uid_t getUserGroup();
+    
+    /**
      * Does authorization via FQAN
      * @param certfqan user certificate FQAN
      * @param jobid the job identifier
@@ -161,6 +167,7 @@ public:
 private:
 	std::string username;
 	uid_t userid;
+	uid_t usergroup;
 	char * lcmaps_logfile;
 	bool mapdone;
 	std::string certfqan;
