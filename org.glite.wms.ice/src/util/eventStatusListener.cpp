@@ -161,7 +161,7 @@ namespace { // anonymous namespace
 void iceUtil::eventStatusListener::createObject( void )
 {
   try {
-      myname = iceUtil::getHostName( );
+      m_myname = iceUtil::getHostName( );
   } catch( runtime_error& ex ) {
       m_isOK = false;
       return;
@@ -169,16 +169,16 @@ void iceUtil::eventStatusListener::createObject( void )
 
 
   m_log_dev->info( "eventStatusListener::CTOR() - Listener created!" );
-  try {
-      pinger.reset( new CEPing(proxyfile, "/") );
-  } catch(exception& ex) {
-      m_log_dev->fatalStream() 
-          << "eventStatusListener::CTOR() - "
-          << "Fatal Error creating a pinger object:" << ex.what()
-          << log4cpp::CategoryStream::ENDLINE;
-      m_isOK = false;
-      return;
-  }
+//   try {
+//       m_pinger.reset( new CEPing(m_proxyfile, "/") );
+//   } catch(exception& ex) {
+//       m_log_dev->fatalStream() 
+//           << "eventStatusListener::CTOR() - "
+//           << "Fatal Error creating a pinger object:" << ex.what()
+//           << log4cpp::CategoryStream::ENDLINE;
+//       m_isOK = false;
+//       return;
+//   }
 
   /**
    * Here we do not need to check if the creation of subscriptionManager
@@ -187,7 +187,7 @@ void iceUtil::eventStatusListener::createObject( void )
    * ::getInstance() call, because the instance of singleton has been
    * already created.
    */
-  subManager = subscriptionManager::getInstance();
+  m_subManager = subscriptionManager::getInstance();
 
   init();
 }
@@ -196,14 +196,14 @@ void iceUtil::eventStatusListener::createObject( void )
 iceUtil::eventStatusListener::eventStatusListener(const int& i,const string& hostcert)
   : CEConsumer(i),
     iceThread( "event status poller" ),
-    status(api::job_statuses::UNKNOWN),
-    proxyfile(hostcert),
-    tcpport(i),
-    conf(iceUtil::iceConfManager::getInstance()),
+    //m_status(api::job_statuses::UNKNOWN),
+    //m_proxyfile(hostcert),
+    //m_tcpport(i),
+    m_conf(iceUtil::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_isOK( true ),
-    cache( jobCache::getInstance() )
+    m_cache( jobCache::getInstance() )
 {
   createObject();
 }
@@ -215,14 +215,14 @@ iceUtil::eventStatusListener::eventStatusListener(const int& i,
 						  const string& key)
   : CEConsumer(i, cert.c_str(), key.c_str()),
     iceThread( "event status poller" ),
-    status(api::job_statuses::UNKNOWN),
-    proxyfile(hostcert),
-    tcpport(i),
-    conf(iceUtil::iceConfManager::getInstance()),
+    //m_status(api::job_statuses::UNKNOWN),
+    //m_proxyfile(hostcert),
+    //m_tcpport(i),
+    m_conf(iceUtil::iceConfManager::getInstance()),
     m_log_dev( api::util::creamApiLogger::instance()->getLogger() ),
     m_lb_logger( iceLBLogger::instance() ),
     m_isOK( true ),
-    cache( jobCache::getInstance() )
+    m_cache( jobCache::getInstance() )
 {
   createObject();
 }
@@ -300,7 +300,7 @@ void iceUtil::eventStatusListener::acceptJobStatus(void)
    */
   {
     boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-    if(this->getEventTopic()->Name != conf->getICETopic()) {
+    if(this->getEventTopic()->Name != m_conf->getICETopic()) {
         m_log_dev->warnStream() 
             << "eventStatusListener::acceptJobStatus() - "
             << "Received a notification with TopicName="
@@ -349,7 +349,7 @@ void iceUtil::eventStatusListener::init(void)
       
       { 
           boost::recursive_mutex::scoped_lock cemonM( cemonUrlCache::mutex );
-          for(jobCache::iterator it=cache->begin(); it != cache->end(); it++) {
+          for(jobCache::iterator it=m_cache->begin(); it != m_cache->end(); it++) {
               ceurl = it->getCreamURL();
               cemonURL =cemonUrlCache::getInstance()->getCEMonUrl( ceurl );
               m_log_dev->infoStream()
@@ -359,7 +359,7 @@ void iceUtil::eventStatusListener::init(void)
                   << log4cpp::CategoryStream::ENDLINE;
 	    if( cemonURL.empty() ) {
               try {
-                  api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( conf->getHostProxyFile() );
+                  api::soap_proxy::CreamProxyFactory::getProxy()->Authenticate( m_conf->getHostProxyFile() );
                   api::soap_proxy::CreamProxyFactory::getProxy()->GetCEMonURL( ceurl.c_str(), cemonURL );
                   m_log_dev->infoStream() 
                       << "eventStatusListener::init() - "
@@ -372,8 +372,8 @@ void iceUtil::eventStatusListener::init(void)
 
 		cemonURL = ceurl;
 		boost::replace_first(cemonURL,
-				     conf->getCreamUrlPostfix(),
-				     conf->getCEMonUrlPostfix()
+				     m_conf->getCreamUrlPostfix(),
+				     m_conf->getCEMonUrlPostfix()
 				     );
 
 		m_log_dev->errorStream() 
@@ -404,13 +404,13 @@ void iceUtil::eventStatusListener::init(void)
       
       // Must lock the subscription manager due to its singleton nature
       boost::recursive_mutex::scoped_lock M( subscriptionManager::mutex );
-      if( !subManager->subscribedTo(*it) ) {
+      if( !m_subManager->subscribedTo(*it) ) {
           m_log_dev->infoStream() 
               << "eventStatusListener::init() - Not subscribed to ["
               << *it << "]. Subscribing to it..."
               << log4cpp::CategoryStream::ENDLINE;
 
-          if( !subManager->subscribe(*it) ) {
+          if( !m_subManager->subscribe(*it) ) {
               m_log_dev->errorStream() 
                   << "eventStatusListener::init() - Subscription to ["<< *it 
                   << "] failed. Will not receives status notifications from it."
@@ -460,10 +460,10 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     // NOTE: we assume that the all the notifications are for the SAME job.
     // This is important! The following code relies on this assumption
 
-    jobCache::iterator jc_it( cache->lookupByCreamJobID( notifications.begin()->getCreamJobID() ) );
+    jobCache::iterator jc_it( m_cache->lookupByCreamJobID( notifications.begin()->getCreamJobID() ) );
 
     // No job found in cache
-    if ( jc_it == cache->end() ) {
+    if ( jc_it == m_cache->end() ) {
         m_log_dev->warnStream()
             << "eventStatusListener::handleEvent() - "
             << "creamjobid ["
@@ -479,7 +479,7 @@ void iceUtil::eventStatusListener::handleEvent( const monitortypes__Event& ev )
     // like DONE-OK; otherwise the eventStatusPoller wont never purge it...
     if( !api::job_statuses::isFinished( jc_it->getStatus() ) ) {
       jc_it->setLastSeen( time(0) );
-      cache->put( *jc_it );
+      m_cache->put( *jc_it );
     }
 
     // Now, for each status change notification, check if it has to be logged

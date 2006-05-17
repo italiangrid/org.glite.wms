@@ -53,19 +53,19 @@ namespace glite {
 
 	*/
 	class eventStatusListener : public CEConsumer, public iceThread {
-	  std::string grid_JOBID, cream_JOBID;
-	  glite::ce::cream_client_api::job_statuses::job_status status;
-	  boost::scoped_ptr<CEPing> pinger;
-	  std::vector<std::string> activeSubscriptions;
-	  std::string proxyfile;
-	  int tcpport;
-	  std::string myname;
-	  glite::wms::ice::util::iceConfManager* conf;
-          log4cpp::Category *m_log_dev;
-          iceLBLogger *m_lb_logger;
-	  bool m_isOK;
-          jobCache* cache;
-	  subscriptionManager* subManager;
+	    //std::string m_grid_JOBID, m_cream_JOBID;
+	  //glite::ce::cream_client_api::job_statuses::job_status m_status;
+	  //boost::scoped_ptr<CEPing> m_pinger;
+	  //std::vector<std::string> m_activeSubscriptions;
+	  //std::string m_proxyfile;
+	  //int m_tcpport;
+	  std::string                             m_myname;
+	  glite::wms::ice::util::iceConfManager*  m_conf;
+          log4cpp::Category                      *m_log_dev;
+          iceLBLogger                            *m_lb_logger;
+	  bool                                    m_isOK;
+          jobCache*                               m_cache;
+	  subscriptionManager*                    m_subManager;
 
 	  void init(void);
 
@@ -73,9 +73,10 @@ namespace glite {
 
 	protected:
 	  eventStatusListener(const eventStatusListener&) : 
-              CEConsumer(9999),
-              pinger(0)
+              CEConsumer(9999)
+	    //m_pinger(0)
               {}
+
 	  void createObject();
 
 	public:

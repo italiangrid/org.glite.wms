@@ -44,11 +44,11 @@ namespace fs = boost::filesystem;
 
 //______________________________________________________________________________
 iceUtil::CreamJob::CreamJob( ) :
-    status( api::job_statuses::UNKNOWN ),
+    m_status( api::job_statuses::UNKNOWN ),
     m_num_logged_status_changes( 0 ),
-    last_seen( time(0) ),
-    end_lease( last_seen + 60*30 ), // FIXME: remove hardcoded default
-    statusPollRetryCount( 0 )
+    m_last_seen( time(0) ),
+    m_end_lease( m_last_seen + 60*30 ), // FIXME: remove hardcoded default
+    m_statusPollRetryCount( 0 )
 {
 
 }
@@ -65,22 +65,22 @@ string iceUtil::CreamJob::serialize( void ) const
     string res;
 
     classad::ClassAd ad;
-    ad.InsertAttr( "cream_jobid", cream_jobid );
-    ad.InsertAttr( "status", status );
+    ad.InsertAttr( "cream_jobid", m_cream_jobid );
+    ad.InsertAttr( "status", m_status );
     ad.InsertAttr( "exit_code", m_exit_code );
-    ad.InsertAttr( "delegation_id", delegation_id );
-    ad.InsertAttr( "wn_sequence_code", wn_sequence_code );
+    ad.InsertAttr( "delegation_id", m_delegation_id );
+    ad.InsertAttr( "wn_sequence_code", m_wn_sequence_code );
     ad.InsertAttr( "num_logged_status_changes", m_num_logged_status_changes );
     classad::ClassAdParser parser;
-    classad::ClassAd* jdlAd = parser.ParseClassAd( jdl );
+    classad::ClassAd* jdlAd = parser.ParseClassAd( m_jdl );
     // Updates sequence code
-    jdlAd->InsertAttr( "LB_sequence_code", sequence_code );
+    jdlAd->InsertAttr( "LB_sequence_code", m_sequence_code );
     ad.Insert( "jdl", jdlAd );
 
     try {    
-        ad.InsertAttr( "last_seen", boost::lexical_cast< string >(last_seen) );
-        ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(end_lease) );
-	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( proxyCertTimestamp ) );
+        ad.InsertAttr( "last_seen", boost::lexical_cast< string >(m_last_seen) );
+        ad.InsertAttr( "end_lease" , boost::lexical_cast< string >(m_end_lease) );
+	ad.InsertAttr( "lastmodiftime_proxycert", boost::lexical_cast< string >( m_proxyCertTimestamp ) );
     } catch( boost::bad_lexical_cast& ) {
         // Should never happen... FIXME
     }
@@ -108,7 +108,7 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
     if(!ad)
         throw ClassadSyntax_ex(string("ClassAd parser returned a NULL pointer parsing entire classad ")+buf);
   
-    if ( ! ad->EvaluateAttrString( "cream_jobid", cream_jobid ) ||
+    if ( ! ad->EvaluateAttrString( "cream_jobid", m_cream_jobid ) ||
          ! ad->EvaluateAttrNumber( "status", st_number ) ||
          ! ad->EvaluateAttrNumber( "exit_code", m_exit_code ) || 
          ! ad->EvaluateAttrClassAd( "jdl", jdlAd ) ||
@@ -116,28 +116,28 @@ void iceUtil::CreamJob::unserialize( const std::string& buf ) throw( ClassadSynt
          ! ad->EvaluateAttrString( "last_seen", lseen ) ||
          ! ad->EvaluateAttrString( "end_lease", elease ) ||
 	 ! ad->EvaluateAttrString( "lastmodiftime_proxycert", lastmtime_proxy) ||
-         ! ad->EvaluateAttrString( "delegation_id", delegation_id ) ||
-         ! ad->EvaluateAttrString( "wn_sequence_code", wn_sequence_code ) ) {
+         ! ad->EvaluateAttrString( "delegation_id", m_delegation_id ) ||
+         ! ad->EvaluateAttrString( "wn_sequence_code", m_wn_sequence_code ) ) {
 
         throw ClassadSyntax_ex("ClassAd parser returned a NULL pointer looking for one of the following attributes: grid_jobid, status, exit_code, jdl, num_logged_status_changes, last_seen, end_lease, lastmodiftime_proxycert, delegation_id, wn_sequence_code" );
 
     }
-    status = (api::job_statuses::job_status)st_number;
+    m_status = (api::job_statuses::job_status)st_number;
     boost::trim_if( tstamp, boost::is_any_of("\"" ) );
     boost::trim_if( elease, boost::is_any_of("\"" ) );
     boost::trim_if( lseen, boost::is_any_of("\"" ) );
     boost::trim_if( lastmtime_proxy, boost::is_any_of("\"" ) );
-    boost::trim_if( delegation_id, boost::is_any_of("\"") );
-    boost::trim_if( wn_sequence_code, boost::is_any_of("\"") );
+    boost::trim_if( m_delegation_id, boost::is_any_of("\"") );
+    boost::trim_if( m_wn_sequence_code, boost::is_any_of("\"") );
     
     try {
-        end_lease = boost::lexical_cast< time_t >( elease );
-        last_seen = boost::lexical_cast< time_t >( lseen );
-	proxyCertTimestamp = boost::lexical_cast< time_t >( lastmtime_proxy );
+        m_end_lease = boost::lexical_cast< time_t >( elease );
+        m_last_seen = boost::lexical_cast< time_t >( lseen );
+	m_proxyCertTimestamp = boost::lexical_cast< time_t >( lastmtime_proxy );
     } catch( boost::bad_lexical_cast& ) {
         throw ClassadSyntax_ex( "CreamJob::unserialize() is unable to cast [" + tstamp + "] or [" +elease+"] or [" +lseen + "] or [" +lastmtime_proxy + "] to time_t" );
     }
-    boost::trim_if(cream_jobid, boost::is_any_of("\""));
+    boost::trim_if(m_cream_jobid, boost::is_any_of("\""));
 
     classad::ClassAdUnParser unparser;
     string jdl_string;
@@ -157,51 +157,51 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
         throw ClassadSyntax_ex( string("CreamJob::setJdl unable to parse jdl=[") + j + string("]") );
     }
 
-    jdl = j;
+    m_jdl = j;
 
     // Look for the "ce_id" attribute
-    if ( !jdlAd->EvaluateAttrString( "ce_id", ceid ) ) {
+    if ( !jdlAd->EvaluateAttrString( "ce_id", m_ceid ) ) {
         throw ClassadSyntax_ex("CreamJob::setJdl: ce_id attribute not found, or is not a string");
     }
-    boost::trim_if(ceid, boost::is_any_of("\"") );
+    boost::trim_if(m_ceid, boost::is_any_of("\"") );
     
     // Look for the "X509UserProxy" attribute
-    if ( !jdlAd->EvaluateAttrString( "X509UserProxy", user_proxyfile ) ) {
+    if ( !jdlAd->EvaluateAttrString( "X509UserProxy", m_user_proxyfile ) ) {
         throw ClassadSyntax_ex("CreamJob::setJdl: X509UserProxy attribute not found, or is not a string");
     }
-    boost::trim_if(user_proxyfile, boost::is_any_of("\""));
+    boost::trim_if(m_user_proxyfile, boost::is_any_of("\""));
     
     struct stat stat_buf;
-    if( ::stat( user_proxyfile.c_str(), &stat_buf ) == -1 )
+    if( ::stat( m_user_proxyfile.c_str(), &stat_buf ) == -1 )
     {
 	int saverr = errno;
 	glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->warnStream()
 	<< "creamJob::setJdl() - The user proxy file ["
-	<< user_proxyfile << "] is not stat-able:" << strerror(saverr) 
+	<< m_user_proxyfile << "] is not stat-able:" << strerror(saverr) 
 	<<". This could compromise the correct working of proxy renewal thread"
 	<< log4cpp::CategoryStream::ENDLINE;
     } else {
-	proxyCertTimestamp = stat_buf.st_mtime;
+	m_proxyCertTimestamp = stat_buf.st_mtime;
     }
 
     // Look for the "LBSequenceCode" attribute (if this attribute is not in the classad, the sequence code is set to the empty string
-    if ( jdlAd->EvaluateAttrString( "LB_sequence_code", sequence_code ) ) {
-        boost::trim_if(sequence_code, boost::is_any_of("\""));
+    if ( jdlAd->EvaluateAttrString( "LB_sequence_code", m_sequence_code ) ) {
+        boost::trim_if(m_sequence_code, boost::is_any_of("\""));
     }
     
     // Look for the "edg_jobid" attribute
-    if ( !jdlAd->EvaluateAttrString( "edg_jobid", grid_jobid ) ) {
+    if ( !jdlAd->EvaluateAttrString( "edg_jobid", m_grid_jobid ) ) {
         throw ClassadSyntax_ex( "CreamJob::setJdl: edg_jobid attribute not found, or is not a string" );
     }
-    boost::trim_if(grid_jobid, boost::is_any_of("\"") );
+    boost::trim_if(m_grid_jobid, boost::is_any_of("\"") );
   
     vector<string> pieces;
     try{
-        api::util::CEUrl::parseCEID(ceid, pieces);
+        api::util::CEUrl::parseCEID(m_ceid, pieces);
     } catch(api::util::CEUrl::ceid_syntax_ex& ex) {
         throw ClassadSyntax_ex(ex.what());
     }
-    endpoint = pieces[0] + ":" + pieces[1];
+    m_endpoint = pieces[0] + ":" + pieces[1];
 
     /**
      * No need to lock the mutex because getInstance already does that
@@ -210,21 +210,20 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
 
     {
       boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
-      cream_address = conf->getCreamUrlPrefix() 
-	+ endpoint + conf->getCreamUrlPostfix();
-      cream_deleg_address = conf->getCreamUrlDelegationPrefix() 
-	+ endpoint + conf->getCreamUrlDelegationPostfix();
+      m_cream_address = conf->getCreamUrlPrefix() 
+	+ m_endpoint + conf->getCreamUrlPostfix();
+      m_cream_deleg_address = conf->getCreamUrlDelegationPrefix() 
+	+ m_endpoint + conf->getCreamUrlDelegationPostfix();
     }
-
 }
 
 //______________________________________________________________________________
 bool iceUtil::CreamJob::is_active( void ) const
 {
-    return ( ( status == api::job_statuses::REGISTERED ) ||
-             ( status == api::job_statuses::PENDING ) ||
-             ( status == api::job_statuses::IDLE ) ||
-             ( status == api::job_statuses::RUNNING ) ||
-             ( status == api::job_statuses::HELD ) ||
-	     ( status == api::job_statuses::REALLY_RUNNING) );
+    return ( ( m_status == api::job_statuses::REGISTERED ) ||
+             ( m_status == api::job_statuses::PENDING ) ||
+             ( m_status == api::job_statuses::IDLE ) ||
+             ( m_status == api::job_statuses::RUNNING ) ||
+             ( m_status == api::job_statuses::HELD ) ||
+	     ( m_status == api::job_statuses::REALLY_RUNNING) );
 }
