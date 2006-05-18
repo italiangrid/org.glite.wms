@@ -491,8 +491,8 @@ void eventStatusPoller::purgeJobs(const vector<string>& jobs_to_purge)
         } catch(cream_api::cream_exceptions::BaseException& s) {
             m_log_dev->log(log4cpp::Priority::ERROR, s.what());
         } catch(cream_api::cream_exceptions::InternalException& severe) {
-            m_log_dev->log(log4cpp::Priority::FATAL, severe.what());
-            exit(1);
+            m_log_dev->log(log4cpp::Priority::ERROR, severe.what());
+            //exit(1);
         } catch(elementNotFound_ex& ex) {
             m_log_dev->errorStream()
                 << "eventStatusPoller::purgeJobs() - Cannot remove [" << cid

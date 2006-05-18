@@ -137,7 +137,7 @@ int main(int argc, char*argv[])
     iceUtil::iceConfManager::getInstance();
   }
   catch(iceUtil::ConfigurationManager_ex& ex) {
-    cerr << ex.what() << endl;
+    cerr << "glite-wms-ice::main() - ERROR: " << ex.what() << endl;
     exit(1);
   }
 
@@ -146,7 +146,8 @@ int main(int argc, char*argv[])
   //
   string dguser( iceUtil::iceConfManager::getInstance()->getDGuser() );
   if (!set_user(dguser)) {
-      cerr << "cannot set the user id to " << dguser << endl;
+      cerr << "glite-wms-ice::main() - ERROR: cannot set the user id to " 
+	   << dguser << endl;
       exit( 1 );
   }
 
@@ -253,11 +254,13 @@ int main(int argc, char*argv[])
     boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
-      log_dev->log(log4cpp::Priority::ERROR, ex.what() );
+    log_dev->errorStream() << "glite-wms-ice::main() - " << ex.what()
+			   << log4cpp::CategoryStream::ENDLINE;
     exit(1);
   } catch(...) {
-      log_dev->log(log4cpp::Priority::ERROR, 
-                   "Catched unknown exception" );
+    log_dev->errorStream() << "glite-wms-ice::main() - "
+			   << "Catched unknown exception"
+			   << log4cpp::CategoryStream::ENDLINE;
     exit(1);
   }
 
@@ -274,18 +277,21 @@ int main(int argc, char*argv[])
    * Initializes CREAM client
    ****************************************************************************/
   soap_proxy::CreamProxyFactory::initProxy(true);
-  if(!soap_proxy::CreamProxyFactory::getProxy())
+  if( !soap_proxy::CreamProxyFactory::getProxy() )
     {
-      log_dev->log(log4cpp::Priority::ERROR,
-                   "CreamProxy creation failed! Stop" );
+      log_dev->errorStream() << "glite-wms-ice::main() - " 
+			     << "CreamProxy creation failed! Stop"
+			     << log4cpp::CategoryStream::ENDLINE;
       exit(1);
     }
-  // soap_proxy::CreamProxyFactory::getProxy()->printOnConsole( true );
+
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   try {
     soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(hostdn);
   } catch(soap_proxy::auth_ex& ex) {
-      log_dev->log(log4cpp::Priority::ERROR, ex.what() );
+    log_dev->errorStream() << "glite-wms-ice::main() - " 
+			   << ex.what()
+			   << log4cpp::CategoryStream::ENDLINE;
     exit(1);
   }
 
@@ -367,9 +373,10 @@ int main(int argc, char*argv[])
       try { 
 	iceManager->removeRequest(j);
       } catch(exception& ex) {
-          log_dev->log(log4cpp::Priority::ERROR,
-                       string("Error removing request from FL: ")
-                       +ex.what() );
+	log_dev->errorStream() << "glite-wms-ice::main() - "
+			       << "Error removing request from FL: "
+			       << ex.what()
+			       << log4cpp::CategoryStream::ENDLINE;
 	exit(1);
       }
     }

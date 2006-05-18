@@ -192,7 +192,7 @@ void Ice::startListener( int listenPort )
       if( (!host) || (!key) ) {
 	m_log_dev->fatalStream()
 	  << "Ice::startListener() - cannot access to GLITE_HOST_CERT and/or "
-	  << "GLITE_HOST_KEY environmental variables. Cannot sstart Listener "
+	  << "GLITE_HOST_KEY environmental variables. Cannot start Listener "
 	  << "with authentication as requested. Stop."
 	  << log4cpp::CategoryStream::ENDLINE;
 	exit(1);
@@ -300,14 +300,15 @@ void Ice::clearRequests()
 void Ice::getNextRequests(vector<string>& ops) 
 {
   try { 
-      m_requests = m_fle.get_all_available();
+    m_requests = m_fle.get_all_available();
   }
   catch( exception& ex ) {
-      m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
-      exit(1);
+    m_log_dev->fatalStream() << "Ice::getNextRequest() - " << ex.what()
+			     << log4cpp::CategoryStream::ENDLINE;
+    exit(1);
   }
   for ( unsigned j=0; j < m_requests.size(); j++ ) {
-      ops.push_back(*m_requests[j]);
+    ops.push_back(*m_requests[j]);
   }
 }
 
@@ -335,8 +336,10 @@ void Ice::ungetRequest( unsigned int reqNum)
         
         m_flns.push_back(toResubmit);
     } catch(std::exception& ex) {
-        m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
-        exit(1);
+      m_log_dev->fatalStream () << "Ice::ungetRequest() - "
+				<< ex.what()
+				<< log4cpp::CategoryStream::ENDLINE;
+      exit(1);
     }
 }
 
@@ -362,7 +365,7 @@ void Ice::resubmit_job( util::CreamJob& j )
     } catch(std::exception& ex) {
         m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
         lb_logger->logEvent( new util::ns_enqueued_fail_event( j, m_ns_filelist ) );
-        exit(1); // FIXME: Should we keep going?
+        exit(1);
     }
 }
 
