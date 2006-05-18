@@ -5,24 +5,24 @@ using namespace glite::wms::ice::util;
 namespace apiLogger = glite::ce::cream_client_api::util;
 
 iceThread::iceThread( const std::string& name ) :
-    _name( name ),
-    _running( false ),
-    _stopped( false )
+    m_name( name ),
+    m_running( false ),
+    m_stopped( false )
 {
 
 }
 
 iceThread::iceThread( ) :
-    _name( ),
-    _running( false ),
-    _stopped( false )
+    m_name( ),
+    m_running( false ),
+    m_stopped( false )
 {
 
 }
 
 void iceThread::operator()()
 {
-    _running = true;
+    m_running = true;
     apiLogger::creamApiLogger::instance()->getLogger()->infoStream()
         << "Thread " << getName() << " starting..."
         << log4cpp::CategoryStream::ENDLINE;
@@ -30,5 +30,5 @@ void iceThread::operator()()
     apiLogger::creamApiLogger::instance()->getLogger()->infoStream()
         << "Thread " << getName() << " finished"
         << log4cpp::CategoryStream::ENDLINE;
-    _running = false;
+    m_running = false;
 }

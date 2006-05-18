@@ -38,9 +38,9 @@ namespace glite {
 	class jobCache {
 
 	private:
-            static jobCache *_instance; ///< The singleton instance of the jobCache class
-            static std::string jnlFile; ///< The name of the journal file used to log operations on the cache
-            static std::string snapFile; ///< The name of the cache snapshot file, used to save snapshots of the cache content
+            static jobCache *s_instance; ///< The singleton instance of the jobCache class
+            static std::string s_jnlFile; ///< The name of the journal file used to log operations on the cache
+            static std::string s_snapFile; ///< The name of the cache snapshot file, used to save snapshots of the cache content
 
           /**
            * This class represents a sort of "double-keyed hash
@@ -57,7 +57,7 @@ namespace glite {
            * to the user.
            */
 
-	      log4cpp::Category* log_dev;
+	  log4cpp::Category* m_log_dev;
 
           class jobCacheTable {
           protected:
@@ -66,9 +66,9 @@ namespace glite {
               typedef std::map< std::string, _jobsType::iterator > _cidMapType;
               typedef std::map< std::string, _jobsType::iterator > _gidMapType;
 
-              _jobsType _jobs; ///< Jobs in the jobCacheTable are stored in a list
-              std::map< std::string, _jobsType::iterator > _cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
-              std::map< std::string, _jobsType::iterator > _gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
+              _jobsType m_jobs; ///< Jobs in the jobCacheTable are stored in a list
+              std::map< std::string, _jobsType::iterator > m_cidMap; ///< This hash table associates Cream jobIDs with job positions in the list _jobs
+              std::map< std::string, _jobsType::iterator > m_gidMap; ///< This hash table associates Grid jobIDs with job positions in the list _jobs
 
 
           public:
@@ -156,9 +156,9 @@ namespace glite {
 
           };
 
-          jobCacheTable _jobs; ///< The in-core data structure holding the set of jobs
+          jobCacheTable m_jobs; ///< The in-core data structure holding the set of jobs
 
-	  int operation_counter; ///< Number of operations logged on the journal
+	  int m_operation_counter; ///< Number of operations logged on the journal
 
           /**
            * Loads the journal handled by the jnlMgr object.
@@ -172,7 +172,7 @@ namespace glite {
 	  void loadSnapshot(void) 
 	    throw(jnlFile_ex&, ClassadSyntax_ex&);
 
-	  boost::scoped_ptr< glite::wms::ice::util::jnlFileManager > jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
+	  boost::scoped_ptr< glite::wms::ice::util::jnlFileManager > m_jnlMgr; ///< The journal manager used to handle access to the journal/snapshot file
 
 	protected:
 	  jobCache( )
@@ -216,7 +216,7 @@ namespace glite {
            *
            * @param jnl the full pathname of the journal file
            */
-	  static void setJournalFile(const std::string& jnl) { jnlFile = jnl; }
+	  static void setJournalFile(const std::string& jnl) { s_jnlFile = jnl; }
 
           /**
            * Changes the path and filename of the snapshot file. This method,
@@ -225,7 +225,7 @@ namespace glite {
            *
            * @param snap the full pathname of the snapshot file
            */
-	  static void setSnapshotFile(const std::string& snap) { snapFile = snap; }
+	  static void setSnapshotFile(const std::string& snap) { s_snapFile = snap; }
 
           /**
            * Destructor.
@@ -290,7 +290,7 @@ namespace glite {
            * @return an iterator to the first job
            */
           iterator begin( void ) {
-              return _jobs.begin();
+              return m_jobs.begin();
           };
           
           /**
@@ -299,7 +299,7 @@ namespace glite {
            * @return an iterator to the end of the jobCache
            */
           iterator end( void ) {
-              return _jobs.end();
+              return m_jobs.end();
           };
           
           /**
@@ -308,7 +308,7 @@ namespace glite {
            * @return a const_iterator to the first job 
            */
           const_iterator begin( void ) const {
-              return _jobs.begin();
+              return m_jobs.begin();
           };
           
           /**
@@ -317,7 +317,7 @@ namespace glite {
            * @return a const_iterator to the end of the jobCache
            */
           const_iterator end( void ) const {
-              return _jobs.end();
+              return m_jobs.end();
           };
 
           /**

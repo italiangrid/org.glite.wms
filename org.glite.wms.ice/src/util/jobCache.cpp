@@ -31,9 +31,9 @@ using namespace std;
 using namespace glite::wms::ice::util;
 namespace apiutil = glite::ce::cream_client_api::util;
 
-jobCache* jobCache::_instance = 0;
-string jobCache::jnlFile = DEFAULT_JNLFILE;
-string jobCache::snapFile = DEFAULT_SNAPFILE;
+jobCache* jobCache::s_instance = 0;
+string jobCache::s_jnlFile = DEFAULT_JNLFILE;
+string jobCache::s_snapFile = DEFAULT_SNAPFILE;
 boost::recursive_mutex jobCache::mutex;
 
 // 
@@ -42,9 +42,9 @@ boost::recursive_mutex jobCache::mutex;
 
 //______________________________________________________________________________
 jobCache::jobCacheTable::jobCacheTable( ) :
-    _jobs( ),
-    _cidMap( ),
-    _gidMap( )
+    m_jobs( ),
+    m_cidMap( ),
+    m_gidMap( )
 {
 }
 
@@ -54,20 +54,20 @@ jobCache::jobCacheTable::iterator jobCache::jobCacheTable::putJob( const CreamJo
     // Note: the GridJobID of a job MUST always be defined; the creamJobId
     // could be initially empty, so we need to check this.
 
-    _gidMapType::iterator it = _gidMap.find( c.getGridJobID() );
+    _gidMapType::iterator it = m_gidMap.find( c.getGridJobID() );
     jobCacheTable::iterator pos;
-    if ( it == _gidMap.end() ) {
+    if ( it == m_gidMap.end() ) {
         // Inserts a new job
-        _jobs.push_back( c );
-        pos = --_jobs.end();
+        m_jobs.push_back( c );
+        pos = --m_jobs.end();
     } else {
         pos = it->second;
         // overwrites existing job
         *pos = c;
     }
-    _gidMap.insert( make_pair( c.getGridJobID(), pos ) );
+    m_gidMap.insert( make_pair( c.getGridJobID(), pos ) );
     if ( !c.getJobID().empty() ) {
-        _cidMap.insert( make_pair( c.getJobID(), pos ) );
+        m_cidMap.insert( make_pair( c.getJobID(), pos ) );
     }
     return pos;
 }
@@ -79,27 +79,27 @@ void jobCache::jobCacheTable::delJob( const jobCacheTable::iterator& pos )
         return;
 
     // Removes from the gidMap
-    _gidMap.erase( pos->getGridJobID() );
+    m_gidMap.erase( pos->getGridJobID() );
 
     // Removes from the cidMap
     if ( !pos->getJobID().empty() ) {
-        _cidMap.erase( pos->getJobID() );
+        m_cidMap.erase( pos->getJobID() );
     }
 
     // Finally, removes from the joblist
-    _jobs.erase( pos );
+    m_jobs.erase( pos );
 }
 
 //______________________________________________________________________________
 jobCache::jobCacheTable::iterator 
 jobCache::jobCacheTable::findJobByGID( const std::string& gid )
 {
-    _gidMapType::iterator it = _gidMap.find( gid );
+    _gidMapType::iterator it = m_gidMap.find( gid );
 
-    if ( it != _gidMap.end() ) {
+    if ( it != m_gidMap.end() ) {
         return it->second;
     } else {
-        return _jobs.end();
+        return m_jobs.end();
     }
 }
 
@@ -107,12 +107,12 @@ jobCache::jobCacheTable::findJobByGID( const std::string& gid )
 jobCache::jobCacheTable::iterator 
 jobCache::jobCacheTable::findJobByCID( const std::string& cid )
 {
-    _cidMapType::iterator it = _cidMap.find( cid );
+    _cidMapType::iterator it = m_cidMap.find( cid );
 
-    if ( it != _cidMap.end() ) {
+    if ( it != m_cidMap.end() ) {
         return it->second;
     } else {
-        return _jobs.end();
+        return m_jobs.end();
     }
 }
 
@@ -120,47 +120,47 @@ jobCache::jobCacheTable::findJobByCID( const std::string& cid )
 jobCache::jobCacheTable::iterator 
 jobCache::jobCacheTable::begin( void )
 {
-    return _jobs.begin( );
+    return m_jobs.begin( );
 }
 
 //______________________________________________________________________________
 jobCache::jobCacheTable::iterator 
 jobCache::jobCacheTable::end( void )
 {
-    return _jobs.end( );
+    return m_jobs.end( );
 }
 
 //______________________________________________________________________________
 jobCache::jobCacheTable::const_iterator 
 jobCache::jobCacheTable::begin( void ) const
 {
-    return _jobs.begin( );
+    return m_jobs.begin( );
 }
 
 //______________________________________________________________________________
 jobCache::jobCacheTable::const_iterator 
 jobCache::jobCacheTable::end( void ) const
 {
-    return _jobs.end( );
+    return m_jobs.end( );
 }
 
 //______________________________________________________________________________
 jobCache* jobCache::getInstance() throw(jnlFile_ex&, ClassadSyntax_ex&) {
-    if(!_instance)
-        _instance = new jobCache( ); // can throw jnlFile_ex or
+    if(!s_instance)
+        s_instance = new jobCache( ); // can throw jnlFile_ex or
     // ClassadSyntax_ex
-    return _instance;
+    return s_instance;
 }
 
 //______________________________________________________________________________
 jobCache::jobCache( void )
   throw(jnlFile_ex&, ClassadSyntax_ex&) 
-    : log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
-      _jobs( ),
-      operation_counter(0)
+    : m_log_dev(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()),
+      m_jobs( ),
+      m_operation_counter(0)
 { 
-    jnlFileManager *man = new jnlFileManager( jnlFile );
-    jnlMgr.reset( man );
+    jnlFileManager *man = new jnlFileManager( s_jnlFile );
+    m_jnlMgr.reset( man );
     loadSnapshot();
     loadJournal();
 }
@@ -179,7 +179,7 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
    */
   struct stat stat_buf;
   int saveerr = 0;
-  if(-1==::stat(snapFile.c_str(), &stat_buf)) {
+  if(-1==::stat(s_snapFile.c_str(), &stat_buf)) {
     saveerr = errno;
     if(saveerr==ENOENT) return;
     else
@@ -195,7 +195,7 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
    * by its dtor. This ensure file closing under any circumstance 
    * (unexpected exception raising, forgotting to call ::close() etc.)
    */
-  ifstream tmpIs(snapFile.c_str(), ios::in );
+  ifstream tmpIs(s_snapFile.c_str(), ios::in );
   /**
    * Loads jobs from snapshot file
    */
@@ -209,8 +209,8 @@ void jobCache::loadSnapshot() throw(jnlFile_ex&, ClassadSyntax_ex&)
 
     // CreamJob cj = this->unparse(Buf); // can raise a ClassadSyntax_ex
     CreamJob cj( Buf ); // can raise ClassadSyntax_ex
-    _jobs.putJob( cj ); // update in-memory data structure
-    operation_counter++;
+    m_jobs.putJob( cj ); // update in-memory data structure
+    m_operation_counter++;
   }
   tmpIs.close(); // redundant: ifstream's dtor also closes file
 }
@@ -223,21 +223,21 @@ void jobCache::loadJournal(void)
     operation op;
     string param;
     
-    while ( jnlMgr->getOperation(op, param) ) {
+    while ( m_jnlMgr->getOperation(op, param) ) {
         
         CreamJob cj( param );
         
         switch ( op ) {
         case PUT:
-            _jobs.putJob( cj );
-            operation_counter++;
+            m_jobs.putJob( cj );
+            m_operation_counter++;
             break;
         case ERASE:
-            _jobs.delJob( lookupByGridJobID( cj.getGridJobID() ) );
-            operation_counter++;
+            m_jobs.delJob( lookupByGridJobID( cj.getGridJobID() ) );
+            m_operation_counter++;
             break;
         default:
-            log_dev->log(log4cpp::Priority::ERROR,
+            m_log_dev->log(log4cpp::Priority::ERROR,
                          "Unknown operation parsing the journal");
         }
     }
@@ -249,13 +249,13 @@ jobCache::iterator jobCache::put(const CreamJob& cj) throw (jnlFile_ex&, jnlFile
     string param= cj.serialize();
 //    std::cout << std::endl << "*** ALVISE DEBUG: PUTTING job [" << cj.getJobID() << "] - status ["<<cj.getStatus()<<"]"<<std::endl;
     logOperation( PUT, param );
-    return _jobs.putJob( cj );
+    return m_jobs.putJob( cj );
 }
 
 //______________________________________________________________________________
 void jobCache::print(ostream& os) {
     jobCacheTable::const_iterator it;
-    for ( it=_jobs.begin(); it!=_jobs.end(); it++ ) {
+    for ( it=m_jobs.begin(); it!=m_jobs.end(); it++ ) {
         os << "GID=" << it->getGridJobID() 
            << " CID=" << it->getJobID() 
            << " STATUS=" << it->getStatus()
@@ -269,7 +269,7 @@ void jobCache::dump() throw (jnlFile_ex&)
 //    string tmpSnapFile = snapFile + ".tmp." +
 //        apiutil::string_manipulation::make_string(::getpid());
 
-    string tmpSnapFile = boost::str( boost::format("%1%.tmp.%2%") % snapFile % ::getpid() );
+    string tmpSnapFile = boost::str( boost::format("%1%.tmp.%2%") % s_snapFile % ::getpid() );
 
     int saveerr = 0;
         
@@ -290,10 +290,10 @@ void jobCache::dump() throw (jnlFile_ex&)
         
         jobCacheTable::iterator it;
         
-	log_dev->log(log4cpp::Priority::INFO,
+	m_log_dev->log(log4cpp::Priority::INFO,
 		     "jobCache::dump() - Dumping snapshot file");
         
-        for (it=_jobs.begin(); it != _jobs.end(); it++ ) {
+        for (it=m_jobs.begin(); it != m_jobs.end(); it++ ) {
             
             string param = it->serialize();
             
@@ -310,12 +310,12 @@ void jobCache::dump() throw (jnlFile_ex&)
         tmpOs.close(); // redundant: ofstream's dtor also closes the file
     }
     
-    if(-1==::rename(tmpSnapFile.c_str(), snapFile.c_str()))
+    if(-1==::rename(tmpSnapFile.c_str(), s_snapFile.c_str()))
         {
             string err = string("Error renaming temp snapshot file into snapshot file")+
                 strerror(errno);
             
-	    log_dev->log(log4cpp::Priority::ERROR,
+	    m_log_dev->log(log4cpp::Priority::ERROR,
 			 string("jobCache::dump() - Could't rename snapshot file: ")+err);
             
             throw jnlFile_ex(err);
@@ -329,41 +329,41 @@ void jobCache::logOperation( const operation& op, const std::string& param )
      * Updates journal file
      *
      */
-    jnlMgr->readonly_mode(false);
-    jnlMgr->logOperation(op, param); // can raise jnlFile_ex and jnlFileReadOnly_ex
+    m_jnlMgr->readonly_mode(false);
+    m_jnlMgr->logOperation(op, param); // can raise jnlFile_ex and jnlFileReadOnly_ex
 
     /**
      * checks if cache-dump and journal-truncation are needed
      */
-    operation_counter++;
+    m_operation_counter++;
     int max_op_cntr;
     {
       boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
       max_op_cntr = iceConfManager::getInstance()->getMaxJobCacheOperationBeforeDump();
     }
 
-    if( operation_counter >= max_op_cntr )
+    if( m_operation_counter >= max_op_cntr )
     {
-      operation_counter = 0;
+      m_operation_counter = 0;
       try {
 	this->dump(); // can raise a jnlFile_ex
-	jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
+	m_jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
       } catch(jnlFile_ex& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
+	m_log_dev->log(log4cpp::Priority::ERROR,
 		     string("jobCache::logOperation() - ")
 		     + ex.what());
 	exit(1);
       } catch(jnlFileReadOnly_ex& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
+	m_log_dev->log(log4cpp::Priority::ERROR,
 		     ex.what());
 	exit(1);
       } catch(std::exception& ex) {
-	log_dev->log(log4cpp::Priority::ERROR,
+	m_log_dev->log(log4cpp::Priority::ERROR,
 		     string("jobCache::logOperation() - ")
 		     + ex.what());
 	exit(1);
       } catch(...) {
-	log_dev->log(log4cpp::Priority::ERROR,
+	m_log_dev->log(log4cpp::Priority::ERROR,
 		     string("jobCache::logOperation() - Catched unknown exception"));
 	exit(1);
       }
@@ -372,17 +372,17 @@ void jobCache::logOperation( const operation& op, const std::string& param )
 
 jobCache::iterator jobCache::lookupByCreamJobID( const string& creamJID )
 {
-    return _jobs.findJobByCID( creamJID );
+    return m_jobs.findJobByCID( creamJID );
 }
 
 jobCache::iterator jobCache::lookupByGridJobID( const string& gridJID )
 {
-    return _jobs.findJobByGID( gridJID );
+    return m_jobs.findJobByGID( gridJID );
 }
 
 jobCache::iterator jobCache::erase( jobCache::iterator& it )
 {
-    if ( it == _jobs.end() ) {
+    if ( it == m_jobs.end() ) {
         return it;
     }
 
@@ -393,6 +393,6 @@ jobCache::iterator jobCache::erase( jobCache::iterator& it )
     string to_string = it->serialize();
     // job found, log operation and remove
     logOperation( ERASE, to_string );
-    _jobs.delJob( it );    
+    m_jobs.delJob( it );    
     return result;
 }

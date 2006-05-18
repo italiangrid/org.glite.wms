@@ -24,7 +24,7 @@ namespace wms {
 namespace ice {
 namespace util {
 
-subscriptionCache* subscriptionCache::instance = NULL;
+subscriptionCache* subscriptionCache::s_instance = NULL;
 boost::recursive_mutex subscriptionCache::mutex;
 
 subscriptionCache::subscriptionCache( ) 
@@ -35,8 +35,8 @@ subscriptionCache::subscriptionCache( )
 //----------------------------------------------------------------------------
 void subscriptionCache::insert( const std::string& s )
 {
-    if ( cemons.find(s) == cemons.end() ) {
-        cemons.insert(s); 
+    if ( m_cemons.find(s) == m_cemons.end() ) {
+        m_cemons.insert(s); 
     }
 }
 
@@ -44,9 +44,9 @@ void subscriptionCache::insert( const std::string& s )
 void subscriptionCache::remove(const string& s)
 {
     boost::recursive_mutex::scoped_lock M( mutex );
-    it = cemons.find(s);
-    if( it != cemons.end() ) {
-        cemons.erase( it );
+    m_it = m_cemons.find(s);
+    if( m_it != m_cemons.end() ) {
+        m_cemons.erase( m_it );
     }
 }
 
@@ -54,16 +54,16 @@ void subscriptionCache::remove(const string& s)
 bool subscriptionCache::has(const string& s)
 {
     boost::recursive_mutex::scoped_lock M( mutex );
-    it = cemons.find(s);
-    return ( it != cemons.end() );
+    m_it = m_cemons.find(s);
+    return ( m_it != m_cemons.end() );
 }
 
 //____________________________________________________________________________
 subscriptionCache* subscriptionCache::getInstance()
 {
-    if (!instance)
-        instance = new subscriptionCache();
-    return instance;
+    if (!s_instance)
+        s_instance = new subscriptionCache();
+    return s_instance;
 }
 
 } // namespace util

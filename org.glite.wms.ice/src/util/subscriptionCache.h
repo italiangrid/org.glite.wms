@@ -29,9 +29,9 @@ namespace ice {
 namespace util {
 
   class subscriptionCache {
-      std::set<std::string> cemons;
-      std::set<std::string>::const_iterator it;
-      static subscriptionCache* instance;    
+      std::set<std::string> m_cemons;
+      std::set<std::string>::const_iterator m_it;
+      static subscriptionCache* s_instance;    
       
   protected:
       subscriptionCache();

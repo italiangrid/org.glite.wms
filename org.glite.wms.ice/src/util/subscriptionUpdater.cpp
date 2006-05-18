@@ -3,6 +3,7 @@
 #include "subscriptionManager.h"
 #include "jobCache.h"
 #include "cemonUrlCache.h"
+#include "iceUtils.h"
 #include "glite/ce/cream-client-api-c/CreamProxyFactory.h"
 #include "glite/ce/cream-client-api-c/CreamProxy.h"
 #include <iostream>
@@ -33,30 +34,42 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   /**
    * let's Determine our hostname to use as consumerURL
    */
-  char name[256];
-  memset((void*)name, 0, 256);
+//   char name[256];
+//   memset((void*)name, 0, 256);
 
-  if(gethostname(name, 256) == -1) {
-    m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
-                           << strerror(errno)
-                           << log4cpp::CategoryStream::ENDLINE;
-    m_valid = false;
-    return;
-  }
-  struct hostent *H=gethostbyname(name);
-  if(!H) {
-    m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
-			     << strerror(h_errno)
+//   if(gethostname(name, 256) == -1) {
+//     m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
+//                            << strerror(errno)
+//                            << log4cpp::CategoryStream::ENDLINE;
+//     m_valid = false;
+//     return;
+//   }
+//   struct hostent *H=gethostbyname(name);
+//   if(!H) {
+//     m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - Couldn't resolve local hostname: "
+// 			     << strerror(h_errno)
+// 			     << log4cpp::CategoryStream::ENDLINE;
+//     m_valid = false;
+//     return;
+//   }
+
+  char* tmp_myname;
+  try {
+    tmp_myname = (char*)iceUtil::getHostName().c_str();
+  } catch( runtime_error& ex) {
+    m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - iceUtils::getHostName() returned an ERROR: "
+			     << ex.what()
 			     << log4cpp::CategoryStream::ENDLINE;
     m_valid = false;
     return;
   }
+
   {
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     if( m_conf->getListenerEnableAuthN() )
-      m_myname = boost::str( boost::format("https://%1%:%2%") % H->h_name % m_conf->getListenerPort() );
+      m_myname = boost::str( boost::format("https://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
     else
-      m_myname = boost::str( boost::format("http://%1%:%2%") % H->h_name % m_conf->getListenerPort() );
+      m_myname = boost::str( boost::format("http://%1%:%2%") % tmp_myname % m_conf->getListenerPort() );
   }
   
   m_subMgr->setConsumerURLName( m_myname );

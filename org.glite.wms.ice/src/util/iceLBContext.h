@@ -30,7 +30,7 @@ namespace glite {
                     virtual const char *what( void ) const throw();
                     
                 private:
-                    std::string     le_reason;
+                    std::string     m_le_reason;
                 };
 
                 // Forward Declaration
@@ -43,8 +43,8 @@ namespace glite {
 
                     virtual ~iceLBContext( void );
 
-                    static void set_lb_retries( unsigned int r ) { el_s_retries = r; return; }
-                    static void set_lb_interval( unsigned int sec ) { el_s_sleep = sec; return; }
+                    static void set_lb_retries( unsigned int r ) { s_el_s_retries = r; return; }
+                    static void set_lb_interval( unsigned int sec ) { s_el_s_sleep = sec; return; }
                     static void set_lb_destination( const char* dest ) { el_s_destination = dest; return; }
 
                     /**
@@ -53,7 +53,7 @@ namespace glite {
                      */
                     void registerJob( const CreamJob& theJob );
 
-                    inline void startLogging( void ) { this->el_count = 0; this->el_hostProxy = false; }
+                    inline void startLogging( void ) { this->m_el_count = 0; this->m_el_hostProxy = false; }
 
                     void setLoggingJob( const CreamJob& theJob, edg_wll_Source src  ) throw( iceLBException& );
 
@@ -78,12 +78,13 @@ namespace glite {
                     std::string el_s_localhost_name;
 
                 protected:
-                    bool el_hostProxy;
-                    unsigned int el_count;
-                    log4cpp::Category *log_dev;
-                    jobCache* _cache;
+                    bool                m_el_hostProxy;
+                    unsigned int        m_el_count;
+                    log4cpp::Category  *m_log_dev;
+                    jobCache           *m_cache;
 
-                    static unsigned int el_s_retries, el_s_sleep;
+                    static unsigned int s_el_s_retries, 
+		                        s_el_s_sleep;
                 };
 
             } // namespace util

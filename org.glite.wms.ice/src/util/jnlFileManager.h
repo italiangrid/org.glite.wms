@@ -32,16 +32,16 @@ namespace glite {
 	*/
 	class jnlFileManager {
 	  
-	  std::string filename;
-	  std::ofstream os;
-	  std::ifstream is;
-	  bool readonly, isempty;
-          boost::recursive_mutex mutexJnlFile;
-          boost::recursive_mutex::scoped_lock mutexJnlFileLock;
+	  std::string m_filename;
+	  std::ofstream m_os;
+	  std::ifstream m_is;
+	  bool m_readonly, m_isempty;
+          boost::recursive_mutex m_mutexJnlFile;
+          boost::recursive_mutex::scoped_lock m_mutexJnlFileLock;
 
-	  unsigned long long savedoff;
+	  unsigned long long m_savedoff;
 
-          static const boost::regex match;
+          static const boost::regex s_match;
 
 	public:
 	  //! jnlFileManager Constructor
@@ -52,8 +52,8 @@ namespace glite {
 	   */
 	  jnlFileManager(const std::string& jnlFile) throw (glite::wms::ice::util::jnlFile_ex&);
 	  virtual ~jnlFileManager() throw () {
-	    if(readonly) is.close();
-	    else os.close();
+	    if(m_readonly) m_is.close();
+	    else m_os.close();
 	  }
 	  
 	  //! Truncates the journal file

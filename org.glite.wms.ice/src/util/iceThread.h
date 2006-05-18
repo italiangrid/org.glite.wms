@@ -31,7 +31,7 @@ namespace glite {
                * Returns true iff the thread started execution (i.e.,
                * the operator()() method has been called).
                */
-              bool isRunning( void ) const { return _running; };
+              bool isRunning( void ) const { return m_running; };
 
               /**
                * Returns true iff the thread has been stopped, by
@@ -40,14 +40,14 @@ namespace glite {
                * terminated! the thread is terminated if isStopped()
                * == true AND isRunning() == false;
                */
-              bool isStopped( void ) const { return _stopped; };
+              bool isStopped( void ) const { return m_stopped; };
 
               /**
                * Returns the name of this thread.
                *
                * @return the name of the thread
                */
-              const std::string& getName( void ) const { return _name; };
+              const std::string& getName( void ) const { return m_name; };
 
               // Modifiers
 
@@ -56,7 +56,7 @@ namespace glite {
                * the end of the current iteration, the thread will
                * terminate.
                */
-              void stop( void ) { _stopped = true; };
+              void stop( void ) { m_stopped = true; };
 
           protected:
               virtual void body( void ) = 0;
@@ -64,9 +64,9 @@ namespace glite {
               iceThread( const std::string& name );
               iceThread( ); // needed by copy costructors...
           private:              
-              std::string _name;
-              bool _running;
-              bool _stopped;
+              std::string m_name;
+              bool m_running;
+              bool m_stopped;
 
           };
 

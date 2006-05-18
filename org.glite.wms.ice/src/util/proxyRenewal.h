@@ -30,10 +30,10 @@ namespace glite {
           class proxyRenewal : public iceThread {
           protected:
 
-              log4cpp::Category* log_dev;
-              jobCache *cache;
-              boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > creamClient;
-              time_t delay;
+              log4cpp::Category* m_log_dev;
+              jobCache *m_cache;
+              boost::scoped_ptr< glite::ce::cream_client_api::soap_proxy::CreamProxy > m_creamClient;
+              time_t m_delay;
 
               void checkProxies();
               

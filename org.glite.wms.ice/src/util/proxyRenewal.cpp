@@ -25,17 +25,17 @@ using namespace std;
 //______________________________________________________________________________
 proxyRenewal::proxyRenewal() :
     iceThread( "ICE Proxy Renewer" ),
-    log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
-    cache( jobCache::getInstance() ),
-    creamClient( 0 ),
-    delay( 1*60 ) // proxy renewer wakes up every minute
+    m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() ),
+    m_cache( jobCache::getInstance() ),
+    m_creamClient( 0 ),
+    m_delay( 1*60 ) // proxy renewer wakes up every minute
 {
     try {        
         soap_proxy::CreamProxy* p( new soap_proxy::CreamProxy( false ) );
-        creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
+        m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
-	log_dev->fatalStream()
+	m_log_dev->fatalStream()
 	      << "proxyRenewal::CTOR() - Error creating a CreamProxy instance: "
 	      << ex.what() <<". Stop!"
 	      << log4cpp::CategoryStream::ENDLINE;
@@ -49,12 +49,12 @@ void proxyRenewal::body( void )
 {
     while( !isStopped() ) {
 
-        log_dev->infoStream()
+        m_log_dev->infoStream()
             << "proxyRenewal::body() - new iteration"
             << log4cpp::CategoryStream::ENDLINE;
 
 	checkProxies();
-        sleep( delay );
+        sleep( m_delay );
     }
 }
 
@@ -63,14 +63,14 @@ void proxyRenewal::checkProxies()
 {
   boost::recursive_mutex::scoped_lock M( jobCache::mutex );
 
-  for(jobCache::iterator jobIt = cache->begin(); jobIt != cache->end(); ++jobIt) {
+  for(jobCache::iterator jobIt = m_cache->begin(); jobIt != m_cache->end(); ++jobIt) {
       if ( ! jobIt->is_active() ) 
           continue; // skip terminated jobs
 
     struct stat buf;
     if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 )
     {
-	log_dev->errorStream() 
+	m_log_dev->errorStream() 
             << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
             << jobIt->getUserProxyCertificate() << "] for job ["
             << jobIt->getJobID() << "]. Wont check if it needs to be renewed."
@@ -78,21 +78,21 @@ void proxyRenewal::checkProxies()
         // FIXME: what to do?
     } else {
       if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
-	log_dev->infoStream() 
+	m_log_dev->infoStream() 
             << "proxyRenewal::checkProxies() - Need to renew proxy  ["
             << jobIt->getUserProxyCertificate() << "] for job ["
             << jobIt->getJobID() << "]"
             << log4cpp::CategoryStream::ENDLINE;
 
-        creamClient->clearSoap( );
+        m_creamClient->clearSoap( );
 
         try {
-            creamClient->Authenticate( jobIt->getUserProxyCertificate() );
+            m_creamClient->Authenticate( jobIt->getUserProxyCertificate() );
 
             vector< string > theJob;
             theJob.push_back( jobIt->getJobID() );
 
-            creamClient->renewProxy( jobIt->getDelegationId(),
+            m_creamClient->renewProxy( jobIt->getDelegationId(),
                                      jobIt->getCreamURL(),
                                      jobIt->getCreamDelegURL(),
                                      jobIt->getUserProxyCertificate(),
@@ -102,7 +102,7 @@ void proxyRenewal::checkProxies()
         }
 
         jobIt->setProxyCertMTime( buf.st_mtime );
-        cache->put( *jobIt );
+        m_cache->put( *jobIt );
 
 	// update of lastmodification time of proxy file
 	// put in cache
