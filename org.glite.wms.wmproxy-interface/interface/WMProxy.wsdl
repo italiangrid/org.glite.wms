@@ -8,13 +8,13 @@
 	targetNamespace="http://glite.org/wms/wmproxy" name="WMProxy">
 	
 	<!-- ==== Import wsdl file for delegation services (client version 1.5 or greater) ==== -->
-	<wsdl:import
+	<!--wsdl:import
 			namespace="http://www.gridsite.org/namespaces/delegation-1"
-			location="www.gridsite.org-delegation-1.1.0.wsdl"/>
+			location="www.gridsite.org-delegation-1.1.0.wsdl"/-->
 
-        <!--wsdl:import
+        <wsdl:import
                         namespace="http://www.gridsite.org/namespaces/delegation-1"
-                        location="www.gridsite.org-delegation-1.0.0.wsdl"/-->
+                        location="www.gridsite.org-delegation-1.0.0.wsdl"/>
 			
 	<!-- ==== Types definition ==== -->
 	<wsdl:types>
