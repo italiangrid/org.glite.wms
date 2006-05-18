@@ -19,7 +19,7 @@
 #include "glite/lb/Job.h"
 #include "glite/lb/context-int.h" // edg_wll_SetSequenceCode
 
-// Logging
+// EDG log
 #include "utilities/logging.h"
 #include "glite/wms/common/logger/edglog.h"
 #include "glite/wms/common/logger/manipulators.h"
@@ -429,9 +429,13 @@ WMPEventLogger::registerDag(WMPExpDagAd *dag, const string &path)
     
     int dagsize = dag->size();   
     
-	// Setting LB log sync timeout   
-    int timeout = 120 + dagsize;   
-    if (edg_wll_SetParamInt(ctx, EDG_WLL_PARAM_LOG_SYNC_TIMEOUT, timeout)) {   
+	// Setting LB log sync timeout
+	struct timeval timeout;
+	timeout.tv_sec = 120 + dagsize; // seconds
+	timeout.tv_usec = 0; // microseconds
+    edglog(debug)<<"Setting LB log sync timeout to "<<timeout.tv_sec
+    	<<" seconds"<<endl; 
+    if (edg_wll_SetParamTime(ctx, EDG_WLL_PARAM_LOG_SYNC_TIMEOUT, &timeout)) {   
     	edglog(error)<<"Unable to set LB log sync timeout"<<endl;   
    	}
 

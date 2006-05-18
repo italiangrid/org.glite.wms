@@ -724,7 +724,7 @@ generateRandomNumber(int lowerlimit, int upperlimit)
    invalid or incomplete, Z_VERSION_ERROR if the version of zlib.h and
    the version of the library linked do not match, or Z_ERRNO if there
    is an error reading or writing the files.
-  */
+  *//*
 int gzUncompress (const string &source, const string &dest)
 {
 	GLITE_STACK_TRY("gzUncompress()");
@@ -799,7 +799,7 @@ int gzUncompress (const string &source, const string &dest)
 	GLITE_STACK_CATCH();
 }
 
-/* Report a zlib or i/o error */
+
 string gzError(int ret)
 {
 	string err ="";
@@ -933,7 +933,7 @@ uncompressFile(const string &filename, const string &startingpath)
 	remove(outfile);
 
 	GLITE_STACK_CATCH();
-}
+}*/
 
 void 
 fileCopy(const string& source, const string& target)
@@ -1037,6 +1037,7 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 	}
 	argvs[i] = (char *) 0;
 	
+	edglog(debug)<<"Forking process..."<<endl;
 	switch (fork()) {
 		case -1:
 			// Unable to fork
@@ -1066,6 +1067,8 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 						"doExecv()", WMS_IS_FAILURE, "Unable to execute command"
 						"\n(please contact server administrator");
 				}
+	        } else {
+	        	edglog(debug)<<"execv succesfully"<<endl;
 	        }
 	        break;
         default:
@@ -1085,6 +1088,7 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 				edglog(critical)<<"Child dumped core!!!"<<endl;
 			}
 #endif // WCOREDUMP
+			edglog(critical)<<"exit code: "<<status<<endl;
 	    	if (status) {
 	    		edglog(critical)<<"Unable to create job local directory, "
 					"exit code: "<<status<<endl;
@@ -1102,6 +1106,51 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
     GLITE_STACK_CATCH();
 }
 
+void
+untarFile(const string &file, const string &untar_starting_path,
+	uid_t userid, uid_t groupid)
+{
+	GLITE_STACK_TRY("untarFile()");
+	edglog_fn("wmputils::untarFile");
+	
+	if (fileExists(file)) {
+		// Try to find managedirexecutable 
+	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
+	   	if (!glite_path) {
+	   		glite_path = getenv(GLITE_LOCATION);
+	   	}
+	   	string gliteDirmanExe = (glite_path == NULL)
+	   		? ("/opt/glite")
+	   		:(string(glite_path)); 
+	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+	   	
+	   	// Creating parameters vector for zip file extraction
+		vector<string> extparams;
+		extparams.push_back("-c");
+		extparams.push_back(boost::lexical_cast<string>(userid));
+		extparams.push_back("-g");
+		extparams.push_back(boost::lexical_cast<string>(groupid));
+		extparams.push_back("-m");
+		extparams.push_back("0770");
+		extparams.push_back("-x");
+		extparams.push_back(untar_starting_path);
+		
+		vector<string> extfiles;
+		extfiles.push_back(file);
+		
+		doExecv(gliteDirmanExe, extparams, extfiles, 0, extfiles.size() - 1);
+		
+	} else {
+		edglog(critical)<<"Unable to untar ISB file, file does not exist: "
+			<<file<<endl;
+		throw FileSystemException(__FILE__, __LINE__,
+			"untarFile()", WMS_FILE_SYSTEM_ERROR,
+			"Unable to untar ISB file\n(please contact server administrator)");
+	}
+	
+	GLITE_STACK_CATCH();
+}
+
 int 
 managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	vector<string> jobids)
@@ -1115,7 +1164,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	unsigned int size = jobids.size();
 	edglog(info)<<"Job id vector size: "<<size<<endl;
 	
-	if (size != 0) {
+	if (size) {
 	   	// Try to find managedirexecutable 
 	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
 	   	if (glite_path == NULL) {
@@ -1263,50 +1312,6 @@ createSuidDirectory(const string &directory)
 				"Unable to create directory\n(please contact server "
 					"administrator)");
 		}
-	}
-	
-	GLITE_STACK_CATCH();
-}
-
-void
-untarFile(const string &file, const string &untar_starting_path,
-	uid_t userid, uid_t groupid)
-{
-	GLITE_STACK_TRY("untarFile()");
-	edglog_fn("wmputils::untarFile");
-	
-	if (fileExists(file)) {
-		// Try to find managedirexecutable 
-	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
-	   	if (!glite_path) {
-	   		glite_path = getenv(GLITE_LOCATION);
-	   	}
-	   	string gliteDirmanExe = (glite_path == NULL)
-	   		? ("/opt/glite")
-	   		:(string(glite_path)); 
-	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
-	   	
-		string dirpermissions = " -m 0773 ";
-		string user = " -c " + boost::lexical_cast<string>(userid); // UID
-		string group = " -g " + boost::lexical_cast<string>(groupid); // GROUP
-		string untar = " -x " + untar_starting_path + " ";
-		
-		string command = gliteDirmanExe + user + group + dirpermissions
-			+ untar + file;
-		edglog(debug)<<"Excecuting command: "<<command<<endl;
-		if (system(command.c_str())) {
-			edglog(critical)<<"Unable to untar ISB file: "<<file<<endl;
-		   	throw FileSystemException(__FILE__, __LINE__,
-				"untarFile()", WMS_FILE_SYSTEM_ERROR,
-				"Unable to untar ISB file\n(please contact server "
-					"administrator)");
-		}
-	} else {
-		edglog(critical)<<"Unable to untar ISB file, file does not exist: "
-			<<file<<endl;
-		throw FileSystemException(__FILE__, __LINE__,
-			"untarFile()", WMS_FILE_SYSTEM_ERROR,
-			"Unable to untar ISB file\n(please contact server administrator)");
 	}
 	
 	GLITE_STACK_CATCH();

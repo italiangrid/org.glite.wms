@@ -1431,8 +1431,9 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					for (unsigned int i = 0; i < files.size(); i++) {
 						edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
 						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
-						wmputilities::untarFile(jobpath + files[i], targetdir,
-							auth->getUserId(), auth->getUserGroup());
+						wmputilities::untarFile(jobpath + files[i],
+							targetdir, auth->getUserId(), auth->getUserGroup());
+						
 					}
 			    	wmputilities::setFlagFile(flagfile, true);
 			    } else {

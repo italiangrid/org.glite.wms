@@ -47,10 +47,10 @@
 
 // Untar option
 #define UNTAR_ERR_NO_ERROR                  0
-#define UNTAR_ERR_SETUID_SETGID           128
-#define UNTAR_ERR_OPEN_FILE               256
-#define UNTAR_ERR_EXTRACTING_FILE         512
-#define UNTAR_ERR_ARCHIVE_FILE_EXISTS    1024
+#define UNTAR_ERR_SETUID_SETGID            80
+#define UNTAR_ERR_OPEN_FILE                82
+#define UNTAR_ERR_EXTRACTING_FILE          84
+#define UNTAR_ERR_ARCHIVE_FILE_EXISTS      86
 
 
 // Untar functionalities
@@ -240,6 +240,8 @@ uncompressFile(char *file, char *prefix)
 	char buf[MAXPATHLEN];
 	char * infile = NULL;
 	char * outfile = NULL;
+	
+	int outcome = UNTAR_ERR_NO_ERROR;
 
 	uInt len = (uInt)strlen(file);
 	strcpy(buf, file);
@@ -264,12 +266,13 @@ uncompressFile(char *file, char *prefix)
 
 	TAR * tarfile = NULL;
 	tar_open(&tarfile, outfile, NULL, O_RDONLY, S_IRWXU, TAR_GNU);
-	chmod_tar_extract_all(tarfile, prefix);
+	outcome = chmod_tar_extract_all(tarfile, prefix);
+	fprintf(stderr, "Outcome: %d\n", outcome);
 	tar_close(tarfile);
 
 	remove(outfile);
 	
-	return UNTAR_ERR_NO_ERROR;
+	return outcome;
 }
 
 int 
@@ -448,6 +451,7 @@ int main(int argc, char *argv[]) {
 	if (summary_status != ADJUST_DIRECTORY_ERR_NO_ERROR) {
 		printf("Warning!! some error occurred\n");
 	}
+	fprintf(stderr,"summary_status: %d\n", summary_status);
 	exit(summary_status);
 }
 
