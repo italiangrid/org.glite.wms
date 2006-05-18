@@ -43,30 +43,6 @@ subscriptionManager::subscriptionManager()
     m_valid = false;
     return;
   }
-/*   char name[256];
-  memset((void*)name, 0, 256);
-
-  if(gethostname(name, 256) == -1) {
-    m_log_dev->fatalStream() << "subscriptionManager::CTOR - Couldn't resolve local hostname: "
-                           << strerror(errno)
-                           << log4cpp::CategoryStream::ENDLINE;
-    m_valid = false;
-    return;
-  }
-  struct hostent *H=gethostbyname(name);
-  if(!H) {
-      m_log_dev->fatalStream() << "subscriptionManager::CTOR - Couldn't resolve local hostname: "
-                             << strerror(h_errno)
-                             << log4cpp::CategoryStream::ENDLINE;
-    m_valid = false;
-    return;
-  }
-  ostringstream os("");
-  {
-    boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
-    os << "http://" << H->h_name << ":" << m_conf->getListenerPort();
-  }
-  m_myname = os.str(); */
 
   m_T.addDialect(NULL);
   m_vec.reserve(100);
@@ -75,7 +51,6 @@ subscriptionManager::subscriptionManager()
 //______________________________________________________________________________
 subscriptionManager* subscriptionManager::getInstance()
 {
-  //boost::recursive_mutex::scoped_lock M( mutex );
   if(!s_instance)
     s_instance = new subscriptionManager();
 
@@ -87,41 +62,27 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   throw (exception&)
 {
   m_log_dev->infoStream() << "subscriptionManager::list() - retrieving list of "
-                        << "subscriptions from [" << url << "]"
-                        << log4cpp::CategoryStream::ENDLINE;
-//  try {
-
-    m_ceSMgr.list(url, vec); // can throw an std::exception
-
-//  } catch(AuthenticationInitException& ex) {
-//       log_dev->errorStream() << "subscriptionManager::list() - "
-//                              << ex.what()
-// 	  		     << log4cpp::CategoryStream::ENDLINE;
-//      throw ex;
-//  } catch(exception& ex) {
-//       log_dev->errorStream() << "subscriptionManager::list() - "
-// 	                     << ex.what()
-// 	 		     << log4cpp::CategoryStream::ENDLINE;
-//      throw ex;
-//  }
+			  << "subscriptions from [" << url << "]"
+			  << log4cpp::CategoryStream::ENDLINE;
+  
+  m_ceSMgr.list(url, vec); // can throw an std::exception
+  
   for(vector<Subscription>::const_iterator it = m_vec.begin();
       it != m_vec.end();
       it++) 
-  {
-     //struct tm T;
-     tp = it->getExpirationTime();
-     localtime_r( &tp, &m_Time );
-     //char aT[256];
-     memset( (void*) m_aT, 0, 256 );
-     strftime(m_aT, 256, "%a %d %b %Y %T", &m_Time);
-     m_log_dev->infoStream() << "subscriptionManager::list() - "
-			   << "*** Found subscription: ["
-                           << it->getSubscriptionID()
-	 		   << "] [" << it->getConsumerURL() << "]"
-			   << " [" << it->getTopicName()<<"]"
-			   << " [" << m_aT << "]"
-			   << log4cpp::CategoryStream::ENDLINE;
-  }
+    {
+      tp = it->getExpirationTime();
+      localtime_r( &tp, &m_Time );
+      memset( (void*) m_aT, 0, 256 );
+      strftime(m_aT, 256, "%a %d %b %Y %T", &m_Time);
+      m_log_dev->infoStream() << "subscriptionManager::list() - "
+			      << "*** Found subscription: ["
+			      << it->getSubscriptionID()
+			      << "] [" << it->getConsumerURL() << "]"
+			      << " [" << it->getTopicName()<<"]"
+			      << " [" << m_aT << "]"
+			      << log4cpp::CategoryStream::ENDLINE;
+    }
 }
 
 //______________________________________________________________________________

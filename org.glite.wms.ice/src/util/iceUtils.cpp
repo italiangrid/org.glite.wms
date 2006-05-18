@@ -47,6 +47,8 @@ string getHostName( void ) throw ( runtime_error& )
     return string(H->h_name);
 }
 
+
+
 string time_t_to_string( time_t tval ) {
     char buf[26]; // ctime_r wants a buffer of at least 26 bytes
     ctime_r( &tval, buf );

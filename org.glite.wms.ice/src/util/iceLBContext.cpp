@@ -27,35 +27,36 @@ namespace fs = boost::filesystem;
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/CommonConfiguration.h"
 #include "jobCache.h"
+#include "iceUtils.h"
 
-#include <netdb.h>
+//#include <netdb.h>
 
 using namespace std;
-using namespace glite::wms::ice::util;
+namespace iceUtil = glite::wms::ice::util;
 namespace configuration = glite::wms::common::configuration;
 
 // static member definitions
-unsigned int iceLBContext::s_el_s_retries = 3;
-unsigned int iceLBContext::s_el_s_sleep = 60;
-const char *iceLBContext::el_s_notLogged = "Event not logged, context unset.";
-const char *iceLBContext::el_s_unavailable = "unavailable";
-const char *iceLBContext::el_s_OK = "OK";
-const char *iceLBContext::el_s_failed = "Failed";
+unsigned int iceUtil::iceLBContext::s_el_s_retries = 3;
+unsigned int iceUtil::iceLBContext::s_el_s_sleep = 60;
+const char *iceUtil::iceLBContext::el_s_notLogged = "Event not logged, context unset.";
+const char *iceUtil::iceLBContext::el_s_unavailable = "unavailable";
+const char *iceUtil::iceLBContext::el_s_OK = "OK";
+const char *iceUtil::iceLBContext::el_s_failed = "Failed";
 
 //////////////////////////////////////////////////////////////////////////////
 //
 // iceLogger Exception
 //
 //////////////////////////////////////////////////////////////////////////////
-iceLBException::iceLBException( const char *reason ) : m_le_reason( reason ? reason : "" )
+iceUtil::iceLBException::iceLBException( const char *reason ) : m_le_reason( reason ? reason : "" )
 {}
 
-iceLBException::iceLBException( const string &reason ) : m_le_reason( reason )
+iceUtil::iceLBException::iceLBException( const string &reason ) : m_le_reason( reason )
 {}
 
-iceLBException::~iceLBException( void ) throw() {}
+iceUtil::iceLBException::~iceLBException( void ) throw() {}
 
-const char *iceLBException::what( void ) const throw()
+const char *iceUtil::iceLBException::what( void ) const throw()
 {
   return this->m_le_reason.c_str();
 }
@@ -65,7 +66,7 @@ const char *iceLBException::what( void ) const throw()
 // iceLBContext
 //
 //////////////////////////////////////////////////////////////////////////////
-iceLBContext::iceLBContext( void ) :
+iceUtil::iceLBContext::iceLBContext( void ) :
     el_context( new edg_wll_Context ), 
     el_s_localhost_name( ),
     m_el_hostProxy( false ),
@@ -74,27 +75,25 @@ iceLBContext::iceLBContext( void ) :
     m_cache( jobCache::getInstance() )
 {
     edg_wll_InitContext( el_context );
-    char name[256];
+    //    char name[256];
 
-    if ( gethostname(name, 256) < 0 ) {
-        el_s_localhost_name = "(unknown host name )";
-    } else {
-        struct hostent *H = gethostbyname(name);
-        if ( !H ) {
-            el_s_localhost_name = "(unknown host name )";            
-        } else {
-            el_s_localhost_name = H->h_name;
-        }
+    try {
+      el_s_localhost_name = (char*)iceUtil::getHostName().c_str();
+    } catch( runtime_error& ex) {
+      m_log_dev->errorStream() << "iceLBContext::CTOR() - getHostName() returned an ERROR: "
+			       << ex.what()
+			       << log4cpp::CategoryStream::ENDLINE;
+      el_s_localhost_name = "(unknown host name )"; 
     }
 }
 
 
-iceLBContext::~iceLBContext( void )
+iceUtil::iceLBContext::~iceLBContext( void )
 {
 
 }
 
-string iceLBContext::getLoggingError( const char *preamble )
+string iceUtil::iceLBContext::getLoggingError( const char *preamble )
 {
   string       cause( preamble ? preamble : "" );
 
@@ -111,7 +110,7 @@ string iceLBContext::getLoggingError( const char *preamble )
   return cause;
 }
 
-void iceLBContext::testCode( int &code, bool retry )
+void iceUtil::iceLBContext::testCode( int &code, bool retry )
 {
     if ( code != 0 ) {
         string err( getLoggingError( 0 ) );
@@ -216,7 +215,7 @@ void iceLBContext::testCode( int &code, bool retry )
 
 }
 
-void iceLBContext::registerJob( const util::CreamJob& theJob )
+void iceUtil::iceLBContext::registerJob( const util::CreamJob& theJob )
 {
     int res;
     edg_wlc_JobId   id;
@@ -240,7 +239,7 @@ void iceLBContext::registerJob( const util::CreamJob& theJob )
 }
 
 
-void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
+void iceUtil::iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source src ) throw ( iceLBException& )
 {
     edg_wlc_JobId   id;
     int res = 0;
@@ -314,7 +313,7 @@ void iceLBContext::setLoggingJob( const util::CreamJob& theJob, edg_wll_Source s
 //
 //
 //////////////////////////////////////////////////////////////////////////////
-void iceLBContext::update_and_store_job( CreamJob& theJob )
+void iceUtil::iceLBContext::update_and_store_job( CreamJob& theJob )
 {
     boost::recursive_mutex::scoped_lock( m_cache->mutex );
     string new_seq_code( edg_wll_GetSequenceCode( *el_context ) );
