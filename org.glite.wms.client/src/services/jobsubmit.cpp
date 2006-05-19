@@ -1629,7 +1629,6 @@ void JobSubmit::createZipFile (
 */
 void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::string> > &paths, std::vector <std::pair<glite::jdl::FileAd, std::string> > &failed, std::string &errors) {
 	int code = 0;
-	ostringstream err ;
 	string protocol = "";
 	string source = "";
 	string destination = "";
@@ -1665,11 +1664,11 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		protocol = (source.find("://")==string::npos)?FILE_PROTOCOL:"";
 		// command
 		cmd= globusUrlCopy +" "+ string (protocol+source) + " " + destination;
-
 		logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)\n" , cmd);
 		// launches the command
 		code = system( cmd.c_str() );
 		if (code != 0){
+			ostringstream err;
 			err << " - " <<  source << "\nto: " << destination << " - ErrorCode: " << code << "\n";
 			reason = strerror(code);
 			if (reason!=NULL) {
@@ -1683,6 +1682,7 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 					"ErrorCode=" + boost::lexical_cast<string>(code) );
 			}
 			failed.push_back(paths[0]);
+			errors+=err.str();
 		} else{
 			logInfo->print(WMS_DEBUG, "File Transfer (gsiftp)", "Transfer successfully done");
 			// Removes the zip file just transferred
@@ -1699,6 +1699,8 @@ void JobSubmit::gsiFtpTransfer(std::vector <std::pair<glite::jdl::FileAd, std::s
 		paths.erase(paths.begin());
 	}
 }
+
+
 
 /**
 * File transfer by CURL (https protocol)
