@@ -54,7 +54,7 @@ const char* LOG_DEFAULT_PATH	= "/tmp";
 // Environment variables
 const char* GRIDMAP_ENV			= "GRIDMAP";
 const char* GLITE_LOCATION_ENV 	= "GLITE_LOCATION";
-const char* GLITE_VAR_ENV 		= "GLITE_WMS_LOCATION_VAR";
+const char* GLITE_LOG_ENV 		= "GLITE_LOCATION_LOG";
 // Subject substrings
 const char* PERSONAL_FIELD 	= "CN=";
 const char* DNLIST_FIELD 		="http";
@@ -178,7 +178,7 @@ void Converter::usage(const std::string &exe) {
 	cout << "\t\t($GLITE_LOCATION/etc/glite_wms_wmproxy.gacl);\n";
 	cout << "\t--" << LONG_LOG << " <filepath>\n";
 	cout << "\t\tcreate a log file in a different path from the default one\n";
-	cout << "\t\t([$GLITE_VAR_ENV] | [/tmp] /mapfile2gacl-<date>-debug.log);\n";
+	cout << "\t\t([$GLITE_LOCATION_LOG] | [/tmp] /mapfile2gacl-<date>-debug.log);\n";
 	cout << "\t--" << LONG_ADD << "\n";
 	cout << "\t\tonly adding of new entries to the gacl file is allowed;\n";
 	cout << "\t--" << LONG_REMOVE << "\n";
@@ -229,7 +229,7 @@ Log* Converter::createLogFile ( ) {
         oss << (ns->tm_year+1900) << FILL << ns->tm_mon ;
 	oss << FILL << ns->tm_mday ;
 	// location
-	env = getenv (GLITE_VAR_ENV);
+	env = getenv (GLITE_LOG_ENV);
 	if (env) {
 		path = string(env) ;
 	} else {
