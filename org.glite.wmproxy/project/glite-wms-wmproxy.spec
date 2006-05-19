@@ -58,6 +58,9 @@ gLite WMS WMProxy Service executables and libraries
 #%attr(-, root, root) %{prefix}/bin/glite_wms_wmproxy_purge_proxycache
 %attr(4555, root, root) %{prefix}/bin/glite_wms_wmproxy_dirmanager
 %attr(-, root, root) %{prefix}/bin/glite_wms_wmproxy_server
+%attr(-, root, root) %{prefix}/bin/glite-wms-wmproxy-gacladmin
+%attr(-, root, root) %{prefix}/bin/glite-wms-wmproxy-gridmapfile2gacl
+%attr(-, root, root) %{prefix}/bin/glite-wms-wmproxy-purge-proxycache
 %attr(-, root, root) %{prefix}/etc/lcmaps/lcmaps.db.template
 %attr(-, root, root) %{prefix}/etc/glite_wms_wmproxy_httpd.conf.template
 %attr(-, root, root) %{prefix}/etc/glite_wms_wmproxy.gacl.template
