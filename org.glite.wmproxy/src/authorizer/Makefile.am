@@ -27,7 +27,6 @@ lib_LTLIBRARIES = \
 
 noinst_HEADERS = \
 	wmpauthorizer.h \
-	wmpgacladmin.h \
 	wmpvomsauthz.h
 
 libglite_wms_wmproxy_authorizer_la_SOURCES = \
