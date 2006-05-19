@@ -218,7 +218,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegatedproxyfqan, authorizer::WMPAuthorizer *auth)
 {
 	GLITE_STACK_TRY("jobregister()");
-	edglog_fn("wmpoperations::jobregister");
+	edglog_fn("wmpcoreoperations::jobregister");
 	
 	// Checking for VO in jdl file
 	string vo = wmputilities::getEnvVO();
@@ -233,7 +233,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
 					"Organisation";
 				edglog(error)<<msg<<endl;
 				throw JobOperationException(__FILE__, __LINE__,
-			    	"wmpoperations::jobregister()",
+			    	"wmpcoreoperations::jobregister()",
 			    	wmputilities::WMS_OPERATION_NOT_ALLOWED, 
 			    	msg);
 			}
@@ -261,7 +261,7 @@ jobregister(jobRegisterResponse &jobRegister_response, const string &jdl,
         	if (jad->getStringValue(JDL::JOBTYPE).size() > 1) {
         		edglog(error)<<"Composite Job Type not yet supported"<<endl;
             	throw JobOperationException(__FILE__, __LINE__,
-        			"wmpoperations::jobregister()",
+        			"wmpcoreoperations::jobregister()",
         			wmputilities::WMS_OPERATION_NOT_ALLOWED,
         			"Composite Job Type not yet supported");
            }
@@ -309,7 +309,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 	const string &delegation_id)
 {
 	GLITE_STACK_TRY("jobRegister()");
-	edglog_fn("wmpoperations::jobRegister");
+	edglog_fn("wmpcoreoperations::jobRegister");
 	logRemoteHostInfo();
 	
 	// Checking delegation id
@@ -346,7 +346,7 @@ jobRegister(jobRegisterResponse &jobRegister_response, const string &jdl,
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::jobRegister()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHZ_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -372,7 +372,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	const string &jobid, vector<string> &jobids)
 {
 	GLITE_STACK_TRY("setSubjobFileSystem()");
-	edglog_fn("wmpoperations::setSubjobFileSystem");
+	edglog_fn("wmpcoreoperations::setSubjobFileSystem");
 	
 	// Getting LCMAPS mapped User ID
 	uid_t jobdiruserid = auth->getUserId();
@@ -393,9 +393,9 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	// Creating sub jobs directories
 	if (jobids.size()) {
 		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-		int outcome = wmputilities::managedir(document_root, userid,
+		/*int outcome =*/ wmputilities::managedir(document_root, userid,
 			jobdiruserid, jobids);
-		if (outcome) {
+		/*if (outcome) {
 			edglog(critical)
 				<<"Unable to create sub jobs local directories for job:\n\t"
 				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
@@ -403,7 +403,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 				"setSubjobFileSystem()", wmputilities::WMS_FATAL,
 				"Unable to create sub jobs local directories\n(please contact "
 				"server administrator)");
-		} else {
+		} else {*/
 			string link;
 			string linkbak;
 			
@@ -442,7 +442,7 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 			    	}
 			    }
 			}
-		}
+		//}
 		// Creating gacl file in the private job directory
 		authorizer::WMPAuthorizer::setJobGacl(jobids);
 	}
@@ -456,7 +456,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	char * renewalproxy = NULL)
 {
 	GLITE_STACK_TRY("setJobFileSystem()");
-	edglog_fn("wmpoperations::setJobFileSystem");
+	edglog_fn("wmpcoreoperations::setJobFileSystem");
 	
 	// Getting LCMAPS mapped User ID
 	uid_t jobdiruserid = auth->getUserId();
@@ -471,14 +471,14 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	vector<string> job;
 	job.push_back(jobid);
 	edglog(debug)<<"Creating job directories for job:\n"<<jobid<<endl;
-	if (wmputilities::managedir(document_root, userid, jobdiruserid, job)) {
+	/*if (*/wmputilities::managedir(document_root, userid, jobdiruserid, job);/*) {
 		edglog(critical)<<"Unable to create job local directory for job:\n\t"
 			<<jobid<<"\n"<<strerror(errno)<<endl;
 		throw FileSystemException(__FILE__, __LINE__,
 			"setJobFileSystem()", wmputilities::WMS_FATAL,
 			"Unable to create job local directory\n(please contact server "
 			"administrator)");
-	}
+	}*/
 	
 	// Getting delegated proxy inside job directory
 	string proxy(wmputilities::getJobDelegatedProxyPath(jobid));
@@ -534,7 +534,7 @@ setAttributes(JobAd *jad, JobId *jid, const string &dest_uri,
 	const string &delegatedproxyfqan)
 {
 	GLITE_STACK_TRY("setAttributes()");
-	edglog_fn("wmpoperations::setAttributes JOB");
+	edglog_fn("wmpcoreoperations::setAttributes JOB");
 	
 	// Inserting Proxy VO if not present in original jdl file
 	edglog(debug)<<"Setting attribute JDL::VIRTUAL_ORGANISATION"<<endl;
@@ -629,7 +629,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	const string &delegatedproxyfqan, const string &jdl, JobAd *jad)
 {
 	GLITE_STACK_TRY("regist()");
-	edglog_fn("wmpoperations::regist JOB");
+	edglog_fn("wmpcoreoperations::regist JOB");
 	
 	if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
 		if (!jad->hasAttribute(JDL::SHHOST)) {
@@ -768,7 +768,7 @@ setAttributes(WMPExpDagAd *dag, JobId *jid, const string &dest_uri,
 	const string &delegatedproxyfqan)
 {
 	GLITE_STACK_TRY("setAttributes()");
-	edglog_fn("wmpoperations::setAttributes DAG");
+	edglog_fn("wmpcoreoperations::setAttributes DAG");
 	
 	// Adding WMProxyDestURI attribute
 	edglog(debug)<<"Setting attribute JDL::WMPISB_BASE_URI"<<endl;
@@ -843,7 +843,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	JobAd *jad)
 {
 	GLITE_STACK_TRY("regist()");
-	edglog_fn("wmpoperations::regist DAG");
+	edglog_fn("wmpcoreoperations::regist DAG");
 
 	// Creating unique identifier
 	JobId *jid = new JobId();
@@ -1093,7 +1093,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	struct soap *soap)
 {
 	GLITE_STACK_TRY("jobStart()");
-	edglog_fn("wmpoperations::jobStart");
+	edglog_fn("wmpcoreoperations::jobStart");
 	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
@@ -1121,7 +1121,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	if ( authorizer::WMPAuthorizer::checkJobDrain ( ) ) {
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::jobStart()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpcoreoperations::jobStart()", wmputilities::WMS_AUTHZ_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -1208,7 +1208,7 @@ logCheckpointable(WMPEventLogger * wmplogger, JobAd * jad,
 	const string &stringjid) 
 {
 	GLITE_STACK_TRY("logCheckpointable()");
-	edglog_fn("wmpoperations::logCheckpointable");
+	edglog_fn("wmpcoreoperations::logCheckpointable");
 	
 	int current_step;
 	if (jad->hasAttribute(JDL::CHKPT_CURRENTSTEP)) {
@@ -1262,7 +1262,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	int fd = -1; 
 	
 	try {
-		edglog_fn("wmpoperations::submit");
+		edglog_fn("wmpcoreoperations::submit");
 		
 		if (issubmit) {
 			// Starting the job. Need to continue from last logged seqcode
@@ -1430,6 +1430,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						+ FILE_SEPARATOR;
 					for (unsigned int i = 0; i < files.size(); i++) {
 						edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
+						edglog(debug)<<"Absolute path: "<<jobpath + files[i]<<endl;
+						edglog(debug)<<"Target directory: "<<targetdir<<endl;
 						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
 						wmputilities::untarFile(jobpath + files[i],
 							targetdir, auth->getUserId(), auth->getUserGroup());
@@ -1438,7 +1440,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			    	wmputilities::setFlagFile(flagfile, true);
 			    } else {
 			    	edglog(debug)<<"Flag file "<<flagfile<<" already exists. "
-			    		"Skipping uncompressFile..."<<endl;
+			    		"Skipping untarFile..."<<endl;
 			    }
 			}
 			
@@ -1664,6 +1666,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						+ FILE_SEPARATOR;
 					for (unsigned int i = 0; i < files.size(); i++) {
 						edglog(debug)<<"Uncompressing zip file: "<<files[i]<<endl;
+						edglog(debug)<<"Absolute path: "<<jobpath + files[i]<<endl;
+						edglog(debug)<<"Target directory: "<<targetdir<<endl;
 						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
 						wmputilities::untarFile(jobpath + files[i], targetdir,
 							auth->getUserId(), auth->getUserGroup());
@@ -1671,7 +1675,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 					wmputilities::setFlagFile(flagfile, true);
 				} else {
 					edglog(debug)<<"Flag file "<<flagfile<<" already exists. "
-		    		"Skipping uncompressFile..."<<endl;
+		    		"Skipping untarFile..."<<endl;
 				}
 		    }
 			
@@ -1801,7 +1805,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	const string &delegation_id, struct soap *soap)
 {
 	GLITE_STACK_TRY("jobSubmit()");
-	edglog_fn("wmpoperations::jobSubmit");
+	edglog_fn("wmpcoreoperations::jobSubmit");
 	logRemoteHostInfo();
 	
 	// Checking delegation id
@@ -1838,7 +1842,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 		edglog(error)<<"Unavailable service (the server is temporarily drained)"
 			<<endl;
 		throw AuthorizationException(__FILE__, __LINE__,
-	    	"wmpoperations::jobRegister()", wmputilities::WMS_AUTHZ_ERROR, 
+	    	"wmpcoreoperations::jobRegister()", wmputilities::WMS_AUTHZ_ERROR, 
 	    	"Unavailable service (the server is temporarily drained)");
 	} else {
 		edglog(debug)<<"No drain"<<endl;
@@ -1920,7 +1924,7 @@ void
 jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 {
 	GLITE_STACK_TRY("jobCancel()");
-	edglog_fn("wmpoperations::jobCancel");
+	edglog_fn("wmpcoreoperations::jobCancel");
 	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<job_id<<endl;
 	
@@ -2090,7 +2094,7 @@ listmatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 	const string &delegation_id)
 {
 	GLITE_STACK_TRY("listmatch");
-	edglog_fn("wmpoperations::listmatch");
+	edglog_fn("wmpcoreoperations::listmatch");
 	
 	int result = 0;
 	int type = getType(jdl);
@@ -2158,7 +2162,7 @@ jobListMatch(jobListMatchResponse &jobListMatch_response, const string &jdl,
 {
 	GLITE_STACK_TRY("jobListMatch(jobListMatchResponse &jobListMatch_response, "
 		"const string &jdl, const string &delegation_id)");
-	edglog_fn("wmpoperations::jobListMatch");
+	edglog_fn("wmpcoreoperations::jobListMatch");
 	logRemoteHostInfo();
 	
 	// Checking delegation id
@@ -2201,7 +2205,7 @@ void
 jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 {
 	GLITE_STACK_TRY("jobpurge()");
-	edglog_fn("wmpoperations::jobpurge");
+	edglog_fn("wmpcoreoperations::jobpurge");
 	
 	edglog(debug)<<"CheckState: "<<(checkstate ? "True" : "False")<<endl;
 	
@@ -2315,7 +2319,7 @@ void
 jobPurge(jobPurgeResponse &jobPurge_response, const string &jid)
 {
 	GLITE_STACK_TRY("jobPurge()");
-	edglog_fn("wmpoperations::jobPurge");
+	edglog_fn("wmpcoreoperations::jobPurge");
 	logRemoteHostInfo();
 	edglog(info)<<"Operation requested for job: "<<jid<<endl;
 	

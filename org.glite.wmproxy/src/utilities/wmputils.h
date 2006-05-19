@@ -12,7 +12,6 @@
 #define GLITE_WMS_WMPROXY_UTILITIES_WMPUTILS_H
 
 #include <vector>
-//#include <openssl/x509.h> // ASN1_UTCTIME
 
 #include "glite/wmsutils/jobid/JobId.h"
 
@@ -29,6 +28,8 @@ enum FQANFields {
 	FQAN_ROLE,
 	FQAN_CAPABILITY
 };
+
+
 //
 // File utility methods
 //
@@ -74,6 +75,8 @@ void writeTextFile(const std::string &path, const std::string &text);
 
 std::string readTextFile(const std::string &path);
 
+
+
 //
 // Service & service host methods
 //
@@ -94,6 +97,8 @@ std::string getEndpoint();
 
 void parseAddressPort(const std::string &addressport,
 	std::pair<std::string, int> &addresspair);
+
+
 
 //
 // Job specific methods
@@ -273,7 +278,9 @@ std::vector<std::string> parseFQAN(const std::string &fqan);
  */
 std::vector<std::pair<std::string, std::string> >
 	parseFQANPair(const std::string &fqan);
+
 	
+
 //
 // "External" methods
 //
@@ -300,12 +307,13 @@ bool getUserQuota(std::pair<long, long>& result, std::string uname);
  * @return true if the operation was successfully, false otherwise
  */
 bool getUserFreeQuota(std::pair<long, long>& result, std::string uname);
+
 /**
  * Generate / Manage directory properties
  * @param dir name of the dir to be generated
  * @param userid the id of the user
  */
-int managedir(const std::string &dir, uid_t userid, uid_t jobuserid,
+void managedir(const std::string &dir, uid_t userid, uid_t jobuserid,
 	std::vector<std::string> jobids);
 
 /**

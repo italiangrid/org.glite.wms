@@ -284,7 +284,7 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
 	// used to manage return values:
 	int ret;
 	struct stat stat_result;
-	int summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR ;
+	//int summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR;
 
 	// testing that is a directory
 	ret = stat(dir, &stat_result);
@@ -332,7 +332,8 @@ check_dir(char *dir, int opt_create, mode_t new_mode, gid_t new_group,
 		fprintf(stderr, "%s is not a directory. Skipping\n", dir);
 		return ADJUST_DIRECTORY_ERR_NOT_A_DIR;
 	}
-	return summary_status;
+	//return summary_status;
+	return ADJUST_DIRECTORY_ERR_NO_ERROR;
 }
 
 int main(int argc, char *argv[]) {
@@ -376,7 +377,7 @@ int main(int argc, char *argv[]) {
 		
 #ifdef ALLOW_COMMAND_LINE_OVERRIDE
 
-			case 'x': // If specified, provided files are extracted
+			case 'x': // If specified, argument files are extracted
 				starting_path = strdup(optarg);
 				untar = TRUE;
 				break;
@@ -427,31 +428,42 @@ int main(int argc, char *argv[]) {
 	}
 	summary_status = ADJUST_DIRECTORY_ERR_NO_ERROR;
 
-	for (i = optind; i < argc; i++) {
-		if (untar) {
-			// -x option is specified -> extracting ISB files...
+	if (untar) {
+		// -x option is specified -> extracting ISB files...
+		for (i = optind; i < argc; i++) {
 			fprintf(stderr,"Group before set: %d\n", getgid());
 			fprintf(stderr,"User before set: %d\n", getuid());
 			fprintf(stderr,"Group to set: %d\n", new_group);
 			fprintf(stderr,"User to set: %d\n", create_uid);
 			if (setgid(new_group) || setuid(create_uid)) {
 				fprintf("Unable to set user/group: %s\n", strerror(errno));
-				summary_status = UNTAR_ERR_SETUID_SETGID;
+				//summary_status = UNTAR_ERR_SETUID_SETGID;
+				exit(UNTAR_ERR_SETUID_SETGID);
 			} else {
 				fprintf(stderr,"Group after set: %d\n", getgid());
 				fprintf(stderr,"User after set: %d\n", getuid());
-				summary_status |= uncompressFile(argv[i], starting_path);
+				//summary_status |= uncompressFile(argv[i], starting_path);
+				if (summary_status = uncompressFile(argv[i], starting_path)) {
+					exit(summary_status);	
+				}
 			}
-		} else {
-			// Creating directory...
-			summary_status |= check_dir(argv[i], opt_create, new_mode,
-				new_group, create_uid);
+		}
+	} else {
+		// -x no specified -> creating directory...
+		for (i = optind; i < argc; i++) {
+			//summary_status |= check_dir(argv[i], opt_create, new_mode,
+			//	new_group, create_uid);
+			if (summary_status = check_dir(argv[i], opt_create, new_mode,
+					new_group, create_uid)) {
+				exit(summary_status);
+			}
 		}
 	}
-	if (summary_status != ADJUST_DIRECTORY_ERR_NO_ERROR) {
+	/*if (summary_status != ADJUST_DIRECTORY_ERR_NO_ERROR) {
 		printf("Warning!! some error occurred\n");
 	}
 	fprintf(stderr,"summary_status: %d\n", summary_status);
-	exit(summary_status);
+	exit(summary_status);*/
+	exit(ADJUST_DIRECTORY_ERR_NO_ERROR);
 }
 

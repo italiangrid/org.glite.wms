@@ -20,10 +20,8 @@
 #include <fcntl.h> // O_RDONLY
 #include <netdb.h> // gethostbyname
 #include <unistd.h>
-
 #include <stdlib.h>
-
-#include <sys/wait.h>
+#include <sys/wait.h> // wait
 
 // boost
 #include <boost/tokenizer.hpp>
@@ -65,6 +63,7 @@ namespace purger          = glite::wms::purger;
 #endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 using namespace std;
+
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -80,6 +79,10 @@ namespace utilities {
 #endif
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
+
+const int SUCCESS = 0;
+const int FAILURE = 1;
+
 // gLite environment variables
 const char* GLITE_LOCATION = "GLITE_LOCATION";
 const char* GLITE_WMS_LOCATION = "GLITE_WMS_LOCATION";
@@ -1008,7 +1011,29 @@ computeFileSize(const string & path)
     GLITE_STACK_CATCH();
 }
 
-void
+string
+searchForDirmanager()
+{
+	GLITE_STACK_TRY("searchForDirmanager()");
+	
+	// Try to find managedirexecutable 
+   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
+   	if (!glite_path) {
+   		glite_path = getenv(GLITE_LOCATION);
+   	}
+   	string gliteDirmanExe = (glite_path == NULL)
+   		? ("/opt/glite")
+   		:(string(glite_path)); 
+   		
+   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+   	
+   	return gliteDirmanExe;
+   	
+   	GLITE_STACK_CATCH();
+}
+	
+
+int
 doExecv(const string &command, vector<string> &params, const vector<string> &dirs,
 	unsigned int startIndex, unsigned int endIndex)
 {
@@ -1041,60 +1066,74 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 	switch (fork()) {
 		case -1:
 			// Unable to fork
-			edglog(critical)<<"Unable to fork process during job local "
-				"directory creation"<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-				"doExecv()", WMS_IS_FAILURE, "Unable to fork process"
-				"\n(please contact server administrator)");
+			edglog(critical)<<"Unable to fork process"<<endl;
+			return FAILURE;
 			break;
 		case 0:
 			// child
 	        if (execv(command.c_str(), argvs)) {
-	        	if (errno == E2BIG) {
-        			edglog(debug)<<"Command line too long, splitting..."<<endl;
-        			unsigned int middle = startIndex
-        				+ (endIndex - startIndex) / 2;
-                    edglog(info)<<"Calling from index "<<startIndex
-                    	<<" to "<<middle<<endl;
-        			doExecv(command, params, dirs, startIndex, middle);
-        			edglog(info)<<"Calling from index "<<middle + 1
-                    	<<" to "<<endIndex<<endl; 
-        			doExecv(command, params, dirs, middle + 1, endIndex);
-	        	} else {
-	        		edglog(critical)<<"Unable to execute command during job local "
-						"directory creation"<<endl;
-	        		throw FileSystemException(__FILE__, __LINE__,
-						"doExecv()", WMS_IS_FAILURE, "Unable to execute command"
-						"\n(please contact server administrator");
-				}
+	        	unsigned int middle;
+	        	switch (errno) {
+		        	case E2BIG:
+	        			edglog(debug)<<"Command line too long, splitting..."<<endl;
+	        			middle = startIndex + (endIndex - startIndex) / 2;
+	                    edglog(debug)<<"Calling from index "<<startIndex
+	                    	<<" to "<<middle<<endl;
+	        			if (doExecv(command, params, dirs, startIndex, middle)) {
+	        				return FAILURE;	
+	        			}
+	        			edglog(debug)<<"Calling from index "<<middle + 1
+	                    	<<" to "<<endIndex<<endl; 
+	        			if (doExecv(command, params, dirs, middle + 1, endIndex)) {
+	        				return FAILURE;
+	        			}
+	        			break;
+	        			
+	        		case EACCES:
+	        			edglog(severe)<<"Command not executable"<<endl;
+	        		case EPERM:
+	        			edglog(severe)<<"Wrong execution permissions"<<endl;
+	        		case ENOENT:
+	        			edglog(severe)<<"Unable to find command"<<endl;
+	        		case ENOMEM:
+	        			edglog(severe)<<"Insufficient memory to execute command"
+	        				<<endl;
+	        		case EIO:
+	        			edglog(severe)<<"I/O error"<<endl;
+	        		case ENFILE:
+	        			edglog(severe)<<"Too many opened files"<<endl;
+	        			
+		        	default:
+		        		edglog(severe)<<"Unable to execute command"<<endl;
+		        		return FAILURE;
+						break;
+	        	}
 	        } else {
 	        	edglog(debug)<<"execv succesfully"<<endl;
 	        }
 	        break;
         default:
         	// parent
-	    	int status;
+	    	int status = SUCCESS;
 	    	wait(&status);
 	    	if (WIFEXITED(status)) {
                 edglog(debug)<<"Child wait succesfully (WIFEXITED(status))"<<endl;
                 edglog(debug)<<"WEXITSTATUS(status): "<<WEXITSTATUS(status)<<endl;
             }
             if (WIFSIGNALED(status)) {
-                edglog(critical)<<"WIFSIGNALED(status)"<<endl;
-                edglog(critical)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
+                edglog(severe)<<"WIFSIGNALED(status)"<<endl;
+                edglog(severe)<<"WEXITSTATUS(status): "<<WTERMSIG(status)<<endl;
             }
+            
 #ifdef WCOREDUMP
 			if (WCOREDUMP(status)) {
 				edglog(critical)<<"Child dumped core!!!"<<endl;
 			}
 #endif // WCOREDUMP
-			edglog(critical)<<"exit code: "<<status<<endl;
+
 	    	if (status) {
-	    		edglog(critical)<<"Unable to create job local directory, "
-					"exit code: "<<status<<endl;
-	    		throw FileSystemException(__FILE__, __LINE__,
-					"doExecv()", WMS_IS_FAILURE, "Unable to create job local "
-					"directory\n(please contact server administrator)");
+	    		edglog(severe)<<"Child failure, exit code: "<<status<<endl;
+	    		return FAILURE;
 	    	}
 	    	break;
 	}
@@ -1102,6 +1141,8 @@ doExecv(const string &command, vector<string> &params, const vector<string> &dir
 		free(argvs[j]);
 	}
     free(argvs);
+    
+    return SUCCESS;
     
     GLITE_STACK_CATCH();
 }
@@ -1114,15 +1155,7 @@ untarFile(const string &file, const string &untar_starting_path,
 	edglog_fn("wmputils::untarFile");
 	
 	if (fileExists(file)) {
-		// Try to find managedirexecutable 
-	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
-	   	if (!glite_path) {
-	   		glite_path = getenv(GLITE_LOCATION);
-	   	}
-	   	string gliteDirmanExe = (glite_path == NULL)
-	   		? ("/opt/glite")
-	   		:(string(glite_path)); 
-	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+		string gliteDirmanExe = searchForDirmanager();
 	   	
 	   	// Creating parameters vector for zip file extraction
 		vector<string> extparams;
@@ -1138,7 +1171,13 @@ untarFile(const string &file, const string &untar_starting_path,
 		vector<string> extfiles;
 		extfiles.push_back(file);
 		
-		doExecv(gliteDirmanExe, extparams, extfiles, 0, extfiles.size() - 1);
+		// Extracting files
+		if (doExecv(gliteDirmanExe, extparams, extfiles, 0, extfiles.size() - 1)) {
+			edglog(critical)<<"Unable to untar ISB file:"<<file<<endl;
+			throw FileSystemException(__FILE__, __LINE__,
+				"untarFile()", WMS_FILE_SYSTEM_ERROR, "Unable to untar ISB file"
+				"\n(please contact server administrator)");
+		}
 		
 	} else {
 		edglog(critical)<<"Unable to untar ISB file, file does not exist: "
@@ -1151,7 +1190,7 @@ untarFile(const string &file, const string &untar_starting_path,
 	GLITE_STACK_CATCH();
 }
 
-int 
+void 
 managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	vector<string> jobids)
 {
@@ -1160,34 +1199,25 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	
 	time_t starttime = time(NULL);
 	
-	int exit_code = 0; 
 	unsigned int size = jobids.size();
 	edglog(info)<<"Job id vector size: "<<size<<endl;
 	
 	if (size) {
-	   	// Try to find managedirexecutable 
-	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
-	   	if (glite_path == NULL) {
-	   		glite_path = getenv(GLITE_LOCATION);
-	   	}
-	   	string gliteDirmanExe = (glite_path == NULL)
-	   		? (FILE_SEP + "opt" + FILE_SEP + "glite")
-	   		:(string(glite_path)); 
-	   	gliteDirmanExe += FILE_SEP + "bin" + FILE_SEP
-	   		+ "glite_wms_wmproxy_dirmanager";
+	   	string gliteDirmanExe = searchForDirmanager();
 	   	
 	   	string useridtxt = boost::lexical_cast<string>(userid);
 	   	string grouptxt = boost::lexical_cast<string>(getgid());
 	   	
 		int level = 0; 
-	   	bool extended_path = true ; 
+	   	bool extended_path = true; 
 		// Vector contains at least one element
 		string path = to_filename (glite::wmsutils::jobid::JobId(jobids[0]),
 		   	level, extended_path);
 		int pos = path.find(FILE_SEP, 0);
+		
+		// Creating SanboxDir directory if needed
 		string sandboxdir = document_root + FILE_SEP + path.substr(0, pos)
 			+ FILE_SEP;
-		// Creating SanboxDir directory if needed
 		if (!fileExists(sandboxdir)) {
 			string run = gliteDirmanExe
 				+ " -c " + useridtxt
@@ -1196,7 +1226,11 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		   	edglog(debug)<<"Creating SandboxDir..."<<endl;
 			edglog(debug)<<"Executing: \n\t"<<run<<endl;
 			if (system(run.c_str())) {
-		   		return 1;
+				edglog(fatal)<<"Unable to create sandbox directory"<<endl;
+		   		throw FileSystemException(__FILE__, __LINE__,
+					"managedir()", WMS_FILE_SYSTEM_ERROR,
+					"Unable to create sandbox directory\n"
+					"(please contact server administrator)");
 		   	}
 		}
 		
@@ -1227,6 +1261,7 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 	   	string allpath;
 		string reduceddir;
 		
+		// Populating directories to create vector
 		vector<string>::iterator iter = jobids.begin();
 		vector<string>::iterator const end = jobids.end();
 		for (; iter != end; ++iter) {
@@ -1250,13 +1285,28 @@ managedir(const string &document_root, uid_t userid, uid_t jobdiruserid,
 		    jobdirs.push_back(path + FILE_SEP + PEEK_DIRECTORY);
 		}
 		
-	   	doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1);
-	   	doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1);
+		// Creating reduced directories
+	   	if (doExecv(gliteDirmanExe, redparams, reddirs, 0, reddirs.size() - 1)) {
+	   		edglog(fatal)<<"Unable to create job local directory (reduced)"<<endl;
+	   		throw FileSystemException(__FILE__, __LINE__,
+				"managedir()", WMS_FILE_SYSTEM_ERROR,
+				"Unable to create job local directory\n"
+				"(please contact server administrator)");	
+	   	}
+	   	
+	   	// Creating job directories
+	   	if (doExecv(gliteDirmanExe, jobparams, jobdirs, 0, jobdirs.size() - 1)) {
+	   		edglog(fatal)<<"Unable to create job local directory (job)"<<endl;
+	   		throw FileSystemException(__FILE__, __LINE__,
+				"managedir()", WMS_FILE_SYSTEM_ERROR,
+				"Unable to create job local directory\n"
+				"(please contact server administrator)");	
+	   	}
 	}
 	time_t stoptime = time(NULL);
-	edglog(debug)<<"Directory creation elapsed time: "<<(stoptime - starttime)<<endl;
+	edglog(debug)<<"Directory creation elapsed time: "
+		<<(stoptime - starttime)<<endl;
 	
-    return exit_code;
     GLITE_STACK_CATCH();
 }
 
@@ -1289,15 +1339,7 @@ createSuidDirectory(const string &directory)
 	edglog_fn("wmputils::createSuidDirectory");
 	
 	if (!fileExists(directory)) {
-		// Try to find managedirexecutable 
-	   	char * glite_path = getenv(GLITE_WMS_LOCATION); 
-	   	if (!glite_path) {
-	   		glite_path = getenv(GLITE_LOCATION);
-	   	}
-	   	string gliteDirmanExe = (glite_path == NULL)
-	   		? ("/opt/glite")
-	   		:(string(glite_path)); 
-	   	gliteDirmanExe += "/bin/glite_wms_wmproxy_dirmanager";
+		string gliteDirmanExe = searchForDirmanager();
 	   	
 		string dirpermissions = " -m 0773 ";
 		string user = " -c " + boost::lexical_cast<string>(getuid()); // UID
