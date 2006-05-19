@@ -448,7 +448,7 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 			opts.output = new string();
 			*opts.output = string(DEFAULT_GLITE_LOCATION) + string(GACL_RELATIVE_PATH);
 		}
-		cout << "Coversion of the grid-mapfile entries to gacl entries:\n";
+		cout << "Conversion of the grid-mapfile entries to gacl entries:\n";
 		cout << "Working on files:\n";
 		cout << "- grid-mapfile: " <<  *opts.input   << "\n";
 		cout << "- gacl-file: " <<  *opts.output   << "\n\n";
@@ -672,7 +672,7 @@ void Converter::removeOldEntries(const std::vector<std::string> &map, std::vecto
 	string err = "";
 	bool found = false;
 	int gacl_size = gacl.size ( );
-	for (unsigned int i = 0; i < gacl_size; i++) {
+	for (int i = 0; i < gacl_size; i++) {
 		gacl_entry = gacl[i];
 		found = false;
 		for (unsigned int j=0; j < map.size(); j++) {
