@@ -450,8 +450,8 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 		}
 		cout << "Coversion of the grid-mapfile entries to gacl entries:\n";
 		cout << "Working on files:\n";
-		cout << "- grid-mapfile: " <<  opts.input   << "\n";
-		cout << "- gacl-file: " <<  opts.output   << "\n\n";
+		cout << "- grid-mapfile: " <<  *opts.input   << "\n";
+		cout << "- gacl-file: " <<  *opts.output   << "\n\n";
 		if (answerYes("Do you wish to continue", false, true)==false){
 			cout << "bye\n";
 			exit(0);
