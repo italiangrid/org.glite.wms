@@ -331,13 +331,13 @@ bool isNull(std::string field);
  */
 int generateRandomNumber(int lowerlimit, int upperlimit);
 
-#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
-
 /**
  * Server debugging method to wait for a while
  * @param seconds number of seconds to wait
  */
 void waitForSeconds(int seconds);
+
+#endif // #ifndef GLITE_WMS_WMPROXY_TOOLS
 
 /**
    * Removes white spaces at the beginning and 

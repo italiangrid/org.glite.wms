@@ -17,9 +17,10 @@
 #include <openssl/pem.h>
 
 #include "wmpauthorizer.h"
-#include "wmpvomsauthz.h"
 
 #ifndef GLITE_WMS_WMPROXY_TOOLS
+
+#include "wmpvomsauthz.h"
 
 // Exceptions
 #include "utilities/wmpexceptions.h"

@@ -72,7 +72,7 @@ namespace utilities {
 // Define File Separator 
 #ifdef WIN
 	// Windows File Separator 
-	const string FILE_SEP = "\\"; 
+	const string FILE_SEP = "\\";
 #else 
 	// Linux File Separator 
    	const string FILE_SEP ="/"; 
@@ -1425,7 +1425,9 @@ isNull(string field)
 const string 
 cleanString(string str)
 {
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("cleanString()");
+	#endif
 	int len = 0;
 	string ws = " "; //white space char
 	len = str.size( );
@@ -1454,7 +1456,9 @@ cleanString(string str)
 		}
 	}
 	return str;
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
+	#endif
 }
 
  /**
@@ -1463,11 +1467,15 @@ cleanString(string str)
 const string 
 toLower(const string &src)
 {
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("toLower()");
+	#endif
 	string result(src);
 	transform(result.begin(), result.end(), result.begin(), ::tolower);
 	return result;
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
+	#endif
  }
  
  /**
@@ -1477,7 +1485,9 @@ toLower(const string &src)
 void 
 split(const string &field, string &label, string &value)
 {
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("split()");
+	#endif
 	unsigned int size = field.size();
 	if (size > 0) {
 		unsigned int p = field.find("=") ;
@@ -1491,14 +1501,18 @@ split(const string &field, string &label, string &value)
 			value = toLower(cleanString(value));
 		}
 	}
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
+	#endif
 };
 
 
 bool 
 hasElement(const std::vector<std::string> &vect, const std::string &elem)
 {
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("hasElement()");
+	#endif
 	bool result = false;
 	int size = vect.size();
 	for (int i=0; i < size; i++){
@@ -1508,7 +1522,9 @@ hasElement(const std::vector<std::string> &vect, const std::string &elem)
 		}
 	}
 	return result;
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
+	#endif
 };
 
 /**
@@ -1517,7 +1533,9 @@ hasElement(const std::vector<std::string> &vect, const std::string &elem)
  const std::string
  normalizePath( const std::string &fpath )
  {
- 	GLITE_STACK_TRY("normalizePath()");
+ 	#ifndef GLITE_WMS_WMPROXY_TOOLS
+	GLITE_STACK_TRY("normalizePath()");
+	#endif
 	string                   modified;
 	string::const_iterator   last, next;
 	string::reverse_iterator check;
@@ -1538,7 +1556,9 @@ hasElement(const std::vector<std::string> &vect, const std::string &elem)
 	if( *check == '/' ) modified.assign( modified.begin(), modified.end() - 1 );
 
 	return modified;
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
+	#endif
 }
 
 /*
@@ -1547,7 +1567,9 @@ hasElement(const std::vector<std::string> &vect, const std::string &elem)
 const std::string
 getAbsolutePath(const string &file)
 {
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_TRY("getAbsolutePath()");
+	#endif
 	string path = file;
 	char* pwd = getenv ("PWD");
 	if (path.find("./")==0 || path.compare(".")==0){
@@ -1574,7 +1596,9 @@ getAbsolutePath(const string &file)
 		}
 	}
 	return path;
+	#ifndef GLITE_WMS_WMPROXY_TOOLS
 	GLITE_STACK_CATCH();
+	#endif
 }
 
 } // namespace utilities

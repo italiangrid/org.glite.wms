@@ -48,6 +48,7 @@ const int SUCCESS = 0;
 const int ERROR = -1;
 const char* VERSION_NUMBERS		= "1.0.0";
 const char* DEFAULT_GRIDMAPFILE 	= "/etc/grid-security/grid-mapfile";
+const char* DEFAULT_GLITE_LOCATION	= "/opt/glite";
 const char* GACL_RELATIVE_PATH 	= "/etc/grid-security/glite_wms_wmproxy.gacl";
 const char* LOG_DEFAULT_PATH	= "/tmp";
 // Environment variables
@@ -167,6 +168,8 @@ const std::string Converter::version() {
 
 void Converter::usage(const std::string &exe) {
 	cout << version() << "\n\n";
+	cout << "usage:  glite-wms-wmproxy-gridmapfile2gacl [options]\n";
+	cout << "where [options]:\n";
 	cout << "\t--" << LONG_INPUT << ", -i <filepath>\n";
 	cout << "\t\tload a gridmap file different from the default one\n";
 	cout <<"\t\t(/etc/grid-security/grid-mapfile);\n";
@@ -397,8 +400,8 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 			if (env) {
 				opts.output = new string(utilities::normalizePath(string(env)) + "/" +string(GACL_RELATIVE_PATH)  );
 			} else {
-				error( "Uknown path location of the gacl file",
-				"(option to specify a path is --" + string(LONG_OUTPUT) + ")" );
+				opts.output = new string();
+				*opts.output = string(DEFAULT_GLITE_LOCATION) + string(GACL_RELATIVE_PATH);
 			}
 		}
 		// --only-dn and --only-fqan
@@ -428,9 +431,31 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 				rmOper = true;
 			}
 		}
-	} else {
-		errors = "\nno input options have been found";
-		result = ERROR;
+	}
+	if (opts.input==NULL && opts.output==NULL) {
+		// Default Grid-mapfile
+		env = getenv (GRIDMAP_ENV);
+		if (env) {
+			opts.input = new string(env);
+		} else {
+			opts.input = new string(DEFAULT_GRIDMAPFILE);
+		}
+		// Default gacl file
+		env = getenv (GLITE_LOCATION_ENV);
+		if (env) {
+			opts.output = new string(utilities::normalizePath(string(env)) + "/" +string(GACL_RELATIVE_PATH)  );
+		} else {
+			opts.output = new string();
+			*opts.output = string(DEFAULT_GLITE_LOCATION) + string(GACL_RELATIVE_PATH);
+		}
+		cout << "Coversion of the grid-mapfile entries to gacl entries:\n";
+		cout << "Working on files:\n";
+		cout << "- grid-mapfile: " <<  opts.input   << "\n";
+		cout << "- gacl-file: " <<  opts.output   << "\n\n";
+		if (answerYes("Do you wish to continue", false, true)==false){
+			cout << "bye\n";
+			exit(0);
+		}
 	}
 	return result;
 } ;
