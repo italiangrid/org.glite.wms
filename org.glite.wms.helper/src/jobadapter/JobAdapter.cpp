@@ -206,16 +206,24 @@ try {
   std::string arguments(jdl::get_arguments(*m_ad, b_arg));
  
   /* Not Mandatory */
-  std::string prologue;
-  std::string prologue_arguments;
   bool is_in_jdl;
-  prologue = jdl::get_prologue(*m_ad, is_in_jdl);
-  if (is_in_jdl) 
-  {
+  std::string prologue = jdl::get_prologue(*m_ad, is_in_jdl);
+  std::string prologue_arguments;
+  if (is_in_jdl) {
     if (prologue[0] != '/') {
       prologue.insert(0, "./", 2);
     }
     prologue_arguments = jdl::get_prologue_arguments(*m_ad, is_in_jdl);
+  }
+
+  /* Not Mandatory */
+  std::string epilogue = jdl::get_epilogue(*m_ad, is_in_jdl);
+  std::string epilogue_arguments;
+  if (is_in_jdl) {
+    if (epilogue[0] != '/') {
+      epilogue.insert(0, "./", 2);
+    }
+    epilogue_arguments = jdl::get_epilogue_arguments(*m_ad, is_in_jdl);
   }
 
   /* Not Mandatory */
@@ -779,6 +787,8 @@ try {
   jw->arguments(arguments);
   jw->prologue(prologue);
   jw->prologue_arguments(prologue_arguments);
+  jw->epilogue(epilogue);
+  jw->epilogue_arguments(epilogue_arguments);
   jw->job_Id(job_id);
   jw->job_id_to_filename(jobid_to_file);
   jw->environment(env);

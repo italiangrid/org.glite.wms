@@ -85,6 +85,9 @@ struct JobWrapper::pimpl {
   std::string               m_prologue;
   std::string               m_prologue_arguments;
 
+  std::string               m_epilogue;
+  std::string               m_epilogue_arguments;
+
   int                       m_job_type;
   bool                      m_osb_wildcards_support;
 };
@@ -107,15 +110,27 @@ JobWrapper::~JobWrapper()
 }
 
 void
-JobWrapper::prologue(const std::string& p)
+JobWrapper::prologue(std::string const& p)
 {
   m_pimpl->m_prologue = p;
 }
 
 void
-JobWrapper::prologue_arguments(const std::string& p_a)
+JobWrapper::prologue_arguments(std::string const& a)
 {
-  m_pimpl->m_prologue_arguments = p_a;
+  m_pimpl->m_prologue_arguments = a;
+}
+
+void
+JobWrapper::epilogue(std::string const& e)
+{
+  m_pimpl->m_epilogue = e;
+}
+
+void
+JobWrapper::epilogue_arguments(std::string const& a)
+{
+  m_pimpl->m_epilogue_arguments = a;
 }
 
 void
@@ -459,6 +474,8 @@ JobWrapper::dump_vars(std::ostream& os) const
     dump(os, "__perusal_listfileuri", m_pimpl->m_perusal_listfileuri) &&
     dump(os, "__prologue", m_pimpl->m_prologue) &&
     dump(os, "__prologue_arguments", m_pimpl->m_prologue_arguments) &&
+    dump(os, "__epilogue", m_pimpl->m_epilogue) &&
+    dump(os, "__epilogue_arguments", m_pimpl->m_epilogue_arguments) &&
     dump(os, "__output_data", m_pimpl->m_outputdata != 0) &&
     dump(os, "__output_file", output_files) &&
     dump(os, "__output_lfn", logical_file_names) &&

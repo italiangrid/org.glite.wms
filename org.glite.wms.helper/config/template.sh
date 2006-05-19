@@ -651,6 +651,16 @@ fi
 
 jw_echo "job exit status = ${status}"
 
+if [ -f "${__epilogue}" ]; then
+  chmod +x "${__epilogue}" 2>/dev/null
+  ${__epilogue} "${__epilogue_arguments}"
+  epilogue_status=$?
+  if [ ${epilogue_status} -ne 0 ]; then
+    log_error "epilogue failed with error ${epilogue_status}"
+  fi
+fi
+
+if [ ${__job_type} -eq 3 ]; then #interactive jobs
 # uncomment this one below if the osb order list originally 
 # specified is not of some relevance to the user
 #sort_by_size __output_file ${workdir}
