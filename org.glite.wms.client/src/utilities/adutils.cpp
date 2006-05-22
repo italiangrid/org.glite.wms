@@ -3,6 +3,7 @@
 #include "glite/jdl/JobAd.h"
 #include "glite/jdl/ExpDagAd.h"
 #include "glite/jdl/JDLAttributes.h"
+#include "glite/jdl/PrivateAttributes.h"  // RETRYCOUNT Default attributes
 #include "glite/jdl/jdl_attributes.h"
 #include "glite/jdl/JdlAttributeList.h"
 #include "glite/jdl/RequestAdExceptions.h"
@@ -194,7 +195,9 @@ std::vector<std::string> AdUtils::getUnknown(Ad* jdl){
 	}
 	return attributes;
 }
-// STATIC METHODS:
+
+// TBD: Utilise template class for similar methods
+// STATIC METHOD: set missing STRING value
 void setMissing(glite::jdl::Ad* jdl,const string& attrName, const string& attrValue, bool force=false){
 	if (attrValue!=""){
 		if(!jdl->hasAttribute(attrName)){
@@ -206,13 +209,22 @@ void setMissing(glite::jdl::Ad* jdl,const string& attrName, const string& attrVa
 		}
 	}
 }
-void setMissing(glite::jdl::Ad* jdl,const string& attrName, bool attrValue, bool force=false){
+// STATIC METHOD: set missing BOOL value
+void setMissing(glite::jdl::Ad* jdl,const string& attrName, bool attrValue){
 	if(   (!jdl->hasAttribute(attrName)) &&  attrValue ){
 		// Set Default Attribute ONLY when TRUE
 		jdl->setAttribute(attrName,attrValue);
 	}
 }
-// STATIC METHODS:
+// STATIC METHOD: set missing INT value
+// it ALWAYS set the value (even if it is 0)
+void setMissing(glite::jdl::Ad* jdl,const string& attrName, int attrValue){
+	if(!jdl->hasAttribute(attrName)){
+		// Set Default Attribute ONLY when TRUE
+		jdl->setAttribute(attrName,attrValue);
+	}
+}
+// STATIC METHOD: set missing value from a conf Ad (of Any type)
 void setMissingString(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& confAd, bool force=false){
 		if (confAd.hasAttribute(attrName)){
 			string attrValue=confAd.getString(attrName);
@@ -225,8 +237,10 @@ void setMissingString(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad
 				jdl->setAttribute(attrName,attrValue);
 			}
 		}
-
 }
+
+
+// STATIC METHOD: set missing INT value from a conf Ad
 void setMissingInt(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& confAd, bool force=false){
 	if (confAd.hasAttribute(attrName)){
 		int attrValue=confAd.getInt(attrName);
@@ -240,6 +254,7 @@ void setMissingInt(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& c
 		}
 	}
 }
+// STATIC METHOD: set missing BOOL value from a conf Ad
 void setMissingBool(glite::jdl::Ad* jdl,const string& attrName, glite::jdl::Ad& confAd, bool force=false){
 	if (confAd.hasAttribute(attrName)){
 		bool attrValue=confAd.getBool(attrName);
@@ -278,12 +293,37 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 			std::vector< std::string > attrs= confAd.attributes ();
 			for (unsigned int i = 0 ; i<attrs.size(); i++){
 				string attrName =attrs[i] ;
-				if( 	glite_wms_client_toLower(attrName)!=JDL::RANK &&
-					glite_wms_client_toLower(attrName)!=JDL::REQUIREMENTS){
+				// Exclude special attributes (will be parsed furtherly)
+				// rank-req-retryC-shallowRC
+				if( 	glite_wms_client_toLower(attrName)!=glite_wms_client_toLower(JDL::RANK) &&
+					glite_wms_client_toLower(attrName)!=glite_wms_client_toLower(JDL::REQUIREMENTS) &&
+					glite_wms_client_toLower(attrName)!=glite_wms_client_toLower(JDL::RETRYCOUNT) &&
+					glite_wms_client_toLower(attrName)!=glite_wms_client_toLower(JDL::SHALLOWRETRYCOUNT)){
 					if (!jdl->hasAttribute(attrs[i])){
 						jdl->setAttributeExpr (attrs[i],confAd.lookUp(attrs[i])->Copy());
 					}
 				}
+			}
+			// Special [SHALLOW]RETRYCOUNT check:
+			// This is the last check:
+			// (avoid further checks: might be changing boolean type evaluation)
+			if(jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_COLLECTION) ||
+			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG) ||
+			   jdl->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
+				// COLLECTIONS,DAGS AND PARTITIONABLE case:
+				// (append special Resubmission private attributes)
+				if(confAd.hasAttribute(JDL::RETRYCOUNT)){
+					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT,
+						confAd.getInt(JDL::RETRYCOUNT));
+				}
+				if(confAd.hasAttribute(JDL::SHALLOWRETRYCOUNT)){
+					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT,
+						confAd.getInt(JDL::SHALLOWRETRYCOUNT));
+				}
+			}else{
+				// NORMAL JOBS: normal approach
+				setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
+				setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
 			}
 		}else{
 			/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
@@ -298,6 +338,23 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 			// ALLOW_ZIPPED_ISB ,PU_FILE_ENABLE
 			setMissing(jdl,JDL::ALLOW_ZIPPED_ISB,conf->allow_zipped_isb());
 			setMissing(jdl,JDL::PU_FILE_ENABLE,conf->perusal_file_enable());
+			// INT attributes special [SHALLOW]RETRYCOUNT
+			if(jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_COLLECTION) ||
+			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG) ||
+			   jdl->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
+				// COLLECTIONS,DAGS AND PARTITIONABLE case:
+				// (append special Resubmission private attributes)
+				if((!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT))){
+					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT,conf->retry_count());
+				}
+				if((!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT))){
+					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_SHALLOWRETRYCOUNT,conf->shallow_retry_count());
+				}
+			}else{
+				// NORMAL JOBS: normal approach
+				setMissing(jdl, JDL::RETRYCOUNT, conf->retry_count());
+				setMissing(jdl, JDL::SHALLOWRETRYCOUNT, conf->shallow_retry_count());
+			}
 		}
 	}catch(RequestAdException &exc){
 		// Some classAd exception occurred
@@ -337,22 +394,12 @@ void AdUtils::setDefaultValues(glite::jdl::JobAd* jdl,
 		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
 			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
 		}
-		// RETRYCOUNT
-		setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
-		setMissingInt(jdl,JDL::SHALLOWRETRYCOUNT,confAd);
 	}else{
 		/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
 		// RANK
 		if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
 		// REQUIREMENTS
 		if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
-		// (SHALLOW) RETRYCOUNT
-		if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
-			jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
-		}
-		if(   (!jdl->hasAttribute(JDL::SHALLOWRETRYCOUNT)) ){
-			jdl->setAttribute(JDL::SHALLOWRETRYCOUNT,conf->shallow_retry_count());
-		}
 	}
 }
 /******************
@@ -397,18 +444,12 @@ void AdUtils::setDefaultValues(glite::jdl::CollectionAd* jdl,
 		if(confAd.hasAttribute(JDL::REQUIREMENTS)){
 			jdl->setDefaultReq(confAd.lookUp(JDL::REQUIREMENTS));
 		}
-		// RETRYCOUNT
-		setMissingInt(jdl,JDL::RETRYCOUNT,confAd);
 	}else{
 		/* ALL ATTRIBUTES MIXED CONF FILE (OLD) APPROACH: */
 		// RANK
 		if(conf->rank()!=NULL){ jdl->setDefaultRank(conf->rank());}
 		// REQUIREMENTS
 		if(conf->requirements()!=NULL){ jdl->setDefaultReq(conf->requirements());}
-		// RETRYCOUNT
-		if(   (!jdl->hasAttribute(JDL::RETRYCOUNT)) ){
-			jdl->setAttribute(JDL::RETRYCOUNT,conf->retry_count());
-		}
 	}
 }
 /***********************
