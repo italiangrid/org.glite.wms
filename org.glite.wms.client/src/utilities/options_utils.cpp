@@ -1329,7 +1329,7 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 *	gets the value of the option list of strings-attribute
 */
 const vector<string> Options::getListAttribute (const Options::OptsAttributes &attribute){
-	vector<string> *vect ;
+	vector<string> *vect = NULL ;
 	switch (attribute){
 		case(USERTAG) : {
 			vect = &usertags ;
@@ -1340,7 +1340,7 @@ const vector<string> Options::getListAttribute (const Options::OptsAttributes &a
 			break;
 		}
 		default : {
-			// returns an empty vector
+			// returns an NULL  vector
 			break ;
 		}
 	};
