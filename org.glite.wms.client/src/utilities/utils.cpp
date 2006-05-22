@@ -45,17 +45,8 @@
 
 
 // Voms implementation
-// #include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
-// #include "glite/security/voms/voms_api.h"  // voms parsing
-
-/*
-extern "C" {
-        #include "glite/security/voms/voms_apic.h"
-}
-*/
-
-
-
+#include "openssl/ssl.h" // SSLeay_add_ssl_algorithms & ASN1_UTCTIME_get
+#include "glite/security/voms/voms_api.h"  // voms parsing
 
 namespace glite {
 namespace wms{
@@ -111,40 +102,42 @@ const string GZ_MODE = "wb6f";
 
 
 //                 VOMS METHODS (BEGIN)
-#ifdef  vomsapi
+
+
+/******************************************************************
+		VOMS IMPLEMENTATION
+*******************************************************************/
 /******************************************************************
  method :load_chain
-******************************************************************/
-STACK_OF(X509) *load_chain(char *certfile){
+*******************************************************************/
+STACK_OF(X509) *load_chain(const char *certfile){
 	STACK_OF(X509_INFO) *sk=NULL;
-	STACK_OF(X509) *stack=NULL;
+	STACK_OF(X509) *stack=NULL, *ret=NULL;
 	BIO *in=NULL;
 	X509_INFO *xi;
 	int first = 1;
 	if(!(stack = sk_X509_new_null())) {
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
-		throw  *createWmpException(new ProxyFileException, "load_chain",
-			string ("memory allocation failure") ) ;
+		throw  WmsClientException(__FILE__,__LINE__, "load_chain",DEFAULT_ERR_CODE,
+			"memory allocation","Unable to allocate STACK_OF(X509) instance") ;
 	}
 	if(!(in=BIO_new_file(certfile, "r"))) {
-		// goto end;
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
-		throw  *createWmpException(new ProxyFileException, "load_chain",
-			string ("error opening proxy file") ) ;
+		throw  WmsClientException(__FILE__,__LINE__, "load_chain",DEFAULT_ERR_CODE,
+			"I/O Error","error opening proxy file") ;
 	}
 	// This loads from a file, a stack of x509/crl/pkey sets
 	if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
-		// goto end;
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
-		throw  *createWmpException(new ProxyFileException, "load_chain",
-			string (" error reading proxy file") ) ;
+		throw  WmsClientException(__FILE__,__LINE__, "load_chain",DEFAULT_ERR_CODE,
+			"I/O Error","error reading proxy file") ;
 	}
-	// Scan over it and pull out the certs
-	while (sk_X509_INFO_num(sk)){
-		//  skip first cert
+	/* scan over it and pull out the certs */
+	while (sk_X509_INFO_num(sk)) {
+		/* skip first cert */
 		if (first) {
 			first = 0;
 			continue;
@@ -161,54 +154,56 @@ STACK_OF(X509) *load_chain(char *certfile){
 		BIO_free(in);
 		sk_X509_INFO_free(sk);
 		// goto end;
-		throw  *createWmpException(new ProxyFileException, "load_chain",
-			string ("no certificates certfile") ) ;
+		throw  WmsClientException(__FILE__,__LINE__, "load_chain",DEFAULT_ERR_CODE,
+			"Parsing Error", "no certificates in proxy file") ;
 	}
-	BIO_free(in);
-	sk_X509_INFO_free(sk);
-	return stack;
+	ret=stack;
+	return ret;
 }
-
 /******************************************************************
 private method: load_voms
 *******************************************************************/
-int  load_voms (vomsdata& d, const char *pxfile ){
-	BIO  *in = NULL;
-	X509 *x  = NULL;
-	d.data.clear() ;
-	STACK_OF(X509) *chain = NULL;
-	SSLeay_add_ssl_algorithms();
-	char *of   = const_cast<char *>(pxfile);
+void load_voms (vomsdata *vo_data, const char *proxy_file){
+	//  Pointer MUST arrive already set
+	assert(proxy_file);
+	assert(vo_data);
+	vo_data->data.clear() ;
+	BIO *in = NULL;
+	X509 *x = NULL;
 	in = BIO_new(BIO_s_file());
+	SSLeay_add_ssl_algorithms();
 	if (in) {
-		if (BIO_read_filename(in, of) > 0) {
+		if (BIO_read_filename(in,proxy_file)>0){
 			x = PEM_read_bio_X509(in, NULL, 0, NULL);
 			if(!x){
-				// Couldn't find a valid proxy.
-				throw  *createWmpException(new ProxyFileException, "load_voms",
-					"Couldn't find a valid proxy") ;
+				throw  WmsClientException(__FILE__,__LINE__, "load_voms",DEFAULT_ERR_CODE,
+					"I/O Error","Couldn't find a valid proxy");
 			}
-			chain = load_chain(of);
-			d.SetVerificationType((verify_type)(VERIFY_SIGN | VERIFY_KEY));
-			if (!d.Retrieve(x, chain, RECURSE_CHAIN)){
-				d.SetVerificationType((verify_type)(VERIFY_NONE));
-				if (d.Retrieve(x, chain, RECURSE_CHAIN)){
-					// WARNING: Unable to verify signature!"
+			STACK_OF(X509) *chain = load_chain(proxy_file);
+			vo_data->SetVerificationType((verify_type)(VERIFY_SIGN|VERIFY_KEY));
+			if (!vo_data->Retrieve( x , chain, RECURSE_CHAIN)  ){
+				vo_data->SetVerificationType((verify_type)(VERIFY_NONE));
+				if (vo_data->Retrieve(x, chain, RECURSE_CHAIN)){
+					throw  WmsClientException(__FILE__,__LINE__, "load_voms",DEFAULT_ERR_CODE,
+						"Parsing Error","Unable to verify signature");
 				}
 			}
 			sk_X509_free(chain);
-		}else {
-			// Couldn't find a valid proxy.
-			throw  *createWmpException(new ProxyFileException, "load_voms",
-				"Couldn't find a valid proxy") ;
+		} else{
+			throw  WmsClientException(__FILE__,__LINE__,"load_voms",DEFAULT_ERR_CODE,
+				"I/O Error","Couldn't find a valid proxy certificate");
 		}
+	} else {
+		throw  WmsClientException(__FILE__,__LINE__,"load_voms",DEFAULT_ERR_CODE,
+			"I/O Error","Invalid Proxy");
+	}
+	if (vo_data->error!=VERR_NONE){
+		// throw CredProxyException(__FILE__,__LINE__ , METHOD,WMS_VO_LOAD,"parse");
+		// Do something?
 	}
 	// Release memory
 	BIO_free(in);
-	return 0;
 }
-
-#endif
 
 
 /**
@@ -221,71 +216,27 @@ int  load_voms (vomsdata& d, const char *pxfile ){
 
 
 const std::string getDefaultVoVoms(const char *pxfile){
-	int error = 0;
 	string defaultVo;
-/*
-
-	vomsdata *vo_data ;
- 	char * envval = NULL;
+	// int error = 0;
+	vomsdata *vo_data = new vomsdata() ;
+	char * envval = NULL;
 	char * vomsdir = NULL;
 	char * certdir = NULL;
 	if ((envval = getenv(X509_VOMS_DIR))) { vomsdir = envval;}
 	else {vomsdir = const_cast<char*>(VOMS_DIR);}
-
-
 	if ((envval = getenv(X509_CERT_DIR))) {certdir = envval;}
 	else { certdir = const_cast<char*>(CERT_DIR);}
-
-
-
-	if (!(vo_data = VOMS_Init(vomsdir, certdir))) {
-		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
-			"Unable to load VOMS01") ;
-	}
-
-	cout << "getDefaultVoVoms01: " <<  vo_data << endl ;
-	cout << "getDefaultVoVoms02 " << endl ;
-	cout << "getDefaultVoVoms03 " << endl ;
-	struct voms * defaultvoms = VOMS_DefaultData(vo_data, &error);
-	cout << "getDefaultVoVoms04 " << endl ;
-	if (defaultvoms) {
-		cout << "getDefaultVoVoms05" << defaultvoms<< endl ;
-		return string(defaultvoms->voname);
-	} else {
-		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
-			"Unable to load VOMS") ;
-	}
-*/
-	return defaultVo;
-
-
-
-
-
-/*
-	cout << "getDefaultVoVomsdbg Parsing file: " << pxfile << endl ;
-	if (load_voms(vo_data, pxfile)) {
-		// Unable to load VOMS
-		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
-			"Unable to load VOMS") ;
-	}
+	load_voms(vo_data, pxfile);
 	voms v;
 	// get Default voms
-	if (!vo_data.DefaultData(v)){
-		// Unable to load default VO value
-		throw  *createWmpException(new ProxyFileException, "getDefaultVo",
-			"Couldn't load default voms Data") ;
+	if (!vo_data->DefaultData(v)){
+		// Unable to load default VO value: return empty string
+		return "";
 	}
 	return string (v.voname);
-*/
-
-
 }
 
-
 //                 VOMS METHODS (END)
-
-
 
 /*************************************
 *** Constructor **********************
@@ -848,14 +799,7 @@ std::string Utils::FQANtoVO(const std::string fqan){
 std::string Utils::getDefaultVo(){
 	const char *proxy = glite::wms::wmproxyapiutils::getProxyFile(NULL) ;
 	if (proxy){
-/*
-		cout << "\nUtils::getDefaultVo dbg Retrieving VOMS from certificate:"<< proxy << endl ;
 		return getDefaultVoVoms(proxy);
-*/
-		const vector <std::string> fqans= glite::wms::wmproxyapiutils::getFQANs(proxy);
-		if (fqans.size()){return Utils::FQANtoVO(fqans[0]);}
-		else {return "";};
-
 	} else {
 		throw WmsClientException(__FILE__,__LINE__,"getDefaultVo",
 			DEFAULT_ERR_CODE,
@@ -884,6 +828,9 @@ std::string* Utils::checkConf(){
 		logInfo->print (WMS_DEBUG, "Vo read from", "proxy certificate extension",true,true);
 		voName=getDefaultVo();
 		src=CERT_EXTENSION;
+	}else{
+		// Unable to read VOMS extension: debug
+		logInfo->print (WMS_DEBUG, "Unable to read VOMS extension from proxy certificate", "",true,true);
 	}
 	// OTHER OPTIONS PARSING.........
 	if (vo && src!=NONE){

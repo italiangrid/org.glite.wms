@@ -58,9 +58,11 @@ glite_wms_job_delegate_proxy_LDADD = \
 	$(WMPROXY_DELEGATE) \
 	$(WMPROXY_UTILS) \
 	$(CLASSAD_LIBS) \
+	$(GLOBUS_SSL_NOTHR_LIBS) \
 	$(BOOST_LIBS) \
-	$(GRIDSITE_LIBS) \
-	$(GRIDSITE_OPENSSL_LIBS)
+	$(VOMS_CPP_NOTHR_LIBS) \
+	$(GRIDSITE_GLOBUS_LIBS) \
+	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
 glite_wms_job_proxy_info_SOURCES = \
 	wmp-job-proxy-info.cpp
@@ -82,23 +84,9 @@ glite_wms_job_proxy_info_LDADD = \
 	$(WMPROXY_PROXYINFO) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
+	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS)
-
-#glite_job_attach_SOURCES = \
-#	wmp-job-attach.cpp
-#glite_job_attach_LDFLAGS = -Xlinker --export-dynamic
-#glite_job_attach_LDADD = \
-#	$(GLITE_WMS_WMPROXY_LIBS) \
-#	$(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#	$(GLITE_WMSUTILS_JOBID_LIBS) \
-#	$(GLITE_WMSUTILS_CJOBID_LIBS) \
-#	$(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-#	$(GLITE_WMS_JDL_LIBS) \
-#	$(CLASSAD_LIBS) \
-#	$(BOOST_LIBS) \
-#	$(GRIDSITE_LIBS) \
-#	$(GRIDSITE_OPENSSL_LIBS)
 
 glite_wms_job_list_match_SOURCES = \
 	wmp-job-list-match.cpp
@@ -116,6 +104,7 @@ glite_wms_job_list_match_LDADD = \
 	$(WMPROXY_UTILS) \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
+	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_LIBS) \
 	$(GRIDSITE_OPENSSL_LIBS)
 
@@ -146,6 +135,7 @@ glite_wms_job_submit_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
+	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
 	$(CURL) \
@@ -178,6 +168,7 @@ glite_wms_job_cancel_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
+	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
@@ -208,6 +199,7 @@ glite_wms_job_output_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
+	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
 	$(CURL)
@@ -239,42 +231,10 @@ glite_wms_job_perusal_LDADD = \
 	$(CLASSAD_LIBS) \
 	$(BOOST_LIBS) \
 	$(EXPAT_LIBS) \
+	$(VOMS_CPP_NOTHR_LIBS) \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS) \
 	$(CURL) 
-
-
-#glite_job_status_SOURCES = \
-#        wmp-job-status.cpp
-#glite_job_status_LDFLAGS = -Xlinker --export-dynamic
-#glite_job_status_LDADD = \
-#        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#        $(GLITE_WMSUTILS_JOBID_LIBS) \
-#        $(GLITE_WMSUTILS_CJOBID_LIBS) \
-#        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-#        $(GLITE_WMS_JDL_LIBS) \
-#        $(CLASSAD_LIBS) \
-#        $(BOOST_LIBS) \
-#        $(CURL) \
-#        $(GRIDSITE_LIBS) \
-#        $(GRIDSITE_OPENSSL_LIBS)
-
-
-#glite_job_logging_info_SOURCES = \
-#        wmp-job-logging-info.cpp
-#glite_job_logging_info_LDFLAGS = -Xlinker --export-dynamic
-#glite_job_logging_info_LDADD = \
-#        $(GLITE_WMS_COMMON_UT_UTIL_LIBS) \
-#        $(GLITE_WMSUTILS_JOBID_LIBS) \
-#        $(GLITE_WMSUTILS_CJOBID_LIBS) \
-#        $(GLITE_WMSUTILS_EXCEPTION_LIBS) \
-#        $(GLITE_WMS_JDL_LIBS) \
-#        $(CLASSAD_LIBS) \
-#        $(BOOST_LIBS) \
-#        $(GRIDSITE_LIBS) \
-#        $(GRIDSITE_OPENSSL_LIBS)
-#
-
 
 AM_CPPFLAGS = -I$(top_srcdir)/src \
 	-I$(top_srcdir)/build/src \
@@ -287,9 +247,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src \
 	$(LIBTAR_CFLAGS) \
 	$(ZLIB_CFLAGS) \
 	-DWANT_NAMESPACES
-
-#-DWITH_OPENSSL
-
 
 
 MAINTAINERCLEANFILES = Makefile.in

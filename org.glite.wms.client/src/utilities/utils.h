@@ -15,6 +15,17 @@
  * utils.h
  */
 
+
+// edglog /usr/include/unistd.h compilation problem workaround:
+// declaration of `char* crypt(const char*, const char*) throw ()'
+// throws different exceptions
+#if defined __GLIBC__ && __GLIBC__ == 2 && __GLIBC_MINOR__ == 3
+#include <sys/cdefs.h>
+#undef __THROW
+#define __THROW
+#endif
+
+
  // std header files
 #include <string>
 #include <vector>

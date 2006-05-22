@@ -153,6 +153,7 @@ have_glite_jdl=no
 have_glite_lb=no
 have_glite_wms_chkpt=no
 have_glite_wms_wmproxy=no
+have_glite_security=no
 
 AC_GLITE
 AC_OPTIMIZE
@@ -174,6 +175,9 @@ AC_MSG_RESULT(["GLITE_WMS_CHKPT found $have_glite_wms_chkpt"])
 
 AC_GLITE_WMS_WMPROXY([], have_glite_wms_wmproxy=yes, have_glite_wms_wmproxy=no)
 AC_MSG_RESULT(["GLITE_WMS_WMPROXY found $have_glite_wms_wmproxy"])
+
+AC_GLITE_SECURITY([], have_glite_security=yes, have_glite_security=no)
+AC_MSG_RESULT(["GLITE_SECURITY found $have_glite_security"])
 
 # Configuration items
 AC_PREFIX_DEFAULT([/opt/glite])
