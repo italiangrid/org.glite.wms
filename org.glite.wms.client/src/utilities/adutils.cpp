@@ -308,9 +308,8 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 			// This is the last check:
 			// (avoid further checks: might be changing boolean type evaluation)
 			if(jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_COLLECTION) ||
-			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG) ||
-			   jdl->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
-				// COLLECTIONS,DAGS AND PARTITIONABLE case:
+			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG)){
+				// COLLECTIONS and DAGS case:
 				// (append special Resubmission private attributes)
 				if(confAd.hasAttribute(JDL::RETRYCOUNT)){
 					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT,
@@ -340,9 +339,8 @@ void AdUtils::setDefaultValuesAd(glite::jdl::Ad* jdl,
 			setMissing(jdl,JDL::PU_FILE_ENABLE,conf->perusal_file_enable());
 			// INT attributes special [SHALLOW]RETRYCOUNT
 			if(jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_COLLECTION) ||
-			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG) ||
-			   jdl->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_PARTITIONABLE)){
-				// COLLECTIONS,DAGS AND PARTITIONABLE case:
+			   jdl->hasAttribute(JDL::TYPE   , JDL_TYPE_DAG)){
+				// COLLECTIONS AND DAGS case:
 				// (append special Resubmission private attributes)
 				if((!jdl->hasAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT))){
 					jdl->setAttribute(JDLPrivate::DEFAULT_NODE_RETRYCOUNT,conf->retry_count());
