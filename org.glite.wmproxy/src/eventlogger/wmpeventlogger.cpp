@@ -678,6 +678,8 @@ WMPEventLogger::logListener(const char* host, int port)
 			edglog(debug)<<"edg_wll_LogListenerProxy() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log listener failed\n"
+					"edg_wll_LogListenerProxy")<<endl;	
 				randomsleep();
 			}
 		}
@@ -691,6 +693,8 @@ WMPEventLogger::logListener(const char* host, int port)
 			edglog(debug)<<"edg_wll_LogListener() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log listener failed\n"
+					"edg_wll_LogListener")<<endl;
 				randomsleep();
 			}
 		}
@@ -721,6 +725,8 @@ WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
 			edglog(debug)<<"edg_wll_LogEventProxy() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log checkpointable failed\n"
+					"edg_wll_LogEventProxy")<<endl;
 				randomsleep();				
 			}
 		}
@@ -734,6 +740,8 @@ WMPEventLogger::logCheckpointable(const char* current_step, const char* state)
 			edglog(debug)<<"edg_wll_LogEventSync() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log checkpointable failed\n"
+					"edg_wll_LogEventSync")<<endl;
 				randomsleep();				
 			}
 		}
@@ -765,6 +773,8 @@ WMPEventLogger::logAbortEventSync(char* reason)
 			edglog(debug)<<"edg_wll_LogEventProxy() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log abort failed\n"
+					"edg_wll_LogEventProxy")<<endl;
 				randomsleep();				
 			}
 		}
@@ -778,6 +788,8 @@ WMPEventLogger::logAbortEventSync(char* reason)
 			edglog(debug)<<"edg_wll_LogEventSync() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log sync abort failed\n"
+					"edg_wll_LogEventSync")<<endl;
 				randomsleep();				
 			}
 		}
@@ -810,6 +822,8 @@ WMPEventLogger::logAcceptEventSync()
 			edglog(debug)<<"edg_wll_LogEventProxy() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log sync accept failed\n"
+					"edg_wll_LogEventProxy")<<endl;
 				randomsleep();				
 			}
 		}
@@ -823,6 +837,8 @@ WMPEventLogger::logAcceptEventSync()
 			edglog(debug)<<"edg_wll_LogEventSync() exit code: "
 					<<outcome<<endl;
 			if (outcome) {
+				edglog(severe)<<error_message("Register log sync accept failed\n"
+					"edg_wll_LogEventSync")<<endl;
 				randomsleep();				
 			}
 		}
@@ -1346,7 +1362,7 @@ WMPEventLogger::error_message(const string &api)
 	} else {
 		if (getenv(GLITE_WMS_LOG_DESTINATION)) {
 			error_message = string("LB (ENV): " 
-				+ getenv(GLITE_WMS_LOG_DESTINATION) + "\n"
+				+ string(getenv(GLITE_WMS_LOG_DESTINATION)) + "\n"
 				+ api + "\nLB Error: " + msg + "\n(" + dsc + ")");
 		} else {
 			error_message = string("LB: " + this->lb_host + ":"
