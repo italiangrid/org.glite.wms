@@ -97,16 +97,13 @@ class WMPEventLogger  {
 
 		void setLoggingJob(const std::string &jid, const char *seq_code = NULL);
 
-		int setUserProxy(const std::string &proxy);
+		void setUserProxy(const std::string &proxy);
 		
 		regJobEvent retrieveRegJobEvent(const std::string &jobid_str);
 		
 		std::string isStartAllowed();
 		
 		std::string getLastEventSeqCode();
-		
-		std::string getUserTag(const std::string &tagname);
-		
 		
 		/**
 		 * Gets the full status of the job represented by the input job id
@@ -117,9 +114,6 @@ class WMPEventLogger  {
 			const std::string &delegatedproxy, bool childreninfo = false);
 			
 		glite::lb::JobStatus getStatus(bool childreninfo);
-			
-		static const std::string QUERY_SEQUENCE_CODE;
-		static const std::string QUERY_JDL_ORIGINAL;
 
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
 		edg_wlc_JobId *subjobs;
@@ -137,19 +131,15 @@ class WMPEventLogger  {
 		std::string delegatedproxy;
 		int desturiport;
 		
-		const char * error_message(const char *api);
+		std::string error_message(const std::string &api);
 		
 		void testAndLog(int &code, bool &with_hp, int &lap);
-		bool logEvent(event_name event, const char *reason,
+		int logEvent(event_name event, const char *reason,
 			const char *file_queue = NULL, const char *jdl = NULL);
 		void logEvent(event_name event, const char *reason, bool retry,
 			const char *file_queue = NULL, const char *jdl = NULL);
 			
 		void randomsleep();
-		
-		static const char * GLITE_WMS_LOG_DESTINATION;
-		static const int LB_RENEWAL_PORT = 7512;
-		static const int LOG_RETRY_COUNT = 3;
 };
 
 } // eventlogger
