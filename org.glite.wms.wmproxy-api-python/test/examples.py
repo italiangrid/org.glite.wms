@@ -45,8 +45,8 @@ class JobId:
 		if self.jobid:
 			return self.jobid
 		else:
-			tile ("WARNING: using DEFAULT JOBID",DEFAULT_JOBID)
-			return DEFAULT_JOBID
+			title ("WARNING: using DEFAULT JOBID",self.DEFAULT_JOBID)
+			return self.DEFAULT_JOBID
 		sys.exit(1)
 
 class Jdl:
@@ -71,8 +71,8 @@ class Jdl:
 		elif defaultJdl:
 			return defaultJdl
 		else:
-			tile ("WARNING: using DEFAULT JDL",DEFAULT_JDL )
-			return DEFAULT_JDL
+			tile ("WARNING: using DEFAULT JDL",self.DEFAULT_JDL )
+			return self.DEFAULT_JDL
 
 
 """
@@ -364,7 +364,7 @@ def runTextRunner(level, sublevel):
 	"submitSuite":["testdagSubmit","testcollectionSubmit","testcollectionSubmitOne",\
 	"testjobSubmit","testjobListMatch","testcycleJob"],\
 	# PERUSAL SUITES
-	"perusalSuite":["testgetPerusalFiles","testenableFilePerusal"],\
+	"PerusalSuite":["testgetPerusalFiles","testenableFilePerusal"],\
 	# TEMPLATES SUITES
 	"templateSuite":["testgetStringParametricJobTemplate","testgetIntParametricJobTemplate",\
 	"testgetCollectionTemplate","testgetDAGTemplate","testgetJobTemplate"],\
@@ -445,19 +445,23 @@ def custom2():
 
 
 def printHelp(command, helpLevel=0):
-	print "\nUsage:  ".ljust(25) + command + " 0-"+str(LEV_MAX-1)+"[.<subsuite number>]  [<jobid>] [<jdl>]"
+	print "\nUsage:  ".ljust(25) + command + " 0-"+str(LEV_MAX-1)+"[.<subtest number>]  [<jobid>] [<jdl>]"
 	print "ALL tests:".ljust(25) + command + " -a [<jobid>] [<jdl>]"
-	print "help:     ".ljust(25) + command + " -h\n"
+	print "help:     ".ljust(25) + command + " -h"
 
 if __name__=="__main__":
 	try:
 		if len(sys.argv)<2:
 			printHelp(sys.argv[0])
-			sys.argv.append(raw_input("Please Select one Test(or type '-h', or press ^C):\n"))
+			sys.argv.append(raw_input("Please Select one test(or type '-h', or press ^C):\n"))
 		if sys.argv[1]=="-h":
 			runTextRunner(LEV_HELP,LEV_HELP)
 			printHelp(sys.argv[0])
-			sys.argv[1]=(raw_input("Please Select one Test(or press ^C):\n"))
+			print " - - - "
+			print "EXAMPLES:"
+			print "\t"+ sys.argv[0] + " 1".ljust(25) +"Will perform all templateSuite TESTS"
+			print "\t"+ sys.argv[0] + " 2.4".ljust(25) +"Will perform testenableFilePerusal from perusalSuite SUITE"
+			sys.argv[1]=(raw_input("Please Select one test(or press ^C):\n"))
 	except KeyboardInterrupt:
 		print "\nbye!"
 		sys.exit(0)
