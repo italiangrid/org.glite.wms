@@ -393,56 +393,46 @@ setSubjobFileSystem(authorizer::WMPAuthorizer *auth,
 	// Creating sub jobs directories
 	if (jobids.size()) {
 		edglog(debug)<<"Creating sub job directories for job:\n"<<jobid<<endl;
-		/*int outcome =*/ wmputilities::managedir(document_root, userid,
+		wmputilities::managedir(document_root, userid,
 			jobdiruserid, jobids);
-		/*if (outcome) {
-			edglog(critical)
-				<<"Unable to create sub jobs local directories for job:\n\t"
-				<<jobid<<"\n"<<strerror(errno)<<" code: "<<errno<<endl;
-			throw FileSystemException(__FILE__, __LINE__,
-				"setSubjobFileSystem()", wmputilities::WMS_FATAL,
-				"Unable to create sub jobs local directories\n(please contact "
-				"server administrator)");
-		} else {*/
-			string link;
-			string linkbak;
-			
-			vector<string>::iterator iter = jobids.begin();
-			vector<string>::iterator const end = jobids.end();
-			for (; iter != end; ++iter) {
-				link = wmputilities::getJobDelegatedProxyPath(*iter);
-				edglog(debug)<<"Creating proxy symbolic link for: "
-					<<*iter<<endl;
-				if (symlink(proxy.c_str(), link.c_str())) {
-					if (errno != EEXIST) {
-				      	edglog(critical)
-				      		<<"Unable to create symbolic link to proxy file:\n\t"
-				      		<<link<<"\n"<<strerror(errno)<<endl;
-				      
-				      	throw FileSystemException(__FILE__, __LINE__,
-							"setSubjobFileSystem()", wmputilities::WMS_FATAL,
-							"Unable to create symbolic link to proxy file\n"
-								"(please contact server administrator)");
-					}
-			    }
-			    
-			    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
-			    edglog(debug)<<"Creating backup proxy symbolic link for: "
-					<<*iter<<endl;
-			    if (symlink(proxybak.c_str(), linkbak.c_str())) {
-			    	if (errno != EEXIST) {
-				      	edglog(critical)
-				      		<<"Unable to create symbolic link to backup proxy file:\n\t"
-				      		<<linkbak<<"\n"<<strerror(errno)<<endl;
-				      
-				      	throw FileSystemException(__FILE__, __LINE__,
-							"setSubjobFileSystem()", wmputilities::WMS_FATAL,
-							"Unable to create symbolic link to backup proxy file\n"
-								"(please contact server administrator)");
-			    	}
-			    }
-			}
-		//}
+		string link;
+		string linkbak;
+		
+		vector<string>::iterator iter = jobids.begin();
+		vector<string>::iterator const end = jobids.end();
+		for (; iter != end; ++iter) {
+			link = wmputilities::getJobDelegatedProxyPath(*iter);
+			edglog(debug)<<"Creating proxy symbolic link for: "
+				<<*iter<<endl;
+			if (symlink(proxy.c_str(), link.c_str())) {
+				if (errno != EEXIST) {
+			      	edglog(critical)
+			      		<<"Unable to create symbolic link to proxy file:\n\t"
+			      		<<link<<"\n"<<strerror(errno)<<endl;
+			      
+			      	throw FileSystemException(__FILE__, __LINE__,
+						"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+						"Unable to create symbolic link to proxy file\n"
+							"(please contact server administrator)");
+				}
+		    }
+		    
+		    linkbak = wmputilities::getJobDelegatedProxyPathBak(*iter);
+		    edglog(debug)<<"Creating backup proxy symbolic link for: "
+				<<*iter<<endl;
+		    if (symlink(proxybak.c_str(), linkbak.c_str())) {
+		    	if (errno != EEXIST) {
+			      	edglog(critical)
+			      		<<"Unable to create symbolic link to backup proxy file:\n\t"
+			      		<<linkbak<<"\n"<<strerror(errno)<<endl;
+			      
+			      	throw FileSystemException(__FILE__, __LINE__,
+						"setSubjobFileSystem()", wmputilities::WMS_FATAL,
+						"Unable to create symbolic link to backup proxy file\n"
+							"(please contact server administrator)");
+		    	}
+		    }
+		}
 		// Creating gacl file in the private job directory
 		authorizer::WMPAuthorizer::setJobGacl(jobids);
 	}
@@ -471,14 +461,7 @@ setJobFileSystem(authorizer::WMPAuthorizer *auth, const string &delegatedproxy,
 	vector<string> job;
 	job.push_back(jobid);
 	edglog(debug)<<"Creating job directories for job:\n"<<jobid<<endl;
-	/*if (*/wmputilities::managedir(document_root, userid, jobdiruserid, job);/*) {
-		edglog(critical)<<"Unable to create job local directory for job:\n\t"
-			<<jobid<<"\n"<<strerror(errno)<<endl;
-		throw FileSystemException(__FILE__, __LINE__,
-			"setJobFileSystem()", wmputilities::WMS_FATAL,
-			"Unable to create job local directory\n(please contact server "
-			"administrator)");
-	}*/
+	wmputilities::managedir(document_root, userid, jobdiruserid, job);
 	
 	// Getting delegated proxy inside job directory
 	string proxy(wmputilities::getJobDelegatedProxyPath(jobid));
@@ -714,12 +697,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 			
 	// Setting user proxy
-	if (wmplogger.setUserProxy(delegatedproxy)) {
-			edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-			throw AuthenticationException(__FILE__, __LINE__,
-				"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-				"Unable to set User Proxy for LB context");
-	}
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	// Registering the job
 	jad->check();
@@ -987,12 +965,7 @@ regist(jobRegisterResponse &jobRegister_response, authorizer::WMPAuthorizer *aut
 	setAttributes(dag, jid, dest_uri, delegatedproxyfqan);
 		
 	// Setting user proxy
-	if (wmplogger.setUserProxy(delegatedproxy)) {
-			edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-			throw AuthenticationException(__FILE__, __LINE__,
-				"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-				"Unable to set User Proxy for LB context");
-	}
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	////////////////////////////////////////////////////
 	// If present -> Mandatory attribute not present
@@ -1135,12 +1108,7 @@ jobStart(jobStartResponse &jobStart_response, const string &job_id,
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
-	if (wmplogger.setUserProxy(delegatedproxy)) {
-		edglog(critical)<<"Unable to set User Proxy for LB context"<<endl;
-		throw AuthenticationException(__FILE__, __LINE__,
-			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-			"Unable to set User Proxy for LB context");
-	}
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	// Checking proxy validity
 	try {
@@ -1433,6 +1401,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						edglog(debug)<<"Absolute path: "<<jobpath + files[i]<<endl;
 						edglog(debug)<<"Target directory: "<<targetdir<<endl;
 						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
+						
+						// TBD Call the method with a vector of file
 						wmputilities::untarFile(jobpath + files[i],
 							targetdir, auth->getUserId(), auth->getUserGroup());
 						
@@ -1452,7 +1422,7 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 	          		throw JobOperationException( __FILE__, __LINE__,
 	          			"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 	           			"LB logging listener failed");
-				}	
+				}
 			} else if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)) {
 				string flagfile = wmputilities::getJobDirectoryPath(*jid)
 		    		+ FILE_SEPARATOR + FLAG_FILE_LOG_CHECKPOINTABLE;
@@ -1669,6 +1639,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 						edglog(debug)<<"Absolute path: "<<jobpath + files[i]<<endl;
 						edglog(debug)<<"Target directory: "<<targetdir<<endl;
 						//wmputilities::uncompressFile(jobpath + files[i], targetdir);
+						
+						// TBD Call the method with a vector of file
 						wmputilities::untarFile(jobpath + files[i], targetdir,
 							auth->getUserId(), auth->getUserGroup());
 					}
@@ -1878,12 +1850,7 @@ jobSubmit(struct ns1__jobSubmitResponse &response,
 	edglog(debug)<<"Job delegated proxy: "<<proxy<<endl;
 	
 	// Setting user proxy
-	if (wmplogger.setUserProxy(proxy)) {
-		edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-		throw AuthenticationException(__FILE__, __LINE__,
-			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-			"Unable to set User Proxy for LB context");
-	}
+	wmplogger.setUserProxy(proxy);
 	
 	jobSubmit_response.jobIdStruct = jobRegister_response.jobIdStruct;
 	
@@ -1949,12 +1916,19 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 	delete auth;
 	
 	string jobpath = wmputilities::getJobDirectoryPath(*jid);
-  
-	// Checking proxy validity
-	//authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+
+	// Initializing logger
+	WMPEventLogger wmplogger(wmputilities::getEndpoint());
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+	
+	// Setting user proxy
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	// Getting job status to check if cancellation is possible
-	JobStatus status = WMPEventLogger::getStatus(jid, delegatedproxy);
+	JobStatus status = wmplogger.getStatus(false);
 	
 	// Getting type from jdl
 	string seqcode = "";
@@ -1978,7 +1952,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		// Getting sequence code from jdl
 		Ad *ad = new Ad();
 		ad->fromFile(wmputilities::getJobJDLToStartPath(*jid));
-		//Ad *ad = new Ad(status.getValString(JobStatus::JDL));
 		if (ad->hasAttribute(JDL::LB_SEQUENCE_CODE)) {
 			seqcode = ad->getStringValue(JDL::LB_SEQUENCE_CODE)[0];
 		}
@@ -1990,21 +1963,6 @@ jobCancel(jobCancelResponse &jobCancel_response, const string &job_id)
 		throw JobOperationException(__FILE__, __LINE__,
 			"jobCancel()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
 			"Cancel has already been requested");
-	}
-	
-	// Initializing logger
-	WMPEventLogger wmplogger(wmputilities::getEndpoint());
-	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
-	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jid,
-		conf.getDefaultProtocol(), conf.getDefaultPort());
-	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
-	
-	// Setting user proxy
-	if (wmplogger.setUserProxy(delegatedproxy)) {
-		edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-		throw AuthenticationException(__FILE__, __LINE__,
-			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-			"Unable to set User Proxy for LB context");
 	}
 	
 	if (seqcode == "") {
@@ -2213,11 +2171,18 @@ jobpurge(jobPurgeResponse &jobPurge_response, JobId *jobid, bool checkstate)
 	string delegatedproxy = wmputilities::getJobDelegatedProxyPath(*jobid);
 	edglog(debug)<<"Job delegated proxy: "<<delegatedproxy<<endl;
 	
-	// Checking proxy validity
-	//authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
+	// Initializing logger
+	WMPEventLogger wmplogger(wmputilities::getEndpoint());
+	std::pair<std::string, int> lbaddress_port = conf.getLBLocalLoggerAddressPort();
+	wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
+		conf.getDefaultProtocol(), conf.getDefaultPort());
+	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+	
+	// Setting user proxy
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	// Getting job status to check if purge is possible
-	JobStatus status = WMPEventLogger::getStatus(jobid, delegatedproxy);
+	JobStatus status = wmplogger.getStatus(false);
 	
 	if (((JobId) status.getValJobId(JobStatus::PARENT_JOB)).isSet()) {
 		string msg = "the job is a DAG subjob. The parent is: "

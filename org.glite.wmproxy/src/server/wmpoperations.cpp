@@ -327,21 +327,12 @@ getSandboxBulkDestURI(getSandboxBulkDestURIResponse &getSandboxBulkDestURI_respo
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
-	if (wmplogger.setUserProxy(delegatedproxy)) {
-		edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-		throw AuthenticationException(__FILE__, __LINE__,
-			"setUserProxy()", wmputilities::WMS_AUTHENTICATION_ERROR,
-			"Unable to set User Proxy for LB context");
-	}
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	DestURIsStructType *destURIsStruct = new DestURIsStructType();
 	destURIsStruct->Item = new vector<DestURIStructType*>(0);
 	
-	// Checking proxy validity
-	//authorizer::WMPAuthorizer::checkProxy(delegatedproxy);
-	
 	// Getting job status to check if cancellation is possible
-	//JobStatus status = WMPEventLogger::getStatus(jobid, delegatedproxy, true);
 	JobStatus status = wmplogger.getStatus(true);
 	vector<string> jids = status.getValStringList(JobStatus::CHILDREN);
 	edglog(debug)<<"Children count: "<<status.getValInt(JobStatus::CHILDREN_NUM)<<endl;
@@ -455,8 +446,19 @@ getOutputFileList(getOutputFileListResponse &getOutputFileList_response,
 	edglog(debug)<<"Searching for file: "<<jobdirectory + FILE_SEPARATOR
 		+ MARADONA_FILE<<endl;
 	if (!wmputilities::fileExists(jobdirectory + FILE_SEPARATOR + MARADONA_FILE)) {
+		// Initializing logger
+		WMPEventLogger wmplogger(wmputilities::getEndpoint());
+		std::pair<std::string, int> lbaddress_port
+			= conf.getLBLocalLoggerAddressPort();
+		wmplogger.init(lbaddress_port.first, lbaddress_port.second, jobid,
+			conf.getDefaultProtocol(), conf.getDefaultPort());
+		wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
+		
+		// Setting user proxy
+		wmplogger.setUserProxy(delegatedproxy);
+		
 		// Getting job status to check if is a job and is done success
-		JobStatus status = WMPEventLogger::getStatus(jobid, delegatedproxy);
+		JobStatus status = wmplogger.getStatus(false);
 	
 		if (status.getValInt(JobStatus::CHILDREN_NUM) != 0) {
 			string msg = "getOutputFileList operation not allowed for dag or "
@@ -1047,12 +1049,7 @@ checkPerusalFlag(JobId *jid, string &delegatedproxy, bool checkremotepeek)
 	wmplogger.setLBProxy(conf.isLBProxyAvailable(), wmputilities::getUserDN());
 	
 	// Setting user proxy
-	if (wmplogger.setUserProxy(delegatedproxy)) {
-		edglog(critical)<<"Unable to set User Proxy for LB context"<<endl;
-		throw AuthenticationException(__FILE__, __LINE__,
-			"checkPerusalFlag()", wmputilities::WMS_AUTHENTICATION_ERROR,
-			"Unable to set User Proxy for LB context");
-	}
+	wmplogger.setUserProxy(delegatedproxy);
 	
 	string jdlpath = wmplogger.retrieveRegJobEvent(jid->toString()).jdl;
 	edglog(debug)<<"jdlpath: "<<jdlpath<<endl;
