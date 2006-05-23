@@ -1286,58 +1286,6 @@ WMPEventLogger::getStatus(bool childreninfo)
   	GLITE_STACK_CATCH();
 }
 
-void
-setJobLoggingProxy(glite::lb::Job &lbjob, const string &proxy)
-{
-	GLITE_STACK_TRY("setJobLoggingProxy()");
-	edglog_fn("WMPEventLogger::setJobLoggingProxy");
-	
-	if (proxy != "") {
-		try {
-			authorizer::WMPAuthorizer::checkProxy(proxy);
-			//lbjob.setParam(EDG_WLL_PARAM_X509_KEY, 0);
-			//lbjob.setParam(EDG_WLL_PARAM_X509_CERT, 0);
-			lbjob.setParam(EDG_WLL_PARAM_X509_PROXY, proxy);
-			return;
-		} catch (Exception &ex) {
-			if (ex.getCode() != wmputilities::WMS_PROXY_EXPIRED) {
-				throw ex;
-			}
-		}
-	}
-	// Setting host proxy
-	if (!getenv(GLITE_HOST_KEY) || !getenv(GLITE_HOST_CERT)) {
-		edglog(severe)<<"Unable to set User Proxy for LB context"<<endl;
-		throw AuthenticationException(__FILE__, __LINE__,
-			"setJobLoggingProxy()", WMS_AUTHENTICATION_ERROR,
-			"Unable to set User Proxy for LB context");
-	} else {
-		//lbjob.setParam(EDG_WLL_PARAM_X509_PROXY, 0);
-		lbjob.setParam(EDG_WLL_PARAM_X509_KEY, string(getenv(GLITE_HOST_KEY)));
-		lbjob.setParam(EDG_WLL_PARAM_X509_CERT, string(getenv(GLITE_HOST_CERT)));
-	}
-	
-	GLITE_STACK_CATCH();
-}
-
-glite::lb::JobStatus
-WMPEventLogger::getStatus(JobId *jid, const string &delegatedproxy,
-	bool childreninfo)
-{
-	GLITE_STACK_TRY("WMPEventLogger::getStatus()");
-	
-	glite::lb::Job lb_job(*jid);
-	setJobLoggingProxy(lb_job, delegatedproxy);
-	int flag = glite::lb::Job::STAT_CLASSADS;
-	if (childreninfo) {
-		flag = flag | glite::lb::Job::STAT_CHILDREN;
-	}
-	return lb_job.status(flag); // to get also jdl
-	// lb_job.status(0) minimal information about the job
-	
-	GLITE_STACK_CATCH();
-}
-
 
 
 //

@@ -106,17 +106,15 @@ class WMPEventLogger  {
 		std::string getLastEventSeqCode();
 		
 		/**
-		 * Gets the full status of the job represented by the input job id
-		 * @param jid the job id to get the status for
-		 * @return the status of the corresponding job
+		 * Gets the status of the context job
+		 * @param childreninfo if set to true, subjobs info are also returned (if any)
+		 * @return the status of the context job
 		 */
-		static glite::lb::JobStatus getStatus(glite::wmsutils::jobid::JobId *jid,
-			const std::string &delegatedproxy, bool childreninfo = false);
-			
 		glite::lb::JobStatus getStatus(bool childreninfo);
 
 		void registerSubJobs(WMPExpDagAd *ad, edg_wlc_JobId *subjobs);
 		edg_wlc_JobId *subjobs;
+		
 		
 	private:
 		
