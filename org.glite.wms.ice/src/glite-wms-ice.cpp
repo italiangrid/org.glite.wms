@@ -180,9 +180,11 @@ int main(int argc, char*argv[])
   //string hostdn;
   // Set the creation of CreamProxy with automatic delegetion ON
   soap_proxy::CreamProxyFactory::initProxy( true );
-  log_dev->infoStream()
-      << "Host proxyfile is [" << hostcert << "]" 
-      << log4cpp::CategoryStream::ENDLINE;
+  CREAM_SAFE_LOG(
+                 log_dev->infoStream()
+                 << "Host proxyfile is [" << hostcert << "]" 
+                 << log4cpp::CategoryStream::ENDLINE
+                 );
   try {
     hostdn = soap_proxy::CreamProxyFactory::getProxy()->getDN(hostcert);
     boost::trim_if(hostdn, boost::is_any_of("/"));
@@ -195,17 +197,21 @@ int main(int argc, char*argv[])
     }
 
     if((soap_proxy::CreamProxyFactory::getProxy()->getProxyTimeLeft(hostcert)<=0) || (hostdn=="") ) {
-        log_dev->errorStream() 
-            << "Host proxy certificate is expired. Won't start Listener"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       log_dev->errorStream() 
+                       << "Host proxy certificate is expired. Won't start Listener"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
 
         // this must be set because other pieces of code
         // have a behaviour that depends on the listener is running or not
 	boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
 	iceUtil::iceConfManager::getInstance()->setStartListener( false );
     } else {
-	log_dev->log(log4cpp::Priority::INFO,
-                     string( "Host DN is [" + hostdn + "]") );
+        CREAM_SAFE_LOG(
+                       log_dev->log(log4cpp::Priority::INFO,
+                                    string( "Host DN is [" + hostdn + "]") )
+                       );
     }
   } catch ( glite::ce::cream_client_api::soap_proxy::auth_ex& ex ) {
     logger_instance->log(log4cpp::Priority::ERROR,
@@ -227,12 +233,15 @@ int main(int argc, char*argv[])
     jcachefile = iceUtil::iceConfManager::getInstance()->getCachePersistFile();
   }
   string jsnapfile  = jcachefile+".snapshot";
-  log_dev->infoStream() << "Initializing jobCache with journal file ["
-  			<< jcachefile
-			<< "] and snapshot file ["
-   			<< jsnapfile
-			<< "]..."
-			<< log4cpp::CategoryStream::ENDLINE;
+  CREAM_SAFE_LOG(
+                 log_dev->infoStream() 
+                 << "Initializing jobCache with journal file ["
+                 << jcachefile
+                 << "] and snapshot file ["
+                 << jsnapfile
+                 << "]..."
+                 << log4cpp::CategoryStream::ENDLINE
+                 );
 
   iceUtil::jobCache::setJournalFile(jcachefile);
   iceUtil::jobCache::setSnapshotFile(jsnapfile);
@@ -241,7 +250,7 @@ int main(int argc, char*argv[])
       iceUtil::jobCache::getInstance();
   }
   catch(exception& ex) {
-      log_dev->log( log4cpp::Priority::FATAL, ex.what() );
+      CREAM_SAFE_LOG( log_dev->log( log4cpp::Priority::FATAL, ex.what() ) );
       exit( 1 );
   }
 
@@ -254,14 +263,20 @@ int main(int argc, char*argv[])
     boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
     iceManager = new glite::wms::ice::Ice(iceUtil::iceConfManager::getInstance()->getWMInputFile(), iceUtil::iceConfManager::getInstance()->getICEInputFile());
   } catch(glite::wms::ice::iceInit_ex& ex) {
-    log_dev->errorStream() << "glite-wms-ice::main() - " << ex.what()
-			   << log4cpp::CategoryStream::ENDLINE;
-    exit(1);
+      CREAM_SAFE_LOG(
+                     log_dev->fatalStream() 
+                     << "glite-wms-ice::main() - " << ex.what()
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
+      exit(1);
   } catch(...) {
-    log_dev->errorStream() << "glite-wms-ice::main() - "
-			   << "Catched unknown exception"
-			   << log4cpp::CategoryStream::ENDLINE;
-    exit(1);
+      CREAM_SAFE_LOG(
+                     log_dev->fatalStream() 
+                     << "glite-wms-ice::main() - "
+                     << "Catched unknown exception"
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
+      exit(1);
   }
 
 
@@ -277,22 +292,27 @@ int main(int argc, char*argv[])
    * Initializes CREAM client
    ****************************************************************************/
   soap_proxy::CreamProxyFactory::initProxy(true);
-  if( !soap_proxy::CreamProxyFactory::getProxy() )
-    {
-      log_dev->errorStream() << "glite-wms-ice::main() - " 
-			     << "CreamProxy creation failed! Stop"
-			     << log4cpp::CategoryStream::ENDLINE;
+  if( !soap_proxy::CreamProxyFactory::getProxy() ) {
+      CREAM_SAFE_LOG(
+                     log_dev->fatalStream() 
+                     << "glite-wms-ice::main() - " 
+                     << "CreamProxy creation failed! Stop"
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
       exit(1);
-    }
+  }
 
   soap_proxy::CreamProxyFactory::getProxy()->printDebug( true );
   try {
     soap_proxy::CreamProxyFactory::getProxy()->setSOAPHeaderID(hostdn);
   } catch(soap_proxy::auth_ex& ex) {
-    log_dev->errorStream() << "glite-wms-ice::main() - " 
-			   << ex.what()
-			   << log4cpp::CategoryStream::ENDLINE;
-    exit(1);
+      CREAM_SAFE_LOG(
+                     log_dev->fatalStream() 
+                     << "glite-wms-ice::main() - " 
+                     << ex.what()
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
+      exit(1);
   }
 
 
@@ -330,53 +350,61 @@ int main(int argc, char*argv[])
     iceManager->getNextRequests(requests);
     
     if( requests.size() )
-        log_dev->infoStream()
-            << "*** Found " << requests.size() << " new request(s)"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       log_dev->infoStream()
+                       << "*** Found " << requests.size() << " new request(s)"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
 
     for(unsigned int j=0; j < requests.size( ); j++) {
-        log_dev->infoStream()
-            << "*** Unparsing request <"
-            << requests[j] 
-            << ">"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       log_dev->infoStream()
+                       << "*** Unparsing request <"
+                       << requests[j] 
+                       << ">"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
         boost::scoped_ptr< glite::wms::ice::iceAbsCommand > cmd;
         try {
             glite::wms::ice::iceAbsCommand* tmp = glite::wms::ice::iceCommandFactory::mkCommand( requests[j] );
             cmd.reset( tmp ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything
         }
         catch(std::exception& ex) {
-            log_dev->log(log4cpp::Priority::ERROR, ex.what() );
-            log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." );
+            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::ERROR, ex.what() ) );
+            CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing BAD request..." ) );
             iceManager->removeRequest(j);
             continue;
         }
       try {
           cmd->execute( iceManager );
       } catch ( glite::wms::ice::iceCommandFatal_ex& ex ) {
-          log_dev->errorStream()
-              << "Command execution got FATAL exception: "
-              << ex.what()
-              << log4cpp::CategoryStream::ENDLINE;
+          CREAM_SAFE_LOG( 
+                         log_dev->errorStream()
+                         << "Command execution got FATAL exception: "
+                         << ex.what()
+                         << log4cpp::CategoryStream::ENDLINE
+                         );
       } catch ( glite::wms::ice::iceCommandTransient_ex& ex ) {
-	log_dev->errorStream()
-            << "Command execution got TRANSIENT exception: "
-            << ex.what()
-            << log4cpp::CategoryStream::ENDLINE;
-
-	log_dev->log(log4cpp::Priority::INFO,
-                     "Request will be resubmitted" );
+          CREAM_SAFE_LOG(
+                         log_dev->errorStream()
+                         << "Command execution got TRANSIENT exception: "
+                         << ex.what()
+                         << log4cpp::CategoryStream::ENDLINE
+                         );
+          CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Request will be resubmitted" ) );
           
       }
-      log_dev->log(log4cpp::Priority::INFO,
-                   "Removing submitted request from WM/ICE's filelist..." );
+      CREAM_SAFE_LOG( log_dev->log(log4cpp::Priority::INFO, "Removing submitted request from WM/ICE's filelist..." ) );
       try { 
 	iceManager->removeRequest(j);
       } catch(exception& ex) {
-	log_dev->errorStream() << "glite-wms-ice::main() - "
-			       << "Error removing request from FL: "
-			       << ex.what()
-			       << log4cpp::CategoryStream::ENDLINE;
+          CREAM_SAFE_LOG(
+                         log_dev->fatalStream() 
+                         << "glite-wms-ice::main() - "
+                         << "Error removing request from FL: "
+                         << ex.what()
+                         << log4cpp::CategoryStream::ENDLINE
+                         );
 	exit(1);
       }
     }

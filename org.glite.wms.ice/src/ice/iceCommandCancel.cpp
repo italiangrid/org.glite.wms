@@ -98,10 +98,12 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
     // Look for "lb_sequence_code" attribute inside "Arguments"
     if ( !argumentsAD->EvaluateAttrString( "sequencecode", m_sequence_code ) ) {
         // FIXME: This should be an error to throw. For now, we try anyway...
-        m_log_dev->warnStream()
-            << "Cancel request does not have a \"sequencecode\" attribute. "
-            << "Fine for now, should not happen in the future"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG( m_log_dev->warnStream()
+                        << "Cancel request does not have a "
+                        << "\"sequencecode\" attribute. "
+                        << "Fine for now, should not happen in the future"
+                        << log4cpp::CategoryStream::ENDLINE
+                        );
     } else {
         boost::trim_if(m_sequence_code, boost::is_any_of("\""));        
     }
@@ -109,20 +111,24 @@ iceCommandCancel::iceCommandCancel( const std::string& request ) throw(util::Cla
 
 void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceCommandTransient_ex& )
 {
-    m_log_dev->infoStream()
-        << "This request is a Cancel..."
-        << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG( 
+                   m_log_dev->infoStream()
+                   << "This request is a Cancel..."
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
 
     boost::recursive_mutex::scoped_lock M( util::jobCache::mutex );
 
     // Lookup the job in the jobCache
     util::jobCache::iterator it = util::jobCache::getInstance()->lookupByGridJobID( m_gridJobId );
     if ( it == util::jobCache::getInstance()->end() ) {
-        m_log_dev->errorStream()
-            << "Cancel operation cannot locate jobid=["
-            << m_gridJobId 
-            << "] in the jobCache. Giving up"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG( 
+                       m_log_dev->errorStream()
+                       << "Cancel operation cannot locate jobid=["
+                       << m_gridJobId 
+                       << "] in the jobCache. Giving up"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
 
         throw iceCommandFatal_ex( string("ICE cannot cancel job with grid job id=[") + m_gridJobId + string("], as the job does not appear to exist") );
     }
@@ -138,18 +144,22 @@ void iceCommandCancel::execute( Ice* ice ) throw ( iceCommandFatal_ex&, iceComma
     util::CreamJob theJob( *it );
     vector<string> url_jid(1);   
     url_jid[0] = theJob.getJobID();
-    m_log_dev->infoStream()
-        << "Removing job gridJobId [" 
-        << m_gridJobId
-        << "], creamJobId [" 
-        << url_jid[0] 
-        << "]"
-        << log4cpp::CategoryStream::ENDLINE;
-    
-    m_log_dev->infoStream()
-        << "Sending cancellation requesto to ["
-        << theJob.getCreamURL() << "]"
-        << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(
+                   m_log_dev->infoStream()
+                   << "Removing job gridJobId [" 
+                   << m_gridJobId
+                   << "], creamJobId [" 
+                   << url_jid[0] 
+                   << "]"
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
+
+    CREAM_SAFE_LOG(    
+                   m_log_dev->infoStream()
+                   << "Sending cancellation requesto to ["
+                   << theJob.getCreamURL() << "]"
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
 
     cream_api::soap_proxy::CreamProxy* theProxy( cream_api::soap_proxy::CreamProxyFactory::getProxy() );
     

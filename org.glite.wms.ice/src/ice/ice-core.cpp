@@ -75,14 +75,19 @@ namespace ice {
     void Ice::IceThreadHelper::stop( void )
     {
         if( m_thread && m_ptr_thread->isRunning() ) {
-            m_log_dev->infoStream()
-                << "Waiting for thread " << m_name << " termination..."
-                << log4cpp::CategoryStream::ENDLINE;
+            CREAM_SAFE_LOG( 
+                           m_log_dev->infoStream()
+                           << "Waiting for thread " << m_name 
+                           << " termination..."
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
             m_ptr_thread->stop();
             m_thread->join();
-            m_log_dev->infoStream()
-                << "Thread " << m_name << " finished"
-                << log4cpp::CategoryStream::ENDLINE;
+            CREAM_SAFE_LOG(
+                           m_log_dev->infoStream()
+                           << "Thread " << m_name << " finished"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
         }
     }
 
@@ -101,16 +106,18 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
     m_fle( WM_FL.c_str() ),
     m_log_dev( glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger() )
 {
-    m_log_dev->log(log4cpp::Priority::INFO,
-                   "Ice::CTOR() - Initializing File Extractor object...");
+    CREAM_SAFE_LOG( 
+                   m_log_dev->log(log4cpp::Priority::INFO, "Ice::CTOR() - Initializing File Extractor object...")
+                   );
     try {
         m_flns.open( NS_FL.c_str() );
     }
     catch( std::exception& ex ) {
         throw iceInit_ex( ex.what() );
     } catch( ... ) {
-        m_log_dev->log(log4cpp::Priority::FATAL,
-                       "Ice::CTOR() - Catched unknown exception");
+        CREAM_SAFE_LOG(
+                       m_log_dev->log(log4cpp::Priority::FATAL, "Ice::CTOR() - Catched unknown exception")
+                       );
         exit( 1 );
     }
 
@@ -140,12 +147,13 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
           util::subscriptionManager::getInstance();
 	}
         if( !util::subscriptionManager::getInstance()->isValid() ) {
-            m_log_dev->errorStream() 
-                << "Ice::CTOR() - "
-                << "Fatal error creating the subscriptionManager instance. Stop!"//Will not start listener."
-                << log4cpp::CategoryStream::ENDLINE;
-            //confMgr->setStartListener( false );
-	    //return; // no reason to continue with subscriptionCache initialization
+            CREAM_SAFE_LOG(
+                           m_log_dev->fatalStream() 
+                           << "Ice::CTOR() - "
+                           << "Fatal error creating the subscriptionManager "
+                           << "instance. Stop!"
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
 	    exit(1);
         }
         /**
@@ -157,12 +165,13 @@ Ice::Ice( const string& NS_FL, const string& WM_FL ) throw(iceInit_ex&) :
         {
             boost::recursive_mutex::scoped_lock M( util::subscriptionCache::mutex );
             if( util::subscriptionCache::getInstance() == NULL ) {
-                m_log_dev->errorStream() 
-                    << "Ice::CTOR() - "
-                    << "Fatal error creating the subscriptionCache instance. "
-                    << "Stop!."//Will not start listener."
-                    << log4cpp::CategoryStream::ENDLINE;
-                //confMgr->setStartListener( false );
+                CREAM_SAFE_LOG(
+                               m_log_dev->fatalStream() 
+                               << "Ice::CTOR() - "
+                               << "Fatal error creating the subscriptionCache instance. "
+                               << "Stop!."
+                               << log4cpp::CategoryStream::ENDLINE
+                               );
 		exit(1);
             }
         }
@@ -181,20 +190,25 @@ void Ice::startListener( int listenPort )
     boost::recursive_mutex::scoped_lock M( util::iceConfManager::mutex );
     util::iceConfManager* confMgr( util::iceConfManager::getInstance() );
 
-    m_log_dev->infoStream()
-        << "Ice::startListener() - Creating a CEMon listener object..."
-        << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(
+                   m_log_dev->infoStream()
+                   << "Ice::startListener() - "
+                   << "Creating a CEMon listener object..."
+                   << log4cpp::CategoryStream::ENDLINE
+                   );
 
     util::eventStatusListener* listener;
     if( confMgr->getListenerEnableAuthN() ) {
       const char *host = ::getenv("GLITE_HOST_CERT");
       const char *key  = ::getenv("GLITE_HOST_KEY");
       if( (!host) || (!key) ) {
-	m_log_dev->fatalStream()
-	  << "Ice::startListener() - cannot access to GLITE_HOST_CERT and/or "
-	  << "GLITE_HOST_KEY environmental variables. Cannot start Listener "
-	  << "with authentication as requested. Stop."
-	  << log4cpp::CategoryStream::ENDLINE;
+          CREAM_SAFE_LOG(
+                         m_log_dev->fatalStream()
+                         << "Ice::startListener() - cannot access to GLITE_HOST_CERT and/or "
+                         << "GLITE_HOST_KEY environmental variables. Cannot start Listener "
+                         << "with authentication as requested. Stop."
+                         << log4cpp::CategoryStream::ENDLINE
+                         );
 	exit(1);
       }
       listener = new util::eventStatusListener(listenPort, 
@@ -207,10 +221,12 @@ void Ice::startListener( int listenPort )
     }
     
     if( !listener->isOK() ) {
-        
-        m_log_dev->errorStream()
-            << "CEMon listener creation went wrong. Won't start it."
-            << log4cpp::CategoryStream::ENDLINE;
+
+        CREAM_SAFE_LOG(        
+                       m_log_dev->errorStream()
+                       << "CEMon listener creation went wrong. Won't start it."
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
         
         // this must be set because other pieces of code
         // have a behaviour that depends on the listener is running or not
@@ -219,18 +235,22 @@ void Ice::startListener( int listenPort )
     }
     int bind_retry=0;
     while( !listener->bind() ) {
-        m_log_dev->errorStream()
-            << "Ice::startListener() - Bind error: "
-            << listener->getErrorMessage()
-            << " - error code="
-            << listener->getErrorCode()
-            << "Retrying in 5 seconds..."
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       m_log_dev->errorStream()
+                       << "Ice::startListener() - Bind error: "
+                       << listener->getErrorMessage()
+                       << " - error code="
+                       << listener->getErrorCode()
+                       << "Retrying in 5 seconds..."
+                       << log4cpp::CategoryStream::ENDLINE;
+                       );
 	bind_retry++;
 	if( bind_retry > 1000 ) {
-	  m_log_dev->fatalStream()
-	       << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
-	       << log4cpp::CategoryStream::ENDLINE;
+            CREAM_SAFE_LOG(
+                           m_log_dev->fatalStream()
+                           << "Ice::startListener() - Too many bind retries (5000 secs). Giving up..."
+                           << log4cpp::CategoryStream::ENDLINE
+                           );
 	  exit(1);
 	}  
         sleep(5);
@@ -251,9 +271,12 @@ void Ice::startListener( int listenPort )
         util::subscriptionUpdater* subs_updater = new util::subscriptionUpdater( confMgr->getHostProxyFile());      
 	if( !subs_updater->isValid() )
 	{
-	  m_log_dev->fatalStream()
-	       << "Ice::startListener() - subscriptionUpdater object creation failed. Stop!"
-	       << log4cpp::CategoryStream::ENDLINE;
+            CREAM_SAFE_LOG(
+                           m_log_dev->fatalStream()
+                           << "Ice::startListener() - "
+                           << "subscriptionUpdater object creation failed. Stop!"
+                           << log4cpp::CategoryStream::ENDLINE;
+                           );
 	  exit(1);
 	             
 	}
@@ -269,9 +292,11 @@ void Ice::startPoller( int poller_delay )
     poller = new util::eventStatusPoller( this, poller_delay );
     m_poller_thread.start( poller );
   } catch(util::eventStatusPoller_ex& ex) {
-    m_log_dev->fatalStream()
-	       << "Ice::startPoller() - eventStatusPoller object creation failed. Stop!"
-	       << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(
+                     m_log_dev->fatalStream()
+                     << "Ice::startPoller() - eventStatusPoller object creation failed. Stop!"
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
     exit(1);
   }
 }
@@ -303,8 +328,11 @@ void Ice::getNextRequests(vector<string>& ops)
     m_requests = m_fle.get_all_available();
   }
   catch( exception& ex ) {
-    m_log_dev->fatalStream() << "Ice::getNextRequest() - " << ex.what()
-			     << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(
+                     m_log_dev->fatalStream() 
+                     << "Ice::getNextRequest() - " << ex.what()
+                     << log4cpp::CategoryStream::ENDLINE
+                     );
     exit(1);
   }
   for ( unsigned j=0; j < m_requests.size(); j++ ) {
@@ -329,16 +357,21 @@ void Ice::ungetRequest( unsigned int reqNum)
     boost::replace_first( toResubmit, "jobsubmit", "jobresubmit");
     
     try {
-        m_log_dev->infoStream()
-            << "Ice::ungetRequest() - Putting ["
-            << toResubmit << "] to WM's Input file"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "Ice::ungetRequest() - Putting ["
+                       << toResubmit << "] to WM's Input file"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
         
         m_flns.push_back(toResubmit);
     } catch(std::exception& ex) {
-      m_log_dev->fatalStream () << "Ice::ungetRequest() - "
-				<< ex.what()
-				<< log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       m_log_dev->fatalStream () 
+                       << "Ice::ungetRequest() - "
+                       << ex.what()
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
       exit(1);
     }
 }
@@ -354,16 +387,18 @@ void Ice::resubmit_job( util::CreamJob& j )
     wmsutils_ns::FileListMutex mx(m_flns);
     wmsutils_ns::FileListLock  lock(mx);
     try {
-        m_log_dev->infoStream()
-            << "Ice::doOnJobFailure() - Putting ["
-            << resub_request << "] to WM's Input file"
-            << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(
+                       m_log_dev->infoStream()
+                       << "Ice::doOnJobFailure() - Putting ["
+                       << resub_request << "] to WM's Input file"
+                       << log4cpp::CategoryStream::ENDLINE
+                       );
 
         lb_logger->logEvent( new util::ns_enqueued_start_event( j, m_ns_filelist ) );
         m_flns.push_back(resub_request);
         lb_logger->logEvent( new util::ns_enqueued_ok_event( j, m_ns_filelist ) );
     } catch(std::exception& ex) {
-        m_log_dev->log(log4cpp::Priority::FATAL, ex.what());
+        CREAM_SAFE_LOG( m_log_dev->log(log4cpp::Priority::FATAL, ex.what()) );
         lb_logger->logEvent( new util::ns_enqueued_fail_event( j, m_ns_filelist ) );
         exit(1);
     }
