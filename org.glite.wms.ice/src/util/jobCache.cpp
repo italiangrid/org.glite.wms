@@ -237,8 +237,8 @@ void jobCache::loadJournal(void)
             m_operation_counter++;
             break;
         default:
-            m_log_dev->log(log4cpp::Priority::ERROR,
-                         "Unknown operation parsing the journal");
+	  CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
+					"Unknown operation parsing the journal"));
         }
     }
 }
@@ -290,8 +290,8 @@ void jobCache::dump() throw (jnlFile_ex&)
         
         jobCacheTable::iterator it;
         
-	m_log_dev->log(log4cpp::Priority::INFO,
-		     "jobCache::dump() - Dumping snapshot file");
+	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::INFO,
+				      "jobCache::dump() - Dumping snapshot file"));
         
         for (it=m_jobs.begin(); it != m_jobs.end(); it++ ) {
             
@@ -315,8 +315,8 @@ void jobCache::dump() throw (jnlFile_ex&)
             string err = string("Error renaming temp snapshot file into snapshot file")+
                 strerror(errno);
             
-	    m_log_dev->log(log4cpp::Priority::ERROR,
-			 string("jobCache::dump() - Could't rename snapshot file: ")+err);
+	    CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
+					  string("jobCache::dump() - Could't rename snapshot file: ")+err));
             
             throw jnlFile_ex(err);
         }
@@ -349,22 +349,22 @@ void jobCache::logOperation( const operation& op, const std::string& param )
 	this->dump(); // can raise a jnlFile_ex
 	m_jnlMgr->truncate(); // can raise a jnlFile_ex of jnlFileReadOnly_ex
       } catch(jnlFile_ex& ex) {
-	m_log_dev->log(log4cpp::Priority::ERROR,
-		     string("jobCache::logOperation() - ")
-		     + ex.what());
+	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
+				      string("jobCache::logOperation() - ")
+				      + ex.what()));
 	exit(1);
       } catch(jnlFileReadOnly_ex& ex) {
-	m_log_dev->log(log4cpp::Priority::ERROR,
-		     ex.what());
+	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
+				      ex.what()));
 	exit(1);
       } catch(std::exception& ex) {
-	m_log_dev->log(log4cpp::Priority::ERROR,
-		     string("jobCache::logOperation() - ")
-		     + ex.what());
+	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
+				      string("jobCache::logOperation() - ")
+				      + ex.what()));
 	exit(1);
       } catch(...) {
-	m_log_dev->log(log4cpp::Priority::ERROR,
-		     string("jobCache::logOperation() - Catched unknown exception"));
+	CREAM_SAFE_LOG(m_log_dev->log(log4cpp::Priority::ERROR,
+				      string("jobCache::logOperation() - Catched unknown exception")));
 	exit(1);
       }
     }

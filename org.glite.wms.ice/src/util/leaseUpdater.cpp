@@ -54,10 +54,10 @@ leaseUpdater::leaseUpdater( ) :
         m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
-	m_log_dev->fatalStream()
-	      << "leaseUpdater::CTOR() - Error creating a CreamProxy instance: "
-	      << ex.what() <<". Stop!"
-	      << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->fatalStream()
+		     << "leaseUpdater::CTOR() - Error creating a CreamProxy instance: "
+		     << ex.what() <<". Stop!"
+		     << log4cpp::CategoryStream::ENDLINE);
 	exit(1);      
     } 
     double _delta_time_for_lease = ((double)iceConfManager::getInstance()->getLeaseThresholdTime())/2.0;
@@ -76,19 +76,19 @@ void leaseUpdater::update_lease( void )
     while ( it != m_cache->end() ) {
         if ( it->getEndLease() < time(0) ) {
             // Remove expired job from cache
-	    m_log_dev->errorStream()
-            << "leaseUpdater::update_lease() - "
-            << "Removing lease-expired job [" << it->getJobID() <<"]"
-            << log4cpp::CategoryStream::ENDLINE;
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << "leaseUpdater::update_lease() - "
+			 << "Removing lease-expired job [" << it->getJobID() <<"]"
+			 << log4cpp::CategoryStream::ENDLINE);
             it = m_cache->erase( it );
         } else {
-	    m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
-	    			    << "Checking LEASE for Job ["
-				    << it->getJobID() << "] - " 
-				    << " isActive="<<it->is_active()
-				    << " - remaining="<<(it->getEndLease()-time(0))
-				    << " - threshold="<<m_threshold
-				    << log4cpp::CategoryStream::ENDLINE;
+	  CREAM_SAFE_LOG(m_log_dev->infoStream() << "leaseUpdater::update_lease() - "
+			 << "Checking LEASE for Job ["
+			 << it->getJobID() << "] - " 
+			 << " isActive="<<it->is_active()
+			 << " - remaining="<<(it->getEndLease()-time(0))
+			 << " - threshold="<<m_threshold
+			 << log4cpp::CategoryStream::ENDLINE);
 	                       
             if ( it->is_active() && ( it->getEndLease() - time(0) < m_threshold ) ) {
                 update_lease_for_job( *it );
@@ -109,22 +109,22 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
 
     // Renew the lease\
     
-    m_log_dev->infoStream()
-            << "leaseUpdater::update_lease_for_job() - "
-            << "updating lease for cream jobid=["
-            << j.getJobID()
-            << "] m_delta=" << m_delta
-            << log4cpp::CategoryStream::ENDLINE; 
+    CREAM_SAFE_LOG(m_log_dev->infoStream()
+		   << "leaseUpdater::update_lease_for_job() - "
+		   << "updating lease for cream jobid=["
+		   << j.getJobID()
+		   << "] m_delta=" << m_delta
+		   << log4cpp::CategoryStream::ENDLINE);
     
     try {
         m_creamClient->Authenticate( j.getUserProxyCertificate() );
         m_creamClient->Lease( j.getCreamURL().c_str(), jobids, m_delta, newLease );
     } catch ( soap_proxy::soap_ex& ex ) {
-        m_log_dev->errorStream()
-            << "leaseUpdater::update_lease_for_job() - "
-            << "CreamProxy returned an exception: "
-            << ex.what()
-            << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "leaseUpdater::update_lease_for_job() - "
+		     << "CreamProxy returned an exception: "
+		     << ex.what()
+		     << log4cpp::CategoryStream::ENDLINE);
         // FIXME: what to do?
     }
 
@@ -133,33 +133,33 @@ void leaseUpdater::update_lease_for_job( CreamJob& j )
         // The lease for this job has been updated
         // So update the job cache as well...
 
-        m_log_dev->infoStream()
-            << "leaseUpdater::update_lease_for_job() - "
-            << "updating lease for cream jobid=["
-            << j.getJobID()
-            << "]; old lease ends " << time_t_to_string( j.getEndLease() )
-            << " new lease ends " << time_t_to_string( newLease[ j.getJobID() ] )
-            << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
+		     << "leaseUpdater::update_lease_for_job() - "
+		     << "updating lease for cream jobid=["
+		     << j.getJobID()
+		     << "]; old lease ends " << time_t_to_string( j.getEndLease() )
+		     << " new lease ends " << time_t_to_string( newLease[ j.getJobID() ] )
+		     << log4cpp::CategoryStream::ENDLINE);
         
         j.setEndLease( newLease[ j.getJobID() ] );
         m_cache->put( j ); // Be Careful!! This should not invalidate any iterator on the job cache, as the job j is guaranteed (in this case) to be already in the cache.            
     } else {
         // there was an error updating the lease
-        m_log_dev->errorStream()
-            << "leaseUpdater::update_lease_for_job() - "
-            << "unable to update lease for cream jobid=["
-            << j.getJobID()
-            << "]; old lease ends " << time_t_to_string( j.getEndLease() )
-            << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->errorStream()
+		     << "leaseUpdater::update_lease_for_job() - "
+		     << "unable to update lease for cream jobid=["
+		     << j.getJobID()
+		     << "]; old lease ends " << time_t_to_string( j.getEndLease() )
+		     << log4cpp::CategoryStream::ENDLINE);
     }
 }
 
 void leaseUpdater::body( void )
 {
     while ( !isStopped() ) {
-        m_log_dev->infoStream()
-            << "leaseUpdater::body() - new iteration"
-            << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
+		     << "leaseUpdater::body() - new iteration"
+		     << log4cpp::CategoryStream::ENDLINE);
         update_lease( );
         sleep( m_delay );
     }

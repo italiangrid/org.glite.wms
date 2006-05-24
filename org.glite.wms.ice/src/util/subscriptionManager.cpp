@@ -30,16 +30,16 @@ subscriptionManager::subscriptionManager()
     m_lastSubscriptionID(""),
     m_vec()
 {
-  m_log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
-                        << log4cpp::CategoryStream::ENDLINE;
+  CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::CTOR - Authenticating..."
+		 << log4cpp::CategoryStream::ENDLINE);
   try {
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
     m_ceS.authenticate(m_conf->getHostProxyFile().c_str(), "/");
     m_ceSMgr.authenticate(m_conf->getHostProxyFile().c_str(), "/");
   } catch(exception& ex) {
-    m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR authenticating: "
-                           << ex.what()
-                           << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionManager::CTOR - Fatal ERROR authenticating: "
+		   << ex.what()
+		   << log4cpp::CategoryStream::ENDLINE);
     m_valid = false;
     return;
   }
@@ -61,9 +61,9 @@ subscriptionManager* subscriptionManager::getInstance()
 void subscriptionManager::list(const string& url, vector<Subscription>& vec)
   throw (exception&)
 {
-  m_log_dev->infoStream() << "subscriptionManager::list() - retrieving list of "
-			  << "subscriptions from [" << url << "]"
-			  << log4cpp::CategoryStream::ENDLINE;
+  CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::list() - retrieving list of "
+		 << "subscriptions from [" << url << "]"
+		 << log4cpp::CategoryStream::ENDLINE);
   
   m_ceSMgr.list(url, vec); // can throw an std::exception
   
@@ -75,13 +75,13 @@ void subscriptionManager::list(const string& url, vector<Subscription>& vec)
       localtime_r( &tp, &m_Time );
       memset( (void*) m_aT, 0, 256 );
       strftime(m_aT, 256, "%a %d %b %Y %T", &m_Time);
-      m_log_dev->infoStream() << "subscriptionManager::list() - "
-			      << "*** Found subscription: ["
-			      << it->getSubscriptionID()
-			      << "] [" << it->getConsumerURL() << "]"
-			      << " [" << it->getTopicName()<<"]"
-			      << " [" << m_aT << "]"
-			      << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::list() - "
+		     << "*** Found subscription: ["
+		     << it->getSubscriptionID()
+		     << "] [" << it->getConsumerURL() << "]"
+		     << " [" << it->getTopicName()<<"]"
+		     << " [" << m_aT << "]"
+		     << log4cpp::CategoryStream::ENDLINE);
     }
 }
 
@@ -90,9 +90,9 @@ bool subscriptionManager::subscribe(const string& url)
 {
   m_ceS.setServiceURL(url);
 
-  m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribing to ["
-                        << url << "]"
-                        << log4cpp::CategoryStream::ENDLINE;
+  CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribing to ["
+		 << url << "]"
+		 << log4cpp::CategoryStream::ENDLINE);
 
   {
     boost::recursive_mutex::scoped_lock M( iceConfManager::mutex );
@@ -105,13 +105,13 @@ bool subscriptionManager::subscribe(const string& url)
   try {
     m_ceS.subscribe();
     m_lastSubscriptionID = m_ceS.getSubscriptionID();
-    m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribed with ID ["
-                        << m_lastSubscriptionID << "]"
-                        << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionManager::subscribe() - Subscribed with ID ["
+		   << m_lastSubscriptionID << "]"
+		   << log4cpp::CategoryStream::ENDLINE);
     return true;
   } catch(exception& ex) {
-    m_log_dev->errorStream() << "subscriptionManager::subscribe() - Subscription Error: "
-	                   << ex.what() << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::subscribe() - Subscription Error: "
+		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
     return false;
   }
 }
@@ -127,9 +127,9 @@ bool subscriptionManager::updateSubscription(const string& url,
     		          time(NULL)+m_conf->getSubscriptionDuration());
     return true;
   } catch(exception& ex) {
-    m_log_dev->errorStream() << "subscriptionManager::updateSubscription()"
-     			   << " - SubscriptionUpdate Error: "
-	                   << ex.what() << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::updateSubscription()"
+		   << " - SubscriptionUpdate Error: "
+		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
     return false;
   }
   //return ""; // unreachable code; just to silent a compilation warning
@@ -141,9 +141,9 @@ bool subscriptionManager::subscribedTo(const string& url)
   m_vec.clear();
   try {this->list(url, m_vec);}
   catch(exception& ex) {
-    m_log_dev->errorStream() << "subscriptionManager::subscribedTo() - "
-    			   << "Error retrieving subscription list: "
-	                   << ex.what() << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionManager::subscribedTo() - "
+		   << "Error retrieving subscription list: "
+		   << ex.what() << log4cpp::CategoryStream::ENDLINE);
   }
   for(vector<Subscription>::const_iterator it = m_vec.begin();
       it != m_vec.end();

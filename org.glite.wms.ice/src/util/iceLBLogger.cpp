@@ -65,12 +65,12 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
         try {
             m_ctx->setLoggingJob( ev->getJob(), ev->getSrc() );
         } catch( iceLBException& ex ) {
-            m_log_dev->errorStream()
-                << "iceLBLogger::logEvent() - Error logging " << ev->describe()
-                << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
-                << " CreamJobID=[" << ev->getJob().getJobID() << "]"
-                << ". Caught exception " << ex.what()
-                << log4cpp::CategoryStream::ENDLINE;
+	  CREAM_SAFE_LOG(m_log_dev->errorStream()
+			 << "iceLBLogger::logEvent() - Error logging " << ev->describe()
+			 << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
+			 << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+			 << ". Caught exception " << ex.what()
+			 << log4cpp::CategoryStream::ENDLINE);
             return;
         }
     
@@ -78,16 +78,16 @@ void iceLBLogger::logEvent( iceLBEvent* ev )
 
         int res = 0;
         do {
-            m_log_dev->infoStream() 
-                << "iceLBLogger::logEvent() - Logging " << ev->describe( )
-                << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
-                << " CreamJobID=[" << ev->getJob().getJobID() << "]"
-                << log4cpp::CategoryStream::ENDLINE;
+            CREAM_SAFE_LOG(m_log_dev->infoStream() 
+			   << "iceLBLogger::logEvent() - Logging " << ev->describe( )
+			   << " GridJobID=[" << ev->getJob().getGridJobID() << "]"
+			   << " CreamJobID=[" << ev->getJob().getJobID() << "]"
+			   << log4cpp::CategoryStream::ENDLINE);
             
             res = ev->execute( m_ctx );
-            m_log_dev->infoStream() 
-                << "iceLBLogger::logEvent() - ...Got return code " << res 
-                << log4cpp::CategoryStream::ENDLINE;
+            CREAM_SAFE_LOG(m_log_dev->infoStream() 
+			   << "iceLBLogger::logEvent() - ...Got return code " << res 
+			   << log4cpp::CategoryStream::ENDLINE);
             
             m_ctx->testCode( res );
             

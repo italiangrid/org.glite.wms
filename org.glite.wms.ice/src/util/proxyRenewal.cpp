@@ -35,10 +35,10 @@ proxyRenewal::proxyRenewal() :
         m_creamClient.reset( p ); // boost::scoped_ptr<>.reset() requires its argument not to throw anything, IIC
     } catch(soap_proxy::soap_ex& ex) {
         // FIXME: what to do??
-	m_log_dev->fatalStream()
-	      << "proxyRenewal::CTOR() - Error creating a CreamProxy instance: "
-	      << ex.what() <<". Stop!"
-	      << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->fatalStream()
+		     << "proxyRenewal::CTOR() - Error creating a CreamProxy instance: "
+		     << ex.what() <<". Stop!"
+		     << log4cpp::CategoryStream::ENDLINE);
 	exit(1);      
     } 
 }
@@ -49,9 +49,9 @@ void proxyRenewal::body( void )
 {
     while( !isStopped() ) {
 
-        m_log_dev->infoStream()
-            << "proxyRenewal::body() - new iteration"
-            << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->infoStream()
+		     << "proxyRenewal::body() - new iteration"
+		     << log4cpp::CategoryStream::ENDLINE);
 
 	checkProxies();
         sleep( m_delay );
@@ -70,19 +70,19 @@ void proxyRenewal::checkProxies()
     struct stat buf;
     if( ::stat( jobIt->getUserProxyCertificate().c_str(), &buf) == 1 )
     {
-	m_log_dev->errorStream() 
-            << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
-            << jobIt->getUserProxyCertificate() << "] for job ["
-            << jobIt->getJobID() << "]. Wont check if it needs to be renewed."
-            << log4cpp::CategoryStream::ENDLINE;
+      CREAM_SAFE_LOG(m_log_dev->errorStream() 
+		     << "proxyRenewal::checkProxies() - Cannot stat proxy file ["
+		     << jobIt->getUserProxyCertificate() << "] for job ["
+		     << jobIt->getJobID() << "]. Wont check if it needs to be renewed."
+		     << log4cpp::CategoryStream::ENDLINE);
         // FIXME: what to do?
     } else {
       if( buf.st_mtime > jobIt->getProxyCertLastMTime() ) {
-	m_log_dev->infoStream() 
-            << "proxyRenewal::checkProxies() - Need to renew proxy  ["
-            << jobIt->getUserProxyCertificate() << "] for job ["
-            << jobIt->getJobID() << "]"
-            << log4cpp::CategoryStream::ENDLINE;
+	CREAM_SAFE_LOG(m_log_dev->infoStream() 
+		       << "proxyRenewal::checkProxies() - Need to renew proxy  ["
+		       << jobIt->getUserProxyCertificate() << "] for job ["
+		       << jobIt->getJobID() << "]"
+		       << log4cpp::CategoryStream::ENDLINE);
 
         m_creamClient->clearSoap( );
 

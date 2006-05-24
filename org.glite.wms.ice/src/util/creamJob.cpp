@@ -175,11 +175,11 @@ void iceUtil::CreamJob::setJdl( const string& j ) throw( ClassadSyntax_ex& )
     if( ::stat( m_user_proxyfile.c_str(), &stat_buf ) == -1 )
     {
 	int saverr = errno;
-	glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->warnStream()
-	<< "creamJob::setJdl() - The user proxy file ["
-	<< m_user_proxyfile << "] is not stat-able:" << strerror(saverr) 
-	<<". This could compromise the correct working of proxy renewal thread"
-	<< log4cpp::CategoryStream::ENDLINE;
+	CREAM_SAFE_LOG(glite::ce::cream_client_api::util::creamApiLogger::instance()->getLogger()->warnStream()
+		       << "creamJob::setJdl() - The user proxy file ["
+		       << m_user_proxyfile << "] is not stat-able:" << strerror(saverr) 
+		       <<". This could compromise the correct working of proxy renewal thread"
+		       << log4cpp::CategoryStream::ENDLINE)
     } else {
 	m_proxyCertTimestamp = stat_buf.st_mtime;
     }

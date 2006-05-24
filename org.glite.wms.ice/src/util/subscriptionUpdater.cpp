@@ -57,9 +57,9 @@ iceUtil::subscriptionUpdater::subscriptionUpdater(const string& cert)
   try {
     tmp_myname = (char*)iceUtil::getHostName().c_str();
   } catch( runtime_error& ex) {
-    m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - iceUtils::getHostName() returned an ERROR: "
-			     << ex.what()
-			     << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->fatalStream() << "subscriptionUpdater::CTOR - iceUtils::getHostName() returned an ERROR: "
+		   << ex.what()
+		   << log4cpp::CategoryStream::ENDLINE);
     m_valid = false;
     return;
   }
@@ -83,9 +83,9 @@ void iceUtil::subscriptionUpdater::body( void )
   set<string> ceurls;
 
   while( !isStopped() ) {
-    m_log_dev->debugStream() << "subscriptionUpdater::body() - Checking "
-                             << "subscription's time validity..."
-			     << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(m_log_dev->debugStream() << "subscriptionUpdater::body() - Checking "
+		   << "subscription's time validity..."
+		   << log4cpp::CategoryStream::ENDLINE);
     ceurls.clear();
     retrieveCEURLs(ceurls);
 
@@ -97,9 +97,9 @@ void iceUtil::subscriptionUpdater::body( void )
         m_subMgr->list(*it, vec);
       }
       catch(exception& ex) {
-        m_log_dev->errorStream() << "subscriptionUpdater::body() - "
-	 		         << "Error retrieving list of subscriptions: "
-			         << ex.what() << log4cpp::CategoryStream::ENDLINE;
+        CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::body() - "
+		       << "Error retrieving list of subscriptions: "
+		       << ex.what() << log4cpp::CategoryStream::ENDLINE);
 	return;
       }
       
@@ -118,9 +118,9 @@ void iceUtil::subscriptionUpdater::body( void )
       {
         // this means that ICE is not subscribed to current CEMon
 	// it should be! something happened... must re-subscribe
-	m_log_dev->warnStream() << "subscriptionUpdater::body() - "
-	 		         << "Subscription to [" << *it << "] disappeared! Going to re-subscribe to it."
-			         << log4cpp::CategoryStream::ENDLINE;
+	CREAM_SAFE_LOG(m_log_dev->warnStream() << "subscriptionUpdater::body() - "
+		       << "Subscription to [" << *it << "] disappeared! Going to re-subscribe to it."
+		       << log4cpp::CategoryStream::ENDLINE);
 	m_subMgr->subscribe( *it );
       } else
         this->renewSubscriptions(vec);
@@ -140,25 +140,25 @@ void iceUtil::subscriptionUpdater::renewSubscriptions(vector<Subscription>& vec)
       {
         boost::recursive_mutex::scoped_lock M( iceUtil::iceConfManager::mutex );
         if(timeleft < m_conf->getSubscriptionUpdateThresholdTime()) {
-          m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
-	     << "Updating subscription ["<<sit->getSubscriptionID() << "]"
-	     << " at [" <<sit->getEndpoint()<<"]"
-	     << log4cpp::CategoryStream::ENDLINE;
-	  m_log_dev->infoStream()  << "subscriptionUpdater::renewSubscriptions() - Update params: "
-	     << "ConsumerURL=["<<sit->getConsumerURL()
-	     << "] - TopicName=[" << sit->getTopicName() << "] - "
-	     << "Duration=" << m_conf->getSubscriptionDuration()
-	     << " secs since now - rate="
-	     << m_conf->getNotificationFrequency()
-	     << " secs"
-	     << log4cpp::CategoryStream::ENDLINE;
+          CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
+			 << "Updating subscription ["<<sit->getSubscriptionID() << "]"
+			 << " at [" <<sit->getEndpoint()<<"]"
+			 << log4cpp::CategoryStream::ENDLINE);
+	  CREAM_SAFE_LOG(m_log_dev->infoStream()  << "subscriptionUpdater::renewSubscriptions() - Update params: "
+			 << "ConsumerURL=["<<sit->getConsumerURL()
+			 << "] - TopicName=[" << sit->getTopicName() << "] - "
+			 << "Duration=" << m_conf->getSubscriptionDuration()
+			 << " secs since now - rate="
+			 << m_conf->getNotificationFrequency()
+			 << " secs"
+			 << log4cpp::CategoryStream::ENDLINE);
           {
 	    boost::recursive_mutex::scoped_lock M( iceUtil::subscriptionManager::mutex );
 	    string newID;
  	    if(m_subMgr->updateSubscription( sit->getEndpoint(), sit->getSubscriptionID(), newID )) {
-	      m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
-	    	  		    << "New subscription ID after renewal is ["
-	  			    << newID << "]" << log4cpp::CategoryStream::ENDLINE;
+	      CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::renewSubscriptions() - "
+			     << "New subscription ID after renewal is ["
+			     << newID << "]" << log4cpp::CategoryStream::ENDLINE);
 	      sit->setSubscriptionID(newID);
 	      sit->setExpirationTime( time(NULL) + m_conf->getSubscriptionDuration() );
 	    }
@@ -211,19 +211,19 @@ void iceUtil::subscriptionUpdater::retrieveCEURLs(set<string>& urls)
 	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
 	      urls.insert( cemonURL );
 	  } catch(exception& ex) {
-	      m_log_dev->errorStream() << "subscriptionUpdater::retrieveCEURLs() - Error retrieving"
-	      			     <<" CEMon's URL from CREAM's URL: "
-			 	     << ex.what()
-				     << ". Composing URL from configuration file..."
-			 	     << log4cpp::CategoryStream::ENDLINE;
+	    CREAM_SAFE_LOG(m_log_dev->errorStream() << "subscriptionUpdater::retrieveCEURLs() - Error retrieving"
+			   <<" CEMon's URL from CREAM's URL: "
+			   << ex.what()
+			   << ". Composing URL from configuration file..."
+			   << log4cpp::CategoryStream::ENDLINE);
 	      cemonURL = ceurl;
 	      boost::replace_first(cemonURL,
                                    m_conf->getCreamUrlPostfix(),
                                    m_conf->getCEMonUrlPostfix()
                                   );
-	      m_log_dev->infoStream() << "subscriptionUpdater::retrieveCEURLs() - Using CEMon URL ["
-	      			    << cemonURL << "]" << log4cpp::CategoryStream::ENDLINE;
-              urls.insert( cemonURL );
+	      CREAM_SAFE_LOG(m_log_dev->infoStream() << "subscriptionUpdater::retrieveCEURLs() - Using CEMon URL ["
+			     << cemonURL << "]" << log4cpp::CategoryStream::ENDLINE);
+	      urls.insert( cemonURL );
 	      cemonUrlCache::getInstance()->putCEMonUrl( ceurl, cemonURL );
 	  }
 	} else {

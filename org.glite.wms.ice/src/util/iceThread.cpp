@@ -23,12 +23,12 @@ iceThread::iceThread( ) :
 void iceThread::operator()()
 {
     m_running = true;
-    apiLogger::creamApiLogger::instance()->getLogger()->infoStream()
-        << "Thread " << getName() << " starting..."
-        << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->infoStream()
+		   << "Thread " << getName() << " starting..."
+		   << log4cpp::CategoryStream::ENDLINE);
     body( );
-    apiLogger::creamApiLogger::instance()->getLogger()->infoStream()
-        << "Thread " << getName() << " finished"
-        << log4cpp::CategoryStream::ENDLINE;
+    CREAM_SAFE_LOG(apiLogger::creamApiLogger::instance()->getLogger()->infoStream()
+		   << "Thread " << getName() << " finished"
+		   << log4cpp::CategoryStream::ENDLINE);
     m_running = false;
 }
