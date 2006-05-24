@@ -14,6 +14,8 @@
 #       Authors: Giuseppe Avellino <giuseppe.avellino@datamat.it>
 #
 
+noinst_HEADERS = converter.h  log.h proxy_cleaner.h
+
 bin_PROGRAMS = glite-wms-wmproxy-purge-proxycache \
  glite-wms-wmproxy-gacladmin \
  glite-wms-wmproxy-gridmapfile2gacl
