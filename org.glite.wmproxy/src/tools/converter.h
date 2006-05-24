@@ -7,6 +7,9 @@
 #include <vector>
 #include <string>
 
+extern "C" {
+#include <getopt.h>
+}
 namespace glite {
 namespace wms {
 namespace wmproxy {
@@ -27,6 +30,24 @@ struct userOpts {
 	bool help;
 };
 
+struct converterOpts {
+	std::string* input ;
+	std::string* output ;
+	std::string* log;
+	bool noint;
+	bool debug ;
+	bool create ;
+	bool add ;
+	bool remove;
+	bool dn ;
+	bool fqan ;
+	bool version ;
+	bool help;
+};
+
+// Semicolon and white-space strings used in the definition of the short options
+const char short_required_arg = ':' ;
+const char short_no_arg = ' ' ;
 
 class Converter {
         public :
@@ -58,7 +79,7 @@ class Converter {
 		/**
 		* Returns the pointer to the userOptions struct
 		*/
-		userOpts* getUserOptions( ) ;
+		converterOpts* getUserOptions( ) ;
 		/**
 		* Creates the log file to the specified path
 		*@param path the location of the log file
@@ -85,7 +106,7 @@ class Converter {
 		* @return a negative value in case of any error occured,
 		* ("errors" contains the description of the error), 0 otherwise
 		*/
-		const int readOptions(int argc,char **argv, userOpts &opts, std::string &msg, std::string &errors);
+		const int readOptions(int argc,char **argv, converterOpts &opts, std::string &msg, std::string &errors);
 		/*
 		*: Loads the grid-mapfile located in "path" and
 		* puts the entries in the mapEntries vector
@@ -98,10 +119,18 @@ class Converter {
 		static int getEntry(std::string &entry) ;
 		/**
 		*/
-		int readMapFile(const std::string &path, std::vector<std::string> &entries, std::string &errors) ;
-		void setUpGaclFile (const std::string &path, const bool& create,std::vector<std::string> &dns, std::vector<std::string> &fqans) ;
-		void addEntries (const std::vector<std::string> &map, const glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType &credential= 					glite::wms::wmproxy::authorizer::GaclManager::WMPGACL_UNDEFCRED_TYPE) ;
-		void removeOldEntries(const std::vector<std::string> &map, std::vector<std::string> &gacl, const glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType &credential=glite::wms::wmproxy::authorizer::GaclManager::WMPGACL_UNDEFCRED_TYPE) ;
+		int readMapFile(const std::string &path,
+				std::vector<std::string> &entries,
+				std::string &errors) ;
+		void setUpGaclFile (const std::string &path,
+				const bool& create,
+				std::vector<std::string> &dns,
+				std::vector<std::string> &fqans) ;
+		void addEntries (const std::vector<std::string> &map,
+				const glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType &credential= 							glite::wms::wmproxy::authorizer::GaclManager::WMPGACL_UNDEFCRED_TYPE) ;
+		void removeOldEntries(const std::vector<std::string> &map,
+				std::vector<std::string> &gacl,
+				const glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType &credential=glite::wms::wmproxy::authorizer::GaclManager::WMPGACL_UNDEFCRED_TYPE) ;
 		static glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType Converter::checkCredentialType (const std::string &raw) ;
 		int saveGacl ( ) ;
 		std::string entries (int n, bool new_word=false);
@@ -110,13 +139,11 @@ class Converter {
 		inline bool remove( ){return rmOper;};
 
 	private:
-/**
-*  Yes/No-question
-*/
-bool answerYes (const std::string& question, bool defaultAnswer, bool defaultValue);
-
+		/**
+		*  Yes/No-question
+		*/
+		bool answerYes (const std::string& question, bool defaultAnswer, bool defaultValue);
 		Log* logFile;
-		userOpts usrOpts;
 		glite::wms::wmproxy::authorizer::GaclManager *usrGacl;
 		std::string gridMapFile;
 		// new gacl file flag
@@ -130,6 +157,12 @@ bool answerYes (const std::string& question, bool defaultAnswer, bool defaultVal
 		// operation types
 		bool addOper ;
 		bool rmOper ;
+		/**
+		* User Options Handlers
+		*/
+		converterOpts usrOpts;
+		char* shortOpts  ;
+		static const struct option longOpts[];
 
 };
 }}}} // ending namespaces

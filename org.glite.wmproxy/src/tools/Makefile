@@ -54,7 +54,7 @@ all: map2gacl gacladmin cleanproxies
 map2gacl:
 	$(CPP) $(CMFLAGS) $(CFLAGS_MAP2GACL)  $(LDFLAGS_MAP2GACL) \
 		-o glite-wmp-mapfile2gacl \
-		mapfile2gacl.cpp ../authorizer/wmpgaclmanager.cpp ../authorizer/wmpauthorizer.cpp ../utilities/wmputils.cpp \
+		wmpgridmap2gacl.cpp ../authorizer/wmpgaclmanager.cpp ../authorizer/wmpauthorizer.cpp ../utilities/wmputils.cpp \
 		log.cpp
 
 gacladmin:

@@ -8,10 +8,6 @@
 
 //      $Id$
 
-#ifndef GLITE_GACL_TOOLS
-#define GLITE_GACL_TOOLS
-#endif
-
 #include "converter.h"
 
 #include "stdio.h"
@@ -25,14 +21,12 @@
 #include "utilities/wmputils.h"
 #include "authorizer/wmpauthorizer.h"
 
-// Command line options
-extern "C" {
-#include <getopt.h>
-}
+#include "utils.h"
 
 #define LOG(sev,m1,m2) if (logFile) {logFile->print (sev,m1,m2);}
 #define LOGFILE(sev,m1,m2) if (logFile) {logFile->print (sev,m1,m2,false);}
 #define FILL std::setw(2) << std::setfill('0')
+
 
 using namespace std;
 using namespace glite::wms::wmproxy::authorizer;
@@ -43,35 +37,13 @@ namespace wms {
 namespace wmproxy {
 namespace tools {
 
-// Result operation codes
-const int SUCCESS = 0;
-const int ERROR = -1;
-const char* VERSION_NUMBERS		= "1.0.0";
-const char* DEFAULT_GRIDMAPFILE 	= "/etc/grid-security/grid-mapfile";
-const char* DEFAULT_GLITE_LOCATION	= "/opt/glite";
-const char* GACL_RELATIVE_PATH 	= "/etc/grid-security/glite_wms_wmproxy.gacl";
-const char* LOG_DEFAULT_PATH	= "/tmp";
-// Environment variables
-const char* GRIDMAP_ENV			= "GRIDMAP";
-const char* GLITE_LOCATION_ENV 	= "GLITE_LOCATION";
-const char* GLITE_LOG_ENV 		= "GLITE_LOCATION_LOG";
-// Subject substrings
-const char* PERSONAL_FIELD 	= "CN=";
-const char* DNLIST_FIELD 		="http";
-// Long-option strings
-const char* LONG_INPUT 		= "input";
-const char* LONG_OUTPUT 		= "output";
-const char* LONG_LOG 		= "log";
-const char* LONG_DEBUG 		= "debug";
-const char* LONG_NOINT 		= "noint";
-const char* LONG_NEW 		= "new";
-const char* LONG_DN 			= "only-dn";
-const char* LONG_FQAN 		= "only-fqan";
-const char* LONG_ADD			= "only-add";
-const char* LONG_REMOVE 	= "only-remove";
-const char* LONG_VERSION 	= "version";
-const char* LONG_HELP 		= "help";
-// Short-option strings
+const char* VERSION_NUMBERS            = "1.0.0";
+const char *LOG_FILENAME = "glite-wms-wmproxy-gridmapfile2gacl";
+/**
+* LONG OPTIONS ===========================
+*/
+
+// Short-option chars
 const char SHORT_INPUT		= 'i' ;
 const char SHORT_OUTPUT		= 'o' ;
 const char SHORT_VERSION	= 'v' ;
@@ -85,29 +57,22 @@ const char REMOVE			= 'r' ;
 const char DN					= 'p' ;
 const char FQAN				= 'f' ;
 
-
-// Semicolon and white-space strings used in the definition of the short options
-const char short_required_arg 	= ':' ;
-const char short_no_arg 		= ' ' ;
-// other constant
-const string ALL_VALUES 		= "/*";
-
 /**
 * LONG OPTIONS ===========================
 */
-const struct option longOpts[] = {
-	{	LONG_INPUT,           	required_argument,		0,		SHORT_INPUT},
-	{	LONG_OUTPUT,        	required_argument,		0,		SHORT_OUTPUT},
-	{	LONG_LOG,       		required_argument,		0,		LOG},
-	{	LONG_NEW,       		no_argument,			0,		NEW},
-	{	LONG_DEBUG,       	no_argument,			0,		DEBUG},
-	{	LONG_NOINT,       		no_argument,			0,		NOINT},
-	{	LONG_ADD,       		no_argument,			0,		ADD},
-	{	LONG_REMOVE,       	no_argument,			0,		REMOVE},
-	{	LONG_DN,       		no_argument,			0,		DN},
-	{	LONG_FQAN,       		no_argument,			0,		FQAN},
-	{	LONG_VERSION,       	no_argument,			0,		SHORT_VERSION},
-	{	LONG_HELP,       		no_argument,			0,		SHORT_HELP},
+const struct option Converter::longOpts[] = {
+	{	Utils::LONG_INPUT,           	required_argument,		0,		SHORT_INPUT},
+	{	Utils::LONG_OUTPUT,        	required_argument,		0,		SHORT_OUTPUT},
+	{	Utils::LONG_LOG,       		required_argument,		0,		LOG},
+	{	Utils::LONG_NEW,       		no_argument,			0,		NEW},
+	{	Utils::LONG_DEBUG,       	no_argument,			0,		DEBUG},
+	{	Utils::LONG_NOINT,       		no_argument,			0,		NOINT},
+	{	Utils::LONG_ADD,       		no_argument,			0,		ADD},
+	{	Utils::LONG_REMOVE,       	no_argument,			0,		REMOVE},
+	{	Utils::LONG_DN,       		no_argument,			0,		DN},
+	{	Utils::LONG_FQAN,       		no_argument,			0,		FQAN},
+	{	Utils::LONG_VERSION,       	no_argument,			0,		SHORT_VERSION},
+	{	Utils::LONG_HELP,       		no_argument,			0,		SHORT_HELP},
 	{0, 0, 0, 0}
 };
 
@@ -147,6 +112,16 @@ Converter::Converter( ) {
 	// operations
 	addOper = false;
 	rmOper = false;
+	/**
+	* Short Options
+	*/
+	asprintf (&shortOpts,
+			"%c%c%c%c%c%c%c%c" ,
+			SHORT_INPUT,		Utils::short_required_arg,
+			SHORT_OUTPUT,		Utils::short_required_arg,
+			SHORT_VERSION,    	Utils::short_no_arg,
+			SHORT_HELP, 		Utils::short_no_arg
+	);
 };
 /**
 * Default destructor
@@ -170,30 +145,30 @@ void Converter::usage(const std::string &exe) {
 	cout << version() << "\n\n";
 	cout << "usage:  glite-wms-wmproxy-gridmapfile2gacl [options]\n";
 	cout << "where [options]:\n";
-	cout << "\t--" << LONG_INPUT << ", -i <filepath>\n";
+	cout << "\t--" << Utils::LONG_INPUT << ", -i <filepath>\n";
 	cout << "\t\tload a gridmap file different from the default one\n";
 	cout <<"\t\t(/etc/grid-security/grid-mapfile);\n";
-	cout << "\t--" << LONG_OUTPUT << ", -o <filepath>\n";
+	cout << "\t--" << Utils::LONG_OUTPUT << ", -o <filepath>\n";
 	cout << "\t\tcreate a gacl file different from the default one\n";
 	cout << "\t\t($GLITE_LOCATION/etc/glite_wms_wmproxy.gacl);\n";
-	cout << "\t--" << LONG_LOG << " <filepath>\n";
+	cout << "\t--" << Utils::LONG_LOG << " <filepath>\n";
 	cout << "\t\tcreate a log file in a different path from the default one\n";
-	cout << "\t\t([$GLITE_LOCATION_LOG] | [/tmp] /mapfile2gacl-<date>-debug.log);\n";
-	cout << "\t--" << LONG_ADD << "\n";
+	cout << "\t\t([$GLITE_LOCATION_LOG] | [/tmp] /"<< LOG_FILENAME << "-<date>-.log);\n";
+	cout << "\t--" << Utils::LONG_ADD << "\n";
 	cout << "\t\tonly adding of new entries to the gacl file is allowed;\n";
-	cout << "\t--" << LONG_REMOVE << "\n";
+	cout << "\t--" << Utils::LONG_REMOVE << "\n";
 	cout << "\t\tonly removal of gacl entries (not present in the grid-mapfile) is allowed;\n";
-	cout << "\t--" << LONG_NEW << "\n";
+	cout << "\t--" << Utils::LONG_NEW << "\n";
 	cout << "\t\toverwrite the gacl file if it already exists;\n";
-	cout << "\t--" << LONG_DN << "\n";
+	cout << "\t--" << Utils::LONG_DN << "\n";
 	cout << "\t\tupdate only dn-entries (person-entries);\n";
-	cout << "\t--" << LONG_FQAN << "\n";
+	cout << "\t--" << Utils::LONG_FQAN << "\n";
 	cout << "\t\tupdate only fqan-entries (voms-entries);\n";
-	cout << "\t--" << LONG_DEBUG << "\n";
+	cout << "\t--" << Utils::LONG_DEBUG << "\n";
 	cout << "\t\tprint debug messages on the std output;\n";
-	cout << "\t--" << LONG_VERSION << ", -v\n";
+	cout << "\t--" << Utils::LONG_VERSION << ", -v\n";
 	cout << "\t\tprint the version message on the std output;\n";
-	cout << "\t--" << LONG_HELP << ", -?\n";
+	cout << "\t--" << Utils::LONG_HELP << ", -?\n";
 	cout << "\t\tprint this help message on the std output;\n";
 	cout << "\n\tPlease report any bug at:\n";
 	cout << "\t\tegee@datamat.it\n\n";
@@ -229,13 +204,13 @@ Log* Converter::createLogFile ( ) {
         oss << (ns->tm_year+1900) << FILL << ns->tm_mon ;
 	oss << FILL << ns->tm_mday ;
 	// location
-	env = getenv (GLITE_LOG_ENV);
+	env = getenv (Utils::GLITE_LOG_ENV);
 	if (env) {
 		path = string(env) ;
 	} else {
-		path = string(LOG_DEFAULT_PATH) ;
+		path = string(Utils::LOG_DEFAULT_PATH) ;
 	}
-	path +=  "/mapfile2gacl-" + oss.str( ) + "-debug.log";
+	path +=  "/" + string(LOG_FILENAME) + "-" + oss.str( ) + ".log";
 	// log object
 	if (usrOpts.debug) {
 		logFile = new Log(path, WMSLOG_DEBUG);
@@ -247,33 +222,33 @@ Log* Converter::createLogFile ( ) {
 /**
 * Returns the pointer to the userOptions struct
 */
-userOpts* Converter::getUserOptions( ) {
+converterOpts* Converter::getUserOptions( ) {
 	return (&usrOpts);
 };
 /**
 * Check whether an option is correct
 */
 const int Converter::checkOpts(const std::string& opt) {
-	int r = ERROR;
-	unsigned int numOpts = (sizeof(longOpts)/sizeof(option)) -1;
+	int r = Utils::ERROR;
+	unsigned int numOpts = (sizeof(Converter::longOpts)/sizeof(option)) -1;
 	if (opt.compare (0,2,"--")==0){
 		string lg = opt.substr(2, (opt.size()-2));
 		for (unsigned int i = 0; i < numOpts ; i++){
-			struct option s = longOpts[i];
+			struct option s = Converter::longOpts[i];
 			if (lg.compare(s.name)==0){
-				r = SUCCESS ;
+				r = Utils::SUCCESS ;
 				break;
 			}
 		}
 	} else if (opt.compare (0,1,"-")==0){
 		for (unsigned int i = 0; i < numOpts ; i++){
-			struct option s = longOpts[i];
+			struct option s = Converter::longOpts[i];
 			string sh = opt.substr(1, (opt.size()-1));
 			if (sh.size()==1){
 				if (s.val < 128){
 					char c = (char)s.val;
 					if (sh.compare(string(1,c))==0){
-						r = 1;
+						r = Utils::SUCCESS ;
 						break;
 					}
 				}
@@ -285,18 +260,12 @@ const int Converter::checkOpts(const std::string& opt) {
 /**
 * Reads the input options
 */
-const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &msg, string &errors){
-	int result = SUCCESS;
+const int Converter::readOptions(int argc,char **argv, converterOpts &opts, string &msg, string &errors){
+	int result = Utils::SUCCESS;
 	string arg = "";
 	int next_opt = 0;
-	// short options
-	char* shortOpts  ;
 	char *env = NULL;
 	string err = "";
-	asprintf (&shortOpts,
-		"%c%c%c%c",
-		SHORT_INPUT,		short_required_arg,
-		SHORT_OUTPUT, 	short_required_arg );
 	msg = "Command: " + string(argv[0]) ;
 	// Reading options ......
 	if (argc>1){
@@ -307,76 +276,76 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 			else { arg = ""; }
 			// Returns the "val"-field of the struct "option"
 			next_opt = getopt_long (argc, (char* const*)argv,
-						shortOpts, longOpts, NULL);
+					shortOpts, Converter::longOpts, NULL);
 			// error
 			if (next_opt == '?') {
 				errors = "\nError: Invalid Option";
-				result = ERROR;
+				result = Utils::ERROR;
 				break;
-			} else if ( next_opt != -1 && arg.size() > 0 && checkOpts(arg) != SUCCESS  ){
+			} else if ( next_opt != -1 && arg.size() > 0 && checkOpts(arg) != Utils::SUCCESS  ){
 				errors  ="\nError: --" + arg + ": unrecognized option";
-				result = ERROR;
+				result = Utils::ERROR;
 				break;
 			} else if (next_opt != -1 ){
 				switch (next_opt) {
 					case (SHORT_INPUT) : {
 						opts.input = new string(utilities::getAbsolutePath(optarg));
-						msg += " --" + string(LONG_INPUT) + " " + *opts.input ;
+						msg += " --" + string(Utils::LONG_INPUT) + " " + *opts.input ;
 						break;
 					}
 					case (SHORT_OUTPUT) : {
 						opts.output = new string(utilities::getAbsolutePath(optarg));
-						msg += " --" + string(LONG_OUTPUT) + " " + *opts.output ;
+						msg += " --" + string(Utils::LONG_OUTPUT) + " " + *opts.output ;
 						break;
 					}
 					case (LOG) : {
 						opts.log = new string(utilities::getAbsolutePath(optarg));
-						msg += " --" + string(LONG_LOG) + " " + *opts.log;
+						msg += " --" + string(Utils::LONG_LOG) + " " + *opts.log;
 						break;
 					}
 					case (NOINT) : {
 						opts.noint = true;
-						msg += " --" + string(LONG_NOINT) ;
+						msg += " --" + string(Utils::LONG_NOINT) ;
 						break;
 					}
 					case (DEBUG) : {
 						opts.debug = true;
-						msg += " --" + string(LONG_DEBUG) ;
+						msg += " --" + string(Utils::LONG_DEBUG) ;
 						break;
 					}
 					case (NEW) : {
 						opts.create = true;
-						msg += " --" + string(LONG_NEW) ;
+						msg += " --" + string(Utils::LONG_NEW) ;
 						break;
 					}
 					case (ADD) : {
 						opts.add = true;
-						msg += " --" + string(LONG_ADD) ;
+						msg += " --" + string(Utils::LONG_ADD) ;
 						break;
 					}
 					case (REMOVE) : {
 						opts.remove = true;
-						msg += " --" + string(LONG_REMOVE) ;
+						msg += " --" + string(Utils::LONG_REMOVE) ;
 						break;
 					}
 					case (DN) : {
 						opts.dn = true;
-						msg += " --" + string(LONG_DN) ;
+						msg += " --" + string(Utils::LONG_DN) ;
 						break;
 					}
 					case (FQAN) : {
 						opts.fqan = true;
-						msg += " --" + string(LONG_FQAN) ;
+						msg += " --" + string(Utils::LONG_FQAN) ;
 						break;
 					}
 					case (SHORT_VERSION) : {
 						opts.version = true;
-						msg += " --" + string(LONG_VERSION) ;
+						msg += " --" + string(Utils::LONG_VERSION) ;
 						break;
 					}
 					case (SHORT_HELP) : {
 						opts.help = true;
-						msg += " --" + string(LONG_HELP) ;
+						msg += " --" + string(Utils::LONG_HELP) ;
 						break;
 					}
 					default: {
@@ -388,38 +357,38 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 		} ;
 		// pathname to grid-mapfile
 		if (opts.input==NULL){
-			env = getenv (GRIDMAP_ENV);
+			env = getenv (Utils::GRIDMAP_ENV);
 			if (env) {
 				opts.input = new string(env);
 			} else {
-				opts.input = new string(DEFAULT_GRIDMAPFILE);
+				opts.input = new string(Utils::DEFAULT_GRIDMAPFILE);
 			}
 		}
 		if (opts.output==NULL) {
-			env = getenv (GLITE_LOCATION_ENV);
+			env = getenv (Utils::GLITE_LOCATION_ENV);
 			if (env) {
-				opts.output = new string(utilities::normalizePath(string(env)) + "/" +string(GACL_RELATIVE_PATH)  );
+				opts.output = new string(utilities::normalizePath(string(env)) + "/" +string(Utils::GACL_RELATIVE_PATH)  );
 			} else {
 				opts.output = new string();
-				*opts.output = string(DEFAULT_GLITE_LOCATION) + string(GACL_RELATIVE_PATH);
+				*opts.output = string(Utils::DEFAULT_GLITE_LOCATION) + string(Utils::GACL_RELATIVE_PATH);
 			}
 		}
 		// --only-dn and --only-fqan
 		 if (opts.dn && opts.fqan) {
-		 	if (opts.dn) { err =  "--" + string(LONG_DN) + " - ";}
-			if (opts.fqan) { err =  "--" + string(LONG_FQAN) + " - ";}
+		 	if (opts.dn) { err =  "--" + string(Utils::LONG_DN) + " - ";}
+			if (opts.fqan) { err =  "--" + string(Utils::LONG_FQAN) + " - ";}
 			err += "these options cannot be used together:\n";
-			err += "--" + string(LONG_DN) + " | ";
-			err += "--" + string(LONG_FQAN) + ".\n";
+			err += "--" + string(Utils::LONG_DN) + " | ";
+			err += "--" + string(Utils::LONG_FQAN) + ".\n";
 			error( "incompatible options\n", err);
 		}
 		// --only-add and --only-remove
 		 if (opts.add && opts.remove) {
-		 	if (opts.add) { err =  "--" + string(LONG_ADD) + " - ";}
-			if (opts.remove) { err =  "--" + string(LONG_REMOVE) + " - ";}
+		 	if (opts.add) { err =  "--" + string(Utils::LONG_ADD) + " - ";}
+			if (opts.remove) { err =  "--" + string(Utils::LONG_REMOVE) + " - ";}
 			err += "these options cannot be used together:\n";
-			err += "--" + string(LONG_ADD) + " | ";
-			err += "--" + string(LONG_REMOVE) + ".\n";
+			err += "--" + string(Utils::LONG_ADD) + " | ";
+			err += "--" + string(Utils::LONG_REMOVE) + ".\n";
 			error( "incompatible options\n", err);
 		} else {
 			if (opts.add) {
@@ -434,19 +403,19 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 	}
 	if (opts.input==NULL && opts.output==NULL) {
 		// Default Grid-mapfile
-		env = getenv (GRIDMAP_ENV);
+		env = getenv (Utils::GRIDMAP_ENV);
 		if (env) {
 			opts.input = new string(env);
 		} else {
-			opts.input = new string(DEFAULT_GRIDMAPFILE);
+			opts.input = new string(Utils::DEFAULT_GRIDMAPFILE);
 		}
 		// Default gacl file
-		env = getenv (GLITE_LOCATION_ENV);
+		env = getenv (Utils::GLITE_LOCATION_ENV);
 		if (env) {
-			opts.output = new string(utilities::normalizePath(string(env)) + "/" +string(GACL_RELATIVE_PATH)  );
+			opts.output = new string(utilities::normalizePath(string(env)) + "/" +string(Utils::GACL_RELATIVE_PATH)  );
 		} else {
 			opts.output = new string();
-			*opts.output = string(DEFAULT_GLITE_LOCATION) + string(GACL_RELATIVE_PATH);
+			*opts.output = string(Utils::DEFAULT_GLITE_LOCATION) + string(Utils::GACL_RELATIVE_PATH);
 		}
 		cout << "Conversion of the grid-mapfile entries to gacl entries:\n";
 		cout << "Working on files:\n";
@@ -464,7 +433,7 @@ const int Converter::readOptions(int argc,char **argv, userOpts &opts, string &m
 *
 */
 int Converter::getEntry(std::string &entry) {
-	int result = SUCCESS;
+	int result = Utils::SUCCESS;
 	unsigned int p = 0;
 	unsigned int len = 0;
 	string s1 = "";
@@ -478,10 +447,10 @@ int Converter::getEntry(std::string &entry) {
 			entry = utilities::cleanString(entry);
 			// checks for jolly chars (=all values)
 			while (true) {
-				p = entry.find (ALL_VALUES);
+				p = entry.find (Utils::ALL_VALUES);
 				if (p != string::npos ){
 					s1 = entry.substr(0, p);
-					p += ALL_VALUES.size();
+					p += Utils::ALL_VALUES.size();
 					len = entry.size() ;
 					if (len > p ){
 						s2 = entry.substr(p,len);
@@ -499,10 +468,10 @@ int Converter::getEntry(std::string &entry) {
 			}
 
 		} else {
-			result = ERROR;
+			result = Utils::ERROR;
 		}
 	} else {
-		result = ERROR;
+		result = Utils::ERROR;
 	}
 
 	return result;
@@ -519,7 +488,7 @@ int Converter::readMapFile(const string &path, std::vector<std::string> &entries
   	string s = "";
 	string e = "";
 	int n = 0;
-	int result = SUCCESS ;
+	int result = Utils::SUCCESS ;
 	LOG (WMS_INFO, "Reading the grid-mapfile", path);
 	this->gridMapFile = path;
   	ifstream in((const char*)path.c_str());
@@ -527,7 +496,7 @@ int Converter::readMapFile(const string &path, std::vector<std::string> &entries
  		while(getline(in, s)) {
 			s = utilities::cleanString(s);
 			if (s.size()>0) {
-				if (getEntry(s) == ERROR) {
+				if (getEntry(s) == Utils::ERROR) {
 					error("bad entry in the grid-mapfile:", s );
 					continue;
 				} else {
@@ -547,7 +516,7 @@ int Converter::readMapFile(const string &path, std::vector<std::string> &entries
 		in.close();
 	} else {
 		errors = "unable to read the grid-mapfile: " + path ;
-		result = ERROR;
+		result = Utils::ERROR;
 	}
 	this->readEntries = entries.size() ;
 	os1 << "Number of entries loaded from the grid-mapfile: " << n ;
@@ -564,7 +533,7 @@ int Converter::readMapFile(const string &path, std::vector<std::string> &entries
 /**
 *  Yes/No-question
 */
-bool Converter::answerYes (const std::string& question, bool defaultAnswer, bool defaultValue){
+bool Converter::answerYes (const std::string& question, bool defaultAnswer, bool defaultValue) {
 	if (usrOpts.noint){
 		// No interaction required
 		return defaultValue ;
@@ -584,12 +553,13 @@ bool Converter::answerYes (const std::string& question, bool defaultAnswer, bool
 	}
 	if(c){free(c);}
 }
-
 /**
 * Setting up of the gacl file to be created
 */
-void Converter::setUpGaclFile (const std::string &path, const bool& create,
-	std::vector<std::string> &dns, std::vector<std::string> &fqans) {
+void Converter::setUpGaclFile (const std::string &path,
+	const bool& create,
+	std::vector<std::string> &dns,
+	std::vector<std::string> &fqans) {
 	// checks whether the gacl file already exists
 	this->existingGacl = GaclManager::gaclExists(path);
 	// not replace the file !!!
@@ -746,11 +716,11 @@ int Converter::saveGacl ( ) {
 */
 glite::wms::wmproxy::authorizer::GaclManager::WMPgaclCredType Converter::checkCredentialType (const std::string &raw) {
 	// Personal certificate: it has to contain this string in any position
-	if (raw.find(PERSONAL_FIELD) != string::npos ){
+	if (raw.find(Utils::PERSONAL_FIELD) != string::npos ){
 		return GaclManager::WMPGACL_PERSON_TYPE;
 	} else
 	// DNLIST if starts with http protocol
-	if (raw.find(DNLIST_FIELD)== 0){
+	if (raw.find(Utils::DNLIST_FIELD)== 0){
 		return GaclManager::WMPGACL_DNLIST_TYPE;
 	} else {
 		return GaclManager::WMPGACL_VOMS_TYPE;
@@ -880,7 +850,7 @@ int main (int argc,char **argv){
 	Log *logFile = NULL;
 
 	// reads the input options
-	userOpts *opts = converter.getUserOptions( );
+	converterOpts *opts = converter.getUserOptions( );
 	result = converter.readOptions (argc, argv, *opts, msg, err);
 	// --version
 	if (opts->version){
@@ -897,13 +867,13 @@ int main (int argc,char **argv){
 	} else {
 		logFile = converter.createLogFile( );
 	}
-	if (result == ERROR){
+	if (result == Utils::ERROR){
 		converter.error(err, "");
 	}
 	LOG (WMS_DEBUG, msg, "");
 	// pathname to outpur gacl file
 	// Reading the Grid-mapfile
-	if (converter.readMapFile (*(opts->input), mapEntries, err) == ERROR){
+	if (converter.readMapFile (*(opts->input), mapEntries, err) == Utils::ERROR){
 		converter.error(err, "");
 		exit(-1);
 	} else {
