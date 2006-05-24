@@ -29,7 +29,7 @@ EXPAT_LOCATION=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32/
 EXPAT=$(REPOSITORY)/repository/expat/1.95.7/rhel30_gcc32
 CLASSAD=$(REPOSITORY)/repository/classads/0.9.6/rhel30_gcc32
 BOOST=$(REPOSITORY)/repository/boost/1.32.0/rhel30_gcc32
-
+ARES=$(REPOSITORY)/repository/c-ares/1.3.0/rhel30_gcc32
 
 
 BOOST_LIBS=-L$(BOOST_LOCATION)/lib \
@@ -59,11 +59,11 @@ LIBTAR=-L/usr/local/lib -ltar
 ZLIB=-L/usr/local/lib -lz
 
 LB_LIBRARIES=\
--L$(GLOBUS_LOCATION)/lib \
 -L$(EXPAT)/lib \
--lglite_lb_client_gcc32 \
--lglite_lb_clientpp_gcc32 \
+-L$(ARES)/lib \
+-L$(GLOBUS_LOCATION)/lib \
 -lexpat \
+-lcares \
 -lglobus_gsi_proxy_core_$(GLOBUS_FLAVOR_THREADS) \
 -lglobus_gsi_credential_$(GLOBUS_FLAVOR_THREADS) \
 -lglobus_gsi_callback_$(GLOBUS_FLAVOR_THREADS) \
@@ -90,6 +90,8 @@ STAGELIBS=-L$(REPOSITORY)/stage/lib \
 -lglite_wms_client_utils \
 -lglite_wms_client_services \
 -lglite_lb_common_gcc32 \
+-lglite_lb_client_gcc32 \
+-lglite_lb_clientpp_gcc32 \
 -lglite_wms_globus_ftp_util \
 -lglite_wms_logger \
 -lglite_security_gss_gcc32 \
