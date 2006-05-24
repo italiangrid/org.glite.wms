@@ -1211,13 +1211,8 @@ logCheckpointable(WMPEventLogger * wmplogger, JobAd * jad,
 		edglog(debug)<<"Setting attribute JDL::CHKPT_CURRENTSTEP"<<endl;
 		statead.setAttribute(JDL::CHKPT_CURRENTSTEP, current_step);
 	}
-	if (wmplogger->logCheckpointable(boost::lexical_cast<std::string>(
-			current_step).c_str(), statead.toString().c_str())) {
-		edglog(severe)<<"LB logging checkpoint state failed"<<endl;
-		throw JobOperationException(__FILE__, __LINE__,
-			"logCheckpointable()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-			"LB logging checkpoint state failed");
-	}
+	wmplogger->logCheckpointable(boost::lexical_cast<std::string>(
+			current_step).c_str(), statead.toString().c_str());
 	
 	GLITE_STACK_CATCH();
 }
@@ -1416,13 +1411,8 @@ submit(const string &jdl, JobId *jid, authorizer::WMPAuthorizer *auth,
 			
 			if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_INTERACTIVE)) {
 				edglog(debug)<<"Logging listener"<<endl;
-				if (wmplogger.logListener(jad->getString(JDL::SHHOST).c_str(), 
-					jad->getInt(JDL::SHPORT))) {
-					edglog(severe)<<"LB logging listener failed"<<endl;
-	          		throw JobOperationException( __FILE__, __LINE__,
-	          			"submit()", wmputilities::WMS_OPERATION_NOT_ALLOWED,
-	           			"LB logging listener failed");
-				}
+				wmplogger.logListener(jad->getString(JDL::SHHOST).c_str(), 
+					jad->getInt(JDL::SHPORT));
 			} else if (jad->hasAttribute(JDL::JOBTYPE, JDL_JOBTYPE_CHECKPOINTABLE)) {
 				string flagfile = wmputilities::getJobDirectoryPath(*jid)
 		    		+ FILE_SEPARATOR + FLAG_FILE_LOG_CHECKPOINTABLE;

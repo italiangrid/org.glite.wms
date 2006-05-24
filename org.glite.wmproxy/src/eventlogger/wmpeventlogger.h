@@ -81,14 +81,14 @@ class WMPEventLogger  {
 		
 		std::vector<std::string> WMPEventLogger::generateSubjobsIds(int res_num);
 
-		bool logListener(const char* host, int port);
-		bool logCheckpointable(const char* current_step, const char* state);
+		void logListener(const char* host, int port);
+		void logCheckpointable(const char* current_step, const char* state);
 		
 		// Event logging
 		void logEvent(event_name event, const char *reason, bool retry, bool test,
 			const char *file_queue = NULL, const char *jdl = NULL);
-		bool logAbortEventSync(char *reason);
-		bool logAcceptEventSync();
+		int logAbortEventSync(char *reason);
+		int logAcceptEventSync();
 
 		void logUserTag(std::string name, const std::string &value);
 		void logUserTags(classad::ClassAd *userTags);
@@ -129,7 +129,7 @@ class WMPEventLogger  {
 		std::string delegatedproxy;
 		int desturiport;
 		
-		std::string error_message(const std::string &api);
+		std::string error_message(const std::string &api, int exitcode = 0);
 		
 		void testAndLog(int &code, bool &with_hp, int &lap);
 		int logEvent(event_name event, const char *reason,
