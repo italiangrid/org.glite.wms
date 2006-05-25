@@ -10,9 +10,10 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
-
+#include <boost/lexical_cast.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/function.hpp>
@@ -34,18 +35,16 @@ typedef boost::shared_ptr<
   boost::remove_pointer<edg_wll_Context>::type
 > ContextPtr;
 
-class CannotCreateLBContext
+class CannotCreateLBContext: public std::exception
 {
   int m_errcode;
+  std::string m_what;
+
 public:
-  CannotCreateLBContext(int errcode)
-    : m_errcode(errcode)
-  {
-  }
-  int error_code() const
-  {
-    return m_errcode;
-  }
+  CannotCreateLBContext(int errcode);
+  ~CannotCreateLBContext() throw ();
+  char const* what() const throw();
+  int error_code() const;
 };
 
 ContextPtr
@@ -164,7 +163,7 @@ public:
   }
 };
 
-class LBQueryFailed {};
+class LB_Unavailable {};
 
 LB_Events
 get_interesting_events(

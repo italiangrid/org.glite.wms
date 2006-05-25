@@ -534,6 +534,8 @@ try {
 
 } catch (task::SigPipe&) {
   Info("Dispatcher: no RequestHandler listening. Exiting...");
+} catch (LB_Unavailable&) {
+  Info("Dispatcher: LB unavailable. Exiting...");
 } catch (std::exception const& e) {
   Error("Dispatcher: " << e.what() << ". Exiting...");
 } catch (...) {
