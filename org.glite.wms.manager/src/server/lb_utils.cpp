@@ -180,6 +180,40 @@ bool is_lb_available()
 
 }
 
+namespace {
+
+void free_events(edg_wll_Event* events)
+{
+  if (events) {
+    for (int i = 0; events[i].type != EDG_WLL_EVENT_UNDEF; ++i) {
+      edg_wll_FreeEvent(&events[i]);
+    }
+    free(events);
+  }
+}
+
+}
+
+LB_Events::LB_Events(edg_wll_Event* events)
+  : m_events(events, &free_events), m_size(0)
+{
+  if (m_events) {
+    while (m_events[m_size].type != EDG_WLL_EVENT_UNDEF) {
+      ++m_size;
+    }
+  }
+}
+
+LB_Unavailable::~LB_Unavailable() throw()
+{
+}
+
+char const*
+LB_Unavailable::what() const throw()
+{
+  return "LB unavailable";
+}
+
 LB_Events
 get_interesting_events(ContextPtr context, jobid::JobId const& id)
 {
@@ -253,6 +287,8 @@ get_interesting_events(ContextPtr context, jobid::JobId const& id)
     query_succeeded = error == 0 || error == ENOENT;
 
     LB_Events result(events);   // guarantees cleanup even in case of failure
+
+#warning should we manage different kinds of errors?
 
     if (query_succeeded) {
       return result;

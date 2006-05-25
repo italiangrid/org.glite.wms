@@ -274,6 +274,13 @@ public:
 
     return result;
   }
+  fs::path log(jobid::JobId const& node_id) const
+  {
+    fs::path result(m_base_submit_dir);
+    result /= fs::path("log." + jobid::to_filename(node_id), fs::native);
+
+    return result;
+  }
   fs::path pre(jobid::JobId const& node_id) const
   {
     char const* getenv_GLITE_WMS_LOCATION = std::getenv("GLITE_WMS_LOCATION");
@@ -316,12 +323,12 @@ public:
 
 };
 
-int get_deep_retry_count(classad::ClassAd const& jdl)
+int get_deep_retry_count(classad::ClassAd const& jdl, int default_count)
 {
-  bool valid = false;
-  int result = jdl::get_retry_count(jdl, valid);
-  if (!valid || result < 0) {
-    result = 0;
+  bool is_in_jdl = false;
+  int result = jdl::get_retry_count(jdl, is_in_jdl);
+  if (!is_in_jdl || result < 0) {
+    result = default_count;
   }
   return result;
 }
@@ -336,12 +343,12 @@ int get_sys_max_deep_retry_count()
   return result >= 0 ? result : 0;
 }
 
-int get_shallow_retry_count(classad::ClassAd const& jdl)
+int get_shallow_retry_count(classad::ClassAd const& jdl, int default_count)
 {
-  bool valid = false;
-  int result = jdl::get_shallow_retry_count(jdl, valid);
-  if (!valid || result < 0) {
-    result = 0;
+  bool is_in_jdl = false;
+  int result = jdl::get_shallow_retry_count(jdl, is_in_jdl);
+  if (!is_in_jdl || result < 0 && result != -1) {
+    result = default_count;
   }
   return result;
 }
@@ -356,11 +363,21 @@ int get_sys_max_shallow_retry_count()
   return result >= 0 ? result : 0;
 }
 
-void fix_retry_count(jdl::DAGNodeInfo& node_info, classad::ClassAd const& jdl)
+void
+fix_retry_count(
+  jdl::DAGNodeInfo& node_info,
+  classad::ClassAd const& jdl,
+  int default_retry_count,
+  int default_shallow_retry_count
+)
 {
-  int const job_deep_retry_count(get_deep_retry_count(jdl));
+  int const job_deep_retry_count(
+    get_deep_retry_count(jdl, default_retry_count)
+  );
   int const sys_deep_retry_count(get_sys_max_deep_retry_count());
-  int const job_shallow_retry_count(get_shallow_retry_count(jdl));
+  int const job_shallow_retry_count(
+    get_shallow_retry_count(jdl, default_shallow_retry_count)
+  );
   int const sys_shallow_retry_count(get_sys_max_shallow_retry_count());
 
   int const deep_retry_count(
@@ -370,20 +387,41 @@ void fix_retry_count(jdl::DAGNodeInfo& node_info, classad::ClassAd const& jdl)
     std::min(job_shallow_retry_count, sys_shallow_retry_count)
   );
 
+  int retry_count = deep_retry_count + 1;
+  if (shallow_retry_count != -1) {
+    retry_count *= shallow_retry_count + 1;
+  }
+
   // upper limit on the number of retries; the planner will check the actual
   // limits
-  node_info.retry_count((deep_retry_count + 1) * (shallow_retry_count + 1));
+  node_info.retry_count(retry_count);
 }
 
 class DescriptionAdToSubmitFile
 {
   jdl::DAGAd* m_dagad;
   Paths const* m_paths;
+  int m_default_retry_count;
+  int m_default_shallow_retry_count;
 
 public:
   DescriptionAdToSubmitFile(jdl::DAGAd* dagad, Paths const* paths)
-    : m_dagad(dagad), m_paths(paths)
+    : m_dagad(dagad),
+      m_paths(paths),
+      m_default_retry_count(0),
+      m_default_shallow_retry_count(0)
   {
+    classad::ClassAd const& ad(m_dagad->ad());
+    try {
+      m_default_retry_count
+        = ca::evaluate_attribute(ad, "DefaultNodeRetryCount");
+    } catch (ca::InvalidValue&) {
+    }
+    try {
+      m_default_shallow_retry_count
+        = ca::evaluate_attribute(ad, "DefaultNodeShallowRetryCount");
+    } catch (ca::InvalidValue&) {
+    }
   }
   void operator()(jdl::DAGAd::node_value_type const& node) const
   {
@@ -403,7 +441,12 @@ public:
     jdl::DAGNodeInfo new_node_info = node_info;
     new_node_info.description_file_for_ad(submit_file.native_file_string());
 
-    fix_retry_count(new_node_info, *ad);
+    fix_retry_count(
+      new_node_info,
+      *ad,
+      m_default_retry_count,
+      m_default_shallow_retry_count
+    );
 
     // TODO should change node type too
     m_dagad->replace_node(name, new_node_info);
@@ -452,11 +495,27 @@ class NodeAdTransformation
 {
   jdl::DAGAd const* m_dagad;
   boost::shared_ptr<classad::ExprTree> m_ce_id_requirements;
+  int m_default_retry_count;
+  int m_default_shallow_retry_count;
 
 public:
   NodeAdTransformation(jdl::DAGAd const& dagad, std::string const& ce_id)
-    : m_dagad(&dagad), m_ce_id_requirements(make_requirements(ce_id))
+    : m_dagad(&dagad),
+      m_ce_id_requirements(make_requirements(ce_id)),
+      m_default_retry_count(0),
+      m_default_shallow_retry_count(0)
   {
+    classad::ClassAd const& ad(m_dagad->ad());
+    try {
+      m_default_retry_count
+        = ca::evaluate_attribute(ad, "DefaultNodeRetryCount");
+    } catch (ca::InvalidValue&) {
+    }
+    try {
+      m_default_shallow_retry_count
+        = ca::evaluate_attribute(ad, "DefaultNodeShallowRetryCount");
+    } catch (ca::InvalidValue&) {
+    }
   }
   classad::ClassAd* operator()(classad::ClassAd const& ad) const
   {
@@ -470,7 +529,16 @@ public:
       jdl::get_certificate_subject(*m_dagad)
     );
     jdl::set_edg_dagid(*result, jdl::get_edg_jobid(*m_dagad));
-
+    bool is_in_jdl = false;
+    int r = jdl::get_retry_count(*result, is_in_jdl);
+    if (!is_in_jdl) {
+      jdl::set_retry_count(*result, m_default_retry_count);
+    }
+    is_in_jdl = false;
+    int s = jdl::get_shallow_retry_count(*result, is_in_jdl);
+    if (!is_in_jdl) {
+      jdl::set_shallow_retry_count(*result, m_default_shallow_retry_count);
+    }
     if (m_ce_id_requirements) {
       result->Insert("Requirements", m_ce_id_requirements->Copy());
     }
@@ -579,7 +647,8 @@ public:
 
     std::string pre_file = m_paths->pre(node_id).native_file_string();
     std::string pre_args = m_paths->ad(node_id).native_file_string()
-      + ' ' + m_paths->submit(node_id).native_file_string();
+      + ' ' + m_paths->submit(node_id).native_file_string()
+      + ' ' + m_paths->log(node_id).native_file_string();
     new_node_info.pre(pre_file, pre_args);
 
     std::string post_file = m_paths->post(node_id).native_file_string();
@@ -705,7 +774,6 @@ create_dagman_job_ad(
             << " -Rescue " << paths.rescue().native_file_string()
             << " -maxpre " << dagman_max_pre
             << " -Condorlog " << paths.dag_log().native_file_string();
-
   jdl::set_arguments(result, arguments.str());
   jdl::set_ce_id(result, "dagman");
 

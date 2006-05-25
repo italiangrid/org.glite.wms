@@ -221,11 +221,15 @@ Request::~Request()
       break;
 
     case Request::DELIVERED:
-      assert(!marked_cancelled());
       apply(m_input_cleaners);
       break;
 
     case Request::CANCELLED:
+      log_cancelled(m_cancel_context);
+      apply(m_input_cleaners);
+      break;
+
+    case Request::CANCEL_DELIVERED:
       apply(m_input_cleaners);
       break;
 

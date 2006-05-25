@@ -248,7 +248,7 @@ void process_cancel(RequestPtr req, WMReal& wm)
   Debug("considering cancel of " << req->id());
 
   wm.cancel(req->id(), req->lb_context());
-  req->state(Request::CANCELLED);
+  req->state(Request::CANCEL_DELIVERED);
 }
 
 }
@@ -303,6 +303,7 @@ try {
       } else if (req->marked_cancelled()) {
 
         // normal cancel
+        req->state(Request::PROCESSING);
         process_cancel(req, wm);
 
       } else {

@@ -88,12 +88,10 @@ void log_enqueued_fail(
   std::string const& ad,
   std::string const& reason
 );
-
 void log_helper_called(
   ContextPtr context,
   std::string const& name
 );
-
 void log_helper_return(
   ContextPtr context,
   std::string const& name,
@@ -107,31 +105,13 @@ class LB_Events
   boost::shared_array<edg_wll_Event> m_events;
   size_t m_size;
 
-  static void free_events(edg_wll_Event* events)
-  {
-    if (events) {
-      for (int i = 0; events[i].type; ++i) {
-        edg_wll_FreeEvent(&events[i]);
-      }
-      free(events);
-    }
-  }
-
 public:
   typedef edg_wll_Event const* iterator;
   typedef iterator const_iterator;
   typedef std::reverse_iterator<iterator> reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-  LB_Events(edg_wll_Event* events)
-    : m_events(events, &free_events), m_size(0)
-  {
-    if (m_events) {
-      while (m_events[m_size].type) {
-        ++m_size;
-      }
-    }
-  }
+  LB_Events(edg_wll_Event* events);
   bool empty() const
   {
     return m_size == 0;
@@ -163,7 +143,12 @@ public:
   }
 };
 
-class LB_Unavailable {};
+class LB_Unavailable: public std::exception
+{
+public:
+  ~LB_Unavailable() throw ();
+  char const* what() const throw();
+};
 
 LB_Events
 get_interesting_events(

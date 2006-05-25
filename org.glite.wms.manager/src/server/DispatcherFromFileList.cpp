@@ -105,6 +105,7 @@ void do_transitions_for_cancel(
       req->clear_jdl();         // this, together with marked_cancelled(),
                                 // tells the RequestHandler that it should
                                 // process the cancel request
+      req->state(Request::READY);
       write_end.write(req);
       break;
     case Request::READY:
@@ -124,6 +125,8 @@ void do_transitions_for_cancel(
       break;
     case Request::CANCELLED:
       // do nothing; the job has already been cancelled
+      break;
+    case Request::CANCEL_DELIVERED:
       break;
     }
   }
@@ -215,7 +218,8 @@ bool is_done(std::pair<std::string, RequestPtr> const& id_req)
   return
     req->state() == Request::DELIVERED && !req->marked_cancelled()
     || req->state() == Request::UNRECOVERABLE
-    || req->state() == Request::CANCELLED;
+    || req->state() == Request::CANCELLED
+    || req->state() == Request::CANCEL_DELIVERED;
 }
 
 void remove_done(TaskQueue& tq)

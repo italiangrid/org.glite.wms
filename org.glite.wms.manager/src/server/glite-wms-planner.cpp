@@ -39,6 +39,9 @@
 #include "glite/wms/common/configuration/Configuration.h"
 #include "glite/wms/common/configuration/WMConfiguration.h"
 #include "glite/wms/common/configuration/NSConfiguration.h"
+#include "glite/wms/common/logger/logstream_ts.h"
+#include "glite/wms/common/logger/edglog.h"
+#include "glite/wms/common/logger/logger_utils.h"
 #include "glite/jdl/JobAdManipulation.h"
 #include "glite/jdl/PrivateAdManipulation.h"
 #include "glite/jdl/ManipulationExceptions.h"
@@ -56,6 +59,7 @@ namespace configuration = glite::wms::common::configuration;
 namespace jobid = glite::wmsutils::jobid;
 namespace ca = glite::wmsutils::classads;
 namespace fs = boost::filesystem;
+namespace logger = glite::wms::common::logger;
 
 namespace {
 
@@ -65,7 +69,7 @@ void usage(std::ostream& os)
 {
   os
     << "Usage: " << program_name << " --help\n"
-    << "   or: " << program_name << " SOURCE DEST\n";
+    << "   or: " << program_name << " SOURCE DEST [log_file]\n";
 }
 
 unsigned int const five_minutes = 300;
@@ -468,6 +472,47 @@ void do_it(
   create_token_undo.dismiss();
 }
 
+std::fstream log_stream;
+
+bool
+init_logger(
+  char const* const log_file,
+  configuration::Configuration const& config
+)
+try {
+
+  if (log_file) {
+    if (!std::ifstream(log_file)) {
+      std::ofstream _(log_file);
+    }
+    log_stream.open(log_file, std::ios::in | std::ios::out | std::ios::ate);
+    if (log_stream) {
+      logger::threadsafe::edglog.open(
+        log_stream,
+        static_cast<logger::level_t>(config.wm()->log_level())
+      );
+    } else {
+      std::cerr << "init_logger: cannot open the log file "
+                << log_file << '\n';
+      return EXIT_FAILURE;
+    }
+  } else {
+    logger::threadsafe::edglog.open(
+      std::cerr,
+      static_cast<logger::level_t>(config.wm()->log_level())
+    );
+  }
+
+  return true;
+
+} catch (std::exception const& e) {
+  std::cerr << "init_logger: " << e.what() << '\n';
+  return false;
+} catch (...) {
+  std::cerr << "init_logger: unknown exception\n";
+  return false;
+}
+
 } // {anonymous}
 
 int
@@ -480,7 +525,7 @@ try {
     usage(std::cout);
     return EXIT_SUCCESS;
 
-  } else if (argc != 3) {
+  } else if (argc != 3 && argc != 4) {
 
     usage(std::cerr);
     return EXIT_FAILURE;
@@ -488,32 +533,37 @@ try {
   }
 
 #warning is signal handling needed?
+#warning yes it is, probably we need to intercept the termination signal from condor_dagman; in that case abort the node
   // signal_handling();
-
-  std::string const input_file(argv[1]);
-  std::ifstream is(input_file.c_str());
-  if (!is) {
-    std::cerr << "Cannot open input file " << input_file << '\n';
-    return EXIT_FAILURE;
-  }
-  std::string const output_file(argv[2]);
-  std::ofstream os(output_file.c_str());
-  if (!os) {
-    std::cerr << "Cannot open output file " << output_file << '\n';
-    return EXIT_FAILURE;
-  }
 
   configuration::Configuration config(
     "glite_wms.conf",
     configuration::ModuleType::workload_manager
   );
 
+  if (!init_logger(argc == 4 ? argv[3] : 0, config)) {
+    return EXIT_FAILURE;
+  }
+
+  std::string const input_file(argv[1]);
+  std::ifstream is(input_file.c_str());
+  if (!is) {
+    Error("Cannot open input file " << input_file);
+    return EXIT_FAILURE;
+  }
+  std::string const output_file(argv[2]);
+  std::ofstream os(output_file.c_str());
+  if (!os) {
+    Error("Cannot open output file " << output_file);
+    return EXIT_FAILURE;
+  }
+
   std::string const name("dag_node_planner");
 
   classad::ClassAd input_ad;
   classad::ClassAdParser parser;
   if (!parser.ParseClassAd(is, input_ad)) {
-    std::cerr << "Cannot parse JDL from input file (" << input_file << ")\n";
+    Error("Cannot parse JDL from input file (" << input_file << ')');
     return EXIT_FAILURE;
   }
   is.close();
@@ -563,19 +613,21 @@ try {
 
   if (error.empty()) {
     log_helper_return(context, name, EXIT_SUCCESS);
+    return EXIT_SUCCESS;
   } else {
     log_helper_return(context, name, EXIT_ABORT_NODE);
     log_abort(context, error);
+    return EXIT_ABORT_NODE;
   }
 
 } catch (std::exception const& e) {
 
-  std::cerr << e.what() << '\n';
+  Error(e.what());
   return EXIT_ABORT_NODE;
 
 } catch (...) {
 
-  std::cerr << "unknown exception\n";
+  Error("unknown exception");
   return EXIT_ABORT_NODE;
 
 }

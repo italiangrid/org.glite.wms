@@ -48,13 +48,14 @@ class Request: boost::noncopyable
 {
 public:
   enum State {
-    WAITING       = 0x01,
-    READY         = 0x02,
-    PROCESSING    = 0x04,
-    RECOVERABLE   = 0x08,
-    UNRECOVERABLE = 0x10,
-    DELIVERED     = 0x20,
-    CANCELLED     = 0x40
+    WAITING          = 0x01,
+    READY            = 0x02,
+    PROCESSING       = 0x04,
+    RECOVERABLE      = 0x08,
+    UNRECOVERABLE    = 0x10,
+    DELIVERED        = 0x20,
+    CANCELLED        = 0x40,
+    CANCEL_DELIVERED = 0x80
   };
 
 public:
