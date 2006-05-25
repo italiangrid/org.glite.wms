@@ -235,8 +235,8 @@ WMPEventLogger::registerProxyRenewal(const string &proxy_path,
 		    	&& !edg_wll_SetParam(ctx, EDG_WLL_PARAM_X509_PROXY,
 		    	proxy_path.c_str());
 	    	j++);
-	    string msg = error_message("Proxy renewal registration failed\n"
-			"glite_renewal_RegisterProxy, edg_wll_SetParam[Proxy]");
+	    string msg = "Proxy renewal registration failed\n"
+			"glite_renewal_RegisterProxy, edg_wll_SetParam[Proxy]";
 		edglog(critical)<<msg<<endl;
 	   	throw LBException(__FILE__, __LINE__, "registerProxyRenewal()",
 	   		WMS_LOGGING_ERROR, msg);
@@ -1301,8 +1301,15 @@ WMPEventLogger::error_message(const string &message, int exitcode)
 	
 	string error_message = string(lb + message
 		+ ((exitcode) ? "\nExit code: "
-			+ boost::lexical_cast<string>(exitcode) : "")
-		+ "\nLB[Proxy] Error: " + msg + "\n(" + dsc + ")");
+		+ boost::lexical_cast<string>(exitcode) : ""));
+			
+	if (msg && dsc) {
+		error_message += "\nLB[Proxy] Error: " + string(msg)
+			+ "\n(" + string(dsc) + ")";
+	} else {
+		error_message += "\nLB[Proxy] Error not available "
+			"(empty messages)";
+	}
 	
 	free(msg);
 	free(dsc);
