@@ -95,6 +95,7 @@ STAGELIBS=-L$(REPOSITORY)/stage/lib \
 -lglite_wms_globus_ftp_util \
 -lglite_wms_logger \
 -lglite_security_gss_gcc32 \
+-lvomsapi_gcc32 \
 $(LB_LIBRARIES) \
 $(GRIDSITE_GLOBUS_STAGE_LIBS) \
 $(GRIDSITE_GLOBUS_LIBS) \
@@ -152,8 +153,8 @@ delegate_proxy_OBJ=glite-wms-job-delegate-proxy
 delegate_proxy_CFLAGS=$(CFLAGS)
 delegate_proxy_DEPS=$(COMMON_LD_FLAGS) 
 
-proxyinfo_SOURCE=wmp-job-proxy-info.cpp
-proxyinfo_OBJ=glite-wms-job-proxy-info
+proxyinfo_SOURCE=wmp-job-info.cpp
+proxyinfo_OBJ=glite-wms-job-info
 proxyinfo_CFLAGS=$(CFLAGS)
 proxyinfo_DEPS=$(COMMON_LD_FLAGS)
 

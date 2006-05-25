@@ -58,6 +58,7 @@ class Options
 			FROM ,
 			HELP ,
 			INPUT ,
+			JDLORIG,
    			LISTONLY,
 			LRMS ,
 			LOGFILE ,
@@ -70,6 +71,7 @@ class Options
 			OUTPUT ,
 			PORT ,
 			PROTO,
+			PROXY,
 			RANK ,
                         REGISTERONLY,
 			RESOURCE ,
@@ -104,7 +106,7 @@ class Options
 			JOBOUTPUT,
 			JOBATTACH,
                         JOBDELEGATION,
-			JOBPROXYINFO,
+			JOBINFO,
 			JOBPERUSAL
 		};
 		/*
@@ -229,7 +231,7 @@ class Options
 		*	@param exename name of the programme executable
 		*	@param long displays the long usage help if it is "true"
 		*/
-		void proxyinfo_usage(const char* &exename, const bool &long_usg=false) ;
+		void jobinfo_usage(const char* &exename, const bool &long_usg=false) ;
 		/**
 		*	Displays on the standard output  the usage help message for the job-perusal command
 		*	@param exename name of the programme executable
@@ -394,6 +396,7 @@ class Options
 		static const char* LONG_FROM ;
 		static const char* LONG_GET ;
 		static const char* LONG_HELP ;
+		static const char* LONG_JDLORIG ;
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
 		static const char* LONG_LOGFILE;
@@ -404,6 +407,7 @@ class Options
 		static const char* LONG_NOLISTEN ;
 		static const char* LONG_NOMSG	;
 		static const char* LONG_PROTO	;
+		static const char* LONG_PROXY	;
 		static const char* LONG_RANK ;
                 static const char* LONG_REGISTERONLY ;
 		static const char* LONG_SET ;
@@ -480,6 +484,7 @@ class Options
 		static const std::string USG_GET ;
 		static const std::string USG_HELP ;
 		static const std::string USG_INPUT ;
+		static const std::string USG_JDLORIG ;
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
 		static const std::string USG_LOGFILE;
@@ -492,6 +497,7 @@ class Options
 		static const std::string USG_OUTPUT ;
 		static const std::string USG_PORT ;
 		static const std::string USG_PROTO ;
+		static const std::string USG_PROXY ;
 		static const std::string USG_RANK ;
                 static const std::string USG_REGISTERONLY ;
 		static const std::string USG_RESOURCE ;
@@ -549,12 +555,14 @@ class Options
 		bool debug ;
 		bool get ;
 		bool help ;
+		bool jdlorig ;
                 bool listonly ;
 		bool nodisplay ;
 		bool nogui ;
 		bool noint ;
 		bool nolisten ;
 		bool nomsg ;
+		bool proxy ;
 		bool rank ;
                 bool registeronly;
 		bool unset;
@@ -582,7 +590,7 @@ class Options
 		static const struct option outputLongOpts[]  ;
 		static const struct option attachLongOpts[]  ;
                 static const struct option delegationLongOpts[]  ;
-		static const struct option proxyInfoLongOpts[]  ;
+		static const struct option jobInfoLongOpts[]  ;
 		static const struct option perusalLongOpts[]  ;
 		/**
 		*	pointer to the long options of the command

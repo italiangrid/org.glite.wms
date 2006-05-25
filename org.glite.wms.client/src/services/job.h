@@ -43,8 +43,9 @@ namespace services {
 #define WMP_SBDESTURI_SERVICE           "getSandboxDestURI"
 #define WMP_BULKDESTURI_SERVICE         "getSandboxBulkDestURI"
 #define WMP_GETPROTOCOLS_SERVICE           "getTransferProtocols"
-#define WMP_JDL_SERVICE                 "getJDL"
-
+#define WMP_JDL_SERVICE                 		"getJDL"
+#define WMP_DELEG_PROXYINFO    		"getDelegatedProxyInfo"
+#define WMP_JOB_PROXYINFO    		"getJobProxyInfo"
 /*
 * WMProxy version numbers
 * (major.minor.subminor)

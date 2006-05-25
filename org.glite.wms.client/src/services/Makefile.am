@@ -8,7 +8,7 @@
 
 noinst_LTLIBRARIES = \
 	libglite_wms_client_delegateproxy.la \
-	libglite_wms_client_proxyinfo.la \
+	libglite_wms_client_jobinfo.la \
 	libglite_wms_client_jobsubmit.la \
 	libglite_wms_client_joboutput.la \
 	libglite_wms_client_jobcancel.la \
@@ -18,7 +18,7 @@ noinst_LTLIBRARIES = \
 	
 noinst_HEADERS     = \
 	delegateproxy.h \
-	proxyinfo.h \
+	jobinfo.h \
 	jobcancel.h \
 	joblistmatch.h \
 	joboutput.h \
@@ -32,8 +32,8 @@ libglite_wms_client_delegateproxy_la_SOURCES = \
 	delegateproxy.cpp \
 	job.cpp
 
-libglite_wms_client_proxyinfo_la_SOURCES = \
-	proxyinfo.cpp \
+libglite_wms_client_jobinfo_la_SOURCES = \
+	jobinfo.cpp \
 	lbapi.cpp \
 	job.cpp
 

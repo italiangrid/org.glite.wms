@@ -22,7 +22,7 @@ WMPROXY_ATTACH = $(top_builddir)/src/services/libglite_wms_client_jobattach.la
 WMPROXY_PERUSAL= $(top_builddir)/src/services/libglite_wms_client_jobperusal.la
 WMPROXY_CANCEL = $(top_builddir)/src/services/libglite_wms_client_jobcancel.la
 WMPROXY_DELEGATE = $(top_builddir)/src/services/libglite_wms_client_delegateproxy.la
-WMPROXY_PROXYINFO = $(top_builddir)/src/services/libglite_wms_client_proxyinfo.la
+WMPROXY_PROXYINFO = $(top_builddir)/src/services/libglite_wms_client_jobinfo.la
 WMPROXY_LISTMATCH = $(top_builddir)/src/services/libglite_wms_client_joblistmatch.la
 WMPROXY_LOGINFO = $(top_builddir)/src/services/libglite_wms_client_jobloginfo.la
 WMPROXY_OUTPUT = $(top_builddir)/src/services/libglite_wms_client_joboutput.la
@@ -36,7 +36,7 @@ CURL = -L/usr/lib -lcurl
 bin_PROGRAMS = \
 	glite-wms-job-cancel \
 	glite-wms-job-delegate-proxy \
-	glite-wms-job-proxy-info \
+	glite-wms-job-info \
 	glite-wms-job-submit \
 	glite-wms-job-list-match \
 	glite-wms-job-output \
@@ -64,10 +64,10 @@ glite_wms_job_delegate_proxy_LDADD = \
 	$(GRIDSITE_GLOBUS_LIBS) \
 	$(GRIDSITE_GLOBUS_OPENSSL_LIBS)
 
-glite_wms_job_proxy_info_SOURCES = \
-	wmp-job-proxy-info.cpp
-glite_wms_job_proxy_info_LDFLAGS = -Xlinker --export-dynamic
-glite_wms_job_proxy_info_LDADD = \
+glite_wms_job_info_SOURCES = \
+	wmp-job-info.cpp
+glite_wms_job_info_LDFLAGS = -Xlinker --export-dynamic
+glite_wms_job_info_LDADD = \
         $(GLITE_LB_NOTHR_COMMON_LIBS) \
         $(GLITE_LB_NOTHR_CLIENT_LIBS) \
         $(GLITE_LB_NOTHR_CLIENTPP_LIBS) \

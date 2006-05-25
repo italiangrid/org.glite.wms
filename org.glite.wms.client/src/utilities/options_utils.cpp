@@ -109,6 +109,7 @@ const char* Options::LONG_FROM		= "from";
 const char* Options::LONG_GET			= "get";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_INPUTFILE		= "input-file";
+const char* Options::LONG_JDLORIG		= "jdl-original";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
 const char* Options::LONG_LOGFILE		= "logfile";
@@ -119,6 +120,7 @@ const char* Options::LONG_NOINT		= "noint";
 const char* Options::LONG_NOLISTEN		= "nolisten";
 const char* Options::LONG_NOMSG		= "nomsg";
 const char* Options::LONG_PROTO		= "proto";
+const char* Options::LONG_PROXY		= "proxy";
 const char* Options::LONG_RANK 		= "rank";
 const char* Options::LONG_REGISTERONLY = "register-only";
 const char* Options::LONG_SET			= "set";
@@ -329,11 +331,13 @@ const struct option Options::delegationLongOpts[] = {
 /*
 *	Long options for proxy-info
 */
-const struct option Options::proxyInfoLongOpts[] = {
+const struct option Options::jobInfoLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
+	{	Options::LONG_PROXY,		no_argument,			0,		Options::PROXY},
 	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
+	{	Options::LONG_JDLORIG,	  	no_argument,			0,		Options::JDLORIG},
 	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
@@ -401,6 +405,8 @@ const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
+const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG) ;
+
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
 const string Options::USG_INPUTFILE = "--" + string(LONG_INPUTFILE) + "\t<file_path>";
@@ -428,6 +434,8 @@ const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OU
 const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t<port_num>";
 
 const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t<protocol>";
+
+const string Options::USG_PROXY = "--" + string(LONG_PROXY) ;
 
 const string Options::USG_RANK = "--" + string(LONG_RANK ) ;
 
@@ -666,10 +674,12 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 *	@param exename the name of the executable
 *	@param long_usage if the value is true it prints the long help msg
 */
-void Options::proxyinfo_usage(const char* &exename, const bool &long_usg){
+void Options::jobinfo_usage(const char* &exename, const bool &long_usg){
 	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
 	cerr << "Usage: " << exename <<   " [options] [ -d <deleg Id> | <job Id> ]\n\n";
         cerr << "options:\n" ;
+	cerr << "\t" << USG_PROXY << "\n";
+	cerr << "\t" << USG_JDLORIG << "\n";
 	cerr << "\t" << USG_HELP << "\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
@@ -679,8 +689,10 @@ void Options::proxyinfo_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
 	cerr << "identifier:\n" ;
+	cerr << "\t<job Id> = the identifier of a prevoiusly submitted job\n\n";
+	cerr << "\tor\n";
 	cerr << "\t" << USG_DELEGATION << " = the identifier of a previously delegated proxy\n";
-	cerr << "\tor <job Id> = the identifier of a prevoiusly submitted job\n";
+	cerr << "\tor <job Id> = the identifier of a prevoiusly submitted job\n\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
 	if (long_usg){
@@ -782,12 +794,14 @@ Options::Options (const WMPCommands &command){
 	debug  = false ;
 	get = false;
 	help = false  ;
+	jdlorig = false;
         listonly = false;
 	nodisplay = false ;
 	nogui  = false ;
 	noint  = false ;
 	nolisten = false  ;
 	nomsg = false  ;
+	proxy = false;
 	rank = false  ;
 	set = false;
         registeronly = false;
@@ -921,7 +935,7 @@ Options::Options (const WMPCommands &command){
 			numOpts = (sizeof(delegationLongOpts)/sizeof(option)) -1;
 			break ;
 		} ;
-		case (JOBPROXYINFO) :{
+		case (JOBINFO) :{
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c%c%c",
@@ -931,8 +945,8 @@ Options::Options (const WMPCommands &command){
 				Options::SHORT_CONFIG,		short_required_arg);
 
 			// long options
-			longOpts = proxyInfoLongOpts ;
-			numOpts = (sizeof(proxyInfoLongOpts)/sizeof(option)) -1;
+			longOpts = jobInfoLongOpts ;
+			numOpts = (sizeof(jobInfoLongOpts)/sizeof(option)) -1;
 			break ;
 		} ;
 		case (JOBPERUSAL) :{
@@ -1317,6 +1331,14 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 			value = rank;
 			break ;
 		}
+                case(PROXY) : {
+			value = proxy;
+			break ;
+		}
+                case(JDLORIG) : {
+			value = jdlorig;
+			break ;
+		}
 		default : {
 			// returns false
 			break ;
@@ -1611,8 +1633,8 @@ void Options::printUsage(const char* exename) {
                         delegation_usage(exename);
                         break;
                 } ;
-                case (JOBPROXYINFO) :{
-                        proxyinfo_usage(exename);
+                case (JOBINFO) :{
+                        jobinfo_usage(exename);
                         break;
                 } ;
 		case (JOBPERUSAL) :{
@@ -1792,13 +1814,13 @@ void Options::readOptions(const int &argc, const char **argv){
 			// =========================================================
 			// JobProxyInfo : needs Jobid or --delegatioID option
 			// ========================================================
-			if ( cmdType == JOBPROXYINFO){
+			if ( cmdType == JOBINFO){
 					if (optind == argc-1 ) {
 						jobid = Utils::checkJobId (argv[optind]);
 						jobIds.push_back(jobid);
 						if(delegation){
 							ostringstream err ;
-							err << "The following option cannot used with the jobId: ";
+							err << "The following option cannot used with the jobId:\n";
 							err << getAttributeUsage(Options::DELEGATION) << "\n";
 							err << "Specify\n";
 							err << "- JobId : for a delegated proxy used to submit the job identified by the JobId string ;\n";
@@ -1994,8 +2016,8 @@ std::string Options::getDefaultApplicationName() {
 			name = "glite-wms-job-delegate-proxy";
                         break;
                 } ;
-		case ( JOBPROXYINFO) :{
-			name = "glite-wms-job-proxy-info";
+		case ( JOBINFO) :{
+			name = "glite-wms-job-info";
                         break;
                 } ;
 		case ( JOBPERUSAL) :{
@@ -2019,7 +2041,7 @@ const int Options::checkCommonShortOpts (const int &opt ) {
 			if (cmdType==JOBSUBMIT ||
 				cmdType==JOBMATCH ||
 				cmdType==JOBDELEGATION ||
-				cmdType==JOBPROXYINFO){
+				cmdType==JOBINFO){
 				r = Options::ENDPOINT;
 			} else if (cmdType==JOBSTATUS) {
 				r = Options::EXCLUDE;
@@ -2471,6 +2493,24 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 				inCmd += px + LONG_USERTAG + ws + tag + ";" + ws ;
 			}
 			break ;
+		};
+		case ( Options::JDLORIG ) : {
+                	if (unset){
+				dupl = new string(LONG_JDLORIG) ;
+    			} else {
+				jdlorig = true;
+  				inCmd += px + LONG_JDLORIG + ";" + ws ;
+                     	 }
+                        break ;
+		};
+		case ( Options::PROXY ) : {
+                	if (unset){
+				dupl = new string(LONG_PROXY) ;
+    			} else {
+				proxy = true;
+  				inCmd += px + LONG_PROXY + ";" + ws ;
+                     	 }
+                        break ;
 		};
 		default : {
 			throw WmsClientException(__FILE__,__LINE__,"setAttribute",
