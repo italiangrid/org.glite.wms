@@ -126,20 +126,10 @@ void EventSubmit::process_event( void )
       elog::cedglog << logger::setlevel( logger::info )
 		    << ei_s_subnodeof << this->ei_data->md_dagId << endl;
     
-    // Check if the node has been resubmitted
+    // Check if the node has been resubmitted (This check is not need if condor log always the post script event)
     position = this->ei_data->md_container->position_by_edg_id( edgid );
     if( position != this->ei_data->md_container->end() ) { // Job already exist in our database
       elog::cedglog << logger::setlevel( logger::info ) << "This node seems to be resubmitted." << endl;
-/*
-      elog::cedglog << logger::setlevel( logger::info ) << "We haven't found post script event! Logs DoneFailed." << endl;
-
-#ifdef GLITE_WMS_HAVE_LBPROXY
-      this->ei_data->md_logger->set_LBProxy_context( edgid, seqcode, position->proxy_file() );
-#else
-      this->ei_data->md_logger->reset_user_proxy( position->proxy_file() ).reset_context( edgid, seqcode );
-#endif
-      this->ei_data->md_logger->failed_on_error_event( "Post script failed to log" ); // log fail
-*/
       this->ei_data->md_sizefile->decrement_pending();
       this->ei_data->md_container->update_pointer( position, this->ei_data->md_logger->sequence_code(), 5 );	
       this->ei_data->md_container->remove( position ); // remove it
