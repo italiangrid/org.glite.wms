@@ -660,8 +660,7 @@ if [ -f "${__epilogue}" ]; then
   fi
 fi
 
-if [ ${__job_type} -eq 3 ]; then #interactive jobs
-# uncomment this one below if the osb order list originally 
+# uncomment this one below if the order in the osb originally 
 # specified is not of some relevance to the user
 #sort_by_size __output_file ${workdir}
 
