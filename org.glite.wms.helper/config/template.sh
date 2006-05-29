@@ -88,7 +88,7 @@ doExit() # 1 - status
 {
   jw_status=$1
 
-  jw_echo "jw exit status = ${status}"
+  jw_echo "jw exit status = ${jw_status}"
 
   globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
   globus_copy_status=$?
