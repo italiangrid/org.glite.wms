@@ -96,7 +96,7 @@ doExit() # 1 - status
   cd ..
   rm -rf ${newdir}
 
-  if [ ${jw_status} -eq 0]; then
+  if [ ${jw_status} -eq 0 ]; then
     exit ${globus_copy_status}
   else
     exit ${jw_status}
