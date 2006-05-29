@@ -86,19 +86,21 @@ globus_url_retry_copy() # 1 - source, 2 - dest
 
 doExit() # 1 - status
 {
-  status=$1
+  jw_status=$1
 
   jw_echo "jw exit status = ${status}"
 
   globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
-  if [ $? != 0 ]; then
-    $status=$?
-  fi
+  globus_copy_status=$?
 
   cd ..
   rm -rf ${newdir}
 
-  exit $status
+  if [ ${jw_status} -eq 0]; then
+    exit ${globus_copy_status}
+  else
+    exit ${jw_status}
+  fi
 }
 
 doDSUploadTmp()
