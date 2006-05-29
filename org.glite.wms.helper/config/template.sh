@@ -89,13 +89,14 @@ doExit() # 1 - status
   status=$1
   jw_echo "jw exit status = ${status}"
 
-  status2=globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  globus_url_retry_copy "file://${workdir}/${maradona}" "${__maradonaprotocol}"
+  globus_copy_status=$?
 
   cd ..
   rm -rf ${newdir}
 
-  if [ ${status} -eq 0]; then
-    exit ${status2}
+  if [ ${status} -eq 0 ]; then
+    exit ${globus_copy_status}
   else
     exit ${status}
   fi
