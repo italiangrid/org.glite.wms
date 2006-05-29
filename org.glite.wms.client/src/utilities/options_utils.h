@@ -58,6 +58,7 @@ class Options
 			FROM ,
 			HELP ,
 			INPUT ,
+			JDL,
 			JDLORIG,
    			LISTONLY,
 			LRMS ,
@@ -396,7 +397,6 @@ class Options
 		static const char* LONG_FROM ;
 		static const char* LONG_GET ;
 		static const char* LONG_HELP ;
-		static const char* LONG_JDLORIG ;
 		static const char* LONG_LISTONLY;
 		static const char* LONG_LRMS	;
 		static const char* LONG_LOGFILE;
@@ -407,7 +407,6 @@ class Options
 		static const char* LONG_NOLISTEN ;
 		static const char* LONG_NOMSG	;
 		static const char* LONG_PROTO	;
-		static const char* LONG_PROXY	;
 		static const char* LONG_RANK ;
                 static const char* LONG_REGISTERONLY ;
 		static const char* LONG_SET ;
@@ -439,6 +438,10 @@ class Options
 		// filename
 		static const char* LONG_FILENAME;
 		static const char SHORT_FILENAME ;
+		// port - proxy
+		static const char* LONG_PROXY	;
+		static const char* LONG_PORT ;
+		static const char SHORT_P ;
 		// resource
 		static const char* LONG_RESOURCE ;
 		static const char SHORT_RESOURCE ;
@@ -453,17 +456,13 @@ class Options
 		static const char* LONG_EXCLUDE ;
 		static const char* LONG_ENDPOINT ;
 		static const char SHORT_E ;
-
-		// port
-		static const char* LONG_PORT ;
-		static const char SHORT_PORT ;
-		// port
+		// delegation
 		static const char* LONG_DELEGATION ;
 		static const char SHORT_DELEGATION ;
-
-		static int FLAG_ENDPOINT ;
-		static int FLAG_EXCLUDE ;
-
+		// JDL
+		static const char* LONG_JDL ;
+		static const char* LONG_JDLORIG ;
+		static const char SHORT_JDLORIG ;
 		/**
 		*	short usage constants
 		*/
@@ -484,6 +483,7 @@ class Options
 		static const std::string USG_GET ;
 		static const std::string USG_HELP ;
 		static const std::string USG_INPUT ;
+		static const std::string USG_JDL ;
 		static const std::string USG_JDLORIG ;
                 static const std::string USG_LISTONLY;
 		static const std::string USG_LRMS	;
@@ -536,9 +536,12 @@ class Options
 		std::string* fileprotocol ;
 		std::string* from ;
 		std::string* input ;
+		std::string *jdl;
+		std::string *jdlorig;
 		std::string* lrms ;
 		std::string* logfile ;
 		std::string* output ;
+		std::string* proxy ;
 		std::string* resource ;
 		std::string* start ;
 		std::string* status ;
@@ -555,14 +558,12 @@ class Options
 		bool debug ;
 		bool get ;
 		bool help ;
-		bool jdlorig ;
                 bool listonly ;
 		bool nodisplay ;
 		bool nogui ;
 		bool noint ;
 		bool nolisten ;
 		bool nomsg ;
-		bool proxy ;
 		bool rank ;
                 bool registeronly;
 		bool unset;

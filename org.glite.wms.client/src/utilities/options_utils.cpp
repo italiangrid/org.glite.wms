@@ -109,7 +109,6 @@ const char* Options::LONG_FROM		= "from";
 const char* Options::LONG_GET			= "get";
 const char* Options::LONG_HELP 		= "help";
 const char* Options::LONG_INPUTFILE		= "input-file";
-const char* Options::LONG_JDLORIG		= "jdl-original";
 const char* Options::LONG_LISTONLY		= "list-only";
 const char* Options::LONG_LRMS		= "lrms";
 const char* Options::LONG_LOGFILE		= "logfile";
@@ -120,7 +119,6 @@ const char* Options::LONG_NOINT		= "noint";
 const char* Options::LONG_NOLISTEN		= "nolisten";
 const char* Options::LONG_NOMSG		= "nomsg";
 const char* Options::LONG_PROTO		= "proto";
-const char* Options::LONG_PROXY		= "proxy";
 const char* Options::LONG_RANK 		= "rank";
 const char* Options::LONG_REGISTERONLY = "register-only";
 const char* Options::LONG_SET			= "set";
@@ -166,10 +164,16 @@ const char* Options::LONG_ENDPOINT	= "endpoint";
 const char Options::SHORT_E = 'e';
 // port
 const char* Options::LONG_PORT		= "port";
-const char Options::SHORT_PORT 	= 'p';
+const char* Options::LONG_PROXY		= "proxy";
+const char Options::SHORT_P		 	= 'p';
 // delegation
 const char* Options::LONG_DELEGATION	= "delegationid";
 const char Options::SHORT_DELEGATION 	= 'd';
+//JDL original
+const char* Options::LONG_JDL			= "jdl";
+const char* Options::LONG_JDLORIG		= "jdl-original";
+const char Options::SHORT_JDLORIG		= 'j';
+
 // Semicolon and white-space strings used in the definition of the short options
 const char Options::short_required_arg = ':' ;
 const char Options::short_no_arg = ' ' ;
@@ -232,8 +236,8 @@ const struct option Options::statusLongOpts[] = {
 *	Long options for  job-logging-info
 */
 const struct option Options::loginfoLongOpts[] = {
-{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
-{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
+	{	Options::LONG_VERSION,			no_argument,			0,		Options::VERSION	},
+	{	Options::LONG_HELP,				no_argument,			0,		Options::HELP	},
 	{ 	Options::LONG_VERBOSE,         required_argument,		0,		Options::SHORT_V},
 	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
         {	Options::LONG_VO,             	required_argument,		0,		Options::VO	},
@@ -301,7 +305,7 @@ const struct option Options::outputLongOpts[] = {
 const struct option Options::attachLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
-	{	Options::LONG_PORT,              	required_argument,		0,		Options::SHORT_PORT},
+	{	Options::LONG_PORT,              	required_argument,		0,		Options::SHORT_P},
 	{	Options::LONG_NOLISTEN,		no_argument,			0,		Options::NOLISTEN	},
 	{	Options::LONG_CONFIG,            required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
@@ -323,8 +327,8 @@ const struct option Options::delegationLongOpts[] = {
 	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
-	{	Options::LONG_OUTPUT,            required_argument,	0,	Options::SHORT_OUTPUT},
-	{	Options::LONG_NOINT,		no_argument,		0,	Options::NOINT	},
+	{	Options::LONG_OUTPUT,            required_argument,		0,	Options::SHORT_OUTPUT},
+	{	Options::LONG_NOINT,		no_argument,			0,	Options::NOINT	},
 	{	Options::LONG_HELP,			no_argument,			0,		Options::HELP	},
 	{0, 0, 0, 0}
 };
@@ -335,9 +339,10 @@ const struct option Options::jobInfoLongOpts[] = {
 	{	Options::LONG_VERSION,		no_argument,			0,		Options::VERSION},
 	{	Options::LONG_LOGFILE,		required_argument,		0,		Options::LOGFILE},
 	{	Options::LONG_DEBUG,             	no_argument,			0,		Options::DBG},
-	{	Options::LONG_PROXY,		no_argument,			0,		Options::PROXY},
+	{	Options::LONG_PROXY,		required_argument,		0,		Options::SHORT_P},
 	{	Options::LONG_DELEGATION,  	required_argument,		0,		Options::SHORT_DELEGATION},
-	{	Options::LONG_JDLORIG,	  	no_argument,			0,		Options::JDLORIG},
+	{	Options::LONG_JDLORIG,	  	required_argument,		0,		Options::SHORT_JDLORIG},
+	{	Options::LONG_JDL	,	  	required_argument,		0,		Options::JDL},
 	{	Options::LONG_ENDPOINT,        	required_argument,		0,		Options::SHORT_E},
 	{	Options::LONG_CONFIG,    		required_argument,		0,		Options::SHORT_CONFIG},
 	{	Options::LONG_VO,           		required_argument,		0,		Options::VO},
@@ -389,7 +394,7 @@ const string Options::USG_DEBUG  = "--" + string(LONG_DEBUG );
 
 const string Options::USG_DEFJDL = "--" + string(LONG_DEFJDL)	 + "\t\t<file_path>" ;
 
-const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + "\t<id_string>";
+const string Options::USG_DELEGATION  = "--" + string(LONG_DELEGATION )+ ", -" + SHORT_DELEGATION + " <id_string>";
 
 const string Options::USG_DIR  = "--" + string(LONG_DIR )+ "\t\t<directory_path>"	;
 
@@ -405,7 +410,9 @@ const string Options::USG_GET  = "--" + string(LONG_GET ) ;
 
 const string Options::USG_HELP = "--" + string(LONG_HELP) ;
 
-const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG) ;
+const string Options::USG_JDL = "--" + string(LONG_JDL)+ "\t<jobid>" ;
+
+const string Options::USG_JDLORIG = "--" + string(LONG_JDLORIG)+ ", -" + SHORT_JDLORIG + " <jobid>" ;
 
 const string Options::USG_INPUT = "--" + string(LONG_INPUT )  + ", -" + SHORT_INPUT  + "\t<file_path>";
 
@@ -431,11 +438,11 @@ const string Options::USG_NOMSG	 = "--" + string(LONG_NOMSG);
 
 const string Options::USG_OUTPUT = "--" + string(LONG_OUTPUT) + ", -" + SHORT_OUTPUT + "\t<file_path>";
 
-const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_PORT + "\t<port_num>";
+const string Options::USG_PORT  = "--" + string(LONG_PORT )+ ", -" + SHORT_P + "\t<port_num>";
 
 const string Options::USG_PROTO  = "--" + string(LONG_PROTO ) + "\t\t<protocol>";
 
-const string Options::USG_PROXY = "--" + string(LONG_PROXY) ;
+const string Options::USG_PROXY = "--" + string(LONG_PROXY) + ", -" + SHORT_P + "\t<jobid>";
 
 const string Options::USG_RANK = "--" + string(LONG_RANK ) ;
 
@@ -676,10 +683,13 @@ void Options::delegation_usage(const char* &exename, const bool &long_usg){
 */
 void Options::jobinfo_usage(const char* &exename, const bool &long_usg){
 	cerr << "\n" << Options::getVersionMessage( ) << "\n" ;
-	cerr << "Usage: " << exename <<   " [options] [ -d <deleg Id> | <job Id> ]\n\n";
-        cerr << "options:\n" ;
-	cerr << "\t" << USG_PROXY << "\n";
+	cerr << "Usage: " << exename <<   " [options] <operation options> [other options]\n\n";
+	cerr << "operation options (mandatory):\n";
+	cerr << "\t" << USG_JDL << " (registered)\n";
 	cerr << "\t" << USG_JDLORIG << "\n";
+	cerr << "\t" << USG_PROXY << "\n";
+	cerr << "\t" << USG_DELEGATION << "\n";
+        cerr << "options:\n" ;
 	cerr << "\t" << USG_HELP << "\n";
         cerr << "\t" << USG_ENDPOINT << "\n";
 	cerr << "\t" << USG_CONFIG << "\n";
@@ -688,11 +698,6 @@ void Options::jobinfo_usage(const char* &exename, const bool &long_usg){
 	cerr << "\t" << USG_NOINT << "\n";
 	cerr << "\t" << USG_DEBUG << "\n";
 	cerr << "\t" << USG_LOGFILE << "\n\n";
-	cerr << "identifier:\n" ;
-	cerr << "\t<job Id> = the identifier of a prevoiusly submitted job\n\n";
-	cerr << "\tor\n";
-	cerr << "\t" << USG_DELEGATION << " = the identifier of a previously delegated proxy\n";
-	cerr << "\tor <job Id> = the identifier of a prevoiusly submitted job\n\n";
 	cerr << "Please report any bug at:\n" ;
 	cerr << "\t" << HELP_EMAIL << "\n";
 	if (long_usg){
@@ -794,6 +799,7 @@ Options::Options (const WMPCommands &command){
 	debug  = false ;
 	get = false;
 	help = false  ;
+	jdl = false;
 	jdlorig = false;
         listonly = false;
 	nodisplay = false ;
@@ -912,7 +918,7 @@ Options::Options (const WMPCommands &command){
 			// short options
 			asprintf (&shortOpts,
 				"%c%c%c%c%c%c" ,
-				Options::SHORT_PORT,	 	short_required_arg,
+				Options::SHORT_P	,	 	short_required_arg,
 				Options::SHORT_INPUT,		short_required_arg,
 				Options::SHORT_CONFIG,		short_required_arg);
 			// long options
@@ -938,8 +944,10 @@ Options::Options (const WMPCommands &command){
 		case (JOBINFO) :{
 			// short options
 			asprintf (&shortOpts,
-				"%c%c%c%c%c%c%c%c",
+				"%c%c%c%c%c%c%c%c%c%c%c%c",
 				Options::SHORT_E,  			short_required_arg, // endpoint
+				Options::SHORT_P,			short_required_arg, // proxy
+				Options::SHORT_JDLORIG,		short_required_arg,
 				Options::SHORT_DELEGATION, 	short_required_arg,
 				Options::SHORT_OUTPUT, 		short_required_arg,
 				Options::SHORT_CONFIG,		short_required_arg);
@@ -1219,7 +1227,27 @@ string* Options::getStringAttribute (const OptsAttributes &attribute){
 			break ;
 		}
 		case(START) : {
-			value = start;
+			if (start) {
+				value = new string (*start);
+			}
+			break ;
+		}
+		case(PROXY) : {
+			if (proxy) {
+				value = new string (*proxy);
+			}
+			break ;
+		}
+                case(JDLORIG) : {
+			if (jdlorig) {
+				value = new string (*jdlorig);
+			}
+			break ;
+		}
+                case(JDL) : {
+			if (jdl) {
+				value = new string (*jdl);
+			}
 			break ;
 		}
 		default : {
@@ -1329,14 +1357,6 @@ bool Options::getBoolAttribute (const OptsAttributes &attribute){
 		}
                 case(RANK) : {
 			value = rank;
-			break ;
-		}
-                case(PROXY) : {
-			value = proxy;
-			break ;
-		}
-                case(JDLORIG) : {
-			value = jdlorig;
 			break ;
 		}
 		default : {
@@ -1567,6 +1587,18 @@ const string Options::getAttributeUsage (const Options::OptsAttributes &attribut
 		}
 		case(INPUTFILE) : {
 			msg = USG_INPUTFILE ;
+			break ;
+		}
+		case(JDL) : {
+			msg = USG_JDL ;
+			break ;
+		}
+		case(JDLORIG) : {
+			msg = USG_JDLORIG ;
+			break ;
+		}
+		case(PROXY) : {
+			msg = USG_PROXY;
 			break ;
 		}
 		default : {
@@ -1815,7 +1847,7 @@ void Options::readOptions(const int &argc, const char **argv){
 			// JobProxyInfo : needs Jobid or --delegatioID option
 			// ========================================================
 			if ( cmdType == JOBINFO){
-					if (optind == argc-1 ) {
+			/*		if (optind == argc-1 ) {
 						jobid = Utils::checkJobId (argv[optind]);
 						jobIds.push_back(jobid);
 						if(delegation){
@@ -1863,7 +1895,7 @@ void Options::readOptions(const int &argc, const char **argv){
 							"readOptions", DEFAULT_ERR_CODE,
 							"Arguments Error",
 							err.str() );
-					}
+					}*/
 			} else
 
 			// =========================================================
@@ -2056,6 +2088,14 @@ const int Options::checkCommonShortOpts (const int &opt ) {
 			}
 			break;
 		}
+		case (SHORT_P) : {
+			if (cmdType==JOBSUBMIT || cmdType==JOBATTACH) {
+				r = Options::PORT;
+			} else if (cmdType==JOBINFO) {
+				r = Options::PROXY;
+			}
+			break;
+		}
 	}
 	return r;
 }
@@ -2166,7 +2206,7 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                                 ostringstream v ;
                                 v << *verbosity ;
                                 inCmd += px + LONG_VERBOSE + ws + v.str()+ ";" + ws ;
-				string arg =checkArg(LONG_VERBOSE,optarg, Options::VERBOSE);
+				string arg = checkArg(LONG_VERBOSE,optarg, Options::VERBOSE);
 				*verbosity = atoi (arg.c_str());
 			}
 			break ;
@@ -2348,12 +2388,12 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
-		case ( Options::SHORT_PORT ) : {
+		case ( Options::PORT ) : {
 			if (port){
 				dupl = new string(LONG_PORT) ;
 			}else {
 				port= (unsigned int*) malloc (sizeof(int));
-				string arg = checkArg(LONG_PORT ,optarg, Options::PORT, string(1,Options::SHORT_PORT)) ;
+				string arg = checkArg(LONG_PORT ,optarg, Options::PORT, string(1,Options::SHORT_P)) ;
 				*port = atoi (arg.c_str());
 
 				inCmd += px + LONG_PORT  + ws + boost::lexical_cast<string>(*port)+ ";" + ws ;
@@ -2494,12 +2534,21 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
 			}
 			break ;
 		};
-		case ( Options::JDLORIG ) : {
-                	if (unset){
+		case ( Options::JDL ) : {
+                	if (jdl){
+				dupl = new string(LONG_JDL) ;
+    			} else {
+				jdl = new string(checkArg(LONG_JDL ,optarg, Options::JDL)) ;
+  				inCmd += px + LONG_JDL + ws + *jdl + ";" + ws ;
+                     	 }
+                        break ;
+		};
+		case ( Options::SHORT_JDLORIG ) : {
+                	if (jdlorig){
 				dupl = new string(LONG_JDLORIG) ;
     			} else {
-				jdlorig = true;
-  				inCmd += px + LONG_JDLORIG + ";" + ws ;
+				jdlorig = new string(checkArg(LONG_JDLORIG ,optarg, Options::JDLORIG, string(1,Options::SHORT_JDLORIG))) ;
+  				inCmd += px + LONG_JDLORIG + ws + *jdlorig + ";" + ws ;
                      	 }
                         break ;
 		};
@@ -2507,8 +2556,8 @@ void Options::setAttribute (const int &in_opt, const char **argv) {
                 	if (unset){
 				dupl = new string(LONG_PROXY) ;
     			} else {
-				proxy = true;
-  				inCmd += px + LONG_PROXY + ";" + ws ;
+				proxy = new string(checkArg(LONG_PROXY ,optarg, Options::PROXY, string(1,Options::SHORT_P))) ;
+  				inCmd += px + LONG_PROXY + ws + *proxy + ";" + ws ;
                      	 }
                         break ;
 		};

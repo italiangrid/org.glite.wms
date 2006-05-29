@@ -53,29 +53,62 @@ const string monthStr[]  = {"Jan", "Feb", "March", "Apr", "May", "June" ,"July",
 *	Default constructor
 */
 JobInfo::JobInfo( ){
-	origOpt = false;
-	proxyOpt = false;
+	jdlOpt = NULL;
+	origOpt = NULL;
+	proxyOpt = NULL;
+	jobId = string("");
 };
 /*
 *	Default destructor
 */
-JobInfo::~JobInfo( ){};
+JobInfo::~JobInfo( ){
+	// "free memory" for the string  attributes
+	if (jdlOpt) { free(jdlOpt);}
+	if (origOpt ) { free(origOpt);}
+	if (proxyOpt ) { free(proxyOpt);}
+
+};
 /*
 * Handles the command line arguments
 */
 void JobInfo::readOptions (int argc,char **argv){
-	ostringstream err;
+	string err = "";
         Job::readOptions  (argc, argv, Options::JOBINFO);
-	origOpt = wmcOpts->getBoolAttribute(Options::JDLORIG);
-	proxyOpt = wmcOpts->getBoolAttribute(Options::PROXY);
-	if (origOpt && proxyOpt ){
-		err << "The following options cannot be specified together:\n" ;
-		err << wmcOpts->getAttributeUsage(Options::JDLORIG) << "\n";
-		err << wmcOpts->getAttributeUsage(Options::PROXY) << "\n";
+	jdlOpt = wmcOpts->getStringAttribute(Options::JDL);
+	origOpt = wmcOpts->getStringAttribute(Options::JDLORIG);
+	proxyOpt = wmcOpts->getStringAttribute(Options::PROXY);
+	dgOpt = wmcOpts->getStringAttribute(Options::DELEGATION);
+	if (jdlOpt == NULL && origOpt == NULL &&
+		proxyOpt == NULL && dgOpt == NULL) {
+		err = "A mandatory option is missing; specify one of these operations:\n" ;
+		err += wmcOpts->getAttributeUsage(Options::JDL) + " \n";
+		err += wmcOpts->getAttributeUsage(Options::JDLORIG) + " \n";
+		err += wmcOpts->getAttributeUsage(Options::PROXY) + " \n";
+		err += wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
+	} else if ( (jdlOpt && origOpt) ||
+		(jdlOpt && proxyOpt) ||
+		(jdlOpt && dgOpt) ||
+		(origOpt && proxyOpt) ||
+		(origOpt && dgOpt) ||
+		(proxyOpt && dgOpt) ) {
+		err = "The following options cannot be specified together:\n" ;
+		err += wmcOpts->getAttributeUsage(Options::JDL) + "\n";
+		err += wmcOpts->getAttributeUsage(Options::JDLORIG) + "\n";
+		err += wmcOpts->getAttributeUsage(Options::PROXY) + "\n";
+		err += wmcOpts->getAttributeUsage(Options::DELEGATION) + "\n";
+	} else if (jdlOpt) {
+		jobId = Utils::checkJobId (*jdlOpt);
+	} else if (origOpt){
+		jobId = Utils::checkJobId (*origOpt);
+	} else if (proxyOpt){
+		jobId = Utils::checkJobId (*proxyOpt);
+	}
+	if (err.size()>0) {
 		throw WmsClientException(__FILE__,__LINE__,
 				"readOptions",DEFAULT_ERR_CODE,
-				"Input Option Error", err.str());
+				"Input Option Error", err);
 	}
+
 };
 
 const std::string JobInfo::field (const std::string &label, const std::string &value){
@@ -312,80 +345,58 @@ void JobInfo::retrieveInfo ( ){
 	postOptionchecks();
 	ostringstream out ;
 	ostringstream header ;
-	string jobid = "";
 	ProxyInfoStructType* proxy_info = NULL ;
 	string jdl = "";
 	vector <pair<string , string> > params;
-	vector<string> ids = wmcOpts->getJobIds( );
-	if (ids.empty() ) {
-		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
+	if (dgOpt) {
 		retrieveEndPointURL(false);
-		if (dgOpt) {
-			logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier: ",
-				string("\""+ *dgOpt + "\"") );
-			try {
-				// log-info
-				params.push_back(make_pair("delegationID", *dgOpt));
-				logInfo->service(WMP_DELEG_PROXYINFO, params);
-				// calling the service ....
-				proxy_info = getDelegatedProxyInfo(*dgOpt, cfgCxt);
-				logInfo->result(WMP_DELEG_PROXYINFO, "Info on delegated proxy successfully retrieved");
-			} catch (BaseException &exc) {
-				throw WmsClientException(__FILE__,__LINE__,
-				"proxy_info", ECONNABORTED,
-				"WMProxy Server Error", errMsg(exc));
-			}
-			header << "Your proxy delegated to the endpoint "  << getEndPoint( ) << "\n";
-			header << "with delegationID " << *dgOpt << ": \n";
-		} else {
-			ostringstream err ;
-			err << "One of these two options is mandatory:\n";
-			err << "- " << wmcOpts->getAttributeUsage(Options::DELEGATION) << "\n";
-			err << "- JobId (as last argument)\n";
+		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy with identifier: ",
+			string("\""+ *dgOpt + "\"") );
+		try {
+			// log-info
+			params.push_back(make_pair("delegationID", *dgOpt));
+			logInfo->service(WMP_DELEG_PROXYINFO, params);
+			// calling the service ....
+			proxy_info = getDelegatedProxyInfo(*dgOpt, cfgCxt);
+			logInfo->result(WMP_DELEG_PROXYINFO, "Info on delegated proxy successfully retrieved");
+		} catch (BaseException &exc) {
 			throw WmsClientException(__FILE__,__LINE__,
-				"readOptions", DEFAULT_ERR_CODE,
-				"Incompatible Options"  ,
-				err.str());
+			"proxy_info", ECONNABORTED,
+			"WMProxy Server Error", errMsg(exc));
 		}
-
+		header << "Your proxy delegated to the endpoint "  << getEndPoint( ) << "\n";
+		header << "with delegationID " << *dgOpt << ": \n";
 	} else {
-		ids = wmcOpts->getJobIds( );
-		if (ids.size()>1 ) {
-			throw WmsClientException(__FILE__,__LINE__,
-				"retrieveInfo", ECONNABORTED,
-				"Too many argument", "Only one JobId can be specified as last argument");
-		}
-		jobid = ids[0];
 		logInfo->print(WMS_DEBUG, "Getting the enpoint URL", "");
 		LbApi lbApi;
-		lbApi.setJobId(jobid);
+		lbApi.setJobId(jobId);
 		Status status = lbApi.getStatus(true,true);
 		setEndPoint(status.getEndpoint(), false);
-		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobid);
+		logInfo->print(WMS_DEBUG, "Retrieving information on the delegated proxy used for submitting the job:", jobId);
 		try {
 			if (proxyOpt) {
 				// log-info
-				logInfo->service(WMP_JOB_PROXYINFO, jobid);
-				proxy_info = getJobProxyInfo(jobid, cfgCxt);
+				logInfo->service(WMP_JOB_PROXYINFO, jobId);
+				proxy_info = getJobProxyInfo(jobId, cfgCxt);
 				// calling the service ....
 				logInfo->result(WMP_JOB_PROXYINFO, "Proxy info successfully retrieved");
 				header << "Your proxy delegated to the endpoint "  << getEndPoint( ) << "\n";
 			} else if (origOpt) {
 				// log-info
-				params.push_back(make_pair("JobId", jobid));
+				params.push_back(make_pair("JobId", jobId));
 				params.push_back(make_pair("JDL-type", "ORIGINAL"));
 				// calling the service ...
 				logInfo->service(WMP_JDL_SERVICE, params);
-				jdl = getJDL(jobid, ORIGINAL, cfgCxt);
+				jdl = getJDL(jobId, ORIGINAL, cfgCxt);
 				logInfo->result(WMP_JDL_SERVICE, "JDL info successfully retrieved");
 				header << "The original JDL\n" ;
-			} else {
+			} else if (jdlOpt) {
 				// log-info
-				params.push_back(make_pair("JobId", jobid));
+				params.push_back(make_pair("JobId", jobId));
 				params.push_back(make_pair("JDL-type", "REGISTERED"));
 				logInfo->service(WMP_JDL_SERVICE, params);
 				// calling the service ...
-				jdl = getJDL(jobid, REGISTERED, cfgCxt);
+				jdl = getJDL(jobId, REGISTERED, cfgCxt);
 				logInfo->result(WMP_JDL_SERVICE, "JDL info successfully retrieved");
 				header << "The registered JDL\n" ;
 			}
@@ -394,7 +405,7 @@ void JobInfo::retrieveInfo ( ){
 			"retrieveInfo", ECONNABORTED,
 			"WMProxy Server Error", errMsg(exc));
 		}
-		header << " for the job "<< jobid << " :";
+		header << " for the job "<< jobId << " :";
 	}
 	// OUTPUT MESSAGE ============================================
 	if (proxy_info) {
@@ -410,13 +421,13 @@ void JobInfo::retrieveInfo ( ){
 			out << "\n" << wmcUtils->getStripe(74, "=" , string (wmcOpts->getApplicationName() + " Failure") ) << "\n\n";
 			out << "Unable to retrieve information on ";
 			if (proxyOpt) {
-				out << "the proxy for the job: " << jobid << "\n";
+				out << "the proxy for the job: " << jobId << "\n";
 			} else if (dgOpt) {
 				out << "your proxy with delegationId: " << *dgOpt << "\n";
 			} else if (origOpt) {
-				out << "the Original JDL of  the job: " << jobid << "\n";
+				out << "the Original JDL of  the job: " << jobId << "\n";
 			} else {
-				out << "the Registered JDL of the job: " << jobid << "\n";
+				out << "the Registered JDL of the job: " << jobId << "\n";
 			}
 		}
 	}
