@@ -217,3 +217,22 @@ Allow specifying a further jdl file whose attributes will be merged into the sub
 This option is only available from glite version >= 3.1.
 <<<default-jdl>>>
 
+<<<proxy>>>
+Retrieves and displays information for the proxy delegated with the specified JobId: the WMProxy service where the job was submitted is contacted and asked for needed information.
+<<<proxy>>>
+
+<<<jdl>>>
+Retrieves and displays the jdl registered to the LB service for the specified JobId: the WMProxy service where the job was submitted is contacted and asked for needed information.
+<<<jdl>>>
+
+<<<jdl-original>>>
+Retrieves and displays the original jdl submitted by the user to the WMProxy service. This information might be quite different from the registered jdl, mostly for parametric and collection of jobs.
+<<<jdl-original>>>
+
+<<<info-output>>>
+Stores the retrieved information into the specified file instead of the standard output. The specified file path can be either a simple name or an absolute path (on the submitting machine). In the former case the file filepath is created in the current working directory.
+<<<info-output>>>
+
+
+
+

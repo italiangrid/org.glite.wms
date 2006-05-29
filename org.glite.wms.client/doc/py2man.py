@@ -10,7 +10,7 @@ RASKMAN_DEBUG = 0
 GENERATE_MAN=True #MAN PAGES
 GENERATE_TXT=True #LATEC
 GENERATE_WKI=True #WIKI PAGES
-GENERATE_PLT=False #WIKI PAGES
+GENERATE_PLT=False #Plain Text PAGES
 #Output for generated pages PATH:
 MAN_OUTPUT=""
 TXT_OUTPUT="../../org.egee.jra1.deliverables/users-guide/WMPROXY/"
@@ -37,8 +37,11 @@ options2short = { \
 "filename": ["filename","f","filename"] ,\
 "get": ["get","",""] ,\
 "help": ["help","",""] ,\
+"info-output" : ["output","o","filename"],\
 "jobout-dir": ["dir","","directorypath"] ,\
 "jobout-input": ["input","i","filepath"] ,\
+"jdl":["jdl","","jobid"], \
+"jdl-original":["jdl-original","j","jobid"], \
 "list-only": ["list-only","",""] ,\
 "logfile": ["logfile","","filepath"] ,\
 "lrms": ["lrms","","lrmstype"] ,\
@@ -52,6 +55,7 @@ options2short = { \
 "perusal-output": ["output","o","filepath"] ,\
 "proto": ["proto","","protocol"] ,\
 "proto-submit": ["proto","","protocol"] ,\
+"proxy": ["proxy","p","jobid"] ,\
 "rank": ["rank","",""] ,\
 "register-only": ["register-only","",""] ,\
 "resource": ["resource","r", "ceid"] ,\
@@ -73,9 +77,11 @@ common_options=[ "version", "help", "config", "vo", "debug", "logfile", "noint"]
 commands2options={
 "glite-wms-job-delegate-proxy":["delegationid", "autm-delegation", "endpoint", "deleg-output"], \
 "glite-wms-job-submit":["submit-input", "resource","nodes-resource",  "nolisten", "nomsg","lrms", "to", "valid", "register-only", \
-"transfer-files", "proto-submit", "start", "submit-output", "collection","dag","default-jdl"], \
+   "transfer-files", "proto-submit", "start", "submit-output", "collection","dag","default-jdl"], \
 "glite-wms-job-cancel":["cancel-input","cancel-output"], \
 "glite-wms-job-list-match":["delegationid", "autm-delegation", "endpoint", "rank","match-output"], \
 "glite-wms-job-output":["jobout-input", "jobout-dir", "proto", "list-only"], \
-"glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename", "all", "perusal-dir", "proto", "perusal-output", "nodisplay"] \
+"glite-wms-job-perusal": ["perusal-inputfile","set", "get", "unset", "filename",\
+   "all", "perusal-dir", "proto", "perusal-output", "nodisplay"],\
+"glite-wms-job-info":["delegationid","proxy","jdl","jdl-original","endpoint","info-output"],\
 }

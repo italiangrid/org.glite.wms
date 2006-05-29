@@ -408,5 +408,71 @@ A message with the result of the operation is always displayed on the standard o
 
 
 
+###glite-wms-job-info###
+<<<SYNOPSIS>>>
+[options]
+<<<SYNOPSIS>>>
+
+<<<DESCRIPTION>>>
+Allow retrieving useful information about the user delegated proxy, the delegated identification details of the user, the jdl of a previously submitted job, etc.
+Each piece of information has to be queried through the proper option.
+E.g.:
+
+1) glite-wms-job-info --delegationId mydelegationID
+
+2) glite-wms-job-info --jdl mySubmittedJobID
+
+3) glite-wms-job-info --proxy mySubmittedJobID
+
+<<<DESCRIPTION>>>
+<<<FILES>>>
+voName/glite_wms.conf
+The user configuration file. The standard path location is $GLITE_WMS_LOCATION/etc (or $GLITE_LOCATION/etc).
+Different configuration files can be specified by either using the --config option or setting the GLITE_WMS_CLIENT_CONFIG environment variable
+/tmp/x509up_u<uid> A valid X509 user proxy; use the X509_USER_PROXY environment variable to override the default location
+<<<FILES>>>
+
+<<<ENVIRONMENT>>>
+GLITE_WMS_CLIENT_CONFIG:  This variable may be set to specify the path location of the configuration file
+
+GLITE_WMS_LOCATION:  This variable must be set when the Glite WMS installation is not located in the default paths: either /opt/glite or /usr/local
+
+GLITE_LOCATION: This variable must be set when the Glite installation is not located in the default paths: either  /opt/glite or /usr/local
+
+GLITE_WMS_WMPROXY_ENDPOINT:		This variable may be set to specify the endpoint URL
+
+X509_CERT_DIR: This variable may be set to override the default location of the trusted certificates directory, which is normally /etc/grid-security/certificates
+
+X509_USER_PROXY: This variable may be set to override the default location of the user proxy credentials, which is normally /tmp/x509up_u<uid>.
+
+<<<ENVIRONMENT>>>
+<<<AUTHORS>>>
+Alessandro Maraschini , Marco Sottilaro (egee@datamat.it)
+<<<AUTHORS>>>
+<<<EXAMPLES>>>
+
+1) Display information for the proxy delegated to the WMProxy service with the specified identifier:
+	glite-wms-job-info -d <delegationId>
+
+2) Display information for the proxy delegated with a previously submitted Job:
+	glite-wms-job-info -p <JobId>
+
+3) Display the submission string registered to LB server for a previosly submitted Job:
+	glite-wms-job-info --jdl <JobId> -o <OutputFile>
+
+4) Display the original submission string sent to the WMProxy service for a previosly submitted Job
+	glite-wms-job-info -j <JobId>
+
+5) Send the request to the WMProxy service whose URL is specified with the -e option
+	glite-wms-job-info -d <delegationId> -e https://wmproxy.glite.it:7443/glite_wms_wmproxy_server
+
+6) Store into a file the submission string registered to LB server for a previosly submitted Job:
+	glite-wms-job-info --jdl <JobId> -o <OutputFile>
+
+When --endpoint (-e) is not specified, the search of an available WMProxy service is performed according to the modality reported in the description of the --endpoint option.
+
+<<<EXAMPLES>>>
+
+###glite-wms-job-info###
 
 
